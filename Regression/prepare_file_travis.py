@@ -1,6 +1,6 @@
 # This script modifies `WarpX-test.ini` (which is used for nightly builds)
-# and creates the file `shippable-test.ini` (which is used for continous
-# integration on Shippable (https://app.shippable.com/))
+# and creates the file `travis-test.ini` (which is used for continous
+# integration on TravisCI (https://travis-ci.org/)
 import re
 
 with open('WarpX-tests.ini') as f:
@@ -24,5 +24,5 @@ text = re.sub( '\[UnitTest_[a-zA-Z]+\]\n(.+\n)*', '', text)
 # Prevent emails from being sent
 text = re.sub( 'sendEmailWhenFail = 1', 'sendEmailWhenFail = 0', text )
 
-with open('shippable-tests.ini', 'w') as f:
+with open('travis-tests.ini', 'w') as f:
     f.write(text)

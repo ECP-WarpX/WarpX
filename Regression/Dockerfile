@@ -18,8 +18,7 @@ RUN apt-get update \
 
 # Create new user
 RUN useradd --create-home regtester
-RUN mkdir -p /home/regtester/AMReX_RegTesting/warpx/
-COPY ./ /home/regtester/AMReX_RegTesting/warpx/
+RUN mkdir -p /home/regtester/AMReX_RegTesting/
 RUN chown -R regtester /home/regtester/
 # Grant sudo access without password
 RUN echo 'regtester ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
@@ -42,18 +41,21 @@ RUN git clone https://github.com/AMReX-Codes/amrex.git \
     && cd amrex/ \
     && git checkout development \
     && cd ..
-
-# Clone their regression test utility
-RUN git clone https://github.com/RemiLehe/regression_testing.git
-
 # Clone picsar
 RUN git clone https://bitbucket.org/berkeleylab/picsar.git
+# Clone warpx
+RUN git clone https://github.com/ECP-WarpX/WarpX.git
+
+# Clone the AMReX regression test utility
+RUN git clone https://github.com/RemiLehe/regression_testing.git
 
 # Prepare regression tests
 RUN mkdir -p rt-WarpX/WarpX-benchmarks \
-    && cd warpx/Regression \
-    && python prepare_file_shippable.py \
-    && cp shippable-tests.ini ../../rt-WarpX
+    && cd WarpX/Regression \
+    && python prepare_file_travis.py \
+    && cp travis-tests.ini ../../rt-WarpX
 
 ENV FFTW_HOME /usr/
 ENV OMP_NUM_THREADS 2
+
+WORKDIR /home/regtester/AMReX_RegTesting/regression_testing
