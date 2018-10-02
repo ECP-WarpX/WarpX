@@ -2,9 +2,9 @@ language: c++
 sudo: true
 
 env:
-    matrix:
-        - WARPX_DIM=3
-	- WARPX_DIM=2
+  matrix:
+    - WARPX_DIM=3
+    - WARPX_DIM=2
 
 before_install:
     - sudo apt-get update
