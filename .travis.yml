@@ -3,17 +3,7 @@ sudo: true
 
 before_install:
     - sudo apt-get update
-    - sudo apt-get install -y \
-            wget \
-            make \
-            git \
-            gcc \
-            gfortran \
-            g++ \
-            openmpi-bin \
-            libopenmpi-dev \
-            libfftw3-dev \
-            libfftw3-mpi-dev
+    - sudo apt-get install -y gcc gfortran g++ openmpi-bin libopenmpi-dev libfftw3-dev libfftw3-mpi-dev
     # Install miniconda and python dependencies
     - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh
     - bash Miniconda-latest-Linux-x86_64.sh -b
