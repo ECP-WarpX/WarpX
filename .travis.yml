@@ -12,15 +12,14 @@ before_install:
 
 install:
     # Move the cloned code to the folder `regression_testing`
-    - mkdir -p regression_testing/warpx
-    - mv ./* regression_testing/warpx
-    - cd regression_testing
+    - pwd
+    - mv ../ ;  mv WarpX ~/ ; cd ~/
     # Clone PICSAR and AMReX
     - git clone https://github.com/AMReX-Codes/amrex.git
     - cd amrex ; git checkout development ; cd ..
     - git clone https://bitbucket.org/berkeleylab/picsar.git
     # Clone the AMReX regression test utility
-    - git clone https://github.com/RemiLehe/regression_testing.g
+    - git clone https://github.com/RemiLehe/regression_testing.git
     # Prepare regression tests
     - mkdir -p rt-WarpX/WarpX-benchmarks \
         && cd WarpX/Regression \
