@@ -7,7 +7,7 @@ before_install:
     # Install miniconda and python dependencies
     - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh
     - bash Miniconda-latest-Linux-x86_64.sh -b
-    - export PATH=/home/regtester/miniconda2/bin:$PATH
+    - export PATH=/home/travis/miniconda2/bin:$PATH
     - pip install --upgrade pip && pip install numpy scipy matplotlib yt
 
 install:
