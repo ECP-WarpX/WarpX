@@ -12,8 +12,7 @@ before_install:
 
 install:
     # Move the cloned code to the folder `regression_testing`
-    - mv ../ ;  mv WarpX /home/travis/WarpX ; cd /home/travis/
-    - ls
+    - cd ../ ; mv WarpX /home/travis/WarpX ; cd /home/travis/
     # Clone PICSAR and AMReX
     - git clone https://github.com/AMReX-Codes/amrex.git
     - cd amrex ; git checkout development ; cd ..
@@ -22,10 +21,9 @@ install:
     - git clone https://github.com/RemiLehe/regression_testing.git
     # Prepare regression tests
     - mkdir -p rt-WarpX/WarpX-benchmarks
-    - cd WarpX
     - ls
-    - cd Regression
-    - python prepare_file_travis.py \
+    - cd WarpX/Regression
+    - python prepare_file_travis.py
     - cp travis-tests.ini ../../rt-WarpX
     - export FFTW_HOME=/usr/
     - export OMP_NUM_THREADS=2
