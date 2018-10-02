@@ -12,7 +12,7 @@ before_install:
 
 install:
     # Move the cloned code to the folder `regression_testing`
-    - mv ../ ;  mv WarpX ~/WarpX ; cd ~/
+    - mv ../ ;  mv WarpX /home/travis/WarpX ; cd /home/travis/
     - ls
     # Clone PICSAR and AMReX
     - git clone https://github.com/AMReX-Codes/amrex.git
