@@ -6,6 +6,9 @@ import re
 with open('WarpX-tests.ini') as f:
     text = f.read()
 
+# Replace default folder name
+text = re.sub('/home/regtester/AMReX_RegTesting/', '/home/travis/', text)
+
 # Add doComparison = 0 for each test
 text = re.sub( '\[(?P<name>.*)\]\nbuildDir = ',
                '[\g<name>]\ndoComparison = 0\nbuildDir = ', text )
