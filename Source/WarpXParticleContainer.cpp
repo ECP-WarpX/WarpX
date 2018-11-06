@@ -189,13 +189,13 @@ WarpXParticleContainer::AddNParticles (int lev,
 
 
 void
-WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
-                                          RealVector& wp, RealVector& uxp,
-                                          RealVector& uyp, RealVector& uzp,
-                                          MultiFab& jx, MultiFab& jy, MultiFab& jz,
-                                          MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
-                                          const long np_current, const long np,
-                                          int thread_num, int lev, Real dt )
+WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
+					RealVector& wp, RealVector& uxp,
+					RealVector& uyp, RealVector& uzp,
+					MultiFab& jx, MultiFab& jy, MultiFab& jz,
+					MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
+					const long np_current, const long np,
+					int thread_num, int lev, Real dt )
 {
   Real *jx_ptr, *jy_ptr, *jz_ptr;
   const int  *jxntot, *jyntot, *jzntot;
@@ -217,7 +217,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
   // Deposit charge for particles that are not in the current buffers
   if (np_current > 0)
-    {
+  {
       tbx.grow(ngJ);
       tby.grow(ngJ);
       tbz.grow(ngJ);
@@ -298,7 +298,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
   // Deposit charge for particles that are in the current buffers
   if (np_current < np)
-    {
+  {
       const IntVect& ref_ratio = WarpX::RefRatio(lev-1);
       const Box& ctilebox = amrex::coarsen(pti.tilebox(),ref_ratio);
       const std::array<Real,3>& cxyzmin_tile = WarpX::LowerCorner(ctilebox, lev-1);

@@ -1399,6 +1399,15 @@ PhysicalParticleContainer::Evolve (int lev,
 		       m_giv[thread_num], dt);
                 BL_PROFILE_VAR_STOP(blp_pxr_pp);
 
+		//
+		// Sort particles by tile for current deposition
+		//
+		long ngJ = jx.nGrow();
+		IntVect bin_size(AMREX_D_DECL(2, 2, 2));
+		Cuda::DeviceVector<int> bin_start;
+		Cuda::DeviceVector<int> bin_stop;		
+		SortParticlesByBin(pti, ngJ, bin_start, bin_stop, bin_size); 
+		
                 //
                 // Current Deposition
                 //
