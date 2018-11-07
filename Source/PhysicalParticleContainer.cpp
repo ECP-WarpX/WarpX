@@ -1405,15 +1405,24 @@ PhysicalParticleContainer::Evolve (int lev,
 		long ngJ = jx.nGrow();
 		IntVect bin_size(AMREX_D_DECL(2, 2, 2));
 		Cuda::DeviceVector<int> bin_start;
-		Cuda::DeviceVector<int> bin_stop;		
-		SortParticlesByBin(pti, ngJ, bin_start, bin_stop, bin_size); 
+		Cuda::DeviceVector<int> bin_stop;
+
+		std::cout << "before call to sort" << std::endl;
+
+		SortParticlesByBin(pti, ngJ, bin_start, bin_stop, bin_size);
+
+		std::cout << "after call to sort" << std::endl;
 		
                 //
                 // Current Deposition
                 //
+
+		std::cout << "before depositcurrent" << std::endl;
+
                 DepositCurrent(pti, wp, uxp, uyp, uzp, jx, jy, jz,
                                cjx, cjy, cjz, np_current, np, thread_num, lev, dt);
   
+		std::cout << "after depositcurrent" << std::endl;
                 //
                 // copy particle data back
                 //
