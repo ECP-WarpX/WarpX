@@ -431,25 +431,17 @@ PhysicalParticleContainer::AddPlasmaCPU (int lev, RealBox part_realbox)
                     attribs[PIdx::uzold] = u[2];
 #endif
 
-		    ParticleType p;
-		    p.id()  = ParticleType::NextID();
-		    p.cpu() = ParallelDescriptor::MyProc();
-#if (AMREX_SPACEDIM == 3)
-		    p.pos(0) = x;
-		    p.pos(1) = y;
-		    p.pos(2) = z;
-#elif (AMREX_SPACEDIM == 2)
-		    p.pos(0) = x;
-		    p.pos(1) = z;
-#endif
-
 		    AddOneParticle(lev, grid_id, tile_id, x, y, z, attribs);
                 }
             }
 
             if (cost) {
 	        wt = (amrex::second() - wt) / tile_box.d_numPts();
-		(*cost)[mfi].plus(wt, tile_box);
+                FArrayBox* costfab = cost->fabPtr(mfi);
+                AMREX_LAUNCH_HOST_DEVICE_LAMBDA ( tile_box, work_box,
+                {
+                    costfab->plus(wt, work_box);
+                });
             }
         }
     }
@@ -670,21 +662,27 @@ PhysicalParticleContainer::AddPlasmaGPU (int lev, RealBox part_realbox)
             }
 
 	    auto& particle_tile = GetParticles(lev)[std::make_pair(grid_id,tile_id)];
-	    particle_tile.resize(host_particles.size());
+            auto old_size = particle_tile.GetArrayOfStructs().size();
+            auto new_size = old_size + host_particles.size();
+	    particle_tile.resize(new_size);
 
 	    thrust::copy(host_particles.begin(),
 			 host_particles.end(),
-			 particle_tile.GetArrayOfStructs().begin());
+			 particle_tile.GetArrayOfStructs().begin() + old_size);
 
 	    for (int kk = 0; kk < PIdx::nattribs; ++kk) {
 	      thrust::copy(host_attribs[kk].begin(),
 			   host_attribs[kk].end(),
-			   particle_tile.GetStructOfArrays().GetRealData(kk).begin());
+			   particle_tile.GetStructOfArrays().GetRealData(kk).begin() + old_size);
 	    }
 	    			 
             if (cost) {
 	        wt = (amrex::second() - wt) / tile_box.d_numPts();
-		(*cost)[mfi].plus(wt, tile_box);
+                FArrayBox* costfab = cost->fabPtr(mfi);
+                AMREX_LAUNCH_HOST_DEVICE_LAMBDA ( tile_box, work_box,
+                {
+                    costfab->plus(wt, work_box);
+                });
             }
         }		
     }
@@ -967,7 +965,6 @@ PhysicalParticleContainer::FieldGather (int lev,
 	    // Field Gather
 	    //
 	    const int ll4symtry          = false;
-	    const int l_lower_order_in_v = warpx_l_lower_order_in_v();
             long lvect_fieldgathe = 64;
 	    warpx_geteb_energy_conserving(
 	       &np,
@@ -986,13 +983,17 @@ PhysicalParticleContainer::FieldGather (int lev,
                BL_TO_FORTRAN_ANYD(bxfab),
 	       BL_TO_FORTRAN_ANYD(byfab),
 	       BL_TO_FORTRAN_ANYD(bzfab),
-	       &ll4symtry, &l_lower_order_in_v,
+	       &ll4symtry, &WarpX::l_lower_order_in_v,
 	       &lvect_fieldgathe, &WarpX::field_gathering_algo);
 
             if (cost) {
                 const Box& tbx = pti.tilebox();
                 wt = (amrex::second() - wt) / tbx.d_numPts();
-                (*cost)[pti].plus(wt, tbx);
+                FArrayBox* costfab = cost->fabPtr(pti);
+                AMREX_LAUNCH_HOST_DEVICE_LAMBDA ( tbx, work_box,
+                {
+                    costfab->plus(wt, work_box);
+                });
             }
         }
     }
@@ -1081,7 +1082,7 @@ PhysicalParticleContainer::Evolve (int lev,
             FArrayBox const* byfab = &(By[pti]);
             FArrayBox const* bzfab = &(Bz[pti]);
 
-            if (warpx_use_fdtd_nci_corr())
+            if (WarpX::use_fdtd_nci_corr)
             {
 #if (AMREX_SPACEDIM == 2)
                 const Box& tbox = amrex::grow(pti.tilebox(),{static_cast<int>(WarpX::nox),
@@ -1261,7 +1262,6 @@ PhysicalParticleContainer::Evolve (int lev,
                 // Field Gather of Aux Data (i.e., the full solution)
                 //
                 const int ll4symtry          = false;
-                const int l_lower_order_in_v = warpx_l_lower_order_in_v();
                 long lvect_fieldgathe = 64;
 
                 const std::array<Real,3>& xyzmin_grid = WarpX::LowerCorner(box, lev);
@@ -1288,7 +1288,7 @@ PhysicalParticleContainer::Evolve (int lev,
                     BL_TO_FORTRAN_ANYD(*bxfab),
                     BL_TO_FORTRAN_ANYD(*byfab),
                     BL_TO_FORTRAN_ANYD(*bzfab),
-                    &ll4symtry, &l_lower_order_in_v,
+                    &ll4symtry, &WarpX::l_lower_order_in_v,
                     &lvect_fieldgathe, &WarpX::field_gathering_algo);
 
                 if (np_gather < np)
@@ -1305,7 +1305,7 @@ PhysicalParticleContainer::Evolve (int lev,
                     const FArrayBox* cbyfab = &(*cBy)[pti];
                     const FArrayBox* cbzfab = &(*cBz)[pti];
 
-                    if (warpx_use_fdtd_nci_corr())
+                    if (WarpX::use_fdtd_nci_corr)
                     {
 #if (AMREX_SPACEDIM == 2)
                         const Box& tbox = amrex::grow(cbox,{static_cast<int>(WarpX::nox),
@@ -1385,7 +1385,7 @@ PhysicalParticleContainer::Evolve (int lev,
                         BL_TO_FORTRAN_ANYD(*cbxfab),
                         BL_TO_FORTRAN_ANYD(*cbyfab),
                         BL_TO_FORTRAN_ANYD(*cbzfab),
-                        &ll4symtry, &l_lower_order_in_v,
+                        &ll4symtry, &WarpX::l_lower_order_in_v,
                         &lvect_fieldgathe, &WarpX::field_gathering_algo);
                 }
 
@@ -1436,7 +1436,11 @@ PhysicalParticleContainer::Evolve (int lev,
             if (cost) {
                 const Box& tbx = pti.tilebox();
                 wt = (amrex::second() - wt) / tbx.d_numPts();
-                (*cost)[pti].plus(wt, tbx);
+                FArrayBox* costfab = cost->fabPtr(pti);
+                AMREX_LAUNCH_HOST_DEVICE_LAMBDA ( tbx, work_box,
+                {
+                    costfab->plus(wt, work_box);
+                });
             }
         }
     }
@@ -1556,7 +1560,6 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const int* ixyzmin_grid = box.loVect();
 
             const int ll4symtry          = false;
-            const int l_lower_order_in_v = true;
             long lvect_fieldgathe = 64;
             warpx_geteb_energy_conserving(
                 &np,
@@ -1575,7 +1578,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 BL_TO_FORTRAN_ANYD(bxfab),
                 BL_TO_FORTRAN_ANYD(byfab),
                 BL_TO_FORTRAN_ANYD(bzfab),
-                &ll4symtry, &l_lower_order_in_v,
+                &ll4symtry, &WarpX::l_lower_order_in_v,
                 &lvect_fieldgathe, &WarpX::field_gathering_algo);
 
             warpx_particle_pusher_momenta(&np,
