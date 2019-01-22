@@ -1403,26 +1403,57 @@ PhysicalParticleContainer::Evolve (int lev,
 		// Sort particles by tile for current deposition
 		//
 		long ngJ = jx.nGrow();
-		IntVect bin_size(AMREX_D_DECL(2, 2, 2));
+		// std::cout << "ngJ " << ngJ << std::endl;
+		// IntVect bin_size(AMREX_D_DECL(2, 2, 2));
+		// int bin_size = 8;
+		IntVect bin_size_vect(AMREX_D_DECL(WarpX::bin_size, WarpX::bin_size, WarpX::bin_size));
+		//		const long gpu_tiling = 1;
+
 		Cuda::DeviceVector<int> bin_start;
 		Cuda::DeviceVector<int> bin_stop;
+		Cuda::DeviceVector<int> bin_np;
 
-		std::cout << "before call to sort" << std::endl;
+		// thrust::device_ptr<int>(bin_start);
 
-		SortParticlesByBin(pti, ngJ, bin_start, bin_stop, bin_size);
+		//std::cout << "before call to sort" << std::endl;
 
-		std::cout << "after call to sort" << std::endl;
+		//std::cout<< "pti.numParticles(); " << pti.numParticles() << std::endl;
+
+		SortParticlesByBin(pti, ngJ, bin_start, bin_stop, bin_size_vect);
+		
+		//std::cout << "bin_start:" << std::endl;
+		//thrust::copy(bin_start.begin(), bin_start.end(), std::ostream_iterator<float>(std::cout, " "));
+		//std::cout << "bin_stop:" << std::endl;
+		//thrust::copy(bin_stop.begin(), bin_stop.end(), std::ostream_iterator<float>(std::cout, " "));
+		bin_np.resize(bin_start.size());
+		//thrust::transform(bin_stop.begin(), bin_stop.end(),
+		//bin_start.begin(),
+				    //		  bin_np.begin(), thrust::minus<int>());
+		//std::cout << "bin_np:" << std::endl;
+		//thrust::copy(bin_np.begin(), bin_np.end(), std::ostream_iterator<float>(std::cout, " "));
+		//int sum_bin_np = thrust::reduce(bin_np.begin(), bin_np.end(), (int) 0, thrust::plus<int>());
+		//std::cout << "####################################################### sum_bin_np + "<<sum_bin_np<<std::endl;
+		int nbins = bin_start.size();
+		
+		//std::cout << "bin_stop:" << std::cout;
+		//std::cout << bin_stop << std::cout;
+
+		//std::cout << "after call to sort" << std::endl;
 		
                 //
                 // Current Deposition
                 //
 
-		std::cout << "before depositcurrent" << std::endl;
+		//std::cout << "before depositcurrent" << std::endl;
+
+                // DepositCurrent(pti, wp, uxp, uyp, uzp, jx, jy, jz,
+                //                cjx, cjy, cjz, np_current, np, thread_num, lev, dt);
 
                 DepositCurrent(pti, wp, uxp, uyp, uzp, jx, jy, jz,
-                               cjx, cjy, cjz, np_current, np, thread_num, lev, dt);
+			       cjx, cjy, cjz, np_current, np, thread_num, lev, dt,
+			       WarpX::gpu_tiling, WarpX::bin_size, nbins, bin_start, bin_stop);
   
-		std::cout << "after depositcurrent" << std::endl;
+		//std::cout << "after depositcurrent" << std::endl;
                 //
                 // copy particle data back
                 //

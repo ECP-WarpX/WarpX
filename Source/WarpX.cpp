@@ -38,6 +38,8 @@ long WarpX::charge_deposition_algo = 0;
 long WarpX::field_gathering_algo = 1;
 long WarpX::particle_pusher_algo = 0;
 int WarpX::maxwell_fdtd_solver_id = 0;
+int WarpX::gpu_tiling = 0;
+int WarpX::bin_size = 1;
 
 long WarpX::nox = 1;
 long WarpX::noy = 1;
@@ -425,6 +427,8 @@ WarpX::ReadParameters ()
     {
 	ParmParse pp("algo");
 	pp.query("current_deposition", current_deposition_algo);
+	pp.query("gpu_tiling", gpu_tiling);
+	pp.query("bin_size", bin_size);
 	pp.query("charge_deposition", charge_deposition_algo);
 	pp.query("field_gathering", field_gathering_algo);
 	pp.query("particle_pusher", particle_pusher_algo);

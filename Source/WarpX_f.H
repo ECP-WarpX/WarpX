@@ -118,8 +118,30 @@ extern "C"
 			const amrex::Real* dt,
 			const amrex::Real* dx, const amrex::Real* dy, const amrex::Real* dz,
 			const long* nox, const long* noy,const long* noz,
-			const long* lvect, const long* current_depo_algo);
-
+			const long* lvect, const long* current_depo_algo,
+			const int* gpu_tiling,
+			const int* bin_size,
+			const int* nbins,
+			const int* bin_start,
+			const int* bin_stop);
+  /*
+	void warpx_current_deposition_GPU(
+			amrex::Real* jx, const long* jx_ng, const int* jx_ntot,
+			amrex::Real* jy, const long* jy_ng, const int* jy_ntot,
+			amrex::Real* jz, const long* jz_ng, const int* jz_ntot,
+			const long* np,
+			const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,
+			const amrex::Real* uxp, const amrex::Real* uyp,const amrex::Real* uzp,
+			const amrex::Real* gip, const amrex::Real* w, const amrex::Real* q,
+			const amrex::Real* xmin, const amrex::Real* ymin, const amrex::Real* zmin,
+			const amrex::Real* dt,
+			const amrex::Real* dx, const amrex::Real* dy, const amrex::Real* dz,
+			const long* nox, const long* noy,const long* noz,
+			const long* lvect, const long* current_depo_algo,
+			const int* bin_size,
+			const int* bin_start,
+			const int* bin_stop);
+  */
 	// Field gathering
 
 	void warpx_geteb_energy_conserving(const long* np,

@@ -80,6 +80,8 @@ public:
     static long field_gathering_algo;
     static long particle_pusher_algo;
     static int maxwell_fdtd_solver_id;
+    static int gpu_tiling;
+    static int bin_size;
 
     // Interpolation order
     static long nox;

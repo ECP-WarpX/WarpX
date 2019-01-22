@@ -199,7 +199,10 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 					MultiFab& jx, MultiFab& jy, MultiFab& jz,
 					MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
 					const long np_current, const long np,
-					int thread_num, int lev, Real dt )
+					int thread_num, int lev, Real dt,
+					const int gpu_tiling, const int bin_size, const int nbins, 
+					const amrex::Cuda::DeviceVector<int>& bin_start, 
+					const amrex::Cuda::DeviceVector<int>& bin_stop )
 {
   Real *jx_ptr, *jy_ptr, *jz_ptr;
   const int  *jxntot, *jyntot, *jzntot;
@@ -208,6 +211,9 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
   const std::array<Real,3>& cdx = WarpX::CellSize(std::max(lev-1,0));
   const std::array<Real, 3>& xyzmin = xyzmin_tile;
   const long lvect = 8;
+
+  const int* p_bin_start = bin_start.dataPtr();
+  const int* p_bin_stop  = bin_stop.dataPtr();
 
   BL_PROFILE_VAR_NS("PICSAR::CurrentDeposition", blp_pxr_cd);
   BL_PROFILE_VAR_NS("PPC::Evolve::Accumulate", blp_accumulate);
@@ -218,6 +224,21 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 
   // WarpX assumes the same number of guard cells for Jx, Jy, Jz
   long ngJ = jx.nGrow();
+
+  // std::cout<<"in DepositCurrent"<<std::endl;
+  //thrust::copy(bin_start.begin(), bin_start.end(), std::ostream_iterator<float>(std::cout, " "));		
+  //std::cout<<"^in DepositCurrent"<<std::endl;
+
+  //  std::cout<<"m_xp[thread_num] = ";
+  //thrust::copy(m_xp[thread_num].begin(), m_xp[thread_num].end(), std::ostream_iterator<float>(std::cout, " "));
+  //std::cout<<"m_yp[thread_num] = ";
+  //thrust::copy(m_yp[thread_num].begin(), m_yp[thread_num].end(), std::ostream_iterator<float>(std::cout, " "));
+  //std::cout<<"m_zp[thread_num] = ";
+  //thrust::copy(m_zp[thread_num].begin(), m_zp[thread_num].end(), std::ostream_iterator<float>(std::cout, " "));
+
+  // std::cout<<"test ugly "<<p_bin_start[0]<<std::endl;
+  // std::cout<<"test ugly "<<p_bin_start[1]<<std::endl;
+  // std::cout<<"test ugly "<<p_bin_start[2]<<std::endl;
 
   // Deposit charge for particles that are not in the current buffers
   if (np_current > 0)
@@ -257,21 +278,48 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
       jzntot = local_jz[thread_num]->length();
 
       BL_PROFILE_VAR_START(blp_pxr_cd);
+      
+      /*
+	  warpx_current_deposition_GPU(
+				       jx_ptr, &ngJ, jxntot,
+				       jy_ptr, &ngJ, jyntot,
+				       jz_ptr, &ngJ, jzntot,
+				       &np_current,
+				       m_xp[thread_num].dataPtr(),
+				       m_yp[thread_num].dataPtr(),
+				       m_zp[thread_num].dataPtr(),
+				       uxp.dataPtr(), uyp.dataPtr(), uzp.dataPtr(),
+				       m_giv[thread_num].dataPtr(),
+				       wp.dataPtr(), &this->charge,
+				       &xyzmin[0], &xyzmin[1], &xyzmin[2],
+				       &dt, &dx[0], &dx[1], &dx[2],
+				       &WarpX::nox,&WarpX::noy,&WarpX::noz,
+				       &lvect,&WarpX::current_deposition_algo,
+				       bin_size,
+				       bin_start.dataPtr(),
+				       bin_stop.dataPtr());
+	  */
+
       warpx_current_deposition(
-                               jx_ptr, &ngJ, jxntot,
-                               jy_ptr, &ngJ, jyntot,
-                               jz_ptr, &ngJ, jzntot,
-                               &np_current,
-                               m_xp[thread_num].dataPtr(),
-                               m_yp[thread_num].dataPtr(),
-                               m_zp[thread_num].dataPtr(),
-                               uxp.dataPtr(), uyp.dataPtr(), uzp.dataPtr(),
-                               m_giv[thread_num].dataPtr(),
-                               wp.dataPtr(), &this->charge,
-                               &xyzmin[0], &xyzmin[1], &xyzmin[2],
-                               &dt, &dx[0], &dx[1], &dx[2],
-                               &WarpX::nox,&WarpX::noy,&WarpX::noz,
-                               &lvect,&WarpX::current_deposition_algo);
+			       jx_ptr, &ngJ, jxntot,
+			       jy_ptr, &ngJ, jyntot,
+			       jz_ptr, &ngJ, jzntot,
+			       &np_current,
+			       m_xp[thread_num].dataPtr(),
+			       m_yp[thread_num].dataPtr(),
+			       m_zp[thread_num].dataPtr(),
+			       uxp.dataPtr(), uyp.dataPtr(), uzp.dataPtr(),
+			       m_giv[thread_num].dataPtr(),
+			       wp.dataPtr(), &this->charge,
+			       &xyzmin[0], &xyzmin[1], &xyzmin[2],
+			       &dt, &dx[0], &dx[1], &dx[2],
+			       &WarpX::nox,&WarpX::noy,&WarpX::noz,
+			       &lvect,&WarpX::current_deposition_algo,
+			       &gpu_tiling,
+			       &bin_size,
+			       &nbins,
+			       p_bin_start,
+			       p_bin_stop );
       BL_PROFILE_VAR_STOP(blp_pxr_cd);
 
       BL_PROFILE_VAR_START(blp_accumulate);
@@ -300,12 +348,20 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
       BL_PROFILE_VAR_STOP(blp_accumulate);
     }
 
-  // Deposit charge for particles that are in the current buffers
+  // Deposit current for particles that are in the current buffers
   if (np_current < np)
   {
       const IntVect& ref_ratio = WarpX::RefRatio(lev-1);
       const Box& ctilebox = amrex::coarsen(pti.tilebox(),ref_ratio);
       const std::array<Real,3>& cxyzmin_tile = WarpX::LowerCorner(ctilebox, lev-1);
+
+      std::cout << "#############################" << std::endl;
+      std::cout << "#############################" << std::endl;
+      std::cout << "#############################" << std::endl;
+      std::cout << "depositing current in buffers" << std::endl;
+      std::cout << "#############################" << std::endl;
+      std::cout << "#############################" << std::endl;
+      std::cout << "#############################" << std::endl;
 
       tbx = amrex::convert(ctilebox, WarpX::jx_nodal_flag);
       tby = amrex::convert(ctilebox, WarpX::jy_nodal_flag);
@@ -345,6 +401,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 
       long ncrse = np - np_current;
       BL_PROFILE_VAR_START(blp_pxr_cd);
+      /*
       warpx_current_deposition(
                                jx_ptr, &ngJ, jxntot,
                                jy_ptr, &ngJ, jyntot,
@@ -362,6 +419,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                                &dt, &cdx[0], &cdx[1], &cdx[2],
                                &WarpX::nox,&WarpX::noy,&WarpX::noz,
                                &lvect,&WarpX::current_deposition_algo);
+      */
       BL_PROFILE_VAR_STOP(blp_pxr_cd);
 
       BL_PROFILE_VAR_START(blp_accumulate);

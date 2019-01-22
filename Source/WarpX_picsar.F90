@@ -249,7 +249,7 @@ subroutine warpx_charge_deposition(rho,np,xp,yp,zp,w,q,xmin,ymin,zmin,dx,dy,dz,n
   subroutine warpx_current_deposition( &
     jx,jx_ng,jx_ntot,jy,jy_ng,jy_ntot,jz,jz_ng,jz_ntot, &
     np,xp,yp,zp,uxp,uyp,uzp,gaminv,w,q,xmin,ymin,zmin,dt,dx,dy,dz,nox,noy,noz,&
-    lvect,current_depo_algo) &
+    lvect,current_depo_algo,gpu_tiling,bin_size,nbins,bin_start,bin_stop) &
     bind(C, name="warpx_current_deposition")
 
     integer, intent(in) :: jx_ntot(AMREX_SPACEDIM), jy_ntot(AMREX_SPACEDIM), jz_ntot(AMREX_SPACEDIM)
@@ -267,7 +267,10 @@ subroutine warpx_charge_deposition(rho,np,xp,yp,zp,w,q,xmin,ymin,zmin,dx,dy,dz,n
     real(amrex_real), intent(IN),  dimension(np)                     :: gaminv
     integer(c_long), intent(IN)                                   :: lvect
     integer(c_long), intent(IN)                                   :: current_depo_algo
-
+    
+    integer, intent(in) :: gpu_tiling, bin_size, nbins
+    integer, dimension(nbins), intent(in):: bin_start(0:nbins-1), bin_stop(0:nbins-1)
+    
     ! Compute the number of valid cells and guard cells
     integer(c_long) :: jx_nvalid(AMREX_SPACEDIM), jy_nvalid(AMREX_SPACEDIM), jz_nvalid(AMREX_SPACEDIM), &
                        jx_nguards(AMREX_SPACEDIM), jy_nguards(AMREX_SPACEDIM), jz_nguards(AMREX_SPACEDIM)
@@ -278,15 +281,33 @@ subroutine warpx_charge_deposition(rho,np,xp,yp,zp,w,q,xmin,ymin,zmin,dx,dy,dz,n
     jy_nguards = jy_ng
     jz_nguards = jz_ng
 
+!     write(*,*) "in warpx_current_deposition bin_start(2)", bin_start(2)
+!     write(*,*) "in warpx_current_deposition bin_start" 
+!     write(*,*) bin_start(1)
+!     write(*,*) "jusqu'ici, tout va bien"
+
 ! Dimension 3
 #if (AMREX_SPACEDIM==3)
-   CALL WRPX_PXR_CURRENT_DEPOSITION(        &
-        jx,jx_nguards,jx_nvalid,            &
-        jy,jy_nguards,jy_nvalid,            &
-        jz,jz_nguards,jz_nvalid,            &
-        np,xp,yp,zp,uxp,uyp,uzp,gaminv,w,q, &
-        xmin,ymin,zmin,dt,dx,dy,dz,         &
-        nox,noy,noz,current_depo_algo)
+    if (gpu_tiling == 1) then
+       write(*,*) "gpu_tiling == 1"
+       write(*,*) "bin_size", bin_size
+       write(*,*) "nbins", nbins
+       CALL depose_jxjyjz_scalar_1_1_1_gpu(      &
+            jx, jx_nguards, jx_nvalid,           &
+            jy, jy_nguards, jy_nvalid,           &
+            jz, jz_nguards, jz_nvalid,           &
+            np,xp,yp,zp,uxp,uyp,uzp,gaminv,w,q, &
+            xmin, ymin, zmin, dt, dx, dy, dz,   &
+            bin_size, nbins, bin_start, bin_stop)
+    else
+       CALL WRPX_PXR_CURRENT_DEPOSITION(        &
+            jx,jx_nguards,jx_nvalid,            &
+            jy,jy_nguards,jy_nvalid,            &
+            jz,jz_nguards,jz_nvalid,            &
+            np,xp,yp,zp,uxp,uyp,uzp,gaminv,w,q, &
+            xmin,ymin,zmin,dt,dx,dy,dz,         &
+            nox,noy,noz,current_depo_algo)
+    endif
 ! Dimension 2
 #elif (AMREX_SPACEDIM==2)
         CALL WRPX_PXR_CURRENT_DEPOSITION(   &
@@ -300,6 +321,13 @@ subroutine warpx_charge_deposition(rho,np,xp,yp,zp,w,q,xmin,ymin,zmin,dx,dy,dz,n
 
   end subroutine warpx_current_deposition
 
+!   CALL depose_jxjyjz_scalar_1_1_1_gpu(      &
+!         jx, jx_nguards, jx_nvalid,           &
+!         jy, jy_nguards, jy_nvalid,           &
+!         jz, jz_nguards, jz_nvalid,           &
+!         np,xp,yp,zp,uxp,uyp,uzp,gaminv,w,q, &
+!         xmin, ymin, zmin, dt, dx, dy, dz,   &
+!         bin_size, bin_start, bin_stop)
   ! _________________________________________________________________
   !>
   !> @brief

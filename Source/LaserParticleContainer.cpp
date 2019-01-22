@@ -417,8 +417,8 @@ LaserParticleContainer::Evolve (int lev,
 	    //
 	    // Current Deposition
 	    //
-            DepositCurrent(pti, wp, uxp, uyp, uzp, jx, jy, jz,
-                           cjx, cjy, cjz, np_current, np, thread_num, lev, dt);
+            //DepositCurrent(pti, wp, uxp, uyp, uzp, jx, jy, jz,
+	    //              cjx, cjy, cjz, np_current, np, thread_num, lev, dt);
 
 	    //
 	    // copy particle data back

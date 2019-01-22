@@ -166,7 +166,12 @@ public:
                               const long np,
                               int thread_num,
                               int lev,
-                              amrex::Real dt );
+                              amrex::Real dt,
+			      const int gpu_tiling,
+			      const int bin_size,
+			      const int nbins,
+			      const amrex::Cuda::DeviceVector<int>& bin_start,
+			      const amrex::Cuda::DeviceVector<int>& bin_stop);
   
     /// 
     /// This returns the total charge for all the particles in this ParticleContainer.
