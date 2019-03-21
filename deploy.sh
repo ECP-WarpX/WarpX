@@ -1,12 +1,17 @@
 #!/bin/bash
 set -e # Exit with nonzero exit code if anything fails
 
+# This script updates the documentation and pushes to the corresponding
+# Github repository
+# See https://gist.github.com/domenic/ec8b0fc8ab45f39403dd
+
 SOURCE_BRANCH="dev"
 TARGET_REPO="ecp-warpx.github.io"
 SHA=`git rev-parse --verify HEAD`
 
 # Pull requests and commits to other branches shouldn't try to deploy
-#if [ "$TRAVIS_PULL_REQUEST" != "false" -o "$TRAVIS_BRANCH" != "$SOURCE_BRANCH" ]; then
+# Also: since the code is built for 2D and 3D, only the 3D build should push
+#if [ "$TRAVIS_PULL_REQUEST" != "false" -o "$TRAVIS_BRANCH" != "$SOURCE_BRANCH" -o "$WARPX_TEST_DIM" != "3" ]; then
 #    echo "Skipping deploy; just doing a build."
 #    exit 0
 #fi
