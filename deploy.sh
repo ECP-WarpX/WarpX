@@ -6,7 +6,6 @@ set -e # Exit with nonzero exit code if anything fails
 # See https://gist.github.com/domenic/ec8b0fc8ab45f39403dd
 
 SOURCE_BRANCH="dev"
-TARGET_REPO="ecp-warpx.github.io"
 SHA=`git rev-parse --verify HEAD`
 
 # Pull requests and commits to other branches shouldn't try to deploy
@@ -22,9 +21,9 @@ cd Docs
 make html
 
 # Clone the documentation repository
-git clone https://github.com/ECP-WarpX/$(TARGET_REPO).git
+git clone https://github.com/ECP-WarpX/ecp-warpx.github.io.git
 # Remove the previous `dev` documentation
-cd $(TARGET_REPO)
+cd ecp-warpx.github.io
 git rm -r ./doc_versions/dev/*
 # Copy and add the new documentation
 cp -r ../Docs/build/html/* ./doc_versions/dev/
