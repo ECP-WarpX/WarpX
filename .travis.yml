@@ -23,9 +23,5 @@ script:
     # Run the script that prepares the test environment and runs the tests
 #    - ./run_test.sh
 
-after_success:
     # Automatically upload the documentation for the dev branch
-#    if: branch = dev
-    - pip install sphinx sphinx_rtd
-    - sudo apt-get install pandoc
     - ./deploy.sh
