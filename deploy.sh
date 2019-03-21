@@ -13,7 +13,7 @@ SHA=`git rev-parse --verify HEAD`
 
 # Install sphinx and pandoc, and build the documentation
 pip install sphinx sphinx_rtd_theme
-conda install -c conda-forge pandoc
+conda install --yes -c conda-forge pandoc
 cd Docs
 make html
 
