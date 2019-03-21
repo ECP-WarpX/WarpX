@@ -36,7 +36,7 @@ git config user.name "Travis CI"
 git config user.email "rlehe@normalesup.org"
 git commit -m "Deploy to GitHub Pages: ${SHA}" || true
 # Get ssh credential to push to the documentation, using encrypted key
-openssl aes-256-cbc -K $encrypted_12c8071d2874_key -iv $encrypted_12c8071d2874_iv -in deploy_key.enc -out deploy_key -d
+openssl aes-256-cbc -K $encrypted_12c8071d2874_key -iv $encrypted_12c8071d2874_iv -in ../deploy_key.enc -out ../deploy_key -d
 chmod 600 ../deploy_key
 eval `ssh-agent -s`
 ssh-add ../deploy_key
