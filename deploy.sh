@@ -27,6 +27,7 @@ git clone https://github.com/ECP-WarpX/ecp-warpx.github.io.git
 cd ecp-warpx.github.io
 git rm -r ./doc_versions/dev/*
 # Copy and add the new documentation
+mkdir ./doc_versions/dev/
 cp -r ../Docs/build/html/* ./doc_versions/dev/
 git add ./*
 
