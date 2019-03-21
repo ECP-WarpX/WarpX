@@ -21,8 +21,14 @@ cd Docs
 make html
 cd ../
 
+# Get ssh credential to push to the documentation, using encrypted key
+openssl aes-256-cbc -K $encrypted_12c8071d2874_key -iv $encrypted_12c8071d2874_iv -in deploy_key.enc -out deploy_key -d
+chmod 600 deploy_key
+eval `ssh-agent -s`
+ssh-add deploy_key
+
 # Clone the documentation repository
-git clone https://github.com/ECP-WarpX/ecp-warpx.github.io.git
+git clone git@github.com:ECP-WarpX/ecp-warpx.github.io.git
 # Remove the previous `dev` documentation
 cd ecp-warpx.github.io
 git rm -r ./doc_versions/dev/*
@@ -35,11 +41,6 @@ git add ./*
 git config user.name "Travis CI"
 git config user.email "rlehe@normalesup.org"
 git commit -m "Deploy to GitHub Pages: ${SHA}" || true
-# Get ssh credential to push to the documentation, using encrypted key
-openssl aes-256-cbc -K $encrypted_12c8071d2874_key -iv $encrypted_12c8071d2874_iv -in ../deploy_key.enc -out ../deploy_key -d
-chmod 600 ../deploy_key
-eval `ssh-agent -s`
-ssh-add ../deploy_key
 # Push to the repo
 git push
 
