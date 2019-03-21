@@ -547,7 +547,10 @@ WarpX::WritePlotFile () const
                     VisMF::Write(*current_fp[lev][1], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jy_fp"));
                     VisMF::Write(*current_fp[lev][2], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jz_fp"));
                     if (plot_rho) {
-                        VisMF::Write(*rho_fp[lev], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "rho_fp"));
+                        // Use the component 1 of `rho_fp`, i.e. rho_new
+            			// for time synchronization
+                        MultiFab rho_new(*rho_fp[lev], amrex::make_alias, 1, 1);
+                        VisMF::Write(rho_new, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "rho_fp"));
                     }
                 } else {
                     const DistributionMapping& dm = DistributionMap(lev);
@@ -623,7 +626,10 @@ WarpX::WritePlotFile () const
                         VisMF::Write(*current_cp[lev][1], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jy_cp"));
                         VisMF::Write(*current_cp[lev][2], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jz_cp"));
                         if (plot_rho) {
-                            VisMF::Write(*rho_cp[lev], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "rho_cp"));
+                            // Use the component 1 of `rho_cp`, i.e. rho_new
+                			// for time synchronization
+                            MultiFab rho_new(*rho_cp[lev], amrex::make_alias, 1, 1);
+                            VisMF::Write(rho_new, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "rho_cp"));
                         }
                     } else {
                         const DistributionMapping& dm = DistributionMap(lev);
