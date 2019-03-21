@@ -19,6 +19,7 @@ SHA=`git rev-parse --verify HEAD`
 pip install sphinx sphinx_rtd_theme
 cd Docs
 make html
+cd ../
 
 # Clone the documentation repository
 git clone https://github.com/ECP-WarpX/ecp-warpx.github.io.git
