@@ -40,5 +40,5 @@ chmod 600 ../deploy_key
 eval `ssh-agent -s`
 ssh-add ../deploy_key
 # Push to the repo
-git push $TARGET_REPO
+git push
 
