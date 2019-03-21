@@ -21,23 +21,24 @@ pip install sphinx sphinx_rtd_theme
 cd Docs
 make html
 
-# Get ssh credential to push to the documentation, using encrypted key
-openssl aes-256-cbc -K $encrypted_12c8071d2874_key -iv $encrypted_12c8071d2874_iv -in deploy_key.enc -out deploy_key -d
-chmod 600 deploy_key
-eval `ssh-agent -s`
-ssh-add deploy_key
-
 # Clone the documentation repository
 git clone https://github.com/ECP-WarpX/$(TARGET_REPO).git
 # Remove the previous `dev` documentation
-cd $(TARGET_REPO)/doc_versions/dev
-git rm -r ./*
+cd $(TARGET_REPO)
+git rm -r ./doc_versions/dev/*
 # Copy and add the new documentation
-cp -r ../../../Docs/build/html/* ./
+cp -r ../Docs/build/html/* ./doc_versions/dev/
 git add ./*
+
 # Configure git user and commit changes
 git config user.name "Travis CI"
 git config user.email "rlehe@normalesup.org"
 git commit -m "Deploy to GitHub Pages: ${SHA}" || true
+# Get ssh credential to push to the documentation, using encrypted key
+openssl aes-256-cbc -K $encrypted_12c8071d2874_key -iv $encrypted_12c8071d2874_iv -in ../deploy_key.enc -out ../deploy_key -d
+chmod 600 ../deploy_key
+eval `ssh-agent -s`
+ssh-add ../deploy_key
 # Push to the repo
 git push $TARGET_REPO
+
