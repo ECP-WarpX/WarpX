@@ -9,7 +9,6 @@ This explains how to generate the documentation for Warpx, and contribute to it.
 Install the Python requirements for compiling the documentation:
 ```
 pip install sphinx sphinx_rtd_theme
-conda install -c conda-forge pandoc
 ```
 
 ### Compiling the documentation
