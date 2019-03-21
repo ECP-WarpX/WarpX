@@ -17,6 +17,12 @@ conda install --yes -c conda-forge pandoc
 cd Docs
 make html
 
+# Get ssh credential to push to the documentation, using encrypted key
+openssl aes-256-cbc -K $encrypted_12c8071d2874_key -iv $encrypted_12c8071d2874_iv -in deploy_key.enc -out deploy_key -d
+chmod 600 deploy_key
+eval `ssh-agent -s`
+ssh-add deploy_key
+
 # Clone the documentation repository
 git clone https://github.com/ECP-WarpX/$(TARGET_REPO).git
 # Remove the previous `dev` documentation
@@ -27,5 +33,7 @@ cp -r ../../../Docs/build/html/* ./
 git add ./*
 # Configure git user and commit changes
 git config user.name "Travis CI"
-git config user.email "$COMMIT_AUTHOR_EMAIL"
+git config user.email "rlehe@normalesup.org"
 git commit -m "Deploy to GitHub Pages: ${SHA}" || true
+# Push to the repo
+git push $TARGET_REPO
