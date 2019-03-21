@@ -577,7 +577,9 @@ WarpX::WritePlotFile () const
                     VisMF::Write(jz, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jz_fp"));
                     if (plot_rho) {
                         MultiFab rho(rho_fp[lev]->boxArray(), dm, 1, 0);
-                        MultiFab::Copy(rho, *rho_fp[lev], 0, 0, 1, 0);
+			// Use the component 1 of `rho_fp`, i.e. rho_new
+			// for time synchronization
+                        MultiFab::Copy(rho, *rho_fp[lev], 1, 0, 1, 0);
                         VisMF::Write(rho, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "rho_fp"));
                     }
                 }
