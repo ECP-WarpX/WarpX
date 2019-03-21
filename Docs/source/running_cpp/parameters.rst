@@ -209,7 +209,7 @@ Particle initialization
     fields when running in the boosted frame. See examples.
 
 * ``<species_name>.do_splitting`` (`bool`) optional (default `0`)
-    Split particles of the species when crossing the boundary from a lower 
+    Split particles of the species when crossing the boundary from a lower
     resolution domain to a higher resolution domain.
 
 * ``<species_name>.split_type`` (`int`) optional (default `0`)
@@ -404,7 +404,7 @@ Numerics and algorithms
 
     .. warning::
 
-        The vectorized version does not run on GPU. Use 
+        The vectorized version does not run on GPU. Use
 		``algo.field_gather=1`` when running on GPU.
 
 * ``algo.particle_pusher`` (`integer`)
@@ -465,6 +465,9 @@ Diagnostics and output
     Only used when ``warpx.do_boosted_frame_diagnostic`` is ``1``.
     The time interval inbetween the lab-frame snapshots (where this
     time interval is expressed in the laboratory frame).
+
+* ``warpx.plot_rho`` (`0` or `1`) optional (default `0`)
+    Whether to write the ``rho`` field (i.e. charge density) in the output.
 
 * ``warpx.plot_raw_fields`` (`0` or `1`) optional (default `0`)
     By default, the fields written in the plot files are averaged on the nodes.

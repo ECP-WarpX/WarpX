@@ -575,6 +575,11 @@ WarpX::WritePlotFile () const
                     VisMF::Write(jx, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jx_fp"));
                     VisMF::Write(jy, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jy_fp"));
                     VisMF::Write(jz, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jz_fp"));
+                    if (plot_rho) {
+                        MultiFab rho(rho_fp[lev]->boxArray(), dm, 1, 0);
+                        MultiFab::Copy(rho, *rho_fp[lev], 0, 0, 1, 0);
+                        VisMF::Write(jz, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "rho_fp"));
+                    }
                 }
             }
 
