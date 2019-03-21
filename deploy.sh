@@ -11,8 +11,7 @@ SHA=`git rev-parse --verify HEAD`
 #    exit 0
 #fi
 
-# Install sphinx and build the documentation
-pip install sphinx sphinx_rtd_theme
+# Build the documentation
 cd Docs
 make html
 
