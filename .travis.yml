@@ -21,7 +21,7 @@ script:
     # Run the tests on the current commit
     - export WARPX_TEST_COMMIT=$TRAVIS_COMMIT
     # Run the script that prepares the test environment and runs the tests
-#    - ./run_test.sh
+    - ./run_test.sh
 
     # Automatically upload the documentation for the dev branch
     - ./deploy.sh

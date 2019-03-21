@@ -10,10 +10,10 @@ SHA=`git rev-parse --verify HEAD`
 
 # Pull requests and commits to other branches shouldn't try to deploy
 # Also: since the code is built for 2D and 3D, only the 3D build should push
-#if [ "$TRAVIS_PULL_REQUEST" != "false" -o "$TRAVIS_BRANCH" != "$SOURCE_BRANCH" -o "$WARPX_TEST_DIM" != "3" ]; then
-#    echo "Skipping deploy; just doing a build."
-#    exit 0
-#fi
+if [ "$TRAVIS_PULL_REQUEST" != "false" -o "$TRAVIS_BRANCH" != "$SOURCE_BRANCH" -o "$WARPX_TEST_DIM" != "3" ]; then
+    echo "Skipping deploy; just doing a build."
+    exit 0
+fi
 
 # Install sphinx and pandoc, and build the documentation
 pip install sphinx sphinx_rtd_theme
