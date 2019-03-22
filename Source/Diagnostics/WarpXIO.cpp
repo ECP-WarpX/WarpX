@@ -622,51 +622,16 @@ WarpX::WritePlotFile () const
                         VisMF::Write(*Bfield_cp[lev][0], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "Bx_cp"));
                         VisMF::Write(*Bfield_cp[lev][1], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "By_cp"));
                         VisMF::Write(*Bfield_cp[lev][2], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "Bz_cp"));
-                        VisMF::Write(*current_cp[lev][0], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jx_cp"));
-                        VisMF::Write(*current_cp[lev][1], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jy_cp"));
-                        VisMF::Write(*current_cp[lev][2], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jz_cp"));
-                        if (plot_rho) {
-                            // Use the component 1 of `rho_cp`, i.e. rho_new
-                			// for time synchronization
-                            MultiFab rho_new(*rho_cp[lev], amrex::make_alias, 1, 1);
-                            VisMF::Write(rho_new, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "rho_cp"));
-                        }
                     } else {
-                        const DistributionMapping& dm = DistributionMap(lev);
-                        MultiFab Ex(Efield_cp[lev][0]->boxArray(), dm, 1, 0);
-                        MultiFab Ey(Efield_cp[lev][1]->boxArray(), dm, 1, 0);
-                        MultiFab Ez(Efield_cp[lev][2]->boxArray(), dm, 1, 0);
-                        MultiFab Bx(Bfield_cp[lev][0]->boxArray(), dm, 1, 0);
-                        MultiFab By(Bfield_cp[lev][1]->boxArray(), dm, 1, 0);
-                        MultiFab Bz(Bfield_cp[lev][2]->boxArray(), dm, 1, 0);
-                        MultiFab jx(current_cp[lev][0]->boxArray(), dm, 1, 0);
-                        MultiFab jy(current_cp[lev][1]->boxArray(), dm, 1, 0);
-                        MultiFab jz(current_cp[lev][2]->boxArray(), dm, 1, 0);
-                        MultiFab::Copy(Ex, *Efield_cp[lev][0], 0, 0, 1, 0);
-                        MultiFab::Copy(Ey, *Efield_cp[lev][1], 0, 0, 1, 0);
-                        MultiFab::Copy(Ez, *Efield_cp[lev][2], 0, 0, 1, 0);
-                        MultiFab::Copy(Bx, *Bfield_cp[lev][0], 0, 0, 1, 0);
-                        MultiFab::Copy(By, *Bfield_cp[lev][1], 0, 0, 1, 0);
-                        MultiFab::Copy(Bz, *Bfield_cp[lev][2], 0, 0, 1, 0);
-                        MultiFab::Copy(jx, *current_cp[lev][0], 0, 0, 1, 0);
-                        MultiFab::Copy(jy, *current_cp[lev][1], 0, 0, 1, 0);
-                        MultiFab::Copy(jz, *current_cp[lev][2], 0, 0, 1, 0);
-                        VisMF::Write(Ex, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "Ex_cp"));
-                        VisMF::Write(Ey, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "Ey_cp"));
-                        VisMF::Write(Ez, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "Ez_cp"));
-                        VisMF::Write(Bx, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "Bx_cp"));
-                        VisMF::Write(By, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "By_cp"));
-                        VisMF::Write(Bz, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "Bz_cp"));
-                        VisMF::Write(jx, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jx_cp"));
-                        VisMF::Write(jy, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jy_cp"));
-                        VisMF::Write(jz, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "jz_cp"));
-                        if (plot_rho) {
-                            MultiFab rho(rho_cp[lev]->boxArray(), dm, 1, 0);
-    			// Use the component 1 of `rho_cp`, i.e. rho_new
-    			// for time synchronization
-                            MultiFab::Copy(rho, *rho_cp[lev], 1, 0, 1, 0);
-                            VisMF::Write(rho, amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "rho_cp"));
-                        }
+                        std::array<std::unique_ptr<MultiFab>, 3> E = getInterpolatedE(lev);
+                        std::array<std::unique_ptr<MultiFab>, 3> B = getInterpolatedB(lev);
+
+                        VisMF::Write(*E[0], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "Ex_cp"));
+                        VisMF::Write(*E[1], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "Ey_cp"));
+                        VisMF::Write(*E[2], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "Ez_cp"));
+                        VisMF::Write(*B[0], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "Bx_cp"));
+                        VisMF::Write(*B[1], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "By_cp"));
+                        VisMF::Write(*B[2], amrex::MultiFabFileFullPrefix(lev, raw_plotfilename, level_prefix, "Bz_cp"));
                     }
                 }
             }
