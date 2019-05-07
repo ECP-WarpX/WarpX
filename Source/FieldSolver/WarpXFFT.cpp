@@ -226,7 +226,13 @@ PushPatchPSATD( SpectralSolver& solver,
 void
 WarpX::AllocLevelDataFFT (int lev)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "PSATD doesn't work with mesh refinement yet");
+
+    if (fft_hybrid_mpi_decomposition) {
+        // When the above flag is on, we use PICSAR code,
+        // which can only support 1 box per MPI rank
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0,
+            "PSATD doesn't work with mesh refinement yet");
+    }
 
     static_assert(std::is_standard_layout<FFTData>::value, "FFTData must have standard layout");
     static_assert(sizeof(FFTData) == sizeof(void*)*FFTData::N, "sizeof FFTData is wrong");
@@ -237,18 +243,6 @@ WarpX::AllocLevelDataFFT (int lev)
     DistributionMapping dm_fp_fft;
     FFTDomainDecomposition(lev, ba_fp_fft, dm_fp_fft, ba_valid_fp_fft[lev], domain_fp_fft[lev],
                            geom[lev].Domain());
-
-    if (fft_hybrid_mpi_decomposition == false){
-        // Allocate and initialize objects for the spectral solver
-        std::array<Real,3> dx = CellSize(lev);
-#if (AMREX_SPACEDIM == 3)
-        RealVect dx_vect(dx[0], dx[1], dx[2]);
-#elif (AMREX_SPACEDIM == 2)
-        RealVect dx_vect(dx[0], dx[2]);
-#endif
-        spectral_solver_fp[lev].reset( new SpectralSolver( ba_fp_fft, dm_fp_fft,
-                 nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev] ) );
-    }
 
     // rho2 has one extra ghost cell, so that it's safe to deposit charge density after
     // pushing particle.
@@ -274,7 +268,19 @@ WarpX::AllocLevelDataFFT (int lev)
     rho_fp_fft[lev].reset(new MultiFab(amrex::convert(ba_fp_fft,IntVect::TheNodeVector()),
                                        dm_fp_fft, 2, 0));
 
-    dataptr_fp_fft[lev].reset(new LayoutData<FFTData>(ba_fp_fft, dm_fp_fft));
+    if (fft_hybrid_mpi_decomposition == false){
+        // Allocate and initialize objects for the spectral solver
+        std::array<Real,3> dx = CellSize(lev);
+#if (AMREX_SPACEDIM == 3)
+        RealVect dx_vect(dx[0], dx[1], dx[2]);
+#elif (AMREX_SPACEDIM == 2)
+        RealVect dx_vect(dx[0], dx[2]);
+#endif
+        spectral_solver_fp[lev].reset( new SpectralSolver( ba_fp_fft, dm_fp_fft,
+            nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev] ) );
+    } else {
+        dataptr_fp_fft[lev].reset(new LayoutData<FFTData>(ba_fp_fft, dm_fp_fft));
+    }
 
     if (lev > 0)
     {
@@ -282,18 +288,6 @@ WarpX::AllocLevelDataFFT (int lev)
         DistributionMapping dm_cp_fft;
         FFTDomainDecomposition(lev, ba_cp_fft, dm_cp_fft, ba_valid_cp_fft[lev], domain_cp_fft[lev],
                                amrex::coarsen(geom[lev].Domain(),2));
-
-        if (fft_hybrid_mpi_decomposition == false){
-            // Allocate and initialize objects for the spectral solver
-            std::array<Real,3> dx = CellSize(lev-1);
-#if (AMREX_SPACEDIM == 3)
-            RealVect dx_vect(dx[0], dx[1], dx[2]);
-#elif (AMREX_SPACEDIM == 2)
-            RealVect dx_vect(dx[0], dx[2]);
-#endif
-            spectral_solver_cp[lev].reset( new SpectralSolver( ba_cp_fft, dm_cp_fft,
-                    nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev] ) );
-       }
 
         Efield_cp_fft[lev][0].reset(new MultiFab(amrex::convert(ba_cp_fft,Ex_nodal_flag),
                                                  dm_cp_fft, 1, 0));
@@ -316,10 +310,24 @@ WarpX::AllocLevelDataFFT (int lev)
         rho_cp_fft[lev].reset(new MultiFab(amrex::convert(ba_cp_fft,IntVect::TheNodeVector()),
                                            dm_cp_fft, 2, 0));
 
-        dataptr_cp_fft[lev].reset(new LayoutData<FFTData>(ba_cp_fft, dm_cp_fft));
+        if (fft_hybrid_mpi_decomposition == false){
+            // Allocate and initialize objects for the spectral solver
+            std::array<Real,3> dx = CellSize(lev-1);
+#if (AMREX_SPACEDIM == 3)
+            RealVect dx_vect(dx[0], dx[1], dx[2]);
+#elif (AMREX_SPACEDIM == 2)
+            RealVect dx_vect(dx[0], dx[2]);
+#endif
+            spectral_solver_cp[lev].reset( new SpectralSolver( ba_cp_fft, dm_cp_fft,
+                   nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev] ) );
+        } else {
+            dataptr_cp_fft[lev].reset(new LayoutData<FFTData>(ba_cp_fft, dm_cp_fft));
+        }
     }
 
-    InitFFTDataPlan(lev);
+    if (fft_hybrid_mpi_decomposition){
+        InitFFTDataPlan(lev);
+    }
 }
 
 /** \brief Create MPI sub-communicators for each FFT group,
@@ -477,15 +485,6 @@ WarpX::InitFFTDataPlan (int lev)
     {
       // Multiple FFT patches on this MPI rank
         amrex::Abort("WarpX::InitFFTDataPlan: TODO");
-    }
-
-    if (lev > 0)
-    {
-        if (fft_hybrid_mpi_decomposition) {
-            // When the above flag is on, we use PICSAR code,
-            // which can only support 1 box per MPI rank
-            amrex::Abort("WarpX::InitFFTDataPlan: TODO");
-        }
     }
 }
 
