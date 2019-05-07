@@ -10,57 +10,6 @@ constexpr int WarpX::FFTData::N;
 namespace {
 static std::unique_ptr<WarpX::FFTData> nullfftdata; // This for process with nz_fft=0
 
-/** \brief Returns an "owner mask" which 1 for all cells, except
- *  for the duplicated (physical) cells of a nodal grid.
- *
- *  More precisely, for these cells (which are represented on several grids)
- *  the owner mask is 1 only if these cells are at the lower left end of
- *  the local grid - or if these cells are at the end of the physical domain
- *  Therefore, there for these cells, there will be only one grid for
- *  which the owner mask is non-zero.
- */
-static iMultiFab
-BuildFFTOwnerMask (const MultiFab& mf, const Geometry& geom)
-{
-    const BoxArray& ba = mf.boxArray();
-    const DistributionMapping& dm = mf.DistributionMap();
-    iMultiFab mask(ba, dm, 1, 0);
-    const int owner = 1;
-    const int nonowner = 0;
-    mask.setVal(owner);
-
-    const Box& domain_box = amrex::convert(geom.Domain(), ba.ixType());
-
-    AMREX_ASSERT(ba.complementIn(domain_box).isEmpty());
-
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-    for (MFIter mfi(mask); mfi.isValid(); ++mfi)
-    {
-        IArrayBox& fab = mask[mfi];
-        const Box& bx = fab.box();
-        Box bx2 = bx;
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            // Detect nodal dimensions
-            if (bx2.type(idim) == IndexType::NODE) {
-                // Make sure that this grid does not touch the end of
-                // the physical domain.
-                if (bx2.bigEnd(idim) < domain_box.bigEnd(idim)) {
-                    bx2.growHi(idim, -1);
-                }
-            }
-        }
-        const BoxList& bl = amrex::boxDiff(bx, bx2);
-        // Set owner mask in these cells
-        for (const auto& b : bl) {
-            fab.setVal(nonowner, b, 0, 1);
-        }
-    }
-
-    return mask;
-}
-
 /** \brief Copy the data from the FFT grid to the regular grid
  *
  * Because, for nodal grid, some cells are duplicated on several boxes,
@@ -75,7 +24,7 @@ CopyDataFromFFTToValid (MultiFab& mf, const MultiFab& mf_fft, const BoxArray& ba
     auto idx_type = mf_fft.ixType();
     MultiFab mftmp(amrex::convert(ba_valid_fft,idx_type), mf_fft.DistributionMap(), 1, 0);
 
-    const iMultiFab& mask = BuildFFTOwnerMask(mftmp, geom);
+    const std::unique_ptr<iMultiFab> mask = mftmp.OwnerMask(geom.periodicity());
 
     // Local copy: whenever an MPI rank owns both the data from the FFT
     // grid and from the regular grid, for overlapping region, copy it locally
@@ -98,7 +47,7 @@ CopyDataFromFFTToValid (MultiFab& mf, const MultiFab& mf_fft, const BoxArray& ba
             // (i.e. for nodal duplicated cells, there is a single box
             // for which the mask is different than 0)
             // if mask == 0, set value to zero
-            dstfab.setValIfNot(0.0, bx, mask[mfi], 0, 1);
+            dstfab.setValIfNot(0.0, bx, (*mask)[mfi], 0, 1);
         }
     }
 
@@ -564,7 +513,7 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */)
                        *current_cp_fft[lev][1],
                        *current_cp_fft[lev][2],
                        *rho_cp_fft[lev],
-                       ba_valid_cp_fft[lev], geom[lev],
+                       ba_valid_cp_fft[lev], geom[lev-1],
                        fft_hybrid_mpi_decomposition );
         }
     }
