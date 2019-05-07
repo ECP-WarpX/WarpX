@@ -109,6 +109,118 @@ CopyDataFromFFTToValid (MultiFab& mf, const MultiFab& mf_fft, const BoxArray& ba
     mf.ParallelAdd(mftmp);
 }
 
+/* \brief Push the fields in a given patch (either fine or coarse)
+   using the PSATD solver */
+void
+PushPatchPSATD( SpectralSolver& solver,
+           MultiFab& Ex, MultiFab& Ey, MultiFab& Ez,
+           MultiFab& Bx, MultiFab& By, MultiFab& Bz,
+           MultiFab& Jx, MultiFab& Jy, MultiFab& Jz, MultiFab& rho,
+           MultiFab& Ex_fft, MultiFab& Ey_fft, MultiFab& Ez_fft,
+           MultiFab& Bx_fft, MultiFab& By_fft, MultiFab& Bz_fft,
+           MultiFab& Jx_fft, MultiFab& Jy_fft, MultiFab& Jz_fft,
+           MultiFab& rho_fft, const BoxArray& ba_valid_fft,
+           const Geometry& geom,
+           const bool fft_hybrid_mpi_decomposition){
+
+    BL_PROFILE_VAR_NS("WarpXFFT::CopyDualGrid", blp_copy);
+    BL_PROFILE_VAR_NS("PICSAR::FftPushEB", blp_push_eb);
+
+    const auto& period = geom.periodicity();
+
+    BL_PROFILE_VAR_START(blp_copy);
+    Ex_fft.ParallelCopy(Ex, 0, 0, 1, 0, 0, period);
+    Ey_fft.ParallelCopy(Ey, 0, 0, 1, 0, 0, period);
+    Ez_fft.ParallelCopy(Ez, 0, 0, 1, 0, 0, period);
+    Bx_fft.ParallelCopy(Bx, 0, 0, 1, 0, 0, period);
+    By_fft.ParallelCopy(By, 0, 0, 1, 0, 0, period);
+    Bz_fft.ParallelCopy(Bz, 0, 0, 1, 0, 0, period);
+    Jx_fft.ParallelCopy(Jx, 0, 0, 1, 0, 0, period);
+    Jy_fft.ParallelCopy(Jy, 0, 0, 1, 0, 0, period);
+    Jz_fft.ParallelCopy(Jz, 0, 0, 1, 0, 0, period);
+    rho_fft.ParallelCopy(rho, 0, 0, 2, 0, 0, period);
+    BL_PROFILE_VAR_STOP(blp_copy);
+
+    if (fft_hybrid_mpi_decomposition){
+        BL_PROFILE_VAR_START(blp_push_eb);
+        if (Ex_fft.local_size() == 1)
+           //Only one FFT patch on this MPI
+        {
+        	for (MFIter mfi(Ex_fft); mfi.isValid(); ++mfi)
+        	{
+                    warpx_fft_push_eb(WARPX_TO_FORTRAN_ANYD((Ex_fft)[mfi]),
+                                      WARPX_TO_FORTRAN_ANYD((Ey_fft)[mfi]),
+                                      WARPX_TO_FORTRAN_ANYD((Ez_fft)[mfi]),
+                                      WARPX_TO_FORTRAN_ANYD((Bx_fft)[mfi]),
+                                      WARPX_TO_FORTRAN_ANYD((By_fft)[mfi]),
+                                      WARPX_TO_FORTRAN_ANYD((Bz_fft)[mfi]),
+                                      WARPX_TO_FORTRAN_ANYD((Jx_fft)[mfi]),
+                                      WARPX_TO_FORTRAN_ANYD((Jy_fft)[mfi]),
+                                      WARPX_TO_FORTRAN_ANYD((Jz_fft)[mfi]),
+                                      WARPX_TO_FORTRAN_N_ANYD((rho_fft)[mfi],0),
+                                      WARPX_TO_FORTRAN_N_ANYD((rho_fft)[mfi],1));
+        	}
+        }
+        else if (Ex_fft.local_size() == 0)
+          // No FFT patch on this MPI rank
+          // Still need to call the MPI-FFT routine.
+        {
+        	FArrayBox fab(Box(IntVect::TheZeroVector(), IntVect::TheUnitVector()));
+        	warpx_fft_push_eb(WARPX_TO_FORTRAN_ANYD(fab),
+        			  WARPX_TO_FORTRAN_ANYD(fab),
+        			  WARPX_TO_FORTRAN_ANYD(fab),
+        			  WARPX_TO_FORTRAN_ANYD(fab),
+        			  WARPX_TO_FORTRAN_ANYD(fab),
+        			  WARPX_TO_FORTRAN_ANYD(fab),
+        			  WARPX_TO_FORTRAN_ANYD(fab),
+        			  WARPX_TO_FORTRAN_ANYD(fab),
+        			  WARPX_TO_FORTRAN_ANYD(fab),
+        			  WARPX_TO_FORTRAN_ANYD(fab),
+        			  WARPX_TO_FORTRAN_ANYD(fab));
+        }
+        else
+          // Multiple FFT patches on this MPI rank
+        {
+    	amrex::Abort("WarpX::PushPSATD: TODO");
+        }
+        BL_PROFILE_VAR_STOP(blp_push_eb);
+    } else {
+        // Perform forward Fourier transform
+        solver.ForwardTransform(Ex_fft, SpectralFieldIndex::Ex);
+        solver.ForwardTransform(Ey_fft, SpectralFieldIndex::Ey);
+        solver.ForwardTransform(Ez_fft, SpectralFieldIndex::Ez);
+        solver.ForwardTransform(Bx_fft, SpectralFieldIndex::Bx);
+        solver.ForwardTransform(By_fft, SpectralFieldIndex::By);
+        solver.ForwardTransform(Bz_fft, SpectralFieldIndex::Bz);
+        solver.ForwardTransform(Jx_fft, SpectralFieldIndex::Jx);
+        solver.ForwardTransform(Jy_fft, SpectralFieldIndex::Jy);
+        solver.ForwardTransform(Jz_fft, SpectralFieldIndex::Jz);
+        solver.ForwardTransform(rho_fft, SpectralFieldIndex::rho_old, 0);
+        solver.ForwardTransform(rho_fft, SpectralFieldIndex::rho_new, 1);
+
+        // Advance fields in spectral space
+        solver.pushSpectralFields();
+
+        // Perform backward Fourier Transform
+        solver.BackwardTransform(Ex_fft, SpectralFieldIndex::Ex);
+        solver.BackwardTransform(Ey_fft, SpectralFieldIndex::Ey);
+        solver.BackwardTransform(Ez_fft, SpectralFieldIndex::Ez);
+        solver.BackwardTransform(Bx_fft, SpectralFieldIndex::Bx);
+        solver.BackwardTransform(By_fft, SpectralFieldIndex::By);
+        solver.BackwardTransform(Bz_fft, SpectralFieldIndex::Bz);
+    }
+
+    BL_PROFILE_VAR_START(blp_copy);
+    CopyDataFromFFTToValid(Ex, Ex_fft, ba_valid_fft, geom);
+    CopyDataFromFFTToValid(Ey, Ey_fft, ba_valid_fft, geom);
+    CopyDataFromFFTToValid(Ez, Ez_fft, ba_valid_fft, geom);
+    CopyDataFromFFTToValid(Bx, Bx_fft, ba_valid_fft, geom);
+    CopyDataFromFFTToValid(By, By_fft, ba_valid_fft, geom);
+    CopyDataFromFFTToValid(Bz, Bz_fft, ba_valid_fft, geom);
+    BL_PROFILE_VAR_STOP(blp_copy);
+
+}
+
 }
 
 void
@@ -128,7 +240,6 @@ WarpX::AllocLevelDataFFT (int lev)
 
     if (fft_hybrid_mpi_decomposition == false){
         // Allocate and initialize objects for the spectral solver
-        // (all use the same distribution mapping)
         std::array<Real,3> dx = CellSize(lev);
 #if (AMREX_SPACEDIM == 3)
         RealVect dx_vect(dx[0], dx[1], dx[2]);
@@ -171,6 +282,18 @@ WarpX::AllocLevelDataFFT (int lev)
         DistributionMapping dm_cp_fft;
         FFTDomainDecomposition(lev, ba_cp_fft, dm_cp_fft, ba_valid_cp_fft[lev], domain_cp_fft[lev],
                                amrex::coarsen(geom[lev].Domain(),2));
+
+        if (fft_hybrid_mpi_decomposition == false){
+            // Allocate and initialize objects for the spectral solver
+            std::array<Real,3> dx = CellSize(lev-1);
+#if (AMREX_SPACEDIM == 3)
+            RealVect dx_vect(dx[0], dx[1], dx[2]);
+#elif (AMREX_SPACEDIM == 2)
+            RealVect dx_vect(dx[0], dx[2]);
+#endif
+            spectral_solver_cp[lev].reset( new SpectralSolver( ba_cp_fft, dm_cp_fft,
+                    nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev] ) );
+       }
 
         Efield_cp_fft[lev][0].reset(new MultiFab(amrex::convert(ba_cp_fft,Ex_nodal_flag),
                                                  dm_cp_fft, 1, 0));
@@ -358,7 +481,11 @@ WarpX::InitFFTDataPlan (int lev)
 
     if (lev > 0)
     {
-        amrex::Abort("WarpX::InitFFTDataPlan: TODO");
+        if (fft_hybrid_mpi_decomposition) {
+            // When the above flag is on, we use PICSAR code,
+            // which can only support 1 box per MPI rank
+            amrex::Abort("WarpX::InitFFTDataPlan: TODO");
+        }
     }
 }
 
@@ -387,107 +514,59 @@ WarpX::PushPSATD (amrex::Real a_dt)
 void
 WarpX::PushPSATD (int lev, amrex::Real /* dt */)
 {
-    BL_PROFILE_VAR_NS("WarpXFFT::CopyDualGrid", blp_copy);
-    BL_PROFILE_VAR_NS("PICSAR::FftPushEB", blp_push_eb);
+    // Loop over coarse and fine patches
+    for (auto patch_type: {PatchType::coarse, PatchType::fine}) {
+        // Skip the coarse patch for level 0
+        if ((lev == 0) && (patch_type == PatchType::coarse)) continue;
 
-    auto period_fp = geom[lev].periodicity();
-
-    BL_PROFILE_VAR_START(blp_copy);
-    Efield_fp_fft[lev][0]->ParallelCopy(*Efield_fp[lev][0], 0, 0, 1, 0, 0, period_fp);
-    Efield_fp_fft[lev][1]->ParallelCopy(*Efield_fp[lev][1], 0, 0, 1, 0, 0, period_fp);
-    Efield_fp_fft[lev][2]->ParallelCopy(*Efield_fp[lev][2], 0, 0, 1, 0, 0, period_fp);
-    Bfield_fp_fft[lev][0]->ParallelCopy(*Bfield_fp[lev][0], 0, 0, 1, 0, 0, period_fp);
-    Bfield_fp_fft[lev][1]->ParallelCopy(*Bfield_fp[lev][1], 0, 0, 1, 0, 0, period_fp);
-    Bfield_fp_fft[lev][2]->ParallelCopy(*Bfield_fp[lev][2], 0, 0, 1, 0, 0, period_fp);
-    current_fp_fft[lev][0]->ParallelCopy(*current_fp[lev][0], 0, 0, 1, 0, 0, period_fp);
-    current_fp_fft[lev][1]->ParallelCopy(*current_fp[lev][1], 0, 0, 1, 0, 0, period_fp);
-    current_fp_fft[lev][2]->ParallelCopy(*current_fp[lev][2], 0, 0, 1, 0, 0, period_fp);
-    rho_fp_fft[lev]->ParallelCopy(*rho_fp[lev], 0, 0, 2, 0, 0, period_fp);
-    BL_PROFILE_VAR_STOP(blp_copy);
-
-    BL_PROFILE_VAR_START(blp_push_eb);
-    if (fft_hybrid_mpi_decomposition){
-        if (Efield_fp_fft[lev][0]->local_size() == 1)
-           //Only one FFT patch on this MPI
-        {
-        	for (MFIter mfi(*Efield_fp_fft[lev][0]); mfi.isValid(); ++mfi)
-        	{
-                    warpx_fft_push_eb(WARPX_TO_FORTRAN_ANYD((*Efield_fp_fft[lev][0])[mfi]),
-                                      WARPX_TO_FORTRAN_ANYD((*Efield_fp_fft[lev][1])[mfi]),
-                                      WARPX_TO_FORTRAN_ANYD((*Efield_fp_fft[lev][2])[mfi]),
-                                      WARPX_TO_FORTRAN_ANYD((*Bfield_fp_fft[lev][0])[mfi]),
-                                      WARPX_TO_FORTRAN_ANYD((*Bfield_fp_fft[lev][1])[mfi]),
-                                      WARPX_TO_FORTRAN_ANYD((*Bfield_fp_fft[lev][2])[mfi]),
-                                      WARPX_TO_FORTRAN_ANYD((*current_fp_fft[lev][0])[mfi]),
-                                      WARPX_TO_FORTRAN_ANYD((*current_fp_fft[lev][1])[mfi]),
-                                      WARPX_TO_FORTRAN_ANYD((*current_fp_fft[lev][2])[mfi]),
-                                      WARPX_TO_FORTRAN_N_ANYD((*rho_fp_fft[lev])[mfi],0),
-                                      WARPX_TO_FORTRAN_N_ANYD((*rho_fp_fft[lev])[mfi],1));
-        	}
+        if (patch_type == PatchType::fine) {
+            PushPatchPSATD( *spectral_solver_fp[lev],
+                       *Efield_fp[lev][0],
+                       *Efield_fp[lev][1],
+                       *Efield_fp[lev][2],
+                       *Bfield_fp[lev][0],
+                       *Bfield_fp[lev][1],
+                       *Bfield_fp[lev][2],
+                       *current_fp[lev][0],
+                       *current_fp[lev][1],
+                       *current_fp[lev][2],
+                       *rho_fp[lev],
+                       *Efield_fp_fft[lev][0],
+                       *Efield_fp_fft[lev][1],
+                       *Efield_fp_fft[lev][2],
+                       *Bfield_fp_fft[lev][0],
+                       *Bfield_fp_fft[lev][1],
+                       *Bfield_fp_fft[lev][2],
+                       *current_fp_fft[lev][0],
+                       *current_fp_fft[lev][1],
+                       *current_fp_fft[lev][2],
+                       *rho_fp_fft[lev],
+                       ba_valid_fp_fft[lev], geom[lev],
+                       fft_hybrid_mpi_decomposition );
+        } else if (patch_type == PatchType::coarse) {
+            PushPatchPSATD( *spectral_solver_cp[lev],
+                       *Efield_cp[lev][0],
+                       *Efield_cp[lev][1],
+                       *Efield_cp[lev][2],
+                       *Bfield_cp[lev][0],
+                       *Bfield_cp[lev][1],
+                       *Bfield_cp[lev][2],
+                       *current_cp[lev][0],
+                       *current_cp[lev][1],
+                       *current_cp[lev][2],
+                       *rho_cp[lev],
+                       *Efield_cp_fft[lev][0],
+                       *Efield_cp_fft[lev][1],
+                       *Efield_cp_fft[lev][2],
+                       *Bfield_cp_fft[lev][0],
+                       *Bfield_cp_fft[lev][1],
+                       *Bfield_cp_fft[lev][2],
+                       *current_cp_fft[lev][0],
+                       *current_cp_fft[lev][1],
+                       *current_cp_fft[lev][2],
+                       *rho_cp_fft[lev],
+                       ba_valid_cp_fft[lev], geom[lev],
+                       fft_hybrid_mpi_decomposition );
         }
-        else if (Efield_fp_fft[lev][0]->local_size() == 0)
-          // No FFT patch on this MPI rank
-          // Still need to call the MPI-FFT routine.
-        {
-        	FArrayBox fab(Box(IntVect::TheZeroVector(), IntVect::TheUnitVector()));
-        	warpx_fft_push_eb(WARPX_TO_FORTRAN_ANYD(fab),
-        			  WARPX_TO_FORTRAN_ANYD(fab),
-        			  WARPX_TO_FORTRAN_ANYD(fab),
-        			  WARPX_TO_FORTRAN_ANYD(fab),
-        			  WARPX_TO_FORTRAN_ANYD(fab),
-        			  WARPX_TO_FORTRAN_ANYD(fab),
-        			  WARPX_TO_FORTRAN_ANYD(fab),
-        			  WARPX_TO_FORTRAN_ANYD(fab),
-        			  WARPX_TO_FORTRAN_ANYD(fab),
-        			  WARPX_TO_FORTRAN_ANYD(fab),
-        			  WARPX_TO_FORTRAN_ANYD(fab));
-        }
-        else
-          // Multiple FFT patches on this MPI rank
-        {
-    	amrex::Abort("WarpX::PushPSATD: TODO");
-        }
-    } else {
-        // Not using the hybrid decomposition
-        auto& solver = *spectral_solver_fp[lev];
-
-        // Perform forward Fourier transform
-        solver.ForwardTransform(*Efield_fp_fft[lev][0], SpectralFieldIndex::Ex);
-        solver.ForwardTransform(*Efield_fp_fft[lev][1], SpectralFieldIndex::Ey);
-        solver.ForwardTransform(*Efield_fp_fft[lev][2], SpectralFieldIndex::Ez);
-        solver.ForwardTransform(*Bfield_fp_fft[lev][0], SpectralFieldIndex::Bx);
-        solver.ForwardTransform(*Bfield_fp_fft[lev][1], SpectralFieldIndex::By);
-        solver.ForwardTransform(*Bfield_fp_fft[lev][2], SpectralFieldIndex::Bz);
-        solver.ForwardTransform(*current_fp_fft[lev][0], SpectralFieldIndex::Jx);
-        solver.ForwardTransform(*current_fp_fft[lev][1], SpectralFieldIndex::Jy);
-        solver.ForwardTransform(*current_fp_fft[lev][2], SpectralFieldIndex::Jz);
-        solver.ForwardTransform(*rho_fp_fft[lev], SpectralFieldIndex::rho_old, 0);
-        solver.ForwardTransform(*rho_fp_fft[lev], SpectralFieldIndex::rho_new, 1);
-
-        // Advance fields in spectral space
-        solver.pushSpectralFields();
-
-        // Perform backward Fourier Transform
-        solver.BackwardTransform(*Efield_fp_fft[lev][0], SpectralFieldIndex::Ex);
-        solver.BackwardTransform(*Efield_fp_fft[lev][1], SpectralFieldIndex::Ey);
-        solver.BackwardTransform(*Efield_fp_fft[lev][2], SpectralFieldIndex::Ez);
-        solver.BackwardTransform(*Bfield_fp_fft[lev][0], SpectralFieldIndex::Bx);
-        solver.BackwardTransform(*Bfield_fp_fft[lev][1], SpectralFieldIndex::By);
-        solver.BackwardTransform(*Bfield_fp_fft[lev][2], SpectralFieldIndex::Bz);
-    }
-    BL_PROFILE_VAR_STOP(blp_push_eb);
-
-    BL_PROFILE_VAR_START(blp_copy);
-    CopyDataFromFFTToValid(*Efield_fp[lev][0], *Efield_fp_fft[lev][0], ba_valid_fp_fft[lev], geom[lev]);
-    CopyDataFromFFTToValid(*Efield_fp[lev][1], *Efield_fp_fft[lev][1], ba_valid_fp_fft[lev], geom[lev]);
-    CopyDataFromFFTToValid(*Efield_fp[lev][2], *Efield_fp_fft[lev][2], ba_valid_fp_fft[lev], geom[lev]);
-    CopyDataFromFFTToValid(*Bfield_fp[lev][0], *Bfield_fp_fft[lev][0], ba_valid_fp_fft[lev], geom[lev]);
-    CopyDataFromFFTToValid(*Bfield_fp[lev][1], *Bfield_fp_fft[lev][1], ba_valid_fp_fft[lev], geom[lev]);
-    CopyDataFromFFTToValid(*Bfield_fp[lev][2], *Bfield_fp_fft[lev][2], ba_valid_fp_fft[lev], geom[lev]);
-    BL_PROFILE_VAR_STOP(blp_copy);
-
-    if (lev > 0)
-    {
-        amrex::Abort("WarpX::PushPSATD: TODO");
     }
 }
