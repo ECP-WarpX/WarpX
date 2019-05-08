@@ -20,11 +20,11 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
     amrex::Abort(); // Check that this is not used now.
 
     // Allocate the arrays of coefficients
-    C_coef = SpectralCoefficients(ba, dm, 1, 0);
-    S_ck_coef = SpectralCoefficients(ba, dm, 1, 0);
-    X1_coef = SpectralCoefficients(ba, dm, 1, 0);
-    X2_coef = SpectralCoefficients(ba, dm, 1, 0);
-    X3_coef = SpectralCoefficients(ba, dm, 1, 0);
+    C_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    S_ck_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    X1_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
+    X2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
+    X3_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
 
     // Fill them with the right values:
     // Loop over boxes and allocate the corresponding coefficients
@@ -42,9 +42,15 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
         // Extract arrays for the coefficients
         Array4<Real> C = C_coef[mfi].array();
         Array4<Real> S_ck = S_ck_coef[mfi].array();
-        Array4<Real> X1 = X1_coef[mfi].array();
-        Array4<Real> X2 = X2_coef[mfi].array();
-        Array4<Real> X3 = X3_coef[mfi].array();
+        Array4<Complex> X1 = X1_coef[mfi].array();
+        Array4<Complex> X2 = X2_coef[mfi].array();
+        Array4<Complex> X3 = X3_coef[mfi].array();
+        Array4<Complex> X4 = X4_coef[mfi].array();
+        Array4<Complex> Theta2 = Theta2_coef[mfi].array();
+        // Extract reals (for portability on GPU)
+        Real vx = v_galilean[0];
+        Real vy = v_galilean[1];
+        Real vz = v_galilean[2];
 
         // Loop over indices within one box
         ParallelFor(bx,
@@ -63,18 +69,49 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
             // Calculate coefficients
             constexpr Real c = PhysConst::c;
             constexpr Real ep0 = PhysConst::ep0;
+            const Complex I{0.,1.};
             if (k_norm != 0){
+
                 C(i,j,k) = std::cos(c*k_norm*dt);
                 S_ck(i,j,k) = std::sin(c*k_norm*dt)/(c*k_norm);
-                X1(i,j,k) = (1. - C(i,j,k))/(ep0 * c*c * k_norm*k_norm);
-                X2(i,j,k) = (1. - S_ck(i,j,k)/dt)/(ep0 * k_norm*k_norm);
-                X3(i,j,k) = (C(i,j,k) - S_ck(i,j,k)/dt)/(ep0 * k_norm*k_norm);
+
+                // Calculate dot product with galilean velocity
+                const Real kv = modified_kx[i]*vx +
+#if (AMREX_SPACEDIM==3)
+                                 modified_ky[j]*vy +
+                                 modified_kz[k]*vz;
+#else
+                                 modified_kz[j]*vz;
+#endif
+
+                const Real nu = kv/(k_norm*c);
+                const Complex theta = std::exp( 0.5*I*k_v*dt );
+                Theta2(i,j,k) = theta*theta;
+
+                if ( (nu != 1.) && (nu != 0.) ) {
+
+                    // Note: the coefficients X1, X2, X3 do not correspond
+                    // exactly to the original Galilean paper, but the
+                    // update equation have been modified accordingly so that
+                    // the expressions/ below (with the update equations)
+                    // are mathematically equivalent to those of the paper.
+                    x1 = 1./(1.-nu**2) *
+                        (theta_star - C(i,j,k)*theta + I*kv*S_ck(i,j,k));
+                    // x1, above, is identical to the original paper
+                    X1(i,j,k) = theta*x1/(ep0*c*c*k_norm*k_norm);
+                    // The difference betwen X2 and X3 below, and those
+                    // from the original paper is the factor ep0*k_norm*k_norm
+                    X2(i,j,k) = (x1 - theta*(1 - C(i,j,k)))
+                                /(theta_star-theta)/(ep0*k_norm*k_norm);
+                    X3(i,j,k) = (x1 - theta_star*(1 - C(i,j,k)))
+                                /(theta_star-theta)/(ep0*k_norm*k_norm);
+                }
+                // TODO: Handle other cases
+
             } else { // Handle k_norm = 0, by using the analytical limit
                 C(i,j,k) = 1.;
                 S_ck(i,j,k) = dt;
-                X1(i,j,k) = 0.5 * dt*dt / ep0;
-                X2(i,j,k) = c*c * dt*dt / (6.*ep0);
-                X3(i,j,k) = - c*c * dt*dt / (3.*ep0);
+                // TODO: Calculate limit of these coefficients
             }
         });
     }
@@ -137,30 +174,34 @@ GalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
             constexpr Complex I = Complex{0,1};
             const Real C = C_arr(i,j,k);
             const Real S_ck = S_ck_arr(i,j,k);
-            const Real X1 = X1_arr(i,j,k);
-            const Real X2 = X2_arr(i,j,k);
-            const Real X3 = X3_arr(i,j,k);
+            const Complex X1 = X1_arr(i,j,k);
+            const Complex X2 = X2_arr(i,j,k);
+            const Complex X3 = X3_arr(i,j,k);
+            const Complex X4 = X4_arr(i,j,k);
+            const Complex T2 = Theta2_arr(i,j,k);
 
-            // Update E (see WarpX online documentation: theory section)
-            fields(i,j,k,Idx::Ex) = C*Ex_old
-                        + S_ck*(c2*I*(ky*Bz_old - kz*By_old) - inv_ep0*Jx)
-                        - I*(X2*rho_new - X3*rho_old)*kx;
-            fields(i,j,k,Idx::Ey) = C*Ey_old
-                        + S_ck*(c2*I*(kz*Bx_old - kx*Bz_old) - inv_ep0*Jy)
-                        - I*(X2*rho_new - X3*rho_old)*ky;
-            fields(i,j,k,Idx::Ez) = C*Ez_old
-                        + S_ck*(c2*I*(kx*By_old - ky*Bx_old) - inv_ep0*Jz)
-                        - I*(X2*rho_new - X3*rho_old)*kz;
-            // Update B (see WarpX online documentation: theory section)
-            fields(i,j,k,Idx::Bx) = C*Bx_old
-                        - S_ck*I*(ky*Ez_old - kz*Ey_old)
-                        +   X1*I*(ky*Jz     - kz*Jy);
-            fields(i,j,k,Idx::By) = C*By_old
-                        - S_ck*I*(kz*Ex_old - kx*Ez_old)
-                        +   X1*I*(kz*Jx     - kx*Jz);
-            fields(i,j,k,Idx::Bz) = C*Bz_old
-                        - S_ck*I*(kx*Ey_old - ky*Ex_old)
-                        +   X1*I*(kx*Jy     - ky*Jx);
+            // Update E (see the original Galilean article)
+            fields(i,j,k,Idx::Ex) = T2*C*Ex_old
+                        + T2*S_ck*c2*I*(ky*Bz_old - kz*By_old)
+                        + X4*Jx - I*(X2*rho_new - T2*X3*rho_old)*kx;
+            fields(i,j,k,Idx::Ey) = T2*C*Ey_old
+                        + T2*S_ck*c2*I*(kz*Bx_old - kx*Bz_old)
+                        + X4*Jy - I*(X2*rho_new - T2*X3*rho_old)*ky;
+            fields(i,j,k,Idx::Ez) = T2*C*Ez_old
+                        + T2*S_ck*(c2*I*(kx*By_old - ky*Bx_old)
+                        + X4*Jz - I*(X2*rho_new - T2*X3*rho_old)*kz;
+            // Update B (see the original Galilean article)
+            // Note: here X1 is T2*x1/(ep0*c*c*k_norm*k_norm), where
+            // x1 has the same definition as in the original paper
+            fields(i,j,k,Idx::Bx) = T2*C*Bx_old
+                        - T2*S_ck*I*(ky*Ez_old - kz*Ey_old)
+                        +      X1*I*(ky*Jz     - kz*Jy);
+            fields(i,j,k,Idx::By) = T2*C*By_old
+                        - T2*S_ck*I*(kz*Ex_old - kx*Ez_old)
+                        +      X1*I*(kz*Jx     - kx*Jz);
+            fields(i,j,k,Idx::Bz) = T2*C*Bz_old
+                        - T2*S_ck*I*(kx*Ey_old - ky*Ex_old)
+                        +      X1*I*(kx*Jy     - ky*Jx);
         });
     }
 };

@@ -18,7 +18,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
 
     private:
-        SpectralCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
+        SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
 };
 
 #endif // WARPX_PSATD_ALGORITHM_H_
