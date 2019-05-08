@@ -441,7 +441,7 @@ WarpX::ReadParameters ()
                 else
                 {
                     particle_plot_flags.resize(PIdx::nattribs, 1);
-                }                
+                }
             }
             else
             {
@@ -452,7 +452,7 @@ WarpX::ReadParameters ()
                 else
                 {
                     particle_plot_flags.resize(PIdx::nattribs, 0);
-                }                
+                }
 
                 for (const auto& var : particle_plot_vars)
                 {
@@ -528,6 +528,7 @@ WarpX::ReadParameters ()
         pp.query("nox", nox_fft);
         pp.query("noy", noy_fft);
         pp.query("noz", noz_fft);
+        pp.query("v_galilean", v_galilean);
         // Override value
         if (fft_hybrid_mpi_decomposition==false) ngroups_fft=ParallelDescriptor::NProcs();
     }
