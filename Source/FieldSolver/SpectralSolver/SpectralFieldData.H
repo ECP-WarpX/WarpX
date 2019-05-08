@@ -19,7 +19,6 @@ struct SpectralFieldIndex {
  */
 class SpectralFieldData
 {
-    friend class PsatdAlgorithm;
 
     // Define the FFTplans type, which holds one fft plan per box
     // (plans are only initialized for the boxes that are owned by
@@ -41,10 +40,10 @@ class SpectralFieldData
                                const int field_index, const int i_comp);
         void BackwardTransform( amrex::MultiFab& mf,
                                const int field_index, const int i_comp);
-
-    private:
         // `fields` stores fields in spectral space, as multicomponent FabArray
         SpectralField fields;
+
+    private:
         // tmpRealField and tmpSpectralField store fields
         // right before/after the Fourier transform
         SpectralField tmpSpectralField; // contains Complexs

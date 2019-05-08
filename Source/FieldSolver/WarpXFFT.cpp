@@ -136,7 +136,7 @@ WarpX::AllocLevelDataFFT (int lev)
         RealVect dx_vect(dx[0], dx[2]);
 #endif
         spectral_solver_fp[lev].reset( new SpectralSolver( ba_fp_fft, dm_fp_fft,
-                 nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev] ) );
+                 nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev] ) );
     }
 
     // rho2 has one extra ghost cell, so that it's safe to deposit charge density after
