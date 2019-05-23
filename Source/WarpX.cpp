@@ -537,13 +537,13 @@ WarpX::ValidateParameters ()
 #ifdef AMREX_USE_CUDA
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( (WarpX::current_deposition_algo != 1) and
                                       (WarpX::current_deposition_algo != 2),
-            "When running with GPUs, use warpx.current_deposition_algo = 0 or 3" );
+            "When running with GPUs, use algo.current_deposition = 0 or 3" );
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( (WarpX::charge_deposition_algo != 0),
-            "When running with GPUs, use warpx.charge_deposition_algo = 1" );    
+            "When running with GPUs, use algo.charge_deposition = 1" );    
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( (WarpX::field_gathering_algo != 0),
-            "When running with GPUs, use warpx.field_gathering_algo = 1" );    
+            "When running with GPUs, use algo.field_gathering = 1" );    
 
 #endif
 }
