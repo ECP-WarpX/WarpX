@@ -527,6 +527,25 @@ WarpX::ReadParameters ()
         pp.query("config", insitu_config);
         pp.query("pin_mesh", insitu_pin_mesh);
     }
+
+    ValidateParameters();
+}
+
+void
+WarpX::ValidateParameters ()
+{
+#ifdef AMREX_USE_CUDA
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( (WarpX::current_deposition_algo != 1) and
+                                      (WarpX::current_deposition_algo != 2),
+            "When running with GPUs, use warpx.current_deposition_algo = 0 or 3" );
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( (WarpX::charge_deposition_algo != 0),
+            "When running with GPUs, use warpx.charge_deposition_algo = 1" );    
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( (WarpX::field_gathering_algo != 0),
+            "When running with GPUs, use warpx.field_gathering_algo = 1" );    
+
+#endif
 }
 
 // This is a virtual function.

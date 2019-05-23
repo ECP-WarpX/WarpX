@@ -195,6 +195,8 @@ public:
     void SyncRho (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rhof,
                   amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rhoc);
 
+    void ValidateParameters ();
+    
     int getistep (int lev) const {return istep[lev];}
     void setistep (int lev, int ii) {istep[lev] = ii;}
     amrex::Real gett_new (int lev) const {return t_new[lev];}
@@ -215,8 +217,8 @@ public:
 
     void WritePlotFileES(const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                          const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E);
-
+                         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E);  
+    
     static std::array<amrex::Real,3> CellSize (int lev);
     static amrex::RealBox getRealBox(const amrex::Box& bx, int lev);
     static std::array<amrex::Real,3> LowerCorner (const amrex::Box& bx, int lev);
