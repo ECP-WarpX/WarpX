@@ -84,11 +84,11 @@ WarpX::WriteWarpXHeader(const std::string& name) const
 
 	// Geometry
 	for (int i = 0; i < AMREX_SPACEDIM; ++i) {
-            HeaderFile << Geometry::ProbLo(i) << ' ';
+            HeaderFile << Geom(0).ProbLo(i) << ' ';
 	}
         HeaderFile << '\n';
         for (int i = 0; i < AMREX_SPACEDIM; ++i) {
-            HeaderFile << Geometry::ProbHi(i) << ' ';
+            HeaderFile << Geom(0).ProbHi(i) << ' ';
 	}
         HeaderFile << '\n';
 
@@ -283,7 +283,7 @@ WarpX::InitFromCheckpoint ()
 	    }
 	}
 
-	Geometry::ProbDomain(RealBox(prob_lo,prob_hi));
+        ResetProbDomain(RealBox(prob_lo,prob_hi));
 
 	for (int lev = 0; lev < nlevs; ++lev) {
 	    BoxArray ba;
@@ -422,14 +422,14 @@ WarpX::GetCellCenteredData() {
         AverageAndPackVectorField( *cc[lev], Efield_aux[lev], dcomp, ng );
         dcomp += 3;
         // then the magnetic field
-        AverageAndPackVectorField( *cc[lev], Efield_aux[lev], dcomp, ng );
+        AverageAndPackVectorField( *cc[lev], Bfield_aux[lev], dcomp, ng );
         dcomp += 3;
         // then the current density
         AverageAndPackVectorField( *cc[lev], current_fp[lev], dcomp, ng );
         dcomp += 3;
+        // then the charge density
         const std::unique_ptr<MultiFab>& charge_density = mypc->GetChargeDensity(lev);
         AverageAndPackScalarField( *cc[lev], *charge_density, dcomp, ng );
-
         cc[lev]->FillBoundary(geom[lev].periodicity());
     }
 
@@ -642,7 +642,7 @@ WarpX::WritePlotFile () const
         particle_varnames.push_back("uzold");
     }
 
-    mypc->WritePlotFile(plotfilename, particle_plot_flags, particle_varnames);
+    mypc->WritePlotFile(plotfilename, particle_varnames);
 
     WriteJobInfo(plotfilename);
 
