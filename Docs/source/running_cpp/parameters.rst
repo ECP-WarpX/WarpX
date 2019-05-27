@@ -29,12 +29,12 @@ Overall simulation parameters
     (The direction ``y`` cannot be used in 2D simulations.)
 
 * ``warpx.zmax_plasma_to_compute_max_step`` (`float`) optional
-    Can be useful when running in a boosted frame. If specified, automatically 
-    calculates the number of iterations required in the boosted frame for the 
-    lower `z` end of the simulation domain to reach 
-    ``warpx.zmax_plasma_to_compute_max_step`` (typically the plasma end, 
-    given in the lab frame). The value of ``max_step`` is overwritten, and 
-    printed to standard output. Currently only works if the Lorentz boost and 
+    Can be useful when running in a boosted frame. If specified, automatically
+    calculates the number of iterations required in the boosted frame for the
+    lower `z` end of the simulation domain to reach
+    ``warpx.zmax_plasma_to_compute_max_step`` (typically the plasma end,
+    given in the lab frame). The value of ``max_step`` is overwritten, and
+    printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
 
 * ``warpx.verbose`` (`0` or `1`)
@@ -188,8 +188,8 @@ Particle initialization
       This requires the additional parameter ``<species_name>.num_particles_per_cell``.
 
 * ``<species_name>.do_continuous_injection`` (`0` or `1`)
-    Whether to inject particles during the simulation, and not only at 
-    initialization. This can be required whith a moving window and/or when 
+    Whether to inject particles during the simulation, and not only at
+    initialization. This can be required whith a moving window and/or when
     running in a boosted frame.
 
 * ``<species_name>.profile`` (`string`)
@@ -295,20 +295,20 @@ Particle initialization
 * ``<species>.plot_species`` (`0` or `1` optional; default `1`)
     Whether to plot particle quantities for this species.
 
-* ``<species>.plot_vars`` (list of `strings` separated by spaces, optional) 
-    List of particle quantities to write to `plotfiles`. By defaults, all 
-    quantities are written to file. Choices are 
+* ``<species>.plot_vars`` (list of `strings` separated by spaces, optional)
+    List of particle quantities to write to `plotfiles`. By defaults, all
+    quantities are written to file. Choices are
     * ``w`` for the particle weight,
-    * ``ux`` ``uy`` ``uz`` for the particle momentum, 
+    * ``ux`` ``uy`` ``uz`` for the particle momentum,
     * ``Ex`` ``Ey`` ``Ez`` for the electric field on particles,
     * ``Bx`` ``By`` ``Bz`` for the magnetic field on particles.
-    The particle positions are always included. Use 
-    ``<species>.plot_vars = none`` to plot no particle data, except 
+    The particle positions are always included. Use
+    ``<species>.plot_vars = none`` to plot no particle data, except
     particle position.
 
 * ``<species>.do_boosted_frame_diags`` (`0` or `1` optional, default `1`)
-    Only used when ``warpx.do_boosted_frame_diagnostic=1``. When running in a 
-    boosted frame, whether or not to plot back-transformed diagnostics for 
+    Only used when ``warpx.do_boosted_frame_diagnostic=1``. When running in a
+    boosted frame, whether or not to plot back-transformed diagnostics for
     this species.
 
 * ``warpx.serialize_ics`` (`0 or 1`)
@@ -467,13 +467,13 @@ Laser initialization
 
 * ``<laser_name>.do_continuous_injection`` (`0` or `1`) optional (default `0`).
     Whether or not to use continuous injection (`0` or not `0`).
-    If the antenna starts outside of the simulation domain but enters it 
-    at some point (due to moving window or moving antenna in the boosted 
-    frame), use this so that the laser antenna is injected when it reaches 
-    the box boundary. If running in a boosted frame, this requires the 
-    boost direction, moving window direction and laser propagation direction 
-    to be along `z`. If not running in a boosted frame, this requires the 
-    moving window and laser propagation directions to be the same (`x`, `y` 
+    If the antenna starts outside of the simulation domain but enters it
+    at some point (due to moving window or moving antenna in the boosted
+    frame), use this so that the laser antenna is injected when it reaches
+    the box boundary. If running in a boosted frame, this requires the
+    boost direction, moving window direction and laser propagation direction
+    to be along `z`. If not running in a boosted frame, this requires the
+    moving window and laser propagation directions to be the same (`x`, `y`
     or `z`)
 
 * ``warpx.num_mirrors`` (`int`) optional (default `0`)
@@ -535,7 +535,7 @@ Numerics and algorithms
 
         The vectorized version does not run on GPU. Use
 		``algo.charge_deposition=1`` when running on GPU.
-       
+
 * ``algo.field_gathering`` (`integer`)
     The algorithm for field gathering:
 
@@ -581,17 +581,17 @@ Numerics and algorithms
     fields are defined at different points in space)
 
 * ``warpx.do_subcycling`` (`0` or `1`; default: 0)
-    Whether or not to use sub-cycling. Different refinement levels have a 
-    different cell size, which results in different Courant–Friedrichs–Lewy 
-    (CFL) limits for the time step. By default, when using mesh refinement, 
-    the same time step is used for all levels. This time step is 
-    taken as the CFL limit of the finest level. Hence, for coarser 
-    levels, the timestep is only a fraction of the CFL limit for this 
-    level, which may lead to numerical artifacts. With sub-cycling, each level 
-    evolves with its own time step, set to its own CFL limit. In practice, it 
-    means that when level 0 performs one iteration, level 1 performs two 
-    iterations. Currently, this option is only supported when 
-    ``amr.max_level = 1``. More information can be found at 
+    Whether or not to use sub-cycling. Different refinement levels have a
+    different cell size, which results in different Courant–Friedrichs–Lewy
+    (CFL) limits for the time step. By default, when using mesh refinement,
+    the same time step is used for all levels. This time step is
+    taken as the CFL limit of the finest level. Hence, for coarser
+    levels, the timestep is only a fraction of the CFL limit for this
+    level, which may lead to numerical artifacts. With sub-cycling, each level
+    evolves with its own time step, set to its own CFL limit. In practice, it
+    means that when level 0 performs one iteration, level 1 performs two
+    iterations. Currently, this option is only supported when
+    ``amr.max_level = 1``. More information can be found at
     https://ieeexplore.ieee.org/document/8659392.
 
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
@@ -616,6 +616,9 @@ Numerics and algorithms
     plans will simply be estimated (``FFTW_ESTIMATE`` mode).
     See `this section of the FFTW documentation <http://www.fftw.org/fftw3_doc/Planner-Flags.html>`__
     for more information.
+
+* ``pstad.v_galilean`` (3 floats, in units of the speed of light)
+    Defines the galilean velocity.
 
 Boundary conditions
 -------------------
@@ -658,7 +661,7 @@ Diagnostics and output
     The directory in which to save the lab frame data when using the
     **back-transformed diagnostics**. If not specified, the default is
     is `lab_frame_data`.
-    
+
 * ``warpx.num_snapshots_lab`` (`integer`)
     Only used when ``warpx.do_boosted_frame_diagnostic`` is ``1``.
     The number of lab-frame snapshots that will be written.
@@ -672,9 +675,9 @@ Diagnostics and output
     Whether to use the **back-transformed diagnostics** for the fields.
 
 * ``warpx.boosted_frame_diag_fields`` (space-separated list of `string`)
-    Which fields to dumped in back-transformed diagnostics. Choices are 
-    'Ex', 'Ey', Ez', 'Bx', 'By', Bz', 'jx', 'jy', jz' and 'rho'. Example: 
-    ``warpx.boosted_frame_diag_fields = Ex Ez By``. By default, all fields 
+    Which fields to dumped in back-transformed diagnostics. Choices are
+    'Ex', 'Ey', Ez', 'Bx', 'By', Bz', 'jx', 'jy', jz' and 'rho'. Example:
+    ``warpx.boosted_frame_diag_fields = Ex Ez By``. By default, all fields
     are dumped.
 
 * ``warpx.plot_raw_fields`` (`0` or `1`) optional (default `0`)

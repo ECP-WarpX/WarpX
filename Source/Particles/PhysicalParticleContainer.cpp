@@ -122,6 +122,8 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     // Parse galilean velocity
     ParmParse ppsatd("psatd");
     ppsatd.query("v_galilean", v_galilean);
+    // Scale the velocity by the speed of light                             
+    for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
 
 }
 
