@@ -22,7 +22,7 @@ public:
 
     virtual void InitData () override;
 
-#ifdef WARPX_DO_ELECTROSTATIC    
+#ifdef WARPX_DO_ELECTROSTATIC
     virtual void FieldGatherES(const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                                const amrex::Vector<std::unique_ptr<amrex::FabArray<amrex::BaseFab<int> > > >& masks) override;
 
@@ -30,7 +30,7 @@ public:
                                  amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                            amrex::Real t, amrex::Real dt) override;
 #endif // WARPX_DO_ELECTROSTATIC
-    
+
     virtual void FieldGather(int lev,
                              const amrex::MultiFab& Ex,
                              const amrex::MultiFab& Ey,
@@ -97,7 +97,7 @@ public:
                          amrex::Real q_tot, long npart);
 
     virtual void GetParticleSlice(const int direction, const amrex::Real z_old,
-                                  const amrex::Real z_new, const amrex::Real t_boost, 
+                                  const amrex::Real z_new, const amrex::Real t_boost,
                                   const amrex::Real t_lab, const amrex::Real dt,
                                   DiagnosticParticles& diagnostic_particles) final;
 
@@ -118,12 +118,16 @@ protected:
 			    const amrex::RealBox& overlap_realbox,
 			    const amrex::RealBox& tile_real_box,
 			    const amrex::RealBox& particle_real_box);
-  
+
     int GetRefineFac(const amrex::Real x, const amrex::Real y, const amrex::Real z);
     std::unique_ptr<amrex::IArrayBox> m_refined_injection_mask = nullptr;
 
     // Inject particles during the whole simulation
     void ContinuousInjection(const amrex::RealBox& injection_box) override;
+
+private:
+
+    amrex::Array<amrex::Real,3> v_galilean = {0,0,0};    
 
 };
 
