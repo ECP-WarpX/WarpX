@@ -17,8 +17,6 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
 {
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
-    amrex::Abort(); // Check that this is not used now.
-
     // Allocate the arrays of coefficients
     C_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     S_ck_coef = SpectralRealCoefficients(ba, dm, 1, 0);
