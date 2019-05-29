@@ -24,7 +24,7 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
     X2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
     X3_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
     X4_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
-
+    Theta2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
 
     // Fill them with the right values:
     // Loop over boxes and allocate the corresponding coefficients
