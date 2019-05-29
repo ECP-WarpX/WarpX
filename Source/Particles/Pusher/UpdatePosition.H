@@ -44,9 +44,9 @@ void UpdatePositionGalilean(
     // Update positions over one time step
     x += ux * inv_gamma * dt - vx;
 #if (AMREX_SPACEDIM == 3) || (defined WARPX_RZ) // RZ pushes particles in 3D
-    y += uy * inv_gamma * dt - vy;
+    y += uy * inv_gamma * dt - vy * dt;
 #endif
-    z += uz * inv_gamma * dt - vz;
+    z += uz * inv_gamma * dt - vz * dt;
 
 }
 
