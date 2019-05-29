@@ -47,7 +47,7 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
         Array4<Complex> X2 = X2_coef[mfi].array();
         Array4<Complex> X3 = X3_coef[mfi].array();
         Array4<Complex> X4 = X4_coef[mfi].array();
-        //Array4<Complex> Theta2 = Theta2_coef[mfi].array();
+        Array4<Complex> Theta2 = Theta2_coef[mfi].array();
         // Extract reals (for portability on GPU)
         Real vx = v_galilean[0];
         Real vy = v_galilean[1];
@@ -89,7 +89,8 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
                 const Complex theta = std::exp( 0.5*I*kv*dt );
                 const Complex theta_star = std::exp( -0.5*I*kv*dt );
                 const Complex e_theta = std::exp( I*c*k_norm*dt );
-                const Complex Theta2 = theta*theta;
+
+                Theta2(i,j,k) = theta*theta;
 
                 if ( (nu != 1.) && (nu != 0) ) {
 
@@ -108,7 +109,7 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
                                 /(theta_star-theta)/(ep0*k_norm*k_norm);
                     X3(i,j,k) = (x1 - theta_star*(1 - C(i,j,k)))
                                 /(theta_star-theta)/(ep0*k_norm*k_norm);
-                    X4(i,j,k) = I*kv*X1(i,j,k) - Theta2*S_ck(i,j,k)/ep0;
+                    X4(i,j,k) = I*kv*X1(i,j,k) - theta*theta*S_ck(i,j,k)/ep0;
                 }
                 if ( nu == 0) {
                     X1(i,j,k) = (1. - C(i,j,k)) / (ep0*c*c*k_norm*k_norm);
@@ -116,21 +117,21 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
                     X3(i,j,k) = (C(i,j,k) - S_ck(i,j,k)/dt) / (ep0*k_norm*k_norm);
                     X4(i,j,k) = -S_ck(i,j,k)/ep0;
                 }
-
                 if ( nu == 1.) {
                     X1(i,j,k) = (1. - e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*c*c*ep0*k_norm*k_norm);
                     X2(i,j,k) = (3. - 4.*e_theta + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*k_norm*k_norm*(1.- e_theta));
                     X3(i,j,k) = (3. - 2./e_theta - 2.*e_theta + e_theta*e_theta - 2.*I*c*k_norm*dt) / (4.*ep0*(e_theta - 1.)*k_norm*k_norm);
                     X4(i,j,k) = I*(-1. + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*c*k_norm);
                 }
-                else { // Handle k_norm = 0, by using the analytical limit
-                    C(i,j,k) = 1.;
-                    S_ck(i,j,k) = dt;
-                    X1(i,j,k) = c*c*dt*dt/(2. * ep0);
-                    X2(i,j,k) = c*c*dt*dt/(6. * ep0);
-                    X3(i,j,k) = - c*c*dt*dt/(3. * ep0);
-                    X4(i,j,k) = -dt/ep0;
-                }
+
+            } else { // Handle k_norm = 0, by using the analytical limit
+                C(i,j,k) = 1.;
+                S_ck(i,j,k) = dt;
+                X1(i,j,k) = c*c*dt*dt/(2. * ep0);
+                X2(i,j,k) = c*c*dt*dt/(6. * ep0);
+                X3(i,j,k) = - c*c*dt*dt/(3. * ep0);
+                X4(i,j,k) = -dt/ep0;
+                Theta2(i,j,k) = 1.;
             }
         });
     }
