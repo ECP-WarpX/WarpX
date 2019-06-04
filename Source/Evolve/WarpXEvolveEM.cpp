@@ -142,7 +142,7 @@ WarpX::EvolveEM (int numsteps)
         int num_moved = MoveWindow(move_j);
         
         if (max_level == 0) {
-            int num_redistribute_ghost = num_moved + 1;
+            int num_redistribute_ghost = num_moved + 2;
             mypc->RedistributeLocal(num_redistribute_ghost);
         }
         else {
