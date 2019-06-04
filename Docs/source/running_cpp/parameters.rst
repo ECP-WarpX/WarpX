@@ -187,6 +187,15 @@ Particle initialization
     * ``NRandomPerCell``: injection with a fixed number of randomly-distributed particles per cell.
       This requires the additional parameter ``<species_name>.num_particles_per_cell``.
 
+    * ``gaussian_beam``: Inject particle beam with gaussian distribution in
+      space in all directions. This requires additional parameters:
+      ``<species_name>.q_tot`` (beam charge),
+      ``<species_name>.npart`` (number of particles in the beam),
+      ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
+      ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
+      and optional argument ``<species_name>.do_symmetrize`` (whether to
+      symmetrize the beam in the x and y directions).
+
 * ``<species_name>.do_continuous_injection`` (`0` or `1`)
     Whether to inject particles during the simulation, and not only at
     initialization. This can be required whith a moving window and/or when
@@ -466,7 +475,7 @@ Laser initialization
     See definition in Akturk et al., Opt Express, vol 12, no 19 (2014).
 
 * ``<laser_name>.do_continuous_injection`` (`0` or `1`) optional (default `0`).
-    Whether or not to use continuous injection (`0` or not `0`).
+    Whether or not to use continuous injection.
     If the antenna starts outside of the simulation domain but enters it
     at some point (due to moving window or moving antenna in the boosted
     frame), use this so that the laser antenna is injected when it reaches
@@ -512,53 +521,60 @@ Numerics and algorithms
     Number of passes along each direction for the bilinear filter.
     In 2D simulations, only the first two values are read.
 
-* ``algo.current_deposition`` (`integer`)
-    The algorithm for current deposition:
+* ``algo.current_deposition`` (`string`, optional)
+    The algorithm for current deposition. Available options are:
 
-     - ``0``: Esirkepov deposition, vectorized
-     - ``1``: Esirkepov deposition, non-optimized
-     - ``2``: Direct deposition, vectorized
-     - ``3``: Direct deposition, non-optimized
+     - ``esirkepov``: the charge-conserving Esirkepov algorithm
+       (see `Esirkepov, Comp. Phys. Comm. (2001) <https://www.sciencedirect.com/science/article/pii/S0010465500002289>`__)
+     - ``direct``: simpler current deposition algorithm, described in
+       the section :doc:`../theory/picsar_theory`. Note that this algorithm is not strictly charge-conserving.
+     - ``direct-vectorized`` (only available in 3D, and when running on CPU/KNL - as opposed to GPU):
+       mathematically equivalent to ``direct``, but uses an optimized algorithm
+       for vectorization on CPU/KNL (see `Vincenti, Comp. Phys. Comm. (2017)
+       <https://www.sciencedirect.com/science/article/pii/S0010465516302764>`__)
 
-    .. warning::
+    If ``algo.current_deposition`` is not specified, the default is ``esirkepov``.
 
-        On GPU, use ``algo.current_deposition=0`` for Esirkepov
-	or ``3`` for direct deposition.
+* ``algo.charge_deposition`` (`string`, optional)
+    The algorithm for the charge density deposition. Available options are:
 
-* ``algo.charge_deposition`` (`integer`)
-    The algorithm for the charge density deposition:
+     - ``standard``: standard charge deposition algorithm, described in
+       the section :doc:`../theory/picsar_theory`.
+     - ``vectorized`` (only available in 3D, and when running on CPU/KNL - as opposed to GPU):
+       mathematically equivalent to ``standard``, but uses an optimized algorithm
+       for vectorization on CPU/KNL (see `Vincenti, Comp. Phys. Comm. (2017)
+       <https://www.sciencedirect.com/science/article/pii/S0010465516302764>`__)
 
-     - ``0``: Vectorized version
-     - ``1``: Non-optimized version
+    If ``algo.charge_deposition`` is not specified, ``vectorized`` is the default
+    whenever it is available ; ``standard`` is the default otherwise.
 
-    .. warning::
+* ``algo.field_gathering`` (`string`, optional)
+    The algorithm for field gathering. Available options are:
 
-        The vectorized version does not run on GPU. Use
-		``algo.charge_deposition=1`` when running on GPU.
+     - ``standard``: gathers directly from the grid points (either staggered
+       or nodal gridpoints depending on ``warpx.do_nodal``).
+     - ``vectorized`` (not available when running on GPU): mathematically
+       equivalent to ``standard``, but uses optimized vector instructions for CPU/KNL.
 
-* ``algo.field_gathering`` (`integer`)
-    The algorithm for field gathering:
+    If ``algo.field_gathering`` is not specified, ``vectorized`` is the default
+    on CPU/KNL ; ``standard`` is the default on GPU.
 
-     - ``0``: Vectorized version
-     - ``1``: Non-optimized version
+* ``algo.particle_pusher`` (`string`, optional)
+    The algorithm for the particle pusher. Available options are:
 
-    .. warning::
+     - ``boris``: Boris pusher.
+     - ``vay``: Vay pusher (see `Vay, Phys. Plasmas (2008) <https://aip.scitation.org/doi/10.1063/1.2837054>`__)
 
-        The vectorized version does not run on GPU. Use
-		``algo.field_gather=1`` when running on GPU.
+     If ``algo.particle_pusher`` is not specified, ``boris`` is the default.
 
-* ``algo.particle_pusher`` (`integer`)
-    The algorithm for the particle pusher:
+* ``algo.maxwell_fdtd_solver`` (`string`, optional)
+    The algorithm for the FDTD Maxwell field solver. Available options are:
 
-     - ``0``: Boris pusher
-     - ``1``: Vay pusher
+     - ``yee``: Yee FDTD solver.
+     - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
+       coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
 
-* ``algo.maxwell_fdtd_solver`` (`string`)
-    The algorithm for the FDTD Maxwell field solver:
-
-     - ``yee``: Yee FDTD solver
-     - ``ckc``: Cole-Karkkainen solver with Cowan
-       coefficients (see Cowan - PRST-AB 16, 041303 (2013))
+     If ``algo.maxwell_fdtd_solver`` is not specified, ``yee`` is the default.
 
 * ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`integer`)
     The order of the shape factors for the macroparticles, for the 3 dimensions of space.
@@ -713,6 +729,19 @@ Diagnostics and output
 
 * ``warpx.plot_B_field`` (`0` or `1` optional; default `1`)
     Whether to plot the magnetic field.
+
+* ``slice.dom_lo`` and ``slice.dom_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters similar to the units of the simulation box.)
+    The extent of the slice are defined by the co-ordinates of the lower corner (``slice.dom_lo``) and upper corner (``slice.dom_hi``). The slice could be 1D, 2D, or 3D, aligned with the co-ordinate axes and the first axis of the coordinates is x. For example: if for a 3D simulation, an x-z slice is to be extracted at y = 0.0, then the y-value of slice.dom_lo and slice.dom_hi must be equal to 0.0
+
+* ``slice.coarsening_ratio`` (`2 integers in 2D`, `3 integers in 3D`; default `1`)
+    The coarsening ratio input must be greater than 0. Default is 1 in all directions.
+    In the directions that is reduced, i.e., for an x-z slice in 3D, the reduced y-dimension has a default coarsening ratio equal to 1.
+
+* ``slice.plot_int`` (`integer`)
+    The number of PIC cycles inbetween two consecutive data dumps for the slice. Use a
+    negative number to disable slice generation and slice data dumping.
+
+
 
 Checkpoints and restart
 -----------------------
