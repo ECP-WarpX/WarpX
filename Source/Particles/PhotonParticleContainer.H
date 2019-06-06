@@ -80,9 +80,7 @@ public:
 
 //This function initialises the optical depth of the photons
 #ifdef WARPX_QED
-    virtual void InitOpticalDepth(
-                                    WarpXParIter& pti,
-                                    warpx_breit_wheeler_engine& engine);
+    virtual void InitOpticalDepth();
 #endif
 
 private:

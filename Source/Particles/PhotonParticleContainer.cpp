@@ -51,6 +51,11 @@ void PhotonParticleContainer::InitData()
         Redistribute();  // We then redistribute
     }
 
+#ifdef WARPX_QED
+//Calls a function to intialize the optical depths
+    InitOpticalDepth();
+#endif
+
 }
 
 void
@@ -110,17 +115,15 @@ PhotonParticleContainer::Evolve (int lev,
                                        cEx, cEy, cEz,
                                        cBx, cBy, cBz,
                                        t, dt);
-
 }
 
 
 #ifdef WARPX_QED
-void PhotonParticleContainer::InitOpticalDepth(
-    WarpXParIter& pti,
-    warpx_breit_wheeler_engine& engine)
+void PhotonParticleContainer::InitOpticalDepth()
 {
+    auto pti = WarpXParIter{*this, 0};
     auto& taus = pti.GetAttribs(particle_comps["tau"]);
     for(auto& tau: taus)
-        tau = engine.get_optical_depth();
+        tau = bw_engine->get_optical_depth();
 }
 #endif
