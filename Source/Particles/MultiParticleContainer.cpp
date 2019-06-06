@@ -1,6 +1,7 @@
 #include <limits>
 #include <algorithm>
 #include <string>
+#include <memory>
 
 #include <MultiParticleContainer.H>
 #include <WarpX_f.H>
@@ -8,17 +9,14 @@
 
 using namespace amrex;
 
-#ifdef WARPX_QED
-MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core):
-    bw_engine{std::move(init_warpx_breit_wheeler_engine())}
-#else
 MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
-#endif
 {
-
-
-
     ReadParameters();
+
+#ifdef WARPX_QED
+    //Prepares a shared pointer to the BW engine
+    bw_engine = std::make_shared<warpx_breit_wheeler_engine>();
+#endif
 
     allcontainers.resize(nspecies + nlasers);
     for (int i = 0; i < nspecies; ++i) {
@@ -29,7 +27,15 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
             allcontainers[i].reset(new RigidInjectedParticleContainer(amr_core, i, species_names[i]));
         }
         else if (species_types[i] == PCTypes::Photon) {
+
+#ifdef WARPX_QED
+            //Gives a pointer to the BW engine
+            allcontainers[i].reset(new PhotonParticleContainer(amr_core, i,
+                                    species_names[i], bw_engine));
+#else
             allcontainers[i].reset(new PhotonParticleContainer(amr_core, i, species_names[i]));
+#endif
+
         }
         allcontainers[i]->deposit_on_main_grid = deposit_on_main_grid[i];
     }
@@ -162,7 +168,6 @@ MultiParticleContainer::InitData ()
     pc_tmp->InitData();
 
 #ifdef WARPX_QED
-
     //Helper function
     auto does_file_exist = [](const char *fileName)
     {return (std::ifstream{fileName}).good(); };
@@ -170,19 +175,19 @@ MultiParticleContainer::InitData ()
     //Initialize the lookup tables
     //Generates tables if they do not exist
     if(!does_file_exist("bw_engine_dndt.bin")){
-        bw_engine.compute_dN_dt_lookup_table(&std::cout);
-        bw_engine.write_dN_dt_table("bw_engine_dndt.bin");
+        bw_engine->compute_dN_dt_lookup_table(&std::cout);
+        bw_engine->write_dN_dt_table("bw_engine_dndt.bin");
     }
     else{
-        bw_engine.read_dN_dt_table("bw_engine_dndt.bin");
+        bw_engine->read_dN_dt_table("bw_engine_dndt.bin");
     }
 
     if(!does_file_exist("bw_engine_pair.bin")){
-        bw_engine.compute_cumulative_pair_table(&std::cout);
-        bw_engine.write_cumulative_pair_table("bw_engine_pair.bin");
+        bw_engine->compute_cumulative_pair_table(&std::cout);
+        bw_engine->write_cumulative_pair_table("bw_engine_pair.bin");
     }
     else{
-        bw_engine.read_cumulative_pair_table("bw_engine_pair.bin");
+        bw_engine->read_cumulative_pair_table("bw_engine_pair.bin");
     }
 #endif
 

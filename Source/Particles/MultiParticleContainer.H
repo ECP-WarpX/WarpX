@@ -136,7 +136,7 @@ public:
     void Checkpoint (const std::string& dir) const;
 
     void WritePlotFile (const std::string& dir) const;
-    
+
     void Restart (const std::string& dir);
 
     void PostRestart ();
@@ -192,7 +192,7 @@ public:
 
     //bw_engine is a public member of the MultiParticleContainer object
 #ifdef WARPX_QED
-    warpx_breit_wheeler_engine bw_engine;
+    std::shared_ptr<warpx_breit_wheeler_engine> bw_engine;
 #endif
 
 protected:

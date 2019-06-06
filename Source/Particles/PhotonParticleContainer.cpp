@@ -13,9 +13,19 @@
 
 using namespace amrex;
 
+#ifdef WARPX_QED
+//A copy of the BW engine should be passed to the constructor
+PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecies,
+                        const std::string& name,
+                        std::shared_ptr<warpx_breit_wheeler_engine> bw_engine)
+    :
+    PhysicalParticleContainer(amr_core, ispecies, name),
+    bw_engine{bw_engine}
+#else
 PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecies,
                                                   const std::string& name)
     : PhysicalParticleContainer(amr_core, ispecies, name)
+#endif
 {
 
     // This will read <species>.[...] from the inputs file
@@ -40,6 +50,7 @@ void PhotonParticleContainer::InitData()
     if (maxLevel() > 0) {
         Redistribute();  // We then redistribute
     }
+
 }
 
 void
