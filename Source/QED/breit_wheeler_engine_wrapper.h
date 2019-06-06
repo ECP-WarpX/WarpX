@@ -11,13 +11,12 @@
 
 #include "amrex_rng_wrapper.h"
 
-using warpx_breit_wheeler_engine =
-  picsar::multi_physics::breit_wheeler_engine<amrex::Real, amrex_rng_wrapper>;
-
-//Helper function to initialize the engine
-inline warpx_breit_wheeler_engine init_warpx_breit_wheeler_engine(){
-  return  warpx_breit_wheeler_engine{std::move(amrex_rng_wrapper{})};
-}
+class warpx_breit_wheeler_engine:
+  public picsar::multi_physics::breit_wheeler_engine<amrex::Real, amrex_rng_wrapper>
+{
+  public:
+    warpx_breit_wheeler_engine();
+};
 
 //___________________________________________
 
