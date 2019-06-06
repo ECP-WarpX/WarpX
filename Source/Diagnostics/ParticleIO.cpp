@@ -22,8 +22,8 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
         int zinject_plane_tmp;
         is >> zinject_plane_tmp;
         zinject_plane_levels.push_back(zinject_plane_tmp);
-        WarpX::GotoNextLine(is);        
-    } 
+        WarpX::GotoNextLine(is);
+    }
 
     for (int i = 0; i < nlevs; ++i)
     {
@@ -31,7 +31,7 @@ RigidInjectedParticleContainer::ReadHeader (std::istream& is)
         is >> done_injecting_tmp;
         done_injecting.push_back(done_injecting_tmp);
         WarpX::GotoNextLine(is);
-    }     
+    }
 }
 
 void
@@ -76,11 +76,11 @@ MultiParticleContainer::Checkpoint (const std::string& dir) const
 void
 MultiParticleContainer::WritePlotFile (const std::string& dir) const
 {
-    Vector<std::string> int_names;    
+    Vector<std::string> int_names;
     Vector<int> int_flags;
 
     for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
-        auto& pc = allcontainers[i];                
+        auto& pc = allcontainers[i];
         if (pc->plot_species) {
 
             Vector<std::string> real_names;
@@ -89,30 +89,36 @@ MultiParticleContainer::WritePlotFile (const std::string& dir) const
             real_names.push_back("momentum_x");
             real_names.push_back("momentum_y");
             real_names.push_back("momentum_z");
-            
+
             real_names.push_back("Ex");
             real_names.push_back("Ey");
             real_names.push_back("Ez");
-            
+
             real_names.push_back("Bx");
             real_names.push_back("By");
             real_names.push_back("Bz");
-            
+
 #ifdef WARPX_RZ
             real_names.push_back("theta");
 #endif
-            
+
             if (WarpX::do_boosted_frame_diagnostic && pc->DoBoostedFrameDiags())
             {
                 real_names.push_back("xold");
                 real_names.push_back("yold");
                 real_names.push_back("zold");
-                
+
                 real_names.push_back("uxold");
                 real_names.push_back("uyold");
                 real_names.push_back("uzold");
             }
-                        
+
+#ifdef WARPX_QED
+            //If the species is a photon, add the tau field 
+            if(species_types[i] == PCTypes::Photon)
+                real_names.push_back("tau");
+#endif
+
             // Convert momentum to SI
             pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
             // real_names contains a list of all particle attributes.
@@ -135,7 +141,7 @@ MultiParticleContainer::Restart (const std::string& dir)
 }
 
 void
-MultiParticleContainer::ReadHeader (std::istream& is) 
+MultiParticleContainer::ReadHeader (std::istream& is)
 {
     for (auto& pc : allcontainers) {
 	pc->ReadHeader(is);
@@ -150,7 +156,7 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
     }
 }
 
-// Particle momentum is defined as gamma*velocity, which is neither 
+// Particle momentum is defined as gamma*velocity, which is neither
 // SI mass*gamma*velocity nor normalized gamma*velocity/c.
 // This converts momentum to SI units (or vice-versa) to write SI data
 // to file.
