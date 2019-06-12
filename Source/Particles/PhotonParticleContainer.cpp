@@ -121,9 +121,11 @@ PhotonParticleContainer::Evolve (int lev,
 #ifdef WARPX_QED
 void PhotonParticleContainer::InitOpticalDepth()
 {
-    auto pti = WarpXParIter{*this, 0};
-    auto& taus = pti.GetAttribs(particle_comps["tau"]);
-    for(auto& tau: taus)
-        tau = bw_engine->get_optical_depth();
+    int num_levels = finestLevel() + 1;
+    for (int lev = 0; lev < num_levels; ++lev)
+        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+            for(auto& tau: pti.GetAttribs(particle_comps["tau"]))
+                tau = bw_engine->get_optical_depth();        
+
 }
 #endif
