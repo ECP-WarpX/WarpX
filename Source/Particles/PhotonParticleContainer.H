@@ -78,9 +78,13 @@ public:
                               int lev,
                               amrex::Real dt ) override {};
 
-//This function initialises the optical depth of the photons
 #ifdef WARPX_QED
-    virtual void InitOpticalDepth();
+    //This function initialises the optical depth of the photons
+    void InitOpticalDepth();
+
+    //This function evolves the optical depth of the photons
+    void EvolveOpticalDepth (int lev, amrex::Real dt);
+
 #endif
 
 private:

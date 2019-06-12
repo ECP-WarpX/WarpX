@@ -1,5 +1,6 @@
 CEXE_headers += amrex_rng_wrapper.h
 CEXE_headers += breit_wheeler_engine_wrapper.h
+CEXE_headers += qed_commons.h
 CEXE_sources += breit_wheeler_engine_wrapper.cpp
 CEXE_sources += amrex_rng_wrapper.cpp
 

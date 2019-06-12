@@ -4,9 +4,11 @@
 //This file provides a wrapper aroud the breit_wheeler engine
 //provided by the standard template library
 
+
+
 //BW ENGINE
 //#define PXRMP_GPU __host__ __device__
-#define PXRMP_WITH_SI_UNITS
+#include "warpx_qed_commons.h"
 #include "breit_wheeler_engine.hpp"
 
 #include "amrex_rng_wrapper.h"

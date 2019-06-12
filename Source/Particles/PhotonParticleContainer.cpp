@@ -115,17 +115,66 @@ PhotonParticleContainer::Evolve (int lev,
                                        cEx, cEy, cEz,
                                        cBx, cBy, cBz,
                                        t, dt);
+
+#ifdef WARPX_QED
+    //Evolves the optical depth of the photons
+    EvolveOpticalDepth(lev, dt);
+#endif
 }
 
 
 #ifdef WARPX_QED
+//This function initialises the optical depth of the photons
 void PhotonParticleContainer::InitOpticalDepth()
 {
+    BL_PROFILE("PhotonParticleContainer::InitOpticalDepth");
+    //Looping over all the particles
     int num_levels = finestLevel() + 1;
     for (int lev = 0; lev < num_levels; ++lev)
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
             for(auto& tau: pti.GetAttribs(particle_comps["tau"]))
-                tau = bw_engine->get_optical_depth();        
+                tau = bw_engine->get_optical_depth();
 
 }
+
+void PhotonParticleContainer::EvolveOpticalDepth (int lev, amrex::Real dt)
+{
+    BL_PROFILE("PhotonParticleContainer::EvolveOpticalDepth");
+    //Looping over all the particles in level lev
+    for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+    {
+        auto& attribs = pti.GetAttribs();
+        const long np = pti.numParticles();
+        auto& uxp = attribs[PIdx::ux];
+        auto& uyp = attribs[PIdx::uy];
+        auto& uzp = attribs[PIdx::uz];
+        auto& Exp = attribs[PIdx::Ex];
+        auto& Eyp = attribs[PIdx::Ey];
+        auto& Ezp = attribs[PIdx::Ez];
+        auto& Bxp = attribs[PIdx::Bx];
+        auto& Byp = attribs[PIdx::By];
+        auto& Bzp = attribs[PIdx::Bz];
+        auto&  wp = attribs[PIdx::w];
+        auto& taus = pti.GetAttribs(particle_comps["tau"]);
+
+        for(size_t i = 0; i < np; ++i){
+            bool has_event_happened;
+            //We ignore the time at which the event takes place
+            std::tie(has_event_happened, std::ignore) =
+                bw_engine->evolve_opt_depth_and_determine_event(
+                qed_me_c*uxp[i], qed_me_c*uyp[i], qed_me_c*uzp[i],
+                Exp[i], Eyp[i], Ezp[i],
+                Bxp[i], Byp[i], Bzp[i],
+                dt, taus[i]);
+
+            if(has_event_happened)
+                wp[i] = -1.; // Should kill the particle...
+
+
+        }
+
+    }
+
+}
+
 #endif

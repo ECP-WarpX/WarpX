@@ -1,11 +1,11 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 200
+max_step = 4000
 amr.n_cell =  128 128
 amr.max_grid_size = 128   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 32 # minimum size of each AMReX box, used to decompose the domain
-amr.plot_int = 10
+amr.plot_int = 100
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 0     0      # Is periodic?
 geometry.prob_lo     = -30.e-6   -56.e-6    # physical domain
@@ -71,14 +71,14 @@ photons.z_rms = .5e-6
 photons.x_m = 0.
 photons.y_m = 0.
 photons.z_m = -28.e-6
-photons.npart = 100
+photons.npart = 500
 photons.q_tot = -1.e-12
 photons.profile = "constant"
 photons.density = 8.e23 # not used in case of a gaussian beam
 photons.momentum_distribution_type = "gaussian"
 photons.ux_m = 0.0
 photons.uy_m = 0.0
-photons.uz_m = 500.
+photons.uz_m = 800.
 photons.ux_th = 2.
 photons.uy_th = 2.
 photons.uz_th = 50.
@@ -93,7 +93,7 @@ laser1.profile      = Gaussian
 laser1.position     = 0. 0. 9.e-6        # This point is on the laser plane
 laser1.direction    = 0. 0. 1.           # The plane normal direction
 laser1.polarization = 0. 1. 0.           # The main polarization vector
-laser1.e_max        = 16.e12             # Maximum amplitude of the laser field (in V/m)
+laser1.e_max        = 16.e14             # Maximum amplitude of the laser field (in V/m)
 laser1.profile_waist = 5.e-6             # The waist of the laser (in m)
 laser1.profile_duration = 15.e-15        # The duration of the laser (in s)
 laser1.profile_t_peak = 30.e-15          # Time at which the laser reaches its peak (in s)
