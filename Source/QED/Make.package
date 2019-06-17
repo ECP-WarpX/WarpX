@@ -1,8 +1,11 @@
 CEXE_headers += amrex_rng_wrapper.h
 CEXE_headers += breit_wheeler_engine_wrapper.h
 CEXE_headers += qed_commons.h
+CEXE_headers += schwinger_pair_prod_wrapper.h
 CEXE_sources += breit_wheeler_engine_wrapper.cpp
 CEXE_sources += amrex_rng_wrapper.cpp
+CEXE_sources += schwinger_pair_prod_wrapper.cpp
+CEXE_sources += warpx_schwinger_pair_prod_methods.cpp
 
 INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/QED
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/QED

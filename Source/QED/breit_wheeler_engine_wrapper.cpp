@@ -1,5 +1,5 @@
 //This file provides a wrapper aroud the breit_wheeler engine
-//provided by the standard template library
+//provided by PICSAR QED
 
 #include "breit_wheeler_engine_wrapper.h"
 

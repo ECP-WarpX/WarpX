@@ -30,6 +30,10 @@
 #include <SpectralSolver.H>
 #endif
 
+#ifdef WARPX_QED
+#include "schwinger_pair_prod_wrapper.h"
+#endif
+
 #if defined(BL_USE_SENSEI_INSITU)
 namespace amrex {
 class AmrMeshInSituBridge;
@@ -149,7 +153,7 @@ public:
     BilinearFilter bilinear_filter;
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_exeybz;
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_bxbyez;
-    
+
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
     amrex::Vector<amrex::Real> mirror_z_width;
@@ -306,6 +310,11 @@ private:
     void ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp);
     void AddRhoFromFineLevelandSumBoundary (int lev, int icomp, int ncomp);
     void NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp);
+
+#ifdef WARPX_QED
+    void DoSchwingerPairProduction(); //Implemented in QED/warpx_schwinger_pair_prod_methods
+    warpx_schwinger_pair_engine schwinger_engine;
+#endif
 
 #ifdef WARPX_DO_ELECTROSTATIC
     ///

@@ -1,5 +1,5 @@
 #ifndef WARPX_amrex_rng_wrapper_h_
-#define WARPX_rng_wrapper_h_
+#define WARPX_amrex_rng_wrapper_h_
 
 //This file provides a wrapper aroud the RNG
 //provided by the amrex library

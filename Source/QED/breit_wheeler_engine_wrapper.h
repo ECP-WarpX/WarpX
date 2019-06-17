@@ -2,9 +2,7 @@
 #define WARPX_breit_wheeler_engine_wrapper_h_
 
 //This file provides a wrapper aroud the breit_wheeler engine
-//provided by the standard template library
-
-
+//provided by PICSAR QED
 
 //BW ENGINE
 //#define PXRMP_GPU __host__ __device__
