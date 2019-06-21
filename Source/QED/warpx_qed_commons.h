@@ -11,5 +11,4 @@
 const amrex::Real qed_me_c =
   picsar::multi_physics::electron_mass * picsar::multi_physics::light_speed;
 
-
 #endif //WARPX_qed_commons_h_

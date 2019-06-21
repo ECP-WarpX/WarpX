@@ -101,8 +101,10 @@ WarpX::EvolveEM (int numsteps)
             amrex::Abort("Unsupported do_subcycling type");
         }
 
-#ifdef WARPX_QED //Calls the schwinger pair production routine
-    DoSchwingerPairProduction();
+#ifdef WARPX_QED
+    //Calls the schwinger pair production routine if flag is true
+    if(qed_do_schwinger_pair_prod)
+        DoSchwingerPairProduction(dt[0]);
 #endif
 
         if (num_mirrors>0){

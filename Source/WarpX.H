@@ -312,7 +312,12 @@ private:
     void NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp);
 
 #ifdef WARPX_QED
-    void DoSchwingerPairProduction(); //Implemented in QED/warpx_schwinger_pair_prod_methods
+    //QED_TODO: set these quantities via inputfile
+    bool qed_do_schwinger_pair_prod=true; //This flag should be set via inputfile
+    amrex::Real qed_default_dz_if_2_dimensions = 1.0;
+    //___
+
+    void DoSchwingerPairProduction(amrex::Real a_dt); //Implemented in QED/warpx_schwinger_pair_prod_methods
     warpx_schwinger_pair_engine schwinger_engine;
 #endif
 
