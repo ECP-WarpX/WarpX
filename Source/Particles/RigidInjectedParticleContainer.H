@@ -56,6 +56,12 @@ public:
                         const amrex::MultiFab& Bx,
                         const amrex::MultiFab& By,
                         const amrex::MultiFab& Bz) override;
+                        
+    virtual void warpx_copy_attribs(const long* np,
+                            const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,
+                            const amrex::Real* uxp, const amrex::Real* uyp, const amrex::Real* uzp,
+                            amrex::Real* xpold, amrex::Real* ypold, amrex::Real* zpold,
+                            amrex::Real* uxpold, amrex::Real* uypold, amrex::Real* uzpold);
 
 private:
 
