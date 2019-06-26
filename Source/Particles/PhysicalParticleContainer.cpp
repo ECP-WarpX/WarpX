@@ -2077,6 +2077,7 @@ PhysicalParticleContainer::warpx_copy_attribs(const long* np,
 			uxpold[n]=uxp[n];
 			uypold[n]=uyp[n];
 			uzpold[n]=uzp[n];
+	}
 }
 
 /* \brief Inject particles during the simulation
