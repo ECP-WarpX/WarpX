@@ -27,6 +27,10 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
         allcontainers[i].reset(new LaserParticleContainer(amr_core,i, lasers_names[i-nspecies]));
     }
 
+    // For each species, get the ID of its target species.
+    // This is used for ionization and pair creation processes.
+    mapSpeciesTarget();
+
     pc_tmp.reset(new PhysicalParticleContainer(amr_core));
 
     // Compute the number of species for which lab-frame data is dumped
@@ -84,7 +88,9 @@ MultiParticleContainer::ReadParameters ()
             pp.queryarr("deposit_on_main_grid", tmp);
             for (auto const& name : tmp) {
                 auto it = std::find(species_names.begin(), species_names.end(), name);
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(it != species_names.end(), "ERROR: species in particles.deposit_on_main_grid must be part of particles.species_names");
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(it != species_names.end(), 
+                    "ERROR: species in particles.deposit_on_main_grid "
+                    "must be part of particles.species_names");
                 int i = std::distance(species_names.begin(), it);
                 deposit_on_main_grid[i] = 1;
             }
@@ -97,7 +103,9 @@ MultiParticleContainer::ReadParameters ()
             if (!rigid_injected_species.empty()) {
                 for (auto const& name : rigid_injected_species) {
                     auto it = std::find(species_names.begin(), species_names.end(), name);
-                    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(it != species_names.end(), "ERROR: species in particles.rigid_injected_species must be part of particles.species_names");
+                    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(it != species_names.end(), 
+                        "ERROR: species in particles.rigid_injected_species "
+                        "must be part of particles.species_names");
                     int i = std::distance(species_names.begin(), it);
                     species_types[i] = PCTypes::RigidInjected;
                 }
@@ -483,4 +491,45 @@ MultiParticleContainer::doContinuousInjection() const
         }
     }
     return warpx_do_continuous_injection;
+}
+
+/* \brief Get ID for target species of each species.
+ * The users specifies the name of the target species, 
+ * this routine get the ID of the target species.
+ */
+void
+MultiParticleContainer::mapSpeciesTarget()
+{
+    // Set target species for ionization
+    for (int i=0; i<nspecies; i++){
+        auto& pc = allcontainers[i];
+        // If species pc has ionization on, find species with name 
+        // pc->ionization_target_name and store its ID into 
+        // pc->ionization_target.
+        if (pc->do_field_ionization){
+            int i_target = getSpeciesID(pc->ionization_target_name);
+            pc->ionization_target = i_target;
+        }
+    }
+}
+
+/* \brief For a species name, return its ID.
+ */
+int
+MultiParticleContainer::getSpeciesID(std::string target_str)
+{
+    int i_target;
+    bool found = 0;
+    // Loop over species
+    for (int i=0; i<nspecies; i++){
+        // If species name matches, store its ID
+        // into i_target
+        if (species_names[i] == target_str){
+            found = 1;
+            i_target = i;
+        }
+    }
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(found != 0,
+        "ERROR: could not find ID for species");
+    return i_target;
 }

@@ -256,6 +256,8 @@ public:
     }
 
     int DoBoostedFrameDiags () const { return do_boosted_frame_diags; }
+
+    virtual void setIonizationTarget(int i_target) {};
     
 protected:
 
@@ -275,6 +277,10 @@ protected:
     // This is currently required because continuous injection does not 
     // support all features allowed by direct injection.
     int do_continuous_injection = 0;
+
+    int do_field_ionization = 0;
+    int ionization_target;
+    std::string ionization_target_name;
 
     int do_boosted_frame_diags = 1;
 

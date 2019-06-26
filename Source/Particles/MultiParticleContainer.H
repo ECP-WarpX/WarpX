@@ -31,7 +31,7 @@ public:
     ~MultiParticleContainer() {}
 
     WarpXParticleContainer& GetParticleContainer (int ispecies) {
-	return *allcontainers[ispecies];
+        return *allcontainers[ispecies];
     }
 
     std::array<amrex::Real, 3> meanParticleVelocity(int ispecies) {
@@ -205,6 +205,8 @@ private:
     std::unique_ptr<PhysicalParticleContainer> pc_tmp;
 
     void ReadParameters ();
+    void mapSpeciesTarget ();
+    int getSpeciesID (std::string target_str);
 
     // Number of species dumped in BoostedFrameDiagnostics
     int nspecies_boosted_frame_diags = 0;
