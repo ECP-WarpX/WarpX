@@ -63,6 +63,10 @@ public:
                             amrex::Real* xpold, amrex::Real* ypold, amrex::Real* zpold,
                             amrex::Real* uxpold, amrex::Real* uypold, amrex::Real* uzpold);
 
+    virtual void ReadHeader (std::istream& is) override;
+
+    virtual void WriteHeader (std::ostream& os) const override;
+    
 private:
 
     // User input quantities

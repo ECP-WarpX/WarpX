@@ -25,7 +25,7 @@ class SpectralFieldData
     // (plans are only initialized for the boxes that are owned by
     // the local MPI rank)
 #ifdef AMREX_USE_GPU
-    // Add cuFFT-specific code
+    using FFTplans = amrex::LayoutData<cufftHandle>;
 #else
     using FFTplans = amrex::LayoutData<fftw_plan>;
 #endif
@@ -47,7 +47,8 @@ class SpectralFieldData
         SpectralField fields;
         // tmpRealField and tmpSpectralField store fields
         // right before/after the Fourier transform
-        SpectralField tmpRealField, tmpSpectralField;
+        SpectralField tmpSpectralField; // contains Complexs
+        amrex::MultiFab tmpRealField; // contains Reals
         FFTplans forward_plan, backward_plan;
         // Correcting "shift" factors when performing FFT from/to
         // a cell-centered grid in real space, instead of a nodal grid
