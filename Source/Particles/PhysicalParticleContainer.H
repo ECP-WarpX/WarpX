@@ -128,9 +128,6 @@ protected:
     // Inject particles during the whole simulation
     void ContinuousInjection(const amrex::RealBox& injection_box) override;
 
-private:
-
-    amrex::Array<amrex::Real,3> v_galilean = {0,0,0};    
 
 };
 

@@ -314,7 +314,7 @@ subroutine warpx_charge_deposition(rho,np,xp,yp,zp,w,q,xmin,ymin,zmin,dx,dy,dz,n
   !>
   subroutine warpx_current_deposition( &
     jx,jx_ng,jx_ntot,jy,jy_ng,jy_ntot,jz,jz_ng,jz_ntot, &
-    np,xp,yp,zp,uxp,uyp,uzp,gaminv,w,q,xmin,ymin,zmin,dt,dx,dy,dz,nox,noy,noz,&
+    np,xp,yp,zp,uxp,uyp,uzp,vx_gal,vy_gal,vz_gal,gaminv,w,q,xmin,ymin,zmin,dt,dx,dy,dz,nox,noy,noz,&   !oshapoval
     l_nodal,lvect,current_depo_algo) &
     bind(C, name="warpx_current_deposition")
 
@@ -330,6 +330,7 @@ subroutine warpx_charge_deposition(rho,np,xp,yp,zp,w,q,xmin,ymin,zmin,dx,dy,dz,n
     real(amrex_real), intent(IN)                                     :: xmin,ymin,zmin
     real(amrex_real), intent(IN),  dimension(np)                     :: xp,yp,zp,w
     real(amrex_real), intent(IN),  dimension(np)                     :: uxp,uyp,uzp
+    real(amrex_real), intent(IN),  dimension(np)                     :: vx_gal,vy_gal,vz_gal     !oshapoval
     real(amrex_real), intent(IN),  dimension(np)                     :: gaminv
     integer(c_long), intent(IN)                                   :: lvect
     integer(c_long), intent(IN)                                   :: current_depo_algo
@@ -361,7 +362,7 @@ subroutine warpx_charge_deposition(rho,np,xp,yp,zp,w,q,xmin,ymin,zmin,dx,dy,dz,n
         jx,jx_nguards,jx_nvalid,            &
         jy,jy_nguards,jy_nvalid,            &
         jz,jz_nguards,jz_nvalid,            &
-        np,xp,yp,zp,uxp,uyp,uzp,gaminv,w,q, &
+        np,xp,yp,zp,uxp,uyp,uzp,vx_gal,vy_gal,vz_gal,gaminv,w,q, & !oshapoval
         xmin,zmin,dt,dx,dz,nox,noz,pxr_l_nodal, &
         lvect,current_depo_algo)
 #endif
