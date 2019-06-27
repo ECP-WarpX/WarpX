@@ -82,7 +82,7 @@ public:
 
     void SplitParticles(int lev);
 
-    virtual long copyParticles(int lev) override;
+    virtual void copyParticles(int lev) override;
 
     // Inject particles in Box 'part_box'
     virtual void AddParticles (int lev);

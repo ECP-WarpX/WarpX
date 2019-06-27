@@ -2073,17 +2073,23 @@ PhysicalParticleContainer::ContinuousInjection(const RealBox& injection_box)
     AddPlasma(lev, injection_box);
 }
 
-long
+/* \brief Copy particles at lev and store into MultiParticleContainer::pc_tmp.
+ * \param lev: refinement level
+ */
+void
 PhysicalParticleContainer::copyParticles(int lev)
 {
+    // Get instance of unique_ptr MultiParticleContainer::pc_tmp.
     auto& mypc = WarpX::GetInstance().GetPartContainer();
     auto& pc_ion = mypc.GetPCtmp();
+    // Declare a bunch of temporary arrays
     Cuda::ManagedDeviceVector<Real> xp, yp, zp;
     RealVector elec_x, elec_y, elec_z, elec_w;
     RealVector elec_ux, elec_uy, elec_uz;
     long elec_np = 0;
-    // Loop over particle interator
+    // Iterate over grids
     for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti){
+        // Get particle arrays within each grid
         pti.GetPosition(xp, yp, zp);
         // particle Array Of Structs data
         auto& particles = pti.GetArrayOfStructs();
@@ -2093,6 +2099,8 @@ PhysicalParticleContainer::copyParticles(int lev)
         auto& uxp = attribs[PIdx::ux];
         auto& uyp = attribs[PIdx::uy];
         auto& uzp = attribs[PIdx::uz];
+        // Loop over particles within each grid, and append 
+        // particle quantities to temporary arrays
         const long np = pti.numParticles();
         for(int i=0; i<np; i++){
             auto& p = particles[i];
@@ -2105,27 +2113,18 @@ PhysicalParticleContainer::copyParticles(int lev)
             elec_w.push_back(  wp[i] );
         }
         elec_np += np;
-        pc_ion.AddNParticles(lev, 
-                              elec_np,
-                              elec_x.dataPtr(),
-                              elec_y.dataPtr(),
-                              elec_z.dataPtr(),
-                              elec_ux.dataPtr(),
-                              elec_uy.dataPtr(),
-                              elec_uz.dataPtr(),
-                              1,
-                              elec_w.dataPtr(),
-                              1, -1);
     }
-
-    /*
-      elec_xp = elec_x.dataPtr();
-    elec_yp = elec_y.dataPtr();
-    elec_zp = elec_z.dataPtr();
-    elec_uxp = elec_ux.dataPtr();
-    elec_uyp = elec_uy.dataPtr();
-    elec_uzp = elec_uz.dataPtr();
-    elec_wp = elec_w.dataPtr();
-    */
-    return elec_np;
+    // Fill MultiParticleContainer::pc_tmp with particle quantities
+    // in the temporary arrays
+    pc_ion.AddNParticles(lev, 
+                         elec_np,
+                         elec_x.dataPtr(),
+                         elec_y.dataPtr(),
+                         elec_z.dataPtr(),
+                         elec_ux.dataPtr(),
+                         elec_uy.dataPtr(),
+                         elec_uz.dataPtr(),
+                         1,
+                         elec_w.dataPtr(),
+                         1, -1);
 }

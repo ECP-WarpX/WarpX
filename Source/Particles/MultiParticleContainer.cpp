@@ -557,29 +557,13 @@ void
 MultiParticleContainer::doFieldIonization()
 {
     for (auto& pc : allcontainers){
-        long elec_np = 0;
         for (int lev = 0; lev <= pc->finestLevel(); ++lev){
             // If ionization off for this species, do not do anything.
             if (!pc->do_field_ionization){ continue; }
-            // WarpXParticleContainer* pc_ion = (WarpXParticleContainer*) pc_tmp;
-            // std::unique_ptr<WarpXParticleContainer> pc_ion = static_cast<std::unique_ptr<PhysicalParticleContainer> >(pc_tmp);
-            elec_np = pc->copyParticles(lev);
-            /*
-            pc_tmp->AddNParticles(lev, 
-                                  elec_np,
-                                  elec_x,
-                                  elec_y,
-                                  elec_z,
-                                  elec_ux,
-                                  elec_uy,
-                                  elec_uz,
-                                  1,
-                                  elec_w,
-                                  1, -1);
-            auto target_pc = allcontainers[pc->ionization_target];
-            target_pc->addParticles(pc_tmp, 1);
+            pc->copyParticles(lev);
+            auto& target_pc = allcontainers[pc->ionization_target];
+            target_pc->addParticles(*pc_tmp, 1);
             pc_tmp->clearParticles();
-            */
         }
     }
 }
