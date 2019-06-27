@@ -207,8 +207,8 @@ private:
     std::unique_ptr<PhysicalParticleContainer> pc_tmp;
 
     void ReadParameters ();
-    void mapSpeciesTarget ();
-    int getSpeciesID (std::string target_str);
+    void mapSpeciesProduct ();
+    int getSpeciesID (std::string product_str);
 
     // Number of species dumped in BoostedFrameDiagnostics
     int nspecies_boosted_frame_diags = 0;

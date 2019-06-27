@@ -27,9 +27,9 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
         allcontainers[i].reset(new LaserParticleContainer(amr_core,i, lasers_names[i-nspecies]));
     }
 
-    // For each species, get the ID of its target species.
+    // For each species, get the ID of its product species.
     // This is used for ionization and pair creation processes.
-    mapSpeciesTarget();
+    mapSpeciesProduct();
 
     pc_tmp.reset(new PhysicalParticleContainer(amr_core));
 
@@ -493,21 +493,21 @@ MultiParticleContainer::doContinuousInjection() const
     return warpx_do_continuous_injection;
 }
 
-/* \brief Get ID of target species of each species.
- * The users specifies the name of the target species, 
+/* \brief Get ID of product species of each species.
+ * The users specifies the name of the product species, 
  * this routine get its ID.
  */
 void
-MultiParticleContainer::mapSpeciesTarget()
+MultiParticleContainer::mapSpeciesProduct()
 {
     for (int i=0; i<nspecies; i++){
         auto& pc = allcontainers[i];
         // If species pc has ionization on, find species with name 
-        // pc->ionization_target_name and store its ID into 
-        // pc->ionization_target.
+        // pc->ionization_product_name and store its ID into 
+        // pc->ionization_product.
         if (pc->do_field_ionization){
-            int i_target = getSpeciesID(pc->ionization_target_name);
-            pc->ionization_target = i_target;
+            int i_product = getSpeciesID(pc->ionization_product_name);
+            pc->ionization_product = i_product;
         }
     }
 }
@@ -515,25 +515,25 @@ MultiParticleContainer::mapSpeciesTarget()
 /* \brief Given a species name, return its ID.
  */
 int
-MultiParticleContainer::getSpeciesID(std::string target_str)
+MultiParticleContainer::getSpeciesID(std::string product_str)
 {
-    int i_target;
+    int i_product;
     bool found = 0;
     // Loop over species
     for (int i=0; i<nspecies; i++){
         // If species name matches, store its ID
-        // into i_target
-        if (species_names[i] == target_str){
+        // into i_product
+        if (species_names[i] == product_str){
             found = 1;
-            i_target = i;
+            i_product = i;
         }
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(found != 0,
         "ERROR: could not find ID for species");
-    return i_target;
+    return i_product;
 }
 
-/* \brief Find ionized particles and create target electrons
+/* \brief Find ionized particles and create product electrons
  */
 void
 MultiParticleContainer::doFieldIonization()
@@ -545,10 +545,10 @@ MultiParticleContainer::doFieldIonization()
             // Fill MultiParticleContainer::pc_tmp with a copy of all
             // ionizable particles.
             pc->copyParticles(lev);
-            // For current species, get target species
-            auto& target_pc = allcontainers[pc->ionization_target];
-            // Add species in pc_tmp to target species
-            target_pc->addParticles(*pc_tmp, 1);
+            // For current species, get product species
+            auto& product_pc = allcontainers[pc->ionization_product];
+            // Add species in pc_tmp to product species
+            product_pc->addParticles(*pc_tmp, 1);
             // Clear pc_tmp
             pc_tmp->clearParticles();
         }

@@ -83,7 +83,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("split_type", split_type);
 
     pp.query("do_field_ionization", do_field_ionization);
-    pp.query("ionization_target", ionization_target_name);
+    pp.query("ionization_product", ionization_product_name);
     pp.query("do_continuous_injection", do_continuous_injection);
 
     // Whether to plot back-transformed (lab-frame) diagnostics 

@@ -259,7 +259,7 @@ public:
 
     int DoBoostedFrameDiags () const { return do_boosted_frame_diags; }
 
-    virtual void setIonizationTarget(int i_target) {};
+    virtual void setIonizationProduct(int i_product) {};
 
 protected:
 
@@ -281,8 +281,8 @@ protected:
     int do_continuous_injection = 0;
 
     int do_field_ionization = 0;
-    int ionization_target;
-    std::string ionization_target_name;
+    int ionization_product;
+    std::string ionization_product_name;
 
     int do_boosted_frame_diags = 1;
 
