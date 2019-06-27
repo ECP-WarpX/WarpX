@@ -560,9 +560,14 @@ MultiParticleContainer::doFieldIonization()
         for (int lev = 0; lev <= pc->finestLevel(); ++lev){
             // If ionization off for this species, do not do anything.
             if (!pc->do_field_ionization){ continue; }
+            // Fill MultiParticleContainer::pc_tmp with a copy of all
+            // ionizable particles.
             pc->copyParticles(lev);
+            // For current species, get target species
             auto& target_pc = allcontainers[pc->ionization_target];
+            // Add species in pc_tmp to target species
             target_pc->addParticles(*pc_tmp, 1);
+            // Clear pc_tmp
             pc_tmp->clearParticles();
         }
     }
