@@ -82,14 +82,7 @@ public:
 
     void SplitParticles(int lev);
 
-    virtual long copyParticles(int lev, 
-                               RealVector elec_x,
-                               RealVector elec_y,
-                               RealVector elec_z,
-                               RealVector elec_ux,
-                               RealVector elec_uy,
-                               RealVector elec_uz,
-                               RealVector elec_w) override;
+    virtual long copyParticles(int lev) override;
 
     // Inject particles in Box 'part_box'
     virtual void AddParticles (int lev);

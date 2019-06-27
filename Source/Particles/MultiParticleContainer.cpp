@@ -2,9 +2,28 @@
 #include <algorithm>
 #include <string>
 
+#include <array>
+
+#include "AMReX_REAL.H"
+#include <AMReX_Vector.H>
+#include <WarpXConst.H>
+#include <WarpXParser.H>
+#include "AMReX_ParmParse.H"
+#include "AMReX_Utility.H"
+#include <AMReX_AmrParGDB.H>
+#include <WarpX_f.H>
+#include <WarpX.H>
+
 #include <MultiParticleContainer.H>
 #include <WarpX_f.H>
 #include <WarpX.H>
+
+
+#include <memory>
+
+#include <AMReX_Particles.H>
+#include <AMReX_AmrCore.H>
+
 
 using namespace amrex;
 
@@ -540,27 +559,27 @@ MultiParticleContainer::doFieldIonization()
     for (auto& pc : allcontainers){
         long elec_np = 0;
         for (int lev = 0; lev <= pc->finestLevel(); ++lev){
-            RealVector elec_x, elec_y, elec_z, elec_w;
-            RealVector elec_ux, elec_uy, elec_uz;
             // If ionization off for this species, do not do anything.
             if (!pc->do_field_ionization){ continue; }
-            elec_np = pc->copyParticles(lev, elec_x, elec_y, elec_z, 
-                                        elec_ux, elec_uy, elec_uz,
-                                        elec_w);
+            // WarpXParticleContainer* pc_ion = (WarpXParticleContainer*) pc_tmp;
+            // std::unique_ptr<WarpXParticleContainer> pc_ion = static_cast<std::unique_ptr<PhysicalParticleContainer> >(pc_tmp);
+            elec_np = pc->copyParticles(lev);
+            /*
             pc_tmp->AddNParticles(lev, 
                                   elec_np,
-                                  elec_x.dataPtr(),
-                                  elec_y.dataPtr(),
-                                  elec_z.dataPtr(),
-                                  elec_ux.dataPtr(),
-                                  elec_uy.dataPtr(),
-                                  elec_uz.dataPtr(),
+                                  elec_x,
+                                  elec_y,
+                                  elec_z,
+                                  elec_ux,
+                                  elec_uy,
+                                  elec_uz,
                                   1,
-                                  elec_w.dataPtr(),
+                                  elec_w,
                                   1, -1);
             auto target_pc = allcontainers[pc->ionization_target];
             target_pc->addParticles(pc_tmp, 1);
             pc_tmp->clearParticles();
+            */
         }
     }
 }

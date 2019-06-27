@@ -9,6 +9,13 @@
 #include <AMReX_Particles.H>
 #include <AMReX_IArrayBox.H>
 
+
+#include <AMReX_AmrCore.H>
+
+
+
+
+
 #include <WarpXParticleContainer.H>
 #include <PhysicalParticleContainer.H>
 #include <RigidInjectedParticleContainer.H>
@@ -206,7 +213,7 @@ private:
     amrex::Vector<std::unique_ptr<WarpXParticleContainer> > allcontainers;
     // Temporary particle container, used e.g. for particle splitting.
     std::unique_ptr<PhysicalParticleContainer> pc_tmp;
-
+    
     void ReadParameters ();
     void mapSpeciesTarget ();
     int getSpeciesID (std::string target_str);

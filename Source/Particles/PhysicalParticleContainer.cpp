@@ -2074,16 +2074,13 @@ PhysicalParticleContainer::ContinuousInjection(const RealBox& injection_box)
 }
 
 long
-PhysicalParticleContainer::copyParticles(int lev, 
-                                         RealVector elec_x,
-                                         RealVector elec_y,
-                                         RealVector elec_z,
-                                         RealVector elec_ux,
-                                         RealVector elec_uy,
-                                         RealVector elec_uz,
-                                         RealVector elec_w)
+PhysicalParticleContainer::copyParticles(int lev)
 {
+    auto& mypc = WarpX::GetInstance().GetPartContainer();
+    auto& pc_ion = mypc.GetPCtmp();
     Cuda::ManagedDeviceVector<Real> xp, yp, zp;
+    RealVector elec_x, elec_y, elec_z, elec_w;
+    RealVector elec_ux, elec_uy, elec_uz;
     long elec_np = 0;
     // Loop over particle interator
     for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti){
@@ -2108,6 +2105,27 @@ PhysicalParticleContainer::copyParticles(int lev,
             elec_w.push_back(  wp[i] );
         }
         elec_np += np;
+        pc_ion.AddNParticles(lev, 
+                              elec_np,
+                              elec_x.dataPtr(),
+                              elec_y.dataPtr(),
+                              elec_z.dataPtr(),
+                              elec_ux.dataPtr(),
+                              elec_uy.dataPtr(),
+                              elec_uz.dataPtr(),
+                              1,
+                              elec_w.dataPtr(),
+                              1, -1);
     }
+
+    /*
+      elec_xp = elec_x.dataPtr();
+    elec_yp = elec_y.dataPtr();
+    elec_zp = elec_z.dataPtr();
+    elec_uxp = elec_ux.dataPtr();
+    elec_uyp = elec_uy.dataPtr();
+    elec_uzp = elec_uz.dataPtr();
+    elec_wp = elec_w.dataPtr();
+    */
     return elec_np;
 }
