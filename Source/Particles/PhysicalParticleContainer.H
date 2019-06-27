@@ -78,7 +78,7 @@ public:
                         const amrex::MultiFab& By,
                         const amrex::MultiFab& Bz) override;
 
-    virtual void PostRestart () final {};
+    virtual void PostRestart () final {}
 
     void SplitParticles(int lev);
 

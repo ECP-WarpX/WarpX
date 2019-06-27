@@ -2099,7 +2099,7 @@ PhysicalParticleContainer::copyParticles(int lev)
         auto& uxp = attribs[PIdx::ux];
         auto& uyp = attribs[PIdx::uy];
         auto& uzp = attribs[PIdx::uz];
-        // Loop over particles within each grid, and append 
+        // Loop over particles within each grid, and copy
         // particle quantities to temporary arrays
         const long np = pti.numParticles();
         for(int i=0; i<np; i++){

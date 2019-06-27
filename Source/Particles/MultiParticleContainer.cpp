@@ -2,28 +2,9 @@
 #include <algorithm>
 #include <string>
 
-#include <array>
-
-#include "AMReX_REAL.H"
-#include <AMReX_Vector.H>
-#include <WarpXConst.H>
-#include <WarpXParser.H>
-#include "AMReX_ParmParse.H"
-#include "AMReX_Utility.H"
-#include <AMReX_AmrParGDB.H>
-#include <WarpX_f.H>
-#include <WarpX.H>
-
 #include <MultiParticleContainer.H>
 #include <WarpX_f.H>
 #include <WarpX.H>
-
-
-#include <memory>
-
-#include <AMReX_Particles.H>
-#include <AMReX_AmrCore.H>
-
 
 using namespace amrex;
 
@@ -512,14 +493,13 @@ MultiParticleContainer::doContinuousInjection() const
     return warpx_do_continuous_injection;
 }
 
-/* \brief Get ID for target species of each species.
+/* \brief Get ID of target species of each species.
  * The users specifies the name of the target species, 
- * this routine get the ID of the target species.
+ * this routine get its ID.
  */
 void
 MultiParticleContainer::mapSpeciesTarget()
 {
-    // Set target species for ionization
     for (int i=0; i<nspecies; i++){
         auto& pc = allcontainers[i];
         // If species pc has ionization on, find species with name 
@@ -532,7 +512,7 @@ MultiParticleContainer::mapSpeciesTarget()
     }
 }
 
-/* \brief For a species name, return its ID.
+/* \brief Given a species name, return its ID.
  */
 int
 MultiParticleContainer::getSpeciesID(std::string target_str)
@@ -553,6 +533,8 @@ MultiParticleContainer::getSpeciesID(std::string target_str)
     return i_target;
 }
 
+/* \brief Find ionized particles and create target electrons
+ */
 void
 MultiParticleContainer::doFieldIonization()
 {
