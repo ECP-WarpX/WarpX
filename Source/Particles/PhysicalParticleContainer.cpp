@@ -2072,3 +2072,42 @@ PhysicalParticleContainer::ContinuousInjection(const RealBox& injection_box)
     const int lev=0;
     AddPlasma(lev, injection_box);
 }
+
+long
+PhysicalParticleContainer::copyParticles(int lev, 
+                                         RealVector elec_x,
+                                         RealVector elec_y,
+                                         RealVector elec_z,
+                                         RealVector elec_ux,
+                                         RealVector elec_uy,
+                                         RealVector elec_uz,
+                                         RealVector elec_w)
+{
+    Cuda::ManagedDeviceVector<Real> xp, yp, zp;
+    long elec_np = 0;
+    // Loop over particle interator
+    for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti){
+        pti.GetPosition(xp, yp, zp);
+        // particle Array Of Structs data
+        auto& particles = pti.GetArrayOfStructs();
+        // particle Struct Of Arrays data
+        auto& attribs = pti.GetAttribs();
+        auto& wp  = attribs[PIdx::w ];
+        auto& uxp = attribs[PIdx::ux];
+        auto& uyp = attribs[PIdx::uy];
+        auto& uzp = attribs[PIdx::uz];
+        const long np = pti.numParticles();
+        for(int i=0; i<np; i++){
+            auto& p = particles[i];
+            elec_x.push_back(  xp[i] );
+            elec_y.push_back(  yp[i] );
+            elec_z.push_back(  zp[i] );
+            elec_ux.push_back( uxp[i] );
+            elec_uy.push_back( uyp[i] );
+            elec_uz.push_back( uzp[i] );
+            elec_w.push_back(  wp[i] );
+        }
+        elec_np += np;
+    }
+    return elec_np;
+}

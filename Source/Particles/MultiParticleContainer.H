@@ -7,6 +7,7 @@
 #include <string>
 
 #include <AMReX_Particles.H>
+#include <AMReX_IArrayBox.H>
 
 #include <WarpXParticleContainer.H>
 #include <PhysicalParticleContainer.H>
@@ -126,6 +127,8 @@ public:
     /// This version uses PICSAR routines to perform the deposition.
     ///    
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
+
+    void doFieldIonization();
 
     void Checkpoint (const std::string& dir) const;
 

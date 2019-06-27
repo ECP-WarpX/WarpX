@@ -78,9 +78,18 @@ public:
                         const amrex::MultiFab& By,
                         const amrex::MultiFab& Bz) override;
 
-    virtual void PostRestart () final {}
+    virtual void PostRestart () final {};
 
     void SplitParticles(int lev);
+
+    virtual long copyParticles(int lev, 
+                               RealVector elec_x,
+                               RealVector elec_y,
+                               RealVector elec_z,
+                               RealVector elec_ux,
+                               RealVector elec_uy,
+                               RealVector elec_uz,
+                               RealVector elec_w) override;
 
     // Inject particles in Box 'part_box'
     virtual void AddParticles (int lev);

@@ -258,6 +258,15 @@ public:
     int DoBoostedFrameDiags () const { return do_boosted_frame_diags; }
 
     virtual void setIonizationTarget(int i_target) {};
+
+    virtual long copyParticles(int lev, 
+                               RealVector elec_x,
+                               RealVector elec_y,
+                               RealVector elec_z,
+                               RealVector elec_ux,
+                               RealVector elec_uy,
+                               RealVector elec_uz,
+                               RealVector elec_w) {return 0;};
     
 protected:
 

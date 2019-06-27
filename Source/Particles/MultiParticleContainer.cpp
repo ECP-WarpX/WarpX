@@ -533,3 +533,34 @@ MultiParticleContainer::getSpeciesID(std::string target_str)
         "ERROR: could not find ID for species");
     return i_target;
 }
+
+void
+MultiParticleContainer::doFieldIonization()
+{
+    for (auto& pc : allcontainers){
+        long elec_np = 0;
+        for (int lev = 0; lev <= pc->finestLevel(); ++lev){
+            RealVector elec_x, elec_y, elec_z, elec_w;
+            RealVector elec_ux, elec_uy, elec_uz;
+            // If ionization off for this species, do not do anything.
+            if (!pc->do_field_ionization){ continue; }
+            elec_np = pc->copyParticles(lev, elec_x, elec_y, elec_z, 
+                                        elec_ux, elec_uy, elec_uz,
+                                        elec_w);
+            pc_tmp->AddNParticles(lev, 
+                                  elec_np,
+                                  elec_x.dataPtr(),
+                                  elec_y.dataPtr(),
+                                  elec_z.dataPtr(),
+                                  elec_ux.dataPtr(),
+                                  elec_uy.dataPtr(),
+                                  elec_uz.dataPtr(),
+                                  1,
+                                  elec_w.dataPtr(),
+                                  1, -1);
+            auto target_pc = allcontainers[pc->ionization_target];
+            target_pc->addParticles(pc_tmp, 1);
+            pc_tmp->clearParticles();
+        }
+    }
+}
