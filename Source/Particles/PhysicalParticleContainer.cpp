@@ -81,10 +81,21 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_backward_propagation", do_backward_propagation);
     pp.query("do_splitting", do_splitting);
     pp.query("split_type", split_type);
-
     pp.query("do_field_ionization", do_field_ionization);
-    pp.query("ionization_product", ionization_product_name);
     pp.query("do_continuous_injection", do_continuous_injection);
+    if (do_field_ionization){
+        AddRealComp("ionization_level");
+        plot_flags.resize(PIdx::nattribs + 1, 1);
+        pp.get("ionization_product", ionization_product_name);
+        int species_ionization_level;
+        pp.get("species_ionization_level", species_ionization_level);
+        //Looping over all the particles
+        int num_levels = finestLevel() + 1;
+        for (int lev = 0; lev <= num_levels; ++lev)
+            for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+                for(auto& ionization_level: pti.GetAttribs(particle_comps["ionization_level"]))
+                    ionization_level = species_ionization_level;
+    }
 
     // Whether to plot back-transformed (lab-frame) diagnostics 
     // for this species.
@@ -2099,6 +2110,7 @@ PhysicalParticleContainer::copyParticles(int lev)
         auto& uxp = attribs[PIdx::ux];
         auto& uyp = attribs[PIdx::uy];
         auto& uzp = attribs[PIdx::uz];
+        // auto& ilevp = attribs[PIdx::nattribs];
         // Loop over particles within each grid, and copy
         // particle quantities to temporary arrays
         const long np = pti.numParticles();

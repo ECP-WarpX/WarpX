@@ -191,7 +191,7 @@ public:
                               int lev,
                               amrex::Real dt );
 
-    virtual void copyParticles(int lev) {return 0;};
+    virtual void copyParticles(int lev) {};
 
     // If particles start outside of the domain, ContinuousInjection 
     // makes sure that they are initialized when they enter the domain, and 

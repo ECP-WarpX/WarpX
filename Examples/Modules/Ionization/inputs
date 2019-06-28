@@ -35,7 +35,8 @@ ions.momentum_distribution_type = "gaussian"
 ions.ux_m = 0.
 ions.uz_m = 0.
 ions.do_field_ionization = 1
-ions.ionization_target = target
+ions.ionization_product = target
+ions.species_ionization_level = 2
 
 target.charge = -q_e
 target.mass = m_e
