@@ -17,7 +17,7 @@ geometry.prob_hi     =  20.e-6    20.e-6
 warpx.serialize_ics = 1
 warpx.do_pml = 0
 warpx.cfl = 1.0
-amr.plot_int = 1
+amr.plot_int = -1
 
 #################################
 ############ PLASMA #############
@@ -36,7 +36,7 @@ ions.ux_m = 0.
 ions.uz_m = 0.
 ions.do_field_ionization = 1
 ions.ionization_product = target
-ions.species_ionization_level = 2
+ions.ionization_level = 2
 
 target.charge = -q_e
 target.mass = m_e

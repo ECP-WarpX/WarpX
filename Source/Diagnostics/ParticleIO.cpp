@@ -113,8 +113,9 @@ MultiParticleContainer::WritePlotFile (const std::string& dir) const
                 real_names.push_back("uzold");
             }
 
-            if(pc->do_field_ionization)
-                real_names.push_back("ionization_level");
+            real_names.push_back("ionization_level");
+            //if(pc->do_field_ionization)
+            //    real_names.push_back("ionization_level");
             
             // Convert momentum to SI
             pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
