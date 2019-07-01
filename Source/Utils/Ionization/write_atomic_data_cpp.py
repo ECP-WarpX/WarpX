@@ -62,6 +62,6 @@ cpp_string += '    };\n\n'
 
 # Write the string to file
 cpp_string += '#endif // #ifndef WARPX_IONIZATION_TABLE_H_\n'
-f= open("WarpXIonizationTable.H","w")
+f= open("IonizationEnergiesTable.H","w")
 f.write(cpp_string)
 f.close()
