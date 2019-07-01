@@ -22,7 +22,7 @@ cpp_string += '#ifndef WARPX_IONIZATION_TABLE_H_\n'
 cpp_string += '#define WARPX_IONIZATION_TABLE_H_\n\n'
 
 # Map each element to ID in table
-cpp_string += 'std::map<std::string, int> ion_map_ids = {'
+cpp_string += 'const std::map<std::string, int> ion_map_ids = {'
 for count, name in enumerate(ion_names):
     cpp_string += '\n    {"' + name + '", ' + str(count) + '},'
 cpp_string = cpp_string[:-1]

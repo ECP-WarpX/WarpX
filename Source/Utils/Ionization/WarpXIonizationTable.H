@@ -4,7 +4,7 @@
 #ifndef WARPX_IONIZATION_TABLE_H_
 #define WARPX_IONIZATION_TABLE_H_
 
-std::map<std::string, int> ion_map_ids = {
+const std::map<std::string, int> ion_map_ids = {
     {"H", 0},
     {"He", 1},
     {"Li", 2},
