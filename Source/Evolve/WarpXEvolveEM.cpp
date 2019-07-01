@@ -148,9 +148,7 @@ WarpX::EvolveEM (int numsteps)
         
         if (max_level == 0) {
             int num_redistribute_ghost = num_moved + 1;
-            Print()<<"14\n";
             mypc->RedistributeLocal(num_redistribute_ghost);
-            Print()<<"15\n";
         }
         else {
             mypc->Redistribute();
@@ -281,7 +279,6 @@ WarpX::OneStep_nosub (Real cur_time)
     // Loop over species. For each ionizable species, create particles in 
     // product species.
     mypc->doFieldIonization();
-    Print()<<"10\n";
     // Push particle from x^{n} to x^{n+1}
     //               from p^{n-1/2} to p^{n+1/2}
     // Deposit current j^{n+1/2}
@@ -292,15 +289,13 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
 #endif
     PushParticlesandDepose(cur_time);
-    Print()<<"11\n";
-
+    
 #ifdef WARPX_USE_PY
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 #endif
 
     SyncCurrent();
-    Print()<<"12\n";
-
+    
     SyncRho(rho_fp, rho_cp);
 
     // Push E and B from {n} to {n+1}
@@ -323,8 +318,7 @@ WarpX::OneStep_nosub (Real cur_time)
         FillBoundaryE();
     }
     FillBoundaryB();
-    Print()<<"13\n";
-
+    
 #endif
 }
 

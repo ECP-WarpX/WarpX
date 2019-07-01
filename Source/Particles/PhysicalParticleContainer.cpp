@@ -81,24 +81,12 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_backward_propagation", do_backward_propagation);
     pp.query("do_splitting", do_splitting);
     pp.query("split_type", split_type);
+    pp.query("do_continuous_injection", do_continuous_injection); 
     pp.query("do_field_ionization", do_field_ionization);
-    pp.query("do_continuous_injection", do_continuous_injection);
-
-    AddRealComp("ionization_level");
-    plot_flags.resize(PIdx::nattribs + 1, 1);
-
     if (do_field_ionization){
-        int species_ionization_level;
-        pp.get("ionization_level", species_ionization_level);
         pp.get("ionization_product", ionization_product_name);
-        /*
-        //Looping over all the particles
-        int num_levels = finestLevel() + 1;
-        for (int lev = 0; lev <= num_levels; ++lev)
-            for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
-                for(auto& ionization_level: pti.GetAttribs(particle_comps["ionization_level"]))
-                    ionization_level = species_ionization_level;
-        */
+        AddRealComp("ionization_level");
+        plot_flags.resize(PIdx::nattribs + 1, 1);
     }
 
     // Whether to plot back-transformed (lab-frame) diagnostics 
@@ -137,6 +125,26 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     }
 }
 
+void PhysicalParticleContainer::InitIonizationLevel ()
+{
+    // Do not do anything if ionization is off for this species
+    if (!do_field_ionization) return;
+    
+    int species_ionization_level = 0;
+    ParmParse pp(species_name);
+    pp.query("ionization_level", species_ionization_level);
+    //Loop over all the particles
+    for (int lev = 0; lev <= finestLevel(); ++lev){
+        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti){
+            auto& ionization_level_array = pti.GetAttribs(particle_comps["ionization_level"]);
+            // Loop over particles and set ionization_level
+            for(auto& ionization_level: ionization_level_array){
+                ionization_level = species_ionization_level;
+            }
+        }
+    }
+}
+
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
     : WarpXParticleContainer(amr_core, 0)
 {
@@ -149,6 +157,7 @@ void PhysicalParticleContainer::InitData()
     if (maxLevel() > 0) {
         Redistribute();  // We then redistribute
     }
+    InitIonizationLevel();
 }
 
 void PhysicalParticleContainer::MapParticletoBoostedFrame(Real& x, Real& y, Real& z, std::array<Real, 3>& u)
@@ -2094,7 +2103,6 @@ PhysicalParticleContainer::ContinuousInjection(const RealBox& injection_box)
 void
 PhysicalParticleContainer::copyParticles(int lev)
 {
-    Print()<<"1\n";
     // Get instance of unique_ptr MultiParticleContainer::pc_tmp.
     auto& mypc = WarpX::GetInstance().GetPartContainer();
     auto& pc_ion = mypc.GetPCtmp();
@@ -2103,7 +2111,6 @@ PhysicalParticleContainer::copyParticles(int lev)
     RealVector elec_x, elec_y, elec_z, elec_w;
     RealVector elec_ux, elec_uy, elec_uz;
     long elec_np = 0;
-    Print()<<"2\n";
     // Iterate over grids
     for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti){
         // Get particle arrays within each grid
@@ -2120,7 +2127,6 @@ PhysicalParticleContainer::copyParticles(int lev)
         // Loop over particles within each grid, and copy
         // particle quantities to temporary arrays
         const long np = pti.numParticles();
-    Print()<<"3\n";
         for(int i=0; i<np; i++){
             auto& p = particles[i];
             elec_x.push_back(  xp[i] );
@@ -2135,7 +2141,6 @@ PhysicalParticleContainer::copyParticles(int lev)
     }
     // Fill MultiParticleContainer::pc_tmp with particle quantities
     // in the temporary arrays
-    Print()<<"4\n";
     pc_ion.AddNParticles(lev, 
                          elec_np,
                          elec_x.dataPtr(),
@@ -2147,5 +2152,4 @@ PhysicalParticleContainer::copyParticles(int lev)
                          1,
                          elec_w.dataPtr(),
                          1, -1);
-    Print()<<"5\n";
 }

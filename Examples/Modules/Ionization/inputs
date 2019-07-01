@@ -17,7 +17,7 @@ geometry.prob_hi     =  20.e-6    20.e-6
 warpx.serialize_ics = 1
 warpx.do_pml = 0
 warpx.cfl = 1.0
-amr.plot_int = -1
+amr.plot_int = 1
 
 #################################
 ############ PLASMA #############

@@ -546,15 +546,11 @@ MultiParticleContainer::doFieldIonization()
             // ionizable particles.
             pc->copyParticles(lev);
             // For current species, get product species
-            Print()<<"6\n";
             auto& product_pc = allcontainers[pc->ionization_product];
-            Print()<<"7\n";
             // Add species in pc_tmp to product species
             product_pc->addParticles(*pc_tmp, 1);
-            Print()<<"8\n";
             // Clear pc_tmp
             pc_tmp->clearParticles();
-            Print()<<"9\n";
         }
     }
 }
