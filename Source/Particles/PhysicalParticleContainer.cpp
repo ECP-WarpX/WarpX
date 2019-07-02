@@ -86,17 +86,17 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     if (do_field_ionization){
         pp.get("ionization_product", ionization_product_name);
         pp.get("physical_element", physical_element);
+        // Add Real component for ionization level
         AddRealComp("ionization_level");
         plot_flags.resize(PIdx::nattribs + 1, 1);
-        ion_element_id = ion_map_ids[physical_element];
-        // ion_element_id = ion_map_ids["He"];
+        // Get atomic number and ionization energies from file
+        int ion_element_id = ion_map_ids[physical_element];
         ion_atomic_number = ion_atomic_numbers[ion_element_id];
         ionization_energies.resize(ion_atomic_number);
         int offset = ion_energy_offsets[ion_element_id];
         for(int i=0; i<ion_atomic_number; i++){
             ionization_energies[i] = table_ionization_energies[i+offset];
         }
-
         Print()<<"ion_atomic_number "<<ion_atomic_number<<'\n';
         Print()<<"ion_element_id "<<ion_element_id<<'\n';
         for(int i=0; i<ion_atomic_number; i++){

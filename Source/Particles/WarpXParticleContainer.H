@@ -284,7 +284,6 @@ protected:
     int ionization_product;
     std::string ionization_product_name;
     int ion_atomic_number;
-    int ion_element_id;
     amrex::Gpu::ManagedVector<amrex::Real> ionization_energies;
     std::string physical_element;
 
