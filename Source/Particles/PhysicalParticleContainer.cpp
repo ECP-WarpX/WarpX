@@ -1,5 +1,6 @@
 #include <limits>
 #include <sstream>
+#include <math.h>
 
 #include <MultiParticleContainer.H>
 #include <WarpX_f.H>
@@ -82,10 +83,10 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_splitting", do_splitting);
     pp.query("split_type", split_type);
     pp.query("do_continuous_injection", do_continuous_injection);
+    pp.query("do_field_ionization", do_field_ionization);
 
     // If do_field_ionization, read initialization data from input file and
     // read ionization energies from table.
-    pp.query("do_field_ionization", do_field_ionization);
     if (do_field_ionization)
         InitIonizationModule();
 
@@ -124,15 +125,16 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         }
     }
 }
+
 void PhysicalParticleContainer::InitIonizationModule()
 {
     ParmParse pp(species_name);
     pp.get("ionization_product", ionization_product_name);
     pp.get("physical_element", physical_element);
-// Add Real component for ionization level
+    // Add Real component for ionization level
     AddRealComp("ionization_level");
     plot_flags.resize(PIdx::nattribs + 1, 1);
-// Get atomic number and ionization energies from file
+    // Get atomic number and ionization energies from file
     int ion_element_id = ion_map_ids[physical_element];
     ion_atomic_number = ion_atomic_numbers[ion_element_id];
     ionization_energies.resize(ion_atomic_number);
@@ -140,29 +142,25 @@ void PhysicalParticleContainer::InitIonizationModule()
     for(int i=0; i<ion_atomic_number; i++){
         ionization_energies[i] = table_ionization_energies[i+offset];
     }
-    Print()<<"ion_atomic_number "<<ion_atomic_number<<'\n';
-    Print()<<"ion_element_id "<<ion_element_id<<'\n';
-    for(int i=0; i<ion_atomic_number; i++){
-        Print()<<"ionization_energies[i] "<<ionization_energies[i]<<'\n';
-    }
 
-    Print()<<"alpha "<<PhysConst::alpha<<'\n';
-    Print()<<"hbar  "<<PhysConst::hbar <<'\n';
-    Print()<<"r_e   "<<PhysConst::r_e  <<'\n';
+    // Compute ADK prefactors (See Chen, JCP 236 (2013), equation (2))
+    // For now, we assume l=0 and m=0.
+    // The approximate expressions are used, 
+    // without Gamma function
     Real wa = std::pow(PhysConst::alpha,3) * PhysConst::c / PhysConst::r_e;
     Real Ea = PhysConst::m_e * PhysConst::c*PhysConst::c /PhysConst::q_e * 
         std::pow(PhysConst::alpha,4)/PhysConst::r_e;
     Real UH = table_ionization_energies[0];
-    Print()<<"UH "<<UH<<'\n';
     Real l_eff = std::sqrt(UH/ionization_energies[0]) - 1.;
     adk_power.resize(ion_atomic_number);
     adk_prefactor.resize(ion_atomic_number);
     adk_exp_prefactor.resize(ion_atomic_number);
     for (int i=0; i<ion_atomic_number; ++i){
         Real n_eff = (i+1) * std::sqrt(UH/ionization_energies[i]);
-        Real C2 = 1./(2*MathConst::pi*n_eff) * 
-            std::pow(4*PhysConst::q_e*PhysConst::q_e/(n_eff*n_eff-l_eff*l_eff), n_eff) * 
-            std::pow((n_eff-l_eff)/(n_eff+l_eff), l_eff+.5);
+        //Real C2 = 1./(2*MathConst::pi*n_eff) *
+        //    std::pow(4*PhysConst::q_e*PhysConst::q_e/(n_eff*n_eff-l_eff*l_eff), n_eff) * 
+        //    std::pow((n_eff-l_eff)/(n_eff+l_eff), l_eff+.5);
+        Real C2 = std::pow(2,2*n_eff)/(n_eff*tgamma(n_eff+l_eff+1)*tgamma(n_eff-l_eff));
         adk_power[i] = -(2*n_eff - 1);
         Real dt = 1.;
         Real Uion = ionization_energies[i];
