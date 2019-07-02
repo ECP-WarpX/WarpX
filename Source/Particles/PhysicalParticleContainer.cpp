@@ -81,7 +81,10 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_backward_propagation", do_backward_propagation);
     pp.query("do_splitting", do_splitting);
     pp.query("split_type", split_type);
-    pp.query("do_continuous_injection", do_continuous_injection); 
+    pp.query("do_continuous_injection", do_continuous_injection);
+
+    // If do_field_ionization, read initialization data from input file and
+    // read ionization energies from table.
     pp.query("do_field_ionization", do_field_ionization);
     if (do_field_ionization){
         pp.get("ionization_product", ionization_product_name);
@@ -140,7 +143,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     }
 }
 
-void PhysicalParticleContainer::InitIonizationLevel ()
+void PhysicalParticleContainer::InitIonization ()
 {
     // Do not do anything if ionization is off for this species
     if (!do_field_ionization) return;
@@ -172,7 +175,7 @@ void PhysicalParticleContainer::InitData()
     if (maxLevel() > 0) {
         Redistribute();  // We then redistribute
     }
-    InitIonizationLevel();
+    InitIonization();
 }
 
 void PhysicalParticleContainer::MapParticletoBoostedFrame(Real& x, Real& y, Real& z, std::array<Real, 3>& u)

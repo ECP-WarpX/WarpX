@@ -22,7 +22,7 @@ public:
 
     virtual void InitData () override;
 
-    void InitIonizationLevel ();
+    void InitIonization ();
 
 #ifdef WARPX_DO_ELECTROSTATIC    
     virtual void FieldGatherES(const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
