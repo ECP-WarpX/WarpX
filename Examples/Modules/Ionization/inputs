@@ -37,6 +37,7 @@ ions.uz_m = 0.
 ions.do_field_ionization = 1
 ions.ionization_product = target
 ions.ionization_level = 2
+ions.physical_element = Rn
 
 target.charge = -q_e
 target.mass = m_e

@@ -12,7 +12,7 @@ regex_command = '\n\s+(\d+)\s+\|\s+([A-Z]+[a-z]*)\s+\w+\s+\|\s+\+*(\d+)\s+\|\s+\
 list_of_tuples = re.findall( regex_command, text_data )
 ion_atom_numbers = [int(i) for i in list(dict.fromkeys( [x[0] for x in list_of_tuples] ))]
 ion_names = list(dict.fromkeys( [x[1] for x in list_of_tuples] ))
-ion_offsets = np.cumsum(np.array(ion_atom_numbers)-1)
+ion_offsets = np.concatenate(([0], np.cumsum(np.array(ion_atom_numbers)[:-1])), axis=0)
 
 # Head of CPP file
 cpp_string = ''
@@ -22,13 +22,14 @@ cpp_string += '#ifndef WARPX_IONIZATION_TABLE_H_\n'
 cpp_string += '#define WARPX_IONIZATION_TABLE_H_\n\n'
 
 # Map each element to ID in table
-cpp_string += 'const std::map<std::string, int> ion_map_ids = {'
+cpp_string += 'std::map<std::string, int> ion_map_ids = {'
 for count, name in enumerate(ion_names):
     cpp_string += '\n    {"' + name + '", ' + str(count) + '},'
 cpp_string = cpp_string[:-1]
 cpp_string += ' };\n\n'
 
 # Atomic number of each species
+cpp_string += 'const int nelements = ' + str(len(ion_names)) + ';\n\n'
 cpp_string += 'const int ion_atomic_numbers[nelements] = {'
 for count, atom_num in enumerate(ion_atom_numbers):
     if count%10==0: cpp_string += '\n    '
@@ -37,7 +38,6 @@ cpp_string = cpp_string[:-2]
 cpp_string += '};\n\n'
 
 # Offset of each element in table of ionization energies
-cpp_string += 'const int nelements = ' + str(len(ion_names)) + ';\n\n'
 cpp_string += 'const int ion_energy_offsets[nelements] = {'
 for count, offset in enumerate(ion_offsets):
     if count%10==0: cpp_string += '\n    '

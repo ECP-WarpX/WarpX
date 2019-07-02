@@ -4,7 +4,7 @@
 #ifndef WARPX_IONIZATION_TABLE_H_
 #define WARPX_IONIZATION_TABLE_H_
 
-const std::map<std::string, int> ion_map_ids = {
+std::map<std::string, int> ion_map_ids = {
     {"H", 0},
     {"He", 1},
     {"Li", 2},
@@ -28,17 +28,17 @@ const std::map<std::string, int> ion_map_ids = {
     {"Xe", 20},
     {"Rn", 21} };
 
+const int nelements = 22;
+
 const int ion_atomic_numbers[nelements] = {
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
     11, 12, 13, 14, 15, 16, 17, 18, 36, 37, 
     54, 86};
 
-const int nelements = 22;
-
 const int ion_energy_offsets[nelements] = {
     0, 1, 3, 6, 10, 15, 21, 28, 36, 45, 
-    55, 66, 78, 91, 105, 120, 136, 153, 188, 224, 
-    277, 362};
+    55, 66, 78, 91, 105, 120, 136, 153, 171, 207, 
+    244, 298};
 
 const int energies_tab_length = 384;
 
