@@ -285,6 +285,9 @@ protected:
     std::string ionization_product_name;
     int ion_atomic_number;
     amrex::Gpu::ManagedVector<amrex::Real> ionization_energies;
+    amrex::Gpu::ManagedVector<amrex::Real> adk_power;
+    amrex::Gpu::ManagedVector<amrex::Real> adk_prefactor;
+    amrex::Gpu::ManagedVector<amrex::Real> adk_exp_prefactor;
     std::string physical_element;
 
     int do_boosted_frame_diags = 1;

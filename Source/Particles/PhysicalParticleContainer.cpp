@@ -86,26 +86,8 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     // If do_field_ionization, read initialization data from input file and
     // read ionization energies from table.
     pp.query("do_field_ionization", do_field_ionization);
-    if (do_field_ionization){
-        pp.get("ionization_product", ionization_product_name);
-        pp.get("physical_element", physical_element);
-        // Add Real component for ionization level
-        AddRealComp("ionization_level");
-        plot_flags.resize(PIdx::nattribs + 1, 1);
-        // Get atomic number and ionization energies from file
-        int ion_element_id = ion_map_ids[physical_element];
-        ion_atomic_number = ion_atomic_numbers[ion_element_id];
-        ionization_energies.resize(ion_atomic_number);
-        int offset = ion_energy_offsets[ion_element_id];
-        for(int i=0; i<ion_atomic_number; i++){
-            ionization_energies[i] = table_ionization_energies[i+offset];
-        }
-        Print()<<"ion_atomic_number "<<ion_atomic_number<<'\n';
-        Print()<<"ion_element_id "<<ion_element_id<<'\n';
-        for(int i=0; i<ion_atomic_number; i++){
-            Print()<<"ionization_energies[i] "<<ionization_energies[i]<<'\n';
-        }
-    }
+    if (do_field_ionization)
+        InitIonizationModule();
 
     // Whether to plot back-transformed (lab-frame) diagnostics 
     // for this species.
@@ -142,8 +124,75 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         }
     }
 }
+void PhysicalParticleContainer::InitIonizationModule()
+{
+    ParmParse pp(species_name);
+    pp.get("ionization_product", ionization_product_name);
+    pp.get("physical_element", physical_element);
+// Add Real component for ionization level
+    AddRealComp("ionization_level");
+    plot_flags.resize(PIdx::nattribs + 1, 1);
+// Get atomic number and ionization energies from file
+    int ion_element_id = ion_map_ids[physical_element];
+    ion_atomic_number = ion_atomic_numbers[ion_element_id];
+    ionization_energies.resize(ion_atomic_number);
+    int offset = ion_energy_offsets[ion_element_id];
+    for(int i=0; i<ion_atomic_number; i++){
+        ionization_energies[i] = table_ionization_energies[i+offset];
+    }
+    Print()<<"ion_atomic_number "<<ion_atomic_number<<'\n';
+    Print()<<"ion_element_id "<<ion_element_id<<'\n';
+    for(int i=0; i<ion_atomic_number; i++){
+        Print()<<"ionization_energies[i] "<<ionization_energies[i]<<'\n';
+    }
 
-void PhysicalParticleContainer::InitIonization ()
+    Print()<<"alpha "<<PhysConst::alpha<<'\n';
+    Print()<<"hbar  "<<PhysConst::hbar <<'\n';
+    Print()<<"r_e   "<<PhysConst::r_e  <<'\n';
+    Real wa = std::pow(PhysConst::alpha,3) * PhysConst::c / PhysConst::r_e;
+    Real Ea = PhysConst::m_e * PhysConst::c*PhysConst::c /PhysConst::q_e * 
+        std::pow(PhysConst::alpha,4)/PhysConst::r_e;
+    Real UH = table_ionization_energies[0];
+    Print()<<"UH "<<UH<<'\n';
+    Real l_eff = std::sqrt(UH/ionization_energies[0]) - 1.;
+    adk_power.resize(ion_atomic_number);
+    adk_prefactor.resize(ion_atomic_number);
+    adk_exp_prefactor.resize(ion_atomic_number);
+    for (int i=0; i<ion_atomic_number; ++i){
+        Real n_eff = (i+1) * std::sqrt(UH/ionization_energies[i]);
+        Real C2 = 1./(2*MathConst::pi*n_eff) * 
+            std::pow(4*PhysConst::q_e*PhysConst::q_e/(n_eff*n_eff-l_eff*l_eff), n_eff) * 
+            std::pow((n_eff-l_eff)/(n_eff+l_eff), l_eff+.5);
+        adk_power[i] = -(2*n_eff - 1);
+        Real dt = 1.;
+        Real Uion = ionization_energies[i];
+        adk_prefactor[i] = dt * wa * C2 * ( Uion/(2*UH) ) 
+            * std::pow(std::pow(2*(Uion/UH),3./2)*Ea,2*n_eff - 1);
+        adk_exp_prefactor[i] = -2./3 * std::pow( Uion/UH,3./2) * Ea;
+    }
+// FROM FBPIC: compute prefactors
+/*
+  # Calculate the ADK prefactors (See Chen, JCP 236 (2013), equation (2))
+  # - Scalars
+  alpha = physical_constants['fine-structure constant'][0]
+  r_e = physical_constants['classical electron radius'][0]
+  wa = alpha**3 * c / r_e
+  Ea = m_e*c**2/e * alpha**4/r_e
+  # - Arrays (one element per ionization level)
+  UH = get_ionization_energies('H')[0]
+  Z = np.arange( len(Uion) ) + 1
+  n_eff = Z * np.sqrt( UH/Uion )
+  l_eff = n_eff[0] - 1
+  C2 = 2**(2*n_eff) / (n_eff * gamma(n_eff+l_eff+1) * gamma(n_eff-l_eff))
+  # For now, we assume l=0, m=0                                                                                                                                                                                                                                                                                         
+  self.adk_power = - (2*n_eff - 1)
+  self.adk_prefactor = dt * wa * C2 * ( Uion/(2*UH) ) \
+  * ( 2*(Uion/UH)**(3./2)*Ea )**(2*n_eff - 1)
+  self.adk_exp_prefactor = -2./3 * ( Uion/UH )**(3./2) * Ea
+*/
+}
+
+void PhysicalParticleContainer::InitIonizationLevel ()
 {
     // Do not do anything if ionization is off for this species
     if (!do_field_ionization) return;
@@ -175,7 +224,7 @@ void PhysicalParticleContainer::InitData()
     if (maxLevel() > 0) {
         Redistribute();  // We then redistribute
     }
-    InitIonization();
+    InitIonizationLevel();
 }
 
 void PhysicalParticleContainer::MapParticletoBoostedFrame(Real& x, Real& y, Real& z, std::array<Real, 3>& u)
