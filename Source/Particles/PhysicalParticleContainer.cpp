@@ -2218,3 +2218,7 @@ PhysicalParticleContainer::copyParticles(int lev)
                          elec_w.dataPtr(),
                          1, -1);
 }
+
+//int
+//PhysicalParticleContainer::findIonizedParticles(int lev, Cuda::ManagedDeviceVector<unsigned short int> is_ionized)
+//{}

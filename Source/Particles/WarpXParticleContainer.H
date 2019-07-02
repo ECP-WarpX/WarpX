@@ -193,6 +193,8 @@ public:
 
     virtual void copyParticles(int lev) {};
 
+    // virtual int findIonizedParticles(int lev, amrex::Cuda::ManagedDeviceVector<unsigned short int> is_ionized) {};
+
     // If particles start outside of the domain, ContinuousInjection 
     // makes sure that they are initialized when they enter the domain, and 
     // NOT before. Virtual function, overriden by derived classes. 

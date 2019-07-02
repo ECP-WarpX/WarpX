@@ -88,6 +88,8 @@ public:
 
     virtual void copyParticles(int lev) override;
 
+    // virtual int findIonizedParticles(int lev, amrex::Cuda::ManagedDeviceVector<unsigned short int> is_ionized) override;
+
     // Inject particles in Box 'part_box'
     virtual void AddParticles (int lev);
     void AddPlasma(int lev, amrex::RealBox part_realbox = amrex::RealBox());
