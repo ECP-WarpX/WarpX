@@ -539,6 +539,8 @@ MultiParticleContainer::getSpeciesID(std::string product_str)
 void
 MultiParticleContainer::doFieldIonization()
 {
+    // auto& mypc = WarpX::GetInstance().GetPartContainer();
+    // auto& pc_ion = mypc.GetPCtmp();
     // Gpu::ManagedVector<bool> is_ionized_vector;
     for (auto& pc : allcontainers){
         Cuda::ManagedDeviceVector<int> is_ionized_vector;
@@ -551,21 +553,25 @@ MultiParticleContainer::doFieldIonization()
                                                x_buf,  y_buf,  z_buf,
                                                ux_buf, uy_buf, uz_buf,
                                                w_buf);
-            
-/*
-            pc_ion.AddNParticles(lev, 
-                                 elec_np,
-                                 elec_x.dataPtr(),
-                                 elec_y.dataPtr(),
-                                 elec_z.dataPtr(),
-                                 elec_ux.dataPtr(),
-                                 elec_uy.dataPtr(),
-                                 elec_uz.dataPtr(),
+            pc_tmp->AddNParticles(lev, 
+                                 np_buf,
+                                 x_buf.dataPtr(),
+                                 y_buf.dataPtr(),
+                                 z_buf.dataPtr(),
+                                 ux_buf.dataPtr(),
+                                 uy_buf.dataPtr(),
+                                 uz_buf.dataPtr(),
                                  1,
-                                 elec_w.dataPtr(),
+                                 w_buf.dataPtr(),
                                  1, -1);
-*/
-
+            
+            // For current species, get product species
+            auto& product_pc = allcontainers[pc->ionization_product];
+            // Add species in pc_tmp to product species
+            product_pc->addParticles(*pc_tmp, 1);
+            // Clear pc_tmp
+            pc_tmp->clearParticles();
+            
 
 
         }

@@ -2,8 +2,8 @@
 ####### GENERAL PARAMETERS ######
 #################################
 max_step = 1000
-amr.n_cell =  8 128
-amr.max_grid_size = 128
+amr.n_cell =  16 128
+amr.max_grid_size = 8
 amr.blocking_factor = 8
 amr.max_level = 0
 geometry.coord_sys   = 0                  # 0: Cartesian
@@ -34,7 +34,7 @@ ions.density = 1.e25  # number of electrons per m^3
 ions.momentum_distribution_type = "gaussian"
 ions.do_field_ionization = 1
 ions.ionization_product = target
-ions.ionization_level = 0
+ions.ionization_level = 4
 ions.physical_element = Rn
 
 target.charge = -q_e

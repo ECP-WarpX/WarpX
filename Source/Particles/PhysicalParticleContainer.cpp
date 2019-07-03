@@ -2174,7 +2174,6 @@ PhysicalParticleContainer::doFieldIonization(
     Cuda::ManagedDeviceVector<Real>& w_buf)
 {
     BL_PROFILE("PPC:doFieldIonization()");
-    Print()<<"in PhysicalParticleContainer::doFieldIonization\n";
     int comp_ionization = particle_comps["ionization_level"];
     int np_buf = 0;
     x_buf.resize(0);
@@ -2185,14 +2184,20 @@ PhysicalParticleContainer::doFieldIonization(
     uz_buf.resize(0);
     w_buf.resize(0);
     Cuda::ManagedDeviceVector<int> is_ionized_vector;
+    Cuda::ManagedDeviceVector<int> is_ionized_cumsum_vector;
+    Cuda::ManagedDeviceVector<Real> xp_vector, yp_vector, zp_vector;
     // auto& mypc = WarpX::GetInstance().GetPartContainer();
     // Iterate over grids
     for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti){
-        Print()<<"WarpXParIter\n";
         long np = pti.numParticles();
+        pti.GetPosition(xp_vector, yp_vector, zp_vector);
         is_ionized_vector.resize(np);
+        is_ionized_cumsum_vector.resize(np);
         int* AMREX_RESTRICT is_ionized = is_ionized_vector.dataPtr();
         auto& attribs = pti.GetAttribs();
+        Real* AMREX_RESTRICT x  = xp_vector.dataPtr();
+        Real* AMREX_RESTRICT y  = yp_vector.dataPtr();
+        Real* AMREX_RESTRICT z  = zp_vector.dataPtr();
         Real* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
         Real* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
         Real* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
@@ -2202,23 +2207,23 @@ PhysicalParticleContainer::doFieldIonization(
         Real* AMREX_RESTRICT bx = attribs[PIdx::Bx].dataPtr();
         Real* AMREX_RESTRICT by = attribs[PIdx::By].dataPtr();
         Real* AMREX_RESTRICT bz = attribs[PIdx::Bz].dataPtr();
-        Print()<<"comp_ionization "<<comp_ionization<<'\n';
+        Real* AMREX_RESTRICT w  = attribs[PIdx::w ].dataPtr();
         Real* AMREX_RESTRICT ilev_real = pti.GetAttribs(comp_ionization).dataPtr();
         // Real* AMREX_RESTRICT ilev_real = pti.GetAttribs(particle_comps["ionization_level"]);
         // Real* AMREX_RESTRICT ilev_real = attribs[comp_ionization].dataPtr();
         // int* AMREX_RESTRICT is_ionized = is_ionized_vector.dataPtr();
 
         Real c = PhysConst::c;
-        Real c2i = 1./c/c;
+        Real c2_inv = 1./c/c;
         ParallelFor( np,
                      [=] AMREX_GPU_DEVICE (long i) {
                          Real random_draw = Random();
                          Real ga = std::sqrt(1. +
                                              (ux[i]*ux[i] + 
                                               uy[i]*uy[i] + 
-                                              uz[i]*uz[i]) * c2i);
+                                              uz[i]*uz[i]) * c2_inv);
                          Real E = std::sqrt(
-                             - ( ux[i]*ex[i] + uy[i]*ey[i] + uz[i]*ez[i] ) * ( ux[i]*ex[i] + uy[i]*ey[i] + uz[i]*ez[i] ) *c2i
+                             - ( ux[i]*ex[i] + uy[i]*ey[i] + uz[i]*ez[i] ) * ( ux[i]*ex[i] + uy[i]*ey[i] + uz[i]*ez[i] ) * c2_inv
                              + ( ga   *ex[i] + uy[i]*bz[i] - uz[i]*by[i] ) * ( ga   *ex[i] + uy[i]*bz[i] - uz[i]*by[i] )
                              + ( ga   *ey[i] + uz[i]*bx[i] - ux[i]*bz[i] ) * ( ga   *ey[i] + uz[i]*bx[i] - ux[i]*bz[i] )
                              + ( ga   *ez[i] + ux[i]*by[i] - uy[i]*bx[i] ) * ( ga   *ez[i] + ux[i]*by[i] - uy[i]*bx[i] )
@@ -2254,12 +2259,61 @@ PhysicalParticleContainer::doFieldIonization(
                          }
                      }
             );
-        int np_ionized = 0;
-        for(int i=0; i<np; ++i){
+        // cumsum and allocate arrays
+        int np_ionized = is_ionized[0];
+        for(int i=1; i<np; ++i){
             np_ionized += is_ionized[i];
-            // std::cout<<is_ionized[i]<<" ";
+            is_ionized_cumsum_vector[i] = is_ionized_cumsum_vector[i-1]+is_ionized[i-1];
+        } 
+        /*
+        Print()<<"is_ionized\n";
+        for(int i=0; i<np; ++i){
+            std::cout<<is_ionized[i]<<" ";
         }
+        Print()<<"is_ionized_cumsum_vector\n";
+        for(int i=0; i<np; ++i){
+            std::cout<<is_ionized_cumsum_vector[i]<<" ";
+        }
+        */
+        int old_size = x_buf.size();
+        np_buf = old_size + np_ionized;
+        x_buf.resize (np_buf);
+        y_buf.resize (np_buf);
+        z_buf.resize (np_buf);
+        ux_buf.resize(np_buf);
+        uy_buf.resize(np_buf);
+        uz_buf.resize(np_buf);
+        w_buf.resize (np_buf);
+        Real* AMREX_RESTRICT  x_buf_p =  x_buf.dataPtr();
+        Real* AMREX_RESTRICT  y_buf_p =  y_buf.dataPtr();
+        Real* AMREX_RESTRICT  z_buf_p =  z_buf.dataPtr();
+        Real* AMREX_RESTRICT ux_buf_p = ux_buf.dataPtr();
+        Real* AMREX_RESTRICT uy_buf_p = uy_buf.dataPtr();
+        Real* AMREX_RESTRICT uz_buf_p = uz_buf.dataPtr();
+        Real* AMREX_RESTRICT  w_buf_p =  w_buf.dataPtr();
+        int* AMREX_RESTRICT is_ionized_cumsum = is_ionized_cumsum_vector.dataPtr();
+        ParallelFor( np,
+                     [=] AMREX_GPU_DEVICE (long i) {
+                         // std::cout<<ilev_real[i]<<' ';
+                         if(is_ionized[i]){
+                             // ilev_real[i] = ilev_real[i] + 1.;
+                             ilev_real[i] += 1.;
+                             x_buf_p [old_size + is_ionized_cumsum[i]] = x [i];
+                             y_buf_p [old_size + is_ionized_cumsum[i]] = y [i];
+                             z_buf_p [old_size + is_ionized_cumsum[i]] = z [i];
+                             ux_buf_p[old_size + is_ionized_cumsum[i]] = ux[i];
+                             uy_buf_p[old_size + is_ionized_cumsum[i]] = uy[i];
+                             uz_buf_p[old_size + is_ionized_cumsum[i]] = uz[i];
+                             w_buf_p [old_size + is_ionized_cumsum[i]] = w [i];
+                         }
+                     }
+            );
+        /*
+        Print()<<"x_buf.size() "<<x_buf.size()<<'\n';
+        Print()<<"np_buf "<<np_buf<<'\n';
         Print()<<"np "<<np<<" np_ionized "<<np_ionized<<'\n';
+        */
+        
     }
     return np_buf;
 }
