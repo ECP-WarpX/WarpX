@@ -88,10 +88,15 @@ public:
 
     virtual void copyParticles(int lev) override;
 
-    virtual void fill_is_ionized(const int lev,
-                                 amrex::Cuda::ManagedDeviceVector<int> is_ionized_vector) override;
-
-    // virtual int findIonizedParticles(int lev, amrex::Cuda::ManagedDeviceVector<unsigned short int> is_ionized) override;
+    virtual int doFieldIonization(
+        const int lev, 
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& x_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& y_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& z_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& ux_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& uy_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& uz_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& w_buf) override;
 
     // Inject particles in Box 'part_box'
     virtual void AddParticles (int lev);

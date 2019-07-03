@@ -263,8 +263,15 @@ public:
 
     virtual void setIonizationProduct(int i_product) {};
 
-    virtual void fill_is_ionized(const int lev,
-                                 amrex::Cuda::ManagedDeviceVector<int> is_ionized_vector) {};
+    virtual int doFieldIonization(
+        const int lev, 
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& x_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& y_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& z_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& ux_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& uy_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& uz_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& w_buf) {return 0;};
 
 protected:
 

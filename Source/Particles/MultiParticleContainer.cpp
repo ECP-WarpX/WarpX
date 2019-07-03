@@ -545,7 +545,29 @@ MultiParticleContainer::doFieldIonization()
         for (int lev = 0; lev <= pc->finestLevel(); ++lev){
             // If ionization off for this species, do not do anything.
             if (!pc->do_field_ionization){ continue; }
-            pc->fill_is_ionized(lev, is_ionized_vector);
+            Cuda::ManagedDeviceVector<Real>  x_buf,  y_buf,  z_buf;
+            Cuda::ManagedDeviceVector<Real> ux_buf, uy_buf, uz_buf, w_buf;
+            int np_buf = pc->doFieldIonization(lev,
+                                               x_buf,  y_buf,  z_buf,
+                                               ux_buf, uy_buf, uz_buf,
+                                               w_buf);
+            
+/*
+            pc_ion.AddNParticles(lev, 
+                                 elec_np,
+                                 elec_x.dataPtr(),
+                                 elec_y.dataPtr(),
+                                 elec_z.dataPtr(),
+                                 elec_ux.dataPtr(),
+                                 elec_uy.dataPtr(),
+                                 elec_uz.dataPtr(),
+                                 1,
+                                 elec_w.dataPtr(),
+                                 1, -1);
+*/
+
+
+
         }
     }
 }
