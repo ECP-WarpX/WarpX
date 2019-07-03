@@ -1,10 +1,12 @@
 #include <limits>
 #include <algorithm>
 #include <string>
+#include <math.h>
 
 #include <MultiParticleContainer.H>
 #include <WarpX_f.H>
 #include <WarpX.H>
+#include <WarpXConst.H>
 
 using namespace amrex;
 
@@ -533,31 +535,23 @@ MultiParticleContainer::getSpeciesID(std::string product_str)
     return i_product;
 }
 
-/* \brief Find ionized particles and create product electrons
- */
+
 void
 MultiParticleContainer::doFieldIonization()
-{}
-/*
+{
+    // Gpu::ManagedVector<bool> is_ionized_vector;
     for (auto& pc : allcontainers){
+        Cuda::ManagedDeviceVector<int> is_ionized_vector;
         for (int lev = 0; lev <= pc->finestLevel(); ++lev){
             // If ionization off for this species, do not do anything.
             if (!pc->do_field_ionization){ continue; }
-            // Fill MultiParticleContainer::pc_tmp with a copy of all
+            pc->fill_is_ionized(lev, is_ionized_vector);
+        }
+    }
+}
 
-            // --- Simple test to create product particles
-            // ionizable particles.
-            // pc->copyParticles(lev);
-            // Get instance of unique_ptr MultiParticleContainer::pc_tmp.
-            auto& mypc = WarpX::GetInstance().GetPartContainer();
-            int elec_np = 0;
-            // Iterate over grids
-            for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti){
-                // Get particle arrays within each grid
-                pti.GetPosition(xp, yp, zp);
-                // particle Array Of Structs data
+            /*
                 auto& particles = pti.GetArrayOfStructs();
-                // particle Struct Of Arrays data
                 auto& attribs = pti.GetAttribs();
                 auto& wp  = attribs[PIdx::w ];
                 auto& uxp = attribs[PIdx::ux];
@@ -566,7 +560,6 @@ MultiParticleContainer::doFieldIonization()
                 // auto& ilevp = attribs[PIdx::nattribs];
                 // Loop over particles within each grid, and copy
                 // particle quantities to temporary arrays
-                const long np = pti.numParticles();
                 for(int i=0; i<np; i++){
                     auto& p = particles[i];
                     elec_x.push_back(  xp[i] );
@@ -579,7 +572,8 @@ MultiParticleContainer::doFieldIonization()
                 }
                 elec_np += np;
             }
-
+            */
+/*
             Cuda::ManagedDeviceVector<unsigned short int> is_ionized;
 
             int n_ionized = pc->findIonizedParticles(lev, is_ionized);

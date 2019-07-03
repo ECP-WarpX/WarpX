@@ -263,6 +263,9 @@ public:
 
     virtual void setIonizationProduct(int i_product) {};
 
+    virtual void fill_is_ionized(const int lev,
+                                 amrex::Cuda::ManagedDeviceVector<int> is_ionized_vector) {};
+
 protected:
 
     std::map<std::string, int> particle_comps;

@@ -2162,6 +2162,66 @@ PhysicalParticleContainer::ContinuousInjection(const RealBox& injection_box)
     AddPlasma(lev, injection_box);
 }
 
+void
+PhysicalParticleContainer::fill_is_ionized(
+    const int lev, 
+    Cuda::ManagedDeviceVector<int> is_ionized_vector)
+{
+    int comp_ionization = particle_comps["ionization_level"];
+    // auto& mypc = WarpX::GetInstance().GetPartContainer();
+    // Iterate over grids
+    for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti){
+        long np = pti.numParticles();
+        is_ionized_vector.resize(np);
+        int* AMREX_RESTRICT is_ionized = is_ionized_vector.dataPtr();
+        auto& attribs = pti.GetAttribs();
+        Real* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
+        Real* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
+        Real* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
+        Real* AMREX_RESTRICT ex = attribs[PIdx::Ex].dataPtr();
+        Real* AMREX_RESTRICT ey = attribs[PIdx::Ey].dataPtr();
+        Real* AMREX_RESTRICT ez = attribs[PIdx::Ez].dataPtr();
+        Real* AMREX_RESTRICT bx = attribs[PIdx::Bx].dataPtr();
+        Real* AMREX_RESTRICT by = attribs[PIdx::By].dataPtr();
+        Real* AMREX_RESTRICT bz = attribs[PIdx::Bz].dataPtr();
+        // Real* AMREX_RESTRICT ion_level = pti.GetAttribs(particle_comps["ionization_level"]);
+        Real* AMREX_RESTRICT ilev_real = attribs[comp_ionization].dataPtr();
+        // int* AMREX_RESTRICT is_ionized = is_ionized_vector.dataPtr();
+
+        Real c = PhysConst::c;
+        ParallelFor( np,
+                     [=] AMREX_GPU_DEVICE (long i) {
+                         Real random_draw = Random();
+                         Real ga = std::sqrt(ux[i]*ux[i] + 
+                                             uy[i]*uy[i] + 
+                                             uz[i]*uz[i]);
+                         Real E = std::sqrt(
+                             - ( ux[i]*ex[i] + uy[i]*ey[i]   + uz[i]*ez[i]  ) * ( ux[i]*ex[i] + uy[i]*ey[i]   + uz[i]*ez[i]  )
+                             + ( ga   *ex[i] + uy[i]*bz[i]*c - uz[i]*by[i]*c) * ( ga   *ex[i] + uy[i]*bz[i]*c - uz[i]*by[i]*c)
+                             + ( ga   *ey[i] + uz[i]*bx[i]*c - ux[i]*bz[i]*c) * ( ga   *ey[i] + uz[i]*bx[i]*c - ux[i]*bz[i]*c)
+                             + ( ga   *ez[i] + ux[i]*by[i]*c - uy[i]*bx[i]*c) * ( ga   *ez[i] + ux[i]*by[i]*c - uy[i]*bx[i]*c)
+                             );
+                         int ilev = (int) ilev_real[i]+0.5;
+                         Real p, w_dtau;
+                         if (E<1.e-100*(ionization_energies[0])){
+                             p = 0.;
+                         } else {
+                             w_dtau = 1./ ga * adk_prefactor[ilev] * 
+                                 std::pow(E,adk_power[ilev]) * 
+                                 std::exp( adk_exp_prefactor[ilev]/E );
+                             p = 1. - std::exp( - w_dtau );
+                         }
+                         ux[i] = 0.;
+                         // is_ionized_vector[i] = 0;
+                         /*
+                           if (random_draw < p){
+                           is_ionized[i] = 1;
+                           }
+                         */
+                     }
+            );
+    }
+}
 /* \brief Copy particles at lev and store into MultiParticleContainer::pc_tmp.
  * \param lev: refinement level
  */
