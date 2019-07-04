@@ -2061,23 +2061,23 @@ int PhysicalParticleContainer::GetRefineFac(const Real x, const Real y, const Re
 /*Function to store values for back-tranformed diagnostic"*/
 void
 PhysicalParticleContainer::warpx_copy_attribs(const long* np,
-								const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,
-								const amrex::Real* uxp, const amrex::Real* uyp, const amrex::Real* uzp,
-								amrex::Real* xpold, amrex::Real* ypold, amrex::Real* zpold,
-								amrex::Real* uxpold, amrex::Real* uypold, amrex::Real* uzpold)
+                                const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,
+                                const amrex::Real* uxp, const amrex::Real* uyp, const amrex::Real* uzp,
+                                amrex::Real* xpold, amrex::Real* ypold, amrex::Real* zpold,
+                                amrex::Real* uxpold, amrex::Real* uypold, amrex::Real* uzpold)
 {
 
-	for(int n=0; n<*np; ++n)
-	{
-	//In fortran the loop was from 1 to np
-			xpold[n]=xp[n];
-			ypold[n]=yp[n];
-			zpold[n]=zp[n];
+    for(int n=0; n<*np; ++n)
+    {
+    //In fortran the loop was from 1 to np
+            xpold[n]=xp[n];
+            ypold[n]=yp[n];
+            zpold[n]=zp[n];
 
-			uxpold[n]=uxp[n];
-			uypold[n]=uyp[n];
-			uzpold[n]=uzp[n];
-	}
+            uxpold[n]=uxp[n];
+            uypold[n]=uyp[n];
+            uzpold[n]=uzp[n];
+    }
 }
 
 /* \brief Inject particles during the simulation
