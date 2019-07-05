@@ -195,7 +195,6 @@ void PhysicalParticleContainer::InitIonizationLevel ()
     // Do not do anything if ionization is off for this species
     if (!do_field_ionization) return;
     
-    int species_ionization_level = 0;
     ParmParse pp(species_name);
     pp.query("ionization_level", species_ionization_level);
     //Loop over all the particles
@@ -630,6 +629,11 @@ PhysicalParticleContainer::AddPlasmaCPU (int lev, RealBox part_realbox)
                     attribs[PIdx::ux] = u[0];
                     attribs[PIdx::uy] = u[1];
                     attribs[PIdx::uz] = u[2];
+
+                    if (do_field_ionization){
+                        auto& particle_tile = DefineAndReturnParticleTile(lev, grid_id, tile_id);
+                        particle_tile.push_back_real(particle_comps["ionization_level"], species_ionization_level);
+                    }
                     
                     if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
                     {
@@ -2174,6 +2178,7 @@ PhysicalParticleContainer::doFieldIonization(
     Cuda::ManagedDeviceVector<Real>& w_buf)
 {
     BL_PROFILE("PPC:doFieldIonization()");
+    Print()<<"PPC:doFieldIonization()\n";
     int comp_ionization = particle_comps["ionization_level"];
     int np_buf = 0;
     x_buf.resize(0);
@@ -2307,14 +2312,20 @@ PhysicalParticleContainer::doFieldIonization(
                              w_buf_p [old_size + is_ionized_cumsum[i]] = w [i];
                          }
                      }
-            );
+        );
         /*
-        Print()<<"x_buf.size() "<<x_buf.size()<<'\n';
-        Print()<<"np_buf "<<np_buf<<'\n';
-        Print()<<"np "<<np<<" np_ionized "<<np_ionized<<'\n';
+        ParallelFor( np,
+                     [=] AMREX_GPU_DEVICE (long i) {
+                             std::cout<<z[i]<<' '<<ilev_real[i]<<"\n";
+                     }
+        );
+        std::cout<<"\nx_buf.size() "<<x_buf.size()<<'\n';
+        std::cout<<"np_buf "<<np_buf<<'\n';
+        std::cout<<"np "<<np<<" np_ionized "<<np_ionized<<'\n';
+        std::cout<<'\n';
         */
-        
     }
+
     return np_buf;
 }
 /* \brief Copy particles at lev and store into MultiParticleContainer::pc_tmp.

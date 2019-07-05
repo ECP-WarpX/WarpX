@@ -296,6 +296,7 @@ protected:
     int ionization_product;
     std::string ionization_product_name;
     int ion_atomic_number;
+    int species_ionization_level = 0;
     amrex::Gpu::ManagedVector<amrex::Real> ionization_energies;
     amrex::Gpu::ManagedVector<amrex::Real> adk_power;
     amrex::Gpu::ManagedVector<amrex::Real> adk_prefactor;
