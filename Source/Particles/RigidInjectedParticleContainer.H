@@ -43,7 +43,7 @@ public:
                          amrex::Real dt) override;
 
     virtual void PushPX(WarpXParIter& pti,
-	                amrex::Cuda::ManagedDeviceVector<amrex::Real>& xp,
+                        amrex::Cuda::ManagedDeviceVector<amrex::Real>& xp,
                         amrex::Cuda::ManagedDeviceVector<amrex::Real>& yp,
                         amrex::Cuda::ManagedDeviceVector<amrex::Real>& zp,
                         amrex::Cuda::ManagedDeviceVector<amrex::Real>& giv,
@@ -56,7 +56,7 @@ public:
                         const amrex::MultiFab& Bx,
                         const amrex::MultiFab& By,
                         const amrex::MultiFab& Bz) override;
-                        
+
     virtual void ReadHeader (std::istream& is) override;
 
     virtual void WriteHeader (std::ostream& os) const override;
