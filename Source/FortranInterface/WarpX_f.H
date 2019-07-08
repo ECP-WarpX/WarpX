@@ -74,11 +74,6 @@
 extern "C"
 {
 #endif
-    
-    void WRPX_COPY_SLICE(const int* lo, const int* hi,
-                         const amrex_real* tmp, const int* tlo, const int* thi,
-                         amrex_real* buf, const int* blo, const int* bhi,
-                         const int* ncomp, const int* i_boost, const int* i_lab);
 
 	// Charge deposition
 	void warpx_charge_deposition(amrex::Real* rho,

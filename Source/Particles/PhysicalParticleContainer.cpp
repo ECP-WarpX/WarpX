@@ -1721,6 +1721,12 @@ PhysicalParticleContainer::PushPX(WarpXParIter& pti,
                                   Real dt)
 {
 
+    if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
+    {
+        warpx_copy_attribs(pti, xp.dataPtr(), yp.dataPtr(), zp.dataPtr());
+    }
+
+    // The following definitions should migrate to future warpx_particle_pusher CPP version
     // This wraps the call to warpx_particle_pusher so that inheritors can modify the call.
     auto& attribs = pti.GetAttribs();
     auto& uxp = attribs[PIdx::ux];
@@ -1732,22 +1738,6 @@ PhysicalParticleContainer::PushPX(WarpXParIter& pti,
     auto& Bxp = attribs[PIdx::Bx];
     auto& Byp = attribs[PIdx::By];
     auto& Bzp = attribs[PIdx::Bz];
-    const long np  = pti.numParticles();
-
-    if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
-    {
-        auto& xpold    = pti.GetAttribs(particle_comps["xold"]);
-        auto& ypold    = pti.GetAttribs(particle_comps["yold"]);
-        auto& zpold    = pti.GetAttribs(particle_comps["zold"]);
-        auto& uxpold   = pti.GetAttribs(particle_comps["uxold"]);
-        auto& uypold   = pti.GetAttribs(particle_comps["uyold"]);
-        auto& uzpold   = pti.GetAttribs(particle_comps["uzold"]);
-
-        warpx_copy_attribs(&np, xp.dataPtr(), yp.dataPtr(), zp.dataPtr(),
-                           uxp.dataPtr(), uyp.dataPtr(), uzp.dataPtr(),
-                           xpold.dataPtr(), ypold.dataPtr(), zpold.dataPtr(),
-                           uxpold.dataPtr(), uypold.dataPtr(), uzpold.dataPtr());
-    }
 
     warpx_particle_pusher(&np,
                           xp.dataPtr(),
@@ -2060,24 +2050,33 @@ int PhysicalParticleContainer::GetRefineFac(const Real x, const Real y, const Re
 
 /*Function to store values for back-tranformed diagnostic"*/
 void
-PhysicalParticleContainer::warpx_copy_attribs(const long* np,
-								const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,
-								const amrex::Real* uxp, const amrex::Real* uyp, const amrex::Real* uzp,
-								amrex::Real* xpold, amrex::Real* ypold, amrex::Real* zpold,
-								amrex::Real* uxpold, amrex::Real* uypold, amrex::Real* uzpold)
+PhysicalParticleContainer::warpx_copy_attribs(WarpXParIter& pti,
+                            const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp)
 {
 
-	for(int n=0; n<*np; ++n)
-	{
-	//In fortran the loop was from 1 to np
-			xpold[n]=xp[n];
-			ypold[n]=yp[n];
-			zpold[n]=zp[n];
+    auto& attribs = pti.GetAttribs();
+    auto& uxp = attribs[PIdx::ux];
+    auto& uyp = attribs[PIdx::uy];
+    auto& uzp = attribs[PIdx::uz];
 
-			uxpold[n]=uxp[n];
-			uypold[n]=uyp[n];
-			uzpold[n]=uzp[n];
-	}
+    auto& xpold    = pti.GetAttribs(particle_comps["xold"]);
+    auto& ypold    = pti.GetAttribs(particle_comps["yold"]);
+    auto& zpold    = pti.GetAttribs(particle_comps["zold"]);
+    auto& uxpold   = pti.GetAttribs(particle_comps["uxold"]);
+    auto& uypold   = pti.GetAttribs(particle_comps["uyold"]);
+    auto& uzpold   = pti.GetAttribs(particle_comps["uzold"]);
+
+    amrex::ParallelFor(tbx,
+                [=] AMREX_GPU_DEVICE (int i) noexcept
+                {
+                    xpold[i]=xp[i];
+                    ypold[i]=yp[i];
+                    zpold[i]=zp[i];
+                    
+                    uxpold[i]=uxp[i];
+                    uypold[i]=uyp[i];
+                    uzpold[i]=uzp[i];
+                });
 }
 
 /* \brief Inject particles during the simulation

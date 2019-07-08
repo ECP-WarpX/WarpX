@@ -64,7 +64,7 @@ public:
                          amrex::Real dt) override;
 
     virtual void PushPX(WarpXParIter& pti,
-	                	amrex::Cuda::ManagedDeviceVector<amrex::Real>& xp,
+                        amrex::Cuda::ManagedDeviceVector<amrex::Real>& xp,
                         amrex::Cuda::ManagedDeviceVector<amrex::Real>& yp,
                         amrex::Cuda::ManagedDeviceVector<amrex::Real>& zp,
                         amrex::Cuda::ManagedDeviceVector<amrex::Real>& giv,
@@ -78,11 +78,8 @@ public:
                         const amrex::MultiFab& By,
                         const amrex::MultiFab& Bz) override;
                         
-    virtual void warpx_copy_attribs(const long* np,
-                            const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,
-                            const amrex::Real* uxp, const amrex::Real* uyp, const amrex::Real* uzp,
-                            amrex::Real* xpold, amrex::Real* ypold, amrex::Real* zpold,
-                            amrex::Real* uxpold, amrex::Real* uypold, amrex::Real* uzpold);
+    void warpx_copy_attribs(WarpXParIter& pti,
+                            const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp);
 
     virtual void PostRestart () final {}
 
