@@ -204,12 +204,18 @@ RigidInjectedParticleContainer::BoostandRemapParticles()
 
 void
 RigidInjectedParticleContainer::PushPX(WarpXParIter& pti,
-	                               Cuda::ManagedDeviceVector<Real>& xp,
+                                   Cuda::ManagedDeviceVector<Real>& xp,
                                        Cuda::ManagedDeviceVector<Real>& yp,
                                        Cuda::ManagedDeviceVector<Real>& zp,
                                        Cuda::ManagedDeviceVector<Real>& giv,
                                        Real dt)
 {
+
+    if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
+    {
+        warpx_copy_attribs(pti, xp.dataPtr(), yp.dataPtr(), zp.dataPtr());
+    }
+
 
     // This wraps the call to warpx_particle_pusher so that inheritors can modify the call.
     auto& attribs = pti.GetAttribs();
@@ -223,21 +229,6 @@ RigidInjectedParticleContainer::PushPX(WarpXParIter& pti,
     auto& Byp = attribs[PIdx::By];
     auto& Bzp = attribs[PIdx::Bz];
     const long np  = pti.numParticles();
-
-    if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
-    {
-        auto& xpold    = pti.GetAttribs(particle_comps["xold"]);
-        auto& ypold    = pti.GetAttribs(particle_comps["yold"]);
-        auto& zpold    = pti.GetAttribs(particle_comps["zold"]);
-        auto& uxpold   = pti.GetAttribs(particle_comps["uxold"]);
-        auto& uypold   = pti.GetAttribs(particle_comps["uyold"]);
-        auto& uzpold   = pti.GetAttribs(particle_comps["uzold"]);
-
-        warpx_copy_attribs(&np, xp.dataPtr(), yp.dataPtr(), zp.dataPtr(),
-                           uxp.dataPtr(), uyp.dataPtr(), uzp.dataPtr(),
-                           xpold.dataPtr(), ypold.dataPtr(), zpold.dataPtr(),
-                           uxpold.dataPtr(), uypold.dataPtr(), uzpold.dataPtr());
-    }
 
     // Save the position and momenta, making copies
     Cuda::ManagedDeviceVector<Real> xp_save, yp_save, zp_save;
@@ -334,9 +325,9 @@ RigidInjectedParticleContainer::Evolve (int lev,
     done_injecting_lev = done_injecting[lev];
 
     PhysicalParticleContainer::Evolve (lev,
-				       Ex, Ey, Ez,
-				       Bx, By, Bz,
-				       jx, jy, jz,
+                       Ex, Ey, Ez,
+                       Bx, By, Bz,
+                       jx, jy, jz,
                                        cjx, cjy, cjz,
                                        rho, crho,
                                        cEx, cEy, cEz,

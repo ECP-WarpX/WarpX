@@ -74,98 +74,94 @@
 extern "C"
 {
 #endif
-    
-    void WRPX_COPY_SLICE(const int* lo, const int* hi,
-                         const amrex_real* tmp, const int* tlo, const int* thi,
-                         amrex_real* buf, const int* blo, const int* bhi,
-                         const int* ncomp, const int* i_boost, const int* i_lab);
 
-	// Charge deposition
-	void warpx_charge_deposition(amrex::Real* rho,
-            const long* np,	const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,	const amrex::Real* w,
-			const amrex::Real* q, const amrex::Real* xmin, const amrex::Real* ymin, const amrex::Real* zmin,
-			const amrex::Real* dx, const amrex::Real* dy, const amrex::Real* dz,
-			const long* nx, const long* ny, const long* nz,
-			const long* nxguard, const long* nyguard, const long* nzguard,
-			const long* nox, const long* noy,const long* noz,
-			const long* lvect, const long* charge_depo_algo);
+
+    // Charge deposition
+    void warpx_charge_deposition(amrex::Real* rho,
+            const long* np,    const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,    const amrex::Real* w,
+            const amrex::Real* q, const amrex::Real* xmin, const amrex::Real* ymin, const amrex::Real* zmin,
+            const amrex::Real* dx, const amrex::Real* dy, const amrex::Real* dz,
+            const long* nx, const long* ny, const long* nz,
+            const long* nxguard, const long* nyguard, const long* nzguard,
+            const long* nox, const long* noy,const long* noz,
+            const long* lvect, const long* charge_depo_algo);
 
         // Charge deposition finalize for RZ
         void warpx_charge_deposition_rz_volume_scaling(
-			amrex::Real* rho, const long* rho_ng, const int* rho_ntot,
-			const amrex::Real* rmin,
-			const amrex::Real* dr);
+            amrex::Real* rho, const long* rho_ng, const int* rho_ntot,
+            const amrex::Real* rmin,
+            const amrex::Real* dr);
 
-	// Current deposition
-	void warpx_current_deposition(
-			amrex::Real* jx, const long* jx_ng, const int* jx_ntot,
-			amrex::Real* jy, const long* jy_ng, const int* jy_ntot,
-			amrex::Real* jz, const long* jz_ng, const int* jz_ntot,
-			const long* np,
-			const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,
-			const amrex::Real* uxp, const amrex::Real* uyp,const amrex::Real* uzp,
-			const amrex::Real* gip, const amrex::Real* w, const amrex::Real* q,
-			const amrex::Real* xmin, const amrex::Real* ymin, const amrex::Real* zmin,
-			const amrex::Real* dt,
-			const amrex::Real* dx, const amrex::Real* dy, const amrex::Real* dz,
-			const long* nox, const long* noy,const long* noz,
+    // Current deposition
+    void warpx_current_deposition(
+            amrex::Real* jx, const long* jx_ng, const int* jx_ntot,
+            amrex::Real* jy, const long* jy_ng, const int* jy_ntot,
+            amrex::Real* jz, const long* jz_ng, const int* jz_ntot,
+            const long* np,
+            const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,
+            const amrex::Real* uxp, const amrex::Real* uyp,const amrex::Real* uzp,
+            const amrex::Real* gip, const amrex::Real* w, const amrex::Real* q,
+            const amrex::Real* xmin, const amrex::Real* ymin, const amrex::Real* zmin,
+            const amrex::Real* dt,
+            const amrex::Real* dx, const amrex::Real* dy, const amrex::Real* dz,
+            const long* nox, const long* noy,const long* noz,
                         const int* l_nodal, const long* lvect, const long* current_depo_algo);
 
         // Current deposition finalize for RZ
         void warpx_current_deposition_rz_volume_scaling(
-			amrex::Real* jx, const long* jx_ng, const int* jx_ntot,
-			amrex::Real* jy, const long* jy_ng, const int* jy_ntot,
-			amrex::Real* jz, const long* jz_ng, const int* jz_ntot,
-			const amrex::Real* rmin,
-			const amrex::Real* dr);
+            amrex::Real* jx, const long* jx_ng, const int* jx_ntot,
+            amrex::Real* jy, const long* jy_ng, const int* jy_ntot,
+            amrex::Real* jz, const long* jz_ng, const int* jz_ntot,
+            const amrex::Real* rmin,
+            const amrex::Real* dr);
 
-	// Field gathering
+    // Field gathering
 
-	void warpx_geteb_energy_conserving(const long* np,
-			const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,
-			amrex::Real* exp, amrex::Real* eyp, amrex::Real* ezp,
+    void warpx_geteb_energy_conserving(const long* np,
+            const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,
+            amrex::Real* exp, amrex::Real* eyp, amrex::Real* ezp,
                         amrex::Real* bxp, amrex::Real* byp, amrex::Real* bzp,
                         const int* ixyzmin,
                         const amrex::Real* xmin, const amrex::Real* ymin, const amrex::Real* zmin,
                         const amrex::Real* dx, const amrex::Real* dy, const amrex::Real* dz,
-			const long* nox, const long* noy, const long* noz,
-			const amrex::Real* exg, const int* exg_lo, const int* exg_hi,
-			const amrex::Real* eyg, const int* eyg_lo, const int* eyg_hi,
-			const amrex::Real* ezg, const int* ezg_lo, const int* ezg_hi,
-			const amrex::Real* bxg, const int* bxg_lo, const int* bxg_hi,
-			const amrex::Real* byg, const int* byg_lo, const int* byg_hi,
-			const amrex::Real* bzg, const int* bzg_lo, const int* bzg_hi,
-			const int* ll4symtry, const int* l_lower_order_in_v,
+            const long* nox, const long* noy, const long* noz,
+            const amrex::Real* exg, const int* exg_lo, const int* exg_hi,
+            const amrex::Real* eyg, const int* eyg_lo, const int* eyg_hi,
+            const amrex::Real* ezg, const int* ezg_lo, const int* ezg_hi,
+            const amrex::Real* bxg, const int* bxg_lo, const int* bxg_hi,
+            const amrex::Real* byg, const int* byg_lo, const int* byg_hi,
+            const amrex::Real* bzg, const int* bzg_lo, const int* bzg_hi,
+            const int* ll4symtry, const int* l_lower_order_in_v,
                         const int* l_nodal, const long* lvect,
-			const long* field_gathe_algo);
+            const long* field_gathe_algo);
 
-	// Particle pusher (velocity and position)
+    // Particle pusher (velocity and position)
 
-	void warpx_particle_pusher(const long* np,
-			amrex::Real* xp, amrex::Real* yp, amrex::Real* zp,
-			amrex::Real* uxp, amrex::Real* uyp, amrex::Real* uzp, amrex::Real* gaminv,
-			const amrex::Real* exp, const amrex::Real* eyp,const amrex::Real* ezp,
-			const amrex::Real* bxp, const amrex::Real* byp,const amrex::Real* bzp,
-			const amrex::Real* charge, const amrex::Real* mass, const amrex::Real* dt,
-			const long* particle_pusher_algo);
+    void warpx_particle_pusher(const long* np,
+            amrex::Real* xp, amrex::Real* yp, amrex::Real* zp,
+            amrex::Real* uxp, amrex::Real* uyp, amrex::Real* uzp, amrex::Real* gaminv,
+            const amrex::Real* exp, const amrex::Real* eyp,const amrex::Real* ezp,
+            const amrex::Real* bxp, const amrex::Real* byp,const amrex::Real* bzp,
+            const amrex::Real* charge, const amrex::Real* mass, const amrex::Real* dt,
+            const long* particle_pusher_algo);
 
-	// Particle pusher (velocity)
+    // Particle pusher (velocity)
 
-	void warpx_particle_pusher_momenta(const long* np,
-			amrex::Real* xp, amrex::Real* yp, amrex::Real* zp,
-			amrex::Real* uxp, amrex::Real* uyp, amrex::Real* uzp, amrex::Real* gaminv,
-			const amrex::Real* exp, const amrex::Real* eyp,const amrex::Real* ezp,
-			const amrex::Real* bxp, const amrex::Real* byp,const amrex::Real* bzp,
-			const amrex::Real* charge, const amrex::Real* mass, const amrex::Real* dt,
-			const long* particle_pusher_algo);
+    void warpx_particle_pusher_momenta(const long* np,
+            amrex::Real* xp, amrex::Real* yp, amrex::Real* zp,
+            amrex::Real* uxp, amrex::Real* uyp, amrex::Real* uzp, amrex::Real* gaminv,
+            const amrex::Real* exp, const amrex::Real* eyp,const amrex::Real* ezp,
+            const amrex::Real* bxp, const amrex::Real* byp,const amrex::Real* bzp,
+            const amrex::Real* charge, const amrex::Real* mass, const amrex::Real* dt,
+            const long* particle_pusher_algo);
 
 
     // Laser pusher
 
-	void warpx_gaussian_laser( const long* np,
-				amrex::Real* Xp, amrex::Real* Yp, amrex::Real* t, amrex::Real* wavelength, amrex::Real* e_max, amrex::Real* waist,
-				amrex::Real* duration, amrex::Real* t_peak, amrex::Real* f, amrex::Real* amplitude,
-				amrex::Real* zeta, amrex::Real* beta, amrex::Real* phi2, amrex::Real* theta_stc );
+    void warpx_gaussian_laser( const long* np,
+                amrex::Real* Xp, amrex::Real* Yp, amrex::Real* t, amrex::Real* wavelength, amrex::Real* e_max, amrex::Real* waist,
+                amrex::Real* duration, amrex::Real* t_peak, amrex::Real* f, amrex::Real* amplitude,
+                amrex::Real* zeta, amrex::Real* beta, amrex::Real* phi2, amrex::Real* theta_stc );
 
         void warpx_harris_laser( const long* np,
                                  amrex::Real* Xp, amrex::Real* Yp, amrex::Real* t, amrex::Real* wavelength,
@@ -224,7 +220,7 @@ extern "C"
                 const amrex::Real* dtsdz,
                 const amrex::Real* xmin,
                 const amrex::Real* dx,
-		const int* maxwell_fdtd_solver_id);
+        const int* maxwell_fdtd_solver_id);
 
         void warpx_push_evec_f(
                 const int* xlo, const int* xhi,
@@ -237,7 +233,7 @@ extern "C"
                 const amrex::Real* dtsdx_c2,
                 const amrex::Real* dtsdy_c2,
                 const amrex::Real* dtsdz_c2,
-		const int* maxwell_fdtd_solver_id);
+        const int* maxwell_fdtd_solver_id);
 
 #ifdef USE_OPENBC_POISSON
     void warpx_openbc_potential (amrex::Real* rho, amrex::Real* phi, const amrex::Real* dx);
@@ -245,11 +241,11 @@ extern "C"
 #endif
 
     void warpx_compute_E (const int* lo, const int* hi,
-			  const BL_FORT_FAB_ARG_3D(phi),
-			  BL_FORT_FAB_ARG_3D(Ex),
-			  BL_FORT_FAB_ARG_3D(Ey),
-			  BL_FORT_FAB_ARG_3D(Ez),
-			  const amrex::Real* dx);
+              const BL_FORT_FAB_ARG_3D(phi),
+              BL_FORT_FAB_ARG_3D(Ex),
+              BL_FORT_FAB_ARG_3D(Ey),
+              BL_FORT_FAB_ARG_3D(Ez),
+              const amrex::Real* dx);
 
 ///
 /// These functions are used in electrostatic mode.
@@ -362,9 +358,9 @@ extern "C"
                             BL_FORT_FAB_ARG_3D(by),
                             BL_FORT_FAB_ARG_3D(bz),
                             const amrex::Real* dtsdx,
-			    const amrex::Real* dtsdy,
-			    const amrex::Real* dtsdz,
-			    const int* maxwell_fdtd_solver_id);
+                const amrex::Real* dtsdy,
+                const amrex::Real* dtsdz,
+                const int* maxwell_fdtd_solver_id);
 
 
     void WRPX_PUSH_PML_EVEC(const int* xlo, const int* xhi,

@@ -40,13 +40,13 @@ public:
                              const amrex::MultiFab& Bz) final;
 
     virtual void Evolve (int lev,
-			 const amrex::MultiFab& Ex,
+             const amrex::MultiFab& Ex,
                          const amrex::MultiFab& Ey,
                          const amrex::MultiFab& Ez,
-			 const amrex::MultiFab& Bx,
+             const amrex::MultiFab& Bx,
                          const amrex::MultiFab& By,
                          const amrex::MultiFab& Bz,
-			 amrex::MultiFab& jx,
+             amrex::MultiFab& jx,
                          amrex::MultiFab& jy,
                          amrex::MultiFab& jz,
                          amrex::MultiFab* cjx,
@@ -78,11 +78,8 @@ public:
                         const amrex::MultiFab& By,
                         const amrex::MultiFab& Bz) override;
                         
-    virtual void warpx_copy_attribs(const long* np,
-                            const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,
-                            const amrex::Real* uxp, const amrex::Real* uyp, const amrex::Real* uzp,
-                            amrex::Real* xpold, amrex::Real* ypold, amrex::Real* zpold,
-                            amrex::Real* uxpold, amrex::Real* uypold, amrex::Real* uzpold);
+    void warpx_copy_attribs(WarpXParIter& pti,
+                            const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp);
 
     virtual void PostRestart () final {}
 
@@ -124,9 +121,9 @@ protected:
     bool do_backward_propagation = false;
 
     long NumParticlesToAdd (const amrex::Box& overlap_box,
-			    const amrex::RealBox& overlap_realbox,
-			    const amrex::RealBox& tile_real_box,
-			    const amrex::RealBox& particle_real_box);
+                const amrex::RealBox& overlap_realbox,
+                const amrex::RealBox& tile_real_box,
+                const amrex::RealBox& particle_real_box);
   
     int GetRefineFac(const amrex::Real x, const amrex::Real y, const amrex::Real z);
     std::unique_ptr<amrex::IArrayBox> m_refined_injection_mask = nullptr;
