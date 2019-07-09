@@ -249,6 +249,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
+        self.max_level = kw.pop('warpx_max_level', 0)
 
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
@@ -256,7 +257,9 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
         pywarpx.amr.max_grid_size = self.max_grid_size
-
+        pywarpx.amr.blocking_factor = self.blocking_factor
+        pywarpx.amr.max_level = self.max_level        
+        
         assert self.lower_bound[0] >= 0., Exception('Lower radial boundary must be >= 0.')
         assert self.bc_rmin != 'periodic' and self.bc_rmax != 'periodic', Exception('Radial boundaries can not be periodic')
         assert self.n_azimuthal_modes is None or self.n_azimuthal_modes == 1, Exception('Only one azimuthal mode supported')
@@ -290,14 +293,17 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
-
+        self.max_level = kw.pop('warpx_max_level', 0)
+        
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
 
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
         pywarpx.amr.max_grid_size = self.max_grid_size
-
+        pywarpx.amr.blocking_factor = self.blocking_factor
+        pywarpx.amr.max_level = self.max_level
+        
         # Geometry
         pywarpx.geometry.coord_sys = 0  # Cartesian
         pywarpx.geometry.is_periodic = '%d %d'%(self.bc_xmin=='periodic', self.bc_ymin=='periodic')  # Is periodic?
@@ -328,6 +334,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
     def init(self, kw):
         self.max_grid_size = kw.pop('warpx_max_grid_size', 32)
         self.blocking_factor = kw.pop('warpx_blocking_factor', None)
+        self.max_level = kw.pop('warpx_max_level', 0)
 
     def initialize_inputs(self):
         pywarpx.amr.n_cell = self.number_of_cells
@@ -335,8 +342,8 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
         pywarpx.amr.max_grid_size = self.max_grid_size
-
         pywarpx.amr.blocking_factor = self.blocking_factor
+        pywarpx.amr.max_level = self.max_level
 
         # Geometry
         pywarpx.geometry.coord_sys = 0  # Cartesian
