@@ -1334,27 +1334,6 @@ PhysicalParticleContainer::Evolve (int lev,
             if (! do_not_push)
             {
                 const long np_gather = (cEx) ? nfine_gather : np;
-/*
-                // Gather for particles inside domains
-                FieldGather(pti, wp, uxp, uyp, uzp, &jx, &jy, &jz,
-                            0, np_gather, thread_num,
-                            lev, lev, dt);
-                if (has_buffer){
-                    // Gather for particles in buffers
-                    FieldGather(pti, wp, uxp, uyp, uzp, cjx, cjy, cjz,
-                                np_gather, np - nfine_gather, thread_num,
-                                lev, lev-1, dt);
-                }
-*/
-                // Gather for particles inside domains
-                FieldGather(pti, 0, np_gather, 
-                            thread_num, lev, lev);
-                if (has_buffer){
-                    // Gather for particles in buffers
-                    FieldGather(pti, np_gather, np - nfine_gather,
-                                thread_num, lev, lev-1);
-                }
-
                 //
                 // Field Gather of Aux Data (i.e., the full solution)
                 //
@@ -1387,7 +1366,6 @@ PhysicalParticleContainer::Evolve (int lev,
                     &ll4symtry, &WarpX::l_lower_order_in_v, &WarpX::do_nodal,
                     &lvect_fieldgathe, &WarpX::field_gathering_algo);
 
-                // maxence
                 if (np_gather < np)
                 {
                     const IntVect& ref_ratio = WarpX::RefRatio(lev-1);
@@ -2100,79 +2078,4 @@ PhysicalParticleContainer::applyNCIFilter(WarpXParIter& pti,
     nci_godfrey_filter_exeybz[lev]->ApplyStencil(filtered_Bz, Bz[pti], filtered_Bz.box());
     bzfab = &filtered_Bz;
 #endif
-}
-
-void
-WarpXParticleContainer::FieldGather(WarpXParIter& pti,
-                                    const long offset, const long np_to_gather,
-                                    FArrayBox const* exfab,
-                                    int thread_num, int lev, int gather_lev)
-{    
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
-                                     (gather_lev==(lev  )),
-                                     "Gather buffers only work for lev-1");
-    // If no particles, do not do anything
-    if (np_to_gather == 0) return;
-
-    const long ngEB = jx->nGrow();
-    const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
-    // int eb_is_nodal = Ex->is_nodal() and jy->is_nodal() and jz->is_nodal();
-    int eb_is_nodal = WarpX::do_nodal;
-    // const Real stagger_shift = eb_is_nodal ? 0.0 : 0.5;
-
-    // Get tile box where current is deposited.
-    // The tile box is different when depositing in the buffers (depos_lev<lev)
-    // or when depositing inside the level (depos_lev=lev)
-    Box validbox;
-    if (lev == depos_lev) {
-        validbox = pti.validbox();
-    } else {
-        const IntVect& ref_ratio = WarpX::RefRatio(depos_lev);
-        validbox = amrex::coarsen(pti.validbox(),ref_ratio);
-    }
-    
-    // Staggered tile boxes (different in each direction)
-    Box vbex = convert(validbox, WarpX::ex_nodal_flag);
-    Box vbey = convert(validbox, WarpX::ey_nodal_flag);
-    Box vbez = convert(validbox, WarpX::ez_nodal_flag);
-    Box vbbx = convert(validbox, WarpX::bx_nodal_flag);
-    Box vbby = convert(validbox, WarpX::by_nodal_flag);
-    Box vbbz = convert(validbox, WarpX::bz_nodal_flag);
-    validbox.grow(ngJ);
-
-    // No tiling on GPU: jx_ptr points to the full
-    // jx array (same for jy_ptr and jz_ptr).
-    Array4<Real> const& ex_arr = jx->array(pti); // exfab.array() ???
-    Array4<Real> const& ey_arr = jy->array(pti);
-    Array4<Real> const& ez_arr = jz->array(pti);
-
-    Real* AMREX_RESTRICT xp = m_xp[thread_num].dataPtr() + offset;
-    Real* AMREX_RESTRICT zp = m_zp[thread_num].dataPtr() + offset;
-    Real* AMREX_RESTRICT yp = m_yp[thread_num].dataPtr() + offset;
-
-    // Lower corner of tile box physical domain
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(valifdbox, gather_lev);;
-    // xyzmin is built on pti.tilebox(), so it does 
-    // not include staggering, so the stagger_shift has to be done by hand.
-    // Alternatively, we could define xyzminx from tbx (and the same for 3 
-    // directions and for jx, jy, jz). This way, sx0 would not be needed.
-    // Better for memory? worth trying?    
-    const Dim3 lo = lbound(validbox);
-
-    if        (WarpX::nox == 1){
-        doDepositionShapeN<1>(xp, yp, zp, wp.dataPtr(), uxp.dataPtr(), 
-                              uyp.dataPtr(), uzp.dataPtr(), jx_arr, jy_arr, 
-                              jz_arr, offset, np_to_depose, dt, dx,
-                              xyzmin, lo, stagger_shift, q);
-    } else if (WarpX::nox == 2){
-        doDepositionShapeN<2>(xp, yp, zp, wp.dataPtr(), uxp.dataPtr(), 
-                              uyp.dataPtr(), uzp.dataPtr(), jx_arr, jy_arr, 
-                              jz_arr, offset, np_to_depose, dt, dx,
-                              xyzmin, lo, stagger_shift, q);
-    } else if (WarpX::nox == 3){
-        doDepositionShapeN<3>(xp, yp, zp, wp.dataPtr(), uxp.dataPtr(), 
-                              uyp.dataPtr(), uzp.dataPtr(), jx_arr, jy_arr, 
-                              jz_arr, offset, np_to_depose, dt, dx,
-                              xyzmin, lo, stagger_shift, q);
-    }
 }
