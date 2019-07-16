@@ -2164,7 +2164,8 @@ PhysicalParticleContainer::FieldGather(WarpXParIter& pti,
     // directions and for jx, jy, jz). This way, sx0 would not be needed.
     // Better for memory? worth trying?    
     const Dim3 lo = lbound(box);
-
+    
+    
     /*
     if        (WarpX::nox == 1){
         doDepositionShapeN<1>(xp, yp, zp, wp.dataPtr(), uxp.dataPtr(), 
