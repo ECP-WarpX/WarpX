@@ -109,6 +109,21 @@ public:
 
     virtual void ConvertUnits (ConvertDirection convert_dir) override;
 
+    void applyNCIFilter(WarpXParIter& pti,
+                        const amrex::MultiFab& Ex,
+                        const amrex::MultiFab& Ey,
+                        const amrex::MultiFab& Ez,
+                        const amrex::MultiFab& Bx,
+                        const amrex::MultiFab& By,
+                        const amrex::MultiFab& Bz,
+                        amrex::FArrayBox& filtered_Ex,
+                        amrex::FArrayBox& filtered_Ey,
+                        amrex::FArrayBox& filtered_Ez,
+                        amrex::FArrayBox& filtered_Bx,
+                        amrex::FArrayBox& filtered_By,
+                        amrex::FArrayBox& filtered_Bz,
+                        int lev, amrex::Box box);
+
 protected:
 
     std::string species_name;
