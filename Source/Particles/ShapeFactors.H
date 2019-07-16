@@ -16,7 +16,6 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 int compute_shape_factor <0> (Real* const sx, Real xmid){
     int j = (int) (xmid+0.5);
     sx[0] = 1.0;
-    sx[1] = 0.0;
     return j;
 }
 
