@@ -1189,8 +1189,6 @@ PhysicalParticleContainer::Evolve (int lev,
         int thread_num = 0;
 #endif
 
-        FArrayBox filtered_Ex, filtered_Ey, filtered_Ez;
-        FArrayBox filtered_Bx, filtered_By, filtered_Bz;
         std::vector<bool> inexflag;
         Vector<long> pid;
         RealVector tmp;
@@ -1227,16 +1225,8 @@ PhysicalParticleContainer::Evolve (int lev,
 
             if (WarpX::use_fdtd_nci_corr){
                 applyNCIFilter(pti, Ex, Ey, Ez, Bx, By, Bz, 
-                               filtered_Ex, filtered_Ey, filtered_Ez, 
-                               filtered_Bx, filtered_By, filtered_Bz, 
+                               exfab, eyfab, ezfab, bxfab, byfab, bzfab,
                                lev, pti.tilebox());
-                // Update reference fabs
-                exfab = &filtered_Ex;
-                eyfab = &filtered_Ey;
-                ezfab = &filtered_Ez;
-                bxfab = &filtered_Bx;
-                byfab = &filtered_By;
-                bzfab = &filtered_Bz;
             }
 
             Exp.assign(np,0.0);
@@ -1401,16 +1391,8 @@ PhysicalParticleContainer::Evolve (int lev,
 
                     if (WarpX::use_fdtd_nci_corr){
                         applyNCIFilter(pti, *cEx, *cEy, *cEz, *cBx, *cBy, *cBz,
-                                       filtered_Ex, filtered_Ey, filtered_Ez,
-                                       filtered_Bx, filtered_By, filtered_Bz,
+                                       cexfab, ceyfab, cezfab, cbxfab, cbyfab, cbzfab,
                                        lev-1, cbox);
-                        // Update reference fabs
-                        cexfab = &filtered_Ex;
-                        ceyfab = &filtered_Ey;
-                        cezfab = &filtered_Ez;
-                        cbxfab = &filtered_Bx;
-                        cbyfab = &filtered_By;
-                        cbzfab = &filtered_Bz;
                     }
                     
                     long ncrse = np - nfine_gather;
@@ -2044,15 +2026,18 @@ PhysicalParticleContainer::applyNCIFilter(WarpXParIter& pti,
                                           const amrex::MultiFab& Bx,
                                           const amrex::MultiFab& By,
                                           const amrex::MultiFab& Bz,
-                                          amrex::FArrayBox& filtered_Ex,
-                                          amrex::FArrayBox& filtered_Ey,
-                                          amrex::FArrayBox& filtered_Ez,
-                                          amrex::FArrayBox& filtered_Bx,
-                                          amrex::FArrayBox& filtered_By,
-                                          amrex::FArrayBox& filtered_Bz,
+                                          const FArrayBox* exfab,
+                                          const FArrayBox* eyfab,
+                                          const FArrayBox* ezfab,
+                                          const FArrayBox* bxfab,
+                                          const FArrayBox* byfab,
+                                          const FArrayBox* bzfab,
                                           int lev, Box box)
 {
     Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
+
+    FArrayBox filtered_Ex, filtered_Ey, filtered_Ez;
+    FArrayBox filtered_Bx, filtered_By, filtered_Bz;
 
     // Get instances of NCI Godfrey filters 
     const auto& nci_godfrey_filter_exeybz = WarpX::GetInstance().nci_godfrey_filter_exeybz;
@@ -2073,31 +2058,38 @@ PhysicalParticleContainer::applyNCIFilter(WarpXParIter& pti,
     exeli = filtered_Ex.elixir();
     // Apply filter on Ex, result stored in filtered_Ex
     nci_godfrey_filter_exeybz[lev]->ApplyStencil(filtered_Ex, Ex[pti], filtered_Ex.box());
+    // Update reference exfab
+    exfab = &filtered_Ex;
 
     // Filter Ez
     filtered_Ez.resize(amrex::convert(tbox,WarpX::Ez_nodal_flag));
     ezeli = filtered_Ez.elixir();
     nci_godfrey_filter_bxbyez[lev]->ApplyStencil(filtered_Ez, Ez[pti], filtered_Ez.box());
+    ezfab = &filtered_Ez;
 
     // Filter By
     filtered_By.resize(amrex::convert(tbox,WarpX::By_nodal_flag));
     byeli = filtered_By.elixir();
     nci_godfrey_filter_bxbyez[lev]->ApplyStencil(filtered_By, By[pti], filtered_By.box());
+    byfab = &filtered_By;
 
 #if (AMREX_SPACEDIM == 3)
     // Filter Ey
     filtered_Ey.resize(amrex::convert(tbox,WarpX::Ey_nodal_flag));
     eyeli = filtered_Ey.elixir();
     nci_godfrey_filter_exeybz[lev]->ApplyStencil(filtered_Ey, Ey[pti], filtered_Ey.box());
+    eyfab = &filtered_Ey;
 
     // Filter Bx
     filtered_Bx.resize(amrex::convert(tbox,WarpX::Bx_nodal_flag));
     bxeli = filtered_Bx.elixir();
     nci_godfrey_filter_bxbyez[lev]->ApplyStencil(filtered_Bx, Bx[pti], filtered_Bx.box());
+    bxfab = &filtered_Bx;
 
     // Filter Bz
     filtered_Bz.resize(amrex::convert(tbox,WarpX::Bz_nodal_flag));
     bzeli = filtered_Bz.elixir();
     nci_godfrey_filter_exeybz[lev]->ApplyStencil(filtered_Bz, Bz[pti], filtered_Bz.box());
+    bzfab = &filtered_Bz;
 #endif
 }
