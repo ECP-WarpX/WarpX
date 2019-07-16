@@ -2165,23 +2165,16 @@ PhysicalParticleContainer::FieldGather(WarpXParIter& pti,
     // Better for memory? worth trying?    
     const Dim3 lo = lbound(box);
     
-    
-    /*
-    if        (WarpX::nox == 1){
-        doDepositionShapeN<1>(xp, yp, zp, wp.dataPtr(), uxp.dataPtr(), 
-                              uyp.dataPtr(), uzp.dataPtr(), jx_arr, jy_arr, 
-                              jz_arr, offset, np_to_depose, dt, dx,
-                              xyzmin, lo, stagger_shift, q);
-    } else if (WarpX::nox == 2){
-        doDepositionShapeN<2>(xp, yp, zp, wp.dataPtr(), uxp.dataPtr(), 
-                              uyp.dataPtr(), uzp.dataPtr(), jx_arr, jy_arr, 
-                              jz_arr, offset, np_to_depose, dt, dx,
-                              xyzmin, lo, stagger_shift, q);
-    } else if (WarpX::nox == 3){
-        doDepositionShapeN<3>(xp, yp, zp, wp.dataPtr(), uxp.dataPtr(), 
-                              uyp.dataPtr(), uzp.dataPtr(), jx_arr, jy_arr, 
-                              jz_arr, offset, np_to_depose, dt, dx,
-                              xyzmin, lo, stagger_shift, q);
+    if (l_lower_order_in_v){
+        if        (WarpX::nox == 1){
+            doGatherShapeN<1,1>(xp, yp, zp, 
+                                Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(), 
+                                Bxp.dataPtr(), Byp.dataPtr(), Bzp.dataPtr(), 
+                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr, 
+                                offset, np_to_gather, dx,
+                                xyzmin, lo, stagger_shift);
+            // } else if (WarpX::nox == 2){
+            // } else if (WarpX::nox == 3){
+        }
     }
-    */
 }
