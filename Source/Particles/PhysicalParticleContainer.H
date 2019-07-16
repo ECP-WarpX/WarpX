@@ -39,6 +39,25 @@ public:
                                     const amrex::MultiFab& By,
                                     const amrex::MultiFab& Bz) final;
 
+    void FieldGather(WarpXParIter& pti,
+                     RealVector& Exp,
+                     RealVector& Eyp,
+                     RealVector& Ezp,
+                     RealVector& Bxp,
+                     RealVector& Byp,
+                     RealVector& Bzp,
+                     amrex::MultiFab* Ex,
+                     amrex::MultiFab* Ey,
+                     amrex::MultiFab* Ez,
+                     amrex::MultiFab* Bx,
+                     amrex::MultiFab* By,
+                     amrex::MultiFab* Bz,
+                     const long offset,
+                     const long np_to_gather,
+                     int thread_num,
+                     int lev,
+                     int depos_lev);
+
     virtual void Evolve (int lev,
 			 const amrex::MultiFab& Ex,
                          const amrex::MultiFab& Ey,
