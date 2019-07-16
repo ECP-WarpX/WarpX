@@ -1346,6 +1346,13 @@ PhysicalParticleContainer::Evolve (int lev,
 
                 BL_PROFILE_VAR_START(blp_pxr_fg);
 
+                FArrayBox const* exfab = &(Ex[pti]);
+                FArrayBox const* eyfab = &(Ey[pti]);
+                FArrayBox const* ezfab = &(Ez[pti]);
+                FArrayBox const* bxfab = &(Bx[pti]);
+                FArrayBox const* byfab = &(By[pti]);
+                FArrayBox const* bzfab = &(Bz[pti]);
+
                 warpx_geteb_energy_conserving(
                     &np_gather,
                     m_xp[thread_num].dataPtr(),
@@ -1378,6 +1385,13 @@ PhysicalParticleContainer::Evolve (int lev,
                                        lev-1, cbox);
                     }
                     
+                    const FArrayBox* cexfab = &(*cEx)[pti];
+                    const FArrayBox* ceyfab = &(*cEy)[pti];
+                    const FArrayBox* cezfab = &(*cEz)[pti];
+                    const FArrayBox* cbxfab = &(*cBx)[pti];
+                    const FArrayBox* cbyfab = &(*cBy)[pti];
+                    const FArrayBox* cbzfab = &(*cBz)[pti];
+
                     long ncrse = np - nfine_gather;
                     warpx_geteb_energy_conserving(
                         &ncrse,
