@@ -25,8 +25,8 @@ template <int depos_order, int lower_in_v>
 void doGatherShapeN(const Real * const xp, 
                     const Real * const yp, 
                     const Real * const zp,
-                    const Real * Exp, const Real * Eyp, const Real * Ezp,
-                    const Real * Bxp, const Real * Byp, const Real * Bzp,
+                    Real * const Exp, Real * const Eyp, Real * const Ezp,
+                    Real * const Bxp, Real * const Byp, Real * const Bzp,
                     const amrex::Array4<amrex::Real>& ex_arr, 
                     const amrex::Array4<amrex::Real>& ey_arr, 
                     const amrex::Array4<amrex::Real>& ez_arr,
@@ -85,10 +85,50 @@ void doGatherShapeN(const Real * const xp,
 		     const int l0 = compute_shape_factor<depos_order - lower_in_v>(sz0, zmid-stagger_shift);
 
                      // Deposit current into jx_arr, jy_arr and jz_arr
+             Exp[ip] = 0;
+             Eyp[ip] = 0;
+             Ezp[ip] = 0;
+             Bxp[ip] = 0;
+             Byp[ip] = 0;
+             Bzp[ip] = 0;
 #if (AMREX_SPACEDIM == 2)
+/*
+ -- ex(ip) = ex(ip) + sx0(jj)*sz (ll)*exg(j0+jj, l +ll)
+ -- ey(ip) = ey(ip) + sx (jj)*sz (ll)*eyg(j +jj, l +ll)
+ -- ez(ip) = ez(ip) + sx (jj)*sz0(ll)*ezg(j +jj, l0+ll)
+ -- bx(ip) = bx(ip) + sx (jj)*sz0(ll)*bxg(j +jj, l0+ll)
+by(ip) = by(ip) + sx0(jj)*sz0(ll)*byg(j0+jj, l0+ll)
+ -- bz(ip) = bz(ip) + sx0(jj)*sz (ll)*bzg(j0+jj, l +ll)
+ */
+                     for (int iz=0; iz<=depos_order; iz++){
+                         for (int ix=0; ix<=depos_order; ix++){
+                             Eyp[ip] += sx[ix]*sz[iz]*
+                                 ey_arr(lo.x+j+ix, lo.y+l+iz, 0);
+                         }
+                     }
                      for (int iz=0; iz<=depos_order; iz++){
                          for (int ix=0; ix<=depos_order-lower_in_v; ix++){
-                             /*
+                             Exp[ip] += sx0[ix]*sz[iz]*
+                                 ex_arr(lo.x+j0+ix, lo.y+l +iz, 0);
+                             Bzp[ip] += sx0[ix]*sz[iz]*
+                                 bz_arr(lo.x+j0+ix, lo.y+l +iz, 0);
+                         }
+                     }
+                     for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+                         for (int ix=0; ix<=depos_order; ix++){
+                             Ezp[ip] += sx[ix]*sz0[iz]*
+                                 ez_arr(lo.x+j+ix, lo.y+l0 +iz, 0);
+                             Bxp[ip] += sx[ix]*sz0[iz]*
+                                 bx_arr(lo.x+j+ix, lo.y+l0 +iz, 0);
+                         }
+                     }
+                     for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+                         for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+                             Byp[ip] += sx0[ix]*sz0[iz]*
+                                 by_arr(lo.x+j0+ix, lo.y+l0+iz, 0);
+                         }
+                     }
+                     /*
                              amrex::Gpu::Atomic::Add(
                                  &jx_arr(lo.x+j0+ix, lo.y+l +iz, 0), 
                                  sx0[ix]*sz [iz]*wqx);
@@ -106,9 +146,9 @@ void doGatherShapeN(const Real * const xp,
                              amrex::Gpu::Atomic::Add(
                                  &jz_arr(lo.x+j +ix, lo.y+l0+iz, 0), 
                                  sx [ix]*sz0[iz]*wqz);
-                             */
                          }
                      }
+                     */
 #else // (AMREX_SPACEDIM == 3)
                      for (int iz=0; iz<=depos_order; iz++){
                          for (int iy=0; iy<=depos_order; iy++){
