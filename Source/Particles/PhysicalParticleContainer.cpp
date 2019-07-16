@@ -6,7 +6,7 @@
 #include <WarpX.H>
 #include <WarpXConst.H>
 #include <WarpXWrappers.h>
-
+#include <FieldGather.H>
 
 using namespace amrex;
 
@@ -2165,7 +2165,7 @@ PhysicalParticleContainer::FieldGather(WarpXParIter& pti,
     // Better for memory? worth trying?    
     const Dim3 lo = lbound(box);
     
-    if (l_lower_order_in_v){
+    if (WarpX::l_lower_order_in_v){
         if        (WarpX::nox == 1){
             doGatherShapeN<1,1>(xp, yp, zp, 
                                 Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(), 
