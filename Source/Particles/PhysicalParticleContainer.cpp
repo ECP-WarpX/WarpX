@@ -1215,17 +1215,8 @@ PhysicalParticleContainer::Evolve (int lev,
 
             const long np = pti.numParticles();
 
-            // Data on the grid
-            FArrayBox const* exfab = &(Ex[pti]);
-            FArrayBox const* eyfab = &(Ey[pti]);
-            FArrayBox const* ezfab = &(Ez[pti]);
-            FArrayBox const* bxfab = &(Bx[pti]);
-            FArrayBox const* byfab = &(By[pti]);
-            FArrayBox const* bzfab = &(Bz[pti]);
-
             if (WarpX::use_fdtd_nci_corr){
                 applyNCIFilter(pti, Ex, Ey, Ez, Bx, By, Bz, 
-                               exfab, eyfab, ezfab, bxfab, byfab, bzfab,
                                lev, pti.tilebox());
             }
 
@@ -1404,16 +1395,8 @@ PhysicalParticleContainer::Evolve (int lev,
                     const std::array<Real,3>& cxyzmin_grid = WarpX::LowerCorner(cbox, lev-1);
                     const int* cixyzmin_grid = cbox.loVect();
 
-                    const FArrayBox* cexfab = &(*cEx)[pti];
-                    const FArrayBox* ceyfab = &(*cEy)[pti];
-                    const FArrayBox* cezfab = &(*cEz)[pti];
-                    const FArrayBox* cbxfab = &(*cBx)[pti];
-                    const FArrayBox* cbyfab = &(*cBy)[pti];
-                    const FArrayBox* cbzfab = &(*cBz)[pti];
-
                     if (WarpX::use_fdtd_nci_corr){
                         applyNCIFilter(pti, *cEx, *cEy, *cEz, *cBx, *cBy, *cBz,
-                                       cexfab, ceyfab, cezfab, cbxfab, cbyfab, cbzfab,
                                        lev-1, cbox);
                     }
                     
@@ -2036,6 +2019,7 @@ PhysicalParticleContainer::ContinuousInjection(const RealBox& injection_box)
     AddPlasma(lev, injection_box);
 }
 
+
 /* \brief Apply NCI corrector to E{x,y,z} and B{x,y,z} in box 
  * on particles in pti, and store the result in 
  * filtered_E{x,y,z} and filtered_B{x,y,z}.
@@ -2048,14 +2032,16 @@ PhysicalParticleContainer::applyNCIFilter(WarpXParIter& pti,
                                           const amrex::MultiFab& Bx,
                                           const amrex::MultiFab& By,
                                           const amrex::MultiFab& Bz,
-                                          const FArrayBox* exfab,
-                                          const FArrayBox* eyfab,
-                                          const FArrayBox* ezfab,
-                                          const FArrayBox* bxfab,
-                                          const FArrayBox* byfab,
-                                          const FArrayBox* bzfab,
                                           int lev, Box box)
 {
+    // Data on the grid
+    FArrayBox const* exfab = &(Ex[pti]);
+    FArrayBox const* eyfab = &(Ey[pti]);
+    FArrayBox const* ezfab = &(Ez[pti]);
+    FArrayBox const* bxfab = &(Bx[pti]);
+    FArrayBox const* byfab = &(By[pti]);
+    FArrayBox const* bzfab = &(Bz[pti]);
+
     Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
 
     FArrayBox filtered_Ex, filtered_Ey, filtered_Ez;

@@ -116,12 +116,6 @@ public:
                         const amrex::MultiFab& Bx,
                         const amrex::MultiFab& By,
                         const amrex::MultiFab& Bz,
-                        const amrex::FArrayBox* exfab,
-                        const amrex::FArrayBox* eyfab,
-                        const amrex::FArrayBox* ezfab,
-                        const amrex::FArrayBox* bxfab,
-                        const amrex::FArrayBox* byfab,
-                        const amrex::FArrayBox* bzfab,
                         int lev, amrex::Box box);
 
 protected:
