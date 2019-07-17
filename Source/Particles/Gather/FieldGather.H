@@ -48,7 +48,6 @@ void doGatherShapeN(const Real * const xp,
     const Real zmin = xyzmin[2];
 
     // Loop over particles and deposit into jx_arr, jy_arr and jz_arr
-    Print()<<"in my function\n";
     ParallelFor( np_to_gather,
                  [=] AMREX_GPU_DEVICE (long ip) {
 

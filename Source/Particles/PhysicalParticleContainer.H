@@ -46,12 +46,13 @@ public:
                      RealVector& Bxp,
                      RealVector& Byp,
                      RealVector& Bzp,
-                     const amrex::MultiFab* Ex,
-                     const amrex::MultiFab* Ey,
-                     const amrex::MultiFab* Ez,
-                     const amrex::MultiFab* Bx,
-                     const amrex::MultiFab* By,
-                     const amrex::MultiFab* Bz,
+                     amrex::FArrayBox const * exfab,
+                     amrex::FArrayBox const * eyfab,
+                     amrex::FArrayBox const * ezfab,
+                     amrex::FArrayBox const * bxfab,
+                     amrex::FArrayBox const * byfab,
+                     amrex::FArrayBox const * bzfab,
+                     const int ngE, const int e_is_nodal,
                      const long offset,
                      const long np_to_gather,
                      int thread_num,
@@ -127,15 +128,6 @@ public:
                                   DiagnosticParticles& diagnostic_particles) final;
 
     virtual void ConvertUnits (ConvertDirection convert_dir) override;
-
-    void applyNCIFilter(WarpXParIter& pti,
-                        const amrex::MultiFab& Ex,
-                        const amrex::MultiFab& Ey,
-                        const amrex::MultiFab& Ez,
-                        const amrex::MultiFab& Bx,
-                        const amrex::MultiFab& By,
-                        const amrex::MultiFab& Bz,
-                        int lev, amrex::Box box);
 
 protected:
 

@@ -1170,6 +1170,10 @@ PhysicalParticleContainer::Evolve (int lev,
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
     const std::array<Real,3>& cdx = WarpX::CellSize(std::max(lev-1,0));
 
+    // Get instances of NCI Godfrey filters 
+    const auto& nci_godfrey_filter_exeybz = WarpX::GetInstance().nci_godfrey_filter_exeybz;
+    const auto& nci_godfrey_filter_bxbyez = WarpX::GetInstance().nci_godfrey_filter_bxbyez;
+
     BL_ASSERT(OnSameGrids(lev,jx));
 
     MultiFab* cost = WarpX::getCosts(lev);
@@ -1189,6 +1193,8 @@ PhysicalParticleContainer::Evolve (int lev,
         int thread_num = 0;
 #endif
 
+        FArrayBox filtered_Ex, filtered_Ey, filtered_Ez;
+        FArrayBox filtered_Bx, filtered_By, filtered_Bz;
         std::vector<bool> inexflag;
         Vector<long> pid;
         RealVector tmp;
@@ -1215,9 +1221,65 @@ PhysicalParticleContainer::Evolve (int lev,
 
             const long np = pti.numParticles();
 
-            if (WarpX::use_fdtd_nci_corr){
-                applyNCIFilter(pti, Ex, Ey, Ez, Bx, By, Bz, 
-                               lev, pti.tilebox());
+            // Data on the grid
+            FArrayBox const* exfab = &(Ex[pti]);
+            FArrayBox const* eyfab = &(Ey[pti]);
+            FArrayBox const* ezfab = &(Ez[pti]);
+            FArrayBox const* bxfab = &(Bx[pti]);
+            FArrayBox const* byfab = &(By[pti]);
+            FArrayBox const* bzfab = &(Bz[pti]);
+
+            Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
+            if (WarpX::use_fdtd_nci_corr)
+            {
+#if (AMREX_SPACEDIM == 2)
+                const Box& tbox = amrex::grow(pti.tilebox(),{static_cast<int>(WarpX::nox),
+                            static_cast<int>(WarpX::noz)});
+#else
+                const Box& tbox = amrex::grow(pti.tilebox(),{static_cast<int>(WarpX::nox),
+                            static_cast<int>(WarpX::noy),
+                            static_cast<int>(WarpX::noz)});
+#endif
+
+                // Filter Ex (Both 2D and 3D)
+                filtered_Ex.resize(amrex::convert(tbox,WarpX::Ex_nodal_flag));
+                // Safeguard for GPU
+                exeli = filtered_Ex.elixir();
+                // Apply filter on Ex, result stored in filtered_Ex
+                nci_godfrey_filter_exeybz[lev]->ApplyStencil(filtered_Ex, Ex[pti], filtered_Ex.box());
+                // Update exfab reference
+                exfab = &filtered_Ex;
+
+                // Filter Ez
+                filtered_Ez.resize(amrex::convert(tbox,WarpX::Ez_nodal_flag));
+                ezeli = filtered_Ez.elixir();
+                nci_godfrey_filter_bxbyez[lev]->ApplyStencil(filtered_Ez, Ez[pti], filtered_Ez.box());
+                ezfab = &filtered_Ez;
+
+                // Filter By
+                filtered_By.resize(amrex::convert(tbox,WarpX::By_nodal_flag));
+                byeli = filtered_By.elixir();
+                nci_godfrey_filter_bxbyez[lev]->ApplyStencil(filtered_By, By[pti], filtered_By.box());
+                byfab = &filtered_By;
+#if (AMREX_SPACEDIM == 3)
+                // Filter Ey
+                filtered_Ey.resize(amrex::convert(tbox,WarpX::Ey_nodal_flag));
+                eyeli = filtered_Ey.elixir();
+                nci_godfrey_filter_exeybz[lev]->ApplyStencil(filtered_Ey, Ey[pti], filtered_Ey.box());
+                eyfab = &filtered_Ey;
+
+                // Filter Bx
+                filtered_Bx.resize(amrex::convert(tbox,WarpX::Bx_nodal_flag));
+                bxeli = filtered_Bx.elixir();
+                nci_godfrey_filter_bxbyez[lev]->ApplyStencil(filtered_Bx, Bx[pti], filtered_Bx.box());
+                bxfab = &filtered_Bx;
+
+                // Filter Bz
+                filtered_Bz.resize(amrex::convert(tbox,WarpX::Bz_nodal_flag));
+                bzeli = filtered_Bz.elixir();
+                nci_godfrey_filter_exeybz[lev]->ApplyStencil(filtered_Bz, Bz[pti], filtered_Bz.box());
+                bzfab = &filtered_Bz;
+#endif
             }
 
             Exp.assign(np,0.0);
@@ -1333,90 +1395,91 @@ PhysicalParticleContainer::Evolve (int lev,
             
             if (! do_not_push)
             {
-                const int ll4symtry          = false;
-                long lvect_fieldgathe = 64;
-
-                // maxence
                 const long np_gather = (cEx) ? nfine_gather : np;
-                FieldGather(pti, Exp, Eyp, Ezp, Bxp, Byp, Bzp, &Ex, &Ey, &Ez, 
-                            &Bx, &By, &Bz, 0, np_gather, thread_num, lev, lev);
+
                 //
                 // Field Gather of Aux Data (i.e., the full solution)
                 //
-                /*
-                const std::array<Real,3>& xyzmin_grid = WarpX::LowerCorner(box, lev);
-                const int* ixyzmin_grid = box.loVect();
-                FArrayBox const* exfab = &(Ex[pti]);
-                FArrayBox const* eyfab = &(Ey[pti]);
-                FArrayBox const* ezfab = &(Ez[pti]);
-                FArrayBox const* bxfab = &(Bx[pti]);
-                FArrayBox const* byfab = &(By[pti]);
-                FArrayBox const* bzfab = &(Bz[pti]);
-                warpx_geteb_energy_conserving(
-                    &np_gather,
-                    m_xp[thread_num].dataPtr(),
-                    m_yp[thread_num].dataPtr(),
-                    m_zp[thread_num].dataPtr(),
-                    Exp.dataPtr(),Eyp.dataPtr(),Ezp.dataPtr(),
-                    Bxp.dataPtr(),Byp.dataPtr(),Bzp.dataPtr(),
-                    ixyzmin_grid,
-                    &xyzmin_grid[0], &xyzmin_grid[1], &xyzmin_grid[2],
-                    &dx[0], &dx[1], &dx[2],
-                    &WarpX::nox, &WarpX::noy, &WarpX::noz,
-                    BL_TO_FORTRAN_ANYD(*exfab),
-                    BL_TO_FORTRAN_ANYD(*eyfab),
-                    BL_TO_FORTRAN_ANYD(*ezfab),
-                    BL_TO_FORTRAN_ANYD(*bxfab),
-                    BL_TO_FORTRAN_ANYD(*byfab),
-                    BL_TO_FORTRAN_ANYD(*bzfab),
-                    &ll4symtry, &WarpX::l_lower_order_in_v, &WarpX::do_nodal,
-                    &lvect_fieldgathe, &WarpX::field_gathering_algo);
-                */
+                int e_is_nodal = Ex.is_nodal() and Ey.is_nodal() and Ez.is_nodal();
+                FieldGather(pti, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                            exfab, eyfab, ezfab, bxfab, byfab, bzfab, 
+                            Ex.nGrow(), e_is_nodal, 0, np_gather, thread_num, lev, lev);
+
                 if (np_gather < np)
                 {
                     const IntVect& ref_ratio = WarpX::RefRatio(lev-1);
                     const Box& cbox = amrex::coarsen(box,ref_ratio);
-
-                    if (WarpX::use_fdtd_nci_corr){
-                        applyNCIFilter(pti, *cEx, *cEy, *cEz, *cBx, *cBy, *cBz,
-                                       lev-1, cbox);
-                    }
-
-                    FieldGather(pti, Exp, Eyp, Ezp, Bxp, Byp, Bzp, cEx, cEy, cEz, 
-                                cBx, cBy, cBz, nfine_gather, np-nfine_gather, 
-                                thread_num, lev, lev-1);
-
-                    /*
                     const std::array<Real,3>& cxyzmin_grid = WarpX::LowerCorner(cbox, lev-1);
                     const int* cixyzmin_grid = cbox.loVect();
-                    const FArrayBox* cexfab = &(*cEx)[pti];
-                    const FArrayBox* ceyfab = &(*cEy)[pti];
-                    const FArrayBox* cezfab = &(*cEz)[pti];
-                    const FArrayBox* cbxfab = &(*cBx)[pti];
-                    const FArrayBox* cbyfab = &(*cBy)[pti];
-                    const FArrayBox* cbzfab = &(*cBz)[pti];
 
-                    long ncrse = np - nfine_gather;
-                    warpx_geteb_energy_conserving(
-                        &ncrse,
-                        m_xp[thread_num].dataPtr()+nfine_gather,
-                        m_yp[thread_num].dataPtr()+nfine_gather,
-                        m_zp[thread_num].dataPtr()+nfine_gather,
-                        Exp.dataPtr()+nfine_gather, Eyp.dataPtr()+nfine_gather, Ezp.dataPtr()+nfine_gather,
-                        Bxp.dataPtr()+nfine_gather, Byp.dataPtr()+nfine_gather, Bzp.dataPtr()+nfine_gather,
-                        cixyzmin_grid,
-                        &cxyzmin_grid[0], &cxyzmin_grid[1], &cxyzmin_grid[2],
-                        &cdx[0], &cdx[1], &cdx[2],
-                        &WarpX::nox, &WarpX::noy, &WarpX::noz,
-                        BL_TO_FORTRAN_ANYD(*cexfab),
-                        BL_TO_FORTRAN_ANYD(*ceyfab),
-                        BL_TO_FORTRAN_ANYD(*cezfab),
-                        BL_TO_FORTRAN_ANYD(*cbxfab),
-                        BL_TO_FORTRAN_ANYD(*cbyfab),
-                        BL_TO_FORTRAN_ANYD(*cbzfab),
-                        &ll4symtry, &WarpX::l_lower_order_in_v, &WarpX::do_nodal,
-                        &lvect_fieldgathe, &WarpX::field_gathering_algo);
-                    */
+                    // Data on the grid
+                    FArrayBox const* cexfab = &(*cEx)[pti];
+                    FArrayBox const* ceyfab = &(*cEy)[pti];
+                    FArrayBox const* cezfab = &(*cEz)[pti];
+                    FArrayBox const* cbxfab = &(*cBx)[pti];
+                    FArrayBox const* cbyfab = &(*cBy)[pti];
+                    FArrayBox const* cbzfab = &(*cBz)[pti];
+
+                    if (WarpX::use_fdtd_nci_corr)
+                    {
+#if (AMREX_SPACEDIM == 2)
+                        const Box& tbox = amrex::grow(cbox,{static_cast<int>(WarpX::nox),
+                                    static_cast<int>(WarpX::noz)});
+#else
+                        const Box& tbox = amrex::grow(cbox,{static_cast<int>(WarpX::nox),
+                                    static_cast<int>(WarpX::noy),
+                                    static_cast<int>(WarpX::noz)});
+#endif
+
+                        // Filter Ex (both 2D and 3D)
+                        filtered_Ex.resize(amrex::convert(tbox,WarpX::Ex_nodal_flag));
+                        // Safeguard for GPU
+                        exeli = filtered_Ex.elixir();
+                        // Apply filter on Ex, result stored in filtered_Ex
+                        nci_godfrey_filter_exeybz[lev-1]->ApplyStencil(filtered_Ex, (*cEx)[pti], filtered_Ex.box());
+                        // Update exfab reference
+                        cexfab = &filtered_Ex;
+
+                        // Filter Ez
+                        filtered_Ez.resize(amrex::convert(tbox,WarpX::Ez_nodal_flag));
+                        ezeli = filtered_Ez.elixir();
+                        nci_godfrey_filter_bxbyez[lev-1]->ApplyStencil(filtered_Ez, (*cEz)[pti], filtered_Ez.box());
+                        cezfab = &filtered_Ez;
+
+                        // Filter By
+                        filtered_By.resize(amrex::convert(tbox,WarpX::By_nodal_flag));
+                        byeli = filtered_By.elixir();
+                        nci_godfrey_filter_bxbyez[lev-1]->ApplyStencil(filtered_By, (*cBy)[pti], filtered_By.box());
+                        cbyfab = &filtered_By;
+#if (AMREX_SPACEDIM == 3)
+                        // Filter Ey
+                        filtered_Ey.resize(amrex::convert(tbox,WarpX::Ey_nodal_flag));
+                        eyeli = filtered_Ey.elixir();
+                        nci_godfrey_filter_exeybz[lev-1]->ApplyStencil(filtered_Ey, (*cEy)[pti], filtered_Ey.box());
+                        ceyfab = &filtered_Ey;
+                        
+                        // Filter Bx
+                        filtered_Bx.resize(amrex::convert(tbox,WarpX::Bx_nodal_flag));
+                        bxeli = filtered_Bx.elixir();
+                        nci_godfrey_filter_bxbyez[lev-1]->ApplyStencil(filtered_Bx, (*cBx)[pti], filtered_Bx.box());
+                        cbxfab = &filtered_Bx;
+                        
+                        // Filter Bz
+                        filtered_Bz.resize(amrex::convert(tbox,WarpX::Bz_nodal_flag));
+                        bzeli = filtered_Bz.elixir();
+                        nci_godfrey_filter_exeybz[lev-1]->ApplyStencil(filtered_Bz, (*cBz)[pti], filtered_Bz.box());
+                        cbzfab = &filtered_Bz;
+#endif
+                    }
+
+                    e_is_nodal = cEx->is_nodal() and cEy->is_nodal() and cEz->is_nodal();
+                    FieldGather(pti, Exp, Eyp, Ezp, Bxp, Byp, Bzp, 
+                                cexfab, ceyfab, cezfab,
+                                cbxfab, cbyfab, cbzfab,
+                                cEx->nGrow(), e_is_nodal, 
+                                nfine_gather, np-nfine_gather, 
+                                thread_num, lev, lev-1);
+
                 }
                 BL_PROFILE_VAR_STOP(blp_pxr_fg);
 
@@ -2015,89 +2078,6 @@ PhysicalParticleContainer::ContinuousInjection(const RealBox& injection_box)
     AddPlasma(lev, injection_box);
 }
 
-
-/* \brief Apply NCI corrector to E{x,y,z} and B{x,y,z} in box 
- * on particles in pti, and store the result in 
- * filtered_E{x,y,z} and filtered_B{x,y,z}.
- */
-void
-PhysicalParticleContainer::applyNCIFilter(WarpXParIter& pti,
-                                          const amrex::MultiFab& Ex,
-                                          const amrex::MultiFab& Ey,
-                                          const amrex::MultiFab& Ez,
-                                          const amrex::MultiFab& Bx,
-                                          const amrex::MultiFab& By,
-                                          const amrex::MultiFab& Bz,
-                                          int lev, Box box)
-{
-    // Data on the grid
-    FArrayBox const* exfab = &(Ex[pti]);
-    FArrayBox const* eyfab = &(Ey[pti]);
-    FArrayBox const* ezfab = &(Ez[pti]);
-    FArrayBox const* bxfab = &(Bx[pti]);
-    FArrayBox const* byfab = &(By[pti]);
-    FArrayBox const* bzfab = &(Bz[pti]);
-
-    Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
-
-    FArrayBox filtered_Ex, filtered_Ey, filtered_Ez;
-    FArrayBox filtered_Bx, filtered_By, filtered_Bz;
-
-    // Get instances of NCI Godfrey filters 
-    const auto& nci_godfrey_filter_exeybz = WarpX::GetInstance().nci_godfrey_filter_exeybz;
-    const auto& nci_godfrey_filter_bxbyez = WarpX::GetInstance().nci_godfrey_filter_bxbyez;
-
-#if (AMREX_SPACEDIM == 2)
-    const Box& tbox = amrex::grow(box,{static_cast<int>(WarpX::nox),
-                static_cast<int>(WarpX::noz)});
-#else
-    const Box& tbox = amrex::grow(box,{static_cast<int>(WarpX::nox),
-                static_cast<int>(WarpX::noy),
-                static_cast<int>(WarpX::noz)});
-#endif
-
-    // Filter Ex (Both 2D and 3D)
-    filtered_Ex.resize(amrex::convert(tbox,WarpX::Ex_nodal_flag));
-    // Safeguard for GPU
-    exeli = filtered_Ex.elixir();
-    // Apply filter on Ex, result stored in filtered_Ex
-    nci_godfrey_filter_exeybz[lev]->ApplyStencil(filtered_Ex, Ex[pti], filtered_Ex.box());
-    // Update reference exfab
-    exfab = &filtered_Ex;
-
-    // Filter Ez
-    filtered_Ez.resize(amrex::convert(tbox,WarpX::Ez_nodal_flag));
-    ezeli = filtered_Ez.elixir();
-    nci_godfrey_filter_bxbyez[lev]->ApplyStencil(filtered_Ez, Ez[pti], filtered_Ez.box());
-    ezfab = &filtered_Ez;
-
-    // Filter By
-    filtered_By.resize(amrex::convert(tbox,WarpX::By_nodal_flag));
-    byeli = filtered_By.elixir();
-    nci_godfrey_filter_bxbyez[lev]->ApplyStencil(filtered_By, By[pti], filtered_By.box());
-    byfab = &filtered_By;
-
-#if (AMREX_SPACEDIM == 3)
-    // Filter Ey
-    filtered_Ey.resize(amrex::convert(tbox,WarpX::Ey_nodal_flag));
-    eyeli = filtered_Ey.elixir();
-    nci_godfrey_filter_exeybz[lev]->ApplyStencil(filtered_Ey, Ey[pti], filtered_Ey.box());
-    eyfab = &filtered_Ey;
-
-    // Filter Bx
-    filtered_Bx.resize(amrex::convert(tbox,WarpX::Bx_nodal_flag));
-    bxeli = filtered_Bx.elixir();
-    nci_godfrey_filter_bxbyez[lev]->ApplyStencil(filtered_Bx, Bx[pti], filtered_Bx.box());
-    bxfab = &filtered_Bx;
-
-    // Filter Bz
-    filtered_Bz.resize(amrex::convert(tbox,WarpX::Bz_nodal_flag));
-    bzeli = filtered_Bz.elixir();
-    nci_godfrey_filter_exeybz[lev]->ApplyStencil(filtered_Bz, Bz[pti], filtered_Bz.box());
-    bzfab = &filtered_Bz;
-#endif
-}
-
 void
 PhysicalParticleContainer::FieldGather(WarpXParIter& pti,
                                        RealVector& Exp,
@@ -2106,12 +2086,13 @@ PhysicalParticleContainer::FieldGather(WarpXParIter& pti,
                                        RealVector& Bxp,
                                        RealVector& Byp,
                                        RealVector& Bzp,
-                                       const MultiFab* Ex,
-                                       const MultiFab* Ey,
-                                       const MultiFab* Ez,
-                                       const MultiFab* Bx,
-                                       const MultiFab* By,
-                                       const MultiFab* Bz,
+                                       FArrayBox const * exfab,
+                                       FArrayBox const * eyfab,
+                                       FArrayBox const * ezfab,
+                                       FArrayBox const * bxfab,
+                                       FArrayBox const * byfab,
+                                       FArrayBox const * bzfab,
+                                       const int ngE, const int e_is_nodal,
                                        const long offset,
                                        const long np_to_gather,
                                        int thread_num,
@@ -2125,9 +2106,7 @@ PhysicalParticleContainer::FieldGather(WarpXParIter& pti,
     // If no particles, do not do anything
     if (np_to_gather == 0) return;
 
-    const long ngE = Ex->nGrow();
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(gather_lev,0));
-    int e_is_nodal = Ex->is_nodal() and Ey->is_nodal() and Ez->is_nodal();
     const Real stagger_shift = e_is_nodal ? 0.0 : 0.5;
 
     // Get box =from which field is gathered.
@@ -2141,12 +2120,12 @@ PhysicalParticleContainer::FieldGather(WarpXParIter& pti,
 
     box.grow(ngE);
 
-    const Array4<const Real>& ex_arr = Ex->array(pti);
-    const Array4<const Real>& ey_arr = Ey->array(pti);
-    const Array4<const Real>& ez_arr = Ez->array(pti);
-    const Array4<const Real>& bx_arr = Bx->array(pti);
-    const Array4<const Real>& by_arr = By->array(pti);
-    const Array4<const Real>& bz_arr = Bz->array(pti);
+    const Array4<const Real>& ex_arr = exfab->array();
+    const Array4<const Real>& ey_arr = eyfab->array();
+    const Array4<const Real>& ez_arr = ezfab->array();
+    const Array4<const Real>& bx_arr = bxfab->array();
+    const Array4<const Real>& by_arr = byfab->array();
+    const Array4<const Real>& bz_arr = bzfab->array();
 
     const Real * const AMREX_RESTRICT xp = m_xp[thread_num].dataPtr() + offset;
     const Real * const AMREX_RESTRICT zp = m_zp[thread_num].dataPtr() + offset;
