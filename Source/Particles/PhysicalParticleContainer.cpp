@@ -2160,22 +2160,25 @@ PhysicalParticleContainer::FieldGather(WarpXParIter& pti,
     if (WarpX::l_lower_order_in_v){
         if        (WarpX::nox == 1){
             doGatherShapeN<1,1>(xp, yp, zp, 
-                                Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(), 
-                                Bxp.dataPtr(), Byp.dataPtr(), Bzp.dataPtr(), 
+                                Exp.dataPtr() + offset, Eyp.dataPtr() + offset, 
+                                Ezp.dataPtr() + offset, Bxp.dataPtr() + offset,
+                                Byp.dataPtr() + offset, Bzp.dataPtr() + offset, 
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr, 
                                 np_to_gather, dx,
                                 xyzmin, lo, stagger_shift);
         } else if (WarpX::nox == 2){
             doGatherShapeN<2,1>(xp, yp, zp, 
-                                Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(), 
-                                Bxp.dataPtr(), Byp.dataPtr(), Bzp.dataPtr(), 
+                                Exp.dataPtr() + offset, Eyp.dataPtr() + offset, 
+                                Ezp.dataPtr() + offset, Bxp.dataPtr() + offset,
+                                Byp.dataPtr() + offset, Bzp.dataPtr() + offset, 
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr, 
                                 np_to_gather, dx,
                                 xyzmin, lo, stagger_shift);
         } else if (WarpX::nox == 3){
             doGatherShapeN<3,1>(xp, yp, zp, 
-                                Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(), 
-                                Bxp.dataPtr(), Byp.dataPtr(), Bzp.dataPtr(), 
+                                Exp.dataPtr() + offset, Eyp.dataPtr() + offset, 
+                                Ezp.dataPtr() + offset, Bxp.dataPtr() + offset,
+                                Byp.dataPtr() + offset, Bzp.dataPtr() + offset, 
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr, 
                                 np_to_gather, dx,
                                 xyzmin, lo, stagger_shift);
@@ -2183,22 +2186,25 @@ PhysicalParticleContainer::FieldGather(WarpXParIter& pti,
     } else {
         if        (WarpX::nox == 1){
             doGatherShapeN<1,0>(xp, yp, zp, 
-                                Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(), 
-                                Bxp.dataPtr(), Byp.dataPtr(), Bzp.dataPtr(), 
+                                Exp.dataPtr() + offset, Eyp.dataPtr() + offset, 
+                                Ezp.dataPtr() + offset, Bxp.dataPtr() + offset,
+                                Byp.dataPtr() + offset, Bzp.dataPtr() + offset, 
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr, 
                                 np_to_gather, dx,
                                 xyzmin, lo, stagger_shift);
         } else if (WarpX::nox == 2){
             doGatherShapeN<2,0>(xp, yp, zp, 
-                                Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(), 
-                                Bxp.dataPtr(), Byp.dataPtr(), Bzp.dataPtr(), 
+                                Exp.dataPtr() + offset, Eyp.dataPtr() + offset, 
+                                Ezp.dataPtr() + offset, Bxp.dataPtr() + offset,
+                                Byp.dataPtr() + offset, Bzp.dataPtr() + offset, 
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr, 
                                 np_to_gather, dx,
                                 xyzmin, lo, stagger_shift);
         } else if (WarpX::nox == 3){
             doGatherShapeN<3,0>(xp, yp, zp, 
-                                Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(), 
-                                Bxp.dataPtr(), Byp.dataPtr(), Bzp.dataPtr(), 
+                                Exp.dataPtr() + offset, Eyp.dataPtr() + offset, 
+                                Ezp.dataPtr() + offset, Bxp.dataPtr() + offset,
+                                Byp.dataPtr() + offset, Bzp.dataPtr() + offset, 
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr, 
                                 np_to_gather, dx,
                                 xyzmin, lo, stagger_shift);
