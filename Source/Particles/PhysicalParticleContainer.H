@@ -108,6 +108,10 @@ public:
 
 protected:
 
+      amrex::Array<amrex::Real,3> v_galilean = {0,0,0};
+
+protected:
+
     std::string species_name;
     std::unique_ptr<PlasmaInjector> plasma_injector;
 
@@ -128,9 +132,9 @@ protected:
     // Inject particles during the whole simulation
     void ContinuousInjection(const amrex::RealBox& injection_box) override;
 
-private:
+  //private:
 
-    amrex::Array<amrex::Real,3> v_galilean = {0,0,0};    
+    //amrex::Array<amrex::Real,3> v_galilean = {0,0,0};
 
 };
 

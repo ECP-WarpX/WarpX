@@ -105,6 +105,7 @@ extern "C"
 			const long* np,
 			const amrex::Real* xp, const amrex::Real* yp, const amrex::Real* zp,
 			const amrex::Real* uxp, const amrex::Real* uyp,const amrex::Real* uzp,
+      const amrex::Real* vx_gal, const amrex::Real* vy_gal, const amrex::Real* vz_gal,
 			const amrex::Real* gip, const amrex::Real* w, const amrex::Real* q,
 			const amrex::Real* xmin, const amrex::Real* ymin, const amrex::Real* zmin,
 			const amrex::Real* dt,

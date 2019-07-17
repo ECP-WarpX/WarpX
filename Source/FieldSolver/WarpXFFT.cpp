@@ -90,7 +90,7 @@ CopyDataFromFFTToValid (MultiFab& mf, const MultiFab& mf_fft, const BoxArray& ba
 
         const FArrayBox& srcfab = mf_fft[mfi];
         const Box& srcbox = srcfab.box();
- 
+
         if (srcbox.contains(bx))
         {
             // Copy the interior region (without guard cells)
@@ -109,7 +109,7 @@ CopyDataFromFFTToValid (MultiFab& mf, const MultiFab& mf_fft, const BoxArray& ba
     mf.setVal(0.0, 0);
     mf.ParallelAdd(mftmp);
 
-  
+
 }
 
 }
@@ -252,7 +252,8 @@ WarpX::FFTDomainDecomposition (int lev, BoxArray& ba_fft, DistributionMapping& d
                                BoxArray& ba_valid, Box& domain_fft, const Box& domain)
 {
 
-    IntVect nguards_fft(AMREX_D_DECL(nox_fft/2,noy_fft/2,noz_fft/2));
+    //IntVect nguards_fft(AMREX_D_DECL(nox_fft/2,noy_fft/2,noz_fft/2));
+    IntVect nguards_fft(AMREX_D_DECL(32,32,32));//oshapoval
 
     int nprocs = ParallelDescriptor::NProcs();
 
@@ -500,5 +501,3 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */)
     }
 
 }
-
-
