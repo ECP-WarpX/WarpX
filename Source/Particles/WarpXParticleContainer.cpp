@@ -461,10 +461,6 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
         tilebox = amrex::coarsen(pti.tilebox(),ref_ratio);
     }
     
-    // Staggered tile boxes (different in each direction)
-    Box tbx = convert(tilebox, WarpX::jx_nodal_flag);
-    Box tby = convert(tilebox, WarpX::jy_nodal_flag);
-    Box tbz = convert(tilebox, WarpX::jz_nodal_flag);
     tilebox.grow(ngJ);
 
 #ifdef AMREX_USE_GPU
@@ -474,6 +470,11 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     Array4<Real> const& jy_arr = jy->array(pti);
     Array4<Real> const& jz_arr = jz->array(pti);
 #else
+    // Staggered tile boxes (different in each direction)
+    Box tbx = convert(tilebox, WarpX::jx_nodal_flag);
+    Box tby = convert(tilebox, WarpX::jy_nodal_flag);
+    Box tbz = convert(tilebox, WarpX::jz_nodal_flag);
+
     // Tiling is on: jx_ptr points to local_jx[thread_num]
     // (same for jy_ptr and jz_ptr)
     tbx.grow(ngJ);
