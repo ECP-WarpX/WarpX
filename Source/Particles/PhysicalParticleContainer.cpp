@@ -1333,26 +1333,25 @@ PhysicalParticleContainer::Evolve (int lev,
             
             if (! do_not_push)
             {
-                const long np_gather = (cEx) ? nfine_gather : np;
-                //
-                // Field Gather of Aux Data (i.e., the full solution)
-                //
                 const int ll4symtry          = false;
                 long lvect_fieldgathe = 64;
 
+                // maxence
+                const long np_gather = (cEx) ? nfine_gather : np;
+                FieldGather(pti, Exp, Eyp, Ezp, Bxp, Byp, Bzp, &Ex, &Ey, &Ez, 
+                            &Bx, &By, &Bz, 0, np_gather, thread_num, lev, lev);
+                //
+                // Field Gather of Aux Data (i.e., the full solution)
+                //
+                /*
                 const std::array<Real,3>& xyzmin_grid = WarpX::LowerCorner(box, lev);
                 const int* ixyzmin_grid = box.loVect();
-                
-
-                BL_PROFILE_VAR_START(blp_pxr_fg);
-
                 FArrayBox const* exfab = &(Ex[pti]);
                 FArrayBox const* eyfab = &(Ey[pti]);
                 FArrayBox const* ezfab = &(Ez[pti]);
                 FArrayBox const* bxfab = &(Bx[pti]);
                 FArrayBox const* byfab = &(By[pti]);
                 FArrayBox const* bzfab = &(Bz[pti]);
-
                 warpx_geteb_energy_conserving(
                     &np_gather,
                     m_xp[thread_num].dataPtr(),
@@ -1372,7 +1371,7 @@ PhysicalParticleContainer::Evolve (int lev,
                     BL_TO_FORTRAN_ANYD(*bzfab),
                     &ll4symtry, &WarpX::l_lower_order_in_v, &WarpX::do_nodal,
                     &lvect_fieldgathe, &WarpX::field_gathering_algo);
-
+                */
                 if (np_gather < np)
                 {
                     const IntVect& ref_ratio = WarpX::RefRatio(lev-1);
@@ -2102,12 +2101,12 @@ PhysicalParticleContainer::FieldGather(WarpXParIter& pti,
                                        RealVector& Bxp,
                                        RealVector& Byp,
                                        RealVector& Bzp,
-                                       MultiFab* Ex,
-                                       MultiFab* Ey,
-                                       MultiFab* Ez,
-                                       MultiFab* Bx,
-                                       MultiFab* By,
-                                       MultiFab* Bz,
+                                       const MultiFab* Ex,
+                                       const MultiFab* Ey,
+                                       const MultiFab* Ez,
+                                       const MultiFab* Bx,
+                                       const MultiFab* By,
+                                       const MultiFab* Bz,
                                        const long offset,
                                        const long np_to_gather,
                                        int thread_num,
@@ -2145,16 +2144,16 @@ PhysicalParticleContainer::FieldGather(WarpXParIter& pti,
     Box box_bz = convert(box, WarpX::Bz_nodal_flag);
     box.grow(ngE);
 
-    Array4<Real> const& ex_arr = Ex->array(pti);
-    Array4<Real> const& ey_arr = Ey->array(pti);
-    Array4<Real> const& ez_arr = Ez->array(pti);
-    Array4<Real> const& bx_arr = Bx->array(pti);
-    Array4<Real> const& by_arr = By->array(pti);
-    Array4<Real> const& bz_arr = Bz->array(pti);
+    const Array4<const Real>& ex_arr = Ex->array(pti);
+    const Array4<const Real>& ey_arr = Ey->array(pti);
+    const Array4<const Real>& ez_arr = Ez->array(pti);
+    const Array4<const Real>& bx_arr = Bx->array(pti);
+    const Array4<const Real>& by_arr = By->array(pti);
+    const Array4<const Real>& bz_arr = Bz->array(pti);
 
-    Real* AMREX_RESTRICT xp = m_xp[thread_num].dataPtr() + offset;
-    Real* AMREX_RESTRICT zp = m_zp[thread_num].dataPtr() + offset;
-    Real* AMREX_RESTRICT yp = m_yp[thread_num].dataPtr() + offset;
+    const Real * const AMREX_RESTRICT xp = m_xp[thread_num].dataPtr() + offset;
+    const Real * const AMREX_RESTRICT zp = m_zp[thread_num].dataPtr() + offset;
+    const Real * const AMREX_RESTRICT yp = m_yp[thread_num].dataPtr() + offset;
 
     // Lower corner of tile box physical domain
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, depos_lev);;
@@ -2173,8 +2172,20 @@ PhysicalParticleContainer::FieldGather(WarpXParIter& pti,
                                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr, 
                                 offset, np_to_gather, dx,
                                 xyzmin, lo, stagger_shift);
-            // } else if (WarpX::nox == 2){
-            // } else if (WarpX::nox == 3){
+        } else if (WarpX::nox == 2){
+            doGatherShapeN<2,1>(xp, yp, zp, 
+                                Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(), 
+                                Bxp.dataPtr(), Byp.dataPtr(), Bzp.dataPtr(), 
+                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr, 
+                                offset, np_to_gather, dx,
+                                xyzmin, lo, stagger_shift);
+        } else if (WarpX::nox == 3){
+            doGatherShapeN<3,1>(xp, yp, zp, 
+                                Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(), 
+                                Bxp.dataPtr(), Byp.dataPtr(), Bzp.dataPtr(), 
+                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr, 
+                                offset, np_to_gather, dx,
+                                xyzmin, lo, stagger_shift);
         }
     }
 }

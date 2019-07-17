@@ -27,12 +27,12 @@ void doGatherShapeN(const Real * const xp,
                     const Real * const zp,
                     Real * const Exp, Real * const Eyp, Real * const Ezp,
                     Real * const Bxp, Real * const Byp, Real * const Bzp,
-                    const amrex::Array4<amrex::Real>& ex_arr, 
-                    const amrex::Array4<amrex::Real>& ey_arr, 
-                    const amrex::Array4<amrex::Real>& ez_arr,
-                    const amrex::Array4<amrex::Real>& bx_arr, 
-                    const amrex::Array4<amrex::Real>& by_arr, 
-                    const amrex::Array4<amrex::Real>& bz_arr,
+                    const amrex::Array4<const amrex::Real>& ex_arr, 
+                    const amrex::Array4<const amrex::Real>& ey_arr, 
+                    const amrex::Array4<const amrex::Real>& ez_arr,
+                    const amrex::Array4<const amrex::Real>& bx_arr, 
+                    const amrex::Array4<const amrex::Real>& by_arr, 
+                    const amrex::Array4<const amrex::Real>& bz_arr,
                     const long offset, const long np_to_gather, 
                     const std::array<amrex::Real,3>& dx,
                     const std::array<Real, 3> xyzmin,
@@ -53,6 +53,7 @@ void doGatherShapeN(const Real * const xp,
     const Real zmin = xyzmin[2];
 
     // Loop over particles and deposit into jx_arr, jy_arr and jz_arr
+    Print()<<"in my function\n";
     ParallelFor( np_to_gather,
                  [=] AMREX_GPU_DEVICE (long ip) {
 
@@ -128,31 +129,23 @@ by(ip) = by(ip) + sx0(jj)*sz0(ll)*byg(j0+jj, l0+ll)
                                  by_arr(lo.x+j0+ix, lo.y+l0+iz, 0);
                          }
                      }
-                     /*
-                             amrex::Gpu::Atomic::Add(
-                                 &jx_arr(lo.x+j0+ix, lo.y+l +iz, 0), 
-                                 sx0[ix]*sz [iz]*wqx);
-                         }
-                     }
-                     for (int iz=0; iz<=depos_order; iz++){
-                         for (int ix=0; ix<=depos_order; ix++){
-                             amrex::Gpu::Atomic::Add(
-                                 &jy_arr(lo.x+j +ix, lo.y+l +iz, 0), 
-                                 sx [ix]*sz [iz]*wqy);
-                         }
-                     }
-                     for (int iz=0; iz<=depos_order; iz++){
-                         for (int ix=0; ix<=depos_order-lower_in_v; ix++){
-                             amrex::Gpu::Atomic::Add(
-                                 &jz_arr(lo.x+j +ix, lo.y+l0+iz, 0), 
-                                 sx [ix]*sz0[iz]*wqz);
-                         }
-                     }
                      */
 #else // (AMREX_SPACEDIM == 3)
+/*
+ex(ip) = ex(ip) + sx0(jj)*sy(kk)*sz(ll)*exg(j0+jj, k+kk, l+ll)
+ey(ip) = ey(ip) + sx(jj)*sy0(kk)*sz(ll)*eyg(j+jj, k0+kk, l+ll)
+ez(ip) = ez(ip) + sx(jj)*sy(kk)*sz0(ll)*ezg(j+jj, k+kk, l0+ll)
+bx(ip) = bx(ip) + sx(jj)*sy0(kk)*sz0(ll)*bxg(j+jj, k0+kk, l0+ll)
+by(ip) = by(ip) + sx0(jj)*sy(kk)*sz0(ll)*byg(j0+jj, k+kk, l0+ll)
+bz(ip) = bz(ip) + sx0(jj)*sy0(kk)*sz(ll)*bzg(j0+jj, k0+kk, l+ll)
+ */
                      for (int iz=0; iz<=depos_order; iz++){
                          for (int iy=0; iy<=depos_order; iy++){
                              for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+                                 
+                             }
+                         }
+                     }
                                  /*
                                  amrex::Gpu::Atomic::Add(
                                      &jx_arr(lo.x+j0+ix, lo.y+k +iy, lo.z+l +iz),
