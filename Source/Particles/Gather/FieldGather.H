@@ -93,14 +93,6 @@ void doGatherShapeN(const Real * const xp,
              Byp[ip] = 0;
              Bzp[ip] = 0;
 #if (AMREX_SPACEDIM == 2)
-/*
- -- ex(ip) = ex(ip) + sx0(jj)*sz (ll)*exg(j0+jj, l +ll)
- -- ey(ip) = ey(ip) + sx (jj)*sz (ll)*eyg(j +jj, l +ll)
- -- ez(ip) = ez(ip) + sx (jj)*sz0(ll)*ezg(j +jj, l0+ll)
- -- bx(ip) = bx(ip) + sx (jj)*sz0(ll)*bxg(j +jj, l0+ll)
-by(ip) = by(ip) + sx0(jj)*sz0(ll)*byg(j0+jj, l0+ll)
- -- bz(ip) = bz(ip) + sx0(jj)*sz (ll)*bzg(j0+jj, l +ll)
- */
                      for (int iz=0; iz<=depos_order; iz++){
                          for (int ix=0; ix<=depos_order; ix++){
                              Eyp[ip] += sx[ix]*sz[iz]*
@@ -129,46 +121,53 @@ by(ip) = by(ip) + sx0(jj)*sz0(ll)*byg(j0+jj, l0+ll)
                                  by_arr(lo.x+j0+ix, lo.y+l0+iz, 0);
                          }
                      }
-                     */
 #else // (AMREX_SPACEDIM == 3)
-/*
-ex(ip) = ex(ip) + sx0(jj)*sy(kk)*sz(ll)*exg(j0+jj, k+kk, l+ll)
-ey(ip) = ey(ip) + sx(jj)*sy0(kk)*sz(ll)*eyg(j+jj, k0+kk, l+ll)
-ez(ip) = ez(ip) + sx(jj)*sy(kk)*sz0(ll)*ezg(j+jj, k+kk, l0+ll)
-bx(ip) = bx(ip) + sx(jj)*sy0(kk)*sz0(ll)*bxg(j+jj, k0+kk, l0+ll)
-by(ip) = by(ip) + sx0(jj)*sy(kk)*sz0(ll)*byg(j0+jj, k+kk, l0+ll)
-bz(ip) = bz(ip) + sx0(jj)*sy0(kk)*sz(ll)*bzg(j0+jj, k0+kk, l+ll)
- */
                      for (int iz=0; iz<=depos_order; iz++){
                          for (int iy=0; iy<=depos_order; iy++){
                              for (int ix=0; ix<=depos_order-lower_in_v; ix++){
-                                 
-                             }
-                         }
-                     }
-                                 /*
-                                 amrex::Gpu::Atomic::Add(
-                                     &jx_arr(lo.x+j0+ix, lo.y+k +iy, lo.z+l +iz),
-                                     sx0[ix]*sy [iy]*sz [iz]*wqx);
+                             Exp[ip] += sx0[ix]*sy[iy]*sz[iz]*
+                                 ex_arr(lo.x+j0+ix, lo.y+k+iy, lo.z+l+iz);
                              }
                          }
                      }
                      for (int iz=0; iz<=depos_order; iz++){
                          for (int iy=0; iy<=depos_order-lower_in_v; iy++){
                              for (int ix=0; ix<=depos_order; ix++){
-                                 amrex::Gpu::Atomic::Add(
-                                     &jy_arr(lo.x+j +ix, lo.y+k0+iy, lo.z+l +iz), 
-                                     sx [ix]*sy0[iy]*sz [iz]*wqy);
+                             Eyp[ip] += sx[ix]*sy0[iy]*sz[iz]*
+                                 ey_arr(lo.x+j+ix, lo.y+k0+iy, lo.z+l+iz);
                              }
                          }
                      }
                      for (int iz=0; iz<=depos_order-lower_in_v; iz++){
                          for (int iy=0; iy<=depos_order; iy++){
                              for (int ix=0; ix<=depos_order; ix++){
-                                 amrex::Gpu::Atomic::Add(
-                                     &jz_arr(lo.x+j +ix, lo.y+k +iy, lo.z+l0+iz),
-                                     sx [ix]*sy [iy]*sz0[iz]*wqz);
-                                 */
+                             Ezp[ip] += sx[ix]*sy[iy]*sz0[iz]*
+                                 ez_arr(lo.x+j+ix, lo.y+k+iy, lo.z+l0+iz);
+                             }
+                         }
+                     }
+
+                     for (int iz=0; iz<=depos_order; iz++){
+                         for (int iy=0; iy<=depos_order-lower_in_v; iy++){
+                             for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+                             Bzp[ip] += sx0[ix]*sy0[iy]*sz[iz]*
+                                 bz_arr(lo.x+j0+ix, lo.y+k0+iy, lo.z+l+iz);
+                             }
+                         }
+                     }
+                     for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+                         for (int iy=0; iy<=depos_order; iy++){
+                             for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+                             Byp[ip] += sx0[ix]*sy[iy]*sz0[iz]*
+                                 by_arr(lo.x+j0+ix, lo.y+k+iy, lo.z+l0+iz);
+                             }
+                         }
+                     }
+                     for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+                         for (int iy=0; iy<=depos_order-lower_in_v; iy++){
+                             for (int ix=0; ix<=depos_order; ix++){
+                             Bxp[ip] += sx[ix]*sy0[iy]*sz0[iz]*
+                                 bx_arr(lo.x+j+ix, lo.y+k0+iy, lo.z+l0+iz);
                              }
                          }
                      }
