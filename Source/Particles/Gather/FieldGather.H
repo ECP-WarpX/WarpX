@@ -12,9 +12,7 @@ using namespace amrex;
  * \param jx_arr       : Array4 of current density, either full array or tile.
  * \param jy_arr       : Array4 of current density, either full array or tile.
  * \param jz_arr       : Array4 of current density, either full array or tile.
- * \param offset       : Index of first particle for which current is deposited
  * \param np_to_gather : Number of particles for which current is deposited.
-                        Particles [offset,offset+np_tp_depose] deposit current.
  * \param dx           : 3D cell size
  * \param xyzmin       : Physical lower bounds of domain.
  * \param lo           : Index lower bounds of domain.
@@ -33,7 +31,7 @@ void doGatherShapeN(const Real * const xp,
                     const amrex::Array4<const amrex::Real>& bx_arr, 
                     const amrex::Array4<const amrex::Real>& by_arr, 
                     const amrex::Array4<const amrex::Real>& bz_arr,
-                    const long offset, const long np_to_gather, 
+                    const long np_to_gather, 
                     const std::array<amrex::Real,3>& dx,
                     const std::array<Real, 3> xyzmin,
                     const Dim3 lo,
@@ -41,11 +39,8 @@ void doGatherShapeN(const Real * const xp,
 {
     const Real dxi = 1.0/dx[0];
     const Real dzi = 1.0/dx[2];
-#if (AMREX_SPACEDIM == 2)
-    const Real invvol = dxi*dzi;
-#else // (AMREX_SPACEDIM == 3)
+#if (AMREX_SPACEDIM == 3)
     const Real dyi = 1.0/dx[1];
-    const Real invvol = dxi*dyi*dzi;
 #endif
 
     const Real xmin = xyzmin[0];
@@ -74,24 +69,24 @@ void doGatherShapeN(const Real * const xp,
                      // y direction
                      const Real ymid= (yp[ip]-ymin)*dyi;
                      Real AMREX_RESTRICT sy [depos_order + 1];
-		     const int k  = compute_shape_factor<depos_order>(sy,  ymid);
+                     const int k  = compute_shape_factor<depos_order>(sy,  ymid);
                      Real AMREX_RESTRICT sy0[depos_order + 1 - lower_in_v];
-		     const int k0 = compute_shape_factor<depos_order-lower_in_v>(sy0, ymid-stagger_shift);
+                     const int k0 = compute_shape_factor<depos_order-lower_in_v>(sy0, ymid-stagger_shift);
 #endif
                      // z direction
                      const Real zmid= (zp[ip]-zmin)*dzi;
                      Real AMREX_RESTRICT sz [depos_order + 1];
-		     const int l  = compute_shape_factor<depos_order>(sz,  zmid);
+                     const int l  = compute_shape_factor<depos_order>(sz,  zmid);
                      Real AMREX_RESTRICT sz0[depos_order + 1 - lower_in_v];
-		     const int l0 = compute_shape_factor<depos_order - lower_in_v>(sz0, zmid-stagger_shift);
+                     const int l0 = compute_shape_factor<depos_order - lower_in_v>(sz0, zmid-stagger_shift);
 
                      // Deposit current into jx_arr, jy_arr and jz_arr
-             Exp[ip] = 0;
-             Eyp[ip] = 0;
-             Ezp[ip] = 0;
-             Bxp[ip] = 0;
-             Byp[ip] = 0;
-             Bzp[ip] = 0;
+                     Exp[ip] = 0;
+                     Eyp[ip] = 0;
+                     Ezp[ip] = 0;
+                     Bxp[ip] = 0;
+                     Byp[ip] = 0;
+                     Bzp[ip] = 0;
 #if (AMREX_SPACEDIM == 2)
                      for (int iz=0; iz<=depos_order; iz++){
                          for (int ix=0; ix<=depos_order; ix++){
@@ -125,24 +120,24 @@ void doGatherShapeN(const Real * const xp,
                      for (int iz=0; iz<=depos_order; iz++){
                          for (int iy=0; iy<=depos_order; iy++){
                              for (int ix=0; ix<=depos_order-lower_in_v; ix++){
-                             Exp[ip] += sx0[ix]*sy[iy]*sz[iz]*
-                                 ex_arr(lo.x+j0+ix, lo.y+k+iy, lo.z+l+iz);
+                                 Exp[ip] += sx0[ix]*sy[iy]*sz[iz]*
+                                     ex_arr(lo.x+j0+ix, lo.y+k+iy, lo.z+l+iz);
                              }
                          }
                      }
                      for (int iz=0; iz<=depos_order; iz++){
                          for (int iy=0; iy<=depos_order-lower_in_v; iy++){
                              for (int ix=0; ix<=depos_order; ix++){
-                             Eyp[ip] += sx[ix]*sy0[iy]*sz[iz]*
-                                 ey_arr(lo.x+j+ix, lo.y+k0+iy, lo.z+l+iz);
+                                 Eyp[ip] += sx[ix]*sy0[iy]*sz[iz]*
+                                     ey_arr(lo.x+j+ix, lo.y+k0+iy, lo.z+l+iz);
                              }
                          }
                      }
                      for (int iz=0; iz<=depos_order-lower_in_v; iz++){
                          for (int iy=0; iy<=depos_order; iy++){
                              for (int ix=0; ix<=depos_order; ix++){
-                             Ezp[ip] += sx[ix]*sy[iy]*sz0[iz]*
-                                 ez_arr(lo.x+j+ix, lo.y+k+iy, lo.z+l0+iz);
+                                 Ezp[ip] += sx[ix]*sy[iy]*sz0[iz]*
+                                     ez_arr(lo.x+j+ix, lo.y+k+iy, lo.z+l0+iz);
                              }
                          }
                      }
@@ -150,24 +145,24 @@ void doGatherShapeN(const Real * const xp,
                      for (int iz=0; iz<=depos_order; iz++){
                          for (int iy=0; iy<=depos_order-lower_in_v; iy++){
                              for (int ix=0; ix<=depos_order-lower_in_v; ix++){
-                             Bzp[ip] += sx0[ix]*sy0[iy]*sz[iz]*
-                                 bz_arr(lo.x+j0+ix, lo.y+k0+iy, lo.z+l+iz);
+                                 Bzp[ip] += sx0[ix]*sy0[iy]*sz[iz]*
+                                     bz_arr(lo.x+j0+ix, lo.y+k0+iy, lo.z+l+iz);
                              }
                          }
                      }
                      for (int iz=0; iz<=depos_order-lower_in_v; iz++){
                          for (int iy=0; iy<=depos_order; iy++){
                              for (int ix=0; ix<=depos_order-lower_in_v; ix++){
-                             Byp[ip] += sx0[ix]*sy[iy]*sz0[iz]*
-                                 by_arr(lo.x+j0+ix, lo.y+k+iy, lo.z+l0+iz);
+                                 Byp[ip] += sx0[ix]*sy[iy]*sz0[iz]*
+                                     by_arr(lo.x+j0+ix, lo.y+k+iy, lo.z+l0+iz);
                              }
                          }
                      }
                      for (int iz=0; iz<=depos_order-lower_in_v; iz++){
                          for (int iy=0; iy<=depos_order-lower_in_v; iy++){
                              for (int ix=0; ix<=depos_order; ix++){
-                             Bxp[ip] += sx[ix]*sy0[iy]*sz0[iz]*
-                                 bx_arr(lo.x+j+ix, lo.y+k0+iy, lo.z+l0+iz);
+                                 Bxp[ip] += sx[ix]*sy0[iy]*sz0[iz]*
+                                     bx_arr(lo.x+j+ix, lo.y+k0+iy, lo.z+l0+iz);
                              }
                          }
                      }

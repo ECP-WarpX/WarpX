@@ -12,9 +12,7 @@ using namespace amrex;
  * \param jx_arr       : Array4 of current density, either full array or tile.
  * \param jy_arr       : Array4 of current density, either full array or tile.
  * \param jz_arr       : Array4 of current density, either full array or tile.
- * \param offset       : Index of first particle for which current is deposited
  * \param np_to_depose : Number of particles for which current is deposited.
-                        Particles [offset,offset+np_tp_depose] deposit current.
  * \param dt           : Time step for particle level
  * \param dx           : 3D cell size
  * \param xyzmin       : Physical lower bounds of domain.
@@ -29,7 +27,7 @@ void doDepositionShapeN(const Real * const xp, const Real * const yp, const Real
                         const amrex::Array4<amrex::Real>& jx_arr, 
                         const amrex::Array4<amrex::Real>& jy_arr, 
                         const amrex::Array4<amrex::Real>& jz_arr,
-                        const long offset, const long np_to_depose, 
+                        const long np_to_depose, 
                         const amrex::Real dt, const std::array<amrex::Real,3>& dx,
                         const std::array<Real, 3> xyzmin,
                         const Dim3 lo,
