@@ -38,7 +38,7 @@ NumParticlesToAdd(const Box& overlap_box, const RealBox& overlap_realbox,
         } else {
             fac = 1.0;
         }
-	
+
         int ref_num_ppc = num_ppc * AMREX_D_TERM(fac, *fac, *fac);
         for (int i_part=0; i_part<ref_num_ppc;i_part++) {
             std::array<Real, 3> r;
@@ -49,7 +49,6 @@ NumParticlesToAdd(const Box& overlap_box, const RealBox& overlap_realbox,
             Real z = overlap_corner[2] + (iv[2] + r[2])*dx[2];
 #elif ( AMREX_SPACEDIM == 2 )
             Real x = overlap_corner[0] + (iv[0] + r[0])*dx[0];
-            Real y = 0;
             Real z = overlap_corner[1] + (iv[1] + r[1])*dx[1];
 #endif
             // If the new particle is not inside the tile box,
@@ -62,7 +61,7 @@ NumParticlesToAdd(const Box& overlap_box, const RealBox& overlap_realbox,
             ++np;
         }
     }
-    
+
     return np;
 }
 
