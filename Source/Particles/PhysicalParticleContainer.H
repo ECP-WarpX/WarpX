@@ -12,6 +12,7 @@ class PhysicalParticleContainer
     : public WarpXParticleContainer
 {
 public:
+
     PhysicalParticleContainer (amrex::AmrCore* amr_core,
                                int ispecies,
                                const std::string& name);
@@ -111,7 +112,7 @@ protected:
       amrex::Array<amrex::Real,3> v_galilean = {0,0,0};
 
 protected:
-
+    //amrex::Array<amrex::Real,3> v_galilean = {0,0,0};
     std::string species_name;
     std::unique_ptr<PlasmaInjector> plasma_injector;
 
