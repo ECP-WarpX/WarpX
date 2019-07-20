@@ -259,13 +259,13 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
 
         assert self.lower_bound[0] >= 0., Exception('Lower radial boundary must be >= 0.')
         assert self.bc_rmin != 'periodic' and self.bc_rmax != 'periodic', Exception('Radial boundaries can not be periodic')
-        assert self.n_azimuthal_modes is None or self.n_azimuthal_modes == 1, Exception('Only one azimuthal mode supported')
 
         # Geometry
         pywarpx.geometry.coord_sys = 1  # RZ
         pywarpx.geometry.is_periodic = '0 %d'%(self.bc_zmin=='periodic')  # Is periodic?
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
+        pywarpx.warpx.nmodes = self.n_azimuthal_modes
 
         if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
             pywarpx.warpx.do_moving_window = 1
@@ -381,15 +381,10 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.pml_ncell = self.pml_ncell
 
         # --- Same method names are used, though mapped to lower case.
-        pywarpx.warpx.maxwell_fdtd_solver = self.method
+        pywarpx.algo.maxwell_fdtd_solver = self.method
 
         if self.cfl is not None:
             pywarpx.warpx.cfl = self.cfl
-
-        if self.stencil_order is not None:
-            pywarpx.interpolation.nox = self.stencil_order[0]
-            pywarpx.interpolation.noy = self.stencil_order[1]
-            pywarpx.interpolation.noz = self.stencil_order[2]
 
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
@@ -407,7 +402,7 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
         self.laser.profile = "Gaussian"
         self.laser.wavelength = self.wavelength  # The wavelength of the laser (in meters)
         self.laser.e_max = self.E0  # Maximum amplitude of the laser field (in V/m)
-        self.laser.polarization = [np.cos(self.polarization_angle), np.sin(self.polarization_angle), 0.]  # The main polarization vector
+        self.laser.polarization = self.polarization_direction  # The main polarization vector
         self.laser.profile_waist = self.waist  # The waist of the laser (in meters)
         self.laser.profile_duration = self.duration  # The duration of the laser (in seconds)
         self.laser.zeta = self.zeta
@@ -453,7 +448,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         if self.gamma_boost is not None:
             pywarpx.warpx.gamma_boost = self.gamma_boost
-            pywarpx.warpx.boost_direction = 'z'
+            pywarpx.warpx.boost_direction = None
 
         pywarpx.amr.plot_int = self.plot_int
         pywarpx.amr.plot_file = self.plot_file
@@ -567,11 +562,21 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         pywarpx.warpx.plot_finepatch = self.plot_finepatch
         pywarpx.warpx.plot_crsepatch = self.plot_crsepatch
 
+        if self.write_dir is not None:
+            plot_file = self.write_dir + '/plotfiles/plt'
+            pywarpx.amr.check_consistency('plot_file', plot_file, 'The plot directory must be the same for all simulation frame diagnostics')
+            pywarpx.amr.plot_file = plot_file
+
 class ElectrostaticFieldDiagnostic(picmistandard.PICMI_ElectrostaticFieldDiagnostic):
     def initialize_inputs(self):
         # --- For now, the period must be the same as plot_int if set
         pywarpx.amr.check_consistency('plot_int', self.period, 'The period must be the same for all simulation frame diagnostics')
         pywarpx.amr.plot_int = self.period
+
+        if self.write_dir is not None:
+            plot_file = self.write_dir + '/plotfiles/plt'
+            pywarpx.amr.check_consistency('plot_file', plot_file, 'The plot directory must be the same for all simulation frame diagnostics')
+            pywarpx.amr.plot_file = plot_file
 
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
@@ -587,6 +592,11 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         if 'part_per_proc' in self.data_list:
             pywarpx.warpx.plot_part_per_proc = 1
 
+        if self.write_dir is not None:
+            plot_file = self.write_dir + '/plotfiles/plt'
+            pywarpx.amr.check_consistency('plot_file', plot_file, 'The plot directory must be the same for all simulation frame diagnostics')
+            pywarpx.amr.plot_file = plot_file
+
 
 # ----------------------------
 # Lab frame diagnostics
@@ -598,11 +608,13 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
 
         pywarpx.warpx.check_consistency('num_snapshots_lab', self.num_snapshots, 'The number of snapshots must be the same in all lab frame diagnostics')
         pywarpx.warpx.check_consistency('dt_snapshots_lab', self.dt_snapshots, 'The time between snapshots must be the same in all lab frame diagnostics')
+        pywarpx.warpx.check_consistency('lab_data_directory', self.write_dir, 'The write directory must be the same in all lab frame diagnostics')
 
         pywarpx.warpx.do_boosted_frame_diagnostic = 1
         pywarpx.warpx.num_snapshots_lab = self.num_snapshots
         pywarpx.warpx.dt_snapshots_lab = self.dt_snapshots
         pywarpx.warpx.do_boosted_frame_fields = 1
+        pywarpx.warpx.lab_data_directory = self.write_dir
 
 
 class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic):
@@ -610,8 +622,10 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic)
 
         pywarpx.warpx.check_consistency('num_snapshots_lab', self.num_snapshots, 'The number of snapshots must be the same in all lab frame diagnostics')
         pywarpx.warpx.check_consistency('dt_snapshots_lab', self.dt_snapshots, 'The time between snapshots must be the same in all lab frame diagnostics')
+        pywarpx.warpx.check_consistency('lab_data_directory', self.write_dir, 'The write directory must be the same in all lab frame diagnostics')
 
         pywarpx.warpx.do_boosted_frame_diagnostic = 1
         pywarpx.warpx.num_snapshots_lab = self.num_snapshots
         pywarpx.warpx.dt_snapshots_lab = self.dt_snapshots
         pywarpx.warpx.do_boosted_frame_particles = 1
+        pywarpx.warpx.lab_data_directory = self.write_dir

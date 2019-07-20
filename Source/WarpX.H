@@ -81,6 +81,7 @@ public:
     static amrex::Vector<amrex::Real> B_external;
 
     // Algorithms
+    static long use_picsar_deposition;
     static long current_deposition_algo;
     static long charge_deposition_algo;
     static long field_gathering_algo;
@@ -195,8 +196,8 @@ public:
     void FillBoundaryF (int lev);
 
     void SyncCurrent ();
-    void SyncRho (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rhof,
-                  amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rhoc);
+    void SyncRho ();
+
 
     int getistep (int lev) const {return istep[lev];}
     void setistep (int lev, int ii) {istep[lev] = ii;}
@@ -250,6 +251,23 @@ public:
     void SliceGenerationForDiagnostics ();
     void WriteSlicePlotFile () const;
     void ClearSliceMultiFabs ();
+
+    // these should be private, but can't due to Cuda limitations
+    static void ComputeDivB (amrex::MultiFab& divB, int dcomp,
+                             const std::array<const amrex::MultiFab*, 3>& B,
+                             const std::array<amrex::Real,3>& dx);
+
+    static void ComputeDivB (amrex::MultiFab& divB, int dcomp,
+                             const std::array<const amrex::MultiFab*, 3>& B,
+                             const std::array<amrex::Real,3>& dx, int ngrow);
+
+    static void ComputeDivE (amrex::MultiFab& divE, int dcomp,
+                             const std::array<const amrex::MultiFab*, 3>& B,
+                             const std::array<amrex::Real,3>& dx);
+
+    static void ComputeDivE (amrex::MultiFab& divE, int dcomp,
+                             const std::array<const amrex::MultiFab*, 3>& B,
+                             const std::array<amrex::Real,3>& dx, int ngrow);
 
 protected:
 
@@ -383,22 +401,6 @@ private:
     std::array<std::unique_ptr<amrex::MultiFab>, 3> getInterpolatedE(int lev) const;
 
     std::array<std::unique_ptr<amrex::MultiFab>, 3> getInterpolatedB(int lev) const;
-
-    static void ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                             const std::array<const amrex::MultiFab*, 3>& B,
-                             const std::array<amrex::Real,3>& dx);
-
-    static void ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                             const std::array<const amrex::MultiFab*, 3>& B,
-                             const std::array<amrex::Real,3>& dx, int ngrow);
-
-    static void ComputeDivE (amrex::MultiFab& divE, int dcomp,
-                             const std::array<const amrex::MultiFab*, 3>& B,
-                             const std::array<amrex::Real,3>& dx);
-
-    static void ComputeDivE (amrex::MultiFab& divE, int dcomp,
-                             const std::array<const amrex::MultiFab*, 3>& B,
-                             const std::array<amrex::Real,3>& dx, int ngrow);
 
     void SyncCurrent (const std::array<const amrex::MultiFab*,3>& fine,
                       const std::array<      amrex::MultiFab*,3>& crse,
@@ -655,7 +657,8 @@ private:
 
     void EvolvePSATD (int numsteps);
     void PushPSATD (amrex::Real dt);
-    void PushPSATD (int lev, amrex::Real dt);
+    void PushPSATD_localFFT (int lev, amrex::Real dt);
+    void PushPSATD_hybridFFT (int lev, amrex::Real dt);
 
 #endif
 

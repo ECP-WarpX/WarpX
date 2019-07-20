@@ -295,8 +295,7 @@ WarpX::OneStep_nosub (Real cur_time)
 #endif
 
     SyncCurrent();
-    
-    SyncRho(rho_fp, rho_cp);
+    SyncRho();
 
     // Push E and B from {n} to {n+1}
     // (And update guard cells immediately afterwards)
