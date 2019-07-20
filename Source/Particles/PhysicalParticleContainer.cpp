@@ -8,6 +8,12 @@
 #include <WarpXConst.H>
 #include <WarpXWrappers.h>
 #include <IonizationEnergiesTable.H>
+#include <WarpXAlgorithmSelection.H>
+
+// Import low-level single-particle kernels
+#include <UpdatePosition.H>
+#include <UpdateMomentumBoris.H>
+#include <UpdateMomentumVay.H>
 
 using namespace amrex;
 
@@ -1839,35 +1845,52 @@ PhysicalParticleContainer::PushPX(WarpXParIter& pti,
                                   Real dt)
 {
 
+    // This wraps the momentum and position advance so that inheritors can modify the call.
+    auto& attribs = pti.GetAttribs();
+    // Extract pointers to the different particle quantities
+    Real* AMREX_RESTRICT x = xp.dataPtr();
+    Real* AMREX_RESTRICT y = yp.dataPtr();
+    Real* AMREX_RESTRICT z = zp.dataPtr();
+    Real* AMREX_RESTRICT gi = giv.dataPtr();
+    Real* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
+    Real* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
+    Real* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
+    Real* AMREX_RESTRICT Ex = attribs[PIdx::Ex].dataPtr();
+    Real* AMREX_RESTRICT Ey = attribs[PIdx::Ey].dataPtr();
+    Real* AMREX_RESTRICT Ez = attribs[PIdx::Ez].dataPtr();
+    Real* AMREX_RESTRICT Bx = attribs[PIdx::Bx].dataPtr();
+    Real* AMREX_RESTRICT By = attribs[PIdx::By].dataPtr();
+    Real* AMREX_RESTRICT Bz = attribs[PIdx::Bz].dataPtr();
+
     if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
     {
-        copy_attribs(pti, xp.dataPtr(), yp.dataPtr(), zp.dataPtr());
+        copy_attribs(pti, x, y, z);
     }
 
-    // The following attributes should be included in CPP version of warpx_particle_pusher
-	// This wraps the call to warpx_particle_pusher so that inheritors can modify the call.
-    auto& attribs = pti.GetAttribs();
-    auto& uxp = attribs[PIdx::ux];
-    auto& uyp = attribs[PIdx::uy];
-    auto& uzp = attribs[PIdx::uz];
-    auto& Exp = attribs[PIdx::Ex];
-    auto& Eyp = attribs[PIdx::Ey];
-    auto& Ezp = attribs[PIdx::Ez];
-    auto& Bxp = attribs[PIdx::Bx];
-    auto& Byp = attribs[PIdx::By];
-    auto& Bzp = attribs[PIdx::Bz];
-    const long np  = pti.numParticles();
-    
-    warpx_particle_pusher(&np,
-                          xp.dataPtr(),
-                          yp.dataPtr(),
-                          zp.dataPtr(),
-                          uxp.dataPtr(), uyp.dataPtr(), uzp.dataPtr(),
-                          giv.dataPtr(),
-                          Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(),
-                          Bxp.dataPtr(), Byp.dataPtr(), Bzp.dataPtr(),
-                          &this->charge, &this->mass, &dt,
-                          &WarpX::particle_pusher_algo);
+    // Loop over the particles and update their momentum
+    const Real q = this->charge;
+    const Real m = this-> mass;
+    if (WarpX::particle_pusher_algo == ParticlePusherAlgo::Boris){
+        amrex::ParallelFor( pti.numParticles(),
+            [=] AMREX_GPU_DEVICE (long i) {
+                UpdateMomentumBoris( ux[i], uy[i], uz[i], gi[i],
+                      Ex[i], Ey[i], Ez[i], Bx[i], By[i], Bz[i], q, m, dt);
+                UpdatePosition( x[i], y[i], z[i],
+                      ux[i], uy[i], uz[i], dt );
+            }
+        );
+    } else if (WarpX::particle_pusher_algo == ParticlePusherAlgo::Vay) {
+        amrex::ParallelFor( pti.numParticles(),
+            [=] AMREX_GPU_DEVICE (long i) {
+                UpdateMomentumVay( ux[i], uy[i], uz[i], gi[i],
+                      Ex[i], Ey[i], Ez[i], Bx[i], By[i], Bz[i], q, m, dt);
+                UpdatePosition( x[i], y[i], z[i],
+                      ux[i], uy[i], uz[i], dt );
+            }
+        );
+    } else {
+      amrex::Abort("Unknown particle pusher");
+    };
 
 }
 
@@ -1957,16 +1980,39 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 &ll4symtry, &WarpX::l_lower_order_in_v, &WarpX::do_nodal,
                 &lvect_fieldgathe, &WarpX::field_gathering_algo);
 
-            warpx_particle_pusher_momenta(&np,
-                                          m_xp[thread_num].dataPtr(),
-                                          m_yp[thread_num].dataPtr(),
-                                          m_zp[thread_num].dataPtr(),
-                                          uxp.dataPtr(), uyp.dataPtr(), uzp.dataPtr(),
-                                          m_giv[thread_num].dataPtr(),
-                                          Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(),
-                                          Bxp.dataPtr(), Byp.dataPtr(), Bzp.dataPtr(),
-                                          &this->charge, &this->mass, &dt,
-                                          &WarpX::particle_pusher_algo);
+            // This wraps the momentum advance so that inheritors can modify the call.
+            // Extract pointers to the different particle quantities
+            Real* AMREX_RESTRICT gi = m_giv[thread_num].dataPtr();
+            Real* AMREX_RESTRICT uxpp = uxp.dataPtr();
+            Real* AMREX_RESTRICT uypp = uyp.dataPtr();
+            Real* AMREX_RESTRICT uzpp = uzp.dataPtr();
+            Real* AMREX_RESTRICT Expp = Exp.dataPtr();
+            Real* AMREX_RESTRICT Eypp = Eyp.dataPtr();
+            Real* AMREX_RESTRICT Ezpp = Ezp.dataPtr();
+            Real* AMREX_RESTRICT Bxpp = Bxp.dataPtr();
+            Real* AMREX_RESTRICT Bypp = Byp.dataPtr();
+            Real* AMREX_RESTRICT Bzpp = Bzp.dataPtr();
+
+            // Loop over the particles and update their momentum
+            const Real q = this->charge;
+            const Real m = this-> mass;
+            if (WarpX::particle_pusher_algo == ParticlePusherAlgo::Boris){
+                amrex::ParallelFor( pti.numParticles(),
+                    [=] AMREX_GPU_DEVICE (long i) {
+                        UpdateMomentumBoris( uxpp[i], uypp[i], uzpp[i], gi[i],
+                              Expp[i], Eypp[i], Ezpp[i], Bxpp[i], Bypp[i], Bzpp[i], q, m, dt);
+                    }
+                );
+            } else if (WarpX::particle_pusher_algo == ParticlePusherAlgo::Vay) {
+                amrex::ParallelFor( pti.numParticles(),
+                    [=] AMREX_GPU_DEVICE (long i) {
+                        UpdateMomentumVay( uxpp[i], uypp[i], uzpp[i], gi[i],
+                              Expp[i], Eypp[i], Ezpp[i], Bxpp[i], Bypp[i], Bzpp[i], q, m, dt);
+                    }
+                );
+            } else {
+              amrex::Abort("Unknown particle pusher");
+            };
         }
     }
 }
