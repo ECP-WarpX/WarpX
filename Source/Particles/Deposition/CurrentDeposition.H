@@ -69,6 +69,7 @@ template <int depos_order>
 void doDepositionShapeN(const Real * const xp, const Real * const yp, const Real * const zp,
                         const Real * const wp, const Real * const uxp,
                         const Real * const uyp, const Real * const uzp,
+                        const Real * const ion_lev,
                         const amrex::Array4<amrex::Real>& jx_arr, 
                         const amrex::Array4<amrex::Real>& jy_arr, 
                         const amrex::Array4<amrex::Real>& jz_arr,
@@ -103,7 +104,10 @@ void doDepositionShapeN(const Real * const xp, const Real * const yp, const Real
                      const Real gaminv = 1.0/std::sqrt(1.0 + uxp[ip]*uxp[ip]*clightsq
 						       + uyp[ip]*uyp[ip]*clightsq
 						       + uzp[ip]*uzp[ip]*clightsq);
-                     const Real wq  = q*wp[ip];
+                     Real wq  = q*wp[ip];
+                     if (ion_lev){
+                         wq *= ion_lev[ip];
+                     }
                      const Real vx  = uxp[ip]*gaminv;
                      const Real vy  = uyp[ip]*gaminv;
                      const Real vz  = uzp[ip]*gaminv;
@@ -242,6 +246,7 @@ template <int depos_order>
 void doEsirkepovDepositionShapeN (const Real * const xp, const Real * const yp, const Real * const zp,
                                   const Real * const wp, const Real * const uxp,
                                   const Real * const uyp, const Real * const uzp,
+                                  const Real * ion_lev,
                                   const amrex::Array4<amrex::Real>& Jx_arr,
                                   const amrex::Array4<amrex::Real>& Jy_arr,
                                   const amrex::Array4<amrex::Real>& Jz_arr,
@@ -278,7 +283,10 @@ void doEsirkepovDepositionShapeN (const Real * const xp, const Real * const yp, 
                                                            + uzp[ip]*uzp[ip]*clightsq);
 
                      // wqx, wqy wqz are particle current in each direction
-                     const Real wq = q*wp[ip];
+                     Real wq = q*wp[ip];
+                     if (ion_lev){
+                         wq *= ion_lev[ip];
+                     }
                      const Real wqx = wq*invdtdx;
                      const Real wqy = wq*invdtdy;
                      const Real wqz = wq*invdtdz;

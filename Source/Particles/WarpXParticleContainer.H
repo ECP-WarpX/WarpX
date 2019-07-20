@@ -179,6 +179,7 @@ public:
                                 RealVector& uxp,
                                 RealVector& uyp,
                                 RealVector& uzp,
+                                amrex::Real* ion_lev,
                                 amrex::MultiFab* jx,
                                 amrex::MultiFab* jy,
                                 amrex::MultiFab* jz,

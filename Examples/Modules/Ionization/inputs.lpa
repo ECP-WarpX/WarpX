@@ -5,7 +5,7 @@ max_step = 1000
 amr.n_cell =  64  512
 amr.max_grid_size = 64   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 32 # minimum size of each AMReX box, used to decompose the domain
-amr.plot_int = 10
+amr.plot_int = 50
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 0     0      # Is periodic?
 geometry.prob_lo     = -30.e-6   -56.e-6    # physical domain
@@ -20,6 +20,11 @@ warpx.fine_tag_hi =  5.e-6   -25.e-6
 interpolation.nox = 3 # Particle interpolation order. Must be the same in x, y, and z
 interpolation.noy = 3
 interpolation.noz = 3
+
+algo.use_picsar_deposition = 0
+algo.current_deposition = direct
+warpx.plot_rho = 1
+
 warpx.verbose = 1
 warpx.do_dive_cleaning = 0
 warpx.plot_raw_fields = 1
@@ -64,7 +69,7 @@ ions.momentum_distribution_type = "constant"
 ions.do_continuous_injection = 1
 ions.do_field_ionization = 1
 ions.ionization_product = electrons
-ions.ionization_level = 5
+ions.ionization_level = 0
 ions.physical_element = C
 
 #################################
@@ -79,6 +84,6 @@ laser1.polarization = 0. 1. 0.           # The main polarization vector
 laser1.e_max        = 16.e12             # Maximum amplitude of the laser field (in V/m)
 laser1.profile_waist = 5.e-6             # The waist of the laser (in m)
 laser1.profile_duration = 15.e-15        # The duration of the laser (in s)
-laser1.profile_t_peak = 30.e-15          # Time at which the laser reaches its peak (in s)
+laser1.profile_t_peak = 50.e-15          # Time at which the laser reaches its peak (in s)
 laser1.profile_focal_distance = 100.e-6  # Focal distance from the antenna (in m)
 laser1.wavelength = 0.8e-6               # The wavelength of the laser (in m)
