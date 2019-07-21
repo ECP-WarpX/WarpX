@@ -376,6 +376,7 @@ PhysicalParticleContainer::AddParticles (int lev)
     BL_PROFILE("PhysicalParticleContainer::AddParticles()");
 
     if (plasma_injector->add_single_particle) {
+        /*
         AddNParticles(lev, 1,
                       &(plasma_injector->single_particle_pos[0]),
                       &(plasma_injector->single_particle_pos[1]),
@@ -384,6 +385,19 @@ PhysicalParticleContainer::AddParticles (int lev)
                       &(plasma_injector->single_particle_vel[1]),
                       &(plasma_injector->single_particle_vel[2]),
                       1, &(plasma_injector->single_particle_weight), 0);
+        */
+        Vector<int> attribs_idx = {PIdx::w};
+        Vector<Real*> attribs;
+        attribs.resize(attribs_idx.size());
+        attribs[0] = &(plasma_injector->single_particle_weight);
+        AddNParticles2(lev, 1,
+                      &(plasma_injector->single_particle_pos[0]),
+                      &(plasma_injector->single_particle_pos[1]),
+                      &(plasma_injector->single_particle_pos[2]),
+                      &(plasma_injector->single_particle_vel[0]),
+                      &(plasma_injector->single_particle_vel[1]),
+                      &(plasma_injector->single_particle_vel[2]),
+                      attribs_idx, attribs, 0);
         return;
     }
 
@@ -1825,6 +1839,7 @@ PhysicalParticleContainer::SplitParticles(int lev)
 	// they are not re-split when entering a higher level
 	// AddNParticles calls Redistribute, so that particles
 	// in pctmp_split are in the proper grids and tiles
+    /*
 	pctmp_split.AddNParticles(lev, 
                               np_split_to_add,
                               psplit_x.dataPtr(),
@@ -1836,6 +1851,21 @@ PhysicalParticleContainer::SplitParticles(int lev)
                               1,
                               psplit_w.dataPtr(),
                               1, NoSplitParticleID);
+    */
+    Vector<int> attribs_idx = {PIdx::w};
+    Vector<Real*> attribs;
+    attribs.resize(attribs_idx.size());
+    attribs[0] = psplit_w.dataPtr();
+	pctmp_split.AddNParticles2(lev,
+                               np_split_to_add,
+                               psplit_x.dataPtr(),
+                               psplit_y.dataPtr(),
+                               psplit_z.dataPtr(),
+                               psplit_ux.dataPtr(),
+                               psplit_uy.dataPtr(),
+                               psplit_uz.dataPtr(),
+                               attribs_idx, attribs,
+                               1, NoSplitParticleID);
 	// Copy particles from tmp to current particle container
     addParticles(pctmp_split,1);
 	// Clear tmp container
@@ -2312,6 +2342,7 @@ PhysicalParticleContainer::doFieldIonization(
     // Iterate over grids
     for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti){
         long np = pti.numParticles();
+        Print()<<" np "<<np<<'\n';
         pti.GetPosition(xp_vector, yp_vector, zp_vector);
         is_ionized_vector.resize(np);
         is_ionized_cumsum_vector.resize(np);
@@ -2507,6 +2538,7 @@ PhysicalParticleContainer::copyParticles(int lev)
     }
     // Fill MultiParticleContainer::pc_tmp with particle quantities
     // in the temporary arrays
+/*
     pc_ion.AddNParticles(lev, 
                          elec_np,
                          elec_x.dataPtr(),
@@ -2518,6 +2550,21 @@ PhysicalParticleContainer::copyParticles(int lev)
                          1,
                          elec_w.dataPtr(),
                          1, -1);
+*/
+    Vector<int> attribs_idx = {PIdx::w};
+    Vector<Real*> attribs;
+    attribs.resize(attribs_idx.size());
+    attribs[0] = elec_w.dataPtr();
+    pc_ion.AddNParticles2(lev, 
+                          elec_np,
+                          elec_x.dataPtr(),
+                          elec_y.dataPtr(),
+                          elec_z.dataPtr(),
+                          elec_ux.dataPtr(),
+                          elec_uy.dataPtr(),
+                          elec_uz.dataPtr(),
+                          attribs_idx, attribs,
+                          1, -1);
 }
 
 //int
