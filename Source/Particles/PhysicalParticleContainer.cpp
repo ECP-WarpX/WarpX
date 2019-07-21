@@ -208,9 +208,17 @@ void PhysicalParticleContainer::InitIonizationLevel ()
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti){
             auto& ionization_level_array = pti.GetAttribs(particle_comps["ionization_level"]);
             // Loop over particles and set ionization_level
+	    /*
             for(auto& ionization_level: ionization_level_array){
                 ionization_level = species_ionization_level;
             }
+	    */
+            Real* AMREX_RESTRICT ionization_level = pti.GetAttribs(particle_comps["ionization_level"]).dataPtr();
+	    amrex::ParallelFor( pti.numParticles(),
+				[=] AMREX_GPU_DEVICE (long i) {
+				  ionization_level[i] = species_ionization_level;
+				}
+	    );
         }
     }
 }
