@@ -387,16 +387,6 @@ PhysicalParticleContainer::AddParticles (int lev)
     BL_PROFILE("PhysicalParticleContainer::AddParticles()");
 
     if (plasma_injector->add_single_particle) {
-        /*
-        AddNParticles(lev, 1,
-                      &(plasma_injector->single_particle_pos[0]),
-                      &(plasma_injector->single_particle_pos[1]),
-                      &(plasma_injector->single_particle_pos[2]),
-                      &(plasma_injector->single_particle_vel[0]),
-                      &(plasma_injector->single_particle_vel[1]),
-                      &(plasma_injector->single_particle_vel[2]),
-                      1, &(plasma_injector->single_particle_weight), 0);
-        */
         Vector<int> attribs_idx = {PIdx::w};
         Vector<Real*> attribs;
         attribs.resize(attribs_idx.size());
@@ -661,10 +651,9 @@ PhysicalParticleContainer::AddPlasmaCPU (int lev, RealBox part_realbox)
                     attribs[PIdx::uy] = u[1];
                     attribs[PIdx::uz] = u[2];
 
+                    // Add runtime attribs.
                     Vector<Real> additional_attribs;
                     additional_attribs.resize(NumRealComps()-PIdx::nattribs);
-                    Print()<<"2: additional_attribs.size() "<<additional_attribs.size()<<'\n';
-
                     if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
                     {
                         additional_attribs[particle_comps["xold"]-PIdx::nattribs] = x;
@@ -673,17 +662,6 @@ PhysicalParticleContainer::AddPlasmaCPU (int lev, RealBox part_realbox)
                         additional_attribs[particle_comps["uxold"]-PIdx::nattribs] = u[0];
                         additional_attribs[particle_comps["uyold"]-PIdx::nattribs] = u[1];
                         additional_attribs[particle_comps["uzold"]-PIdx::nattribs] = u[2];
-                        /*
-                        // need to create old values
-                        auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
-                        particle_tile.push_back_real(particle_comps["xold"], x);
-                        particle_tile.push_back_real(particle_comps["yold"], y);
-                        particle_tile.push_back_real(particle_comps["zold"], z);
-                
-                        particle_tile.push_back_real(particle_comps["uxold"], u[0]);
-                        particle_tile.push_back_real(particle_comps["uyold"], u[1]);
-                        particle_tile.push_back_real(particle_comps["uzold"], u[2]);
-                        */
                     }
                     if (do_field_ionization){
                         additional_attribs[particle_comps["ionization_level"]-PIdx::nattribs] = species_ionization_level;
