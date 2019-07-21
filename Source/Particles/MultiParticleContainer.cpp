@@ -548,11 +548,16 @@ MultiParticleContainer::doFieldIonization()
             // If ionization off for this species, do not do anything.
             if (!pc->do_field_ionization){ continue; }
             Cuda::ManagedDeviceVector<Real>  x_buf,  y_buf,  z_buf;
+            Cuda::ManagedDeviceVector<Real>  ex_buf,  ey_buf,  ez_buf;
+            Cuda::ManagedDeviceVector<Real>  bx_buf,  by_buf,  bz_buf;
             Cuda::ManagedDeviceVector<Real> ux_buf, uy_buf, uz_buf, w_buf;
             int np_buf = pc->doFieldIonization(lev,
                                                x_buf,  y_buf,  z_buf,
                                                ux_buf, uy_buf, uz_buf,
+                                               ex_buf, ey_buf, ez_buf,
+                                               bx_buf, by_buf, bz_buf,
                                                w_buf);
+/*
             pc_tmp->AddNParticles(lev, 
                                  np_buf,
                                  x_buf.dataPtr(),
@@ -564,7 +569,34 @@ MultiParticleContainer::doFieldIonization()
                                  1,
                                  w_buf.dataPtr(),
                                  1, -1);
-            
+*/
+            Vector<int> attribs_idx = {PIdx::w,
+                                       PIdx::Ex,
+                                       PIdx::Ey,
+                                       PIdx::Ez,
+                                       PIdx::Bx,
+                                       PIdx::By,
+                                       PIdx::Bz};
+            Vector<Real*> attribs;
+            attribs.resize(attribs_idx.size());
+            attribs[0] = w_buf.dataPtr();
+            attribs[1] = ex_buf.dataPtr();
+            attribs[2] = ey_buf.dataPtr();
+            attribs[3] = ez_buf.dataPtr();
+            attribs[4] = bx_buf.dataPtr();
+            attribs[5] = by_buf.dataPtr();
+            attribs[6] = bz_buf.dataPtr();
+            pc_tmp->AddNParticles2(lev, 
+                                   np_buf,
+                                   x_buf.dataPtr(),
+                                   y_buf.dataPtr(),
+                                   z_buf.dataPtr(),
+                                   ux_buf.dataPtr(),
+                                   uy_buf.dataPtr(),
+                                   uz_buf.dataPtr(),
+                                   attribs_idx,
+                                   attribs,
+                                   1, -1);
             // For current species, get product species
             auto& product_pc = allcontainers[pc->ionization_product];
             // Add species in pc_tmp to product species

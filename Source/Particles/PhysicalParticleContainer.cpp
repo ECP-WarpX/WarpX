@@ -2280,6 +2280,12 @@ PhysicalParticleContainer::doFieldIonization(
     Cuda::ManagedDeviceVector<Real>& ux_buf,
     Cuda::ManagedDeviceVector<Real>& uy_buf,
     Cuda::ManagedDeviceVector<Real>& uz_buf,
+    Cuda::ManagedDeviceVector<Real>& ex_buf,
+    Cuda::ManagedDeviceVector<Real>& ey_buf,
+    Cuda::ManagedDeviceVector<Real>& ez_buf,
+    Cuda::ManagedDeviceVector<Real>& bx_buf,
+    Cuda::ManagedDeviceVector<Real>& by_buf,
+    Cuda::ManagedDeviceVector<Real>& bz_buf,
     Cuda::ManagedDeviceVector<Real>& w_buf)
 {
     BL_PROFILE("PPC:doFieldIonization()");
@@ -2292,6 +2298,12 @@ PhysicalParticleContainer::doFieldIonization(
     ux_buf.resize(0);
     uy_buf.resize(0);
     uz_buf.resize(0);
+    ex_buf.resize(0);
+    ey_buf.resize(0);
+    ez_buf.resize(0);
+    bx_buf.resize(0);
+    by_buf.resize(0);
+    bz_buf.resize(0);
     w_buf.resize(0);
     Cuda::ManagedDeviceVector<int> is_ionized_vector;
     Cuda::ManagedDeviceVector<int> is_ionized_cumsum_vector;
@@ -2305,20 +2317,20 @@ PhysicalParticleContainer::doFieldIonization(
         is_ionized_cumsum_vector.resize(np);
         int* AMREX_RESTRICT is_ionized = is_ionized_vector.dataPtr();
         auto& attribs = pti.GetAttribs();
-        Real* AMREX_RESTRICT x  = xp_vector.dataPtr();
-        Real* AMREX_RESTRICT y  = yp_vector.dataPtr();
-        Real* AMREX_RESTRICT z  = zp_vector.dataPtr();
-        Real* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
-        Real* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
-        Real* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
-        Real* AMREX_RESTRICT ex = attribs[PIdx::Ex].dataPtr();
-        Real* AMREX_RESTRICT ey = attribs[PIdx::Ey].dataPtr();
-        Real* AMREX_RESTRICT ez = attribs[PIdx::Ez].dataPtr();
-        Real* AMREX_RESTRICT bx = attribs[PIdx::Bx].dataPtr();
-        Real* AMREX_RESTRICT by = attribs[PIdx::By].dataPtr();
-        Real* AMREX_RESTRICT bz = attribs[PIdx::Bz].dataPtr();
-        Real* AMREX_RESTRICT w  = attribs[PIdx::w ].dataPtr();
-        Real* AMREX_RESTRICT ilev_real = pti.GetAttribs(comp_ionization).dataPtr();
+        const Real * const AMREX_RESTRICT x  = xp_vector.dataPtr();
+        const Real * const AMREX_RESTRICT y  = yp_vector.dataPtr();
+        const Real * const AMREX_RESTRICT z  = zp_vector.dataPtr();
+        const Real * const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
+        const Real * const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
+        const Real * const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
+        const Real * const AMREX_RESTRICT ex = attribs[PIdx::Ex].dataPtr();
+        const Real * const AMREX_RESTRICT ey = attribs[PIdx::Ey].dataPtr();
+        const Real * const AMREX_RESTRICT ez = attribs[PIdx::Ez].dataPtr();
+        const Real * const AMREX_RESTRICT bx = attribs[PIdx::Bx].dataPtr();
+        const Real * const AMREX_RESTRICT by = attribs[PIdx::By].dataPtr();
+        const Real * const AMREX_RESTRICT bz = attribs[PIdx::Bz].dataPtr();
+        const Real * const AMREX_RESTRICT w  = attribs[PIdx::w ].dataPtr();
+        Real * const AMREX_RESTRICT ilev_real = pti.GetAttribs(comp_ionization).dataPtr();
         // Real* AMREX_RESTRICT ilev_real = pti.GetAttribs(particle_comps["ionization_level"]);
         // Real* AMREX_RESTRICT ilev_real = attribs[comp_ionization].dataPtr();
         // int* AMREX_RESTRICT is_ionized = is_ionized_vector.dataPtr();
@@ -2393,6 +2405,12 @@ PhysicalParticleContainer::doFieldIonization(
         ux_buf.resize(np_buf);
         uy_buf.resize(np_buf);
         uz_buf.resize(np_buf);
+        ex_buf.resize(np_buf);
+        ey_buf.resize(np_buf);
+        ez_buf.resize(np_buf);
+        bx_buf.resize(np_buf);
+        by_buf.resize(np_buf);
+        bz_buf.resize(np_buf);
         w_buf.resize (np_buf);
         Real* AMREX_RESTRICT  x_buf_p =  x_buf.dataPtr();
         Real* AMREX_RESTRICT  y_buf_p =  y_buf.dataPtr();
@@ -2400,6 +2418,12 @@ PhysicalParticleContainer::doFieldIonization(
         Real* AMREX_RESTRICT ux_buf_p = ux_buf.dataPtr();
         Real* AMREX_RESTRICT uy_buf_p = uy_buf.dataPtr();
         Real* AMREX_RESTRICT uz_buf_p = uz_buf.dataPtr();
+        Real* AMREX_RESTRICT ex_buf_p = ex_buf.dataPtr();
+        Real* AMREX_RESTRICT ey_buf_p = ey_buf.dataPtr();
+        Real* AMREX_RESTRICT ez_buf_p = ez_buf.dataPtr();
+        Real* AMREX_RESTRICT bx_buf_p = bx_buf.dataPtr();
+        Real* AMREX_RESTRICT by_buf_p = by_buf.dataPtr();
+        Real* AMREX_RESTRICT bz_buf_p = bz_buf.dataPtr();
         Real* AMREX_RESTRICT  w_buf_p =  w_buf.dataPtr();
         int* AMREX_RESTRICT is_ionized_cumsum = is_ionized_cumsum_vector.dataPtr();
         ParallelFor( np,
@@ -2414,6 +2438,12 @@ PhysicalParticleContainer::doFieldIonization(
                              ux_buf_p[old_size + is_ionized_cumsum[i]] = ux[i];
                              uy_buf_p[old_size + is_ionized_cumsum[i]] = uy[i];
                              uz_buf_p[old_size + is_ionized_cumsum[i]] = uz[i];
+                             ex_buf_p[old_size + is_ionized_cumsum[i]] = ex[i];
+                             ey_buf_p[old_size + is_ionized_cumsum[i]] = ey[i];
+                             ez_buf_p[old_size + is_ionized_cumsum[i]] = ez[i];
+                             bx_buf_p[old_size + is_ionized_cumsum[i]] = bx[i];
+                             by_buf_p[old_size + is_ionized_cumsum[i]] = by[i];
+                             bz_buf_p[old_size + is_ionized_cumsum[i]] = bz[i];
                              w_buf_p [old_size + is_ionized_cumsum[i]] = w [i];
                          }
                      }
