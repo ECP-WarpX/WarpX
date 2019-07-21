@@ -70,7 +70,7 @@ ions.do_continuous_injection = 1
 ions.do_field_ionization = 1
 ions.ionization_product = electrons
 ions.ionization_level = 0
-ions.physical_element = C
+ions.physical_element = H
 
 #################################
 ############ PLASMA #############

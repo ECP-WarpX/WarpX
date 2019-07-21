@@ -230,10 +230,27 @@ public:
 
     amrex::Real maxParticleVelocity(bool local = false);
 
-    void AddNParticles (int lev,
-                        int n, const amrex::Real* x, const amrex::Real* y, const amrex::Real* z,
-			const amrex::Real* vx, const amrex::Real* vy, const amrex::Real* vz,
-			int nattr, const amrex::Real* attr, int uniqueparticles, int id=-1);
+    void AddNParticles (int lev, int n, 
+                        const amrex::Real* x, 
+                        const amrex::Real* y, 
+                        const amrex::Real* z,
+                        const amrex::Real* vx, 
+                        const amrex::Real* vy, 
+                        const amrex::Real* vz,
+                        int nattr, 
+                        const amrex::Real* attr, 
+                        int uniqueparticles, int id=-1);
+
+    void AddNParticles2 (int lev, int n, 
+                         const amrex::Real* x, 
+                         const amrex::Real* y, 
+                         const amrex::Real* z,
+                         const amrex::Real* vx, 
+                         const amrex::Real* vy, 
+                         const amrex::Real* vz,
+                         const amrex::Vector<int> attribs_idx, 
+                         const amrex::Vector<amrex::Real*> attribs,
+                         int uniqueparticles, int id=-1);
 
     void AddOneParticle (int lev, int grid, int tile,
                          amrex::Real x, amrex::Real y, amrex::Real z,
@@ -285,6 +302,12 @@ public:
         amrex::Cuda::ManagedDeviceVector<amrex::Real>& ux_buf,
         amrex::Cuda::ManagedDeviceVector<amrex::Real>& uy_buf,
         amrex::Cuda::ManagedDeviceVector<amrex::Real>& uz_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& ex_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& ey_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& ez_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& bx_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& by_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& bz_buf,
         amrex::Cuda::ManagedDeviceVector<amrex::Real>& w_buf) {return 0;};
 
 protected:

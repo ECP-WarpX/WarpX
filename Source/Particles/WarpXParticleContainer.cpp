@@ -179,10 +179,11 @@ WarpXParticleContainer::AddOneParticle (ParticleTileType& particle_tile,
 }
 
 void
-WarpXParticleContainer::AddNParticles (int lev,
-                                       int n, const Real* x, const Real* y, const Real* z,
-				       const Real* vx, const Real* vy, const Real* vz,
-				       int nattr, const Real* attr, int uniqueparticles, int id)
+WarpXParticleContainer::AddNParticles (int lev, int n, const Real* x, 
+                                       const Real* y, const Real* z,
+                                       const Real* vx, const Real* vy, 
+                                       const Real* vz, int nattr, const Real* attr, 
+                                       int uniqueparticles, int id)
 {
     BL_ASSERT(nattr == 1);
     const Real* weight = attr;
@@ -253,6 +254,121 @@ WarpXParticleContainer::AddNParticles (int lev,
     if (np > 0)
     {
         particle_tile.push_back_real(PIdx::w , weight + ibegin, weight + iend);
+        particle_tile.push_back_real(PIdx::ux,     vx + ibegin,     vx + iend);
+        particle_tile.push_back_real(PIdx::uy,     vy + ibegin,     vy + iend);
+        particle_tile.push_back_real(PIdx::uz,     vz + ibegin,     vz + iend);
+
+        if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
+        {
+            auto& ptile = DefineAndReturnParticleTile(0, 0, 0);
+            ptile.push_back_real(particle_comps["uxold"], vx + ibegin, vx + iend);
+            ptile.push_back_real(particle_comps["uyold"], vy + ibegin, vy + iend);
+            ptile.push_back_real(particle_comps["uzold"], vz + ibegin, vz + iend);
+        }
+
+        for (int comp = PIdx::uz+1; comp < PIdx::nattribs; ++comp)
+        {
+#ifdef WARPX_RZ
+            if (comp == PIdx::theta) {
+                particle_tile.push_back_real(comp, theta.front(), theta.back());
+            }
+            else {
+                particle_tile.push_back_real(comp, np, 0.0);
+            }
+#else
+            particle_tile.push_back_real(comp, np, 0.0);
+#endif
+        }
+        for (int i = PIdx::nattribs; i < NumRealComps(); ++i){
+            particle_tile.push_back_real(i, 0.0);
+        }
+    }
+
+    Redistribute();
+}
+
+void
+WarpXParticleContainer::AddNParticles2 (int lev, int n, const Real* x, 
+                                        const Real* y, const Real* z,
+                                        const Real* vx, const Real* vy, const Real* vz,
+                                        const Vector<int> attribs_idx, 
+                                        const Vector<Real*> attribs,
+                                        int uniqueparticles, int id)
+{
+    int nattr = attribs_idx.size();
+
+    // const Real* weight = attr;
+
+    int ibegin, iend;
+    if (uniqueparticles) {
+	ibegin = 0;
+	iend = n;
+    } else {
+	int myproc = ParallelDescriptor::MyProc();
+	int nprocs = ParallelDescriptor::NProcs();
+	int navg = n/nprocs;
+	int nleft = n - navg * nprocs;
+	if (myproc < nleft) {
+	    ibegin = myproc*(navg+1);
+	    iend = ibegin + navg+1;
+	} else {
+	    ibegin = myproc*navg + nleft;
+	    iend = ibegin + navg;
+	}
+    }
+
+    //  Add to grid 0 and tile 0
+    // Redistribute() will move them to proper places.
+    std::pair<int,int> key {0,0};
+    auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
+    std::size_t np = iend-ibegin;
+
+#ifdef WARPX_RZ
+    Vector<Real> theta(np);
+#endif
+
+    for (int i = ibegin; i < iend; ++i)
+    {
+        ParticleType p;
+	if (id==-1)
+	{
+	    p.id() = ParticleType::NextID();
+	} else {
+	    p.id() = id;
+	}
+        p.cpu() = ParallelDescriptor::MyProc();
+#if (AMREX_SPACEDIM == 3)
+        p.pos(0) = x[i];
+        p.pos(1) = y[i];
+        p.pos(2) = z[i];
+#elif (AMREX_SPACEDIM == 2)
+#ifdef WARPX_RZ
+        theta[i-ibegin] = std::atan2(y[i], x[i]);
+        p.pos(0) = std::sqrt(x[i]*x[i] + y[i]*y[i]);
+#else
+        p.pos(0) = x[i];
+#endif
+        p.pos(1) = z[i];
+#endif
+
+        if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
+        {
+            auto& ptile = DefineAndReturnParticleTile(0, 0, 0);
+            ptile.push_back_real(particle_comps["xold"], x[i]);
+            ptile.push_back_real(particle_comps["yold"], y[i]);
+            ptile.push_back_real(particle_comps["zold"], z[i]);
+        }
+
+        particle_tile.push_back(p);
+    }
+
+    if (np > 0)
+    {
+        for (int i=0; i<attribs_idx.size(); i++){
+            particle_tile.push_back_real(attribs_idx[i] , 
+                                         attribs[i] + ibegin, 
+                                         attribs[i] + iend);
+        }
         particle_tile.push_back_real(PIdx::ux,     vx + ibegin,     vx + iend);
         particle_tile.push_back_real(PIdx::uy,     vy + ibegin,     vy + iend);
         particle_tile.push_back_real(PIdx::uz,     vz + ibegin,     vz + iend);

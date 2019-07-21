@@ -99,6 +99,12 @@ public:
         amrex::Cuda::ManagedDeviceVector<amrex::Real>& ux_buf,
         amrex::Cuda::ManagedDeviceVector<amrex::Real>& uy_buf,
         amrex::Cuda::ManagedDeviceVector<amrex::Real>& uz_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& ex_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& ey_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& ez_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& bx_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& by_buf,
+        amrex::Cuda::ManagedDeviceVector<amrex::Real>& bz_buf,
         amrex::Cuda::ManagedDeviceVector<amrex::Real>& w_buf) override;
 
     // Inject particles in Box 'part_box'
