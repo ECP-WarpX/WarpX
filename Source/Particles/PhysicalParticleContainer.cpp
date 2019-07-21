@@ -2339,6 +2339,10 @@ PhysicalParticleContainer::doFieldIonization(
         const Real * const AMREX_RESTRICT bz = attribs[PIdx::Bz].dataPtr();
         const Real * const AMREX_RESTRICT w  = attribs[PIdx::w ].dataPtr();
         Real * const AMREX_RESTRICT ilev_real = pti.GetAttribs(comp_ionization).dataPtr();
+	const Real * const AMREX_RESTRICT p_ionization_energies = ionization_energies.dataPtr();
+	const Real * const AMREX_RESTRICT p_adk_prefactor = adk_prefactor.dataPtr();
+	const Real * const AMREX_RESTRICT p_adk_exp_prefactor = adk_exp_prefactor.dataPtr();
+	const Real * const AMREX_RESTRICT p_adk_power = adk_power.dataPtr();
         // Real* AMREX_RESTRICT ilev_real = pti.GetAttribs(particle_comps["ionization_level"]);
         // Real* AMREX_RESTRICT ilev_real = attribs[comp_ionization].dataPtr();
         // int* AMREX_RESTRICT is_ionized = is_ionized_vector.dataPtr();
@@ -2361,12 +2365,12 @@ PhysicalParticleContainer::doFieldIonization(
                          int ilev = (int) round(ilev_real[i]);
                          // int ilev = static_cast<int>(round(ilev_real[i]));
                          Real p, w_dtau;
-                         if (E<1.e-100*(ionization_energies[0])){
+                         if (E<1.e-100*(p_ionization_energies[0])){
                              p = 0.;
                          } else {
-                             w_dtau = 1./ ga * adk_prefactor[ilev] * 
-                                 std::pow(E,adk_power[ilev]) * 
-                                 std::exp( adk_exp_prefactor[ilev]/E );
+                             w_dtau = 1./ ga * p_adk_prefactor[ilev] * 
+                                 std::pow(E,p_adk_power[ilev]) * 
+                                 std::exp( p_adk_exp_prefactor[ilev]/E );
                              p = 1. - std::exp( - w_dtau );
                          }
 /*

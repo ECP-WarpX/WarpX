@@ -258,13 +258,14 @@ RigidInjectedParticleContainer::PushPX(WarpXParIter& pti,
         uyp_save = uyp;
         uzp_save = uzp;
 
+	/*
         Real* AMREX_RESTRICT xp_savep = xp_save.dataPtr();
         Real* AMREX_RESTRICT yp_savep = yp_save.dataPtr();
         Real* AMREX_RESTRICT zp_savep = zp_save.dataPtr();
         Real* AMREX_RESTRICT uxp_savep = uxp_save.dataPtr();
         Real* AMREX_RESTRICT uyp_savep = uyp_save.dataPtr();
         Real* AMREX_RESTRICT uzp_savep = uzp_save.dataPtr();
-
+	*/
         // Scale the fields of particles about to cross the injection plane.
         // This only approximates what should be happening. The particles
         // should by advanced a fraction of a time step instead.
