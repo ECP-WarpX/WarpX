@@ -32,15 +32,18 @@
 %token <f2> F2
 %token EOL
 %token POW "**" '^'
+%token GEQ ">="
+%token LEQ "<="
 
 %nonassoc F1 F2
 %right '='
 %left '+' '-'
 %left '*' '/'
 %left '<' '>'
-%left "<=" ">="
 %nonassoc NEG UPLUS
 %right POW
+%right GEQ
+%right LEQ
 
 /* This specifies the type of `exp` (i.e., struct wp_node*).  Rules
    specified later pass `exp` to wp_new* functions declared in
@@ -75,8 +78,8 @@ exp:
 | '(' exp ')'                { $$ = $2; }
 | exp '<' exp                { $$ = wp_newf2(WP_LT, $1, $3); }
 | exp '>' exp                { $$ = wp_newf2(WP_GT, $1, $3); }
-| exp "<=" exp               { $$ = wp_newf2(WP_LEQ, $1, $3); }
-| exp ">=" exp               { $$ = wp_newf2(WP_GEQ, $1, $3); }
+| exp LEQ exp               { $$ = wp_newf2(WP_LEQ, $1, $3); }
+| exp GEQ exp               { $$ = wp_newf2(WP_GEQ, $1, $3); }
 | '-'exp %prec NEG           { $$ = wp_newnode(WP_NEG, $2, NULL); }
 | '+'exp %prec UPLUS         { $$ = $2; }
 | exp POW exp                { $$ = wp_newf2(WP_POW, $1, $3); }

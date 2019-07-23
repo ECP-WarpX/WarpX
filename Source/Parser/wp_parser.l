@@ -21,8 +21,6 @@ EXP	([Ee][-+]?[0-9]+)
 "," |
 "<" |
 ">" |
-"<=" |
-">=" |
 "(" |
 ")"     { return yytext[0]; } /* simply pass through */
 
@@ -46,6 +44,8 @@ EXP	([Ee][-+]?[0-9]+)
 "fabs"        { yylval.f1 = WP_ABS;       return F1; }
 "**"          { yylval.f2 = WP_POW;       return POW;}
 "^"           { yylval.f2 = WP_POW;       return POW;}
+">="          { yylval.f2 = WP_GEQ;       return GEQ;}
+"<="          { yylval.f2 = WP_LEQ;       return LEQ;}
 "pow"         { yylval.f2 = WP_POW;       return F2; }
 "heaviside"   { yylval.f2 = WP_HEAVISIDE; return F2; }
 "min"         { yylval.f2 = WP_MIN;       return F2; }
