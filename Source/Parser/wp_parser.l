@@ -21,6 +21,9 @@ EXP	([Ee][-+]?[0-9]+)
 "," |
 "<" |
 ">" |
+"<=" |
+">=" |
+"==" |
 "(" |
 ")"     { return yytext[0]; } /* simply pass through */
 
@@ -57,8 +60,8 @@ EXP	([Ee][-+]?[0-9]+)
 "."?[0-9]+{EXP}?  { yylval.d = atof(yytext);   return NUMBER; }
 
  /* Special characters */
-"//".*  
-[ \t]   /* ignore white space */ 
+"//".*
+[ \t]   /* ignore white space */
 \\\n    /* ignore line continuation */
 "\n"    { return EOL; }
 
