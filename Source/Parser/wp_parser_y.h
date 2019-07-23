@@ -35,6 +35,9 @@ enum wp_f2_t {  // Built-in functions with two arguments
     WP_POW = 1,
     WP_GT,
     WP_LT,
+    WP_GEQ,
+    WP_LEQ,
+    WP_EQ,
     WP_HEAVISIDE,
     WP_MIN,
     WP_MAX
