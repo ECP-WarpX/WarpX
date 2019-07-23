@@ -144,16 +144,18 @@ WarpXParticleContainer::AllocData ()
 void
 WarpXParticleContainer::AddOneParticle (int lev, int grid, int tile,
                                         Real x, Real y, Real z,
-                                        std::array<Real,PIdx::nattribs>& attribs)
+                                        std::array<Real,PIdx::nattribs>& attribs,
+                                        Vector<Real> additional_attribs)
 {
     auto& particle_tile = DefineAndReturnParticleTile(lev, grid, tile);
-    AddOneParticle(particle_tile, x, y, z, attribs);
+    AddOneParticle(particle_tile, x, y, z, attribs, additional_attribs);
 }
 
 void
 WarpXParticleContainer::AddOneParticle (ParticleTileType& particle_tile,
                                         Real x, Real y, Real z,
-                                        std::array<Real,PIdx::nattribs>& attribs)
+                                        std::array<Real,PIdx::nattribs>& attribs,
+                                        Vector<Real> additional_attribs)
 {
     ParticleType p;
     p.id()  = ParticleType::NextID();
@@ -174,7 +176,14 @@ WarpXParticleContainer::AddOneParticle (ParticleTileType& particle_tile,
     particle_tile.push_back(p);
     particle_tile.push_back_real(attribs);
     for (int i = PIdx::nattribs; i < NumRealComps(); ++i){
-        particle_tile.push_back_real(i, 0.0);
+        Real val = 0.;
+        if (additional_attribs.size() > 0){
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                additional_attribs.size()==(NumRealComps()-PIdx::nattribs),
+                "AddOneParticle: additional_attribs must have enough comps");
+            val = additional_attribs[i-PIdx::nattribs];
+        }
+        particle_tile.push_back_real(i, val);
     }
 }
 

@@ -254,11 +254,13 @@ public:
 
     void AddOneParticle (int lev, int grid, int tile,
                          amrex::Real x, amrex::Real y, amrex::Real z,
-                         std::array<amrex::Real,PIdx::nattribs>& attribs);
+                         std::array<amrex::Real,PIdx::nattribs>& attribs,
+                         amrex::Vector<amrex::Real> additional_attribs = {});
 
     void AddOneParticle (ParticleTileType& particle_tile,
                          amrex::Real x, amrex::Real y, amrex::Real z,
-                         std::array<amrex::Real,PIdx::nattribs>& attribs);
+                         std::array<amrex::Real,PIdx::nattribs>& attribs,
+                         amrex::Vector<amrex::Real> additional_attribs = {});
 
     virtual void ReadHeader (std::istream& is);
 

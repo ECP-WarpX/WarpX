@@ -362,20 +362,23 @@ PhysicalParticleContainer::CheckAndAddParticle(Real x, Real y, Real z,
     attribs[PIdx::uz] = u[2];
     attribs[PIdx::w ] = weight;
 
+    Vector<Real> additional_attribs;
+    additional_attribs.resize(NumRealComps()-PIdx::nattribs);
+
     if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
     {
-        // need to create old values
-        auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
-        particle_tile.push_back_real(particle_comps["xold"], x);
-        particle_tile.push_back_real(particle_comps["yold"], y);
-        particle_tile.push_back_real(particle_comps["zold"], z);
-                
-        particle_tile.push_back_real(particle_comps["uxold"], u[0]);
-        particle_tile.push_back_real(particle_comps["uyold"], u[1]);
-        particle_tile.push_back_real(particle_comps["uzold"], u[2]);
+        additional_attribs[particle_comps["xold"]-PIdx::nattribs] = x;
+        additional_attribs[particle_comps["yold"]-PIdx::nattribs] = y;
+        additional_attribs[particle_comps["zold"]-PIdx::nattribs] = z;
+        additional_attribs[particle_comps["uxold"]-PIdx::nattribs] = u[0];
+        additional_attribs[particle_comps["uyold"]-PIdx::nattribs] = u[1];
+        additional_attribs[particle_comps["uzold"]-PIdx::nattribs] = u[2];
+    }
+    if (do_field_ionization){
+        additional_attribs[particle_comps["ionization_level"]-PIdx::nattribs] = species_ionization_level;
     }
     // add particle
-    AddOneParticle(0, 0, 0, x, y, z, attribs);
+    AddOneParticle(0, 0, 0, x, y, z, attribs, additional_attribs);
 }
 
 void
@@ -384,14 +387,18 @@ PhysicalParticleContainer::AddParticles (int lev)
     BL_PROFILE("PhysicalParticleContainer::AddParticles()");
 
     if (plasma_injector->add_single_particle) {
-        AddNParticles(lev, 1,
+        Vector<int> attribs_idx = {PIdx::w};
+        Vector<Real*> attribs;
+        attribs.resize(attribs_idx.size());
+        attribs[0] = &(plasma_injector->single_particle_weight);
+        AddNParticles2(lev, 1,
                       &(plasma_injector->single_particle_pos[0]),
                       &(plasma_injector->single_particle_pos[1]),
                       &(plasma_injector->single_particle_pos[2]),
                       &(plasma_injector->single_particle_vel[0]),
                       &(plasma_injector->single_particle_vel[1]),
                       &(plasma_injector->single_particle_vel[2]),
-                      1, &(plasma_injector->single_particle_weight), 0);
+                      attribs_idx, attribs, 0);
         return;
     }
 
@@ -644,24 +651,22 @@ PhysicalParticleContainer::AddPlasmaCPU (int lev, RealBox part_realbox)
                     attribs[PIdx::uy] = u[1];
                     attribs[PIdx::uz] = u[2];
 
-                    if (do_field_ionization){
-                        auto& particle_tile = DefineAndReturnParticleTile(lev, grid_id, tile_id);
-                        particle_tile.push_back_real(particle_comps["ionization_level"], species_ionization_level);
-                    }
-                    
+                    // Add runtime attribs.
+                    Vector<Real> additional_attribs;
+                    additional_attribs.resize(NumRealComps()-PIdx::nattribs);
                     if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
                     {
-                        auto& particle_tile = DefineAndReturnParticleTile(lev, grid_id, tile_id);
-                        particle_tile.push_back_real(particle_comps["xold"], x);
-                        particle_tile.push_back_real(particle_comps["yold"], y);
-                        particle_tile.push_back_real(particle_comps["zold"], z);
-
-                        particle_tile.push_back_real(particle_comps["uxold"], u[0]);
-                        particle_tile.push_back_real(particle_comps["uyold"], u[1]);
-                        particle_tile.push_back_real(particle_comps["uzold"], u[2]);
+                        additional_attribs[particle_comps["xold"]-PIdx::nattribs] = x;
+                        additional_attribs[particle_comps["yold"]-PIdx::nattribs] = y;
+                        additional_attribs[particle_comps["zold"]-PIdx::nattribs] = z;
+                        additional_attribs[particle_comps["uxold"]-PIdx::nattribs] = u[0];
+                        additional_attribs[particle_comps["uyold"]-PIdx::nattribs] = u[1];
+                        additional_attribs[particle_comps["uzold"]-PIdx::nattribs] = u[2];
                     }
-
-                    AddOneParticle(lev, grid_id, tile_id, x, y, z, attribs);
+                    if (do_field_ionization){
+                        additional_attribs[particle_comps["ionization_level"]-PIdx::nattribs] = species_ionization_level;
+                    }
+                    AddOneParticle(lev, grid_id, tile_id, x, y, z, attribs, additional_attribs);
                 }
             }
 
@@ -1833,6 +1838,7 @@ PhysicalParticleContainer::SplitParticles(int lev)
 	// they are not re-split when entering a higher level
 	// AddNParticles calls Redistribute, so that particles
 	// in pctmp_split are in the proper grids and tiles
+    /*
 	pctmp_split.AddNParticles(lev, 
                               np_split_to_add,
                               psplit_x.dataPtr(),
@@ -1844,6 +1850,21 @@ PhysicalParticleContainer::SplitParticles(int lev)
                               1,
                               psplit_w.dataPtr(),
                               1, NoSplitParticleID);
+    */
+    Vector<int> attribs_idx = {PIdx::w};
+    Vector<Real*> attribs;
+    attribs.resize(attribs_idx.size());
+    attribs[0] = psplit_w.dataPtr();
+	pctmp_split.AddNParticles2(lev,
+                               np_split_to_add,
+                               psplit_x.dataPtr(),
+                               psplit_y.dataPtr(),
+                               psplit_z.dataPtr(),
+                               psplit_ux.dataPtr(),
+                               psplit_uy.dataPtr(),
+                               psplit_uz.dataPtr(),
+                               attribs_idx, attribs,
+                               1, NoSplitParticleID);
 	// Copy particles from tmp to current particle container
     addParticles(pctmp_split,1);
 	// Clear tmp container
@@ -2320,6 +2341,7 @@ PhysicalParticleContainer::doFieldIonization(
     // Iterate over grids
     for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti){
         long np = pti.numParticles();
+        Print()<<" np "<<np<<'\n';
         pti.GetPosition(xp_vector, yp_vector, zp_vector);
         is_ionized_vector.resize(np);
         is_ionized_cumsum_vector.resize(np);
@@ -2519,6 +2541,7 @@ PhysicalParticleContainer::copyParticles(int lev)
     }
     // Fill MultiParticleContainer::pc_tmp with particle quantities
     // in the temporary arrays
+/*
     pc_ion.AddNParticles(lev, 
                          elec_np,
                          elec_x.dataPtr(),
@@ -2530,6 +2553,21 @@ PhysicalParticleContainer::copyParticles(int lev)
                          1,
                          elec_w.dataPtr(),
                          1, -1);
+*/
+    Vector<int> attribs_idx = {PIdx::w};
+    Vector<Real*> attribs;
+    attribs.resize(attribs_idx.size());
+    attribs[0] = elec_w.dataPtr();
+    pc_ion.AddNParticles2(lev, 
+                          elec_np,
+                          elec_x.dataPtr(),
+                          elec_y.dataPtr(),
+                          elec_z.dataPtr(),
+                          elec_ux.dataPtr(),
+                          elec_uy.dataPtr(),
+                          elec_uz.dataPtr(),
+                          attribs_idx, attribs,
+                          1, -1);
 }
 
 //int
