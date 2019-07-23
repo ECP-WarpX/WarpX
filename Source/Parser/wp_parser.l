@@ -23,7 +23,6 @@ EXP	([Ee][-+]?[0-9]+)
 ">" |
 "<=" |
 ">=" |
-"==" |
 "(" |
 ")"     { return yytext[0]; } /* simply pass through */
 

@@ -189,8 +189,6 @@ wp_call_f2 (enum wp_f2_t type, double a, double b)
         return (a >= b) ? 1.0 : 0.0;
     case WP_LEQ:
         return (a <= b) ? 1.0 : 0.0;
-    case WP_EQ:
-        return (a == b) ? 1.0 : 0.0;
     case WP_HEAVISIDE:
         return (a < 0.0) ? 0.0 : ((a > 0.0) ? 1.0 : b);
     case WP_MIN:
@@ -816,9 +814,6 @@ wp_ast_print_f2 (struct wp_f2* f2)
         break;
     case WP_LEQ:
         printf("LEQ\n");
-        break;
-    case WP_EQ:
-        printf("EQ\n");
         break;
     case WP_HEAVISIDE:
         printf("HEAVISIDE\n");

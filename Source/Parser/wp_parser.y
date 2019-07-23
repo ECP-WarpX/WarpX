@@ -77,7 +77,6 @@ exp:
 | exp '>' exp                { $$ = wp_newf2(WP_GT, $1, $3); }
 | exp "<=" exp               { $$ = wp_newf2(WP_LEQ, $1, $3); }
 | exp ">=" exp               { $$ = wp_newf2(WP_GEQ, $1, $3); }
-| exp "==" exp               { $$ = wp_newf2(WP_EQ, $1, $3); }
 | '-'exp %prec NEG           { $$ = wp_newnode(WP_NEG, $2, NULL); }
 | '+'exp %prec UPLUS         { $$ = $2; }
 | exp POW exp                { $$ = wp_newf2(WP_POW, $1, $3); }
