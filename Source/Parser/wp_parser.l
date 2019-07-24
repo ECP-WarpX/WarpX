@@ -46,6 +46,10 @@ EXP	([Ee][-+]?[0-9]+)
 "^"           { yylval.f2 = WP_POW;       return POW;}
 ">="          { yylval.f2 = WP_GEQ;       return GEQ;}
 "<="          { yylval.f2 = WP_LEQ;       return LEQ;}
+"=="          { yylval.f2 = WP_EQ;        return EQ;}
+"!="          { yylval.f2 = WP_NEQ;       return NEQ;}
+"and"         { yylval.f2 = WP_AND;       return AND;}
+"or"          { yylval.f2 = WP_OR;        return OR;}
 "pow"         { yylval.f2 = WP_POW;       return F2; }
 "heaviside"   { yylval.f2 = WP_HEAVISIDE; return F2; }
 "min"         { yylval.f2 = WP_MIN;       return F2; }

@@ -469,7 +469,7 @@ extern int yylex (void);
 #undef yyTABLES_NAME
 #endif
 
-#line 71 "wp_parser.l"
+#line 75 "wp_parser.l"
 
 
 #line 476 "wp_parser.lex.h"
