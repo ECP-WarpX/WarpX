@@ -70,7 +70,7 @@ Setting up the field mesh
     This patch is rectangular, and thus its extent is given here by the coordinates
     of the lower corner (``warpx.fine_tag_lo``) and upper corner (``warpx.fine_tag_hi``).
 
-* ``n_field_gather_buffer`` (`integer`; 0 by default)
+* ``warpx.n_field_gather_buffer`` (`integer`; 0 by default)
     When using mesh refinement: the particles that are located inside
     a refinement patch, but within ``n_field_gather_buffer`` cells of
     the edge of this patch, will gather the fields from the lower refinement
@@ -79,12 +79,17 @@ Setting up the field mesh
     refinement patch, close to its edge. See the section
     :doc:`../../theory/amr` for more details.
 
-* ``n_current_deposition_buffer`` (`integer`)
+* ``warpx.n_current_deposition_buffer`` (`integer`)
     When using mesh refinement: the particles that are located inside
     a refinement patch, but within ``n_field_gather_buffer`` cells of
     the edge of this patch, will deposit their charge and current to the
     lower refinement level, instead of depositing to the refinement patch
     itself. See the section :doc:`../../theory/amr` for more details.
+
+* ``particles.deposit_on_main_grid`` (list of strings)
+    When using mesh refinement: the particle species whose name are included
+    in the list will deposit their charge/current directly on the main grid
+    (i.e. the coarsest level), even if they are inside a refinement patch.
 
 Distribution across MPI ranks and parallelization
 -------------------------------------------------

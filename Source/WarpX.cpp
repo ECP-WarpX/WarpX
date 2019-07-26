@@ -18,6 +18,7 @@
 #include <WarpXWrappers.h>
 #include <WarpXUtil.H>
 #include <WarpXAlgorithmSelection.H>
+#include <WarpX_FDTD.H>
 
 #ifdef BL_USE_SENSEI_INSITU
 #include <AMReX_AmrMeshInSituBridge.H>
@@ -36,6 +37,7 @@ Vector<int> WarpX::boost_direction = {0,0,0};
 int WarpX::do_compute_max_step_from_zmax = 0;
 Real WarpX::zmax_plasma_to_compute_max_step = 0.;
 
+long WarpX::use_picsar_deposition = 1;
 long WarpX::current_deposition_algo;
 long WarpX::charge_deposition_algo;
 long WarpX::field_gathering_algo;
@@ -200,6 +202,10 @@ WarpX::WarpX ()
     costs.resize(nlevs_max);
 
 #ifdef WARPX_USE_PSATD
+    spectral_solver_fp.resize(nlevs_max);
+    spectral_solver_cp.resize(nlevs_max);
+#endif
+#ifdef WARPX_USE_PSATD_HYBRID
     Efield_fp_fft.resize(nlevs_max);
     Bfield_fp_fft.resize(nlevs_max);
     current_fp_fft.resize(nlevs_max);
@@ -212,9 +218,6 @@ WarpX::WarpX ()
 
     dataptr_fp_fft.resize(nlevs_max);
     dataptr_cp_fft.resize(nlevs_max);
-
-    spectral_solver_fp.resize(nlevs_max);
-    spectral_solver_cp.resize(nlevs_max);
 
     ba_valid_fp_fft.resize(nlevs_max);
     ba_valid_cp_fft.resize(nlevs_max);
@@ -483,6 +486,12 @@ WarpX::ReadParameters ()
 
     {
         ParmParse pp("algo");
+        // If not in RZ mode, read use_picsar_deposition
+        // In RZ mode, use_picsar_deposition is on, as the C++ version 
+        // of the deposition does not support RZ
+#ifndef WARPX_RZ
+        pp.query("use_picsar_deposition", use_picsar_deposition);
+#endif
         current_deposition_algo = GetAlgorithmInteger(pp, "current_deposition");
         charge_deposition_algo = GetAlgorithmInteger(pp, "charge_deposition");
         field_gathering_algo = GetAlgorithmInteger(pp, "field_gathering");
@@ -500,10 +509,8 @@ WarpX::ReadParameters ()
         pp.query("noy", noy_fft);
         pp.query("noz", noz_fft);
         pp.query("v_galilean", v_galilean);
-	// Scale the velocity by the speed of light
-	for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
-        // Override value
-        if (fft_hybrid_mpi_decomposition==false) ngroups_fft=ParallelDescriptor::NProcs();
+	    // Scale the velocity by the speed of light
+	    for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
     }
 #endif
 
@@ -558,8 +565,14 @@ WarpX::MakeNewLevelFromScratch (int lev, Real time, const BoxArray& new_grids,
     InitLevelData(lev, time);
 
 #ifdef WARPX_USE_PSATD
-    AllocLevelDataFFT(lev);
-    InitLevelDataFFT(lev, time);
+    if (fft_hybrid_mpi_decomposition){
+#ifdef WARPX_USE_PSATD_HYBRID
+        AllocLevelDataFFT(lev);
+        InitLevelDataFFT(lev, time);
+#else
+    amrex::Abort("The option `psatd.fft_hybrid_mpi_decomposition` does not work on GPU.");
+#endif
+    }
 #endif
 }
 
@@ -603,7 +616,7 @@ WarpX::ClearLevel (int lev)
 
     costs[lev].reset();
 
-#ifdef WARPX_USE_PSATD
+#ifdef WARPX_USE_PSATD_HYBRID
     for (int i = 0; i < 3; ++i) {
         Efield_fp_fft[lev][i].reset();
         Bfield_fp_fft[lev][i].reset();
@@ -704,6 +717,37 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     // CKC solver requires one additional guard cell
     if (maxwell_fdtd_solver_id == 1) ngF = std::max( ngF, 1 );
 
+#ifdef WARPX_USE_PSATD
+    if (fft_hybrid_mpi_decomposition == false){
+        // All boxes should have the same number of guard cells
+        // (to avoid temporary parallel copies)
+        // Thus take the max of the required number of guards for each field
+        // Also: the number of guard cell should be enough to contain
+        // the stencil of the FFT solver. Here, this number (`ngFFT`)
+        // is determined *empirically* to be the order of the solver
+        // for nodal, and half the order of the solver for staggered.
+        IntVect ngFFT;
+        if (do_nodal) {
+            ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
+        } else {
+            ngFFT = IntVect(AMREX_D_DECL(nox_fft/2, noy_fft/2, noz_fft/2));
+        }
+        for (int i_dim=0; i_dim<AMREX_SPACEDIM; i_dim++ ){
+            int ng_required = ngFFT[i_dim];
+            // Get the max
+            ng_required = std::max( ng_required, ngE[i_dim] );
+            ng_required = std::max( ng_required, ngJ[i_dim] );
+            ng_required = std::max( ng_required, ngRho[i_dim] );
+            ng_required = std::max( ng_required, ngF );
+            // Set the guard cells to this max
+            ngE[i_dim] = ng_required;
+            ngJ[i_dim] = ng_required;
+            ngRho[i_dim] = ng_required;
+            ngF = ng_required;
+        }
+    }
+#endif
+
     AllocLevelMFs(lev, ba, dm, ngE, ngJ, ngRho, ngF);
 }
 
@@ -753,6 +797,21 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         rho_fp[lev].reset(new MultiFab(amrex::convert(ba,IntVect::TheUnitVector()),dm,2,ngRho));
         rho_fp_owner_masks[lev] = std::move(rho_fp[lev]->OwnerMask(period));
+    }
+    if (fft_hybrid_mpi_decomposition == false){
+        // Allocate and initialize the spectral solver
+        std::array<Real,3> dx = CellSize(lev);
+#if (AMREX_SPACEDIM == 3)
+        RealVect dx_vect(dx[0], dx[1], dx[2]);
+#elif (AMREX_SPACEDIM == 2)
+        RealVect dx_vect(dx[0], dx[2]);
+#endif
+        // Get the cell-centered box, with guard cells
+        BoxArray realspace_ba = ba;  // Copy box
+        realspace_ba.enclosedCells().grow(ngE); // cell-centered + guard cells
+        // Define spectral solver
+        spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev] ) );
     }
 #endif
 
@@ -936,18 +995,32 @@ WarpX::ComputeDivB (MultiFab& divB, int dcomp,
                     const std::array<const MultiFab*, 3>& B,
                     const std::array<Real,3>& dx)
 {
-#ifdef _OPENMP
-#pragma omp parallel
+    Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
+
+#ifdef WARPX_RZ
+    const Real rmin = GetInstance().Geom(0).ProbLo(0);
 #endif
-    for (MFIter mfi(divB, true); mfi.isValid(); ++mfi)
+
+#ifdef _OPENMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+    for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         const Box& bx = mfi.tilebox();
-        WRPX_COMPUTE_DIVB(bx.loVect(), bx.hiVect(),
-                           BL_TO_FORTRAN_N_ANYD(divB[mfi],dcomp),
-                           BL_TO_FORTRAN_ANYD((*B[0])[mfi]),
-                           BL_TO_FORTRAN_ANYD((*B[1])[mfi]),
-                           BL_TO_FORTRAN_ANYD((*B[2])[mfi]),
-                           dx.data());
+        auto const& Bxfab = B[0]->array(mfi);
+        auto const& Byfab = B[1]->array(mfi);
+        auto const& Bzfab = B[2]->array(mfi);
+        auto const& divBfab = divB.array(mfi);
+
+        ParallelFor(bx,
+        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            warpx_computedivb(i, j, k, dcomp, divBfab, Bxfab, Byfab, Bzfab, dxinv, dyinv, dzinv
+#ifdef WARPX_RZ
+                              ,rmin
+#endif
+                              );
+        });
     }
 }
 
@@ -956,18 +1029,32 @@ WarpX::ComputeDivB (MultiFab& divB, int dcomp,
                     const std::array<const MultiFab*, 3>& B,
                     const std::array<Real,3>& dx, int ngrow)
 {
-#ifdef _OPENMP
-#pragma omp parallel
+    Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
+
+#ifdef WARPX_RZ
+    const Real rmin = GetInstance().Geom(0).ProbLo(0);
 #endif
-    for (MFIter mfi(divB, true); mfi.isValid(); ++mfi)
+
+#ifdef _OPENMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+    for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         Box bx = mfi.growntilebox(ngrow);
-        WRPX_COMPUTE_DIVB(bx.loVect(), bx.hiVect(),
-                           BL_TO_FORTRAN_N_ANYD(divB[mfi],dcomp),
-                           BL_TO_FORTRAN_ANYD((*B[0])[mfi]),
-                           BL_TO_FORTRAN_ANYD((*B[1])[mfi]),
-                           BL_TO_FORTRAN_ANYD((*B[2])[mfi]),
-                           dx.data());
+        auto const& Bxfab = B[0]->array(mfi);
+        auto const& Byfab = B[1]->array(mfi);
+        auto const& Bzfab = B[2]->array(mfi);
+        auto const& divBfab = divB.array(mfi);
+
+        ParallelFor(bx,
+        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            warpx_computedivb(i, j, k, dcomp, divBfab, Bxfab, Byfab, Bzfab, dxinv, dyinv, dzinv
+#ifdef WARPX_RZ
+                              ,rmin
+#endif
+                              );
+        });
     }
 }
 
@@ -976,25 +1063,32 @@ WarpX::ComputeDivE (MultiFab& divE, int dcomp,
                     const std::array<const MultiFab*, 3>& E,
                     const std::array<Real,3>& dx)
 {
-#ifdef _OPENMP
-#pragma omp parallel
+    Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
+
+#ifdef WARPX_RZ
+    const Real rmin = GetInstance().Geom(0).ProbLo(0);
 #endif
-    for (MFIter mfi(divE, true); mfi.isValid(); ++mfi)
+
+#ifdef _OPENMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+    for (MFIter mfi(divE, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         const Box& bx = mfi.tilebox();
+        auto const& Exfab = E[0]->array(mfi);
+        auto const& Eyfab = E[1]->array(mfi);
+        auto const& Ezfab = E[2]->array(mfi);
+        auto const& divEfab = divE.array(mfi);
+
+        ParallelFor(bx,
+        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            warpx_computedive(i, j, k, dcomp, divEfab, Exfab, Eyfab, Ezfab, dxinv, dyinv, dzinv
 #ifdef WARPX_RZ
-        const Real xmin = GetInstance().Geom(0).ProbLo(0);
+                              ,rmin
 #endif
-        WRPX_COMPUTE_DIVE(bx.loVect(), bx.hiVect(),
-                           BL_TO_FORTRAN_N_ANYD(divE[mfi],dcomp),
-                           BL_TO_FORTRAN_ANYD((*E[0])[mfi]),
-                           BL_TO_FORTRAN_ANYD((*E[1])[mfi]),
-                           BL_TO_FORTRAN_ANYD((*E[2])[mfi]),
-                           dx.data()
-#ifdef WARPX_RZ
-                           ,&xmin
-#endif
-                           );
+                              );
+        });
     }
 }
 
@@ -1003,25 +1097,32 @@ WarpX::ComputeDivE (MultiFab& divE, int dcomp,
                     const std::array<const MultiFab*, 3>& E,
                     const std::array<Real,3>& dx, int ngrow)
 {
-#ifdef _OPENMP
-#pragma omp parallel
+    Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
+
+#ifdef WARPX_RZ
+    const Real rmin = GetInstance().Geom(0).ProbLo(0);
 #endif
-    for (MFIter mfi(divE, true); mfi.isValid(); ++mfi)
+
+#ifdef _OPENMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+    for (MFIter mfi(divE, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
         Box bx = mfi.growntilebox(ngrow);
+        auto const& Exfab = E[0]->array(mfi);
+        auto const& Eyfab = E[1]->array(mfi);
+        auto const& Ezfab = E[2]->array(mfi);
+        auto const& divEfab = divE.array(mfi);
+
+        ParallelFor(bx,
+        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            warpx_computedive(i, j, k, dcomp, divEfab, Exfab, Eyfab, Ezfab, dxinv, dyinv, dzinv
 #ifdef WARPX_RZ
-        const Real xmin = GetInstance().Geom(0).ProbLo(0);
+                              ,rmin
 #endif
-        WRPX_COMPUTE_DIVE(bx.loVect(), bx.hiVect(),
-                           BL_TO_FORTRAN_N_ANYD(divE[mfi],dcomp),
-                           BL_TO_FORTRAN_ANYD((*E[0])[mfi]),
-                           BL_TO_FORTRAN_ANYD((*E[1])[mfi]),
-                           BL_TO_FORTRAN_ANYD((*E[2])[mfi]),
-                           dx.data()
-#ifdef WARPX_RZ
-                           ,&xmin
-#endif
-                           );
+                              );
+        });
     }
 }
 
