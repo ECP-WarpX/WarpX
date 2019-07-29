@@ -1769,17 +1769,33 @@ PhysicalParticleContainer::PushPX(WarpXParIter& pti,
     auto& Byp = attribs[PIdx::By];
     auto& Bzp = attribs[PIdx::Bz];
     const long np  = pti.numParticles();
-    
-    warpx_particle_pusher(&np,
-                          xp.dataPtr(),
-                          yp.dataPtr(),
-                          zp.dataPtr(),
-                          uxp.dataPtr(), uyp.dataPtr(), uzp.dataPtr(),
-                          giv.dataPtr(),
-                          Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(),
-                          Bxp.dataPtr(), Byp.dataPtr(), Bzp.dataPtr(),
-                          &this->charge, &this->mass, &dt,
-                          &WarpX::particle_pusher_algo);
+
+    // Push momenta
+    warpx_particle_pusher_momenta(&np,
+                        xp.dataPtr(), yp.dataPtr(), zp.dataPtr(),
+                        uxp.dataPtr(), uyp.dataPtr(), uzp.dataPtr(),
+                        giv.dataPtr(),
+                        Exp.dataPtr(), Eyp.dataPtr(), Ezp.dataPtr(),
+                        Bxp.dataPtr(), Byp.dataPtr(), Bzp.dataPtr(),
+                        &this->charge, &this->mass, &dt,
+                        &WarpX::particle_pusher_algo);
+
+    // Push positions
+    Real vx = v_galilean[0];
+    Real vy = v_galilean[1];
+    Real vz = v_galilean[2];
+    Real* AMREX_RESTRICT x = xp.dataPtr();
+    Real* AMREX_RESTRICT y = yp.dataPtr();
+    Real* AMREX_RESTRICT z = zp.dataPtr();
+    Real* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
+    Real* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
+    Real* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
+    amrex::ParallelFor( np,
+        [=] AMREX_GPU_DEVICE (long i) {
+            UpdatePositionGalilean( x[i], y[i], z[i],
+                  ux[i], uy[i], uz[i], vx, vy, vz, dt );
+        }
+    );
 
 }
 
