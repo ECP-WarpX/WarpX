@@ -525,6 +525,9 @@ class Simulation(picmistandard.PICMI_Simulation):
         for diagnostic in self.diagnostics:
             diagnostic.initialize_inputs()
 
+    def set_max_step(self, max_steps):
+        self.max_steps = max_steps
+    
     def initialize_warpx(self):
         if self.warpx_initialized:
             return
