@@ -26,7 +26,7 @@ void doDepositionShapeN(const amrex::Real * const xp,
                         const amrex::Real * const uxp,
                         const amrex::Real * const uyp,
                         const amrex::Real * const uzp,
-                        const Real * const ion_lev,
+                        const amrex::Real * const ion_lev,
                         const amrex::Array4<amrex::Real>& jx_arr,
                         const amrex::Array4<amrex::Real>& jy_arr,
                         const amrex::Array4<amrex::Real>& jz_arr,
@@ -62,7 +62,7 @@ void doDepositionShapeN(const amrex::Real * const xp,
             const amrex::Real gaminv = 1.0/std::sqrt(1.0 + uxp[ip]*uxp[ip]*clightsq
                                                      + uyp[ip]*uyp[ip]*clightsq
                                                      + uzp[ip]*uzp[ip]*clightsq);
-            const amrex::Real wq  = q*wp[ip];
+            amrex::Real wq  = q*wp[ip];
             if (ion_lev){
                 wq *= ion_lev[ip];
             }
@@ -207,7 +207,7 @@ void doEsirkepovDepositionShapeN (const amrex::Real * const xp,
                                                      + uzp[ip]*uzp[ip]*clightsq);
 
             // wqx, wqy wqz are particle current in each direction
-            const amrex::Real wq = q*wp[ip];
+            amrex::Real wq = q*wp[ip];
             if (ion_lev){
                 wq *= ion_lev[ip];
             }

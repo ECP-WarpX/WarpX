@@ -503,14 +503,20 @@ LaserParticleContainer::Evolve (int lev,
             //
             // Current Deposition
             //
+            Real* AMREX_RESTRICT ion_lev;
+            if (do_field_ionization){
+                ion_lev = pti.GetAttribs(particle_comps["ionization_level"]).dataPtr();
+            } else {
+                ion_lev = nullptr;
+            }
             // Deposit inside domains
-            DepositCurrent(pti, wp, uxp, uyp, uzp, &jx, &jy, &jz,
+            DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                            0, np_current, thread_num,
                            lev, lev, dt);
             bool has_buffer = cjx;
             if (has_buffer){
                 // Deposit in buffers
-                DepositCurrent(pti, wp, uxp, uyp, uzp, cjx, cjy, cjz,
+                DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                np_current, np-np_current, thread_num,
                                lev, lev-1, dt);
             }
