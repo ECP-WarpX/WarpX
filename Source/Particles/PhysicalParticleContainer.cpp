@@ -196,17 +196,20 @@ PhysicalParticleContainer::CheckAndAddParticle(Real x, Real y, Real z,
     attribs[PIdx::uz] = u[2];
     attribs[PIdx::w ] = weight;
 
-    if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
+    if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) )
     {
-        // need to create old values
         auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
-        particle_tile.push_back_real(particle_comps["xold"], x);
-        particle_tile.push_back_real(particle_comps["yold"], y);
-        particle_tile.push_back_real(particle_comps["zold"], z);
+        if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
+        {
+            // need to create old values
+            particle_tile.push_back_real(particle_comps["xold"], x);
+            particle_tile.push_back_real(particle_comps["yold"], y);
+            particle_tile.push_back_real(particle_comps["zold"], z);
                 
-        particle_tile.push_back_real(particle_comps["uxold"], u[0]);
-        particle_tile.push_back_real(particle_comps["uyold"], u[1]);
-        particle_tile.push_back_real(particle_comps["uzold"], u[2]);
+            particle_tile.push_back_real(particle_comps["uxold"], u[0]);
+            particle_tile.push_back_real(particle_comps["uyold"], u[1]);
+            particle_tile.push_back_real(particle_comps["uzold"], u[2]);
+        }
     }
     // add particle
     AddOneParticle(0, 0, 0, x, y, z, attribs);
@@ -289,7 +292,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         const int grid_id = mfi.index();
         const int tile_id = mfi.LocalTileIndex();
         GetParticles(lev)[std::make_pair(grid_id, tile_id)];
-        if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags) {
+        if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ) {
             DefineAndReturnParticleTile(lev, grid_id, tile_id);
         }
     }
@@ -414,10 +417,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
         auto& particle_tile = GetParticles(lev)[std::make_pair(grid_id,tile_id)];
         bool do_boosted = false;
-        if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags) {
-            do_boosted = true;
+        if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ) {
             DefineAndReturnParticleTile(lev, grid_id, tile_id);
         }
+        do_boosted = (WarpX::do_boosted_frame_diagnostic && 
+                      do_boosted_frame_diags);
+
         auto old_size = particle_tile.GetArrayOfStructs().size();
         auto new_size = old_size + max_new_particles;
         particle_tile.resize(new_size);
