@@ -125,13 +125,13 @@ void doDepositionShapeN(const amrex::Real * const xp,
 #if (defined WARPX_DIM_2D) || (defined WARPX_DIM_RZ)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
-                    amrex::Gpu::Atomic::Add(
+                    amrex::HostDevice::Atomic::Add(
                         &jx_arr(lo.x+j0+ix, lo.y+l +iz, 0), 
                         sx0[ix]*sz [iz]*wqx);
-                    amrex::Gpu::Atomic::Add(
+                    amrex::HostDevice::Atomic::Add(
                         &jy_arr(lo.x+j +ix, lo.y+l +iz, 0), 
                         sx [ix]*sz [iz]*wqy);
-                    amrex::Gpu::Atomic::Add(
+                    amrex::HostDevice::Atomic::Add(
                         &jz_arr(lo.x+j +ix, lo.y+l0+iz, 0), 
                         sx [ix]*sz0[iz]*wqz);
                 }
@@ -140,13 +140,13 @@ void doDepositionShapeN(const amrex::Real * const xp,
             for (int iz=0; iz<=depos_order; iz++){
                 for (int iy=0; iy<=depos_order; iy++){
                     for (int ix=0; ix<=depos_order; ix++){
-                        amrex::Gpu::Atomic::Add(
+                        amrex::HostDevice::Atomic::Add(
                             &jx_arr(lo.x+j0+ix, lo.y+k +iy, lo.z+l +iz),
                             sx0[ix]*sy [iy]*sz [iz]*wqx);
-                        amrex::Gpu::Atomic::Add(
+                        amrex::HostDevice::Atomic::Add(
                             &jy_arr(lo.x+j +ix, lo.y+k0+iy, lo.z+l +iz), 
                             sx [ix]*sy0[iy]*sz [iz]*wqy);
-                        amrex::Gpu::Atomic::Add(
+                        amrex::HostDevice::Atomic::Add(
                             &jz_arr(lo.x+j +ix, lo.y+k +iy, lo.z+l0+iz),
                             sx [ix]*sy [iy]*sz0[iz]*wqz);
                     }
@@ -310,7 +310,7 @@ void doEsirkepovDepositionShapeN (const amrex::Real * const xp,
                     for (int i=dil; i<=depos_order+1-diu; i++) {
                         sdxi += wqx*(sx_old[i] - sx_new[i])*((sy_new[j] + 0.5*(sy_old[j] - sy_new[j]))*sz_new[k] +
                                                              (0.5*sy_new[j] + 1./3.*(sy_old[j] - sy_new[j]))*(sz_old[k] - sz_new[k]));
-                        amrex::Gpu::Atomic::Add( &Jx_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxi);
+                        amrex::HostDevice::Atomic::Add( &Jx_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxi);
                     }
                 }
             }
@@ -320,7 +320,7 @@ void doEsirkepovDepositionShapeN (const amrex::Real * const xp,
                     for (int j=djl; j<=depos_order+1-dju; j++) {
                         sdyj += wqy*(sy_old[j] - sy_new[j])*((sz_new[k] + 0.5*(sz_old[k] - sz_new[k]))*sx_new[i] +
                                                              (0.5*sz_new[k] + 1./3.*(sz_old[k] - sz_new[k]))*(sx_old[i] - sx_new[i]));
-                        amrex::Gpu::Atomic::Add( &Jy_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdyj);
+                        amrex::HostDevice::Atomic::Add( &Jy_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdyj);
                     }
                 }
             }
@@ -330,7 +330,7 @@ void doEsirkepovDepositionShapeN (const amrex::Real * const xp,
                     for (int k=dkl; k<=depos_order+1-dku; k++) {
                         sdzk += wqz*(sz_old[k] - sz_new[k])*((sx_new[i] + 0.5*(sx_old[i] - sx_new[i]))*sy_new[j] +
                                                              (0.5*sx_new[i] + 1./3.*(sx_old[i] - sx_new[i]))*(sy_old[j] - sy_new[j]));
-                        amrex::Gpu::Atomic::Add( &Jz_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdzk);
+                        amrex::HostDevice::Atomic::Add( &Jz_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdzk);
                     }
                 }
             }
@@ -341,21 +341,21 @@ void doEsirkepovDepositionShapeN (const amrex::Real * const xp,
                 amrex::Real sdxi = 0.;
                 for (int i=dil; i<=depos_order+1-diu; i++) {
                     sdxi += wqx*(sx_old[i] - sx_new[i])*(sz_new[k] + 0.5*(sz_old[k] - sz_new[k]));
-                    amrex::Gpu::Atomic::Add( &Jx_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0), sdxi);
+                    amrex::HostDevice::Atomic::Add( &Jx_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0), sdxi);
                 }
             }
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 for (int i=dil; i<=depos_order+2-diu; i++) {
                     const amrex::Real sdyj = wq*vy*invvol*((sz_new[k] + 0.5*(sz_old[k] - sz_new[k]))*sx_new[i] +
                                                            (0.5*sz_new[k] + 1./3.*(sz_old[k] - sz_new[k]))*(sx_old[i] - sx_new[i]));
-                    amrex::Gpu::Atomic::Add( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0), sdyj);
+                    amrex::HostDevice::Atomic::Add( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0), sdyj);
                 }
             }
             for (int i=dil; i<=depos_order+2-diu; i++) {
                 amrex::Real sdzk = 0.;
                 for (int k=dkl; k<=depos_order+1-dku; k++) {
                     sdzk += wqz*(sz_old[k] - sz_new[k])*(sx_new[i] + 0.5*(sx_old[i] - sx_new[i]));
-                    amrex::Gpu::Atomic::Add( &Jz_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0), sdzk);
+                    amrex::HostDevice::Atomic::Add( &Jz_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0), sdzk);
                 }
             }
 

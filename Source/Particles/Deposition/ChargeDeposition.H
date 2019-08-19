@@ -74,7 +74,7 @@ void doChargeDepositionShapeN(const amrex::Real * const xp,
 #if (defined WARPX_DIM_2D) || (defined WARPX_DIM_RZ)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
-                    amrex::Gpu::Atomic::Add(
+                    amrex::HostDevice::Atomic::Add(
                         &rho_arr(lo.x+i+ix, lo.y+k+iz, 0), 
                         sx[ix]*sz[iz]*wq);
                 }
@@ -83,7 +83,7 @@ void doChargeDepositionShapeN(const amrex::Real * const xp,
             for (int iz=0; iz<=depos_order; iz++){
                 for (int iy=0; iy<=depos_order; iy++){
                     for (int ix=0; ix<=depos_order; ix++){
-                        amrex::Gpu::Atomic::Add(
+                        amrex::HostDevice::Atomic::Add(
                             &rho_arr(lo.x+i+ix, lo.y+j+iy, lo.z+k+iz),
                             sx[ix]*sy[iy]*sz[iz]*wq);
                     }
