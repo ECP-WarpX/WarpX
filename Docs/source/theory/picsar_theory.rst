@@ -13,6 +13,7 @@
 The electromagnetic Particle-In-Cell method
 ===========================================
 
+
 .. figure:: PIC.png
    :alt: [fig:PIC] The Particle-In-Cell (PIC) method follows the evolution of a collection of charged macro-particles (positively charged in blue on the left plot, negatively charged in red) that evolve self-consistently with their electromagnetic (or electrostatic) fields. The core PIC algorithm involves four operations at each time step: 1) evolve the velocity and position of the particles using the Newton-Lorentz equations, 2) deposit the charge and/or current densities through interpolation from the particles distributions onto the grid, 3) evolve Maxwell’s wave equations (for electromagnetic) or solve Poisson’s equation (for electrostatic) on the grid, 4) interpolate the fields from the grid onto the particles for the next particle push. Additional “add-ons” operations are inserted between these core operations to account for additional physics (e.g. absorption/emission of particles, addition of external forces to account for accelerator focusing or accelerating component) or numerical effects (e.g. smoothing/filtering of the charge/current densities and/or fields on the grid).
 
@@ -665,7 +666,7 @@ Lehe, R, A Lifschitz, C Thaury, V Malka, and X Davoine. 2013. “Numerical growt
 
    <div id="ref-Liumotl1997">
 
-Liu, Qh. 1997. “The PSTD Algorithm: A Time-Domain Method Requiring Only Two Cells Per Wavelength.” *Microwave and Optical Technology Letters* 15 (3): 158–65. `https://doi.org/10.1002/(Sici)1098-2760(19970620)15:3<158::Aid-Mop11>3.3.Co;2-T <https://doi.org/10.1002/(Sici)1098-2760(19970620)15:3<158::Aid-Mop11>3.3.Co;2-T>`__.
+Liu, Qh. 1997. “The PSTD Algorithm: A Time-Domain Method Requiring Only Two Cells Per Wavelength.” *Microwave and Optical Technology Letters* 15 (3): 158–65. `https://doi.org/10.1002/(SICI)1098-2760(19970620)15\:3\<158\:\:AID-MOP11\>3.0.CO\;2-3 <https://doi.org/10.1002/(SICI)1098-2760(19970620)15\:3\<158\:\:AID-MOP11\>3.0.CO\;2-3>`_.
 
 .. raw:: html
 
