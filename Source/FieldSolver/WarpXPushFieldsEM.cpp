@@ -644,9 +644,15 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
         // these do not include the guard cells.
-        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev);
+        const std::array<Real, 3>& xyzmin  = WarpX::LowerCornerWithCentering(tilebox, lev);
+        const std::array<Real, 3>& xyzminr = WarpX::LowerCornerWithCentering(tbr, lev);
+        const std::array<Real, 3>& xyzmint = WarpX::LowerCornerWithCentering(tbt, lev);
+        const std::array<Real, 3>& xyzminz = WarpX::LowerCornerWithCentering(tbz, lev);
+        const Real rmin  = xyzmin[0];
+        const Real rminr = xyzminr[0];
+        const Real rmint = xyzmint[0];
+        const Real rminz = xyzminz[0];
         const Dim3 lo = lbound(tilebox);
-        const Real rmin = xyzmin[0];
         const int irmin = lo.x;
 
         const long nmodes = n_rz_azimuthal_modes;
@@ -663,9 +669,9 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 Jr_arr(i,j,0,0) -= Jr_arr(-1-i,j,0,0);
             }
             // Apply the inverse volume scaling
-            // Since Jr is not cell centered in r, no need for distinction
+            // Since Jr is never cell centered in r, no need for distinction
             // between on axis and off-axis factors
-            const amrex::Real r = std::abs(rmin + (i - irmin + 0.5)*dr);
+            const amrex::Real r = std::abs(rminr + (i - irmin)*dr);
             Jr_arr(i,j,0,0) /= (2.*MathConst::pi*r);
 
             for (int imode=1 ; imode < nmodes ; imode++) {
@@ -678,7 +684,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                     Jr_arr(i,j,0,2*imode) -= ifact*Jr_arr(-1-i,j,0,2*imode);
                 }
                 // Apply the inverse volume scaling
-                // Since Jr is not cell centered in r, no need for distinction
+                // Since Jr is never cell centered in r, no need for distinction
                 // between on axis and off-axis factors
                 Jr_arr(i,j,0,2*imode-1) /= (2.*MathConst::pi*r);
                 Jr_arr(i,j,0,2*imode) /= (2.*MathConst::pi*r);
@@ -688,14 +694,16 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
-            // Jt is located on the boundary
-            if (rmin == 0. && 0 < i && i <= ngJ) {
-                Jt_arr(i,j,0,0) += Jt_arr(-i,j,0,0);
+            // If Jt is node centered, Jt[0] is located on the boundary.
+            // If Jt is cell centered, Jt[0] is at 1/2 dr.
+            int ishift = (rmint > rmin ? 1 : 0);
+            if (rmin == 0. && 0 < i && i <= ngJ-ishift) {
+                Jt_arr(i,j,0,0) += Jt_arr(-ishift-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
             // Jt is forced to zero on axis.
-            const amrex::Real r = std::abs(rmin + (i - irmin)*dr);
+            const amrex::Real r = std::abs(rmint + (i - irmin)*dr);
             if (r == 0.) {
                 Jt_arr(i,j,0,0) = 0.;
             } else {
@@ -706,10 +714,9 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 const Real ifact = ( (imode%2) == 0 ? +1. : -1.);
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                // Jt is located on the boundary
-                if (rmin == 0. && 0 < i && i <= ngJ) {
-                    Jt_arr(i,j,0,2*imode-1) += ifact*Jt_arr(-i,j,0,2*imode-1);
-                    Jt_arr(i,j,0,2*imode) += ifact*Jt_arr(-i,j,0,2*imode);
+                if (rmin == 0. && 0 < i && i <= ngJ-ishift) {
+                    Jt_arr(i,j,0,2*imode-1) += ifact*Jt_arr(-ishift-i,j,0,2*imode-1);
+                    Jt_arr(i,j,0,2*imode) += ifact*Jt_arr(-ishift-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
@@ -727,13 +734,15 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
-            // Jz is located on the boundary
-            if (rmin == 0. && 0 < i && i <= ngJ) {
-                Jz_arr(i,j,0,0) += Jz_arr(-i,j,0,0);
+            // If Jz is node centered, Jt[0] is located on the boundary.
+            // If Jz is cell centered, Jt[0] is at 1/2 dr.
+            int ishift = (rminz > rmin ? 1 : 0);
+            if (rmin == 0. && 0 < i && i <= ngJ-ishift) {
+                Jz_arr(i,j,0,0) += Jz_arr(-ishift-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
-            const amrex::Real r = std::abs(rmin + (i - irmin)*dr);
+            const amrex::Real r = std::abs(rminz + (i - irmin)*dr);
             if (r == 0.) {
                 // Verboncoeur JCP 164, 421-427 (2001) : corrected volume on axis
                 Jz_arr(i,j,0,0) /= (MathConst::pi*dr/3.);
@@ -745,10 +754,9 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 const Real ifact = ( (imode%2) == 0 ? +1. : -1.);
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                // Jz is located on the boundary
-                if (rmin == 0. && 0 < i && i <= ngJ) {
-                    Jz_arr(i,j,0,2*imode-1) += ifact*Jz_arr(-i,j,0,2*imode-1);
-                    Jz_arr(i,j,0,2*imode) += ifact*Jz_arr(-i,j,0,2*imode);
+                if (rmin == 0. && 0 < i && i <= ngJ-ishift) {
+                    Jz_arr(i,j,0,2*imode-1) += ifact*Jz_arr(-ishift-i,j,0,2*imode-1);
+                    Jz_arr(i,j,0,2*imode) += ifact*Jz_arr(-ishift-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
