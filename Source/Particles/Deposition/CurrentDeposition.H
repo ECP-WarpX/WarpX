@@ -42,7 +42,8 @@ void doDepositionShapeN(const amrex::Real * const xp,
                         const std::array<amrex::Real,3>& xyzminy,
                         const std::array<amrex::Real,3>& xyzminz,
                         const amrex::Dim3 lo,
-                        const amrex::Real q)
+                        const amrex::Real q,
+                        const long n_rz_azimuthal_modes)
 {
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
@@ -103,6 +104,7 @@ void doDepositionShapeN(const amrex::Real * const xp,
                 costheta = 1.;
                 sintheta = 0.;
             }
+            const Complex xy0 = Complex{costheta, sintheta};
             const amrex::Real wqx = wq*invvol*(+vx*costheta + vy*sintheta);
             const amrex::Real wqy = wq*invvol*(-vx*sintheta + vy*costheta);
 #else
@@ -160,6 +162,18 @@ void doDepositionShapeN(const amrex::Real * const xp,
                     amrex::Gpu::Atomic::Add(
                         &jz_arr(lo.x+j_yz+ix, lo.y+l_z+iz, 0, 0), 
                         sx_yz[ix]*sz_z[iz]*wqz);
+#if (defined WARPX_DIM_RZ)
+                    Complex xy = xy0; // Throughout the following loop, xy takes the value e^{i m theta}
+                    for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
+                        amrex::Gpu::Atomic::Add( &jx_arr(lo.x+j_x+ix, lo.y+l_xy+iz, 0, 2*imode-1), sx_x[ix]*sz_xy[iz]*wqx*xy.real());
+                        amrex::Gpu::Atomic::Add( &jx_arr(lo.x+j_x+ix, lo.y+l_xy+iz, 0, 2*imode  ), sx_x[ix]*sz_xy[iz]*wqx*xy.imag());
+                        amrex::Gpu::Atomic::Add( &jy_arr(lo.x+j_yz+ix, lo.y+l_xy+iz, 0, 2*imode-1), sx_yz[ix]*sz_xy[iz]*wqy*xy.real());
+                        amrex::Gpu::Atomic::Add( &jy_arr(lo.x+j_yz+ix, lo.y+l_xy+iz, 0, 2*imode  ), sx_yz[ix]*sz_xy[iz]*wqy*xy.imag());
+                        amrex::Gpu::Atomic::Add( &jz_arr(lo.x+j_yz+ix, lo.y+l_z+iz, 0, 2*imode-1), sx_yz[ix]*sz_z[iz]*wqz*xy.real());
+                        amrex::Gpu::Atomic::Add( &jz_arr(lo.x+j_yz+ix, lo.y+l_z+iz, 0, 2*imode  ), sx_yz[ix]*sz_z[iz]*wqz*xy.imag());
+                        xy = xy*xy0;
+                    }
+#endif
                 }
             }
 #elif (defined WARPX_DIM_3D)

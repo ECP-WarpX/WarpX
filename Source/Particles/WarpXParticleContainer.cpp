@@ -392,19 +392,22 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
                 xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx,
-                xyzminx, xyzminy, xyzminz, lo, q);
+                xyzminx, xyzminy, xyzminz, lo, q,
+                WarpX::n_rz_azimuthal_modes);
         } else if (WarpX::nox == 2){
             doDepositionShapeN<2>(
                 xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx,
-                xyzminx, xyzminy, xyzminz, lo, q);
+                xyzminx, xyzminy, xyzminz, lo, q,
+                WarpX::n_rz_azimuthal_modes);
         } else if (WarpX::nox == 3){
             doDepositionShapeN<3>(
                 xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx,
-                xyzminx, xyzminy, xyzminz, lo, q);
+                xyzminx, xyzminy, xyzminz, lo, q,
+                WarpX::n_rz_azimuthal_modes);
         }
     }
     BL_PROFILE_VAR_STOP(blp_deposit);
