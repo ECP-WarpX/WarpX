@@ -509,13 +509,16 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     BL_PROFILE_VAR_START(blp_ppc_chd);
     if        (WarpX::nox == 1){
         doChargeDepositionShapeN<1>(xp, yp, zp, wp.dataPtr()+offset, ion_lev,
-                                    rho_arr, np_to_depose, dx, xyzmin, lo, q);
+                                    rho_arr, np_to_depose, dx, xyzmin, lo, q,
+                                    WarpX::n_rz_azimuthal_modes);
     } else if (WarpX::nox == 2){
         doChargeDepositionShapeN<2>(xp, yp, zp, wp.dataPtr()+offset, ion_lev,
-                                    rho_arr, np_to_depose, dx, xyzmin, lo, q);
+                                    rho_arr, np_to_depose, dx, xyzmin, lo, q,
+                                    WarpX::n_rz_azimuthal_modes);
     } else if (WarpX::nox == 3){
         doChargeDepositionShapeN<3>(xp, yp, zp, wp.dataPtr()+offset, ion_lev,
-                                    rho_arr, np_to_depose, dx, xyzmin, lo, q);
+                                    rho_arr, np_to_depose, dx, xyzmin, lo, q,
+                                    WarpX::n_rz_azimuthal_modes);
     }
     BL_PROFILE_VAR_STOP(blp_ppc_chd);
 
