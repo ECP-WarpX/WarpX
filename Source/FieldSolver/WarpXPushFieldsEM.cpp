@@ -781,30 +781,34 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         Array4<Real> const& Rho_arr = Rho->array(mfi);
 
         tilebox = mfi.tilebox();
-        Box tb = convert(tilebox, IntVect::TheUnitVector());
+        Box tb = convert(tilebox, rho_nodal_flag);
 
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
         // these do not include the guard cells.
         const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev);
+        const std::array<Real, 3>& xyzminr = WarpX::LowerCorner(tilebox, lev);
         const Dim3 lo = lbound(tilebox);
         const Real rmin = xyzmin[0];
+        const Real rminr = xyzminr[0];
         const int irmin = lo.x;
+        int ishift = (rminr > rmin ? 1 : 0);
 
         // Rescale charge in r-z mode since the inverse volume factor was not
         // included in the charge deposition.
+        // Note that the loop is also over ncomps, which takes care of the RZ modes.
         amrex::ParallelFor(tb, Rho->nComp(),
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
         {
             // Wrap the charge density deposited in the guard cells around
             // to the cells above the axis.
             // Rho is located on the boundary
-            if (rmin == 0. && 0 < i && i <= ngRho) {
-                Rho_arr(i,j,0,icomp) += Rho_arr(-i,j,0,icomp);
+            if (rmin == 0. && 0 < i && i <= ngRho-ishift) {
+                Rho_arr(i,j,0,icomp) += Rho_arr(-ishift-i,j,0,icomp);
             }
 
             // Apply the inverse volume scaling
-            const amrex::Real r = std::abs(rmin + (i - irmin)*dr);
+            const amrex::Real r = std::abs(rminr + (i - irmin)*dr);
             if (r == 0.) {
                 // Verboncoeur JCP 164, 421-427 (2001) : corrected volume on axis
                 Rho_arr(i,j,0,icomp) /= (MathConst::pi*dr/3.);

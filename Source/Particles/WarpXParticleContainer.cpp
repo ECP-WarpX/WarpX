@@ -384,9 +384,9 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     } else {
         // Lower corner of tile box physical domain
         // Note that this includes guard cells since it is after tilebox.ngrow
-        std::array<Real, 3> xyzminx = WarpX::LowerCornerWithCentering(tbx, depos_lev);
-        std::array<Real, 3> xyzminy = WarpX::LowerCornerWithCentering(tby, depos_lev);
-        std::array<Real, 3> xyzminz = WarpX::LowerCornerWithCentering(tbz, depos_lev);
+        const std::array<Real, 3> xyzminx = WarpX::LowerCornerWithCentering(tbx, depos_lev);
+        const std::array<Real, 3> xyzminy = WarpX::LowerCornerWithCentering(tby, depos_lev);
+        const std::array<Real, 3> xyzminz = WarpX::LowerCornerWithCentering(tbz, depos_lev);
         if        (WarpX::nox == 1){
             doDepositionShapeN<1>(
                 xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
@@ -471,18 +471,18 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     }
     
     tilebox.grow(ngRho);
+    const Box tb = amrex::convert(tilebox, WarpX::rho_nodal_flag);
 
-    const int nc = (rho->nComp() == 1 ? 1 : rho->nComp()/2);
+    const int ncomps = (rho->nComp() == 1 ? 1 : rho->nComp()/2);
 
 #ifdef AMREX_USE_GPU
     // No tiling on GPU: rho_arr points to the full rho array.
-    MultiFab rhoi(*rho, amrex::make_alias, icomp*nc, nc);
+    MultiFab rhoi(*rho, amrex::make_alias, icomp*ncomps, ncomps);
     Array4<Real> const& rho_arr = rhoi.array(pti);
 #else
     // Tiling is on: rho_arr points to local_rho[thread_num]
-    const Box tb = amrex::convert(tilebox, IntVect::TheUnitVector());
 
-    local_rho[thread_num].resize(tb, nc);
+    local_rho[thread_num].resize(tb, ncomps);
 
     // local_rho[thread_num] is set to zero
     local_rho[thread_num].setVal(0.0);
@@ -498,9 +498,10 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev);
+    // And also takes into accout the centering of rho.
+    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tb, depos_lev);
     // Indices of the lower bound
-    const Dim3 lo = lbound(tilebox);
+    const Dim3 lo = lbound(tb);
 
     BL_PROFILE_VAR_START(blp_ppc_chd);
     if        (WarpX::nox == 1){
@@ -518,7 +519,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 #ifndef AMREX_USE_GPU
     BL_PROFILE_VAR_START(blp_accumulate);
 
-    (*rho)[pti].atomicAdd(local_rho[thread_num], tb, tb, 0, icomp*nc, nc);
+    (*rho)[pti].atomicAdd(local_rho[thread_num], tb, tb, 0, icomp*ncomps, ncomps);
 
     BL_PROFILE_VAR_STOP(blp_accumulate);
 #endif
