@@ -953,6 +953,26 @@ PhysicalParticleContainer::Evolve (int lev,
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
     const std::array<Real,3>& cdx = WarpX::CellSize(std::max(lev-1,0));
 
+    // If needed, check that cEx is initialized
+    if (WarpX::m_use_buffers && WarpX::n_field_gather_buffer>0){
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(cEx,
+            "Field gather buffers requested but cEx not initialized!");
+    }
+    if (m_gather_from_main_grid){
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(cEx,
+            "gather_from_main_grid requested but cEx not initialized!");
+    }
+
+    // If needed, check that cjx is initialized
+    if (WarpX::m_use_buffers && WarpX::n_current_deposition_buffer>0){
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(cjx,
+            "Current deposition buffers requested but cjx not initialized!");
+    }
+    if (m_deposit_on_main_grid){
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(cjx,
+            "deposit_on_main_grid requested but cjx not initialized!");
+    }
+
     // Get instances of NCI Godfrey filters
     const auto& nci_godfrey_filter_exeybz = WarpX::GetInstance().nci_godfrey_filter_exeybz;
     const auto& nci_godfrey_filter_bxbyez = WarpX::GetInstance().nci_godfrey_filter_bxbyez;
@@ -1087,7 +1107,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
             long nfine_current = np; //! number of particles depositing to fine grid
             long nfine_gather = np;  //! number of particles gathering from fine grid
-            if (m_use_buffers && !do_not_push)
+            if (WarpX::m_use_buffers && !do_not_push)
             {
                 BL_PROFILE_VAR_START(blp_partition);
                 inexflag.resize(np);
@@ -1199,7 +1219,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 }
                 DepositCharge(pti, wp, ion_lev, rho, 0, 0,
                               np_current, thread_num, lev, lev);
-                if (m_use_buffers || m_deposit_on_main_grid){
+                if (WarpX::m_use_buffers || m_deposit_on_main_grid){
                     DepositCharge(pti, wp, ion_lev, crho, 0, np_current,
                                   np-np_current, thread_num, lev, lev-1);
                 }
@@ -1320,7 +1340,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                0, np_current, thread_num,
                                lev, lev, dt);
-                if (m_use_buffers || m_deposit_on_main_grid){
+                if (WarpX::m_use_buffers || m_deposit_on_main_grid){
                     // Deposit in buffers or on coarse grid
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                    np_current, np-np_current, thread_num,
@@ -1346,7 +1366,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 }
                 DepositCharge(pti, wp, ion_lev, rho, 1, 0,
                               np_current, thread_num, lev, lev);
-                if (m_use_buffers || m_deposit_on_main_grid){
+                if (WarpX::m_use_buffers || m_deposit_on_main_grid){
                     DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
                                   np-np_current, thread_num, lev, lev-1);
                 }

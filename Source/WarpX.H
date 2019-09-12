@@ -127,6 +127,8 @@ public:
     // buffers
     static int n_field_gather_buffer;       //! in number of cells from the edge (identical for each dimension)
     static int n_current_deposition_buffer; //! in number of cells from the edge (identical for each dimension)
+    //! Whether the number of cells in deposition or gather buffer is > 0
+    static bool m_use_buffers = false;
 
     // do nodal
     static int do_nodal;

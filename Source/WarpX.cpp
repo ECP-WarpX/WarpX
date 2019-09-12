@@ -730,6 +730,8 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         n_current_deposition_buffer = ngJ.max();
     }
 
+    m_use_buffers = n_current_deposition_buffer>0 || n_field_gather_buffer>0;
+
     int ngF = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell
     if (maxwell_fdtd_solver_id == 1) ngF = std::max( ngF, 1 );

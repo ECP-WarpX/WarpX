@@ -298,8 +298,6 @@ protected:
     //! instead of gathering fields from the finest patch level, gather from the coarsest
     bool m_gather_from_main_grid = false;
 
-    bool m_use_buffers = false;
-
     static int do_not_push;
 
     // Whether to allow particles outside of the simulation domain to be
