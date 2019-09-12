@@ -964,8 +964,6 @@ PhysicalParticleContainer::Evolve (int lev,
     const iMultiFab* current_masks = WarpX::CurrentBufferMasks(lev);
     const iMultiFab* gather_masks = WarpX::GatherBufferMasks(lev);
 
-    bool has_buffer = cEx || cjx;
-
     if (WarpX::do_boosted_frame_diagnostic && do_boosted_frame_diags)
     {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -1089,7 +1087,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
             long nfine_current = np; //! number of particles depositing to fine grid
             long nfine_gather = np;  //! number of particles gathering from fine grid
-            if (has_buffer && !do_not_push)
+            if (m_use_buffers && !do_not_push)
             {
                 BL_PROFILE_VAR_START(blp_partition);
                 inexflag.resize(np);
@@ -1201,7 +1199,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 }
                 DepositCharge(pti, wp, ion_lev, rho, 0, 0,
                               np_current, thread_num, lev, lev);
-                if (has_buffer){
+                if (m_use_buffers || m_deposit_on_main_grid){
                     DepositCharge(pti, wp, ion_lev, crho, 0, np_current,
                                   np-np_current, thread_num, lev, lev-1);
                 }
@@ -1322,7 +1320,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                0, np_current, thread_num,
                                lev, lev, dt);
-                if (has_buffer){
+                if (m_use_buffers || m_deposit_on_main_grid){
                     // Deposit in buffers or on coarse grid
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                    np_current, np-np_current, thread_num,
@@ -1348,7 +1346,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 }
                 DepositCharge(pti, wp, ion_lev, rho, 1, 0,
                               np_current, thread_num, lev, lev);
-                if (has_buffer){
+                if (m_use_buffers || m_deposit_on_main_grid){
                     DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
                                   np-np_current, thread_num, lev, lev-1);
                 }
