@@ -726,10 +726,6 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     IntVect ngRho = ngJ+1; //One extra ghost cell, so that it's safe to deposit charge density
                            // after pushing particle.
 
-    if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
-        n_current_deposition_buffer = 1;
-    }
-
     if (n_current_deposition_buffer < 0) {
         n_current_deposition_buffer = ngJ.max();
     }
@@ -916,12 +912,15 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     //
     // Copy of the coarse aux
     //
-    if (lev > 0 && (n_field_gather_buffer > 0 || n_current_deposition_buffer > 0))
+    bool initialize_coarse_aux = n_field_gather_buffer>0 || mypc->nSpeciesGatherFromMainGrid()>0;
+    bool initialize_coarse_current = n_current_deposition_buffer>0 || mypc->nSpeciesDepositOnMainGrid()>0;
+
+    if (lev > 0 && (initialize_coarse_aux || initialize_coarse_current))
     {
         BoxArray cba = ba;
         cba.coarsen(refRatio(lev-1));
 
-        if (n_field_gather_buffer > 0) {
+        if ( initialize_coarse_aux ) {
             // Create the MultiFabs for B
             Bfield_cax[lev][0].reset( new MultiFab(amrex::convert(cba,Bx_nodal_flag),dm,ncomps,ngE));
             Bfield_cax[lev][1].reset( new MultiFab(amrex::convert(cba,By_nodal_flag),dm,ncomps,ngE));
@@ -937,7 +936,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             // that particles may move by more than one cell when using subcycling.
         }
 
-        if (n_current_deposition_buffer > 0) {
+        if ( initialize_coarse_current ) {
             current_buf[lev][0].reset( new MultiFab(amrex::convert(cba,jx_nodal_flag),dm,ncomps,ngJ));
             current_buf[lev][1].reset( new MultiFab(amrex::convert(cba,jy_nodal_flag),dm,ncomps,ngJ));
             current_buf[lev][2].reset( new MultiFab(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ));
