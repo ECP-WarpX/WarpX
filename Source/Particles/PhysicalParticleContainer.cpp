@@ -1323,7 +1323,7 @@ PhysicalParticleContainer::Evolve (int lev,
                                0, np_current, thread_num,
                                lev, lev, dt);
                 if (has_buffer){
-                    // Deposit in buffers
+                    // Deposit in buffers or on coarse grid
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
                                    np_current, np-np_current, thread_num,
                                    lev, lev-1, dt);
