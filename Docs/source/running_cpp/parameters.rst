@@ -337,6 +337,7 @@ Particle initialization
     * ``ux`` ``uy`` ``uz`` for the particle momentum,
     * ``Ex`` ``Ey`` ``Ez`` for the electric field on particles,
     * ``Bx`` ``By`` ``Bz`` for the magnetic field on particles.
+    * ``tau`` for the optical depth of the particles (if QED processes are enabled).
     The particle positions are always included. Use
     ``<species>.plot_vars = none`` to plot no particle data, except
     particle position.
