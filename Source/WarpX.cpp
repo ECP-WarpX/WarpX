@@ -645,7 +645,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
       ngy_tmp += 1;
       ngz_tmp += 1;
     }
-    
+
     // Ex, Ey, Ez, Bx, By, and Bz have the same number of ghost cells.
     // jx, jy, jz and rho have the same number of ghost cells.
     // E and B have the same number of ghost cells as j and rho if NCI filter is not used,
@@ -721,6 +721,20 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_fp[lev][0].reset( new MultiFab(amrex::convert(ba,Ex_nodal_flag),dm,1,ngE));
     Efield_fp[lev][1].reset( new MultiFab(amrex::convert(ba,Ey_nodal_flag),dm,1,ngE));
     Efield_fp[lev][2].reset( new MultiFab(amrex::convert(ba,Ez_nodal_flag),dm,1,ngE));
+
+
+
+    Bfield_avg_fp[lev][0].reset( new MultiFab(amrex::convert(ba,...),dm,1,ngE)); //oshapoval
+    Bfield_avg_fp[lev][1].reset( new MultiFab(amrex::convert(ba,...),dm,1,ngE)); //oshapoval
+    Bfield_avg_fp[lev][2].reset( new MultiFab(amrex::convert(ba,...),dm,1,ngE)); //oshapoval
+
+    Efield_avg_fp[lev][0].reset( new MultiFab(amrex::convert(ba,...),dm,1,ngE)); //oshapoval
+    Efield_avg_fp[lev][1].reset( new MultiFab(amrex::convert(ba,...),dm,1,ngE)); //oshapoval
+    Efield_avg_fp[lev][2].reset( new MultiFab(amrex::convert(ba,...),dm,1,ngE)); //oshapoval
+
+
+
+
 
     current_fp[lev][0].reset( new MultiFab(amrex::convert(ba,jx_nodal_flag),dm,1,ngJ));
     current_fp[lev][1].reset( new MultiFab(amrex::convert(ba,jy_nodal_flag),dm,1,ngJ));

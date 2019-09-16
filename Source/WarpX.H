@@ -149,7 +149,7 @@ public:
     BilinearFilter bilinear_filter;
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_exeybz;
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_bxbyez;
-    
+
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
     amrex::Vector<amrex::Real> mirror_z_width;
@@ -452,6 +452,9 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
 
+
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp; //oshapoval
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp; //oshapoval
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
 
