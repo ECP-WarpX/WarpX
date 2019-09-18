@@ -1,12 +1,17 @@
 #ifndef WARPX_H_
 #define WARPX_H_
 
-#include <iostream>
-#include <memory>
-#include <array>
+#include <MultiParticleContainer.H>
+#include <PML.H>
+#include <BoostedFrameDiagnostic.H>
+#include <BilinearFilter.H>
+#include <NCIGodfreyFilter.H>
 
-#ifdef _OPENMP
-#include <omp.h>
+#ifdef WARPX_USE_PSATD
+#   include <SpectralSolver.H>
+#endif
+#ifdef WARPX_USE_PSATD_HYBRID
+#   include <PicsarHybridFFTData.H>
 #endif
 
 #include <AMReX_AmrCore.H>
@@ -19,18 +24,13 @@
 #include <AMReX_Interpolater.H>
 #include <AMReX_FillPatchUtil.H>
 
-#include <MultiParticleContainer.H>
-#include <PML.H>
-#include <BoostedFrameDiagnostic.H>
-#include <BilinearFilter.H>
-#include <NCIGodfreyFilter.H>
+#ifdef _OPENMP
+#   include <omp.h>
+#endif
 
-#ifdef WARPX_USE_PSATD
-#include <SpectralSolver.H>
-#endif
-#ifdef WARPX_USE_PSATD_HYBRID
-#include <PicsarHybridFFTData.H>
-#endif
+#include <iostream>
+#include <memory>
+#include <array>
 
 #if defined(BL_USE_SENSEI_INSITU)
 namespace amrex {
@@ -83,7 +83,6 @@ public:
     static amrex::Vector<amrex::Real> B_external;
 
     // Algorithms
-    static long use_picsar_deposition;
     static long current_deposition_algo;
     static long charge_deposition_algo;
     static long field_gathering_algo;
@@ -94,6 +93,10 @@ public:
     static long nox;
     static long noy;
     static long noz;
+
+    // Number of modes for the RZ multimode version
+    static long n_rz_azimuthal_modes;
+    static long ncomps;
 
     static bool use_fdtd_nci_corr;
     static int  l_lower_order_in_v;
@@ -122,8 +125,8 @@ public:
     static int sort_int;
 
     // buffers
-    static int n_field_gather_buffer;
-    static int n_current_deposition_buffer;
+    static int n_field_gather_buffer;       //! in number of cells from the edge (identical for each dimension)
+    static int n_current_deposition_buffer; //! in number of cells from the edge (identical for each dimension)
 
     // do nodal
     static int do_nodal;
@@ -152,7 +155,7 @@ public:
     BilinearFilter bilinear_filter;
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_exeybz;
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_bxbyez;
-    
+
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
     amrex::Vector<amrex::Real> mirror_z_width;
@@ -178,9 +181,25 @@ public:
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
 
+#ifdef WARPX_DIM_RZ
+    void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
+                                                   amrex::MultiFab* Jy,
+                                                   amrex::MultiFab* Jz,
+                                                   int lev);
+
+    void ApplyInverseVolumeScalingToChargeDensity(amrex::MultiFab* Rho,
+                                                  int lev);
+#endif
+
     void DampPML ();
     void DampPML (int lev);
     void DampPML (int lev, PatchType patch_type);
+
+    void DampJPML ();
+    void DampJPML (int lev);
+    void DampJPML (int lev, PatchType patch_type);
+
+    void CopyJPML ();
 
     void PushParticlesandDepose (int lev, amrex::Real cur_time);
     void PushParticlesandDepose (         amrex::Real cur_time);
@@ -247,6 +266,7 @@ public:
 
     static int do_moving_window;
     static int moving_window_dir;
+    static amrex::Real moving_window_v;
 
     // slice generation //
     void InitializeSliceMultiFabs ();
@@ -280,20 +300,20 @@ protected:
     //! DistributionMapping.  Only used during initialization.  Called
     //! by AmrCoreInitFromScratch.
     virtual void MakeNewLevelFromScratch (int lev, amrex::Real time, const amrex::BoxArray& ba,
-					  const amrex::DistributionMapping& dm) final;
+                                          const amrex::DistributionMapping& dm) final;
 
     //! Make a new level using provided BoxArray and
     //! DistributionMapping and fill with interpolated coarse level
     //! data.  Called by AmrCore::regrid.
     virtual void MakeNewLevelFromCoarse (int lev, amrex::Real time, const amrex::BoxArray& ba,
-					 const amrex::DistributionMapping& dm) final
+                                         const amrex::DistributionMapping& dm) final
         { amrex::Abort("MakeNewLevelFromCoarse: To be implemented"); }
 
     //! Remake an existing level using provided BoxArray and
     //! DistributionMapping and fill with existing fine and coarse
     //! data.  Called by AmrCore::regrid.
     virtual void RemakeLevel (int lev, amrex::Real time, const amrex::BoxArray& ba,
-			      const amrex::DistributionMapping& dm) final;
+                              const amrex::DistributionMapping& dm) final;
 
     //! Delete level data.  Called by AmrCore::regrid.
     virtual void ClearLevel (int lev) final;
@@ -476,12 +496,6 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_buf;
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > charge_buf;
 
-    amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>, 3 > > current_fp_owner_masks;
-    amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>, 3 > > current_cp_owner_masks;
-
-    amrex::Vector<std::unique_ptr<amrex::iMultiFab> > rho_fp_owner_masks;
-    amrex::Vector<std::unique_ptr<amrex::iMultiFab> > rho_cp_owner_masks;
-
     // div E cleaning
     int do_dive_cleaning = 0;
 
@@ -489,10 +503,14 @@ private:
     int do_pml = 1;
     int pml_ncell = 10;
     int pml_delta = 10;
+    int pml_has_particles = 0;
+    int do_pml_j_damping = 0;
+    int do_pml_in_domain = 0;
+    amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector();
+    amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector();
     amrex::Vector<std::unique_ptr<PML> > pml;
 
     amrex::Real moving_window_x = std::numeric_limits<amrex::Real>::max();
-    amrex::Real moving_window_v = std::numeric_limits<amrex::Real>::max();
     amrex::Real current_injection_position = 0;
 
     // Plasma injection parameters
@@ -508,6 +526,9 @@ private:
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > costs;
     int load_balance_with_sfc = 0;
     amrex::Real load_balance_knapsack_factor = 1.24;
+
+    // Override sync every ? steps
+    int override_sync_int = 10;
 
     // Other runtime parameters
     int verbose = 1;
@@ -529,6 +550,7 @@ private:
     int check_int = -1;
     int plot_int = -1;
 
+    std::string openpmd_backend {"h5"};
 #ifdef WARPX_USE_OPENPMD
     bool dump_plotfiles = false;
     bool dump_openpmd = true;
@@ -536,25 +558,15 @@ private:
     bool dump_plotfiles = true;
     bool dump_openpmd = false;
 #endif
-    bool plot_E_field       = true;
-    bool plot_B_field       = true;
-    bool plot_J_field       = true;
-    bool plot_part_per_cell = true;
-    bool plot_part_per_grid = false;
-    bool plot_part_per_proc = false;
-    bool plot_proc_number   = false;
-    bool plot_dive          = false;
-    bool plot_divb          = false;
     bool plot_rho           = false;
-    bool plot_F             = false;
     bool plot_finepatch     = false;
     bool plot_crsepatch     = false;
     bool plot_raw_fields    = false;
     bool plot_raw_fields_guards = false;
+    amrex::Vector<std::string> fields_to_plot;
     int plot_coarsening_ratio = 1;
 
     amrex::VisMF::Header::Version checkpoint_headerversion = amrex::VisMF::Header::NoFabHeader_v1;
-//    amrex::VisMF::Header::Version plotfile_headerversion   = amrex::VisMF::Header::NoFabHeader_v1;
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
 

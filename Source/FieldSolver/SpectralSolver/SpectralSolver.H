@@ -24,7 +24,8 @@ class SpectralSolver
                         const int norder_x, const int norder_y,
                         const int norder_z, const bool nodal,
                         const amrex::Array<amrex::Real,3>& v_galilean,
-                        const amrex::RealVect dx, const amrex::Real dt );
+                        const amrex::RealVect dx, const amrex::Real dt,
+                        const bool pml=false );
 
         /* \brief Transform the component `i_comp` of MultiFab `mf`
          *  to spectral space, and store the corresponding result internally
