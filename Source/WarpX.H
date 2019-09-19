@@ -246,6 +246,9 @@ public:
     static amrex::RealBox getRealBox(const amrex::Box& bx, int lev);
     static std::array<amrex::Real,3> LowerCorner (const amrex::Box& bx, int lev);
     static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, int lev);
+    // Returns the locations of the lower corner of the box, shifted up
+    // a half cell if cell centered.
+    static std::array<amrex::Real,3> LowerCornerWithCentering (const amrex::Box& bx, int lev);
 
     static amrex::IntVect RefRatio (int lev);
 
@@ -263,6 +266,8 @@ public:
     static amrex::IntVect jx_nodal_flag;
     static amrex::IntVect jy_nodal_flag;
     static amrex::IntVect jz_nodal_flag;
+
+    static amrex::IntVect rho_nodal_flag;
 
     static int do_moving_window;
     static int moving_window_dir;

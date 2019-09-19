@@ -2,6 +2,7 @@
 #define CHARGEDEPOSITION_H_
 
 #include "ShapeFactors.H"
+#include <WarpX_Complex.H>
 
 /* \brief Charge Deposition for thread thread_num
  * /param xp, yp, zp   : Pointer to arrays of particle positions.
@@ -28,7 +29,8 @@ void doChargeDepositionShapeN(const amrex::Real * const xp,
                               const std::array<amrex::Real,3>& dx,
                               const std::array<amrex::Real, 3> xyzmin,
                               const amrex::Dim3 lo,
-                              const amrex::Real q)
+                              const amrex::Real q,
+                              const long n_rz_azimuthal_modes)
 {
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
@@ -60,8 +62,18 @@ void doChargeDepositionShapeN(const amrex::Real * const xp,
             // x direction
             // Get particle position in grid coordinates
 #if (defined WARPX_DIM_RZ)
-            const amrex::Real r = std::sqrt(xp[ip]*xp[ip] + yp[ip]*yp[ip]);
-            const amrex::Real x = (r - xmin)*dxi;
+            const amrex::Real rp = std::sqrt(xp[ip]*xp[ip] + yp[ip]*yp[ip]);
+            amrex::Real costheta;
+            amrex::Real sintheta;
+            if (rp > 0.) {
+                costheta = xp[ip]/rp;
+                sintheta = yp[ip]/rp;
+            } else {
+                costheta = 1.;
+                sintheta = 0.;
+            }
+            const Complex xy0 = Complex{costheta, sintheta};
+            const amrex::Real x = (rp - xmin)*dxi;
 #else
             const amrex::Real x = (xp[ip] - xmin)*dxi;
 #endif
@@ -86,8 +98,16 @@ void doChargeDepositionShapeN(const amrex::Real * const xp,
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
                     amrex::Gpu::Atomic::Add(
-                        &rho_arr(lo.x+i+ix, lo.y+k+iz, 0),
+                        &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 0),
                         sx[ix]*sz[iz]*wq);
+#if (defined WARPX_DIM_RZ)
+                    Complex xy = xy0; // Throughout the following loop, xy takes the value e^{i m theta}
+                    for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
+                        amrex::Gpu::Atomic::Add( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode-1), sx[ix]*sz[iz]*wq*xy.real());
+                        amrex::Gpu::Atomic::Add( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode  ), sx[ix]*sz[iz]*wq*xy.imag());
+                        xy = xy*xy0;
+                    }
+#endif
                 }
             }
 #elif (defined WARPX_DIM_3D)
