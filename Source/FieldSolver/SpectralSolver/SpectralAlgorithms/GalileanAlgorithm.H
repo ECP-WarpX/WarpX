@@ -17,7 +17,9 @@ class GalileanAlgorithm : public SpectralBaseAlgorithm
                          const amrex::Real dt);
         // Redefine update equation from base class
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
-
+        virtual int getRequiredNumberOfFields() const override final {
+            return SpectralFieldIndex::n_fields;
+        };
     private:
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients Theta2_coef, X1_coef, X2_coef, X3_coef, X4_coef;

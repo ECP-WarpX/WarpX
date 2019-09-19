@@ -691,7 +691,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
       ngy_tmp += 1;
       ngz_tmp += 1;
     }
-    
+
     // Ex, Ey, Ez, Bx, By, and Bz have the same number of ghost cells.
     // jx, jy, jz and rho have the same number of ghost cells.
     // E and B have the same number of ghost cells as j and rho if NCI filter is not used,
@@ -761,7 +761,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         // for nodal, and half the order of the solver for staggered.
         IntVect ngFFT;
         if (do_nodal) {
-            ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
+            ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft,noz_fft));
         } else {
             ngFFT = IntVect(AMREX_D_DECL(nox_fft/2, noy_fft/2, noz_fft/2));
         }
@@ -920,7 +920,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             realspace_ba.enclosedCells().grow(ngE); // cell-centered + guard cells
             // Define spectral solver
             spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
-                nox_fft, noy_fft, noz_fft, do_nodal, cdx_vect, dt[lev] ) );
+                nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev] ) );
         }
 #endif
     }

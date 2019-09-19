@@ -38,23 +38,18 @@ SpectralSolver::SpectralSolver(
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
 
-    if ((v_galilean[0]==0) && (v_galilean[1]==0) && (v_galilean[2]==0)){
-        // v_galilean is 0: use standard PSATD algorithm
-        algorithm = std::unique_ptr<PsatdAlgorithm>( new PsatdAlgorithm(
+    if (pml) {
+        algorithm = std::unique_ptr<PMLPsatdAlgorithm>( new PMLPsatdAlgorithm(
             k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
-     } else {
-        // Otherwise: use the Galilean algorithm
-        algorithm = std::unique_ptr<GalileanAlgorithm>( new GalileanAlgorithm(
-            k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt ));
-     }
-
-    // if (pml) {
-    //     algorithm = std::unique_ptr<PMLPsatdAlgorithm>( new PMLPsatdAlgorithm(
-    //         k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
-    // } else {
-    //     algorithm = std::unique_ptr<PsatdAlgorithm>( new PsatdAlgorithm(
-    //         k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
-    // }
+    } else if ((v_galilean[0]==0) && (v_galilean[1]==0) && (v_galilean[2]==0)){
+         // v_galilean is 0: use standard PSATD algorithm
+         algorithm = std::unique_ptr<PsatdAlgorithm>( new PsatdAlgorithm(
+             k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
+      } else {
+          // Otherwise: use the Galilean algorithm
+          algorithm = std::unique_ptr<GalileanAlgorithm>( new GalileanAlgorithm(
+              k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt ));
+       }
 
 
     // - Initialize arrays for fields in spectral space + FFT plans

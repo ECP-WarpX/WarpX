@@ -374,6 +374,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     // Alternatively, we could define xyzminx from tbx (and the same for 3
     // directions and for jx, jy, jz). This way, sx0 would not be needed.
     // Better for memory? worth trying?
+
     const Dim3 lo = lbound(tilebox);
 
     BL_PROFILE_VAR_START(blp_deposit);
@@ -401,19 +402,19 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
         if        (WarpX::nox == 1){
             doDepositionShapeN<1>(
                 xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                uyp.dataPtr() + offset, uzp.dataPtr() + offset, v_galilean, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo,
                 stagger_shift, q);
         } else if (WarpX::nox == 2){
             doDepositionShapeN<2>(
                 xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                uyp.dataPtr() + offset, uzp.dataPtr() + offset, v_galilean, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo,
                 stagger_shift, q);
         } else if (WarpX::nox == 3){
             doDepositionShapeN<3>(
                 xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                uyp.dataPtr() + offset, uzp.dataPtr() + offset, v_galilean, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo,
                 stagger_shift, q);
         }
@@ -510,6 +511,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev);
+
     // Indices of the lower bound
     const Dim3 lo = lbound(tilebox);
 

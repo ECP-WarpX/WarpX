@@ -27,7 +27,7 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
         }
 
     private:
-        SpectralCoefficients C_coef, S_ck_coef;
+        SpectralRealCoefficients C_coef, S_ck_coef;
 
 };
 

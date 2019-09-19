@@ -31,6 +31,7 @@ void doDepositionShapeN(const amrex::Real * const xp,
                         const amrex::Real * const uxp,
                         const amrex::Real * const uyp,
                         const amrex::Real * const uzp,
+                        const std::array<amrex::Real,3>& v_galilean,
                         const int * const ion_lev,
                         const amrex::Array4<amrex::Real>& jx_arr,
                         const amrex::Array4<amrex::Real>& jy_arr,
@@ -45,6 +46,11 @@ void doDepositionShapeN(const amrex::Real * const xp,
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
+
+    const amrex::Real vx_gal = v_galilean[0];
+    const amrex::Real vy_gal = v_galilean[1];
+    const amrex::Real vz_gal = v_galilean[2];
+
     const amrex::Real dxi = 1.0/dx[0];
     const amrex::Real dzi = 1.0/dx[2];
     const amrex::Real dts2dx = 0.5*dt*dxi;
@@ -81,8 +87,8 @@ void doDepositionShapeN(const amrex::Real * const xp,
 #if (defined WARPX_DIM_RZ)
             // In RZ, wqx is actually wqr, and wqy is wqtheta
             // Convert to cylinderical at the mid point
-            const amrex::Real xpmid = xp[ip] - 0.5*dt*vx;
-            const amrex::Real ypmid = yp[ip] - 0.5*dt*vy;
+            const amrex::Real xpmid = xp[ip] - 0.5*dt*(vx - vx_gal);
+            const amrex::Real ypmid = yp[ip] - 0.5*dt*(vy-vy_gal);
             const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);
             amrex::Real costheta;
             amrex::Real sintheta;
@@ -107,7 +113,7 @@ void doDepositionShapeN(const amrex::Real * const xp,
 #if (defined WARPX_DIM_RZ)
             const amrex::Real xmid = (rpmid-xmin)*dxi;
 #else
-            const amrex::Real xmid = (xp[ip]-xmin)*dxi-dts2dx*vx;
+            const amrex::Real xmid = (xp[ip]-xmin)*dxi-dts2dx*(vx - vx_gal);
 #endif
             // Compute shape factors for node-centered quantities
             amrex::Real sx [depos_order + 1];
@@ -120,14 +126,14 @@ void doDepositionShapeN(const amrex::Real * const xp,
 
 #if (defined WARPX_DIM_3D)
             // y direction
-            const amrex::Real ymid= (yp[ip]-ymin)*dyi-dts2dy*vy;
+            const amrex::Real ymid= (yp[ip]-ymin)*dyi-dts2dy*(vy-vy_gal);
             amrex::Real sy [depos_order + 1];
             const int k  = compute_shape_factor<depos_order>(sy,  ymid);
             amrex::Real sy0[depos_order + 1];
             const int k0 = compute_shape_factor<depos_order>(sy0, ymid-stagger_shift);
 #endif
             // z direction
-            const amrex::Real zmid= (zp[ip]-zmin)*dzi-dts2dz*vz;
+            const amrex::Real zmid= (zp[ip]-zmin)*dzi-dts2dz*(vz -vz_gal);
             amrex::Real sz [depos_order + 1];
             const int l  = compute_shape_factor<depos_order>(sz,  zmid);
             amrex::Real sz0[depos_order + 1];
