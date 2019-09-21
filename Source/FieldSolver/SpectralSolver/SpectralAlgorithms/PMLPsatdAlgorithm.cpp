@@ -18,7 +18,7 @@ PMLPsatdAlgorithm::PMLPsatdAlgorithm(
 
     // Allocate the arrays of coefficients
     C_coef = SpectralRealCoefficients(ba, dm, 1, 0);
-    S_ck_coef = SpectralRealCoefficients(ba, dm, 1, 0); 
+    S_ck_coef = SpectralRealCoefficients(ba, dm, 1, 0);
 
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 }
