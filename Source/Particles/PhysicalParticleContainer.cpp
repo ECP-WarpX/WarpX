@@ -459,7 +459,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         int loc_ionization_initial_level = ionization_initial_level;
 
         bool fewer_than_one_ppc = plasma_injector->m_fewer_than_one_ppc;
-        amrex::Dim3 part_every_ncell = 
+        amrex::Dim3 part_every_ncell =
             Dim3{plasma_injector->m_particle_every_n_cell[0],
                  plasma_injector->m_particle_every_n_cell[1],
                  plasma_injector->m_particle_every_n_cell[2]
