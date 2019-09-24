@@ -24,10 +24,9 @@ SpectralSolver::SpectralSolver(
                 const amrex::DistributionMapping& dm,
                 const int norder_x, const int norder_y,
                 const int norder_z, const bool nodal,
-                const amrex::Array<amrex::Real,3>& v_galilean,
+                const amrex::Vector<amrex::Real>& v_galilean,
                 const amrex::RealVect dx, const amrex::Real dt,
                 const bool pml ) {
-
     // Initialize all structures using the same distribution mapping dm
 
     // - Initialize k space object (Contains info about the size of

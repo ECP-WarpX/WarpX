@@ -25,6 +25,7 @@
 using namespace amrex;
 
 Vector<Real> WarpX::B_external(3, 0.0);
+Vector<Real>v_galilean = {0,0,0};
 
 int WarpX::do_moving_window = 0;
 int WarpX::moving_window_dir = -1;
@@ -547,7 +548,7 @@ WarpX::ReadParameters ()
         pp.query("nox", nox_fft);
         pp.query("noy", noy_fft);
         pp.query("noz", noz_fft);
-        pp.query("v_galilean", v_galilean);
+        pp.queryarr("v_galilean", v_galilean);
         // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
     }
@@ -761,7 +762,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         // for nodal, and half the order of the solver for staggered.
         IntVect ngFFT;
         if (do_nodal) {
-            ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft,noz_fft));
+            ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
         } else {
             ngFFT = IntVect(AMREX_D_DECL(nox_fft/2, noy_fft/2, noz_fft/2));
         }

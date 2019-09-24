@@ -600,6 +600,9 @@ private:
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_cp_fft;
 #endif
 
+
+amrex::Vector<amrex::Real> v_galilean;
+
 #ifdef WARPX_USE_PSATD
 private:
     void EvolvePSATD (int numsteps);
@@ -609,7 +612,6 @@ private:
     bool fft_hybrid_mpi_decomposition = false;
     int ngroups_fft = 4;
     int fftw_plan_measure = 1;
-    amrex::Array<amrex::Real,3> v_galilean = {0,0,0};
     int nox_fft = 16;
     int noy_fft = 16;
     int noz_fft = 16;

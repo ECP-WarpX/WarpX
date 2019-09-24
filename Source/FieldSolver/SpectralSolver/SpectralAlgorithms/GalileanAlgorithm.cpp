@@ -9,8 +9,9 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
                          const DistributionMapping& dm,
                          const int norder_x, const int norder_y,
                          const int norder_z, const bool nodal,
-                         const Array<Real, 3>& v_galilean,
+                         const Vector<Real>& v_galilean,
                          const Real dt)
+
      // Initialize members of base class
      : SpectralBaseAlgorithm( spectral_kspace, dm,
                               norder_x, norder_y, norder_z, nodal )
@@ -127,7 +128,7 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
             } else { // Handle k_norm = 0, by using the analytical limit
                 C(i,j,k) = 1.;
                 S_ck(i,j,k) = dt;
-                X1(i,j,k) = dt*dt/(2. * ep0); //oshapoval
+                X1(i,j,k) = dt*dt/(2. * ep0);
                 X2(i,j,k) = c*c*dt*dt/(6. * ep0);
                 X3(i,j,k) = - c*c*dt*dt/(3. * ep0);
                 X4(i,j,k) = -dt/ep0;
