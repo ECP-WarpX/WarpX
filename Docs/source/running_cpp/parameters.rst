@@ -366,6 +366,15 @@ Particle initialization
     species (must be smaller than the atomic number of chemical element given
     in `physical_element`).
 
+* ``<species>.fewer_than_one_ppc`` (`0` or `1`) optional (default `0`)
+    Whether to run with <1 particle per cell (only works if
+    ``injection_style=nuniformpercell``). If true, ``num_particles_per_cell_each_dim``
+    is ignored, and ``particle_every_n_cell`` is read instead.
+
+* ``<species>.particle_every_n_cell`` (list of `0` or `1`)
+    Required if ``fewer_than_one_ppc`` is `1`. Distance between cells into
+    which a particle is injected (2 elements for 2D, 3 elements for 3D).
+
 Laser initialization
 --------------------
 
