@@ -133,6 +133,15 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         gaussian_beam = true;
         parseMomentum(pp);
     }
+
+    pp.query("fewer_than_one_ppc", fewer_than_one_ppc);
+    if (fewer_than_one_ppc){
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            part_pos_s == "nuniformpercell",
+            "fewer_than_one_ppc = 1 only possible if injection_style = nuniformpercell"
+            );
+    }
+
     // Depending on injection type at runtime, initialize inj_pos
     // so that inj_pos->getPositionUnitBox calls
     // InjectorPosition[Random or Regular].getPositionUnitBox.
@@ -147,10 +156,18 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         // Note that for RZ, three numbers are expected, r, theta, and z.
         // For 2D, only two are expected. The third is overwritten with 1.
         num_particles_per_cell_each_dim.assign(3, 1);
-        pp.getarr("num_particles_per_cell_each_dim", num_particles_per_cell_each_dim);
+        if (not fewer_than_one_ppc){
+            pp.getarr("num_particles_per_cell_each_dim", num_particles_per_cell_each_dim);
 #if WARPX_DIM_XZ
-        num_particles_per_cell_each_dim[2] = 1;
+            num_particles_per_cell_each_dim[2] = 1;
 #endif
+        } else {
+            pp.getarr("particle_every_n_cell", particle_every_n_cell);
+#if WARPX_DIM_XZ
+            particle_every_n_cell[2] = 1;
+#endif
+        }
+
         // Construct InjectorPosition from InjectorPositionRegular.
         inj_pos.reset(new InjectorPosition((InjectorPositionRegular*)nullptr,
                                            xmin, xmax, ymin, ymax, zmin, zmax,

@@ -31,8 +31,9 @@ public:
     bool insideBounds (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
 
     int num_particles_per_cell;
-
     amrex::Vector<int> num_particles_per_cell_each_dim;
+    bool fewer_than_one_ppc = false;
+    amrex::Vector<int> particle_every_n_cell;
 
     // gamma * beta
     amrex::XDim3 getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
