@@ -459,11 +459,14 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         int loc_ionization_initial_level = ionization_initial_level;
 
         bool fewer_than_one_ppc = plasma_injector->m_fewer_than_one_ppc;
-        amrex::Dim3 part_every_ncell =
-            Dim3{plasma_injector->m_particle_every_n_cell[0],
-                 plasma_injector->m_particle_every_n_cell[1],
-                 plasma_injector->m_particle_every_n_cell[2]
-        };
+
+        amrex::Dim3 part_every_ncell;
+        if (plasma_injector->m_fewer_than_one_ppc)
+            part_every_ncell =
+                Dim3{plasma_injector->m_particle_every_n_cell[0],
+                     plasma_injector->m_particle_every_n_cell[1],
+                     plasma_injector->m_particle_every_n_cell[2]
+            };
 
         // Loop over all new particles and inject them (creates too many
         // particles, in particular does not consider xmin, xmax etc.).
@@ -511,15 +514,16 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #if   (defined WARPX_DIM_3D)
                 if ( ( int((x-problo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
                      ( int((y-problo[1])/dx[1]) % part_every_ncell.y != 0 ) ||
-                     ( int((z-problo[2])/dx[2]) % part_every_ncell.z != 0 ) )
+                     ( int((z-problo[2])/dx[2]) % part_every_ncell.z != 0 ) ) {
 #elif (defined WARPX_DIM_XZ)
                 if ( ( int((x-problo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
-                     ( int((z-problo[1])/dx[1]) % part_every_ncell.y != 0 ) )
+                     ( int((z-problo[1])/dx[1]) % part_every_ncell.y != 0 ) ) {
 #elif (defined WARPX_DIM_RZ)
                 if ( ( int((x-problo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
-                     ( int((z-problo[1])/dx[1]) % part_every_ncell.z != 0 ) )
+                     ( int((z-problo[1])/dx[1]) % part_every_ncell.z != 0 ) ) {
 #endif
                     p.id() = 0;
+                }
             }
 
 #if (AMREX_SPACEDIM == 3)

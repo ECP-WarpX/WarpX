@@ -112,7 +112,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 
 
     pp.query("fewer_than_one_ppc", m_fewer_than_one_ppc);
-    if (m_fewer_than_one_ppc){
+    if (m_fewer_than_one_ppc == true){
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             part_pos_s == "nuniformpercell",
             "fewer_than_one_ppc = 1 only possible if injection_style = nuniformpercell"
