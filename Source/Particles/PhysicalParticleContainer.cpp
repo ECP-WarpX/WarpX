@@ -412,6 +412,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 }
             }
         }
+
         int const* hp_cellid = (cellid_v.empty()) ? nullptr : cellid_v.data();
         amrex::AsyncArray<int> cellid_aa(hp_cellid, cellid_v.size());
         int const* dp_cellid = cellid_aa.data();
@@ -462,11 +463,13 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
         amrex::Dim3 part_every_ncell;
         if (plasma_injector->m_fewer_than_one_ppc)
+        {
             part_every_ncell =
                 Dim3{plasma_injector->m_particle_every_n_cell[0],
                      plasma_injector->m_particle_every_n_cell[1],
                      plasma_injector->m_particle_every_n_cell[2]
             };
+        }
 
         // Loop over all new particles and inject them (creates too many
         // particles, in particular does not consider xmin, xmax etc.).
@@ -522,7 +525,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 if ( ( int((x-problo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
                      ( int((z-problo[1])/dx[1]) % part_every_ncell.z != 0 ) ) {
 #endif
-                    p.id() = 0;
+                    p.id() = -1;
                 }
             }
 
