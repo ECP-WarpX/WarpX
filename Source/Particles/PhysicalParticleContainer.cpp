@@ -540,18 +540,23 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 if ( ( int((x-initial_prob_lo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
                      ( int((y-initial_prob_lo[1])/dx[1]) % part_every_ncell.y != 0 ) ||
                      ( int((z-initial_prob_lo[2])/dx[2]) % part_every_ncell.z != 0 ) ) {
-                    // ( int((z-problo[2])/dx[2]) % part_every_ncell.z != 0 ) ) {
 #elif (defined WARPX_DIM_XZ)
                 if ( ( int((x-initial_prob_lo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
                      ( int((z-initial_prob_lo[1])/dx[1]) % part_every_ncell.y != 0 ) ) {
-                    // ( int((z-problo[1])/dx[1]) % part_every_ncell.y != 0 ) ) {
 #elif (defined WARPX_DIM_RZ)
                 if ( ( int((x-initial_prob_lo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
                      ( int((z-initial_prob_lo[1])/dx[1]) % part_every_ncell.z != 0 ) ) {
-                    // ( int((z-problo[1])/dx[1]) % part_every_ncell.z != 0 ) ) {
 #endif
                     p.id() = -1;
                 }
+#if   (defined WARPX_DIM_3D)
+                if (int(initial_prob_lo[0]) % 2 == 0) x += dx[0]/2.;
+                if (int(initial_prob_lo[1]) % 2 == 0) y += dx[1]/2.;
+                if (int(initial_prob_lo[2]) % 2 == 0) z += dx[2]/2.;
+#elif (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
+                if (int(initial_prob_lo[0]) % 2 == 0) x += dx[0]/2.;
+                if (int(initial_prob_lo[1]) % 2 == 0) z += dx[1]/2.;
+#endif
             }
 
 #if (AMREX_SPACEDIM == 3)
