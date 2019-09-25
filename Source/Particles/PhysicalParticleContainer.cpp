@@ -1376,12 +1376,22 @@ PhysicalParticleContainer::SplitParticles(int lev)
 
         // offset for split particles is computed as a function of cell size
         // and number of particles per cell, so that a uniform distribution
-        // before splitting results in a uniform distribution after splitting
+        // before splitting results in a uniform distribution after splitting.
         const amrex::Vector<int> ppc_nd = plasma_injector->num_particles_per_cell_each_dim;
         const std::array<Real,3>& dx = WarpX::CellSize(lev);
         amrex::Vector<amrex::Real> split_offset = {dx[0]/2/ppc_nd[0],
                                                    dx[1]/2/ppc_nd[1],
                                                    dx[2]/2/ppc_nd[2]};
+        // Same thing when <1 ppc
+        if ( plasma_injector->m_fewer_than_one_ppc ){
+            split_offset[0] *= plasma_injector->m_particle_every_n_cell[0];
+#if (AMREX_SPACEDIM==3)
+            split_offset[1] *= plasma_injector->m_particle_every_n_cell[1];
+            split_offset[2] *= plasma_injector->m_particle_every_n_cell[2];
+#else
+            split_offset[2] *= plasma_injector->m_particle_every_n_cell[1];
+#endif
+        }
 
         // particle Array Of Structs data
         auto& particles = pti.GetArrayOfStructs();
