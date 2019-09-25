@@ -78,7 +78,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     }
 
     const Geometry& geom = Geom(0);
-    m_initial_prob_lo_z = geom.ProbLoArray()[AMREX_SPACEDIM-1];
+    m_initial_prob_lo = geom.ProbLoArray();
 
 }
 
@@ -474,6 +474,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
         amrex::Dim3 part_every_ncell;
         amrex::Real fraction_part_per_cell;
+
+        // If inject fewer than one particle par cell, store number of gap
+        // cells into GPU-friendly variables
         if (plasma_injector->m_fewer_than_one_ppc)
         {
             part_every_ncell =
@@ -485,7 +488,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 (part_every_ncell.x*part_every_ncell.y*part_every_ncell.z);
         }
 
-        amrex::Real initial_prob_lo_z = m_initial_prob_lo_z;
+        const auto initial_prob_lo = m_initial_prob_lo;
 
         // Loop over all new particles and inject them (creates too many
         // particles, in particular does not consider xmin, xmax etc.).
@@ -531,17 +534,17 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 // If using fewer than one particle per cell, disqualify all
                 // but one particle every n cells
 #if   (defined WARPX_DIM_3D)
-                if ( ( int((x-problo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
-                     ( int((y-problo[1])/dx[1]) % part_every_ncell.y != 0 ) ||
-                     ( int((z-initial_prob_lo_z)/dx[2]) % part_every_ncell.z != 0 ) ) {
+                if ( ( int((x-initial_prob_lo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
+                     ( int((y-initial_prob_lo[1])/dx[1]) % part_every_ncell.y != 0 ) ||
+                     ( int((z-initial_prob_lo[2])/dx[2]) % part_every_ncell.z != 0 ) ) {
                     // ( int((z-problo[2])/dx[2]) % part_every_ncell.z != 0 ) ) {
 #elif (defined WARPX_DIM_XZ)
-                if ( ( int((x-problo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
-                     ( int((z-initial_prob_lo_z)/dx[1]) % part_every_ncell.y != 0 ) ) {
+                if ( ( int((x-initial_prob_lo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
+                     ( int((z-initial_prob_lo[1])/dx[1]) % part_every_ncell.y != 0 ) ) {
                     // ( int((z-problo[1])/dx[1]) % part_every_ncell.y != 0 ) ) {
 #elif (defined WARPX_DIM_RZ)
-                if ( ( int((x-problo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
-                     ( int((z-initial_prob_lo_z)/dx[1]) % part_every_ncell.z != 0 ) ) {
+                if ( ( int((x-initial_prob_lo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
+                     ( int((z-initial_prob_lo[1])/dx[1]) % part_every_ncell.z != 0 ) ) {
                     // ( int((z-problo[1])/dx[1]) % part_every_ncell.z != 0 ) ) {
 #endif
                     p.id() = -1;

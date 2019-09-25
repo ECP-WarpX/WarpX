@@ -142,9 +142,9 @@ protected:
     bool boost_adjust_transverse_positions = false;
     bool do_backward_propagation = false;
 
-    // Initial lower end of the physical domain in the z direction.
+    // Initial lower end of the physical domain.
     // This is used for continous particle injection.
-    amrex::Real m_initial_prob_lo_z;
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> m_initial_prob_lo;
 
     // Inject particles during the whole simulation
     void ContinuousInjection (const amrex::RealBox& injection_box) override;
