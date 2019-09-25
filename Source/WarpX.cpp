@@ -25,7 +25,6 @@
 using namespace amrex;
 
 Vector<Real> WarpX::B_external(3, 0.0);
-Vector<Real>v_galilean = {0,0,0};
 
 int WarpX::do_moving_window = 0;
 int WarpX::moving_window_dir = -1;
@@ -198,6 +197,7 @@ WarpX::WarpX ()
 
     costs.resize(nlevs_max);
 
+    v_galilean.resize(3, 0.0);
 #ifdef WARPX_USE_PSATD
     spectral_solver_fp.resize(nlevs_max);
     spectral_solver_cp.resize(nlevs_max);
