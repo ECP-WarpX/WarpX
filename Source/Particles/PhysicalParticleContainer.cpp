@@ -76,6 +76,11 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
             }
         }
     }
+
+    const Geometry& geom = Geom(0);
+    m_initial_prob_lo_z = geom.ProbLoArray()[AMREX_SPACEDIM-1];
+    Print()<<"m_initial_prob_lo_z "<< m_initial_prob_lo_z<<'\n';
+
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
@@ -462,6 +467,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         bool fewer_than_one_ppc = plasma_injector->m_fewer_than_one_ppc;
 
         amrex::Dim3 part_every_ncell;
+        amrex::Real fraction_part_per_cell;
         if (plasma_injector->m_fewer_than_one_ppc)
         {
             part_every_ncell =
@@ -469,7 +475,15 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                      plasma_injector->m_particle_every_n_cell[1],
                      plasma_injector->m_particle_every_n_cell[2]
             };
+            Print()<<"part_every_ncell "<<part_every_ncell<<'\n';
+            fraction_part_per_cell =
+                (part_every_ncell.x*part_every_ncell.y*part_every_ncell.z);
+            Print()<<"fraction_part_per_cell "<<fraction_part_per_cell<<'\n';
         }
+
+        Print()<<"problo[1] "<<problo[1]<<'\n';
+        amrex::Real initial_prob_lo_z = m_initial_prob_lo_z;
+        Print()<<"initial_prob_lo_z "<< initial_prob_lo_z<<'\n';
 
         // Loop over all new particles and inject them (creates too many
         // particles, in particular does not consider xmin, xmax etc.).
@@ -517,13 +531,16 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #if   (defined WARPX_DIM_3D)
                 if ( ( int((x-problo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
                      ( int((y-problo[1])/dx[1]) % part_every_ncell.y != 0 ) ||
-                     ( int((z-problo[2])/dx[2]) % part_every_ncell.z != 0 ) ) {
+                     ( int((z-initial_prob_lo_z)/dx[2]) % part_every_ncell.z != 0 ) ) {
+                    // ( int((z-problo[2])/dx[2]) % part_every_ncell.z != 0 ) ) {
 #elif (defined WARPX_DIM_XZ)
                 if ( ( int((x-problo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
-                     ( int((z-problo[1])/dx[1]) % part_every_ncell.y != 0 ) ) {
+                     ( int((z-initial_prob_lo_z)/dx[1]) % part_every_ncell.y != 0 ) ) {
+                    // ( int((z-problo[1])/dx[1]) % part_every_ncell.y != 0 ) ) {
 #elif (defined WARPX_DIM_RZ)
                 if ( ( int((x-problo[0])/dx[0]) % part_every_ncell.x != 0 ) ||
-                     ( int((z-problo[1])/dx[1]) % part_every_ncell.z != 0 ) ) {
+                     ( int((z-initial_prob_lo_z)/dx[1]) % part_every_ncell.z != 0 ) ) {
+                    // ( int((z-problo[1])/dx[1]) % part_every_ncell.z != 0 ) ) {
 #endif
                     p.id() = -1;
                 }
@@ -629,8 +646,10 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             u.y *= PhysConst::c;
             u.z *= PhysConst::c;
 
-            // Real weight = dens * scale_fac / (AMREX_D_TERM(fac, *fac, *fac));
             Real weight = dens * scale_fac;
+            if ( fewer_than_one_ppc == true ){
+                weight *= fraction_part_per_cell;
+            }
 #ifdef WARPX_DIM_RZ
             if (radially_weighted) {
                 weight *= 2.*MathConst::pi*xb;
