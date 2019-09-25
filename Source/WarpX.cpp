@@ -197,7 +197,7 @@ WarpX::WarpX ()
 
     costs.resize(nlevs_max);
 
-    v_galilean.resize(3, 0.0);
+    //v_galilean.resize(3, 0.0);
 #ifdef WARPX_USE_PSATD
     spectral_solver_fp.resize(nlevs_max);
     spectral_solver_cp.resize(nlevs_max);

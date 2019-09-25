@@ -601,7 +601,7 @@ private:
 #endif
 
 
-amrex::Vector<amrex::Real> v_galilean;
+amrex::Vector<amrex::Real> v_galilean = {0.,0.,0.};
 
 #ifdef WARPX_USE_PSATD
 private:
