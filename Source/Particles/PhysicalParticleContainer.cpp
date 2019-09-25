@@ -79,7 +79,6 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     const Geometry& geom = Geom(0);
     m_initial_prob_lo_z = geom.ProbLoArray()[AMREX_SPACEDIM-1];
-    Print()<<"m_initial_prob_lo_z "<< m_initial_prob_lo_z<<'\n';
 
 }
 
@@ -466,6 +465,13 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
         bool fewer_than_one_ppc = plasma_injector->m_fewer_than_one_ppc;
 
+        if (fewer_than_one_ppc && WarpX::moving_window_dir){
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WarpX::moving_window_dir == AMREX_SPACEDIM-1,
+                "can use fewer_than_one_ppc with moving window only if moving window direction is z"
+                );
+        }
+
         amrex::Dim3 part_every_ncell;
         amrex::Real fraction_part_per_cell;
         if (plasma_injector->m_fewer_than_one_ppc)
@@ -475,15 +481,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                      plasma_injector->m_particle_every_n_cell[1],
                      plasma_injector->m_particle_every_n_cell[2]
             };
-            Print()<<"part_every_ncell "<<part_every_ncell<<'\n';
             fraction_part_per_cell =
                 (part_every_ncell.x*part_every_ncell.y*part_every_ncell.z);
-            Print()<<"fraction_part_per_cell "<<fraction_part_per_cell<<'\n';
         }
 
-        Print()<<"problo[1] "<<problo[1]<<'\n';
         amrex::Real initial_prob_lo_z = m_initial_prob_lo_z;
-        Print()<<"initial_prob_lo_z "<< initial_prob_lo_z<<'\n';
 
         // Loop over all new particles and inject them (creates too many
         // particles, in particular does not consider xmin, xmax etc.).
