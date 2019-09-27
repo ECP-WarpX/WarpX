@@ -151,7 +151,7 @@ WarpX::UpdateAuxilaryData ()
                 amrex::ParallelFor(Box(ex_aux), Box(ey_aux), Box(ez_aux),
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_efield_x(j,k,l, ex_aux, ex_fp, ex_c);
+                    CalculateAuxiliaryField<false,true,true>(j,k,l, ex_aux, ex_fp, ex_c);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
