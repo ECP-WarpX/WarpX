@@ -22,7 +22,7 @@ int getInterpolationShift <true> ( int i_fine, int i_coarse ){
 template <>
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 amrex::Real getInterpolationWeight <true> ( int i_fine, int i_coarse ){
-    amrex::Real w = (i_fine == i_coarse) ? 0.0 : 0.5;
+    amrex::Real w = (i_fine == 2*i_coarse) ? 0.0 : 0.5;
     return w;
 }
 
@@ -62,13 +62,17 @@ void CalculateAuxiliaryField( int j, int k, int l,
     Real const wx = getInterpolationWeight<is_nodal_x>( j, jg );
     Real const w0x = Real(1.) - wx;
 
-    int const k0 = getInterpolationShift<is_nodal_x>( k, kg );
-    Real const wy = getInterpolationWeight<is_nodal_x>( k, kg );
+#if (AMREX_SPACEDIM == 3)
+    int const k0 = getInterpolationShift<is_nodal_y>( k, kg );
+    Real const wy = getInterpolationWeight<is_nodal_y>( k, kg );
     Real const w0y = Real(1.) - wy;
 
-#if (AMREX_SPACEDIM == 3)
-    int const l0 = getInterpolationShift<is_nodal_x>( l, lg );
-    Real const wz = getInterpolationWeight<is_nodal_x>( l, lg );
+    int const l0 = getInterpolationShift<is_nodal_z>( l, lg );
+    Real const wz = getInterpolationWeight<is_nodal_z>( l, lg );
+    Real const w0z = Real(1.) - wz;
+#else
+    int const k0 = getInterpolationShift<is_nodal_z>( k, kg );
+    Real const wz = getInterpolationWeight<is_nodal_z>( k, kg );
     Real const w0z = Real(1.) - wz;
 #endif
 
@@ -89,9 +93,9 @@ void CalculateAuxiliaryField( int j, int k, int l,
                             + w0x*Fc(jg+j0,kg+k0,lg+l0) )
                    );
 #else
-                        wy*(   wx*Fc(jg   ,kg   ,lg  )
+                        wz*(   wx*Fc(jg   ,kg   ,lg  )
                             + w0x*Fc(jg+j0,kg   ,lg  ) )
-                     + w0y*(   wx*Fc(jg   ,kg+k0,lg  )
+                     + w0z*(   wx*Fc(jg   ,kg+k0,lg  )
                             + w0x*Fc(jg+j0,kg+k0,lg  ) );
 #endif
 }
