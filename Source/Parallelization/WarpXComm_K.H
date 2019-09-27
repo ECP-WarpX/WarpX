@@ -80,19 +80,32 @@ void warpx_interp_efield_x (int j, int k, int l,
     int kg = amrex::coarsen(k,2);
     int jg = amrex::coarsen(j,2);
 
+    // Cell-centered in x: determine whether we will average with
+    // the coarse point to the right or left of the nearest coarse point
+    int j0 = (j == 2*jg) ? -1 : 1;
+    // Nodal in y: determine if the coarse point is at the same position
+    // as a fine point
     Real wy = (k == kg*2) ? 0.0 : 0.5;
     Real owy = 1.0-wy;
 
 #if (AMREX_SPACEDIM == 3)
     Real wz = (l == lg*2) ? 0.0 : 0.5;
     Real owz = 1.0-wz;
-    Exa(j,k,l) = owy * owz * Exc(jg  ,kg  ,lg  )
-        +         wy * owz * Exc(jg  ,kg+1,lg  )
-        +        owy *  wz * Exc(jg  ,kg  ,lg+1)
-        +         wy *  wz * Exc(jg  ,kg+1,lg+1)
+    Exa(j,k,l) =  0.75*( owy * owz * Exc(jg  ,kg  ,lg  )
+                       +  wy * owz * Exc(jg  ,kg+1,lg  )
+                       + owy *  wz * Exc(jg  ,kg  ,lg+1)
+                       +  wy *  wz * Exc(jg  ,kg+1,lg+1) )
+                + 0.25*( owy * owz * Exc(jg+j0,kg  ,lg  )
+                       +  wy * owz * Exc(jg+j0,kg+1,lg  )
+                       + owy *  wz * Exc(jg+j0,kg  ,lg+1)
+                       +  wy *  wz * Exc(jg+j0,kg+1,lg+1) )
         + Exf(j,k,l);
 #else
-    Exa(j,k,l) = owy * Exc(jg,kg,lg) + wy * Exc(jg,kg+1,lg) + Exf(j,k,l);
+    Exa(j,k,l) =  0.75*( owy * Exc(jg   ,kg  ,lg  )
+                       +  wy * Exc(jg   ,kg+1,lg  ) )
+                + 0.25*( owy * Exc(jg+j0,kg  ,lg  )
+                       +  wy * Exc(jg+j0,kg+1,lg  ) )
+        + Exf(j,k,l);
 #endif
 }
 
