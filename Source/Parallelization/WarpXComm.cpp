@@ -99,15 +99,15 @@ WarpX::UpdateAuxilaryData ()
                 amrex::ParallelFor(Box(bx_aux), Box(by_aux), Box(bz_aux),
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_bfield_x(j,k,l, bx_aux, bx_fp, bx_c);
+                    CalculateAuxiliaryField<true,false,false>(j,k,l, bx_aux, bx_fp, bx_c);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_bfield_y(j,k,l, by_aux, by_fp, by_c);
+                    CalculateAuxiliaryField<false,true,false>(j,k,l, by_aux, by_fp, by_c);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_bfield_z(j,k,l, bz_aux, bz_fp, bz_c);
+                    CalculateAuxiliaryField<false,false,true>(j,k,l, bz_aux, bz_fp, bz_c);
                 });
             }
         }
@@ -155,11 +155,11 @@ WarpX::UpdateAuxilaryData ()
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_efield_y(j,k,l, ey_aux, ey_fp, ey_c);
+                    CalculateAuxiliaryField<true,false,true>(j,k,l, ey_aux, ey_fp, ey_c);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_efield_z(j,k,l, ez_aux, ez_fp, ez_c);
+                    CalculateAuxiliaryField<true,true,false>(j,k,l, ez_aux, ez_fp, ez_c);
                 });
             }
         }
