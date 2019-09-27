@@ -549,13 +549,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #endif
                     p.id() = -1;
                 }
+                // Move particles transversally (in x and y) for centering
 #if   (defined WARPX_DIM_3D)
                 if (int(initial_prob_lo[0]) % 2 == 0) x += dx[0]/2.;
                 if (int(initial_prob_lo[1]) % 2 == 0) y += dx[1]/2.;
-                if (int(initial_prob_lo[2]) % 2 == 0) z += dx[2]/2.;
 #elif (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
                 if (int(initial_prob_lo[0]) % 2 == 0) x += dx[0]/2.;
-                if (int(initial_prob_lo[1]) % 2 == 0) z += dx[1]/2.;
 #endif
             }
 
