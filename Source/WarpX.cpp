@@ -702,7 +702,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     int ngJy = ngy_tmp;
     int ngJz = ngz_tmp;
 
-n    // When calling the moving window (with one level of refinement),  we shift
+    // When calling the moving window (with one level of refinement),  we shift
     // the fine grid by 2 cells ; therefore, we need at least 2 guard cells
     // on level 1. This may not be necessary for level 0.
     if (do_moving_window) {
