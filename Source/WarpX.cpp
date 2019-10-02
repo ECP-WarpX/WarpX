@@ -237,8 +237,7 @@ WarpX::WarpX ()
 
 WarpX::~WarpX ()
 {
-    int nlevs_max = maxLevel() +1;
-    for (int lev = 0; lev < nlevs_max; ++lev) {
+    for (int lev = 0; lev <= maxLevel(); ++lev) {
         ClearLevel(lev);
     }
 
@@ -703,7 +702,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     int ngJy = ngy_tmp;
     int ngJz = ngz_tmp;
 
-    // When calling the moving window (with one level of refinement),  we shift
+n    // When calling the moving window (with one level of refinement),  we shift
     // the fine grid by 2 cells ; therefore, we need at least 2 guard cells
     // on level 1. This may not be necessary for level 0.
     if (do_moving_window) {
