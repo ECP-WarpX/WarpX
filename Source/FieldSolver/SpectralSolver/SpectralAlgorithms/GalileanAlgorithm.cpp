@@ -1,7 +1,7 @@
 #include <GalileanAlgorithm.H>
 #include <WarpXConst.H>
 #include <cmath>
-
+#include <WarpX_Complex.H>
 using namespace amrex;
 
 /* \brief Initialize coefficients for the update equation */
@@ -87,9 +87,9 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
 #endif
 
                 const Real nu = kv/(k_norm*c);
-                const Complex theta = std::exp( 0.5*I*kv*dt );
-                const Complex theta_star = std::exp( -0.5*I*kv*dt );
-                const Complex e_theta = std::exp( I*c*k_norm*dt );
+                const Complex theta = MathFunc::exp( 0.5*I*kv*dt );
+                const Complex theta_star = MathFunc::exp( -0.5*I*kv*dt );
+                const Complex e_theta = MathFunc::exp( I*c*k_norm*dt );
 
                 Theta2(i,j,k) = theta*theta;
 
