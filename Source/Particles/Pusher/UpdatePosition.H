@@ -43,7 +43,7 @@ void UpdatePositionGalilean(
     const amrex::Real inv_gamma = 1./std::sqrt(1. + (ux*ux + uy*uy + uz*uz)*inv_c2);
     // Update positions over one time step
     x += ux * inv_gamma * dt - vx * dt;
-#if (AMREX_SPACEDIM == 3) || (defined WARPX_RZ) // RZ pushes particles in 3D
+#if (AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ) // RZ pushes particles in 3D
     y += uy * inv_gamma * dt - vy * dt;
 #endif
     z += uz * inv_gamma * dt - vz * dt;
