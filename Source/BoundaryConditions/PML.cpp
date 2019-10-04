@@ -23,7 +23,6 @@ namespace
         int olo = overlap.smallEnd(idim);
         int ohi = overlap.bigEnd(idim);
         int slo = sigma.m_lo;
-        int shi = sigma.m_hi;
         int sslo = sigma_star.m_lo;
 
         for (int i = olo; i <= ohi+1; ++i)
@@ -51,7 +50,6 @@ namespace
         int olo = overlap.smallEnd(idim);
         int ohi = overlap.bigEnd(idim);
         int slo = sigma.m_lo;
-        int shi = sigma.m_hi;
         int sslo = sigma_star.m_lo;
         for (int i = olo; i <= ohi+1; ++i)
         {
@@ -531,7 +529,6 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& grid_dm,
         const RealVect cdx{AMREX_D_DECL(cgeom->CellSize(0), cgeom->CellSize(1), cgeom->CellSize(2))};
         // Get the cell-centered box, with guard cells
         BoxArray realspace_cba = cba;  // Copy box
-        // const bool in_pml = true; // Tells spectral solver to use split-PML equations
 
         realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_cp.reset( new SpectralSolver( realspace_cba, cdm,

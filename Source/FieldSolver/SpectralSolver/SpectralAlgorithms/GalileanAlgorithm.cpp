@@ -27,6 +27,19 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
     X4_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
     Theta2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
 
+    InitializeSpectralCoefficients(spectral_kspace, dm, v_galilean, dt);
+}
+
+void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spectral_kspace,
+                                        const amrex::DistributionMapping& dm,
+                                        const Vector<Real>& v_galilean,
+                                        const amrex::Real dt)
+{
+    Real vx = v_galilean[0];
+    Real vy = v_galilean[1];
+    Real vz = v_galilean[2];
+
+    const BoxArray& ba = spectral_kspace.spectralspace_ba;
     // Fill them with the right values:
     // Loop over boxes and allocate the corresponding coefficients
     // for each box owned by the local MPI proc
@@ -49,10 +62,6 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
         Array4<Complex> X3 = X3_coef[mfi].array();
         Array4<Complex> X4 = X4_coef[mfi].array();
         Array4<Complex> Theta2 = Theta2_coef[mfi].array();
-        // Extract reals (for portability on GPU)
-        Real vx = v_galilean[0];
-        Real vy = v_galilean[1];
-        Real vz = v_galilean[2];
 
         // Loop over indices within one box
         ParallelFor(bx,
@@ -73,7 +82,6 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
             constexpr Real ep0 = PhysConst::ep0;
             const Complex I{0.,1.};
             if (k_norm != 0){
-
                 C(i,j,k) = std::cos(c*k_norm*dt);
                 S_ck(i,j,k) = std::sin(c*k_norm*dt)/(c*k_norm);
 
@@ -100,8 +108,7 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
                     // update equation have been modified accordingly so that
                     // the expressions/ below (with the update equations)
                     // are mathematically equivalent to those of the paper.
-                    Complex x1 = 1./(1.-nu*nu) *
-                        (theta_star - C(i,j,k)*theta + I*kv*S_ck(i,j,k)*theta);
+                    Complex x1 = 1./(1.-nu*nu) * (theta_star - C(i,j,k)*theta + I*kv*S_ck(i,j,k)*theta);
                     // x1, above, is identical to the original paper
                     X1(i,j,k) = theta*x1/(ep0*c*c*k_norm*k_norm);
                     // The difference betwen X2 and X3 below, and those

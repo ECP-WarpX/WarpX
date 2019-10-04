@@ -19,7 +19,12 @@ class GalileanAlgorithm : public SpectralBaseAlgorithm
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
         virtual int getRequiredNumberOfFields() const override final {
             return SpectralFieldIndex::n_fields;
-        };
+        }
+
+        void InitializeSpectralCoefficients(const SpectralKSpace& spectral_kspace,
+                                    const amrex::DistributionMapping& dm,
+                                    const amrex::Vector<amrex::Real>& v_galilean,
+                                    const amrex::Real dt);
     private:
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients Theta2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
