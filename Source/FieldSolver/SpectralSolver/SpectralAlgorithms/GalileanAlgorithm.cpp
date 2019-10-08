@@ -202,7 +202,7 @@ GalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
 #endif
             constexpr Real c2 = PhysConst::c*PhysConst::c;
             constexpr Real inv_ep0 = 1./PhysConst::ep0;
-            constexpr Complex I = Complex{0,1};
+            const Complex I = Complex{0,1};
             const Real C = C_arr(i,j,k);
             const Real S_ck = S_ck_arr(i,j,k);
             const Complex X1 = X1_arr(i,j,k);
