@@ -1,4 +1,6 @@
 
+#include <AMReX_MLMG.H>
+#include <AMReX_MLNodeLaplacian.H>
 #include <WarpX.H>
 #include <WarpX_f.H>
 #include <BilinearFilter.H>
@@ -232,6 +234,9 @@ WarpX::InitSpaceChargeField ()
     // Get parameters of the grid
     const int lev = 0;
     const Geometry& gm = Geom(lev);
+    const DistributionMapping& dm = DistributionMap(lev);
+    BoxArray nba = boxArray(lev);
+    nba.surroundingNodes();
     const Box& gbox = gm.Domain();
     const Real* dx = gm.CellSize();
 
@@ -240,12 +245,39 @@ WarpX::InitSpaceChargeField ()
     const std::unique_ptr<MultiFab>& rho = mypc->GetChargeDensity(lev, local);
 
     // Allocate the field for the potential
-    BoxArray nba = boxArray(lev);
-    nba.surroundingNodes();
-    MultiFab phi(nba, DistributionMap(lev), 1, 0);
+    MultiFab phi(nba, dm, 1, 0);
+    phi.setVal(0.);
 
-#ifdef USE_OPENBC_POISSON
-    // Get deposition for the openBC Poisson solver
+#ifndef USE_OPENBC_POISSON
+
+    // Call amrex's multigrid solver
+
+    // Define the linear operator (Poisson operator)
+    MLNodeLaplacian linop( {gm}, {nba}, {dm} );
+    linop.setDomainBC(
+        {AMREX_D_DECL(LinOpBCType::Periodic, LinOpBCType::Periodic, LinOpBCType::Periodic)},
+        {AMREX_D_DECL(LinOpBCType::Periodic, LinOpBCType::Periodic, LinOpBCType::Periodic)});
+    BoxArray cba = nba;
+    cba.enclosedCells();
+    MultiFab sigma(cba, dm, 1, 0);
+    sigma.setVal(1.0);
+    linop.setSigma(0, sigma);
+
+    // Solve the Poisson equation
+    MLMG mlmg(linop);
+    const Real reltol = 1.e-3;
+    Vector<MultiFab*> phi_vec;
+    phi_vec.resize(1);
+    phi_vec[0] = &phi;
+    Vector<MultiFab const*> rho_vec;
+    rho_vec.resize(1);
+    rho_vec[0] = &(*rho);
+    mlmg.solve( phi_vec, rho_vec, reltol, 0.0);
+    amrex::Print() << rho->max(0) << std::endl;
+    amrex::Print() << rho_vec[0]->max(0) << std::endl;
+
+#else
+    // Call the openBC Poisson solver
     int lohi[6];
     warpx_openbc_decompose(gbox.loVect(), gbox.hiVect(), lohi, lohi+3);
     int nprocs = ParallelDescriptor::NProcs();
