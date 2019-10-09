@@ -400,7 +400,7 @@ private:
     void InitFromCheckpoint ();
     void PostRestart ();
 
-    void InitOpenbc ();
+    void InitSpaceChargeField ();
 
     void InitPML ();
     void ComputePMLFactors ();
