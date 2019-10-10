@@ -322,8 +322,12 @@ amrex::Print() << "Ex " << (*Efield_fp[lev][0]).max(0) << " " << (*Efield_fp[lev
     for ( MFIter mfi(phi, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
         const Real inv_dx = 1./dx[0];
+#if (AMREX_SPACEDIM == 3)
         const Real inv_dy = 1./dx[1];
         const Real inv_dz = 1./dx[2];
+#else
+        const Real inv_dz = 1./dx[1];
+#endif
         amrex::Print() << inv_dx << " " << inv_dy << " " << inv_dz << std::endl;
 
         const Box& tbx  = mfi.tilebox(Ex_nodal_flag);
@@ -334,17 +338,29 @@ amrex::Print() << "Ex " << (*Efield_fp[lev][0]).max(0) << " " << (*Efield_fp[lev
         const auto& Ex_arr = (*Efield_fp[lev][0])[mfi].array();
         const auto& Ey_arr = (*Efield_fp[lev][1])[mfi].array();
         const auto& Ez_arr = (*Efield_fp[lev][2])[mfi].array();
+
+#if (AMREX_SPACEDIM == 3)
         amrex::ParallelFor( tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Ex_arr(i,j,k) = inv_dx*( phi_arr(i+1,j,k) - phi_arr(i,j,k) );
+                Ex_arr(i,j,k) += inv_dx*( phi_arr(i+1,j,k) - phi_arr(i,j,k) );
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Ey_arr(i,j,k) = inv_dy*( phi_arr(i,j+1,k) - phi_arr(i,j,k) );
+                Ey_arr(i,j,k) += inv_dy*( phi_arr(i,j+1,k) - phi_arr(i,j,k) );
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Ez_arr(i,j,k) = inv_dz*( phi_arr(i,j,k+1) - phi_arr(i,j,k) );
+                Ez_arr(i,j,k) += inv_dz*( phi_arr(i,j,k+1) - phi_arr(i,j,k) );
             }
         );
+#else
+        amrex::ParallelFor( tbx, tbz,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                Ex_arr(i,j,k) += inv_dx*( phi_arr(i+1,j,k) - phi_arr(i,j,k) );
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                Ez_arr(i,j,k) += inv_dz*( phi_arr(i,j+1,k) - phi_arr(i,j,k) );
+            }
+        );
+#endif
     }
 
 amrex::Print() << "Ex " << (*Efield_fp[lev][0]).max(0) << " " << (*Efield_fp[lev][0]).min(0) <<  std::endl;
