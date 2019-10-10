@@ -260,7 +260,7 @@ WarpX::InitSpaceChargeField ()
     BoxArray cba = nba;
     cba.enclosedCells();
     MultiFab sigma(cba, dm, 1, 0);
-    sigma.setVal(1.0);
+    sigma.setVal(PhysConst::ep0);
     linop.setSigma(0, sigma);
 
     // Solve the Poisson equation
@@ -273,8 +273,9 @@ WarpX::InitSpaceChargeField ()
     rho_vec.resize(1);
     rho_vec[0] = &(*rho);
     mlmg.solve( phi_vec, rho_vec, reltol, 0.0);
-    amrex::Print() << rho->max(0) << std::endl;
-    amrex::Print() << rho_vec[0]->max(0) << std::endl;
+    amrex::Print() << "Rho " << rho->max(0) << " " << rho->min(0) <<  std::endl;
+    amrex::Print() << "Phi " << phi.max(0) << " " << phi.min(0) <<  std::endl;
+
 
 #else
     // Call the openBC Poisson solver
@@ -313,19 +314,40 @@ WarpX::InitSpaceChargeField ()
     phi.copy(phi_openbc, gm.periodicity());
 #endif
 
+amrex::Print() << "Ex " << (*Efield_fp[lev][0]).max(0) << " " << (*Efield_fp[lev][0]).min(0) <<  std::endl;
+
 #ifdef _OPENMP
-#pragma omp parallel
+#pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(phi); mfi.isValid(); ++mfi)
+    for ( MFIter mfi(phi, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
-        const Box& bx = mfi.validbox();
-        warpx_compute_E(bx.loVect(), bx.hiVect(),
-                        BL_TO_FORTRAN_3D(phi[mfi]),
-                        BL_TO_FORTRAN_3D((*Efield_fp[lev][0])[mfi]),
-                        BL_TO_FORTRAN_3D((*Efield_fp[lev][1])[mfi]),
-                        BL_TO_FORTRAN_3D((*Efield_fp[lev][2])[mfi]),
-                        dx);
+        const Real inv_dx = 1./dx[0];
+        const Real inv_dy = 1./dx[1];
+        const Real inv_dz = 1./dx[2];
+        amrex::Print() << inv_dx << " " << inv_dy << " " << inv_dz << std::endl;
+
+        const Box& tbx  = mfi.tilebox(Ex_nodal_flag);
+        const Box& tby  = mfi.tilebox(Ey_nodal_flag);
+        const Box& tbz  = mfi.tilebox(Ez_nodal_flag);
+
+        const auto& phi_arr = phi[mfi].array();
+        const auto& Ex_arr = (*Efield_fp[lev][0])[mfi].array();
+        const auto& Ey_arr = (*Efield_fp[lev][1])[mfi].array();
+        const auto& Ez_arr = (*Efield_fp[lev][2])[mfi].array();
+        amrex::ParallelFor( tbx, tby, tbz,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                Ex_arr(i,j,k) = inv_dx*( phi_arr(i+1,j,k) - phi_arr(i,j,k) );
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                Ey_arr(i,j,k) = inv_dy*( phi_arr(i,j+1,k) - phi_arr(i,j,k) );
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                Ez_arr(i,j,k) = inv_dz*( phi_arr(i,j,k+1) - phi_arr(i,j,k) );
+            }
+        );
     }
+
+amrex::Print() << "Ex " << (*Efield_fp[lev][0]).max(0) << " " << (*Efield_fp[lev][0]).min(0) <<  std::endl;
 }
 
 void
