@@ -1,13 +1,13 @@
 max_step = 0
-amr.n_cell =  64 64
+amr.n_cell =  64 64 64
 amr.max_grid_size = 64
 amr.max_level = 0
 
 amr.plot_int = 1
 geometry.coord_sys   = 0                  # 0: Cartesian
-geometry.is_periodic = 0     0            # Is periodic?
-geometry.prob_lo     = -50.e-6   -50.e-6
-geometry.prob_hi     =  50.e-6    50.e-6
+geometry.is_periodic = 0     0     0       # Is periodic?
+geometry.prob_lo     = -50.e-6   -50.e-6    -50.e-6
+geometry.prob_hi     =  50.e-6    50.e-6     50.e-6
 
 particles.nspecies = 1
 particles.species_names = beam
