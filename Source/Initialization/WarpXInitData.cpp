@@ -255,8 +255,8 @@ WarpX::InitSpaceChargeField ()
     // Define the linear operator (Poisson operator)
     MLNodeLaplacian linop( {gm}, {nba}, {dm} );
     linop.setDomainBC(
-        {AMREX_D_DECL(LinOpBCType::Periodic, LinOpBCType::Periodic, LinOpBCType::Periodic)},
-        {AMREX_D_DECL(LinOpBCType::Periodic, LinOpBCType::Periodic, LinOpBCType::Periodic)});
+        {AMREX_D_DECL(LinOpBCType::Dirichlet, LinOpBCType::Dirichlet, LinOpBCType::Dirichlet)},
+        {AMREX_D_DECL(LinOpBCType::Dirichlet, LinOpBCType::Dirichlet, LinOpBCType::Dirichlet)});
     BoxArray cba = nba;
     cba.enclosedCells();
     MultiFab sigma(cba, dm, 1, 0);
@@ -273,9 +273,6 @@ WarpX::InitSpaceChargeField ()
     rho_vec.resize(1);
     rho_vec[0] = &(*rho);
     mlmg.solve( phi_vec, rho_vec, reltol, 0.0);
-    amrex::Print() << "Rho " << rho->max(0) << " " << rho->min(0) <<  std::endl;
-    amrex::Print() << "Phi " << phi.max(0) << " " << phi.min(0) <<  std::endl;
-
 
 #else
     // Call the openBC Poisson solver
@@ -314,8 +311,6 @@ WarpX::InitSpaceChargeField ()
     phi.copy(phi_openbc, gm.periodicity());
 #endif
 
-amrex::Print() << "Ex " << (*Efield_fp[lev][0]).max(0) << " " << (*Efield_fp[lev][0]).min(0) <<  std::endl;
-
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -328,8 +323,6 @@ amrex::Print() << "Ex " << (*Efield_fp[lev][0]).max(0) << " " << (*Efield_fp[lev
 #else
         const Real inv_dz = 1./dx[1];
 #endif
-        amrex::Print() << inv_dx << " " << inv_dy << " " << inv_dz << std::endl;
-
         const Box& tbx  = mfi.tilebox(Ex_nodal_flag);
         const Box& tby  = mfi.tilebox(Ey_nodal_flag);
         const Box& tbz  = mfi.tilebox(Ez_nodal_flag);
@@ -362,8 +355,6 @@ amrex::Print() << "Ex " << (*Efield_fp[lev][0]).max(0) << " " << (*Efield_fp[lev
         );
 #endif
     }
-
-amrex::Print() << "Ex " << (*Efield_fp[lev][0]).max(0) << " " << (*Efield_fp[lev][0]).min(0) <<  std::endl;
 }
 
 void
