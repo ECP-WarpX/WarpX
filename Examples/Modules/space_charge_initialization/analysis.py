@@ -21,10 +21,10 @@ filename = sys.argv[1]
 ds = yt.load( filename )
 # Extract data
 ad0 = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
-Ex_array = ad0['Ex'].to_ndarray()
+Ex_array = ad0['Ex'].to_ndarray().squeeze()
 if ds.dimensionality == 2:
     # Rename the z dimension as y, so as to make this script work for 2d and 3d
-    Ey_array = ad0['Ez'].to_ndarray()
+    Ey_array = ad0['Ez'].to_ndarray().squeeze()
 elif ds.dimensionality == 3:
     Ey_array = ad0['Ey'].to_ndarray()
     Ez_array = ad0['Ez'].to_ndarray()
