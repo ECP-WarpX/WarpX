@@ -21,10 +21,11 @@ ds = yt.load( filename )
 # Extract data
 ad0 = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 Ex_array = ad0['Ex'].to_ndarray().squeeze()
+Ey_array = ad0['Ey'].to_ndarray().squeeze()
 Ez_array = ad0['Ez'].to_ndarray().squeeze()
 
+# Compute theoretical field
 if ds.dimensionality == 2:
-    # Compute theoretical field
     Nx, Nz, _ =  ds.domain_dimensions
     xmin, zmin, _ = ds.domain_left_edge.v
     Lx, Lz, _ = ds.domain_width.v
@@ -35,23 +36,38 @@ if ds.dimensionality == 2:
                 (1-np.exp(-(x_2d**2+z_2d**2)/(2*r0**2)))
     Ex_th = x_2d * factor
     Ez_th = z_2d * factor
+elif ds.dimensionality == 3:
+    Nx, Ny, Nz =  ds.domain_dimensions
+    xmin, ymin, zmin = ds.domain_left_edge.v
+    Lx, Ly, Lz = ds.domain_width.v
+    x = xmin + Lx/Nx*(0.5+np.arange(Nx))
+    y = ymin + Ly/Ny*(0.5+np.arange(Ny))
+    z = zmin + Lz/Nz*(0.5+np.arange(Nz))
+    x_2d, y_2d, z_2d = np.meshgrid(x, y, z, indexing='ij')
+    r2 = x_2d**2+y_2d+z_2d**2
+    factor = Qtot/(4*np.pi*scc.epsilon_0*r2**1.5) * gammainc(3./2, r2/(2.*r0**2))
+    Ex_th = factor*x_2d
+    Ey_th = factor*y_2d
+    Ez_th = factor*z_2d
 
 # Plot theory and data
 plt.figure(figsize=(10,10))
 plt.subplot(221)
 plt.title('Ex: Theory')
-plt.imshow(Ex_th)
+plt.imshow(Ex_th[:,:,Nz//2])
 plt.subplot(222)
 plt.title('Ex: Simulation')
-plt.imshow(Ex_array)
+plt.imshow(Ex_array[:,:,Nz//2])
 plt.subplot(223)
 plt.title('Ez: Theory')
-plt.imshow(Ez_th)
+plt.imshow(Ez_th[:,:,Nz//2])
 plt.subplot(224)
 plt.title('Ez: Simulation')
-plt.imshow(Ez_array)
+plt.imshow(Ez_array[:,:,Nz//2])
 plt.savefig('Comparison.png')
 
 # Automatically check the results
 assert np.allclose( Ex_array, Ex_th, atol=0.1*Ex_th.max() )
 assert np.allclose( Ez_array, Ez_th, atol=0.1*Ez_th.max() )
+if ds.dimensionality == 3:
+    assert np.allclose( Ey_array, Ey_th, atol=0.1*Ey_th.max() )
