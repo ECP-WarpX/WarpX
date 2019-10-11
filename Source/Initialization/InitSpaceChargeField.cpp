@@ -21,7 +21,7 @@ WarpX::InitSpaceChargeField ()
     const Real* dx = gm.CellSize();
 
     // Deposit particle charge density (source of Poisson solver)
-    bool local = true;
+    bool local = false;
     const std::unique_ptr<MultiFab>& rho = mypc->GetChargeDensity(lev, local);
 
     // Allocate the field for the potential
