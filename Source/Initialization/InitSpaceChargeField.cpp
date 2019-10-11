@@ -32,11 +32,23 @@ WarpX::InitSpaceChargeField ()
 
     // Call amrex's multigrid solver
 
+    // Define the boundary conditions
+    Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
+    for (int idim=0; idim<AMREX_SPACEDIM; idim++){
+        if ( gm.isPeriodic(idim) ) {
+            lobc[idim] = LinOpBCType::Periodic;
+            hibc[idim] = LinOpBCType::Periodic;
+        } else {
+            // Use Dirichlet boundary condition by default.
+            // Ideally, we would often want open boundary conditions here.
+            lobc[idim] = LinOpBCType::Dirichlet;
+            hibc[idim] = LinOpBCType::Dirichlet;
+        }
+    }
+
     // Define the linear operator (Poisson operator)
     MLNodeLaplacian linop( {gm}, {nba}, {dm} );
-    linop.setDomainBC(
-        {AMREX_D_DECL(LinOpBCType::Dirichlet, LinOpBCType::Dirichlet, LinOpBCType::Dirichlet)},
-        {AMREX_D_DECL(LinOpBCType::Dirichlet, LinOpBCType::Dirichlet, LinOpBCType::Dirichlet)});
+    linop.setDomainBC( lobc, hibc );
     BoxArray cba = nba;
     cba.enclosedCells();
     MultiFab sigma(cba, dm, 1, 0);
