@@ -50,13 +50,6 @@ extern "C"
     void warpx_openbc_decompose (const int*, const int*, int*, int*);
 #endif
 
-    void warpx_compute_E (const int* lo, const int* hi,
-                          const BL_FORT_FAB_ARG_3D(phi),
-                          BL_FORT_FAB_ARG_3D(Ex),
-                          BL_FORT_FAB_ARG_3D(Ey),
-                          BL_FORT_FAB_ARG_3D(Ez),
-                          const amrex::Real* dx);
-
 ///
 /// These functions are used in electrostatic mode.
 ///
