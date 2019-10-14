@@ -37,5 +37,8 @@ USE_RZ = FALSE
 
 DO_ELECTROSTATIC = FALSE
 
+INCLUDE_LOCATIONS += /home/travis/miniconda3/include
+LIBRARY_LOCATIONS += /home/travis/miniconda3/lib
+
 WARPX_HOME := .
 include $(WARPX_HOME)/Source/Make.WarpX
