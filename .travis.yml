@@ -16,8 +16,7 @@ before_install:
     - export PATH=/home/travis/miniconda3/bin:$PATH
     - pip install --upgrade pip && pip install numpy scipy matplotlib yt mpi4py
     # Install an up-to-date version of the Boost library (>= 1.67 should be ok)
-    - wget http://mirrors.kernel.org/ubuntu/pool/main/b/boost-defaults/libboost-dev_1.67.0.1_amd64.deb
-    - sudo dpkg -i libboost-dev_1.67.0.1_amd64.deb
+    - conda install -y boost
 
 script:
     - export FFTW_HOME=/usr/
