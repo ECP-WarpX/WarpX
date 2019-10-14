@@ -17,6 +17,7 @@ before_install:
     - pip install --upgrade pip && pip install numpy scipy matplotlib yt mpi4py
     # Install an up-to-date version of the Boost library (>= 1.67 should be ok)
     - conda install -y boost
+    - conda activate base
 
 script:
     - export FFTW_HOME=/usr/
