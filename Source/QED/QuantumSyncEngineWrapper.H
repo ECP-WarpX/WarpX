@@ -21,7 +21,7 @@ struct QuantumSynchrotronEngineInnards
 
     //Lookup table data
     amrex::Gpu::ManagedDeviceVector<amrex::Real> KKfunc_coords;
-    amrex::Gpu::ManagedDeviceVector<amrex::Real> KKfunc_data; 
+    amrex::Gpu::ManagedDeviceVector<amrex::Real> KKfunc_data;
     //______
 };
 
@@ -62,7 +62,7 @@ public:
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     bool operator()(
-        amrex::Real px, amrex::Real py, amrex::Real pz, 
+        amrex::Real px, amrex::Real py, amrex::Real pz,
         amrex::Real ex, amrex::Real ey, amrex::Real ez,
         amrex::Real bx, amrex::Real by, amrex::Real bz,
         amrex::Real dt, amrex::Real& opt_depth) const
@@ -82,9 +82,9 @@ public:
             px, py, pz,
             ex, ey, ez,
             bx, by, bz,
-            dt, opt_depth, 
+            dt, opt_depth,
             has_event_happend, unused_event_time,
-            dummy_lambda, 
+            dummy_lambda,
             table,
             innards->ctrl);
 
@@ -113,7 +113,7 @@ public:
     /* \brief Builds the functor to evolve the optical depth */
     QuantumSynchrotronEvolveOpticalDepth build_evolve_functor ();
 
-    /* \brief Computes the Lookup tables using the default settings 
+    /* \brief Computes the Lookup tables using the default settings
      *  provided by the PICSAR library */
     void computes_lookup_tables_default ();
 
