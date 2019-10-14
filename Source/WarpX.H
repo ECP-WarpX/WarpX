@@ -76,7 +76,7 @@ public:
 
     // External fields
     static amrex::Vector<amrex::Real> B_external;
-    static amrex::Vector<amrex::Real> v_galilean; //= {0.,0.,0.,}; //oshapoval
+    //static amrex::Vector<amrex::Real> v_galilean; //= {0.,0.,0.,}; //oshapoval
 
     // Algorithms
     static long current_deposition_algo;
@@ -625,7 +625,7 @@ private:
 #endif
 
 
-//amrex::Vector<amrex::Real> v_galilean = {0.,0.,0.};
+amrex::Vector<amrex::Real> v_galilean = {0.,0.,0.};
 
 #ifdef WARPX_USE_PSATD
 private:

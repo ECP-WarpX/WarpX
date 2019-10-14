@@ -40,7 +40,13 @@ public:
                               const amrex::MultiFab& Ez,
                               const amrex::MultiFab& Bx,
                               const amrex::MultiFab& By,
-                              const amrex::MultiFab& Bz) final;
+                              const amrex::MultiFab& Bz,
+                              const amrex::MultiFab& Ex_avg,
+                              const amrex::MultiFab& Ey_avg,
+                              const amrex::MultiFab& Ez_avg,
+                              const amrex::MultiFab& Bx_avg,
+                              const amrex::MultiFab& By_avg,
+                              const amrex::MultiFab& Bz_avg) final;
 
     void FieldGather (WarpXParIter& pti,
                       RealVector& Exp,

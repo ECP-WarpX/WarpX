@@ -74,7 +74,7 @@ WarpX::EvolveEM (int numsteps)
         // At the beginning, we have B^{n} and E^{n}.
         // Particles have p^{n} and x^{n}.
         // is_synchronized is true.
-        amrex::Print() << "PushP==before \n";
+        //amrex::Print() << "PushP==before \n";
         if (is_synchronized) {
             FillBoundaryE();
             FillBoundaryB();
@@ -95,21 +95,21 @@ WarpX::EvolveEM (int numsteps)
             UpdateAuxilaryData();
 
         }
-        amrex::Print() << "11PushP==before \n";
+        //amrex::Print() << "11PushP==before \n";
         if (do_subcycling == 0 || finest_level == 0) {
-            amrex::Print() << "Error1 = " << std::endl;
+            //amrex::Print() << "Error1 = " << std::endl;
             OneStep_nosub(cur_time);
-            amrex::Print() << "Error1 = " << std::endl;
+            //amrex::Print() << "Error1 = " << std::endl;
         } else if (do_subcycling == 1 && finest_level == 1) {
-            amrex::Print() << "Error2 = " << std::endl;
+            //amrex::Print() << "Error2 = " << std::endl;
             OneStep_sub1(cur_time);
-            amrex::Print() << "Error2 = " << std::endl;
+            //amrex::Print() << "Error2 = " << std::endl;
 
         } else {
             amrex::Print() << "Error: do_subcycling = " << do_subcycling << std::endl;
             amrex::Abort("Unsupported do_subcycling type");
         }
-        amrex::Print() << "22PushP==before \n";
+        //amrex::Print() << "22PushP==before \n";
 
         if (num_mirrors>0){
             applyMirrors(cur_time);
@@ -121,7 +121,7 @@ WarpX::EvolveEM (int numsteps)
         if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
             // At the end of last step, push p by 0.5*dt to synchronize
             UpdateAuxilaryData();
-        amrex::Print() << "Again PushP==before \n";
+        //amrex::Print() << "Again PushP==before \n";
 
             for (int lev = 0; lev <= finest_level; ++lev) {
                 mypc->PushP(lev, 0.5*dt[lev],
@@ -129,12 +129,12 @@ WarpX::EvolveEM (int numsteps)
                             *Efield_aux[lev][2],
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],
                             *Bfield_aux[lev][2]);
-                amrex::Print() << "PushP==inside \n";
+                //amrex::Print() << "PushP==inside \n";
 
             }
             is_synchronized = true;
         }
-        amrex::Print() << "PushP==after-after \n";
+        //amrex::Print() << "PushP==after-after \n";
 
 #ifdef WARPX_USE_PY
         if (warpx_py_afterEsolve) warpx_py_afterEsolve();
@@ -205,7 +205,9 @@ WarpX::EvolveEM (int numsteps)
             for (int lev = 0; lev <= finest_level; ++lev) {
                 mypc->FieldGather(lev,
                                   *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
-                                  *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
+                                  *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
+                                  *Efield_avg_aux[lev][0],*Efield_avg_aux[lev][1],*Efield_avg_aux[lev][2],
+                                  *Bfield_avg_aux[lev][0],*Bfield_avg_aux[lev][1],*Bfield_avg_aux[lev][2]);
             }
 
             last_plot_file_step = step+1;
@@ -259,7 +261,11 @@ WarpX::EvolveEM (int numsteps)
                               *Efield_aux[lev][0],*Efield_aux[lev][1],
                               *Efield_aux[lev][2],
                               *Bfield_aux[lev][0],*Bfield_aux[lev][1],
-                              *Bfield_aux[lev][2]);
+                              *Bfield_aux[lev][2],
+                              *Efield_avg_aux[lev][0],*Efield_avg_aux[lev][1],
+                              *Efield_avg_aux[lev][2],
+                              *Bfield_avg_aux[lev][0],*Bfield_avg_aux[lev][1],
+                              *Bfield_avg_aux[lev][2]);
         }
 
         if (write_plot_file)
@@ -302,10 +308,10 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_particlescraper) warpx_py_particlescraper();
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
 #endif
-    amrex::Print() << "Error-100 = " << std::endl;
+    //amrex::Print() << "Error-100 = " << std::endl;
 
     PushParticlesandDepose(cur_time);
-    amrex::Print() << "Error-101 = " << std::endl;
+    //amrex::Print() << "Error-101 = " << std::endl;
 
 
 #ifdef WARPX_USE_PY
@@ -324,7 +330,7 @@ WarpX::OneStep_nosub (Real cur_time)
     // (And update guard cells immediately afterwards)
 #ifdef WARPX_USE_PSATD
     PushPSATD(dt[0]);
-    amrex::Print() << "Error-102 = " << std::endl;
+    //amrex::Print() << "Error-102 = " << std::endl;
 
     if (do_pml) DampPML();
     FillBoundaryE();
@@ -506,8 +512,8 @@ WarpX::PushParticlesandDepose (Real cur_time)
 void
 WarpX::PushParticlesandDepose (int lev, Real cur_time, DtType a_dt_type)
 {
-    amrex::Print() << (Efield_aux[lev][0] == nullptr) << std::endl;
-    amrex::Print() << (Efield_avg_aux[lev][0] == nullptr) << std::endl;
+    //amrex::Print() << (Efield_aux[lev][0] == nullptr) << std::endl;
+    //amrex::Print() << (Efield_avg_aux[lev][0] == nullptr) << std::endl;
     mypc->Evolve(lev,
                  *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                  *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],

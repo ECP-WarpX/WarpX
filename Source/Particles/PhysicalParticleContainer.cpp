@@ -893,7 +893,10 @@ PhysicalParticleContainer::EvolveES (const Vector<std::array<std::unique_ptr<Mul
 void
 PhysicalParticleContainer::FieldGather (int lev,
                                         const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
-                                        const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz)
+                                        const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                                        const MultiFab& Ex_avg, const MultiFab& Ey_avg, const MultiFab& Ez_avg,
+                                        const MultiFab& Bx_avg, const MultiFab& By_avg, const MultiFab& Bz_avg
+                                       )
 {
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
 
@@ -934,6 +937,13 @@ PhysicalParticleContainer::FieldGather (int lev,
             const FArrayBox& bxfab = Bx[pti];
             const FArrayBox& byfab = By[pti];
             const FArrayBox& bzfab = Bz[pti];
+
+            // const FArrayBox& exfab = Ex_avg[pti]; //oshapoval
+            // const FArrayBox& eyfab = Ey_avg[pti];
+            // const FArrayBox& ezfab = Ez_avg[pti];
+            // const FArrayBox& bxfab = Bx_avg[pti];
+            // const FArrayBox& byfab = By_avg[pti];
+            // const FArrayBox& bzfab = Bz_avg[pti]; //oshapoval
 
             Exp.assign(np,0.0);
             Eyp.assign(np,0.0);
@@ -1051,20 +1061,20 @@ PhysicalParticleContainer::Evolve (int lev,
             const long np = pti.numParticles();
 
             // Data on the grid
-            // FArrayBox const* exfab = &(Ex[pti]);
-            // FArrayBox const* eyfab = &(Ey[pti]);
-            // FArrayBox const* ezfab = &(Ez[pti]);
-            // FArrayBox const* bxfab = &(Bx[pti]);
-            // FArrayBox const* byfab = &(By[pti]);
-            // FArrayBox const* bzfab = &(Bz[pti]);
+            FArrayBox const* exfab = &(Ex[pti]);
+            FArrayBox const* eyfab = &(Ey[pti]);
+            FArrayBox const* ezfab = &(Ez[pti]);
+            FArrayBox const* bxfab = &(Bx[pti]);
+            FArrayBox const* byfab = &(By[pti]);
+            FArrayBox const* bzfab = &(Bz[pti]);
 
-            FArrayBox const* exfab = &(Ex_avg[pti]); //oshapoval
-            FArrayBox const* eyfab = &(Ey_avg[pti]); //oshapoval
-            FArrayBox const* ezfab = &(Ez_avg[pti]); //oshapoval
-            FArrayBox const* bxfab = &(Bx_avg[pti]); //oshapoval
-            FArrayBox const* byfab = &(By_avg[pti]); //oshapoval
-            FArrayBox const* bzfab = &(Bz_avg[pti]); //oshapoval
-
+            // FArrayBox const* exfab = &(Ex_avg[pti]); //oshapoval
+            // FArrayBox const* eyfab = &(Ey_avg[pti]); //oshapoval
+            // FArrayBox const* ezfab = &(Ez_avg[pti]); //oshapoval
+            // FArrayBox const* bxfab = &(Bx_avg[pti]); //oshapoval
+            // FArrayBox const* byfab = &(By_avg[pti]); //oshapoval
+            // FArrayBox const* bzfab = &(Bz_avg[pti]); //oshapoval
+            //
 
             Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
 

@@ -232,10 +232,13 @@ void
 MultiParticleContainer::FieldGather (int lev,
                                      const MultiFab& Ex, const MultiFab& Ey,
                                      const MultiFab& Ez, const MultiFab& Bx,
-                                     const MultiFab& By, const MultiFab& Bz)
+                                     const MultiFab& By, const MultiFab& Bz,
+                                     const MultiFab& Ex_avg, const MultiFab& Ey_avg,
+                                     const MultiFab& Ez_avg, const MultiFab& Bx_avg,
+                                     const MultiFab& By_avg, const MultiFab& Bz_avg)
 {
     for (auto& pc : allcontainers) {
-        pc->FieldGather(lev, Ex, Ey, Ez, Bx, By, Bz);
+        pc->FieldGather(lev, Ex, Ey, Ez, Bx, By, Bz,Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg);
     }
 }
 

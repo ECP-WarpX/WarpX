@@ -145,15 +145,15 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
 
 
                     Psi1(i,j,k) = theta * ((S1(i,j,k) + I*nu*C1(i,j,k)) - Theta2(i,j,k) * (S3(i,j,k) + I*nu*C3(i,j,k))) /(c*k_norm*dt * (nu*nu - 1.));
-                    Psi2(i,j,k) = theta * ((C1(i,j,k) - I*nu*S1(i,j,k)) - Theta2(i,j,k) * (C3(i,j,k) - I*nu*S3(i,j,k))) /(c*k_norm*dt * (nu*nu - 1.));
+                    Psi2(i,j,k) = theta * ((C1(i,j,k) - I*nu*S1(i,j,k)) - Theta2(i,j,k) * (C3(i,j,k) - I*nu*S3(i,j,k))) /(c*c*k_norm*k_norm*dt * (nu*nu - 1.));
                     Psi3(i,j,k) = I * theta * (1. - theta*theta) /(c*k_norm*dt*nu);
 
-                    A1(i,j,k) = (Psi1(i,j,k)  - 1. + I * kv*Psi2(i,j,k))/ (c2* k_norm*k_norm * (nu*nu - 1.));
+                    A1(i,j,k) = (Psi1(i,j,k)  - 1. + I * kv*Psi2(i,j,k)    )/ (c2* k_norm*k_norm * (nu*nu - 1.));
                     A2(i,j,k) = (Psi3(i,j,k) - Psi1(i,j,k)) / (c2* k_norm*k_norm);
 
-                    CRhoold(i,j,k) = C_rho; //* (theta*theta * A1(i,j,k) - A2(i,j,k));
-                    CRhonew(i,j,k) = C_rho; //* (A2(i,j,k) - A1(i,j,k));
-                    Jcoef(i,j,k) = 1.;//(I*kv*A1(i,j,k) + Psi2(i,j,k));
+                    CRhoold(i,j,k) = C_rho* (theta*theta * A1(i,j,k) - A2(i,j,k));
+                    CRhonew(i,j,k) = C_rho* (A2(i,j,k) - A1(i,j,k));
+                    Jcoef(i,j,k) = (I*kv*A1(i,j,k) + Psi2(i,j,k))/ep0;
                     // x1, above, is identical to the original paper
                     X1(i,j,k) = theta*x1/(ep0*c*c*k_norm*k_norm);
                     // The difference betwen X2 and X3 below, and those
@@ -171,19 +171,19 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
                     X4(i,j,k) = -S_ck(i,j,k)/ep0;
 
                     Psi1(i,j,k) = (-S1(i,j,k) + S3(i,j,k)) / (c*k_norm*dt);
-                    Psi2(i,j,k) = -2. * S1(i,j,k)*S_ck(i,j,k) / (c*k_norm*dt);
+                    Psi2(i,j,k) = (-C1(i,j,k) + C3(i,j,k)) / (c2*k_norm*k_norm*dt);//-2. * S1(i,j,k)*S_ck(i,j,k) / (c*k_norm*dt);
                     Psi3(i,j,k) = 1.;
                     A1(i,j,k) = (c*k_norm*dt + S1(i,j,k) - S3(i,j,k)) / (c*c2 * k_norm*k_norm*k_norm * dt);
                     A2(i,j,k) =  (c*k_norm*dt + S1(i,j,k) - S3(i,j,k)) / (c*c2 * k_norm*k_norm*k_norm * dt);
                     CRhoold(i,j,k) = 2. * I * S1(i,j,k)  * ( dt*C(i,j,k) - S_ck(i,j,k)) / (c*k_norm*k_norm*k_norm*dt*dt*ep0);
                     CRhonew(i,j,k) =  - I * (c2* k_norm*k_norm * dt*dt - C1(i,j,k) + C3(i,j,k))  / (c2 * k_norm*k_norm*k_norm*k_norm * ep0 * dt*dt);
-                    Jcoef(i,j,k) = -2. * S1(i,j,k) * S_ck(i,j,k) / (ep0*c*k_norm*dt);
+                    Jcoef(i,j,k) = (-C1(i,j,k) + C3(i,j,k)) / (c2*ep0*k_norm*k_norm*dt);//-2. * S1(i,j,k) * S_ck(i,j,k) / (ep0*c*k_norm*dt);
                 }
                 if ( nu == 1.) {
-                    X1(i,j,k) = (1. - e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*c*c*ep0*k_norm*k_norm);
-                    X2(i,j,k) = (3. - 4.*e_theta + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*k_norm*k_norm*(1.- e_theta));
-                    X3(i,j,k) = (3. - 2./e_theta - 2.*e_theta + e_theta*e_theta - 2.*I*c*k_norm*dt) / (4.*ep0*(e_theta - 1.)*k_norm*k_norm);
-                    X4(i,j,k) = I*(-1. + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*c*k_norm);
+                    X1(i,j,k) = 1.;//(1. - e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*c*c*ep0*k_norm*k_norm);
+                    X2(i,j,k) = 1.;//(3. - 4.*e_theta + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*k_norm*k_norm*(1.- e_theta));
+                    X3(i,j,k) = 1.;//(3. - 2./e_theta - 2.*e_theta + e_theta*e_theta - 2.*I*c*k_norm*dt) / (4.*ep0*(e_theta - 1.)*k_norm*k_norm);
+                    X4(i,j,k) = 1.;//I*(-1. + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*c*k_norm);
                 }
 
             } else { // Handle k_norm = 0, by using the analytical limit
@@ -333,8 +333,6 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
             // Update B (see the original Galilean article)
             // Note: here X1 is T2*x1/(ep0*c*c*k_norm*k_norm), where
             // x1 has the same definition as in the original paper
-
-
             fields(i,j,k,Idx::Bx) = T2*C*Bx_old
                         - T2*S_ck*I*(ky*Ez_old - kz*Ey_old)
                         +      X1*I*(ky*Jz     - kz*Jy);
@@ -346,37 +344,36 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
                         +      X1*I*(kx*Jy     - ky*Jx);
 
 //Update teh averaged fields
-            // fields(i,j,k,Idx::Ex_avg) = Psi1*Ex_old
-            //               - Psi2*c2*I*(ky*Bz_old - kz*By_old)
-            //               + Jcoef*Jx*inv_ep0 + ( CRhonew * rho_new +  CRhoold*rho_old )*kx;
-            // fields(i,j,k,Idx::Ey_avg) =  Psi1*Ey_old
-            //               - Psi2*c2*I*(kz*Bx_old - kx*Bz_old)
-            //               + Jcoef*Jy*inv_ep0 +( CRhonew * rho_new +  CRhoold*rho_old )*ky;
-            // fields(i,j,k,Idx::Ez_avg) =  Psi1*Ez_old
-            //               - Psi2*c2*I*(kx*By_old - ky*Bx_old)
-            //               + Jcoef*Jz*inv_ep0 + ( CRhonew * rho_new +  CRhoold*rho_old )*kz;
+            fields(i,j,k,Idx::Ex_avg) = Psi1*Ex_old
+                          - Psi2*c2*I*(ky*Bz_old - kz*By_old)
+                          + Jcoef*Jx + ( CRhonew * rho_new +  CRhoold*rho_old )*kx;
+            fields(i,j,k,Idx::Ey_avg) =  Psi1*Ey_old
+                          - Psi2*c2*I*(kz*Bx_old - kx*Bz_old)
+                          + Jcoef*Jy +( CRhonew * rho_new +  CRhoold*rho_old )*ky;
+            fields(i,j,k,Idx::Ez_avg) =  Psi1*Ez_old
+                          - Psi2*c2*I*(kx*By_old - ky*Bx_old)
+                          + Jcoef*Jz     + ( CRhonew * rho_new +  CRhoold*rho_old )*kz;
+
+            fields(i,j,k,Idx::Bx_avg) =  Psi1*Bx_old
+                          + I*Psi2*(ky*Ez_old - kz*Ey_old)
+                          + A1*I*(ky*Jz     - kz*Jy)*inv_ep0;
+            fields(i,j,k,Idx::By_avg) =  Psi1*By_old
+                          + I*Psi2*(kz*Ex_old - kx*Ez_old)
+                          + A1*I*(kz*Jx     - kx*Jz)*inv_ep0;
+            fields(i,j,k,Idx::Bz_avg) =  Psi1*Bz_old
+                          + I*Psi2*(kx*Ey_old - ky*Ex_old)
+                          + A1*I*(kx*Jy     - ky*Jx)*inv_ep0;
+
+
+            // fields(i,j,k,Idx::Ex_avg) =  1.;
+            // fields(i,j,k,Idx::Ey_avg) =  1.;
+            // fields(i,j,k,Idx::Ez_avg) =  1.;
             //
-            // fields(i,j,k,Idx::Bx_avg) =  Psi1*Bx_old
-            //               + I*Psi2*(ky*Ez_old - kz*Ey_old)
-            //               + A1*I*(ky*Jz     - kz*Jy)*inv_ep0;
-            // fields(i,j,k,Idx::By_avg) =  Psi1*By_old
-            //               + I*Psi2*(kz*Ex_old - kx*Ez_old)
-            //               + A1*I*(kz*Jx     - kx*Jz)*inv_ep0;
-            // fields(i,j,k,Idx::Bz_avg) =  Psi1*Bz_old
-            //               + I*Psi2*(kx*Ey_old - ky*Ex_old)
-            //               + A1*I*(kx*Jy     - ky*Jx)*inv_ep0;
-
-
-            fields(i,j,k,Idx::Ex_avg) =  1.;
-            fields(i,j,k,Idx::Ey_avg) =  1.;
-            fields(i,j,k,Idx::Ez_avg) =  1.;
-
-            fields(i,j,k,Idx::Bx_avg) =  1.;
-            fields(i,j,k,Idx::By_avg) =  1.;
-            fields(i,j,k,Idx::Bz_avg) =  1.;
-            //Print()<<"Psi1 "<<Psi1<<'-------------'<<'\n';
-            //Print()<<"Psi2 "<<Psi2<<'-------------'<<'\n';
-            //Print()<<"Psi3 "<<Psi3<<'-------------'<<'\n';
+            // fields(i,j,k,Idx::Bx_avg) =  1.;
+            // fields(i,j,k,Idx::By_avg) =  1.;
+            // fields(i,j,k,Idx::Bz_avg) =  1.;
+            //Print()<<"Ez_avg "<<i<<j<<k<<fields(i,j,k,Idx::Ez_avg)<<'-------------'<<'\n';
+            //Print()<<"Ez"<<i<<j<<k<<fields(i,j,k,Idx::Ez)<<'-------------'<<'\n';
 
 
             });

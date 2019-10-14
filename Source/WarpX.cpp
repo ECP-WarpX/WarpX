@@ -25,7 +25,7 @@
 using namespace amrex;
 
 Vector<Real> WarpX::B_external(3, 0.0);
-Vector<Real> WarpX::v_galilean(3, 0.0);
+//Vector<Real> WarpX::v_galilean(3, 0.0); //oshap
 
 int WarpX::do_moving_window = 0;
 int WarpX::moving_window_dir = -1;

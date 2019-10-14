@@ -88,7 +88,10 @@ public:
     void FieldGather (int lev,
                       const amrex::MultiFab& Ex, const amrex::MultiFab& Ey,
                       const amrex::MultiFab& Ez, const amrex::MultiFab& Bx,
-                      const amrex::MultiFab& By, const amrex::MultiFab& Bz);
+                      const amrex::MultiFab& By, const amrex::MultiFab& Bz,
+                      const amrex::MultiFab& Ex_avg, const amrex::MultiFab& Ey_avg,
+                      const amrex::MultiFab& Ez_avg, const amrex::MultiFab& Bx_avg,
+                      const amrex::MultiFab& By_avg, const amrex::MultiFab& Bz_avg);
 
     ///
     /// This evolves all the particles by one PIC time step, including current deposition, the
