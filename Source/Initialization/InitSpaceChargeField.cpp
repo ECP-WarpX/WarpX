@@ -21,7 +21,7 @@ WarpX::InitSpaceChargeField ()
 
     // Get particle average momentum
     // TODO: Do a global reduction
-    Real uz_avg = 1.;
+    Real uz_avg = 10.;
     Real gamma = std::sqrt( 1 + uz_avg*uz_avg );
     Real beta_z = uz_avg/gamma;
 
@@ -65,7 +65,7 @@ WarpX::InitSpaceChargeField ()
     BoxArray cba = nba;
     cba.enclosedCells();
     MultiFab sigma(cba, dm, 1, 0);
-    sigma.setVal(PhysConst::ep0);
+    sigma.setVal(-PhysConst::ep0);
     linop.setSigma(0, sigma);
 
     // Solve the Poisson equation
@@ -132,36 +132,70 @@ WarpX::InitSpaceChargeField ()
 #endif
         const Real inv_gamma2 = 1./(gamma*gamma);
 
-        const Box& tbx  = mfi.tilebox(Ex_nodal_flag);
-        const Box& tby  = mfi.tilebox(Ey_nodal_flag);
-        const Box& tbz  = mfi.tilebox(Ez_nodal_flag);
-
         const auto& phi_arr = phi[mfi].array();
+
+        // Calculate E field
+        const Box& tex  = mfi.tilebox(Ex_nodal_flag);
+        const Box& tey  = mfi.tilebox(Ey_nodal_flag);
+        const Box& tez  = mfi.tilebox(Ez_nodal_flag);
         const auto& Ex_arr = (*Efield_fp[lev][0])[mfi].array();
         const auto& Ey_arr = (*Efield_fp[lev][1])[mfi].array();
         const auto& Ez_arr = (*Efield_fp[lev][2])[mfi].array();
 
 #if (AMREX_SPACEDIM == 3)
-        amrex::ParallelFor( tbx, tby, tbz,
+        amrex::ParallelFor( tex, tey, tez,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Ex_arr(i,j,k) += inv_dx*( phi_arr(i+1,j,k) - phi_arr(i,j,k) );
+                Ex_arr(i,j,k) += -inv_dx*( phi_arr(i+1,j,k) - phi_arr(i,j,k) );
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Ey_arr(i,j,k) += inv_dy*( phi_arr(i,j+1,k) - phi_arr(i,j,k) );
+                Ey_arr(i,j,k) += -inv_dy*( phi_arr(i,j+1,k) - phi_arr(i,j,k) );
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Ez_arr(i,j,k) += inv_gamma2*inv_dz*( phi_arr(i,j,k+1) - phi_arr(i,j,k) );
+                Ez_arr(i,j,k) += -inv_gamma2*inv_dz*( phi_arr(i,j,k+1) - phi_arr(i,j,k) );
             }
         );
 #else
-        amrex::ParallelFor( tbx, tbz,
+        amrex::ParallelFor( tex, tez,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Ex_arr(i,j,k) += inv_dx*( phi_arr(i+1,j,k) - phi_arr(i,j,k) );
+                Ex_arr(i,j,k) += -inv_dx*( phi_arr(i+1,j,k) - phi_arr(i,j,k) );
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Ez_arr(i,j,k) += inv_gamma2*inv_dz*( phi_arr(i,j+1,k) - phi_arr(i,j,k) );
+                Ez_arr(i,j,k) += -inv_gamma2*inv_dz*( phi_arr(i,j+1,k) - phi_arr(i,j,k) );
             }
         );
 #endif
+
+        // Calculate B field
+        const Box& tbx  = mfi.tilebox(Bx_nodal_flag);
+        const Box& tby  = mfi.tilebox(By_nodal_flag);
+        const auto& Bx_arr = (*Bfield_fp[lev][0])[mfi].array();
+        const auto& By_arr = (*Bfield_fp[lev][1])[mfi].array();
+        const Real inv_c = 1./PhysConst::c;
+        // Finite difference + averaging in z, in order to have the
+        // result be cell-centered in z
+#if (AMREX_SPACEDIM == 3)
+        amrex::ParallelFor( tbx, tby,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                Bx_arr(i,j,k) +=  beta_z*inv_c* \
+                                  inv_dy*0.5*( phi_arr(i,j+1,k  ) - phi_arr(i,j,k  )
+                                             + phi_arr(i,j+1,k+1) - phi_arr(i,j,k+1));
+            },
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                By_arr(i,j,k) += -beta_z*inv_c* \
+                                  inv_dx*0.5*( phi_arr(i+1,j,k  ) - phi_arr(i,j,k  )
+                                             + phi_arr(i+1,j,k+1) - phi_arr(i,j,k+1));
+            }
+        );
+#else
+        amrex::ParallelFor( tby,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                By_arr(i,j,k) += -beta_z*inv_c* \
+                                  inv_dx*0.5*( phi_arr(i+1,j,k  ) - phi_arr(i,j,k  )
+                                             + phi_arr(i+1,j,k+1) - phi_arr(i,j,k+1));
+            },
+        );
+#endif
+
+
     }
 }
