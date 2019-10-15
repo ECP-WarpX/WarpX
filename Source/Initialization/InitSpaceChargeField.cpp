@@ -18,7 +18,20 @@ WarpX::InitSpaceChargeField ()
     BoxArray nba = boxArray(lev);
     nba.surroundingNodes();
     const Box& gbox = gm.Domain();
-    const Real* dx = gm.CellSize();
+
+    // Get particle average momentum
+    // TODO: Do a global reduction
+    Real uz_avg = 1.;
+    Real gamma = std::sqrt( 1 + uz_avg*uz_avg );
+    Real beta_z = uz_avg/gamma;
+
+    // Create a new boosted geometry object, that will be used to
+    // solve the relativistic Poisson equation
+    RealBox domain = gm.ProbDomain();
+    const int dir = AMREX_SPACEDIM-1; // boost along the last axis (z direction)
+    domain.setHi( dir, gamma*domain.hi(dir) );
+    domain.setLo( dir, gamma*domain.lo(dir) );
+    auto boosted_geom = Geometry( gm.Domain(), &domain );
 
     // Deposit particle charge density (source of Poisson solver)
     bool local = false;
@@ -47,7 +60,7 @@ WarpX::InitSpaceChargeField ()
     }
 
     // Define the linear operator (Poisson operator)
-    MLNodeLaplacian linop( {gm}, {nba}, {dm} );
+    MLNodeLaplacian linop( {boosted_geom}, {nba}, {dm} );
     linop.setDomainBC( lobc, hibc );
     BoxArray cba = nba;
     cba.enclosedCells();
@@ -99,6 +112,7 @@ WarpX::InitSpaceChargeField ()
 
     static_assert(AMREX_SPACEDIM == 3, "Openbc is 3D only");
     BL_ASSERT(finestLevel() == 0);
+    const Real* dx = boosted_geom.CellSize();
     warpx_openbc_potential(rho_openbc[myproc].dataPtr(), phi_openbc[myproc].dataPtr(), dx);
     phi.copy(phi_openbc, gm.periodicity());
 #endif
@@ -108,6 +122,7 @@ WarpX::InitSpaceChargeField ()
 #endif
     for ( MFIter mfi(phi, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
+        const Real* dx = gm.CellSize();
         const Real inv_dx = 1./dx[0];
 #if (AMREX_SPACEDIM == 3)
         const Real inv_dy = 1./dx[1];
@@ -115,6 +130,8 @@ WarpX::InitSpaceChargeField ()
 #else
         const Real inv_dz = 1./dx[1];
 #endif
+        const Real inv_gamma2 = 1./(gamma*gamma);
+
         const Box& tbx  = mfi.tilebox(Ex_nodal_flag);
         const Box& tby  = mfi.tilebox(Ey_nodal_flag);
         const Box& tbz  = mfi.tilebox(Ez_nodal_flag);
@@ -133,7 +150,7 @@ WarpX::InitSpaceChargeField ()
                 Ey_arr(i,j,k) += inv_dy*( phi_arr(i,j+1,k) - phi_arr(i,j,k) );
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Ez_arr(i,j,k) += inv_dz*( phi_arr(i,j,k+1) - phi_arr(i,j,k) );
+                Ez_arr(i,j,k) += inv_gamma2*inv_dz*( phi_arr(i,j,k+1) - phi_arr(i,j,k) );
             }
         );
 #else
@@ -142,7 +159,7 @@ WarpX::InitSpaceChargeField ()
                 Ex_arr(i,j,k) += inv_dx*( phi_arr(i+1,j,k) - phi_arr(i,j,k) );
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Ez_arr(i,j,k) += inv_dz*( phi_arr(i,j+1,k) - phi_arr(i,j,k) );
+                Ez_arr(i,j,k) += inv_gamma2*inv_dz*( phi_arr(i,j+1,k) - phi_arr(i,j,k) );
             }
         );
 #endif
