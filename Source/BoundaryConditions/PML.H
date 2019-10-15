@@ -85,7 +85,6 @@ public:
          int ncell, int delta, int ref_ratio,
 #ifdef WARPX_USE_PSATD
          amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
-         //const amrex::Array<amrex::Real,3>& v_galilean, //oshapoval
 #endif
          int do_dive_cleaning, int do_moving_window,
          int pml_has_particles, int do_pml_in_domain,

@@ -199,7 +199,6 @@ WarpX::WarpX ()
 
     costs.resize(nlevs_max);
 
-    //v_galilean.resize(3, 0.0);
 #ifdef WARPX_USE_PSATD
     spectral_solver_fp.resize(nlevs_max);
     spectral_solver_cp.resize(nlevs_max);
@@ -553,6 +552,12 @@ WarpX::ReadParameters ()
         pp.queryarr("v_galilean", v_galilean);
         // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
+
+        if (WarpX::maxwell_fdtd_solver_id == MaxwellSolverAlgo::Yee){
+            if ( (v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)){
+                amrex::Abort("A non-zero `v_galilean` can only be used if the code is compiled with USE_PSATD=TRUE and algo.maxwell_fdtd_solver = CKC");
+            }
+        }
     }
 #endif
 
@@ -686,14 +691,10 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     int ngy_tmp = (maxLevel() > 0 && do_subcycling == 1) ? WarpX::noy+1 : WarpX::noy;
     int ngz_tmp = (maxLevel() > 0 && do_subcycling == 1) ? WarpX::noz+1 : WarpX::noz;
 
-    if ((WarpX::v_galilean[0]!=0) or
-        (WarpX::v_galilean[1]!=0) or
-        (WarpX::v_galilean[2]!=0)){
-      // Add one guard cell in the case of the galilean algorithm
-      ngx_tmp += 1;
-      ngy_tmp += 1;
-      ngz_tmp += 1;
-    }
+    // Add one guard cell in the case of the galilean algorithm
+    if (WarpX::v_galilean[0]!=0) ngx_tmp += 1;
+    if (WarpX::v_galilean[1]!=0) ngy_tmp += 1;
+    if (WarpX::v_galilean[2]!=0) ngz_tmp += 1;
 
     // Ex, Ey, Ez, Bx, By, and Bz have the same number of ghost cells.
     // jx, jy, jz and rho have the same number of ghost cells.

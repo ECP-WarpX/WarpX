@@ -381,6 +381,12 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
     const Dim3 lo = lbound(tilebox);
 
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
+        if ( (v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)){
+            amrex::Abort("The Esirkepov algorithm cannot be used with the Galilean algorithm.");
+        }
+    }
+
     BL_PROFILE_VAR_START(blp_deposit);
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if        (WarpX::nox == 1){
