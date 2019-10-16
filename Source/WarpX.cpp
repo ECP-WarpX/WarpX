@@ -553,12 +553,12 @@ WarpX::ReadParameters ()
         pp.queryarr("v_galilean", v_galilean);
         // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
+    }
+#endif
 
-        if (WarpX::maxwell_fdtd_solver_id == MaxwellSolverAlgo::Yee){
-            if ( (v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)){
-                amrex::Abort("A non-zero `v_galilean` can only be used if the code is compiled with USE_PSATD=TRUE and algo.maxwell_fdtd_solver = CKC");
-            }
-        }
+#ifndef WARPX_USE_PSATD //When running with finite difference (Yee or CKC solver)
+    if ( (v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)){
+        amrex::Abort("A non-zero `v_galilean` can only be used if the code is compiled with USE_PSATD=TRUE and algo.maxwell_fdtd_solver = CKC");
     }
 #endif
 

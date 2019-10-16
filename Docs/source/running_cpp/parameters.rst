@@ -693,7 +693,8 @@ Numerics and algorithms
     (see the sub-section Numerical Stability and alternate formulation
     in a Galilean frame in :doc:`../theory/boosted-frame`).
     It also requires the use of the `direct` current deposition option
-    `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
+    `algo.current_deposition = direct` (does not work with Esirkepov algorithm)
+    and nodal grid (`warpx.do_nodal = 1`).
 
 * ``warpx.override_sync_int`` (`integer`) optional (default `10`)
     Number of time steps between synchronization of sources (`rho` and `J`) on
