@@ -26,4 +26,4 @@ energyE_gal_psatd = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
 #E field energy precalculated with standard PSATD (v_galilean = (0,0,0))
 energyE_psatd = 270975.396667626 #E field energy calculated with PSATD (v_galilean = (0,0,0))
 
-assert( energyE_gal_psatd < 1e-10 * energyE_gal_psatd )
+assert( energyE_gal_psatd < 1e-10 * energyE_psatd )
