@@ -28,8 +28,13 @@ class HankelTransform
         const RealVector getRadialGrid();
         const RealVector getSpectralFrequencies();
 
-        void HankelForwardTransform(const int nz, amrex::Array4<amrex::Real const> const& F, amrex::Array4<amrex::Real> const& G);
-        void HankelInverseTransform(const int nz, amrex::Array4<amrex::Real const> const& G, amrex::Array4<amrex::Real> const& F);
+        void HankelForwardTransform(const int nz,
+                                    amrex::Array4<amrex::Real const> const& F,
+                                    amrex::Array4<amrex::Real> const& G);
+
+        void HankelInverseTransform(const int nz,
+                                    amrex::Array4<amrex::Real const> const& G,
+                                    amrex::Array4<amrex::Real> const& F);
 
     private:
         // Even though nk == nr always, use a seperate variable for clarity.
