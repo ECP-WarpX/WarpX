@@ -38,7 +38,7 @@ class HankelTransform
 
     private:
         // Even though nk == nr always, use a seperate variable for clarity.
-        const int nr, nk;
+        int nr, nk;
 
         RealVector nu;
         RealVector r;
