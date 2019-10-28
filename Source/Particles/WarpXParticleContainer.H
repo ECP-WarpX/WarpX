@@ -6,6 +6,11 @@
 #include <AMReX_Particles.H>
 #include <AMReX_AmrCore.H>
 
+#ifdef WARPX_QED
+    #include <QuantumSyncEngineWrapper.H>
+    #include <BreitWheelerEngineWrapper.H>
+#endif
+
 #include <memory>
 
 enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
@@ -268,7 +273,7 @@ public:
         AddIntComp(comm);
     }
 
-    int DoBoostedFrameDiags () const { return do_boosted_frame_diags; }
+    int doBackTransformedDiagnostics () const { return do_back_transformed_diagnostics; }
 
     virtual void buildIonizationMask (const amrex::MFIter& mfi, const int lev,
                                       amrex::Gpu::ManagedDeviceVector<int>& ionization_mask)
@@ -311,7 +316,19 @@ protected:
     amrex::Gpu::ManagedVector<amrex::Real> adk_exp_prefactor;
     std::string physical_element;
 
-    int do_boosted_frame_diags = 1;
+    int do_back_transformed_diagnostics = 1;
+
+#ifdef WARPX_QED
+    bool do_qed = false;
+
+    virtual bool has_quantum_sync(){return false;};
+    virtual bool has_breit_wheeler(){return false;};
+
+    virtual void
+    set_breit_wheeler_engine_ptr(std::shared_ptr<BreitWheelerEngine>){};
+    virtual void
+    set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){};
+#endif
 
     amrex::Vector<amrex::FArrayBox> local_rho;
     amrex::Vector<amrex::FArrayBox> local_jx;
