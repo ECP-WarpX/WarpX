@@ -19,7 +19,7 @@ WarpXParser::define (std::string const& func_body)
 
 #ifdef _OPENMP
 
-    int nthreads = omp_get_max_threads();
+    constexpr int nthreads = omp_get_max_threads();
     m_variables.resize(nthreads);
     m_parser.resize(nthreads);
     m_parser[0] = wp_c_parser_new(f.c_str());
