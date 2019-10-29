@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
 
     BL_PROFILE_VAR("main()", pmain);
 
-    const Real strt_total = amrex::second();
+    constexpr Real strt_total = amrex::second();
 
     {
         WarpX warpx;
