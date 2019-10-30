@@ -5,14 +5,14 @@
 using namespace amrex;
 
 /* \brief Initialize fields in spectral space, and FFT plans */
-SpectralFieldDataHankel::SpectralFieldDataHankel (const BoxArray& realspace_ba,
-                                                  const SpectralHankelKSpace& k_space,
-                                                  const DistributionMapping& dm,
-                                                  const int n_field_required,
-                                                  const int n_rz_azimuthal_modes)
+SpectralFieldDataHankel::SpectralFieldDataHankel (BoxArray const & realspace_ba,
+                                                  SpectralHankelKSpace const & k_space,
+                                                  DistributionMapping const & dm,
+                                                  int const n_field_required,
+                                                  int const n_rz_azimuthal_modes)
     : n_rz_azimuthal_modes(n_rz_azimuthal_modes)
 {
-    const BoxArray& spectralspace_ba = k_space.spectralspace_ba;
+    BoxArray const & spectralspace_ba = k_space.spectralspace_ba;
 
     // Allocate the arrays that contain the fields in spectral space
     // (one component per field)
@@ -137,29 +137,24 @@ SpectralFieldDataHankel::~SpectralFieldDataHankel()
 void
 SpectralFieldDataHankel::FABZForwardTransform (MFIter const & mfi,
                                                amrex::FArrayBox const & tempHTransformedSplit,
-                                               const int field_index, const bool is_nodal_z)
+                                               int const field_index, const bool is_nodal_z)
 {
-    const int ncomp = 2*n_rz_azimuthal_modes - 1;
-
     // Copy the split complex to the interleaved complex
-    const Box realspace_bx = tempHTransformed[mfi].box();
+    Box const realspace_bx = tempHTransformed[mfi].box();
+
     Array4<const Real> split_arr = tempHTransformedSplit.array();
     Array4<Complex> complex_arr = tempHTransformed[mfi].array();
-    // mode 0
-    {
-        ParallelFor(realspace_bx,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+
+    int const modes = n_rz_azimuthal_modes;
+    ParallelFor(realspace_bx, modes,
+    [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
+        if (mode == 0) {
             complex_arr(i,j,k,0) = {split_arr(i,j,k,0), 0.};
-        });
-    }
-    // Can this outer for loop be put inside the ParallelFor?
-    for (int mode=1 ; mode < n_rz_azimuthal_modes ; mode++) {
-        int icomp = 2*mode - 1;
-        ParallelFor(realspace_bx,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+        } else {
+            int icomp = 2*mode - 1;
             complex_arr(i,j,k,mode) = {split_arr(i,j,k,icomp), split_arr(i,j,k,icomp+1)};
-        });
-    }
+        }
+    });
 
     // Perform Fourier transform from `tmpRealField` to `tmpSpectralField`
 #ifdef AMREX_USE_GPU
@@ -187,18 +182,21 @@ SpectralFieldDataHankel::FABZForwardTransform (MFIter const & mfi,
     // from a cell-centered grid in real space instead of a nodal grid.
     Array4<const Complex> tmp_arr = tmpSpectralField[mfi].array();
     Array4<Complex> fields_arr = SpectralFieldDataHankel::fields[mfi].array();
-    const Complex* zshift_arr = zshift_FFTfromCell[mfi].dataPtr();
+    Complex const* zshift_arr = zshift_FFTfromCell[mfi].dataPtr();
 
     // Loop over indices within one box, all components
-    const Box spectralspace_bx = tmpSpectralField[mfi].box();
-    const int findex = field_index*n_rz_azimuthal_modes;
-    ParallelFor(spectralspace_bx, ncomp,
-    [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept {
-        Complex spectral_field_value = tmp_arr(i,j,k,n);
+    // The fields are organized so that the fields for each mode
+    // are grouped together in memory.
+    Box const spectralspace_bx = tmpSpectralField[mfi].box();
+
+    ParallelFor(spectralspace_bx, modes,
+    [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
+        Complex spectral_field_value = tmp_arr(i,j,k,mode);
         // Apply proper shift
         if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
         // Copy field into the right index
-        fields_arr(i,j,k,findex+n) = spectral_field_value;
+        int const ic = field_index + mode*SpectralFieldIndex::n_fields;
+        fields_arr(i,j,k,ic) = spectral_field_value;
     });
 }
 
@@ -207,28 +205,28 @@ SpectralFieldDataHankel::FABZForwardTransform (MFIter const & mfi,
  * to physical space, and return the resulting FArrayBox */
 amrex::FArrayBox
 SpectralFieldDataHankel::FABZBackwardTransform (MFIter const & mfi,
-                                                const int field_index, const bool is_nodal_z)
+                                                int const field_index, const bool is_nodal_z)
 {
-    const int ncomp = 2*n_rz_azimuthal_modes - 1;
-
     // Copy the spectral-space field from the appropriate index of the FabArray
     // `fields` (specified by `field_index`) to field `tmpSpectralField`
     // and apply correcting shift factor if the real space data is on
     // a cell-centered grid in real space instead of a nodal grid.
     Array4<const Complex> fields_arr = SpectralFieldDataHankel::fields[mfi].array();
     Array4<Complex> tmp_arr = tmpSpectralField[mfi].array();
-    const Complex* zshift_arr = zshift_FFTtoCell[mfi].dataPtr();
+    Complex const* zshift_arr = zshift_FFTtoCell[mfi].dataPtr();
 
     // Loop over indices within one box, all components
-    const Box spectralspace_bx = tmpSpectralField[mfi].box();
-    const int findex = field_index*n_rz_azimuthal_modes;
-    ParallelFor(spectralspace_bx, ncomp,
-    [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) noexcept {
-        Complex spectral_field_value = fields_arr(i,j,k,findex+n);
+    Box const spectralspace_bx = tmpSpectralField[mfi].box();
+
+    int const modes = n_rz_azimuthal_modes;
+    ParallelFor(spectralspace_bx, modes,
+    [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
+        int const ic = field_index + mode*SpectralFieldIndex::n_fields;
+        Complex spectral_field_value = fields_arr(i,j,k,ic);
         // Apply proper shift
         if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
         // Copy field into the right index
-        tmp_arr(i,j,k,n) = spectral_field_value;
+        tmp_arr(i,j,k,mode) = spectral_field_value;
     });
 
     // Perform Fourier transform from `tmpSpectralField` to `tmpRealField`
@@ -254,26 +252,24 @@ SpectralFieldDataHankel::FABZBackwardTransform (MFIter const & mfi,
     // Copy the interleaved complex to the split complex
     Box realspace_bx = tempHTransformed[mfi].box();
     realspace_bx.enclosedCells(); // Discard last point in nodal direction
+
+    int const ncomp = 2*n_rz_azimuthal_modes - 1;
     amrex::FArrayBox tempHTransformedSplit(realspace_bx, ncomp);
+    Array4<Real> split_arr = tempHTransformedSplit.array();
+
     AMREX_ALWAYS_ASSERT(realspace_bx == tempHTransformed[mfi].box());
     Array4<const Complex> complex_arr = tempHTransformed[mfi].array();
-    Array4<Real> split_arr = tempHTransformedSplit.array();
-    // mode 0
-    {
-        ParallelFor(realspace_bx,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+
+    ParallelFor(realspace_bx, modes,
+    [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
+        if (mode == 0) {
             split_arr(i,j,k,0) = complex_arr(i,j,k,0).real();
-        });
-    }
-    // Can this outer for loop be put inside the ParallelFor?
-    for (int mode=1 ; mode < n_rz_azimuthal_modes ; mode++) {
-        int icomp = 2*mode - 1;
-        ParallelFor(realspace_bx,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+        } else {
+            int icomp = 2*mode - 1;
             split_arr(i,j,k,icomp) = complex_arr(i,j,k,mode).real();
             split_arr(i,j,k,icomp+1) = complex_arr(i,j,k,mode).imag();
-        });
-    }
+        }
+    });
 
     return tempHTransformedSplit;
 
@@ -283,14 +279,14 @@ SpectralFieldDataHankel::FABZBackwardTransform (MFIter const & mfi,
  *  to spectral space, and store the corresponding result internally
  *  (in the spectral field specified by `field_index`) */
 void
-SpectralFieldDataHankel::ForwardTransform (const MultiFab& mf, const int field_index,
-                                           const int i_comp)
+SpectralFieldDataHankel::ForwardTransform (MultiFab const & mf, int const field_index,
+                                           int const i_comp)
 {
     // Check field index type, in order to apply proper shift in spectral space
     // Only cell centered in r is supported.
-    const bool is_nodal_z = mf.is_nodal(1);
+    bool const is_nodal_z = mf.is_nodal(1);
 
-    const int ncomp = 2*n_rz_azimuthal_modes - 1;
+    int const ncomp = 2*n_rz_azimuthal_modes - 1;
 
     // Loop over boxes
     for (MFIter mfi(mf); mfi.isValid(); ++mfi){
@@ -311,14 +307,14 @@ SpectralFieldDataHankel::ForwardTransform (const MultiFab& mf, const int field_i
  *  to spectral space, and store the corresponding result internally
  *  (in the spectral fields specified by `field_index_r` and `field_index_r`) */
 void
-SpectralFieldDataHankel::ForwardTransform (const MultiFab& mf_r, const int field_index_r,
-                                           const MultiFab& mf_t, const int field_index_t)
+SpectralFieldDataHankel::ForwardTransform (MultiFab const & mf_r, int const field_index_r,
+                                           MultiFab const & mf_t, int const field_index_t)
 {
     // Check field index type, in order to apply proper shift in spectral space
     // Only cell centered in r is supported.
-    const bool is_nodal_z = mf_r.is_nodal(1);
+    bool const is_nodal_z = mf_r.is_nodal(1);
 
-    const int ncomp = 2*n_rz_azimuthal_modes - 1;
+    int const ncomp = 2*n_rz_azimuthal_modes - 1;
 
     // Loop over boxes
     for (MFIter mfi(mf_r); mfi.isValid(); ++mfi){
@@ -341,13 +337,13 @@ SpectralFieldDataHankel::ForwardTransform (const MultiFab& mf_r, const int field
 /* \brief Transform spectral field specified by `field_index` back to
  * real space, and store it in the component `i_comp` of `mf` */
 void
-SpectralFieldDataHankel::BackwardTransform (MultiFab& mf, const int field_index,
-                                            const int i_comp)
+SpectralFieldDataHankel::BackwardTransform (MultiFab& mf, int const field_index,
+                                            int const i_comp)
 {
     // Check field index type, in order to apply proper shift in spectral space
-    const bool is_nodal_z = mf.is_nodal(1);
+    bool const is_nodal_z = mf.is_nodal(1);
 
-    const int ncomp = 2*n_rz_azimuthal_modes - 1;
+    int const ncomp = 2*n_rz_azimuthal_modes - 1;
 
     // Loop over boxes
     for (MFIter mfi(mf); mfi.isValid(); ++mfi){
@@ -355,7 +351,7 @@ SpectralFieldDataHankel::BackwardTransform (MultiFab& mf, const int field_index,
         amrex::FArrayBox tempHTransformedSplit = FABZBackwardTransform(mfi, field_index, is_nodal_z);
 
         // Perform the Hankel inverse transform last
-        const Box realspace_bx = mf[mfi].box(); // Copy the box
+        Box const realspace_bx = mf[mfi].box(); // Copy the box
         amrex::FArrayBox mf_comp(mf[mfi], amrex::make_alias, i_comp*ncomp, ncomp);
         hankeltransformer[mfi].SpectralToPhysical_Scalar(realspace_bx, tempHTransformedSplit, mf_comp);
 
@@ -368,8 +364,8 @@ SpectralFieldDataHankel::BackwardTransform (MultiFab& mf, const int field_index,
             Array4<const Real> tmp_arr = tmpRealField[mfi].array();
             // Normalization: divide by the number of points in realspace
             // (includes the guard cells)
-            const Box realspace_bx = tmpRealField[mfi].box();
-            const Real inv_N = 1./realspace_bx.numPts();
+            Box const realspace_bx = tmpRealField[mfi].box();
+            Real const inv_N = 1./realspace_bx.numPts();
 
             ParallelFor(mfi.validbox(),
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
@@ -384,13 +380,13 @@ SpectralFieldDataHankel::BackwardTransform (MultiFab& mf, const int field_index,
 /* \brief Transform spectral fields specified by `field_index_r` and
  * `field_index_t` back to real space, and store them in `mf_r` and `mf_t` */
 void
-SpectralFieldDataHankel::BackwardTransform (MultiFab& mf_r, const int field_index_r,
-                                            MultiFab& mf_t, const int field_index_t)
+SpectralFieldDataHankel::BackwardTransform (MultiFab& mf_r, int const field_index_r,
+                                            MultiFab& mf_t, int const field_index_t)
 {
     // Check field index type, in order to apply proper shift in spectral space
-    const bool is_nodal_z = mf_r.is_nodal(1);
+    bool const is_nodal_z = mf_r.is_nodal(1);
 
-    const int ncomp = 2*n_rz_azimuthal_modes - 1;
+    int const ncomp = 2*n_rz_azimuthal_modes - 1;
 
     // Loop over boxes
     for (MFIter mfi(mf_r); mfi.isValid(); ++mfi){
@@ -399,7 +395,7 @@ SpectralFieldDataHankel::BackwardTransform (MultiFab& mf_r, const int field_inde
         amrex::FArrayBox tempHTransformedSplit_m = FABZBackwardTransform(mfi, field_index_t, is_nodal_z);
 
         // Perform the Hankel inverse transform last
-        const Box realspace_bx = mf_r[mfi].box(); // Copy the box
+        Box const realspace_bx = mf_r[mfi].box(); // Copy the box
         hankeltransformer[mfi].SpectralToPhysical_Vector(realspace_bx,
                                                          tempHTransformedSplit_p, tempHTransformedSplit_m,
                                                          mf_r[mfi], mf_t[mfi]);
@@ -413,8 +409,8 @@ SpectralFieldDataHankel::BackwardTransform (MultiFab& mf_r, const int field_inde
             Array4<const Real> tmp_arr = tmpRealField[mfi].array();
             // Normalization: divide by the number of points in realspace
             // (includes the guard cells)
-            const Box realspace_bx = tmpRealField[mfi].box();
-            const Real inv_N = 1./realspace_bx.numPts();
+            Box const realspace_bx = tmpRealField[mfi].box();
+            Real const inv_N = 1./realspace_bx.numPts();
 
             ParallelFor(mfi.validbox(),
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {

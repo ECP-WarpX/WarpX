@@ -1,0 +1,86 @@
+#ifndef WARPX_SPECTRAL_SOLVER_RZ_H_
+#define WARPX_SPECTRAL_SOLVER_RZ_H_
+
+#include <SpectralBaseAlgorithmRZ.H>
+#include <SpectralFieldDataHankel.H>
+
+/* \brief Top-level class for the electromagnetic spectral solver
+ *
+ * Stores the field in spectral space, and has member functions
+ * to Fourier-transform the fields between real space and spectral space
+ * and to update fields in spectral space over one time step.
+ */
+class SpectralSolverRZ
+{
+    public:
+        // Inline definition of the member functions of `SpectralSolverRZ`,
+        // except the constructor (see `SpectralSolverRZ.cpp`)
+        // The body of these functions is short, since the work is done in the
+        // underlying classes `SpectralFieldData` and `PsatdAlgorithm`
+
+        // Constructor
+        SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
+                         amrex::DistributionMapping const & dm,
+                         int const n_rz_azimuthal_modes,
+                         int const norder_z, bool const nodal,
+                         amrex::RealVect const dx, amrex::Real const dt,
+                         bool const pml=false);
+
+        /* \brief Transform the component `i_comp` of MultiFab `mf`
+         *  to spectral space, and store the corresponding result internally
+         *  (in the spectral field specified by `field_index`) */
+        void ForwardTransform(amrex::MultiFab const & mf,
+                              int const field_index,
+                              int const i_comp=0 ){
+            BL_PROFILE("SpectralSolverRZ::ForwardTransform");
+            field_data.ForwardTransform(mf, field_index, i_comp);
+        };
+
+        /* \brief Transform the two MultiFabs `mf1` and `mf2`
+         *  to spectral space, and store the corresponding results internally
+         *  (in the spectral field specified by `field_index1` and `field_index2`) */
+        void ForwardTransform(amrex::MultiFab const & mf1, int const field_index1,
+                              amrex::MultiFab const & mf2, int const field_index2){
+            BL_PROFILE("SpectralSolverRZ::ForwardTransform");
+            field_data.ForwardTransform(mf1, field_index1,
+                                        mf2, field_index2);
+        };
+
+        /* \brief Transform spectral field specified by `field_index` back to
+         * real space, and store it in the component `i_comp` of `mf` */
+        void BackwardTransform(amrex::MultiFab& mf,
+                               int const field_index,
+                               int const i_comp=0){
+            BL_PROFILE("SpectralSolverRZ::BackwardTransform");
+            field_data.BackwardTransform(mf, field_index, i_comp);
+        };
+
+        /* \brief Transform spectral fields specified by `field_index1` and `field_index2`
+         * back to real space, and store it in `mf1` and `mf2`*/
+        void BackwardTransform(amrex::MultiFab& mf1, int const field_index1,
+                               amrex::MultiFab& mf2, int const field_index2){
+            BL_PROFILE("SpectralSolverRZ::BackwardTransform");
+            field_data.BackwardTransform(mf1, field_index1,
+                                         mf2, field_index2);
+        };
+
+        /* \brief Update the fields in spectral space, over one timestep */
+        void pushSpectralFields(){
+            BL_PROFILE("SpectralSolverRZ::pushSpectralFields");
+            // Virtual function: the actual function used here depends
+            // on the sub-class of `SpectralBaseAlgorithm` that was
+            // initialized in the constructor of `SpectralSolverRZ`
+            algorithm->pushSpectralFields(field_data);
+        };
+
+    private:
+        SpectralFieldDataHankel field_data; // Store field in spectral space
+                                      // and perform the Fourier transforms
+        std::unique_ptr<SpectralBaseAlgorithmRZ> algorithm;
+        // Defines field update equation in spectral space,
+        // and the associated coefficients.
+        // SpectralBaseAlgorithmRZ is a base class ; this pointer is meant
+        // to point an instance of a *sub-class* defining a specific algorithm
+};
+
+#endif // WARPX_SPECTRAL_SOLVER_RZ_H_

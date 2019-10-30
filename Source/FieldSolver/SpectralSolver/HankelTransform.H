@@ -25,8 +25,8 @@ class HankelTransform
                         const int nr,
                         const amrex::Real rmax);
 
-        const RealVector getRadialGrid();
-        const RealVector getSpectralFrequencies();
+        const RealVector & getRadialGrid() {return r;}
+        const RealVector & getSpectralFrequencies() {return nu;}
 
         void HankelForwardTransform(const int nz,
                                     amrex::Array4<amrex::Real const> const& F,

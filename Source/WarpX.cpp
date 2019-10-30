@@ -873,8 +873,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         BoxArray realspace_ba = ba;  // Copy box
         realspace_ba.enclosedCells().grow(ngE); // cell-centered + guard cells
         // Define spectral solver
+#ifdef WARPX_DIM_RZ
+        spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
+            n_rz_azimuthal_modes, noz_fft, do_nodal, dx_vect, dt[lev] ) );
+#else
         spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev] ) );
+#endif
     }
 #endif
 
@@ -958,8 +963,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             BoxArray realspace_ba = cba;// Copy box
             realspace_ba.enclosedCells().grow(ngE);// cell-centered + guard cells
             // Define spectral solver
+#ifdef WARPX_DIM_RZ
+            spectral_solver_cp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
+                n_rz_azimuthal_modes, noz_fft, do_nodal, cdx_vect, dt[lev] ) );
+#else
             spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
                 nox_fft, noy_fft, noz_fft, do_nodal, cdx_vect, dt[lev] ) );
+#endif
         }
 #endif
     }

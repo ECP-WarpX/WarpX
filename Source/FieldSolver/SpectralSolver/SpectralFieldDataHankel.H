@@ -40,11 +40,16 @@ class SpectralFieldDataHankel
                                const int field_index, const int i_comp);
         void BackwardTransform(amrex::MultiFab& mf_r, const int field_index_r,
                                amrex::MultiFab& mf_t, const int field_index_t);
+
+        // Returns an array that holds the kr for all of the modes
+        HankelTransform::RealVector const & getKrArray(amrex::MFIter const & mfi) const {return hankeltransformer[mfi].getKrArray();}
+
         // `fields` stores fields in spectral space, as multicomponent FabArray
         SpectralField fields;
 
+        int n_rz_azimuthal_modes;
+
     private:
-        const int n_rz_azimuthal_modes;
 
         // tmpRealField and tmpSpectralField store fields
         // right before/after the Fourier transform

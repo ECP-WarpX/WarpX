@@ -145,20 +145,6 @@ HankelTransform::HankelTransform (const int hankel_order,
 
 }
 
-const HankelTransform::RealVector
-HankelTransform::getRadialGrid ()
-{
-    return r;
-}
-
-
-const HankelTransform::RealVector
-HankelTransform::getSpectralFrequencies ()
-{
-    return nu;
-}
-
-
 void
 HankelTransform::HankelForwardTransform (const int nz, amrex::Array4<amrex::Real const> const& F, amrex::Array4<amrex::Real> const& G)
 {
