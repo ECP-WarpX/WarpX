@@ -40,8 +40,8 @@ warpx.serialize_ics = 1
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 1 # number of species
-particles.species_names = photons
+particles.nspecies = 3 # number of species
+particles.species_names = photons ele_bw pos_bw
 particles.photon_species = photons
 #################################
 
@@ -65,11 +65,11 @@ photons.uz_m = 0.0
 photons.ux_th = 100.
 photons.uy_th = 100.
 photons.uz_th = 100.
-
-
 ##########QED####################
 photons.do_qed = 1
 photons.do_qed_breit_wheeler = 1
+photons.qed_breit_wheeler_ele_product_species = ele_bw
+photons.qed_breit_wheeler_pos_product_species = pos_bw
 #################################
 
 ##########QED TABLES####################
