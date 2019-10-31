@@ -509,12 +509,32 @@ MultiParticleContainer::mapSpeciesProduct ()
         // pc->ionization_product_name and store its ID into
         // pc->ionization_product.
         if (pc->do_field_ionization){
-            int i_product = getSpeciesID(pc->ionization_product_name);
+            const int i_product = getSpeciesID(pc->ionization_product_name);
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 i != i_product,
                 "ERROR: ionization product cannot be the same species");
             pc->ionization_product = i_product;
         }
+
+#ifdef WARPX_QED
+        if (pc-> has_breit_wheeler()){
+            const int i_product_ele = getSpeciesID(
+                pc->m_qed_breit_wheeler_ele_product_name);
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != i_product_ele,
+                "ERROR: Breit Wheeler product cannot be the same species");
+            pc->m_qed_breit_wheeler_ele_product = i_product_ele;
+
+            const int i_product_pos = getSpeciesID(
+                pc->m_qed_breit_wheeler_pos_product_name);
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != i_product_pos,
+                "ERROR: Breit Wheeler product cannot be the same species");
+            pc->m_qed_breit_wheeler_pos_product = i_product_pos;
+
+        }
+#endif
+
     }
 }
 
@@ -536,7 +556,7 @@ MultiParticleContainer::getSpeciesID (std::string product_str)
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         found != 0,
-        "ERROR: could not find product species ID for ionization. Wrong name?");
+        "ERROR: could not find product species ID. Wrong name?");
     return i_product;
 }
 
@@ -911,4 +931,10 @@ MultiParticleContainer::ParseBreitWheelerParams ()
 
     return std::make_tuple(generate_table, table_name, ctrl);
 }
+
+void MultiParticleContainer::doQedEvents()
+{
+
+}
+
 #endif

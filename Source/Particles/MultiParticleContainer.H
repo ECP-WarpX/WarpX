@@ -272,6 +272,11 @@ protected:
      */
     std::tuple<bool, std::string, PicsarBreitWheelerCtrl>
     ParseBreitWheelerParams ();
+
+    /*
+    *   TO ADD
+    */
+    void doQedEvents();
 #endif
 
 private:
