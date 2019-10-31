@@ -201,6 +201,13 @@ public:
 
     IonizationProcess ionization_process;
 
+#ifdef WARPX_QED
+    /*
+    *   TO ADD
+    */
+    void doQedEvents();
+#endif
+
 protected:
 
     // Particle container types
@@ -273,10 +280,6 @@ protected:
     std::tuple<bool, std::string, PicsarBreitWheelerCtrl>
     ParseBreitWheelerParams ();
 
-    /*
-    *   TO ADD
-    */
-    void doQedEvents();
 #endif
 
 private:

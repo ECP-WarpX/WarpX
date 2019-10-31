@@ -2315,10 +2315,4 @@ set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine> ptr)
 {
     m_shr_p_qs_engine = ptr;
 }
-
-bool
-PhysicalParticleContainer::hasQed() const
-{
-    return m_do_qed_quantum_sync;
-}
 #endif
