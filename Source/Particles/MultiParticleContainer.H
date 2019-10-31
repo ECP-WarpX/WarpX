@@ -304,5 +304,9 @@ private:
     // runtime parameters
     int nlasers = 0;
     int nspecies = 1;   // physical particles only. nspecies+nlasers == allcontainers.size().
+
+    // TO ADD
+    void TouchAllTileseOfSpeciesAtLevel
+        (std::unique_ptr<WarpXParticleContainer>& p_spec, int lev);
 };
 #endif /*WARPX_ParticleContainer_H_*/

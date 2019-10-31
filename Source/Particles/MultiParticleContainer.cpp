@@ -582,22 +582,12 @@ MultiParticleContainer::doFieldIonization ()
             // without runtime component).
 #ifdef _OPENMP
             // Touch all tiles of source species in serial if runtime attribs
-            for (MFIter mfi = pc_source->MakeMFIter(lev); mfi.isValid(); ++mfi) {
-                const int grid_id = mfi.index();
-                const int tile_id = mfi.LocalTileIndex();
-                pc_source->GetParticles(lev)[std::make_pair(grid_id,tile_id)];
-                if ( (pc_source->NumRuntimeRealComps()>0) || (pc_source->NumRuntimeIntComps()>0) ) {
-                    pc_source->DefineAndReturnParticleTile(lev, grid_id, tile_id);
-                }
+            if ( (pc_source->NumRuntimeRealComps()>0) || (pc_source->NumRuntimeIntComps()>0) ){
+                TouchAllTileseOfSpeciesAtLevel(pc_source, lev);
             }
 #endif
             // Touch all tiles of product species in serial
-            for (MFIter mfi = pc_source->MakeMFIter(lev); mfi.isValid(); ++mfi) {
-                const int grid_id = mfi.index();
-                const int tile_id = mfi.LocalTileIndex();
-                pc_product->GetParticles(lev)[std::make_pair(grid_id,tile_id)];
-                pc_product->DefineAndReturnParticleTile(lev, grid_id, tile_id);
-            }
+            TouchAllTileseOfSpeciesAtLevel(pc_product, lev);
 
             // Enable tiling
             MFItInfo info;
@@ -932,9 +922,92 @@ MultiParticleContainer::ParseBreitWheelerParams ()
     return std::make_tuple(generate_table, table_name, ctrl);
 }
 
+// TO ADD
+void MultiParticleContainer::TouchAllTileseOfSpeciesAtLevel
+        (std::unique_ptr<WarpXParticleContainer>& p_spec, int lev)
+{
+    for (MFIter mfi = p_spec->MakeMFIter(lev); mfi.isValid(); ++mfi) {
+        const int grid_id = mfi.index();
+        const int tile_id = mfi.LocalTileIndex();
+        p_spec->GetParticles(lev)[std::make_pair(grid_id,tile_id)];
+        p_spec->DefineAndReturnParticleTile(lev, grid_id, tile_id);
+    }
+}
+
+//For now just BW
 void MultiParticleContainer::doQedEvents()
 {
+    BL_PROFILE("MPC::doQedEvents");
 
+    // Loop over all species.
+   for (auto& pc_source : allcontainers){
+
+       if(!pc_source->has_breit_wheeler()) {continue;}
+
+        // Get product species
+        auto& pc_product_ele = allcontainers[pc_source->m_qed_breit_wheeler_ele_product];
+        auto& pc_product_pos = allcontainers[pc_source->m_qed_breit_wheeler_pos_product];
+
+        for (int lev = 0; lev <= pc_source->finestLevel(); ++lev){
+
+            // When using runtime components, AMReX requires to touch all tiles
+            // in serial and create particles tiles with runtime components if
+            // they do not exist (or if they were defined by default, i.e.,
+            // without runtime component).
+#ifdef _OPENMP
+            // Touch all tiles of source species in serial if runtime attribs
+            if ( (pc_source->NumRuntimeRealComps()>0) || (pc_source->NumRuntimeIntComps()>0) ){
+                TouchAllTileseOfSpeciesAtLevel(pc_source, lev);
+            }
+#endif
+            // Touch all tiles of product species in serial
+            TouchAllTileseOfSpeciesAtLevel(pc_product_ele, lev);
+            TouchAllTileseOfSpeciesAtLevel(pc_product_pos, lev);
+
+            // Enable tiling
+            MFItInfo info;
+            if (pc_source->do_tiling && Gpu::notInLaunchRegion()) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    pc_product_ele->do_tiling,
+                    "For ionization, either all or none of the "
+                    "particle species must use tiling.");
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    pc_product_pos->do_tiling,
+                    "For ionization, either all or none of the "
+                    "particle species must use tiling.");
+                info.EnableTiling(pc_product_ele->tile_size);
+                info.EnableTiling(pc_product_pos->tile_size);
+            }
+
+#ifdef _OPENMP
+            info.SetDynamic(true);
+#pragma omp parallel
+#endif
+
+            // Loop over all grids (if not tiling) or grids and tiles (if tiling)
+            for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
+            {
+                // Breit Wheeler mask: one element per source particles.
+                // 0 no BW, 1 BW
+                //amrex::Gpu::ManagedDeviceVector<int> is_ionized;
+                //pc_source->buildIonizationMask(mfi, lev, is_ionized);
+                // Create particles in pc_product
+                //int do_boost = WarpX::do_back_transformed_diagnostics
+                //    && pc_product->doBackTransformedDiagnostics();
+                //amrex::Gpu::ManagedDeviceVector<int> v_do_back_transformed_product{do_boost};
+                //const amrex::Vector<WarpXParticleContainer*> v_pc_product {pc_product.get()};
+                // Copy source to product particles, and increase ionization
+                // level of source particle
+                //ionization_process.createParticles(lev, mfi, pc_source, v_pc_product,
+                //                                  is_ionized, v_do_back_transformed_product);
+                // Synchronize to prevent the destruction of temporary arrays (at the
+                // end of the function call) before the kernel executes.
+                Gpu::streamSynchronize();
+            }
+
+
+        }
+   }
 }
 
 #endif

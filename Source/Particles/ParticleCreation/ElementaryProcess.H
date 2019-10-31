@@ -254,4 +254,11 @@ public:
 class IonizationProcess: public elementaryProcess<elementaryProcessType::Ionization>
 {};
 
+#ifdef WARPX_QED
+// Derived class for Breit Wheeler pair creation process
+class QedBreitWheelerPairCreationProcess :
+    public elementaryProcess<elementaryProcessType::QedBreitWheelerPairCreation>
+{};
+#endif
+
 #endif // ELEMENTARYPROCESS_H_
