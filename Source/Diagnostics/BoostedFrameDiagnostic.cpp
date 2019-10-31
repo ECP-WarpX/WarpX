@@ -764,11 +764,20 @@ void BoostedFrameDiagnostic::Flush(const Geometry& geom)
 
 
 
-void
+//void
+//BoostedFrameDiagnostic::
+//writeLabFrameData(const MultiFab* cell_centered_data,
+//                  const MultiParticleContainer& mypc,
+//                  const Geometry& geom, const Real t_boost, const Real dt) {
+void 
 BoostedFrameDiagnostic::
-writeLabFrameData(const MultiFab* cell_centered_data,
-                  const MultiParticleContainer& mypc,
-                  const Geometry& geom, const Real t_boost, const Real dt) {
+writeLabFrameData(
+    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_aux,
+    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_aux,
+    const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp,
+    const MultiParticleContainer& mypc, const amrex::Geometry& geom,
+    const amrex::Real t_boost, const amrex::Real dt) {
+
 
     BL_PROFILE("BoostedFrameDiagnostic::writeLabFrameData");
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
@@ -826,6 +835,12 @@ writeLabFrameData(const MultiFab* cell_centered_data,
         }
 
         if (WarpX::do_boosted_frame_fields) {
+            // for CC-OPT
+            // obtain ncomp from aux field. 
+            // 
+            int total_levels = Efield_aux.size();
+            Vector<std::unique_ptr<MultiFab> > cc(total_levels);
+
             const int ncomp = cell_centered_data->nComp();
             const int start_comp = 0;
             const bool interpolate = true;

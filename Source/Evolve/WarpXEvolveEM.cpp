@@ -146,7 +146,11 @@ WarpX::EvolveEM (int numsteps)
             if (WarpX::do_boosted_frame_fields) {
                 cell_centered_data = GetCellCenteredData();
             }
-            myBFD->writeLabFrameData(cell_centered_data.get(), *mypc, geom[0], cur_time, dt[0]);
+            // myBFD->writeLabFrameData(cell_centered_data.get(), *mypc, geom[0], cur_time, dt[0]);
+            // change for CC-OPT
+            myBFD->writeLabFrameData(Efield_aux, Bfield_aux, current_fp,
+                                     *mypc, geom[0], cur_time, dt[0]);
+           
         }
 
         bool move_j = is_synchronized || to_make_plot || do_insitu;

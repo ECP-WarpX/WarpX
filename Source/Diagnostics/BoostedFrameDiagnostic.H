@@ -203,10 +203,17 @@ public:
      *    and lorentz-transformed to the lab-frame and copied to the full
      *    and reduce diagnostic and stored in particle_buffer.
      */
-    void writeLabFrameData(const amrex::MultiFab* cell_centered_data,
-                           const MultiParticleContainer& mypc,
-                           const amrex::Geometry& geom,
-                           const amrex::Real t_boost, const amrex::Real dt);
+    //void writeLabFrameData(const amrex::MultiFab* cell_centered_data,
+    //                       const MultiParticleContainer& mypc,
+    //                       const amrex::Geometry& geom,
+    //                       const amrex::Real t_boost, const amrex::Real dt);
+    // change for CC-OPT
+    void writeLabFrameData(
+         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_aux,
+         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_aux,
+         const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp,
+         const MultiParticleContainer& mypc, const amrex::Geometry& geom,
+         const amrex::Real t_boost, const amrex::Real dt);
     /// The metadata containg information on t_boost, num_snapshots, and Lorentz parameters.
     void writeMetaData();
 
