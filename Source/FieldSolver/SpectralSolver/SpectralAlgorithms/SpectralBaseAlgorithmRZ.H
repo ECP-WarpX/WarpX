@@ -31,7 +31,7 @@ class SpectralBaseAlgorithmRZ
                                 amrex::DistributionMapping const & dm,
                                 int const norder_z, bool const nodal)
           // Compute and assign the modified k vectors
-          : modified_kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_z,nodal))
+          : modified_kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, nodal))
           {};
 
         // Modified finite-order vectors

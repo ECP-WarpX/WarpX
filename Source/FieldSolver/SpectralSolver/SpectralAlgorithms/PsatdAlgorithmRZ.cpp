@@ -8,11 +8,11 @@ using namespace amrex;
 PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralHankelKSpace const & spectral_kspace,
                                     DistributionMapping const & dm,
                                     int const n_rz_azimuthal_modes, int const norder_z,
-                                    bool const nodal, Real const dt)
+                                    bool const nodal, Real const dt_step)
      // Initialize members of base class
      : SpectralBaseAlgorithmRZ(spectral_kspace, dm,
                                norder_z, nodal),
-       dt(dt)
+       dt(dt_step)
 {
 
     // Allocate the arrays of coefficients
@@ -54,8 +54,8 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataHankel & f)
         Array4<const Real> X3_arr = X3_coef[mfi].array();
 
         // Extract pointers for the k vectors
-        auto const & kr = f.getKrArray(mfi);
-        Real const* kr_arr = kr.dataPtr();
+        auto const & kr_modes = f.getKrArray(mfi);
+        Real const* kr_arr = kr_modes.dataPtr();
         Real const* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
         int const nr = bx.length(0);
 

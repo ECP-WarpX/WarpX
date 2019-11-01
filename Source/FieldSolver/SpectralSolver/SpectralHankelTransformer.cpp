@@ -1,22 +1,25 @@
 #include <WarpXConst.H>
 #include <SpectralHankelTransformer.H>
 
-SpectralHankelTransformer::SpectralHankelTransformer (const int nr,
-                                                      const int n_rz_azimuthal_modes,
-                                                      const amrex::Real rmax)
-: nr(nr), n_rz_azimuthal_modes(n_rz_azimuthal_modes)
+SpectralHankelTransformer::SpectralHankelTransformer (int const nr_nodes,
+                                                      int const modes,
+                                                      amrex::Real const rmax)
+: nr(nr_nodes), n_rz_azimuthal_modes(modes)
 {
 
+    dht0.resize(n_rz_azimuthal_modes);
+    dhtp.resize(n_rz_azimuthal_modes);
+    dhtm.resize(n_rz_azimuthal_modes);
     kr.resize(nr*n_rz_azimuthal_modes);
 
     for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
-        dht0[mode] = HankelTransform(mode  , mode, nr, rmax);
-        dhtm[mode] = HankelTransform(mode+1, mode, nr, rmax);
-        dhtp[mode] = HankelTransform(mode-1, mode, nr, rmax);
+        dht0[mode].reset( new HankelTransform(mode  , mode, nr, rmax) );
+        dhtp[mode].reset( new HankelTransform(mode+1, mode, nr, rmax) );
+        dhtm[mode].reset( new HankelTransform(mode-1, mode, nr, rmax) );
 
         // Save all of the kr's in one place to allow easy access later
         amrex::Real *kr_array = kr.dataPtr();
-        auto const & nu = dht0[mode].getSpectralFrequencies();
+        auto const & nu = dht0[mode]->getSpectralFrequencies();
         auto const & nu_array = nu.dataPtr();
         amrex::ParallelFor(nr,
         [=] AMREX_GPU_DEVICE (int ir)
@@ -44,7 +47,7 @@ SpectralHankelTransformer::PhysicalToSpectral_Scalar (amrex::Box const & box,
         amrex::Array4<amrex::Real> const & F_physical_i_array = F_physical_i.array();
         amrex::Array4<amrex::Real> const & G_spectral_i_array = G_spectral_i.array();
         int const mode = (icomp + 1)/2;
-        dht0[mode].HankelForwardTransform(nz, F_physical_i_array, G_spectral_i_array);
+        dht0[mode]->HankelForwardTransform(nz, F_physical_i_array, G_spectral_i_array);
     }
 }
 
@@ -119,10 +122,10 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
         auto const & G_m_spectral_r_array = G_m_spectral_r.array();
         auto const & G_m_spectral_c_array = G_m_spectral_c.array();
 
-        dhtp[mode].HankelForwardTransform(nz, temp_p_r_array, G_p_spectral_r_array);
-        dhtp[mode].HankelForwardTransform(nz, temp_p_c_array, G_p_spectral_c_array);
-        dhtm[mode].HankelForwardTransform(nz, temp_m_r_array, G_m_spectral_r_array);
-        dhtm[mode].HankelForwardTransform(nz, temp_m_c_array, G_m_spectral_c_array);
+        dhtp[mode]->HankelForwardTransform(nz, temp_p_r_array, G_p_spectral_r_array);
+        dhtp[mode]->HankelForwardTransform(nz, temp_p_c_array, G_p_spectral_c_array);
+        dhtm[mode]->HankelForwardTransform(nz, temp_m_r_array, G_m_spectral_r_array);
+        dhtm[mode]->HankelForwardTransform(nz, temp_m_c_array, G_m_spectral_c_array);
 
     }
 }
@@ -143,7 +146,7 @@ SpectralHankelTransformer::SpectralToPhysical_Scalar (amrex::Box const & box,
         amrex::Array4<amrex::Real> const & G_spectral_i_array = G_spectral_i.array();
         amrex::Array4<amrex::Real> const & F_physical_i_array = F_physical_i.array();
         int const mode = (icomp + 1)/2;
-        dht0[mode].HankelInverseTransform(nz, G_spectral_i_array, F_physical_i_array);
+        dht0[mode]->HankelInverseTransform(nz, G_spectral_i_array, F_physical_i_array);
     }
 }
 
@@ -197,16 +200,16 @@ SpectralHankelTransformer::SpectralToPhysical_Vector (amrex::Box const & box,
         amrex::FArrayBox F_t_physical_r(F_t_physical, amrex::make_alias, icomp  , 1);
         auto const & F_r_physical_r_array = F_r_physical_r.array();
         auto const & F_t_physical_r_array = F_t_physical_r.array();
-        dhtp[mode].HankelInverseTransform(nz, temp_r_r_array, F_r_physical_r_array);
-        dhtm[mode].HankelInverseTransform(nz, temp_t_r_array, F_t_physical_r_array);
+        dhtp[mode]->HankelInverseTransform(nz, temp_r_r_array, F_r_physical_r_array);
+        dhtm[mode]->HankelInverseTransform(nz, temp_t_r_array, F_t_physical_r_array);
 
         if (mode > 0) {
             amrex::FArrayBox F_r_physical_c(F_r_physical, amrex::make_alias, icomp+1, 1);
             amrex::FArrayBox F_t_physical_c(F_t_physical, amrex::make_alias, icomp+1, 1);
             auto const & F_r_physical_c_array = F_r_physical_c.array();
             auto const & F_t_physical_c_array = F_t_physical_c.array();
-            dhtp[mode].HankelInverseTransform(nz, temp_r_c_array, F_r_physical_c_array);
-            dhtm[mode].HankelInverseTransform(nz, temp_t_c_array, F_t_physical_c_array);
+            dhtp[mode]->HankelInverseTransform(nz, temp_r_c_array, F_r_physical_c_array);
+            dhtm[mode]->HankelInverseTransform(nz, temp_t_c_array, F_t_physical_c_array);
         }
 
     }

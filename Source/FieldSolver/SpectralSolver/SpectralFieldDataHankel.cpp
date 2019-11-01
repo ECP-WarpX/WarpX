@@ -9,8 +9,8 @@ SpectralFieldDataHankel::SpectralFieldDataHankel (BoxArray const & realspace_ba,
                                                   SpectralHankelKSpace const & k_space,
                                                   DistributionMapping const & dm,
                                                   int const n_field_required,
-                                                  int const n_rz_azimuthal_modes)
-    : n_rz_azimuthal_modes(n_rz_azimuthal_modes)
+                                                  int const n_modes)
+    : n_rz_azimuthal_modes(n_modes)
 {
     BoxArray const & spectralspace_ba = k_space.spectralspace_ba;
 
@@ -188,6 +188,8 @@ SpectralFieldDataHankel::FABZForwardTransform (MFIter const & mfi,
     // The fields are organized so that the fields for each mode
     // are grouped together in memory.
     Box const spectralspace_bx = tmpSpectralField[mfi].box();
+    int const nz = spectralspace_bx.length(1);
+    amrex::Real inv_nz = 1./nz;
 
     ParallelFor(spectralspace_bx, modes,
     [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
@@ -196,7 +198,7 @@ SpectralFieldDataHankel::FABZForwardTransform (MFIter const & mfi,
         if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
         // Copy field into the right index
         int const ic = field_index + mode*SpectralFieldIndex::n_fields;
-        fields_arr(i,j,k,ic) = spectral_field_value;
+        fields_arr(i,j,k,ic) = spectral_field_value*inv_nz;
     });
 }
 
@@ -251,7 +253,6 @@ SpectralFieldDataHankel::FABZBackwardTransform (MFIter const & mfi,
 
     // Copy the interleaved complex to the split complex
     Box realspace_bx = tempHTransformed[mfi].box();
-    realspace_bx.enclosedCells(); // Discard last point in nodal direction
 
     int const ncomp = 2*n_rz_azimuthal_modes - 1;
     amrex::FArrayBox tempHTransformedSplit(realspace_bx, ncomp);
@@ -351,7 +352,8 @@ SpectralFieldDataHankel::BackwardTransform (MultiFab& mf, int const field_index,
         amrex::FArrayBox tempHTransformedSplit = FABZBackwardTransform(mfi, field_index, is_nodal_z);
 
         // Perform the Hankel inverse transform last
-        Box const realspace_bx = mf[mfi].box(); // Copy the box
+        Box realspace_bx = mf[mfi].box(); // Copy the box
+        realspace_bx.enclosedCells(); // Discard last point in nodal direction
         amrex::FArrayBox mf_comp(mf[mfi], amrex::make_alias, i_comp*ncomp, ncomp);
         hankeltransformer[mfi].SpectralToPhysical_Scalar(realspace_bx, tempHTransformedSplit, mf_comp);
 
@@ -395,7 +397,8 @@ SpectralFieldDataHankel::BackwardTransform (MultiFab& mf_r, int const field_inde
         amrex::FArrayBox tempHTransformedSplit_m = FABZBackwardTransform(mfi, field_index_t, is_nodal_z);
 
         // Perform the Hankel inverse transform last
-        Box const realspace_bx = mf_r[mfi].box(); // Copy the box
+        Box realspace_bx = mf_r[mfi].box(); // Copy the box
+        realspace_bx.enclosedCells(); // Discard last point in nodal direction
         hankeltransformer[mfi].SpectralToPhysical_Vector(realspace_bx,
                                                          tempHTransformedSplit_p, tempHTransformedSplit_m,
                                                          mf_r[mfi], mf_t[mfi]);

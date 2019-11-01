@@ -532,6 +532,23 @@ WarpX::ReadParameters ()
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1.
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
+
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+        // Force use of cell centered grid.
+        // This could be relaxed along z, but
+        // needs to be the same for all quantities.
+        Bx_nodal_flag = IntVect::TheCellVector();
+        By_nodal_flag = IntVect::TheCellVector();
+        Bz_nodal_flag = IntVect::TheCellVector();
+        Ex_nodal_flag = IntVect::TheCellVector();
+        Ey_nodal_flag = IntVect::TheCellVector();
+        Ez_nodal_flag = IntVect::TheCellVector();
+        jx_nodal_flag = IntVect::TheCellVector();
+        jy_nodal_flag = IntVect::TheCellVector();
+        jz_nodal_flag = IntVect::TheCellVector();
+        rho_nodal_flag = IntVect::TheCellVector();
+#endif
+
     }
 
     {

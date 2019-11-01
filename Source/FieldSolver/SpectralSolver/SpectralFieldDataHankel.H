@@ -28,7 +28,7 @@ class SpectralFieldDataHankel
                                 const SpectralHankelKSpace& k_space,
                                 const amrex::DistributionMapping& dm,
                                 const int n_field_required,
-                                const int n_rz_azimuthal_modes);
+                                const int n_modes);
         SpectralFieldDataHankel() = default; // Default constructor
         SpectralFieldDataHankel& operator=(SpectralFieldDataHankel&& field_data) = default;
         ~SpectralFieldDataHankel();

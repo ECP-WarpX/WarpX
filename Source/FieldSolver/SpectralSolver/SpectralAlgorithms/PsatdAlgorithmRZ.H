@@ -13,7 +13,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         PsatdAlgorithmRZ(SpectralHankelKSpace const & spectral_kspace,
                          amrex::DistributionMapping const & dm,
                          int const n_rz_azimuthal_modes, int const norder_z,
-                         bool const nodal, amrex::Real const dt);
+                         bool const nodal, amrex::Real const dt_step);
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldDataHankel & f) override final;
         virtual int getRequiredNumberOfFields() const override final {

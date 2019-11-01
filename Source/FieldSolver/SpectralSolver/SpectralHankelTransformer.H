@@ -60,9 +60,9 @@ class SpectralHankelTransformer
         int n_rz_azimuthal_modes;
         HankelTransform::RealVector kr;
 
-        amrex::Vector<HankelTransform> dht0;
-        amrex::Vector<HankelTransform> dhtm;
-        amrex::Vector<HankelTransform> dhtp;
+        amrex::Vector< std::unique_ptr<HankelTransform> > dht0;
+        amrex::Vector< std::unique_ptr<HankelTransform> > dhtm;
+        amrex::Vector< std::unique_ptr<HankelTransform> > dhtp;
 
 };
 
