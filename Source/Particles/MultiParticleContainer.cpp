@@ -989,8 +989,8 @@ void MultiParticleContainer::doQedEvents()
             {
                 // Breit Wheeler mask: one element per source particles.
                 // 0 no BW, 1 BW
-                //amrex::Gpu::ManagedDeviceVector<int> is_ionized;
-                //pc_source->buildIonizationMask(mfi, lev, is_ionized);
+                amrex::Gpu::ManagedDeviceVector<int> should_do_breit_wheel;
+                pc_source->BuildQedMask(mfi, lev, should_do_breit_wheel);
                 // Create particles in pc_product
                 //int do_boost = WarpX::do_back_transformed_diagnostics
                 //    && pc_product->doBackTransformedDiagnostics();

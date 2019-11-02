@@ -339,6 +339,9 @@ protected:
     std::string m_qed_breit_wheeler_pos_product_name;
     int m_qed_quantum_sync_phot_product;
     std::string m_qed_quantum_sync_phot_product_name;
+
+    virtual void BuildQedMask(const amrex::MFIter& mfi, const int lev,
+        amrex::Gpu::ManagedDeviceVector<int>& ionization_mask) {};
 #endif
 
     amrex::Vector<amrex::FArrayBox> local_rho;

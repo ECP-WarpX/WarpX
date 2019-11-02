@@ -2315,4 +2315,40 @@ set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine> ptr)
 {
     m_shr_p_qs_engine = ptr;
 }
+
+void
+PhysicalParticleContainer::BuildQedMask(
+    const amrex::MFIter& mfi, const int lev,
+    amrex::Gpu::ManagedDeviceVector<int>& qed_mask)
+{
+    BL_PROFILE("PPC::buildQedMask");
+
+    // Current tile info
+    const int grid_id = mfi.index();
+    const int tile_id = mfi.LocalTileIndex();
+
+    // Get GPU-friendly arrays of particle data
+    auto& ptile = GetParticles(lev)[std::make_pair(grid_id,tile_id)];
+    // Only need attribs (i.e., SoA data)
+    auto& soa = ptile.GetStructOfArrays();
+    const int np = ptile.GetArrayOfStructs().size();
+
+    // If no particle, nothing to do.
+    if (np == 0) return;
+
+    // Otherwise, resize qed_mask, and get poiters to attribs arrays.
+    qed_mask.resize(np);
+
+    const ParticleReal * const AMREX_RESTRICT p_tau =
+        soa.GetRealData(particle_comps["tau"]).data();
+
+    int * const AMREX_RESTRICT p_qed_mask =
+         qed_mask.data();
+
+    ParallelFor(np,
+        [=] AMREX_GPU_DEVICE (long i){
+                p_qed_mask[i] = (p_tau[i] <  0);
+        }
+    );
+}
 #endif

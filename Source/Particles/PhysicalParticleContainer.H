@@ -228,6 +228,10 @@ public:
      */
     virtual void EvolveOpticalDepth(WarpXParIter& pti,
         amrex::Real dt);
+
+    //TO ADD
+    virtual void BuildQedMask(const amrex::MFIter& mfi, const int lev,
+        amrex::Gpu::ManagedDeviceVector<int>& qed_mask) override;
 #endif
 
 protected:
