@@ -72,6 +72,25 @@ photons.qed_breit_wheeler_ele_product_species = ele_bw
 photons.qed_breit_wheeler_pos_product_species = pos_bw
 #################################
 
+
+### PRODUCT SPECIES ###
+ele_bw.charge = -q_e
+ele_bw.mass = m_e
+ele_bw.injection_style = nuniformpercell
+ele_bw.num_particles_per_cell_each_dim = 1 1
+ele_bw.profile = constant
+ele_bw.density = 0.0
+ele_bw.momentum_distribution_type = "gaussian"
+
+pos_bw.charge = q_e
+pos_bw.mass = m_e
+pos_bw.injection_style = nuniformpercell
+pos_bw.num_particles_per_cell_each_dim = 1 1
+pos_bw.profile = constant
+pos_bw.density = 0.0
+pos_bw.momentum_distribution_type = "gaussian"
+###
+
 ##########QED TABLES####################
 qed_bw.chi_min = 0.001
 qed_bw.generate_table = 1
