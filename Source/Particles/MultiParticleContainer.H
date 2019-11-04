@@ -209,6 +209,8 @@ public:
         m_p_unq_qed_breit_wheeler_process;
 
     void doQedEvents();
+    void doQedBreitWheeler(std::unique_ptr<WarpXParticleContainer>& p_source);
+    void doQedQuantumSync(std::unique_ptr<WarpXParticleContainer>& p_source);
 #endif
 
 protected:
