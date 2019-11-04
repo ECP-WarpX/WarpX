@@ -83,6 +83,13 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         pp.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
 
     //TODO: SHOULD CHECK IF SPECIES IS EITHER ELECTRONS OR POSITRONS!!
+
+    //If Quantum Synchrotron process is enabled, look for the target photon
+    //species
+    if(m_do_qed_quantum_sync){
+        pp.get("qed_quantum_sync_phot_product_species", m_qed_quantum_sync_phot_product);
+    }
+
 #endif
 
     //variable to set plot_flags size

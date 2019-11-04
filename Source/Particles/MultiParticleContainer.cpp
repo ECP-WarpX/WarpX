@@ -517,7 +517,7 @@ MultiParticleContainer::mapSpeciesProduct ()
         }
 
 #ifdef WARPX_QED
-        if (pc-> has_breit_wheeler()){
+        if (pc->has_breit_wheeler()){
             const int i_product_ele = getSpeciesID(
                 pc->m_qed_breit_wheeler_ele_product_name);
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -531,7 +531,15 @@ MultiParticleContainer::mapSpeciesProduct ()
                 i != i_product_pos,
                 "ERROR: Breit Wheeler product cannot be the same species");
             pc->m_qed_breit_wheeler_pos_product = i_product_pos;
+        }
 
+        if(pc->has_quantum_sync()){
+            const int i_product_phot = getSpeciesID(
+                pc->m_qed_quantum_sync_phot_product_name);
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != i_product_phot,
+                "ERROR: Quantum Synchrotron product cannot be the same species");
+            pc->m_qed_quantum_sync_phot_product = i_product_phot;
         }
 #endif
 
