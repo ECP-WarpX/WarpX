@@ -205,6 +205,9 @@ public:
     /*
     *   TO ADD
     */
+    std::unique_ptr<QedBreitWheelerPairCreationProcess>
+        m_p_unq_qed_breit_wheeler_process;
+
     void doQedEvents();
 #endif
 

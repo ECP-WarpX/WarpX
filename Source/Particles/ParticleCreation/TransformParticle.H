@@ -47,19 +47,4 @@ void transformSourceParticle < elementaryProcessType::Ionization > (
     runtime_iattribs[0][i] += 1;
 }
 
-#ifdef WARPX_QED
-// For Breit Wheeler Pair creation, set to zero the ID of the source particle
-template <>
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void
-transformSourceParticle < elementaryProcessType::QedBreitWheelerPairCreation > (
-    int i,
-    WarpXParticleContainer::ParticleType& particle,
-    amrex::GpuArray<int*,1> runtime_iattribs)
-{
-    //Sets ID to negative number so that the particle is destroyed.
-    particle.id() = -1;
-}
-#endif
-
 #endif // TRANSFORMPARTICLE_H_

@@ -5,6 +5,11 @@
 #include "CopyParticle.H"
 #include "TransformParticle.H"
 
+#ifdef WARPX_QED
+    #include <BreitWheelerEngineWrapper.H>
+    #include <WarpXConst.H>
+#endif
+
 /**
  * \brief Base class for particle creation processes
  *
@@ -255,10 +260,114 @@ class IonizationProcess: public elementaryProcess<elementaryProcessType::Ionizat
 {};
 
 #ifdef WARPX_QED
+
+//####################################################################
+
 // Derived class for Breit Wheeler pair creation process
 class QedBreitWheelerPairCreationProcess :
     public elementaryProcess<elementaryProcessType::QedBreitWheelerPairCreation>
-{};
+{
+public:
+    QedBreitWheelerPairCreationProcess(const BreitWheelerGeneratePairs&& t_functor):
+        m_generate_functor{t_functor},
+        elementaryProcess<elementaryProcessType::QedBreitWheelerPairCreation>()
+    {};
+
+    void copyAndTransformParticles(
+        amrex::Gpu::ManagedDeviceVector<int>& is_flagged,
+        amrex::Gpu::ManagedDeviceVector<int>& i_product,
+        int np_source,
+        amrex::Gpu::ManagedDeviceVector<int> v_pid_product,
+        amrex::Gpu::ManagedDeviceVector<WarpXParticleContainer::ParticleType*> v_particles_product,
+        WarpXParticleContainer::ParticleType* particles_source,
+        const amrex::Vector<copyParticle>& v_copy_functor,
+        amrex::GpuArray<int*,1> runtime_iattribs_source)
+    {
+        int const * const AMREX_RESTRICT p_is_flagged = is_flagged.dataPtr();
+        int const * const AMREX_RESTRICT p_i_product = i_product.dataPtr();
+        copyParticle const * const p_copy_functor = v_copy_functor.data();
+        WarpXParticleContainer::ParticleType * * p_particles_product = v_particles_product.data();
+        int const * const p_pid_product = v_pid_product.data();
+
+        // Loop over all source particles. If is_flagged, copy particle data
+        // to corresponding product particle.
+        int nproducts = v_particles_product.size();
+        amrex::For(
+            np_source, [=] AMREX_GPU_DEVICE (int is) noexcept
+            {
+                if(p_is_flagged[is]){
+                    // offset of 1 due to inclusive scan
+                    int ip = p_i_product[is]-1;
+                    WarpXParticleContainer::ParticleType& p_source  = particles_source[is];
+
+                    WarpXParticleContainer::ParticleType* particles_product_ele =
+                        p_particles_product[0];
+                    WarpXParticleContainer::ParticleType& p_product_ele =
+                        particles_product_ele[ip];
+                    p_copy_functor[0](
+                        is, ip, p_pid_product[0], p_source, p_product_ele);
+
+                    WarpXParticleContainer::ParticleType* particles_product_pos =
+                        p_particles_product[1];
+                    WarpXParticleContainer::ParticleType& p_product_pos =
+                        particles_product_pos[ip];
+                    p_copy_functor[1](
+                        is, ip, p_pid_product[1], p_source, p_product_pos);
+
+                    const amrex::ParticleReal me = PhysConst::m_e;
+                    const amrex::ParticleReal one_over_me = 1./PhysConst::m_e;
+
+                    const amrex::ParticleReal w = p_source.rdata(0);
+                    const amrex::ParticleReal px = me*p_source.rdata(1);
+                    const amrex::ParticleReal py = me*p_source.rdata(2);
+                    const amrex::ParticleReal pz = me*p_source.rdata(3);
+                    const amrex::ParticleReal ex = p_source.rdata(4);
+                    const amrex::ParticleReal ey = p_source.rdata(5);
+                    const amrex::ParticleReal ez = p_source.rdata(6);
+                    const amrex::ParticleReal bx = p_source.rdata(7);
+                    const amrex::ParticleReal by = p_source.rdata(8);
+                    const amrex::ParticleReal bz = p_source.rdata(9);
+                    amrex::ParticleReal e_w = 0.0;
+                    amrex::ParticleReal e_px = 0.0;
+                    amrex::ParticleReal e_py = 0.0;
+                    amrex::ParticleReal e_pz = 0.0;
+                    amrex::ParticleReal p_px = 0.0;
+                    amrex::ParticleReal p_py = 0.0;
+                    amrex::ParticleReal p_pz = 0.0;
+                    amrex::ParticleReal p_w = 0.0;
+
+                    m_generate_functor.operator()<1>(
+                        px, py, pz,
+                        ex, ey, ez,
+                        bx, by, bz,
+                        w,
+                        &e_px, &e_py, &e_pz,
+                        &p_pz, &p_py, &p_pz,
+                        &e_w, &p_w);
+
+                    p_product_ele.rdata(0) = e_w;
+                    p_product_ele.rdata(1) = e_px*one_over_me;
+                    p_product_ele.rdata(2) = e_py*one_over_me;
+                    p_product_ele.rdata(3) = e_pz*one_over_me;
+                    p_product_pos.rdata(0) = p_w;
+                    p_product_pos.rdata(1) = p_px*one_over_me;
+                    p_product_pos.rdata(2) = p_py*one_over_me;
+                    p_product_pos.rdata(3) = p_pz*one_over_me;
+
+                    p_source.id() = -1; //Sets ID to zero
+
+                }
+            }
+        );
+    }
+
+private:
+    const BreitWheelerGeneratePairs m_generate_functor;
+};
+
+//####################################################################
+
+
 #endif
 
 #endif // ELEMENTARYPROCESS_H_

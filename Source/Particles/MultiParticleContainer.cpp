@@ -726,6 +726,11 @@ void MultiParticleContainer::InitBreitWheeler ()
 
     if(!m_shr_p_bw_engine->are_lookup_tables_initialized())
         amrex::Error("Table initialization has failed!\n");
+
+    //ADD COMMENT
+    m_p_unq_qed_breit_wheeler_process = std::make_unique<
+        QedBreitWheelerPairCreationProcess>(
+            m_shr_p_bw_engine->build_pair_functor());
 }
 
 std::tuple<bool,std::string,PicsarQuantumSynchrotronCtrl>
@@ -969,11 +974,11 @@ void MultiParticleContainer::doQedEvents()
             if (pc_source->do_tiling && Gpu::notInLaunchRegion()) {
                 AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                     pc_product_ele->do_tiling,
-                    "For ionization, either all or none of the "
+                    "For Breit Wheeler, either all or none of the "
                     "particle species must use tiling.");
                 AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                     pc_product_pos->do_tiling,
-                    "For ionization, either all or none of the "
+                    "For Breit Wheeler, either all or none of the "
                     "particle species must use tiling.");
                 info.EnableTiling(pc_product_ele->tile_size);
                 info.EnableTiling(pc_product_pos->tile_size);
@@ -992,16 +997,21 @@ void MultiParticleContainer::doQedEvents()
                 amrex::Gpu::ManagedDeviceVector<int> should_do_breit_wheel;
                 pc_source->BuildQedMask(mfi, lev, should_do_breit_wheel);
                 // Create particles in pc_product
-                //int do_boost = WarpX::do_back_transformed_diagnostics
-                //    && pc_product->doBackTransformedDiagnostics();
-                //amrex::Gpu::ManagedDeviceVector<int> v_do_back_transformed_product{do_boost};
-                //const amrex::Vector<WarpXParticleContainer*> v_pc_product {pc_product.get()};
-                // Copy source to product particles, and increase ionization
-                // level of source particle
-                //ionization_process.createParticles(lev, mfi, pc_source, v_pc_product,
-                //                                  is_ionized, v_do_back_transformed_product);
+                int do_boost_ele = WarpX::do_back_transformed_diagnostics
+                    && pc_product_ele->doBackTransformedDiagnostics();
+                int do_boost_pos = WarpX::do_back_transformed_diagnostics
+                    && pc_product_pos->doBackTransformedDiagnostics();
+                amrex::Gpu::ManagedDeviceVector<int>
+                    v_do_back_transformed_product{do_boost_ele, do_boost_pos};
+                const amrex::Vector<WarpXParticleContainer*>
+                    v_pc_product {pc_product_ele.get(), pc_product_pos.get()};
+                // ADD COMMENT HERE
+                m_p_unq_qed_breit_wheeler_process->createParticles
+                    (lev, mfi, pc_source, v_pc_product,
+                     should_do_breit_wheel, v_do_back_transformed_product);
                 // Synchronize to prevent the destruction of temporary arrays (at the
                 // end of the function call) before the kernel executes.
+
                 Gpu::streamSynchronize();
             }
 

@@ -94,15 +94,15 @@ pos_bw.momentum_distribution_type = "gaussian"
 ##########QED TABLES####################
 qed_bw.chi_min = 0.001
 qed_bw.generate_table = 1
-qed_bw.tab_dndt_chi_min = 0.1
-qed_bw.tab_dndt_chi_max = 500
+qed_bw.tab_dndt_chi_min = 0.01
+qed_bw.tab_dndt_chi_max = 500.
 qed_bw.tab_dndt_how_many = 128
 qed_bw.tab_pair_chi_min = 0.01
-qed_bw.tab_pair_chi_max = 500
-qed_bw.tab_pair_chi_how_many = 2
-qed_bw.tab_pair_prob_how_many = 2
+qed_bw.tab_pair_chi_max = 500.
+qed_bw.tab_pair_chi_how_many = 50
+qed_bw.tab_pair_prob_how_many = 50
 qed_bw.save_table_in = "bw_table"
-#qed_bw.load_table_from = "bw_table"
+qed_bw.load_table_from = "bw_table"
 #################################
 
 ### EXTERNAL FIELD ###
