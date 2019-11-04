@@ -105,6 +105,7 @@ qs_phot.mass = m_e
 qs_phot.injection_style = nuniformpercell
 qs_phot.num_particles_per_cell_each_dim = 1 1
 qs_phot.profile = constant
+ Ugly trick to avoid photons at T=0
 qs_phot.density = 0.0
 qs_phot.momentum_distribution_type = "gaussian"
 
@@ -119,7 +120,7 @@ qed_qs.tab_em_chi_max = 200
 qed_qs.tab_em_chi_how_many = 2
 qed_qs.tab_em_prob_how_many = 2
 qed_qs.save_table_in = "qs_table"
-#qed_qs.load_table_from = "qs_table"
+qed_qs.load_table_from = "qs_table"
 #################################
 
 ### EXTERNAL FIELD ###

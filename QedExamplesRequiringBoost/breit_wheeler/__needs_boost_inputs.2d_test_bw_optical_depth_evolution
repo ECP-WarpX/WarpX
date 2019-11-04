@@ -81,6 +81,8 @@ ele_bw.num_particles_per_cell_each_dim = 1 1
 ele_bw.profile = constant
 ele_bw.density = 0.0
 ele_bw.momentum_distribution_type = "gaussian"
+ele_bw.xmin = 1 ## Ugly trick to avoid electrons at T=0
+ele_bw.xmax = -1 ##  Ugly trick to avoid electrons at T=0
 
 pos_bw.charge = q_e
 pos_bw.mass = m_e
@@ -89,6 +91,8 @@ pos_bw.num_particles_per_cell_each_dim = 1 1
 pos_bw.profile = constant
 pos_bw.density = 0.0
 pos_bw.momentum_distribution_type = "gaussian"
+pos_bw.xmin = 1 ## Ugly trick to avoid positrons at T=0
+pos_bw.xmax = -1 ##  Ugly trick to avoid positrons at T=0
 ###
 
 ##########QED TABLES####################
