@@ -105,7 +105,8 @@ qs_phot.mass = m_e
 qs_phot.injection_style = nuniformpercell
 qs_phot.num_particles_per_cell_each_dim = 1 1
 qs_phot.profile = constant
- Ugly trick to avoid photons at T=0
+qs_phot.xmin = 1 ## Ugly trick to avoid photons at T=0
+qs_phot.xmax = -1 ##  Ugly trick to avoid photons at T=0
 qs_phot.density = 0.0
 qs_phot.momentum_distribution_type = "gaussian"
 
