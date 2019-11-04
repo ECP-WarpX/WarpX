@@ -342,6 +342,10 @@ protected:
 
     virtual void BuildQedMask(const amrex::MFIter& mfi, const int lev,
         amrex::Gpu::ManagedDeviceVector<int>& ionization_mask) {};
+
+    virtual void BuildQedMaskAndResetTauQuantumSync(
+        const amrex::MFIter& mfi, const int lev,
+        amrex::Gpu::ManagedDeviceVector<int>& ionization_mask) {};
 #endif
 
     virtual bool AmIAPhoton () {return false;};

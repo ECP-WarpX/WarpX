@@ -2377,4 +2377,46 @@ PhysicalParticleContainer::BuildQedMask(
         }
     );
 }
+
+void
+PhysicalParticleContainer::BuildQedMaskAndResetTauQuantumSync(
+    const amrex::MFIter& mfi, const int lev,
+    amrex::Gpu::ManagedDeviceVector<int>& qed_mask)
+{
+    BL_PROFILE("PPC::BuildQedMaskAndResetTauQuantumSync");
+
+    // Current tile info
+    const int grid_id = mfi.index();
+    const int tile_id = mfi.LocalTileIndex();
+
+    // Get GPU-friendly arrays of particle data
+    auto& ptile = GetParticles(lev)[std::make_pair(grid_id,tile_id)];
+    // Only need attribs (i.e., SoA data)
+    auto& soa = ptile.GetStructOfArrays();
+    const int np = ptile.GetArrayOfStructs().size();
+
+    // If no particle, nothing to do.
+    if (np == 0) return;
+
+    // Otherwise, resize qed_mask, and get poiters to attribs arrays.
+    qed_mask.resize(np);
+
+    ParticleReal * const AMREX_RESTRICT p_tau =
+        soa.GetRealData(particle_comps["tau"]).data();
+
+    int * const AMREX_RESTRICT p_qed_mask =
+         qed_mask.data();
+
+    auto quantum_sync_get_opt =
+            m_shr_p_qs_engine->build_optical_depth_functor();
+
+    ParallelFor(np,
+        [=] AMREX_GPU_DEVICE (long i){
+            if(p_tau[i] <  0){
+                p_qed_mask[i] = 1;
+                p_tau[i] = quantum_sync_get_opt();
+            }
+        }
+    );
+}
 #endif

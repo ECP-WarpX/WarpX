@@ -1053,5 +1053,53 @@ void MultiParticleContainer::doQedQuantumSync(
     std::unique_ptr<WarpXParticleContainer>& pc_source)
 {
     BL_PROFILE("MPC::doQedEvents::doQedQuantumSync");
+
+        // Get product species
+    auto& pc_product_phot= allcontainers[pc_source->m_qed_quantum_sync_phot_product];
+
+    for (int lev = 0; lev <= pc_source->finestLevel(); ++lev){
+
+        // When using runtime components, AMReX requires to touch all tiles
+        // in serial and create particles tiles with runtime components if
+        // they do not exist (or if they were defined by default, i.e.,
+        // without runtime component).
+#ifdef _OPENMP
+        // Touch all tiles of source species in serial if runtime attribs
+        if ( (pc_source->NumRuntimeRealComps()>0) || (pc_source->NumRuntimeIntComps()>0) ){
+            TouchAllTileseOfSpeciesAtLevel(pc_source, lev);
+        }
+#endif
+        // Touch all tiles of product species in serial
+        TouchAllTileseOfSpeciesAtLevel(pc_product_phot, lev);
+
+        // Enable tiling
+        MFItInfo info;
+        if (pc_source->do_tiling && Gpu::notInLaunchRegion()) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                pc_product_phot->do_tiling,
+                "For Quantum Synchrotron, either all or none of the "
+                "particle species must use tiling.");
+            info.EnableTiling(pc_product_phot->tile_size);
+        }
+
+#ifdef _OPENMP
+        info.SetDynamic(true);
+#pragma omp parallel
+#endif
+
+        // Loop over all grids (if not tiling) or grids and tiles (if tiling)
+        for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
+        {
+            // Breit Wheeler mask: one element per source particles.
+            // 0 no BW, 1 BW
+            amrex::Gpu::ManagedDeviceVector<int> should_do_breit_wheel;
+            pc_source->BuildQedMaskAndResetTauQuantumSync
+                (mfi, lev, should_do_breit_wheel);
+
+            // ADD QS
+
+            Gpu::streamSynchronize();
+        }
+    }
 }
 #endif

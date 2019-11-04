@@ -232,6 +232,11 @@ public:
     //TO ADD
     virtual void BuildQedMask(const amrex::MFIter& mfi, const int lev,
         amrex::Gpu::ManagedDeviceVector<int>& qed_mask) override;
+
+    //TO ADD
+    virtual void BuildQedMaskAndResetTauQuantumSync(
+        const amrex::MFIter& mfi, const int lev,
+        amrex::Gpu::ManagedDeviceVector<int>& qed_mask) override;
 #endif
 
 protected:
