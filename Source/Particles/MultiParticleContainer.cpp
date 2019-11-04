@@ -531,6 +531,15 @@ MultiParticleContainer::mapSpeciesProduct ()
                 i != i_product_pos,
                 "ERROR: Breit Wheeler product cannot be the same species");
             pc->m_qed_breit_wheeler_pos_product = i_product_pos;
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_ele < allcontainers.size(),
+                "ERROR: Breit Wheeler product species not found");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_pos < allcontainers.size(),
+                "ERROR: Breit Wheeler product species not found");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                allcontainers[i_product_ele]->AmIAnElectron() &&
+                allcontainers[i_product_pos]->AmIAPositron(),
+                "ERROR: Breit Wheeler product species are of wrong type");
         }
 
         if(pc->has_quantum_sync()){
@@ -540,6 +549,12 @@ MultiParticleContainer::mapSpeciesProduct ()
                 i != i_product_phot,
                 "ERROR: Quantum Synchrotron product cannot be the same species");
             pc->m_qed_quantum_sync_phot_product = i_product_phot;
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_phot < allcontainers.size(),
+                "ERROR: Quantum Synchrotron product species not found");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                allcontainers[i_product_phot]->AmIAPhoton(),
+                "ERROR: Quantum Synchrotron product species is of wrong type");
         }
 #endif
 

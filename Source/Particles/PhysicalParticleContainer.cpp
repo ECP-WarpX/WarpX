@@ -2297,6 +2297,24 @@ PhysicalParticleContainer::AmIALepton(){
     return (this-> mass == PhysConst::m_e);
 }
 
+
+bool PhysicalParticleContainer::AmIAPhoton ()
+{
+    return false;
+}
+
+bool PhysicalParticleContainer::AmIAnElectron ()
+{
+    return (this-> mass == PhysConst::m_e &&
+        this->charge == -PhysConst::q_e);
+}
+
+bool PhysicalParticleContainer::AmIAPositron ()
+{
+    return (this-> mass == PhysConst::m_e &&
+        this->charge == PhysConst::q_e);
+}
+
 #ifdef WARPX_QED
 
 bool PhysicalParticleContainer::has_quantum_sync()

@@ -344,6 +344,11 @@ protected:
         amrex::Gpu::ManagedDeviceVector<int>& ionization_mask) {};
 #endif
 
+    virtual bool AmIAPhoton () {return false;};
+    virtual bool AmIAnElectron () {return false;};
+    virtual bool AmIAPositron () {return false;};
+
+
     amrex::Vector<amrex::FArrayBox> local_rho;
     amrex::Vector<amrex::FArrayBox> local_jx;
     amrex::Vector<amrex::FArrayBox> local_jy;
