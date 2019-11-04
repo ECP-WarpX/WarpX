@@ -87,7 +87,8 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     //If Quantum Synchrotron process is enabled, look for the target photon
     //species
     if(m_do_qed_quantum_sync){
-        pp.get("qed_quantum_sync_phot_product_species", m_qed_quantum_sync_phot_product);
+        pp.get("qed_quantum_sync_phot_product_species",
+            m_qed_quantum_sync_phot_product_name);
     }
 
 #endif
