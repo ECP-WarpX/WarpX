@@ -101,10 +101,7 @@ public:
         // --- source runtime integer attribs
         amrex::GpuArray<int*,1> runtime_iattribs_source;
         std::map<std::string, int> icomps_source = pc_source->getParticleiComps();
-        if(icomps_source.find("ionization_level") != icomps_source.end()){
-            runtime_iattribs_source[0] =
-                soa_source.GetIntData(icomps_source["ionization_level"]).data();
-        }
+        runtime_iattribs_source[0] = soa_source.GetIntData(icomps_source["ionization_level"]).data();
 
         int nproducts = v_pc_product.size();
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
