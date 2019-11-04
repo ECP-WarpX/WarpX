@@ -939,85 +939,96 @@ void MultiParticleContainer::TouchAllTileseOfSpeciesAtLevel
     }
 }
 
-//For now just BW
 void MultiParticleContainer::doQedEvents()
 {
     BL_PROFILE("MPC::doQedEvents");
 
     // Loop over all species.
    for (auto& pc_source : allcontainers){
-
-       if(!pc_source->has_breit_wheeler()) {continue;}
-
-        // Get product species
-        auto& pc_product_ele = allcontainers[pc_source->m_qed_breit_wheeler_ele_product];
-        auto& pc_product_pos = allcontainers[pc_source->m_qed_breit_wheeler_pos_product];
-
-        for (int lev = 0; lev <= pc_source->finestLevel(); ++lev){
-
-            // When using runtime components, AMReX requires to touch all tiles
-            // in serial and create particles tiles with runtime components if
-            // they do not exist (or if they were defined by default, i.e.,
-            // without runtime component).
-#ifdef _OPENMP
-            // Touch all tiles of source species in serial if runtime attribs
-            if ( (pc_source->NumRuntimeRealComps()>0) || (pc_source->NumRuntimeIntComps()>0) ){
-                TouchAllTileseOfSpeciesAtLevel(pc_source, lev);
-            }
-#endif
-            // Touch all tiles of product species in serial
-            TouchAllTileseOfSpeciesAtLevel(pc_product_ele, lev);
-            TouchAllTileseOfSpeciesAtLevel(pc_product_pos, lev);
-
-            // Enable tiling
-            MFItInfo info;
-            if (pc_source->do_tiling && Gpu::notInLaunchRegion()) {
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    pc_product_ele->do_tiling,
-                    "For Breit Wheeler, either all or none of the "
-                    "particle species must use tiling.");
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    pc_product_pos->do_tiling,
-                    "For Breit Wheeler, either all or none of the "
-                    "particle species must use tiling.");
-                info.EnableTiling(pc_product_ele->tile_size);
-                info.EnableTiling(pc_product_pos->tile_size);
-            }
-
-#ifdef _OPENMP
-            info.SetDynamic(true);
-#pragma omp parallel
-#endif
-
-            // Loop over all grids (if not tiling) or grids and tiles (if tiling)
-            for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
-            {
-                // Breit Wheeler mask: one element per source particles.
-                // 0 no BW, 1 BW
-                amrex::Gpu::ManagedDeviceVector<int> should_do_breit_wheel;
-                pc_source->BuildQedMask(mfi, lev, should_do_breit_wheel);
-                // Create particles in pc_product
-                int do_boost_ele = WarpX::do_back_transformed_diagnostics
-                    && pc_product_ele->doBackTransformedDiagnostics();
-                int do_boost_pos = WarpX::do_back_transformed_diagnostics
-                    && pc_product_pos->doBackTransformedDiagnostics();
-                amrex::Gpu::ManagedDeviceVector<int>
-                    v_do_back_transformed_product{do_boost_ele, do_boost_pos};
-                const amrex::Vector<WarpXParticleContainer*>
-                    v_pc_product {pc_product_ele.get(), pc_product_pos.get()};
-                // ADD COMMENT HERE
-                m_p_unq_qed_breit_wheeler_process->createParticles
-                    (lev, mfi, pc_source, v_pc_product,
-                     should_do_breit_wheel, v_do_back_transformed_product);
-                // Synchronize to prevent the destruction of temporary arrays (at the
-                // end of the function call) before the kernel executes.
-
-                Gpu::streamSynchronize();
-            }
-
-
+        if(pc_source->has_breit_wheeler()){
+            doQedBreitWheeler(pc_source);
+        }
+        else if(pc_source->has_quantum_sync()){
+            doQedQuantumSync(pc_source);
         }
    }
 }
 
+void MultiParticleContainer::doQedBreitWheeler(
+    std::unique_ptr<WarpXParticleContainer>& pc_source)
+{
+    BL_PROFILE("MPC::doQedEvents::doQedBreitWheeler");
+
+    // Get product species
+    auto& pc_product_ele = allcontainers[pc_source->m_qed_breit_wheeler_ele_product];
+    auto& pc_product_pos = allcontainers[pc_source->m_qed_breit_wheeler_pos_product];
+
+    for (int lev = 0; lev <= pc_source->finestLevel(); ++lev){
+
+        // When using runtime components, AMReX requires to touch all tiles
+        // in serial and create particles tiles with runtime components if
+        // they do not exist (or if they were defined by default, i.e.,
+        // without runtime component).
+#ifdef _OPENMP
+        // Touch all tiles of source species in serial if runtime attribs
+        if ( (pc_source->NumRuntimeRealComps()>0) || (pc_source->NumRuntimeIntComps()>0) ){
+            TouchAllTileseOfSpeciesAtLevel(pc_source, lev);
+        }
+#endif
+        // Touch all tiles of product species in serial
+        TouchAllTileseOfSpeciesAtLevel(pc_product_ele, lev);
+        TouchAllTileseOfSpeciesAtLevel(pc_product_pos, lev);
+
+        // Enable tiling
+        MFItInfo info;
+        if (pc_source->do_tiling && Gpu::notInLaunchRegion()) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                pc_product_ele->do_tiling,
+                "For Breit Wheeler, either all or none of the "
+                "particle species must use tiling.");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                pc_product_pos->do_tiling,
+                "For Breit Wheeler, either all or none of the "
+                "particle species must use tiling.");
+            info.EnableTiling(pc_product_ele->tile_size);
+            info.EnableTiling(pc_product_pos->tile_size);
+        }
+
+#ifdef _OPENMP
+        info.SetDynamic(true);
+#pragma omp parallel
+#endif
+
+        // Loop over all grids (if not tiling) or grids and tiles (if tiling)
+        for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
+        {
+            // Breit Wheeler mask: one element per source particles.
+            // 0 no BW, 1 BW
+            amrex::Gpu::ManagedDeviceVector<int> should_do_breit_wheel;
+            pc_source->BuildQedMask(mfi, lev, should_do_breit_wheel);
+            // Create particles in pc_product
+            int do_boost_ele = WarpX::do_back_transformed_diagnostics
+                && pc_product_ele->doBackTransformedDiagnostics();
+            int do_boost_pos = WarpX::do_back_transformed_diagnostics
+                && pc_product_pos->doBackTransformedDiagnostics();
+            amrex::Gpu::ManagedDeviceVector<int>
+                v_do_back_transformed_product{do_boost_ele, do_boost_pos};
+            const amrex::Vector<WarpXParticleContainer*>
+                v_pc_product {pc_product_ele.get(), pc_product_pos.get()};
+            // ADD COMMENT HERE
+            m_p_unq_qed_breit_wheeler_process->createParticles
+                (lev, mfi, pc_source, v_pc_product,
+                should_do_breit_wheel, v_do_back_transformed_product);
+            // Synchronize to prevent the destruction of temporary arrays (at the
+            // end of the function call) before the kernel executes.
+            Gpu::streamSynchronize();
+        }
+    }
+}
+
+void MultiParticleContainer::doQedQuantumSync(
+    std::unique_ptr<WarpXParticleContainer>& pc_source)
+{
+    BL_PROFILE("MPC::doQedEvents::doQedQuantumSync");
+}
 #endif
