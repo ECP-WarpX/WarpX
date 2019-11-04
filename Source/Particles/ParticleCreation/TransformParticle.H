@@ -6,7 +6,8 @@
 #ifdef WARPX_QED
     enum struct elementaryProcessType
         {Ionization,
-        QedBreitWheelerPairCreation};
+        QedBreitWheelerPairCreation,
+        QedQuantumSynchrotron};
 #else
     enum struct elementaryProcessType {Ionization};
 #endif

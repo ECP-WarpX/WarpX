@@ -7,6 +7,7 @@
 
 #ifdef WARPX_QED
     #include <BreitWheelerEngineWrapper.H>
+    #include <QuantumSyncEngineWrapper.H>
     #include <WarpXConst.H>
 #endif
 
@@ -369,8 +370,97 @@ private:
 };
 
 //####################################################################
+// Derived class for Quantum Synchrotron emission process
+class QedQuantumSynchrotronEmissionProcess :
+    public elementaryProcess<elementaryProcessType::QedQuantumSynchrotron>
+{
+public:
+    QedQuantumSynchrotronEmissionProcess(
+        const QuantumSynchrotronGeneratePhotonAndUpdateMomentum&& t_functor):
+        m_emission_functor{t_functor},
+        elementaryProcess<elementaryProcessType::QedQuantumSynchrotron>()
+    {};
 
+    void copyAndTransformParticles(
+        amrex::Gpu::ManagedDeviceVector<int>& is_flagged,
+        amrex::Gpu::ManagedDeviceVector<int>& i_product,
+        int np_source,
+        amrex::Gpu::ManagedDeviceVector<int> v_pid_product,
+        amrex::Gpu::ManagedDeviceVector<WarpXParticleContainer::ParticleType*> v_particles_product,
+        WarpXParticleContainer::ParticleType* particles_source,
+        const amrex::Vector<copyParticle>& v_copy_functor,
+        amrex::GpuArray<int*,1> runtime_iattribs_source)
+    {
+        int const * const AMREX_RESTRICT p_is_flagged = is_flagged.dataPtr();
+        int const * const AMREX_RESTRICT p_i_product = i_product.dataPtr();
+        copyParticle const * const p_copy_functor = v_copy_functor.data();
+        WarpXParticleContainer::ParticleType * * p_particles_product = v_particles_product.data();
+        int const * const p_pid_product = v_pid_product.data();
 
+        // Loop over all source particles. If is_flagged, copy particle data
+        // to corresponding product particle.
+        int nproducts = v_particles_product.size();
+        amrex::For(
+            np_source, [=] AMREX_GPU_DEVICE (int is) noexcept
+            {
+                if(p_is_flagged[is]){
+                    // offset of 1 due to inclusive scan
+                    int ip = p_i_product[is]-1;
+                    WarpXParticleContainer::ParticleType& p_source  = particles_source[is];
+
+                    WarpXParticleContainer::ParticleType* particles_product_phot =
+                        p_particles_product[0];
+                    WarpXParticleContainer::ParticleType& p_product_phot =
+                        particles_product_phot[ip];
+                    p_copy_functor[0](
+                        is, ip, p_pid_product[0], p_source, p_product_phot);
+
+                    const amrex::ParticleReal me = PhysConst::m_e;
+                    const amrex::ParticleReal one_over_me = 1./PhysConst::m_e;
+
+                    amrex::ParticleReal w = p_source.rdata(0);
+                    amrex::ParticleReal px = me*p_source.rdata(1);
+                    amrex::ParticleReal py = me*p_source.rdata(2);
+                    amrex::ParticleReal pz = me*p_source.rdata(3);
+                    const amrex::ParticleReal ex = p_source.rdata(4);
+                    const amrex::ParticleReal ey = p_source.rdata(5);
+                    const amrex::ParticleReal ez = p_source.rdata(6);
+                    const amrex::ParticleReal bx = p_source.rdata(7);
+                    const amrex::ParticleReal by = p_source.rdata(8);
+                    const amrex::ParticleReal bz = p_source.rdata(9);
+                    amrex::ParticleReal g_w = 0.0;
+                    amrex::ParticleReal g_px = 0.0;
+                    amrex::ParticleReal g_py = 0.0;
+                    amrex::ParticleReal g_pz = 0.0;
+
+                    m_emission_functor.operator()<1>(
+                        &px, &py, &pz,
+                        ex, ey, ez,
+                        bx, by, bz,
+                        w,
+                        &g_px, &g_py, &g_pz,
+                        &g_w);
+
+                    p_source.rdata(1) = px*one_over_me;
+                    p_source.rdata(2) = py*one_over_me;
+                    p_source.rdata(3) = pz*one_over_me;
+                    p_product_phot.rdata(0) = g_w;
+                    p_product_phot.rdata(1) = g_px*one_over_me;
+                    p_product_phot.rdata(2) = g_py*one_over_me;
+                    p_product_phot.rdata(3) = g_pz*one_over_me;
+
+                    //TODO: reset tau!
+
+                }
+            }
+        );
+    }
+
+private:
+    const QuantumSynchrotronGeneratePhotonAndUpdateMomentum m_emission_functor;
+};
+
+//####################################################################
 #endif
 
 #endif // ELEMENTARYPROCESS_H_
