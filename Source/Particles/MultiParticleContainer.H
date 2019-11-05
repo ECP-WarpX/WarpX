@@ -207,6 +207,8 @@ public:
     */
     std::unique_ptr<QedBreitWheelerPairCreationProcess>
         m_p_unq_qed_breit_wheeler_process;
+    std::unique_ptr<QedQuantumSynchrotronEmissionProcess>
+        m_p_unq_qed_quantum_sync_process;
 
     void doQedEvents();
     void doQedBreitWheeler(std::unique_ptr<WarpXParticleContainer>& p_source);

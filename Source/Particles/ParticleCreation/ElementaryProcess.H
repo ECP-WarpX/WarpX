@@ -403,6 +403,11 @@ public:
         WarpXParticleContainer::ParticleType * * p_particles_product = v_particles_product.data();
         int const * const p_pid_product = v_pid_product.data();
 
+        // Source attribs
+        auto& r_source_attribs = p_copy_functor[0].m_attribs_source;
+        // Product attribs
+        auto& r_phot_attribs = p_copy_functor[0].m_attribs_product;
+
         // Loop over all source particles. If is_flagged, copy particle data
         // to corresponding product particle.
         int nproducts = v_particles_product.size();
@@ -424,20 +429,20 @@ public:
                     const amrex::ParticleReal me = PhysConst::m_e;
                     const amrex::ParticleReal one_over_me = 1./PhysConst::m_e;
 
-                    amrex::ParticleReal w = p_source.rdata(0);
-                    amrex::ParticleReal px = me*p_source.rdata(1);
-                    amrex::ParticleReal py = me*p_source.rdata(2);
-                    amrex::ParticleReal pz = me*p_source.rdata(3);
-                    const amrex::ParticleReal ex = p_source.rdata(4);
-                    const amrex::ParticleReal ey = p_source.rdata(5);
-                    const amrex::ParticleReal ez = p_source.rdata(6);
-                    const amrex::ParticleReal bx = p_source.rdata(7);
-                    const amrex::ParticleReal by = p_source.rdata(8);
-                    const amrex::ParticleReal bz = p_source.rdata(9);
-                    amrex::ParticleReal g_w = 0.0;
-                    amrex::ParticleReal g_px = 0.0;
-                    amrex::ParticleReal g_py = 0.0;
-                    amrex::ParticleReal g_pz = 0.0;
+                    const auto w  = r_source_attribs[PIdx::w][is];
+                    auto px =  me*r_source_attribs[PIdx::ux][is];
+                    auto py =  me*r_source_attribs[PIdx::uy][is];
+                    auto pz =  me*r_source_attribs[PIdx::uz][is];
+                    const auto ex =  r_source_attribs[PIdx::Ex][is];
+                    const auto ey =  r_source_attribs[PIdx::Ey][is];
+                    const auto ez =  r_source_attribs[PIdx::Ez][is];
+                    const auto bx =  r_source_attribs[PIdx::Bx][is];
+                    const auto by =  r_source_attribs[PIdx::By][is];
+                    const auto bz =  r_source_attribs[PIdx::Bz][is];
+                    auto g_w = amrex::ParticleReal{0.0};
+                    auto g_px = amrex::ParticleReal{0.0};
+                    auto g_py = amrex::ParticleReal{0.0};
+                    auto g_pz = amrex::ParticleReal{0.0};
 
                     m_emission_functor.operator()<1>(
                         &px, &py, &pz,
@@ -447,16 +452,13 @@ public:
                         &g_px, &g_py, &g_pz,
                         &g_w);
 
-                    p_source.rdata(1) = px*one_over_me;
-                    p_source.rdata(2) = py*one_over_me;
-                    p_source.rdata(3) = pz*one_over_me;
-                    p_product_phot.rdata(0) = g_w;
-                    p_product_phot.rdata(1) = g_px*one_over_me;
-                    p_product_phot.rdata(2) = g_py*one_over_me;
-                    p_product_phot.rdata(3) = g_pz*one_over_me;
-
-                    //TODO: reset tau!
-
+                    r_source_attribs[PIdx::ux][is] = px*one_over_me;
+                    r_source_attribs[PIdx::uy][is] = py*one_over_me;
+                    r_source_attribs[PIdx::uz][is] = pz*one_over_me;
+                    r_phot_attribs[PIdx::w][ip] = g_w;
+                    r_phot_attribs[PIdx::ux][ip]= g_px*one_over_me;
+                    r_phot_attribs[PIdx::uy][ip] = g_py*one_over_me;
+                    r_phot_attribs[PIdx::uz][ip] = g_pz*one_over_me;
                 }
             }
         );

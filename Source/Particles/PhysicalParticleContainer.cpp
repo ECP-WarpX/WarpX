@@ -2416,6 +2416,9 @@ PhysicalParticleContainer::BuildQedMaskAndResetTauQuantumSync(
                 p_qed_mask[i] = 1;
                 p_tau[i] = quantum_sync_get_opt();
             }
+            else{
+                p_qed_mask[i] = 0;
+            }
         }
     );
 }

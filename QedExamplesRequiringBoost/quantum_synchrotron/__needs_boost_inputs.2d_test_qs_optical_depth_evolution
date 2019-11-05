@@ -125,5 +125,5 @@ qed_qs.load_table_from = "qs_table"
 #################################
 
 ### EXTERNAL FIELD ###
-warpx.B_external_particle = 0 0 1.0e7
+warpx.B_external_particle = 0 0 1.0e5
 ####

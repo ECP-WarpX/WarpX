@@ -714,6 +714,11 @@ void MultiParticleContainer::InitQuantumSync ()
 
     if(!m_shr_p_qs_engine->are_lookup_tables_initialized())
         amrex::Error("Table initialization has failed!\n");
+
+    //ADD COMMENT
+    m_p_unq_qed_quantum_sync_process = std::make_unique<
+        QedQuantumSynchrotronEmissionProcess>(
+            m_shr_p_qs_engine->build_phot_em_functor());
 }
 
 void MultiParticleContainer::InitBreitWheeler ()
@@ -1055,13 +1060,6 @@ void MultiParticleContainer::doQedBreitWheeler(
             // end of the function call) before the kernel executes.
             Gpu::streamSynchronize();
 
-
-            const auto p_pos_new_size = pc_product_pos->
-                GetParticles(lev)[grid_title].GetArrayOfStructs().size();
-
-
-            auto& ptile_pos = pc_product_pos->GetParticles(lev)[grid_title];
-
             if(pc_product_ele->has_quantum_sync()){
                 auto& ptile_ele = pc_product_ele->GetParticles(lev)[grid_title];
                 const auto p_ele_new_size =
@@ -1146,11 +1144,49 @@ void MultiParticleContainer::doQedQuantumSync(
         {
             // Breit Wheeler mask: one element per source particles.
             // 0 no BW, 1 BW
-            amrex::Gpu::ManagedDeviceVector<int> should_do_breit_wheel;
+            amrex::Gpu::ManagedDeviceVector<int> should_do_quantum_sync;
             pc_source->BuildQedMaskAndResetTauQuantumSync
-                (mfi, lev, should_do_breit_wheel);
+                (mfi, lev, should_do_quantum_sync);
 
-            // ADD QS
+             // Create particles in pc_product
+            int do_boost_phot = WarpX::do_back_transformed_diagnostics
+                && pc_product_phot->doBackTransformedDiagnostics();
+            amrex::Gpu::ManagedDeviceVector<int>
+                v_do_back_transformed_product{do_boost_phot};
+            const amrex::Vector<WarpXParticleContainer*>
+                v_pc_product {pc_product_phot.get()};
+            // ADD COMMENT HERE
+
+            const int grid_id = mfi.index();
+            const int tile_id = mfi.LocalTileIndex();
+            auto grid_title = std::make_pair(grid_id,tile_id);
+            const auto p_phot_init_size = pc_product_phot->
+                GetParticles(lev)[grid_title].GetArrayOfStructs().size();
+
+            m_p_unq_qed_quantum_sync_process->createParticles
+                (lev, mfi, pc_source, v_pc_product,
+                should_do_quantum_sync, v_do_back_transformed_product);
+            // Synchronize to prevent the destruction of temporary arrays (at the
+            // end of the function call) before the kernel executes.
+            Gpu::streamSynchronize();
+
+            if(pc_product_phot->has_breit_wheeler()){
+                auto& ptile_phot = pc_product_phot->GetParticles(lev)[grid_title];
+                const auto p_phot_new_size =
+                    ptile_phot.GetArrayOfStructs().size();
+                auto particle_comps = pc_product_phot->getParticleComps();
+                ParticleReal * const AMREX_RESTRICT p_tau =
+                    ptile_phot.GetStructOfArrays().GetRealData(
+                        particle_comps["tau"]).data();
+
+                auto get_opt =
+                    m_shr_p_bw_engine->build_optical_depth_functor();
+
+                amrex::ParallelFor(p_phot_new_size-p_phot_init_size,
+                [=] AMREX_GPU_DEVICE (long i){
+                    p_tau[i+p_phot_init_size] = get_opt();
+                });
+            }
 
             Gpu::streamSynchronize();
         }
