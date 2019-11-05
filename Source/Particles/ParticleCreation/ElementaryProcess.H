@@ -214,7 +214,7 @@ public:
      * \param v_copy_functor vector of copy functors, one for each product particle container
      * \param runtime_iattribs_source pointer to source runtime integer attribs
      */
-    void copyAndTransformParticles(
+    virtual void copyAndTransformParticles(
         amrex::Gpu::ManagedDeviceVector<int>& is_flagged,
         amrex::Gpu::ManagedDeviceVector<int>& i_product,
         int np_source,
@@ -285,7 +285,7 @@ public:
         amrex::Gpu::ManagedDeviceVector<WarpXParticleContainer::ParticleType*> v_particles_product,
         WarpXParticleContainer::ParticleType* particles_source,
         const amrex::Vector<copyParticle>& v_copy_functor,
-        amrex::GpuArray<int*,1> runtime_iattribs_source)
+        amrex::GpuArray<int*,1> runtime_iattribs_source) override
     {
         int const * const AMREX_RESTRICT p_is_flagged = is_flagged.dataPtr();
         int const * const AMREX_RESTRICT p_i_product = i_product.dataPtr();
@@ -389,7 +389,7 @@ public:
         amrex::Gpu::ManagedDeviceVector<WarpXParticleContainer::ParticleType*> v_particles_product,
         WarpXParticleContainer::ParticleType* particles_source,
         const amrex::Vector<copyParticle>& v_copy_functor,
-        amrex::GpuArray<int*,1> runtime_iattribs_source)
+        amrex::GpuArray<int*,1> runtime_iattribs_source) override
     {
         int const * const AMREX_RESTRICT p_is_flagged = is_flagged.dataPtr();
         int const * const AMREX_RESTRICT p_i_product = i_product.dataPtr();
