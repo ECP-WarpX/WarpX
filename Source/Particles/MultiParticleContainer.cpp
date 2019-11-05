@@ -1039,11 +1039,65 @@ void MultiParticleContainer::doQedBreitWheeler(
             const amrex::Vector<WarpXParticleContainer*>
                 v_pc_product {pc_product_ele.get(), pc_product_pos.get()};
             // ADD COMMENT HERE
+
+            const int grid_id = mfi.index();
+            const int tile_id = mfi.LocalTileIndex();
+            auto grid_title = std::make_pair(grid_id,tile_id);
+            const auto p_ele_init_size = pc_product_ele->
+                GetParticles(lev)[grid_title].GetArrayOfStructs().size();
+            const auto p_pos_init_size = pc_product_pos->
+                GetParticles(lev)[grid_title].GetArrayOfStructs().size();
+
             m_p_unq_qed_breit_wheeler_process->createParticles
                 (lev, mfi, pc_source, v_pc_product,
                 should_do_breit_wheel, v_do_back_transformed_product);
             // Synchronize to prevent the destruction of temporary arrays (at the
             // end of the function call) before the kernel executes.
+            Gpu::streamSynchronize();
+
+
+            const auto p_pos_new_size = pc_product_pos->
+                GetParticles(lev)[grid_title].GetArrayOfStructs().size();
+
+
+            auto& ptile_pos = pc_product_pos->GetParticles(lev)[grid_title];
+
+            if(pc_product_ele->has_quantum_sync()){
+                auto& ptile_ele = pc_product_ele->GetParticles(lev)[grid_title];
+                const auto p_ele_new_size =
+                    ptile_ele.GetArrayOfStructs().size();
+                auto particle_comps = pc_product_ele->getParticleComps();
+                ParticleReal * const AMREX_RESTRICT p_tau =
+                    ptile_ele.GetStructOfArrays().GetRealData(
+                        particle_comps["tau"]).data();
+
+                auto get_opt =
+                    m_shr_p_qs_engine->build_optical_depth_functor();
+
+                amrex::ParallelFor(p_ele_new_size-p_ele_init_size,
+                [=] AMREX_GPU_DEVICE (long i){
+                    p_tau[i+p_ele_init_size] = get_opt();
+                });
+            }
+
+            if(pc_product_pos->has_quantum_sync()){
+                auto& ptile_pos = pc_product_pos->GetParticles(lev)[grid_title];
+                const auto p_pos_new_size =
+                    ptile_pos.GetArrayOfStructs().size();
+                auto particle_comps = pc_product_pos->getParticleComps();
+                ParticleReal * const AMREX_RESTRICT p_tau =
+                    ptile_pos.GetStructOfArrays().GetRealData(
+                        particle_comps["tau"]).data();
+
+                auto get_opt =
+                    m_shr_p_qs_engine->build_optical_depth_functor();
+
+                amrex::ParallelFor(p_pos_new_size-p_pos_init_size,
+                [=] AMREX_GPU_DEVICE (long i){
+                    p_tau[i+p_pos_init_size] = get_opt();
+                });
+            }
+
             Gpu::streamSynchronize();
         }
     }
