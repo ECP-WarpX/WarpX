@@ -293,6 +293,12 @@ public:
         WarpXParticleContainer::ParticleType * * p_particles_product = v_particles_product.data();
         int const * const p_pid_product = v_pid_product.data();
 
+        // Source attribs
+        auto& r_source_attribs = p_copy_functor[0].m_attribs_source;
+        // Product attribs
+        auto& r_ele_attribs = p_copy_functor[0].m_attribs_product;
+        auto& r_pos_attribs = p_copy_functor[1].m_attribs_product;
+
         // Loop over all source particles. If is_flagged, copy particle data
         // to corresponding product particle.
         int nproducts = v_particles_product.size();
@@ -318,27 +324,27 @@ public:
                     p_copy_functor[1](
                         is, ip, p_pid_product[1], p_source, p_product_pos);
 
-                    const amrex::ParticleReal me = PhysConst::m_e;
-                    const amrex::ParticleReal one_over_me = 1./PhysConst::m_e;
+                    const auto me = PhysConst::m_e;
+                    const auto one_over_me = 1./PhysConst::m_e;
 
-                    const amrex::ParticleReal w = p_source.rdata(0);
-                    const amrex::ParticleReal px = me*p_source.rdata(1);
-                    const amrex::ParticleReal py = me*p_source.rdata(2);
-                    const amrex::ParticleReal pz = me*p_source.rdata(3);
-                    const amrex::ParticleReal ex = p_source.rdata(4);
-                    const amrex::ParticleReal ey = p_source.rdata(5);
-                    const amrex::ParticleReal ez = p_source.rdata(6);
-                    const amrex::ParticleReal bx = p_source.rdata(7);
-                    const amrex::ParticleReal by = p_source.rdata(8);
-                    const amrex::ParticleReal bz = p_source.rdata(9);
-                    amrex::ParticleReal e_w = 0.0;
-                    amrex::ParticleReal e_px = 0.0;
-                    amrex::ParticleReal e_py = 0.0;
-                    amrex::ParticleReal e_pz = 0.0;
-                    amrex::ParticleReal p_px = 0.0;
-                    amrex::ParticleReal p_py = 0.0;
-                    amrex::ParticleReal p_pz = 0.0;
-                    amrex::ParticleReal p_w = 0.0;
+                    const auto w  = r_source_attribs[PIdx::w][is];
+                    const auto px =  me*r_source_attribs[PIdx::ux][is];
+                    const auto py =  me*r_source_attribs[PIdx::uy][is];
+                    const auto pz =  me*r_source_attribs[PIdx::uz][is];
+                    const auto ex =  r_source_attribs[PIdx::Ex][is];
+                    const auto ey =  r_source_attribs[PIdx::Ey][is];
+                    const auto ez =  r_source_attribs[PIdx::Ez][is];
+                    const auto bx =  r_source_attribs[PIdx::Bx][is];
+                    const auto by =  r_source_attribs[PIdx::By][is];
+                    const auto bz =  r_source_attribs[PIdx::Bz][is];
+                    auto e_w = amrex::ParticleReal{0.0};
+                    auto p_w = amrex::ParticleReal{0.0};
+                    auto e_px = amrex::ParticleReal{0.0};
+                    auto e_py = amrex::ParticleReal{0.0};
+                    auto e_pz = amrex::ParticleReal{0.0};
+                    auto p_px = amrex::ParticleReal{0.0};
+                    auto p_py = amrex::ParticleReal{0.0};
+                    auto p_pz = amrex::ParticleReal{0.0};
 
                     m_generate_functor.operator()<1>(
                         px, py, pz,
@@ -349,14 +355,14 @@ public:
                         &p_pz, &p_py, &p_pz,
                         &e_w, &p_w);
 
-                    p_product_ele.rdata(0) = e_w;
-                    p_product_ele.rdata(1) = e_px*one_over_me;
-                    p_product_ele.rdata(2) = e_py*one_over_me;
-                    p_product_ele.rdata(3) = e_pz*one_over_me;
-                    p_product_pos.rdata(0) = p_w;
-                    p_product_pos.rdata(1) = p_px*one_over_me;
-                    p_product_pos.rdata(2) = p_py*one_over_me;
-                    p_product_pos.rdata(3) = p_pz*one_over_me;
+                    r_ele_attribs[PIdx::w][ip] = e_w;
+                    r_ele_attribs[PIdx::ux][ip]= e_px*one_over_me;
+                    r_ele_attribs[PIdx::uy][ip] = e_py*one_over_me;
+                    r_ele_attribs[PIdx::uz][ip] = e_pz*one_over_me;
+                    r_pos_attribs[PIdx::w][ip] = p_w;
+                    r_pos_attribs[PIdx::ux][ip]= p_px*one_over_me;
+                    r_pos_attribs[PIdx::uy][ip] = p_py*one_over_me;
+                    r_pos_attribs[PIdx::uz][ip] = p_pz*one_over_me;
 
                     p_source.id() = -1; //Sets ID to zero
 
