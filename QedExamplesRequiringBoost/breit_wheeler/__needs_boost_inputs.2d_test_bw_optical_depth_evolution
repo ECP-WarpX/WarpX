@@ -56,7 +56,7 @@ photons.xmax = 30.0e-6
 photons.ymax = 30.0e-6
 photons.zmax = 30.0e-6
 photons.num_particles_per_cell_each_dim = 8 8
-photons.density = 1e19
+photons.density = 1e-32
 photons.profile = "constant"
 photons.momentum_distribution_type = "gaussian"
 photons.ux_m = 8125.0
@@ -110,6 +110,6 @@ qed_bw.load_table_from = "bw_table"
 #################################
 
 ### EXTERNAL FIELD ###
-warpx.B_external_particle = 0 0 1.0e6
+warpx.B_external_particle = 0 0 1.0e8
 ####
 
