@@ -141,16 +141,16 @@ WarpX::EvolveEM (int numsteps)
         bool do_insitu = ((step+1) >= insitu_start) &&
             (insitu_int > 0) && ((step+1) % insitu_int == 0);
 
-        if (do_boosted_frame_diagnostic) {
+        if (do_back_transformed_diagnostics) {
             std::unique_ptr<MultiFab> cell_centered_data = nullptr;
-            if (WarpX::do_boosted_frame_fields) {
+            if (WarpX::do_back_transformed_fields) {
                 cell_centered_data = GetCellCenteredData();
             }
             // myBFD->writeLabFrameData(cell_centered_data.get(), *mypc, geom[0], cur_time, dt[0]);
             // change for CC-OPT
             myBFD->writeLabFrameData(Efield_aux, Bfield_aux, current_fp,
+                                     cell_centered_data.get(),
                                      *mypc, geom[0], cur_time, dt[0]);
-           
         }
 
         bool move_j = is_synchronized || to_make_plot || do_insitu;
@@ -265,7 +265,7 @@ WarpX::EvolveEM (int numsteps)
         WriteCheckPointFile();
     }
 
-    if (do_boosted_frame_diagnostic) {
+    if (do_back_transformed_diagnostics) {
         myBFD->Flush(geom[0]);
     }
 
