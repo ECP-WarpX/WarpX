@@ -150,7 +150,7 @@ WarpX::EvolveEM (int numsteps)
             // change for CC-OPT
             myBFD->writeLabFrameData(Efield_aux, Bfield_aux, current_fp,
                                      cell_centered_data.get(),
-                                     *mypc, geom[0], cur_time, dt[0]);
+                                     *mypc, geom, cur_time, dt[0], refRatio());
         }
 
         bool move_j = is_synchronized || to_make_plot || do_insitu;
