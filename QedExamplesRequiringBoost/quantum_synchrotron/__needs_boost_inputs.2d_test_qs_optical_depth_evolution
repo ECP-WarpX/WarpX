@@ -115,13 +115,13 @@ qed_qs.chi_min = 0.001
 qed_qs.generate_table = 1
 qed_qs.tab_dndt_chi_min = 0.001
 qed_qs.tab_dndt_chi_max = 200
-qed_qs.tab_dndt_how_many = 200
+qed_qs.tab_dndt_how_many = 100
 qed_qs.tab_em_chi_min = 0.001
 qed_qs.tab_em_chi_max = 200
-qed_qs.tab_em_chi_how_many = 2
-qed_qs.tab_em_prob_how_many = 2
+qed_qs.tab_em_chi_how_many = 30
+qed_qs.tab_em_prob_how_many = 30
 qed_qs.save_table_in = "qs_table"
-qed_qs.load_table_from = "qs_table"
+#qed_qs.load_table_from = "qs_table"
 #################################
 
 ### EXTERNAL FIELD ###
