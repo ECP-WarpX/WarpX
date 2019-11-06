@@ -110,6 +110,6 @@ qed_bw.load_table_from = "bw_table"
 #################################
 
 ### EXTERNAL FIELD ###
-warpx.B_external_particle = 0 0 1.0e8
+warpx.B_external_particle = 0 0 1.07e7
 ####
 
