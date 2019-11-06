@@ -352,7 +352,7 @@ public:
                         bx, by, bz,
                         w,
                         &e_px, &e_py, &e_pz,
-                        &p_pz, &p_py, &p_pz,
+                        &p_px, &p_py, &p_pz,
                         &e_w, &p_w);
 
                     r_ele_attribs[PIdx::w][ip] = e_w;
