@@ -430,9 +430,9 @@ public:
                     const auto one_over_me = 1./me;
 
                     const auto w  = r_source_attribs[PIdx::w][is];
-                    auto px =  mec*r_source_attribs[PIdx::ux][is];
-                    auto py =  mec*r_source_attribs[PIdx::uy][is];
-                    auto pz =  mec*r_source_attribs[PIdx::uz][is];
+                    auto px =  me*r_source_attribs[PIdx::ux][is];
+                    auto py =  me*r_source_attribs[PIdx::uy][is];
+                    auto pz =  me*r_source_attribs[PIdx::uz][is];
                     const auto ex =  r_source_attribs[PIdx::Ex][is];
                     const auto ey =  r_source_attribs[PIdx::Ey][is];
                     const auto ez =  r_source_attribs[PIdx::Ez][is];
