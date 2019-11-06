@@ -324,13 +324,13 @@ public:
                     p_copy_functor[1](
                         is, ip, p_pid_product[1], p_source, p_product_pos);
 
-                    const auto mec = PhysConst::m_e*PhysConst::c;
-                    const auto one_over_mec = 1./mec;
+                    const auto me = PhysConst::m_e;
+                    const auto one_over_me = 1./me;
 
                     const auto w  = r_source_attribs[PIdx::w][is];
-                    const auto px =  mec*r_source_attribs[PIdx::ux][is];
-                    const auto py =  mec*r_source_attribs[PIdx::uy][is];
-                    const auto pz =  mec*r_source_attribs[PIdx::uz][is];
+                    const auto px =  me*r_source_attribs[PIdx::ux][is];
+                    const auto py =  me*r_source_attribs[PIdx::uy][is];
+                    const auto pz =  me*r_source_attribs[PIdx::uz][is];
                     const auto ex =  r_source_attribs[PIdx::Ex][is];
                     const auto ey =  r_source_attribs[PIdx::Ey][is];
                     const auto ez =  r_source_attribs[PIdx::Ez][is];
@@ -356,13 +356,13 @@ public:
                         &e_w, &p_w);
 
                     r_ele_attribs[PIdx::w][ip] = e_w;
-                    r_ele_attribs[PIdx::ux][ip]= e_px*one_over_mec;
-                    r_ele_attribs[PIdx::uy][ip] = e_py*one_over_mec;
-                    r_ele_attribs[PIdx::uz][ip] = e_pz*one_over_mec;
+                    r_ele_attribs[PIdx::ux][ip]= e_px*one_over_me;
+                    r_ele_attribs[PIdx::uy][ip] = e_py*one_over_me;
+                    r_ele_attribs[PIdx::uz][ip] = e_pz*one_over_me;
                     r_pos_attribs[PIdx::w][ip] = p_w;
-                    r_pos_attribs[PIdx::ux][ip]= p_px*one_over_mec;
-                    r_pos_attribs[PIdx::uy][ip] = p_py*one_over_mec;
-                    r_pos_attribs[PIdx::uz][ip] = p_pz*one_over_mec;
+                    r_pos_attribs[PIdx::ux][ip]= p_px*one_over_me;
+                    r_pos_attribs[PIdx::uy][ip] = p_py*one_over_me;
+                    r_pos_attribs[PIdx::uz][ip] = p_pz*one_over_me;
 
                     p_source.id() = -1; //Sets ID to zero
 
@@ -426,8 +426,8 @@ public:
                     p_copy_functor[0](
                         is, ip, p_pid_product[0], p_source, p_product_phot);
 
-                    const auto mec = PhysConst::m_e*PhysConst::c;
-                    const auto one_over_mec = 1./mec;
+                    const auto me = PhysConst::m_e*PhysConst::c;
+                    const auto one_over_me = 1./me;
 
                     const auto w  = r_source_attribs[PIdx::w][is];
                     auto px =  mec*r_source_attribs[PIdx::ux][is];
@@ -452,13 +452,13 @@ public:
                         &g_px, &g_py, &g_pz,
                         &g_w);
 
-                    r_source_attribs[PIdx::ux][is] = px*one_over_mec;
-                    r_source_attribs[PIdx::uy][is] = py*one_over_mec;
-                    r_source_attribs[PIdx::uz][is] = pz*one_over_mec;
+                    r_source_attribs[PIdx::ux][is] = px*one_over_me;
+                    r_source_attribs[PIdx::uy][is] = py*one_over_me;
+                    r_source_attribs[PIdx::uz][is] = pz*one_over_me;
                     r_phot_attribs[PIdx::w][ip] = g_w;
-                    r_phot_attribs[PIdx::ux][ip]= g_px*one_over_mec;
-                    r_phot_attribs[PIdx::uy][ip] = g_py*one_over_mec;
-                    r_phot_attribs[PIdx::uz][ip] = g_pz*one_over_mec;
+                    r_phot_attribs[PIdx::ux][ip]= g_px*one_over_me;
+                    r_phot_attribs[PIdx::uy][ip] = g_py*one_over_me;
+                    r_phot_attribs[PIdx::uz][ip] = g_pz*one_over_me;
                 }
             }
         );
