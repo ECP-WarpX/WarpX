@@ -272,12 +272,12 @@ class IonizationProcess: public ElementaryProcess<ElementaryProcessType::Ionizat
 
 // Derived class for Breit Wheeler pair creation process
 class QedBreitWheelerPairCreationProcess :
-    public elementaryProcess<elementaryProcessType::QedBreitWheelerPairCreation>
+    public elementaryProcess<ElementaryProcessType::QedBreitWheelerPairCreation>
 {
 public:
     QedBreitWheelerPairCreationProcess(const BreitWheelerGeneratePairs&& t_functor):
         m_generate_functor{t_functor},
-        elementaryProcess<elementaryProcessType::QedBreitWheelerPairCreation>()
+        elementaryProcess<ElementaryProcessType::QedBreitWheelerPairCreation>()
     {};
 
     void copyAndTransformParticles(
@@ -381,13 +381,13 @@ private:
 //####################################################################
 // Derived class for Quantum Synchrotron emission process
 class QedQuantumSynchrotronEmissionProcess :
-    public elementaryProcess<elementaryProcessType::QedQuantumSynchrotron>
+    public elementaryProcess<ElementaryProcessType::QedQuantumSynchrotron>
 {
 public:
     QedQuantumSynchrotronEmissionProcess(
         const QuantumSynchrotronGeneratePhotonAndUpdateMomentum&& t_functor):
         m_emission_functor{t_functor},
-        elementaryProcess<elementaryProcessType::QedQuantumSynchrotron>()
+        elementaryProcess<ElementaryProcessType::QedQuantumSynchrotron>()
     {};
 
     void copyAndTransformParticles(
