@@ -4,12 +4,12 @@
 #include "WarpXParticleContainer.H"
 
 #ifdef WARPX_QED
-    enum struct elementaryProcessType
+    enum struct ElementaryProcessType
         {Ionization,
         QedBreitWheelerPairCreation,
         QedQuantumSynchrotron};
 #else
-    enum struct elementaryProcessType {Ionization};
+    enum struct ElementaryProcessType {Ionization};
 #endif
 
 /**
