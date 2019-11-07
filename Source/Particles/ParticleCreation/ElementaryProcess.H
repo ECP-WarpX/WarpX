@@ -287,12 +287,12 @@ public:
         amrex::Gpu::ManagedDeviceVector<int> v_pid_product,
         amrex::Gpu::ManagedDeviceVector<WarpXParticleContainer::ParticleType*> v_particles_product,
         WarpXParticleContainer::ParticleType* particles_source,
-         const amrex::Gpu::ManagedDeviceVector<CopyParticle>& v_copy_functor,
+        const amrex::Gpu::ManagedDeviceVector<CopyParticle>& v_copy_functor,
         amrex::GpuArray<int*,1> runtime_iattribs_source) override
     {
         int const * const AMREX_RESTRICT p_is_flagged = is_flagged.dataPtr();
         int const * const AMREX_RESTRICT p_i_product = i_product.dataPtr();
-        copyParticle const * const p_copy_functor = v_copy_functor.dataPtr();
+        CopyParticle const * const p_copy_functor = v_copy_functor.dataPtr();
         WarpXParticleContainer::ParticleType * * p_particles_product = v_particles_product.data();
         int const * const p_pid_product = v_pid_product.data();
 
@@ -381,7 +381,7 @@ private:
 //####################################################################
 // Derived class for Quantum Synchrotron emission process
 class QedQuantumSynchrotronEmissionProcess :
-    public elementaryProcess<ElementaryProcessType::QedQuantumSynchrotron>
+    public ElementaryProcess<ElementaryProcessType::QedQuantumSynchrotron>
 {
 public:
     QedQuantumSynchrotronEmissionProcess(
@@ -402,7 +402,7 @@ public:
     {
         int const * const AMREX_RESTRICT p_is_flagged = is_flagged.dataPtr();
         int const * const AMREX_RESTRICT p_i_product = i_product.dataPtr();
-        copyParticle const * const p_copy_functor = v_copy_functor.dataPtr();
+        CopyParticle const * const p_copy_functor = v_copy_functor.dataPtr();
         WarpXParticleContainer::ParticleType * * p_particles_product = v_particles_product.data();
         int const * const p_pid_product = v_pid_product.data();
 
