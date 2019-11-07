@@ -18,7 +18,7 @@
  * \param particle particle struct
  * \param runtime_iattribs integer attribs
  */
-template < elementaryProcessType ProcessT >
+template < ElementaryProcessType ProcessT >
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void transformSourceParticle(
     int i,
@@ -30,7 +30,7 @@ void transformSourceParticle(
  * \param i index of particle
  * \param particle particle struct
  */
-template < elementaryProcessType ProcessT >
+template < ElementaryProcessType ProcessT >
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void transformProductParticle(
     int i,
@@ -39,7 +39,7 @@ void transformProductParticle(
 // For ionization, increase ionization level of source particle
 template <>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void transformSourceParticle < elementaryProcessType::Ionization > (
+void transformSourceParticle < ElementaryProcessType::Ionization > (
     int i,
     WarpXParticleContainer::ParticleType& particle,
     amrex::GpuArray<int*,1> runtime_iattribs)
