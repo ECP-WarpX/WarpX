@@ -142,14 +142,7 @@ WarpX::EvolveEM (int numsteps)
             (insitu_int > 0) && ((step+1) % insitu_int == 0);
 
         if (do_back_transformed_diagnostics) {
-            std::unique_ptr<MultiFab> cell_centered_data = nullptr;
-            if (WarpX::do_back_transformed_fields) {
-                cell_centered_data = GetCellCenteredData();
-            }
-            // myBFD->writeLabFrameData(cell_centered_data.get(), *mypc, geom[0], cur_time, dt[0]);
-            // change for CC-OPT
             myBFD->writeLabFrameData(Efield_aux, Bfield_aux, current_fp,
-                                     cell_centered_data.get(),
                                      *mypc, geom, cur_time, dt[0], refRatio());
         }
 

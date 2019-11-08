@@ -212,12 +212,12 @@ public:
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield,
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Bfield,
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& current,
-         const amrex::MultiFab* cell_centered_data,
+//         const amrex::MultiFab* cell_centered_data,
          const MultiParticleContainer& mypc, const amrex::Vector<amrex::Geometry>& geom,
          const amrex::Real t_boost, const amrex::Real dt, 
          const amrex::Vector<amrex::IntVect>& ref_ratio);
     
-    void GetCellCenteredSliceData(
+    std::unique_ptr<amrex::MultiFab> GetCellCenteredSliceData(
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield,
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Bfield,
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& current,
@@ -229,6 +229,12 @@ public:
                const std::array< std::unique_ptr<amrex::MultiFab>, 3 >& vector_field,
                amrex::Vector<int> slice_to_full_ba_map, 
                const int dcomp, const int ngrow);
+
+    void AverageAndPackScalarField_to_CCslice( amrex::MultiFab& cc_slice, 
+               const amrex::MultiFab& scalar_field,
+               amrex::Vector<int> slice_to_full_ba_map, 
+               const int dcomp, const int ngrow);
+
     /// The metadata containg information on t_boost, num_snapshots, and Lorentz parameters.
     void writeMetaData();
 

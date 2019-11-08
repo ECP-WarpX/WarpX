@@ -361,7 +361,7 @@ AverageAndPackScalarField( MultiFab& mf_avg,
                            const MultiFab & scalar_field,
                            const int dcomp, const int ngrow )
 {
-    // Check the type of staggering of the 3-component `vector_field`
+    // Check the type of staggering of the `scalar_field`
     // and average accordingly:
     // - Fully cell-centered field (no average needed; simply copy)
     if ( scalar_field.is_cell_centered() ){
