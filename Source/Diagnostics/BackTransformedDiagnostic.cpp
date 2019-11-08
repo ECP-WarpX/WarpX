@@ -761,21 +761,12 @@ void BackTransformedDiagnostic::Flush(const Geometry& geom)
 }
 
 
-
-
-
-//void
-//BoostedFrameDiagnostic::
-//writeLabFrameData(const MultiFab* cell_centered_data,
-//                  const MultiParticleContainer& mypc,
-//                  const Geometry& geom, const Real t_boost, const Real dt) {
 void 
 BackTransformedDiagnostic::
 writeLabFrameData(
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield,
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Bfield,
     const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& current,
-//    const MultiFab* cell_centered_data,
     const MultiParticleContainer& mypc, const Vector<Geometry>& geom,
     const amrex::Real t_boost, const amrex::Real dt,
     const Vector<IntVect>& ref_ratio) {
@@ -792,7 +783,7 @@ writeLabFrameData(
     const std::vector<std::string> species_names = mypc.GetSpeciesNames();
     Real prev_t_lab = -dt;
     std::unique_ptr<amrex::MultiFab> tmp_slice_ptr;
-    std::unique_ptr<amrex::MultiFab> slice;
+    //std::unique_ptr<amrex::MultiFab> slice;
     amrex::Vector<WarpXParticleContainer::DiagnosticParticleData> tmp_particle_buffer;
     
 
@@ -838,10 +829,6 @@ writeLabFrameData(
         }
 
         if (WarpX::do_back_transformed_fields) {
-            // for CC-OPT
-            // obtain ng and ncomp
-            // obtain nlevels
-            // allocate Vec of unique_ptrs of mfs called cc with nlevels
             // Get grids and dmap of mf
             // generate cc slice at zboost location
             // average and pack vec field for E, B, j, rho
@@ -850,44 +837,30 @@ writeLabFrameData(
             // average down to the coarsest level, and use only the 0th level.
             std::unique_ptr<MultiFab> cc_slice = nullptr;
        
-            if (slice)
-            {
-              slice.reset(new MultiFab);
-              slice.reset(nullptr);
+            // Obtain cell-centered data at zboost location
+            // cell-centered slice containing back-transformed data
+            // is generated only if t_lab != prev_t_lab and is re-used
+            // if multiple diags have the same z_lab,t_lab.
+            // cc_slice is re-used if the t_lab of a diag is equal to
+            // that of the previous diag.
+            if (LabFrameDiags_[i]->t_lab != prev_t_lab ) {
+               if (cc_slice)
+               {
+                  cc_slice.reset(new MultiFab);
+                  cc_slice.reset(nullptr);
+               }
+               cc_slice = GetCellCenteredSliceData( Efield, Bfield, current, mypc, geom,
+                                         boost_direction_,
+                                         LabFrameDiags_[i]->current_z_boost,
+                                         ref_ratio);
+               const int ncomp = cc_slice->nComp();
+               LorentzTransformZ(*cc_slice, gamma_boost_, beta_boost_, ncomp);
             }
-            // Obtain cell-centered data at zboost location //
-            cc_slice = GetCellCenteredSliceData( Efield, Bfield, current, mypc, geom,
-                                      boost_direction_,
-                                      LabFrameDiags_[i]->current_z_boost,
-                                      ref_ratio);
-            const int ncomp = cc_slice->nComp();
-            LorentzTransformZ(*cc_slice, gamma_boost_, beta_boost_, ncomp);
-       
-            //const int ncomp = cell_centered_data->nComp();
-            //const int start_comp = 0;
-            //const bool interpolate = true;
-            // slice containing back-transformed data is generated only 
-            // if t_lab != prev_t_lab and is re-used if multiple 
-            // diags have the same z_lab,t_lab.
-            //if (LabFrameDiags_[i]->t_lab != prev_t_lab ) {
-            //   if (slice)
-            //   {
-            //     slice.reset(new MultiFab);
-            //     slice.reset(nullptr);
-            //   }
-            //   slice = amrex::get_slice_data(boost_direction_,
-            //                                 LabFrameDiags_[i]->current_z_boost,
-            //                                 *cell_centered_data, geom[0],
-            //                                 start_comp, ncomp,
-            //                                 interpolate);
-            //   // Back-transform data to the lab-frame
-            //   LorentzTransformZ(*slice, gamma_boost_, beta_boost_, ncomp);
-            //}
-            // Create a 2D box for the slice in the boosted frame
+            // Create a 2D box for the slice in the boosted frame 
+            // with lo and hi same as that of the diag, except in the z-direction.
             Real dx = geom[0].CellSize(boost_direction_);
             int i_boost = ( LabFrameDiags_[i]->current_z_boost -
                             geom[0].ProbLo(boost_direction_))/dx;
-            //Box slice_box = geom.Domain();
             Box slice_box = LabFrameDiags_[i]->buff_box_;
             slice_box.setSmall(boost_direction_, i_boost);
             slice_box.setBig(boost_direction_, i_boost);
@@ -897,16 +870,13 @@ writeLabFrameData(
             slice_ba.maxSize(max_box_size_);
             tmp_slice_ptr = std::unique_ptr<MultiFab>(new MultiFab(slice_ba,
                             LabFrameDiags_[i]->data_buffer_->DistributionMap(),
-                            ncomp, 0));
+                            cc_slice->nComp(), 0));
 
-            // slice is re-used if the t_lab of a diag is equal to
-            // that of the previous diag.
-            // Back-transformed data is copied from slice
+            // Back-transformed data is copied from cc_slice
             // which has the dmap of the domain to
             // tmp_slice_ptr which has the dmap of the
             // data_buffer that stores the back-transformed data.
-            //tmp_slice_ptr->copy(*slice, 0, 0, ncomp);
-            tmp_slice_ptr->copy(*cc_slice, 0, 0, ncomp);
+            tmp_slice_ptr->copy(*cc_slice, 0, 0, cc_slice->nComp());
             LabFrameDiags_[i]->AddDataToBuffer(*tmp_slice_ptr, i_lab,
                                               map_actual_fields_to_dump);
             tmp_slice_ptr.reset(new MultiFab);
@@ -1509,7 +1479,7 @@ AddPartDataToParticleBuffer(
 }
 
 // Obtain cell-centered slice at z=z_boost and pack E, B, j, rho
-// Then average down to the coarsest level on the cc slice
+// Then average down to the coarsest level on the cell-centered slice
 std::unique_ptr<MultiFab>
 BackTransformedDiagnostic::GetCellCenteredSliceData(
      const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield,
@@ -1523,23 +1493,17 @@ BackTransformedDiagnostic::GetCellCenteredSliceData(
     const int ng = 1;
     const int ncomp = 10;            
     int total_levels = Efield.size();
-//    amrex::Print() << " total_levels " << total_levels << "\n";
-//    amrex::Print() << " ng is " << ng << " nc " << ncomp << "\n";
-//    amrex::Print() << " generate slice at zboost = " 
-//                   << current_z_boost << "\n";
-    // allocate array of CC multifabs //
+    // allocate Vector of unique_ptrs of MultiFabs with nlevels
     Vector<std::unique_ptr<MultiFab> > cc(total_levels);
     // loop over all the levels, then, 
     //   Similar to the allocateSlice() function in AMReX, 
     //   Define RealBox real_slice, and Box slice_box
-    //   define slice for that level      
-    //   obtain box array for that level from baseline MF (convert IndexType)
-    //   obtain dm from baseline MF
-    //   loop over all the intersections of boxes
+    //   and define slice for that level.
+    //   Obtain box array for that level from source MF (convert IndexType)
+    //   Obtain dm from baseline MF loop over all the intersections of boxes
     for (int lev = 0; lev < total_levels; ++lev) {
-        // allocate and initialize slice at that lev 
-        // similar to allocateSlice()
-        // Define Box for cell-centered slice with same index space as level lev
+        // Allocate and initialize slice at that lev 
+        // Define Box for cell-centered slice with same index space as level->lev
         Box slice_cc = geom[lev].Domain();
         // Modify the boost-dim index consistent with zboost location
         Real dx_cc = geom[lev].CellSize(boost_direction_);
@@ -1547,56 +1511,53 @@ BackTransformedDiagnostic::GetCellCenteredSliceData(
                        - geom[lev].ProbLo(boost_direction_))/dx_cc;
         slice_cc.setSmall(boost_direction_, i_boost_cc);
         slice_cc.setBig(boost_direction_, i_boost_cc);
-//        amrex::Print() << " slice_cc " << slice_cc << "\n"; 
-        // define multifab that stores slice, similar to AMReX
-        // convert Index Type of box Array to CC
+        // Define multifab that stores slice, similar to AMReX
+        // Convert Index Type of Box Array to CC
         IntVect cc_type(AMREX_D_DECL(0,0,0));
         BoxArray ba = amrex::convert
                       (Efield[lev][0]->boxArray(), cc_type);
-//        amrex::Print() << " ba " << ba << "\n";
         const DistributionMapping& dm = 
                       Efield[lev][0]->DistributionMap();
-//        amrex::Print() << "dm " << dm << "\n";
         std::vector< std::pair<int,Box> > isects;
-        // isects generates list of <proc,Box> 
-        // from domain BoxArray that intersects with slice
+        // isects generates list of <proc,Box> from domain
+        // BoxArray that intersects with slice
         ba.intersections(slice_cc,isects,false,0);                
         Vector<Box> boxes;
         Vector<int> procs;
-        // to store all proc IDs that map full_ba to slice_ba
+        // Store all proc IDs that map full_ba to slice_ba
         Vector<int> slice_to_full_ba_map;
         for (int i = 0; i < isects.size(); ++i) {
-//            amrex::Print() << " ith isect first " << isects[i].first;
-//            amrex::Print() << " second " << isects[i].second << "\n";
             procs.push_back(dm[isects[i].first]);
             boxes.push_back(isects[i].second);                    
             slice_to_full_ba_map.push_back(isects[i].first);
         }
         BoxArray slice_cc_ba(&boxes[0], boxes.size());
         DistributionMapping slice_cc_dmap(std::move(procs));
-//        amrex::Print() << " slice cc ba " << slice_cc_ba << "\n";
         
         cc[lev].reset( new MultiFab(slice_cc_ba, slice_cc_dmap, ncomp, ng));
 
-        // avg and pack Efield
+        // Interpolate/average and pack Efield data from the source 
+        // to the cell-centered slice MultiFab
         int dcomp =  0;
         AverageAndPackVectorField_to_CCslice( *cc[lev], Efield[lev],
                   slice_to_full_ba_map, dcomp, ng); 
-        // avg and pack Bfield
+        // Interpolate/average and pack Bfield data from the 
+        // source to the cell-centered slice MultiFab
         dcomp += 3;
         AverageAndPackVectorField_to_CCslice( *cc[lev], Bfield[lev],
                   slice_to_full_ba_map, dcomp, ng); 
-        // avg and pack current
+        // Interpolate/average and pack current data 
+        // from source to the cell-centered slice MultiFab
         dcomp += 3;
         AverageAndPackVectorField_to_CCslice( *cc[lev], current[lev],
                   slice_to_full_ba_map, dcomp, ng); 
-        // avg and pack rho
+        // Interpolate/average and pack charge density data
+        // from source to the cell-centered slice MultiFab.
         dcomp += 3;
         const std::unique_ptr<MultiFab>& charge_density
                             = mypc.GetChargeDensity(lev);
         AverageAndPackScalarField_to_CCslice( *cc[lev], *charge_density,
                   slice_to_full_ba_map, dcomp, ng); 
-        // DO WE NEED to CALL cc[lev]->FillBoundary(geom[lev].periodicity());
         cc[lev]->FillBoundary(geom[lev].periodicity());
     } 
     for (int lev = total_levels-1; lev>0; --lev)
@@ -1617,78 +1578,95 @@ void BackTransformedDiagnostic::
      for (MFIter mfi(cc_slice, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
          // index of the box in the index space of slice boxarray 
          int slice_gid = mfi.index();
-//         amrex::Print() << " slice gid " << slice_gid << "\n";
          // corresponding index of the intersecting box in the full box array 
          int full_gid = slice_to_full_ba_map[slice_gid];
-//         amrex::Print() << " full gid " << full_gid << "\n";
          Array4<Real> const& slice_arr = cc_slice.array(mfi);
-      
+         // Define source Array4 
+         Array4 <Real const> const& src_x_arr
+                = vector_field[0]->const_array(full_gid);
+         Array4 <Real const> const& src_y_arr
+                = vector_field[1]->const_array(full_gid);
+         Array4 <Real const> const& src_z_arr
+                = vector_field[2]->const_array(full_gid);
+
          const Box& tile_box = mfi.growntilebox(ngrow);
+         // Check the staggeric type of the 3-component `vector-field` 
+         // and average accordingly:
+         // Fully cell-centered field ( simply copy - no avg)
          if (vector_field[0]->is_cell_centered() ) {
-//            amrex::Print() << " Cellcentered copy simple \n";
             int nc = 1;
-            Array4 <Real const> const& ccx_arr
-                   = vector_field[0]->const_array(full_gid);
-            Array4 <Real const> const& ccy_arr
-                   = vector_field[1]->const_array(full_gid);
-            Array4 <Real const> const& ccz_arr
-                   = vector_field[2]->const_array(full_gid);          
             AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
             {
-               const FArrayBox ccx_fab(ccx_arr);
-               const FArrayBox ccy_fab(ccy_arr);
-               const FArrayBox ccz_fab(ccz_arr);
+               const FArrayBox ccx_fab(src_x_arr);
+               const FArrayBox ccy_fab(src_y_arr);
+               const FArrayBox ccz_fab(src_z_arr);
                FArrayBox slice_fab(slice_arr);
                slice_fab.copy(ccx_fab, thread_box, dcomp, thread_box, 0, 1);
                slice_fab.copy(ccy_fab, thread_box, dcomp+1, thread_box, 0, 1);
                slice_fab.copy(ccz_fab, thread_box, dcomp+2, thread_box, 0, 1);
             });
-
+         // Source MultiFab is nodal
          } else if (vector_field[0]->is_nodal() ) {
-//            amrex::Print() << " nodal to cc avg \n";
-            Array4 <Real const> const& ndx_arr
-                   = vector_field[0]->const_array(full_gid);
-            Array4 <Real const> const& ndy_arr
-                  = vector_field[1]->const_array(full_gid);
-            Array4 <Real const> const& ndz_arr
-                  = vector_field[2]->const_array(full_gid);
             AMREX_LAUNCH_HOST_DEVICE_LAMBDA(tile_box, thread_box,
             {
-                amrex_avg_nd_to_cc(thread_box, slice_arr, ndx_arr, 
+                amrex_avg_nd_to_cc(thread_box, slice_arr, src_x_arr, 
                                    dcomp, 0, 1);
-                amrex_avg_nd_to_cc(thread_box, slice_arr, ndy_arr,
+                amrex_avg_nd_to_cc(thread_box, slice_arr, src_y_arr,
                                    dcomp+1, 0, 1);
-                amrex_avg_nd_to_cc(thread_box, slice_arr, ndz_arr,
+                amrex_avg_nd_to_cc(thread_box, slice_arr, src_z_arr,
                                    dcomp+2, 0, 1);
             });
-            
-
+         // Face-centered source MultiFab (B-field on Yee grid)
          } else if (vector_field[0]->is_nodal(0) ) {
-//            amrex::Print() << " face to cc avg \n";
-            AMREX_D_TERM( Array4 <Real const> const& fxarr
-                                 = vector_field[0]->const_array(full_gid);,
-                          Array4 <Real const> const& fyarr
-                                 = vector_field[1]->const_array(full_gid);,
-                          Array4 <Real const> const& fzarr
-                                 = vector_field[2]->const_array(full_gid););
-            AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
-            {
-               amrex_avg_fc_to_cc(thread_box, slice_arr,
-                                  AMREX_D_DECL(fxarr,fyarr,fzarr),dcomp);
-            });
-         } else if (!vector_field[0]->is_nodal(0) ) {
-//            amrex::Print() << " edge to cc avg \n";
-            AMREX_D_TERM( Array4 <Real const> const& exarr 
-                                 = vector_field[0]->const_array(full_gid);,
-                          Array4 <Real const> const& eyarr
-                                 = vector_field[1]->const_array(full_gid);,
-                          Array4 <Real const> const& ezarr
-                                 = vector_field[2]->const_array(full_gid););
-            AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
-            {
-               amrex_avg_eg_to_cc(thread_box, slice_arr, 
-                                  AMREX_D_DECL(exarr,eyarr,ezarr),dcomp); 
-            });
+            
+            if (vector_field[0]->nComp() > 1) {
+#ifdef WARPX_DIM_RZ
+                // When ncomp>1, the total fields are constructed in
+                // temporary MultiFabs.
+#else
+                amrex::Abort("AverageAndPackVectorField not implemented for ncomp>1");
+#endif        
+            } else {
+               AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
+               {
+                  amrex_avg_fc_to_cc(thread_box, slice_arr,
+                            AMREX_D_DECL(src_x_arr,src_y_arr,src_z_arr),dcomp);
+               });
+#if (AMREX_SPACEDIM == 2)
+               // 
+               MultiFab::Copy(cc_slice, cc_slice, dcomp+1, dcomp+2, 1, ngrow);
+               // replace multiFab::copy (mf_Avg, *vec_field[1],0,dcomp+1,1,ngrow)
+               AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
+               {
+                  const FArrayBox ccy_fab(src_y_arr);
+                  FArrayBox slice_fab(slice_arr);
+                  slice_fab.copy(ccy_fab, thread_box, dcomp+1, thread_box, 0, 1);
+               });
+               
+#endif
+            }
+         // Edge-centered source multifab 
+         } else if (!vector_field[0]->is_nodal(0) ) {            
+            if (vector_field[0]->nComp() > 1) {
+#ifdef WARPX_DIM_RZ
+               // When ncomp>1, the total fields are constructed
+               // in temporary MultiFabs.
+#else
+               amrex::Abort("AverageAndPackVectorField not implemented for ncomp > 1");
+#endif
+            } else {
+               AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
+               {
+                  amrex_avg_eg_to_cc(thread_box, slice_arr,
+                              AMREX_D_DECL(src_x_arr,src_y_arr,src_z_arr),dcomp);
+               });
+#if (AMREX_SPACEDIM==2)
+               // replace the following!
+ //            MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
+ //            amrex::average_node_to_cellcenter( mf_avg, dcomp+1,
+ //                                            *vector_field[1], 0, 1, ngrow);
+#endif
+            }
 
          } else {
             amrex::Abort("Unknown staggering.");

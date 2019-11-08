@@ -187,13 +187,13 @@ public:
      *    steps 2-7 are performed
      * 2. Based on t_lab and t_boost, obtain z_lab and z_boost.
      * 3. Define data_buffer multifab that will store the data in the BT diag.
-     * 4. Define slice multifab at z_index that corresponds to z_boost and
-     *    getslicedata using cell-centered data at z_index and its distribution map.
-     * 5. Lorentz transform data stored in slice from z_boost,t_Boost to z_lab,t_lab
-     *    and store in slice multifab.
+     * 4. Define cc_slice multifab at z_index that corresponds to z_boost and
+     *    obtain cell-centered data on the cc_slice from E, B, j, rho multifabs.
+     * 5. Lorentz transform data stored in cc_slice from z_boost,t_boost 
+     *    to z_lab,t_lab and store in slice multifab.
      * 6. Generate a temporary slice multifab with distribution map of lab-frame
      *    data but at z_boost and
-     *    ParallelCopy data from the slice multifab to the temporary slice.
+     *    ParallelCopy data from the cc_slice multifab to the temporary slice.
      * 7. Finally, AddDataToBuffer is called where the data from temporary slice
      *    is simply copied from tmp_slice(i,j,k_boost) to
      *    LabFrameDiagSnapshot(i,j,k_lab) for full BT lab-frame diagnostic
@@ -203,20 +203,22 @@ public:
      *    and lorentz-transformed to the lab-frame and copied to the full
      *    and reduce diagnostic and stored in particle_buffer.
      */
-    //void writeLabFrameData(const amrex::MultiFab* cell_centered_data,
-    //                       const MultiParticleContainer& mypc,
-    //                       const amrex::Geometry& geom,
-    //                       const amrex::Real t_boost, const amrex::Real dt);
-    // change for CC-OPT
     void writeLabFrameData(
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield,
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Bfield,
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& current,
-//         const amrex::MultiFab* cell_centered_data,
          const MultiParticleContainer& mypc, const amrex::Vector<amrex::Geometry>& geom,
          const amrex::Real t_boost, const amrex::Real dt, 
          const amrex::Vector<amrex::IntVect>& ref_ratio);
     
+    /** \brief
+     *  The data from E, B, j, and rho multiFabs are copied or interpolated
+     *  to a cell-centered slice that is defined at z=zboost for each level,
+     *  based on the index type of the source multifabs. Finally, the data
+     *  from each level are averaged-down to the coarsest level, and used
+     *  for the back-transformation diagnostics. The slice multifab packs
+     *  all the field components, Ex,Ey,Ez,Bx,By,Bz,jx,jy,jz,rho.
+     */
     std::unique_ptr<amrex::MultiFab> GetCellCenteredSliceData(
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield,
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Bfield,
@@ -225,11 +227,27 @@ public:
          const int boost_direction_, const amrex::Real current_z_boost,
          const amrex::Vector<amrex::IntVect>& ref_ratio);
 
+    /** \brief
+     * Takes an array of 3 MultiFab `vector_field`
+     * (representing the x,y,z components of a vector),
+     * averages it to the cell center of a slice MultiFab
+     * where the Vector of proc_id and box_array_indices
+     * of the source box arrays intersecting with the slice
+     * BoxArray is provided. The data are stored in the components
+     * dcomp to dcomp+2.
+     */
     void AverageAndPackVectorField_to_CCslice( amrex::MultiFab& cc_slice, 
                const std::array< std::unique_ptr<amrex::MultiFab>, 3 >& vector_field,
                amrex::Vector<int> slice_to_full_ba_map, 
                const int dcomp, const int ngrow);
 
+    /** \brief
+     * Take a MultiFab `scalar_field` and average it to the
+     * cell-center and stores the resulting MultiFab in cc_slice in 
+     * the component dcomp. Use the vector of (proc,BoxArray) indices
+     * which contain the list of intersecting Boxes from the source
+     * and destination MultiFab.
+     */
     void AverageAndPackScalarField_to_CCslice( amrex::MultiFab& cc_slice, 
                const amrex::MultiFab& scalar_field,
                amrex::Vector<int> slice_to_full_ba_map, 
