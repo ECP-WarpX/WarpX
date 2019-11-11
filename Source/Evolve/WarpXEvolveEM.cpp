@@ -319,6 +319,7 @@ WarpX::OneStep_nosub (Real cur_time)
     EvolveE(dt[0]); // We now have E^{n+1}
     FillBoundaryE();
     EvolveF(0.5*dt[0], DtType::SecondHalf);
+    FillBoundaryF();
     EvolveB(0.5*dt[0]); // We now have B^{n+1}
     if (do_pml) {
         DampPML();
