@@ -4,6 +4,7 @@
 #include "BackTransformedDiagnostic.H"
 #include "SliceDiagnostic.H"
 #include "WarpX_f.H"
+#include "FieldIO.H"
 #include "WarpX.H"
 
 using namespace amrex;
@@ -474,7 +475,7 @@ LorentzTransformZ(MultiFab& data, Real gamma_boost, Real beta_boost, int ncomp)
 #endif
     for (MFIter mfi(data, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
         const Box& tile_box = mfi.tilebox();
-        Array4< Real > arr = data[mfi].array();
+        Array4 <Real> arr = data[mfi].array();
         // arr(x,y,z,comp) where 0->9 comps are
         // Ex Ey Ez Bx By Bz jx jy jz rho
         Real clight = PhysConst::c;
@@ -1456,10 +1457,10 @@ AddPartDataToParticleBuffer(
         {
            if( xpc[i] >= (diag_domain_lab_.lo(0)-dx_) &&
                xpc[i] <= (diag_domain_lab_.hi(0)+dx_) ) {
- #if (AMREX_SPACEDIM == 3)
+#if (AMREX_SPACEDIM == 3)
               if( ypc[i] >= (diag_domain_lab_.lo(1)-dy_) &&
                   ypc[i] <= (diag_domain_lab_.hi(1) + dy_))
- #endif
+#endif
               {
                  wpc_buff[partcounter] = wpc[i];
                  xpc_buff[partcounter] = xpc[i];
@@ -1575,6 +1576,29 @@ void BackTransformedDiagnostic::
                Vector<int> slice_to_full_ba_map, 
                const int dcomp, const int ngrow)
 {
+     
+#ifdef WARPX_DIM_RZ
+     // When ncomp>1, the total fields are constructed in
+     // temporary MultiFabs.
+     // mf_total is declared such that it is a vector array 
+     // similar to vector_field, but, with dm and box_array 
+     // similar to cc_slice. 
+     std::array<std::unique_ptr<MultiFab>,3> mf_total;
+     mf_total[0].reset(new MultiFab(vector_field[0]->boxArray(), vector_field[0]->DistributionMap(), 1, vector_field[0]->nGrowVect()));
+     mf_total[1].reset(new MultiFab(vector_field[1]->boxArray(), vector_field[0]->DistributionMap(), 1, vector_field[1]->nGrowVect()));
+     mf_total[2].reset(new MultiFab(vector_field[2]->boxArray(), vector_field[0]->DistributionMap(), 1, vector_field[2]->nGrowVect()));     
+     // Sum over the real components, giving quantity at theta=0
+     MultiFab::Copy(*mf_total[0], *vector_field[0], 0, 0, 1, vector_field[0]->nGrowVect());
+     MultiFab::Copy(*mf_total[1], *vector_field[1], 0, 0, 1, vector_field[1]->nGrowVect());
+     MultiFab::Copy(*mf_total[2], *vector_field[2], 0, 0, 1, vector_field[2]->nGrowVect());
+     for (int ic=1 ; ic < vector_field[0]->nComp() ; ic += 2) {
+         MultiFab::Add(*mf_total[0], *vector_field[0], ic, 0, 1, vector_field[0]->nGrowVect());
+         MultiFab::Add(*mf_total[1], *vector_field[1], ic, 0, 1, vector_field[1]->nGrowVect());
+         MultiFab::Add(*mf_total[2], *vector_field[2], ic, 0, 1, vector_field[2]->nGrowVect());
+     }
+#else
+     amrex::Abort("AverageAndPackVectorField not implemented for ncomp>1");
+#endif
      for (MFIter mfi(cc_slice, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
          // index of the box in the index space of slice boxarray 
          int slice_gid = mfi.index();
@@ -1588,9 +1612,17 @@ void BackTransformedDiagnostic::
                 = vector_field[1]->const_array(full_gid);
          Array4 <Real const> const& src_z_arr
                 = vector_field[2]->const_array(full_gid);
+#ifdef WARPX_DIM_RZ
+         Array4 <Real const> const& mftotal_x_arr
+                = vector_field[0]->const_array(full_gid);
+         Array4 <Real const> const& mftotal_y_arr
+                = vector_field[1]->const_array(full_gid);
+         Array4 <Real const> const& mftotal_z_arr
+                = vector_field[2]->const_array(full_gid);
+#endif
 
          const Box& tile_box = mfi.growntilebox(ngrow);
-         // Check the staggeric type of the 3-component `vector-field` 
+         // Check the staggering type of the 3-component `vector-field` 
          // and average accordingly:
          // Fully cell-centered field ( simply copy - no avg)
          if (vector_field[0]->is_cell_centered() ) {
@@ -1621,26 +1653,45 @@ void BackTransformedDiagnostic::
             
             if (vector_field[0]->nComp() > 1) {
 #ifdef WARPX_DIM_RZ
-                // When ncomp>1, the total fields are constructed in
-                // temporary MultiFabs.
+            AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
+            {
+               amrex_avg_fc_to_cc(thread_box, slice_arr,
+               AMREX_D_DECL(mftotal_x_arr, mftotal_z_arr, mftotal_y_arr), dcomp);
+            });
+            // copy second component containing z-dim data to third component
+            MultiFab::Copy(cc_slice, cc_slice, dcomp+1, dcomp+2, 1, ngrow);
+            // Copy y-dim data from src to second component
+            AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
+            {
+                const FArrayBox mftotal_y_fab(mftotal_y_arr);
+                FArrayBox slice_fab(slice_arr);
+                slice_fab.copy(mftotal_y_fab, thread_box, 0, thread_box,
+                               dcomp+1, 1); 
+            });
 #else
-                amrex::Abort("AverageAndPackVectorField not implemented for ncomp>1");
+            amrex::Abort("AverageAndPaclVectorField not implemented for ncomp>1");
 #endif        
+            // if ncomp == 1
             } else {
                AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
                {
                   amrex_avg_fc_to_cc(thread_box, slice_arr,
-                            AMREX_D_DECL(src_x_arr,src_y_arr,src_z_arr),dcomp);
+#if (AMREX_SPACEDIM == 3)
+                        AMREX_D_DECL(src_x_arr,src_y_arr,src_z_arr),dcomp);
+#else
+                        AMREX_D_DECL(src_x_arr,src_z_arr,src_y_arr),dcomp);
+#endif
                });
 #if (AMREX_SPACEDIM == 2)
-               // 
+               // Copy z-data stored in dcomp+1 to dcomp+2
                MultiFab::Copy(cc_slice, cc_slice, dcomp+1, dcomp+2, 1, ngrow);
-               // replace multiFab::copy (mf_Avg, *vec_field[1],0,dcomp+1,1,ngrow)
+               // Copy y-data from src ccy_fab to the slice at dcomp+1
+               // (no averaging done here for the y-dir in 2D) 
                AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
                {
                   const FArrayBox ccy_fab(src_y_arr);
                   FArrayBox slice_fab(slice_arr);
-                  slice_fab.copy(ccy_fab, thread_box, dcomp+1, thread_box, 0, 1);
+                  slice_fab.copy(ccy_fab, thread_box, 0, thread_box, dcomp+1, 1);
                });
                
 #endif
@@ -1649,22 +1700,43 @@ void BackTransformedDiagnostic::
          } else if (!vector_field[0]->is_nodal(0) ) {            
             if (vector_field[0]->nComp() > 1) {
 #ifdef WARPX_DIM_RZ
-               // When ncomp>1, the total fields are constructed
-               // in temporary MultiFabs.
+               AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
+               {
+                  amrex_avg_eg_to_cc(thread_box, slice_arr,
+                   AMREX_D_DECL(mftotal_x_arr,mftotal_z_arr,mftotal_y_arr),dcomp); 
+               });
+               MultiFab::Copy(cc_slice, cc_slice, dcomp+1, dcomp+2, 1, ngrow);
+               AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
+               {
+                  amrex_avg_nd_to_cc(thread_box, slice_arr, mftotal_y_arr,
+                                   dcomp+1, 0, 1);
+               });
 #else
                amrex::Abort("AverageAndPackVectorField not implemented for ncomp > 1");
 #endif
             } else {
                AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
                {
+#if (AMREX_SPACEDIM==3)
                   amrex_avg_eg_to_cc(thread_box, slice_arr,
                               AMREX_D_DECL(src_x_arr,src_y_arr,src_z_arr),dcomp);
-               });
+#else
+                  amrex_avg_eg_to_cc(thread_box, slice_arr,
+                              AMREX_D_DECL(src_x_arr,src_z_arr,src_y_arr),dcomp);
+#endif
+	       });
 #if (AMREX_SPACEDIM==2)
-               // replace the following!
- //            MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
- //            amrex::average_node_to_cellcenter( mf_avg, dcomp+1,
- //                                            *vector_field[1], 0, 1, ngrow);
+               MultiFab::Copy(cc_slice, cc_slice, dcomp+1, dcomp+2, 1, ngrow);
+               // averaging the second E-component from the source array to 
+               // to the dst slice_array using avg_node_to_cc. 
+               // node_to_cc is used because eg_to_cc requires a vector 
+               // of SPACEDIM number of components (2D or 3D)
+               // Here, we only need to copy/average the Ey component. 
+               AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
+               {
+                  amrex_avg_nd_to_cc(thread_box, slice_arr, src_y_arr,
+                                   dcomp+1, 0, 1);
+               });
 #endif
             }
 
@@ -1718,3 +1790,69 @@ void BackTransformedDiagnostic::
    }   
 
 }
+
+//#ifdef WARPX_DIM_RZ
+//void BackTransformedDiagnostic::
+//     ConstructTotalRZField_Slice(mf_total, vector_field,
+//                 Vector<int> slice_to_full_ba_map)
+//{
+//   // Sum over the real components.
+//   // The first component for theta=0 is a special case with real value only.
+//   const int ngrow = 1;  
+//   // 1. copy vec_field_0 to mf_Total[0], 
+//   for (MFIter mfi(mf_total, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+//       // index of the box in the index space of mf_total
+//       int mf_gid = mfi.index();
+//       // corresponding index of intersecting box in source boxarray
+//       int full_grid = slice_to_full_ba_map[mf_gid];
+//       Array4<Real> const& mftotal_x_arr = mf_total[0]->array(mfi);
+//       Array4<Real> const& mftotal_y_arr = mf_total[1]->array(mfi);
+//       Array4<Real> const& mftotal_z_arr = mf_total[2]->array(mfi);
+//       // source arrays
+//       Array4 <Real const> const& src_x_arr
+//              = vector_field[0]->const_Array(full_gid);
+//       Array4 <Real const> const& src_y_arr
+//              = vector_field[1]->const_Array(full_gid);
+//       Array4 <Real const> const& src_z_arr
+//              = vector_field[2]->const_Array(full_gid);
+//
+//       const Box& tile_box = mfi.growntilebox(ngrow);
+//       AMREX_LAUNCH_GOST_DEVICE_LAMBDA (tile_box, thread_box,
+//       {
+//           const FArrayBox vec_x_fab(src_x_arr);
+//           const FArrayBox vec_y_fab(src_y_arr);
+//           const FArrayBox vec_z_fab(src_z_arr);
+//           FArrayBox mftotal_x_fab(mftotal_x_arr);
+//           FArrayBox mftotal_y_fab(mftotal_y_arr);
+//           FArrayBox mftotal_z_fab(mftotal_z_arr);
+//           mftotal_x_fab.copy(vec_x_fab, thread_box, 0, thread_box, 0, 1);
+//           mftotal_y_fab.copy(vec_y_fab, thread_box, 0, thread_box, 0, 1);
+//           mftotal_z_fab.copy(vec_z_fab, thread_box, 0, thread_box, 0, 1);
+//       });
+//   }
+//       // Now add all the real components
+//   for (int ic=1; ic < vector_field[0]->nComp(); ic += 2) {
+//      for (MFIter mfi(mf_total, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+//          // index of the box in the index space of mf_total
+//          int mf_gid = mfi.index();
+//          // corresponding index of intersecting box in source boxarray
+//          int full_grid = slice_to_full_ba_map[mf_gid];
+//          Array4<Real> const& mftotal_x_arr = mf_total[0]->array(mfi);
+//          Array4<Real> const& mftotal_y_arr = mf_total[1]->array(mfi);
+//          Array4<Real> const& mftotal_z_arr = mf_total[2]->array(mfi);
+//          // source arrays
+//          Array4 <Real const> const& src_x_arr
+//                 = vector_field[0]->const_Array(full_gid);
+//          Array4 <Real const> const& src_y_arr
+//                 = vector_field[1]->const_Array(full_gid);
+//          Array4 <Real const> const& src_z_arr
+//                 = vector_field[2]->const_Array(full_gid);
+//          
+//           
+//      }
+//   }
+//       
+//      
+//
+//}
+//#endif
