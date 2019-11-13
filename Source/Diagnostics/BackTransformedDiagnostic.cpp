@@ -1699,7 +1699,7 @@ void BackTransformedDiagnostic::
                 amrex_avg_eg_to_cc(thread_box, slice_arr,
                             AMREX_D_DECL(src_x_arr,src_z_arr,src_y_arr),dcomp);
 #endif
-	       });
+           });
 #if (AMREX_SPACEDIM==2)
                // Copy z-data stored in dcomp+1 to dcomp+2
                // Then averaging the y-component from the source array to 
