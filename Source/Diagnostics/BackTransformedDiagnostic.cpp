@@ -1,6 +1,5 @@
 #include <AMReX_MultiFabUtil.H>
 #include <AMReX_MultiFabUtil_C.H>
-#include "AMReX_buildInfo.H"
 #include "BackTransformedDiagnostic.H"
 #include "SliceDiagnostic.H"
 #include "WarpX_f.H"
