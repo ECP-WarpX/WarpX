@@ -103,4 +103,13 @@ WriteOpenPMDFields( const std::string& filename,
                     const int iteration, const double time );
 #endif // WARPX_USE_OPENPMD
 
+#ifdef WARPX_DIM_RZ
+void
+ConstructTotalRZField(
+     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& mf_total,
+     const std::array< std::unique_ptr<amrex::MultiFab>, 3 >& vector_field);
+
+#endif // WARPX_FielIO_H_
+
+
 #endif // WARPX_FielIO_H_
