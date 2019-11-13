@@ -1634,12 +1634,13 @@ void BackTransformedDiagnostic::
                AMREX_D_DECL(mftotal_x_arr, mftotal_z_arr, mftotal_y_arr), dcomp);
             });
             // copy second component containing z-dim data to third component
-            MultiFab::Copy(cc_slice, cc_slice, dcomp+1, dcomp+2, 1, ngrow);
-            // Copy y-dim data from src to second component
+            // then copy y-dim data from src to second component
             AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
             {
                 const FArrayBox mftotal_y_fab(mftotal_y_arr);
                 FArrayBox slice_fab(slice_arr);
+                slice_fab.copy(slice_fab, thread_box, dcomp_1, thread_box,
+                               dcomp+2, 1);
                 slice_fab.copy(mftotal_y_fab, thread_box, 0, thread_box,
                                dcomp+1, 1);
             });
@@ -1679,9 +1680,10 @@ void BackTransformedDiagnostic::
                   amrex_avg_eg_to_cc(thread_box, slice_arr,
                    AMREX_D_DECL(mftotal_x_arr,mftotal_z_arr,mftotal_y_arr),dcomp);
                });
-               MultiFab::Copy(cc_slice, cc_slice, dcomp+1, dcomp+2, 1, ngrow);
                AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
                {
+                  slice_fab.copy(slice_fab, thread_box, dcomp_1, thread_box,
+                                 dcomp+2, 1);
                   amrex_avg_nd_to_cc(thread_box, slice_arr, mftotal_y_arr,
                                    dcomp+1, 0, 1);
                });
