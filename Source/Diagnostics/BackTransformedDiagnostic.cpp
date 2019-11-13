@@ -1644,7 +1644,7 @@ void BackTransformedDiagnostic::
             {
                 const FArrayBox mftotal_y_fab(mftotal_y_arr);
                 FArrayBox slice_fab(slice_arr);
-                slice_fab.copy(slice_fab, thread_box, dcomp_1, thread_box,
+                slice_fab.copy(slice_fab, thread_box, dcomp+1, thread_box,
                                dcomp+2, 1);
                 slice_fab.copy(mftotal_y_fab, thread_box, 0, thread_box,
                                dcomp+1, 1);
@@ -1689,7 +1689,8 @@ void BackTransformedDiagnostic::
                });
                AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
                {
-                  slice_fab.copy(slice_fab, thread_box, dcomp_1, thread_box,
+                  FArrayBox slice_fab(slice_arr);
+                  slice_fab.copy(slice_fab, thread_box, dcomp+1, thread_box,
                                  dcomp+2, 1);
                   amrex_avg_nd_to_cc(thread_box, slice_arr, mftotal_y_arr,
                                      dcomp+1, 0, 1);
