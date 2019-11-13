@@ -294,7 +294,7 @@ MultiParticleContainer::PushP (int lev, Real dt,
     }
 }
 
-std::unique_ptr<MultiFab> 
+std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local) const
 {
     std::unique_ptr<MultiFab> rho = allcontainers[0]->GetChargeDensity(lev, true);
