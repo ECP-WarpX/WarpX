@@ -10,6 +10,7 @@
 #ifdef WARPX_QED
     #include <QuantumSyncEngineWrapper.H>
     #include <BreitWheelerEngineWrapper.H>
+    #include <QedChiFunctions.H>
 #endif
 
 #include <map>
@@ -93,9 +94,9 @@ public:
                          DtType a_dt_type=DtType::Full) override;
 
     virtual void PushPX(WarpXParIter& pti,
-                        amrex::Cuda::ManagedDeviceVector<amrex::ParticleReal>& xp,
-                        amrex::Cuda::ManagedDeviceVector<amrex::ParticleReal>& yp,
-                        amrex::Cuda::ManagedDeviceVector<amrex::ParticleReal>& zp,
+                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& xp,
+                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& yp,
+                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& zp,
                         amrex::Real dt, DtType a_dt_type=DtType::Full);
 
     virtual void PushP (int lev, amrex::Real dt,
@@ -209,18 +210,26 @@ protected:
     // Inject particles during the whole simulation
     void ContinuousInjection (const amrex::RealBox& injection_box) override;
 
+    //This function return true if the PhysicalParticleContainer contains electrons
+    //or positrons, false otherwise
+    virtual bool AmIALepton ();
+
+    //When true PhysicalParticleContainer tries to use a pusher including
+    //radiation reaction
+    bool do_classical_radiation_reaction = false;
+
 #ifdef WARPX_QED
     // A flag to enable quantum_synchrotron process for leptons
-    bool do_qed_quantum_sync = false;
+    bool m_do_qed_quantum_sync = false;
 
     // A flag to enable breit_wheeler process [photons only!!]
-    bool do_qed_breit_wheeler = false;
+    bool m_do_qed_breit_wheeler = false;
 
     // A smart pointer to an instance of a Quantum Synchrotron engine
-    std::shared_ptr<QuantumSynchrotronEngine> shr_ptr_qs_engine;
+    std::shared_ptr<QuantumSynchrotronEngine> m_shr_p_qs_engine;
 
     // A smart pointer to an instance of a Breit Wheeler engine [photons only!]
-    std::shared_ptr<BreitWheelerEngine> shr_ptr_bw_engine;
+    std::shared_ptr<BreitWheelerEngine> m_shr_p_bw_engine;
 #endif
 
 };
