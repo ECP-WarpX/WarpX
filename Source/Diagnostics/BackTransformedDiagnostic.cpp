@@ -837,8 +837,8 @@ writeLabFrameData(
                cc_slice.reset(new MultiFab);
                cc_slice.reset(nullptr);
                // Cell-centered slice data at zboost location is obtained
-               cc_slice = GetCellCenteredSliceData( Efield, Bfield, current, mypc, geom,
-                                         boost_direction_,
+               cc_slice = GetCellCenteredSliceData( Efield, Bfield, current,
+                                         mypc, geom, boost_direction_,
                                          LabFrameDiags_[i]->current_z_boost,
                                          ref_ratio);
                const int ncomp = cc_slice->nComp();
@@ -898,7 +898,6 @@ writeLabFrameData(
 
             if (WarpX::do_back_transformed_fields) {
 #ifdef WARPX_USE_HDF5
-
                 Box buff_box = LabFrameDiags_[i]->buff_box_;
                 for (int comp = 0; comp < LabFrameDiags_[i]->data_buffer_->nComp(); ++comp)
                     output_write_field( LabFrameDiags_[i]->file_name,
@@ -1564,9 +1563,15 @@ void BackTransformedDiagnostic::
      // similar to vector_field, but, with dm and box_array
      // similar to cc_slice.
      std::array<std::unique_ptr<MultiFab>,3> mf_total;
-     mf_total[0].reset(new MultiFab(vector_field[0]->boxArray(), vector_field[0]->DistributionMap(), 1, vector_field[0]->nGrowVect()));
-     mf_total[1].reset(new MultiFab(vector_field[1]->boxArray(), vector_field[0]->DistributionMap(), 1, vector_field[1]->nGrowVect()));
-     mf_total[2].reset(new MultiFab(vector_field[2]->boxArray(), vector_field[0]->DistributionMap(), 1, vector_field[2]->nGrowVect()));
+     mf_total[0].reset(new MultiFab(vector_field[0]->boxArray(),
+                           vector_field[0]->DistributionMap(), 1,
+                           vector_field[0]->nGrowVect()));
+     mf_total[1].reset(new MultiFab(vector_field[1]->boxArray(),
+                           vector_field[0]->DistributionMap(), 1,
+                           vector_field[1]->nGrowVect()));
+     mf_total[2].reset(new MultiFab(vector_field[2]->boxArray(),
+                           vector_field[0]->DistributionMap(), 1,
+                           vector_field[2]->nGrowVect()));
 #endif
      if (vector_field[0]->nComp() > 1) {
 #ifdef WARPX_DIM_RZ
@@ -1666,8 +1671,10 @@ void BackTransformedDiagnostic::
                {
                   const FArrayBox ccy_fab(src_y_arr);
                   FArrayBox slice_fab(slice_arr);
-                  slice_fab.copy(slice_fab, thread_box, dcomp+1, thread_box, dcomp+2, 1);
-                  slice_fab.copy(ccy_fab, thread_box, 0, thread_box, dcomp+1, 1);
+                  slice_fab.copy(slice_fab, thread_box, dcomp+1, thread_box,
+                                 dcomp+2, 1);
+                  slice_fab.copy(ccy_fab, thread_box, 0, thread_box,
+                                 dcomp+1, 1);
                });
 #endif
             }
@@ -1685,7 +1692,7 @@ void BackTransformedDiagnostic::
                   slice_fab.copy(slice_fab, thread_box, dcomp_1, thread_box,
                                  dcomp+2, 1);
                   amrex_avg_nd_to_cc(thread_box, slice_arr, mftotal_y_arr,
-                                   dcomp+1, 0, 1);
+                                     dcomp+1, 0, 1);
                });
 #else
                amrex::Abort("AverageAndPackVectorField not implemented for ncomp > 1");
@@ -1710,7 +1717,8 @@ void BackTransformedDiagnostic::
                AMREX_LAUNCH_HOST_DEVICE_LAMBDA (tile_box, thread_box,
                {
                   FArrayBox slice_fab(slice_arr);
-                  slice_fab.copy(slice_fab, thread_box, dcomp+1, thread_box, dcomp+2, 1);
+                  slice_fab.copy(slice_fab, thread_box, dcomp+1, thread_box,
+                                 dcomp+2, 1);
                   amrex_avg_nd_to_cc(thread_box, slice_arr, src_y_arr,
                                    dcomp+1, 0, 1);
                });
@@ -1734,7 +1742,6 @@ void BackTransformedDiagnostic::
                Vector<int> slice_to_full_ba_map,
                const int dcomp, const int ngrow)
 {
-
    for (MFIter mfi(cc_slice, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
        // index of the box in the index space of slice box array
        int slice_gid = mfi.index();

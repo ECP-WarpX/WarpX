@@ -236,9 +236,9 @@ public:
      * dcomp to dcomp+2.
      */
     void AverageAndPackVectorField_to_CCslice( amrex::MultiFab& cc_slice,
-               const std::array< std::unique_ptr<amrex::MultiFab>, 3 >& vector_field,
-               amrex::Vector<int> slice_to_full_ba_map,
-               const int dcomp, const int ngrow);
+         const std::array< std::unique_ptr<amrex::MultiFab>, 3 >& vector_field,
+         amrex::Vector<int> slice_to_full_ba_map,
+         const int dcomp, const int ngrow);
 
     /** \brief
      * Take a MultiFab `scalar_field` and average it to the
