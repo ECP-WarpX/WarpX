@@ -432,19 +432,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const Real q = this->charge;
             const Real m = this->mass;
 
-            //Assumes that all consistency checks have been done at initialization
-            if(do_classical_radiation_reaction){
-                amrex::ParallelFor(
-                    pti.numParticles(),
-                    [=] AMREX_GPU_DEVICE (long i) {
-                        UpdateMomentumBorisWithRadiationReaction(
-                        uxpp[i], uypp[i], uzpp[i],
-                        Expp[i], Eypp[i], Ezpp[i],
-                        Bxpp[i], Bypp[i], Bzpp[i],
-                        q, m, dt);
-                    }
-                );
-            } else if (WarpX::particle_pusher_algo == ParticlePusherAlgo::Boris){
+            if (WarpX::particle_pusher_algo == ParticlePusherAlgo::Boris){
                 amrex::ParallelFor( pti.numParticles(),
                     [=] AMREX_GPU_DEVICE (long i) {
                         UpdateMomentumBoris(
