@@ -24,8 +24,11 @@
 
 using namespace amrex;
 
-Vector<Real> WarpX::B_external(3, 0.0);
-Vector<Real> WarpX::E_external(3, 0.0);
+Vector<Real> WarpX::B_external_particle(3, 0.0);
+Vector<Real> WarpX::E_external_particle(3, 0.0);
+
+Vector<Real> WarpX::E_external_grid(3, 0.0);
+Vector<Real> WarpX::B_external_grid(3, 0.0);
 
 int WarpX::do_moving_window = 0;
 int WarpX::moving_window_dir = -1;
@@ -70,6 +73,7 @@ bool WarpX::do_back_transformed_particles = true;
 
 int  WarpX::num_slice_snapshots_lab = 0;
 Real WarpX::dt_slice_snapshots_lab;
+Real WarpX::particle_slice_width_lab = 0.0;
 
 bool WarpX::do_dynamic_scheduling = true;
 
@@ -300,8 +304,11 @@ WarpX::ReadParameters ()
             pp.query("zmax_plasma_to_compute_max_step",
                       zmax_plasma_to_compute_max_step);
 
-        pp.queryarr("B_external", B_external);
-        pp.queryarr("E_external", E_external);
+        pp.queryarr("B_external_particle", B_external_particle);
+        pp.queryarr("E_external_particle", E_external_particle);
+
+        pp.queryarr("E_external_grid", E_external_grid);
+        pp.queryarr("B_external_grid", B_external_grid);
 
         pp.query("do_moving_window", do_moving_window);
         if (do_moving_window)
@@ -630,6 +637,7 @@ WarpX::ReadParameters ()
           pp.query("num_slice_snapshots_lab", num_slice_snapshots_lab);
           if (num_slice_snapshots_lab > 0) {
              pp.get("dt_slice_snapshots_lab", dt_slice_snapshots_lab );
+             pp.get("particle_slice_width_lab",particle_slice_width_lab);
           }
        }
 

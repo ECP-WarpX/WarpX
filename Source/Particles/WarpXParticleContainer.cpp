@@ -4,10 +4,11 @@
 #include <MultiParticleContainer.H>
 #include <WarpXParticleContainer.H>
 #include <AMReX_AmrParGDB.H>
+#include <WarpXComm.H>
 #include <WarpX_f.H>
 #include <WarpX.H>
 #include <WarpXAlgorithmSelection.H>
-
+#include <WarpXComm.H>
 // Import low-level single-particle kernels
 #include <GetAndSetPosition.H>
 #include <UpdatePosition.H>
@@ -298,6 +299,9 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 #ifdef AMREX_USE_GPU
     // No tiling on GPU: jx_ptr points to the full
     // jx array (same for jy_ptr and jz_ptr).
+    auto & jx_fab = jx->get(pti);
+    auto & jy_fab = jy->get(pti);
+    auto & jz_fab = jz->get(pti);
     Array4<Real> const& jx_arr = jx->array(pti);
     Array4<Real> const& jy_arr = jy->array(pti);
     Array4<Real> const& jz_arr = jz->array(pti);
@@ -317,6 +321,9 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     local_jy[thread_num].setVal(0.0);
     local_jz[thread_num].setVal(0.0);
 
+    auto & jx_fab = local_jx[thread_num];
+    auto & jy_fab = local_jy[thread_num];
+    auto & jz_fab = local_jz[thread_num];
     Array4<Real> const& jx_arr = local_jx[thread_num].array();
     Array4<Real> const& jy_arr = local_jy[thread_num].array();
     Array4<Real> const& jz_arr = local_jz[thread_num].array();
@@ -329,13 +336,13 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     ParticleReal* AMREX_RESTRICT zp = m_zp[thread_num].dataPtr() + offset;
     ParticleReal* AMREX_RESTRICT yp = m_yp[thread_num].dataPtr() + offset;
 
+    // Lower corner of tile box physical domain
+    // Note that this includes guard cells since it is after tilebox.ngrow
     const Dim3 lo = lbound(tilebox);
+    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev);
 
     BL_PROFILE_VAR_START(blp_deposit);
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
-        // Lower corner of tile box physical domain
-        // Note that this includes guard cells since it is after tilebox.ngrow
-        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev);
         if        (WarpX::nox == 1){
             doEsirkepovDepositionShapeN<1>(
                 xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
@@ -356,32 +363,24 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
                 WarpX::n_rz_azimuthal_modes);
         }
     } else {
-        // Lower corner of tile box physical domain
-        // Note that this includes guard cells since it is after tilebox.ngrow
-        const std::array<Real, 3> xyzminx = WarpX::LowerCornerWithCentering(tbx, depos_lev);
-        const std::array<Real, 3> xyzminy = WarpX::LowerCornerWithCentering(tby, depos_lev);
-        const std::array<Real, 3> xyzminz = WarpX::LowerCornerWithCentering(tbz, depos_lev);
         if        (WarpX::nox == 1){
             doDepositionShapeN<1>(
                 xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx,
-                xyzminx, xyzminy, xyzminz, lo, q,
-                WarpX::n_rz_azimuthal_modes);
+                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx,
+                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes);
         } else if (WarpX::nox == 2){
             doDepositionShapeN<2>(
                 xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx,
-                xyzminx, xyzminy, xyzminz, lo, q,
-                WarpX::n_rz_azimuthal_modes);
+                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx,
+                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes);
         } else if (WarpX::nox == 3){
             doDepositionShapeN<3>(
                 xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
-                jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx,
-                xyzminx, xyzminy, xyzminz, lo, q,
-                WarpX::n_rz_azimuthal_modes);
+                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx,
+                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes);
         }
     }
     BL_PROFILE_VAR_STOP(blp_deposit);
@@ -506,68 +505,68 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 }
 
 void
-WarpXParticleContainer::DepositCharge (Vector<std::unique_ptr<MultiFab> >& rho, bool local)
+WarpXParticleContainer::DepositCharge (Vector<std::unique_ptr<MultiFab> >& rho,
+                                        bool local, bool reset,
+                                        bool do_rz_volume_scaling)
 {
+    // Loop over the refinement levels
+    int const finest_level = rho.size() - 1;
+    for (int lev = 0; lev <= finest_level; ++lev) {
 
-    int num_levels = rho.size();
-    int finest_level = num_levels - 1;
+        // Reset the `rho` array if `reset` is True
+        if (reset) rho[lev]->setVal(0.0, rho[lev]->nGrow());
 
-    // each level deposits it's own particles
-    const int ng = rho[0]->nGrow();
-    for (int lev = 0; lev < num_levels; ++lev) {
-
-        rho[lev]->setVal(0.0, ng);
-
-        const auto& gm = m_gdb->Geom(lev);
-        const auto& ba = m_gdb->ParticleBoxArray(lev);
-
-        const Real* dx  = gm.CellSize();
-        const Real* plo = gm.ProbLo();
-        BoxArray nba = ba;
-        nba.surroundingNodes();
-
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti) {
-            const Box& box = nba[pti];
-
+        // Loop over particle tiles and deposit charge on each level
+#ifdef _OPENMP
+        #pragma omp parallel
+        {
+        int thread_num = omp_get_thread_num();
+#else
+        int thread_num = 0;
+#endif
+        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+        {
+            const long np = pti.numParticles();
             auto& wp = pti.GetAttribs(PIdx::w);
-            const auto& particles = pti.GetArrayOfStructs();
-            int nstride = particles.dataShape().first;
-            const long np  = pti.numParticles();
 
-            FArrayBox& rhofab = (*rho[lev])[pti];
+            pti.GetPosition(m_xp[thread_num], m_yp[thread_num], m_zp[thread_num]);
 
-            WRPX_DEPOSIT_CIC(particles.dataPtr(), nstride, np,
-                             wp.dataPtr(), &this->charge,
-                             rhofab.dataPtr(), box.loVect(), box.hiVect(),
-                             plo, dx, &ng);
+            int* AMREX_RESTRICT ion_lev;
+            if (do_field_ionization){
+                ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+            } else {
+                ion_lev = nullptr;
+            }
+
+            DepositCharge(pti, wp, ion_lev, rho[lev].get(), 0, 0, np, thread_num, lev, lev);
         }
+#ifdef _OPENMP
+        }
+#endif
 
-        if (!local) rho[lev]->SumBoundary(gm.periodicity());
+#ifdef WARPX_DIM_RZ
+        if (do_rz_volume_scaling) {
+            WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
+        }
+#endif
+
+        // Exchange guard cells
+        if (!local) rho[lev]->SumBoundary( m_gdb->Geom(lev).periodicity() );
     }
 
-    // now we average down fine to crse
-    std::unique_ptr<MultiFab> crse;
+    // Now that the charge has been deposited at each level,
+    // we average down from fine to crse
     for (int lev = finest_level - 1; lev >= 0; --lev) {
-        const BoxArray& fine_BA = rho[lev+1]->boxArray();
         const DistributionMapping& fine_dm = rho[lev+1]->DistributionMap();
-        BoxArray coarsened_fine_BA = fine_BA;
+        BoxArray coarsened_fine_BA = rho[lev+1]->boxArray();
         coarsened_fine_BA.coarsen(m_gdb->refRatio(lev));
-
         MultiFab coarsened_fine_data(coarsened_fine_BA, fine_dm, rho[lev+1]->nComp(), 0);
         coarsened_fine_data.setVal(0.0);
 
-        IntVect ratio(AMREX_D_DECL(2, 2, 2));  // FIXME
+        int const refinement_ratio = 2;
 
-        for (MFIter mfi(coarsened_fine_data); mfi.isValid(); ++mfi) {
-            const Box& bx = mfi.validbox();
-            const Box& crse_box = coarsened_fine_data[mfi].box();
-            const Box& fine_box = (*rho[lev+1])[mfi].box();
-            WRPX_SUM_FINE_TO_CRSE_NODAL(bx.loVect(), bx.hiVect(), ratio.getVect(),
-                                        coarsened_fine_data[mfi].dataPtr(), crse_box.loVect(), crse_box.hiVect(),
-                                        (*rho[lev+1])[mfi].dataPtr(), fine_box.loVect(), fine_box.hiVect());
-        }
-
-        rho[lev]->copy(coarsened_fine_data, m_gdb->Geom(lev).periodicity(), FabArrayBase::ADD);
+        interpolateDensityFineToCoarse( *rho[lev+1], coarsened_fine_data, refinement_ratio );
+        rho[lev]->ParallelAdd( coarsened_fine_data, m_gdb->Geom(lev).periodicity() );
     }
 }
 
@@ -846,5 +845,3 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
     if (pld.m_lev == lev-1){
     }
 }
-
-

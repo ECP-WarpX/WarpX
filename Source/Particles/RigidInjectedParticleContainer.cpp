@@ -78,7 +78,7 @@ RigidInjectedParticleContainer::RemapParticles()
                 // Note that the particles are already in the boosted frame.
                 // This value is saved to advance the particles not injected yet
 
-                Cuda::ManagedDeviceVector<ParticleReal> xp, yp, zp;
+                Gpu::ManagedDeviceVector<ParticleReal> xp, yp, zp;
 
                 for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
                 {
@@ -138,7 +138,7 @@ RigidInjectedParticleContainer::BoostandRemapParticles()
 #pragma omp parallel
 #endif
     {
-        Cuda::ManagedDeviceVector<ParticleReal> xp, yp, zp;
+        Gpu::ManagedDeviceVector<ParticleReal> xp, yp, zp;
 
         for (WarpXParIter pti(*this, 0); pti.isValid(); ++pti)
         {
@@ -209,9 +209,9 @@ RigidInjectedParticleContainer::BoostandRemapParticles()
 
 void
 RigidInjectedParticleContainer::PushPX(WarpXParIter& pti,
-                                       Cuda::ManagedDeviceVector<ParticleReal>& xp,
-                                       Cuda::ManagedDeviceVector<ParticleReal>& yp,
-                                       Cuda::ManagedDeviceVector<ParticleReal>& zp,
+                                       Gpu::ManagedDeviceVector<ParticleReal>& xp,
+                                       Gpu::ManagedDeviceVector<ParticleReal>& yp,
+                                       Gpu::ManagedDeviceVector<ParticleReal>& zp,
                                        Real dt, DtType a_dt_type)
 {
 
@@ -222,7 +222,7 @@ RigidInjectedParticleContainer::PushPX(WarpXParIter& pti,
     auto& uzp = attribs[PIdx::uz];
 
     // Save the position and momenta, making copies
-    Cuda::ManagedDeviceVector<ParticleReal> xp_save, yp_save, zp_save;
+    Gpu::ManagedDeviceVector<ParticleReal> xp_save, yp_save, zp_save;
     RealVector uxp_save, uyp_save, uzp_save;
 
     ParticleReal* const AMREX_RESTRICT x = xp.dataPtr();
@@ -392,12 +392,12 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const FArrayBox& byfab = By[pti];
             const FArrayBox& bzfab = Bz[pti];
 
-            Exp.assign(np,WarpX::E_external[0]);
-            Eyp.assign(np,WarpX::E_external[1]);
-            Ezp.assign(np,WarpX::E_external[2]);
-            Bxp.assign(np,WarpX::B_external[0]);
-            Byp.assign(np,WarpX::B_external[1]);
-            Bzp.assign(np,WarpX::B_external[2]);
+            Exp.assign(np,WarpX::E_external_particle[0]);
+            Eyp.assign(np,WarpX::E_external_particle[1]);
+            Ezp.assign(np,WarpX::E_external_particle[2]);
+            Bxp.assign(np,WarpX::B_external_particle[0]);
+            Byp.assign(np,WarpX::B_external_particle[1]);
+            Bzp.assign(np,WarpX::B_external_particle[2]);
 
             //
             // copy data from particle container to temp arrays
