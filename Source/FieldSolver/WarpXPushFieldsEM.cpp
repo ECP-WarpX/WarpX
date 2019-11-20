@@ -766,8 +766,23 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         const Real rminz = xyzminz[0];
         const Dim3 lo = lbound(tilebox);
         const int irmin = lo.x;
+        int const ishift = (rmint > rmin ? 1 : 0);
 
         const long nmodes = n_rz_azimuthal_modes;
+
+        // Grow the tileboxes to include the guard cells, except for the
+        // guard cells at negative radius.
+        if (rmin > 0.) {
+           tbr.growLo(0, ngJ);
+           tbt.growLo(0, ngJ);
+           tbz.growLo(0, ngJ);
+        }
+        tbr.growHi(0, ngJ);
+        tbt.growHi(0, ngJ);
+        tbz.growHi(0, ngJ);
+        tbr.grow(1, ngJ);
+        tbt.grow(1, ngJ);
+        tbz.grow(1, ngJ);
 
         // Rescale current in r-z mode since the inverse volume factor was not
         // included in the current deposition.
@@ -808,7 +823,6 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // to the cells above the axis.
             // If Jt is node centered, Jt[0] is located on the boundary.
             // If Jt is cell centered, Jt[0] is at 1/2 dr.
-            int ishift = (rmint > rmin ? 1 : 0);
             if (rmin == 0. && 0 < i && i <= ngJ-ishift) {
                 Jt_arr(i,j,0,0) += Jt_arr(-ishift-i,j,0,0);
             }
@@ -848,7 +862,6 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // to the cells above the axis.
             // If Jz is node centered, Jt[0] is located on the boundary.
             // If Jz is cell centered, Jt[0] is at 1/2 dr.
-            int ishift = (rminz > rmin ? 1 : 0);
             if (rmin == 0. && 0 < i && i <= ngJ-ishift) {
                 Jz_arr(i,j,0,0) += Jz_arr(-ishift-i,j,0,0);
             }
@@ -907,12 +920,20 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         // Note that this is done before the tilebox.grow so that
         // these do not include the guard cells.
         const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev);
-        const std::array<Real, 3>& xyzminr = WarpX::LowerCorner(tilebox, lev);
+        const std::array<Real, 3>& xyzminr = WarpX::LowerCorner(tb, lev);
         const Dim3 lo = lbound(tilebox);
         const Real rmin = xyzmin[0];
         const Real rminr = xyzminr[0];
         const int irmin = lo.x;
         int ishift = (rminr > rmin ? 1 : 0);
+
+        // Grow the tilebox to include the guard cells, except for the
+        // guard cells at negative radius.
+        if (rmin > 0.) {
+           tb.growLo(0, ngRho);
+        }
+        tb.growHi(0, ngRho);
+        tb.grow(1, ngRho);
 
         // Rescale charge in r-z mode since the inverse volume factor was not
         // included in the charge deposition.
