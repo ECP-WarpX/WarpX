@@ -133,10 +133,10 @@ void doDepositionShapeN(const amrex::ParticleReal * const xp,
             amrex::Real sx_cell[depos_order + 1];
             int j_node;
             int j_cell;
-            if (jx_type[0] == NODE || jy_type[0] == NODE || jz_type[0] == NODE) {
+            if ((jx_type[0] == NODE) || (jy_type[0] == NODE) || (jz_type[0] == NODE)) {
                 j_node = compute_shape_factor<depos_order>(sx_node, xmid);
             }
-            if (jx_type[0] == CELL || jy_type[0] == CELL || jz_type[0] == CELL) {
+            if ((jx_type[0] == CELL) || (jy_type[0] == CELL) || (jz_type[0] == CELL)) {
                 j_cell = compute_shape_factor<depos_order>(sx_cell, xmid - 0.5);
             }
             const amrex::Real (&sx_jx)[depos_order + 1] = ((jx_type[0] == NODE) ? sx_node : sx_cell);
@@ -153,10 +153,10 @@ void doDepositionShapeN(const amrex::ParticleReal * const xp,
             amrex::Real sy_cell[depos_order + 1];
             int k_node;
             int k_cell;
-            if (jx_type[1] == NODE || jy_type[1] == NODE || jz_type[1] == NODE) {
+            if ((jx_type[1] == NODE) || (jy_type[1] == NODE) || (jz_type[1] == NODE)) {
                 k_node = compute_shape_factor<depos_order>(sy_node, ymid);
             }
-            if (jx_type[1] == CELL || jy_type[1] == CELL || jz_type[1] == CELL) {
+            if ((jx_type[1] == CELL) || (jy_type[1] == CELL) || (jz_type[1] == CELL)) {
                 k_cell = compute_shape_factor<depos_order>(sy_cell, ymid - 0.5);
             }
             const amrex::Real (&sy_jx)[depos_order + 1] = ((jx_type[1] == NODE) ? sy_node : sy_cell);
@@ -173,10 +173,10 @@ void doDepositionShapeN(const amrex::ParticleReal * const xp,
             amrex::Real sz_cell[depos_order + 1];
             int l_node;
             int l_cell;
-            if (jx_type[zdir] == NODE || jy_type[zdir] == NODE || jz_type[zdir] == NODE) {
+            if ((jx_type[zdir] == NODE) || (jy_type[zdir] == NODE) || (jz_type[zdir] == NODE)) {
                 l_node = compute_shape_factor<depos_order>(sz_node, zmid);
             }
-            if (jx_type[zdir] == CELL || jy_type[zdir] == CELL || jz_type[zdir] == CELL) {
+            if ((jx_type[zdir] == CELL) || (jy_type[zdir] == CELL) || (jz_type[zdir] == CELL)) {
                 l_cell = compute_shape_factor<depos_order>(sz_cell, zmid - 0.5);
             }
             const amrex::Real (&sz_jx)[depos_order + 1] = ((jx_type[zdir] == NODE) ? sz_node : sz_cell);
@@ -199,9 +199,6 @@ void doDepositionShapeN(const amrex::ParticleReal * const xp,
                     amrex::Gpu::Atomic::Add(
                         &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0),
                         sx_jz[ix]*sz_jz[iz]*wqz);
-                    if (lo.x+j_jz+ix == 10) {
-                      std::cout << "JZ " << lo.y+l_jz+iz << " " << sx_jz[ix]*sz_jz[iz]*wqz << "\n";
-                    }
 #if (defined WARPX_DIM_RZ)
                     Complex xy = xy0; // Note that xy is equal to e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
@@ -505,9 +502,6 @@ void doEsirkepovDepositionShapeN (const amrex::ParticleReal * const xp,
                 for (int k=dkl; k<=depos_order+1-dku; k++) {
                     sdzk += wqz*(sz_old[k] - sz_new[k])*(sx_new[i] + 0.5_rt * (sx_old[i] - sx_new[i]));
                     amrex::Gpu::Atomic::Add( &Jz_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdzk);
-                    if (lo.x+i_new-1+i == 10) {
-                      std::cout << "JZ " << lo.y+k_new-1+k << " " << sdzk << "\n";
-                    }
 #if (defined WARPX_DIM_RZ)
                     Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
