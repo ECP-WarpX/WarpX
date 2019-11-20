@@ -77,11 +77,11 @@ namespace {
 #endif
         solver.BackwardTransform(*Efield[2], Idx::Ez);
 #ifdef WARPX_DIM_RZ
-        solver.BackwardTransform(*Bfield[0], Idx::Bx);
-        solver.BackwardTransform(*Bfield[1], Idx::By);
-#else
         solver.BackwardTransform(*Bfield[0], Idx::Bx,
                                  *Bfield[1], Idx::By);
+#else
+        solver.BackwardTransform(*Bfield[0], Idx::Bx);
+        solver.BackwardTransform(*Bfield[1], Idx::By);
 #endif
         solver.BackwardTransform(*Bfield[2], Idx::Bz);
     }
