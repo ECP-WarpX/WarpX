@@ -35,19 +35,15 @@ SpectralHankelTransformer::SpectralHankelTransformer (int const nr_nodes,
 void
 SpectralHankelTransformer::PhysicalToSpectral_Scalar (amrex::Box const & box,
                                                       amrex::FArrayBox const & F_physical,
-                                                      amrex::FArrayBox const & G_spectral)
+                                                      amrex::FArrayBox       & G_spectral)
 {
     // The Hankel transform is purely real, so the real and imaginary parts of
     // F can be transformed separately, so a simple loop over components
     // can be done.
     int const nz = box.length(1);
     for (int icomp=0 ; icomp < 2*n_rz_azimuthal_modes-1 ; icomp++) {
-        amrex::FArrayBox F_physical_ic(F_physical, amrex::make_alias, icomp, 1);
-        amrex::FArrayBox G_spectral_ic(G_spectral, amrex::make_alias, icomp, 1);
-        amrex::Array4<amrex::Real> const & F_physical_ic_array = F_physical_ic.array();
-        amrex::Array4<amrex::Real> const & G_spectral_ic_array = G_spectral_ic.array();
         int const mode = (icomp + 1)/2;
-        dht0[mode]->HankelForwardTransform(nz, F_physical_ic_array, G_spectral_ic_array);
+        dht0[mode]->HankelForwardTransform(nz, F_physical, icomp, G_spectral, icomp);
     }
 }
 
@@ -56,8 +52,8 @@ void
 SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
                                                       amrex::FArrayBox const & F_r_physical,
                                                       amrex::FArrayBox const & F_t_physical,
-                                                      amrex::FArrayBox const & G_p_spectral,
-                                                      amrex::FArrayBox const & G_m_spectral)
+                                                      amrex::FArrayBox       & G_p_spectral,
+                                                      amrex::FArrayBox       & G_m_spectral)
 {
     int const nz = box.length(1);
 
@@ -112,20 +108,10 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
             });
         }
 
-        amrex::FArrayBox G_p_spectral_r(G_p_spectral, amrex::make_alias, icomp  , 1);
-        amrex::FArrayBox G_p_spectral_i(G_p_spectral, amrex::make_alias, icomp+1, 1);
-        amrex::FArrayBox G_m_spectral_r(G_m_spectral, amrex::make_alias, icomp  , 1);
-        amrex::FArrayBox G_m_spectral_i(G_m_spectral, amrex::make_alias, icomp+1, 1);
-
-        auto const & G_p_spectral_r_array = G_p_spectral_r.array();
-        auto const & G_p_spectral_i_array = G_p_spectral_i.array();
-        auto const & G_m_spectral_r_array = G_m_spectral_r.array();
-        auto const & G_m_spectral_i_array = G_m_spectral_i.array();
-
-        dhtp[mode]->HankelForwardTransform(nz, temp_p_r_array, G_p_spectral_r_array);
-        dhtp[mode]->HankelForwardTransform(nz, temp_p_i_array, G_p_spectral_i_array);
-        dhtm[mode]->HankelForwardTransform(nz, temp_m_r_array, G_m_spectral_r_array);
-        dhtm[mode]->HankelForwardTransform(nz, temp_m_i_array, G_m_spectral_i_array);
+        dhtp[mode]->HankelForwardTransform(nz, temp_p_r, 0, G_p_spectral, icomp  );
+        dhtp[mode]->HankelForwardTransform(nz, temp_p_i, 0, G_p_spectral, icomp+1);
+        dhtm[mode]->HankelForwardTransform(nz, temp_m_r, 0, G_m_spectral, icomp  );
+        dhtm[mode]->HankelForwardTransform(nz, temp_m_i, 0, G_m_spectral, icomp+1);
 
     }
 }
@@ -134,19 +120,15 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
 void
 SpectralHankelTransformer::SpectralToPhysical_Scalar (amrex::Box const & box,
                                                       amrex::FArrayBox const & G_spectral,
-                                                      amrex::FArrayBox const & F_physical)
+                                                      amrex::FArrayBox       & F_physical)
 {
     // The Hankel inverse transform is purely real, so the real and imaginary parts of
     // F can be transformed separately, so a simple loop over components
     // can be done.
     int const nz = box.length(1);
     for (int icomp=0 ; icomp < 2*n_rz_azimuthal_modes-1 ; icomp++) {
-        amrex::FArrayBox G_spectral_ic(G_spectral, amrex::make_alias, icomp, 1);
-        amrex::FArrayBox F_physical_ic(F_physical, amrex::make_alias, icomp, 1);
-        amrex::Array4<amrex::Real> const & G_spectral_ic_array = G_spectral_ic.array();
-        amrex::Array4<amrex::Real> const & F_physical_ic_array = F_physical_ic.array();
         int const mode = (icomp + 1)/2;
-        dht0[mode]->HankelInverseTransform(nz, G_spectral_ic_array, F_physical_ic_array);
+        dht0[mode]->HankelInverseTransform(nz, G_spectral, icomp, F_physical, icomp);
     }
 }
 
@@ -181,20 +163,10 @@ SpectralHankelTransformer::SpectralToPhysical_Vector (amrex::Box const & box,
             icomp = 2*mode - 1;
         }
 
-        amrex::FArrayBox G_p_spectral_r(G_p_spectral, amrex::make_alias, icomp  , 1);
-        amrex::FArrayBox G_p_spectral_i(G_p_spectral, amrex::make_alias, icomp+1, 1);
-        amrex::FArrayBox G_m_spectral_r(G_m_spectral, amrex::make_alias, icomp  , 1);
-        amrex::FArrayBox G_m_spectral_i(G_m_spectral, amrex::make_alias, icomp+1, 1);
-
-        amrex::Array4<amrex::Real> const & G_p_spectral_r_array = G_p_spectral_r.array();
-        amrex::Array4<amrex::Real> const & G_p_spectral_i_array = G_p_spectral_i.array();
-        amrex::Array4<amrex::Real> const & G_m_spectral_r_array = G_m_spectral_r.array();
-        amrex::Array4<amrex::Real> const & G_m_spectral_i_array = G_m_spectral_i.array();
-
-        dhtp[mode]->HankelInverseTransform(nz, G_p_spectral_r_array, temp_p_r_array);
-        dhtp[mode]->HankelInverseTransform(nz, G_p_spectral_i_array, temp_p_i_array);
-        dhtm[mode]->HankelInverseTransform(nz, G_m_spectral_r_array, temp_m_r_array);
-        dhtm[mode]->HankelInverseTransform(nz, G_m_spectral_i_array, temp_m_i_array);
+        dhtp[mode]->HankelInverseTransform(nz, G_p_spectral, icomp  , temp_p_r, 0);
+        dhtp[mode]->HankelInverseTransform(nz, G_p_spectral, icomp+1, temp_p_i, 0);
+        dhtm[mode]->HankelInverseTransform(nz, G_m_spectral, icomp  , temp_m_r, 0);
+        dhtm[mode]->HankelInverseTransform(nz, G_m_spectral, icomp+1, temp_m_i, 0);
 
         // Note that a litte time could be saved by skipping the complex part for mode 0
         amrex::ParallelFor(box,

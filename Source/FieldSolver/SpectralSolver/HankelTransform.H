@@ -29,12 +29,12 @@ class HankelTransform
         const RealVector & getSpectralFrequencies() {return nu;}
 
         void HankelForwardTransform(const int nz,
-                                    amrex::Array4<amrex::Real const> const& F,
-                                    amrex::Array4<amrex::Real> const& G);
+                                    amrex::FArrayBox const& F, int const F_icomp,
+                                    amrex::FArrayBox      & G, int const G_icomp);
 
         void HankelInverseTransform(const int nz,
-                                    amrex::Array4<amrex::Real const> const& G,
-                                    amrex::Array4<amrex::Real> const& F);
+                                    amrex::FArrayBox const& G, int const G_icomp,
+                                    amrex::FArrayBox      & F, int const F_icomp);
 
     private:
         // Even though nk == nr always, use a seperate variable for clarity.

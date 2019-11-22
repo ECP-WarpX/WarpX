@@ -6,9 +6,9 @@
 #include <blas.hh>
 #include <lapack.hh>
 
-HankelTransform::HankelTransform (const int hankel_order,
-                                  const int azimuthal_mode,
-                                  const int nr,
+HankelTransform::HankelTransform (int const hankel_order,
+                                  int const azimuthal_mode,
+                                  int const nr,
                                   const amrex::Real rmax)
 : nr(nr), nk(nr)
 {
@@ -55,7 +55,7 @@ HankelTransform::HankelTransform (const int hankel_order,
     RealVector num(nk*nr);
     for (int ir=0 ; ir < nr ; ir++) {
         for (int ik=0 ; ik < nk ; ik++) {
-            const int ii = ik + ir*nk;
+            int const ii = ik + ir*nk;
             num[ii] = jn(hankel_order, 2*MathConst::pi*r[ir]*nu[ik]);
         }
     }
@@ -65,7 +65,7 @@ HankelTransform::HankelTransform (const int hankel_order,
     if (azimuthal_mode > 0) {
         for (int ir=0 ; ir < nr ; ir++) {
             for (int ik=1 ; ik < nk ; ik++) {
-                const int ii = ik + ir*nk;
+                int const ii = ik + ir*nk;
                 invM[ii] = num[ii]/denom[ik];
             }
         }
@@ -78,19 +78,19 @@ HankelTransform::HankelTransform (const int hankel_order,
         // so that the condition number of invM is close to 1
         if (hankel_order == azimuthal_mode-1) {
             for (int ir=0 ; ir < nr ; ir++) {
-                const int ii = ir*nk;
+                int const ii = ir*nk;
                 invM[ii] = std::pow(r[ir], (azimuthal_mode-1))/(MathConst::pi*std::pow(rmax, (azimuthal_mode+1)));
             }
         } else {
             for (int ir=0 ; ir < nr ; ir++) {
-                const int ii = ir*nk;
+                int const ii = ir*nk;
                 invM[ii] = 0.;
             }
         }
     } else {
         for (int ir=0 ; ir < nr ; ir++) {
             for (int ik=0 ; ik < nk ; ik++) {
-                const int ii = ik + ir*nk;
+                int const ii = ik + ir*nk;
                 invM[ii] = num[ii]/denom[ik];
             }
         }
@@ -116,7 +116,7 @@ HankelTransform::HankelTransform (const int hankel_order,
 
         for (int i=0 ; i < nk-1 ; i++) {
             if (sdiag[i] != 0.) {
-                const int j = i + i*nk;
+                int const j = i + i*nk;
                 sp[j] = 1./sdiag[i];
             }
         }
@@ -146,24 +146,26 @@ HankelTransform::HankelTransform (const int hankel_order,
 }
 
 void
-HankelTransform::HankelForwardTransform (const int nz, amrex::Array4<amrex::Real const> const& F, amrex::Array4<amrex::Real> const& G)
+HankelTransform::HankelForwardTransform (int const nz, amrex::FArrayBox const& F, int const F_icomp,
+                                                       amrex::FArrayBox & G, int const G_icomp)
 {
     // Note that M is flagged to be transposed since it has dimensions (nr, nk)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                nk, nz, nr, 1.,
                M.dataPtr(), nk,
-               F.dataPtr(), nr, 0.,
-               G.dataPtr(), nk);
+               F.dataPtr(F_icomp), nr, 0.,
+               G.dataPtr(G_icomp), nk);
 }
 
 
 void
-HankelTransform::HankelInverseTransform (const int nz, amrex::Array4<amrex::Real const> const& G, amrex::Array4<amrex::Real> const& F)
+HankelTransform::HankelInverseTransform (int const nz, amrex::FArrayBox const& G, int const G_icomp,
+                                                       amrex::FArrayBox & F, int const F_icomp)
 {
     // Note that invM is flagged to be transposed since it has dimensions (nk, nr)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                nr, nz, nk, 1.,
                invM.dataPtr(), nr,
-               G.dataPtr(), nk, 0.,
-               F.dataPtr(), nr);
+               G.dataPtr(G_icomp), nk, 0.,
+               F.dataPtr(F_icomp), nr);
 }
