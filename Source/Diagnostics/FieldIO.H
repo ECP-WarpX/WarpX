@@ -19,6 +19,7 @@ AverageAndPackVectorField( amrex::MultiFab& mf_avg,
 void
 AverageAndPackScalarField( amrex::MultiFab& mf_avg,
                          const amrex::MultiFab & scalar_field,
+                         const amrex::DistributionMapping& dm,
                          const int dcomp, const int ngrow );
 
 void
