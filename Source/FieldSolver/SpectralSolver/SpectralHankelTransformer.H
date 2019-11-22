@@ -51,8 +51,8 @@ class SpectralHankelTransformer
         SpectralToPhysical_Vector(amrex::Box const & box,
                                   amrex::FArrayBox const & G_p_spectral,
                                   amrex::FArrayBox const & G_m_spectral,
-                                  amrex::FArrayBox const & F_r_physical,
-                                  amrex::FArrayBox const & F_t_physical);
+                                  amrex::FArrayBox       & F_r_physical,
+                                  amrex::FArrayBox       & F_t_physical);
 
     private:
 
