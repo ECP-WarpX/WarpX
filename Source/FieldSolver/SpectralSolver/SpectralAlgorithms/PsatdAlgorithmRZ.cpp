@@ -66,6 +66,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataHankel & f)
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
 
+            // All of the fields of each mode are grouped together
             using Idx = SpectralFieldIndex;
             auto const Ep_m = Idx::Ex + Idx::n_fields*mode;
             auto const Em_m = Idx::Ey + Idx::n_fields*mode;
@@ -89,6 +90,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataHankel & f)
             Complex const rho_new = fields(i,j,k,Idx::rho_new + Idx::n_fields*mode);
 
             // k vector values, and coefficients
+            // The k values for each mode are grouped together
             int const ii = i + nr*mode;
             Real const kr = kr_arr[ii];
             Real const kz = modified_kz_arr[j];

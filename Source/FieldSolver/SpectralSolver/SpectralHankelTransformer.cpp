@@ -40,10 +40,20 @@ SpectralHankelTransformer::PhysicalToSpectral_Scalar (amrex::Box const & box,
     // The Hankel transform is purely real, so the real and imaginary parts of
     // F can be transformed separately, so a simple loop over components
     // can be done.
-    int const nz = box.length(1);
-    for (int icomp=0 ; icomp < 2*n_rz_azimuthal_modes-1 ; icomp++) {
-        int const mode = (icomp + 1)/2;
-        dht0[mode]->HankelForwardTransform(nz, F_physical, icomp, G_spectral, icomp);
+    // Note that F_physical does not include the imaginart part of mode 0,
+    // but G_spectral does.
+    for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
+        int const mode_r = 2*mode;
+        int const mode_i = 2*mode + 1;
+        if (mode == 0) {
+            int const icomp = 0;
+            dht0[mode]->HankelForwardTransform(F_physical, icomp, G_spectral, mode_r);
+            G_spectral.setVal(0., mode_i);
+        } else {
+            int const icomp = 2*mode - 1;
+            dht0[mode]->HankelForwardTransform(F_physical, icomp  , G_spectral, mode_r);
+            dht0[mode]->HankelForwardTransform(F_physical, icomp+1, G_spectral, mode_i);
+        }
     }
 }
 
@@ -55,7 +65,8 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
                                                       amrex::FArrayBox       & G_p_spectral,
                                                       amrex::FArrayBox       & G_m_spectral)
 {
-    int const nz = box.length(1);
+    // Note that F_physical does not include the imaginart part of mode 0,
+    // but G_spectral does.
 
     amrex::Array4<const amrex::Real> const & F_r_physical_array = F_r_physical.array();
     amrex::Array4<const amrex::Real> const & F_t_physical_array = F_t_physical.array();
@@ -71,14 +82,9 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
     amrex::Array4<amrex::Real> const & temp_m_i_array = temp_m_i.array();
 
     for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
-        int icomp;
-        if (mode == 0) {
-            icomp = 0;
-        } else {
-            icomp = 2*mode - 1;
-        }
 
         if (mode == 0) {
+            int const icomp = 0;
             amrex::ParallelFor(box,
             [=] AMREX_GPU_DEVICE (int i, int j, int k)
             {
@@ -93,6 +99,7 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
                 temp_m_i_array(i,j,0) = 0.5*(r_imag + t_real);
             });
         } else {
+            int const icomp = 2*mode - 1;
             amrex::ParallelFor(box,
             [=] AMREX_GPU_DEVICE (int i, int j, int k)
             {
@@ -108,10 +115,12 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
             });
         }
 
-        dhtp[mode]->HankelForwardTransform(nz, temp_p_r, 0, G_p_spectral, icomp  );
-        dhtp[mode]->HankelForwardTransform(nz, temp_p_i, 0, G_p_spectral, icomp+1);
-        dhtm[mode]->HankelForwardTransform(nz, temp_m_r, 0, G_m_spectral, icomp  );
-        dhtm[mode]->HankelForwardTransform(nz, temp_m_i, 0, G_m_spectral, icomp+1);
+        int const mode_r = 2*mode;
+        int const mode_i = 2*mode + 1;
+        dhtp[mode]->HankelForwardTransform(temp_p_r, 0, G_p_spectral, mode_r);
+        dhtp[mode]->HankelForwardTransform(temp_p_i, 0, G_p_spectral, mode_i);
+        dhtm[mode]->HankelForwardTransform(temp_m_r, 0, G_m_spectral, mode_r);
+        dhtm[mode]->HankelForwardTransform(temp_m_i, 0, G_m_spectral, mode_i);
 
     }
 }
@@ -125,10 +134,19 @@ SpectralHankelTransformer::SpectralToPhysical_Scalar (amrex::Box const & box,
     // The Hankel inverse transform is purely real, so the real and imaginary parts of
     // F can be transformed separately, so a simple loop over components
     // can be done.
-    int const nz = box.length(1);
-    for (int icomp=0 ; icomp < 2*n_rz_azimuthal_modes-1 ; icomp++) {
-        int const mode = (icomp + 1)/2;
-        dht0[mode]->HankelInverseTransform(nz, G_spectral, icomp, F_physical, icomp);
+    // Note that F_physical does not include the imaginart part of mode 0,
+    // but G_spectral does.
+    for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
+        int const mode_r = 2*mode;
+        int const mode_i = 2*mode + 1;
+        if (mode == 0) {
+            int const icomp = 0;
+            dht0[mode]->HankelInverseTransform(G_spectral, mode_r, F_physical, icomp);
+        } else {
+            int const icomp = 2*mode - 1;
+            dht0[mode]->HankelInverseTransform(G_spectral, mode_r, F_physical, icomp);
+            dht0[mode]->HankelInverseTransform(G_spectral, mode_i, F_physical, icomp+1);
+        }
     }
 }
 
@@ -140,7 +158,8 @@ SpectralHankelTransformer::SpectralToPhysical_Vector (amrex::Box const & box,
                                                       amrex::FArrayBox      & F_r_physical,
                                                       amrex::FArrayBox      & F_t_physical)
 {
-    int const nz = box.length(1);
+    // Note that F_physical does not include the imaginart part of mode 0,
+    // but G_spectral does.
 
     amrex::Array4<amrex::Real> const & F_r_physical_array = F_r_physical.array();
     amrex::Array4<amrex::Real> const & F_t_physical_array = F_t_physical.array();
@@ -156,32 +175,43 @@ SpectralHankelTransformer::SpectralToPhysical_Vector (amrex::Box const & box,
     amrex::Array4<amrex::Real> const & temp_m_i_array = temp_m_i.array();
 
     for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
-        int icomp;
+
+        int const mode_r = 2*mode;
+        int const mode_i = 2*mode + 1;
+        dhtp[mode]->HankelInverseTransform(G_p_spectral, mode_r, temp_p_r, 0);
+        dhtp[mode]->HankelInverseTransform(G_p_spectral, mode_i, temp_p_i, 0);
+        dhtm[mode]->HankelInverseTransform(G_m_spectral, mode_r, temp_m_r, 0);
+        dhtm[mode]->HankelInverseTransform(G_m_spectral, mode_i, temp_m_i, 0);
+
         if (mode == 0) {
-            icomp = 0;
+            int const icomp = 0;
+            amrex::ParallelFor(box,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+                amrex::Real const p_real = temp_p_r_array(i,j,0);
+                amrex::Real const p_imag = temp_p_i_array(i,j,0);
+                amrex::Real const m_real = temp_m_r_array(i,j,0);
+                amrex::Real const m_imag = temp_m_i_array(i,j,0);
+                // Combine the values
+                F_r_physical_array(i,j,0,icomp  ) =  p_real + m_real;
+                F_t_physical_array(i,j,0,icomp  ) = -p_imag + m_imag;
+            });
         } else {
-            icomp = 2*mode - 1;
+            int const icomp = 2*mode - 1;
+            amrex::ParallelFor(box,
+            [=] AMREX_GPU_DEVICE (int i, int j, int k)
+            {
+                amrex::Real const p_real = temp_p_r_array(i,j,0);
+                amrex::Real const p_imag = temp_p_i_array(i,j,0);
+                amrex::Real const m_real = temp_m_r_array(i,j,0);
+                amrex::Real const m_imag = temp_m_i_array(i,j,0);
+                // Combine the values
+                F_r_physical_array(i,j,0,icomp  ) =  p_real + m_real;
+                F_r_physical_array(i,j,0,icomp+1) =  p_imag + m_imag;
+                F_t_physical_array(i,j,0,icomp  ) = -p_imag + m_imag;
+                F_t_physical_array(i,j,0,icomp+1) =  p_real - m_real;
+            });
         }
-
-        dhtp[mode]->HankelInverseTransform(nz, G_p_spectral, icomp  , temp_p_r, 0);
-        dhtp[mode]->HankelInverseTransform(nz, G_p_spectral, icomp+1, temp_p_i, 0);
-        dhtm[mode]->HankelInverseTransform(nz, G_m_spectral, icomp  , temp_m_r, 0);
-        dhtm[mode]->HankelInverseTransform(nz, G_m_spectral, icomp+1, temp_m_i, 0);
-
-        // Note that a litte time could be saved by skipping the complex part for mode 0
-        amrex::ParallelFor(box,
-        [=] AMREX_GPU_DEVICE (int i, int j, int k)
-        {
-            amrex::Real const p_real = temp_p_r_array(i,j,0);
-            amrex::Real const p_imag = temp_p_i_array(i,j,0);
-            amrex::Real const m_real = temp_m_r_array(i,j,0);
-            amrex::Real const m_imag = temp_m_i_array(i,j,0);
-            // Combine the values
-            F_r_physical_array(i,j,0,icomp  ) =  p_real + m_real;
-            F_r_physical_array(i,j,0,icomp+1) =  p_imag + m_imag;
-            F_t_physical_array(i,j,0,icomp  ) = -p_imag + m_imag;
-            F_t_physical_array(i,j,0,icomp+1) =  p_real - m_real;
-        });
 
     }
 }

@@ -26,42 +26,42 @@ class SpectralSolverRZ
                          amrex::RealVect const dx, amrex::Real const dt,
                          bool const pml=false);
 
-        /* \brief Transform the component `i_comp` of MultiFab `mf`
+        /* \brief Transform the component `i_comp` of MultiFab `field_mf`
          *  to spectral space, and store the corresponding result internally
          *  (in the spectral field specified by `field_index`) */
-        void ForwardTransform(amrex::MultiFab const & mf,
+        void ForwardTransform(amrex::MultiFab const & field_mf,
                               int const field_index,
                               int const i_comp=0 ){
             BL_PROFILE("SpectralSolverRZ::ForwardTransform");
-            field_data.ForwardTransform(mf, field_index, i_comp);
+            field_data.ForwardTransform(field_mf, field_index, i_comp);
         };
 
-        /* \brief Transform the two MultiFabs `mf1` and `mf2`
+        /* \brief Transform the two MultiFabs `field_mf1` and `field_mf2`
          *  to spectral space, and store the corresponding results internally
          *  (in the spectral field specified by `field_index1` and `field_index2`) */
-        void ForwardTransform(amrex::MultiFab const & mf1, int const field_index1,
-                              amrex::MultiFab const & mf2, int const field_index2){
+        void ForwardTransform(amrex::MultiFab const & field_mf1, int const field_index1,
+                              amrex::MultiFab const & field_mf2, int const field_index2){
             BL_PROFILE("SpectralSolverRZ::ForwardTransform");
-            field_data.ForwardTransform(mf1, field_index1,
-                                        mf2, field_index2);
+            field_data.ForwardTransform(field_mf1, field_index1,
+                                        field_mf2, field_index2);
         };
 
         /* \brief Transform spectral field specified by `field_index` back to
-         * real space, and store it in the component `i_comp` of `mf` */
-        void BackwardTransform(amrex::MultiFab& mf,
+         * real space, and store it in the component `i_comp` of `field_mf` */
+        void BackwardTransform(amrex::MultiFab& field_mf,
                                int const field_index,
                                int const i_comp=0){
             BL_PROFILE("SpectralSolverRZ::BackwardTransform");
-            field_data.BackwardTransform(mf, field_index, i_comp);
+            field_data.BackwardTransform(field_mf, field_index, i_comp);
         };
 
         /* \brief Transform spectral fields specified by `field_index1` and `field_index2`
-         * back to real space, and store it in `mf1` and `mf2`*/
-        void BackwardTransform(amrex::MultiFab& mf1, int const field_index1,
-                               amrex::MultiFab& mf2, int const field_index2){
+         * back to real space, and store it in `field_mf1` and `field_mf2`*/
+        void BackwardTransform(amrex::MultiFab& field_mf1, int const field_index1,
+                               amrex::MultiFab& field_mf2, int const field_index2){
             BL_PROFILE("SpectralSolverRZ::BackwardTransform");
-            field_data.BackwardTransform(mf1, field_index1,
-                                         mf2, field_index2);
+            field_data.BackwardTransform(field_mf1, field_index1,
+                                         field_mf2, field_index2);
         };
 
         /* \brief Update the fields in spectral space, over one timestep */

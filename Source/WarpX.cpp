@@ -894,14 +894,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #elif (AMREX_SPACEDIM == 2)
         RealVect dx_vect(dx[0], dx[2]);
 #endif
-        // Get the cell-centered box, with guard cells
+        // Get the cell-centered box
         BoxArray realspace_ba = ba;  // Copy box
-        realspace_ba.enclosedCells().grow(ngE); // cell-centered + guard cells
+        realspace_ba.enclosedCells(); // Make it cell-centered
         // Define spectral solver
 #ifdef WARPX_DIM_RZ
+        realspace_ba.grow(1, ngE[1]); // add guard cells only in z
         spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
             n_rz_azimuthal_modes, noz_fft, do_nodal, dx_vect, dt[lev] ) );
 #else
+        realspace_ba.grow(ngE); // add guard cells
         spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev] ) );
 #endif

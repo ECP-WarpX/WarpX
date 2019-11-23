@@ -28,12 +28,10 @@ class HankelTransform
         const RealVector & getRadialGrid() {return r;}
         const RealVector & getSpectralFrequencies() {return nu;}
 
-        void HankelForwardTransform(const int nz,
-                                    amrex::FArrayBox const& F, int const F_icomp,
+        void HankelForwardTransform(amrex::FArrayBox const& F, int const F_icomp,
                                     amrex::FArrayBox      & G, int const G_icomp);
 
-        void HankelInverseTransform(const int nz,
-                                    amrex::FArrayBox const& G, int const G_icomp,
+        void HankelInverseTransform(amrex::FArrayBox const& G, int const G_icomp,
                                     amrex::FArrayBox      & F, int const F_icomp);
 
     private:

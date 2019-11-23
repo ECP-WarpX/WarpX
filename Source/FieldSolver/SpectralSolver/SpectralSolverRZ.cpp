@@ -30,7 +30,7 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
     // - Initialize k space object (Contains info about the size of
     // the spectral space corresponding to each box in `realspace_ba`,
     // as well as the value of the corresponding k coordinates)
-    SpectralHankelKSpace const k_space= SpectralHankelKSpace(realspace_ba, dm, dx);
+    SpectralHankelKSpace const k_space = SpectralHankelKSpace(realspace_ba, dm, dx);
 
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space

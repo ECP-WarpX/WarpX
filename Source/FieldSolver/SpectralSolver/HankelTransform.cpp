@@ -30,8 +30,9 @@ HankelTransform::HankelTransform (int const hankel_order,
 
     // Calculate the spatial grid (Uniform grid with a half-cell offset)
     r.resize(nr);
+    amrex::Real dr = rmax/nr;
     for (int ir=0 ; ir < nr ; ir++) {
-        r[ir] = (rmax/nr)*(ir + 0.5);
+        r[ir] = dr*(ir + 0.5);
     }
 
     // Calculate and store the inverse matrix invM
@@ -146,26 +147,50 @@ HankelTransform::HankelTransform (int const hankel_order,
 }
 
 void
-HankelTransform::HankelForwardTransform (int const nz, amrex::FArrayBox const& F, int const F_icomp,
-                                                       amrex::FArrayBox & G, int const G_icomp)
+HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_icomp,
+                                         amrex::FArrayBox      & G, int const G_icomp)
 {
+    amrex::Box const& F_box = F.box();
+    amrex::Box const& G_box = G.box();
+
+    int const nrF = F_box.length(0);
+    int const nz = F_box.length(1);
+    int const ngr = G_box.smallEnd(0) - F_box.smallEnd(0);
+
+    std::cout << "BAD NR " << G_box.smallEnd(0) << " " << F_box.smallEnd(0) << "\n";
+    AMREX_ALWAYS_ASSERT(nr == G_box.length(0));
+    AMREX_ALWAYS_ASSERT(nz == G_box.length(1));
+    AMREX_ALWAYS_ASSERT(ngr >= 0);
+    AMREX_ALWAYS_ASSERT(F_box.bigEnd(0)+1 >= nr);
+
     // Note that M is flagged to be transposed since it has dimensions (nr, nk)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                nk, nz, nr, 1.,
                M.dataPtr(), nk,
-               F.dataPtr(F_icomp), nr, 0.,
+               F.dataPtr(F_icomp)+ngr, nrF, 0.,
                G.dataPtr(G_icomp), nk);
 }
 
-
 void
-HankelTransform::HankelInverseTransform (int const nz, amrex::FArrayBox const& G, int const G_icomp,
-                                                       amrex::FArrayBox & F, int const F_icomp)
+HankelTransform::HankelInverseTransform (amrex::FArrayBox const& G, int const G_icomp,
+                                         amrex::FArrayBox      & F, int const F_icomp)
 {
+    amrex::Box const& G_box = G.box();
+    amrex::Box const& F_box = F.box();
+
+    int const nrF = F_box.length(0);
+    int const nz = F_box.length(1);
+    int const ngr = G_box.smallEnd(0) - F_box.smallEnd(0);
+
+    AMREX_ALWAYS_ASSERT(nr == G_box.length(0));
+    AMREX_ALWAYS_ASSERT(nz == G_box.length(1));
+    AMREX_ALWAYS_ASSERT(ngr >= 0);
+    AMREX_ALWAYS_ASSERT(F_box.bigEnd(0)+1 >= nr);
+
     // Note that invM is flagged to be transposed since it has dimensions (nk, nr)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                nr, nz, nk, 1.,
                invM.dataPtr(), nr,
                G.dataPtr(G_icomp), nk, 0.,
-               F.dataPtr(F_icomp), nr);
+               F.dataPtr(F_icomp)+ngr, nrF);
 }
