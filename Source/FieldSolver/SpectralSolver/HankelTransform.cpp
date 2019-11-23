@@ -157,7 +157,6 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
     int const nz = F_box.length(1);
     int const ngr = G_box.smallEnd(0) - F_box.smallEnd(0);
 
-    std::cout << "BAD NR " << G_box.smallEnd(0) << " " << F_box.smallEnd(0) << "\n";
     AMREX_ALWAYS_ASSERT(nr == G_box.length(0));
     AMREX_ALWAYS_ASSERT(nz == G_box.length(1));
     AMREX_ALWAYS_ASSERT(ngr >= 0);
