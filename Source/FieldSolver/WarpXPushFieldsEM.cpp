@@ -766,7 +766,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         const Real rminz = xyzminz[0];
         const Dim3 lo = lbound(tilebox);
         const int irmin = lo.x;
-        int const ishift = (rmint > rmin ? 1 : 0);
+        int const ishift_t = (rmint > rmin ? 1 : 0);
+        int const ishift_z = (rminz > rmin ? 1 : 0);
 
         const long nmodes = n_rz_azimuthal_modes;
 
@@ -823,8 +824,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // to the cells above the axis.
             // If Jt is node centered, Jt[0] is located on the boundary.
             // If Jt is cell centered, Jt[0] is at 1/2 dr.
-            if (rmin == 0. && 0 < i && i <= ngJ-ishift) {
-                Jt_arr(i,j,0,0) += Jt_arr(-ishift-i,j,0,0);
+            if (rmin == 0. && 0 < i && i <= ngJ-ishift_t) {
+                Jt_arr(i,j,0,0) += Jt_arr(-ishift_t-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
@@ -840,9 +841,9 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 const Real ifact = ( (imode%2) == 0 ? +1. : -1.);
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                if (rmin == 0. && 0 < i && i <= ngJ-ishift) {
-                    Jt_arr(i,j,0,2*imode-1) += ifact*Jt_arr(-ishift-i,j,0,2*imode-1);
-                    Jt_arr(i,j,0,2*imode) += ifact*Jt_arr(-ishift-i,j,0,2*imode);
+                if (rmin == 0. && 0 < i && i <= ngJ-ishift_t) {
+                    Jt_arr(i,j,0,2*imode-1) += ifact*Jt_arr(-ishift_t-i,j,0,2*imode-1);
+                    Jt_arr(i,j,0,2*imode) += ifact*Jt_arr(-ishift_t-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
@@ -862,8 +863,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // to the cells above the axis.
             // If Jz is node centered, Jt[0] is located on the boundary.
             // If Jz is cell centered, Jt[0] is at 1/2 dr.
-            if (rmin == 0. && 0 < i && i <= ngJ-ishift) {
-                Jz_arr(i,j,0,0) += Jz_arr(-ishift-i,j,0,0);
+            if (rmin == 0. && 0 < i && i <= ngJ-ishift_z) {
+                Jz_arr(i,j,0,0) += Jz_arr(-ishift_z-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
@@ -879,9 +880,9 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 const Real ifact = ( (imode%2) == 0 ? +1. : -1.);
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                if (rmin == 0. && 0 < i && i <= ngJ-ishift) {
-                    Jz_arr(i,j,0,2*imode-1) += ifact*Jz_arr(-ishift-i,j,0,2*imode-1);
-                    Jz_arr(i,j,0,2*imode) += ifact*Jz_arr(-ishift-i,j,0,2*imode);
+                if (rmin == 0. && 0 < i && i <= ngJ-ishift_z) {
+                    Jz_arr(i,j,0,2*imode-1) += ifact*Jz_arr(-ishift_z-i,j,0,2*imode-1);
+                    Jz_arr(i,j,0,2*imode) += ifact*Jz_arr(-ishift_z-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
@@ -937,7 +938,8 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
 
         // Rescale charge in r-z mode since the inverse volume factor was not
         // included in the charge deposition.
-        // Note that the loop is also over ncomps, which takes care of the RZ modes.
+        // Note that the loop is also over ncomps, which takes care of the RZ modes,
+        // as well as the old and new rho.
         amrex::ParallelFor(tb, Rho->nComp(),
         [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
         {
