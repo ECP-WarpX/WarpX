@@ -452,18 +452,18 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     const int ncomps = (rho->nComp() == 1 ? 1 : rho->nComp()/2);
 
 #ifdef AMREX_USE_GPU
-    // No tiling on GPU: rho_arr points to the full rho array.
+    // No tiling on GPU: rho_fab points to the full rho array.
     MultiFab rhoi(*rho, amrex::make_alias, icomp*ncomps, ncomps);
-    Array4<Real> const& rho_arr = rhoi.array(pti);
+    auto & rho_fab = rhoi->get(pti);
 #else
-    // Tiling is on: rho_arr points to local_rho[thread_num]
+    // Tiling is on: rho_fab points to local_rho[thread_num]
 
     local_rho[thread_num].resize(tb, ncomps);
 
     // local_rho[thread_num] is set to zero
     local_rho[thread_num].setVal(0.0);
 
-    Array4<Real> const& rho_arr = local_rho[thread_num].array();
+    auto & rho_fab = local_rho[thread_num];
 #endif
     // GPU, no tiling: deposit directly in rho
     // CPU, tiling: deposit into local_rho
@@ -474,23 +474,22 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
-    // And also takes into accout the centering of rho.
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tb, depos_lev);
+    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev);
     // Indices of the lower bound
-    const Dim3 lo = lbound(tb);
+    const Dim3 lo = lbound(tilebox);
 
     BL_PROFILE_VAR_START(blp_ppc_chd);
     if        (WarpX::nox == 1){
         doChargeDepositionShapeN<1>(xp, yp, zp, wp.dataPtr()+offset, ion_lev,
-                                    rho_arr, np_to_depose, dx, xyzmin, lo, q,
+                                    rho_fab, np_to_depose, dx, xyzmin, lo, q,
                                     WarpX::n_rz_azimuthal_modes);
     } else if (WarpX::nox == 2){
         doChargeDepositionShapeN<2>(xp, yp, zp, wp.dataPtr()+offset, ion_lev,
-                                    rho_arr, np_to_depose, dx, xyzmin, lo, q,
+                                    rho_fab, np_to_depose, dx, xyzmin, lo, q,
                                     WarpX::n_rz_azimuthal_modes);
     } else if (WarpX::nox == 3){
         doChargeDepositionShapeN<3>(xp, yp, zp, wp.dataPtr()+offset, ion_lev,
-                                    rho_arr, np_to_depose, dx, xyzmin, lo, q,
+                                    rho_fab, np_to_depose, dx, xyzmin, lo, q,
                                     WarpX::n_rz_azimuthal_modes);
     }
     BL_PROFILE_VAR_STOP(blp_ppc_chd);
