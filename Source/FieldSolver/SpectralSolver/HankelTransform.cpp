@@ -23,9 +23,9 @@ HankelTransform::HankelTransform (int const hankel_order,
     // Add of check of alpha_errors, should be all zeros
 
     // Calculate the spectral grid
-    nu.resize(nk);
+    kr.resize(nk);
     for (int ik=0 ; ik < nk ; ik++) {
-        nu[ik] = alphas[ik]/(2*MathConst::pi*rmax);
+        kr[ik] = alphas[ik]/rmax;
     }
 
     // Calculate the spatial grid (Uniform grid with a half-cell offset)
@@ -57,7 +57,7 @@ HankelTransform::HankelTransform (int const hankel_order,
     for (int ir=0 ; ir < nr ; ir++) {
         for (int ik=0 ; ik < nk ; ik++) {
             int const ii = ik + ir*nk;
-            num[ii] = jn(hankel_order, 2*MathConst::pi*r[ir]*nu[ik]);
+            num[ii] = jn(hankel_order, r[ir]*kr[ik]);
         }
     }
 

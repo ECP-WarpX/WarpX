@@ -8,10 +8,10 @@
 /* \brief This defines the class that performs the Hankel transform.
  * Original authors: Remi Lehe, Manuel Kirchen
  *
- * 
+ *
  * Definition of the Hankel forward and backward transform of order p:
- * g(\nu) = 2 \pi \int_0^\infty f(r) J_p( 2 \pi \nu r) r dr
- * f( r ) = 2 \pi \int_0^\infty g(\nu) J_p( 2 \pi \nu r) \nu d\nu d
+ * g(kr) = \int_0^\infty f(r) J_p(kr r) r dr
+ * f(r ) = \int_0^\infty g(kr) J_p(kr r) kr dkr
 */
 class HankelTransform
 {
@@ -26,7 +26,7 @@ class HankelTransform
                         const amrex::Real rmax);
 
         const RealVector & getRadialGrid() {return r;}
-        const RealVector & getSpectralFrequencies() {return nu;}
+        const RealVector & getSpectralWavenumbers() {return kr;}
 
         void HankelForwardTransform(amrex::FArrayBox const& F, int const F_icomp,
                                     amrex::FArrayBox      & G, int const G_icomp);
@@ -38,7 +38,7 @@ class HankelTransform
         // Even though nk == nr always, use a seperate variable for clarity.
         int nr, nk;
 
-        RealVector nu;
+        RealVector kr;
         RealVector r;
 
         RealVector invM;

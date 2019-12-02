@@ -19,13 +19,13 @@ SpectralHankelTransformer::SpectralHankelTransformer (int const nr_nodes,
 
         // Save all of the kr's in one place to allow easy access later
         amrex::Real *kr_array = kr.dataPtr();
-        auto const & nu = dht0[mode]->getSpectralFrequencies();
-        auto const & nu_array = nu.dataPtr();
+        auto const & kr_m = dht0[mode]->getSpectralWavenumbers();
+        auto const & kr_m_array = kr_m.dataPtr();
         amrex::ParallelFor(nr,
         [=] AMREX_GPU_DEVICE (int ir)
         {
             int const ii = ir + mode*nr;
-            kr_array[ii] = 2*MathConst::pi*nu_array[ir];
+            kr_array[ii] = kr_m_array[ir];
         });
     }
 
