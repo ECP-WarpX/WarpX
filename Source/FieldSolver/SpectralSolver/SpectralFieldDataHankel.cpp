@@ -189,6 +189,7 @@ SpectralFieldDataHankel::FABZForwardTransform (MFIter const & mfi,
     Box const& spectralspace_bx = tmpSpectralField[mfi].box();
     int const nz = spectralspace_bx.length(1);
     amrex::Real inv_nz = 1./nz;
+    constexpr int n_fields = SpectralFieldIndex::n_fields;
 
     ParallelFor(spectralspace_bx, modes,
     [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
@@ -196,7 +197,7 @@ SpectralFieldDataHankel::FABZForwardTransform (MFIter const & mfi,
         // Apply proper shift
         if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];
         // Copy field into the right index
-        int const ic = field_index + mode*SpectralFieldIndex::n_fields;
+        int const ic = field_index + mode*n_fields;
         fields_arr(i,j,k,ic) = spectral_field_value*inv_nz;
     });
 }
@@ -220,9 +221,10 @@ SpectralFieldDataHankel::FABZBackwardTransform (MFIter const & mfi,
     Box const& spectralspace_bx = tmpSpectralField[mfi].box();
 
     int const modes = n_rz_azimuthal_modes;
+    constexpr int n_fields = SpectralFieldIndex::n_fields;
     ParallelFor(spectralspace_bx, modes,
     [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
-        int const ic = field_index + mode*SpectralFieldIndex::n_fields;
+        int const ic = field_index + mode*n_fields;
         Complex spectral_field_value = fields_arr(i,j,k,ic);
         // Apply proper shift
         if (is_nodal_z==false) spectral_field_value *= zshift_arr[j];

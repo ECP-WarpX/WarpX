@@ -45,13 +45,13 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataHankel & f)
         Box const & bx = f.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        Array4<Complex> fields = f.fields[mfi].array();
+        Array4<Complex> const& fields = f.fields[mfi].array();
         // Extract arrays for the coefficients
-        Array4<const Real> C_arr = C_coef[mfi].array();
-        Array4<const Real> S_ck_arr = S_ck_coef[mfi].array();
-        Array4<const Real> X1_arr = X1_coef[mfi].array();
-        Array4<const Real> X2_arr = X2_coef[mfi].array();
-        Array4<const Real> X3_arr = X3_coef[mfi].array();
+        Array4<const Real> const& C_arr = C_coef[mfi].array();
+        Array4<const Real> const& S_ck_arr = S_ck_coef[mfi].array();
+        Array4<const Real> const& X1_arr = X1_coef[mfi].array();
+        Array4<const Real> const& X2_arr = X2_coef[mfi].array();
+        Array4<const Real> const& X3_arr = X3_coef[mfi].array();
 
         // Extract pointers for the k vectors
         auto const & kr_modes = f.getKrArray(mfi);
@@ -91,8 +91,8 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataHankel & f)
 
             // k vector values, and coefficients
             // The k values for each mode are grouped together
-            int const ii = i + nr*mode;
-            Real const kr = kr_arr[ii];
+            int const ir = i + nr*mode;
+            Real const kr = kr_arr[ir];
             Real const kz = modified_kz_arr[j];
 
             constexpr Real c2 = PhysConst::c*PhysConst::c;
@@ -139,17 +139,17 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataHankel c
         Box const & bx = f.fields[mfi].box();
 
         // Extract pointers for the k vectors
-        Real* const modified_kz = modified_kz_vec[mfi].dataPtr();
+        Real const* const modified_kz = modified_kz_vec[mfi].dataPtr();
 
         // Extract arrays for the coefficients
-        Array4<Real> C = C_coef[mfi].array();
-        Array4<Real> S_ck = S_ck_coef[mfi].array();
-        Array4<Real> X1 = X1_coef[mfi].array();
-        Array4<Real> X2 = X2_coef[mfi].array();
-        Array4<Real> X3 = X3_coef[mfi].array();
+        Array4<Real> const& C = C_coef[mfi].array();
+        Array4<Real> const& S_ck = S_ck_coef[mfi].array();
+        Array4<Real> const& X1 = X1_coef[mfi].array();
+        Array4<Real> const& X2 = X2_coef[mfi].array();
+        Array4<Real> const& X3 = X3_coef[mfi].array();
 
-        auto const & kr = f.getKrArray(mfi);
-        Real const* kr_arr = kr.dataPtr();
+        auto const & kr_modes = f.getKrArray(mfi);
+        Real const* kr_arr = kr_modes.dataPtr();
         int const nr = bx.length(0);
 
         // Loop over indices within one box
@@ -158,8 +158,8 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataHankel c
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
             // Calculate norm of vector
-            int const ii = i + nr*mode;
-            Real const kr = kr_arr[ii];
+            int const ir = i + nr*mode;
+            Real const kr = kr_arr[ir];
             Real const kz = modified_kz[j];
             Real const k_norm = std::sqrt(kr*kr + kz*kz);
 

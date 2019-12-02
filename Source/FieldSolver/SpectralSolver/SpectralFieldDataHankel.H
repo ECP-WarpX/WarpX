@@ -34,7 +34,7 @@ class SpectralFieldDataHankel
         ~SpectralFieldDataHankel();
         void ForwardTransform(const amrex::MultiFab& mf,
                               const int field_index, const int i_comp);
-        void ForwardTransform(const amrex::MultiFab& mf_r, const int field_index_r, 
+        void ForwardTransform(const amrex::MultiFab& mf_r, const int field_index_r,
                               const amrex::MultiFab& mf_t, const int field_index_t);
         void BackwardTransform(amrex::MultiFab& mf,
                                const int field_index, const int i_comp);
