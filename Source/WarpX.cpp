@@ -558,6 +558,8 @@ WarpX::ReadParameters ()
         jy_nodal_flag = IntVect::TheCellVector();
         jz_nodal_flag = IntVect::TheCellVector();
         rho_nodal_flag = IntVect::TheCellVector();
+        // Use same shape factors in all directions, for gathering
+        l_lower_order_in_v = false;
 #endif
 
     }
