@@ -396,7 +396,7 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
     const int ncomp = fields_to_plot.size()
         + static_cast<int>(plot_finepatch)*6
         + static_cast<int>(plot_crsepatch)*6
-        + static_cast<int>(costs[0] != nullptr);
+        + static_cast<int>(costs[0] != nullptr and plot_costs);
 
     // Loop over levels of refinement
     for (int lev = 0; lev <= finest_level; ++lev)
@@ -555,7 +555,7 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
             dcomp += 3;
         }
 
-        if (costs[0] != nullptr)
+        if (costs[0] != nullptr and plot_costs)
         {
             AverageAndPackScalarField( mf_avg[lev], *costs[lev], dmap[lev], dcomp, ngrow );
             if(lev==0) varnames.push_back("costs");
