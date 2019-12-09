@@ -173,7 +173,9 @@ public:
 
             // --- product runtime integer attribs
             int pid_product;
+#ifdef _OPENMP
 #pragma omp critical (doParticleCreation_nextid)
+#endif
             {
                 // ID of first newly-created product particle
                 pid_product = pc_product->NextID();
