@@ -29,6 +29,10 @@
 #   include <omp.h>
 #endif
 
+#ifdef WARPX_USE_OPENPMD
+#include <WarpXOpenPMD.H>
+#endif
+
 #include <iostream>
 #include <memory>
 #include <array>
@@ -302,6 +306,19 @@ public:
                              const std::array<const amrex::MultiFab*, 3>& B,
                              const std::array<amrex::Real,3>& dx, int ngrow);
 
+
+    void InitSpaceChargeField (WarpXParticleContainer& pc);
+    void computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                     std::array<amrex::Real, 3> const beta = {{0,0,0}},
+                     amrex::Real const required_precision=1.e-11 ) const;
+    void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
+                   const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   std::array<amrex::Real, 3> const beta = {{0,0,0}} ) const;
+    void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
+                   const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   std::array<amrex::Real, 3> const beta = {{0,0,0}} ) const;
+
 protected:
 
     //! Tagging cells for refinement
@@ -364,22 +381,6 @@ private:
     ///
     void EvolveES(int numsteps);
 
-    ///
-    /// Compute the gravitational potential from rho by solving Poisson's equation.
-    /// Both rho and phi are assumed to be node-centered. This method is only used
-    /// in electrostatic mode.
-    ///
-    void computePhi(const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                          amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
-
-    ///
-    /// Compute the electric field in each direction by computing the gradient
-    /// the potential phi using 2nd order centered differences. Both rho and phi
-    /// are assumed to be node-centered. This method is only used in electrostatic mode.
-    ///
-    void computeE(amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                  const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
-
     //
     // This stuff is needed by the nodal multigrid solver when running in
     // electrostatic mode.
@@ -411,8 +412,6 @@ private:
 
     void InitFromCheckpoint ();
     void PostRestart ();
-
-    void InitOpenbc ();
 
     void InitPML ();
     void ComputePMLFactors ();
@@ -550,15 +549,20 @@ private:
     int check_int = -1;
     int plot_int = -1;
 
-    std::string openpmd_backend {"h5"};
+    std::string openpmd_backend {"bp"};
 #ifdef WARPX_USE_OPENPMD
     bool dump_plotfiles = false;
     bool dump_openpmd = true;
+    bool openpmd_tspf = true; // one file per timestep
+  //bool openpmd_tspf = false; // one file all timesteps
+    WarpXOpenPMDPlot* m_OpenPMDPlotWriter = nullptr;
+
 #else
     bool dump_plotfiles = true;
     bool dump_openpmd = false;
 #endif
     bool plot_rho           = false;
+    bool plot_costs         = true;
     bool plot_finepatch     = false;
     bool plot_crsepatch     = false;
     bool plot_raw_fields    = false;
