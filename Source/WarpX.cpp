@@ -791,8 +791,8 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         // for nodal, and half the order of the solver for staggered.
         IntVect ngFFT;
         if (do_nodal) {
-            //ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
-            ngFFT = IntVect(AMREX_D_DECL(32,32,32));
+            ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
+            //ngFFT = IntVect(AMREX_D_DECL(32,32,32));
 
         } else {
             ngFFT = IntVect(AMREX_D_DECL(nox_fft/2, noy_fft/2, noz_fft/2));

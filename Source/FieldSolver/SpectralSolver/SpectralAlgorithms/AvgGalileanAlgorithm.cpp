@@ -80,6 +80,7 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
         Array4<Complex> CRhonew = Rhonew_coef[mfi].array();
         Array4<Complex> Jcoef   = Jcoef_coef[mfi].array();
         // Extract reals (for portability on GPU)
+
         Real vx = v_galilean[0];
         Real vy = v_galilean[1];
         Real vz = v_galilean[2];
@@ -320,6 +321,8 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
             const Complex CRhoold= Rhoold_arr(i,j,k);
             const Complex CRhonew= Rhonew_arr(i,j,k);
             const Complex Jcoef = Jcoef_arr(i,j,k);
+
+
             //Update E (see the original Galilean article)
             fields(i,j,k,Idx::Ex) = T2*C*Ex_old
                         + T2*S_ck*c2*I*(ky*Bz_old - kz*By_old)
@@ -364,15 +367,17 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
                           + I*Psi2*(kx*Ey_old - ky*Ex_old)
                           + A1*I*(kx*Jy     - ky*Jx)*inv_ep0;
 
-
-            // fields(i,j,k,Idx::Ex_avg) =  1.;
-            // fields(i,j,k,Idx::Ey_avg) =  1.;
-            // fields(i,j,k,Idx::Ez_avg) =  1.;
             //
-            // fields(i,j,k,Idx::Bx_avg) =  1.;
-            // fields(i,j,k,Idx::By_avg) =  1.;
-            // fields(i,j,k,Idx::Bz_avg) =  1.;
-            //Print()<<"Ez_avg "<<i<<j<<k<<fields(i,j,k,Idx::Ez_avg)<<'-------------'<<'\n';
+            // fields(i,j,k,Idx::Ex_avg) =  fields(i,j,k,Idx::Ex);
+            // fields(i,j,k,Idx::Ey_avg) =  fields(i,j,k,Idx::Ey);
+            // fields(i,j,k,Idx::Ez_avg) =  fields(i,j,k,Idx::Ez);
+            //
+            // fields(i,j,k,Idx::Bx_avg) =  fields(i,j,k,Idx::Bx);
+            // fields(i,j,k,Idx::By_avg) =  fields(i,j,k,Idx::By);
+            // fields(i,j,k,Idx::Bz_avg) =  fields(i,j,k,Idx::Bz);
+
+
+            //Print()<<"Ez_avg "<< ' ' << i<<' '<< j<<' '<<k<<' '<< fields(i,j,k,Idx::Ez)<< fields(i,j,k,Idx::Ez_avg)<<'-------------'<<'\n';
             //Print()<<"Ez"<<i<<j<<k<<fields(i,j,k,Idx::Ez)<<'-------------'<<'\n';
 
 
