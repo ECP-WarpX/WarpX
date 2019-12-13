@@ -221,8 +221,12 @@ public:
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield,
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Bfield,
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& current,
+         const amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho,
          const MultiParticleContainer& mypc, const amrex::Vector<amrex::Geometry>& geom,
-         const int boost_direction_, const amrex::Real current_z_boost,
+         //const int boost_direction_, 
+         const int boost_direction_, const amrex::Box buff_box,
+         const amrex::Real current_z_boost,
+//         const amrex::Real zhi_boost,
          const amrex::Vector<amrex::IntVect>& ref_ratio);
 
     /** \brief
@@ -247,6 +251,7 @@ public:
      * and destination MultiFab.
      */
     void AverageAndPackScalarField_to_CCslice( amrex::MultiFab& cc_slice,
+//               const std::unique_ptr<amrex::MultiFab>& scalar_field,
                const amrex::MultiFab& scalar_field,
                amrex::Vector<int> slice_to_full_ba_map,
                const int dcomp, const int ngrow);

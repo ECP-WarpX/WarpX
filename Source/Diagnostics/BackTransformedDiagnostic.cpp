@@ -596,7 +596,6 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
                                 diag_box, i));
     }
 
-
     for (int i = 0; i < N_slice_snapshots; ++i) {
 
         IntVect slice_ncells_lab ;
@@ -663,7 +662,6 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
         slice_dom_lab.setLo(AMREX_SPACEDIM-1, zmin_slice_lab + v_window_lab * t_slice_lab );
         slice_dom_lab.setHi(AMREX_SPACEDIM-1, zmax_slice_lab +
                                          v_window_lab * t_slice_lab );
-
         // construct labframeslice
         m_LabFrameDiags_[i+N_snapshots].reset(new LabFrameSlice(t_slice_lab, t_boost,
                                 m_inv_gamma_boost_, m_inv_beta_boost_, m_dz_lab_,
@@ -785,6 +783,12 @@ writeLabFrameData(
     std::unique_ptr<MultiFab> cc_slice = nullptr;
     amrex::Vector<WarpXParticleContainer::DiagnosticParticleData> tmp_particle_buffer;
 
+    int total_levels = Efield.size();
+    Vector<std::unique_ptr<MultiFab> > loc_charge_density(total_levels);
+    for ( int lev = 0; lev<total_levels; ++lev) {
+        loc_charge_density[lev] = mypc.GetChargeDensity(lev);
+    }
+    
 
     // Loop over snapshots
     for (int i = 0; i < m_LabFrameDiags_.size(); ++i) {
@@ -836,7 +840,9 @@ writeLabFrameData(
                cc_slice.reset(nullptr);
                // Cell-centered slice data at zboost location is obtained
                cc_slice = GetCellCenteredSliceData( Efield, Bfield, current,
+                                         loc_charge_density,
                                          mypc, geom, m_boost_direction_,
+                                         m_LabFrameDiags_[i]->m_buff_box_,
                                          m_LabFrameDiags_[i]->m_current_z_boost,
                                          ref_ratio);
                const int ncomp = cc_slice->nComp();
@@ -1540,8 +1546,11 @@ BackTransformedDiagnostic::GetCellCenteredSliceData(
      const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Efield,
      const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& Bfield,
      const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& current,
+     const amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho,
      const MultiParticleContainer& mypc, const amrex::Vector<amrex::Geometry>& geom,
-     const int boost_direction_, const amrex::Real current_z_boost,
+    // const int boost_direction_,
+     const int boost_direction_, const Box buff_box,
+     const amrex::Real current_z_boost,
      const Vector<IntVect>& ref_ratio)
 {
     const int ng = 1;
@@ -1552,7 +1561,8 @@ BackTransformedDiagnostic::GetCellCenteredSliceData(
     for (int lev = 0; lev < total_levels; ++lev) {
         // Allocate and initialize slice for the current lev
         // Define Box for cell-centered slice with same index space as level->lev
-        Box slice_cc = geom[lev].Domain();
+        //Box slice_cc = geom[lev].Domain();
+        Box slice_cc = buff_box;
         // Modify the boost-dim index consistent with zboost location
         Real dx_cc = geom[lev].CellSize(boost_direction_);
         int i_boost_cc = ( current_z_boost
@@ -1605,9 +1615,7 @@ BackTransformedDiagnostic::GetCellCenteredSliceData(
         // Interpolate/average and pack charge density data
         // from source to the cell-centered slice MultiFab.
         dcomp += 3;
-        const std::unique_ptr<MultiFab>& charge_density
-                            = mypc.GetChargeDensity(lev);
-        AverageAndPackScalarField_to_CCslice( *cc[lev], *charge_density,
+        AverageAndPackScalarField_to_CCslice( *cc[lev], *rho[lev],
                   slice_to_full_ba_map, dcomp, ng);
         cc[lev]->FillBoundary(geom[lev].periodicity());
     }
@@ -1810,6 +1818,7 @@ void BackTransformedDiagnostic::
 void BackTransformedDiagnostic::
      AverageAndPackScalarField_to_CCslice( MultiFab& cc_slice,
                const MultiFab& scalar_field,
+//               const std::unique_ptr<MultiFab>& scalar_field,
                Vector<int> slice_to_full_ba_map,
                const int dcomp, const int ngrow)
 {
