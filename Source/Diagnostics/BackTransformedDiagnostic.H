@@ -223,7 +223,7 @@ public:
          const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& current,
          const amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho,
          const MultiParticleContainer& mypc, const amrex::Vector<amrex::Geometry>& geom,
-         //const int boost_direction_, 
+         //const int boost_direction_,
          const int boost_direction_, const amrex::Box buff_box,
          const amrex::Real current_z_boost,
 //         const amrex::Real zhi_boost,

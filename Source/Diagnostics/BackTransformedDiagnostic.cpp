@@ -788,7 +788,7 @@ writeLabFrameData(
     for ( int lev = 0; lev<total_levels; ++lev) {
         loc_charge_density[lev] = mypc.GetChargeDensity(lev);
     }
-    
+
 
     // Loop over snapshots
     for (int i = 0; i < m_LabFrameDiags_.size(); ++i) {
