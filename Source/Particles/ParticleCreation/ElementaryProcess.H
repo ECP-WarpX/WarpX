@@ -431,7 +431,7 @@ public:
                     p_copy_functor[0](
                         is, ip, p_pid_product[0], p_source, p_product_phot);
 
-                    const auto me = PhysConst::m_e*PhysConst::c;
+                    const auto me = PhysConst::m_e;
                     const auto one_over_me = 1./me;
 
                     const auto w  = r_source_attribs[PIdx::w][is];
@@ -457,7 +457,7 @@ public:
                         &g_px, &g_py, &g_pz,
                         &g_w);
 
-                    if(sqrt(g_px*g_px + g_py*g_py + g_pz*g_pz) > 2.0 * me)
+                    if(sqrt(g_px*g_px + g_py*g_py + g_pz*g_pz) < 2.0 * me*PhysConst::c)
                         p_product_phot.id() = -1;
 
                     r_source_attribs[PIdx::ux][is] = px*one_over_me;
