@@ -16,6 +16,8 @@
     #include <QuantumSyncEngineWrapper.H>
 #endif
 
+#include "CollisionType.H"
+
 #include <memory>
 #include <map>
 #include <string>
@@ -142,6 +144,8 @@ public:
 
     void doFieldIonization ();
 
+    void doCoulombCollisions ();
+
     void Checkpoint (const std::string& dir) const;
 
     void WritePlotFile (const std::string& dir) const;
@@ -228,6 +232,10 @@ protected:
 
     std::vector<std::string> lasers_names;
 
+    std::vector<std::string> collision_names;
+
+    amrex::Vector<std::unique_ptr<CollisionType> > allcollisions;
+
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     std::vector<bool> m_deposit_on_main_grid;
 
@@ -312,5 +320,6 @@ private:
     // TO ADD
     void TouchAllTileseOfSpeciesAtLevel
         (std::unique_ptr<WarpXParticleContainer>& p_spec, int lev);
+    int ncollisions = 0;
 };
 #endif /*WARPX_ParticleContainer_H_*/

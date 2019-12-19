@@ -457,6 +457,9 @@ public:
                         &g_px, &g_py, &g_pz,
                         &g_w);
 
+                    if(sqrt(g_px*g_px + g_py*g_py + g_pz*g_pz) > 2.0 * me)
+                        p_product_phot.id() = -1;
+
                     r_source_attribs[PIdx::ux][is] = px*one_over_me;
                     r_source_attribs[PIdx::uy][is] = py*one_over_me;
                     r_source_attribs[PIdx::uz][is] = pz*one_over_me;
@@ -464,6 +467,7 @@ public:
                     r_phot_attribs[PIdx::ux][ip]= g_px*one_over_me;
                     r_phot_attribs[PIdx::uy][ip] = g_py*one_over_me;
                     r_phot_attribs[PIdx::uz][ip] = g_pz*one_over_me;
+
                 }
             }
         );
