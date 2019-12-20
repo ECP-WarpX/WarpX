@@ -5,6 +5,8 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_GpuComplex.H>
 
+#include <complex>
+
 // Define complex type on GPU/CPU
 #ifdef AMREX_USE_GPU
 
