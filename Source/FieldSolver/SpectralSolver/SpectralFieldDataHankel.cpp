@@ -34,7 +34,11 @@ SpectralFieldDataHankel::SpectralFieldDataHankel (BoxArray const & realspace_ba,
 
     // Allocate and initialize the FFT plans and Hankel transformer
     forward_plan = FFTplans(spectralspace_ba, dm);
+#ifndef AMREX_USE_GPU
+    // The backward plan is not needed with GPU since it would be the same
+    // as the forward plan anyway.
     backward_plan = FFTplans(spectralspace_ba, dm);
+#endif
     hankeltransformer = HankelTransformer(spectralspace_ba, dm);
 
     // Loop over boxes and allocate the corresponding plan
@@ -42,38 +46,24 @@ SpectralFieldDataHankel::SpectralFieldDataHankel (BoxArray const & realspace_ba,
     for (MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi){
         IntVect grid_size = realspace_ba[mfi].length();
 #ifdef AMREX_USE_GPU
-        NOT IMPLEMENTED
-        // Create cuFFT plans
-        // Creating 3D plan for real to complex -- double precision
-        // Assuming CUDA is used for programming GPU
-        // Note that D2Z is inherently forward plan
-        // and  Z2D is inherently backward plan
+        // Create cuFFT plan
+        // This is alway complex to complex.
+        // This plan is for one azimuthal mode only.
         cufftResult result;
-#if (AMREX_SPACEDIM == 3)
-        result = cufftPlan3d(&forward_plan[mfi], grid_size[2],
-                             grid_size[1],grid_size[0], CUFFT_D2Z);
+        int fft_length[] = {grid_size[1]};
+        int inembed[] = {grid_size[1]};
+        int istride = grid_size[0];
+        int idist = 1;
+        int onembed[] = {grid_size[1]};
+        int ostride = grid_size[0];
+        int odist = 1;
+        int batch = grid_size[0]; // number of ffts
+        result = cufftPlanMany(&forward_plan[mfi], 1, fft_length, inembed, istride, idist,
+                               onembed, ostride, odist, CUFFT_Z2Z, batch);
         if (result != CUFFT_SUCCESS) {
-           amrex::Print() << " cufftplan3d forward failed! \n";
+           amrex::Print() << " cufftPlanMany failed! \n";
         }
-
-        result = cufftPlan3d(&backward_plan[mfi], grid_size[2],
-                             grid_size[1], grid_size[0], CUFFT_Z2D);
-        if (result != CUFFT_SUCCESS) {
-           amrex::Print() << " cufftplan3d backward failed! \n";
-        }
-#else
-        result = cufftPlan2d(&forward_plan[mfi], grid_size[1],
-                              grid_size[0], CUFFT_D2Z);
-        if (result != CUFFT_SUCCESS) {
-           amrex::Print() << " cufftplan2d forward failed! \n";
-        }
-
-        result = cufftPlan2d(&backward_plan[mfi], grid_size[1],
-                               grid_size[0], CUFFT_Z2D);
-        if (result != CUFFT_SUCCESS) {
-           amrex::Print() << " cufftplan2d backward failed! \n";
-        }
-#endif
+        // The backward plane is the same as the forward since the direction is passed when executed
 
 #else
         // Create FFTW plans
@@ -107,10 +97,10 @@ SpectralFieldDataHankel::SpectralFieldDataHankel (BoxArray const & realspace_ba,
                                reinterpret_cast<fftw_complex*>(tempHTransformed[mfi].dataPtr()), // fftw_complex *out
                                FFTW_BACKWARD, // int sign
                                FFTW_ESTIMATE); // unsigned flags
+#endif
 
         std::array<Real,3> xmax = WarpX::UpperCorner(mfi.tilebox(), 0); // lev=0 is explicit
         hankeltransformer[mfi] = SpectralHankelTransformer(grid_size[0], n_rz_azimuthal_modes, xmax[0]);
-#endif
     }
 }
 
@@ -122,7 +112,7 @@ SpectralFieldDataHankel::~SpectralFieldDataHankel()
 #ifdef AMREX_USE_GPU
             // Destroy cuFFT plans
             cufftDestroy(forward_plan[mfi]);
-            cufftDestroy(backward_plan[mfi]);
+            // cufftDestroy(backward_plan[mfi]); // This was never allocated
 #else
             // Destroy FFTW plans
             fftw_destroy_plan(forward_plan[mfi]);
@@ -157,19 +147,20 @@ SpectralFieldDataHankel::FABZForwardTransform (MFIter const & mfi,
 
     // Perform Fourier transform from `tmpRealField` to `tmpSpectralField`
 #ifdef AMREX_USE_GPU
-    NOT IMPLEMENTED
     // Perform Fast Fourier Transform on GPU using cuFFT
     // make sure that this is done on the same
     // GPU stream as the above copy
     cufftResult result;
     cudaStream_t stream = amrex::Gpu::Device::cudaStream();
     cufftSetStream(forward_plan[mfi], stream);
-    result = cufftExecD2Z(forward_plan[mfi],
-                          tmpRealField[mfi].dataPtr(),
-                          reinterpret_cast<cuDoubleComplex*>(
-                          tmpSpectralField[mfi].dataPtr()));
-    if (result != CUFFT_SUCCESS) {
-       amrex::Print() << " forward transform using cufftExecD2Z failed ! \n";
+    for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
+        result = cufftExecZ2Z(forward_plan[mfi],
+                              reinterpret_cast<fftw_complex*>(tempHTransformed[mfi].dataPtr(mode)), // fftw_complex *in
+                              reinterpret_cast<fftw_complex*>(tmpSpectralField[mfi].dataPtr(mode)), // fftw_complex *out
+                              CUFFT_FORWARD);
+        if (result != CUFFT_SUCCESS) {
+           amrex::Print() << " forward transform using cufftExecZ2Z failed ! \n";
+        }
     }
 #else
     fftw_execute(forward_plan[mfi]);
@@ -234,19 +225,20 @@ SpectralFieldDataHankel::FABZBackwardTransform (MFIter const & mfi,
 
     // Perform Fourier transform from `tmpSpectralField` to `tmpRealField`
 #ifdef AMREX_USE_GPU
-    NOT IMPLEMENTED
-    // Perform Fast Fourier Transform on GPU using cuFFT.
+    // Perform Fast Fourier Transform on GPU using cuFFT
     // make sure that this is done on the same
     // GPU stream as the above copy
     cufftResult result;
     cudaStream_t stream = amrex::Gpu::Device::cudaStream();
-    cufftSetStream(backward_plan[mfi], stream);
-    result = cufftExecZ2D(backward_plan[mfi],
-                          reinterpret_cast<cuDoubleComplex*>(
-                          tmpSpectralField[mfi].dataPtr()),
-                          tmpRealField[mfi].dataPtr());
-    if (result != CUFFT_SUCCESS) {
-       amrex::Print() << " Backward transform using cufftexecZ2D failed! \n";
+    cufftSetStream(forward_plan[mfi], stream);
+    for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
+        result = cufftExecZ2Z(forward_plan[mfi],
+                              reinterpret_cast<fftw_complex*>(tmpSpectralField[mfi].dataPtr(mode)), // fftw_complex *in
+                              reinterpret_cast<fftw_complex*>(tempHTransformed[mfi].dataPtr(mode)), // fftw_complex *out
+                              CUFFT_BACKWARD);
+        if (result != CUFFT_SUCCESS) {
+           amrex::Print() << " backwardtransform using cufftExecZ2Z failed ! \n";
+        }
     }
 #else
     fftw_execute(backward_plan[mfi]);
