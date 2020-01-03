@@ -1157,9 +1157,9 @@ WarpX::Evolve (int numsteps) {
 }
 
 void
-WarpX::ComputeDivB (MultiFab& divB, int dcomp,
-                    const std::array<const MultiFab*, 3>& B,
-                    const std::array<Real,3>& dx)
+WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
+                    const std::array<const amrex::MultiFab*, 3>& B,
+                    const std::array<amrex::Real,3>& dx)
 {
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
@@ -1191,9 +1191,9 @@ WarpX::ComputeDivB (MultiFab& divB, int dcomp,
 }
 
 void
-WarpX::ComputeDivB (MultiFab& divB, int dcomp,
-                    const std::array<const MultiFab*, 3>& B,
-                    const std::array<Real,3>& dx, int ngrow)
+WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
+                    const std::array<const amrex::MultiFab*, 3>& B,
+                    const std::array<amrex::Real,3>& dx, int ngrow)
 {
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
@@ -1225,9 +1225,9 @@ WarpX::ComputeDivB (MultiFab& divB, int dcomp,
 }
 
 void
-WarpX::ComputeDivE (MultiFab& divE, int dcomp,
-                    const std::array<const MultiFab*, 3>& E,
-                    const std::array<Real,3>& dx)
+WarpX::ComputeDivE (amrex::MultiFab& divE, int dcomp,
+                    const std::array<const amrex::MultiFab*, 3>& E,
+                    const std::array<amrex::Real,3>& dx)
 {
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
@@ -1259,9 +1259,9 @@ WarpX::ComputeDivE (MultiFab& divE, int dcomp,
 }
 
 void
-WarpX::ComputeDivE (MultiFab& divE, int dcomp,
-                    const std::array<const MultiFab*, 3>& E,
-                    const std::array<Real,3>& dx, int ngrow)
+WarpX::ComputeDivE (amrex::MultiFab& divE, int dcomp,
+                    const std::array<const amrex::MultiFab*, 3>& E,
+                    const std::array<amrex::Real,3>& dx, int ngrow)
 {
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
@@ -1289,6 +1289,17 @@ WarpX::ComputeDivE (MultiFab& divE, int dcomp,
 #endif
                               );
         });
+    }
+}
+
+PML*
+WarpX::GetPML (int lev)
+{
+    if (do_pml) {
+        // This should check if pml was initialized
+        return pml[lev].get();
+    } else {
+        return nullptr;
     }
 }
 

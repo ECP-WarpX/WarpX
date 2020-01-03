@@ -175,7 +175,7 @@ public:
 
     void ComputeDt ();
     // Compute max_step automatically for simulations in a boosted frame.
-    void computeMaxStepBoostAccelerator(amrex::Geometry geom);
+    void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
     int  MoveWindow (bool move_j);
     void UpdatePlasmaInjectionPosition (amrex::Real dt);
 
@@ -210,6 +210,8 @@ public:
     void DampJPML (int lev, PatchType patch_type);
 
     void CopyJPML ();
+
+    PML* GetPML (int lev);
 
     void PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full);
     void PushParticlesandDepose (         amrex::Real cur_time);
@@ -535,7 +537,7 @@ private:
     amrex::Real load_balance_knapsack_factor = 1.24;
 
     // Override sync every ? steps
-    int override_sync_int = 10;
+    int override_sync_int = 1;
 
     // Other runtime parameters
     int verbose = 1;
