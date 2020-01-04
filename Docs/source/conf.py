@@ -33,9 +33,10 @@ sys.path.insert(0, os.path.join( os.path.abspath(__file__), '../Python') )
 extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
-    'breathe',
-    'exhale'
+    'breathe'
  ]
+# ,
+#     'exhale'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -171,27 +172,7 @@ breathe_projects = {
 }
 breathe_default_project = "WarpX"
 
-# Setup the exhale extension
-exhale_args = {
-    # These arguments are required
-    "containmentFolder": "./api",
-    "rootFileName": "library_root.rst",
-    "rootFileTitle": "Doxygen",
-    "doxygenStripFromPath": "..",
-    # Suggested optional arguments
-    "createTreeView": True,
-    # TIP: if using the sphinx-bootstrap-theme, you need
-    # "treeViewIsBootstrap": True,
-    "exhaleExecutesDoxygen": True,
-    "exhaleDoxygenStdin": "INPUT = ../../Source/"
-}
-
 # Tell sphinx what the primary language being documented is.
 primary_domain = 'cpp'
 # Tell sphinx what the pygments highlight language should be.
 highlight_language = 'cpp'
-
-
-read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
-if read_the_docs_build:
-    subprocess.call('cd ../; doxygen', shell=True)

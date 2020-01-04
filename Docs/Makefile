@@ -21,13 +21,6 @@ clean:
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
+	doxygen
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
-
-Python-build:
-	cd ../Python; make pybuild
-
-Doxygen-build:
-	doxygen Doxyfile
-
-Latex-conversion:
-	cd source/latex_theory; make
+	cp -r doxyhtml build/html/
