@@ -24,3 +24,12 @@ clean:
 	doxygen
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	cp -r doxyhtml build/html/
+
+Python-build:
+	cd ../Python; make pybuild
+
+Doxygen-build:
+	doxygen Doxyfile
+
+Latex-conversion:
+	cd source/latex_theory; make
