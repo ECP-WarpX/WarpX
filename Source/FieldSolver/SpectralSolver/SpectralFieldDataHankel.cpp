@@ -142,7 +142,7 @@ SpectralFieldDataHankel::FABZForwardTransform (MFIter const & mfi,
     [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
         int const mode_r = 2*mode;
         int const mode_i = 2*mode + 1;
-        complex_arr(i,j,k,mode) = {split_arr(i,j,k,mode_r), split_arr(i,j,k,mode_i)};
+        complex_arr(i,j,k,mode) = Complex{split_arr(i,j,k,mode_r), split_arr(i,j,k,mode_i)};
     });
 
     // Perform Fourier transform from `tmpRealField` to `tmpSpectralField`
@@ -155,8 +155,8 @@ SpectralFieldDataHankel::FABZForwardTransform (MFIter const & mfi,
     cufftSetStream(forward_plan[mfi], stream);
     for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
         result = cufftExecZ2Z(forward_plan[mfi],
-                              reinterpret_cast<fftw_complex*>(tempHTransformed[mfi].dataPtr(mode)), // fftw_complex *in
-                              reinterpret_cast<fftw_complex*>(tmpSpectralField[mfi].dataPtr(mode)), // fftw_complex *out
+                              reinterpret_cast<cuDoubleComplex*>(tempHTransformed[mfi].dataPtr(mode)), // cuDoubleComplex *in
+                              reinterpret_cast<cuDoubleComplex*>(tmpSpectralField[mfi].dataPtr(mode)), // cuDoubleComplex *out
                               CUFFT_FORWARD);
         if (result != CUFFT_SUCCESS) {
            amrex::Print() << " forward transform using cufftExecZ2Z failed ! \n";
@@ -233,9 +233,9 @@ SpectralFieldDataHankel::FABZBackwardTransform (MFIter const & mfi,
     cufftSetStream(forward_plan[mfi], stream);
     for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
         result = cufftExecZ2Z(forward_plan[mfi],
-                              reinterpret_cast<fftw_complex*>(tmpSpectralField[mfi].dataPtr(mode)), // fftw_complex *in
-                              reinterpret_cast<fftw_complex*>(tempHTransformed[mfi].dataPtr(mode)), // fftw_complex *out
-                              CUFFT_BACKWARD);
+                              reinterpret_cast<cuDoubleComplex*>(tmpSpectralField[mfi].dataPtr(mode)), // cuDoubleComplex *in
+                              reinterpret_cast<cuDoubleComplex*>(tempHTransformed[mfi].dataPtr(mode)), // cuDoubleComplex *out
+                              CUFFT_INVERSE);
         if (result != CUFFT_SUCCESS) {
            amrex::Print() << " backwardtransform using cufftExecZ2Z failed ! \n";
         }

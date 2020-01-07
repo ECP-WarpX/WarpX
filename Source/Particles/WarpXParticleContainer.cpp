@@ -469,7 +469,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 #ifdef AMREX_USE_GPU
     // No tiling on GPU: rho_fab points to the full rho array.
     MultiFab rhoi(*rho, amrex::make_alias, icomp*ncomps, ncomps);
-    auto & rho_fab = rhoi->get(pti);
+    auto & rho_fab = rhoi.get(pti);
 #else
     // Tiling is on: rho_fab points to local_rho[thread_num]
 

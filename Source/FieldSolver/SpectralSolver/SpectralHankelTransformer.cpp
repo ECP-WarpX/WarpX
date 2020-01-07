@@ -10,12 +10,24 @@ SpectralHankelTransformer::SpectralHankelTransformer (int const nr_nodes,
     dht0.resize(n_rz_azimuthal_modes);
     dhtp.resize(n_rz_azimuthal_modes);
     dhtm.resize(n_rz_azimuthal_modes);
-    kr.resize(nr*n_rz_azimuthal_modes);
 
     for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
         dht0[mode].reset( new HankelTransform(mode  , mode, nr, rmax) );
         dhtp[mode].reset( new HankelTransform(mode+1, mode, nr, rmax) );
         dhtm[mode].reset( new HankelTransform(mode-1, mode, nr, rmax) );
+    }
+
+    ExtractKrArray();
+
+}
+
+// This needs to be separate since the ParallelFor cannot be in the constructor.
+void
+SpectralHankelTransformer::ExtractKrArray ()
+{
+    kr.resize(nr*n_rz_azimuthal_modes);
+
+    for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
 
         // Save all of the kr's in one place to allow easy access later
         amrex::Real *kr_array = kr.dataPtr();
@@ -28,9 +40,7 @@ SpectralHankelTransformer::SpectralHankelTransformer (int const nr_nodes,
             kr_array[ii] = kr_m_array[ir];
         });
     }
-
 }
-
 // Converts a scalar field from the physical to the spectral space for all modes
 void
 SpectralHankelTransformer::PhysicalToSpectral_Scalar (amrex::Box const & box,

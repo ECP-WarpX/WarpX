@@ -23,6 +23,9 @@ class SpectralHankelTransformer
                                   const int n_rz_azimuthal_modes,
                                   const amrex::Real rmax);
 
+        void
+        ExtractKrArray();
+
         // Returns an array that holds the kr for all of the modes
         HankelTransform::RealVector const & getKrArray() const {return kr;}
 
