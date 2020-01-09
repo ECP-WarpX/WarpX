@@ -615,11 +615,11 @@ MultiParticleContainer::doFieldIonization ()
 #ifdef _OPENMP
             // Touch all tiles of source species in serial if runtime attribs
             if ( (pc_source->NumRuntimeRealComps()>0) || (pc_source->NumRuntimeIntComps()>0) ){
-                TouchAllTileseOfSpeciesAtLevel(pc_source, lev);
+                TouchAllTilesOfSpeciesAtLevel(pc_source, lev);
             }
 #endif
             // Touch all tiles of product species in serial
-            TouchAllTileseOfSpeciesAtLevel(pc_product, lev);
+            TouchAllTilesOfSpeciesAtLevel(pc_product, lev);
 
             // Enable tiling
             MFItInfo info;
@@ -690,6 +690,18 @@ MultiParticleContainer::doCoulombCollisions ()
 
             }
         }
+    }
+}
+
+// TO ADD
+void MultiParticleContainer::TouchAllTilesOfSpeciesAtLevel
+        (std::unique_ptr<WarpXParticleContainer>& p_spec, int lev)
+{
+    for (MFIter mfi = p_spec->MakeMFIter(lev); mfi.isValid(); ++mfi) {
+        const int grid_id = mfi.index();
+        const int tile_id = mfi.LocalTileIndex();
+        p_spec->GetParticles(lev)[std::make_pair(grid_id,tile_id)];
+        p_spec->DefineAndReturnParticleTile(lev, grid_id, tile_id);
     }
 }
 
@@ -987,18 +999,6 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
     }
 }
 
-// TO ADD
-void MultiParticleContainer::TouchAllTileseOfSpeciesAtLevel
-        (std::unique_ptr<WarpXParticleContainer>& p_spec, int lev)
-{
-    for (MFIter mfi = p_spec->MakeMFIter(lev); mfi.isValid(); ++mfi) {
-        const int grid_id = mfi.index();
-        const int tile_id = mfi.LocalTileIndex();
-        p_spec->GetParticles(lev)[std::make_pair(grid_id,tile_id)];
-        p_spec->DefineAndReturnParticleTile(lev, grid_id, tile_id);
-    }
-}
-
 void MultiParticleContainer::doQedEvents()
 {
     BL_PROFILE("MPC::doQedEvents");
@@ -1032,12 +1032,12 @@ void MultiParticleContainer::doQedBreitWheeler(
 #ifdef _OPENMP
         // Touch all tiles of source species in serial if runtime attribs
         if ( (pc_source->NumRuntimeRealComps()>0) || (pc_source->NumRuntimeIntComps()>0) ){
-            TouchAllTileseOfSpeciesAtLevel(pc_source, lev);
+            TouchAllTilesOfSpeciesAtLevel(pc_source, lev);
         }
 #endif
         // Touch all tiles of product species in serial
-        TouchAllTileseOfSpeciesAtLevel(pc_product_ele, lev);
-        TouchAllTileseOfSpeciesAtLevel(pc_product_pos, lev);
+        TouchAllTilesOfSpeciesAtLevel(pc_product_ele, lev);
+        TouchAllTilesOfSpeciesAtLevel(pc_product_pos, lev);
 
         // Enable tiling
         MFItInfo info;
@@ -1150,11 +1150,11 @@ void MultiParticleContainer::doQedQuantumSync(
 #ifdef _OPENMP
         // Touch all tiles of source species in serial if runtime attribs
         if ( (pc_source->NumRuntimeRealComps()>0) || (pc_source->NumRuntimeIntComps()>0) ){
-            TouchAllTileseOfSpeciesAtLevel(pc_source, lev);
+            TouchAllTilesOfSpeciesAtLevel(pc_source, lev);
         }
 #endif
         // Touch all tiles of product species in serial
-        TouchAllTileseOfSpeciesAtLevel(pc_product_phot, lev);
+        TouchAllTilesOfSpeciesAtLevel(pc_product_phot, lev);
 
         // Enable tiling
         MFItInfo info;

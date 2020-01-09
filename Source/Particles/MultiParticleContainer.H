@@ -324,7 +324,7 @@ private:
     int nspecies = 1;   // physical particles only. nspecies+nlasers == allcontainers.size().
 
     // TO ADD
-    void TouchAllTileseOfSpeciesAtLevel
+    void TouchAllTilesOfSpeciesAtLevel
         (std::unique_ptr<WarpXParticleContainer>& p_spec, int lev);
     int ncollisions = 0;
 };
