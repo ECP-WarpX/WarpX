@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 
         warpx.InitData();
 
-        warpx.Evolve();
+        warpx.Evolve(-1);
 
         Real end_total = amrex::second() - strt_total;
 
