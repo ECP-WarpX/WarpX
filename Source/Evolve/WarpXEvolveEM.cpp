@@ -154,9 +154,9 @@ WarpX::EvolveEM (int numsteps)
         bool do_insitu = ((step+1) >= insitu_start) &&
             (insitu_int > 0) && ((step+1) % insitu_int == 0);
 
-        if (do_boosted_frame_diagnostic) {
+        if (do_back_transformed_diagnostics) {
             std::unique_ptr<MultiFab> cell_centered_data = nullptr;
-            if (WarpX::do_boosted_frame_fields) {
+            if (WarpX::do_back_transformed_fields) {
                 cell_centered_data = GetCellCenteredData();
             }
             myBFD->writeLabFrameData(cell_centered_data.get(), *mypc, geom[0], cur_time, dt[0]);
@@ -280,7 +280,7 @@ WarpX::EvolveEM (int numsteps)
         WriteCheckPointFile();
     }
 
-    if (do_boosted_frame_diagnostic) {
+    if (do_back_transformed_diagnostics) {
         myBFD->Flush(geom[0]);
     }
 
@@ -299,6 +299,7 @@ WarpX::OneStep_nosub (Real cur_time)
     // Loop over species. For each ionizable species, create particles in
     // product species.
     mypc->doFieldIonization();
+    mypc->doCoulombCollisions();
     // Push particle from x^{n} to x^{n+1}
     //               from p^{n-1/2} to p^{n+1/2}
     // Deposit current j^{n+1/2}
@@ -500,7 +501,7 @@ WarpX::OneStep_sub1 (Real curtime)
 }
 
 void
-WarpX::PushParticlesandDepose (Real cur_time)
+WarpX::PushParticlesandDepose (amrex::Real cur_time)
 {
     // Evolve particles to p^{n+1/2} and x^{n+1}
     // Depose current, j^{n+1/2}
@@ -510,7 +511,7 @@ WarpX::PushParticlesandDepose (Real cur_time)
 }
 
 void
-WarpX::PushParticlesandDepose (int lev, Real cur_time, DtType a_dt_type)
+WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type)
 {
     //amrex::Print() << (Efield_aux[lev][0] == nullptr) << std::endl;
     //amrex::Print() << (Efield_avg_aux[lev][0] == nullptr) << std::endl;
@@ -612,7 +613,7 @@ WarpX::ComputeDt ()
  * simulation box passes input parameter zmax_plasma_to_compute_max_step.
  */
 void
-WarpX::computeMaxStepBoostAccelerator(amrex::Geometry a_geom){
+WarpX::computeMaxStepBoostAccelerator(const amrex::Geometry& a_geom){
     // Sanity checks: can use zmax_plasma_to_compute_max_step only if
     // the moving window and the boost are all in z direction.
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -643,9 +644,10 @@ WarpX::computeMaxStepBoostAccelerator(amrex::Geometry a_geom){
     // Divide by dt, and update value of max_step.
     int computed_max_step;
     if (do_subcycling){
-        computed_max_step = interaction_time_boost/dt[0];
+        computed_max_step = static_cast<int>(interaction_time_boost/dt[0]);
     } else {
-        computed_max_step = interaction_time_boost/dt[maxLevel()];
+        computed_max_step =
+            static_cast<int>(interaction_time_boost/dt[maxLevel()]);
     }
     max_step = computed_max_step;
     Print()<<"max_step computed in computeMaxStepBoostAccelerator: "

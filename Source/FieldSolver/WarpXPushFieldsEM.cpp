@@ -98,7 +98,7 @@ WarpX::PushPSATD_localFFT (int lev, amrex::Real /* dt */)
 #endif
 
 void
-WarpX::EvolveB (Real a_dt)
+WarpX::EvolveB (amrex::Real a_dt)
 {
     for (int lev = 0; lev <= finest_level; ++lev) {
         EvolveB(lev, a_dt);
@@ -106,7 +106,7 @@ WarpX::EvolveB (Real a_dt)
 }
 
 void
-WarpX::EvolveB (int lev, Real a_dt)
+WarpX::EvolveB (int lev, amrex::Real a_dt)
 {
     BL_PROFILE("WarpX::EvolveB()");
     EvolveB(lev, PatchType::fine, a_dt);
@@ -311,7 +311,7 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
 }
 
 void
-WarpX::EvolveE (Real a_dt)
+WarpX::EvolveE (amrex::Real a_dt)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -320,7 +320,7 @@ WarpX::EvolveE (Real a_dt)
 }
 
 void
-WarpX::EvolveE (int lev, Real a_dt)
+WarpX::EvolveE (int lev, amrex::Real a_dt)
 {
     BL_PROFILE("WarpX::EvolveE()");
     EvolveE(lev, PatchType::fine, a_dt);
@@ -619,7 +619,7 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 }
 
 void
-WarpX::EvolveF (Real a_dt, DtType a_dt_type)
+WarpX::EvolveF (amrex::Real a_dt, DtType a_dt_type)
 {
     if (!do_dive_cleaning) return;
 
@@ -630,7 +630,7 @@ WarpX::EvolveF (Real a_dt, DtType a_dt_type)
 }
 
 void
-WarpX::EvolveF (int lev, Real a_dt, DtType a_dt_type)
+WarpX::EvolveF (int lev, amrex::Real a_dt, DtType a_dt_type)
 {
     if (!do_dive_cleaning) return;
 
@@ -639,7 +639,7 @@ WarpX::EvolveF (int lev, Real a_dt, DtType a_dt_type)
 }
 
 void
-WarpX::EvolveF (int lev, PatchType patch_type, Real a_dt, DtType a_dt_type)
+WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_type)
 {
     if (!do_dive_cleaning) return;
 

@@ -2,8 +2,10 @@ AMREX_HOME ?= ../../../amrex
 PICSAR_HOME ?= ../../../picsar
 OPENBC_HOME ?= ../../../openbc_poisson
 
+CXXSTD        = c++14
 USE_MPI       = TRUE
 USE_PARTICLES = TRUE
+USE_RPATH     = TRUE
 
 ifeq ($(USE_GPU),TRUE)
   USE_OMP  = FALSE
@@ -75,6 +77,7 @@ include $(AMREX_HOME)/Src/Base/Make.package
 include $(AMREX_HOME)/Src/Particle/Make.package
 include $(AMREX_HOME)/Src/Boundary/Make.package
 include $(AMREX_HOME)/Src/AmrCore/Make.package
+include $(AMREX_HOME)/Src/LinearSolvers/MLMG/Make.package
 
 ifeq ($(USE_SENSEI_INSITU),TRUE)
   include $(AMREX_HOME)/Src/Amr/Make.package
@@ -82,19 +85,27 @@ ifeq ($(USE_SENSEI_INSITU),TRUE)
 endif
 
 ifeq ($(QED),TRUE)
-  BOOST_ROOT ?= NOT_SET
-  ifneq ($(BOOST_ROOT),NOT_SET)
-    VPATH_LOCATIONS += $(BOOST_ROOT)
-    INCLUDE_LOCATIONS += $(BOOST_ROOT)
-  endif
   INCLUDE_LOCATIONS += $(PICSAR_HOME)/src/multi_physics/QED/src
   CXXFLAGS += -DWARPX_QED
   CFLAGS   += -DWARPX_QED
   FFLAGS   += -DWARPX_QED
   F90FLAGS += -DWARPX_QED
   include $(WARPX_HOME)/Source/QED/Make.package
-endif
+  USERSuffix := $(USERSuffix).QED
 
+  ifeq ($(QED_TABLE_GEN),TRUE)
+    BOOST_ROOT ?= NOT_SET
+    ifneq ($(BOOST_ROOT),NOT_SET)
+      VPATH_LOCATIONS += $(BOOST_ROOT)
+      INCLUDE_LOCATIONS += $(BOOST_ROOT)
+    endif
+    CXXFLAGS += -DWARPX_QED_TABLE_GEN
+    CFLAGS   += -DWARPX_QED_TABLE_GEN
+    FFLAGS   += -DWARPX_QED_TABLE_GEN
+    F90FLAGS += -DWARPX_QED_TABLE_GEN
+     USERSuffix := $(USERSuffix).GENTABLES
+  endif
+endif
 
 include $(PICSAR_HOME)/src/Make.package
 
@@ -113,7 +124,7 @@ endif
 
 ifeq ($(USE_OPENPMD), TRUE)
    # try pkg-config query
-   ifeq (0, $(shell pkg-config "openPMD >= 0.9.0"; echo $$?))
+   ifeq (0, $(shell pkg-config "openPMD >= 0.10.3"; echo $$?))
        CXXFLAGS += $(shell pkg-config --cflags openPMD)
        LIBRARY_LOCATIONS += $(shell pkg-config --variable=libdir openPMD)
        libraries += $(shell pkg-config --libs-only-l openPMD)
@@ -161,9 +172,6 @@ ifeq ($(USE_RZ),TRUE)
 endif
 
 ifeq ($(DO_ELECTROSTATIC),TRUE)
-     include $(AMREX_HOME)/Src/LinearSolvers/C_to_F_MG/Make.package
-     include $(AMREX_HOME)/Src/LinearSolvers/F_MG/FParallelMG.mak
-     include $(AMREX_HOME)/Src/F_BaseLib/FParallelMG.mak
      DEFINES += -DWARPX_DO_ELECTROSTATIC
 endif
 
