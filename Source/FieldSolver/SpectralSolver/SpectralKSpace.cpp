@@ -84,7 +84,7 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
         // Fill the k vector
         IntVect fft_size = realspace_ba[mfi].length();
         const Real dk = 2*MathConst::pi/(fft_size[i_dim]*dx[i_dim]);
-        amrex::Print() <<"i_dim" << i_dim <<' '  << fft_size[i_dim]<<' ' << dx[i_dim]<<' '  << std::endl; //oshapoval
+        //amrex::Print() <<"i_dim" << i_dim <<' '  << fft_size[i_dim]<<' ' << dx[i_dim]<<' '  << std::endl; //oshapoval
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( bx.smallEnd(i_dim) == 0,
             "Expected box to start at 0, in spectral space.");
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( bx.bigEnd(i_dim) == N-1,
@@ -94,7 +94,7 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
             // (typically: first axis, in a real-to-complex FFT)
             for (int i=0; i<N; i++ ){
                 k[i] = i*dk;
-                amrex::Print() << "i and k[i]:"<< i <<' '  << k[i]<<' ' << std::endl; //oshapoval
+                //amrex::Print() << "i and k[i]:"<< i <<' '  << k[i]<<' ' << std::endl; //oshapoval
 
             }
         } else {
@@ -201,20 +201,31 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             //for (int n=0; n<stencil_coef.size(); n++){ //oshapoval
 
                 if (nodal){
-                    modified_k[i] = k[i];
+                    //modified_k[i] = k[i];
 
                     // modified_k[i] += 2.*stencil_coef[n]* \
                     // std::sin( k[i]*(n+1)*delta_x )/( delta_x ); //oshapoval
-
-                    // modified_k[i] += stencil_coef[n]* \
-                    //     std::sin( k[i]*n*delta_x )/( n*delta_x );
+                    //
+                    modified_k[i] += stencil_coef[n]* \
+                        std::sin( k[i]*n*delta_x )/( n*delta_x );
                 } else {
                     modified_k[i] += stencil_coef[n]* \
                         std::sin( k[i]*(n-0.5)*delta_x )/( (n-0.5)*delta_x );
                 }
             }
+            //oshapoval
+            if (i_dim == 0){
+                modified_k[k.size()-1] = 0.;
+            } if (i_dim == 1){
+                modified_k[k.size()/2] = 0.;
+            } else {}
+            //oshapoval
+
+            //print::Print() << "  i_dim:"<<' '  << i_dim<<' ' << std::endl; //oshapoval
+            amrex::Print() << "  modified_k[i]:"<< i <<' ' << k[i] <<' '  <<"i_dim = " <<i_dim << ' '<<  modified_k[i]<<' ' << std::endl; //oshapoval
         }
     }
+
     return modified_k_comp;
 }
 
@@ -253,9 +264,9 @@ getFonbergStencilCoefficients( const int n_order, const bool nodal )
     //         double lognumer = 2.*std::log(tgamma(m+1));
     //         double logdenom = std::log(tgamma(m+1+l)) + std::log(tgamma(m+1-l)) + std::log(l);
     //         coefs[n] = std::pow(-1,l+1) * std::exp(lognumer - logdenom);
-    //         Print()<<" Fonberg coeffs:"<< ' '<<n <<' '<<coefs[n]<<' '<<'\n';
-        //     }
-        // }
+    //         Print()<<" Fonberg coeffs:"<< ' '<< n <<' '<<coefs[n]<<' '<<'\n';
+    //         }
+    //    }
     // Coefficients for staggered finite-difference
     else {
         Real prod = 1.;

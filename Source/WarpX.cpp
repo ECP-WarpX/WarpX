@@ -208,7 +208,7 @@ WarpX::WarpX ()
 #endif // WARPX_DO_ELECTROSTATIC
 
     costs.resize(nlevs_max);
-    //std::cout << "V_gal before" << "\n";
+    //std::cout << "V_gal before" << v_galilean<< "\n"; //oshapoval
 
     //v_galilean.resize(3, 0.0);
 #ifdef WARPX_USE_PSATD
@@ -216,7 +216,7 @@ WarpX::WarpX ()
     spectral_solver_cp.resize(nlevs_max);
 #endif
 
-     //std::cout << "V_gal after" << "\n";
+     //std::cout << "V_gal after" << v_galilean<< "\n"; //oshapoval
 
 #ifdef WARPX_USE_PSATD_HYBRID
     Efield_fp_fft.resize(nlevs_max);
@@ -791,8 +791,8 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         // for nodal, and half the order of the solver for staggered.
         IntVect ngFFT;
         if (do_nodal) {
-            ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
-            //ngFFT = IntVect(AMREX_D_DECL(32,32,32));
+            //ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
+            ngFFT = IntVect(AMREX_D_DECL(16,16,16));
 
         } else {
             ngFFT = IntVect(AMREX_D_DECL(nox_fft/2, noy_fft/2, noz_fft/2));
@@ -809,6 +809,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
             ngJ[i_dim] = ng_required;
             ngRho[i_dim] = ng_required;
             ngF = ng_required;
+            std::cout<< "i_dim = "<< i_dim << ' ' <<"ngRho[i_dim] = "<< ngRho[i_dim]<< ' ' << ' '<< ngJ[i_dim] << ' ' <<ngE[i_dim] <<'\n'; //oshapoval
         }
     }
 #endif
@@ -874,6 +875,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     else
     {
         rho_fp[lev].reset(new MultiFab(amrex::convert(ba,IntVect::TheUnitVector()),dm,2*ncomps,ngRho));
+        std::cout<<"ncomps = "<< ncomps<<'\n'; //shapoval
     }
     if (fft_hybrid_mpi_decomposition == false){
         // Allocate and initialize the spectral solver
