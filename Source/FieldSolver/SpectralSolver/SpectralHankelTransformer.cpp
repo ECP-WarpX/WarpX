@@ -33,10 +33,11 @@ SpectralHankelTransformer::ExtractKrArray ()
         amrex::Real *kr_array = kr.dataPtr();
         auto const & kr_m = dht0[mode]->getSpectralWavenumbers();
         auto const & kr_m_array = kr_m.dataPtr();
+        int const nr_temp = nr;
         amrex::ParallelFor(nr,
         [=] AMREX_GPU_DEVICE (int ir)
         {
-            int const ii = ir + mode*nr;
+            int const ii = ir + mode*nr_temp;
             kr_array[ii] = kr_m_array[ir];
         });
     }

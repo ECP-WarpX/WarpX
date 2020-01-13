@@ -151,6 +151,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataHankel c
         auto const & kr_modes = f.getKrArray(mfi);
         Real const* kr_arr = kr_modes.dataPtr();
         int const nr = bx.length(0);
+        Real const dt_temp = dt;
 
         // Loop over indices within one box
         int const modes = f.n_rz_azimuthal_modes;
@@ -167,17 +168,17 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataHankel c
             constexpr Real c = PhysConst::c;
             constexpr Real ep0 = PhysConst::ep0;
             if (k_norm != 0){
-                C(i,j,k,mode) = std::cos(c*k_norm*dt);
-                S_ck(i,j,k,mode) = std::sin(c*k_norm*dt)/(c*k_norm);
+                C(i,j,k,mode) = std::cos(c*k_norm*dt_temp);
+                S_ck(i,j,k,mode) = std::sin(c*k_norm*dt_temp)/(c*k_norm);
                 X1(i,j,k,mode) = (1. - C(i,j,k,mode))/(ep0 * c*c * k_norm*k_norm);
-                X2(i,j,k,mode) = (1. - S_ck(i,j,k,mode)/dt)/(ep0 * k_norm*k_norm);
-                X3(i,j,k,mode) = (C(i,j,k,mode) - S_ck(i,j,k,mode)/dt)/(ep0 * k_norm*k_norm);
+                X2(i,j,k,mode) = (1. - S_ck(i,j,k,mode)/dt_temp)/(ep0 * k_norm*k_norm);
+                X3(i,j,k,mode) = (C(i,j,k,mode) - S_ck(i,j,k,mode)/dt_temp)/(ep0 * k_norm*k_norm);
             } else { // Handle k_norm = 0, by using the analytical limit
                 C(i,j,k,mode) = 1.;
-                S_ck(i,j,k,mode) = dt;
-                X1(i,j,k,mode) = 0.5 * dt*dt / ep0;
-                X2(i,j,k,mode) = c*c * dt*dt / (6.*ep0);
-                X3(i,j,k,mode) = - c*c * dt*dt / (3.*ep0);
+                S_ck(i,j,k,mode) = dt_temp;
+                X1(i,j,k,mode) = 0.5 * dt_temp*dt_temp / ep0;
+                X2(i,j,k,mode) = c*c * dt_temp*dt_temp / (6.*ep0);
+                X3(i,j,k,mode) = - c*c * dt_temp*dt_temp / (3.*ep0);
             }
         });
      }
