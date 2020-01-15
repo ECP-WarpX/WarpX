@@ -16,7 +16,7 @@ import glob
 import os
 
 #Maximum acceptable error for this test
-relative_error_threshold = 0.06
+relative_error_threshold = 0.065
 
 #Physical parameters
 um = 1.e-6
@@ -210,7 +210,7 @@ def main() :
         launch_analysis(executables[0])
     else :
         assert(False)
-
+    print('Passed')
 
 if __name__ == "__main__":
     main()
