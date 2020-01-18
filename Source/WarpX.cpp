@@ -1344,7 +1344,7 @@ WarpX::Version ()
 std::string
 WarpX::PicsarVersion ()
 {
-#ifdef WARPX_GIT_VERSION
+#ifdef PICSAR_GIT_VERSION
     return std::string(PICSAR_GIT_VERSION);
 #else
     return std::string("Unknown");
