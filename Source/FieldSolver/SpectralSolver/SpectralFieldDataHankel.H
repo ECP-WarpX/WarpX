@@ -42,10 +42,11 @@ class SpectralFieldDataHankel
                                amrex::MultiFab& mf_t, const int field_index_t);
 
         void FABZForwardTransform(amrex::MFIter const & mfi,
-                                  amrex::FArrayBox const & tempHTransformedSplit,
+                                  amrex::MultiFab const & tempHTransformedSplit,
                                   int field_index, const bool is_nodal_z);
-        amrex::FArrayBox FABZBackwardTransform (amrex::MFIter const & mfi,
-                                                const int field_index, const bool is_nodal_z);
+        void FABZBackwardTransform (amrex::MFIter const & mfi, const int field_index,
+                                    amrex::MultiFab & tempHTransformedSplit,
+                                    const bool is_nodal_z);
 
         // Returns an array that holds the kr for all of the modes
         HankelTransform::RealVector const & getKrArray(amrex::MFIter const & mfi) const {return hankeltransformer[mfi].getKrArray();}

@@ -38,10 +38,10 @@ class SpectralHankelTransformer
         // Converts a vector field from the spectral to the spectral space
         void
         PhysicalToSpectral_Vector(amrex::Box const & box,
-                                  amrex::FArrayBox const & F_r_physical,
-                                  amrex::FArrayBox const & F_t_physical,
-                                  amrex::FArrayBox       & G_p_spectral,
-                                  amrex::FArrayBox       & G_m_spectral);
+                                  amrex::FArrayBox & F_r_physical,
+                                  amrex::FArrayBox & F_t_physical,
+                                  amrex::FArrayBox & G_p_spectral,
+                                  amrex::FArrayBox & G_m_spectral);
 
         // Converts a scalar field from the spectral to the physical space
         void
