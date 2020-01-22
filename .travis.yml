@@ -1,6 +1,11 @@
 dist: xenial
 language: c++
-sudo: true
+sudo: false
+
+#cache:
+#  apt: true
+#  directories:
+#    - $HOME/miniconda3/
 
 env:
   matrix:
@@ -10,19 +15,37 @@ env:
     - HAS_QED=TRUE
 
 before_install:
-    - sudo apt-get update
-    - sudo apt-get install -y gcc gfortran g++ openmpi-bin libopenmpi-dev libfftw3-dev libfftw3-mpi-dev
     # Install miniconda and python dependencies
+    #- if [ ! -d "$HOME/miniconda3/" ]; then
     - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
     - bash Miniconda3-latest-Linux-x86_64.sh -b
-    - export PATH=/home/travis/miniconda3/bin:$PATH
-    - pip install --upgrade pip && pip install numpy scipy matplotlib mpi4py cython
-    - pip install git+https://github.com/yt-project/yt.git
+    # fi
+    - source "$HOME/miniconda3/etc/profile.d/conda.sh"
+    - hash -r
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    - conda activate base
+    - conda install -y -q -c conda-forge mamba
+
+install:
+    - mamba install -y -q -c conda-forge
+        python cython numpy scipy matplotlib pkg-config
+        binutils compilers openmp
+        mpi4py fftw=*=mpi* openpmd-api=*=mpi*
+        sympy setuptools IPython
+    #    yt
+    # https://docs.conda.io/projects/conda-build/en/latest/resources/compiler-tools.html#using-the-compiler-packages
+    - conda activate base
+    - python -m pip install -U pip
+    - python -m pip install git+https://github.com/yt-project/yt.git
 
 script:
-    - export FFTW_HOME=/usr/
-    - export OMP_NUM_THREADS=1
+    - export FFTW_HOME=$CONDA_PREFIX
+    - export HDF5_HOME=$CONDA_PREFIX
+
     # Run the tests on the current commit
     - export WARPX_TEST_COMMIT=$TRAVIS_COMMIT
+
     # Run the script that prepares the test environment and runs the tests
+    - export OMP_NUM_THREADS=1
     - ./run_test.sh
