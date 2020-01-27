@@ -98,8 +98,8 @@ it can be convenient to run the tests on your local machine with
 ./run_tests.sh
 ```
 from WarpX root folder. The tests can be influenced by environment variables:
-- `export WARPX_TEST_DIM=3` or `export WARPX_TEST_DIM=2` in order to select
-only the tests that correspond to this dimension
+- `export WARPX_TEST_DIM=3`, `export WARPX_TEST_DIM=2` or `export WARPX_TEST_DIM=RZ` 
+in order to select only the tests that correspond to this dimensionality
 - `export WARPX_TEST_ARCH=CPU` or `export WARPX_TEST_ARCH=GPU` in order to
 run the tests on CPU or GPU respectively.
 - `export WARPX_TEST_COMMIT=...` in order to test a specific commit.
@@ -183,7 +183,7 @@ html documentation with
 ```
 make html
 ```
-in `Docs/`. Then open `html/index.html` with your favorite web browser and look
+in `Docs/`. Then open `Docs/build/html/index.html` with your favorite web browser and look
 for your changes.
 
 Once your code is ready with documentation and automated test,
@@ -197,4 +197,6 @@ created it). Reviewers will interact with you if they have comments/questions.
 - Also, using 'git grep "myfunction ()"' searches for files only in the git repo, which is more efficient compared to the 'grep "myfunction ()"' command that searches through all the files in a directory, including plotfiles for example.
 - It is recommended that style changes are not included in the PR where new code is added. This is to avoid any errors that may be introduced in a PR just to do style change.
 - Some text editors automatically modify the files you open (e.g., to remove trailing spaces). Please turn this feature off as it causes many changes and makes pull requests harder to review.
-
+- `#include` directives should be ordered from more specific to more general, i.e., `"module header"`, `"WarpX header"`, `<close library headers>` (AMReX, PICSAR), `<other third party headers>` (e.g., `omp`), `<stdlib headers>`. See [PR #331](https://github.com/ECP-WarpX/WarpX/pull/331), or [LLVM](https://llvm.org/docs/CodingStandards.html#include-style) or [include-what-you-use](https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/WhyIWYU.md) pages.
+- WarpX uses `CamelCase` convention for file names and class names, rather than `snake_case`.
+- The names of all member variables should be prefixed with `m_`. This is particularly useful to avoid capturing member variables by value in a lambda function, which causes the whole object to be copied to GPU when running on a GPU-accelerated architecture. This convention should be used for all new piece of code, and it should be applied progressively to old code.

@@ -6,12 +6,14 @@
 #include <AMReX_FArrayBox.H>
 #include <AMReX_REAL.H>
 
-/* \brief Push the position of a photon particle over one timestep,
- *    given the value of its momenta `ux`, `uy`, `uz` */
+/**
+ * \brief Push the position of a photon particle over one timestep,
+ *    given the value of its momenta `ux`, `uy`, `uz`
+ */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void UpdatePositionPhoton(
-    amrex::Real& x, amrex::Real& y, amrex::Real& z,
-    const amrex::Real ux, const amrex::Real uy, const amrex::Real uz,
+    amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
+    const amrex::ParticleReal ux, const amrex::ParticleReal uy, const amrex::ParticleReal uz,
     const amrex::Real dt )
 {
     // Compute speed of light over inverse of momentum modulus

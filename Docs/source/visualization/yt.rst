@@ -20,6 +20,14 @@ or with the `Anaconda distribution <https://anaconda.org/>`__ of python (recomme
 
     conda install -c conda-forge yt
 
+The latest version of `yt` can be required for advanced options (e.g., rigid
+injection for particles). To built `yt` directly from source, you can use
+
+::
+
+    pip install git+https://github.com/yt-project/yt.git
+
+
 Visualizing the data
 --------------------
 
@@ -43,6 +51,10 @@ The list of field data and particle data stored can be seen with:
 ::
 
     ds.field_list
+
+For a quick start-up, the most useful commands for post-processing can be found
+in our Jupyter notebook
+:download:`Visualization.ipynb<../../../Tools/Visualization.ipynb>`
 
 Field data
 ~~~~~~~~~~
@@ -99,12 +111,8 @@ For instance, in order to obtain the array of position `x` as a numpy array:
     ad = ds.all_data()
     x = ad['particle_position_x'].to_ndarray()
 
-
 Further information
 -------------------
 
 A lot more information can be obtained from the yt documentation, and the
 corresponding notebook tutorials `here <http://yt-project.org/doc/>`__.
-
-A notebook with useful yt commands can be found at ``WarpX/Tools/Visualization.ipynb``.
-It is a good start to explore simulation results.

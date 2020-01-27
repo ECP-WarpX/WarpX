@@ -1,9 +1,10 @@
 #ifndef WARPX_H_
 #define WARPX_H_
 
+#include "WarpXDtType.H"
 #include <MultiParticleContainer.H>
 #include <PML.H>
-#include <BoostedFrameDiagnostic.H>
+#include <BackTransformedDiagnostic.H>
 #include <BilinearFilter.H>
 #include <NCIGodfreyFilter.H>
 
@@ -23,9 +24,14 @@
 #include <AMReX_LayoutData.H>
 #include <AMReX_Interpolater.H>
 #include <AMReX_FillPatchUtil.H>
+#include <WarpXParserWrapper.H>
 
 #ifdef _OPENMP
 #   include <omp.h>
+#endif
+
+#ifdef WARPX_USE_OPENPMD
+#include <WarpXOpenPMD.H>
 #endif
 
 #include <iostream>
@@ -37,13 +43,6 @@ namespace amrex {
 class AmrMeshInSituBridge;
 }
 #endif
-
-enum struct DtType : int
-{
-    Full = 0,
-    FirstHalf,
-    SecondHalf
-};
 
 enum struct PatchType : int
 {
@@ -75,12 +74,42 @@ public:
 
     MultiParticleContainer& GetPartContainer () { return *mypc; }
 
-    static void shiftMF(amrex::MultiFab& mf, const amrex::Geometry& geom, int num_shift, int dir);
+    static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
+                         int num_shift, int dir, amrex::Real external_field=0.0,
+                         bool useparser = false,
+                         ParserWrapper *field_parser=nullptr);
 
     static void GotoNextLine (std::istream& is);
 
-    // External fields
-    static amrex::Vector<amrex::Real> B_external;
+    // External fields added to particle fields.
+    static amrex::Vector<amrex::Real> B_external_particle;
+    static amrex::Vector<amrex::Real> E_external_particle;
+
+    // Initial field on the grid.
+    static amrex::Vector<amrex::Real> E_external_grid;
+    static amrex::Vector<amrex::Real> B_external_grid;
+
+    // Initialization Type for External E and B
+    static std::string B_ext_grid_s;
+    static std::string E_ext_grid_s;
+
+    // Parser for B_external on the grid
+    static std::string str_Bx_ext_grid_function;
+    static std::string str_By_ext_grid_function;
+    static std::string str_Bz_ext_grid_function;
+    // Parser for E_external on the grid
+    static std::string str_Ex_ext_grid_function;
+    static std::string str_Ey_ext_grid_function;
+    static std::string str_Ez_ext_grid_function;
+
+    // ParserWrapper for B_external on the grid
+    std::unique_ptr<ParserWrapper> Bxfield_parser;
+    std::unique_ptr<ParserWrapper> Byfield_parser;
+    std::unique_ptr<ParserWrapper> Bzfield_parser;
+    // ParserWrapper for E_external on the grid
+    std::unique_ptr<ParserWrapper> Exfield_parser;
+    std::unique_ptr<ParserWrapper> Eyfield_parser;
+    std::unique_ptr<ParserWrapper> Ezfield_parser;
 
     // Algorithms
     static long current_deposition_algo;
@@ -105,12 +134,12 @@ public:
     static bool serialize_ics;
 
     // Back transformation diagnostic
-    static bool do_boosted_frame_diagnostic;
+    static bool do_back_transformed_diagnostics;
     static std::string lab_data_directory;
     static int  num_snapshots_lab;
     static amrex::Real dt_snapshots_lab;
-    static bool do_boosted_frame_fields;
-    static bool do_boosted_frame_particles;
+    static bool do_back_transformed_fields;
+    static bool do_back_transformed_particles;
 
     // Boosted frame parameters
     static amrex::Real gamma_boost;
@@ -123,6 +152,8 @@ public:
     static bool refine_plasma;
 
     static int sort_int;
+
+    static int do_subcycling;
 
     // buffers
     static int n_field_gather_buffer;       //! in number of cells from the edge (identical for each dimension)
@@ -165,7 +196,7 @@ public:
 
     void ComputeDt ();
     // Compute max_step automatically for simulations in a boosted frame.
-    void computeMaxStepBoostAccelerator(amrex::Geometry geom);
+    void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
     int  MoveWindow (bool move_j);
     void UpdatePlasmaInjectionPosition (amrex::Real dt);
 
@@ -201,12 +232,16 @@ public:
 
     void CopyJPML ();
 
-    void PushParticlesandDepose (int lev, amrex::Real cur_time);
+    PML* GetPML (int lev);
+
+    void PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full);
     void PushParticlesandDepose (         amrex::Real cur_time);
 
     // This function does aux(lev) = fp(lev) + I(aux(lev-1)-cp(lev)).
     // Caller must make sure fp and cp have ghost cells filled.
     void UpdateAuxilaryData ();
+    void UpdateAuxilaryDataStagToNodal ();
+    void UpdateAuxilaryDataSameType ();
 
     // Fill boundary cells including coarse/fine boundaries
     void FillBoundaryB ();
@@ -246,6 +281,9 @@ public:
     static amrex::RealBox getRealBox(const amrex::Box& bx, int lev);
     static std::array<amrex::Real,3> LowerCorner (const amrex::Box& bx, int lev);
     static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, int lev);
+    // Returns the locations of the lower corner of the box, shifted up
+    // a half cell if cell centered.
+    static std::array<amrex::Real,3> LowerCornerWithCentering (const amrex::Box& bx, int lev);
 
     static amrex::IntVect RefRatio (int lev);
 
@@ -273,6 +311,10 @@ public:
     void SliceGenerationForDiagnostics ();
     void WriteSlicePlotFile () const;
     void ClearSliceMultiFabs ();
+    static int num_slice_snapshots_lab;
+    static amrex::Real dt_slice_snapshots_lab;
+    static amrex::Real particle_slice_width_lab;
+    amrex::RealBox getSliceRealBox() const {return slice_realbox;}
 
     // these should be private, but can't due to Cuda limitations
     static void ComputeDivB (amrex::MultiFab& divB, int dcomp,
@@ -291,7 +333,62 @@ public:
                              const std::array<const amrex::MultiFab*, 3>& B,
                              const std::array<amrex::Real,3>& dx, int ngrow);
 
+
+    void InitSpaceChargeField (WarpXParticleContainer& pc);
+    void computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+                     amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                     std::array<amrex::Real, 3> const beta = {{0,0,0}},
+                     amrex::Real const required_precision=1.e-11 ) const;
+    void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
+                   const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   std::array<amrex::Real, 3> const beta = {{0,0,0}} ) const;
+    void computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& B,
+                   const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                   std::array<amrex::Real, 3> const beta = {{0,0,0}} ) const;
+
+    /**
+     * \brief
+     * This function initializes the E and B fields on each level
+     * using the parser and the user-defined function for the external fields.
+     * The subroutine will parse the x_/y_z_external_grid_function and
+     * then, the B or E multifab is initialized based on the (x,y,z) position
+     * on the staggered yee-grid or cell-centered grid.
+     */
+    void InitializeExternalFieldsOnGridUsingParser (
+         amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
+         ParserWrapper *xfield_parser, ParserWrapper *yfield_parser,
+         ParserWrapper *zfield_parser, amrex::IntVect x_nodal_flag,
+         amrex::IntVect y_nodal_flag, amrex::IntVect z_nodal_flag,
+         const int lev);
+
 protected:
+
+    /**
+     * \brief
+     *  This function initializes E, B, rho, and F, at all the levels
+     *  of the multifab. rho and F are initialized with 0.
+     *  The E and B fields are initialized using user-defined inputs.
+     *  The initialization type is set using "B_ext_grid_init_style"
+     *  and "E_ext_grid_init_style". The initialization style is set to "default"
+     *  if not explicitly defined by the user, and the E and B fields are
+     *  initialized with E_external_grid and B_external_grid, respectively, each with
+     *  a default value of 0.
+     *  If the initialization type for the E and B field is "constant",
+     *  then, the E and B fields at all the levels are initialized with
+     *  user-defined values for E_external_grid and B_external_grid.
+     *  If the initialization type for B-field is set to
+     *  "parse_B_ext_grid_function", then, the parser is used to read
+     *  Bx_external_grid_function(x,y,z), By_external_grid_function(x,y,z),
+     *  and Bz_external_grid_function(x,y,z).
+     *  Similarly, if the E-field initialization type is set to
+     *  "parse_E_ext_grid_function", then, the parser is used to read
+     *  Ex_external_grid_function(x,y,z), Ey_external_grid_function(x,y,z),
+     *  and Ex_external_grid_function(x,y,z). The parser for the E and B
+     *  initialization assumes that the function has three independent
+     *  variables, at max, namely, x, y, z. However, any number of constants
+     *  can be used in the function used to define the E and B fields on the grid.
+     */
+    void InitLevelData (int lev, amrex::Real time);
 
     //! Tagging cells for refinement
     virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
@@ -353,31 +450,12 @@ private:
     ///
     void EvolveES(int numsteps);
 
-    ///
-    /// Compute the gravitational potential from rho by solving Poisson's equation.
-    /// Both rho and phi are assumed to be node-centered. This method is only used
-    /// in electrostatic mode.
-    ///
-    void computePhi(const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                          amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
-
-    ///
-    /// Compute the electric field in each direction by computing the gradient
-    /// the potential phi using 2nd order centered differences. Both rho and phi
-    /// are assumed to be node-centered. This method is only used in electrostatic mode.
-    ///
-    void computeE(amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                  const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi) const;
-
     //
     // This stuff is needed by the nodal multigrid solver when running in
     // electrostatic mode.
     //
     void zeroOutBoundary(amrex::MultiFab& input_data, amrex::MultiFab& bndry_data,
                          const amrex::FabArray<amrex::BaseFab<int> >& mask) const;
-
-    void sumFineToCrseNodal(const amrex::MultiFab& fine, amrex::MultiFab& crse,
-                            const amrex::Geometry& cgeom, const amrex::IntVect& ratio);
 
     void fixRHSForSolve(amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rhs,
                         const amrex::Vector<std::unique_ptr<amrex::FabArray<amrex::BaseFab<int> > > >& masks) const ;
@@ -399,12 +477,9 @@ private:
 
     void AllocLevelData (int lev, const amrex::BoxArray& new_grids,
                          const amrex::DistributionMapping& new_dmap);
-    void InitLevelData (int lev, amrex::Real time);
 
     void InitFromCheckpoint ();
     void PostRestart ();
-
-    void InitOpenbc ();
 
     void InitPML ();
     void ComputePMLFactors ();
@@ -423,12 +498,6 @@ private:
     std::array<std::unique_ptr<amrex::MultiFab>, 3> getInterpolatedE(int lev) const;
 
     std::array<std::unique_ptr<amrex::MultiFab>, 3> getInterpolatedB(int lev) const;
-
-    void SyncCurrent (const std::array<const amrex::MultiFab*,3>& fine,
-                      const std::array<      amrex::MultiFab*,3>& crse,
-                      int ref_ratio);
-
-    void SyncRho (const amrex::MultiFab& fine, amrex::MultiFab& crse, int ref_ratio);
 
     void ExchangeWithPmlB (int lev);
     void ExchangeWithPmlE (int lev);
@@ -459,7 +528,7 @@ private:
     std::unique_ptr<MultiParticleContainer> mypc;
 
     // Boosted Frame Diagnostics
-    std::unique_ptr<BoostedFrameDiagnostic> myBFD;
+    std::unique_ptr<BackTransformedDiagnostic> myBFD;
 
     //
     // Fields: First array for level, second for direction
@@ -528,12 +597,10 @@ private:
     amrex::Real load_balance_knapsack_factor = 1.24;
 
     // Override sync every ? steps
-    int override_sync_int = 10;
+    int override_sync_int = 1;
 
     // Other runtime parameters
     int verbose = 1;
-
-    int do_subcycling = 0;
 
     int max_step   = std::numeric_limits<int>::max();
     amrex::Real stop_time = std::numeric_limits<amrex::Real>::max();
@@ -550,15 +617,20 @@ private:
     int check_int = -1;
     int plot_int = -1;
 
-    std::string openpmd_backend {"h5"};
+    std::string openpmd_backend {"bp"};
 #ifdef WARPX_USE_OPENPMD
     bool dump_plotfiles = false;
     bool dump_openpmd = true;
+    bool openpmd_tspf = true; // one file per timestep
+  //bool openpmd_tspf = false; // one file all timesteps
+    WarpXOpenPMDPlot* m_OpenPMDPlotWriter = nullptr;
+
 #else
     bool dump_plotfiles = true;
     bool dump_openpmd = false;
 #endif
     bool plot_rho           = false;
+    bool plot_costs         = true;
     bool plot_finepatch     = false;
     bool plot_crsepatch     = false;
     bool plot_raw_fields    = false;
@@ -659,5 +731,6 @@ private:
     std::string insitu_config;
     int insitu_pin_mesh;
 };
+
 
 #endif
