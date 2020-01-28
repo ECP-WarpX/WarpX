@@ -49,9 +49,9 @@ void doDepositionShapeN(const amrex::ParticleReal * const xp,
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
 
-    const amrex::Real vx_gal = v_galilean[0];
-    const amrex::Real vy_gal = v_galilean[1];
-    const amrex::Real vz_gal = v_galilean[2];
+    const amrex::Real vx_gal = 0.0; //v_galilean[0];
+    const amrex::Real vy_gal = 0.0; //v_galilean[1];
+    const amrex::Real vz_gal = 0.0; //v_galilean[2];
 
     const amrex::Real dxi = 1.0/dx[0];
     const amrex::Real dzi = 1.0/dx[2];

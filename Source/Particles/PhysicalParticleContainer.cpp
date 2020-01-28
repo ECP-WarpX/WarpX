@@ -1690,8 +1690,10 @@ PhysicalParticleContainer::PushPX(WarpXParIter& pti,
                 UpdateMomentumBoris( ux[i], uy[i], uz[i],
                                      Ex[i], Ey[i], Ez[i], Bx[i],
                                      By[i], Bz[i], qp, m, dt);
-                UpdatePositionGalilean( x[i], y[i], z[i],
-                                ux[i], uy[i], uz[i], vx, vy, vz, dt );
+                // UpdatePositionGalilean( x[i], y[i], z[i],
+                //                 ux[i], uy[i], uz[i], vx, vy, vz, dt );
+                UpdatePosition( x[i], y[i], z[i],
+                                ux[i], uy[i], uz[i], dt );
             }
         );
     } else if (WarpX::particle_pusher_algo == ParticlePusherAlgo::Vay) {
@@ -1703,8 +1705,10 @@ PhysicalParticleContainer::PushPX(WarpXParIter& pti,
                 UpdateMomentumVay( ux[i], uy[i], uz[i],
                                    Ex[i], Ey[i], Ez[i], Bx[i],
                                    By[i], Bz[i], qp, m, dt);
-                UpdatePositionGalilean( x[i], y[i], z[i],
-                                ux[i], uy[i], uz[i], vx, vy, vz, dt );
+                // UpdatePositionGalilean( x[i], y[i], z[i],
+                //                 ux[i], uy[i], uz[i], vx, vy, vz, dt );
+                UpdatePosition( x[i], y[i], z[i],
+                                ux[i], uy[i], uz[i], dt );
             }
         );
     } else if (WarpX::particle_pusher_algo == ParticlePusherAlgo::HigueraCary) {
