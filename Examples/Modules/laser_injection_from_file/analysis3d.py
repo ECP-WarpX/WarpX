@@ -190,10 +190,10 @@ def do_analysis(fname, compname, steps):
 def launch_analysis(executable):
     create_gaussian_3d()
     os.system("./" + executable + " inputs.3d_test_txye")
-    do_analysis("diags/plotfiles/plt00150/", "comp_unf.pdf", 150)
+    do_analysis("diags/plotfiles/plt00200/", "comp_unf.pdf", 200)
     os.system("sed 's/gauss_3d_unf.txye/gauss_3d.txye/g' inputs.3d_test_txye > inputs.3d_test_txye_non_unf")
     os.system("./" + executable + " inputs.3d_test_txye_non_unf")
-    do_analysis("diags/plotfiles/plt00150/", "comp_non_unf.pdf", 150)
+    do_analysis("diags/plotfiles/plt00200/", "comp_non_unf.pdf", 200)
 
 
 def main() :
