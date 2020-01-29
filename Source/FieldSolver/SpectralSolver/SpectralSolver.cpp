@@ -2,6 +2,7 @@
 #include <SpectralSolver.H>
 #include <PsatdAlgorithm.H>
 #include <PMLPsatdAlgorithm.H>
+#include <PsatdAlgorithmNoRho.H>
 
 /* \brief Initialize the spectral Maxwell solver
  *
@@ -23,7 +24,7 @@ SpectralSolver::SpectralSolver(
                 const int norder_x, const int norder_y,
                 const int norder_z, const bool nodal,
                 const amrex::RealVect dx, const amrex::Real dt,
-                const bool pml ) {
+                const bool no_rho, const bool pml ) {
 
     // Initialize all structures using the same distribution mapping dm
 
@@ -37,8 +38,13 @@ SpectralSolver::SpectralSolver(
     if (pml) {
         algorithm = std::unique_ptr<PMLPsatdAlgorithm>( new PMLPsatdAlgorithm(
             k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
-    } else {
+    }
+    else if ( ! no_rho ) {
         algorithm = std::unique_ptr<PsatdAlgorithm>( new PsatdAlgorithm(
+            k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
+    }
+    else {
+        algorithm = std::unique_ptr<PsatdAlgorithmNoRho>( new PsatdAlgorithmNoRho(
             k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
     }
 

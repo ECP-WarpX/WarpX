@@ -1,0 +1,37 @@
+#ifndef WARPX_PSATD_ALGORITHM_NO_RHO_H_
+#define WARPX_PSATD_ALGORITHM_NO_RHO_H_
+
+#include <SpectralBaseAlgorithm.H>
+
+// \brief Class that updates the field in spectral space and stores the coefficients
+// of the corresponding update equation.
+class PsatdAlgorithmNoRho : public SpectralBaseAlgorithm
+{
+
+    public:
+
+        PsatdAlgorithmNoRho ( const SpectralKSpace& spectral_kspace,
+                              const amrex::DistributionMapping& dm,
+                              const int norder_x,
+                              const int norder_y,
+                              const int norder_z,
+                              const bool nodal,
+                              const amrex::Real dt );
+
+        // Redefine functions from base class
+
+        virtual void pushSpectralFields ( SpectralFieldData& f ) const override final;
+
+        virtual int getRequiredNumberOfFields () const override final {
+            return SpectralFieldIndex::n_fields;
+        }
+
+        void InitializeSpectralCoefficients ( const SpectralKSpace& spectral_kspace,
+                                              const amrex::DistributionMapping& dm,
+                                              const amrex::Real dt );
+
+    private:
+        SpectralCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
+};
+
+#endif // WARPX_PSATD_ALGORITHM_NO_RHO_H_

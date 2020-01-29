@@ -453,6 +453,9 @@ WarpX::ReadParameters ()
         pp.query("do_pml_j_damping", do_pml_j_damping);
         pp.query("do_pml_in_domain", do_pml_in_domain);
 
+        // PSATD push without rho
+        pp.query("no_rho", no_rho);
+
         Vector<int> parse_do_pml_Lo(AMREX_SPACEDIM,1);
         pp.queryarr("do_pml_Lo", parse_do_pml_Lo);
         do_pml_Lo[0] = parse_do_pml_Lo[0];
@@ -852,7 +855,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         realspace_ba.enclosedCells().grow(ngE); // cell-centered + guard cells
         // Define spectral solver
         spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev] ) );
+            nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev], no_rho ) );
     }
 #endif
 
@@ -937,7 +940,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             realspace_ba.enclosedCells().grow(ngE);// cell-centered + guard cells
             // Define spectral solver
             spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
-                nox_fft, noy_fft, noz_fft, do_nodal, cdx_vect, dt[lev] ) );
+                nox_fft, noy_fft, noz_fft, do_nodal, cdx_vect, dt[lev], no_rho ) );
         }
 #endif
     }

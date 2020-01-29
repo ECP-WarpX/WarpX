@@ -25,7 +25,7 @@ class SpectralSolver
                         const int norder_x, const int norder_y,
                         const int norder_z, const bool nodal,
                         const amrex::RealVect dx, const amrex::Real dt,
-                        const bool pml=false );
+                        const bool no_rho, const bool pml=false );
 
         /**
          * \brief Transform the component `i_comp` of MultiFab `mf`

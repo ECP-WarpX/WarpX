@@ -700,6 +700,8 @@ private:
     int noy_fft = 16;
     int noz_fft = 16;
 
+    bool no_rho;
+
 #ifdef WARPX_USE_PSATD
 private:
     void EvolvePSATD (int numsteps);
