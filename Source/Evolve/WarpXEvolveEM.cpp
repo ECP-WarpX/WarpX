@@ -153,6 +153,10 @@ WarpX::EvolveEM (int numsteps)
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
         // We might need to move j because we are going to make a plotfile.
 
+        //oshapoval
+        GalileanShift();
+        //oshapoval
+
         int num_moved = MoveWindow(move_j);
 
         if (max_level == 0) {

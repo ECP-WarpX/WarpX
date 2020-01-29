@@ -434,7 +434,8 @@ WarpX::GetCellCenteredData() {
         AverageAndPackVectorField( *cc[lev], current_fp[lev], dmap[lev], dcomp, ng );
         dcomp += 3;
         // then the charge density
-        const std::unique_ptr<MultiFab>& charge_density = mypc->GetChargeDensity(lev);
+        const std::unique_ptr<MultiFab>& charge_density = mypc->GetChargeDensity(lev, dt[lev]); //oshapoval
+
         AverageAndPackScalarField( *cc[lev], *charge_density, dcomp, ng );
         cc[lev]->FillBoundary(geom[lev].periodicity());
     }
@@ -886,4 +887,3 @@ WarpX::ClearSliceMultiFabs ()
     Bfield_slice.shrink_to_fit();
 
 }
-

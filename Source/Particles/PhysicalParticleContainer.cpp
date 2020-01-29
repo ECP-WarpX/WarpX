@@ -1198,10 +1198,10 @@ PhysicalParticleContainer::Evolve (int lev,
                     ion_lev = nullptr;
                 }
                 DepositCharge(pti, wp, ion_lev, rho, 0, 0,
-                              np_current, thread_num, lev, lev);
+                              np_current, thread_num, lev, lev, dt);
                 if (has_buffer){
                     DepositCharge(pti, wp, ion_lev, crho, 0, np_current,
-                                  np-np_current, thread_num, lev, lev-1);
+                                  np-np_current, thread_num, lev, lev-1, dt);
                 }
             }
 
@@ -1317,10 +1317,10 @@ PhysicalParticleContainer::Evolve (int lev,
                     ion_lev = nullptr;
                 }
                 DepositCharge(pti, wp, ion_lev, rho, 1, 0,
-                              np_current, thread_num, lev, lev);
+                              np_current, thread_num, lev, lev, dt);
                 if (has_buffer){
                     DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
-                                  np-np_current, thread_num, lev, lev-1);
+                                  np-np_current, thread_num, lev, lev-1, dt);
                 }
             }
 
@@ -2216,8 +2216,20 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
     const ParticleReal * const AMREX_RESTRICT yp = m_yp[thread_num].dataPtr() + offset;
 
     // Lower corner of tile box physical domain
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev);
+    //oshapoval
+    Real cur_time = WarpX::GetInstance().gett_new(lev); //oshapoval
+    const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
+    Real time_shift = (cur_time - time_of_last_gal_shift);
 
+    #if (AMREX_SPACEDIM == 3)
+        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    #elif (AMREX_SPACEDIM == 2)
+        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, std::numeric_limits<Real>::quiet_NaN(), v_galilean[2]*time_shift };
+    #endif
+
+    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, gather_lev);
+    //const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev);
+    //oshapoval
     const Dim3 lo = lbound(box);
 
     // Depending on l_lower_in_v and WarpX::nox, call
