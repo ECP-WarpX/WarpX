@@ -34,14 +34,13 @@ c = 299792458
 
 #Parameters of the gaussian beam
 wavelength = 1.*um
-w0 = 3.*um
+w0 = 2.0*um
 tt = 10.*fs
 x_c = 0.*um
 y_c = 0.*um
 t_c = 20.*fs
 foc_dist = 10*um
 E_max = 1e12
-rot_angle = -np.pi/4.0
 
 #Parameters of the txy grid
 x_l = -5.0*um
@@ -157,6 +156,7 @@ def do_analysis(fname, compname, steps):
         ds.domain_left_edge[2],
         ds.domain_right_edge[2],
         ds.domain_dimensions[2]).v
+
     X, Y, Z = np.meshgrid(x, y, z, sparse=False, indexing='ij')
 
     # Compute the theory for envelope
@@ -165,11 +165,13 @@ def do_analysis(fname, compname, steps):
     # Read laser field in PIC simulation, and compute envelope
     all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
     F_laser = all_data_level_0['boxlib', 'Ey'].v.squeeze()
-    env = abs(hilbert(F_laser))
+    env = abs(hilbert(F_laser, axis=0))
 
     relative_error_env = np.sum(np.abs(env-env_theory)) / np.sum(np.abs(env))
     print("Relative error envelope: ", relative_error_env)
     assert(relative_error_env < relative_error_threshold)
+
+
 
     fft_F_laser = np.fft.fftn(F_laser)
 
@@ -189,10 +191,10 @@ def do_analysis(fname, compname, steps):
 def launch_analysis(executable):
     create_gaussian_3d()
     os.system("./" + executable + " inputs.3d_test_txye")
-    do_analysis("diags/plotfiles/plt00200/", "comp_unf.pdf", 200)
+    do_analysis("diags/plotfiles/plt00150/", "comp_unf.pdf", 150)
     os.system("sed 's/gauss_3d_unf.txye/gauss_3d.txye/g' inputs.3d_test_txye > inputs.3d_test_txye_non_unf")
     os.system("./" + executable + " inputs.3d_test_txye_non_unf")
-    do_analysis("diags/plotfiles/plt00200/", "comp_non_unf.pdf", 200)
+    do_analysis("diags/plotfiles/plt00150/", "comp_non_unf.pdf", 150)
 
 
 def main() :
