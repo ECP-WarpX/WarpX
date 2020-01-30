@@ -127,11 +127,16 @@ MultiParticleContainer::WritePlotFile (const std::string& dir) const
 
             // Convert momentum to SI
             pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
+            // Select particles to be written
+            // (by setting IDs of unselected particles to negative numbers)
+            pc->SelectParticlesForIO();
             // real_names contains a list of all particle attributes.
             // pc->plot_flags is 1 or 0, whether quantity is dumped or not.
             pc->WritePlotFile(dir, species_names[i],
                               pc->plot_flags, int_flags,
                               real_names, int_names);
+            // Reset negative IDs back to positive
+            pc->UnSelectParticlesAfterIO();
             // Convert momentum back to WarpX units
             pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
         }
@@ -198,6 +203,61 @@ PhysicalParticleContainer::ConvertUnits(ConvertDirection convert_direction)
                     ux[i] *= factor;
                     uy[i] *= factor;
                     uz[i] *= factor;
+                }
+            );
+        }
+    }
+}
+
+// This function selects particles for IO
+// by setting unselected particle IDs to be negative
+void
+PhysicalParticleContainer::SelectParticlesForIO()
+{
+    BL_PROFILE("PPC::SelectParticlesForIO()");
+
+    const int nLevels = finestLevel();
+    for (int lev=0; lev<=nLevels; lev++){
+#ifdef _OPENMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+        {
+            auto pstructs = pti.GetArrayOfStructs()().dataPtr();
+            // Loop over the particles and set id to negative
+            const long np = pti.numParticles();
+            ParallelFor( np,
+                [=] AMREX_GPU_DEVICE (long i) {
+                    if ( i % 2 == 0 )
+                    {
+                        pstructs[i].id() *= -1;
+                    }
+                }
+            );
+        }
+    }
+}
+
+// This function reset unselect particle IDs back to positive
+void
+PhysicalParticleContainer::UnSelectParticlesAfterIO()
+{
+    BL_PROFILE("PPC::UnSelectParticlesAfterIO()");
+
+    const int nLevels = finestLevel();
+    for (int lev=0; lev<=nLevels; lev++){
+#ifdef _OPENMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+        {
+            auto pstructs = pti.GetArrayOfStructs()().dataPtr();
+            // Loop over particles and change id back to positive
+            const long np = pti.numParticles();
+            ParallelFor( np,
+                [=] AMREX_GPU_DEVICE (long i) {
+                    if ( pstructs[i].id() < 0 )
+                    { pstructs[i].id() *= -1; }
                 }
             );
         }

@@ -289,6 +289,10 @@ public:
 
     virtual void ConvertUnits (ConvertDirection convert_dir){};
 
+    virtual void SelectParticlesForIO (){};
+
+    virtual void UnSelectParticlesAfterIO (){};
+
     static void ReadParameters ();
 
     static int NextID () { return ParticleType::NextID(); }

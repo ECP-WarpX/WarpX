@@ -228,6 +228,10 @@ public:
 
     virtual void ConvertUnits (ConvertDirection convert_dir) override;
 
+    virtual void SelectParticlesForIO () override;
+
+    virtual void UnSelectParticlesAfterIO () override;
+
 /**
  * \brief Apply NCI Godfrey filter to all components of E and B before gather
  * \param lev MR level
