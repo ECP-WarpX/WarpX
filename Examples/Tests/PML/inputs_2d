@@ -23,10 +23,10 @@ geometry.prob_hi     =  30.e-6  120.e-6
 warpx.verbose = 1
 
 # Algorithms
+algo.psatd_push = mixed
 
 warpx.cfl = 1.0
 warpx.do_pml = 1
-warpx.no_rho = 1
 particles.nspecies = 0
 
 warpx.do_moving_window = 0

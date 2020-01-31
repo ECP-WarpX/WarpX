@@ -2,7 +2,7 @@
 #include <SpectralSolver.H>
 #include <PsatdAlgorithm.H>
 #include <PMLPsatdAlgorithm.H>
-#include <PsatdAlgorithmNoRho.H>
+#include <PsatdAlgorithmMixed.H>
 
 /* \brief Initialize the spectral Maxwell solver
  *
@@ -10,13 +10,14 @@
  * corresponding coefficients for the discretized field update equation,
  * and prepares the structures that store the fields in spectral space.
  *
- * \param norder_x Order of accuracy of the spatial derivatives along x
- * \param norder_y Order of accuracy of the spatial derivatives along y
- * \param norder_z Order of accuracy of the spatial derivatives along z
- * \param nodal    Whether the solver is applied to a nodal or staggered grid
- * \param dx       Cell size along each dimension
- * \param dt       Time step
- * \param pml      Whether the boxes in which the solver is applied are PML boxes
+ * \param norder_x        Order of accuracy of the spatial derivatives along x
+ * \param norder_y        Order of accuracy of the spatial derivatives along y
+ * \param norder_z        Order of accuracy of the spatial derivatives along z
+ * \param nodal           Whether the solver is applied to a nodal or staggered grid
+ * \param dx              Cell size along each dimension
+ * \param dt              Time step
+ * \param psatd_push_algo Select implementation of PSATD push ("standard" or "mixed")
+ * \param pml             Whether the boxes in which the solver is applied are PML boxes
  */
 SpectralSolver::SpectralSolver(
                 const amrex::BoxArray& realspace_ba,
@@ -24,7 +25,7 @@ SpectralSolver::SpectralSolver(
                 const int norder_x, const int norder_y,
                 const int norder_z, const bool nodal,
                 const amrex::RealVect dx, const amrex::Real dt,
-                const bool no_rho, const bool pml ) {
+                const int psatd_push_algo, const bool pml ) {
 
     // Initialize all structures using the same distribution mapping dm
 
@@ -39,12 +40,12 @@ SpectralSolver::SpectralSolver(
         algorithm = std::unique_ptr<PMLPsatdAlgorithm>( new PMLPsatdAlgorithm(
             k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
     }
-    else if ( ! no_rho ) {
+    else if ( psatd_push_algo == 0 ) {
         algorithm = std::unique_ptr<PsatdAlgorithm>( new PsatdAlgorithm(
             k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
     }
-    else {
-        algorithm = std::unique_ptr<PsatdAlgorithmNoRho>( new PsatdAlgorithmNoRho(
+    else if ( psatd_push_algo == 1 ) {
+        algorithm = std::unique_ptr<PsatdAlgorithmMixed>( new PsatdAlgorithmMixed(
             k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
     }
 

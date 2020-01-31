@@ -84,7 +84,7 @@ public:
          const amrex::Geometry* geom, const amrex::Geometry* cgeom,
          int ncell, int delta, int ref_ratio,
 #ifdef WARPX_USE_PSATD
-         amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal, bool no_rho,
+         amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
 #endif
          int do_dive_cleaning, int do_moving_window,
          int pml_has_particles, int do_pml_in_domain,

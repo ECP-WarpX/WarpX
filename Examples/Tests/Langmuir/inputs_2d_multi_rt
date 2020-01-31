@@ -26,8 +26,8 @@ warpx.verbose = 1
 
 # Algorithms
 algo.field_gathering = energy-conserving
+algo.psatd_push = mixed
 warpx.do_pml = 0
-warpx.no_rho = 1
 
 # Interpolation
 interpolation.nox = 1

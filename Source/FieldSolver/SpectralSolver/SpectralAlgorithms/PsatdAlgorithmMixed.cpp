@@ -1,11 +1,11 @@
-#include <PsatdAlgorithmNoRho.H>
+#include <PsatdAlgorithmMixed.H>
 #include <WarpXConst.H>
 #include <cmath>
 
 using namespace amrex;
 
 // \brief Initialize coefficients for the update equation
-PsatdAlgorithmNoRho::PsatdAlgorithmNoRho ( const SpectralKSpace& spectral_kspace,
+PsatdAlgorithmMixed::PsatdAlgorithmMixed ( const SpectralKSpace& spectral_kspace,
                                            const DistributionMapping& dm,
                                            const int norder_x,
                                            const int norder_y,
@@ -23,7 +23,6 @@ PsatdAlgorithmNoRho::PsatdAlgorithmNoRho ( const SpectralKSpace& spectral_kspace
     C_coef = SpectralCoefficients(ba, dm, 1, 0);
     S_ck_coef = SpectralCoefficients(ba, dm, 1, 0);
     X1_coef = SpectralCoefficients(ba, dm, 1, 0);
-    // New coefficients for formulation without rho
     X2_coef = SpectralCoefficients(ba, dm, 1, 0);
     X3_coef = SpectralCoefficients(ba, dm, 1, 0);
 
@@ -32,7 +31,7 @@ PsatdAlgorithmNoRho::PsatdAlgorithmNoRho ( const SpectralKSpace& spectral_kspace
 
 // Advance the E and B field in spectral space (stored in `f`) over one time step
 void
-PsatdAlgorithmNoRho::pushSpectralFields(SpectralFieldData& f) const{
+PsatdAlgorithmMixed::pushSpectralFields(SpectralFieldData& f) const{
 
     // Loop over boxes
     for (MFIter mfi(f.fields); mfi.isValid(); ++mfi){
@@ -45,7 +44,6 @@ PsatdAlgorithmNoRho::pushSpectralFields(SpectralFieldData& f) const{
         Array4<const Real> C_arr = C_coef[mfi].array();
         Array4<const Real> S_ck_arr = S_ck_coef[mfi].array();
         Array4<const Real> X1_arr = X1_coef[mfi].array();
-        // New coefficients for formulation without rho
         Array4<const Real> X2_arr = X2_coef[mfi].array();
         Array4<const Real> X3_arr = X3_coef[mfi].array();
         // Extract pointers for the k vectors
@@ -88,7 +86,6 @@ PsatdAlgorithmNoRho::pushSpectralFields(SpectralFieldData& f) const{
             const Real C = C_arr(i,j,k);
             const Real S_ck = S_ck_arr(i,j,k);
             const Real X1 = X1_arr(i,j,k);
-            // New coefficients for formulation without rho
             const Real X2 = X2_arr(i,j,k);
             const Real X3 = X3_arr(i,j,k);
 
@@ -123,7 +120,7 @@ PsatdAlgorithmNoRho::pushSpectralFields(SpectralFieldData& f) const{
     }
 };
 
-void PsatdAlgorithmNoRho::InitializeSpectralCoefficients(const SpectralKSpace& spectral_kspace,
+void PsatdAlgorithmMixed::InitializeSpectralCoefficients(const SpectralKSpace& spectral_kspace,
                                     const amrex::DistributionMapping& dm,
                                     const amrex::Real dt)
 {
@@ -145,7 +142,6 @@ void PsatdAlgorithmNoRho::InitializeSpectralCoefficients(const SpectralKSpace& s
         Array4<Real> C = C_coef[mfi].array();
         Array4<Real> S_ck = S_ck_coef[mfi].array();
         Array4<Real> X1 = X1_coef[mfi].array();
-        // New coefficients for formulation without rho
         Array4<Real> X2 = X2_coef[mfi].array();
         Array4<Real> X3 = X3_coef[mfi].array();
 
@@ -171,14 +167,12 @@ void PsatdAlgorithmNoRho::InitializeSpectralCoefficients(const SpectralKSpace& s
                 C(i,j,k) = std::cos(c*k_norm*dt);
                 S_ck(i,j,k) = std::sin(c*k_norm*dt)/(c*k_norm);
                 X1(i,j,k) = (1. - C(i,j,k))/(ep0 * c*c * k_norm*k_norm);
-                // New coefficients for formulation without rho
                 X2(i,j,k) = ( 1. - C(i,j,k) ) / ( k_norm*k_norm );
                 X3(i,j,k) = ( S_ck(i,j,k) - dt ) / ( k_norm*k_norm );
             } else { // Handle k_norm = 0, by using the analytical limit
                 C(i,j,k) = 1.;
                 S_ck(i,j,k) = dt;
                 X1(i,j,k) = 0.5 * dt*dt / ep0;
-                // New coefficients for formulation without rho
                 X2(i,j,k) = 0.5 * dt*dt * c*c;
                 X3(i,j,k) = - c*c * dt*dt*dt / 6.;
             }

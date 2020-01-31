@@ -122,6 +122,10 @@ public:
     static long field_gathering_algo;
     static long particle_pusher_algo;
     static int maxwell_fdtd_solver_id;
+    // Implementation of equation (13) of (Vay et al, JCP 243, 2013):
+    // - use rho via Gauss law and discrete continuity equation (last two terms)
+    // - use rho via Gauss law (second last term) and J for all remaining terms
+    static int psatd_push_algo;
 
     // div E cleaning
     static int do_dive_cleaning;
@@ -699,8 +703,6 @@ private:
     int nox_fft = 16;
     int noy_fft = 16;
     int noz_fft = 16;
-
-    bool no_rho;
 
 #ifdef WARPX_USE_PSATD
 private:
