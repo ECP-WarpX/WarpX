@@ -96,15 +96,18 @@ PsatdAlgorithmNoRho::pushSpectralFields(SpectralFieldData& f) const{
             // Update E (see WarpX online documentation: theory section)
             fields(i,j,k,Idx::Ex) = C*Ex_old
                         + S_ck*(c2*I*(ky*Bz_old - kz*By_old) - inv_ep0*Jx)
-                        + X2*(kx*Ex_old+ky*Ey_old+kz*Ez_old)*kx
+                      //+ X2*(kx*Ex_old+ky*Ey_old+kz*Ez_old)*kx
+                        - I*X2*inv_ep0*rho_old*kx
                         + X3*inv_ep0*(kx*Jx+ky*Jy+kz*Jz)*kx;
             fields(i,j,k,Idx::Ey) = C*Ey_old
                         + S_ck*(c2*I*(kz*Bx_old - kx*Bz_old) - inv_ep0*Jy)
-                        + X2*(kx*Ex_old+ky*Ey_old+kz*Ez_old)*ky
+                      //+ X2*(kx*Ex_old+ky*Ey_old+kz*Ez_old)*ky
+                        - I*X2*inv_ep0*rho_old*ky
                         + X3*inv_ep0*(kx*Jx+ky*Jy+kz*Jz)*ky;
             fields(i,j,k,Idx::Ez) = C*Ez_old
                         + S_ck*(c2*I*(kx*By_old - ky*Bx_old) - inv_ep0*Jz)
-                        + X2*(kx*Ex_old+ky*Ey_old+kz*Ez_old)*kz
+                      //+ X2*(kx*Ex_old+ky*Ey_old+kz*Ez_old)*kz
+                        - I*X2*inv_ep0*rho_old*kz
                         + X3*inv_ep0*(kx*Jx+ky*Jy+kz*Jz)*kz;
             // Update B (see WarpX online documentation: theory section)
             fields(i,j,k,Idx::Bx) = C*Bx_old
