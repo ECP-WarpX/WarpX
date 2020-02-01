@@ -89,22 +89,27 @@ void FiniteDifferenceSolver::EvolveECartesian (
         const Box& tey  = mfi.tilebox(Efield[1]->ixType().ixType());
         const Box& tez  = mfi.tilebox(Efield[2]->ixType().ixType());
 
+        Real const inv_c2 = 1./( PhysConst::c * PhysConst::c );
+
         // Loop over the cells and update the fields
         amrex::ParallelFor(tex, tey, tez,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                Bx(i, j, k) += dt * T_Algo::DownwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
-                             - dt * T_Algo::DownwardDy(Ez, coefs_y, n_coefs_y, i, j, k);
+                Ex(i, j, k) += inv_c2 * dt * (
+                    - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
+                    + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k) );
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                By(i, j, k) += dt * T_Algo::DownwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
-                             - dt * T_Algo::DownwardDz(Ex, coefs_z, n_coefs_z, i, j, k);
+                Ey(i, j, k) += inv_c2 * dt * (
+                    - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
+                    + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k) );
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                Bz(i, j, k) += dt * T_Algo::DownwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
-                             - dt * T_Algo::DownwardDx(Ey, coefs_x, n_coefs_x, i, j, k);
+                Ez(i, j, k) += inv_c2 * dt * (
+                    - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
+                    + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k) );
             }
 
         );
@@ -151,6 +156,8 @@ void FiniteDifferenceSolver::EvolveECylindrical (
         const Box& tet  = mfi.tilebox(Efield[1]->ixType().ixType());
         const Box& tez  = mfi.tilebox(Efield[2]->ixType().ixType());
 
+        Real const inv_c2 = 1./( PhysConst::c * PhysConst::c );
+
         // Loop over the cells and update the fields
         amrex::ParallelFor(ter, tet, tez,
 
@@ -177,25 +184,25 @@ void FiniteDifferenceSolver::EvolveECylindrical (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Bt(i, j, 0, 0) += dt*(
-                    T_Algo::DownwardDr(Ez, coefs_r, n_coefs_r, i, j, 0, 0)
+                    T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 0)
                     - T_Algo::DownwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 0)); // Mode m=0
                 for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
                     Bt(i, j, 0, 2*m-1) += dt*(
-                        T_Algo::DownwardDr(Ez, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
+                        T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
                         - T_Algo::DownwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m-1)); // Real part
                     Bt(i, j, 0, 2*m  ) += dt*(
-                        T_Algo::DownwardDr(Ez, coefs_r, n_coefs_r, i, j, 0, 2*m  )
+                        T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m  )
                         - T_Algo::DownwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m  )); // Imaginary part
                 }
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Real const r = rmin + (i + 0.5)*dr; // r on a cell-centered grid (Bz is cell-centered in r)
-                Bz(i, j, 0, 0) += dt*( - T_Algo::DownwardDrr_over_r(Et, r, dr, coefs_r, n_coefs_r, i, j, 0, 0));
+                Ez(i, j, 0, 0) += dt*( - T_Algo::DownwardDrr_over_r(Et, r, dr, coefs_r, n_coefs_r, i, j, 0, 0));
                 for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
-                    Bz(i, j, 0, 2*m-1) += dt*( m * Er(i, j, 0, 2*m  )/r
+                    Ez(i, j, 0, 2*m-1) += dt*( m * Er(i, j, 0, 2*m  )/r
                         - T_Algo::DownwardDrr_over_r(Et, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)); // Real part
-                    Bz(i, j, 0, 2*m  ) += dt*(-m * Er(i, j, 0, 2*m-1)/r
+                    Ez(i, j, 0, 2*m  ) += dt*(-m * Er(i, j, 0, 2*m-1)/r
                         - T_Algo::DownwardDrr_over_r(Et, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m  )); // Imaginary part
                 }
             }
