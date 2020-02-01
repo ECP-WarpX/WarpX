@@ -45,8 +45,8 @@ struct GatheringAlgo {
 // - use rho via Gauss law (second last term) and J for all remaining terms
 struct PsatdPushAlgo {
     enum {
-	 Standard = 0,
-	 Mixed = 1
+         Standard = 0,
+         Mixed = 1
     };
 };
 
