@@ -4,7 +4,7 @@
 
 using namespace amrex;
 
-/* \brief Initialize coefficients for the update equation */
+// \brief Constructor
 PsatdAlgorithm::PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                          const DistributionMapping& dm,
                          const int norder_x, const int norder_y,
@@ -15,18 +15,18 @@ PsatdAlgorithm::PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
 {
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
-    // Allocate the arrays of coefficients
+    // Allocate arrays of coefficients
     C_coef = SpectralCoefficients(ba, dm, 1, 0);
     S_ck_coef = SpectralCoefficients(ba, dm, 1, 0);
     X1_coef = SpectralCoefficients(ba, dm, 1, 0);
     X2_coef = SpectralCoefficients(ba, dm, 1, 0);
     X3_coef = SpectralCoefficients(ba, dm, 1, 0);
 
+    // Initialize coefficients for update equations
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 }
 
-/* Advance the E and B field in spectral space (stored in `f`)
- * over one time step */
+// \brief Advance E and B fields in spectral space (stored in `f`) over one time step
 void
 PsatdAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
 
@@ -111,6 +111,7 @@ PsatdAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
     }
 };
 
+// \brief Initialize coefficients for update equations
 void PsatdAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spectral_kspace,
                                     const amrex::DistributionMapping& dm,
                                     const amrex::Real dt)

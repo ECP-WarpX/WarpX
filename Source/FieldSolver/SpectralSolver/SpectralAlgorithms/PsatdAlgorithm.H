@@ -3,10 +3,11 @@
 
 #include <SpectralBaseAlgorithm.H>
 
-/**
- * \brief Class that updates the field in spectral space
- * and stores the coefficients of the corresponding update equation.
- */
+// \brief Class that updates the fields in spectral space and stores the coefficients
+// of the corresponding update equations. Objects of this type are instantiated when
+// psatd_push_algo = standard (also default option, when psatd_push_algo is not
+// assigned in input file).
+// Reference: Vay et al, JCP 243, 2013.
 class PsatdAlgorithm : public SpectralBaseAlgorithm
 {
 
