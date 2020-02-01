@@ -45,7 +45,7 @@ const std::map<std::string, int> gathering_algo_to_int = {
 
 // Implementation of equation (13) of (Vay et al, JCP 243, 2013):
 // - use rho via Gauss law and discrete continuity equation (last two terms)
-// - use rho via Gauss law (second last term) and J for all remaining terms
+// - use rho via Gauss law (second-to-last term) and J for all remaining terms
 const std::map<std::string, int> psatd_push_algo_to_int = {
     { "standard", PsatdPushAlgo::Standard },
     { "mixed"   , PsatdPushAlgo::Mixed    },

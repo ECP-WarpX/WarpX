@@ -61,7 +61,7 @@ int WarpX::maxwell_fdtd_solver_id;
 int WarpX::do_dive_cleaning = 0;
 // Implementation of equation (13) of (Vay et al, JCP 243, 2013):
 // - use rho via Gauss law and discrete continuity equation (last two terms)
-// - use rho via Gauss law (second last term) and J for all remaining terms
+// - use rho via Gauss law (second-to-last term) and J for all remaining terms
 int WarpX::psatd_push_algo;
 
 long WarpX::n_rz_azimuthal_modes = 1;
