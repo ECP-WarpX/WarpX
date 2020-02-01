@@ -14,6 +14,7 @@
 #   include "FiniteDifferenceAlgorithms/CKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/NodalAlgorithm.H"
 #endif
+#include "WarpXConst.H"
 #include <AMReX_Gpu.H>
 
 using namespace amrex;
@@ -24,6 +25,7 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     amrex::Real const dt ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
@@ -31,20 +33,20 @@ void FiniteDifferenceSolver::EvolveE (
 #ifdef WARPX_DIM_RZ
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
 
-        EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, dt );
+        EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, dt );
 
 #else
     if (m_do_nodal) {
 
-        EvolveECartesian <NodalAlgorithm> ( Efield, Bfield, dt );
+        EvolveECartesian <NodalAlgorithm> ( Efield, Bfield, Jfield, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        EvolveECartesian <YeeAlgorithm> ( Efield, Bfield, dt );
+        EvolveECartesian <YeeAlgorithm> ( Efield, Bfield, Jfield, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveECartesian <CKCAlgorithm> ( Efield, Bfield, dt );
+        EvolveECartesian <CKCAlgorithm> ( Efield, Bfield, Jfield, dt );
 
 #endif
     } else {
@@ -60,6 +62,7 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     amrex::Real const dt ) {
 
     // Loop through the grids, and over the tiles within each grid
@@ -75,6 +78,9 @@ void FiniteDifferenceSolver::EvolveECartesian (
         auto const& Bx = Efield[0]->array(mfi);
         auto const& By = Efield[1]->array(mfi);
         auto const& Bz = Efield[2]->array(mfi);
+        auto const& jx = Jfield[0]->array(mfi);
+        auto const& jy = Jfield[1]->array(mfi);
+        auto const& jz = Jfield[2]->array(mfi);
 
         // Extract stencil coefficients
         Real const* AMREX_RESTRICT coefs_x = stencil_coefs_x.dataPtr();
@@ -89,27 +95,30 @@ void FiniteDifferenceSolver::EvolveECartesian (
         const Box& tey  = mfi.tilebox(Efield[1]->ixType().ixType());
         const Box& tez  = mfi.tilebox(Efield[2]->ixType().ixType());
 
-        Real const inv_c2 = 1./( PhysConst::c * PhysConst::c );
+        Real constexpr c2 = PhysConst::c * PhysConst::c;
 
         // Loop over the cells and update the fields
         amrex::ParallelFor(tex, tey, tez,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                Ex(i, j, k) += inv_c2 * dt * (
+                Ex(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
-                    + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k) );
+                    + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k)
+                    - PhysConst::mu0 * jx(i, j, k) );
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                Ey(i, j, k) += inv_c2 * dt * (
+                Ey(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
-                    + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k) );
+                    + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
+                    - PhysConst::mu0 * jy(i, j, k) );
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                Ez(i, j, k) += inv_c2 * dt * (
+                Ez(i, j, k) += c2 * dt * (
                     - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
-                    + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k) );
+                    + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k)
+                    - PhysConst::mu0 * jz(i, j, k) );
             }
 
         );
@@ -156,7 +165,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
         const Box& tet  = mfi.tilebox(Efield[1]->ixType().ixType());
         const Box& tez  = mfi.tilebox(Efield[2]->ixType().ixType());
 
-        Real const inv_c2 = 1./( PhysConst::c * PhysConst::c );
+        Real const c2 = PhysConst::c * PhysConst::c;
 
         // Loop over the cells and update the fields
         amrex::ParallelFor(ter, tet, tez,

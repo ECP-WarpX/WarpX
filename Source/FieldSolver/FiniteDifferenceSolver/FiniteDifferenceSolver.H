@@ -39,8 +39,9 @@ class FiniteDifferenceSolver
                        amrex::Real const dt );
 
         void EvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-                      amrex::Real const dt );
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+                       std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+                       amrex::Real const dt );
 
     private:
 
@@ -73,6 +74,7 @@ class FiniteDifferenceSolver
         void EvolveECylindrical (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
             amrex::Real const dt );
 #else
         template< typename T_Algo >
@@ -85,6 +87,7 @@ class FiniteDifferenceSolver
         void EvolveECartesian (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
             amrex::Real const dt );
 #endif
 
