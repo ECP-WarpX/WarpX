@@ -145,9 +145,12 @@ void FiniteDifferenceSolver::EvolveECylindrical (
         auto const& Er = Efield[0]->array(mfi);
         auto const& Et = Efield[1]->array(mfi);
         auto const& Ez = Efield[2]->array(mfi);
-        auto const& Br = Efield[0]->array(mfi);
-        auto const& Bt = Efield[1]->array(mfi);
-        auto const& Bz = Efield[2]->array(mfi);
+        auto const& Br = Bfield[0]->array(mfi);
+        auto const& Bt = Bfield[1]->array(mfi);
+        auto const& Bz = Bfield[2]->array(mfi);
+        auto const& jr = Jfield[0]->array(mfi);
+        auto const& jt = Jfield[1]->array(mfi);
+        auto const& jz = Jfield[2]->array(mfi);
 
         // Extract stencil coefficients
         Real const* AMREX_RESTRICT coefs_r = stencil_coefs_r.dataPtr();
@@ -171,42 +174,39 @@ void FiniteDifferenceSolver::EvolveECylindrical (
         amrex::ParallelFor(ter, tet, tez,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                Real const r = rmin + i*dr; // r on nodal point (Br is nodal in r)
-                Br(i, j, 0, 0) += dt * T_Algo::DownwardDz(Et, coefs_z, n_coefs_z, i, j, 0, 0); // Mode m=0
+                Real const r = rmin + (i + 0.5)*dr; // r on cell-centered point (Er is cell-centered in r)
+                Er(i, j, 0, 0) +=  c2 * dt*(
+                    - T_Algo::DownwardDz(Bt, coefs_z, n_coefs_z, i, j, 0, 0)
+                    - PhysConst::mu0 * jr(i, j, 0, 0) ); // Mode m=0
                 for (int m=1; m<nmodes; m++) { // Higher-order modes
-                    Br(i, j, 0, 2*m-1) += dt*(
-                        T_Algo::DownwardDz(Et, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
-                        - m * T_Algo::DivideByR(Ez, r, dr, m, i, j, 0, 2*m  ));  // Real part
-                    Br(i, j, 0, 2*m  ) += dt*(
-                        T_Algo::DownwardDz(Et, coefs_z, n_coefs_z, i, j, 0, 2*m  )
-                        + m * T_Algo::DivideByR(Ez, r, dr, m, i, j, 0, 2*m-1)); // Imaginary part
-                }
-                // Ensure that Br remains 0 on axis (except for m=1)
-                if (r==0) { // On axis
-                    Br(i, j, 0, 0) = 0.; // Mode m=0
-                    for (int m=2; m<nmodes; m++) { // Higher-order modes (but not m=1)
-                        Br(i, j, 0, 2*m-1) = 0.;
-                        Br(i, j, 0, 2*m  ) = 0.;
-                    }
+                    Er(i, j, 0, 2*m-1) += c2 * dt*(
+                        - T_Algo::DownwardDz(Bt, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
+                        + m * Ez(i, j, 0, 2*m  )/r
+                        - PhysConst::mu0 * jr(i, j, 0, 2*m-1) );  // Real part
+                    Er(i, j, 0, 2*m  ) += c2 * dt*(
+                        - T_Algo::DownwardDz(Bt, coefs_z, n_coefs_z, i, j, 0, 2*m  )
+                        - m * Ez(i, j, 0, 2*m-1)/r
+                        - PhysConst::mu0 * jr(i, j, 0, 2*m  ) ); // Imaginary part
                 }
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                Bt(i, j, 0, 0) += dt*(
-                    T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 0)
-                    - T_Algo::DownwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 0)); // Mode m=0
+                Et(i, j, 0, 0) += c2 * dt*(
+                    - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 0)
+                    + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 0)
+                ); // Mode m=0
                 for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
-                    Bt(i, j, 0, 2*m-1) += dt*(
-                        T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
-                        - T_Algo::DownwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m-1)); // Real part
-                    Bt(i, j, 0, 2*m  ) += dt*(
-                        T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m  )
-                        - T_Algo::DownwardDz(Er, coefs_z, n_coefs_z, i, j, 0, 2*m  )); // Imaginary part
+                    Et(i, j, 0, 2*m-1) += c2 * dt*(
+                        - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
+                        + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m-1)); // Real part
+                    Et(i, j, 0, 2*m  ) += c2 * dt*(
+                        - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m  )
+                        + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m  )); // Imaginary part
                 }
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                Real const r = rmin + (i + 0.5)*dr; // r on a cell-centered grid (Bz is cell-centered in r)
+                Real const r = rmin + i*dr; // r on a nodal grid (Bz is nodal in r)
                 Ez(i, j, 0, 0) += dt*( - T_Algo::DownwardDrr_over_r(Et, r, dr, coefs_r, n_coefs_r, i, j, 0, 0));
                 for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
                     Ez(i, j, 0, 2*m-1) += dt*( m * Er(i, j, 0, 2*m  )/r
