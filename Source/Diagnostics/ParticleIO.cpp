@@ -277,7 +277,7 @@ PhysicalParticleContainer::SelectParticlesForIO(std::string species_name)
             }
             else if ( type == "default" ) // do nothing
             {}
-            else 
+            else
             { amrex::Abort("Unknown plot downsampling type."); }
         }
     }
