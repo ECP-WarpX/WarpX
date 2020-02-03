@@ -75,9 +75,9 @@ void FiniteDifferenceSolver::EvolveECartesian (
         auto const& Ex = Efield[0]->array(mfi);
         auto const& Ey = Efield[1]->array(mfi);
         auto const& Ez = Efield[2]->array(mfi);
-        auto const& Bx = Efield[0]->array(mfi);
-        auto const& By = Efield[1]->array(mfi);
-        auto const& Bz = Efield[2]->array(mfi);
+        auto const& Bx = Bfield[0]->array(mfi);
+        auto const& By = Bfield[1]->array(mfi);
+        auto const& Bz = Bfield[2]->array(mfi);
         auto const& jx = Jfield[0]->array(mfi);
         auto const& jy = Jfield[1]->array(mfi);
         auto const& jz = Jfield[2]->array(mfi);
