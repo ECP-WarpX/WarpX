@@ -8,6 +8,8 @@
  */
 #include <MultiParticleContainer.H>
 #include <WarpX.H>
+#include <AMReX_Random.H>
+#include <cmath>
 
 using namespace amrex;
 
@@ -129,7 +131,7 @@ MultiParticleContainer::WritePlotFile (const std::string& dir) const
             pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
             // Select particles to be written
             // (by setting IDs of unselected particles to negative numbers)
-            pc->SelectParticlesForIO();
+            pc->SelectParticlesForIO(species_names[i]);
             // real_names contains a list of all particle attributes.
             // pc->plot_flags is 1 or 0, whether quantity is dumped or not.
             pc->WritePlotFile(dir, species_names[i],
@@ -212,9 +214,32 @@ PhysicalParticleContainer::ConvertUnits(ConvertDirection convert_direction)
 // This function selects particles for IO
 // by setting unselected particle IDs to be negative
 void
-PhysicalParticleContainer::SelectParticlesForIO()
+PhysicalParticleContainer::SelectParticlesForIO(std::string species_name)
 {
     BL_PROFILE("PPC::SelectParticlesForIO()");
+
+    // plot downsampling type
+    std::string type = "default";
+    // plot downsampling fraction
+    Real fraction = 1.0;
+    // flags
+    int is_type_given = 0;
+    int is_fraction_given = 0;
+
+    // read input
+    ParmParse pp(species_name);
+    is_type_given = pp.query("plot_downsampling_type",type);
+    is_fraction_given = pp.query("plot_downsampling_fraction",fraction);
+
+    // assert
+    if ( is_type_given == 1 && is_fraction_given == 0 )
+    {
+        amrex::Abort("Missing a <species>.plot_downdampling_fraction.");
+    }
+    if ( is_type_given == 0 && is_fraction_given == 1 )
+    {
+        amrex::Abort("Missing a <species>.plot_downdampling_type.");
+    }
 
     const int nLevels = finestLevel();
     for (int lev=0; lev<=nLevels; lev++){
@@ -224,16 +249,36 @@ PhysicalParticleContainer::SelectParticlesForIO()
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             auto pstructs = pti.GetArrayOfStructs()().dataPtr();
-            // Loop over the particles and set id to negative
             const long np = pti.numParticles();
-            ParallelFor( np,
-                [=] AMREX_GPU_DEVICE (long i) {
-                    if ( i % 2 == 0 )
-                    {
-                        pstructs[i].id() *= -1;
+            // loop over the particles and set id to negative
+            if ( type == "uniform" )
+            {
+                ParallelFor( np,
+                    [=] AMREX_GPU_DEVICE (long i) {
+                        AMREX_ALWAYS_ASSERT( pstructs[i].id() > 0 );
+                        if ( i % int(floor(1.0/fraction)) != 0 )
+                        {
+                            pstructs[i].id() *= -1;
+                        }
                     }
-                }
-            );
+                );
+            }
+            else if ( type == "random" )
+            {
+                ParallelFor( np,
+                    [=] AMREX_GPU_DEVICE (long i) {
+                        AMREX_ALWAYS_ASSERT( pstructs[i].id() > 0 );
+                        if ( Random() > fraction )
+                        {
+                            pstructs[i].id() *= -1;
+                        }
+                    }
+                );
+            }
+            else if ( type == "default" ) // do nothing
+            {}
+            else 
+            { amrex::Abort("Unknown plot downsampling type."); }
         }
     }
 }

@@ -272,7 +272,7 @@ public:
 
     virtual void ConvertUnits (ConvertDirection convert_dir){};
 
-    virtual void SelectParticlesForIO (){};
+    virtual void SelectParticlesForIO (std::string species_name){};
 
     virtual void UnSelectParticlesAfterIO (){};
 

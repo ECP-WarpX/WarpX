@@ -219,7 +219,7 @@ public:
 
     virtual void ConvertUnits (ConvertDirection convert_dir) override;
 
-    virtual void SelectParticlesForIO () override;
+    virtual void SelectParticlesForIO (std::string species_name) override;
 
     virtual void UnSelectParticlesAfterIO () override;
 
