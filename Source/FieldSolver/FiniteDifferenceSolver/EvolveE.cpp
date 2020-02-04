@@ -181,11 +181,11 @@ void FiniteDifferenceSolver::EvolveECylindrical (
                 for (int m=1; m<nmodes; m++) { // Higher-order modes
                     Er(i, j, 0, 2*m-1) += c2 * dt*(
                         - T_Algo::DownwardDz(Bt, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
-                        + m * Ez(i, j, 0, 2*m  )/r
+                        + m * Bz(i, j, 0, 2*m  )/r
                         - PhysConst::mu0 * jr(i, j, 0, 2*m-1) );  // Real part
                     Er(i, j, 0, 2*m  ) += c2 * dt*(
                         - T_Algo::DownwardDz(Bt, coefs_z, n_coefs_z, i, j, 0, 2*m  )
-                        - m * Ez(i, j, 0, 2*m-1)/r
+                        - m * Bz(i, j, 0, 2*m-1)/r
                         - PhysConst::mu0 * jr(i, j, 0, 2*m  ) ); // Imaginary part
                 }
             },
@@ -194,26 +194,36 @@ void FiniteDifferenceSolver::EvolveECylindrical (
                 Et(i, j, 0, 0) += c2 * dt*(
                     - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 0)
                     + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 0)
-                ); // Mode m=0
+                    - PhysConst::mu0 * jt(i, j, 0, 0 ) ); // Mode m=0
                 for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
                     Et(i, j, 0, 2*m-1) += c2 * dt*(
                         - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
-                        + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m-1)); // Real part
+                        + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
+                        - PhysConst::mu0 * jt(i, j, 0, 2*m-1) ); // Real part
                     Et(i, j, 0, 2*m  ) += c2 * dt*(
                         - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m  )
-                        + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m  )); // Imaginary part
+                        + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m  )
+                        - PhysConst::mu0 * jt(i, j, 0, 2*m  ) ); // Imaginary part
                 }
+                // TODO: Modify on-axis condition
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Real const r = rmin + i*dr; // r on a nodal grid (Bz is nodal in r)
-                Ez(i, j, 0, 0) += dt*( - T_Algo::DownwardDrr_over_r(Et, r, dr, coefs_r, n_coefs_r, i, j, 0, 0));
+                Ez(i, j, 0, 0) += c2 * dt*(
+                   T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 0)
+                    - PhysConst::mu0 * jz(i, j, 0, 0  ) );
                 for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
-                    Ez(i, j, 0, 2*m-1) += dt*( m * Er(i, j, 0, 2*m  )/r
-                        - T_Algo::DownwardDrr_over_r(Et, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)); // Real part
-                    Ez(i, j, 0, 2*m  ) += dt*(-m * Er(i, j, 0, 2*m-1)/r
-                        - T_Algo::DownwardDrr_over_r(Et, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m  )); // Imaginary part
+                    Ez(i, j, 0, 2*m-1) += c2 * dt *(
+                        - m * Br(i, j, 0, 2*m  )/r
+                        T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
+                        - PhysConst::mu0 * jz(i, j, 0, 2*m-1) ); // Real part
+                    Ez(i, j, 0, 2*m  ) += c2 * dt *(
+                        m * Br(i, j, 0, 2*m-1)/r
+                        T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m  )
+                        - PhysConst::mu0 * jz(i, j, 0, 2*m  ) ); // Imaginary part
                 }
+                // TODO: Modify on-axis condition
             }
 
         );
