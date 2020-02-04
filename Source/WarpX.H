@@ -200,11 +200,15 @@ public:
     // Compute max_step automatically for simulations in a boosted frame.
     void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
     int  MoveWindow (bool move_j);
+
+    /**
+     * \brief
+     * This function shifts the boundary of the grid by 'v_galilean*dt'.
+     * In doding so, only positions attributes are changed while fields remain unchanged.
+     */
     void ShiftGalileanBoundary ();
     void UpdatePlasmaInjectionPosition (amrex::Real dt);
-
     void ResetProbDomain (const amrex::RealBox& rb);
-
     void EvolveE (         amrex::Real dt);
     void EvolveE (int lev, amrex::Real dt);
     void EvolveB (         amrex::Real dt);
