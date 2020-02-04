@@ -357,8 +357,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
     const Dim3 lo = lbound(tilebox);
 
-    //oshapoval
-    Real cur_time = WarpX::GetInstance().gett_new(lev); //oshapoval
+    Real cur_time = WarpX::GetInstance().gett_new(lev);
     const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
     Real time_shift = (cur_time + 0.5*dt - time_of_last_gal_shift);
 
@@ -369,7 +368,6 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     #endif
 
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
-    //oshapoval
 
     BL_PROFILE_VAR_START(blp_deposit);
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
@@ -449,7 +447,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
                                        const int * const ion_lev,
                                        amrex::MultiFab* rho, int icomp,
                                        const long offset, const long np_to_depose,
-                                       int thread_num, int lev, int depos_lev, Real dt)
+                                       int thread_num, int lev, int depos_lev)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                      (depos_lev==(lev  )),
@@ -507,9 +505,10 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
-    //oshapoval
-    Real cur_time = WarpX::GetInstance().gett_new(lev);
-    const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
+    const auto& warpx_instance = WarpX::GetInstance();
+    Real cur_time = warpx_instance.gett_new(lev);
+    Real dt = warpx_instance.getdt(lev);
+    const auto& time_of_last_gal_shift = warpx_instance.time_of_last_gal_shift;
 
     Real time_shift_rho_old = (cur_time - time_of_last_gal_shift);
     Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
@@ -531,7 +530,6 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     #endif
 
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
-    //oshapoval
 
     // Indices of the lower bound
     const Dim3 lo = lbound(tilebox);
@@ -559,7 +557,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 }
 
 void
-WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho, Real dt,
+WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                                         bool local, bool reset,
                                         bool do_rz_volume_scaling)
 {
@@ -592,7 +590,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
                 ion_lev = nullptr;
             }
 
-            DepositCharge(pti, wp, ion_lev, rho[lev].get(), 0, 0, np, thread_num, lev, lev, dt);
+            DepositCharge(pti, wp, ion_lev, rho[lev].get(), 0, 0, np, thread_num, lev, lev);
         }
 #ifdef _OPENMP
         }
@@ -625,7 +623,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 }
 
 std::unique_ptr<MultiFab>
-WarpXParticleContainer::GetChargeDensity (int lev, Real dt, bool local)
+WarpXParticleContainer::GetChargeDensity (int lev, bool local)
 {
     const auto& gm = m_gdb->Geom(lev);
     const auto& ba = m_gdb->ParticleBoxArray(lev);
@@ -663,7 +661,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, Real dt, bool local)
             }
 
             DepositCharge(pti, wp, ion_lev, rho.get(), 0, 0, np,
-                          thread_num, lev, lev, dt);
+                          thread_num, lev, lev);
         }
 #ifdef _OPENMP
     }

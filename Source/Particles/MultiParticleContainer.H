@@ -146,7 +146,7 @@ public:
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
     /// to it. The charge density is accumulated over all the particles in the MultiParticleContainer
     ///
-    std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, amrex::Real dt, bool local = false);
+    std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
     void doFieldIonization ();
 
