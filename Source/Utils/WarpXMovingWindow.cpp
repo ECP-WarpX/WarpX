@@ -328,9 +328,8 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
     }
 }
 
-//oshapoval
 void
-WarpX::GalileanShift ()
+WarpX::ShiftGalileanBoundary ()
 {
     Real cur_time = t_new[0];
     WarpX:: time_of_last_gal_shift;
@@ -361,12 +360,10 @@ WarpX::GalileanShift ()
         new_hi[1] = current_hi[1] + galilean_shift[2];
       }
     #endif
-    time_of_last_gal_shift = cur_time; //oshapoval
+    time_of_last_gal_shift = cur_time;
 
     ResetProbDomain(RealBox(new_lo, new_hi));
 }
-//oshapoval
-
 
 void
 WarpX::ResetProbDomain (const RealBox& rb)
