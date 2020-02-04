@@ -241,8 +241,7 @@ WarpX::FFTDomainDecomposition (int lev, BoxArray& ba_fft, DistributionMapping& d
                                BoxArray& ba_valid, Box& domain_fft, const Box& domain)
 {
 
-    //IntVect nguards_fft(AMREX_D_DECL(nox_fft/2,noy_fft/2,noz_fft/2));
-    IntVect nguards_fft(AMREX_D_DECL(32,32,32));//oshapoval
+    IntVect nguards_fft(AMREX_D_DECL(nox_fft/2,noy_fft/2,noz_fft/2));
 
     int nprocs = ParallelDescriptor::NProcs();
 
