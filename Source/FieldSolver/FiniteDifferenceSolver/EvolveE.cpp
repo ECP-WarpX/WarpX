@@ -133,6 +133,7 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveECylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     amrex::Real const dt ) {
 
     // Loop through the grids, and over the tiles within each grid
@@ -216,11 +217,11 @@ void FiniteDifferenceSolver::EvolveECylindrical (
                 for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
                     Ez(i, j, 0, 2*m-1) += c2 * dt *(
                         - m * Br(i, j, 0, 2*m  )/r
-                        T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
+                        + T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
                         - PhysConst::mu0 * jz(i, j, 0, 2*m-1) ); // Real part
                     Ez(i, j, 0, 2*m  ) += c2 * dt *(
                         m * Br(i, j, 0, 2*m-1)/r
-                        T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m  )
+                        + T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m  )
                         - PhysConst::mu0 * jz(i, j, 0, 2*m  ) ); // Imaginary part
                 }
                 // TODO: Modify on-axis condition
