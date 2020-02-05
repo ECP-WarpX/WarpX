@@ -184,6 +184,15 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
                             Br(i, j, 0, 2*m  ) = 0.;
                         }
                     }
+                    // For m==1, Ez is linear in r, for small r
+                    // Therefore, the formula below regularizes the singularity
+                    int const m = 1;
+                    Br(i, j, 0, 2*m-1) += dt*(
+                        T_Algo::UpwardDz(Et, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
+                        - m * 2*Ez( i, j, 0, 2*m  )/dr );  // Real part
+                    Br(i, j, 0, 2*m  ) += dt*(
+                        T_Algo::UpwardDz(Et, coefs_z, n_coefs_z, i, j, 0, 2*m  )
+                        + m * 2*Ez( i, j, 0, 2*m-1)/dr ); // Imaginary part
                 }
             },
 
