@@ -13,7 +13,7 @@ class GalileanAlgorithm : public SpectralBaseAlgorithm
                          const amrex::DistributionMapping& dm,
                          const int norder_x, const int norder_y,
                          const int norder_z, const bool nodal,
-                         const amrex::Vector<amrex::Real>& v_galilean,
+                         const amrex::Array<amrex::Real,3>& v_galilean,
                          const amrex::Real dt);
         // Redefine update equation from base class
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
@@ -23,7 +23,7 @@ class GalileanAlgorithm : public SpectralBaseAlgorithm
 
         void InitializeSpectralCoefficients(const SpectralKSpace& spectral_kspace,
                                     const amrex::DistributionMapping& dm,
-                                    const amrex::Vector<amrex::Real>& v_galilean,
+                                    const amrex::Array<amrex::Real,3>& v_galilean,
                                     const amrex::Real dt);
     private:
         SpectralRealCoefficients C_coef, S_ck_coef, C1_coef, C3_coef, S1_coef,S3_coef;

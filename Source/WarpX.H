@@ -690,7 +690,7 @@ private:
 #endif
 
 
-amrex::Vector<amrex::Real> v_galilean = {0.,0.,0.};
+amrex::Array<amrex::Real,3> v_galilean = {0.,0.,0.};
 
 #ifdef WARPX_USE_PSATD
 private:

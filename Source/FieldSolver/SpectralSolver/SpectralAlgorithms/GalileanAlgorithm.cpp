@@ -9,7 +9,7 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
                          const DistributionMapping& dm,
                          const int norder_x, const int norder_y,
                          const int norder_z, const bool nodal,
-                         const Vector<Real>& v_galilean,
+                         const Array<Real,3>& v_galilean,
                          const Real dt)
 
      // Initialize members of base class
@@ -43,7 +43,7 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
 
 void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spectral_kspace,
                                         const amrex::DistributionMapping& dm,
-                                        const Vector<Real>& v_galilean,
+                                        const Array<Real,3>& v_galilean,
                                         const amrex::Real dt)
 {
     Real vx = v_galilean[0];
