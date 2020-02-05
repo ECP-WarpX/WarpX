@@ -230,6 +230,7 @@ PhysicalParticleContainer::SelectParticlesForIO(std::string species_name)
     ParmParse pp(species_name);
     is_type_given = pp.query("plot_downsampling_type",type);
     is_fraction_given = pp.query("plot_downsampling_fraction",fraction);
+    int inv_fraction = int(floor(1.0/fraction));
 
     // assert
     if ( is_type_given == 1 && is_fraction_given == 0 )
@@ -241,6 +242,16 @@ PhysicalParticleContainer::SelectParticlesForIO(std::string species_name)
         amrex::Abort("Missing a <species>.plot_downdampling_type.");
     }
 
+    // parser
+    auto & mypc = WarpX::GetInstance().GetPartContainer();
+    auto nSpecies = mypc.nSpecies();
+    auto species_names = mypc.GetSpeciesNames();
+    int i_s;
+    for ( int i = 0; i < nSpecies; ++i )
+    { if ( species_names[i] == species_name ) { i_s = i; } }
+    auto & myspc = mypc.GetParticleContainer(i_s);
+    ParserWrapper* function_partparser = myspc.m_particle_filter_parser.get();
+
     const int nLevels = finestLevel();
     for (int lev=0; lev<=nLevels; lev++){
 #ifdef _OPENMP
@@ -250,13 +261,32 @@ PhysicalParticleContainer::SelectParticlesForIO(std::string species_name)
         {
             auto pstructs = pti.GetArrayOfStructs()().dataPtr();
             const long np = pti.numParticles();
-            // loop over the particles and set id to negative
+            // assert
+            ParallelFor( np,
+                [=] AMREX_GPU_DEVICE (long i) {
+                    AMREX_ALWAYS_ASSERT( pstructs[i].id() > 0 );
+                }
+            );
+            // filter
+            if ( myspc.m_is_particle_filter )
+            {
+                ParallelFor( np,
+                    [=] AMREX_GPU_DEVICE (long i) {
+                        Real x = pstructs[i].pos(0);
+                        Real y = pstructs[i].pos(1);
+                        Real z = pstructs[i].pos(2);
+                        Real t = WarpX::GetInstance().gett_new(lev);
+                        if ( function_partparser->getField(x,y,z,t) == 0.0 )
+                        { pstructs[i].id() *= -1; }
+                    }
+                );
+            }
+            // fraction
             if ( type == "uniform" )
             {
                 ParallelFor( np,
                     [=] AMREX_GPU_DEVICE (long i) {
-                        AMREX_ALWAYS_ASSERT( pstructs[i].id() > 0 );
-                        if ( i % int(floor(1.0/fraction)) != 0 )
+                        if ( i % inv_fraction != 0 && pstructs[i].id() > 0 )
                         {
                             pstructs[i].id() *= -1;
                         }
@@ -267,16 +297,14 @@ PhysicalParticleContainer::SelectParticlesForIO(std::string species_name)
             {
                 ParallelFor( np,
                     [=] AMREX_GPU_DEVICE (long i) {
-                        AMREX_ALWAYS_ASSERT( pstructs[i].id() > 0 );
-                        if ( Random() > fraction )
+                        if ( Random() > fraction && pstructs[i].id() > 0 )
                         {
                             pstructs[i].id() *= -1;
                         }
                     }
                 );
             }
-            else if ( type == "default" ) // do nothing
-            {}
+            else if ( type == "default" ) {} // do nothing
             else
             { amrex::Abort("Unknown plot downsampling type."); }
         }

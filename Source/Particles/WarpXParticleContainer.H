@@ -11,6 +11,7 @@
 #define WARPX_WarpXParticleContainer_H_
 
 #include "WarpXDtType.H"
+#include <WarpXParserWrapper.H>
 
 #include <AMReX_Particles.H>
 #include <AMReX_AmrCore.H>
@@ -317,6 +318,10 @@ public:
     amrex::ParticleReal getCharge () const {return charge;}
     //amrex::Real getMass () {return mass;}
     amrex::ParticleReal getMass () const {return mass;}
+
+    /// ParserWrapper for particle output filter
+    int m_is_particle_filter = 0;
+    std::unique_ptr<ParserWrapper> m_particle_filter_parser;
 
 protected:
 

@@ -18,6 +18,7 @@
 #include <WarpX.H>
 #include <WarpXConst.H>
 #include <WarpXWrappers.h>
+#include <WarpXUtil.H>
 #include <IonizationEnergiesTable.H>
 #include <FieldGather.H>
 #include <GetAndSetPosition.H>
@@ -133,6 +134,16 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
             plot_flags[plot_flag_size-1] = 1;
         }
     #endif
+
+    // particle filter parser
+    pp.query("is_particle_filter",m_is_particle_filter);
+    if (m_is_particle_filter)
+    {
+        std::string function_string;
+        Store_parserString(pp,"plot_filter_function",function_string);
+        m_particle_filter_parser.reset(new ParserWrapper(makeParser(function_string)));
+    }
+
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
