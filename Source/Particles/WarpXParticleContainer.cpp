@@ -349,8 +349,25 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
+    // xyzmin is built on pti.tilebox(), so it does
+    // not include staggering, so the stagger_shift has to be done by hand.
+    // Alternatively, we could define xyzminx from tbx (and the same for 3
+    // directions and for jx, jy, jz). This way, sx0 would not be needed.
+    // Better for memory? worth trying?
+
     const Dim3 lo = lbound(tilebox);
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev);
+
+    Real cur_time = WarpX::GetInstance().gett_new(lev);
+    const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
+    Real time_shift = (cur_time + 0.5*dt - time_of_last_gal_shift);
+
+    #if (AMREX_SPACEDIM == 3)
+        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]* time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    #elif (AMREX_SPACEDIM == 2)
+        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]* time_shift, std::numeric_limits<Real>::quiet_NaN(), v_galilean[2]*time_shift };
+    #endif
+
+    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
 
     BL_PROFILE_VAR_START(blp_deposit);
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
@@ -377,7 +394,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
         if        (WarpX::nox == 1){
             doDepositionShapeN<1>(
                 xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                uyp.dataPtr() + offset, uzp.dataPtr() + offset,v_galilean, ion_lev,
+                uyp.dataPtr() + offset, uzp.dataPtr() + offset, v_galilean, ion_lev,
                 jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx,
                 xyzmin, lo, q);
         } else if (WarpX::nox == 2){
@@ -488,7 +505,31 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev);
+    const auto& warpx_instance = WarpX::GetInstance();
+    Real cur_time = warpx_instance.gett_new(lev);
+    Real dt = warpx_instance.getdt(lev);
+    const auto& time_of_last_gal_shift = warpx_instance.time_of_last_gal_shift;
+
+    Real time_shift_rho_old = (cur_time - time_of_last_gal_shift);
+    Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
+
+    amrex::Array<amrex::Real,3> galilean_shift;
+
+    #if (AMREX_SPACEDIM == 3)
+        if (icomp==0){
+            galilean_shift = { v_galilean[0]*time_shift_rho_old, v_galilean[1]*time_shift_rho_old, v_galilean[2]*time_shift_rho_old };
+        } else{
+            galilean_shift = { v_galilean[0]*time_shift_rho_new, v_galilean[1]*time_shift_rho_new, v_galilean[2]*time_shift_rho_new };
+        }
+    #elif (AMREX_SPACEDIM == 2)
+        if (icomp==0){
+            galilean_shift = { v_galilean[0]*time_shift_rho_old, std::numeric_limits<Real>::quiet_NaN(), v_galilean[2]*time_shift_rho_old };
+        } else{
+            galilean_shift = { v_galilean[0]*time_shift_rho_new, std::numeric_limits<Real>::quiet_NaN(), v_galilean[2]*time_shift_rho_new };
+        }
+    #endif
+
+    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
 
     // Indices of the lower bound
     const Dim3 lo = lbound(tilebox);

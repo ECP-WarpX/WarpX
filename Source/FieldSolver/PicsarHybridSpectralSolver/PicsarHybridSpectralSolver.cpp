@@ -243,7 +243,6 @@ WarpX::FFTDomainDecomposition (int lev, BoxArray& ba_fft, DistributionMapping& d
 
     IntVect nguards_fft(AMREX_D_DECL(nox_fft/2,noy_fft/2,noz_fft/2));
 
-
     int nprocs = ParallelDescriptor::NProcs();
 
     BoxList bl(domain, ngroups_fft);  // This does a multi-D domain decomposition for groups

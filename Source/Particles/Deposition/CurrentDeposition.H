@@ -34,7 +34,7 @@ void doDepositionShapeN(const amrex::ParticleReal * const xp,
                         const amrex::ParticleReal * const uxp,
                         const amrex::ParticleReal * const uyp,
                         const amrex::ParticleReal * const uzp,
-                        const std::vector<amrex::Real>& v_galilean,
+                        const std::array<amrex::Real,3>& v_galilean,
                         const int * const ion_lev,
                         amrex::FArrayBox& jx_fab,
                         amrex::FArrayBox& jy_fab,
@@ -49,9 +49,9 @@ void doDepositionShapeN(const amrex::ParticleReal * const xp,
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
 
-    const amrex::Real vx_gal = v_galilean[0];
-    const amrex::Real vy_gal = v_galilean[1];
-    const amrex::Real vz_gal = v_galilean[2];
+    const amrex::Real vx_gal = 0.0; //v_galilean[0];
+    const amrex::Real vy_gal = 0.0; //v_galilean[1];
+    const amrex::Real vz_gal = 0.0; //v_galilean[2];
 
     const amrex::Real dxi = 1.0/dx[0];
     const amrex::Real dzi = 1.0/dx[2];
@@ -152,7 +152,7 @@ void doDepositionShapeN(const amrex::ParticleReal * const xp,
 
 #if (defined WARPX_DIM_3D)
             // y direction
-            const amrex::Real ymid= (yp[ip]-ymin)*dyi-dts2dy*(vy-vy_gal);
+            const amrex::Real ymid = (yp[ip]-ymin)*dyi-dts2dy*(vy-vy_gal);
             amrex::Real sy_node[depos_order + 1];
             amrex::Real sy_cell[depos_order + 1];
             int k_node;
@@ -172,7 +172,7 @@ void doDepositionShapeN(const amrex::ParticleReal * const xp,
 #endif
 
             // z direction
-            const amrex::Real zmid= (zp[ip]-zmin)*dzi-dts2dz*(vz -vz_gal);
+            const amrex::Real zmid = (zp[ip]-zmin)*dzi-dts2dz*(vz -vz_gal);
             amrex::Real sz_node[depos_order + 1];
             amrex::Real sz_cell[depos_order + 1];
             int l_node;

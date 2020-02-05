@@ -117,7 +117,9 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     // Parse galilean velocity
     ParmParse ppsatd("psatd");
-    ppsatd.queryarr("v_galilean", v_galilean);
+    //ppsatd.queryarr("v_galilean", v_galilean);
+    ppsatd.query("v_galilean", v_galilean);
+
     // Scale the velocity by the speed of light
     for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
 
@@ -127,7 +129,6 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
             plot_flags[plot_flag_size-1] = 1;
         }
     #endif
-
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
@@ -1651,7 +1652,8 @@ PhysicalParticleContainer::PushPX(WarpXParIter& pti,
     Real vz = v_galilean[2];
 
 #ifdef WARPX_QED
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(((v_galilean[0]==0) && (v_galilean[1]==0) && (v_galilean[2]==0)), "QED + galilean (or averaged galilean) not implemented." );
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(((v_galilean[0]==0) && (v_galilean[1]==0)
+                && (v_galilean[2]==0)), "QED + galilean (or averaged galilean) not implemented." );
     if(do_classical_radiation_reaction){
         if(m_do_qed_quantum_sync){
             const auto t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
@@ -1689,7 +1691,8 @@ PhysicalParticleContainer::PushPX(WarpXParIter& pti,
         }
 #else
     if(do_classical_radiation_reaction){
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(((v_galilean[0]==0) && (v_galilean[1]==0) && (v_galilean[2]==0)), "Radiation Reaction + galilean (or averaged galilean) not implemented." );
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(((v_galilean[0]==0) && (v_galilean[1]==0)
+                  && (v_galilean[2]==0)), "Radiation Reaction + galilean (or averaged galilean) not implemented." );
         amrex::ParallelFor(
             pti.numParticles(),
             [=] AMREX_GPU_DEVICE (long i) {
@@ -1712,8 +1715,10 @@ PhysicalParticleContainer::PushPX(WarpXParIter& pti,
                 UpdateMomentumBoris( ux[i], uy[i], uz[i],
                                      Ex[i], Ey[i], Ez[i], Bx[i],
                                      By[i], Bz[i], qp, m, dt);
-                UpdatePositionGalilean( x[i], y[i], z[i],
-                                ux[i], uy[i], uz[i], vx, vy, vz, dt );
+                // UpdatePositionGalilean( x[i], y[i], z[i],
+                //                 ux[i], uy[i], uz[i], vx, vy, vz, dt );
+                UpdatePosition( x[i], y[i], z[i],
+                                ux[i], uy[i], uz[i], dt );
             }
         );
     } else if (WarpX::particle_pusher_algo == ParticlePusherAlgo::Vay) {
@@ -1725,8 +1730,10 @@ PhysicalParticleContainer::PushPX(WarpXParIter& pti,
                 UpdateMomentumVay( ux[i], uy[i], uz[i],
                                    Ex[i], Ey[i], Ez[i], Bx[i],
                                    By[i], Bz[i], qp, m, dt);
-                UpdatePositionGalilean( x[i], y[i], z[i],
-                                ux[i], uy[i], uz[i], vx, vy, vz, dt );
+                // UpdatePositionGalilean( x[i], y[i], z[i],
+                //                 ux[i], uy[i], uz[i], vx, vy, vz, dt );
+                UpdatePosition( x[i], y[i], z[i],
+                                ux[i], uy[i], uz[i], dt );
             }
         );
     } else if (WarpX::particle_pusher_algo == ParticlePusherAlgo::HigueraCary) {
@@ -2234,7 +2241,17 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
     const ParticleReal * const AMREX_RESTRICT yp = m_yp[thread_num].dataPtr() + offset;
 
     // Lower corner of tile box physical domain
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev);
+    Real cur_time = WarpX::GetInstance().gett_new(lev);
+    const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
+    Real time_shift = (cur_time - time_of_last_gal_shift);
+
+    #if (AMREX_SPACEDIM == 3)
+        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    #elif (AMREX_SPACEDIM == 2)
+        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, std::numeric_limits<Real>::quiet_NaN(), v_galilean[2]*time_shift };
+    #endif
+
+    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, gather_lev);
 
     const Dim3 lo = lbound(box);
 
