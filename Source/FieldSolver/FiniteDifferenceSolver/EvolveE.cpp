@@ -26,6 +26,7 @@ void FiniteDifferenceSolver::EvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    std::unique_ptr<amrex::MultiFab> const& Ffield,
     amrex::Real const dt ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
@@ -33,20 +34,20 @@ void FiniteDifferenceSolver::EvolveE (
 #ifdef WARPX_DIM_RZ
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
 
-        EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, dt );
+        EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, dt );
 
 #else
     if (m_do_nodal) {
 
-        EvolveECartesian <NodalAlgorithm> ( Efield, Bfield, Jfield, dt );
+        EvolveECartesian <NodalAlgorithm> ( Efield, Bfield, Jfield, Ffield, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        EvolveECartesian <YeeAlgorithm> ( Efield, Bfield, Jfield, dt );
+        EvolveECartesian <YeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveECartesian <CKCAlgorithm> ( Efield, Bfield, Jfield, dt );
+        EvolveECartesian <CKCAlgorithm> ( Efield, Bfield, Jfield, Ffield, dt );
 
 #endif
     } else {
@@ -63,7 +64,10 @@ void FiniteDifferenceSolver::EvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    std::unique_ptr<amrex::MultiFab> const& Ffield,
     amrex::Real const dt ) {
+
+    Real constexpr c2 = PhysConst::c * PhysConst::c;
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP
@@ -95,8 +99,6 @@ void FiniteDifferenceSolver::EvolveECartesian (
         const Box& tey  = mfi.tilebox(Efield[1]->ixType().ixType());
         const Box& tez  = mfi.tilebox(Efield[2]->ixType().ixType());
 
-        Real constexpr c2 = PhysConst::c * PhysConst::c;
-
         // Loop over the cells and update the fields
         amrex::ParallelFor(tex, tey, tez,
 
@@ -123,6 +125,30 @@ void FiniteDifferenceSolver::EvolveECartesian (
 
         );
 
+        // If F is not a null pointer, further update E using the grad(F) term
+        // (hyperbolic correction for errors in charge conservation)
+        if (Ffield) {
+
+            // Extract field data for this grid/tile
+            auto const F = Ffield->array(mfi);
+
+            // Loop over the cells and update the fields
+            amrex::ParallelFor(tex, tey, tez,
+
+                [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                    Ex(i, j, k) += T_Algo::UpwardDx(F, coefs_x, n_coefs_x, i, j, k);
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                    Ey(i, j, k) += T_Algo::UpwardDy(F, coefs_y, n_coefs_y, i, j, k);
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                    Ez(i, j, k) += T_Algo::UpwardDz(F, coefs_z, n_coefs_z, i, j, k);
+                }
+
+            );
+
+        }
+
     }
 
 }
@@ -134,6 +160,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+    std::unique_ptr<amrex::MultiFab> const& Ffield,
     amrex::Real const dt ) {
 
     // Loop through the grids, and over the tiles within each grid
@@ -209,7 +236,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                Real const r = rmin + i*dr; // r on a nodal grid (Bz is nodal in r)
+                Real const r = rmin + i*dr; // r on a nodal grid (Ez is nodal in r)
                 if (r != 0) { // Off-axis, regular Maxwell equations
                     Ez(i, j, 0, 0) += c2 * dt*(
                        T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 0)
@@ -239,6 +266,45 @@ void FiniteDifferenceSolver::EvolveECylindrical (
             }
 
         );
+
+        // If F is not a null pointer, further update E using the grad(F) term
+        // (hyperbolic correction for errors in charge conservation)
+        if (Ffield) {
+
+            // Extract field data for this grid/tile
+            auto const F = Ffield->array(mfi);
+
+            // Loop over the cells and update the fields
+            amrex::ParallelFor(ter, tet, tez,
+
+                [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                    Er(i, j, 0, 0) += T_Algo::UpwardDr(F, coefs_r, n_coefs_r, i, j, 0, 0);
+                    for (int m=1; m<nmodes; m++) { // Higher-order modes
+                        Er(i, j, 0, 2*m-1) += T_Algo::UpwardDr(F, coefs_r, n_coefs_r, i, j, 0, 2*m-1); // Real part
+                        Er(i, j, 0, 2*m  ) += T_Algo::UpwardDr(F, coefs_r, n_coefs_r, i, j, 0, 2*m  ); // Imaginary part
+                    }
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                    // Mode m=0: no update
+                    Real const r = rmin + i*dr; // r on a nodal grid (Et is nodal in r)
+                    if (r!=0){
+                        for (int m=1; m<nmodes; m++) { // Higher-order modes
+                            Et(i, j, 0, 2*m-1) +=  m * F(i, j, 0, 2*m  )/r; // Real part
+                            Et(i, j, 0, 2*m  ) += -m * F(i, j, 0, 2*m-1)/r; // Imaginary part
+                        }
+                    }
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                    Ez(i, j, 0, 0) += T_Algo::UpwardDz(F, coefs_z, n_coefs_z, i, j, 0, 0);
+                    for (int m=1; m<nmodes; m++) { // Higher-order modes
+                        Ez(i, j, 0, 2*m-1) += T_Algo::UpwardDz(F, coefs_z, n_coefs_z, i, j, 0, 2*m-1); // Real part
+                        Ez(i, j, 0, 2*m  ) += T_Algo::UpwardDz(F, coefs_z, n_coefs_z, i, j, 0, 2*m  ); // Imaginary part
+                    }
+                }
+
+            );
+
+        }
 
     }
 

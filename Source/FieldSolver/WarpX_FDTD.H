@@ -148,43 +148,6 @@ void warpx_push_ez_yee(int i, int j, int k,
 #endif
 }
 
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_push_ex_f_yee(int j, int k, int l,
-                         amrex::Array4<amrex::Real> const& Ex,
-                         amrex::Array4<amrex::Real const> const& F,
-                         amrex::Real dtsdx_c2)
-{
-#if defined WARPX_DIM_3D
-    Ex(j,k,l) += + dtsdx_c2 * (F(j+1,k,l) - F(j,k,l));
-#elif (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-    Ex(j,k,0) += + dtsdx_c2 * (F(j+1,k,0) - F(j  ,k,0));
-#endif
-}
-
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_push_ey_f_yee(int j, int k, int l,
-                         amrex::Array4<amrex::Real> const& Ey,
-                         amrex::Array4<amrex::Real const> const& F,
-                         amrex::Real dtsdy_c2)
-{
-#if defined WARPX_DIM_3D
-    Ey(j,k,l) += + dtsdy_c2 * (F(j,k+1,l) - F(j,k,l));
-#endif
-}
-
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_push_ez_f_yee(int j, int k, int l,
-                         amrex::Array4<amrex::Real> const& Ez,
-                         amrex::Array4<amrex::Real const> const& F,
-                         amrex::Real dtsdz_c2)
-{
-#if defined WARPX_DIM_3D
-    Ez(j,k,l) += + dtsdz_c2 * (F(j,k,l+1) - F(j,k,l));
-#elif (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-    Ez(j,k,0) += + dtsdz_c2 * (F(j,k+1,0) - F(j,k,0));
-#endif
-}
-
 static void warpx_calculate_ckc_coefficients(amrex::Real dtsdx, amrex::Real dtsdy, amrex::Real dtsdz,
                                              amrex::Real &betaxy, amrex::Real &betaxz, amrex::Real &betayx,
                                              amrex::Real &betayz, amrex::Real &betazx, amrex::Real &betazy,
@@ -239,80 +202,6 @@ static void warpx_calculate_ckc_coefficients(amrex::Real dtsdx, amrex::Real dtsd
     betazx *= dtsdz;
     alphax *= dtsdx;
     alphaz *= dtsdz;
-#endif
-}
-
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_push_ex_f_ckc(int j, int k, int l,
-                         amrex::Array4<amrex::Real> const& Ex,
-                         amrex::Array4<amrex::Real const> const& F,
-                         amrex::Real betaxy, amrex::Real betaxz, amrex::Real betayx,
-                         amrex::Real betayz, amrex::Real betazx, amrex::Real betazy,
-                         amrex::Real gammax, amrex::Real gammay, amrex::Real gammaz,
-                         amrex::Real alphax, amrex::Real alphay, amrex::Real alphaz)
-{
-#if defined WARPX_DIM_3D
-    Ex(j,k,l) += + alphax * (F(j+1,k  ,l  ) - F(j,  k,  l  ))
-                 + betaxy * (F(j+1,k+1,l  ) - F(j,k+1,l  )
-                          +  F(j+1,k-1,l  ) - F(j,k-1,l  ))
-                 + betaxz * (F(j+1,k  ,l+1) - F(j,k  ,l+1)
-                          +  F(j+1,k  ,l-1) - F(j,k  ,l-1))
-                 + gammax * (F(j+1,k+1,l+1) - F(j,k+1,l+1)
-                          +  F(j+1,k-1,l+1) - F(j,k-1,l+1)
-                          +  F(j+1,k+1,l-1) - F(j,k+1,l-1)
-                          +  F(j+1,k-1,l-1) - F(j,k-1,l-1));
-#elif defined WARPX_DIM_XZ
-    Ex(j,k,0) += + alphax * (F(j+1,k  ,0) - F(j,k  ,0))
-                 + betaxz * (F(j+1,k+1,0) - F(j,k+1,0)
-                          +  F(j+1,k-1,0) - F(j,k-1,0));
-#endif
-}
-
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_push_ey_f_ckc(int j, int k, int l,
-                         amrex::Array4<amrex::Real> const& Ey,
-                         amrex::Array4<amrex::Real const> const& F,
-                         amrex::Real betaxy, amrex::Real betaxz, amrex::Real betayx,
-                         amrex::Real betayz, amrex::Real betazx, amrex::Real betazy,
-                         amrex::Real gammax, amrex::Real gammay, amrex::Real gammaz,
-                         amrex::Real alphax, amrex::Real alphay, amrex::Real alphaz)
-{
-#if defined WARPX_DIM_3D
-    Ey(j,k,l) += + alphay * (F(j  ,k+1,l  ) - F(j  ,k,l  ))
-                 + betayx * (F(j+1,k+1,l  ) - F(j+1,k,l  )
-                          +  F(j-1,k+1,l  ) - F(j-1,k,l  ))
-                 + betayz * (F(j  ,k+1,l+1) - F(j  ,k,l+1)
-                          +  F(j  ,k+1,l-1) - F(j  ,k,l-1))
-                 + gammay * (F(j+1,k+1,l+1) - F(j+1,k,l+1)
-                          +  F(j-1,k+1,l+1) - F(j-1,k,l+1)
-                          +  F(j+1,k+1,l-1) - F(j+1,k,l-1)
-                          +  F(j-1,k+1,l-1) - F(j-1,k,l-1));
-#endif
-}
-
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_push_ez_f_ckc(int j, int k, int l,
-                         amrex::Array4<amrex::Real> const& Ez,
-                         amrex::Array4<amrex::Real const> const& F,
-                         amrex::Real betaxy, amrex::Real betaxz, amrex::Real betayx,
-                         amrex::Real betayz, amrex::Real betazx, amrex::Real betazy,
-                         amrex::Real gammax, amrex::Real gammay, amrex::Real gammaz,
-                         amrex::Real alphax, amrex::Real alphay, amrex::Real alphaz)
-{
-#if defined WARPX_DIM_3D
-    Ez(j,k,l) += + alphaz * (F(j  ,k  ,l+1) - F(j,  k,  l))
-                 + betazx * (F(j+1,k  ,l+1) - F(j+1,k  ,l)
-                          +  F(j-1,k  ,l+1) - F(j-1,k  ,l))
-                 + betazy * (F(j  ,k+1,l+1) - F(j  ,k+1,l)
-                          +  F(j  ,k-1,l+1) - F(j  ,k-1,l))
-                 + gammaz * (F(j+1,k+1,l+1) - F(j+1,k+1,l)
-                          +  F(j-1,k+1,l+1) - F(j-1,k+1,l)
-                          +  F(j+1,k-1,l+1) - F(j+1,k-1,l)
-                          +  F(j-1,k-1,l+1) - F(j-1,k-1,l));
-#elif defined WARPX_DIM_XZ
-    Ez(j,k,0) += + alphaz * (F(j  ,k+1,0) - F(j  ,k,0))
-                 + betazx * (F(j+1,k+1,0) - F(j+1,k,0)
-                          +  F(j-1,k+1,0) - F(j-1,k,0));
 #endif
 }
 
