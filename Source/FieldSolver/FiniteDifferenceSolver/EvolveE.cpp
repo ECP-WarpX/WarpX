@@ -295,7 +295,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
                     } else { // r==0: on-axis corrections
                         // For m==1, F is linear in r, for small r
                         // Therefore, the formula below regularizes the singularity
-                        if (nmodes > 0) {
+                        if (nmodes >= 2) { // needs to have at least m=0 and m=1
                             int const m=1;
                             Et(i, j, 0, 2*m-1) +=  m * F(i+1, j, 0, 2*m  )/dr; // Real part
                             Et(i, j, 0, 2*m  ) += -m * F(i+1, j, 0, 2*m-1)/dr; // Imaginary part
