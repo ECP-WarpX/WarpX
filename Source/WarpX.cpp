@@ -78,9 +78,11 @@ long WarpX::noz = 1;
 bool WarpX::use_fdtd_nci_corr = false;
 int  WarpX::l_lower_order_in_v = true;
 
-bool WarpX::use_filter        = false;
-bool WarpX::serialize_ics     = false;
-bool WarpX::refine_plasma     = false;
+bool WarpX::use_filter              = false;
+bool WarpX::use_kspace_filter       = false;
+bool WarpX::use_filter_compensation = false;
+bool WarpX::serialize_ics           = false;
+bool WarpX::refine_plasma           = false;
 
 int WarpX::num_mirrors = 0;
 
@@ -432,6 +434,8 @@ WarpX::ReadParameters ()
         // Read filter and fill IntVect filter_npass_each_dir with
         // proper size for AMREX_SPACEDIM
         pp.query("use_filter", use_filter);
+        pp.query("use_kspace_filter", use_kspace_filter);
+        pp.query("use_filter_compensation", use_filter_compensation);
         Vector<int> parse_filter_npass_each_dir(AMREX_SPACEDIM,1);
         pp.queryarr("filter_npass_each_dir", parse_filter_npass_each_dir);
         filter_npass_each_dir[0] = parse_filter_npass_each_dir[0];
@@ -886,6 +890,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         realspace_ba.grow(1, ngE[1]); // add guard cells only in z
         spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
             n_rz_azimuthal_modes, noz_fft, do_nodal, dx_vect, dt[lev] ) );
+        if (use_kspace_filter) {
+            spectral_solver_fp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
+        }
 #else
         realspace_ba.grow(ngE); // add guard cells
         spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
@@ -978,6 +985,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             realspace_ba.grow(1, ngE[1]); // add guard cells only in z
             spectral_solver_cp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
                 n_rz_azimuthal_modes, noz_fft, do_nodal, cdx_vect, dt[lev] ) );
+            if (use_kspace_filter) {
+                spectral_solver_cp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
+            }
 #else
             realspace_ba.grow(ngE); // add guard cells
             spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,

@@ -29,9 +29,9 @@ class SpectralSolverRZ
         /* \brief Transform the component `i_comp` of MultiFab `field_mf`
          *  to spectral space, and store the corresponding result internally
          *  (in the spectral field specified by `field_index`) */
-        void ForwardTransform(amrex::MultiFab const & field_mf,
-                              int const field_index,
-                              int const i_comp=0 ){
+        void ForwardTransform (amrex::MultiFab const & field_mf,
+                               int const field_index,
+                               int const i_comp=0 ) {
             BL_PROFILE("SpectralSolverRZ::ForwardTransform");
             field_data.ForwardTransform(field_mf, field_index, i_comp);
         };
@@ -39,8 +39,8 @@ class SpectralSolverRZ
         /* \brief Transform the two MultiFabs `field_mf1` and `field_mf2`
          *  to spectral space, and store the corresponding results internally
          *  (in the spectral field specified by `field_index1` and `field_index2`) */
-        void ForwardTransform(amrex::MultiFab const & field_mf1, int const field_index1,
-                              amrex::MultiFab const & field_mf2, int const field_index2){
+        void ForwardTransform (amrex::MultiFab const & field_mf1, int const field_index1,
+                               amrex::MultiFab const & field_mf2, int const field_index2) {
             BL_PROFILE("SpectralSolverRZ::ForwardTransform");
             field_data.ForwardTransform(field_mf1, field_index1,
                                         field_mf2, field_index2);
@@ -48,24 +48,24 @@ class SpectralSolverRZ
 
         /* \brief Transform spectral field specified by `field_index` back to
          * real space, and store it in the component `i_comp` of `field_mf` */
-        void BackwardTransform(amrex::MultiFab& field_mf,
-                               int const field_index,
-                               int const i_comp=0){
+        void BackwardTransform (amrex::MultiFab& field_mf,
+                                int const field_index,
+                                int const i_comp=0) {
             BL_PROFILE("SpectralSolverRZ::BackwardTransform");
             field_data.BackwardTransform(field_mf, field_index, i_comp);
         };
 
         /* \brief Transform spectral fields specified by `field_index1` and `field_index2`
          * back to real space, and store it in `field_mf1` and `field_mf2`*/
-        void BackwardTransform(amrex::MultiFab& field_mf1, int const field_index1,
-                               amrex::MultiFab& field_mf2, int const field_index2){
+        void BackwardTransform (amrex::MultiFab& field_mf1, int const field_index1,
+                                amrex::MultiFab& field_mf2, int const field_index2) {
             BL_PROFILE("SpectralSolverRZ::BackwardTransform");
             field_data.BackwardTransform(field_mf1, field_index1,
                                          field_mf2, field_index2);
         };
 
         /* \brief Update the fields in spectral space, over one timestep */
-        void pushSpectralFields(){
+        void pushSpectralFields () {
             BL_PROFILE("SpectralSolverRZ::pushSpectralFields");
             // Virtual function: the actual function used here depends
             // on the sub-class of `SpectralBaseAlgorithm` that was
@@ -73,7 +73,28 @@ class SpectralSolverRZ
             algorithm->pushSpectralFields(field_data);
         };
 
+        /* \brief Initialize K space filtering arrays */
+        void InitFilter (amrex::IntVect const & filter_npass_each_dir,
+                         bool const compensation)
+        {
+            field_data.InitFilter(filter_npass_each_dir, compensation, k_space);
+        };
+
+        /* \brief Apply K space filtering for a scalar */
+        void ApplyFilter (int const field_index)
+        {
+            field_data.ApplyFilter(field_index);
+        };
+
+        /* \brief Apply K space filtering for a vector */
+        void ApplyFilter (int const field_index1, int const field_index2, int const field_index3)
+        {
+            field_data.ApplyFilter(field_index1, field_index2, field_index3);
+        };
+
     private:
+
+        SpectralHankelKSpace k_space; // Save the instance to initialize filtering
         SpectralFieldDataHankel field_data; // Store field in spectral space
                                       // and perform the Fourier transforms
         std::unique_ptr<SpectralBaseAlgorithmRZ> algorithm;
@@ -81,6 +102,7 @@ class SpectralSolverRZ
         // and the associated coefficients.
         // SpectralBaseAlgorithmRZ is a base class ; this pointer is meant
         // to point an instance of a *sub-class* defining a specific algorithm
+
 };
 
 #endif // WARPX_SPECTRAL_SOLVER_RZ_H_

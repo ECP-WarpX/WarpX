@@ -14,6 +14,8 @@ ifeq ($(USE_RZ),TRUE)
   CEXE_sources += SpectralHankelKSpace.cpp
   CEXE_headers += SpectralHankelTransformer.H
   CEXE_sources += SpectralHankelTransformer.cpp
+  CEXE_headers += SpectralBinomialFilter.H
+  CEXE_sources += SpectralBinomialFilter.cpp
   CEXE_headers += HankelTransform.H
   CEXE_sources += HankelTransform.cpp
   CEXE_headers += BesselRoots.H

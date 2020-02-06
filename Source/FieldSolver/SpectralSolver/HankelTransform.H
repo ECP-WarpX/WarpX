@@ -1,9 +1,7 @@
 #ifndef WARPX_HANKEL_TRANSFORM_H_
 #define WARPX_HANKEL_TRANSFORM_H_
 
-/* #include <AMReX_REAL.H> */
-/* #include <AMReX_Vector.H> */
-/* #include <AMReX_CudaContainers.H> */
+#include <AMReX_FArrayBox.H>
 
 /* \brief This defines the class that performs the Hankel transform.
  * Original authors: Remi Lehe, Manuel Kirchen
