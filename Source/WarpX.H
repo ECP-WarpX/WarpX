@@ -18,6 +18,7 @@
 #include <BackTransformedDiagnostic.H>
 #include <BilinearFilter.H>
 #include <NCIGodfreyFilter.H>
+#include "MultiReducedDiags.H"
 
 #include <FiniteDifferenceSolver.H>
 #ifdef WARPX_USE_PSATD
@@ -213,6 +214,9 @@ public:
     amrex::Vector<amrex::Real> mirror_z_width;
     amrex::Vector<int> mirror_z_npoints;
 
+    /// object with all reduced diagnotics, similar to MultiParticleContainer for species.
+    MultiReducedDiags* reduced_diags;
+
     void applyMirrors(amrex::Real time);
 
     void ComputeDt ();
@@ -232,6 +236,26 @@ public:
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+
+    /** \brief apply QED correction on electric field
+     * \param dt vector of time steps (for all levels)
+     */
+    void Hybrid_QED_Push (         amrex::Vector<amrex::Real> dt);
+
+    /** \brief apply QED correction on electric field for level lev
+     * \param lev mesh refinement level
+     * \param dt time step
+     */
+    void Hybrid_QED_Push (int lev, amrex::Real dt);
+
+    /** \brief apply QED correction on electric field for level lev and patch type patch_type
+     * \param lev mesh refinement level
+     * \param dt patch_type which MR patch: PatchType::fine or PatchType::coarse
+     * \param dt time step
+     */
+    void Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real dt);
+
+    static amrex::Real quantum_xi;
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -630,6 +654,8 @@ private:
 
     // Other runtime parameters
     int verbose = 1;
+
+    bool use_hybrid_QED = 0;
 
     int max_step   = std::numeric_limits<int>::max();
     amrex::Real stop_time = std::numeric_limits<amrex::Real>::max();
