@@ -13,7 +13,6 @@
 #include <WarpX.H>
 #include <WarpXConst.H>
 #include <WarpX_f.H>
-#include <WarpX_K.H>
 #include <WarpX_PML_kernels.H>
 #include <WarpX_FDTD.H>
 #ifdef WARPX_USE_PY
@@ -222,10 +221,10 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 {
 
     if (patch_type == PatchType::fine) {
-        fdtd_solver_fp[lev]->EvolveE( Efield_fp[lev], Bfield_fp[lev],
+        m_fdtd_solver_fp[lev]->EvolveE( Efield_fp[lev], Bfield_fp[lev],
                                       current_fp[lev], F_fp[lev], a_dt );
     } else {
-        fdtd_solver_cp[lev]->EvolveE( Efield_cp[lev], Bfield_cp[lev],
+        m_fdtd_solver_cp[lev]->EvolveE( Efield_cp[lev], Bfield_cp[lev],
                                       current_cp[lev], F_cp[lev], a_dt );
     }
 

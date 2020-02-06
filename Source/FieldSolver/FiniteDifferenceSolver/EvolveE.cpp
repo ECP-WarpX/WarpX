@@ -76,28 +76,28 @@ void FiniteDifferenceSolver::EvolveECartesian (
     for ( MFIter mfi(*Efield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
 
         // Extract field data for this grid/tile
-        auto const& Ex = Efield[0]->array(mfi);
-        auto const& Ey = Efield[1]->array(mfi);
-        auto const& Ez = Efield[2]->array(mfi);
-        auto const& Bx = Bfield[0]->array(mfi);
-        auto const& By = Bfield[1]->array(mfi);
-        auto const& Bz = Bfield[2]->array(mfi);
-        auto const& jx = Jfield[0]->array(mfi);
-        auto const& jy = Jfield[1]->array(mfi);
-        auto const& jz = Jfield[2]->array(mfi);
+        Array4<Real> const& Ex = Efield[0]->array(mfi);
+        Array4<Real> const& Ey = Efield[1]->array(mfi);
+        Array4<Real> const& Ez = Efield[2]->array(mfi);
+        Array4<Real> const& Bx = Bfield[0]->array(mfi);
+        Array4<Real> const& By = Bfield[1]->array(mfi);
+        Array4<Real> const& Bz = Bfield[2]->array(mfi);
+        Array4<Real> const& jx = Jfield[0]->array(mfi);
+        Array4<Real> const& jy = Jfield[1]->array(mfi);
+        Array4<Real> const& jz = Jfield[2]->array(mfi);
 
         // Extract stencil coefficients
-        Real const* AMREX_RESTRICT coefs_x = stencil_coefs_x.dataPtr();
-        int const n_coefs_x = stencil_coefs_x.size();
-        Real const* AMREX_RESTRICT coefs_y = stencil_coefs_y.dataPtr();
-        int const n_coefs_y = stencil_coefs_y.size();
-        Real const* AMREX_RESTRICT coefs_z = stencil_coefs_z.dataPtr();
-        int const n_coefs_z = stencil_coefs_z.size();
+        Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
+        int const n_coefs_x = m_stencil_coefs_x.size();
+        Real const * const AMREX_RESTRICT coefs_y = m_stencil_coefs_y.dataPtr();
+        int const n_coefs_y = m_stencil_coefs_y.size();
+        Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+        int const n_coefs_z = m_stencil_coefs_z.size();
 
         // Extract tileboxes for which to loop
-        const Box& tex  = mfi.tilebox(Efield[0]->ixType().ixType());
-        const Box& tey  = mfi.tilebox(Efield[1]->ixType().ixType());
-        const Box& tez  = mfi.tilebox(Efield[2]->ixType().ixType());
+        Box const& tex  = mfi.tilebox(Efield[0]->ixType().ixType());
+        Box const& tey  = mfi.tilebox(Efield[1]->ixType().ixType());
+        Box const& tez  = mfi.tilebox(Efield[2]->ixType().ixType());
 
         // Loop over the cells and update the fields
         amrex::ParallelFor(tex, tey, tez,
@@ -130,7 +130,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
         if (Ffield) {
 
             // Extract field data for this grid/tile
-            auto const F = Ffield->array(mfi);
+            Array4<Real> F = Ffield->array(mfi);
 
             // Loop over the cells and update the fields
             amrex::ParallelFor(tex, tey, tez,
@@ -170,21 +170,21 @@ void FiniteDifferenceSolver::EvolveECylindrical (
     for ( MFIter mfi(*Efield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
 
         // Extract field data for this grid/tile
-        auto const& Er = Efield[0]->array(mfi);
-        auto const& Et = Efield[1]->array(mfi);
-        auto const& Ez = Efield[2]->array(mfi);
-        auto const& Br = Bfield[0]->array(mfi);
-        auto const& Bt = Bfield[1]->array(mfi);
-        auto const& Bz = Bfield[2]->array(mfi);
-        auto const& jr = Jfield[0]->array(mfi);
-        auto const& jt = Jfield[1]->array(mfi);
-        auto const& jz = Jfield[2]->array(mfi);
+        Array4<Real> const& Er = Efield[0]->array(mfi);
+        Array4<Real> const& Et = Efield[1]->array(mfi);
+        Array4<Real> const& Ez = Efield[2]->array(mfi);
+        Array4<Real> const& Br = Bfield[0]->array(mfi);
+        Array4<Real> const& Bt = Bfield[1]->array(mfi);
+        Array4<Real> const& Bz = Bfield[2]->array(mfi);
+        Array4<Real> const& jr = Jfield[0]->array(mfi);
+        Array4<Real> const& jt = Jfield[1]->array(mfi);
+        Array4<Real> const& jz = Jfield[2]->array(mfi);
 
         // Extract stencil coefficients
-        Real const* AMREX_RESTRICT coefs_r = stencil_coefs_r.dataPtr();
-        int const n_coefs_r = stencil_coefs_r.size();
-        Real const* AMREX_RESTRICT coefs_z = stencil_coefs_z.dataPtr();
-        int const n_coefs_z = stencil_coefs_z.size();
+        Real const * const AMREX_RESTRICT coefs_r = m_stencil_coefs_r.dataPtr();
+        int const n_coefs_r = m_stencil_coefs_r.size();
+        Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
+        int const n_coefs_z = m_stencil_coefs_z.size();
 
         // Extract cylindrical specific parameters
         Real const dr = m_dr;
@@ -192,9 +192,9 @@ void FiniteDifferenceSolver::EvolveECylindrical (
         Real const rmin = m_rmin;
 
         // Extract tileboxes for which to loop
-        const Box& ter  = mfi.tilebox(Efield[0]->ixType().ixType());
-        const Box& tet  = mfi.tilebox(Efield[1]->ixType().ixType());
-        const Box& tez  = mfi.tilebox(Efield[2]->ixType().ixType());
+        Box const& ter  = mfi.tilebox(Efield[0]->ixType().ixType());
+        Box const& tet  = mfi.tilebox(Efield[1]->ixType().ixType());
+        Box const& tez  = mfi.tilebox(Efield[2]->ixType().ixType());
 
         Real const c2 = PhysConst::c * PhysConst::c;
 
@@ -272,7 +272,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
         if (Ffield) {
 
             // Extract field data for this grid/tile
-            auto const F = Ffield->array(mfi);
+            Array4<Real> F = Ffield->array(mfi);
 
             // Loop over the cells and update the fields
             amrex::ParallelFor(ter, tet, tez,
@@ -287,10 +287,18 @@ void FiniteDifferenceSolver::EvolveECylindrical (
                 [=] AMREX_GPU_DEVICE (int i, int j, int k){
                     // Mode m=0: no update
                     Real const r = rmin + i*dr; // r on a nodal grid (Et is nodal in r)
-                    if (r!=0){
+                    if (r != 0){ // Off-axis, regular Maxwell equations
                         for (int m=1; m<nmodes; m++) { // Higher-order modes
                             Et(i, j, 0, 2*m-1) +=  m * F(i, j, 0, 2*m  )/r; // Real part
                             Et(i, j, 0, 2*m  ) += -m * F(i, j, 0, 2*m-1)/r; // Imaginary part
+                        }
+                    } else { // r==0: on-axis corrections
+                        // For m==1, F is linear in r, for small r
+                        // Therefore, the formula below regularizes the singularity
+                        if (nmodes > 0) {
+                            int const m=1;
+                            Et(i, j, 0, 2*m-1) +=  m * F(i+1, j, 0, 2*m  )/dr; // Real part
+                            Et(i, j, 0, 2*m  ) += -m * F(i+1, j, 0, 2*m-1)/dr; // Imaginary part
                         }
                     }
                 },
