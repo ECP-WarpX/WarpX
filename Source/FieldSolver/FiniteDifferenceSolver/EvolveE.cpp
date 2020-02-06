@@ -219,19 +219,43 @@ void FiniteDifferenceSolver::EvolveECylindrical (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                Et(i, j, 0, 0) += c2 * dt*(
-                    - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 0)
-                    + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 0)
-                    - PhysConst::mu0 * jt(i, j, 0, 0 ) ); // Mode m=0
-                for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
-                    Et(i, j, 0, 2*m-1) += c2 * dt*(
-                        - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
-                        + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
-                        - PhysConst::mu0 * jt(i, j, 0, 2*m-1) ); // Real part
-                    Et(i, j, 0, 2*m  ) += c2 * dt*(
-                        - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m  )
-                        + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m  )
-                        - PhysConst::mu0 * jt(i, j, 0, 2*m  ) ); // Imaginary part
+                Real const r = rmin + i*dr; // r on a nodal grid (Et is nodal in r)
+                if (r != 0) { // Off-axis, regular Maxwell equations
+                    Et(i, j, 0, 0) += c2 * dt*(
+                        - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 0)
+                        + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 0)
+                        - PhysConst::mu0 * jt(i, j, 0, 0 ) ); // Mode m=0
+                    for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
+                        Et(i, j, 0, 2*m-1) += c2 * dt*(
+                            - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
+                            + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m-1)
+                            - PhysConst::mu0 * jt(i, j, 0, 2*m-1) ); // Real part
+                        Et(i, j, 0, 2*m  ) += c2 * dt*(
+                            - T_Algo::DownwardDr(Bz, coefs_r, n_coefs_r, i, j, 0, 2*m  )
+                            + T_Algo::DownwardDz(Br, coefs_z, n_coefs_z, i, j, 0, 2*m  )
+                            - PhysConst::mu0 * jt(i, j, 0, 2*m  ) ); // Imaginary part
+                    }
+                } else { // r==0: on-axis corrections
+                    // Ensure that Et remains 0 on axis (except for m=1)
+                    Et(i, j, 0, 0) = 0.; // Mode m=0
+                    for (int m=1; m<nmodes; m++) { // Higher-order modes
+                        if (m == 1){
+                            // The bulk equation could in principle be used here since it does not diverge
+                            // on axis. However, it typically gives poor results e.g. for the propagation
+                            // of a laser pulse (the field is spuriously reduced on axis). For this reason
+                            // a modified on-axis condition is used here: we use the fact that
+                            // Etheta(r=0,m=1) should equal -iEr(r=0,m=1), for the fields Er and Et to be
+                            // independent of theta at r=0. Now with linear interpolation:
+                            // Er(r=0,m=1) = 0.5*[Er(r=dr/2,m=1) + Er(r=-dr/2,m=1)]
+                            // And using the rule applying for the guards cells
+                            // Er(r=-dr/2,m=1) = Er(r=dr/2,m=1). Thus: Et(i,j,m) = -i*Er(i,j,m)
+                            Et(i,j,0,2*m-1) =  Er(i,j,0,2*m  );
+                            Et(i,j,0,2*m  ) = -Er(i,j,0,2*m-1);
+                        } else {
+                            Et(i, j, 0, 2*m-1) = 0.;
+                            Et(i, j, 0, 2*m  ) = 0.;
+                        }
+                    }
                 }
             },
 
@@ -265,7 +289,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
                 }
             }
 
-        );
+        ); // end of loop over cells
 
         // If F is not a null pointer, further update E using the grad(F) term
         // (hyperbolic correction for errors in charge conservation)
@@ -310,11 +334,11 @@ void FiniteDifferenceSolver::EvolveECylindrical (
                     }
                 }
 
-            );
+            ); // end of loop over cells
 
-        }
+        } // end of if condition for F
 
-    }
+    } // end of loop over grid/tiles
 
 }
 
