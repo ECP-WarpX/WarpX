@@ -8,11 +8,12 @@
 #ifndef CHARGEDEPOSITION_H_
 #define CHARGEDEPOSITION_H_
 
+#include "GetAndSetPosition.H"
 #include "ShapeFactors.H"
 #include <WarpX_Complex.H>
 
 /* \brief Charge Deposition for thread thread_num
- * /param xp, yp, zp   : Pointer to arrays of particle positions.
+ * /param GetPosition : A functor for returning the particle position.
  * \param wp           : Pointer to array of particle weights.
  * \param ion_lev      : Pointer to array of particle ionization level. This is
                          required to have the charge of each macroparticle
@@ -26,9 +27,7 @@
  * /param q            : species charge.
  */
 template <int depos_order>
-void doChargeDepositionShapeN(const amrex::ParticleReal * const xp,
-                              const amrex::ParticleReal * const yp,
-                              const amrex::ParticleReal * const zp,
+void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
                               const amrex::ParticleReal * const wp,
                               const int * const ion_lev,
                               amrex::FArrayBox& rho_fab,
@@ -72,16 +71,19 @@ void doChargeDepositionShapeN(const amrex::ParticleReal * const xp,
                 wq *= ion_lev[ip];
             }
 
+            amrex::ParticleReal xp, yp, zp;
+            GetPosition(ip, xp, yp, zp);
+
             // --- Compute shape factors
             // x direction
             // Get particle position in grid coordinates
 #if (defined WARPX_DIM_RZ)
-            const amrex::Real rp = std::sqrt(xp[ip]*xp[ip] + yp[ip]*yp[ip]);
+            const amrex::Real rp = std::sqrt(xp*xp + yp*yp);
             amrex::Real costheta;
             amrex::Real sintheta;
             if (rp > 0.) {
-                costheta = xp[ip]/rp;
-                sintheta = yp[ip]/rp;
+                costheta = xp/rp;
+                sintheta = yp/rp;
             } else {
                 costheta = 1.;
                 sintheta = 0.;
@@ -89,7 +91,7 @@ void doChargeDepositionShapeN(const amrex::ParticleReal * const xp,
             const Complex xy0 = Complex{costheta, sintheta};
             const amrex::Real x = (rp - xmin)*dxi;
 #else
-            const amrex::Real x = (xp[ip] - xmin)*dxi;
+            const amrex::Real x = (xp - xmin)*dxi;
 #endif
 
             // Compute shape factor along x
@@ -104,7 +106,7 @@ void doChargeDepositionShapeN(const amrex::ParticleReal * const xp,
 
 #if (defined WARPX_DIM_3D)
             // y direction
-            const amrex::Real y = (yp[ip] - ymin)*dyi;
+            const amrex::Real y = (yp - ymin)*dyi;
             amrex::Real sy[depos_order + 1];
             int j;
             if (rho_type[1] == NODE) {
@@ -114,7 +116,7 @@ void doChargeDepositionShapeN(const amrex::ParticleReal * const xp,
             }
 #endif
             // z direction
-            const amrex::Real z = (zp[ip] - zmin)*dzi;
+            const amrex::Real z = (zp - zmin)*dzi;
             amrex::Real sz[depos_order + 1];
             int k;
             if (rho_type[zdir] == NODE) {
