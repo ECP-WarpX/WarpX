@@ -156,35 +156,35 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
 
             // TODO: Work on rhocomp
             // TODO: Work on theta derivative
-            // TODO: Work on on-axis condition
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Real const r = rmin + i*dr; // r on a nodal grid (F is nodal in r)
                 if (r != 0) { // Off-axis, regular equations
-                    F(i, j, k) += dt * (
-                        - rho(i, j, k, rhocomp) * inv_epsilon0
-                        + T_Algo::DownwardDrr_over_r(Ex, coefs_x, n_coefs_x, i, j, k)
-                        + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, k) );
+                    F(i, j, 0, 0) += dt * (
+                        - rho(i, j, 0, rho_shift) * inv_epsilon0
+                        + T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 0)
+                        + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 0) );
                     for (int m=1 ; m<nmodes ; m++) { // Higher-order modes
                         F(i, j, 0, 2*m-1) += dt * (
-                            - rho(i, j, k, rhocomp) * inv_epsilon0
-                            + T_Algo::DownwardDrr_over_r(Ex, coefs_x, n_coefs_x, i, j, k)
-                            + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, k) );
+                            - rho(i, j, 0, rho_shift + 2*m-1) * inv_epsilon0
+                            + T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
+                            + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 2*m-1) ); // Real part
                         F(i, j, 0, 2*m  ) += c2 * dt *(
-                            m * Br(i, j, 0, 2*m-1)/r
-                            + T_Algo::DownwardDrr_over_r(Bt, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m  )
-                            - PhysConst::mu0 * jz(i, j, 0, 2*m  ) ); // Imaginary part
+                            - rho(i, j, 0, rho_shift + 2*m-1) * inv_epsilon0
+                            + T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
+                            + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 2*m  ) ); // Imaginary part
                     }
                 } else { // r==0: on-axis corrections
-                    // For m==0, Bt is linear in r, for small r
+                    // For m==0, Er is linear in r, for small r
                     // Therefore, the formula below regularizes the singularity
-                    Ez(i, j, 0, 0) += c2 * dt*(
-                         4*Bt(i, j, 0, 0)/dr // regularization
-                         - PhysConst::mu0 * jz(i, j, 0, 0  ) );
-                    // Ensure that Ez remains 0 for higher-order modes
+                    F(i, j, 0, 0) += dt * (
+                        - rho(i, j, 0, rho_shift) * inv_epsilon0
+                         4*Er(i, j, 0, 0)/dr // regularization
+                         + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 0) );
+                    // Ensure that F remains 0 for higher-order modes
                     for (int m=1; m<nmodes; m++) {
-                        Ez(i, j, 0, 2*m-1) = 0.;
-                        Ez(i, j, 0, 2*m  ) = 0.;
+                        F(i, j, 0, 2*m-1) = 0.;
+                        F(i, j, 0, 2*m  ) = 0.;
                     }
                 }
             }
