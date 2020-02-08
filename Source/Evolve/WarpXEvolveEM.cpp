@@ -270,7 +270,7 @@ WarpX::EvolveEM (int numsteps)
 
     bool write_plot_file = plot_int > 0 && istep[0] > last_plot_file_step
         && (max_time_reached || istep[0] >= max_step);
-    bool write_openPMD = openpmd_int > 0 && (max_time_reached || istep[0] >= max_step);
+    bool write_openPMD = (openpmd_int > 0) && (istep[0] > last_plot_file_step) && (max_time_reached || istep[0] >= max_step);
 
     bool do_insitu = (insitu_start >= istep[0]) && (insitu_int > 0) &&
         (istep[0] > last_insitu_step) && (max_time_reached || istep[0] >= max_step);
