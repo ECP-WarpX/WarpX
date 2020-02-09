@@ -138,19 +138,31 @@ void WarpXOpenPMDPlot::GetFileName(std::string& filename)
 }
 
 
-void WarpXOpenPMDPlot::SetStep(int ts)
+bool WarpXOpenPMDPlot::SetStep(int ts)
 {
   if (ts < 0)
-    return;
+    return false;
 
-  m_CurrentStep =  ts;
-
-  Init(openPMD::AccessType::CREATE);
+  if (m_CurrentStep >= ts) {
+     m_OK = false;
+  } else {
+    m_OK = true;
+    m_CurrentStep =  ts;
+    Init(openPMD::AccessType::CREATE);
+  } 
+  return  m_OK;
 }
 
 void
 WarpXOpenPMDPlot::Init(openPMD::AccessType accessType)
-{
+{ 
+  // closing the previous m_Series is needed.
+  // adios1 will crash for example.
+   if (m_Series != nullptr) {
+     m_Series->flush();
+     m_Series = nullptr;
+  }
+
     // either for the next ts file,
     // or init a single file for all ts
     std::string filename;
@@ -193,6 +205,9 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType)
 void
 WarpXOpenPMDPlot::WriteOpenPMDParticles(const std::unique_ptr<MultiParticleContainer>& mpc)
 {
+  if (!m_OK)
+     return;
+
   BL_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
   std::vector<std::string> species_names = mpc->GetSpeciesNames();
 
@@ -529,6 +544,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
                       const int iteration,
                       const double time ) const
 {
+  if (!m_OK)
+    return;
+
   //This is AMReX's tiny profiler. Possibly will apply it later
   BL_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
 

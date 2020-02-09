@@ -88,7 +88,7 @@ public:
 
   ~WarpXOpenPMDPlot();
 
-  void SetStep(int ts);
+  bool SetStep(int ts);
 
   void WriteOpenPMDParticles(const std::unique_ptr<MultiParticleContainer>&);
 
@@ -172,6 +172,7 @@ private:
   bool m_OneFilePerTS = true;  //! write in openPMD fileBased manner for individual time steps
   std::string m_OpenPMDFileType = "bp"; //! MPI-parallel openPMD backend: bp or h5
   int m_CurrentStep  = -1;
+  bool m_OK = false;
 
   // meta data
   std::vector< bool > m_fieldPMLdirections; //! @see WarpX::getPMLdirections()
