@@ -149,13 +149,13 @@ bool WarpXOpenPMDPlot::SetStep(int ts)
     m_OK = true;
     m_CurrentStep =  ts;
     Init(openPMD::AccessType::CREATE);
-  } 
+  }
   return  m_OK;
 }
 
 void
 WarpXOpenPMDPlot::Init(openPMD::AccessType accessType)
-{ 
+{
   // closing the previous m_Series is needed.
   // adios1 will crash for example.
    if (m_Series != nullptr) {
