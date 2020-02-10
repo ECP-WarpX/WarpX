@@ -661,7 +661,7 @@ MultiParticleContainer::doFieldIonization ()
 
         for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
         {
-            auto info = getMFItInfo(*pc_source, *pc_product);
+            auto info = getMFItInfo<1>(*pc_source, {*pc_product});
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -715,15 +715,18 @@ MultiParticleContainer::doCoulombCollisions ()
     }
 }
 
+template<size_t N>
 MFItInfo MultiParticleContainer::getMFItInfo (const WarpXParticleContainer& pc_src,
-                                              const WarpXParticleContainer& pc_dst) const noexcept
+                                              const std::array<WarpXParticleContainer, N> &pc_dst) const noexcept
 {
     MFItInfo info;
 
     if (pc_src.do_tiling && Gpu::notInLaunchRegion()) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
-                                         "For ionization, either all or none of the "
-                                         "particle species must use tiling.");
+        for (auto& dst : pc_dst){
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(dst.do_tiling,
+                                             "For particle creation processes, either all or none of the "
+                                             "particle species must use tiling.");
+        }
         info.EnableTiling(pc_src.tile_size);
     }
 
