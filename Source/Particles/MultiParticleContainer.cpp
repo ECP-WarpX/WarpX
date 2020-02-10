@@ -1019,4 +1019,147 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
         m_shr_p_bw_engine->init_lookup_tables_from_raw_data(table_data);
     }
 }
+
+void MultiParticleContainer::doQedEvents()
+{
+    BL_PROFILE("MPC::doQedEvents");
+
+    doQedBreitWheeler();
+    doQedQuantumSync();
+}
+
+void MultiParticleContainer::doQedBreitWheeler()
+{
+    BL_PROFILE("MPC::doQedEvents::doQedBreitWheeler");
+
+    // Loop over all species.
+    // Photons undergoing Breit Wheeler process create electrons
+    // in pc_product_ele and positrons in pc_product_pos
+
+    for (auto& pc_source : allcontainers){
+        if(!pc_source->has_breit_wheeler()){ continue; }
+
+        // Get product species
+        auto& pc_product_ele =
+            allcontainers[pc_source->m_qed_breit_wheeler_ele_product];
+        auto& pc_product_pos =
+            allcontainers[pc_source->m_qed_breit_wheeler_pos_product];
+
+        SmartCopyFactory copy_factory_ele(*pc_source, *pc_product_ele);
+        SmartCopyFactory copy_factory_pos(*pc_source, *pc_product_pos);
+        auto phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
+
+        auto Filter    = phys_pc_ptr->getPairGenerationFilterFunc();
+        auto CopyEle      = copy_factory_ele.getSmartCopy();
+        auto CopyPos      = copy_factory_pos.getSmartCopy();
+        //auto Transform = IonizationTransformFunc();
+
+        pc_source ->defineAllParticleTiles();
+        pc_product_pos->defineAllParticleTiles();
+        pc_product_ele->defineAllParticleTiles();
+
+        for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
+        {
+/*            auto info = getMFItInfo(*pc_source, *pc_product);
+
+#ifdef _OPENMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+            for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
+            {
+                auto& src_tile = pc_source ->ParticlesAt(lev, mfi);
+                auto& dst_tile = pc_product->ParticlesAt(lev, mfi);
+
+                auto np_dst = dst_tile.numParticles();
+                auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
+                                                                 Filter, Copy, Transform);
+
+                setNewParticleIDs(dst_tile, np_dst, num_added);
+            }
+
+
+          m_p_unq_qed_breit_wheeler_process->createParticles
+                (lev, mfi, pc_source, v_pc_product,
+                should_do_breit_wheel, v_do_back_transformed_product);
+            // Synchronize to prevent the destruction of temporary arrays (at the
+            // end of the function call) before the kernel executes.
+            Gpu::streamSynchronize();
+
+            if(pc_product_ele->has_quantum_sync()){
+                auto& ptile_ele = pc_product_ele->GetParticles(lev)[grid_title];
+                const auto p_ele_new_size =
+                    ptile_ele.GetArrayOfStructs().size();
+                auto particle_comps = pc_product_ele->getParticleComps();
+                ParticleReal * const AMREX_RESTRICT p_tau =
+                    ptile_ele.GetStructOfArrays().GetRealData(
+                        particle_comps["tau"]).data();
+
+                auto get_opt =
+                    m_shr_p_qs_engine->build_optical_depth_functor();
+
+                amrex::ParallelFor(p_ele_new_size-p_ele_init_size,
+                [=] AMREX_GPU_DEVICE (long i){
+                    p_tau[i+p_ele_init_size] = get_opt();
+                });
+            }
+
+            if(pc_product_pos->has_quantum_sync()){
+                auto& ptile_pos = pc_product_pos->GetParticles(lev)[grid_title];
+                const auto p_pos_new_size =
+                    ptile_pos.GetArrayOfStructs().size();
+                auto particle_comps = pc_product_pos->getParticleComps();
+                ParticleReal * const AMREX_RESTRICT p_tau =
+                    ptile_pos.GetStructOfArrays().GetRealData(
+                        particle_comps["tau"]).data();
+
+                auto get_opt =
+                    m_shr_p_qs_engine->build_optical_depth_functor();
+
+                amrex::ParallelFor(p_pos_new_size-p_pos_init_size,
+                [=] AMREX_GPU_DEVICE (long i){
+                    p_tau[i+p_pos_init_size] = get_opt();
+                });
+            }
+
+            Gpu::streamSynchronize();
+        }
+    }
+
+*/
+        }
+   }
+}
+
+void doQedQuantumSync(std::unique_ptr<WarpXParticleContainer>& p_source)
+{
+    BL_PROFILE("MPC::doQedEvents::doQedQuantumSync");
+
+    // Loop over all species.
+    // Electrons or positrons undergoing Quantum photon emission process
+    // create photons in pc_product_phot
+
+    for (auto& pc_source : allcontainers){
+        if(!pc_source->has_quantum_sync()){ continue; }
+
+                // Get product species
+        auto& pc_product_phot =
+            allcontainers[pc_source->m_qed_quantum_sync_phot_product];
+
+        SmartCopyFactory copy_factory_phot(*pc_source, *pc_product_phot);
+        auto phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
+
+        auto Filter    = phys_pc_ptr->getPairGenerationFilterFunc();
+        auto CopyEle      = copy_factory_ele.getSmartCopy();
+        auto CopyPos      = copy_factory_pos.getSmartCopy();
+        //auto Transform = IonizationTransformFunc();
+
+        pc_source ->defineAllParticleTiles();
+        pc_product_pos->defineAllParticleTiles();
+        pc_product_ele->defineAllParticleTiles();
+
+
+    }
+}
+
+
 #endif

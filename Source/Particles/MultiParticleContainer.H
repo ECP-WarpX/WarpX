@@ -231,6 +231,13 @@ public:
     std::unique_ptr<ParserWrapper> m_Ey_particle_parser;
     std::unique_ptr<ParserWrapper> m_Ez_particle_parser;
 
+#ifdef WARPX_QED
+    void doQedEvents();
+    void doQedBreitWheeler();
+    void doQedQuantumSync();
+#endif
+
+
 
 protected:
 

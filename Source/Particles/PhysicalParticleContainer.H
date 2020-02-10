@@ -21,6 +21,9 @@
     #include <QuantumSyncEngineWrapper.H>
     #include <BreitWheelerEngineWrapper.H>
     #include <QedChiFunctions.H>
+
+    #include <QEDPairGeneration.H>
+    #include <QEDPhotonEmission.H>
 #endif
 
 #include <map>
@@ -314,6 +317,10 @@ public:
      */
     virtual void EvolveOpticalDepth(WarpXParIter& pti,
         amrex::Real dt);
+
+    PhotonEmissionFilterFunc getPhotonEmissionFilterFunc ();
+
+    PairGenerationFilterFunc getPairGenerationFilterFunc ();
 #endif
 
 protected:
