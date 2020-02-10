@@ -610,8 +610,8 @@ WarpX::ReadParameters ()
         pp.query("noy", noy_fft);
         pp.query("noz", noz_fft);
         pp.query("v_galilean", v_galilean);
-	    // Scale the velocity by the speed of light
-	    for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
+      // Scale the velocity by the speed of light
+        for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
     }
 #endif
 
