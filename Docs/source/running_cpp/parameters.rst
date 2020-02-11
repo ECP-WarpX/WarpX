@@ -1010,7 +1010,7 @@ Diagnostics and output
         :math:`\gamma v/c`, where
         :math:`\gamma` is the Lorentz factor,
         :math:`v/c` is the particle velocity normalized by the speed of light.
-        E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at 
+        E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
         positions `x` greater than `0`, and those having velocity `uz` less than 10,
         will be dumped.
 
