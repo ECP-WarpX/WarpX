@@ -605,13 +605,57 @@ MultiParticleContainer::mapSpeciesProduct ()
         // pc->ionization_product_name and store its ID into
         // pc->ionization_product.
         if (pc->do_field_ionization){
-            int i_product = getSpeciesID(pc->ionization_product_name);
+            const int i_product = getSpeciesID(pc->ionization_product_name);
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 i != i_product,
                 "ERROR: ionization product cannot be the same species");
             pc->ionization_product = i_product;
         }
+
+#ifdef WARPX_QED
+        if (pc->has_breit_wheeler()){
+            const int i_product_ele = getSpeciesID(
+                pc->m_qed_breit_wheeler_ele_product_name);
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != i_product_ele,
+                "ERROR: Breit Wheeler product cannot be the same species");
+            pc->m_qed_breit_wheeler_ele_product = i_product_ele;
+
+            const int i_product_pos = getSpeciesID(
+                pc->m_qed_breit_wheeler_pos_product_name);
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != i_product_pos,
+                "ERROR: Breit Wheeler product cannot be the same species");
+            pc->m_qed_breit_wheeler_pos_product = i_product_pos;
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_ele < allcontainers.size(),
+                "ERROR: Breit Wheeler product species not found");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_pos < allcontainers.size(),
+                "ERROR: Breit Wheeler product species not found");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                allcontainers[i_product_ele]->AmIAnElectron() &&
+                allcontainers[i_product_pos]->AmIAPositron(),
+                "ERROR: Breit Wheeler product species are of wrong type");
+        }
+
+        if(pc->has_quantum_sync()){
+            const int i_product_phot = getSpeciesID(
+                pc->m_qed_quantum_sync_phot_product_name);
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != i_product_phot,
+                "ERROR: Quantum Synchrotron product cannot be the same species");
+            pc->m_qed_quantum_sync_phot_product = i_product_phot;
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_phot < allcontainers.size(),
+                "ERROR: Quantum Synchrotron product species not found");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                allcontainers[i_product_phot]->AmIAPhoton(),
+                "ERROR: Quantum Synchrotron product species is of wrong type");
+        }
+#endif
+
     }
+
 }
 
 /* \brief Given a species name, return its ID.
@@ -632,7 +676,7 @@ MultiParticleContainer::getSpeciesID (std::string product_str)
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         found != 0,
-        "ERROR: could not find product species ID for ionization. Wrong name?");
+        "ERROR: could not find product species ID. Wrong name?");
     return i_product;
 }
 
@@ -661,7 +705,7 @@ MultiParticleContainer::doFieldIonization ()
 
         for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
         {
-            auto info = getMFItInfo<1>(*pc_source, {*pc_product});
+            auto info = getMFItInfo(*pc_source, *pc_product);
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -713,28 +757,6 @@ MultiParticleContainer::doCoulombCollisions ()
             }
         }
     }
-}
-
-template<size_t N>
-MFItInfo MultiParticleContainer::getMFItInfo (const WarpXParticleContainer& pc_src,
-                                              const std::array<WarpXParticleContainer, N> &pc_dst) const noexcept
-{
-    MFItInfo info;
-
-    if (pc_src.do_tiling && Gpu::notInLaunchRegion()) {
-        for (auto& dst : pc_dst){
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(dst.do_tiling,
-                                             "For particle creation processes, either all or none of the "
-                                             "particle species must use tiling.");
-        }
-        info.EnableTiling(pc_src.tile_size);
-    }
-
-#ifdef _OPENMP
-    info.SetDynamic(true);
-#endif
-
-    return info;
 }
 
 #ifdef WARPX_QED
@@ -1063,11 +1085,13 @@ void MultiParticleContainer::doQedBreitWheeler()
 
         for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
         {
-/*            auto info = getMFItInfo(*pc_source, *pc_product);
-
+            auto info = getMFItInfo(*pc_source, *pc_product_ele, *pc_product_pos);
+/*
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
+
+
             for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
             {
                 auto& src_tile = pc_source ->ParticlesAt(lev, mfi);
@@ -1133,7 +1157,7 @@ void MultiParticleContainer::doQedBreitWheeler()
    }
 }
 
-void doQedQuantumSync(std::unique_ptr<WarpXParticleContainer>& p_source)
+void MultiParticleContainer::doQedQuantumSync()
 {
     BL_PROFILE("MPC::doQedEvents::doQedQuantumSync");
 
@@ -1152,14 +1176,11 @@ void doQedQuantumSync(std::unique_ptr<WarpXParticleContainer>& p_source)
         auto phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
 
         auto Filter    = phys_pc_ptr->getPairGenerationFilterFunc();
-        auto CopyEle      = copy_factory_ele.getSmartCopy();
-        auto CopyPos      = copy_factory_pos.getSmartCopy();
+        auto CopyPhot      = copy_factory_phot.getSmartCopy();
         //auto Transform = IonizationTransformFunc();
 
         pc_source ->defineAllParticleTiles();
-        pc_product_pos->defineAllParticleTiles();
-        pc_product_ele->defineAllParticleTiles();
-
+        pc_product_phot->defineAllParticleTiles();
 
     }
 }

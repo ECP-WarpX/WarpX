@@ -344,6 +344,11 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 #endif
 
+#ifdef WARPX_QED
+    //Do QED processes
+    mypc->doQedEvents();
+#endif
+
     SyncCurrent();
 
     SyncRho();

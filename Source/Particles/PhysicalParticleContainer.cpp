@@ -67,7 +67,8 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !(do_classical_radiation_reaction && !AmIALepton()),
+        !(do_classical_radiation_reaction &&
+        !(AmIAnElectron() || AmIAPositron()) ),
         "Can't enable classical radiation reaction for non lepton species. " );
 
     //Only Boris pusher is compatible with radiation reaction
@@ -88,6 +89,13 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         pp.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
 
     //TODO: SHOULD CHECK IF SPECIES IS EITHER ELECTRONS OR POSITRONS!!
+
+    if(m_do_qed_quantum_sync){
+        pp.get("qed_quantum_sync_phot_product_species",
+            m_qed_quantum_sync_phot_product_name);
+    }
+
+
 #endif
 
     //variable to set plot_flags size
@@ -2341,12 +2349,25 @@ PhysicalParticleContainer::getIonizationFunc ()
 
 //This function return true if the PhysicalParticleContainer contains electrons
 //or positrons, false otherwise
-bool
-PhysicalParticleContainer::AmIALepton(){
-    return (this-> mass == PhysConst::m_e);
+bool PhysicalParticleContainer::AmIAPhoton ()
+{
+    return false;
+}
+
+bool PhysicalParticleContainer::AmIAnElectron ()
+{
+    return (this-> mass == PhysConst::m_e &&
+        this->charge == -PhysConst::q_e);
+}
+
+bool PhysicalParticleContainer::AmIAPositron ()
+{
+    return (this-> mass == PhysConst::m_e &&
+        this->charge == PhysConst::q_e);
 }
 
 #ifdef WARPX_QED
+
 
 bool PhysicalParticleContainer::has_quantum_sync()
 {

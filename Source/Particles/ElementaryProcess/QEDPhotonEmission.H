@@ -33,16 +33,20 @@ struct PhotonEmissionTransformFunc
 
         // Compute electric field amplitude in the particle's frame of
         // reference (particularly important when in boosted frame).
-        amrex::ParticleReal w = ptd.m_rdata[PIdx::w][i_src];
-        amrex::ParticleReal ux = ptd.m_rdata[PIdx::ux][i_src];
-        amrex::ParticleReal uy = ptd.m_rdata[PIdx::uy][i_src];
-        amrex::ParticleReal uz = ptd.m_rdata[PIdx::uz][i_src];
-        amrex::ParticleReal ex = ptd.m_rdata[PIdx::Ex][i_src];
-        amrex::ParticleReal ey = ptd.m_rdata[PIdx::Ey][i_src];
-        amrex::ParticleReal ez = ptd.m_rdata[PIdx::Ez][i_src];
-        amrex::ParticleReal bx = ptd.m_rdata[PIdx::Bx][i_src];
-        amrex::ParticleReal by = ptd.m_rdata[PIdx::By][i_src];
-        amrex::ParticleReal bz = ptd.m_rdata[PIdx::Bz][i_src];
+        const amrex::ParticleReal w = src.m_rdata[PIdx::w][i_src];
+        const amrex::ParticleReal ux = src.m_rdata[PIdx::ux][i_src];
+        const amrex::ParticleReal uy = src.m_rdata[PIdx::uy][i_src];
+        const amrex::ParticleReal uz = src.m_rdata[PIdx::uz][i_src];
+        const amrex::ParticleReal ex = src.m_rdata[PIdx::Ex][i_src];
+        const amrex::ParticleReal ey = src.m_rdata[PIdx::Ey][i_src];
+        const amrex::ParticleReal ez = src.m_rdata[PIdx::Ez][i_src];
+        const amrex::ParticleReal bx = src.m_rdata[PIdx::Bx][i_src];
+        const amrex::ParticleReal by = src.m_rdata[PIdx::By][i_src];
+        const amrex::ParticleReal bz = src.m_rdata[PIdx::Bz][i_src];
+
+        auto px = ux*me;
+        auto py = uy*me;
+        auto pz = uz*me;
 
         auto g_w = amrex::ParticleReal{0.0};
         auto g_px = amrex::ParticleReal{0.0};

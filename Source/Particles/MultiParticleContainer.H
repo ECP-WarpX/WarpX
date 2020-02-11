@@ -33,6 +33,7 @@
 #include <map>
 #include <string>
 #include <algorithm>
+#include <array>
 
 /**
  * The class MultiParticleContainer holds multiple instances of the polymorphic
@@ -260,14 +261,32 @@ protected:
 
     std::vector<PCTypes> species_types;
 
+    template<typename ...Args>
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,
-                                 const WarpXParticleContainer& pc_dst) const noexcept;
+                                 Args const&... pc_dsts) const noexcept
+    {
+        amrex::MFItInfo info;
+
+        MFItInfoCheckTiling(pc_src, pc_dsts...);
+
+    if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
+        info.EnableTiling(pc_src.tile_size);
+    }
+
+#ifdef _OPENMP
+        info.SetDynamic(true);
+#endif
+
+        return info;
+    }
+
 
 #ifdef WARPX_QED
     // The QED engines
     std::shared_ptr<BreitWheelerEngine> m_shr_p_bw_engine;
     std::shared_ptr<QuantumSynchrotronEngine> m_shr_p_qs_engine;
     //_______________________________
+
 
     /**
      * Initialize QED engines and provides smart pointers
@@ -337,5 +356,26 @@ private:
     int nlasers = 0;
     int nspecies = 1;   // physical particles only. nspecies+nlasers == allcontainers.size().
     int ncollisions = 0;
+
+    void MFItInfoCheckTiling(const WarpXParticleContainer& pc_src) const noexcept
+    {
+        return;
+    }
+
+    template<typename First, typename ...Args>
+    void MFItInfoCheckTiling(const WarpXParticleContainer& pc_src,
+                             First const& pc_dst, Args const&... others) const noexcept
+    {
+        if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
+                "For particle creation processes, either all or none of the "
+                "particle species must use tiling.");
+        }
+
+        MFItInfoCheckTiling(pc_src, others...);
+    }
+
+
+
 };
 #endif /*WARPX_ParticleContainer_H_*/

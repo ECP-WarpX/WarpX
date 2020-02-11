@@ -361,7 +361,18 @@ protected:
     set_breit_wheeler_engine_ptr(std::shared_ptr<BreitWheelerEngine>){};
     virtual void
     set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){};
+
+    int m_qed_breit_wheeler_ele_product;
+    std::string m_qed_breit_wheeler_ele_product_name;
+    int m_qed_breit_wheeler_pos_product;
+    std::string m_qed_breit_wheeler_pos_product_name;
+    int m_qed_quantum_sync_phot_product;
+    std::string m_qed_quantum_sync_phot_product_name;
 #endif
+
+    virtual bool AmIAPhoton () {return false;};
+    virtual bool AmIAnElectron () {return false;};
+    virtual bool AmIAPositron () {return false;};
 
     amrex::Vector<amrex::FArrayBox> local_rho;
     amrex::Vector<amrex::FArrayBox> local_jx;

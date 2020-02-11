@@ -339,7 +339,10 @@ protected:
 
     //This function return true if the PhysicalParticleContainer contains electrons
     //or positrons, false otherwise
-    virtual bool AmIALepton ();
+
+    virtual bool AmIAPhoton ();
+    virtual bool AmIAnElectron ();
+    virtual bool AmIAPositron ();
 
     //When true PhysicalParticleContainer tries to use a pusher including
     //radiation reaction

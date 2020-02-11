@@ -200,6 +200,8 @@ public:
             rand_zero_one_minus_epsi;
         for(auto& el : rand_zero_one_minus_epsi) el = amrex::Random();
 
+        const auto p_rand = rand_zero_one_minus_epsi.data();
+
         PicsarBreitWheelerEngine::
         internal_generate_breit_wheeler_pairs(
             px, py, pz,
@@ -218,7 +220,7 @@ public:
                 m_p_cum_distrib_data
             },
             m_ctrl,
-            rand_zero_one_minus_epsi.data());
+            p_rand);
     }
 
 private:
