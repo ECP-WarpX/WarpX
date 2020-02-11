@@ -13,7 +13,6 @@
 #include <WarpXParticleContainer.H>
 #include <AMReX_AmrParGDB.H>
 #include <WarpXComm.H>
-#include <WarpX_f.H>
 #include <WarpX.H>
 #include <WarpXAlgorithmSelection.H>
 #include <WarpXComm.H>
@@ -744,6 +743,25 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
                     costarr(i,j,k) += wt;
                 });
             }
+        }
+    }
+}
+
+// When using runtime components, AMReX requires to touch all tiles
+// in serial and create particles tiles with runtime components if
+// they do not exist (or if they were defined by default, i.e.,
+// without runtime component).
+void WarpXParticleContainer::defineAllParticleTiles () noexcept
+{
+    tmp_particle_data.resize(finestLevel()+1);
+    for (int lev = 0; lev <= finestLevel(); ++lev)
+    {
+        for (auto mfi = MakeMFIter(lev); mfi.isValid(); ++mfi)
+        {
+            const int grid_id = mfi.index();
+            const int tile_id = mfi.LocalTileIndex();
+            tmp_particle_data[lev][std::make_pair(grid_id,tile_id)];
+            DefineAndReturnParticleTile(lev, grid_id, tile_id);
         }
     }
 }

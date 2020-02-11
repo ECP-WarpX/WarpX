@@ -386,19 +386,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     scale_fac = dx[0]*dx[1]/num_ppc;
 #endif
 
-#ifdef _OPENMP
-    // First touch all tiles in the map in serial
-    for (MFIter mfi = MakeMFIter(lev); mfi.isValid(); ++mfi) {
-        auto index = std::make_pair(mfi.index(), mfi.LocalTileIndex());
-        GetParticles(lev)[index];
-        tmp_particle_data.resize(finestLevel()+1);
-        // Create map entry if not there
-        tmp_particle_data[lev][index];
-        if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ) {
-            DefineAndReturnParticleTile(lev, mfi.index(), mfi.LocalTileIndex());
-        }
-    }
-#endif
+    defineAllParticleTiles();
 
     MultiFab* cost = WarpX::getCosts(lev);
 
@@ -576,7 +564,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                           overlap_realbox.lo(1),
                           overlap_realbox.lo(2))};
 
-        std::size_t shared_mem_bytes = plasma_injector->sharedMemoryNeeded();
         int lrrfac = rrfac;
 
         bool loc_do_field_ionization = do_field_ionization;
@@ -761,7 +748,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             p.pos(0) = xb;
             p.pos(1) = z;
 #endif
-        }, shared_mem_bytes);
+        });
 
         if (cost) {
             wt = (amrex::second() - wt) / tile_box.d_numPts();
@@ -1015,44 +1002,36 @@ PhysicalParticleContainer::AssignExternalFieldOnParticles(WarpXParIter& pti,
       Real* const AMREX_RESTRICT Exp_data = Exp.dataPtr();
       Real* const AMREX_RESTRICT Eyp_data = Eyp.dataPtr();
       Real* const AMREX_RESTRICT Ezp_data = Ezp.dataPtr();
-      ParserWrapper *xfield_partparser = mypc.m_Ex_particle_parser.get();
-      ParserWrapper *yfield_partparser = mypc.m_Ey_particle_parser.get();
-      ParserWrapper *zfield_partparser = mypc.m_Ez_particle_parser.get();
+      ParserWrapper<4> *xfield_partparser = mypc.m_Ex_particle_parser.get();
+      ParserWrapper<4> *yfield_partparser = mypc.m_Ey_particle_parser.get();
+      ParserWrapper<4> *zfield_partparser = mypc.m_Ez_particle_parser.get();
       Real time = warpx.gett_new(lev);
       amrex::ParallelFor(pti.numParticles(),
                          [=] AMREX_GPU_DEVICE (long i) {
                              ParticleReal x, y, z;
                              GetPosition(i, x, y, z);
-                             Exp_data[i] = xfield_partparser->getField(x, y, z, time);
-                             Eyp_data[i] = yfield_partparser->getField(x, y, z, time);
-                             Ezp_data[i] = zfield_partparser->getField(x, y, z, time);
-                         },
-      /* To allocate shared memory for the GPU threads. */
-      /* But, for now only 4 doubles (x,y,z,t) are allocated. */
-      amrex::Gpu::numThreadsPerBlockParallelFor() * sizeof(double) * 4
-      );
+                             Exp_data[i] = (*xfield_partparser)(x, y, z, time);
+                             Eyp_data[i] = (*yfield_partparser)(x, y, z, time);
+                             Ezp_data[i] = (*zfield_partparser)(x, y, z, time);
+                         });
    }
    if (mypc.m_B_ext_particle_s=="parse_b_ext_particle_function") {
       const auto GetPosition = GetParticlePosition(pti);
       Real* const AMREX_RESTRICT Bxp_data = Bxp.dataPtr();
       Real* const AMREX_RESTRICT Byp_data = Byp.dataPtr();
       Real* const AMREX_RESTRICT Bzp_data = Bzp.dataPtr();
-      ParserWrapper *xfield_partparser = mypc.m_Bx_particle_parser.get();
-      ParserWrapper *yfield_partparser = mypc.m_By_particle_parser.get();
-      ParserWrapper *zfield_partparser = mypc.m_Bz_particle_parser.get();
+      ParserWrapper<4> *xfield_partparser = mypc.m_Bx_particle_parser.get();
+      ParserWrapper<4> *yfield_partparser = mypc.m_By_particle_parser.get();
+      ParserWrapper<4> *zfield_partparser = mypc.m_Bz_particle_parser.get();
       Real time = warpx.gett_new(lev);
       amrex::ParallelFor(pti.numParticles(),
             [=] AMREX_GPU_DEVICE (long i) {
                              ParticleReal x, y, z;
                              GetPosition(i, x, y, z);
-                             Bxp_data[i] = xfield_partparser->getField(x, y, z, time);
-                             Byp_data[i] = yfield_partparser->getField(x, y, z, time);
-                             Bzp_data[i] = zfield_partparser->getField(x, y, z, time);
-                         },
-      /* To allocate shared memory for the GPU threads. */
-      /* But, for now only 4 doubles (x,y,z,t) are allocated. */
-      amrex::Gpu::numThreadsPerBlockParallelFor() * sizeof(double) * 4
-      );
+                             Bxp_data[i] = (*xfield_partparser)(x, y, z, time);
+                             Byp_data[i] = (*yfield_partparser)(x, y, z, time);
+                             Bzp_data[i] = (*zfield_partparser)(x, y, z, time);
+                         });
    }
 }
 
@@ -2349,86 +2328,17 @@ void PhysicalParticleContainer::InitIonizationModule ()
     }
 }
 
-/* \brief create mask of ionized particles (1 if ionized, 0 otherwise)
- *
- * \param mfi: tile or grid
- * \param lev: MR level
- * \param ionization_mask: Array with as many elements as particles in mfi.
- * This function initialized the array, and set each element to 1 or 0
- * depending on whether the particle is ionized or not.
- */
-void
-PhysicalParticleContainer::buildIonizationMask (const amrex::MFIter& mfi, const int lev,
-                                                amrex::Gpu::ManagedDeviceVector<int>& ionization_mask)
+IonizationFilterFunc
+PhysicalParticleContainer::getIonizationFunc ()
 {
-    BL_PROFILE("PPC::buildIonizationMask");
-    // Get pointers to ionization data from pc_source
-    const Real * const AMREX_RESTRICT p_ionization_energies = ionization_energies.dataPtr();
-    const Real * const AMREX_RESTRICT p_adk_prefactor = adk_prefactor.dataPtr();
-    const Real * const AMREX_RESTRICT p_adk_exp_prefactor = adk_exp_prefactor.dataPtr();
-    const Real * const AMREX_RESTRICT p_adk_power = adk_power.dataPtr();
+    BL_PROFILE("PPC::getIonizationFunc");
 
-    // Current tile info
-    const int grid_id = mfi.index();
-    const int tile_id = mfi.LocalTileIndex();
-
-    // Get GPU-friendly arrays of particle data
-    auto& ptile = GetParticles(lev)[std::make_pair(grid_id,tile_id)];
-    // Only need attribs (i.e., SoA data)
-    auto& soa = ptile.GetStructOfArrays();
-    const int np = ptile.GetArrayOfStructs().size();
-
-    // If no particle, nothing to do.
-    if (np == 0) return;
-    // Otherwise, resize ionization_mask, and get poiters to attribs arrays.
-    ionization_mask.resize(np);
-    int * const AMREX_RESTRICT p_ionization_mask = ionization_mask.data();
-    const ParticleReal * const AMREX_RESTRICT ux = soa.GetRealData(PIdx::ux).data();
-    const ParticleReal * const AMREX_RESTRICT uy = soa.GetRealData(PIdx::uy).data();
-    const ParticleReal * const AMREX_RESTRICT uz = soa.GetRealData(PIdx::uz).data();
-    const ParticleReal * const AMREX_RESTRICT ex = soa.GetRealData(PIdx::Ex).data();
-    const ParticleReal * const AMREX_RESTRICT ey = soa.GetRealData(PIdx::Ey).data();
-    const ParticleReal * const AMREX_RESTRICT ez = soa.GetRealData(PIdx::Ez).data();
-    const ParticleReal * const AMREX_RESTRICT bx = soa.GetRealData(PIdx::Bx).data();
-    const ParticleReal * const AMREX_RESTRICT by = soa.GetRealData(PIdx::By).data();
-    const ParticleReal * const AMREX_RESTRICT bz = soa.GetRealData(PIdx::Bz).data();
-    int* ion_lev = soa.GetIntData(particle_icomps["ionization_level"]).data();
-
-    Real c = PhysConst::c;
-    Real c2_inv = 1./c/c;
-    int atomic_number = ion_atomic_number;
-
-    // Loop over all particles in grid/tile. If ionized, set mask to 1
-    // and increment ionization level.
-    ParallelFor(
-        np,
-        [=] AMREX_GPU_DEVICE (long i) {
-            // Get index of ionization_level
-            p_ionization_mask[i] = 0;
-            if ( ion_lev[i]<atomic_number ){
-                Real random_draw = amrex::Random();
-                // Compute electric field amplitude in the particle's frame of
-                // reference (particularly important when in boosted frame).
-                Real ga = std::sqrt(1. + (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i]) * c2_inv);
-                Real E = std::sqrt(
-                    - ( ux[i]*ex[i] + uy[i]*ey[i] + uz[i]*ez[i] ) * ( ux[i]*ex[i] + uy[i]*ey[i] + uz[i]*ez[i] ) * c2_inv
-                    + ( ga   *ex[i] + uy[i]*bz[i] - uz[i]*by[i] ) * ( ga   *ex[i] + uy[i]*bz[i] - uz[i]*by[i] )
-                    + ( ga   *ey[i] + uz[i]*bx[i] - ux[i]*bz[i] ) * ( ga   *ey[i] + uz[i]*bx[i] - ux[i]*bz[i] )
-                    + ( ga   *ez[i] + ux[i]*by[i] - uy[i]*bx[i] ) * ( ga   *ez[i] + ux[i]*by[i] - uy[i]*bx[i] )
-                    );
-                // Compute probability of ionization p
-                Real w_dtau = 1./ ga * p_adk_prefactor[ion_lev[i]] *
-                    std::pow(E,p_adk_power[ion_lev[i]]) *
-                    std::exp( p_adk_exp_prefactor[ion_lev[i]]/E );
-                Real p = 1. - std::exp( - w_dtau );
-
-                if (random_draw < p){
-                    // update mask
-                    p_ionization_mask[i] = 1;
-                }
-            }
-        }
-    );
+    return IonizationFilterFunc{ionization_energies.dataPtr(),
+                                adk_prefactor.dataPtr(),
+                                adk_exp_prefactor.dataPtr(),
+                                adk_power.dataPtr(),
+                                particle_icomps["ionization_level"],
+                                ion_atomic_number};
 }
 
 //This function return true if the PhysicalParticleContainer contains electrons

@@ -1,9 +1,14 @@
+/* Copyright 2019-2020 Glenn Richardson, Maxence Thevenet
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <cmath>
 #include <limits>
 
 #include <WarpX.H>
 #include <WarpXConst.H>
-#include <WarpX_f.H>
 #include <WarpX_K.H>
 #include <WarpX_PML_kernels.H>
 #include <WarpX_FDTD.H>
@@ -146,6 +151,8 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
             { tmpEz(i,j,k,n) = Ezfab(i,j,k,n); }
         );
 
+        // Make local copy of xi, to use on device.
+        const Real xi = WarpX::quantum_xi;
         // Apply QED correction to electric field, using temporary arrays.
         amrex::ParallelFor(
             tbx,
@@ -153,7 +160,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
             {
                 warpx_hybrid_QED_push(j,k,l, Exfab, Eyfab, Ezfab, Bxfab, Byfab,
                                       Bzfab, tmpEx, tmpEy, tmpEz, dx, dy, dz,
-                                      a_dt);
+                                      a_dt, xi);
             }
         );
 

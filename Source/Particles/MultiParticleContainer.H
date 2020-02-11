@@ -11,14 +11,14 @@
 #ifndef WARPX_ParticleContainer_H_
 #define WARPX_ParticleContainer_H_
 
-#include "ElementaryProcess.H"
-
 #include <WarpXParticleContainer.H>
 #include <PhysicalParticleContainer.H>
 #include <RigidInjectedParticleContainer.H>
 #include <PhotonParticleContainer.H>
 #include <LaserParticleContainer.H>
 #include <WarpXParserWrapper.H>
+#include <SmartCopy.H>
+#include <FilterCopyTransform.H>
 
 #include <AMReX_Particles.H>
 #ifdef WARPX_QED
@@ -217,21 +217,19 @@ public:
 
     PhysicalParticleContainer& GetPCtmp () { return *pc_tmp; }
 
-    IonizationProcess ionization_process;
-
     std::string m_B_ext_particle_s = "default";
     std::string m_E_ext_particle_s = "default";
     // External fields added to particle fields.
     amrex::Vector<amrex::Real> m_B_external_particle;
     amrex::Vector<amrex::Real> m_E_external_particle;
     // ParserWrapper for B_external on the particle
-    std::unique_ptr<ParserWrapper> m_Bx_particle_parser;
-    std::unique_ptr<ParserWrapper> m_By_particle_parser;
-    std::unique_ptr<ParserWrapper> m_Bz_particle_parser;
+    std::unique_ptr<ParserWrapper<4> > m_Bx_particle_parser;
+    std::unique_ptr<ParserWrapper<4> > m_By_particle_parser;
+    std::unique_ptr<ParserWrapper<4> > m_Bz_particle_parser;
     // ParserWrapper for E_external on the particle
-    std::unique_ptr<ParserWrapper> m_Ex_particle_parser;
-    std::unique_ptr<ParserWrapper> m_Ey_particle_parser;
-    std::unique_ptr<ParserWrapper> m_Ez_particle_parser;
+    std::unique_ptr<ParserWrapper<4> > m_Ex_particle_parser;
+    std::unique_ptr<ParserWrapper<4> > m_Ey_particle_parser;
+    std::unique_ptr<ParserWrapper<4> > m_Ez_particle_parser;
 
 
 protected:
@@ -254,6 +252,9 @@ protected:
     std::vector<bool> m_gather_from_main_grid;
 
     std::vector<PCTypes> species_types;
+
+    amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,
+                                 const WarpXParticleContainer& pc_dst) const noexcept;
 
 #ifdef WARPX_QED
     // The QED engines

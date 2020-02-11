@@ -10,7 +10,6 @@
 
 #include "BackTransformedDiagnostic.H"
 #include "SliceDiagnostic.H"
-#include "WarpX_f.H"
 #include "WarpX.H"
 
 using namespace amrex;
@@ -1378,7 +1377,7 @@ AddPartDataToParticleBuffer(
     int nspeciesBoostedFrame) {
     for (int isp = 0; isp < nspeciesBoostedFrame; ++isp) {
         auto np = tmp_particle_buffer[isp].GetRealData(DiagIdx::w).size();
-        if (np == 0) return;
+        if (np == 0) continue;
 
         // allocate size of particle buffer array to np
         // This is a growing array. Each time we add np elements
@@ -1443,7 +1442,7 @@ AddPartDataToParticleBuffer(
     for (int isp = 0; isp < nSpeciesBackTransformedDiagnostics; ++isp) {
         auto np = tmp_particle_buffer[isp].GetRealData(DiagIdx::w).size();
 
-        if (np == 0) return;
+        if (np == 0) continue;
 
         Real const* const AMREX_RESTRICT wp_temp =
              tmp_particle_buffer[isp].GetRealData(DiagIdx::w).data();
