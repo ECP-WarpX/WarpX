@@ -140,8 +140,10 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     if (m_is_particle_filter)
     {
         std::string function_string;
-        Store_parserString(pp,"plot_filter_function",function_string);
-        m_particle_filter_parser.reset(new ParserWrapper(makeParser(function_string)));
+        Store_parserString(pp,"plot_filter_function(t,x,y,z,ux,uy,uz)",
+                           function_string);
+        m_particle_filter_parser.reset(new ParserWrapper<7>(
+            makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
     }
 
 }

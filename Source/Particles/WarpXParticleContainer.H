@@ -317,7 +317,7 @@ public:
 
     /// ParserWrapper for particle output filter
     int m_is_particle_filter = 0;
-    std::unique_ptr<ParserWrapper> m_particle_filter_parser;
+    std::unique_ptr<ParserWrapper<7>> m_particle_filter_parser;
 
 protected:
 

@@ -250,7 +250,7 @@ PhysicalParticleContainer::SelectParticlesForIO(std::string species_name)
     for ( int i = 0; i < nSpecies; ++i )
     { if ( species_names[i] == species_name ) { i_s = i; } }
     auto & myspc = mypc.GetParticleContainer(i_s);
-    ParserWrapper* function_partparser = myspc.m_particle_filter_parser.get();
+    ParserWrapper<7> *function_partparser = myspc.m_particle_filter_parser.get();
 
     const int nLevels = finestLevel();
     for (int lev=0; lev<=nLevels; lev++){
@@ -261,6 +261,10 @@ PhysicalParticleContainer::SelectParticlesForIO(std::string species_name)
         {
             auto pstructs = pti.GetArrayOfStructs()().dataPtr();
             const long np = pti.numParticles();
+            auto& attribs = pti.GetAttribs();
+            ParticleReal* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
+            ParticleReal* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
+            ParticleReal* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
             // assert
             ParallelFor( np,
                 [=] AMREX_GPU_DEVICE (long i) {
@@ -272,11 +276,11 @@ PhysicalParticleContainer::SelectParticlesForIO(std::string species_name)
             {
                 ParallelFor( np,
                     [=] AMREX_GPU_DEVICE (long i) {
+                        Real t = WarpX::GetInstance().gett_new(lev);
                         Real x = pstructs[i].pos(0);
                         Real y = pstructs[i].pos(1);
                         Real z = pstructs[i].pos(2);
-                        Real t = WarpX::GetInstance().gett_new(lev);
-                        if ( function_partparser->getField(x,y,z,t) == 0.0 )
+                        if ( (*function_partparser)(t,x,y,z,ux[i],uy[i],uz[i]) == 0.0 )
                         { pstructs[i].id() *= -1; }
                     }
                 );
