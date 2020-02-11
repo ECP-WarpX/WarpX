@@ -168,4 +168,5 @@ PhotonParticleContainer::EvolveOpticalDepth(
         }
     );
 }
+
 #endif

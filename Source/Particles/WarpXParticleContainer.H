@@ -368,6 +368,7 @@ protected:
     std::string m_qed_breit_wheeler_pos_product_name;
     int m_qed_quantum_sync_phot_product;
     std::string m_qed_quantum_sync_phot_product_name;
+
 #endif
 
     virtual bool AmIAPhoton () {return false;};

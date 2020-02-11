@@ -5,6 +5,7 @@
 #include "WarpXParticleContainer.H"
 
 #include <BreitWheelerEngineWrapper.H>
+#include <QuantumSyncEngineWrapper.H>
 
 
 struct PairGenerationFilterFunc
@@ -15,7 +16,7 @@ struct PairGenerationFilterFunc
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator() (const PData& ptd, int i) const noexcept
     {
-        const auto opt_depth = ptd.m_runtime_data[m_opt_depth_comp][i];
+        const auto opt_depth = ptd.m_runtime_rdata[m_opt_depth_comp][i];
         return (opt_depth < 0.0);
     }
 };
@@ -23,7 +24,24 @@ struct PairGenerationFilterFunc
 struct PairGenerationTransformFunc
 {
 
-    const BreitWheelerGeneratePairs m_generate_functor;
+    const BreitWheelerGeneratePairs& m_generate_functor;
+
+    bool m_target_has_quantum_sync = false;
+    int m_target_opt_depth_comp = 0;
+    QuantumSynchrotronGetOpticalDepth m_target_opt_depth_functor;
+
+    PairGenerationTransformFunc(
+        const BreitWheelerGeneratePairs& generate_functor):
+        m_generate_functor{generate_functor}
+        {}
+
+    void enable_opt_depth_for_targets(int target_opt_depth_comp,
+     const QuantumSynchrotronGetOpticalDepth&& opt_depth_functor)
+    {
+        m_target_has_quantum_sync = true;
+        m_target_opt_depth_comp = target_opt_depth_comp;
+        m_target_opt_depth_functor = opt_depth_functor;
+    }
 
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -67,8 +85,8 @@ struct PairGenerationTransformFunc
             &e_px, &e_py, &e_pz,
             &p_px, &p_py, &p_pz,
             &e_w, &p_w);
-            /*
-                                r_ele_attribs[PIdx::w][ip] = e_w;
+
+            /*                    r_ele_attribs[PIdx::w][ip] = e_w;
                     r_ele_attribs[PIdx::ux][ip]= e_px*one_over_me;
                     r_ele_attribs[PIdx::uy][ip] = e_py*one_over_me;
                     r_ele_attribs[PIdx::uz][ip] = e_pz*one_over_me;

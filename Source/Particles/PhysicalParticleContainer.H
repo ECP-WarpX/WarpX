@@ -340,9 +340,9 @@ protected:
     //This function return true if the PhysicalParticleContainer contains electrons
     //or positrons, false otherwise
 
-    virtual bool AmIAPhoton ();
-    virtual bool AmIAnElectron ();
-    virtual bool AmIAPositron ();
+    virtual bool AmIAPhoton () override;
+    virtual bool AmIAnElectron () override;
+    virtual bool AmIAPositron () override;
 
     //When true PhysicalParticleContainer tries to use a pusher including
     //radiation reaction
@@ -361,6 +361,7 @@ protected:
 
     // A smart pointer to an instance of a Breit Wheeler engine [photons only!]
     std::shared_ptr<BreitWheelerEngine> m_shr_p_bw_engine;
+
 #endif
 
 };

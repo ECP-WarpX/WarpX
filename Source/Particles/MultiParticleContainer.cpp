@@ -1176,13 +1176,50 @@ void MultiParticleContainer::doQedQuantumSync()
         auto phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
 
         auto Filter    = phys_pc_ptr->getPairGenerationFilterFunc();
-        auto CopyPhot      = copy_factory_phot.getSmartCopy();
-        //auto Transform = IonizationTransformFunc();
+        auto CopyPhot   = copy_factory_phot.getSmartCopy();
+
+        const auto phot_em_functor = m_shr_p_qs_engine->build_phot_em_functor();
+        auto Transform = PhotonEmissionTransformFunc(phot_em_functor);
+
+        if(pc_product_phot->has_breit_wheeler()){
+            Transform.enable_opt_depth_for_target(
+                pc_product_phot->particle_comps["tau"],
+                m_shr_p_bw_engine->build_optical_depth_functor());
+        }
 
         pc_source ->defineAllParticleTiles();
         pc_product_phot->defineAllParticleTiles();
 
+        for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
+        {
+            auto info = getMFItInfo(*pc_source, *pc_product_phot);
+
+#ifdef _OPENMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+            for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
+            {
+                auto& src_tile = pc_source->ParticlesAt(lev, mfi);
+                auto& dst_tile = pc_product_phot->ParticlesAt(lev, mfi);
+
+                auto np_dst = dst_tile.numParticles();
+
+                auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
+                                                                 Filter, CopyPhot, Transform);
+
+                setNewParticleIDs(dst_tile, np_dst, num_added);
+
+                auto pp = dst_tile.GetArrayOfStructs()().data() + np_dst;
+                amrex::ParallelFor(num_added, [=] AMREX_GPU_DEVICE (int ip) noexcept
+                {
+                    auto& p = pp[ip];
+                    //ELIMINATE
+                });
+
+            }
+        }
     }
+
 }
 
 
