@@ -1,3 +1,10 @@
+/* Copyright 2019 Axel Huebl, Cameron Yang, Maxence Thevenet
+ * Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef INJECTOR_MOMENTUM_H_
 #define INJECTOR_MOMENTUM_H_
 
@@ -216,7 +223,7 @@ struct InjectorMomentumParser
         return amrex::XDim3{m_ux_parser(x,y,z),m_uy_parser(x,y,z),m_uz_parser(x,y,z)};
     }
 
-    GpuParser m_ux_parser, m_uy_parser, m_uz_parser;
+    GpuParser<3> m_ux_parser, m_uy_parser, m_uz_parser;
 };
 
 // Base struct for momentum injector.
@@ -293,8 +300,6 @@ struct InjectorMomentum
     void operator= (InjectorMomentum &&) = delete;
 
     ~InjectorMomentum ();
-
-    std::size_t sharedMemoryNeeded () const noexcept;
 
     // call getMomentum from the object stored in the union
     // (the union is called Object, and the instance is called object).

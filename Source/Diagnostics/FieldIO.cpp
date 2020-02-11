@@ -1,8 +1,16 @@
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, David Grote
+ * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+ * Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 
 #include <WarpX.H>
 #include <FieldIO.H>
 #ifdef WARPX_USE_OPENPMD
-#include <openPMD/openPMD.hpp>
+#   include <openPMD/openPMD.hpp>
 #endif
 
 #include <AMReX_FillPatchUtil_F.H>
@@ -352,7 +360,7 @@ AverageAndPackVectorField( MultiFab& mf_avg,
     }
 }
 
-/** \brief Takes the specified component of the three fields and
+/** \brief Takes all of the components of the three fields and
  * averages and packs them into the MultiFab mf_avg.
  */
 void
@@ -363,14 +371,10 @@ AverageAndPackVectorFieldComponents (MultiFab& mf_avg,
 {
     if (vector_field[0]->nComp() > 1) {
         std::array<std::unique_ptr<MultiFab>,3> vector_field_component;
-        vector_field_component[0].reset(new MultiFab(vector_field[0]->boxArray(), dm, 1, vector_field[0]->nGrowVect()));
-        vector_field_component[1].reset(new MultiFab(vector_field[1]->boxArray(), dm, 1, vector_field[1]->nGrowVect()));
-        vector_field_component[2].reset(new MultiFab(vector_field[2]->boxArray(), dm, 1, vector_field[2]->nGrowVect()));
         for (int icomp=0 ; icomp < vector_field[0]->nComp() ; icomp++) {
-            // This is a bit inefficient since it copies the data. Can this be done with pointers?
-            MultiFab::Copy(*vector_field_component[0], *vector_field[0], icomp, 0, 1, vector_field[0]->nGrowVect());
-            MultiFab::Copy(*vector_field_component[1], *vector_field[1], icomp, 0, 1, vector_field[1]->nGrowVect());
-            MultiFab::Copy(*vector_field_component[2], *vector_field[2], icomp, 0, 1, vector_field[2]->nGrowVect());
+            vector_field_component[0].reset(new MultiFab(*vector_field[0], amrex::make_alias, icomp, 1));
+            vector_field_component[1].reset(new MultiFab(*vector_field[1], amrex::make_alias, icomp, 1));
+            vector_field_component[2].reset(new MultiFab(*vector_field[2], amrex::make_alias, icomp, 1));
             AverageAndPackVectorField(mf_avg, vector_field_component, dm, dcomp, ngrow);
             dcomp += 3;
         }
@@ -480,6 +484,15 @@ AddToVarNames (Vector<std::string>& varnames,
     for(auto coord:coords) varnames.push_back(name+coord+suffix);
 }
 
+/** \brief Add RZ variable names to the list.
+ */
+void
+AddToVarNamesRZ (Vector<std::string>& varnames,
+                 std::string name, std::string suffix) {
+    auto coords = {"r", "theta", "z"};
+    for(auto coord:coords) varnames.push_back(name+coord+suffix);
+}
+
 /** \brief Write the different fields that are meant for output,
  * into the vector of MultiFab `mf_avg` (one MultiFab per level)
  * after averaging them to the cell centers.
@@ -555,31 +568,31 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
             if(lev==0) varnames.push_back(fieldname);
             if        (fieldname == "Ex"){
                 MultiFab::Copy( mf_avg[lev], mf_tmp_E, 0, dcomp++, 1, ngrow);
-                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_E, 0, dcomp, ngrow, fieldname, varnames);
+                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_E, 0, dcomp, ngrow, "Er", varnames);
             } else if (fieldname == "Ey"){
                 MultiFab::Copy( mf_avg[lev], mf_tmp_E, 1, dcomp++, 1, ngrow);
-                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_E, 1, dcomp, ngrow, fieldname, varnames);
+                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_E, 1, dcomp, ngrow, "Etheta", varnames);
             } else if (fieldname == "Ez"){
                 MultiFab::Copy( mf_avg[lev], mf_tmp_E, 2, dcomp++, 1, ngrow);
-                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_E, 2, dcomp, ngrow, fieldname, varnames);
+                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_E, 2, dcomp, ngrow, "Ez", varnames);
             } else if (fieldname == "Bx"){
                 MultiFab::Copy( mf_avg[lev], mf_tmp_B, 0, dcomp++, 1, ngrow);
-                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_B, 0, dcomp, ngrow, fieldname, varnames);
+                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_B, 0, dcomp, ngrow, "Br", varnames);
             } else if (fieldname == "By"){
                 MultiFab::Copy( mf_avg[lev], mf_tmp_B, 1, dcomp++, 1, ngrow);
-                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_B, 1, dcomp, ngrow, fieldname, varnames);
+                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_B, 1, dcomp, ngrow, "Btheta", varnames);
             } else if (fieldname == "Bz"){
                 MultiFab::Copy( mf_avg[lev], mf_tmp_B, 2, dcomp++, 1, ngrow);
-                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_B, 2, dcomp, ngrow, fieldname, varnames);
+                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_B, 2, dcomp, ngrow, "Bz", varnames);
             } else if (fieldname == "jx"){
                 MultiFab::Copy( mf_avg[lev], mf_tmp_J, 0, dcomp++, 1, ngrow);
-                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_J, 0, dcomp, ngrow, fieldname, varnames);
+                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_J, 0, dcomp, ngrow, "jr", varnames);
             } else if (fieldname == "jy"){
                 MultiFab::Copy( mf_avg[lev], mf_tmp_J, 1, dcomp++, 1, ngrow);
-                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_J, 1, dcomp, ngrow, fieldname, varnames);
+                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_J, 1, dcomp, ngrow, "jtheta", varnames);
             } else if (fieldname == "jz"){
                 MultiFab::Copy( mf_avg[lev], mf_tmp_J, 2, dcomp++, 1, ngrow);
-                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_J, 2, dcomp, ngrow, fieldname, varnames);
+                CopyVectorFieldComponentsToMultiFab(lev, mf_avg, mf_tmp_J, 2, dcomp, ngrow, "jz", varnames);
             } else if (fieldname == "rho"){
                 AverageAndPackScalarField( mf_avg[lev], *rho_fp[lev], dcomp++, ngrow );
                 CopyScalarFieldComponentsToMultiFab(lev, mf_avg, *rho_fp[lev], dcomp, ngrow, n_rz_azimuthal_modes,
@@ -655,10 +668,10 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
             if (lev == 0) {
                 AddToVarNames(varnames, "E", "_fp");
                 if (n_rz_azimuthal_modes > 1) {
-                    AddToVarNames(varnames, "E", ComponentName("_fp", 0, "real"));
+                    AddToVarNamesRZ(varnames, "E", ComponentName("_fp", 0, "real"));
                     for (int mode=1 ; mode < n_rz_azimuthal_modes ; mode++) {
-                        AddToVarNames(varnames, "E", ComponentName("_fp", mode, "real"));
-                        AddToVarNames(varnames, "E", ComponentName("_fp", mode, "imag"));
+                        AddToVarNamesRZ(varnames, "E", ComponentName("_fp", mode, "real"));
+                        AddToVarNamesRZ(varnames, "E", ComponentName("_fp", mode, "imag"));
                     }
                 }
             }
@@ -668,10 +681,10 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
             if (lev == 0) {
                 AddToVarNames(varnames, "B", "_fp");
                 if (n_rz_azimuthal_modes > 1) {
-                    AddToVarNames(varnames, "B", ComponentName("_fp", 0, "real"));
+                    AddToVarNamesRZ(varnames, "B", ComponentName("_fp", 0, "real"));
                     for (int mode=1 ; mode < n_rz_azimuthal_modes ; mode++) {
-                        AddToVarNames(varnames, "B", ComponentName("_fp", mode, "real"));
-                        AddToVarNames(varnames, "B", ComponentName("_fp", mode, "imag"));
+                        AddToVarNamesRZ(varnames, "B", ComponentName("_fp", mode, "real"));
+                        AddToVarNamesRZ(varnames, "B", ComponentName("_fp", mode, "imag"));
                     }
                 }
             }
