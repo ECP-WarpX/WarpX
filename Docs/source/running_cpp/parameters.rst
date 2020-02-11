@@ -1005,6 +1005,7 @@ Diagnostics and output
         ``<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` must be provided,
         which is an expresion that describs the condition to filter
         a portion of particles that will be dumped.
+        `t` represents the physical time in seconds during the simulation.
         `x, y, z` represent particle positions in the unit of meter.
         `ux, uy, uz` represent particle velocities in the unit of
         :math:`\gamma v/c`, where
