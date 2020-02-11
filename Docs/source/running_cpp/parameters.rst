@@ -986,6 +986,34 @@ Diagnostics and output
     Use a negative number to disable data dumping.
     This is ``-1`` (disabled) by default.
 
+    * ``<species_name>.plot_downsampling_type`` (`random` or `uniform`) optional
+        If provided, only a fraction of the particle data of this species will be dumped.
+        The two types indicate the dumped particles are selected either randomly or uniformly.
+
+    * ``<species_name>.plot_downsampling_fraction`` (`float`)
+        If ``<species_name>.plot_downsampling_type`` is given,
+        ``<species_name>.plot_downsampling_fraction`` must be provided.
+        It specifies the fraction that the particles will be dumped.
+        The fraction must be in the range [0,1].
+
+    * ``<species_name>.is_particle_filter`` (`0` or `1`, default `0`) optional
+        If `1` is provided, a particle filter will be used to select a portion of
+        particles that will be dumped.
+
+    * ``<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`)
+        If ``<species_name>.is_particle_filter`` is `1`,
+        ``<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` must be provided,
+        which is an expresion that describs the condition to filter
+        a portion of particles that will be dumped.
+        `x, y, z` represent particle positions in the unit of meter.
+        `ux, uy, uz` represent particle velocities in the unit of
+        :math:`\gamma v/c`, where
+        :math:`\gamma` is the Lorentz factor,
+        :math:`v/c` is the particle velocity normalized by the speed of light.
+        E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at 
+        positions `x` greater than `0`, and those having velocity `uz` less than 10,
+        will be dumped.
+
 * ``warpx.openpmd_int`` (`integer`) optional
     The number of PIC cycles (interval) in between two consecutive `openPMD <https://www.openPMD.org>`_ data dumps.
     Requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
