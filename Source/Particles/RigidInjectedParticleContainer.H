@@ -1,3 +1,10 @@
+/* Copyright 2019 Andrew Myers, David Grote, Maxence Thevenet
+ * Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_RigidInjectedParticleContainer_H_
 #define WARPX_RigidInjectedParticleContainer_H_
 
@@ -61,11 +68,7 @@ public:
                          amrex::Real dt,
                          DtType a_dt_type=DtType::Full) override;
 
-    virtual void PushPX(WarpXParIter& pti,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& xp,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& yp,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& zp,
-                        amrex::Real dt, DtType a_dt_type=DtType::Full) override;
+    virtual void PushPX (WarpXParIter& pti, amrex::Real dt, DtType a_dt_type=DtType::Full) override;
 
     virtual void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& Ex,

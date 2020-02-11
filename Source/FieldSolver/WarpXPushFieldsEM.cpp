@@ -1,10 +1,17 @@
+/* Copyright 2019 Andrew Myers, Aurore Blelly, Axel Huebl
+ * David Grote, Maxence Thevenet, Remi Lehe
+ * Revathi Jambunathan, Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 
 #include <cmath>
 #include <limits>
 
 #include <WarpX.H>
 #include <WarpXConst.H>
-#include <WarpX_f.H>
 #include <WarpX_K.H>
 #include <WarpX_PML_kernels.H>
 #include <WarpX_FDTD.H>

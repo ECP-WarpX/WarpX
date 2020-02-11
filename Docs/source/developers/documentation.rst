@@ -3,10 +3,6 @@
 Documentation
 =============
 
-.. warning::
-
-   Needs info on how to install all pieces to compile the doc! Some basic info is in the ``CONTRIBUTING.md`` .
-
 Doxygen documentation
 ---------------------
 
@@ -44,7 +40,21 @@ Your Doxygen documentation is not only useful for people looking into the code, 
 
   .. doxygenclass:: WarpXParticleContainer
 
-Exhale documentation
---------------------
+Building the documentation
+--------------------------
 
-Very similar to Breathe, the Python module `exhale <https://exhale.readthedocs.io/en/latest/>`__ reads the full Doxygen documentation and renders it in ` rst <https://en.wikipedia.org/wiki/ReStructuredText>`__ format, and is accessible from the main WarpX ReadTheDocs page.
+To build the documentation on your local computer, you will need to install Doxygen as well as the Python module `breathe`. On MacOS this can by done by
+
+.. code-block:: sh
+
+    brew install doxygen
+    pip install breathe
+
+Then, to compile the documentation, use
+
+.. code-block:: sh
+
+    cd Docs/
+    make html
+    # This will first compile the Doxygen documentation (execute doxygen)
+    # and then build html pages from rst files using sphinx and breathe.
