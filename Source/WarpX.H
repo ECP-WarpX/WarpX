@@ -210,6 +210,7 @@ public:
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_bxbyez;
 
     amrex::Real time_of_last_gal_shift  = 0;
+    amrex::Array<amrex::Real,3> v_galilean = {0,0,0};
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
@@ -750,7 +751,6 @@ private:
 
     int ngroups_fft = 4;
     int fftw_plan_measure = 1;
-    amrex::Array<amrex::Real,3> v_galilean = {0,0,0};
 
     amrex::Vector<std::unique_ptr<SpectralSolver>> spectral_solver_fp;
     amrex::Vector<std::unique_ptr<SpectralSolver>> spectral_solver_cp;

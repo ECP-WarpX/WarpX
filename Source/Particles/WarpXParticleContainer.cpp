@@ -306,6 +306,13 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
     const Dim3 lo = lbound(tilebox);
 
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
+        if ( (v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)){
+            amrex::Abort("The Esirkepov algorithm cannot be used with the Galilean algorithm.");
+        }
+    }
+
+    // Compute Galilean shift
     Real cur_time = WarpX::GetInstance().gett_new(lev);
     const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
     Real time_shift = (cur_time + 0.5*dt - time_of_last_gal_shift);
@@ -317,6 +324,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     #endif
 
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
+
 
     BL_PROFILE_VAR_START(blp_deposit);
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
