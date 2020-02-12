@@ -27,8 +27,10 @@ struct PairGenerationTransformFunc
 
     const BreitWheelerGeneratePairs& m_generate_functor;
 
-    bool m_target_has_quantum_sync = false;
-    int m_target_opt_depth_comp = 0;
+    bool m_target1_has_quantum_sync = false;
+    int m_target1_opt_depth_runtime_comp = 0;
+    bool m_target2_has_quantum_sync = false;
+    int m_target2_opt_depth_runtime_comp = 0;
     QuantumSynchrotronGetOpticalDepth m_target_opt_depth_functor;
 
     PairGenerationTransformFunc(
@@ -36,17 +38,30 @@ struct PairGenerationTransformFunc
         m_generate_functor{generate_functor}
         {}
 
-    void enable_opt_depth_for_targets(int target_opt_depth_comp,
+    void enable_opt_depth_for_targets(const bool enable1, const bool enable2,
+     const int target1_opt_depth_runtime_comp, const int target2_opt_depth_runtime_comp,
      const QuantumSynchrotronGetOpticalDepth&& opt_depth_functor)
     {
-        m_target_has_quantum_sync = true;
-        m_target_opt_depth_comp = target_opt_depth_comp;
-        m_target_opt_depth_functor = opt_depth_functor;
+        if(enable1){
+            m_target1_has_quantum_sync = true;
+            m_target1_opt_depth_runtime_comp = target1_opt_depth_runtime_comp;
+        }
+
+        if(enable2){
+            m_target2_has_quantum_sync = true;
+            m_target2_opt_depth_runtime_comp = target2_opt_depth_runtime_comp;
+        }
+
+        if(enable1 || enable2){
+            m_target_opt_depth_functor = opt_depth_functor;
+        }
+
     }
 
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (DstData& dst, SrcData& src, int i_src, int i_dst) const noexcept
+    void operator() (DstData& dst1, DstData& dst2, SrcData& src,
+        int i_src, int i_dst1, int i_dst2) const noexcept
     {
 
         const amrex::ParticleReal me = PhysConst::m_e;
@@ -87,16 +102,30 @@ struct PairGenerationTransformFunc
             &p_px, &p_py, &p_pz,
             &e_w, &p_w);
 
-            /*                    r_ele_attribs[PIdx::w][ip] = e_w;
-                    r_ele_attribs[PIdx::ux][ip]= e_px*one_over_me;
-                    r_ele_attribs[PIdx::uy][ip] = e_py*one_over_me;
-                    r_ele_attribs[PIdx::uz][ip] = e_pz*one_over_me;
-                    r_pos_attribs[PIdx::w][ip] = p_w;
-                    r_pos_attribs[PIdx::ux][ip]= p_px*one_over_me;
-                    r_pos_attribs[PIdx::uy][ip] = p_py*one_over_me;
-                    r_pos_attribs[PIdx::uz][ip] = p_pz*one_over_me;
+        src.m_rdata[PIdx::ux][i_src] = px*one_over_me;
+        src.m_rdata[PIdx::uy][i_src] = py*one_over_me;
+        src.m_rdata[PIdx::uz][i_src] = pz*one_over_me;
 
-                    p_source.id() = -1; //Sets ID to zero */
+        dst1.m_rdata[PIdx::w][i_dst1] = e_w;
+        dst1.m_rdata[PIdx::ux][i_dst1] = e_px*one_over_me;
+        dst1.m_rdata[PIdx::uy][i_dst1] = e_py*one_over_me;
+        dst1.m_rdata[PIdx::uz][i_dst1] = e_pz*one_over_me;
+
+        dst2.m_rdata[PIdx::w][i_dst2] = p_w;
+        dst2.m_rdata[PIdx::ux][i_dst2] = p_px*one_over_me;
+        dst2.m_rdata[PIdx::uy][i_dst2] = p_py*one_over_me;
+        dst2.m_rdata[PIdx::uz][i_dst2] = p_pz*one_over_me;
+
+        if(m_target1_has_quantum_sync){
+            dst1.m_runtime_rdata[m_target1_opt_depth_runtime_comp][i_dst1] =
+                m_target_opt_depth_functor();
+        }
+
+        if(m_target2_has_quantum_sync){
+            dst2.m_runtime_rdata[m_target2_opt_depth_runtime_comp][i_dst2] =
+                m_target_opt_depth_functor();
+        }
+
     }
 
 };
