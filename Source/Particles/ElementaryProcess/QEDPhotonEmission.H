@@ -4,6 +4,8 @@
 #include "WarpXConst.H"
 #include "WarpXParticleContainer.H"
 
+#include <AMReX_GpuContainers.H>
+
 #include <BreitWheelerEngineWrapper.H>
 #include <QuantumSyncEngineWrapper.H>
 
@@ -96,5 +98,31 @@ struct PhotonEmissionTransformFunc
 
     }
 };
+
+template <typename PTile>
+void cleanLowEnergyPhotons(
+    PTile& ptile,
+    const int old_size, const int num_added,
+    const amrex::ParticleReal energy_threshold)
+{
+    auto pp = ptile.GetArrayOfStructs()().data() + old_size;
+
+    const auto threshold = energy_threshold*energy_threshold/
+            (PhysConst::m_e*PhysConst::m_e*PhysConst::c*PhysConst::c);
+
+
+    amrex::ParallelFor(num_added, [=] AMREX_GPU_DEVICE (int ip) noexcept
+    {
+        auto& p = pp[ip];
+
+        const auto ux = p.rdata(PIdx::ux);
+        const auto uy = p.rdata(PIdx::uy);
+        const auto uz = p.rdata(PIdx::uz);
+
+        if(ux*ux + uy*uy + uz*uz < threshold){
+            p.id() = - 1;
+        }
+    });
+}
 
 #endif //QED_PHOTON_EMISSION_H_

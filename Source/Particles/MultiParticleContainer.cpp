@@ -1209,12 +1209,10 @@ void MultiParticleContainer::doQedQuantumSync()
 
                 setNewParticleIDs(dst_tile, np_dst, num_added);
 
-                auto pp = dst_tile.GetArrayOfStructs()().data() + np_dst;
-                amrex::ParallelFor(num_added, [=] AMREX_GPU_DEVICE (int ip) noexcept
-                {
-                    auto& p = pp[ip];
-                    //ELIMINATE
-                });
+                const auto energy_threshold = static_cast<amrex::ParticleReal>(
+                     2.0 * PhysConst::m_e * PhysConst::c * PhysConst::c);
+                cleanLowEnergyPhotons(
+                    dst_tile, np_dst, num_added, energy_threshold);
 
             }
         }
