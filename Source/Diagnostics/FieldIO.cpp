@@ -635,10 +635,7 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-                for (MFIter mfi(mf_avg[lev]); mfi.isValid(); ++mfi) {
-                    (mf_avg[lev])[mfi].setVal(static_cast<Real>(ParallelDescriptor::MyProc()));
-                }
-                dcomp++;
+                mf_avg[lev].setVal(static_cast<Real>(ParallelDescriptor::MyProc()),dcomp++);
             } else if (fieldname == "divB"){
                 if (do_nodal) amrex::Abort("TODO: do_nodal && plot divb");
                 ComputeDivB(mf_avg[lev], dcomp++,
