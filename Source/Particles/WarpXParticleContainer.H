@@ -291,12 +291,14 @@ public:
     void AddRealComp (const std::string& name, bool comm=true)
     {
         particle_comps[name] = NumRealComps();
+        particle_runtime_comps[name] = NumRealComps() - PIdx::nattribs;
         AddRealComp(comm);
     }
 
     void AddIntComp (const std::string& name, bool comm=true)
     {
         particle_icomps[name] = NumIntComps();
+        particle_runtime_icomps[name] = NumIntComps() - 0;
         AddIntComp(comm);
     }
 
@@ -304,6 +306,8 @@ public:
 
     std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
     std::map<std::string, int> getParticleiComps () const noexcept { return particle_icomps;}
+    std::map<std::string, int> getParticleRuntimeComps () const noexcept { return particle_runtime_comps;}
+    std::map<std::string, int> getParticleRuntimeiComps () const noexcept { return particle_runtime_icomps;}
 
     //amrex::Real getCharge () {return charge;}
     amrex::ParticleReal getCharge () const {return charge;}
@@ -314,6 +318,8 @@ protected:
 
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
+    std::map<std::string, int> particle_runtime_comps;
+    std::map<std::string, int> particle_runtime_icomps;
 
     int species_id;
 

@@ -1175,7 +1175,7 @@ void MultiParticleContainer::doQedQuantumSync()
         SmartCopyFactory copy_factory_phot(*pc_source, *pc_product_phot);
         auto phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
 
-        auto Filter    = phys_pc_ptr->getPairGenerationFilterFunc();
+        auto Filter    = phys_pc_ptr->getPhotonEmissionFilterFunc();
         auto CopyPhot   = copy_factory_phot.getSmartCopy();
 
         const auto phot_em_functor = m_shr_p_qs_engine->build_phot_em_functor();
@@ -1183,7 +1183,7 @@ void MultiParticleContainer::doQedQuantumSync()
 
         if(pc_product_phot->has_breit_wheeler()){
             Transform.enable_opt_depth_for_target(
-                pc_product_phot->particle_comps["tau"],
+                pc_product_phot->particle_runtime_comps["tau"],
                 m_shr_p_bw_engine->build_optical_depth_functor());
         }
 
