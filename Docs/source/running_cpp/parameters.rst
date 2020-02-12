@@ -930,7 +930,7 @@ Numerics and algorithms
     Defines the galilean velocity.
     Non-zero `v_galilean` activates Galilean algorithm, which suppresses the Numerical Cherenkov instability
     in boosted-frame simulation. This requires the code to be compiled with `USE_PSATD=TRUE`.
-    (see the sub-section Numerical Stability and alternate formulation 
+    (see the sub-section Numerical Stability and alternate formulation
     in a Galilean frame in :doc:`../theory/boosted-frame`).
     It also requires the use of the `direct` current deposition option
     `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
