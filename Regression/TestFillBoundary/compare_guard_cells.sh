@@ -169,7 +169,7 @@ for NCI_CORR in 0 1; do
                                                        warpx.do_subcycling=$SUBCYCLING \
                                                        warpx.do_nodal=$NODAL \
                                                        algo.field_gathering=$GATHER \
-                                                       warpx.exchange_all_guard_cells=$EXCHANGE_ALL_CELLS \
+                                                       warpx.safe_guard_cells=$EXCHANGE_ALL_CELLS \
                                                        >  ./OUTPUT/$WHICH/$RUNNAME.txt \
                                                        2> ./ERROR/$WHICH/$RUNNAME.txt
                                                 # MPI is sometimes unhappy without this pause (??)
