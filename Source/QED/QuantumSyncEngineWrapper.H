@@ -66,7 +66,7 @@ public:
      * () operator is just a thin wrapper around a very simple function to
      * generate the optical depth. It can be used on GPU.
      */
-    AMREX_GPU_DEVICE
+    AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     amrex::Real operator() () const noexcept
     {
@@ -107,7 +107,7 @@ public:
      * @param[in,out] opt_depth optical depth of the lepton. It is modified by the method.
      * @return a flag which is 1 if optical depth becomes negative (i.e. a photon has to be generated).
      */
-    AMREX_GPU_DEVICE
+    AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     int operator()(
         amrex::Real px, amrex::Real py, amrex::Real pz,
@@ -184,7 +184,7 @@ public:
      * @param[out] g_weight weight of the generated photons. Array should have size=sampling (code units)
      */
     template <size_t sampling>
-    AMREX_GPU_DEVICE
+    AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     void operator()(
     amrex::Real* px, amrex::Real* py, amrex::Real* pz,
