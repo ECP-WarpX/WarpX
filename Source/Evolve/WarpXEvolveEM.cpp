@@ -561,7 +561,7 @@ WarpX::OneStep_sub1 (Real curtime)
             FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
     }
     if ( safe_guard_cells )
-        FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);    
+        FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 }
 
 void
