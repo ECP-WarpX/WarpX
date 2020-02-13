@@ -819,6 +819,7 @@ writeLabFrameData(
     amrex::Print() << " min z boost " << min_zboost << "\n";
     amrex::Print() << " max z boost " << max_zboost << "\n";
     cc_slice = GetCellCenteredSliceData( Efield, Bfield, current,
+                              loc_charge_density,
                               mypc, geom, m_boost_direction_,
                               min_zboost, max_zboost,
                               ref_ratio);
@@ -1584,9 +1585,10 @@ BackTransformedDiagnostic::GetCellCenteredSliceData(
      const amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > >& current,
      const amrex::Vector< std::unique_ptr<amrex::MultiFab> >& rho,
      const MultiParticleContainer& mypc, const amrex::Vector<amrex::Geometry>& geom,
-    // const int boost_direction_,
-     const int boost_direction_, const Box buff_box,
-     const amrex::Real current_z_boost,
+     const int boost_direction_,
+     //const int boost_direction_, const Box buff_box,
+     const amrex::Real current_min_zboost,
+     const amrex::Real current_max_zboost,
      const Vector<IntVect>& ref_ratio)
 {
     const int ng = 1;
@@ -1597,14 +1599,18 @@ BackTransformedDiagnostic::GetCellCenteredSliceData(
     for (int lev = 0; lev < total_levels; ++lev) {
         // Allocate and initialize slice for the current lev
         // Define Box for cell-centered slice with same index space as level->lev
-        //Box slice_cc = geom[lev].Domain();
-        Box slice_cc = buff_box;
+        Box slice_cc = geom[lev].Domain();
+        //Box slice_cc = buff_box;
         // Modify the boost-dim index consistent with zboost location
         Real dx_cc = geom[lev].CellSize(boost_direction_);
-        int i_boost_cc = ( current_z_boost
+        //int i_boost_cc = ( current_z_boost
+        //               - geom[lev].ProbLo(boost_direction_))/dx_cc;
+        int i_min_boost_cc = ( current_min_zboost
                        - geom[lev].ProbLo(boost_direction_))/dx_cc;
-        slice_cc.setSmall(boost_direction_, i_boost_cc);
-        slice_cc.setBig(boost_direction_, i_boost_cc);
+        int i_max_boost_cc = ( current_max_zboost
+                       - geom[lev].ProbLo(boost_direction_))/dx_cc;
+        slice_cc.setSmall(boost_direction_, i_min_boost_cc);
+        slice_cc.setBig(boost_direction_, i_max_boost_cc);
         // Define multifab that stores slice
         // Obtain box array for the current level from
         // the source MF and convert IndexType to CC
