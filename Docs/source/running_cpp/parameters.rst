@@ -46,12 +46,13 @@ Overall simulation parameters
 
 * ``warpx.random_seed`` (`string`) optional
     If provided ``warpx.random_seed = random``, the random seed will be determined
-    using `std::clock()`, thus every simulation run produces different random numbers,
-    and the actual random seed used will be printed on screen.
+    using `std::clock()`, thus every simulation run produces different random numbers.
     If provided ``warpx.random_seed = n``, and `n >= 0`,
     the random_seed will be reset based on `n`.
     If ``warpx.random_seed = default`` is provided, or ``warpx.random_seed`` is not provided at all,
     the default fixed random seed will be used.
+    When the default random seed is not used,
+    the actual random seed used will be printed on screen.
     Note that when GPU threading is used, one should not expect to obtain the same random numbers,
     even if a fixed ``warpx.random_seed`` is provided.
 
