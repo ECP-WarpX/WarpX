@@ -138,19 +138,21 @@ void WarpXOpenPMDPlot::GetFileName(std::string& filename)
 }
 
 
-bool WarpXOpenPMDPlot::SetStep(int ts)
+void WarpXOpenPMDPlot::SetStep(int ts)
 {
-  if (ts < 0)
-    return false;
+  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
 
   if (m_CurrentStep >= ts) {
-    m_OK = false;
-  } else {
-    m_OK = true;
+      // note m_Series is reset in Init(), so using m_Series->iterations.contains(ts) is only able to check the
+      // last written step in m_Series's life time, but not other earlier written steps by other m_Series
+      std::string warnMsg = " Warning from openPMD writer: Already written iteration:"+std::to_string(ts);
+      std::cout<<warnMsg<<std::endl;
+      amrex::Warning(warnMsg);          
+  }
+ 
     m_CurrentStep =  ts;
     Init(openPMD::AccessType::CREATE);
-  }
-  return  m_OK;
+  
 }
 
 void
@@ -202,9 +204,6 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType)
 void
 WarpXOpenPMDPlot::WriteOpenPMDParticles(const std::unique_ptr<MultiParticleContainer>& mpc)
 {
-  if (!m_OK)
-     return;
-
   BL_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
   std::vector<std::string> species_names = mpc->GetSpeciesNames();
 
@@ -541,9 +540,6 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
                       const int iteration,
                       const double time ) const
 {
-  if (!m_OK)
-     return;
-
   //This is AMReX's tiny profiler. Possibly will apply it later
   BL_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
 

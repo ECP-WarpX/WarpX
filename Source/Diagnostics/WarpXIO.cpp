@@ -538,8 +538,8 @@ WarpX::WriteOpenPMDFile () const
 
 #ifdef WARPX_USE_OPENPMD
     const auto step = istep[0];
-    if (!m_OpenPMDPlotWriter->SetStep(step))
-        return;
+
+    m_OpenPMDPlotWriter->SetStep(step);
 
     Vector<std::string> varnames; // Name of the written fields
     Vector<MultiFab> mf_avg; // contains the averaged, cell-centered fields
