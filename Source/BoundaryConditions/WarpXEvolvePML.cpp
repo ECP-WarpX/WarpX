@@ -1,9 +1,15 @@
+/* Copyright 2019 Aurore Blelly, Axel Huebl, Maxence Thevenet
+ * Remi Lehe, Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <cmath>
 #include <limits>
 
 #include <WarpX.H>
 #include <WarpXConst.H>
-#include <WarpX_f.H>
 #include <WarpX_PML_kernels.H>
 #ifdef WARPX_USE_PY
 #include <WarpX_py.H>
@@ -233,7 +239,9 @@ WarpX::DampJPML (int lev, PatchType patch_type)
     }
 }
 
-/* \brief Copy the current J from the regular grid to the PML */
+/**
+ * \brief Copy the current J from the regular grid to the PML
+ */
 void
 WarpX::CopyJPML ()
 {

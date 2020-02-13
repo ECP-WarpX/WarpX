@@ -1,9 +1,19 @@
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, David Grote
+ * Ligia Diana Amorim, Luca Fedeli, Maxence Thevenet
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ * Yinjian Zhao
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PhysicalParticleContainer_H_
 #define WARPX_PhysicalParticleContainer_H_
 
 #include <PlasmaInjector.H>
 #include <WarpXParticleContainer.H>
 #include <NCIGodfreyFilter.H>
+#include <Ionization.H>
 
 #include <AMReX_IArrayBox.H>
 
@@ -15,6 +25,13 @@
 
 #include <map>
 
+/**
+ * PhysicalParticleContainer is the ParticleContainer class containing plasma
+ * particles (if a simulation has 2 plasma species, say "electrons" and
+ * "ions"), they will be two instances of PhysicalParticleContainer.
+ *
+ * PhysicalParticleContainer inherits from WarpXParticleContainer.
+ */
 class PhysicalParticleContainer
     : public WarpXParticleContainer
 {
@@ -40,6 +57,23 @@ public:
                            amrex::Real t, amrex::Real dt) override;
 #endif // WARPX_DO_ELECTROSTATIC
 
+    /**
+     * \brief Apply external E and B fields on the particles. The E and B
+     * fields could be defined as a constant or using a parser for reading
+     * in a mathematical expression. The default value for the E- and B-fields
+     * is (0.0,0.0,0.0).
+     *
+     * \param[in,out] Exp-Bzp pointer to fields on particles modified based
+     *                  on external E and B
+     * \param[in] xp,yp,zp arrays of particle positions required to compute
+     *                  mathematical expression for the external fields
+     *                  using parser.
+     */
+    void AssignExternalFieldOnParticles ( WarpXParIter& pti,
+                                          RealVector& Exp, RealVector& Eyp,
+                                          RealVector& Ezp, RealVector& Bxp,
+                                          RealVector& Byp, RealVector& Bzp, int lev);
+
     virtual void FieldGather (int lev,
                               const amrex::MultiFab& Ex,
                               const amrex::MultiFab& Ey,
@@ -64,10 +98,42 @@ public:
                       const int ngE, const int e_is_nodal,
                       const long offset,
                       const long np_to_gather,
-                      int thread_num,
                       int lev,
                       int depos_lev);
 
+    /**
+     * \brief Evolve is the central function PhysicalParticleContainer that
+     * advances plasma particles for a time dt (typically one timestep).
+     *
+     * \param lev level on which particles are living
+     * \param Ex MultiFab from which field Ex is gathered
+     * \param Ey MultiFab from which field Ey is gathered
+     * \param Ez MultiFab from which field Ez is gathered
+     * \param Bx MultiFab from which field Bx is gathered
+     * \param By MultiFab from which field By is gathered
+     * \param Bz MultiFab from which field Bz is gathered
+     * \param jx MultiFab to which the particles' current jx is deposited
+     * \param jy MultiFab to which the particles' current jy is deposited
+     * \param jz MultiFab to which the particles' current jz is deposited
+     * \param cjx Same as jx (coarser, from lev-1), when using deposition buffers
+     * \param cjy Same as jy (coarser, from lev-1), when using deposition buffers
+     * \param cjz Same as jz (coarser, from lev-1), when using deposition buffers
+     * \param rho MultiFab to which the particles' charge is deposited
+     * \param crho Same as rho (coarser, from lev-1), when using deposition buffers
+     * \param cEx Same as Ex (coarser, from lev-1), when using gather buffers
+     * \param cEy Same as Ey (coarser, from lev-1), when using gather buffers
+     * \param cEz Same as Ez (coarser, from lev-1), when using gather buffers
+     * \param cBx Same as Bx (coarser, from lev-1), when using gather buffers
+     * \param cBy Same as By (coarser, from lev-1), when using gather buffers
+     * \param cBz Same as Bz (coarser, from lev-1), when using gather buffers
+     * \param t current physical time
+     * \param dt time step by which particles are advanced
+     * \param a_dt_type type of time step (used for sub-cycling)
+     *
+     * Evolve iterates over particle iterator (each box) and performs filtering,
+     * field gather, particle push and current deposition for all particles
+     * in the box.
+     */
     virtual void Evolve (int lev,
                          const amrex::MultiFab& Ex,
                          const amrex::MultiFab& Ey,
@@ -93,11 +159,7 @@ public:
                          amrex::Real dt,
                          DtType a_dt_type=DtType::Full) override;
 
-    virtual void PushPX(WarpXParIter& pti,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& xp,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& yp,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& zp,
-                        amrex::Real dt, DtType a_dt_type=DtType::Full);
+    virtual void PushPX (WarpXParIter& pti, amrex::Real dt, DtType a_dt_type=DtType::Full);
 
     virtual void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& Ex,
@@ -120,15 +182,13 @@ public:
                         RealVector& uzp,
                         RealVector& wp );
 
-    void copy_attribs(WarpXParIter& pti,const amrex::ParticleReal* xp,
-                        const amrex::ParticleReal* yp, const amrex::ParticleReal* zp);
+    void copy_attribs (WarpXParIter& pti);
 
     virtual void PostRestart () final {}
 
     void SplitParticles(int lev);
 
-    virtual void buildIonizationMask (const amrex::MFIter& mfi, const int lev,
-                                      amrex::Gpu::ManagedDeviceVector<int>& ionization_mask) override;
+    IonizationFilterFunc getIonizationFunc ();
 
     // Inject particles in Box 'part_box'
     virtual void AddParticles (int lev);
@@ -163,13 +223,39 @@ public:
  * \brief Apply NCI Godfrey filter to all components of E and B before gather
  * \param lev MR level
  * \param box box onto which the filter is applied
- * \param exeli safeguard to avoid destructing arrays between ParIter iterations on GPU
+ * \param exeli safeguard Elixir object (to avoid de-allocating too early
+            --between ParIter iterations-- on GPU) for field Ex
+ * \param eyeli safeguard Elixir object (to avoid de-allocating too early
+            --between ParIter iterations-- on GPU) for field Ey
+ * \param ezeli safeguard Elixir object (to avoid de-allocating too early
+            --between ParIter iterations-- on GPU) for field Ez
+ * \param bxeli safeguard Elixir object (to avoid de-allocating too early
+            --between ParIter iterations-- on GPU) for field Bx
+ * \param byeli safeguard Elixir object (to avoid de-allocating too early
+            --between ParIter iterations-- on GPU) for field By
+ * \param bzeli safeguard Elixir object (to avoid de-allocating too early
+            --between ParIter iterations-- on GPU) for field Bz
  * \param filtered_Ex Array containing filtered value
+ * \param filtered_Ey Array containing filtered value
+ * \param filtered_Ez Array containing filtered value
+ * \param filtered_Bx Array containing filtered value
+ * \param filtered_By Array containing filtered value
+ * \param filtered_Bz Array containing filtered value
  * \param Ex Field array before filtering (not modified)
- * \param ex_ptr pointer to the array used for field gather.
+ * \param Ey Field array before filtering (not modified)
+ * \param Ez Field array before filtering (not modified)
+ * \param Bx Field array before filtering (not modified)
+ * \param By Field array before filtering (not modified)
+ * \param Bz Field array before filtering (not modified)
+ * \param exfab pointer to the Ex field (modified)
+ * \param eyfab pointer to the Ey field (modified)
+ * \param ezfab pointer to the Ez field (modified)
+ * \param bxfab pointer to the Bx field (modified)
+ * \param byfab pointer to the By field (modified)
+ * \param bzfab pointer to the Bz field (modified)
  *
  * The NCI Godfrey filter is applied on Ex, the result is stored in filtered_Ex
- * and the pointer is modified (before this function is called, it points to Ex
+ * and the pointer exfab is modified (before this function is called, it points to Ex
  * and after this function is called, it points to Ex_filtered)
  */
     void applyNCIFilter (
@@ -251,6 +337,7 @@ protected:
     //When true PhysicalParticleContainer tries to use a pusher including
     //radiation reaction
     bool do_classical_radiation_reaction = false;
+
 
 #ifdef WARPX_QED
     // A flag to enable quantum_synchrotron process for leptons

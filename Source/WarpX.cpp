@@ -1,5 +1,15 @@
+/* Copyright 2016-2020 Andrew Myers, Ann Almgren, Aurore Blelly
+ * Axel Huebl, Burlen Loring, David Grote
+ * Glenn Richardson, Jean-Luc Vay, Junmin Gu
+ * Mathieu Lobet, Maxence Thevenet, Remi Lehe
+ * Revathi Jambunathan, Weiqun Zhang, Yinjian Zhao
+ * levinem
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <WarpX.H>
-#include <WarpX_f.H>
 #include <WarpXConst.H>
 #include <WarpXWrappers.h>
 #include <WarpXUtil.H>
@@ -24,16 +34,27 @@
 
 using namespace amrex;
 
-Vector<Real> WarpX::B_external_particle(3, 0.0);
-Vector<Real> WarpX::E_external_particle(3, 0.0);
-
 Vector<Real> WarpX::E_external_grid(3, 0.0);
 Vector<Real> WarpX::B_external_grid(3, 0.0);
+
+std::string WarpX::authors = "";
+std::string WarpX::B_ext_grid_s = "default";
+std::string WarpX::E_ext_grid_s = "default";
+
+// Parser for B_external on the grid
+std::string WarpX::str_Bx_ext_grid_function;
+std::string WarpX::str_By_ext_grid_function;
+std::string WarpX::str_Bz_ext_grid_function;
+// Parser for E_external on the grid
+std::string WarpX::str_Ex_ext_grid_function;
+std::string WarpX::str_Ey_ext_grid_function;
+std::string WarpX::str_Ez_ext_grid_function;
 
 int WarpX::do_moving_window = 0;
 int WarpX::moving_window_dir = -1;
 Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
+Real WarpX::quantum_xi = PhysConst::xi;
 Real WarpX::gamma_boost = 1.;
 Real WarpX::beta_boost = 0.;
 Vector<int> WarpX::boost_direction = {0,0,0};
@@ -45,6 +66,7 @@ long WarpX::charge_deposition_algo;
 long WarpX::field_gathering_algo;
 long WarpX::particle_pusher_algo;
 int WarpX::maxwell_fdtd_solver_id;
+int WarpX::do_dive_cleaning = 0;
 
 long WarpX::n_rz_azimuthal_modes = 1;
 long WarpX::ncomps = 1;
@@ -78,6 +100,7 @@ Real WarpX::particle_slice_width_lab = 0.0;
 bool WarpX::do_dynamic_scheduling = true;
 
 int WarpX::do_subcycling = 0;
+bool WarpX::exchange_all_guard_cells = 0;
 
 #if (AMREX_SPACEDIM == 3)
 IntVect WarpX::Bx_nodal_flag(1,0,0);
@@ -141,7 +164,7 @@ WarpX::WarpX ()
     ReadParameters();
 
 #ifdef WARPX_USE_OPENPMD
-    m_OpenPMDPlotWriter = new WarpXOpenPMDPlot(openpmd_tspf, openpmd_backend);
+    m_OpenPMDPlotWriter = new WarpXOpenPMDPlot(openpmd_tspf, openpmd_backend, WarpX::getPMLdirections());
 #endif
 
     // Geometry on all levels has been defined already.
@@ -178,6 +201,9 @@ WarpX::WarpX ()
     }
     do_back_transformed_particles = mypc->doBackTransformedDiagnostics();
 
+    /** create object for reduced diagnostics */
+    reduced_diags = new MultiReducedDiags();
+
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);
 
@@ -211,10 +237,13 @@ WarpX::WarpX ()
 
     costs.resize(nlevs_max);
 
+    // Allocate field solver objects
 #ifdef WARPX_USE_PSATD
     spectral_solver_fp.resize(nlevs_max);
     spectral_solver_cp.resize(nlevs_max);
 #endif
+    m_fdtd_solver_fp.resize(nlevs_max);
+    m_fdtd_solver_cp.resize(nlevs_max);
 #ifdef WARPX_USE_PSATD_HYBRID
     Efield_fp_fft.resize(nlevs_max);
     Bfield_fp_fft.resize(nlevs_max);
@@ -247,6 +276,25 @@ WarpX::WarpX ()
     // at different levels (the stencil depends on c*dt/dz)
     nci_godfrey_filter_exeybz.resize(nlevs_max);
     nci_godfrey_filter_bxbyez.resize(nlevs_max);
+
+    // Sanity checks. Must be done after calling the MultiParticleContainer
+    // constructor, as it reads additional parameters
+    // (e.g., use_fdtd_nci_corr)
+
+#ifndef WARPX_USE_PSATD
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        not ( do_pml && do_nodal ),
+        "PML + do_nodal for finite-difference not implemented"
+        );
+#endif
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        not ( do_dive_cleaning && do_nodal ),
+        "divE cleaning + do_nodal not implemented"
+        );
+#ifdef WARPX_USE_PSATD
+    AMREX_ALWAYS_ASSERT(use_fdtd_nci_corr == 0);
+    AMREX_ALWAYS_ASSERT(do_subcycling == 0);
+#endif
 }
 
 WarpX::~WarpX ()
@@ -255,6 +303,8 @@ WarpX::~WarpX ()
     for (int lev = 0; lev < nlevs_max; ++lev) {
         ClearLevel(lev);
     }
+
+    delete reduced_diags;
 
 #ifdef BL_USE_SENSEI_INSITU
     delete insitu_bridge;
@@ -272,6 +322,7 @@ WarpX::ReadParameters ()
         ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
         pp.query("max_step", max_step);
         pp.query("stop_time", stop_time);
+        pp.query("authors", authors);
     }
 
     {
@@ -293,6 +344,8 @@ WarpX::ReadParameters ()
         pp.query("verbose", verbose);
         pp.query("regrid_int", regrid_int);
         pp.query("do_subcycling", do_subcycling);
+        pp.query("use_hybrid_QED", use_hybrid_QED);
+        pp.query("exchange_all_guard_cells", exchange_all_guard_cells);
         pp.query("override_sync_int", override_sync_int);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
@@ -305,12 +358,6 @@ WarpX::ReadParameters ()
         do_compute_max_step_from_zmax =
             pp.query("zmax_plasma_to_compute_max_step",
                       zmax_plasma_to_compute_max_step);
-
-        pp.queryarr("B_external_particle", B_external_particle);
-        pp.queryarr("E_external_particle", E_external_particle);
-
-        pp.queryarr("E_external_grid", E_external_grid);
-        pp.queryarr("B_external_grid", B_external_grid);
 
         pp.query("do_moving_window", do_moving_window);
         if (do_moving_window)
@@ -413,6 +460,8 @@ WarpX::ReadParameters ()
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
         pp.query("sort_int", sort_int);
 
+        pp.query("quantum_xi", quantum_xi);
+
         pp.query("do_pml", do_pml);
         pp.query("pml_ncell", pml_ncell);
         pp.query("pml_delta", pml_delta);
@@ -439,12 +488,11 @@ WarpX::ReadParameters ()
             amrex::Abort("J-damping can only be done when PML are inside simulation domain (do_pml_in_domain=1)");
         }
 
-        pp.query("dump_openpmd", dump_openpmd);
+        pp.query("openpmd_int", openpmd_int);
         pp.query("openpmd_backend", openpmd_backend);
 #ifdef WARPX_USE_OPENPMD
         pp.query("openpmd_tspf", openpmd_tspf);
 #endif
-        pp.query("dump_plotfiles", dump_plotfiles);
         pp.query("plot_costs", plot_costs);
         pp.query("plot_raw_fields", plot_raw_fields);
         pp.query("plot_raw_fields_guards", plot_raw_fields_guards);
@@ -633,7 +681,6 @@ WarpX::ReadParameters ()
        }
 
     }
-
 }
 
 // This is a virtual function.
@@ -717,58 +764,23 @@ WarpX::ClearLevel (int lev)
 void
 WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& dm)
 {
-    // When using subcycling, the particles on the fine level perform two pushes
-    // before being redistributed ; therefore, we need one extra guard cell
-    // (the particles may move by 2*c*dt)
-    const int ngx_tmp = (maxLevel() > 0 && do_subcycling == 1) ? WarpX::nox+1 : WarpX::nox;
-    const int ngy_tmp = (maxLevel() > 0 && do_subcycling == 1) ? WarpX::noy+1 : WarpX::noy;
-    const int ngz_tmp = (maxLevel() > 0 && do_subcycling == 1) ? WarpX::noz+1 : WarpX::noz;
 
-    // Ex, Ey, Ez, Bx, By, and Bz have the same number of ghost cells.
-    // jx, jy, jz and rho have the same number of ghost cells.
-    // E and B have the same number of ghost cells as j and rho if NCI filter is not used,
-    // but different number of ghost cells in z-direction if NCI filter is used.
-    // The number of cells should be even, in order to easily perform the
-    // interpolation from coarse grid to fine grid.
-    int ngx = (ngx_tmp % 2) ? ngx_tmp+1 : ngx_tmp;  // Always even number
-    int ngy = (ngy_tmp % 2) ? ngy_tmp+1 : ngy_tmp;  // Always even number
-    int ngz_nonci = (ngz_tmp % 2) ? ngz_tmp+1 : ngz_tmp;  // Always even number
-    int ngz;
-    if (WarpX::use_fdtd_nci_corr) {
-        int ng = ngz_tmp + NCIGodfreyFilter::m_stencil_width;
-        ngz = (ng % 2) ? ng+1 : ng;
-    } else {
-        ngz = ngz_nonci;
-    }
+    bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 
-    // J is only interpolated from fine to coarse (not coarse to fine)
-    // and therefore does not need to be even.
-    int ngJx = ngx_tmp;
-    int ngJy = ngy_tmp;
-    int ngJz = ngz_tmp;
-
-    // When calling the moving window (with one level of refinement),  we shift
-    // the fine grid by 2 cells ; therefore, we need at least 2 guard cells
-    // on level 1. This may not be necessary for level 0.
-    if (do_moving_window) {
-        ngx = std::max(ngx,2);
-        ngy = std::max(ngy,2);
-        ngz = std::max(ngz,2);
-        ngJx = std::max(ngJx,2);
-        ngJy = std::max(ngJy,2);
-        ngJz = std::max(ngJz,2);
-    }
-
-#if (AMREX_SPACEDIM == 3)
-    IntVect ngE(ngx,ngy,ngz);
-    IntVect ngJ(ngJx,ngJy,ngJz);
-#elif (AMREX_SPACEDIM == 2)
-    IntVect ngE(ngx,ngz);
-    IntVect ngJ(ngJx,ngJz);
-#endif
-
-    IntVect ngRho = ngJ+1; //One extra ghost cell, so that it's safe to deposit charge density
-                           // after pushing particle.
+    guard_cells.Init(
+        do_subcycling,
+        WarpX::use_fdtd_nci_corr,
+        do_nodal,
+        do_moving_window,
+        fft_hybrid_mpi_decomposition,
+        aux_is_nodal,
+        moving_window_dir,
+        WarpX::nox,
+        nox_fft, noy_fft, noz_fft,
+        NCIGodfreyFilter::m_stencil_width,
+        maxwell_fdtd_solver_id,
+        maxLevel(),
+        exchange_all_guard_cells);
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
         n_current_deposition_buffer = 1;
@@ -779,54 +791,22 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     }
 
     if (n_current_deposition_buffer < 0) {
-        n_current_deposition_buffer = ngJ.max();
+        n_current_deposition_buffer = guard_cells.ng_alloc_J.max();
     }
     if (n_field_gather_buffer < 0) {
         // Field gather buffer should be larger than current deposition buffers
         n_field_gather_buffer = n_current_deposition_buffer + 1;
     }
 
-    int ngF = (do_moving_window) ? 2 : 0;
-    // CKC solver requires one additional guard cell
-    if (maxwell_fdtd_solver_id == 1) ngF = std::max( ngF, 1 );
-
-#ifdef WARPX_USE_PSATD
-    if (fft_hybrid_mpi_decomposition == false){
-        // All boxes should have the same number of guard cells
-        // (to avoid temporary parallel copies)
-        // Thus take the max of the required number of guards for each field
-        // Also: the number of guard cell should be enough to contain
-        // the stencil of the FFT solver. Here, this number (`ngFFT`)
-        // is determined *empirically* to be the order of the solver
-        // for nodal, and half the order of the solver for staggered.
-        IntVect ngFFT;
-        if (do_nodal) {
-            ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
-        } else {
-            ngFFT = IntVect(AMREX_D_DECL(nox_fft/2, noy_fft/2, noz_fft/2));
-        }
-        for (int i_dim=0; i_dim<AMREX_SPACEDIM; i_dim++ ){
-            int ng_required = ngFFT[i_dim];
-            // Get the max
-            ng_required = std::max( ng_required, ngE[i_dim] );
-            ng_required = std::max( ng_required, ngJ[i_dim] );
-            ng_required = std::max( ng_required, ngRho[i_dim] );
-            ng_required = std::max( ng_required, ngF );
-            // Set the guard cells to this max
-            ngE[i_dim] = ng_required;
-            ngJ[i_dim] = ng_required;
-            ngRho[i_dim] = ng_required;
-            ngF = ng_required;
-        }
-    }
-#endif
-
-    AllocLevelMFs(lev, ba, dm, ngE, ngJ, ngRho, ngF);
+    AllocLevelMFs(lev, ba, dm, guard_cells.ng_alloc_EB, guard_cells.ng_alloc_J,
+                  guard_cells.ng_alloc_Rho, guard_cells.ng_alloc_F,
+                  guard_cells.ng_Extra, aux_is_nodal);
 }
 
 void
 WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm,
-                      const IntVect& ngE, const IntVect& ngJ, const IntVect& ngRho, int ngF)
+                      const IntVect& ngE, const IntVect& ngJ, const IntVect& ngRho,
+                      const IntVect& ngF, const IntVect& ngextra, const bool aux_is_nodal)
 {
 
 #if defined WARPX_DIM_RZ
@@ -837,9 +817,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     // Even components are the imaginary parts.
     ncomps = n_rz_azimuthal_modes*2 - 1;
 #endif
-
-    bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
-    IntVect ngextra(static_cast<int>(aux_is_nodal and !do_nodal));
 
     //
     // The fine patch
@@ -870,7 +847,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_dive_cleaning)
     {
-        F_fp[lev].reset  (new MultiFab(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF));
+        F_fp[lev].reset  (new MultiFab(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max()));
     }
 #ifdef WARPX_USE_PSATD
     else
@@ -893,7 +870,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev] ) );
     }
 #endif
-
+    std::array<Real,3> const dx = CellSize(lev);
+    m_fdtd_solver_fp[lev].reset(
+        new FiniteDifferenceSolver(maxwell_fdtd_solver_id, dx, do_nodal) );
     //
     // The Aux patch (i.e., the full solution)
     //
@@ -955,7 +934,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         }
         if (do_dive_cleaning)
         {
-            F_cp[lev].reset  (new MultiFab(amrex::convert(cba,IntVect::TheUnitVector()),dm,ncomps, ngF));
+            F_cp[lev].reset  (new MultiFab(amrex::convert(cba,IntVect::TheUnitVector()),dm,ncomps, ngF.max()));
         }
 #ifdef WARPX_USE_PSATD
         else
@@ -965,11 +944,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if (fft_hybrid_mpi_decomposition == false){
             // Allocate and initialize the spectral solver
             std::array<Real,3> cdx = CellSize(lev-1);
-    #if (AMREX_SPACEDIM == 3)
+#if (AMREX_SPACEDIM == 3)
             RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
-    #elif (AMREX_SPACEDIM == 2)
+#elif (AMREX_SPACEDIM == 2)
             RealVect cdx_vect(cdx[0], cdx[2]);
-    #endif
+#endif
             // Get the cell-centered box, with guard cells
             BoxArray realspace_ba = cba;// Copy box
             realspace_ba.enclosedCells().grow(ngE);// cell-centered + guard cells
@@ -978,6 +957,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                 nox_fft, noy_fft, noz_fft, do_nodal, cdx_vect, dt[lev] ) );
         }
 #endif
+    std::array<Real,3> cdx = CellSize(lev-1);
+    m_fdtd_solver_cp[lev].reset(
+        new FiniteDifferenceSolver( maxwell_fdtd_solver_id, cdx, do_nodal ) );
     }
 
     //
@@ -1116,9 +1098,9 @@ WarpX::Evolve (int numsteps) {
 }
 
 void
-WarpX::ComputeDivB (MultiFab& divB, int dcomp,
-                    const std::array<const MultiFab*, 3>& B,
-                    const std::array<Real,3>& dx)
+WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
+                    const std::array<const amrex::MultiFab*, 3>& B,
+                    const std::array<amrex::Real,3>& dx)
 {
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
@@ -1150,9 +1132,9 @@ WarpX::ComputeDivB (MultiFab& divB, int dcomp,
 }
 
 void
-WarpX::ComputeDivB (MultiFab& divB, int dcomp,
-                    const std::array<const MultiFab*, 3>& B,
-                    const std::array<Real,3>& dx, int ngrow)
+WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
+                    const std::array<const amrex::MultiFab*, 3>& B,
+                    const std::array<amrex::Real,3>& dx, int ngrow)
 {
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
@@ -1184,9 +1166,9 @@ WarpX::ComputeDivB (MultiFab& divB, int dcomp,
 }
 
 void
-WarpX::ComputeDivE (MultiFab& divE, int dcomp,
-                    const std::array<const MultiFab*, 3>& E,
-                    const std::array<Real,3>& dx)
+WarpX::ComputeDivE (amrex::MultiFab& divE, int dcomp,
+                    const std::array<const amrex::MultiFab*, 3>& E,
+                    const std::array<amrex::Real,3>& dx)
 {
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
@@ -1218,9 +1200,9 @@ WarpX::ComputeDivE (MultiFab& divE, int dcomp,
 }
 
 void
-WarpX::ComputeDivE (MultiFab& divE, int dcomp,
-                    const std::array<const MultiFab*, 3>& E,
-                    const std::array<Real,3>& dx, int ngrow)
+WarpX::ComputeDivE (amrex::MultiFab& divE, int dcomp,
+                    const std::array<const amrex::MultiFab*, 3>& E,
+                    const std::array<amrex::Real,3>& dx, int ngrow)
 {
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
@@ -1249,6 +1231,35 @@ WarpX::ComputeDivE (MultiFab& divE, int dcomp,
                               );
         });
     }
+}
+
+PML*
+WarpX::GetPML (int lev)
+{
+    if (do_pml) {
+        // This should check if pml was initialized
+        return pml[lev].get();
+    } else {
+        return nullptr;
+    }
+}
+
+std::vector< bool >
+WarpX::getPMLdirections() const
+{
+    std::vector< bool > dirsWithPML( 6, false );
+#if AMREX_SPACEDIM!=3
+    dirsWithPML.resize( 4 );
+#endif
+    if( do_pml )
+    {
+        for( auto i = 0u; i < dirsWithPML.size() / 2u; ++i )
+        {
+            dirsWithPML.at( 2u*i      ) = bool(do_pml_Lo[i]);
+            dirsWithPML.at( 2u*i + 1u ) = bool(do_pml_Hi[i]);
+        }
+    }
+    return dirsWithPML;
 }
 
 void
@@ -1276,15 +1287,65 @@ WarpX::BuildBufferMasks ()
 #endif
                 for (MFIter mfi(*bmasks, true); mfi.isValid(); ++mfi)
                 {
-                    const Box& tbx = mfi.growntilebox();
-                    warpx_build_buffer_masks (BL_TO_FORTRAN_BOX(tbx),
-                                              BL_TO_FORTRAN_ANYD((*bmasks)[mfi]),
-                                              BL_TO_FORTRAN_ANYD(tmp[mfi]),
-                                              &ngbuffer);
+                    const Box tbx = mfi.growntilebox();
+                    BuildBufferMasksInBox( tbx, (*bmasks)[mfi], tmp[mfi], ngbuffer );
                 }
             }
         }
     }
+}
+
+/**
+ * \brief Build buffer mask within given FArrayBox
+ *
+ * \param tbx         Current FArrayBox
+ * \param buffer_mask Buffer mask to be set
+ * \param guard_mask  Guard mask used to set buffer_mask
+ * \param ng          Number of guard cells
+ */
+void
+WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
+                               const amrex::IArrayBox &guard_mask, const int ng )
+{
+    bool setnull;
+    const auto lo = amrex::lbound( tbx );
+    const auto hi = amrex::ubound( tbx );
+    Array4<int> msk = buffer_mask.array();
+    Array4<int const> gmsk = guard_mask.array();
+#if (AMREX_SPACEDIM == 2)
+    int k = lo.z;
+    for     (int j = lo.y; j <= hi.y; ++j) {
+        for (int i = lo.x; i <= hi.x; ++i) {
+            setnull = false;
+            // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
+            for     (int jj = j-ng; jj <= j+ng; ++jj) {
+                for (int ii = i-ng; ii <= i+ng; ++ii) {
+                    if ( gmsk(ii,jj,k) == 0 ) setnull = true;
+                }
+            }
+            if ( setnull ) msk(i,j,k) = 0;
+            else           msk(i,j,k) = 1;
+        }
+    }
+#elif (AMREX_SPACEDIM == 3)
+    for         (int k = lo.z; k <= hi.z; ++k) {
+        for     (int j = lo.y; j <= hi.y; ++j) {
+            for (int i = lo.x; i <= hi.x; ++i) {
+                setnull = false;
+                // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
+                for         (int kk = k-ng; kk <= k+ng; ++kk) {
+                    for     (int jj = j-ng; jj <= j+ng; ++jj) {
+                        for (int ii = i-ng; ii <= i+ng; ++ii) {
+                            if ( gmsk(ii,jj,kk) == 0 ) setnull = true;
+                        }
+                    }
+                }
+                if ( setnull ) msk(i,j,k) = 0;
+                else           msk(i,j,k) = 1;
+            }
+        }
+    }
+#endif
 }
 
 const iMultiFab*
@@ -1333,7 +1394,7 @@ WarpX::Version ()
 std::string
 WarpX::PicsarVersion ()
 {
-#ifdef WARPX_GIT_VERSION
+#ifdef PICSAR_GIT_VERSION
     return std::string(PICSAR_GIT_VERSION);
 #else
     return std::string("Unknown");

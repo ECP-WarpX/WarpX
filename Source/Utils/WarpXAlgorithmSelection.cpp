@@ -1,3 +1,11 @@
+/* Copyright 2019-2020 Axel Huebl, David Grote, Luca Fedeli
+ * Remi Lehe, Weiqun Zhang, Yinjian Zhao
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <WarpXAlgorithmSelection.H>
 
 #include <map>
@@ -18,14 +26,18 @@ const std::map<std::string, int> maxwell_solver_algo_to_int = {
 const std::map<std::string, int> particle_pusher_algo_to_int = {
     {"boris",   ParticlePusherAlgo::Boris },
     {"vay",     ParticlePusherAlgo::Vay },
-    {"higuera",     ParticlePusherAlgo::HigueraCary },
+    {"higuera", ParticlePusherAlgo::HigueraCary },
     {"default", ParticlePusherAlgo::Boris }
 };
 
 const std::map<std::string, int> current_deposition_algo_to_int = {
-    {"esirkepov",            CurrentDepositionAlgo::Esirkepov },
-    {"direct",               CurrentDepositionAlgo::Direct },
-    {"default",              CurrentDepositionAlgo::Esirkepov }
+    {"esirkepov", CurrentDepositionAlgo::Esirkepov },
+    {"direct",    CurrentDepositionAlgo::Direct },
+#ifdef WARPX_USE_PSATD
+    {"default",   CurrentDepositionAlgo::Direct }
+#else
+    {"default",   CurrentDepositionAlgo::Esirkepov }
+#endif
 };
 
 const std::map<std::string, int> charge_deposition_algo_to_int = {

@@ -1,13 +1,24 @@
+/* Copyright 2019-2020 Andrew Myers, Ann Almgren, Axel Huebl
+ * David Grote, Jean-Luc Vay, Junmin Gu
+ * Luca Fedeli, Mathieu Lobet, Maxence Thevenet
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ * Yinjian Zhao
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_ParticleContainer_H_
 #define WARPX_ParticleContainer_H_
-
-#include "ElementaryProcess.H"
 
 #include <WarpXParticleContainer.H>
 #include <PhysicalParticleContainer.H>
 #include <RigidInjectedParticleContainer.H>
 #include <PhotonParticleContainer.H>
 #include <LaserParticleContainer.H>
+#include <WarpXParserWrapper.H>
+#include <SmartCopy.H>
+#include <FilterCopyTransform.H>
 
 #include <AMReX_Particles.H>
 #ifdef WARPX_QED
@@ -16,19 +27,27 @@
     #include <QuantumSyncEngineWrapper.H>
 #endif
 
+#include "CollisionType.H"
+
 #include <memory>
 #include <map>
 #include <string>
 #include <algorithm>
 
-//
-// MultiParticleContainer holds multiple (nspecies or npsecies+1 when
-// using laser) WarpXParticleContainer.  WarpXParticleContainer is
-// derived from amrex::ParticleContainer, and it is
-// polymorphic. PhysicalParticleContainer and LaserParticleContainer are
-// concrete class derived from WarpXParticlContainer.
-//
-
+/**
+ * The class MultiParticleContainer holds multiple instances of the polymorphic
+ * class WarpXParticleContainer, stored in its member variable "allcontainers".
+ * The class WarpX typically has a single (pointer to an) instance of
+ * MultiParticleContainer.
+ *
+ * MultiParticleContainer typically has two types of functions:
+ * - Functions that loop over all instances of WarpXParticleContainer in
+ *   allcontainers and calls the corresponding function (for instance,
+ *   MultiParticleContainer::Evolve loops over all particles containers and
+ *   calls the corresponding WarpXParticleContainer::Evolve function).
+ * - Functions that specifically handle multiple species (for instance
+ *   ReadParameters or mapSpeciesProduct).
+ */
 class MultiParticleContainer
 {
 
@@ -73,13 +92,6 @@ public:
                    amrex::Real t, amrex::Real dt);
 
     ///
-    /// This pushes the particle positions by one half time step for all the species in the
-    /// MultiParticleContainer. It is used to desynchronize the particles after initializaton
-    /// or when restarting from a checkpoint. This is the electrostatic version.
-    ///
-    void PushXES (amrex::Real dt);
-
-    ///
     /// This deposits the particle charge onto rho, accumulating the value for all the species
     /// in the MultiParticleContainer. rho is assumed to contain node-centered multifabs.
     /// This version is hard-coded for CIC deposition.
@@ -120,7 +132,7 @@ public:
     ///
     /// This pushes the particle positions by one half time step for all the species in the
     /// MultiParticleContainer. It is used to desynchronize the particles after initializaton
-    /// or when restarting from a checkpoint. This is the electromagnetic version.
+    /// or when restarting from a checkpoint.
     ///
     void PushX (amrex::Real dt);
 
@@ -141,6 +153,8 @@ public:
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false) const;
 
     void doFieldIonization ();
+
+    void doCoulombCollisions ();
 
     void Checkpoint (const std::string& dir) const;
 
@@ -203,7 +217,20 @@ public:
 
     PhysicalParticleContainer& GetPCtmp () { return *pc_tmp; }
 
-    IonizationProcess ionization_process;
+    std::string m_B_ext_particle_s = "default";
+    std::string m_E_ext_particle_s = "default";
+    // External fields added to particle fields.
+    amrex::Vector<amrex::Real> m_B_external_particle;
+    amrex::Vector<amrex::Real> m_E_external_particle;
+    // ParserWrapper for B_external on the particle
+    std::unique_ptr<ParserWrapper<4> > m_Bx_particle_parser;
+    std::unique_ptr<ParserWrapper<4> > m_By_particle_parser;
+    std::unique_ptr<ParserWrapper<4> > m_Bz_particle_parser;
+    // ParserWrapper for E_external on the particle
+    std::unique_ptr<ParserWrapper<4> > m_Ex_particle_parser;
+    std::unique_ptr<ParserWrapper<4> > m_Ey_particle_parser;
+    std::unique_ptr<ParserWrapper<4> > m_Ez_particle_parser;
+
 
 protected:
 
@@ -214,6 +241,10 @@ protected:
 
     std::vector<std::string> lasers_names;
 
+    std::vector<std::string> collision_names;
+
+    amrex::Vector<std::unique_ptr<CollisionType> > allcollisions;
+
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     std::vector<bool> m_deposit_on_main_grid;
 
@@ -221,6 +252,9 @@ protected:
     std::vector<bool> m_gather_from_main_grid;
 
     std::vector<PCTypes> species_types;
+
+    amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,
+                                 const WarpXParticleContainer& pc_dst) const noexcept;
 
 #ifdef WARPX_QED
     // The QED engines
@@ -295,5 +329,6 @@ private:
     // runtime parameters
     int nlasers = 0;
     int nspecies = 1;   // physical particles only. nspecies+nlasers == allcontainers.size().
+    int ncollisions = 0;
 };
 #endif /*WARPX_ParticleContainer_H_*/

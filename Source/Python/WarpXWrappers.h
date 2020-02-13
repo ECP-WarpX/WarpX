@@ -1,3 +1,10 @@
+/* Copyright 2019 Andrew Myers, David Grote, Maxence Thevenet
+ * Remi Lehe, Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_WRAPPERS_H_
 #define WARPX_WRAPPERS_H_
 
@@ -5,8 +12,11 @@
 #include <AMReX_BLProfiler.H>
 
 #ifdef BL_USE_MPI
-#include <mpi.h>
+#   include <mpi.h>
 #endif
+
+#include <AMReX_REAL.H>
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,10 +64,17 @@ extern "C" {
 
     void warpx_evolve (int numsteps);  // -1 means the inputs parameter will be used.
 
-    void warpx_addNParticles(int speciesnumber, int lenx,
-                             amrex::ParticleReal* x, amrex::ParticleReal* y, amrex::ParticleReal* z,
-                             amrex::ParticleReal* vx, amrex::ParticleReal* vy, amrex::ParticleReal* vz,
-                             int nattr, amrex::ParticleReal* attr, int uniqueparticles);
+    void warpx_addNParticles(int speciesnumber,
+                             int lenx,
+                             amrex::ParticleReal const * x,
+                             amrex::ParticleReal const * y,
+                             amrex::ParticleReal const * z,
+                             amrex::ParticleReal const * vx,
+                             amrex::ParticleReal const * vy,
+                             amrex::ParticleReal const * vz,
+                             int nattr,
+                             amrex::ParticleReal const * attr,
+                             int uniqueparticles);
 
     void warpx_ConvertLabParamsToBoost();
 
@@ -66,24 +83,6 @@ extern "C" {
     amrex::Real warpx_getProbHi(int dir);
 
     long warpx_getNumParticles(int speciesnumber);
-
-    amrex::Real** warpx_getEfield(int lev, int direction,
-                                  int *return_size, int* ncomps, int* ngrow, int **shapes);
-
-    int* warpx_getEfieldLoVects(int lev, int direction,
-                                int *return_size, int* ngrow);
-
-    amrex::Real** warpx_getBfield(int lev, int direction,
-                                  int *return_size, int* ncomps, int* ngrow, int **shapes);
-
-    int* warpx_getBfieldLoVects(int lev, int direction,
-                                int *return_size, int* ngrow);
-
-    amrex::Real** warpx_getCurrentDensity(int lev, int direction,
-                                          int *return_size, int* ncomps, int* ngrow, int **shapes);
-
-    int* warpx_getCurrentDensityLoVects(int lev, int direction,
-                                        int *return_size, int* ngrow);
 
     amrex::ParticleReal** warpx_getParticleStructs(int speciesnumber, int lev,
                                                    int* num_tiles, int** particles_per_tile);
@@ -113,9 +112,11 @@ extern "C" {
 
   int warpx_checkInt ();
   int warpx_plotInt ();
+  int warpx_openpmdInt ();
 
   void warpx_WriteCheckPointFile ();
   void warpx_WritePlotFile ();
+  void warpx_WriteOpenPMDFile ();
 
   int warpx_finestLevel ();
 

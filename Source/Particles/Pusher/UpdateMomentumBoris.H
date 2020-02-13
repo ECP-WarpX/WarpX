@@ -1,9 +1,16 @@
+/* Copyright 2019 David Grote, Maxence Thevenet, Remi Lehe
+ * Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_H_
 #define WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_BORIS_H_
 
 #include <AMReX_REAL.H>
 
-/* \brief Push the particle's positions over one timestep,
+/** \brief Push the particle's positions over one timestep,
  *    given the value of its momenta `ux`, `uy`, `uz` */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void UpdateMomentumBoris(

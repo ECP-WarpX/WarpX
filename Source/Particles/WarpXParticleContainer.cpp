@@ -1,10 +1,18 @@
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, David Grote
+ * Jean-Luc Vay, Luca Fedeli, Maxence Thevenet
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ * Yinjian Zhao, levinem
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <limits>
 
 #include <MultiParticleContainer.H>
 #include <WarpXParticleContainer.H>
 #include <AMReX_AmrParGDB.H>
 #include <WarpXComm.H>
-#include <WarpX_f.H>
 #include <WarpX.H>
 #include <WarpXAlgorithmSelection.H>
 #include <WarpXComm.H>
@@ -16,54 +24,10 @@
 
 using namespace amrex;
 
-int WarpXParticleContainer::do_not_push = 0;
-int WarpXParticleContainer::do_not_deposit = 0;
-
 WarpXParIter::WarpXParIter (ContainerType& pc, int level)
     : ParIter(pc, level, MFItInfo().SetDynamic(WarpX::do_dynamic_scheduling))
 {
 }
-
-#if (AMREX_SPACEDIM == 2)
-void
-WarpXParIter::GetPosition (Gpu::ManagedDeviceVector<ParticleReal>& x,
-                           Gpu::ManagedDeviceVector<ParticleReal>& y,
-                           Gpu::ManagedDeviceVector<ParticleReal>& z) const
-{
-    amrex::ParIter<0,0,PIdx::nattribs>::GetPosition(x, z);
-#ifdef WARPX_DIM_RZ
-    const auto& attribs = GetAttribs();
-    const auto& theta = attribs[PIdx::theta];
-    y.resize(x.size());
-    for (unsigned int i=0 ; i < x.size() ; i++) {
-        // The x stored in the particles is actually the radius
-        y[i] = x[i]*std::sin(theta[i]);
-        x[i] = x[i]*std::cos(theta[i]);
-    }
-#else
-    y.resize(x.size(), std::numeric_limits<ParticleReal>::quiet_NaN());
-#endif
-}
-
-void
-WarpXParIter::SetPosition (const Gpu::ManagedDeviceVector<ParticleReal>& x,
-                           const Gpu::ManagedDeviceVector<ParticleReal>& y,
-                           const Gpu::ManagedDeviceVector<ParticleReal>& z)
-{
-#ifdef WARPX_DIM_RZ
-    auto& attribs = GetAttribs();
-    auto& theta = attribs[PIdx::theta];
-    Gpu::ManagedDeviceVector<ParticleReal> r(x.size());
-    for (unsigned int i=0 ; i < x.size() ; i++) {
-        theta[i] = std::atan2(y[i], x[i]);
-        r[i] = std::sqrt(x[i]*x[i] + y[i]*y[i]);
-    }
-    amrex::ParIter<0,0,PIdx::nattribs>::SetPosition(r, z);
-#else
-    amrex::ParIter<0,0,PIdx::nattribs>::SetPosition(x, z);
-#endif
-}
-#endif
 
 WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     : ParticleContainer<0,0,PIdx::nattribs>(amr_core->GetParGDB())
@@ -101,9 +65,6 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     local_jx.resize(num_threads);
     local_jy.resize(num_threads);
     local_jz.resize(num_threads);
-    m_xp.resize(num_threads);
-    m_yp.resize(num_threads);
-    m_zp.resize(num_threads);
 }
 
 void
@@ -120,7 +81,6 @@ WarpXParticleContainer::ReadParameters ()
         do_tiling = true;
 #endif
         pp.query("do_tiling",  do_tiling);
-        pp.query("do_not_push", do_not_push);
 
         initialized = true;
     }
@@ -164,7 +124,6 @@ WarpXParticleContainer::AddNParticles (int lev,
 
     //  Add to grid 0 and tile 0
     // Redistribute() will move them to proper places.
-    std::pair<int,int> key {0,0};
     auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
     std::size_t np = iend-ibegin;
@@ -335,9 +294,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     // CPU, tiling: deposit into local_jx
     // (same for jx and jz)
 
-    ParticleReal* AMREX_RESTRICT xp = m_xp[thread_num].dataPtr() + offset;
-    ParticleReal* AMREX_RESTRICT zp = m_zp[thread_num].dataPtr() + offset;
-    ParticleReal* AMREX_RESTRICT yp = m_yp[thread_num].dataPtr() + offset;
+    const auto GetPosition = GetParticlePosition(pti, offset);
 
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
@@ -348,19 +305,19 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if        (WarpX::nox == 1){
             doEsirkepovDepositionShapeN<1>(
-                xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo, q,
                 WarpX::n_rz_azimuthal_modes);
         } else if (WarpX::nox == 2){
             doEsirkepovDepositionShapeN<2>(
-                xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo, q,
                 WarpX::n_rz_azimuthal_modes);
         } else if (WarpX::nox == 3){
             doEsirkepovDepositionShapeN<3>(
-                xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo, q,
                 WarpX::n_rz_azimuthal_modes);
@@ -368,19 +325,19 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     } else {
         if        (WarpX::nox == 1){
             doDepositionShapeN<1>(
-                xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx,
                 xyzmin, lo, q);
         } else if (WarpX::nox == 2){
             doDepositionShapeN<2>(
-                xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx,
                 xyzmin, lo, q);
         } else if (WarpX::nox == 3){
             doDepositionShapeN<3>(
-                xp, yp, zp, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx,
                 xyzmin, lo, q);
@@ -420,7 +377,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 void
 WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
                                        const int * const ion_lev,
-                                       MultiFab* rho, int icomp,
+                                       amrex::MultiFab* rho, int icomp,
                                        const long offset, const long np_to_depose,
                                        int thread_num, int lev, int depos_lev)
 {
@@ -474,9 +431,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     // GPU, no tiling: deposit directly in rho
     // CPU, tiling: deposit into local_rho
 
-    ParticleReal* AMREX_RESTRICT xp = m_xp[thread_num].dataPtr() + offset;
-    ParticleReal* AMREX_RESTRICT zp = m_zp[thread_num].dataPtr() + offset;
-    ParticleReal* AMREX_RESTRICT yp = m_yp[thread_num].dataPtr() + offset;
+    const auto GetPosition = GetParticlePosition(pti, offset);
 
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
@@ -486,13 +441,13 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
     BL_PROFILE_VAR_START(blp_ppc_chd);
     if        (WarpX::nox == 1){
-        doChargeDepositionShapeN<1>(xp, yp, zp, wp.dataPtr()+offset, ion_lev,
+        doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_arr, np_to_depose, dx, xyzmin, lo, q);
     } else if (WarpX::nox == 2){
-        doChargeDepositionShapeN<2>(xp, yp, zp, wp.dataPtr()+offset, ion_lev,
+        doChargeDepositionShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_arr, np_to_depose, dx, xyzmin, lo, q);
     } else if (WarpX::nox == 3){
-        doChargeDepositionShapeN<3>(xp, yp, zp, wp.dataPtr()+offset, ion_lev,
+        doChargeDepositionShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_arr, np_to_depose, dx, xyzmin, lo, q);
     }
     BL_PROFILE_VAR_STOP(blp_ppc_chd);
@@ -507,7 +462,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 }
 
 void
-WarpXParticleContainer::DepositCharge (Vector<std::unique_ptr<MultiFab> >& rho,
+WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                                         bool local, bool reset,
                                         bool do_rz_volume_scaling)
 {
@@ -530,8 +485,6 @@ WarpXParticleContainer::DepositCharge (Vector<std::unique_ptr<MultiFab> >& rho,
         {
             const long np = pti.numParticles();
             auto& wp = pti.GetAttribs(PIdx::w);
-
-            pti.GetPosition(m_xp[thread_num], m_yp[thread_num], m_zp[thread_num]);
 
             int* AMREX_RESTRICT ion_lev;
             if (do_field_ionization){
@@ -600,8 +553,6 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
         {
             const long np = pti.numParticles();
             auto& wp = pti.GetAttribs(PIdx::w);
-
-            pti.GetPosition(m_xp[thread_num], m_yp[thread_num], m_zp[thread_num]);
 
             int* AMREX_RESTRICT ion_lev;
             if (do_field_ionization){
@@ -729,38 +680,7 @@ Real WarpXParticleContainer::maxParticleVelocity(bool local) {
 }
 
 void
-WarpXParticleContainer::PushXES (Real dt)
-{
-    BL_PROFILE("WPC::PushXES()");
-
-    const int num_levels = finestLevel() + 1;
-
-    for (int lev = 0; lev < num_levels; ++lev) {
-        const auto& gm = m_gdb->Geom(lev);
-        const RealBox& prob_domain = gm.ProbDomain();
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti) {
-            auto& particles = pti.GetArrayOfStructs();
-            int nstride = particles.dataShape().first;
-            const long np  = pti.numParticles();
-
-            auto& attribs = pti.GetAttribs();
-            auto& uxp = attribs[PIdx::ux];
-            auto& uyp = attribs[PIdx::uy];
-            auto& uzp = attribs[PIdx::uz];
-
-            WRPX_PUSH_LEAPFROG_POSITIONS(particles.dataPtr(), nstride, np,
-                                         uxp.dataPtr(), uyp.dataPtr(),
-#if AMREX_SPACEDIM == 3
-                                         uzp.dataPtr(),
-#endif
-                                         &dt,
-                                         prob_domain.lo(), prob_domain.hi());
-        }
-    }
-}
-
-void
-WarpXParticleContainer::PushX (Real dt)
+WarpXParticleContainer::PushX (amrex::Real dt)
 {
     const int nLevels = finestLevel();
     for (int lev = 0; lev <= nLevels; ++lev) {
@@ -769,7 +689,7 @@ WarpXParticleContainer::PushX (Real dt)
 }
 
 void
-WarpXParticleContainer::PushX (int lev, Real dt)
+WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 {
     BL_PROFILE("WPC::PushX()");
 
@@ -789,32 +709,27 @@ WarpXParticleContainer::PushX (int lev, Real dt)
             //
             // Particle Push
             //
-            // Extract pointers to particle position and momenta, for this particle tile
-            // - positions are stored as an array of struct, in `ParticleType`
-            ParticleType * AMREX_RESTRICT pstructs = &(pti.GetArrayOfStructs()[0]);
+
+            const auto GetPosition = GetParticlePosition(pti);
+                  auto SetPosition = SetParticlePosition(pti);
+
             // - momenta are stored as a struct of array, in `attribs`
             auto& attribs = pti.GetAttribs();
             ParticleReal* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
             ParticleReal* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
             ParticleReal* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 #ifdef WARPX_DIM_RZ
+            auto& aos = pti.GetArrayOfStructs();
+            ParticleType* AMREX_RESTRICT const pstruct = aos().dataPtr();
             ParticleReal* AMREX_RESTRICT theta = attribs[PIdx::theta].dataPtr();
 #endif
             // Loop over the particles and update their position
             amrex::ParallelFor( pti.numParticles(),
                 [=] AMREX_GPU_DEVICE (long i) {
-                    ParticleType& p = pstructs[i]; // Particle object that gets updated
-                    ParticleReal x, y, z; // Temporary variables
-#ifndef WARPX_DIM_RZ
-                    GetPosition( x, y, z, p ); // Initialize x, y, z
-                    UpdatePosition( x, y, z, ux[i], uy[i], uz[i], dt);
-                    SetPosition( p, x, y, z ); // Update the object p
-#else
-                    // For WARPX_DIM_RZ, the particles are still pushed in 3D Cartesian
-                    GetCartesianPositionFromCylindrical( x, y, z, p, theta[i] );
-                    UpdatePosition( x, y, z, ux[i], uy[i], uz[i], dt);
-                    SetCylindricalPositionFromCartesian( p, theta[i], x, y, z );
-#endif
+                                    ParticleReal x, y, z;
+                                    GetPosition(i, x, y, z);
+                                    UpdatePosition(x, y, z, ux[i], uy[i], uz[i], dt);
+                                    SetPosition(i, x, y, z);
                 }
             );
 
@@ -828,6 +743,25 @@ WarpXParticleContainer::PushX (int lev, Real dt)
                     costarr(i,j,k) += wt;
                 });
             }
+        }
+    }
+}
+
+// When using runtime components, AMReX requires to touch all tiles
+// in serial and create particles tiles with runtime components if
+// they do not exist (or if they were defined by default, i.e.,
+// without runtime component).
+void WarpXParticleContainer::defineAllParticleTiles () noexcept
+{
+    tmp_particle_data.resize(finestLevel()+1);
+    for (int lev = 0; lev <= finestLevel(); ++lev)
+    {
+        for (auto mfi = MakeMFIter(lev); mfi.isValid(); ++mfi)
+        {
+            const int grid_id = mfi.index();
+            const int tile_id = mfi.LocalTileIndex();
+            tmp_particle_data[lev][std::make_pair(grid_id,tile_id)];
+            DefineAndReturnParticleTile(lev, grid_id, tile_id);
         }
     }
 }

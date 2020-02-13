@@ -1,12 +1,19 @@
+/* Copyright 2019 Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <SpectralFieldData.H>
 
 using namespace amrex;
 
 /* \brief Initialize fields in spectral space, and FFT plans */
-SpectralFieldData::SpectralFieldData( const BoxArray& realspace_ba,
-                            const SpectralKSpace& k_space,
-                            const DistributionMapping& dm,
-                            const int n_field_required )
+SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
+                                      const SpectralKSpace& k_space,
+                                      const amrex::DistributionMapping& dm,
+                                      const int n_field_required )
 {
     const BoxArray& spectralspace_ba = k_space.spectralspace_ba;
 

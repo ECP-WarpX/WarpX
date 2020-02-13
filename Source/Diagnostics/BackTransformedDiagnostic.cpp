@@ -1,3 +1,10 @@
+/* Copyright 2019 Andrew Myers, Axel Huebl, Maxence Thevenet
+ * Revathi Jambunathan, Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <AMReX_MultiFabUtil.H>
 #include <AMReX_MultiFabUtil_C.H>
 #include "BackTransformedDiagnostic.H"
@@ -559,7 +566,7 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
     std::vector<std::string> user_fields_to_dump;
     ParmParse pp("warpx");
     bool do_user_fields;
-    do_user_fields = pp.queryarr("boosted_frame_diag_fields",
+    do_user_fields = pp.queryarr("back_transformed_diag_fields",
                                  user_fields_to_dump);
     // If user specifies fields to dump, overwrite ncomp_to_dump,
     // map_actual_fields_to_dump and mesh_field_names.
@@ -1404,7 +1411,7 @@ AddPartDataToParticleBuffer(
     int nspeciesBoostedFrame) {
     for (int isp = 0; isp < nspeciesBoostedFrame; ++isp) {
         auto np = tmp_particle_buffer[isp].GetRealData(DiagIdx::w).size();
-        if (np == 0) return;
+        if (np == 0) continue;
 
         // allocate size of particle buffer array to np
         // This is a growing array. Each time we add np elements
@@ -1469,7 +1476,7 @@ AddPartDataToParticleBuffer(
     for (int isp = 0; isp < nSpeciesBackTransformedDiagnostics; ++isp) {
         auto np = tmp_particle_buffer[isp].GetRealData(DiagIdx::w).size();
 
-        if (np == 0) return;
+        if (np == 0) continue;
 
         Real const* const AMREX_RESTRICT wp_temp =
              tmp_particle_buffer[isp].GetRealData(DiagIdx::w).data();

@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+
+# Copyright 2017-2020 Andrew Myers, Axel Huebl, Burlen Loring
+# Maxence Thevenet, Remi Lehe
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
 # -*- coding: utf-8 -*-
 #
 # WarpX documentation build configuration file, created by
@@ -17,10 +25,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os, sys
+import os, sys, subprocess
 import sphinx_rtd_theme
 sys.path.insert(0, os.path.join( os.path.abspath(__file__), '../Python') )
-
 
 # -- General configuration ------------------------------------------------
 
@@ -33,7 +40,9 @@ sys.path.insert(0, os.path.join( os.path.abspath(__file__), '../Python') )
 # ones.
 extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode' ]
+    'sphinx.ext.viewcode',
+    'breathe'
+ ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -57,7 +66,7 @@ author = 'WarpX collaboration'
 # built documents.
 #
 # The short X.Y version.
-version = '19.10'
+version = '20.02'
 # The full version, including alpha/beta/rc tags.
 release = ''
 
@@ -98,7 +107,7 @@ numfig = True
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = [] #['_static']
+html_static_path = ['_static']
 
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -162,3 +171,16 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://amrex-codes.github.io/': None}
+
+# Setup the breathe extension
+breathe_projects = {
+    "WarpX": "../doxyxml/"
+}
+breathe_default_project = "WarpX"
+
+# Tell sphinx what the primary language being documented is.
+primary_domain = 'cpp'
+# Tell sphinx what the pygments highlight language should be.
+highlight_language = 'cpp'
+
+subprocess.call('cd ../; doxygen; mkdir -p source/_static; cp -r doxyhtml source/_static/', shell=True)

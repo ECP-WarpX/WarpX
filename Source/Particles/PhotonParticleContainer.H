@@ -1,9 +1,23 @@
+/* Copyright 2019 Andrew Myers, David Grote, Luca Fedeli
+ * Maxence Thevenet, Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PhotonParticleContainer_H_
 #define WARPX_PhotonParticleContainer_H_
 
 #include <PhysicalParticleContainer.H>
 #include <AMReX_Vector.H>
 
+/**
+ * Photon particles have no mass, they deposit no charge, and see specific QED
+ * effects. For these reasons, they are stored in the separate particle
+ * container PhotonParticleContainer, that inherts from
+ * PhysicalParticleContainer. The particle pusher and current deposition, in
+ * particular, are overriden in this container.
+ */
 class PhotonParticleContainer
     : public PhysicalParticleContainer
 {
@@ -41,9 +55,6 @@ public:
                          DtType a_dt_type=DtType::Full) override;
 
     virtual void PushPX(WarpXParIter& pti,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& xp,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& yp,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& zp,
                         amrex::Real dt, DtType a_dt_type=DtType::Full) override;
 
     // Do nothing

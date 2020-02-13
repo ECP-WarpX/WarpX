@@ -1,3 +1,10 @@
+/* Copyright 2019 David Grote, Luca Fedeli, Maxence Thevenet
+ * Remi Lehe, Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PARTICLES_PUSHER_UPDATEPOSITIONPHOTON_H_
 #define WARPX_PARTICLES_PUSHER_UPDATEPOSITIONPHOTON_H_
 
@@ -6,8 +13,10 @@
 #include <AMReX_FArrayBox.H>
 #include <AMReX_REAL.H>
 
-/* \brief Push the position of a photon particle over one timestep,
- *    given the value of its momenta `ux`, `uy`, `uz` */
+/**
+ * \brief Push the position of a photon particle over one timestep,
+ *    given the value of its momenta `ux`, `uy`, `uz`
+ */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void UpdatePositionPhoton(
     amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
@@ -23,7 +32,6 @@ void UpdatePositionPhoton(
     y += uy * c_over_umod * dt;
 #endif
     z += uz * c_over_umod * dt;
-
 }
 
 #endif // WARPX_PARTICLES_PUSHER_UPDATEPOSITION_H_

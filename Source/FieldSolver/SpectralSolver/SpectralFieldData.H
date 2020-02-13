@@ -1,3 +1,10 @@
+/* Copyright 2019 David Grote, Maxence Thevenet, Remi Lehe
+ * Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_SPECTRAL_FIELD_DATA_H_
 #define WARPX_SPECTRAL_FIELD_DATA_H_
 
@@ -8,20 +15,20 @@
 // Declare type for spectral fields
 using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
 
-/* Index for the regular fields, when stored in spectral space */
+/** Index for the regular fields, when stored in spectral space */
 struct SpectralFieldIndex {
   enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields };
   // n_fields is automatically the total number of fields
 };
 
-/* Index for the PML fields, when stored in spectral space */
+/** Index for the PML fields, when stored in spectral space */
 struct SpectralPMLIndex {
   enum { Exy=0, Exz, Eyx, Eyz, Ezx, Ezy,
            Bxy, Bxz, Byx, Byz, Bzx, Bzy, n_fields };
   // n_fields is automatically the total number of fields
 };
 
-/* \brief Class that stores the fields in spectral space, and performs the
+/** \brief Class that stores the fields in spectral space, and performs the
  *  Fourier transforms between real space and spectral space
  */
 class SpectralFieldData

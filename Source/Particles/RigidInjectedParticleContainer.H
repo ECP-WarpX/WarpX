@@ -1,9 +1,34 @@
+/* Copyright 2019 Andrew Myers, David Grote, Maxence Thevenet
+ * Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_RigidInjectedParticleContainer_H_
 #define WARPX_RigidInjectedParticleContainer_H_
 
 #include <PhysicalParticleContainer.H>
 #include <AMReX_Vector.H>
 
+/**
+ * When injecting a particle beam (typically for a plasma wakefield
+ * acceleration simulation), say propagating in the z direction, it can
+ * be necessary to make particles propagate in a straight line up to a given
+ * location z=z0. This is of particular importance when running in a boosted
+ * frame, where the beam may evolve due to its space charge fields before
+ * entering the plasma, causing the actual injected beam, and hence the whole
+ * simulation result, to depend on the Lorentz factor of the boost.
+ *
+ * This feature is implemented in RigidInjectedParticleContainer: At each
+ * iteration, for each particle, if z<z0 the particle moves in a straight line,
+ * and if z>z0 the particle evolves as a regular PhysicalParticleContainer.
+ *
+ * Note: This option is also useful to build self-consistent space charge
+ * fields for the particle beam.
+ *
+ * RigidInjectedParticleContainer derives from PhysicalParticleContainer.
+ */
 class RigidInjectedParticleContainer
     : public PhysicalParticleContainer
 {
@@ -43,11 +68,7 @@ public:
                          amrex::Real dt,
                          DtType a_dt_type=DtType::Full) override;
 
-    virtual void PushPX(WarpXParIter& pti,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& xp,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& yp,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& zp,
-                        amrex::Real dt, DtType a_dt_type=DtType::Full) override;
+    virtual void PushPX (WarpXParIter& pti, amrex::Real dt, DtType a_dt_type=DtType::Full) override;
 
     virtual void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& Ex,

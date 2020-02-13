@@ -1,6 +1,11 @@
-#include <AMReX_MGT_Solver.H>
-#include <AMReX_stencil_types.H>
-
+/* Copyright 2019 Andrew Myers, Axel Huebl, David Bizzozero
+ * David Grote, Maxence Thevenet, Remi Lehe
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <WarpX.H>
 #include <WarpX_f.H>
 
@@ -10,16 +15,6 @@ namespace
 }
 
 using namespace amrex;
-
-class NoOpPhysBC
-    : public amrex::PhysBCFunctBase
-{
-public:
-    NoOpPhysBC () {}
-    virtual ~NoOpPhysBC () {}
-    virtual void FillBoundary (amrex::MultiFab& mf, int, int, amrex::Real time) override { }
-    using amrex::PhysBCFunctBase::FillBoundary;
-};
 
 void
 WarpX::EvolveES (int numsteps) {
@@ -71,7 +66,7 @@ WarpX::EvolveES (int numsteps) {
         // Beyond one step, particles have p^{n-1/2} and x^{n}.
         if (is_synchronized) {
             // on first step, push X by 0.5*dt
-            mypc->PushXES(0.5*dt[lev]);
+            mypc->PushX(0.5*dt[lev]);
             UpdatePlasmaInjectionPosition(0.5*dt[lev]);
             mypc->Redistribute();
             mypc->DepositCharge(rhoNodal);
@@ -108,7 +103,7 @@ WarpX::EvolveES (int numsteps) {
 
         if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
             // on last step, push by only 0.5*dt to synchronize all at n+1/2
-            mypc->PushXES(-0.5*dt[lev]);
+            mypc->PushX(-0.5*dt[lev]);
             UpdatePlasmaInjectionPosition(-0.5*dt[lev]);
             is_synchronized = true;
         }

@@ -1,8 +1,17 @@
+/* Copyright 2019-2020 Andrew Myers, Ann Almgren, Axel Huebl
+ * David Grote, Jean-Luc Vay, Luca Fedeli
+ * Mathieu Lobet, Maxence Thevenet, Remi Lehe
+ * Revathi Jambunathan, Weiqun Zhang, Yinjian Zhao
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <MultiParticleContainer.H>
 
 #include <AMReX_Vector.H>
 
-#include <WarpX_f.H>
 #include <WarpX.H>
 
 //This is now needed for writing a binary file on disk.
@@ -53,7 +62,14 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
             nspecies_back_transformed_diagnostics += 1;
         }
     }
-    ionization_process = IonizationProcess();
+
+    // collision
+    allcollisions.resize(ncollisions);
+    for (int i = 0; i < ncollisions; ++i) {
+        allcollisions[i].reset
+            (new CollisionType(species_names, collision_names[i]));
+    }
+
 }
 
 void
@@ -63,6 +79,93 @@ MultiParticleContainer::ReadParameters ()
     if (!initialized)
     {
         ParmParse pp("particles");
+
+        // allocating and initializing default values of external fields for particles
+        m_E_external_particle.resize(3);
+        m_B_external_particle.resize(3);
+        // initialize E and B fields to 0.0
+        for (int idim = 0; idim < 3; ++idim) {
+            m_E_external_particle[idim] = 0.0;
+            m_B_external_particle[idim] = 0.0;
+        }
+        // default values of E_external_particle and B_external_particle
+        // are used to set the E and B field when "constant" or "parser"
+        // is not explicitly used in the input
+        pp.query("B_ext_particle_init_style", m_B_ext_particle_s);
+        std::transform(m_B_ext_particle_s.begin(),
+                       m_B_ext_particle_s.end(),
+                       m_B_ext_particle_s.begin(),
+                       ::tolower);
+        pp.query("E_ext_particle_init_style", m_E_ext_particle_s);
+        std::transform(m_E_ext_particle_s.begin(),
+                       m_E_ext_particle_s.end(),
+                       m_E_ext_particle_s.begin(),
+                       ::tolower);
+        // if the input string for B_external on particles is "constant"
+        // then the values for the external B on particles must
+        // be provided in the input file.
+        if (m_B_ext_particle_s == "constant")
+            pp.getarr("B_external_particle", m_B_external_particle);
+
+        // if the input string for E_external on particles is "constant"
+        // then the values for the external E on particles must
+        // be provided in the input file.
+        if (m_E_ext_particle_s == "constant")
+            pp.getarr("E_external_particle", m_E_external_particle);
+
+        // if the input string for B_ext_particle_s is
+        // "parse_b_ext_particle_function" then the mathematical expression
+        // for the Bx_, By_, Bz_external_particle_function(x,y,z)
+        // must be provided in the input file.
+        if (m_B_ext_particle_s == "parse_b_ext_particle_function") {
+           // store the mathematical expression as string
+           std::string str_Bx_ext_particle_function;
+           std::string str_By_ext_particle_function;
+           std::string str_Bz_ext_particle_function;
+           Store_parserString(pp, "Bx_external_particle_function(x,y,z,t)",
+                                      str_Bx_ext_particle_function);
+           Store_parserString(pp, "By_external_particle_function(x,y,z,t)",
+                                      str_By_ext_particle_function);
+           Store_parserString(pp, "Bz_external_particle_function(x,y,z,t)",
+                                      str_Bz_ext_particle_function);
+
+           // Parser for B_external on the particle
+           m_Bx_particle_parser.reset(new ParserWrapper<4>(
+                                    makeParser(str_Bx_ext_particle_function,{"x","y","z","t"})));
+           m_By_particle_parser.reset(new ParserWrapper<4>(
+                                    makeParser(str_By_ext_particle_function,{"x","y","z","t"})));
+           m_Bz_particle_parser.reset(new ParserWrapper<4>(
+                                    makeParser(str_Bz_ext_particle_function,{"x","y","z","t"})));
+
+        }
+
+        // if the input string for E_ext_particle_s is
+        // "parse_e_ext_particle_function" then the mathematical expression
+        // for the Ex_, Ey_, Ez_external_particle_function(x,y,z)
+        // must be provided in the input file.
+        if (m_E_ext_particle_s == "parse_e_ext_particle_function") {
+           // store the mathematical expression as string
+           std::string str_Ex_ext_particle_function;
+           std::string str_Ey_ext_particle_function;
+           std::string str_Ez_ext_particle_function;
+           Store_parserString(pp, "Ex_external_particle_function(x,y,z,t)",
+                                      str_Ex_ext_particle_function);
+           Store_parserString(pp, "Ey_external_particle_function(x,y,z,t)",
+                                      str_Ey_ext_particle_function);
+           Store_parserString(pp, "Ez_external_particle_function(x,y,z,t)",
+                                      str_Ez_ext_particle_function);
+           // Parser for E_external on the particle
+           m_Ex_particle_parser.reset(new ParserWrapper<4>(
+                                    makeParser(str_Ex_ext_particle_function,{"x","y","z","t"})));
+           m_Ey_particle_parser.reset(new ParserWrapper<4>(
+                                    makeParser(str_Ey_ext_particle_function,{"x","y","z","t"})));
+           m_Ez_particle_parser.reset(new ParserWrapper<4>(
+                                    makeParser(str_Ez_ext_particle_function,{"x","y","z","t"})));
+
+        }
+
+
+
 
         pp.query("nspecies", nspecies);
         BL_ASSERT(nspecies >= 0);
@@ -118,6 +221,15 @@ MultiParticleContainer::ReadParameters ()
                     int i = std::distance(species_names.begin(), it);
                     species_types[i] = PCTypes::Photon;
                 }
+            }
+
+            // collision
+            ParmParse pc("collisions");
+            pc.query("ncollisions", ncollisions);
+            BL_ASSERT(ncollisions >= 0);
+            if (ncollisions > 0) {
+                pc.getarr("collision_names", collision_names);
+                BL_ASSERT(collision_names.size() == ncollisions);
             }
 
         }
@@ -194,14 +306,6 @@ MultiParticleContainer::EvolveES (const Vector<std::array<std::unique_ptr<MultiF
     for (unsigned i = 0; i < nlevs; i++) {
         const Geometry& gm = allcontainers[0]->Geom(i);
         rho[i]->SumBoundary(gm.periodicity());
-    }
-}
-
-void
-MultiParticleContainer::PushXES (Real dt)
-{
-    for (auto& pc : allcontainers) {
-        pc->PushXES(dt);
     }
 }
 
@@ -383,11 +487,11 @@ MultiParticleContainer::PostRestart ()
 
 void
 MultiParticleContainer
-::GetLabFrameData(const std::string& snapshot_name,
-                  const int i_lab, const int direction,
-                  const Real z_old, const Real z_new,
-                  const Real t_boost, const Real t_lab, const Real dt,
-                  Vector<WarpXParticleContainer::DiagnosticParticleData>& parts) const
+::GetLabFrameData (const std::string& snapshot_name,
+                   const int i_lab, const int direction,
+                   const Real z_old, const Real z_new,
+                   const Real t_boost, const Real t_lab, const Real dt,
+                   Vector<WarpXParticleContainer::DiagnosticParticleData>& parts) const
 {
 
     BL_PROFILE("MultiParticleContainer::GetLabFrameData");
@@ -449,7 +553,7 @@ MultiParticleContainer
  * calls virtual function ContinuousInjection.
  */
 void
-MultiParticleContainer::ContinuousInjection(const RealBox& injection_box) const
+MultiParticleContainer::ContinuousInjection (const RealBox& injection_box) const
 {
     for (int i=0; i<nspecies+nlasers; i++){
         auto& pc = allcontainers[i];
@@ -465,7 +569,7 @@ MultiParticleContainer::ContinuousInjection(const RealBox& injection_box) const
  * a position to update (PhysicalParticleContainer does not do anything).
  */
 void
-MultiParticleContainer::UpdateContinuousInjectionPosition(Real dt) const
+MultiParticleContainer::UpdateContinuousInjectionPosition (Real dt) const
 {
     for (int i=0; i<nspecies+nlasers; i++){
         auto& pc = allcontainers[i];
@@ -536,77 +640,98 @@ void
 MultiParticleContainer::doFieldIonization ()
 {
     BL_PROFILE("MPC::doFieldIonization");
+
     // Loop over all species.
     // Ionized particles in pc_source create particles in pc_product
-    for (auto& pc_source : allcontainers){
-
-        // Skip if not ionizable
+    for (auto& pc_source : allcontainers)
+    {
         if (!pc_source->do_field_ionization){ continue; }
 
-        // Get product species
         auto& pc_product = allcontainers[pc_source->ionization_product];
 
-        for (int lev = 0; lev <= pc_source->finestLevel(); ++lev){
+        SmartCopyFactory copy_factory(*pc_source, *pc_product);
+        auto phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
 
-            // When using runtime components, AMReX requires to touch all tiles
-            // in serial and create particles tiles with runtime components if
-            // they do not exist (or if they were defined by default, i.e.,
-            // without runtime component).
-#ifdef _OPENMP
-            // Touch all tiles of source species in serial if runtime attribs
-            for (MFIter mfi = pc_source->MakeMFIter(lev); mfi.isValid(); ++mfi) {
-                const int grid_id = mfi.index();
-                const int tile_id = mfi.LocalTileIndex();
-                pc_source->GetParticles(lev)[std::make_pair(grid_id,tile_id)];
-                if ( (pc_source->NumRuntimeRealComps()>0) || (pc_source->NumRuntimeIntComps()>0) ) {
-                    pc_source->DefineAndReturnParticleTile(lev, grid_id, tile_id);
-                }
-            }
-#endif
-            // Touch all tiles of product species in serial
-            for (MFIter mfi = pc_source->MakeMFIter(lev); mfi.isValid(); ++mfi) {
-                const int grid_id = mfi.index();
-                const int tile_id = mfi.LocalTileIndex();
-                pc_product->GetParticles(lev)[std::make_pair(grid_id,tile_id)];
-                pc_product->DefineAndReturnParticleTile(lev, grid_id, tile_id);
-            }
+        auto Filter    = phys_pc_ptr->getIonizationFunc();
+        auto Copy      = copy_factory.getSmartCopy();
+        auto Transform = IonizationTransformFunc();
 
-            // Enable tiling
-            MFItInfo info;
-            if (pc_source->do_tiling && Gpu::notInLaunchRegion()) {
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    pc_product->do_tiling,
-                    "For ionization, either all or none of the "
-                    "particle species must use tiling.");
-                info.EnableTiling(pc_source->tile_size);
-            }
+        pc_source ->defineAllParticleTiles();
+        pc_product->defineAllParticleTiles();
+
+        for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
+        {
+            auto info = getMFItInfo(*pc_source, *pc_product);
 
 #ifdef _OPENMP
-            info.SetDynamic(true);
-#pragma omp parallel
+#pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-            // Loop over all grids (if not tiling) or grids and tiles (if tiling)
             for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
             {
-                // Ionization mask: one element per source particles.
-                // 0 if not ionized, 1 if ionized.
-                amrex::Gpu::ManagedDeviceVector<int> is_ionized;
-                pc_source->buildIonizationMask(mfi, lev, is_ionized);
-                // Create particles in pc_product
-                int do_boost = WarpX::do_back_transformed_diagnostics
-                    && pc_product->doBackTransformedDiagnostics();
-                amrex::Gpu::ManagedDeviceVector<int> v_do_back_transformed_product{do_boost};
-                const amrex::Vector<WarpXParticleContainer*> v_pc_product {pc_product.get()};
-                // Copy source to product particles, and increase ionization
-                // level of source particle
-                ionization_process.createParticles(lev, mfi, pc_source, v_pc_product,
-                                                   is_ionized, v_do_back_transformed_product);
-                // Synchronize to prevent the destruction of temporary arrays (at the
-                // end of the function call) before the kernel executes.
-                Gpu::streamSynchronize();
+                auto& src_tile = pc_source ->ParticlesAt(lev, mfi);
+                auto& dst_tile = pc_product->ParticlesAt(lev, mfi);
+
+                auto np_dst = dst_tile.numParticles();
+                auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
+                                                                 Filter, Copy, Transform);
+
+                setNewParticleIDs(dst_tile, np_dst, num_added);
             }
-        } // lev
-    } // pc_source
+        }
+    }
+}
+
+void
+MultiParticleContainer::doCoulombCollisions ()
+{
+    BL_PROFILE("MPC::doCoulombCollisions");
+
+    for (int i = 0; i < ncollisions; ++i)
+    {
+        auto& species1 = allcontainers[ allcollisions[i]->m_species1_index ];
+        auto& species2 = allcontainers[ allcollisions[i]->m_species2_index ];
+
+        // Enable tiling
+        MFItInfo info;
+        if (Gpu::notInLaunchRegion()) info.EnableTiling(species1->tile_size);
+
+        // Loop over refinement levels
+        for (int lev = 0; lev <= species1->finestLevel(); ++lev){
+
+            // Loop over all grids/tiles at this level
+#ifdef _OPENMP
+            info.SetDynamic(true);
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+            for (MFIter mfi = species1->MakeMFIter(lev, info); mfi.isValid(); ++mfi){
+
+                CollisionType::doCoulombCollisionsWithinTile
+                    ( lev, mfi, species1, species2,
+                      allcollisions[i]->m_isSameSpecies,
+                      allcollisions[i]->m_CoulombLog );
+
+            }
+        }
+    }
+}
+
+MFItInfo MultiParticleContainer::getMFItInfo (const WarpXParticleContainer& pc_src,
+                                              const WarpXParticleContainer& pc_dst) const noexcept
+{
+    MFItInfo info;
+
+    if (pc_src.do_tiling && Gpu::notInLaunchRegion()) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
+                                         "For ionization, either all or none of the "
+                                         "particle species must use tiling.");
+        info.EnableTiling(pc_src.tile_size);
+    }
+
+#ifdef _OPENMP
+    info.SetDynamic(true);
+#endif
+
+    return info;
 }
 
 #ifdef WARPX_QED

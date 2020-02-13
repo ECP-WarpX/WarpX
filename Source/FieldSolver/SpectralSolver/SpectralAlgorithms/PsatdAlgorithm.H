@@ -1,9 +1,17 @@
+/* Copyright 2019 Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PSATD_ALGORITHM_H_
 #define WARPX_PSATD_ALGORITHM_H_
 
 #include <SpectralBaseAlgorithm.H>
 
-/* \brief Class that updates the field in spectral space
+/**
+ * \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
  */
 class PsatdAlgorithm : public SpectralBaseAlgorithm

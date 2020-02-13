@@ -1,14 +1,18 @@
+/* Copyright 2019-2020 Andrew Myers, Maxence Thevenet, Remi Lehe
+ * Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PARTICLES_SORTING_SORTINGUTILS_H_
 #define WARPX_PARTICLES_SORTING_SORTINGUTILS_H_
 
 #include <WarpXParticleContainer.H>
 #include <AMReX_Gpu.H>
-#ifdef AMREX_USE_GPU
-    #include <thrust/partition.h>
-    #include <thrust/distance.h>
-#endif
+#include <AMReX_Partition.H>
 
-/* \brief Fill the elements of the input vector with consecutive integer,
+/** \brief Fill the elements of the input vector with consecutive integer,
  *        starting from 0
  *
  * \param[inout] v Vector of integers, to be filled by this routine
@@ -16,15 +20,17 @@
 void fillWithConsecutiveIntegers( amrex::Gpu::DeviceVector<long>& v )
 {
 #ifdef AMREX_USE_GPU
-    // On GPU: Use thrust
-    thrust::sequence( v.begin(), v.end() );
+    // On GPU: Use amrex
+    auto data = v.data();
+    auto N = v.size();
+    AMREX_FOR_1D( N, i, data[i] = i;);
 #else
     // On CPU: Use std library
     std::iota( v.begin(), v.end(), 0L );
 #endif
 }
 
-/* \brief Find the indices that would reorder the elements of `predicate`
+/** \brief Find the indices that would reorder the elements of `predicate`
  * so that the elements with non-zero value precede the other elements
  *
  * \param[in, out] index_begin Point to the beginning of the vector which is
@@ -35,17 +41,18 @@ void fillWithConsecutiveIntegers( amrex::Gpu::DeviceVector<long>& v )
  */
 template< typename ForwardIterator >
 ForwardIterator stablePartition(ForwardIterator const index_begin,
-                               ForwardIterator const index_end,
-                               amrex::Gpu::DeviceVector<int> const& predicate)
+                                ForwardIterator const index_end,
+                                amrex::Gpu::DeviceVector<int> const& predicate)
 {
 #ifdef AMREX_USE_GPU
-    // On GPU: Use thrust
+    // On GPU: Use amrex
     int const* AMREX_RESTRICT predicate_ptr = predicate.dataPtr();
-    ForwardIterator const sep = thrust::stable_partition(
-        thrust::cuda::par(amrex::Gpu::The_ThrustCachedAllocator()),
-        index_begin, index_end,
-        [predicate_ptr] AMREX_GPU_DEVICE (long i) { return predicate_ptr[i]; }
-    );
+    int N = static_cast<int>(std::distance(index_begin, index_end));
+    auto num_true = amrex::StablePartition(&(*index_begin), N,
+        [predicate_ptr] AMREX_GPU_DEVICE (long i) { return predicate_ptr[i]; });
+
+    ForwardIterator sep = index_begin;
+    std::advance(sep, num_true);
 #else
     // On CPU: Use std library
     ForwardIterator const sep = std::stable_partition(
@@ -56,7 +63,7 @@ ForwardIterator stablePartition(ForwardIterator const index_begin,
     return sep;
 }
 
-/* \brief Return the number of elements between `first` and `last`
+/** \brief Return the number of elements between `first` and `last`
  *
  * \param[in] fist Points to a position in a vector
  * \param[in] last Points to another position in a vector
@@ -66,15 +73,10 @@ template< typename ForwardIterator >
 int iteratorDistance(ForwardIterator const first,
                      ForwardIterator const last)
 {
-#ifdef AMREX_USE_GPU
-    // On GPU: Use thrust
-    return thrust::distance( first, last );
-#else
     return std::distance( first, last );
-#endif
 }
 
-/* \brief Functor that fills the elements of the particle array `inexflag`
+/** \brief Functor that fills the elements of the particle array `inexflag`
  *  with the value of the spatial array `bmasks`, at the corresponding particle position.
  *
  * \param[in] pti Contains information on the particle positions
@@ -124,7 +126,7 @@ class fillBufferFlag
         amrex::Array4<int const> m_buffer_mask;
 };
 
-/* \brief Functor that fills the elements of the particle array `inexflag`
+/** \brief Functor that fills the elements of the particle array `inexflag`
  *  with the value of the spatial array `bmasks`, at the corresponding particle position.
  *
  * Contrary to `fillBufferFlag`, here this is done only for the particles that
@@ -186,7 +188,7 @@ class fillBufferFlagRemainingParticles
         long const* m_indices_ptr;
 };
 
-/* \brief Functor that copies the elements of `src` into `dst`,
+/** \brief Functor that copies the elements of `src` into `dst`,
  *       while reordering them according to `indices`
  *
  * \param[in] src Source vector

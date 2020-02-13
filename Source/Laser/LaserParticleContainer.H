@@ -1,3 +1,11 @@
+/* Copyright 2019 Andrew Myers, Axel Huebl, David Grote
+ * Luca Fedeli, Maxence Thevenet, Remi Lehe
+ * Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_LaserParticleContainer_H_
 #define WARPX_LaserParticleContainer_H_
 
@@ -10,6 +18,17 @@
 #include <memory>
 #include <limits>
 
+/**
+ * The main method to inject a laser pulse in WarpX is to use an artificial
+ * antenna: particles evenly distributed in a given plane (one particle per
+ * cell) move at each iteration and deposit a current J onto the grid, which
+ * in turns creates an electromagnetic field on the grid. The particles'
+ * displacements are prescribed to create the field requested by the user.
+ *
+ * These artificial particles are contained in the LaserParticleContainer.
+ * LaserParticleContainer derives directly from WarpXParticleContainer. It
+ * requires a DepositCurrent function, but no FieldGather function.
+ */
 class LaserParticleContainer
     : public WarpXParticleContainer
 {
@@ -45,16 +64,16 @@ public:
 
     virtual void PostRestart () final;
 
-    void calculate_laser_plane_coordinates (const int np, const int thread_num,
+    void calculate_laser_plane_coordinates (const WarpXParIter& pti, const int np,
                                             amrex::Real * AMREX_RESTRICT const pplane_Xp,
                                             amrex::Real * AMREX_RESTRICT const pplane_Yp);
 
-    void update_laser_particle (const int np, amrex::ParticleReal * AMREX_RESTRICT const puxp,
+    void update_laser_particle (WarpXParIter& pti, const int np, amrex::ParticleReal * AMREX_RESTRICT const puxp,
                                 amrex::ParticleReal * AMREX_RESTRICT const puyp,
                                 amrex::ParticleReal * AMREX_RESTRICT const puzp,
                                 amrex::ParticleReal const * AMREX_RESTRICT const pwp,
                                 amrex::Real const * AMREX_RESTRICT const amplitude,
-                                const amrex::Real dt, const int thread_num);
+                                const amrex::Real dt);
 
 protected:
 
