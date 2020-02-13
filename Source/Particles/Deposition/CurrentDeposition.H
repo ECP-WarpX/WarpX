@@ -40,7 +40,6 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
                         const amrex::ParticleReal * const uxp,
                         const amrex::ParticleReal * const uyp,
                         const amrex::ParticleReal * const uzp,
-                        const std::array<amrex::Real,3>& v_galilean,
                         const int * const ion_lev,
                         amrex::FArrayBox& jx_fab,
                         amrex::FArrayBox& jy_fab,
@@ -54,11 +53,6 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
-
-    const amrex::Real vx_gal = 0.0; //v_galilean[0];
-    const amrex::Real vy_gal = 0.0; //v_galilean[1];
-    const amrex::Real vz_gal = 0.0; //v_galilean[2];
-
     const amrex::Real dxi = 1.0/dx[0];
     const amrex::Real dzi = 1.0/dx[2];
     const amrex::Real dts2dx = 0.5*dt*dxi;
@@ -111,8 +105,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 #if (defined WARPX_DIM_RZ)
             // In RZ, wqx is actually wqr, and wqy is wqtheta
             // Convert to cylinderical at the mid point
-            const amrex::Real xpmid = xp - 0.5*dt*(vx - vx_gal);
-            const amrex::Real ypmid = yp - 0.5*dt*(vy-vy_gal);
+            const amrex::Real xpmid = xp - 0.5*dt*vx;
+            const amrex::Real ypmid = yp - 0.5*dt*vy;
             const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);
             amrex::Real costheta;
             amrex::Real sintheta;
@@ -137,7 +131,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 #if (defined WARPX_DIM_RZ)
             const amrex::Real xmid = (rpmid - xmin)*dxi;
 #else
-            const amrex::Real xmid = (xp - xmin)*dxi - dts2dx*(vx - vx_gal);
+            const amrex::Real xmid = (xp - xmin)*dxi - dts2dx*vx;
 #endif
             // j_j[xyz] leftmost grid point in x that the particle touches for the centering of each current
             // sx_j[xyz] shape factor along x for the centering of each current
@@ -162,7 +156,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 
 #if (defined WARPX_DIM_3D)
             // y direction
-            const amrex::Real ymid = (yp - ymin)*dyi - dts2dy*(vy-vy_gal);
+            const amrex::Real ymid = (yp - ymin)*dyi - dts2dy*vy;
             amrex::Real sy_node[depos_order + 1];
             amrex::Real sy_cell[depos_order + 1];
             int k_node;
@@ -182,7 +176,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 #endif
 
             // z direction
-            const amrex::Real zmid = (zp - zmin)*dzi - dts2dz*(vz - vz_gal);
+            const amrex::Real zmid = (zp - zmin)*dzi - dts2dz*vz;
             amrex::Real sz_node[depos_order + 1];
             amrex::Real sz_cell[depos_order + 1];
             int l_node;
