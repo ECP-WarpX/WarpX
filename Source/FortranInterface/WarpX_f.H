@@ -1,3 +1,13 @@
+/* Copyright 2019 Andrew Myers, Aurore Blelly, Axel Huebl
+ * David Grote, Jean-Luc Vay, Ligia Diana Amorim
+ * Luca Fedeli, Mathieu Lobet, Maxence Thevenet
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_F_H_
 #define WARPX_F_H_
 
@@ -24,7 +34,6 @@
 #define WRPX_INTERPOLATE_CIC             warpx_interpolate_cic_3d
 #define WRPX_INTERPOLATE_CIC_TWO_LEVELS  warpx_interpolate_cic_two_levels_3d
 #define WRPX_PUSH_LEAPFROG               warpx_push_leapfrog_3d
-#define WRPX_PUSH_LEAPFROG_POSITIONS     warpx_push_leapfrog_positions_3d
 
 #elif (AMREX_SPACEDIM == 2)
 
@@ -33,7 +42,6 @@
 #define WRPX_INTERPOLATE_CIC             warpx_interpolate_cic_2d
 #define WRPX_INTERPOLATE_CIC_TWO_LEVELS  warpx_interpolate_cic_two_levels_2d
 #define WRPX_PUSH_LEAPFROG               warpx_push_leapfrog_2d
-#define WRPX_PUSH_LEAPFROG_POSITIONS     warpx_push_leapfrog_positions_2d
 
 #endif
 
@@ -125,10 +133,6 @@ extern "C"
                             amrex_real* rho_w, const int* r2lo, const int* r2hi);
 
 #endif
-
-    void warpx_build_buffer_masks (const int* lo, const int* hi,
-                                   int* msk, const int* mlo, const int* mhi,
-                                   const int* gmsk, const int* glo, const int* ghi, const int* ng);
 
 #ifdef __cplusplus
 }

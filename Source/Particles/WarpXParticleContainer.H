@@ -1,3 +1,12 @@
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, David Grote
+ * Jean-Luc Vay, Junmin Gu, Luca Fedeli
+ * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+ * Weiqun Zhang, Yinjian Zhao
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_WarpXParticleContainer_H_
 #define WARPX_WarpXParticleContainer_H_
 
@@ -72,14 +81,6 @@ public:
 
     WarpXParIter (ContainerType& pc, int level);
 
-#if (AMREX_SPACEDIM == 2)
-    void GetPosition (amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& x,
-                      amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& y,
-                      amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& z) const;
-    void SetPosition (const amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& x,
-                      const amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& y,
-                      const amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& z);
-#endif
     const std::array<RealVector, PIdx::nattribs>& GetAttribs () const {
         return GetStructOfArrays().GetRealData();
     }
@@ -192,15 +193,6 @@ public:
     /// This pushes the particle positions by one half time step.
     /// It is used to desynchronize the particles after initializaton
     /// or when restarting from a checkpoint.
-    /// This is the electrostatic version of the particle push.
-    ///
-    void PushXES (amrex::Real dt);
-
-    ///
-    /// This pushes the particle positions by one half time step.
-    /// It is used to desynchronize the particles after initializaton
-    /// or when restarting from a checkpoint.
-    /// This is the electromagnetic version of the particle push.
     ///
     void PushX (         amrex::Real dt);
     void PushX (int lev, amrex::Real dt);
@@ -310,12 +302,8 @@ public:
 
     int doBackTransformedDiagnostics () const { return do_back_transformed_diagnostics; }
 
-    virtual void buildIonizationMask (const amrex::MFIter& mfi, const int lev,
-                                      amrex::Gpu::ManagedDeviceVector<int>& ionization_mask)
-    {};
-
-    std::map<std::string, int> getParticleComps () { return particle_comps;}
-    std::map<std::string, int> getParticleiComps () { return particle_icomps;}
+    std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
+    std::map<std::string, int> getParticleiComps () const noexcept { return particle_icomps;}
 
     //amrex::Real getCharge () {return charge;}
     amrex::ParticleReal getCharge () const {return charge;}
@@ -338,8 +326,9 @@ protected:
     //! instead of gathering fields from the finest patch level, gather from the coarsest
     bool m_gather_from_main_grid = false;
 
-    static int do_not_push;
-    static int do_not_deposit;
+    int do_not_push = 0;
+    int do_not_deposit = 0;
+    int do_not_gather = 0;
 
     // Whether to allow particles outside of the simulation domain to be
     // initialized when they enter the domain.
@@ -383,8 +372,6 @@ protected:
     using DataContainer = amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>;
     using PairIndex = std::pair<int, int>;
 
-    amrex::Vector<DataContainer> m_xp, m_yp, m_zp;
-
     // Whether to dump particle quantities.
     // If true, particle position is always dumped.
     int plot_species = 1;
@@ -395,6 +382,14 @@ protected:
     amrex::Vector<std::string> plot_vars;
 
     amrex::Vector<std::map<PairIndex, std::array<DataContainer, TmpIdx::nattribs> > > tmp_particle_data;
+
+    /**
+     * When using runtime components, AMReX requires to touch all tiles
+     * in serial and create particles tiles with runtime components if
+     * they do not exist (or if they were defined by default, i.e.,
+     * without runtime component).
+     */
+     void defineAllParticleTiles () noexcept;
 
 private:
     virtual void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld,
