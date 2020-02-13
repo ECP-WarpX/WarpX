@@ -32,6 +32,17 @@ int main(int argc, char* argv[])
 
     amrex::Initialize(argc,argv);
 
+    // set random seed
+    int random_seed = -1;
+    amrex::ParmParse pp("warpx");
+    pp.query("random_seed", random_seed);
+    int myproc = amrex::ParallelDescriptor::MyProc();
+    if ( random_seed > 0 ) {
+        amrex::ResetRandomSeed( (myproc+1) * random_seed );
+    } else if ( random_seed == 0 ) {
+        amrex::ResetRandomSeed( (myproc+1) * std::clock() );
+    }
+
     ConvertLabParamsToBoost();
 
     BL_PROFILE_VAR("main()", pmain);
