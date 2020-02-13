@@ -352,7 +352,6 @@ void
 WarpX::ShiftGalileanBoundary ()
 {
     Real cur_time = t_new[0];
-    
     Real new_lo[AMREX_SPACEDIM];
     Real new_hi[AMREX_SPACEDIM];
     const Real* current_lo = geom[0].ProbLo();
