@@ -5,19 +5,20 @@
 
 using namespace amrex;
 
-/* \brief Initialize the spectral Maxwell solver
+/**
+ * \brief Initialize the spectral Maxwell solver
  *
  * This function selects the spectral algorithm to be used, allocates the
  * corresponding coefficients for the discretized field update equation,
  * and prepares the structures that store the fields in spectral space.
  *
- * \param norder_x        Order of accuracy of the spatial derivatives along x
- * \param norder_y        Order of accuracy of the spatial derivatives along y
- * \param norder_z        Order of accuracy of the spatial derivatives along z
- * \param nodal           Whether the solver is applied to a nodal or staggered grid
- * \param dx              Cell size along each dimension
- * \param dt              Time step
- * \param pml             Whether the boxes in which the solver is applied are PML boxes
+ * \param norder_x Order of accuracy of the spatial derivatives along x
+ * \param norder_y Order of accuracy of the spatial derivatives along y
+ * \param norder_z Order of accuracy of the spatial derivatives along z
+ * \param nodal    Whether the solver is applied to a nodal or staggered grid
+ * \param dx       Cell size along each dimension
+ * \param dt       Time step
+ * \param pml      Whether the boxes in which the solver is applied are PML boxes
  */
 SpectralSolver::SpectralSolver(
                 const amrex::BoxArray& realspace_ba,

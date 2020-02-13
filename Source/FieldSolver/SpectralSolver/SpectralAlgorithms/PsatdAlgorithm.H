@@ -3,31 +3,36 @@
 
 #include <SpectralBaseAlgorithm.H>
 
-// \brief Class that updates the fields in spectral space and stores the coefficients
-// of the corresponding update equations. Objects of this type are instantiated when
-// psatd_push_algo = standard (also default option, when psatd_push_algo is not
-// assigned in input file).
-// Reference: Vay et al, JCP 243, 2013.
+/**
+ * \brief Class that updates the fields in spectral space and stores the coefficients
+ * of the corresponding update equations (Vay et al, JCP 243, 2013)
+ */
 class PsatdAlgorithm : public SpectralBaseAlgorithm
 {
 
     public:
-        PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
-                         const amrex::DistributionMapping& dm,
-                         const int norder_x, const int norder_y,
-                         const int norder_z, const bool nodal,
-                         const amrex::Real dt);
+
+        PsatdAlgorithm( const SpectralKSpace& spectral_kspace,
+                        const amrex::DistributionMapping& dm,
+                        const int norder_x,
+                        const int norder_y,
+                        const int norder_z,
+                        const bool nodal,
+                        const amrex::Real dt );
+
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
+
         virtual int getRequiredNumberOfFields() const override final {
             return SpectralFieldIndex::n_fields;
         }
 
-        void InitializeSpectralCoefficients(const SpectralKSpace& spectral_kspace,
-                                    const amrex::DistributionMapping& dm,
-                                    const amrex::Real dt);
+        void InitializeSpectralCoefficients( const SpectralKSpace& spectral_kspace,
+                                             const amrex::DistributionMapping& dm,
+                                             const amrex::Real dt );
 
     private:
+
         SpectralCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
 };
 
