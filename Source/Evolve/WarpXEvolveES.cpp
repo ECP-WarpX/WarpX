@@ -46,6 +46,7 @@ WarpX::EvolveES (int numsteps) {
         nba.surroundingNodes();
         rhoNodal[lev].reset(new MultiFab(nba, dmap[lev], 1, ng));
         phiNodal[lev].reset(new MultiFab(nba, dmap[lev], 1, 2));
+		phiNodal[lev]->setVal(0);
 
         eFieldNodal[lev][0].reset(new MultiFab(nba, dmap[lev], 1, ng));
         eFieldNodal[lev][1].reset(new MultiFab(nba, dmap[lev], 1, ng));
