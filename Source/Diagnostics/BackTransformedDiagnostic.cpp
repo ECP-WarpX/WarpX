@@ -789,6 +789,35 @@ writeLabFrameData(
         loc_charge_density[lev] = mypc.GetChargeDensity(lev);
     }
 
+    // call get cell centered data once //
+    Real min_zboost = zhi_boost;
+    Real max_zboost = zlo_boost;
+    Real min_xboost = domain_z_boost.hi(0);
+    Real max_xboost = domain_z_boost.lo(0);
+    Real min_yboost = domain_z_boost.hi(1);
+    Real max_yboost = domain_z_boost.lo(1);
+
+    for ( int i = 0; i < m_LabFrameDiags_.size(); ++i) {
+        // Get updated z position of snapshot
+        const Real old_z_boost = m_LabFrameDiags_[i]->m_current_z_boost;
+        m_LabFrameDiags_[i]->updateCurrentZPositions(t_boost,
+                                              m_inv_gamma_boost_,
+                                              m_inv_beta_boost_);
+        m_LabFrameDiags_[i]->m_current_z_boost = old_z_boost;
+        if (m_LabFrameDiags_[i]->m_current_z_boost < min_zboost)
+            min_zboost = m_LabFrameDiags_[i]->m_current_z_boost;
+        if (m_LabFrameDiags_[i]->m_current_z_boost > max_zboost)
+            max_zboost = m_LabFrameDiags_[i]->m_current_z_boost;
+    }
+    amrex::Print() << " min z boost " << min_zboost << "\n";
+    amrex::Print() << " max z boost " << max_zboost << "\n";
+    cc_slice = GetCellCenteredSliceData( Efield, Bfield, current,
+                              mypc, geom, m_boost_direction_,
+                              min_zboost, max_zboost,
+                              ref_ratio);
+    LorentzTransformZ(*cc_slice, m_gamma_boost_,
+                      m_beta_boost_, m_ncomp_to_dump);
+
 
     // Loop over snapshots
     for (int i = 0; i < m_LabFrameDiags_.size(); ++i) {
@@ -835,20 +864,20 @@ writeLabFrameData(
             // The cell-centered slice containing back-transformed data
             // is generated only if t_lab != prev_t_lab and is re-used
             // if multiple diags have the same z_lab,t_lab.
-            if (m_LabFrameDiags_[i]->m_t_lab != prev_t_lab ) {
-               cc_slice.reset(new MultiFab);
-               cc_slice.reset(nullptr);
-               // Cell-centered slice data at zboost location is obtained
-               cc_slice = GetCellCenteredSliceData( Efield, Bfield, current,
-                                         loc_charge_density,
-                                         mypc, geom, m_boost_direction_,
-                                         m_LabFrameDiags_[i]->m_buff_box_,
-                                         m_LabFrameDiags_[i]->m_current_z_boost,
-                                         ref_ratio);
-               const int ncomp = cc_slice->nComp();
-               LorentzTransformZ(*cc_slice, m_gamma_boost_,
-                                  m_beta_boost_, ncomp);
-            }
+            //if (m_LabFrameDiags_[i]->m_t_lab != prev_t_lab ) {
+            //   cc_slice.reset(new MultiFab);
+            //   cc_slice.reset(nullptr);
+            //   // Cell-centered slice data at zboost location is obtained
+            //   cc_slice = GetCellCenteredSliceData( Efield, Bfield, current,
+            //                             loc_charge_density,
+            //                             mypc, geom, m_boost_direction_,
+            //                             m_LabFrameDiags_[i]->m_buff_box_,
+            //                             m_LabFrameDiags_[i]->m_current_z_boost,
+            //                             ref_ratio);
+            //   const int ncomp = cc_slice->nComp();
+            //   LorentzTransformZ(*cc_slice, m_gamma_boost_,
+            //                      m_beta_boost_, ncomp);
+            //}
             // Create a 2D box for the slice in the boosted frame
             // with lo and hi same as that of the diag, except in the z-direction.
             Real dx = geom[0].CellSize(m_boost_direction_);
