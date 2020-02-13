@@ -353,7 +353,7 @@ WarpX::ReadParameters ()
                            << " for MPI process " << myproc_1 - 1 << "\n";
             } else if ( std::stoul("999"+random_seed) == 999 ) {
                 Abort("Unknown warpx.random_seed value.");
-            } else if ( std::stoul(random_seed) >= 0 ) {
+            } else if ( std::stoi(random_seed) >= 0 ) {
                 unsigned long seed = myproc_1 * ( std::stoul(random_seed) + x );
                 ResetRandomSeed(seed);
                 AllPrint() << "Actual Random Seed Used: " << seed
