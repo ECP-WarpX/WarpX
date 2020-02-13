@@ -147,12 +147,12 @@ void WarpXOpenPMDPlot::SetStep(int ts)
       // last written step in m_Series's life time, but not other earlier written steps by other m_Series
       std::string warnMsg = " Warning from openPMD writer: Already written iteration:"+std::to_string(ts);
       std::cout<<warnMsg<<std::endl;
-      amrex::Warning(warnMsg);          
+      amrex::Warning(warnMsg);
   }
- 
+
     m_CurrentStep =  ts;
     Init(openPMD::AccessType::CREATE);
-  
+
 }
 
 void
