@@ -9,6 +9,9 @@
 #ifdef WARPX_USE_PY
 #include <WarpX_py.H>
 #endif
+#ifdef WARPX_USE_PSATD
+#include <SpectralSolver.H>
+#endif
 
 #ifdef BL_USE_SENSEI_INSITU
 #include <AMReX_AmrMeshInSituBridge.H>
@@ -321,8 +324,22 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 #endif
 
-    SyncCurrent();
+#ifdef WARPX_USE_PSATD
+    // Correct current on fine and coarse patch
+    for ( int lev = 0; lev <= finest_level; ++lev )
+    {
+        SpectralSolver& ss_fp = *spectral_solver_fp[lev];
+        ss_fp.CurrentCorrection( current_fp[lev], rho_fp[lev] );
+        if ( spectral_solver_cp[lev] )
+        {
+            SpectralSolver& ss_cp = *spectral_solver_cp[lev];
+            ss_cp.CurrentCorrection( current_cp[lev], rho_cp[lev] );
+        }
+    }
+#endif
 
+    // Synchronize J and rho
+    SyncCurrent();
     SyncRho();
 
     // At this point, J is up-to-date inside the domain, and E and B are

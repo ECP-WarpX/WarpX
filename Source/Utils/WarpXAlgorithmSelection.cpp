@@ -43,15 +43,6 @@ const std::map<std::string, int> gathering_algo_to_int = {
     {"default",             GatheringAlgo::EnergyConserving }
 };
 
-// Implementation of equation (13) of (Vay et al, JCP 243, 2013):
-// - use rho via Gauss law and discrete continuity equation (last two terms)
-// - use rho via Gauss law (second-to-last term) and J for all remaining terms
-const std::map<std::string, int> psatd_push_algo_to_int = {
-    { "standard", PsatdPushAlgo::Standard },
-    { "mixed"   , PsatdPushAlgo::Mixed    },
-    { "default" , PsatdPushAlgo::Standard }
-};
-
 int
 GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
 
@@ -73,8 +64,6 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = charge_deposition_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "field_gathering")) {
         algo_to_int = gathering_algo_to_int;
-    } else if (0 == std::strcmp(pp_search_key, "psatd_push")) {
-        algo_to_int = psatd_push_algo_to_int;
     } else {
         std::string pp_search_string = pp_search_key;
         amrex::Abort("Unknown algorithm type: " + pp_search_string);

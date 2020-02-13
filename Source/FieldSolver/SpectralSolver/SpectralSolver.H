@@ -25,7 +25,7 @@ class SpectralSolver
                         const int norder_x, const int norder_y,
                         const int norder_z, const bool nodal,
                         const amrex::RealVect dx, const amrex::Real dt,
-                        const int psatd_push_algo, const bool pml=false );
+                        const bool pml=false );
 
         /**
          * \brief Transform the component `i_comp` of MultiFab `mf`
@@ -60,14 +60,30 @@ class SpectralSolver
             algorithm->pushSpectralFields( field_data );
         };
 
+        /**
+          * \brief Current correction as in equation (19) of (Vay et al, JCP 243, 2013)
+          */
+        void CurrentCorrection ( std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                 std::unique_ptr<amrex::MultiFab>& rho );
+
     private:
-        SpectralFieldData field_data; // Store field in spectral space
-                                      // and perform the Fourier transforms
+
+        amrex::BoxArray m_realspace_ba;
+        amrex::DistributionMapping m_dm;
+        int m_norder_x;
+        int m_norder_y;
+        int m_norder_z;
+        bool m_nodal;
+        amrex::RealVect m_dx;
+        amrex::Real m_dt;
+
+        // Store field in spectral space and perform the Fourier transforms
+        SpectralFieldData field_data;
+
+        // Defines field update equation in spectral space and the associated coefficients.
+        // SpectralBaseAlgorithm is a base class; this pointer is meant to point
+        // to an instance of a *sub-class* defining a specific algorithm
         std::unique_ptr<SpectralBaseAlgorithm> algorithm;
-        // Defines field update equation in spectral space,
-        // and the associated coefficients.
-        // SpectralBaseAlgorithm is a base class ; this pointer is meant
-        // to point an instance of a *sub-class* defining a specific algorithm
 };
 
 #endif // WARPX_SPECTRAL_SOLVER_H_

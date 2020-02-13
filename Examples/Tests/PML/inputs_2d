@@ -23,7 +23,6 @@ geometry.prob_hi     =  30.e-6  120.e-6
 warpx.verbose = 1
 
 # Algorithms
-algo.psatd_push = mixed
 
 warpx.cfl = 1.0
 warpx.do_pml = 1

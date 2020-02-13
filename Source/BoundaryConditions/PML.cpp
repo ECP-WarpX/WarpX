@@ -470,9 +470,9 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& grid_dm,
     // Get the cell-centered box, with guard cells
     BoxArray realspace_ba = ba;  // Copy box
     realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
-    // Define spectral solver (psatd_push_algo does not make a difference in PML)
+    // Define spectral solver
     spectral_solver_fp.reset( new SpectralSolver( realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, dx, dt, WarpX::psatd_push_algo, in_pml ) );
+        nox_fft, noy_fft, noz_fft, do_nodal, dx, dt, in_pml ) );
 #endif
 
     if (cgeom)
@@ -531,9 +531,9 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& grid_dm,
         // Get the cell-centered box, with guard cells
         BoxArray realspace_cba = cba;  // Copy box
         realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
-        // Define spectral solver (psatd_push_algo does not make a difference in PML)
+        // Define spectral solver
         spectral_solver_cp.reset( new SpectralSolver( realspace_cba, cdm,
-            nox_fft, noy_fft, noz_fft, do_nodal, cdx, dt, WarpX::psatd_push_algo, in_pml ) );
+            nox_fft, noy_fft, noz_fft, do_nodal, cdx, dt, in_pml ) );
 #endif
     }
 }

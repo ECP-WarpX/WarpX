@@ -59,10 +59,6 @@ long WarpX::field_gathering_algo;
 long WarpX::particle_pusher_algo;
 int WarpX::maxwell_fdtd_solver_id;
 int WarpX::do_dive_cleaning = 0;
-// Implementation of equation (13) of (Vay et al, JCP 243, 2013):
-// - use rho via Gauss law and discrete continuity equation (last two terms)
-// - use rho via Gauss law (second-to-last term) and J for all remaining terms
-int WarpX::psatd_push_algo;
 
 long WarpX::n_rz_azimuthal_modes = 1;
 long WarpX::ncomps = 1;
@@ -607,7 +603,6 @@ WarpX::ReadParameters ()
             // Use same shape factors in all directions, for gathering
             l_lower_order_in_v = false;
         }
-        psatd_push_algo = GetAlgorithmInteger( pp, "psatd_push" );
     }
 
 #ifdef WARPX_USE_PSATD
@@ -857,7 +852,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         realspace_ba.enclosedCells().grow(ngE); // cell-centered + guard cells
         // Define spectral solver (last argument missing: default pml=false)
         spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev], psatd_push_algo ) );
+            nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev] ) );
     }
 #endif
 
@@ -942,7 +937,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             realspace_ba.enclosedCells().grow(ngE);// cell-centered + guard cells
             // Define spectral solver (last argument missing: default pml=false)
             spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
-                nox_fft, noy_fft, noz_fft, do_nodal, cdx_vect, dt[lev], psatd_push_algo ) );
+                nox_fft, noy_fft, noz_fft, do_nodal, cdx_vect, dt[lev] ) );
         }
 #endif
     }
