@@ -22,18 +22,17 @@ using namespace amrex;
  * \param[in] bx The x-component of the B-field at the point at whicht the M-field is to be calculated
  * \param[in] by The y-component of the B-field at the point at whicht the M-field is to be calculated
  * \param[in] bz The z-component of the B-field at the point at whicht the M-field is to be calculated
- * \param[in] xi The quantum parameter being used for the simulation
- * \param[in] c2 The speed of light squared
+ * \param[in] xi_c2 The quantum parameter * c2 being used for the simulation
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void calc_M(Real arr [], Real ex, Real ey, Real ez, Real bx, Real by, Real bz, Real xi, Real c2)
+void calc_M(Real arr [], Real ex, Real ey, Real ez, Real bx, Real by, Real bz, Real xi_c2)
 {
     const Real ee = ex*ex+ey*ey+ez*ez;
     const Real bb = bx*bx+by*by+bz*bz;
     const Real eb = ex*bx+ey*by+ez*bz;
-    arr[0] = -2*xi*c2*( 2*bx*(ee-c2*bb) - 7*ex*eb );
-    arr[1] = -2*xi*c2*( 2*by*(ee-c2*bb) - 7*ey*eb );
-    arr[2] = -2*xi*c2*( 2*bz*(ee-c2*bb) - 7*ez*eb );
+    arr[0] = -2*xi_c2*( 2*bx*(ee-c2*bb) - 7*ex*eb );
+    arr[1] = -2*xi_c2*( 2*by*(ee-c2*bb) - 7*ey*eb );
+    arr[2] = -2*xi_c2*( 2*bz*(ee-c2*bb) - 7*ez*eb );
 };
 
 
@@ -63,7 +62,7 @@ void calc_M(Real arr [], Real ex, Real ey, Real ez, Real bx, Real by, Real bz, R
  * \param[in] dy The y spatial step, used for calculating curls
  * \param[in] dz The z spatial step, used for calulating curls
  * \param[in] dt The temporal step, used for the half push/correction to the E-fields at the end of the function
- * \param[in] xi Quantum parameter
+ * \param[in] xi_c2 Quantum parameter * c**2
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void warpx_hybrid_QED_push (int j, int k, int l, Array4<Real> const& Ex, Array4<Real>
@@ -71,13 +70,14 @@ void warpx_hybrid_QED_push (int j, int k, int l, Array4<Real> const& Ex, Array4<
                             Array4<Real> const& By, Array4<Real const> const& Bz,
                             Array4<Real> const& tmpEx, Array4<Real> const& tmpEy,
                             Array4<Real> const& tmpEz, Real dx, Real dy, Real dz, Real dt,
-                            const Real xi)
+                            const Real xi_c2)
 {
 
 
 // Defining constants to be used in the calculations
 
 constexpr amrex::Real c2 = PhysConst::c * PhysConst::c;
+constexpr amrex::Real c2i = 1./c2;
 const amrex::Real dxi = 1./dx;
 const amrex::Real dzi = 1./dz;
 
@@ -96,17 +96,17 @@ const amrex::Real dyi = 1./dy;
     // Calcualting the M-field at the chosen stencil points
 
     calc_M(Mpx, tmpEx(j+1,k,l), tmpEy(j+1,k,l), tmpEz(j+1,k,l),
-                Bx(j+1,k,l), By(j+1,k,l), Bz(j+1,k,l), xi, c2);
+                Bx(j+1,k,l), By(j+1,k,l), Bz(j+1,k,l), xi_c2);
     calc_M(Mnx, tmpEx(j-1,k,l), tmpEy(j-1,k,l), tmpEz(j-1,k,l),
-                Bx(j-1,k,l), By(j-1,k,l), Bz(j-1,k,l), xi, c2);
+                Bx(j-1,k,l), By(j-1,k,l), Bz(j-1,k,l), xi_c2);
     calc_M(Mpy, tmpEx(j,k+1,l), tmpEy(j,k+1,l), tmpEz(j,k+1,l),
-                Bx(j,k+1,l), By(j,k+1,l), Bz(j,k+1,l), xi, c2);
+                Bx(j,k+1,l), By(j,k+1,l), Bz(j,k+1,l), xi_c2);
     calc_M(Mny, tmpEx(j,k-1,l), tmpEy(j,k-1,l), tmpEz(j,k-1,l),
-                Bx(j,k-1,l), By(j,k-1,l), Bz(j,k-1,l), xi, c2);
+                Bx(j,k-1,l), By(j,k-1,l), Bz(j,k-1,l), xi_c2);
     calc_M(Mpz, tmpEx(j,k,l+1), tmpEy(j,k,l+1), tmpEz(j,k,l+1),
-                Bx(j,k,l+1), By(j,k,l+1), Bz(j,k,l+1), xi, c2);
+                Bx(j,k,l+1), By(j,k,l+1), Bz(j,k,l+1), xi_c2);
     calc_M(Mnz, tmpEx(j,k,l-1), tmpEy(j,k,l-1), tmpEz(j,k,l-1),
-                Bx(j,k,l-1), By(j,k,l-1), Bz(j,k,l-1), xi, c2);
+                Bx(j,k,l-1), By(j,k,l-1), Bz(j,k,l-1), xi_c2);
 
     // Calculating necessary curls
 
@@ -144,33 +144,33 @@ const amrex::Real dyi = 1./dy;
     const amrex::Real EVxB = ex*VxB[0] + ey*VxB[1] + ez*VxB[2];
     const amrex::Real BVxB = bx*VxB[0] + by*VxB[1] + bz*VxB[2];
 
-    const amrex::Real beta = 4*xi*( ee - c2*bb ) + PhysConst::ep0;
+    const amrex::Real beta = 4*xi_c2*( c2i*ee - bb ) + PhysConst::ep0;
 
     const amrex::Real Alpha[3] = {
-        2*xi*c2*( -7*bx*EVxE - 7*VxE[0]*eb + 4*ex*BVxE ) + VxM[0],
-        2*xi*c2*( -7*by*EVxE - 7*VxE[1]*eb + 4*ey*BVxE ) + VxM[1],
-        2*xi*c2*( -7*bz*EVxE - 7*VxE[2]*eb + 4*ez*BVxE ) + VxM[2]
+        2*xi_c2*( -7*bx*EVxE - 7*VxE[0]*eb + 4*ex*BVxE ) + VxM[0],
+        2*xi_c2*( -7*by*EVxE - 7*VxE[1]*eb + 4*ey*BVxE ) + VxM[1],
+        2*xi_c2*( -7*bz*EVxE - 7*VxE[2]*eb + 4*ez*BVxE ) + VxM[2]
     };
 
     const amrex::Real Omega[3] = {
-        Alpha[0] + 2*xi*c2*( 4*ex*EVxB + 2*VxB[0]*( ee - c2*bb ) + 7*c2*bx*BVxB ),
-        Alpha[1] + 2*xi*c2*( 4*ey*EVxB + 2*VxB[1]*( ee - c2*bb ) + 7*c2*by*BVxB ),
-        Alpha[2] + 2*xi*c2*( 4*ez*EVxB + 2*VxB[2]*( ee - c2*bb ) + 7*c2*bz*BVxB )
+        Alpha[0] + 2*xi_c2*( 4*ex*EVxB + 2*VxB[0]*( ee - c2*bb ) + 7*c2*bx*BVxB ),
+        Alpha[1] + 2*xi_c2*( 4*ey*EVxB + 2*VxB[1]*( ee - c2*bb ) + 7*c2*by*BVxB ),
+        Alpha[2] + 2*xi_c2*( 4*ez*EVxB + 2*VxB[2]*( ee - c2*bb ) + 7*c2*bz*BVxB )
     };
 
     // Calcualting matrix values for the QED correction algorithm
 
-    const amrex::Real a00 = beta + xi*( 8*ex*ex + 14*c2*bx*bx );
+    const amrex::Real a00 = beta + xi_c2*( 8*c2i*ex*ex + 14*bx*bx );
 
-    const amrex::Real a11 = beta + xi*( 8*ey*ey + 14*c2*by*by );
+    const amrex::Real a11 = beta + xi_c2*( 8*c2i*ey*ey + 14*by*by );
 
-    const amrex::Real a22 = beta + xi*( 8*ez*ez + 14*c2*bz*bz );
+    const amrex::Real a22 = beta + xi_c2*( 8*c2i*ez*ez + 14*bz*bz );
 
-    const amrex::Real a01 = xi*( 2*ex*ey + 14*c2*bx*by );
+    const amrex::Real a01 = xi_c2*( 2*c2i*ex*ey + 14*bx*by );
 
-    const amrex::Real a02 = xi*( 2*ex*ez + 14*c2*bx*bz );
+    const amrex::Real a02 = xi_c2*( 2*c2i*ex*ez + 14*bx*bz );
 
-    const amrex::Real a12 = xi*( 2*ez*ey + 14*c2*bz*by );
+    const amrex::Real a12 = xi_c2*( 2*c2i*ez*ey + 14*bz*by );
 
     const amrex::Real detA = a00*( a11*a22 - a12*a12 ) - a01*( a01*a22 - a02*a12 )+a02*( a01*a12 - a02*a11 );
 
@@ -218,13 +218,13 @@ const amrex::Real dyi = 1./dy;
     // Calcualting the M-field at the chosen stencil points
 
     calc_M(Mpx, tmpEx(j+1,k,0), tmpEy(j+1,k,0), tmpEz(j+1,k,0),
-                Bx(j+1,k,0), By(j+1,k,0), Bz(j+1,k,0), xi, c2);
+                Bx(j+1,k,0), By(j+1,k,0), Bz(j+1,k,0), xi_c2);
     calc_M(Mnx, tmpEx(j-1,k,0), tmpEy(j-1,k,0), tmpEz(j-1,k,0),
-                Bx(j-1,k,0), By(j-1,k,0), Bz(j-1,k,0), xi, c2);
+                Bx(j-1,k,0), By(j-1,k,0), Bz(j-1,k,0), xi_c2);
     calc_M(Mpz, tmpEx(j,k+1,0), tmpEy(j,k+1,0), tmpEz(j,k+1,0),
-                Bx(j,k+1,0), By(j,k+1,0), Bz(j,k+1,0), xi, c2);
+                Bx(j,k+1,0), By(j,k+1,0), Bz(j,k+1,0), xi_c2);
     calc_M(Mnz, tmpEx(j,k-1,0), tmpEy(j,k-1,0), tmpEz(j,k-1,0),
-                Bx(j,k-1,0), By(j,k-1,0), Bz(j,k-1,0), xi, c2);
+                Bx(j,k-1,0), By(j,k-1,0), Bz(j,k-1,0), xi_c2);
 
     // Calculating necessary curls
 
@@ -262,33 +262,33 @@ const amrex::Real dyi = 1./dy;
     const amrex::Real EVxB = ex*VxB[0] + ey*VxB[1] + ez*VxB[2];
     const amrex::Real BVxB = bx*VxB[0] + by*VxB[1] + bz*VxB[2];
 
-    const amrex::Real beta = 4*xi*( ee - c2*bb ) + PhysConst::ep0;
+    const amrex::Real beta = 4*xi_c2*( c2i*ee - bb ) + PhysConst::ep0;
 
     const amrex::Real Alpha[3] = {
-        2*xi*c2*( -7*bx*EVxE - 7*VxE[0]*eb + 4*ex*BVxE ) + VxM[0],
-        2*xi*c2*( -7*by*EVxE - 7*VxE[1]*eb + 4*ey*BVxE ) + VxM[1],
-        2*xi*c2*( -7*bz*EVxE - 7*VxE[2]*eb + 4*ez*BVxE ) + VxM[2]
+        2*xi_c2*( -7*bx*EVxE - 7*VxE[0]*eb + 4*ex*BVxE ) + VxM[0],
+        2*xi_c2*( -7*by*EVxE - 7*VxE[1]*eb + 4*ey*BVxE ) + VxM[1],
+        2*xi_c2*( -7*bz*EVxE - 7*VxE[2]*eb + 4*ez*BVxE ) + VxM[2]
     };
 
     const amrex::Real Omega[3] = {
-        Alpha[0] + 2*xi*c2*( 4*ex*EVxB + 2*VxB[0]*( ee - c2*bb ) + 7*c2*bx*BVxB ),
-        Alpha[1] + 2*xi*c2*( 4*ey*EVxB + 2*VxB[1]*( ee - c2*bb ) + 7*c2*by*BVxB ),
-        Alpha[2] + 2*xi*c2*( 4*ez*EVxB + 2*VxB[2]*( ee - c2*bb ) + 7*c2*bz*BVxB )
+        Alpha[0] + 2*xi_c2*( 4*ex*EVxB + 2*VxB[0]*( ee - c2*bb ) + 7*c2*bx*BVxB ),
+        Alpha[1] + 2*xi_c2*( 4*ey*EVxB + 2*VxB[1]*( ee - c2*bb ) + 7*c2*by*BVxB ),
+        Alpha[2] + 2*xi_c2*( 4*ez*EVxB + 2*VxB[2]*( ee - c2*bb ) + 7*c2*bz*BVxB )
     };
 
     // Calcualting matrix values for the QED correction algorithm
 
-    const amrex::Real a00 = beta + xi*( 8*ex*ex + 14*c2*bx*bx );
+    const amrex::Real a00 = beta + xi_c2*( 8*c2i*ex*ex + 14*bx*bx );
 
-    const amrex::Real a11 = beta + xi*( 8*ey*ey + 14*c2*by*by );
+    const amrex::Real a11 = beta + xi_c2*( 8*c2i*ey*ey + 14*by*by );
 
-    const amrex::Real a22 = beta + xi*( 8*ez*ez + 14*c2*bz*bz );
+    const amrex::Real a22 = beta + xi_c2*( 8*c2i*ez*ez + 14*bz*bz );
 
-    const amrex::Real a01 = xi*( 2*ex*ey + 14*c2*bx*by );
+    const amrex::Real a01 = xi_c2*( 2*c2i*ex*ey + 14*bx*by );
 
-    const amrex::Real a02 = xi*( 2*ex*ez + 14*c2*bx*bz );
+    const amrex::Real a02 = xi_c2*( 2*c2i*ex*ez + 14*bx*bz );
 
-    const amrex::Real a12 = xi*( 2*ez*ey + 14*c2*bz*by );
+    const amrex::Real a12 = xi_c2*( 2*c2i*ez*ey + 14*bz*by );
 
     const amrex::Real detA = a00*( a11*a22 - a12*a12 ) - a01*( a01*a22 - a02*a12 ) + a02*( a01*a12 - a02*a11 );
 
