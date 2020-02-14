@@ -10,7 +10,10 @@
 #include <WarpX.H>
 #include <FieldIO.H>
 #ifdef WARPX_USE_OPENPMD
-#   include <openPMD/openPMD.hpp>
+#include <openPMD/openPMD.hpp>
+#endif
+#ifdef WARPX_USE_PSATD
+#include <SpectralSolver.H>
 #endif
 
 #include <AMReX_FillPatchUtil_F.H>
@@ -642,15 +645,20 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
                                     Bfield_aux[lev][2].get()},
                             WarpX::CellSize(lev) );
             } else if (fieldname == "divE"){
-                if (do_nodal) amrex::Abort("TODO: do_nodal && plot dive");
+                if (do_nodal) amrex::Abort("TODO: do_nodal && plot divE");
                 const BoxArray& ba = amrex::convert(boxArray(lev),IntVect::TheUnitVector());
-                MultiFab dive(ba,DistributionMap(lev),1,0);
-                ComputeDivE( dive, 0,
-                             {Efield_aux[lev][0].get(),
-                                     Efield_aux[lev][1].get(),
-                                     Efield_aux[lev][2].get()},
-                             WarpX::CellSize(lev) );
-                AverageAndPackScalarField( mf_avg[lev], dive, dcomp++, ngrow );
+#ifdef WARPX_USE_PSATD
+                std::unique_ptr<amrex::MultiFab> divE_ptr( new MultiFab( ba, DistributionMap(lev), 1, 0 ) );
+                SpectralSolver& ss_fp = *spectral_solver_fp[lev];
+                ss_fp.ComputeSpectralDivE( divE_ptr, Efield_aux[lev] );
+                MultiFab& divE = *divE_ptr;
+                AverageAndPackScalarField( mf_avg[lev], divE, dcomp++, ngrow );
+#else
+                MultiFab divE( ba, DistributionMap(lev), 1, 0 );
+                ComputeDivE( divE, 0, {Efield_aux[lev][0].get(), Efield_aux[lev][1].get(),
+                             Efield_aux[lev][2].get()}, WarpX::CellSize(lev) );
+                AverageAndPackScalarField( mf_avg[lev], divE, dcomp++, ngrow );
+#endif
             } else {
                 amrex::Abort("unknown field in fields_to_plot: " + fieldname);
             }

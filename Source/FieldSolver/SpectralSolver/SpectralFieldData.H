@@ -17,7 +17,7 @@ using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
 
 /** Index for the regular fields, when stored in spectral space */
 struct SpectralFieldIndex {
-  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields };
+  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, divE, n_fields };
   // n_fields is automatically the total number of fields
 };
 
