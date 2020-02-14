@@ -153,7 +153,7 @@ const amrex::Real dyi = 1./dy;
     };
 
     const amrex::Real Omega[3] = {
-        Alpha[0] + 2*xi_c2*( 4*ex*EVxB + 2*VxB[0]*( ee - c2*bb ) + 7*c2*bx*BVxB ),
+        Alpha[0] + 2._rt*xi_c2*( 4._rt*ex*EVxB + 2._rt*VxB[0]*( ee - c2*bb ) + 7._rt*c2*bx*BVxB ),
         Alpha[1] + 2*xi_c2*( 4*ey*EVxB + 2*VxB[1]*( ee - c2*bb ) + 7*c2*by*BVxB ),
         Alpha[2] + 2*xi_c2*( 4*ez*EVxB + 2*VxB[2]*( ee - c2*bb ) + 7*c2*bz*BVxB )
     };
