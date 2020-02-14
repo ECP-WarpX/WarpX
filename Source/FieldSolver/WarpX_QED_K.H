@@ -25,14 +25,14 @@ using namespace amrex;
  * \param[in] xi_c2 The quantum parameter * c2 being used for the simulation
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void calc_M(Real arr [], Real ex, Real ey, Real ez, Real bx, Real by, Real bz, Real xi_c2)
+void calc_M(Real arr [], Real ex, Real ey, Real ez, Real bx, Real by, Real bz, Real xi_c2, Real c2)
 {
     const Real ee = ex*ex+ey*ey+ez*ez;
-    const Real bb = bx*bx+by*by+bz*bz;
+    const Real bb_c2 = c2*(bx*bx+by*by+bz*bz);
     const Real eb = ex*bx+ey*by+ez*bz;
-    arr[0] = -2*xi_c2*( 2*bx*(ee-c2*bb) - 7*ex*eb );
-    arr[1] = -2*xi_c2*( 2*by*(ee-c2*bb) - 7*ey*eb );
-    arr[2] = -2*xi_c2*( 2*bz*(ee-c2*bb) - 7*ez*eb );
+    arr[0] = -2*xi_c2*( 2*bx*(ee-bb_c2) - 7*ex*eb );
+    arr[1] = -2*xi_c2*( 2*by*(ee-bb_c2) - 7*ey*eb );
+    arr[2] = -2*xi_c2*( 2*bz*(ee-bb_c2) - 7*ez*eb );
 };
 
 
@@ -96,17 +96,17 @@ const amrex::Real dyi = 1./dy;
     // Calcualting the M-field at the chosen stencil points
 
     calc_M(Mpx, tmpEx(j+1,k,l), tmpEy(j+1,k,l), tmpEz(j+1,k,l),
-                Bx(j+1,k,l), By(j+1,k,l), Bz(j+1,k,l), xi_c2);
+           Bx(j+1,k,l), By(j+1,k,l), Bz(j+1,k,l), xi_c2, c2);
     calc_M(Mnx, tmpEx(j-1,k,l), tmpEy(j-1,k,l), tmpEz(j-1,k,l),
-                Bx(j-1,k,l), By(j-1,k,l), Bz(j-1,k,l), xi_c2);
+           Bx(j-1,k,l), By(j-1,k,l), Bz(j-1,k,l), xi_c2, c2);
     calc_M(Mpy, tmpEx(j,k+1,l), tmpEy(j,k+1,l), tmpEz(j,k+1,l),
-                Bx(j,k+1,l), By(j,k+1,l), Bz(j,k+1,l), xi_c2);
+           Bx(j,k+1,l), By(j,k+1,l), Bz(j,k+1,l), xi_c2, c2);
     calc_M(Mny, tmpEx(j,k-1,l), tmpEy(j,k-1,l), tmpEz(j,k-1,l),
-                Bx(j,k-1,l), By(j,k-1,l), Bz(j,k-1,l), xi_c2);
+           Bx(j,k-1,l), By(j,k-1,l), Bz(j,k-1,l), xi_c2, c2);
     calc_M(Mpz, tmpEx(j,k,l+1), tmpEy(j,k,l+1), tmpEz(j,k,l+1),
-                Bx(j,k,l+1), By(j,k,l+1), Bz(j,k,l+1), xi_c2);
+           Bx(j,k,l+1), By(j,k,l+1), Bz(j,k,l+1), xi_c2, c2);
     calc_M(Mnz, tmpEx(j,k,l-1), tmpEy(j,k,l-1), tmpEz(j,k,l-1),
-                Bx(j,k,l-1), By(j,k,l-1), Bz(j,k,l-1), xi_c2);
+           Bx(j,k,l-1), By(j,k,l-1), Bz(j,k,l-1), xi_c2, c2);
 
     // Calculating necessary curls
 
@@ -218,13 +218,13 @@ const amrex::Real dyi = 1./dy;
     // Calcualting the M-field at the chosen stencil points
 
     calc_M(Mpx, tmpEx(j+1,k,0), tmpEy(j+1,k,0), tmpEz(j+1,k,0),
-                Bx(j+1,k,0), By(j+1,k,0), Bz(j+1,k,0), xi_c2);
+           Bx(j+1,k,0), By(j+1,k,0), Bz(j+1,k,0), xi_c2, c2);
     calc_M(Mnx, tmpEx(j-1,k,0), tmpEy(j-1,k,0), tmpEz(j-1,k,0),
-                Bx(j-1,k,0), By(j-1,k,0), Bz(j-1,k,0), xi_c2);
+           Bx(j-1,k,0), By(j-1,k,0), Bz(j-1,k,0), xi_c2, c2);
     calc_M(Mpz, tmpEx(j,k+1,0), tmpEy(j,k+1,0), tmpEz(j,k+1,0),
-                Bx(j,k+1,0), By(j,k+1,0), Bz(j,k+1,0), xi_c2);
+           Bx(j,k+1,0), By(j,k+1,0), Bz(j,k+1,0), xi_c2, c2);
     calc_M(Mnz, tmpEx(j,k-1,0), tmpEy(j,k-1,0), tmpEz(j,k-1,0),
-                Bx(j,k-1,0), By(j,k-1,0), Bz(j,k-1,0), xi_c2);
+           Bx(j,k-1,0), By(j,k-1,0), Bz(j,k-1,0), xi_c2, c2);
 
     // Calculating necessary curls
 
