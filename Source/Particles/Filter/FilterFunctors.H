@@ -5,7 +5,7 @@
 #include "AMReX_Random.H"
 #include "WarpXParticleContainer.H"
 
-using ParticleType = typename WarpXParticleContainer::ParticleType;
+using SuperParticleType = typename WarpXParticleContainer::SuperParticleType;
 
 /**
  * \brief Functor that returns 0 or 1 depending on a random draw per particle
@@ -25,7 +25,7 @@ struct RandomFilter
      * \return whether or not the particle is selected
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator () (const ParticleType& p) const noexcept
+    bool operator () (const SuperParticleType& p) const noexcept
     {
         if ( !m_is_active )
             return 1;
@@ -56,7 +56,7 @@ struct UniformFilter
      * \return whether or not the particle is selected
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator () (const ParticleType& p) const noexcept
+    bool operator () (const SuperParticleType& p) const noexcept
     {
         if ( !m_is_active )
             return 1;
