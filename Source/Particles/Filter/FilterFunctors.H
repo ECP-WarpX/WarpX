@@ -12,7 +12,6 @@ using ParticleType = typename WarpXParticleContainer::ParticleType;
  */
 struct RandomFilter
 {
-public:
     /** constructor
      * \param a_is_active whether the test is active
      * \param a_fraction fraction of particles to select
