@@ -461,8 +461,8 @@ WarpX::ReadParameters ()
         pp.query("sort_int", sort_int);
 
         double quantum_xi;
-        int input_is_specified = pp.query("quantum_xi", quantum_xi);
-        if (input_is_specified)
+        int quantum_xi_is_specified = pp.query("quantum_xi", quantum_xi);
+        if (quantum_xi_is_specified)
             quantum_xi_c2 = quantum_xi * PhysConst::c * PhysConst::c;
 
         pp.query("do_pml", do_pml);
