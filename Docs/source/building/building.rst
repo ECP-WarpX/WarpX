@@ -17,8 +17,8 @@ single directory (e.g. ``warpx_directory``):
 
     mkdir warpx_directory
     cd warpx_directory
-    git clone --branch dev https://github.com/ECP-WarpX/WarpX.git
-    git clone --branch master https://bitbucket.org/berkeleylab/picsar.git
+    git clone https://github.com/ECP-WarpX/WarpX.git
+    git clone https://bitbucket.org/berkeleylab/picsar.git
     git clone --branch development https://github.com/AMReX-Codes/amrex.git
 
 Basic compilation
@@ -42,7 +42,7 @@ options are set in the file ``GNUmakefile``. The default
 options correspond to an optimized code for 3D geometry. The main compile-time
 options are:
 
-    * ``DIM=3D`` or ``2D``: Geometry of the simulation (note that running an executable compiled for 3D with a 2D input file will crash).
+    * ``DIM=3`` or ``2``: Geometry of the simulation (note that running an executable compiled for 3D with a 2D input file will crash).
     * ``DEBUG=FALSE`` or ``TRUE``: Compiling in ``DEBUG`` mode can help tremendously during code development.
     * ``USE_PSATD=FALSE`` or ``TRUE``: Compile the Pseudo-Spectral Analytical Time Domain Maxwell solver. Requires an FFT library.
     * ``USE_RZ=FALSE`` or ``TRUE``: Compile for 2D axisymmetric geometry.
