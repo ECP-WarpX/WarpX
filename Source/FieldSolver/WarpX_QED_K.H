@@ -316,11 +316,11 @@ const amrex::Real dyi = 1./dy;
 
    // Adding the QED corrections to the origional fields
 
-    Ex(j,k,0) = Ex(j,k,0) + 0.5._rt*dt*dEx;
+    Ex(j,k,0) = Ex(j,k,0) + 0.5_rt*dt*dEx;
 
-    Ey(j,k,0) = Ey(j,k,0) + 0.5._rt*dt*dEy;
+    Ey(j,k,0) = Ey(j,k,0) + 0.5_rt*dt*dEy;
 
-    Ez(j,k,0) = Ez(j,k,0) + 0.5._rt*dt*dEz;
+    Ez(j,k,0) = Ez(j,k,0) + 0.5_rt*dt*dEz;
 
 #endif
 
