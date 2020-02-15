@@ -386,6 +386,10 @@ Particle initialization
     If `1` is given, both charge deposition and current deposition will
     not be done, thus that species does not contribute to the fields.
 
+* ``<species_name>.do_not_gather`` (`0` or `1` optional; default `0`)
+    If `1` is given, field gather from grids will not be done,
+    thus that species will not be affected by the field on grids.
+
 * ``<species_name>.do_not_push`` (`0` or `1` optional; default `0`)
     If `1` is given, this species will not be pushed
     by any pusher during the simulation.
@@ -993,7 +997,7 @@ Diagnostics and output
 
 * ``warpx.openpmd_backend`` (``bp``, ``h5`` or ``json``) optional
     `I/O backend <https://openpmd-api.readthedocs.io/en/latest/backends/overview.html>`_ for `openPMD <https://www.openPMD.org>`_ data dumps.
-    ``bp`` is the `ADIOS I/O library <https://csmd.ornl.gov/adios>`_, ``h5`` is the `HDF5 format <https://www.hdfgroup.org/solutions/hdf5/>`, and ``json`` is a `simple text format <https://en.wikipedia.org/wiki/JSON>`_.
+    ``bp`` is the `ADIOS I/O library <https://csmd.ornl.gov/adios>`_, ``h5`` is the `HDF5 format <https://www.hdfgroup.org/solutions/hdf5/>`_, and ``json`` is a `simple text format <https://en.wikipedia.org/wiki/JSON>`_.
     ``json`` only works with serial/single-rank jobs.
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
 
@@ -1216,10 +1220,9 @@ Diagnostics and output
 * ``<reduced_diags_name>.extension`` (`string`) optional (default `txt`)
     The extension of the output file.
 
-* ``<reduced_diags_name>.separator`` (`string`) optional (default `,`)
+* ``<reduced_diags_name>.separator`` (`string`) optional (default a `whitespace`)
     The separator between row values in the output file.
-    The default separator is comma, i.e. the output file is in
-    the CSV (comma separated value) format.
+    The default separator is a whitespace.
 
 Lookup tables for QED modules (implementation in progress)
 ----------------------------------------------------------

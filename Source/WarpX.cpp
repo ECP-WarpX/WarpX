@@ -10,7 +10,6 @@
  * License: BSD-3-Clause-LBNL
  */
 #include <WarpX.H>
-#include <WarpX_f.H>
 #include <WarpXConst.H>
 #include <WarpXWrappers.h>
 #include <WarpXUtil.H>
@@ -246,10 +245,13 @@ WarpX::WarpX ()
 
     costs.resize(nlevs_max);
 
+    // Allocate field solver objects
 #ifdef WARPX_USE_PSATD
     spectral_solver_fp.resize(nlevs_max);
     spectral_solver_cp.resize(nlevs_max);
 #endif
+    m_fdtd_solver_fp.resize(nlevs_max);
+    m_fdtd_solver_cp.resize(nlevs_max);
 #ifdef WARPX_USE_PSATD_HYBRID
     Efield_fp_fft.resize(nlevs_max);
     Bfield_fp_fft.resize(nlevs_max);
@@ -909,7 +911,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #endif
     }
 #endif
-
+    std::array<Real,3> const dx = CellSize(lev);
+    m_fdtd_solver_fp[lev].reset(
+        new FiniteDifferenceSolver(maxwell_fdtd_solver_id, dx, do_nodal) );
     //
     // The Aux patch (i.e., the full solution)
     //
@@ -981,11 +985,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if (fft_hybrid_mpi_decomposition == false){
             // Allocate and initialize the spectral solver
             std::array<Real,3> cdx = CellSize(lev-1);
-    #if (AMREX_SPACEDIM == 3)
+#if (AMREX_SPACEDIM == 3)
             RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
-    #elif (AMREX_SPACEDIM == 2)
+#elif (AMREX_SPACEDIM == 2)
             RealVect cdx_vect(cdx[0], cdx[2]);
-    #endif
+#endif
             // Get the cell-centered box, with guard cells
             BoxArray realspace_ba = cba;// Copy box
             realspace_ba.enclosedCells(); // Make it cell-centered
@@ -1004,6 +1008,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #endif
         }
 #endif
+    std::array<Real,3> cdx = CellSize(lev-1);
+    m_fdtd_solver_cp[lev].reset(
+        new FiniteDifferenceSolver( maxwell_fdtd_solver_id, cdx, do_nodal ) );
     }
 
     //
@@ -1331,15 +1338,65 @@ WarpX::BuildBufferMasks ()
 #endif
                 for (MFIter mfi(*bmasks, true); mfi.isValid(); ++mfi)
                 {
-                    const Box& tbx = mfi.growntilebox();
-                    warpx_build_buffer_masks (BL_TO_FORTRAN_BOX(tbx),
-                                              BL_TO_FORTRAN_ANYD((*bmasks)[mfi]),
-                                              BL_TO_FORTRAN_ANYD(tmp[mfi]),
-                                              &ngbuffer);
+                    const Box tbx = mfi.growntilebox();
+                    BuildBufferMasksInBox( tbx, (*bmasks)[mfi], tmp[mfi], ngbuffer );
                 }
             }
         }
     }
+}
+
+/**
+ * \brief Build buffer mask within given FArrayBox
+ *
+ * \param tbx         Current FArrayBox
+ * \param buffer_mask Buffer mask to be set
+ * \param guard_mask  Guard mask used to set buffer_mask
+ * \param ng          Number of guard cells
+ */
+void
+WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
+                               const amrex::IArrayBox &guard_mask, const int ng )
+{
+    bool setnull;
+    const auto lo = amrex::lbound( tbx );
+    const auto hi = amrex::ubound( tbx );
+    Array4<int> msk = buffer_mask.array();
+    Array4<int const> gmsk = guard_mask.array();
+#if (AMREX_SPACEDIM == 2)
+    int k = lo.z;
+    for     (int j = lo.y; j <= hi.y; ++j) {
+        for (int i = lo.x; i <= hi.x; ++i) {
+            setnull = false;
+            // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
+            for     (int jj = j-ng; jj <= j+ng; ++jj) {
+                for (int ii = i-ng; ii <= i+ng; ++ii) {
+                    if ( gmsk(ii,jj,k) == 0 ) setnull = true;
+                }
+            }
+            if ( setnull ) msk(i,j,k) = 0;
+            else           msk(i,j,k) = 1;
+        }
+    }
+#elif (AMREX_SPACEDIM == 3)
+    for         (int k = lo.z; k <= hi.z; ++k) {
+        for     (int j = lo.y; j <= hi.y; ++j) {
+            for (int i = lo.x; i <= hi.x; ++i) {
+                setnull = false;
+                // If gmsk=0 for any neighbor within ng cells, current cell is in the buffer region
+                for         (int kk = k-ng; kk <= k+ng; ++kk) {
+                    for     (int jj = j-ng; jj <= j+ng; ++jj) {
+                        for (int ii = i-ng; ii <= i+ng; ++ii) {
+                            if ( gmsk(ii,jj,kk) == 0 ) setnull = true;
+                        }
+                    }
+                }
+                if ( setnull ) msk(i,j,k) = 0;
+                else           msk(i,j,k) = 1;
+            }
+        }
+    }
+#endif
 }
 
 const iMultiFab*
