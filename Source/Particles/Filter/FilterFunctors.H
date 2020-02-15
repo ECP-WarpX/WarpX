@@ -34,8 +34,8 @@ struct RandomFilter
         return 0;
     }
 private:
-    bool m_is_active;
-    amrex::Real m_fraction;
+    bool m_is_active = false; //! select all particles if false
+    amrex::Real m_fraction = 1.0; //! range: [0.0:1.0] where 0 is no & 1 is all particles
 };
 
 /**
@@ -43,12 +43,11 @@ private:
  */
 struct UniformFilter
 {
-public:
     /** constructor
      * \param a_is_active whether the test is active
      * \param a_stride one particle every a_stride is written to file
      */
-    UniformFilter(bool a_is_active, long a_stride)
+    UniformFilter(bool a_is_active, int a_stride)
         : m_is_active(a_is_active), m_stride(a_stride) {};
 
     /**
@@ -66,8 +65,8 @@ public:
         return 0;
     }
 private:
-    bool m_is_active;
-    long m_stride;
+    bool m_is_active = false; //! select all particles if false
+    int m_stride = 0; //! selection of every n-th particle
 };
 
 #endif // FILTERFUNCTORS_H

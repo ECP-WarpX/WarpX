@@ -134,7 +134,7 @@ MultiParticleContainer::WritePlotFile (const std::string& dir) const
             bool do_random_filter = true;
             bool do_uniform_filter = false;
             Real random_fraction = 0.25;
-            long uniform_stride = 3;
+            int uniform_stride = 3;
 
             RandomFilter const random_filter(do_random_filter, random_fraction);
             UniformFilter const uniform_filter(do_uniform_filter, uniform_stride);
