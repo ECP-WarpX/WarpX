@@ -21,7 +21,8 @@ SpectralHankelTransformer::SpectralHankelTransformer (int const nr_nodes,
 
 }
 
-// This needs to be separate since the ParallelFor cannot be in the constructor.
+/* \brief Extracts the kr for all of the modes
+ * This needs to be separate since the ParallelFor cannot be in the constructor. */
 void
 SpectralHankelTransformer::ExtractKrArray ()
 {
@@ -42,7 +43,8 @@ SpectralHankelTransformer::ExtractKrArray ()
         });
     }
 }
-// Converts a scalar field from the physical to the spectral space for all modes
+
+/* \brief Converts a scalar field from the physical to the spectral space for all modes */
 void
 SpectralHankelTransformer::PhysicalToSpectral_Scalar (amrex::Box const & box,
                                                       amrex::FArrayBox const & F_physical,
@@ -68,7 +70,7 @@ SpectralHankelTransformer::PhysicalToSpectral_Scalar (amrex::Box const & box,
     }
 }
 
-// Converts a vector field from the physical to the spectral space for all modes
+/* \brief Converts a vector field from the physical to the spectral space for all modes */
 void
 SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
                                                       amrex::FArrayBox & F_r_physical,
@@ -76,8 +78,8 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
                                                       amrex::FArrayBox & G_p_spectral,
                                                       amrex::FArrayBox & G_m_spectral)
 {
-    // Note that F and G include the imaginary part of mode 0
-    // F will be overwritten
+    // Note that F and G include the imaginary part of mode 0.
+    // F will be overwritten (by the + and - data).
 
     amrex::Array4<amrex::Real> const & F_r_physical_array = F_r_physical.array();
     amrex::Array4<amrex::Real> const & F_t_physical_array = F_t_physical.array();
@@ -113,7 +115,7 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
     }
 }
 
-// Converts a scalar field from the spectral to the physical space for all modes
+/* \brief Converts a scalar field from the spectral to the physical space for all modes */
 void
 SpectralHankelTransformer::SpectralToPhysical_Scalar (amrex::Box const & box,
                                                       amrex::FArrayBox const & G_spectral,
@@ -141,7 +143,7 @@ SpectralHankelTransformer::SpectralToPhysical_Scalar (amrex::Box const & box,
     }
 }
 
-// Converts a vector field from the spectral to the physical space for all modes
+/* \brief Converts a vector field from the spectral to the physical space for all modes */
 void
 SpectralHankelTransformer::SpectralToPhysical_Vector (amrex::Box const & box,
                                                       amrex::FArrayBox const& G_p_spectral,
@@ -149,7 +151,7 @@ SpectralHankelTransformer::SpectralToPhysical_Vector (amrex::Box const & box,
                                                       amrex::FArrayBox      & F_r_physical,
                                                       amrex::FArrayBox      & F_t_physical)
 {
-    // Note that F and G include the imaginary part of mode 0
+    // Note that F and G include the imaginary part of mode 0.
 
     amrex::Array4<amrex::Real> const & F_r_physical_array = F_r_physical.array();
     amrex::Array4<amrex::Real> const & F_t_physical_array = F_t_physical.array();

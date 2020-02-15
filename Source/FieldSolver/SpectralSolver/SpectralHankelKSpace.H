@@ -7,7 +7,7 @@
  *
  * (Contains info about the size of the spectral space corresponding
  * to each box in `realspace_ba`, as well as the value of the
- * corresponding k coordinates)
+ * corresponding kz coordinates)
  */
 class SpectralHankelKSpace
     :

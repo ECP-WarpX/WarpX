@@ -8,8 +8,8 @@
  *  spectral and interpolation grid.
  *
  *  Attributes :
- *  - dht0, dhtm, dhtp : the discrete Hankel transform objects
- *     that operates along r
+ *  - dht0, dhtm, dhtp : the discrete Hankel transform objects for the modes,
+ *     operating along r
 */
 
 class SpectralHankelTransformer

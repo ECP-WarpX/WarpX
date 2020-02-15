@@ -22,6 +22,7 @@ class SpectralFieldDataHankel
 #else
     using FFTplans = amrex::LayoutData<fftw_plan>;
 #endif
+    // Similarly, define the Hankel transformers and filter for each box.
     using HankelTransformer = amrex::LayoutData<SpectralHankelTransformer>;
     using BinomialFilter = amrex::LayoutData<SpectralBinomialFilter>;
 
@@ -69,8 +70,8 @@ class SpectralFieldDataHankel
 
     private:
 
-        // tmpRealField and tmpSpectralField store fields
-        // right before/after the Fourier transform
+        // tempHTransformed and tmpSpectralField store fields
+        // right before/after the z Fourier transform
         SpectralField tempHTransformed; // contains Complexes
         SpectralField tmpSpectralField; // contains Complexes
         FFTplans forward_plan, backward_plan;
