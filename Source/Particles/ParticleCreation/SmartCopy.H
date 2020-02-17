@@ -58,10 +58,8 @@ void setNewParticleIDs (PTile& ptile, int old_size, int num_added)
     amrex::ParallelFor(num_added, [=] AMREX_GPU_DEVICE (int ip) noexcept
     {
         auto& p = pp[ip];
-        if(p.id() != -1){
-            p.id() = pid+ip;
-            p.cpu() = cpuid;
-        }
+        p.id() = pid+ip;
+        p.cpu() = cpuid;
     });
 }
 
