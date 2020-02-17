@@ -112,24 +112,27 @@ template <typename PTile>
 void cleanLowEnergyPhotons(
     PTile& ptile,
     const int old_size, const int num_added,
-    const amrex::ParticleReal energy_threshold)
+    const amrex::ParticleReal t_energy_threshold)
 {
     auto pp = ptile.GetArrayOfStructs()().data() + old_size;
+    const auto& soa = ptile.GetStructOfArrays();
+    const auto p_ux = soa.GetRealData(PIdx::ux).data() + old_size;
+    const auto  p_uy = soa.GetRealData(PIdx::uy).data() + old_size;
+    const auto  p_uz = soa.GetRealData(PIdx::uz).data() + old_size;
 
-    const auto threshold =
-        (energy_threshold/(PhysConst::m_e*PhysConst::c))*
-        (energy_threshold/(PhysConst::m_e*PhysConst::c));
-
+    const auto energy_threshold =
+        t_energy_threshold/(PhysConst::m_e*PhysConst::c);
+    const auto energy_threshold2 = energy_threshold*energy_threshold;
 
     amrex::ParallelFor(num_added, [=] AMREX_GPU_DEVICE (int ip) noexcept
     {
         auto& p = pp[ip];
 
-        const auto ux = p.rdata(PIdx::ux);
-        const auto uy = p.rdata(PIdx::uy);
-        const auto uz = p.rdata(PIdx::uz);
+        const auto ux = p_ux[ip];
+        const auto uy = p_uy[ip];
+        const auto uz = p_uz[ip];
 
-        if(ux*ux + uy*uy + uz*uz < threshold){
+        if(ux*ux + uy*uy + uz*uz < energy_threshold2){
             p.id() = - 1;
         }
     });
