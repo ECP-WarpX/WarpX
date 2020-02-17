@@ -51,6 +51,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_splitting", do_splitting);
     pp.query("split_type", split_type);
     pp.query("do_not_deposit", do_not_deposit);
+    pp.query("do_not_gather", do_not_gather);
     pp.query("do_not_push", do_not_push);
 
     pp.query("do_continuous_injection", do_continuous_injection);
@@ -561,7 +562,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                           overlap_realbox.lo(1),
                           overlap_realbox.lo(2))};
 
-        std::size_t shared_mem_bytes = plasma_injector->sharedMemoryNeeded();
         int lrrfac = rrfac;
 
         bool loc_do_field_ionization = do_field_ionization;
@@ -746,7 +746,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             p.pos(0) = xb;
             p.pos(1) = z;
 #endif
-        }, shared_mem_bytes);
+        });
 
         if (cost) {
             wt = (amrex::second() - wt) / tile_box.d_numPts();
@@ -1000,44 +1000,36 @@ PhysicalParticleContainer::AssignExternalFieldOnParticles(WarpXParIter& pti,
       Real* const AMREX_RESTRICT Exp_data = Exp.dataPtr();
       Real* const AMREX_RESTRICT Eyp_data = Eyp.dataPtr();
       Real* const AMREX_RESTRICT Ezp_data = Ezp.dataPtr();
-      ParserWrapper *xfield_partparser = mypc.m_Ex_particle_parser.get();
-      ParserWrapper *yfield_partparser = mypc.m_Ey_particle_parser.get();
-      ParserWrapper *zfield_partparser = mypc.m_Ez_particle_parser.get();
+      ParserWrapper<4> *xfield_partparser = mypc.m_Ex_particle_parser.get();
+      ParserWrapper<4> *yfield_partparser = mypc.m_Ey_particle_parser.get();
+      ParserWrapper<4> *zfield_partparser = mypc.m_Ez_particle_parser.get();
       Real time = warpx.gett_new(lev);
       amrex::ParallelFor(pti.numParticles(),
                          [=] AMREX_GPU_DEVICE (long i) {
                              ParticleReal x, y, z;
                              GetPosition(i, x, y, z);
-                             Exp_data[i] = xfield_partparser->getField(x, y, z, time);
-                             Eyp_data[i] = yfield_partparser->getField(x, y, z, time);
-                             Ezp_data[i] = zfield_partparser->getField(x, y, z, time);
-                         },
-      /* To allocate shared memory for the GPU threads. */
-      /* But, for now only 4 doubles (x,y,z,t) are allocated. */
-      amrex::Gpu::numThreadsPerBlockParallelFor() * sizeof(double) * 4
-      );
+                             Exp_data[i] = (*xfield_partparser)(x, y, z, time);
+                             Eyp_data[i] = (*yfield_partparser)(x, y, z, time);
+                             Ezp_data[i] = (*zfield_partparser)(x, y, z, time);
+                         });
    }
    if (mypc.m_B_ext_particle_s=="parse_b_ext_particle_function") {
       const auto GetPosition = GetParticlePosition(pti);
       Real* const AMREX_RESTRICT Bxp_data = Bxp.dataPtr();
       Real* const AMREX_RESTRICT Byp_data = Byp.dataPtr();
       Real* const AMREX_RESTRICT Bzp_data = Bzp.dataPtr();
-      ParserWrapper *xfield_partparser = mypc.m_Bx_particle_parser.get();
-      ParserWrapper *yfield_partparser = mypc.m_By_particle_parser.get();
-      ParserWrapper *zfield_partparser = mypc.m_Bz_particle_parser.get();
+      ParserWrapper<4> *xfield_partparser = mypc.m_Bx_particle_parser.get();
+      ParserWrapper<4> *yfield_partparser = mypc.m_By_particle_parser.get();
+      ParserWrapper<4> *zfield_partparser = mypc.m_Bz_particle_parser.get();
       Real time = warpx.gett_new(lev);
       amrex::ParallelFor(pti.numParticles(),
             [=] AMREX_GPU_DEVICE (long i) {
                              ParticleReal x, y, z;
                              GetPosition(i, x, y, z);
-                             Bxp_data[i] = xfield_partparser->getField(x, y, z, time);
-                             Byp_data[i] = yfield_partparser->getField(x, y, z, time);
-                             Bzp_data[i] = zfield_partparser->getField(x, y, z, time);
-                         },
-      /* To allocate shared memory for the GPU threads. */
-      /* But, for now only 4 doubles (x,y,z,t) are allocated. */
-      amrex::Gpu::numThreadsPerBlockParallelFor() * sizeof(double) * 4
-      );
+                             Bxp_data[i] = (*xfield_partparser)(x, y, z, time);
+                             Byp_data[i] = (*yfield_partparser)(x, y, z, time);
+                             Bzp_data[i] = (*zfield_partparser)(x, y, z, time);
+                         });
    }
 }
 
@@ -2198,7 +2190,8 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
                                      (gather_lev==(lev  )),
                                      "Gather buffers only work for lev-1");
     // If no particles, do not do anything
-    if (np_to_gather == 0) return;
+    // If do_not_gather = 1 by user, do not do anything
+    if (np_to_gather == 0 || do_not_gather) return;
 
     // initializing the field value to the externally applied field before
     // gathering fields from the grid to the particles.

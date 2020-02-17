@@ -20,6 +20,7 @@
 #include <NCIGodfreyFilter.H>
 #include "MultiReducedDiags.H"
 
+#include <FiniteDifferenceSolver.H>
 #ifdef WARPX_USE_PSATD
 #   include <SpectralSolver.H>
 #endif
@@ -91,7 +92,7 @@ public:
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, amrex::IntVect ng_extra,
                          amrex::Real external_field=0.0, bool useparser = false,
-                         ParserWrapper *field_parser=nullptr);
+                         ParserWrapper<3> *field_parser=nullptr);
 
     static void GotoNextLine (std::istream& is);
 
@@ -116,13 +117,13 @@ public:
     static std::string str_Ez_ext_grid_function;
 
     // ParserWrapper for B_external on the grid
-    std::unique_ptr<ParserWrapper> Bxfield_parser;
-    std::unique_ptr<ParserWrapper> Byfield_parser;
-    std::unique_ptr<ParserWrapper> Bzfield_parser;
+    std::unique_ptr<ParserWrapper<3> > Bxfield_parser;
+    std::unique_ptr<ParserWrapper<3> > Byfield_parser;
+    std::unique_ptr<ParserWrapper<3> > Bzfield_parser;
     // ParserWrapper for E_external on the grid
-    std::unique_ptr<ParserWrapper> Exfield_parser;
-    std::unique_ptr<ParserWrapper> Eyfield_parser;
-    std::unique_ptr<ParserWrapper> Ezfield_parser;
+    std::unique_ptr<ParserWrapper<3> > Exfield_parser;
+    std::unique_ptr<ParserWrapper<3> > Eyfield_parser;
+    std::unique_ptr<ParserWrapper<3> > Ezfield_parser;
 
     // Algorithms
     static long current_deposition_algo;
@@ -254,7 +255,7 @@ public:
      */
     void Hybrid_QED_Push (int lev, PatchType patch_type, amrex::Real dt);
 
-    static amrex::Real quantum_xi;
+    static amrex::Real quantum_xi_c2;
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -410,8 +411,8 @@ public:
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
-         ParserWrapper *xfield_parser, ParserWrapper *yfield_parser,
-         ParserWrapper *zfield_parser, amrex::IntVect x_nodal_flag,
+         ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
+         ParserWrapper<3> *zfield_parser, amrex::IntVect x_nodal_flag,
          amrex::IntVect y_nodal_flag, amrex::IntVect z_nodal_flag,
          const int lev);
 
@@ -748,6 +749,8 @@ private:
     amrex::Vector<std::unique_ptr<SpectralSolver>> spectral_solver_fp;
     amrex::Vector<std::unique_ptr<SpectralSolver>> spectral_solver_cp;
 #endif
+    amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;
+    amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_cp;
 
 #ifdef WARPX_USE_PSATD_HYBRID
 private:

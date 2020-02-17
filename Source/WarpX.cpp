@@ -54,7 +54,7 @@ int WarpX::do_moving_window = 0;
 int WarpX::moving_window_dir = -1;
 Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
-Real WarpX::quantum_xi = PhysConst::xi;
+Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
 Real WarpX::gamma_boost = 1.;
 Real WarpX::beta_boost = 0.;
 Vector<int> WarpX::boost_direction = {0,0,0};
@@ -237,10 +237,13 @@ WarpX::WarpX ()
 
     costs.resize(nlevs_max);
 
+    // Allocate field solver objects
 #ifdef WARPX_USE_PSATD
     spectral_solver_fp.resize(nlevs_max);
     spectral_solver_cp.resize(nlevs_max);
 #endif
+    m_fdtd_solver_fp.resize(nlevs_max);
+    m_fdtd_solver_cp.resize(nlevs_max);
 #ifdef WARPX_USE_PSATD_HYBRID
     Efield_fp_fft.resize(nlevs_max);
     Bfield_fp_fft.resize(nlevs_max);
@@ -457,7 +460,10 @@ WarpX::ReadParameters ()
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
         pp.query("sort_int", sort_int);
 
-        pp.query("quantum_xi", quantum_xi);
+        double quantum_xi;
+        int quantum_xi_is_specified = pp.query("quantum_xi", quantum_xi);
+        if (quantum_xi_is_specified)
+            quantum_xi_c2 = quantum_xi * PhysConst::c * PhysConst::c;
 
         pp.query("do_pml", do_pml);
         pp.query("pml_ncell", pml_ncell);
@@ -867,7 +873,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev] ) );
     }
 #endif
-
+    std::array<Real,3> const dx = CellSize(lev);
+    m_fdtd_solver_fp[lev].reset(
+        new FiniteDifferenceSolver(maxwell_fdtd_solver_id, dx, do_nodal) );
     //
     // The Aux patch (i.e., the full solution)
     //
@@ -939,11 +947,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if (fft_hybrid_mpi_decomposition == false){
             // Allocate and initialize the spectral solver
             std::array<Real,3> cdx = CellSize(lev-1);
-    #if (AMREX_SPACEDIM == 3)
+#if (AMREX_SPACEDIM == 3)
             RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
-    #elif (AMREX_SPACEDIM == 2)
+#elif (AMREX_SPACEDIM == 2)
             RealVect cdx_vect(cdx[0], cdx[2]);
-    #endif
+#endif
             // Get the cell-centered box, with guard cells
             BoxArray realspace_ba = cba;// Copy box
             realspace_ba.enclosedCells().grow(ngE);// cell-centered + guard cells
@@ -952,6 +960,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                 nox_fft, noy_fft, noz_fft, do_nodal, cdx_vect, dt[lev] ) );
         }
 #endif
+    std::array<Real,3> cdx = CellSize(lev-1);
+    m_fdtd_solver_cp[lev].reset(
+        new FiniteDifferenceSolver( maxwell_fdtd_solver_id, cdx, do_nodal ) );
     }
 
     //
