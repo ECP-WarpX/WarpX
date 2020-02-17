@@ -24,14 +24,14 @@ struct PhotonEmissionFilterFunc
 
 struct PhotonEmissionTransformFunc
 {
-    const QuantumSynchrotronGeneratePhotonAndUpdateMomentum& m_emission_functor;
+    const QuantumSynchrotronGeneratePhotonAndUpdateMomentum m_emission_functor;
 
     bool m_target_has_breit_wheeler = false;
     int m_target_opt_depth_runtime_comp = 0;
     BreitWheelerGetOpticalDepth m_target_opt_depth_functor;
 
     PhotonEmissionTransformFunc(
-        const QuantumSynchrotronGeneratePhotonAndUpdateMomentum& emission_functor):
+        QuantumSynchrotronGeneratePhotonAndUpdateMomentum emission_functor):
         m_emission_functor{emission_functor}
         {}
 

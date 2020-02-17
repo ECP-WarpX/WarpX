@@ -25,7 +25,7 @@ struct PairGenerationFilterFunc
 struct PairGenerationTransformFunc
 {
 
-    const BreitWheelerGeneratePairs& m_generate_functor;
+    const BreitWheelerGeneratePairs m_generate_functor;
 
     bool m_target1_has_quantum_sync = false;
     int m_target1_opt_depth_runtime_comp = 0;
@@ -34,7 +34,7 @@ struct PairGenerationTransformFunc
     QuantumSynchrotronGetOpticalDepth m_target_opt_depth_functor;
 
     PairGenerationTransformFunc(
-        const BreitWheelerGeneratePairs& generate_functor):
+        BreitWheelerGeneratePairs generate_functor):
         m_generate_functor{generate_functor}
         {}
 
