@@ -24,14 +24,21 @@ struct PhotonEmissionFilterFunc
 
 struct PhotonEmissionTransformFunc
 {
+    const QuantumSynchrotronGetOpticalDepth m_opt_depth_functor;
     const QuantumSynchrotronGeneratePhotonAndUpdateMomentum m_emission_functor;
+    const int m_opt_depth_runtime_comp = 0;
 
     bool m_target_has_breit_wheeler = false;
     int m_target_opt_depth_runtime_comp = 0;
     BreitWheelerGetOpticalDepth m_target_opt_depth_functor;
 
     PhotonEmissionTransformFunc(
-        QuantumSynchrotronGeneratePhotonAndUpdateMomentum emission_functor):
+        QuantumSynchrotronGetOpticalDepth opt_depth_functor,
+        int opt_depth_runtime_comp,
+        QuantumSynchrotronGeneratePhotonAndUpdateMomentum emission_functor
+        ):
+        m_opt_depth_functor{opt_depth_functor},
+        m_opt_depth_runtime_comp{opt_depth_runtime_comp},
         m_emission_functor{emission_functor}
         {}
 
@@ -88,6 +95,9 @@ struct PhotonEmissionTransformFunc
         dst.m_rdata[PIdx::ux][i_dst] = g_px*one_over_me;
         dst.m_rdata[PIdx::uy][i_dst] = g_py*one_over_me;
         dst.m_rdata[PIdx::uz][i_dst] = g_pz*one_over_me;
+
+        src.m_runtime_rdata[m_opt_depth_runtime_comp][i_src] =
+            m_opt_depth_functor();
 
         if(m_target_has_breit_wheeler){
             dst.m_runtime_rdata[m_target_opt_depth_runtime_comp][i_dst] =
