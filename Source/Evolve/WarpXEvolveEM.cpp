@@ -183,7 +183,14 @@ WarpX::EvolveEM (int numsteps)
         int num_moved = MoveWindow(move_j);
 
         if (max_level == 0) {
-            int num_redistribute_ghost = num_moved + 2;
+            int num_redistribute_ghost = num_moved;
+            if ((v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)) {
+                // Galilean algorithm ; particles can move by up to 2 cells
+                num_moved += 2;
+            } else {
+                // Standard algorithm ; particles can move by up to 1 cell
+                num_moved += 1;
+            }
             mypc->RedistributeLocal(num_redistribute_ghost);
         }
         else {

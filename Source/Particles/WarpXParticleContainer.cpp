@@ -298,33 +298,20 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
-    // xyzmin is built on pti.tilebox(), so it does
-    // not include staggering, so the stagger_shift has to be done by hand.
-    // Alternatively, we could define xyzminx from tbx (and the same for 3
-    // directions and for jx, jy, jz). This way, sx0 would not be needed.
-    // Better for memory? worth trying?
-
     const Dim3 lo = lbound(tilebox);
+    // Take into account Galilean shift
+    auto& warpx_instance = WarpX::GetInstance();
+    Real cur_time = warpx_instance.gett_new(lev);
+    const auto& time_of_last_gal_shift = warpx_instance.time_of_last_gal_shift;
+    Real time_shift = (cur_time + 0.5*dt - time_of_last_gal_shift);
+    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]* time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if ( (v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)){
             amrex::Abort("The Esirkepov algorithm cannot be used with the Galilean algorithm.");
         }
     }
-
-    // Compute Galilean shift
-    Real cur_time = WarpX::GetInstance().gett_new(lev);
-    const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
-    Real time_shift = (cur_time + 0.5*dt - time_of_last_gal_shift);
-
-    #if (AMREX_SPACEDIM == 3)
-        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]* time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
-    #elif (AMREX_SPACEDIM == 2)
-        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]* time_shift, std::numeric_limits<Real>::quiet_NaN(), v_galilean[2]*time_shift };
-    #endif
-
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
-
 
     BL_PROFILE_VAR_START(blp_deposit);
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
@@ -464,26 +451,15 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     Real cur_time = warpx_instance.gett_new(lev);
     Real dt = warpx_instance.getdt(lev);
     const auto& time_of_last_gal_shift = warpx_instance.time_of_last_gal_shift;
-
+    // Take into account Galilean shift
     Real time_shift_rho_old = (cur_time - time_of_last_gal_shift);
     Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
-
     amrex::Array<amrex::Real,3> galilean_shift;
-
-    #if (AMREX_SPACEDIM == 3)
-        if (icomp==0){
-            galilean_shift = { v_galilean[0]*time_shift_rho_old, v_galilean[1]*time_shift_rho_old, v_galilean[2]*time_shift_rho_old };
-        } else{
-            galilean_shift = { v_galilean[0]*time_shift_rho_new, v_galilean[1]*time_shift_rho_new, v_galilean[2]*time_shift_rho_new };
-        }
-    #elif (AMREX_SPACEDIM == 2)
-        if (icomp==0){
-            galilean_shift = { v_galilean[0]*time_shift_rho_old, std::numeric_limits<Real>::quiet_NaN(), v_galilean[2]*time_shift_rho_old };
-        } else{
-            galilean_shift = { v_galilean[0]*time_shift_rho_new, std::numeric_limits<Real>::quiet_NaN(), v_galilean[2]*time_shift_rho_new };
-        }
-    #endif
-
+    if (icomp==0){
+        galilean_shift = { v_galilean[0]*time_shift_rho_old, v_galilean[1]*time_shift_rho_old, v_galilean[2]*time_shift_rho_old };
+    } else{
+        galilean_shift = { v_galilean[0]*time_shift_rho_new, v_galilean[1]*time_shift_rho_new, v_galilean[2]*time_shift_rho_new };
+    }
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
 
     // Indices of the lower bound
