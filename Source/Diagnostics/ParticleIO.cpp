@@ -1,6 +1,6 @@
 /* Copyright 2019 Andrew Myers, Axel Huebl, David Grote
  * Luca Fedeli, Maxence Thevenet, Revathi Jambunathan
- * Weiqun Zhang, levinem
+ * Weiqun Zhang, levinem, Yinjian Zhao
  *
  * This file is part of WarpX.
  *

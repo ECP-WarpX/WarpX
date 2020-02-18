@@ -1,3 +1,9 @@
+/* Copyright 2016-2020 Maxence Thevenet, Yinjian Zhao
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef FILTERFUNCTORS_H
 #define FILTERFUNCTORS_H
 
