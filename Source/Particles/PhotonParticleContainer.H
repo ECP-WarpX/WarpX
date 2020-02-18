@@ -84,13 +84,8 @@ public:
                                 int lev,
                                 int depos_lev,
                                 amrex::Real dt) override {};
-    //Photons are not electrons or positrons...
-    virtual bool AmIAnElectron () override { return false; }
 
-    //Photons are not electrons or positrons...
-    virtual bool AmIAPositron () override { return false; }
-
-    //...photons are photons
+    //Photons are photons
     virtual bool AmIAPhoton () override { return true; }
 
 
