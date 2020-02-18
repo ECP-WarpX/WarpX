@@ -26,115 +26,8 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
     X4_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
     Theta2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
 
-    // Fill them with the right values:
-    // Loop over boxes and allocate the corresponding coefficients
-    // for each box owned by the local MPI proc
-    for (MFIter mfi(ba, dm); mfi.isValid(); ++mfi){
+    InitializeSpectralCoefficients(spectral_kspace, dm, v_galilean, dt);
 
-        const Box& bx = ba[mfi];
-
-        // Extract pointers for the k vectors
-        const Real* modified_kx = modified_kx_vec[mfi].dataPtr();
-#if (AMREX_SPACEDIM==3)
-        const Real* modified_ky = modified_ky_vec[mfi].dataPtr();
-#endif
-        const Real* modified_kz = modified_kz_vec[mfi].dataPtr();
-        // Extract arrays for the coefficients
-        Array4<Real> C = C_coef[mfi].array();
-        Array4<Real> S_ck = S_ck_coef[mfi].array();
-
-        Array4<Complex> X1 = X1_coef[mfi].array();
-        Array4<Complex> X2 = X2_coef[mfi].array();
-        Array4<Complex> X3 = X3_coef[mfi].array();
-        Array4<Complex> X4 = X4_coef[mfi].array();
-        Array4<Complex> Theta2 = Theta2_coef[mfi].array();
-        // Extract reals (for portability on GPU)
-        Real vx = v_galilean[0];
-        Real vy = v_galilean[1];
-        Real vz = v_galilean[2];
-
-        // Loop over indices within one box
-        ParallelFor(bx,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-        {
-            // Calculate norm of vector
-            const Real k_norm = std::sqrt(
-                std::pow(modified_kx[i], 2) +
-#if (AMREX_SPACEDIM==3)
-                std::pow(modified_ky[j], 2) +
-                std::pow(modified_kz[k], 2));
-#else
-                std::pow(modified_kz[j], 2));
-#endif
-
-            // Calculate coefficients
-            constexpr Real c = PhysConst::c;
-            constexpr Real ep0 = PhysConst::ep0;
-            const Complex I{0.,1.};
-            if (k_norm != 0){
-
-                C(i,j,k) = std::cos(c*k_norm*dt);
-                S_ck(i,j,k) = std::sin(c*k_norm*dt)/(c*k_norm);
-
-                // Calculate dot product with galilean velocity
-                const Real kv = modified_kx[i]*vx +
-#if (AMREX_SPACEDIM==3)
-                                 modified_ky[j]*vy +
-                                 modified_kz[k]*vz;
-#else
-                                 modified_kz[j]*vz;
-#endif
-
-                const Real nu = kv/(k_norm*c);
-                const Complex theta = std::exp( 0.5*I*kv*dt );
-                const Complex theta_star = std::exp( -0.5*I*kv*dt );
-                const Complex e_theta = std::exp( I*c*k_norm*dt );
-
-                Theta2(i,j,k) = theta*theta;
-
-                if ( (nu != 1.) && (nu != 0) ) {
-
-                    // Note: the coefficients X1, X2, X3 do not correspond
-                    // exactly to the original Galilean paper, but the
-                    // update equation have been modified accordingly so that
-                    // the expressions/ below (with the update equations)
-                    // are mathematically equivalent to those of the paper.
-                    Complex x1 = 1./(1.-nu*nu) *
-                        (theta_star - C(i,j,k)*theta + I*kv*S_ck(i,j,k)*theta);
-                    // x1, above, is identical to the original paper
-                    X1(i,j,k) = theta*x1/(ep0*c*c*k_norm*k_norm);
-                    // The difference betwen X2 and X3 below, and those
-                    // from the original paper is the factor ep0*k_norm*k_norm
-                    X2(i,j,k) = (x1 - theta*(1 - C(i,j,k)))
-                                /(theta_star-theta)/(ep0*k_norm*k_norm);
-                    X3(i,j,k) = (x1 - theta_star*(1 - C(i,j,k)))
-                                /(theta_star-theta)/(ep0*k_norm*k_norm);
-                    X4(i,j,k) = I*kv*X1(i,j,k) - theta*theta*S_ck(i,j,k)/ep0;
-                }
-                if ( nu == 0) {
-                    X1(i,j,k) = (1. - C(i,j,k)) / (ep0*c*c*k_norm*k_norm);
-                    X2(i,j,k) = (1. - S_ck(i,j,k)/dt) / (ep0*k_norm*k_norm);
-                    X3(i,j,k) = (C(i,j,k) - S_ck(i,j,k)/dt) / (ep0*k_norm*k_norm);
-                    X4(i,j,k) = -S_ck(i,j,k)/ep0;
-                }
-                if ( nu == 1.) {
-                    X1(i,j,k) = (1. - e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*c*c*ep0*k_norm*k_norm);
-                    X2(i,j,k) = (3. - 4.*e_theta + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*k_norm*k_norm*(1.- e_theta));
-                    X3(i,j,k) = (3. - 2./e_theta - 2.*e_theta + e_theta*e_theta - 2.*I*c*k_norm*dt) / (4.*ep0*(e_theta - 1.)*k_norm*k_norm);
-                    X4(i,j,k) = I*(-1. + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*c*k_norm);
-                }
-
-            } else { // Handle k_norm = 0, by using the analytical limit
-                C(i,j,k) = 1.;
-                S_ck(i,j,k) = dt;
-                X1(i,j,k) = dt*dt/(2. * ep0);
-                X2(i,j,k) = c*c*dt*dt/(6. * ep0);
-                X3(i,j,k) = - c*c*dt*dt/(3. * ep0);
-                X4(i,j,k) = -dt/ep0;
-                Theta2(i,j,k) = 1.;
-            }
-        });
-    }
 };
 
 /* Advance the E and B field in spectral space (stored in `f`)
@@ -193,7 +86,6 @@ GalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
             const Real kz = modified_kz_arr[j];
 #endif
             constexpr Real c2 = PhysConst::c*PhysConst::c;
-            constexpr Real inv_ep0 = 1./PhysConst::ep0;
             constexpr Complex I = Complex{0,1};
             const Real C = C_arr(i,j,k);
             const Real S_ck = S_ck_arr(i,j,k);
@@ -228,3 +120,120 @@ GalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
         });
     }
 };
+
+
+void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spectral_kspace,
+                                    const amrex::DistributionMapping& dm,
+                                    const Array<Real, 3>& v_galilean,
+                                    const amrex::Real dt)
+{
+    const BoxArray& ba = spectral_kspace.spectralspace_ba;
+    // Fill them with the right values:
+    // Loop over boxes and allocate the corresponding coefficients
+    // for each box owned by the local MPI proc
+    for (MFIter mfi(ba, dm); mfi.isValid(); ++mfi){
+
+        const Box& bx = ba[mfi];
+
+        // Extract pointers for the k vectors
+        const Real* modified_kx = modified_kx_vec[mfi].dataPtr();
+    #if (AMREX_SPACEDIM==3)
+        const Real* modified_ky = modified_ky_vec[mfi].dataPtr();
+    #endif
+        const Real* modified_kz = modified_kz_vec[mfi].dataPtr();
+        // Extract arrays for the coefficients
+        Array4<Real> C = C_coef[mfi].array();
+        Array4<Real> S_ck = S_ck_coef[mfi].array();
+        Array4<Complex> X1 = X1_coef[mfi].array();
+        Array4<Complex> X2 = X2_coef[mfi].array();
+        Array4<Complex> X3 = X3_coef[mfi].array();
+        Array4<Complex> X4 = X4_coef[mfi].array();
+        Array4<Complex> Theta2 = Theta2_coef[mfi].array();
+        // Extract reals (for portability on GPU)
+        Real vx = v_galilean[0];
+        Real vy = v_galilean[1];
+        Real vz = v_galilean[2];
+
+        // Loop over indices within one box
+        ParallelFor(bx,
+        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            // Calculate norm of vector
+            const Real k_norm = std::sqrt(
+                std::pow(modified_kx[i], 2) +
+    #if (AMREX_SPACEDIM==3)
+                std::pow(modified_ky[j], 2) +
+                std::pow(modified_kz[k], 2));
+    #else
+                std::pow(modified_kz[j], 2));
+    #endif
+
+            // Calculate coefficients
+            constexpr Real c = PhysConst::c;
+            constexpr Real ep0 = PhysConst::ep0;
+            const Complex I{0.,1.};
+            if (k_norm != 0){
+
+                C(i,j,k) = std::cos(c*k_norm*dt);
+                S_ck(i,j,k) = std::sin(c*k_norm*dt)/(c*k_norm);
+
+                // Calculate dot product with galilean velocity
+                const Real kv = modified_kx[i]*vx +
+    #if (AMREX_SPACEDIM==3)
+                                 modified_ky[j]*vy +
+                                 modified_kz[k]*vz;
+    #else
+                                 modified_kz[j]*vz;
+    #endif
+
+                const Real nu = kv/(k_norm*c);
+                const Complex theta = MathFunc::exp( 0.5*I*kv*dt );
+                const Complex theta_star = MathFunc::exp( -0.5*I*kv*dt );
+                const Complex e_theta = MathFunc::exp( I*c*k_norm*dt );
+
+                Theta2(i,j,k) = theta*theta;
+
+                if ( (nu != 1.) && (nu != 0) ) {
+
+                    // Note: the coefficients X1, X2, X3 do not correspond
+                    // exactly to the original Galilean paper, but the
+                    // update equation have been modified accordingly so that
+                    // the expressions/ below (with the update equations)
+                    // are mathematically equivalent to those of the paper.
+                    Complex x1 = 1./(1.-nu*nu) *
+                        (theta_star - C(i,j,k)*theta + I*kv*S_ck(i,j,k)*theta);
+                    // x1, above, is identical to the original paper
+                    X1(i,j,k) = theta*x1/(ep0*c*c*k_norm*k_norm);
+                    // The difference betwen X2 and X3 below, and those
+                    // from the original paper is the factor ep0*k_norm*k_norm
+                    X2(i,j,k) = (x1 - theta*(1 - C(i,j,k)))
+                                /(theta_star-theta)/(ep0*k_norm*k_norm);
+                    X3(i,j,k) = (x1 - theta_star*(1 - C(i,j,k)))
+                                /(theta_star-theta)/(ep0*k_norm*k_norm);
+                    X4(i,j,k) = I*kv*X1(i,j,k) - theta*theta*S_ck(i,j,k)/ep0;
+                }
+                if ( nu == 0) {
+                    X1(i,j,k) = (1. - C(i,j,k)) / (ep0*c*c*k_norm*k_norm);
+                    X2(i,j,k) = (1. - S_ck(i,j,k)/dt) / (ep0*k_norm*k_norm);
+                    X3(i,j,k) = (C(i,j,k) - S_ck(i,j,k)/dt) / (ep0*k_norm*k_norm);
+                    X4(i,j,k) = -S_ck(i,j,k)/ep0;
+                }
+                if ( nu == 1.) {
+                    X1(i,j,k) = (1. - e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*c*c*ep0*k_norm*k_norm);
+                    X2(i,j,k) = (3. - 4.*e_theta + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*k_norm*k_norm*(1.- e_theta));
+                    X3(i,j,k) = (3. - 2./e_theta - 2.*e_theta + e_theta*e_theta - 2.*I*c*k_norm*dt) / (4.*ep0*(e_theta - 1.)*k_norm*k_norm);
+                    X4(i,j,k) = I*(-1. + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*c*k_norm);
+                }
+
+            } else { // Handle k_norm = 0, by using the analytical limit
+                C(i,j,k) = 1.;
+                S_ck(i,j,k) = dt;
+                X1(i,j,k) = dt*dt/(2. * ep0);
+                X2(i,j,k) = c*c*dt*dt/(6. * ep0);
+                X3(i,j,k) = - c*c*dt*dt/(3. * ep0);
+                X4(i,j,k) = -dt/ep0;
+                Theta2(i,j,k) = 1.;
+            }
+        });
+    }
+}
