@@ -130,14 +130,11 @@ MultiParticleContainer::WritePlotFile (const std::string& dir) const
             // Convert momentum to SI
             pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
 
-            // build filter functors
-            bool do_random_filter = true;
-            bool do_uniform_filter = false;
-            Real random_fraction = 0.25;
-            int uniform_stride = 3;
-
-            RandomFilter const random_filter(do_random_filter, random_fraction);
-            UniformFilter const uniform_filter(do_uniform_filter, uniform_stride);
+            RandomFilter const random_filter(pc->m_do_random_filter,
+                                             pc->m_random_fraction);
+            UniformFilter const uniform_filter(pc->m_do_uniform_filter,
+                                               pc->m_uniform_stride);
+            ParserFilter const parser_filter(pc->m_do_parser_filter,i);
 
             // real_names contains a list of all particle attributes.
             // pc->plot_flags is 1 or 0, whether quantity is dumped or not.
@@ -147,10 +144,12 @@ MultiParticleContainer::WritePlotFile (const std::string& dir) const
                 real_names, int_names,
                 [=] (const SuperParticleType& p)
                 {
-                    return random_filter(p) * uniform_filter(p) ;
+                    return random_filter(p) * uniform_filter(p) * parser_filter(p);
                 });
+
             // Convert momentum back to WarpX units
             pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
+
         }
     }
 }
