@@ -139,12 +139,15 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     // build filter functors
     m_do_random_filter  = pp.query("random_fraction", m_random_fraction);
     m_do_uniform_filter = pp.query("uniform_stride",  m_uniform_stride);
-    m_do_parser_filter  = pp.query("do_parser_filter", m_do_parser_filter);
-    std::string function_string;
-    Store_parserString(pp,"plot_filter_function(t,x,y,z,ux,uy,uz)",
-                       function_string);
-    m_particle_filter_parser.reset(new ParserWrapper<7>(
-        makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
+    std::string buf;
+    m_do_parser_filter  = pp.query("plot_filter_function(t,x,y,z,ux,uy,uz)", buf);
+    if (m_do_parser_filter) {
+        std::string function_string = "";
+        Store_parserString(pp,"plot_filter_function(t,x,y,z,ux,uy,uz)",
+                           function_string);
+        m_particle_filter_parser.reset(new ParserWrapper<7>(
+            makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
+    }
 
 }
 
