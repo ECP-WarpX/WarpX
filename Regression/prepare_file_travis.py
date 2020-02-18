@@ -14,9 +14,11 @@ import re
 import os
 # Get relevant environment variables
 dim = os.environ.get('WARPX_TEST_DIM', None)
-qed = os.environ.get('HAS_QED', None)
+qed = os.environ.get('HAS_QED', 'FALSE')
 arch = os.environ.get('WARPX_TEST_ARCH', 'CPU')
-
+single_precision = os.environ.get('SINGLE_PRECISION', 'FALSE')
+electrostatic = os.environ.get('ELECTROSTATIC', 'FALSE')
+python_main = os.environ.get('PYTHON_MAIN', 'FALSE')
 # Find the directory in which the tests should be run
 current_dir = os.getcwd()
 test_dir = re.sub('warpx/Regression', '', current_dir )
@@ -81,12 +83,44 @@ if dim is not None:
         raise ValueError('Unkown dimension: %s' %dim)
 
 # Remove or keep QED tests according to 'qed' variable
-if qed is not None:
-    print('Selecting tests with QED = %s' %qed)
-    if (qed == "FALSE"):
-        test_blocks = [ block for block in test_blocks if not 'QED=TRUE' in block ]
-    else:
-        test_blocks = [ block for block in test_blocks if 'QED=TRUE' in block ]
+if qed not in ['TRUE', 'FALSE']:
+    raise ValueError('HAS_QED must be TRUE or FALSE')
+print('Selecting tests with HAS_QED = %s' %qed)
+if (qed == "FALSE"):
+    test_blocks = [ block for block in test_blocks if not 'QED=TRUE' in block ]
+else:
+    test_blocks = [ block for block in test_blocks if 'QED=TRUE' in block ]
+
+# Remove or keep SINGLE_PRECISION tests according to 'single_precision' variable
+if single_precision not in ['TRUE', 'FALSE']:
+    raise ValueError('SINGLE_PRECISION must be TRUE or FALSE')
+print('Selecting tests with SINGLE_PRECISION = %s' %qed)
+if (qed == "FALSE"):
+    test_blocks = [ block for block in test_blocks if not (
+            'PRECISION=FLOAT' in block and
+            'USE_SINGLE_PRECISION_PARTICLES=TRUE' in block) ]
+else:
+    test_blocks = [ block for block in test_blocks if (
+            'PRECISION=FLOAT' in block and
+            'USE_SINGLE_PRECISION_PARTICLES=TRUE' in block) ]
+
+# Remove or keep ELECTROSTATIC tests according to 'electrostatic' variable
+if electrostatic not in ['TRUE', 'FALSE']:
+    raise ValueError('ELECTROSTATIC must be TRUE or FALSE')
+print('Selecting tests with ELECTROSTATIC = %s' %qed)
+if (electrostatic == "FALSE"):
+    test_blocks = [ block for block in test_blocks if not 'DO_ELECTROSTATIC=TRUE' in block ]
+else:
+    test_blocks = [ block for block in test_blocks if 'DO_ELECTROSTATIC=TRUE' in block ]
+
+# Remove or keep PYTHON_MAIN tests according to 'python_main' variable
+if python_main not in ['TRUE', 'FALSE']:
+    raise ValueError('PYTHON_MAIN must be TRUE or FALSE')
+print('Selecting tests with PYTHON_MAIN = %s' %qed)
+if (python_main == "FALSE"):
+    test_blocks = [ block for block in test_blocks if not 'PYTHON_MAIN=TRUE' in block ]
+else:
+    test_blocks = [ block for block in test_blocks if 'PYTHON_MAIN=TRUE' in block ]
 
 # - Add the selected test blocks to the text
 text = text + '\n' + '\n'.join(test_blocks)
