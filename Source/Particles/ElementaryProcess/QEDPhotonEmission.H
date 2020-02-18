@@ -4,36 +4,74 @@
 #include "WarpXConst.H"
 #include "WarpXParticleContainer.H"
 
-#include <AMReX_GpuContainers.H>
-
 #include <BreitWheelerEngineWrapper.H>
 #include <QuantumSyncEngineWrapper.H>
 
-struct PhotonEmissionFilterFunc
-{
-    int m_opt_depth_runtime_comp;
+// This file contains the implementation of the elementary process
+// functors needed for QED photon emission (an electron or a positron
+// emits a photon).
 
+/**
+ * \brief Filter functor for the QED photon emission process
+ */
+class PhotonEmissionFilterFunc
+{
+public:
+
+    /**
+    * \brief Constructor of the PhotonEmissionFilterFunc functor.
+    *
+    * @param[in] opt_depth_runtime_comp Index of the optical depth component
+    */
+    PhotonEmissionFilterFunc(int opt_depth_runtime_comp):
+        m_opt_depth_runtime_comp{opt_depth_runtime_comp}
+    {}
+
+    /**
+    * \brief Functor call. This method determines if a given (electron or positron)
+    * particle should undergo QED photon emission.
+    *
+    * @param[in] ptd particle tile data
+    * @param[in] i particle index
+    * @return true if a pair has to be generated, false otherwise
+    */
     template <typename PData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator() (const PData& ptd, int i) const noexcept
     {
-        const auto opt_depth = ptd.m_runtime_rdata[m_opt_depth_runtime_comp][i];
+        const auto opt_depth =
+            ptd.m_runtime_rdata[m_opt_depth_runtime_comp][i];
         return (opt_depth < 0.0);
     }
+
+private:
+    int m_opt_depth_runtime_comp;
 };
 
-struct PhotonEmissionTransformFunc
+/**
+ * \brief Transform functor for the QED photon emission process
+ */
+class PhotonEmissionTransformFunc
 {
-    const QuantumSynchrotronGetOpticalDepth m_opt_depth_functor;
-    const QuantumSynchrotronGeneratePhotonAndUpdateMomentum m_emission_functor;
-    const int m_opt_depth_runtime_comp = 0;
 
-    bool m_target_has_breit_wheeler = false;
-    int m_target_opt_depth_runtime_comp = 0;
-    BreitWheelerGetOpticalDepth m_target_opt_depth_functor;
+public:
 
+    /**
+    * \brief Constructor of the PhotonEmissionTransformFunc functor.
+    *
+    * A QuantumSynchrotronGeneratePhotonAndUpdateMomentum functor is passed by value. However, it contains
+    * only few integer and real parameters and few pointers to the raw data of the
+    * lookup tables. Therefore, it should be rather lightweight to copy.
+    *
+    * Also a QuantumSynchrotronGetOpticalDepth has to be passed, since the
+    * optical depth has to be re-initialized after each photon emission.
+    *
+    * @param[in] opt_depth_functor functor to re-initialize the optical depth of the source particles
+    * @param[in] opt_depth_runtime_comp index of the optical depth component of the source species
+    * @param[in] emission_functor functor to generate photons and update momentum of the source particles
+    */
     PhotonEmissionTransformFunc(
-        QuantumSynchrotronGetOpticalDepth opt_depth_functor,
+        QuantumSynchrotronGetOpticalDepth&& opt_depth_functor,
         int opt_depth_runtime_comp,
         QuantumSynchrotronGeneratePhotonAndUpdateMomentum emission_functor
         ):
@@ -42,6 +80,13 @@ struct PhotonEmissionTransformFunc
         m_emission_functor{emission_functor}
         {}
 
+    /**
+    * \brief method to set some parameters if the target species has QED effects enabled.
+    * Don't call if this is not the case.
+    *
+    * @param[in] target_opt_depth_runtime_comp index of the optical depth component of target species
+    * @param[in] opt_depth_functor functor to initialize the optical depth of the target species
+    */
     void enable_opt_depth_for_target(int target_opt_depth_runtime_comp,
      const BreitWheelerGetOpticalDepth&& opt_depth_functor)
     {
@@ -50,7 +95,15 @@ struct PhotonEmissionTransformFunc
         m_target_opt_depth_functor = opt_depth_functor;
     }
 
-
+    /**
+    * \brief Functor call. It determines the properties of the generated photon
+    * and updates the momentum of the source particle
+    *
+    * @param[in,out] dst target species (photons)
+    * @param[in, out] src source species (either electrons or positrons)
+    * @param[in] i_src particle index of the source species
+    * @param[in] i_dst particle index of target species
+    */
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (DstData& dst, SrcData& src, int i_src, int i_dst) const noexcept
@@ -96,9 +149,11 @@ struct PhotonEmissionTransformFunc
         dst.m_rdata[PIdx::uy][i_dst] = g_py*one_over_me;
         dst.m_rdata[PIdx::uz][i_dst] = g_pz*one_over_me;
 
+        //Initialize the optical depth component of the source species.
         src.m_runtime_rdata[m_opt_depth_runtime_comp][i_src] =
             m_opt_depth_functor();
 
+        //Initialize the optical depth component of the target species if needed.
         if(m_target_has_breit_wheeler){
             dst.m_runtime_rdata[m_target_opt_depth_runtime_comp][i_dst] =
                 m_target_opt_depth_functor();
@@ -106,15 +161,39 @@ struct PhotonEmissionTransformFunc
 
 
     }
+
+private:
+    const QuantumSynchrotronGetOpticalDepth
+        m_opt_depth_functor;  /*!< A copy of the functor to initialize the optical depth of the source species. */
+    const QuantumSynchrotronGeneratePhotonAndUpdateMomentum
+        m_emission_functor;  /*!< A copy of the functor to generate photons. It contains only pointers to the lookup tables.*/
+
+    bool m_target_has_breit_wheeler = false; /*!< Flag to tell if target species has QED effects enabled*/
+    const int m_opt_depth_runtime_comp = 0;  /*!< Index of the optical depth component of source species*/
+    int m_target_opt_depth_runtime_comp = 0;  /*!< Index of the optical depth component of target species*/
+    BreitWheelerGetOpticalDepth m_target_opt_depth_functor; /*!< A copy of the functor to initialize the optical depth of the target species.*/
+
 };
 
+
+/**
+* \brief Free function to call to remove immediately
+* low energy photons by setting their ID to -1.
+*
+* @tparam PTile particle tile type
+* @param[in,out] ptile a particle tile
+* @param[in] old_size the old number of particles
+* @param[in] num_added the number of photons added to the tile
+* @param[in] t_energy_threshold the energy threshold
+*/
 template <typename PTile>
 void cleanLowEnergyPhotons(
-    PTile& ptile,
-    const int old_size, const int num_added,
-    const amrex::ParticleReal t_energy_threshold)
+PTile& ptile,
+const int old_size, const int num_added,
+const amrex::ParticleReal t_energy_threshold)
 {
     auto pp = ptile.GetArrayOfStructs()().data() + old_size;
+
     const auto& soa = ptile.GetStructOfArrays();
     const auto p_ux = soa.GetRealData(PIdx::ux).data() + old_size;
     const auto  p_uy = soa.GetRealData(PIdx::uy).data() + old_size;
@@ -137,5 +216,6 @@ void cleanLowEnergyPhotons(
         }
     });
 }
+
 
 #endif //QED_PHOTON_EMISSION_H_

@@ -1158,14 +1158,10 @@ void MultiParticleContainer::doQedQuantumSync()
         auto Filter    = phys_pc_ptr->getPhotonEmissionFilterFunc();
         auto CopyPhot   = copy_factory_phot.getSmartCopy();
 
-        const auto phot_em_functor =
-            m_shr_p_qs_engine->build_phot_em_functor();
-        const auto opt_depth_functor =
-            m_shr_p_qs_engine->build_optical_depth_functor();
         auto Transform = PhotonEmissionTransformFunc(
-            opt_depth_functor,
+            m_shr_p_qs_engine->build_optical_depth_functor(),
             pc_source->particle_runtime_comps["tau"],
-            phot_em_functor);
+             m_shr_p_qs_engine->build_phot_em_functor());
 
         if(pc_product_phot->has_breit_wheeler()){
             Transform.enable_opt_depth_for_target(

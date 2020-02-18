@@ -2390,18 +2390,14 @@ PhotonEmissionFilterFunc
 PhysicalParticleContainer::getPhotonEmissionFilterFunc ()
 {
     BL_PROFILE("PPC::getPhotonEmissionFunc");
-    PhotonEmissionFilterFunc filter_func;
-    filter_func.m_opt_depth_runtime_comp = particle_runtime_comps["tau"];
-    return filter_func;
+    return PhotonEmissionFilterFunc{particle_runtime_comps["tau"]};
 }
 
 PairGenerationFilterFunc
 PhysicalParticleContainer::getPairGenerationFilterFunc ()
 {
     BL_PROFILE("PPC::getPairGenerationFunc");
-    PairGenerationFilterFunc filter_func;
-    filter_func.m_opt_depth_runtime_comp = particle_runtime_comps["tau"];
-    return filter_func;
+    return PairGenerationFilterFunc{particle_runtime_comps["tau"]};
 }
 
 #endif
