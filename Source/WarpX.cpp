@@ -343,23 +343,18 @@ WarpX::ReadParameters ()
         // set random seed
         std::string random_seed = "default";
         pp.query("random_seed", random_seed);
+        std::random_device rd;
+        std::uniform_int_distribution<int> dist(0, 32767);
         if ( random_seed != "default" ) {
             unsigned long myproc_1 = ParallelDescriptor::MyProc() + 1;
-            unsigned long x = 2;
             if ( random_seed == "random" ) {
-                unsigned long seed = myproc_1 * std::clock();
+                unsigned long seed = myproc_1 * dist(rd) + std::clock();
                 ResetRandomSeed(seed);
-                AllPrint() << "Actual Random Seed Used: " << seed
-                           << " for MPI process " << myproc_1 - 1 << "\n";
-            } else if ( std::stoul("999"+random_seed) == 999 ) {
-                Abort("Unknown warpx.random_seed value.");
-            } else if ( std::stoi(random_seed) >= 0 ) {
-                unsigned long seed = myproc_1 * ( std::stoul(random_seed) + x );
+            } else if ( std::stoi(random_seed) > 0 ) {
+                unsigned long seed = myproc_1 * std::stoul(random_seed);
                 ResetRandomSeed(seed);
-                AllPrint() << "Actual Random Seed Used: " << seed
-                           << " for MPI process " << myproc_1 - 1 << "\n";
             } else {
-                Abort("Unknown warpx.random_seed value.");
+                Abort("warpx.random_seed must be \"random\" or a number.");
             }
         }
 
