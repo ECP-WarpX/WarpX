@@ -94,7 +94,7 @@ else:
 # Remove or keep SINGLE_PRECISION tests according to 'single_precision' variable
 if single_precision not in ['TRUE', 'FALSE']:
     raise ValueError('SINGLE_PRECISION must be TRUE or FALSE')
-print('Selecting tests with SINGLE_PRECISION = %s' %qed)
+print('Selecting tests with SINGLE_PRECISION = %s' %single_precision)
 if (qed == "FALSE"):
     test_blocks = [ block for block in test_blocks if not (
             'PRECISION=FLOAT' in block and
@@ -107,7 +107,7 @@ else:
 # Remove or keep ELECTROSTATIC tests according to 'electrostatic' variable
 if electrostatic not in ['TRUE', 'FALSE']:
     raise ValueError('ELECTROSTATIC must be TRUE or FALSE')
-print('Selecting tests with ELECTROSTATIC = %s' %qed)
+print('Selecting tests with ELECTROSTATIC = %s' %electrostatic)
 if (electrostatic == "FALSE"):
     test_blocks = [ block for block in test_blocks if not 'DO_ELECTROSTATIC=TRUE' in block ]
 else:
@@ -116,7 +116,7 @@ else:
 # Remove or keep PYTHON_MAIN tests according to 'python_main' variable
 if python_main not in ['TRUE', 'FALSE']:
     raise ValueError('PYTHON_MAIN must be TRUE or FALSE')
-print('Selecting tests with PYTHON_MAIN = %s' %qed)
+print('Selecting tests with PYTHON_MAIN = %s' %python_main)
 if (python_main == "FALSE"):
     test_blocks = [ block for block in test_blocks if not 'PYTHON_MAIN=TRUE' in block ]
 else:
