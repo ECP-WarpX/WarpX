@@ -33,7 +33,6 @@
 #include <map>
 #include <string>
 #include <algorithm>
-#include <array>
 
 /**
  * The class MultiParticleContainer holds multiple instances of the polymorphic
@@ -233,14 +232,27 @@ public:
     std::unique_ptr<ParserWrapper<4> > m_Ez_particle_parser;
 
 #ifdef WARPX_QED
+    /**
+    * \brief Performs QED events (Breit-Wheeler process and photon emission)
+    */
     void doQedEvents();
-    void doQedBreitWheeler();
-    void doQedQuantumSync();
 #endif
 
 
 
 protected:
+
+#ifdef WARPX_QED
+    /**
+    * \brief Performs Breit-Wheeler process for the species for which it is enabled
+    */
+    void doQedBreitWheeler();
+
+    /**
+    * \brief Performs QED photon emission for the species for which it is enabled
+    */
+    void doQedQuantumSync();
+#endif
 
     // Particle container types
     enum struct PCTypes {Physical, RigidInjected, Photon};
