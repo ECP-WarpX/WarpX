@@ -67,20 +67,15 @@ class SpectralSolver
         };
 
         /**
-          * \brief Compute divergence of E
+          * \brief Public interface to call the member function ComputeSpectralDivE
+          * of the base class SpectralBaseAlgorithm from objects of class SpectralSolver
           */
-        void ComputeSpectralDivE ( std::unique_ptr<amrex::MultiFab>& divE,
-                                   const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield );
+        void ComputeSpectralDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                                   amrex::MultiFab& divE ) {
+            algorithm->ComputeSpectralDivE( field_data, Efield, divE );
+        };
 
     private:
-
-        amrex::BoxArray m_realspace_ba;
-        amrex::DistributionMapping m_dm;
-        int m_norder_x;
-        int m_norder_y;
-        int m_norder_z;
-        bool m_nodal;
-        amrex::RealVect m_dx;
 
         // Store field in spectral space and perform the Fourier transforms
         SpectralFieldData field_data;
