@@ -320,7 +320,7 @@ public:
     std::unique_ptr<ParserWrapper<7>> m_particle_filter_parser;
 
 protected:
-
+    amrex::Array<amrex::Real,3> v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
 
