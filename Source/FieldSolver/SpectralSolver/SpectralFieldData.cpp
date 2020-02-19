@@ -330,8 +330,8 @@ std::string
 SpectralFieldData::cufftErrorToString (const cufftResult& err)
 {
     const auto res2string = std::map<cufftResult, std::string>{
-		{CUFFT_SUCCESS, "CUFFT_SUCCESS"},
-		{CUFFT_INVALID_PLAN,"CUFFT_INVALID_PLAN"},
+        {CUFFT_SUCCESS, "CUFFT_SUCCESS"},
+        {CUFFT_INVALID_PLAN,"CUFFT_INVALID_PLAN"},
         {CUFFT_ALLOC_FAILED,"CUFFT_ALLOC_FAILED"},
         {CUFFT_INVALID_TYPE,"CUFFT_INVALID_TYPE"},
         {CUFFT_INVALID_VALUE,"CUFFT_INVALID_VALUE"},
