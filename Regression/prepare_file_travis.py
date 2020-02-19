@@ -19,6 +19,7 @@ arch = os.environ.get('WARPX_TEST_ARCH', 'CPU')
 single_precision = os.environ.get('SINGLE_PRECISION', 'FALSE')
 electrostatic = os.environ.get('ELECTROSTATIC', 'FALSE')
 python_main = os.environ.get('PYTHON_MAIN', 'FALSE')
+psatd = os.environ.get('USE_PSATD', 'FALSE')
 # Find the directory in which the tests should be run
 current_dir = os.getcwd()
 test_dir = re.sub('warpx/Regression', '', current_dir )
@@ -121,6 +122,15 @@ if (python_main == "FALSE"):
     test_blocks = [ block for block in test_blocks if not 'PYTHON_MAIN=TRUE' in block ]
 else:
     test_blocks = [ block for block in test_blocks if 'PYTHON_MAIN=TRUE' in block ]
+
+# Remove or keep USE_PSATD tests according to 'psatd' variable
+if psatd not in ['TRUE', 'FALSE']:
+    raise ValueError('USE_PSATD must be TRUE or FALSE')
+print('Selecting tests with USE_PSATD = %s' %psatd)
+if (psatd == "FALSE"):
+    test_blocks = [ block for block in test_blocks if not 'USE_PSATD=TRUE' in block ]
+else:
+    test_blocks = [ block for block in test_blocks if 'USE_PSATD=TRUE' in block ]
 
 # - Add the selected test blocks to the text
 text = text + '\n' + '\n'.join(test_blocks)

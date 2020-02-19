@@ -10,11 +10,6 @@ language: c++
 sudo: true
 cache: pip
 
-
-     - WARPX_TEST_DIM=3 HAS_QED=FALSE
-     - WARPX_TEST_DIM=RZ HAS_QED=FALSE
-     - WARPX_TEST_DIM=2 HAS_QED=FALSE
-     - HAS_QED=TRUE
 env:
   matrix:
     - WARPX_TEST_DIM=3
