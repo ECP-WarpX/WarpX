@@ -98,7 +98,7 @@ def select_tests(blocks, do_test, test_env_variable, match_string_list):
     return blocks
 
 test_blocks = select_tests(test_blocks, qed, 'WARPX_CI_QED',
-                           ['USE_QED=TRUE'])
+                           ['QED=TRUE'])
 test_blocks = select_tests(test_blocks, single_precision, 'WARPX_CI_SINGLE_PRECISION',
                            ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'])
 test_blocks = select_tests(test_blocks, electrostatic, 'WARPX_CI_ELECTROSTATIC',
