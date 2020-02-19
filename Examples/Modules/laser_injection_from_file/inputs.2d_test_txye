@@ -3,7 +3,7 @@
 #################################
 max_step = 400
 amr.n_cell =  672 672
-amr.plot_int = 50
+amr.plot_int = 400
 amr.max_grid_size = 512
 amr.blocking_factor = 32
 amr.max_level = 0
