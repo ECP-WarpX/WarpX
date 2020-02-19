@@ -5,6 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
+#include "Histogram.H"
 #include "BeamRelevant.H"
 #include "ParticleEnergy.H"
 #include "FieldEnergy.H"
@@ -54,6 +55,11 @@ MultiReducedDiags::MultiReducedDiags ()
         {
             m_multi_rd[i_rd].reset
                 ( new BeamRelevant(m_rd_names[i_rd]));
+        }
+        else if (rd_type.compare("Histogram") == 0)
+        {
+            m_multi_rd[i_rd].reset
+                ( new Histogram(m_rd_names[i_rd]));
         }
         else
         { Abort("No matching reduced diagnostics type found."); }
