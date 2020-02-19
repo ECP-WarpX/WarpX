@@ -211,3 +211,75 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
     }
     return parser;
 }
+
+void CheckGriddingForRZSpectral ()
+{
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+// When using the RZ spectral solver, the Hankel transform cannot be
+// divided among multiple blocks. Each block must extend over the
+// entire radial extent.
+// The grid can be divided up along z, but the number of blocks
+// must be >= the number of processors.
+
+    int max_level;
+    Vector<int> n_cell(AMREX_SPACEDIM, -1);
+
+    ParmParse pp_amr("amr");
+
+    pp_amr.get("max_level",max_level);
+    pp_amr.getarr("n_cell",n_cell,0,AMREX_SPACEDIM);
+
+    Vector<int> blocking_factor_x(max_level+1);
+    Vector<int> max_grid_size_x(max_level+1);
+
+    // Set the radial block size to be equal to the radial grid size.
+    blocking_factor_x[0] = n_cell[0];
+    max_grid_size_x[0] = n_cell[0];
+
+    for (int lev=1 ; lev <= max_level ; lev++) {
+        // This assumes a refinement ratio of 2
+        blocking_factor_x[lev] = blocking_factor_x[lev-1]/2;
+        max_grid_size_x[lev] = max_grid_size_x[lev-1]/2;
+    }
+
+    pp_amr.addarr("blocking_factor_x", blocking_factor_x);
+    pp_amr.addarr("max_grid_size_x", max_grid_size_x);
+
+    // Adjust the longitudinal block sizes, making sure that there are
+    // more blocks than processors.
+    int nprocs = ParallelDescriptor::NProcs();
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_cell[1] > nprocs,
+                                     "With RZ spectral, the number of z cells must be greater than the number of processors.");
+
+    // Get the longitudinal blocking factor in case it was set by the user.
+    // If not set, use the default value of 8.
+    Vector<int> bf;
+    pp_amr.queryarr("blocking_factor",bf);
+    pp_amr.queryarr("blocking_factor_y",bf);
+    bf.resize(std::max(static_cast<int>(bf.size()),1),8);
+
+    // Make sure that the blocking factor (of the finest level) is small
+    // enough so that there will be at least as many blocks as there
+    // are processors.
+    while (n_cell[1] < nprocs*bf[0]) {
+        bf[0] /= 2;
+    }
+    pp_amr.addarr("blocking_factor_y", bf);
+
+    // Get the longitudinal max grid size in case it was set by the user.
+    // If not set, use the default value of 128.
+    Vector<int> mg;
+    pp_amr.queryarr("max_grid_size",mg);
+    pp_amr.queryarr("max_grid_size_y",mg);
+    mg.resize(std::max(static_cast<int>(mg.size()),1),128);
+
+    // Make sure that the max grid size (of the finest level) is small
+    // enough so that there will be at least as many blocks as there
+    // are processors.
+    while (n_cell[1] < nprocs*mg[0]) {
+        mg[0] /= 2;
+    }
+    pp_amr.addarr("max_grid_size_y", mg);
+
+#endif
+}
