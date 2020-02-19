@@ -8,7 +8,7 @@
 #include "ParticleHistogram.H"
 #include "WarpX.H"
 #include "WarpXConst.H"
-#include <WarpXUtil.H>
+#include "WarpXUtil.H"
 #include "AMReX_REAL.H"
 #include "AMReX_ParticleReduce.H"
 #include <limits> // numeric_limits<float>::min()
@@ -160,8 +160,10 @@ void ParticleHistogram::ComputeDiags (int step)
             { m_data[i] /= f_area; }
         }
     }
-    else if ( m_norm == "default" ) {}
-    else if ( m_norm == "unity_particle_weight" ) {}
+    else if ( m_norm == "default" )
+    { /* do nothing */ }
+    else if ( m_norm == "unity_particle_weight" )
+    { /* do nothing */ }
     else { Abort("Unknown ParticleHistogram normalization type."); }
 
 }
