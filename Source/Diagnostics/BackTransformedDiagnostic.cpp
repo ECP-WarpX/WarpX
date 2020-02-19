@@ -1619,7 +1619,7 @@ BackTransformedDiagnostic::GetCellCenteredSliceData(
         // Obtain box array for the current level from
         // the source MF and convert IndexType to CC
         IntVect cc_type(AMREX_D_DECL(0,0,0));
-//        amrex::Print() << " cc_type" << cc_type << "\n"; 
+//        amrex::Print() << " cc_type" << cc_type << "\n";
 //        amrex::Print() << " ex ba " << Efield[lev][0]->boxArray() << "\n";
         BoxArray ba = amrex::convert
                       (Efield[lev][0]->boxArray(), cc_type);
@@ -1648,7 +1648,7 @@ BackTransformedDiagnostic::GetCellCenteredSliceData(
         DistributionMapping slice_cc_dmap(std::move(procs));
 
         cc[lev].reset( new MultiFab(slice_cc_ba, slice_cc_dmap, ncomp, ng));
-        
+
 
         // Interpolate/average and pack Efield data from the source
         // to the cell-centered slice MultiFab
@@ -1656,7 +1656,7 @@ BackTransformedDiagnostic::GetCellCenteredSliceData(
 //        amrex::Print() << " avg and pack vec field\n";
         AverageAndPackVectorField_to_CCslice( *cc[lev], Efield[lev],
                   slice_to_full_ba_map, dcomp, ng);
-       
+
         // Interpolate/average and pack Bfield data from the
         // source to the cell-centered slice MultiFab
         dcomp += 3;
