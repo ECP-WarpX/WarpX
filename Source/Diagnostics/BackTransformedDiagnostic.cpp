@@ -799,32 +799,36 @@ writeLabFrameData(
     // call get cell centered data once //
     Real min_zboost = zhi_boost;
     Real max_zboost = zlo_boost;
-    Real min_xboost = domain_z_boost.hi(0);
-    Real max_xboost = domain_z_boost.lo(0);
-    Real min_yboost = domain_z_boost.hi(1);
-    Real max_yboost = domain_z_boost.lo(1);
-
+    //Real min_xboost = domain_z_boost.hi(0);
+    //Real max_xboost = domain_z_boost.lo(0);
+    //Real min_yboost = domain_z_boost.hi(1);
+    //Real max_yboost = domain_z_boost.lo(1);
+    // for all slices -- get the min and max of the z_boost
+    // so that the cell-centered data can be obtained for that region
+    // without repeating the call for each slice.
     for ( int i = 0; i < m_LabFrameDiags_.size(); ++i) {
         // Get updated z position of snapshot
         const Real old_z_boost = m_LabFrameDiags_[i]->m_current_z_boost;
         m_LabFrameDiags_[i]->updateCurrentZPositions(t_boost,
                                               m_inv_gamma_boost_,
                                               m_inv_beta_boost_);
-        m_LabFrameDiags_[i]->m_current_z_boost = old_z_boost;
         if (m_LabFrameDiags_[i]->m_current_z_boost < min_zboost)
             min_zboost = m_LabFrameDiags_[i]->m_current_z_boost;
         if (m_LabFrameDiags_[i]->m_current_z_boost > max_zboost)
             max_zboost = m_LabFrameDiags_[i]->m_current_z_boost;
+        m_LabFrameDiags_[i]->m_current_z_boost = old_z_boost;
     }
-    amrex::Print() << " min z boost " << min_zboost << "\n";
-    amrex::Print() << " max z boost " << max_zboost << "\n";
+//    amrex::Print() << " min z boost " << min_zboost << "\n";
+//    amrex::Print() << " max z boost " << max_zboost << "\n";
     cc_slice = GetCellCenteredSliceData( Efield, Bfield, current,
                               loc_charge_density,
                               mypc, geom, m_boost_direction_,
                               min_zboost, max_zboost,
                               ref_ratio);
+//    amrex::Print() << " get cc done \n";
     LorentzTransformZ(*cc_slice, m_gamma_boost_,
                       m_beta_boost_, m_ncomp_to_dump);
+//    amrex::Print() << " lorentz transform done \n";
 
 
     // Loop over snapshots
@@ -1615,8 +1619,12 @@ BackTransformedDiagnostic::GetCellCenteredSliceData(
         // Obtain box array for the current level from
         // the source MF and convert IndexType to CC
         IntVect cc_type(AMREX_D_DECL(0,0,0));
+//        amrex::Print() << " cc_type" << cc_type << "\n"; 
+//        amrex::Print() << " ex ba " << Efield[lev][0]->boxArray() << "\n";
         BoxArray ba = amrex::convert
                       (Efield[lev][0]->boxArray(), cc_type);
+//        amrex::Print() << " ba " << ba << "\n";
+//        amrex::Print() << " slice_cc " << slice_cc << "\n";
         // Obtain dm from baseline MF and
         // loop over all the intersections of boxes
         const DistributionMapping& dm =
@@ -1624,7 +1632,9 @@ BackTransformedDiagnostic::GetCellCenteredSliceData(
         std::vector< std::pair<int,Box> > isects;
         // isects generates list of <proc,Box> from domain
         // BoxArray that intersects with slice
+//        amrex::Print() << " intersections\n";
         ba.intersections(slice_cc,isects,false,0);
+//        amrex::Print() << " isects size " << isects.size() << "\n";
         Vector<Box> boxes;
         Vector<int> procs;
         // Store all proc IDs that map full_ba to slice_ba
@@ -1638,20 +1648,25 @@ BackTransformedDiagnostic::GetCellCenteredSliceData(
         DistributionMapping slice_cc_dmap(std::move(procs));
 
         cc[lev].reset( new MultiFab(slice_cc_ba, slice_cc_dmap, ncomp, ng));
+        
 
         // Interpolate/average and pack Efield data from the source
         // to the cell-centered slice MultiFab
         int dcomp =  0;
+//        amrex::Print() << " avg and pack vec field\n";
         AverageAndPackVectorField_to_CCslice( *cc[lev], Efield[lev],
                   slice_to_full_ba_map, dcomp, ng);
+       
         // Interpolate/average and pack Bfield data from the
         // source to the cell-centered slice MultiFab
         dcomp += 3;
+//        amrex::Print() << " avg and pack vec field\n";
         AverageAndPackVectorField_to_CCslice( *cc[lev], Bfield[lev],
                   slice_to_full_ba_map, dcomp, ng);
         // Interpolate/average and pack current data
         // from source to the cell-centered slice MultiFab
         dcomp += 3;
+//        amrex::Print() << " avg and pack vec field\n";
         AverageAndPackVectorField_to_CCslice( *cc[lev], current[lev],
                   slice_to_full_ba_map, dcomp, ng);
         // Interpolate/average and pack charge density data
