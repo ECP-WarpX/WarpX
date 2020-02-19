@@ -13,10 +13,13 @@
 import re
 import os
 # Get relevant environment variables
-dim = os.environ.get('WARPX_TEST_DIM', None)
-qed = os.environ.get('HAS_QED', None)
+dim = os.environ.get('WARPX_CI_DIM', None)
+qed = os.environ.get('WARPX_CI_QED', 'FALSE')
 arch = os.environ.get('WARPX_TEST_ARCH', 'CPU')
-
+single_precision = os.environ.get('WARPX_CI_SINGLE_PRECISION', 'FALSE')
+electrostatic = os.environ.get('WARPX_CI_ELECTROSTATIC', 'FALSE')
+python_main = os.environ.get('WARPX_CI_PYTHON_MAIN', 'FALSE')
+psatd = os.environ.get('WARPX_CI_PSATD', 'FALSE')
 # Find the directory in which the tests should be run
 current_dir = os.getcwd()
 test_dir = re.sub('warpx/Regression', '', current_dir )
@@ -80,13 +83,30 @@ if dim is not None:
     else:
         raise ValueError('Unkown dimension: %s' %dim)
 
-# Remove or keep QED tests according to 'qed' variable
-if qed is not None:
-    print('Selecting tests with QED = %s' %qed)
-    if (qed == "FALSE"):
-        test_blocks = [ block for block in test_blocks if not 'QED=TRUE' in block ]
+def select_tests(blocks, do_test, test_env_variable, match_string_list):
+    # Remove or keep tests according to do_test variable
+    if do_test not in ['TRUE', 'FALSE']:
+        raise ValueError(test_env_variable + ' must be TRUE or FALSE')
+    if (do_test == "FALSE"):
+        for match_string in match_string_list:
+            print('Selecting tests without ' + match_string)
+            blocks = [ block for block in blocks if not match_string in block ]
     else:
-        test_blocks = [ block for block in test_blocks if 'QED=TRUE' in block ]
+        for match_string in match_string_list:
+            print('Selecting tests with ' + match_string)
+            blocks = [ block for block in blocks if match_string in block ]
+    return blocks
+
+test_blocks = select_tests(test_blocks, qed, 'WARPX_CI_QED',
+                           ['QED=TRUE'])
+test_blocks = select_tests(test_blocks, single_precision, 'WARPX_CI_SINGLE_PRECISION',
+                           ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'])
+test_blocks = select_tests(test_blocks, electrostatic, 'WARPX_CI_ELECTROSTATIC',
+                           ['DO_ELECTROSTATIC=TRUE'])
+test_blocks = select_tests(test_blocks, python_main, 'WARPX_CI_PYTHON_MAIN',
+                           ['PYTHON_MAIN=TRUE'])
+test_blocks = select_tests(test_blocks, psatd, 'WARPX_CI_PSATD',
+                           ['USE_PSATD=TRUE'])
 
 # - Add the selected test blocks to the text
 text = text + '\n' + '\n'.join(test_blocks)
