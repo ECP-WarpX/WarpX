@@ -5,17 +5,18 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "Histogram.H"
+#include "ParticleHistogram.H"
 #include "WarpX.H"
 #include "WarpXConst.H"
 #include <WarpXUtil.H>
 #include "AMReX_REAL.H"
 #include "AMReX_ParticleReduce.H"
+#include <limits> // numeric_limits<float>::min()
 
 using namespace amrex;
 
 // constructor
-Histogram::Histogram (std::string rd_name)
+ParticleHistogram::ParticleHistogram (std::string rd_name)
 : ReducedDiags{rd_name}
 {
 
@@ -25,6 +26,7 @@ Histogram::Histogram (std::string rd_name)
     pp.get("bin_number",m_bin_num);
     pp.get("bin_max",   m_bin_max);
     pp.get("bin_min",   m_bin_min);
+    pp.query("normalization",m_norm);
     m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;
     std::string function_string = "";
     Store_parserString(pp,"histogram_function(t,x,y,z,ux,uy,uz)",
@@ -64,7 +66,7 @@ Histogram::Histogram (std::string rd_name)
 // end constructor
 
 // function that computes the histogram
-void Histogram::ComputeDiags (int step)
+void ParticleHistogram::ComputeDiags (int step)
 {
 
     // Judge if the diags should be done
@@ -117,7 +119,12 @@ void Histogram::ComputeDiags (int step)
             auto f1 = m_bin_min + m_bin_size*i;
             auto f2 = m_bin_min + m_bin_size*(i+1);
             if ( f > f1 && f < f2 )
-            { return w; }
+            {
+                if ( m_norm == "unity_particle_weight" )
+                { return 1.0; }
+                else
+                { return w; }
+            }
             else
             { return 0.0; }
         });
@@ -126,5 +133,36 @@ void Histogram::ComputeDiags (int step)
             (m_data[i], ParallelDescriptor::IOProcessorNumber());
     }
 
+    if ( m_norm == "max_to_unity" )
+    {
+        Real f_max = 0.0;
+        for ( int i = 0; i < m_bin_num; ++i )
+        {
+            if ( m_data[i] > f_max )
+            { f_max = m_data[i]; }
+        }
+        for ( int i = 0; i < m_bin_num; ++i )
+        {
+            if ( f_max > std::numeric_limits<Real>::min() )
+            { m_data[i] /= f_max; }
+        }
+    }
+    else if ( m_norm == "area_to_unity" )
+    {
+        Real f_area = 0.0;
+        for ( int i = 0; i < m_bin_num; ++i )
+        {
+            f_area += m_data[i] * m_bin_size;
+        }
+        for ( int i = 0; i < m_bin_num; ++i )
+        {
+            if ( f_area > std::numeric_limits<Real>::min() )
+            { m_data[i] /= f_area; }
+        }
+    }
+    else if ( m_norm == "default" ) {}
+    else if ( m_norm == "unity_particle_weight" ) {}
+    else { Abort("Unknown ParticleHistogram normalization type."); }
+
 }
-// end void Histogram::ComputeDiags
+// end void ParticleHistogram::ComputeDiags

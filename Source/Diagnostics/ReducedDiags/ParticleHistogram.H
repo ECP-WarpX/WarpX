@@ -5,8 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_HISTOGRAM_H_
-#define WARPX_DIAGNOSTICS_REDUCEDDIAGS_HISTOGRAM_H_
+#ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_PARTICLEHISTOGRAM_H_
+#define WARPX_DIAGNOSTICS_REDUCEDDIAGS_PARTICLEHISTOGRAM_H_
 
 #include "ReducedDiags.H"
 #include <WarpXParserWrapper.H>
@@ -16,16 +16,19 @@
  *  This class contains a function that
  *  computes a histogram of user defined quantity.
  */
-class Histogram : public ReducedDiags
+class ParticleHistogram : public ReducedDiags
 {
 public:
 
     /** constructor
      *  @param[in] rd_name reduced diags names */
-    Histogram(std::string rd_name);
+    ParticleHistogram(std::string rd_name);
 
     /// name of species
     std::string m_species_name;
+
+    /// particle weight type
+    std::string m_norm = "default";
 
     /// number of bins
     int m_bin_num;
