@@ -85,10 +85,6 @@ public:
                                 int depos_lev,
                                 amrex::Real dt) override {};
 
-    //Photons are photons
-    virtual bool AmIAPhoton () override { return true; }
-
-
 #ifdef WARPX_QED
     /**
      * This function evolves the optical depth of the photons if QED effects

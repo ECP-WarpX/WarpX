@@ -29,6 +29,8 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
 
+    m_my_type = PhysicalParticleType::photon;
+
     ParmParse pp(species_name);
 
 #ifdef WARPX_QED
