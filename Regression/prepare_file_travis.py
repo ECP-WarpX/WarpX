@@ -13,13 +13,13 @@
 import re
 import os
 # Get relevant environment variables
-dim = os.environ.get('WARPX_TEST_DIM', None)
-qed = os.environ.get('HAS_QED', 'FALSE')
+dim = os.environ.get('WARPX_CI_DIM', None)
+qed = os.environ.get('WARPX_CI_QED', 'FALSE')
 arch = os.environ.get('WARPX_TEST_ARCH', 'CPU')
-single_precision = os.environ.get('SINGLE_PRECISION', 'FALSE')
-electrostatic = os.environ.get('ELECTROSTATIC', 'FALSE')
-python_main = os.environ.get('PYTHON_MAIN', 'FALSE')
-psatd = os.environ.get('USE_PSATD', 'FALSE')
+single_precision = os.environ.get('WARPX_CI_SINGLE_PRECISION', 'FALSE')
+electrostatic = os.environ.get('WARPX_CI_ELECTROSTATIC', 'FALSE')
+python_main = os.environ.get('WARPX_CI_PYTHON_MAIN', 'FALSE')
+psatd = os.environ.get('WARPX_CI_PSATD', 'FALSE')
 # Find the directory in which the tests should be run
 current_dir = os.getcwd()
 test_dir = re.sub('warpx/Regression', '', current_dir )
@@ -83,54 +83,30 @@ if dim is not None:
     else:
         raise ValueError('Unkown dimension: %s' %dim)
 
-# Remove or keep QED tests according to 'qed' variable
-if qed not in ['TRUE', 'FALSE']:
-    raise ValueError('HAS_QED must be TRUE or FALSE')
-print('Selecting tests with HAS_QED = %s' %qed)
-if (qed == "FALSE"):
-    test_blocks = [ block for block in test_blocks if not 'QED=TRUE' in block ]
-else:
-    test_blocks = [ block for block in test_blocks if 'QED=TRUE' in block ]
+def select_tests(blocks, do_test, test_env_variable, match_string_list):
+    # Remove or keep tests according to do_test variable
+    if do_test not in ['TRUE', 'FALSE']:
+        raise ValueError(test_env_variable + ' must be TRUE or FALSE')
+    if (do_test == "FALSE"):
+        for match_string in match_string_list:
+            print('Selecting tests without ' + match_string)
+            blocks = [ block for block in blocks if not match_string in block ]
+    else:
+        for match_string in match_string_list:
+            print('Selecting tests with ' + match_string)
+            blocks = [ block for block in blocks if match_string in block ]
+    return blocks
 
-# Remove or keep SINGLE_PRECISION tests according to 'single_precision' variable
-if single_precision not in ['TRUE', 'FALSE']:
-    raise ValueError('SINGLE_PRECISION must be TRUE or FALSE')
-print('Selecting tests with SINGLE_PRECISION = %s' %single_precision)
-if (qed == "FALSE"):
-    test_blocks = [ block for block in test_blocks if not (
-            'PRECISION=FLOAT' in block and
-            'USE_SINGLE_PRECISION_PARTICLES=TRUE' in block) ]
-else:
-    test_blocks = [ block for block in test_blocks if (
-            'PRECISION=FLOAT' in block and
-            'USE_SINGLE_PRECISION_PARTICLES=TRUE' in block) ]
-
-# Remove or keep ELECTROSTATIC tests according to 'electrostatic' variable
-if electrostatic not in ['TRUE', 'FALSE']:
-    raise ValueError('ELECTROSTATIC must be TRUE or FALSE')
-print('Selecting tests with ELECTROSTATIC = %s' %electrostatic)
-if (electrostatic == "FALSE"):
-    test_blocks = [ block for block in test_blocks if not 'DO_ELECTROSTATIC=TRUE' in block ]
-else:
-    test_blocks = [ block for block in test_blocks if 'DO_ELECTROSTATIC=TRUE' in block ]
-
-# Remove or keep PYTHON_MAIN tests according to 'python_main' variable
-if python_main not in ['TRUE', 'FALSE']:
-    raise ValueError('PYTHON_MAIN must be TRUE or FALSE')
-print('Selecting tests with PYTHON_MAIN = %s' %python_main)
-if (python_main == "FALSE"):
-    test_blocks = [ block for block in test_blocks if not 'PYTHON_MAIN=TRUE' in block ]
-else:
-    test_blocks = [ block for block in test_blocks if 'PYTHON_MAIN=TRUE' in block ]
-
-# Remove or keep USE_PSATD tests according to 'psatd' variable
-if psatd not in ['TRUE', 'FALSE']:
-    raise ValueError('USE_PSATD must be TRUE or FALSE')
-print('Selecting tests with USE_PSATD = %s' %psatd)
-if (psatd == "FALSE"):
-    test_blocks = [ block for block in test_blocks if not 'USE_PSATD=TRUE' in block ]
-else:
-    test_blocks = [ block for block in test_blocks if 'USE_PSATD=TRUE' in block ]
+test_blocks = select_tests(test_blocks, qed, 'WARPX_CI_QED',
+                           ['QED=TRUE'])
+test_blocks = select_tests(test_blocks, single_precision, 'WARPX_CI_SINGLE_PRECISION',
+                           ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'])
+test_blocks = select_tests(test_blocks, electrostatic, 'WARPX_CI_ELECTROSTATIC',
+                           ['DO_ELECTROSTATIC=TRUE'])
+test_blocks = select_tests(test_blocks, python_main, 'WARPX_CI_PYTHON_MAIN',
+                           ['PYTHON_MAIN=TRUE'])
+test_blocks = select_tests(test_blocks, psatd, 'WARPX_CI_PSATD',
+                           ['USE_PSATD=TRUE'])
 
 # - Add the selected test blocks to the text
 text = text + '\n' + '\n'.join(test_blocks)
