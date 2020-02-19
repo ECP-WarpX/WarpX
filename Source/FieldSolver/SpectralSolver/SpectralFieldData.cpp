@@ -343,7 +343,7 @@ SpectralFieldData::cufftErrorToString (const cufftResult& err)
 
     const auto it = res2string.find(err);
     if(it != res2string.end()){
-        return it->second();
+        return it->second;
     }
     else{
         return std::to_string(err) +
