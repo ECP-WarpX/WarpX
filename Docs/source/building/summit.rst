@@ -40,5 +40,3 @@ Then modify the few first lines of the installation script ``install_script.sh``
    INST_SCIPY=1
 
 and follow the instructions from the yt website.
- 
-
