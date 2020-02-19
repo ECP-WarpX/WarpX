@@ -41,7 +41,7 @@ package and setting ``USE_PSATD=TRUE``.
         the packages were downloaded and built. For example, using bash:
         ::
 
-           export BLASPP_HOME=/location/of/packages/blaspp 
+           export BLASPP_HOME=/location/of/packages/blaspp
            export LAPACKPP_HOME=/location/of/packages/lapackpp
 
       - Set ``USE_PSATD=TRUE`` when compiling:
