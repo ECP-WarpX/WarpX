@@ -14,14 +14,16 @@
 using namespace amrex;
 
 void
-WarpX::ComputeSpaceChargeField ()
+WarpX::ComputeSpaceChargeField (bool const reset_fields)
 {
-    // Start by setting all E and B fields to 0
-    const int num_levels = max_level + 1;
-    for (int lev = 0; lev <= max_level; lev++) {
-        for (int comp=0; comp<3; comp++) {
-            Efield_fp[lev][comp]->setVal(0);
-            Bfield_fp[lev][comp]->setVal(0);
+    if (reset_fields) {
+        // Reset all E and B fields to 0, before calculating space-charge fields
+        const int num_levels = max_level + 1;
+        for (int lev = 0; lev <= max_level; lev++) {
+            for (int comp=0; comp<3; comp++) {
+                Efield_fp[lev][comp]->setVal(0);
+                Bfield_fp[lev][comp]->setVal(0);
+            }
         }
     }
 

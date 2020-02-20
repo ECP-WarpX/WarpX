@@ -133,7 +133,8 @@ WarpX::InitFromScratch ()
     mypc->InitData();
 
     // Loop through species and calculate their space-charge field
-    ComputeSpaceChargeField();
+    bool const reset_fields = false; // Do not erase previous user-specified values on the grid
+    ComputeSpaceChargeField(reset_fields);
 
     InitPML();
 
