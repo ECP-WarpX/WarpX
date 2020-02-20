@@ -35,10 +35,11 @@ struct RandomFilter
     bool operator () (const SuperParticleType& p) const noexcept
     {
         if ( !m_is_active )
-            return 1;
-        if ( amrex::Random() < m_fraction )
-            return 1;
-        return 0;
+        { return 1; }
+        else if ( amrex::Random() < m_fraction )
+        { return 1; }
+        else
+        { return 0; }
     }
 private:
     bool m_is_active = false; //! select all particles if false
@@ -66,10 +67,11 @@ struct UniformFilter
     bool operator () (const SuperParticleType& p) const noexcept
     {
         if ( !m_is_active )
-            return 1;
-        if ( p.id()%m_stride == 0 )
-            return 1;
-        return 0;
+        { return 1; }
+        else if ( p.id()%m_stride == 0 )
+        { return 1; }
+        else
+        { return 0; }
     }
 private:
     bool m_is_active = false; //! select all particles if false
@@ -95,6 +97,8 @@ struct ParserFilter
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator () (const SuperParticleType& p) const noexcept
     {
+        if ( !m_is_active )
+        { return 1; }
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         auto & myspc = mypc.GetParticleContainer(m_species_index);
         ParserWrapper<7> *function_partparser =
@@ -106,11 +110,10 @@ struct ParserFilter
         amrex::Real ux = p.rdata(PIdx::ux);
         amrex::Real uy = p.rdata(PIdx::uy);
         amrex::Real uz = p.rdata(PIdx::uz);
-        if ( !m_is_active )
-            return 1;
         if ( (*function_partparser)(t,x,y,z,ux,uy,uz) != 0.0 )
-            return 1;
-        return 0;
+        { return 1; }
+        else
+        { return 0; }
     }
 private:
     bool m_is_active = false; //! select all particles if false
