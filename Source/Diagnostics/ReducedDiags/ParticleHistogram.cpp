@@ -35,7 +35,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
         makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
 
     // resize data array
-    m_data.resize(m_bin_num+2,0.0);
+    m_data.resize(m_bin_num,0.0);
 
     if (ParallelDescriptor::IOProcessor())
     {
