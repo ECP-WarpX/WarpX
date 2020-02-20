@@ -182,7 +182,6 @@ WarpX::Evolve (int numsteps)
 
         int num_moved = MoveWindow(move_j);
 
-
 #ifdef WARPX_DO_ELECTROSTATIC
         // Electrostatic solver: particles can move by an arbitrary number of cells
         mypc->Redistribute();
@@ -352,7 +351,8 @@ WarpX::OneStep_nosub (Real cur_time)
     // E and B field to the grid ; this is done at the beginning of the PIC
     // loop (i.e. immediately after a `Redistribute`) so that the particles
     // do not deposit out of bound
-    ComputeSpaceChargeField();
+    bool const reset_fields = true;
+    ComputeSpaceChargeField( reset_fields );
 #endif
 
     // Loop over species. For each ionizable species, create particles in
