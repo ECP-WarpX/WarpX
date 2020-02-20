@@ -12,6 +12,7 @@ geometry.prob_hi     = 1 1 1
 warpx.do_pml = 0
 warpx.const_dt = 2e-4
 warpx.do_electrostatic = 1
+warpx.fields_to_plot = Ex Ey Ez rho
 
 particles.nspecies = 2
 particles.species_names = electron1 electron2

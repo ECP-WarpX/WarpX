@@ -182,6 +182,13 @@ WarpX::Evolve (int numsteps)
 
         int num_moved = MoveWindow(move_j);
 
+
+#ifdef WARPX_DO_ELECTROSTATIC
+        // Electrostatic solver: particles can move by an arbitrary number of cells
+        mypc->Redistribute();
+#else
+        // Electromagnetic solver: due to CFL condition, particles can
+        // only move by one or two cells per time step
         if (max_level == 0) {
             int num_redistribute_ghost = num_moved;
             if ((v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)) {
@@ -196,6 +203,7 @@ WarpX::Evolve (int numsteps)
         else {
             mypc->Redistribute();
         }
+#endif
 
         bool to_sort = (sort_int > 0) && ((step+1) % sort_int == 0);
         if (to_sort) {
@@ -337,6 +345,16 @@ WarpX::Evolve (int numsteps)
 void
 WarpX::OneStep_nosub (Real cur_time)
 {
+
+#ifdef WARPX_DO_ELECTROSTATIC
+    // Electrostatic solver:
+    // For each species: deposit charge and add the associated space-charge
+    // E and B field to the grid ; this is done at the beginning of the PIC
+    // loop (i.e. immediately after a `Redistribute`) so that the particles
+    // do not deposit out of bound
+    ComputeSpaceChargeField();
+#endif
+
     // Loop over species. For each ionizable species, create particles in
     // product species.
     mypc->doFieldIonization();
@@ -413,13 +431,6 @@ WarpX::OneStep_nosub (Real cur_time)
     // E and B are up-to-date in the domain, but all guard cells are
     // outdated.
 #   endif
-#else
-    // Electrostatic solver:
-    // Loop through species and calculate their space-charge field
-    for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
-        WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        InitSpaceChargeField(species);
-    }
 #endif
 }
 
