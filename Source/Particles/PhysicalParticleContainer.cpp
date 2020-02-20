@@ -1308,9 +1308,9 @@ PhysicalParticleContainer::Evolve (int lev,
                 BL_PROFILE_VAR_STOP(blp_ppc_pp);
 
                 //
-                // Current Deposition
+                // Current Deposition (only needed for electromagnetic solver)
                 //
-
+#ifndef WARPX_DO_ELECTROSTATIC
                 int* AMREX_RESTRICT ion_lev;
                 if (do_field_ionization){
                     ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
@@ -1328,8 +1328,9 @@ PhysicalParticleContainer::Evolve (int lev,
                                    np_current, np-np_current, thread_num,
                                    lev, lev-1, dt);
                 }
+#endif // ndef WARPX_DO_ELECTROSTATIC
             }
-
+#ifndef WARPX_DO_ELECTROSTATIC
             if (rho) {
                 // Deposit charge after particle push, in component 1 of MultiFab rho.
                 int* AMREX_RESTRICT ion_lev;
@@ -1345,6 +1346,7 @@ PhysicalParticleContainer::Evolve (int lev,
                                   np-np_current, thread_num, lev, lev-1);
                 }
             }
+#endif // ndef WARPX_DO_ELECTROSTATIC
 
             if (cost) {
                 const Box& tbx = pti.tilebox();

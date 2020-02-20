@@ -28,9 +28,9 @@
 using namespace amrex;
 
 void
-WarpX::EvolveEM (int numsteps)
+WarpX::Evolve (int numsteps)
 {
-    BL_PROFILE("WarpX::EvolveEM()");
+    BL_PROFILE("WarpX::Evolve()");
 
     Real cur_time = t_new[0];
     static int last_plot_file_step = 0;
@@ -344,6 +344,17 @@ WarpX::EvolveEM (int numsteps)
 void
 WarpX::OneStep_nosub (Real cur_time)
 {
+
+#ifdef WARPX_DO_ELECTROSTATIC
+    // Electrostatic solver:
+    // For each species: deposit charge and add the associated space-charge
+    // E and B field to the grid ; this is done at the beginning of the PIC
+    // loop (i.e. immediately after a `Redistribute`) so that the particles
+    // do not deposit out of bound
+    bool const reset_fields = true;
+    ComputeSpaceChargeField( reset_fields );
+#endif
+
     // Loop over species. For each ionizable species, create particles in
     // product species.
     mypc->doFieldIonization();
@@ -375,9 +386,12 @@ WarpX::OneStep_nosub (Real cur_time)
     if (do_pml && pml_has_particles) CopyJPML();
     if (do_pml && do_pml_j_damping) DampJPML();
 
+
+#ifndef WARPX_DO_ELECTROSTATIC
+    // Electromagnetic solver:
     // Push E and B from {n} to {n+1}
     // (And update guard cells immediately afterwards)
-#ifdef WARPX_USE_PSATD
+#   ifdef WARPX_USE_PSATD
     if (use_hybrid_QED)
     {
         WarpX::Hybrid_QED_Push(dt);
@@ -396,7 +410,7 @@ WarpX::OneStep_nosub (Real cur_time)
     if (do_pml) DampPML();
 
 ;
-#else
+#   else
     EvolveF(0.5*dt[0], DtType::FirstHalf);
     FillBoundaryF(guard_cells.ng_FieldSolverF);
     EvolveB(0.5*dt[0]); // We now have B^{n+1/2}
@@ -416,6 +430,7 @@ WarpX::OneStep_nosub (Real cur_time)
     }
     // E and B are up-to-date in the domain, but all guard cells are
     // outdated.
+#   endif
 #endif
 }
 
@@ -439,6 +454,10 @@ WarpX::OneStep_nosub (Real cur_time)
 void
 WarpX::OneStep_sub1 (Real curtime)
 {
+#ifdef WARPX_DO_ELECTROSTATIC
+    amrex::Abort("Electrostatic solver cannot be used with sub-cycling.");
+#endif
+
     // TODO: we could save some charge depositions
     // Loop over species. For each ionizable species, create particles in
     // product species.
