@@ -7,8 +7,9 @@
 #include "SpectralKSpace.H"
 #include "SpectralSolver.H"
 #include "SpectralAlgorithms/PsatdAlgorithm.H"
-#include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
 #include "SpectralAlgorithms/ComovingPsatdAlgorithm.H"
+#include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
+#include "SpectralAlgorithms/PMLGalileanAlgorithm.H"
 #include "WarpX.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
@@ -55,8 +56,15 @@ SpectralSolver::SpectralSolver(
     //   Initialize the corresponding coefficients over k space
 
     if (pml) {
-        algorithm = std::make_unique<PMLPsatdAlgorithm>(
-            k_space, dm, norder_x, norder_y, norder_z, nodal, dt);
+        if ((v_galilean[0]==0) && (v_galilean[1]==0) && (v_galilean[2]==0)){
+            // v_galilean is 0: use standard PSATD algorithm
+            algorithm = std::unique_ptr<PMLPsatdAlgorithm>( new PMLPsatdAlgorithm(
+                   k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
+        }
+        else {
+            algorithm = std::unique_ptr<PsatdAlgorithm>( new PMLPsatdAlgorithm(
+                   k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
+        }
     }
     else {
         // Comoving PSATD algorithm
