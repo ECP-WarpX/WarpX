@@ -230,11 +230,6 @@ WarpX::WarpX ()
 
     pml.resize(nlevs_max);
 
-#ifdef WARPX_DO_ELECTROSTATIC
-    masks.resize(nlevs_max);
-    gather_masks.resize(nlevs_max);
-#endif // WARPX_DO_ELECTROSTATIC
-
     costs.resize(nlevs_max);
 
     // Allocate field solver objects
