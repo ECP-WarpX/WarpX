@@ -17,6 +17,8 @@ warpx.fields_to_plot = Ex Ey Ez rho
 particles.nspecies = 2
 particles.species_names = electron1 electron2
 
+algo.field_gathering = momentum-conserving
+
 electron1.charge = -q_e
 electron1.mass = m_e
 electron1.injection_style = "SingleParticle"
