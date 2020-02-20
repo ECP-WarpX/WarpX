@@ -565,11 +565,11 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         const RealVect dx{AMREX_D_DECL(geom->CellSize(0), geom->CellSize(1), geom->CellSize(2))};
         // Get the cell-centered box, with guard cells
         BoxArray realspace_ba = ba;  // Copy box
-        Array<Real,3> const v_galilean_zero = {0., 0., 0.};
+        Array<Real,3> const v_galilean = WarpX::GetInstance().v_galilean;
         Array<Real,3> const v_comoving_zero = {0., 0., 0.};
         realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_fp = std::make_unique<SpectralSolver>(realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, dx, dt, in_pml );
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, v_comoving_zero, dx, dt, in_pml );
 #endif
     }
 
@@ -653,6 +653,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
             sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba, cgeom->CellSize(), ncell, delta);
         }
 
+<<<<<<< HEAD
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
             amrex::ignore_unused(dt);
@@ -662,13 +663,22 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
             const RealVect cdx{AMREX_D_DECL(cgeom->CellSize(0), cgeom->CellSize(1), cgeom->CellSize(2))};
             // Get the cell-centered box, with guard cells
             BoxArray realspace_cba = cba;  // Copy box
-            Array<Real,3> const v_galilean_zero = {0., 0., 0.};
-            Array<Real,3> const v_comoving_zero = {0., 0., 0.};
             const bool in_pml = true; // Tells spectral solver to use split-PML equations
 
             realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
             spectral_solver_cp = std::make_unique<SpectralSolver>(realspace_cba, cdm,
-                nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, cdx, dt, in_pml );
+                nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, v_comoving_zero, cdx, dt, in_pml );
+=======
+#ifdef WARPX_USE_PSATD
+        const RealVect cdx{AMREX_D_DECL(cgeom->CellSize(0), cgeom->CellSize(1), cgeom->CellSize(2))};
+        // Get the cell-centered box, with guard cells
+        BoxArray realspace_cba = cba;  // Copy box
+        // const bool in_pml = true; // Tells spectral solver to use split-PML equations
+
+        realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
+        spectral_solver_cp.reset( new SpectralSolver( realspace_cba, cdm,
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx, dt, in_pml ) );
+>>>>>>> Activate the PML
 #endif
         }
     }
