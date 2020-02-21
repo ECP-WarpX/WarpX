@@ -140,7 +140,11 @@ int WarpX::n_current_deposition_buffer = -1;
 
 int WarpX::do_nodal = false;
 
+#ifdef AMREX_USE_GPU
 int WarpX::do_device_synchronize_before_profile = 1;
+#else
+int WarpX::do_device_synchronize_before_profile = 0;
+#endif
 
 WarpX* WarpX::m_instance = nullptr;
 
@@ -375,7 +379,7 @@ WarpX::ReadParameters ()
         ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
 
         pp.query("do_device_synchronize_before_profile", do_device_synchronize_before_profile);
-            
+
         // pp.query returns 1 if argument zmax_plasma_to_compute_max_step is
         // specified by the user, 0 otherwise.
         do_compute_max_step_from_zmax =
