@@ -79,13 +79,13 @@ void ParticleHistogram::ComputeDiags (int step)
     auto & mypc = warpx.GetPartContainer();
 
     // get number of species (int)
-    auto nSpecies = mypc.nSpecies();
+    auto const nSpecies = mypc.nSpecies();
 
     // get species names (std::vector<std::string>)
-    auto species_names = mypc.GetSpeciesNames();
+    auto const species_names = mypc.GetSpeciesNames();
 
     // get time at level 0
-    auto t = warpx.gett_new(0);
+    auto const t = warpx.gett_new(0);
 
     // select species
     int i_s;
@@ -108,16 +108,16 @@ void ParticleHistogram::ComputeDiags (int step)
         m_data[i] = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         {
-            auto w  = p.rdata(PIdx::w);
-            auto x  = p.pos(0);
-            auto y  = p.pos(1);
-            auto z  = p.pos(2);
-            auto ux = p.rdata(PIdx::ux);
-            auto uy = p.rdata(PIdx::uy);
-            auto uz = p.rdata(PIdx::uz);
-            auto f = (*fun_partparser)(t,x,y,z,ux,uy,uz);
-            auto f1 = m_bin_min + m_bin_size*i;
-            auto f2 = m_bin_min + m_bin_size*(i+1);
+            auto const w  = p.rdata(PIdx::w);
+            auto const x  = p.pos(0);
+            auto const y  = p.pos(1);
+            auto const z  = p.pos(2);
+            auto const ux = p.rdata(PIdx::ux);
+            auto const uy = p.rdata(PIdx::uy);
+            auto const uz = p.rdata(PIdx::uz);
+            auto const f = (*fun_partparser)(t,x,y,z,ux,uy,uz);
+            auto const f1 = m_bin_min + m_bin_size*i;
+            auto const f2 = m_bin_min + m_bin_size*(i+1);
             if ( f > f1 && f < f2 )
             {
                 if ( m_norm == "unity_particle_weight" )
