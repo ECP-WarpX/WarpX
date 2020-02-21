@@ -13,13 +13,15 @@
 import re
 import os
 # Get relevant environment variables
-dim = os.environ.get('WARPX_CI_DIM', None)
-qed = os.environ.get('WARPX_CI_QED', 'FALSE')
 arch = os.environ.get('WARPX_TEST_ARCH', 'CPU')
-single_precision = os.environ.get('WARPX_CI_SINGLE_PRECISION', 'FALSE')
-electrostatic = os.environ.get('WARPX_CI_ELECTROSTATIC', 'FALSE')
-python_main = os.environ.get('WARPX_CI_PYTHON_MAIN', 'FALSE')
-psatd = os.environ.get('WARPX_CI_PSATD', 'FALSE')
+
+ci_regular_cartesian = os.environ.get('WARPX_CI_REGULAR_CARTESIAN') == 'TRUE'
+ci_psatd = os.environ.get('WARPX_CI_PSATD') == 'TRUE'
+ci_python_main = os.environ.get('WARPX_CI_PYTHON_MAIN') == 'TRUE'
+ci_single_precision = os.environ.get('WARPX_CI_SINGLE_PRECISION') == 'TRUE'
+ci_rz_and_nompi = os.environ.get('WARPX_CI_RZ_AND_NOMPI') == 'TRUE'
+ci_qed = os.environ.get('WARPX_CI_QED') == 'TRUE'
+
 # Find the directory in which the tests should be run
 current_dir = os.getcwd()
 test_dir = re.sub('warpx/Regression', '', current_dir )
@@ -71,23 +73,11 @@ test_blocks =  [ match[0] for match in re.findall(select_test_regex, text) ]
 # - Remove the test blocks from `text` (only the selected ones will be added back)
 text = re.sub( select_test_regex, '', text )
 
-# Keep tests that have the right dimension
-if dim is not None:
-    print('Selecting tests with dim = %s' %dim)
-    # Cartesian tests
-    if dim in ['2', '3']:
-        test_blocks = [ block for block in test_blocks \
-             if ('dim = %s'%dim in block) and not ('USE_RZ' in block) ]
-    elif dim == 'RZ':
-        test_blocks = [ block for block in test_blocks if 'USE_RZ' in block ]
-    else:
-        raise ValueError('Unkown dimension: %s' %dim)
-
-def select_tests(blocks, do_test, test_env_variable, match_string_list):
+def select_tests(blocks, match_string_list, do_test):
     # Remove or keep tests according to do_test variable
-    if do_test not in ['TRUE', 'FALSE']:
-        raise ValueError(test_env_variable + ' must be TRUE or FALSE')
-    if (do_test == "FALSE"):
+    if do_test not in [True, False]:
+        raise ValueError("do_test must be True or False")
+    if (do_test == False):
         for match_string in match_string_list:
             print('Selecting tests without ' + match_string)
             blocks = [ block for block in blocks if not match_string in block ]
@@ -97,16 +87,31 @@ def select_tests(blocks, do_test, test_env_variable, match_string_list):
             blocks = [ block for block in blocks if match_string in block ]
     return blocks
 
-test_blocks = select_tests(test_blocks, qed, 'WARPX_CI_QED',
-                           ['QED=TRUE'])
-test_blocks = select_tests(test_blocks, single_precision, 'WARPX_CI_SINGLE_PRECISION',
-                           ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'])
-test_blocks = select_tests(test_blocks, electrostatic, 'WARPX_CI_ELECTROSTATIC',
-                           ['DO_ELECTROSTATIC=TRUE'])
-test_blocks = select_tests(test_blocks, python_main, 'WARPX_CI_PYTHON_MAIN',
-                           ['PYTHON_MAIN=TRUE'])
-test_blocks = select_tests(test_blocks, psatd, 'WARPX_CI_PSATD',
-                           ['USE_PSATD=TRUE'])
+if ci_regular_cartesian:
+    test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], False)
+    test_blocks = select_tests(test_blocks, ['useMPI = 0'], False)
+    test_blocks = select_tests(test_blocks, ['QED=TRUE'], False)
+
+if ci_psatd:
+    test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], True)
+
+if ci_python_main:
+    test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], True)
+
+if ci_single_precision:
+    test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], True)
+    
+if ci_rz_and_nompi:
+    test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
+    block1 = select_tests(test_blocks, ['USE_RZ=TRUE'], True)
+    block2 = select_tests(test_blocks, ['useMPI = 0'], True)
+    test_blocks = block1 + block2
+
+if ci_qed:
+    test_blocks = select_tests(test_blocks, ['QED=TRUE'], True)
 
 # - Add the selected test blocks to the text
 text = text + '\n' + '\n'.join(test_blocks)
