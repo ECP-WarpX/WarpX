@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Maxence Thevenet, Remi Lehe
+/* Copyright 2019-2020 Maxence Thevenet, Remi Lehe, Edoardo Zoni
  *
  * This file is part of WarpX.
  *

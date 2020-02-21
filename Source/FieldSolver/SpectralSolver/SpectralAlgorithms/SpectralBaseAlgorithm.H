@@ -1,4 +1,4 @@
-/* Copyright 2019 Remi Lehe
+/* Copyright 2019 Remi Lehe, Edoardo Zoni
  *
  * This file is part of WarpX.
  *

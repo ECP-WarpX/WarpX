@@ -1,6 +1,5 @@
-/* Copyright 2019-2020 Andrew Myers, Axel Huebl, David Grote
- * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
- * Weiqun Zhang
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, David Grote, Maxence Thevenet,
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang, Edoardo Zoni
  *
  * This file is part of WarpX.
  *
