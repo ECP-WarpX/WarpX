@@ -639,6 +639,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
     const Real dr = dx[0];
 
+    constexpr int NODE = amrex::IndexType::NODE;
+
     Box tilebox;
 
     for ( MFIter mfi(*Jx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
@@ -656,14 +658,11 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
         // these do not include the guard cells.
-        const std::array<Real, 3>& xyzmin  = WarpX::LowerCornerWithCentering(tilebox, lev);
-        const std::array<Real, 3>& xyzminr = WarpX::LowerCornerWithCentering(tbr, lev);
-        const std::array<Real, 3>& xyzmint = WarpX::LowerCornerWithCentering(tbt, lev);
-        const std::array<Real, 3>& xyzminz = WarpX::LowerCornerWithCentering(tbz, lev);
+        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev);
         const Real rmin  = xyzmin[0];
-        const Real rminr = xyzminr[0];
-        const Real rmint = xyzmint[0];
-        const Real rminz = xyzminz[0];
+        const Real rminr = xyzmin[0] + (tbr.type() == NODE ? 0. : 0.5*dx[0]);
+        const Real rmint = xyzmin[0] + (tbt.type() == NODE ? 0. : 0.5*dx[0]);
+        const Real rminz = xyzmin[0] + (tbz.type() == NODE ? 0. : 0.5*dx[0]);
         const Dim3 lo = lbound(tilebox);
         const int irmin = lo.x;
         int const ishift_t = (rmint > rmin ? 1 : 0);
@@ -807,6 +806,8 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
     const Real dr = dx[0];
 
+    constexpr int NODE = amrex::IndexType::NODE;
+
     Box tilebox;
 
     for ( MFIter mfi(*Rho, TilingIfNotGPU()); mfi.isValid(); ++mfi )
@@ -821,10 +822,9 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         // Note that this is done before the tilebox.grow so that
         // these do not include the guard cells.
         const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev);
-        const std::array<Real, 3>& xyzminr = WarpX::LowerCorner(tb, lev);
         const Dim3 lo = lbound(tilebox);
         const Real rmin = xyzmin[0];
-        const Real rminr = xyzminr[0];
+        const Real rminr = xyzmin[0] + (tb.type() == NODE ? 0. : 0.5*dx[0]);
         const int irmin = lo.x;
         int ishift = (rminr > rmin ? 1 : 0);
 
