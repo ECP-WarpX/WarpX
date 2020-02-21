@@ -89,7 +89,7 @@ int  WarpX::sort_int = 4;
 #else
 int  WarpX::sort_int = -1;
 #endif
-amrex::IntVect WarpX::sort_bin_size(4,4,4);
+amrex::IntVect WarpX::sort_bin_size(AMREX_D_DECL(4,4,4));
 
 bool WarpX::do_back_transformed_diagnostics = false;
 std::string WarpX::lab_data_directory = "lab_frame_data";
