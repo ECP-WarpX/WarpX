@@ -110,5 +110,3 @@ f3_error = f3_error/bin_num
 print('Maxwell-Juttner distribution difference:', f3_error)
 
 assert(f3_error < tolerance)
-
-np.savetxt('f3.txt',f)
