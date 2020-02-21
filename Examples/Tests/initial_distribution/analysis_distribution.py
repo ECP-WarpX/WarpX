@@ -103,8 +103,6 @@ for i in range(bin_num):
 f3_error = 0.0
 for i in range(bin_num):
     f3_error = f3_error + abs(f[i] - h3[i+2])
-    f3_error = f3_error + abs(f[i] - h3[i+2])
-    f3_error = f3_error + abs(f[i] - h3[i+2])
 
 f3_error = f3_error/bin_num
 
