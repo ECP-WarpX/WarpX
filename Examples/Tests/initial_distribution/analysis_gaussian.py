@@ -43,7 +43,7 @@ for i in range(bin_num):
     f[i] = f[i] / f_max
 
 # compute error
-f_error = 0
+f_error = 0.0
 for i in range(bin_num):
     f_error = f_error + abs(f[i] - hx[i+2])
     f_error = f_error + abs(f[i] - hy[i+2])

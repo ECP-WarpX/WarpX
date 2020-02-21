@@ -11,7 +11,7 @@ geometry.is_periodic = 1 1 1
 geometry.prob_lo     = 0.0 0.0 0.0
 geometry.prob_hi     = 1.0 1.0 1.0
 warpx.do_pml         = 0
-amr.plot_int         = 1
+amr.plot_int         = 1000
 
 #################################
 ############ NUMERICS ###########
