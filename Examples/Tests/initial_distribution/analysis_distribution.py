@@ -18,7 +18,8 @@ import scipy.constants as scc
 import scipy.special as scs
 
 # print tolerance
-print('tolerance:', 0.008)
+tolerance = 0.008
+print('tolerance:', tolerance)
 
 # gaussian and maxwell-boltzmann
 
@@ -71,8 +72,8 @@ f2_error = f2_error/bin_num
 print('Gaussian distribution difference:', f1_error)
 print('Maxwell-Boltzmann distribution difference:', f2_error)
 
-assert(f1_error < 0.008)
-assert(f2_error < 0.008)
+assert(f1_error < tolerance)
+assert(f2_error < tolerance)
 
 # maxwell-juttner
 
@@ -108,6 +109,6 @@ f3_error = f3_error/bin_num
 
 print('Maxwell-Juttner distribution difference:', f3_error)
 
-assert(f3_error < 0.008)
+assert(f3_error < tolerance)
 
 np.savetxt('f3.txt',f)
