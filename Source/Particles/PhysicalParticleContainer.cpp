@@ -1310,43 +1310,44 @@ PhysicalParticleContainer::Evolve (int lev,
                 //
                 // Current Deposition (only needed for electromagnetic solver)
                 //
-#ifndef WARPX_DO_ELECTROSTATIC
-                int* AMREX_RESTRICT ion_lev;
-                if (do_field_ionization){
-                    ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
-                } else {
-                    ion_lev = nullptr;
-                }
-                // Deposit inside domains
-                DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
-                               0, np_current, thread_num,
-                               lev, lev, dt);
+                if (!WarpX::do_electrostatic) {
+                    int* AMREX_RESTRICT ion_lev;
+                    if (do_field_ionization){
+                        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                    } else {
+                        ion_lev = nullptr;
+                    }
+                    // Deposit inside domains
+                    DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
+                                   0, np_current, thread_num,
+                                   lev, lev, dt);
+                    if (has_buffer){
+                        // Deposit in buffers
+                        DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
+                                       np_current, np-np_current, thread_num,
+                                       lev, lev-1, dt);
+                    }
+                } // end of "if !do_electrostatic"
+            } // end of "if do_not_push"
 
-                if (has_buffer){
-                    // Deposit in buffers
-                    DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
-                                   np_current, np-np_current, thread_num,
-                                   lev, lev-1, dt);
-                }
-#endif // ndef WARPX_DO_ELECTROSTATIC
-            }
-#ifndef WARPX_DO_ELECTROSTATIC
             if (rho) {
                 // Deposit charge after particle push, in component 1 of MultiFab rho.
-                int* AMREX_RESTRICT ion_lev;
-                if (do_field_ionization){
-                    ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
-                } else {
-                    ion_lev = nullptr;
-                }
-                DepositCharge(pti, wp, ion_lev, rho, 1, 0,
-                              np_current, thread_num, lev, lev);
-                if (has_buffer){
-                    DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
-                                  np-np_current, thread_num, lev, lev-1);
+                // (Skipped for electrostatic solver, as this may lead to out-of-bounds)
+                if (!WarpX::do_electrostatic) {
+                    int* AMREX_RESTRICT ion_lev;
+                    if (do_field_ionization){
+                        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                    } else {
+                        ion_lev = nullptr;
+                    }
+                    DepositCharge(pti, wp, ion_lev, rho, 1, 0,
+                                  np_current, thread_num, lev, lev);
+                    if (has_buffer){
+                        DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
+                                      np-np_current, thread_num, lev, lev-1);
+                    }
                 }
             }
-#endif // ndef WARPX_DO_ELECTROSTATIC
 
             if (cost) {
                 const Box& tbx = pti.tilebox();

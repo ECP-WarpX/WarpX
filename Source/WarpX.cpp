@@ -446,6 +446,7 @@ WarpX::ReadParameters ()
                    "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
         }
 
+        do_electrostatic = false;
         pp.query("do_electrostatic", do_electrostatic);
         pp.query("n_buffer", n_buffer);
         pp.query("const_dt", const_dt);
