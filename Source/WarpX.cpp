@@ -15,6 +15,7 @@
 #include <WarpXUtil.H>
 #include <WarpXAlgorithmSelection.H>
 #include <WarpX_FDTD.H>
+#include "WarpXProfilerWrapper.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_MultiFabUtil.H>
@@ -1101,7 +1102,7 @@ WarpX::RefRatio (int lev)
 
 void
 WarpX::Evolve (int numsteps) {
-    BL_PROFILE_REGION("WarpX::Evolve()");
+    WX_PROFILE_REGION("WarpX::Evolve()");
 
 #ifdef WARPX_DO_ELECTROSTATIC
     if (do_electrostatic) {

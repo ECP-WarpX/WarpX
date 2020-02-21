@@ -59,7 +59,7 @@ WarpX::ExchangeWithPmlF (int lev)
 void
 WarpX::UpdateAuxilaryData ()
 {
-    BL_PROFILE("UpdateAuxilaryData()");
+    WX_PROFILE("UpdateAuxilaryData()");
 
     if (Bfield_aux[0][0]->ixType() == Bfield_fp[0][0]->ixType()) {
         UpdateAuxilaryDataSameType();
@@ -522,7 +522,7 @@ WarpX::FillBoundaryAux (int lev, IntVect ng)
 void
 WarpX::SyncCurrent ()
 {
-    BL_PROFILE("SyncCurrent()");
+    WX_PROFILE("SyncCurrent()");
 
     // Restrict fine patch current onto the coarse patch, before
     // summing the guard cells of the fine patch
@@ -557,7 +557,7 @@ interpolateCurrentFineToCoarse ( std::array< amrex::MultiFab const *, 3 > const 
                                  std::array< amrex::MultiFab       *, 3 > const & coarse,
                                  int const refinement_ratio)
 {
-    BL_PROFILE("interpolateCurrentFineToCoarse()");
+    WX_PROFILE("interpolateCurrentFineToCoarse()");
     BL_ASSERT(refinement_ratio == 2);
     const IntVect& ng = (fine[0]->nGrowVect() + 1) / refinement_ratio; // add equivalent no. of guards to coarse patch
 
@@ -589,7 +589,7 @@ interpolateCurrentFineToCoarse ( std::array< amrex::MultiFab const *, 3 > const 
 void
 WarpX::SyncRho ()
 {
-    BL_PROFILE("SyncRho()");
+    WX_PROFILE("SyncRho()");
 
     if (!rho_fp[0]) return;
     const int ncomp = rho_fp[0]->nComp();
@@ -615,7 +615,7 @@ WarpX::SyncRho ()
 void
 interpolateDensityFineToCoarse (const MultiFab& fine, MultiFab& coarse, int const refinement_ratio)
 {
-    BL_PROFILE("interpolateDensityFineToCoarse()");
+    WX_PROFILE("interpolateDensityFineToCoarse()");
     BL_ASSERT(refinement_ratio == 2);
     const IntVect& ng = (fine.nGrowVect() + 1) / refinement_ratio;  // add equivalent no. of guards to coarse patch
     const int nc = fine.nComp();
