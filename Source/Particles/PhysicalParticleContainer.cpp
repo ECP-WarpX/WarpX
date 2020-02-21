@@ -51,6 +51,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_splitting", do_splitting);
     pp.query("split_type", split_type);
     pp.query("do_not_deposit", do_not_deposit);
+    pp.query("do_not_gather", do_not_gather);
     pp.query("do_not_push", do_not_push);
 
     pp.query("do_continuous_injection", do_continuous_injection);
@@ -126,6 +127,12 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
             }
         }
     }
+
+    // Parse galilean velocity
+    ParmParse ppsatd("psatd");
+    ppsatd.query("v_galilean", v_galilean);
+    // Scale the velocity by the speed of light
+    for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
 
     #ifdef WARPX_QED
         if(m_do_qed){
@@ -1310,11 +1317,11 @@ PhysicalParticleContainer::Evolve (int lev,
                 } else {
                     ion_lev = nullptr;
                 }
-
                 // Deposit inside domains
                 DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                0, np_current, thread_num,
                                lev, lev, dt);
+
                 if (has_buffer){
                     // Deposit in buffers
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
@@ -1636,7 +1643,6 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
     const Real m = this-> mass;
 
 #ifdef WARPX_QED
-
     if(do_classical_radiation_reaction){
         if(m_do_qed_quantum_sync){
             const auto t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
@@ -2181,7 +2187,8 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
                                      (gather_lev==(lev  )),
                                      "Gather buffers only work for lev-1");
     // If no particles, do not do anything
-    if (np_to_gather == 0) return;
+    // If do_not_gather = 1 by user, do not do anything
+    if (np_to_gather == 0 || do_not_gather) return;
 
     // initializing the field value to the externally applied field before
     // gathering fields from the grid to the particles.
@@ -2206,8 +2213,12 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
 
     const auto GetPosition = GetParticlePosition(pti, offset);
 
-    // Lower corner of tile box physical domain
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev);
+    // Lower corner of tile box physical domain (take into account Galilean shift)
+    Real cur_time = WarpX::GetInstance().gett_new(lev);
+    const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
+    Real time_shift = (cur_time - time_of_last_gal_shift);
+    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, gather_lev);
 
     const Dim3 lo = lbound(box);
 
