@@ -85,7 +85,7 @@ bin_max = 12.0
 bin_num = 50
 bin_size = (bin_max-bin_min)/bin_num
 theta   = 1.0
-K2    = scs.kn(2,1.0/theta)
+K2      = scs.kn(2,1.0/theta)
 
 # compute the analytical solution
 f = np.zeros( bin_num )
