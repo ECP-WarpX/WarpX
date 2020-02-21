@@ -61,8 +61,8 @@ for i in range(bin_num):
 f1_error = f1_error/bin_num
 f2_error = f2_error/bin_num
 
-print('Gaussian difference:', f1_error)
-print('Maxwell-Boltzmann difference:', f2_error)
+print('Gaussian distribution difference:', f1_error)
+print('Maxwell-Boltzmann distribution difference:', f2_error)
 print('tolerance:', 0.008)
 
 assert(f1_error < 0.008)
