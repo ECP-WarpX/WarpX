@@ -141,9 +141,9 @@ int WarpX::n_current_deposition_buffer = -1;
 int WarpX::do_nodal = false;
 
 #ifdef AMREX_USE_GPU
-int WarpX::do_device_synchronize_before_profile = 1;
+bool WarpX::do_device_synchronize_before_profile = true;
 #else
-int WarpX::do_device_synchronize_before_profile = 0;
+bool WarpX::do_device_synchronize_before_profile = false;
 #endif
 
 WarpX* WarpX::m_instance = nullptr;
@@ -1106,7 +1106,7 @@ WarpX::RefRatio (int lev)
 
 void
 WarpX::Evolve (int numsteps) {
-    WX_PROFILE_REGION("WarpX::Evolve()");
+    WARPX_PROFILE_REGION("WarpX::Evolve()");
 
 #ifdef WARPX_DO_ELECTROSTATIC
     if (do_electrostatic) {

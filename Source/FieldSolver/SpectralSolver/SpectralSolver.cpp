@@ -70,7 +70,7 @@ SpectralSolver::ForwardTransform( const amrex::MultiFab& mf,
                                   const int field_index,
                                   const int i_comp )
 {
-    WX_PROFILE("SpectralSolver::ForwardTransform");
+    WARPX_PROFILE("SpectralSolver::ForwardTransform");
     field_data.ForwardTransform( mf, field_index, i_comp );
 }
 
@@ -79,13 +79,13 @@ SpectralSolver::BackwardTransform( amrex::MultiFab& mf,
                                    const int field_index,
                                    const int i_comp )
 {
-    WX_PROFILE("SpectralSolver::BackwardTransform");
+    WARPX_PROFILE("SpectralSolver::BackwardTransform");
     field_data.BackwardTransform( mf, field_index, i_comp );
 }
 
 void
 SpectralSolver::pushSpectralFields(){
-    WX_PROFILE("SpectralSolver::pushSpectralFields");
+    WARPX_PROFILE("SpectralSolver::pushSpectralFields");
     // Virtual function: the actual function used here depends
     // on the sub-class of `SpectralBaseAlgorithm` that was
     // initialized in the constructor of `SpectralSolver`

@@ -14,8 +14,8 @@ using namespace amrex;
 void
 WarpX::LoadBalance ()
 {
-    WX_PROFILE_REGION("LoadBalance");
-    WX_PROFILE("WarpX::LoadBalance()");
+    WARPX_PROFILE_REGION("LoadBalance");
+    WARPX_PROFILE("WarpX::LoadBalance()");
 
     AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
 

@@ -9,12 +9,12 @@
 
 #include <AMReX_BLProfiler.H>
 
-WX_PROFILE_VAR_NS WX_PROFILE_VAR_START WX_PROFILE_VAR_STOP WX_PROFILE  WX_PROFILE_REGION
+WARPX_PROFILE_VAR_NS WARPX_PROFILE_VAR_START WARPX_PROFILE_VAR_STOP WARPX_PROFILE  WARPX_PROFILE_REGION
 
 void wrapper_profile_var_ns(std::string function_name, std::string variable_name,
                             int verbose=0, bool synchronize=false)
 {
-    WX_PROFILE_VAR_NS(function_name, blp_copy);
+    WARPX_PROFILE_VAR_NS(function_name, blp_copy);
 }
 
 #endif // WARPX_PROFILER_WRAPPER_H_

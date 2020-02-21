@@ -126,7 +126,7 @@ void ConvertLabParamsToBoost()
  * zmin and zmax.
  */
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax){
-    WX_PROFILE("WarpX::NullifyMF()");
+    WARPX_PROFILE("WarpX::NullifyMF()");
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif

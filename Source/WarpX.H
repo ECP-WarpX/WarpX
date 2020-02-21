@@ -173,7 +173,7 @@ public:
     static int do_subcycling;
 
     static bool exchange_all_guard_cells;
-    static int do_device_synchronize_before_profile;
+    static bool do_device_synchronize_before_profile;
 
     // buffers
     static int n_field_gather_buffer;       //! in number of cells from the edge (identical for each dimension)

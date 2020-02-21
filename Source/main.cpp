@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 
     ConvertLabParamsToBoost();
 
-    WX_PROFILE_VAR("main()", pmain);
+    WARPX_PROFILE_VAR("main()", pmain);
 
     const Real strt_total = amrex::second();
 
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    WX_PROFILE_VAR_STOP(pmain);
+    WARPX_PROFILE_VAR_STOP(pmain);
 
     amrex::Finalize();
 #if defined AMREX_USE_MPI

@@ -169,7 +169,7 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
 void
 PhysicalParticleContainer::ConvertUnits(ConvertDirection convert_direction)
 {
-    WX_PROFILE("PPC::ConvertUnits()");
+    WARPX_PROFILE("PPC::ConvertUnits()");
 
     // Compute conversion factor
     Real factor = 1;

@@ -17,11 +17,11 @@ static void doDeviceSynchronize(int do_device_synchronize)
         amrex::Gpu::synchronize();
 }
 
-#define WX_PROFILE(fname) doDeviceSynchronize(WarpX::do_device_synchronize_before_profile); BL_PROFILE(fname)
-#define WX_PROFILE_VAR(fname, vname) doDeviceSynchronize(WarpX::do_device_synchronize_before_profile); BL_PROFILE_VAR(fname, vname)
-#define WX_PROFILE_VAR_NS(fname, vname) doDeviceSynchronize(WarpX::do_device_synchronize_before_profile); BL_PROFILE_VAR_NS(fname, vname)
-#define WX_PROFILE_VAR_START(vname) doDeviceSynchronize(WarpX::do_device_synchronize_before_profile); BL_PROFILE_VAR_START(vname)
-#define WX_PROFILE_VAR_STOP(vname) doDeviceSynchronize(WarpX::do_device_synchronize_before_profile); BL_PROFILE_VAR_STOP(vname)
-#define WX_PROFILE_REGION(rname) doDeviceSynchronize(WarpX::do_device_synchronize_before_profile); BL_PROFILE_REGION(rname)
+#define WARPX_PROFILE(fname) doDeviceSynchronize(WarpX::do_device_synchronize_before_profile); BL_PROFILE(fname)
+#define WARPX_PROFILE_VAR(fname, vname) doDeviceSynchronize(WarpX::do_device_synchronize_before_profile); BL_PROFILE_VAR(fname, vname)
+#define WARPX_PROFILE_VAR_NS(fname, vname) doDeviceSynchronize(WarpX::do_device_synchronize_before_profile); BL_PROFILE_VAR_NS(fname, vname)
+#define WARPX_PROFILE_VAR_START(vname) doDeviceSynchronize(WarpX::do_device_synchronize_before_profile); BL_PROFILE_VAR_START(vname)
+#define WARPX_PROFILE_VAR_STOP(vname) doDeviceSynchronize(WarpX::do_device_synchronize_before_profile); BL_PROFILE_VAR_STOP(vname)
+#define WARPX_PROFILE_REGION(rname) doDeviceSynchronize(WarpX::do_device_synchronize_before_profile); BL_PROFILE_REGION(rname)
 
 #endif // WARPX_PROFILERWRAPPER_H_
