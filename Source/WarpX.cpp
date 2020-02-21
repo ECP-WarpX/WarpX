@@ -89,7 +89,7 @@ int  WarpX::sort_int = 4;
 #else
 int  WarpX::sort_int = -1;
 #endif
-amrex::IntVect WarpX::sort_bin_size = 4*amrex::IntVect::TheUnitVector();
+amrex::IntVect WarpX::sort_bin_size(4,4,4);
 
 bool WarpX::do_back_transformed_diagnostics = false;
 std::string WarpX::lab_data_directory = "lab_frame_data";
@@ -484,9 +484,11 @@ WarpX::ReadParameters ()
         pp.query("sort_int", sort_int);
 
         Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
-        pp.queryarr("sort_bin_size", vect_sort_bin_size);
-        for (int i=0; i<AMREX_SPACEDIM; i++)
-            sort_bin_size[i] = vect_sort_bin_size[i];
+        bool sort_bin_size_is_specified = pp.queryarr("sort_bin_size", vect_sort_bin_size);
+        if (sort_bin_size_is_specified){
+            for (int i=0; i<AMREX_SPACEDIM; i++)
+                sort_bin_size[i] = vect_sort_bin_size[i];
+        }
 
         double quantum_xi;
         int quantum_xi_is_specified = pp.query("quantum_xi", quantum_xi);
