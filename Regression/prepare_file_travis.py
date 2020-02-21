@@ -103,7 +103,7 @@ if ci_python_main:
 
 if ci_single_precision:
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], True)
-    
+
 if ci_rz_and_nompi:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
     block1 = select_tests(test_blocks, ['USE_RZ=TRUE'], True)
