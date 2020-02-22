@@ -1,3 +1,9 @@
+/* Copyright 2019-2020 David Grote
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_HANKEL_TRANSFORM_H_
 #define WARPX_HANKEL_TRANSFORM_H_
 

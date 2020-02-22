@@ -1,3 +1,9 @@
+/* Copyright 2020 David Grote
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 /* #include <WarpXConst.H> */
 #include <SpectralBinomialFilter.H>
 /* #include <cmath> */

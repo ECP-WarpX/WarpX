@@ -1,3 +1,9 @@
+/* Copyright 2019 David Grote
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 /* -------------------------------------------------------------------------
 ! program to calculate the first zeroes (root abscissas) of the first 
 ! kind bessel function of integer order n using the subroutine rootj.

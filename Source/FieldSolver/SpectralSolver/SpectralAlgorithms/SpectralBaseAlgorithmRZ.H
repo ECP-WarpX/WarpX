@@ -1,3 +1,9 @@
+/* Copyright 2019 David Grote
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_SPECTRAL_BASE_ALGORITHM_RZ_H_
 #define WARPX_SPECTRAL_BASE_ALGORITHM_RZ_H_
 

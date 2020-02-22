@@ -1,3 +1,9 @@
+/* Copyright 2019-2020 David Grote
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_SPECTRAL_FIELD_DATA_HANKEL_H_
 #define WARPX_SPECTRAL_FIELD_DATA_HANKEL_H_
 
