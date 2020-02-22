@@ -172,8 +172,8 @@ public:
 
     static int do_subcycling;
 
-    static bool exchange_all_guard_cells;
     static bool do_device_synchronize_before_profile;
+    static bool safe_guard_cells;
 
     // buffers
     static int n_field_gather_buffer;       //! in number of cells from the edge (identical for each dimension)
