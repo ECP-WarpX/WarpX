@@ -10,12 +10,6 @@
 #include <HankelTransform.H>
 #include <SpectralKSpace.H>
 
-using namespace amrex;
-
-// `KFilterArray` holds a one 1D array ("ManagedVector") that
-// implements the filter.
-using KFilterArray = Gpu::ManagedVector<Real>;
-
 /**
  * \brief Class that sets up binomial filtering in k space
  *
@@ -24,13 +18,18 @@ using KFilterArray = Gpu::ManagedVector<Real>;
 class SpectralBinomialFilter
 {
     public:
+
+        // `KFilterArray` holds a one 1D array ("ManagedVector") that
+        // implements the filter.
+        using KFilterArray = amrex::Gpu::ManagedVector<amrex::Real>;
+
         SpectralBinomialFilter() {};
         void InitFilterArrayR(HankelTransform::RealVector const & kr,
-                              Real const dr,
+                              amrex::Real const dr,
                               int const npasses,
                               bool const compensation);
         void InitFilterArrayZ(RealKVector const & kz,
-                              Real const dz,
+                              amrex::Real const dz,
                               int const npasses,
                               bool const compensation);
 

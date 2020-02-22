@@ -20,19 +20,20 @@
 class SpectralFieldDataHankel
 {
 
-    // Define the FFTplans type, which holds one fft plan per box
-    // (plans are only initialized for the boxes that are owned by
-    // the local MPI rank)
-#ifdef AMREX_USE_GPU
-    using FFTplans = amrex::LayoutData<cufftHandle>;
-#else
-    using FFTplans = amrex::LayoutData<fftw_plan>;
-#endif
-    // Similarly, define the Hankel transformers and filter for each box.
-    using HankelTransformer = amrex::LayoutData<SpectralHankelTransformer>;
-    using BinomialFilter = amrex::LayoutData<SpectralBinomialFilter>;
-
     public:
+
+        // Define the FFTplans type, which holds one fft plan per box
+        // (plans are only initialized for the boxes that are owned by
+        // the local MPI rank)
+#ifdef AMREX_USE_GPU
+        using FFTplans = amrex::LayoutData<cufftHandle>;
+#else
+        using FFTplans = amrex::LayoutData<fftw_plan>;
+#endif
+        // Similarly, define the Hankel transformers and filter for each box.
+        using HankelTransformer = amrex::LayoutData<SpectralHankelTransformer>;
+        using BinomialFilter = amrex::LayoutData<SpectralBinomialFilter>;
+
         SpectralFieldDataHankel(const amrex::BoxArray& realspace_ba,
                                 const SpectralHankelKSpace& k_space,
                                 const amrex::DistributionMapping& dm,

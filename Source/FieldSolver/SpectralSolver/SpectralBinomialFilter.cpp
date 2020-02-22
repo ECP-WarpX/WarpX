@@ -6,7 +6,9 @@
  */
 /* #include <WarpXConst.H> */
 #include <SpectralBinomialFilter.H>
-/* #include <cmath> */
+#include <AMReX_REAL.H>
+
+#include <cmath>
 
 /* \brief Initialize the radial filter array */
 void
