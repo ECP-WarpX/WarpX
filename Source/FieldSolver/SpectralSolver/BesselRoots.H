@@ -5,21 +5,21 @@
  * License: BSD-3-Clause-LBNL
  */
 /* -------------------------------------------------------------------------
-! program to calculate the first zeroes (root abscissas) of the first 
+! program to calculate the first zeroes (root abscissas) of the first
 ! kind bessel function of integer order n using the subroutine rootj.
 ! --------------------------------------------------------------------------
 ! sample run:
 !
 ! (calculate the first 10 zeroes of 1st kind bessel function of order 2).
-! 
+!
 ! zeroes of bessel function of order: 2
-! 
-! number of calculated zeroes: 10 
+!
+! number of calculated zeroes: 10
 !
 ! table of root abcissas (5 items per line)
 !    5.135622    8.417244   11.619841   14.795952   17.959819
     21.116997   24.270112   27.420574   30.569204   33.716520
-! 
+!
 ! table of error codes (5 items per line)
 !   0   0   0   0   0
 !   0   0   0   0   0
@@ -123,7 +123,7 @@ void GetBesselRoots(int n, int nk, HankelTransform::RealVector& roots, amrex::Ve
 }
 
 void SecantRootFinder(int n, int nitmx, amrex::Real tol, amrex::Real *zeroj, int *ier) {
-  
+
     amrex::Real p0, p1, q0, q1, dp, p;
     amrex::Real c[2];
 
