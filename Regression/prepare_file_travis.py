@@ -74,7 +74,7 @@ test_blocks =  [ match[0] for match in re.findall(select_test_regex, text) ]
 text = re.sub( select_test_regex, '', text )
 
 def select_tests(blocks, match_string_list, do_test):
-    # Remove or keep tests according to do_test variable
+    """Remove or keep tests from list in WarpX-tests.ini according to do_test variable"""
     if do_test not in [True, False]:
         raise ValueError("do_test must be True or False")
     if (do_test == False):
