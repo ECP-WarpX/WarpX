@@ -416,7 +416,6 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
 void
 MultiParticleContainer::SortParticlesByBin (amrex::IntVect bin_size)
 {
-    Print()<<"bin_size "<<bin_size<<'\n';
     for (auto& pc : allcontainers) {
         pc->SortParticlesByBin(bin_size);
     }
