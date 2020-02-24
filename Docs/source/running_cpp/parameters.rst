@@ -1041,10 +1041,10 @@ Diagnostics and output
         a portion of particles that will be dumped.
         `t` represents the physical time in seconds during the simulation.
         `x, y, z` represent particle positions in the unit of meter.
-        `ux, uy, uz` represent particle proper velocities
-        :math:`\gamma v`, where
+        `ux, uy, uz` represent particle velocities in the unit of
+        :math:`\gamma v/c`, where
         :math:`\gamma` is the Lorentz factor,
-        :math:`v` is the particle velocity.
+        :math:`v/c` is the particle velocity normalized by the speed of light.
         E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
         positions `x` greater than `0`, and those having velocity `uz` less than 10,
         will be dumped.

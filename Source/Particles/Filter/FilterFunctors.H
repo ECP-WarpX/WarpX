@@ -11,6 +11,7 @@
 #include "AMReX_Random.H"
 #include "WarpXParticleContainer.H"
 #include "WarpX.H"
+#include "WarpXConst.H"
 
 using SuperParticleType = typename WarpXParticleContainer::SuperParticleType;
 
@@ -95,9 +96,9 @@ struct ParserFilter
         amrex::Real x  = p.pos(0);
         amrex::Real y  = p.pos(1);
         amrex::Real z  = p.pos(2);
-        amrex::Real ux = p.rdata(PIdx::ux);
-        amrex::Real uy = p.rdata(PIdx::uy);
-        amrex::Real uz = p.rdata(PIdx::uz);
+        amrex::Real ux = p.rdata(PIdx::ux)/PhysConst::c;
+        amrex::Real uy = p.rdata(PIdx::uy)/PhysConst::c;
+        amrex::Real uz = p.rdata(PIdx::uz)/PhysConst::c;
         if ( (*function_partparser)(t,x,y,z,ux,uy,uz) != 0.0 ) return 1;
         else return 0;
     }
