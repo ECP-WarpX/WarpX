@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 
 # Concatenation of tests in each of the 6 elements in Travis matrix
-f = open('travis_matrix_elements.txt') ; matrix_elements = f.readlines() ; f.close()
+f = open('./travis_matrix_elements.txt') ; matrix_elements = f.readlines() ; f.close()
 # All tests read by prepare_travis_tests.py
-f = open('travis_all_tests.txt') ; all_tests = f.readlines() ; f.close()
+f = open('./travis_all_tests.txt') ; all_tests = f.readlines() ; f.close()
 
 # Now let's make sure these two are equal
 
@@ -19,4 +19,8 @@ for element in elements_to_remove:
 # Sort lists, and make sure they are equal
 matrix_elements.sort()
 all_tests.sort()
+
+print(matrix_elements)
+print(all_tests)
+
 assert( matrix_elements == all_tests )

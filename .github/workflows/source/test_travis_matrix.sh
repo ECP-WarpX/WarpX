@@ -21,9 +21,9 @@ rm travis-tests.ini
     python travis_matrix.py &&
         rm travis_all_tests.txt travis_matrix_elements.txt travis_matrix.py &&
         echo "test passed" &&
-        exit 1
+        exit 0
 } || {
     rm travis_all_tests.txt travis_matrix_elements.txt travis_matrix.py &&
         echo "tests failed" &&
-        exit 0
+        exit 1
 }
