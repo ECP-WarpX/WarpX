@@ -114,9 +114,9 @@ void ParticleHistogram::ComputeDiags (int step)
             auto const x  = p.pos(0);
             auto const y  = p.pos(1);
             auto const z  = p.pos(2);
-            auto const ux = p.rdata(PIdx::ux);
-            auto const uy = p.rdata(PIdx::uy);
-            auto const uz = p.rdata(PIdx::uz);
+            auto const ux = p.rdata(PIdx::ux)/PhysConst::c;
+            auto const uy = p.rdata(PIdx::uy)/PhysConst::c;
+            auto const uz = p.rdata(PIdx::uz)/PhysConst::c;
             auto const f = (*fun_partparser)(t,x,y,z,ux,uy,uz);
             auto const f1 = m_bin_min + m_bin_size*i;
             auto const f2 = m_bin_min + m_bin_size*(i+1);
