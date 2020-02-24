@@ -91,7 +91,7 @@ void ParticleHistogram::ComputeDiags (int step)
     int i_s;
     for ( int i = 0; i < nSpecies; ++i )
     {
-        if ( m_species_name == species_names[i] ) { i_s = i; }
+        if ( m_species_name == species_names[i] ) i_s = i;
     }
 
     // get WarpXParticleContainer class object
@@ -118,15 +118,13 @@ void ParticleHistogram::ComputeDiags (int step)
             auto const f = (*fun_partparser)(t,x,y,z,ux,uy,uz);
             auto const f1 = m_bin_min + m_bin_size*i;
             auto const f2 = m_bin_min + m_bin_size*(i+1);
-            if ( f > f1 && f < f2 )
-            {
+            if ( f > f1 && f < f2 ) {
                 if ( m_norm == "unity_particle_weight" )
-                { return 1.0; }
+                    return 1.0;
                 else
-                { return w; }
-            }
-            else
-            { return 0.0; }
+                    return w;
+            } else
+                return 0.0;
         });
         // reduced sum over mpi ranks
         ParallelDescriptor::ReduceRealSum
@@ -139,12 +137,12 @@ void ParticleHistogram::ComputeDiags (int step)
         for ( int i = 0; i < m_bin_num; ++i )
         {
             if ( m_data[i] > f_max )
-            { f_max = m_data[i]; }
+                f_max = m_data[i];
         }
         for ( int i = 0; i < m_bin_num; ++i )
         {
             if ( f_max > std::numeric_limits<Real>::min() )
-            { m_data[i] /= f_max; }
+                m_data[i] /= f_max;
         }
     }
     else if ( m_norm == "area_to_unity" )
@@ -157,7 +155,7 @@ void ParticleHistogram::ComputeDiags (int step)
         for ( int i = 0; i < m_bin_num; ++i )
         {
             if ( f_area > std::numeric_limits<Real>::min() )
-            { m_data[i] /= f_area; }
+                m_data[i] /= f_area;
         }
     }
     else if ( m_norm == "default" )
