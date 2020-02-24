@@ -29,3 +29,5 @@ jobs:
       run: |
         sudo apt-get install -y --no-install-recommends doxygen
         .github/workflows/source/doxygen
+    - name: TravisCI test matrix runs all tests exactly once
+      run: .github/workflows/source/test_travis_matrix.sh
