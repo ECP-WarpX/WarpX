@@ -47,9 +47,6 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
                 std::ofstream::out | std::ofstream::app);
             // write header row
             ofs << "#";
-            ofs << "histogram_function(t,x,y,z,ux,uy,uz) = ";
-            ofs << function_string << std::endl;
-            ofs << "#";
             ofs << "[1]step()";
             ofs << m_sep;
             ofs << "[2]time(s)";
