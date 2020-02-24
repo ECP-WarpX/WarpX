@@ -1256,10 +1256,10 @@ Diagnostics and output
         which is the histogram function.
         `t` represents the physical time in seconds during the simulation.
         `x, y, z` represent particle positions in the unit of meter.
-        `ux, uy, uz` represent the particle proper velocities
-        :math:`\gamma v`, where
+        `ux, uy, uz` represent the particle velocities in the unit of
+        :math:`\gamma v/c`, where
         :math:`\gamma` is the Lorentz factor,
-        :math:`v` is the particle velocity.
+        :math:`v/c` is the particle velocity normalized by the speed of light.
         E.g.
         `x` produces the position (density) distribution in `x`.
         `ux` produces the velocity distribution in `x`,
