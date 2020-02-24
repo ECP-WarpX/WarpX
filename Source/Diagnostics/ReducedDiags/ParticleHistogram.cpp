@@ -57,7 +57,9 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
             {
                 ofs << m_sep;
                 ofs << "[" + std::to_string(3+i) + "]";
-                ofs << "bin" + std::to_string(1+i) + "()";
+                Real b = m_bin_min + m_bin_size*(Real(i)+0.5);
+                ofs << "bin" + std::to_string(1+i)
+                             + "=" + std::to_string(b) + "()";
             }
             ofs << std::endl;
             // close file
