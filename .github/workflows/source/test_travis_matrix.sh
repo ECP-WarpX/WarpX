@@ -1,6 +1,6 @@
 #! /usr/bin/env sh
 
-set -eu -o pipefail
+set -euxo pipefail
 
 cp .github/workflows/source/travis_matrix.py Regression/
 cd Regression/
