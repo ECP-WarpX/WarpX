@@ -331,7 +331,7 @@ def read_reduced_diags_histogram(filename, delimiter=' '):
     '''
     Modified based on read_reduced_diags
     Two extra return objects:
-    - bin_values: the values of bins
+    - bin_value: the values of bins
     - bin_data: the histogram data values of bins
     '''
     # Read header line
@@ -349,9 +349,9 @@ def read_reduced_diags_histogram(filename, delimiter=' '):
     metadata_dict['units']  = {key: field_units[i]  for i, key in enumerate(field_names)}
     metadata_dict['column'] = {key: field_column[i] for i, key in enumerate(field_names)}
     # Save bin values
-    bin_values = field_bin[2:]
-    bin_data   = data[:,2:]
-    return metadata_dict, data_dict, bin_values, bin_data
+    bin_value = field_bin[2:]
+    bin_data  = data[:,2:]
+    return metadata_dict, data_dict, bin_value, bin_data
 
 if __name__ == "__main__":
     data = read_lab_snapshot("lab_frame_data/snapshot00012", "lab_frame_data/Header");
