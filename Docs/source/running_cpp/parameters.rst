@@ -1024,7 +1024,7 @@ Diagnostics and output
     This is ``-1`` (disabled) by default.
 
     * ``<species_name>.random_fraction`` (`float`) optional
-        If provided ``<species_name>.uniform_stride = a``,
+        If provided ``<species_name>.random_fraction = a``,
         only `a` fraction of the particle data of this species will be dumped randomly,
         i.e. if `rand() < a`, this particle will be dumped,
         where `rand()` denotes a random number generator.
