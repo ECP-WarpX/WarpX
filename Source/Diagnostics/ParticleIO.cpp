@@ -134,23 +134,17 @@ MultiParticleContainer::WritePlotFile (const std::string& dir) const
                                              pc->m_random_fraction);
             UniformFilter const uniform_filter(pc->m_do_uniform_filter,
                                                pc->m_uniform_stride);
-            ParserFilter const parser_filter(pc->m_do_parser_filter);
+            ParserFilter const parser_filter(pc->m_do_parser_filter,i);
 
             // real_names contains a list of all particle attributes.
             // pc->plot_flags is 1 or 0, whether quantity is dumped or not.
-            amrex::Real const t = WarpX::GetInstance().gett_new(0);
-            auto & mypc   = WarpX::GetInstance().GetPartContainer();
-            auto & myspc  = mypc.GetParticleContainer(i);
-            ParserWrapper<7> * function_partparser =
-                myspc.m_particle_filter_parser.get();
             pc->WritePlotFile(
                 dir, species_names[i],
                 pc->plot_flags, int_flags,
                 real_names, int_names,
                 [=] (const SuperParticleType& p)
                 {
-                    return random_filter(p) * uniform_filter(p) *
-                           parser_filter(p,t,function_partparser);
+                    return random_filter(p) * uniform_filter(p) * parser_filter(p);
                 });
 
             // Convert momentum back to WarpX units

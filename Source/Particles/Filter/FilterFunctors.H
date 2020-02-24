@@ -81,7 +81,14 @@ struct ParserFilter
     /** constructor
      * \param a_is_active whether the test is active
      */
-    ParserFilter(bool a_is_active) : m_is_active(a_is_active) {};
+    ParserFilter(bool a_is_active, int a_species_index)
+    : m_is_active(a_is_active), m_species_index(a_species_index)
+    {
+        m_t = WarpX::GetInstance().gett_new(0);
+        auto & mypc   = WarpX::GetInstance().GetPartContainer();
+        auto & myspc  = mypc.GetParticleContainer(m_species_index);
+        m_function_partparser = myspc.m_particle_filter_parser.get();
+    };
 
     /**
      * \brief return 1 if the particle is selected by the parser
@@ -89,21 +96,24 @@ struct ParserFilter
      * \return whether or not the particle is selected
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator () (const SuperParticleType& p, const amrex::Real t,
-        ParserWrapper<7> * function_partparser) const noexcept
+    bool operator () (const SuperParticleType& p) const noexcept
     {
         if ( !m_is_active ) return 1;
-        amrex::Real x  = p.pos(0);
-        amrex::Real y  = p.pos(1);
-        amrex::Real z  = p.pos(2);
-        amrex::Real ux = p.rdata(PIdx::ux)/PhysConst::c;
-        amrex::Real uy = p.rdata(PIdx::uy)/PhysConst::c;
-        amrex::Real uz = p.rdata(PIdx::uz)/PhysConst::c;
-        if ( (*function_partparser)(t,x,y,z,ux,uy,uz) != 0.0 ) return 1;
+        amrex::Real const x  = p.pos(0);
+        amrex::Real const y  = p.pos(1);
+        amrex::Real const z  = p.pos(2);
+        amrex::Real const ux = p.rdata(PIdx::ux)/PhysConst::c;
+        amrex::Real const uy = p.rdata(PIdx::uy)/PhysConst::c;
+        amrex::Real const uz = p.rdata(PIdx::uz)/PhysConst::c;
+        if ( (*m_function_partparser)(m_t,x,y,z,ux,uy,uz) != 0.0 ) return 1;
         else return 0;
     }
+public:
+    amrex::Real m_t;
+    ParserWrapper<7> * m_function_partparser;
 private:
     bool m_is_active = false; //! select all particles if false
+    int  m_species_index = 0; //! species index
 };
 
 #endif // FILTERFUNCTORS_H
