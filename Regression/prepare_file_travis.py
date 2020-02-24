@@ -19,7 +19,7 @@ ci_regular_cartesian = os.environ.get('WARPX_CI_REGULAR_CARTESIAN') == 'TRUE'
 ci_psatd = os.environ.get('WARPX_CI_PSATD') == 'TRUE'
 ci_python_main = os.environ.get('WARPX_CI_PYTHON_MAIN') == 'TRUE'
 ci_single_precision = os.environ.get('WARPX_CI_SINGLE_PRECISION') == 'TRUE'
-ci_rz_and_nompi = os.environ.get('WARPX_CI_RZ_AND_NOMPI') == 'TRUE'
+ci_rz_or_nompi = os.environ.get('WARPX_CI_RZ_OR_NOMPI') == 'TRUE'
 ci_qed = os.environ.get('WARPX_CI_QED') == 'TRUE'
 
 # Find the directory in which the tests should be run
@@ -74,7 +74,7 @@ test_blocks =  [ match[0] for match in re.findall(select_test_regex, text) ]
 text = re.sub( select_test_regex, '', text )
 
 def select_tests(blocks, match_string_list, do_test):
-    # Remove or keep tests according to do_test variable
+    """Remove or keep tests from list in WarpX-tests.ini according to do_test variable"""
     if do_test not in [True, False]:
         raise ValueError("do_test must be True or False")
     if (do_test == False):
@@ -104,7 +104,7 @@ if ci_python_main:
 if ci_single_precision:
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT', 'USE_SINGLE_PRECISION_PARTICLES=TRUE'], True)
 
-if ci_rz_and_nompi:
+if ci_rz_or_nompi:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], False)
     block1 = select_tests(test_blocks, ['USE_RZ=TRUE'], True)
     block2 = select_tests(test_blocks, ['useMPI = 0'], True)
