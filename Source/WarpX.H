@@ -169,10 +169,11 @@ public:
     static bool refine_plasma;
 
     static int sort_int;
+    static amrex::IntVect sort_bin_size;
 
     static int do_subcycling;
 
-    static bool exchange_all_guard_cells;
+    static bool safe_guard_cells;
 
     // buffers
     static int n_field_gather_buffer;       //! in number of cells from the edge (identical for each dimension)
@@ -395,7 +396,8 @@ public:
     const amrex::IntVect getngE() const { return guard_cells.ng_alloc_EB; };
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; };
 
-    void InitSpaceChargeField (WarpXParticleContainer& pc);
+    void ComputeSpaceChargeField (bool const reset_fields);
+    void AddSpaceChargeField (WarpXParticleContainer& pc);
     void computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
