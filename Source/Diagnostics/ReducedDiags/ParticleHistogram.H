@@ -40,10 +40,11 @@ public:
     /// bin size
     amrex::Real m_bin_size;
 
-    /// parser
+    /// Parser to read expression for particle quantity from the input file.
+    /// 7 elements are t, x y, z, ux, uy, uz
     std::unique_ptr<ParserWrapper<7>> m_parser;
 
-    /** This funciton computes a histogram of user defined quantity.
+    /** This function computes a histogram of user defined quantity.
      *  \param [in] step current time step.
      */
     virtual void ComputeDiags(int step) override final;

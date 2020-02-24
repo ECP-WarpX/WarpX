@@ -11,7 +11,7 @@
 #include "WarpXUtil.H"
 #include "AMReX_REAL.H"
 #include "AMReX_ParticleReduce.H"
-#include <limits> // numeric_limits<float>::min()
+#include <limits>
 
 using namespace amrex;
 
