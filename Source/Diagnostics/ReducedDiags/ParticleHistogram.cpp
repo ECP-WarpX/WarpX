@@ -72,7 +72,7 @@ void ParticleHistogram::ComputeDiags (int step)
 {
 
     // Judge if the diags should be done
-    if ( (step+1) % m_freq != 0 ) { return; }
+    if ( (step+1) % m_freq != 0 ) return;
 
     // get WarpX class object
     auto & warpx = WarpX::GetInstance();
@@ -121,12 +121,9 @@ void ParticleHistogram::ComputeDiags (int step)
             auto const f1 = m_bin_min + m_bin_size*i;
             auto const f2 = m_bin_min + m_bin_size*(i+1);
             if ( f > f1 && f < f2 ) {
-                if ( m_norm == "unity_particle_weight" )
-                    return 1.0;
-                else
-                    return w;
-            } else
-                return 0.0;
+                if ( m_norm == "unity_particle_weight" ) return 1.0;
+                else return w;
+            } else return 0.0;
         });
         // reduced sum over mpi ranks
         ParallelDescriptor::ReduceRealSum
@@ -138,13 +135,11 @@ void ParticleHistogram::ComputeDiags (int step)
         Real f_max = 0.0;
         for ( int i = 0; i < m_bin_num; ++i )
         {
-            if ( m_data[i] > f_max )
-                f_max = m_data[i];
+            if ( m_data[i] > f_max ) f_max = m_data[i];
         }
         for ( int i = 0; i < m_bin_num; ++i )
         {
-            if ( f_max > std::numeric_limits<Real>::min() )
-                m_data[i] /= f_max;
+            if ( f_max > std::numeric_limits<Real>::min() ) m_data[i] /= f_max;
         }
     }
     else if ( m_norm == "area_to_unity" )
@@ -156,14 +151,11 @@ void ParticleHistogram::ComputeDiags (int step)
         }
         for ( int i = 0; i < m_bin_num; ++i )
         {
-            if ( f_area > std::numeric_limits<Real>::min() )
-                m_data[i] /= f_area;
+            if ( f_area > std::numeric_limits<Real>::min() ) m_data[i] /= f_area;
         }
     }
-    else if ( m_norm == "default" )
-    { /* do nothing */ }
-    else if ( m_norm == "unity_particle_weight" )
-    { /* do nothing */ }
+    else if ( m_norm == "default" ) { /* do nothing */ }
+    else if ( m_norm == "unity_particle_weight" ) { /* do nothing */ }
     else { Abort("Unknown ParticleHistogram normalization type."); }
 
 }
