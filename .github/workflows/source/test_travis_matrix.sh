@@ -3,8 +3,6 @@
 cp .github/workflows/source/travis_matrix.py Regression/
 cd Regression/
 
-rm -f travis_all_tests.txt travis_matrix_elements.txt
-
 # Put the name of all travis tests into a text file
 python prepare_file_travis.py && grep "\[" travis-tests.ini > travis_all_tests.txt
 
@@ -13,15 +11,8 @@ WARPX_CI_REGULAR_CARTESIAN=TRUE python prepare_file_travis.py && grep "\[" travi
 WARPX_CI_PSATD=TRUE             python prepare_file_travis.py && grep "\[" travis-tests.ini >> travis_matrix_elements.txt
 WARPX_CI_PYTHON_MAIN=TRUE       python prepare_file_travis.py && grep "\[" travis-tests.ini >> travis_matrix_elements.txt
 WARPX_CI_SINGLE_PRECISION=TRUE  python prepare_file_travis.py && grep "\[" travis-tests.ini >> travis_matrix_elements.txt
-WARPX_CI_RZ_AND_NOMPI=TRUE      python prepare_file_travis.py && grep "\[" travis-tests.ini >> travis_matrix_elements.txt
+WARPX_CI_RZ_OR_NOMPI=TRUE      python prepare_file_travis.py && grep "\[" travis-tests.ini >> travis_matrix_elements.txt
 WARPX_CI_QED=TRUE               python prepare_file_travis.py && grep "\[" travis-tests.ini >> travis_matrix_elements.txt
-
-rm travis-tests.ini
-
-"echo CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT"
-cat travis_all_tests.txt
-"echo CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT"
-cat travis_matrix_elements.txt
 
 # Check that the resulting lists are equal
 {
