@@ -97,9 +97,11 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     std::string physical_species_s;
     bool species_is_specified = pp.query("species_type", physical_species_s);
     if (species_is_specified){
-        physical_species = SpeciesNames[physical_species_s];
-        charge = SpeciesCharge[physical_species];
-        mass = SpeciesMass[physical_species];
+        physical_species = from_string( physical_species_s );
+        // charge = SpeciesCharge[physical_species];
+        charge = get_charge( physical_species );
+        // mass = SpeciesMass[physical_species];
+        mass = get_mass( physical_species );
     }
     
     // parse charge and mass

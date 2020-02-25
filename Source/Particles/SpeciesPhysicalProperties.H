@@ -9,38 +9,67 @@
 #define WARPX_SPECIESPHYSICALPROPERTIES_H_
 
 #include "WarpXConst.H"
+
 #include <AMReX_REAL.H>
+#include <AMReX_AmrCore.H>
 
 #include <map>
 #include <limits>
 
 enum struct PhysicalSpecies{unspecified=0, electron, positron, photon, hydrogen};
 
-std::map<std::string, PhysicalSpecies> SpeciesNames =
+static PhysicalSpecies from_string(std::string species)
 {
-    { "unspecified", PhysicalSpecies::unspecified },
-    { "electron", PhysicalSpecies::electron },
-    { "positron", PhysicalSpecies::positron },
-    { "photon",   PhysicalSpecies::photon },
-    { "hydrogen", PhysicalSpecies::hydrogen }
-};
+    if( species=="unspecified" )
+        return PhysicalSpecies::unspecified;
+    if( species=="electron" )
+        return PhysicalSpecies::electron;
+    if( species=="positron" )
+        return PhysicalSpecies::positron;
+    if( species=="photon" )
+        return PhysicalSpecies::photon;
+    if( species=="hydrogen" )
+        return PhysicalSpecies::hydrogen;
+    amrex::Abort("unknown PhysicalSpecies");
+    return PhysicalSpecies::unspecified;
+}
 
-std::map<PhysicalSpecies, amrex::Real> SpeciesMass =
+static amrex::Real get_charge (PhysicalSpecies ps)
 {
-    {PhysicalSpecies::unspecified, std::numeric_limits<amrex::Real>::quiet_NaN()},
-    {PhysicalSpecies::electron, PhysConst::m_e},
-    {PhysicalSpecies::positron, PhysConst::m_e},
-    {PhysicalSpecies::photon,   std::numeric_limits<amrex::Real>::quiet_NaN()},
-    {PhysicalSpecies::hydrogen, PhysConst::m_p}
-};
+    switch(ps) {
+    case PhysicalSpecies::unspecified:
+        return std::numeric_limits<amrex::Real>::quiet_NaN();
+    case PhysicalSpecies::electron:
+        return -PhysConst::q_e;
+    case PhysicalSpecies::positron:
+        return PhysConst::q_e;
+    case PhysicalSpecies::photon:
+        return std::numeric_limits<amrex::Real>::quiet_NaN();
+    case PhysicalSpecies::hydrogen:
+        return PhysConst::q_e;
+    default:
+        amrex::Abort("unknown PhysicalSpecies");
+        return 0.;
+    }
+}
 
-std::map<PhysicalSpecies, amrex::Real> SpeciesCharge =
+static amrex::Real get_mass (PhysicalSpecies ps)
 {
-    {PhysicalSpecies::unspecified, std::numeric_limits<amrex::Real>::quiet_NaN()},
-    {PhysicalSpecies::electron, -PhysConst::q_e},
-    {PhysicalSpecies::positron,  PhysConst::q_e},
-    {PhysicalSpecies::photon,    std::numeric_limits<amrex::Real>::quiet_NaN()},
-    {PhysicalSpecies::hydrogen,  PhysConst::q_e}
-};
+    switch(ps) {
+    case PhysicalSpecies::unspecified:
+        return std::numeric_limits<amrex::Real>::quiet_NaN();
+    case PhysicalSpecies::electron:
+        return -PhysConst::m_e;
+    case PhysicalSpecies::positron:
+        return PhysConst::m_e;
+    case PhysicalSpecies::photon:
+        return std::numeric_limits<amrex::Real>::quiet_NaN();
+    case PhysicalSpecies::hydrogen:
+        return PhysConst::m_p;
+    default:
+        amrex::Abort("unknown PhysicalSpecies");
+        return 0.;
+    }
+}
 
 #endif // WARPX_SPECIESPHYSICALPROPERTIES_H_
