@@ -9,7 +9,7 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_PARTICLEHISTOGRAM_H_
 
 #include "ReducedDiags.H"
-#include <WarpXParserWrapper.H>
+#include "WarpXParserWrapper.H"
 #include <fstream>
 
 /**
@@ -31,7 +31,7 @@ public:
     int m_bin_num;
 
     /// selected species index
-    int m_species;
+    int m_selected_species_id;
 
     /// max and min bin values
     amrex::Real m_bin_max;

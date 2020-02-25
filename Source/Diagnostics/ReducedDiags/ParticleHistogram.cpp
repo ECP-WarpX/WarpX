@@ -9,8 +9,8 @@
 #include "WarpX.H"
 #include "WarpXConst.H"
 #include "WarpXUtil.H"
-#include "AMReX_REAL.H"
-#include "AMReX_ParticleReduce.H"
+#include <AMReX_REAL.H>
+#include <AMReX_ParticleReduce.H>
 #include <limits>
 
 using namespace amrex;
@@ -42,7 +42,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     // select species
     for ( int i = 0; i < mypc.nSpecies(); ++i )
     {
-        if ( selected_species_name == species_names[i] ) m_species = i;
+        if ( selected_species_name == species_names[i] )
+        { m_selected_species_id = i; }
     }
 
     // resize data array
@@ -92,7 +93,7 @@ void ParticleHistogram::ComputeDiags (int step)
     auto & mypc = WarpX::GetInstance().GetPartContainer();
 
     // get WarpXParticleContainer class object
-    auto & myspc = mypc.GetParticleContainer(m_species);
+    auto & myspc = mypc.GetParticleContainer(m_selected_species_id);
 
     using PType = typename WarpXParticleContainer::SuperParticleType;
 
