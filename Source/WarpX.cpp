@@ -15,6 +15,7 @@
 #include <WarpXUtil.H>
 #include <WarpXAlgorithmSelection.H>
 #include <WarpX_FDTD.H>
+#include "WarpXProfilerWrapper.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_MultiFabUtil.H>
@@ -84,7 +85,12 @@ bool WarpX::refine_plasma     = false;
 
 int WarpX::num_mirrors = 0;
 
+#ifdef AMREX_USE_GPU
+int  WarpX::sort_int = 4;
+#else
 int  WarpX::sort_int = -1;
+#endif
+amrex::IntVect WarpX::sort_bin_size(AMREX_D_DECL(4,4,4));
 
 bool WarpX::do_back_transformed_diagnostics = false;
 std::string WarpX::lab_data_directory = "lab_frame_data";
@@ -100,7 +106,7 @@ Real WarpX::particle_slice_width_lab = 0.0;
 bool WarpX::do_dynamic_scheduling = true;
 
 int WarpX::do_subcycling = 0;
-bool WarpX::exchange_all_guard_cells = 0;
+bool WarpX::safe_guard_cells = 0;
 
 #if (AMREX_SPACEDIM == 3)
 IntVect WarpX::Bx_nodal_flag(1,0,0);
@@ -138,6 +144,12 @@ int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
 int WarpX::do_nodal = false;
+
+#ifdef AMREX_USE_GPU
+bool WarpX::do_device_synchronize_before_profile = true;
+#else
+bool WarpX::do_device_synchronize_before_profile = false;
+#endif
 
 WarpX* WarpX::m_instance = nullptr;
 
@@ -363,13 +375,15 @@ WarpX::ReadParameters ()
         pp.query("regrid_int", regrid_int);
         pp.query("do_subcycling", do_subcycling);
         pp.query("use_hybrid_QED", use_hybrid_QED);
-        pp.query("exchange_all_guard_cells", exchange_all_guard_cells);
+        pp.query("safe_guard_cells", safe_guard_cells);
         pp.query("override_sync_int", override_sync_int);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
                                          "Subcycling method 1 only works for 2 levels.");
 
         ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
+
+        pp.query("do_device_synchronize_before_profile", do_device_synchronize_before_profile);
 
         // pp.query returns 1 if argument zmax_plasma_to_compute_max_step is
         // specified by the user, 0 otherwise.
@@ -478,6 +492,13 @@ WarpX::ReadParameters ()
         pp.query("n_field_gather_buffer", n_field_gather_buffer);
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
         pp.query("sort_int", sort_int);
+
+        Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
+        bool sort_bin_size_is_specified = pp.queryarr("sort_bin_size", vect_sort_bin_size);
+        if (sort_bin_size_is_specified){
+            for (int i=0; i<AMREX_SPACEDIM; i++)
+                sort_bin_size[i] = vect_sort_bin_size[i];
+        }
 
         double quantum_xi;
         int quantum_xi_is_specified = pp.query("quantum_xi", quantum_xi);
@@ -806,7 +827,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         maxwell_fdtd_solver_id,
         maxLevel(),
         WarpX::v_galilean,
-        exchange_all_guard_cells);
+        safe_guard_cells);
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
         n_current_deposition_buffer = 1;

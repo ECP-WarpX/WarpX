@@ -30,7 +30,7 @@ using namespace amrex;
 void
 WarpX::Evolve (int numsteps)
 {
-    BL_PROFILE("WarpX::Evolve()");
+    WARPX_PROFILE("WarpX::Evolve()");
 
     Real cur_time = t_new[0];
     static int last_plot_file_step = 0;
@@ -207,7 +207,7 @@ WarpX::Evolve (int numsteps)
         bool to_sort = (sort_int > 0) && ((step+1) % sort_int == 0);
         if (to_sort) {
             amrex::Print() << "re-sorting particles \n";
-            mypc->SortParticlesByCell();
+            mypc->SortParticlesByBin(sort_bin_size);
         }
 
         amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
@@ -427,6 +427,8 @@ WarpX::OneStep_nosub (Real cur_time)
         }
         // E and B are up-to-date in the domain, but all guard cells are
         // outdated.
+        if ( safe_guard_cells )
+            FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
 #endif
     }
 }
@@ -545,6 +547,8 @@ WarpX::OneStep_sub1 (Real curtime)
         FillBoundaryE(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
     }
 
+    if ( safe_guard_cells )
+        FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
     FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 
     // v) Push the fields on the coarse patch and mother grid
@@ -585,7 +589,11 @@ WarpX::OneStep_sub1 (Real curtime)
             FillBoundaryF(coarse_lev, PatchType::fine, IntVect::TheZeroVector());
         }
         DampPML(coarse_lev, PatchType::fine);
+        if ( safe_guard_cells )
+            FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
     }
+    if ( safe_guard_cells )
+        FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 }
 
 void
