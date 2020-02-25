@@ -8,7 +8,6 @@
  */
 #include <WarpX.H>
 #include <WarpXUtil.H>
-#include "WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
@@ -35,7 +34,7 @@ int main(int argc, char* argv[])
 
     ConvertLabParamsToBoost();
 
-    WARPX_PROFILE_VAR("main()", pmain);
+    BL_PROFILE_VAR("main()", pmain);
 
     const Real strt_total = amrex::second();
 
@@ -56,7 +55,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    WARPX_PROFILE_VAR_STOP(pmain);
+    BL_PROFILE_VAR_STOP(pmain);
 
     amrex::Finalize();
 #if defined AMREX_USE_MPI

@@ -30,7 +30,7 @@ using namespace amrex;
 void
 WarpX::EvolveEM (int numsteps)
 {
-    WARPX_PROFILE("WarpX::EvolveEM()");
+    BL_PROFILE("WarpX::EvolveEM()");
 
     Real cur_time = t_new[0];
     static int last_plot_file_step = 0;

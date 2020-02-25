@@ -125,7 +125,7 @@ WriteOpenPMDFields( const std::string& filename,
                   const MultiFab& mf, const Geometry& geom,
                   const int iteration, const double time )
 {
-  WARPX_PROFILE("WriteOpenPMDFields()");
+  BL_PROFILE("WriteOpenPMDFields()");
 
   const int ncomp = mf.nComp();
 

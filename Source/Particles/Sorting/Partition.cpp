@@ -46,7 +46,7 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
     iMultiFab const* gather_masks,
     RealVector& uxp, RealVector& uyp, RealVector& uzp, RealVector& wp)
 {
-    WARPX_PROFILE("PPC::Evolve::partition");
+    BL_PROFILE("PPC::Evolve::partition");
 
     // Initialize temporary arrays
     Gpu::DeviceVector<int> inexflag;

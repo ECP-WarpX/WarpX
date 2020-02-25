@@ -494,7 +494,7 @@ MultiParticleContainer
                    Vector<WarpXParticleContainer::DiagnosticParticleData>& parts) const
 {
 
-    WARPX_PROFILE("MultiParticleContainer::GetLabFrameData");
+    BL_PROFILE("MultiParticleContainer::GetLabFrameData");
 
     // Loop over particle species
     for (int i = 0; i < nspecies_back_transformed_diagnostics; ++i){
@@ -639,7 +639,7 @@ MultiParticleContainer::getSpeciesID (std::string product_str)
 void
 MultiParticleContainer::doFieldIonization ()
 {
-    WARPX_PROFILE("MPC::doFieldIonization");
+    BL_PROFILE("MPC::doFieldIonization");
 
     // Loop over all species.
     // Ionized particles in pc_source create particles in pc_product
@@ -684,7 +684,7 @@ MultiParticleContainer::doFieldIonization ()
 void
 MultiParticleContainer::doCoulombCollisions ()
 {
-    WARPX_PROFILE("MPC::doCoulombCollisions");
+    BL_PROFILE("MPC::doCoulombCollisions");
 
     for (int i = 0; i < ncollisions; ++i)
     {

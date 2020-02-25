@@ -43,7 +43,7 @@ WarpX::DampPML (int lev, PatchType patch_type)
 {
     if (!do_pml) return;
 
-    WARPX_PROFILE("WarpX::DampPML()");
+    BL_PROFILE("WarpX::DampPML()");
 
     if (pml[lev]->ok())
     {
@@ -165,7 +165,7 @@ WarpX::DampJPML (int lev, PatchType patch_type)
     if (!do_pml) return;
     if (!do_pml_j_damping) return;
 
-    WARPX_PROFILE("WarpX::DampJPML()");
+    BL_PROFILE("WarpX::DampJPML()");
 
     if (pml[lev]->ok())
     {

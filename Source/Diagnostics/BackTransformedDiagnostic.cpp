@@ -33,7 +33,7 @@ namespace
       Should be run only by the root process.
     */
     void output_create(const std::string& file_path) {
-        WARPX_PROFILE("output_create");
+        BL_PROFILE("output_create");
         hid_t file = H5Fcreate(file_path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         if (file < 0) {
             amrex::Abort("Error: could not create file at " + file_path);
@@ -84,7 +84,7 @@ namespace
     void output_write_metadata(const std::string& file_path,
                                const int istep, const Real time, const Real dt)
     {
-        WARPX_PROFILE("output_write_metadata");
+        BL_PROFILE("output_write_metadata");
         hid_t file = H5Fopen(file_path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 
         write_string_attribute(file, "software", "warpx");
@@ -120,7 +120,7 @@ namespace
     void output_create_field(const std::string& file_path, const std::string& field_path,
                              const unsigned nx, const unsigned ny, const unsigned nz)
     {
-        WARPX_PROFILE("output_create_field");
+        BL_PROFILE("output_create_field");
 
         // Open the output.
         hid_t file = H5Fopen(file_path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
@@ -180,7 +180,7 @@ namespace
     long output_resize_particle_field(const std::string& file_path, const std::string& field_path,
                                       const long num_to_add)
     {
-        WARPX_PROFILE("output_resize_particle_field");
+        BL_PROFILE("output_resize_particle_field");
 
         // Open the output.
         hid_t file = H5Fopen(file_path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
@@ -219,7 +219,7 @@ namespace
     void output_write_particle_field(const std::string& file_path, const std::string& field_path,
                                      const Real* data_ptr, const long count, const long index)
     {
-        WARPX_PROFILE("output_write_particle_field");
+        BL_PROFILE("output_write_particle_field");
 
         MPI_Comm comm = MPI_COMM_WORLD;
         MPI_Info info = MPI_INFO_NULL;
@@ -299,7 +299,7 @@ namespace
     */
     void output_create_particle_field(const std::string& file_path, const std::string& field_path)
     {
-        WARPX_PROFILE("output_create_particle_field");
+        BL_PROFILE("output_create_particle_field");
 
         MPI_Comm comm = MPI_COMM_WORLD;
         MPI_Info info = MPI_INFO_NULL;
@@ -350,7 +350,7 @@ namespace
                             const int lo_x, const int lo_y, const int lo_z)
     {
 
-        WARPX_PROFILE("output_write_field");
+        BL_PROFILE("output_write_field");
 
         MPI_Comm comm = MPI_COMM_WORLD;
         MPI_Info info = MPI_INFO_NULL;
@@ -539,7 +539,7 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
 {
 
 
-    WARPX_PROFILE("BackTransformedDiagnostic::BackTransformedDiagnostic");
+    BL_PROFILE("BackTransformedDiagnostic::BackTransformedDiagnostic");
 
     AMREX_ALWAYS_ASSERT(WarpX::do_back_transformed_fields or
                         WarpX::do_back_transformed_particles);
@@ -685,7 +685,7 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
 
 void BackTransformedDiagnostic::Flush(const Geometry& geom)
 {
-    WARPX_PROFILE("BackTransformedDiagnostic::Flush");
+    BL_PROFILE("BackTransformedDiagnostic::Flush");
 
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::NoFabHeader_v1);
@@ -774,7 +774,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
                   const MultiParticleContainer& mypc,
                   const Geometry& geom, const Real t_boost, const Real dt) {
 
-    WARPX_PROFILE("BackTransformedDiagnostic::writeLabFrameData");
+    BL_PROFILE("BackTransformedDiagnostic::writeLabFrameData");
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::NoFabHeader_v1);
 
@@ -1004,7 +1004,7 @@ BackTransformedDiagnostic::
 writeParticleData(const WarpXParticleContainer::DiagnosticParticleData& pdata,
                   const std::string& name, const int i_lab)
 {
-    WARPX_PROFILE("BackTransformedDiagnostic::writeParticleData");
+    BL_PROFILE("BackTransformedDiagnostic::writeParticleData");
 
     std::string field_name;
     std::ofstream ofs;
@@ -1053,7 +1053,7 @@ void
 BackTransformedDiagnostic::
 writeMetaData ()
 {
-    WARPX_PROFILE("BackTransformedDiagnostic::writeMetaData");
+    BL_PROFILE("BackTransformedDiagnostic::writeMetaData");
 
     if (ParallelDescriptor::IOProcessor()) {
         const std::string fullpath = WarpX::lab_data_directory + "/snapshots";
