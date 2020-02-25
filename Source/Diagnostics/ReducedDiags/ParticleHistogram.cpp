@@ -34,6 +34,18 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     m_parser.reset(new ParserWrapper<7>(
         makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
 
+    // get MultiParticleContainer class object
+    auto & mypc = WarpX::GetInstance().GetPartContainer();
+    // get number of species (int)
+    auto const nSpecies = mypc.nSpecies();
+    // get species names (std::vector<std::string>)
+    auto const species_names = mypc.GetSpeciesNames();
+    // select species
+    for ( int i = 0; i < nSpecies; ++i )
+    {
+        if ( m_species_name == species_names[i] ) m_species = i;
+    }
+
     // resize data array
     m_data.resize(m_bin_num,0.0);
 
@@ -74,30 +86,14 @@ void ParticleHistogram::ComputeDiags (int step)
     // Judge if the diags should be done
     if ( (step+1) % m_freq != 0 ) return;
 
-    // get WarpX class object
-    auto & warpx = WarpX::GetInstance();
+    // get time at level 0
+    auto const t = WarpX::GetInstance().gett_new(0);
 
     // get MultiParticleContainer class object
-    auto & mypc = warpx.GetPartContainer();
-
-    // get number of species (int)
-    auto const nSpecies = mypc.nSpecies();
-
-    // get species names (std::vector<std::string>)
-    auto const species_names = mypc.GetSpeciesNames();
-
-    // get time at level 0
-    auto const t = warpx.gett_new(0);
-
-    // select species
-    int i_s;
-    for ( int i = 0; i < nSpecies; ++i )
-    {
-        if ( m_species_name == species_names[i] ) i_s = i;
-    }
+    auto & mypc = WarpX::GetInstance().GetPartContainer();
 
     // get WarpXParticleContainer class object
-    auto & myspc = mypc.GetParticleContainer(i_s);
+    auto & myspc = mypc.GetParticleContainer(m_species);
 
     using PType = typename WarpXParticleContainer::SuperParticleType;
 
@@ -154,8 +150,8 @@ void ParticleHistogram::ComputeDiags (int step)
             if ( f_area > std::numeric_limits<Real>::min() ) m_data[i] /= f_area;
         }
     }
-    else if ( m_norm == "default" ) { /* do nothing */ }
-    else if ( m_norm == "unity_particle_weight" ) { /* do nothing */ }
+    else if ( m_norm == "default" || m_norm == "unity_particle_weight")
+    { /* do nothing */ }
     else { Abort("Unknown ParticleHistogram normalization type."); }
 
 }

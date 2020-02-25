@@ -33,6 +33,9 @@ public:
     /// number of bins
     int m_bin_num;
 
+    /// selected species index
+    int m_species;
+
     /// max and min bin values
     amrex::Real m_bin_max;
     amrex::Real m_bin_min;
