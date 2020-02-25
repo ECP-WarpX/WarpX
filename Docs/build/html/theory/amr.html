@@ -1,0 +1,272 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Mesh refinement &mdash; WarpX  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Boundary conditions" href="PML.html" />
+    <link rel="prev" title="The electromagnetic Particle-In-Cell method" href="picsar_theory.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> WarpX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                20.02
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../building/building.html">Building/installing WarpX</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_cpp/running_cpp.html">Running WarpX as an executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_python/running_python.html">Running WarpX from Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualization/visualization.html">Visualizing the simulation results</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="theory.html">Theoretical background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="picsar_theory.html">The electromagnetic Particle-In-Cell method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="picsar_theory.html#filtering">Filtering</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Mesh refinement</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#electrostatic">Electrostatic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#electromagnetic">Electromagnetic</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="PML.html">Boundary conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boosted_frame.html">Moving window and optimal Lorentz boosted frame</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_output.html">Inputs and outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/developers.html">Developers documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/doxygen.html">Doxygen</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">WarpX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="theory.html">Theoretical background</a> &raquo;</li>
+        
+      <li>Mesh refinement</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/theory/amr.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="mesh-refinement">
+<h1>Mesh refinement<a class="headerlink" href="#mesh-refinement" title="Permalink to this headline">¶</a></h1>
+<div class="figure align-default" id="fig-esamr">
+<a class="reference internal image-reference" href="../_images/ICNSP_2011_Vay_fig1.png"><img alt="Sketches of the implementation of mesh refinement in WarpX with the electrostatic (left) and electromagnetic (right) solvers. In both cases, the charge/current from particles are deposited at the finest levels first, then interpolated recursively to coarser levels. In the electrostatic case, the potential is calculated first at the coarsest level :math:`L_0`, the solution interpolated to the boundaries of the refined patch :math:`r` at the next level :math:`L_{1}` and the potential calculated at :math:`L_1`. The procedure is repeated iteratively up to the highest level. In the electromagnetic case, the fields are computed independently on each grid and patch without interpolation at boundaries. Patches are terminated by absorbing layers (PML) to prevent the reflection of electromagnetic waves. Additional coarse patch :math:`c` and fine grid :math:`a` are needed so that the full solution is obtained by substitution on :math:`a` as :math:`F_{n+1}(a)=F_{n+1}(r)+I[F_n( s )-F_{n+1}( c )]` where :math:`F` is the field, and :math:`I` is a coarse-to-fine interpolation operator. In both cases, the field solution at a given level :math:`L_n` is unaffected by the solution at higher levels :math:`L_{n+1}` and up, allowing for mitigation of some spurious effects (see text) by providing a transition zone via extension of the patches by a few cells beyond the desired refined area (red &amp; orange rectangles) in which the field is interpolated onto particles from the coarser parent level only." src="../_images/ICNSP_2011_Vay_fig1.png" style="width: 15cm;" /></a>
+<p class="caption"><span class="caption-number">Fig. 7 </span><span class="caption-text">Sketches of the implementation of mesh refinement in WarpX with the electrostatic (left) and electromagnetic (right) solvers. In both cases, the charge/current from particles are deposited at the finest levels first, then interpolated recursively to coarser levels. In the electrostatic case, the potential is calculated first at the coarsest level <span class="math notranslate nohighlight">\(L_0\)</span>, the solution interpolated to the boundaries of the refined patch <span class="math notranslate nohighlight">\(r\)</span> at the next level <span class="math notranslate nohighlight">\(L_{1}\)</span> and the potential calculated at <span class="math notranslate nohighlight">\(L_1\)</span>. The procedure is repeated iteratively up to the highest level. In the electromagnetic case, the fields are computed independently on each grid and patch without interpolation at boundaries. Patches are terminated by absorbing layers (PML) to prevent the reflection of electromagnetic waves. Additional coarse patch <span class="math notranslate nohighlight">\(c\)</span> and fine grid <span class="math notranslate nohighlight">\(a\)</span> are needed so that the full solution is obtained by substitution on <span class="math notranslate nohighlight">\(a\)</span> as <span class="math notranslate nohighlight">\(F_{n+1}(a)=F_{n+1}(r)+I[F_n( s )-F_{n+1}( c )]\)</span> where <span class="math notranslate nohighlight">\(F\)</span> is the field, and <span class="math notranslate nohighlight">\(I\)</span> is a coarse-to-fine interpolation operator. In both cases, the field solution at a given level <span class="math notranslate nohighlight">\(L_n\)</span> is unaffected by the solution at higher levels <span class="math notranslate nohighlight">\(L_{n+1}\)</span> and up, allowing for mitigation of some spurious effects (see text) by providing a transition zone via extension of the patches by a few cells beyond the desired refined area (red &amp; orange rectangles) in which the field is interpolated onto particles from the coarser parent level only.</span><a class="headerlink" href="#fig-esamr" title="Permalink to this image">¶</a></p>
+</div>
+<p>The mesh refinement methods that have been implemented in WarpX were developed following the following principles: i) avoidance of spurious effects from mesh refinement, or minimization of such effects; ii) user controllability of the spurious effects’ relative magnitude; iii) simplicity of implementation. The two main generic issues that were identified are: a) spurious self-force on macroparticles close to the mesh refinement interface (J. Vay et al. 2002; Colella and Norgaard 2010); b) reflection (and possible amplification) of short wavelength electromagnetic waves at the mesh refinement interface (Vay 2001). The two effects are due to the loss of translation invariance introduced by the asymmetry of the grid on each side of the mesh refinement interface.</p>
+<p>In addition, for some implementations where the field that is computed at a given level is affected by the solution at finer levels, there are cases where the procedure violates the integral of Gauss’ Law around the refined patch, leading to long range errors (J. Vay et al. 2002; Colella and Norgaard 2010). As will be shown below, in the procedure that has been developed in WarpX, the field at a given refinement level is not affected by the solution at finer levels, and is thus not affected by this type of error.</p>
+<div class="section" id="electrostatic">
+<h2>Electrostatic<a class="headerlink" href="#electrostatic" title="Permalink to this headline">¶</a></h2>
+<p>A cornerstone of the Particle-In-Cell method is that assuming a particle lying in a hypothetical infinite grid, then if the grid is regular and symmetrical, and if the order of field gathering matches the order of charge (or current) deposition, then there is no self-force of the particle acting on itself: a) anywhere if using the so-called “momentum conserving” gathering scheme; b) on average within one cell if using the “energy conserving” gathering scheme (Birdsall and Langdon 1991). A breaking of the regularity and/or symmetry in the grid, whether it is from the use of irregular meshes or mesh refinement, and whether one uses finite difference, finite volume or finite elements, results in a net spurious self-force (which does not average to zero over one cell) for a macroparticle close to the point of irregularity (mesh refinement interface for the current purpose) (J. Vay et al. 2002; Colella and Norgaard 2010).</p>
+<p>A sketch of the implementation of mesh refinement in WarpX is given in Figure <a class="reference external" href="#fig:ESAMR">[fig:ESAMR]</a> (left). Given the solution of the electric potential at a refinement level <span class="math notranslate nohighlight">\(L_n\)</span>, it is interpolated onto the boundaries of the grid patch(es) at the next refined level <span class="math notranslate nohighlight">\(L_{n+1}\)</span>. The electric potential is then computed at level <span class="math notranslate nohighlight">\(L_{n+1}\)</span> by solving the Poisson equation. This procedure necessitates the knowledge of the charge density at every level of refinement. For efficiency, the macroparticle charge is deposited on the highest level patch that contains them, and the charge density of each patch is added recursively to lower levels, down to the lowest.</p>
+<div class="figure align-default" id="fig-esselfforce">
+<a class="reference internal image-reference" href="../_images/ICNSP_2011_Vay_fig2.png"><img alt="Position history of one charged particle attracted by its image induced by a nearby metallic (dirichlet) boundary. The particle is initialized at rest. Without refinement patch (reference case), the particle is accelerated by its image, is reflected specularly at the wall, then decelerates until it reaches its initial position at rest. If the particle is initialized inside a refinement patch, the particle is initially accelerated toward the wall but is spuriously reflected before it reaches the boundary of the patch whether using the method implemented in WarpX or the MC method. Providing a surrounding transition region 2 or 4 cells wide in which the potential is interpolated from the parent coarse solution reduces significantly the effect of the spurious self-force." src="../_images/ICNSP_2011_Vay_fig2.png" style="width: 15cm;" /></a>
+<p class="caption"><span class="caption-number">Fig. 8 </span><span class="caption-text">Position history of one charged particle attracted by its image induced by a nearby metallic (dirichlet) boundary. The particle is initialized at rest. Without refinement patch (reference case), the particle is accelerated by its image, is reflected specularly at the wall, then decelerates until it reaches its initial position at rest. If the particle is initialized inside a refinement patch, the particle is initially accelerated toward the wall but is spuriously reflected before it reaches the boundary of the patch whether using the method implemented in WarpX or the MC method. Providing a surrounding transition region 2 or 4 cells wide in which the potential is interpolated from the parent coarse solution reduces significantly the effect of the spurious self-force.</span><a class="headerlink" href="#fig-esselfforce" title="Permalink to this image">¶</a></p>
+</div>
+<p>The presence of the self-force is illustrated on a simple test case that was introduced in (J. Vay et al. 2002) and also used in (Colella and Norgaard 2010): a single macroparticle is initialized at rest within a single refinement patch four cells away from the patch refinement boundary. The patch at level <span class="math notranslate nohighlight">\(L_1\)</span> has <span class="math notranslate nohighlight">\(32\times32\)</span> cells and is centered relative to the lowest <span class="math notranslate nohighlight">\(64\times64\)</span> grid at level <span class="math notranslate nohighlight">\(L_0\)</span> (“main grid”), while the macroparticle is centered in one direction but not in the other. The boundaries of the main grid are perfectly conducting, so that the macroparticle is attracted to the closest wall by its image. Specular reflection is applied when the particle reaches the boundary so that the motion is cyclic. The test was performed with WarpX using either linear or quadratic interpolation when gathering the main grid solution onto the refined patch boundary. It was also performed using another method from P. McCorquodale et al (labeled “MC” in this paper) based on the algorithm given in (Mccorquodale et al. 2004), which employs a more elaborate procedure involving two-ways interpolations between the main grid and the refined patch. A reference case was also run using a single <span class="math notranslate nohighlight">\(128\times128\)</span> grid with no refined patch, in which it is observed that the particle propagates toward the closest boundary at an accelerated pace, is reflected specularly at the boundary, then slows down until it reaches its initial position at zero velocity. The particle position histories are shown for the various cases in Fig. <a class="reference external" href="#fig:ESselfforce">[fig:ESselfforce]</a>. In all the cases using the refinement patch, the particle was spuriously reflected near the patch boundary and was effectively trapped in the patch. We notice that linear interpolation performs better than quadratic, and that the simple method implemented in WarpX performs better than the other proposed method for this test (see discussion below).</p>
+<div class="figure align-default" id="fig-esselfforcemap">
+<a class="reference internal image-reference" href="../_images/ICNSP_2011_Vay_fig3.png"><img alt="(left) Maps of the magnitude of the spurious self-force :math:`\epsilon` in arbitrary units within one quarter of the refined patch, defined as :math:`\epsilon=\sqrt{(E_x-E_x^{ref})^2+(E_y-E_y^{ref})^2}`, where :math:`E_x` and :math:`E_y` are the electric field components within the patch experienced by one particle at a given location and :math:`E_x^{ref}` and :math:`E_y^{ref}` are the electric field from a reference solution. The map is given for the WarpX and the MC mesh refinement algorithms and for linear and quadratic interpolation at the patch refinement boundary. (right) Lineouts of the maximum (taken over neighboring cells) of the spurious self-force. Close to the interface boundary (x=0), the spurious self-force decreases at a rate close to one order of magnitude per cell (red line), then at about one order of magnitude per six cells (green line)." src="../_images/ICNSP_2011_Vay_fig3.png" style="width: 15cm;" /></a>
+<p class="caption"><span class="caption-number">Fig. 9 </span><span class="caption-text">(left) Maps of the magnitude of the spurious self-force <span class="math notranslate nohighlight">\(\epsilon\)</span> in arbitrary units within one quarter of the refined patch, defined as <span class="math notranslate nohighlight">\(\epsilon=\sqrt{(E_x-E_x^{ref})^2+(E_y-E_y^{ref})^2}\)</span>, where <span class="math notranslate nohighlight">\(E_x\)</span> and <span class="math notranslate nohighlight">\(E_y\)</span> are the electric field components within the patch experienced by one particle at a given location and <span class="math notranslate nohighlight">\(E_x^{ref}\)</span> and <span class="math notranslate nohighlight">\(E_y^{ref}\)</span> are the electric field from a reference solution. The map is given for the WarpX and the MC mesh refinement algorithms and for linear and quadratic interpolation at the patch refinement boundary. (right) Lineouts of the maximum (taken over neighboring cells) of the spurious self-force. Close to the interface boundary (x=0), the spurious self-force decreases at a rate close to one order of magnitude per cell (red line), then at about one order of magnitude per six cells (green line).</span><a class="headerlink" href="#fig-esselfforcemap" title="Permalink to this image">¶</a></p>
+</div>
+<p>The magnitude of the spurious self-force as a function of the macroparticle position was mapped and is shown in Fig. <a class="reference external" href="#fig:ESselfforcemap">[fig:ESselfforcemap]</a> for the WarpX and MC algorithms using linear or quadratic interpolations between grid levels. It is observed that the magnitude of the spurious self-force decreases rapidly with the distance between the particle and the refined patch boundary, at a rate approaching one order of magnitude per cell for the four cells closest to the boundary and about one order of magnitude per six cells beyond. The method implemented in WarpX offers a weaker spurious force on average and especially at the cells that are the closest to the coarse-fine interface where it is the largest and thus matters most.
+We notice that the magnitude of the spurious self-force depends strongly on the distance to the edge of the patch and to the nodes of the underlying coarse grid, but weakly on the order of deposition and size of the patch.</p>
+<p>A method was devised and implemented in WarpX for reducing the magnitude of spurious self-forces near the coarse-fine boundaries as follows. Noting that the coarse grid solution is unaffected by the presence of the patch and is thus free of self-force, extra “transition” cells are added around the “effective” refined area.
+Within the effective area, the particles gather the potential in the fine grid. In the extra transition cells surrounding the refinement patch, the force is gathered directly from the coarse grid (an option, which has not yet been implemented, would be to interpolate between the coarse and fine grid field solutions within the transition zone so as to provide continuity of the force experienced by the particles at the interface). The number of cells allocated in the transition zones is controllable by the user in WarpX, giving the opportunity to check whether the spurious self-force is affecting the calculation by repeating it using different thicknesses of the transition zones. The control of the spurious force using the transition zone is illustrated in Fig. <a class="reference external" href="#fig:ESselfforce">[fig:ESselfforce]</a>, where the calculation with WarpX using linear interpolation at the patch interface was repeated using either two or four cells transition regions (measured in refined patch cell units). Using two extra cells allowed for the particle to be free of spurious trapping within the refined area and follow a trajectory that is close to the reference one, and using four extra cells improved further to the point where the resulting trajectory becomes undistinguishable from the reference one.
+We note that an alternative method was devised for reducing the magnitude of self-force near the coarse-fine boundaries for the MC method, by using a special deposition procedure near the interface (Colella and Norgaard 2010).</p>
+</div>
+<div class="section" id="electromagnetic">
+<h2>Electromagnetic<a class="headerlink" href="#electromagnetic" title="Permalink to this headline">¶</a></h2>
+<p>The method that is used for electrostatic mesh refinement is not directly applicable to electromagnetic calculations. As was shown in section 3.4 of (Vay 2001), refinement schemes relying solely on interpolation between coarse and fine patches lead to the reflection with amplification of the short wavelength modes that fall below the cutoff of the Nyquist frequency of the coarse grid. Unless these modes are damped heavily or prevented from occurring at their source, they may affect particle motion and their effect can escalate if trapped within a patch, via multiple successive reflections with amplification.</p>
+<p>To circumvent this issue, an additional coarse patch (with the same resolution as the parent grid) is added, as shown in Fig. <a class="reference external" href="#fig:ESAMR">[fig:ESAMR]</a>-right and described in (Vay, Adam, and Heron 2004). Both the fine and the coarse grid patches are terminated by Perfectly Matched Layers, reducing wave reflection by orders of magnitude, controllable by the user (Berenger 1996; J.-L. Vay 2002). The source current resulting from the motion of charged macroparticles within the refined region is accumulated on the fine patch and is then interpolated onto the coarse patch and added onto the parent grid. The process is repeated recursively from the finest level down to the coarsest. The Maxwell equations are then solved for one time interval on the entire set of grids, by default for one time step using the time step of the finest grid. The field on the coarse and fine patches only contain the contributions from the particles that have evolved within the refined area but not from the current sources outside the area. The total contribution of the field from sources within and outside the refined area is obtained by adding the field from the refined grid <span class="math notranslate nohighlight">\(F(r)\)</span>, and adding an interpolation <span class="math notranslate nohighlight">\(I\)</span> of the difference between the relevant subset <span class="math notranslate nohighlight">\(s\)</span> of the field in the parent grid <span class="math notranslate nohighlight">\(F(s)\)</span> and the field of the coarse grid <span class="math notranslate nohighlight">\(F( c )\)</span>, on an auxiliary grid <span class="math notranslate nohighlight">\(a\)</span>, i.e. <span class="math notranslate nohighlight">\(F(a)=F(r)+I[F(s)-F( c )]\)</span>. The field on the parent grid subset <span class="math notranslate nohighlight">\(F(s)\)</span> contains contributions from sources from both within and outside of the refined area. Thus, in effect, there is substitution of the coarse field resulting from sources within the patch area by its fine resolution counterpart. The operation is carried out recursively starting at the coarsest level up to the finest.
+An option has been implemented in which various grid levels are pushed with different time steps, given as a fixed fraction of the individual grid Courant conditions (assuming same cell aspect ratio for all grids and refinement by integer factors). In this case, the fields from the coarse levels, which are advanced less often, are interpolated in time.</p>
+<p>The substitution method has two potential drawbacks due to the inexact cancellation between the coarse and fine patches of : (i) the remnants of ghost fixed charges created by the particles entering and leaving the patches (this effect is due to the use of the electromagnetic solver and is different from the spurious self-force that was described for the electrostatic case); (ii) if using a Maxwell solver with a low-order stencil, the electromagnetic waves traveling on each patch at slightly different velocity due to numerical dispersion.
+The first issue results in an effective spurious multipole field whose magnitude decreases very rapidly with the distance to the patch boundary, similarly to the spurious self-force in the electrostatic case. Hence, adding a few extra transition cells surrounding the patches mitigates this effect very effectively.
+The tunability of WarpX’s electromagnetic finite-difference and pseudo-spectral solvers provides the means to optimize the numerical dispersion so as to minimize the second effect for a given application, which has been demonstrated on the laser-plasma interaction test case presented in (Vay, Adam, and Heron 2004).
+Both effects and their mitigation are described in more detail in (Vay, Adam, and Heron 2004).</p>
+<p>Caustics are supported anywhere on the grid with an accuracy that is set by the local resolution, and will be adequately resolved if the grid resolution supports the necessary modes from their sources to the points of wavefront crossing. The mesh refinement method that is implemented in WarpX has the potential to provide higher efficiency than the standard use of fixed gridding, by offering a path toward adaptive gridding following wavefronts.</p>
+<div id="refs" class="references"><div id="ref-Berengerjcp96"><p>Berenger, Jp. 1996. “Three-Dimensional Perfectly Matched Layer for the Absorption of Electromagnetic Waves.” <em>Journal of Computational Physics</em> 127 (2): 363–79.</p>
+</div><div id="ref-Birdsalllangdon"><p>Birdsall, C K, and A B Langdon. 1991. <em>Plasma Physics via Computer Simulation</em>. Adam-Hilger.</p>
+</div><div id="ref-Colellajcp2010"><p>Colella, Phillip, and Peter C Norgaard. 2010. “Controlling Self-Force Errors at Refinement Boundaries for Amr-Pic.” <em>Journal of Computational Physics</em> 229 (4): 947–57. <a class="reference external" href="https://doi.org/10.1016/J.Jcp.2009.07.004">https://doi.org/10.1016/J.Jcp.2009.07.004</a>.</p>
+</div><div id="ref-Mccorquodalejcp2004"><p>Mccorquodale, P, P Colella, Dp Grote, and Jl Vay. 2004. “A Node-Centered Local Refinement Algorithm For Poisson’s Equation In Complex Geometries.” <em>Journal of Computational Physics</em> 201 (1): 34–60. <a class="reference external" href="https://doi.org/10.1016/J.Jcp.2004.04.022">https://doi.org/10.1016/J.Jcp.2004.04.022</a>.</p>
+</div><div id="ref-Vayjcp01"><p>Vay, J.-L. 2001. “An Extended Fdtd Scheme for the Wave Equation: Application to Multiscale Electromagnetic Simulation.” <em>Journal of Computational Physics</em> 167 (1): 72–98.</p>
+</div><div id="ref-Vayjcp02"><p>———. 2002. “Asymmetric Perfectly Matched Layer for the Absorption of Waves.” <em>Journal of Computational Physics</em> 183 (2): 367–99. <a class="reference external" href="https://doi.org/10.1006/Jcph.2002.7175">https://doi.org/10.1006/Jcph.2002.7175</a>.</p>
+</div><div id="ref-Vaycpc04"><p>Vay, J.-L., J.-C. Adam, and A Heron. 2004. “Asymmetric Pml for the Absorption of Waves. Application to Mesh Refinement in Electromagnetic Particle-in-Cell Plasma Simulations.” <em>Computer Physics Communications</em> 164 (1-3): 171–77. <a class="reference external" href="https://doi.org/10.1016/J.Cpc.2004.06.026">https://doi.org/10.1016/J.Cpc.2004.06.026</a>.</p>
+</div><div id="ref-Vaylpb2002"><p>Vay, Jl, P Colella, P Mccorquodale, B Van Straalen, A Friedman, and Dp Grote. 2002. “Mesh Refinement for Particle-in-Cell Plasma Simulations: Applications to and Benefits for Heavy Ion Fusion.” <em>Laser and Particle Beams</em> 20 (4): 569–75. <a class="reference external" href="https://doi.org/10.1017/S0263034602204139">https://doi.org/10.1017/S0263034602204139</a>.</p>
+</div></div></div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="PML.html" class="btn btn-neutral float-right" title="Boundary conditions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="picsar_theory.html" class="btn btn-neutral float-left" title="The electromagnetic Particle-In-Cell method" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, WarpX collaboration
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

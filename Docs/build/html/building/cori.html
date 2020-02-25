@@ -1,0 +1,333 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Building WarpX for Cori (NERSC) &mdash; WarpX  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Building WarpX for Summit (OLCF)" href="summit.html" />
+    <link rel="prev" title="Building WarpX with Spack" href="spack.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> WarpX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                20.02
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="building.html">Building/installing WarpX</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="building.html#downloading-the-source-code">Downloading the source code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building.html#basic-compilation">Basic compilation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building.html#compile-time-vs-run-time-options">Compile-time vs. run-time options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="building.html#advanced-building-instructions">Advanced building instructions</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="building.html#building-for-specific-platforms">Building for specific platforms</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Building WarpX for Cori (NERSC)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#standard-build">Standard build</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gpu-build">GPU Build</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#building-warpx-with-openpmd-support">Building WarpX with openPMD support</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="summit.html">Building WarpX for Summit (OLCF)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../running_cpp/running_cpp.html">Running WarpX as an executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_python/running_python.html">Running WarpX from Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualization/visualization.html">Visualizing the simulation results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/theory.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/developers.html">Developers documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/doxygen.html">Doxygen</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">WarpX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="building.html">Building/installing WarpX</a> &raquo;</li>
+        
+      <li>Building WarpX for Cori (NERSC)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/building/cori.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="building-warpx-for-cori-nersc">
+<h1>Building WarpX for Cori (NERSC)<a class="headerlink" href="#building-warpx-for-cori-nersc" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="standard-build">
+<h2>Standard build<a class="headerlink" href="#standard-build" title="Permalink to this headline">¶</a></h2>
+<p>For the <a class="reference external" href="http://www.nersc.gov/users/computational-systems/cori/">Cori cluster</a> at NERSC,
+you need to type the following command when compiling:</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In order to compile the code with a spectral solver, type</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">module</span> <span class="n">load</span> <span class="n">cray</span><span class="o">-</span><span class="n">fftw</span>
+</pre></div>
+</div>
+<p>before typing any of the commands below, and add <code class="docutils literal notranslate"><span class="pre">USE_PSATD=TRUE</span></code>
+at the end of the command containing <code class="docutils literal notranslate"><span class="pre">make</span></code>.</p>
+</div>
+<p>In order to compile for the <strong>Haswell architecture</strong>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>with the Intel compiler</p></li>
+</ul>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="o">-</span><span class="n">j</span> <span class="mi">16</span> <span class="n">COMP</span><span class="o">=</span><span class="n">intel</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>with the GNU compiler (<code class="docutils literal notranslate"><span class="pre">COMP=gcc</span></code> is the corresponding optional flag)</p></li>
+</ul>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">module</span> <span class="n">swap</span> <span class="n">PrgEnv</span><span class="o">-</span><span class="n">intel</span> <span class="n">PrgEnv</span><span class="o">-</span><span class="n">gnu</span>
+<span class="n">make</span> <span class="o">-</span><span class="n">j</span> <span class="mi">16</span> <span class="n">COMP</span><span class="o">=</span><span class="n">gcc</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>In order to compile for the <strong>Knight’s Landing (KNL) architecture</strong>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>with the Intel compiler</p></li>
+</ul>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">module</span> <span class="n">swap</span> <span class="n">craype</span><span class="o">-</span><span class="n">haswell</span> <span class="n">craype</span><span class="o">-</span><span class="n">mic</span><span class="o">-</span><span class="n">knl</span>
+<span class="n">make</span> <span class="o">-</span><span class="n">j</span> <span class="mi">16</span> <span class="n">COMP</span><span class="o">=</span><span class="n">intel</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>with the GNU compiler</p></li>
+</ul>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">module</span> <span class="n">swap</span> <span class="n">craype</span><span class="o">-</span><span class="n">haswell</span> <span class="n">craype</span><span class="o">-</span><span class="n">mic</span><span class="o">-</span><span class="n">knl</span>
+<span class="n">module</span> <span class="n">swap</span> <span class="n">PrgEnv</span><span class="o">-</span><span class="n">intel</span> <span class="n">PrgEnv</span><span class="o">-</span><span class="n">gnu</span>
+<span class="n">make</span> <span class="o">-</span><span class="n">j</span> <span class="mi">16</span> <span class="n">COMP</span><span class="o">=</span><span class="n">gcc</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>See <a class="reference internal" href="../running_cpp/platforms.html"><span class="doc">Running on specific platforms</span></a> for more information on how to run
+WarpX on Cori.</p>
+</div>
+<div class="section" id="gpu-build">
+<h2>GPU Build<a class="headerlink" href="#gpu-build" title="Permalink to this headline">¶</a></h2>
+<p>To compile on the experimental GPU nodes on Cori, you first need to purge
+your modules, most of which won’t work on the GPU nodes.</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">module</span> <span class="n">purge</span>
+</pre></div>
+</div>
+<p>Then, you need to load the following modules:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">module</span> <span class="n">load</span> <span class="n">modules</span> <span class="n">esslurm</span> <span class="n">gcc</span><span class="o">/</span><span class="mf">7.3.0</span> <span class="n">cuda</span> <span class="n">mvapich2</span>
+</pre></div>
+</div>
+<p>You can also use OpenMPI-UCX instead of mvapich: openmpi/4.0.1-ucx-1.6.</p>
+<p>Then, you need to use slurm to request access to a GPU node:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">salloc</span> <span class="o">-</span><span class="n">C</span> <span class="n">gpu</span> <span class="o">-</span><span class="n">N</span> <span class="mi">1</span> <span class="o">-</span><span class="n">t</span> <span class="mi">30</span> <span class="o">-</span><span class="n">c</span> <span class="mi">10</span> <span class="o">--</span><span class="n">gres</span><span class="o">=</span><span class="nl">gpu</span><span class="p">:</span><span class="mi">1</span> <span class="o">-</span><span class="n">A</span> <span class="n">m1759</span>
+</pre></div>
+</div>
+<p>This reserves 10 logical cores (5 physical), 1 GPU.
+The latest documentation can be found here: <a class="reference external" href="https://docs-dev.nersc.gov/cgpu/access">https://docs-dev.nersc.gov/cgpu/access</a>
+Note that you can’t cross-compile for the GPU nodes - you have to log on to one
+and then build your software.</p>
+<p>Finally, navigate to the base of the WarpX repository and compile in GPU mode:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="o">-</span><span class="n">j</span> <span class="mi">16</span> <span class="n">USE_GPU</span><span class="o">=</span><span class="n">TRUE</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="building-warpx-with-openpmd-support">
+<h2>Building WarpX with openPMD support<a class="headerlink" href="#building-warpx-with-openpmd-support" title="Permalink to this headline">¶</a></h2>
+<p>First, load the appropriate modules:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">module</span> <span class="n">swap</span> <span class="n">craype</span><span class="o">-</span><span class="n">haswell</span> <span class="n">craype</span><span class="o">-</span><span class="n">mic</span><span class="o">-</span><span class="n">knl</span>
+<span class="n">module</span> <span class="n">swap</span> <span class="n">PrgEnv</span><span class="o">-</span><span class="n">intel</span> <span class="n">PrgEnv</span><span class="o">-</span><span class="n">gnu</span>
+<span class="n">module</span> <span class="n">load</span> <span class="n">cmake</span><span class="o">/</span><span class="mf">3.14.4</span>
+<span class="n">module</span> <span class="n">load</span> <span class="n">cray</span><span class="o">-</span><span class="n">hdf5</span><span class="o">-</span><span class="n">parallel</span>
+<span class="n">module</span> <span class="n">load</span> <span class="n">adios</span><span class="o">/</span><span class="mf">1.13.1</span>
+<span class="k">export</span> <span class="n">CRAYPE_LINK_TYPE</span><span class="o">=</span><span class="n">dynamic</span>
+</pre></div>
+</div>
+<p>Then, in the <cite>warpx_directory</cite>, download and build the openPMD API:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/openPMD/openPMD-api.git
+mkdir openPMD-api-build
+cd openPMD-api-build
+cmake ../openPMD-api -DopenPMD_USE_PYTHON=OFF -DCMAKE_INSTALL_PREFIX=../openPMD-install/ -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_RPATH=&#39;$ORIGIN&#39;
+cmake --build . --target install
+</pre></div>
+</div>
+<p>Finally, compile WarpX:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span>cd ../WarpX
+export PKG_CONFIG_PATH=$PWD/../openPMD-install/lib64/pkgconfig:$PKG_CONFIG_PATH
+make -j 16 COMP=gcc USE_OPENPMD=TRUE
+</pre></div>
+</div>
+<p>In order to run WarpX, load the same modules again.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="summit.html" class="btn btn-neutral float-right" title="Building WarpX for Summit (OLCF)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="spack.html" class="btn btn-neutral float-left" title="Building WarpX with Spack" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, WarpX collaboration
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

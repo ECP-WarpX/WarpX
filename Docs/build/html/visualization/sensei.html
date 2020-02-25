@@ -1,0 +1,683 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>In situ Visualization with SENSEI &mdash; WarpX  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="In situ Visualization with Ascent" href="ascent.html" />
+    <link rel="prev" title="Out-of-the-box plotting script" href="plot_parallel.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> WarpX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                20.02
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../building/building.html">Building/installing WarpX</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_cpp/running_cpp.html">Running WarpX as an executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_python/running_python.html">Running WarpX from Python</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="visualization.html">Visualizing the simulation results</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="yt.html">Visualization with yt (for plotfiles)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="backtransformed_diags.html">Visualizing back-transformed diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reduced_diags.html">Reduced diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visit.html">Visualization with Visit (for plotfiles)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="picviewer.html">PyQt-based visualization GUI: PICViewer (for both plotfiles and openPMD)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openpmdviewer.html">Visualization with openPMD-viewer (for openPMD data)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html">Advanced yt visualization, for developers (for plotfiles)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plot_parallel.html">Out-of-the-box plotting script</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">In situ Visualization with SENSEI</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#system-architecture">System Architecture</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#compiling-with-gnu-make">Compiling with GNU Make</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parmparse-configuration">ParmParse Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#back-end-selection-and-configuration">Back-end Selection and Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#obtaining-sensei">Obtaining SENSEI</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#sensei-vm">SENSEI VM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#nersc-cori">NERSC Cori</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#d-lpa-example">3D LPA Example</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#rendering-with-visit-libsim">Rendering with VisIt Libsim</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rendering-with-paraview-catalyst">Rendering with ParaView Catalyst</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#in-situ-calculation-with-python">In situ Calculation with Python</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ascent.html">In situ Visualization with Ascent</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/theory.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/developers.html">Developers documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/doxygen.html">Doxygen</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">WarpX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="visualization.html">Visualizing the simulation results</a> &raquo;</li>
+        
+      <li>In situ Visualization with SENSEI</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/visualization/sensei.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="in-situ-visualization-with-sensei">
+<h1>In situ Visualization with SENSEI<a class="headerlink" href="#in-situ-visualization-with-sensei" title="Permalink to this headline">¶</a></h1>
+<p>SENSEI is a light weight framework for in situ data analysis. SENSEI’s data
+model and API provide uniform access to and run time selection of a diverse set
+of visualization and analysis back ends including VisIt Libsim, ParaView
+Catalyst, VTK-m, Ascent, ADIOS, Yt, and Python.</p>
+<p>SENSEI uses an XML file to select and configure one or more back ends at run
+time. Run time selection of the back end via XML means one user can access
+Catalyst, another Libsim, yet another Python with no changes to the code.</p>
+<div class="section" id="system-architecture">
+<h2>System Architecture<a class="headerlink" href="#system-architecture" title="Permalink to this headline">¶</a></h2>
+<div class="figure align-default" id="id1">
+<span id="sensei-arch"></span><img alt="https://data.kitware.com/api/v1/item/5c06cd538d777f2179d4aaca/download" src="https://data.kitware.com/api/v1/item/5c06cd538d777f2179d4aaca/download" />
+<p class="caption"><span class="caption-number">Fig. 1 </span><span class="caption-text">SENSEI’s in situ architecture enables use of a diverse of back ends which
+can be selected at run time via an XML configuration file</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<p>The three major architectural components in SENSEI are <em>data adaptors</em> which
+present simulation data in SENSEI’s data model, <em>analysis adaptors</em> which
+present the back end data consumers to the simulation, and <em>bridge code</em> from
+which the simulation manages adaptors and periodically pushes data through the
+system. SENSEI comes equipped with a number of analysis adaptors enabling use
+of popular analysis and visualization libraries such as VisIt Libsim, ParaView
+Catalyst, Python, and ADIOS to name a few. AMReX contains SENSEI data adaptors
+and bridge code making it easy to use in AMReX based simulation codes.</p>
+<p>SENSEI provides a <em>configurable analysis adaptor</em> which uses an XML file to
+select and configure one or more back ends at run time. Run time selection of
+the back end via XML means one user can access Catalyst, another Libsim, yet
+another Python with no changes to the code.  This is depicted in figure
+<a class="reference internal" href="#sensei-arch"><span class="std std-numref">Fig. 1</span></a>. On the left side of the figure AMReX produces data, the
+bridge code pushes the data through the configurable analysis adaptor to the
+back end that was selected at run time.</p>
+</div>
+<div class="section" id="compiling-with-gnu-make">
+<h2>Compiling with GNU Make<a class="headerlink" href="#compiling-with-gnu-make" title="Permalink to this headline">¶</a></h2>
+<p>For codes making use of AMReX’s build system add the following variable to the
+code’s main <code class="code docutils literal notranslate"><span class="pre">GNUmakefile</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">USE_SENSEI_INSITU</span> <span class="o">=</span> TRUE
+</pre></div>
+</div>
+<p>When set, AMReX’s make files will query environment variables for the lists of
+compiler and linker flags, include directories, and link libraries. These lists
+can be quite elaborate when using more sophisticated back ends, and are best
+set automatically using the <code class="code docutils literal notranslate"><span class="pre">sensei_config</span></code> command line tool that should
+be installed with SENSEI. Prior to invoking make use the following command to
+set these variables:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> sensei_config
+</pre></div>
+</div>
+<p>Typically, the <code class="code docutils literal notranslate"><span class="pre">sensei_config</span></code> tool is in the users PATH after loading
+the desired SENSEI module. After configuring the build environment with
+<code class="code docutils literal notranslate"><span class="pre">sensei_config</span></code>, proceed as usual.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make -j4 -f GNUmakefile
+</pre></div>
+</div>
+</div>
+<div class="section" id="parmparse-configuration">
+<h2>ParmParse Configuration<a class="headerlink" href="#parmparse-configuration" title="Permalink to this headline">¶</a></h2>
+<p>Once an AMReX code has been compiled with SENSEI features enabled, it will need
+to be enabled and configured at runtime. This is done using ParmParse input file.
+The supported parameters are described in the following table.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 28%" />
+<col style="width: 61%" />
+<col style="width: 10%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>parameter</p></th>
+<th class="head"><p>description</p></th>
+<th class="head"><p>default</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="code docutils literal notranslate"><span class="pre">insitu.int</span></code></p></td>
+<td><p>turns in situ processing on or off and controls how
+often data is processed.</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="code docutils literal notranslate"><span class="pre">insitu.start</span></code></p></td>
+<td><p>controls when in situ processing starts.</p></td>
+<td><p>0</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="code docutils literal notranslate"><span class="pre">insitu.config</span></code></p></td>
+<td><p>points to the SENSEI XML file which selects and
+configures the desired back end.</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><code class="code docutils literal notranslate"><span class="pre">insitu.pin_mesh</span></code></p></td>
+<td><p>when 1 lower left corner of the mesh is pinned to
+0.,0.,0.</p></td>
+<td><p>0</p></td>
+</tr>
+</tbody>
+</table>
+<p>A typical use case is to enabled SENSEI by setting <code class="code docutils literal notranslate"><span class="pre">insitu.int</span></code> to be
+greater than 1, and <code class="code docutils literal notranslate"><span class="pre">insitu.config</span></code> to point SENSEI to an XML file that
+selects and configures the desired back end.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">insitu</span><span class="o">.</span><span class="n">int</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">insitu</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">render_iso_catalyst</span><span class="o">.</span><span class="n">xml</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="back-end-selection-and-configuration">
+<h2>Back-end Selection and Configuration<a class="headerlink" href="#back-end-selection-and-configuration" title="Permalink to this headline">¶</a></h2>
+<p>The back end is selected and configured at run time using the SENSEI XML file.
+The XML sets parameters specific to SENSEI and to the chosen back end. Many of
+the back ends have sophisticated configuration mechanisms which SENSEI makes
+use of.  For example the following XML configuration was used on NERSC’s Cori
+with WarpX to render 10 iso surfaces, shown in figure <a class="reference internal" href="#lpa-visit"><span class="std std-numref">Fig. 2</span></a>, using
+VisIt Libsim.</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;sensei&gt;</span>
+  <span class="nt">&lt;analysis</span> <span class="na">type=</span><span class="s">&quot;libsim&quot;</span> <span class="na">frequency=</span><span class="s">&quot;1&quot;</span> <span class="na">mode=</span><span class="s">&quot;batch&quot;</span>
+    <span class="na">session=</span><span class="s">&quot;beam_j_pin.session&quot;</span>
+    <span class="na">image-filename=</span><span class="s">&quot;beam_j_pin_%ts&quot;</span> <span class="na">image-width=</span><span class="s">&quot;1200&quot;</span> <span class="na">image-height=</span><span class="s">&quot;900&quot;</span>
+    <span class="na">image-format=</span><span class="s">&quot;png&quot;</span> <span class="na">enabled=</span><span class="s">&quot;1&quot;</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/sensei&gt;</span>
+</pre></div>
+</div>
+<p>The <em>session</em> attribute names a session file that contains VisIt specific
+runtime configuration. The session file is generated using VisIt GUI on a
+representative dataset. Usually this data set is generated in a low resolution
+run of the desired simulation.</p>
+<div class="figure align-default" id="id2">
+<span id="lpa-visit"></span><img alt="https://data.kitware.com/api/v1/item/5c06b4b18d777f2179d4784c/download" src="https://data.kitware.com/api/v1/item/5c06b4b18d777f2179d4784c/download" />
+<p class="caption"><span class="caption-number">Fig. 2 </span><span class="caption-text">Rendering of 10 3D iso-surfaces of j using VisIt libsim. The upper left
+quadrant has been clipped away to reveal innner structure.</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
+<p>The same run and visualization was repeated using ParaView Catalyst, shown in
+figure <a class="reference internal" href="#lpa-pv"><span class="std std-numref">Fig. 3</span></a>, by providing the following XML configuration.</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;sensei&gt;</span>
+  <span class="nt">&lt;analysis</span> <span class="na">type=</span><span class="s">&quot;catalyst&quot;</span> <span class="na">pipeline=</span><span class="s">&quot;pythonscript&quot;</span>
+    <span class="na">filename=</span><span class="s">&quot;beam_j.py&quot;</span> <span class="na">enabled=</span><span class="s">&quot;1&quot;</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/sensei&gt;</span>
+</pre></div>
+</div>
+<p>Here the <em>filename</em> attribute is used to pass Catalyst a Catalyst specific
+configuration that was generated using the ParaView GUI on a representative
+dataset.</p>
+<div class="figure align-default" id="id3">
+<span id="lpa-pv"></span><img alt="https://data.kitware.com/api/v1/item/5c05b6388d777f2179d207ae/download" src="https://data.kitware.com/api/v1/item/5c05b6388d777f2179d207ae/download" />
+<p class="caption"><span class="caption-number">Fig. 3 </span><span class="caption-text">Rendering of 10 3D iso-surfaces of j using ParaView Catalyst. The upper left
+quadrant has been clipped away to reveal innner structure.</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+</div>
+<p>The renderings in these runs were configured using a representative dataset
+which was obtained by running the simulation for a few time steps at a lower
+spatial resolution.  When using VisIt Libsim the following XML configures the
+VTK writer to write the simulation data in VTK format. At the end of the run a
+<code class="code docutils literal notranslate"><span class="pre">.visit</span></code> file that VisIt can open will be generated.</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;sensei&gt;</span>
+  <span class="nt">&lt;analysis</span> <span class="na">type=</span><span class="s">&quot;PosthocIO&quot;</span> <span class="na">mode=</span><span class="s">&quot;visit&quot;</span> <span class="na">writer=</span><span class="s">&quot;xml&quot;</span>
+     <span class="na">ghost_array_name=</span><span class="s">&quot;avtGhostZones&quot;</span> <span class="na">output_dir=</span><span class="s">&quot;./&quot;</span>
+     <span class="na">enabled=</span><span class="s">&quot;1&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;/analysis&gt;</span>
+<span class="nt">&lt;/sensei&gt;</span>
+</pre></div>
+</div>
+<p>When using ParaView Catalyst the following XML configures the VTK writer to
+write the simulation data in VTK format. At the end of the run a <code class="code docutils literal notranslate"><span class="pre">.pvd</span></code>
+file that ParaView can open will be generated.</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;sensei&gt;</span>
+  <span class="nt">&lt;analysis</span> <span class="na">type=</span><span class="s">&quot;PosthocIO&quot;</span> <span class="na">mode=</span><span class="s">&quot;paraview&quot;</span> <span class="na">writer=</span><span class="s">&quot;xml&quot;</span>
+     <span class="na">ghost_array_name=</span><span class="s">&quot;vtkGhostType&quot;</span> <span class="na">output_dir=</span><span class="s">&quot;./&quot;</span>
+     <span class="na">enabled=</span><span class="s">&quot;1&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;/analysis&gt;</span>
+<span class="nt">&lt;/sensei&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="obtaining-sensei">
+<h2>Obtaining SENSEI<a class="headerlink" href="#obtaining-sensei" title="Permalink to this headline">¶</a></h2>
+<p>SENSEI is hosted on Kitware’s Gitlab site at <a class="reference external" href="https://gitlab.kitware.com/sensei/sensei">https://gitlab.kitware.com/sensei/sensei</a>
+It’s best to checkout the latest release rather than working on the master branch.</p>
+<p>To ease the burden of wrangling back end installs SENSEI provides two platforms
+with all dependencies pre-installed, a VirtualBox VM, and a NERSC Cori
+deployment. New users are encouraged to experiment with one of these.</p>
+<div class="section" id="sensei-vm">
+<h3>SENSEI VM<a class="headerlink" href="#sensei-vm" title="Permalink to this headline">¶</a></h3>
+<p>The SENSEI VM comes with all of SENSEI’s dependencies and the major back ends
+such as VisIt and ParaView installed. The VM is the easiest way to test things
+out. It also can be used to see how installs were done and the environment
+configured.</p>
+<p>The SENSEI VM can be downloaded <a class="reference external" href="https://data.kitware.com/api/v1/file/5be656368d777f21799ee5a6/download">here</a>.</p>
+<p>The SENSEI VM uses modules to manage the build and run environment. Load the
+SENSEI modulefile for the back-end you wish to use. The following table
+describes the available installs and which back-ends are supported in each.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 46%" />
+<col style="width: 54%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>modulefile</p></th>
+<th class="head"><p>back-end(s)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>sensei/2.1.1-catalyst-shared</p></td>
+<td><p>ParaView Catalyst, ADIOS, Python</p></td>
+</tr>
+<tr class="row-odd"><td><p>sensei/2.1.1-libsim-shared</p></td>
+<td><p>VisIt Libsim, ADIOS, Python</p></td>
+</tr>
+<tr class="row-even"><td><p>sensei/2.1.1-vtk-shared</p></td>
+<td><p>VTK-m, ADIOS, Python</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="nersc-cori">
+<h3>NERSC Cori<a class="headerlink" href="#nersc-cori" title="Permalink to this headline">¶</a></h3>
+<p>SENSEI is deployed at NERSC on Cori. The NERSC deployment includes the major
+back ends such as ADIOS, ParaView Catalyst, VisIt Libsim, and Python.</p>
+<p>The SENSEI installs uses modules to manage the build and run environment. Load the
+SENSEI modulefile for the back-end you wish to use. The following table
+describes the available installs and which back-ends are supported in each.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 46%" />
+<col style="width: 54%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>modulefile</p></th>
+<th class="head"><p>back-end(s)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>sensei/2.1.0-catalyst-shared</p></td>
+<td><p>ParaView Catalyst, ADIOS, Python</p></td>
+</tr>
+<tr class="row-odd"><td><p>sensei/2.1.0-libsim-shared</p></td>
+<td><p>VisIt Libsim, ADIOS, Python</p></td>
+</tr>
+<tr class="row-even"><td><p>sensei/2.1.0-vtk-shared</p></td>
+<td><p>VTK-m, ADIOS, Python</p></td>
+</tr>
+</tbody>
+</table>
+<p>To access the SENSEI modulefiles on cori first add the SENSEI install to the search path:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module use /usr/common/software/sensei/modulefiles
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="d-lpa-example">
+<h2>3D LPA Example<a class="headerlink" href="#d-lpa-example" title="Permalink to this headline">¶</a></h2>
+<p>This section shows an example of using SENSEI and three different back ends on
+a 3D LPA simulation. The instructions are specifically for NERSC cori, but also
+work with the SENSEI VM. The primary difference between working through the examples
+on cori or the VM are that different versions of software are installed.</p>
+<div class="section" id="rendering-with-visit-libsim">
+<h3>Rendering with VisIt Libsim<a class="headerlink" href="#rendering-with-visit-libsim" title="Permalink to this headline">¶</a></h3>
+<p>First, log into cori and clone the git repo’s.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$SCRATCH</span>
+mkdir warpx
+<span class="nb">cd</span> warpx/
+git clone https://github.com/ECP-WarpX/WarpX.git WarpX-libsim
+git clone --branch development https://github.com/AMReX-Codes/amrex
+git clone https://bitbucket.org/berkeleylab/picsar.git
+<span class="nb">cd</span> WarpX-libsim
+vim GNUmakefile
+</pre></div>
+</div>
+<p>Next, edit the makefile to turn the SENSEI features on.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">USE_SENSEI_INSITU</span><span class="o">=</span><span class="n">TRUE</span>
+</pre></div>
+</div>
+<p>Then, load the SENSEI VisIt module, bring SENSEI’s build requirements into the
+environment, and compile WarpX.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module use /usr/common/software/sensei/modulefiles/
+module load sensei/2.1.0-libsim-shared
+<span class="nb">source</span> sensei_config
+make -j8
+</pre></div>
+</div>
+<p>Download the WarpX input deck, SENSEI XML configuration and and VisIt session
+files. The inputs file configures WarpX, the xml file configures SENSEI, and
+the session file configures VisIt. The inputs and xml files are written by
+hand, while the session file is generated in VisIt gui on a representative data
+set.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget https://data.kitware.com/api/v1/item/5c05d48e8d777f2179d22f20/download -O inputs.3d
+wget https://data.kitware.com/api/v1/item/5c05d4588d777f2179d22f16/download -O beam_j_pin.xml
+wget https://data.kitware.com/api/v1/item/5c05d4588d777f2179d22f0e/download -O beam_j_pin.session
+</pre></div>
+</div>
+<p>To run the demo, submit an interactive job to the batch queue, and launch WarpX.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>salloc -C haswell -N <span class="m">1</span> -t <span class="m">00</span>:30:00 -q debug
+./Bin/main3d.gnu.TPROF.MPI.OMP.ex inputs.3d
+</pre></div>
+</div>
+</div>
+<div class="section" id="rendering-with-paraview-catalyst">
+<h3>Rendering with ParaView Catalyst<a class="headerlink" href="#rendering-with-paraview-catalyst" title="Permalink to this headline">¶</a></h3>
+<p>First, log into cori and clone the git repo’s.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> <span class="nv">$SCRATCH</span>
+mkdir warpx
+<span class="nb">cd</span> warpx/
+git clone https://github.com/ECP-WarpX/WarpX.git WarpX-catalyst
+git clone --branch development https://github.com/AMReX-Codes/amrex
+git clone https://bitbucket.org/berkeleylab/picsar.git
+<span class="nb">cd</span> WarpX-catalyst
+vim GNUmakefile
+</pre></div>
+</div>
+<p>Next, edit the makefile to turn the SENSEI features on.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">USE_SENSEI_INSITU</span><span class="o">=</span><span class="n">TRUE</span>
+</pre></div>
+</div>
+<p>Then, load the SENSEI ParaView module, bring SENSEI’s build requirements into the
+environment, and compile WarpX.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module use /usr/common/software/sensei/modulefiles/
+module load sensei/2.1.0-catalyst-shared
+<span class="nb">source</span> sensei_config
+make -j8
+</pre></div>
+</div>
+<p>Download the WarpX input deck, SENSEI XML configuration and and ParaView session
+files. The inputs file configures WarpX, the xml file configures SENSEI, and
+the session file configures ParaView. The inputs and xml files are written by
+hand, while the session file is generated in ParaView gui on a representative data
+set.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget https://data.kitware.com/api/v1/item/5c05b3fd8d777f2179d2067d/download -O inputs.3d
+wget https://data.kitware.com/api/v1/item/5c05b3fd8d777f2179d20675/download -O beam_j.xml
+wget https://data.kitware.com/api/v1/item/5c05b3fc8d777f2179d2066d/download -O beam_j.py
+</pre></div>
+</div>
+<p>To run the demo, submit an interactive job to the batch queue, and launch WarpX.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>salloc -C haswell -N <span class="m">1</span> -t <span class="m">00</span>:30:00 -q debug
+./Bin/main3d.gnu.TPROF.MPI.OMP.ex inputs.3d
+</pre></div>
+</div>
+</div>
+<div class="section" id="in-situ-calculation-with-python">
+<h3>In situ Calculation with Python<a class="headerlink" href="#in-situ-calculation-with-python" title="Permalink to this headline">¶</a></h3>
+<p>SENSEI’s Python back-end loads a user provided script file containing callbacks
+for <code class="code docutils literal notranslate"><span class="pre">Initialize</span></code>, <code class="code docutils literal notranslate"><span class="pre">Execute</span></code>, and <code class="code docutils literal notranslate"><span class="pre">Finalize</span></code> phases of the run.
+During the execute phase the simulation pushes data through SENSEI.  SENSEI forwards
+this data to the user provided Python function. SENSEI’s MPI communicator is made
+available to the user’s function via a global variable <code class="code docutils literal notranslate"><span class="pre">comm</span></code>.</p>
+<p>Here is a template for the user provided Python code.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># YOUR IMPORTS HERE</span>
+
+<span class="c1"># SET DEFAULTS OF GLOBAL VARIABLES THAT INFLUENCE RUNTIME BEHAVIOR HERE</span>
+
+<span class="k">def</span> <span class="nf">Initialize</span><span class="p">():</span>
+  <span class="sd">&quot;&quot;&quot; Initialization code &quot;&quot;&quot;</span>
+  <span class="c1"># YOUR CODE HERE</span>
+  <span class="k">return</span>
+
+<span class="k">def</span> <span class="nf">Execute</span><span class="p">(</span><span class="n">dataAdaptor</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot; Use sensei::DataAdaptor instance passed in</span>
+<span class="sd">      dataAdaptor to access and process simulation data &quot;&quot;&quot;</span>
+  <span class="c1"># YOUR CODE HERE</span>
+  <span class="k">return</span>
+
+<span class="k">def</span> <span class="nf">Finalize</span><span class="p">():</span>
+  <span class="sd">&quot;&quot;&quot; Finalization code &quot;&quot;&quot;</span>
+  <span class="c1"># YOUR CODE HERE</span>
+  <span class="k">return</span>
+</pre></div>
+</div>
+<p><code class="code docutils literal notranslate"><span class="pre">Initialize</span></code> and <code class="code docutils literal notranslate"><span class="pre">Finalize</span></code> are optional and will be called if
+they are provided. <code class="code docutils literal notranslate"><span class="pre">Execute</span></code> is required. SENSEI’s DataAdaptor API
+is used to obtain data and metadata from the simulation. Data is through
+VTK Object’s. In WarpX the vtkOverlappingAMR VTK dataset is used.</p>
+<p>The following script shows a simple integration of a scalar quantity
+over the valid cells of the mesh. The result is saved in a CSV format.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span><span class="o">,</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">vtk.util.numpy_support</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">vtk</span> <span class="kn">import</span> <span class="n">vtkDataObject</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="c1"># default values of control parameters</span>
+<span class="n">array</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+<span class="n">out_file</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+<span class="k">def</span> <span class="nf">Initialize</span><span class="p">():</span>
+  <span class="c1"># rank zero writes the result</span>
+  <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">out_file</span> <span class="k">if</span> <span class="n">out_file</span> <span class="k">else</span> <span class="s1">&#39;integrate_</span><span class="si">%s</span><span class="s1">.csv&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;# time, </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">array</span><span class="p">))</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+  <span class="k">return</span>
+
+<span class="k">def</span> <span class="nf">Execute</span><span class="p">(</span><span class="n">adaptor</span><span class="p">):</span>
+  <span class="c1"># get the mesh and arrays we need</span>
+  <span class="n">dobj</span> <span class="o">=</span> <span class="n">adaptor</span><span class="o">.</span><span class="n">GetMesh</span><span class="p">(</span><span class="s1">&#39;mesh&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+  <span class="n">adaptor</span><span class="o">.</span><span class="n">AddArray</span><span class="p">(</span><span class="n">dobj</span><span class="p">,</span> <span class="s1">&#39;mesh&#39;</span><span class="p">,</span> <span class="n">vtkDataObject</span><span class="o">.</span><span class="n">CELL</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span>
+  <span class="n">adaptor</span><span class="o">.</span><span class="n">AddGhostCellsArray</span><span class="p">(</span><span class="n">dobj</span><span class="p">,</span> <span class="s1">&#39;mesh&#39;</span><span class="p">)</span>
+  <span class="n">time</span> <span class="o">=</span> <span class="n">adaptor</span><span class="o">.</span><span class="n">GetDataTime</span><span class="p">()</span>
+
+  <span class="c1"># integrate over the local blocks</span>
+  <span class="n">varint</span> <span class="o">=</span> <span class="mf">0.</span>
+  <span class="n">it</span> <span class="o">=</span> <span class="n">dobj</span><span class="o">.</span><span class="n">NewIterator</span><span class="p">()</span>
+  <span class="k">while</span> <span class="ow">not</span> <span class="n">it</span><span class="o">.</span><span class="n">IsDoneWithTraversal</span><span class="p">():</span>
+    <span class="c1"># get the local data block and its props</span>
+    <span class="n">blk</span> <span class="o">=</span> <span class="n">it</span><span class="o">.</span><span class="n">GetCurrentDataObject</span><span class="p">()</span>
+
+    <span class="c1"># get the array container</span>
+    <span class="n">atts</span> <span class="o">=</span> <span class="n">blk</span><span class="o">.</span><span class="n">GetCellData</span><span class="p">()</span>
+
+    <span class="c1"># get the data array</span>
+    <span class="n">var</span> <span class="o">=</span>  <span class="n">vtk_to_numpy</span><span class="p">(</span><span class="n">atts</span><span class="o">.</span><span class="n">GetArray</span><span class="p">(</span><span class="n">array</span><span class="p">))</span>
+
+    <span class="c1"># get ghost cell mask</span>
+    <span class="n">ghost</span> <span class="o">=</span> <span class="n">vtk_to_numpy</span><span class="p">(</span><span class="n">atts</span><span class="o">.</span><span class="n">GetArray</span><span class="p">(</span><span class="s1">&#39;vtkGhostType&#39;</span><span class="p">))</span>
+    <span class="n">ii</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ghost</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># integrate over valid cells</span>
+    <span class="n">varint</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">var</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">blk</span><span class="o">.</span><span class="n">GetSpacing</span><span class="p">())</span>
+
+    <span class="n">it</span><span class="o">.</span><span class="n">GoToNextItem</span><span class="p">()</span>
+
+  <span class="c1"># reduce integral to rank 0</span>
+  <span class="n">varint</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">varint</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
+
+  <span class="c1"># rank zero writes the result</span>
+  <span class="k">if</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">out_file</span> <span class="k">if</span> <span class="n">out_file</span> <span class="k">else</span> <span class="s1">&#39;integrate_</span><span class="si">%s</span><span class="s1">.csv&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s1">&#39;a+&#39;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">, </span><span class="si">%s</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">varint</span><span class="p">))</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+  <span class="k">return</span>
+</pre></div>
+</div>
+<p>The following XML configures SENSEI’s Python back-end.</p>
+<div class="highlight-xml notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;sensei&gt;</span>
+  <span class="nt">&lt;analysis</span> <span class="na">type=</span><span class="s">&quot;python&quot;</span> <span class="na">script_file=</span><span class="s">&quot;./integrate.py&quot;</span> <span class="na">enabled=</span><span class="s">&quot;1&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;initialize_source&gt;</span>
+array=&#39;rho&#39;
+out_file=&#39;rho.csv&#39;
+     <span class="nt">&lt;/initialize_source&gt;</span>
+  <span class="nt">&lt;/analysis&gt;</span>
+<span class="nt">&lt;/sensei&gt;</span>
+</pre></div>
+</div>
+<p>The <code class="code docutils literal notranslate"><span class="pre">script_file</span></code> attribute sets the file path to load the user’s Python
+code from, and the <code class="code docutils literal notranslate"><span class="pre">initialize_source</span></code> element contains Python code that
+controls runtime behavior specific to each user provided script.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="ascent.html" class="btn btn-neutral float-right" title="In situ Visualization with Ascent" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="plot_parallel.html" class="btn btn-neutral float-left" title="Out-of-the-box plotting script" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, WarpX collaboration
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

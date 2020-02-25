@@ -1,0 +1,308 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Building/installing WarpX &mdash; WarpX  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Building WarpX with support for openPMD output" href="openpmd.html" />
+    <link rel="prev" title="WarpX documentation" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> WarpX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                20.02
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Building/installing WarpX</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#downloading-the-source-code">Downloading the source code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basic-compilation">Basic compilation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compile-time-vs-run-time-options">Compile-time vs. run-time options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-building-instructions">Advanced building instructions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openpmd.html">Building WarpX with support for openPMD output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spectral.html">Building the spectral solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rzgeometry.html">Building WarpX to use RZ geometry</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gpu_local.html">Building WarpX with GPU support (Linux only)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="python.html">Installing WarpX as a Python package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spack.html">Building WarpX with Spack</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#building-for-specific-platforms">Building for specific platforms</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cori.html">Building WarpX for Cori (NERSC)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="summit.html">Building WarpX for Summit (OLCF)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../running_cpp/running_cpp.html">Running WarpX as an executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_python/running_python.html">Running WarpX from Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualization/visualization.html">Visualizing the simulation results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/theory.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/developers.html">Developers documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/doxygen.html">Doxygen</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">WarpX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Building/installing WarpX</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/building/building.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="building-installing-warpx">
+<h1>Building/installing WarpX<a class="headerlink" href="#building-installing-warpx" title="Permalink to this headline">¶</a></h1>
+<p>WarpX can be built with various options. This page describes the most basic
+build, and points to instructions for more advanced builds.</p>
+<p>Even if you are interested in more advanced builds, we recommend reading this
+page first.</p>
+<div class="section" id="downloading-the-source-code">
+<h2>Downloading the source code<a class="headerlink" href="#downloading-the-source-code" title="Permalink to this headline">¶</a></h2>
+<p>Clone the source codes of WarpX, and its dependencies AMReX and PICSAR into one
+single directory (e.g. <code class="docutils literal notranslate"><span class="pre">warpx_directory</span></code>):</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">mkdir</span> <span class="n">warpx_directory</span>
+<span class="n">cd</span> <span class="n">warpx_directory</span>
+<span class="n">git</span> <span class="n">clone</span> <span class="nl">https</span><span class="p">:</span><span class="c1">//github.com/ECP-WarpX/WarpX.git</span>
+<span class="n">git</span> <span class="n">clone</span> <span class="nl">https</span><span class="p">:</span><span class="c1">//bitbucket.org/berkeleylab/picsar.git</span>
+<span class="n">git</span> <span class="n">clone</span> <span class="o">--</span><span class="n">branch</span> <span class="n">development</span> <span class="nl">https</span><span class="p">:</span><span class="c1">//github.com/AMReX-Codes/amrex.git</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="basic-compilation">
+<h2>Basic compilation<a class="headerlink" href="#basic-compilation" title="Permalink to this headline">¶</a></h2>
+<p>WarpX requires a C/C++ and Fortran compiler (e.g., GCC or Intel) and an
+MPI implementation (e.g., OpenMPI or MPICH). Then <code class="docutils literal notranslate"><span class="pre">cd</span></code> into the directory
+<code class="docutils literal notranslate"><span class="pre">WarpX</span></code> and type</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="o">-</span><span class="n">j</span> <span class="mi">4</span>
+</pre></div>
+</div>
+<p>This will generate an executable file in the <code class="docutils literal notranslate"><span class="pre">Bin</span></code> directory.</p>
+</div>
+<div class="section" id="compile-time-vs-run-time-options">
+<h2>Compile-time vs. run-time options<a class="headerlink" href="#compile-time-vs-run-time-options" title="Permalink to this headline">¶</a></h2>
+<p>WarpX has multiple compile-time and run-time options. The compilation
+options are set in the file <code class="docutils literal notranslate"><span class="pre">GNUmakefile</span></code>. The default
+options correspond to an optimized code for 3D geometry. The main compile-time
+options are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">DIM=3</span></code> or <code class="docutils literal notranslate"><span class="pre">2</span></code>: Geometry of the simulation (note that running an executable compiled for 3D with a 2D input file will crash).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DEBUG=FALSE</span></code> or <code class="docutils literal notranslate"><span class="pre">TRUE</span></code>: Compiling in <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> mode can help tremendously during code development.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">USE_PSATD=FALSE</span></code> or <code class="docutils literal notranslate"><span class="pre">TRUE</span></code>: Compile the Pseudo-Spectral Analytical Time Domain Maxwell solver. Requires an FFT library.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">USE_RZ=FALSE</span></code> or <code class="docutils literal notranslate"><span class="pre">TRUE</span></code>: Compile for 2D axisymmetric geometry.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">COMP=gcc</span></code> or <code class="docutils literal notranslate"><span class="pre">intel</span></code>: Compiler.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">USE_MPI=TRUE</span></code> or <code class="docutils literal notranslate"><span class="pre">FALSE</span></code>: Whether to compile with MPI support.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">USE_OMP=TRUE</span></code> or <code class="docutils literal notranslate"><span class="pre">FALSE</span></code>: Whether to compile with OpenMP support.</p></li>
+</ul>
+</div></blockquote>
+<p>For a description of these different options, see the <a class="reference external" href="https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html">corresponding page</a> in the AMReX documentation.</p>
+<p>Alternatively, instead of modifying the file <code class="docutils literal notranslate"><span class="pre">GNUmakefile</span></code>, you can directly pass the options in command line ; for instance:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="o">-</span><span class="n">j</span> <span class="mi">4</span> <span class="n">USE_OMP</span><span class="o">=</span><span class="n">FALSE</span>
+</pre></div>
+</div>
+<p>In order to clean a previously compiled version (typically useful for troubleshooting, if you encounter unexpected compilation errors):</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">realclean</span>
+</pre></div>
+</div>
+<p>before re-attempting compilation.</p>
+</div>
+<div class="section" id="advanced-building-instructions">
+<h2>Advanced building instructions<a class="headerlink" href="#advanced-building-instructions" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="openpmd.html">Building WarpX with support for openPMD output</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spectral.html">Building the spectral solver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rzgeometry.html">Building WarpX to use RZ geometry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gpu_local.html">Building WarpX with GPU support (Linux only)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="python.html">Installing WarpX as a Python package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spack.html">Building WarpX with Spack</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="building-for-specific-platforms">
+<h2>Building for specific platforms<a class="headerlink" href="#building-for-specific-platforms" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cori.html">Building WarpX for Cori (NERSC)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="summit.html">Building WarpX for Summit (OLCF)</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="openpmd.html" class="btn btn-neutral float-right" title="Building WarpX with support for openPMD output" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../index.html" class="btn btn-neutral float-left" title="WarpX documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, WarpX collaboration
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

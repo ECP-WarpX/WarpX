@@ -1,0 +1,301 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Advanced yt visualization, for developers (for plotfiles) &mdash; WarpX  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Out-of-the-box plotting script" href="plot_parallel.html" />
+    <link rel="prev" title="Visualization with openPMD-viewer (for openPMD data)" href="openpmdviewer.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> WarpX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                20.02
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../building/building.html">Building/installing WarpX</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_cpp/running_cpp.html">Running WarpX as an executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_python/running_python.html">Running WarpX from Python</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="visualization.html">Visualizing the simulation results</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="yt.html">Visualization with yt (for plotfiles)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="backtransformed_diags.html">Visualizing back-transformed diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reduced_diags.html">Reduced diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visit.html">Visualization with Visit (for plotfiles)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="picviewer.html">PyQt-based visualization GUI: PICViewer (for both plotfiles and openPMD)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openpmdviewer.html">Visualization with openPMD-viewer (for openPMD data)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Advanced yt visualization, for developers (for plotfiles)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#dump-additional-data">Dump additional data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#read-raw-data">Read raw data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="plot_parallel.html">Out-of-the-box plotting script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sensei.html">In situ Visualization with SENSEI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ascent.html">In situ Visualization with Ascent</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/theory.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/developers.html">Developers documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/doxygen.html">Doxygen</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">WarpX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="visualization.html">Visualizing the simulation results</a> &raquo;</li>
+        
+      <li>Advanced yt visualization, for developers (for plotfiles)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/visualization/advanced.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="advanced-yt-visualization-for-developers-for-plotfiles">
+<h1>Advanced yt visualization, for developers (for plotfiles)<a class="headerlink" href="#advanced-yt-visualization-for-developers-for-plotfiles" title="Permalink to this headline">¶</a></h1>
+<p>This sections contains yt commands for advanced users. The Particle-In-Cell methods uses a
+staggered grid (see <a class="reference internal" href="../theory/picsar_theory.html"><span class="doc">The electromagnetic Particle-In-Cell method</span></a>), so that the x, y, and z components of the
+electric and magnetic fields are all defined at different locations in space. Regular output
+(see the <a class="reference internal" href="yt.html"><span class="doc">Visualization with yt (for plotfiles)</span></a> page, or the notebook at <code class="docutils literal notranslate"><span class="pre">WarpX/Tools/Visualization.ipynb</span></code> for an example)
+returns cell-centered data for convenience, which involves an additional operation. It is sometimes
+useful to access the raw data directly. Furthermore,
+the WarpX implementation for mesh refinement contains a number of grids for each level (coarse,
+fine and auxilary, see
+<a class="reference internal" href="../theory/theory.html"><span class="doc">Theoretical background</span></a> for more details), and it is sometimes useful to access each of
+them (regular output return the auxiliary grid only). This page provides information to read
+raw data of all grids.</p>
+<div class="section" id="dump-additional-data">
+<h2>Dump additional data<a class="headerlink" href="#dump-additional-data" title="Permalink to this headline">¶</a></h2>
+<p>In order to dump additional data in WarpX (mostly for debugging purpose), run the simulation
+with parameters</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">warpx</span><span class="p">.</span><span class="n">plot_raw_fields</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">warpx</span><span class="p">.</span><span class="n">plot_finepatch</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">warpx</span><span class="p">.</span><span class="n">plot_crsepatch</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">warpx</span><span class="p">.</span><span class="n">plot_dive</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">warpx</span><span class="p">.</span><span class="n">plot_rho</span> <span class="o">=</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>see <a class="reference internal" href="../running_cpp/parameters.html"><span class="doc">Input parameters</span></a> for more information on these parameters.</p>
+</div>
+<div class="section" id="read-raw-data">
+<h2>Read raw data<a class="headerlink" href="#read-raw-data" title="Permalink to this headline">¶</a></h2>
+<p>Meta-data
+relevant to this topic (number and locations of grids in the simulation) are accessed to
+with</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span>import yt
+# get yt dataset
+ds = yt.load( &#39;./plotfiles/plt00004&#39; )
+# Index of data in the plotfile
+ds_index = ds.index
+# Print the number of grids in the simulation
+ds_index.grids.shape
+# Left and right physical boundary of each grid
+ds_index.grid_left_edge
+ds_index.grid_right_edge
+# List available fields
+ds.field_list
+</pre></div>
+</div>
+<p>When <code class="docutils literal notranslate"><span class="pre">warpx.plot_raw_fields=1</span></code> and <code class="docutils literal notranslate"><span class="pre">warpx.plot_finepatch=1</span></code>, here are some useful
+commands to access properties of a grid and the Ex field on the fine patch:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="cp"># store grid number 2 into my_grid</span>
+<span class="n">my_grid</span> <span class="o">=</span> <span class="n">ds</span><span class="p">.</span><span class="n">index</span><span class="p">.</span><span class="n">grids</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="cp"># Get left and right edges of my_grid</span>
+<span class="n">my_grid</span><span class="p">.</span><span class="n">LeftEdge</span>
+<span class="n">my_grid</span><span class="p">.</span><span class="n">RightEdge</span>
+<span class="cp"># Get Level of my_grid</span>
+<span class="n">my_grid</span><span class="p">.</span><span class="n">Level</span>
+<span class="cp"># left edge of the grid, in number of points</span>
+<span class="n">my_grid</span><span class="p">.</span><span class="n">start_index</span>
+</pre></div>
+</div>
+<p>Return the <code class="docutils literal notranslate"><span class="pre">Ex</span></code> field on the fine patch of grid <code class="docutils literal notranslate"><span class="pre">my_grid</span></code>:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span>my_field = my_grid[&#39;raw&#39;, &#39;Ex_fp&#39;].squeeze().v
+</pre></div>
+</div>
+<p>For a 2D plotfile, <code class="docutils literal notranslate"><span class="pre">my_field</span></code> has shape <code class="docutils literal notranslate"><span class="pre">(nx,nz,2)</span></code>. The last component stands for the
+two values on the edges of each cell for the electric field, due to field staggering. Numpy
+function <code class="docutils literal notranslate"><span class="pre">squeeze</span></code> removes empty components. While <code class="docutils literal notranslate"><span class="pre">yt</span></code> arrays are unit-aware, it is
+sometimes useful to extract the data into unitless numpy arrays. This is achieved with <code class="docutils literal notranslate"><span class="pre">.v</span></code>.
+In the case of <code class="docutils literal notranslate"><span class="pre">Ex_fp</span></code>, the staggering is on direction <code class="docutils literal notranslate"><span class="pre">x</span></code>, so that
+<code class="docutils literal notranslate"><span class="pre">my_field[:,:-1,1]</span> <span class="pre">==</span> <span class="pre">my_field[:,1:,0]</span></code>.</p>
+<p>All combinations of the fields (<code class="docutils literal notranslate"><span class="pre">E</span></code> or <code class="docutils literal notranslate"><span class="pre">B</span></code>), the component (<code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">y</span></code> or <code class="docutils literal notranslate"><span class="pre">z</span></code>) and the
+grid (<code class="docutils literal notranslate"><span class="pre">_fp</span></code> for fine, <code class="docutils literal notranslate"><span class="pre">_cp</span></code> for coarse and <code class="docutils literal notranslate"><span class="pre">_aux</span></code> for auxiliary) can be accessed in this
+way, i.e., <code class="docutils literal notranslate"><span class="pre">my_grid['raw',</span> <span class="pre">'Ey_aux']</span></code> or <code class="docutils literal notranslate"><span class="pre">my_grid['raw',</span> <span class="pre">'Bz_cp']</span></code> are valid queries.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="plot_parallel.html" class="btn btn-neutral float-right" title="Out-of-the-box plotting script" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="openpmdviewer.html" class="btn btn-neutral float-left" title="Visualization with openPMD-viewer (for openPMD data)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, WarpX collaboration
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

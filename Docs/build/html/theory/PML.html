@@ -1,0 +1,394 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Boundary conditions &mdash; WarpX  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Moving window and optimal Lorentz boosted frame" href="boosted_frame.html" />
+    <link rel="prev" title="Mesh refinement" href="amr.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> WarpX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                20.02
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../building/building.html">Building/installing WarpX</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_cpp/running_cpp.html">Running WarpX as an executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_python/running_python.html">Running WarpX from Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualization/visualization.html">Visualizing the simulation results</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="theory.html">Theoretical background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="picsar_theory.html">The electromagnetic Particle-In-Cell method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="picsar_theory.html#filtering">Filtering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="amr.html">Mesh refinement</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Boundary conditions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#open-boundary-condition-for-electromagnetic-waves">Open boundary condition for electromagnetic waves</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#sec-analytic-theory-propa-plane-wave-propagation-of-a-plane-wave-in-an-apml-medium">[Sec:analytic theory, propa plane wave]Propagation of a Plane Wave in an APML Medium</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#discretization">Discretization</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="boosted_frame.html">Moving window and optimal Lorentz boosted frame</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_output.html">Inputs and outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/developers.html">Developers documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/doxygen.html">Doxygen</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">WarpX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="theory.html">Theoretical background</a> &raquo;</li>
+        
+      <li>Boundary conditions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/theory/PML.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="boundary-conditions">
+<h1>Boundary conditions<a class="headerlink" href="#boundary-conditions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="open-boundary-condition-for-electromagnetic-waves">
+<h2>Open boundary condition for electromagnetic waves<a class="headerlink" href="#open-boundary-condition-for-electromagnetic-waves" title="Permalink to this headline">¶</a></h2>
+<p>For the TE case, the original Berenger’s Perfectly Matched Layer (PML) writes</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+\varepsilon _{0}\frac{\partial E_{x}}{\partial t}+\sigma _{y}E_{x} = &amp; \frac{\partial H_{z}}{\partial y}\label{PML_def_1} \\
+\varepsilon _{0}\frac{\partial E_{y}}{\partial t}+\sigma _{x}E_{y} = &amp; -\frac{\partial H_{z}}{\partial x}\label{PML_def_2} \\
+\mu _{0}\frac{\partial H_{zx}}{\partial t}+\sigma ^{*}_{x}H_{zx} = &amp; -\frac{\partial E_{y}}{\partial x}\label{PML_def_3} \\
+\mu _{0}\frac{\partial H_{zy}}{\partial t}+\sigma ^{*}_{y}H_{zy} = &amp; \frac{\partial E_{x}}{\partial y}\label{PML_def_4} \\
+H_{z}  = &amp; H_{zx}+H_{zy}\label{PML_def_5}\end{aligned}\end{split}\]</div>
+<p>This can be generalized to</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+\varepsilon _{0}\frac{\partial E_{x}}{\partial t}+\sigma _{y}E_{x} = &amp; \frac{c_{y}}{c}\frac{\partial H_{z}}{\partial y}+\overline{\sigma }_{y}H_{z}\label{APML_def_1} \\
+\varepsilon _{0}\frac{\partial E_{y}}{\partial t}+\sigma _{x}E_{y} = &amp; -\frac{c_{x}}{c}\frac{\partial H_{z}}{\partial x}+\overline{\sigma }_{x}H_{z}\label{APML_def_2} \\
+\mu _{0}\frac{\partial H_{zx}}{\partial t}+\sigma ^{*}_{x}H_{zx} = &amp; -\frac{c^{*}_{x}}{c}\frac{\partial E_{y}}{\partial x}+\overline{\sigma }_{x}^{*}E_{y}\label{APML_def_3} \\
+\mu _{0}\frac{\partial H_{zy}}{\partial t}+\sigma ^{*}_{y}H_{zy} = &amp; \frac{c^{*}_{y}}{c}\frac{\partial E_{x}}{\partial y}+\overline{\sigma }_{y}^{*}E_{x}\label{APML_def_4} \\
+H_{z} = &amp; H_{zx}+H_{zy}\label{APML_def_5}\end{aligned}\end{split}\]</div>
+<p>For <span class="math notranslate nohighlight">\(c_{x}=c_{y}=c^{*}_{x}=c^{*}_{y}=c\)</span> and <span class="math notranslate nohighlight">\(\overline{\sigma }_{x}=\overline{\sigma }_{y}=\overline{\sigma }_{x}^{*}=\overline{\sigma }_{y}^{*}=0\)</span>,
+this system reduces to the Berenger PML medium, while adding the additional
+constraint <span class="math notranslate nohighlight">\(\sigma _{x}=\sigma _{y}=\sigma _{x}^{*}=\sigma _{y}^{*}=0\)</span>
+leads to the system of Maxwell equations in vacuum.</p>
+<div class="section" id="sec-analytic-theory-propa-plane-wave-propagation-of-a-plane-wave-in-an-apml-medium">
+<h3>[Sec:analytic theory, propa plane wave]Propagation of a Plane Wave in an APML Medium<a class="headerlink" href="#sec-analytic-theory-propa-plane-wave-propagation-of-a-plane-wave-in-an-apml-medium" title="Permalink to this headline">¶</a></h3>
+<p>We consider a plane wave of magnitude (<span class="math notranslate nohighlight">\(E_{0},H_{zx0},H_{zy0}\)</span>)
+and pulsation <span class="math notranslate nohighlight">\(\omega\)</span> propagating in the APML medium with an
+angle <span class="math notranslate nohighlight">\(\varphi\)</span> relative to the x axis</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+E_{x} = &amp; -E_{0}\sin \varphi e^{i\omega \left( t-\alpha x-\beta y\right) }\label{Plane_wave_APML_def_1} \\
+E_{y} = &amp; E_{0}\cos \varphi e^{i\omega \left( t-\alpha x-\beta y\right) }\label{Plane_wave_APML_def_2} \\
+H_{zx} = &amp; H_{zx0}e^{i\omega \left( t-\alpha x-\beta y\right) }\label{Plane_wave_AMPL_def_3} \\
+H_{zy} = &amp; H_{zy0}e^{i\omega \left( t-\alpha x-\beta y\right) }\label{Plane_wave_APML_def_4}\end{aligned}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\alpha\)</span> and<span class="math notranslate nohighlight">\(\beta\)</span> are two complex constants to
+be determined.</p>
+<p>Introducing (<a class="reference external" href="#Plane_wave_APML_def_1">[Plane_wave_APML_def_1]</a>), (<a class="reference external" href="#Plane_wave_APML_def_2">[Plane_wave_APML_def_2]</a>),
+(<a class="reference external" href="#Plane_wave_AMPL_def_3">[Plane_wave_AMPL_def_3]</a>) and (<a class="reference external" href="#Plane_wave_APML_def_4">[Plane_wave_APML_def_4]</a>)
+into (<a class="reference external" href="#APML_def_1">[APML_def_1]</a>), (<a class="reference external" href="#APML_def_2">[APML_def_2]</a>), (<a class="reference external" href="#APML_def_3">[APML_def_3]</a>)
+and (<a class="reference external" href="#APML_def_4">[APML_def_4]</a>) gives</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+\varepsilon _{0}E_{0}\sin \varphi -i\frac{\sigma _{y}}{\omega }E_{0}\sin \varphi  = &amp; \beta \frac{c_{y}}{c}\left( H_{zx0}+H_{zy0}\right) +i\frac{\overline{\sigma }_{y}}{\omega }\left( H_{zx0}+H_{zy0}\right) \label{Plane_wave_APML_1_1} \\
+\varepsilon _{0}E_{0}\cos \varphi -i\frac{\sigma _{x}}{\omega }E_{0}\cos \varphi  = &amp; \alpha \frac{c_{x}}{c}\left( H_{zx0}+H_{zy0}\right) -i\frac{\overline{\sigma }_{x}}{\omega }\left( H_{zx0}+H_{zy0}\right) \label{Plane_wave_APML_1_2} \\
+\mu _{0}H_{zx0}-i\frac{\sigma ^{*}_{x}}{\omega }H_{zx0} = &amp; \alpha \frac{c^{*}_{x}}{c}E_{0}\cos \varphi -i\frac{\overline{\sigma }^{*}_{x}}{\omega }E_{0}\cos \varphi \label{Plane_wave_APML_1_3} \\
+\mu _{0}H_{zy0}-i\frac{\sigma ^{*}_{y}}{\omega }H_{zy0} = &amp; \beta \frac{c^{*}_{y}}{c}E_{0}\sin \varphi +i\frac{\overline{\sigma }^{*}_{y}}{\omega }E_{0}\sin \varphi \label{Plane_wave_APML_1_4}\end{aligned}\end{split}\]</div>
+<p>Defining <span class="math notranslate nohighlight">\(Z=E_{0}/\left( H_{zx0}+H_{zy0}\right)\)</span> and using (<a class="reference external" href="#Plane_wave_APML_1_1">[Plane_wave_APML_1_1]</a>)
+and (<a class="reference external" href="#Plane_wave_APML_1_2">[Plane_wave_APML_1_2]</a>), we get</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+\beta  = &amp; \left[ Z\left( \varepsilon _{0}-i\frac{\sigma _{y}}{\omega }\right) \sin \varphi -i\frac{\overline{\sigma }_{y}}{\omega }\right] \frac{c}{c_{y}}\label{Plane_wave_APML_beta_of_g} \\
+\alpha  = &amp; \left[ Z\left( \varepsilon _{0}-i\frac{\sigma _{x}}{\omega }\right) \cos \varphi +i\frac{\overline{\sigma }_{x}}{\omega }\right] \frac{c}{c_{x}}\label{Plane_wave_APML_alpha_of_g}\end{aligned}\end{split}\]</div>
+<p>Adding <span class="math notranslate nohighlight">\(H_{zx0}\)</span> and <span class="math notranslate nohighlight">\(H_{zy0}\)</span> from (<a class="reference external" href="#Plane_wave_APML_1_3">[Plane_wave_APML_1_3]</a>)
+and (<a class="reference external" href="#Plane_wave_APML_1_4">[Plane_wave_APML_1_4]</a>) and substituting the expressions
+for <span class="math notranslate nohighlight">\(\alpha\)</span> and <span class="math notranslate nohighlight">\(\beta\)</span> from (<a class="reference external" href="#Plane_wave_APML_beta_of_g">[Plane_wave_APML_beta_of_g]</a>)
+and (<a class="reference external" href="#Plane_wave_APML_alpha_of_g">[Plane_wave_APML_alpha_of_g]</a>) yields</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+\frac{1}{Z} = &amp; \frac{Z\left( \varepsilon _{0}-i\frac{\sigma _{x}}{\omega }\right) \cos \varphi \frac{c^{*}_{x}}{c_{x}}+i\frac{\overline{\sigma }_{x}}{\omega }\frac{c^{*}_{x}}{c_{x}}-i\frac{\overline{\sigma }^{*}_{x}}{\omega }}{\mu _{0}-i\frac{\sigma ^{*}_{x}}{\omega }}\cos \varphi \nonumber \\
+ + &amp; \frac{Z\left( \varepsilon _{0}-i\frac{\sigma _{y}}{\omega }\right) \sin \varphi \frac{c^{*}_{y}}{c_{y}}-i\frac{\overline{\sigma }_{y}}{\omega }\frac{c^{*}_{y}}{c_{y}}+i\frac{\overline{\sigma }^{*}_{y}}{\omega }}{\mu _{0}-i\frac{\sigma ^{*}_{y}}{\omega }}\sin \varphi\end{aligned}\end{split}\]</div>
+<p>If <span class="math notranslate nohighlight">\(c_{x}=c^{*}_{x}\)</span>, <span class="math notranslate nohighlight">\(c_{y}=c^{*}_{y}\)</span>, <span class="math notranslate nohighlight">\(\overline{\sigma }_{x}=\overline{\sigma }^{*}_{x}\)</span>, <span class="math notranslate nohighlight">\(\overline{\sigma }_{y}=\overline{\sigma }^{*}_{y}\)</span>, <span class="math notranslate nohighlight">\(\frac{\sigma _{x}}{\varepsilon _{0}}=\frac{\sigma ^{*}_{x}}{\mu _{0}}\)</span> and <span class="math notranslate nohighlight">\(\frac{\sigma _{y}}{\varepsilon _{0}}=\frac{\sigma ^{*}_{y}}{\mu _{0}}\)</span> then</p>
+<div class="math notranslate nohighlight">
+\[\begin{aligned}
+Z = &amp; \pm \sqrt{\frac{\mu _{0}}{\varepsilon _{0}}}\label{APML_impedance}\end{aligned}\]</div>
+<p>which is the impedance of vacuum. Hence, like the PML, given some
+restrictions on the parameters, the APML does not generate any reflection
+at any angle and any frequency. As for the PML, this property is not
+retained after discretization, as shown subsequently in this paper.</p>
+<p>Calling <span class="math notranslate nohighlight">\(\psi\)</span> any component of the field and <span class="math notranslate nohighlight">\(\psi _{0}\)</span>
+its magnitude, we get from (<a class="reference external" href="#Plane_wave_APML_def_1">[Plane_wave_APML_def_1]</a>), (<a class="reference external" href="#Plane_wave_APML_beta_of_g">[Plane_wave_APML_beta_of_g]</a>),
+(<a class="reference external" href="#Plane_wave_APML_alpha_of_g">[Plane_wave_APML_alpha_of_g]</a>) and (<a class="reference external" href="#APML_impedance">[APML_impedance]</a>) that</p>
+<div class="math notranslate nohighlight">
+\[\label{Plane_wave_absorption}
+\psi =\psi _{0}e^{i\omega \left( t\mp x\cos \varphi /c_{x}\mp y\sin \varphi /c_{y}\right) }e^{-\left( \pm \frac{\sigma _{x}\cos \varphi }{\varepsilon _{0}c_{x}}+\overline{\sigma }_{x}\frac{c}{c_{x}}\right) x}e^{-\left( \pm \frac{\sigma _{y}\sin \varphi }{\varepsilon _{0}c_{y}}+\overline{\sigma }_{y}\frac{c}{c_{y}}\right) y}\]</div>
+<p>We assume that we have an APML layer of thickness <span class="math notranslate nohighlight">\(\delta\)</span> (measured
+along <span class="math notranslate nohighlight">\(x\)</span>) and that <span class="math notranslate nohighlight">\(\sigma _{y}=\overline{\sigma }_{y}=0\)</span>
+and <span class="math notranslate nohighlight">\(c_{y}=c.\)</span> Using (<a class="reference external" href="#Plane_wave_absorption">[Plane_wave_absorption]</a>), we determine
+that the coefficient of reflection given by this layer is</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+R_{APML}\left( \theta \right)  = &amp; e^{-\left( \sigma _{x}\cos \varphi /\varepsilon _{0}c_{x}+\overline{\sigma }_{x}c/c_{x}\right) \delta }e^{-\left( \sigma _{x}\cos \varphi /\varepsilon _{0}c_{x}-\overline{\sigma }_{x}c/c_{x}\right) \delta }\nonumber \\
+ = &amp; e^{-2\left( \sigma _{x}\cos \varphi /\varepsilon _{0}c_{x}\right) \delta }\end{aligned}\end{split}\]</div>
+<p>which happens to be the same as the PML theoretical coefficient of
+reflection if we assume <span class="math notranslate nohighlight">\(c_{x}=c\)</span>. Hence, it follows that for
+the purpose of wave absorption, the term <span class="math notranslate nohighlight">\(\overline{\sigma }_{x}\)</span>
+seems to be of no interest. However, although this conclusion is true
+at the infinitesimal limit, it does not hold for the discretized counterpart.</p>
+</div>
+<div class="section" id="discretization">
+<h3>Discretization<a class="headerlink" href="#discretization" title="Permalink to this headline">¶</a></h3>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+\frac{E_x|^{n+1}_{j+1/2,k,l}-E_x|^{n}_{j+1/2,k,l}}{\Delta t} + \sigma_y \frac{E_x|^{n+1}_{j+1/2,k,l}+E_x|^{n}_{j+1/2,k,l}}{2} = &amp; \frac{H_z|^{n+1/2}_{j+1/2,k+1/2,l}-H_z|^{n+1/2}_{j+1/2,k-1/2,l}}{\Delta y} \\
+%
+\frac{E_y|^{n+1}_{j,k+1/2,l}-E_y|^{n}_{j,k+1/2,l}}{\Delta t} + \sigma_x \frac{E_y|^{n+1}_{j,k+1/2,l}+E_y|^{n}_{j,k+1/2,l}}{2} = &amp; - \frac{H_z|^{n+1/2}_{j+1/2,k+1/2,l}-H_z|^{n+1/2}_{j-1/2,k+1/2,l}}{\Delta x} \\
+%
+\frac{H_{zx}|^{n+3/2}_{j+1/2,k+1/2,l}-H_{zx}|^{n}_{j+1/2,k+1/2,l}}{\Delta t} + \sigma^*_x \frac{H_{zx}|^{n+3/2}_{j+1/2,k+1/2,l}+H_{zx}|^{n}_{j+1/2,k+1/2,l}}{2} = &amp; - \frac{E_y|^{n+1}_{j+1,k+1/2,l}-E_y|^{n+1}_{j,k+1/2,l}}{\Delta x} \\
+%
+\frac{H_{zy}|^{n+3/2}_{j+1/2,k+1/2,l}-H_{zy}|^{n}_{j+1/2,k+1/2,l}}{\Delta t} + \sigma^*_y \frac{H_{zy}|^{n+3/2}_{j+1/2,k+1/2,l}+H_{zy}|^{n}_{j+1/2,k+1/2,l}}{2} = &amp; \frac{E_x|^{n+1}_{j+1/2,k+1,l}-E_x|^{n+1}_{j+1/2,k,l}}{\Delta y} \\
+%
+H_z = &amp; H_{zx}+H_{zy}\end{aligned}\end{split}\]</div>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+E_x|^{n+1}_{j+1/2,k,l} = &amp; \left(\frac{1-\sigma_y \Delta t/2}{1+\sigma_y \Delta t/2}\right) E_x|^{n}_{j+1/2,k,l} + \frac{\Delta t/\Delta y}{1+\sigma_y \Delta t/2} \left(H_z|^{n+1/2}_{j+1/2,k+1/2,l}-H_z|^{n+1/2}_{j+1/2,k-1/2,l}\right) \\
+%
+E_y|^{n+1}_{j,k+1/2,l} = &amp; \left(\frac{1-\sigma_x \Delta t/2}{1+\sigma_x \Delta t/2}\right) E_y|^{n}_{j,k+1/2,l} - \frac{\Delta t/\Delta x}{1+\sigma_x \Delta t/2} \left(H_z|^{n+1/2}_{j+1/2,k+1/2,l}-H_z|^{n+1/2}_{j-1/2,k+1/2,l}\right) \\
+%
+H_{zx}|^{n+3/2}_{j+1/2,k+1/2,l} = &amp; \left(\frac{1-\sigma^*_x \Delta t/2}{1+\sigma^*_x \Delta t/2}\right) H_{zx}|^{n}_{j+1/2,k+1/2,l} - \frac{\Delta t/\Delta x}{1+\sigma^*_x \Delta t/2} \left(E_y|^{n+1}_{j+1,k+1/2,l}-E_y|^{n+1}_{j,k+1/2,l}\right) \\
+%
+H_{zy}|^{n+3/2}_{j+1/2,k+1/2,l} = &amp; \left(\frac{1-\sigma^*_y \Delta t/2}{1+\sigma^*_y \Delta t/2}\right) H_{zy}|^{n}_{j+1/2,k+1/2,l} + \frac{\Delta t/\Delta y}{1+\sigma^*_y \Delta t/2} \left(E_x|^{n+1}_{j+1/2,k+1,l}-E_x|^{n+1}_{j+1/2,k,l}\right) \\
+%
+H_z = &amp; H_{zx}+H_{zy}\end{aligned}\end{split}\]</div>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+E_x|^{n+1}_{j+1/2,k,l} = &amp; e^{-\sigma_y\Delta t} E_x|^{n}_{j+1/2,k,l} + \frac{1-e^{-\sigma_y\Delta t}}{\sigma_y \Delta y} \left(H_z|^{n+1/2}_{j+1/2,k+1/2,l}-H_z|^{n+1/2}_{j+1/2,k-1/2,l}\right) \\
+%
+E_y|^{n+1}_{j,k+1/2,l} = &amp; e^{-\sigma_x\Delta t} E_y|^{n}_{j,k+1/2,l} - \frac{1-e^{-\sigma_x\Delta t}}{\sigma_x \Delta x} \left(H_z|^{n+1/2}_{j+1/2,k+1/2,l}-H_z|^{n+1/2}_{j-1/2,k+1/2,l}\right) \\
+%
+H_{zx}|^{n+3/2}_{j+1/2,k+1/2,l} = &amp; e^{-\sigma^*_x\Delta t} H_{zx}|^{n}_{j+1/2,k+1/2,l} - \frac{1-e^{-\sigma^*_x\Delta t}}{\sigma^*_x \Delta x} \left(E_y|^{n+1}_{j+1,k+1/2,l}-E_y|^{n+1}_{j,k+1/2,l}\right) \\
+%
+H_{zy}|^{n+3/2}_{j+1/2,k+1/2,l} = &amp; e^{-\sigma^*_y\Delta t} H_{zy}|^{n}_{j+1/2,k+1/2,l} + \frac{1-e^{-\sigma^*_y\Delta t}}{\sigma^*_y \Delta y} \left(E_x|^{n+1}_{j+1/2,k+1,l}-E_x|^{n+1}_{j+1/2,k,l}\right) \\
+%
+H_z = &amp; H_{zx}+H_{zy}\end{aligned}\end{split}\]</div>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+E_x|^{n+1}_{j+1/2,k,l} = &amp; e^{-\sigma_y\Delta t} E_x|^{n}_{j+1/2,k,l} + \frac{1-e^{-\sigma_y\Delta t}}{\sigma_y \Delta y}\frac{c_y}{c} \left(H_z|^{n+1/2}_{j+1/2,k+1/2,l}-H_z|^{n+1/2}_{j+1/2,k-1/2,l}\right) \\
+%
+E_y|^{n+1}_{j,k+1/2,l} = &amp; e^{-\sigma_x\Delta t} E_y|^{n}_{j,k+1/2,l} - \frac{1-e^{-\sigma_x\Delta t}}{\sigma_x \Delta x}\frac{c_x}{c} \left(H_z|^{n+1/2}_{j+1/2,k+1/2,l}-H_z|^{n+1/2}_{j-1/2,k+1/2,l}\right) \\
+%
+H_{zx}|^{n+3/2}_{j+1/2,k+1/2,l} = &amp; e^{-\sigma^*_x\Delta t} H_{zx}|^{n}_{j+1/2,k+1/2,l} - \frac{1-e^{-\sigma^*_x\Delta t}}{\sigma^*_x \Delta x}\frac{c^*_x}{c} \left(E_y|^{n+1}_{j+1,k+1/2,l}-E_y|^{n+1}_{j,k+1/2,l}\right) \\
+%
+H_{zy}|^{n+3/2}_{j+1/2,k+1/2,l} = &amp; e^{-\sigma^*_y\Delta t} H_{zy}|^{n}_{j+1/2,k+1/2,l} + \frac{1-e^{-\sigma^*_y\Delta t}}{\sigma^*_y \Delta y}\frac{c^*_y}{c} \left(E_x|^{n+1}_{j+1/2,k+1,l}-E_x|^{n+1}_{j+1/2,k,l}\right) \\
+%
+H_z = &amp; H_{zx}+H_{zy}\end{aligned}\end{split}\]</div>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+c_x = &amp; c e^{-\sigma_x\Delta t} \frac{\sigma_x \Delta x}{1-e^{-\sigma_x\Delta t}} \\
+c_y = &amp; c e^{-\sigma_y\Delta t} \frac{\sigma_y \Delta y}{1-e^{-\sigma_y\Delta t}} \\
+c^*_x = &amp; c e^{-\sigma^*_x\Delta t} \frac{\sigma^*_x \Delta x}{1-e^{-\sigma^*_x\Delta t}} \\
+c^*_y = &amp; c e^{-\sigma^*_y\Delta t} \frac{\sigma^*_y \Delta y}{1-e^{-\sigma^*_y\Delta t}}\end{aligned}\end{split}\]</div>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+E_x|^{n+1}_{j+1/2,k,l} = &amp; e^{-\sigma_y\Delta t} \left[ E_x|^{n}_{j+1/2,k,l} + \frac{\Delta t}{\Delta y} \left(H_z|^{n+1/2}_{j+1/2,k+1/2,l}-H_z|^{n+1/2}_{j+1/2,k-1/2,l}\right) \right] \\
+%
+E_y|^{n+1}_{j,k+1/2,l} = &amp; e^{-\sigma_x\Delta t} \left[ E_y|^{n}_{j,k+1/2,l} - \frac{\Delta t}{\Delta x}  \left(H_z|^{n+1/2}_{j+1/2,k+1/2,l}-H_z|^{n+1/2}_{j-1/2,k+1/2,l}\right) \right] \\
+%
+H_{zx}|^{n+3/2}_{j+1/2,k+1/2,l} = &amp; e^{-\sigma^*_x\Delta t} \left[ H_{zx}|^{n}_{j+1/2,k+1/2,l} - \frac{\Delta t}{\Delta x}  \left(E_y|^{n+1}_{j+1,k+1/2,l}-E_y|^{n+1}_{j,k+1/2,l}\right) \right] \\
+%
+H_{zy}|^{n+3/2}_{j+1/2,k+1/2,l} = &amp; e^{-\sigma^*_y\Delta t} \left[ H_{zy}|^{n}_{j+1/2,k+1/2,l} + \frac{\Delta t}{\Delta y}  \left(E_x|^{n+1}_{j+1/2,k+1,l}-E_x|^{n+1}_{j+1/2,k,l}\right) \right] \\
+%
+H_z = &amp; H_{zx}+H_{zy}\end{aligned}\end{split}\]</div>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+E_x|^{n+1}_{j+1/2,k,l} = &amp; E_x|^{n}_{j+1/2,k,l} + \frac{\Delta t}{\Delta y} \left(H_z|^{n+1/2}_{j+1/2,k+1/2,l}-H_z|^{n+1/2}_{j+1/2,k-1/2,l}\right) \\
+%
+E_y|^{n+1}_{j,k+1/2,l} = &amp; E_y|^{n}_{j,k+1/2,l} - \frac{\Delta t}{\Delta x} \left(H_z|^{n+1/2}_{j+1/2,k+1/2,l}-H_z|^{n+1/2}_{j-1/2,k+1/2,l}\right) \\
+%
+H_{zx}|^{n+3/2}_{j+1/2,k+1/2,l} = &amp; H_{zx}|^{n}_{j+1/2,k+1/2,l} - \frac{\Delta t}{\Delta x} \left(E_y|^{n+1}_{j+1,k+1/2,l}-E_y|^{n+1}_{j,k+1/2,l}\right) \\
+%
+H_{zy}|^{n+3/2}_{j+1/2,k+1/2,l} = &amp; H_{zy}|^{n}_{j+1/2,k+1/2,l} + \frac{\Delta t}{\Delta y} \left(E_x|^{n+1}_{j+1/2,k+1,l}-E_x|^{n+1}_{j+1/2,k,l}\right) \\
+%
+H_z = &amp; H_{zx}+H_{zy}\end{aligned}\end{split}\]</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="boosted_frame.html" class="btn btn-neutral float-right" title="Moving window and optimal Lorentz boosted frame" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="amr.html" class="btn btn-neutral float-left" title="Mesh refinement" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, WarpX collaboration
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

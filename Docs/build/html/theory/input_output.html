@@ -1,0 +1,319 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Inputs and outputs &mdash; WarpX  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Developers documentation" href="../developers/developers.html" />
+    <link rel="prev" title="Moving window and optimal Lorentz boosted frame" href="boosted_frame.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> WarpX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                20.02
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../building/building.html">Building/installing WarpX</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_cpp/running_cpp.html">Running WarpX as an executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_python/running_python.html">Running WarpX from Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualization/visualization.html">Visualizing the simulation results</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="theory.html">Theoretical background</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="picsar_theory.html">The electromagnetic Particle-In-Cell method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="picsar_theory.html#filtering">Filtering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="amr.html">Mesh refinement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="PML.html">Boundary conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boosted_frame.html">Moving window and optimal Lorentz boosted frame</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Inputs and outputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#inputs-and-outputs-in-a-boosted-frame-simulation">Inputs and outputs in a boosted frame simulation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#input-in-a-boosted-frame-simulation">Input in a boosted frame simulation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#output-in-a-boosted-frame-simulation">Output in a boosted frame simulation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/developers.html">Developers documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/doxygen.html">Doxygen</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">WarpX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="theory.html">Theoretical background</a> &raquo;</li>
+        
+      <li>Inputs and outputs</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/theory/input_output.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="inputs-and-outputs">
+<h1>Inputs and outputs<a class="headerlink" href="#inputs-and-outputs" title="Permalink to this headline">¶</a></h1>
+<p>Initialization of the plasma columns and drivers (laser or particle beam) is performed via the specification of multidimensional functions that describe the initial state with, if needed, a time dependence, or from reconstruction of distributions based on experimental data. Care is needed when initializing quantities in parallel to avoid double counting and ensure smoothness of the distributions at the interface of computational domains. When the sum of the initial distributions of charged particles is not charge neutral, initial fields are computed using generally a static approximation with Poisson solves accompanied by proper relativistic scalings (Vay 2008; Cowan et al. 2013).</p>
+<p>Outputs include dumps of particle and field quantities at regular intervals, histories of particle distributions moments, spectra, etc, and plots of the various quantities. In parallel simulations, the diagnostic subroutines need to handle additional complexity from the domain decomposition, as well as large amount of data that may necessitate data reduction in some form before saving to disk.</p>
+<p>Simulations in a Lorentz boosted frame require additional considerations, as described below.</p>
+<div class="section" id="inputs-and-outputs-in-a-boosted-frame-simulation">
+<h2>Inputs and outputs in a boosted frame simulation<a class="headerlink" href="#inputs-and-outputs-in-a-boosted-frame-simulation" title="Permalink to this headline">¶</a></h2>
+<div class="figure align-default" id="id1">
+<a class="reference internal image-reference" href="../_images/Input_output.png"><img alt="(top) Snapshot of a particle beam showing “frozen&quot; (grey spheres) and “active&quot; (colored spheres) macroparticles traversing the injection plane (red rectangle). (bottom) Snapshot of the beam macroparticles (colored spheres) passing through the background of electrons (dark brown streamlines) and the diagnostic stations (red rectangles). The electrons, the injection plane and the diagnostic stations are fixed in the laboratory plane, and are thus counter-propagating to the beam in a boosted frame." src="../_images/Input_output.png" style="width: 120mm;" /></a>
+<p class="caption"><span class="caption-number">Fig. 11 </span><span class="caption-text">(top) Snapshot of a particle beam showing “frozen” (grey spheres) and “active” (colored spheres) macroparticles traversing the injection plane (red rectangle). (bottom) Snapshot of the beam macroparticles (colored spheres) passing through the background of electrons (dark brown streamlines) and the diagnostic stations (red rectangles). The electrons, the injection plane and the diagnostic stations are fixed in the laboratory plane, and are thus counter-propagating to the beam in a boosted frame.</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<p>[Fig_inputoutput]</p>
+<p>The input and output data are often known from, or compared to, experimental data. Thus, calculating in
+a frame other than the laboratory entails transformations of the data between the calculation frame and the laboratory
+frame. This section describes the procedures that have been implemented in the Particle-In-Cell framework Warp (Grote et al. 2005) to handle the input and output of data between the frame of calculation and the laboratory frame (Vay et al. 2011). Simultaneity of events between two frames is valid only for a plane that is perpendicular to the relative motion of the frame. As a result, the input/output processes involve the input of data (particles or fields) through a plane, as well as output through a series of planes, all of which are perpendicular to the direction of the relative velocity between the frame of calculation and the other frame of choice.</p>
+<div class="section" id="input-in-a-boosted-frame-simulation">
+<h3>Input in a boosted frame simulation<a class="headerlink" href="#input-in-a-boosted-frame-simulation" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="particles">
+<h4>Particles -<a class="headerlink" href="#particles" title="Permalink to this headline">¶</a></h4>
+<p>Particles are launched through a plane using a technique that is generic and applies to Lorentz boosted frame simulations in general, including plasma acceleration, and is illustrated using the case of a positively charged particle beam propagating through a background of cold electrons in an assumed continuous transverse focusing system, leading to a well-known growing transverse “electron cloud” instability (Vay 2007). In the laboratory frame, the electron background is initially at rest and a moving window is used to follow the beam progression. Traditionally, the beam macroparticles are initialized all at once in the window, while background electron macroparticles are created continuously in front of the beam on a plane that is perpendicular to the beam velocity. In a frame moving at some fraction of the beam velocity in the laboratory frame, the beam initial conditions at a given time in the calculation frame are generally unknown and one must initialize the beam differently. However, it can be taken advantage of the fact that the beam initial conditions are often known for a given plane in the laboratory, either directly, or via simple calculation or projection from the conditions at a given time in the labortory frame. Given the position and velocity <span class="math notranslate nohighlight">\(\{x,y,z,v_x,v_y,v_z\}\)</span> for each beam macroparticle at time <span class="math notranslate nohighlight">\(t=0\)</span> for a beam moving at the average velocity <span class="math notranslate nohighlight">\(v_b=\beta_b c\)</span> (where <span class="math notranslate nohighlight">\(c\)</span> is the speed of light) in the laboratory, and using the standard synchronization (<span class="math notranslate nohighlight">\(z=z'=0\)</span> at <span class="math notranslate nohighlight">\(t=t'=0\)</span>) between the laboratory and the calculation frames, the procedure for transforming the beam quantities for injection in a boosted frame moving at velocity <span class="math notranslate nohighlight">\(\beta c\)</span> in the laboratory is as follows (the superscript <span class="math notranslate nohighlight">\('\)</span> relates to quantities known in the boosted frame while the superscript <span class="math notranslate nohighlight">\(^*\)</span> relates to quantities that are know at a given longitudinal position <span class="math notranslate nohighlight">\(z^*\)</span> but different times of arrival):</p>
+<ol class="arabic">
+<li><p>project positions at <span class="math notranslate nohighlight">\(z^*=0\)</span> assuming ballistic propagation</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+    t^* &amp;=&amp; \left(z-\bar{z}\right)/v_z \label{Eq:t*}\\
+    x^* &amp;=&amp; x-v_x t^* \label{Eq:x*}\\
+    y^* &amp;=&amp; y-v_y t^* \label{Eq:y*}\\
+    z^* &amp;=&amp; 0 \label{Eq:z*}\end{aligned}\end{split}\]</div>
+<p>the velocity components being left unchanged,</p>
+</li>
+<li><p>apply Lorentz transformation from laboratory frame to boosted frame</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+    t'^* &amp;=&amp; -\gamma t^* \label{Eq:tp*}\\
+    x'^* &amp;=&amp; x^* \label{Eq:xp*}\\
+    y'^* &amp;=&amp; y^* \label{Eq:yp*}\\
+    z'^* &amp;=&amp; \gamma\beta c t^* \label{Eq:zp*}\\
+    v'^*_x&amp;=&amp;\frac{v_x^*}{\gamma\left(1-\beta \beta_b\right)} \label{Eq:vxp*}\\
+    v'^*_y&amp;=&amp;\frac{v_y^*}{\gamma\left(1-\beta \beta_b\right)} \label{Eq:vyp*}\\
+    v'^*_z&amp;=&amp;\frac{v_z^*-\beta c}{1-\beta \beta_b} \label{Eq:vzp*}\end{aligned}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\gamma=1/\sqrt{1-\beta^2}\)</span>. With the knowledge of the time at which each beam macroparticle crosses the plane into consideration, one can inject each beam macroparticle in the simulation at the appropriate location and time.</p>
+</li>
+<li><p>synchronize macroparticles in boosted frame, obtaining their positions at a fixed <span class="math notranslate nohighlight">\(t'=0\)</span> (before any particle is injected)</p>
+<div class="math notranslate nohighlight">
+\[\begin{aligned}
+    z' &amp;=&amp; z'^*-\bar{v}'^*_z t'^* \label{Eq:zp}\end{aligned}\]</div>
+<p>This additional step is needed for setting the electrostatic or electromagnetic fields at the plane of injection. In a Particle-In-Cell code, the three-dimensional fields are calculated by solving the Maxwell equations (or static approximation like Poisson, Darwin or other (Vay 2008)) on a grid on which the source term is obtained from the macroparticles distribution. This requires generation of a three-dimensional representation of the beam distribution of macroparticles at a given time before they cross the injection plane at <span class="math notranslate nohighlight">\(z'^*\)</span>. This is accomplished by expanding the beam distribution longitudinally such that all macroparticles (so far known at different times of arrival at the injection plane) are synchronized to the same time in the boosted frame. To keep the beam shape constant, the particles are “frozen” until they cross that plane: the three velocity components and the two position components perpendicular to the boosted frame velocity are kept constant, while the remaining position component is advanced at the average beam velocity. As particles cross the plane of injection, they become regular “active” particles with full 6-D dynamics.</p>
+</li>
+</ol>
+<p>Figure <a class="reference external" href="#Fig_inputoutput">[Fig_inputoutput]</a> (top) shows a snapshot of a beam that has passed partly through the injection plane. As the frozen beam macroparticles pass through the injection plane (which moves opposite to the beam in the boosted frame), they are converted to “active” macroparticles. The charge or current density is accumulated from the active and the frozen particles, thus ensuring that the fields at the plane of injection are consistent.</p>
+</div>
+<div class="section" id="laser">
+<h4>Laser -<a class="headerlink" href="#laser" title="Permalink to this headline">¶</a></h4>
+<p>Similarly to the particle beam, the laser is injected through a plane perpendicular to the axis of propagation of the laser (by default <span class="math notranslate nohighlight">\(z\)</span>).
+The electric field <span class="math notranslate nohighlight">\(E_\perp\)</span> that is to be emitted is given by the formula</p>
+<div class="math notranslate nohighlight">
+\[E_\perp\left(x,y,t\right)=E_0 f\left(x,y,t\right) \sin\left[\omega t+\phi\left(x,y,\omega\right)\right]\]</div>
+<p>where <span class="math notranslate nohighlight">\(E_0\)</span> is the amplitude of the laser electric field, <span class="math notranslate nohighlight">\(f\left(x,y,t\right)\)</span> is the laser envelope, <span class="math notranslate nohighlight">\(\omega\)</span> is the laser frequency, <span class="math notranslate nohighlight">\(\phi\left(x,y,\omega\right)\)</span> is a phase function to account for focusing, defocusing or injection at an angle, and <span class="math notranslate nohighlight">\(t\)</span> is time. By default, the laser envelope is a three-dimensional gaussian of the form</p>
+<div class="math notranslate nohighlight">
+\[f\left(x,y,t\right)=e^{-\left(x^2/2 \sigma_x^2+y^2/2 \sigma_y^2+c^2t^2/2 \sigma_z^2\right)}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\sigma_x\)</span>, <span class="math notranslate nohighlight">\(\sigma_y\)</span> and <span class="math notranslate nohighlight">\(\sigma_z\)</span> are the dimensions of the laser pulse; or it can be defined arbitrarily by the user at runtime.
+If <span class="math notranslate nohighlight">\(\phi\left(x,y,\omega\right)=0\)</span>, the laser is injected at a waist and parallel to the axis <span class="math notranslate nohighlight">\(z\)</span>.</p>
+<p>If, for convenience, the injection plane is moving at constant velocity <span class="math notranslate nohighlight">\(\beta_s c\)</span>, the formula is modified to take the Doppler effect on frequency and amplitude into account and becomes</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+E_\perp\left(x,y,t\right)&amp;=&amp;\left(1-\beta_s\right)E_0 f\left(x,y,t\right)\nonumber \\
+&amp;\times&amp; \sin\left[\left(1-\beta_s\right)\omega t+\phi\left(x,y,\omega\right)\right].\end{aligned}\end{split}\]</div>
+<p>The injection of a laser of frequency <span class="math notranslate nohighlight">\(\omega\)</span> is considered for a simulation using a boosted frame moving at <span class="math notranslate nohighlight">\(\beta c\)</span> with respect to the laboratory. Assuming that the laser is injected at a plane that is fixed in the laboratory, and thus moving at <span class="math notranslate nohighlight">\(\beta_s=-\beta\)</span> in the boosted frame, the injection in the boosted frame is given by</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{aligned}
+E_\perp\left(x',y',t'\right)&amp;=&amp;\left(1-\beta_s\right)E'_0 f\left(x',y',t'\right)\nonumber \\
+&amp;\times&amp;\sin\left[\left(1-\beta_s\right)\omega' t'+\phi\left(x',y',\omega'\right)\right]\\
+&amp;=&amp;\left(E_0/\gamma\right) f\left(x',y',t'\right) \nonumber\\
+&amp;\times&amp;\sin\left[\omega t'/\gamma+\phi\left(x',y',\omega'\right)\right]\end{aligned}\end{split}\]</div>
+<p>since <span class="math notranslate nohighlight">\(E'_0/E_0=\omega'/\omega=1/\left(1+\beta\right)\gamma\)</span>.</p>
+<p>The electric field is then converted into currents that get injected via a 2D array of macro-particles, with one positive and one dual negative macro-particle for each array cell in the plane of injection, whose weights and motion are governed by <span class="math notranslate nohighlight">\(E_\perp\left(x',y',t'\right)\)</span>. Injecting using this dual array of macroparticles offers the advantage of automatically including the longitudinal component that arises from emitting into a boosted frame, and to automatically verify the discrete Gauss’ law thanks to using charge conserving (e.g. Esirkepov) current deposition scheme (Esirkepov 2001).</p>
+</div>
+</div>
+<div class="section" id="output-in-a-boosted-frame-simulation">
+<h3>Output in a boosted frame simulation<a class="headerlink" href="#output-in-a-boosted-frame-simulation" title="Permalink to this headline">¶</a></h3>
+<p>Some quantities, e.g. charge or dimensions perpendicular to the boost velocity, are Lorentz invariant.
+Those quantities are thus readily available from standard diagnostics in the boosted frame calculations. Quantities that do not fall in this category are recorded at a number of regularly spaced “stations”, immobile in the laboratory frame, at a succession of time intervals to record data history, or averaged over time. A visual example is given on Fig. <a class="reference external" href="#Fig_inputoutput">[Fig_inputoutput]</a> (bottom). Since the space-time locations of the diagnostic grids in the laboratory frame generally do not coincide with the space-time positions of the macroparticles and grid nodes used for the calculation in a boosted frame, some interpolation is performed at runtime during the data collection process. As a complement or an alternative, selected particle or field quantities can be dumped at regular intervals and quantities are reconstructed in the laboratory frame during a post-processing phase. The choice of the methods depends on the requirements of the diagnostics and particular implementations.</p>
+<div id="refs" class="references"><div id="ref-CowanPRSTAB13"><p>Cowan, Benjamin M, David L Bruhwiler, John R Cary, Estelle Cormier-Michel, and Cameron G R Geddes. 2013. “Generalized algorithm for control of numerical dispersion in explicit time-domain electromagnetic simulations.” <em>Physical Review Special Topics-Accelerators and Beams</em> 16 (4). <a class="reference external" href="https://doi.org/10.1103/PhysRevSTAB.16.041303">https://doi.org/10.1103/PhysRevSTAB.16.041303</a>.</p>
+</div><div id="ref-Esirkepovcpc01"><p>Esirkepov, Tz. 2001. “Exact Charge Conservation Scheme for Particle-in-Cell Simulation with an Arbitrary Form-Factor.” <em>Computer Physics Communications</em> 135 (2): 144–53.</p>
+</div><div id="ref-Warp"><p>Grote, D P, A Friedman, J.-L. Vay, and I Haber. 2005. “The Warp Code: Modeling High Intensity Ion Beams.” In <em>Aip Conference Proceedings</em>, 55–58. 749.</p>
+</div><div id="ref-Vaypop2008"><p>Vay, J L. 2008. “Simulation of Beams or Plasmas Crossing at Relativistic Velocity.” <em>Physics of Plasmas</em> 15 (5): 56701. <a class="reference external" href="https://doi.org/10.1063/1.2837054">https://doi.org/10.1063/1.2837054</a>.</p>
+</div><div id="ref-Vayprl07"><p>Vay, J.-L. 2007. “Noninvariance of Space- and Time-Scale Ranges Under A Lorentz Transformation and the Implications for the Study of Relativistic Interactions.” <em>Physical Review Letters</em> 98 (13): 130405/1–4.</p>
+</div><div id="ref-Vaypop2011"><p>Vay, J -L., C G R Geddes, E Esarey, C B Schroeder, W P Leemans, E Cormier-Michel, and D P Grote. 2011. “Modeling of 10 Gev-1 Tev Laser-Plasma Accelerators Using Lorentz Boosted Simulations.” <em>Physics of Plasmas</em> 18 (12). <a class="reference external" href="https://doi.org/10.1063/1.3663841">https://doi.org/10.1063/1.3663841</a>.</p>
+</div></div></div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../developers/developers.html" class="btn btn-neutral float-right" title="Developers documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="boosted_frame.html" class="btn btn-neutral float-left" title="Moving window and optimal Lorentz boosted frame" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, WarpX collaboration
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
