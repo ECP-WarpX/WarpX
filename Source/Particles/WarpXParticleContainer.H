@@ -11,6 +11,8 @@
 #define WARPX_WarpXParticleContainer_H_
 
 #include "WarpXDtType.H"
+#include "WarpXConst.H"
+#include "SpeciesPhysicalProperties.H"
 
 #include <AMReX_Particles.H>
 #include <AMReX_AmrCore.H>
@@ -319,6 +321,7 @@ protected:
 
     amrex::Real charge;
     amrex::Real mass;
+    PhysicalSpecies physical_species;
 
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     bool m_deposit_on_main_grid = false;

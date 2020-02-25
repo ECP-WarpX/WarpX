@@ -12,6 +12,7 @@
 #include <InjectorPosition.H>
 #include <InjectorDensity.H>
 #include <InjectorMomentum.H>
+#include "SpeciesPhysicalProperties.H"
 
 #include <WarpXConst.H>
 #include <WarpXParser.H>
@@ -47,6 +48,7 @@ public:
 
     amrex::Real getCharge () {return charge;}
     amrex::Real getMass () {return mass;}
+    PhysicalSpecies getPhysicalSpecies() {return physical_species;}
 
     bool doInjection () const noexcept { return inj_pos != NULL;}
 
@@ -86,6 +88,8 @@ public:
 protected:
 
     amrex::Real mass, charge;
+
+    PhysicalSpecies physical_species;
 
     amrex::Real density;
 
