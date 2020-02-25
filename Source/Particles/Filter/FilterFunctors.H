@@ -105,7 +105,7 @@ struct ParserFilter
         amrex::Real const ux = p.rdata(PIdx::ux)/PhysConst::c;
         amrex::Real const uy = p.rdata(PIdx::uy)/PhysConst::c;
         amrex::Real const uz = p.rdata(PIdx::uz)/PhysConst::c;
-        if ( (*m_function_partparser)(m_t,x,y,z,ux,uy,uz) != 0.0 ) return 1;
+        if ( (*m_function_partparser)(m_t,x,y,z,ux,uy,uz) > 0.5 ) return 1;
         else return 0;
     }
 public:
