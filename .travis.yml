@@ -11,6 +11,8 @@ sudo: true
 cache: pip
 
 env:
+  global:
+    - WARPX_CI_OPENPMD=TRUE
   matrix:
     - WARPX_CI_REGULAR_CARTESIAN=TRUE
     - WARPX_CI_PSATD=TRUE
@@ -32,6 +34,9 @@ install:
     - export CEI_CMAKE="/home/travis/.local/bin/cmake"
     - python -m pip install --upgrade git+https://github.com/yt-project/yt.git
     - sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY && sudo chmod a+x /usr/local/bin/cmake-easyinstall
+    - sudo cmake-easyinstall git-https://github.com/openPMD/openPMD-api.git
+        -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+        -DCMAKE_INSTALL_PREFIX=/usr/local
 
 script:
     - export FFTW_HOME=/usr/
