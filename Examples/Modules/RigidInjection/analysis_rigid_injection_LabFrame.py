@@ -1,5 +1,12 @@
 #! /usr/bin/env python
 
+# Copyright 2019-2020 Luca Fedeli, Maxence Thevenet
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
+
 '''
 Analysis script of a WarpX simulation of rigid injection.
 
@@ -16,14 +23,13 @@ in which case a warning is raised.
 import sys
 import yt
 import numpy as np
-import scipy.constants as scc
 yt.funcs.mylog.setLevel(0)
 
 filename = sys.argv[1]
 
 # WarpX headers include more data when rigid injection is used,
 # which gives an error with the last yt release.
-# To avoid this issue, the three last lines of WarpXHeader are removed if 
+# To avoid this issue, the three last lines of WarpXHeader are removed if
 # needed.
 def remove_rigid_lines(plotfile, nlines_if_rigid):
     header_name = plotfile + '/WarpXHeader'
@@ -32,7 +38,7 @@ def remove_rigid_lines(plotfile, nlines_if_rigid):
     nlines = len(file_lines)
     f.close()
     if nlines == nlines_if_rigid:
-        f = open(header_name, 'w')        
+        f = open(header_name, 'w')
         f.writelines(file_lines[:-3])
         f.close()
 

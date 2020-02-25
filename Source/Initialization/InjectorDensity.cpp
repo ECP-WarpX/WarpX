@@ -1,3 +1,11 @@
+/* Copyright 2019-2020 Axel Huebl, Ligia Diana Amorim, Maxence Thevenet
+ * Revathi Jambunathan, Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include <InjectorDensity.H>
 #include <PlasmaInjector.H>
 
 using namespace amrex;
@@ -21,23 +29,8 @@ InjectorDensity::~InjectorDensity ()
         object.predefined.clear();
         break;
     }
-    }
-}
-
-// Compute the amount of memory needed in GPU Shared Memory.
-std::size_t
-InjectorDensity::sharedMemoryNeeded () const noexcept
-{
-    switch (type)
-    {
-    case Type::parser:
-    {
-        // For parser injector, the 3D position of each particle
-        // is stored in shared memory.
-        return amrex::Gpu::numThreadsPerBlockParallelFor() * sizeof(double) * 3;
-    }
     default:
-        return 0;
+        return;
     }
 }
 
@@ -48,7 +41,7 @@ InjectorDensityPredefined::InjectorDensityPredefined (
     ParmParse pp(a_species_name);
 
     std::vector<amrex::Real> v;
-    // Read parameters for the predefined plasma profile, 
+    // Read parameters for the predefined plasma profile,
     // and store them in managed memory
     pp.getarr("predefined_profile_params", v);
     p = static_cast<amrex::Real*>

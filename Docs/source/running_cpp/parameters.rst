@@ -9,6 +9,10 @@ Input parameters
 Overall simulation parameters
 -----------------------------
 
+* ``authors`` (`string`: e.g. ``"Jane Doe <jane@example.com>, Jimmy Joe <jimmy@example.com>"``)
+    Authors of an input file / simulation setup.
+    When provided, this information is added as metadata to (openPMD) output files.
+
 * ``max_step`` (`integer`)
     The number of PIC cycles to perform.
 
@@ -40,6 +44,19 @@ Overall simulation parameters
 * ``warpx.verbose`` (`0` or `1`)
     Controls how much information is printed to the terminal, when running WarpX.
 
+* ``warpx.random_seed`` (`string` or `int` > 0) optional
+    If provided ``warpx.random_seed = random``, the random seed will be determined
+    using `std::random_device` and `std::clock()`,
+    thus every simulation run produces different random numbers.
+    If provided ``warpx.random_seed = n``, and it is required that `n > 0`,
+    the random seed for each MPI rank is `(mpi_rank+1) * n`,
+    where `mpi_rank` starts from 0.
+    `n = 1` and ``warpx.random_seed = default``
+    produce the default random seed.
+    Note that when GPU threading is used,
+    one should not expect to obtain the same random numbers,
+    even if a fixed ``warpx.random_seed`` is provided.
+
 Setting up the field mesh
 -------------------------
 
@@ -70,6 +87,16 @@ Setting up the field mesh
     This patch is rectangular, and thus its extent is given here by the coordinates
     of the lower corner (``warpx.fine_tag_lo``) and upper corner (``warpx.fine_tag_hi``).
 
+* ``warpx.n_current_deposition_buffer`` (`integer`)
+    When using mesh refinement: the particles that are located inside
+    a refinement patch, but within ``n_current_deposition_buffer`` cells of
+    the edge of this patch, will deposit their charge and current to the
+    lower refinement level, instead of depositing to the refinement patch
+    itself. See the section :doc:`../../theory/amr` for more details.
+    If this variable is not explicitly set in the input script,
+    ``n_current_deposition_buffer`` is automatically set so as to be large
+    enough to hold the particle shape, on the fine grid
+
 * ``warpx.n_field_gather_buffer`` (`integer`; 0 by default)
     When using mesh refinement: the particles that are located inside
     a refinement patch, but within ``n_field_gather_buffer`` cells of
@@ -77,19 +104,23 @@ Setting up the field mesh
     level, instead of gathering the fields from the refinement patch itself.
     This avoids some of the spurious effects that can occur inside the
     refinement patch, close to its edge. See the section
-    :doc:`../../theory/amr` for more details.
+    :doc:`../../theory/amr` for more details. If this variable is not
+    explicitly set in the input script, ``n_field_gather_buffer`` is
+    automatically set so that it is one cell larger than
+    ``n_current_deposition_buffer``, on the fine grid.
 
-* ``warpx.n_current_deposition_buffer`` (`integer`)
-    When using mesh refinement: the particles that are located inside
-    a refinement patch, but within ``n_field_gather_buffer`` cells of
-    the edge of this patch, will deposit their charge and current to the
-    lower refinement level, instead of depositing to the refinement patch
-    itself. See the section :doc:`../../theory/amr` for more details.
-
-* ``particles.deposit_on_main_grid`` (list of strings)
+* ``particles.deposit_on_main_grid`` (`list of strings`)
     When using mesh refinement: the particle species whose name are included
     in the list will deposit their charge/current directly on the main grid
     (i.e. the coarsest level), even if they are inside a refinement patch.
+
+* ``particles.gather_from_main_grid`` (`list of strings`)
+    When using mesh refinement: the particle species whose name are included
+    in the list will gather their fields from the main grid
+    (i.e. the coarsest level), even if they are inside a refinement patch.
+
+* ``warpx.n_rz_azimuthal_modes`` (`integer`; 1 by default)
+    When using the RZ version, this is the number of azimuthal modes.
 
 Distribution across MPI ranks and parallelization
 -------------------------------------------------
@@ -130,6 +161,9 @@ Distribution across MPI ranks and parallelization
 
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
+
+* ``warpx.safe_guard_cells`` (`0` or `1`) optional (default `0`)
+    For developers: run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
 
 Math parser and user-defined constants
 --------------------------------------
@@ -201,10 +235,26 @@ Particle initialization
       and optional argument ``<species_name>.do_symmetrize`` (whether to
       symmetrize the beam in the x and y directions).
 
+* ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
+    With the NUniformPerCell injection style, this specifies the number of particles along each axis
+    within a cell. Note that for RZ, the three axis are radius, theta, and z.
+
 * ``<species_name>.do_continuous_injection`` (`0` or `1`)
     Whether to inject particles during the simulation, and not only at
-    initialization. This can be required whith a moving window and/or when
+    initialization. This can be required with a moving window and/or when
     running in a boosted frame.
+
+* ``<species_name>.initialize_self_fields`` (`0` or `1`)
+    Whether to calculate the space-charge fields associated with this species
+    at the beginning of the simulation.
+
+* ``<species_name>.self_fields_required_precision`` (`float`, default: 1.e-11)
+    The relative precision with which the initial space-charge fields should
+    be calculated. More specifically, the initial space-charge fields are
+    computed with an iterative Multi-Level Multi-Grid (MLMG) solver.
+    For highly-relativistic beams, this solver can fail to reach the default
+    precision within a reasonable time ; in that case, users can set a
+    relaxed precision requirement through ``self_fields_required_precision``.
 
 * ``<species_name>.profile`` (`string`)
     Density profile for this species. The options are:
@@ -248,6 +298,39 @@ Particle initialization
       well as standard deviations along each direction ``<species_name>.ux_th``,
       ``<species_name>.uy_th`` and ``<species_name>.uz_th``.
 
+    * ``maxwell_boltzmann``: Maxwell-Boltzmann distribution that takes a dimensionless
+      temperature parameter ``<species_name>.theta`` as an input, where theta is kb*T/(m*c^2),
+      kb is the Boltzmann constant, c is the speed of light, and m is the mass of the species.
+      It also includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c.
+      The plasma will be initialized to move at drift velocity beta*c in the
+      ``<species_name>.drift_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
+      between the sign and the character on input. A direction without a sign will be treated as
+      positive. The MB distribution is initialized in the drifting frame by sampling three Gaussian
+      distributions in each dimension using, the Box Mueller method, and then the distribution is
+      transformed to the simulation frame using the flipping method. The flipping method can be
+      found in Zenitani 2015 section III. B. (Phys. Plasmas 22, 042116).
+
+      Note that though the particles may move at relativistic speeds in the simulation frame,
+      they are not relativistic in the drift frame. This is as opposed to the Maxwell Juttner
+      setting, which initializes particles with relativistic momentums in their drifting frame.
+
+    * ``maxwell_juttner``: Maxwell-Juttner distribution for high temperature plasma. This mode
+      requires a dimensionless temperature parameter ``<species_name>.theta``, where theta is equal
+      to kb*T/(m*c^2), where kb is the Boltzmann constant, and m is the mass of the species. It also
+      includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c. The plasma
+      will be initialized to move at velocity beta*c in the
+      ``<species_name>.drift_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
+      between the sign and the character on input. A direction without a sign will be treated as
+      positive. The MJ distribution will be initialized in the moving frame using the Sobol method,
+      and then the distribution will be transformed to the simulation frame using the flipping method.
+      Both the Sobol and the flipping method can be found in Zenitani 2015 (Phys. Plasmas 22, 042116).
+
+      Please take notice that particles initialized with this setting can be relativistic in two ways.
+      In the simulation frame, they can drift with a relativistic speed beta. Then, in the drifting
+      frame they are still moving with relativistic speeds due to high temperature. This is as opposed
+      to the Maxwell Boltzmann setting, which initializes non-relativistic plasma in their relativistic
+      drifting frame.
+
     * ``radial_expansion``: momentum depends on the radial coordinate linearly. This
       requires additional parameter ``u_over_r`` which is the slope.
 
@@ -273,8 +356,9 @@ Particle initialization
 * ``species_name.predefined_profile_name`` (`string`)
     Only read of ``<species_name>.electrons.profile`` is `predefined`.
 
-    * If ``parabolic_channel``, the plasma profile is a parabolic profile with linear ramps
-      at the beginning and the end of the profile. The density is given by
+    * If ``parabolic_channel``, the plasma profile is a parabolic profile with
+      cosine-like ramps at the beginning and the end of the profile.
+      The density is given by
 
       .. math::
 
@@ -287,9 +371,9 @@ Particle initialization
           n(x,y) = 1 + 4\frac{x^2+y^2}{k_p^2 R_c^4}
 
       where :math:`k_p` is the plasma wavenumber associated with density :math:`n_0`.
-      Here, :math:`n(z)` is a linear up-ramp from :math:`0` to :math:`L_{ramp,up}`,
+      Here, :math:`n(z)` is a cosine-like up-ramp from :math:`0` to :math:`L_{ramp,up}`,
       constant to :math:`1` from :math:`L_{ramp,up}` to :math:`L_{ramp,up} + L_{plateau}`
-      and a linear down-ramp from :math:`L_{ramp,up} + L_{plateau}` to
+      and a cosine-like down-ramp from :math:`L_{ramp,up} + L_{plateau}` to
       :math:`L_{ramp,up} + L_{plateau}+L_{ramp,down}`. All parameters are given
       in ``predefined_profile_params``.
 
@@ -314,6 +398,18 @@ Particle initialization
     axes (4 particles in 2D, 6 particles in 3D). When `1`, particles are split
     along the diagonals (4 particles in 2D, 8 particles in 3D).
 
+* ``<species_name>.do_not_deposit`` (`0` or `1` optional; default `0`)
+    If `1` is given, both charge deposition and current deposition will
+    not be done, thus that species does not contribute to the fields.
+
+* ``<species_name>.do_not_gather`` (`0` or `1` optional; default `0`)
+    If `1` is given, field gather from grids will not be done,
+    thus that species will not be affected by the field on grids.
+
+* ``<species_name>.do_not_push`` (`0` or `1` optional; default `0`)
+    If `1` is given, this species will not be pushed
+    by any pusher during the simulation.
+
 * ``<species>.plot_species`` (`0` or `1` optional; default `1`)
     Whether to plot particle quantities for this species.
 
@@ -330,8 +426,8 @@ Particle initialization
     ``<species>.plot_vars = none`` to plot no particle data, except
     particle position.
 
-* ``<species>.do_boosted_frame_diags`` (`0` or `1` optional, default `1`)
-    Only used when ``warpx.do_boosted_frame_diagnostic=1``. When running in a
+* ``<species>.do_back_transformed_diagnostics`` (`0` or `1` optional, default `1`)
+    Only used when ``warpx.do_back_transformed_diagnostics=1``. When running in a
     boosted frame, whether or not to plot back-transformed diagnostics for
     this species.
 
@@ -339,7 +435,8 @@ Particle initialization
     Whether or not to use OpenMP threading for particle initialization.
 
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
-    Do field ionization for this species (using the ADK theory).
+    Do field ionization for this species (using the ADK theory). Currently,
+    this is slow on GPU.
 
 * ``<species>.physical_element`` (`string`)
     Only read if `do_field_ionization = 1`. Symbol of chemical element for
@@ -354,6 +451,29 @@ Particle initialization
     Only read if `do_field_ionization = 1`. Initial ionization level of the
     species (must be smaller than the atomic number of chemical element given
     in `physical_element`).
+
+* ``<species>.do_classical_radiation_reaction`` (`int`) optional (default `0`)
+    Enables Radiation Reaction (or Radiation Friction) for the species. Species
+    must be either electrons or positrons. Boris pusher must be used for the
+    simulation
+
+* ``<species>.do_qed`` (`int`) optional (default `0`)
+    If `<species>.do_qed = 0` all the QED effects are disabled for this species.
+    If `<species>.do_qed = 1` QED effects can be enabled for this species (see below).
+    **Implementation of this feature is in progress. It requires to compile with QED=TRUE**
+
+* ``<species>.do_qed_quantum_sync`` (`int`) optional (default `0`)
+    It only works if `<species>.do_qed = 1`. Enables Quantum synchrotron emission for this species.
+    Quantum synchrotron lookup table should be either generated or loaded from disk to enable
+    this process (see "Lookup tables for QED modules" section below).
+    **Implementation of this feature is in progress. It requires to compile with QED=TRUE**
+
+* ``<species>.do_qed_breit_wheeler`` (`int`) optional (default `0`)
+    It only works if `<species>.do_qed = 1`. Enables non-linear Breit-Wheeler process for this species.
+    Breit-Wheeler lookup table should be either generated or loaded from disk to enable
+    this process (see "Lookup tables for QED modules" section below).
+    **Implementation of this feature is in progress. It requires to compile with QED=TRUE**
+
 
 Laser initialization
 --------------------
@@ -444,6 +564,38 @@ Laser initialization
       none of the parameters below are used when ``<laser_name>.parse_field_function=1``. Even
       though ``<laser_name>.wavelength`` and ``<laser_name>.e_max`` should be included in the laser
       function, they still have to be specified as they are used for numerical purposes.
+    - ``"from_txye_file"``: the electric field of the laser is read from an external binary file
+      whose format is explained below. It requires to provide the name of the binary file
+      setting the additional parameter ``<laser_name>.txye_file_name`` (string). It accepts an
+      optional parameter ``<laser_name>.time_chunk_size`` (int). This allows to read only
+      time_chunk_size timesteps from the binary file. New timesteps are read as soon as they are needed.
+      The default value is automatically set to the number of timesteps contained in the binary file
+      (i.e. only one read is performed at the beginning of the simulation).
+      The external binary file should provide E(x,y,t) on a rectangular (but non necessarily uniform)
+      grid. The code performs a bi-linear (in 2D) or tri-linear (in 3D) interpolation to set the field
+      values. x,y,t are meant to be in S.I. units, while the field value is meant to be multiplied by
+      ``<laser_name>.e_max`` (i.e. in most cases the maximum of abs(E(x,y,t)) should be 1,
+      so that the maximum field intensity can be set straightforwardly with ``<laser_name>.e_max``).
+      The binary file has to respect the following format:
+
+        * flag to indicate if the grid is uniform or not (1 byte, 0 means non-uniform, !=0 means uniform)
+
+        * np, number of timesteps (uint32_t, must be >=2)
+
+        * nx, number of points along x (uint32_t, must be >=2)
+
+        * ny, number of points along y (uint32_t, must be 1 for 2D simulations and >=2 for 3D simulations)
+
+        * timesteps (double[2] if grid is uniform, double[np] otherwise)
+
+        * x_coords (double[2] if grid is uniform, double[nx] otherwise)
+
+        * y_coords (double[1] if 2D, double[2] if 3D & uniform grid, double[ny] if 3D & non uniform grid)
+
+        * field_data (double[nt * nx * ny], with nt being the slowest coordinate).
+
+      A file at this format can be generated from Python, see an example at ``Examples/Modules/laser_injection_from_file``
+
 
 *  ``<laser_name>.profile_t_peak`` (`float`; in seconds)
     The time at which the laser reaches its peak intensity, at the position
@@ -492,7 +644,7 @@ Laser initialization
 
 * ``<laser_name>.stc_direction`` (`3 floats`) optional (default `1. 0. 0.`)
     Direction of laser spatio-temporal couplings.
-  	See definition in Akturk et al., Opt Express, vol 12, no 19 (2014).
+    See definition in Akturk et al., Opt Express, vol 12, no 19 (2014).
 
 * ``<laser_name>.zeta`` (`float`; in meters.seconds) optional (default `0.`)
     Spatial chirp at focus in direction ``<laser_name>.stc_direction``. See definition in
@@ -517,6 +669,11 @@ Laser initialization
     moving window and laser propagation directions to be the same (`x`, `y`
     or `z`)
 
+* ``<laser_name>.min_particles_per_mode`` (`int`) optional (default `4`)
+    When using the RZ version, this specifies the minimum number of particles
+    per angular mode. The laser particles are loaded into radial spokes, with
+    the number of spokes given by min_particles_per_mode*(warpx.n_rz_azimuthal_modes-1).
+
 * ``warpx.num_mirrors`` (`int`) optional (default `0`)
     Users can input perfect mirror condition inside the simulation domain.
     The number of mirrors is given by ``warpx.num_mirrors``. The mirrors are
@@ -535,6 +692,136 @@ Laser initialization
     parameter is the minimum number of points for the mirror. If
     ``mirror_z_width < dz/cell_size``, the upper bound of the mirror is increased
     so that it contains at least ``mirror_z_npoints``.
+
+* ``warpx.B_ext_grid_init_style`` (string) optional (default is "default")
+    This parameter determines the type of initialization for the external
+    magnetic field. The "default" style initializes the
+    external magnetic field (Bx,By,Bz) to (0.0, 0.0, 0.0).
+    The string can be set to "constant" if a constant magnetic field is
+    required to be set at initialization. If set to "constant", then an
+    additional parameter, namely, ``warpx.B_external_grid`` must be specified.
+    If set to ``parse_B_ext_grid_function``, then a mathematical expression can
+    be used to initialize the external magnetic field on the grid. It
+    requires additional parameters in the input file, namely,
+    ``warpx.Bx_external_grid_function(x,y,z)``,
+    ``warpx.By_external_grid_function(x,y,z)``,
+    ``warpx.Bz_external_grid_function(x,y,z)`` to initialize the external
+    magnetic field for each of the three components on the grid.
+    Constants required in the expression can be set using ``my_constants``.
+    For example, if ``warpx.Bx_external_grid_function(x,y,z)=Bo*x + delta*(y + z)``
+    then the constants `Bo` and `delta` required in the above equation
+    can be set using ``my_constants.Bo=`` and ``my_constants.delta=`` in the
+    input file. For a two-dimensional simulation, it is assumed that the first dimension     is `x` and the second dimension in `z`, and the value of `y` is set to zero.
+    Note that the current implementation of the parser for external B-field
+    does not work with RZ and the code will abort with an error message.
+
+* ``warpx.E_ext_grid_init_style`` (string) optional (default is "default")
+    This parameter determines the type of initialization for the external
+    electric field. The "default" style initializes the
+    external electric field (Ex,Ey,Ez) to (0.0, 0.0, 0.0).
+    The string can be set to "constant" if a constant electric field is
+    required to be set at initialization. If set to "constant", then an
+    additional parameter, namely, ``warpx.E_external_grid`` must be specified
+    in the input file.
+    If set to ``parse_E_ext_grid_function``, then a mathematical expression can
+    be used to initialize the external magnetic field on the grid. It
+    required additional parameters in the input file, namely,
+    ``warpx.Ex_external_grid_function(x,y,z)``,
+    ``warpx.Ey_external_grid_function(x,y,z)``,
+    ``warpx.Ez_external_grid_function(x,y,z)`` to initialize the external
+    electric field for each of the three components on the grid.
+    Constants required in the expression can be set using ``my_constants``.
+    For example, if ``warpx.Ex_external_grid_function(x,y,z)=Eo*x + delta*(y + z)``
+    then the constants `Bo` and `delta` required in the above equation
+    can be set using ``my_constants.Eo=`` and ``my_constants.delta=`` in the
+    input file. For a two-dimensional simulation, it is assumed that the first
+    dimension is `x` and the second dimension in `z`,
+    and the value of `y` is set to zero.
+    Note that the current implementation of the parser for external E-field
+    does not work with RZ and the code will abort with an error message.
+
+* ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `int`)
+    required when ``warpx.B_ext_grid_init_style="parse_B_ext_grid_function"``
+    and when ``warpx.E_ext_grid_init_style="parse_E_ext_grid_function"``, respectively.
+    External uniform and constant electrostatic and magnetostatic field added
+    to the grid at initialization. Use with caution as these fields are used for
+    the field solver. In particular, do not use any other boundary condition
+    than periodic.
+
+*  ``particles.B_ext_particle_init_style`` (string) optional (default is "default")
+     This parameter determines the type of initialization for the external
+     magnetic field that is applied directly to the particles at every timestep.
+     The "default" style sets the external B-field (Bx,By,Bz) to (0.0,0.0,0.0).
+     The string can be set to "constant" if a constant external B-field is applied
+     every timestep. If this parameter is set to "constant", then an additional
+     parameter, namely, ``particles.B_external_particle`` must be specified in
+     the input file.
+     To parse a mathematical function for the external B-field, use the option
+     ``parse_B_ext_particle_function``. This option requires additional parameters
+     in the input file, namely,
+     ``particles.Bx_external_particle_function(x,y,z,t)``,
+     ``particles.By_external_particle_function(x,y,z,t)``,
+     ``particles.Bz_external_particle_function(x,y,z,t)`` to apply the external B-field
+     on the particles. Constants required in the mathematical expression can be set
+     using ``my_constants``. For a two-dimensional simulation, it is assumed that
+     the first and second dimensions are `x` and `z`, respectively, and the
+     value of the `By` component is set to zero.
+     Note that the current implementation of the parser for B-field on particles
+     does not work with RZ and the code will abort with an error message.
+
+*    ``particles.E_ext_particle_init_style`` (string) optional (default is "default")
+     This parameter determines the type of initialization for the external
+     electric field that is applied directly to the particles at every timestep.
+     The "default" style set the external E-field (Ex,Ey,Ez) to (0.0,0.0,0.0).
+     The string can be set to "constant" if a constant external E-field is to be
+     used in the simulation at every timestep. If this parameter is set to "constant",
+     then an additional parameter, namely, ``particles.E_external_particle`` must be
+     specified in the input file.
+     To parse a mathematical function for the external E-field, use the option
+     ``parse_E_ext_particle_function``. This option requires additional
+     parameters in the input file, namely,
+     ``particles.Ex_external_particle_function(x,y,z,t)``,
+     ``particles.Ey_external_particle_function(x,y,z,t)``,
+     ``particles.Ez_external_particle_function(x,y,z,t)`` to apply the external E-field
+     on the particles. Constants required in the mathematical expression can be set
+     using ``my_constants``. For a two-dimensional simulation, similar to the B-field,
+     it is assumed that the first and second dimensions are `x` and `z`, respectively,
+     and the value of the `Ey` component is set to zero.
+     The current implementation of the parser for the E-field on particles does not work
+     with RZ and the code will abort with an error message.
+
+* ``particles.E_external_particle`` & ``particles.B_external_particle`` (list of `float`) optional (default `0. 0. 0.`)
+    Two separate parameters which add an externally applied uniform E-field or
+    B-field to each particle which is then added to the field values gathered
+    from the grid in the PIC cycle.
+
+Collision initialization
+------------------------
+
+WarpX provides a relativistic elastic Monte Carlo binary collision model,
+following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+
+* ``collisions.ncollisions`` (`int`) optional (default `0`)
+    Number of collision types.
+
+* ``collisions.collision_names`` (`strings`, separated by spaces)
+    The name of each collision type. It must be provided if ``collisions.ncollisions`` is not zero.
+    This is then used in the rest of the input deck;
+    in this documentation we use ``<collision_name>`` as a placeholder.
+    The number of strings provided should match the number of collision types,
+    i.e. ``collisions.ncollisions``.
+
+* ``<collision_name>.species`` (`strings`, two species names separated by spaces)
+    The names of two species, between which the collision will be considered.
+    It must be provided if ``collisions.ncollisions`` is not zero, and
+    the number of provided ``<collision_name>.species`` should match
+    the number of collision types, i.e. ``collisions.ncollisions``.
+
+* ``<collision_name>.CoulombLog`` (`float`) optional
+    A provided fixed Coulomb logarithm of the collision type
+    ``<collision_name>``.
+    If this is not provided, or if a non-positive value is provided,
+    a Coulomb logarithm will be computed automatically according to the algorithm.
 
 Numerics and algorithms
 -----------------------
@@ -560,42 +847,36 @@ Numerics and algorithms
        (see `Esirkepov, Comp. Phys. Comm. (2001) <https://www.sciencedirect.com/science/article/pii/S0010465500002289>`__)
      - ``direct``: simpler current deposition algorithm, described in
        the section :doc:`../theory/picsar_theory`. Note that this algorithm is not strictly charge-conserving.
-     - ``direct-vectorized`` (only available in 3D, and when running on CPU/KNL - as opposed to GPU):
-       mathematically equivalent to ``direct``, but uses an optimized algorithm
-       for vectorization on CPU/KNL (see `Vincenti, Comp. Phys. Comm. (2017)
-       <https://www.sciencedirect.com/science/article/pii/S0010465516302764>`__)
 
-    If ``algo.current_deposition`` is not specified, the default is ``esirkepov``.
+    If ``algo.current_deposition`` is not specified, the default is
+    ``esirkepov`` (unless WarpX is compiled with ``USE_PSATD=TRUE``, in which
+    case the default is ``direct``).
 
 * ``algo.charge_deposition`` (`string`, optional)
     The algorithm for the charge density deposition. Available options are:
 
      - ``standard``: standard charge deposition algorithm, described in
        the section :doc:`../theory/picsar_theory`.
-     - ``vectorized`` (only available in 3D, and when running on CPU/KNL - as opposed to GPU):
-       mathematically equivalent to ``standard``, but uses an optimized algorithm
-       for vectorization on CPU/KNL (see `Vincenti, Comp. Phys. Comm. (2017)
-       <https://www.sciencedirect.com/science/article/pii/S0010465516302764>`__)
-
-    If ``algo.charge_deposition`` is not specified, ``vectorized`` is the default
-    whenever it is available ; ``standard`` is the default otherwise.
 
 * ``algo.field_gathering`` (`string`, optional)
     The algorithm for field gathering. Available options are:
 
-     - ``standard``: gathers directly from the grid points (either staggered
+     - ``energy-conserving``: gathers directly from the grid points (either staggered
        or nodal gridpoints depending on ``warpx.do_nodal``).
-     - ``vectorized`` (not available when running on GPU): mathematically
-       equivalent to ``standard``, but uses optimized vector instructions for CPU/KNL.
+     - ``momentum-conserving``: first average the fields from the grid points to
+       the nodes, and then gather from the nodes.
 
-    If ``algo.field_gathering`` is not specified, ``vectorized`` is the default
-    on CPU/KNL ; ``standard`` is the default on GPU.
+     If ``algo.field_gathering`` is not specified, the default is ``energy-conserving``.
+     If ``warpx.do_nodal`` is ``true``, then ``energy-conserving`` and ``momentum-conserving``
+     are equivalent.
+
 
 * ``algo.particle_pusher`` (`string`, optional)
     The algorithm for the particle pusher. Available options are:
 
      - ``boris``: Boris pusher.
      - ``vay``: Vay pusher (see `Vay, Phys. Plasmas (2008) <https://aip.scitation.org/doi/10.1063/1.2837054>`__)
+     - ``higuera``: Higuera-Cary pusher (see `Higuera and Cary, Phys. Plasmas (2017) <https://aip.scitation.org/doi/10.1063/1.4979989>`__)
 
      If ``algo.particle_pusher`` is not specified, ``boris`` is the default.
 
@@ -665,6 +946,46 @@ Numerics and algorithms
     See `this section of the FFTW documentation <http://www.fftw.org/fftw3_doc/Planner-Flags.html>`__
     for more information.
 
+* ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
+    Defines the galilean velocity.
+    Non-zero `v_galilean` activates Galilean algorithm, which suppresses the Numerical Cherenkov instability
+    in boosted-frame simulation. This requires the code to be compiled with `USE_PSATD=TRUE`.
+    (see the sub-section Numerical Stability and alternate formulation
+    in a Galilean frame in :doc:`../theory/boosted-frame`).
+    It also requires the use of the `direct` current deposition option
+    `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
+
+* ``warpx.override_sync_int`` (`integer`) optional (default `10`)
+    Number of time steps between synchronization of sources (`rho` and `J`) on
+    grid nodes at box boundaries. Since the grid nodes at the interface between
+    two neighbor boxes are duplicated in both boxes, an instability can occur
+    if they have too different values. This option makes sure that they are
+    synchronized periodically.
+
+* ``warpx.use_hybrid_QED`` ('bool'; default: 0)
+    Will use the Hybird QED Maxwell solver when pushing fields: a QED correction is added to the
+    field solver to solve non-linear Maxwell's equations, according to [Quantum Electrodynamics
+    vacuum polarization solver, P. Carneiro et al., `ArXiv 2016 <https://arxiv.org/abs/1607.04224>`__].
+    Note that this option can only be used with the PSATD build. Furthermore,
+    warpx.do_nodal must be set to `1` which is not its default value.
+
+ * ``warpx.quantum_xi`` ('float'; default: 1.3050122.e-52)
+     Overwrites the actual quantum parameter used in Maxwell's QED equations. Assigning a
+     value here will make the simulation unphysical, but will allow QED effects to become more apparent.
+     Note that this option will only have an effect if the warpx.use_Hybrid_QED flag is also triggered.
+
+ * ``warpx.do_device_synchronize_before_profile`` (`bool`) optional (default `1`)
+    When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
+    This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
+
+ * ``warpx.sort_int`` (`int`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
+     If ``<=0``, do not sort particles. If ``>0``, sort particles by bin every ``sort_int`` iteration.
+     It is turned on on GPUs for performance reasons (to improve memory locality).
+
+ * ``warpx.sort_bin_size`` (list of `int`) optional (default ``4 4 4``)
+     If ``sort_int > 0`` particles are sorted in bins of ``sort_bin_size`` cells.
+     In 2D, only the first two elements are read.
+
 Boundary conditions
 -------------------
 
@@ -701,27 +1022,23 @@ Boundary conditions
 Diagnostics and output
 ----------------------
 
-* ``amr.plot_int`` (`integer`)
-    The number of PIC cycles inbetween two consecutive data dumps. Use a
-    negative number to disable data dumping.
+* ``amr.plot_int`` (`integer`) optional
+    The number of PIC cycles (interval) in between two consecutive `plotfile` data dumps.
+    Use a negative number to disable data dumping.
+    This is ``-1`` (disabled) by default.
 
-* ``warpx.dump_plotfiles`` (`0` or `1`) optional
-    Whether to dump the simulation data in
-    `AMReX plotfile <https://amrex-codes.github.io/amrex/docs_html/IO.html>`__
-    format. This is ``1`` by default, unless WarpX is compiled with openPMD support.
+* ``warpx.openpmd_int`` (`integer`) optional
+    The number of PIC cycles (interval) in between two consecutive `openPMD <https://www.openPMD.org>`_ data dumps.
+    Requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
+    This is ``-1`` (disabled) by default.
 
-* ``warpx.dump_openpmd`` (`0` or `1`) optional
-    Whether to dump the simulation data in
-    `openPMD <https://github.com/openPMD>`__ format.
-    When WarpX is compiled with openPMD support, this is ``1`` by default.
-
-* ``warpx.openpmd_backend`` (``h5``, ``bp`` or ``json``) optional
-    I/O backend for
-    `openPMD <https://github.com/openPMD>`__ dumps.
-    When WarpX is compiled with openPMD support, this is ``h5`` by default.
+* ``warpx.openpmd_backend`` (``bp``, ``h5`` or ``json``) optional
+    `I/O backend <https://openpmd-api.readthedocs.io/en/latest/backends/overview.html>`_ for `openPMD <https://www.openPMD.org>`_ data dumps.
+    ``bp`` is the `ADIOS I/O library <https://csmd.ornl.gov/adios>`_, ``h5`` is the `HDF5 format <https://www.hdfgroup.org/solutions/hdf5/>`_, and ``json`` is a `simple text format <https://en.wikipedia.org/wiki/JSON>`_.
     ``json`` only works with serial/single-rank jobs.
+    When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
 
-* ``warpx.do_boosted_frame_diagnostic`` (`0` or `1`)
+* ``warpx.do_back_transformed_diagnostics`` (`0` or `1`)
     Whether to use the **back-transformed diagnostics** (i.e. diagnostics that
     perform on-the-fly conversion to the laboratory frame, when running
     boosted-frame simulations)
@@ -732,28 +1049,28 @@ Diagnostics and output
     is `lab_frame_data`.
 
 * ``warpx.num_snapshots_lab`` (`integer`)
-    Only used when ``warpx.do_boosted_frame_diagnostic`` is ``1``.
+    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
     The number of lab-frame snapshots that will be written.
 
 * ``warpx.dt_snapshots_lab`` (`float`, in seconds)
-    Only used when ``warpx.do_boosted_frame_diagnostic`` is ``1``.
+    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
     The time interval inbetween the lab-frame snapshots (where this
     time interval is expressed in the laboratory frame).
 
 * ``warpx.dz_snapshots_lab`` (`float`, in meters)
-    Only used when ``warpx.do_boosted_frame_diagnostic`` is ``1``.
+    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
     Distance between the lab-frame snapshots (expressed in the laboratory
     frame). ``dt_snapshots_lab`` is then computed by
     ``dt_snapshots_lab = dz_snapshots_lab/c``. Either `dt_snapshots_lab`
     or `dz_snapshot_lab` is required.
 
-* ``warpx.do_boosted_frame_fields`` (`0 or 1`)
+* ``warpx.do_back_transformed_fields`` (`0 or 1`)
     Whether to use the **back-transformed diagnostics** for the fields.
 
-* ``warpx.boosted_frame_diag_fields`` (space-separated list of `string`)
+* ``warpx.back_transformed_diag_fields`` (space-separated list of `string`)
     Which fields to dumped in back-transformed diagnostics. Choices are
     'Ex', 'Ey', Ez', 'Bx', 'By', Bz', 'jx', 'jy', jz' and 'rho'. Example:
-    ``warpx.boosted_frame_diag_fields = Ex Ez By``. By default, all fields
+    ``warpx.back_transformed_diag_fields = Ex Ez By``. By default, all fields
     are dumped.
 
 * ``warpx.plot_raw_fields`` (`0` or `1`) optional (default `0`)
@@ -786,18 +1103,242 @@ Diagnostics and output
     ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho``
     ``F`` ``part_per_grid`` ``part_per_proc`` ``divE`` ``divB``.
     Default is
-    ``warpx_fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell``.
+    ``warpx.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell``.
 
 * ``slice.dom_lo`` and ``slice.dom_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters similar to the units of the simulation box.)
-    The extent of the slice are defined by the co-ordinates of the lower corner (``slice.dom_lo``) and upper corner (``slice.dom_hi``). The slice could be 1D, 2D, or 3D, aligned with the co-ordinate axes and the first axis of the coordinates is x. For example: if for a 3D simulation, an x-z slice is to be extracted at y = 0.0, then the y-value of slice.dom_lo and slice.dom_hi must be equal to 0.0
+    The extent of the slice are defined by the co-ordinates of the lower
+    corner (``slice.dom_lo``) and upper corner (``slice.dom_hi``).
+    The slice could be 1D, 2D, or 3D, aligned with the co-ordinate axes
+    and the first axis of the coordinates is x. For example: if for a
+    3D simulation, an x-z slice is to be extracted at y = 0.0,
+    then the y-value of slice.dom_lo and slice.dom_hi must be equal to 0.0
 
 * ``slice.coarsening_ratio`` (`2 integers in 2D`, `3 integers in 3D`; default `1`)
     The coarsening ratio input must be greater than 0. Default is 1 in all directions.
-    In the directions that is reduced, i.e., for an x-z slice in 3D, the reduced y-dimension has a default coarsening ratio equal to 1.
+    In the directions that is reduced, i.e., for an x-z slice in 3D,
+    the reduced y-dimension has a default coarsening ratio equal to 1.
 
 * ``slice.plot_int`` (`integer`)
     The number of PIC cycles inbetween two consecutive data dumps for the slice. Use a
     negative number to disable slice generation and slice data dumping.
+
+* ``slice.num_slice_snapshots_lab`` (`integer`)
+    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
+    The number of back-transformed field and particle data that
+    will be written for the reduced domain defined by ``slice.dom_lo``
+    and ``slice.dom_hi``. Note that the 'slice' is a reduced
+    diagnostic which could be 1D, 2D, or 3D, aligned with the co-ordinate axes.
+    These slices can be visualized using read_raw_data.py and the HDF5 format can
+    be visualized using the h5py library. Please see the documentation on visualization
+    for further details.
+
+* ``slice.dt_slice_snapshots_lab`` (`float`, in seconds)
+    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
+    The time interval between the back-transformed reduced diagnostics (where this
+    time interval is expressed in the laboratory frame).
+
+* ``slice.particle_slice_width_lab`` (`float`, in meters)
+    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1`` and
+    ``slice.num_slice_snapshots_lab`` is non-zero. Particles are
+    copied from the full back-transformed diagnostic to the reduced
+    slice diagnostic if there are within the user-defined width from
+    the slice region defined by ``slice.dom_lo`` and ``slice.dom_hi``.
+
+* ``warpx.reduced_diags_names`` (`strings`, separated by spaces)
+    The names given by the user of simple reduced diagnostics.
+    Also the names of the output `.txt` files.
+    This reduced diagnostics aims to produce simple outputs
+    of the time history of some physical quantities.
+    If ``warpx.reduced_diags_names`` is not provided in the input file,
+    no reduced diagnostics will be done.
+    This is then used in the rest of the input deck;
+    in this documentation we use `<reduced_diags_name>` as a placeholder.
+
+* ``<reduced_diags_name>.type`` (`string`)
+    The type of reduced diagnostics associated with this `<reduced_diags_name>`.
+    For example, ``ParticleEnergy`` and ``FieldEnergy``.
+    All available types will be described below in detail.
+    For all reduced diagnostics,
+    the first and the second columns in the output file are
+    the time step and the corresponding physical time in seconds, respectively.
+
+    * ``ParticleEnergy``
+        This type computes both the total and the mean
+        relativistic particle kinetic energy among all species.
+
+        .. math::
+
+            E_p = \sum_{i=1}^N ( \sqrt{ p_i^2 c^2 + m_0^2 c^4 } - m_0 c^2 ) w_i
+
+        where :math:`p` is the relativistic momentum,
+        :math:`c` is the speed of light,
+        :math:`m_0` is the rest mass,
+        :math:`N` is the number of particles,
+        :math:`w` is the individual particle weight.
+
+        The output columns are
+        total :math:`E_p` of all species,
+        :math:`E_p` of each species,
+        total mean energy :math:`E_p / \sum w_i`,
+        mean energy of each species.
+
+    * ``FieldEnergy``
+        This type computes the electric and magnetic field energy.
+
+        .. math::
+
+            E_f = \sum [ \varepsilon_0 E^2 / 2 + B^2 / ( 2 \mu_0 ) ] \Delta V
+
+        where
+        :math:`E` is the electric field,
+        :math:`B` is the magnetic field,
+        :math:`\varepsilon_0` is the vacuum permittivity,
+        :math:`\mu_0` is the vacuum permeability,
+        :math:`\Delta V` is the cell volume (or area for 2D),
+        the sum is over all cells.
+
+        The output columns are
+        total field energy :math:`E_f`,
+        :math:`E` field energy,
+        :math:`B` field energy, at mesh refinement levels from 0 to :math:`n`.
+
+    * ``BeamRelevant``
+        This type computes properties of a particle beam relevant for particle accelerators,
+        like position, momentum, emittance, etc.
+
+        `<reduced_diags_name>.species` must be provided,
+        such that the diagnostics are done for this (beam-like) species only.
+
+        The output columns (for 3D-XYZ) are the following, where the average is done over
+        the whole species (typical usage: the particle beam is in a separate species):
+
+        [1], [2], [3]: The mean values of beam positions (m)
+        :math:`\langle x \rangle`, :math:`\langle y \rangle`,
+        :math:`\langle z \rangle`.
+
+        [4], [5], [6]: The mean values of beam relativistic momenta (kg m/s)
+        :math:`\langle p_x \rangle`, :math:`\langle p_y \rangle`,
+        :math:`\langle p_z \rangle`.
+
+        [7]: The mean Lorentz factor :math:`\langle \gamma \rangle`.
+
+        [8], [9], [10]: The RMS values of beam positions (m)
+        :math:`\delta_x = \sqrt{ \langle (x - \langle x \rangle)^2 \rangle }`,
+        :math:`\delta_y = \sqrt{ \langle (y - \langle y \rangle)^2 \rangle }`,
+        :math:`\delta_z = \sqrt{ \langle (z - \langle z \rangle)^2 \rangle }`.
+
+        [11], [12], [13]: The RMS values of beam relativistic momenta (kg m/s)
+        :math:`\delta_{px} = \sqrt{ \langle (p_x - \langle p_x \rangle)^2 \rangle }`,
+        :math:`\delta_{py} = \sqrt{ \langle (p_y - \langle p_y \rangle)^2 \rangle }`,
+        :math:`\delta_{pz} = \sqrt{ \langle (p_z - \langle p_z \rangle)^2 \rangle }`.
+
+        [14]: The RMS value of the Lorentz factor
+        :math:`\sqrt{ \langle (\gamma - \langle \gamma \rangle)^2 \rangle }`.
+
+        [15], [16], [17]: beam projected transverse RMS normalized emittance (m)
+        :math:`\epsilon_x = \dfrac{1}{mc} \sqrt{\delta_x^2 \delta_{px}^2 -
+        \Big\langle (x-\langle x \rangle) (p_x-\langle p_x \rangle) \Big\rangle^2}`,
+        :math:`\epsilon_y = \dfrac{1}{mc} \sqrt{\delta_y^2 \delta_{py}^2 -
+        \Big\langle (y-\langle y \rangle) (p_y-\langle p_y \rangle) \Big\rangle^2}`,
+        :math:`\epsilon_z = \dfrac{1}{mc} \sqrt{\delta_z^2 \delta_{pz}^2 -
+        \Big\langle (z-\langle z \rangle) (p_z-\langle p_z \rangle) \Big\rangle^2}`.
+
+        For 2D-XZ,
+        :math:`\langle y \rangle`,
+        :math:`\delta_y`, and
+        :math:`\epsilon_y` will not be outputed.
+
+* ``<reduced_diags_name>.frequency`` (`int`)
+    The output frequency (every # time steps).
+
+* ``<reduced_diags_name>.path`` (`string`) optional (default `./diags/reducedfiles/`)
+    The path that the output file will be stored.
+
+* ``<reduced_diags_name>.extension`` (`string`) optional (default `txt`)
+    The extension of the output file.
+
+* ``<reduced_diags_name>.separator`` (`string`) optional (default a `whitespace`)
+    The separator between row values in the output file.
+    The default separator is a whitespace.
+
+Lookup tables for QED modules (implementation in progress)
+----------------------------------------------------------
+Lookup tables store pre-computed values for functions used by the QED modules.
+**Implementation of this feature is in progress. It requires to compile with QED=TRUE**
+
+* ``qed_bw.lookup_table_mode`` (`string`)
+    There are three options to prepare the lookup table required by the Breit-Wheeler module:
+
+    * ``dummy_builtin``:  a built-in table is used (Warning: the quality of the table is very low,
+      so this option has to be used only for test purposes).
+
+    * ``generate``: a new table is generated. This option requires Boost math library
+      (version >= 1.67) and to compile with QED_TABLE_GEN=TRUE. All
+      the following parameters must be specified:
+
+        * ``qed_bw.chi_min`` (`float`): minimum chi parameter to be considered by the engine
+
+        * ``qed_bw.tab_dndt_chi_min`` (`float`): minimum chi parameter for lookup table 1 (
+          used for the evolution of the optical depth of the photons)
+
+        * ``qed_bw.tab_dndt_chi_max`` (`float`): maximum chi parameter for lookup table 1
+
+        * ``qed_bw.tab_dndt_how_many`` (`int`): number of points to be used for lookup table 1
+
+        * ``qed_bw.tab_pair_chi_min`` (`float`): minimum chi parameter for lookup table 2 (
+          used for pair generation)
+
+        * ``qed_bw.tab_pair_chi_max`` (`float`): maximum chi parameter for lookup table 2
+
+        * ``qed_bw.tab_pair_chi_how_many`` (`int`): number of points to be used for chi axis in lookup table 2
+
+        * ``qed_bw.tab_pair_frac_how_many`` (`int`): number of points to be used for the second axis in lookup table 2
+          (the second axis is the ratio between the energy of the less energetic particle of the pair and the
+          energy of the photon).
+
+        * ``qed_bw.save_table_in`` (`string`): where to save the lookup table
+
+    * ``load``: a lookup table is loaded from a pre-generated binary file. The following parameter
+      must be specified:
+
+        * ``qed_bw.load_table_from`` (`string`): name of the lookup table file to read from.
+
+* ``qed_qs.lookup_table_mode`` (`string`)
+    There are three options to prepare the lookup table required by the Quantum Synchrotron module:
+
+    * ``dummy_builtin``:  a built-in table is used (Warning: the quality of the table is very low,
+      so this option has to be used only for test purposes).
+
+    * ``generate``: a new table is generated. This option requires Boost math library
+      (version >= 1.67) and to compile with QED_TABLE_GEN=TRUE. All
+      the following parameters must be specified:
+
+        * ``qed_qs.chi_min`` (`float`): minimum chi parameter to be considered by the engine
+
+        * ``qed_qs.tab_dndt_chi_min`` (`float`): minimum chi parameter for lookup table 1 (
+          used for the evolution of the optical depth of electrons and positrons)
+
+        * ``qed_qs.tab_dndt_chi_max`` (`float`): maximum chi parameter for lookup table 1
+
+        * ``qed_qs.tab_dndt_how_many`` (`int`): number of points to be used for lookup table 1
+
+        * ``qed_qs.tab_em_chi_min`` (`float`): minimum chi parameter for lookup table 2 (
+          used for photon emission)
+
+        * ``qed_qs.tab_em_chi_max`` (`float`): maximum chi parameter for lookup table 2
+
+        * ``qed_qs.tab_em_chi_how_many`` (`int`): number of points to be used for chi axis in lookup table 2
+
+        * ``qed_qs.tab_em_prob_how_many`` (`int`): number of points to be used for the second axis in lookup table 2
+          (the second axis is a cumulative probability).
+
+        * ``qed_bw.save_table_in`` (`string`): where to save the lookup table
+
+    * ``load``: a lookup table is loaded from a pre-generated binary file. The following parameter
+      must be specified:
+
+        * ``qed_qs.load_table_from`` (`string`): name of the lookup table file to read from.
+
 
 Checkpoints and restart
 -----------------------

@@ -1,6 +1,12 @@
+/* Copyright 2019 Andrew Myers, Maxence Thevenet, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <WarpX.H>
 #include <BilinearFilter.H>
-#include <WarpX_f.H>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -23,8 +29,8 @@ namespace {
             new_s[0] = 0.5 * old_s[0];
             if (1<jmax) new_s[0] += 0.5 * old_s[1];
             loc = 0.;
-            // For each element j, apply the filter to 
-            // old_s to get new_s[j]. loc stores the tmp 
+            // For each element j, apply the filter to
+            // old_s to get new_s[j]. loc stores the tmp
             // filtered value.
             for(int j=1; j<jmax+1; j++){
                 loc = 0.5 * old_s[j];
@@ -45,7 +51,7 @@ namespace {
 }
 
 void BilinearFilter::ComputeStencils(){
-    BL_PROFILE("BilinearFilter::ComputeStencils()");
+    WARPX_PROFILE("BilinearFilter::ComputeStencils()");
     stencil_length_each_dir = npass_each_dir;
     stencil_length_each_dir += 1.;
 #if (AMREX_SPACEDIM == 3)

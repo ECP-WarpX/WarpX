@@ -1,8 +1,11 @@
-#include <AMReX_MGT_Solver.H>
-#include <AMReX_stencil_types.H>
-
+/* Copyright 2019 Andrew Myers, Axel Huebl, David Bizzozero
+ * Maxence Thevenet
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <WarpX.H>
-#include <WarpX_f.H>
 
 namespace
 {
@@ -17,7 +20,7 @@ WritePlotFileES (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                  const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                  const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E)
 {
-    BL_PROFILE("WarpX::WritePlotFileES()");
+    WARPX_PROFILE("WarpX::WritePlotFileES()");
 
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(plotfile_headerversion);
@@ -29,10 +32,10 @@ WritePlotFileES (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     const int nlevels = finestLevel()+1;
 
     {
-	Vector<std::string> varnames;
-	Vector<std::unique_ptr<MultiFab> > mf(finest_level+1);
+        Vector<std::string> varnames;
+        Vector<std::unique_ptr<MultiFab> > mf(finest_level+1);
 
-	for (int lev = 0; lev <= finest_level; ++lev) {
+        for (int lev = 0; lev <= finest_level; ++lev) {
             int ncomp = 5;
             const int ngrow = 0;
             mf[lev].reset(new MultiFab(grids[lev], dmap[lev], ncomp, ngrow));
@@ -98,24 +101,7 @@ WritePlotFileES (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
         }
     }
 
-    Vector<std::string> particle_varnames;
-    particle_varnames.push_back("weight");
-
-    particle_varnames.push_back("momentum_x");
-    particle_varnames.push_back("momentum_y");
-    particle_varnames.push_back("momentum_z");
-
-    particle_varnames.push_back("Ex");
-    particle_varnames.push_back("Ey");
-    particle_varnames.push_back("Ez");
-
-    particle_varnames.push_back("Bx");
-    particle_varnames.push_back("By");
-    particle_varnames.push_back("Bz");
-
-    Vector<std::string> int_names;
-        
-    mypc->Checkpoint(plotfilename, particle_varnames, int_names);
+    mypc->Checkpoint(plotfilename);
 
     WriteJobInfo(plotfilename);
 

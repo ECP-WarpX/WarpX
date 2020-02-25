@@ -1,3 +1,9 @@
+/* Copyright 2019 Remi Lehe
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_SPECTRAL_BASE_ALGORITHM_H_
 #define WARPX_SPECTRAL_BASE_ALGORITHM_H_
 
@@ -24,7 +30,10 @@ class SpectralBaseAlgorithm
 
     protected: // Meant to be used in the subclasses
 
-        using SpectralCoefficients = amrex::FabArray< amrex::BaseFab <amrex::Real> >;
+        using SpectralRealCoefficients = \
+            amrex::FabArray< amrex::BaseFab <amrex::Real> >;
+        using SpectralComplexCoefficients = \
+            amrex::FabArray< amrex::BaseFab <Complex> >;
 
         // Constructor
         SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,

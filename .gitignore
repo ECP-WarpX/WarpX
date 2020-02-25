@@ -1,8 +1,12 @@
+Bin/
 main?d.*.ex
+Python/pywarpx/libwarpx*.so
 d/
 f/
 o/
 tmp_build_dir/
+test_dir
+test_dir/
 AMReX_buildInfo.cpp
 Backtrace.*
 *.vth
@@ -19,6 +23,13 @@ chk*
 ##########
 *.pyc
 __pycache__
+
+##########
+# Sphinx #
+##########
+Docs/doxyhtml/
+Docs/doxyxml/
+Docs/source/_static/
 
 #######
 # IDE #

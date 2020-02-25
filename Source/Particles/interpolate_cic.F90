@@ -1,7 +1,13 @@
+! Copyright 2019 Maxence Thevenet, Weiqun Zhang
+!
+! This file is part of WarpX.
+!
+! License: BSD-3-Clause-LBNL
+
 module warpx_ES_interpolate_cic
 
   use iso_c_binding
-  use amrex_fort_module, only : amrex_real
+  use amrex_fort_module, only : amrex_real, amrex_particle_real
 
   implicit none
 
@@ -12,7 +18,7 @@ contains
 ! node-centered.
 !
 ! Arguments:
-!     particles : a pointer to the particle array-of-structs 
+!     particles : a pointer to the particle array-of-structs
 !     ns        : the stride length of particle struct (the size of the struct in number of reals)
 !     np        : the number of particles
 !     Ex_p      : the electric field in the x-direction at the particle positions (output)
@@ -31,7 +37,7 @@ contains
                                       lo, hi, plo, dx, ng)    &
        bind(c,name='warpx_interpolate_cic_3d')
     integer, value,   intent(in)     :: ns, np
-    real(amrex_real), intent(in)     :: particles(ns,np)
+    real(amrex_particle_real), intent(in)     :: particles(ns,np)
     real(amrex_real), intent(inout)  :: Ex_p(np), Ey_p(np), Ez_p(np)
     integer,          intent(in)     :: ng
     integer,          intent(in)     :: lo(3)
@@ -91,7 +97,7 @@ contains
                  wx_hi*wy_lo*wz_hi*Ez(i+1, j,   k+1) + &
                  wx_hi*wy_hi*wz_lo*Ez(i+1, j+1, k  ) + &
                  wx_hi*wy_hi*wz_hi*Ez(i+1, j+1, k+1)
-       
+
     end do
 
   end subroutine warpx_interpolate_cic_3d
@@ -103,7 +109,7 @@ contains
                              lo, hi, plo, dx, ng)    &
        bind(c,name='warpx_interpolate_cic_2d')
     integer, value,   intent(in)     :: ns, np
-    real(amrex_real), intent(in)     :: particles(ns,np)
+    real(amrex_particle_real), intent(in)     :: particles(ns,np)
     real(amrex_real), intent(inout)  :: Ex_p(np), Ey_p(np)
     integer,          intent(in)     :: ng
     integer,          intent(in)     :: lo(2)
@@ -157,7 +163,7 @@ contains
                                                  plo,  ng,   lev)        &
        bind(c,name='warpx_interpolate_cic_two_levels_3d')
     integer, value,   intent(in)     :: ns, np
-    real(amrex_real), intent(in)     :: particles(ns,np)
+    real(amrex_particle_real), intent(in)     :: particles(ns,np)
     real(amrex_real), intent(inout)  :: Ex_p(np), Ey_p(np), Ez_p(np)
     integer,          intent(in)     :: ng, lev
     integer,          intent(in)     :: lo(3), hi(3)
@@ -184,7 +190,7 @@ contains
        lx = (particles(1, n) - plo(1))*inv_dx(1)
        ly = (particles(2, n) - plo(2))*inv_dx(2)
        lz = (particles(3, n) - plo(3))*inv_dx(3)
-       
+
        i = floor(lx)
        j = floor(ly)
        k = floor(lz)
@@ -203,11 +209,11 @@ contains
           wx_hi = lx - i
           wy_hi = ly - j
           wz_hi = lz - k
-          
+
           wx_lo = 1.0d0 - wx_hi
           wy_lo = 1.0d0 - wy_hi
           wz_lo = 1.0d0 - wz_hi
-          
+
           Ex_p(n) = wx_lo*wy_lo*wz_lo*cEx(i,   j,   k  ) + &
                     wx_lo*wy_lo*wz_hi*cEx(i,   j,   k+1) + &
                     wx_lo*wy_hi*wz_lo*cEx(i,   j+1, k  ) + &
@@ -225,7 +231,7 @@ contains
                     wx_hi*wy_lo*wz_hi*cEy(i+1, j,   k+1) + &
                     wx_hi*wy_hi*wz_lo*cEy(i+1, j+1, k  ) + &
                     wx_hi*wy_hi*wz_hi*cEy(i+1, j+1, k+1)
-          
+
           Ez_p(n) = wx_lo*wy_lo*wz_lo*cEz(i,   j,   k  ) + &
                     wx_lo*wy_lo*wz_hi*cEz(i,   j,   k+1) + &
                     wx_lo*wy_hi*wz_lo*cEz(i,   j+1, k  ) + &
@@ -234,14 +240,14 @@ contains
                     wx_hi*wy_lo*wz_hi*cEz(i+1, j,   k+1) + &
                     wx_hi*wy_hi*wz_lo*cEz(i+1, j+1, k  ) + &
                     wx_hi*wy_hi*wz_hi*cEz(i+1, j+1, k+1)
-          
+
 ! otherwise use the fine
        else
 
           wx_hi = lx - i
           wy_hi = ly - j
           wz_hi = lz - k
-          
+
           wx_lo = 1.0d0 - wx_hi
           wy_lo = 1.0d0 - wy_hi
           wz_lo = 1.0d0 - wz_hi
@@ -254,7 +260,7 @@ contains
                wx_hi*wy_lo*wz_hi*Ex(i+1, j,   k+1) + &
                wx_hi*wy_hi*wz_lo*Ex(i+1, j+1, k  ) + &
                wx_hi*wy_hi*wz_hi*Ex(i+1, j+1, k+1)
-          
+
           Ey_p(n) = wx_lo*wy_lo*wz_lo*Ey(i,   j,   k  ) + &
                     wx_lo*wy_lo*wz_hi*Ey(i,   j,   k+1) + &
                     wx_lo*wy_hi*wz_lo*Ey(i,   j+1, k  ) + &
@@ -263,7 +269,7 @@ contains
                     wx_hi*wy_lo*wz_hi*Ey(i+1, j,   k+1) + &
                     wx_hi*wy_hi*wz_lo*Ey(i+1, j+1, k  ) + &
                     wx_hi*wy_hi*wz_hi*Ey(i+1, j+1, k+1)
-          
+
           Ez_p(n) = wx_lo*wy_lo*wz_lo*Ez(i,   j,   k  ) + &
                     wx_lo*wy_lo*wz_hi*Ez(i,   j,   k+1) + &
                     wx_lo*wy_hi*wz_lo*Ez(i,   j+1, k  ) + &
@@ -272,7 +278,7 @@ contains
                     wx_hi*wy_lo*wz_hi*Ez(i+1, j,   k+1) + &
                     wx_hi*wy_hi*wz_lo*Ez(i+1, j+1, k  ) + &
                     wx_hi*wy_hi*wz_hi*Ez(i+1, j+1, k+1)
-       
+
        end if
 
     end do
@@ -290,7 +296,7 @@ contains
                                                  plo,  ng,   lev)        &
        bind(c,name='warpx_interpolate_cic_two_levels_2d')
     integer, value,   intent(in)     :: ns, np
-    real(amrex_real), intent(in)     :: particles(ns,np)
+    real(amrex_particle_real), intent(in)     :: particles(ns,np)
     real(amrex_real), intent(inout)  :: Ex_p(np), Ey_p(np)
     integer,          intent(in)     :: ng, lev
     integer,          intent(in)     :: lo(2), hi(2)
@@ -314,7 +320,7 @@ contains
 
        lx = (particles(1, n) - plo(1))*inv_dx(1)
        ly = (particles(2, n) - plo(2))*inv_dx(2)
-       
+
        i = floor(lx)
        j = floor(ly)
 
@@ -329,10 +335,10 @@ contains
 
           wx_hi = lx - i
           wy_hi = ly - j
-          
+
           wx_lo = 1.0d0 - wx_hi
           wy_lo = 1.0d0 - wy_hi
-          
+
           Ex_p(n) = wx_lo*wy_lo*cEx(i,   j  ) + &
                     wx_lo*wy_hi*cEx(i,   j+1) + &
                     wx_hi*wy_lo*cEx(i+1, j  ) + &
@@ -342,13 +348,13 @@ contains
                     wx_lo*wy_hi*cEy(i,   j+1) + &
                     wx_hi*wy_lo*cEy(i+1, j  ) + &
                     wx_hi*wy_hi*cEy(i+1, j+1)
-          
+
 ! otherwise use the fine
        else
 
           wx_hi = lx - i
           wy_hi = ly - j
-          
+
           wx_lo = 1.0d0 - wx_hi
           wy_lo = 1.0d0 - wy_hi
 
@@ -356,7 +362,7 @@ contains
                     wx_lo*wy_hi*Ex(i,   j+1) + &
                     wx_hi*wy_lo*Ex(i+1, j  ) + &
                     wx_hi*wy_hi*Ex(i+1, j+1)
-          
+
           Ey_p(n) = wx_lo*wy_lo*Ey(i,   j  ) + &
                     wx_lo*wy_hi*Ey(i,   j+1) + &
                     wx_hi*wy_lo*Ey(i+1, j  ) + &

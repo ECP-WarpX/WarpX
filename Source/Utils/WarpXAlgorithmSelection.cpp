@@ -1,10 +1,19 @@
+/* Copyright 2019-2020 Axel Huebl, David Grote, Luca Fedeli
+ * Remi Lehe, Weiqun Zhang, Yinjian Zhao
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <WarpXAlgorithmSelection.H>
+
 #include <map>
 #include <algorithm>
 #include <cstring>
 
 // Define dictionary with correspondance between user-input strings,
-// and corresponding integer for use inside the code (e.g. in PICSAR).
+// and corresponding integer for use inside the code
 
 const std::map<std::string, int> maxwell_solver_algo_to_int = {
     {"yee",     MaxwellSolverAlgo::Yee },
@@ -17,16 +26,18 @@ const std::map<std::string, int> maxwell_solver_algo_to_int = {
 const std::map<std::string, int> particle_pusher_algo_to_int = {
     {"boris",   ParticlePusherAlgo::Boris },
     {"vay",     ParticlePusherAlgo::Vay },
+    {"higuera", ParticlePusherAlgo::HigueraCary },
     {"default", ParticlePusherAlgo::Boris }
 };
 
 const std::map<std::string, int> current_deposition_algo_to_int = {
-    {"esirkepov",            CurrentDepositionAlgo::Esirkepov },
-    {"direct",               CurrentDepositionAlgo::Direct },
-#if (!defined AMREX_USE_GPU)&&(AMREX_SPACEDIM == 3) // Only available on CPU and 3D
-    {"direct-vectorized",    CurrentDepositionAlgo::DirectVectorized },
+    {"esirkepov", CurrentDepositionAlgo::Esirkepov },
+    {"direct",    CurrentDepositionAlgo::Direct },
+#ifdef WARPX_USE_PSATD
+    {"default",   CurrentDepositionAlgo::Direct }
+#else
+    {"default",   CurrentDepositionAlgo::Esirkepov }
 #endif
-    {"default",              CurrentDepositionAlgo::Esirkepov }
 };
 
 const std::map<std::string, int> charge_deposition_algo_to_int = {
@@ -35,13 +46,9 @@ const std::map<std::string, int> charge_deposition_algo_to_int = {
 };
 
 const std::map<std::string, int> gathering_algo_to_int = {
-    {"standard",   GatheringAlgo::Standard },
-#ifndef AMREX_USE_GPU // Only available on CPU
-    {"vectorized", GatheringAlgo::Vectorized },
-    {"default",    GatheringAlgo::Vectorized }
-#else
-    {"default",    GatheringAlgo::Standard }
-#endif
+    {"energy-conserving",   GatheringAlgo::EnergyConserving },
+    {"momentum-conserving", GatheringAlgo::MomentumConserving },
+    {"default",             GatheringAlgo::EnergyConserving }
 };
 
 

@@ -4,6 +4,7 @@
 #include "wp_parser_y.h"
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_Extension.H>
+#include <AMReX_REAL.H>
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,16 +22,10 @@ extern "C" {
 #include <string>
 
 AMREX_GPU_HOST_DEVICE
-inline double
-wp_ast_eval (struct wp_node* node)
+inline amrex_real
+wp_ast_eval (struct wp_node* node, amrex_real const* x)
 {
-    double result;
-
-#ifdef AMREX_DEVICE_COMPILE
-    extern __shared__ double extern_xyz[];
-    int tid = threadIdx.x + threadIdx.y*blockDim.x + threadIdx.z*(blockDim.x*blockDim.y);
-    double* x = extern_xyz + tid*3;
-#endif
+    amrex_real result;
 
     switch (node->type)
     {
@@ -41,7 +36,7 @@ wp_ast_eval (struct wp_node* node)
     }
     case WP_SYMBOL:
     {
-#ifdef AMREX_DEVICE_COMPILE
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
         int i =((struct wp_symbol*)node)->ip.i;
         result = x[i];
 #else
@@ -51,45 +46,45 @@ wp_ast_eval (struct wp_node* node)
     }
     case WP_ADD:
     {
-        result = wp_ast_eval(node->l) + wp_ast_eval(node->r);
+        result = wp_ast_eval(node->l,x) + wp_ast_eval(node->r,x);
         break;
     }
     case WP_SUB:
     {
-        result = wp_ast_eval(node->l) - wp_ast_eval(node->r);
+        result = wp_ast_eval(node->l,x) - wp_ast_eval(node->r,x);
         break;
     }
     case WP_MUL:
     {
-        result = wp_ast_eval(node->l) * wp_ast_eval(node->r);
+        result = wp_ast_eval(node->l,x) * wp_ast_eval(node->r,x);
         break;
     }
     case WP_DIV:
     {
-        result = wp_ast_eval(node->l) / wp_ast_eval(node->r);
+        result = wp_ast_eval(node->l,x) / wp_ast_eval(node->r,x);
         break;
     }
     case WP_NEG:
     {
-        result = -wp_ast_eval(node->l);
+        result = -wp_ast_eval(node->l,x);
         break;
     }
     case WP_F1:
     {
         result = wp_call_f1(((struct wp_f1*)node)->ftype,
-                wp_ast_eval(((struct wp_f1*)node)->l));
+                wp_ast_eval(((struct wp_f1*)node)->l,x));
         break;
     }
     case WP_F2:
     {
         result = wp_call_f2(((struct wp_f2*)node)->ftype,
-                wp_ast_eval(((struct wp_f2*)node)->l),
-                wp_ast_eval(((struct wp_f2*)node)->r));
+                wp_ast_eval(((struct wp_f2*)node)->l,x),
+                wp_ast_eval(((struct wp_f2*)node)->r,x));
         break;
     }
     case WP_ADD_VP:
     {
-#ifdef AMREX_DEVICE_COMPILE
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
         int i = node->rip.i;
         result = node->lvp.v + x[i];
 #else
@@ -99,7 +94,7 @@ wp_ast_eval (struct wp_node* node)
     }
     case WP_ADD_PP:
     {
-#ifdef AMREX_DEVICE_COMPILE
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
         int i = node->lvp.ip.i;
         int j = node->rip.i;
         result = x[i] + x[j];
@@ -110,7 +105,7 @@ wp_ast_eval (struct wp_node* node)
     }
     case WP_SUB_VP:
     {
-#ifdef AMREX_DEVICE_COMPILE
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
         int i = node->rip.i;
         result = node->lvp.v - x[i];
 #else
@@ -120,7 +115,7 @@ wp_ast_eval (struct wp_node* node)
     }
     case WP_SUB_PP:
     {
-#ifdef AMREX_DEVICE_COMPILE
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
         int i = node->lvp.ip.i;
         int j = node->rip.i;
         result = x[i] - x[j];
@@ -131,7 +126,7 @@ wp_ast_eval (struct wp_node* node)
     }
     case WP_MUL_VP:
     {
-#ifdef AMREX_DEVICE_COMPILE
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
         int i = node->rip.i;
         result = node->lvp.v * x[i];
 #else
@@ -141,7 +136,7 @@ wp_ast_eval (struct wp_node* node)
     }
     case WP_MUL_PP:
     {
-#ifdef AMREX_DEVICE_COMPILE
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
         int i = node->lvp.ip.i;
         int j = node->rip.i;
         result = x[i] * x[j];
@@ -152,7 +147,7 @@ wp_ast_eval (struct wp_node* node)
     }
     case WP_DIV_VP:
     {
-#ifdef AMREX_DEVICE_COMPILE
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
         int i = node->rip.i;
         result = node->lvp.v / x[i];
 #else
@@ -162,7 +157,7 @@ wp_ast_eval (struct wp_node* node)
     }
     case WP_DIV_PP:
     {
-#ifdef AMREX_DEVICE_COMPILE
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
         int i = node->lvp.ip.i;
         int j = node->rip.i;
         result = x[i] / x[j];
@@ -173,7 +168,7 @@ wp_ast_eval (struct wp_node* node)
     }
     case WP_NEG_P:
     {
-#ifdef AMREX_DEVICE_COMPILE
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
         int i = node->rip.i;
         result = -x[i];
 #else

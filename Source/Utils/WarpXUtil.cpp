@@ -1,9 +1,18 @@
-#include <cmath>
-
+/* Copyright 2019-2020 Andrew Myers, Burlen Loring, Luca Fedeli
+ * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+ * Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <WarpXUtil.H>
 #include <WarpXConst.H>
 #include <AMReX_ParmParse.H>
 #include <WarpX.H>
+
+#include <cmath>
+#include <fstream>
 
 using namespace amrex;
 
@@ -68,7 +77,7 @@ void ConvertLabParamsToBoost()
     BL_ASSERT(slice_lo.size() == AMREX_SPACEDIM);
     pp_slice.queryarr("dom_hi",slice_hi,0,AMREX_SPACEDIM);
     BL_ASSERT(slice_hi.size() == AMREX_SPACEDIM);
-    
+
 
     pp_amr.query("max_level", max_level);
     if (max_level > 0){
@@ -113,18 +122,23 @@ void ConvertLabParamsToBoost()
 
 }
 
-/* \brief Function that sets the value of MultiFab MF to zero for z between 
+/* \brief Function that sets the value of MultiFab MF to zero for z between
  * zmin and zmax.
  */
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax){
-    BL_PROFILE("WarpX::NullifyMF()");
+    WARPX_PROFILE("WarpX::NullifyMF()");
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for(amrex::MFIter mfi(mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi){
         const amrex::Box& bx = mfi.tilebox();
         // Get box lower and upper physical z bound, and dz
-        const amrex::Real zmin_box = WarpX::LowerCorner(bx, lev)[2];
+        #if (AMREX_SPACEDIM == 3)
+            amrex::Array<amrex::Real,3> galilean_shift = { 0., 0., 0., };
+        #elif (AMREX_SPACEDIM == 2)
+            amrex::Array<amrex::Real,3> galilean_shift = { 0., std::numeric_limits<Real>::quiet_NaN(),  0., } ;
+        #endif
+        const amrex::Real zmin_box = WarpX::LowerCorner(bx, galilean_shift, lev)[2];
         const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev)[2];
         amrex::Real dz  = WarpX::CellSize(lev)[2];
         // Get box lower index in the z direction
@@ -143,7 +157,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
                     const Real z_gridpoint = zmin_box+(k-lo_ind)*dz;
 #else
                     const Real z_gridpoint = zmin_box+(j-lo_ind)*dz;
-#endif 
+#endif
                     if ( (z_gridpoint >= zmin) && (z_gridpoint < zmax) ) {
                         arr(i,j,k) = 0.;
                     };
@@ -151,4 +165,54 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
             );
         }
     }
+}
+
+namespace WarpXUtilIO{
+    bool WriteBinaryDataOnFile(std::string filename, const amrex::Vector<char>& data)
+    {
+        std::ofstream of{filename, std::ios::binary};
+        of.write(data.data(), data.size());
+        of.close();
+        return  of.good();
+    }
+}
+
+void Store_parserString(amrex::ParmParse& pp, std::string query_string,
+                        std::string& stored_string)
+{
+
+    char cstr[query_string.size()+1];
+    strcpy(cstr, query_string.c_str());
+
+    std::vector<std::string> f;
+    pp.getarr(cstr, f);
+    stored_string.clear();
+    for (auto const& s : f) {
+        stored_string += s;
+    }
+    f.clear();
+
+}
+
+
+WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames)
+{
+    WarpXParser parser(parse_function);
+    parser.registerVariables(varnames);
+    ParmParse pp("my_constants");
+    std::set<std::string> symbols = parser.symbols();
+    for (auto const& v : varnames) symbols.erase(v.c_str());
+    for (auto it = symbols.begin(); it != symbols.end(); ) {
+        Real v;
+        if (pp.query(it->c_str(), v)) {
+           parser.setConstant(*it, v);
+           it = symbols.erase(it);
+        } else {
+           ++it;
+        }
+    }
+    for (auto const& s : symbols) {
+        amrex::Abort("makeParser::Unknown symbol "+s);
+    }
+    return parser;
 }

@@ -1,10 +1,18 @@
+/* Copyright 2019 Axel Huebl, David Grote, Maxence Thevenet
+ * Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef CHARGEDEPOSITION_H_
 #define CHARGEDEPOSITION_H_
 
+#include "GetAndSetPosition.H"
 #include "ShapeFactors.H"
 
 /* \brief Charge Deposition for thread thread_num
- * /param xp, yp, zp   : Pointer to arrays of particle positions.
+ * /param GetPosition : A functor for returning the particle position.
  * \param wp           : Pointer to array of particle weights.
  * \param ion_lev      : Pointer to array of particle ionization level. This is
                          required to have the charge of each macroparticle
@@ -18,10 +26,8 @@
  * /param q            : species charge.
  */
 template <int depos_order>
-void doChargeDepositionShapeN(const amrex::Real * const xp, 
-                              const amrex::Real * const yp, 
-                              const amrex::Real * const zp,
-                              const amrex::Real * const wp,
+void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
+                              const amrex::ParticleReal * const wp,
                               const int * const ion_lev,
                               const amrex::Array4<amrex::Real>& rho_arr,
                               const long np_to_depose,
@@ -56,28 +62,31 @@ void doChargeDepositionShapeN(const amrex::Real * const xp,
                 wq *= ion_lev[ip];
             }
 
+            amrex::ParticleReal xp, yp, zp;
+            GetPosition(ip, xp, yp, zp);
+
             // --- Compute shape factors
             // x direction
             // Get particle position in grid coordinates
 #if (defined WARPX_DIM_RZ)
-            const amrex::Real r = std::sqrt(xp[ip]*xp[ip] + yp[ip]*yp[ip]);
+            const amrex::Real r = std::sqrt(xp*xp + yp*yp);
             const amrex::Real x = (r - xmin)*dxi;
 #else
-            const amrex::Real x = (xp[ip] - xmin)*dxi;
+            const amrex::Real x = (xp - xmin)*dxi;
 #endif
             // Compute shape factors for node-centered quantities
             amrex::Real sx[depos_order + 1];
             // i: leftmost grid point (node-centered) that the particle touches
             const int i = compute_shape_factor<depos_order>(sx,  x);
-                     
+
 #if (defined WARPX_DIM_3D)
             // y direction
-            const amrex::Real y = (yp[ip] - ymin)*dyi;
+            const amrex::Real y = (yp - ymin)*dyi;
             amrex::Real sy[depos_order + 1];
             const int j = compute_shape_factor<depos_order>(sy,  y);
 #endif
             // z direction
-            const amrex::Real z = (zp[ip] - zmin)*dzi;
+            const amrex::Real z = (zp - zmin)*dzi;
             amrex::Real sz[depos_order + 1];
             const int k = compute_shape_factor<depos_order>(sz,  z);
 
@@ -86,7 +95,7 @@ void doChargeDepositionShapeN(const amrex::Real * const xp,
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
                     amrex::Gpu::Atomic::Add(
-                        &rho_arr(lo.x+i+ix, lo.y+k+iz, 0), 
+                        &rho_arr(lo.x+i+ix, lo.y+k+iz, 0),
                         sx[ix]*sz[iz]*wq);
                 }
             }

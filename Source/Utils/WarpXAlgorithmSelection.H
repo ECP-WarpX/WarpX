@@ -1,3 +1,10 @@
+/* Copyright 2019 David Grote, Luca Fedeli, Remi Lehe
+ * Yinjian Zhao
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef UTILS_WARPXALGORITHMSELECTION_H_
 #define UTILS_WARPXALGORITHMSELECTION_H_
 
@@ -5,8 +12,6 @@
 #include <string>
 
 struct MaxwellSolverAlgo {
-    // These numbers corresponds to the algorithm code in WarpX's
-    // `warpx_push_bvec` and `warpx_push_evec_f`
     enum {
         Yee = 0,
         CKC = 1
@@ -14,22 +19,17 @@ struct MaxwellSolverAlgo {
 };
 
 struct ParticlePusherAlgo {
-    // These numbers correspond to the algorithm code in WarpX's
-    // `warpx_particle_pusher`
     enum {
         Boris = 0,
-        Vay = 1
+        Vay = 1,
+        HigueraCary = 2
     };
 };
 
 struct CurrentDepositionAlgo {
     enum {
-        // These numbers corresponds to the algorithm code in PICSAR's
-        // `depose_jxjyjz_generic` and `depose_jxjyjz_generic_2d`
-         Direct = 3,
-         DirectVectorized = 2,
-         EsirkepovNonOptimized = 1,
-         Esirkepov = 0
+         Esirkepov = 0,
+         Direct = 1
     };
 };
 
@@ -41,11 +41,9 @@ struct ChargeDepositionAlgo {
 };
 
 struct GatheringAlgo {
-    // These numbers corresponds to the algorithm code in PICSAR's
-    // `geteb3d_energy_conserving_generic` function
     enum {
-         Vectorized = 0,
-         Standard = 1
+         EnergyConserving = 0,
+         MomentumConserving
     };
 };
 

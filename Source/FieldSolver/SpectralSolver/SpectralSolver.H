@@ -1,10 +1,17 @@
+/* Copyright 2019-2020 Maxence Thevenet, Remi Lehe
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_SPECTRAL_SOLVER_H_
 #define WARPX_SPECTRAL_SOLVER_H_
 
 #include <SpectralBaseAlgorithm.H>
 #include <SpectralFieldData.H>
 
-/* \brief Top-level class for the electromagnetic spectral solver
+/**
+ * \brief Top-level class for the electromagnetic spectral solver
  *
  * Stores the field in spectral space, and has member functions
  * to Fourier-transform the fields between real space and spectral space
@@ -23,36 +30,30 @@ class SpectralSolver
                         const amrex::DistributionMapping& dm,
                         const int norder_x, const int norder_y,
                         const int norder_z, const bool nodal,
+                        const amrex::Array<amrex::Real,3>& v_galilean,
                         const amrex::RealVect dx, const amrex::Real dt,
                         const bool pml=false );
 
-        /* \brief Transform the component `i_comp` of MultiFab `mf`
+        /**
+         * \brief Transform the component `i_comp` of MultiFab `mf`
          *  to spectral space, and store the corresponding result internally
          *  (in the spectral field specified by `field_index`) */
         void ForwardTransform( const amrex::MultiFab& mf,
                                const int field_index,
-                               const int i_comp=0 ){
-            BL_PROFILE("SpectralSolver::ForwardTransform");
-            field_data.ForwardTransform( mf, field_index, i_comp );
-        };
+                               const int i_comp=0 );
 
-        /* \brief Transform spectral field specified by `field_index` back to
-         * real space, and store it in the component `i_comp` of `mf` */
+        /**
+         * \brief Transform spectral field specified by `field_index` back to
+         * real space, and store it in the component `i_comp` of `mf`
+         */
         void BackwardTransform( amrex::MultiFab& mf,
                                 const int field_index,
-                                const int i_comp=0 ){
-            BL_PROFILE("SpectralSolver::BackwardTransform");
-            field_data.BackwardTransform( mf, field_index, i_comp );
-        };
+                                const int i_comp=0 );
 
-        /* \brief Update the fields in spectral space, over one timestep */
-        void pushSpectralFields(){
-            BL_PROFILE("SpectralSolver::pushSpectralFields");
-            // Virtual function: the actual function used here depends
-            // on the sub-class of `SpectralBaseAlgorithm` that was
-            // initialized in the constructor of `SpectralSolver`
-            algorithm->pushSpectralFields( field_data );
-        };
+        /**
+         * \brief Update the fields in spectral space, over one timestep
+         */
+        void pushSpectralFields();
 
     private:
         SpectralFieldData field_data; // Store field in spectral space

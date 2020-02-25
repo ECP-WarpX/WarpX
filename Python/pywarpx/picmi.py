@@ -1,3 +1,11 @@
+# Copyright 2018-2020 Andrew Myers, David Grote, Ligia Diana Amorim
+# Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+#
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
 """Classes following the PICMI standard
 """
 import re
@@ -56,30 +64,39 @@ class Species(picmistandard.PICMI_Species):
                 if self.mass is None:
                     self.mass = element.mass*periodictable.constants.atomic_mass_constant
 
-    def initialize_inputs(self, layout):
+    def initialize_inputs(self, layout, initialize_self_fields=False):
         self.species_number = pywarpx.particles.nspecies
         pywarpx.particles.nspecies += 1
 
         if self.name is None:
             self.name = 'species{}'.format(self.species_number)
 
-        if pywarpx.particles.species_names is None:
-            pywarpx.particles.species_names = self.name
-        else:
-            pywarpx.particles.species_names += ' ' + self.name
+        pywarpx.particles.species_names.append(self.name)
 
-        self.species = pywarpx.Bucket.Bucket(self.name, mass=self.mass, charge=self.charge, injection_style = 'python')
+        self.species = pywarpx.Bucket.Bucket(self.name,
+                                             mass = self.mass,
+                                             charge = self.charge,
+                                             injection_style = 'python',
+                                             initialize_self_fields = int(initialize_self_fields),
+                                             plot_vars = set())
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
             self.initial_distribution.initialize_inputs(self.species_number, layout, self.species, self.density_scale)
 
+        for interaction in self.interactions:
+            assert interaction[0] == 'ionization'
+            assert interaction[1] == 'ADK', 'WarpX only has ADK ionization model implemented'
+            self.species.do_field_ionization=1
+            self.species.physical_element=self.particle_type
+            self.species.ionization_product_species = interaction[2].name
+            self.species.ionization_initial_level = self.charge_state
 
 picmistandard.PICMI_MultiSpecies.Species_class = Species
 class MultiSpecies(picmistandard.PICMI_MultiSpecies):
-    def initialize_inputs(self, layout):
+    def initialize_inputs(self, layout, initialize_self_fields=False):
         for species in self.species_instances_list:
-            species.initialize_inputs(layout)
+            species.initialize_inputs(layout, initialize_self_fields)
 
 
 class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
@@ -207,7 +224,6 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
         species.zmin = self.lower_bound[2]
         species.zmax = self.upper_bound[2]
 
-        # --- Only constant density is supported at this time
         species.profile = "parse_density_function"
         if density_scale is None:
             species.__setattr__('density_function(x,y,z)', self.density_expression)
@@ -218,7 +234,10 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
             setattr(pywarpx.my_constants, k, v)
 
         # --- Note that WarpX takes gamma*beta as input
-        if np.any(np.not_equal(self.rms_velocity, 0.)):
+        if np.any(np.not_equal(self.momentum_expressions, None)):
+            species.momentum_distribution_type = 'parse_momentum_function'
+            self.setup_parse_momentum_functions(species)
+        elif np.any(np.not_equal(self.rms_velocity, 0.)):
             species.momentum_distribution_type = "gaussian"
             species.ux_m = self.directed_velocity[0]/constants.c
             species.uy_m = self.directed_velocity[1]/constants.c
@@ -235,6 +254,19 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
         if self.fill_in:
             species.do_continuous_injection = 1
 
+    def setup_parse_momentum_functions(self, species):
+        if self.momentum_expressions[0] is not None:
+            species.__setattr__('momentum_function_ux(x,y,z)', '({0})/{1}'.format(self.momentum_expressions[0], constants.c))
+        else:
+            species.__setattr__('momentum_function_ux(x,y,z)', '({0})/{1}'.format(self.directed_velocity[0], constants.c))
+        if self.momentum_expressions[1] is not None:
+            species.__setattr__('momentum_function_uy(x,y,z)', '({0})/{1}'.format(self.momentum_expressions[1], constants.c))
+        else:
+            species.__setattr__('momentum_function_uy(x,y,z)', '({0})/{1}'.format(self.directed_velocity[1], constants.c))
+        if self.momentum_expressions[2] is not None:
+            species.__setattr__('momentum_function_uz(x,y,z)', '({0})/{1}'.format(self.momentum_expressions[2], constants.c))
+        else:
+            species.__setattr__('momentum_function_uz(x,y,z)', '({0})/{1}'.format(self.directed_velocity[2], constants.c))
 
 class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
     def init(self, kw):
@@ -308,15 +340,16 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         pywarpx.geometry.is_periodic = '0 %d'%(self.bc_zmin=='periodic')  # Is periodic?
         pywarpx.geometry.prob_lo = self.lower_bound  # physical domain
         pywarpx.geometry.prob_hi = self.upper_bound
-        pywarpx.warpx.nmodes = self.n_azimuthal_modes
+        pywarpx.warpx.n_rz_azimuthal_modes = self.n_azimuthal_modes
 
-        if self.moving_window_velocity is not None and np.any(np.not_equal(self.moving_window_velocity, 0.)):
-            pywarpx.warpx.do_moving_window = 1
-            if self.moving_window_velocity[0] != 0.:
-                raise Exception('In cylindrical coordinates, a moving window in r can not be done')
-            if self.moving_window_velocity[1] != 0.:
-                pywarpx.warpx.moving_window_dir = 'z'
-                pywarpx.warpx.moving_window_v = self.moving_window_velocity[1]/constants.c  # in units of the speed of light
+        if self.moving_window_zvelocity is not None:
+            if np.isscalar(self.moving_window_zvelocity):
+                if self.moving_window_zvelocity !=0:
+                    pywarpx.warpx.do_moving_window = 1
+                    pywarpx.warpx.moving_window_dir = 'z'
+                    pywarpx.warpx.moving_window_v = self.moving_window_zvelocity/constants.c  # in units of the speed of light
+            else:
+                raise Exception('RZ PICMI moving_window_velocity (only available in z direction) should be a scalar')
 
         if self.refined_regions:
             assert len(self.refined_regions) == 1, Exception('WarpX only supports one refined region.')
@@ -529,8 +562,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.solver.initialize_inputs()
 
         for i in range(len(self.species)):
-            assert not self.initialize_self_fields[i], Exception('WarpX does not support initializing self fields')
-            self.species[i].initialize_inputs(self.layouts[i])
+            self.species[i].initialize_inputs(self.layouts[i], self.initialize_self_fields[i])
 
         for i in range(len(self.lasers)):
             self.lasers[i].initialize_inputs()
@@ -589,22 +621,43 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         pywarpx.amr.check_consistency('plot_int', self.period, 'The period must be the same for all simulation frame diagnostics')
         pywarpx.amr.plot_int = self.period
 
-        if 'rho' in self.data_list:
-            pywarpx.warpx.plot_rho = 1
-        if 'dive' in self.data_list:
-            pywarpx.warpx.plot_dive = 1
-        if 'divb' in self.data_list:
-            pywarpx.warpx.plot_divb = 1
-        if 'F' in self.data_list:
-            pywarpx.warpx.plot_F = 1
-        if 'proc_number' in self.data_list:
-            pywarpx.warpx.plot_proc_number = 1
+        for dataname in self.data_list:
+            if dataname == 'E':
+                pywarpx.warpx.add_field_to_plot('Ex')
+                pywarpx.warpx.add_field_to_plot('Ey')
+                pywarpx.warpx.add_field_to_plot('Ez')
+            elif dataname == 'B':
+                pywarpx.warpx.add_field_to_plot('Bx')
+                pywarpx.warpx.add_field_to_plot('By')
+                pywarpx.warpx.add_field_to_plot('Bz')
+            elif dataname == 'J':
+                pywarpx.warpx.add_field_to_plot('jx')
+                pywarpx.warpx.add_field_to_plot('jy')
+                pywarpx.warpx.add_field_to_plot('jz')
+            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'F', 'proc_number']:
+                pywarpx.warpx.add_field_to_plot(dataname)
+            elif dataname in ['Jx', 'Jy', 'Jz']:
+                pywarpx.warpx.add_field_to_plot(dataname.lower())
+            elif dataname == 'dive':
+                pywarpx.warpx.add_field_to_plot('divE')
+            elif dataname == 'divb':
+                pywarpx.warpx.add_field_to_plot('divB')
+            elif dataname == 'costs':
+                pywarpx.warpx.plot_costs = 1
+            elif dataname == 'raw_fields':
+                self.plot_raw_fields = 1
+            elif dataname == 'raw_fields_guards':
+                self.plot_raw_fields_guards = 1
+            elif dataname == 'finepatch':
+                self.plot_finepatch = 1
+            elif dataname == 'crsepatch':
+                self.plot_crsepatch = 1
 
         pywarpx.warpx.plot_raw_fields = self.plot_raw_fields
         pywarpx.warpx.plot_raw_fields_guards = self.plot_raw_fields_guards
 
-        pywarpx.amr.check_consistency('plot_finepatch', self.plot_finepatch, 'The fine patch flag must be the same for all simulation frame field diagnostics')
-        pywarpx.amr.check_consistency('plot_crsepatch', self.plot_crsepatch, 'The coarse patch flag must be the same for all simulation frame field diagnostics')
+        pywarpx.warpx.check_consistency('plot_finepatch', self.plot_finepatch, 'The fine patch flag must be the same for all simulation frame field diagnostics')
+        pywarpx.warpx.check_consistency('plot_crsepatch', self.plot_crsepatch, 'The coarse patch flag must be the same for all simulation frame field diagnostics')
         pywarpx.warpx.plot_finepatch = self.plot_finepatch
         pywarpx.warpx.plot_crsepatch = self.plot_crsepatch
 
@@ -631,12 +684,36 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         pywarpx.amr.check_consistency('plot_int', self.period, 'The period must be the same for all simulation frame diagnostics')
         pywarpx.amr.plot_int = self.period
 
-        if 'part_per_cell' in self.data_list:
-            pywarpx.warpx.plot_part_per_cell = 1
-        if 'part_per_grid' in self.data_list:
-            pywarpx.warpx.plot_part_per_grid = 1
-        if 'part_per_proc' in self.data_list:
-            pywarpx.warpx.plot_part_per_proc = 1
+        plot_vars = set()
+        for dataname in self.data_list:
+            if dataname == 'position':
+                # --- The positions are alway written out anyway
+                pass
+            elif dataname == 'momentum':
+                plot_vars.add('ux')
+                plot_vars.add('uy')
+                plot_vars.add('uz')
+            elif dataname == 'weighting':
+                plot_vars.add('w')
+            elif dataname == 'fields':
+                plot_vars.add('Ex')
+                plot_vars.add('Ey')
+                plot_vars.add('Ez')
+                plot_vars.add('Bx')
+                plot_vars.add('By')
+                plot_vars.add('Bz')
+            elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
+                plot_vars.add(dataname)
+            elif dataname in ['part_per_cell', 'part_per_grid', 'part_per_proc']:
+                pywarpx.warpx.add_field_to_plot(dataname)
+
+        if plot_vars:
+            species = self.species
+            if not np.iterable(species):
+                species = [species]
+            for specie in species:
+                for var in plot_vars:
+                    specie.species.plot_vars.add(var)
 
         if self.write_dir is not None:
             plot_file = self.write_dir + '/plotfiles/plt'
@@ -656,10 +733,10 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
         pywarpx.warpx.check_consistency('dt_snapshots_lab', self.dt_snapshots, 'The time between snapshots must be the same in all lab frame diagnostics')
         pywarpx.warpx.check_consistency('lab_data_directory', self.write_dir, 'The write directory must be the same in all lab frame diagnostics')
 
-        pywarpx.warpx.do_boosted_frame_diagnostic = 1
+        pywarpx.warpx.do_back_transformed_diagnostics = 1
         pywarpx.warpx.num_snapshots_lab = self.num_snapshots
         pywarpx.warpx.dt_snapshots_lab = self.dt_snapshots
-        pywarpx.warpx.do_boosted_frame_fields = 1
+        pywarpx.warpx.do_back_transformed_fields = 1
         pywarpx.warpx.lab_data_directory = self.write_dir
 
 
@@ -670,8 +747,17 @@ class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic)
         pywarpx.warpx.check_consistency('dt_snapshots_lab', self.dt_snapshots, 'The time between snapshots must be the same in all lab frame diagnostics')
         pywarpx.warpx.check_consistency('lab_data_directory', self.write_dir, 'The write directory must be the same in all lab frame diagnostics')
 
-        pywarpx.warpx.do_boosted_frame_diagnostic = 1
+        pywarpx.warpx.do_back_transformed_diagnostics = 1
+
+        if isinstance(self.species, Species):
+            self.species.do_back_transformed_diagnostics = 1
+        else:
+            try:
+                for specie in self.species:
+                    specie.do_back_transformed_diagnostics = 1
+            except TypeError:
+                pass
+
         pywarpx.warpx.num_snapshots_lab = self.num_snapshots
         pywarpx.warpx.dt_snapshots_lab = self.dt_snapshots
-        pywarpx.warpx.do_boosted_frame_particles = 1
         pywarpx.warpx.lab_data_directory = self.write_dir

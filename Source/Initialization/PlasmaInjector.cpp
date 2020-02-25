@@ -1,12 +1,22 @@
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, Cameron Yang
+ * David Grote, Luca Fedeli, Maxence Thevenet
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include "PlasmaInjector.H"
+
+#include <WarpXConst.H>
+#include <WarpX.H>
+#include <WarpXUtil.H>
+
+#include <AMReX.H>
 
 #include <sstream>
 #include <functional>
-
-#include <WarpXConst.H>
-#include <WarpX_f.H>
-#include <AMReX.H>
-#include <WarpX.H>
 
 using namespace amrex;
 
@@ -20,7 +30,7 @@ namespace {
         amrex::Abort(string.c_str());
     }
 
-    Real parseChargeName(const ParmParse pp, const std::string& name) {
+    Real parseChargeName(const ParmParse& pp, const std::string& name) {
         Real result;
         if (name == "q_e") {
             return PhysConst::q_e;
@@ -32,20 +42,20 @@ namespace {
         }
     }
 
-    Real parseChargeString(const ParmParse pp, const std::string& name) {
+    Real parseChargeString(const ParmParse& pp, const std::string& name) {
         if(name.substr(0, 1) == "-")
             return -1.0 * parseChargeName(pp, name.substr(1, name.size() - 1));
         return parseChargeName(pp, name);
     }
 
-    Real parseMassString(const ParmParse pp, const std::string& name) {
+    Real parseMassString(const ParmParse& pp, const std::string& name) {
         Real result;
         if (name == "m_e") {
             return PhysConst::m_e;
         } else if (name == "m_p"){
             return PhysConst::m_p;
         } else if (name == "inf"){
-	    return std::numeric_limits<double>::infinity();
+            return std::numeric_limits<double>::infinity();
         } else if (pp.query("mass", result)) {
             return result;
         } else {
@@ -108,6 +118,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                    part_pos_s.end(),
                    part_pos_s.begin(),
                    ::tolower);
+    num_particles_per_cell_each_dim.assign(3, 0);
     if (part_pos_s == "python") {
         return;
     } else if (part_pos_s == "singleparticle") {
@@ -143,9 +154,11 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseDensity(pp);
         parseMomentum(pp);
     } else if (part_pos_s == "nuniformpercell") {
-        num_particles_per_cell_each_dim.resize(3);
+        // Note that for RZ, three numbers are expected, r, theta, and z.
+        // For 2D, only two are expected. The third is overwritten with 1.
+        num_particles_per_cell_each_dim.assign(3, 1);
         pp.getarr("num_particles_per_cell_each_dim", num_particles_per_cell_each_dim);
-#if ( AMREX_SPACEDIM == 2 )
+#if WARPX_DIM_XZ
         num_particles_per_cell_each_dim[2] = 1;
 #endif
         // Construct InjectorPosition from InjectorPositionRegular.
@@ -162,34 +175,6 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     } else {
         StringParseAbortMessage("Injection style", part_pos_s);
     }
-}
-
-namespace {
-WarpXParser makeParser (std::string const& parse_function)
-{
-    WarpXParser parser(parse_function);
-    parser.registerVariables({"x","y","z"});
-
-    ParmParse pp("my_constants");
-    std::set<std::string> symbols = parser.symbols();
-    symbols.erase("x");
-    symbols.erase("y");
-    symbols.erase("z"); // after removing variables, we are left with constants
-    for (auto it = symbols.begin(); it != symbols.end(); ) {
-        Real v;
-        if (pp.query(it->c_str(), v)) {
-            parser.setConstant(*it, v);
-            it = symbols.erase(it);
-        } else {
-            ++it;
-        }
-    }
-    for (auto const& s : symbols) { // make sure there no unknown symbols
-        amrex::Abort("PlasmaInjector::makeParser: Unknown symbol "+s);
-    }
-
-    return parser;
-}
 }
 
 // Depending on injection type at runtime, initialize inj_rho
@@ -213,14 +198,10 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
         // Construct InjectorDensity with InjectorDensityPredefined.
         inj_rho.reset(new InjectorDensity((InjectorDensityPredefined*)nullptr,species_name));
     } else if (rho_prof_s == "parse_density_function") {
-        std::vector<std::string> f;
-        pp.getarr("density_function(x,y,z)", f);
-        for (auto const& s : f) {
-            str_density_function += s;
-        }
+        Store_parserString(pp, "density_function(x,y,z)", str_density_function);
         // Construct InjectorDensity with InjectorDensityParser.
         inj_rho.reset(new InjectorDensity((InjectorDensityParser*)nullptr,
-                                          makeParser(str_density_function)));
+                                          makeParser(str_density_function,{"x","y","z"})));
     } else {
         StringParseAbortMessage("Density profile type", rho_prof_s);
     }
@@ -266,6 +247,68 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
         // Construct InjectorMomentum with InjectorMomentumGaussian.
         inj_mom.reset(new InjectorMomentum((InjectorMomentumGaussian*)nullptr,
                                            ux_m, uy_m, uz_m, ux_th, uy_th, uz_th));
+    } else if (mom_dist_s == "maxwell_boltzmann"){
+        Real beta = 0.;
+        Real theta = 10.;
+        int dir = 0;
+        std::string direction = "x";
+        pp.query("beta", beta);
+        if(beta < 0){
+            amrex::Abort("Please enter a positive beta value. Drift direction is set with <s_name>.bulk_vel_dir = 'x' or '+x', '-x', 'y' or '+y', etc.");
+        }
+        pp.query("theta", theta);
+        pp.query("bulk_vel_dir", direction);
+        if(direction[0] == '-'){
+            beta = -beta;
+        }
+        if((direction == "x" || direction[1] == 'x') ||
+           (direction == "X" || direction[1] == 'X')){
+            dir = 0;
+        } else if ((direction == "y" || direction[1] == 'y') ||
+                   (direction == "Y" || direction[1] == 'Y')){
+            dir = 1;
+        } else if ((direction == "z" || direction[1] == 'z') ||
+                   (direction == "Z" || direction[1] == 'Z')){
+            dir = 2;
+        } else{
+            std::stringstream stringstream;
+            stringstream << "Cannot interpret <s_name>.bulk_vel_dir input '" << direction << "'. Please enter +/- x, y, or z with no whitespace between the sign and other character.";
+            direction = stringstream.str();
+            amrex::Abort(direction.c_str());
+        }
+        // Construct InjectorMomentum with InjectorMomentumBoltzmann.
+        inj_mom.reset(new InjectorMomentum((InjectorMomentumBoltzmann*)nullptr, theta, beta, dir));
+    } else if (mom_dist_s == "maxwell_juttner"){
+        Real beta = 0.;
+        Real theta = 10.;
+        int dir = 0;
+        std::string direction = "x";
+        pp.query("beta", beta);
+        if(beta < 0){
+            amrex::Abort("Please enter a positive beta value. Drift direction is set with <s_name>.bulk_vel_dir = 'x' or '+x', '-x', 'y' or '+y', etc.");
+        }
+        pp.query("theta", theta);
+        pp.query("bulk_vel_dir", direction);
+        if(direction[0] == '-'){
+            beta = -beta;
+        }
+        if((direction == "x" || direction[1] == 'x') ||
+           (direction == "X" || direction[1] == 'X')){
+            dir = 0;
+        } else if ((direction == "y" || direction[1] == 'y') ||
+                   (direction == "Y" || direction[1] == 'Y')){
+            dir = 1;
+        } else if ((direction == "z" || direction[1] == 'z') ||
+                   (direction == "Z" || direction[1] == 'Z')){
+            dir = 2;
+        } else{
+            std::stringstream stringstream;
+            stringstream << "Cannot interpret <s_name>.bulk_vel_dir input '" << direction << "'. Please enter +/- x, y, or z with no whitespace between the sign and other character.";
+            direction = stringstream.str();
+            amrex::Abort(direction.c_str());
+        }
+        // Construct InjectorMomentum with InjectorMomentumJuttner.
+        inj_mom.reset(new InjectorMomentum((InjectorMomentumJuttner*)nullptr, theta, beta, dir));
     } else if (mom_dist_s == "radial_expansion") {
         Real u_over_r = 0.;
         pp.query("u_over_r", u_over_r);
@@ -273,26 +316,17 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
         inj_mom.reset(new InjectorMomentum
                       ((InjectorMomentumRadialExpansion*)nullptr, u_over_r));
     } else if (mom_dist_s == "parse_momentum_function") {
-        std::vector<std::string> f;
-        pp.getarr("momentum_function_ux(x,y,z)", f);
-        for (auto const& s : f) {
-            str_momentum_function_ux += s;
-        }
-        f.clear();
-        pp.getarr("momentum_function_uy(x,y,z)", f);
-        for (auto const& s : f) {
-            str_momentum_function_uy += s;
-        }
-        f.clear();
-        pp.getarr("momentum_function_uz(x,y,z)", f);
-        for (auto const& s : f) {
-            str_momentum_function_uz += s;
-        }
+        Store_parserString(pp, "momentum_function_ux(x,y,z)",
+                                               str_momentum_function_ux);
+        Store_parserString(pp, "momentum_function_uy(x,y,z)",
+                                               str_momentum_function_uy);
+        Store_parserString(pp, "momentum_function_uz(x,y,z)",
+                                               str_momentum_function_uz);
         // Construct InjectorMomentum with InjectorMomentumParser.
         inj_mom.reset(new InjectorMomentum((InjectorMomentumParser*)nullptr,
-                                           makeParser(str_momentum_function_ux),
-                                           makeParser(str_momentum_function_uy),
-                                           makeParser(str_momentum_function_uz)));
+                                           makeParser(str_momentum_function_ux,{"x","y","z"}),
+                                           makeParser(str_momentum_function_uy,{"x","y","z"}),
+                                           makeParser(str_momentum_function_uz,{"x","y","z"})));
     } else {
         StringParseAbortMessage("Momentum distribution type", mom_dist_s);
     }

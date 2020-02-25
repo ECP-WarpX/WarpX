@@ -1,3 +1,11 @@
+/* Copyright 2019 Andrew Myers, Aurore Blelly, Axel Huebl
+ * Maxence Thevenet, Remi Lehe, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <PML.H>
 #include <WarpX.H>
 #include <WarpXConst.H>
@@ -23,7 +31,6 @@ namespace
         int olo = overlap.smallEnd(idim);
         int ohi = overlap.bigEnd(idim);
         int slo = sigma.m_lo;
-        int shi = sigma.m_hi;
         int sslo = sigma_star.m_lo;
 
         for (int i = olo; i <= ohi+1; ++i)
@@ -51,7 +58,6 @@ namespace
         int olo = overlap.smallEnd(idim);
         int ohi = overlap.bigEnd(idim);
         int slo = sigma.m_lo;
-        int shi = sigma.m_hi;
         int sslo = sigma_star.m_lo;
         for (int i = olo; i <= ohi+1; ++i)
         {
@@ -471,9 +477,10 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& grid_dm,
     const RealVect dx{AMREX_D_DECL(geom->CellSize(0), geom->CellSize(1), geom->CellSize(2))};
     // Get the cell-centered box, with guard cells
     BoxArray realspace_ba = ba;  // Copy box
+    Array<Real,3> v_galilean_zero = {0,0,0};
     realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
     spectral_solver_fp.reset( new SpectralSolver( realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, dx, dt, in_pml ) );
+        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, dx, dt, in_pml ) );
 #endif
 
     if (cgeom)
@@ -527,13 +534,14 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& grid_dm,
         }
 
 #ifdef WARPX_USE_PSATD
-        const bool in_pml = true; // Tells spectral solver to use split-PML equations
         const RealVect cdx{AMREX_D_DECL(cgeom->CellSize(0), cgeom->CellSize(1), cgeom->CellSize(2))};
         // Get the cell-centered box, with guard cells
         BoxArray realspace_cba = cba;  // Copy box
+        // const bool in_pml = true; // Tells spectral solver to use split-PML equations
+
         realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_cp.reset( new SpectralSolver( realspace_cba, cdm,
-            nox_fft, noy_fft, noz_fft, do_nodal, cdx, dt, in_pml ) );
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, cdx, dt, in_pml ) );
 #endif
     }
 }
@@ -754,14 +762,14 @@ PML::CopyJtoPMLs (const std::array<amrex::MultiFab*,3>& j_fp,
 
 
 void
-PML::ExchangeF (MultiFab* F_fp, MultiFab* F_cp, int do_pml_in_domain)
+PML::ExchangeF (amrex::MultiFab* F_fp, amrex::MultiFab* F_cp, int do_pml_in_domain)
 {
     ExchangeF(PatchType::fine, F_fp, do_pml_in_domain);
     ExchangeF(PatchType::coarse, F_cp, do_pml_in_domain);
 }
 
 void
-PML::ExchangeF (PatchType patch_type, MultiFab* Fp, int do_pml_in_domain)
+PML::ExchangeF (PatchType patch_type, amrex::MultiFab* Fp, int do_pml_in_domain)
 {
     if (patch_type == PatchType::fine && pml_F_fp && Fp) {
         Exchange(*pml_F_fp, *Fp, *m_geom, do_pml_in_domain);
@@ -775,7 +783,7 @@ void
 PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
                 int do_pml_in_domain)
 {
-    BL_PROFILE("PML::Exchange");
+    WARPX_PROFILE("PML::Exchange");
 
     const IntVect& ngr = reg.nGrowVect();
     const IntVect& ngp = pml.nGrowVect();
@@ -806,16 +814,22 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
             MultiFab::Copy(tmpregmf, reg, 0, 0, 1, ngr);
             tmpregmf.ParallelCopy(totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
 #ifdef _OPENMP
-#pragma omp parallel
+#pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(reg); mfi.isValid(); ++mfi)
             {
                 const FArrayBox& src = tmpregmf[mfi];
                 FArrayBox& dst = reg[mfi];
+                const auto srcarr = src.array();
+                auto dstarr = dst.array();
                 const BoxList& bl = amrex::boxDiff(dst.box(), mfi.validbox());
                 // boxDiff avoids the outermost valid cell
                 for (const Box& bx : bl) {
-                    dst.copy(src, bx, 0, bx, 0, 1);
+                    amrex::ParallelFor(bx,
+                                       [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+                                       {
+                                           dstarr(i,j,k,0) = srcarr(i,j,k,0);
+                                       });
                 }
             }
         }
@@ -840,11 +854,10 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
 void
 PML::CopyToPML (MultiFab& pml, MultiFab& reg, const Geometry& geom)
 {
-  const IntVect& ngr = reg.nGrowVect();
   const IntVect& ngp = pml.nGrowVect();
   const auto& period = geom.periodicity();
 
-  pml.ParallelCopy(reg, 0, 0, 1, ngr, ngp, period);
+  pml.ParallelCopy(reg, 0, 0, 1, IntVect(0), ngp, period);
 }
 
 void

@@ -1,3 +1,9 @@
+# Copyright 2017-2019 David Grote
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
 """Provides wrappers around field and current density on multiFABs
 
 Available routines:
@@ -8,6 +14,13 @@ JxWrapper, JyWrapper, JzWrapper
 
 """
 import numpy as np
+try:
+    from mpi4py import MPI as mpi
+    comm_world = mpi.COMM_WORLD
+    npes = comm_world.Get_size()
+except ImportError:
+    npes = 1
+
 from . import _libwarpx
 
 
@@ -19,14 +32,14 @@ class _MultiFABWrapper(object):
      - overlaps: is one along the axes where the grid boundaries overlap the neighboring grid
      - get_lovects: routine that returns the list of lo vectors
      - get_fabs: routine that returns the list of FABs
-     - level=0: ignored
+     - level: refinement level
     """
-    def __init__(self, direction, overlaps, get_lovects, get_fabs, level=0, include_ghosts=False):
+    def __init__(self, direction, overlaps, get_lovects, get_fabs, level, include_ghosts=False):
         self.direction = direction
         self.overlaps = np.array(overlaps)
         self.get_lovects = get_lovects
         self.get_fabs = get_fabs
-        self.level = 0 #level
+        self.level = level
         self.include_ghosts = include_ghosts
 
         self.dim = _libwarpx.dim
@@ -80,17 +93,36 @@ class _MultiFABWrapper(object):
     def _getitem3d(self, index):
         """Returns slices of a 3D decomposed array,
         """
-        ix = index[0]
-        iy = index[1]
-        iz = index[2]
 
         lovects = self._getlovects()
         hivects = self._gethivects()
         fields = self._getfields()
 
+        ix = index[0]
+        iy = index[1]
+        iz = index[2]
+
+        if len(fields[0].shape) > self.dim:
+            ncomps = fields[0].shape[-1]
+        else:
+            ncomps = 1
+
+        if len(index) > self.dim:
+            if ncomps > 1:
+                ic = index[-1]
+            else:
+                raise Exception('Too many indices given')
+        else:
+            ic = None
+
         nx = hivects[0,:].max() - self.nghosts
         ny = hivects[1,:].max() - self.nghosts
         nz = hivects[2,:].max() - self.nghosts
+
+        if npes > 1:
+            nx = comm_world.allreduce(nx, op=mpi.MAX)
+            ny = comm_world.allreduce(ny, op=mpi.MAX)
+            nz = comm_world.allreduce(nz, op=mpi.MAX)
 
         if isinstance(ix, slice):
             ixstart = max(ix.start or -self.nghosts, -self.nghosts)
@@ -112,11 +144,15 @@ class _MultiFABWrapper(object):
             izstop = iz + 1
 
         # --- Setup the size of the array to be returned and create it.
+        # --- Space is added for multiple components if needed.
         sss = (max(0, ixstop - ixstart),
                max(0, iystop - iystart),
                max(0, izstop - izstart))
-        resultglobal = np.zeros(sss)
+        if ncomps > 1 and ic is None:
+            sss = tuple(list(sss) + [ncomps])
+        resultglobal = np.zeros(sss, dtype=_libwarpx._numpy_real_dtype)
 
+        datalist = []
         for i in range(len(fields)):
 
             # --- The ix1, 2 etc are relative to global indexing
@@ -132,12 +168,23 @@ class _MultiFABWrapper(object):
                 sss = (slice(ix1 - lovects[0,i], ix2 - lovects[0,i]),
                        slice(iy1 - lovects[1,i], iy2 - lovects[1,i]),
                        slice(iz1 - lovects[2,i], iz2 - lovects[2,i]))
+                if ic is not None:
+                    sss = tuple(list(sss) + [ic])
 
                 vslice = (slice(ix1 - ixstart, ix2 - ixstart),
                           slice(iy1 - iystart, iy2 - iystart),
                           slice(iz1 - izstart, iz2 - izstart))
 
-                resultglobal[vslice] = fields[i][sss]
+                datalist.append((vslice, fields[i][sss]))
+
+        if npes == 1:
+            all_datalist = [datalist]
+        else:
+            all_datalist = comm_world.allgather(datalist)
+
+        for datalist in all_datalist:
+            for vslice, ff in datalist:
+                resultglobal[vslice] = ff
 
         # --- Now remove any of the reduced dimensions.
         sss = [slice(None), slice(None), slice(None)]
@@ -177,6 +224,10 @@ class _MultiFABWrapper(object):
         nx = hivects[0,:].max() - self.nghosts
         nz = hivects[1,:].max() - self.nghosts
 
+        if npes > 1:
+            nx = comm_world.allreduce(nx, op=mpi.MAX)
+            nz = comm_world.allreduce(nz, op=mpi.MAX)
+
         if isinstance(ix, slice):
             ixstart = max(ix.start or -self.nghosts, -self.nghosts)
             ixstop = min(ix.stop or nx + 1 + self.nghosts, nx + self.overlaps[0] + self.nghosts)
@@ -196,8 +247,9 @@ class _MultiFABWrapper(object):
                max(0, izstop - izstart))
         if ncomps > 1 and ic is None:
             sss = tuple(list(sss) + [ncomps])
-        resultglobal = np.zeros(sss)
+        resultglobal = np.zeros(sss, dtype=_libwarpx._numpy_real_dtype)
 
+        datalist = []
         for i in range(len(fields)):
 
             # --- The ix1, 2 etc are relative to global indexing
@@ -216,7 +268,16 @@ class _MultiFABWrapper(object):
                 vslice = (slice(ix1 - ixstart, ix2 - ixstart),
                           slice(iz1 - izstart, iz2 - izstart))
 
-                resultglobal[vslice] = fields[i][sss]
+                datalist.append((vslice, fields[i][sss]))
+
+        if npes == 1:
+            all_datalist = [datalist]
+        else:
+            all_datalist = comm_world.allgather(datalist)
+
+        for datalist in all_datalist:
+            for vslice, ff in datalist:
+                resultglobal[vslice] = ff
 
         # --- Now remove any of the reduced dimensions.
         sss = [slice(None), slice(None)]
@@ -258,6 +319,14 @@ class _MultiFABWrapper(object):
         lovects = self._getlovects()
         hivects = self._gethivects()
         fields = self._getfields()
+
+        if len(index) > self.dim:
+            if ncomps > 1:
+                ic = index[-1]
+            else:
+                raise Exception('Too many indices given')
+        else:
+            ic = None
 
         nx = hivects[0,:].max() - self.nghosts
         ny = hivects[1,:].max() - self.nghosts
@@ -307,6 +376,8 @@ class _MultiFABWrapper(object):
                 sss = (slice(ix1 - lovects[0,i], ix2 - lovects[0,i]),
                        slice(iy1 - lovects[1,i], iy2 - lovects[1,i]),
                        slice(iz1 - lovects[2,i], iz2 - lovects[2,i]))
+                if ic is not None:
+                    sss = tuple(list(sss) + [ic])
 
                 if isinstance(value, np.ndarray):
                     vslice = (slice(ix1 - ixstart, ix2 - ixstart),
@@ -439,4 +510,237 @@ def JzWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(direction=2, overlaps=[1,1,0],
                             get_lovects=_libwarpx.get_mesh_current_density_lovects,
                             get_fabs=_libwarpx.get_mesh_current_density,
+                            level=level, include_ghosts=include_ghosts)
+
+def ExCPWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=0, overlaps=[0,1,1],
+                            get_lovects=_libwarpx.get_mesh_electric_field_cp_lovects,
+                            get_fabs=_libwarpx.get_mesh_electric_field_cp,
+                            level=level, include_ghosts=include_ghosts)
+
+def EyCPWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=1, overlaps=[1,0,1],
+                            get_lovects=_libwarpx.get_mesh_electric_field_cp_lovects,
+                            get_fabs=_libwarpx.get_mesh_electric_field_cp,
+                            level=level, include_ghosts=include_ghosts)
+
+def EzCPWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=2, overlaps=[1,1,0],
+                            get_lovects=_libwarpx.get_mesh_electric_field_cp_lovects,
+                            get_fabs=_libwarpx.get_mesh_electric_field_cp,
+                            level=level, include_ghosts=include_ghosts)
+
+def BxCPWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=0, overlaps=[1,0,0],
+                            get_lovects=_libwarpx.get_mesh_magnetic_field_cp_lovects,
+                            get_fabs=_libwarpx.get_mesh_magnetic_field_cp,
+                            level=level, include_ghosts=include_ghosts)
+
+def ByCPWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=1, overlaps=[0,1,0],
+                            get_lovects=_libwarpx.get_mesh_magnetic_field_cp_lovects,
+                            get_fabs=_libwarpx.get_mesh_magnetic_field_cp,
+                            level=level, include_ghosts=include_ghosts)
+
+def BzCPWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=2, overlaps=[0,0,1],
+                            get_lovects=_libwarpx.get_mesh_magnetic_field_cp_lovects,
+                            get_fabs=_libwarpx.get_mesh_magnetic_field_cp,
+                            level=level, include_ghosts=include_ghosts)
+
+def JxCPWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=0, overlaps=[0,1,1],
+                            get_lovects=_libwarpx.get_mesh_current_density_cp_lovects,
+                            get_fabs=_libwarpx.get_mesh_current_density_cp,
+                            level=level, include_ghosts=include_ghosts)
+
+def JyCPWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=1, overlaps=[1,0,1],
+                            get_lovects=_libwarpx.get_mesh_current_density_cp_lovects,
+                            get_fabs=_libwarpx.get_mesh_current_density_cp,
+                            level=level, include_ghosts=include_ghosts)
+
+def JzCPWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=2, overlaps=[1,1,0],
+                            get_lovects=_libwarpx.get_mesh_current_density_cp_lovects,
+                            get_fabs=_libwarpx.get_mesh_current_density_cp,
+                            level=level, include_ghosts=include_ghosts)
+
+def ExFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=0, overlaps=[0,1,1],
+                            get_lovects=_libwarpx.get_mesh_electric_field_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_electric_field_fp,
+                            level=level, include_ghosts=include_ghosts)
+
+def EyFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=1, overlaps=[1,0,1],
+                            get_lovects=_libwarpx.get_mesh_electric_field_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_electric_field_fp,
+                            level=level, include_ghosts=include_ghosts)
+
+def EzFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=2, overlaps=[1,1,0],
+                            get_lovects=_libwarpx.get_mesh_electric_field_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_electric_field_fp,
+                            level=level, include_ghosts=include_ghosts)
+
+def BxFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=0, overlaps=[1,0,0],
+                            get_lovects=_libwarpx.get_mesh_magnetic_field_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_magnetic_field_fp,
+                            level=level, include_ghosts=include_ghosts)
+
+def ByFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=1, overlaps=[0,1,0],
+                            get_lovects=_libwarpx.get_mesh_magnetic_field_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_magnetic_field_fp,
+                            level=level, include_ghosts=include_ghosts)
+
+def BzFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=2, overlaps=[0,0,1],
+                            get_lovects=_libwarpx.get_mesh_magnetic_field_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_magnetic_field_fp,
+                            level=level, include_ghosts=include_ghosts)
+
+def JxFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=0, overlaps=[0,1,1],
+                            get_lovects=_libwarpx.get_mesh_current_density_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_current_density_fp,
+                            level=level, include_ghosts=include_ghosts)
+
+def JyFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=1, overlaps=[1,0,1],
+                            get_lovects=_libwarpx.get_mesh_current_density_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_current_density_fp,
+                            level=level, include_ghosts=include_ghosts)
+
+def JzFPWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=2, overlaps=[1,1,0],
+                            get_lovects=_libwarpx.get_mesh_current_density_fp_lovects,
+                            get_fabs=_libwarpx.get_mesh_current_density_fp,
+                            level=level, include_ghosts=include_ghosts)
+def ExCPPMLWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=0, overlaps=[0,1,1],
+                            get_lovects=_libwarpx.get_mesh_electric_field_cp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_electric_field_cp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def EyCPPMLWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=1, overlaps=[1,0,1],
+                            get_lovects=_libwarpx.get_mesh_electric_field_cp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_electric_field_cp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def EzCPPMLWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=2, overlaps=[1,1,0],
+                            get_lovects=_libwarpx.get_mesh_electric_field_cp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_electric_field_cp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def BxCPPMLWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=0, overlaps=[1,0,0],
+                            get_lovects=_libwarpx.get_mesh_magnetic_field_cp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_magnetic_field_cp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def ByCPPMLWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=1, overlaps=[0,1,0],
+                            get_lovects=_libwarpx.get_mesh_magnetic_field_cp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_magnetic_field_cp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def BzCPPMLWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=2, overlaps=[0,0,1],
+                            get_lovects=_libwarpx.get_mesh_magnetic_field_cp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_magnetic_field_cp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def JxCPPMLWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=0, overlaps=[0,1,1],
+                            get_lovects=_libwarpx.get_mesh_current_density_cp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_current_density_cp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def JyCPPMLWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=1, overlaps=[1,0,1],
+                            get_lovects=_libwarpx.get_mesh_current_density_cp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_current_density_cp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def JzCPPMLWrapper(level=1, include_ghosts=False):
+    assert level>0, Exception('Coarse patch only available on levels > 0')
+    return _MultiFABWrapper(direction=2, overlaps=[1,1,0],
+                            get_lovects=_libwarpx.get_mesh_current_density_cp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_current_density_cp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def ExFPPMLWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=0, overlaps=[0,1,1],
+                            get_lovects=_libwarpx.get_mesh_electric_field_fp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_electric_field_fp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def EyFPPMLWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=1, overlaps=[1,0,1],
+                            get_lovects=_libwarpx.get_mesh_electric_field_fp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_electric_field_fp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def EzFPPMLWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=2, overlaps=[1,1,0],
+                            get_lovects=_libwarpx.get_mesh_electric_field_fp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_electric_field_fp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def BxFPPMLWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=0, overlaps=[1,0,0],
+                            get_lovects=_libwarpx.get_mesh_magnetic_field_fp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_magnetic_field_fp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def ByFPPMLWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=1, overlaps=[0,1,0],
+                            get_lovects=_libwarpx.get_mesh_magnetic_field_fp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_magnetic_field_fp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def BzFPPMLWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=2, overlaps=[0,0,1],
+                            get_lovects=_libwarpx.get_mesh_magnetic_field_fp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_magnetic_field_fp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def JxFPPMLWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=0, overlaps=[0,1,1],
+                            get_lovects=_libwarpx.get_mesh_current_density_fp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_current_density_fp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def JyFPPMLWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=1, overlaps=[1,0,1],
+                            get_lovects=_libwarpx.get_mesh_current_density_fp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_current_density_fp_pml,
+                            level=level, include_ghosts=include_ghosts)
+
+def JzFPPMLWrapper(level=0, include_ghosts=False):
+    return _MultiFABWrapper(direction=2, overlaps=[1,1,0],
+                            get_lovects=_libwarpx.get_mesh_current_density_fp_lovects_pml,
+                            get_fabs=_libwarpx.get_mesh_current_density_fp_pml,
                             level=level, include_ghosts=include_ghosts)
