@@ -103,7 +103,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         // mass = SpeciesMass[physical_species];
         mass = get_mass( physical_species );
     }
-    
+
     // parse charge and mass
     std::string charge_s;
     bool charge_is_specified = pp.query("charge", charge_s);
@@ -117,7 +117,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     if (!charge_is_specified && !species_is_specified){
         amrex::Abort("Need to specify at least one of species_type or charge");
     }
-    
+
     std::string mass_s;
     bool mass_is_specified = pp.query("mass", mass_s);
     if (mass_is_specified){
@@ -381,4 +381,3 @@ PlasmaInjector::getInjectorMomentum ()
 {
     return inj_mom.get();
 }
-
