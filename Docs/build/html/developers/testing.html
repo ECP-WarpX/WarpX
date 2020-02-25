@@ -1,0 +1,344 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Testing the code &mdash; WarpX  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Documentation" href="documentation.html" />
+    <link rel="prev" title="Profiling" href="profiling.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> WarpX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                20.02
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../building/building.html">Building/installing WarpX</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_cpp/running_cpp.html">Running WarpX as an executable</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../running_python/running_python.html">Running WarpX from Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualization/visualization.html">Visualizing the simulation results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/theory.html">Theoretical background</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="developers.html">Developers documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="amrex_basics.html">AMReX basics (excessively basic)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="repo_organization.html">WarpX structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fields.html">Fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="particles.html">Particles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="initialization.html">Initialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diagnostics.html">Diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="moving_window.html">Moving Window</a></li>
+<li class="toctree-l2"><a class="reference internal" href="portability.html">Portability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="profiling.html">Profiling</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Testing the code</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#continuous-integration-in-warpx">Continuous Integration in WarpX</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#warpx-tests-ini-files">WarpX-tests.ini files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#travisci-tests">TravisCI tests</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#local-tests-every-night">Local tests every night</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#run-the-test-suite-locally">Run the test suite locally</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#add-a-test-to-the-suite">Add a test to the suite</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#useful-tool-for-plotfile-comparison-fcompare">Useful tool for plotfile comparison: <code class="docutils literal notranslate"><span class="pre">fcompare</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="documentation.html">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="doxygen.html">Doxygen</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">WarpX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="developers.html">Developers documentation</a> &raquo;</li>
+        
+      <li>Testing the code</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/developers/testing.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="testing-the-code">
+<span id="developers-testing"></span><h1>Testing the code<a class="headerlink" href="#testing-the-code" title="Permalink to this headline">¶</a></h1>
+<p>When adding a new feature, you want to make sure that (i) you did not break the existing code and (ii) your contribution gives correct results. While existing capabilities are tested regularly remotely (when commits are pushed to an open PR on TravisCI, and every night on local clusters), it can also be useful to run tests on your custom input file. This section details how to use both automated and custom tests.</p>
+<div class="section" id="continuous-integration-in-warpx">
+<h2>Continuous Integration in WarpX<a class="headerlink" href="#continuous-integration-in-warpx" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="warpx-tests-ini-files">
+<h3>WarpX-tests.ini files<a class="headerlink" href="#warpx-tests-ini-files" title="Permalink to this headline">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>section empty!</p>
+</div>
+</div>
+<div class="section" id="travisci-tests">
+<h3>TravisCI tests<a class="headerlink" href="#travisci-tests" title="Permalink to this headline">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>section empty!</p>
+</div>
+</div>
+<div class="section" id="local-tests-every-night">
+<h3>Local tests every night<a class="headerlink" href="#local-tests-every-night" title="Permalink to this headline">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>section empty!</p>
+</div>
+</div>
+</div>
+<div class="section" id="run-the-test-suite-locally">
+<h2>Run the test suite locally<a class="headerlink" href="#run-the-test-suite-locally" title="Permalink to this headline">¶</a></h2>
+<p>Once your new feature is ready, you can check that you did not break anything. WarpX has automated tests running for each Pull Request. For easier debugging, it can be convenient to run the tests on your local machine with</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>./run_test.sh
+</pre></div>
+</div>
+<p>from WarpX root folder. It will compile all necessary executables and run all tests. The tests can be influenced by environment variables:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">WARPX_TEST_DIM=3</span></code>, <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">WARPX_TEST_DIM=2</span></code> or <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">WARPX_TEST_DIM=RZ</span></code> in order to select only the tests that correspond to this dimensionality</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">WARPX_TEST_ARCH=CPU</span></code> or <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">WARPX_TEST_ARCH=GPU</span></code> in order to run the tests on CPU or GPU respectively.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">WARPX_TEST_COMMIT=...</span></code> in order to test a specific commit.</p></li>
+</ul>
+<p>The command above (without command line arguments) runs all the tests defined in [Regression/WarpX-tests.ini](./Regression/WarpX-tests.ini). In order to run single tests, pass the test names as command line arguments:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>./run_test.sh test1 test2
+<span class="c1"># For instance</span>
+./run_test.sh PlasmaAccelerationBoost3d Larmor
+</pre></div>
+</div>
+</div>
+<div class="section" id="add-a-test-to-the-suite">
+<h2>Add a test to the suite<a class="headerlink" href="#add-a-test-to-the-suite" title="Permalink to this headline">¶</a></h2>
+<p>There are three steps to follow to add a new automated test (illustrated here for PML boundary conditions):</p>
+<ul class="simple">
+<li><p>An input file for your test, in folder <cite>Example/Tests/…</cite>. For the PML test, the input file is at <code class="docutils literal notranslate"><span class="pre">Examples/Tests/PML/inputs_2d</span></code>. You can also re-use an existing input file (even better!) and pass specific parameters at runtime (see below).</p></li>
+<li><p>A Python script that reads simulation output and tests correctness versus theory or calibrated results. For the PML test, see <code class="docutils literal notranslate"><span class="pre">Examples/Tests/PML/analysis_pml_yee.py</span></code>. It typically ends with Python statement <cite>assert( error&lt;0.01 )</cite>.</p></li>
+<li><p>Add an entry to [Regression/WarpX-tests.ini](./Regression/WarpX-tests.ini), so that a WarpX simulation runs your test in the continuous integration process on [Travis CI](<a class="reference external" href="https://docs.travis-ci.com/user/tutorial/">https://docs.travis-ci.com/user/tutorial/</a>), and the Python script is executed to assess the correctness. For the PML test, the entry is</p></li>
+</ul>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">pml_x_yee</span><span class="p">]</span>
+<span class="n">buildDir</span> <span class="o">=</span> <span class="p">.</span>
+<span class="n">inputFile</span> <span class="o">=</span> <span class="n">Examples</span><span class="o">/</span><span class="n">Tests</span><span class="o">/</span><span class="n">PML</span><span class="o">/</span><span class="n">inputs2d</span>
+<span class="n">runtime_params</span> <span class="o">=</span> <span class="n">warpx</span><span class="p">.</span><span class="n">do_dynamic_scheduling</span><span class="o">=</span><span class="mi">0</span> <span class="n">algo</span><span class="p">.</span><span class="n">maxwell_fdtd_solver</span><span class="o">=</span><span class="n">yee</span>
+<span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">addToCompileString</span> <span class="o">=</span>
+<span class="n">restartTest</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">useMPI</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">numprocs</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">useOMP</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">numthreads</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">compileTest</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">doVis</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">analysisRoutine</span> <span class="o">=</span> <span class="n">Examples</span><span class="o">/</span><span class="n">Tests</span><span class="o">/</span><span class="n">PML</span><span class="o">/</span><span class="n">analysis_pml_yee</span><span class="p">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>If you re-use an existing input file, you can add arguments to <code class="docutils literal notranslate"><span class="pre">runtime_params</span></code>, like <code class="docutils literal notranslate"><span class="pre">runtime_params</span> <span class="pre">=</span> <span class="pre">amr.max_level=1</span> <span class="pre">amr.n_cell=32</span> <span class="pre">512</span> <span class="pre">max_step=100</span> <span class="pre">plasma_e.zmin=-200.e-6</span></code>.</p>
+</div>
+<div class="section" id="useful-tool-for-plotfile-comparison-fcompare">
+<h2>Useful tool for plotfile comparison: <code class="docutils literal notranslate"><span class="pre">fcompare</span></code><a class="headerlink" href="#useful-tool-for-plotfile-comparison-fcompare" title="Permalink to this headline">¶</a></h2>
+<p>AMReX provides <code class="docutils literal notranslate"><span class="pre">fcompare</span></code>, an executable that takes two <code class="docutils literal notranslate"><span class="pre">plotfiles</span></code> as input and returns the absolute and relative difference for each field between these two plotfiles. For some changes in the code, it is very convenient to run the same input file with an old and your current version, and <code class="docutils literal notranslate"><span class="pre">fcompare</span></code> the plotfiles at the same iteration. To use it:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># Compile the executable</span>
+<span class="nb">cd</span> &lt;path to AMReX&gt;/Tools/Plotfile/ <span class="c1"># This may change</span>
+make -j <span class="m">8</span>
+<span class="c1"># Run the executable to compare old and new versions</span>
+&lt;path to AMReX&gt;/Tools/Plotfile/fcompare.gnu.ex old/plt00200 new/plt00200
+</pre></div>
+</div>
+<p>which should return something like</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>          variable name             absolute error            relative error
+                                       <span class="o">(||</span>A - B<span class="o">||)</span>         <span class="o">(||</span>A - B<span class="o">||</span>/<span class="o">||</span>A<span class="o">||)</span>
+----------------------------------------------------------------------------
+<span class="nv">level</span> <span class="o">=</span> <span class="m">0</span>
+jx                                 <span class="m">1</span>.044455105e+11               <span class="m">1</span>.021651316
+jy                                  <span class="m">4</span>.08631977e+16               <span class="m">7</span>.734299273
+jz                                 <span class="m">1</span>.877301764e+14               <span class="m">1</span>.073458933
+Ex                                 <span class="m">4</span>.196315448e+10               <span class="m">1</span>.253551615
+Ey                                 <span class="m">3</span>.330698083e+12               <span class="m">6</span>.436470137
+Ez                                 <span class="m">2</span>.598167798e+10              <span class="m">0</span>.6804387128
+Bx                                     <span class="m">273</span>.8687473               <span class="m">2</span>.340209782
+By                                     <span class="m">152</span>.3911863                <span class="m">1</span>.10952567
+Bz                                     <span class="m">37</span>.43212767                 <span class="m">2</span>.1977289
+part_per_cell                                   <span class="m">15</span>                    <span class="m">0</span>.9375
+Ex_fp                              <span class="m">4</span>.196315448e+10               <span class="m">1</span>.253551615
+Ey_fp                              <span class="m">3</span>.330698083e+12               <span class="m">6</span>.436470137
+Ez_fp                              <span class="m">2</span>.598167798e+10              <span class="m">0</span>.6804387128
+Bx_fp                                  <span class="m">273</span>.8687473               <span class="m">2</span>.340209782
+By_fp                                  <span class="m">152</span>.3911863                <span class="m">1</span>.10952567
+Bz_fp                                  <span class="m">37</span>.43212767                 <span class="m">2</span>.1977289
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="documentation.html" class="btn btn-neutral float-right" title="Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="profiling.html" class="btn btn-neutral float-left" title="Profiling" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, WarpX collaboration
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,256 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Example input files &mdash; WarpX  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Input parameters" href="parameters.html" />
+    <link rel="prev" title="How to run a new simulation" href="how_to_run.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> WarpX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                20.02
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../building/building.html">Building/installing WarpX</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="running_cpp.html">Running WarpX as an executable</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="how_to_run.html">How to run a new simulation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Example input files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#beam-driven-acceleration">Beam-driven acceleration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#laser-driven-acceleration">Laser-driven acceleration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plasma-mirror">Plasma mirror</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#uniform-plasma">Uniform plasma</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="parameters.html">Input parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="profiling.html">Profiling the code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parallelization.html">Parallelization in  WarpX</a></li>
+<li class="toctree-l2"><a class="reference internal" href="platforms.html">Running on specific platforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pwfa.html">In-depth explanation of a PWFA simulation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../running_python/running_python.html">Running WarpX from Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../visualization/visualization.html">Visualizing the simulation results</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory/theory.html">Theoretical background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/developers.html">Developers documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developers/doxygen.html">Doxygen</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">WarpX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="running_cpp.html">Running WarpX as an executable</a> &raquo;</li>
+        
+      <li>Example input files</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/running_cpp/examples.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="example-input-files">
+<h1>Example input files<a class="headerlink" href="#example-input-files" title="Permalink to this headline">¶</a></h1>
+<p>This section allows you to <strong>download input files</strong> that correspond to different physical situations. For a definition of the different parameters that are set in these files, see the section <a class="reference internal" href="parameters.html"><span class="doc">Input parameters</span></a>. For a complete list of all example input files, have a look at our <code class="docutils literal notranslate"><span class="pre">Examples/</span></code> directory. It contains folders and subfolders with self-describing names that you can try. All these input files are automatically tested, so they should always be up-to-date.</p>
+<div class="section" id="beam-driven-acceleration">
+<h2>Beam-driven acceleration<a class="headerlink" href="#beam-driven-acceleration" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference download internal" download="" href="../_downloads/40e6c1ed6547e7236122eb41c7f2c21b/inputs_2d"><code class="xref download docutils literal notranslate"><span class="pre">2D</span> <span class="pre">case</span></code></a></p></li>
+<li><p><a class="reference download internal" download="" href="../_downloads/8f9b91cee648dd7a4cca4cdeba8dc14b/inputs_2d_boost"><code class="xref download docutils literal notranslate"><span class="pre">2D</span> <span class="pre">case</span> <span class="pre">in</span> <span class="pre">boosted</span> <span class="pre">frame</span></code></a></p></li>
+<li><p><a class="reference download internal" download="" href="../_downloads/44a6d043789c4ce34224352c7fdf4fd2/inputs_3d_boost"><code class="xref download docutils literal notranslate"><span class="pre">3D</span> <span class="pre">case</span> <span class="pre">in</span> <span class="pre">boosted</span> <span class="pre">frame</span></code></a></p></li>
+</ul>
+</div>
+<div class="section" id="laser-driven-acceleration">
+<h2>Laser-driven acceleration<a class="headerlink" href="#laser-driven-acceleration" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference download internal" download="" href="../_downloads/0df88a230dd3cc3bd0ce39523f83f62c/inputs_2d"><code class="xref download docutils literal notranslate"><span class="pre">2D</span> <span class="pre">case</span></code></a></p></li>
+<li><p><a class="reference download internal" download="" href="../_downloads/38c15f015b221e7ca62c3199b2359d30/inputs_2d_boost"><code class="xref download docutils literal notranslate"><span class="pre">2D</span> <span class="pre">case</span> <span class="pre">in</span> <span class="pre">boosted</span> <span class="pre">frame</span></code></a></p></li>
+<li><p><a class="reference download internal" download="" href="../_downloads/c24f7108fed1b2e48c839a7fe11b2487/inputs_3d"><code class="xref download docutils literal notranslate"><span class="pre">3D</span> <span class="pre">case</span></code></a></p></li>
+</ul>
+</div>
+<div class="section" id="plasma-mirror">
+<h2>Plasma mirror<a class="headerlink" href="#plasma-mirror" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference download internal" download="" href="../_downloads/97f36a52530d1b9fc7e3f46494f25cfa/inputs_2d"><code class="xref download docutils literal notranslate"><span class="pre">2D</span> <span class="pre">case</span></code></a></p>
+</div>
+<div class="section" id="uniform-plasma">
+<h2>Uniform plasma<a class="headerlink" href="#uniform-plasma" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference download internal" download="" href="../_downloads/7ca29a59b11f11a8b3f19a5483f11024/inputs_2d"><code class="xref download docutils literal notranslate"><span class="pre">2D</span> <span class="pre">case</span></code></a>
+<a class="reference download internal" download="" href="../_downloads/72a139db4df1d0b2afa8215601d6ef29/inputs_3d"><code class="xref download docutils literal notranslate"><span class="pre">3D</span> <span class="pre">case</span></code></a></p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="parameters.html" class="btn btn-neutral float-right" title="Input parameters" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="how_to_run.html" class="btn btn-neutral float-left" title="How to run a new simulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, WarpX collaboration
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
