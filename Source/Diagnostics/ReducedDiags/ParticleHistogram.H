@@ -24,9 +24,6 @@ public:
      *  @param[in] rd_name reduced diags names */
     ParticleHistogram(std::string rd_name);
 
-    /// name of species
-    std::string m_species_name;
-
     /// particle weight type
     std::string m_norm = "default";
 

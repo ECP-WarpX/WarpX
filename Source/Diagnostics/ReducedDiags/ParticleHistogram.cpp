@@ -22,7 +22,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
 
     // read parameters
     ParmParse pp(rd_name);
-    pp.get("species",m_species_name);
+    std::string selected_species_name;
+    pp.get("species",selected_species_name);
     pp.get("bin_number",m_bin_num);
     pp.get("bin_max",   m_bin_max);
     pp.get("bin_min",   m_bin_min);
@@ -36,14 +37,12 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
 
     // get MultiParticleContainer class object
     auto & mypc = WarpX::GetInstance().GetPartContainer();
-    // get number of species (int)
-    auto const nSpecies = mypc.nSpecies();
     // get species names (std::vector<std::string>)
     auto const species_names = mypc.GetSpeciesNames();
     // select species
-    for ( int i = 0; i < nSpecies; ++i )
+    for ( int i = 0; i < mypc.nSpecies(); ++i )
     {
-        if ( m_species_name == species_names[i] ) m_species = i;
+        if ( selected_species_name == species_names[i] ) m_species = i;
     }
 
     // resize data array
