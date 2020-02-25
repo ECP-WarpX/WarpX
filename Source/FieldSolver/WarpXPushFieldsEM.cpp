@@ -106,7 +106,7 @@ WarpX::EvolveB (amrex::Real a_dt)
 void
 WarpX::EvolveB (int lev, amrex::Real a_dt)
 {
-    BL_PROFILE("WarpX::EvolveB()");
+    WARPX_PROFILE("WarpX::EvolveB()");
     EvolveB(lev, PatchType::fine, a_dt);
     if (lev > 0)
     {
@@ -207,7 +207,7 @@ WarpX::EvolveE (amrex::Real a_dt)
 void
 WarpX::EvolveE (int lev, amrex::Real a_dt)
 {
-    BL_PROFILE("WarpX::EvolveE()");
+    WARPX_PROFILE("WarpX::EvolveE()");
     EvolveE(lev, PatchType::fine, a_dt);
     if (lev > 0)
     {
@@ -539,7 +539,7 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
 {
     if (!do_dive_cleaning) return;
 
-    BL_PROFILE("WarpX::EvolveF()");
+    WARPX_PROFILE("WarpX::EvolveF()");
 
     static constexpr Real mu_c2 = PhysConst::mu0*PhysConst::c*PhysConst::c;
 
@@ -629,7 +629,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
         // these do not include the guard cells.
-        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev);
+        std::array<amrex::Real,3> galilean_shift = {0,0,0};
+        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, lev);
         const Dim3 lo = lbound(tilebox);
         const Real rmin = xyzmin[0];
         const int irmin = lo.x;
@@ -771,7 +772,8 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
         // these do not include the guard cells.
-        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev);
+        std::array<amrex::Real,3> galilean_shift = {0,0,0};
+        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, lev);
         const Dim3 lo = lbound(tilebox);
         const Real rmin = xyzmin[0];
         const int irmin = lo.x;

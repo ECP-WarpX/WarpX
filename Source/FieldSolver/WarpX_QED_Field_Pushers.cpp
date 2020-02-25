@@ -46,7 +46,7 @@ WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> dt)
 void
 WarpX::Hybrid_QED_Push (int lev, Real a_dt)
 {
-    BL_PROFILE("WarpX::Hybrid_QED_Push()");
+    WARPX_PROFILE("WarpX::Hybrid_QED_Push()");
     Hybrid_QED_Push(lev, PatchType::fine, a_dt);
     if (lev > 0)
     {
@@ -150,7 +150,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
         );
 
         // Make local copy of xi, to use on device.
-        const Real xi = WarpX::quantum_xi;
+        const Real xi_c2 = WarpX::quantum_xi_c2;
         // Apply QED correction to electric field, using temporary arrays.
         amrex::ParallelFor(
             tbx,
@@ -158,7 +158,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
             {
                 warpx_hybrid_QED_push(j,k,l, Exfab, Eyfab, Ezfab, Bxfab, Byfab,
                                       Bzfab, tmpEx, tmpEy, tmpEz, dx, dy, dz,
-                                      a_dt, xi);
+                                      a_dt, xi_c2);
             }
         );
 

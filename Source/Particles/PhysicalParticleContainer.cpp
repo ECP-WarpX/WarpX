@@ -51,6 +51,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_splitting", do_splitting);
     pp.query("split_type", split_type);
     pp.query("do_not_deposit", do_not_deposit);
+    pp.query("do_not_gather", do_not_gather);
     pp.query("do_not_push", do_not_push);
 
     pp.query("do_continuous_injection", do_continuous_injection);
@@ -126,6 +127,12 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
             }
         }
     }
+
+    // Parse galilean velocity
+    ParmParse ppsatd("psatd");
+    ppsatd.query("v_galilean", v_galilean);
+    // Scale the velocity by the speed of light
+    for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
 
     #ifdef WARPX_QED
         if(m_do_qed){
@@ -307,7 +314,7 @@ PhysicalParticleContainer::CheckAndAddParticle(Real x, Real y, Real z,
 void
 PhysicalParticleContainer::AddParticles (int lev)
 {
-    BL_PROFILE("PhysicalParticleContainer::AddParticles()");
+    WARPX_PROFILE("PhysicalParticleContainer::AddParticles()");
 
     if (plasma_injector->add_single_particle) {
         AddNParticles(lev, 1,
@@ -354,7 +361,7 @@ PhysicalParticleContainer::AddParticles (int lev)
 void
 PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 {
-    BL_PROFILE("PhysicalParticleContainer::AddPlasma");
+    WARPX_PROFILE("PhysicalParticleContainer::AddPlasma");
 
     // If no part_realbox is provided, initialize particles in the whole domain
     const Geometry& geom = Geom(lev);
@@ -917,7 +924,7 @@ PhysicalParticleContainer::EvolveES (const Vector<std::array<std::unique_ptr<Mul
                                      Vector<std::unique_ptr<MultiFab> >& rho,
                                      Real t, Real dt)
 {
-    BL_PROFILE("PPC::EvolveES()");
+    WARPX_PROFILE("PPC::EvolveES()");
 
     int num_levels = rho.size();
     for (int lev = 0; lev < num_levels; ++lev) {
@@ -1104,11 +1111,11 @@ PhysicalParticleContainer::Evolve (int lev,
                                    const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
                                    Real t, Real dt, DtType a_dt_type)
 {
-    BL_PROFILE("PPC::Evolve()");
-    BL_PROFILE_VAR_NS("PPC::Evolve::Copy", blp_copy);
-    BL_PROFILE_VAR_NS("PPC::FieldGather", blp_fg);
-    BL_PROFILE_VAR_NS("PPC::EvolveOpticalDepth", blp_ppc_qed_ev);
-    BL_PROFILE_VAR_NS("PPC::ParticlePush", blp_ppc_pp);
+    WARPX_PROFILE("PPC::Evolve()");
+    WARPX_PROFILE_VAR_NS("PPC::Evolve::Copy", blp_copy);
+    WARPX_PROFILE_VAR_NS("PPC::FieldGather", blp_fg);
+    WARPX_PROFILE_VAR_NS("PPC::EvolveOpticalDepth", blp_ppc_qed_ev);
+    WARPX_PROFILE_VAR_NS("PPC::ParticlePush", blp_ppc_pp);
 
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
     const std::array<Real,3>& cdx = WarpX::CellSize(std::max(lev-1,0));
@@ -1239,7 +1246,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 //
                 // Field Gather of Aux Data (i.e., the full solution)
                 //
-                BL_PROFILE_VAR_START(blp_fg);
+                WARPX_PROFILE_VAR_START(blp_fg);
                 FieldGather(pti, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                             exfab, eyfab, ezfab, bxfab, byfab, bzfab,
                             Ex.nGrow(), e_is_nodal,
@@ -1282,23 +1289,23 @@ PhysicalParticleContainer::Evolve (int lev,
                                 lev, lev-1);
                 }
 
-                BL_PROFILE_VAR_STOP(blp_fg);
+                WARPX_PROFILE_VAR_STOP(blp_fg);
 
 #ifdef WARPX_QED
                 //
                 //Evolve Optical Depth
                 //
-                BL_PROFILE_VAR_START(blp_ppc_qed_ev);
+                WARPX_PROFILE_VAR_START(blp_ppc_qed_ev);
                 EvolveOpticalDepth(pti, dt);
-                BL_PROFILE_VAR_STOP(blp_ppc_qed_ev);
+                WARPX_PROFILE_VAR_STOP(blp_ppc_qed_ev);
 #endif
 
                 //
                 // Particle Push
                 //
-                BL_PROFILE_VAR_START(blp_ppc_pp);
+                WARPX_PROFILE_VAR_START(blp_ppc_pp);
                 PushPX(pti, dt, a_dt_type);
-                BL_PROFILE_VAR_STOP(blp_ppc_pp);
+                WARPX_PROFILE_VAR_STOP(blp_ppc_pp);
 
                 //
                 // Current Deposition
@@ -1310,11 +1317,11 @@ PhysicalParticleContainer::Evolve (int lev,
                 } else {
                     ion_lev = nullptr;
                 }
-
                 // Deposit inside domains
                 DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
                                0, np_current, thread_num,
                                lev, lev, dt);
+
                 if (has_buffer){
                     // Deposit in buffers
                     DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
@@ -1636,7 +1643,6 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
     const Real m = this-> mass;
 
 #ifdef WARPX_QED
-
     if(do_classical_radiation_reaction){
         if(m_do_qed_quantum_sync){
             const auto t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
@@ -1791,7 +1797,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                                   const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                   const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz)
 {
-    BL_PROFILE("PhysicalParticleContainer::PushP");
+    WARPX_PROFILE("PhysicalParticleContainer::PushP");
 
     if (do_not_push) return;
 
@@ -1944,7 +1950,7 @@ void PhysicalParticleContainer::GetParticleSlice(const int direction, const Real
                                                  const Real t_lab, const Real dt,
                                                  DiagnosticParticles& diagnostic_particles)
 {
-    BL_PROFILE("PhysicalParticleContainer::GetParticleSlice");
+    WARPX_PROFILE("PhysicalParticleContainer::GetParticleSlice");
 
     // Assume that the boost in the positive z direction.
 #if (AMREX_SPACEDIM == 2)
@@ -2181,7 +2187,8 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
                                      (gather_lev==(lev  )),
                                      "Gather buffers only work for lev-1");
     // If no particles, do not do anything
-    if (np_to_gather == 0) return;
+    // If do_not_gather = 1 by user, do not do anything
+    if (np_to_gather == 0 || do_not_gather) return;
 
     // initializing the field value to the externally applied field before
     // gathering fields from the grid to the particles.
@@ -2206,8 +2213,12 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
 
     const auto GetPosition = GetParticlePosition(pti, offset);
 
-    // Lower corner of tile box physical domain
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, gather_lev);
+    // Lower corner of tile box physical domain (take into account Galilean shift)
+    Real cur_time = WarpX::GetInstance().gett_new(lev);
+    const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
+    Real time_shift = (cur_time - time_of_last_gal_shift);
+    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, gather_lev);
 
     const Dim3 lo = lbound(box);
 
@@ -2320,7 +2331,7 @@ void PhysicalParticleContainer::InitIonizationModule ()
 IonizationFilterFunc
 PhysicalParticleContainer::getIonizationFunc ()
 {
-    BL_PROFILE("PPC::getIonizationFunc");
+    WARPX_PROFILE("PPC::getIonizationFunc");
 
     return IonizationFilterFunc{ionization_energies.dataPtr(),
                                 adk_prefactor.dataPtr(),

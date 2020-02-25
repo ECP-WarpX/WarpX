@@ -15,6 +15,7 @@
 #include <WarpXUtil.H>
 #include <WarpXAlgorithmSelection.H>
 #include <WarpX_FDTD.H>
+#include "WarpXProfilerWrapper.H"
 
 #include <AMReX_ParmParse.H>
 #include <AMReX_MultiFabUtil.H>
@@ -54,7 +55,7 @@ int WarpX::do_moving_window = 0;
 int WarpX::moving_window_dir = -1;
 Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
-Real WarpX::quantum_xi = PhysConst::xi;
+Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
 Real WarpX::gamma_boost = 1.;
 Real WarpX::beta_boost = 0.;
 Vector<int> WarpX::boost_direction = {0,0,0};
@@ -84,7 +85,12 @@ bool WarpX::refine_plasma     = false;
 
 int WarpX::num_mirrors = 0;
 
+#ifdef AMREX_USE_GPU
+int  WarpX::sort_int = 4;
+#else
 int  WarpX::sort_int = -1;
+#endif
+amrex::IntVect WarpX::sort_bin_size(AMREX_D_DECL(4,4,4));
 
 bool WarpX::do_back_transformed_diagnostics = false;
 std::string WarpX::lab_data_directory = "lab_frame_data";
@@ -100,7 +106,7 @@ Real WarpX::particle_slice_width_lab = 0.0;
 bool WarpX::do_dynamic_scheduling = true;
 
 int WarpX::do_subcycling = 0;
-bool WarpX::exchange_all_guard_cells = 0;
+bool WarpX::safe_guard_cells = 0;
 
 #if (AMREX_SPACEDIM == 3)
 IntVect WarpX::Bx_nodal_flag(1,0,0);
@@ -138,6 +144,12 @@ int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
 int WarpX::do_nodal = false;
+
+#ifdef AMREX_USE_GPU
+bool WarpX::do_device_synchronize_before_profile = true;
+#else
+bool WarpX::do_device_synchronize_before_profile = false;
+#endif
 
 WarpX* WarpX::m_instance = nullptr;
 
@@ -340,18 +352,38 @@ WarpX::ReadParameters ()
     {
         ParmParse pp("warpx");
 
+        // set random seed
+        std::string random_seed = "default";
+        pp.query("random_seed", random_seed);
+        if ( random_seed != "default" ) {
+            unsigned long myproc_1 = ParallelDescriptor::MyProc() + 1;
+            if ( random_seed == "random" ) {
+                std::random_device rd;
+                std::uniform_int_distribution<int> dist(2, INT_MAX);
+                unsigned long seed = myproc_1 * dist(rd);
+                ResetRandomSeed(seed);
+            } else if ( std::stoi(random_seed) > 0 ) {
+                unsigned long seed = myproc_1 * std::stoul(random_seed);
+                ResetRandomSeed(seed);
+            } else {
+                Abort("warpx.random_seed must be \"default\", \"random\" or an integer > 0.");
+            }
+        }
+
         pp.query("cfl", cfl);
         pp.query("verbose", verbose);
         pp.query("regrid_int", regrid_int);
         pp.query("do_subcycling", do_subcycling);
         pp.query("use_hybrid_QED", use_hybrid_QED);
-        pp.query("exchange_all_guard_cells", exchange_all_guard_cells);
+        pp.query("safe_guard_cells", safe_guard_cells);
         pp.query("override_sync_int", override_sync_int);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
                                          "Subcycling method 1 only works for 2 levels.");
 
         ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
+
+        pp.query("do_device_synchronize_before_profile", do_device_synchronize_before_profile);
 
         // pp.query returns 1 if argument zmax_plasma_to_compute_max_step is
         // specified by the user, 0 otherwise.
@@ -460,7 +492,17 @@ WarpX::ReadParameters ()
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
         pp.query("sort_int", sort_int);
 
-        pp.query("quantum_xi", quantum_xi);
+        Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
+        bool sort_bin_size_is_specified = pp.queryarr("sort_bin_size", vect_sort_bin_size);
+        if (sort_bin_size_is_specified){
+            for (int i=0; i<AMREX_SPACEDIM; i++)
+                sort_bin_size[i] = vect_sort_bin_size[i];
+        }
+
+        double quantum_xi;
+        int quantum_xi_is_specified = pp.query("quantum_xi", quantum_xi);
+        if (quantum_xi_is_specified)
+            quantum_xi_c2 = quantum_xi * PhysConst::c * PhysConst::c;
 
         pp.query("do_pml", do_pml);
         pp.query("pml_ncell", pml_ncell);
@@ -629,6 +671,9 @@ WarpX::ReadParameters ()
         pp.query("nox", nox_fft);
         pp.query("noy", noy_fft);
         pp.query("noz", noz_fft);
+        pp.query("v_galilean", v_galilean);
+      // Scale the velocity by the speed of light
+        for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
     }
 #endif
 
@@ -780,7 +825,8 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         NCIGodfreyFilter::m_stencil_width,
         maxwell_fdtd_solver_id,
         maxLevel(),
-        exchange_all_guard_cells);
+        WarpX::v_galilean,
+        safe_guard_cells);
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
         n_current_deposition_buffer = 1;
@@ -867,7 +913,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         realspace_ba.enclosedCells().grow(ngE); // cell-centered + guard cells
         // Define spectral solver
         spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, dx_vect, dt[lev] ) );
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev] ) );
     }
 #endif
     std::array<Real,3> const dx = CellSize(lev);
@@ -954,7 +1000,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             realspace_ba.enclosedCells().grow(ngE);// cell-centered + guard cells
             // Define spectral solver
             spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
-                nox_fft, noy_fft, noz_fft, do_nodal, cdx_vect, dt[lev] ) );
+                nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev] ) );
         }
 #endif
     std::array<Real,3> cdx = CellSize(lev-1);
@@ -1038,14 +1084,17 @@ WarpX::getRealBox(const Box& bx, int lev)
 }
 
 std::array<Real,3>
-WarpX::LowerCorner(const Box& bx, int lev)
+WarpX::LowerCorner(const Box& bx, std::array<amrex::Real,3> galilean_shift, int lev)
 {
-    const RealBox grid_box = getRealBox( bx, lev );
+    RealBox grid_box = getRealBox( bx, lev );
+
     const Real* xyzmin = grid_box.lo();
+
 #if (AMREX_SPACEDIM == 3)
-    return { xyzmin[0], xyzmin[1], xyzmin[2] };
+    return { xyzmin[0] + galilean_shift[0], xyzmin[1] + galilean_shift[1], xyzmin[2] + galilean_shift[2] };
+
 #elif (AMREX_SPACEDIM == 2)
-    return { xyzmin[0], std::numeric_limits<Real>::lowest(), xyzmin[1] };
+    return { xyzmin[0] + galilean_shift[0], std::numeric_limits<Real>::lowest(), xyzmin[1] + galilean_shift[2] };
 #endif
 }
 
@@ -1061,21 +1110,6 @@ WarpX::UpperCorner(const Box& bx, int lev)
 #endif
 }
 
-std::array<Real,3>
-WarpX::LowerCornerWithCentering(const Box& bx, int lev)
-{
-    std::array<Real,3> corner = LowerCorner(bx, lev);
-    std::array<Real,3> dx = CellSize(lev);
-    if (!bx.type(0)) corner[0] += 0.5*dx[0];
-#if (AMREX_SPACEDIM == 3)
-    if (!bx.type(1)) corner[1] += 0.5*dx[1];
-    if (!bx.type(2)) corner[2] += 0.5*dx[2];
-#else
-    if (!bx.type(1)) corner[2] += 0.5*dx[2];
-#endif
-    return corner;
-}
-
 IntVect
 WarpX::RefRatio (int lev)
 {
@@ -1084,7 +1118,7 @@ WarpX::RefRatio (int lev)
 
 void
 WarpX::Evolve (int numsteps) {
-    BL_PROFILE_REGION("WarpX::Evolve()");
+    WARPX_PROFILE_REGION("WarpX::Evolve()");
 
 #ifdef WARPX_DO_ELECTROSTATIC
     if (do_electrostatic) {

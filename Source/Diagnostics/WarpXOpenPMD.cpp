@@ -16,7 +16,7 @@
 #include <sstream>
 #include <tuple>
 #include <utility>
-
+#include <iostream>
 
 namespace detail
 {
@@ -140,12 +140,19 @@ void WarpXOpenPMDPlot::GetFileName(std::string& filename)
 
 void WarpXOpenPMDPlot::SetStep(int ts)
 {
-  if (ts < 0)
-    return;
+  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
 
-  m_CurrentStep =  ts;
+  if (m_CurrentStep >= ts) {
+      // note m_Series is reset in Init(), so using m_Series->iterations.contains(ts) is only able to check the
+      // last written step in m_Series's life time, but not other earlier written steps by other m_Series
+      std::string warnMsg = " Warning from openPMD writer: Already written iteration:"+std::to_string(ts);
+      std::cout<<warnMsg<<std::endl;
+      amrex::Warning(warnMsg);
+  }
 
-  Init(openPMD::AccessType::CREATE);
+    m_CurrentStep =  ts;
+    Init(openPMD::AccessType::CREATE);
+
 }
 
 void
@@ -155,6 +162,10 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType)
     // or init a single file for all ts
     std::string filename;
     GetFileName(filename);
+
+    // close a previously open series before creating a new one
+    // see ADIOS1 limitation: https://github.com/openPMD/openPMD-api/pull/686
+    m_Series = nullptr;
 
     if( amrex::ParallelDescriptor::NProcs() > 1 )
     {
@@ -193,7 +204,7 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType)
 void
 WarpXOpenPMDPlot::WriteOpenPMDParticles(const std::unique_ptr<MultiParticleContainer>& mpc)
 {
-  BL_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
+  WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
   std::vector<std::string> species_names = mpc->GetSpeciesNames();
 
   for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
@@ -530,7 +541,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
                       const double time ) const
 {
   //This is AMReX's tiny profiler. Possibly will apply it later
-  BL_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
+  WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
 
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
 
