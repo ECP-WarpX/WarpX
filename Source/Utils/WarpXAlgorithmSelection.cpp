@@ -51,6 +51,7 @@ const std::map<std::string, int> gathering_algo_to_int = {
     {"default",             GatheringAlgo::EnergyConserving }
 };
 
+
 int
 GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
 

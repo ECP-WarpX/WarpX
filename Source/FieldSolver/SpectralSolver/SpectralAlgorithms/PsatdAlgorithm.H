@@ -34,9 +34,9 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             return SpectralFieldIndex::n_fields;
         }
 
-         virtual void CurrentCorrection ( SpectralFieldData& field_data,
-                                          std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                          std::unique_ptr<amrex::MultiFab>& rho );
+        virtual void CurrentCorrection ( SpectralFieldData& field_data,
+                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                         std::unique_ptr<amrex::MultiFab>& rho );
 
         void InitializeSpectralCoefficients( const SpectralKSpace& spectral_kspace,
                                              const amrex::DistributionMapping& dm,
