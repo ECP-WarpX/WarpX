@@ -71,7 +71,8 @@ Resolution
 
 
 
- (γb=10)
+
+(γb=10)
 
 
 The example we use employs the
