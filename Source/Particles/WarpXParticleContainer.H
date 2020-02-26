@@ -10,8 +10,8 @@
 #ifndef WARPX_WarpXParticleContainer_H_
 #define WARPX_WarpXParticleContainer_H_
 
-#include "WarpXDtType.H"
-#include <WarpXParserWrapper.H>
+#include "WarpXParserWrapper.H"
+#include "Evolve/WarpXDtType.H"
 
 #include <AMReX_Particles.H>
 #include <AMReX_AmrCore.H>

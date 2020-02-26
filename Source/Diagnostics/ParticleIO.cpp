@@ -8,8 +8,8 @@
  */
 
 #include "FilterFunctors.H"
-#include <MultiParticleContainer.H>
-#include <WarpX.H>
+#include "Particles/MultiParticleContainer.H"
+#include "WarpX.H"
 
 using namespace amrex;
 
