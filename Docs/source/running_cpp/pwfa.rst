@@ -6,36 +6,92 @@ As described in the Introduction
 of the key applications of the WarpX exascale computing platform is in modelling
 future, compact and economic plasma-based accelerators. In this section we
 describe the simulation setup of a realistic electron beam driven plasma
-wakefield accelerator (PWFA) configuration that can be explored with
-**WarpX** using the example input file :download:`PWFA
+wakefield accelerator (PWFA) configuration. For illustration porpuses the setup
+can be explored with **WarpX** using the example input file :download:`PWFA
 <../../../Examples/Physics_applications/plasma_acceleration/inputs_2d_boost>`.
 
 The simulation setup consists of 4 particle species: drive
 beam (driver), witness beam (beam), plasma electrons (plasma_e), and plasma
 ions (plasma_p). The species parameters are summarized in the following table.
 
-======== ====================================================
+======== ===============================================
 Species  Parameters
-======== ====================================================
-driver   γ = 48923; N = 2x10^8; σz = 4.0 μm; σx = σy = 2.0 μm
-beam     γ = 48923; N = 6x10^5; σz = 1.0 mm; σx = σy = 0.5 μm
+======== ===============================================
+driver   γ = 48923; N = 2x10^8; σz = 4.0 μm; σx = 2.0 μm
+beam     γ = 48923; N = 6x10^5; σz = 1.0 mm; σx = 0.5 μm
 plasma_e n = 1x10^23 m^-3
 plasma_p n = 1x10^23 m^-3
-======== ====================================================
+======== ===============================================
 
 Where γ is the beam relativisitc Lorentz factor, N is the number of particles,
 and σx, σy, σz are the beam widths (root-mean-squares of particle positions) in
 the transverse (x,y) and longitudinal directions.
 
-The separation between the driver and witness beams is set to 125 μm.
+Listed below are the key arguments and best-practices relevant for chosing the
+pwfa simulation parameters used in the example.
 
-WarpX simulations can be done in the laboratory frame or in a Lorentz-boosted
-frame. In the lab frame, there is typically no need to model the plasma ions
-since they are mainly stationary during the short time scales associated with
-the motion of plasma electrons. In the boosted frame, that argument is no longer
-valid as ions have relativistic velocities. The example uses the boosted frame
-because it substantially reduces the computational costs of the simulation and
-that is why plasma_p needs to be defined in the example.
+2D Geometry
+-----------
+
+    2D cartesian (with longitudinal direction z and transverse x) geometry
+    simulaions can give valuable physical and numerical insight into the
+    simulation requirements and evolution while being much less time consuming
+    than the full 3D cartesian or cylindrical geometries.
+
+Lorentz boosted frame
+---------------------
+
+    WarpX simulations can be done in the laboratory or `Lorentz-boosted
+    <https://warpx.readthedocs.io/en/latest/theory/boosted_frame.html>`_ frames.
+    In the laboratory frame, there is typically no need to model the palsma ions
+    species, since they are mainly stationary during the short time scales
+    associated with the motion of plasma electrons. In the boosted frame, that
+    argument is no longer valid, as ions have relativistic velocities. The
+    boosted frame still results in a substantial reduction to the simulation
+    computational cost.
+
+.. note::
+Regardless of the frame that is chosen for the simulation, the
+input file parameters are defined in respect to the laboratory frame.
+
+
+Resolution
+----------
+
+    Longitudinal and transverse resolutions should be chosen to accurately
+    describe the physical processes taking place in the simulation. Convergence
+    scans, where resolution in both directions is gradually increased, should be
+    used to determine the optimal configuration. Multiple cells per beam length
+    and width are recommended (our illustrative example resolution is coarse).
+
+.. note::
+    To avoid spurious effects, in the boosted frame, we consider the contrain
+    that the transverse cell size (dx) should be larger than the transverse one
+    (dz), i.e. dx > (dz*2*γb).
+
+
+
+ (γb=10)
+
+
+The example we use employs the
+boosted frame, with relativistic factor γb=10, to substantially reduce the
+computational costs of the simulation and that is why it includes the definition
+of plasma_p.
+
+The separation between the driver and witness beams is set to 125 μm so that the
+witness beam falls in the accelerating and focusing region of the plasma bubble.
+
+
+
+
+Longitudinal and transverse resolutions should be chosen to accurately describe
+the physical processes taking place in the simulation. To avoid spurious effects
+ we consider the contrain that, in the boosted frame, the transverse cell size
+ (dx=dy) should be larger than the transverse one (dz), i.e. dx > (dz*2*γb).
+
+* the simulation box resolution ratio in the boosted frame should be lower than
+1. In other words
 
 
 
