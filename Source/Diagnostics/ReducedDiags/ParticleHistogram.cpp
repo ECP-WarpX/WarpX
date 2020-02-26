@@ -100,6 +100,12 @@ void ParticleHistogram::ComputeDiags (int step)
     // get parser
     ParserWrapper<7> *fun_partparser = m_parser.get();
 
+    // declare local variables
+    Real const bin_min  = m_bin_min;
+    Real const bin_size = m_bin_size;
+    bool is_unity_particle_weight = false;
+    if ( m_norm == "unity_particle_weight" ) is_unity_particle_weight = true;
+
     for ( int i = 0; i < m_bin_num; ++i )
     {
         // compute the histogram
@@ -114,10 +120,10 @@ void ParticleHistogram::ComputeDiags (int step)
             auto const uy = p.rdata(PIdx::uy)/PhysConst::c;
             auto const uz = p.rdata(PIdx::uz)/PhysConst::c;
             auto const f = (*fun_partparser)(t,x,y,z,ux,uy,uz);
-            auto const f1 = m_bin_min + m_bin_size*i;
-            auto const f2 = m_bin_min + m_bin_size*(i+1);
+            auto const f1 = bin_min + bin_size*i;
+            auto const f2 = bin_min + bin_size*(i+1);
             if ( f > f1 && f < f2 ) {
-                if ( m_norm == "unity_particle_weight" ) return 1.0;
+                if ( is_unity_particle_weight ) return 1.0;
                 else return w;
             } else return 0.0;
         });
