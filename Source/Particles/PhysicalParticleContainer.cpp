@@ -85,6 +85,9 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         pp.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
         if (m_do_qed_quantum_sync)
             AddRealComp("optical_depth_QSR");
+        pp.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
+        if (m_do_qed_breit_wheeler)
+            AddRealComp("optical_depth_BW");
     }
 
     //TODO: SHOULD CHECK IF SPECIES IS EITHER ELECTRONS OR POSITRONS!!

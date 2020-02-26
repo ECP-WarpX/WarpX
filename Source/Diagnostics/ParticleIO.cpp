@@ -120,10 +120,12 @@ MultiParticleContainer::WritePlotFile (const std::string& dir) const
             }
 
 #ifdef WARPX_QED
-            if( pc->has_breit_wheeler() )
+            if( pc->has_breit_wheeler() ) {
                 real_names.push_back("optical_depth_BW");
-            if( pc->has_quantum_sync() )
+            }
+            if( pc->has_quantum_sync() ) {
                 real_names.push_back("optical_depth_QSR");
+            }
 #endif
 
             // Convert momentum to SI
