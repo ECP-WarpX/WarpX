@@ -41,7 +41,7 @@ public:
     amrex::Real m_bin_size;
 
     /// Parser to read expression for particle quantity from the input file.
-    /// 7 elements are t, x y, z, ux, uy, uz
+    /// 7 elements are t, x, y, z, ux, uy, uz
     std::unique_ptr<ParserWrapper<7>> m_parser;
 
     /** This function computes a histogram of user defined quantity.
