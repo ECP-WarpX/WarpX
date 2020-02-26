@@ -1,7 +1,15 @@
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, Cameron Yang
+ * David Grote, Luca Fedeli, Maxence Thevenet
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include "PlasmaInjector.H"
 
 #include <WarpXConst.H>
-#include <WarpX_f.H>
 #include <WarpX.H>
 #include <WarpXUtil.H>
 
@@ -193,7 +201,7 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
         Store_parserString(pp, "density_function(x,y,z)", str_density_function);
         // Construct InjectorDensity with InjectorDensityParser.
         inj_rho.reset(new InjectorDensity((InjectorDensityParser*)nullptr,
-                                          makeParser(str_density_function)));
+                                          makeParser(str_density_function,{"x","y","z"})));
     } else {
         StringParseAbortMessage("Density profile type", rho_prof_s);
     }
@@ -316,9 +324,9 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
                                                str_momentum_function_uz);
         // Construct InjectorMomentum with InjectorMomentumParser.
         inj_mom.reset(new InjectorMomentum((InjectorMomentumParser*)nullptr,
-                                           makeParser(str_momentum_function_ux),
-                                           makeParser(str_momentum_function_uy),
-                                           makeParser(str_momentum_function_uz)));
+                                           makeParser(str_momentum_function_ux,{"x","y","z"}),
+                                           makeParser(str_momentum_function_uy,{"x","y","z"}),
+                                           makeParser(str_momentum_function_uz,{"x","y","z"})));
     } else {
         StringParseAbortMessage("Momentum distribution type", mom_dist_s);
     }

@@ -1,5 +1,14 @@
+/* Copyright 2016-2020 Andrew Myers, Ann Almgren, Axel Huebl
+ * David Grote, Jean-Luc Vay, Remi Lehe
+ * Revathi Jambunathan, Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <WarpX.H>
 #include <WarpXUtil.H>
+#include "WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
@@ -26,7 +35,7 @@ int main(int argc, char* argv[])
 
     ConvertLabParamsToBoost();
 
-    BL_PROFILE_VAR("main()", pmain);
+    WARPX_PROFILE_VAR("main()", pmain);
 
     const Real strt_total = amrex::second();
 
@@ -47,7 +56,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    BL_PROFILE_VAR_STOP(pmain);
+    WARPX_PROFILE_VAR_STOP(pmain);
 
     amrex::Finalize();
 #if defined AMREX_USE_MPI

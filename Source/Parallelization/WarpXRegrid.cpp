@@ -1,3 +1,11 @@
+/* Copyright 2019 Andrew Myers, Ann Almgren, Axel Huebl
+ * David Grote, Maxence Thevenet, Remi Lehe
+ * Weiqun Zhang, levinem
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <WarpX.H>
 #include <AMReX_BLProfiler.H>
 
@@ -6,8 +14,8 @@ using namespace amrex;
 void
 WarpX::LoadBalance ()
 {
-    BL_PROFILE_REGION("LoadBalance");
-    BL_PROFILE("WarpX::LoadBalance()");
+    WARPX_PROFILE_REGION("LoadBalance");
+    WARPX_PROFILE("WarpX::LoadBalance()");
 
     AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
 

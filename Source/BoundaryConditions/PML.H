@@ -1,7 +1,17 @@
+/* Copyright 2019 Andrew Myers, Aurore Blelly, Axel Huebl
+ * Maxence Thevenet, Remi Lehe, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <array>
 
 #ifndef WARPX_PML_H_
 #define WARPX_PML_H_
+
+#include "WarpXProfilerWrapper.H"
 
 #include <AMReX_MultiFab.H>
 #include <AMReX_Geometry.H>

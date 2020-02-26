@@ -1,3 +1,9 @@
+/* Copyright 2019 Remi Lehe
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <SortingUtils.H>
 #include <PhysicalParticleContainer.H>
 #include <WarpX.H>
@@ -40,7 +46,7 @@ PhysicalParticleContainer::PartitionParticlesInBuffers(
     iMultiFab const* gather_masks,
     RealVector& uxp, RealVector& uyp, RealVector& uzp, RealVector& wp)
 {
-    BL_PROFILE("PPC::Evolve::partition");
+    WARPX_PROFILE("PPC::Evolve::partition");
 
     // Initialize temporary arrays
     Gpu::DeviceVector<int> inexflag;

@@ -1,5 +1,11 @@
+/* Copyright 2019 Andrew Myers, Axel Huebl, David Bizzozero
+ * Maxence Thevenet
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <WarpX.H>
-#include <WarpX_f.H>
 
 namespace
 {
@@ -14,7 +20,7 @@ WritePlotFileES (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                  const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                  const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E)
 {
-    BL_PROFILE("WarpX::WritePlotFileES()");
+    WARPX_PROFILE("WarpX::WritePlotFileES()");
 
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(plotfile_headerversion);

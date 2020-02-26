@@ -1,5 +1,13 @@
+/* Copyright 2019-2020 Andrew Myers, Ann Almgren, Aurore Blelly
+ * Axel Huebl, Burlen Loring, Maxence Thevenet
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <WarpX.H>
-#include <WarpX_f.H>
 #include <BilinearFilter.H>
 #include <NCIGodfreyFilter.H>
 
@@ -18,7 +26,7 @@ using namespace amrex;
 void
 WarpX::InitData ()
 {
-    BL_PROFILE("WarpX::InitData()");
+    WARPX_PROFILE("WarpX::InitData()");
 
     if (restart_chkfile.empty())
     {
@@ -74,11 +82,21 @@ WarpX::InitData ()
         if (plot_int > 0)
             WritePlotFile();
 
+        if (openpmd_int > 0)
+            WriteOpenPMDFile();
+
         if (check_int > 0)
             WriteCheckPointFile();
 
         if ((insitu_int > 0) && (insitu_start == 0))
             UpdateInSitu();
+
+        // Write reduced diagnostics before the first iteration.
+        if (reduced_diags->m_plot_rd != 0)
+        {
+            reduced_diags->ComputeDiags(-1);
+            reduced_diags->WriteToFile(-1);
+        }
     }
 }
 
@@ -115,12 +133,8 @@ WarpX::InitFromScratch ()
     mypc->InitData();
 
     // Loop through species and calculate their space-charge field
-    for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
-        WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        if (species.initialize_self_fields) {
-            InitSpaceChargeField(species);
-        }
-    }
+    bool const reset_fields = false; // Do not erase previous user-specified values on the grid
+    ComputeSpaceChargeField(reset_fields);
 
     InitPML();
 
@@ -301,12 +315,12 @@ WarpX::InitLevelData (int lev, Real time)
        Store_parserString(pp, "Bz_external_grid_function(x,y,z)",
                                                     str_Bz_ext_grid_function);
 
-       Bxfield_parser.reset(new ParserWrapper(
-                                makeParser(str_Bx_ext_grid_function)));
-       Byfield_parser.reset(new ParserWrapper(
-                                makeParser(str_By_ext_grid_function)));
-       Bzfield_parser.reset(new ParserWrapper(
-                                makeParser(str_Bz_ext_grid_function)));
+       Bxfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Bx_ext_grid_function,{"x","y","z"})));
+       Byfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_By_ext_grid_function,{"x","y","z"})));
+       Bzfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Bz_ext_grid_function,{"x","y","z"})));
 
        // Initialize Bfield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Bfield_fp[lev][0].get(),
@@ -353,12 +367,12 @@ WarpX::InitLevelData (int lev, Real time)
        Store_parserString(pp, "Ez_external_grid_function(x,y,z)",
                                                     str_Ez_ext_grid_function);
 
-       Exfield_parser.reset(new ParserWrapper(
-                                makeParser(str_Ex_ext_grid_function)));
-       Eyfield_parser.reset(new ParserWrapper(
-                                makeParser(str_Ey_ext_grid_function)));
-       Ezfield_parser.reset(new ParserWrapper(
-                                makeParser(str_Ez_ext_grid_function)));
+       Exfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Ex_ext_grid_function,{"x","y","z"})));
+       Eyfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Ey_ext_grid_function,{"x","y","z"})));
+       Ezfield_parser.reset(new ParserWrapper<3>(
+                                makeParser(str_Ez_ext_grid_function,{"x","y","z"})));
 
        // Initialize Efield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Efield_fp[lev][0].get(),
@@ -449,8 +463,8 @@ WarpX::InitLevelDataFFT (int lev, Real time)
 void
 WarpX::InitializeExternalFieldsOnGridUsingParser (
        MultiFab *mfx, MultiFab *mfy, MultiFab *mfz,
-       ParserWrapper *xfield_parser, ParserWrapper *yfield_parser,
-       ParserWrapper *zfield_parser, IntVect x_nodal_flag,
+       ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
+       ParserWrapper<3> *zfield_parser, IntVect x_nodal_flag,
        IntVect y_nodal_flag, IntVect z_nodal_flag,
        const int lev)
 {
@@ -500,7 +514,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the x-component of the field.
-                mfxfab(i,j,k) = xfield_parser->getField(x,y,z);
+                mfxfab(i,j,k) = (*xfield_parser)(x,y,z);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 Real fac_x = (1.0 - mfy_type[0]) * dx_lev[0]*0.5;
@@ -516,7 +530,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the y-component of the field.
-                mfyfab(i,j,k)  = yfield_parser->getField(x,y,z);
+                mfyfab(i,j,k)  = (*yfield_parser)(x,y,z);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 Real fac_x = (1.0 - mfz_type[0]) * dx_lev[0]*0.5;
@@ -532,13 +546,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the z-component of the field.
-                mfzfab(i,j,k) = zfield_parser->getField(x,y,z);
-            },
-            /* To allocate shared memory for the GPU threads. */
-            /* But, for now only 3 doubles (x,y,z) are allocated. */
-            amrex::Gpu::numThreadsPerBlockParallelFor() * sizeof(double) * 3
+                mfzfab(i,j,k) = (*zfield_parser)(x,y,z);
+            }
         );
-
     }
 
 }

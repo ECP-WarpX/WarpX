@@ -1,8 +1,18 @@
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, David Grote, Maxence Thevenet,
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang, Edoardo Zoni
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 
 #include <WarpX.H>
 #include <FieldIO.H>
 #ifdef WARPX_USE_OPENPMD
 #include <openPMD/openPMD.hpp>
+#endif
+#ifdef WARPX_USE_PSATD
+#include <SpectralSolver.H>
 #endif
 
 #include <AMReX_FillPatchUtil_F.H>
@@ -117,7 +127,7 @@ WriteOpenPMDFields( const std::string& filename,
                   const MultiFab& mf, const Geometry& geom,
                   const int iteration, const double time )
 {
-  BL_PROFILE("WriteOpenPMDFields()");
+  WARPX_PROFILE("WriteOpenPMDFields()");
 
   const int ncomp = mf.nComp();
 
@@ -386,9 +396,7 @@ AverageAndPackScalarField( MultiFab& mf_avg,
     // and average accordingly:
     // - Fully cell-centered field (no average needed; simply copy)
     if ( scalar_field.is_cell_centered() ){
-
         MultiFab::Copy( mf_avg, scalar_field, 0, dcomp, 1, ngrow);
-
         // - Fully nodal
     } else if ( scalar_field.is_nodal() ){
 
@@ -607,9 +615,9 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
 #pragma omp parallel
 #endif
                 for (MFIter mfi(mf_avg[lev]); mfi.isValid(); ++mfi) {
-                    (mf_avg[lev])[mfi].setVal(static_cast<Real>(npart_in_grid[mfi.index()]),
-                                              dcomp++);
+                    (mf_avg[lev])[mfi].setVal(static_cast<Real>(npart_in_grid[mfi.index()]));
                 }
+                dcomp++;
             } else if (fieldname == "part_per_proc"){
                 const Vector<long>& npart_in_grid = mypc->NumberOfParticlesInGrid(lev);
                 // MultiFab containing number of particles per process
@@ -621,16 +629,13 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
                 for (MFIter mfi(mf_avg[lev]); mfi.isValid(); ++mfi) {
                     n_per_proc += npart_in_grid[mfi.index()];
                 }
-                mf_avg[lev].setVal(static_cast<Real>(n_per_proc), dcomp++,1);
+                mf_avg[lev].setVal(static_cast<Real>(n_per_proc),dcomp++,1);
             } else if (fieldname == "proc_number"){
                 // MultiFab containing the Processor ID
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-                for (MFIter mfi(mf_avg[lev]); mfi.isValid(); ++mfi) {
-                    (mf_avg[lev])[mfi].setVal(static_cast<Real>(ParallelDescriptor::MyProc()),
-                                              dcomp++);
-                }
+                mf_avg[lev].setVal(static_cast<Real>(ParallelDescriptor::MyProc()),dcomp++,1);
             } else if (fieldname == "divB"){
                 if (do_nodal) amrex::Abort("TODO: do_nodal && plot divb");
                 ComputeDivB(mf_avg[lev], dcomp++,
@@ -639,15 +644,16 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
                                     Bfield_aux[lev][2].get()},
                             WarpX::CellSize(lev) );
             } else if (fieldname == "divE"){
-                if (do_nodal) amrex::Abort("TODO: do_nodal && plot dive");
+                if (do_nodal) amrex::Abort("TODO: do_nodal && plot divE");
                 const BoxArray& ba = amrex::convert(boxArray(lev),IntVect::TheUnitVector());
-                MultiFab dive(ba,DistributionMap(lev),1,0);
-                ComputeDivE( dive, 0,
-                             {Efield_aux[lev][0].get(),
-                                     Efield_aux[lev][1].get(),
-                                     Efield_aux[lev][2].get()},
-                             WarpX::CellSize(lev) );
-                AverageAndPackScalarField( mf_avg[lev], dive, dcomp++, ngrow );
+                MultiFab divE( ba, DistributionMap(lev), 1, 0 );
+#ifdef WARPX_USE_PSATD
+                spectral_solver_fp[lev]->ComputeSpectralDivE( Efield_aux[lev], divE );
+#else
+                ComputeDivE( divE, 0, {Efield_aux[lev][0].get(), Efield_aux[lev][1].get(),
+                             Efield_aux[lev][2].get()}, WarpX::CellSize(lev) );
+#endif
+                AverageAndPackScalarField( mf_avg[lev], divE, dcomp++, ngrow );
             } else {
                 amrex::Abort("unknown field in fields_to_plot: " + fieldname);
             }

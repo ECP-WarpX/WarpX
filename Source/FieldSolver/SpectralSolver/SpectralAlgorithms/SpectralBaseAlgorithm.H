@@ -1,3 +1,9 @@
+/* Copyright 2019 Remi Lehe, Edoardo Zoni
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_SPECTRAL_BASE_ALGORITHM_H_
 #define WARPX_SPECTRAL_BASE_ALGORITHM_H_
 
@@ -22,9 +28,23 @@ class SpectralBaseAlgorithm
         // calls the subclass's destructor.
         virtual ~SpectralBaseAlgorithm() {};
 
+        virtual void CurrentCorrection ( SpectralFieldData& field_data,
+                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                         std::unique_ptr<amrex::MultiFab>& rho ) {};
+
+        /**
+         * \brief Compute spectral divergence of E
+         */
+        void ComputeSpectralDivE ( SpectralFieldData& field_data,
+                                   const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                                   amrex::MultiFab& divE );
+
     protected: // Meant to be used in the subclasses
 
-        using SpectralCoefficients = amrex::FabArray< amrex::BaseFab <amrex::Real> >;
+        using SpectralRealCoefficients = \
+            amrex::FabArray< amrex::BaseFab <amrex::Real> >;
+        using SpectralComplexCoefficients = \
+            amrex::FabArray< amrex::BaseFab <Complex> >;
 
         // Constructor
         SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,

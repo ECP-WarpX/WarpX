@@ -1,3 +1,10 @@
+/* Copyright 2019 David Grote, Maxence Thevenet, Remi Lehe
+ * Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_SPECTRAL_FIELD_DATA_H_
 #define WARPX_SPECTRAL_FIELD_DATA_H_
 
@@ -5,12 +12,14 @@
 #include <SpectralKSpace.H>
 #include <AMReX_MultiFab.H>
 
+#include <string>
+
 // Declare type for spectral fields
 using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
 
 /** Index for the regular fields, when stored in spectral space */
 struct SpectralFieldIndex {
-  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields };
+  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, divE, n_fields };
   // n_fields is automatically the total number of fields
 };
 
@@ -63,6 +72,16 @@ class SpectralFieldData
                             zshift_FFTfromCell, zshift_FFTtoCell;
 #if (AMREX_SPACEDIM==3)
         SpectralShiftFactor yshift_FFTfromCell, yshift_FFTtoCell;
+#endif
+
+#ifdef AMREX_USE_GPU
+        /** \brief This method converts a cufftResult
+        * into the corresponding string
+        *
+        * @param[in] err a cufftResult
+        * @return an std::string
+        */
+        std::string cufftErrorToString (const cufftResult& err);
 #endif
 };
 

@@ -1,3 +1,9 @@
+/* Copyright 2019-2020 Maxence Thevenet
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef GUARDCELLMANAGER_H_
 #define GUARDCELLMANAGER_H_
 
@@ -42,7 +48,8 @@ public:
         const int nci_corr_stencil,
         const int maxwell_fdtd_solver_id,
         const int max_level,
-        const bool exchange_all_guard_cells);
+        const amrex::Array<amrex::Real,3> v_galilean,
+        const bool safe_guard_cells);
 
     // Guard cells allocated for MultiFabs E and B
     amrex::IntVect ng_alloc_EB = amrex::IntVect::TheZeroVector();

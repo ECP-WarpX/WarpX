@@ -1,9 +1,20 @@
+/* Copyright 2019-2020 Andrew Myers, Ann Almgren, Aurore Blelly
+ * Axel Huebl, Burlen Loring, David Grote
+ * Glenn Richardson, Jean-Luc Vay, Luca Fedeli
+ * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+ * Weiqun Zhang, Yinjian Zhao
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <cmath>
 #include <limits>
 
 #include <WarpX.H>
+#include <WarpX_QED_K.H>
+#include <WarpX_QED_Field_Pushers.cpp>
 #include <WarpXConst.H>
-#include <WarpX_f.H>
 #include <WarpXUtil.H>
 #include <WarpXAlgorithmSelection.H>
 #ifdef WARPX_USE_PY
@@ -17,16 +28,16 @@
 #include <AMReX_AmrMeshInSituBridge.H>
 #endif
 
-
 using namespace amrex;
 
 void
 WarpX::EvolveEM (int numsteps)
 {
-    BL_PROFILE("WarpX::EvolveEM()");
+    WARPX_PROFILE("WarpX::EvolveEM()");
 
     Real cur_time = t_new[0];
     static int last_plot_file_step = 0;
+    static int last_openPMD_step = 0;
     static int last_check_file_step = 0;
     static int last_insitu_step = 0;
 
@@ -149,7 +160,8 @@ WarpX::EvolveEM (int numsteps)
 
         cur_time += dt[0];
 
-        bool to_make_plot = (plot_int > 0) && ((step+1) % plot_int == 0);
+        bool to_make_plot = ( (plot_int > 0) && ((step+1) % plot_int == 0) );
+        bool to_write_openPMD = ( (openpmd_int > 0) && ((step+1) % openpmd_int == 0) );
 
         // slice generation //
         bool to_make_slice_plot = (slice_plot_int > 0) && ( (step+1)% slice_plot_int == 0);
@@ -165,24 +177,40 @@ WarpX::EvolveEM (int numsteps)
             myBFD->writeLabFrameData(cell_centered_data.get(), *mypc, geom[0], cur_time, dt[0]);
         }
 
-        bool move_j = is_synchronized || to_make_plot || do_insitu;
+        bool move_j = is_synchronized || to_make_plot || to_write_openPMD || do_insitu;
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
         // We might need to move j because we are going to make a plotfile.
 
+        ShiftGalileanBoundary();
+
         int num_moved = MoveWindow(move_j);
 
+#ifdef WARPX_DO_ELECTROSTATIC
+        // Electrostatic solver: particles can move by an arbitrary number of cells
+        mypc->Redistribute();
+#else
+        // Electromagnetic solver: due to CFL condition, particles can
+        // only move by one or two cells per time step
         if (max_level == 0) {
-            int num_redistribute_ghost = num_moved + 1;
+            int num_redistribute_ghost = num_moved;
+            if ((v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)) {
+                // Galilean algorithm ; particles can move by up to 2 cells
+                num_redistribute_ghost += 2;
+            } else {
+                // Standard algorithm ; particles can move by up to 1 cell
+                num_redistribute_ghost += 1;
+            }
             mypc->RedistributeLocal(num_redistribute_ghost);
         }
         else {
             mypc->Redistribute();
         }
+#endif
 
         bool to_sort = (sort_int > 0) && ((step+1) % sort_int == 0);
         if (to_sort) {
             amrex::Print() << "re-sorting particles \n";
-            mypc->SortParticlesByCell();
+            mypc->SortParticlesByBin(sort_bin_size);
         }
 
         amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
@@ -198,8 +226,15 @@ WarpX::EvolveEM (int numsteps)
             t_new[i] = cur_time;
         }
 
+        /// reduced diags
+        if (reduced_diags->m_plot_rd != 0)
+        {
+            reduced_diags->ComputeDiags(step);
+            reduced_diags->WriteToFile(step);
+        }
+
         // slice gen //
-        if (to_make_plot || do_insitu || to_make_slice_plot)
+        if (to_make_plot || to_write_openPMD || do_insitu || to_make_slice_plot)
         {
             // This is probably overkill, but it's not called often
             FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
@@ -218,10 +253,13 @@ WarpX::EvolveEM (int numsteps)
             }
 
             last_plot_file_step = step+1;
+            last_openPMD_step = step+1;
             last_insitu_step = step+1;
 
             if (to_make_plot)
                 WritePlotFile();
+            if (to_write_openPMD)
+                WriteOpenPMDFile();
 
             if (to_make_slice_plot)
             {
@@ -253,11 +291,13 @@ WarpX::EvolveEM (int numsteps)
 
     bool write_plot_file = plot_int > 0 && istep[0] > last_plot_file_step
         && (max_time_reached || istep[0] >= max_step);
+    bool write_openPMD = openpmd_int > 0 && istep[0] > last_openPMD_step
+        && (max_time_reached || istep[0] >= max_step);
 
     bool do_insitu = (insitu_start >= istep[0]) && (insitu_int > 0) &&
         (istep[0] > last_insitu_step) && (max_time_reached || istep[0] >= max_step);
 
-    if (write_plot_file || do_insitu)
+    if (write_plot_file || write_openPMD || do_insitu)
     {
         // This is probably overkill, but it's not called often
         FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
@@ -279,6 +319,8 @@ WarpX::EvolveEM (int numsteps)
 
         if (write_plot_file)
             WritePlotFile();
+        if (write_openPMD)
+            WriteOpenPMDFile();
 
         if (do_insitu)
             UpdateInSitu();
@@ -325,15 +367,18 @@ WarpX::OneStep_nosub (Real cur_time)
 #endif
 
 #ifdef WARPX_USE_PSATD
-    // Correct current on fine and coarse patch
-    for ( int lev = 0; lev <= finest_level; ++lev )
+    if ( do_current_correction )
     {
-        SpectralSolver& ss_fp = *spectral_solver_fp[lev];
-        ss_fp.CurrentCorrection( current_fp[lev], rho_fp[lev] );
-        if ( spectral_solver_cp[lev] )
+        // Correct current on fine and coarse patch
+        for ( int lev = 0; lev <= finest_level; ++lev )
         {
-            SpectralSolver& ss_cp = *spectral_solver_cp[lev];
-            ss_cp.CurrentCorrection( current_cp[lev], rho_cp[lev] );
+            SpectralSolver& ss_fp = *spectral_solver_fp[lev];
+            ss_fp.CurrentCorrection( current_fp[lev], rho_fp[lev] );
+            if ( spectral_solver_cp[lev] )
+            {
+                SpectralSolver& ss_cp = *spectral_solver_cp[lev];
+                ss_cp.CurrentCorrection( current_cp[lev], rho_cp[lev] );
+            }
         }
     }
 #endif
@@ -353,10 +398,24 @@ WarpX::OneStep_nosub (Real cur_time)
     // Push E and B from {n} to {n+1}
     // (And update guard cells immediately afterwards)
 #ifdef WARPX_USE_PSATD
+    if (use_hybrid_QED)
+    {
+        WarpX::Hybrid_QED_Push(dt);
+        FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+    }
     PushPSATD(dt[0]);
-    if (do_pml) DampPML();
     FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
     FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+
+    if (use_hybrid_QED)
+    {
+        WarpX::Hybrid_QED_Push(dt);
+        FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+
+    }
+    if (do_pml) DampPML();
+
+;
 #else
     EvolveF(0.5*dt[0], DtType::FirstHalf);
     FillBoundaryF(guard_cells.ng_FieldSolverF);
@@ -377,6 +436,8 @@ WarpX::OneStep_nosub (Real cur_time)
     }
     // E and B are up-to-date in the domain, but all guard cells are
     // outdated.
+    if ( safe_guard_cells )
+        FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
 #endif
 }
 
@@ -490,6 +551,8 @@ WarpX::OneStep_sub1 (Real curtime)
         FillBoundaryE(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
     }
 
+    if ( safe_guard_cells )
+        FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
     FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 
     // v) Push the fields on the coarse patch and mother grid
@@ -530,7 +593,11 @@ WarpX::OneStep_sub1 (Real curtime)
             FillBoundaryF(coarse_lev, PatchType::fine, IntVect::TheZeroVector());
         }
         DampPML(coarse_lev, PatchType::fine);
+        if ( safe_guard_cells )
+            FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
     }
+    if ( safe_guard_cells )
+        FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 }
 
 void

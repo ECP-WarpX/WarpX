@@ -1,5 +1,13 @@
 #! /usr/bin/env python
 
+# Copyright 2019 Andrew Myers, Jean-Luc Vay, Maxence Thevenet
+# Remi Lehe, Weiqun Zhang
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
+
 import sys
 import matplotlib
 matplotlib.use('Agg')
@@ -16,8 +24,4 @@ plt.plot(t, s)
 plt.savefig("laser_analysis.png")
 
 # return '0' for success, anything else for failure
-passed = True
-if passed:
-    sys.exit(0)
-else:
-    sys.exit(100)
+sys.exit(0)

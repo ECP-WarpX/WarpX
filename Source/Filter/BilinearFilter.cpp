@@ -1,6 +1,12 @@
+/* Copyright 2019 Andrew Myers, Maxence Thevenet, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <WarpX.H>
 #include <BilinearFilter.H>
-#include <WarpX_f.H>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -45,7 +51,7 @@ namespace {
 }
 
 void BilinearFilter::ComputeStencils(){
-    BL_PROFILE("BilinearFilter::ComputeStencils()");
+    WARPX_PROFILE("BilinearFilter::ComputeStencils()");
     stencil_length_each_dir = npass_each_dir;
     stencil_length_each_dir += 1.;
 #if (AMREX_SPACEDIM == 3)

@@ -1,3 +1,10 @@
+/* Copyright 2019 Axel Huebl, David Grote, Maxence Thevenet
+ * Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef INJECTOR_POSITION_H_
 #define INJECTOR_POSITION_H_
 
@@ -97,8 +104,6 @@ struct InjectorPosition
     InjectorPosition (InjectorPosition&&) = delete;
     void operator= (InjectorPosition const&) = delete;
     void operator= (InjectorPosition &&) = delete;
-
-    std::size_t sharedMemoryNeeded () const noexcept { return 0; }
 
     // call getPositionUnitBox from the object stored in the union
     // (the union is called Object, and the instance is called object).

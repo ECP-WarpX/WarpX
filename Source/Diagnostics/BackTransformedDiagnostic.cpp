@@ -1,9 +1,15 @@
+/* Copyright 2019 Andrew Myers, Axel Huebl, Maxence Thevenet
+ * Revathi Jambunathan, Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <AMReX_MultiFabUtil.H>
 #include <AMReX_MultiFabUtil_C.H>
 
 #include "BackTransformedDiagnostic.H"
 #include "SliceDiagnostic.H"
-#include "WarpX_f.H"
 #include "WarpX.H"
 
 using namespace amrex;
@@ -27,7 +33,7 @@ namespace
       Should be run only by the root process.
     */
     void output_create(const std::string& file_path) {
-        BL_PROFILE("output_create");
+        WARPX_PROFILE("output_create");
         hid_t file = H5Fcreate(file_path.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
         if (file < 0) {
             amrex::Abort("Error: could not create file at " + file_path);
@@ -78,7 +84,7 @@ namespace
     void output_write_metadata(const std::string& file_path,
                                const int istep, const Real time, const Real dt)
     {
-        BL_PROFILE("output_write_metadata");
+        WARPX_PROFILE("output_write_metadata");
         hid_t file = H5Fopen(file_path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
 
         write_string_attribute(file, "software", "warpx");
@@ -114,7 +120,7 @@ namespace
     void output_create_field(const std::string& file_path, const std::string& field_path,
                              const unsigned nx, const unsigned ny, const unsigned nz)
     {
-        BL_PROFILE("output_create_field");
+        WARPX_PROFILE("output_create_field");
 
         // Open the output.
         hid_t file = H5Fopen(file_path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
@@ -174,7 +180,7 @@ namespace
     long output_resize_particle_field(const std::string& file_path, const std::string& field_path,
                                       const long num_to_add)
     {
-        BL_PROFILE("output_resize_particle_field");
+        WARPX_PROFILE("output_resize_particle_field");
 
         // Open the output.
         hid_t file = H5Fopen(file_path.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
@@ -213,7 +219,7 @@ namespace
     void output_write_particle_field(const std::string& file_path, const std::string& field_path,
                                      const Real* data_ptr, const long count, const long index)
     {
-        BL_PROFILE("output_write_particle_field");
+        WARPX_PROFILE("output_write_particle_field");
 
         MPI_Comm comm = MPI_COMM_WORLD;
         MPI_Info info = MPI_INFO_NULL;
@@ -293,7 +299,7 @@ namespace
     */
     void output_create_particle_field(const std::string& file_path, const std::string& field_path)
     {
-        BL_PROFILE("output_create_particle_field");
+        WARPX_PROFILE("output_create_particle_field");
 
         MPI_Comm comm = MPI_COMM_WORLD;
         MPI_Info info = MPI_INFO_NULL;
@@ -344,7 +350,7 @@ namespace
                             const int lo_x, const int lo_y, const int lo_z)
     {
 
-        BL_PROFILE("output_write_field");
+        WARPX_PROFILE("output_write_field");
 
         MPI_Comm comm = MPI_COMM_WORLD;
         MPI_Info info = MPI_INFO_NULL;
@@ -533,7 +539,7 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
 {
 
 
-    BL_PROFILE("BackTransformedDiagnostic::BackTransformedDiagnostic");
+    WARPX_PROFILE("BackTransformedDiagnostic::BackTransformedDiagnostic");
 
     AMREX_ALWAYS_ASSERT(WarpX::do_back_transformed_fields or
                         WarpX::do_back_transformed_particles);
@@ -559,7 +565,7 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
     std::vector<std::string> user_fields_to_dump;
     ParmParse pp("warpx");
     bool do_user_fields;
-    do_user_fields = pp.queryarr("boosted_frame_diag_fields",
+    do_user_fields = pp.queryarr("back_transformed_diag_fields",
                                  user_fields_to_dump);
     // If user specifies fields to dump, overwrite ncomp_to_dump,
     // map_actual_fields_to_dump and mesh_field_names.
@@ -679,7 +685,7 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
 
 void BackTransformedDiagnostic::Flush(const Geometry& geom)
 {
-    BL_PROFILE("BackTransformedDiagnostic::Flush");
+    WARPX_PROFILE("BackTransformedDiagnostic::Flush");
 
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::NoFabHeader_v1);
@@ -768,7 +774,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
                   const MultiParticleContainer& mypc,
                   const Geometry& geom, const Real t_boost, const Real dt) {
 
-    BL_PROFILE("BackTransformedDiagnostic::writeLabFrameData");
+    WARPX_PROFILE("BackTransformedDiagnostic::writeLabFrameData");
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::NoFabHeader_v1);
 
@@ -998,7 +1004,7 @@ BackTransformedDiagnostic::
 writeParticleData(const WarpXParticleContainer::DiagnosticParticleData& pdata,
                   const std::string& name, const int i_lab)
 {
-    BL_PROFILE("BackTransformedDiagnostic::writeParticleData");
+    WARPX_PROFILE("BackTransformedDiagnostic::writeParticleData");
 
     std::string field_name;
     std::ofstream ofs;
@@ -1047,7 +1053,7 @@ void
 BackTransformedDiagnostic::
 writeMetaData ()
 {
-    BL_PROFILE("BackTransformedDiagnostic::writeMetaData");
+    WARPX_PROFILE("BackTransformedDiagnostic::writeMetaData");
 
     if (ParallelDescriptor::IOProcessor()) {
         const std::string fullpath = WarpX::lab_data_directory + "/snapshots";
@@ -1371,7 +1377,7 @@ AddPartDataToParticleBuffer(
     int nspeciesBoostedFrame) {
     for (int isp = 0; isp < nspeciesBoostedFrame; ++isp) {
         auto np = tmp_particle_buffer[isp].GetRealData(DiagIdx::w).size();
-        if (np == 0) return;
+        if (np == 0) continue;
 
         // allocate size of particle buffer array to np
         // This is a growing array. Each time we add np elements
@@ -1436,7 +1442,7 @@ AddPartDataToParticleBuffer(
     for (int isp = 0; isp < nSpeciesBackTransformedDiagnostics; ++isp) {
         auto np = tmp_particle_buffer[isp].GetRealData(DiagIdx::w).size();
 
-        if (np == 0) return;
+        if (np == 0) continue;
 
         Real const* const AMREX_RESTRICT wp_temp =
              tmp_particle_buffer[isp].GetRealData(DiagIdx::w).data();

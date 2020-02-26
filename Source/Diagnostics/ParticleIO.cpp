@@ -1,3 +1,11 @@
+/* Copyright 2019 Andrew Myers, Axel Huebl, David Grote
+ * Luca Fedeli, Maxence Thevenet, Revathi Jambunathan
+ * Weiqun Zhang, levinem
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <MultiParticleContainer.H>
 #include <WarpX.H>
 
@@ -161,7 +169,7 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
 void
 PhysicalParticleContainer::ConvertUnits(ConvertDirection convert_direction)
 {
-    BL_PROFILE("PPC::ConvertUnits()");
+    WARPX_PROFILE("PPC::ConvertUnits()");
 
     // Compute conversion factor
     Real factor = 1;

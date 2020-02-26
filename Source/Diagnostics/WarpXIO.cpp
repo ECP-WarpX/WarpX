@@ -1,3 +1,12 @@
+/* Copyright 2019-2020 Andrew Myers, Ann Almgren, Axel Huebl
+ * Burlen Loring, David Grote, Gunther H. Weber
+ * Junmin Gu, Maxence Thevenet, Remi Lehe
+ * Revathi Jambunathan, Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include <AMReX_MultiFabUtil.H>
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_FillPatchUtil_F.H>
@@ -19,7 +28,7 @@
 #endif
 
 #ifdef WARPX_USE_OPENPMD
-#include "WarpXOpenPMD.H"
+#   include "WarpXOpenPMD.H"
 #endif
 
 
@@ -111,7 +120,7 @@ WarpX::WriteWarpXHeader(const std::string& name) const
 void
 WarpX::WriteCheckPointFile() const
 {
-    BL_PROFILE("WarpX::WriteCheckPointFile()");
+    WARPX_PROFILE("WarpX::WriteCheckPointFile()");
 
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(checkpoint_headerversion);
@@ -194,7 +203,7 @@ WarpX::WriteCheckPointFile() const
 void
 WarpX::InitFromCheckpoint ()
 {
-    BL_PROFILE("WarpX::InitFromCheckpoint()");
+    WARPX_PROFILE("WarpX::InitFromCheckpoint()");
 
     amrex::Print() << "  Restart from checkpoint " << restart_chkfile << "\n";
 
@@ -412,7 +421,7 @@ WarpX::InitFromCheckpoint ()
 std::unique_ptr<MultiFab>
 WarpX::GetCellCenteredData() {
 
-    BL_PROFILE("WarpX::GetCellCenteredData");
+    WARPX_PROFILE("WarpX::GetCellCenteredData");
 
     const int ng =  1;
     const int nc = 10;
@@ -435,6 +444,7 @@ WarpX::GetCellCenteredData() {
         dcomp += 3;
         // then the charge density
         const std::unique_ptr<MultiFab>& charge_density = mypc->GetChargeDensity(lev);
+
         AverageAndPackScalarField( *cc[lev], *charge_density, dcomp, ng );
         cc[lev]->FillBoundary(geom[lev].periodicity());
     }
@@ -451,7 +461,7 @@ void
 WarpX::UpdateInSitu () const
 {
 #if defined(BL_USE_SENSEI_INSITU) || defined(AMREX_USE_ASCENT)
-    BL_PROFILE("WarpX::UpdateInSitu()");
+    WARPX_PROFILE("WarpX::UpdateInSitu()");
 
     // Average the fields from the simulation to the cell centers
     const int ngrow = 1;
@@ -499,45 +509,68 @@ WarpX::UpdateInSitu () const
 }
 
 void
-WarpX::WritePlotFile () const
-{
-    BL_PROFILE("WarpX::WritePlotFile()");
-
-    const std::string& plotfilename = amrex::Concatenate(plot_file,istep[0]);
-    amrex::Print() << "  Writing plotfile " << plotfilename << "\n";
-
+WarpX::prepareFields(
+        int const step,
+        Vector<std::string>& varnames,
+        Vector<MultiFab>& mf_avg,
+        Vector<const MultiFab*>& output_mf,
+        Vector<Geometry>& output_geom
+) const {
     // Average the fields from the simulation grid to the cell centers
     const int ngrow = 0;
-    Vector<std::string> varnames; // Name of the written fields
-    // mf_avg will contain the averaged, cell-centered fields
-    Vector<MultiFab> mf_avg;
     WarpX::AverageAndPackFields( varnames, mf_avg, ngrow );
 
     // Coarsen the fields, if requested by the user
-    Vector<const MultiFab*> output_mf; // will point to the data to be written
     Vector<MultiFab> coarse_mf; // will remain empty if there is no coarsening
-    Vector<Geometry> output_geom;
     if (plot_coarsening_ratio != 1) {
         coarsenCellCenteredFields( coarse_mf, output_geom, mf_avg, Geom(),
-                                    plot_coarsening_ratio, finest_level );
+                                   plot_coarsening_ratio, finest_level );
         output_mf = amrex::GetVecOfConstPtrs(coarse_mf);
     } else {  // No averaging necessary, simply point to mf_avg
         output_mf = amrex::GetVecOfConstPtrs(mf_avg);
         output_geom = Geom();
     }
+}
+
+void
+WarpX::WriteOpenPMDFile () const
+{
+    WARPX_PROFILE("WarpX::WriteOpenPMDFile()");
 
 #ifdef WARPX_USE_OPENPMD
-    if (dump_openpmd) {
-        m_OpenPMDPlotWriter->SetStep(istep[0]);
-        // fields: only dumped for coarse level
-        m_OpenPMDPlotWriter->WriteOpenPMDFields(
-            varnames, *output_mf[0], output_geom[0], istep[0], t_new[0]);
-        // particles: all (reside only on locally finest level)
-        m_OpenPMDPlotWriter->WriteOpenPMDParticles(mypc);
-    }
-#endif
+    const auto step = istep[0];
 
-    if (dump_plotfiles) {
+    m_OpenPMDPlotWriter->SetStep(step);
+
+    Vector<std::string> varnames; // Name of the written fields
+    Vector<MultiFab> mf_avg; // contains the averaged, cell-centered fields
+    Vector<const MultiFab*> output_mf; // will point to the data to be written
+    Vector<Geometry> output_geom;
+
+    prepareFields(step, varnames, mf_avg, output_mf, output_geom);
+    // fields: only dumped for coarse level
+    m_OpenPMDPlotWriter->WriteOpenPMDFields(
+        varnames, *output_mf[0], output_geom[0], step, t_new[0]);
+    // particles: all (reside only on locally finest level)
+    m_OpenPMDPlotWriter->WriteOpenPMDParticles(mypc);
+#endif
+}
+
+void
+WarpX::WritePlotFile () const
+{
+    WARPX_PROFILE("WarpX::WritePlotFile()");
+
+    const auto step = istep[0];
+    const std::string& plotfilename = amrex::Concatenate(plot_file,step);
+    amrex::Print() << "  Writing plotfile " << plotfilename << "\n";
+
+    Vector<std::string> varnames; // Name of the written fields
+    Vector<MultiFab> mf_avg; // contains the averaged, cell-centered fields
+    Vector<const MultiFab*> output_mf; // will point to the data to be written
+    Vector<Geometry> output_geom;
+
+    prepareFields(step, varnames, mf_avg, output_mf, output_geom);
 
     // Write the fields contained in `mf_avg`, and corresponding to the
     // names `varnames`, into a plotfile.
@@ -620,18 +653,13 @@ WarpX::WritePlotFile () const
         }
     }
 
-    // leaving the option of binary output through AMREx around
-    // regardless of openPMD. This can be adjusted later
-    {
-      mypc->WritePlotFile(plotfilename);
-    }
+    mypc->WritePlotFile(plotfilename);
 
     WriteJobInfo(plotfilename);
 
     WriteWarpXHeader(plotfilename);
 
     VisMF::SetHeaderVersion(current_version);
-    } // endif: dump_plotfiles
 
 }
 
@@ -885,4 +913,3 @@ WarpX::ClearSliceMultiFabs ()
     Bfield_slice.shrink_to_fit();
 
 }
-

@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+
+# Copyright 2017-2020 Andrew Myers, Axel Huebl, Burlen Loring
+# Maxence Thevenet, Remi Lehe
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
 # -*- coding: utf-8 -*-
 #
 # WarpX documentation build configuration file, created by
@@ -33,8 +41,7 @@ sys.path.insert(0, os.path.join( os.path.abspath(__file__), '../Python') )
 extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
-    'breathe',
-    'exhale'
+    'breathe'
  ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -59,7 +66,7 @@ author = 'WarpX collaboration'
 # built documents.
 #
 # The short X.Y version.
-version = '20.01'
+version = '20.02'
 # The full version, including alpha/beta/rc tags.
 release = ''
 
@@ -170,21 +177,6 @@ breathe_projects = {
     "WarpX": "../doxyxml/"
 }
 breathe_default_project = "WarpX"
-
-# Setup the exhale extension
-exhale_args = {
-    # These arguments are required
-    "containmentFolder": "./api",
-    "rootFileName": "library_root.rst",
-    "rootFileTitle": "Doxygen",
-    "doxygenStripFromPath": "..",
-    # Suggested optional arguments
-    "createTreeView": True,
-    # TIP: if using the sphinx-bootstrap-theme, you need
-    # "treeViewIsBootstrap": True,
-    "exhaleExecutesDoxygen": True,
-    "exhaleDoxygenStdin": "INPUT = ../../Source/"
-}
 
 # Tell sphinx what the primary language being documented is.
 primary_domain = 'cpp'

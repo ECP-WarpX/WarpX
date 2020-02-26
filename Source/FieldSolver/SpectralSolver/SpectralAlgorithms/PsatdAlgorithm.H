@@ -1,3 +1,10 @@
+/* Copyright 2019 Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PSATD_ALGORITHM_H_
 #define WARPX_PSATD_ALGORITHM_H_
 
@@ -27,13 +34,18 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
             return SpectralFieldIndex::n_fields;
         }
 
+         virtual void CurrentCorrection ( SpectralFieldData& field_data,
+                                          std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                          std::unique_ptr<amrex::MultiFab>& rho );
+
         void InitializeSpectralCoefficients( const SpectralKSpace& spectral_kspace,
                                              const amrex::DistributionMapping& dm,
                                              const amrex::Real dt );
 
     private:
 
-        SpectralCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
+        SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
+        amrex::Real m_dt;
 };
 
 #endif // WARPX_PSATD_ALGORITHM_H_
