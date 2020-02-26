@@ -6,13 +6,15 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <WarpXUtil.H>
-#include <WarpXConst.H>
+#include "WarpXUtil.H"
+#include "WarpXConst.H"
+#include "WarpX.H"
+
 #include <AMReX_ParmParse.H>
-#include <WarpX.H>
 
 #include <cmath>
 #include <fstream>
+
 
 using namespace amrex;
 
@@ -126,14 +128,19 @@ void ConvertLabParamsToBoost()
  * zmin and zmax.
  */
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax){
-    BL_PROFILE("WarpX::NullifyMF()");
+    WARPX_PROFILE("WarpX::NullifyMF()");
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for(amrex::MFIter mfi(mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi){
         const amrex::Box& bx = mfi.tilebox();
         // Get box lower and upper physical z bound, and dz
-        const amrex::Real zmin_box = WarpX::LowerCorner(bx, lev)[2];
+        #if (AMREX_SPACEDIM == 3)
+            amrex::Array<amrex::Real,3> galilean_shift = { 0., 0., 0., };
+        #elif (AMREX_SPACEDIM == 2)
+            amrex::Array<amrex::Real,3> galilean_shift = { 0., std::numeric_limits<Real>::quiet_NaN(),  0., } ;
+        #endif
+        const amrex::Real zmin_box = WarpX::LowerCorner(bx, galilean_shift, lev)[2];
         const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev)[2];
         amrex::Real dz  = WarpX::CellSize(lev)[2];
         // Get box lower index in the z direction
@@ -175,31 +182,23 @@ namespace WarpXUtilIO{
 void Store_parserString(amrex::ParmParse& pp, std::string query_string,
                         std::string& stored_string)
 {
-
-    char cstr[query_string.size()+1];
-    strcpy(cstr, query_string.c_str());
-
     std::vector<std::string> f;
-    pp.getarr(cstr, f);
+    pp.getarr(query_string.c_str(), f);
     stored_string.clear();
     for (auto const& s : f) {
         stored_string += s;
     }
     f.clear();
-
 }
 
 
-WarpXParser makeParser (std::string const& parse_function)
+WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames)
 {
     WarpXParser parser(parse_function);
-    parser.registerVariables({"x","y","z","t"});
+    parser.registerVariables(varnames);
     ParmParse pp("my_constants");
     std::set<std::string> symbols = parser.symbols();
-    symbols.erase("x");
-    symbols.erase("y");
-    symbols.erase("z");
-    symbols.erase("t");
+    for (auto const& v : varnames) symbols.erase(v.c_str());
     for (auto it = symbols.begin(); it != symbols.end(); ) {
         Real v;
         if (pp.query(it->c_str(), v)) {

@@ -17,7 +17,7 @@ The basic WarpX workflow is:
 - Implement your changes and push them on a new branch `<branch_name>` on
 your fork;
 - Create a Pull Request from branch `<branch_name>` on your fork to branch
-`dev` on the main WarpX repo.
+`master` on the main WarpX repo.
 
 First, let us setup your local git repo. Make your own fork of the main
 (`upstream`) WarpX repo:
@@ -31,7 +31,7 @@ git clone --branch master https://bitbucket.org/berkeleylab/picsar.git
 git clone --branch development https://github.com/AMReX-Codes/amrex.git
 
 # Clone your fork on your local computer. You can get this address on your fork's Github page.
-git clone --branch dev https://github.com/<myGithubUsername>/ECP-WarpX/WarpX.git
+git clone https://github.com/<myGithubUsername>/ECP-WarpX/WarpX.git
 cd warpx
 # Keep track of the main WarpX repo, to remain up-to-date.
 git remote add upstream https://github.com/ECP-WarpX/WarpX.git
@@ -40,16 +40,16 @@ Now you are free to play with your fork (for additional information, you can vis
 [Github fork help page](https://help.github.com/en/articles/fork-a-repo)).
 
 > Note: you do not have to re-do the setup above every time.
-> Instead, in the future, you need to update the `dev` branch
+> Instead, in the future, you need to update the `master` branch
 > on your fork with
 > ```
-> git checkout dev
-> git pull upstream dev
+> git checkout master
+> git pull upstream master
 > ```
 
-Make sure you are on WarpX `dev` branch with
+Make sure you are on WarpX `master` branch with
 ```
-git checkout dev
+git checkout master
 ```
 in the WarpX directory.
 
@@ -81,33 +81,13 @@ your fork with
 git push -u origin <branch_name>
 ```
 
-If you want to synchronize your branch with the `dev` branch (this is useful
-when the `dev` branch is being modified while you are working on
+If you want to synchronize your branch with the `master` branch (this is useful
+when the `master` branch is being modified while you are working on
 `<branch_name>`), you can use
 ```
-git pull upstream dev
+git pull upstream master
 ```
 and fix any conflict that may occur.
-
-### Check that you did not break the code
-
-Once your new feature is ready, you can check that you did not break anything.
-WarpX has automated tests running for each Pull Request. For easier debugging,
-it can be convenient to run the tests on your local machine with
-```
-./run_test.sh
-```
-from WarpX root folder. The tests can be influenced by environment variables:
-- `export WARPX_TEST_DIM=3`, `export WARPX_TEST_DIM=2` or `export WARPX_TEST_DIM=RZ` 
-in order to select only the tests that correspond to this dimensionality
-- `export WARPX_TEST_ARCH=CPU` or `export WARPX_TEST_ARCH=GPU` in order to
-run the tests on CPU or GPU respectively.
-- `export WARPX_TEST_COMMIT=...` in order to test a specific commit.
-
-The command above (without command line arguments) runs all the tests defined in [Regression/WarpX-tests.ini](./Regression/WarpX-tests.ini). In order to run single tests, pass the test names as command line arguments:
-```
-./run_test.sh test1 test2
-```
 
 ### Submit a Pull Request
 
@@ -116,8 +96,6 @@ and to propose your new feature/improvement/fix to the WarpX project.
 Right after you push changes, a banner should appear on the Github page of
 your fork, with your `<branch_name>`.
 - Click on the `compare & pull request` button to prepare your PR.
-- Change the PR destination from `master` to `dev` (make sure that the PR is
-from `<yourFork>/<branch_name>` to `ECP-WarpX/WarpX/dev`).
 - It is time to communicate your changes: write a title and a description for
 your PR. People who review your PR are happy to know
   * what feature/fix you propose, and why
@@ -138,42 +116,7 @@ put the `[WIP]` tag (for Work In Progress) at the beginning of the PR title.
 
 A new feature is great, a **working** new feature is even better! Please test
 your code and add your test to the automated test suite. It's the way to
-protect your work from adventurous developers. There are three steps to follow
-to add a new automated test (illustrated here for PML boundary conditions):
-- An input file for your test, in folder `Example/Tests/...`. For the PML
-test, the input file is at
-[Examples/Tests/PML/inputs2d](./Examples/Tests/PML/inputs2d). You can also
-re-use an existing input file (even better!) and pass specific parameters at
-runtime (see below).
-- A Python script that reads simulation output and tests correctness versus
-theory or calibrated results. For the PML test, see
-[Examples/Tests/PML/analysis_pml.py](/Examples/Tests/PML/analysis_pml.py).
-It typically ends with Python statement `assert( error<0.01 )`.
-- Add an entry to [Regression/WarpX-tests.ini](./Regression/WarpX-tests.ini),
-so that a WarpX simulation runs your test in the continuous integration
-process on [Travis CI](https://docs.travis-ci.com/user/tutorial/), and the
-Python script is executed to assess the correctness. For the PML test, the
-entry is
-```
-[pml_x_yee]
-buildDir = .
-inputFile = Examples/Tests/PML/inputs2d
-runtime_params = warpx.do_dynamic_scheduling=0 algo.maxwell_fdtd_solver=yee
-dim = 2
-addToCompileString =
-restartTest = 0
-useMPI = 1
-numprocs = 2
-useOMP = 1
-numthreads = 2
-compileTest = 0
-doVis = 0
-analysisRoutine = Examples/Tests/PML/analysis_pml_yee.py
-```
-If you re-use an existing input file, you can add arguments to
-`runtime_params`, like
-`runtime_params = amr.max_level=1 amr.n_cell=32 512 max_step=100 plasma_e.zmin=-200.e-6`
-.
+protect your work from adventurous developers. Instructions are given in the [testing section](https://warpx.readthedocs.io/en/latest/developers/testing.html) of our developer's documentation.
 
 #### Include documentation to your PR
 

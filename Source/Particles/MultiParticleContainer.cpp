@@ -8,19 +8,16 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <MultiParticleContainer.H>
+#include "MultiParticleContainer.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
 #include <AMReX_Vector.H>
-
-#include <WarpX_f.H>
-#include <WarpX.H>
-
-//This is now needed for writing a binary file on disk.
-#include <WarpXUtil.H>
 
 #include <limits>
 #include <algorithm>
 #include <string>
+
 
 using namespace amrex;
 
@@ -131,12 +128,12 @@ MultiParticleContainer::ReadParameters ()
                                       str_Bz_ext_particle_function);
 
            // Parser for B_external on the particle
-           m_Bx_particle_parser.reset(new ParserWrapper(
-                                    makeParser(str_Bx_ext_particle_function)));
-           m_By_particle_parser.reset(new ParserWrapper(
-                                    makeParser(str_By_ext_particle_function)));
-           m_Bz_particle_parser.reset(new ParserWrapper(
-                                    makeParser(str_Bz_ext_particle_function)));
+           m_Bx_particle_parser.reset(new ParserWrapper<4>(
+                                    makeParser(str_Bx_ext_particle_function,{"x","y","z","t"})));
+           m_By_particle_parser.reset(new ParserWrapper<4>(
+                                    makeParser(str_By_ext_particle_function,{"x","y","z","t"})));
+           m_Bz_particle_parser.reset(new ParserWrapper<4>(
+                                    makeParser(str_Bz_ext_particle_function,{"x","y","z","t"})));
 
         }
 
@@ -156,12 +153,12 @@ MultiParticleContainer::ReadParameters ()
            Store_parserString(pp, "Ez_external_particle_function(x,y,z,t)",
                                       str_Ez_ext_particle_function);
            // Parser for E_external on the particle
-           m_Ex_particle_parser.reset(new ParserWrapper(
-                                    makeParser(str_Ex_ext_particle_function)));
-           m_Ey_particle_parser.reset(new ParserWrapper(
-                                    makeParser(str_Ey_ext_particle_function)));
-           m_Ez_particle_parser.reset(new ParserWrapper(
-                                    makeParser(str_Ez_ext_particle_function)));
+           m_Ex_particle_parser.reset(new ParserWrapper<4>(
+                                    makeParser(str_Ex_ext_particle_function,{"x","y","z","t"})));
+           m_Ey_particle_parser.reset(new ParserWrapper<4>(
+                                    makeParser(str_Ey_ext_particle_function,{"x","y","z","t"})));
+           m_Ez_particle_parser.reset(new ParserWrapper<4>(
+                                    makeParser(str_Ez_ext_particle_function,{"x","y","z","t"})));
 
         }
 
@@ -415,10 +412,10 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
 }
 
 void
-MultiParticleContainer::SortParticlesByCell ()
+MultiParticleContainer::SortParticlesByBin (amrex::IntVect bin_size)
 {
     for (auto& pc : allcontainers) {
-        pc->SortParticlesByCell();
+        pc->SortParticlesByBin(bin_size);
     }
 }
 
@@ -495,7 +492,7 @@ MultiParticleContainer
                    Vector<WarpXParticleContainer::DiagnosticParticleData>& parts) const
 {
 
-    BL_PROFILE("MultiParticleContainer::GetLabFrameData");
+    WARPX_PROFILE("MultiParticleContainer::GetLabFrameData");
 
     // Loop over particle species
     for (int i = 0; i < nspecies_back_transformed_diagnostics; ++i){
@@ -640,7 +637,7 @@ MultiParticleContainer::getSpeciesID (std::string product_str)
 void
 MultiParticleContainer::doFieldIonization ()
 {
-    BL_PROFILE("MPC::doFieldIonization");
+    WARPX_PROFILE("MPC::doFieldIonization");
 
     // Loop over all species.
     // Ionized particles in pc_source create particles in pc_product
@@ -673,8 +670,8 @@ MultiParticleContainer::doFieldIonization ()
                 auto& dst_tile = pc_product->ParticlesAt(lev, mfi);
 
                 auto np_dst = dst_tile.numParticles();
-                auto num_added = filterCopyTransformParticles(dst_tile, src_tile, np_dst,
-                                                              Filter, Copy, Transform);
+                auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
+                                                                 Filter, Copy, Transform);
 
                 setNewParticleIDs(dst_tile, np_dst, num_added);
             }
@@ -685,7 +682,7 @@ MultiParticleContainer::doFieldIonization ()
 void
 MultiParticleContainer::doCoulombCollisions ()
 {
-    BL_PROFILE("MPC::doCoulombCollisions");
+    WARPX_PROFILE("MPC::doCoulombCollisions");
 
     for (int i = 0; i < ncollisions; ++i)
     {

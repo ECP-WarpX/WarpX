@@ -4,24 +4,23 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpX.H"
+#include "Utils/WarpXConst.H"
+#include "WarpX_QED_K.H"
+#include "BoundaryConditions/WarpX_PML_kernels.H"
+#include "BoundaryConditions/PML_current.H"
+#include "WarpX_FDTD.H"
+#ifdef WARPX_USE_PY
+#   include "Python/WarpX_py.H"
+#endif
+
+#ifdef BL_USE_SENSEI_INSITU
+#   include <AMReX_AmrMeshInSituBridge.H>
+#endif
+
 #include <cmath>
 #include <limits>
 
-#include <WarpX.H>
-#include <WarpXConst.H>
-#include <WarpX_f.H>
-#include <WarpX_PML_kernels.H>
-#ifdef WARPX_USE_PY
-#include <WarpX_py.H>
-#endif
-
-#include <WarpX_QED_K.H>
-
-#include <PML_current.H>
-
-#ifdef BL_USE_SENSEI_INSITU
-#include <AMReX_AmrMeshInSituBridge.H>
-#endif
 
 using namespace amrex;
 
@@ -47,7 +46,7 @@ WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> dt)
 void
 WarpX::Hybrid_QED_Push (int lev, Real a_dt)
 {
-    BL_PROFILE("WarpX::Hybrid_QED_Push()");
+    WARPX_PROFILE("WarpX::Hybrid_QED_Push()");
     Hybrid_QED_Push(lev, PatchType::fine, a_dt);
     if (lev > 0)
     {
@@ -151,7 +150,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
         );
 
         // Make local copy of xi, to use on device.
-        const Real xi = WarpX::quantum_xi;
+        const Real xi_c2 = WarpX::quantum_xi_c2;
         // Apply QED correction to electric field, using temporary arrays.
         amrex::ParallelFor(
             tbx,
@@ -159,7 +158,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
             {
                 warpx_hybrid_QED_push(j,k,l, Exfab, Eyfab, Ezfab, Bxfab, Byfab,
                                       Bzfab, tmpEx, tmpEy, tmpEz, dx, dy, dz,
-                                      a_dt, xi);
+                                      a_dt, xi_c2);
             }
         );
 

@@ -8,9 +8,14 @@
 #ifndef WARPX_SPECTRAL_FIELD_DATA_H_
 #define WARPX_SPECTRAL_FIELD_DATA_H_
 
-#include <WarpX_ComplexForFFT.H>
-#include <SpectralKSpace.H>
+#include "WarpX_ComplexForFFT.H"
+#include "SpectralKSpace.H"
 #include <AMReX_MultiFab.H>
+
+#include <string>
+
+#ifdef WARPX_USE_PSATD
+#   include <fftw3.h>
 
 // Declare type for spectral fields
 using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
@@ -71,6 +76,17 @@ class SpectralFieldData
 #if (AMREX_SPACEDIM==3)
         SpectralShiftFactor yshift_FFTfromCell, yshift_FFTtoCell;
 #endif
+
+#ifdef AMREX_USE_GPU
+        /** \brief This method converts a cufftResult
+        * into the corresponding string
+        *
+        * @param[in] err a cufftResult
+        * @return an std::string
+        */
+        std::string cufftErrorToString (const cufftResult& err);
+#endif
 };
 
+#endif // WARPX_USE_PSATD
 #endif // WARPX_SPECTRAL_FIELD_DATA_H_

@@ -6,10 +6,11 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "GuardCellManager.H"
-#include <WarpX.H>
-#include <WarpXUtil.H>
-#include <WarpXConst.H>
+#include "Parallelization/GuardCellManager.H"
+#include "WarpX.H"
+#include "Utils/WarpXUtil.H"
+#include "Utils/WarpXConst.H"
+
 
 using namespace amrex;
 
@@ -111,8 +112,8 @@ WarpX::MoveWindow (bool move_j)
         // Shift each component of vector fields (E, B, j)
         for (int dim = 0; dim < 3; ++dim) {
             // Fine grid
-            ParserWrapper *Bfield_parser;
-            ParserWrapper *Efield_parser;
+            ParserWrapper<3> *Bfield_parser;
+            ParserWrapper<3> *Efield_parser;
             bool use_Bparser = false;
             bool use_Eparser = false;
             if (B_ext_grid_s == "parse_b_ext_grid_function") {
@@ -233,9 +234,9 @@ WarpX::MoveWindow (bool move_j)
 void
 WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
                 IntVect ng_extra, amrex::Real external_field, bool useparser,
-                ParserWrapper *field_parser)
+                ParserWrapper<3> *field_parser)
 {
-    BL_PROFILE("WarpX::shiftMF()");
+    WARPX_PROFILE("WarpX::shiftMF()");
     const BoxArray& ba = mf.boxArray();
     const DistributionMapping& dm = mf.DistributionMap();
     const int nc = mf.nComp();
@@ -246,15 +247,20 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
     MultiFab tmpmf(ba, dm, nc, ng);
     MultiFab::Copy(tmpmf, mf, 0, 0, nc, ng);
 
-    IntVect ng_mw = IntVect::TheUnitVector();
-    // Enough guard cells in the MW direction
-    ng_mw[dir] = num_shift;
-    // Add the extra cell (if momentum-conserving gather with staggered field solve)
-    ng_mw += ng_extra;
-    // Make sure we don't exceed number of guard cells allocated
-    ng_mw = ng_mw.min(ng);
-    // Fill guard cells.
-    tmpmf.FillBoundary(ng_mw, geom.periodicity());
+    if ( WarpX::safe_guard_cells ) {
+        // Fill guard cells.
+        tmpmf.FillBoundary(geom.periodicity());
+    } else {
+        IntVect ng_mw = IntVect::TheUnitVector();
+        // Enough guard cells in the MW direction
+        ng_mw[dir] = num_shift;
+        // Add the extra cell (if momentum-conserving gather with staggered field solve)
+        ng_mw += ng_extra;
+        // Make sure we don't exceed number of guard cells allocated
+        ng_mw = ng_mw.min(ng);
+        // Fill guard cells.
+        tmpmf.FillBoundary(ng_mw, geom.periodicity());
+    }
 
     // Make a box that covers the region that the window moved into
     const IndexType& typ = ba.ixType();
@@ -329,10 +335,8 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
                       Real fac_z = (1.0 - mf_type[2]) * dx[2]*0.5;
                       Real z = k*dx[2] + real_box.lo(2) + fac_z;
 #endif
-                      srcfab(i,j,k,n) = field_parser->getField(x,y,z);
-                }
-                , amrex::Gpu::numThreadsPerBlockParallelFor() * sizeof(double)*4
-                );
+                      srcfab(i,j,k,n) = (*field_parser)(x,y,z);
+                });
             }
 
         }
@@ -348,6 +352,41 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
             dstfab(i,j,k,n) = srcfab(i+shift.x,j+shift.y,k+shift.z,n);
         });
     }
+}
+
+void
+WarpX::ShiftGalileanBoundary ()
+{
+    Real cur_time = t_new[0];
+    Real new_lo[AMREX_SPACEDIM];
+    Real new_hi[AMREX_SPACEDIM];
+    const Real* current_lo = geom[0].ProbLo();
+    const Real* current_hi = geom[0].ProbHi();
+
+    Real time_shift = (cur_time - time_of_last_gal_shift);
+
+    #if (AMREX_SPACEDIM == 3)
+        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]* time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    #elif (AMREX_SPACEDIM == 2)
+        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]* time_shift, std::numeric_limits<Real>::quiet_NaN(), v_galilean[2]*time_shift };
+    #endif
+
+    #if (AMREX_SPACEDIM == 3)
+        for (int i=0; i<AMREX_SPACEDIM; i++) {
+            new_lo[i] = current_lo[i] + galilean_shift[i];
+            new_hi[i] = current_hi[i] + galilean_shift[i];
+        }
+    #elif (AMREX_SPACEDIM == 2)
+    {
+        new_lo[0] = current_lo[0] + galilean_shift[0];
+        new_hi[0] = current_hi[0] + galilean_shift[0];
+        new_lo[1] = current_lo[1] + galilean_shift[2];
+        new_hi[1] = current_hi[1] + galilean_shift[2];
+      }
+    #endif
+    time_of_last_gal_shift = cur_time;
+
+    ResetProbDomain(RealBox(new_lo, new_hi));
 }
 
 void

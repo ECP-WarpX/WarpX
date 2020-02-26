@@ -5,8 +5,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <InjectorMomentum.H>
-#include <PlasmaInjector.H>
+#include "InjectorMomentum.H"
+#include "PlasmaInjector.H"
+
 
 using namespace amrex;
 
@@ -28,21 +29,3 @@ InjectorMomentum::~InjectorMomentum ()
     }
     }
 }
-
-// Compute the amount of memory needed in GPU Shared Memory.
-std::size_t
-InjectorMomentum::sharedMemoryNeeded () const noexcept
-{
-    switch (type)
-    {
-    case Type::parser:
-    {
-        // For parser injector, the 3D position of each particle and time, t,
-        // is stored in shared memory.
-        return amrex::Gpu::numThreadsPerBlockParallelFor() * sizeof(double) * 4;
-    }
-    default:
-        return 0;
-    }
-}
-

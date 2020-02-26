@@ -4,15 +4,17 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-
 #include "BeamRelevant.H"
 #include "WarpX.H"
-#include "WarpXConst.H"
-#include "AMReX_REAL.H"
-#include "AMReX_ParticleReduce.H"
+#include "Utils/WarpXConst.H"
+
+#include <AMReX_REAL.H>
+#include <AMReX_ParticleReduce.H>
+
 #include <iostream>
 #include <cmath>
 #include <limits>
+
 
 using namespace amrex;
 
@@ -63,41 +65,41 @@ BeamRelevant::BeamRelevant (std::string rd_name)
             // write header row
 #if (AMREX_SPACEDIM == 3)
             ofs << "#";
-            ofs << "[1]step";             ofs << m_sep;
+            ofs << "[1]step()";           ofs << m_sep;
             ofs << "[2]time(s)";          ofs << m_sep;
             ofs << "[3]x_mean(m)";        ofs << m_sep;
             ofs << "[4]y_mean(m)";        ofs << m_sep;
             ofs << "[5]z_mean(m)";        ofs << m_sep;
-            ofs << "[6]px_mean(kg m/s)";  ofs << m_sep;
-            ofs << "[7]py_mean(kg m/s)";  ofs << m_sep;
-            ofs << "[8]pz_mean(kg m/s)";  ofs << m_sep;
-            ofs << "[9]gamma_mean";       ofs << m_sep;
+            ofs << "[6]px_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[7]py_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[8]pz_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[9]gamma_mean()";     ofs << m_sep;
             ofs << "[10]x_rms(m)";        ofs << m_sep;
             ofs << "[11]y_rms(m)";        ofs << m_sep;
             ofs << "[12]z_rms(m)";        ofs << m_sep;
-            ofs << "[13]px_rms(kg m/s)";  ofs << m_sep;
-            ofs << "[14]py_rms(kg m/s)";  ofs << m_sep;
-            ofs << "[15]pz_rms(kg m/s)";  ofs << m_sep;
-            ofs << "[16]gamma_rms";       ofs << m_sep;
+            ofs << "[13]px_rms(kg*m/s)";  ofs << m_sep;
+            ofs << "[14]py_rms(kg*m/s)";  ofs << m_sep;
+            ofs << "[15]pz_rms(kg*m/s)";  ofs << m_sep;
+            ofs << "[16]gamma_rms()";     ofs << m_sep;
             ofs << "[17]emittance_x(m)";  ofs << m_sep;
             ofs << "[18]emittance_y(m)";  ofs << m_sep;
             ofs << "[19]emittance_z(m)";  ofs << std::endl;
 #elif (AMREX_SPACEDIM == 2)
             ofs << "#";
-            ofs << "[1]step";             ofs << m_sep;
+            ofs << "[1]step()";           ofs << m_sep;
             ofs << "[2]time(s)";          ofs << m_sep;
             ofs << "[3]x_mean(m)";        ofs << m_sep;
             ofs << "[4]z_mean(m)";        ofs << m_sep;
-            ofs << "[5]px_mean(kg m/s)";  ofs << m_sep;
-            ofs << "[6]py_mean(kg m/s)";  ofs << m_sep;
-            ofs << "[7]pz_mean(kg m/s)";  ofs << m_sep;
-            ofs << "[8]gamma_mean";       ofs << m_sep;
+            ofs << "[5]px_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[6]py_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[7]pz_mean(kg*m/s)";  ofs << m_sep;
+            ofs << "[8]gamma_mean()";     ofs << m_sep;
             ofs << "[9]x_rms(m)";         ofs << m_sep;
             ofs << "[10]z_rms(m)";        ofs << m_sep;
-            ofs << "[11]px_rms(kg m/s)";  ofs << m_sep;
-            ofs << "[12]py_rms(kg m/s)";  ofs << m_sep;
-            ofs << "[13]pz_rms(kg m/s)";  ofs << m_sep;
-            ofs << "[14]gamma_rms";       ofs << m_sep;
+            ofs << "[11]px_rms(kg*m/s)";  ofs << m_sep;
+            ofs << "[12]py_rms(kg*m/s)";  ofs << m_sep;
+            ofs << "[13]pz_rms(kg*m/s)";  ofs << m_sep;
+            ofs << "[14]gamma_rms()";     ofs << m_sep;
             ofs << "[15]emittance_x(m)";  ofs << m_sep;
             ofs << "[16]emittance_z(m)";  ofs << std::endl;
 #endif
@@ -358,13 +360,13 @@ void BeamRelevant::ComputeDiags (int step)
         m_data[7]  = std::sqrt(x_ms);
         m_data[8]  = std::sqrt(y_ms);
         m_data[9]  = std::sqrt(z_ms);
-        m_data[10] = std::sqrt(ux_ms * m);
-        m_data[11] = std::sqrt(uy_ms * m);
-        m_data[12] = std::sqrt(uz_ms * m);
+        m_data[10] = std::sqrt(ux_ms) * m;
+        m_data[11] = std::sqrt(uy_ms) * m;
+        m_data[12] = std::sqrt(uz_ms) * m;
         m_data[13] = std::sqrt(gm_ms);
-        m_data[14] = std::sqrt(std::abs(x_ms*ux_ms-xux*xux)) / PhysConst::c;
-        m_data[15] = std::sqrt(std::abs(y_ms*uy_ms-yuy*yuy)) / PhysConst::c;
-        m_data[16] = std::sqrt(std::abs(z_ms*uz_ms-zuz*zuz)) / PhysConst::c;
+        m_data[14] = std::sqrt(x_ms*ux_ms-xux*xux) / PhysConst::c;
+        m_data[15] = std::sqrt(y_ms*uy_ms-yuy*yuy) / PhysConst::c;
+        m_data[16] = std::sqrt(z_ms*uz_ms-zuz*zuz) / PhysConst::c;
 #elif (AMREX_SPACEDIM == 2)
         m_data[0]  = x_mean;
         m_data[1]  = z_mean;
@@ -374,12 +376,12 @@ void BeamRelevant::ComputeDiags (int step)
         m_data[5]  = gm_mean;
         m_data[6]  = std::sqrt(x_ms);
         m_data[7]  = std::sqrt(z_ms);
-        m_data[8]  = std::sqrt(ux_ms * m);
-        m_data[9]  = std::sqrt(uy_ms * m);
-        m_data[10] = std::sqrt(uz_ms * m);
+        m_data[8]  = std::sqrt(ux_ms) * m;
+        m_data[9]  = std::sqrt(uy_ms) * m;
+        m_data[10] = std::sqrt(uz_ms) * m;
         m_data[11] = std::sqrt(gm_ms);
-        m_data[12] = std::sqrt(std::abs(x_ms*ux_ms-xux*xux)) / PhysConst::c;
-        m_data[13] = std::sqrt(std::abs(z_ms*uz_ms-zuz*zuz)) / PhysConst::c;
+        m_data[12] = std::sqrt(x_ms*ux_ms-xux*xux) / PhysConst::c;
+        m_data[13] = std::sqrt(z_ms*uz_ms-zuz*zuz) / PhysConst::c;
 #endif
 
     }

@@ -7,21 +7,21 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "MultiParticleContainer.H"
+#include "WarpXParticleContainer.H"
+#include "WarpX.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Parallelization/WarpXComm.H"
+// Import low-level single-particle kernels
+#include "Pusher/GetAndSetPosition.H"
+#include "Pusher/UpdatePosition.H"
+#include "Deposition/CurrentDeposition.H"
+#include "Deposition/ChargeDeposition.H"
+
+#include <AMReX_AmrParGDB.H>
+
 #include <limits>
 
-#include <MultiParticleContainer.H>
-#include <WarpXParticleContainer.H>
-#include <AMReX_AmrParGDB.H>
-#include <WarpXComm.H>
-#include <WarpX_f.H>
-#include <WarpX.H>
-#include <WarpXAlgorithmSelection.H>
-#include <WarpXComm.H>
-// Import low-level single-particle kernels
-#include <GetAndSetPosition.H>
-#include <UpdatePosition.H>
-#include <CurrentDeposition.H>
-#include <ChargeDeposition.H>
 
 using namespace amrex;
 
@@ -238,8 +238,8 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     Real q = this->charge;
 
-    BL_PROFILE_VAR_NS("PPC::Evolve::Accumulate", blp_accumulate);
-    BL_PROFILE_VAR_NS("PPC::CurrentDeposition", blp_deposit);
+    WARPX_PROFILE_VAR_NS("PPC::Evolve::Accumulate", blp_accumulate);
+    WARPX_PROFILE_VAR_NS("PPC::CurrentDeposition", blp_deposit);
 
 
     // Get tile box where current is deposited.
@@ -300,9 +300,21 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
     const Dim3 lo = lbound(tilebox);
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev);
+    // Take into account Galilean shift
+    auto& warpx_instance = WarpX::GetInstance();
+    Real cur_time = warpx_instance.gett_new(lev);
+    const auto& time_of_last_gal_shift = warpx_instance.time_of_last_gal_shift;
+    Real time_shift = (cur_time + 0.5*dt - time_of_last_gal_shift);
+    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]* time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
 
-    BL_PROFILE_VAR_START(blp_deposit);
+    if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
+        if ( (v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)){
+            amrex::Abort("The Esirkepov algorithm cannot be used with the Galilean algorithm.");
+        }
+    }
+
+    WARPX_PROFILE_VAR_START(blp_deposit);
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if        (WarpX::nox == 1){
             doEsirkepovDepositionShapeN<1>(
@@ -344,16 +356,16 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
                 xyzmin, lo, q);
         }
     }
-    BL_PROFILE_VAR_STOP(blp_deposit);
+    WARPX_PROFILE_VAR_STOP(blp_deposit);
 
 #ifndef AMREX_USE_GPU
-    BL_PROFILE_VAR_START(blp_accumulate);
+    WARPX_PROFILE_VAR_START(blp_accumulate);
     // CPU, tiling: atomicAdd local_jx into jx
     // (same for jx and jz)
     (*jx)[pti].atomicAdd(local_jx[thread_num], tbx, tbx, 0, 0, jx->nComp());
     (*jy)[pti].atomicAdd(local_jy[thread_num], tby, tby, 0, 0, jy->nComp());
     (*jz)[pti].atomicAdd(local_jz[thread_num], tbz, tbz, 0, 0, jz->nComp());
-    BL_PROFILE_VAR_STOP(blp_accumulate);
+    WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
 }
 
@@ -396,8 +408,8 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     const Real q = this->charge;
 
-    BL_PROFILE_VAR_NS("PPC::ChargeDeposition", blp_ppc_chd);
-    BL_PROFILE_VAR_NS("PPC::Evolve::Accumulate", blp_accumulate);
+    WARPX_PROFILE_VAR_NS("PPC::ChargeDeposition", blp_ppc_chd);
+    WARPX_PROFILE_VAR_NS("PPC::Evolve::Accumulate", blp_accumulate);
 
     // Get tile box where charge is deposited.
     // The tile box is different when depositing in the buffers (depos_lev<lev)
@@ -436,11 +448,25 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
-    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, depos_lev);
+    const auto& warpx_instance = WarpX::GetInstance();
+    Real cur_time = warpx_instance.gett_new(lev);
+    Real dt = warpx_instance.getdt(lev);
+    const auto& time_of_last_gal_shift = warpx_instance.time_of_last_gal_shift;
+    // Take into account Galilean shift
+    Real time_shift_rho_old = (cur_time - time_of_last_gal_shift);
+    Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
+    amrex::Array<amrex::Real,3> galilean_shift;
+    if (icomp==0){
+        galilean_shift = { v_galilean[0]*time_shift_rho_old, v_galilean[1]*time_shift_rho_old, v_galilean[2]*time_shift_rho_old };
+    } else{
+        galilean_shift = { v_galilean[0]*time_shift_rho_new, v_galilean[1]*time_shift_rho_new, v_galilean[2]*time_shift_rho_new };
+    }
+    const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
+
     // Indices of the lower bound
     const Dim3 lo = lbound(tilebox);
 
-    BL_PROFILE_VAR_START(blp_ppc_chd);
+    WARPX_PROFILE_VAR_START(blp_ppc_chd);
     if        (WarpX::nox == 1){
         doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_arr, np_to_depose, dx, xyzmin, lo, q);
@@ -451,14 +477,14 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         doChargeDepositionShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_arr, np_to_depose, dx, xyzmin, lo, q);
     }
-    BL_PROFILE_VAR_STOP(blp_ppc_chd);
+    WARPX_PROFILE_VAR_STOP(blp_ppc_chd);
 
 #ifndef AMREX_USE_GPU
-    BL_PROFILE_VAR_START(blp_accumulate);
+    WARPX_PROFILE_VAR_START(blp_accumulate);
 
     (*rho)[pti].atomicAdd(local_rho[thread_num], tb, tb, 0, icomp*nc, nc);
 
-    BL_PROFILE_VAR_STOP(blp_accumulate);
+    WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
 }
 
@@ -692,7 +718,7 @@ WarpXParticleContainer::PushX (amrex::Real dt)
 void
 WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 {
-    BL_PROFILE("WPC::PushX()");
+    WARPX_PROFILE("WPC::PushX()");
 
     if (do_not_push) return;
 

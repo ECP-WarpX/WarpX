@@ -7,8 +7,11 @@
 #ifndef WARPX_SPECTRAL_BASE_ALGORITHM_H_
 #define WARPX_SPECTRAL_BASE_ALGORITHM_H_
 
-#include <SpectralKSpace.H>
-#include <SpectralFieldData.H>
+#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+
+
+#if WARPX_USE_PSATD
 
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
@@ -30,7 +33,10 @@ class SpectralBaseAlgorithm
 
     protected: // Meant to be used in the subclasses
 
-        using SpectralCoefficients = amrex::FabArray< amrex::BaseFab <amrex::Real> >;
+        using SpectralRealCoefficients = \
+            amrex::FabArray< amrex::BaseFab <amrex::Real> >;
+        using SpectralComplexCoefficients = \
+            amrex::FabArray< amrex::BaseFab <Complex> >;
 
         // Constructor
         SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
@@ -54,4 +60,5 @@ class SpectralBaseAlgorithm
 #endif
 };
 
+#endif // WARPX_USE_PSATD
 #endif // WARPX_SPECTRAL_BASE_ALGORITHM_H_

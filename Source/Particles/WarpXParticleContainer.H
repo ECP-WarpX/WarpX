@@ -10,7 +10,7 @@
 #ifndef WARPX_WarpXParticleContainer_H_
 #define WARPX_WarpXParticleContainer_H_
 
-#include "WarpXDtType.H"
+#include "Evolve/WarpXDtType.H"
 
 #include <AMReX_Particles.H>
 #include <AMReX_AmrCore.H>
@@ -311,7 +311,7 @@ public:
     amrex::ParticleReal getMass () const {return mass;}
 
 protected:
-
+    amrex::Array<amrex::Real,3> v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
 
@@ -328,6 +328,7 @@ protected:
 
     int do_not_push = 0;
     int do_not_deposit = 0;
+    int do_not_gather = 0;
 
     // Whether to allow particles outside of the simulation domain to be
     // initialized when they enter the domain.
