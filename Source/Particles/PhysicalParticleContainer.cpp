@@ -8,28 +8,29 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "PhysicalParticleContainer.H"
+
+#include "MultiParticleContainer.H"
+#include "FortranInterface/WarpX_f.H"
+#include "WarpX.H"
+#include "Utils/WarpXConst.H"
+#include "Python/WarpXWrappers.h"
+#include "Utils/IonizationEnergiesTable.H"
+#include "Particles/Gather/FieldGather.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+
+#include "Utils/WarpXAlgorithmSelection.H"
+
+// Import low-level single-particle kernels
+#include "Particles/Pusher/UpdatePosition.H"
+#include "Particles/Pusher/UpdateMomentumBoris.H"
+#include "Particles/Pusher/UpdateMomentumVay.H"
+#include "Particles/Pusher/UpdateMomentumBorisWithRadiationReaction.H"
+#include "Particles/Pusher/UpdateMomentumHigueraCary.H"
+
 #include <limits>
 #include <sstream>
 
-#include <PhysicalParticleContainer.H>
-
-#include <MultiParticleContainer.H>
-#include <WarpX_f.H>
-#include <WarpX.H>
-#include <WarpXConst.H>
-#include <WarpXWrappers.h>
-#include <IonizationEnergiesTable.H>
-#include <FieldGather.H>
-#include <GetAndSetPosition.H>
-
-#include <WarpXAlgorithmSelection.H>
-
-// Import low-level single-particle kernels
-#include <UpdatePosition.H>
-#include <UpdateMomentumBoris.H>
-#include <UpdateMomentumVay.H>
-#include <UpdateMomentumBorisWithRadiationReaction.H>
-#include <UpdateMomentumHigueraCary.H>
 
 using namespace amrex;
 
@@ -315,7 +316,7 @@ PhysicalParticleContainer::CheckAndAddParticle(Real x, Real y, Real z,
 void
 PhysicalParticleContainer::AddParticles (int lev)
 {
-    BL_PROFILE("PhysicalParticleContainer::AddParticles()");
+    WARPX_PROFILE("PhysicalParticleContainer::AddParticles()");
 
     if (plasma_injector->add_single_particle) {
         AddNParticles(lev, 1,
@@ -362,7 +363,7 @@ PhysicalParticleContainer::AddParticles (int lev)
 void
 PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 {
-    BL_PROFILE("PhysicalParticleContainer::AddPlasma");
+    WARPX_PROFILE("PhysicalParticleContainer::AddPlasma");
 
     // If no part_realbox is provided, initialize particles in the whole domain
     const Geometry& geom = Geom(lev);
@@ -925,7 +926,7 @@ PhysicalParticleContainer::EvolveES (const Vector<std::array<std::unique_ptr<Mul
                                      Vector<std::unique_ptr<MultiFab> >& rho,
                                      Real t, Real dt)
 {
-    BL_PROFILE("PPC::EvolveES()");
+    WARPX_PROFILE("PPC::EvolveES()");
 
     int num_levels = rho.size();
     for (int lev = 0; lev < num_levels; ++lev) {
@@ -1112,11 +1113,11 @@ PhysicalParticleContainer::Evolve (int lev,
                                    const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
                                    Real t, Real dt, DtType a_dt_type)
 {
-    BL_PROFILE("PPC::Evolve()");
-    BL_PROFILE_VAR_NS("PPC::Evolve::Copy", blp_copy);
-    BL_PROFILE_VAR_NS("PPC::FieldGather", blp_fg);
-    BL_PROFILE_VAR_NS("PPC::EvolveOpticalDepth", blp_ppc_qed_ev);
-    BL_PROFILE_VAR_NS("PPC::ParticlePush", blp_ppc_pp);
+    WARPX_PROFILE("PPC::Evolve()");
+    WARPX_PROFILE_VAR_NS("PPC::Evolve::Copy", blp_copy);
+    WARPX_PROFILE_VAR_NS("PPC::FieldGather", blp_fg);
+    WARPX_PROFILE_VAR_NS("PPC::EvolveOpticalDepth", blp_ppc_qed_ev);
+    WARPX_PROFILE_VAR_NS("PPC::ParticlePush", blp_ppc_pp);
 
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
     const std::array<Real,3>& cdx = WarpX::CellSize(std::max(lev-1,0));
@@ -1247,7 +1248,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 //
                 // Field Gather of Aux Data (i.e., the full solution)
                 //
-                BL_PROFILE_VAR_START(blp_fg);
+                WARPX_PROFILE_VAR_START(blp_fg);
                 FieldGather(pti, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                             exfab, eyfab, ezfab, bxfab, byfab, bzfab,
                             Ex.nGrow(), e_is_nodal,
@@ -1290,23 +1291,23 @@ PhysicalParticleContainer::Evolve (int lev,
                                 lev, lev-1);
                 }
 
-                BL_PROFILE_VAR_STOP(blp_fg);
+                WARPX_PROFILE_VAR_STOP(blp_fg);
 
 #ifdef WARPX_QED
                 //
                 //Evolve Optical Depth
                 //
-                BL_PROFILE_VAR_START(blp_ppc_qed_ev);
+                WARPX_PROFILE_VAR_START(blp_ppc_qed_ev);
                 EvolveOpticalDepth(pti, dt);
-                BL_PROFILE_VAR_STOP(blp_ppc_qed_ev);
+                WARPX_PROFILE_VAR_STOP(blp_ppc_qed_ev);
 #endif
 
                 //
                 // Particle Push
                 //
-                BL_PROFILE_VAR_START(blp_ppc_pp);
+                WARPX_PROFILE_VAR_START(blp_ppc_pp);
                 PushPX(pti, dt, a_dt_type);
-                BL_PROFILE_VAR_STOP(blp_ppc_pp);
+                WARPX_PROFILE_VAR_STOP(blp_ppc_pp);
 
                 //
                 // Current Deposition
@@ -1798,7 +1799,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                                   const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                   const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz)
 {
-    BL_PROFILE("PhysicalParticleContainer::PushP");
+    WARPX_PROFILE("PhysicalParticleContainer::PushP");
 
     if (do_not_push) return;
 
@@ -1951,7 +1952,7 @@ void PhysicalParticleContainer::GetParticleSlice(const int direction, const Real
                                                  const Real t_lab, const Real dt,
                                                  DiagnosticParticles& diagnostic_particles)
 {
-    BL_PROFILE("PhysicalParticleContainer::GetParticleSlice");
+    WARPX_PROFILE("PhysicalParticleContainer::GetParticleSlice");
 
     // Assume that the boost in the positive z direction.
 #if (AMREX_SPACEDIM == 2)
@@ -2332,7 +2333,7 @@ void PhysicalParticleContainer::InitIonizationModule ()
 IonizationFilterFunc
 PhysicalParticleContainer::getIonizationFunc ()
 {
-    BL_PROFILE("PPC::getIonizationFunc");
+    WARPX_PROFILE("PPC::getIonizationFunc");
 
     return IonizationFilterFunc{ionization_energies.dataPtr(),
                                 adk_prefactor.dataPtr(),

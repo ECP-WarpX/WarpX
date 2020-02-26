@@ -9,13 +9,13 @@
 #ifndef PLASMA_INJECTOR_H_
 #define PLASMA_INJECTOR_H_
 
-#include <InjectorPosition.H>
-#include <InjectorDensity.H>
-#include <InjectorMomentum.H>
 #include "SpeciesPhysicalProperties.H"
+#include "InjectorPosition.H"
+#include "InjectorDensity.H"
+#include "InjectorMomentum.H"
 
-#include <WarpXConst.H>
-#include <WarpXParser.H>
+#include "Utils/WarpXConst.H"
+#include "Parser/WarpXParser.H"
 
 #include <AMReX_Vector.H>
 #include <AMReX_ParmParse.H>

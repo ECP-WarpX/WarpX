@@ -5,7 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpXOpenPMD.H"
-#include "WarpXAlgorithmSelection.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "FieldIO.H"  // for getReversedVec
 
 #include <algorithm>
@@ -18,6 +18,7 @@
 #include <utility>
 #include <iostream>
 
+
 namespace detail
 {
 
@@ -29,6 +30,7 @@ namespace detail
     };
     static_assert(sizeof(int) * 2u <= sizeof(uint64_t), "int size might cause collisions in global IDs");
 
+#ifdef WARPX_USE_OPENPMD
     /** Unclutter a real_names to openPMD record
      *
      * @param fullName name as in real_names variable
@@ -88,8 +90,10 @@ namespace detail
         };
         else return {};
     }
+#endif // WARPX_USE_OPENPMD
 }
 
+#ifdef WARPX_USE_OPENPMD
 WarpXOpenPMDPlot::WarpXOpenPMDPlot(bool oneFilePerTS,
     std::string openPMDFileType, std::vector<bool> fieldPMLdirections)
   :m_Series(nullptr),
@@ -204,7 +208,7 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType)
 void
 WarpXOpenPMDPlot::WriteOpenPMDParticles(const std::unique_ptr<MultiParticleContainer>& mpc)
 {
-  BL_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
+  WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
   std::vector<std::string> species_names = mpc->GetSpeciesNames();
 
   for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
@@ -541,7 +545,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
                       const double time ) const
 {
   //This is AMReX's tiny profiler. Possibly will apply it later
-  BL_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
+  WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
 
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
 
@@ -676,7 +680,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
       auto const chunk_size = getReversedVec( local_box.size() );
 
       // Write local data
-      double const * local_data = fab.dataPtr( icomp );
+      amrex::Real const * local_data = fab.dataPtr( icomp );
       mesh_comp.storeChunk( openPMD::shareRaw(local_data),
                             chunk_offset, chunk_size );
     }
@@ -684,7 +688,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
   // Flush data to disk after looping over all components
   m_Series->flush();
 }
-
+#endif // WARPX_USE_OPENPMD
 
 
 
