@@ -73,7 +73,7 @@ driver.rigid_advance = true
 driver.projected = true
 driver.focused = false
 
-plas.a_e.species_type = electron
+plasma_e.species_type = electron
 plasma_e.injection_style = "NUniformPerCell"
 plasma_e.zmin = 0.e-6
 plasma_e.zmax = 0.2
