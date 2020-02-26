@@ -45,6 +45,9 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
         if ( selected_species_name == species_names[i] )
         { m_selected_species_id = i; }
     }
+    // if m_selected_species_id is not modified
+    if ( m_selected_species_id == -1 )
+    { Abort("Unknown species for ParticleHistogram reduced diagnostic."); }
 
     // resize data array
     m_data.resize(m_bin_num,0.0);
