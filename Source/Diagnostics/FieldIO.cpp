@@ -5,9 +5,12 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "FieldIO.H"
+#include "WarpX.H"
 
-#include <WarpX.H>
-#include <FieldIO.H>
+#include <AMReX_FillPatchUtil_F.H>
+#include <AMReX_Interpolater.H>
+
 #ifdef WARPX_USE_OPENPMD
 #include <openPMD/openPMD.hpp>
 #endif
@@ -15,8 +18,6 @@
 #include <SpectralSolver.H>
 #endif
 
-#include <AMReX_FillPatchUtil_F.H>
-#include <AMReX_Interpolater.H>
 
 using namespace amrex;
 
@@ -211,7 +212,7 @@ WriteOpenPMDFields( const std::string& filename,
       auto chunk_size = getReversedVec(local_box.size());
 
       // Write local data
-      const double* local_data = fab.dataPtr(icomp);
+      Real const * local_data = fab.dataPtr(icomp);
       mesh_comp.storeChunk(openPMD::shareRaw(local_data),
                            chunk_offset, chunk_size);
     }

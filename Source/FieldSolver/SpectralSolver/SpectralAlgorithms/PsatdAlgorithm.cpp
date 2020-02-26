@@ -4,10 +4,13 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <PsatdAlgorithm.H>
-#include <WarpXConst.H>
+#include "PsatdAlgorithm.H"
+#include "Utils/WarpXConst.H"
+
 #include <cmath>
 
+
+#if WARPX_USE_PSATD
 using namespace amrex;
 
 // \brief Constructor
@@ -258,3 +261,4 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
     field_data.BackwardTransform( *current[2], Idx::Jz, 0 );
     field_data.BackwardTransform( *rho, Idx::rho_new, 1 );
 }
+#endif // WARPX_USE_PSATD

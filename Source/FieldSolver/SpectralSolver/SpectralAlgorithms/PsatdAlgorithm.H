@@ -8,7 +8,10 @@
 #ifndef WARPX_PSATD_ALGORITHM_H_
 #define WARPX_PSATD_ALGORITHM_H_
 
-#include <SpectralBaseAlgorithm.H>
+#include "SpectralBaseAlgorithm.H"
+
+
+#if WARPX_USE_PSATD
 
 /**
  * \brief Class that updates the fields in spectral space and stores the coefficients
@@ -48,4 +51,5 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         amrex::Real m_dt;
 };
 
+#endif // WARPX_USE_PSATD
 #endif // WARPX_PSATD_ALGORITHM_H_
