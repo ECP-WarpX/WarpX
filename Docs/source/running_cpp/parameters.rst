@@ -1253,7 +1253,7 @@ Diagnostics and output
 
         ``<reduced_diags_name>.species`` (`string`)
         must be provided,
-        such that the diagnostics are done for this species only.
+        such that the diagnostics are done for this species.
 
         ``<reduced_diags_name>.histogram_function(t,x,y,z,ux,uy,uz)`` (`string`)
         must be provided,
