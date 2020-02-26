@@ -105,6 +105,7 @@ Real WarpX::particle_slice_width_lab = 0.0;
 
 bool WarpX::do_dynamic_scheduling = true;
 
+int WarpX::do_electrostatic = 0;
 int WarpX::do_subcycling = 0;
 bool WarpX::safe_guard_cells = 0;
 
@@ -460,7 +461,6 @@ WarpX::ReadParameters ()
                    "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
         }
 
-        do_electrostatic = 0;
         pp.query("do_electrostatic", do_electrostatic);
         pp.query("n_buffer", n_buffer);
         pp.query("const_dt", const_dt);
