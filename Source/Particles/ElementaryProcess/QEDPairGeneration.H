@@ -201,7 +201,6 @@ private:
     QuantumSynchrotronGetOpticalDepth
         m_target_opt_depth_functor; /*!< A copy of the functor to initialize the optical depth of the target species.*/
 
-
 };
 
 #endif //QED_PAIR_GENERATION_H_
