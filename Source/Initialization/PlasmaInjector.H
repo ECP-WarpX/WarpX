@@ -48,7 +48,7 @@ public:
 
     amrex::Real getCharge () {return charge;}
     amrex::Real getMass () {return mass;}
-    PhysicalSpecies getPhysicalSpecies() {return physical_species;}
+    PhysicalSpecies getPhysicalSpecies() const {return physical_species;}
 
     bool doInjection () const noexcept { return inj_pos != NULL;}
 

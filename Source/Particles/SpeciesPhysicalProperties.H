@@ -8,7 +8,7 @@
 #ifndef WARPX_SPECIESPHYSICALPROPERTIES_H_
 #define WARPX_SPECIESPHYSICALPROPERTIES_H_
 
-#include "WarpXConst.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_AmrCore.H>
@@ -59,7 +59,7 @@ static amrex::Real get_mass (PhysicalSpecies ps)
     case PhysicalSpecies::unspecified:
         return std::numeric_limits<amrex::Real>::quiet_NaN();
     case PhysicalSpecies::electron:
-        return -PhysConst::m_e;
+        return PhysConst::m_e;
     case PhysicalSpecies::positron:
         return PhysConst::m_e;
     case PhysicalSpecies::photon:
