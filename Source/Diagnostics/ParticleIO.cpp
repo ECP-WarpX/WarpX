@@ -6,8 +6,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <MultiParticleContainer.H>
-#include <WarpX.H>
+#include "Particles/MultiParticleContainer.H"
+#include "WarpX.H"
 
 using namespace amrex;
 
@@ -169,7 +169,7 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
 void
 PhysicalParticleContainer::ConvertUnits(ConvertDirection convert_direction)
 {
-    BL_PROFILE("PPC::ConvertUnits()");
+    WARPX_PROFILE("PPC::ConvertUnits()");
 
     // Compute conversion factor
     Real factor = 1;

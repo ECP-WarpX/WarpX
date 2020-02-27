@@ -5,8 +5,10 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "GuardCellManager.H"
-#include "NCIGodfreyFilter.H"
+#include "Filter/NCIGodfreyFilter.H"
+
 #include <AMReX_Print.H>
+
 
 using namespace amrex;
 
@@ -25,7 +27,7 @@ guardCellManager::Init(
     const int maxwell_fdtd_solver_id,
     const int max_level,
     const amrex::Array<amrex::Real,3> v_galilean,
-    const bool exchange_all_guard_cells)
+    const bool safe_guard_cells)
 {
     // When using subcycling, the particles on the fine level perform two pushes
     // before being redistributed ; therefore, we need one extra guard cell
@@ -137,7 +139,7 @@ guardCellManager::Init(
     ng_FieldSolverF = IntVect(AMREX_D_DECL(1,1,1));
 #endif
 
-    if (exchange_all_guard_cells){
+    if (safe_guard_cells){
         // Run in safe mode: exchange all allocated guard cells at each
         // call of FillBoundary
         ng_FieldSolver = ng_alloc_EB;

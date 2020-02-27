@@ -11,23 +11,23 @@
 #ifndef WARPX_ParticleContainer_H_
 #define WARPX_ParticleContainer_H_
 
-#include <WarpXParticleContainer.H>
-#include <PhysicalParticleContainer.H>
-#include <RigidInjectedParticleContainer.H>
-#include <PhotonParticleContainer.H>
-#include <LaserParticleContainer.H>
-#include <WarpXParserWrapper.H>
-#include <SmartCopy.H>
-#include <FilterCopyTransform.H>
+#include "WarpXParticleContainer.H"
+#include "PhysicalParticleContainer.H"
+#include "PhotonParticleContainer.H"
+#include "Laser/LaserParticleContainer.H"
+#include "Parser/WarpXParserWrapper.H"
+#include "Particles/Collision/CollisionType.H"
+#include "Particles/ParticleCreation/SmartCopy.H"
+#include "Particles/ParticleCreation/FilterCopyTransform.H"
+#include "Particles/RigidInjectedParticleContainer.H"
 
-#include <AMReX_Particles.H>
 #ifdef WARPX_QED
-    #include <QedChiFunctions.H>
-    #include <BreitWheelerEngineWrapper.H>
-    #include <QuantumSyncEngineWrapper.H>
+#   include "QED/QedChiFunctions.H"
+#   include "QED/BreitWheelerEngineWrapper.H"
+#   include "QED/QuantumSyncEngineWrapper.H"
 #endif
 
-#include "CollisionType.H"
+#include <AMReX_Particles.H>
 
 #include <memory>
 #include <map>
@@ -168,7 +168,7 @@ public:
 
     void WriteHeader (std::ostream& os) const;
 
-    void SortParticlesByCell ();
+    void SortParticlesByBin (amrex::IntVect bin_size);
 
     void Redistribute ();
 
