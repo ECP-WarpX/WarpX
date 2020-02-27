@@ -231,6 +231,8 @@ def initialize(argv=None):
         argv = sys.argv
     amrex_init(argv)
     libwarpx.warpx_ConvertLabParamsToBoost()
+    if geometry_dim == 'rz':
+        libwarpx.warpx_CheckGriddingForRZSpectral()
     libwarpx.warpx_init()
 
 
