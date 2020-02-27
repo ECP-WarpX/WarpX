@@ -15,6 +15,7 @@
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #endif
 #include "WarpXConst.H"
+#include "WarpX.H"
 #include <AMReX_Gpu.H>
 
 using namespace amrex;
@@ -150,17 +151,18 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
         Box const& tf  = mfi.tilebox(Ffield->ixType().ixType());
 
         Real constexpr inv_epsilon0 = 1./PhysConst::ep0;
+        Real constexpr c2 = PhysConst::c * PhysConst::c;
+
+        // Use the right shift in components:
+        // - the first 2*n_rz_azimuthal_modes-1 components correspond to rho old (i.e. rhocomp=0)
+        // - the next 2*n_rz_azimuthal_modes-1 components correspond to rho new (i.e. rhocomp=1)
+        int rho_shift = 0;
+        if (rhocomp == 1) {
+            rho_shift = 2*WarpX::n_rz_azimuthal_modes-1;
+        }
 
         // Loop over the cells and update the fields
         amrex::ParallelFor(tf,
-
-            // Use the right shift in components:
-            // - the first 2*n_rz_azimuthal_modes-1 components correspond to rho old (i.e. rhocomp=0)
-            // - the next 2*n_rz_azimuthal_modes-1 components correspond to rho new (i.e. rhocomp=1)
-            int rho_shift = 0;
-            if (rhocomp == 1) {
-                rho_shift = 2*WarpX::n_rz_azimuthal_modes-1;
-            }
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Real const r = rmin + i*dr; // r on a nodal grid (F is nodal in r)
@@ -186,7 +188,7 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
                     // Therefore, the formula below regularizes the singularity
                     F(i, j, 0, 0) += dt * (
                         - rho(i, j, 0, rho_shift) * inv_epsilon0
-                         4*Er(i, j, 0, 0)/dr // regularization
+                         + 4*Er(i, j, 0, 0)/dr // regularization
                          + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 0) );
                     // Ensure that F remains 0 for higher-order modes
                     for (int m=1; m<nmodes; m++) {
