@@ -32,8 +32,8 @@ h2y = np.genfromtxt("h2y.txt")
 h2z = np.genfromtxt("h2z.txt")
 
 # parameters of bin
-bin_min = -1.2e7
-bin_max = +1.2e7
+bin_min = -4.0e-2 * scc.c
+bin_max = +4.0e-2 * scc.c
 bin_num = 50
 bin_size = (bin_max-bin_min)/bin_num
 
