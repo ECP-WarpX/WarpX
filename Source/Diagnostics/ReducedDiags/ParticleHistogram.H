@@ -9,7 +9,7 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_PARTICLEHISTOGRAM_H_
 
 #include "ReducedDiags.H"
-#include "WarpXParserWrapper.H"
+#include "Parser/WarpXParserWrapper.H"
 #include <fstream>
 
 /**

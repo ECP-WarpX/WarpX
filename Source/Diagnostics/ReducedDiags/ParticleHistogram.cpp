@@ -7,8 +7,8 @@
 
 #include "ParticleHistogram.H"
 #include "WarpX.H"
-#include "WarpXConst.H"
-#include "WarpXUtil.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
 #include <AMReX_REAL.H>
 #include <AMReX_ParticleReduce.H>
 #include <limits>
