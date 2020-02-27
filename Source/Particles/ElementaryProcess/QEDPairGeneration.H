@@ -187,7 +187,6 @@ public:
             dst2.m_runtime_rdata[m_target2_opt_depth_runtime_comp][i_dst2] =
                 m_target_opt_depth_functor();
         }
-
     }
 
 private:
