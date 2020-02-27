@@ -14,9 +14,12 @@
 #include <BreitWheelerEngineWrapper.H>
 #include <QuantumSyncEngineWrapper.H>
 
-// This file contains the implementation of the elementary process
-// functors needed for Breit-Wheeler pair generation (one photon generates
-// and electron-positron pair).
+/** @file
+ *
+ * This file contains the implementation of the elementary process
+ * functors needed for Breit-Wheeler pair generation (one photon generates
+ * and electron-positron pair).
+ */
 
 /**
  * \brief Filter functor for the Breit Wheeler process
