@@ -14,9 +14,12 @@
 #include <BreitWheelerEngineWrapper.H>
 #include <QuantumSyncEngineWrapper.H>
 
-// This file contains the implementation of the elementary process
-// functors needed for QED photon emission (an electron or a positron
-// emits a photon).
+/** @file
+ *
+ * This file contains the implementation of the elementary process
+ * functors needed for QED photon emission (an electron or a positron
+ * emits a photon).
+ */
 
 /**
  * \brief Filter functor for the QED photon emission process
