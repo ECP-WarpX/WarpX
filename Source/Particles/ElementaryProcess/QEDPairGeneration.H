@@ -124,7 +124,7 @@ public:
         int const i_src, int const i_dst1, int const i_dst2) const noexcept
     {
 
-        const amrex::ParticleReal me = PhysConst::m_e;
+        constexpr amrex::ParticleReal me = PhysConst::m_e;
         const amrex::ParticleReal one_over_me = 1./me;
 
         const amrex::ParticleReal w = src.m_rdata[PIdx::w][i_src];
