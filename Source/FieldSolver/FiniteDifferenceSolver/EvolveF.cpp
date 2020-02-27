@@ -155,7 +155,6 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
         amrex::ParallelFor(tf,
 
             // TODO: Work on rhocomp
-            // TODO: Work on theta derivative
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Real const r = rmin + i*dr; // r on a nodal grid (F is nodal in r)
@@ -168,10 +167,12 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
                         F(i, j, 0, 2*m-1) += dt * (
                             - rho(i, j, 0, rho_shift + 2*m-1) * inv_epsilon0
                             + T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
+                            + m * Et( i, j, 0, 2*m )/r
                             + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 2*m-1) ); // Real part
                         F(i, j, 0, 2*m  ) += c2 * dt *(
                             - rho(i, j, 0, rho_shift + 2*m-1) * inv_epsilon0
                             + T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
+                            - m * Et( i, j, 0, 2*m-1 )/r
                             + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 2*m  ) ); // Imaginary part
                     }
                 } else { // r==0: on-axis corrections
