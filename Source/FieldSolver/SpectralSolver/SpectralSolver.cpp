@@ -15,10 +15,7 @@
 
 #if WARPX_USE_PSATD
 
-using namespace amrex;
-
-/**
- * \brief Initialize the spectral Maxwell solver
+/* \brief Initialize the spectral Maxwell solver
  *
  * This function selects the spectral algorithm to be used, allocates the
  * corresponding coefficients for the discretized field update equation,
@@ -65,9 +62,10 @@ SpectralSolver::SpectralSolver(
        }
 
 
-    // Initialize arrays for fields in spectral space + FFT plans
-    field_data = SpectralFieldData( realspace_ba, k_space, dm, algorithm->getRequiredNumberOfFields() );
-};
+    // - Initialize arrays for fields in spectral space + FFT plans
+    field_data = SpectralFieldData( realspace_ba, k_space, dm,
+            algorithm->getRequiredNumberOfFields() );
+}
 
 void
 SpectralSolver::ForwardTransform( const amrex::MultiFab& mf,

@@ -67,9 +67,9 @@ class SpectralSolver
         };
 
         /**
-          * \brief Public interface to call the member function CurrentCorrection
-          * of the class PsatdAlgorithm
-          */
+         * \brief Public interface to call the member function CurrentCorrection
+         * of the class PsatdAlgorithm
+         */
         void CurrentCorrection ( std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                  std::unique_ptr<amrex::MultiFab>& rho ) {
              algorithm->CurrentCorrection( field_data, current, rho );

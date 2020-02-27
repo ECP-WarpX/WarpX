@@ -259,6 +259,5 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
     field_data.BackwardTransform( *current[0], Idx::Jx, 0 );
     field_data.BackwardTransform( *current[1], Idx::Jy, 0 );
     field_data.BackwardTransform( *current[2], Idx::Jz, 0 );
-    field_data.BackwardTransform( *rho, Idx::rho_new, 1 );
 }
 #endif // WARPX_USE_PSATD
