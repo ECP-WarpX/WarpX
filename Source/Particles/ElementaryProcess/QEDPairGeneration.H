@@ -121,7 +121,7 @@ public:
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (DstData& dst1, DstData& dst2, const SrcData& src,
-        int i_src, int i_dst1, int i_dst2) const noexcept
+        int const i_src, int const i_dst1, int const i_dst2) const noexcept
     {
 
         const amrex::ParticleReal me = PhysConst::m_e;
