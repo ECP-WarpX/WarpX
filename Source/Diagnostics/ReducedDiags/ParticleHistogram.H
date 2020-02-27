@@ -9,7 +9,7 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_PARTICLEHISTOGRAM_H_
 
 #include "ReducedDiags.H"
-#include "Parser/WarpXParserWrapper.H"
+#include "WarpX.H"
 #include <fstream>
 
 /**
@@ -39,6 +39,12 @@ public:
 
     /// bin size
     amrex::Real m_bin_size;
+
+    // get WarpX class object
+    WarpX & m_warpx = WarpX::GetInstance();
+
+    // get MultiParticleContainer class object
+    MultiParticleContainer & m_mypc = m_warpx.GetPartContainer();
 
     /// Parser to read expression for particle quantity from the input file.
     /// 7 elements are t, x, y, z, ux, uy, uz

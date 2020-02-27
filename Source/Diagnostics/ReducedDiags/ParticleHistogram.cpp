@@ -7,7 +7,6 @@
 
 #include "ParticleHistogram.H"
 #include "WarpX.H"
-#include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include <AMReX_REAL.H>
 #include <AMReX_ParticleReduce.H>
@@ -35,12 +34,10 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     m_parser.reset(new ParserWrapper<7>(
         makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
 
-    // get MultiParticleContainer class object
-    auto & mypc = WarpX::GetInstance().GetPartContainer();
     // get species names (std::vector<std::string>)
-    auto const species_names = mypc.GetSpeciesNames();
+    auto const species_names = m_mypc.GetSpeciesNames();
     // select species
-    for ( int i = 0; i < mypc.nSpecies(); ++i )
+    for ( int i = 0; i < m_mypc.nSpecies(); ++i )
     {
         if ( selected_species_name == species_names[i] ){
             m_selected_species_id = i;
@@ -92,13 +89,10 @@ void ParticleHistogram::ComputeDiags (int step)
     if ( (step+1) % m_freq != 0 ) return;
 
     // get time at level 0
-    auto const t = WarpX::GetInstance().gett_new(0);
-
-    // get MultiParticleContainer class object
-    auto & mypc = WarpX::GetInstance().GetPartContainer();
+    auto const t = m_warpx.gett_new(0);
 
     // get WarpXParticleContainer class object
-    auto const & myspc = mypc.GetParticleContainer(m_selected_species_id);
+    auto const & myspc = m_mypc.GetParticleContainer(m_selected_species_id);
 
     using PType = typename WarpXParticleContainer::SuperParticleType;
 
