@@ -480,7 +480,6 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& grid_dm,
     BoxArray realspace_ba = ba;  // Copy box
     Array<Real,3> v_galilean_zero = {0,0,0};
     realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
-    // Define spectral solver
     spectral_solver_fp.reset( new SpectralSolver( realspace_ba, dm,
         nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, dx, dt, in_pml ) );
 #endif
@@ -542,7 +541,6 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& grid_dm,
         // const bool in_pml = true; // Tells spectral solver to use split-PML equations
 
         realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
-        // Define spectral solver
         spectral_solver_cp.reset( new SpectralSolver( realspace_cba, cdm,
             nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, cdx, dt, in_pml ) );
 #endif
