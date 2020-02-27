@@ -5,21 +5,22 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpX.H"
+#include "Utils/WarpXConst.H"
+#include "WarpX_PML_kernels.H"
+#ifdef WARPX_USE_PY
+#   include "Python/WarpX_py.H"
+#endif
+
+#include "PML_current.H"
+
+#ifdef BL_USE_SENSEI_INSITU
+#   include <AMReX_AmrMeshInSituBridge.H>
+#endif
+
 #include <cmath>
 #include <limits>
 
-#include <WarpX.H>
-#include <WarpXConst.H>
-#include <WarpX_PML_kernels.H>
-#ifdef WARPX_USE_PY
-#include <WarpX_py.H>
-#endif
-
-#ifdef BL_USE_SENSEI_INSITU
-#include <AMReX_AmrMeshInSituBridge.H>
-#endif
-
-#include <PML_current.H>
 
 using namespace amrex;
 
@@ -43,7 +44,7 @@ WarpX::DampPML (int lev, PatchType patch_type)
 {
     if (!do_pml) return;
 
-    BL_PROFILE("WarpX::DampPML()");
+    WARPX_PROFILE("WarpX::DampPML()");
 
     if (pml[lev]->ok())
     {
@@ -165,7 +166,7 @@ WarpX::DampJPML (int lev, PatchType patch_type)
     if (!do_pml) return;
     if (!do_pml_j_damping) return;
 
-    BL_PROFILE("WarpX::DampJPML()");
+    WARPX_PROFILE("WarpX::DampJPML()");
 
     if (pml[lev]->ok())
     {

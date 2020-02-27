@@ -4,12 +4,16 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <SpectralKSpace.H>
-#include <SpectralSolver.H>
-#include <PsatdAlgorithm.H>
-#include <GalileanAlgorithm.H>
-#include <PMLPsatdAlgorithm.H>
+#include "SpectralKSpace.H"
+#include "SpectralSolver.H"
+#include "SpectralAlgorithms/PsatdAlgorithm.H"
+#include "SpectralAlgorithms/GalileanAlgorithm.H"
+#include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
+#include "WarpX.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
+
+#if WARPX_USE_PSATD
 
 /* \brief Initialize the spectral Maxwell solver
  *
@@ -62,4 +66,32 @@ SpectralSolver::SpectralSolver(
     field_data = SpectralFieldData( realspace_ba, k_space, dm,
             algorithm->getRequiredNumberOfFields() );
 
-};
+}
+
+void
+SpectralSolver::ForwardTransform( const amrex::MultiFab& mf,
+                                  const int field_index,
+                                  const int i_comp )
+{
+    WARPX_PROFILE("SpectralSolver::ForwardTransform");
+    field_data.ForwardTransform( mf, field_index, i_comp );
+}
+
+void
+SpectralSolver::BackwardTransform( amrex::MultiFab& mf,
+                                   const int field_index,
+                                   const int i_comp )
+{
+    WARPX_PROFILE("SpectralSolver::BackwardTransform");
+    field_data.BackwardTransform( mf, field_index, i_comp );
+}
+
+void
+SpectralSolver::pushSpectralFields(){
+    WARPX_PROFILE("SpectralSolver::pushSpectralFields");
+    // Virtual function: the actual function used here depends
+    // on the sub-class of `SpectralBaseAlgorithm` that was
+    // initialized in the constructor of `SpectralSolver`
+    algorithm->pushSpectralFields( field_data );
+}
+#endif // WARPX_USE_PSATD

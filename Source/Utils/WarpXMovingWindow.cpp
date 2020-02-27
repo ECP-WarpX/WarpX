@@ -6,10 +6,11 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "GuardCellManager.H"
-#include <WarpX.H>
-#include <WarpXUtil.H>
-#include <WarpXConst.H>
+#include "Parallelization/GuardCellManager.H"
+#include "WarpX.H"
+#include "Utils/WarpXUtil.H"
+#include "Utils/WarpXConst.H"
+
 
 using namespace amrex;
 
@@ -235,7 +236,7 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
                 IntVect ng_extra, amrex::Real external_field, bool useparser,
                 ParserWrapper<3> *field_parser)
 {
-    BL_PROFILE("WarpX::shiftMF()");
+    WARPX_PROFILE("WarpX::shiftMF()");
     const BoxArray& ba = mf.boxArray();
     const DistributionMapping& dm = mf.DistributionMap();
     const int nc = mf.nComp();

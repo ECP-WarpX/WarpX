@@ -7,18 +7,18 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <WarpX.H>
-#include <BilinearFilter.H>
-#include <NCIGodfreyFilter.H>
+#include "WarpX.H"
+#include "Filter/BilinearFilter.H"
+#include "Filter/NCIGodfreyFilter.H"
+#include "Parser/GpuParser.H"
+#include "Utils/WarpXUtil.H"
 
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
 
 #ifdef BL_USE_SENSEI_INSITU
-#include <AMReX_AmrMeshInSituBridge.H>
+#   include <AMReX_AmrMeshInSituBridge.H>
 #endif
-#include <GpuParser.H>
-#include <WarpXUtil.H>
 
 
 using namespace amrex;
@@ -26,7 +26,7 @@ using namespace amrex;
 void
 WarpX::InitData ()
 {
-    BL_PROFILE("WarpX::InitData()");
+    WARPX_PROFILE("WarpX::InitData()");
 
     if (restart_chkfile.empty())
     {
