@@ -40,12 +40,6 @@ public:
     /// bin size
     amrex::Real m_bin_size;
 
-    // get WarpX class object
-    WarpX & m_warpx = WarpX::GetInstance();
-
-    // get MultiParticleContainer class object
-    MultiParticleContainer & m_mypc = m_warpx.GetPartContainer();
-
     /// Parser to read expression for particle quantity from the input file.
     /// 7 elements are t, x, y, z, ux, uy, uz
     std::unique_ptr<ParserWrapper<7>> m_parser;
