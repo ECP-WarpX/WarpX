@@ -74,7 +74,7 @@ public:
     *
     * @param[in] generate_functor functor to be called to determine the properties of the generated pairs
     */
-    PairGenerationTransformFunc(BreitWheelerGeneratePairs generate_functor):
+    PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor):
         m_generate_functor{generate_functor}
     {}
 
