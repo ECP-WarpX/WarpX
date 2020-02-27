@@ -7,11 +7,10 @@
 
 #include "ParticleHistogram.H"
 #include "WarpX.H"
-#include "WarpXConst.H"
-#include "WarpXUtil.H"
-#include "AMReX_REAL.H"
-#include "AMReX_ParticleReduce.H"
-#include <limits> // numeric_limits<float>::min()
+#include "Utils/WarpXUtil.H"
+#include <AMReX_REAL.H>
+#include <AMReX_ParticleReduce.H>
+#include <limits>
 
 using namespace amrex;
 
@@ -22,7 +21,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
 
     // read parameters
     ParmParse pp(rd_name);
-    pp.get("species",m_species_name);
+    std::string selected_species_name;
+    pp.get("species",selected_species_name);
     pp.get("bin_number",m_bin_num);
     pp.get("bin_max",   m_bin_max);
     pp.get("bin_min",   m_bin_min);
@@ -33,6 +33,22 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
                        function_string);
     m_parser.reset(new ParserWrapper<7>(
         makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
+
+    // get MultiParticleContainer class object
+    auto & mypc = WarpX::GetInstance().GetPartContainer();
+    // get species names (std::vector<std::string>)
+    auto const species_names = mypc.GetSpeciesNames();
+    // select species
+    for ( int i = 0; i < mypc.nSpecies(); ++i )
+    {
+        if ( selected_species_name == species_names[i] ){
+            m_selected_species_id = i;
+        }
+    }
+    // if m_selected_species_id is not modified
+    if ( m_selected_species_id == -1 ){
+        Abort("Unknown species for ParticleHistogram reduced diagnostic.");
+    }
 
     // resize data array
     m_data.resize(m_bin_num,0.0);
@@ -54,7 +70,9 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
             {
                 ofs << m_sep;
                 ofs << "[" + std::to_string(3+i) + "]";
-                ofs << "bin" + std::to_string(1+i) + "()";
+                Real b = m_bin_min + m_bin_size*(Real(i)+0.5);
+                ofs << "bin" + std::to_string(1+i)
+                             + "=" + std::to_string(b) + "()";
             }
             ofs << std::endl;
             // close file
@@ -70,37 +88,30 @@ void ParticleHistogram::ComputeDiags (int step)
 {
 
     // Judge if the diags should be done
-    if ( (step+1) % m_freq != 0 ) { return; }
+    if ( (step+1) % m_freq != 0 ) return;
 
     // get WarpX class object
     auto & warpx = WarpX::GetInstance();
 
-    // get MultiParticleContainer class object
-    auto & mypc = warpx.GetPartContainer();
-
-    // get number of species (int)
-    auto const nSpecies = mypc.nSpecies();
-
-    // get species names (std::vector<std::string>)
-    auto const species_names = mypc.GetSpeciesNames();
-
     // get time at level 0
     auto const t = warpx.gett_new(0);
 
-    // select species
-    int i_s;
-    for ( int i = 0; i < nSpecies; ++i )
-    {
-        if ( m_species_name == species_names[i] ) { i_s = i; }
-    }
+    // get MultiParticleContainer class object
+    auto & mypc = warpx.GetPartContainer();
 
     // get WarpXParticleContainer class object
-    auto & myspc = mypc.GetParticleContainer(i_s);
+    auto const & myspc = mypc.GetParticleContainer(m_selected_species_id);
 
     using PType = typename WarpXParticleContainer::SuperParticleType;
 
     // get parser
     ParserWrapper<7> *fun_partparser = m_parser.get();
+
+    // declare local variables
+    Real const bin_min  = m_bin_min;
+    Real const bin_size = m_bin_size;
+    bool is_unity_particle_weight = false;
+    if ( m_norm == "unity_particle_weight" ) is_unity_particle_weight = true;
 
     for ( int i = 0; i < m_bin_num; ++i )
     {
@@ -112,21 +123,16 @@ void ParticleHistogram::ComputeDiags (int step)
             auto const x  = p.pos(0);
             auto const y  = p.pos(1);
             auto const z  = p.pos(2);
-            auto const ux = p.rdata(PIdx::ux);
-            auto const uy = p.rdata(PIdx::uy);
-            auto const uz = p.rdata(PIdx::uz);
+            auto const ux = p.rdata(PIdx::ux)/PhysConst::c;
+            auto const uy = p.rdata(PIdx::uy)/PhysConst::c;
+            auto const uz = p.rdata(PIdx::uz)/PhysConst::c;
             auto const f = (*fun_partparser)(t,x,y,z,ux,uy,uz);
-            auto const f1 = m_bin_min + m_bin_size*i;
-            auto const f2 = m_bin_min + m_bin_size*(i+1);
-            if ( f > f1 && f < f2 )
-            {
-                if ( m_norm == "unity_particle_weight" )
-                { return 1.0; }
-                else
-                { return w; }
-            }
-            else
-            { return 0.0; }
+            auto const f1 = bin_min + bin_size*i;
+            auto const f2 = bin_min + bin_size*(i+1);
+            if ( f > f1 && f < f2 ) {
+                if ( is_unity_particle_weight ) return 1.0;
+                else return w;
+            } else return 0.0;
         });
         // reduced sum over mpi ranks
         ParallelDescriptor::ReduceRealSum
@@ -138,13 +144,11 @@ void ParticleHistogram::ComputeDiags (int step)
         Real f_max = 0.0;
         for ( int i = 0; i < m_bin_num; ++i )
         {
-            if ( m_data[i] > f_max )
-            { f_max = m_data[i]; }
+            if ( m_data[i] > f_max ) f_max = m_data[i];
         }
         for ( int i = 0; i < m_bin_num; ++i )
         {
-            if ( f_max > std::numeric_limits<Real>::min() )
-            { m_data[i] /= f_max; }
+            if ( f_max > std::numeric_limits<Real>::min() ) m_data[i] /= f_max;
         }
     }
     else if ( m_norm == "area_to_unity" )
@@ -156,13 +160,10 @@ void ParticleHistogram::ComputeDiags (int step)
         }
         for ( int i = 0; i < m_bin_num; ++i )
         {
-            if ( f_area > std::numeric_limits<Real>::min() )
-            { m_data[i] /= f_area; }
+            if ( f_area > std::numeric_limits<Real>::min() ) m_data[i] /= f_area;
         }
     }
-    else if ( m_norm == "default" )
-    { /* do nothing */ }
-    else if ( m_norm == "unity_particle_weight" )
+    else if ( m_norm == "default" || m_norm == "unity_particle_weight")
     { /* do nothing */ }
     else { Abort("Unknown ParticleHistogram normalization type."); }
 
