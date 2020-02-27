@@ -12,9 +12,6 @@
 
 #include <cmath>
 
-
-using namespace amrex;
-
 /**
  * calc_M calculates the Magnetization field of the vacuum at a specific point and returns it as a three component vector
  * \param[in] arr This is teh empty array that will be filled with the components of the M-field
@@ -29,6 +26,7 @@ using namespace amrex;
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void calc_M(Real arr [], Real ex, Real ey, Real ez, Real bx, Real by, Real bz, Real xi_c2, Real c2)
 {
+    using namespace amrex;
     const Real ee = ex*ex+ey*ey+ez*ez;
     const Real bb_c2 = c2*(bx*bx+by*by+bz*bz);
     const Real eb = ex*bx+ey*by+ez*bz;
@@ -75,6 +73,7 @@ void warpx_hybrid_QED_push (int j, int k, int l, Array4<Real> const& Ex, Array4<
                             const Real xi_c2)
 {
 
+using namespace amrex;
 
 // Defining constants to be used in the calculations
 
