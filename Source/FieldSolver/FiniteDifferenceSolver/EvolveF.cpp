@@ -93,7 +93,7 @@ void FiniteDifferenceSolver::EvolveFCartesian (
         // Extract tileboxes for which to loop
         Box const& tf  = mfi.tilebox(Ffield->ixType().ixType());
 
-        Real constexpr inv_epsilon0 = 1./PhysConst::epsilon0;
+        Real constexpr inv_epsilon0 = 1./PhysConst::ep0;
 
         // Loop over the cells and update the fields
         amrex::ParallelFor(tf,
@@ -149,7 +149,7 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
         // Extract tileboxes for which to loop
         Box const& tf  = mfi.tilebox(Ffield->ixType().ixType());
 
-        Real constexpr inv_epsilon0 = 1./PhysConst::epsilon0;
+        Real constexpr inv_epsilon0 = 1./PhysConst::ep0;
 
         // Loop over the cells and update the fields
         amrex::ParallelFor(tf,
