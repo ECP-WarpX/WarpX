@@ -44,7 +44,7 @@ static amrex::Real get_charge (PhysicalSpecies ps)
     case PhysicalSpecies::positron:
         return PhysConst::q_e;
     case PhysicalSpecies::photon:
-        return std::numeric_limits<amrex::Real>::quiet_NaN();
+        return 0.;
     case PhysicalSpecies::hydrogen:
         return PhysConst::q_e;
     default:
@@ -63,7 +63,7 @@ static amrex::Real get_mass (PhysicalSpecies ps)
     case PhysicalSpecies::positron:
         return PhysConst::m_e;
     case PhysicalSpecies::photon:
-        return std::numeric_limits<amrex::Real>::quiet_NaN();
+        return 0.;
     case PhysicalSpecies::hydrogen:
         return PhysConst::m_p;
     default:
