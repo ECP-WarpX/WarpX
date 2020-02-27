@@ -125,7 +125,7 @@ public:
     {
 
         constexpr amrex::ParticleReal me = PhysConst::m_e;
-        const amrex::ParticleReal one_over_me = 1./me;
+        constexpr amrex::ParticleReal one_over_me = 1._prt/me;
 
         const amrex::ParticleReal w = src.m_rdata[PIdx::w][i_src];
         const amrex::ParticleReal ux = src.m_rdata[PIdx::ux][i_src];
