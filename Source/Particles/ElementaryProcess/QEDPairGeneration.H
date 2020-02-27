@@ -1,3 +1,10 @@
+/* Copyright 2019 Luca Fedeli
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #ifndef QED_PAIR_GENERATION_H_
 #define QED_PAIR_GENERATION_H_
 

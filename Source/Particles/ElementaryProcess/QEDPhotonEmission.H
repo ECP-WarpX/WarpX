@@ -1,3 +1,10 @@
+/* Copyright 2019 Luca Fedeli
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #ifndef QED_PHOTON_EMISSION_H_
 #define QED_PHOTON_EMISSION_H_
 
