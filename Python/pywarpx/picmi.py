@@ -569,7 +569,7 @@ class Simulation(picmistandard.PICMI_Simulation):
             self.laser_injection_methods[i].initialize_inputs(self.lasers[i])
 
         for diagnostic in self.diagnostics:
-            diagnostic.initialize_inputs()
+            diagnostic.initialize_inputs(self.solver.grid)
 
     def initialize_warpx(self):
         if self.warpx_initialized:
@@ -616,7 +616,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.plot_finepatch = kw.pop('warpx_plot_finepatch', None)
         self.plot_crsepatch = kw.pop('warpx_plot_crsepatch', None)
 
-    def initialize_inputs(self):
+    def initialize_inputs(self, grid):
         # --- For now, the period must be the same as plot_int if set
         pywarpx.amr.check_consistency('plot_int', self.period, 'The period must be the same for all simulation frame diagnostics')
         pywarpx.amr.plot_int = self.period
@@ -667,7 +667,7 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
             pywarpx.amr.plot_file = plot_file
 
 class ElectrostaticFieldDiagnostic(picmistandard.PICMI_ElectrostaticFieldDiagnostic):
-    def initialize_inputs(self):
+    def initialize_inputs(self, grid):
         # --- For now, the period must be the same as plot_int if set
         pywarpx.amr.check_consistency('plot_int', self.period, 'The period must be the same for all simulation frame diagnostics')
         pywarpx.amr.plot_int = self.period
@@ -679,7 +679,7 @@ class ElectrostaticFieldDiagnostic(picmistandard.PICMI_ElectrostaticFieldDiagnos
 
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
-    def initialize_inputs(self):
+    def initialize_inputs(self, grid):
         # --- For now, the period must be the same as plot_int if set
         pywarpx.amr.check_consistency('plot_int', self.period, 'The period must be the same for all simulation frame diagnostics')
         pywarpx.amr.plot_int = self.period
@@ -687,8 +687,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         plot_vars = set()
         for dataname in self.data_list:
             if dataname == 'position':
-                # --- The positions are alway written out anyway
-                pass
+                # --- The positions are alway written out anyway.
+                if isinstance(grid, CylindricalGrid):
+                    plot_vars.add('theta')
             elif dataname == 'momentum':
                 plot_vars.add('ux')
                 plot_vars.add('uy')
@@ -727,7 +728,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
 
 
 class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
-    def initialize_inputs(self):
+    def initialize_inputs(self, grid):
 
         pywarpx.warpx.check_consistency('num_snapshots_lab', self.num_snapshots, 'The number of snapshots must be the same in all lab frame diagnostics')
         pywarpx.warpx.check_consistency('dt_snapshots_lab', self.dt_snapshots, 'The time between snapshots must be the same in all lab frame diagnostics')
@@ -741,7 +742,7 @@ class LabFrameFieldDiagnostic(picmistandard.PICMI_LabFrameFieldDiagnostic):
 
 
 class LabFrameParticleDiagnostic(picmistandard.PICMI_LabFrameParticleDiagnostic):
-    def initialize_inputs(self):
+    def initialize_inputs(self, grid):
 
         pywarpx.warpx.check_consistency('num_snapshots_lab', self.num_snapshots, 'The number of snapshots must be the same in all lab frame diagnostics')
         pywarpx.warpx.check_consistency('dt_snapshots_lab', self.dt_snapshots, 'The time between snapshots must be the same in all lab frame diagnostics')
