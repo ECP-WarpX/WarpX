@@ -42,6 +42,13 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     charge = plasma_injector->getCharge();
     mass = plasma_injector->getMass();
 
+    if(mass == PhysConst::m_e && charge == -PhysConst::q_e){
+        m_my_type = PhysicalParticleType::electron;
+    }
+    else if(mass == PhysConst::m_e && charge == PhysConst::q_e){
+         m_my_type = PhysicalParticleType::positron;
+    }
+
     ParmParse pp(species_name);
 
     pp.query("boost_adjust_transverse_positions", boost_adjust_transverse_positions);
@@ -2340,25 +2347,6 @@ PhysicalParticleContainer::getIonizationFunc ()
                                 ion_atomic_number};
 }
 
-//This function return true if the PhysicalParticleContainer contains electrons
-//or positrons, false otherwise
-bool PhysicalParticleContainer::AmIAPhoton ()
-{
-    return false;
-}
-
-bool PhysicalParticleContainer::AmIAnElectron ()
-{
-    return (this-> mass == PhysConst::m_e &&
-        this->charge == -PhysConst::q_e);
-}
-
-bool PhysicalParticleContainer::AmIAPositron ()
-{
-    return (this-> mass == PhysConst::m_e &&
-        this->charge == PhysConst::q_e);
-}
-
 #ifdef WARPX_QED
 
 
@@ -2390,18 +2378,14 @@ PhotonEmissionFilterFunc
 PhysicalParticleContainer::getPhotonEmissionFilterFunc ()
 {
     BL_PROFILE("PPC::getPhotonEmissionFunc");
-    PhotonEmissionFilterFunc filter_func;
-    filter_func.m_opt_depth_runtime_comp = particle_runtime_comps["tau"];
-    return filter_func;
+    return PhotonEmissionFilterFunc{particle_runtime_comps["tau"]};
 }
 
 PairGenerationFilterFunc
 PhysicalParticleContainer::getPairGenerationFilterFunc ()
 {
     BL_PROFILE("PPC::getPairGenerationFunc");
-    PairGenerationFilterFunc filter_func;
-    filter_func.m_opt_depth_runtime_comp = particle_runtime_comps["tau"];
-    return filter_func;
+    return PairGenerationFilterFunc{particle_runtime_comps["tau"]};
 }
 
 #endif

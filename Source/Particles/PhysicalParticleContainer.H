@@ -39,6 +39,14 @@ class PhysicalParticleContainer
     : public WarpXParticleContainer
 {
 public:
+
+    enum PhysicalParticleType{
+        electron,
+        positron,
+        photon,
+        other
+    };
+
     PhysicalParticleContainer (amrex::AmrCore* amr_core,
                                int ispecies,
                                const std::string& name);
@@ -340,13 +348,15 @@ protected:
     //This function return true if the PhysicalParticleContainer contains electrons
     //or positrons, false otherwise
 
-    virtual bool AmIAPhoton () override;
-    virtual bool AmIAnElectron () override;
-    virtual bool AmIAPositron () override;
 
     //When true PhysicalParticleContainer tries to use a pusher including
     //radiation reaction
     bool do_classical_radiation_reaction = false;
+
+    PhysicalParticleType m_my_type = PhysicalParticleType::other;
+    bool AmIAPhoton () {return (m_my_type == PhysicalParticleType::photon);};
+    bool AmIAnElectron () {return (m_my_type == PhysicalParticleType::electron);};
+    bool AmIAPositron () {return (m_my_type == PhysicalParticleType::positron);};
 
 
 #ifdef WARPX_QED
