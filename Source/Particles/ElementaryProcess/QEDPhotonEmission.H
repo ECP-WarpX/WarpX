@@ -97,7 +97,7 @@ public:
     * @param[in] target_opt_depth_runtime_comp index of the optical depth component of target species
     * @param[in] opt_depth_functor functor to initialize the optical depth of the target species
     */
-    void enable_opt_depth_for_target(int target_opt_depth_runtime_comp,
+    void enable_opt_depth_for_target(int const target_opt_depth_runtime_comp,
      const BreitWheelerGetOpticalDepth&& opt_depth_functor)
     {
         m_target_has_breit_wheeler = true;
