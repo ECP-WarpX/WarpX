@@ -118,29 +118,30 @@ public:
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (DstData& dst, SrcData& src, int i_src, int i_dst) const noexcept
     {
+        using namespace amrex;
 
-        constexpr amrex::ParticleReal me = PhysConst::m_e;
-        constexpr amrex::ParticleReal one_over_me = 1._prt/me;
+        constexpr ParticleReal me = PhysConst::m_e;
+        constexpr ParticleReal one_over_me = 1._prt/me;
 
-        const amrex::ParticleReal w = src.m_rdata[PIdx::w][i_src];
-        const amrex::ParticleReal ux = src.m_rdata[PIdx::ux][i_src];
-        const amrex::ParticleReal uy = src.m_rdata[PIdx::uy][i_src];
-        const amrex::ParticleReal uz = src.m_rdata[PIdx::uz][i_src];
-        const amrex::ParticleReal ex = src.m_rdata[PIdx::Ex][i_src];
-        const amrex::ParticleReal ey = src.m_rdata[PIdx::Ey][i_src];
-        const amrex::ParticleReal ez = src.m_rdata[PIdx::Ez][i_src];
-        const amrex::ParticleReal bx = src.m_rdata[PIdx::Bx][i_src];
-        const amrex::ParticleReal by = src.m_rdata[PIdx::By][i_src];
-        const amrex::ParticleReal bz = src.m_rdata[PIdx::Bz][i_src];
+        const ParticleReal w = src.m_rdata[PIdx::w][i_src];
+        const ParticleReal ux = src.m_rdata[PIdx::ux][i_src];
+        const ParticleReal uy = src.m_rdata[PIdx::uy][i_src];
+        const ParticleReal uz = src.m_rdata[PIdx::uz][i_src];
+        const ParticleReal ex = src.m_rdata[PIdx::Ex][i_src];
+        const ParticleReal ey = src.m_rdata[PIdx::Ey][i_src];
+        const ParticleReal ez = src.m_rdata[PIdx::Ez][i_src];
+        const ParticleReal bx = src.m_rdata[PIdx::Bx][i_src];
+        const ParticleReal by = src.m_rdata[PIdx::By][i_src];
+        const ParticleReal bz = src.m_rdata[PIdx::Bz][i_src];
 
         auto px = ux*me;
         auto py = uy*me;
         auto pz = uz*me;
 
-        auto g_w = amrex::ParticleReal{0.0};
-        auto g_px = amrex::ParticleReal{0.0};
-        auto g_py = amrex::ParticleReal{0.0};
-        auto g_pz = amrex::ParticleReal{0.0};
+        auto g_w = ParticleReal{0.0};
+        auto g_px = ParticleReal{0.0};
+        auto g_py = ParticleReal{0.0};
+        auto g_pz = ParticleReal{0.0};
 
         m_emission_functor.operator()<1>(
             &px, &py, &pz,
