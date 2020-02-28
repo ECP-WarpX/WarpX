@@ -1,0 +1,10 @@
+target_sources(WarpX
+  PRIVATE
+    Average.cpp
+    Interpolate.cpp
+    IntervalsParser.cpp
+    WarpXAlgorithmSelection.cpp
+    WarpXMovingWindow.cpp
+    WarpXTagging.cpp
+    WarpXUtil.cpp
+)
