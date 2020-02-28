@@ -5,22 +5,22 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "PhotonParticleContainer.H"
+#include "Utils/WarpXConst.H"
+#include "WarpX.H"
+
+// Import low-level single-particle kernels
+#include "Particles/Pusher/UpdatePositionPhoton.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+
+#ifdef _OPENMP
+#   include <omp.h>
+#endif
+
 #include <limits>
 #include <sstream>
 #include <algorithm>
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
-#include <PhotonParticleContainer.H>
-#include <WarpX.H>
-#include <WarpXConst.H>
-
-
-// Import low-level single-particle kernels
-#include <UpdatePositionPhoton.H>
-#include <GetAndSetPosition.H>
 
 using namespace amrex;
 
@@ -65,7 +65,7 @@ void PhotonParticleContainer::InitData()
 }
 
 void
-PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType a_dt_type)
+PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType /*a_dt_type*/)
 {
 
     // This wraps the momentum and position advance so that inheritors can modify the call.
@@ -110,7 +110,7 @@ PhotonParticleContainer::Evolve (int lev,
                                  MultiFab* rho, MultiFab* crho,
                                  const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                  const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                 Real t, Real dt, DtType a_dt_type)
+                                 Real t, Real dt, DtType /*a_dt_type*/)
 {
     // This does gather, push and depose.
     // Push and depose have been re-written for photon,

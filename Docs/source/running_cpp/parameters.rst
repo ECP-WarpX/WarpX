@@ -44,6 +44,19 @@ Overall simulation parameters
 * ``warpx.verbose`` (`0` or `1`)
     Controls how much information is printed to the terminal, when running WarpX.
 
+* ``warpx.random_seed`` (`string` or `int` > 0) optional
+    If provided ``warpx.random_seed = random``, the random seed will be determined
+    using `std::random_device` and `std::clock()`,
+    thus every simulation run produces different random numbers.
+    If provided ``warpx.random_seed = n``, and it is required that `n > 0`,
+    the random seed for each MPI rank is `(mpi_rank+1) * n`,
+    where `mpi_rank` starts from 0.
+    `n = 1` and ``warpx.random_seed = default``
+    produce the default random seed.
+    Note that when GPU threading is used,
+    one should not expect to obtain the same random numbers,
+    even if a fixed ``warpx.random_seed`` is provided.
+
 Setting up the field mesh
 -------------------------
 
@@ -148,6 +161,9 @@ Distribution across MPI ranks and parallelization
 
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
+
+* ``warpx.safe_guard_cells`` (`0` or `1`) optional (default `0`)
+    For developers: run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
 
 Math parser and user-defined constants
 --------------------------------------
@@ -930,6 +946,15 @@ Numerics and algorithms
     See `this section of the FFTW documentation <http://www.fftw.org/fftw3_doc/Planner-Flags.html>`__
     for more information.
 
+* ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
+    Defines the galilean velocity.
+    Non-zero `v_galilean` activates Galilean algorithm, which suppresses the Numerical Cherenkov instability
+    in boosted-frame simulation. This requires the code to be compiled with `USE_PSATD=TRUE`.
+    (see the sub-section Numerical Stability and alternate formulation
+    in a Galilean frame in :doc:`../theory/boosted-frame`).
+    It also requires the use of the `direct` current deposition option
+    `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
+
 * ``warpx.override_sync_int`` (`integer`) optional (default `10`)
     Number of time steps between synchronization of sources (`rho` and `J`) on
     grid nodes at box boundaries. Since the grid nodes at the interface between
@@ -948,6 +973,18 @@ Numerics and algorithms
      Overwrites the actual quantum parameter used in Maxwell's QED equations. Assigning a
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
      Note that this option will only have an effect if the warpx.use_Hybrid_QED flag is also triggered.
+
+ * ``warpx.do_device_synchronize_before_profile`` (`bool`) optional (default `1`)
+    When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
+    This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
+
+ * ``warpx.sort_int`` (`int`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
+     If ``<=0``, do not sort particles. If ``>0``, sort particles by bin every ``sort_int`` iteration.
+     It is turned on on GPUs for performance reasons (to improve memory locality).
+
+ * ``warpx.sort_bin_size`` (list of `int`) optional (default ``4 4 4``)
+     If ``sort_int > 0`` particles are sorted in bins of ``sort_bin_size`` cells.
+     In 2D, only the first two elements are read.
 
 Boundary conditions
 -------------------

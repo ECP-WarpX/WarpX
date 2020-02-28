@@ -6,14 +6,16 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <WarpX.H>
-#include <WarpX_f.H>
+#include "WarpX.H"
+#include "FortranInterface/WarpX_f.H"
+
 
 namespace
 {
     const std::string level_prefix {"Level_"};
 }
 
+#ifdef WARPX_DO_ELECTROSTATIC
 using namespace amrex;
 
 void
@@ -21,7 +23,7 @@ WarpX::EvolveES (int numsteps) {
 
     amrex::Print() << "Running in electrostatic mode \n";
 
-    BL_PROFILE("WarpX::EvolveES()");
+    WARPX_PROFILE("WarpX::EvolveES()");
     Real cur_time = t_new[0];
     static int last_plot_file_step = 0;
     static int last_check_file_step = 0;
@@ -213,3 +215,4 @@ void WarpX::getLevelMasks(Vector<std::unique_ptr<FabArray<BaseFab<int> > > >& ma
         }
     }
 }
+#endif // WARPX_DO_ELECTROSTATIC

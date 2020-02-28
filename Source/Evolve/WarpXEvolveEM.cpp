@@ -1,36 +1,36 @@
 /* Copyright 2019-2020 Andrew Myers, Ann Almgren, Aurore Blelly
- * Axel Huebl, Burlen Loring, David Grote
- * Glenn Richardson, Jean-Luc Vay, Luca Fedeli
- * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
- * Weiqun Zhang, Yinjian Zhao
+ *                     Axel Huebl, Burlen Loring, David Grote
+ *                     Glenn Richardson, Jean-Luc Vay, Luca Fedeli
+ *                     Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+ *                     Weiqun Zhang, Yinjian Zhao
  *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <cmath>
-#include <limits>
-
-#include <WarpX.H>
-#include <WarpX_QED_K.H>
-#include <WarpX_QED_Field_Pushers.cpp>
-#include <WarpXConst.H>
-#include <WarpXUtil.H>
-#include <WarpXAlgorithmSelection.H>
+#include "WarpX.H"
+#include "FieldSolver/WarpX_QED_K.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #ifdef WARPX_USE_PY
-#include <WarpX_py.H>
+#   include "Python/WarpX_py.H"
 #endif
 
 #ifdef BL_USE_SENSEI_INSITU
-#include <AMReX_AmrMeshInSituBridge.H>
+#   include <AMReX_AmrMeshInSituBridge.H>
 #endif
+
+#include <cmath>
+#include <limits>
+
 
 using namespace amrex;
 
 void
 WarpX::EvolveEM (int numsteps)
 {
-    BL_PROFILE("WarpX::EvolveEM()");
+    WARPX_PROFILE("WarpX::EvolveEM()");
 
     Real cur_time = t_new[0];
     static int last_plot_file_step = 0;
@@ -178,20 +178,36 @@ WarpX::EvolveEM (int numsteps)
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
         // We might need to move j because we are going to make a plotfile.
 
+        ShiftGalileanBoundary();
+
         int num_moved = MoveWindow(move_j);
 
+#ifdef WARPX_DO_ELECTROSTATIC
+        // Electrostatic solver: particles can move by an arbitrary number of cells
+        mypc->Redistribute();
+#else
+        // Electromagnetic solver: due to CFL condition, particles can
+        // only move by one or two cells per time step
         if (max_level == 0) {
-            int num_redistribute_ghost = num_moved + 1;
+            int num_redistribute_ghost = num_moved;
+            if ((v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)) {
+                // Galilean algorithm ; particles can move by up to 2 cells
+                num_redistribute_ghost += 2;
+            } else {
+                // Standard algorithm ; particles can move by up to 1 cell
+                num_redistribute_ghost += 1;
+            }
             mypc->RedistributeLocal(num_redistribute_ghost);
         }
         else {
             mypc->Redistribute();
         }
+#endif
 
         bool to_sort = (sort_int > 0) && ((step+1) % sort_int == 0);
         if (to_sort) {
             amrex::Print() << "re-sorting particles \n";
-            mypc->SortParticlesByCell();
+            mypc->SortParticlesByBin(sort_bin_size);
         }
 
         amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
@@ -405,6 +421,8 @@ WarpX::OneStep_nosub (Real cur_time)
     }
     // E and B are up-to-date in the domain, but all guard cells are
     // outdated.
+    if ( safe_guard_cells )
+        FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
 #endif
 }
 
@@ -518,6 +536,8 @@ WarpX::OneStep_sub1 (Real curtime)
         FillBoundaryE(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
     }
 
+    if ( safe_guard_cells )
+        FillBoundaryF(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
     FillBoundaryB(fine_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 
     // v) Push the fields on the coarse patch and mother grid
@@ -558,7 +578,11 @@ WarpX::OneStep_sub1 (Real curtime)
             FillBoundaryF(coarse_lev, PatchType::fine, IntVect::TheZeroVector());
         }
         DampPML(coarse_lev, PatchType::fine);
+        if ( safe_guard_cells )
+            FillBoundaryE(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
     }
+    if ( safe_guard_cells )
+        FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
 }
 
 void

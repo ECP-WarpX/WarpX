@@ -10,7 +10,7 @@
 #ifndef WARPX_WarpXParticleContainer_H_
 #define WARPX_WarpXParticleContainer_H_
 
-#include "WarpXDtType.H"
+#include "Evolve/WarpXDtType.H"
 
 #include <AMReX_Particles.H>
 #include <AMReX_AmrCore.H>
@@ -315,7 +315,7 @@ public:
     amrex::ParticleReal getMass () const {return mass;}
 
 protected:
-
+    amrex::Array<amrex::Real,3> v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
     std::map<std::string, int> particle_runtime_comps;
