@@ -123,6 +123,7 @@ public:
     void operator() (DstData& dst1, DstData& dst2, const SrcData& src,
         int const i_src, int const i_dst1, int const i_dst2) const noexcept
     {
+         using namespace amrex;
 
         constexpr amrex::ParticleReal me = PhysConst::m_e;
         constexpr amrex::ParticleReal one_over_me = 1._prt/me;
