@@ -20,4 +20,4 @@ Please acknowledge the role that WarpX played in your research by adding the fol
 
     <div id="ref-VayNIM2018">
 
-Vay JL, Almgren A, Bell J, Ge L, Grote DP, Hogan M, Kononenko O, Lehe R, Myers A, Ng C, Park J. **Warp-X: A new exascale computing platform for beam–plasma simulations**. *Nuclear Instruments and Methods in Physics Research Section A: Accelerators, Spectrometers, Detectors and Associated Equipment*. 2018, 909, pp.476-479.. https://doi.org/10.1016/j.nima.2018.01.035
+Vay JL, Almgren A, Bell J, Ge L, Grote DP, Hogan M, Kononenko O, Lehe R, Myers A, Ng C, Park J. **Warp-X: A new exascale computing platform for beam–plasma simulations**. *Nuclear Instruments and Methods in Physics Research Section A: Accelerators, Spectrometers, Detectors and Associated Equipment*. 2018, 909, pp.476-479. https://doi.org/10.1016/j.nima.2018.01.035
