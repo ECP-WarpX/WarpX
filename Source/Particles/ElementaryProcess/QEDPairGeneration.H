@@ -90,7 +90,7 @@ public:
     */
     void enable_opt_depth_for_targets(const bool enable1, const bool enable2,
      const int target1_opt_depth_runtime_comp, const int target2_opt_depth_runtime_comp,
-     const QuantumSynchrotronGetOpticalDepth&& opt_depth_functor)
+     const QuantumSynchrotronGetOpticalDepth opt_depth_functor)
     {
         if(enable1){
             m_target1_has_quantum_sync = true;
