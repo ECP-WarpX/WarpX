@@ -299,7 +299,6 @@ protected:
     std::shared_ptr<QuantumSynchrotronEngine> m_shr_p_qs_engine;
     //_______________________________
 
-
     /**
      * Initialize QED engines and provides smart pointers
      * to species who need QED processes
