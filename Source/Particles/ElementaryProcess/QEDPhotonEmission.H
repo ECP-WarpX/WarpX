@@ -83,7 +83,7 @@ public:
     PhotonEmissionTransformFunc(
         QuantumSynchrotronGetOpticalDepth&& opt_depth_functor,
         int const opt_depth_runtime_comp,
-        QuantumSynchrotronGeneratePhotonAndUpdateMomentum emission_functor
+        QuantumSynchrotronGeneratePhotonAndUpdateMomentum const emission_functor
         ):
         m_opt_depth_functor{opt_depth_functor},
         m_opt_depth_runtime_comp{opt_depth_runtime_comp},
