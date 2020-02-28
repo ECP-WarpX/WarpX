@@ -1077,7 +1077,6 @@ void MultiParticleContainer::doQedBreitWheeler()
         auto Filter    = phys_pc_ptr->getPairGenerationFilterFunc();
         auto CopyEle      = copy_factory_ele.getSmartCopy();
         auto CopyPos      = copy_factory_pos.getSmartCopy();
-        //auto Transform = IonizationTransformFunc();
 
         const auto pair_gen_functor = m_shr_p_bw_engine->build_pair_functor();
         auto Transform = PairGenerationTransformFunc(pair_gen_functor);
