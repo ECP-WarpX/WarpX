@@ -354,7 +354,7 @@ protected:
     bool do_classical_radiation_reaction = false;
 
     PhysicalParticleType m_my_type = PhysicalParticleType::other;
-    bool AmIAPhoton () {return (m_my_type == PhysicalParticleType::photon);};
+    bool AmIAPhoton () override {return (m_my_type == PhysicalParticleType::photon);};
     bool AmIAnElectron () override {return (m_my_type == PhysicalParticleType::electron);};
     bool AmIAPositron () override {return (m_my_type == PhysicalParticleType::positron);};
 
