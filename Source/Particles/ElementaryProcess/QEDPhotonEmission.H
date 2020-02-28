@@ -81,7 +81,7 @@ public:
     * @param[in] emission_functor functor to generate photons and update momentum of the source particles
     */
     PhotonEmissionTransformFunc(
-        QuantumSynchrotronGetOpticalDepth&& opt_depth_functor,
+        QuantumSynchrotronGetOpticalDepth opt_depth_functor,
         int const opt_depth_runtime_comp,
         QuantumSynchrotronGeneratePhotonAndUpdateMomentum const emission_functor
         ):
