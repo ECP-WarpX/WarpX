@@ -356,7 +356,7 @@ protected:
     PhysicalParticleType m_my_type = PhysicalParticleType::other;
     bool AmIAPhoton () {return (m_my_type == PhysicalParticleType::photon);};
     bool AmIAnElectron () {return (m_my_type == PhysicalParticleType::electron);};
-    bool AmIAPositron () {return (m_my_type == PhysicalParticleType::positron);};
+    bool AmIAPositron () override {return (m_my_type == PhysicalParticleType::positron);};
 
 #ifdef WARPX_QED
     // A flag to enable quantum_synchrotron process for leptons
