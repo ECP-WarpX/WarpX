@@ -1062,7 +1062,7 @@ void MultiParticleContainer::doQedBreitWheeler()
     // in pc_product_ele and positrons in pc_product_pos
 
     for (auto& pc_source : allcontainers){
-        if(!pc_source->has_breit_wheeler()){ continue; }
+        if(!pc_source->has_breit_wheeler()) continue;
 
         // Get product species
         auto& pc_product_ele =
