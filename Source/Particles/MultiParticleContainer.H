@@ -281,9 +281,9 @@ protected:
 
         MFItInfoCheckTiling(pc_src, pc_dsts...);
 
-    if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
-        info.EnableTiling(pc_src.tile_size);
-    }
+        if (pc_src.do_tiling && amrex::Gpu::notInLaunchRegion()) {
+            info.EnableTiling(pc_src.tile_size);
+        }
 
 #ifdef _OPENMP
         info.SetDynamic(true);
