@@ -33,7 +33,7 @@ public:
     *
     * @param[in] opt_depth_runtime_comp Index of the optical depth component
     */
-    PhotonEmissionFilterFunc(int opt_depth_runtime_comp):
+    PhotonEmissionFilterFunc(int const opt_depth_runtime_comp):
         m_opt_depth_runtime_comp{opt_depth_runtime_comp}
     {}
 
