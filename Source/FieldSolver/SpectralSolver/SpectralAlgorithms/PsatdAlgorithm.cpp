@@ -255,7 +255,7 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
         });
     }
 
-    // Backward Fourier transform of J and rho
+    // Backward Fourier transform of J
     field_data.BackwardTransform( *current[0], Idx::Jx, 0 );
     field_data.BackwardTransform( *current[1], Idx::Jy, 0 );
     field_data.BackwardTransform( *current[2], Idx::Jz, 0 );

@@ -372,12 +372,10 @@ WarpX::OneStep_nosub (Real cur_time)
         // Correct current on fine and coarse patch
         for ( int lev = 0; lev <= finest_level; ++lev )
         {
-            SpectralSolver& ss_fp = *spectral_solver_fp[lev];
-            ss_fp.CurrentCorrection( current_fp[lev], rho_fp[lev] );
+            spectral_solver_fp[lev]->CurrentCorrection( current_fp[lev], rho_fp[lev] );
             if ( spectral_solver_cp[lev] )
             {
-                SpectralSolver& ss_cp = *spectral_solver_cp[lev];
-                ss_cp.CurrentCorrection( current_cp[lev], rho_cp[lev] );
+                spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
             }
         }
     }
