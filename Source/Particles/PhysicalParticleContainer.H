@@ -348,7 +348,6 @@ protected:
     //This function return true if the PhysicalParticleContainer contains electrons
     //or positrons, false otherwise
 
-
     //When true PhysicalParticleContainer tries to use a pusher including
     //radiation reaction
     bool do_classical_radiation_reaction = false;
