@@ -119,7 +119,7 @@ public:
     void operator() (DstData& dst, SrcData& src, int i_src, int i_dst) const noexcept
     {
 
-        const amrex::ParticleReal me = PhysConst::m_e;
+        constexpr amrex::ParticleReal me = PhysConst::m_e;
         const amrex::ParticleReal one_over_me = 1./me;
 
         const amrex::ParticleReal w = src.m_rdata[PIdx::w][i_src];
