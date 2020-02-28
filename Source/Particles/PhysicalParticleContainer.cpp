@@ -2387,14 +2387,14 @@ set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine> ptr)
 PhotonEmissionFilterFunc
 PhysicalParticleContainer::getPhotonEmissionFilterFunc ()
 {
-    BL_PROFILE("PPC::getPhotonEmissionFunc");
+    WARPX_PROFILE("PPC::getPhotonEmissionFunc");
     return PhotonEmissionFilterFunc{particle_runtime_comps["tau"]};
 }
 
 PairGenerationFilterFunc
 PhysicalParticleContainer::getPairGenerationFilterFunc ()
 {
-    BL_PROFILE("PPC::getPairGenerationFunc");
+    WARPX_PROFILE("PPC::getPairGenerationFunc");
     return PairGenerationFilterFunc{particle_runtime_comps["tau"]};
 }
 

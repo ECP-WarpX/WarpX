@@ -1045,7 +1045,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 
 void MultiParticleContainer::doQedEvents()
 {
-    BL_PROFILE("MPC::doQedEvents");
+    WARPX_PROFILE("MPC::doQedEvents");
 
     doQedBreitWheeler();
     doQedQuantumSync();
@@ -1053,7 +1053,7 @@ void MultiParticleContainer::doQedEvents()
 
 void MultiParticleContainer::doQedBreitWheeler()
 {
-    BL_PROFILE("MPC::doQedEvents::doQedBreitWheeler");
+    WARPX_PROFILE("MPC::doQedEvents::doQedBreitWheeler");
 
     // Loop over all species.
     // Photons undergoing Breit Wheeler process create electrons
@@ -1135,7 +1135,7 @@ void MultiParticleContainer::doQedBreitWheeler()
 
 void MultiParticleContainer::doQedQuantumSync()
 {
-    BL_PROFILE("MPC::doQedEvents::doQedQuantumSync");
+    WARPX_PROFILE("MPC::doQedEvents::doQedQuantumSync");
 
     // Loop over all species.
     // Electrons or positrons undergoing Quantum photon emission process
