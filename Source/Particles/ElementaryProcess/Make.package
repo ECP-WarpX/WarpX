@@ -3,6 +3,7 @@ CEXE_headers += Ionization.H
 ifeq ($(QED),TRUE)
     CEXE_headers += QEDPairGeneration.H
     CEXE_headers += QEDPhotonEmission.H
+    include $(WARPX_HOME)/Source/Particles/ElementaryProcess/QEDInternals/Make.package
 endif
 
 INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/Particles/ElementaryProcess/
