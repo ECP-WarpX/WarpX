@@ -29,7 +29,6 @@ interpolation.nox = 3
 interpolation.noy = 3
 interpolation.noz = 3
 
-warpx.do_current_correction = 1
 
 #################################
 ############ PLASMA #############

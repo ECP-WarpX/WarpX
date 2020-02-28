@@ -25,7 +25,6 @@ warpx.use_filter = 1
 warpx.cfl = 1.
 warpx.do_pml = 0
 warpx.use_hybrid_QED = 1
-warpx.do_current_correction = 1
 
 particles.nspecies = 0
 
