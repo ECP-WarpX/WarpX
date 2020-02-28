@@ -18,6 +18,3 @@ ifeq ($(QED_TABLE_GEN),TRUE)
     CEXE_sources += BreitWheelerEngineTableBuilder.cpp
     CEXE_sources += QuantumSyncEngineTableBuilder.cpp
 endif
-
-INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/Particles/ElementaryProcess/QEDInternals/
-VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Particles/ElementaryProcess/QEDInternals/
