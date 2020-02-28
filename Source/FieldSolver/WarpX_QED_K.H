@@ -4,6 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+
 #ifndef WarpX_QED_K_h
 #define WarpX_QED_K_h
 
