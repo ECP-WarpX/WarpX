@@ -1,7 +1,7 @@
 Acknowledge WarpX
 =================
 
-Please acknowledge the role that WarpX played in your research by adding the following sentence to your publications, it helps contributors keep track of users and promote the project:
+Please acknowledge the role that WarpX played in your research by adding the following sentence to your publications, it helps contributors keep in touch with the community and promote the project.
 
 **Plain text:**
 
@@ -18,7 +18,6 @@ Please acknowledge the role that WarpX played in your research by adding the fol
 
 .. raw:: html
 
-    <div id="ref-VayAAC2010">
+    <div id="ref-VayNIM2018">
 
-Vay, J -. L, C G R Geddes, C Benedetti, D L Bruhwiler, E Cormier-Michel, B M Cowan, J R Cary, and D P Grote. 2010. “Modeling Laser Wakefield Accelerators in A Lorentz Boosted Frame.” *Aip Conference Proceedings* 1299: 244–49. https://doi.org/10.1063/1.3520322.
-
+Vay JL, Almgren A, Bell J, Ge L, Grote DP, Hogan M, Kononenko O, Lehe R, Myers A, Ng C, Park J. **Warp-X: A new exascale computing platform for beam–plasma simulations**. *Nuclear Instruments and Methods in Physics Research Section A: Accelerators, Spectrometers, Detectors and Associated Equipment*. 2018, 909, pp.476-479.. https://doi.org/10.1016/j.nima.2018.01.035
