@@ -55,7 +55,7 @@ public:
     }
 
 private:
-    int m_opt_depth_runtime_comp;
+    int m_opt_depth_runtime_comp /*!< Index of the optical depth component of the source species*/;
 };
 
 /**
