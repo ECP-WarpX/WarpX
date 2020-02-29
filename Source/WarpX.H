@@ -205,8 +205,8 @@ public:
         if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
             if (m_instance) {
             return m_instance->costs[lev].get();
-        } else {
-            return nullptr;
+            } else {
+                return nullptr;
             }
         } else {
             return nullptr;
