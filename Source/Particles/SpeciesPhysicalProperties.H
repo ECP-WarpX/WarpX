@@ -18,57 +18,60 @@
 
 enum struct PhysicalSpecies{unspecified=0, electron, positron, photon, hydrogen};
 
-static PhysicalSpecies from_string(std::string species)
+namespace species
 {
-    if( species=="unspecified" )
+    static PhysicalSpecies from_string(std::string species)
+    {
+        if( species=="unspecified" )
+            return PhysicalSpecies::unspecified;
+        if( species=="electron" )
+            return PhysicalSpecies::electron;
+        if( species=="positron" )
+            return PhysicalSpecies::positron;
+        if( species=="photon" )
+            return PhysicalSpecies::photon;
+        if( species=="hydrogen" )
+            return PhysicalSpecies::hydrogen;
+        amrex::Abort("unknown PhysicalSpecies");
         return PhysicalSpecies::unspecified;
-    if( species=="electron" )
-        return PhysicalSpecies::electron;
-    if( species=="positron" )
-        return PhysicalSpecies::positron;
-    if( species=="photon" )
-        return PhysicalSpecies::photon;
-    if( species=="hydrogen" )
-        return PhysicalSpecies::hydrogen;
-    amrex::Abort("unknown PhysicalSpecies");
-    return PhysicalSpecies::unspecified;
-}
-
-static amrex::Real get_charge (PhysicalSpecies ps)
-{
-    switch(ps) {
-    case PhysicalSpecies::unspecified:
-        return std::numeric_limits<amrex::Real>::quiet_NaN();
-    case PhysicalSpecies::electron:
-        return -PhysConst::q_e;
-    case PhysicalSpecies::positron:
-        return PhysConst::q_e;
-    case PhysicalSpecies::photon:
-        return 0.;
-    case PhysicalSpecies::hydrogen:
-        return PhysConst::q_e;
-    default:
-        amrex::Abort("unknown PhysicalSpecies");
-        return 0.;
     }
-}
 
-static amrex::Real get_mass (PhysicalSpecies ps)
-{
-    switch(ps) {
-    case PhysicalSpecies::unspecified:
-        return std::numeric_limits<amrex::Real>::quiet_NaN();
-    case PhysicalSpecies::electron:
-        return PhysConst::m_e;
-    case PhysicalSpecies::positron:
-        return PhysConst::m_e;
-    case PhysicalSpecies::photon:
-        return 0.;
-    case PhysicalSpecies::hydrogen:
-        return PhysConst::m_p;
-    default:
-        amrex::Abort("unknown PhysicalSpecies");
-        return 0.;
+    static amrex::Real get_charge (PhysicalSpecies ps)
+    {
+        switch(ps) {
+        case PhysicalSpecies::unspecified:
+            return std::numeric_limits<amrex::Real>::quiet_NaN();
+        case PhysicalSpecies::electron:
+            return -PhysConst::q_e;
+        case PhysicalSpecies::positron:
+            return PhysConst::q_e;
+        case PhysicalSpecies::photon:
+            return 0.;
+        case PhysicalSpecies::hydrogen:
+            return PhysConst::q_e;
+        default:
+            amrex::Abort("unknown PhysicalSpecies");
+            return 0.;
+        }
+    }
+
+    static amrex::Real get_mass (PhysicalSpecies ps)
+    {
+        switch(ps) {
+        case PhysicalSpecies::unspecified:
+            return std::numeric_limits<amrex::Real>::quiet_NaN();
+        case PhysicalSpecies::electron:
+            return PhysConst::m_e;
+        case PhysicalSpecies::positron:
+            return PhysConst::m_e;
+        case PhysicalSpecies::photon:
+            return 0.;
+        case PhysicalSpecies::hydrogen:
+            return PhysConst::m_p;
+        default:
+            amrex::Abort("unknown PhysicalSpecies");
+            return 0.;
+        }
     }
 }
 
