@@ -1,36 +1,36 @@
 /* Copyright 2019-2020 Andrew Myers, Ann Almgren, Aurore Blelly
- * Axel Huebl, Burlen Loring, David Grote
- * Glenn Richardson, Jean-Luc Vay, Luca Fedeli
- * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
- * Weiqun Zhang, Yinjian Zhao
+ *                     Axel Huebl, Burlen Loring, David Grote
+ *                     Glenn Richardson, Jean-Luc Vay, Luca Fedeli
+ *                     Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+ *                     Weiqun Zhang, Yinjian Zhao
  *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <cmath>
-#include <limits>
-
-#include <WarpX.H>
-#include <WarpX_QED_K.H>
-#include <WarpX_QED_Field_Pushers.cpp>
-#include <WarpXConst.H>
-#include <WarpXUtil.H>
-#include <WarpXAlgorithmSelection.H>
+#include "WarpX.H"
+#include "FieldSolver/WarpX_QED_K.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #ifdef WARPX_USE_PY
-#include <WarpX_py.H>
+#   include "Python/WarpX_py.H"
 #endif
 
 #ifdef BL_USE_SENSEI_INSITU
-#include <AMReX_AmrMeshInSituBridge.H>
+#   include <AMReX_AmrMeshInSituBridge.H>
 #endif
+
+#include <cmath>
+#include <limits>
+
 
 using namespace amrex;
 
 void
 WarpX::EvolveEM (int numsteps)
 {
-    BL_PROFILE("WarpX::EvolveEM()");
+    WARPX_PROFILE("WarpX::EvolveEM()");
 
     Real cur_time = t_new[0];
     static int last_plot_file_step = 0;
@@ -38,7 +38,7 @@ WarpX::EvolveEM (int numsteps)
     static int last_check_file_step = 0;
     static int last_insitu_step = 0;
 
-    if (do_compute_max_step_from_zmax){
+    if (do_compute_max_step_from_zmax) {
         computeMaxStepBoostAccelerator(geom[0]);
     }
 
@@ -61,25 +61,36 @@ WarpX::EvolveEM (int numsteps)
         if (warpx_py_beforestep) warpx_py_beforestep();
 #endif
 
-        if (costs[0] != nullptr)
-        {
+        MultiFab* cost = WarpX::getCosts(0);
+        amrex::Vector<amrex::Real>* cost_heuristic = WarpX::getCostsHeuristic(0);
+        if (cost != nullptr || cost_heuristic != nullptr) {
 #ifdef WARPX_USE_PSATD
             amrex::Abort("LoadBalance for PSATD: TODO");
 #endif
-
             if (step > 0 && (step+1) % load_balance_int == 0)
             {
                 LoadBalance();
                 // Reset the costs to 0
-                for (int lev = 0; lev <= finest_level; ++lev) {
-                    costs[lev]->setVal(0.0);
+                for (int lev = 0; lev <= finest_level; ++lev)
+                {
+                    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+                    {
+                        costs[lev]->setVal(0.0);
+                    } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
+                    {
+                        costs_heuristic[lev]->assign((*costs_heuristic[lev]).size(), 0.0);
+                    }
                 }
             }
-
-            for (int lev = 0; lev <= finest_level; ++lev) {
-                // Perform running average of the costs
-                // (Giving more importance to most recent costs)
-                (*costs[lev].get()).mult( (1. - 2./load_balance_int) );
+            for (int lev = 0; lev <= finest_level; ++lev)
+            {
+                MultiFab* cost = WarpX::getCosts(lev);
+                if (cost)
+                {
+                    // Perform running average of the costs
+                    // (Giving more importance to most recent costs)
+                    cost->mult( (1. - 2./load_balance_int) );
+                }
             }
         }
 
@@ -92,13 +103,13 @@ WarpX::EvolveEM (int numsteps)
             FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
             UpdateAuxilaryData();
             // on first step, push p by -0.5*dt
-            for (int lev = 0; lev <= finest_level; ++lev) {
+            for (int lev = 0; lev <= finest_level; ++lev)
+            {
                 mypc->PushP(lev, -0.5*dt[lev],
                             *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
             }
             is_synchronized = false;
-
         } else {
             // Beyond one step, we have E^{n} and B^{n}.
             // Particles have p^{n-1/2} and x^{n}.
@@ -207,7 +218,7 @@ WarpX::EvolveEM (int numsteps)
         bool to_sort = (sort_int > 0) && ((step+1) % sort_int == 0);
         if (to_sort) {
             amrex::Print() << "re-sorting particles \n";
-            mypc->SortParticlesByCell();
+            mypc->SortParticlesByBin(sort_bin_size);
         }
 
         amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time

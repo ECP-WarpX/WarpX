@@ -8,18 +8,16 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <MultiParticleContainer.H>
+#include "MultiParticleContainer.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
 #include <AMReX_Vector.H>
-
-#include <WarpX.H>
-
-//This is now needed for writing a binary file on disk.
-#include <WarpXUtil.H>
 
 #include <limits>
 #include <algorithm>
 #include <string>
+
 
 using namespace amrex;
 
@@ -414,10 +412,10 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local)
 }
 
 void
-MultiParticleContainer::SortParticlesByCell ()
+MultiParticleContainer::SortParticlesByBin (amrex::IntVect bin_size)
 {
     for (auto& pc : allcontainers) {
-        pc->SortParticlesByCell();
+        pc->SortParticlesByBin(bin_size);
     }
 }
 
@@ -487,14 +485,14 @@ MultiParticleContainer::PostRestart ()
 
 void
 MultiParticleContainer
-::GetLabFrameData (const std::string& snapshot_name,
-                   const int i_lab, const int direction,
+::GetLabFrameData (const std::string& /*snapshot_name*/,
+                   const int /*i_lab*/, const int direction,
                    const Real z_old, const Real z_new,
                    const Real t_boost, const Real t_lab, const Real dt,
                    Vector<WarpXParticleContainer::DiagnosticParticleData>& parts) const
 {
 
-    BL_PROFILE("MultiParticleContainer::GetLabFrameData");
+    WARPX_PROFILE("MultiParticleContainer::GetLabFrameData");
 
     // Loop over particle species
     for (int i = 0; i < nspecies_back_transformed_diagnostics; ++i){
@@ -639,7 +637,7 @@ MultiParticleContainer::getSpeciesID (std::string product_str)
 void
 MultiParticleContainer::doFieldIonization ()
 {
-    BL_PROFILE("MPC::doFieldIonization");
+    WARPX_PROFILE("MPC::doFieldIonization");
 
     // Loop over all species.
     // Ionized particles in pc_source create particles in pc_product
@@ -684,7 +682,7 @@ MultiParticleContainer::doFieldIonization ()
 void
 MultiParticleContainer::doCoulombCollisions ()
 {
-    BL_PROFILE("MPC::doCoulombCollisions");
+    WARPX_PROFILE("MPC::doCoulombCollisions");
 
     for (int i = 0; i < ncollisions; ++i)
     {

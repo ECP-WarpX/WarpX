@@ -5,22 +5,22 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "PhotonParticleContainer.H"
+#include "Utils/WarpXConst.H"
+#include "WarpX.H"
+
+// Import low-level single-particle kernels
+#include "Particles/Pusher/UpdatePositionPhoton.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+
+#ifdef _OPENMP
+#   include <omp.h>
+#endif
+
 #include <limits>
 #include <sstream>
 #include <algorithm>
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
-#include <PhotonParticleContainer.H>
-#include <WarpX.H>
-#include <WarpXConst.H>
-
-
-// Import low-level single-particle kernels
-#include <UpdatePositionPhoton.H>
-#include <GetAndSetPosition.H>
 
 using namespace amrex;
 
@@ -56,7 +56,7 @@ void PhotonParticleContainer::InitData()
 }
 
 void
-PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType a_dt_type)
+PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType /*a_dt_type*/)
 {
 
     // This wraps the momentum and position advance so that inheritors can modify the call.
@@ -101,7 +101,7 @@ PhotonParticleContainer::Evolve (int lev,
                                  MultiFab* rho, MultiFab* crho,
                                  const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                  const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                 Real t, Real dt, DtType a_dt_type)
+                                 Real t, Real dt, DtType /*a_dt_type*/)
 {
     // This does gather, push and depose.
     // Push and depose have been re-written for photon,
@@ -124,7 +124,7 @@ void
 PhotonParticleContainer::EvolveOpticalDepth(
     WarpXParIter& pti,amrex::Real dt)
 {
-     if(!has_breit_wheeler())
+    if(!has_breit_wheeler())
         return;
 
     auto& attribs = pti.GetAttribs();
@@ -141,8 +141,8 @@ PhotonParticleContainer::EvolveOpticalDepth(
     BreitWheelerEvolveOpticalDepth evolve_opt =
         m_shr_p_bw_engine->build_evolve_functor();
 
-    amrex::Real* AMREX_RESTRICT p_tau =
-        pti.GetAttribs(particle_comps["tau"]).dataPtr();
+    amrex::Real* AMREX_RESTRICT p_optical_depth_BW =
+        pti.GetAttribs(particle_comps["optical_depth_BW"]).dataPtr();
 
     const auto me = PhysConst::m_e;
 
@@ -157,8 +157,8 @@ PhotonParticleContainer::EvolveOpticalDepth(
                 px, py, pz,
                 Ex[i], Ey[i], Ez[i],
                 Bx[i], By[i], Bz[i],
-                dt, p_tau[i]);
+                dt, p_optical_depth_BW[i]);
         }
-    );
+        );
 }
 #endif

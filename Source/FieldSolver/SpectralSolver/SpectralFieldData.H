@@ -8,19 +8,24 @@
 #ifndef WARPX_SPECTRAL_FIELD_DATA_H_
 #define WARPX_SPECTRAL_FIELD_DATA_H_
 
-#include <WarpX_ComplexForFFT.H>
-#include <SpectralKSpace.H>
+#include "WarpX_ComplexForFFT.H"
+#include "SpectralKSpace.H"
 #include <AMReX_MultiFab.H>
 
 #include <string>
 
+#ifdef WARPX_USE_PSATD
+#   include <fftw3.h>
+
 // Declare type for spectral fields
 using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
 
-/** Index for the regular fields, when stored in spectral space */
+/** Index for the regular fields, when stored in spectral space:
+ *  - n_fields is automatically the total number of fields
+ *  - divE reuses the memory slot for Bx, since Bx is not used when computing divE
+ */
 struct SpectralFieldIndex {
-  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields };
-  // n_fields is automatically the total number of fields
+  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields, divE=3 };
 };
 
 /** Index for the PML fields, when stored in spectral space */
@@ -85,4 +90,5 @@ class SpectralFieldData
 #endif
 };
 
+#endif // WARPX_USE_PSATD
 #endif // WARPX_SPECTRAL_FIELD_DATA_H_

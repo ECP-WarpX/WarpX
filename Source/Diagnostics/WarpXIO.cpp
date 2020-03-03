@@ -7,28 +7,26 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpX.H"
+#include "FieldIO.H"
+#include "SliceDiagnostic.H"
+
+#ifdef WARPX_USE_OPENPMD
+#   include "Diagnostics/WarpXOpenPMD.H"
+#endif
+
 #include <AMReX_MultiFabUtil.H>
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_FillPatchUtil_F.H>
-
-#include <WarpX.H>
-#include <FieldIO.H>
-
-#include "AMReX_buildInfo.H"
+#include <AMReX_buildInfo.H>
 
 #ifdef BL_USE_SENSEI_INSITU
-#include <AMReX_AmrMeshInSituBridge.H>
+#   include <AMReX_AmrMeshInSituBridge.H>
 #endif
-
-#include "SliceDiagnostic.H"
 
 #ifdef AMREX_USE_ASCENT
-#include <ascent.hpp>
-#include <AMReX_Conduit_Blueprint.H>
-#endif
-
-#ifdef WARPX_USE_OPENPMD
-#   include "WarpXOpenPMD.H"
+#   include <ascent.hpp>
+#   include <AMReX_Conduit_Blueprint.H>
 #endif
 
 
@@ -120,7 +118,7 @@ WarpX::WriteWarpXHeader(const std::string& name) const
 void
 WarpX::WriteCheckPointFile() const
 {
-    BL_PROFILE("WarpX::WriteCheckPointFile()");
+    WARPX_PROFILE("WarpX::WriteCheckPointFile()");
 
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(checkpoint_headerversion);
@@ -189,9 +187,11 @@ WarpX::WriteCheckPointFile() const
             pml[lev]->CheckPoint(amrex::MultiFabFileFullPrefix(lev, checkpointname, level_prefix, "pml"));
         }
 
-        if (costs[lev]) {
-            VisMF::Write(*costs[lev],
-                         amrex::MultiFabFileFullPrefix(lev, checkpointname, level_prefix, "costs"));
+        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+            if (costs[lev]) {
+                VisMF::Write(*costs[lev],
+                             amrex::MultiFabFileFullPrefix(lev, checkpointname, level_prefix, "costs"));
+            }
         }
     }
 
@@ -203,7 +203,7 @@ WarpX::WriteCheckPointFile() const
 void
 WarpX::InitFromCheckpoint ()
 {
-    BL_PROFILE("WarpX::InitFromCheckpoint()");
+    WARPX_PROFILE("WarpX::InitFromCheckpoint()");
 
     amrex::Print() << "  Restart from checkpoint " << restart_chkfile << "\n";
 
@@ -384,13 +384,15 @@ WarpX::InitFromCheckpoint ()
             }
         }
 
-        if (costs[lev]) {
-            const auto& cost_mf_name =
+        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+            if (costs[lev]) {
+                const auto& cost_mf_name =
                 amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "costs");
-            if (VisMF::Exist(cost_mf_name)) {
-                VisMF::Read(*costs[lev], cost_mf_name);
-            } else {
-                costs[lev]->setVal(0.0);
+                if (VisMF::Exist(cost_mf_name)) {
+                    VisMF::Read(*costs[lev], cost_mf_name);
+                } else {
+                    costs[lev]->setVal(0.0);
+                }
             }
         }
     }
@@ -421,7 +423,7 @@ WarpX::InitFromCheckpoint ()
 std::unique_ptr<MultiFab>
 WarpX::GetCellCenteredData() {
 
-    BL_PROFILE("WarpX::GetCellCenteredData");
+    WARPX_PROFILE("WarpX::GetCellCenteredData");
 
     const int ng =  1;
     const int nc = 10;
@@ -461,7 +463,7 @@ void
 WarpX::UpdateInSitu () const
 {
 #if defined(BL_USE_SENSEI_INSITU) || defined(AMREX_USE_ASCENT)
-    BL_PROFILE("WarpX::UpdateInSitu()");
+    WARPX_PROFILE("WarpX::UpdateInSitu()");
 
     // Average the fields from the simulation to the cell centers
     const int ngrow = 1;
@@ -510,7 +512,7 @@ WarpX::UpdateInSitu () const
 
 void
 WarpX::prepareFields(
-        int const step,
+        int const /*step*/,
         Vector<std::string>& varnames,
         Vector<MultiFab>& mf_avg,
         Vector<const MultiFab*>& output_mf,
@@ -535,7 +537,7 @@ WarpX::prepareFields(
 void
 WarpX::WriteOpenPMDFile () const
 {
-    BL_PROFILE("WarpX::WriteOpenPMDFile()");
+    WARPX_PROFILE("WarpX::WriteOpenPMDFile()");
 
 #ifdef WARPX_USE_OPENPMD
     const auto step = istep[0];
@@ -559,7 +561,7 @@ WarpX::WriteOpenPMDFile () const
 void
 WarpX::WritePlotFile () const
 {
-    BL_PROFILE("WarpX::WritePlotFile()");
+    WARPX_PROFILE("WarpX::WritePlotFile()");
 
     const auto step = istep[0];
     const std::string& plotfilename = amrex::Concatenate(plot_file,step);

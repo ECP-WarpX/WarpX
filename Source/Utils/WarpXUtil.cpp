@@ -6,13 +6,15 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <WarpXUtil.H>
-#include <WarpXConst.H>
+#include "WarpXUtil.H"
+#include "WarpXConst.H"
+#include "WarpX.H"
+
 #include <AMReX_ParmParse.H>
-#include <WarpX.H>
 
 #include <cmath>
 #include <fstream>
+
 
 using namespace amrex;
 
@@ -126,7 +128,7 @@ void ConvertLabParamsToBoost()
  * zmin and zmax.
  */
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax){
-    BL_PROFILE("WarpX::NullifyMF()");
+    WARPX_PROFILE("WarpX::NullifyMF()");
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -180,18 +182,13 @@ namespace WarpXUtilIO{
 void Store_parserString(amrex::ParmParse& pp, std::string query_string,
                         std::string& stored_string)
 {
-
-    char cstr[query_string.size()+1];
-    strcpy(cstr, query_string.c_str());
-
     std::vector<std::string> f;
-    pp.getarr(cstr, f);
+    pp.getarr(query_string.c_str(), f);
     stored_string.clear();
     for (auto const& s : f) {
         stored_string += s;
     }
     f.clear();
-
 }
 
 
