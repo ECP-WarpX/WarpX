@@ -98,6 +98,15 @@ class SpectralSolverRZ
             field_data.ApplyFilter(field_index1, field_index2, field_index3);
         };
 
+        /**
+          * \brief Public interface to call the member function ComputeSpectralDivE
+          * of the base class SpectralBaseAlgorithmRZ from objects of class SpectralSolverRZ
+          */
+        void ComputeSpectralDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                                   amrex::MultiFab& divE ) {
+            algorithm->ComputeSpectralDivE( field_data, Efield, divE );
+        };
+
     private:
 
         SpectralHankelKSpace k_space; // Save the instance to initialize filtering

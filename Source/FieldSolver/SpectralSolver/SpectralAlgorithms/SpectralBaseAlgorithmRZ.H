@@ -28,6 +28,13 @@ class SpectralBaseAlgorithmRZ
         // calls the subclass's destructor.
         virtual ~SpectralBaseAlgorithmRZ() {};
 
+        /**
+         * \brief Compute spectral divergence of E
+         */
+        void ComputeSpectralDivE ( SpectralFieldDataHankel& field_data,
+                                   const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                                   amrex::MultiFab& divE );
+
     protected: // Meant to be used in the subclasses
 
         using SpectralCoefficients = amrex::FabArray< amrex::BaseFab <amrex::Real> >;

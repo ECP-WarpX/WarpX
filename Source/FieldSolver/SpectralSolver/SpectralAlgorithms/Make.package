@@ -11,6 +11,7 @@ CEXE_sources += PMLPsatdAlgorithm.cpp
 
 ifeq ($(USE_RZ),TRUE)
   CEXE_headers += SpectralBaseAlgorithmRZ.H
+  CEXE_sources += SpectralBaseAlgorithmRZ.cpp
   CEXE_headers += PsatdAlgorithmRZ.H
   CEXE_sources += PsatdAlgorithmRZ.cpp
 endif
