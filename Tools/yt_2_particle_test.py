@@ -121,8 +121,9 @@ plt.title('Electric field vs displacement (from origin) of weightless particle')
 #Create volume plot of field magnitude at first timestep
 Etot = np.sqrt(np.power(Ex[:,:,:,1],2) + np.power(Ey[:,:,:,1],2) 
              + np.power(Ez[:,:,:,1],2))
+lvl = 5e-9
 verts, faces, __, __ = measure.marching_cubes_lewiner\
-    (Etot[::2,::2,::2],level=E0[-1], spacing=(dx*2, dy*2, dz*2))
+    (Etot[::2,::2,::2], level=lvl, spacing=(dx*2, dy*2, dz*2))
 verts[:,0] = verts[:,0]+x_avg[0]
 verts[:,1] = verts[:,1]+y_avg[0]
 verts[:,2] = verts[:,2]+z_avg[0]
@@ -133,7 +134,10 @@ ax4.plot_trisurf(verts[:,0], verts[:,1], faces, verts[:,2],
 ax4.set_xlim((x_avg[0],x_avg[-1]))
 ax4.set_ylim((y_avg[0],y_avg[-1]))
 ax4.set_zlim((z_avg[0],z_avg[-1]))
-ax4.set_aspect('equal')
+ax4.set_xlabel('x [m]')
+ax4.set_ylabel('y [m]')
+ax4.set_zlabel('z [m]')
+ax4.set_title('E-field magnitude isosurface at |E|=' + str(lvl))
 
 #Create 3d quiver plot of field at first timestep
 fig5 = plt.figure(5)
