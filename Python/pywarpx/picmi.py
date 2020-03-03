@@ -304,8 +304,16 @@ class PseudoRandomLayout(picmistandard.PICMI_PseudoRandomLayout):
 
 
 class BinomialSmoother(picmistandard.PICMI_BinomialSmoother):
+    def init(self, kw):
+        self.use_spectral = kw.pop('warpx_kspace_filter', None)
+        self.use_spectral_compensation = kw.pop('warpx_kspace_filter_compensation', None)
+
     def initialize_inputs(self, solver):
-        pywarpx.warpx.use_filter = 1
+        if self.use_spectral:
+            pywarpx.warpx.use_kspace_filter = 1
+            pywarpx.warpx.use_filter_compensation = self.use_spectral_compensation
+        else:
+            pywarpx.warpx.use_filter = 1
         if self.n_pass is None:
             # If not specified, do at least one pass in each direction.
             self.n_pass = 1
