@@ -133,7 +133,7 @@ void
 PhotonParticleContainer::EvolveOpticalDepth(
     WarpXParIter& pti,amrex::Real dt)
 {
-     if(!has_breit_wheeler())
+    if(!has_breit_wheeler())
         return;
 
     auto& attribs = pti.GetAttribs();
@@ -150,8 +150,8 @@ PhotonParticleContainer::EvolveOpticalDepth(
     BreitWheelerEvolveOpticalDepth evolve_opt =
         m_shr_p_bw_engine->build_evolve_functor();
 
-    amrex::Real* AMREX_RESTRICT p_tau =
-        pti.GetAttribs(particle_comps["tau"]).dataPtr();
+    amrex::Real* AMREX_RESTRICT p_optical_depth_BW =
+        pti.GetAttribs(particle_comps["optical_depth_BW"]).dataPtr();
 
     const auto me = PhysConst::m_e;
 
@@ -166,9 +166,9 @@ PhotonParticleContainer::EvolveOpticalDepth(
                 px, py, pz,
                 Ex[i], Ey[i], Ez[i],
                 Bx[i], By[i], Bz[i],
-                dt, p_tau[i]);
+                dt, p_optical_depth_BW[i]);
         }
-    );
+        );
 }
 
 #endif
