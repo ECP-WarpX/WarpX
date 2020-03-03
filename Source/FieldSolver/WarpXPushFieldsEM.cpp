@@ -697,7 +697,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 Jr_arr(i,j,0,0) -= Jr_arr(-1-i,j,0,0);
             }
             // Apply the inverse volume scaling
-            // Since Jr is never cell centered in r, no need for distinction
+            // Since Jr is never node centered in r, no need for distinction
             // between on axis and off-axis factors
             const amrex::Real r = std::abs(rminr + (i - irmin)*dr);
             Jr_arr(i,j,0,0) /= (2.*MathConst::pi*r);
@@ -712,7 +712,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                     Jr_arr(i,j,0,2*imode) -= ifact*Jr_arr(-1-i,j,0,2*imode);
                 }
                 // Apply the inverse volume scaling
-                // Since Jr is never cell centered in r, no need for distinction
+                // Since Jr is never node centered in r, no need for distinction
                 // between on axis and off-axis factors
                 Jr_arr(i,j,0,2*imode-1) /= (2.*MathConst::pi*r);
                 Jr_arr(i,j,0,2*imode) /= (2.*MathConst::pi*r);
