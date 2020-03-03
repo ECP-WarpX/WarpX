@@ -1081,21 +1081,21 @@ void MultiParticleContainer::doQedBreitWheeler()
 
         if(pc_product_ele->has_quantum_sync() || pc_product_pos->has_quantum_sync()){
 
-            int ele_tau_runtime = 0;
+            int ele_opt_depth_runtime = 0;
             if(pc_product_ele->has_quantum_sync()){
-                ele_tau_runtime =
-                    pc_product_ele->particle_runtime_comps["tau"];
+                ele_opt_depth_runtime =
+                    pc_product_ele->particle_runtime_comps["optical_depth_QSR"];
             }
-            int pos_tau_runtime = 0;
+            int pos_opt_depth_runtime = 0;
             if(pc_product_pos->has_quantum_sync()){
-                pos_tau_runtime =
-                    pc_product_pos->particle_runtime_comps["tau"];
+                pos_opt_depth_runtime =
+                    pc_product_pos->particle_runtime_comps["optical_depth_QSR"];
             }
 
             Transform.enable_opt_depth_for_targets(
                 pc_product_ele->has_quantum_sync(),
                 pc_product_pos->has_quantum_sync(),
-                ele_tau_runtime, pos_tau_runtime,
+                ele_opt_depth_runtime, pos_opt_depth_runtime,
                 m_shr_p_qs_engine->build_optical_depth_functor());
         }
 
@@ -1157,12 +1157,12 @@ void MultiParticleContainer::doQedQuantumSync()
 
         auto Transform = PhotonEmissionTransformFunc(
             m_shr_p_qs_engine->build_optical_depth_functor(),
-            pc_source->particle_runtime_comps["tau"],
+            pc_source->particle_runtime_comps["optical_depth_QSR"],
              m_shr_p_qs_engine->build_phot_em_functor());
 
         if(pc_product_phot->has_breit_wheeler()){
             Transform.enable_opt_depth_for_target(
-                pc_product_phot->particle_runtime_comps["tau"],
+                pc_product_phot->particle_runtime_comps["optical_depth_BW"],
                 m_shr_p_bw_engine->build_optical_depth_functor());
         }
 

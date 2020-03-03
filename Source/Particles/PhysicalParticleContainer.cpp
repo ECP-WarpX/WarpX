@@ -2395,14 +2395,14 @@ PhotonEmissionFilterFunc
 PhysicalParticleContainer::getPhotonEmissionFilterFunc ()
 {
     WARPX_PROFILE("PPC::getPhotonEmissionFunc");
-    return PhotonEmissionFilterFunc{particle_runtime_comps["tau"]};
+    return PhotonEmissionFilterFunc{particle_runtime_comps["optical_depth_QSR"]};
 }
 
 PairGenerationFilterFunc
 PhysicalParticleContainer::getPairGenerationFilterFunc ()
 {
     WARPX_PROFILE("PPC::getPairGenerationFunc");
-    return PairGenerationFilterFunc{particle_runtime_comps["tau"]};
+    return PairGenerationFilterFunc{particle_runtime_comps["optical_depth_BW"]};
 }
 
 #endif
