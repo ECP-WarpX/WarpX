@@ -63,31 +63,31 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
     const Real dy = dx_vec[1];
     const Real dz = dx_vec[2];
 
-	MultiFab *Ex, *Ey, *Ez, *Bx, *By, *Bz, *Jx, *Jy, *Jz;
-	if (patch_type == PatchType::fine)
-	{
-	  Ex = Efield_fp[lev][0].get();
-	  Ey = Efield_fp[lev][1].get();
-	  Ez = Efield_fp[lev][2].get();
-	  Bx = Bfield_fp[lev][0].get();
-	  By = Bfield_fp[lev][1].get();
-	  Bz = Bfield_fp[lev][2].get();
-	  Jx = Bfield_fp[lev][0].get();
-	  Jy = Bfield_fp[lev][1].get();
-	  Jz = Bfield_fp[lev][2].get();
-	}
-	else
-	{
-	  Ex = Efield_cp[lev][0].get();
-	  Ey = Efield_cp[lev][1].get();
-	  Ez = Efield_cp[lev][2].get();
-	  Bx = Bfield_cp[lev][0].get();
-	  By = Bfield_cp[lev][1].get();
-	  Bz = Bfield_cp[lev][2].get();
-	  Jx = Bfield_cp[lev][0].get();
-	  Jy = Bfield_cp[lev][1].get();
-	  Jz = Bfield_cp[lev][2].get();
-	}
+    MultiFab *Ex, *Ey, *Ez, *Bx, *By, *Bz, *Jx, *Jy, *Jz;
+    if (patch_type == PatchType::fine)
+    {
+      Ex = Efield_fp[lev][0].get();
+      Ey = Efield_fp[lev][1].get();
+      Ez = Efield_fp[lev][2].get();
+      Bx = Bfield_fp[lev][0].get();
+      By = Bfield_fp[lev][1].get();
+      Bz = Bfield_fp[lev][2].get();
+      Jx = Bfield_fp[lev][0].get();
+      Jy = Bfield_fp[lev][1].get();
+      Jz = Bfield_fp[lev][2].get();
+    }
+    else
+    {
+      Ex = Efield_cp[lev][0].get();
+      Ey = Efield_cp[lev][1].get();
+      Ez = Efield_cp[lev][2].get();
+      Bx = Bfield_cp[lev][0].get();
+      By = Bfield_cp[lev][1].get();
+      Bz = Bfield_cp[lev][2].get();
+      Jx = Bfield_cp[lev][0].get();
+      Jy = Bfield_cp[lev][1].get();
+      Jz = Bfield_cp[lev][2].get();
+    }
 
     MultiFab* cost = WarpX::getCosts(lev);
     const IntVect& rr = (lev > 0) ? refRatio(lev-1) : IntVect::TheUnitVector();
@@ -169,9 +169,9 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
             tbx,
             [=] AMREX_GPU_DEVICE (int j, int k, int l)
             {
-				warpx_hybrid_QED_push(j,k,l, Exfab, Eyfab, Ezfab, Bxfab, Byfab,
-				    Bzfab, tmpEx, tmpEy, tmpEz, Jxfab, Jyfab, Jzfab, dx, dy, dz,
-				    a_dt, xi_c2);
+                warpx_hybrid_QED_push(j,k,l, Exfab, Eyfab, Ezfab, Bxfab, Byfab,
+                    Bzfab, tmpEx, tmpEy, tmpEz, Jxfab, Jyfab, Jzfab, dx, dy, dz,
+                    a_dt, xi_c2);
             }
         );
 
