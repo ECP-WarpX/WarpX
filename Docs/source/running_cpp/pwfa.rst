@@ -30,6 +30,7 @@ the transverse (x,y) and longitudinal directions.
 Listed below are the key arguments and best-practices relevant for chosing the
 pwfa simulation parameters used in the example.
 
+
 2D Geometry
 -----------
 
@@ -37,6 +38,7 @@ pwfa simulation parameters used in the example.
     simulaions can give valuable physical and numerical insight into the
     simulation requirements and evolution while being much less time consuming
     than the full 3D cartesian or cylindrical geometries.
+
 
 Lorentz boosted frame
 ---------------------
@@ -70,6 +72,12 @@ Resolution
     (dz), i.e. dx > (dz*2*γb).
 
 
+Time step
+---------
+
+    The time step is computed differently depending on the field solver, being
+    computed  (if we
+    would use Yee instead of CKC)
 
 
 (γb=10)
