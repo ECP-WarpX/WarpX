@@ -194,7 +194,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         if (num_particles_per_cell_each_dim[2]<2*n_rz_azimuthal_modes){
             amrex::Abort("Error: For accurate use of WarpX cylindrical gemoetry"
                          + " the number of particles in the theta direction " +
-                         "should be at least 2 times the n_rz_azimuthal_modes "+
+                         "should be at least two times n_rz_azimuthal_modes " +
                          "(Please visit PR # ?? for more information.)");
         }
 
