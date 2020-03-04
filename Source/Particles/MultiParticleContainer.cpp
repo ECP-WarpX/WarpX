@@ -1079,26 +1079,6 @@ void MultiParticleContainer::doQedBreitWheeler()
         const auto pair_gen_functor = m_shr_p_bw_engine->build_pair_functor();
         auto Transform = PairGenerationTransformFunc(pair_gen_functor);
 
-        if(pc_product_ele->has_quantum_sync() || pc_product_pos->has_quantum_sync()){
-
-            int ele_opt_depth_runtime = 0;
-            if(pc_product_ele->has_quantum_sync()){
-                ele_opt_depth_runtime =
-                    pc_product_ele->particle_runtime_comps["optical_depth_QSR"];
-            }
-            int pos_opt_depth_runtime = 0;
-            if(pc_product_pos->has_quantum_sync()){
-                pos_opt_depth_runtime =
-                    pc_product_pos->particle_runtime_comps["optical_depth_QSR"];
-            }
-
-            Transform.enable_opt_depth_for_targets(
-                pc_product_ele->has_quantum_sync(),
-                pc_product_pos->has_quantum_sync(),
-                ele_opt_depth_runtime, pos_opt_depth_runtime,
-                m_shr_p_qs_engine->build_optical_depth_functor());
-        }
-
         pc_source ->defineAllParticleTiles();
         pc_product_pos->defineAllParticleTiles();
         pc_product_ele->defineAllParticleTiles();
@@ -1159,12 +1139,6 @@ void MultiParticleContainer::doQedQuantumSync()
             m_shr_p_qs_engine->build_optical_depth_functor(),
             pc_source->particle_runtime_comps["optical_depth_QSR"],
              m_shr_p_qs_engine->build_phot_em_functor());
-
-        if(pc_product_phot->has_breit_wheeler()){
-            Transform.enable_opt_depth_for_target(
-                pc_product_phot->particle_runtime_comps["optical_depth_BW"],
-                m_shr_p_bw_engine->build_optical_depth_functor());
-        }
 
         pc_source ->defineAllParticleTiles();
         pc_product_phot->defineAllParticleTiles();

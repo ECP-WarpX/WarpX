@@ -12,7 +12,6 @@
 #include "WarpXParticleContainer.H"
 
 #include <BreitWheelerEngineWrapper.H>
-#include <QuantumSyncEngineWrapper.H>
 
 /** @file
  *
@@ -77,36 +76,6 @@ public:
     PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor):
         m_generate_functor{generate_functor}
     {}
-
-    /**
-    * \brief method to set which target species have QED enabled and thus need to initialize
-    * their optical depth component.
-    *
-    * @param[in] enable1 true if target species 1 has QED effects enabled
-    * @param[in] enable2 true if target species 2 has QED effects enabled
-    * @param[in] target1_opt_depth_runtime_comp index of the optical depth component of target species 1
-    * @param[in] target2_opt_depth_runtime_comp index of the optical depth component of target species 2
-    * @param[in] opt_depth_functor functor to initialize the optical depth of the target species
-    */
-    void enable_opt_depth_for_targets(const bool enable1, const bool enable2,
-     const int target1_opt_depth_runtime_comp, const int target2_opt_depth_runtime_comp,
-     const QuantumSynchrotronGetOpticalDepth opt_depth_functor)
-    {
-        if(enable1){
-            m_target1_has_quantum_sync = true;
-            m_target1_opt_depth_runtime_comp = target1_opt_depth_runtime_comp;
-        }
-
-        if(enable2){
-            m_target2_has_quantum_sync = true;
-            m_target2_opt_depth_runtime_comp = target2_opt_depth_runtime_comp;
-        }
-
-        if(enable1 || enable2){
-            m_target_opt_depth_functor = opt_depth_functor;
-        }
-
-    }
 
     /**
     * \brief Functor call. It determines the properties of the generated pair.
@@ -177,31 +146,12 @@ public:
         dst2.m_rdata[PIdx::ux][i_dst2] = p_px*one_over_me;
         dst2.m_rdata[PIdx::uy][i_dst2] = p_py*one_over_me;
         dst2.m_rdata[PIdx::uz][i_dst2] = p_pz*one_over_me;
-
-        //Initialize the optical depth component of the target species if needed.
-        if(m_target1_has_quantum_sync){
-            dst1.m_runtime_rdata[m_target1_opt_depth_runtime_comp][i_dst1] =
-                m_target_opt_depth_functor();
-        }
-
-        if(m_target2_has_quantum_sync){
-            dst2.m_runtime_rdata[m_target2_opt_depth_runtime_comp][i_dst2] =
-                m_target_opt_depth_functor();
-        }
     }
 
 private:
 
     const BreitWheelerGeneratePairs
         m_generate_functor; /*!< A copy of the functor to generate pairs. It contains only pointers to the lookup tables.*/
-
-    bool m_target1_has_quantum_sync = false; /*!< Flag to tell if target species 1 has QED effects enabled*/
-    int m_target1_opt_depth_runtime_comp = 0; /*!< Index of the optical depth component of target species 1*/
-    bool m_target2_has_quantum_sync = false; /*!< Flag to tell if target species 2 has QED effects enabled*/
-    int m_target2_opt_depth_runtime_comp = 0; /*!< Index of the optical depth component of target species 2*/
-    QuantumSynchrotronGetOpticalDepth
-        m_target_opt_depth_functor; /*!< A copy of the functor to initialize the optical depth of the target species.*/
-
 };
 
 #endif //QED_PAIR_GENERATION_H_

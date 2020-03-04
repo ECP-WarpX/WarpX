@@ -91,21 +91,6 @@ public:
         {}
 
     /**
-    * \brief method to set some parameters if the target species has QED effects enabled.
-    * Don't call if this is not the case.
-    *
-    * @param[in] target_opt_depth_runtime_comp index of the optical depth component of target species
-    * @param[in] opt_depth_functor functor to initialize the optical depth of the target species
-    */
-    void enable_opt_depth_for_target(int const target_opt_depth_runtime_comp,
-     const BreitWheelerGetOpticalDepth opt_depth_functor)
-    {
-        m_target_has_breit_wheeler = true;
-        m_target_opt_depth_runtime_comp = target_opt_depth_runtime_comp;
-        m_target_opt_depth_functor = opt_depth_functor;
-    }
-
-    /**
     * \brief Functor call. It determines the properties of the generated photon
     * and updates the momentum of the source particle
     *
@@ -163,14 +148,6 @@ public:
         //Initialize the optical depth component of the source species.
         src.m_runtime_rdata[m_opt_depth_runtime_comp][i_src] =
             m_opt_depth_functor();
-
-        //Initialize the optical depth component of the target species if needed.
-        if(m_target_has_breit_wheeler){
-            dst.m_runtime_rdata[m_target_opt_depth_runtime_comp][i_dst] =
-                m_target_opt_depth_functor();
-        }
-
-
     }
 
 private:
@@ -178,12 +155,7 @@ private:
         m_opt_depth_functor;  /*!< A copy of the functor to initialize the optical depth of the source species. */
     const QuantumSynchrotronGeneratePhotonAndUpdateMomentum
         m_emission_functor;  /*!< A copy of the functor to generate photons. It contains only pointers to the lookup tables.*/
-
-    bool m_target_has_breit_wheeler = false; /*!< Flag to tell if target species has QED effects enabled*/
     const int m_opt_depth_runtime_comp = 0;  /*!< Index of the optical depth component of source species*/
-    int m_target_opt_depth_runtime_comp = 0;  /*!< Index of the optical depth component of target species*/
-    BreitWheelerGetOpticalDepth m_target_opt_depth_functor; /*!< A copy of the functor to initialize the optical depth of the target species.*/
-
 };
 
 
