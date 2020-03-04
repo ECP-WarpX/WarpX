@@ -57,6 +57,14 @@ Overall simulation parameters
     one should not expect to obtain the same random numbers,
     even if a fixed ``warpx.random_seed`` is provided.
 
+* ``warpx.do_electrostatic`` (`0` or `1`; default is `0`)
+    Run WarpX in electrostatic mode. Instead of updating the fields
+    at each iteration with the full Maxwell equations, the fields are
+    instead recomputed at each iteration from the (relativistic) Poisson
+    equation. There is no limitation on the timestep in this case, but
+    electromagnetic effects (e.g. propagation of radiation, lasers, etc.)
+    are not captured.
+
 Setting up the field mesh
 -------------------------
 
@@ -162,6 +170,9 @@ Distribution across MPI ranks and parallelization
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
 
+* ``warpx.safe_guard_cells`` (`0` or `1`) optional (default `0`)
+    For developers: run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
+
 Math parser and user-defined constants
 --------------------------------------
 
@@ -207,11 +218,17 @@ Particle initialization
     particles are pushed in a standard way, using the specified pusher.
     (see the parameter ``<species_name>.zinject_plane`` below)
 
-* ``<species_name>.charge`` (`float`)
-    The charge of one `physical` particle of this species.
+* ``<species_name>.species_type`` (`string`) optional (default `unspecified`)
+    Type of physical species, ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"``.
+    Either this or both ``mass`` and ``charge`` have to be specified.
 
-* ``<species_name>.mass`` (`float`)
+* ``<species_name>.charge`` (`float`) optional (default `NaN`)
+    The charge of one `physical` particle of this species.
+    If ``species_type`` is specified, the charge will be set to the physical value and ``charge`` is optional.
+
+* ``<species_name>.mass`` (`float`) optional (default `NaN`)
     The mass of one `physical` particle of this species.
+    If ``species_type`` is specified, the mass will be set to the physical value and ``mass`` is optional.
 
 * ``<species_name>.injection_style`` (`string`)
     Determines how the particles will be injected in the simulation.
@@ -970,6 +987,18 @@ Numerics and algorithms
      Overwrites the actual quantum parameter used in Maxwell's QED equations. Assigning a
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
      Note that this option will only have an effect if the warpx.use_Hybrid_QED flag is also triggered.
+
+ * ``warpx.do_device_synchronize_before_profile`` (`bool`) optional (default `1`)
+    When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
+    This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
+
+ * ``warpx.sort_int`` (`int`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
+     If ``<=0``, do not sort particles. If ``>0``, sort particles by bin every ``sort_int`` iteration.
+     It is turned on on GPUs for performance reasons (to improve memory locality).
+
+ * ``warpx.sort_bin_size`` (list of `int`) optional (default ``4 4 4``)
+     If ``sort_int > 0`` particles are sorted in bins of ``sort_bin_size`` cells.
+     In 2D, only the first two elements are read.
 
 Boundary conditions
 -------------------

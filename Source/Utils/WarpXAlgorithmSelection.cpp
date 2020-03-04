@@ -6,11 +6,12 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <WarpXAlgorithmSelection.H>
+#include "WarpXAlgorithmSelection.H"
 
-#include <map>
 #include <algorithm>
 #include <cstring>
+#include <map>
+
 
 // Define dictionary with correspondance between user-input strings,
 // and corresponding integer for use inside the code
@@ -51,6 +52,12 @@ const std::map<std::string, int> gathering_algo_to_int = {
     {"default",             GatheringAlgo::EnergyConserving }
 };
 
+const std::map<std::string, int> load_balance_costs_update_algo_to_int = {
+    {"timers",    LoadBalanceCostsUpdateAlgo::Timers },
+    {"heuristic", LoadBalanceCostsUpdateAlgo::Heuristic },
+    {"default",   LoadBalanceCostsUpdateAlgo::Timers }
+};
+
 
 int
 GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
@@ -73,13 +80,15 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = charge_deposition_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "field_gathering")) {
         algo_to_int = gathering_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "load_balance_costs_update")) {
+        algo_to_int = load_balance_costs_update_algo_to_int;
     } else {
         std::string pp_search_string = pp_search_key;
         amrex::Abort("Unknown algorithm type: " + pp_search_string);
     }
 
     // Check if the user-input is a valid key for the dictionary
-    if (algo_to_int.count(algo) == 0){
+    if (algo_to_int.count(algo) == 0) {
         // Not a valid key ; print error message
         std::string pp_search_string = pp_search_key;
         std::string error_message = "Invalid string for algo." + pp_search_string

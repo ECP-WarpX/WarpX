@@ -7,20 +7,21 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "MultiParticleContainer.H"
+#include "WarpXParticleContainer.H"
+#include "WarpX.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Parallelization/WarpXComm.H"
+// Import low-level single-particle kernels
+#include "Pusher/GetAndSetPosition.H"
+#include "Pusher/UpdatePosition.H"
+#include "Deposition/CurrentDeposition.H"
+#include "Deposition/ChargeDeposition.H"
+
+#include <AMReX_AmrParGDB.H>
+
 #include <limits>
 
-#include <MultiParticleContainer.H>
-#include <WarpXParticleContainer.H>
-#include <AMReX_AmrParGDB.H>
-#include <WarpXComm.H>
-#include <WarpX.H>
-#include <WarpXAlgorithmSelection.H>
-#include <WarpXComm.H>
-// Import low-level single-particle kernels
-#include <GetAndSetPosition.H>
-#include <UpdatePosition.H>
-#include <CurrentDeposition.H>
-#include <ChargeDeposition.H>
 
 using namespace amrex;
 
@@ -96,12 +97,12 @@ WarpXParticleContainer::AllocData ()
 }
 
 void
-WarpXParticleContainer::AddNParticles (int lev,
+WarpXParticleContainer::AddNParticles (int /*lev*/,
                                        int n, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z,
                                        const ParticleReal* vx, const ParticleReal* vy, const ParticleReal* vz,
                                        int nattr, const ParticleReal* attr, int uniqueparticles, int id)
 {
-    BL_ASSERT(nattr == 1);
+    BL_ASSERT(nattr == 1); //! @fixme nattr is unused below: false sense of safety
     const ParticleReal* weight = attr;
 
     int ibegin, iend;
@@ -237,8 +238,8 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     Real q = this->charge;
 
-    BL_PROFILE_VAR_NS("PPC::Evolve::Accumulate", blp_accumulate);
-    BL_PROFILE_VAR_NS("PPC::CurrentDeposition", blp_deposit);
+    WARPX_PROFILE_VAR_NS("PPC::Evolve::Accumulate", blp_accumulate);
+    WARPX_PROFILE_VAR_NS("PPC::CurrentDeposition", blp_deposit);
 
 
     // Get tile box where current is deposited.
@@ -313,7 +314,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
         }
     }
 
-    BL_PROFILE_VAR_START(blp_deposit);
+    WARPX_PROFILE_VAR_START(blp_deposit);
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if        (WarpX::nox == 1){
             doEsirkepovDepositionShapeN<1>(
@@ -355,16 +356,16 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
                 xyzmin, lo, q);
         }
     }
-    BL_PROFILE_VAR_STOP(blp_deposit);
+    WARPX_PROFILE_VAR_STOP(blp_deposit);
 
 #ifndef AMREX_USE_GPU
-    BL_PROFILE_VAR_START(blp_accumulate);
+    WARPX_PROFILE_VAR_START(blp_accumulate);
     // CPU, tiling: atomicAdd local_jx into jx
     // (same for jx and jz)
     (*jx)[pti].atomicAdd(local_jx[thread_num], tbx, tbx, 0, 0, jx->nComp());
     (*jy)[pti].atomicAdd(local_jy[thread_num], tby, tby, 0, 0, jy->nComp());
     (*jz)[pti].atomicAdd(local_jz[thread_num], tbz, tbz, 0, 0, jz->nComp());
-    BL_PROFILE_VAR_STOP(blp_accumulate);
+    WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
 }
 
@@ -407,8 +408,8 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     const Real q = this->charge;
 
-    BL_PROFILE_VAR_NS("PPC::ChargeDeposition", blp_ppc_chd);
-    BL_PROFILE_VAR_NS("PPC::Evolve::Accumulate", blp_accumulate);
+    WARPX_PROFILE_VAR_NS("PPC::ChargeDeposition", blp_ppc_chd);
+    WARPX_PROFILE_VAR_NS("PPC::Evolve::Accumulate", blp_accumulate);
 
     // Get tile box where charge is deposited.
     // The tile box is different when depositing in the buffers (depos_lev<lev)
@@ -465,7 +466,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     // Indices of the lower bound
     const Dim3 lo = lbound(tilebox);
 
-    BL_PROFILE_VAR_START(blp_ppc_chd);
+    WARPX_PROFILE_VAR_START(blp_ppc_chd);
     if        (WarpX::nox == 1){
         doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_arr, np_to_depose, dx, xyzmin, lo, q);
@@ -476,14 +477,14 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         doChargeDepositionShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_arr, np_to_depose, dx, xyzmin, lo, q);
     }
-    BL_PROFILE_VAR_STOP(blp_ppc_chd);
+    WARPX_PROFILE_VAR_STOP(blp_ppc_chd);
 
 #ifndef AMREX_USE_GPU
-    BL_PROFILE_VAR_START(blp_accumulate);
+    WARPX_PROFILE_VAR_START(blp_accumulate);
 
     (*rho)[pti].atomicAdd(local_rho[thread_num], tb, tb, 0, icomp*nc, nc);
 
-    BL_PROFILE_VAR_STOP(blp_accumulate);
+    WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
 }
 
@@ -492,6 +493,9 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
                                         bool local, bool reset,
                                         bool do_rz_volume_scaling)
 {
+#ifdef WARPX_DIM_RZ
+    (void)do_rz_volume_scaling;
+#endif
     // Loop over the refinement levels
     int const finest_level = rho.size() - 1;
     for (int lev = 0; lev <= finest_level; ++lev) {
@@ -717,7 +721,7 @@ WarpXParticleContainer::PushX (amrex::Real dt)
 void
 WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 {
-    BL_PROFILE("WPC::PushX()");
+    WARPX_PROFILE("WPC::PushX()");
 
     if (do_not_push) return;
 
