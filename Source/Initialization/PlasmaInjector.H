@@ -42,7 +42,6 @@ public:
     int num_particles_per_cell;
 
     amrex::Vector<int> num_particles_per_cell_each_dim;
-    int n_rz_azimuthal_modes;
 
     // gamma * beta
     amrex::XDim3 getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
