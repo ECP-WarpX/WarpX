@@ -67,6 +67,7 @@ long WarpX::charge_deposition_algo;
 long WarpX::field_gathering_algo;
 long WarpX::particle_pusher_algo;
 int WarpX::maxwell_fdtd_solver_id;
+long WarpX::load_balance_costs_update_algo;
 int WarpX::do_dive_cleaning = 0;
 // Input parameter to switch on current correction (equation (19) of (Vay et al, JCP 243, 2013)):
 // no correction is applied by default
@@ -250,7 +251,14 @@ WarpX::WarpX ()
     gather_masks.resize(nlevs_max);
 #endif // WARPX_DO_ELECTROSTATIC
 
-    costs.resize(nlevs_max);
+    switch (WarpX::load_balance_costs_update_algo)
+    {
+        case LoadBalanceCostsUpdateAlgo::Timers: costs.resize(nlevs_max);
+            break;
+        case LoadBalanceCostsUpdateAlgo::Heuristic: costs_heuristic.resize(nlevs_max);
+            break;
+        default: amrex::Abort("unknown load balance type");
+    }
 
     // Allocate field solver objects
 #ifdef WARPX_USE_PSATD
@@ -664,6 +672,9 @@ WarpX::ReadParameters ()
             // Use same shape factors in all directions, for gathering
             l_lower_order_in_v = false;
         }
+        load_balance_costs_update_algo = GetAlgorithmInteger(pp, "load_balance_costs_update");
+        pp.query("costs_heuristic_cells_wt", costs_heuristic_cells_wt);
+        pp.query("costs_heuristic_particles_wt", costs_heuristic_particles_wt);
     }
 
 #ifdef WARPX_USE_PSATD
@@ -784,7 +795,12 @@ WarpX::ClearLevel (int lev)
     F_cp  [lev].reset();
     rho_cp[lev].reset();
 
-    costs[lev].reset();
+    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+        costs[lev].reset();
+    } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic) {
+        costs_heuristic[lev].reset();
+    }
+
 
 #ifdef WARPX_USE_PSATD_HYBRID
     for (int i = 0; i < 3; ++i) {
@@ -1061,7 +1077,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 
     if (load_balance_int > 0) {
-        costs[lev].reset(new MultiFab(ba, dm, 1, 0));
+        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+            costs[lev].reset(new MultiFab(ba, dm, 1, 0));
+        } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic) {
+            costs_heuristic[lev].reset(new amrex::Vector<Real>);
+            const int nboxes = Efield_fp[lev][0].get()->size();
+            costs_heuristic[lev]->resize(nboxes);
+        }
     }
 }
 
