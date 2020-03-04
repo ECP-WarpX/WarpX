@@ -192,11 +192,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #endif
 #if WARPX_DIM_RZ
         if (num_particles_per_cell_each_dim[1]<2*WarpX::n_rz_azimuthal_modes){
-            const char * message="Error: For accurate use of WarpX cylindrical "
-            "gemoetry the number of particles in the theta direction should be "
-            "at least two times n_rz_azimuthal_modes (Please visit PR#?? for "
-            "more information.)";
-            amrex::Abort(message);
+            amrex::Abort("Error: For accurate use of WarpX cylindrical gemoetry"
+                         " the number of particles in the theta direction "
+                         "should be at least two times n_rz_azimuthal_modes "
+                         "(Please visit PR#765 for more information.)");
         }
 #endif
         // Construct InjectorPosition from InjectorPositionRegular.
