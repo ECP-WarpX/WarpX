@@ -366,15 +366,17 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 #endif
 
+// Apply current correction: equation (19) of (Vay et al, JCP 243, 2013)
 #ifdef WARPX_USE_PSATD
     if ( do_current_correction )
     {
-        // Correct current on fine and coarse patch
         for ( int lev = 0; lev <= finest_level; ++lev )
         {
+            // Apply correction on fine patch
             spectral_solver_fp[lev]->CurrentCorrection( current_fp[lev], rho_fp[lev] );
             if ( spectral_solver_cp[lev] )
             {
+                // Apply correction on coarse patch
                 spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
             }
         }

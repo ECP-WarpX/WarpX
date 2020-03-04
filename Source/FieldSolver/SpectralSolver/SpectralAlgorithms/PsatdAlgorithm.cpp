@@ -13,7 +13,9 @@
 #if WARPX_USE_PSATD
 using namespace amrex;
 
-// \brief Constructor
+/**
+ * \brief Constructor
+ */
 PsatdAlgorithm::PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                          const DistributionMapping& dm,
                          const int norder_x, const int norder_y,
@@ -37,7 +39,9 @@ PsatdAlgorithm::PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
     m_dt = dt;
 }
 
-// \brief Advance E and B fields in spectral space (stored in `f`) over one time step
+/**
+ * \brief Advance E and B fields in spectral space (stored in `f`) over one time step
+ */
 void
 PsatdAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
 
@@ -122,7 +126,9 @@ PsatdAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
     }
 };
 
-// \brief Initialize coefficients for update equations
+/**
+ * \brief Initialize coefficients for update equations
+ */
 void PsatdAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spectral_kspace,
                                     const amrex::DistributionMapping& dm,
                                     const amrex::Real dt)
@@ -184,7 +190,9 @@ void PsatdAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spectr
 }
 
 /**
- * Current correction: equation (19) of (Vay et al, JCP 243, 2013)
+ * \brief Current correction (equation (19) of (Vay et al, JCP 243, 2013)):
+ * re-implementation of the virtual function CurrentCorrection defined in the
+ * base class SpectralBaseAlgorithm
  */
 void
 PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,

@@ -31,6 +31,12 @@ class SpectralBaseAlgorithm
         // calls the subclass's destructor.
         virtual ~SpectralBaseAlgorithm() {};
 
+        /**
+         * \brief Virtual function for current correction (equation (19) of
+         * (Vay et al, JCP 243, 2013)): not pure, the implementation defined here
+         * (that does nothing) is called if the function is not re-implemented
+         * in a derived class (e.g. PsatdAlgorithm, PMLPsatdAlgorithm)
+         */
         virtual void CurrentCorrection ( SpectralFieldData& field_data,
                                          std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                          std::unique_ptr<amrex::MultiFab>& rho ) {};

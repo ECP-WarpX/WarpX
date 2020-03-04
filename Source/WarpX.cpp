@@ -68,6 +68,8 @@ long WarpX::field_gathering_algo;
 long WarpX::particle_pusher_algo;
 int WarpX::maxwell_fdtd_solver_id;
 int WarpX::do_dive_cleaning = 0;
+// Input parameter to switch on current correction (equation (19) of (Vay et al, JCP 243, 2013)):
+// no correction is applied by default
 int WarpX::do_current_correction = 0;
 
 long WarpX::n_rz_azimuthal_modes = 1;
