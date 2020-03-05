@@ -257,6 +257,45 @@ WarpX::WarpX ()
         default: amrex::Abort("unknown load balance type");
     }
 
+    // Set default values for particle and cell weights for costs update
+    if (costs_heuristic_cells_wt==-1 && costs_heuristic_particles_wt==-1
+        && WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic)
+    {
+#ifdef WARPX_USE_PSATD
+        switch (WarpX::nox)
+        {
+            case 1:
+                costs_heuristic_cells_wt = 0.575;
+                costs_heuristic_particles_wt = 0.425;
+                break;
+            case 2:
+                costs_heuristic_cells_wt = 0.405;
+                costs_heuristic_particles_wt = 0.595;
+                break;
+            case 3:
+                costs_heuristic_cells_wt = 0.250;
+                costs_heuristic_particles_wt = 0.750;
+                break;
+        }
+#else // FDTD
+        switch (WarpX::nox)
+        {
+            case 1:
+                costs_heuristic_cells_wt = 0.401;
+                costs_heuristic_particles_wt = 0.599;
+                break;
+            case 2:
+                costs_heuristic_cells_wt = 0.268;
+                costs_heuristic_particles_wt = 0.732;
+                break;
+            case 3:
+                costs_heuristic_cells_wt = 0.145;
+                costs_heuristic_particles_wt = 0.855;
+                break;
+        }
+#endif
+    }
+
     // Allocate field solver objects
 #ifdef WARPX_USE_PSATD
     spectral_solver_fp.resize(nlevs_max);

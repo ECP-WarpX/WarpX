@@ -700,9 +700,9 @@ private:
      * be assigned to a rank to 8. */
     amrex::Real load_balance_knapsack_factor = 1.24;
     /** Weight factor for cells in updating `costs_heuristic`. */
-    amrex::Real costs_heuristic_cells_wt = 0.1;
+    amrex::Real costs_heuristic_cells_wt = -1;
     /** Weight factor for particles in updating `costs_heuristic`. */
-    amrex::Real costs_heuristic_particles_wt = 0.9;
+    amrex::Real costs_heuristic_particles_wt = -1;
 
     // Override sync every ? steps
     int override_sync_int = 1;
