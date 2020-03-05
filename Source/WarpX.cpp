@@ -296,6 +296,13 @@ WarpX::WarpX ()
         }
 #endif // WARPX_USE_PSATD
     }
+#else // CPU
+    if (costs_heuristic_cells_wt==-1 && costs_heuristic_particles_wt==-1
+        && WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic)
+    {
+        costs_heuristic_cells_wt = 0.1;
+        costs_heuristic_particles_wt = 0.9;
+    }
 #endif // AMREX_USE_GPU
     
     // Allocate field solver objects
