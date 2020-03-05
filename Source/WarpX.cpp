@@ -304,7 +304,7 @@ WarpX::WarpX ()
         costs_heuristic_particles_wt = 0.9;
     }
 #endif // AMREX_USE_GPU
-    
+
     // Allocate field solver objects
 #ifdef WARPX_USE_PSATD
     spectral_solver_fp.resize(nlevs_max);
