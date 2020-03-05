@@ -258,6 +258,7 @@ WarpX::WarpX ()
     }
 
     // Set default values for particle and cell weights for costs update
+#ifdef AMREX_USE_GPU
     if (costs_heuristic_cells_wt==-1 && costs_heuristic_particles_wt==-1
         && WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic)
     {
@@ -293,9 +294,10 @@ WarpX::WarpX ()
                 costs_heuristic_particles_wt = 0.855;
                 break;
         }
-#endif
+#endif // WARPX_USE_PSATD
     }
-
+#endif // AMREX_USE_GPU
+    
     // Allocate field solver objects
 #ifdef WARPX_USE_PSATD
     spectral_solver_fp.resize(nlevs_max);
