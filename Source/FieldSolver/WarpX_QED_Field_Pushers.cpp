@@ -72,9 +72,9 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
         Bx = Bfield_fp[lev][0].get();
         By = Bfield_fp[lev][1].get();
         Bz = Bfield_fp[lev][2].get();
-        Jx = Bfield_fp[lev][0].get();
-        Jy = Bfield_fp[lev][1].get();
-        Jz = Bfield_fp[lev][2].get();
+        Jx = current_fp[lev][0].get();
+        Jy = current_fp[lev][1].get();
+        Jz = current_fp[lev][2].get();
     }
     else
     {
@@ -84,9 +84,9 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
         Bx = Bfield_cp[lev][0].get();
         By = Bfield_cp[lev][1].get();
         Bz = Bfield_cp[lev][2].get();
-        Jx = Bfield_cp[lev][0].get();
-        Jy = Bfield_cp[lev][1].get();
-        Jz = Bfield_cp[lev][2].get();
+        Jx = current_cp[lev][0].get();
+        Jy = current_cp[lev][1].get();
+        Jz = current_cp[lev][2].get();
     }
 
     MultiFab* cost = WarpX::getCosts(lev);
