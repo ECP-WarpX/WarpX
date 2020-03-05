@@ -257,7 +257,9 @@ WarpX::WarpX ()
         default: amrex::Abort("unknown load balance type");
     }
 
-    // Set default values for particle and cell weights for costs update
+    // Set default values for particle and cell weights for costs update;
+    // Default values listed here for the case AMREX_USE_GPU are determined
+    // from single-GPU tests on Summit.
 #ifdef AMREX_USE_GPU
     if (costs_heuristic_cells_wt==-1 && costs_heuristic_particles_wt==-1
         && WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic)
