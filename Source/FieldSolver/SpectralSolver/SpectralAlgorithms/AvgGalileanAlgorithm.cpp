@@ -194,8 +194,9 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
               S1(i,j,k) =  0.;
               C3(i,j,k) = 1.;
               S3(i,j,k) = 0.;
-
-              X1(i,j,k) = c2*dt*dt/(2. * ep0);
+              // !!!!!!
+              //Removed a typo -- there is no c2 coefficient: //              X1(i,j,k) = c2*dt*dt/(2. * ep0); //oshapoval
+              X1(i,j,k) = dt*dt/(2. * ep0);
               X2(i,j,k) = c2*dt*dt/(6. * ep0);
               X3(i,j,k) = - c2*dt*dt/(3. * ep0);
               X4(i,j,k) = -dt/ep0;
