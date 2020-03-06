@@ -3,7 +3,7 @@ Profiling the code
 
 Profiling with AMREX's built-in profiling tools
 -----------------------------------------------
-See `this page <https://amrex-codes.github.io/amrex/docs_html/Chapter12.html>`__ in the AMReX documentation.
+See `this page <https://amrex-codes.github.io/amrex/docs_html/AMReX_Profiling_Tools_Chapter.html>`__ in the AMReX documentation.
 
 
 Profiling the code with Intel Advisor on NERSC
