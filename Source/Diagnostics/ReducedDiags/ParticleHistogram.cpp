@@ -134,10 +134,10 @@ void ParticleHistogram::ComputeDiags (int step)
                 else return w;
             } else return 0.0;
         });
-        // reduced sum over mpi ranks
-        ParallelDescriptor::ReduceRealSum
-            (m_data[i], ParallelDescriptor::IOProcessorNumber());
     }
+    // reduced sum over mpi ranks
+    ParallelDescriptor::ReduceRealSum
+        (m_data.data(), m_data.size(), ParallelDescriptor::IOProcessorNumber());
 
     if ( m_norm == "max_to_unity" )
     {
