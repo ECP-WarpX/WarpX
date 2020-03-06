@@ -23,6 +23,9 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
     //Copy common params
     m_common_params = params;
 
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(params.e_max > 0,
+        "Laser amplitude (e_max) must be positive");
+
     // Parse the properties of the Gaussian profile
     ppl.get("profile_waist", m_params.waist);
     ppl.get("profile_duration", m_params.duration);
