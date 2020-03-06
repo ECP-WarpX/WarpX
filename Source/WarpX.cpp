@@ -67,6 +67,7 @@ long WarpX::charge_deposition_algo;
 long WarpX::field_gathering_algo;
 long WarpX::particle_pusher_algo;
 int WarpX::maxwell_fdtd_solver_id;
+long WarpX::load_balance_costs_update_algo;
 int WarpX::do_dive_cleaning = 0;
 
 long WarpX::n_rz_azimuthal_modes = 1;
@@ -105,6 +106,7 @@ Real WarpX::particle_slice_width_lab = 0.0;
 
 bool WarpX::do_dynamic_scheduling = true;
 
+int WarpX::do_electrostatic = 0;
 int WarpX::do_subcycling = 0;
 bool WarpX::safe_guard_cells = 0;
 
@@ -247,7 +249,14 @@ WarpX::WarpX ()
     gather_masks.resize(nlevs_max);
 #endif // WARPX_DO_ELECTROSTATIC
 
-    costs.resize(nlevs_max);
+    switch (WarpX::load_balance_costs_update_algo)
+    {
+        case LoadBalanceCostsUpdateAlgo::Timers: costs.resize(nlevs_max);
+            break;
+        case LoadBalanceCostsUpdateAlgo::Heuristic: costs_heuristic.resize(nlevs_max);
+            break;
+        default: amrex::Abort("unknown load balance type");
+    }
 
     // Allocate field solver objects
 #ifdef WARPX_USE_PSATD
@@ -660,6 +669,9 @@ WarpX::ReadParameters ()
             // Use same shape factors in all directions, for gathering
             l_lower_order_in_v = false;
         }
+        load_balance_costs_update_algo = GetAlgorithmInteger(pp, "load_balance_costs_update");
+        pp.query("costs_heuristic_cells_wt", costs_heuristic_cells_wt);
+        pp.query("costs_heuristic_particles_wt", costs_heuristic_particles_wt);
     }
 
 #ifdef WARPX_USE_PSATD
@@ -780,7 +792,12 @@ WarpX::ClearLevel (int lev)
     F_cp  [lev].reset();
     rho_cp[lev].reset();
 
-    costs[lev].reset();
+    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+        costs[lev].reset();
+    } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic) {
+        costs_heuristic[lev].reset();
+    }
+
 
 #ifdef WARPX_USE_PSATD_HYBRID
     for (int i = 0; i < 3; ++i) {
@@ -1057,7 +1074,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 
     if (load_balance_int > 0) {
-        costs[lev].reset(new MultiFab(ba, dm, 1, 0));
+        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+            costs[lev].reset(new MultiFab(ba, dm, 1, 0));
+        } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic) {
+            costs_heuristic[lev].reset(new amrex::Vector<Real>);
+            const int nboxes = Efield_fp[lev][0].get()->size();
+            costs_heuristic[lev]->resize(nboxes);
+        }
     }
 }
 
@@ -1114,21 +1137,6 @@ IntVect
 WarpX::RefRatio (int lev)
 {
     return GetInstance().refRatio(lev);
-}
-
-void
-WarpX::Evolve (int numsteps) {
-    WARPX_PROFILE_REGION("WarpX::Evolve()");
-
-#ifdef WARPX_DO_ELECTROSTATIC
-    if (do_electrostatic) {
-        EvolveES(numsteps);
-    } else {
-      EvolveEM(numsteps);
-    }
-#else
-    EvolveEM(numsteps);
-#endif // WARPX_DO_ELECTROSTATIC
 }
 
 void
