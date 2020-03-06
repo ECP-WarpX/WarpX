@@ -531,8 +531,6 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
 
     constexpr int NODE = amrex::IndexType::NODE;
 
-    Box tilebox;
-
     for ( MFIter mfi(*Jx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
 
@@ -540,7 +538,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         Array4<Real> const& Jt_arr = Jy->array(mfi);
         Array4<Real> const& Jz_arr = Jz->array(mfi);
 
-        tilebox = mfi.tilebox();
+        Box const & tilebox = mfi.tilebox();
         Box tbr = convert(tilebox, WarpX::jx_nodal_flag);
         Box tbt = convert(tilebox, WarpX::jy_nodal_flag);
         Box tbz = convert(tilebox, WarpX::jz_nodal_flag);
@@ -550,7 +548,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         // these do not include the guard cells.
         std::array<amrex::Real,3> galilean_shift = {0,0,0};
         const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, lev);
-        const Real rmin  = xyzmin[0] + (tbr.type(0) == NODE ? 0. : 0.5*dx[0]);
+        const Real rmin  = xyzmin[0];
         const Real rminr = xyzmin[0] + (tbr.type(0) == NODE ? 0. : 0.5*dx[0]);
         const Real rmint = xyzmin[0] + (tbt.type(0) == NODE ? 0. : 0.5*dx[0]);
         const Real rminz = xyzmin[0] + (tbz.type(0) == NODE ? 0. : 0.5*dx[0]);
