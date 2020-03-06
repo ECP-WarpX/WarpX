@@ -14,39 +14,33 @@
 #if WARPX_USE_PSATD
 
 /**
- * \brief Class that updates the fields in spectral space and stores the coefficients
- * of the corresponding update equations (Vay et al, JCP 243, 2013)
+ * \brief Class that updates the field in spectral space
+ * and stores the coefficients of the corresponding update equation.
  */
 class PsatdAlgorithm : public SpectralBaseAlgorithm
 {
 
     public:
-
-        PsatdAlgorithm( const SpectralKSpace& spectral_kspace,
-                        const amrex::DistributionMapping& dm,
-                        const int norder_x,
-                        const int norder_y,
-                        const int norder_z,
-                        const bool nodal,
-                        const amrex::Real dt );
-
+        PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
+                         const amrex::DistributionMapping& dm,
+                         const int norder_x, const int norder_y,
+                         const int norder_z, const bool nodal,
+                         const amrex::Real dt);
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
-
         virtual int getRequiredNumberOfFields() const override final {
             return SpectralFieldIndex::n_fields;
         }
+
+        void InitializeSpectralCoefficients(const SpectralKSpace& spectral_kspace,
+                                    const amrex::DistributionMapping& dm,
+                                    const amrex::Real dt);
 
         virtual void CurrentCorrection ( SpectralFieldData& field_data,
                                          std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                          std::unique_ptr<amrex::MultiFab>& rho );
 
-        void InitializeSpectralCoefficients( const SpectralKSpace& spectral_kspace,
-                                             const amrex::DistributionMapping& dm,
-                                             const amrex::Real dt );
-
     private:
-
         SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
         amrex::Real m_dt;
 };
