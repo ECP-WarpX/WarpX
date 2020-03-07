@@ -5,6 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
+#include "Costs.H"
 #include "BeamRelevant.H"
 #include "ParticleEnergy.H"
 #include "FieldEnergy.H"
@@ -54,6 +55,11 @@ MultiReducedDiags::MultiReducedDiags ()
         {
             m_multi_rd[i_rd].reset
                 ( new BeamRelevant(m_rd_names[i_rd]));
+        }
+        else if (rd_type.compare("Costs") == 0)
+        {
+            m_multi_rd[i_rd].reset
+                ( new Costs(m_rd_names[i_rd]));
         }
         else
         { Abort("No matching reduced diagnostics type found."); }

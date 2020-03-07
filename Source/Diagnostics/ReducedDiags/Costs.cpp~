@@ -1,0 +1,116 @@
+/* Copyright 2019-2020 Yinjian Zhao
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
+#include "Costs.H"
+#include "WarpX.H"
+#include "Utils/WarpXConst.H"
+
+#include <AMReX_REAL.H>
+#include <AMReX_ParticleReduce.H>
+
+#include <iostream>
+#include <cmath>
+
+
+using namespace amrex;
+
+// constructor
+Costs::Costs (std::string rd_name)
+: ReducedDiags{rd_name}
+{
+
+    // RZ coordinate is not working
+    #if (defined WARPX_DIM_RZ)
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+        "Costs reduced diagnostics does not work for RZ coordinate.");
+    #endif
+
+    // get WarpX class object
+    auto & warpx = WarpX::GetInstance();
+
+    // resize data array
+    const Real nProcs = ParallelDescriptor::NProcs();
+    m_data.resize(nProcs,0.0);
+
+    if (ParallelDescriptor::IOProcessor())
+    {
+        if ( m_IsNotRestart )
+        {
+            // open file
+            std::ofstream ofs;
+            ofs.open(m_path + m_rd_name + "." + m_extension,
+                std::ofstream::out | std::ofstream::app);
+            // write header row
+            ofs << "#";
+            ofs << "[1]step()";
+            ofs << m_sep;
+            ofs << "[2]time(s)";
+            for (int procNumber = 0; procNumber < nProcs; ++procNumber)
+            {
+                ofs << m_sep;
+                ofs << "[" + std::to_string(3 + procNumber) + "]";
+                ofs << "cost_proc"+std::to_string(procNumber)+"(arb.)";
+            }
+            ofs << std::endl;
+            // close file
+            ofs.close();
+        }
+    }
+
+}
+// end constructor
+
+// function that computes costs
+void Costs::ComputeDiags (int step)
+{
+
+    // Judge if the diags should be done
+    if ( ((step+1) % m_freq != 0) || ((step+1) % WarpX::load_balance_int != 0) ) { return; }
+
+    // get WarpX class object
+    auto & warpx = WarpX::GetInstance();
+
+    // get number of level
+    auto nLevel = warpx.finestLevel() + 1;
+
+    // loop over refinement levels
+    for (int lev = 0; lev < nLevel; ++lev)
+    {
+
+        // get MultiFab data at lev
+        const MultiFab & Ex = warpx.getEfield(lev,0);
+        const MultiFab & Ey = warpx.getEfield(lev,1);
+        const MultiFab & Ez = warpx.getEfield(lev,2);
+        const MultiFab & Bx = warpx.getBfield(lev,0);
+        const MultiFab & By = warpx.getBfield(lev,1);
+        const MultiFab & Bz = warpx.getBfield(lev,2);
+
+        // get cell size
+        Geometry const & geom = warpx.Geom(lev);
+        auto domain_box = geom.Domain();
+
+        // compute costs
+
+        // save data
+        m_data[lev*3+1] = 0.5 * Es * PhysConst::ep0 * dV;
+        m_data[lev*3+2] = 0.5 * Bs / PhysConst::mu0 * dV;
+        m_data[lev*3+0] = m_data[lev*3+1] + m_data[lev*3+2];
+
+    }
+    // end loop over refinement levels
+
+    /* m_data now contains up-to-date values for:
+     *  [total field energy at level 0,
+     *   electric field energy at level 0,
+     *   magnetic field energy at level 0,
+     *   total field energy at level 1,
+     *   electric field energy at level 1,
+     *   magnetic field energy at level 1,
+     *   ......] */
+
+}
+// end void Costs::ComputeDiags
