@@ -106,6 +106,7 @@ Real WarpX::particle_slice_width_lab = 0.0;
 
 bool WarpX::do_dynamic_scheduling = true;
 
+int WarpX::do_electrostatic = 0;
 int WarpX::do_subcycling = 0;
 bool WarpX::safe_guard_cells = 0;
 
@@ -243,11 +244,6 @@ WarpX::WarpX ()
 
     pml.resize(nlevs_max);
 
-#ifdef WARPX_DO_ELECTROSTATIC
-    masks.resize(nlevs_max);
-    gather_masks.resize(nlevs_max);
-#endif // WARPX_DO_ELECTROSTATIC
-
     switch (WarpX::load_balance_costs_update_algo)
     {
         case LoadBalanceCostsUpdateAlgo::Timers: costs.resize(nlevs_max);
@@ -255,6 +251,52 @@ WarpX::WarpX ()
         case LoadBalanceCostsUpdateAlgo::Heuristic: costs_heuristic.resize(nlevs_max);
             break;
         default: amrex::Abort("unknown load balance type");
+    }
+
+    // Set default values for particle and cell weights for costs update;
+    // Default values listed here for the case AMREX_USE_GPU are determined
+    // from single-GPU tests on Summit.
+    if (costs_heuristic_cells_wt<0. && costs_heuristic_particles_wt<0.
+        && WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic)
+    {
+#ifdef AMREX_USE_GPU
+#ifdef WARPX_USE_PSATD
+        switch (WarpX::nox)
+        {
+            case 1:
+                costs_heuristic_cells_wt = 0.575;
+                costs_heuristic_particles_wt = 0.425;
+                break;
+            case 2:
+                costs_heuristic_cells_wt = 0.405;
+                costs_heuristic_particles_wt = 0.595;
+                break;
+            case 3:
+                costs_heuristic_cells_wt = 0.250;
+                costs_heuristic_particles_wt = 0.750;
+                break;
+        }
+#else // FDTD
+        switch (WarpX::nox)
+        {
+            case 1:
+                costs_heuristic_cells_wt = 0.401;
+                costs_heuristic_particles_wt = 0.599;
+                break;
+            case 2:
+                costs_heuristic_cells_wt = 0.268;
+                costs_heuristic_particles_wt = 0.732;
+                break;
+            case 3:
+                costs_heuristic_cells_wt = 0.145;
+                costs_heuristic_particles_wt = 0.855;
+                break;
+        }
+#endif // WARPX_USE_PSATD
+#else // CPU
+        costs_heuristic_cells_wt = 0.1;
+        costs_heuristic_particles_wt = 0.9;
+#endif // AMREX_USE_GPU
     }
 
     // Allocate field solver objects
@@ -1136,21 +1178,6 @@ IntVect
 WarpX::RefRatio (int lev)
 {
     return GetInstance().refRatio(lev);
-}
-
-void
-WarpX::Evolve (int numsteps) {
-    WARPX_PROFILE_REGION("WarpX::Evolve()");
-
-#ifdef WARPX_DO_ELECTROSTATIC
-    if (do_electrostatic) {
-        EvolveES(numsteps);
-    } else {
-      EvolveEM(numsteps);
-    }
-#else
-    EvolveEM(numsteps);
-#endif // WARPX_DO_ELECTROSTATIC
 }
 
 void
