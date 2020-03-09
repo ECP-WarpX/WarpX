@@ -19,7 +19,7 @@ class Costs : public ReducedDiags
 {
 public:
 
-    int nDataFields;
+    static const int nDataFields = 6;
     
     /** constructor
      *  @param[in] rd_name reduced diags names */
