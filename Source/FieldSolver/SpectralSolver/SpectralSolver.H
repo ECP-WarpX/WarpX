@@ -69,7 +69,7 @@ class SpectralSolver
         /**
          * \brief Public interface to call the virtual function \c CurrentCorrection,
          * defined in the base class SpectralBaseAlgorithm and possibly overridden
-         * by its derived classes (e.g. PsatdAlgorithm, PMLPsatdAlgorithm), from
+         * by its derived classes (e.g. PsatdAlgorithm, PMLPsatdAlgorithm), from
          * objects of class SpectralSolver through the private unique pointer \c algorithm
          *
          * \param[in,out] current Three-dimensional array of unique pointers to
