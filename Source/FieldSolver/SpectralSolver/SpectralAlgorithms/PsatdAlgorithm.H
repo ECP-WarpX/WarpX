@@ -1,4 +1,4 @@
-/* Copyright 2019 Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+/* Copyright 2019 Maxence Thevenet, Remi Lehe, Revathi Jambunathan, Edoardo Zoni
  *
  *
  * This file is part of WarpX.
@@ -36,6 +36,17 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
                                     const amrex::DistributionMapping& dm,
                                     const amrex::Real dt);
 
+        /**
+         * \brief Current correction in Fourier space
+         * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010).
+         *
+         * \param[in,out] field_data All fields in Fourier space
+         * \param[in,out] current    Three-dimensional array of unique pointers to
+         *                           <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+         *                           (current density)
+         * \param[in]     rho        Unique pointer to <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+         *                           (charge density)
+         */
         virtual void CurrentCorrection ( SpectralFieldData& field_data,
                                          std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                          std::unique_ptr<amrex::MultiFab>& rho );
