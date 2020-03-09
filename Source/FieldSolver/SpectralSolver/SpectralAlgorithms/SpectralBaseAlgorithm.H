@@ -32,10 +32,18 @@ class SpectralBaseAlgorithm
         virtual ~SpectralBaseAlgorithm() {};
 
         /**
-         * \brief Virtual function for current correction (equation (19) of
-         * (Vay et al, JCP 243, 2013)): not pure, the implementation defined here
-         * (that does nothing) is called if the function is not re-implemented
-         * in a derived class (e.g. PsatdAlgorithm, PMLPsatdAlgorithm)
+         * \brief Virtual function for current correction in Fourier space
+         * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010).
+         * This virtual function is not pure: it can be reimplemented in a derived
+         * class, but a base-class implementation is provided (empty implementation
+         * in this case).
+         *
+         * \param[in,out] field_data All fields in Fourier space
+         * \param[in,out] current    Three-dimensional array of unique pointers to
+         *                           <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+         *                           (current density)
+         * \param[in]     rho        Unique pointer to <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+         *                           (charge density)
          */
         virtual void CurrentCorrection ( SpectralFieldData& field_data,
                                          std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
