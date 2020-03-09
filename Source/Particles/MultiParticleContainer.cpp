@@ -68,6 +68,10 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
             (new CollisionType(species_names, collision_names[i]));
     }
 
+#ifdef WARPX_QED
+    InitSchwinger();
+#endif
+
 }
 
 void
@@ -243,6 +247,18 @@ MultiParticleContainer::ReadParameters ()
             BL_ASSERT(lasers_names.size() == nlasers);
         }
 
+#ifdef WARPX_QED
+        ParmParse ppw("warpx");
+        ppw.query("do_qed_schwinger",m_do_qed_schwinger);
+
+        if (m_do_qed_schwinger) {
+            ParmParse ppq("qed_schwinger");
+            ppq.get("qed_schwinger_ele_product_species",
+                m_qed_schwinger_ele_product_name);
+            ppq.get("qed_schwinger_pos_product_species",
+                m_qed_schwinger_pos_product_name);
+        }
+#endif
         initialized = true;
     }
 }
@@ -950,7 +966,40 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 }
 
 void
+MultiParticleContainer::InitSchwinger ()
+{
+    if (!m_do_qed_schwinger) {return;}
+
+    m_ind_qed_schwinger_ele_product =
+        getSpeciesID(m_qed_schwinger_ele_product_name);
+    m_ind_qed_schwinger_pos_product =
+        getSpeciesID(m_qed_schwinger_pos_product_name);
+
+   // TODO: test if electrons (positrons) are really electrons (positrons)
+
+}
+
+void
 MultiParticleContainer::doQEDSchwinger ()
 {
+    auto & warpx = WarpX::GetInstance();
+
+    const int level_0 = 0;
+
+    const MultiFab & Ex = warpx.getEfield(level_0,0);
+    const MultiFab & Ey = warpx.getEfield(level_0,1);
+    const MultiFab & Ez = warpx.getEfield(level_0,2);
+    const MultiFab & Bx = warpx.getBfield(level_0,0);
+    const MultiFab & By = warpx.getBfield(level_0,1);
+    const MultiFab & Bz = warpx.getBfield(level_0,2);
+
+        // get cell size
+    Geometry const & geom = warpx.Geom(level_0);
+    auto domain_box = geom.Domain();
+#if (AMREX_SPACEDIM == 2)
+    auto dV = geom.CellSize(0) * geom.CellSize(1);
+#elif (AMREX_SPACEDIM == 3)
+    auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
+#endif
 }
 #endif

@@ -53,6 +53,9 @@ class MultiParticleContainer
 
 public:
 
+    using AllContainerType =
+        amrex::Vector<std::unique_ptr<WarpXParticleContainer>>;
+
     MultiParticleContainer (amrex::AmrCore* amr_core);
 
     ~MultiParticleContainer() {}
@@ -126,6 +129,7 @@ public:
     void doCoulombCollisions ();
 
 #ifdef WARPX_QED
+    void InitSchwinger ();
     void doQEDSchwinger ();
 #endif
 
@@ -278,12 +282,23 @@ protected:
      */
     void BreitWheelerGenerateTable();
 
+    /** Whether or not to activate Schwinger process */
+    bool m_do_qed_schwinger = 0;
+    /** Name of Schwinger electron product species */
+    std::string m_qed_schwinger_ele_product_name;
+    /** Name of Schwinger positron product species */
+    std::string m_qed_schwinger_pos_product_name;
+    /** Index for Schwinger electron product species in allcontainers */
+    int m_ind_qed_schwinger_ele_product;
+    /** Index for Schwinger positron product species in allcontainers */
+    int m_ind_qed_schwinger_pos_product;
+
 #endif
 
 private:
 
     // physical particles (+ laser)
-    amrex::Vector<std::unique_ptr<WarpXParticleContainer> > allcontainers;
+    AllContainerType allcontainers;
     // Temporary particle container, used e.g. for particle splitting.
     std::unique_ptr<PhysicalParticleContainer> pc_tmp;
 
