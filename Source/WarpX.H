@@ -15,6 +15,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "BoundaryConditions/PML.H"
 #include "Diagnostics/BackTransformedDiagnostic.H"
+#include "Diagnostics/MultiDiagnostics.H"
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
@@ -186,6 +187,8 @@ public:
     // do nodal
     static int do_nodal;
 
+    amrex::MultiFab * getEfieldp  (int lev, int direction) {return Efield_aux[lev][direction].get();}
+    
     const amrex::MultiFab& getcurrent (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
     const amrex::MultiFab& getBfield  (int lev, int direction) {return *Bfield_aux[lev][direction];}
@@ -594,6 +597,7 @@ private:
 
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
+    std::unique_ptr<MultiDiagnostics> multi_diags;
 
     // Boosted Frame Diagnostics
     std::unique_ptr<BackTransformedDiagnostic> myBFD;
