@@ -948,4 +948,9 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
         m_shr_p_bw_engine->init_lookup_tables_from_raw_data(table_data);
     }
 }
+
+void
+MultiParticleContainer::doQEDSchwinger ()
+{
+}
 #endif

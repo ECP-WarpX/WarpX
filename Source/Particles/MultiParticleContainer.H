@@ -125,6 +125,10 @@ public:
 
     void doCoulombCollisions ();
 
+#ifdef WARPX_QED
+    void doQEDSchwinger ();
+#endif
+
     void Checkpoint (const std::string& dir) const;
 
     void WritePlotFile (const std::string& dir) const;

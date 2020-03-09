@@ -370,6 +370,9 @@ WarpX::OneStep_nosub (Real cur_time)
     // product species.
     mypc->doFieldIonization();
     mypc->doCoulombCollisions();
+#ifdef WARPX_QED
+    mypc->doQEDSchwinger();
+#endif
     // Push particle from x^{n} to x^{n+1}
     //               from p^{n-1/2} to p^{n+1/2}
     // Deposit current j^{n+1/2}
