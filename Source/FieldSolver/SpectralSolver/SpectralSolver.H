@@ -67,11 +67,19 @@ class SpectralSolver
         };
 
         /**
-         * \brief Public interface to call the member function CurrentCorrection
-         * of the class PsatdAlgorithm
+         * \brief Public interface to call the virtual function \c CurrentCorrection,
+         * defined in the base class SpectralBaseAlgorithm and possibly overridden
+         * by its derived classes (e.g. PsatdAlgorithm, PMLPsatdAlgorithm), from
+         * objects of class SpectralSolver through the private unique pointer \c algorithm
+         *
+         * \param[in,out] current Three-dimensional array of unique pointers to
+         *                        <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+         *                        (current density)
+         * \param[in]     rho     Unique pointer to <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+         *                        (charge density)
          */
         void CurrentCorrection ( std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                 std::unique_ptr<amrex::MultiFab>& rho ) {
+                                 const std::unique_ptr<amrex::MultiFab>& rho ) {
              algorithm->CurrentCorrection( field_data, current, rho );
         };
 

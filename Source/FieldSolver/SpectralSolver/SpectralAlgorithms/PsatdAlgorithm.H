@@ -37,8 +37,11 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
                                     const amrex::Real dt);
 
         /**
-         * \brief Current correction in Fourier space
+         * \brief Virtual function for current correction in Fourier space
          * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010).
+         * This function overrides the virtual function \c CurrentCorrection in the
+         * base class \c SpectralBaseAlgorithm (qualifier \c override) and cannot be
+         * overridden by further derived classes (qualifier \c final).
          *
          * \param[in,out] field_data All fields in Fourier space
          * \param[in,out] current    Three-dimensional array of unique pointers to
