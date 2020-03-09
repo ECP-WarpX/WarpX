@@ -241,7 +241,7 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
             constexpr Real ky = 0;
             const Real kz = modified_kz_arr[j];
 #endif
-            const Complex I = Complex{0,1};
+            constexpr Complex I = Complex{0,1};
 
             Real k_norm = std::sqrt( kx*kx + ky*ky + kz*kz );
 

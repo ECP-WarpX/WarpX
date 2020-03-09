@@ -49,7 +49,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          */
         virtual void CurrentCorrection ( SpectralFieldData& field_data,
                                          std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                         std::unique_ptr<amrex::MultiFab>& rho );
+                                         std::unique_ptr<amrex::MultiFab>& rho ) override final;
 
     private:
         SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
