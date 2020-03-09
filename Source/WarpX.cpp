@@ -973,7 +973,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         // Get the cell-centered box, with guard cells
         BoxArray realspace_ba = ba;  // Copy box
         realspace_ba.enclosedCells().grow(ngE); // cell-centered + guard cells
-        // Define spectral solver (last argument missing: default pml=false)
+        // Define spectral solver
         spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev] ) );
     }
@@ -1060,7 +1060,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             // Get the cell-centered box, with guard cells
             BoxArray realspace_ba = cba;// Copy box
             realspace_ba.enclosedCells().grow(ngE);// cell-centered + guard cells
-            // Define spectral solver (last argument missing: default pml=false)
+            // Define spectral solver
             spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
                 nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev] ) );
         }
