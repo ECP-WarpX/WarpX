@@ -541,6 +541,15 @@ private:
     void AddRhoFromFineLevelandSumBoundary (int lev, int icomp, int ncomp);
     void NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp);
 
+    /**
+     * \brief Private function for current correction in Fourier space
+     * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010):
+     * loops over the MR levels and applies the correction on the fine and coarse
+     * patches (calls the virtual method \c CurrentCorrection of the spectral
+     * algorithm in use, via the public interface defined in the class SpectralSolver).
+     */
+    void CurrentCorrection ();
+
 #ifdef WARPX_DO_ELECTROSTATIC
     ///
     /// Advance the simulation by numsteps steps, electrostatic case.

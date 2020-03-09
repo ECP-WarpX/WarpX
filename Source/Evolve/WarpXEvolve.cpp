@@ -388,21 +388,10 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 #endif
 
-// Apply current correction: equation (19) of (Vay et al, JCP 243, 2013)
+// Apply current correction in Fourier space
+// (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
 #ifdef WARPX_USE_PSATD
-    if ( do_current_correction )
-    {
-        for ( int lev = 0; lev <= finest_level; ++lev )
-        {
-            // Apply correction on fine patch
-            spectral_solver_fp[lev]->CurrentCorrection( current_fp[lev], rho_fp[lev] );
-            if ( spectral_solver_cp[lev] )
-            {
-                // Apply correction on coarse patch
-                spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
-            }
-        }
-    }
+    if ( do_current_correction ) CurrentCorrection();
 #endif
 
     // Synchronize J and rho
@@ -831,6 +820,21 @@ WarpX::applyMirrors(Real time){
                 NullifyMF(cBy, lev, z_min, z_max);
                 NullifyMF(cBz, lev, z_min, z_max);
             }
+        }
+    }
+}
+
+void
+WarpX::CurrentCorrection ()
+{
+    for ( int lev = 0; lev <= finest_level; ++lev )
+    {
+        // Apply correction on fine patch
+        spectral_solver_fp[lev]->CurrentCorrection( current_fp[lev], rho_fp[lev] );
+        if ( spectral_solver_cp[lev] )
+        {
+            // Apply correction on coarse patch
+            spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
         }
     }
 }
