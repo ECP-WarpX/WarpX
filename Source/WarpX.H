@@ -135,7 +135,9 @@ public:
     static int maxwell_fdtd_solver_id;
     static long load_balance_costs_update_algo;
 
-    // Current correction: equation (19) of (Vay et al, JCP 243, 2013)
+    // Static public variable to switch on current correction in Fourier space
+    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010): can be set
+    // true by the user as an input parameter (default value is false)
     static int do_current_correction;
 
     // div E cleaning
