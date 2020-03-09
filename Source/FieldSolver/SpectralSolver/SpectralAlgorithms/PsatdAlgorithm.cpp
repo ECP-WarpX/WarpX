@@ -243,7 +243,7 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
 #endif
             constexpr Complex I = Complex{0,1};
 
-            Real k_norm = std::sqrt( kx*kx + ky*ky + kz*kz );
+            const Real k_norm = std::sqrt( kx*kx + ky*ky + kz*kz );
 
             // div(J) in Fourier space
             Complex k_dot_J = kx*Jx + ky*Jy + kz*Jz;
