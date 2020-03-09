@@ -192,7 +192,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spectr
 void
 PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                   std::unique_ptr<amrex::MultiFab>& rho ) {
+                                   const std::unique_ptr<amrex::MultiFab>& rho ) {
 
     using Idx = SpectralFieldIndex;
 
