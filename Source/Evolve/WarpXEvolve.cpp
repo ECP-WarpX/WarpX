@@ -478,6 +478,11 @@ WarpX::OneStep_sub1 (Real curtime)
     // product species.
     mypc->doFieldIonization();
 
+#ifdef WARPX_QED
+    //Do QED processes
+    mypc->doQedEvents();
+#endif
+
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
     const int fine_lev = 1;
     const int coarse_lev = 0;
