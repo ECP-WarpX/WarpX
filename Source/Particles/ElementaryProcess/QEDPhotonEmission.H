@@ -8,8 +8,8 @@
 #ifndef QED_PHOTON_EMISSION_H_
 #define QED_PHOTON_EMISSION_H_
 
-#include "WarpXConst.H"
-#include "WarpXParticleContainer.H"
+#include "Utils/WarpXConst.H"
+#include "Particles/WarpXParticleContainer.H"
 
 #include <QuantumSyncEngineWrapper.H>
 
@@ -120,6 +120,8 @@ public:
         const ParticleReal by = src.m_rdata[PIdx::By][i_src];
         const ParticleReal bz = src.m_rdata[PIdx::Bz][i_src];
 
+        // Particle momentum is stored as gamma * velocity.
+        // Convert to m * gamma * velocity before applying the emission functor.
         auto px = ux*me;
         auto py = uy*me;
         auto pz = uz*me;
@@ -137,6 +139,7 @@ public:
             &g_px, &g_py, &g_pz,
             &g_w);
 
+        // Then convert back to WarpX convention.
         src.m_rdata[PIdx::ux][i_src] = px*one_over_me;
         src.m_rdata[PIdx::uy][i_src] = py*one_over_me;
         src.m_rdata[PIdx::uz][i_src] = pz*one_over_me;
