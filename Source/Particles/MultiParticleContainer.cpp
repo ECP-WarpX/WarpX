@@ -984,7 +984,7 @@ void MultiParticleContainer::doQedEvents()
 
 void MultiParticleContainer::doQedBreitWheeler()
 {
-    WARPX_PROFILE("MPC::doQedEvents::doQedBreitWheeler");
+    WARPX_PROFILE("MPC::doQedBreitWheeler");
 
     // Loop over all species.
     // Photons undergoing Breit Wheeler process create electrons
