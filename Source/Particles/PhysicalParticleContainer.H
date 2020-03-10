@@ -22,8 +22,8 @@
     #include <BreitWheelerEngineWrapper.H>
     #include <QedChiFunctions.H>
 
-    #include <QEDPairGeneration.H>
-    #include <QEDPhotonEmission.H>
+    #include <Particles/ElementaryProcess/QEDPairGeneration.H>
+    #include <Particles/ElementaryProcess/QEDPhotonEmission.H>
 #endif
 
 #include <map>
