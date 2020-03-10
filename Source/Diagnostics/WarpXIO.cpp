@@ -10,7 +10,7 @@
 #include "WarpX.H"
 #include "FieldIO.H"
 #include "SliceDiagnostic.H"
-:wq
+
 #ifdef WARPX_USE_OPENPMD
 #   include "Diagnostics/WarpXOpenPMD.H"
 #endif
