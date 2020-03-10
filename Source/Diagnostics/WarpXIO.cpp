@@ -10,7 +10,7 @@
 #include "WarpX.H"
 #include "FieldIO.H"
 #include "SliceDiagnostic.H"
-
+:wq
 #ifdef WARPX_USE_OPENPMD
 #   include "Diagnostics/WarpXOpenPMD.H"
 #endif
@@ -471,7 +471,7 @@ WarpX::UpdateInSitu () const
             bp_mesh);
 
     // wrap particle data for each species
-    // we prefix the fields with "particle_{species_name}" b/c we 
+    // we prefix the fields with "particle_{species_name}" b/c we
     // want to to uniquely name all the fields that can be plotted
 
     std::vector<std::string> species_names = mypc->GetSpeciesNames();

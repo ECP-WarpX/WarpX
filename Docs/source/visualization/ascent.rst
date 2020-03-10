@@ -51,7 +51,7 @@ performed.
 Visualization/Analysis Pipeline Configuration
 ---------------------------------------------
 Ascent uses the file :code:`ascent_actions.yaml` to configure analysis and
-visualization pipelines. 
+visualization pipelines.
 
 For example, the following :code:`ascent_actions.yaml`
 file extracts an isosurface of the field Ex for 15 levels and saves the
@@ -60,7 +60,7 @@ resulting images to :code:`levels_<nnnn>.png`. `Ascent Actions
 overview over all available analysis and visualization actions.
 
 .. code-block:: json
-- 
+-
   action: "add_pipelines"
   pipelines:
     p1:
@@ -69,21 +69,21 @@ overview over all available analysis and visualization actions.
         params:
            field: "Ex"
            levels: 15
-- 
+-
   action: "add_scenes"
-  scenes: 
-    scene1: 
+  scenes:
+    scene1:
       image_prefix: "levels_%04d"
-      plots: 
-        plot1: 
+      plots:
+        plot1:
           type: "pseudocolor"
           pipeline: "p1"
           field: "Ex"
 
-Here is another example that renders isosurfaces and particles: 
+Here is another example that renders isosurfaces and particles:
 
 .. code-block:: json
-- 
+-
   action: "add_pipelines"
   pipelines:
     p1:
@@ -92,23 +92,23 @@ Here is another example that renders isosurfaces and particles:
         params:
            field: "Bx"
            levels: 3
-- 
+-
   action: "add_scenes"
-  scenes: 
-    scene1: 
-      plots: 
-        plot1: 
+  scenes:
+    scene1:
+      plots:
+        plot1:
           type: "pseudocolor"
           pipeline: "p1"
           field: "Bx"
-        plot2: 
+        plot2:
           type: "pseudocolor"
           field: "particle_electrons_Bx"
-          points: 
+          points:
             radius: 0.0000005
-      renders: 
-        r1: 
-          camera: 
+      renders:
+        r1:
+          camera:
             azimuth: 100
             elevation: 10
           image_prefix: "out_render_3d_%06d"
