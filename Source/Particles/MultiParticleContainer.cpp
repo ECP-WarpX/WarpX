@@ -1094,7 +1094,7 @@ void MultiParticleContainer::doQedQuantumSync()
 
                 setNewParticleIDs(dst_tile, np_dst, num_added);
 
-                constexpr auto energy_threshold = amrex::ParticleReal(
+                constexpr auto energy_threshold = static_cast<amrex::ParticleReal>(
                      2.0 * PhysConst::m_e * PhysConst::c * PhysConst::c);
                 cleanLowEnergyPhotons(
                     dst_tile, np_dst, num_added, energy_threshold);
