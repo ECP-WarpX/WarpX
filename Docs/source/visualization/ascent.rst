@@ -50,60 +50,65 @@ performed.
 
 Visualization/Analysis Pipeline Configuration
 ---------------------------------------------
-Ascent uses the file :code:`ascent_actions.json` to configure analysis and
-visualization pipelines. For example, the following :code:`ascent_actions.json`
+Ascent uses the file :code:`ascent_actions.yaml` to configure analysis and
+visualization pipelines. 
+
+For example, the following :code:`ascent_actions.yaml`
 file extracts an isosurface of the field Ex for 15 levels and saves the
 resulting images to :code:`levels_<nnnn>.png`. `Ascent Actions
 <https://ascent.readthedocs.io/en/latest/Actions/index.html>`_ provides an
 overview over all available analysis and visualization actions.
 
 .. code-block:: json
+- 
+  action: "add_pipelines"
+  pipelines:
+    p1:
+      f1:
+        type: "contour"
+        params:
+           field: "Ex"
+           levels: 15
+- 
+  action: "add_scenes"
+  scenes: 
+    scene1: 
+      image_prefix: "levels_%04d"
+      plots: 
+        plot1: 
+          type: "pseudocolor"
+          pipeline: "p1"
+          field: "Ex"
 
-  [
-    {
-      "action": "add_pipelines",
-      "pipelines":
-      {
-        "p1":
-        {
-          "f1":
-          {
-            "type" : "contour",
-            "params" :
-            {
-              "field" : "Ex",
-              "levels": 15
-            }
-          }
-        }
-      }
-    },
-    {
-      "action": "add_scenes",
-      "scenes":
-      {
-        "s1":
-        {
-          "image_prefix": "levels_%04d",
-          "plots":
-          {
-          "p1":
-            {
-              "type": "pseudocolor",
-              "pipeline": "p1",
-              "field": "Ex"
-            }
-          }
-        }
-      }
-    },
+Here is another example that renders isosurfaces and particles: 
 
-    {
-      "action": "execute"
-    },
-
-    {
-      "action": "reset"
-    }
-  ]
-
+.. code-block:: json
+- 
+  action: "add_pipelines"
+  pipelines:
+    p1:
+      f1:
+        type: "contour"
+        params:
+           field: "Bx"
+           levels: 3
+- 
+  action: "add_scenes"
+  scenes: 
+    scene1: 
+      plots: 
+        plot1: 
+          type: "pseudocolor"
+          pipeline: "p1"
+          field: "Bx"
+        plot2: 
+          type: "pseudocolor"
+          field: "particle_electrons_Bx"
+          points: 
+            radius: 0.0000005
+      renders: 
+        r1: 
+          camera: 
+            azimuth: 100
+            elevation: 10
+          image_prefix: "out_render_3d_%06d"
