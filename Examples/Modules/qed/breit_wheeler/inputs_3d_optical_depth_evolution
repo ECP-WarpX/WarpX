@@ -66,8 +66,6 @@ p1.qed_breit_wheeler_pos_product_species = pos_bw
 #################################
 
 p2.species_type = "photon"
-p2.charge = -q_e
-p2.mass = m_e
 p2.injection_style = "NUniformPerCell"
 p2.profile = "constant"
 p2.xmin = -0.5e-6
@@ -94,8 +92,6 @@ p2.qed_breit_wheeler_pos_product_species = pos_bw
 #################################
 
 p3.species_type = "photon"
-p3.charge = -q_e
-p3.mass = m_e
 p3.injection_style = "NUniformPerCell"
 p3.profile = "constant"
 p3.xmin = -0.5e-6
@@ -122,8 +118,6 @@ p3.qed_breit_wheeler_pos_product_species = pos_bw
 #################################
 
 p4.species_type = "photon"
-p4.charge = -q_e
-p4.mass = m_e
 p4.injection_style = "NUniformPerCell"
 p4.profile = "constant"
 p4.xmin = -0.5e-6
