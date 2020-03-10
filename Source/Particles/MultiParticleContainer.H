@@ -22,9 +22,9 @@
 #include "Particles/RigidInjectedParticleContainer.H"
 
 #ifdef WARPX_QED
-#   include "QedChiFunctions.H"
-#   include "BreitWheelerEngineWrapper.H"
-#   include "QuantumSyncEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
+#   include "Particles/ElementaryProcess/BreitWheelerEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QuantumSyncEngineWrapper.H"
 #endif
 
 #include <AMReX_Particles.H>
