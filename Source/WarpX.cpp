@@ -140,6 +140,8 @@ IntVect WarpX::jy_nodal_flag(1,1);// y is the missing dimension to 2D AMReX
 IntVect WarpX::jz_nodal_flag(1,0);// z is the second dimension to 2D AMReX
 #endif
 
+IntVect WarpX::rho_nodal_flag(AMREX_D_DECL(1, 1, 1));
+
 IntVect WarpX::filter_npass_each_dir(1);
 
 int WarpX::n_field_gather_buffer = -1;
@@ -244,11 +246,6 @@ WarpX::WarpX ()
 
     pml.resize(nlevs_max);
 
-#ifdef WARPX_DO_ELECTROSTATIC
-    masks.resize(nlevs_max);
-    gather_masks.resize(nlevs_max);
-#endif // WARPX_DO_ELECTROSTATIC
-
     switch (WarpX::load_balance_costs_update_algo)
     {
         case LoadBalanceCostsUpdateAlgo::Timers: costs.resize(nlevs_max);
@@ -256,6 +253,52 @@ WarpX::WarpX ()
         case LoadBalanceCostsUpdateAlgo::Heuristic: costs_heuristic.resize(nlevs_max);
             break;
         default: amrex::Abort("unknown load balance type");
+    }
+
+    // Set default values for particle and cell weights for costs update;
+    // Default values listed here for the case AMREX_USE_GPU are determined
+    // from single-GPU tests on Summit.
+    if (costs_heuristic_cells_wt<0. && costs_heuristic_particles_wt<0.
+        && WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic)
+    {
+#ifdef AMREX_USE_GPU
+#ifdef WARPX_USE_PSATD
+        switch (WarpX::nox)
+        {
+            case 1:
+                costs_heuristic_cells_wt = 0.575;
+                costs_heuristic_particles_wt = 0.425;
+                break;
+            case 2:
+                costs_heuristic_cells_wt = 0.405;
+                costs_heuristic_particles_wt = 0.595;
+                break;
+            case 3:
+                costs_heuristic_cells_wt = 0.250;
+                costs_heuristic_particles_wt = 0.750;
+                break;
+        }
+#else // FDTD
+        switch (WarpX::nox)
+        {
+            case 1:
+                costs_heuristic_cells_wt = 0.401;
+                costs_heuristic_particles_wt = 0.599;
+                break;
+            case 2:
+                costs_heuristic_cells_wt = 0.268;
+                costs_heuristic_particles_wt = 0.732;
+                break;
+            case 3:
+                costs_heuristic_cells_wt = 0.145;
+                costs_heuristic_particles_wt = 0.855;
+                break;
+        }
+#endif // WARPX_USE_PSATD
+#else // CPU
+        costs_heuristic_cells_wt = 0.1;
+        costs_heuristic_particles_wt = 0.9;
+#endif // AMREX_USE_GPU
     }
 
     // Allocate field solver objects
@@ -640,6 +683,7 @@ WarpX::ReadParameters ()
             jx_nodal_flag = IntVect::TheNodeVector();
             jy_nodal_flag = IntVect::TheNodeVector();
             jz_nodal_flag = IntVect::TheNodeVector();
+            rho_nodal_flag = IntVect::TheNodeVector();
             // Use same shape factors in all directions, for gathering
             l_lower_order_in_v = false;
         }
@@ -898,7 +942,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_dive_cleaning || plot_rho)
     {
-        rho_fp[lev].reset(new MultiFab(amrex::convert(ba,IntVect::TheUnitVector()),dm,2*ncomps,ngRho));
+        rho_fp[lev].reset(new MultiFab(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho));
     }
 
     if (do_subcycling == 1 && lev == 0)
@@ -915,7 +959,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #ifdef WARPX_USE_PSATD
     else
     {
-        rho_fp[lev].reset(new MultiFab(amrex::convert(ba,IntVect::TheUnitVector()),dm,2*ncomps,ngRho));
+        rho_fp[lev].reset(new MultiFab(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho));
     }
     if (fft_hybrid_mpi_decomposition == false){
         // Allocate and initialize the spectral solver
@@ -993,7 +1037,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         current_cp[lev][2].reset( new MultiFab(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ));
 
         if (do_dive_cleaning || plot_rho){
-            rho_cp[lev].reset(new MultiFab(amrex::convert(cba,IntVect::TheUnitVector()),dm,2*ncomps,ngRho));
+            rho_cp[lev].reset(new MultiFab(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho));
         }
         if (do_dive_cleaning)
         {
@@ -1002,7 +1046,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #ifdef WARPX_USE_PSATD
         else
         {
-            rho_cp[lev].reset(new MultiFab(amrex::convert(cba,IntVect::TheUnitVector()),dm,2*ncomps,ngRho));
+            rho_cp[lev].reset(new MultiFab(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho));
         }
         if (fft_hybrid_mpi_decomposition == false){
             // Allocate and initialize the spectral solver
@@ -1065,7 +1109,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             current_buf[lev][1].reset( new MultiFab(amrex::convert(cba,jy_nodal_flag),dm,ncomps,ngJ));
             current_buf[lev][2].reset( new MultiFab(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ));
             if (rho_cp[lev]) {
-                charge_buf[lev].reset( new MultiFab(amrex::convert(cba,IntVect::TheUnitVector()),dm,2*ncomps,ngRho));
+                charge_buf[lev].reset( new MultiFab(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho));
             }
             current_buffer_masks[lev].reset( new iMultiFab(ba, dm, ncomps, 1) );
             // Current buffer masks have 1 ghost cell, because of the fact
