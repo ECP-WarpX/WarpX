@@ -48,9 +48,11 @@ public:
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator() (const PData& ptd, int const i) const noexcept
     {
-        const auto opt_depth =
+        using namespace amrex;
+
+        const amrex::ParticleReal opt_depth =
             ptd.m_runtime_rdata[m_opt_depth_runtime_comp][i];
-        return (opt_depth < 0.0);
+        return (opt_depth < 0.0_rt);
     }
 
 private:
@@ -122,10 +124,10 @@ public:
         auto py = uy*me;
         auto pz = uz*me;
 
-        auto g_w = ParticleReal{0.0};
-        auto g_px = ParticleReal{0.0};
-        auto g_py = ParticleReal{0.0};
-        auto g_pz = ParticleReal{0.0};
+        auto g_w = 0.0_rt;
+        auto g_px = 0.0_rt;
+        auto g_py = 0.0_rt;
+        auto g_pz = 0.0_rt;
 
         m_emission_functor.operator()<1>(
             &px, &py, &pz,

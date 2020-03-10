@@ -48,9 +48,11 @@ public:
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator() (const PData& ptd, int const i) const noexcept
     {
-        const auto opt_depth =
+        using namespace amrex;
+
+        const amrex::ParticleReal opt_depth =
             ptd.m_runtime_rdata[m_opt_depth_runtime_comp][i];
-        return (opt_depth < 0.0);
+        return (opt_depth < 0.0_rt);
     }
 
 private:
@@ -112,14 +114,14 @@ public:
         const auto py = uy*me;
         const auto pz = uz*me;
 
-        auto e_w = ParticleReal{0.0};
-        auto p_w = ParticleReal{0.0};
-        auto e_px = ParticleReal{0.0};
-        auto e_py = ParticleReal{0.0};
-        auto e_pz = ParticleReal{0.0};
-        auto p_px = ParticleReal{0.0};
-        auto p_py = ParticleReal{0.0};
-        auto p_pz = ParticleReal{0.0};
+        auto e_w = 0.0_rt;
+        auto p_w = 0.0_rt;
+        auto e_px = 0.0_rt;
+        auto e_py = 0.0_rt;
+        auto e_pz = 0.0_rt;
+        auto p_px = 0.0_rt;
+        auto p_py = 0.0_rt;
+        auto p_pz = 0.0_rt;
 
         //Despite the names of the variables, positrons and electrons
         //can be exchanged, since the physical process is completely
