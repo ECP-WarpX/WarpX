@@ -824,6 +824,7 @@ WarpX::applyMirrors(Real time){
     }
 }
 
+#ifdef WARPX_USE_PSATD
 void
 WarpX::CurrentCorrection ()
 {
@@ -838,3 +839,4 @@ WarpX::CurrentCorrection ()
         }
     }
 }
+#endif
