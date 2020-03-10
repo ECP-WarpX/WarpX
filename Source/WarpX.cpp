@@ -142,11 +142,7 @@ IntVect WarpX::jy_nodal_flag(1,1);// y is the missing dimension to 2D AMReX
 IntVect WarpX::jz_nodal_flag(1,0);// z is the second dimension to 2D AMReX
 #endif
 
-#if (AMREX_SPACEDIM == 3)
-IntVect WarpX::rho_nodal_flag(1,1,1);
-#elif (AMREX_SPACEDIM == 2)
-IntVect WarpX::rho_nodal_flag(1,1);  // x is the first dimension to AMReX
-#endif
+IntVect WarpX::rho_nodal_flag(AMREX_D_DECL(1, 1, 1));
 
 IntVect WarpX::filter_npass_each_dir(1);
 

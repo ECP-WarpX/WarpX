@@ -18,7 +18,7 @@
                          required to have the charge of each macroparticle
                          since q is a scalar. For non-ionizable species,
                          ion_lev is a null pointer.
- * \param rho_fab      : Array4 of charge density, either full array or tile.
+ * \param rho_fab      : FArrayBox of charge density, either full array or tile.
  * \param np_to_depose : Number of particles for which current is deposited.
  * \param dx           : 3D cell size
  * \param xyzmin       : Physical lower bounds of domain.

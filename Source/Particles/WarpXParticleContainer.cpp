@@ -425,16 +425,16 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     tilebox.grow(ngRho);
     const Box tb = amrex::convert(tilebox, WarpX::rho_nodal_flag);
 
-    const int ncomps = (rho->nComp() == 1 ? 1 : rho->nComp()/2);
+    const int nc = (rho->nComp() == 1 ? 1 : rho->nComp()/2);
 
 #ifdef AMREX_USE_GPU
     // No tiling on GPU: rho_fab points to the full rho array.
-    MultiFab rhoi(*rho, amrex::make_alias, icomp*ncomps, ncomps);
+    MultiFab rhoi(*rho, amrex::make_alias, icomp*nc, nc);
     auto & rho_fab = rhoi.get(pti);
 #else
     // Tiling is on: rho_fab points to local_rho[thread_num]
 
-    local_rho[thread_num].resize(tb, ncomps);
+    local_rho[thread_num].resize(tb, nc);
 
     // local_rho[thread_num] is set to zero
     local_rho[thread_num].setVal(0.0);
@@ -485,7 +485,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 #ifndef AMREX_USE_GPU
     WARPX_PROFILE_VAR_START(blp_accumulate);
 
-    (*rho)[pti].atomicAdd(local_rho[thread_num], tb, tb, 0, icomp*ncomps, ncomps);
+    (*rho)[pti].atomicAdd(local_rho[thread_num], tb, tb, 0, icomp*nc, nc);
 
     WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
