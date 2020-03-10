@@ -23,8 +23,8 @@
 
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
-#   include "Particles/ElementaryProcess/BreitWheelerEngineWrapper.H"
-#   include "Particles/ElementaryProcess/QuantumSyncEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#   include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
 #endif
 
 #include <AMReX_Particles.H>
