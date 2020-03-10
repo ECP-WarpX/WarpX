@@ -139,6 +139,7 @@ public:
             &g_px, &g_py, &g_pz,
             &g_w);
 
+        // Then convert back to WarpX convention.
         src.m_rdata[PIdx::ux][i_src] = px*one_over_me;
         src.m_rdata[PIdx::uy][i_src] = py*one_over_me;
         src.m_rdata[PIdx::uz][i_src] = pz*one_over_me;
