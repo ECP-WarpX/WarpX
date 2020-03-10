@@ -14,25 +14,54 @@
 
 using namespace amrex;
 
+enum NormalizationType
+{
+    no_normalization,
+    unity_particle_weight,
+    max_to_unity,
+    area_to_unity
+};
+
 // constructor
 ParticleHistogram::ParticleHistogram (std::string rd_name)
 : ReducedDiags{rd_name}
 {
 
-    // read parameters
     ParmParse pp(rd_name);
+
+    // read species
     std::string selected_species_name;
     pp.get("species",selected_species_name);
+
+    // read bin parameters
     pp.get("bin_number",m_bin_num);
     pp.get("bin_max",   m_bin_max);
     pp.get("bin_min",   m_bin_min);
-    pp.query("normalization",m_norm);
     m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;
+
+    // read histogram function
     std::string function_string = "";
     Store_parserString(pp,"histogram_function(t,x,y,z,ux,uy,uz)",
                        function_string);
     m_parser.reset(new ParserWrapper<7>(
         makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
+
+    // read normalization type
+    std::string norm_string = "default";
+    pp.query("normalization",norm_string);
+
+    // set normalization type
+    if ( norm_string == "default" ) {
+        m_norm = NormalizationType::no_normalization;
+    } else if ( norm_string == "unity_particle_weight" ) {
+        m_norm = NormalizationType::unity_particle_weight;
+    } else if ( norm_string == "max_to_unity" ) {
+        m_norm = NormalizationType::max_to_unity;
+    } else if ( norm_string == "area_to_unity" ) {
+        m_norm = NormalizationType::area_to_unity;
+    } else {
+        Abort("Unknown ParticleHistogram normalization type.");
+    }
 
     // get MultiParticleContainer class object
     auto & mypc = WarpX::GetInstance().GetPartContainer();
@@ -111,7 +140,8 @@ void ParticleHistogram::ComputeDiags (int step)
     Real const bin_min  = m_bin_min;
     Real const bin_size = m_bin_size;
     bool is_unity_particle_weight = false;
-    if ( m_norm == "unity_particle_weight" ) is_unity_particle_weight = true;
+    if ( m_norm == NormalizationType::unity_particle_weight )
+    { is_unity_particle_weight = true; }
 
     for ( int i = 0; i < m_bin_num; ++i )
     {
@@ -139,7 +169,8 @@ void ParticleHistogram::ComputeDiags (int step)
     ParallelDescriptor::ReduceRealSum
         (m_data.data(), m_data.size(), ParallelDescriptor::IOProcessorNumber());
 
-    if ( m_norm == "max_to_unity" )
+    // normalize the maximum value to be one
+    if ( m_norm == NormalizationType::max_to_unity )
     {
         Real f_max = 0.0;
         for ( int i = 0; i < m_bin_num; ++i )
@@ -150,8 +181,11 @@ void ParticleHistogram::ComputeDiags (int step)
         {
             if ( f_max > std::numeric_limits<Real>::min() ) m_data[i] /= f_max;
         }
+        return;
     }
-    else if ( m_norm == "area_to_unity" )
+
+    // normalize the area (integral) to be one
+    if ( m_norm == NormalizationType::area_to_unity )
     {
         Real f_area = 0.0;
         for ( int i = 0; i < m_bin_num; ++i )
@@ -162,10 +196,8 @@ void ParticleHistogram::ComputeDiags (int step)
         {
             if ( f_area > std::numeric_limits<Real>::min() ) m_data[i] /= f_area;
         }
+        return;
     }
-    else if ( m_norm == "default" || m_norm == "unity_particle_weight")
-    { /* do nothing */ }
-    else { Abort("Unknown ParticleHistogram normalization type."); }
 
 }
 // end void ParticleHistogram::ComputeDiags

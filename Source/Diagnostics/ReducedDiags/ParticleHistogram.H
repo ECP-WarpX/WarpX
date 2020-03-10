@@ -25,7 +25,7 @@ public:
     ParticleHistogram(std::string rd_name);
 
     /// particle weight type
-    std::string m_norm = "default";
+    int m_norm = 0;
 
     /// number of bins
     int m_bin_num;
