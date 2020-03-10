@@ -39,8 +39,7 @@ particles.species_names = p1 p2 p3 p4 ele_bw pos_bw
 particles.photon_species = p1 p2 p3 p4
 #################################
 
-p1.charge = -q_e
-p1.mass = m_e
+p1.species_type = 'photon'
 p1.injection_style = "NUniformPerCell"
 p1.profile = "constant"
 p1.xmin = -0.5e-6
@@ -66,6 +65,7 @@ p1.qed_breit_wheeler_ele_product_species = ele_bw
 p1.qed_breit_wheeler_pos_product_species = pos_bw
 #################################
 
+p2.species_type = 'photon'
 p2.charge = -q_e
 p2.mass = m_e
 p2.injection_style = "NUniformPerCell"
@@ -93,6 +93,7 @@ p2.qed_breit_wheeler_ele_product_species = ele_bw
 p2.qed_breit_wheeler_pos_product_species = pos_bw
 #################################
 
+p3.species_type = 'photon'
 p3.charge = -q_e
 p3.mass = m_e
 p3.injection_style = "NUniformPerCell"
@@ -120,6 +121,7 @@ p3.qed_breit_wheeler_ele_product_species = ele_bw
 p3.qed_breit_wheeler_pos_product_species = pos_bw
 #################################
 
+p4.species_type = 'photon'
 p4.charge = -q_e
 p4.mass = m_e
 p4.injection_style = "NUniformPerCell"
@@ -148,8 +150,7 @@ p4.qed_breit_wheeler_pos_product_species = pos_bw
 #################################
 
 ### PRODUCT SPECIES ###
-ele_bw.charge = -q_e
-ele_bw.mass = m_e
+ele_bw.species_type = 'electron'
 ele_bw.injection_style = nuniformpercell
 ele_bw.num_particles_per_cell_each_dim = 1 1
 ele_bw.profile = constant
@@ -159,8 +160,7 @@ ele_bw.xmin = 1 ## Ugly trick to avoid electrons at T=0
 ele_bw.xmax = -1 ##  Ugly trick to avoid electrons at T=0
 ele_bw.do_qed = 0
 
-pos_bw.charge = q_e
-pos_bw.mass = m_e
+pos_bw.species_type = 'positron'
 pos_bw.injection_style = nuniformpercell
 pos_bw.num_particles_per_cell_each_dim = 1 1
 pos_bw.profile = constant
