@@ -40,7 +40,7 @@ particles.species_names = electrons positrons qs_phot
 particles.photon_species = qs_phot
 #################################
 
-electrons.species_type = 'electron'
+electrons.species_type = "electron"
 electrons.injection_style = "NUniformPerCell"
 electrons.profile = "constant"
 electrons.xmin = -30e-6
@@ -65,7 +65,7 @@ electrons.do_qed_quantum_sync = 1
 electrons.qed_quantum_sync_phot_product_species = qs_phot
 #################################
 
-positrons.species_type = 'positron'
+positrons.species_type = "positron"
 positrons.injection_style = "NUniformPerCell"
 positrons.profile = "constant"
 positrons.xmin = -30e-6
@@ -91,7 +91,7 @@ positrons.qed_quantum_sync_phot_product_species = qs_phot
 #################################
 
 ### PRODUCT SPECIES ###
-qs_phot.species_type = 'photon'
+qs_phot.species_type = "photon"
 qs_phot.injection_style = nuniformpercell
 qs_phot.num_particles_per_cell_each_dim = 1 1
 qs_phot.profile = constant
