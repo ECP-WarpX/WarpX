@@ -4,8 +4,10 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpX.H"
 #include "PsatdAlgorithm.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <cmath>
 
@@ -193,6 +195,8 @@ void
 PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                    const std::unique_ptr<amrex::MultiFab>& rho ) {
+    // Profiling
+    WARPX_PROFILE( "PsatdAlgorithm::CurrentCorrection" );
 
     using Idx = SpectralFieldIndex;
 
