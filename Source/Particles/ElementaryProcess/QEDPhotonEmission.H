@@ -8,8 +8,8 @@
 #ifndef QED_PHOTON_EMISSION_H_
 #define QED_PHOTON_EMISSION_H_
 
-#include "WarpXConst.H"
-#include "WarpXParticleContainer.H"
+#include "Utils/WarpXConst.H"
+#include "Particles/WarpXParticleContainer.H"
 
 #include <QuantumSyncEngineWrapper.H>
 
