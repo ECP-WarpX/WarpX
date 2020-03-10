@@ -8,8 +8,8 @@
 #ifndef QED_PAIR_GENERATION_H_
 #define QED_PAIR_GENERATION_H_
 
-#include "WarpXConst.H"
-#include "WarpXParticleContainer.H"
+#include "Utils/WarpXConst.H"
+#include "Particles/WarpXParticleContainer.H"
 
 #include <BreitWheelerEngineWrapper.H>
 
