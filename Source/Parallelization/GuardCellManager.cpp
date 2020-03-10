@@ -5,7 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "GuardCellManager.H"
-#include "NCIGodfreyFilter.H"
+#include "Filter/NCIGodfreyFilter.H"
 #include <AMReX_Print.H>
 #include <AMReX_ParmParse.H>
 
@@ -103,7 +103,6 @@ guardCellManager::Init(
         // the stencil of the FFT solver. Here, this number (`ngFFT`)
         // is determined *empirically* to be the order of the solver
         // for nodal, and half the order of the solver for staggered.
-        //IntVect ngFFT;
 
         int ngFFt_x = do_nodal ? nox_fft : nox_fft/2.;
         int ngFFt_y = do_nodal ? noy_fft : noy_fft/2.;
@@ -115,7 +114,6 @@ guardCellManager::Init(
         pp.query("nz_guard_psatd", ngFFt_z);
 
         IntVect ngFFT = IntVect(AMREX_D_DECL(ngFFt_x, ngFFt_y, ngFFt_z));
-        amrex::Print() <<"ngFFT = "<< ngFFT << "------\n"; //oshapoval
 
         for (int i_dim=0; i_dim<AMREX_SPACEDIM; i_dim++ ){
             int ng_required = ngFFT[i_dim];
