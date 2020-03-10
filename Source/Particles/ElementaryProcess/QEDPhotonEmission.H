@@ -120,6 +120,8 @@ public:
         const ParticleReal by = src.m_rdata[PIdx::By][i_src];
         const ParticleReal bz = src.m_rdata[PIdx::Bz][i_src];
 
+        // Particle momentum is stored as gamma * velocity.
+        // Convert to m * gamma * velocity before applying the emission functor.
         auto px = ux*me;
         auto py = uy*me;
         auto pz = uz*me;
