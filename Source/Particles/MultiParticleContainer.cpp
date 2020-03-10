@@ -9,6 +9,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
+#include "SpeciesPhysicalProperties.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
@@ -562,8 +563,8 @@ MultiParticleContainer::mapSpeciesProduct ()
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_pos < allcontainers.size(),
                 "ERROR: Breit Wheeler product species not found");
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                allcontainers[i_product_ele]->AmIAnElectron() &&
-                allcontainers[i_product_pos]->AmIAPositron(),
+                allcontainers[i_product_ele]->AmIA<PhysicalSpecies::electron>() &&
+                allcontainers[i_product_pos]->AmIA<PhysicalSpecies::positron>(),
                 "ERROR: Breit Wheeler product species are of wrong type");
         }
 
@@ -578,7 +579,7 @@ MultiParticleContainer::mapSpeciesProduct ()
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_phot < allcontainers.size(),
                 "ERROR: Quantum Synchrotron product species not found");
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                allcontainers[i_product_phot]->AmIAPhoton(),
+                allcontainers[i_product_phot]->AmIA<PhysicalSpecies::photon>(),
                 "ERROR: Quantum Synchrotron product species is of wrong type");
         }
 #endif

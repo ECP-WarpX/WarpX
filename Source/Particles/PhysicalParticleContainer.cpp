@@ -44,13 +44,6 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     charge = plasma_injector->getCharge();
     mass = plasma_injector->getMass();
 
-    if(mass == PhysConst::m_e && charge == -PhysConst::q_e){
-        m_my_type = PhysicalParticleType::electron;
-    }
-    else if(mass == PhysConst::m_e && charge == PhysConst::q_e){
-         m_my_type = PhysicalParticleType::positron;
-    }
-
     ParmParse pp(species_name);
 
     pp.query("boost_adjust_transverse_positions", boost_adjust_transverse_positions);
@@ -78,8 +71,9 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     //should be false
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         !(do_classical_radiation_reaction &&
-        !(AmIAnElectron() || AmIAPositron()) ),
-        "Can't enable classical radiation reaction for non lepton species. " );
+        !(AmIA<PhysicalSpecies::electron>() ||
+        AmIA<PhysicalSpecies::positron>() )),
+        "Can't enable classical radiation reaction for non lepton species. ");
 
     //Only Boris pusher is compatible with radiation reaction
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(

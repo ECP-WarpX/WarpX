@@ -310,6 +310,14 @@ public:
     //amrex::Real getMass () {return mass;}
     amrex::ParticleReal getMass () const {return mass;}
 
+    /* \brief This function tests if the current species
+    *  is of a given PhysicalSpecies (specified as a template parameter).
+    * @tparam PhysSpec the PhysicalSpecies to test against
+    * @return the result of the test
+    */
+    template<PhysicalSpecies PhysSpec>
+    bool AmIA () const noexcept {return (physical_species == PhysSpec);}
+
 protected:
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
@@ -374,11 +382,6 @@ protected:
     std::string m_qed_quantum_sync_phot_product_name;
 
 #endif
-
-    virtual bool AmIAPhoton () {return false;};
-    virtual bool AmIAnElectron () {return false;};
-    virtual bool AmIAPositron () {return false;};
-
     amrex::Vector<amrex::FArrayBox> local_rho;
     amrex::Vector<amrex::FArrayBox> local_jx;
     amrex::Vector<amrex::FArrayBox> local_jy;

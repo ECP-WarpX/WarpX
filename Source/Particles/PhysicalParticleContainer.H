@@ -342,11 +342,6 @@ protected:
     //radiation reaction
     bool do_classical_radiation_reaction = false;
 
-    PhysicalParticleType m_my_type = PhysicalParticleType::other;
-    bool AmIAPhoton () override {return (m_my_type == PhysicalParticleType::photon);};
-    bool AmIAnElectron () override {return (m_my_type == PhysicalParticleType::electron);};
-    bool AmIAPositron () override {return (m_my_type == PhysicalParticleType::positron);};
-
 #ifdef WARPX_QED
     // A flag to enable quantum_synchrotron process for leptons
     bool m_do_qed_quantum_sync = false;
