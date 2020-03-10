@@ -634,7 +634,7 @@ MultiParticleContainer::doFieldIonization ()
 
         for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
         {
-            auto info = getMFItInfo(*pc_source, *pc_product);
+            const auto info = getMFItInfo(*pc_source, *pc_product);
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -644,8 +644,8 @@ MultiParticleContainer::doFieldIonization ()
                 auto& src_tile = pc_source ->ParticlesAt(lev, mfi);
                 auto& dst_tile = pc_product->ParticlesAt(lev, mfi);
 
-                auto np_dst = dst_tile.numParticles();
-                auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
+                const auto np_dst = dst_tile.numParticles();
+                const auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
                                                                  Filter, Copy, Transform);
 
                 setNewParticleIDs(dst_tile, np_dst, num_added);
@@ -1016,7 +1016,7 @@ void MultiParticleContainer::doQedBreitWheeler()
 
         for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
         {
-            auto info = getMFItInfo(*pc_source, *pc_product_ele, *pc_product_pos);
+            const auto info = getMFItInfo(*pc_source, *pc_product_ele, *pc_product_pos);
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -1027,9 +1027,9 @@ void MultiParticleContainer::doQedBreitWheeler()
                 auto& dst_ele_tile = pc_product_ele->ParticlesAt(lev, mfi);
                 auto& dst_pos_tile = pc_product_pos->ParticlesAt(lev, mfi);
 
-                auto np_dst_ele = dst_ele_tile.numParticles();
-                auto np_dst_pos = dst_pos_tile.numParticles();
-                auto num_added = filterCopyTransformParticles<1>(
+                const auto np_dst_ele = dst_ele_tile.numParticles();
+                const auto np_dst_pos = dst_pos_tile.numParticles();
+                const auto num_added = filterCopyTransformParticles<1>(
                     dst_ele_tile, dst_pos_tile,
                     src_tile, np_dst_ele, np_dst_pos,
                     Filter, CopyEle, CopyPos, Transform);
@@ -1076,7 +1076,7 @@ void MultiParticleContainer::doQedQuantumSync()
 
         for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
         {
-            auto info = getMFItInfo(*pc_source, *pc_product_phot);
+            const auto info = getMFItInfo(*pc_source, *pc_product_phot);
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -1086,10 +1086,11 @@ void MultiParticleContainer::doQedQuantumSync()
                 auto& src_tile = pc_source->ParticlesAt(lev, mfi);
                 auto& dst_tile = pc_product_phot->ParticlesAt(lev, mfi);
 
-                auto np_dst = dst_tile.numParticles();
+                const auto np_dst = dst_tile.numParticles();
 
-                auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
-                                                                 Filter, CopyPhot, Transform);
+                const auto num_added =
+                    filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
+                        Filter, CopyPhot, Transform);
 
                 setNewParticleIDs(dst_tile, np_dst, num_added);
 
