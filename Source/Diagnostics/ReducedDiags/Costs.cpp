@@ -126,12 +126,14 @@ void Costs::ComputeDiags (int step)
     }
 
     // parallel reduce to IO proc and get data over all procs
-    amrex::Vector<amrex::Real>::iterator it_m_data = m_data.begin();
-    amrex::Real* addr_it_m_data = &(*it_m_data);
-    ParallelAllReduce::Sum(addr_it_m_data,
-                        m_data.size(),
-                        ParallelContext::CommunicatorSub());
+    ParallelDescriptor::ReduceRealSum(m_data, ParallelDescriptor::IOProcessorNumber());
     
+    //amrex::Vector<amrex::Real>::iterator it_m_data = m_data.begin();
+    //amrex::Real* addr_it_m_data = &(*it_m_data);
+    // ParallelAllReduce::Sum(addr_it_m_data,
+    //                        m_data.size(),
+    //                        ParallelContext::CommunicatorSub());
+
     /* m_data now contains up-to-date values for:
      *  [[cost, proc, lev, i, j, k] of box 0 at level 0,
      *   [cost, proc, lev, i, j, k] of box 1 at level 0,
