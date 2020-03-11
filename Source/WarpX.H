@@ -663,12 +663,12 @@ private:
     /** Interval to perform load balance; `load_balance_int=5`, e.g., will load
      * balance during steps 5, 10, 15, etc. */
     int load_balance_int = -1;
-    /** Collection of multifabs to keep track of weights, based on number of cells
-     * and number of particles per box; for use in load balancing routines. */
-    amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > > costs_heuristic;
-    /** Collection of multifabs to keep track of weights, based on in-code timers,
+    /** Collection of multifabs to keep track of weights, based on in-code timers,                                              
      * for use in load balancing routines. */
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > costs;
+    /** Collection of vectors to keep track of weights, based on number of cells
+     * and number of particles per box; for use in load balancing routines. */
+    amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > > costs_heuristic;
     /** Load balance with 'space filling curve' strategy. */
     int load_balance_with_sfc = 0;
     /** Controls the maximum number of boxes that can be assigned to a rank during
