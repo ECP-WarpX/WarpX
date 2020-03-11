@@ -24,7 +24,7 @@ public:
      *  @param[in] rd_name reduced diags names */
     ParticleHistogram(std::string rd_name);
 
-    /// particle weight type
+    /// normalization type
     int m_norm;
 
     /// number of bins

@@ -14,11 +14,13 @@
 
 using namespace amrex;
 
-enum NormalizationType
-{
+struct NormalizationType {
+    enum {
+    no_normalization = 0,
     unity_particle_weight,
     max_to_unity,
     area_to_unity
+    };
 };
 
 // constructor
@@ -51,7 +53,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
 
     // set normalization type
     if ( norm_string == "default" ) {
-        m_norm = -1;
+        m_norm = NormalizationType::no_normalization;
     } else if ( norm_string == "unity_particle_weight" ) {
         m_norm = NormalizationType::unity_particle_weight;
     } else if ( norm_string == "max_to_unity" ) {
