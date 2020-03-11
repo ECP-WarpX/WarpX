@@ -253,9 +253,9 @@ MultiParticleContainer::ReadParameters ()
 
         if (m_do_qed_schwinger) {
             ParmParse ppq("qed_schwinger");
-            ppq.get("qed_schwinger_ele_product_species",
+            ppq.get("ele_product_species",
                 m_qed_schwinger_ele_product_name);
-            ppq.get("qed_schwinger_pos_product_species",
+            ppq.get("pos_product_species",
                 m_qed_schwinger_pos_product_name);
         }
 #endif
@@ -577,7 +577,7 @@ MultiParticleContainer::getSpeciesID (std::string product_str)
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         found != 0,
-        "ERROR: could not find product species ID for ionization. Wrong name?");
+       "ERROR: could not find product species ID. Wrong name?");
     return i_product;
 }
 
@@ -982,8 +982,14 @@ MultiParticleContainer::InitSchwinger ()
 void
 MultiParticleContainer::doQEDSchwinger ()
 {
+    if (!m_do_qed_schwinger) {return;}
+
     auto & warpx = WarpX::GetInstance();
 
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_nodal,
+        "ERROR: Schwinger process only implemented for warpx.do_nodal = 1");
+
+    // So far Schwinger process does not consider refined meshes
     const int level_0 = 0;
 
     const MultiFab & Ex = warpx.getEfield(level_0,0);
@@ -993,13 +999,63 @@ MultiParticleContainer::doQEDSchwinger ()
     const MultiFab & By = warpx.getBfield(level_0,1);
     const MultiFab & Bz = warpx.getBfield(level_0,2);
 
-        // get cell size
+        // get cell size multiplied by time step
     Geometry const & geom = warpx.Geom(level_0);
     auto domain_box = geom.Domain();
 #if (AMREX_SPACEDIM == 2)
-    auto dV = geom.CellSize(0) * geom.CellSize(1);
+    auto dVdt = geom.CellSize(0) * geom.CellSize(1) * warpx.getdt(0); // getdt(level_0) ??
 #elif (AMREX_SPACEDIM == 3)
-    auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
+    auto dVdt = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2) * warpx.getdt(0);
 #endif
+
+    // Add defineAllParticleTiles(); ??
+
+    MFItInfo info;
+    if (TilingIfNotGPU()) {
+        info.EnableTiling(); // Put EnableTiling(PhysicalParticleContainer::tile_size); instead ??
+    }
+#ifdef _OPENMP
+    info.SetDynamic(true);
+#pragma omp parallel if (not WarpX::serialize_ics)
+#endif
+
+    for (MFIter mfi(Ex, info); mfi.isValid(); ++mfi )
+    {
+        const Box& box = mfi.tilebox();
+
+        // const FArrayBox& fabEx = Ex[mfi];
+
+        const auto& arrEx = Ex[mfi].array();
+        const auto& arrEy = Ey[mfi].array();
+        const auto& arrEz = Ez[mfi].array();
+        const auto& arrBx = Bx[mfi].array();
+        const auto& arrBy = By[mfi].array();
+        const auto& arrBz = Bz[mfi].array();
+
+        FArrayBox NumPairCreation(box, 1);
+        auto arrNumPairCreation = NumPairCreation.array();
+
+        amrex::ParallelFor(box,  [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                arrNumPairCreation(i,j,k) = getSchwingerProductionNumber( dVdt,
+                    arrEx(i,j,k),arrEy(i,j,k),arrEz(i,j,k),
+                    arrBx(i,j,k),arrBy(i,j,k),arrBz(i,j,k));
+                });
+
+        CreateSchwingerPairs(arrNumPairCreation);
+    }
+}
+
+amrex::Real MultiParticleContainer::getSchwingerProductionNumber (
+                  const amrex::Real dVdt,
+                  const amrex::Real Ex, const amrex::Real Ey, const amrex::Real Ez,
+                  const amrex::Real Bx, const amrex::Real By, const amrex::Real Bz)
+                  {
+                      return 1664;
+                  }
+                  ;
+
+void MultiParticleContainer::CreateSchwingerPairs (
+                             const amrex::Array4<amrex::Real>& arrNumPairCreation)
+{
 }
 #endif
