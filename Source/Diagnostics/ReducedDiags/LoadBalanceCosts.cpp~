@@ -126,10 +126,9 @@ void LoadBalanceCosts::WriteToFile (int step) const
             ofs << "[1]step()";
             ofs << m_sep;
             ofs << "[2]time(s)";
-            
+            ofs << m_sep;
             for (int boxNumber=0; boxNumber<m_nBoxesMax; ++boxNumber)
             {
-                ofs << m_sep;
                 ofs << "[" + std::to_string(3 + m_nDataFields*boxNumber) + "]";
                 ofs << "cost_box_"+std::to_string(boxNumber)+"()";
                 ofs << m_sep;
@@ -147,6 +146,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
                 ofs << m_sep;
                 ofs << "[" + std::to_string(8 + m_nDataFields*boxNumber) + "]";
                 ofs << "k_low_box_"+std::to_string(boxNumber)+"()";
+                ofs << m_sep;
             }
             ofs << std::endl;
 
