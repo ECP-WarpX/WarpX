@@ -32,11 +32,8 @@ public:
      *  @param[in] rd_name reduced diags names */
     LoadBalanceCosts(std::string rd_name);
 
-    /** This funciton updates the costs (if needed; not necessary if load balance step).
-     *  Heuristic costs are updated at each load balance step.  If costs reduced
-     *  diagnostic is desired at a non-load balance step, the heuristic cost is
-     *  updated.  Timer-based costs are recorded inline, so in this case there
-     *  is nothing to compute/update.  */
+    /** This funciton updates the costs, given the current distribution mapping,
+     *  according to the number of particles and cells on the box  */
     virtual void ComputeDiags(int step) override final;
 
     /** write to file function for costs;  this differs from the base class
