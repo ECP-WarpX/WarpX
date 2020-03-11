@@ -130,4 +130,15 @@ T trilinear_interp(T x0, T x1,T y0, T y1, T z0, T z1,
 */
 WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames);
 
+namespace WarpXUtilMsg{
+
+/** \brief If expression is == 0, this function prints msg and calls amrex::abort()
+ *
+ * @param[in] expression
+ * @param[in] msg the string to be printed if expression is == 0 (default value is "ERROR!")
+ */
+void AlwaysAssert(int expression, const std::string& msg);
+
+}
+
 #endif //WARPX_UTILS_H_
