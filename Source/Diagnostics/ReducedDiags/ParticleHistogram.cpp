@@ -16,10 +16,10 @@ using namespace amrex;
 
 struct NormalizationType {
     enum {
-    no_normalization = 0,
-    unity_particle_weight,
-    max_to_unity,
-    area_to_unity
+        no_normalization = 0,
+        unity_particle_weight,
+        max_to_unity,
+        area_to_unity
     };
 };
 
