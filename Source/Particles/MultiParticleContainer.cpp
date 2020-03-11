@@ -12,6 +12,9 @@
 #include "SpeciesPhysicalProperties.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
+#ifdef WARPX_QED
+    #include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
+#endif
 
 #include <AMReX_Vector.H>
 
@@ -622,11 +625,7 @@ MultiParticleContainer::getSpeciesID (std::string product_str)
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         found != 0,
-<<<<<<< HEAD
-       "ERROR: could not find product species ID. Wrong name?");
-=======
         "ERROR: could not find product species ID. Wrong name?");
->>>>>>> LucaQED/add_qed_particle_creaction_new_routines
     return i_product;
 }
 
@@ -995,7 +994,6 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
     }
 }
 
-<<<<<<< HEAD
 void
 MultiParticleContainer::InitSchwinger ()
 {
@@ -1076,20 +1074,10 @@ MultiParticleContainer::doQEDSchwinger ()
     }
 }
 
-amrex::Real MultiParticleContainer::getSchwingerProductionNumber (
-                  const amrex::Real dVdt,
-                  const amrex::Real Ex, const amrex::Real Ey, const amrex::Real Ez,
-                  const amrex::Real Bx, const amrex::Real By, const amrex::Real Bz)
-                  {
-                      return 1664;
-                  }
-                  ;
-
 void MultiParticleContainer::CreateSchwingerPairs (
                              const amrex::Array4<amrex::Real>& arrNumPairCreation)
 {
 }
-=======
 void MultiParticleContainer::doQedEvents()
 {
     WARPX_PROFILE("MPC::doQedEvents");
@@ -1222,5 +1210,4 @@ void MultiParticleContainer::doQedQuantumSync()
 }
 
 
->>>>>>> LucaQED/add_qed_particle_creaction_new_routines
 #endif

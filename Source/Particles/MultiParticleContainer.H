@@ -131,9 +131,6 @@ public:
 #ifdef WARPX_QED
     void InitSchwinger ();
     void doQEDSchwinger ();
-    amrex::Real getSchwingerProductionNumber (const amrex::Real dVdt,
-                  const amrex::Real Ex, const amrex::Real Ey, const amrex::Real Ez,
-                  const amrex::Real Bx, const amrex::Real By, const amrex::Real Bz);
     void CreateSchwingerPairs (const amrex::Array4<amrex::Real>& arrNumPairCreation);
 #endif
 
