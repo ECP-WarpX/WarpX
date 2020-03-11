@@ -21,6 +21,12 @@ Costs::Costs (std::string rd_name)
 // function that gathers costs
 void Costs::ComputeDiags (int step)
 {
+    // for now, costs reduced diagnostic only works with `costs_heuristic`,
+    // but this will work for timer based costs as well after changing from
+    // multifab to vector
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(costs_heuristic[0] != nullptr,
+        "Costs reduced diagnostic does not work with timer-based costs update.");
+
     // get WarpX class object
     auto& warpx = WarpX::GetInstance();
     
