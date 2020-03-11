@@ -20,7 +20,13 @@ class Costs : public ReducedDiags
 {
 public:
 
+    /** number of data fields we save for each box 
+     *  (cost, processor, level, i_low, j_low, k_low) */
     const int nDataFields = 6;
+
+    /** used to keep track of max number of boxes over all timesteps; this allows
+     *  to compute the number of NaNs required to fill jagged array into a 
+     *  rectangular one */
     int nBoxesMax = -1;
     
     /** constructor
