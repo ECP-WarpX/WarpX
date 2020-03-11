@@ -10,6 +10,8 @@
 #ifndef WARPX_WarpXParticleContainer_H_
 #define WARPX_WarpXParticleContainer_H_
 
+#include "Utils/WarpXConst.H"
+#include "SpeciesPhysicalProperties.H"
 #include "Evolve/WarpXDtType.H"
 
 #include <AMReX_Particles.H>
@@ -158,12 +160,6 @@ public:
                               const amrex::MultiFab& Ex, const amrex::MultiFab& Ey,
                               const amrex::MultiFab& Ez, const amrex::MultiFab& Bx,
                               const amrex::MultiFab& By, const amrex::MultiFab& Bz) {}
-
-#ifdef WARPX_DO_ELECTROSTATIC
-    virtual void EvolveES (const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                                 amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                           amrex::Real t, amrex::Real dt) = 0;
-#endif // WARPX_DO_ELECTROSTATIC
 
     /**
      * Evolve is the central WarpXParticleContainer function that advances
@@ -319,6 +315,7 @@ protected:
 
     amrex::Real charge;
     amrex::Real mass;
+    PhysicalSpecies physical_species;
 
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     bool m_deposit_on_main_grid = false;
