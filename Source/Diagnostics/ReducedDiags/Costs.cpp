@@ -54,7 +54,7 @@ void Costs::ComputeDiags (int step)
 
     // costs is recomputed, whether or not a load balance step; if not a load
     // balance step, the costs vectors are empty; if it is a load balance step,
-    // remake level clears the costs vectors; 
+    // remake level clears the costs vectors;
     if (warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
     {
         warpx.ComputeCostsHeuristic();
@@ -86,7 +86,7 @@ void Costs::ComputeDiags (int step)
 
     // parallel reduce to IO proc and get data over all procs
     ParallelDescriptor::ReduceRealSum(m_data.data(), m_data.size(), ParallelDescriptor::IOProcessorNumber());
-    
+
     /* m_data now contains up-to-date values for:
      *  [[cost, proc, lev, i_low, j_low, k_low] of box 0 at level 0,
      *   [cost, proc, lev, i_low, j_low, k_low] of box 1 at level 0,
@@ -99,7 +99,7 @@ void Costs::ComputeDiags (int step)
 
     // with data written we must reset costs
     warpx.ResetCosts();
-    
+
 }
 // end void Costs::ComputeDiags
 

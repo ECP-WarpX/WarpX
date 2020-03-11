@@ -70,7 +70,7 @@ WarpX::Evolve (int numsteps)
             if (step > 0 && (step+1) % load_balance_int == 0)
             {
                 LoadBalance();
-                
+
                 // Reset the costs to 0
                 ResetCosts();
             }
