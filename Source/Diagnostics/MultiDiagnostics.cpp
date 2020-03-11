@@ -18,6 +18,14 @@ MultiDiagnostics::MultiDiagnostics ()
 }
 
 void
+MultiDiagnostics::InitData ()
+{
+    for( auto& diag : alldiags ){
+        diag->InitData();
+    }
+}
+
+void
 MultiDiagnostics::ReadParameters ()
 {
     ParmParse pp("diagnostics");

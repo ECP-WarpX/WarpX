@@ -8,6 +8,7 @@ class MultiDiagnostics
 public:
     MultiDiagnostics ();
     void ReadParameters ();
+    void InitData ();
     void FilterComputePackFlush ();
 private:
     amrex::Vector<std::unique_ptr<Diagnostics> > alldiags;
