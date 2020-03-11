@@ -53,16 +53,11 @@ void Costs::ComputeDiags (int step)
     m_data.assign(m_nDataFields*nBoxes, 0.0);
 
     // if not a load balance step, we must compute costs
-    if ((step+1) % warpx.get_load_balance_int() != 0)
+    if (((step+1) % warpx.get_load_balance_int() != 0)
+        && warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
     {
-        if (warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
-        {
-            warpx.ComputeCostsHeuristic();
+        warpx.ComputeCostsHeuristic();
 
-        } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-        {
-            // costs update via timers, nothing to compute
-        }
     }
 
     // keeps track of correct index in array over all boxes on all levels
