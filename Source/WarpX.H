@@ -754,19 +754,19 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_slice;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_slice;
 
-#ifdef WARPX_USE_PSATD_HYBRID
     // Store fields in real space on the dual grid (i.e. the grid for the FFT push of the fields)
     // This includes data for the FFT guard cells (between FFT groups)
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp_fft;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp_fft;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp_fft;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp_fft;
-
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cp_fft;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_cp_fft;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_cp_fft;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_cp_fft;
-#endif
+    // Domain decomposition containing the valid part of the dual grids (i.e. without FFT guard cells)
+    amrex::Vector<amrex::BoxArray> ba_valid_fp_fft;
+    amrex::Vector<amrex::BoxArray> ba_valid_cp_fft;
 
     bool fft_hybrid_mpi_decomposition = false;
     int nox_fft = 16;
@@ -777,7 +777,7 @@ private:
 private:
     void EvolvePSATD (int numsteps);
     void PushPSATD (amrex::Real dt);
-    void PushPSATD_localFFT (int lev, amrex::Real dt);
+    void PushPSATD (int lev, amrex::Real dt);
 
     int ngroups_fft = 4;
     int fftw_plan_measure = 1;
@@ -792,10 +792,6 @@ private:
 private:
     amrex::Vector<std::unique_ptr<amrex::LayoutData<FFTData> > > dataptr_fp_fft;
     amrex::Vector<std::unique_ptr<amrex::LayoutData<FFTData> > > dataptr_cp_fft;
-
-    // Domain decomposition containing the valid part of the dual grids (i.e. without FFT guard cells)
-    amrex::Vector<amrex::BoxArray> ba_valid_fp_fft;
-    amrex::Vector<amrex::BoxArray> ba_valid_cp_fft;
 
     amrex::Vector<amrex::Box> domain_fp_fft;  //  "global" domain for the group this process belongs to
     amrex::Vector<amrex::Box> domain_cp_fft;

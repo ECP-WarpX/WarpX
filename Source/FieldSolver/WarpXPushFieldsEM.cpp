@@ -26,6 +26,110 @@
 using namespace amrex;
 
 #ifdef WARPX_USE_PSATD
+
+
+/** \brief Returns an "owner mask" which 1 for all cells, except
+ *  for the duplicated (physical) cells of a nodal grid.
+ *
+ *  More precisely, for these cells (which are represented on several grids)
+ *  the owner mask is 1 only if these cells are at the lower left end of
+ *  the local grid - or if these cells are at the end of the physical domain
+ *  Therefore, there for these cells, there will be only one grid for
+ *  which the owner mask is non-zero.
+ */
+static iMultiFab
+BuildFFTOwnerMask (const MultiFab& mf, const Geometry& geom)
+{
+    const BoxArray& ba = mf.boxArray();
+    const DistributionMapping& dm = mf.DistributionMap();
+    iMultiFab mask(ba, dm, 1, 0);
+    const int owner = 1;
+    const int nonowner = 0;
+    mask.setVal(owner);
+
+    const Box& domain_box = amrex::convert(geom.Domain(), ba.ixType());
+
+    AMREX_ASSERT(ba.complementIn(domain_box).isEmpty());
+
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+    for (MFIter mfi(mask); mfi.isValid(); ++mfi)
+    {
+        IArrayBox& fab = mask[mfi];
+        const Box& bx = fab.box();
+        Box bx2 = bx;
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            // Detect nodal dimensions
+            if (bx2.type(idim) == IndexType::NODE) {
+                // Make sure that this grid does not touch the end of
+                // the physical domain.
+                if (bx2.bigEnd(idim) < domain_box.bigEnd(idim)) {
+                    bx2.growHi(idim, -1);
+                }
+            }
+        }
+        const BoxList& bl = amrex::boxDiff(bx, bx2);
+        // Set owner mask in these cells
+        for (const auto& b : bl) {
+            fab.setVal(nonowner, b, 0, 1);
+        }
+
+    }
+
+    return mask;
+}
+
+/** \brief Copy the data from the FFT grid to the regular grid
+ *
+ * Because, for nodal grid, some cells are duplicated on several boxes,
+ * special care has to be taken in order to have consistent values on
+ * each boxes when copying this data. Here this is done by setting a
+ * mask, where, for these duplicated cells, the mask is non-zero on only
+ * one box.
+ */
+static void
+CopyDataFromFFTToValid (MultiFab& mf, const MultiFab& mf_fft, const BoxArray& ba_valid_fft, const Geometry& geom)
+{
+    auto idx_type = mf_fft.ixType();
+    MultiFab mftmp(amrex::convert(ba_valid_fft,idx_type), mf_fft.DistributionMap(), 1, 0);
+
+    const iMultiFab& mask = BuildFFTOwnerMask(mftmp, geom);
+
+    // Local copy: whenever an MPI rank owns both the data from the FFT
+    // grid and from the regular grid, for overlapping region, copy it locally
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+    for (MFIter mfi(mftmp,true); mfi.isValid(); ++mfi)
+    {
+        const Box& bx = mfi.tilebox();
+        FArrayBox& dstfab = mftmp[mfi];
+
+        const FArrayBox& srcfab = mf_fft[mfi];
+        const Box& srcbox = srcfab.box();
+
+        if (srcbox.contains(bx))
+        {
+            // Copy the interior region (without guard cells)
+            dstfab.copy(srcfab, bx, 0, bx, 0, 1);
+            // Set the value to 0 whenever the mask is 0
+            // (i.e. for nodal duplicated cells, there is a single box
+            // for which the mask is different than 0)
+            // if mask == 0, set value to zero
+            dstfab.setValIfNot(0.0, bx, mask[mfi], 0, 1);
+        }
+    }
+
+    // Global copy: Get the remaining the data from other procs
+    // Use ParallelAdd instead of ParallelCopy, so that the value from
+    // the cell that has non-zero mask is the one which is retained.
+    mf.setVal(0.0, 0);
+    mf.ParallelAdd(mftmp);
+
+
+}
+
 namespace {
     void
     PushPSATDSinglePatch (
@@ -66,13 +170,10 @@ WarpX::PushPSATD (amrex::Real a_dt)
 {
     for (int lev = 0; lev <= finest_level; ++lev) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(dt[lev] == a_dt, "dt must be consistent");
-        if (fft_hybrid_mpi_decomposition){
 #ifdef WARPX_USE_PSATD_HYBRID
-            PushPSATD_hybridFFT(lev, a_dt);
+        PushPSATD_hybridFFT(lev, a_dt);
 #endif
-        } else {
-            PushPSATD_localFFT(lev, a_dt);
-        }
+        PushPSATD (lev, a_dt);
 
         // Evolve the fields in the PML boxes
         if (do_pml && pml[lev]->ok()) {
@@ -82,14 +183,53 @@ WarpX::PushPSATD (amrex::Real a_dt)
 }
 
 void
-WarpX::PushPSATD_localFFT (int lev, amrex::Real /* dt */)
+WarpX::PushPSATD (int lev, amrex::Real /* dt */)
 {
-    // Update the fields on the fine and coarse patch
-    PushPSATDSinglePatch( *spectral_solver_fp[lev],
-        Efield_fp[lev], Bfield_fp[lev], current_fp[lev], rho_fp[lev] );
-    if (spectral_solver_cp[lev]) {
-        PushPSATDSinglePatch( *spectral_solver_cp[lev],
-             Efield_cp[lev], Bfield_cp[lev], current_cp[lev], rho_cp[lev] );
+
+    if (fft_hybrid_mpi_decomposition) {
+        // Only fine patch is implemented at this point
+
+        WARPX_PROFILE_VAR_NS("WarpXFFT::CopyDualGrid", blp_copy);
+        auto period_fp = geom[lev].periodicity();
+
+        // Copy from regular grid to dual grid
+        WARPX_PROFILE_VAR_START(blp_copy);
+        Efield_fp_fft[lev][0]->ParallelCopy(*Efield_fp[lev][0], 0, 0, 1, Efield_fp[lev][0]->nGrow(), 0, period_fp);
+        Efield_fp_fft[lev][1]->ParallelCopy(*Efield_fp[lev][1], 0, 0, 1, Efield_fp[lev][1]->nGrow(), 0, period_fp);
+        Efield_fp_fft[lev][2]->ParallelCopy(*Efield_fp[lev][2], 0, 0, 1, Efield_fp[lev][2]->nGrow(), 0, period_fp);
+        Bfield_fp_fft[lev][0]->ParallelCopy(*Bfield_fp[lev][0], 0, 0, 1, Bfield_fp[lev][0]->nGrow(), 0, period_fp);
+        Bfield_fp_fft[lev][1]->ParallelCopy(*Bfield_fp[lev][1], 0, 0, 1, Bfield_fp[lev][1]->nGrow(), 0, period_fp);
+        Bfield_fp_fft[lev][2]->ParallelCopy(*Bfield_fp[lev][2], 0, 0, 1, Bfield_fp[lev][2]->nGrow(), 0, period_fp);
+        current_fp_fft[lev][0]->ParallelCopy(*current_fp[lev][0], 0, 0, 1, current_fp[lev][0]->nGrow(), 0, period_fp);
+        current_fp_fft[lev][1]->ParallelCopy(*current_fp[lev][1], 0, 0, 1, current_fp[lev][1]->nGrow(), 0, period_fp);
+        current_fp_fft[lev][2]->ParallelCopy(*current_fp[lev][2], 0, 0, 1, current_fp[lev][2]->nGrow(), 0, period_fp);
+        rho_fp_fft[lev]->ParallelCopy(*rho_fp[lev], 0, 0, 2, rho_fp[lev]->nGrow(), 0, period_fp);
+        WARPX_PROFILE_VAR_STOP(blp_copy);
+
+        // Call FFT solver on dual grid
+        PushPSATDSinglePatch( *spectral_solver_fp[lev],
+            Efield_fp_fft[lev], Bfield_fp_fft[lev], current_fp_fft[lev], rho_fp_fft[lev] );
+
+        // Copy data back from dual grid to regular grid (TODO: do not exchange guard cells?)
+        WARPX_PROFILE_VAR_START(blp_copy);
+        CopyDataFromFFTToValid(*Efield_fp[lev][0], *Efield_fp_fft[lev][0], ba_valid_fp_fft[lev], geom[lev]);
+        CopyDataFromFFTToValid(*Efield_fp[lev][1], *Efield_fp_fft[lev][1], ba_valid_fp_fft[lev], geom[lev]);
+        CopyDataFromFFTToValid(*Efield_fp[lev][2], *Efield_fp_fft[lev][2], ba_valid_fp_fft[lev], geom[lev]);
+        CopyDataFromFFTToValid(*Bfield_fp[lev][0], *Bfield_fp_fft[lev][0], ba_valid_fp_fft[lev], geom[lev]);
+        CopyDataFromFFTToValid(*Bfield_fp[lev][1], *Bfield_fp_fft[lev][1], ba_valid_fp_fft[lev], geom[lev]);
+        CopyDataFromFFTToValid(*Bfield_fp[lev][2], *Bfield_fp_fft[lev][2], ba_valid_fp_fft[lev], geom[lev]);
+        WARPX_PROFILE_VAR_STOP(blp_copy);
+
+    } else {
+
+        // Update the fields on the fine and coarse patch
+        PushPSATDSinglePatch( *spectral_solver_fp[lev],
+            Efield_fp[lev], Bfield_fp[lev], current_fp[lev], rho_fp[lev] );
+        if (spectral_solver_cp[lev]) {
+            PushPSATDSinglePatch( *spectral_solver_cp[lev],
+                 Efield_cp[lev], Bfield_cp[lev], current_cp[lev], rho_cp[lev] );
+        }
+
     }
 }
 #endif
