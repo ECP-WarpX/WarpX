@@ -10,7 +10,6 @@
 
 #include "WarpX.H"
 #include "ReducedDiags.H"
-#include <fstream>
 
 /**
  *  This class mainly contains a function that

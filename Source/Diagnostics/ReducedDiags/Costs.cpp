@@ -8,9 +8,6 @@
 #include "Costs.H"
 #include "WarpX.H"
 
-#include <iostream>
-#include <fstream>
-
 
 using namespace amrex;
 
