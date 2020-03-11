@@ -27,9 +27,9 @@ void Costs::ComputeDiags (int step)
     // for now, costs reduced diagnostic only works with `costs_heuristic`,
     // but this will work for timer based costs as well after changing from
     // multifab to vector
-    const amrex::Vector<amrex::Real>* cost_heuristic = warpx.getCostsHeuristic(0);                                              
+    const amrex::Vector<amrex::Real>* cost_heuristic = warpx.getCostsHeuristic(0);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(cost_heuristic != nullptr,
-        "Costs reduced diagnostic does not work with timer-based costs update."); 
+        "Costs reduced diagnostic does not work with timer-based costs update.");
 
     // judge if the diags should be done
     // costs is initialized only if we're doing load balance
