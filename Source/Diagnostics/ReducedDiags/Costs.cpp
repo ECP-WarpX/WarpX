@@ -8,68 +8,24 @@
 #include "Costs.H"
 #include "WarpX.H"
 
+#include <iostream>
+#include <fstream>
+
 
 using namespace amrex;
 
 // constructor
 Costs::Costs (std::string rd_name)
-: ReducedDiags{rd_name}
+    : ReducedDiags{rd_name}
 {
-
-    // get WarpX class object
-    auto & warpx = WarpX::GetInstance();
-
-    if (ParallelDescriptor::IOProcessor())
-    {
-        if ( m_IsNotRestart )
-        {
-            // open file
-            std::ofstream ofs;
-            ofs.open(m_path + m_rd_name + "." + m_extension,
-                     std::ofstream::out | std::ofstream::app);
-
-            // write header row
-            // for each box on each level we will save 6 data fields: [cost, proc, lev, i_low, j_low, k_low])
-            ofs << "#";
-            ofs << "[1]step()";
-            ofs << m_sep;
-            ofs << "[2]time(s)";
-            ofs << m_sep;
-            for (int boxNumber=0; boxNumber<1; boxNumber++)
-            {
-                ofs << "[" + std::to_string(3 + nDataFields*boxNumber) + "]";
-                ofs << "cost_box"+std::to_string(boxNumber);
-                ofs << m_sep;
-                ofs << "[" + std::to_string(4 + nDataFields*boxNumber) + "]";
-                ofs << "proc_box"+std::to_string(boxNumber);
-                ofs << m_sep;
-                ofs << "[" + std::to_string(5 + nDataFields*boxNumber) + "]";
-                ofs << "lev_box"+std::to_string(boxNumber);
-                ofs << m_sep;
-                ofs << "[" + std::to_string(6 + nDataFields*boxNumber) + "]";
-                ofs << "i_box"+std::to_string(boxNumber);
-                ofs << m_sep;
-                ofs << "[" + std::to_string(7 + nDataFields*boxNumber) + "]";
-                ofs << "j_box"+std::to_string(boxNumber);
-                ofs << m_sep;
-                ofs << "[" + std::to_string(8 + nDataFields*boxNumber) + "]";
-                ofs << "k_box"+std::to_string(boxNumber);
-                ofs << std::endl;
-            }
-
-            // close file
-            ofs.close();
-        }
-    }
+    
 }
-// end constructor
 
 // function that gathers costs
 void Costs::ComputeDiags (int step)
 {
-
     // get WarpX class object
-    auto & warpx = WarpX::GetInstance();
+    auto& warpx = WarpX::GetInstance();
     
     // judge if the diags should be done
     // costs is initialized only if we're doing load balance
@@ -83,6 +39,10 @@ void Costs::ComputeDiags (int step)
         const amrex::Vector<amrex::Real>* cost_heuristic = warpx.getCostsHeuristic(lev);
         nBoxes += cost_heuristic->size();
     }
+
+    // keep track of the max number of boxes, this is needed later on to fill
+    // the jagged array (in case each step does not have the same number of boxes)
+    nBoxesMax = std::max(nBoxesMax, nBoxes);
     
     // resize and clear data array
     m_data.resize(nDataFields*nBoxes, 0.0);
@@ -97,7 +57,7 @@ void Costs::ComputeDiags (int step)
 
         } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
-            // costs are update via timers, nothing to do
+            // costs update via timers, nothing to compute
         }
     }
     
@@ -125,24 +85,111 @@ void Costs::ComputeDiags (int step)
         shift += nDataFields*(cost_heuristic->size());
     }
 
-    // parallel reduce to IO proc and get data over all procs
-    ParallelDescriptor::ReduceRealSum(m_data, ParallelDescriptor::IOProcessorNumber());
-    
-    //amrex::Vector<amrex::Real>::iterator it_m_data = m_data.begin();
-    //amrex::Real* addr_it_m_data = &(*it_m_data);
-    // ParallelAllReduce::Sum(addr_it_m_data,
-    //                        m_data.size(),
-    //                        ParallelContext::CommunicatorSub());
+    // parallel reduce to IO proc and get data over all procs    
+    amrex::Vector<amrex::Real>::iterator it_m_data = m_data.begin();
+    amrex::Real* addr_it_m_data = &(*it_m_data);
+    ParallelReduce::Sum(addr_it_m_data,
+                        m_data.size(),
+                        ParallelDescriptor::IOProcessorNumber(),
+                        ParallelContext::CommunicatorSub());
 
     /* m_data now contains up-to-date values for:
-     *  [[cost, proc, lev, i, j, k] of box 0 at level 0,
-     *   [cost, proc, lev, i, j, k] of box 1 at level 0,
-     *   [cost, proc, lev, i, j, k] of box 2 at level 0,
+     *  [[cost, proc, lev, i_low, j_low, k_low] of box 0 at level 0,
+     *   [cost, proc, lev, i_low, j_low, k_low] of box 1 at level 0,
+     *   [cost, proc, lev, i_low, j_low, k_low] of box 2 at level 0,
      *   ...
-     *   [cost, proc, lev, i, j, k] of box 0 at level 1,
-     *   [cost, proc, lev, i, j, k] of box 1 at level 1,
-     *   [cost, proc, lev, i, j, k] of box 2 at level 1,
+     *   [cost, proc, lev, i_low, j_low, k_low] of box 0 at level 1,
+     *   [cost, proc, lev, i_low, j_low, k_low] of box 1 at level 1,
+     *   [cost, proc, lev, i_low, j_low, k_low] of box 2 at level 1,
      *   ......] */
 
 }
 // end void Costs::ComputeDiags
+
+// write to file function for cost
+void Costs::WriteToFile (int step) const
+{
+    ReducedDiags::WriteToFile(step);
+
+    // get WarpX class object
+    auto& warpx = WarpX::GetInstance();
+
+    if (ParallelDescriptor::IOProcessor())
+    {
+        // final step is a special case, fill jagged array with NaN
+        if (step == (warpx.maxStep() - 1))
+        {
+            // open tmp file to copy data
+            std::string fileTmpName = m_path + m_rd_name + ".tmp." + m_extension;
+            std::ofstream ofs(fileTmpName, std::ofstream::out);
+            
+            // write header row
+            // for each box on each level we saved 6 data fields: [cost, proc, lev, i_low, j_low, k_low])
+            ofs << "#";
+            ofs << "[1]step()";
+            ofs << m_sep;
+            ofs << "[2]time(s)";
+            ofs << m_sep;
+            for (int boxNumber=0; boxNumber<nBoxesMax; ++boxNumber)
+            {
+                ofs << "[" + std::to_string(3 + nDataFields*boxNumber) + "]";
+                ofs << "cost_box_"+std::to_string(boxNumber)+"()";
+                ofs << m_sep;
+                ofs << "[" + std::to_string(4 + nDataFields*boxNumber) + "]";
+                ofs << "proc_box_"+std::to_string(boxNumber)+"()";
+                ofs << m_sep;
+                ofs << "[" + std::to_string(5 + nDataFields*boxNumber) + "]";
+                ofs << "lev_box_"+std::to_string(boxNumber)+"()";
+                ofs << m_sep;
+                ofs << "[" + std::to_string(6 + nDataFields*boxNumber) + "]";
+                ofs << "i_low_box_"+std::to_string(boxNumber)+"()";
+                ofs << m_sep;
+                ofs << "[" + std::to_string(7 + nDataFields*boxNumber) + "]";
+                ofs << "j_low_box_"+std::to_string(boxNumber)+"()";
+                ofs << m_sep;
+                ofs << "[" + std::to_string(8 + nDataFields*boxNumber) + "]";
+                ofs << "k_low_box_"+std::to_string(boxNumber)+"()";
+                ofs << m_sep;
+            }
+            ofs << std::endl;            
+            
+            // open the data-containing file
+            std::string fileDataName = m_path + m_rd_name + "." + m_extension;
+            std::ifstream ifs(fileDataName, std::ifstream::in);        
+            
+            // Fill in the tmp costs file with data, padded with NaNs
+            for (std::string lineIn; std::getline(ifs, lineIn);)
+            {
+                // count the elements in the input line
+                int cnt = 0;
+                std::stringstream ss(lineIn);
+                std::string token;
+                
+                while (std::getline(ss, token, m_sep[0]))
+                {
+                    cnt += 1;
+                    if (ss.peek() == m_sep[0]) ss.ignore();
+                }
+                
+                ofs << lineIn;
+                // 2 columns for step, time; then nBoxes*nDatafields columns for data;
+                // then fill the remaining columns (i.e., up to 2 + nBoxesMax*nDataFields)
+                // with NaN, so the array is not jagged
+                for (int i=0; i<(nBoxesMax*nDataFields - (cnt - 2)); ++i)
+                {
+                    ofs << m_sep << "NaN";
+                }
+                ofs << std::endl;
+            }
+            
+            // close files
+            ifs.close();
+            ofs.close();
+
+            // remove the original, rename tmp file
+            std::remove(fileDataName.c_str());
+            std::rename(fileTmpName.c_str(), fileDataName.c_str());
+            
+        } // if (step == (warpx.maxStep() - 1)) ...
+    } // if (ParallelDescriptor::IOProcessor()) ...
+} // end ReducedDiags::WriteToFile
