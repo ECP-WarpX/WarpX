@@ -29,7 +29,7 @@ void Costs::ComputeDiags (int step)
     // multifab to vector
     const amrex::Vector<amrex::Real>* cost_heuristic = warpx.getCostsHeuristic(0);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(cost_heuristic != nullptr,
-        "Costs reduced diagnostic does not work with timer-based costs update.");
+        "Costs reduced diagnostic works only with heuristic costs update.");
 
     // judge if the diags should be done
     // costs is initialized only if we're doing load balance
@@ -52,12 +52,12 @@ void Costs::ComputeDiags (int step)
     m_data.resize(m_nDataFields*nBoxes, 0.0);
     m_data.assign(m_nDataFields*nBoxes, 0.0);
 
-    // if not a load balance step, we must compute costs
-    if (((step+1) % warpx.get_load_balance_int() != 0)
-        && (warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic))
+    // costs is recomputed, whether or not a load balance step; if not a load
+    // balance step, the costs vectors are empty; if it is a load balance step,
+    // remake level clears the costs vectors; 
+    if (warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
     {
         warpx.ComputeCostsHeuristic();
-
     }
 
     // keeps track of correct index in array over all boxes on all levels
@@ -85,13 +85,8 @@ void Costs::ComputeDiags (int step)
     }
 
     // parallel reduce to IO proc and get data over all procs
-    amrex::Vector<amrex::Real>::iterator it_m_data = m_data.begin();
-    amrex::Real* addr_it_m_data = &(*it_m_data);
-    ParallelReduce::Sum(addr_it_m_data,
-                        m_data.size(),
-                        ParallelDescriptor::IOProcessorNumber(),
-                        ParallelContext::CommunicatorSub());
-
+    ParallelDescriptor::ReduceRealSum(m_data.data(), m_data.size(), ParallelDescriptor::IOProcessorNumber());
+    
     /* m_data now contains up-to-date values for:
      *  [[cost, proc, lev, i_low, j_low, k_low] of box 0 at level 0,
      *   [cost, proc, lev, i_low, j_low, k_low] of box 1 at level 0,
@@ -102,6 +97,9 @@ void Costs::ComputeDiags (int step)
      *   [cost, proc, lev, i_low, j_low, k_low] of box 2 at level 1,
      *   ......] */
 
+    // with data written we must reset costs
+    warpx.ResetCosts();
+    
 }
 // end void Costs::ComputeDiags
 
@@ -116,7 +114,7 @@ void Costs::WriteToFile (int step) const
     if (ParallelDescriptor::IOProcessor())
     {
         // final step is a special case, fill jagged array with NaN
-        if (step == (warpx.maxStep() - 1))
+        if (step == (warpx.maxStep() - (warpx.maxStep()%m_freq) - 1 ))
         {
             // open tmp file to copy data
             std::string fileTmpName = m_path + m_rd_name + ".tmp." + m_extension;

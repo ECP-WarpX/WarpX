@@ -291,7 +291,12 @@ public:
     void LoadBalance ();
     void LoadBalanceTimers ();
     void LoadBalanceHeuristic ();
+    /** \brief resets costs to zero
+     */
+    void ResetCosts ();
 
+    /** \brief returns the load balance interval
+     */
     int get_load_balance_int () const {return load_balance_int;}
 
 #ifdef WARPX_DIM_RZ
