@@ -32,7 +32,7 @@ public:
      *  @param[in] rd_name reduced diags names */
     Costs(std::string rd_name);
 
-    /** This funciton computes the costs.
+    /** This funciton updates the costs (if needed; not necessary if load balance step).
      *  Heuristic costs are updated at each load balance step.  If costs reduced 
      *  diagnostic is desired at a non-load balance step, the heuristic cost is
      *  updated.  Timer-based costs are recorded inline, so in this case there 
