@@ -171,10 +171,10 @@ void Costs::WriteToFile (int step) const
                     if (ss.peek() == m_sep[0]) ss.ignore();
                 }
                 
-                ofs << lineIn;
                 // 2 columns for step, time; then nBoxes*nDatafields columns for data;
                 // then fill the remaining columns (i.e., up to 2 + nBoxesMax*nDataFields)
                 // with NaN, so the array is not jagged
+                ofs << lineIn;
                 for (int i=0; i<(nBoxesMax*nDataFields - (cnt - 2)); ++i)
                 {
                     ofs << m_sep << "NaN";
