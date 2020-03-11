@@ -252,34 +252,34 @@ PackPlotDataPtrs (Vector<const MultiFab*>& pmf,
 }
 
 AMREX_GPU_HOST_DEVICE
-inline
+AMREX_FORCE_INLINE
 Real AverageToCellCenter ( AMREX_D_DECL( int i,
                                          int j,
                                          int k ),
                            Array4<Real const> const& mf_in_arr,
                            const IntVect stag,
-                           int scomp=0 )
+                           int comp=0 )
 {
     const IntVect& s = stag;
 #if ( AMREX_SPACEDIM == 2 )
-    return 0.25 * ( mf_in_arr(i     ,j     ,0,scomp)
-                  + mf_in_arr(i+s[0],j     ,0,scomp)
-                  + mf_in_arr(i     ,j+s[1],0,scomp)
-                  + mf_in_arr(i+s[0],j+s[1],0,scomp) );
+    return 0.25 * ( mf_in_arr(i     ,j     ,0,comp)
+                  + mf_in_arr(i+s[0],j     ,0,comp)
+                  + mf_in_arr(i     ,j+s[1],0,comp)
+                  + mf_in_arr(i+s[0],j+s[1],0,comp) );
 #elif ( AMREX_SPACEDIM == 3 )
-    return 0.125 * ( mf_in_arr(i     ,j     ,k     ,scomp)
-                   + mf_in_arr(i+s[0],j     ,k     ,scomp)
-                   + mf_in_arr(i     ,j+s[1],k     ,scomp)
-                   + mf_in_arr(i     ,j     ,k+s[2],scomp)
-                   + mf_in_arr(i+s[0],j+s[1],k     ,scomp)
-                   + mf_in_arr(i     ,j+s[1],k+s[2],scomp)
-                   + mf_in_arr(i+s[0],j     ,k+s[2],scomp)
-                   + mf_in_arr(i+s[0],j+s[1],k+s[2],scomp) );
+    return 0.125 * ( mf_in_arr(i     ,j     ,k     ,comp)
+                   + mf_in_arr(i+s[0],j     ,k     ,comp)
+                   + mf_in_arr(i     ,j+s[1],k     ,comp)
+                   + mf_in_arr(i     ,j     ,k+s[2],comp)
+                   + mf_in_arr(i+s[0],j+s[1],k     ,comp)
+                   + mf_in_arr(i     ,j+s[1],k+s[2],comp)
+                   + mf_in_arr(i+s[0],j     ,k+s[2],comp)
+                   + mf_in_arr(i+s[0],j+s[1],k+s[2],comp) );
 #endif
 }
 
 AMREX_GPU_HOST_DEVICE
-inline
+AMREX_FORCE_INLINE
 void AverageToCellCenter ( Box const& bx,
                            Array4<Real> const& mf_out_arr,
                            Array4<Real const> const& mf_in_arr,
@@ -305,7 +305,7 @@ void AverageToCellCenter ( Box const& bx,
             for (int j = lo.y; j <= hi.y; ++j) {
                 AMREX_PRAGMA_SIMD
                 for (int i = lo.x; i <= hi.x; ++i) {
-                    mf_out_arr(i,j,k,dcomp) = AverageToCellCenter( i, j, k, mf_in_arr, stag, n+scomp );
+                    mf_out_arr(i,j,k,n+dcomp) = AverageToCellCenter( i, j, k, mf_in_arr, stag, n+scomp );
                 }
             }
         }
