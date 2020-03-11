@@ -253,11 +253,34 @@ PackPlotDataPtrs (Vector<const MultiFab*>& pmf,
 #endif
 }
 
+/**
+ * \brief Returns the cell-centered average of the floating point data contained
+ * in the input
+ * <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ * \c mf_in_arr. Thanks to the AMReX macro \c AMREX_D_DECL:
+ * if \c AMREX_SPACEDIM=2, only \c i and \c j are passed; if \c AMREX_SPACEDIM=3,
+ * \c i,\c j and \c k are passed.
+ *
+ * \param[in] mf_in_arr floating point data to be averaged
+ * \param[in] stag      staggering (index type) of the data
+ * \param[in] i         index along x to access the
+ *                      <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                      object containing the data to be averaged
+ * \param[in] j         index along y to access the
+ *                      <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                      object containing the data to be averaged
+ * \param[in] k         index along z to access the
+ *                      <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                      object containing the data to be averaged
+ * \param[in] comp      fourth component of the
+ *                      <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                      object containing the data to be averaged
+ */
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-Real AverageToCellCenter ( AMREX_D_DECL( int i, int j, int k ),
-                           Array4<Real const> const& mf_in_arr,
+Real AverageToCellCenter ( Array4<Real const> const& mf_in_arr,
                            const IntVect stag,
+                           AMREX_D_DECL( int i, int j, int k ),
                            const int comp=0 )
 {
 #if ( AMREX_SPACEDIM == 2 )
@@ -277,6 +300,30 @@ Real AverageToCellCenter ( AMREX_D_DECL( int i, int j, int k ),
 #endif
 }
 
+/**
+ * \brief Stores the cell-centered average of the floating point data contained
+ * in the input
+ * <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ * \c mf_in_arr into the output
+ * <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ * \c mf_out_arr, within the
+ * <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1Box.html">Box</a> \c bx.
+ *
+ * \param[in]     bx         rectangular domain of interest
+ * \param[in,out] mf_out_arr floating point data to be filled with cell-centered averages
+ * \param[in]     mf_in_arr  floating point data to be averaged
+ * \param[in]     stag       staggering (index type) of the data
+ * \param[in]     dcomp      offset for the fourth component of the
+ *                           <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                           object where the cell-centered averages will be stored
+ * \param[in]     scomp      optional offset for the fourth component of the
+ *                           <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                           object containing the data to be averaged
+ * \param[in]     ncomp      optional number of components to loop over for both
+ *                           the input and the output
+ *                           <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                           objects
+ */
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 void AverageToCellCenter ( Box const& bx,
@@ -289,13 +336,13 @@ void AverageToCellCenter ( Box const& bx,
 {
     const auto lo = lbound(bx);
     const auto hi = ubound(bx);
-    int n=0;
+    int n = 0;
     do {
 #if ( AMREX_SPACEDIM == 2 )
         for (int j = lo.y; j <= hi.y; ++j) {
             AMREX_PRAGMA_SIMD
             for (int i = lo.x; i <= hi.x; ++i) {
-                mf_out_arr(i,j,0,n+dcomp) = AverageToCellCenter( i, j, mf_in_arr, stag, n+scomp );
+                mf_out_arr(i,j,0,n+dcomp) = AverageToCellCenter( mf_in_arr, stag, i, j, n+scomp );
             }
         }
 #elif ( AMREX_SPACEDIM == 3 )
@@ -303,7 +350,7 @@ void AverageToCellCenter ( Box const& bx,
             for (int j = lo.y; j <= hi.y; ++j) {
                 AMREX_PRAGMA_SIMD
                 for (int i = lo.x; i <= hi.x; ++i) {
-                    mf_out_arr(i,j,k,n+dcomp) = AverageToCellCenter( i, j, k, mf_in_arr, stag, n+scomp );
+                    mf_out_arr(i,j,k,n+dcomp) = AverageToCellCenter( mf_in_arr, stag, i, j, k, n+scomp );
                 }
             }
         }
@@ -312,6 +359,34 @@ void AverageToCellCenter ( Box const& bx,
     } while ( n < ncomp );
 }
 
+/**
+ * \brief Stores the cell-centered average of the floating point data contained
+ * in the input
+ * <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+ * \c mf_in into the output
+ * <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+ * \c mf_out.
+ *
+ * \param[in,out] mf_out <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+ *                       containing the floating point data to be filled with cell-centered averages
+ * \param[in]     mf_in  <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+ *                       containing the floating point data to be averaged
+ * \param[in]     dcomp  offset for the fourth component of the
+ *                       <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                       object, extracted from its
+ *                       <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+ *                       , where the cell-centered averages will be stored
+ * \param[in]     scomp  optional offset for the fourth component of the
+ *                       <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                       object, extracted from its
+ *                       <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+ *                       , containing the data to be averaged
+ * \param[in]     ncomp  optional number of components to loop over for both the
+ *                       input and the output
+ *                       <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                       objects, extracted from the respective
+ *                       <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFabs</a>
+ */
 void
 AverageToCellCenter ( MultiFab& mf_out,
                       const MultiFab*& mf_in,
@@ -320,10 +395,11 @@ AverageToCellCenter ( MultiFab& mf_out,
                       const int scomp=0,
                       const int ncomp=0 )
 {
-    //TODO: add asserts?
+    //TODO: asserts?
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
+    // Loop over boxes (or tiles if not on GPU)
     for (MFIter mfi( mf_out, TilingIfNotGPU() ); mfi.isValid(); ++mfi)
     {
         const Box bx = mfi.growntilebox( ngrow );
@@ -431,7 +507,7 @@ AverageAndPackVectorField( MultiFab& mf_avg,
             mf_total[2].reset(new MultiFab(vector_field[2]->boxArray(), dm, 1, vector_field[2]->nGrowVect()));
             ConstructTotalRZField(mf_total, vector_field);
             PackPlotDataPtrs(srcmf, mf_total);
-            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], dcomp, ngrow );,
+            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], dcomp  , ngrow );,
                           AverageToCellCenter( mf_avg, srcmf[1], dcomp+1, ngrow );,
                           AverageToCellCenter( mf_avg, srcmf[2], dcomp+2, ngrow ); );
             MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
