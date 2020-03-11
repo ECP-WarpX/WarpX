@@ -54,7 +54,7 @@ void Costs::ComputeDiags (int step)
 
     // if not a load balance step, we must compute costs
     if (((step+1) % warpx.get_load_balance_int() != 0)
-        && warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
+        && (warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic))
     {
         warpx.ComputeCostsHeuristic();
 
