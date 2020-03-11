@@ -9,6 +9,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "MultiParticleContainer.H"
+#include "SpeciesPhysicalProperties.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
@@ -550,13 +551,57 @@ MultiParticleContainer::mapSpeciesProduct ()
         // pc->ionization_product_name and store its ID into
         // pc->ionization_product.
         if (pc->do_field_ionization){
-            int i_product = getSpeciesID(pc->ionization_product_name);
+            const int i_product = getSpeciesID(pc->ionization_product_name);
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 i != i_product,
                 "ERROR: ionization product cannot be the same species");
             pc->ionization_product = i_product;
         }
+
+#ifdef WARPX_QED
+        if (pc->has_breit_wheeler()){
+            const int i_product_ele = getSpeciesID(
+                pc->m_qed_breit_wheeler_ele_product_name);
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != i_product_ele,
+                "ERROR: Breit Wheeler product cannot be the same species");
+            pc->m_qed_breit_wheeler_ele_product = i_product_ele;
+
+            const int i_product_pos = getSpeciesID(
+                pc->m_qed_breit_wheeler_pos_product_name);
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != i_product_pos,
+                "ERROR: Breit Wheeler product cannot be the same species");
+            pc->m_qed_breit_wheeler_pos_product = i_product_pos;
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_ele < allcontainers.size(),
+                "ERROR: Breit Wheeler product species not found");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_pos < allcontainers.size(),
+                "ERROR: Breit Wheeler product species not found");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                allcontainers[i_product_ele]->AmIA<PhysicalSpecies::electron>() &&
+                allcontainers[i_product_pos]->AmIA<PhysicalSpecies::positron>(),
+                "ERROR: Breit Wheeler product species are of wrong type");
+        }
+
+        if(pc->has_quantum_sync()){
+            const int i_product_phot = getSpeciesID(
+                pc->m_qed_quantum_sync_phot_product_name);
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != i_product_phot,
+                "ERROR: Quantum Synchrotron product cannot be the same species");
+            pc->m_qed_quantum_sync_phot_product = i_product_phot;
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_phot < allcontainers.size(),
+                "ERROR: Quantum Synchrotron product species not found");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                allcontainers[i_product_phot]->AmIA<PhysicalSpecies::photon>(),
+                "ERROR: Quantum Synchrotron product species is of wrong type");
+        }
+#endif
+
     }
+
 }
 
 /* \brief Given a species name, return its ID.
@@ -577,7 +622,11 @@ MultiParticleContainer::getSpeciesID (std::string product_str)
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         found != 0,
+<<<<<<< HEAD
        "ERROR: could not find product species ID. Wrong name?");
+=======
+        "ERROR: could not find product species ID. Wrong name?");
+>>>>>>> LucaQED/add_qed_particle_creaction_new_routines
     return i_product;
 }
 
@@ -606,7 +655,7 @@ MultiParticleContainer::doFieldIonization ()
 
         for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
         {
-            auto info = getMFItInfo(*pc_source, *pc_product);
+            const auto info = getMFItInfo(*pc_source, *pc_product);
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -616,8 +665,8 @@ MultiParticleContainer::doFieldIonization ()
                 auto& src_tile = pc_source ->ParticlesAt(lev, mfi);
                 auto& dst_tile = pc_product->ParticlesAt(lev, mfi);
 
-                auto np_dst = dst_tile.numParticles();
-                auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
+                const auto np_dst = dst_tile.numParticles();
+                const auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
                                                                  Filter, Copy, Transform);
 
                 setNewParticleIDs(dst_tile, np_dst, num_added);
@@ -658,25 +707,6 @@ MultiParticleContainer::doCoulombCollisions ()
             }
         }
     }
-}
-
-MFItInfo MultiParticleContainer::getMFItInfo (const WarpXParticleContainer& pc_src,
-                                              const WarpXParticleContainer& pc_dst) const noexcept
-{
-    MFItInfo info;
-
-    if (pc_src.do_tiling && Gpu::notInLaunchRegion()) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(pc_dst.do_tiling,
-                                         "For ionization, either all or none of the "
-                                         "particle species must use tiling.");
-        info.EnableTiling(pc_src.tile_size);
-    }
-
-#ifdef _OPENMP
-    info.SetDynamic(true);
-#endif
-
-    return info;
 }
 
 #ifdef WARPX_QED
@@ -965,6 +995,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
     }
 }
 
+<<<<<<< HEAD
 void
 MultiParticleContainer::InitSchwinger ()
 {
@@ -1058,4 +1089,138 @@ void MultiParticleContainer::CreateSchwingerPairs (
                              const amrex::Array4<amrex::Real>& arrNumPairCreation)
 {
 }
+=======
+void MultiParticleContainer::doQedEvents()
+{
+    WARPX_PROFILE("MPC::doQedEvents");
+
+    doQedBreitWheeler();
+    doQedQuantumSync();
+}
+
+void MultiParticleContainer::doQedBreitWheeler()
+{
+    WARPX_PROFILE("MPC::doQedBreitWheeler");
+
+    // Loop over all species.
+    // Photons undergoing Breit Wheeler process create electrons
+    // in pc_product_ele and positrons in pc_product_pos
+
+    for (auto& pc_source : allcontainers){
+        if(!pc_source->has_breit_wheeler()) continue;
+
+        // Get product species
+        auto& pc_product_ele =
+            allcontainers[pc_source->m_qed_breit_wheeler_ele_product];
+        auto& pc_product_pos =
+            allcontainers[pc_source->m_qed_breit_wheeler_pos_product];
+
+        SmartCopyFactory copy_factory_ele(*pc_source, *pc_product_ele);
+        SmartCopyFactory copy_factory_pos(*pc_source, *pc_product_pos);
+        auto phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
+
+        const auto Filter  = phys_pc_ptr->getPairGenerationFilterFunc();
+        const auto CopyEle = copy_factory_ele.getSmartCopy();
+        const auto CopyPos = copy_factory_pos.getSmartCopy();
+
+        const auto pair_gen_functor = m_shr_p_bw_engine->build_pair_functor();
+        auto Transform = PairGenerationTransformFunc(pair_gen_functor);
+
+        pc_source ->defineAllParticleTiles();
+        pc_product_pos->defineAllParticleTiles();
+        pc_product_ele->defineAllParticleTiles();
+
+        for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
+        {
+            const auto info = getMFItInfo(*pc_source, *pc_product_ele, *pc_product_pos);
+
+#ifdef _OPENMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+            for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
+            {
+                auto& src_tile = pc_source ->ParticlesAt(lev, mfi);
+                auto& dst_ele_tile = pc_product_ele->ParticlesAt(lev, mfi);
+                auto& dst_pos_tile = pc_product_pos->ParticlesAt(lev, mfi);
+
+                const auto np_dst_ele = dst_ele_tile.numParticles();
+                const auto np_dst_pos = dst_pos_tile.numParticles();
+                const auto num_added = filterCopyTransformParticles<1>(
+                    dst_ele_tile, dst_pos_tile,
+                    src_tile, np_dst_ele, np_dst_pos,
+                    Filter, CopyEle, CopyPos, Transform);
+
+                setNewParticleIDs(dst_ele_tile, np_dst_ele, num_added);
+                setNewParticleIDs(dst_pos_tile, np_dst_pos, num_added);
+            }
+
+
+
+        }
+   }
+}
+
+void MultiParticleContainer::doQedQuantumSync()
+{
+    WARPX_PROFILE("MPC::doQedEvents::doQedQuantumSync");
+
+    // Loop over all species.
+    // Electrons or positrons undergoing Quantum photon emission process
+    // create photons in pc_product_phot
+
+    for (auto& pc_source : allcontainers){
+        if(!pc_source->has_quantum_sync()){ continue; }
+
+                // Get product species
+        auto& pc_product_phot =
+            allcontainers[pc_source->m_qed_quantum_sync_phot_product];
+
+        SmartCopyFactory copy_factory_phot(*pc_source, *pc_product_phot);
+        auto phys_pc_ptr =
+            static_cast<PhysicalParticleContainer*>(pc_source.get());
+
+        const auto Filter    = phys_pc_ptr->getPhotonEmissionFilterFunc();
+        const auto CopyPhot   = copy_factory_phot.getSmartCopy();
+
+        auto Transform = PhotonEmissionTransformFunc(
+            m_shr_p_qs_engine->build_optical_depth_functor(),
+            pc_source->particle_runtime_comps["optical_depth_QSR"],
+             m_shr_p_qs_engine->build_phot_em_functor());
+
+        pc_source ->defineAllParticleTiles();
+        pc_product_phot->defineAllParticleTiles();
+
+        for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
+        {
+            const auto info = getMFItInfo(*pc_source, *pc_product_phot);
+
+#ifdef _OPENMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+            for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
+            {
+                auto& src_tile = pc_source->ParticlesAt(lev, mfi);
+                auto& dst_tile = pc_product_phot->ParticlesAt(lev, mfi);
+
+                const auto np_dst = dst_tile.numParticles();
+
+                const auto num_added =
+                    filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
+                        Filter, CopyPhot, Transform);
+
+                setNewParticleIDs(dst_tile, np_dst, num_added);
+
+                constexpr auto energy_threshold = static_cast<amrex::ParticleReal>(
+                     2.0 * PhysConst::m_e * PhysConst::c * PhysConst::c);
+                cleanLowEnergyPhotons(
+                    dst_tile, np_dst, num_added, energy_threshold);
+
+            }
+        }
+    }
+
+}
+
+
+>>>>>>> LucaQED/add_qed_particle_creaction_new_routines
 #endif
