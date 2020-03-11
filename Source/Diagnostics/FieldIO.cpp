@@ -253,28 +253,25 @@ PackPlotDataPtrs (Vector<const MultiFab*>& pmf,
 
 AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
-Real AverageToCellCenter ( AMREX_D_DECL( int i,
-                                         int j,
-                                         int k ),
+Real AverageToCellCenter ( AMREX_D_DECL( int i, int j, int k ),
                            Array4<Real const> const& mf_in_arr,
                            const IntVect stag,
-                           int comp=0 )
+                           const int comp=0 )
 {
-    const IntVect& s = stag;
 #if ( AMREX_SPACEDIM == 2 )
-    return 0.25 * ( mf_in_arr(i     ,j     ,0,comp)
-                  + mf_in_arr(i+s[0],j     ,0,comp)
-                  + mf_in_arr(i     ,j+s[1],0,comp)
-                  + mf_in_arr(i+s[0],j+s[1],0,comp) );
+    return 0.25 * ( mf_in_arr(i        ,j        ,0,comp)
+                  + mf_in_arr(i+stag[0],j        ,0,comp)
+                  + mf_in_arr(i        ,j+stag[1],0,comp)
+                  + mf_in_arr(i+stag[0],j+stag[1],0,comp) );
 #elif ( AMREX_SPACEDIM == 3 )
-    return 0.125 * ( mf_in_arr(i     ,j     ,k     ,comp)
-                   + mf_in_arr(i+s[0],j     ,k     ,comp)
-                   + mf_in_arr(i     ,j+s[1],k     ,comp)
-                   + mf_in_arr(i     ,j     ,k+s[2],comp)
-                   + mf_in_arr(i+s[0],j+s[1],k     ,comp)
-                   + mf_in_arr(i     ,j+s[1],k+s[2],comp)
-                   + mf_in_arr(i+s[0],j     ,k+s[2],comp)
-                   + mf_in_arr(i+s[0],j+s[1],k+s[2],comp) );
+    return 0.125 * ( mf_in_arr(i        ,j        ,k        ,comp)
+                   + mf_in_arr(i+stag[0],j        ,k        ,comp)
+                   + mf_in_arr(i        ,j+stag[1],k        ,comp)
+                   + mf_in_arr(i        ,j        ,k+stag[2],comp)
+                   + mf_in_arr(i+stag[0],j+stag[1],k        ,comp)
+                   + mf_in_arr(i        ,j+stag[1],k+stag[2],comp)
+                   + mf_in_arr(i+stag[0],j        ,k+stag[2],comp)
+                   + mf_in_arr(i+stag[0],j+stag[1],k+stag[2],comp) );
 #endif
 }
 
@@ -283,24 +280,23 @@ AMREX_FORCE_INLINE
 void AverageToCellCenter ( Box const& bx,
                            Array4<Real> const& mf_out_arr,
                            Array4<Real const> const& mf_in_arr,
-                           IntVect stag,
-                           int dcomp,
-                           int scomp=0,
-                           int ncomp=0 )
+                           const IntVect stag,
+                           const int dcomp,
+                           const int scomp=0,
+                           const int ncomp=0 )
 {
     const auto lo = lbound(bx);
     const auto hi = ubound(bx);
+    int n=0;
+    do {
 #if ( AMREX_SPACEDIM == 2 )
-    for (int n = 0; n < ncomp; ++n) {
         for (int j = lo.y; j <= hi.y; ++j) {
             AMREX_PRAGMA_SIMD
             for (int i = lo.x; i <= hi.x; ++i) {
                 mf_out_arr(i,j,0,n+dcomp) = AverageToCellCenter( i, j, mf_in_arr, stag, n+scomp );
             }
         }
-    }
 #elif ( AMREX_SPACEDIM == 3 )
-    for (int n = 0; n < ncomp; ++n) {
         for (int k = lo.z; k <= hi.z; ++k) {
             for (int j = lo.y; j <= hi.y; ++j) {
                 AMREX_PRAGMA_SIMD
@@ -309,19 +305,20 @@ void AverageToCellCenter ( Box const& bx,
                 }
             }
         }
-    }
 #endif
+    ++n;
+    } while ( n < ncomp );
 }
 
 void
 AverageToCellCenter ( MultiFab& mf_out,
                       const MultiFab*& mf_in,
-                      int dcomp,
-                      int ngrow,
-                      int scomp=0,
-                      int ncomp=0 )
+                      const int dcomp,
+                      const int ngrow,
+                      const int scomp=0,
+                      const int ncomp=0 )
 {
-    //TODO: add asserts
+    //TODO: add asserts?
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -351,6 +348,8 @@ AverageAndPackVectorField( MultiFab& mf_avg,
     // `average_edge_to_cellcenter` requires fields to be passed as Vector
     Vector<const MultiFab*> srcmf(AMREX_SPACEDIM);
 
+    const MultiFab* tmp_ptr;
+
     // Check the type of staggering of the 3-component `vector_field`
     // and average accordingly:
     // - Fully cell-centered field (no average needed; simply copy)
@@ -363,12 +362,12 @@ AverageAndPackVectorField( MultiFab& mf_avg,
         // - Fully nodal
     } else if ( vector_field[0]->is_nodal() ){
 
-        amrex::average_node_to_cellcenter( mf_avg, dcomp  ,
-                                          *vector_field[0], 0, 1, ngrow);
-        amrex::average_node_to_cellcenter( mf_avg, dcomp+1,
-                                          *vector_field[1], 0, 1, ngrow);
-        amrex::average_node_to_cellcenter( mf_avg, dcomp+2,
-                                          *vector_field[2], 0, 1, ngrow);
+        tmp_ptr = vector_field[0].get();
+        AverageToCellCenter( mf_avg, tmp_ptr, dcomp  , ngrow, 0, 1 );
+        tmp_ptr = vector_field[1].get();
+        AverageToCellCenter( mf_avg, tmp_ptr, dcomp+1, ngrow, 0, 1 );
+        tmp_ptr = vector_field[2].get();
+        AverageToCellCenter( mf_avg, tmp_ptr, dcomp+2, ngrow, 0, 1 );
 
         // - Face centered, in the same way as B on a Yee grid
     } else if ( vector_field[0]->is_nodal(0) ){
@@ -391,10 +390,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
             mf_total[2].reset(new MultiFab(vector_field[2]->boxArray(), dm, 1, vector_field[2]->nGrowVect()));
             ConstructTotalRZField(mf_total, vector_field);
             PackPlotDataPtrs(srcmf, mf_total);
-            //amrex::average_face_to_cellcenter( mf_avg, dcomp, srcmf, ngrow);
-            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], 0+dcomp, ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[1], 1+dcomp, ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[2], 2+dcomp, ngrow ); );
+            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], dcomp  , ngrow );,
+                          AverageToCellCenter( mf_avg, srcmf[1], dcomp+1, ngrow );,
+                          AverageToCellCenter( mf_avg, srcmf[2], dcomp+2, ngrow ); );
             MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
             MultiFab::Copy( mf_avg, *mf_total[1], 0, dcomp+1, 1, ngrow);
 #else
@@ -402,10 +400,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
 #endif
         } else {
             PackPlotDataPtrs(srcmf, vector_field);
-            //amrex::average_face_to_cellcenter( mf_avg, dcomp, srcmf, ngrow);
-            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], 0+dcomp, ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[1], 1+dcomp, ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[2], 2+dcomp, ngrow ); );
+            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], dcomp  , ngrow );,
+                          AverageToCellCenter( mf_avg, srcmf[1], dcomp+1, ngrow );,
+                          AverageToCellCenter( mf_avg, srcmf[2], dcomp+2, ngrow ); );
 #if (AMREX_SPACEDIM == 2)
             MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
             MultiFab::Copy( mf_avg, *vector_field[1], 0, dcomp+1, 1, ngrow);
@@ -429,26 +426,24 @@ AverageAndPackVectorField( MultiFab& mf_avg,
             mf_total[2].reset(new MultiFab(vector_field[2]->boxArray(), dm, 1, vector_field[2]->nGrowVect()));
             ConstructTotalRZField(mf_total, vector_field);
             PackPlotDataPtrs(srcmf, mf_total);
-            //amrex::average_edge_to_cellcenter( mf_avg, dcomp, srcmf, ngrow);
-            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], 0+dcomp, ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[1], 1+dcomp, ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[2], 2+dcomp, ngrow ); );
+            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], dcomp, ngrow );,
+                          AverageToCellCenter( mf_avg, srcmf[1], dcomp+1, ngrow );,
+                          AverageToCellCenter( mf_avg, srcmf[2], dcomp+2, ngrow ); );
             MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
-            amrex::average_node_to_cellcenter( mf_avg, dcomp+1,
-                                              *mf_total[1], 0, 1, ngrow);
+            tmp_ptr = mf_total[1].get();
+            AverageToCellCenter( mf_avg, tmp_ptr, dcomp+1, ngrow, 0, 1 );
 #else
            amrex::Abort("AverageAndPackVectorField not implemented for ncomp > 1");
 #endif
         } else {
             PackPlotDataPtrs(srcmf, vector_field);
-            //amrex::average_edge_to_cellcenter( mf_avg, dcomp, srcmf, ngrow);
-            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], 0+dcomp, ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[1], 1+dcomp, ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[2], 2+dcomp, ngrow ); );
+            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], dcomp  , ngrow );,
+                          AverageToCellCenter( mf_avg, srcmf[1], dcomp+1, ngrow );,
+                          AverageToCellCenter( mf_avg, srcmf[2], dcomp+2, ngrow ); );
 #if (AMREX_SPACEDIM == 2)
             MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
-            amrex::average_node_to_cellcenter( mf_avg, dcomp+1,
-                                              *vector_field[1], 0, 1, ngrow);
+            tmp_ptr = vector_field[1].get();
+            AverageToCellCenter( mf_avg, tmp_ptr, dcomp+1, ngrow, 0, 1 );
 #endif
         }
 
@@ -494,9 +489,8 @@ AverageAndPackScalarField( MultiFab& mf_avg,
         MultiFab::Copy( mf_avg, scalar_field, 0, dcomp, 1, ngrow);
         // - Fully nodal
     } else if ( scalar_field.is_nodal() ){
-
-        amrex::average_node_to_cellcenter( mf_avg, dcomp, scalar_field, 0, 1, ngrow);
-
+        const MultiFab* tmp_ptr = &scalar_field;
+        AverageToCellCenter( mf_avg, tmp_ptr, dcomp, ngrow, 0, 1 );
     } else {
         amrex::Abort("Unknown staggering.");
     }
