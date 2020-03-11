@@ -940,7 +940,7 @@ Numerics and algorithms
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
 
-* ``nx_guard_psatd``, ``ny_guard_psatd``, ``nz_guard_psatd`` (`integer`) optional
+* ``psatd.nx_guard`, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
     The number of guard cells to use with PSATD solver.
     If not set by users, these values are calculated automatically and determined *empirically* and
     would be equal the order of the solver for nodal grid, and half the order of the solver for staggered.

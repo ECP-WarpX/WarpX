@@ -26,7 +26,7 @@ guardCellManager::Init(
     const int maxwell_fdtd_solver_id,
     const int max_level,
     const amrex::Array<amrex::Real,3> v_galilean,
-    const bool exchange_all_guard_cells)
+    const bool safe_guard_cells)
 {
     // When using subcycling, the particles on the fine level perform two pushes
     // before being redistributed ; therefore, we need one extra guard cell
@@ -108,10 +108,10 @@ guardCellManager::Init(
         int ngFFt_y = do_nodal ? noy_fft : noy_fft/2.;
         int ngFFt_z = do_nodal ? noz_fft : noz_fft/2.;
 
-        ParmParse pp;
-        pp.query("nx_guard_psatd", ngFFt_x);
-        pp.query("ny_guard_psatd", ngFFt_y);
-        pp.query("nz_guard_psatd", ngFFt_z);
+        ParmParse pp("psatd");
+        pp.query("nx_guard", ngFFt_x);
+        pp.query("ny_guard", ngFFt_y);
+        pp.query("nz_guard", ngFFt_z);
 
         IntVect ngFFT = IntVect(AMREX_D_DECL(ngFFt_x, ngFFt_y, ngFFt_z));
 
@@ -144,7 +144,7 @@ guardCellManager::Init(
     ng_FieldSolverF = IntVect(AMREX_D_DECL(1,1,1));
 #endif
 
-    if (exchange_all_guard_cells){
+    if (safe_guard_cells){
         // Run in safe mode: exchange all allocated guard cells at each
         // call of FillBoundary
         ng_FieldSolver = ng_alloc_EB;
