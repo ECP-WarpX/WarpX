@@ -721,7 +721,7 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
             if (lev == 0) AddToVarNames(varnames, "B", "_cp");
             dcomp += 3;
         }
-        
+
         BL_ASSERT(dcomp == ncomp);
     } // end loop over levels of refinement
 
