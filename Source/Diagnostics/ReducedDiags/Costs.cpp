@@ -15,7 +15,7 @@ using namespace amrex;
 Costs::Costs (std::string rd_name)
     : ReducedDiags{rd_name}
 {
-    
+
 }
 
 // function that gathers costs
@@ -29,7 +29,7 @@ void Costs::ComputeDiags (int step)
 
     // get WarpX class object
     auto& warpx = WarpX::GetInstance();
-    
+
     // judge if the diags should be done
     // costs is initialized only if we're doing load balance
     if ( ((step+1) % m_freq != 0) || warpx.get_load_balance_int() < 1 ) { return; }
@@ -46,11 +46,11 @@ void Costs::ComputeDiags (int step)
     // keep track of the max number of boxes, this is needed later on to fill
     // the jagged array (in case each step does not have the same number of boxes)
     nBoxesMax = std::max(nBoxesMax, nBoxes);
-    
+
     // resize and clear data array
     m_data.resize(nDataFields*nBoxes, 0.0);
     m_data.assign(nDataFields*nBoxes, 0.0);
-    
+
     // if not a load balance step, we must compute costs
     if ((step+1) % warpx.get_load_balance_int() != 0)
     {
@@ -63,7 +63,7 @@ void Costs::ComputeDiags (int step)
             // costs update via timers, nothing to compute
         }
     }
-    
+
     // keeps track of correct index in array over all boxes on all levels
     int shift = 0;
 
@@ -83,12 +83,12 @@ void Costs::ComputeDiags (int step)
             m_data[shift + mfi.index()*nDataFields + 4] = tbx.loVect()[1];
             m_data[shift + mfi.index()*nDataFields + 5] = tbx.loVect()[2];
         }
-        
+
         // we looped through all the boxes on level lev, update the shift index
         shift += nDataFields*(cost_heuristic->size());
     }
 
-    // parallel reduce to IO proc and get data over all procs    
+    // parallel reduce to IO proc and get data over all procs
     amrex::Vector<amrex::Real>::iterator it_m_data = m_data.begin();
     amrex::Real* addr_it_m_data = &(*it_m_data);
     ParallelReduce::Sum(addr_it_m_data,
@@ -125,7 +125,7 @@ void Costs::WriteToFile (int step) const
             // open tmp file to copy data
             std::string fileTmpName = m_path + m_rd_name + ".tmp." + m_extension;
             std::ofstream ofs(fileTmpName, std::ofstream::out);
-            
+
             // write header row
             // for each box on each level we saved 6 data fields: [cost, proc, lev, i_low, j_low, k_low])
             ofs << "#";
@@ -154,12 +154,12 @@ void Costs::WriteToFile (int step) const
                 ofs << "k_low_box_"+std::to_string(boxNumber)+"()";
                 ofs << m_sep;
             }
-            ofs << std::endl;            
-            
+            ofs << std::endl;
+
             // open the data-containing file
             std::string fileDataName = m_path + m_rd_name + "." + m_extension;
-            std::ifstream ifs(fileDataName, std::ifstream::in);        
-            
+            std::ifstream ifs(fileDataName, std::ifstream::in);
+
             // Fill in the tmp costs file with data, padded with NaNs
             for (std::string lineIn; std::getline(ifs, lineIn);)
             {
@@ -167,13 +167,13 @@ void Costs::WriteToFile (int step) const
                 int cnt = 0;
                 std::stringstream ss(lineIn);
                 std::string token;
-                
+
                 while (std::getline(ss, token, m_sep[0]))
                 {
                     cnt += 1;
                     if (ss.peek() == m_sep[0]) ss.ignore();
                 }
-                
+
                 // 2 columns for step, time; then nBoxes*nDatafields columns for data;
                 // then fill the remaining columns (i.e., up to 2 + nBoxesMax*nDataFields)
                 // with NaN, so the array is not jagged
@@ -184,7 +184,7 @@ void Costs::WriteToFile (int step) const
                 }
                 ofs << std::endl;
             }
-            
+
             // close files
             ifs.close();
             ofs.close();
@@ -192,7 +192,7 @@ void Costs::WriteToFile (int step) const
             // remove the original, rename tmp file
             std::remove(fileDataName.c_str());
             std::rename(fileTmpName.c_str(), fileDataName.c_str());
-            
+
         } // if (step == (warpx.maxStep() - 1)) ...
     } // if (ParallelDescriptor::IOProcessor()) ...
 } // end ReducedDiags::WriteToFile
