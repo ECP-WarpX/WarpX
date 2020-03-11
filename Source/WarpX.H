@@ -663,7 +663,7 @@ private:
     /** Interval to perform load balance; `load_balance_int=5`, e.g., will load
      * balance during steps 5, 10, 15, etc. */
     int load_balance_int = -1;
-    /** Collection of multifabs to keep track of weights, based on in-code timers,                                              
+    /** Collection of multifabs to keep track of weights, based on in-code timers,
      * for use in load balancing routines. */
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > costs;
     /** Collection of vectors to keep track of weights, based on number of cells
