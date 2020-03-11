@@ -12,8 +12,8 @@
 #include "ReducedDiags.H"
 
 /**
- *  This class mainly contains a function that
- *  computes the costs used for loadbalance.
+ *  This class mainly contains a function that update the 
+ *  costs (used in load balance) for writing to output.
  */
 class Costs : public ReducedDiags
 {
