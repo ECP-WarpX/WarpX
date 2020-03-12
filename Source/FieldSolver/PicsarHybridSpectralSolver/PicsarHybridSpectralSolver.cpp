@@ -109,8 +109,8 @@ WarpX::InitFFTComm (int lev)
 // TODO:
 //    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(np_fft*ngroups_fft == nprocs,
 //        "Number of processes must be divisible by number of FFT groups");
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ngroups_fft == 1,
-        "Number of FFT groups should be 1 at this point.");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(np_fft == 1,
+        "In the current implementation, there can be only one MPI rank per FFT group.");
 
     int myproc = ParallelDescriptor::MyProc();
     // my color in ngroups_fft subcommunicators.  0 <= color_fft < ngroups_fft
