@@ -177,6 +177,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     // InjectorPosition[Random or Regular].getPositionUnitBox.
     else if (part_pos_s == "nrandompercell") {
         pp.query("num_particles_per_cell", num_particles_per_cell);
+#if WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            num_particles_per_cell>=2*WarpX::n_rz_azimuthal_modes,
+            "Error: For accurate use of WarpX cylindrical gemoetry the number "
+            "of particles should be at least two times n_rz_azimuthal_modes "
+            "(Please visit PR#765 for more information.)");
+#endif
         // Construct InjectorPosition with InjectorPositionRandom.
         inj_pos.reset(new InjectorPosition((InjectorPositionRandom*)nullptr,
                                            xmin, xmax, ymin, ymax, zmin, zmax));
