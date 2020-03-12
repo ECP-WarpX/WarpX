@@ -33,8 +33,11 @@ using fftw_precision_complex = fftw_complex;
 SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
                                       const SpectralKSpace& k_space,
                                       const amrex::DistributionMapping& dm,
-                                      const int n_field_required )
+                                      const int n_field_required,
+                                      const bool periodic_single_box )
 {
+    m_periodic_single_box = periodic_single_box;
+
     const BoxArray& spectralspace_ba = k_space.spectralspace_ba;
 
     // Allocate the arrays that contain the fields in spectral space
@@ -223,7 +226,12 @@ SpectralFieldData::ForwardTransform( const MultiFab& mf,
         // As a consequence, the copy discards the *last* point of `mf`
         // in any direction that has *nodal* index type.
         {
-            Box realspace_bx = mf[mfi].box(); // Copy the box
+            Box realspace_bx;
+            if (m_periodic_single_box) {
+                realspace_bx = mfi.validbox(); // Discard guard cells
+            } else {
+                realspace_bx = mf[mfi].box(); // Keep guard cells
+            }
             realspace_bx.enclosedCells(); // Discard last point in nodal direction
             AMREX_ALWAYS_ASSERT( realspace_bx == tmpRealField[mfi].box() );
             Array4<const Real> mf_arr = mf[mfi].array();

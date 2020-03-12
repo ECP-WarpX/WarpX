@@ -959,12 +959,21 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #elif (AMREX_SPACEDIM == 2)
         RealVect dx_vect(dx[0], dx[2]);
 #endif
+
+        // Check whether the global domain is periodic and parallelized with a single box
+        bool periodic_single_box = (geom[0].isAllPeriodic() && ba.size()==1 && lev==0);
+
         // Get the cell-centered box, with guard cells
         BoxArray realspace_ba = ba;  // Copy box
-        realspace_ba.enclosedCells().grow(ngE); // cell-centered + guard cells
+        realspace_ba.enclosedCells(); // cell-centered
+        if ( periodic_single_box == false ) {
+            realspace_ba.grow(ngE); // add guard cells
+        }
         // Define spectral solver
+        bool const pml=false;
         spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev] ) );
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
+            pml, periodic_single_box ) );
     }
 #endif
     std::array<Real,3> const dx = CellSize(lev);
