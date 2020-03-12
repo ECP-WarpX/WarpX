@@ -489,6 +489,20 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
         self.laser.phi2 = self.phi2
 
 
+class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
+    def initialize_inputs(self):
+        self.laser_number = pywarpx.lasers.nlasers + 1
+        self.name = 'laser{}'.format(self.laser_number)
+
+        self.laser = pywarpx.Lasers.newlaser(self.name)
+
+        self.laser.profile = "parse_field_function"
+        self.laser.wavelength = self.wavelength  # The wavelength of the laser (in meters)
+        self.laser.e_max = self.Emax  # Maximum amplitude of the laser field (in V/m)
+        self.laser.polarization = self.polarization_direction  # The main polarization vector
+        self.laser.setattr('field_function(X,Y,t)', self.field_expression)
+
+
 class LaserAntenna(picmistandard.PICMI_LaserAntenna):
     def initialize_inputs(self, laser):
         laser.laser.position = self.position  # This point is on the laser plane
