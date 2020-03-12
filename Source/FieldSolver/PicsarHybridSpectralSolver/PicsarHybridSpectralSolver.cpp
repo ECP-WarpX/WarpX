@@ -48,6 +48,19 @@ WarpX::AllocLevelDataFFT (int lev)
     rho_fp_fft[lev].reset(new MultiFab(amrex::convert(ba_fp_fft,IntVect::TheNodeVector()),
                                        dm_fp_fft, 2, 0));
 
+    // Allocate and initialize the spectral solver
+    std::array<Real,3> dx = CellSize(lev);
+#if (AMREX_SPACEDIM == 3)
+    RealVect dx_vect(dx[0], dx[1], dx[2]);
+#elif (AMREX_SPACEDIM == 2)
+    RealVect dx_vect(dx[0], dx[2]);
+#endif
+    // Define spectral solver
+    BoxArray realspace_ba = ba_fp_fft; // Copy box aray
+    realspace_ba.enclosedCells(); // cell-centered (guard cells already included)
+    spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm_fp_fft,
+       nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev] ) );
+
     if (lev > 0)
     {
         BoxArray ba_cp_fft;
