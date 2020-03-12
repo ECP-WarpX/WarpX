@@ -34,8 +34,6 @@ install:
     - sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY && sudo chmod a+x /usr/local/bin/cmake-easyinstall
 
 script:
-    - export FFTW_HOME=/usr/
-
     # Run the tests on the current commit
     - export WARPX_TEST_COMMIT=$TRAVIS_COMMIT
 

@@ -10,12 +10,6 @@ In order to run the code with a spectral solver, you need to:
 
            apt-get install libfftw3-dev libfftw3-mpi-dev
 
-      - Set the environment variable ``FFTW_HOME`` to the path for FFTW.
-        For instance, for Debian, this is done with
-        ::
-
-           export FFTW_HOME=/usr/
-
       - Set ``USE_PSATD=TRUE`` when compiling:
         ::
 
