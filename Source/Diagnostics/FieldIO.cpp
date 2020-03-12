@@ -282,20 +282,23 @@ Real AverageToCellCenter ( Array4<Real const> const& mf_in_arr,
                            AMREX_D_DECL( int i, int j, int k ),
                            const int comp=0 )
 {
+    AMREX_D_TERM( int sx = stag[0];,
+                  int sy = stag[1];,
+                  int sz = stag[2]; );
 #if ( AMREX_SPACEDIM == 2 )
-    return 0.25_rt * ( mf_in_arr(i        ,j        ,0,comp)
-                     + mf_in_arr(i+stag[0],j        ,0,comp)
-                     + mf_in_arr(i        ,j+stag[1],0,comp)
-                     + mf_in_arr(i+stag[0],j+stag[1],0,comp) );
+    return 0.25_rt * ( mf_in_arr(i   ,j   ,0,comp)
+                     + mf_in_arr(i+sx,j   ,0,comp)
+                     + mf_in_arr(i   ,j+sy,0,comp)
+                     + mf_in_arr(i+sx,j+sy,0,comp) );
 #elif ( AMREX_SPACEDIM == 3 )
-    return 0.125_rt * ( mf_in_arr(i        ,j        ,k        ,comp)
-                      + mf_in_arr(i+stag[0],j        ,k        ,comp)
-                      + mf_in_arr(i        ,j+stag[1],k        ,comp)
-                      + mf_in_arr(i        ,j        ,k+stag[2],comp)
-                      + mf_in_arr(i+stag[0],j+stag[1],k        ,comp)
-                      + mf_in_arr(i        ,j+stag[1],k+stag[2],comp)
-                      + mf_in_arr(i+stag[0],j        ,k+stag[2],comp)
-                      + mf_in_arr(i+stag[0],j+stag[1],k+stag[2],comp) );
+    return 0.125_rt * ( mf_in_arr(i   ,j   ,k   ,comp)
+                      + mf_in_arr(i+sx,j   ,k   ,comp)
+                      + mf_in_arr(i   ,j+sy,k   ,comp)
+                      + mf_in_arr(i   ,j   ,k+sz,comp)
+                      + mf_in_arr(i+sx,j+sy,k   ,comp)
+                      + mf_in_arr(i   ,j+sy,k+sz,comp)
+                      + mf_in_arr(i+sx,j   ,k+sz,comp)
+                      + mf_in_arr(i+sx,j+sy,k+sz,comp) );
 #endif
 }
 
