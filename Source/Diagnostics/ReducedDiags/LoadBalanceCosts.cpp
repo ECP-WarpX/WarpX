@@ -126,7 +126,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
             ofs << "[1]step()";
             ofs << m_sep;
             ofs << "[2]time(s)";
-            
+
             for (int boxNumber=0; boxNumber<m_nBoxesMax; ++boxNumber)
             {
                 ofs << m_sep;
