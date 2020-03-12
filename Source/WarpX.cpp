@@ -323,16 +323,11 @@ WarpX::WarpX ()
         ba_valid_fp_fft.resize(nlevs_max);
         ba_valid_cp_fft.resize(nlevs_max);
 
-#ifdef WARPX_USE_PSATD_HYBRID
-        dataptr_fp_fft.resize(nlevs_max);
-        dataptr_cp_fft.resize(nlevs_max);
-
         domain_fp_fft.resize(nlevs_max);
         domain_cp_fft.resize(nlevs_max);
 
         comm_fft.resize(nlevs_max,MPI_COMM_NULL);
         color_fft.resize(nlevs_max,-1);
-#endif
     }
 
 #ifdef BL_USE_SENSEI_INSITU
@@ -859,12 +854,7 @@ WarpX::ClearLevel (int lev)
         ba_valid_fp_fft[lev] = BoxArray();
         ba_valid_cp_fft[lev] = BoxArray();
 
-#ifdef WARPX_USE_PSATD_HYBRID
-        dataptr_fp_fft[lev].reset();
-        dataptr_cp_fft[lev].reset();
-
         FreeFFT(lev);
-#endif
     }
 }
 

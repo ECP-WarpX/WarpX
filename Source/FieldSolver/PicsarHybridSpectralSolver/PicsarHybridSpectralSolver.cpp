@@ -5,7 +5,6 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "PicsarHybridFFTData.H"
 #include "WarpX.H"
 #include "WarpX_f.H"
 #include <AMReX_iMultiFab.H>
@@ -13,126 +12,10 @@
 
 using namespace amrex;
 
-constexpr int FFTData::N;
-
-#ifdef WARPX_USE_PSATD_HYBRID
-namespace {
-static std::unique_ptr<FFTData> nullfftdata; // This for process with nz_fft=0
-
-/** \brief Returns an "owner mask" which 1 for all cells, except
- *  for the duplicated (physical) cells of a nodal grid.
- *
- *  More precisely, for these cells (which are represented on several grids)
- *  the owner mask is 1 only if these cells are at the lower left end of
- *  the local grid - or if these cells are at the end of the physical domain
- *  Therefore, there for these cells, there will be only one grid for
- *  which the owner mask is non-zero.
- */
-static iMultiFab
-BuildFFTOwnerMask (const MultiFab& mf, const Geometry& geom)
-{
-    const BoxArray& ba = mf.boxArray();
-    const DistributionMapping& dm = mf.DistributionMap();
-    iMultiFab mask(ba, dm, 1, 0);
-    const int owner = 1;
-    const int nonowner = 0;
-    mask.setVal(owner);
-
-    const Box& domain_box = amrex::convert(geom.Domain(), ba.ixType());
-
-    AMREX_ASSERT(ba.complementIn(domain_box).isEmpty());
-
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-    for (MFIter mfi(mask); mfi.isValid(); ++mfi)
-    {
-        IArrayBox& fab = mask[mfi];
-        const Box& bx = fab.box();
-        Box bx2 = bx;
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            // Detect nodal dimensions
-            if (bx2.type(idim) == IndexType::NODE) {
-                // Make sure that this grid does not touch the end of
-                // the physical domain.
-                if (bx2.bigEnd(idim) < domain_box.bigEnd(idim)) {
-                    bx2.growHi(idim, -1);
-                }
-            }
-        }
-        const BoxList& bl = amrex::boxDiff(bx, bx2);
-        // Set owner mask in these cells
-        for (const auto& b : bl) {
-            fab.setVal(nonowner, b, 0, 1);
-        }
-
-    }
-
-    return mask;
-}
-
-/** \brief Copy the data from the FFT grid to the regular grid
- *
- * Because, for nodal grid, some cells are duplicated on several boxes,
- * special care has to be taken in order to have consistent values on
- * each boxes when copying this data. Here this is done by setting a
- * mask, where, for these duplicated cells, the mask is non-zero on only
- * one box.
- */
-static void
-CopyDataFromFFTToValid (MultiFab& mf, const MultiFab& mf_fft, const BoxArray& ba_valid_fft, const Geometry& geom)
-{
-    auto idx_type = mf_fft.ixType();
-    MultiFab mftmp(amrex::convert(ba_valid_fft,idx_type), mf_fft.DistributionMap(), 1, 0);
-
-    const iMultiFab& mask = BuildFFTOwnerMask(mftmp, geom);
-
-    // Local copy: whenever an MPI rank owns both the data from the FFT
-    // grid and from the regular grid, for overlapping region, copy it locally
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-    for (MFIter mfi(mftmp,true); mfi.isValid(); ++mfi)
-    {
-        const Box& bx = mfi.tilebox();
-        FArrayBox& dstfab = mftmp[mfi];
-
-        const FArrayBox& srcfab = mf_fft[mfi];
-        const Box& srcbox = srcfab.box();
-
-        if (srcbox.contains(bx))
-        {
-            // Copy the interior region (without guard cells)
-            dstfab.copy(srcfab, bx, 0, bx, 0, 1);
-            // Set the value to 0 whenever the mask is 0
-            // (i.e. for nodal duplicated cells, there is a single box
-            // for which the mask is different than 0)
-            // if mask == 0, set value to zero
-            dstfab.setValIfNot(0.0, bx, mask[mfi], 0, 1);
-        }
-    }
-
-    // Global copy: Get the remaining the data from other procs
-    // Use ParallelAdd instead of ParallelCopy, so that the value from
-    // the cell that has non-zero mask is the one which is retained.
-    mf.setVal(0.0, 0);
-    mf.ParallelAdd(mftmp);
-
-
-}
-
-}
-#endif
-
 void
 WarpX::AllocLevelDataFFT (int lev)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "PSATD doesn't work with mesh refinement yet");
-
-#ifdef WARPX_USE_PSATD_HYBRID
-    static_assert(std::is_standard_layout<FFTData>::value, "FFTData must have standard layout");
-    static_assert(sizeof(FFTData) == sizeof(void*)*FFTData::N, "sizeof FFTData is wrong");
-#endif
 
     InitFFTComm(lev);
 
@@ -165,10 +48,6 @@ WarpX::AllocLevelDataFFT (int lev)
     rho_fp_fft[lev].reset(new MultiFab(amrex::convert(ba_fp_fft,IntVect::TheNodeVector()),
                                        dm_fp_fft, 2, 0));
 
-#ifdef WARPX_USE_PSATD_HYBRID
-    dataptr_fp_fft[lev].reset(new LayoutData<FFTData>(ba_fp_fft, dm_fp_fft));
-#endif
-
     if (lev > 0)
     {
         BoxArray ba_cp_fft;
@@ -196,14 +75,8 @@ WarpX::AllocLevelDataFFT (int lev)
                                                   dm_cp_fft, 1, 0));
         rho_cp_fft[lev].reset(new MultiFab(amrex::convert(ba_cp_fft,IntVect::TheNodeVector()),
                                            dm_cp_fft, 2, 0));
-#ifdef WARPX_USE_PSATD_HYBRID
-        dataptr_cp_fft[lev].reset(new LayoutData<FFTData>(ba_cp_fft, dm_cp_fft));
-#endif
     }
 
-#ifdef WARPX_USE_PSATD_HYBRID
-    InitFFTDataPlan(lev);
-#endif
 }
 
 /** \brief Create MPI sub-communicators for each FFT group,
@@ -220,24 +93,16 @@ WarpX::InitFFTComm (int lev)
 
     // # of processes in the subcommunicator
     int np_fft = nprocs / ngroups_fft;
-#ifdef WARPX_USE_PSATD_HYBRID
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(np_fft*ngroups_fft == nprocs,
-        "Number of processes must be divisible by number of FFT groups");
-#else
+// TODO:
+//    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(np_fft*ngroups_fft == nprocs,
+//        "Number of processes must be divisible by number of FFT groups");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ngroups_fft == 1,
         "Number of FFT groups should be 1 at this point.");
-#endif
 
     int myproc = ParallelDescriptor::MyProc();
     // my color in ngroups_fft subcommunicators.  0 <= color_fft < ngroups_fft
     color_fft[lev] = myproc / np_fft;
     MPI_Comm_split(ParallelDescriptor::Communicator(), color_fft[lev], myproc, &comm_fft[lev]);
-
-#ifdef WARPX_USE_PSATD_HYBRID
-    int fcomm = MPI_Comm_c2f(comm_fft[lev]);
-    // Set the communicator of the PICSAR module to the one we just created
-    warpx_fft_mpi_init(fcomm);
-#endif
 }
 
 /** \brief Perform domain decomposition for the FFTW
@@ -276,7 +141,6 @@ WarpX::FFTDomainDecomposition (int lev, BoxArray& ba_fft, DistributionMapping& d
     // Ask FFTW to chop the current FFT sub-group domain in the z-direction
     // and give a chunk to each MPI rank in the current sub-group.
     int nz_fft, z0_fft;
-#ifndef WARPX_USE_PSATD_HYBRID
     const ptrdiff_t nx_global = domain_fft.length(0)+1;
     const ptrdiff_t ny_global = domain_fft.length(1)+1;
     const ptrdiff_t nz_global = domain_fft.length(2)+1;
@@ -286,9 +150,7 @@ WarpX::FFTDomainDecomposition (int lev, BoxArray& ba_fft, DistributionMapping& d
         &local_n0, &local_0_start);
     nz_fft = local_n0;
     z0_fft = local_0_start;
-#else
-    warpx_fft_domain_decomp(&nz_fft, &z0_fft, WARPX_TO_FORTRAN_BOX(domain_fft));
-#endif
+
     // Each MPI rank adds a box with its chunk of the FFT grid
     // (given by the above decomposition) to the list `bx_fft`,
     // then list is shared among all MPI ranks via AllGather
@@ -344,143 +206,13 @@ WarpX::FFTDomainDecomposition (int lev, BoxArray& ba_fft, DistributionMapping& d
     ba_valid.define(std::move(bl_valid));
 }
 
-#ifdef WARPX_USE_PSATD_HYBRID
-/** /brief Set all the flags and metadata of the PICSAR FFT module.
- *         Allocate the auxiliary arrays of `fft_data`
- *
- * Note: dataptr_data is a stuct containing 22 pointers to arrays
- * 1-11: padded arrays in real space ; 12-22 arrays for the fields in Fourier space
- */
-void
-WarpX::InitFFTDataPlan (int lev)
-{
-    auto dx_fp = CellSize(lev);
-
-    if (Efield_fp_fft[lev][0]->local_size() == 1)
-      //Only one FFT patch on this MPI
-    {
-        for (MFIter mfi(*Efield_fp_fft[lev][0]); mfi.isValid(); ++mfi)
-        {
-            warpx_fft_dataplan_init(&nox_fft, &noy_fft, &noz_fft,
-                                    (*dataptr_fp_fft[lev])[mfi].data, &FFTData::N,
-                                    dx_fp.data(), &dt[lev], &fftw_plan_measure, &WarpX::do_nodal );
-        }
-    }
-    else if (Efield_fp_fft[lev][0]->local_size() == 0)
-      // No FFT patch on this MPI rank (may happen with FFTW)
-      // Still need to call the MPI-FFT initialization routines
-    {
-        nullfftdata.reset(new FFTData());
-        warpx_fft_dataplan_init(&nox_fft, &noy_fft, &noz_fft,
-                                nullfftdata->data, &FFTData::N,
-                                dx_fp.data(), &dt[lev], &fftw_plan_measure,
-                                &WarpX::do_nodal );
-    }
-    else
-    {
-      // Multiple FFT patches on this MPI rank
-        amrex::Abort("WarpX::InitFFTDataPlan: TODO");
-    }
-
-    if (lev > 0)
-    {
-        amrex::Abort("WarpX::InitFFTDataPlan: TODO");
-    }
-}
-#endif
 
 void
 WarpX::FreeFFT (int lev)
 {
-#ifdef WARPX_USE_PSATD_HYBRID
-    nullfftdata.reset();
-    warpx_fft_nullify();
-#else
     fftw_mpi_cleanup();
-#endif
     if (comm_fft[lev] != MPI_COMM_NULL) {
         MPI_Comm_free(&comm_fft[lev]);
     }
     comm_fft[lev] = MPI_COMM_NULL;
 }
-
-#ifdef WARPX_USE_PSATD_HYBRID
-void
-WarpX::PushPSATD_hybridFFT (int lev, amrex::Real /* dt */)
-{
-    WARPX_PROFILE_VAR_NS("WarpXFFT::CopyDualGrid", blp_copy);
-    WARPX_PROFILE_VAR_NS("PICSAR::FftPushEB", blp_push_eb);
-
-    auto period_fp = geom[lev].periodicity();
-
-    WARPX_PROFILE_VAR_START(blp_copy);
-    Efield_fp_fft[lev][0]->ParallelCopy(*Efield_fp[lev][0], 0, 0, 1, Efield_fp[lev][0]->nGrow(), 0, period_fp);
-    Efield_fp_fft[lev][1]->ParallelCopy(*Efield_fp[lev][1], 0, 0, 1, Efield_fp[lev][1]->nGrow(), 0, period_fp);
-    Efield_fp_fft[lev][2]->ParallelCopy(*Efield_fp[lev][2], 0, 0, 1, Efield_fp[lev][2]->nGrow(), 0, period_fp);
-    Bfield_fp_fft[lev][0]->ParallelCopy(*Bfield_fp[lev][0], 0, 0, 1, Bfield_fp[lev][0]->nGrow(), 0, period_fp);
-    Bfield_fp_fft[lev][1]->ParallelCopy(*Bfield_fp[lev][1], 0, 0, 1, Bfield_fp[lev][1]->nGrow(), 0, period_fp);
-    Bfield_fp_fft[lev][2]->ParallelCopy(*Bfield_fp[lev][2], 0, 0, 1, Bfield_fp[lev][2]->nGrow(), 0, period_fp);
-    current_fp_fft[lev][0]->ParallelCopy(*current_fp[lev][0], 0, 0, 1, current_fp[lev][0]->nGrow(), 0, period_fp);
-    current_fp_fft[lev][1]->ParallelCopy(*current_fp[lev][1], 0, 0, 1, current_fp[lev][1]->nGrow(), 0, period_fp);
-    current_fp_fft[lev][2]->ParallelCopy(*current_fp[lev][2], 0, 0, 1, current_fp[lev][2]->nGrow(), 0, period_fp);
-    rho_fp_fft[lev]->ParallelCopy(*rho_fp[lev], 0, 0, 2, rho_fp[lev]->nGrow(), 0, period_fp);
-    WARPX_PROFILE_VAR_STOP(blp_copy);
-
-    WARPX_PROFILE_VAR_START(blp_push_eb);
-    if (Efield_fp_fft[lev][0]->local_size() == 1)
-       //Only one FFT patch on this MPI
-    {
-        for (MFIter mfi(*Efield_fp_fft[lev][0]); mfi.isValid(); ++mfi)
-        {
-                warpx_fft_push_eb(WARPX_TO_FORTRAN_ANYD((*Efield_fp_fft[lev][0])[mfi]),
-                                  WARPX_TO_FORTRAN_ANYD((*Efield_fp_fft[lev][1])[mfi]),
-                                  WARPX_TO_FORTRAN_ANYD((*Efield_fp_fft[lev][2])[mfi]),
-                                  WARPX_TO_FORTRAN_ANYD((*Bfield_fp_fft[lev][0])[mfi]),
-                                  WARPX_TO_FORTRAN_ANYD((*Bfield_fp_fft[lev][1])[mfi]),
-                                  WARPX_TO_FORTRAN_ANYD((*Bfield_fp_fft[lev][2])[mfi]),
-                                  WARPX_TO_FORTRAN_ANYD((*current_fp_fft[lev][0])[mfi]),
-                                  WARPX_TO_FORTRAN_ANYD((*current_fp_fft[lev][1])[mfi]),
-                                  WARPX_TO_FORTRAN_ANYD((*current_fp_fft[lev][2])[mfi]),
-                                  WARPX_TO_FORTRAN_N_ANYD((*rho_fp_fft[lev])[mfi],0),
-                                  WARPX_TO_FORTRAN_N_ANYD((*rho_fp_fft[lev])[mfi],1));
-        }
-    }
-    else if (Efield_fp_fft[lev][0]->local_size() == 0)
-      // No FFT patch on this MPI rank
-      // Still need to call the MPI-FFT routine.
-    {
-        FArrayBox fab(Box(IntVect::TheZeroVector(), IntVect::TheUnitVector()));
-        warpx_fft_push_eb(WARPX_TO_FORTRAN_ANYD(fab),
-                          WARPX_TO_FORTRAN_ANYD(fab),
-                          WARPX_TO_FORTRAN_ANYD(fab),
-                          WARPX_TO_FORTRAN_ANYD(fab),
-                          WARPX_TO_FORTRAN_ANYD(fab),
-                          WARPX_TO_FORTRAN_ANYD(fab),
-                          WARPX_TO_FORTRAN_ANYD(fab),
-                          WARPX_TO_FORTRAN_ANYD(fab),
-                          WARPX_TO_FORTRAN_ANYD(fab),
-                          WARPX_TO_FORTRAN_ANYD(fab),
-                          WARPX_TO_FORTRAN_ANYD(fab));
-    }
-    else
-      // Multiple FFT patches on this MPI rank
-    {
-        amrex::Abort("WarpX::PushPSATD: TODO");
-    }
-    WARPX_PROFILE_VAR_STOP(blp_push_eb);
-
-    WARPX_PROFILE_VAR_START(blp_copy);
-    CopyDataFromFFTToValid(*Efield_fp[lev][0], *Efield_fp_fft[lev][0], ba_valid_fp_fft[lev], geom[lev]);
-    CopyDataFromFFTToValid(*Efield_fp[lev][1], *Efield_fp_fft[lev][1], ba_valid_fp_fft[lev], geom[lev]);
-    CopyDataFromFFTToValid(*Efield_fp[lev][2], *Efield_fp_fft[lev][2], ba_valid_fp_fft[lev], geom[lev]);
-    CopyDataFromFFTToValid(*Bfield_fp[lev][0], *Bfield_fp_fft[lev][0], ba_valid_fp_fft[lev], geom[lev]);
-    CopyDataFromFFTToValid(*Bfield_fp[lev][1], *Bfield_fp_fft[lev][1], ba_valid_fp_fft[lev], geom[lev]);
-    CopyDataFromFFTToValid(*Bfield_fp[lev][2], *Bfield_fp_fft[lev][2], ba_valid_fp_fft[lev], geom[lev]);
-    WARPX_PROFILE_VAR_STOP(blp_copy);
-
-    if (lev > 0)
-    {
-        amrex::Abort("WarpX::PushPSATD: TODO");
-    }
-}
-#endif

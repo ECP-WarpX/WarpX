@@ -25,9 +25,6 @@
 #ifdef WARPX_USE_PSATD
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
-#ifdef WARPX_USE_PSATD_HYBRID
-#   include "FieldSolver/PicsarHybridSpectralSolver/PicsarHybridFFTData.H"
-#endif
 
 #include "Parallelization/GuardCellManager.H"
 
@@ -801,15 +798,6 @@ private:
 
     amrex::Vector<MPI_Comm> comm_fft;
     amrex::Vector<int>      color_fft;
-
-#ifdef WARPX_USE_PSATD_HYBRID
-private:
-    amrex::Vector<std::unique_ptr<amrex::LayoutData<FFTData> > > dataptr_fp_fft;
-    amrex::Vector<std::unique_ptr<amrex::LayoutData<FFTData> > > dataptr_cp_fft;
-
-    void InitFFTDataPlan (int lev);
-    void PushPSATD_hybridFFT (int lev, amrex::Real dt);
-#endif
 
 #if defined(BL_USE_SENSEI_INSITU)
     amrex::AmrMeshInSituBridge *insitu_bridge;

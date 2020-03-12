@@ -170,9 +170,6 @@ WarpX::PushPSATD (amrex::Real a_dt)
 {
     for (int lev = 0; lev <= finest_level; ++lev) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(dt[lev] == a_dt, "dt must be consistent");
-#ifdef WARPX_USE_PSATD_HYBRID
-        PushPSATD_hybridFFT(lev, a_dt);
-#endif
         PushPSATD (lev, a_dt);
 
         // Evolve the fields in the PML boxes
