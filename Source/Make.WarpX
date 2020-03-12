@@ -63,7 +63,6 @@ include $(WARPX_HOME)/Source/BoundaryConditions/Make.package
 include $(WARPX_HOME)/Source/Diagnostics/Make.package
 include $(WARPX_HOME)/Source/FieldSolver/Make.package
 include $(WARPX_HOME)/Source/Filter/Make.package
-include $(WARPX_HOME)/Source/FortranInterface/Make.package
 include $(WARPX_HOME)/Source/Initialization/Make.package
 include $(WARPX_HOME)/Source/Laser/Make.package
 include $(WARPX_HOME)/Source/Parallelization/Make.package

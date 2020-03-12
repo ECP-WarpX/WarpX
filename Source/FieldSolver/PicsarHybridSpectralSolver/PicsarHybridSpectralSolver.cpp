@@ -6,7 +6,6 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
-#include "WarpX_f.H"
 #include <AMReX_iMultiFab.H>
 #include <fftw3-mpi.h>
 
