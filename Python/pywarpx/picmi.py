@@ -500,15 +500,19 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
         self.laser.wavelength = self.wavelength  # The wavelength of the laser (in meters)
         self.laser.e_max = self.Emax  # Maximum amplitude of the laser field (in V/m)
         self.laser.polarization = self.polarization_direction  # The main polarization vector
-        self.laser.setattr('field_function(X,Y,t)', self.field_expression)
+        self.laser.__setattr__('field_function(X,Y,t)', self.field_expression)
+
+        for k,v in self.user_defined_kw.items():
+            setattr(pywarpx.my_constants, k, v)
 
 
 class LaserAntenna(picmistandard.PICMI_LaserAntenna):
     def initialize_inputs(self, laser):
         laser.laser.position = self.position  # This point is on the laser plane
         laser.laser.direction = self.normal_vector  # The plane normal direction
-        laser.laser.profile_focal_distance = laser.focal_position[2] - self.position[2]  # Focal distance from the antenna (in meters)
-        laser.laser.profile_t_peak = (self.position[2] - laser.centroid_position[2])/constants.c  # The time at which the laser reaches its peak (in seconds)
+        if isinstance(laser, GaussianLaser):
+            laser.laser.profile_focal_distance = laser.focal_position[2] - self.position[2]  # Focal distance from the antenna (in meters)
+            laser.laser.profile_t_peak = (self.position[2] - laser.centroid_position[2])/constants.c  # The time at which the laser reaches its peak (in seconds)
 
 
 class Simulation(picmistandard.PICMI_Simulation):
