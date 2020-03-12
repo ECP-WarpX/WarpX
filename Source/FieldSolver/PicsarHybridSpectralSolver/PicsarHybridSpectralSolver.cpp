@@ -9,14 +9,13 @@
 #include "WarpX.H"
 #include "WarpX_f.H"
 #include <AMReX_iMultiFab.H>
-
-
-#ifdef WARPX_USE_PSATD
+#include <fftw3-mpi.h>
 
 using namespace amrex;
 
 constexpr int FFTData::N;
 
+#ifdef WARPX_USE_PSATD_HYBRID
 namespace {
 static std::unique_ptr<FFTData> nullfftdata; // This for process with nz_fft=0
 
@@ -123,16 +122,17 @@ CopyDataFromFFTToValid (MultiFab& mf, const MultiFab& mf_fft, const BoxArray& ba
 }
 
 }
+#endif
 
 void
 WarpX::AllocLevelDataFFT (int lev)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(lev == 0, "PSATD doesn't work with mesh refinement yet");
 
+#ifdef WARPX_USE_PSATD_HYBRID
     static_assert(std::is_standard_layout<FFTData>::value, "FFTData must have standard layout");
     static_assert(sizeof(FFTData) == sizeof(void*)*FFTData::N, "sizeof FFTData is wrong");
-
-
+#endif
 
     InitFFTComm(lev);
 
@@ -165,7 +165,9 @@ WarpX::AllocLevelDataFFT (int lev)
     rho_fp_fft[lev].reset(new MultiFab(amrex::convert(ba_fp_fft,IntVect::TheNodeVector()),
                                        dm_fp_fft, 2, 0));
 
+#ifdef WARPX_USE_PSATD_HYBRID
     dataptr_fp_fft[lev].reset(new LayoutData<FFTData>(ba_fp_fft, dm_fp_fft));
+#endif
 
     if (lev > 0)
     {
@@ -194,11 +196,14 @@ WarpX::AllocLevelDataFFT (int lev)
                                                   dm_cp_fft, 1, 0));
         rho_cp_fft[lev].reset(new MultiFab(amrex::convert(ba_cp_fft,IntVect::TheNodeVector()),
                                            dm_cp_fft, 2, 0));
-
+#ifdef WARPX_USE_PSATD_HYBRID
         dataptr_cp_fft[lev].reset(new LayoutData<FFTData>(ba_cp_fft, dm_cp_fft));
+#endif
     }
 
+#ifdef WARPX_USE_PSATD_HYBRID
     InitFFTDataPlan(lev);
+#endif
 }
 
 /** \brief Create MPI sub-communicators for each FFT group,
@@ -215,17 +220,24 @@ WarpX::InitFFTComm (int lev)
 
     // # of processes in the subcommunicator
     int np_fft = nprocs / ngroups_fft;
+#ifdef WARPX_USE_PSATD_HYBRID
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(np_fft*ngroups_fft == nprocs,
         "Number of processes must be divisible by number of FFT groups");
+#else
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ngroups_fft == 1,
+        "Number of FFT groups should be 1 at this point.");
+#endif
 
     int myproc = ParallelDescriptor::MyProc();
     // my color in ngroups_fft subcommunicators.  0 <= color_fft < ngroups_fft
     color_fft[lev] = myproc / np_fft;
     MPI_Comm_split(ParallelDescriptor::Communicator(), color_fft[lev], myproc, &comm_fft[lev]);
 
+#ifdef WARPX_USE_PSATD_HYBRID
     int fcomm = MPI_Comm_c2f(comm_fft[lev]);
     // Set the communicator of the PICSAR module to the one we just created
     warpx_fft_mpi_init(fcomm);
+#endif
 }
 
 /** \brief Perform domain decomposition for the FFTW
@@ -264,8 +276,19 @@ WarpX::FFTDomainDecomposition (int lev, BoxArray& ba_fft, DistributionMapping& d
     // Ask FFTW to chop the current FFT sub-group domain in the z-direction
     // and give a chunk to each MPI rank in the current sub-group.
     int nz_fft, z0_fft;
-
+#ifndef WARPX_USE_PSATD_HYBRID
+    const ptrdiff_t nx_global = domain_fft.length(0)+1;
+    const ptrdiff_t ny_global = domain_fft.length(1)+1;
+    const ptrdiff_t nz_global = domain_fft.length(2)+1;
+    ptrdiff_t local_n0, local_0_start;
+    auto alloc_local = fftw_mpi_local_size_3d(
+        nz_global, ny_global, nx_global/2+1, comm_fft[lev],
+        &local_n0, &local_0_start);
+    nz_fft = local_n0;
+    z0_fft = local_0_start;
+#else
     warpx_fft_domain_decomp(&nz_fft, &z0_fft, WARPX_TO_FORTRAN_BOX(domain_fft));
+#endif
     // Each MPI rank adds a box with its chunk of the FFT grid
     // (given by the above decomposition) to the list `bx_fft`,
     // then list is shared among all MPI ranks via AllGather
@@ -321,6 +344,7 @@ WarpX::FFTDomainDecomposition (int lev, BoxArray& ba_fft, DistributionMapping& d
     ba_valid.define(std::move(bl_valid));
 }
 
+#ifdef WARPX_USE_PSATD_HYBRID
 /** /brief Set all the flags and metadata of the PICSAR FFT module.
  *         Allocate the auxiliary arrays of `fft_data`
  *
@@ -363,20 +387,24 @@ WarpX::InitFFTDataPlan (int lev)
         amrex::Abort("WarpX::InitFFTDataPlan: TODO");
     }
 }
+#endif
 
 void
 WarpX::FreeFFT (int lev)
 {
+#ifdef WARPX_USE_PSATD_HYBRID
     nullfftdata.reset();
-
     warpx_fft_nullify();
-
+#else
+    fftw_mpi_cleanup();
+#endif
     if (comm_fft[lev] != MPI_COMM_NULL) {
         MPI_Comm_free(&comm_fft[lev]);
     }
     comm_fft[lev] = MPI_COMM_NULL;
 }
 
+#ifdef WARPX_USE_PSATD_HYBRID
 void
 WarpX::PushPSATD_hybridFFT (int lev, amrex::Real /* dt */)
 {
@@ -455,5 +483,4 @@ WarpX::PushPSATD_hybridFFT (int lev, amrex::Real /* dt */)
         amrex::Abort("WarpX::PushPSATD: TODO");
     }
 }
-
-#endif // WARPX_USE_PSATD
+#endif

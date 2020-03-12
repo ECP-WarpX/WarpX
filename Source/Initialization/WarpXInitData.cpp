@@ -425,8 +425,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 }
 
-#ifdef WARPX_USE_PSATD_HYBRID
-
 void
 WarpX::InitLevelDataFFT (int lev, Real time)
 {
@@ -457,8 +455,6 @@ WarpX::InitLevelDataFFT (int lev, Real time)
     }
 
 }
-
-#endif
 
 void
 WarpX::InitializeExternalFieldsOnGridUsingParser (

@@ -788,10 +788,13 @@ private:
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_cp;
 
-#ifdef WARPX_USE_PSATD_HYBRID
-private:
-    amrex::Vector<std::unique_ptr<amrex::LayoutData<FFTData> > > dataptr_fp_fft;
-    amrex::Vector<std::unique_ptr<amrex::LayoutData<FFTData> > > dataptr_cp_fft;
+    void AllocLevelDataFFT (int lev);
+    void FreeFFT (int lev);
+    void InitFFTComm (int lev);
+    void FFTDomainDecomposition (int lev, amrex::BoxArray& ba_fft, amrex::DistributionMapping& dm_fft,
+                                 amrex::BoxArray& ba_valid, amrex::Box& domain_fft,
+                                 const amrex::Box& domain);
+    void InitLevelDataFFT (int lev, amrex::Real time);
 
     amrex::Vector<amrex::Box> domain_fp_fft;  //  "global" domain for the group this process belongs to
     amrex::Vector<amrex::Box> domain_cp_fft;
@@ -799,15 +802,12 @@ private:
     amrex::Vector<MPI_Comm> comm_fft;
     amrex::Vector<int>      color_fft;
 
-    void AllocLevelDataFFT (int lev);
-    void InitLevelDataFFT (int lev, amrex::Real time);
+#ifdef WARPX_USE_PSATD_HYBRID
+private:
+    amrex::Vector<std::unique_ptr<amrex::LayoutData<FFTData> > > dataptr_fp_fft;
+    amrex::Vector<std::unique_ptr<amrex::LayoutData<FFTData> > > dataptr_cp_fft;
 
-    void InitFFTComm (int lev);
-    void FFTDomainDecomposition (int lev, amrex::BoxArray& ba_fft, amrex::DistributionMapping& dm_fft,
-                                 amrex::BoxArray& ba_valid, amrex::Box& domain_fft,
-                                 const amrex::Box& domain);
     void InitFFTDataPlan (int lev);
-    void FreeFFT (int lev);
     void PushPSATD_hybridFFT (int lev, amrex::Real dt);
 #endif
 

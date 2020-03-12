@@ -308,29 +308,32 @@ WarpX::WarpX ()
 #endif
     m_fdtd_solver_fp.resize(nlevs_max);
     m_fdtd_solver_cp.resize(nlevs_max);
+
+    if (fft_hybrid_mpi_decomposition) {
+        Efield_fp_fft.resize(nlevs_max);
+        Bfield_fp_fft.resize(nlevs_max);
+        current_fp_fft.resize(nlevs_max);
+        rho_fp_fft.resize(nlevs_max);
+
+        Efield_cp_fft.resize(nlevs_max);
+        Bfield_cp_fft.resize(nlevs_max);
+        current_cp_fft.resize(nlevs_max);
+        rho_cp_fft.resize(nlevs_max);
+
+        ba_valid_fp_fft.resize(nlevs_max);
+        ba_valid_cp_fft.resize(nlevs_max);
+
 #ifdef WARPX_USE_PSATD_HYBRID
-    Efield_fp_fft.resize(nlevs_max);
-    Bfield_fp_fft.resize(nlevs_max);
-    current_fp_fft.resize(nlevs_max);
-    rho_fp_fft.resize(nlevs_max);
+        dataptr_fp_fft.resize(nlevs_max);
+        dataptr_cp_fft.resize(nlevs_max);
 
-    Efield_cp_fft.resize(nlevs_max);
-    Bfield_cp_fft.resize(nlevs_max);
-    current_cp_fft.resize(nlevs_max);
-    rho_cp_fft.resize(nlevs_max);
+        domain_fp_fft.resize(nlevs_max);
+        domain_cp_fft.resize(nlevs_max);
 
-    dataptr_fp_fft.resize(nlevs_max);
-    dataptr_cp_fft.resize(nlevs_max);
-
-    ba_valid_fp_fft.resize(nlevs_max);
-    ba_valid_cp_fft.resize(nlevs_max);
-
-    domain_fp_fft.resize(nlevs_max);
-    domain_cp_fft.resize(nlevs_max);
-
-    comm_fft.resize(nlevs_max,MPI_COMM_NULL);
-    color_fft.resize(nlevs_max,-1);
+        comm_fft.resize(nlevs_max,MPI_COMM_NULL);
+        color_fft.resize(nlevs_max,-1);
 #endif
+    }
 
 #ifdef BL_USE_SENSEI_INSITU
     insitu_bridge = nullptr;
@@ -794,12 +797,8 @@ WarpX::MakeNewLevelFromScratch (int lev, Real time, const BoxArray& new_grids,
 
 #ifdef WARPX_USE_PSATD
     if (fft_hybrid_mpi_decomposition){
-#ifdef WARPX_USE_PSATD_HYBRID
         AllocLevelDataFFT(lev);
         InitLevelDataFFT(lev, time);
-#else
-    amrex::Abort("The option `psatd.fft_hybrid_mpi_decomposition` does not work on GPU.");
-#endif
     }
 #endif
 }
@@ -842,29 +841,31 @@ WarpX::ClearLevel (int lev)
         costs_heuristic[lev].reset();
     }
 
+    if (fft_hybrid_mpi_decomposition) {
+
+        for (int i = 0; i < 3; ++i) {
+            Efield_fp_fft[lev][i].reset();
+            Bfield_fp_fft[lev][i].reset();
+            current_fp_fft[lev][i].reset();
+
+            Efield_cp_fft[lev][i].reset();
+            Bfield_cp_fft[lev][i].reset();
+            current_cp_fft[lev][i].reset();
+        }
+
+        rho_fp_fft[lev].reset();
+        rho_cp_fft[lev].reset();
+
+        ba_valid_fp_fft[lev] = BoxArray();
+        ba_valid_cp_fft[lev] = BoxArray();
 
 #ifdef WARPX_USE_PSATD_HYBRID
-    for (int i = 0; i < 3; ++i) {
-        Efield_fp_fft[lev][i].reset();
-        Bfield_fp_fft[lev][i].reset();
-        current_fp_fft[lev][i].reset();
+        dataptr_fp_fft[lev].reset();
+        dataptr_cp_fft[lev].reset();
 
-        Efield_cp_fft[lev][i].reset();
-        Bfield_cp_fft[lev][i].reset();
-        current_cp_fft[lev][i].reset();
-    }
-
-    rho_fp_fft[lev].reset();
-    rho_cp_fft[lev].reset();
-
-    dataptr_fp_fft[lev].reset();
-    dataptr_cp_fft[lev].reset();
-
-    ba_valid_fp_fft[lev] = BoxArray();
-    ba_valid_cp_fft[lev] = BoxArray();
-
-    FreeFFT(lev);
+        FreeFFT(lev);
 #endif
+    }
 }
 
 void
