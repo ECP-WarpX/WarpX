@@ -8,7 +8,7 @@
 #ifndef WARPX_SPECTRAL_FIELD_DATA_H_
 #define WARPX_SPECTRAL_FIELD_DATA_H_
 
-#include "WarpX_ComplexForFFT.H"
+#include "Utils/WarpX_Complex.H"
 #include "SpectralKSpace.H"
 #include <AMReX_MultiFab.H>
 

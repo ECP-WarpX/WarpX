@@ -21,8 +21,13 @@ using Complex = amrex::GpuComplex<amrex::Real>;
 
 #ifdef WARPX_USE_PSATD
 #include <cufft.h>
+#    ifdef AMREX_USE_FLOAT
+static_assert( sizeof(Complex) == sizeof(cuComplex),
+    "The complex types in WarpX and cuFFT do not match.");
+#    else
 static_assert( sizeof(Complex) == sizeof(cuDoubleComplex),
     "The complex types in WarpX and cuFFT do not match.");
+#    endif
 #endif // WARPX_USE_PSATD
 
 #else

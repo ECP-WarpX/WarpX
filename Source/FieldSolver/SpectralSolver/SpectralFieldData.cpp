@@ -10,9 +10,16 @@
 #include <map>
 
 
+
 #if WARPX_USE_PSATD
 
 using namespace amrex;
+
+#ifdef AMREX_USE_FLOAT
+    using cuPrecisionComplex = cuComplex;
+#else
+    using cuPrecisionComplex = cuDoubleComplex;
+#endif
 
 /* \brief Initialize fields in spectral space, and FFT plans */
 SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
@@ -73,28 +80,44 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
         cufftResult result;
 #if (AMREX_SPACEDIM == 3)
         result = cufftPlan3d( &forward_plan[mfi], fft_size[2],
+#    ifdef AMREX_USE_FLOAT
+                              fft_size[1],fft_size[0], CUFFT_R2C);
+#    else
                               fft_size[1],fft_size[0], CUFFT_D2Z);
+#    endif
         if ( result != CUFFT_SUCCESS ) {
             amrex::Print() << " cufftplan3d forward failed! Error: " <<
             cufftErrorToString(result) << "\n";
         }
 
         result = cufftPlan3d( &backward_plan[mfi], fft_size[2],
-                              fft_size[1], fft_size[0], CUFFT_Z2D);
+#    ifdef AMREX_USE_FLOAT
+                              fft_size[1],fft_size[0], CUFFT_C2R);
+#    else
+                              fft_size[1],fft_size[0], CUFFT_Z2D);
+#    endif
         if ( result != CUFFT_SUCCESS ) {
            amrex::Print() << " cufftplan3d backward failed! Error: " <<
             cufftErrorToString(result) << "\n";
         }
 #else
         result = cufftPlan2d( &forward_plan[mfi], fft_size[1],
-                              fft_size[0], CUFFT_D2Z );
+#    ifdef AMREX_USE_FLOAT
+                              fft_size[0], CUFFT_R2C);
+#    else
+                              fft_size[0], CUFFT_D2Z);
+#    endif
         if ( result != CUFFT_SUCCESS ) {
            amrex::Print() << " cufftplan2d forward failed! Error: " <<
             cufftErrorToString(result) << "\n";
         }
 
         result = cufftPlan2d( &backward_plan[mfi], fft_size[1],
-                               fft_size[0], CUFFT_Z2D );
+#    ifdef AMREX_USE_FLOAT
+                              fft_size[0], CUFFT_C2R);
+#    else
+                              fft_size[0], CUFFT_Z2D);
+#    endif
         if ( result != CUFFT_SUCCESS ) {
            amrex::Print() << " cufftplan2d backward failed! Error: " <<
             cufftErrorToString(result) << "\n";
@@ -190,13 +213,18 @@ SpectralFieldData::ForwardTransform( const MultiFab& mf,
         cufftResult result;
         cudaStream_t stream = amrex::Gpu::Device::cudaStream();
         cufftSetStream ( forward_plan[mfi], stream);
-        result = cufftExecD2Z( forward_plan[mfi],
-                               tmpRealField[mfi].dataPtr(),
-                               reinterpret_cast<cuDoubleComplex*>(
-                               tmpSpectralField[mfi].dataPtr()) );
+#ifdef AMREX_USE_FLOAT
+        result = cufftExecR2C(
+#else
+        result = cufftExecD2Z(
+#endif
+            forward_plan[mfi],
+            tmpRealField[mfi].dataPtr(),
+            reinterpret_cast<cuPrecisionComplex*>(
+                tmpSpectralField[mfi].dataPtr()) );
         if ( result != CUFFT_SUCCESS ) {
            amrex::Print() <<
-           " forward transform using cufftExecD2Z failed ! Error: " <<
+           " forward transform using cufftExec failed ! Error: " <<
            cufftErrorToString(result) << "\n";
         }
 #else
@@ -295,13 +323,18 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
         cufftResult result;
         cudaStream_t stream = amrex::Gpu::Device::cudaStream();
         cufftSetStream ( backward_plan[mfi], stream);
-        result = cufftExecZ2D( backward_plan[mfi],
-                               reinterpret_cast<cuDoubleComplex*>(
-                               tmpSpectralField[mfi].dataPtr()),
-                               tmpRealField[mfi].dataPtr() );
+#ifdef AMREX_USE_FLOAT
+        result = cufftExecC2R(
+#else
+        result = cufftExecZ2D(
+#endif
+            backward_plan[mfi],
+            reinterpret_cast<cuPrecisionComplex*>(
+            tmpSpectralField[mfi].dataPtr()),
+            tmpRealField[mfi].dataPtr() );
         if ( result != CUFFT_SUCCESS ) {
            amrex::Print() <<
-           " Backward transform using cufftexecZ2D failed! Error: " <<
+           " Backward transform using cufftexec failed! Error: " <<
            cufftErrorToString(result) << "\n";
         }
 #else
