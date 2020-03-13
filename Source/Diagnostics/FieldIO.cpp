@@ -334,12 +334,11 @@ void AverageToCellCenter ( Box const& bx,
                            const IntVect stag,
                            const int dcomp,
                            const int scomp=0,
-                           const int ncomp=0 )
+                           const int ncomp=1 )
 {
     const auto lo = lbound(bx);
     const auto hi = ubound(bx);
-    int n = 0;
-    do {
+    for (int n=0; n < ncomp; ++n) {
 #if ( AMREX_SPACEDIM == 2 )
         for (int j = lo.y; j <= hi.y; ++j) {
             AMREX_PRAGMA_SIMD
@@ -357,8 +356,7 @@ void AverageToCellCenter ( Box const& bx,
             }
         }
 #endif
-    ++n;
-    } while ( n < ncomp );
+    }
 }
 
 /**
@@ -395,7 +393,7 @@ AverageToCellCenter ( MultiFab& mf_out,
                       const int dcomp,
                       const int ngrow,
                       const int scomp=0,
-                      const int ncomp=0 )
+                      const int ncomp=1 )
 {
     //TODO: asserts?
 #ifdef _OPENMP
