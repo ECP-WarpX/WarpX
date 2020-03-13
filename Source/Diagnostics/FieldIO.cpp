@@ -389,7 +389,7 @@ void AverageToCellCenter ( Box const& bx,
  */
 void
 AverageToCellCenter ( MultiFab& mf_out,
-                      const MultiFab*& mf_in,
+                      const MultiFab& mf_in,
                       const int dcomp,
                       const int ngrow,
                       const int scomp=0,
@@ -404,8 +404,8 @@ AverageToCellCenter ( MultiFab& mf_out,
     {
         const Box bx = mfi.growntilebox( ngrow );
         Array4<Real> const& mf_out_arr = mf_out.array( mfi );
-        Array4<Real const> const& mf_in_arr = mf_in->const_array( mfi );
-        const IntVect stag = mf_in->boxArray().ixType().ixType();
+        Array4<Real const> const& mf_in_arr = mf_in.const_array( mfi );
+        const IntVect stag = mf_in.boxArray().ixType().ixType();
         AMREX_LAUNCH_HOST_DEVICE_LAMBDA ( bx, tbx,
         { AverageToCellCenter( tbx, mf_out_arr, mf_in_arr, stag, dcomp, scomp, ncomp ); });
     }
@@ -429,8 +429,6 @@ AverageAndPackVectorField( MultiFab& mf_avg,
     // `average_edge_to_cellcenter` requires fields to be passed as Vector
     Vector<const MultiFab*> srcmf(AMREX_SPACEDIM);
 
-    const MultiFab* tmp_ptr;
-
     // Check the type of staggering of the 3-component `vector_field`
     // and average accordingly:
     // - Fully cell-centered field (no average needed; simply copy)
@@ -443,12 +441,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
         // - Fully nodal
     } else if ( vector_field[0]->is_nodal() ){
 
-        tmp_ptr = vector_field[0].get();
-        AverageToCellCenter( mf_avg, tmp_ptr, dcomp  , ngrow, 0, 1 );
-        tmp_ptr = vector_field[1].get();
-        AverageToCellCenter( mf_avg, tmp_ptr, dcomp+1, ngrow, 0, 1 );
-        tmp_ptr = vector_field[2].get();
-        AverageToCellCenter( mf_avg, tmp_ptr, dcomp+2, ngrow, 0, 1 );
+        AverageToCellCenter( mf_avg, *(vector_field[0]), dcomp  , ngrow, 0, 1 );
+        AverageToCellCenter( mf_avg, *(vector_field[1]), dcomp+1, ngrow, 0, 1 );
+        AverageToCellCenter( mf_avg, *(vector_field[2]), dcomp+2, ngrow, 0, 1 );
 
         // - Face centered, in the same way as B on a Yee grid
     } else if ( vector_field[0]->is_nodal(0) ){
@@ -471,9 +466,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
             mf_total[2].reset(new MultiFab(vector_field[2]->boxArray(), dm, 1, vector_field[2]->nGrowVect()));
             ConstructTotalRZField(mf_total, vector_field);
             PackPlotDataPtrs(srcmf, mf_total);
-            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], dcomp  , ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[1], dcomp+1, ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[2], dcomp+2, ngrow ); );
+            AMREX_D_TERM( AverageToCellCenter( mf_avg, *(srcmf[0]), dcomp  , ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[1]), dcomp+1, ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[2]), dcomp+2, ngrow ); );
             MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
             MultiFab::Copy( mf_avg, *mf_total[1], 0, dcomp+1, 1, ngrow);
 #else
@@ -481,9 +476,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
 #endif
         } else {
             PackPlotDataPtrs(srcmf, vector_field);
-            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], dcomp  , ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[1], dcomp+1, ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[2], dcomp+2, ngrow ); );
+            AMREX_D_TERM( AverageToCellCenter( mf_avg, *(srcmf[0]), dcomp  , ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[1]), dcomp+1, ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[2]), dcomp+2, ngrow ); );
 #if (AMREX_SPACEDIM == 2)
             MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
             MultiFab::Copy( mf_avg, *vector_field[1], 0, dcomp+1, 1, ngrow);
@@ -507,24 +502,22 @@ AverageAndPackVectorField( MultiFab& mf_avg,
             mf_total[2].reset(new MultiFab(vector_field[2]->boxArray(), dm, 1, vector_field[2]->nGrowVect()));
             ConstructTotalRZField(mf_total, vector_field);
             PackPlotDataPtrs(srcmf, mf_total);
-            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], dcomp  , ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[1], dcomp+1, ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[2], dcomp+2, ngrow ); );
+            AMREX_D_TERM( AverageToCellCenter( mf_avg, *(srcmf[0]), dcomp  , ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[1]), dcomp+1, ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[2]), dcomp+2, ngrow ); );
             MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
-            tmp_ptr = mf_total[1].get();
-            AverageToCellCenter( mf_avg, tmp_ptr, dcomp+1, ngrow, 0, 1 );
+            AverageToCellCenter( mf_avg, *(mf_total[1]), dcomp+1, ngrow, 0, 1 );
 #else
            amrex::Abort("AverageAndPackVectorField not implemented for ncomp > 1");
 #endif
         } else {
             PackPlotDataPtrs(srcmf, vector_field);
-            AMREX_D_TERM( AverageToCellCenter( mf_avg, srcmf[0], dcomp  , ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[1], dcomp+1, ngrow );,
-                          AverageToCellCenter( mf_avg, srcmf[2], dcomp+2, ngrow ); );
+            AMREX_D_TERM( AverageToCellCenter( mf_avg, *(srcmf[0]), dcomp  , ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[1]), dcomp+1, ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[2]), dcomp+2, ngrow ); );
 #if (AMREX_SPACEDIM == 2)
             MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
-            tmp_ptr = vector_field[1].get();
-            AverageToCellCenter( mf_avg, tmp_ptr, dcomp+1, ngrow, 0, 1 );
+            AverageToCellCenter( mf_avg, *(vector_field[1]), dcomp+1, ngrow, 0, 1 );
 #endif
         }
 
@@ -570,8 +563,7 @@ AverageAndPackScalarField( MultiFab& mf_avg,
         MultiFab::Copy( mf_avg, scalar_field, 0, dcomp, 1, ngrow);
         // - Fully nodal
     } else if ( scalar_field.is_nodal() ){
-        const MultiFab* tmp_ptr = &scalar_field;
-        AverageToCellCenter( mf_avg, tmp_ptr, dcomp, ngrow, 0, 1 );
+        AverageToCellCenter( mf_avg, scalar_field, dcomp, ngrow, 0, 1 );
     } else {
         amrex::Abort("Unknown staggering.");
     }
