@@ -293,6 +293,7 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
                 // Copy field into temporary array
                 tmp_arr(i,j,k) = spectral_field_value;
             });
+
         }
 
         // Perform Fourier transform from `tmpSpectralField` to `tmpRealField`
@@ -327,11 +328,29 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
             const Box realspace_bx = tmpRealField[mfi].box();
             const Real inv_N = 1./realspace_bx.numPts();
 
-            ParallelFor( mfi.validbox(),
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-                // Copy and normalize field
-                mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i,j,k);
-            });
+            if (m_periodic_single_box) {
+                // Enforce periodicity on the nodes, by using modulo in indices
+                // This is because `tmp_arr` is cell-centered while `mf_arr` can be nodal
+                int const nx = realspace_bx.length(0);
+                int const ny = realspace_bx.length(1);
+#if (AMREX_SPACEDIM == 3)
+                int const nz = realspace_bx.length(2);
+#else
+                int const nz = 1;
+#endif
+                ParallelFor( mfi.validbox(),
+                [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+                    // Copy and normalize field
+                    mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i%nx,j%ny,k%nz);
+                });
+            } else {
+                ParallelFor( mfi.validbox(),
+                [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+                    // Copy and normalize field
+                    mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i,j,k);
+                });
+            }
+
         }
     }
 }
