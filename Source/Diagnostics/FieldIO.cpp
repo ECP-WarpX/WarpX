@@ -332,29 +332,18 @@ void AverageToCellCenter ( Box const& bx,
                            Array4<Real> const& mf_out_arr,
                            Array4<Real const> const& mf_in_arr,
                            const IntVect stag,
+                           int i,
+                           int j,
+                           int k,
                            const int dcomp,
                            const int scomp=0,
                            const int ncomp=1 )
 {
-    const auto lo = lbound(bx);
-    const auto hi = ubound(bx);
     for (int n=0; n < ncomp; ++n) {
 #if ( AMREX_SPACEDIM == 2 )
-        for (int j = lo.y; j <= hi.y; ++j) {
-            AMREX_PRAGMA_SIMD
-            for (int i = lo.x; i <= hi.x; ++i) {
-                mf_out_arr(i,j,0,n+dcomp) = AverageToCellCenter( mf_in_arr, stag, i, j, n+scomp );
-            }
-        }
+        mf_out_arr(i,j,0,n+dcomp) = AverageToCellCenter( mf_in_arr, stag, i, j, n+scomp );
 #elif ( AMREX_SPACEDIM == 3 )
-        for (int k = lo.z; k <= hi.z; ++k) {
-            for (int j = lo.y; j <= hi.y; ++j) {
-                AMREX_PRAGMA_SIMD
-                for (int i = lo.x; i <= hi.x; ++i) {
-                    mf_out_arr(i,j,k,n+dcomp) = AverageToCellCenter( mf_in_arr, stag, i, j, k, n+scomp );
-                }
-            }
-        }
+        mf_out_arr(i,j,k,n+dcomp) = AverageToCellCenter( mf_in_arr, stag, i, j, k, n+scomp );
 #endif
     }
 }
@@ -406,8 +395,12 @@ AverageToCellCenter ( MultiFab& mf_out,
         Array4<Real> const& mf_out_arr = mf_out.array( mfi );
         Array4<Real const> const& mf_in_arr = mf_in.const_array( mfi );
         const IntVect stag = mf_in.boxArray().ixType().ixType();
-        AMREX_LAUNCH_HOST_DEVICE_LAMBDA ( bx, tbx,
-        { AverageToCellCenter( tbx, mf_out_arr, mf_in_arr, stag, dcomp, scomp, ncomp ); });
+        ParallelFor( bx,
+            [=] AMREX_GPU_DEVICE( int i, int j, int k )
+            {
+                AverageToCellCenter( bx, mf_out_arr, mf_in_arr, stag,
+                                     i, j, k, dcomp, scomp, ncomp );
+            } );
     }
 }
 
