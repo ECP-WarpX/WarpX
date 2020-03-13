@@ -15,10 +15,12 @@
 
 using namespace amrex;
 
-#ifdef AMREX_USE_FLOAT
+#ifdef AMREX_USE_GPU
+#    ifdef AMREX_USE_FLOAT
     using cuPrecisionComplex = cuComplex;
-#else
+#    else
     using cuPrecisionComplex = cuDoubleComplex;
+#    endif
 #endif
 
 /* \brief Initialize fields in spectral space, and FFT plans */
@@ -129,21 +131,45 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
         forward_plan[mfi] =
             // Swap dimensions: AMReX FAB are Fortran-order but FFTW is C-order
 #if (AMREX_SPACEDIM == 3)
+#    ifdef AMREX_USE_FLOAT
+            fftwf_plan_dft_r2c_3d( fft_size[2], fft_size[1], fft_size[0],
+#    else
             fftw_plan_dft_r2c_3d( fft_size[2], fft_size[1], fft_size[0],
+#    endif
 #else
+#    ifdef AMREX_USE_FLOAT
+            fftwf_plan_dft_r2c_2d( fft_size[1], fft_size[0],
+#    else
             fftw_plan_dft_r2c_2d( fft_size[1], fft_size[0],
+#    endif
 #endif
             tmpRealField[mfi].dataPtr(),
+#ifdef AMREX_USE_FLOAT
+            reinterpret_cast<fftwf_complex*>( tmpSpectralField[mfi].dataPtr() ),
+#else
             reinterpret_cast<fftw_complex*>( tmpSpectralField[mfi].dataPtr() ),
+#endif
             FFTW_ESTIMATE );
         backward_plan[mfi] =
             // Swap dimensions: AMReX FAB are Fortran-order but FFTW is C-order
 #if (AMREX_SPACEDIM == 3)
+#    ifdef AMREX_USE_FLOAT
+            fftwf_plan_dft_c2r_3d( fft_size[2], fft_size[1], fft_size[0],
+#    else
             fftw_plan_dft_c2r_3d( fft_size[2], fft_size[1], fft_size[0],
+#    endif
 #else
+#    ifdef AMREX_USE_FLOAT
+            fftwf_plan_dft_c2r_2d( fft_size[1], fft_size[0],
+#    else
             fftw_plan_dft_c2r_2d( fft_size[1], fft_size[0],
+#    endif
 #endif
+#ifdef AMREX_USE_FLOAT
+            reinterpret_cast<fftwf_complex*>( tmpSpectralField[mfi].dataPtr() ),
+#else
             reinterpret_cast<fftw_complex*>( tmpSpectralField[mfi].dataPtr() ),
+#endif
             tmpRealField[mfi].dataPtr(),
             FFTW_ESTIMATE );
 #endif
@@ -161,8 +187,13 @@ SpectralFieldData::~SpectralFieldData()
             cufftDestroy( backward_plan[mfi] );
 #else
             // Destroy FFTW plans
+#    ifdef AMREX_USE_FLOAT
+            fftwf_destroy_plan( forward_plan[mfi] );
+            fftwf_destroy_plan( backward_plan[mfi] );
+#    else
             fftw_destroy_plan( forward_plan[mfi] );
             fftw_destroy_plan( backward_plan[mfi] );
+#    endif
 #endif
         }
     }
@@ -228,7 +259,11 @@ SpectralFieldData::ForwardTransform( const MultiFab& mf,
            cufftErrorToString(result) << "\n";
         }
 #else
+#    ifdef AMREX_USE_FLOAT
+        fftwf_execute( forward_plan[mfi] );
+#    else
         fftw_execute( forward_plan[mfi] );
+#    endif
 #endif
 
         // Copy the spectral-space field `tmpSpectralField` to the appropriate
@@ -338,7 +373,11 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
            cufftErrorToString(result) << "\n";
         }
 #else
+#    ifdef AMREX_USE_FLOAT
+        fftwf_execute( backward_plan[mfi] );
+#    else
         fftw_execute( backward_plan[mfi] );
+#    endif
 #endif
 
         // Copy the temporary field `tmpRealField` to the real-space field `mf`

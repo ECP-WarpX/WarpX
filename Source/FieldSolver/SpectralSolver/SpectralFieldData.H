@@ -44,7 +44,11 @@ class SpectralFieldData
 #ifdef AMREX_USE_GPU
     using FFTplans = amrex::LayoutData<cufftHandle>;
 #else
+#    ifdef AMREX_USE_FLOAT
+    using FFTplans = amrex::LayoutData<fftwf_plan>;
+#    else
     using FFTplans = amrex::LayoutData<fftw_plan>;
+#    endif
 #endif
 
     public:
