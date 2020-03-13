@@ -25,16 +25,15 @@ Then, ``cd`` into the directory ``WarpX`` and use the following set of commands 
 
 See :doc:`../running_cpp/platforms` for more information on how to run WarpX on Summit.
 
-.. note:
-   
+.. note::
    If you want to recompile the code, please add the GPU option to realclean:
-   
+
    ::
 
-   module load gcc
-   module load cuda
-   make realclean USE_GPU=TRUE
-   make -j 4 USE_GPU=TRUE
+      module load gcc
+      module load cuda
+      make realclean USE_GPU=TRUE
+      make -j 4 USE_GPU=TRUE
 
 See :doc:`../visualization/yt` for more information on how to visualize the simulation results. In order to build yt **and** a Python environment, you can download the yt installation script as explained in section "All-in-One Installation Script" of the `yt installation web page <https://yt-project.org/doc/installing.html>`__, and run
 
