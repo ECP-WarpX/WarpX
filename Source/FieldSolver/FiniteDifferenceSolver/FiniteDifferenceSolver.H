@@ -53,6 +53,10 @@ class FiniteDifferenceSolver
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
 
+       void EvolveEPML ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+                      std::unique_ptr<amrex::MultiFab> const& Ffield,
+                      amrex::Real const dt );
 
     private:
 
@@ -118,6 +122,7 @@ class FiniteDifferenceSolver
             amrex::Real const dt );
 
         template< typename T_Algo >
+<<<<<<< HEAD
         void EvolveFCartesian (
             std::unique_ptr<amrex::MultiFab>& Ffield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
@@ -130,6 +135,14 @@ class FiniteDifferenceSolver
             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
             amrex::MultiFab& divE );
 
+=======
+        void EvolveEPMLCartesian (
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
+            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+            std::unique_ptr<amrex::MultiFab> const& Ffield,
+            amrex::Real const dt );
+
+>>>>>>> Implement EvolveEPML
 #endif
 
 };
