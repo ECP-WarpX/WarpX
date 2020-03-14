@@ -18,7 +18,6 @@
 #include <SpectralSolver.H>
 #endif
 
-
 using namespace amrex;
 
 namespace
@@ -254,6 +253,157 @@ PackPlotDataPtrs (Vector<const MultiFab*>& pmf,
 #endif
 }
 
+/**
+ * \brief Returns the cell-centered average of the floating point data contained
+ *        in the input
+ *        <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *        \c mf_in_arr. Thanks to the AMReX macro \c AMREX_D_DECL: if \c AMREX_SPACEDIM=2,
+ *        only \c i and \c j are passed; if \c AMREX_SPACEDIM=3, \c i,\c j and \c k are passed.
+ *
+ * \param[in] mf_in_arr floating point data to be averaged
+ * \param[in] stag      staggering (index type) of the data
+ * \param[in] i         index along x to access the
+ *                      <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                      object containing the data to be averaged
+ * \param[in] j         index along y to access the
+ *                      <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                      object containing the data to be averaged
+ * \param[in] k         index along z to access the
+ *                      <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                      object containing the data to be averaged
+ * \param[in] comp      fourth component of the
+ *                      <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                      object containing the data to be averaged
+ */
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+Real AverageToCellCenter ( Array4<Real const> const& mf_in_arr,
+                           const IntVect stag,
+                           AMREX_D_DECL( int i, int j, int k ),
+                           const int comp=0 )
+{
+    AMREX_D_TERM( int sx = stag[0];,
+                  int sy = stag[1];,
+                  int sz = stag[2]; );
+#if ( AMREX_SPACEDIM == 2 )
+    return 0.25_rt * ( mf_in_arr(i   ,j   ,0,comp)
+                     + mf_in_arr(i+sx,j   ,0,comp)
+                     + mf_in_arr(i   ,j+sy,0,comp)
+                     + mf_in_arr(i+sx,j+sy,0,comp) );
+#elif ( AMREX_SPACEDIM == 3 )
+    return 0.125_rt * ( mf_in_arr(i   ,j   ,k   ,comp)
+                      + mf_in_arr(i+sx,j   ,k   ,comp)
+                      + mf_in_arr(i   ,j+sy,k   ,comp)
+                      + mf_in_arr(i   ,j   ,k+sz,comp)
+                      + mf_in_arr(i+sx,j+sy,k   ,comp)
+                      + mf_in_arr(i   ,j+sy,k+sz,comp)
+                      + mf_in_arr(i+sx,j   ,k+sz,comp)
+                      + mf_in_arr(i+sx,j+sy,k+sz,comp) );
+#endif
+}
+
+/**
+ * \brief Stores the cell-centered average of the floating point data contained
+ *        in the input
+ *        <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *        \c mf_in_arr into the output
+ *        <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *        \c mf_out_arr, within the
+ *        <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1Box.html">Box</a> \c bx.
+ *
+ * \param[in]     bx         rectangular domain of interest
+ * \param[in,out] mf_out_arr floating point data to be filled with cell-centered averages
+ * \param[in]     mf_in_arr  floating point data to be averaged
+ * \param[in]     stag       staggering (index type) of the data
+ * \param[in]     dcomp      offset for the fourth component of the
+ *                           <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                           object where the cell-centered averages will be stored
+ * \param[in]     scomp      optional offset for the fourth component of the
+ *                           <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                           object containing the data to be averaged
+ * \param[in]     ncomp      optional number of components to loop over for both
+ *                           the input and the output
+ *                           <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                           objects
+ */
+AMREX_GPU_HOST_DEVICE
+AMREX_FORCE_INLINE
+void AverageToCellCenter ( Box const& bx,
+                           Array4<Real> const& mf_out_arr,
+                           Array4<Real const> const& mf_in_arr,
+                           const IntVect stag,
+                           int i,
+                           int j,
+                           int k,
+                           const int dcomp,
+                           const int scomp=0,
+                           const int ncomp=1 )
+{
+    for (int n=0; n < ncomp; ++n) {
+#if ( AMREX_SPACEDIM == 2 )
+        mf_out_arr(i,j,0,n+dcomp) = AverageToCellCenter( mf_in_arr, stag, i, j, n+scomp );
+#elif ( AMREX_SPACEDIM == 3 )
+        mf_out_arr(i,j,k,n+dcomp) = AverageToCellCenter( mf_in_arr, stag, i, j, k, n+scomp );
+#endif
+    }
+}
+
+/**
+ * \brief Stores the cell-centered average of the floating point data contained
+ *        in the input
+ *        <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+ *        \c mf_in into the output
+ *        <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+ *        \c mf_out.
+ *
+ * \param[in,out] mf_out <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+ *                       containing the floating point data to be filled with cell-centered averages
+ * \param[in]     mf_in  <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+ *                       containing the floating point data to be averaged
+ * \param[in]     dcomp  offset for the fourth component of the
+ *                       <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                       object, extracted from its
+ *                       <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+ *                       , where the cell-centered averages will be stored
+ * \param[in]     scomp  optional offset for the fourth component of the
+ *                       <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                       object, extracted from its
+ *                       <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+ *                       , containing the data to be averaged
+ * \param[in]     ncomp  optional number of components to loop over for both the
+ *                       input and the output
+ *                       <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
+ *                       objects, extracted from the respective
+ *                       <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFabs</a>
+ */
+void
+AverageToCellCenter ( MultiFab& mf_out,
+                      const MultiFab& mf_in,
+                      const int dcomp,
+                      const int ngrow,
+                      const int scomp=0,
+                      const int ncomp=1 )
+{
+    //TODO: asserts?
+#ifdef _OPENMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+    // Loop over boxes (or tiles if not on GPU)
+    for (MFIter mfi( mf_out, TilingIfNotGPU() ); mfi.isValid(); ++mfi)
+    {
+        const Box bx = mfi.growntilebox( ngrow );
+        Array4<Real> const& mf_out_arr = mf_out.array( mfi );
+        Array4<Real const> const& mf_in_arr = mf_in.const_array( mfi );
+        const IntVect stag = mf_in.boxArray().ixType().ixType();
+        ParallelFor( bx,
+            [=] AMREX_GPU_DEVICE( int i, int j, int k )
+            {
+                AverageToCellCenter( bx, mf_out_arr, mf_in_arr, stag,
+                                     i, j, k, dcomp, scomp, ncomp );
+            } );
+    }
+}
+
 /** \brief Takes an array of 3 MultiFab `vector_field`
  * (representing the x, y, z components of a vector),
  * averages it to the cell center, and stores the
@@ -284,12 +434,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
         // - Fully nodal
     } else if ( vector_field[0]->is_nodal() ){
 
-        amrex::average_node_to_cellcenter( mf_avg, dcomp  ,
-                                          *vector_field[0], 0, 1, ngrow);
-        amrex::average_node_to_cellcenter( mf_avg, dcomp+1,
-                                          *vector_field[1], 0, 1, ngrow);
-        amrex::average_node_to_cellcenter( mf_avg, dcomp+2,
-                                          *vector_field[2], 0, 1, ngrow);
+        AverageToCellCenter( mf_avg, *(vector_field[0]), dcomp  , ngrow, 0, 1 );
+        AverageToCellCenter( mf_avg, *(vector_field[1]), dcomp+1, ngrow, 0, 1 );
+        AverageToCellCenter( mf_avg, *(vector_field[2]), dcomp+2, ngrow, 0, 1 );
 
         // - Face centered, in the same way as B on a Yee grid
     } else if ( vector_field[0]->is_nodal(0) ){
@@ -312,7 +459,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
             mf_total[2].reset(new MultiFab(vector_field[2]->boxArray(), dm, 1, vector_field[2]->nGrowVect()));
             ConstructTotalRZField(mf_total, vector_field);
             PackPlotDataPtrs(srcmf, mf_total);
-            amrex::average_face_to_cellcenter( mf_avg, dcomp, srcmf, ngrow);
+            AMREX_D_TERM( AverageToCellCenter( mf_avg, *(srcmf[0]), dcomp  , ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[1]), dcomp+1, ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[2]), dcomp+2, ngrow ); );
             MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
             MultiFab::Copy( mf_avg, *mf_total[1], 0, dcomp+1, 1, ngrow);
 #else
@@ -320,7 +469,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
 #endif
         } else {
             PackPlotDataPtrs(srcmf, vector_field);
-            amrex::average_face_to_cellcenter( mf_avg, dcomp, srcmf, ngrow);
+            AMREX_D_TERM( AverageToCellCenter( mf_avg, *(srcmf[0]), dcomp  , ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[1]), dcomp+1, ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[2]), dcomp+2, ngrow ); );
 #if (AMREX_SPACEDIM == 2)
             MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
             MultiFab::Copy( mf_avg, *vector_field[1], 0, dcomp+1, 1, ngrow);
@@ -344,20 +495,22 @@ AverageAndPackVectorField( MultiFab& mf_avg,
             mf_total[2].reset(new MultiFab(vector_field[2]->boxArray(), dm, 1, vector_field[2]->nGrowVect()));
             ConstructTotalRZField(mf_total, vector_field);
             PackPlotDataPtrs(srcmf, mf_total);
-            amrex::average_edge_to_cellcenter( mf_avg, dcomp, srcmf, ngrow);
+            AMREX_D_TERM( AverageToCellCenter( mf_avg, *(srcmf[0]), dcomp  , ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[1]), dcomp+1, ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[2]), dcomp+2, ngrow ); );
             MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
-            amrex::average_node_to_cellcenter( mf_avg, dcomp+1,
-                                              *mf_total[1], 0, 1, ngrow);
+            AverageToCellCenter( mf_avg, *(mf_total[1]), dcomp+1, ngrow, 0, 1 );
 #else
            amrex::Abort("AverageAndPackVectorField not implemented for ncomp > 1");
 #endif
         } else {
             PackPlotDataPtrs(srcmf, vector_field);
-            amrex::average_edge_to_cellcenter( mf_avg, dcomp, srcmf, ngrow);
+            AMREX_D_TERM( AverageToCellCenter( mf_avg, *(srcmf[0]), dcomp  , ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[1]), dcomp+1, ngrow );,
+                          AverageToCellCenter( mf_avg, *(srcmf[2]), dcomp+2, ngrow ); );
 #if (AMREX_SPACEDIM == 2)
             MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
-            amrex::average_node_to_cellcenter( mf_avg, dcomp+1,
-                                              *vector_field[1], 0, 1, ngrow);
+            AverageToCellCenter( mf_avg, *(vector_field[1]), dcomp+1, ngrow, 0, 1 );
 #endif
         }
 
@@ -403,9 +556,7 @@ AverageAndPackScalarField( MultiFab& mf_avg,
         MultiFab::Copy( mf_avg, scalar_field, 0, dcomp, 1, ngrow);
         // - Fully nodal
     } else if ( scalar_field.is_nodal() ){
-
-        amrex::average_node_to_cellcenter( mf_avg, dcomp, scalar_field, 0, 1, ngrow);
-
+        AverageToCellCenter( mf_avg, scalar_field, dcomp, ngrow, 0, 1 );
     } else {
         amrex::Abort("Unknown staggering.");
     }
