@@ -239,7 +239,7 @@ ConstructTotalRZVectorField (const std::array< std::unique_ptr<MultiFab>, 3 >& v
 }
 
 void
-ConstructTotalRZScalarField(MultiFab& scalar_total,
+ConstructTotalRZScalarField (MultiFab& scalar_total,
                             const MultiFab& scalar_field)
 {
     // Sum over the real components, giving quantity at theta=0
