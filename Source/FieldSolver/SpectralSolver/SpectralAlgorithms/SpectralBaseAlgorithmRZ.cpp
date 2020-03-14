@@ -43,7 +43,7 @@ SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
         constexpr int n_fields = SpectralFieldIndex::n_fields;
 
         // Loop over indices within one box
-        ParallelFor(bx, modes, 
+        ParallelFor(bx, modes,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
             int const ic1 = Idx::Ex + mode*n_fields;
