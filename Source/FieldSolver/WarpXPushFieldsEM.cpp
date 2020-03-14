@@ -493,6 +493,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
     const Real dr = dx[0];
 
     constexpr int NODE = amrex::IndexType::NODE;
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(Jx->ixType().ixType()[0] != NODE,
+        "Jr should never node-centered in r");
 
     Box tilebox;
 
