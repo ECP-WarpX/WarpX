@@ -701,7 +701,7 @@ def get_mesh_electric_field(level, direction, include_ghosts=True):
     This returns a list of numpy arrays containing the mesh electric field
     data on each grid for this process.
 
-    This version is for the full "auxillary" solution on the given level.
+    This version is for the full "auxiliary" solution on the given level.
 
     The data for the numpy arrays are not copied, but share the underlying
     memory buffer with WarpX. The numpy arrays are fully writeable.
@@ -843,7 +843,7 @@ def get_mesh_magnetic_field(level, direction, include_ghosts=True):
     This returns a list of numpy arrays containing the mesh magnetic field
     data on each grid for this process.
 
-    This version is for the full "auxillary" solution on the given level.
+    This version is for the full "auxiliary" solution on the given level.
 
     The data for the numpy arrays are not copied, but share the underlying
     memory buffer with WarpX. The numpy arrays are fully writeable.
@@ -1201,7 +1201,7 @@ def get_mesh_electric_field_lovects(level, direction, include_ghosts=True):
     This returns a list of the lo vectors of the arrays containing the mesh electric field
     data on each grid for this process.
 
-    This version is for the full "auxillary" solution on the given level.
+    This version is for the full "auxiliary" solution on the given level.
 
     Parameters
     ----------
@@ -1319,7 +1319,7 @@ def get_mesh_magnetic_field_lovects(level, direction, include_ghosts=True):
     This returns a list of the lo vectors of the arrays containing the mesh electric field
     data on each grid for this process.
 
-    This version is for the full "auxillary" solution on the given level.
+    This version is for the full "auxiliary" solution on the given level.
 
     Parameters
     ----------
