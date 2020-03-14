@@ -54,14 +54,15 @@ class FiniteDifferenceSolver
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
 
-       void EvolveBPML ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+        void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
+                      std::array< amrex::MultiFab*, 3 > const Efield,
                       amrex::Real const dt );
 
-       void EvolveEPML ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
-                      std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-                      std::unique_ptr<amrex::MultiFab> const& Ffield,
-                      amrex::Real const dt );
+       void EvolveEPML ( std::array< amrex::MultiFab*, 3 > Efield,
+                      std::array< amrex::MultiFab*, 3 > const Bfield,
+                      std::array< amrex::MultiFab*, 3 > const Jfield,
+                      amrex::MultiFab* const Ffield,
+                      amrex::Real const dt, bool pml_has_particles );
 
     private:
 
@@ -123,12 +124,10 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-            std::unique_ptr<amrex::MultiFab> const& Ffield,
+            amrex::MultiFab* const& Ffield,
             amrex::Real const dt );
 
         template< typename T_Algo >
-<<<<<<< HEAD
-<<<<<<< HEAD
         void EvolveFCartesian (
             std::unique_ptr<amrex::MultiFab>& Ffield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
@@ -141,22 +140,20 @@ class FiniteDifferenceSolver
             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
             amrex::MultiFab& divE );
 
-=======
-=======
+        template< typename T_Algo >
         void EvolveBPMLCartesian (
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+            std::array< amrex::MultiFab*, 3 > Bfield,
+            std::array< amrex::MultiFab*, 3 > const Efield,
             amrex::Real const dt );
 
         template< typename T_Algo >
->>>>>>> Implemented EvolveBPML
         void EvolveEPMLCartesian (
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
-            std::unique_ptr<amrex::MultiFab> const& Ffield,
-            amrex::Real const dt );
+            std::array< amrex::MultiFab*, 3 > Efield,
+            std::array< amrex::MultiFab*, 3 > const Bfield,
+            std::array< amrex::MultiFab*, 3 > const Jfield,
+            amrex::MultiFab* const Ffield,
+            amrex::Real const dt, bool pml_has_particles );
 
->>>>>>> Implement EvolveEPML
 #endif
 
 };

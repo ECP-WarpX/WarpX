@@ -217,7 +217,7 @@ WarpX::EvolveE (int lev, amrex::Real a_dt)
 void
 WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 {
-
+    // Evolve regular grid
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE( Efield_fp[lev], Bfield_fp[lev],
                                       current_fp[lev], F_fp[lev], a_dt );
@@ -384,6 +384,20 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
             }
         }
     }
+
+/*
+    // Evolve PML
+    if (patch_type == PatchType::fine) {
+        m_fdtd_solver_fp[lev]->EvolveEPML(
+            pml[lev]->GetE_fp(), pml[lev]->GetB_fp(),
+            pml[lev]->Getj_fp(), pml[lev]->GetF_fp(), a_dt, pml_has_particles );
+    } else {
+        m_fdtd_solver_cp[lev]->EvolveEPML(
+            pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
+            pml[lev]->Getj_cp(), pml[lev]->GetF_cp(), a_dt, pml_has_particles );
+    }
+
+*/
 }
 
 void

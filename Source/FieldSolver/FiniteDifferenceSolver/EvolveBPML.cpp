@@ -23,8 +23,8 @@ using namespace amrex;
  * \brief Update the B field, over one timestep
  */
 void FiniteDifferenceSolver::EvolveBPML (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    std::array< amrex::MultiFab*, 3 > Bfield,
+    std::array< amrex::MultiFab*, 3 > const Efield,
     amrex::Real const dt ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
@@ -56,8 +56,8 @@ void FiniteDifferenceSolver::EvolveBPML (
 
 template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBPMLCartesian (
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
+    std::array< amrex::MultiFab*, 3 > Bfield,
+    std::array< amrex::MultiFab*, 3 > const Efield,
     amrex::Real const dt ) {
 
     // Loop through the grids, and over the tiles within each grid
