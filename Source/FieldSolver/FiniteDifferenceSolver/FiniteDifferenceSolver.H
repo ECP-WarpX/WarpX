@@ -44,7 +44,6 @@ class FiniteDifferenceSolver
                        std::unique_ptr<amrex::MultiFab> const& Ffield,
                        amrex::Real const dt );
 
-
         void EvolveF ( std::unique_ptr<amrex::MultiFab>& Ffield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
                        std::unique_ptr<amrex::MultiFab> const& rhofield,
@@ -124,7 +123,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-            amrex::MultiFab* const& Ffield,
+            std::unique_ptr<amrex::MultiFab> const& Ffield,
             amrex::Real const dt );
 
         template< typename T_Algo >
