@@ -17,9 +17,15 @@ using namespace amrex;
 
 #ifdef AMREX_USE_GPU
 #  ifdef AMREX_USE_FLOAT
-    using cuPrecisionComplex = cuComplex;
+using cuPrecisionComplex = cuComplex;
 #  else
-    using cuPrecisionComplex = cuDoubleComplex;
+using cuPrecisionComplex = cuDoubleComplex;
+#  endif
+#else
+#  ifdef AMREX_USE_FLOAT
+using fftw_precision_complex = fftwf_complex;
+#  else
+using fftw_precision_complex = fftw_complex;
 #  endif
 #endif
 
@@ -144,11 +150,7 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
 #    endif
 #  endif
             tmpRealField[mfi].dataPtr(),
-#  ifdef AMREX_USE_FLOAT
-            reinterpret_cast<fftwf_complex*>( tmpSpectralField[mfi].dataPtr() ),
-#  else
-            reinterpret_cast<fftw_complex*>( tmpSpectralField[mfi].dataPtr() ),
-#  endif
+            reinterpret_cast<fftw_precision_complex*>( tmpSpectralField[mfi].dataPtr() ),
             FFTW_ESTIMATE );
         backward_plan[mfi] =
             // Swap dimensions: AMReX FAB are Fortran-order but FFTW is C-order
@@ -165,11 +167,7 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
             fftw_plan_dft_c2r_2d( fft_size[1], fft_size[0],
 #    endif
 #  endif
-#  ifdef AMREX_USE_FLOAT
-            reinterpret_cast<fftwf_complex*>( tmpSpectralField[mfi].dataPtr() ),
-#  else
-            reinterpret_cast<fftw_complex*>( tmpSpectralField[mfi].dataPtr() ),
-#  endif
+            reinterpret_cast<fftw_precision_complex*>( tmpSpectralField[mfi].dataPtr() ),
             tmpRealField[mfi].dataPtr(),
             FFTW_ESTIMATE );
 #endif
