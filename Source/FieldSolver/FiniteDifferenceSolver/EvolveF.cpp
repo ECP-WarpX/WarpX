@@ -166,7 +166,7 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Real const r = rmin + i*dr; // r on a nodal grid (F is nodal in r)
-                if (r != 0) { // Off-axis, regular equations
+                if (abs(r) > 0.01_rt*dr) { // Off-axis, regular equations
                     F(i, j, 0, 0) += dt * (
                         - rho(i, j, 0, rho_shift) * inv_epsilon0
                         + T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 0)
@@ -188,12 +188,12 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
                     // Therefore, the formula below regularizes the singularity
                     F(i, j, 0, 0) += dt * (
                         - rho(i, j, 0, rho_shift) * inv_epsilon0
-                         + 4*Er(i, j, 0, 0)/dr // regularization
+                         + 4._rt*Er(i, j, 0, 0)/dr // regularization
                          + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 0) );
                     // Ensure that F remains 0 for higher-order modes
                     for (int m=1; m<nmodes; m++) {
-                        F(i, j, 0, 2*m-1) = 0.;
-                        F(i, j, 0, 2*m  ) = 0.;
+                        F(i, j, 0, 2*m-1) = 0._rt;
+                        F(i, j, 0, 2*m  ) = 0._rt;
                     }
                 }
             }
