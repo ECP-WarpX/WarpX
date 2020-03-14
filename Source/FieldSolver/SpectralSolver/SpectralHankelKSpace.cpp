@@ -4,8 +4,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <WarpXConst.H>
-#include <SpectralHankelKSpace.H>
+#include "WarpXConst.H"
+#include "SpectralHankelKSpace.H"
+
 #include <cmath>
 
 /* \brief Initialize k space object.

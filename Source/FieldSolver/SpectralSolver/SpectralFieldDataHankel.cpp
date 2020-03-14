@@ -4,9 +4,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <SpectralFieldDataHankel.H>
+#include "SpectralFieldDataHankel.H"
 
-#include <WarpX.H>
+#include "WarpX.H"
 
 /* \brief Initialize fields in spectral space, and FFT plans
  *

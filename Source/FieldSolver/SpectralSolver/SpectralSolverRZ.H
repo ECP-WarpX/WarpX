@@ -7,8 +7,8 @@
 #ifndef WARPX_SPECTRAL_SOLVER_RZ_H_
 #define WARPX_SPECTRAL_SOLVER_RZ_H_
 
-#include <SpectralBaseAlgorithmRZ.H>
-#include <SpectralFieldDataHankel.H>
+#include "SpectralAlgorithms/SpectralBaseAlgorithmRZ.H"
+#include "SpectralFieldDataHankel.H"
 
 /* \brief Top-level class for the electromagnetic spectral solver
  *

@@ -7,7 +7,7 @@
 #ifndef WARPX_SPECTRAL_HANKEL_K_SPACE_H_
 #define WARPX_SPECTRAL_HANKEL_K_SPACE_H_
 
-#include <SpectralKSpace.H>
+#include "SpectralKSpace.H"
 
 /* \brief Class that represents the spectral, Hankel/FFT, space.
  *

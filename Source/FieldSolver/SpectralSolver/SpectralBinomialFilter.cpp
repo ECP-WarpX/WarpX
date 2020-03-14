@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-/* #include <WarpXConst.H> */
-#include <SpectralBinomialFilter.H>
+
+#include "SpectralBinomialFilter.H"
 #include <AMReX_REAL.H>
 
 #include <cmath>

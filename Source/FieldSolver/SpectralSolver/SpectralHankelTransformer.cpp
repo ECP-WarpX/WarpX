@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <WarpXConst.H>
-#include <SpectralHankelTransformer.H>
+#include "WarpXConst.H"
+#include "SpectralHankelTransformer.H"
 
 SpectralHankelTransformer::SpectralHankelTransformer (int const nr_nodes,
                                                       int const modes,

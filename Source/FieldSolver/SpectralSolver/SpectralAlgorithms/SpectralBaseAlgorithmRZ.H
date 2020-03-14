@@ -7,8 +7,8 @@
 #ifndef WARPX_SPECTRAL_BASE_ALGORITHM_RZ_H_
 #define WARPX_SPECTRAL_BASE_ALGORITHM_RZ_H_
 
-#include <SpectralHankelKSpace.H>
-#include <SpectralFieldDataHankel.H>
+#include "SpectralHankelKSpace.H"
+#include "SpectralFieldDataHankel.H"
 
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.

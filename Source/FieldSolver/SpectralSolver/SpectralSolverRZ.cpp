@@ -4,10 +4,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <SpectralHankelKSpace.H>
-#include <SpectralSolverRZ.H>
-#include <PsatdAlgorithmRZ.H>
-/* #include <PMLPsatdAlgorithmRZ.H> */
+#include "SpectralHankelKSpace.H"
+#include "SpectralSolverRZ.H"
+#include "SpectralAlgorithms/PsatdAlgorithmRZ.H"
 
 /* \brief Initialize the spectral Maxwell solver
  *

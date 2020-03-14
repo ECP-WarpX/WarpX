@@ -7,7 +7,7 @@
 #ifndef WARPX_PSATD_ALGORITHM_RZ_H_
 #define WARPX_PSATD_ALGORITHM_RZ_H_
 
-#include <SpectralBaseAlgorithmRZ.H>
+#include "SpectralBaseAlgorithmRZ.H"
 
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.

@@ -7,8 +7,8 @@
 #ifndef WARPX_SPECTRAL_BINOMIAL_FILTER_H_
 #define WARPX_SPECTRAL_BINOMIAL_FILTER_H_
 
-#include <HankelTransform.H>
-#include <SpectralKSpace.H>
+#include "HankelTransform.H"
+#include "SpectralKSpace.H"
 
 /**
  * \brief Class that sets up binomial filtering in k space
