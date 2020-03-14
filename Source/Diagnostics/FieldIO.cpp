@@ -224,8 +224,8 @@ WriteOpenPMDFields( const std::string& filename,
 
 #ifdef WARPX_DIM_RZ
 void
-ConstructTotalRZVectorField(const std::array< std::unique_ptr<MultiFab>, 3 >& vector_total,
-                            const std::array< std::unique_ptr<MultiFab>, 3 >& vector_field)
+ConstructTotalRZVectorField (const std::array< std::unique_ptr<MultiFab>, 3 >& vector_total,
+                             const std::array< std::unique_ptr<MultiFab>, 3 >& vector_field)
 {
     // Sum over the real components, giving quantity at theta=0
     MultiFab::Copy(*vector_total[0], *vector_field[0], 0, 0, 1, vector_field[0]->nGrowVect());
@@ -239,7 +239,7 @@ ConstructTotalRZVectorField(const std::array< std::unique_ptr<MultiFab>, 3 >& ve
 }
 
 void
-ConstructTotalRZScalarField(MultiFab& scalar_total,
+ConstructTotalRZScalarField (MultiFab& scalar_total,
                             const MultiFab& scalar_field)
 {
     // Sum over the real components, giving quantity at theta=0
