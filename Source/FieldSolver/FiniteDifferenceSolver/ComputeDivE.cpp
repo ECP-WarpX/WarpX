@@ -157,7 +157,7 @@ void FiniteDifferenceSolver::ComputeDivECylindrical (
                     // For m==0, Er is linear in r, for small r
                     // Therefore, the formula below regularizes the singularity
                     divE(i, j, 0, 0) =
-                           4*Er(i, j, 0, 0)/dr // regularization
+                           4._rt*Er(i, j, 0, 0)/dr // regularization
                          + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 0);
                     // Ensure that divE remains 0 for higher-order modes
                     for (int m=1; m<nmodes; m++) {
