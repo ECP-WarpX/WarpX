@@ -29,9 +29,7 @@ void
 MultiDiagnostics::ReadParameters ()
 {
     ParmParse pp("diagnostics");
-    Print()<<"rrndiags "<<ndiags<<'\n';
     pp.query("ndiags", ndiags);
-    Print()<<"rrndiags "<<ndiags<<'\n';
     diags_types.resize( ndiags );
     if (ndiags > 0) pp.getarr("diags_names", diags_names);
     for (int i=0; i<ndiags; i++){
@@ -47,9 +45,7 @@ void
 MultiDiagnostics::FilterComputePackFlush ()
 {
     for (auto& diag : alldiags){
-        diag->Filter();
-        diag->Compute();
-        diag->PackFields();
+        diag->FilterAndPack();
         diag->Flush();
         diag->FlushRaw();
     }
