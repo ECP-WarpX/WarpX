@@ -137,7 +137,7 @@ namespace WarpXUtilMsg{
  * @param[in] expression
  * @param[in] msg the string to be printed if expression is == 0 (default value is "ERROR!")
  */
-void AlwaysAssert(int expression, const std::string& msg);
+void AlwaysAssert(bool expression, const std::string& msg);
 
 }
 
