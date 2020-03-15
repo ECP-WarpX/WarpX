@@ -343,6 +343,7 @@ public:
     void SyncRho ();
 
 
+    amrex::Vector<int> getistep () const {return istep;}
     int getistep (int lev) const {return istep[lev];}
     void setistep (int lev, int ii) {istep[lev] = ii;}
     amrex::Real gett_new (int lev) const {return t_new[lev];}
