@@ -216,9 +216,9 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
 
 namespace WarpXUtilMsg{
 
-void AlwaysAssert(bool expression, const std::string& msg = "ERROR!")
+void AlwaysAssert(bool is_expression_true, const std::string& msg = "ERROR!")
 {
-    if(expression != 0) return;
+    if(is_expression_true) return;
 
     amrex::Abort(msg);
 }
