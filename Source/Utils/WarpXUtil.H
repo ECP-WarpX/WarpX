@@ -132,12 +132,12 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
 
 namespace WarpXUtilMsg{
 
-/** \brief If expression is == 0, this function prints msg and calls amrex::abort()
+/** \brief If is_expression_true is false, this function prints msg and calls amrex::abort()
  *
- * @param[in] expression
- * @param[in] msg the string to be printed if expression is == 0 (default value is "ERROR!")
+ * @param[in] is_expression_true
+ * @param[in] msg the string to be printed if is_expression_true is false (default value is "ERROR!")
  */
-void AlwaysAssert(bool expression, const std::string& msg);
+void AlwaysAssert(bool is_expression_true, const std::string& msg);
 
 }
 
