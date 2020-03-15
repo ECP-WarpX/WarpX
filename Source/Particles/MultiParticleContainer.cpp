@@ -1024,7 +1024,7 @@ void MultiParticleContainer::doQedBreitWheeler()
 #endif
             for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
             {
-                auto& src_tile = pc_source ->ParticlesAt(lev, mfi);
+                auto& src_tile = pc_source->ParticlesAt(lev, mfi);
                 auto& dst_ele_tile = pc_product_ele->ParticlesAt(lev, mfi);
                 auto& dst_pos_tile = pc_product_pos->ParticlesAt(lev, mfi);
 
