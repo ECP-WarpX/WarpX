@@ -312,3 +312,18 @@ WarpX::ComputeCostsHeuristic ()
         }
     } // for (int lev ...)
 } // WarpX::ComputeCostsHeuristic
+
+void
+WarpX::ResetCosts ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            costs[lev]->setVal(0.0);
+        } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
+        {
+            costs_heuristic[lev]->assign((*costs_heuristic[lev]).size(), 0.0);
+        }
+    } // for (int lev) ...
+} //WarpX::ResetCosts
