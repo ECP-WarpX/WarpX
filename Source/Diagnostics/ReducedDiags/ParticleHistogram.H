@@ -13,8 +13,8 @@
 #include <fstream>
 
 /**
- *  This class contains a function that
- *  computes a histogram of user defined quantity.
+ * Reduced diagnostics that computes a histogram over particles
+ * for a quantity specified by the user in the input file using the parser.
  */
 class ParticleHistogram : public ReducedDiags
 {
