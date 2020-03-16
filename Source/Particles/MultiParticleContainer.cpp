@@ -1061,8 +1061,8 @@ void MultiParticleContainer::doQedQuantumSync()
         auto phys_pc_ptr =
             static_cast<PhysicalParticleContainer*>(pc_source.get());
 
-        const auto Filter    = phys_pc_ptr->getPhotonEmissionFilterFunc();
-        const auto CopyPhot   = copy_factory_phot.getSmartCopy();
+        const auto Filter   = phys_pc_ptr->getPhotonEmissionFilterFunc();
+        const auto CopyPhot = copy_factory_phot.getSmartCopy();
 
         auto Transform = PhotonEmissionTransformFunc(
             m_shr_p_qs_engine->build_optical_depth_functor(),
