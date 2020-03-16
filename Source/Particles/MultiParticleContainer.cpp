@@ -166,12 +166,12 @@ MultiParticleContainer::ReadParameters ()
 
 
         pp.query("nspecies", nspecies);
-        BL_ASSERT(nspecies >= 0);
+        AMREX_ALWAYS_ASSERT(nspecies >= 0);
 
         if (nspecies > 0) {
             // Get species names
             pp.getarr("species_names", species_names);
-            BL_ASSERT(species_names.size() == nspecies);
+            AMREX_ALWAYS_ASSERT(species_names.size() == nspecies);
 
             // Get species to deposit on main grid
             m_deposit_on_main_grid.resize(nspecies, false);
@@ -224,10 +224,10 @@ MultiParticleContainer::ReadParameters ()
             // collision
             ParmParse pc("collisions");
             pc.query("ncollisions", ncollisions);
-            BL_ASSERT(ncollisions >= 0);
+            AMREX_ALWAYS_ASSERT(ncollisions >= 0);
             if (ncollisions > 0) {
                 pc.getarr("collision_names", collision_names);
-                BL_ASSERT(collision_names.size() == ncollisions);
+                AMREX_ALWAYS_ASSERT(collision_names.size() == ncollisions);
             }
 
         }
@@ -237,10 +237,10 @@ MultiParticleContainer::ReadParameters ()
 
         ParmParse ppl("lasers");
         ppl.query("nlasers", nlasers);
-        BL_ASSERT(nlasers >= 0);
+        AMREX_ALWAYS_ASSERT(nlasers >= 0);
         if (nlasers > 0) {
             ppl.getarr("names", lasers_names);
-            BL_ASSERT(lasers_names.size() == nlasers);
+            AMREX_ALWAYS_ASSERT(lasers_names.size() == nlasers);
         }
 
         initialized = true;
@@ -272,75 +272,6 @@ MultiParticleContainer::InitData ()
 #endif
 
 }
-
-
-#ifdef WARPX_DO_ELECTROSTATIC
-void
-MultiParticleContainer::FieldGatherES (const Vector<std::array<std::unique_ptr<MultiFab>, 3> >& E,
-                                       const amrex::Vector<std::unique_ptr<amrex::FabArray<amrex::BaseFab<int> > > >& masks)
-{
-    for (auto& pc : allcontainers) {
-        pc->FieldGatherES(E, masks);
-    }
-}
-
-void
-MultiParticleContainer::EvolveES (const Vector<std::array<std::unique_ptr<MultiFab>, 3> >& E,
-                                        Vector<std::unique_ptr<MultiFab> >& rho,
-                                  Real t, Real dt)
-{
-
-    int nlevs = rho.size();
-    int ng = rho[0]->nGrow();
-
-    for (unsigned i = 0; i < nlevs; i++) {
-        rho[i]->setVal(0.0, ng);
-    }
-
-    for (auto& pc : allcontainers) {
-        pc->EvolveES(E, rho, t, dt);
-    }
-
-    for (unsigned i = 0; i < nlevs; i++) {
-        const Geometry& gm = allcontainers[0]->Geom(i);
-        rho[i]->SumBoundary(gm.periodicity());
-    }
-}
-
-void
-MultiParticleContainer::
-DepositCharge (Vector<std::unique_ptr<MultiFab> >& rho, bool local)
-{
-    int nlevs = rho.size();
-    int ng = rho[0]->nGrow();
-
-    for (unsigned i = 0; i < nlevs; i++) {
-        rho[i]->setVal(0.0, ng);
-    }
-
-    for (unsigned i = 0, n = allcontainers.size(); i < n; ++i) {
-        allcontainers[i]->DepositCharge(rho, true);
-    }
-
-    if (!local) {
-        for (unsigned i = 0; i < nlevs; i++) {
-            const Geometry& gm = allcontainers[0]->Geom(i);
-            rho[i]->SumBoundary(gm.periodicity());
-        }
-    }
-}
-
-amrex::Real
-MultiParticleContainer::sumParticleCharge (bool local)
-{
-    amrex::Real total_charge = allcontainers[0]->sumParticleCharge(local);
-    for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
-        total_charge += allcontainers[i]->sumParticleCharge(local);
-    }
-    return total_charge;
-}
-
-#endif // WARPX_DO_ELECTROSTATIC
 
 void
 MultiParticleContainer::FieldGather (int lev,

@@ -57,6 +57,14 @@ Overall simulation parameters
     one should not expect to obtain the same random numbers,
     even if a fixed ``warpx.random_seed`` is provided.
 
+* ``warpx.do_electrostatic`` (`0` or `1`; default is `0`)
+    Run WarpX in electrostatic mode. Instead of updating the fields
+    at each iteration with the full Maxwell equations, the fields are
+    instead recomputed at each iteration from the (relativistic) Poisson
+    equation. There is no limitation on the timestep in this case, but
+    electromagnetic effects (e.g. propagation of radiation, lasers, etc.)
+    are not captured.
+
 Setting up the field mesh
 -------------------------
 
@@ -210,11 +218,17 @@ Particle initialization
     particles are pushed in a standard way, using the specified pusher.
     (see the parameter ``<species_name>.zinject_plane`` below)
 
-* ``<species_name>.charge`` (`float`)
-    The charge of one `physical` particle of this species.
+* ``<species_name>.species_type`` (`string`) optional (default `unspecified`)
+    Type of physical species, ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"``.
+    Either this or both ``mass`` and ``charge`` have to be specified.
 
-* ``<species_name>.mass`` (`float`)
+* ``<species_name>.charge`` (`float`) optional (default `NaN`)
+    The charge of one `physical` particle of this species.
+    If ``species_type`` is specified, the charge will be set to the physical value and ``charge`` is optional.
+
+* ``<species_name>.mass`` (`float`) optional (default `NaN`)
     The mass of one `physical` particle of this species.
+    If ``species_type`` is specified, the mass will be set to the physical value and ``mass`` is optional.
 
 * ``<species_name>.injection_style`` (`string`)
     Determines how the particles will be injected in the simulation.
@@ -237,7 +251,9 @@ Particle initialization
 
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis
-    within a cell. Note that for RZ, the three axis are radius, theta, and z.
+    within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
+    number of particles per theta is at least two times the number of azimuthal modes requested.
+    (It is recommended to do a convergence scan of the number of particles per theta)
 
 * ``<species_name>.do_continuous_injection`` (`0` or `1`)
     Whether to inject particles during the simulation, and not only at
@@ -925,6 +941,11 @@ Numerics and algorithms
 
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
+
+* ``psatd.nx_guard`, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
+    The number of guard cells to use with PSATD solver.
+    If not set by users, these values are calculated automatically and determined *empirically* and
+    would be equal the order of the solver for nodal grid, and half the order of the solver for staggered.
 
 * ``psatd.hybrid_mpi_decomposition`` (`0` or `1`; default: 0)
     Whether to use a different MPI decomposition for the particle-grid operations

@@ -187,9 +187,11 @@ WarpX::WriteCheckPointFile() const
             pml[lev]->CheckPoint(amrex::MultiFabFileFullPrefix(lev, checkpointname, level_prefix, "pml"));
         }
 
-        if (costs[lev]) {
-            VisMF::Write(*costs[lev],
-                         amrex::MultiFabFileFullPrefix(lev, checkpointname, level_prefix, "costs"));
+        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+            if (costs[lev]) {
+                VisMF::Write(*costs[lev],
+                             amrex::MultiFabFileFullPrefix(lev, checkpointname, level_prefix, "costs"));
+            }
         }
     }
 
@@ -382,13 +384,15 @@ WarpX::InitFromCheckpoint ()
             }
         }
 
-        if (costs[lev]) {
-            const auto& cost_mf_name =
+        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+            if (costs[lev]) {
+                const auto& cost_mf_name =
                 amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "costs");
-            if (VisMF::Exist(cost_mf_name)) {
-                VisMF::Read(*costs[lev], cost_mf_name);
-            } else {
-                costs[lev]->setVal(0.0);
+                if (VisMF::Exist(cost_mf_name)) {
+                    VisMF::Read(*costs[lev], cost_mf_name);
+                } else {
+                    costs[lev]->setVal(0.0);
+                }
             }
         }
     }
@@ -405,14 +409,6 @@ WarpX::InitFromCheckpoint ()
     mypc->AllocData();
     mypc->Restart(restart_chkfile);
 
-#ifdef WARPX_DO_ELECTROSTATIC
-    if (do_electrostatic) {
-        getLevelMasks(masks);
-
-        // the plus one is to convert from num_cells to num_nodes
-        getLevelMasks(gather_masks, 4 + 1);
-    }
-#endif // WARPX_DO_ELECTROSTATIC
 }
 
 
@@ -442,8 +438,8 @@ WarpX::GetCellCenteredData() {
         dcomp += 3;
         // then the charge density
         const std::unique_ptr<MultiFab>& charge_density = mypc->GetChargeDensity(lev);
+        AverageAndPackScalarField( *cc[lev], *charge_density, dmap[lev], dcomp, ng );
 
-        AverageAndPackScalarField( *cc[lev], *charge_density, dcomp, ng );
         cc[lev]->FillBoundary(geom[lev].periodicity());
     }
 

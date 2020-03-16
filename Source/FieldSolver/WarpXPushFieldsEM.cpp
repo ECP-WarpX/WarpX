@@ -262,7 +262,7 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
         F  = F_cp[lev].get();
     }
 
-    MultiFab* cost = costs[lev].get();
+    MultiFab* cost = WarpX::getCosts(lev);
     const IntVect& rr = (lev > 0) ? refRatio(lev-1) : IntVect::TheUnitVector();
 
     // xmin is only used by the kernel for cylindrical geometry,
@@ -630,7 +630,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         Array4<Real> const& Rho_arr = Rho->array(mfi);
 
         tilebox = mfi.tilebox();
-        Box tb = convert(tilebox, IntVect::TheUnitVector());
+        Box tb = convert(tilebox, rho_nodal_flag);
 
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
