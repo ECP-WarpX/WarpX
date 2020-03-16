@@ -6,7 +6,9 @@ using namespace amrex;
 MultiDiagnostics::MultiDiagnostics ()
 {
     ReadParameters();
-    Print()<<"ndiags"<<ndiags<<'\n';
+    /** Resize alldiags and initialize each element to a pointer to a
+     * diagnostics. Calls the corresponding diagnostics constructor.
+     */
     alldiags.resize( ndiags );
     for (int i=0; i<ndiags; i++){
         if ( diags_types[i] == DiagTypes::Full ){
@@ -36,7 +38,6 @@ MultiDiagnostics::ReadParameters ()
         ParmParse ppd(diags_names[i]);
         std::string diag_type_str;
         ppd.get("diag_type", diag_type_str);
-        Print()<<diag_type_str<<'\n';
         if (diag_type_str == "Full") diags_types[i] = DiagTypes::Full;
     }
 }

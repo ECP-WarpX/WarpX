@@ -13,8 +13,6 @@ FlushFormatPlotfile::WriteToFile (const amrex::Vector<std::string> varnames,
                                   MultiParticleContainer& mpc, int nlev) const
 {
     auto & warpx = WarpX::GetInstance();
-    //const auto step = istep[0];
-    //const std::string& plotfilename = amrex::Concatenate(plot_file,step);
     const std::string& plotfilename = "toto";
     amrex::Print() << "  Writing plotfile " << plotfilename << "\n";
     
@@ -46,7 +44,6 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
     
     auto & warpx = WarpX::GetInstance();
     
-    // if (WarpX::ParallelDescriptor::IOProcessor())
     if (ParallelDescriptor::IOProcessor())
     {
         // job_info file with details about the run
