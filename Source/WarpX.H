@@ -460,9 +460,9 @@ public:
          amrex::IntVect y_nodal_flag, amrex::IntVect z_nodal_flag,
          const int lev);
 
-    /** \brief add particle and cell contributions to multifabs in `costs_heuristic`
+    /** \brief add particle and cell contributions to multifabs in `costs`
      */
-    void ComputeCostsHeuristic ();
+    void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& costs);
 
 protected:
 

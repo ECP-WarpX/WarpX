@@ -55,9 +55,10 @@ void LoadBalanceCosts::ComputeDiags (int step)
     // costs is recomputed, whether or not a load balance step; if not a load
     // balance step, the costs vectors are empty; if it is a load balance step,
     // remake level clears the costs vectors;
+    amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > > costs_heuristic;
     if (warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
     {
-        warpx.ComputeCostsHeuristic();
+        warpx.ComputeCostsHeuristic(costs_heuristic);
     }
 
     // keeps track of correct index in array over all boxes on all levels
@@ -67,12 +68,14 @@ void LoadBalanceCosts::ComputeDiags (int step)
     for (int lev = 0; lev < nLevels; ++lev)
     {
         const amrex::DistributionMapping& dm = warpx.DistributionMap(lev);
-        const amrex::Vector<amrex::Real>* cost_heuristic = warpx.getCostsHeuristic(lev);
         const MultiFab & Ex = warpx.getEfield(lev,0);
         for (MFIter mfi(Ex, false); mfi.isValid(); ++mfi)
         {
             const Box& tbx = mfi.tilebox();
-            m_data[shift + mfi.index()*m_nDataFields + 0] = (*cost_heuristic)[mfi.index()];
+            if (costs_heuristic[lev])
+            {
+                m_data[shift + mfi.index()*m_nDataFields + 0] = (*costs_heuristic[lev])[mfi.index()];
+            }
             m_data[shift + mfi.index()*m_nDataFields + 1] = dm[mfi.index()];
             m_data[shift + mfi.index()*m_nDataFields + 2] = lev;
             m_data[shift + mfi.index()*m_nDataFields + 3] = tbx.loVect()[0];
@@ -81,7 +84,10 @@ void LoadBalanceCosts::ComputeDiags (int step)
         }
 
         // we looped through all the boxes on level lev, update the shift index
-        shift += m_nDataFields*(cost_heuristic->size());
+        if (costs_heuristic[lev])
+        {
+            shift += m_nDataFields*((*costs_heuristic[lev])->size());
+        }
     }
 
     // parallel reduce to IO proc and get data over all procs
