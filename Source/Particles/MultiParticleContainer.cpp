@@ -558,10 +558,6 @@ MultiParticleContainer::mapSpeciesProduct ()
                 "ERROR: Breit Wheeler product cannot be the same species");
             pc->m_qed_breit_wheeler_pos_product = i_product_pos;
 
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_ele < allcontainers.size(),
-                "ERROR: Breit Wheeler product species not found");
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_pos < allcontainers.size(),
-                "ERROR: Breit Wheeler product species not found");
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 allcontainers[i_product_ele]->AmIA<PhysicalSpecies::electron>() &&
                 allcontainers[i_product_pos]->AmIA<PhysicalSpecies::positron>(),
@@ -576,8 +572,6 @@ MultiParticleContainer::mapSpeciesProduct ()
                 "ERROR: Quantum Synchrotron product cannot be the same species");
             pc->m_qed_quantum_sync_phot_product = i_product_phot;
 
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_phot < allcontainers.size(),
-                "ERROR: Quantum Synchrotron product species not found");
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 allcontainers[i_product_phot]->AmIA<PhysicalSpecies::photon>(),
                 "ERROR: Quantum Synchrotron product species is of wrong type");
