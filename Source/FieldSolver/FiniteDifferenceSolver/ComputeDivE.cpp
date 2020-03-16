@@ -139,7 +139,7 @@ void FiniteDifferenceSolver::ComputeDivECylindrical (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Real const r = rmin + i*dr; // r on a nodal grid (F is nodal in r)
-                if (r > 0.01_rt*dr ) { // Off-axis, regular equations
+                if (r != 0) { // Off-axis, regular equations
                     divE(i, j, 0, 0) =
                           T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 0)
                         + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 0);

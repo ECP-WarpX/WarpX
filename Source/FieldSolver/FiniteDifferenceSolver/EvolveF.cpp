@@ -166,7 +166,7 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Real const r = rmin + i*dr; // r on a nodal grid (F is nodal in r)
-                if (abs(r) > 0.01_rt*dr) { // Off-axis, regular equations
+                if (r != 0) { // Off-axis, regular equations
                     F(i, j, 0, 0) += dt * (
                         - rho(i, j, 0, rho_shift) * inv_epsilon0
                         + T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 0)
