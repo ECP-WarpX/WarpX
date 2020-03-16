@@ -1038,9 +1038,6 @@ void MultiParticleContainer::doQedBreitWheeler()
                 setNewParticleIDs(dst_ele_tile, np_dst_ele, num_added);
                 setNewParticleIDs(dst_pos_tile, np_dst_pos, num_added);
             }
-
-
-
         }
    }
 }
