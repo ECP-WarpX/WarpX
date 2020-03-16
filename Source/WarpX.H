@@ -460,7 +460,10 @@ public:
          amrex::IntVect y_nodal_flag, amrex::IntVect z_nodal_flag,
          const int lev);
 
-    /** \brief add particle and cell contributions to multifabs in `costs`
+    /** \brief adds particle and cell contributions in cells to compute heuristic
+     * cost in each box on each level, and records in `costs`
+     * @param[in] costs vector of (`unique_ptr` to) vectors; expected to be initialized 
+     * to correct number of boxes and boxes per level
      */
     void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& costs);
 
