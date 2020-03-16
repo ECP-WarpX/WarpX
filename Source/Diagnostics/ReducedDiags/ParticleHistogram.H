@@ -42,7 +42,8 @@ public:
 
     /// Parser to read expression for particle quantity from the input file.
     /// 7 elements are t, x, y, z, ux, uy, uz
-    std::unique_ptr<ParserWrapper<7>> m_parser;
+    static constexpr int m_nvars = 7;
+    std::unique_ptr<ParserWrapper<m_nvars>> m_parser;
 
     /** This function computes a histogram of user defined quantity.
      *  \param [in] step current time step.

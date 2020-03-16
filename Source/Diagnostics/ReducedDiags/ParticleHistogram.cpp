@@ -44,7 +44,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     std::string function_string = "";
     Store_parserString(pp,"histogram_function(t,x,y,z,ux,uy,uz)",
                        function_string);
-    m_parser.reset(new ParserWrapper<7>(
+    m_parser.reset(new ParserWrapper<m_nvars>(
         makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
 
     // read normalization type
@@ -81,7 +81,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     }
 
     // resize data array
-    m_data.resize(m_bin_num,0.0);
+    m_data.resize(m_bin_num,0.0_rt);
 
     if (ParallelDescriptor::IOProcessor())
     {
@@ -100,7 +100,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
             {
                 ofs << m_sep;
                 ofs << "[" + std::to_string(3+i) + "]";
-                Real b = m_bin_min + m_bin_size*(Real(i)+0.5);
+                Real b = m_bin_min + m_bin_size*(Real(i)+0.5_rt);
                 ofs << "bin" + std::to_string(1+i)
                              + "=" + std::to_string(b) + "()";
             }
@@ -135,14 +135,13 @@ void ParticleHistogram::ComputeDiags (int step)
     using PType = typename WarpXParticleContainer::SuperParticleType;
 
     // get parser
-    ParserWrapper<7> *fun_partparser = m_parser.get();
+    ParserWrapper<m_nvars> *fun_partparser = m_parser.get();
 
     // declare local variables
     Real const bin_min  = m_bin_min;
     Real const bin_size = m_bin_size;
-    bool is_unity_particle_weight = false;
-    if ( m_norm == NormalizationType::unity_particle_weight )
-    { is_unity_particle_weight = true; }
+    const bool is_unity_particle_weight =
+        (m_norm == NormalizationType::unity_particle_weight) ? true : false;
 
     for ( int i = 0; i < m_bin_num; ++i )
     {
@@ -161,9 +160,9 @@ void ParticleHistogram::ComputeDiags (int step)
             auto const f1 = bin_min + bin_size*i;
             auto const f2 = bin_min + bin_size*(i+1);
             if ( f > f1 && f < f2 ) {
-                if ( is_unity_particle_weight ) return 1.0;
+                if ( is_unity_particle_weight ) return 1.0_rt;
                 else return w;
-            } else return 0.0;
+            } else return 0.0_rt;
         });
     }
     // reduced sum over mpi ranks
@@ -173,7 +172,7 @@ void ParticleHistogram::ComputeDiags (int step)
     // normalize the maximum value to be one
     if ( m_norm == NormalizationType::max_to_unity )
     {
-        Real f_max = 0.0;
+        Real f_max = 0.0_rt;
         for ( int i = 0; i < m_bin_num; ++i )
         {
             if ( m_data[i] > f_max ) f_max = m_data[i];
@@ -188,7 +187,7 @@ void ParticleHistogram::ComputeDiags (int step)
     // normalize the area (integral) to be one
     if ( m_norm == NormalizationType::area_to_unity )
     {
-        Real f_area = 0.0;
+        Real f_area = 0.0_rt;
         for ( int i = 0; i < m_bin_num; ++i )
         {
             f_area += m_data[i] * m_bin_size;
