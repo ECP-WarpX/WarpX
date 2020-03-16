@@ -52,12 +52,17 @@ void LoadBalanceCosts::ComputeDiags (int step)
     m_data.resize(m_nDataFields*nBoxes, 0.0);
     m_data.assign(m_nDataFields*nBoxes, 0.0);
 
-    // costs is recomputed, whether or not a load balance step; if not a load
-    // balance step, the costs vectors are empty; if it is a load balance step,
-    // remake level clears the costs vectors;
+    // read in WarpX costs_heuristic to local copy
     amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > > costs_heuristic;
     if (warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
     {
+        costs_heuristic.resize(nLevels);
+        for (int lev = 0; lev < nLevels; ++lev)
+        {
+            costs_heuristic[lev].reset(new amrex::Vector<Real>);
+            const int nBoxesLev = warpx.getCostsHeuristic(lev)->size();
+            costs_heuristic[lev]->resize(nBoxesLev);
+        }
         warpx.ComputeCostsHeuristic(costs_heuristic);
     }
 
@@ -72,10 +77,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
         for (MFIter mfi(Ex, false); mfi.isValid(); ++mfi)
         {
             const Box& tbx = mfi.tilebox();
-            if (costs_heuristic[lev])
-            {
-                m_data[shift + mfi.index()*m_nDataFields + 0] = (*costs_heuristic[lev])[mfi.index()];
-            }
+            m_data[shift + mfi.index()*m_nDataFields + 0] = (*costs_heuristic[lev])[mfi.index()];
             m_data[shift + mfi.index()*m_nDataFields + 1] = dm[mfi.index()];
             m_data[shift + mfi.index()*m_nDataFields + 2] = lev;
             m_data[shift + mfi.index()*m_nDataFields + 3] = tbx.loVect()[0];
@@ -84,10 +86,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
         }
 
         // we looped through all the boxes on level lev, update the shift index
-        if (costs_heuristic[lev])
-        {
-            shift += m_nDataFields*((*costs_heuristic[lev])->size());
-        }
+        shift += m_nDataFields*(costs_heuristic[lev]->size());
     }
 
     // parallel reduce to IO proc and get data over all procs
@@ -102,9 +101,6 @@ void LoadBalanceCosts::ComputeDiags (int step)
      *   [cost, proc, lev, i_low, j_low, k_low] of box 1 at level 1,
      *   [cost, proc, lev, i_low, j_low, k_low] of box 2 at level 1,
      *   ......] */
-
-    // with data written we must reset costs
-    warpx.ResetCosts();
 
 }
 // end void LoadBalanceCosts::ComputeDiags
