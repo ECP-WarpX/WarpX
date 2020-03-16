@@ -1,6 +1,8 @@
 #ifndef WARPX_DIAGNOSTICS_H_
 #define WARPX_DIAGNOSTICS_H_
 
+#include "FlushFormat.H"
+#include "FlushFormatPlotfile.H"
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
 
@@ -24,6 +26,7 @@ private:
     amrex::Vector< amrex::MultiFab* > mf_out;
     amrex::Vector< amrex::Geometry > output_geom;
     int nlev;
+    FlushFormat* m_flush_format;
 };
 
 #endif // WARPX_DIAGNOSTICS_H_

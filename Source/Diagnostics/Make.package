@@ -6,6 +6,9 @@ CEXE_headers += FullDiagnostics.H
 CEXE_headers += MultiDiagnostics.H
 CEXE_headers += Average.H
 CEXE_sources += Average.cpp
+CEXE_headers += FlushFormat.H
+CEXE_headers += FlushFormatPlotfile.H
+CEXE_sources += FlushFormatPlotfile.cpp
 
 CEXE_sources += WarpXIO.cpp
 CEXE_sources += BackTransformedDiagnostic.cpp

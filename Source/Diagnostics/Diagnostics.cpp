@@ -30,6 +30,7 @@ Diagnostics::InitData ()
                                warpx.DistributionMap(lev),
                                ncomp, 0);
     }
+    m_flush_format = new FlushFormatPlotfile;
 }
 
 void
@@ -49,8 +50,8 @@ Diagnostics::Flush () {
     auto & warpx = WarpX::GetInstance();
     //const auto step = istep[0];
     //const std::string& plotfilename = amrex::Concatenate(plot_file,step);
-    const std::string& plotfilename = "toto";
-    amrex::Print() << "  Writing plotfile " << plotfilename << "\n";
+    //const std::string& plotfilename = "toto";
+    //amrex::Print() << "  Writing plotfile " << plotfilename << "\n";
 
     //Vector<std::string> varnames; // Name of the written fields
     //Vector<MultiFab> mf_avg; // contains the averaged, cell-centered fields
@@ -62,26 +63,10 @@ Diagnostics::Flush () {
     // Write the fields contained in `mf_avg`, and corresponding to the
     // names `varnames`, into a plotfile.
     // Prepare extra directory (filled later), for the raw fields
-    Vector<std::string> rfs;
-    VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
-    VisMF::SetHeaderVersion(amrex::VisMF::Header::Version_v1);
-    amrex::WriteMultiLevelPlotfile(plotfilename, nlev,
-                                   GetVecOfConstPtrs(mf_avg),
-                                   varnames, warpx.Geom(),
-                                   0., warpx.getistep(), warpx.refRatio(),
-                                   "HyperCLaw-V1.1",
-                                   "Level_",
-                                   "Cell",
-                                   rfs
-                                   );
 
-    // mypc->WritePlotFile(plotfilename);
-
-    // WriteJobInfo(plotfilename);
-
-    // WriteWarpXHeader(plotfilename);
-
-    // VisMF::SetHeaderVersion(current_version);
+    m_flush_format->WriteToFile(varnames, GetVecOfConstPtrs(mf_avg),
+                                warpx.Geom(), warpx.getistep(), 0.,
+                                warpx.GetPartContainer(), nlev);
 }
 
 void

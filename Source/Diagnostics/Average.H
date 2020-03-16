@@ -2,9 +2,10 @@
 #define WARPX_AVERAGE_H_
 
 #include "WarpX.H"
-using namespace amrex;
 
 namespace Average{
+
+    using namespace amrex;
 
     Real ToCellCenter ( Array4<Real const> const& mf_in_arr,
                         const IntVect stag,

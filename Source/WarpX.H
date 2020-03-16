@@ -342,13 +342,20 @@ public:
     void SyncCurrent ();
     void SyncRho ();
 
-
+    amrex::Vector<int> getnsubsteps () const {return nsubsteps;};
+    int getnsubsteps (int lev) const {return nsubsteps[lev];};
     amrex::Vector<int> getistep () const {return istep;}
     int getistep (int lev) const {return istep[lev];}
     void setistep (int lev, int ii) {istep[lev] = ii;}
+    amrex::Vector<amrex::Real> gett_old () const {return t_old;}
+    amrex::Real gett_old (int lev) const {return t_old[lev];}
+    amrex::Vector<amrex::Real> gett_new () const {return t_new;}
     amrex::Real gett_new (int lev) const {return t_new[lev];}
     void sett_new (int lev, amrex::Real time) {t_new[lev] = time;}
+    amrex::Vector<amrex::Real> getdt () const {return dt;}
     amrex::Real getdt (int lev) const {return dt[lev];}
+    amrex::Real getmoving_window_x() const {return moving_window_x;};
+    bool getis_synchronized() const {return is_synchronized;};
 
     int maxStep () const {return max_step;}
     amrex::Real stopTime () const {return stop_time;}
