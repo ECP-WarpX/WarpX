@@ -205,7 +205,7 @@ WarpX::WarpX ()
 
     // Diagnostics
     multi_diags = std::unique_ptr<MultiDiagnostics> (new MultiDiagnostics());
-    
+
     // Particle Container
     mypc = std::unique_ptr<MultiParticleContainer> (new MultiParticleContainer(this));
     warpx_do_continuous_injection = mypc->doContinuousInjection();

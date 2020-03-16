@@ -15,7 +15,7 @@ FlushFormatPlotfile::WriteToFile (const amrex::Vector<std::string> varnames,
     auto & warpx = WarpX::GetInstance();
     const std::string& plotfilename = "toto";
     amrex::Print() << "  Writing plotfile " << plotfilename << "\n";
-    
+
     Vector<std::string> rfs;
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::Version_v1);
@@ -41,9 +41,9 @@ FlushFormatPlotfile::WriteToFile (const amrex::Vector<std::string> varnames,
 void
 FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
 {
-    
+
     auto & warpx = WarpX::GetInstance();
-    
+
     if (ParallelDescriptor::IOProcessor())
     {
         // job_info file with details about the run

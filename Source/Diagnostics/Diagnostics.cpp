@@ -13,7 +13,7 @@ void
 Diagnostics::InitData ()
 {
     Print()<<"Diagnostics::InitData\n";
-    
+
     auto & warpx = WarpX::GetInstance();
     nlev = warpx.finestLevel() + 1;
     // Initialize vector of pointer to the fields requested by the user.
