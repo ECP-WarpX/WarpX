@@ -1,9 +1,17 @@
+/* Copyright 2019 Yinjian Zhao
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_HIGUERACARY_H_
 #define WARPX_PARTICLES_PUSHER_UPDATEMOMENTUM_HIGUERACARY_H_
 
-#include "WarpXConst.H"
+#include "Utils/WarpXConst.H"
+
 #include <AMReX_FArrayBox.H>
 #include <AMReX_REAL.H>
+
 
 /**
  * \brief Push the particle's positions over one timestep,

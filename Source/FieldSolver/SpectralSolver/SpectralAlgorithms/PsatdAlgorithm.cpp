@@ -1,7 +1,16 @@
-#include <PsatdAlgorithm.H>
-#include <WarpXConst.H>
+/* Copyright 2019 Remi Lehe, Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "PsatdAlgorithm.H"
+#include "Utils/WarpXConst.H"
+
 #include <cmath>
 
+
+#if WARPX_USE_PSATD
 using namespace amrex;
 
 /* \brief Initialize coefficients for the update equation */
@@ -170,3 +179,4 @@ void PsatdAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spectr
         });
      }
 }
+#endif // WARPX_USE_PSATD

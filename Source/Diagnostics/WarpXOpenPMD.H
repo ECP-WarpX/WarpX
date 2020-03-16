@@ -1,9 +1,28 @@
+/* Copyright 2019-2020 Axel Huebl, Junmin Gu, Maxence Thevenet
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_OPEN_PMD_H_
 #define WARPX_OPEN_PMD_H_
 
-#include <MultiParticleContainer.H> // has AMReX Vector etc used below
+#include "Particles/WarpXParticleContainer.H"
+#include "Particles/MultiParticleContainer.H" // PIdx
 
-#include <openPMD/openPMD.hpp>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Utility.H>
+
+#ifdef WARPX_USE_OPENPMD
+#   include <openPMD/openPMD.hpp>
+#endif
+
+#include <memory>
+#include <string>
+#include <vector>
+
 
 //
 // helper class
@@ -55,18 +74,28 @@ private:
 };
 
 
+#ifdef WARPX_USE_OPENPMD
 //
 //
 /** Writer logic for openPMD particles and fields */
 class WarpXOpenPMDPlot
 {
 public:
-  // not  using const string, to  allow std::move to be effective
-  WarpXOpenPMDPlot(bool, std::string& filetype);
+  /** Initialize openPMD I/O routines
+   *
+   * @param oneFilePerTS write one file per timestep
+   * @param filetype file backend, e.g. "bp" or "h5"
+   * @param fieldPMLdirections PML field solver, @see WarpX::getPMLdirections()
+   */
+  WarpXOpenPMDPlot(bool oneFilePerTS, std::string filetype, std::vector<bool> fieldPMLdirections);
 
-  //WarpXOpenPMDPlot(const std::string& dir, const std::string& fileType);
   ~WarpXOpenPMDPlot();
 
+  /** Set Iteration Step for the series
+   *
+   * @note If an iteration has been written, then it will give a warning
+   *
+   */
   void SetStep(int ts);
 
   void WriteOpenPMDParticles(const std::unique_ptr<MultiParticleContainer>&);
@@ -82,12 +111,14 @@ private:
   void Init(//const std::string& filename,
         openPMD::AccessType accessType);
 
-  /** This function sets up the entries for storing the particle positions in an openPMD  species
+  /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
   *
-  * @param[in]  currSpecies The openPMD species
-  * @param[in]  np  Number of particles
+  * @param[in] pc          WarpX particle container
+  * @param[in] currSpecies Corresponding openPMD species
+  * @param[in] np          Number of particles
   */
-  void SetupPos(openPMD::ParticleSpecies& currSpecies,
+  void SetupPos(const std::unique_ptr<WarpXParticleContainer>& pc,
+        openPMD::ParticleSpecies& currSpecies,
         const unsigned long long& np) const ;
 
   /** This function sets up the entries for particle properties
@@ -149,7 +180,10 @@ private:
   bool m_OneFilePerTS = true;  //! write in openPMD fileBased manner for individual time steps
   std::string m_OpenPMDFileType = "bp"; //! MPI-parallel openPMD backend: bp or h5
   int m_CurrentStep  = -1;
-};
 
+  // meta data
+  std::vector< bool > m_fieldPMLdirections; //! @see WarpX::getPMLdirections()
+};
+#endif // WARPX_USE_OPENPMD
 
 #endif // WARPX_OPEN_PMD_H

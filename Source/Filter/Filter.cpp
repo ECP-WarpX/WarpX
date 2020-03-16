@@ -1,9 +1,17 @@
-#include <WarpX.H>
-#include <Filter.H>
+/* Copyright 2019 Andrew Myers, Maxence Thevenet, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "Filter.H"
+#include "WarpX.H"
 
 #ifdef _OPENMP
-#include <omp.h>
+#   include <omp.h>
 #endif
+
 
 using namespace amrex;
 
@@ -19,7 +27,7 @@ using namespace amrex;
 void
 Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, int scomp, int dcomp, int ncomp)
 {
-    BL_PROFILE("BilinearFilter::ApplyStencil(MultiFab)");
+    WARPX_PROFILE("BilinearFilter::ApplyStencil(MultiFab)");
     ncomp = std::min(ncomp, srcmf.nComp());
 
     for (MFIter mfi(dstmf); mfi.isValid(); ++mfi)
@@ -62,7 +70,7 @@ void
 Filter::ApplyStencil (FArrayBox& dstfab, const FArrayBox& srcfab,
                       const Box& tbx, int scomp, int dcomp, int ncomp)
 {
-    BL_PROFILE("BilinearFilter::ApplyStencil(FArrayBox)");
+    WARPX_PROFILE("BilinearFilter::ApplyStencil(FArrayBox)");
     ncomp = std::min(ncomp, srcfab.nComp());
     const auto& src = srcfab.array();
     const auto& dst = dstfab.array();
@@ -146,7 +154,7 @@ void Filter::DoFilter (const Box& tbx,
 void
 Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, int scomp, int dcomp, int ncomp)
 {
-    BL_PROFILE("BilinearFilter::ApplyStencil()");
+    WARPX_PROFILE("BilinearFilter::ApplyStencil()");
     ncomp = std::min(ncomp, srcmf.nComp());
 #ifdef _OPENMP
 #pragma omp parallel
@@ -182,7 +190,7 @@ void
 Filter::ApplyStencil (amrex::FArrayBox& dstfab, const amrex::FArrayBox& srcfab,
                       const amrex::Box& tbx, int scomp, int dcomp, int ncomp)
 {
-    BL_PROFILE("BilinearFilter::ApplyStencil(FArrayBox)");
+    WARPX_PROFILE("BilinearFilter::ApplyStencil(FArrayBox)");
     ncomp = std::min(ncomp, srcfab.nComp());
     FArrayBox tmpfab;
     const Box& gbx = amrex::grow(tbx,stencil_length_each_dir-1);

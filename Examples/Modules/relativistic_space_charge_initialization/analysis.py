@@ -1,4 +1,11 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+
+# Copyright 2019-2020 Axel Huebl, Remi Lehe
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
 """
 This script checks the space-charge initialization routine, by
 verifying that the space-charge field of a Gaussian beam corresponds to
@@ -11,7 +18,6 @@ import matplotlib.pyplot as plt
 import yt
 import numpy as np
 import scipy.constants as scc
-from scipy.special import gammainc
 yt.funcs.mylog.setLevel(0)
 
 # Parameters from the Simulation

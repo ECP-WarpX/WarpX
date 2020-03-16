@@ -1,4 +1,11 @@
 #! /usr/bin/env python
+
+# Copyright 2019 Luca Fedeli, Maxence Thevenet
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
 import yt
 import numpy as np
 import scipy.stats as st
@@ -16,8 +23,8 @@ def check():
     data_set = yt.load(filename)
 
     all_data = data_set.all_data()
-    res_ele_tau = all_data["electrons", 'particle_tau']
-    res_pos_tau = all_data["positrons", 'particle_tau']
+    res_ele_tau = all_data["electrons", 'particle_optical_depth_QSR']
+    res_pos_tau = all_data["positrons", 'particle_optical_depth_QSR']
 
     loc_ele, scale_ele = st.expon.fit(res_ele_tau)
     loc_pos, scale_pos = st.expon.fit(res_pos_tau)

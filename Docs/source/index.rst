@@ -38,4 +38,5 @@ In order to learn to use the code, please see the sections below:
    visualization/visualization
    theory/theory
    developers/developers
-   api/library_root
+   developers/doxygen
+   acknowledge

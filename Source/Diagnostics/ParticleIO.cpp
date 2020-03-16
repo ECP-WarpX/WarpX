@@ -1,5 +1,13 @@
-#include <MultiParticleContainer.H>
-#include <WarpX.H>
+/* Copyright 2019 Andrew Myers, Axel Huebl, David Grote
+ * Luca Fedeli, Maxence Thevenet, Revathi Jambunathan
+ * Weiqun Zhang, levinem
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "Particles/MultiParticleContainer.H"
+#include "WarpX.H"
 
 using namespace amrex;
 
@@ -112,9 +120,12 @@ MultiParticleContainer::WritePlotFile (const std::string& dir) const
             }
 
 #ifdef WARPX_QED
-                if(pc->m_do_qed){
-                        real_names.push_back("tau");
-                }
+            if( pc->has_breit_wheeler() ) {
+                real_names.push_back("optical_depth_BW");
+            }
+            if( pc->has_quantum_sync() ) {
+                real_names.push_back("optical_depth_QSR");
+            }
 #endif
 
             // Convert momentum to SI
@@ -161,7 +172,7 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
 void
 PhysicalParticleContainer::ConvertUnits(ConvertDirection convert_direction)
 {
-    BL_PROFILE("PPC::ConvertUnits()");
+    WARPX_PROFILE("PPC::ConvertUnits()");
 
     // Compute conversion factor
     Real factor = 1;

@@ -1,9 +1,15 @@
 #! /usr/bin/env python
+
+# Copyright 2019 Luca Fedeli, Maxence Thevenet
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
 # -*- coding: utf-8 -*-
 
 import yt
 import numpy as np
-import scipy.stats as st
 import sys
 import math as m
 import scipy.special as spe
@@ -19,8 +25,8 @@ import scipy.integrate as integ
 # References:
 # 1) R. Duclous et al 2011 Plasma Phys. Control. Fusion 53 015009
 # 2) A. Gonoskov et al. 2015 Phys. Rev. E 92, 023305
-# 3) M. Lobet. PhD thesis "Effets radiatifs et d'électrodynamique
-#    quantique dans l'interaction laser-matière ultra-relativiste"
+# 3) M. Lobet. PhD thesis "Effets radiatifs et d'electrodynamique
+#    quantique dans l'interaction laser-matiere ultra-relativiste"
 #    URL: https://tel.archives-ouvertes.fr/tel-01314224
 
 
@@ -98,7 +104,7 @@ def check():
     all_data_end = data_set_end.all_data()
 
     tau_end_avg = np.array([
-       np.average(all_data_end[name, 'particle_tau'])
+       np.average(all_data_end[name, 'particle_optical_depth_BW'])
        for name in spec_names])
 
     dNBW_dt_sim = (tau_begin_avg - tau_end_avg)/sim_time

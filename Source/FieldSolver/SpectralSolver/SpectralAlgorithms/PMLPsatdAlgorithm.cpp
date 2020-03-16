@@ -1,6 +1,16 @@
-#include <PMLPsatdAlgorithm.H>
-#include <WarpXConst.H>
+/* Copyright 2019 Remi Lehe
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "PMLPsatdAlgorithm.H"
+#include "Utils/WarpXConst.H"
+
 #include <cmath>
+
+
+#if WARPX_USE_PSATD
 
 using namespace amrex;
 
@@ -144,3 +154,4 @@ void PMLPsatdAlgorithm::InitializeSpectralCoefficients (
         });
     }
 };
+#endif // WARPX_USE_PSATD

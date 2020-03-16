@@ -1,10 +1,18 @@
+/* Copyright 2019 Yinjian Zhao
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PARTICLES_COLLISION_UPDATE_MOMENTUM_PEREZ_ELASTIC_H_
 #define WARPX_PARTICLES_COLLISION_UPDATE_MOMENTUM_PEREZ_ELASTIC_H_
 
-#include <WarpXConst.H>
+#include "Utils/WarpXConst.H"
 #include <AMReX_Random.H>
+
 #include <cmath>  // isnan() isinf()
 #include <limits> // numeric_limits<float>::min()
+
 
 /* \brief Update particle velocities according to
  *        F. Perez et al., Phys.Plasmas.19.083104 (2012),

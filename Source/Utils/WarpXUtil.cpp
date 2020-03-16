@@ -1,10 +1,20 @@
-#include <WarpXUtil.H>
-#include <WarpXConst.H>
+/* Copyright 2019-2020 Andrew Myers, Burlen Loring, Luca Fedeli
+ * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+ * Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "WarpXUtil.H"
+#include "WarpXConst.H"
+#include "WarpX.H"
+
 #include <AMReX_ParmParse.H>
-#include <WarpX.H>
 
 #include <cmath>
 #include <fstream>
+
 
 using namespace amrex;
 
@@ -118,7 +128,7 @@ void ConvertLabParamsToBoost()
  * zmin and zmax.
  */
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax){
-    BL_PROFILE("WarpX::NullifyMF()");
+    WARPX_PROFILE("WarpX::NullifyMF()");
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -172,30 +182,23 @@ namespace WarpXUtilIO{
 void Store_parserString(amrex::ParmParse& pp, std::string query_string,
                         std::string& stored_string)
 {
-
-    char cstr[query_string.size()+1];
-    strcpy(cstr, query_string.c_str());
-
     std::vector<std::string> f;
-    pp.getarr(cstr, f);
+    pp.getarr(query_string.c_str(), f);
     stored_string.clear();
     for (auto const& s : f) {
         stored_string += s;
     }
     f.clear();
-
 }
 
 
-WarpXParser makeParser (std::string const& parse_function)
+WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames)
 {
     WarpXParser parser(parse_function);
-    parser.registerVariables({"x","y","z"});
+    parser.registerVariables(varnames);
     ParmParse pp("my_constants");
     std::set<std::string> symbols = parser.symbols();
-    symbols.erase("x");
-    symbols.erase("y");
-    symbols.erase("z");
+    for (auto const& v : varnames) symbols.erase(v.c_str());
     for (auto it = symbols.begin(); it != symbols.end(); ) {
         Real v;
         if (pp.query(it->c_str(), v)) {

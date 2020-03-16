@@ -1,11 +1,19 @@
+/* Copyright 2019 Andrew Myers, Axel Huebl, David Grote
+ * Luca Fedeli, Maxence Thevenet, Remi Lehe
+ * Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_LaserParticleContainer_H_
 #define WARPX_LaserParticleContainer_H_
 
-#include <LaserProfiles.H>
+#include "LaserProfiles.H"
 
-#include <WarpXParticleContainer.H>
-#include <WarpXConst.H>
-#include <WarpXParser.H>
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXConst.H"
+#include "Parser/WarpXParser.H"
 
 #include <memory>
 #include <limits>
@@ -30,12 +38,6 @@ public:
 
     virtual void InitData () final;
 
-#ifdef WARPX_DO_ELECTROSTATIC
-    virtual void EvolveES (const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                           amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                           amrex::Real t, amrex::Real dt) { BL_ASSERT(false); }
-#endif // WARPX_DO_ELECTROSTATIC
-
     virtual void Evolve (int lev,
                          const amrex::MultiFab&, const amrex::MultiFab&, const amrex::MultiFab&,
                          const amrex::MultiFab&, const amrex::MultiFab&, const amrex::MultiFab&,
@@ -58,16 +60,16 @@ public:
 
     virtual void PostRestart () final;
 
-    void calculate_laser_plane_coordinates (const int np, const int thread_num,
+    void calculate_laser_plane_coordinates (const WarpXParIter& pti, const int np,
                                             amrex::Real * AMREX_RESTRICT const pplane_Xp,
                                             amrex::Real * AMREX_RESTRICT const pplane_Yp);
 
-    void update_laser_particle (const int np, amrex::ParticleReal * AMREX_RESTRICT const puxp,
+    void update_laser_particle (WarpXParIter& pti, const int np, amrex::ParticleReal * AMREX_RESTRICT const puxp,
                                 amrex::ParticleReal * AMREX_RESTRICT const puyp,
                                 amrex::ParticleReal * AMREX_RESTRICT const puzp,
                                 amrex::ParticleReal const * AMREX_RESTRICT const pwp,
                                 amrex::Real const * AMREX_RESTRICT const amplitude,
-                                const amrex::Real dt, const int thread_num);
+                                const amrex::Real dt);
 
 protected:
 

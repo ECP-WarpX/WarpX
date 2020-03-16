@@ -1,14 +1,23 @@
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, Cameron Yang
+ * David Grote, Luca Fedeli, Maxence Thevenet
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #include "PlasmaInjector.H"
-
-#include <WarpXConst.H>
-#include <WarpX_f.H>
-#include <WarpX.H>
-#include <WarpXUtil.H>
+#include "SpeciesPhysicalProperties.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX.H"
 
 #include <AMReX.H>
 
 #include <sstream>
 #include <functional>
+
 
 using namespace amrex;
 
@@ -86,22 +95,50 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     pp.query("density_min", density_min);
     pp.query("density_max", density_max);
 
+    std::string physical_species_s;
+    bool species_is_specified = pp.query("species_type", physical_species_s);
+    if (species_is_specified){
+        physical_species = species::from_string( physical_species_s );
+        // charge = SpeciesCharge[physical_species];
+        charge = species::get_charge( physical_species );
+        // mass = SpeciesMass[physical_species];
+        mass = species::get_mass( physical_species );
+    }
+
     // parse charge and mass
     std::string charge_s;
-    pp.get("charge", charge_s);
-    std::transform(charge_s.begin(),
-                   charge_s.end(),
-                   charge_s.begin(),
-                   ::tolower);
-    charge = parseChargeString(pp, charge_s);
+    bool charge_is_specified = pp.query("charge", charge_s);
+    if (charge_is_specified){
+        std::transform(charge_s.begin(),
+                       charge_s.end(),
+                       charge_s.begin(),
+                       ::tolower);
+        charge = parseChargeString(pp, charge_s);
+    }
+    if ( charge_is_specified && species_is_specified ){
+        Print()<<"WARNING: Both <species>.charge and <species>species_type specified\n";
+        Print()<<"         The charge in <species>.mass overwrite the one from <species>.species_type\n";
+    }
+    if (!charge_is_specified && !species_is_specified){
+        amrex::Abort("Need to specify at least one of species_type or charge");
+    }
 
     std::string mass_s;
-    pp.get("mass", mass_s);
-    std::transform(mass_s.begin(),
-                   mass_s.end(),
-                   mass_s.begin(),
-                   ::tolower);
-    mass = parseMassString(pp, mass_s);
+    bool mass_is_specified = pp.query("mass", mass_s);
+    if (mass_is_specified){
+        std::transform(mass_s.begin(),
+                       mass_s.end(),
+                       mass_s.begin(),
+                       ::tolower);
+        mass = parseMassString(pp, mass_s);
+    }
+    if ( mass_is_specified && species_is_specified ){
+        Print()<<"WARNING: Both <species>.mass and <species>species_type specified\n";
+        Print()<<"         The mass in <species>.mass overwrite the one from <species>.species_type\n";
+    }
+    if (!mass_is_specified && !species_is_specified){
+        amrex::Abort("Need to specify at least one of species_type or mass");
+    }
 
     // parse injection style
     std::string part_pos_s;
@@ -193,7 +230,7 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
         Store_parserString(pp, "density_function(x,y,z)", str_density_function);
         // Construct InjectorDensity with InjectorDensityParser.
         inj_rho.reset(new InjectorDensity((InjectorDensityParser*)nullptr,
-                                          makeParser(str_density_function)));
+                                          makeParser(str_density_function,{"x","y","z"})));
     } else {
         StringParseAbortMessage("Density profile type", rho_prof_s);
     }
@@ -316,9 +353,9 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
                                                str_momentum_function_uz);
         // Construct InjectorMomentum with InjectorMomentumParser.
         inj_mom.reset(new InjectorMomentum((InjectorMomentumParser*)nullptr,
-                                           makeParser(str_momentum_function_ux),
-                                           makeParser(str_momentum_function_uy),
-                                           makeParser(str_momentum_function_uz)));
+                                           makeParser(str_momentum_function_ux,{"x","y","z"}),
+                                           makeParser(str_momentum_function_uy,{"x","y","z"}),
+                                           makeParser(str_momentum_function_uz,{"x","y","z"})));
     } else {
         StringParseAbortMessage("Momentum distribution type", mom_dist_s);
     }
@@ -353,4 +390,3 @@ PlasmaInjector::getInjectorMomentum ()
 {
     return inj_mom.get();
 }
-

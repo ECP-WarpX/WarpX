@@ -1,9 +1,16 @@
+/* Copyright 2019 Axel Huebl, Maxence Thevenet, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef INJECTOR_DENSITY_H_
 #define INJECTOR_DENSITY_H_
 
-#include <GpuParser.H>
-#include <CustomDensityProb.H>
-#include <WarpXConst.H>
+#include "Parser/GpuParser.H"
+#include "CustomDensityProb.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX_Gpu.H>
 #include <AMReX_Dim3.H>
@@ -38,7 +45,7 @@ struct InjectorDensityParser
     }
 
     // InjectorDensityParser constructs this GpuParser from WarpXParser.
-    GpuParser m_parser;
+    GpuParser<3> m_parser;
 };
 
 // struct whose getDensity returns local density computed from predefined profile.
@@ -144,8 +151,6 @@ struct InjectorDensity
     void operator= (InjectorDensity &&) = delete;
 
     ~InjectorDensity ();
-
-    std::size_t sharedMemoryNeeded () const noexcept;
 
     // call getDensity from the object stored in the union
     // (the union is called Object, and the instance is called object).

@@ -1,7 +1,14 @@
+/* Copyright 2019 Andrew Myers, David Grote, Luca Fedeli
+ * Maxence Thevenet, Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PhotonParticleContainer_H_
 #define WARPX_PhotonParticleContainer_H_
 
-#include <PhysicalParticleContainer.H>
+#include "PhysicalParticleContainer.H"
 #include <AMReX_Vector.H>
 
 /**
@@ -54,9 +61,6 @@ public:
                          DtType a_dt_type=DtType::Full) override;
 
     virtual void PushPX(WarpXParIter& pti,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& xp,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& yp,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& zp,
                         amrex::Real dt, DtType a_dt_type=DtType::Full) override;
 
     // Do nothing

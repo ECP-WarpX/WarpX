@@ -1,10 +1,17 @@
-#include <WarpX.H>
-#include <NCIGodfreyFilter.H>
-#include <NCIGodfreyTables.H>
+/* Copyright 2019-2020 Luca Fedeli, Maxence Thevenet
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "NCIGodfreyFilter.H"
+#include "Utils/NCIGodfreyTables.H"
+#include "WarpX.H"
 
 #ifdef _OPENMP
-#include <omp.h>
+#   include <omp.h>
 #endif
+
 
 using namespace amrex;
 

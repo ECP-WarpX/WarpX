@@ -1,22 +1,27 @@
+/* Copyright 2019 Andrew Myers, Aurore Blelly, Axel Huebl
+ * David Grote, Maxence Thevenet, Remi Lehe
+ * Revathi Jambunathan, Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "WarpX.H"
+#include "Utils/WarpXConst.H"
+#include "BoundaryConditions/WarpX_PML_kernels.H"
+#include "BoundaryConditions/PML_current.H"
+#include "WarpX_FDTD.H"
+#ifdef WARPX_USE_PY
+#   include "Python/WarpX_py.H"
+#endif
+
+#ifdef BL_USE_SENSEI_INSITU
+#   include <AMReX_AmrMeshInSituBridge.H>
+#endif
 
 #include <cmath>
 #include <limits>
 
-#include <WarpX.H>
-#include <WarpXConst.H>
-#include <WarpX_f.H>
-#include <WarpX_K.H>
-#include <WarpX_PML_kernels.H>
-#include <WarpX_FDTD.H>
-#ifdef WARPX_USE_PY
-#include <WarpX_py.H>
-#endif
-
-#include <PML_current.H>
-
-#ifdef BL_USE_SENSEI_INSITU
-#include <AMReX_AmrMeshInSituBridge.H>
-#endif
 
 using namespace amrex;
 
@@ -108,7 +113,7 @@ WarpX::EvolveB (amrex::Real a_dt)
 void
 WarpX::EvolveB (int lev, amrex::Real a_dt)
 {
-    BL_PROFILE("WarpX::EvolveB()");
+    WARPX_PROFILE("WarpX::EvolveB()");
     EvolveB(lev, PatchType::fine, a_dt);
     if (lev > 0)
     {
@@ -119,129 +124,16 @@ WarpX::EvolveB (int lev, amrex::Real a_dt)
 void
 WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
 {
+
+    if (patch_type == PatchType::fine) {
+        m_fdtd_solver_fp[lev]->EvolveB( Bfield_fp[lev], Efield_fp[lev], a_dt );
+    } else {
+        m_fdtd_solver_cp[lev]->EvolveB( Bfield_cp[lev], Efield_cp[lev], a_dt );
+    }
+
     const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
     const std::array<Real,3>& dx = WarpX::CellSize(patch_level);
     const Real dtsdx = a_dt/dx[0], dtsdy = a_dt/dx[1], dtsdz = a_dt/dx[2];
-    const Real dxinv = 1./dx[0];
-
-    MultiFab *Ex, *Ey, *Ez, *Bx, *By, *Bz;
-    if (patch_type == PatchType::fine)
-    {
-        Ex = Efield_fp[lev][0].get();
-        Ey = Efield_fp[lev][1].get();
-        Ez = Efield_fp[lev][2].get();
-        Bx = Bfield_fp[lev][0].get();
-        By = Bfield_fp[lev][1].get();
-        Bz = Bfield_fp[lev][2].get();
-    }
-    else
-    {
-        Ex = Efield_cp[lev][0].get();
-        Ey = Efield_cp[lev][1].get();
-        Ez = Efield_cp[lev][2].get();
-        Bx = Bfield_cp[lev][0].get();
-        By = Bfield_cp[lev][1].get();
-        Bz = Bfield_cp[lev][2].get();
-    }
-
-    MultiFab* cost = costs[lev].get();
-    const IntVect& rr = (lev > 0) ? refRatio(lev-1) : IntVect::TheUnitVector();
-
-    // xmin is only used by the kernel for cylindrical geometry,
-    // in which case it is actually rmin.
-    const Real xmin = Geom(0).ProbLo(0);
-
-    // Loop through the grids, and over the tiles within each grid
-#ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-    for ( MFIter mfi(*Bx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
-    {
-        Real wt = amrex::second();
-
-        const Box& tbx  = mfi.tilebox(Bx_nodal_flag);
-        const Box& tby  = mfi.tilebox(By_nodal_flag);
-        const Box& tbz  = mfi.tilebox(Bz_nodal_flag);
-
-        auto const& Bxfab = Bx->array(mfi);
-        auto const& Byfab = By->array(mfi);
-        auto const& Bzfab = Bz->array(mfi);
-        auto const& Exfab = Ex->array(mfi);
-        auto const& Eyfab = Ey->array(mfi);
-        auto const& Ezfab = Ez->array(mfi);
-        if (do_nodal) {
-            amrex::ParallelFor(tbx, tby, tbz,
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_bx_nodal(j,k,l,Bxfab,Eyfab,Ezfab,dtsdy,dtsdz);
-            },
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_by_nodal(j,k,l,Byfab,Exfab,Ezfab,dtsdx,dtsdz);
-            },
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_bz_nodal(j,k,l,Bzfab,Exfab,Eyfab,dtsdx,dtsdy);
-            });
-        } else if (WarpX::maxwell_fdtd_solver_id == 0) {
-            const long nmodes = n_rz_azimuthal_modes;
-            amrex::ParallelFor(tbx, tby, tbz,
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_bx_yee(j,k,l,Bxfab,Eyfab,Ezfab,dtsdx,dtsdy,dtsdz,dxinv,xmin,nmodes);
-            },
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_by_yee(j,k,l,Byfab,Exfab,Ezfab,dtsdx,dtsdz,nmodes);
-            },
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_bz_yee(j,k,l,Bzfab,Exfab,Eyfab,dtsdx,dtsdy,dxinv,xmin,nmodes);
-            });
-        } else if (WarpX::maxwell_fdtd_solver_id == 1) {
-            Real betaxy, betaxz, betayx, betayz, betazx, betazy;
-            Real gammax, gammay, gammaz;
-            Real alphax, alphay, alphaz;
-            warpx_calculate_ckc_coefficients(dtsdx, dtsdy, dtsdz,
-                                             betaxy, betaxz, betayx, betayz, betazx, betazy,
-                                             gammax, gammay, gammaz,
-                                             alphax, alphay, alphaz);
-            amrex::ParallelFor(tbx, tby, tbz,
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_bx_ckc(j,k,l,Bxfab,Eyfab,Ezfab,
-                                  betaxy, betaxz, betayx, betayz, betazx, betazy,
-                                  gammax, gammay, gammaz,
-                                  alphax, alphay, alphaz);
-            },
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_by_ckc(j,k,l,Byfab,Exfab,Ezfab,
-                                  betaxy, betaxz, betayx, betayz, betazx, betazy,
-                                  gammax, gammay, gammaz,
-                                  alphax, alphay, alphaz);
-            },
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_bz_ckc(j,k,l,Bzfab,Exfab,Eyfab,
-                                  betaxy, betaxz, betayx, betayz, betazx, betazy,
-                                  gammax, gammay, gammaz,
-                                  alphax, alphay, alphaz);
-            });
-        }
-
-        if (cost) {
-            Box cbx = mfi.tilebox(IntVect{AMREX_D_DECL(0,0,0)});
-            if (patch_type == PatchType::coarse) cbx.refine(rr);
-            wt = (amrex::second() - wt) / cbx.d_numPts();
-            auto costfab = cost->array(mfi);
-            amrex::ParallelFor(cbx,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k)
-            {
-                costfab(i,j,k) += wt;
-            });
-        }
-    }
 
     if (do_pml && pml[lev]->ok())
     {
@@ -322,7 +214,7 @@ WarpX::EvolveE (amrex::Real a_dt)
 void
 WarpX::EvolveE (int lev, amrex::Real a_dt)
 {
-    BL_PROFILE("WarpX::EvolveE()");
+    WARPX_PROFILE("WarpX::EvolveE()");
     EvolveE(lev, PatchType::fine, a_dt);
     if (lev > 0)
     {
@@ -333,6 +225,15 @@ WarpX::EvolveE (int lev, amrex::Real a_dt)
 void
 WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 {
+
+    if (patch_type == PatchType::fine) {
+        m_fdtd_solver_fp[lev]->EvolveE( Efield_fp[lev], Bfield_fp[lev],
+                                      current_fp[lev], F_fp[lev], a_dt );
+    } else {
+        m_fdtd_solver_cp[lev]->EvolveE( Efield_cp[lev], Bfield_cp[lev],
+                                      current_cp[lev], F_cp[lev], a_dt );
+    }
+
     const Real mu_c2_dt = (PhysConst::mu0*PhysConst::c*PhysConst::c) * a_dt;
     const Real c2dt = (PhysConst::c*PhysConst::c) * a_dt;
 
@@ -369,129 +270,12 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
         F  = F_cp[lev].get();
     }
 
-    MultiFab* cost = costs[lev].get();
+    MultiFab* cost = WarpX::getCosts(lev);
     const IntVect& rr = (lev > 0) ? refRatio(lev-1) : IntVect::TheUnitVector();
 
     // xmin is only used by the kernel for cylindrical geometry,
     // in which case it is actually rmin.
     const Real xmin = Geom(0).ProbLo(0);
-
-    // Loop through the grids, and over the tiles within each grid
-#ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-    for ( MFIter mfi(*Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
-    {
-        Real wt = amrex::second();
-
-        const Box& tex  = mfi.tilebox(Ex_nodal_flag);
-        const Box& tey  = mfi.tilebox(Ey_nodal_flag);
-        const Box& tez  = mfi.tilebox(Ez_nodal_flag);
-
-        auto const& Exfab = Ex->array(mfi);
-        auto const& Eyfab = Ey->array(mfi);
-        auto const& Ezfab = Ez->array(mfi);
-        auto const& Bxfab = Bx->array(mfi);
-        auto const& Byfab = By->array(mfi);
-        auto const& Bzfab = Bz->array(mfi);
-        auto const& jxfab = jx->array(mfi);
-        auto const& jyfab = jy->array(mfi);
-        auto const& jzfab = jz->array(mfi);
-
-        if (do_nodal) {
-            amrex::ParallelFor(tex, tey, tez,
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_ex_nodal(j,k,l,Exfab,Byfab,Bzfab,jxfab,mu_c2_dt,dtsdy_c2,dtsdz_c2);
-            },
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_ey_nodal(j,k,l,Eyfab,Bxfab,Bzfab,jyfab,mu_c2_dt,dtsdx_c2,dtsdz_c2);
-            },
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_ez_nodal(j,k,l,Ezfab,Bxfab,Byfab,jzfab,mu_c2_dt,dtsdx_c2,dtsdy_c2);
-            });
-        } else {
-            const long nmodes = n_rz_azimuthal_modes;
-            amrex::ParallelFor(tex, tey, tez,
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_ex_yee(j,k,l,Exfab,Byfab,Bzfab,jxfab,mu_c2_dt,dtsdx_c2,dtsdy_c2,dtsdz_c2,dxinv,xmin,nmodes);
-            },
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_ey_yee(j,k,l,Eyfab,Bxfab,Bzfab,jyfab,Exfab,mu_c2_dt,dtsdx_c2,dtsdz_c2,xmin,nmodes);
-            },
-            [=] AMREX_GPU_DEVICE (int j, int k, int l)
-            {
-                warpx_push_ez_yee(j,k,l,Ezfab,Bxfab,Byfab,jzfab,mu_c2_dt,dtsdx_c2,dtsdy_c2,dxinv,xmin,nmodes);
-            });
-        }
-
-        if (F)
-        {
-            auto const& Ffab = F->array(mfi);
-            if (WarpX::maxwell_fdtd_solver_id == 0) {
-                amrex::ParallelFor(tex, tey, tez,
-                [=] AMREX_GPU_DEVICE (int j, int k, int l)
-                {
-                    warpx_push_ex_f_yee(j,k,l,Exfab,Ffab,dtsdx_c2);
-                },
-                [=] AMREX_GPU_DEVICE (int j, int k, int l)
-                {
-                    warpx_push_ey_f_yee(j,k,l,Eyfab,Ffab,dtsdy_c2);
-                },
-                [=] AMREX_GPU_DEVICE (int j, int k, int l)
-                {
-                    warpx_push_ez_f_yee(j,k,l,Ezfab,Ffab,dtsdz_c2);
-                });
-            }
-            else if (WarpX::maxwell_fdtd_solver_id == 1) {
-                Real betaxy, betaxz, betayx, betayz, betazx, betazy;
-                Real gammax, gammay, gammaz;
-                Real alphax, alphay, alphaz;
-                warpx_calculate_ckc_coefficients(dtsdx_c2, dtsdy_c2, dtsdz_c2,
-                                                 betaxy, betaxz, betayx, betayz, betazx, betazy,
-                                                 gammax, gammay, gammaz,
-                                                 alphax, alphay, alphaz);
-                amrex::ParallelFor(tex, tey, tez,
-                [=] AMREX_GPU_DEVICE (int j, int k, int l)
-                {
-                    warpx_push_ex_f_ckc(j,k,l,Exfab,Ffab,
-                                        betaxy, betaxz, betayx, betayz, betazx, betazy,
-                                        gammax, gammay, gammaz,
-                                        alphax, alphay, alphaz);
-                },
-                [=] AMREX_GPU_DEVICE (int j, int k, int l)
-                {
-                    warpx_push_ey_f_ckc(j,k,l,Eyfab,Ffab,
-                                        betaxy, betaxz, betayx, betayz, betazx, betazy,
-                                        gammax, gammay, gammaz,
-                                        alphax, alphay, alphaz);
-                },
-                [=] AMREX_GPU_DEVICE (int j, int k, int l)
-                {
-                    warpx_push_ez_f_ckc(j,k,l,Ezfab,Ffab,
-                                        betaxy, betaxz, betayx, betayz, betazx, betazy,
-                                        gammax, gammay, gammaz,
-                                        alphax, alphay, alphaz);
-                });
-            }
-        }
-
-        if (cost) {
-            Box cbx = mfi.tilebox(IntVect{AMREX_D_DECL(0,0,0)});
-            if (patch_type == PatchType::coarse) cbx.refine(rr);
-            wt = (amrex::second() - wt) / cbx.d_numPts();
-            auto costfab = cost->array(mfi);
-            amrex::ParallelFor(cbx,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k)
-            {
-                costfab(i,j,k) += wt;
-            });
-        }
-    }
 
     if (do_pml && pml[lev]->ok())
     {
@@ -643,7 +427,7 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
 {
     if (!do_dive_cleaning) return;
 
-    BL_PROFILE("WarpX::EvolveF()");
+    WARPX_PROFILE("WarpX::EvolveF()");
 
     static constexpr Real mu_c2 = PhysConst::mu0*PhysConst::c*PhysConst::c;
 
@@ -733,7 +517,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
         // these do not include the guard cells.
-        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev);
+        std::array<amrex::Real,3> galilean_shift = {0,0,0};
+        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, lev);
         const Dim3 lo = lbound(tilebox);
         const Real rmin = xyzmin[0];
         const int irmin = lo.x;
@@ -870,12 +655,13 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         Array4<Real> const& Rho_arr = Rho->array(mfi);
 
         tilebox = mfi.tilebox();
-        Box tb = convert(tilebox, IntVect::TheUnitVector());
+        Box tb = convert(tilebox, rho_nodal_flag);
 
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
         // these do not include the guard cells.
-        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, lev);
+        std::array<amrex::Real,3> galilean_shift = {0,0,0};
+        const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, lev);
         const Dim3 lo = lbound(tilebox);
         const Real rmin = xyzmin[0];
         const int irmin = lo.x;

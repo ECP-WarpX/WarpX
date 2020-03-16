@@ -1,17 +1,25 @@
+/* Copyright 2019 David Grote, Maxence Thevenet, Remi Lehe
+ * Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PARTICLES_PUSHER_UPDATEPOSITION_H_
 #define WARPX_PARTICLES_PUSHER_UPDATEPOSITION_H_
 
-#include <AMReX_FArrayBox.H>
-#include <WarpXConst.H>
+#include "Utils/WarpXConst.H"
+
 #include <AMReX_REAL.H>
+#include <AMReX_FArrayBox.H>
+
 
 /** \brief Push the particle's positions over one timestep,
  *    given the value of its momenta `ux`, `uy`, `uz` */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void UpdatePosition(
-    amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
-    const amrex::ParticleReal ux, const amrex::ParticleReal uy, const amrex::ParticleReal uz,
-    const amrex::Real dt )
+void UpdatePosition(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
+                    const amrex::ParticleReal ux, const amrex::ParticleReal uy, const amrex::ParticleReal uz,
+                    const amrex::Real dt )
 {
 
     constexpr amrex::Real inv_c2 = 1./(PhysConst::c*PhysConst::c);
@@ -24,7 +32,6 @@ void UpdatePosition(
     y += uy * inv_gamma * dt;
 #endif
     z += uz * inv_gamma * dt;
-
 }
 
 /* \brief Push the particle's positions over one timestep,

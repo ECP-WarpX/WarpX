@@ -1,15 +1,21 @@
-#include <LaserProfiles.H>
-
-#include <WarpX_Complex.H>
-#include <WarpXConst.H>
+/* Copyright 2019 Axel Huebl, Luca Fedeli, Maxence Thevenet
+ * Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "Laser/LaserProfiles.H"
+#include "Utils/WarpX_Complex.H"
+#include "Utils/WarpXConst.H"
 
 #include <cmath>
 
+
 using namespace amrex;
-using namespace WarpXLaserProfiles;
 
 void
-GaussianLaserProfile::init (
+WarpXLaserProfiles::GaussianLaserProfile::init (
     const amrex::ParmParse& ppl,
     const amrex::ParmParse& /* ppc */,
     CommonLaserParameters params)
@@ -70,7 +76,7 @@ GaussianLaserProfile::init (
  * \param amplitude: pointer to array of field amplitude.
  */
 void
-GaussianLaserProfile::fill_amplitude (
+WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     const int np, Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {

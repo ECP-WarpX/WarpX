@@ -1,10 +1,18 @@
+/* Copyright 2019 Yinjian Zhao
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_
 #define WARPX_PARTICLES_COLLISION_ELASTIC_COLLISION_PEREZ_H_
 
 #include "UpdateMomentumPerezElastic.H"
 #include "ComputeTemperature.H"
-#include <WarpXConst.H>
+#include "Utils/WarpXConst.H"
+
 #include <AMReX_Random.H>
+
 
 /** \brief Prepare information for and call
  *        UpdateMomentumPerezElastic().

@@ -1,14 +1,25 @@
-#include <array>
-
+/* Copyright 2019 Andrew Myers, Aurore Blelly, Axel Huebl
+ * Maxence Thevenet, Remi Lehe, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PML_H_
 #define WARPX_PML_H_
+
+#include "Utils/WarpXProfilerWrapper.H"
+
+#ifdef WARPX_USE_PSATD
+#   include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#endif
 
 #include <AMReX_MultiFab.H>
 #include <AMReX_Geometry.H>
 
-#ifdef WARPX_USE_PSATD
-#include <SpectralSolver.H>
-#endif
+#include <array>
+
 
 struct Sigma : amrex::Gpu::ManagedVector<amrex::Real>
 {

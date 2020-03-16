@@ -1,28 +1,44 @@
+# Copyright 2018-2019 Axel Huebl, David Grote, Luca Fedeli
+# Maxence Thevenet, Remi Lehe
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
 dist: xenial
 language: c++
 sudo: true
+cache: pip
 
 env:
   matrix:
-    - WARPX_TEST_DIM=3 HAS_QED=FALSE
-    - WARPX_TEST_DIM=RZ HAS_QED=FALSE
-    - WARPX_TEST_DIM=2 HAS_QED=FALSE
-    - HAS_QED=TRUE
+    - WARPX_CI_REGULAR_CARTESIAN=TRUE
+    - WARPX_CI_PSATD=TRUE
+    - WARPX_CI_PYTHON_MAIN=TRUE
+    - WARPX_CI_SINGLE_PRECISION=TRUE
+    - WARPX_CI_RZ_OR_NOMPI=TRUE
+    - WARPX_CI_QED=TRUE
 
 before_install:
     - sudo apt-get update
-    - sudo apt-get install -y gcc gfortran g++ openmpi-bin libopenmpi-dev libfftw3-dev libfftw3-mpi-dev
-    # Install miniconda and python dependencies
-    - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    - bash Miniconda3-latest-Linux-x86_64.sh -b
-    - export PATH=/home/travis/miniconda3/bin:$PATH
-    - pip install --upgrade pip && pip install numpy scipy matplotlib mpi4py cython
-    - pip install git+https://github.com/yt-project/yt.git
+    - sudo apt-get install -y gcc gfortran g++ openmpi-bin libopenmpi-dev libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev pkg-config make python3 python3-pip python3-setuptools
+      # xenial misses "libadios-openmpi-dev"
+    - sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 2
+    - sudo update-alternatives --set python /usr/bin/python3
+
+install:
+    - python -m pip install --upgrade pip
+    - python -m pip install --upgrade cmake cython matplotlib mpi4py numpy scipy
+    - export CEI_CMAKE="/home/travis/.local/bin/cmake"
+    - python -m pip install --upgrade git+https://github.com/yt-project/yt.git
+    - sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY && sudo chmod a+x /usr/local/bin/cmake-easyinstall
 
 script:
     - export FFTW_HOME=/usr/
-    - export OMP_NUM_THREADS=1
+
     # Run the tests on the current commit
     - export WARPX_TEST_COMMIT=$TRAVIS_COMMIT
+
     # Run the script that prepares the test environment and runs the tests
+    - export OMP_NUM_THREADS=1
     - ./run_test.sh

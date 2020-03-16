@@ -1,4 +1,12 @@
-#include <WarpX_py.H>
+/* Copyright 2019 David Grote, Maxence Thevenet, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "WarpX_py.H"
+
 
 extern "C" {
 

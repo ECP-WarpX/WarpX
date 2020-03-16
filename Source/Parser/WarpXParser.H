@@ -1,3 +1,9 @@
+/* Copyright 2019 Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_PARSER_H_
 #define WARPX_PARSER_H_
 
@@ -15,7 +21,7 @@
 #include <omp.h>
 #endif
 
-class GpuParser;
+template <int N> class GpuParser;
 
 class WarpXParser
 {
@@ -50,7 +56,7 @@ public:
 
     std::set<std::string> symbols () const;
 
-    friend class GpuParser;
+    template <int N> friend class GpuParser;
 
 private:
     void clear ();
@@ -65,9 +71,11 @@ private:
 #ifdef _OPENMP
     std::vector<struct wp_parser*> m_parser;
     mutable std::vector<std::array<amrex::Real,16> > m_variables;
+    mutable std::vector<std::vector<std::string> > m_varnames;
 #else
     struct wp_parser* m_parser = nullptr;
     mutable std::array<amrex::Real,16> m_variables;
+    mutable std::vector<std::string> m_varnames;
 #endif
 };
 
@@ -76,9 +84,9 @@ amrex::Real
 WarpXParser::eval () const noexcept
 {
 #ifdef _OPENMP
-    return wp_ast_eval(m_parser[omp_get_thread_num()]->ast);
+    return wp_ast_eval(m_parser[omp_get_thread_num()]->ast,nullptr);
 #else
-    return wp_ast_eval(m_parser->ast);
+    return wp_ast_eval(m_parser->ast,nullptr);
 #endif
 }
 

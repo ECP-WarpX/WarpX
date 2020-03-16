@@ -1,10 +1,17 @@
-#include <WarpXComm.H>
-#include <WarpXComm_K.H>
-#include <WarpX.H>
-#include <WarpX_f.H>
-#include <WarpXSumGuardCells.H>
-#include <InterpolateCurrentFineToCoarse.H>
-#include <InterpolateDensityFineToCoarse.H>
+/* Copyright 2019 Andrew Myers, Aurore Blelly, Axel Huebl
+ * David Grote, Maxence Thevenet, Remi Lehe
+ * Revathi Jambunathan, Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "WarpXComm.H"
+#include "WarpXComm_K.H"
+#include "WarpX.H"
+#include "WarpXSumGuardCells.H"
+#include "InterpolateCurrentFineToCoarse.H"
+#include "InterpolateDensityFineToCoarse.H"
 
 #include <algorithm>
 #include <cstdlib>
@@ -52,7 +59,7 @@ WarpX::ExchangeWithPmlF (int lev)
 void
 WarpX::UpdateAuxilaryData ()
 {
-    BL_PROFILE("UpdateAuxilaryData()");
+    WARPX_PROFILE("UpdateAuxilaryData()");
 
     if (Bfield_aux[0][0]->ixType() == Bfield_fp[0][0]->ixType()) {
         UpdateAuxilaryDataSameType();
@@ -321,85 +328,103 @@ WarpX::UpdateAuxilaryDataSameType ()
 }
 
 void
-WarpX::FillBoundaryB ()
+WarpX::FillBoundaryB (IntVect ng, IntVect ng_extra_fine)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryB(lev);
+        FillBoundaryB(lev, ng, ng_extra_fine);
     }
 }
 
 void
-WarpX::FillBoundaryE ()
+WarpX::FillBoundaryE (IntVect ng, IntVect ng_extra_fine)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryE(lev);
+        FillBoundaryE(lev, ng, ng_extra_fine);
     }
 }
 
 void
-WarpX::FillBoundaryF ()
+WarpX::FillBoundaryF (IntVect ng)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        FillBoundaryF(lev);
+        FillBoundaryF(lev, ng);
     }
 }
 
 void
-WarpX::FillBoundaryE(int lev)
+WarpX::FillBoundaryE(int lev, IntVect ng, IntVect ng_extra_fine)
 {
-    FillBoundaryE(lev, PatchType::fine);
-    if (lev > 0) FillBoundaryE(lev, PatchType::coarse);
+    FillBoundaryE(lev, PatchType::fine, ng+ng_extra_fine);
+    if (lev > 0) FillBoundaryE(lev, PatchType::coarse, ng);
 }
 
 void
-WarpX::FillBoundaryE (int lev, PatchType patch_type)
+WarpX::FillBoundaryE (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine)
     {
         if (do_pml && pml[lev]->ok())
         {
             pml[lev]->ExchangeE(patch_type,
-                              { Efield_fp[lev][0].get(),
-                                Efield_fp[lev][1].get(),
-                                Efield_fp[lev][2].get() },
+                                { Efield_fp[lev][0].get(),
+                                  Efield_fp[lev][1].get(),
+                                  Efield_fp[lev][2].get() },
                                 do_pml_in_domain);
             pml[lev]->FillBoundaryE(patch_type);
         }
 
         const auto& period = Geom(lev).periodicity();
-        Vector<MultiFab*> mf{Efield_fp[lev][0].get(),Efield_fp[lev][1].get(),Efield_fp[lev][2].get()};
-        amrex::FillBoundary(mf, period);
+        if ( safe_guard_cells ){
+            Vector<MultiFab*> mf{Efield_fp[lev][0].get(),Efield_fp[lev][1].get(),Efield_fp[lev][2].get()};
+            amrex::FillBoundary(mf, period);
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Efield_fp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryE, requested more guard cells than allocated");
+            Efield_fp[lev][0]->FillBoundary(ng, period);
+            Efield_fp[lev][1]->FillBoundary(ng, period);
+            Efield_fp[lev][2]->FillBoundary(ng, period);
+        }
     }
     else if (patch_type == PatchType::coarse)
     {
         if (do_pml && pml[lev]->ok())
         {
-        pml[lev]->ExchangeE(patch_type,
-                            { Efield_cp[lev][0].get(),
-                              Efield_cp[lev][1].get(),
-                              Efield_cp[lev][2].get() },
-                              do_pml_in_domain);
-        pml[lev]->FillBoundaryE(patch_type);
+            pml[lev]->ExchangeE(patch_type,
+                                { Efield_cp[lev][0].get(),
+                                  Efield_cp[lev][1].get(),
+                                  Efield_cp[lev][2].get() },
+                                do_pml_in_domain);
+            pml[lev]->FillBoundaryE(patch_type);
         }
-
         const auto& cperiod = Geom(lev-1).periodicity();
-        Vector<MultiFab*> mf{Efield_cp[lev][0].get(),Efield_cp[lev][1].get(),Efield_cp[lev][2].get()};
-        amrex::FillBoundary(mf, cperiod);
+        if ( safe_guard_cells ) {
+            Vector<MultiFab*> mf{Efield_cp[lev][0].get(),Efield_cp[lev][1].get(),Efield_cp[lev][2].get()};
+            amrex::FillBoundary(mf, cperiod);
+
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Efield_cp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryE, requested more guard cells than allocated");
+            Efield_cp[lev][0]->FillBoundary(ng, cperiod);
+            Efield_cp[lev][1]->FillBoundary(ng, cperiod);
+            Efield_cp[lev][2]->FillBoundary(ng, cperiod);
+        }
     }
 }
 
 void
-WarpX::FillBoundaryB (int lev)
+WarpX::FillBoundaryB (int lev, IntVect ng, IntVect ng_extra_fine)
 {
-    FillBoundaryB(lev, PatchType::fine);
-    if (lev > 0) FillBoundaryB(lev, PatchType::coarse);
+    FillBoundaryB(lev, PatchType::fine, ng + ng_extra_fine);
+    if (lev > 0) FillBoundaryB(lev, PatchType::coarse, ng);
 }
 
 void
-WarpX::FillBoundaryB (int lev, PatchType patch_type)
+WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine)
     {
@@ -413,8 +438,17 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type)
         pml[lev]->FillBoundaryB(patch_type);
         }
         const auto& period = Geom(lev).periodicity();
-        Vector<MultiFab*> mf{Bfield_fp[lev][0].get(),Bfield_fp[lev][1].get(),Bfield_fp[lev][2].get()};
-        amrex::FillBoundary(mf, period);
+        if ( safe_guard_cells ) {
+            Vector<MultiFab*> mf{Bfield_fp[lev][0].get(),Bfield_fp[lev][1].get(),Bfield_fp[lev][2].get()};
+            amrex::FillBoundary(mf, period);
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Bfield_fp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryB, requested more guard cells than allocated");
+            Bfield_fp[lev][0]->FillBoundary(ng, period);
+            Bfield_fp[lev][1]->FillBoundary(ng, period);
+            Bfield_fp[lev][2]->FillBoundary(ng, period);
+        }
     }
     else if (patch_type == PatchType::coarse)
     {
@@ -428,20 +462,29 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type)
         pml[lev]->FillBoundaryB(patch_type);
         }
         const auto& cperiod = Geom(lev-1).periodicity();
-        Vector<MultiFab*> mf{Bfield_cp[lev][0].get(),Bfield_cp[lev][1].get(),Bfield_cp[lev][2].get()};
-        amrex::FillBoundary(mf, cperiod);
+        if ( safe_guard_cells ){
+            Vector<MultiFab*> mf{Bfield_cp[lev][0].get(),Bfield_cp[lev][1].get(),Bfield_cp[lev][2].get()};
+            amrex::FillBoundary(mf, cperiod);
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Bfield_cp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryB, requested more guard cells than allocated");
+            Bfield_cp[lev][0]->FillBoundary(ng, cperiod);
+            Bfield_cp[lev][1]->FillBoundary(ng, cperiod);
+            Bfield_cp[lev][2]->FillBoundary(ng, cperiod);
+        }
     }
 }
 
 void
-WarpX::FillBoundaryF (int lev)
+WarpX::FillBoundaryF (int lev, IntVect ng)
 {
-  FillBoundaryF(lev, PatchType::fine);
-  if (lev > 0) FillBoundaryF(lev, PatchType::coarse);
+    FillBoundaryF(lev, PatchType::fine, ng);
+    if (lev > 0) FillBoundaryF(lev, PatchType::coarse, ng);
 }
 
 void
-WarpX::FillBoundaryF (int lev, PatchType patch_type)
+WarpX::FillBoundaryF (int lev, PatchType patch_type, IntVect ng)
 {
     if (patch_type == PatchType::fine && F_fp[lev])
     {
@@ -453,7 +496,14 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type)
         }
 
         const auto& period = Geom(lev).periodicity();
-        F_fp[lev]->FillBoundary(period);
+        if ( safe_guard_cells ) {
+            F_fp[lev]->FillBoundary(period);
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= F_fp[lev]->nGrowVect(),
+                "Error: in FillBoundaryF, requested more guard cells than allocated");
+            F_fp[lev]->FillBoundary(ng, period);
+        }
     }
     else if (patch_type == PatchType::coarse && F_cp[lev])
     {
@@ -465,14 +515,42 @@ WarpX::FillBoundaryF (int lev, PatchType patch_type)
         }
 
         const auto& cperiod = Geom(lev-1).periodicity();
-        F_cp[lev]->FillBoundary(cperiod);
+        if ( safe_guard_cells ) {
+            F_cp[lev]->FillBoundary(cperiod);
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= F_cp[lev]->nGrowVect(),
+                "Error: in FillBoundaryF, requested more guard cells than allocated");
+            F_cp[lev]->FillBoundary(ng, cperiod);
+        }
     }
+}
+
+void
+WarpX::FillBoundaryAux (IntVect ng)
+{
+    for (int lev = 0; lev <= finest_level-1; ++lev)
+    {
+        FillBoundaryAux(lev, ng);
+    }
+}
+
+void
+WarpX::FillBoundaryAux (int lev, IntVect ng)
+{
+    const auto& period = Geom(lev).periodicity();
+    Efield_aux[lev][0]->FillBoundary(ng, period);
+    Efield_aux[lev][1]->FillBoundary(ng, period);
+    Efield_aux[lev][2]->FillBoundary(ng, period);
+    Bfield_aux[lev][0]->FillBoundary(ng, period);
+    Bfield_aux[lev][1]->FillBoundary(ng, period);
+    Bfield_aux[lev][2]->FillBoundary(ng, period);
 }
 
 void
 WarpX::SyncCurrent ()
 {
-    BL_PROFILE("SyncCurrent()");
+    WARPX_PROFILE("SyncCurrent()");
 
     // Restrict fine patch current onto the coarse patch, before
     // summing the guard cells of the fine patch
@@ -507,7 +585,7 @@ interpolateCurrentFineToCoarse ( std::array< amrex::MultiFab const *, 3 > const 
                                  std::array< amrex::MultiFab       *, 3 > const & coarse,
                                  int const refinement_ratio)
 {
-    BL_PROFILE("interpolateCurrentFineToCoarse()");
+    WARPX_PROFILE("interpolateCurrentFineToCoarse()");
     BL_ASSERT(refinement_ratio == 2);
     const IntVect& ng = (fine[0]->nGrowVect() + 1) / refinement_ratio; // add equivalent no. of guards to coarse patch
 
@@ -539,7 +617,7 @@ interpolateCurrentFineToCoarse ( std::array< amrex::MultiFab const *, 3 > const 
 void
 WarpX::SyncRho ()
 {
-    BL_PROFILE("SyncRho()");
+    WARPX_PROFILE("SyncRho()");
 
     if (!rho_fp[0]) return;
     const int ncomp = rho_fp[0]->nComp();
@@ -565,7 +643,7 @@ WarpX::SyncRho ()
 void
 interpolateDensityFineToCoarse (const MultiFab& fine, MultiFab& coarse, int const refinement_ratio)
 {
-    BL_PROFILE("interpolateDensityFineToCoarse()");
+    WARPX_PROFILE("interpolateDensityFineToCoarse()");
     BL_ASSERT(refinement_ratio == 2);
     const IntVect& ng = (fine.nGrowVect() + 1) / refinement_ratio;  // add equivalent no. of guards to coarse patch
     const int nc = fine.nComp();

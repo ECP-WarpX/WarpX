@@ -1,7 +1,16 @@
-#include <WarpXConst.H>
-#include <SpectralKSpace.H>
+/* Copyright 2019-2020 Andrew Myers, Maxence Thevenet, Remi Lehe
+ * Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "Utils/WarpXConst.H"
+#include "SpectralKSpace.H"
+
 #include <cmath>
 #include <math.h>
+
 
 using namespace amrex;
 using namespace Gpu;
@@ -148,12 +157,7 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
         }
         const Complex I{0,1};
         for (int i=0; i<k.size(); i++ ){
-#ifdef AMREX_USE_GPU
-            shift[i] = thrust::exp( I*sign*k[i]*0.5*dx[i_dim] );
-#else
-            shift[i] = std::exp( I*sign*k[i]*0.5*dx[i_dim] );
-#endif
-
+            shift[i] = exp( I*sign*k[i]*0.5*dx[i_dim]);
         }
     }
     return shift_factor;

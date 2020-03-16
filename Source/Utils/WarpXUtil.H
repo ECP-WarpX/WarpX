@@ -1,13 +1,22 @@
+/* Copyright 2019-2020 Andrew Myers, Luca Fedeli, Maxence Thevenet
+ * Revathi Jambunathan, Revathi Jambunathan
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_UTILS_H_
 #define WARPX_UTILS_H_
+
+#include "Parser/WarpXParser.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
-#include <WarpXParser.H>
 
 #include <string>
+
 
 void ReadBoostedFrameParameters(amrex::Real& gamma_boost, amrex::Real& beta_boost,
                                 amrex::Vector<int>& boost_direction);
@@ -119,6 +128,6 @@ T trilinear_interp(T x0, T x1,T y0, T y1, T z0, T z1,
 *
 * \param parse_function String to read to initialize the parser.
 */
-WarpXParser makeParser (std::string const& parse_function);
+WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames);
 
 #endif //WARPX_UTILS_H_

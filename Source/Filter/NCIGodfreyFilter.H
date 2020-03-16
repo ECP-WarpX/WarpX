@@ -1,7 +1,14 @@
-#include <Filter.H>
-
+/* Copyright 2019 Maxence Thevenet
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 #ifndef WARPX_GODFREY_FILTER_H_
 #define WARPX_GODFREY_FILTER_H_
+
+#include "Filter.H"
+
 
 enum class godfrey_coeff_set { Ex_Ey_Bz=0, Bx_By_Ez=1 };
 

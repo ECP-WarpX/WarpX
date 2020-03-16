@@ -1,3 +1,10 @@
+/* Copyright 2019 Axel Huebl, Maxence Thevenet, Weiqun Zhang
+ *
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
 
 #include <WarpX.H>
 #include <AMReX_BoxIterator.H>
@@ -7,7 +14,7 @@
 using namespace amrex;
 
 void
-WarpX::ErrorEst (int lev, TagBoxArray& tags, Real time, int /*ngrow*/)
+WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
 {
     const Real* problo = Geom(lev).ProbLo();
     const Real* dx = Geom(lev).CellSize();

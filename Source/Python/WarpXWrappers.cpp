@@ -1,9 +1,20 @@
+/* Copyright 2019 Andrew Myers, Axel Huebl, David Grote
+ * Luca Fedeli, Maxence Thevenet, Remi Lehe
+ * Weiqun Zhang
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "WarpXWrappers.h"
+#include "Particles/WarpXParticleContainer.H"
+#include "WarpX.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX_py.H"
 
-#include <WarpXWrappers.h>
-#include <WarpXParticleContainer.H>
-#include <WarpX.H>
-#include <WarpXUtil.H>
-#include <WarpX_py.H>
+#include <AMReX.H>
+#include <AMReX_BLProfiler.H>
+
 
 namespace
 {
@@ -173,9 +184,9 @@ extern "C"
     }
 
     void warpx_addNParticles(int speciesnumber, int lenx,
-                             amrex::ParticleReal* x, amrex::ParticleReal* y, amrex::ParticleReal* z,
-                             amrex::ParticleReal* vx, amrex::ParticleReal* vy, amrex::ParticleReal* vz,
-                             int nattr, amrex::ParticleReal* attr, int uniqueparticles)
+                             amrex::ParticleReal const * x, amrex::ParticleReal const * y, amrex::ParticleReal const * z,
+                             amrex::ParticleReal const * vx, amrex::ParticleReal const * vy, amrex::ParticleReal const * vz,
+                             int nattr, amrex::ParticleReal const * attr, int uniqueparticles)
     {
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         auto & myspc = mypc.GetParticleContainer(speciesnumber);
@@ -346,11 +357,11 @@ extern "C"
     }
     void warpx_FillBoundaryE () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.FillBoundaryE ();
+        warpx.FillBoundaryE (warpx.getngE());
     }
     void warpx_FillBoundaryB () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.FillBoundaryB ();
+        warpx.FillBoundaryB (warpx.getngE());
     }
     void warpx_SyncCurrent () {
         WarpX& warpx = WarpX::GetInstance();
@@ -404,6 +415,11 @@ extern "C"
         return warpx.plotInt ();
     }
 
+    int warpx_openpmdInt () {
+        WarpX& warpx = WarpX::GetInstance();
+        return warpx.openpmdInt ();
+    }
+
     void warpx_WriteCheckPointFile () {
         WarpX& warpx = WarpX::GetInstance();
         warpx.WriteCheckPointFile ();
@@ -411,6 +427,10 @@ extern "C"
     void warpx_WritePlotFile () {
         WarpX& warpx = WarpX::GetInstance();
         warpx.WritePlotFile ();
+    }
+    void warpx_WriteOpenPMDFile () {
+        WarpX& warpx = WarpX::GetInstance();
+        warpx.WriteOpenPMDFile ();
     }
 
     int warpx_finestLevel () {
