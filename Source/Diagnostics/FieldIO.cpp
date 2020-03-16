@@ -410,7 +410,7 @@ AverageAndPackScalarField (MultiFab& mf_avg,
         MultiFab::Copy( mf_avg, *scalar_total, 0, dcomp, 1, ngrow);
     } else if ( scalar_total->is_nodal() ){
         // - Fully nodal
-        Average::ToCellCenter( mf_avg, scalar_total, dcomp, ngrow, 0, 1 );
+        Average::ToCellCenter( mf_avg, *scalar_total, dcomp, ngrow, 0, 1 );
     } else {
         amrex::Abort("Unknown staggering.");
     }
