@@ -251,7 +251,9 @@ Particle initialization
 
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis
-    within a cell. Note that for RZ, the three axis are radius, theta, and z.
+    within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
+    number of particles per theta is at least two times the number of azimuthal modes requested.
+    (It is recommended to do a convergence scan of the number of particles per theta)
 
 * ``<species_name>.do_continuous_injection`` (`0` or `1`)
     Whether to inject particles during the simulation, and not only at
@@ -939,6 +941,11 @@ Numerics and algorithms
 
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
+
+* ``psatd.nx_guard`, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
+    The number of guard cells to use with PSATD solver.
+    If not set by users, these values are calculated automatically and determined *empirically* and
+    would be equal the order of the solver for nodal grid, and half the order of the solver for staggered.
 
 * ``psatd.hybrid_mpi_decomposition`` (`0` or `1`; default: 0)
     Whether to use a different MPI decomposition for the particle-grid operations
