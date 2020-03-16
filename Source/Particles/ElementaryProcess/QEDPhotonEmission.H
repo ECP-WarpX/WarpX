@@ -175,9 +175,9 @@ private:
 */
 template <typename PTile>
 void cleanLowEnergyPhotons(
-PTile& ptile,
-const int old_size, const int num_added,
-const amrex::ParticleReal t_energy_threshold)
+    PTile& ptile,
+    const int old_size, const int num_added,
+    const amrex::ParticleReal t_energy_threshold)
 {
     auto pp = ptile.GetArrayOfStructs()().data() + old_size;
 
