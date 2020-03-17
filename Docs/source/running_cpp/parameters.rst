@@ -1377,8 +1377,8 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
         * ``qed_qs.load_table_from`` (`string`): name of the lookup table file to read from.
 
-* ``qed_qs.photon_creation_energy_threshold`` (`float`): energy threshold for photon particle creation in SI units.
-    The default value is twice the rest mass of an electron.
+* ``qed_qs.photon_creation_energy_threshold`` (`float`) optional (default `2*me*c^2`)
+    Energy threshold for photon particle creation in SI units.
 
 Checkpoints and restart
 -----------------------
