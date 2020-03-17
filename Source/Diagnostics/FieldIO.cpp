@@ -250,21 +250,6 @@ ConstructTotalRZScalarField (MultiFab& scalar_total,
 }
 #endif
 
-void
-PackPlotDataPtrs (Vector<const MultiFab*>& pmf,
-                  const std::array<std::unique_ptr<MultiFab>,3>& data)
-{
-    BL_ASSERT(pmf.size() == AMREX_SPACEDIM);
-#if (AMREX_SPACEDIM == 3)
-    pmf[0] = data[0].get();
-    pmf[1] = data[1].get();
-    pmf[2] = data[2].get();
-#elif (AMREX_SPACEDIM == 2)
-    pmf[0] = data[0].get();
-    pmf[1] = data[2].get();
-#endif
-}
-
 /** \brief Takes an array of 3 MultiFab `vector_field`
  * (representing the x, y, z components of a vector),
  * averages it to the cell center, and stores the
