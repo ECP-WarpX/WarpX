@@ -1299,7 +1299,7 @@ Diagnostics and output
     The separator between row values in the output file.
     The default separator is a whitespace.
 
-Lookup tables for QED modules (implementation in progress)
+Lookup tables and other settings for QED modules (implementation in progress)
 ----------------------------------------------------------
 Lookup tables store pre-computed values for functions used by the QED modules.
 **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
@@ -1377,6 +1377,8 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
         * ``qed_qs.load_table_from`` (`string`): name of the lookup table file to read from.
 
+* ``qed_qs.photon_creation_energy_threshold`` (`float`): energy threshold for photon particle creation in SI units.
+    The default value is twice the rest mass of an electron.
 
 Checkpoints and restart
 -----------------------
