@@ -13,7 +13,7 @@ Diagnostics::~Diagnostics()
 {
     delete m_flush_format;
     for ( int lev=0; lev<nlev; lev++ ){
-        mf_avg.reset();
+        mf_avg[lev].reset();
         for ( int i=0; i<ncomp; i++ ){
             allfields[lev][i].reset();
         }
