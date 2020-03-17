@@ -38,7 +38,7 @@ private:
     /** Pointer to all fields, per level
      * levels    < Ex Ey Ez Bx etc.                 >
      */
-    amrex::Vector< amrex::Vector <amrex::MultiFab*> > allfields;
+    amrex::Vector< amrex::Vector <amrex::MultiFab const *> > allfields;
     /** output multifab, where all fields are cell-centered and stacked */
     amrex::Vector< amrex::MultiFab > mf_avg;
     /** number of levels to output */

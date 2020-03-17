@@ -187,10 +187,10 @@ public:
     // do nodal
     static int do_nodal;
 
-    amrex::MultiFab * get_pointer_Efield_aux  (int lev, int direction) { return Efield_aux[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) { return Bfield_aux[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) { return current_fp[lev][direction].get(); }
-    amrex::MultiFab * get_pointer_rho_fp  (int lev) { return rho_fp[lev].get(); }
+    amrex::MultiFab * const get_pointer_Efield_aux  (int lev, int direction) { return Efield_aux[lev][direction].get(); }
+    amrex::MultiFab * const get_pointer_Bfield_aux  (int lev, int direction) { return Bfield_aux[lev][direction].get(); }
+    amrex::MultiFab * const get_pointer_current_fp  (int lev, int direction) { return current_fp[lev][direction].get(); }
+    amrex::MultiFab * const get_pointer_rho_fp  (int lev) { return rho_fp[lev].get(); }
 
     const amrex::MultiFab& getcurrent (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
