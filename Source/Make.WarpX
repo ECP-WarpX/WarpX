@@ -89,7 +89,6 @@ ifeq ($(QED),TRUE)
   CFLAGS   += -DWARPX_QED
   FFLAGS   += -DWARPX_QED
   F90FLAGS += -DWARPX_QED
-  include $(WARPX_HOME)/Source/QED/Make.package
   USERSuffix := $(USERSuffix).QED
 
   ifeq ($(QED_TABLE_GEN),TRUE)
@@ -155,7 +154,16 @@ ifeq ($(USE_PSATD),TRUE)
   DEFINES += -DWARPX_USE_PSATD
   ifeq ($(USE_CUDA),FALSE) # Running on CPU
      # Use FFTW
-     libraries += -lfftw3_mpi -lfftw3 -lfftw3_threads
+     ifeq ($(PRECISION),FLOAT)
+          libraries += -lfftw3f_mpi -lfftw3f -lfftw3f_threads
+     else
+          libraries += -lfftw3_mpi -lfftw3 -lfftw3_threads
+     endif
+     ifeq ($(USE_PSATD_PICSAR),TRUE)
+        # Compile with PICSAR's Hybrid-MPI PSATD
+        DEFINES += -DWARPX_USE_PSATD_HYBRID
+        DEFINES += -DFFTW # PICSAR uses it
+     endif
   else
     # Use cuFFT
     libraries += -lcufft
