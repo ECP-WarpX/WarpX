@@ -179,7 +179,11 @@ MultiParticleContainer::ReadParameters ()
             pp.queryarr("deposit_on_main_grid", tmp);
             for (auto const& name : tmp) {
                 auto it = std::find(species_names.begin(), species_names.end(), name);
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(it != species_names.end(), "ERROR: species in particles.deposit_on_main_grid must be part of particles.species_names");
+                WarpXUtilMsg::AlwaysAssert(
+                    it != species_names.end(),
+                    "ERROR: species '" + name
+                    + "' in particles.deposit_on_main_grid must be part of particles.species_names"
+                );
                 int i = std::distance(species_names.begin(), it);
                 m_deposit_on_main_grid[i] = true;
             }
@@ -189,7 +193,11 @@ MultiParticleContainer::ReadParameters ()
             pp.queryarr("gather_from_main_grid", tmp_gather);
             for (auto const& name : tmp_gather) {
                 auto it = std::find(species_names.begin(), species_names.end(), name);
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(it != species_names.end(), "ERROR: species in particles.gather_from_main_grid must be part of particles.species_names");
+                WarpXUtilMsg::AlwaysAssert(
+                    it != species_names.end(),
+                    "ERROR: species '" + name
+                    + "' in particles.gather_from_main_grid must be part of particles.species_names"
+                );
                 int i = std::distance(species_names.begin(), it);
                 m_gather_from_main_grid.at(i) = true;
             }
@@ -202,7 +210,11 @@ MultiParticleContainer::ReadParameters ()
             if (!rigid_injected_species.empty()) {
                 for (auto const& name : rigid_injected_species) {
                     auto it = std::find(species_names.begin(), species_names.end(), name);
-                    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(it != species_names.end(), "ERROR: species in particles.rigid_injected_species must be part of particles.species_names");
+                    WarpXUtilMsg::AlwaysAssert(
+                        it != species_names.end(),
+                        "ERROR: species '" + name
+                        + "' in particles.rigid_injected_species must be part of particles.species_names"
+                    );
                     int i = std::distance(species_names.begin(), it);
                     species_types[i] = PCTypes::RigidInjected;
                 }
@@ -213,9 +225,11 @@ MultiParticleContainer::ReadParameters ()
             if (!photon_species.empty()) {
                 for (auto const& name : photon_species) {
                     auto it = std::find(species_names.begin(), species_names.end(), name);
-                    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    WarpXUtilMsg::AlwaysAssert(
                         it != species_names.end(),
-                        "ERROR: species in particles.rigid_injected_species must be part of particles.species_names");
+                        "ERROR: species '" + name
+                        + "' in particles.rigid_injected_species must be part of particles.species_names"
+                    );
                     int i = std::distance(species_names.begin(), it);
                     species_types[i] = PCTypes::Photon;
                 }
@@ -535,9 +549,11 @@ MultiParticleContainer::mapSpeciesProduct ()
         // pc->ionization_product.
         if (pc->do_field_ionization){
             int i_product = getSpeciesID(pc->ionization_product_name);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            WarpXUtilMsg::AlwaysAssert(
                 i != i_product,
-                "ERROR: ionization product cannot be the same species");
+                "ERROR: ionization product of species '" + species_names[i] +
+                "' cannot be the same species."
+            );
             pc->ionization_product = i_product;
         }
     }
