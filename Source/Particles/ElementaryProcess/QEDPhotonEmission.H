@@ -177,7 +177,7 @@ template <typename PTile>
 void cleanLowEnergyPhotons(
     PTile& ptile,
     const int old_size, const int num_added,
-    const amrex::ParticleReal t_energy_threshold)
+    const amrex::ParticleReal energy_threshold)
 {
     auto pp = ptile.GetArrayOfStructs()().data() + old_size;
 
@@ -197,7 +197,7 @@ void cleanLowEnergyPhotons(
         const auto uy = p_uy[ip];
         const auto uz = p_uz[ip];
 
-        constexpr ParticleReal me_c = PhysConst::m_e*PhysConst::c;
+        constexpr amrex::ParticleReal me_c = PhysConst::m_e*PhysConst::c;
         //The square of the photon energy (in SI units)
         const auto phot_energy2 = (ux*ux + uy*uy + uz*uz)*me_c*me_c;
 
