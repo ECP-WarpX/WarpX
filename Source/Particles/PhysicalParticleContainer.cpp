@@ -14,6 +14,7 @@
 #include "FortranInterface/WarpX_f.H"
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
 #include "Python/WarpXWrappers.h"
 #include "Utils/IonizationEnergiesTable.H"
 #include "Particles/Gather/FieldGather.H"
@@ -30,6 +31,7 @@
 
 #include <limits>
 #include <sstream>
+#include <string>
 
 
 using namespace amrex;
@@ -69,9 +71,13 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !(do_classical_radiation_reaction && !AmIALepton()),
-        "Can't enable classical radiation reaction for non lepton species. " );
+    WarpXUtilMsg::AlwaysAssert(
+        !(do_classical_radiation_reaction &&
+        !(AmIA<PhysicalSpecies::electron>() ||
+        AmIA<PhysicalSpecies::positron>() )),
+        "ERROR: can't enable classical radiation reaction for non lepton species '"
+        + species_name + "'."
+    );
 
     //Only Boris pusher is compatible with radiation reaction
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -92,7 +98,12 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
             AddRealComp("optical_depth_BW");
     }
 
-    //TODO: SHOULD CHECK IF SPECIES IS EITHER ELECTRONS OR POSITRONS!!
+    if(m_do_qed_quantum_sync){
+        pp.get("qed_quantum_sync_phot_product_species",
+            m_qed_quantum_sync_phot_product_name);
+    }
+
+
 #endif
 
     //variable to set plot_flags size
@@ -124,9 +135,11 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         if (plot_vars[0] != "none"){
             for (const auto& var : plot_vars){
                 // Return error if var not in PIdx.
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WarpXUtilMsg::AlwaysAssert(
                     ParticleStringNames::to_index.count(var),
-                    "plot_vars argument not in ParticleStringNames");
+                    "ERROR: plot_vars argument '" + var +
+                    "' not in ParticleStringNames"
+                );
                 plot_flags[ParticleStringNames::to_index.at(var)] = 1;
             }
         }
@@ -2148,14 +2161,8 @@ PhysicalParticleContainer::getIonizationFunc ()
                                 ion_atomic_number};
 }
 
-//This function return true if the PhysicalParticleContainer contains electrons
-//or positrons, false otherwise
-bool
-PhysicalParticleContainer::AmIALepton(){
-    return (this-> mass == PhysConst::m_e);
-}
-
 #ifdef WARPX_QED
+
 
 bool PhysicalParticleContainer::has_quantum_sync()
 {
@@ -2179,6 +2186,20 @@ PhysicalParticleContainer::
 set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine> ptr)
 {
     m_shr_p_qs_engine = ptr;
+}
+
+PhotonEmissionFilterFunc
+PhysicalParticleContainer::getPhotonEmissionFilterFunc ()
+{
+    WARPX_PROFILE("PPC::getPhotonEmissionFunc");
+    return PhotonEmissionFilterFunc{particle_runtime_comps["optical_depth_QSR"]};
+}
+
+PairGenerationFilterFunc
+PhysicalParticleContainer::getPairGenerationFilterFunc ()
+{
+    WARPX_PROFILE("PPC::getPairGenerationFunc");
+    return PairGenerationFilterFunc{particle_runtime_comps["optical_depth_BW"]};
 }
 
 #endif
