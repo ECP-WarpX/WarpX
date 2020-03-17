@@ -279,6 +279,10 @@ protected:
     int m_nspecies_breit_wheeler = 0;
     //________
 
+    amrex::ParticleReal m_quantum_sync_photon_creation_energy_threshold =
+      static_cast<amrex::ParticleReal>(
+        2.0 * PhysConst::m_e * PhysConst::c * PhysConst::c );  /*!< Energy threshold for photon creation in Quantum Synchrotron process.*/
+
     /**
      * Returns the number of species having Quantum Synchrotron process enabled
      */

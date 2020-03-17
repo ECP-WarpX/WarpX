@@ -746,6 +746,9 @@ void MultiParticleContainer::InitQuantumSync ()
     if(!m_shr_p_qs_engine->are_lookup_tables_initialized()){
         amrex::Abort("Table initialization has failed!");
     }
+
+
+    pp.query("load_table_from", load_table_name);
 }
 
 void MultiParticleContainer::InitBreitWheeler ()
@@ -1079,10 +1082,9 @@ void MultiParticleContainer::doQedQuantumSync()
 
                 setNewParticleIDs(dst_tile, np_dst, num_added);
 
-                constexpr auto energy_threshold = static_cast<amrex::ParticleReal>(
-                     2.0 * PhysConst::m_e * PhysConst::c * PhysConst::c);
                 cleanLowEnergyPhotons(
-                    dst_tile, np_dst, num_added, energy_threshold);
+                    dst_tile, np_dst, num_added,
+                    m_quantum_sync_photon_creation_energy_threshold);
 
             }
         }
