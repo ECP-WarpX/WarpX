@@ -72,11 +72,13 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false
     WarpXUtilMsg::AlwaysAssert(
-        !(do_classical_radiation_reaction && !AmIALepton()),
+        !(do_classical_radiation_reaction &&
+        !(AmIA<PhysicalSpecies::electron>() ||
+        AmIA<PhysicalSpecies::positron>() )),
         "ERROR: can't enable classical radiation reaction for non lepton species '"
         + species_name + "'."
     );
-
+    
     //Only Boris pusher is compatible with radiation reaction
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         !(do_classical_radiation_reaction &&
@@ -96,7 +98,12 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
             AddRealComp("optical_depth_BW");
     }
 
-    //TODO: SHOULD CHECK IF SPECIES IS EITHER ELECTRONS OR POSITRONS!!
+    if(m_do_qed_quantum_sync){
+        pp.get("qed_quantum_sync_phot_product_species",
+            m_qed_quantum_sync_phot_product_name);
+    }
+
+
 #endif
 
     //variable to set plot_flags size
@@ -2154,14 +2161,8 @@ PhysicalParticleContainer::getIonizationFunc ()
                                 ion_atomic_number};
 }
 
-//This function return true if the PhysicalParticleContainer contains electrons
-//or positrons, false otherwise
-bool
-PhysicalParticleContainer::AmIALepton(){
-    return (this-> mass == PhysConst::m_e);
-}
-
 #ifdef WARPX_QED
+
 
 bool PhysicalParticleContainer::has_quantum_sync()
 {
@@ -2185,6 +2186,20 @@ PhysicalParticleContainer::
 set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine> ptr)
 {
     m_shr_p_qs_engine = ptr;
+}
+
+PhotonEmissionFilterFunc
+PhysicalParticleContainer::getPhotonEmissionFilterFunc ()
+{
+    WARPX_PROFILE("PPC::getPhotonEmissionFunc");
+    return PhotonEmissionFilterFunc{particle_runtime_comps["optical_depth_QSR"]};
+}
+
+PairGenerationFilterFunc
+PhysicalParticleContainer::getPairGenerationFilterFunc ()
+{
+    WARPX_PROFILE("PPC::getPairGenerationFunc");
+    return PairGenerationFilterFunc{particle_runtime_comps["optical_depth_BW"]};
 }
 
 #endif
