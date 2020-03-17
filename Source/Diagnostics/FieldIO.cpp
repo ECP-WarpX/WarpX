@@ -627,7 +627,7 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
 #pragma omp parallel
 #endif
                 for (MFIter mfi(mf_avg[lev]); mfi.isValid(); ++mfi) {
-                    (mf_avg[lev])[mfi].setVal(static_cast<Real>(npart_in_grid[mfi.index()]));
+                    (mf_avg[lev])[mfi].setVal<RunOn::Host>(static_cast<Real>(npart_in_grid[mfi.index()]));
                 }
                 dcomp++;
             } else if (fieldname == "part_per_proc"){
@@ -656,14 +656,12 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
                                     Bfield_aux[lev][2].get()},
                             WarpX::CellSize(lev) );
             } else if (fieldname == "divE"){
-                if (do_nodal) amrex::Abort("TODO: do_nodal && plot divE");
                 const BoxArray& ba = amrex::convert(boxArray(lev),IntVect::TheUnitVector());
                 MultiFab divE( ba, DistributionMap(lev), 1, 0 );
 #ifdef WARPX_USE_PSATD
                 spectral_solver_fp[lev]->ComputeSpectralDivE( Efield_aux[lev], divE );
 #else
-                ComputeDivE( divE, 0, {Efield_aux[lev][0].get(), Efield_aux[lev][1].get(),
-                             Efield_aux[lev][2].get()}, WarpX::CellSize(lev) );
+                m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
 #endif
                 AverageAndPackScalarField( mf_avg[lev], divE, dmap[lev], dcomp++, ngrow );
             } else {
@@ -933,7 +931,7 @@ getInterpolatedScalar(
 
             // Add temporary array to the returned structure
             const Box& bx = (*interpolated_F)[mfi].box();
-            (*interpolated_F)[mfi].plus(ffab, bx, bx, 0, 0, 1);
+            (*interpolated_F)[mfi].plus<RunOn::Host>(ffab, bx, bx, 0, 0, 1);
         }
     }
     return interpolated_F;
@@ -1034,7 +1032,7 @@ getInterpolatedVector(
             // Add temporary array to the returned structure
             for (int i = 0; i < 3; ++i) {
                 const Box& bx = (*interpolated_F[i])[mfi].box();
-                (*interpolated_F[i])[mfi].plus(ffab[i], bx, bx, 0, 0, 1);
+                (*interpolated_F[i])[mfi].plus<RunOn::Host>(ffab[i], bx, bx, 0, 0, 1);
             }
         }
     }
