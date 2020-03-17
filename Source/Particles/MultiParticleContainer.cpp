@@ -714,6 +714,17 @@ void MultiParticleContainer::InitQuantumSync ()
 {
     std::string lookup_table_mode;
     ParmParse pp("qed_qs");
+
+    //If specified, use a user-defined energy threshold for photon creaction
+    ParticleReal temp;
+    if(pp.query("photon_creation_energy_threshold", temp)){
+        m_quantum_sync_photon_creation_energy_threshold = temp;
+    }
+    else{
+        amrex::Print() << "Using default value (2*me*c^2)" <<
+            " for photon energy creaction threshold \n" ;
+    }
+
     pp.query("lookup_table_mode", lookup_table_mode);
     if(lookup_table_mode.empty()){
         amrex::Abort("Quantum Synchrotron table mode should be provided");
@@ -750,18 +761,6 @@ void MultiParticleContainer::InitQuantumSync ()
     if(!m_shr_p_qs_engine->are_lookup_tables_initialized()){
         amrex::Abort("Table initialization has failed!");
     }
-
-    //If specified, use a user-defined energy threshold for photon creaction
-    ParticleReal temp;
-    if(pp.query("photon_creation_energy_threshold", temp)){
-        m_quantum_sync_photon_creation_energy_threshold = temp;
-    }
-    else{
-        amrex::Print() << "Using default value (2*me*c^2)" <<
-            " for photon energy creaction threshold \n" ;
-    }
-
-
 }
 
 void MultiParticleContainer::InitBreitWheeler ()
