@@ -747,8 +747,12 @@ void MultiParticleContainer::InitQuantumSync ()
         amrex::Abort("Table initialization has failed!");
     }
 
+    //If specified, use a user-defined energy threshold for photon creaction
+    if(ParticleReal temp; pp.query("photon_creation_energy_threshold", temp)){
+        m_quantum_sync_photon_creation_energy_threshold = tt;
+    }
 
-    pp.query("load_table_from", load_table_name);
+
 }
 
 void MultiParticleContainer::InitBreitWheeler ()
