@@ -15,6 +15,7 @@ class Diagnostics
 {
 public:
     Diagnostics (int i, std::string name);
+    ~Diagnostics ();
     /** Pack (stack) all fields in the cell-centered output MultiFab mf_avg */
     void FilterAndPack ();
     /** Flush mf_avg and particles to file. */

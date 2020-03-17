@@ -9,6 +9,17 @@ Diagnostics::Diagnostics (int i, std::string name)
     : diag_index(i), diag_name(name)
 {}
 
+Diagnostics::~Diagnostics()
+{
+    delete m_flush_format;
+    for ( int lev=0; lev<nlev; lev++ ){
+        mf_avg.reset();
+        for ( int i=0; i<ncomp; i++ ){
+            allfields[lev][i].reset();
+        }
+    }
+}
+
 void
 Diagnostics::InitData ()
 {
