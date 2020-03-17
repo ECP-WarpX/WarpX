@@ -21,7 +21,7 @@ public:
     /** Flush mf_avg and particles to file. */
     void Flush ();
     /** Flush raw data */
-    virtual void FlushRaw ();
+    void FlushRaw ();
     /** Initialize pointers to main fields and allocate output multifab
      * mf_avg*/
     void InitData();
