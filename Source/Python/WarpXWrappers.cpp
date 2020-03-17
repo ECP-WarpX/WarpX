@@ -286,6 +286,26 @@ extern "C"
     int* warpx_getJz_nodal_flag() {return getFieldNodalFlagData(WarpX::jz_nodal_flag);}
     int* warpx_getRho_nodal_flag() {return getFieldNodalFlagData(WarpX::rho_nodal_flag);}
 
+#define WARPX_GET_SCALAR(SCALAR, GETTER) \
+    amrex::Real** SCALAR(int lev, \
+                         int *return_size, int *ncomps, int *ngrow, int **shapes) { \
+        auto & mf = GETTER(lev); \
+        return getMultiFabPointers(mf, return_size, ncomps, ngrow, shapes); \
+    }
+
+#define WARPX_GET_LOVECTS_SCALAR(SCALAR, GETTER) \
+    int* SCALAR(int lev, \
+                int *return_size, int *ngrow) { \
+        auto & mf = GETTER(lev); \
+        return getMultiFabLoVects(mf, return_size, ngrow); \
+    }
+
+    WARPX_GET_SCALAR(warpx_getChargeDensityCP, WarpX::GetInstance().getrho_cp);
+    WARPX_GET_SCALAR(warpx_getChargeDensityFP, WarpX::GetInstance().getrho_fp);
+
+    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityCPLoVects, WarpX::GetInstance().getrho_cp);
+    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityFPLoVects, WarpX::GetInstance().getrho_fp);
+
 #define WARPX_GET_FIELD_PML(FIELD, GETTER) \
     amrex::Real** FIELD(int lev, int direction, \
                         int *return_size, int *ncomps, int *ngrow, int **shapes) { \
