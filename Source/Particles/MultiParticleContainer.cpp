@@ -269,6 +269,7 @@ MultiParticleContainer::InitData ()
     mapSpeciesProduct();
 
 #ifdef WARPX_QED
+    CheckQEDSpecies();
     InitQED();
 #endif
 
@@ -546,35 +547,17 @@ MultiParticleContainer::mapSpeciesProduct ()
         if (pc->has_breit_wheeler()){
             const int i_product_ele = getSpeciesID(
                 pc->m_qed_breit_wheeler_ele_product_name);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                i != i_product_ele,
-                "ERROR: Breit Wheeler product cannot be the same species");
             pc->m_qed_breit_wheeler_ele_product = i_product_ele;
 
             const int i_product_pos = getSpeciesID(
                 pc->m_qed_breit_wheeler_pos_product_name);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                i != i_product_pos,
-                "ERROR: Breit Wheeler product cannot be the same species");
             pc->m_qed_breit_wheeler_pos_product = i_product_pos;
-
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                allcontainers[i_product_ele]->AmIA<PhysicalSpecies::electron>() &&
-                allcontainers[i_product_pos]->AmIA<PhysicalSpecies::positron>(),
-                "ERROR: Breit Wheeler product species are of wrong type");
         }
 
         if(pc->has_quantum_sync()){
             const int i_product_phot = getSpeciesID(
                 pc->m_qed_quantum_sync_phot_product_name);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                i != i_product_phot,
-                "ERROR: Quantum Synchrotron product cannot be the same species");
             pc->m_qed_quantum_sync_phot_product = i_product_phot;
-
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                allcontainers[i_product_phot]->AmIA<PhysicalSpecies::photon>(),
-                "ERROR: Quantum Synchrotron product species is of wrong type");
         }
 #endif
 
@@ -1095,6 +1078,41 @@ void MultiParticleContainer::doQedQuantumSync()
         }
     }
 
+}
+
+void MultiParticleContainer::CheckQEDSpecies()
+{
+    for (int i=0; i<nspecies; i++){
+        const auto& pc = allcontainers[i];
+        if (pc->has_breit_wheeler()){
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != pc->m_qed_breit_wheeler_ele_product,
+                "ERROR: Breit Wheeler product cannot be the same species");
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != pc->m_qed_breit_wheeler_pos_product,
+                "ERROR: Breit Wheeler product cannot be the same species");
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                allcontainers[pc->m_qed_breit_wheeler_ele_product]->
+                    AmIA<PhysicalSpecies::electron>()
+                &&
+                allcontainers[pc->m_qed_breit_wheeler_pos_product]->
+                    AmIA<PhysicalSpecies::positron>(),
+                "ERROR: Breit Wheeler product species are of wrong type");
+        }
+
+        if(pc->has_quantum_sync()){
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != pc->m_qed_quantum_sync_phot_product,
+                "ERROR: Quantum Synchrotron product cannot be the same species");
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                allcontainers[pc->m_qed_quantum_sync_phot_product]->
+                    AmIA<PhysicalSpecies::photon>(),
+                "ERROR: Quantum Synchrotron product species is of wrong type");
+        }
+    }
 }
 
 
