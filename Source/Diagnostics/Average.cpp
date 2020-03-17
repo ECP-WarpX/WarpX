@@ -6,18 +6,14 @@ AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 Real Average::ToCellCenter ( Array4<Real const> const& mf_in_arr,
                              const IntVect stag,
-                             AMREX_D_DECL( int i, int j, int k ),
+                             int i,
+                             int j,
+                             int k,
                              const int comp)
 {
-    AMREX_D_TERM( int sx = stag[0];,
-                  int sy = stag[1];,
-                  int sz = stag[2]; );
-#if ( AMREX_SPACEDIM == 2 )
-    return 0.25_rt * ( mf_in_arr(i   ,j   ,0,comp)
-                       + mf_in_arr(i+sx,j   ,0,comp)
-                       + mf_in_arr(i   ,j+sy,0,comp)
-                       + mf_in_arr(i+sx,j+sy,0,comp) );
-#elif ( AMREX_SPACEDIM == 3 )
+    int sx = stag[0];
+    int sy = stag[1];
+    int sz = stag[2];
     return 0.125_rt * ( mf_in_arr(i   ,j   ,k   ,comp)
                         + mf_in_arr(i+sx,j   ,k   ,comp)
                         + mf_in_arr(i   ,j+sy,k   ,comp)
@@ -26,7 +22,6 @@ Real Average::ToCellCenter ( Array4<Real const> const& mf_in_arr,
                         + mf_in_arr(i   ,j+sy,k+sz,comp)
                         + mf_in_arr(i+sx,j   ,k+sz,comp)
                         + mf_in_arr(i+sx,j+sy,k+sz,comp) );
-#endif
 }
 
 AMREX_GPU_HOST_DEVICE
@@ -43,11 +38,7 @@ void Average::ToCellCenter ( Box const& bx,
                              const int ncomp )
 {
     for (int n=0; n < ncomp; ++n) {
-#if ( AMREX_SPACEDIM == 2 )
-        mf_out_arr(i,j,0,n+dcomp) = Average::ToCellCenter( mf_in_arr, stag, i, j, n+scomp );
-#elif ( AMREX_SPACEDIM == 3 )
         mf_out_arr(i,j,k,n+dcomp) = Average::ToCellCenter( mf_in_arr, stag, i, j, k, n+scomp );
-#endif
     }
 }
 

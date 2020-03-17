@@ -11,8 +11,7 @@ namespace Average{
      * \brief Returns the cell-centered average of the floating point data contained
      *        in the input
      *        <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
-     *        \c mf_in_arr. Thanks to the AMReX macro \c AMREX_D_DECL: if \c AMREX_SPACEDIM=2,
-     *        only \c i and \c j are passed; if \c AMREX_SPACEDIM=3, \c i,\c j and \c k are passed.
+     *        \c mf_in_arr.
      *
      * \param[in] mf_in_arr floating point data to be averaged
      * \param[in] stag      staggering (index type) of the data
@@ -31,7 +30,9 @@ namespace Average{
      */
     Real ToCellCenter ( Array4<Real const> const& mf_in_arr,
                         const IntVect stag,
-                        AMREX_D_DECL( int i, int j, int k ),
+                        int i,
+                        int j,
+                        int k,
                         const int comp=0 );
 
     /**
