@@ -301,59 +301,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
     const std::array<std::unique_ptr<MultiFab>,3> &vector_total = vector_field;
 #endif
 
-    // Check the type of staggering of the 3-component `vector_field`
-    // and average accordingly:
-    // Fully cell-centered field (no average needed; simply copy)
-    if ( vector_total[0]->is_cell_centered() ){
-
-        MultiFab::Copy( mf_avg, *vector_total[0], 0, dcomp  , 1, ngrow);
-        MultiFab::Copy( mf_avg, *vector_total[1], 0, dcomp+1, 1, ngrow);
-        MultiFab::Copy( mf_avg, *vector_total[2], 0, dcomp+2, 1, ngrow);
-
-      // Fully nodal
-    } else if ( vector_total[0]->is_nodal() ){
-
-        Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow, 0, 1 );
-        Average::ToCellCenter( mf_avg, *(vector_total[1]), dcomp+1, ngrow, 0, 1 );
-        Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+2, ngrow, 0, 1 );
-
-      // Face centered, in the same way as B on a Yee grid
-    } else if ( vector_total[0]->is_nodal(0) ){
-
-#if   (AMREX_SPACEDIM == 2) // x (or r) and z
-        Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow );
-        Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+1, ngrow );
-#elif (AMREX_SPACEDIM == 3) // x, y and z
-        Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow );
-        Average::ToCellCenter( mf_avg, *(vector_total[1]), dcomp+1, ngrow );
-        Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+2, ngrow );
-#endif
-
-#if (AMREX_SPACEDIM == 2)
-        MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
-        MultiFab::Copy( mf_avg, *(vector_total[1]), 0, dcomp+1, 1, ngrow);
-#endif
-
-      // Edge centered, in the same way as E on a Yee grid
-    } else if ( !vector_total[0]->is_nodal(0) ){
-
-#if   (AMREX_SPACEDIM == 2) // x (or r) and z
-        Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow );
-        Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+1, ngrow );
-#elif (AMREX_SPACEDIM == 3) // x, y and z
-        Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow );
-        Average::ToCellCenter( mf_avg, *(vector_total[1]), dcomp+1, ngrow );
-        Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+2, ngrow );
-#endif
-
-#if (AMREX_SPACEDIM == 2)
-        MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
-        Average::ToCellCenter( mf_avg, *(vector_total[1]), dcomp+1, ngrow, 0, 1 );
-#endif
-
-    } else {
-        amrex::Abort("Unknown staggering.");
-    }
+    Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow );
+    Average::ToCellCenter( mf_avg, *(vector_total[1]), dcomp+1, ngrow );
+    Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+2, ngrow );
 }
 
 /** \brief Takes all of the components of the three fields and
