@@ -13,9 +13,9 @@ Real Average::ToCellCenter ( Array4<Real const> const& mf_in_arr,
 {
     int sx = stag[0];
     int sy = stag[1];
-#if ( AMREX_SPACEDIM == 2 )
+#if   (AMREX_SPACEDIM == 2)
     int sz = 0;
-#elif ( AMREX_SPACEDIM == 3 )
+#elif (AMREX_SPACEDIM == 3)
     int sz = stag[2];
 #endif
     return 0.125_rt * (   mf_in_arr(i   ,j   ,k   ,comp)

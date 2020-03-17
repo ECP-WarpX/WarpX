@@ -279,9 +279,6 @@ AverageAndPackVectorField( MultiFab& mf_avg,
 #ifndef WARPX_DIM_RZ
     (void)dm;
 #endif
-    // The object below is temporary, and is needed because
-    // `average_edge_to_cellcenter` requires fields to be passed as Vector
-    Vector<const MultiFab*> srcmf(AMREX_SPACEDIM);
 
 #ifdef WARPX_DIM_RZ
     // Note that vector_total is declared in the same way as
@@ -306,47 +303,49 @@ AverageAndPackVectorField( MultiFab& mf_avg,
 
     // Check the type of staggering of the 3-component `vector_field`
     // and average accordingly:
-    // - Fully cell-centered field (no average needed; simply copy)
+    // Fully cell-centered field (no average needed; simply copy)
     if ( vector_total[0]->is_cell_centered() ){
 
         MultiFab::Copy( mf_avg, *vector_total[0], 0, dcomp  , 1, ngrow);
         MultiFab::Copy( mf_avg, *vector_total[1], 0, dcomp+1, 1, ngrow);
         MultiFab::Copy( mf_avg, *vector_total[2], 0, dcomp+2, 1, ngrow);
 
-        // - Fully nodal
+      // Fully nodal
     } else if ( vector_total[0]->is_nodal() ){
 
         Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow, 0, 1 );
         Average::ToCellCenter( mf_avg, *(vector_total[1]), dcomp+1, ngrow, 0, 1 );
         Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+2, ngrow, 0, 1 );
 
-        // - Face centered, in the same way as B on a Yee grid
+      // Face centered, in the same way as B on a Yee grid
     } else if ( vector_total[0]->is_nodal(0) ){
 
-        // Note that average_face_to_cellcenter operates only on the number of
-        // arrays equal to the number of dimensions. So, for 2D, PackPlotDataPtrs
-        // packs in the x and z (or r and z) arrays, which are then cell averaged.
-        // The Copy code then copies the z from the 2nd to the 3rd field,
-        // and copies over directly the y (or theta) component (which is
-        // already cell centered).
-        PackPlotDataPtrs(srcmf, vector_total);
-        AMREX_D_TERM( Average::ToCellCenter( mf_avg, *(srcmf[0]), dcomp  , ngrow );,
-                      Average::ToCellCenter( mf_avg, *(srcmf[1]), dcomp+1, ngrow );,
-                      Average::ToCellCenter( mf_avg, *(srcmf[2]), dcomp+2, ngrow ); );
-#if (AMREX_SPACEDIM == 2)
-        MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
-        MultiFab::Copy( mf_avg, *vector_total[1], 0, dcomp+1, 1, ngrow);
+#if   (AMREX_SPACEDIM == 2) // x (or r) and z
+        Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow );
+        Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+1, ngrow );
+#elif (AMREX_SPACEDIM == 3) // x, y and z
+        Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow );
+        Average::ToCellCenter( mf_avg, *(vector_total[1]), dcomp+1, ngrow );
+        Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+2, ngrow );
 #endif
 
-        // - Edge centered, in the same way as E on a Yee grid
+#if (AMREX_SPACEDIM == 2)
+        MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
+        MultiFab::Copy( mf_avg, *(vector_total[1]), 0, dcomp+1, 1, ngrow);
+#endif
+
+      // Edge centered, in the same way as E on a Yee grid
     } else if ( !vector_total[0]->is_nodal(0) ){
 
-        // See comment above, though here, the y (or theta) component
-        // has node centering.
-        PackPlotDataPtrs(srcmf, vector_total);
-        AMREX_D_TERM( Average::ToCellCenter( mf_avg, *(srcmf[0]), dcomp  , ngrow );,
-                      Average::ToCellCenter( mf_avg, *(srcmf[1]), dcomp+1, ngrow );,
-                      Average::ToCellCenter( mf_avg, *(srcmf[2]), dcomp+2, ngrow ); );
+#if   (AMREX_SPACEDIM == 2) // x (or r) and z
+        Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow );
+        Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+1, ngrow );
+#elif (AMREX_SPACEDIM == 3) // x, y and z
+        Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow );
+        Average::ToCellCenter( mf_avg, *(vector_total[1]), dcomp+1, ngrow );
+        Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+2, ngrow );
+#endif
+
 #if (AMREX_SPACEDIM == 2)
         MultiFab::Copy( mf_avg, mf_avg, dcomp+1, dcomp+2, 1, ngrow);
         Average::ToCellCenter( mf_avg, *(vector_total[1]), dcomp+1, ngrow, 0, 1 );
