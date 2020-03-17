@@ -18,7 +18,7 @@ Real Average::ToCellCenter ( Array4<Real const> const& mf_in_arr,
 #elif ( AMREX_SPACEDIM == 3 )
     int sz = stag[2];
 #endif
-    return 0.125_rt * ( mf_in_arr(i   ,j   ,k   ,comp)
+    return 0.125_rt * (   mf_in_arr(i   ,j   ,k   ,comp)
                         + mf_in_arr(i+sx,j   ,k   ,comp)
                         + mf_in_arr(i   ,j+sy,k   ,comp)
                         + mf_in_arr(i   ,j   ,k+sz,comp)
@@ -26,24 +26,6 @@ Real Average::ToCellCenter ( Array4<Real const> const& mf_in_arr,
                         + mf_in_arr(i   ,j+sy,k+sz,comp)
                         + mf_in_arr(i+sx,j   ,k+sz,comp)
                         + mf_in_arr(i+sx,j+sy,k+sz,comp) );
-}
-
-AMREX_GPU_HOST_DEVICE
-AMREX_FORCE_INLINE
-void Average::ToCellCenter ( Box const& bx,
-                             Array4<Real> const& mf_out_arr,
-                             Array4<Real const> const& mf_in_arr,
-                             const IntVect stag,
-                             int i,
-                             int j,
-                             int k,
-                             const int dcomp,
-                             const int scomp,
-                             const int ncomp )
-{
-    for (int n=0; n < ncomp; ++n) {
-        mf_out_arr(i,j,k,n+dcomp) = Average::ToCellCenter( mf_in_arr, stag, i, j, k, n+scomp );
-    }
 }
 
 void
@@ -54,7 +36,6 @@ Average::ToCellCenter ( MultiFab& mf_out,
                         const int scomp,
                         const int ncomp )
 {
-    //TODO: asserts?
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -65,11 +46,10 @@ Average::ToCellCenter ( MultiFab& mf_out,
         Array4<Real> const& mf_out_arr = mf_out.array( mfi );
         Array4<Real const> const& mf_in_arr = mf_in.const_array( mfi );
         const IntVect stag = mf_in.boxArray().ixType().ixType();
-        ParallelFor( bx,
-                     [=] AMREX_GPU_DEVICE( int i, int j, int k )
+        ParallelFor( bx, ncomp,
+                     [=] AMREX_GPU_DEVICE( int i, int j, int k, int n )
                      {
-                         Average::ToCellCenter( bx, mf_out_arr, mf_in_arr, stag,
-                                                i, j, k, dcomp, scomp, ncomp );
+                         mf_out_arr(i,j,k,n+dcomp) = Average::ToCellCenter( mf_in_arr, stag, i, j, k, n+scomp );
                      } );
     }
 }
