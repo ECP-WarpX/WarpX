@@ -355,13 +355,20 @@ private:
         MFItInfoCheckTiling(pc_src, others...);
     }
 
+    /**
+    * Should be called right after mapSpeciesProduct in InitData.
+    * It checks the physical correctness of product particle species
+    * selected by the user for ionization process.
+    */
+    void CheckIonizationProductSpecies();
+
 #ifdef WARPX_QED
     /**
     * Should be called right after mapSpeciesProduct in InitData.
     * It checks the physical correctness of product particle species
-    * selected by the user.
+    * selected by the user for QED processes.
     */
-    void CheckQEDSpecies();
+    void CheckQEDProductSpecies();
 #endif
 
 

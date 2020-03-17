@@ -268,6 +268,8 @@ MultiParticleContainer::InitData ()
     // This is used for ionization and pair creation processes.
     mapSpeciesProduct();
 
+    CheckIonizationProductSpecies();
+
 #ifdef WARPX_QED
     CheckQEDSpecies();
     InitQED();
@@ -537,9 +539,6 @@ MultiParticleContainer::mapSpeciesProduct ()
         // pc->ionization_product.
         if (pc->do_field_ionization){
             const int i_product = getSpeciesID(pc->ionization_product_name);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                i != i_product,
-                "ERROR: ionization product cannot be the same species");
             pc->ionization_product = i_product;
         }
 
@@ -662,6 +661,17 @@ MultiParticleContainer::doCoulombCollisions ()
                       allcollisions[i]->m_CoulombLog );
 
             }
+        }
+    }
+}
+
+void MultiParticleContainer::CheckIonizationProductSpecies()
+{
+    for (int i=0; i<nspecies; i++){
+        if (pc->do_field_ionization){
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != pc->ionization_product,
+                "ERROR: ionization product cannot be the same species");
         }
     }
 }
@@ -1080,7 +1090,7 @@ void MultiParticleContainer::doQedQuantumSync()
 
 }
 
-void MultiParticleContainer::CheckQEDSpecies()
+void MultiParticleContainer::CheckQEDProductSpecies()
 {
     for (int i=0; i<nspecies; i++){
         const auto& pc = allcontainers[i];
