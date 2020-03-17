@@ -197,8 +197,9 @@ void cleanLowEnergyPhotons(
         const auto uy = p_uy[ip];
         const auto uz = p_uz[ip];
 
-        constexpr amrex::ParticleReal me_c = PhysConst::m_e*PhysConst::c;
         //The square of the photon energy (in SI units)
+        // ( Particle momentum is stored as gamma * velocity.)
+        constexpr amrex::ParticleReal me_c = PhysConst::m_e*PhysConst::c;
         const auto phot_energy2 = (ux*ux + uy*uy + uz*uz)*me_c*me_c;
 
         if (phot_energy2 < energy_threshold2){
