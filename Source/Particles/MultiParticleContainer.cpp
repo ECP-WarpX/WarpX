@@ -668,9 +668,9 @@ MultiParticleContainer::doCoulombCollisions ()
 void MultiParticleContainer::CheckIonizationProductSpecies()
 {
     for (int i=0; i<nspecies; i++){
-        if (pc->do_field_ionization){
+        if (allcontainers[i]->do_field_ionization){
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                i != pc->ionization_product,
+                i != allcontainers[i]->ionization_product,
                 "ERROR: ionization product cannot be the same species");
         }
     }
@@ -748,8 +748,13 @@ void MultiParticleContainer::InitQuantumSync ()
     }
 
     //If specified, use a user-defined energy threshold for photon creaction
-    if(ParticleReal temp; pp.query("photon_creation_energy_threshold", temp)){
-        m_quantum_sync_photon_creation_energy_threshold = tt;
+    ParticleReal temp;
+    if(pp.query("photon_creation_energy_threshold", temp)){
+        m_quantum_sync_photon_creation_energy_threshold = temp;
+    }
+    else{
+        amrex::Print() << "Using default value (2*me*c^2)" <<
+            " for photon energy creaction threshold \n" ;
     }
 
 
