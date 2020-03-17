@@ -271,7 +271,7 @@ MultiParticleContainer::InitData ()
     CheckIonizationProductSpecies();
 
 #ifdef WARPX_QED
-    CheckQEDSpecies();
+    CheckQEDProductSpecies();
     InitQED();
 #endif
 
