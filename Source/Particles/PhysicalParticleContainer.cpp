@@ -78,7 +78,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         "ERROR: can't enable classical radiation reaction for non lepton species '"
         + species_name + "'."
     );
-    
+
     //Only Boris pusher is compatible with radiation reaction
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         !(do_classical_radiation_reaction &&
@@ -177,7 +177,7 @@ void PhysicalParticleContainer::InitData()
     // Init ionization module here instead of in the PhysicalParticleContainer
     // constructor because dt is required
     if (do_field_ionization) {InitIonizationModule();}
-    AddParticles(0); // Note - add on level 0
+
     Redistribute();  // We then redistribute
 }
 
