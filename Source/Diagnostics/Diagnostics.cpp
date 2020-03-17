@@ -12,11 +12,13 @@ Diagnostics::Diagnostics (int i, std::string name)
 Diagnostics::~Diagnostics()
 {
     delete m_flush_format;
+    /*
     for ( int lev=0; lev<nlev; lev++ ){
         for ( int i=0; i<ncomp; i++ ){
             allfields[lev][i].reset();
         }
     }
+    */
 }
 
 void
