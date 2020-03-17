@@ -587,6 +587,8 @@ def RhoCPWrapper(level=1, include_ghosts=False):
                             get_lovects=_libwarpx.get_mesh_charge_density_cp_lovects,
                             get_fabs=_libwarpx.get_mesh_charge_density_cp,
                             level=level, include_ghosts=include_ghosts)
+
+
 def ExFPWrapper(level=0, include_ghosts=False):
     return _MultiFABWrapper(direction=0, overlaps=[0,1,1],
                             get_lovects=_libwarpx.get_mesh_electric_field_fp_lovects,

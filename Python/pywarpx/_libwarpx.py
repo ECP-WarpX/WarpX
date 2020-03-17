@@ -1117,6 +1117,56 @@ def get_mesh_current_density_fp_pml(level, direction, include_ghosts=True):
         return _get_mesh_field_list(libwarpx.warpx_getCurrentDensityFP_PML, level, direction, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
+def get_mesh_charge_density_cp(level, include_ghosts=True):
+    '''
+
+    This returns a list of numpy arrays containing the mesh charge density
+    data on each grid for this process. This version returns the density for
+    the coarse patch on the given level.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+
+    return _get_mesh_field_list(libwarpx.warpx_getChargeDensityCP, level, None, include_ghosts)
+
+
+def get_mesh_charge_density_fp(level, include_ghosts=True):
+    '''
+
+    This returns a list of numpy arrays containing the mesh charge density
+    data on each grid for this process. This version returns the density on
+    the fine patch for the given level.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+
+    return _get_mesh_field_list(libwarpx.warpx_getChargeDensityFP, level, None, include_ghosts)
 
 
 def get_mesh_charge_density_cp(level, include_ghosts=True):
@@ -1474,6 +1524,7 @@ def get_mesh_current_density_cp_lovects(level, direction, include_ghosts=True):
     '''
     return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getCurrentDensityCPLoVects)
 
+
 def get_mesh_current_density_fp_lovects(level, direction, include_ghosts=True):
     '''
 
@@ -1520,6 +1571,7 @@ def get_mesh_current_density_cp_lovects_pml(level, direction, include_ghosts=Tru
     except ValueError:
         raise Exception('PML not initialized')
 
+
 def get_mesh_current_density_fp_lovects_pml(level, direction, include_ghosts=True):
     '''
 
@@ -1565,6 +1617,7 @@ def get_mesh_charge_density_cp_lovects(level, include_ghosts=True):
     '''
     return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getChargeDensityCPLoVects)
 
+
 def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
     '''
 
@@ -1584,5 +1637,3 @@ def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
 
     '''
     return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getChargeDensityFPLoVects)
-
-

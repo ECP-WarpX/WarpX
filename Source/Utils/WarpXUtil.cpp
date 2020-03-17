@@ -284,4 +284,14 @@ void CheckGriddingForRZSpectral ()
     pp_amr.addarr("max_grid_size_y", mg);
 
 #endif
+
+namespace WarpXUtilMsg{
+
+void AlwaysAssert(bool is_expression_true, const std::string& msg = "ERROR!")
+{
+    if(is_expression_true) return;
+
+    amrex::Abort(msg);
+}
+
 }
