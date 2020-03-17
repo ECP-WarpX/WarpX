@@ -580,9 +580,17 @@ MultiParticleContainer::getSpeciesID (std::string product_str)
             i_product = i;
         }
     }
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+
+    WarpXUtilMsg::AlwaysAssert(
         found != 0,
+<<<<<<< HEAD
         "ERROR: could not find product species ID. Wrong name?");
+=======
+        "ERROR: could not find the ID of product species '"
+        + product_str + "'" + ". Wrong name?"
+    );
+
+>>>>>>> upstream/master
     return i_product;
 }
 
