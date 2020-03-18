@@ -508,7 +508,7 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
     // Add in the RZ modes
     if (n_rz_azimuthal_modes > 1) {
         for (std::string field : fields_to_plot) {
-            if (WarpXUtilStr::is_in({"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz", "rho", "F"}, {field})) {
+            if (WarpXUtilStr::is_in({"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz", "rho", "F"}, field)) {
                 ncomp += 2*n_rz_azimuthal_modes - 1;
             }
         }
