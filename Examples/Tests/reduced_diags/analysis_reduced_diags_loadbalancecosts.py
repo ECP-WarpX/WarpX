@@ -8,16 +8,13 @@
 
 # This script tests the reduced diagnostics `LoadBalanceCosts`.
 # The setup is a uniform plasma with electrons.
-# Particle energy and field energy will be outputed
-# using the reduced diagnostics.
-# And they will be compared with the data in the plotfiles.
+# An heuristic measure of the cost diagnostic is output in the reduced diagnostic.
+# The efficiency (mean of cost per rank, normalized to the maximum cost over all
+# ranks) extracted from the reduced diagnostic is compared before and after the
+# load balance step; the test ensures that efficiency, measured via the reduced
+# diagnostic, improves after the load balance step.
 
-# Tolerance: 1.0e-8 for particle energy, 1.0e-3 for field energy.
-# The difference of the field energy is relatively large,
-# because fields data in plotfiles are cell-centered,
-# but fields data in reduced diagnostics are staggered.
-
-# Possible running time: ~ 2 s
+# Possible running time: ~ 1 s
 
 import numpy as np
 import sys
