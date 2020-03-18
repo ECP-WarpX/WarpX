@@ -241,8 +241,8 @@ namespace WarpXUtilStr
                       std::vector<std::string> elems)
     {
         bool value = false;
-        for (std::string elem : elems){
-            value = is_in(vect, elem);
+        for (auto elem : elems){
+            if (is_in(vect, elem)) value = true;
         }
         return value;
     }
