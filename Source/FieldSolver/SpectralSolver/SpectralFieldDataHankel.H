@@ -10,6 +10,7 @@
 #include "SpectralHankelKSpace.H"
 #include "SpectralFieldData.H"
 #include "SpectralHankelTransformer.H"
+#include "SpectralBinomialFilter.H"
 #include <AMReX_MultiFab.H>
 
 /* \brief Class that stores the fields in spectral space, and performs the
@@ -28,8 +29,9 @@ class SpectralFieldDataHankel
 #else
         using FFTplans = amrex::LayoutData<fftw_plan>;
 #endif
-        // Similarly, define the Hankel transformers for each box.
+        // Similarly, define the Hankel transformers and filter for each box.
         using HankelTransformer = amrex::LayoutData<SpectralHankelTransformer>;
+        using BinomialFilter = amrex::LayoutData<SpectralBinomialFilter>;
 
         SpectralFieldDataHankel(const amrex::BoxArray& realspace_ba,
                                 const SpectralHankelKSpace& k_space,
@@ -56,6 +58,11 @@ class SpectralFieldDataHankel
                                    amrex::MultiFab & tempHTransformedSplit,
                                    const bool is_nodal_z);
 
+        void InitFilter(amrex::IntVect const & filter_npass_each_dir, bool const compensation,
+                        SpectralHankelKSpace const & k_space);
+
+        void ApplyFilter(int const field_index);
+        void ApplyFilter(int const field_index1, int const field_index2, int const field_index3);
         // Returns an array that holds the kr for all of the modes
         HankelTransform::RealVector const & getKrArray(amrex::MFIter const & mfi) const {
             return hankeltransformer[mfi].getKrArray();
@@ -77,6 +84,7 @@ class SpectralFieldDataHankel
         // a cell-centered grid in real space, instead of a nodal grid
         SpectralShiftFactor zshift_FFTfromCell, zshift_FFTtoCell;
         HankelTransformer hankeltransformer;
+        BinomialFilter binomialfilter;
 
 };
 
