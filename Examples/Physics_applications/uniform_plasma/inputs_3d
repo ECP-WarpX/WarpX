@@ -1,7 +1,7 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 10
+max_step = 3
 amr.n_cell =  64 64 64
 amr.max_grid_size = 64
 amr.blocking_factor = 32
@@ -10,6 +10,12 @@ geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 1     1     1      # Is periodic?
 geometry.prob_lo     = -20.e-6   -20.e-6   -20.e-6    # physical domain
 geometry.prob_hi     =  20.e-6    20.e-6    20.e-6
+
+diagnostics.ndiags = 1
+diagnostics.diags_names = d1
+
+d1.diag_type = Full
+d1.fields_to_plot = rho
 
 #################################
 ############ NUMERICS ###########

@@ -150,7 +150,7 @@ namespace WarpXUtilStr
      */
     bool is_in(std::vector<std::string> vect,
                std::string elem);
-    
+
     /** Return true if any element in elems is in vect, false otherwise
      * @param[in] vect vector of strings, typically names
      * @param[in] elems vector of string
