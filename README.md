@@ -1,4 +1,4 @@
-# WarpX
+# WarpX 
 
 [![Code Status master](https://img.shields.io/travis/ECP-WarpX/WarpX/master.svg?label=master)](https://travis-ci.org/ECP-WarpX/WarpX/branches)
 [![Documentation Status](https://readthedocs.org/projects/warpx/badge/?version=latest)](https://warpx.readthedocs.io/en/latest/?badge=latest)
