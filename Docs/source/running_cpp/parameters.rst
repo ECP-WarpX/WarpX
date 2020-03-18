@@ -251,7 +251,9 @@ Particle initialization
 
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis
-    within a cell. Note that for RZ, the three axis are radius, theta, and z.
+    within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
+    number of particles per theta is at least two times the number of azimuthal modes requested.
+    (It is recommended to do a convergence scan of the number of particles per theta)
 
 * ``<species_name>.do_continuous_injection`` (`0` or `1`)
     Whether to inject particles during the simulation, and not only at
@@ -957,6 +959,11 @@ Numerics and algorithms
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
 
+* ``psatd.nx_guard`, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
+    The number of guard cells to use with PSATD solver.
+    If not set by users, these values are calculated automatically and determined *empirically* and
+    would be equal the order of the solver for nodal grid, and half the order of the solver for staggered.
+
 * ``psatd.hybrid_mpi_decomposition`` (`0` or `1`; default: 0)
     Whether to use a different MPI decomposition for the particle-grid operations
     (deposition and gather) and for the PSATD solver. If `1`, the FFT will
@@ -1237,7 +1244,7 @@ Diagnostics and output
         This type computes properties of a particle beam relevant for particle accelerators,
         like position, momentum, emittance, etc.
 
-        `<reduced_diags_name>.species` must be provided,
+        ``<reduced_diags_name>.species`` must be provided,
         such that the diagnostics are done for this (beam-like) species only.
 
         The output columns (for 3D-XYZ) are the following, where the average is done over
@@ -1279,6 +1286,57 @@ Diagnostics and output
         :math:`\delta_y`, and
         :math:`\epsilon_y` will not be outputed.
 
+    * ``ParticleHistogram``
+        This type computes a user defined particle histogram.
+
+        * ``<reduced_diags_name>.species`` (`string`)
+            A species name must be provided,
+            such that the diagnostics are done for this species.
+
+        * ``<reduced_diags_name>.histogram_function(t,x,y,z,ux,uy,uz)`` (`string`)
+            A histogram function must be provided.
+            `t` represents the physical time in seconds during the simulation.
+            `x, y, z` represent particle positions in the unit of meter.
+            `ux, uy, uz` represent the particle velocities in the unit of
+            :math:`\gamma v/c`, where
+            :math:`\gamma` is the Lorentz factor,
+            :math:`v/c` is the particle velocity normalized by the speed of light.
+            E.g.
+            ``x`` produces the position (density) distribution in `x`.
+            ``ux`` produces the velocity distribution in `x`,
+            ``sqrt(ux*ux+uy*uy+uz*uz)`` produces the speed distribution.
+
+        * ``<reduced_diags_name>.bin_number`` (`int` > 0)
+            This is the number of bins used for the histogram.
+
+        * ``<reduced_diags_name>.bin_max`` (`float`)
+            This is the maximum value of the bins.
+
+        * ``<reduced_diags_name>.bin_min`` (`float`)
+            This is the minimum value of the bins.
+
+        * ``<reduced_diags_name>.normalization`` (optional)
+            This provides options to normalize the histogram:
+
+            ``unity_particle_weight``
+            uses unity particle weight to compute the histogram,
+            such that the values of the histogram are
+            the number of counted macroparticles in that bin.
+
+            ``max_to_unity`` will normalize the histogram such that
+            its maximum value is one.
+
+            ``area_to_unity`` will normalize the histogram such that
+            the area under the histogram is one,
+            so the histogram is also the probability density function.
+
+            If nothing is provided,
+            the macroparticle weight will be used to compute
+            the histogram, and no normalization will be done.
+
+        The output columns are
+        values of the 1st bin, the 2nd bin, ..., the nth bin.
+
 * ``<reduced_diags_name>.frequency`` (`int`)
     The output frequency (every # time steps).
 
@@ -1292,7 +1350,7 @@ Diagnostics and output
     The separator between row values in the output file.
     The default separator is a whitespace.
 
-Lookup tables for QED modules (implementation in progress)
+Lookup tables and other settings for QED modules (implementation in progress)
 ----------------------------------------------------------
 Lookup tables store pre-computed values for functions used by the QED modules.
 **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
@@ -1370,6 +1428,8 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
         * ``qed_qs.load_table_from`` (`string`): name of the lookup table file to read from.
 
+* ``qed_qs.photon_creation_energy_threshold`` (`float`) optional (default `2*me*c^2`)
+    Energy threshold for photon particle creation in SI units.
 
 Checkpoints and restart
 -----------------------

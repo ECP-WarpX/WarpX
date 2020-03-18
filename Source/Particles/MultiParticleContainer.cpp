@@ -174,12 +174,12 @@ MultiParticleContainer::ReadParameters ()
 
 
         pp.query("nspecies", nspecies);
-        BL_ASSERT(nspecies >= 0);
+        AMREX_ALWAYS_ASSERT(nspecies >= 0);
 
         if (nspecies > 0) {
             // Get species names
             pp.getarr("species_names", species_names);
-            BL_ASSERT(species_names.size() == nspecies);
+            AMREX_ALWAYS_ASSERT(species_names.size() == nspecies);
 
             // Get species to deposit on main grid
             m_deposit_on_main_grid.resize(nspecies, false);
@@ -187,7 +187,11 @@ MultiParticleContainer::ReadParameters ()
             pp.queryarr("deposit_on_main_grid", tmp);
             for (auto const& name : tmp) {
                 auto it = std::find(species_names.begin(), species_names.end(), name);
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(it != species_names.end(), "ERROR: species in particles.deposit_on_main_grid must be part of particles.species_names");
+                WarpXUtilMsg::AlwaysAssert(
+                    it != species_names.end(),
+                    "ERROR: species '" + name
+                    + "' in particles.deposit_on_main_grid must be part of particles.species_names"
+                );
                 int i = std::distance(species_names.begin(), it);
                 m_deposit_on_main_grid[i] = true;
             }
@@ -197,7 +201,11 @@ MultiParticleContainer::ReadParameters ()
             pp.queryarr("gather_from_main_grid", tmp_gather);
             for (auto const& name : tmp_gather) {
                 auto it = std::find(species_names.begin(), species_names.end(), name);
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(it != species_names.end(), "ERROR: species in particles.gather_from_main_grid must be part of particles.species_names");
+                WarpXUtilMsg::AlwaysAssert(
+                    it != species_names.end(),
+                    "ERROR: species '" + name
+                    + "' in particles.gather_from_main_grid must be part of particles.species_names"
+                );
                 int i = std::distance(species_names.begin(), it);
                 m_gather_from_main_grid.at(i) = true;
             }
@@ -210,7 +218,11 @@ MultiParticleContainer::ReadParameters ()
             if (!rigid_injected_species.empty()) {
                 for (auto const& name : rigid_injected_species) {
                     auto it = std::find(species_names.begin(), species_names.end(), name);
-                    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(it != species_names.end(), "ERROR: species in particles.rigid_injected_species must be part of particles.species_names");
+                    WarpXUtilMsg::AlwaysAssert(
+                        it != species_names.end(),
+                        "ERROR: species '" + name
+                        + "' in particles.rigid_injected_species must be part of particles.species_names"
+                    );
                     int i = std::distance(species_names.begin(), it);
                     species_types[i] = PCTypes::RigidInjected;
                 }
@@ -221,9 +233,11 @@ MultiParticleContainer::ReadParameters ()
             if (!photon_species.empty()) {
                 for (auto const& name : photon_species) {
                     auto it = std::find(species_names.begin(), species_names.end(), name);
-                    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    WarpXUtilMsg::AlwaysAssert(
                         it != species_names.end(),
-                        "ERROR: species in particles.rigid_injected_species must be part of particles.species_names");
+                        "ERROR: species '" + name
+                        + "' in particles.rigid_injected_species must be part of particles.species_names"
+                    );
                     int i = std::distance(species_names.begin(), it);
                     species_types[i] = PCTypes::Photon;
                 }
@@ -232,10 +246,10 @@ MultiParticleContainer::ReadParameters ()
             // collision
             ParmParse pc("collisions");
             pc.query("ncollisions", ncollisions);
-            BL_ASSERT(ncollisions >= 0);
+            AMREX_ALWAYS_ASSERT(ncollisions >= 0);
             if (ncollisions > 0) {
                 pc.getarr("collision_names", collision_names);
-                BL_ASSERT(collision_names.size() == ncollisions);
+                AMREX_ALWAYS_ASSERT(collision_names.size() == ncollisions);
             }
 
         }
@@ -245,10 +259,10 @@ MultiParticleContainer::ReadParameters ()
 
         ParmParse ppl("lasers");
         ppl.query("nlasers", nlasers);
-        BL_ASSERT(nlasers >= 0);
+        AMREX_ALWAYS_ASSERT(nlasers >= 0);
         if (nlasers > 0) {
             ppl.getarr("names", lasers_names);
-            BL_ASSERT(lasers_names.size() == nlasers);
+            AMREX_ALWAYS_ASSERT(lasers_names.size() == nlasers);
         }
 
 #ifdef WARPX_QED
@@ -287,7 +301,10 @@ MultiParticleContainer::InitData ()
     // This is used for ionization and pair creation processes.
     mapSpeciesProduct();
 
+    CheckIonizationProductSpecies();
+
 #ifdef WARPX_QED
+    CheckQEDProductSpecies();
     InitQED();
 #endif
 
@@ -555,9 +572,6 @@ MultiParticleContainer::mapSpeciesProduct ()
         // pc->ionization_product.
         if (pc->do_field_ionization){
             const int i_product = getSpeciesID(pc->ionization_product_name);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                i != i_product,
-                "ERROR: ionization product cannot be the same species");
             pc->ionization_product = i_product;
         }
 
@@ -565,41 +579,17 @@ MultiParticleContainer::mapSpeciesProduct ()
         if (pc->has_breit_wheeler()){
             const int i_product_ele = getSpeciesID(
                 pc->m_qed_breit_wheeler_ele_product_name);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                i != i_product_ele,
-                "ERROR: Breit Wheeler product cannot be the same species");
             pc->m_qed_breit_wheeler_ele_product = i_product_ele;
 
             const int i_product_pos = getSpeciesID(
                 pc->m_qed_breit_wheeler_pos_product_name);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                i != i_product_pos,
-                "ERROR: Breit Wheeler product cannot be the same species");
             pc->m_qed_breit_wheeler_pos_product = i_product_pos;
-
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_ele < allcontainers.size(),
-                "ERROR: Breit Wheeler product species not found");
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_pos < allcontainers.size(),
-                "ERROR: Breit Wheeler product species not found");
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                allcontainers[i_product_ele]->AmIA<PhysicalSpecies::electron>() &&
-                allcontainers[i_product_pos]->AmIA<PhysicalSpecies::positron>(),
-                "ERROR: Breit Wheeler product species are of wrong type");
         }
 
         if(pc->has_quantum_sync()){
             const int i_product_phot = getSpeciesID(
                 pc->m_qed_quantum_sync_phot_product_name);
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                i != i_product_phot,
-                "ERROR: Quantum Synchrotron product cannot be the same species");
             pc->m_qed_quantum_sync_phot_product = i_product_phot;
-
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i_product_phot < allcontainers.size(),
-                "ERROR: Quantum Synchrotron product species not found");
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                allcontainers[i_product_phot]->AmIA<PhysicalSpecies::photon>(),
-                "ERROR: Quantum Synchrotron product species is of wrong type");
         }
 #endif
 
@@ -623,9 +613,13 @@ MultiParticleContainer::getSpeciesID (std::string product_str)
             i_product = i;
         }
     }
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+
+    WarpXUtilMsg::AlwaysAssert(
         found != 0,
-        "ERROR: could not find product species ID. Wrong name?");
+        "ERROR: could not find the ID of product species '"
+        + product_str + "'" + ". Wrong name?"
+    );
+
     return i_product;
 }
 
@@ -708,6 +702,17 @@ MultiParticleContainer::doCoulombCollisions ()
     }
 }
 
+void MultiParticleContainer::CheckIonizationProductSpecies()
+{
+    for (int i=0; i<nspecies; i++){
+        if (allcontainers[i]->do_field_ionization){
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != allcontainers[i]->ionization_product,
+                "ERROR: ionization product cannot be the same species");
+        }
+    }
+}
+
 #ifdef WARPX_QED
 void MultiParticleContainer::InitQED ()
 {
@@ -742,6 +747,17 @@ void MultiParticleContainer::InitQuantumSync ()
 {
     std::string lookup_table_mode;
     ParmParse pp("qed_qs");
+
+    //If specified, use a user-defined energy threshold for photon creaction
+    ParticleReal temp;
+    if(pp.query("photon_creation_energy_threshold", temp)){
+        m_quantum_sync_photon_creation_energy_threshold = temp;
+    }
+    else{
+        amrex::Print() << "Using default value (2*me*c^2)" <<
+            " for photon energy creaction threshold \n" ;
+    }
+
     pp.query("lookup_table_mode", lookup_table_mode);
     if(lookup_table_mode.empty()){
         amrex::Abort("Quantum Synchrotron table mode should be provided");
@@ -1127,7 +1143,7 @@ void MultiParticleContainer::doQedBreitWheeler()
 #endif
             for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
             {
-                auto& src_tile = pc_source ->ParticlesAt(lev, mfi);
+                auto& src_tile = pc_source->ParticlesAt(lev, mfi);
                 auto& dst_ele_tile = pc_product_ele->ParticlesAt(lev, mfi);
                 auto& dst_pos_tile = pc_product_pos->ParticlesAt(lev, mfi);
 
@@ -1141,9 +1157,6 @@ void MultiParticleContainer::doQedBreitWheeler()
                 setNewParticleIDs(dst_ele_tile, np_dst_ele, num_added);
                 setNewParticleIDs(dst_pos_tile, np_dst_pos, num_added);
             }
-
-
-
         }
    }
 }
@@ -1167,8 +1180,8 @@ void MultiParticleContainer::doQedQuantumSync()
         auto phys_pc_ptr =
             static_cast<PhysicalParticleContainer*>(pc_source.get());
 
-        const auto Filter    = phys_pc_ptr->getPhotonEmissionFilterFunc();
-        const auto CopyPhot   = copy_factory_phot.getSmartCopy();
+        const auto Filter   = phys_pc_ptr->getPhotonEmissionFilterFunc();
+        const auto CopyPhot = copy_factory_phot.getSmartCopy();
 
         auto Transform = PhotonEmissionTransformFunc(
             m_shr_p_qs_engine->build_optical_depth_functor(),
@@ -1198,15 +1211,49 @@ void MultiParticleContainer::doQedQuantumSync()
 
                 setNewParticleIDs(dst_tile, np_dst, num_added);
 
-                constexpr auto energy_threshold = static_cast<amrex::ParticleReal>(
-                     2.0 * PhysConst::m_e * PhysConst::c * PhysConst::c);
                 cleanLowEnergyPhotons(
-                    dst_tile, np_dst, num_added, energy_threshold);
+                    dst_tile, np_dst, num_added,
+                    m_quantum_sync_photon_creation_energy_threshold);
 
             }
         }
     }
 
+}
+
+void MultiParticleContainer::CheckQEDProductSpecies()
+{
+    for (int i=0; i<nspecies; i++){
+        const auto& pc = allcontainers[i];
+        if (pc->has_breit_wheeler()){
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != pc->m_qed_breit_wheeler_ele_product,
+                "ERROR: Breit Wheeler product cannot be the same species");
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != pc->m_qed_breit_wheeler_pos_product,
+                "ERROR: Breit Wheeler product cannot be the same species");
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                allcontainers[pc->m_qed_breit_wheeler_ele_product]->
+                    AmIA<PhysicalSpecies::electron>()
+                &&
+                allcontainers[pc->m_qed_breit_wheeler_pos_product]->
+                    AmIA<PhysicalSpecies::positron>(),
+                "ERROR: Breit Wheeler product species are of wrong type");
+        }
+
+        if(pc->has_quantum_sync()){
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                i != pc->m_qed_quantum_sync_phot_product,
+                "ERROR: Quantum Synchrotron product cannot be the same species");
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                allcontainers[pc->m_qed_quantum_sync_phot_product]->
+                    AmIA<PhysicalSpecies::photon>(),
+                "ERROR: Quantum Synchrotron product species is of wrong type");
+        }
+    }
 }
 
 

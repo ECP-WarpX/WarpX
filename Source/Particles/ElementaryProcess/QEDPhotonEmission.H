@@ -171,6 +171,7 @@ private:
 * @param[in,out] ptile a particle tile
 * @param[in] old_size the old number of particles
 * @param[in] num_added the number of photons added to the tile
+<<<<<<< HEAD
 * @param[in] t_energy_threshold the energy threshold
 */
 template <typename PTile>
@@ -178,6 +179,15 @@ void cleanLowEnergyPhotons(
 PTile& ptile,
 const int old_size, const int num_added,
 const amrex::ParticleReal t_energy_threshold)
+=======
+* @param[in] energy_threshold the energy threshold
+*/
+template <typename PTile>
+void cleanLowEnergyPhotons(
+    PTile& ptile,
+    const int old_size, const int num_added,
+    const amrex::ParticleReal energy_threshold)
+>>>>>>> upstream/master
 {
     auto pp = ptile.GetArrayOfStructs()().data() + old_size;
 
@@ -186,8 +196,12 @@ const amrex::ParticleReal t_energy_threshold)
     const auto  p_uy = soa.GetRealData(PIdx::uy).data() + old_size;
     const auto  p_uz = soa.GetRealData(PIdx::uz).data() + old_size;
 
+<<<<<<< HEAD
     const auto energy_threshold =
         t_energy_threshold/(PhysConst::m_e*PhysConst::c);
+=======
+    //The square of the energy threshold
+>>>>>>> upstream/master
     const auto energy_threshold2 = energy_threshold*energy_threshold;
 
     amrex::ParallelFor(num_added, [=] AMREX_GPU_DEVICE (int ip) noexcept
@@ -198,7 +212,16 @@ const amrex::ParticleReal t_energy_threshold)
         const auto uy = p_uy[ip];
         const auto uz = p_uz[ip];
 
+<<<<<<< HEAD
         if(ux*ux + uy*uy + uz*uz < energy_threshold2){
+=======
+        //The square of the photon energy (in SI units)
+        // ( Particle momentum is stored as gamma * velocity.)
+        constexpr amrex::ParticleReal me_c = PhysConst::m_e*PhysConst::c;
+        const auto phot_energy2 = (ux*ux + uy*uy + uz*uz)*me_c*me_c;
+
+        if (phot_energy2 < energy_threshold2){
+>>>>>>> upstream/master
             p.id() = - 1;
         }
     });
