@@ -20,6 +20,10 @@
 # Possible running time: ~ 2 s
 
 import numpy as np
+import sys
+
+# Command line argument
+fn = sys.argv[1]
 
 # Load costs data
 data = np.genfromtxt("./diags/reducedfiles/LBC.txt")
