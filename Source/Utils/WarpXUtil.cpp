@@ -224,3 +224,26 @@ void AlwaysAssert(bool is_expression_true, const std::string& msg = "ERROR!")
 }
 
 }
+
+namespace WarpXUtilStr
+{
+    bool is_in(std::vector<std::string> vect,
+                      std::string elem)
+    {
+        bool value = false;
+        if (std::find(vect.begin(), vect.end(), elem) != vect.end()){
+            value = true;
+        }
+        return value;
+    }
+
+    bool is_in(std::vector<std::string> vect,
+                      std::vector<std::string> elems)
+    {
+        bool value = false;
+        for (std::string elem : elems){
+            value = is_in(vect, elem);
+        }
+        return value;
+    }
+}
