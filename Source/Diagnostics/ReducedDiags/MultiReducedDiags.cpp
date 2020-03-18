@@ -61,6 +61,7 @@ MultiReducedDiags::MultiReducedDiags ()
         {
             m_multi_rd[i_rd].reset
                 ( new LoadBalanceCosts(m_rd_names[i_rd]));
+        }
         else if (rd_type.compare("ParticleHistogram") == 0)
         {
             m_multi_rd[i_rd].reset
