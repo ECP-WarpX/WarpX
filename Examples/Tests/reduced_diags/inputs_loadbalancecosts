@@ -38,7 +38,7 @@ warpx.cfl = 0.99999
 
 # plot frequency
 amr.plot_int = 3
-    
+
 # Particles
 particles.nspecies = 1
 particles.species_names = electrons
