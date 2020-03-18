@@ -155,6 +155,4 @@ f4_error = f4_error/bin_num
 
 print('Gaussian position distribution difference:', f4_error)
 
-np.savetxt('f4.txt',f)
-
 assert(f4_error < tolerance)
