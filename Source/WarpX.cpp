@@ -67,6 +67,7 @@ long WarpX::charge_deposition_algo;
 long WarpX::field_gathering_algo;
 long WarpX::particle_pusher_algo;
 int WarpX::maxwell_fdtd_solver_id;
+long WarpX::load_balance_costs_update_algo;
 int WarpX::do_dive_cleaning = 0;
 
 long WarpX::n_rz_azimuthal_modes = 1;
@@ -105,6 +106,7 @@ Real WarpX::particle_slice_width_lab = 0.0;
 
 bool WarpX::do_dynamic_scheduling = true;
 
+int WarpX::do_electrostatic = 0;
 int WarpX::do_subcycling = 0;
 bool WarpX::safe_guard_cells = 0;
 
@@ -137,6 +139,8 @@ IntVect WarpX::jx_nodal_flag(0,1);// x is the first dimension to AMReX
 IntVect WarpX::jy_nodal_flag(1,1);// y is the missing dimension to 2D AMReX
 IntVect WarpX::jz_nodal_flag(1,0);// z is the second dimension to 2D AMReX
 #endif
+
+IntVect WarpX::rho_nodal_flag(AMREX_D_DECL(1, 1, 1));
 
 IntVect WarpX::filter_npass_each_dir(1);
 
@@ -242,12 +246,60 @@ WarpX::WarpX ()
 
     pml.resize(nlevs_max);
 
-#ifdef WARPX_DO_ELECTROSTATIC
-    masks.resize(nlevs_max);
-    gather_masks.resize(nlevs_max);
-#endif // WARPX_DO_ELECTROSTATIC
+    switch (WarpX::load_balance_costs_update_algo)
+    {
+        case LoadBalanceCostsUpdateAlgo::Timers: costs.resize(nlevs_max);
+            break;
+        case LoadBalanceCostsUpdateAlgo::Heuristic: costs_heuristic.resize(nlevs_max);
+            break;
+        default: amrex::Abort("unknown load balance type");
+    }
 
-    costs.resize(nlevs_max);
+    // Set default values for particle and cell weights for costs update;
+    // Default values listed here for the case AMREX_USE_GPU are determined
+    // from single-GPU tests on Summit.
+    if (costs_heuristic_cells_wt<0. && costs_heuristic_particles_wt<0.
+        && WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic)
+    {
+#ifdef AMREX_USE_GPU
+#ifdef WARPX_USE_PSATD
+        switch (WarpX::nox)
+        {
+            case 1:
+                costs_heuristic_cells_wt = 0.575;
+                costs_heuristic_particles_wt = 0.425;
+                break;
+            case 2:
+                costs_heuristic_cells_wt = 0.405;
+                costs_heuristic_particles_wt = 0.595;
+                break;
+            case 3:
+                costs_heuristic_cells_wt = 0.250;
+                costs_heuristic_particles_wt = 0.750;
+                break;
+        }
+#else // FDTD
+        switch (WarpX::nox)
+        {
+            case 1:
+                costs_heuristic_cells_wt = 0.401;
+                costs_heuristic_particles_wt = 0.599;
+                break;
+            case 2:
+                costs_heuristic_cells_wt = 0.268;
+                costs_heuristic_particles_wt = 0.732;
+                break;
+            case 3:
+                costs_heuristic_cells_wt = 0.145;
+                costs_heuristic_particles_wt = 0.855;
+                break;
+        }
+#endif // WARPX_USE_PSATD
+#else // CPU
+        costs_heuristic_cells_wt = 0.1;
+        costs_heuristic_particles_wt = 0.9;
+#endif // AMREX_USE_GPU
+    }
 
     // Allocate field solver objects
 #ifdef WARPX_USE_PSATD
@@ -631,6 +683,7 @@ WarpX::ReadParameters ()
             jx_nodal_flag = IntVect::TheNodeVector();
             jy_nodal_flag = IntVect::TheNodeVector();
             jz_nodal_flag = IntVect::TheNodeVector();
+            rho_nodal_flag = IntVect::TheNodeVector();
             // Use same shape factors in all directions, for gathering
             l_lower_order_in_v = false;
         }
@@ -660,6 +713,9 @@ WarpX::ReadParameters ()
             // Use same shape factors in all directions, for gathering
             l_lower_order_in_v = false;
         }
+        load_balance_costs_update_algo = GetAlgorithmInteger(pp, "load_balance_costs_update");
+        pp.query("costs_heuristic_cells_wt", costs_heuristic_cells_wt);
+        pp.query("costs_heuristic_particles_wt", costs_heuristic_particles_wt);
     }
 
 #ifdef WARPX_USE_PSATD
@@ -780,7 +836,12 @@ WarpX::ClearLevel (int lev)
     F_cp  [lev].reset();
     rho_cp[lev].reset();
 
-    costs[lev].reset();
+    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+        costs[lev].reset();
+    } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic) {
+        costs_heuristic[lev].reset();
+    }
+
 
 #ifdef WARPX_USE_PSATD_HYBRID
     for (int i = 0; i < 3; ++i) {
@@ -881,7 +942,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_dive_cleaning || plot_rho)
     {
-        rho_fp[lev].reset(new MultiFab(amrex::convert(ba,IntVect::TheUnitVector()),dm,2*ncomps,ngRho));
+        rho_fp[lev].reset(new MultiFab(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho));
     }
 
     if (do_subcycling == 1 && lev == 0)
@@ -898,7 +959,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #ifdef WARPX_USE_PSATD
     else
     {
-        rho_fp[lev].reset(new MultiFab(amrex::convert(ba,IntVect::TheUnitVector()),dm,2*ncomps,ngRho));
+        rho_fp[lev].reset(new MultiFab(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho));
     }
     if (fft_hybrid_mpi_decomposition == false){
         // Allocate and initialize the spectral solver
@@ -976,7 +1037,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         current_cp[lev][2].reset( new MultiFab(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ));
 
         if (do_dive_cleaning || plot_rho){
-            rho_cp[lev].reset(new MultiFab(amrex::convert(cba,IntVect::TheUnitVector()),dm,2*ncomps,ngRho));
+            rho_cp[lev].reset(new MultiFab(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho));
         }
         if (do_dive_cleaning)
         {
@@ -985,7 +1046,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #ifdef WARPX_USE_PSATD
         else
         {
-            rho_cp[lev].reset(new MultiFab(amrex::convert(cba,IntVect::TheUnitVector()),dm,2*ncomps,ngRho));
+            rho_cp[lev].reset(new MultiFab(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho));
         }
         if (fft_hybrid_mpi_decomposition == false){
             // Allocate and initialize the spectral solver
@@ -1048,7 +1109,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             current_buf[lev][1].reset( new MultiFab(amrex::convert(cba,jy_nodal_flag),dm,ncomps,ngJ));
             current_buf[lev][2].reset( new MultiFab(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ));
             if (rho_cp[lev]) {
-                charge_buf[lev].reset( new MultiFab(amrex::convert(cba,IntVect::TheUnitVector()),dm,2*ncomps,ngRho));
+                charge_buf[lev].reset( new MultiFab(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho));
             }
             current_buffer_masks[lev].reset( new iMultiFab(ba, dm, ncomps, 1) );
             // Current buffer masks have 1 ghost cell, because of the fact
@@ -1057,7 +1118,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
 
     if (load_balance_int > 0) {
-        costs[lev].reset(new MultiFab(ba, dm, 1, 0));
+        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+            costs[lev].reset(new MultiFab(ba, dm, 1, 0));
+        } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic) {
+            costs_heuristic[lev].reset(new amrex::Vector<Real>);
+            const int nboxes = Efield_fp[lev][0].get()->size();
+            costs_heuristic[lev]->resize(nboxes);
+        }
     }
 }
 
@@ -1117,21 +1184,6 @@ WarpX::RefRatio (int lev)
 }
 
 void
-WarpX::Evolve (int numsteps) {
-    WARPX_PROFILE_REGION("WarpX::Evolve()");
-
-#ifdef WARPX_DO_ELECTROSTATIC
-    if (do_electrostatic) {
-        EvolveES(numsteps);
-    } else {
-      EvolveEM(numsteps);
-    }
-#else
-    EvolveEM(numsteps);
-#endif // WARPX_DO_ELECTROSTATIC
-}
-
-void
 WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
                     const std::array<const amrex::MultiFab*, 3>& B,
                     const std::array<amrex::Real,3>& dx)
@@ -1191,74 +1243,6 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
         [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             warpx_computedivb(i, j, k, dcomp, divBfab, Bxfab, Byfab, Bzfab, dxinv, dyinv, dzinv
-#ifdef WARPX_DIM_RZ
-                              ,rmin
-#endif
-                              );
-        });
-    }
-}
-
-void
-WarpX::ComputeDivE (amrex::MultiFab& divE, int dcomp,
-                    const std::array<const amrex::MultiFab*, 3>& E,
-                    const std::array<amrex::Real,3>& dx)
-{
-    Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
-
-#ifdef WARPX_DIM_RZ
-    const Real rmin = GetInstance().Geom(0).ProbLo(0);
-#endif
-
-#ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-    for (MFIter mfi(divE, TilingIfNotGPU()); mfi.isValid(); ++mfi)
-    {
-        const Box& bx = mfi.tilebox();
-        auto const& Exfab = E[0]->array(mfi);
-        auto const& Eyfab = E[1]->array(mfi);
-        auto const& Ezfab = E[2]->array(mfi);
-        auto const& divEfab = divE.array(mfi);
-
-        ParallelFor(bx,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-        {
-            warpx_computedive(i, j, k, dcomp, divEfab, Exfab, Eyfab, Ezfab, dxinv, dyinv, dzinv
-#ifdef WARPX_DIM_RZ
-                              ,rmin
-#endif
-                              );
-        });
-    }
-}
-
-void
-WarpX::ComputeDivE (amrex::MultiFab& divE, int dcomp,
-                    const std::array<const amrex::MultiFab*, 3>& E,
-                    const std::array<amrex::Real,3>& dx, int ngrow)
-{
-    Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
-
-#ifdef WARPX_DIM_RZ
-    const Real rmin = GetInstance().Geom(0).ProbLo(0);
-#endif
-
-#ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-    for (MFIter mfi(divE, TilingIfNotGPU()); mfi.isValid(); ++mfi)
-    {
-        Box bx = mfi.growntilebox(ngrow);
-        auto const& Exfab = E[0]->array(mfi);
-        auto const& Eyfab = E[1]->array(mfi);
-        auto const& Ezfab = E[2]->array(mfi);
-        auto const& divEfab = divE.array(mfi);
-
-        ParallelFor(bx,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
-        {
-            warpx_computedive(i, j, k, dcomp, divEfab, Exfab, Eyfab, Ezfab, dxinv, dyinv, dzinv
 #ifdef WARPX_DIM_RZ
                               ,rmin
 #endif

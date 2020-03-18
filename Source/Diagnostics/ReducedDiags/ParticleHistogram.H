@@ -13,8 +13,8 @@
 #include <fstream>
 
 /**
- *  This class contains a function that
- *  computes a histogram of user defined quantity.
+ * Reduced diagnostics that computes a histogram over particles
+ * for a quantity specified by the user in the input file using the parser.
  */
 class ParticleHistogram : public ReducedDiags
 {
@@ -24,8 +24,8 @@ public:
      *  @param[in] rd_name reduced diags names */
     ParticleHistogram(std::string rd_name);
 
-    /// particle weight type
-    std::string m_norm = "default";
+    /// normalization type
+    int m_norm;
 
     /// number of bins
     int m_bin_num;
@@ -42,7 +42,8 @@ public:
 
     /// Parser to read expression for particle quantity from the input file.
     /// 7 elements are t, x, y, z, ux, uy, uz
-    std::unique_ptr<ParserWrapper<7>> m_parser;
+    static constexpr int m_nvars = 7;
+    std::unique_ptr<ParserWrapper<m_nvars>> m_parser;
 
     /** This function computes a histogram of user defined quantity.
      *  \param [in] step current time step.

@@ -10,6 +10,8 @@
 #ifndef WARPX_WarpXParticleContainer_H_
 #define WARPX_WarpXParticleContainer_H_
 
+#include "Utils/WarpXConst.H"
+#include "SpeciesPhysicalProperties.H"
 #include "Evolve/WarpXDtType.H"
 
 #include <AMReX_Particles.H>
@@ -159,12 +161,6 @@ public:
                               const amrex::MultiFab& Ez, const amrex::MultiFab& Bx,
                               const amrex::MultiFab& By, const amrex::MultiFab& Bz) {}
 
-#ifdef WARPX_DO_ELECTROSTATIC
-    virtual void EvolveES (const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                                 amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                           amrex::Real t, amrex::Real dt) = 0;
-#endif // WARPX_DO_ELECTROSTATIC
-
     /**
      * Evolve is the central WarpXParticleContainer function that advances
      * particles for a time dt (typically one timestep). It is a pure virtual
@@ -291,12 +287,14 @@ public:
     void AddRealComp (const std::string& name, bool comm=true)
     {
         particle_comps[name] = NumRealComps();
+        particle_runtime_comps[name] = NumRealComps() - PIdx::nattribs;
         AddRealComp(comm);
     }
 
     void AddIntComp (const std::string& name, bool comm=true)
     {
         particle_icomps[name] = NumIntComps();
+        particle_runtime_icomps[name] = NumIntComps() - 0;
         AddIntComp(comm);
     }
 
@@ -304,21 +302,34 @@ public:
 
     std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
     std::map<std::string, int> getParticleiComps () const noexcept { return particle_icomps;}
+    std::map<std::string, int> getParticleRuntimeComps () const noexcept { return particle_runtime_comps;}
+    std::map<std::string, int> getParticleRuntimeiComps () const noexcept { return particle_runtime_icomps;}
 
     //amrex::Real getCharge () {return charge;}
     amrex::ParticleReal getCharge () const {return charge;}
     //amrex::Real getMass () {return mass;}
     amrex::ParticleReal getMass () const {return mass;}
 
+    /* \brief This function tests if the current species
+    *  is of a given PhysicalSpecies (specified as a template parameter).
+    * @tparam PhysSpec the PhysicalSpecies to test against
+    * @return the result of the test
+    */
+    template<PhysicalSpecies PhysSpec>
+    bool AmIA () const noexcept {return (physical_species == PhysSpec);}
+
 protected:
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
+    std::map<std::string, int> particle_runtime_comps;
+    std::map<std::string, int> particle_runtime_icomps;
 
     int species_id;
 
     amrex::Real charge;
     amrex::Real mass;
+    PhysicalSpecies physical_species;
 
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     bool m_deposit_on_main_grid = false;
@@ -362,8 +373,15 @@ protected:
     set_breit_wheeler_engine_ptr(std::shared_ptr<BreitWheelerEngine>){};
     virtual void
     set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){};
-#endif
 
+    int m_qed_breit_wheeler_ele_product;
+    std::string m_qed_breit_wheeler_ele_product_name;
+    int m_qed_breit_wheeler_pos_product;
+    std::string m_qed_breit_wheeler_pos_product_name;
+    int m_qed_quantum_sync_phot_product;
+    std::string m_qed_quantum_sync_phot_product_name;
+
+#endif
     amrex::Vector<amrex::FArrayBox> local_rho;
     amrex::Vector<amrex::FArrayBox> local_jx;
     amrex::Vector<amrex::FArrayBox> local_jy;
