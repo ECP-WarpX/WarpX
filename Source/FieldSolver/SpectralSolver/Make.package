@@ -5,6 +5,19 @@ CEXE_sources += SpectralFieldData.cpp
 CEXE_headers += SpectralKSpace.H
 CEXE_sources += SpectralKSpace.cpp
 
+ifeq ($(USE_RZ),TRUE)
+  CEXE_headers += SpectralSolverRZ.H
+  CEXE_sources += SpectralSolverRZ.cpp
+  CEXE_headers += SpectralFieldDataHankel.H
+  CEXE_sources += SpectralFieldDataHankel.cpp
+  CEXE_headers += SpectralHankelKSpace.H
+  CEXE_sources += SpectralHankelKSpace.cpp
+  CEXE_headers += SpectralHankelTransformer.H
+  CEXE_sources += SpectralHankelTransformer.cpp
+  CEXE_headers += HankelTransform.H
+  CEXE_sources += HankelTransform.cpp
+  CEXE_headers += BesselRoots.H
+endif
 include $(WARPX_HOME)/Source/FieldSolver/SpectralSolver/SpectralAlgorithms/Make.package
 
 INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/FieldSolver/SpectralSolver
