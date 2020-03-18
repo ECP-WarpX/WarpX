@@ -1292,11 +1292,11 @@ Diagnostics and output
 
         .. math::
 
-            c = n_{\text{prtl}} \cdot w_{\text{prtl}} + n_{\text{cell}} \cdot w_{\text{cell}},
+            c = n_{\text{particle}} \cdot w_{\text{particle}} + n_{\text{cell}} \cdot w_{\text{cell}},
 
         where
-        :math:`n_{\text{prtl}}` is the number of particles on the box,
-        :math:`w_{\text{prtl}}` is the particle cost weight factor (controlled by ``algo.costs_heuristic_particles_wt``),
+        :math:`n_{\text{particle}}` is the number of particles on the box,
+        :math:`w_{\text{particle}}` is the particle cost weight factor (controlled by ``algo.costs_heuristic_particles_wt``),
         :math:`n_{\text{cell}}` is the number of cells on the box, and
         :math:`w_{\text{cell}}` is the cell cost weight factor (controlled by ``algo.costs_heuristic_cells_wt``).
 
