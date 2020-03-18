@@ -78,7 +78,6 @@ sim = picmi.Simulation(solver = solver,
                        max_steps = 40,
                        verbose = 1,
                        warpx_plot_int = 40,
-                       warpx_current_deposition_algo = 'esirkepov',
                        warpx_field_gathering_algo = 'energy-conserving',
                        warpx_particle_pusher_algo = 'boris')
 
@@ -187,4 +186,13 @@ fig.colorbar(im, ax=ax[2], orientation='vertical')
 ax[2].set_title('Ez, last iteration (difference)')
 plt.savefig('langmuir_multi_rz_multimode_analysis_Ez.png')
 
-assert max(max_error_Er, max_error_Ez) < 0.02
+# If Ex is cell centered along z, then the spectral solver
+# is being used.
+spectral = (Ex_sim_wrap.get_nodal_flag()[-1] == 0)
+
+if spectral:
+    acceptable_error = 0.1
+else:
+    acceptable_error = 0.02
+
+assert max(max_error_Er, max_error_Ez) < acceptable_error
