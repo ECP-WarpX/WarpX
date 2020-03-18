@@ -8,8 +8,8 @@ amr.blocking_factor  = 8
 amr.max_level        = 0
 geometry.coord_sys   = 0
 geometry.is_periodic = 1 1 1
-geometry.prob_lo     = 0.0 0.0 0.0
-geometry.prob_hi     = 1.0 1.0 1.0
+geometry.prob_lo     = -1.0 -1.0 -1.0
+geometry.prob_hi     =  1.0  1.0  1.0
 warpx.do_pml         = 0
 amr.plot_int         = 1000
 
@@ -22,8 +22,8 @@ warpx.cfl     = 1.0
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies      = 3
-particles.species_names = gaussian maxwell_boltzmann maxwell_juttner
+particles.nspecies      = 4
+particles.species_names = gaussian maxwell_boltzmann maxwell_juttner beam
 
 gaussian.charge                     = -q_e
 gaussian.mass                       = m_e
@@ -54,13 +54,37 @@ maxwell_juttner.density                    = 1.0e21
 maxwell_juttner.momentum_distribution_type = "maxwell_juttner"
 maxwell_juttner.theta                      = 1.0
 
+beam.charge = -q_e
+beam.mass = m_e
+beam.injection_style = "gaussian_beam"
+beam.x_rms = 0.25
+beam.y_rms = 0.25
+beam.z_rms = 0.25
+beam.x_m = 0.0
+beam.y_m = 0.0
+beam.z_m = 0.0
+beam.npart = 512000
+beam.q_tot = -1.e-20
+beam.momentum_distribution_type = "gaussian"
+beam.ux_m  = 0.0
+beam.uy_m  = 0.0
+beam.uz_m  = 0.0
+beam.ux_th = 1.0
+beam.uy_th = 1.0
+beam.uz_th = 1.0
+beam.zinject_plane = 0.0
+beam.rigid_advance = true
+beam.projected = true
+beam.focused = false
+
 #################################
 ########## DIAGNOSTIC ###########
 #################################
 # 1 for gaussian
 # 2 for maxwell-boltzmann
 # 3 for maxwell-juttner
-warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3
+# 4 for beam
+warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h4x h4y h4z
 
 h1x.type                                 = ParticleHistogram
 h1x.frequency                            = 1
@@ -131,3 +155,33 @@ h3.bin_min                              = 1.0
 h3.bin_max                              = 12.0
 h3.histogram_function(t,x,y,z,ux,uy,uz) = "sqrt(1.0+(ux*ux+uy*uy+uz*uz))"
 h3.normalization                        = max_to_unity
+
+h4x.type                                 = ParticleHistogram
+h4x.frequency                            = 1
+h4x.path                                 = "./"
+h4x.species                              = beam
+h4x.bin_number                           = 50
+h4x.bin_min                              = -1.0
+h4x.bin_max                              = +1.0
+h4x.histogram_function(t,x,y,z,ux,uy,uz) = "x"
+h4x.normalization                        = max_to_unity
+
+h4y.type                                 = ParticleHistogram
+h4y.frequency                            = 1
+h4y.path                                 = "./"
+h4y.species                              = beam
+h4y.bin_number                           = 50
+h4y.bin_min                              = -1.0
+h4y.bin_max                              = +1.0
+h4y.histogram_function(t,x,y,z,ux,uy,uz) = "y"
+h4y.normalization                        = max_to_unity
+
+h4z.type                                 = ParticleHistogram
+h4z.frequency                            = 1
+h4z.path                                 = "./"
+h4z.species                              = beam
+h4z.bin_number                           = 50
+h4z.bin_min                              = -1.0
+h4z.bin_max                              = +1.0
+h4z.histogram_function(t,x,y,z,ux,uy,uz) = "z"
+h4z.normalization                        = max_to_unity

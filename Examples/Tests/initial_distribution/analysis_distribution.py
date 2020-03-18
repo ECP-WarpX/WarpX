@@ -6,11 +6,11 @@
 #
 # License: BSD-3-Clause-LBNL
 
-# This script tests the initial momentum distributions.
+# This script tests initial distributions.
 # 1 denotes gaussian distribution.
 # 2 denotes maxwell-boltzmann distribution.
 # 3 denotes maxwell-juttner distribution.
-# The setup is a uniform plasma of electrons.
+# 4 denotes gaussian position distribution.
 # The distribution is obtained through reduced diagnostic ParticleHistogram.
 
 import numpy as np
@@ -18,10 +18,12 @@ import scipy.constants as scc
 import scipy.special as scs
 
 # print tolerance
-tolerance = 0.008
+tolerance = 0.009
 print('tolerance:', tolerance)
 
+#===============================
 # gaussian and maxwell-boltzmann
+#===============================
 
 # load data
 h1x = np.genfromtxt("h1x.txt")
@@ -75,7 +77,9 @@ print('Maxwell-Boltzmann distribution difference:', f2_error)
 assert(f1_error < tolerance)
 assert(f2_error < tolerance)
 
+#================
 # maxwell-juttner
+#================
 
 # load data
 h3  = np.genfromtxt("h3.txt")
@@ -110,3 +114,47 @@ f3_error = f3_error/bin_num
 print('Maxwell-Juttner distribution difference:', f3_error)
 
 assert(f3_error < tolerance)
+
+#==============
+# gaussian beam
+#==============
+
+# load data
+h4x = np.genfromtxt("h4x.txt")
+h4y = np.genfromtxt("h4y.txt")
+h4z = np.genfromtxt("h4z.txt")
+
+# parameters of bin
+bin_min = -1.0
+bin_max = +1.0
+bin_num = 50
+bin_size = (bin_max-bin_min)/bin_num
+
+# parameters of theory
+x_rms = 0.25
+
+# compute the analytical solution
+f = np.zeros( bin_num )
+for i in range(bin_num):
+    x = (i+0.5)*bin_size + bin_min
+    f[i] = np.exp(-0.5*(x/x_rms)**2)/(x_rms*np.sqrt(2.0*scc.pi))
+
+# normalization
+f_max = np.amax(f)
+for i in range(bin_num):
+    f[i] = f[i] / f_max
+
+# compute error
+f4_error = 0.0
+for i in range(bin_num):
+    f4_error = f4_error + abs(f[i] - h4x[i+2])
+    f4_error = f4_error + abs(f[i] - h4y[i+2])
+    f4_error = f4_error + abs(f[i] - h4z[i+2])
+
+f4_error = f4_error/bin_num
+
+print('Gaussian position distribution difference:', f4_error)
+
+np.savetxt('f4.txt',f)
+
+assert(f4_error < tolerance)
