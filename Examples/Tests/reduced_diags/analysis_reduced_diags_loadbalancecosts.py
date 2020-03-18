@@ -37,7 +37,7 @@ def get_efficiency(i):
     # First get the unique ranks
     costs, ranks = data[i,0::6], data[i,1::6].astype(int)
     rank_to_cost_map = {r:0. for r in set(ranks)}
-    
+
     # compute efficiency before/after load balance and check it is improved
     for c, r in zip(costs, ranks):
         rank_to_cost_map[r] += c
