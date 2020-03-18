@@ -28,22 +28,6 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
 : ReducedDiags{rd_name}
 {
 
-    // read parameters
-    ParmParse pp(rd_name);
-    std::string selected_species_name;
-    pp.get("species",selected_species_name);
-    pp.get("bin_number",m_bin_num);
-    pp.get("bin_max",   m_bin_max);
-    pp.get("bin_min",   m_bin_min);
-    pp.query("normalization",m_norm);
-    m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;
-    std::string function_string = "";
-    Store_parserString(pp,"histogram_function(t,x,y,z,ux,uy,uz)",
-                       function_string);
-    m_parser.reset(new ParserWrapper<7>(
-        makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
-
-=======
     ParmParse pp(rd_name);
 
     // read species
@@ -80,7 +64,6 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
         Abort("Unknown ParticleHistogram normalization type.");
     }
 
->>>>>>> 0555226e4a20b8ae5349e14f830e270c4577f558
     // get MultiParticleContainer class object
     auto & mypc = WarpX::GetInstance().GetPartContainer();
     // get species names (std::vector<std::string>)
