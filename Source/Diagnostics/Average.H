@@ -27,6 +27,7 @@ namespace Average{
      * \param[in] comp      index along the fourth component of the
      *                      <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
      *                      \c mf_in_arr containing the data to be averaged
+     * \return averaged field at cell (i,j,k)
      */
     Real ToCellCenter ( Array4<Real const> const& mf_in_arr,
                         const IntVect stag,

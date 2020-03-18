@@ -6,17 +6,17 @@ AMREX_GPU_HOST_DEVICE
 AMREX_FORCE_INLINE
 Real Average::ToCellCenter ( Array4<Real const> const& mf_in_arr,
                              const IntVect stag,
-                             int i,
-                             int j,
-                             int k,
+                             const int i,
+                             const int j,
+                             const int k,
                              const int comp)
 {
-    int sx = stag[0];
-    int sy = stag[1];
+    const int sx = stag[0];
+    const int sy = stag[1];
 #if   (AMREX_SPACEDIM == 2)
-    int sz = 0;
+    constexpr int sz = 0;
 #elif (AMREX_SPACEDIM == 3)
-    int sz = stag[2];
+    const int sz = stag[2];
 #endif
     return 0.125_rt * (   mf_in_arr(i   ,j   ,k   ,comp)
                         + mf_in_arr(i+sx,j   ,k   ,comp)
