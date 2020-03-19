@@ -387,6 +387,14 @@ bool PlasmaInjector::insideBounds (Real x, Real y, Real z) const noexcept
             z < zmax and z >= zmin);
 }
 
+bool PlasmaInjector::overlapsWith (const amrex::XDim3& lo,
+                                   const amrex::XDim3& hi) const noexcept
+{
+    return ! (   (xmin > hi.x) || (xmax < lo.x)
+              || (ymin > hi.y) || (ymax < lo.y)
+              || (zmin > hi.z) || (zmax < lo.z) );
+}
+
 InjectorPosition*
 PlasmaInjector::getInjectorPosition ()
 {
