@@ -119,26 +119,6 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
                                         mask.dataPtr(), dst1_index, dst2_index,
                                         std::forward<CreateFunc>(create),
                                         std::forward<TransFunc>(transform));
-
-/*     const int hix_without_last_node = box.type(0) ? hi.x - 1 : hi.x;
-    const int hiy_without_last_node = box.type(0) ? hi.y - 1 : hi.y;
-#if (AMREX_SPACEDIM == 3)
-    const int hiz_without_last_node = box.type(0) ? hi.z - 1 : hi.z;
-#else
-    const int hiz_without_last_node = hi.z;
-#endif */
-
-/*     FArrayBox maskFAB(box, 1);
-    auto arrmaskFAB = NumPairCreation.array(); */
-
-/*
-
-    AMREX_HOST_DEVICE_FOR_1D(np, i,
-    {
-        p_mask[i] = filter(src_data, i);
-    });
-
-     */
 }
 
 #endif
