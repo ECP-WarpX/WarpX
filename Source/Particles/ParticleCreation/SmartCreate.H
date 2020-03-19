@@ -16,14 +16,6 @@
 
 struct SmartCreate
 {
-    using amrex;
-
-    int m_num_create_real;
-    const int* m_comps_r;
-
-    int m_num_create_int;
-    const int* m_m_comps_i;
-
     const InitializationPolicy* m_policy_real;
     const InitializationPolicy* m_policy_int;
 
@@ -31,30 +23,62 @@ struct SmartCreate
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (
         PartData& prt, const int i_prt,
-        const amrex::Real x = 0_rt,
+        const amrex::Real x = 0.0,
 #if (AMREX_SPACEDIM == 3)
-        const amrex::Real y = 0_rt,
+        const amrex::Real y = 0.0,
 #endif
-        const amrex::Real z = 0_rt) const noexcept
+        const amrex::Real z = 0.0,
+        const int cpu = 0,
+        const int id = 0) const noexcept
     {
-        prt.m_aos[i_dst].pos(0) = x;
+        prt.m_aos[i_prt].pos(0) = x;
 #if (AMREX_SPACEDIM == 3)
-        prt.m_aos[i_dst].pos(1) = y;
+        prt.m_aos[i_prt].pos(1) = y;
 #endif
-        prt.m_aos[i_dst].pos(2) = z;
+        prt.m_aos[i_prt].pos(2) = z;
+
+        prt.m_aos[i_prt].cpu() = cpu;
+        prt.m_aos[i_prt].id() = id;
 
          // initialize the real components
-         for (int j = 0; j < DstData::NAR; ++j)
-             dst.m_rdata[j][i_dst] = initializeRealValue(m_policy_real[j]);
-         for (int j = 0; j < dst.m_num_runtime_real; ++j)
-             dst.m_runtime_rdata[j][i_dst] = initializeRealValue(m_policy_real[j+DstData::NAR]);
+         for (int j = 0; j < PartData::NAR; ++j)
+             prt.m_rdata[j][i_prt] = initializeRealValue(m_policy_real[j]);
+         for (int j = 0; j < prt.m_num_runtime_real; ++j)
+             prt.m_runtime_rdata[j][i_prt] = initializeRealValue(m_policy_real[j+PartData::NAR]);
 
          // initialize the int components
-         for (int j = 0; j < DstData::NAI; ++j)
-             dst.m_idata[j][i_dst] = initializeIntValue(m_policy_int[j]);
-         for (int j = 0; j < dst.m_num_runtime_int; ++j)
-             dst.m_runtime_idata[j][i_dst] = initializeIntValue(m_policy_int[j+DstData::NAI]);
-     }
- };
+         for (int j = 0; j < PartData::NAI; ++j)
+             prt.m_idata[j][i_prt] = initializeIntValue(m_policy_int[j]);
+         for (int j = 0; j < prt.m_num_runtime_int; ++j)
+             prt.m_runtime_idata[j][i_prt] = initializeIntValue(m_policy_int[j+PartData::NAI]);
+    }
+};
+
+class SmartCreateFactory
+{
+    PolicyVec m_policy_real;
+    PolicyVec m_policy_int;
+    bool m_defined;
+
+public:
+    template <class PC>
+    SmartCreateFactory (const PC& part) noexcept
+        : m_defined(false)
+    {
+        m_policy_real = getPolicies(part.getParticleComps());
+        m_policy_int  = getPolicies(part.getParticleiComps());
+
+        m_defined = true;
+    }
+
+    SmartCreate getSmartCreate () const noexcept
+    {
+        AMREX_ASSERT(m_defined);
+        return SmartCreate{m_policy_real.dataPtr(),
+                         m_policy_int.dataPtr()};
+    }
+
+    bool isDefined () const noexcept { return m_defined; }
+};
 
 #endif //SMART_CREATE_H_
