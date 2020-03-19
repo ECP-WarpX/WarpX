@@ -18,7 +18,9 @@ public:
     void WriteJobInfo(const std::string& dir) const;
     /** Write WarpX-specific plotfile header */
     void WriteWarpXHeader(const std::string& name) const;
-
+    void WriteAllRawFields (const bool plot_raw_fields,
+                            const int nlevels,
+                            std::string plotfilename) const;
 };
 
 #endif // WARPX_FLUSHFORMATPLOTFILE_H_
