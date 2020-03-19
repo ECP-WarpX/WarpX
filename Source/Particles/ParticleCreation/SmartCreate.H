@@ -14,8 +14,6 @@
 #include <AMReX_GpuContainers.H>
 #include <AMReX_ParallelDescriptor.H>
 
-enum SmartCreateMode { default_mode, overwrite_weight };
-
 /**
  * \brief This is a functor for performing a "smart create" that works
  * in both host and device code.
@@ -25,15 +23,11 @@ enum SmartCreateMode { default_mode, overwrite_weight };
  * the particle (in most cases IDs should be initialized using setNewParticleIDs
  * after their creation).
  * Then, it initializes all the other components according to initialization policies.
- * Finally, if SmartCreateMode::overwrite_weight is selected as a template argument, it uses
- * the weight argument to replace the weight component of the particle.
  *
  * You don't create this directly - use the SmartCreateFactory object below.
  *
- * @tparam Mode if SmartCreateMode::overwrite_weight is selected, weight argument is used to replace the weight component of the particle
  */
 
-template<SmartCreateMode Mode>
 struct SmartCreate
 {
     const InitializationPolicy* m_policy_real;
@@ -49,7 +43,6 @@ struct SmartCreate
         const amrex::Real y = 0.0,
 #endif
         const amrex::Real z = 0.0,
-        const amrex::Real weight = 0.0,
         const int cpu = 0,
         const int id = 0) const noexcept
     {
@@ -73,10 +66,6 @@ struct SmartCreate
              prt.m_idata[j][i_prt] = initializeIntValue(m_policy_int[j]);
          for (int j = 0; j < prt.m_num_runtime_int; ++j)
              prt.m_runtime_idata[j][i_prt] = initializeIntValue(m_policy_int[j+PartData::NAI]);
-
-         //Initialize the weight
-         if(Mode == SmartCreateMode::overwrite_weight)
-            prt.m_rdata[m_weight_index][i_prt] = weight;
     }
 };
 
@@ -91,7 +80,6 @@ class SmartCreateFactory
 {
     PolicyVec m_policy_real;
     PolicyVec m_policy_int;
-    int m_weight_index;
     bool m_defined;
 
 public:
@@ -101,17 +89,14 @@ public:
     {
         m_policy_real = getPolicies(part.getParticleComps());
         m_policy_int  = getPolicies(part.getParticleiComps());
-        m_weight_index = getWeightIndex();
         m_defined = true;
     }
 
-    template<SmartCreateMode Mode = SmartCreateMode::default_mode>
-    SmartCreate<Mode> getSmartCreate () const noexcept
+    SmartCreate getSmartCreate () const noexcept
     {
         AMREX_ASSERT(m_defined);
-        return SmartCreate<Mode>{m_policy_real.dataPtr(),
-                         m_policy_int.dataPtr(),
-                         m_weight_index};
+        return SmartCreate{m_policy_real.dataPtr(),
+                         m_policy_int.dataPtr()};
     }
 
     bool isDefined () const noexcept { return m_defined; }

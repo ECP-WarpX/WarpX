@@ -58,11 +58,4 @@ void setNewParticleIDs (PTile& ptile, int old_size, int num_added)
     });
 }
 
-/**
- * \brief Returns the index of the component "w" in WarpXParticleContainer class.
- * If "w" is not found, it aborts the program.
- *
- */
-int getWeightIndex();
-
 #endif //SMART_UTILS_H_

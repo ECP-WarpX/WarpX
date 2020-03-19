@@ -53,12 +53,3 @@ SmartCopyTag getSmartCopyTag (const NameMap& src, const NameMap& dst) noexcept
 
     return tag;
 }
-
-int getWeightIndex()
-{
-    const auto p_index = ParticleStringNames::to_index.find("w");
-    if(p_index == ParticleStringNames::to_index.end())
-            amrex::Abort("Error! Weight index 'w' not found!");
-
-    return p_index->second;
-}
