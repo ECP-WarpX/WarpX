@@ -20,11 +20,12 @@ enum SmartCreateMode { default_mode, overwrite_weight };
  * \brief This is a functor for performing a "smart create" that works
  * in both host and device code.
  *
- * A "smart" create does the following.
- * First, it initializes the position and (eventually) cpuid and id of
- * the particle (in most cases IDs should be initialized using setNewParticleIDs )
+ * A "smart" create does the following:
+ * First, it initializes the position, cpuid and id of
+ * the particle (in most cases IDs should be initialized using setNewParticleIDs
+ * after their creation).
  * Then, it initializes all the other components according to initialization policies.
- * Finally, if SmartCreateMode::overwrite_weight is selected, it uses
+ * Finally, if SmartCreateMode::overwrite_weight is selected as a template argument, it uses
  * the weight argument to replace the weight component of the particle.
  *
  * You don't create this directly - use the SmartCreateFactory object below.
@@ -85,8 +86,6 @@ struct SmartCreate
  * Given a particle container, this can create a functor
  * that will perform the smart create operation on a tile
  * of that particle container
- *
- *
  */
 class SmartCreateFactory
 {
