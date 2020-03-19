@@ -68,8 +68,8 @@ class SmartCreateFactory
 
 public:
     template <class PC>
-    SmartCreateFactory (const PC& part, int weight_index) noexcept
-        : m_weight_index{weight_index}, m_defined(false)
+    SmartCreateFactory (const PC& part) noexcept
+        : m_defined(false)
     {
         m_policy_real = getPolicies(part.getParticleComps());
         m_policy_int  = getPolicies(part.getParticleiComps());
