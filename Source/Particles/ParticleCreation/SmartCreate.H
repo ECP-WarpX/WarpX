@@ -14,6 +14,25 @@
 #include <AMReX_GpuContainers.H>
 #include <AMReX_ParallelDescriptor.H>
 
+enum SmartCreateMode { default_mode, overwrite_weight };
+
+/**
+ * \brief This is a functor for performing a "smart create" that works
+ * in both host and device code.
+ *
+ * A "smart" create does the following.
+ * First, it initializes the position and (eventually) cpuid and id of
+ * the particle (in most cases IDs should be initialized using setNewParticleIDs )
+ * Then, it initializes all the other components according to initialization policies.
+ * Finally, if SmartCreateMode::overwrite_weight is selected, it uses
+ * the weight argument to replace the weight component of the particle.
+ *
+ * You don't create this directly - use the SmartCreateFactory object below.
+ *
+ * @tparam Mode if SmartCreateMode::overwrite_weight is selected, weight argument is used to replace the weight component of the particle
+ */
+
+template<SmartCreateMode Mode>
 struct SmartCreate
 {
     const InitializationPolicy* m_policy_real;
@@ -55,10 +74,20 @@ struct SmartCreate
              prt.m_runtime_idata[j][i_prt] = initializeIntValue(m_policy_int[j+PartData::NAI]);
 
          //Initialize the weight
-         prt.m_rdata[m_weight_index][i_prt] = weight;
+         if(Mode == SmartCreateMode::overwrite_weight)
+            prt.m_rdata[m_weight_index][i_prt] = weight;
     }
 };
 
+/**
+ * \brief A factory for creating SmartCreate functors.
+ *
+ * Given a particle container, this can create a functor
+ * that will perform the smart create operation on a tile
+ * of that particle container
+ *
+ *
+ */
 class SmartCreateFactory
 {
     PolicyVec m_policy_real;
@@ -67,8 +96,8 @@ class SmartCreateFactory
     bool m_defined;
 
 public:
-    template <class PC>
-    SmartCreateFactory (const PC& part) noexcept
+    template <class PartTileData>
+    SmartCreateFactory (const PartTileData& part) noexcept
         : m_defined(false)
     {
         m_policy_real = getPolicies(part.getParticleComps());
@@ -77,10 +106,11 @@ public:
         m_defined = true;
     }
 
-    SmartCreate getSmartCreate () const noexcept
+    template<SmartCreateMode Mode = SmartCreateMode::default_mode>
+    SmartCreate<Mode> getSmartCreate () const noexcept
     {
         AMREX_ASSERT(m_defined);
-        return SmartCreate{m_policy_real.dataPtr(),
+        return SmartCreate<Mode>{m_policy_real.dataPtr(),
                          m_policy_int.dataPtr(),
                          m_weight_index};
     }
