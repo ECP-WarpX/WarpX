@@ -658,18 +658,15 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
             const XDim3 r =
                 inj_pos->getPositionUnitBox(i_part, static_cast<int>(fac));
-            const auto pos = getCellCoords(overlap_corner, dx, r, iv);
-            Real x = pos.x;
-            Real y = pos.y;
-            Real z = pos.z;
+            auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
 #if (AMREX_SPACEDIM == 3)
-            if (!tile_realbox.contains(XDim3{x,y,z})) {
+            if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
                 p.id() = -1;
                 return;
             }
 #else
-            if (!tile_realbox.contains(XDim3{x,z,0.0})) {
+            if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0})) {
                 p.id() = -1;
                 return;
             }
@@ -677,8 +674,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
             // Save the x and y values to use in the insideBounds checks.
             // This is needed with WARPX_DIM_RZ since x and y are modified.
-            Real xb = x;
-            Real yb = y;
+            Real xb = pos.x;
+            Real yb = pos.y;
 
 #ifdef WARPX_DIM_RZ
             // Replace the x and y, setting an angle theta.
@@ -702,12 +699,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 // If the particle is not within the species's
                 // xmin, xmax, ymin, ymax, zmin, zmax, go to
                 // the next generated particle.
-                if (!inj_pos->insideBounds(xb, yb, z)) {
+                if (!inj_pos->insideBounds(xb, yb, pos.z)) {
                     p.id() = -1;
                     return;
                 }
-                u = inj_mom->getMomentum(x, y, z);
-                dens = inj_rho->getDensity(x, y, z);
+                u = inj_mom->getMomentum(pos.x, pos.y, pos.z);
+                dens = inj_rho->getDensity(pos.x, pos.y, pos.z);
                 // Remove particle if density below threshold
                 if ( dens < density_min ){
                     p.id() = -1;
@@ -727,12 +724,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 //
                 // In order for this equation to be solvable, betaz_lab
                 // is explicitly assumed to have no dependency on z0_lab
-                u = inj_mom->getMomentum(x, y, 0.); // No z0_lab dependency
+                u = inj_mom->getMomentum(pos.x, pos.y, 0.); // No z0_lab dependency
                 // At this point u is the lab-frame momentum
                 // => Apply the above formula for z0_lab
                 Real gamma_lab = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
                 Real betaz_lab = u.z/(gamma_lab);
-                Real z0_lab = gamma_boost * ( z*(1-beta_boost*betaz_lab)
+                Real z0_lab = gamma_boost * ( pos.z*(1-beta_boost*betaz_lab)
                                               - PhysConst::c*t*(betaz_lab-beta_boost) );
                 // If the particle is not within the lab-frame zmin, zmax, etc.
                 // go to the next generated particle.
@@ -741,7 +738,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     return;
                 }
                 // call `getDensity` with lab-frame parameters
-                dens = inj_rho->getDensity(x, y, z0_lab);
+                dens = inj_rho->getDensity(pos.x, pos.y, z0_lab);
                 // Remove particle if density below threshold
                 if ( dens < density_min ){
                     p.id() = -1;
@@ -781,7 +778,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             } else {
                 // This is not correct since it might shift the particle
                 // out of the local grid
-                x = std::sqrt(xb*rmax);
+                pos.x = std::sqrt(xb*rmax);
                 weight *= dx[0];
             }
 #endif
@@ -791,15 +788,15 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pa[PIdx::uz][ip] = u.z;
 
 #if (AMREX_SPACEDIM == 3)
-            p.pos(0) = x;
-            p.pos(1) = y;
-            p.pos(2) = z;
+            p.pos(0) = pos.x;
+            p.pos(1) = pos.y;
+            p.pos(2) = pos.z;
 #elif (AMREX_SPACEDIM == 2)
 #ifdef WARPX_DIM_RZ
             pa[PIdx::theta][ip] = theta;
 #endif
             p.pos(0) = xb;
-            p.pos(1) = z;
+            p.pos(1) = pos.z;
 #endif
         });
 
