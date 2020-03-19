@@ -63,7 +63,7 @@ class SmartCreateFactory
 {
     PolicyVec m_policy_real;
     PolicyVec m_policy_int;
-    const int m_weight_index;
+    int m_weight_index;
     bool m_defined;
 
 public:
