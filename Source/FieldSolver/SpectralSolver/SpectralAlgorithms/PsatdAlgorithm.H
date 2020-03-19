@@ -43,12 +43,12 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * base class \c SpectralBaseAlgorithm (qualifier \c override) and cannot be
          * overridden by further derived classes (qualifier \c final).
          *
-         * \param[in,out] field_data All fields in Fourier space
-         * \param[in,out] current    Three-dimensional array of unique pointers to
+         * \param[in,out] field_data all fields in Fourier space
+         * \param[in,out] current    three-dimensional array of unique pointers to
          *                           <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
-         *                           (current density)
-         * \param[in]     rho        Unique pointer to <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
-         *                           (charge density)
+         *                           storing the three components of the current density
+         * \param[in]     rho        unique pointer to <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+         *                           storing the charge density
          */
         virtual void CurrentCorrection ( SpectralFieldData& field_data,
                                          std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
