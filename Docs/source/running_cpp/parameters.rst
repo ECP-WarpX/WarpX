@@ -283,7 +283,7 @@ Particle initialization
       It requires additional argument ``<species_name>.density_function(x,y,z)``, which is a
       mathematical expression for the density of the species, e.g.
       ``electrons.density_function(x,y,z) = "n0+n0*x**2*1.e12"`` where ``n0`` is a
-      user-defined constant, see above.
+      user-defined constant, see above. WARNING: where ``density_function(x,y,z)`` is close to zero, particles will still be injected between ``xmin`` and ``xmax`` etc., with a null weight. This is undesirable because it results in useless computing. To avoid this, see option ``density_min`` below.
 
 * ``<species_name>.density_min`` (`float`) optional (default `0.`)
     Minimum plasma density. No particle is injected where the density is below
@@ -1285,6 +1285,20 @@ Diagnostics and output
         :math:`\langle y \rangle`,
         :math:`\delta_y`, and
         :math:`\epsilon_y` will not be outputed.
+
+    * ``LoadBalanceCosts``
+        This type computes the cost, used in load balancing, for each box on the domain.
+        The cost :math:`c` is computed as
+
+        .. math::
+
+            c = n_{\text{particle}} \cdot w_{\text{particle}} + n_{\text{cell}} \cdot w_{\text{cell}},
+
+        where
+        :math:`n_{\text{particle}}` is the number of particles on the box,
+        :math:`w_{\text{particle}}` is the particle cost weight factor (controlled by ``algo.costs_heuristic_particles_wt``),
+        :math:`n_{\text{cell}}` is the number of cells on the box, and
+        :math:`w_{\text{cell}}` is the cell cost weight factor (controlled by ``algo.costs_heuristic_cells_wt``).
 
     * ``ParticleHistogram``
         This type computes a user defined particle histogram.
