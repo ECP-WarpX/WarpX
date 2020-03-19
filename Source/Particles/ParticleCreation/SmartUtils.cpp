@@ -6,6 +6,9 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "SmartUtils.H"
+#include "WarpXParticleContainer.H"
+
+#include <AMReX.H>
 
 PolicyVec getPolicies (const NameMap& names) noexcept
 {
@@ -49,4 +52,13 @@ SmartCopyTag getSmartCopyTag (const NameMap& src, const NameMap& dst) noexcept
     }
 
     return tag;
+}
+
+int getWeightIndex()
+{
+    const auto p_index = ParticleStringNames::to_index.find("w");
+    if(p_index == ParticleStringNames::to_index.end())
+            amrex::Abort("Error! Weight index 'w' not found!");
+
+    return p_index->second;
 }

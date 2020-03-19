@@ -58,4 +58,6 @@ void setNewParticleIDs (PTile& ptile, int old_size, int num_added)
     });
 }
 
+int getWeightIndex();
+
 #endif //SMART_UTILS_H_
