@@ -103,7 +103,6 @@ void LoadBalanceCosts::ComputeDiags (int step)
      *   ......] */
 
 }
-// end void LoadBalanceCosts::ComputeDiags
 
 // write to file function for cost
 void LoadBalanceCosts::WriteToFile (int step) const
@@ -113,82 +112,79 @@ void LoadBalanceCosts::WriteToFile (int step) const
     // get WarpX class object
     auto& warpx = WarpX::GetInstance();
 
-    if (ParallelDescriptor::IOProcessor())
+    if (!ParallelDescriptor::IOProcessor()) return;
+    
+    // final step is a special case, fill jagged array with NaN
+    if (step == (warpx.maxStep() - (warpx.maxStep()%m_freq) - 1 ))
     {
-        // final step is a special case, fill jagged array with NaN
-        if (step == (warpx.maxStep() - (warpx.maxStep()%m_freq) - 1 ))
+        // open tmp file to copy data
+        std::string fileTmpName = m_path + m_rd_name + ".tmp." + m_extension;
+        std::ofstream ofs(fileTmpName, std::ofstream::out);
+        // write header row
+        // for each box on each level we saved 6 data fields: [cost, proc, lev, i_low, j_low, k_low])
+        ofs << "#";
+        ofs << "[1]step()";
+        ofs << m_sep;
+        ofs << "[2]time(s)";
+
+        for (int boxNumber=0; boxNumber<m_nBoxesMax; ++boxNumber)
         {
-            // open tmp file to copy data
-            std::string fileTmpName = m_path + m_rd_name + ".tmp." + m_extension;
-            std::ofstream ofs(fileTmpName, std::ofstream::out);
-
-            // write header row
-            // for each box on each level we saved 6 data fields: [cost, proc, lev, i_low, j_low, k_low])
-            ofs << "#";
-            ofs << "[1]step()";
             ofs << m_sep;
-            ofs << "[2]time(s)";
+            ofs << "[" + std::to_string(3 + m_nDataFields*boxNumber) + "]";
+            ofs << "cost_box_"+std::to_string(boxNumber)+"()";
+            ofs << m_sep;
+            ofs << "[" + std::to_string(4 + m_nDataFields*boxNumber) + "]";
+            ofs << "proc_box_"+std::to_string(boxNumber)+"()";
+            ofs << m_sep;
+            ofs << "[" + std::to_string(5 + m_nDataFields*boxNumber) + "]";
+            ofs << "lev_box_"+std::to_string(boxNumber)+"()";
+            ofs << m_sep;
+            ofs << "[" + std::to_string(6 + m_nDataFields*boxNumber) + "]";
+            ofs << "i_low_box_"+std::to_string(boxNumber)+"()";
+            ofs << m_sep;
+            ofs << "[" + std::to_string(7 + m_nDataFields*boxNumber) + "]";
+            ofs << "j_low_box_"+std::to_string(boxNumber)+"()";
+            ofs << m_sep;
+            ofs << "[" + std::to_string(8 + m_nDataFields*boxNumber) + "]";
+            ofs << "k_low_box_"+std::to_string(boxNumber)+"()";
+        }
+        ofs << std::endl;
 
-            for (int boxNumber=0; boxNumber<m_nBoxesMax; ++boxNumber)
+        // open the data-containing file
+        std::string fileDataName = m_path + m_rd_name + "." + m_extension;
+        std::ifstream ifs(fileDataName, std::ifstream::in);
+
+        // Fill in the tmp costs file with data, padded with NaNs
+        for (std::string lineIn; std::getline(ifs, lineIn);)
+        {
+            // count the elements in the input line
+            int cnt = 0;
+            std::stringstream ss(lineIn);
+            std::string token;
+
+            while (std::getline(ss, token, m_sep[0]))
             {
-                ofs << m_sep;
-                ofs << "[" + std::to_string(3 + m_nDataFields*boxNumber) + "]";
-                ofs << "cost_box_"+std::to_string(boxNumber)+"()";
-                ofs << m_sep;
-                ofs << "[" + std::to_string(4 + m_nDataFields*boxNumber) + "]";
-                ofs << "proc_box_"+std::to_string(boxNumber)+"()";
-                ofs << m_sep;
-                ofs << "[" + std::to_string(5 + m_nDataFields*boxNumber) + "]";
-                ofs << "lev_box_"+std::to_string(boxNumber)+"()";
-                ofs << m_sep;
-                ofs << "[" + std::to_string(6 + m_nDataFields*boxNumber) + "]";
-                ofs << "i_low_box_"+std::to_string(boxNumber)+"()";
-                ofs << m_sep;
-                ofs << "[" + std::to_string(7 + m_nDataFields*boxNumber) + "]";
-                ofs << "j_low_box_"+std::to_string(boxNumber)+"()";
-                ofs << m_sep;
-                ofs << "[" + std::to_string(8 + m_nDataFields*boxNumber) + "]";
-                ofs << "k_low_box_"+std::to_string(boxNumber)+"()";
+                cnt += 1;
+                if (ss.peek() == m_sep[0]) ss.ignore();
+            }
+
+            // 2 columns for step, time; then nBoxes*nDatafields columns for data;
+            // then fill the remaining columns (i.e., up to 2 + m_nBoxesMax*m_nDataFields)
+            // with NaN, so the array is not jagged
+            ofs << lineIn;
+            for (int i=0; i<(m_nBoxesMax*m_nDataFields - (cnt - 2)); ++i)
+            {
+                ofs << m_sep << "NaN";
             }
             ofs << std::endl;
+        }
 
-            // open the data-containing file
-            std::string fileDataName = m_path + m_rd_name + "." + m_extension;
-            std::ifstream ifs(fileDataName, std::ifstream::in);
+        // close files
+        ifs.close();
+        ofs.close();
 
-            // Fill in the tmp costs file with data, padded with NaNs
-            for (std::string lineIn; std::getline(ifs, lineIn);)
-            {
-                // count the elements in the input line
-                int cnt = 0;
-                std::stringstream ss(lineIn);
-                std::string token;
-
-                while (std::getline(ss, token, m_sep[0]))
-                {
-                    cnt += 1;
-                    if (ss.peek() == m_sep[0]) ss.ignore();
-                }
-
-                // 2 columns for step, time; then nBoxes*nDatafields columns for data;
-                // then fill the remaining columns (i.e., up to 2 + m_nBoxesMax*m_nDataFields)
-                // with NaN, so the array is not jagged
-                ofs << lineIn;
-                for (int i=0; i<(m_nBoxesMax*m_nDataFields - (cnt - 2)); ++i)
-                {
-                    ofs << m_sep << "NaN";
-                }
-                ofs << std::endl;
-            }
-
-            // close files
-            ifs.close();
-            ofs.close();
-
-            // remove the original, rename tmp file
-            std::remove(fileDataName.c_str());
-            std::rename(fileTmpName.c_str(), fileDataName.c_str());
-
-        } // if (step == (warpx.maxStep() - 1)) ...
-    } // if (ParallelDescriptor::IOProcessor()) ...
-} // end ReducedDiags::WriteToFile
+        // remove the original, rename tmp file
+        std::remove(fileDataName.c_str());
+        std::rename(fileTmpName.c_str(), fileDataName.c_str());
+    }
+}
