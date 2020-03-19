@@ -33,8 +33,34 @@
 #include <sstream>
 #include <string>
 
-
 using namespace amrex;
+
+namespace
+{
+
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    XDim3 getCellCoords (const GpuArray<Real, AMREX_SPACEDIM>& lo_corner,
+                         const GpuArray<Real, AMREX_SPACEDIM>& dx,
+                         const XDim3& r, const IntVect& iv) noexcept
+    {
+        XDim3 pos;
+#if (AMREX_SPACEDIM == 3)
+        pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
+        pos.y = lo_corner[1] + (iv[1]+r.y)*dx[1];
+        pos.z = lo_corner[2] + (iv[2]+r.z)*dx[2];
+#else
+        pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
+        pos.y = 0.0;
+#if   defined WARPX_DIM_XZ
+        pos.z = lo_corner[1] + (iv[1]+r.y)*dx[1];
+#elif defined WARPX_DIM_RZ
+        // Note that for RZ, r.y will be theta
+        pos.z = lo_corner[1] + (iv[1]+r.z)*dx[1];
+#endif
+#endif
+        return pos;
+    }    
+}
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int ispecies,
                                                       const std::string& name)
@@ -490,6 +516,25 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         const int grid_id = mfi.index();
         const int tile_id = mfi.LocalTileIndex();
 
+        const GpuArray<Real,AMREX_SPACEDIM> overlap_corner
+            {AMREX_D_DECL(overlap_realbox.lo(0),
+                          overlap_realbox.lo(1),
+                          overlap_realbox.lo(2))};
+        
+        // count the number of cells that could contribute particles
+        ReduceOps<ReduceOpSum> reduce_op;
+        ReduceData<int> reduce_data(reduce_op);
+        using ReduceTuple = typename decltype(reduce_data)::Type;
+        reduce_op.eval(overlap_box, reduce_data,
+                       [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
+                       {
+                           IntVect iv(i, j, k);
+                           const auto lo = getCellCoords(overlap_corner, dx, {0., 0., 0.}, iv);
+                           const auto hi = getCellCoords(overlap_corner, dx, {1., 1., 1.}, iv);
+                           return {inj_pos->overlapsWith(lo, hi)};
+                       });
+        int num_cells_contrib = amrex::get<0>(reduce_data.value());
+        
         // Max number of new particles, if particles are created in the whole
         // overlap_box. All of them are created, and invalid ones are then
         // discaded
@@ -581,11 +626,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 m_shr_p_bw_engine->build_optical_depth_functor();
         }
 #endif
-
-        const GpuArray<Real,AMREX_SPACEDIM> overlap_corner
-            {AMREX_D_DECL(overlap_realbox.lo(0),
-                          overlap_realbox.lo(1),
-                          overlap_realbox.lo(2))};
 
         int lrrfac = rrfac;
 
