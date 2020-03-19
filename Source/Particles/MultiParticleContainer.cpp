@@ -14,6 +14,7 @@
 #include "WarpX.H"
 #ifdef WARPX_QED
     #include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
+    #include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
 #endif
 
 #include <AMReX_Vector.H>
@@ -1029,6 +1030,11 @@ MultiParticleContainer::doQEDSchwinger ()
 {
     if (!m_do_qed_schwinger) {return;}
 
+    auto& pc_product_ele =
+            allcontainers[m_ind_qed_schwinger_ele_product];
+    auto& pc_product_pos =
+            allcontainers[m_ind_qed_schwinger_ele_product];
+
     auto & warpx = WarpX::GetInstance();
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_nodal,
@@ -1066,27 +1072,44 @@ MultiParticleContainer::doQEDSchwinger ()
 
     for (MFIter mfi(Ex, info); mfi.isValid(); ++mfi )
     {
-        const Box& box = mfi.tilebox();
+        // Make the box cell centered to avoid creating particles twice on the tile edges
+        const Box& box = enclosedCells(mfi.tilebox());
 
         // const FArrayBox& fabEx = Ex[mfi];
 
-        const auto& arrEx = Ex[mfi].array();
+/*         const auto& arrEx = Ex[mfi].array();
         const auto& arrEy = Ey[mfi].array();
         const auto& arrEz = Ez[mfi].array();
         const auto& arrBx = Bx[mfi].array();
         const auto& arrBy = By[mfi].array();
-        const auto& arrBz = Bz[mfi].array();
+        const auto& arrBz = Bz[mfi].array(); */
 
-        FArrayBox NumPairCreation(box, 1);
+        const FArrayBox *array_EMFAB [] = {&Ex[mfi],&Ey[mfi],&Ez[mfi],
+                                           &Bx[mfi],&By[mfi],&Bz[mfi]};
+// To add in filter
+/*         FArrayBox NumPairCreation(box, 1);
         auto arrNumPairCreation = NumPairCreation.array();
 
         amrex::ParallelFor(box,  [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 arrNumPairCreation(i,j,k) = getSchwingerProductionNumber( dVdt,
                     arrEx(i,j,k),arrEy(i,j,k),arrEz(i,j,k),
                     arrBx(i,j,k),arrBy(i,j,k),arrBz(i,j,k));
-                });
+                amrex::Print(arrNumPairCreation(i,j,k));
+                }); */
 
-        CreateSchwingerPairs(arrNumPairCreation);
+        auto& dst_ele_tile = pc_product_ele->ParticlesAt(level_0, mfi);
+        auto& dst_pos_tile = pc_product_pos->ParticlesAt(level_0, mfi);
+
+        int dst1_index_dummy=0;
+        int dst2_index_dummy=0;
+        auto filter_dummy= [](auto, auto, auto, auto) {return 0;};
+        auto create_dummy= [](auto, auto, auto, auto, auto) {return 0;};
+        auto transform_dummy= [](auto, auto, auto, auto) {return 0;};
+
+        const auto num_added = filterCreateTransformFromFAB<1>( dst_ele_tile,
+                              dst_pos_tile, box, array_EMFAB, dst1_index_dummy,
+                               dst2_index_dummy,filter_dummy, create_dummy,
+                                transform_dummy);
     }
 }
 
