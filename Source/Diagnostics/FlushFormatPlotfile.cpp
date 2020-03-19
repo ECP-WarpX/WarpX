@@ -28,7 +28,7 @@ FlushFormatPlotfile::WriteToFile (
 
     const bool plot_raw_fields = true;
 
-    
+
     Vector<std::string> rfs;
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::Version_v1);
@@ -44,7 +44,7 @@ FlushFormatPlotfile::WriteToFile (
                                    );
 
     WriteAllRawFields(plot_raw_fields, nlev, filename);
-    
+
     mpc.WritePlotFile(filename);
 
     WriteJobInfo(filename);
@@ -382,7 +382,7 @@ FlushFormatPlotfile::WriteAllRawFields(const bool plot_raw_fields, const int nle
         const DistributionMapping& dm = warpx.DistributionMap(lev);
 
         // Auxiliary patch
-        
+
         WriteRawMF( warpx.getEfield(lev, 0), dm, raw_pltname, level_prefix, "Ex_aux", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getEfield(lev, 1), dm, raw_pltname, level_prefix, "Ey_aux", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getEfield(lev, 2), dm, raw_pltname, level_prefix, "Ez_aux", lev, plot_raw_fields_guards);
