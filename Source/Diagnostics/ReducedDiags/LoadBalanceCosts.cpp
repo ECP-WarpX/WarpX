@@ -113,7 +113,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
     auto& warpx = WarpX::GetInstance();
 
     if (!ParallelDescriptor::IOProcessor()) return;
-    
+
     // final step is a special case, fill jagged array with NaN
     if (step == (warpx.maxStep() - (warpx.maxStep()%m_freq) - 1 ))
     {
