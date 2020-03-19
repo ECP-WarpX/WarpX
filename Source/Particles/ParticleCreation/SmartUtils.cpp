@@ -6,9 +6,6 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "SmartUtils.H"
-#include "WarpXParticleContainer.H"
-
-#include <AMReX.H>
 
 PolicyVec getPolicies (const NameMap& names) noexcept
 {
