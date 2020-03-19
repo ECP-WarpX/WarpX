@@ -55,7 +55,7 @@ struct SmartCreate
              prt.m_runtime_idata[j][i_prt] = initializeIntValue(m_policy_int[j+PartData::NAI]);
 
          //Initialize the weight
-         prt.m_rdata[m_weight_index] = weight;
+         prt.m_rdata[m_weight_index][i_prt] = weight;
     }
 };
 
