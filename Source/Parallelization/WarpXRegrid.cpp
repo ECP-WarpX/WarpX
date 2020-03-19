@@ -310,8 +310,8 @@ WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex:
             const Box& gbx = mfi.growntilebox();
             (*costs[lev])[mfi.index()] += costs_heuristic_cells_wt*gbx.numPts();
         }
-    } // for (int lev ...)
-} // WarpX::ComputeCostsHeuristic
+    }
+}
 
 void
 WarpX::ResetCosts ()
@@ -325,5 +325,5 @@ WarpX::ResetCosts ()
         {
             costs_heuristic[lev]->assign((*costs_heuristic[lev]).size(), 0.0);
         }
-    } // for (int lev) ...
-} //WarpX::ResetCosts
+    }
+}
