@@ -528,7 +528,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         reduce_op.eval(overlap_box, reduce_data,
                        [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
                        {
-                           IntVect iv(i, j, k);
+                           IntVect iv(AMREX_D_DECL(i, j, k));
                            const auto lo = getCellCoords(overlap_corner, dx, {0., 0., 0.}, iv);
                            const auto hi = getCellCoords(overlap_corner, dx, {1., 1., 1.}, iv);
                            return {inj_pos->overlapsWith(lo, hi)};
@@ -658,20 +658,10 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
             const XDim3 r =
                 inj_pos->getPositionUnitBox(i_part, static_cast<int>(fac));
-#if (AMREX_SPACEDIM == 3)
-            Real x = overlap_corner[0] + (iv[0]+r.x)*dx[0];
-            Real y = overlap_corner[1] + (iv[1]+r.y)*dx[1];
-            Real z = overlap_corner[2] + (iv[2]+r.z)*dx[2];
-#else
-            Real x = overlap_corner[0] + (iv[0]+r.x)*dx[0];
-            Real y = 0.0;
-#if   defined WARPX_DIM_XZ
-            Real z = overlap_corner[1] + (iv[1]+r.y)*dx[1];
-#elif defined WARPX_DIM_RZ
-            // Note that for RZ, r.y will be theta
-            Real z = overlap_corner[1] + (iv[1]+r.z)*dx[1];
-#endif
-#endif
+            const auto pos = getCellCoords(overlap_corner, dx, r, iv);
+            Real x = pos.x;
+            Real y = pos.y;
+            Real z = pos.z;
 
 #if (AMREX_SPACEDIM == 3)
             if (!tile_realbox.contains(XDim3{x,y,z})) {
