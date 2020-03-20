@@ -70,17 +70,9 @@ WarpX::Evolve (int numsteps)
             if (step > 0 && (step+1) % load_balance_int == 0)
             {
                 LoadBalance();
+
                 // Reset the costs to 0
-                for (int lev = 0; lev <= finest_level; ++lev)
-                {
-                    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-                    {
-                        costs[lev]->setVal(0.0);
-                    } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
-                    {
-                        costs_heuristic[lev]->assign((*costs_heuristic[lev]).size(), 0.0);
-                    }
-                }
+                ResetCosts();
             }
             for (int lev = 0; lev <= finest_level; ++lev)
             {
@@ -241,6 +233,8 @@ WarpX::Evolve (int numsteps)
             reduced_diags->WriteToFile(step);
         }
 
+        multi_diags->FilterComputePackFlush( step );
+
         // slice gen //
         if (to_make_plot || to_write_openPMD || do_insitu || to_make_slice_plot)
         {
@@ -324,6 +318,8 @@ WarpX::Evolve (int numsteps)
                               *Bfield_aux[lev][0],*Bfield_aux[lev][1],
                               *Bfield_aux[lev][2]);
         }
+
+        multi_diags->FilterComputePackFlush( istep[0], true );
 
         if (write_plot_file)
             WritePlotFile();
