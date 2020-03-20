@@ -1,5 +1,5 @@
-/* Copyright 2019 Axel Huebl, Cameron Yang, Maxence Thevenet
- * Weiqun Zhang
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, Cameron Yang, 
+ * Maxence Thevenet, Weiqun Zhang
  *
  * This file is part of WarpX.
  *
