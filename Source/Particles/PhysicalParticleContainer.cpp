@@ -525,6 +525,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         Gpu::DeviceVector<int> counts(overlap_box.numPts()+1, 0);
         Gpu::DeviceVector<int> offset(overlap_box.numPts()+1, 0);
         auto pcounts = counts.data();
+        int lrrfac = rrfac;
         amrex::ParallelFor(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
             IntVect iv(AMREX_D_DECL(i, j, k));
@@ -533,7 +534,16 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
-                pcounts[index] = num_ppc;
+                if (refine_injection) {
+                    Box fine_overlap_box = overlap_box & amrex::shift(fine_injection_box,shifted);
+                    if (fine_overlap_box.ok()) {
+                        int r = (fine_overlap_box.contains(iv)) ?
+                            AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac) : 1;
+                        pcounts[index] = num_ppc*r;                        
+                    }
+                } else {
+                    pcounts[index] = num_ppc;
+                }
             }
         });
         Gpu::exclusive_scan(counts.begin(), counts.end(), offset.begin());
@@ -546,31 +556,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #else
         std::memcpy(&max_new_particles, offset.dataPtr()+overlap_box.numPts(), sizeof(int));
 #endif
-
-        // If refine injection, build pointer dp_cellid that holds pointer to
-        // array of refined cell IDs.
-        Vector<int> cellid_v;
-        if (refine_injection and lev == 0)
-        {
-            // then how many new particles will be injected is not that simple
-            // We have to shift fine_injection_box because overlap_box has been shifted.
-            Box fine_overlap_box = overlap_box & amrex::shift(fine_injection_box,shifted);
-            if (fine_overlap_box.ok()) {
-                max_new_particles += fine_overlap_box.numPts() * num_ppc
-                    * (AMREX_D_TERM(rrfac,*rrfac,*rrfac)-1);
-                for (int icell = 0, ncells = overlap_box.numPts(); icell < ncells; ++icell) {
-                    IntVect iv = overlap_box.atOffset(icell);
-                    int r = (fine_overlap_box.contains(iv)) ? AMREX_D_TERM(rrfac,*rrfac,*rrfac) : 1;
-                    for (int ipart = 0; ipart < r; ++ipart) {
-                        cellid_v.push_back(icell);
-                        cellid_v.push_back(ipart);
-                    }
-                }
-            }
-        }
-        int const* hp_cellid = (cellid_v.empty()) ? nullptr : cellid_v.data();
-        amrex::AsyncArray<int> cellid_aa(hp_cellid, cellid_v.size());
-        int const* dp_cellid = cellid_aa.data();
 
         // Update NextID to include particles created in this function
         int pid;
@@ -634,8 +619,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         }
 #endif
 
-        int lrrfac = rrfac;
-
         bool loc_do_field_ionization = do_field_ionization;
         int loc_ionization_initial_level = ionization_initial_level;
 
@@ -655,18 +638,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 p.id() = pid+ip;
                 p.cpu() = cpuid;
 
-                Real fac;
-                if (dp_cellid == nullptr) {
-                    fac = 1.0;
-                } else {
-                    int cellid, i_part;
-                    cellid = dp_cellid[2*ip];
-                    i_part = dp_cellid[2*ip+1];
-                    fac = lrrfac;
-                }
-
                 const XDim3 r =
-                    inj_pos->getPositionUnitBox(i_part, static_cast<int>(fac));
+                    inj_pos->getPositionUnitBox(i_part, lrrfac);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
 #if (AMREX_SPACEDIM == 3)
