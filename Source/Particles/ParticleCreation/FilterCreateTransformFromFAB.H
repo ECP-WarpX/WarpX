@@ -112,7 +112,7 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
         arrNumPartCreation(i,j,k) = filter(src_FABs,i,j,k);
         const auto mask_position = i-lo.x + box_sizex*((j-lo.y)
                                    + (k-lo.z)*box_sizey);
-        p_mask[mask_position] = arrNumPartCreation(i,j,k) > 0;
+        p_mask[mask_position] = (arrNumPartCreation(i,j,k) > 0);
     });
 
     return filterCreateTransformFromFAB<N>(dst1, dst2, box, &NumPartCreation,
