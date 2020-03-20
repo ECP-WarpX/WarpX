@@ -129,10 +129,12 @@ struct InjectorMomentumBoltzmann
     amrex::XDim3
     getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
     {
-        amrex::Real u[3];
-        for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0;
-        u[dir] = beta*PhysConst::c;
-        return amrex::XDim3 {u[0],u[1],u[2]};
+        using namespace amrex;
+        Real u[3];
+        for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
+        Real gamma = 1./sqrt(1+beta*beta);
+        u[dir] = gamma*beta;
+        return XDim3 {u[0],u[1],u[2]};
     }
 
 private:
@@ -213,10 +215,12 @@ struct InjectorMomentumJuttner
     amrex::XDim3
     getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
     {
-        amrex::Real u[3];
-        for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0;
-        u[dir] = beta*PhysConst::c;
-        return amrex::XDim3 {u[0],u[1],u[2]};
+        using namespace amrex;
+        Real u[3];
+        for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
+        Real gamma = 1./sqrt(1+beta*beta);
+        u[dir] = gamma*beta;
+        return XDim3 {u[0],u[1],u[2]};
     }
 
 private:
