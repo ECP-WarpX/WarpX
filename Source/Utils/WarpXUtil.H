@@ -148,16 +148,16 @@ namespace WarpXUtilStr
      * @param[in] elem single string
      * @return true if elem is in vect, false otherwise
      */
-    bool is_in(std::vector<std::string> vect,
-               std::string elem);
+    bool is_in(const std::vector<std::string>& vect,
+               const std::string& elem);
 
     /** Return true if any element in elems is in vect, false otherwise
      * @param[in] vect vector of strings, typically names
      * @param[in] elems vector of string
      * @return true if any element in elems is in vect, false otherwise
      */
-    bool is_in(std::vector<std::string> vect,
-               std::vector<std::string> elems);
+    bool is_in(const std::vector<std::string>& vect,
+               const std::vector<std::string>& elems);
 }
 
 #endif //WARPX_UTILS_H_
