@@ -61,7 +61,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
             // If `Heuristic` update, this fills with zeros;
             // if `Timers` update, this fills with timer-based costs
             (*costs[lev])[i] = (*warpx.getCosts(lev))[i];
-        }        
+        }
     }
 
     if (warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)

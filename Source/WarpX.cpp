@@ -2,7 +2,7 @@
  * Axel Huebl, Burlen Loring, David Grote
  * Glenn Richardson, Jean-Luc Vay, Junmin Gu
  * Mathieu Lobet, Maxence Thevenet, Michael Rowan
- * Remi Lehe, Revathi Jambunathan, Weiqun Zhang 
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
  * Yinjian Zhao, levinem
  *
  * This file is part of WarpX.

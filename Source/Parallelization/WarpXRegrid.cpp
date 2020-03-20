@@ -46,7 +46,7 @@ WarpX::LoadBalance ()
 
         RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
     }
-    mypc->Redistribute();    
+    mypc->Redistribute();
 }
 
 
@@ -238,7 +238,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             const int nboxes = Efield_fp[lev][0].get()->size();
             costs[lev]->resize(nboxes, 0.0);
         }
-        
+
         SetDistributionMap(lev, dm);
 
     } else

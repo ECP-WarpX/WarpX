@@ -664,7 +664,7 @@ private:
     /** Interval to perform load balance; `load_balance_int=5`, e.g., will load
      * balance during steps 5, 10, 15, etc. */
     int load_balance_int = -1;
-    /** Collection of vectors to keep track of weights used in load balancing 
+    /** Collection of vectors to keep track of weights used in load balancing
      * routines. */
     amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > > costs;
     /** Load balance with 'space filling curve' strategy. */
