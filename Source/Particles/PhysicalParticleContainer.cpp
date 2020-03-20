@@ -672,12 +672,21 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 // If the particle is not within the species's
                 // xmin, xmax, ymin, ymax, zmin, zmax, go to
                 // the next generated particle.
-                if (!inj_pos->insideBounds(xb, yb, z)) {
+
+                // include ballistic correction for plasma species with bulk motion
+                // note that this assumes that momentum profile is independent of z
+                u = inj_mom->getBulkMomentum(x, y, 0.);
+                Real gamma = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
+                Real betaz = u.z/gamma;
+                Real z0 = z - PhysConst::c*t*betaz;
+                
+                if (!inj_pos->insideBounds(xb, yb, z0)) {
                     p.id() = -1;
                     return;
                 }
-                u = inj_mom->getMomentum(x, y, z);
-                dens = inj_rho->getDensity(x, y, z);
+                
+                u = inj_mom->getMomentum(x, y, 0.);
+                dens = inj_rho->getDensity(x, y, z0);
                 // Remove particle if density below threshold
                 if ( dens < density_min ){
                     p.id() = -1;
