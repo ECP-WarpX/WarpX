@@ -18,13 +18,13 @@ FlushFormatPlotfile::WriteToFile (
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     MultiParticleContainer& mpc, int nlev,
-    const std::string prefix) const
+    const std::string prefix, bool plot_raw_fields,
+    bool plot_raw_fields_guards, bool plot_rho, bool plot_F) const
 {
     auto & warpx = WarpX::GetInstance();
     const auto step = iteration[0];
     const std::string& filename = amrex::Concatenate(prefix, step);
     amrex::Print() << "  Writing plotfile " << filename << "\n";
-    const bool plot_raw_fields = true;
 
     Vector<std::string> rfs;
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
@@ -40,7 +40,8 @@ FlushFormatPlotfile::WriteToFile (
                                    rfs
                                    );
 
-    WriteAllRawFields(plot_raw_fields, nlev, filename);
+    WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards,
+                      plot_rho, plot_F);
 
     mpc.WritePlotFile(filename);
 
@@ -365,12 +366,11 @@ WriteCoarseScalar( const std::string field_name,
 }
 
 void
-FlushFormatPlotfile::WriteAllRawFields(const bool plot_raw_fields, const int nlevels, std::string plotfilename) const
+FlushFormatPlotfile::WriteAllRawFields(
+    const bool plot_raw_fields, const int nlevels, std::string plotfilename,
+    const bool plot_raw_fields_guards, const bool plot_rho, bool plot_F) const
 {
     if (!plot_raw_fields) return;
-    const bool plot_raw_fields_guards = false;
-    const bool plot_rho = false;
-    const bool plot_F = false;
     auto & warpx = WarpX::GetInstance();
     for (int lev = 0; lev < nlevels; ++lev)
     {
@@ -406,18 +406,20 @@ FlushFormatPlotfile::WriteAllRawFields(const bool plot_raw_fields, const int nle
         }
 
         // Coarse path
-        WriteCoarseVector( "E",
-                           warpx.get_pointer_Efield_cp(lev, 0), warpx.get_pointer_Efield_cp(lev, 1), warpx.get_pointer_Efield_cp(lev, 2),
-                           warpx.get_pointer_Efield_fp(lev, 0), warpx.get_pointer_Efield_fp(lev, 1), warpx.get_pointer_Efield_fp(lev, 2),
-                           dm, raw_pltname, level_prefix, lev, plot_raw_fields_guards);
-        WriteCoarseVector( "B",
-                           warpx.get_pointer_Bfield_cp(lev, 0), warpx.get_pointer_Bfield_cp(lev, 1), warpx.get_pointer_Bfield_cp(lev, 2),
-                           warpx.get_pointer_Bfield_fp(lev, 0), warpx.get_pointer_Bfield_fp(lev, 1), warpx.get_pointer_Bfield_fp(lev, 2),
-                           dm, raw_pltname, level_prefix, lev, plot_raw_fields_guards);
-        WriteCoarseVector( "j",
-                           warpx.get_pointer_current_cp(lev, 0), warpx.get_pointer_current_cp(lev, 1), warpx.get_pointer_current_cp(lev, 2),
-                           warpx.get_pointer_current_fp(lev, 0), warpx.get_pointer_current_fp(lev, 1), warpx.get_pointer_current_fp(lev, 2),
-                           dm, raw_pltname, level_prefix, lev, plot_raw_fields_guards);
+        if (lev > 0){
+            WriteCoarseVector( "E",
+                               warpx.get_pointer_Efield_cp(lev, 0), warpx.get_pointer_Efield_cp(lev, 1), warpx.get_pointer_Efield_cp(lev, 2),
+                               warpx.get_pointer_Efield_fp(lev, 0), warpx.get_pointer_Efield_fp(lev, 1), warpx.get_pointer_Efield_fp(lev, 2),
+                               dm, raw_pltname, level_prefix, lev, plot_raw_fields_guards);
+            WriteCoarseVector( "B",
+                               warpx.get_pointer_Bfield_cp(lev, 0), warpx.get_pointer_Bfield_cp(lev, 1), warpx.get_pointer_Bfield_cp(lev, 2),
+                               warpx.get_pointer_Bfield_fp(lev, 0), warpx.get_pointer_Bfield_fp(lev, 1), warpx.get_pointer_Bfield_fp(lev, 2),
+                               dm, raw_pltname, level_prefix, lev, plot_raw_fields_guards);
+            WriteCoarseVector( "j",
+                               warpx.get_pointer_current_cp(lev, 0), warpx.get_pointer_current_cp(lev, 1), warpx.get_pointer_current_cp(lev, 2),
+                               warpx.get_pointer_current_fp(lev, 0), warpx.get_pointer_current_fp(lev, 1), warpx.get_pointer_current_fp(lev, 2),
+                               dm, raw_pltname, level_prefix, lev, plot_raw_fields_guards);
+        }
         if (plot_F) WriteCoarseScalar(
             "F", warpx.get_pointer_F_cp(lev), warpx.get_pointer_F_fp(lev),
             dm, raw_pltname, level_prefix, lev,
