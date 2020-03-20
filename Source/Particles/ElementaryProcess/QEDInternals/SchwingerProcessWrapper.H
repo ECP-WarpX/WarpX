@@ -26,6 +26,8 @@ getSchwingerProductionNumber (const amrex::Real dVdt,
     using namespace amrex;
     using namespace picsar::multi_physics;
 
+    //If SI units are used, PICSAR QED does not use a reference length. 
+    // However, a "lambda" parameter must still be passed to some functions. 
     const auto dummy_lambda = 1._rt;
 
     const auto expectedPairNumber =   dVdt *
