@@ -775,7 +775,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
         if (cost) {
             wt = amrex::second() - wt;
-            (*cost)[mfi.index()] += wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
 
@@ -899,7 +899,7 @@ PhysicalParticleContainer::FieldGather (int lev,
 
             if (cost) {
                 wt = amrex::second() - wt;
-                (*cost)[pti.index()] += wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
     }
@@ -1157,7 +1157,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
             if (cost) {
                 wt = amrex::second() - wt;
-                (*cost)[pti.index()] += wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
     }

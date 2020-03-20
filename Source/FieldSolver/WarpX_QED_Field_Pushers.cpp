@@ -164,7 +164,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
 
         if (cost) {
             wt = amrex::second() - wt;
-            (*cost)[mfi.index()] += wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
 }

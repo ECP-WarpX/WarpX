@@ -768,7 +768,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
             if (cost) {
                 wt = amrex::second() - wt;
-                (*cost)[pti.index()] += wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
     }

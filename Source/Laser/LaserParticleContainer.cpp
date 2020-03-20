@@ -502,7 +502,7 @@ LaserParticleContainer::Evolve (int lev,
 
             if (cost) {
                 wt = amrex::second() - wt;
-                (*cost)[pti.index()] += wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
     }
