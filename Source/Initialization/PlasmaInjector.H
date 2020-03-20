@@ -40,7 +40,7 @@ public:
     bool insideBounds (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
 
     bool overlapsWith (const amrex::XDim3& lo, const amrex::XDim3& hi) const noexcept;
-    
+
     int num_particles_per_cell;
 
     amrex::Vector<int> num_particles_per_cell_each_dim;

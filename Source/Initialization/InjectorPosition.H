@@ -143,7 +143,7 @@ struct InjectorPosition
                   || (ymin > hi.y) || (ymax < lo.y)
                   || (zmin > hi.z) || (zmax < lo.z) );
     }
-    
+
 private:
     enum struct Type { random, regular };
     Type type;

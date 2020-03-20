@@ -59,7 +59,7 @@ namespace
 #endif
 #endif
         return pos;
-    }    
+    }
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int ispecies,
@@ -520,7 +520,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             {AMREX_D_DECL(overlap_realbox.lo(0),
                           overlap_realbox.lo(1),
                           overlap_realbox.lo(2))};
-        
+
         // count the number of particles that each cell in overlap_box could add
         Gpu::DeviceVector<int> counts(overlap_box.numPts()+1, 0);
         Gpu::DeviceVector<int> offset(overlap_box.numPts()+1, 0);
@@ -537,7 +537,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             // Lorentz transform into the lab frame
             lo.z = gamma_boost * (lo.z + PhysConst::c*t*beta_boost);
             hi.z = gamma_boost * (hi.z + PhysConst::c*t*beta_boost);
-            
+
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
@@ -546,7 +546,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     if (fine_overlap_box.ok()) {
                         int r = (fine_overlap_box.contains(iv)) ?
                             AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac) : 1;
-                        pcounts[index] = num_ppc*r;                        
+                        pcounts[index] = num_ppc*r;
                     }
                 } else {
                     pcounts[index] = num_ppc;
@@ -665,7 +665,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 // This is needed with WARPX_DIM_RZ since x and y are modified.
                 Real xb = pos.x;
                 Real yb = pos.y;
-                
+
 #ifdef WARPX_DIM_RZ
                 // Replace the x and y, setting an angle theta.
                 // These x and y are used to get the momentum and density
@@ -740,25 +740,25 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     dens = gamma_boost * dens * ( 1.0 - beta_boost*betaz_lab );
                     u.z = gamma_boost * ( u.z -beta_boost*gamma_lab );
                 }
-                
+
                 if (loc_do_field_ionization) {
                     pi[ip] = loc_ionization_initial_level;
                 }
-                
+
 #ifdef WARPX_QED
                 if(loc_has_quantum_sync){
                     p_optical_depth_QSR[ip] = quantum_sync_get_opt();
                 }
-                
+
                 if(loc_has_breit_wheeler){
                     p_optical_depth_BW[ip] = breit_wheeler_get_opt();
                 }
 #endif
-                
+
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
-                
+
                 // Real weight = dens * scale_fac / (AMREX_D_TERM(fac, *fac, *fac));
                 Real weight = dens * scale_fac;
 #ifdef WARPX_DIM_RZ
@@ -775,7 +775,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 pa[PIdx::ux][ip] = u.x;
                 pa[PIdx::uy][ip] = u.y;
                 pa[PIdx::uz][ip] = u.z;
-                
+
 #if (AMREX_SPACEDIM == 3)
                 p.pos(0) = pos.x;
                 p.pos(1) = pos.y;
@@ -789,7 +789,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #endif
             }
         });
-                   
+
         if (cost) {
             wt = (amrex::second() - wt) / tile_box.d_numPts();
             Array4<Real> const& costarr = cost->array(mfi);
