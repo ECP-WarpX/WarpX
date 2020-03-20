@@ -84,7 +84,7 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
 template <int N, typename DstTile, typename FABs, typename Index,
           typename PredFunc, typename CreateFunc, typename TransFunc>
 Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box,
-                                    FABs *src_FABs, Index dst1_index,
+                                    const FABs *src_FABs, Index dst1_index,
                                     Index dst2_index,  PredFunc&& filter,
                                     CreateFunc&& create,
                                     TransFunc && transform) noexcept
