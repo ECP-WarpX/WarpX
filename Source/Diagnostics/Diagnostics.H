@@ -31,7 +31,7 @@ public:
      * \param[in] force_flush if true, return true for any step
      * \return bool, whether to flush
      */
-    bool DoFlush (int step, bool force_flush=false);
+    bool DoDump (int step, bool force_flush=false);
 private:
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string diag_name;

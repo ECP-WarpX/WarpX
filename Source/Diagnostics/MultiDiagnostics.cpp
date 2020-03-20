@@ -46,7 +46,7 @@ void
 MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
     for (auto& diag : alldiags){
-        if ( !diag->DoFlush( step, force_flush ) ) return;
+        if ( !diag->DoDump( step, force_flush ) ) return;
         diag->FilterAndPack();
         diag->Flush();
         diag->FlushRaw();
