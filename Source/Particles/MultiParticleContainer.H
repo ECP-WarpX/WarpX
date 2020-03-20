@@ -131,9 +131,7 @@ public:
     void doCoulombCollisions ();
 
 #ifdef WARPX_QED
-    void InitSchwinger ();
     void doQEDSchwinger ();
-    void CreateSchwingerPairs (const amrex::Array4<amrex::Real>& arrNumPairCreation);
 #endif
 
     void Checkpoint (const std::string& dir) const;
@@ -333,9 +331,9 @@ protected:
     /** Name of Schwinger positron product species */
     std::string m_qed_schwinger_pos_product_name;
     /** Index for Schwinger electron product species in allcontainers */
-    int m_ind_qed_schwinger_ele_product;
+    int m_qed_schwinger_ele_product;
     /** Index for Schwinger positron product species in allcontainers */
-    int m_ind_qed_schwinger_pos_product;
+    int m_qed_schwinger_pos_product;
 
 #endif
 

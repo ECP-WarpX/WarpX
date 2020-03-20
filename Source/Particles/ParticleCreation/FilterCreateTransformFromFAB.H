@@ -53,15 +53,15 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
     {
         if (mask[i])
         {
-            int j = i%box_sizex;
-            int k = i/box_sizex;
-            int l = i/(box_sizex*box_sizey);
-#if (AMREX_SPACEDIM == 3)
+            IntVect iv = box.atOffset(i);
+            int j = iv[0];
+            int k = iv[1];
+            int l = iv[2];
             Real x = xlo_global + j*dx; // I think this should correspond to node positions right ?
+#if (AMREX_SPACEDIM == 3)
             Real y = ylo_global + k*dy;
             Real z = zlo_global + l*dz;
 #else
-            Real x = xlo_global + j*dx;
             Real y = 0.;
             Real z = ylo_global + k*dy;
 #endif
@@ -110,8 +110,8 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
 
     amrex::ParallelFor(box,  [=] AMREX_GPU_DEVICE (int i, int j, int k){
         arrNumPartCreation(i,j,k) = filter(src_FABs,i,j,k);
-        const auto mask_position = i-lo.x + box_sizex*((j-lo.y)
-                                   + (k-lo.z)*box_sizey);
+        IntVect iv(AMREX_D_DECL(i,j,k));
+        const auto mask_position = box.index(iv);
         p_mask[mask_position] = (arrNumPartCreation(i,j,k) > 0);
     });
 

@@ -73,10 +73,6 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
             (new CollisionType(species_names, collision_names[i]));
     }
 
-#ifdef WARPX_QED
-    InitSchwinger();
-#endif
-
 }
 
 void
@@ -596,6 +592,14 @@ MultiParticleContainer::mapSpeciesProduct ()
 
     }
 
+#ifdef WARPX_QED
+    if (m_do_qed_schwinger) {
+    m_qed_schwinger_ele_product =
+        getSpeciesID(m_qed_schwinger_ele_product_name);
+    m_qed_schwinger_pos_product =
+        getSpeciesID(m_qed_schwinger_pos_product_name);
+    }
+#endif
 }
 
 /* \brief Given a species name, return its ID.
@@ -1012,36 +1016,25 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 }
 
 void
-MultiParticleContainer::InitSchwinger ()
-{
-    if (!m_do_qed_schwinger) {return;}
-
-    m_ind_qed_schwinger_ele_product =
-        getSpeciesID(m_qed_schwinger_ele_product_name);
-    m_ind_qed_schwinger_pos_product =
-        getSpeciesID(m_qed_schwinger_pos_product_name);
-
-   // TODO: test if electrons (positrons) are really electrons (positrons)
-
-}
-
-void
 MultiParticleContainer::doQEDSchwinger ()
 {
     if (!m_do_qed_schwinger) {return;}
 
     auto& pc_product_ele =
-            allcontainers[m_ind_qed_schwinger_ele_product];
+            allcontainers[m_qed_schwinger_ele_product];
     auto& pc_product_pos =
-            allcontainers[m_ind_qed_schwinger_ele_product];
+            allcontainers[m_qed_schwinger_ele_product];
 
     auto & warpx = WarpX::GetInstance();
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_nodal,
         "ERROR: Schwinger process only implemented for warpx.do_nodal = 1");
 
-    // So far Schwinger process does not consider refined meshes
+    // So far Schwinger process does not work with mesh refinement
     const int level_0 = 0;
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.maxLevel() == level_0,
+        "ERROR: Schwinger process not implemented with mesh refinement");
 
     const MultiFab & Ex = warpx.getEfield(level_0,0);
     const MultiFab & Ey = warpx.getEfield(level_0,1);
@@ -1077,12 +1070,7 @@ MultiParticleContainer::doQEDSchwinger ()
 
         // const FArrayBox& fabEx = Ex[mfi];
 
-/*         const auto& arrEx = Ex[mfi].array();
-        const auto& arrEy = Ey[mfi].array();
-        const auto& arrEz = Ez[mfi].array();
-        const auto& arrBx = Bx[mfi].array();
-        const auto& arrBy = By[mfi].array();
-        const auto& arrBz = Bz[mfi].array(); */
+/*         const auto& arrEx = Ex[mfi].array(); */
 
         const FArrayBox *array_EMFAB [] = {&Ex[mfi],&Ey[mfi],&Ez[mfi],
                                            &Bx[mfi],&By[mfi],&Bz[mfi]};
@@ -1100,23 +1088,23 @@ MultiParticleContainer::doQEDSchwinger ()
         auto& dst_ele_tile = pc_product_ele->ParticlesAt(level_0, mfi);
         auto& dst_pos_tile = pc_product_pos->ParticlesAt(level_0, mfi);
 
-        int dst1_index_dummy=0;
-        int dst2_index_dummy=0;
+        const auto np_ele_dst = dst_ele_tile.numParticles();
+        const auto np_pos_dst = dst_pos_tile.numParticles();
+
         auto filter_dummy= [](auto, auto, auto, auto) {return 0;};
         auto create_dummy= [](auto, auto, auto, auto, auto) {return 0;};
         auto transform_dummy= [](auto, auto, auto, auto) {return 0;};
 
         const auto num_added = filterCreateTransformFromFAB<1>( dst_ele_tile,
-                              dst_pos_tile, box, array_EMFAB, dst1_index_dummy,
-                               dst2_index_dummy,filter_dummy, create_dummy,
+                              dst_pos_tile, box, array_EMFAB, np_ele_dst,
+                               np_pos_dst,filter_dummy, create_dummy,
                                 transform_dummy);
+
+        setNewParticleIDs(dst_ele_tile, np_ele_dst, num_added);
+        setNewParticleIDs(dst_pos_tile, np_pos_dst, num_added);
     }
 }
 
-void MultiParticleContainer::CreateSchwingerPairs (
-                             const amrex::Array4<amrex::Real>& arrNumPairCreation)
-{
-}
 void MultiParticleContainer::doQedEvents()
 {
     WARPX_PROFILE("MPC::doQedEvents");
@@ -1277,6 +1265,17 @@ void MultiParticleContainer::CheckQEDProductSpecies()
                 "ERROR: Quantum Synchrotron product species is of wrong type");
         }
     }
+
+    if (m_do_qed_schwinger) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                allcontainers[m_qed_schwinger_ele_product]->
+                    AmIA<PhysicalSpecies::electron>()
+                &&
+                allcontainers[m_qed_schwinger_pos_product]->
+                    AmIA<PhysicalSpecies::positron>(),
+                "ERROR: Schwinger process product species are of wrong type");
+    }
+
 }
 
 

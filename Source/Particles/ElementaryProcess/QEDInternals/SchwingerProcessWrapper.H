@@ -10,7 +10,7 @@
 #include "QedWrapperCommons.H"
 
 //#define PXRMP_CORE_ONLY allows importing only the 'core functions' of the
-//Quantum Synchrotron engine of the QED PICSAR library.
+//Schwinger process engine of the QED PICSAR library.
 #define PXRMP_CORE_ONLY
 #include <schwinger_pair_engine.hpp>
 #include <AMReX_Random.H>
