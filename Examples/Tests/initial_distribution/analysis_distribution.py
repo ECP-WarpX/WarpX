@@ -16,6 +16,7 @@
 import numpy as np
 import scipy.constants as scc
 import scipy.special as scs
+from read_raw_data import read_reduced_diags_histogram
 
 # print tolerance
 tolerance = 0.009
@@ -26,29 +27,20 @@ print('tolerance:', tolerance)
 #===============================
 
 # load data
-h1x = np.genfromtxt("h1x.txt")
-h1y = np.genfromtxt("h1y.txt")
-h1z = np.genfromtxt("h1z.txt")
-h2x = np.genfromtxt("h2x.txt")
-h2y = np.genfromtxt("h2y.txt")
-h2z = np.genfromtxt("h2z.txt")
-
-# parameters of bin
-bin_min = -4.0e-2 * scc.c
-bin_max = +4.0e-2 * scc.c
-bin_num = 50
-bin_size = (bin_max-bin_min)/bin_num
+metadata_dict, data_dict, bin_value, h1x = read_reduced_diags_histogram("h1x.txt")
+metadata_dict, data_dict, bin_value, h1y = read_reduced_diags_histogram("h1y.txt")
+metadata_dict, data_dict, bin_value, h1z = read_reduced_diags_histogram("h1z.txt")
+metadata_dict, data_dict, bin_value, h2x = read_reduced_diags_histogram("h2x.txt")
+metadata_dict, data_dict, bin_value, h2y = read_reduced_diags_histogram("h2y.txt")
+metadata_dict, data_dict, bin_value, h2z = read_reduced_diags_histogram("h2z.txt")
 
 # parameters of theory
 u_rms = 0.01
-gamma = np.sqrt(1+u_rms*u_rms)
+gamma = np.sqrt(1.0+u_rms*u_rms)
 v_rms = u_rms / gamma * scc.c
 
 # compute the analytical solution
-f = np.zeros( bin_num )
-for i in range(bin_num):
-    v = (i+0.5)*bin_size + bin_min
-    f[i] = np.exp(-0.5*(v/v_rms)**2)/(v_rms*np.sqrt(2.0*scc.pi))
+f = np.exp(-0.5*(bin_value*scc.c/v_rms)**2)/(v_rms*np.sqrt(2.0*scc.pi))
 
 # normalization
 f = f / np.amax( f )
@@ -56,8 +48,8 @@ f = f / np.amax( f )
 # compute error
 # note that parameters are chosen such that gaussian and
 # maxwell-boltzmann distributions are identical
-f1_error = np.sum(np.abs(f-h1x[2:])+np.abs(f-h1y[2:])+np.abs(f-h1z[2:]))/bin_num
-f2_error = np.sum(np.abs(f-h2x[2:])+np.abs(f-h2y[2:])+np.abs(f-h2z[2:]))/bin_num
+f1_error = np.sum(np.abs(f-h1x)+np.abs(f-h1y)+np.abs(f-h1z))/bin_value.size
+f2_error = np.sum(np.abs(f-h2x)+np.abs(f-h2y)+np.abs(f-h2z))/bin_value.size
 
 print('Gaussian distribution difference:', f1_error)
 print('Maxwell-Boltzmann distribution difference:', f2_error)
@@ -70,28 +62,22 @@ assert(f2_error < tolerance)
 #================
 
 # load data
-h3  = np.genfromtxt("h3.txt")
+metadata_dict, data_dict, bin_value, bin_data = read_reduced_diags_histogram("h3.txt")
 
-# parameters of bin
-bin_min = 1.0
-bin_max = 12.0
-bin_num = 50
-bin_size = (bin_max-bin_min)/bin_num
-theta   = 1.0
-K2      = scs.kn(2,1.0/theta)
+# parameters of theory
+theta = 1.0
+K2    = scs.kn(2,1.0/theta)
 
 # compute the analytical solution
-f = np.zeros( bin_num )
-for i in range(bin_num):
-    gamma = (i+0.5)*bin_size + bin_min
-    beta  = np.sqrt(1.0-1.0/gamma**2)
-    f[i]  = gamma**2 * beta / (theta*K2) * np.exp(-gamma/theta)
+
+f = bin_value**2 * np.sqrt(1.0-1.0/bin_value**2) / \
+    (theta*K2) * np.exp(-bin_value/theta)
 
 # normalization
 f = f / np.amax( f )
 
 # compute error
-f3_error = np.sum( np.abs(f-h3[2:]) ) / bin_num
+f3_error = np.sum( np.abs(f-bin_data) ) / bin_value.size
 
 print('Maxwell-Juttner distribution difference:', f3_error)
 
@@ -102,30 +88,21 @@ assert(f3_error < tolerance)
 #==============
 
 # load data
-h4x = np.genfromtxt("h4x.txt")
-h4y = np.genfromtxt("h4y.txt")
-h4z = np.genfromtxt("h4z.txt")
-
-# parameters of bin
-bin_min = -1.0
-bin_max = +1.0
-bin_num = 50
-bin_size = (bin_max-bin_min)/bin_num
+metadata_dict, data_dict, bin_value, h4x = read_reduced_diags_histogram("h4x.txt")
+metadata_dict, data_dict, bin_value, h4y = read_reduced_diags_histogram("h4y.txt")
+metadata_dict, data_dict, bin_value, h4z = read_reduced_diags_histogram("h4z.txt")
 
 # parameters of theory
 x_rms = 0.25
 
 # compute the analytical solution
-f = np.zeros( bin_num )
-for i in range(bin_num):
-    x = (i+0.5)*bin_size + bin_min
-    f[i] = np.exp(-0.5*(x/x_rms)**2)/(x_rms*np.sqrt(2.0*scc.pi))
+f = np.exp(-0.5*(bin_value/x_rms)**2)/(x_rms*np.sqrt(2.0*scc.pi))
 
 # normalization
 f = f / np.amax( f )
 
 # compute error
-f4_error = np.sum(np.abs(f-h4x[2:])+np.abs(f-h4y[2:])+np.abs(f-h4z[2:]))/bin_num
+f4_error = np.sum(np.abs(f-h4x)+np.abs(f-h4y)+np.abs(f-h4z))/bin_value.size
 
 print('Gaussian position distribution difference:', f4_error)
 
