@@ -55,11 +55,12 @@ void LoadBalanceCosts::ComputeDiags (int step)
     {
         costs[lev].reset(new amrex::Vector<Real>);
         const int nBoxesLev = warpx.getCosts(lev)->size();
+        costs[lev]->resize(nBoxesLev);
         for (int i = 0; i < nBoxesLev; ++i)
         {
             // If `Heuristic` update, this fills with zeros;
             // if `Timers` update, this fills with timer-based costs
-            costs[lev].push_back((*warpx.costs[lev])[i]);
+            (*costs[lev])[i] = (*warpx.getCosts(lev))[i];
         }        
     }
 

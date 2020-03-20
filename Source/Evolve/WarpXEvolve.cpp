@@ -80,7 +80,10 @@ WarpX::Evolve (int numsteps)
                 {
                     // Perform running average of the costs
                     // (Giving more importance to most recent costs)
-                    (*cost) *= 1. - 2./load_balance_int;
+                    for (int i=0; i<cost->size(); ++i)
+                    {
+                        (*cost)[i] = (*cost)[i]*(1. - 2./load_balance_int);
+                    }
                 }
             }
         }

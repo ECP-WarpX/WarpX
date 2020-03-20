@@ -210,7 +210,7 @@ public:
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
 
-    static amrex::Vector<amrex::Real> getCosts (int lev) {
+    static amrex::Vector<amrex::Real>* getCosts (int lev) {
         if (m_instance) {
             return m_instance->costs[lev].get();
         } else {
