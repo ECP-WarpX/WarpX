@@ -163,8 +163,8 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
         );
 
         if (cost) {
-            const Box& cbx = mfi.tilebox(IntVect{AMREX_D_DECL(0,0,0)});
-            //if (patch_type == PatchType::coarse) cbx.refine(rr);
+            Box cbx = mfi.tilebox(IntVect{AMREX_D_DECL(0,0,0)});
+            if (patch_type == PatchType::coarse) cbx.refine(rr);
             wt = (amrex::second() - wt) / cbx.d_numPts();
             (*cost)[mfi.index()] += wt;
         }
