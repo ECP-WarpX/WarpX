@@ -407,7 +407,7 @@ LaserParticleContainer::Evolve (int lev,
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
-    MultiFab* cost = WarpX::getCosts(lev);
+    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -503,12 +503,7 @@ LaserParticleContainer::Evolve (int lev,
             if (cost) {
                 const Box& tbx = pti.tilebox();
                 wt = (amrex::second() - wt) / tbx.d_numPts();
-                Array4<Real> const& costarr = cost->array(pti);
-                amrex::ParallelFor(tbx,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                {
-                    costarr(i,j,k) += wt;
-                });
+                (*cost)[pti.index()] += wt;
             }
         }
     }

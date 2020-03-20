@@ -406,7 +406,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
     defineAllParticleTiles();
 
-    MultiFab* cost = WarpX::getCosts(lev);
+    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
 
     const int nlevs = numLevels();
     static bool refine_injection = false;
@@ -774,13 +774,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         });
 
         if (cost) {
-            wt = (amrex::second() - wt) / tile_box.d_numPts();
-            Array4<Real> const& costarr = cost->array(mfi);
-            amrex::ParallelFor(tile_box,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-            {
-                costarr(i,j,k) += wt;
-            });
+            const Box& tbx = mfi.tilebox();
+            wt = (amrex::second() - wt) / tbx.d_numPts();
+            (*cost)[mfi.index()] += wt;
         }
     }
 
@@ -862,7 +858,7 @@ PhysicalParticleContainer::FieldGather (int lev,
 
     BL_ASSERT(OnSameGrids(lev,Ex));
 
-    MultiFab* cost = WarpX::getCosts(lev);
+    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -905,12 +901,7 @@ PhysicalParticleContainer::FieldGather (int lev,
             if (cost) {
                 const Box& tbx = pti.tilebox();
                 wt = (amrex::second() - wt) / tbx.d_numPts();
-                Array4<Real> const& costarr = cost->array(pti);
-                amrex::ParallelFor(tbx,
-                                   [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                                   {
-                                       costarr(i,j,k) += wt;
-                                   });
+                (*cost)[pti.index()] += wt;
             }
         }
     }
@@ -942,7 +933,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
-    MultiFab* cost = WarpX::getCosts(lev);
+    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
 
     const iMultiFab* current_masks = WarpX::CurrentBufferMasks(lev);
     const iMultiFab* gather_masks = WarpX::GatherBufferMasks(lev);
@@ -1169,12 +1160,7 @@ PhysicalParticleContainer::Evolve (int lev,
             if (cost) {
                 const Box& tbx = pti.tilebox();
                 wt = (amrex::second() - wt) / tbx.d_numPts();
-                Array4<Real> const& costarr = cost->array(pti);
-                amrex::ParallelFor(tbx,
-                                   [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                                   {
-                                       costarr(i,j,k) += wt;
-                                   });
+                (*cost)[pti.index()] += wt;
             }
         }
     }

@@ -728,7 +728,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
     if (do_not_push) return;
 
-    MultiFab* cost = WarpX::getCosts(lev);
+    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -769,12 +769,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
             if (cost) {
                 const Box& tbx = pti.tilebox();
                 wt = (amrex::second() - wt) / tbx.d_numPts();
-                Array4<Real> const& costarr = cost->array(pti);
-                amrex::ParallelFor(tbx,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                {
-                    costarr(i,j,k) += wt;
-                });
+                (*cost)[pti.index()] += wt;
             }
         }
     }
