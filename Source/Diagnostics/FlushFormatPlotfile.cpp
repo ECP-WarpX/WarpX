@@ -24,10 +24,7 @@ FlushFormatPlotfile::WriteToFile (
     const auto step = iteration[0];
     const std::string& filename = amrex::Concatenate(prefix, step);
     amrex::Print() << "  Writing plotfile " << filename << "\n";
-
-
     const bool plot_raw_fields = true;
-
 
     Vector<std::string> rfs;
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
