@@ -1,8 +1,8 @@
 /* Copyright 2019-2020 Andrew Myers, Aurore Blelly, Axel Huebl
  * David Grote, Glenn Richardson, Jean-Luc Vay
  * Ligia Diana Amorim, Luca Fedeli, Maxence Thevenet
- * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
- * Yinjian Zhao
+ * Michael Rowan, Remi Lehe, Revathi Jambunathan
+ * Weiqun Zhang, Yinjian Zhao
  *
  * This file is part of WarpX.
  *
@@ -774,8 +774,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         });
 
         if (cost) {
-            const Box& tbx = mfi.tilebox();
-            wt = (amrex::second() - wt) / tbx.d_numPts();
+            wt = amrex::second() - wt;
             (*cost)[mfi.index()] += wt;
         }
     }
@@ -899,8 +898,7 @@ PhysicalParticleContainer::FieldGather (int lev,
                         0, np, lev, lev);
 
             if (cost) {
-                const Box& tbx = pti.tilebox();
-                wt = (amrex::second() - wt) / tbx.d_numPts();
+                wt = amrex::second() - wt;
                 (*cost)[pti.index()] += wt;
             }
         }
@@ -1158,8 +1156,7 @@ PhysicalParticleContainer::Evolve (int lev,
             }
 
             if (cost) {
-                const Box& tbx = pti.tilebox();
-                wt = (amrex::second() - wt) / tbx.d_numPts();
+                wt = amrex::second() - wt;
                 (*cost)[pti.index()] += wt;
             }
         }

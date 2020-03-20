@@ -501,8 +501,7 @@ LaserParticleContainer::Evolve (int lev,
             }
 
             if (cost) {
-                const Box& tbx = pti.tilebox();
-                wt = (amrex::second() - wt) / tbx.d_numPts();
+                wt = amrex::second() - wt;
                 (*cost)[pti.index()] += wt;
             }
         }

@@ -1,7 +1,7 @@
 /* Copyright 2019-2020 Andrew Myers, Axel Huebl, David Grote
  * Jean-Luc Vay, Luca Fedeli, Maxence Thevenet
- * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
- * Yinjian Zhao, levinem
+ * Michael Rowan, Remi Lehe, Revathi Jambunathan
+ * Weiqun Zhang, Yinjian Zhao, levinem
  *
  * This file is part of WarpX.
  *
@@ -767,8 +767,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
             );
 
             if (cost) {
-                const Box& tbx = pti.tilebox();
-                wt = (amrex::second() - wt) / tbx.d_numPts();
+                wt = amrex::second() - wt;
                 (*cost)[pti.index()] += wt;
             }
         }
