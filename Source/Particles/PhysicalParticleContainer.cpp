@@ -529,8 +529,13 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         amrex::ParallelFor(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
             IntVect iv(AMREX_D_DECL(i, j, k));
-            const auto lo = getCellCoords(overlap_corner, dx, {0., 0., 0.}, iv);
-            const auto hi = getCellCoords(overlap_corner, dx, {1., 1., 1.}, iv);
+            auto lo = getCellCoords(overlap_corner, dx, {0., 0., 0.}, iv);
+            auto hi = getCellCoords(overlap_corner, dx, {1., 1., 1.}, iv);
+
+            // Lorentz transform into the lab frame
+            lo.z = gamma_boost * (lo.z + PhysConst::c*t*beta_boost);
+            hi.z = gamma_boost * (hi.z + PhysConst::c*t*beta_boost);
+            
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
