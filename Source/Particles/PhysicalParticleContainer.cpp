@@ -652,12 +652,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #if (AMREX_SPACEDIM == 3)
                 if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
                     p.id() = -1;
-                    return;
+                    continue;
                 }
 #else
                 if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0})) {
                     p.id() = -1;
-                    return;
+                    continue;
                 }
 #endif
 
@@ -690,14 +690,14 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     // the next generated particle.
                     if (!inj_pos->insideBounds(xb, yb, pos.z)) {
                         p.id() = -1;
-                        return;
+                        continue;
                     }
                     u = inj_mom->getMomentum(pos.x, pos.y, pos.z);
                     dens = inj_rho->getDensity(pos.x, pos.y, pos.z);
                     // Remove particle if density below threshold
                     if ( dens < density_min ){
                         p.id() = -1;
-                        return;
+                        continue;
                     }
                     // Cut density if above threshold
                     dens = amrex::min(dens, density_max);
@@ -724,14 +724,14 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     // go to the next generated particle.
                     if (!inj_pos->insideBounds(xb, yb, z0_lab)) {
                         p.id() = -1;
-                        return;
+                        continue;
                     }
                     // call `getDensity` with lab-frame parameters
                     dens = inj_rho->getDensity(pos.x, pos.y, z0_lab);
                     // Remove particle if density below threshold
                     if ( dens < density_min ){
                         p.id() = -1;
-                        return;
+                        continue;
                     }
                     // Cut density if above threshold
                     dens = amrex::min(dens, density_max);
