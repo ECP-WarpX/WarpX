@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Andrew Myers, Axel Huebl, Cameron Yang, 
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, Cameron Yang,
  * Maxence Thevenet, Weiqun Zhang
  *
  * This file is part of WarpX.
@@ -134,7 +134,7 @@ struct InjectorMomentumBoltzmann
         u[dir] = beta*PhysConst::c;
         return amrex::XDim3 {u[0],u[1],u[2]};
     }
-    
+
 private:
     int dir;
     amrex::Real beta, vave;
@@ -218,7 +218,7 @@ struct InjectorMomentumJuttner
         u[dir] = beta*PhysConst::c;
         return amrex::XDim3 {u[0],u[1],u[2]};
     }
-    
+
 private:
     int dir;
     amrex::Real beta, theta;
@@ -246,7 +246,7 @@ struct InjectorMomentumRadialExpansion
     {
         return {x*u_over_r, y*u_over_r, z*u_over_r};
     }
-    
+
 private:
     amrex::Real u_over_r;
 };
@@ -273,7 +273,7 @@ struct InjectorMomentumParser
     {
         return amrex::XDim3{m_ux_parser(x,y,z),m_uy_parser(x,y,z),m_uz_parser(x,y,z)};
     }
-    
+
     GpuParser<3> m_ux_parser, m_uy_parser, m_uz_parser;
 };
 
@@ -439,7 +439,7 @@ struct InjectorMomentum
         }
         }
     }
-    
+
 private:
     enum struct Type { constant, custom, gaussian, boltzmann, juttner, radial_expansion, parser};
     Type type;

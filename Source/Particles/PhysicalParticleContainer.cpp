@@ -679,12 +679,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 Real gamma = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
                 Real betaz = u.z/gamma;
                 Real z0 = z - PhysConst::c*t*betaz;
-                
+
                 if (!inj_pos->insideBounds(xb, yb, z0)) {
                     p.id() = -1;
                     return;
                 }
-                
+
                 u = inj_mom->getMomentum(x, y, 0.);
                 dens = inj_rho->getDensity(x, y, z0);
                 // Remove particle if density below threshold
@@ -735,7 +735,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 u = inj_mom->getMomentum(x, y, 0.);
                 gamma_lab = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
                 betaz_lab = u.z/(gamma_lab);
-                
+
                 // At this point u and dens are the lab-frame quantities
                 // => Perform Lorentz transform
                 dens = gamma_boost * dens * ( 1.0 - beta_boost*betaz_lab );

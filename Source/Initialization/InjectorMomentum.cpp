@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Andrew Myers, Axel Huebl, Maxence Thevenet, 
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, Maxence Thevenet,
  * Revathi Jambunathan, Weiqun Zhang
  *
  * This file is part of WarpX.
