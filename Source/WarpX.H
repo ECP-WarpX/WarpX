@@ -213,7 +213,8 @@ public:
     static amrex::Vector<amrex::Real>* getCosts (int lev) {
         if (m_instance) {
             return m_instance->costs[lev].get();
-        } else {
+        } else
+        {
             return nullptr;
         }
     }
