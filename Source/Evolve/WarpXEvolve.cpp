@@ -82,7 +82,7 @@ WarpX::Evolve (int numsteps)
                     // (Giving more importance to most recent costs)
                     for (int i=0; i<cost->size(); ++i)
                     {
-                        (*cost)[i] = (*cost)[i]*(1. - 2./load_balance_int);
+                        (*cost)[i] *= (1. - 2./load_balance_int);
                     }
                 }
             }
