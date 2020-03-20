@@ -521,24 +521,31 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                           overlap_realbox.lo(1),
                           overlap_realbox.lo(2))};
         
-        // count the number of cells that could contribute particles
-        ReduceOps<ReduceOpSum> reduce_op;
-        ReduceData<int> reduce_data(reduce_op);
-        using ReduceTuple = typename decltype(reduce_data)::Type;
-        reduce_op.eval(overlap_box, reduce_data,
-                       [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
-                       {
-                           IntVect iv(AMREX_D_DECL(i, j, k));
-                           const auto lo = getCellCoords(overlap_corner, dx, {0., 0., 0.}, iv);
-                           const auto hi = getCellCoords(overlap_corner, dx, {1., 1., 1.}, iv);
-                           return {inj_pos->overlapsWith(lo, hi)};
-                       });
-        int num_cells_contrib = amrex::get<0>(reduce_data.value());
-        
-        // Max number of new particles, if particles are created in the whole
-        // overlap_box. All of them are created, and invalid ones are then
-        // discaded
-        int max_new_particles = overlap_box.numPts() * num_ppc;
+        // count the number of particles that each cell in overlap_box could add
+        Gpu::DeviceVector<int> counts(overlap_box.numPts()+1, 0);
+        Gpu::DeviceVector<int> offset(overlap_box.numPts()+1, 0);
+        auto pcounts = counts.data();
+        amrex::ParallelFor(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+        {
+            IntVect iv(AMREX_D_DECL(i, j, k));
+            const auto lo = getCellCoords(overlap_corner, dx, {0., 0., 0.}, iv);
+            const auto hi = getCellCoords(overlap_corner, dx, {1., 1., 1.}, iv);
+            if (inj_pos->overlapsWith(lo, hi))
+            {
+                auto index = overlap_box.index(iv);
+                pcounts[index] = num_ppc;
+            }
+        });
+        Gpu::exclusive_scan(counts.begin(), counts.end(), offset.begin());
+
+        // Max number of new particles. All of them are created,
+        // and invalid ones are then discarded
+        int max_new_particles;
+#ifdef AMREX_USE_GPU
+        Gpu::dtoh_memcpy(&max_new_particles, offset.dataPtr()+overlap_box.numPts(), sizeof(int));
+#else
+        std::memcpy(&max_new_particles, offset.dataPtr()+overlap_box.numPts(), sizeof(int));
+#endif
 
         // If refine injection, build pointer dp_cellid that holds pointer to
         // array of refined cell IDs.
@@ -636,170 +643,173 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         // particles, in particular does not consider xmin, xmax etc.).
         // The invalid ones are given negative ID and are deleted during the
         // next redistribute.
-        amrex::For(max_new_particles, [=] AMREX_GPU_DEVICE (int ip) noexcept
+        const auto poffset = offset.data();
+        amrex::For(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
-            ParticleType& p = pp[ip];
-            p.id() = pid+ip;
-            p.cpu() = cpuid;
+            IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
+            const auto index = overlap_box.index(iv);
+            for (int i_part = 0; i_part < pcounts[index]; ++i_part)
+            {
+                long ip = poffset[index] + i_part;
+                ParticleType& p = pp[ip];
+                p.id() = pid+ip;
+                p.cpu() = cpuid;
 
-            int cellid, i_part;
-            Real fac;
-            if (dp_cellid == nullptr) {
-                cellid = ip/num_ppc;
-                i_part = ip - cellid*num_ppc;
-                fac = 1.0;
-            } else {
-                cellid = dp_cellid[2*ip];
-                i_part = dp_cellid[2*ip+1];
-                fac = lrrfac;
-            }
+                Real fac;
+                if (dp_cellid == nullptr) {
+                    fac = 1.0;
+                } else {
+                    int cellid, i_part;
+                    cellid = dp_cellid[2*ip];
+                    i_part = dp_cellid[2*ip+1];
+                    fac = lrrfac;
+                }
 
-            IntVect iv = overlap_box.atOffset(cellid);
-
-            const XDim3 r =
-                inj_pos->getPositionUnitBox(i_part, static_cast<int>(fac));
-            auto pos = getCellCoords(overlap_corner, dx, r, iv);
+                const XDim3 r =
+                    inj_pos->getPositionUnitBox(i_part, static_cast<int>(fac));
+                auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
 #if (AMREX_SPACEDIM == 3)
-            if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
-                p.id() = -1;
-                return;
-            }
+                if (!tile_realbox.contains(XDim3{pos.x,pos.y,pos.z})) {
+                    p.id() = -1;
+                    return;
+                }
 #else
-            if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0})) {
-                p.id() = -1;
-                return;
-            }
+                if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0})) {
+                    p.id() = -1;
+                    return;
+                }
 #endif
 
-            // Save the x and y values to use in the insideBounds checks.
-            // This is needed with WARPX_DIM_RZ since x and y are modified.
-            Real xb = pos.x;
-            Real yb = pos.y;
-
+                // Save the x and y values to use in the insideBounds checks.
+                // This is needed with WARPX_DIM_RZ since x and y are modified.
+                Real xb = pos.x;
+                Real yb = pos.y;
+                
 #ifdef WARPX_DIM_RZ
-            // Replace the x and y, setting an angle theta.
-            // These x and y are used to get the momentum and density
-            Real theta;
-            if (nmodes == 1) {
-                // With only 1 mode, the angle doesn't matter so
-                // choose it randomly.
-                theta = 2.*MathConst::pi*amrex::Random();
-            } else {
-                theta = 2.*MathConst::pi*r.y;
-            }
-            x = xb*std::cos(theta);
-            y = xb*std::sin(theta);
+                // Replace the x and y, setting an angle theta.
+                // These x and y are used to get the momentum and density
+                Real theta;
+                if (nmodes == 1) {
+                    // With only 1 mode, the angle doesn't matter so
+                    // choose it randomly.
+                    theta = 2.*MathConst::pi*amrex::Random();
+                } else {
+                    theta = 2.*MathConst::pi*r.y;
+                }
+                x = xb*std::cos(theta);
+                y = xb*std::sin(theta);
 #endif
 
-            Real dens;
-            XDim3 u;
-            if (gamma_boost == 1.) {
-                // Lab-frame simulation
-                // If the particle is not within the species's
-                // xmin, xmax, ymin, ymax, zmin, zmax, go to
-                // the next generated particle.
-                if (!inj_pos->insideBounds(xb, yb, pos.z)) {
-                    p.id() = -1;
-                    return;
+                Real dens;
+                XDim3 u;
+                if (gamma_boost == 1.) {
+                    // Lab-frame simulation
+                    // If the particle is not within the species's
+                    // xmin, xmax, ymin, ymax, zmin, zmax, go to
+                    // the next generated particle.
+                    if (!inj_pos->insideBounds(xb, yb, pos.z)) {
+                        p.id() = -1;
+                        return;
+                    }
+                    u = inj_mom->getMomentum(pos.x, pos.y, pos.z);
+                    dens = inj_rho->getDensity(pos.x, pos.y, pos.z);
+                    // Remove particle if density below threshold
+                    if ( dens < density_min ){
+                        p.id() = -1;
+                        return;
+                    }
+                    // Cut density if above threshold
+                    dens = amrex::min(dens, density_max);
+                } else {
+                    // Boosted-frame simulation
+                    // Since the user provides the density distribution
+                    // at t_lab=0 and in the lab-frame coordinates,
+                    // we need to find the lab-frame position of this
+                    // particle at t_lab=0, from its boosted-frame coordinates
+                    // Assuming ballistic motion, this is given by:
+                    // z0_lab = gamma*( z_boost*(1-beta*betaz_lab) - ct_boost*(betaz_lab-beta) )
+                    // where betaz_lab is the speed of the particle in the lab frame
+                    //
+                    // In order for this equation to be solvable, betaz_lab
+                    // is explicitly assumed to have no dependency on z0_lab
+                    u = inj_mom->getMomentum(pos.x, pos.y, 0.); // No z0_lab dependency
+                    // At this point u is the lab-frame momentum
+                    // => Apply the above formula for z0_lab
+                    Real gamma_lab = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
+                    Real betaz_lab = u.z/(gamma_lab);
+                    Real z0_lab = gamma_boost * ( pos.z*(1-beta_boost*betaz_lab)
+                                                  - PhysConst::c*t*(betaz_lab-beta_boost) );
+                    // If the particle is not within the lab-frame zmin, zmax, etc.
+                    // go to the next generated particle.
+                    if (!inj_pos->insideBounds(xb, yb, z0_lab)) {
+                        p.id() = -1;
+                        return;
+                    }
+                    // call `getDensity` with lab-frame parameters
+                    dens = inj_rho->getDensity(pos.x, pos.y, z0_lab);
+                    // Remove particle if density below threshold
+                    if ( dens < density_min ){
+                        p.id() = -1;
+                        return;
+                    }
+                    // Cut density if above threshold
+                    dens = amrex::min(dens, density_max);
+                    // At this point u and dens are the lab-frame quantities
+                    // => Perform Lorentz transform
+                    dens = gamma_boost * dens * ( 1.0 - beta_boost*betaz_lab );
+                    u.z = gamma_boost * ( u.z -beta_boost*gamma_lab );
                 }
-                u = inj_mom->getMomentum(pos.x, pos.y, pos.z);
-                dens = inj_rho->getDensity(pos.x, pos.y, pos.z);
-                // Remove particle if density below threshold
-                if ( dens < density_min ){
-                    p.id() = -1;
-                    return;
+                
+                if (loc_do_field_ionization) {
+                    pi[ip] = loc_ionization_initial_level;
                 }
-                // Cut density if above threshold
-                dens = amrex::min(dens, density_max);
-            } else {
-                // Boosted-frame simulation
-                // Since the user provides the density distribution
-                // at t_lab=0 and in the lab-frame coordinates,
-                // we need to find the lab-frame position of this
-                // particle at t_lab=0, from its boosted-frame coordinates
-                // Assuming ballistic motion, this is given by:
-                // z0_lab = gamma*( z_boost*(1-beta*betaz_lab) - ct_boost*(betaz_lab-beta) )
-                // where betaz_lab is the speed of the particle in the lab frame
-                //
-                // In order for this equation to be solvable, betaz_lab
-                // is explicitly assumed to have no dependency on z0_lab
-                u = inj_mom->getMomentum(pos.x, pos.y, 0.); // No z0_lab dependency
-                // At this point u is the lab-frame momentum
-                // => Apply the above formula for z0_lab
-                Real gamma_lab = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
-                Real betaz_lab = u.z/(gamma_lab);
-                Real z0_lab = gamma_boost * ( pos.z*(1-beta_boost*betaz_lab)
-                                              - PhysConst::c*t*(betaz_lab-beta_boost) );
-                // If the particle is not within the lab-frame zmin, zmax, etc.
-                // go to the next generated particle.
-                if (!inj_pos->insideBounds(xb, yb, z0_lab)) {
-                    p.id() = -1;
-                    return;
-                }
-                // call `getDensity` with lab-frame parameters
-                dens = inj_rho->getDensity(pos.x, pos.y, z0_lab);
-                // Remove particle if density below threshold
-                if ( dens < density_min ){
-                    p.id() = -1;
-                    return;
-                }
-                // Cut density if above threshold
-                dens = amrex::min(dens, density_max);
-                // At this point u and dens are the lab-frame quantities
-                // => Perform Lorentz transform
-                dens = gamma_boost * dens * ( 1.0 - beta_boost*betaz_lab );
-                u.z = gamma_boost * ( u.z -beta_boost*gamma_lab );
-            }
-
-            if (loc_do_field_ionization) {
-                pi[ip] = loc_ionization_initial_level;
-            }
-
+                
 #ifdef WARPX_QED
-            if(loc_has_quantum_sync){
-                p_optical_depth_QSR[ip] = quantum_sync_get_opt();
-            }
-
-            if(loc_has_breit_wheeler){
-                p_optical_depth_BW[ip] = breit_wheeler_get_opt();
-            }
+                if(loc_has_quantum_sync){
+                    p_optical_depth_QSR[ip] = quantum_sync_get_opt();
+                }
+                
+                if(loc_has_breit_wheeler){
+                    p_optical_depth_BW[ip] = breit_wheeler_get_opt();
+                }
 #endif
-
-            u.x *= PhysConst::c;
-            u.y *= PhysConst::c;
-            u.z *= PhysConst::c;
-
-            // Real weight = dens * scale_fac / (AMREX_D_TERM(fac, *fac, *fac));
-            Real weight = dens * scale_fac;
+                
+                u.x *= PhysConst::c;
+                u.y *= PhysConst::c;
+                u.z *= PhysConst::c;
+                
+                // Real weight = dens * scale_fac / (AMREX_D_TERM(fac, *fac, *fac));
+                Real weight = dens * scale_fac;
 #ifdef WARPX_DIM_RZ
-            if (radially_weighted) {
-                weight *= 2.*MathConst::pi*xb;
-            } else {
-                // This is not correct since it might shift the particle
-                // out of the local grid
-                pos.x = std::sqrt(xb*rmax);
-                weight *= dx[0];
-            }
+                if (radially_weighted) {
+                    weight *= 2.*MathConst::pi*xb;
+                } else {
+                    // This is not correct since it might shift the particle
+                    // out of the local grid
+                    pos.x = std::sqrt(xb*rmax);
+                    weight *= dx[0];
+                }
 #endif
-            pa[PIdx::w ][ip] = weight;
-            pa[PIdx::ux][ip] = u.x;
-            pa[PIdx::uy][ip] = u.y;
-            pa[PIdx::uz][ip] = u.z;
-
+                pa[PIdx::w ][ip] = weight;
+                pa[PIdx::ux][ip] = u.x;
+                pa[PIdx::uy][ip] = u.y;
+                pa[PIdx::uz][ip] = u.z;
+                
 #if (AMREX_SPACEDIM == 3)
-            p.pos(0) = pos.x;
-            p.pos(1) = pos.y;
-            p.pos(2) = pos.z;
+                p.pos(0) = pos.x;
+                p.pos(1) = pos.y;
+                p.pos(2) = pos.z;
 #elif (AMREX_SPACEDIM == 2)
 #ifdef WARPX_DIM_RZ
-            pa[PIdx::theta][ip] = theta;
+                pa[PIdx::theta][ip] = theta;
 #endif
-            p.pos(0) = xb;
-            p.pos(1) = pos.z;
+                p.pos(0) = xb;
+                p.pos(1) = pos.z;
 #endif
+            }
         });
-
+                   
         if (cost) {
             wt = (amrex::second() - wt) / tile_box.d_numPts();
             Array4<Real> const& costarr = cost->array(mfi);
