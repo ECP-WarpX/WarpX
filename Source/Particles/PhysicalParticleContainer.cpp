@@ -526,6 +526,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         Gpu::DeviceVector<int> offset(overlap_box.numPts()+1, 0);
         auto pcounts = counts.data();
         int lrrfac = rrfac;
+        int lrefine_injection = refine_injection;
+        Box lfine_box = fine_injection_box;
         amrex::ParallelFor(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
             IntVect iv(AMREX_D_DECL(i, j, k));
@@ -539,8 +541,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
-                if (refine_injection) {
-                    Box fine_overlap_box = overlap_box & amrex::shift(fine_injection_box,shifted);
+                if (lrefine_injection) {
+                    Box fine_overlap_box = overlap_box & amrex::shift(lfine_box, shifted);
                     if (fine_overlap_box.ok()) {
                         int r = (fine_overlap_box.contains(iv)) ?
                             AMREX_D_TERM(lrrfac,*lrrfac,*lrrfac) : 1;
