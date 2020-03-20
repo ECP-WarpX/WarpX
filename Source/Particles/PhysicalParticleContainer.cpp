@@ -697,7 +697,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 //
                 // In order for this equation to be solvable, betaz_lab
                 // is explicitly assumed to have no dependency on z0_lab
-                u = inj_mom->getMomentum(x, y, 0.); // No z0_lab dependency
+                //
+                // Note that we use the bulk momentum to perform the ballastic correction
+                u = inj_mom->getBulkMomentum(x, y, 0.); // No z0_lab dependency
                 // At this point u is the lab-frame momentum
                 // => Apply the above formula for z0_lab
                 Real gamma_lab = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
@@ -719,6 +721,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 }
                 // Cut density if above threshold
                 dens = amrex::min(dens, density_max);
+
+                // get the full momentum, including thermal motion
+                u = inj_mom->getMomentum(x, y, 0.);
+                gamma_lab = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
+                betaz_lab = u.z/(gamma_lab);
+                
                 // At this point u and dens are the lab-frame quantities
                 // => Perform Lorentz transform
                 dens = gamma_boost * dens * ( 1.0 - beta_boost*betaz_lab );
