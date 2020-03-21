@@ -674,8 +674,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 // the next generated particle.
 
                 // include ballistic correction for plasma species with bulk motion
-                // note that this assumes that momentum profile is independent of z
-                const XDim3 u_bulk = inj_mom->getBulkMomentum(x, y, 0.);
+                const XDim3 u_bulk = inj_mom->getBulkMomentum(x, y, z);
                 const Real gamma_bulk = std::sqrt(1.+(u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
                 const Real betaz_bulk = u.z/gamma_bulk;
                 const Real z0 = z - PhysConst::c*t*betaz_bulk;
@@ -685,7 +684,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     return;
                 }
 
-                u = inj_mom->getMomentum(x, y, 0.);
+                u = inj_mom->getMomentum(x, y, z0);
                 dens = inj_rho->getDensity(x, y, z0);
                 // Remove particle if density below threshold
                 if ( dens < density_min ){
