@@ -677,8 +677,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 } else {
                     theta = 2.*MathConst::pi*r.y;
                 }
-                x = xb*std::cos(theta);
-                y = xb*std::sin(theta);
+                pos.x = xb*std::cos(theta);
+                pos.y = xb*std::sin(theta);
 #endif
 
                 Real dens;
