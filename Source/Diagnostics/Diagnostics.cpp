@@ -26,9 +26,6 @@ Diagnostics::ReadParameters ()
     pp.query("period", m_period);
     pp.query("plot_raw_fields", m_plot_raw_fields);
     pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
-    pp.query("plot_rho", m_plot_rho);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_plot_rho==false, "cannot plot_rho yet");
-    pp.query("plot_F", m_plot_F);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_plot_F==false, "cannot plot_F yet");
     if (!pp.queryarr("fields_to_plot", varnames)){
         varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
@@ -103,6 +100,18 @@ Diagnostics::InitData ()
 void
 Diagnostics::ComputeAndPack ()
 {
+    // First, make sure all guard cells are properly filled
+    // Probably overkill/unnecessary, but safe and shouldn't happen often !!
+    auto & warpx = WarpX::GetInstance();
+    warpx.FillBoundaryE(warpx.getngE(), warpx.getngExtra());
+    warpx.FillBoundaryB(warpx.getngE(), warpx.getngExtra());
+#ifndef WARPX_USE_PSATD
+    warpx.FillBoundaryAux(warpx.getngUpdateAux());
+#endif
+    warpx.UpdateAuxilaryData();
+
+    warpx.FieldGather();
+
     // cell-center fields and store result in mf_avg.
     for(int lev=0; lev<nlev; lev++){
         for (int icomp=0; icomp<ncomp; icomp++){
