@@ -1,4 +1,3 @@
-
 #include "Diagnostics.H"
 #include "WarpX.H"
 #include "Average.H"
@@ -60,31 +59,31 @@ Diagnostics::InitData ()
     auto & warpx = WarpX::GetInstance();
     nlev = warpx.finestLevel() + 1;
     // Initialize vector of pointers to the fields requested by the user.
-    allfields.resize( nlev );
+    all_field_functors.resize( nlev );
     mf_avg.resize( nlev );
     for ( int lev=0; lev<nlev; lev++ ){
-        allfields[lev].resize( ncomp );
+        all_field_functors[lev].resize( ncomp );
         for (int comp=0; comp<ncomp; comp++){
             if        ( varnames[comp] == "Ex" ){
-                allfields[lev][comp] = warpx.get_pointer_Efield_aux(lev, 0);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 0));
             } else if ( varnames[comp] == "Ey" ){
-                allfields[lev][comp] = warpx.get_pointer_Efield_aux(lev, 1);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 1));
             } else if ( varnames[comp] == "Ez" ){
-                allfields[lev][comp] = warpx.get_pointer_Efield_aux(lev, 2);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 2));
             } else if ( varnames[comp] == "Bx" ){
-                allfields[lev][comp] = warpx.get_pointer_Bfield_aux(lev, 0);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 0));
             } else if ( varnames[comp] == "By" ){
-                allfields[lev][comp] = warpx.get_pointer_Bfield_aux(lev, 1);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 1));
             } else if ( varnames[comp] == "Bz" ){
-                allfields[lev][comp] = warpx.get_pointer_Bfield_aux(lev, 2);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 2));
             } else if ( varnames[comp] == "jx" ){
-                allfields[lev][comp] = warpx.get_pointer_current_fp(lev, 0);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 0));
             } else if ( varnames[comp] == "jy" ){
-                allfields[lev][comp] = warpx.get_pointer_current_fp(lev, 1);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 1));
             } else if ( varnames[comp] == "jz" ){
-                allfields[lev][comp] = warpx.get_pointer_current_fp(lev, 2);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 2));
             } else if ( varnames[comp] == "rho" ){
-                allfields[lev][comp] = warpx.get_pointer_rho_fp(lev);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_rho_fp(lev));
             } else if ( varnames[comp] == "part_per_cell" ){
                 amrex::Abort("plotting part_per_cell is not supported");
             } else {
@@ -102,14 +101,12 @@ Diagnostics::InitData ()
 }
 
 void
-Diagnostics::FilterAndPack ()
+Diagnostics::ComputeAndPack ()
 {
     // cell-center fields and store result in mf_avg.
     for(int lev=0; lev<nlev; lev++){
         for (int icomp=0; icomp<ncomp; icomp++){
-            Average::ToCellCenter ( mf_avg[lev],
-                                    *allfields[lev][icomp],
-                                    icomp, 0 );
+            all_field_functors[lev][icomp]->operator()(mf_avg[lev], icomp, 1);
         }
     }
 }

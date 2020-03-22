@@ -3,8 +3,11 @@
 
 #include "FlushFormat.H"
 #include "FlushFormatPlotfile.H"
+#include "ComputeDiagFunctor.H"
+#include "CellCenterFunctor.H"
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
+
 /**
  * \brief base class for diagnostics.
  * Contains main routines to filter, compute and flush diagnostics.
@@ -17,8 +20,9 @@ public:
     Diagnostics (int i, std::string name);
     ~Diagnostics ();
     void ReadParameters ();
-    /** Pack (stack) all fields in the cell-centered output MultiFab mf_avg */
-    void FilterAndPack ();
+    /** Pack (stack) all fields in the cell-centered output MultiFab mf_avg.
+     * Fields are computed (e.g., cell-centered) on-the-fly using a functor.*/
+    void ComputeAndPack ();
     /** Flush mf_avg and particles to file. */
     void Flush ();
     /** Flush raw data */
@@ -32,8 +36,7 @@ public:
      * \return bool, whether to flush
      */
     bool DoDump (int step, bool force_flush=false);
-    /** \brief Add variable names to the list.
-     */
+    /** \brief Add variable names to the list. */
     void AddToVarNames (std::string name, std::string suffix);
 
 private:
@@ -49,9 +52,12 @@ private:
     int ncomp {9};
     /** Names of  each component requested by the user */
     amrex::Vector< std::string > varnames;
-    /** Pointer to all fields, per level
-     * levels    < Ex Ey Ez Bx etc.                 > */
-    amrex::Vector< amrex::Vector <amrex::MultiFab const *> > allfields;
+    /** Vector of (pointers to) functors to compute output fields, per level,
+     * per component. This allows for simple operations (averaging to
+     * cell-center for standard EB fields) as well as more involved operations
+     * (back-transformed diagnostics, filtering, reconstructing cartesian
+     * fields in cylindrical). */
+    amrex::Vector< amrex::Vector <ComputeDiagFunctor const *> > all_field_functors;
     /** output multifab, where all fields are cell-centered and stacked */
     amrex::Vector< amrex::MultiFab > mf_avg;
     /** number of levels to output */
