@@ -20,5 +20,5 @@ public:
 private:
     amrex::MultiFab* m_mf_src;
 };
-    
+
 #endif // WARPX_CELLCENTERFUNCTOR_H_

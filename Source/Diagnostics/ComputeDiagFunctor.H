@@ -18,5 +18,5 @@ public:
      */
     virtual void operator() (amrex::MultiFab& mf_dst, int dcomp, int ncomp=1) const = 0;
 };
-    
+
 #endif // WARPX_COMPUTEDIAGFUNCTOR_H_
