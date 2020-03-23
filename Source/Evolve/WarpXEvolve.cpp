@@ -28,9 +28,9 @@
 using namespace amrex;
 
 void
-WarpX::EvolveEM (int numsteps)
+WarpX::Evolve (int numsteps)
 {
-    WARPX_PROFILE("WarpX::EvolveEM()");
+    WARPX_PROFILE("WarpX::Evolve()");
 
     Real cur_time = t_new[0];
     static int last_plot_file_step = 0;
@@ -70,17 +70,9 @@ WarpX::EvolveEM (int numsteps)
             if (step > 0 && (step+1) % load_balance_int == 0)
             {
                 LoadBalance();
+
                 // Reset the costs to 0
-                for (int lev = 0; lev <= finest_level; ++lev)
-                {
-                    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-                    {
-                        costs[lev]->setVal(0.0);
-                    } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
-                    {
-                        costs_heuristic[lev]->assign((*costs_heuristic[lev]).size(), 0.0);
-                    }
-                }
+                ResetCosts();
             }
             for (int lev = 0; lev <= finest_level; ++lev)
             {
@@ -193,27 +185,29 @@ WarpX::EvolveEM (int numsteps)
 
         int num_moved = MoveWindow(move_j);
 
-#ifdef WARPX_DO_ELECTROSTATIC
         // Electrostatic solver: particles can move by an arbitrary number of cells
-        mypc->Redistribute();
-#else
-        // Electromagnetic solver: due to CFL condition, particles can
-        // only move by one or two cells per time step
-        if (max_level == 0) {
-            int num_redistribute_ghost = num_moved;
-            if ((v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)) {
-                // Galilean algorithm ; particles can move by up to 2 cells
-                num_redistribute_ghost += 2;
-            } else {
-                // Standard algorithm ; particles can move by up to 1 cell
-                num_redistribute_ghost += 1;
-            }
-            mypc->RedistributeLocal(num_redistribute_ghost);
-        }
-        else {
+        if( do_electrostatic )
+        {
             mypc->Redistribute();
+        } else
+        {
+            // Electromagnetic solver: due to CFL condition, particles can
+            // only move by one or two cells per time step
+            if (max_level == 0) {
+                int num_redistribute_ghost = num_moved;
+                if ((v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)) {
+                    // Galilean algorithm ; particles can move by up to 2 cells
+                    num_redistribute_ghost += 2;
+                } else {
+                    // Standard algorithm ; particles can move by up to 1 cell
+                    num_redistribute_ghost += 1;
+                }
+                mypc->RedistributeLocal(num_redistribute_ghost);
+            }
+            else {
+                mypc->Redistribute();
+            }
         }
-#endif
 
         bool to_sort = (sort_int > 0) && ((step+1) % sort_int == 0);
         if (to_sort) {
@@ -240,6 +234,8 @@ WarpX::EvolveEM (int numsteps)
             reduced_diags->ComputeDiags(step);
             reduced_diags->WriteToFile(step);
         }
+
+        multi_diags->FilterComputePackFlush( step );
 
         // slice gen //
         if (to_make_plot || to_write_openPMD || do_insitu || to_make_slice_plot)
@@ -325,6 +321,8 @@ WarpX::EvolveEM (int numsteps)
                               *Bfield_aux[lev][2]);
         }
 
+        multi_diags->FilterComputePackFlush( istep[0], true );
+
         if (write_plot_file)
             WritePlotFile();
         if (write_openPMD)
@@ -355,6 +353,17 @@ WarpX::EvolveEM (int numsteps)
 void
 WarpX::OneStep_nosub (Real cur_time)
 {
+
+    if (do_electrostatic) {
+        // Electrostatic solver:
+        // For each species: deposit charge and add the associated space-charge
+        // E and B field to the grid ; this is done at the beginning of the PIC
+        // loop (i.e. immediately after a `Redistribute` and before particle
+        // positions are pushed) so that the particles do not deposit out of bound
+        bool const reset_fields = true;
+        ComputeSpaceChargeField( reset_fields );
+    }
+
     // Loop over species. For each ionizable species, create particles in
     // product species.
     mypc->doFieldIonization();
@@ -374,6 +383,11 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 #endif
 
+#ifdef WARPX_QED
+    //Do QED processes
+    mypc->doQedEvents();
+#endif
+
     SyncCurrent();
 
     SyncRho();
@@ -386,50 +400,51 @@ WarpX::OneStep_nosub (Real cur_time)
     if (do_pml && pml_has_particles) CopyJPML();
     if (do_pml && do_pml_j_damping) DampJPML();
 
+    if (!do_electrostatic) {
+    // Electromagnetic solver:
     // Push E and B from {n} to {n+1}
     // (And update guard cells immediately afterwards)
 #ifdef WARPX_USE_PSATD
-    if (use_hybrid_QED)
-    {
-        WarpX::Hybrid_QED_Push(dt);
+        if (use_hybrid_QED)
+        {
+            WarpX::Hybrid_QED_Push(dt);
+            FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+        }
+        PushPSATD(dt[0]);
         FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-    }
-    PushPSATD(dt[0]);
-    FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-    FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-
-    if (use_hybrid_QED)
-    {
-        WarpX::Hybrid_QED_Push(dt);
-        FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-
-    }
-    if (do_pml) DampPML();
-
-;
-#else
-    EvolveF(0.5*dt[0], DtType::FirstHalf);
-    FillBoundaryF(guard_cells.ng_FieldSolverF);
-    EvolveB(0.5*dt[0]); // We now have B^{n+1/2}
-
-    FillBoundaryB(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
-    EvolveE(dt[0]); // We now have E^{n+1}
-
-    FillBoundaryE(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
-    EvolveF(0.5*dt[0], DtType::SecondHalf);
-    EvolveB(0.5*dt[0]); // We now have B^{n+1}
-    if (do_pml) {
-        FillBoundaryF(guard_cells.ng_alloc_F);
-        DampPML();
-        FillBoundaryE(guard_cells.ng_MovingWindow, IntVect::TheZeroVector());
-        FillBoundaryF(guard_cells.ng_MovingWindow);
-        FillBoundaryB(guard_cells.ng_MovingWindow, IntVect::TheZeroVector());
-    }
-    // E and B are up-to-date in the domain, but all guard cells are
-    // outdated.
-    if ( safe_guard_cells )
         FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+
+        if (use_hybrid_QED)
+        {
+            WarpX::Hybrid_QED_Push(dt);
+            FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+
+        }
+        if (do_pml) DampPML();
+#else
+        EvolveF(0.5*dt[0], DtType::FirstHalf);
+        FillBoundaryF(guard_cells.ng_FieldSolverF);
+        EvolveB(0.5*dt[0]); // We now have B^{n+1/2}
+
+        FillBoundaryB(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
+        EvolveE(dt[0]); // We now have E^{n+1}
+
+        FillBoundaryE(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
+        EvolveF(0.5*dt[0], DtType::SecondHalf);
+        EvolveB(0.5*dt[0]); // We now have B^{n+1}
+        if (do_pml) {
+            FillBoundaryF(guard_cells.ng_alloc_F);
+            DampPML();
+            FillBoundaryE(guard_cells.ng_MovingWindow, IntVect::TheZeroVector());
+            FillBoundaryF(guard_cells.ng_MovingWindow);
+            FillBoundaryB(guard_cells.ng_MovingWindow, IntVect::TheZeroVector());
+        }
+        // E and B are up-to-date in the domain, but all guard cells are
+        // outdated.
+        if ( safe_guard_cells )
+            FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
 #endif
+    }
 }
 
 /* /brief Perform one PIC iteration, with subcycling
@@ -452,10 +467,20 @@ WarpX::OneStep_nosub (Real cur_time)
 void
 WarpX::OneStep_sub1 (Real curtime)
 {
+    if( do_electrostatic )
+    {
+        amrex::Abort("Electrostatic solver cannot be used with sub-cycling.");
+    }
+
     // TODO: we could save some charge depositions
     // Loop over species. For each ionizable species, create particles in
     // product species.
     mypc->doFieldIonization();
+
+#ifdef WARPX_QED
+    //Do QED processes
+    mypc->doQedEvents();
+#endif
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
     const int fine_lev = 1;
