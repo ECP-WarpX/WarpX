@@ -228,9 +228,13 @@ private:
     amrex::Real beta, theta;
 };
 
-
-// struct whose getMomentum returns momentum for 1 particle, for
-// radial expansion
+/**
+ * \brief struct whose getMomentum returns momentum for 1 particle, for
+ * radial expansion.
+ *
+ * Note - u_over_r is expected to be the normalized momentum gamma*beta
+ * divided by the physical position in SI units.
+**/
 struct InjectorMomentumRadialExpansion
 {
     InjectorMomentumRadialExpansion (amrex::Real a_u_over_r) noexcept
