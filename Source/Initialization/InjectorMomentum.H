@@ -132,7 +132,7 @@ struct InjectorMomentumBoltzmann
         using namespace amrex;
         Real u[3];
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
-        Real gamma = 1./sqrt(1+beta*beta);
+        const Real gamma = 1./sqrt(1+beta*beta);
         u[dir] = gamma*beta;
         return XDim3 {u[0],u[1],u[2]};
     }
@@ -218,7 +218,7 @@ struct InjectorMomentumJuttner
         using namespace amrex;
         Real u[3];
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
-        Real gamma = 1./sqrt(1+beta*beta);
+        const Real gamma = 1./sqrt(1+beta*beta);
         u[dir] = gamma*beta;
         return XDim3 {u[0],u[1],u[2]};
     }

@@ -710,9 +710,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 const XDim3 u_bulk = inj_mom->getBulkMomentum(x, y, 0.); // No z0_lab dependency
                 // At this point u is the lab-frame momentum
                 // => Apply the above formula for z0_lab
-                Real gamma_lab_bulk = std::sqrt(1.+(u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
-                Real betaz_lab_bulk = u.z/(gamma_lab_bulk);
-                Real z0_lab = gamma_boost * ( z*(1-beta_boost*betaz_lab_bulk)
+                const Real gamma_lab_bulk = std::sqrt(1.+(u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
+                const Real betaz_lab_bulk = u.z/(gamma_lab_bulk);
+                const Real z0_lab = gamma_boost * ( z*(1-beta_boost*betaz_lab_bulk)
                                               - PhysConst::c*t*(betaz_lab_bulk-beta_boost) );
                 // If the particle is not within the lab-frame zmin, zmax, etc.
                 // go to the next generated particle.
@@ -732,8 +732,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
                 // get the full momentum, including thermal motion
                 u = inj_mom->getMomentum(x, y, 0.);
-                Real gamma_lab = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
-                Real betaz_lab = u.z/(gamma_lab);
+                const Real gamma_lab = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
+                const Real betaz_lab = u.z/(gamma_lab);
 
                 // At this point u and dens are the lab-frame quantities
                 // => Perform Lorentz transform
