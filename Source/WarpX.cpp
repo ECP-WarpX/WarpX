@@ -203,6 +203,9 @@ WarpX::WarpX ()
     t_old.resize(nlevs_max, std::numeric_limits<Real>::lowest());
     dt.resize(nlevs_max, std::numeric_limits<Real>::max());
 
+    // Diagnostics
+    multi_diags = std::unique_ptr<MultiDiagnostics> (new MultiDiagnostics());
+
     // Particle Container
     mypc = std::unique_ptr<MultiParticleContainer> (new MultiParticleContainer(this));
     warpx_do_continuous_injection = mypc->doContinuousInjection();
@@ -587,7 +590,6 @@ WarpX::ReadParameters ()
 #ifdef WARPX_USE_OPENPMD
         pp.query("openpmd_tspf", openpmd_tspf);
 #endif
-        pp.query("plot_costs", plot_costs);
         pp.query("plot_raw_fields", plot_raw_fields);
         pp.query("plot_raw_fields_guards", plot_raw_fields_guards);
         pp.query("plot_coarsening_ratio", plot_coarsening_ratio);
