@@ -743,11 +743,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
             ParticleReal* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
             ParticleReal* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
             ParticleReal* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
-#ifdef WARPX_DIM_RZ
-            auto& aos = pti.GetArrayOfStructs();
-            ParticleType* AMREX_RESTRICT const pstruct = aos().dataPtr();
-            ParticleReal* AMREX_RESTRICT theta = attribs[PIdx::theta].dataPtr();
-#endif
+
             // Loop over the particles and update their position
             amrex::ParallelFor( pti.numParticles(),
                 [=] AMREX_GPU_DEVICE (long i) {
