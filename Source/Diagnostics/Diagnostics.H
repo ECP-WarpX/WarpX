@@ -19,7 +19,6 @@ class Diagnostics
 public:
     Diagnostics (int i, std::string name);
     ~Diagnostics ();
-    void ReadParameters ();
     /** Pack (stack) all fields in the cell-centered output MultiFab mf_avg.
      * Fields are computed (e.g., cell-centered) on-the-fly using a functor.*/
     void ComputeAndPack ();
@@ -36,21 +35,29 @@ public:
      * \return bool, whether to flush
      */
     bool DoDump (int step, bool force_flush=false);
-    /** \brief Add variable names to the list. */
-    void AddToVarNames (std::string name, std::string suffix);
-
 private:
+    void ReadParameters ();
+    /** Append varnames with names for all modes of all components of E B and j */
+    void AddRZModesToOutputNames ();
+    /** Append all_field_functors with all modes of all components of E B and j */
+    void AddRZModesToInputsFunctors (int lev);
+    /** Function to return number of components written to file */
+    int nComp_dst () const { return varnames.size(); };
+    /** One input multifab can write several components in the output
+     * multifab, so we also have a function to return the number of components
+     * in the input multifab */
+    int nComp_src () const { return all_field_functors[0].size(); };
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string diag_name;
     /** Prefix for output directories */
-    std::string file_prefix = "diags/diag";
+    std::string file_prefix;
     /** Index of diagnostics in MultiDiagnostics::alldiags */
     int diag_index;
     /** Period at which diagnostics is writte to file */
     int m_period = -1;
-    /** Number of scalar components requested by the user */
-    int ncomp {9};
-    /** Names of  each component requested by the user */
+    /** Names of  each component requested by the user.
+     * in cylindrical geometry, this list is appended with
+     * automatically-constructed names for all modes of all fields */
     amrex::Vector< std::string > varnames;
     /** Vector of (pointers to) functors to compute output fields, per level,
      * per component. This allows for simple operations (averaging to
