@@ -19,6 +19,11 @@ public:
     /** Write WarpX-specific plotfile header */
     void WriteWarpXHeader(const std::string& name) const;
 
+    /**
+     * \brief Destructor
+     */
+    ~FlushFormatPlotfile() {};
+
 };
 
 #endif // WARPX_FLUSHFORMATPLOTFILE_H_

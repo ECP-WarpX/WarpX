@@ -76,7 +76,7 @@ WarpX::Evolve (int numsteps)
             }
             for (int lev = 0; lev <= finest_level; ++lev)
             {
-                MultiFab* cost = WarpX::getCosts(lev);
+                cost = WarpX::getCosts(lev);
                 if (cost)
                 {
                     // Perform running average of the costs

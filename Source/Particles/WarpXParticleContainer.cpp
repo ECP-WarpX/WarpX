@@ -157,10 +157,6 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         p.pos(1) = z[i];
 #endif
 
-        if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
-            auto& ptile = DefineAndReturnParticleTile(0, 0, 0);
-        }
-
         particle_tile.push_back(p);
     }
 
@@ -170,10 +166,6 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         particle_tile.push_back_real(PIdx::ux,     vx + ibegin,     vx + iend);
         particle_tile.push_back_real(PIdx::uy,     vy + ibegin,     vy + iend);
         particle_tile.push_back_real(PIdx::uz,     vz + ibegin,     vz + iend);
-
-        if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
-            auto& ptile = DefineAndReturnParticleTile(0, 0, 0);
-        }
 
         for (int comp = PIdx::uz+1; comp < PIdx::nattribs; ++comp)
         {

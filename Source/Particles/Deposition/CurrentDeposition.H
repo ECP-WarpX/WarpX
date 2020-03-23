@@ -67,7 +67,9 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 #endif
 
     const amrex::Real xmin = xyzmin[0];
+#if (defined WARPX_DIM_3D)
     const amrex::Real ymin = xyzmin[1];
+#endif
     const amrex::Real zmin = xyzmin[2];
 
     const amrex::Real clightsq = 1.0/PhysConst::c/PhysConst::c;

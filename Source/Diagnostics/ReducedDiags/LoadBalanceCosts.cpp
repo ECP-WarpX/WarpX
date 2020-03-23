@@ -40,7 +40,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
     int nBoxes = 0;
     for (int lev = 0; lev < nLevels; ++lev)
     {
-        const amrex::Vector<amrex::Real>* cost_heuristic = warpx.getCostsHeuristic(lev);
+        cost_heuristic = warpx.getCostsHeuristic(lev);
         nBoxes += cost_heuristic->size();
     }
 

@@ -14,6 +14,11 @@ public:
         const amrex::Vector<int> iteration, const double time,
         MultiParticleContainer& mpc, int nlev,
         const std::string prefix) const = 0;
+
+     /**
+      * \brief Virtual destructor
+      */
+     virtual ~FlushFormat() {};
 };
 
 #endif // WARPX_FLUSHFORMAT_H_

@@ -22,6 +22,26 @@ InjectorMomentum::~InjectorMomentum ()
         object.parser.m_uz_parser.clear();
         break;
     }
+    case Type::gaussian:
+    {
+        break;
+    }
+    case Type::boltzmann:
+    {
+        break;
+    }
+    case Type::juttner:
+    {
+        break;
+    }
+    case Type::constant:
+    {
+        break;
+    }
+    case Type::radial_expansion:
+    {
+        break;
+    }
     case Type::custom:
     {
         object.custom.clear();

@@ -7,7 +7,7 @@
 using namespace amrex;
 
 Diagnostics::Diagnostics (int i, std::string name)
-    : diag_index(i), diag_name(name)
+    : diag_name(name), diag_index(i)
 {
     ReadParameters();
 }

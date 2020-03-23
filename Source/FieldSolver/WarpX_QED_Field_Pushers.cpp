@@ -26,7 +26,7 @@ using namespace amrex;
 
 
 void
-WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> dt)
+WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> a_dt)
 {
     if (WarpX::do_nodal == 0) {
         Print()<<"The do_nodal flag is tripped.\n";
@@ -39,7 +39,7 @@ WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> dt)
         }
     }
     for (int lev = 0; lev <= finest_level; ++lev) {
-        Hybrid_QED_Push(lev, dt[lev]);
+        Hybrid_QED_Push(lev, a_dt[lev]);
     }
 }
 
@@ -86,10 +86,6 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
     MultiFab* cost = WarpX::getCosts(lev);
     const IntVect& rr = (lev > 0) ? refRatio(lev-1) : IntVect::TheUnitVector();
 
-    // xmin is only used by the kernel for cylindrical geometry,
-    // in which case it is actually rmin.
-    const Real xmin = Geom(0).ProbLo(0);
-
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -100,8 +96,6 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
 
         // Get boxes for E and B
         const Box& tbx  = mfi.tilebox(Bx_nodal_flag);
-        const Box& tby  = mfi.tilebox(By_nodal_flag);
-        const Box& tbz  = mfi.tilebox(Bz_nodal_flag);
 
         const Box& tex  = mfi.tilebox(Ex_nodal_flag);
         const Box& tey  = mfi.tilebox(Ey_nodal_flag);
