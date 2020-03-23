@@ -1358,8 +1358,9 @@ Diagnostics and output
 
         The output columns are
         values of the 1st bin, the 2nd bin, ..., the nth bin.
-        An example input file and loading pything script of using the histogram reduced diagnostics
-        is given in ``Examples/Tests/initial_distribution/``.
+        An example input file and a loading pything script of
+        using the histogram reduced diagnostics
+        are given in ``Examples/Tests/initial_distribution/``.
 
 * ``<reduced_diags_name>.frequency`` (`int`)
     The output frequency (every # time steps).
