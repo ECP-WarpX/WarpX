@@ -22,7 +22,7 @@ public:
     /** Write WarpX-specific plotfile header */
     void WriteWarpXHeader(const std::string& name) const;
     void WriteAllRawFields (const bool plot_raw_fields, const int nlevels,
-                            std::string plotfilename,
+                            const std::string& plotfilename,
                             const bool plot_raw_fields_guards,
                             const bool plot_rho, bool plot_F) const;
 };
