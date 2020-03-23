@@ -1340,7 +1340,8 @@ Diagnostics and output
             ``unity_particle_weight``
             uses unity particle weight to compute the histogram,
             such that the values of the histogram are
-            the number of counted macroparticles in that bin.
+            the number of counted macroparticles in that bin,
+            i.e.  :math:`f = \sum\limits_{i=1}^N 1`.
 
             ``max_to_unity`` will normalize the histogram such that
             its maximum value is one.
