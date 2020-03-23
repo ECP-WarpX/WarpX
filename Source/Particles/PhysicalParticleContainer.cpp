@@ -37,6 +37,19 @@ using namespace amrex;
 
 namespace
 {
+    // Since the user provides the density distribution
+    // at t_lab=0 and in the lab-frame coordinates,
+    // we need to find the lab-frame position of this
+    // particle at t_lab=0, from its boosted-frame coordinates
+    // Assuming ballistic motion, this is given by:
+    // z0_lab = gamma*( z_boost*(1-beta*betaz_lab) - ct_boost*(betaz_lab-beta) )
+    // where betaz_lab is the speed of the particle in the lab frame
+    //
+    // In order for this equation to be solvable, betaz_lab
+    // is explicitly assumed to have no dependency on z0_lab
+    //
+    // Note that we use the bulk momentum to perform the ballistic correction
+    // Assume no z0_lab dependency
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     Real applyBallisticCorrection(const XDim3& pos, const InjectorMomentum* inj_mom,
                                   Real gamma_boost, Real beta_boost, Real t) noexcept
@@ -710,12 +723,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     // the next generated particle.
 
                     // include ballistic correction for plasma species with bulk motion
-                    const XDim3 u_bulk = inj_mom->getBulkMomentum(pos.x, pos.y, pos.z);
-                    const Real gamma_bulk = std::sqrt(1. +
-                              (u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
-                    const Real betaz_bulk = u_bulk.z/gamma_bulk;
-                    const Real z0 = pos.z - PhysConst::c*t*betaz_bulk;
-
+                    const Real z0 = applyBallisticCorrection(pos, inj_mom, gamma_boost,
+                                                             beta_boost, t);
                     if (!inj_pos->insideBounds(xb, yb, z0)) {
                         p.id() = -1;
                         continue;
@@ -733,28 +742,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     dens = amrex::min(dens, density_max);
                 } else {
                     // Boosted-frame simulation
-                    // Since the user provides the density distribution
-                    // at t_lab=0 and in the lab-frame coordinates,
-                    // we need to find the lab-frame position of this
-                    // particle at t_lab=0, from its boosted-frame coordinates
-                    // Assuming ballistic motion, this is given by:
-                    // z0_lab = gamma*( z_boost*(1-beta*betaz_lab) - ct_boost*(betaz_lab-beta) )
-                    // where betaz_lab is the speed of the particle in the lab frame
-                    //
-                    // In order for this equation to be solvable, betaz_lab
-                    // is explicitly assumed to have no dependency on z0_lab
-                    //
-                    // Note that we use the bulk momentum to perform the ballistic correction
-                    // Assume no z0_lab dependency
-                    const XDim3 u_bulk = inj_mom->getBulkMomentum(pos.x, pos.y, 0.);
-                    // At this point u is the lab-frame momentum
-                    // => Apply the above formula for z0_lab
-                    const Real gamma_lab_bulk = std::sqrt(1.+
-                            (u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
-                    const Real betaz_lab_bulk = u_bulk.z/(gamma_lab_bulk);
-                    const Real z0_lab = gamma_boost * ( pos.z*(1-beta_boost*betaz_lab_bulk)
-                                             - PhysConst::c*t*(betaz_lab_bulk-beta_boost) );
-
+                    const Real z0_lab = applyBallisticCorrection(pos, inj_mom, gamma_boost,
+                                                                 beta_boost, t);
+                    
                     // If the particle is not within the lab-frame zmin, zmax, etc.
                     // go to the next generated particle.
                     if (!inj_pos->insideBounds(xb, yb, z0_lab)) {
