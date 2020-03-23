@@ -22,3 +22,5 @@ Our Doxygen API documentation in classic formatting `is located here <../_static
    testing
    documentation
    workflow
+
+See also the `WarpX tutorial slides <../_static/WarpX_tutorial.pdf>`_.

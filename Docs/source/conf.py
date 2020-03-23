@@ -183,4 +183,4 @@ primary_domain = 'cpp'
 # Tell sphinx what the pygments highlight language should be.
 highlight_language = 'cpp'
 
-subprocess.call('cd ../; doxygen; mkdir -p source/_static; cp -r doxyhtml source/_static/', shell=True)
+subprocess.call('cd ../; doxygen; mkdir -p source/_static; cp -r doxyhtml source/_static/ ; cp source/developers/material/WarpX_tutorial.pdf source/_static/', shell=True)
