@@ -53,7 +53,7 @@ namespace
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     Real applyBallisticCorrection(const XDim3& pos, const InjectorMomentum* inj_mom,
                                   Real gamma_boost, Real beta_boost, Real t) noexcept
-    {        
+    {
         const XDim3 u_bulk = inj_mom->getBulkMomentum(pos.x, pos.y, pos.z);
         const Real gamma_bulk = std::sqrt(1. +
                   (u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
@@ -61,7 +61,7 @@ namespace
         const Real z0 = pos.z - PhysConst::c*t*betaz_bulk;
         return z0;
     }
-    
+
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     XDim3 getCellCoords (const GpuArray<Real, AMREX_SPACEDIM>& lo_corner,
                          const GpuArray<Real, AMREX_SPACEDIM>& dx,
@@ -560,7 +560,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
             lo.z = applyBallisticCorrection(lo, inj_mom, gamma_boost, beta_boost, t);
             hi.z = applyBallisticCorrection(hi, inj_mom, gamma_boost, beta_boost, t);
-                        
+
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
@@ -734,7 +734,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     // Boosted-frame simulation
                     const Real z0_lab = applyBallisticCorrection(pos, inj_mom, gamma_boost,
                                                                  beta_boost, t);
-                    
+
                     // If the particle is not within the lab-frame zmin, zmax, etc.
                     // go to the next generated particle.
                     if (!inj_pos->insideBounds(xb, yb, z0_lab)) {
