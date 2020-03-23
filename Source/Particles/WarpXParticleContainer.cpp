@@ -766,7 +766,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
                 }
             );
 
-            if (cost && warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
                 wt = amrex::second() - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
