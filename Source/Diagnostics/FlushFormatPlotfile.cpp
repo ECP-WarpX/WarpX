@@ -367,7 +367,7 @@ WriteCoarseScalar( const std::string field_name,
 
 void
 FlushFormatPlotfile::WriteAllRawFields(
-    const bool plot_raw_fields, const int nlevels, std::string plotfilename,
+    const bool plot_raw_fields, const int nlevels, const std::string& plotfilename,
     const bool plot_raw_fields_guards, const bool plot_rho, bool plot_F) const
 {
     if (!plot_raw_fields) return;
