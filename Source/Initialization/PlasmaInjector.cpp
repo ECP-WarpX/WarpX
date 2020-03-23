@@ -120,7 +120,12 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         Print()<<"         The charge in <species>.mass overwrite the one from <species>.species_type\n";
     }
     if (!charge_is_specified && !species_is_specified){
-        amrex::Abort("Need to specify at least one of species_type or charge");
+        //No need for charge/species definition if external file is used
+        std::string file_s;
+        bool ext_file_is_specified = pp.query("profile_file", file_s);
+        if (!ext_file_is_specified){
+            amrex::Abort("Need to specify at least one of species_type or charge");
+        }
     }
 
     std::string mass_s;
@@ -137,7 +142,12 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         Print()<<"         The mass in <species>.mass overwrite the one from <species>.species_type\n";
     }
     if (!mass_is_specified && !species_is_specified){
-        amrex::Abort("Need to specify at least one of species_type or mass");
+        //No need for mass/species definition if external file is used
+        std::string file_s;
+        bool ext_file_is_specified = pp.query("profile_file", file_s);
+        if (!ext_file_is_specified){
+            amrex::Abort("Need to specify at least one of species_type or mass");
+        }
     }
 
     // parse injection style
@@ -245,7 +255,10 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
         // Construct InjectorDensity with InjectorDensityParser.
         inj_rho.reset(new InjectorDensity((InjectorDensityParser*)nullptr,
                                           makeParser(str_density_function,{"x","y","z"})));
-    } else {
+    } else if (rho_prof_s == "external_file") {
+        pp.get("profile_file", str_profile_file);
+        Store_parserString(pp, "profile_file", str_profile_file);
+    }else {
         StringParseAbortMessage("Density profile type", rho_prof_s);
     }
 }

@@ -71,6 +71,7 @@ public:
     bool radially_weighted = true;
 
     std::string str_density_function;
+    std::string str_profile_file;
     std::string str_momentum_function_ux;
     std::string str_momentum_function_uy;
     std::string str_momentum_function_uz;
