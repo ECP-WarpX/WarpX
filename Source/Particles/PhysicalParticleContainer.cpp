@@ -773,7 +773,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #endif
         });
 
-        if (cost) {
+        if (cost && warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
             wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
@@ -897,7 +897,7 @@ PhysicalParticleContainer::FieldGather (int lev,
                         Ex.nGrow(), e_is_nodal,
                         0, np, lev, lev);
 
-            if (cost) {
+            if (cost && warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
                 wt = amrex::second() - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
@@ -1155,7 +1155,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 }
             }
 
-            if (cost) {
+            if (cost && warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
                 wt = amrex::second() - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
