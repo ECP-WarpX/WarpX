@@ -37,7 +37,28 @@ using namespace amrex;
 
 namespace
 {
-
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    Real applyBallisticCorrection(const XDim3& pos, const InjectorMomentum* inj_mom,
+                                  Real gamma_boost, Real beta_boost, Real t) noexcept
+    {        
+        if (gamma_boost == 1) {
+            const XDim3 u_bulk = inj_mom->getBulkMomentum(pos.x, pos.y, pos.z);
+            const Real gamma_bulk = std::sqrt(1. +
+                      (u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
+            const Real betaz_bulk = u_bulk.z/gamma_bulk;
+            const Real z0 = pos.z - PhysConst::c*t*betaz_bulk;
+            return z0;
+        } else {
+            const XDim3 u_bulk = inj_mom->getBulkMomentum(pos.x, pos.y, 0.);
+            const Real gamma_lab_bulk = std::sqrt(1.+
+                   (u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
+            const Real betaz_lab_bulk = u_bulk.z/(gamma_lab_bulk);
+            const Real z0_lab = gamma_boost * ( pos.z*(1-beta_boost*betaz_lab_bulk)
+                                     - PhysConst::c*t*(betaz_lab_bulk-beta_boost) );
+            return z0_lab;
+        }
+    }
+    
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     XDim3 getCellCoords (const GpuArray<Real, AMREX_SPACEDIM>& lo_corner,
                          const GpuArray<Real, AMREX_SPACEDIM>& dx,
@@ -534,10 +555,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             auto lo = getCellCoords(overlap_corner, dx, {0., 0., 0.}, iv);
             auto hi = getCellCoords(overlap_corner, dx, {1., 1., 1.}, iv);
 
-            // Lorentz transform into the lab frame
-            lo.z = gamma_boost * (lo.z + PhysConst::c*t*beta_boost);
-            hi.z = gamma_boost * (hi.z + PhysConst::c*t*beta_boost);
-
+            lo.z = applyBallisticCorrection(lo, inj_mom, gamma_boost, beta_boost, t);
+            hi.z = applyBallisticCorrection(hi, inj_mom, gamma_boost, beta_boost, t);
+                        
             if (inj_pos->overlapsWith(lo, hi))
             {
                 auto index = overlap_box.index(iv);
@@ -693,7 +713,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     const XDim3 u_bulk = inj_mom->getBulkMomentum(pos.x, pos.y, pos.z);
                     const Real gamma_bulk = std::sqrt(1. +
                               (u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
-                    const Real betaz_bulk = u.z/gamma_bulk;
+                    const Real betaz_bulk = u_bulk.z/gamma_bulk;
                     const Real z0 = pos.z - PhysConst::c*t*betaz_bulk;
 
                     if (!inj_pos->insideBounds(xb, yb, z0)) {
@@ -731,7 +751,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     // => Apply the above formula for z0_lab
                     const Real gamma_lab_bulk = std::sqrt(1.+
                             (u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
-                    const Real betaz_lab_bulk = u.z/(gamma_lab_bulk);
+                    const Real betaz_lab_bulk = u_bulk.z/(gamma_lab_bulk);
                     const Real z0_lab = gamma_boost * ( pos.z*(1-beta_boost*betaz_lab_bulk)
                                              - PhysConst::c*t*(betaz_lab_bulk-beta_boost) );
 
@@ -739,14 +759,14 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     // go to the next generated particle.
                     if (!inj_pos->insideBounds(xb, yb, z0_lab)) {
                         p.id() = -1;
-                        return;
+                        continue;
                     }
                     // call `getDensity` with lab-frame parameters
                     dens = inj_rho->getDensity(pos.x, pos.y, z0_lab);
                     // Remove particle if density below threshold
                     if ( dens < density_min ){
                         p.id() = -1;
-                        return;
+                        continue;
                     }
                     // Cut density if above threshold
                     dens = amrex::min(dens, density_max);
