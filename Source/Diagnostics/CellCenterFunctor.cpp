@@ -12,11 +12,11 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
 {
 #ifdef WARPX_DIM_RZ
     if (m_mode_avg) {
+        // In cylindrical geometry, sum real part of all modes of m_mf_src in
+        // temporary multifab mf_dst_stag, and cell-center it to mf_dst.
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             nComp()==1,
             "The RZ averaging over modes must write into 1 single component");
-        // In cylindrical gemoetry, sum real part of all modes in m_mf_src in
-        // temporary multifab mf_dst_stag, and cell-center it to mf_dst.
         auto& warpx = WarpX::GetInstance();
         MultiFab mf_dst_stag(m_mf_src->boxArray(), warpx.DistributionMap(m_lev), 1, m_mf_src->nGrowVect());
         // Mode 0

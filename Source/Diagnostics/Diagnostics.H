@@ -39,7 +39,8 @@ private:
     void ReadParameters ();
     /** Append varnames with names for all modes of all components of E B and j */
     void AddRZModesToOutputNames ();
-    /** Append all_field_functors with all modes of all components of E B and j */
+    /** Append all_field_functors[lev] with all modes of all components of E B and j
+     * \param[in] lev level on which source multifabs are defined. */
     void AddRZModesToInputsFunctors (int lev);
     /** Function to return number of components written to file */
     int nComp_dst () const { return varnames.size(); };
@@ -67,8 +68,7 @@ private:
     amrex::Vector< amrex::Vector <ComputeDiagFunctor const *> > all_field_functors;
     /** output multifab, where all fields are cell-centered and stacked */
     amrex::Vector< amrex::MultiFab > mf_avg;
-    /** number of levels to output */
-    int nlev;
+    int nlev; /**< number of levels to output */
     /** This class is responsible for flushing the data to file */
     FlushFormat* m_flush_format;
     /** Whether to plot raw (i.e., NOT cell-centered) fields */

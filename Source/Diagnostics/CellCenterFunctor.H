@@ -10,17 +10,29 @@ class
 CellCenterFunctor : public ComputeDiagFunctor
 {
 public:
+    /** Constructor.
+     * \param[in] mf_src source multifab.
+     * \param[in] lev level of multifab. Used for averaging in rz.
+     * \param[in] mode_avg (in cylindrical) whether to average all modes in mf_src
+     *            before cell-centering into dst multifab.
+     * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
+     */
     CellCenterFunctor(amrex::MultiFab* mf_src, int lev, bool mode_avg=true, int ncomp=1);
-    /** Cell-center m_mf_src and write the result in mf_dst
+
+    /** \brief Cell-center m_mf_src and write the result in mf_dst.
+     *
+     * In cylindrical geometry, by default this functor average all components
+     * of a MultiFab and writes into one single component.
+     *
      * \param[out] mf_dst output MultiFab where the result is written
-     * \param[in] dcomp first component of mf_dst in which the result is written
-     * \param[im] ncomp number of components of mf_dst to update
+     * \param[in] dcomp first component of mf_dst in which cell-centered
+     *            data is stored
      */
     virtual void operator()(amrex::MultiFab& mf_dst, int dcomp) const override final;
 private:
-    amrex::MultiFab* m_mf_src;
-    int m_lev;
-    bool m_mode_avg;
+    amrex::MultiFab* m_mf_src; /**< pointer to source multifab (can be multi-component) */
+    int m_lev; /**< level on which mf_src is defined (used in cylindrical) */
+    bool m_mode_avg; /**< (for cylindrical) whether to average all modes into 1 comp */
 };
 
 #endif // WARPX_CELLCENTERFUNCTOR_H_

@@ -124,10 +124,15 @@ Diagnostics::ComputeAndPack ()
     int icomp_dst = 0;
     for(int lev=0; lev<nlev; lev++){
         for (int icomp=0; icomp<nComp_src(); icomp++){
+            // Call all functors in all_field_functors[lev]. Each of them computes
+            // a diagnostics and wrotes in one or more components of the output
+            // multifab mf_avg[lev].
             all_field_functors[lev][icomp]->operator()(mf_avg[lev], icomp_dst);
+            // update the index of the next component to fill
             icomp_dst += all_field_functors[lev][icomp]->nComp();
         }
     }
+    // Check that the proper number of components of mf_avg were updated.
     AMREX_ALWAYS_ASSERT( icomp_dst == nComp_dst() );
 }
 
@@ -213,7 +218,7 @@ void
 Diagnostics::AddRZModesToOutputNames (){
 #ifdef WARPX_DIM_RZ
     auto & warpx = WarpX::GetInstance();
-    // In cylindrical geometry, real and imag part of each mode os also
+    // In cylindrical geometry, real and imag part of each mode are also
     // dumped to file separately, so they need to be added to varnames
     for (std::string field : {"E", "B", "j"}){
         for (std::string dir :  {"r", "theta", "z"}){
