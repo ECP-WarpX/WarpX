@@ -18,10 +18,6 @@ import scipy.constants as scc
 import scipy.special as scs
 from read_raw_data import read_reduced_diags_histogram
 
-# print tolerance
-tolerance = 0.009
-print('tolerance:', tolerance)
-
 #===============================
 # gaussian and maxwell-boltzmann
 #===============================
@@ -38,12 +34,11 @@ metadata_dict, data_dict, bin_value, h2z = read_reduced_diags_histogram("h2z.txt
 u_rms = 0.01
 gamma = np.sqrt(1.0+u_rms*u_rms)
 v_rms = u_rms / gamma * scc.c
+n     = 1.0e21
+V     = 8.0
 
 # compute the analytical solution
-f = np.exp(-0.5*(bin_value*scc.c/v_rms)**2)/(v_rms*np.sqrt(2.0*scc.pi))
-
-# normalization
-f = f / np.amax( f )
+f = n*V*scc.c*np.exp(-0.5*(bin_value*scc.c/v_rms)**2)/(v_rms*np.sqrt(2.0*scc.pi))
 
 # compute error
 # note that parameters are chosen such that gaussian and
@@ -53,6 +48,10 @@ f2_error = np.sum(np.abs(f-h2x)+np.abs(f-h2y)+np.abs(f-h2z))/bin_value.size
 
 print('Gaussian distribution difference:', f1_error)
 print('Maxwell-Boltzmann distribution difference:', f2_error)
+
+# print tolerance
+tolerance = 1.7e21
+print('tolerance:', tolerance)
 
 assert(f1_error < tolerance)
 assert(f2_error < tolerance)
@@ -67,19 +66,22 @@ metadata_dict, data_dict, bin_value, bin_data = read_reduced_diags_histogram("h3
 # parameters of theory
 theta = 1.0
 K2    = scs.kn(2,1.0/theta)
+n     = 1.0e21
+V     = 8.0
 
 # compute the analytical solution
 
-f = bin_value**2 * np.sqrt(1.0-1.0/bin_value**2) / \
+f = n*V * bin_value**2 * np.sqrt(1.0-1.0/bin_value**2) / \
     (theta*K2) * np.exp(-bin_value/theta)
-
-# normalization
-f = f / np.amax( f )
 
 # compute error
 f3_error = np.sum( np.abs(f-bin_data) ) / bin_value.size
 
 print('Maxwell-Juttner distribution difference:', f3_error)
+
+# print tolerance
+tolerance = 5.3e18
+print('tolerance:', tolerance)
 
 assert(f3_error < tolerance)
 
@@ -94,16 +96,21 @@ metadata_dict, data_dict, bin_value, h4z = read_reduced_diags_histogram("h4z.txt
 
 # parameters of theory
 x_rms = 0.25
+q_tot = -1.0e-20
+q_e   = -1.602176634e-19
+npart = q_tot/q_e
 
 # compute the analytical solution
-f = np.exp(-0.5*(bin_value/x_rms)**2)/(x_rms*np.sqrt(2.0*scc.pi))
-
-# normalization
-f = f / np.amax( f )
+f = npart * np.exp(-0.5*(bin_value/x_rms)**2)/(x_rms*np.sqrt(2.0*scc.pi))
+np.savetxt("f.txt",f)
 
 # compute error
 f4_error = np.sum(np.abs(f-h4x)+np.abs(f-h4y)+np.abs(f-h4z))/bin_value.size
 
 print('Gaussian position distribution difference:', f4_error)
+
+# print tolerance
+tolerance = 0.0007
+print('tolerance:', tolerance)
 
 assert(f4_error < tolerance)

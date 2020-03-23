@@ -1319,6 +1319,11 @@ Diagnostics and output
             ``x`` produces the position (density) distribution in `x`.
             ``ux`` produces the velocity distribution in `x`,
             ``sqrt(ux*ux+uy*uy+uz*uz)`` produces the speed distribution.
+            The default value of the histogram without normalization is
+            :math:`f = \sum\limits_{i=1}^N w_i / \Delta b`, where
+            :math:`\sum\limits_{i=1}^N` is the sum over :math:`N` particles,
+            :math:`w_i` denotes the weight of the ith particle,
+            :math:`\Delta b` is the bin size.
 
         * ``<reduced_diags_name>.bin_number`` (`int` > 0)
             This is the number of bins used for the histogram.
@@ -1350,6 +1355,8 @@ Diagnostics and output
 
         The output columns are
         values of the 1st bin, the 2nd bin, ..., the nth bin.
+        An example of using the histogram reduced diagnostics is in
+        ``Examples/Tests/initial_distribution/``.
 
 * ``<reduced_diags_name>.frequency`` (`int`)
     The output frequency (every # time steps).

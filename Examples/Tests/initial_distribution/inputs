@@ -94,7 +94,6 @@ h1x.bin_number                           = 50
 h1x.bin_min                              = -4.0e-2
 h1x.bin_max                              = +4.0e-2
 h1x.histogram_function(t,x,y,z,ux,uy,uz) = "ux"
-h1x.normalization                        = max_to_unity
 
 h1y.type                                 = ParticleHistogram
 h1y.frequency                            = 1
@@ -104,7 +103,6 @@ h1y.bin_number                           = 50
 h1y.bin_min                              = -4.0e-2
 h1y.bin_max                              = +4.0e-2
 h1y.histogram_function(t,x,y,z,ux,uy,uz) = "uy"
-h1y.normalization                        = max_to_unity
 
 h1z.type                                 = ParticleHistogram
 h1z.frequency                            = 1
@@ -114,7 +112,6 @@ h1z.bin_number                           = 50
 h1z.bin_min                              = -4.0e-2
 h1z.bin_max                              = +4.0e-2
 h1z.histogram_function(t,x,y,z,ux,uy,uz) = "uz"
-h1z.normalization                        = max_to_unity
 
 h2x.type                                 = ParticleHistogram
 h2x.frequency                            = 1
@@ -124,7 +121,6 @@ h2x.bin_number                           = 50
 h2x.bin_min                              = -4.0e-2
 h2x.bin_max                              = +4.0e-2
 h2x.histogram_function(t,x,y,z,ux,uy,uz) = "ux"
-h2x.normalization                        = max_to_unity
 
 h2y.type                                 = ParticleHistogram
 h2y.frequency                            = 1
@@ -134,7 +130,6 @@ h2y.bin_number                           = 50
 h2y.bin_min                              = -4.0e-2
 h2y.bin_max                              = +4.0e-2
 h2y.histogram_function(t,x,y,z,ux,uy,uz) = "uy"
-h2y.normalization                        = max_to_unity
 
 h2z.type                                 = ParticleHistogram
 h2z.frequency                            = 1
@@ -144,7 +139,6 @@ h2z.bin_number                           = 50
 h2z.bin_min                              = -4.0e-2
 h2z.bin_max                              = +4.0e-2
 h2z.histogram_function(t,x,y,z,ux,uy,uz) = "uz"
-h2z.normalization                        = max_to_unity
 
 h3.type                                  = ParticleHistogram
 h3.frequency                             = 1
@@ -154,7 +148,6 @@ h3.bin_number                            = 50
 h3.bin_min                               = 1.0
 h3.bin_max                               = 12.0
 h3.histogram_function(t,x,y,z,ux,uy,uz)  = "sqrt(1.0+(ux*ux+uy*uy+uz*uz))"
-h3.normalization                         = max_to_unity
 
 h4x.type                                 = ParticleHistogram
 h4x.frequency                            = 1
@@ -164,7 +157,6 @@ h4x.bin_number                           = 50
 h4x.bin_min                              = -1.0
 h4x.bin_max                              = +1.0
 h4x.histogram_function(t,x,y,z,ux,uy,uz) = "x"
-h4x.normalization                        = max_to_unity
 
 h4y.type                                 = ParticleHistogram
 h4y.frequency                            = 1
@@ -174,7 +166,6 @@ h4y.bin_number                           = 50
 h4y.bin_min                              = -1.0
 h4y.bin_max                              = +1.0
 h4y.histogram_function(t,x,y,z,ux,uy,uz) = "y"
-h4y.normalization                        = max_to_unity
 
 h4z.type                                 = ParticleHistogram
 h4z.frequency                            = 1
@@ -184,4 +175,3 @@ h4z.bin_number                           = 50
 h4z.bin_min                              = -1.0
 h4z.bin_max                              = +1.0
 h4z.histogram_function(t,x,y,z,ux,uy,uz) = "z"
-h4z.normalization                        = max_to_unity
