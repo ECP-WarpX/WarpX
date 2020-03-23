@@ -695,12 +695,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                               (u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
                     const Real betaz_bulk = u.z/gamma_bulk;
                     const Real z0 = pos.z - PhysConst::c*t*betaz_bulk;
-                    
+
                     if (!inj_pos->insideBounds(xb, yb, z0)) {
                         p.id() = -1;
                         continue;
                     }
-                    
+
                     u = inj_mom->getMomentum(pos.x, pos.y, z0);
                     dens = inj_rho->getDensity(pos.x, pos.y, z0);
 
@@ -750,7 +750,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     }
                     // Cut density if above threshold
                     dens = amrex::min(dens, density_max);
-                    
+
                     // get the full momentum, including thermal motion
                     u = inj_mom->getMomentum(pos.x, pos.y, 0.);
                     const Real gamma_lab = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
