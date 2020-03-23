@@ -7,18 +7,19 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <WarpX.H>
-#include <BilinearFilter.H>
-#include <NCIGodfreyFilter.H>
+#include "WarpX.H"
+#include "Filter/BilinearFilter.H"
+#include "Filter/NCIGodfreyFilter.H"
+#include "Parser/GpuParser.H"
+#include "Utils/WarpXUtil.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
 
 #ifdef BL_USE_SENSEI_INSITU
-#include <AMReX_AmrMeshInSituBridge.H>
+#   include <AMReX_AmrMeshInSituBridge.H>
 #endif
-#include <GpuParser.H>
-#include <WarpXUtil.H>
 
 
 using namespace amrex;
@@ -79,6 +80,7 @@ WarpX::InitData ()
 
     if (restart_chkfile.empty())
     {
+        multi_diags->FilterComputePackFlush( 0, true );
         if (plot_int > 0)
             WritePlotFile();
 
@@ -102,6 +104,7 @@ WarpX::InitData ()
 
 void
 WarpX::InitDiagnostics () {
+    multi_diags->InitData();
     if (do_back_transformed_diagnostics) {
         const Real* current_lo = geom[0].ProbLo();
         const Real* current_hi = geom[0].ProbHi();
@@ -137,15 +140,6 @@ WarpX::InitFromScratch ()
     ComputeSpaceChargeField(reset_fields);
 
     InitPML();
-
-#ifdef WARPX_DO_ELECTROSTATIC
-    if (do_electrostatic) {
-        getLevelMasks(masks);
-
-        // the plus one is to convert from num_cells to num_nodes
-        getLevelMasks(gather_masks, n_buffer + 1);
-    }
-#endif // WARPX_DO_ELECTROSTATIC
 }
 
 void
@@ -249,7 +243,7 @@ WarpX::PostRestart ()
 
 
 void
-WarpX::InitLevelData (int lev, Real time)
+WarpX::InitLevelData (int lev, Real /*time*/)
 {
 
     ParmParse pp("warpx");
@@ -420,8 +414,16 @@ WarpX::InitLevelData (int lev, Real time)
         rho_cp[lev]->setVal(0.0);
     }
 
-    if (costs[lev]) {
-        costs[lev]->setVal(0.0);
+    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
+        if (costs[lev]) {
+            costs[lev]->setVal(0.0);
+        }
+    } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic) {
+        if (costs_heuristic[lev]) {
+            std::fill((*costs_heuristic[lev]).begin(),
+                      (*costs_heuristic[lev]).end(),
+                      0.0);
+        }
     }
 }
 

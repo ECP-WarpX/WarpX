@@ -8,28 +8,31 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <limits>
-#include <sstream>
+#include "PhysicalParticleContainer.H"
 
-#include <PhysicalParticleContainer.H>
+#include "MultiParticleContainer.H"
+#include "FortranInterface/WarpX_f.H"
+#include "WarpX.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
+#include "Python/WarpXWrappers.h"
+#include "Utils/IonizationEnergiesTable.H"
+#include "Particles/Gather/FieldGather.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 
-#include <MultiParticleContainer.H>
-#include <WarpX_f.H>
-#include <WarpX.H>
-#include <WarpXConst.H>
-#include <WarpXWrappers.h>
-#include <IonizationEnergiesTable.H>
-#include <FieldGather.H>
-#include <GetAndSetPosition.H>
-
-#include <WarpXAlgorithmSelection.H>
+#include "Utils/WarpXAlgorithmSelection.H"
 
 // Import low-level single-particle kernels
-#include <UpdatePosition.H>
-#include <UpdateMomentumBoris.H>
-#include <UpdateMomentumVay.H>
-#include <UpdateMomentumBorisWithRadiationReaction.H>
-#include <UpdateMomentumHigueraCary.H>
+#include "Particles/Pusher/UpdatePosition.H"
+#include "Particles/Pusher/UpdateMomentumBoris.H"
+#include "Particles/Pusher/UpdateMomentumVay.H"
+#include "Particles/Pusher/UpdateMomentumBorisWithRadiationReaction.H"
+#include "Particles/Pusher/UpdateMomentumHigueraCary.H"
+
+#include <limits>
+#include <sstream>
+#include <string>
+
 
 using namespace amrex;
 
@@ -39,6 +42,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
       species_name(name)
 {
     plasma_injector.reset(new PlasmaInjector(species_id, species_name));
+    physical_species = plasma_injector->getPhysicalSpecies();
     charge = plasma_injector->getCharge();
     mass = plasma_injector->getMass();
 
@@ -67,9 +71,13 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
     //if the species is not a lepton, do_classical_radiation_reaction
     //should be false
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        !(do_classical_radiation_reaction && !AmIALepton()),
-        "Can't enable classical radiation reaction for non lepton species. " );
+    WarpXUtilMsg::AlwaysAssert(
+        !(do_classical_radiation_reaction &&
+        !(AmIA<PhysicalSpecies::electron>() ||
+        AmIA<PhysicalSpecies::positron>() )),
+        "ERROR: can't enable classical radiation reaction for non lepton species '"
+        + species_name + "'."
+    );
 
     //Only Boris pusher is compatible with radiation reaction
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -79,16 +87,23 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     //_____________________________
 
 #ifdef WARPX_QED
-    //Add real component if QED is enabled
     pp.query("do_qed", m_do_qed);
-    if(m_do_qed)
-        AddRealComp("tau");
-
-    //IF do_qed is enabled, find out if Quantum Synchrotron process is enabled
-    if(m_do_qed)
+    if(m_do_qed){
+        //If do_qed is enabled, find out if Quantum Synchrotron process is enabled
         pp.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
+        if (m_do_qed_quantum_sync)
+            AddRealComp("optical_depth_QSR");
+        pp.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
+        if (m_do_qed_breit_wheeler)
+            AddRealComp("optical_depth_BW");
+    }
 
-    //TODO: SHOULD CHECK IF SPECIES IS EITHER ELECTRONS OR POSITRONS!!
+    if(m_do_qed_quantum_sync){
+        pp.get("qed_quantum_sync_phot_product_species",
+            m_qed_quantum_sync_phot_product_name);
+    }
+
+
 #endif
 
     //variable to set plot_flags size
@@ -120,12 +135,21 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         if (plot_vars[0] != "none"){
             for (const auto& var : plot_vars){
                 // Return error if var not in PIdx.
-                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                WarpXUtilMsg::AlwaysAssert(
                     ParticleStringNames::to_index.count(var),
-                    "plot_vars argument not in ParticleStringNames");
+                    "ERROR: plot_vars argument '" + var +
+                    "' not in ParticleStringNames"
+                );
                 plot_flags[ParticleStringNames::to_index.at(var)] = 1;
             }
         }
+
+#ifdef WARPX_DIM_RZ
+        // Always write out theta, whether or not it's requested,
+        // to be consistent with always writing out r and z.
+        plot_flags[ParticleStringNames::to_index.at("theta")] = 1;
+#endif
+
     }
 
     // Parse galilean velocity
@@ -153,9 +177,7 @@ void PhysicalParticleContainer::InitData()
     // Init ionization module here instead of in the PhysicalParticleContainer
     // constructor because dt is required
     if (do_field_ionization) {InitIonizationModule();}
-
     AddParticles(0); // Note - add on level 0
-
     Redistribute();  // We then redistribute
 }
 
@@ -533,14 +555,19 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
 #ifdef WARPX_QED
         //Pointer to the optical depth component
-        amrex::Real* p_tau;
+        amrex::Real* p_optical_depth_QSR;
+        amrex::Real* p_optical_depth_BW;
 
-        //If a QED effect is enabled, tau has to be initialized
+        // If a QED effect is enabled, the corresponding optical depth
+        // has to be initialized
         bool loc_has_quantum_sync = has_quantum_sync();
         bool loc_has_breit_wheeler = has_breit_wheeler();
-        if(loc_has_quantum_sync || loc_has_breit_wheeler){
-            p_tau = soa.GetRealData(particle_comps["tau"]).data() + old_size;
-        }
+        if (loc_has_quantum_sync)
+            p_optical_depth_QSR = soa.GetRealData(
+                particle_comps["optical_depth_QSR"]).data() + old_size;
+        if(loc_has_breit_wheeler)
+            p_optical_depth_BW = soa.GetRealData(
+                particle_comps["optical_depth_BW"]).data() + old_size;
 
         //If needed, get the appropriate functors from the engines
         QuantumSynchrotronGetOpticalDepth quantum_sync_get_opt;
@@ -645,12 +672,20 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 // If the particle is not within the species's
                 // xmin, xmax, ymin, ymax, zmin, zmax, go to
                 // the next generated particle.
-                if (!inj_pos->insideBounds(xb, yb, z)) {
+
+                // include ballistic correction for plasma species with bulk motion
+                const XDim3 u_bulk = inj_mom->getBulkMomentum(x, y, z);
+                const Real gamma_bulk = std::sqrt(1.+(u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
+                const Real betaz_bulk = u.z/gamma_bulk;
+                const Real z0 = z - PhysConst::c*t*betaz_bulk;
+
+                if (!inj_pos->insideBounds(xb, yb, z0)) {
                     p.id() = -1;
                     return;
                 }
-                u = inj_mom->getMomentum(x, y, z);
-                dens = inj_rho->getDensity(x, y, z);
+
+                u = inj_mom->getMomentum(x, y, z0);
+                dens = inj_rho->getDensity(x, y, z0);
                 // Remove particle if density below threshold
                 if ( dens < density_min ){
                     p.id() = -1;
@@ -670,13 +705,15 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 //
                 // In order for this equation to be solvable, betaz_lab
                 // is explicitly assumed to have no dependency on z0_lab
-                u = inj_mom->getMomentum(x, y, 0.); // No z0_lab dependency
+                //
+                // Note that we use the bulk momentum to perform the ballastic correction
+                const XDim3 u_bulk = inj_mom->getBulkMomentum(x, y, 0.); // No z0_lab dependency
                 // At this point u is the lab-frame momentum
                 // => Apply the above formula for z0_lab
-                Real gamma_lab = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
-                Real betaz_lab = u.z/(gamma_lab);
-                Real z0_lab = gamma_boost * ( z*(1-beta_boost*betaz_lab)
-                                              - PhysConst::c*t*(betaz_lab-beta_boost) );
+                const Real gamma_lab_bulk = std::sqrt(1.+(u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
+                const Real betaz_lab_bulk = u.z/(gamma_lab_bulk);
+                const Real z0_lab = gamma_boost * ( z*(1-beta_boost*betaz_lab_bulk)
+                                              - PhysConst::c*t*(betaz_lab_bulk-beta_boost) );
                 // If the particle is not within the lab-frame zmin, zmax, etc.
                 // go to the next generated particle.
                 if (!inj_pos->insideBounds(xb, yb, z0_lab)) {
@@ -692,6 +729,12 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 }
                 // Cut density if above threshold
                 dens = amrex::min(dens, density_max);
+
+                // get the full momentum, including thermal motion
+                u = inj_mom->getMomentum(x, y, 0.);
+                const Real gamma_lab = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
+                const Real betaz_lab = u.z/(gamma_lab);
+
                 // At this point u and dens are the lab-frame quantities
                 // => Perform Lorentz transform
                 dens = gamma_boost * dens * ( 1.0 - beta_boost*betaz_lab );
@@ -704,11 +747,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
 #ifdef WARPX_QED
             if(loc_has_quantum_sync){
-                p_tau[ip] = quantum_sync_get_opt();
+                p_optical_depth_QSR[ip] = quantum_sync_get_opt();
             }
 
             if(loc_has_breit_wheeler){
-                p_tau[ip] = breit_wheeler_get_opt();
+                p_optical_depth_BW[ip] = breit_wheeler_get_opt();
             }
 #endif
 
@@ -759,217 +802,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
     // The function that calls this is responsible for redistributing particles.
 }
-
-#ifdef WARPX_DO_ELECTROSTATIC
-void
-PhysicalParticleContainer::
-FieldGatherES (const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-               const amrex::Vector<std::unique_ptr<amrex::FabArray<amrex::BaseFab<int> > > >& masks)
-{
-
-    const int num_levels = E.size();
-    const int ng = E[0][0]->nGrow();
-
-    if (num_levels == 1) {
-        const int lev = 0;
-        const auto& gm = m_gdb->Geom(lev);
-        const auto& ba = m_gdb->ParticleBoxArray(lev);
-
-        BoxArray nba = ba;
-        nba.surroundingNodes();
-
-        const Real* dx  = gm.CellSize();
-        const Real* plo = gm.ProbLo();
-
-        BL_ASSERT(OnSameGrids(lev, *E[lev][0]));
-
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti) {
-            const Box& box = nba[pti];
-
-            const auto& particles = pti.GetArrayOfStructs();
-            int nstride = particles.dataShape().first;
-            const long np  = pti.numParticles();
-            auto& attribs = pti.GetAttribs();
-            auto& Exp = attribs[PIdx::Ex];
-            auto& Eyp = attribs[PIdx::Ey];
-#if AMREX_SPACEDIM == 3
-            auto& Ezp = attribs[PIdx::Ez];
-#endif
-            Exp.assign(np,0.0);
-            Eyp.assign(np,0.0);
-#if AMREX_SPACEDIM == 3
-            Ezp.assign(np,0.0);
-#endif
-
-            const FArrayBox& exfab = (*E[lev][0])[pti];
-            const FArrayBox& eyfab = (*E[lev][1])[pti];
-#if AMREX_SPACEDIM == 3
-            const FArrayBox& ezfab = (*E[lev][2])[pti];
-#endif
-
-            WRPX_INTERPOLATE_CIC(particles.dataPtr(), nstride, np,
-                                 Exp.dataPtr(), Eyp.dataPtr(),
-#if AMREX_SPACEDIM == 3
-                                 Ezp.dataPtr(),
-#endif
-                                 exfab.dataPtr(), eyfab.dataPtr(),
-#if AMREX_SPACEDIM == 3
-                                 ezfab.dataPtr(),
-#endif
-                                 box.loVect(), box.hiVect(), plo, dx, &ng);
-        }
-
-        return;
-    }
-
-    const BoxArray& fine_BA = E[1][0]->boxArray();
-    const DistributionMapping& fine_dm = E[1][0]->DistributionMap();
-    BoxArray coarsened_fine_BA = fine_BA;
-    coarsened_fine_BA.coarsen(IntVect(AMREX_D_DECL(2,2,2)));
-
-    MultiFab coarse_Ex(coarsened_fine_BA, fine_dm, 1, 1);
-    MultiFab coarse_Ey(coarsened_fine_BA, fine_dm, 1, 1);
-#if AMREX_SPACEDIM == 3
-    MultiFab coarse_Ez(coarsened_fine_BA, fine_dm, 1, 1);
-#endif
-
-    coarse_Ex.copy(*E[0][0], 0, 0, 1, 1, 1);
-    coarse_Ey.copy(*E[0][1], 0, 0, 1, 1, 1);
-#if AMREX_SPACEDIM == 3
-    coarse_Ez.copy(*E[0][2], 0, 0, 1, 1, 1);
-#endif
-
-    for (int lev = 0; lev < num_levels; ++lev) {
-        const auto& gm = m_gdb->Geom(lev);
-        const auto& ba = m_gdb->ParticleBoxArray(lev);
-
-        BoxArray nba = ba;
-        nba.surroundingNodes();
-
-        const Real* dx  = gm.CellSize();
-        const Real* plo = gm.ProbLo();
-
-        BL_ASSERT(OnSameGrids(lev, *E[lev][0]));
-
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti) {
-            const Box& box = nba[pti];
-
-            const auto& particles = pti.GetArrayOfStructs();
-            int nstride = particles.dataShape().first;
-            const long np  = pti.numParticles();
-
-            auto& attribs = pti.GetAttribs();
-            auto& Exp = attribs[PIdx::Ex];
-            auto& Eyp = attribs[PIdx::Ey];
-#if AMREX_SPACEDIM == 3
-            auto& Ezp = attribs[PIdx::Ez];
-#endif
-            Exp.assign(np,0.0);
-            Eyp.assign(np,0.0);
-#if AMREX_SPACEDIM == 3
-            Ezp.assign(np,0.0);
-#endif
-
-            const FArrayBox& exfab = (*E[lev][0])[pti];
-            const FArrayBox& eyfab = (*E[lev][1])[pti];
-#if AMREX_SPACEDIM == 3
-            const FArrayBox& ezfab = (*E[lev][2])[pti];
-#endif
-
-            if (lev == 0) {
-                WRPX_INTERPOLATE_CIC(particles.dataPtr(), nstride, np,
-                                     Exp.dataPtr(), Eyp.dataPtr(),
-#if AMREX_SPACEDIM == 3
-                                     Ezp.dataPtr(),
-#endif
-                                     exfab.dataPtr(), eyfab.dataPtr(),
-#if AMREX_SPACEDIM == 3
-                                     ezfab.dataPtr(),
-#endif
-                                     box.loVect(), box.hiVect(), plo, dx, &ng);
-            } else {
-
-                const FArrayBox& exfab_coarse = coarse_Ex[pti];
-                const FArrayBox& eyfab_coarse = coarse_Ey[pti];
-#if AMREX_SPACEDIM == 3
-                const FArrayBox& ezfab_coarse = coarse_Ez[pti];
-#endif
-                const Box& coarse_box = coarsened_fine_BA[pti];
-                const Real* coarse_dx = Geom(0).CellSize();
-
-                WRPX_INTERPOLATE_CIC_TWO_LEVELS(particles.dataPtr(), nstride, np,
-                                                Exp.dataPtr(), Eyp.dataPtr(),
-#if AMREX_SPACEDIM == 3
-                                                Ezp.dataPtr(),
-#endif
-                                                exfab.dataPtr(), eyfab.dataPtr(),
-#if AMREX_SPACEDIM == 3
-                                                ezfab.dataPtr(),
-#endif
-                                                box.loVect(), box.hiVect(), dx,
-                                                exfab_coarse.dataPtr(), eyfab_coarse.dataPtr(),
-#if AMREX_SPACEDIM == 3
-                                                ezfab_coarse.dataPtr(),
-#endif
-                                                (*masks[1])[pti].dataPtr(),
-                                                coarse_box.loVect(), coarse_box.hiVect(), coarse_dx,
-                                                plo, &ng, &lev);
-            }
-        }
-    }
-}
-
-void
-PhysicalParticleContainer::EvolveES (const Vector<std::array<std::unique_ptr<MultiFab>, 3> >& E,
-                                     Vector<std::unique_ptr<MultiFab> >& rho,
-                                     Real t, Real dt)
-{
-    WARPX_PROFILE("PPC::EvolveES()");
-
-    int num_levels = rho.size();
-    for (int lev = 0; lev < num_levels; ++lev) {
-        BL_ASSERT(OnSameGrids(lev, *rho[lev]));
-        const auto& gm = m_gdb->Geom(lev);
-        const RealBox& prob_domain = gm.ProbDomain();
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti) {
-            // Particle structs
-            auto& particles = pti.GetArrayOfStructs();
-            int nstride = particles.dataShape().first;
-            const long np  = pti.numParticles();
-
-            // Particle attributes
-            auto& attribs = pti.GetAttribs();
-            auto& uxp = attribs[PIdx::ux];
-            auto& uyp = attribs[PIdx::uy];
-
-#if AMREX_SPACEDIM == 3
-            auto& uzp = attribs[PIdx::uz];
-#endif
-
-            auto& Exp = attribs[PIdx::Ex];
-            auto& Eyp = attribs[PIdx::Ey];
-
-#if AMREX_SPACEDIM == 3
-            auto& Ezp = attribs[PIdx::Ez];
-#endif
-            //
-            // Particle Push
-            //
-            WRPX_PUSH_LEAPFROG(particles.dataPtr(), nstride, np,
-                               uxp.dataPtr(), uyp.dataPtr(),
-#if AMREX_SPACEDIM == 3
-                               uzp.dataPtr(),
-#endif
-                               Exp.dataPtr(), Eyp.dataPtr(),
-#if AMREX_SPACEDIM == 3
-                               Ezp.dataPtr(),
-#endif
-                               &this->charge, &this->mass, &dt,
-                               prob_domain.lo(), prob_domain.hi());
-        }
-    }
-}
-#endif // WARPX_DO_ELECTROSTATIC
 
 void
 PhysicalParticleContainer::AssignExternalFieldOnParticles(WarpXParIter& pti,
@@ -1109,7 +941,7 @@ PhysicalParticleContainer::Evolve (int lev,
                                    MultiFab* rho, MultiFab* crho,
                                    const MultiFab* cEx, const MultiFab* cEy, const MultiFab* cEz,
                                    const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
-                                   Real t, Real dt, DtType a_dt_type)
+                                   Real /*t*/, Real dt, DtType a_dt_type)
 {
     WARPX_PROFILE("PPC::Evolve()");
     WARPX_PROFILE_VAR_NS("PPC::Evolve::Copy", blp_copy);
@@ -1127,6 +959,7 @@ PhysicalParticleContainer::Evolve (int lev,
     BL_ASSERT(OnSameGrids(lev,jx));
 
     MultiFab* cost = WarpX::getCosts(lev);
+
     const iMultiFab* current_masks = WarpX::CurrentBufferMasks(lev);
     const iMultiFab* gather_masks = WarpX::GatherBufferMasks(lev);
 
@@ -1308,41 +1141,44 @@ PhysicalParticleContainer::Evolve (int lev,
                 WARPX_PROFILE_VAR_STOP(blp_ppc_pp);
 
                 //
-                // Current Deposition
+                // Current Deposition (only needed for electromagnetic solver)
                 //
-
-                int* AMREX_RESTRICT ion_lev;
-                if (do_field_ionization){
-                    ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
-                } else {
-                    ion_lev = nullptr;
-                }
-                // Deposit inside domains
-                DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
-                               0, np_current, thread_num,
-                               lev, lev, dt);
-
-                if (has_buffer){
-                    // Deposit in buffers
-                    DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
-                                   np_current, np-np_current, thread_num,
-                                   lev, lev-1, dt);
-                }
-            }
+                if (!WarpX::do_electrostatic) {
+                    int* AMREX_RESTRICT ion_lev;
+                    if (do_field_ionization){
+                        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                    } else {
+                        ion_lev = nullptr;
+                    }
+                    // Deposit inside domains
+                    DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, &jx, &jy, &jz,
+                                   0, np_current, thread_num,
+                                   lev, lev, dt);
+                    if (has_buffer){
+                        // Deposit in buffers
+                        DepositCurrent(pti, wp, uxp, uyp, uzp, ion_lev, cjx, cjy, cjz,
+                                       np_current, np-np_current, thread_num,
+                                       lev, lev-1, dt);
+                    }
+                } // end of "if !do_electrostatic"
+            } // end of "if do_not_push"
 
             if (rho) {
                 // Deposit charge after particle push, in component 1 of MultiFab rho.
-                int* AMREX_RESTRICT ion_lev;
-                if (do_field_ionization){
-                    ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
-                } else {
-                    ion_lev = nullptr;
-                }
-                DepositCharge(pti, wp, ion_lev, rho, 1, 0,
-                              np_current, thread_num, lev, lev);
-                if (has_buffer){
-                    DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
-                                  np-np_current, thread_num, lev, lev-1);
+                // (Skipped for electrostatic solver, as this may lead to out-of-bounds)
+                if (!WarpX::do_electrostatic) {
+                    int* AMREX_RESTRICT ion_lev;
+                    if (do_field_ionization){
+                        ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
+                    } else {
+                        ion_lev = nullptr;
+                    }
+                    DepositCharge(pti, wp, ion_lev, rho, 1, 0,
+                                  np_current, thread_num, lev, lev);
+                    if (has_buffer){
+                        DepositCharge(pti, wp, ion_lev, crho, 1, np_current,
+                                      np-np_current, thread_num, lev, lev-1);
+                    }
                 }
             }
 
@@ -1770,8 +1606,8 @@ void PhysicalParticleContainer::EvolveOpticalDepth(
     const ParticleReal* const AMREX_RESTRICT By = attribs[PIdx::By].dataPtr();
     const ParticleReal* const AMREX_RESTRICT Bz = attribs[PIdx::Bz].dataPtr();
 
-    ParticleReal* const AMREX_RESTRICT p_tau =
-        pti.GetAttribs(particle_comps["tau"]).dataPtr();
+    ParticleReal* const AMREX_RESTRICT p_optical_depth_QSR =
+        pti.GetAttribs(particle_comps["optical_depth_QSR"]).dataPtr();
 
     const ParticleReal m = this->mass;
 
@@ -1785,7 +1621,7 @@ void PhysicalParticleContainer::EvolveOpticalDepth(
                     px, py, pz,
                     Ex[i], Ey[i], Ez[i],
                     Bx[i], By[i], Bz[i],
-                    dt, p_tau[i]);
+                    dt, p_optical_depth_QSR[i]);
             }
     );
 
@@ -2177,7 +2013,7 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
                                         amrex::FArrayBox const * bxfab,
                                         amrex::FArrayBox const * byfab,
                                         amrex::FArrayBox const * bzfab,
-                                        const int ngE, const int e_is_nodal,
+                                        const int ngE, const int /*e_is_nodal*/,
                                         const long offset,
                                         const long np_to_gather,
                                         int lev,
@@ -2341,14 +2177,8 @@ PhysicalParticleContainer::getIonizationFunc ()
                                 ion_atomic_number};
 }
 
-//This function return true if the PhysicalParticleContainer contains electrons
-//or positrons, false otherwise
-bool
-PhysicalParticleContainer::AmIALepton(){
-    return (this-> mass == PhysConst::m_e);
-}
-
 #ifdef WARPX_QED
+
 
 bool PhysicalParticleContainer::has_quantum_sync()
 {
@@ -2372,6 +2202,20 @@ PhysicalParticleContainer::
 set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine> ptr)
 {
     m_shr_p_qs_engine = ptr;
+}
+
+PhotonEmissionFilterFunc
+PhysicalParticleContainer::getPhotonEmissionFilterFunc ()
+{
+    WARPX_PROFILE("PPC::getPhotonEmissionFunc");
+    return PhotonEmissionFilterFunc{particle_runtime_comps["optical_depth_QSR"]};
+}
+
+PairGenerationFilterFunc
+PhysicalParticleContainer::getPairGenerationFilterFunc ()
+{
+    WARPX_PROFILE("PPC::getPairGenerationFunc");
+    return PairGenerationFilterFunc{particle_runtime_comps["optical_depth_BW"]};
 }
 
 #endif

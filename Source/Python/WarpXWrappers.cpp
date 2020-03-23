@@ -6,14 +6,15 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <WarpXWrappers.h>
-#include <WarpXParticleContainer.H>
-#include <WarpX.H>
-#include <WarpXUtil.H>
-#include <WarpX_py.H>
+#include "WarpXWrappers.h"
+#include "Particles/WarpXParticleContainer.H"
+#include "WarpX.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX_py.H"
 
 #include <AMReX.H>
 #include <AMReX_BLProfiler.H>
+
 
 namespace
 {
@@ -255,6 +256,26 @@ extern "C"
     WARPX_GET_LOVECTS(warpx_getCurrentDensityLoVects, WarpX::GetInstance().getcurrent);
     WARPX_GET_LOVECTS(warpx_getCurrentDensityCPLoVects, WarpX::GetInstance().getcurrent_cp);
     WARPX_GET_LOVECTS(warpx_getCurrentDensityFPLoVects, WarpX::GetInstance().getcurrent_fp);
+
+#define WARPX_GET_SCALAR(SCALAR, GETTER) \
+    amrex::Real** SCALAR(int lev, \
+                         int *return_size, int *ncomps, int *ngrow, int **shapes) { \
+        auto & mf = GETTER(lev); \
+        return getMultiFabPointers(mf, return_size, ncomps, ngrow, shapes); \
+    }
+
+#define WARPX_GET_LOVECTS_SCALAR(SCALAR, GETTER) \
+    int* SCALAR(int lev, \
+                int *return_size, int *ngrow) { \
+        auto & mf = GETTER(lev); \
+        return getMultiFabLoVects(mf, return_size, ngrow); \
+    }
+
+    WARPX_GET_SCALAR(warpx_getChargeDensityCP, WarpX::GetInstance().getrho_cp);
+    WARPX_GET_SCALAR(warpx_getChargeDensityFP, WarpX::GetInstance().getrho_fp);
+
+    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityCPLoVects, WarpX::GetInstance().getrho_cp);
+    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityFPLoVects, WarpX::GetInstance().getrho_fp);
 
 #define WARPX_GET_FIELD_PML(FIELD, GETTER) \
     amrex::Real** FIELD(int lev, int direction, \

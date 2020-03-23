@@ -7,28 +7,26 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpX.H"
+#include "FieldIO.H"
+#include "SliceDiagnostic.H"
+
+#ifdef WARPX_USE_OPENPMD
+#   include "Diagnostics/WarpXOpenPMD.H"
+#endif
+
 #include <AMReX_MultiFabUtil.H>
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_FillPatchUtil_F.H>
-
-#include <WarpX.H>
-#include <FieldIO.H>
-
-#include "AMReX_buildInfo.H"
+#include <AMReX_buildInfo.H>
 
 #ifdef BL_USE_SENSEI_INSITU
-#include <AMReX_AmrMeshInSituBridge.H>
+#   include <AMReX_AmrMeshInSituBridge.H>
 #endif
-
-#include "SliceDiagnostic.H"
 
 #ifdef AMREX_USE_ASCENT
-#include <ascent.hpp>
-#include <AMReX_Conduit_Blueprint.H>
-#endif
-
-#ifdef WARPX_USE_OPENPMD
-#   include "WarpXOpenPMD.H"
+#   include <ascent.hpp>
+#   include <AMReX_Conduit_Blueprint.H>
 #endif
 
 
@@ -187,11 +185,6 @@ WarpX::WriteCheckPointFile() const
 
         if (do_pml && pml[lev]) {
             pml[lev]->CheckPoint(amrex::MultiFabFileFullPrefix(lev, checkpointname, level_prefix, "pml"));
-        }
-
-        if (costs[lev]) {
-            VisMF::Write(*costs[lev],
-                         amrex::MultiFabFileFullPrefix(lev, checkpointname, level_prefix, "costs"));
         }
     }
 
@@ -383,16 +376,6 @@ WarpX::InitFromCheckpoint ()
                             amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "jz_cp"));
             }
         }
-
-        if (costs[lev]) {
-            const auto& cost_mf_name =
-                amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "costs");
-            if (VisMF::Exist(cost_mf_name)) {
-                VisMF::Read(*costs[lev], cost_mf_name);
-            } else {
-                costs[lev]->setVal(0.0);
-            }
-        }
     }
 
     if (do_pml)
@@ -407,14 +390,6 @@ WarpX::InitFromCheckpoint ()
     mypc->AllocData();
     mypc->Restart(restart_chkfile);
 
-#ifdef WARPX_DO_ELECTROSTATIC
-    if (do_electrostatic) {
-        getLevelMasks(masks);
-
-        // the plus one is to convert from num_cells to num_nodes
-        getLevelMasks(gather_masks, 4 + 1);
-    }
-#endif // WARPX_DO_ELECTROSTATIC
 }
 
 
@@ -444,8 +419,8 @@ WarpX::GetCellCenteredData() {
         dcomp += 3;
         // then the charge density
         const std::unique_ptr<MultiFab>& charge_density = mypc->GetChargeDensity(lev);
+        AverageAndPackScalarField( *cc[lev], *charge_density, dmap[lev], dcomp, ng );
 
-        AverageAndPackScalarField( *cc[lev], *charge_density, dcomp, ng );
         cc[lev]->FillBoundary(geom[lev].periodicity());
     }
 
@@ -510,7 +485,7 @@ WarpX::UpdateInSitu () const
 
 void
 WarpX::prepareFields(
-        int const step,
+        int const /*step*/,
         Vector<std::string>& varnames,
         Vector<MultiFab>& mf_avg,
         Vector<const MultiFab*>& output_mf,

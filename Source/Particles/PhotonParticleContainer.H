@@ -8,7 +8,7 @@
 #ifndef WARPX_PhotonParticleContainer_H_
 #define WARPX_PhotonParticleContainer_H_
 
-#include <PhysicalParticleContainer.H>
+#include "PhysicalParticleContainer.H"
 #include <AMReX_Vector.H>
 
 /**
@@ -84,11 +84,6 @@ public:
                                 int lev,
                                 int depos_lev,
                                 amrex::Real dt) override {};
-    //Photons are not leptons
-    virtual bool AmIALepton () override
-    {
-        return false;
-    };
 
 #ifdef WARPX_QED
     /**

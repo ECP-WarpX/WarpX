@@ -7,20 +7,21 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "MultiParticleContainer.H"
+#include "WarpXParticleContainer.H"
+#include "WarpX.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Parallelization/WarpXComm.H"
+// Import low-level single-particle kernels
+#include "Pusher/GetAndSetPosition.H"
+#include "Pusher/UpdatePosition.H"
+#include "Deposition/CurrentDeposition.H"
+#include "Deposition/ChargeDeposition.H"
+
+#include <AMReX_AmrParGDB.H>
+
 #include <limits>
 
-#include <MultiParticleContainer.H>
-#include <WarpXParticleContainer.H>
-#include <AMReX_AmrParGDB.H>
-#include <WarpXComm.H>
-#include <WarpX.H>
-#include <WarpXAlgorithmSelection.H>
-#include <WarpXComm.H>
-// Import low-level single-particle kernels
-#include <GetAndSetPosition.H>
-#include <UpdatePosition.H>
-#include <CurrentDeposition.H>
-#include <ChargeDeposition.H>
 
 using namespace amrex;
 
@@ -96,12 +97,12 @@ WarpXParticleContainer::AllocData ()
 }
 
 void
-WarpXParticleContainer::AddNParticles (int lev,
+WarpXParticleContainer::AddNParticles (int /*lev*/,
                                        int n, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z,
                                        const ParticleReal* vx, const ParticleReal* vy, const ParticleReal* vz,
                                        int nattr, const ParticleReal* attr, int uniqueparticles, int id)
 {
-    BL_ASSERT(nattr == 1);
+    BL_ASSERT(nattr == 1); //! @fixme nattr is unused below: false sense of safety
     const ParticleReal* weight = attr;
 
     int ibegin, iend;
@@ -340,19 +341,19 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx,
-                xyzmin, lo, q);
+                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes);
         } else if (WarpX::nox == 2){
             doDepositionShapeN<2>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx,
-                xyzmin, lo, q);
+                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes);
         } else if (WarpX::nox == 3){
             doDepositionShapeN<3>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx,
-                xyzmin, lo, q);
+                xyzmin, lo, q, WarpX::n_rz_azimuthal_modes);
         }
     }
     WARPX_PROFILE_VAR_STOP(blp_deposit);
@@ -422,23 +423,23 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     }
 
     tilebox.grow(ngRho);
+    const Box tb = amrex::convert(tilebox, WarpX::rho_nodal_flag);
 
     const int nc = (rho->nComp() == 1 ? 1 : rho->nComp()/2);
 
 #ifdef AMREX_USE_GPU
-    // No tiling on GPU: rho_arr points to the full rho array.
+    // No tiling on GPU: rho_fab points to the full rho array.
     MultiFab rhoi(*rho, amrex::make_alias, icomp*nc, nc);
-    Array4<Real> const& rho_arr = rhoi.array(pti);
+    auto & rho_fab = rhoi.get(pti);
 #else
-    // Tiling is on: rho_arr points to local_rho[thread_num]
-    const Box tb = amrex::convert(tilebox, IntVect::TheUnitVector());
+    // Tiling is on: rho_fab points to local_rho[thread_num]
 
     local_rho[thread_num].resize(tb, nc);
 
     // local_rho[thread_num] is set to zero
     local_rho[thread_num].setVal(0.0);
 
-    Array4<Real> const& rho_arr = local_rho[thread_num].array();
+    auto & rho_fab = local_rho[thread_num];
 #endif
     // GPU, no tiling: deposit directly in rho
     // CPU, tiling: deposit into local_rho
@@ -468,13 +469,16 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     WARPX_PROFILE_VAR_START(blp_ppc_chd);
     if        (WarpX::nox == 1){
         doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_arr, np_to_depose, dx, xyzmin, lo, q);
+                                    rho_fab, np_to_depose, dx, xyzmin, lo, q,
+                                    WarpX::n_rz_azimuthal_modes);
     } else if (WarpX::nox == 2){
         doChargeDepositionShapeN<2>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_arr, np_to_depose, dx, xyzmin, lo, q);
+                                    rho_fab, np_to_depose, dx, xyzmin, lo, q,
+                                    WarpX::n_rz_azimuthal_modes);
     } else if (WarpX::nox == 3){
         doChargeDepositionShapeN<3>(GetPosition, wp.dataPtr()+offset, ion_lev,
-                                    rho_arr, np_to_depose, dx, xyzmin, lo, q);
+                                    rho_fab, np_to_depose, dx, xyzmin, lo, q,
+                                    WarpX::n_rz_azimuthal_modes);
     }
     WARPX_PROFILE_VAR_STOP(blp_ppc_chd);
 
@@ -492,6 +496,9 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
                                         bool local, bool reset,
                                         bool do_rz_volume_scaling)
 {
+#ifdef WARPX_DIM_RZ
+    (void)do_rz_volume_scaling;
+#endif
     // Loop over the refinement levels
     int const finest_level = rho.size() - 1;
     for (int lev = 0; lev <= finest_level; ++lev) {

@@ -6,16 +6,17 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpX.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpX_Complex.H"
+#include "Particles/MultiParticleContainer.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+
 #include <limits>
 #include <cmath>
 #include <algorithm>
 #include <numeric>
 
-#include <WarpX.H>
-#include <WarpXConst.H>
-#include <WarpX_Complex.H>
-#include <MultiParticleContainer.H>
-#include <GetAndSetPosition.H>
 
 using namespace amrex;
 using namespace WarpXLaserProfiles;
@@ -137,6 +138,13 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     }
 
     //Init laser profile
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(e_max > 0.,
+        "Laser amplitude (e_max) must be positive.");
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(wavelength > 0.,
+        "Laser wavelength must be positive.");
+
     CommonLaserParameters common_params;
     common_params.wavelength = wavelength;
     common_params.e_max = e_max;
@@ -177,7 +185,7 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
  * The up-to-date antenna position is stored in updated_position.
  */
 void
-LaserParticleContainer::UpdateContinuousInjectionPosition(Real dt)
+LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
 {
     int dir = WarpX::moving_window_dir;
     if (do_continuous_injection and (WarpX::gamma_boost > 1)){
@@ -378,7 +386,7 @@ LaserParticleContainer::Evolve (int lev,
                                 MultiFab* rho, MultiFab* crho,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
-                                Real t, Real dt, DtType a_dt_type)
+                                Real t, Real dt, DtType /*a_dt_type*/)
 {
     WARPX_PROFILE("Laser::Evolve()");
     WARPX_PROFILE_VAR_NS("Laser::Evolve::Copy", blp_copy);
@@ -623,14 +631,14 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
  * \param dt: time step.
  */
 void
-LaserParticleContainer::update_laser_particle(WarpXParIter& pti,
-                                              const int np,
-                                              ParticleReal * AMREX_RESTRICT const puxp,
-                                              ParticleReal * AMREX_RESTRICT const puyp,
-                                              ParticleReal * AMREX_RESTRICT const puzp,
-                                              ParticleReal const * AMREX_RESTRICT const pwp,
-                                              Real const * AMREX_RESTRICT const amplitude,
-                                              const Real dt)
+LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
+                                               const int np,
+                                               ParticleReal * AMREX_RESTRICT const puxp,
+                                               ParticleReal * AMREX_RESTRICT const puyp,
+                                               ParticleReal * AMREX_RESTRICT const puzp,
+                                               ParticleReal const * AMREX_RESTRICT const pwp,
+                                               Real const * AMREX_RESTRICT const amplitude,
+                                               const Real dt)
 {
     const auto GetPosition = GetParticlePosition(pti);
     auto       SetPosition = SetParticlePosition(pti);

@@ -1,12 +1,13 @@
-/* Copyright 2019-2020 Axel Huebl, Maxence Thevenet, Revathi Jambunathan
- * Weiqun Zhang
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, Maxence Thevenet,
+ * Revathi Jambunathan, Weiqun Zhang
  *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <InjectorMomentum.H>
-#include <PlasmaInjector.H>
+#include "InjectorMomentum.H"
+#include "PlasmaInjector.H"
+
 
 using namespace amrex;
 

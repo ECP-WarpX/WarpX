@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Maxence Thevenet, Remi Lehe
+/* Copyright 2019-2020 Maxence Thevenet, Remi Lehe, Edoardo Zoni
  *
  * This file is part of WarpX.
  *
@@ -7,9 +7,11 @@
 #ifndef WARPX_SPECTRAL_SOLVER_H_
 #define WARPX_SPECTRAL_SOLVER_H_
 
-#include <SpectralBaseAlgorithm.H>
-#include <SpectralFieldData.H>
+#include "SpectralAlgorithms/SpectralBaseAlgorithm.H"
+#include "SpectralFieldData.H"
 
+
+#ifdef WARPX_USE_PSATD
 /**
  * \brief Top-level class for the electromagnetic spectral solver
  *
@@ -55,14 +57,24 @@ class SpectralSolver
          */
         void pushSpectralFields();
 
-    private:
-        SpectralFieldData field_data; // Store field in spectral space
-                                      // and perform the Fourier transforms
-        std::unique_ptr<SpectralBaseAlgorithm> algorithm;
-        // Defines field update equation in spectral space,
-        // and the associated coefficients.
-        // SpectralBaseAlgorithm is a base class ; this pointer is meant
-        // to point an instance of a *sub-class* defining a specific algorithm
-};
+        /**
+          * \brief Public interface to call the member function ComputeSpectralDivE
+          * of the base class SpectralBaseAlgorithm from objects of class SpectralSolver
+          */
+        void ComputeSpectralDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                                   amrex::MultiFab& divE ) {
+            algorithm->ComputeSpectralDivE( field_data, Efield, divE );
+        };
 
+    private:
+
+        // Store field in spectral space and perform the Fourier transforms
+        SpectralFieldData field_data;
+
+        // Defines field update equation in spectral space and the associated coefficients.
+        // SpectralBaseAlgorithm is a base class; this pointer is meant to point
+        // to an instance of a sub-class defining a specific algorithm
+        std::unique_ptr<SpectralBaseAlgorithm> algorithm;
+};
+#endif // WARPX_USE_PSATD
 #endif // WARPX_SPECTRAL_SOLVER_H_

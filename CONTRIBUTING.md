@@ -31,7 +31,7 @@ git clone --branch master https://bitbucket.org/berkeleylab/picsar.git
 git clone --branch development https://github.com/AMReX-Codes/amrex.git
 
 # Clone your fork on your local computer. You can get this address on your fork's Github page.
-git clone https://github.com/<myGithubUsername>/ECP-WarpX/WarpX.git
+git clone https://github.com/<myGithubUsername>/WarpX.git
 cd warpx
 # Keep track of the main WarpX repo, to remain up-to-date.
 git remote add upstream https://github.com/ECP-WarpX/WarpX.git
@@ -104,9 +104,13 @@ your PR. People who review your PR are happy to know
 - Press `Create pull request`. Now you can navigate through your PR, which
 highlights the changes you made.
 
-Pull Requests DO NOT have to be large: it is much easier to review small
-targeted PRs than a huge chunk of code, so feel free to split your work
-in small pieces.
+Please DO NOT write large Pull Requests, as they are very difficult and
+time-consuming to review. As much as possible, split them into small
+targeted PRs.
+For example, if find typos in the documentation open a pull request that only fixes typos.
+If you want to fix a bug, make a small pull request that only fixes a bug.
+If you want to implement a large feature, write helper functionality first, test it and submit those as a first pull request.
+If you want to implement a feature and are not too sure how to split it, just open an issue about your plans and ping other WarpX developers on it to chime in.
 
 Even before your work is ready to merge, it can be convenient to create a PR
 (so you can use Github tools to visualize your changes). In this case, please

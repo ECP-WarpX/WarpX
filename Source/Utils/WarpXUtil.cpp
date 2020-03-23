@@ -6,13 +6,15 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <WarpXUtil.H>
-#include <WarpXConst.H>
+#include "WarpXUtil.H"
+#include "WarpXConst.H"
+#include "WarpX.H"
+
 #include <AMReX_ParmParse.H>
-#include <WarpX.H>
 
 #include <cmath>
 #include <fstream>
+
 
 using namespace amrex;
 
@@ -69,14 +71,14 @@ void ConvertLabParamsToBoost()
     ParmParse pp_slice("slice");
 
     pp_geom.getarr("prob_lo",prob_lo,0,AMREX_SPACEDIM);
-    BL_ASSERT(prob_lo.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(prob_lo.size() == AMREX_SPACEDIM);
     pp_geom.getarr("prob_hi",prob_hi,0,AMREX_SPACEDIM);
-    BL_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
 
     pp_slice.queryarr("dom_lo",slice_lo,0,AMREX_SPACEDIM);
-    BL_ASSERT(slice_lo.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(slice_lo.size() == AMREX_SPACEDIM);
     pp_slice.queryarr("dom_hi",slice_hi,0,AMREX_SPACEDIM);
-    BL_ASSERT(slice_hi.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(slice_hi.size() == AMREX_SPACEDIM);
 
 
     pp_amr.query("max_level", max_level);
@@ -180,18 +182,13 @@ namespace WarpXUtilIO{
 void Store_parserString(amrex::ParmParse& pp, std::string query_string,
                         std::string& stored_string)
 {
-
-    char cstr[query_string.size()+1];
-    strcpy(cstr, query_string.c_str());
-
     std::vector<std::string> f;
-    pp.getarr(cstr, f);
+    pp.getarr(query_string.c_str(), f);
     stored_string.clear();
     for (auto const& s : f) {
         stored_string += s;
     }
     f.clear();
-
 }
 
 
@@ -215,4 +212,38 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
         amrex::Abort("makeParser::Unknown symbol "+s);
     }
     return parser;
+}
+
+namespace WarpXUtilMsg{
+
+void AlwaysAssert(bool is_expression_true, const std::string& msg = "ERROR!")
+{
+    if(is_expression_true) return;
+
+    amrex::Abort(msg);
+}
+
+}
+
+namespace WarpXUtilStr
+{
+    bool is_in(const std::vector<std::string>& vect,
+               const std::string& elem)
+    {
+        bool value = false;
+        if (std::find(vect.begin(), vect.end(), elem) != vect.end()){
+            value = true;
+        }
+        return value;
+    }
+
+    bool is_in(const std::vector<std::string>& vect,
+               const std::vector<std::string>& elems)
+    {
+        bool value = false;
+        for (auto elem : elems){
+            if (is_in(vect, elem)) value = true;
+        }
+        return value;
+    }
 }
