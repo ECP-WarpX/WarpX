@@ -76,7 +76,7 @@ WarpX::Evolve (int numsteps)
             for (int lev = 0; lev <= finest_level; ++lev)
             {
                 amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
-                if (cost && warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+                if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
                 {
                     // Perform running average of the costs
                     // (Giving more importance to most recent costs; only needed
