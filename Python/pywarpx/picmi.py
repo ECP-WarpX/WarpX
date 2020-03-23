@@ -474,7 +474,8 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 class GaussianLaser(picmistandard.PICMI_GaussianLaser):
     def initialize_inputs(self):
         self.laser_number = pywarpx.lasers.nlasers + 1
-        self.name = 'laser{}'.format(self.laser_number)
+        if self.name is None:
+            self.name = 'laser{}'.format(self.laser_number)
 
         self.laser = pywarpx.Lasers.newlaser(self.name)
 
@@ -492,7 +493,8 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
 class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
     def initialize_inputs(self):
         self.laser_number = pywarpx.lasers.nlasers + 1
-        self.name = 'laser{}'.format(self.laser_number)
+        if self.name is None:
+            self.name = 'laser{}'.format(self.laser_number)
 
         self.laser = pywarpx.Lasers.newlaser(self.name)
 
