@@ -742,7 +742,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                         return;
                     }
                     // call `getDensity` with lab-frame parameters
-                    dens = inj_rho->getDensity(x, y, z0_lab);
+                    dens = inj_rho->getDensity(pos.x, pos.y, z0_lab);
                     // Remove particle if density below threshold
                     if ( dens < density_min ){
                         p.id() = -1;
