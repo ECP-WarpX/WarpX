@@ -16,6 +16,9 @@
 #ifdef WARPX_USE_PY
 #   include "Python/WarpX_py.H"
 #endif
+#ifdef WARPX_USE_PSATD
+#include <SpectralSolver.H>
+#endif
 
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -385,8 +388,19 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 #endif
 
-    SyncCurrent();
+// Apply current correction in Fourier space
+// (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
+#ifdef WARPX_USE_PSATD
+    if ( do_current_correction ) CurrentCorrection();
+#endif
 
+#ifdef WARPX_QED
+    //Do QED processes
+    mypc->doQedEvents();
+#endif
+
+    // Synchronize J and rho
+    SyncCurrent();
     SyncRho();
 
     // At this point, J is up-to-date inside the domain, and E and B are
@@ -472,6 +486,11 @@ WarpX::OneStep_sub1 (Real curtime)
     // Loop over species. For each ionizable species, create particles in
     // product species.
     mypc->doFieldIonization();
+
+#ifdef WARPX_QED
+    //Do QED processes
+    mypc->doQedEvents();
+#endif
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
     const int fine_lev = 1;
@@ -814,3 +833,20 @@ WarpX::applyMirrors(Real time){
         }
     }
 }
+
+#ifdef WARPX_USE_PSATD
+void
+WarpX::CurrentCorrection ()
+{
+    for ( int lev = 0; lev <= finest_level; ++lev )
+    {
+        // Apply correction on fine patch
+        spectral_solver_fp[lev]->CurrentCorrection( current_fp[lev], rho_fp[lev] );
+        if ( spectral_solver_cp[lev] )
+        {
+            // Apply correction on coarse patch
+            spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
+        }
+    }
+}
+#endif

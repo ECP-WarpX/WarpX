@@ -15,6 +15,7 @@
 # $$ E_y = \epsilon \,\frac{m_e c^2 k_y}{q_e}\cos(k_x x)\sin(k_y y)\cos(k_z z)\sin( \omega_p t)$$
 # $$ E_z = \epsilon \,\frac{m_e c^2 k_z}{q_e}\cos(k_x x)\cos(k_y y)\sin(k_z z)\sin( \omega_p t)$$
 import sys
+import re
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -25,6 +26,9 @@ from scipy.constants import e, m_e, epsilon_0, c
 
 # this will be the name of the plot file
 fn = sys.argv[1]
+
+# Parse test name and check if current correction (warpx.do_current_correction=1) is applied
+cc = True if re.search( 'cc', fn ) else False
 
 # Parameters (these parameters must match the parameters in `inputs.multi.rt`)
 epsilon = 0.01
@@ -91,3 +95,11 @@ plt.savefig('langmuir_multi_2d_analysis.png')
 
 # Automatically check the validity
 assert overall_max_error < 0.04
+
+# Check relative L-infinity spatial norm of rho/epsilon_0 - div(E) when
+# current correction (warpx.do_current_correction=1) is applied
+if cc:
+    rho  = data['rho' ].to_ndarray()
+    divE = data['divE'].to_ndarray()
+    Linf_norm = np.amax( np.abs( rho/epsilon_0 - divE ) / np.abs( rho/epsilon_0 ) )
+    assert( Linf_norm < 3.e-1 )

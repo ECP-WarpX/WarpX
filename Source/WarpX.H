@@ -135,6 +135,11 @@ public:
     static int maxwell_fdtd_solver_id;
     static long load_balance_costs_update_algo;
 
+    // Static public variable to switch on current correction in Fourier space
+    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010): can be set
+    // true by the user as an input parameter (default value is false)
+    static int do_current_correction;
+
     // div E cleaning
     static int do_dive_cleaning;
 
@@ -193,10 +198,12 @@ public:
     const amrex::MultiFab& getcurrent_cp (int lev, int direction) {return *current_cp[lev][direction];}
     const amrex::MultiFab& getEfield_cp  (int lev, int direction) {return  *Efield_cp[lev][direction];}
     const amrex::MultiFab& getBfield_cp  (int lev, int direction) {return  *Bfield_cp[lev][direction];}
+    const amrex::MultiFab& getrho_cp (int lev) {return  *rho_cp[lev];}
 
     const amrex::MultiFab& getcurrent_fp (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield_fp  (int lev, int direction) {return *Efield_fp[lev][direction];}
     const amrex::MultiFab& getBfield_fp  (int lev, int direction) {return *Bfield_fp[lev][direction];}
+    const amrex::MultiFab& getrho_fp (int lev) {return *rho_fp[lev];}
 
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
@@ -414,14 +421,6 @@ public:
                              const std::array<const amrex::MultiFab*, 3>& B,
                              const std::array<amrex::Real,3>& dx, int ngrow);
 
-    static void ComputeDivE (amrex::MultiFab& divE, int dcomp,
-                             const std::array<const amrex::MultiFab*, 3>& B,
-                             const std::array<amrex::Real,3>& dx);
-
-    static void ComputeDivE (amrex::MultiFab& divE, int dcomp,
-                             const std::array<const amrex::MultiFab*, 3>& B,
-                             const std::array<amrex::Real,3>& dx, int ngrow);
-
     const amrex::IntVect getngE() const { return guard_cells.ng_alloc_EB; };
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; };
 
@@ -539,6 +538,15 @@ private:
     void ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp);
     void AddRhoFromFineLevelandSumBoundary (int lev, int icomp, int ncomp);
     void NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp);
+
+    /**
+     * \brief Private function for current correction in Fourier space
+     * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010):
+     * loops over the MR levels and applies the correction on the fine and coarse
+     * patches (calls the virtual method \c CurrentCorrection of the spectral
+     * algorithm in use, via the public interface defined in the class SpectralSolver).
+     */
+    void CurrentCorrection ();
 
     void ReadParameters ();
 
