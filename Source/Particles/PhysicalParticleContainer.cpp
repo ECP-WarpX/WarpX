@@ -54,22 +54,12 @@ namespace
     Real applyBallisticCorrection(const XDim3& pos, const InjectorMomentum* inj_mom,
                                   Real gamma_boost, Real beta_boost, Real t) noexcept
     {        
-        if (gamma_boost == 1) {
-            const XDim3 u_bulk = inj_mom->getBulkMomentum(pos.x, pos.y, pos.z);
-            const Real gamma_bulk = std::sqrt(1. +
-                      (u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
-            const Real betaz_bulk = u_bulk.z/gamma_bulk;
-            const Real z0 = pos.z - PhysConst::c*t*betaz_bulk;
-            return z0;
-        } else {
-            const XDim3 u_bulk = inj_mom->getBulkMomentum(pos.x, pos.y, 0.);
-            const Real gamma_lab_bulk = std::sqrt(1.+
-                   (u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
-            const Real betaz_lab_bulk = u_bulk.z/(gamma_lab_bulk);
-            const Real z0_lab = gamma_boost * ( pos.z*(1-beta_boost*betaz_lab_bulk)
-                                     - PhysConst::c*t*(betaz_lab_bulk-beta_boost) );
-            return z0_lab;
-        }
+        const XDim3 u_bulk = inj_mom->getBulkMomentum(pos.x, pos.y, pos.z);
+        const Real gamma_bulk = std::sqrt(1. +
+                  (u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
+        const Real betaz_bulk = u_bulk.z/gamma_bulk;
+        const Real z0 = pos.z - PhysConst::c*t*betaz_bulk;
+        return z0;
     }
     
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
