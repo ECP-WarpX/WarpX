@@ -15,6 +15,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "BoundaryConditions/PML.H"
 #include "Diagnostics/BackTransformedDiagnostic.H"
+#include "Diagnostics/MultiDiagnostics.H"
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
@@ -186,6 +187,11 @@ public:
     // do nodal
     static int do_nodal;
 
+    amrex::MultiFab * get_pointer_Efield_aux  (int lev, int direction) const { return Efield_aux[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) const { return Bfield_aux[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
+
     const amrex::MultiFab& getcurrent (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
     const amrex::MultiFab& getBfield  (int lev, int direction) {return *Bfield_aux[lev][direction];}
@@ -193,10 +199,12 @@ public:
     const amrex::MultiFab& getcurrent_cp (int lev, int direction) {return *current_cp[lev][direction];}
     const amrex::MultiFab& getEfield_cp  (int lev, int direction) {return  *Efield_cp[lev][direction];}
     const amrex::MultiFab& getBfield_cp  (int lev, int direction) {return  *Bfield_cp[lev][direction];}
+    const amrex::MultiFab& getrho_cp (int lev) {return  *rho_cp[lev];}
 
     const amrex::MultiFab& getcurrent_fp (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield_fp  (int lev, int direction) {return *Efield_fp[lev][direction];}
     const amrex::MultiFab& getBfield_fp  (int lev, int direction) {return *Bfield_fp[lev][direction];}
+    const amrex::MultiFab& getrho_fp (int lev) {return *rho_fp[lev];}
 
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
@@ -291,6 +299,13 @@ public:
     void LoadBalance ();
     void LoadBalanceTimers ();
     void LoadBalanceHeuristic ();
+    /** \brief resets costs to zero
+     */
+    void ResetCosts ();
+
+    /** \brief returns the load balance interval
+     */
+    int get_load_balance_int () const {return load_balance_int;}
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -336,12 +351,21 @@ public:
     void SyncCurrent ();
     void SyncRho ();
 
-
+    amrex::Vector<int> getnsubsteps () const {return nsubsteps;};
+    int getnsubsteps (int lev) const {return nsubsteps[lev];};
+    amrex::Vector<int> getistep () const {return istep;}
     int getistep (int lev) const {return istep[lev];}
     void setistep (int lev, int ii) {istep[lev] = ii;}
+    amrex::Vector<amrex::Real> gett_old () const {return t_old;}
+    amrex::Real gett_old (int lev) const {return t_old[lev];}
+    amrex::Vector<amrex::Real> gett_new () const {return t_new;}
     amrex::Real gett_new (int lev) const {return t_new[lev];}
     void sett_new (int lev, amrex::Real time) {t_new[lev] = time;}
+    amrex::Vector<amrex::Real> getdt () const {return dt;}
     amrex::Real getdt (int lev) const {return dt[lev];}
+    amrex::Real getmoving_window_x() const {return moving_window_x;};
+    bool getis_synchronized() const {return is_synchronized;};
+    void setplot_rho (bool a_plot_rho) {plot_rho = a_plot_rho;};
 
     int maxStep () const {return max_step;}
     amrex::Real stopTime () const {return stop_time;}
@@ -414,14 +438,6 @@ public:
                              const std::array<const amrex::MultiFab*, 3>& B,
                              const std::array<amrex::Real,3>& dx, int ngrow);
 
-    static void ComputeDivE (amrex::MultiFab& divE, int dcomp,
-                             const std::array<const amrex::MultiFab*, 3>& B,
-                             const std::array<amrex::Real,3>& dx);
-
-    static void ComputeDivE (amrex::MultiFab& divE, int dcomp,
-                             const std::array<const amrex::MultiFab*, 3>& B,
-                             const std::array<amrex::Real,3>& dx, int ngrow);
-
     const amrex::IntVect getngE() const { return guard_cells.ng_alloc_EB; };
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; };
 
@@ -453,9 +469,12 @@ public:
          amrex::IntVect y_nodal_flag, amrex::IntVect z_nodal_flag,
          const int lev);
 
-    /** \brief add particle and cell contributions to multifabs in `costs_heuristic`
+    /** \brief adds particle and cell contributions in cells to compute heuristic
+     * cost in each box on each level, and records in `costs`
+     * @param[in] costs vector of (`unique_ptr` to) vectors; expected to be initialized
+     * to correct number of boxes and boxes per level
      */
-    void ComputeCostsHeuristic ();
+    void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& costs);
 
 protected:
 
@@ -596,6 +615,7 @@ private:
 
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
+    std::unique_ptr<MultiDiagnostics> multi_diags;
 
     // Boosted Frame Diagnostics
     std::unique_ptr<BackTransformedDiagnostic> myBFD;
@@ -664,7 +684,7 @@ private:
     /** Collection of multifabs to keep track of weights, based on in-code timers,
      * for use in load balancing routines. */
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > costs;
-    /** Collection of multifabs to keep track of weights, based on number of cells
+    /** Collection of vectors to keep track of weights, based on number of cells
      * and number of particles per box; for use in load balancing routines. */
     amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > > costs_heuristic;
     /** Load balance with 'space filling curve' strategy. */
@@ -718,7 +738,6 @@ private:
 #endif
 
     bool plot_rho           = false;
-    bool plot_costs         = true;
     bool plot_finepatch     = false;
     bool plot_crsepatch     = false;
     bool plot_raw_fields    = false;
