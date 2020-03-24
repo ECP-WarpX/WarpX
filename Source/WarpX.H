@@ -193,7 +193,7 @@ public:
     std::array<const amrex::MultiFab*, 3> get_array_Efield_aux  (int lev) const { return {Efield_aux[lev][0].get(),
                                                                                           Efield_aux[lev][1].get(),
                                                                                           Efield_aux[lev][2].get()}; }
-    
+
     amrex::MultiFab * get_pointer_Efield_aux  (int lev, int direction) const { return Efield_aux[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) const { return Bfield_aux[lev][direction].get(); }
 

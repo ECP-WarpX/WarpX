@@ -10,11 +10,11 @@ DivEFunctor::DivEFunctor(std::array<const amrex::MultiFab*, 3> arr_mf_src, int l
 void
 DivEFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
 {
-    auto& warpx = WarpX::GetInstance();    
+    auto& warpx = WarpX::GetInstance();
 
     const BoxArray& ba = amrex::convert(warpx.boxArray(m_lev),IntVect::TheUnitVector());
     MultiFab divE( ba, warpx.DistributionMap(m_lev), 1, 0 );
-    
+
     warpx.ComputeDivE(divE, m_lev);
     Average::ToCellCenter ( mf_dst, divE, dcomp, 0, 0, 1 );
 }
