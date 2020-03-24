@@ -12,12 +12,6 @@ CEXE_headers += FlushFormat.H
 CEXE_headers += FlushFormatPlotfile.H
 CEXE_sources += FlushFormatPlotfile.cpp
 
-CEXE_headers += ComputeDiagFunctor.H
-CEXE_headers += CellCenterFunctor.H
-CEXE_sources += CellCenterFunctor.cpp
-CEXE_headers += PartPerCellFunctor.H
-CEXE_sources += PartPerCellFunctor.cpp
-
 CEXE_sources += WarpXIO.cpp
 CEXE_sources += BackTransformedDiagnostic.cpp
 CEXE_sources += ParticleIO.cpp
@@ -34,6 +28,8 @@ ifeq ($(USE_OPENPMD), TRUE)
 endif
 
 include $(WARPX_HOME)/Source/Diagnostics/ReducedDiags/Make.package
+include $(WARPX_HOME)/Source/Diagnostics/ComputeDiagFunctors/Make.package
+include $(WARPX_HOME)/Source/Diagnostics/FlushFormats/Make.package
 
 INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/Diagnostics
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Diagnostics

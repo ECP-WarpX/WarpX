@@ -1,6 +1,9 @@
 #include "Diagnostics.H"
-#include "CellCenterFunctor.H"
-#include "PartPerCellFunctor.H"
+#include "ComputeDiagFunctors/CellCenterFunctor.H"
+#include "ComputeDiagFunctors/PartPerCellFunctor.H"
+#include "ComputeDiagFunctors/PartPerGridFunctor.H"
+#include "ComputeDiagFunctors/DivBFunctor.H"
+#include "ComputeDiagFunctors/DivEFunctor.H"
 #include "WarpX.H"
 #include "Average.H"
 #include "Utils/WarpXUtil.H"
@@ -90,6 +93,12 @@ Diagnostics::InitData ()
                 all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_F_fp(lev), lev);
             } else if ( varnames[comp] == "part_per_cell" ){
                 all_field_functors[lev][comp] = new PartPerCellFunctor(nullptr, lev);
+            } else if ( varnames[comp] == "part_per_grid" ){
+                all_field_functors[lev][comp] = new PartPerGridFunctor(nullptr, lev);
+            } else if ( varnames[comp] == "divB" ){
+                all_field_functors[lev][comp] = new DivBFunctor(warpx.get_array_Bfield_aux(lev), lev);
+            } else if ( varnames[comp] == "divE" ){
+                all_field_functors[lev][comp] = new DivEFunctor(warpx.get_array_Efield_aux(lev), lev);
             }
         }
 

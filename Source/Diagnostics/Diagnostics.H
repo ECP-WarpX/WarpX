@@ -3,7 +3,7 @@
 
 #include "FlushFormat.H"
 #include "FlushFormatPlotfile.H"
-#include "ComputeDiagFunctor.H"
+#include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
 

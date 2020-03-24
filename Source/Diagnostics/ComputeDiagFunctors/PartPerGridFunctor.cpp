@@ -16,10 +16,13 @@ void
 PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
 {
     auto& warpx = WarpX::GetInstance();
-    // Make alias MultiFab* pointing to the component of mf_dst where the
-    // number of particles per cell is to be written.
-    MultiFab* mf_dst_dcomp = new MultiFab(mf_dst, amrex::make_alias, dcomp, 1);
-    // Set value to 0, and increment the value in each cell with ppc.
-    mf_dst_dcomp->setVal(0._rt);
-    warpx.GetPartContainer().Increment(*mf_dst_dcomp, m_lev);
+    const Vector<long>& npart_in_grid = warpx.GetPartContainer().NumberOfParticlesInGrid(m_lev);
+    // MultiFab containing number of particles per grid
+    // (stored as constant for all cells in each grid)
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+    for (MFIter mfi(mf_dst); mfi.isValid(); ++mfi) {
+        mf_dst[mfi].setVal<RunOn::Host>(static_cast<Real>(npart_in_grid[mfi.index()]));
+    }
 }

@@ -1190,6 +1190,10 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
                     const std::array<const amrex::MultiFab*, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
+        "ComputeDivB not implemented with do_nodal."
+        "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
+    
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
 #ifdef WARPX_DIM_RZ
@@ -1224,6 +1228,10 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
                     const std::array<const amrex::MultiFab*, 3>& B,
                     const std::array<amrex::Real,3>& dx, int ngrow)
 {
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
+        "ComputeDivB not implemented with do_nodal."
+        "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
+
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
 #ifdef WARPX_DIM_RZ
@@ -1251,6 +1259,16 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
                               );
         });
     }
+}
+
+void
+WarpX::ComputeDivE(amrex::MultiFab& divE, int lev)
+{
+#ifdef WARPX_USE_PSATD
+    spectral_solver_fp[lev]->ComputeSpectralDivE( Efield_aux[lev], divE );
+#else
+    m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
+#endif
 }
 
 PML*
