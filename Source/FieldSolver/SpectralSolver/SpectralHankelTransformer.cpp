@@ -87,6 +87,8 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
     // Note that F and G include the imaginary part of mode 0.
     // F will be overwritten (by the + and - data).
 
+    using amrex::operator""_rt;
+
     amrex::Array4<amrex::Real> const & F_r_physical_array = F_r_physical.array();
     amrex::Array4<amrex::Real> const & F_t_physical_array = F_t_physical.array();
 
@@ -105,10 +107,10 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
             // Combine the values
             // temp_p = (F_r - I*F_t)/2
             // temp_m = (F_r + I*F_t)/2
-            F_r_physical_array(i,j,k,mode_r) = 0.5*(r_real + t_imag);
-            F_r_physical_array(i,j,k,mode_i) = 0.5*(r_imag - t_real);
-            F_t_physical_array(i,j,k,mode_r) = 0.5*(r_real - t_imag);
-            F_t_physical_array(i,j,k,mode_i) = 0.5*(r_imag + t_real);
+            F_r_physical_array(i,j,k,mode_r) = 0.5_rt*(r_real + t_imag);
+            F_r_physical_array(i,j,k,mode_i) = 0.5_rt*(r_imag - t_real);
+            F_t_physical_array(i,j,k,mode_r) = 0.5_rt*(r_real - t_imag);
+            F_t_physical_array(i,j,k,mode_i) = 0.5_rt*(r_imag + t_real);
         });
 
         amrex::Gpu::streamSynchronize();

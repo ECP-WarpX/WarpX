@@ -8,6 +8,8 @@
 
 #include "WarpX.H"
 
+using amrex::operator""_rt;
+
 /* \brief Initialize fields in spectral space, and FFT plans
  *
  * \param realspace_ba Box array that corresponds to the decomposition
@@ -197,7 +199,7 @@ SpectralFieldDataHankel::FABZForwardTransform (amrex::MFIter const & mfi,
     // are grouped together in memory.
     amrex::Box const& spectralspace_bx = tmpSpectralField[mfi].box();
     int const nz = spectralspace_bx.length(1);
-    amrex::Real inv_nz = 1./nz;
+    amrex::Real inv_nz = 1._rt/nz;
     constexpr int n_fields = SpectralFieldIndex::n_fields;
 
     ParallelFor(spectralspace_bx, modes,
@@ -333,8 +335,8 @@ SpectralFieldDataHankel::ForwardTransform (amrex::MultiFab const & field_mf_r, i
     amrex::MultiFab field_mf_t_copy(field_mf_t.boxArray(), field_mf_t.DistributionMap(), 2*n_rz_azimuthal_modes, field_mf_t.nGrowVect());
     amrex::MultiFab::Copy(field_mf_r_copy, field_mf_r, 0, 0, 1, field_mf_r.nGrowVect()); // Real part of mode 0
     amrex::MultiFab::Copy(field_mf_t_copy, field_mf_t, 0, 0, 1, field_mf_t.nGrowVect()); // Real part of mode 0
-    field_mf_r_copy.setVal(0., 1, 1, field_mf_r.nGrowVect()); // Imaginary part of mode 0
-    field_mf_t_copy.setVal(0., 1, 1, field_mf_t.nGrowVect()); // Imaginary part of mode 0
+    field_mf_r_copy.setVal(0._rt, 1, 1, field_mf_r.nGrowVect()); // Imaginary part of mode 0
+    field_mf_t_copy.setVal(0._rt, 1, 1, field_mf_t.nGrowVect()); // Imaginary part of mode 0
     amrex::MultiFab::Copy(field_mf_r_copy, field_mf_r, 1, 2, 2*n_rz_azimuthal_modes-2, field_mf_r.nGrowVect());
     amrex::MultiFab::Copy(field_mf_t_copy, field_mf_t, 1, 2, 2*n_rz_azimuthal_modes-2, field_mf_t.nGrowVect());
 

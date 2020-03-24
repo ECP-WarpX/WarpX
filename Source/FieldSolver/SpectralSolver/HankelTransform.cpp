@@ -12,12 +12,15 @@
 #include <blas.hh>
 #include <lapack.hh>
 
+using amrex::operator""_rt;
+
 HankelTransform::HankelTransform (int const hankel_order,
                                   int const azimuthal_mode,
                                   int const nr,
                                   const amrex::Real rmax)
 : nr(nr), nk(nr)
 {
+
     // Check that azimuthal_mode has a valid value
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(hankel_order-1 <= azimuthal_mode && azimuthal_mode <= hankel_order+1,
                                      "azimuthal_mode must be either hankel_order-1, hankel_order or hankel_order+1");
@@ -38,7 +41,7 @@ HankelTransform::HankelTransform (int const hankel_order,
     r.resize(nr);
     amrex::Real dr = rmax/nr;
     for (int ir=0 ; ir < nr ; ir++) {
-        r[ir] = dr*(ir + 0.5);
+        r[ir] = dr*(ir + 0.5_rt);
     }
 
     // Calculate and store the inverse matrix invM
@@ -124,21 +127,21 @@ HankelTransform::HankelTransform (int const hankel_order,
         for (int i=0 ; i < nk-1 ; i++) {
             if (sdiag[i] != 0.) {
                 int const j = i + i*nk;
-                sp[j] = 1./sdiag[i];
+                sp[j] = 1._rt/sdiag[i];
             }
         }
 
         // a_pseudo(1:n,1:m) = matmul(transpose(vt(1:n,1:n)), matmul(sp(1:n,1:m), transpose(u(1:m,1:m))))
         blas::gemm(blas::Layout::ColMajor, blas::Op::NoTrans, blas::Op::Trans,
-                   nr, nk-1, nk-1, 1.,
+                   nr, nk-1, nk-1, 1._rt,
                    sp.dataPtr(), nr,
-                   u.dataPtr(), nk-1, 0.,
+                   u.dataPtr(), nk-1, 0._rt,
                    temp.dataPtr(), nr);
         // Note that M.dataPtr()+nr is passed in so that the first ir column is skipped
         blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                    nr, nk-1, nr, 1.,
                    vt.dataPtr(), nr,
-                   temp.dataPtr(), nr, 0.,
+                   temp.dataPtr(), nr, 0._rt,
                    M.dataPtr()+nr, nr);
 
     } else {
@@ -170,9 +173,9 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
 
     // Note that M is flagged to be transposed since it has dimensions (nr, nk)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
-               nk, nz, nr, 1.,
+               nk, nz, nr, 1._rt,
                M.dataPtr(), nk,
-               F.dataPtr(F_icomp)+ngr, nrF, 0.,
+               F.dataPtr(F_icomp)+ngr, nrF, 0._rt,
                G.dataPtr(G_icomp), nk);
 }
 
@@ -194,8 +197,8 @@ HankelTransform::HankelInverseTransform (amrex::FArrayBox const& G, int const G_
 
     // Note that invM is flagged to be transposed since it has dimensions (nk, nr)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
-               nr, nz, nk, 1.,
+               nr, nz, nk, 1._rt,
                invM.dataPtr(), nr,
-               G.dataPtr(G_icomp), nk, 0.,
+               G.dataPtr(G_icomp), nk, 0._rt,
                F.dataPtr(F_icomp)+ngr, nrF);
 }
