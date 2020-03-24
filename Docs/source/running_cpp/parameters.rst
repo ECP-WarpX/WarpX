@@ -249,6 +249,10 @@ Particle initialization
       and optional argument ``<species_name>.do_symmetrize`` (whether to
       symmetrize the beam in the x and y directions).
 
+    * ``external_file``: inject species macroparticles with properties (charge,mass,position, and momentum) defined in an external file.
+      It requires the additional argument ``<species_name>.injection_file``, which is the string corresponding to the OpenPMD (.h5) file name.
+      When using this style, it is not necessary to add other ``<species_name>.`` parameters, because they will be read from the file.
+
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis
     within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended
@@ -285,10 +289,6 @@ Particle initialization
       ``electrons.density_function(x,y,z) = "n0+n0*x**2*1.e12"`` where ``n0`` is a
       user-defined constant, see above. WARNING: where ``density_function(x,y,z)`` is close to zero, particles will still be injected between ``xmin`` and ``xmax`` etc., with a null weight. This is undesirable because it results in useless computing. To avoid this, see option ``density_min`` below.
       
-    * ``external_file``: species macroparticle information is read from an external file.
-      It requires additional argument ``<species_name>.profile_file``, which is the string corresponding to the OpenPMD (.h5) file name.
-      When using this profile, it is not necessary to add other ``<species_name>.`` parameters, because they will be read from the file.
-
 * ``<species_name>.density_min`` (`float`) optional (default `0.`)
     Minimum plasma density. No particle is injected where the density is below
     this value.

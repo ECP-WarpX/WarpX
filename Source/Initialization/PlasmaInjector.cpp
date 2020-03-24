@@ -121,9 +121,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     }
     if (!charge_is_specified && !species_is_specified){
         //No need for charge/species definition if external file is used
-        std::string file_s;
-        bool ext_file_is_specified = pp.query("profile_file", file_s);
-        if (!ext_file_is_specified){
+        std::string s_inj_style;
+        pp.query("injection_style", s_inj_style);
+        if (s_inj_style != "external_file") {
             amrex::Abort("Need to specify at least one of species_type or charge");
         }
     }
@@ -143,10 +143,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     }
     if (!mass_is_specified && !species_is_specified){
         //No need for mass/species definition if external file is used
-        std::string file_s;
-        bool ext_file_is_specified = pp.query("profile_file", file_s);
-        if (!ext_file_is_specified){
-            amrex::Abort("Need to specify at least one of species_type or mass");
+        std::string s_inj_style;
+        pp.query("injection_style", s_inj_style);
+        if (s_inj_style != "external_file") {
+            amrex::Abort("Need to specify at least one of species_type or charge");
         }
     }
 
@@ -255,11 +255,13 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
         // Construct InjectorDensity with InjectorDensityParser.
         inj_rho.reset(new InjectorDensity((InjectorDensityParser*)nullptr,
                                           makeParser(str_density_function,{"x","y","z"})));
-    } else if (rho_prof_s == "external_file") {
-        pp.get("profile_file", str_profile_file);
-        Store_parserString(pp, "profile_file", str_profile_file);
-    }else {
-        StringParseAbortMessage("Density profile type", rho_prof_s);
+    } else {
+        //No need for profile definition if external file is used
+        std::string s_inj_style;
+        pp.query("injection_style", s_inj_style);
+        if (s_inj_style != "external_file") {
+            StringParseAbortMessage("Density profile type", rho_prof_s);
+        }
     }
 }
 
