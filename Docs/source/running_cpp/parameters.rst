@@ -181,21 +181,21 @@ Distribution across MPI ranks and parallelization
     :math:`w_{\text{particle}}` is the particle cost weight factor (controlled by ``algo.costs_heuristic_particles_wt``),
     :math:`n_{\text{cell}}` is the number of cells on the box, and
     :math:`w_{\text{cell}}` is the cell cost weight factor (controlled by ``algo.costs_heuristic_cells_wt``).
-                 
+
     If this is `Timers`: costs are updated according to in-code timers.
 
 * ``algo.costs_heuristic_particles_wt`` (`float`) optional
-    Particle weight factor used in `Heuristic` strategy for costs update; if running on GPU, 
-    the particle weight is set to a value determined from single-GPU tests on Summit, 
+    Particle weight factor used in `Heuristic` strategy for costs update; if running on GPU,
+    the particle weight is set to a value determined from single-GPU tests on Summit,
     depending on the choice of solver (FDTD or PSATD) and order of the particle shape.
     If running on CPU, the default value is `0.9`.
 
 * ``algo.costs_heuristic_cells_wt`` (`float`) optional
-    Cell weight factor used in `Heuristic` strategy for costs update; if running on GPU, 
-    the cell weight is set to a value determined from single-GPU tests on Summit, 
+    Cell weight factor used in `Heuristic` strategy for costs update; if running on GPU,
+    the cell weight is set to a value determined from single-GPU tests on Summit,
     depending on the choice of solver (FDTD or PSATD) and order of the particle shape.
     If running on CPU, the default value is `0.1`.
-  
+
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
 
