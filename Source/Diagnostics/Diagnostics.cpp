@@ -123,9 +123,9 @@ Diagnostics::ComputeAndPack ()
     // cell-center fields and store result in mf_avg.
     int icomp_dst = 0;
     for(int lev=0; lev<nlev; lev++){
-        for (int icomp=0; icomp<nComp_src(); icomp++){
+        for (int icomp=0, n=nComp_src(); icomp<n; icomp++){
             // Call all functors in all_field_functors[lev]. Each of them computes
-            // a diagnostics and wrotes in one or more components of the output
+            // a diagnostics and writes in one or more components of the output
             // multifab mf_avg[lev].
             all_field_functors[lev][icomp]->operator()(mf_avg[lev], icomp_dst);
             // update the index of the next component to fill
