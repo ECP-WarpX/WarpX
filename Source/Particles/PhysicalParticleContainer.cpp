@@ -58,7 +58,8 @@ namespace
         const Real gamma_bulk = std::sqrt(1. +
                   (u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
         const Real betaz_bulk = u_bulk.z/gamma_bulk;
-        const Real z0 = pos.z - PhysConst::c*t*betaz_bulk;
+        const Real z0 = gamma_boost * ( pos.z*(1-beta_boost*betaz_bulk)
+                             - PhysConst::c*t*(betaz_bulk-beta_boost) );
         return z0;
     }
 
