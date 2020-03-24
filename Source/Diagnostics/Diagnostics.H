@@ -41,12 +41,6 @@ private:
     /** Append all_field_functors[lev] with all modes of all components of E B and j
      * \param[in] lev level on which source multifabs are defined. */
     void AddRZModesToInputsFunctors (int lev);
-    /** Function to return number of components written to file */
-    int nComp_dst () const { return varnames.size(); };
-    /** One input multifab can write several components in the output
-     * multifab, so we also have a function to return the number of components
-     * in the input multifab */
-    int nComp_src () const { return all_field_functors[0].size(); };
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string diag_name;
     /** Prefix for output directories */

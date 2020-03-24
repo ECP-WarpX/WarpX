@@ -61,15 +61,11 @@ Diagnostics::InitData ()
     all_field_functors.resize( nlev );
     mf_avg.resize( nlev );
 
-    int ncomp_except_cylindrical_modes = nComp_dst();
-
-    AddRZModesToOutputNames();
-
     for ( int lev=0; lev<nlev; lev++ ){
-        all_field_functors[lev].resize( ncomp_except_cylindrical_modes );
+        all_field_functors[lev].resize( varnames.size() );
         // Fill vector of functors for all components except individual
         // cyclindrical modes
-        for (int comp=0; comp<nComp_src(); comp++){
+        for (int comp=0, n=all_field_functors[lev].size(); comp<n; comp++){
             if        ( varnames[comp] == "Ex" ){
                 all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 0), lev);
             } else if ( varnames[comp] == "Ey" ){
@@ -97,13 +93,17 @@ Diagnostics::InitData ()
             }
         }
 
+        AddRZModesToOutputNames();
+
         AddRZModesToInputsFunctors( lev );
+
+        // At this point, varnames.size() >= all_field_functors[0].size()
 
         // Allocate output multifab
         // Note: default MultiFab constructor is cell-centered
         mf_avg[lev] = MultiFab(warpx.boxArray(lev),
                                warpx.DistributionMap(lev),
-                               nComp_dst(), 0);
+                               varnames.size(), 0);
     }
     // Construct Flush class. So far, only Plotfile is implemented.
     m_flush_format = new FlushFormatPlotfile;
@@ -127,7 +127,7 @@ Diagnostics::ComputeAndPack ()
     // cell-center fields and store result in mf_avg.
     int icomp_dst = 0;
     for(int lev=0; lev<nlev; lev++){
-        for (int icomp=0, n=nComp_src(); icomp<n; icomp++){
+        for (int icomp=0, n=all_field_functors[0].size(); icomp<n; icomp++){
             // Call all functors in all_field_functors[lev]. Each of them computes
             // a diagnostics and writes in one or more components of the output
             // multifab mf_avg[lev].
@@ -137,7 +137,7 @@ Diagnostics::ComputeAndPack ()
         }
     }
     // Check that the proper number of components of mf_avg were updated.
-    AMREX_ALWAYS_ASSERT( icomp_dst == nComp_dst() );
+    AMREX_ALWAYS_ASSERT( icomp_dst == varnames.size() );
 }
 
 void
@@ -178,11 +178,11 @@ Diagnostics::AddRZModesToInputsFunctors (int lev)
     }
 
     // First index of all_field_functors[lev] where RZ modes are stored
-    int icomp = nComp_src();
+    int icomp = all_field_functors[0].size();
 
     // Er, Etheta, Ez, Br, Btheta, Bz, jr, jtheta, jz
     // Each of them being a multi-component multifab
-    all_field_functors[lev].resize( nComp_src() + 9 );
+    all_field_functors[lev].resize( all_field_functors[0].size() + 9 );
     // E
     for (int dim=0; dim<3; dim++){
         // 3 components, r theta z
@@ -211,10 +211,10 @@ Diagnostics::AddRZModesToInputsFunctors (int lev)
     // and check that it corresponds to the number of components in varnames
     // and mf_avg
     int ncomp_from_src = 0;
-    for (int i=0; i<nComp_src(); i++){
+    for (int i=0; i<all_field_functors[0].size(); i++){
         ncomp_from_src += all_field_functors[lev][i]->nComp();
     }
-    AMREX_ALWAYS_ASSERT( ncomp_from_src == nComp_dst() );
+    AMREX_ALWAYS_ASSERT( ncomp_from_src == varnames.size() );
 #endif
 }
 
