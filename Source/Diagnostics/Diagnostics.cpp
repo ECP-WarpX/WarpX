@@ -1,4 +1,6 @@
 #include "Diagnostics.H"
+#include "CellCenterFunctor.H"
+#include "PartPerCellFunctor.H"
 #include "WarpX.H"
 #include "Average.H"
 #include "Utils/WarpXUtil.H"
@@ -88,8 +90,10 @@ Diagnostics::InitData ()
                 all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 2), lev);
             } else if ( varnames[comp] == "rho" ){
                 all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_rho_fp(lev), lev);
+            } else if ( varnames[comp] == "F" ){
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_F_fp(lev), lev);
             } else if ( varnames[comp] == "part_per_cell" ){
-                amrex::Abort("plotting part_per_cell is not supported");
+                all_field_functors[lev][comp] = new PartPerCellFunctor(nullptr, lev);
             }
         }
 

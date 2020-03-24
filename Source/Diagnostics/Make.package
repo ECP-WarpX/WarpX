@@ -15,6 +15,8 @@ CEXE_sources += FlushFormatPlotfile.cpp
 CEXE_headers += ComputeDiagFunctor.H
 CEXE_headers += CellCenterFunctor.H
 CEXE_sources += CellCenterFunctor.cpp
+CEXE_headers += PartPerCellFunctor.H
+CEXE_sources += PartPerCellFunctor.cpp
 
 CEXE_sources += WarpXIO.cpp
 CEXE_sources += BackTransformedDiagnostic.cpp
