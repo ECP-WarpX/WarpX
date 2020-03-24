@@ -310,6 +310,17 @@ PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
 }
 
 void
+PhysicalParticleContainer::AddExternalFileBeam(std::string s_f)
+{
+#ifdef WARPX_USE_OPENPMD
+    openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
+    Print()<< "Read a Series with openPMD standard version "
+    << series.openPMD() << "\n";
+#endif
+    return;
+}
+
+void
 PhysicalParticleContainer::CheckAndAddParticle(Real x, Real y, Real z,
                                                std::array<Real, 3> u,
                                                Real weight,
@@ -362,6 +373,11 @@ PhysicalParticleContainer::AddParticles (int lev)
                         plasma_injector->do_symmetrize);
 
 
+        return;
+    }
+    
+    if (plasma_injector->external_file) {
+        AddExternalFileBeam(plasma_injector->str_injection_file);
         return;
     }
 

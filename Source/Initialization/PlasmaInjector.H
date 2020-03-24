@@ -71,11 +71,13 @@ public:
     amrex::Real q_tot;
     long npart;
     int do_symmetrize = 0;
+    
+    bool external_file = false;
+    std::string str_injection_file;
 
     bool radially_weighted = true;
 
     std::string str_density_function;
-    std::string str_injection_file;
     std::string str_momentum_function_ux;
     std::string str_momentum_function_uy;
     std::string str_momentum_function_uz;
