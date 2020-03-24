@@ -146,7 +146,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         std::string s_inj_style;
         pp.query("injection_style", s_inj_style);
         if (s_inj_style != "external_file") {
-            amrex::Abort("Need to specify at least one of species_type or charge");
+            amrex::Abort("Need to specify at least one of species_type or mass");
         }
     }
 
