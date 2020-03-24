@@ -3,15 +3,17 @@
 
 using namespace amrex;
 
-CellCenterFunctor::CellCenterFunctor(amrex::MultiFab* mf_src, int lev, bool mode_avg, int ncomp)
-    : ComputeDiagFunctor(ncomp), m_mf_src(mf_src), m_lev(lev), m_mode_avg(mode_avg)
+CellCenterFunctor::CellCenterFunctor(amrex::MultiFab* mf_src, int lev,
+                                     bool convertRZmodes2cartesian, int ncomp)
+    : ComputeDiagFunctor(ncomp), m_mf_src(mf_src), m_lev(lev),
+      m_convertRZmodes2cartesian(convertRZmodes2cartesian)
 {}
 
 void
 CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
 {
 #ifdef WARPX_DIM_RZ
-    if (m_mode_avg) {
+    if (m_convertRZmodes2cartesian) {
         // In cylindrical geometry, sum real part of all modes of m_mf_src in
         // temporary multifab mf_dst_stag, and cell-center it to mf_dst.
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
