@@ -161,7 +161,7 @@ void ParticleHistogram::ComputeDiags (int step)
             auto const f2 = bin_min + bin_size*(i+1);
             if ( f > f1 && f < f2 ) {
                 if ( is_unity_particle_weight ) return 1.0_rt;
-                else return w/bin_size;
+                else return w;
             } else return 0.0_rt;
         });
     }

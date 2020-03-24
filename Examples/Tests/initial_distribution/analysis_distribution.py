@@ -40,9 +40,10 @@ gamma = np.sqrt(1.0+u_rms*u_rms)
 v_rms = u_rms / gamma * scc.c
 n     = 1.0e21
 V     = 8.0
+db    = 0.0016
 
 # compute the analytical solution
-f = n*V*scc.c*np.exp(-0.5*(bin_value*scc.c/v_rms)**2)/(v_rms*np.sqrt(2.0*scc.pi))
+f = n*V*scc.c*db*np.exp(-0.5*(bin_value*scc.c/v_rms)**2)/(v_rms*np.sqrt(2.0*scc.pi))
 f_peak = np.amax(f)
 
 # compute error
@@ -69,10 +70,11 @@ theta = 1.0
 K2    = scs.kn(2,1.0/theta)
 n     = 1.0e21
 V     = 8.0
+db    = 0.22
 
 # compute the analytical solution
 
-f = n*V * bin_value**2 * np.sqrt(1.0-1.0/bin_value**2) / \
+f = n*V*db * bin_value**2 * np.sqrt(1.0-1.0/bin_value**2) / \
     (theta*K2) * np.exp(-bin_value/theta)
 f_peak = np.amax(f)
 
@@ -97,9 +99,10 @@ x_rms = 0.25
 q_tot = -1.0e-20
 q_e   = -1.602176634e-19
 npart = q_tot/q_e
+db    = 0.04
 
 # compute the analytical solution
-f = npart * np.exp(-0.5*(bin_value/x_rms)**2)/(x_rms*np.sqrt(2.0*scc.pi))
+f = npart*db * np.exp(-0.5*(bin_value/x_rms)**2)/(x_rms*np.sqrt(2.0*scc.pi))
 f_peak = np.amax(f)
 
 # compute error

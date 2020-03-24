@@ -1320,11 +1320,10 @@ Diagnostics and output
             ``ux`` produces the velocity distribution in `x`,
             ``sqrt(ux*ux+uy*uy+uz*uz)`` produces the speed distribution.
             The default value of the histogram without normalization is
-            :math:`f = \sum\limits_{i=1}^N w_i / \Delta b`, where
+            :math:`f = \sum\limits_{i=1}^N w_i`, where
             :math:`\sum\limits_{i=1}^N` is the sum over :math:`N` particles
             in that bin,
-            :math:`w_i` denotes the weight of the ith particle,
-            :math:`\Delta b` is the bin size.
+            :math:`w_i` denotes the weight of the ith particle.
 
         * ``<reduced_diags_name>.bin_number`` (`int` > 0)
             This is the number of bins used for the histogram.
