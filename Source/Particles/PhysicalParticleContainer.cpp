@@ -310,7 +310,7 @@ PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
 }
 
 void
-PhysicalParticleContainer::AddExternalFileBeam(std::string s_f)
+PhysicalParticleContainer::AddExternalFileBeam(const std::string s_f)
 {
 #ifdef WARPX_USE_OPENPMD
     openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
