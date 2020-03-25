@@ -1,8 +1,8 @@
 #ifndef WARPX_DIAGNOSTICS_H_
 #define WARPX_DIAGNOSTICS_H_
 
-#include "FlushFormat.H"
-#include "FlushFormatPlotfile.H"
+#include "FlushFormats/FlushFormat.H"
+#include "FlushFormats/FlushFormatPlotfile.H"
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>

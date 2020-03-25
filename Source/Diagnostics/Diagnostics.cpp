@@ -5,7 +5,7 @@
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
 #include "WarpX.H"
-#include "Average.H"
+#include "Utils/Average.H"
 #include "Utils/WarpXUtil.H"
 
 using namespace amrex;
@@ -241,7 +241,6 @@ Diagnostics::AddRZModesToDiags (int lev)
 void
 Diagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
 #ifdef WARPX_DIM_RZ
-    auto & warpx = WarpX::GetInstance();
     // In cylindrical geometry, real and imag part of each mode are also
     // dumped to file separately, so they need to be added to varnames
     varnames.push_back( field + "_0_real" );

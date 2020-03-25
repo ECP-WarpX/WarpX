@@ -1,9 +1,9 @@
 #include "CellCenterFunctor.H"
-#include "Average.H"
+#include "Utils/Average.H"
 
 using namespace amrex;
 
-CellCenterFunctor::CellCenterFunctor(amrex::MultiFab* mf_src, int lev,
+CellCenterFunctor::CellCenterFunctor(amrex::MultiFab const * mf_src, int lev,
                                      bool convertRZmodes2cartesian, int ncomp)
     : ComputeDiagFunctor(ncomp), m_mf_src(mf_src), m_lev(lev),
       m_convertRZmodes2cartesian(convertRZmodes2cartesian)

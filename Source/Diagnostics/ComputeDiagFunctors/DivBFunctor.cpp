@@ -1,5 +1,5 @@
 #include "DivBFunctor.H"
-#include "Average.H"
+#include "Utils/Average.H"
 
 using namespace amrex;
 
