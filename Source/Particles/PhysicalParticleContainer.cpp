@@ -327,24 +327,73 @@ PhysicalParticleContainer::AddExternalFileBeam(std::string s_f, amrex::Real q_to
     int npart=ps.second["position"]["x"].getExtent()[0];
     std::shared_ptr<amrex::Real> ptr_x = ps.second["position"]["x"].loadChunk<amrex::Real>();
     series.flush();
+    std::shared_ptr<amrex::Real> ptr_vx = ps.second["velocity"]["x"].loadChunk<amrex::Real>();
+    series.flush();
     std::shared_ptr<amrex::Real> ptr_z = ps.second["position"]["z"].loadChunk<amrex::Real>();
+    series.flush();
+    std::shared_ptr<amrex::Real> ptr_vz = ps.second["velocity"]["z"].loadChunk<amrex::Real>();
     series.flush();
 #if (defined WARPX_DIM_3D)
     std::shared_ptr<amrex::Real> ptr_y = ps.second["position"]["y"].loadChunk<amrex::Real>();
-#endif
     series.flush();
+    std::shared_ptr<amrex::Real> ptr_vy = ps.second["velocity"]["y"].loadChunk<amrex::Real>();
+    series.flush();
+#endif
     
     mass=p_m*PhysConst::mev_kg;
     charge=p_q*PhysConst::q_e;
     Real weight=q_tot/charge/npart;
     
+    // Allocate temporary vectors on the CPU
+    Gpu::HostVector<ParticleReal> particle_w;
+    Gpu::HostVector<ParticleReal> particle_x;
+    Gpu::HostVector<ParticleReal> particle_y;
+    Gpu::HostVector<ParticleReal> particle_z;
+    Gpu::HostVector<ParticleReal> particle_ux;
+    Gpu::HostVector<ParticleReal> particle_uy;
+    Gpu::HostVector<ParticleReal> particle_uz;
+    
+    if (ParallelDescriptor::IOProcessor()) {
+        for (long i = 0; i < npart; ++i) {
+            amrex::Real x = ptr_x.get()[i];
+            amrex::Real vx = ptr_vx.get()[i];
+            amrex::Real z = ptr_z.get()[i];
+            amrex::Real vz = ptr_vz.get()[i];
+#if (defined WARPX_DIM_3D)
+            amrex::Real y = ptr_y.get()[i];
+            amrex::Real vy = ptr_vy.get()[i];
+#elif (defined WARPX_DIM_XZ)
+            amrex::Real y = 0.0;
+            amrex::Real vy = 0.0;
+#endif
+            if (plasma_injector->insideBounds(x, y, z)) {
+                CheckAndAddParticle(x, y, z, { vx, vy, vz}, weight,
+                                    particle_x,  particle_y,  particle_z,
+                                    particle_ux, particle_uy, particle_uz,
+                                    particle_w);
+            }
+        }
+    }
+    // Add the temporary CPU vectors to the particle structure
+    np = particle_z.size();
+    AddNParticles(0,np,
+                  particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
+                  particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
+                  1, particle_w.dataPtr(),1);
+    /*
+     //Uncoment this block to print the information read from OPMD file
     amrex::Print() << npart << " parts of species " << ps.first << "\nWith"
     << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
     << npart << " macroparticles with weights of " << weight << "\n";
     
     for (size_t col; col<npart; ++col){
         amrex::Print() << "x = " << ptr_x.get()[col] << "\n";
+        amrex::Print() << "z = " << ptr_z.get()[col] << "\n";
+#if (defined WARPX_DIM_3D)
+        amrex::Print() << "y = " << ptr_y.get()[col] << "\n";
+#endif
     }
+     */
 #endif
     return;
 }
