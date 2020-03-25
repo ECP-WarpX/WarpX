@@ -340,9 +340,11 @@ PhysicalParticleContainer::AddExternalFileBeam(std::string s_f, amrex::Real q_to
     series.flush();
 #endif
     
+    //Conversion from Geant4 system of units (http://geant4.web.cern.ch/sites/geant4.web.cern.ch/files/geant4/collaboration/working_groups/electromagnetic/gallery/units/SystemOfUnits.html) to WarpX (SI)
     mass=p_m*PhysConst::mev_kg;
     charge=p_q*PhysConst::q_e;
-    Real weight=q_tot/charge/npart;
+    amrex::Real mmpns_mps = 1.e6;
+    amrex::Real weight=q_tot/charge/npart;
     
     // Allocate temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_w;
@@ -356,12 +358,12 @@ PhysicalParticleContainer::AddExternalFileBeam(std::string s_f, amrex::Real q_to
     if (ParallelDescriptor::IOProcessor()) {
         for (long i = 0; i < npart; ++i) {
             amrex::Real x = ptr_x.get()[i];
-            amrex::Real vx = ptr_vx.get()[i];
+            amrex::Real vx = ptr_vx.get()[i]*mmpns_mps;
             amrex::Real z = ptr_z.get()[i];
-            amrex::Real vz = ptr_vz.get()[i];
+            amrex::Real vz = ptr_vz.get()[i]*mmpns_mps;
 #if (defined WARPX_DIM_3D)
             amrex::Real y = ptr_y.get()[i];
-            amrex::Real vy = ptr_vy.get()[i];
+            amrex::Real vy = ptr_vy.get()[i]*mmpns_mps;
 #elif (defined WARPX_DIM_XZ)
             amrex::Real y = 0.0;
             amrex::Real vy = 0.0;
@@ -375,8 +377,7 @@ PhysicalParticleContainer::AddExternalFileBeam(std::string s_f, amrex::Real q_to
         }
     }
     // Add the temporary CPU vectors to the particle structure
-    np = particle_z.size();
-    AddNParticles(0,np,
+    AddNParticles(0,npart,
                   particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
