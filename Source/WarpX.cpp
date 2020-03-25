@@ -1262,7 +1262,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
 }
 
 void
-WarpX::ComputeDivE(amrex::MultiFab& divE, int lev)
+WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 {
 #ifdef WARPX_USE_PSATD
     spectral_solver_fp[lev]->ComputeSpectralDivE( Efield_aux[lev], divE );

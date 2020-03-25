@@ -457,7 +457,7 @@ public:
                              const std::array<const amrex::MultiFab*, 3>& B,
                              const std::array<amrex::Real,3>& dx, int ngrow);
 
-    void ComputeDivE(amrex::MultiFab& divE, int lev);
+    void ComputeDivE(amrex::MultiFab& divE, const int lev);
 
     const amrex::IntVect getngE() const { return guard_cells.ng_alloc_EB; };
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; };

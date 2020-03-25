@@ -3,7 +3,7 @@
 
 using namespace amrex;
 
-PartPerCellFunctor::PartPerCellFunctor(amrex::MultiFab* mf_src, int lev, int ncomp)
+PartPerCellFunctor::PartPerCellFunctor(const amrex::MultiFab* mf_src, const int lev, const int ncomp)
     : ComputeDiagFunctor(ncomp), m_lev(lev)
 {
     // mf_src will not be used, let's make sure it's null.
@@ -13,7 +13,7 @@ PartPerCellFunctor::PartPerCellFunctor(amrex::MultiFab* mf_src, int lev, int nco
 }
 
 void
-PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
+PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
 {
     auto& warpx = WarpX::GetInstance();
     // Make alias MultiFab* pointing to the component of mf_dst where the
