@@ -3,7 +3,7 @@
 
 using namespace amrex;
 
-PartPerGridFunctor::PartPerGridFunctor(const amrex::MultiFab* mf_src, const int lev, const int ncomp)
+PartPerGridFunctor::PartPerGridFunctor(const amrex::MultiFab * const mf_src, const int lev, const int ncomp)
     : ComputeDiagFunctor(ncomp), m_lev(lev)
 {
     // mf_src will not be used, let's make sure it's null.

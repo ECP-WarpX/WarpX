@@ -16,7 +16,7 @@ public:
      * \param[in] lev level of multifab. Used for averaging in rz.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
-    PartPerGridFunctor(constamrex::MultiFab* mf_src, const int lev, const int ncomp=1);
+    PartPerGridFunctor(const amrex::MultiFab * const mf_src, const int lev, const int ncomp=1);
 
     /** \brief Compute the number of particles per cell directly into mf_dst.
      *
@@ -26,7 +26,7 @@ public:
      */
     virtual void operator()(amrex::MultiFab& mf_dst, const int dcomp) const override final;
 private:
-    int m_lev; /**< level on which mf_src is defined */
+    int const m_lev; /**< level on which mf_src is defined */
 };
 
 #endif // WARPX_PARTPERGRIDFUNCTOR_H_
