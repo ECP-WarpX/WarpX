@@ -26,6 +26,11 @@
     #include <Particles/ElementaryProcess/QEDPhotonEmission.H>
 #endif
 
+#ifdef WARPX_USE_OPENPMD
+    #include <openPMD/openPMD.hpp>
+    #include "Utils/WarpXConst.H"
+#endif
+
 #include <map>
 
 /**
