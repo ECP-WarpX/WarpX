@@ -21,10 +21,6 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_Utility.H>
 
-#ifdef WARPX_USE_OPENPMD
-#include <openPMD/openPMD.hpp>
-#endif
-
 #include <array>
 
 ///
