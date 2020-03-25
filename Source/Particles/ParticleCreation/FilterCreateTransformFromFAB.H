@@ -18,19 +18,18 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
     const auto box_sizex = box.length(0);
     const auto box_sizey = box.length(1);
 
-//    amrex::Print() << "dst1 = " << dst1 << "\n";
-//    amrex::Print() << "dst1 = " << dst2 << "\n";
-
     auto & warpx = WarpX::GetInstance();
     const int level_0 = 0;
     Geometry const & geom = warpx.Geom(level_0);
 
     Real xlo_global = geom.ProbLo(0);
     Real ylo_global = geom.ProbLo(1);
-    Real zlo_global = geom.ProbLo(2);
     Real dx         = geom.CellSize(0);
     Real dy         = geom.CellSize(1);
+#if (AMREX_SPACEDIM == 3)
+    Real zlo_global = geom.ProbLo(2);
     Real dz         = geom.CellSize(2);
+#endif
 
     auto arrNumPartCreation = src_FAB->array();
 
@@ -45,7 +44,6 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
     Gpu::streamSynchronize();
 
     const Index num_added = N*(last_mask + last_offset);
-    amrex::Print() << "num_added = "  << num_added << "\n";
     dst1.resize(std::max(dst1_index + num_added, dst1.numParticles()));
     dst2.resize(std::max(dst2_index + num_added, dst2.numParticles()));
 
@@ -58,26 +56,21 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
     {
         if (mask[i])
         {
-            amrex::Print() << "BLAKOU" << i;
             IntVect iv = box.atOffset(i);
             int j = iv[0];
             int k = iv[1];
             Real x = xlo_global + j*dx; // I think this should correspond to node positions right ?
-            amrex::Print() << "BLAKA" << i;
 #if (AMREX_SPACEDIM == 3)
             int l = iv[2];
             Real y = ylo_global + k*dy;
             Real z = zlo_global + l*dz;
 #else
             int l = 0;
-            Real y = 0.;
+            int y = 0;
             Real z = ylo_global + k*dy;
 #endif
             for (int n = 0; n < N; ++n)
             {
-                amrex::Print() << "x = " << x << "\n";
-                amrex::Print() << "y = " << y << "\n";
-                amrex::Print() << "z = " << z << "\n";
                 create1(dst1_data, N*p_offsets[i] + dst1_index + n, x, y, z);
                 create2(dst2_data, N*p_offsets[i] + dst2_index + n, x, y, z);
             }
@@ -85,11 +78,8 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
                        arrNumPartCreation(j,k,l));
             transform(dst2_data, N*p_offsets[i] + dst2_index, N,
                        arrNumPartCreation(j,k,l));
-            amrex::Print() << "BLAKO" << i << N;
         }
     });
-
-    amrex::Print() << "BLAKOUT" ;
 
     Gpu::streamSynchronize();
     return num_added;

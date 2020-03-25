@@ -1060,16 +1060,8 @@ MultiParticleContainer::doQEDSchwinger ()
 
     for (MFIter mfi(Ex, info); mfi.isValid(); ++mfi )
     {
-        amrex::Print() << "Hi"  << "\n";
         // Make the box cell centered to avoid creating particles twice on the tile edges
         const Box& box = enclosedCells(mfi.tilebox());
-
-        const Box& grownbox = mfi.growntilebox();
-
-        const auto& arrEx = Ex[mfi].array();
-        amrex::ParallelFor(grownbox,            [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                amrex::Print() << "i = " << i << " j = " << j << "k = " << k << "Ex = " << arrEx(i,j,k) << "\n";
-            });
 
         const FArrayBox *array_EMFAB [] = {&Ex[mfi],&Ey[mfi],&Ez[mfi],
                                            &Bx[mfi],&By[mfi],&Bz[mfi]};
@@ -1093,15 +1085,10 @@ MultiParticleContainer::doQEDSchwinger ()
 
         auto transform_dummy= [](auto, auto, auto, auto) {return 0;};
 
-        amrex::Print() << "Hii"  << "\n";
-
         const auto num_added = filterCreateTransformFromFAB<1>( dst_ele_tile,
                               dst_pos_tile, box, array_EMFAB, np_ele_dst,
                                np_pos_dst,Filter, CreateEle, CreatePos,
                                 transform_dummy);
-
-        amrex::Print() << "num_added = "  << num_added << "\n";
-
 
         setNewParticleIDs(dst_ele_tile, np_ele_dst, num_added);
         setNewParticleIDs(dst_pos_tile, np_pos_dst, num_added);
