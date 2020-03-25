@@ -323,12 +323,7 @@ PhysicalParticleContainer::AddExternalFileBeam(std::string s_f, amrex::Real q_to
     std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
     amrex::Real p_m=ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
     amrex::Real p_q=ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    std::int npart=ps.second["position"]["x"].getExtent()[0];
-    std::shared_ptr<amrex::Real> ptr_x = ps.second["position"]["x"].loadChunk<amrex::Real>();
-    std::shared_ptr<amrex::Real> ptr_z = ps.second["position"]["z"].loadChunk<amrex::Real>();
-#if (defined WARPX_DIM_3D)
-    std::shared_ptr<amrex::Real> ptr_y = ps.second["position"]["y"].loadChunk<amrex::Real>();
-#endif
+    int npart=ps.second["position"]["x"].getExtent()[0];
     series.flush();
     
     mass=p_m*PhysConst::mev_kg;
