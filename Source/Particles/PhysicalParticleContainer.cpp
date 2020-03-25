@@ -310,21 +310,12 @@ PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
 }
 
 void
-PhysicalParticleContainer::AddExternalFileBeam(std::string s_f, amrex::Real q)
+PhysicalParticleContainer::AddExternalFileBeam(std::string s_f, amrex::Real q_tot)
 {
 #ifdef WARPX_USE_OPENPMD
     openPMD::Series series=openPMD::Series(s_f,openPMD::AccessType::READ_ONLY);
     amrex::Print() << "OpenPMD standard version " << series.openPMD() << "\n";
     openPMD::Iteration& i = series.iterations[1];
-    
-    // Allocate temporary vectors on the CPU? or GPU?
-    Gpu::HostVector<ParticleReal> particle_x;
-    Gpu::HostVector<ParticleReal> particle_y;
-    Gpu::HostVector<ParticleReal> particle_z;
-    Gpu::HostVector<ParticleReal> particle_ux;
-    Gpu::HostVector<ParticleReal> particle_uy;
-    Gpu::HostVector<ParticleReal> particle_uz;
-    Gpu::HostVector<ParticleReal> particle_w;
     
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size()==1,"External file "
                                      "should contain only one species\n");
@@ -332,17 +323,21 @@ PhysicalParticleContainer::AddExternalFileBeam(std::string s_f, amrex::Real q)
     std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
     amrex::Real p_m=ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
     amrex::Real p_q=ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    auto x = ps.second["position"]["x"];
-    amrex::Print() << typeid(x).name() << "\n";
-    std::shared_ptr<amrex::Real> ptr_x = x.loadChunk<amrex::Real>();
+    std::int npart=ps.second["position"]["x"].getExtent()[0];
+    std::shared_ptr<amrex::Real> ptr_x = ps.second["position"]["x"].loadChunk<amrex::Real>();
+    std::shared_ptr<amrex::Real> ptr_z = ps.second["position"]["z"].loadChunk<amrex::Real>();
+#if (defined WARPX_DIM_3D)
+    std::shared_ptr<amrex::Real> ptr_y = ps.second["position"]["y"].loadChunk<amrex::Real>();
+#endif
     series.flush();
     
     mass=p_m*PhysConst::mev_kg;
     charge=p_q*PhysConst::q_e;
-    amrex::Real nparts=x.getExtent()[0];
+    Real weight=q_tot/charge/npart;
     
-    amrex::Print() << nparts << " parts of species " << ps.first << "\nWith";
-    amrex::Print() << " mass = " << mass << " and charge = " << charge << "\n";
+    amrex::Print() << npart << " parts of species " << ps.first << "\nWith"
+    << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
+    << npart << " macroparticles with weight " << weight << "\n";
 #endif
     return;
 }
