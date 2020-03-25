@@ -14,7 +14,7 @@ public:
      * \param[in] mf_src source multifab.
      * \param[in] lev level of multifab. Used for averaging in rz.
      * \param[in] convert_RZmodes2cartesian (in cylindrical) whether to
-     *            average all modes in mf_src before cell-centering into dst multifab.
+     *            sum all modes in mf_src before cell-centering into dst multifab.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
     CellCenterFunctor(amrex::MultiFab* mf_src, int lev,
