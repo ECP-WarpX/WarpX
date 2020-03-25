@@ -204,6 +204,9 @@ WarpX::WarpX ()
     t_old.resize(nlevs_max, std::numeric_limits<Real>::lowest());
     dt.resize(nlevs_max, std::numeric_limits<Real>::max());
 
+    // Diagnostics
+    multi_diags = std::unique_ptr<MultiDiagnostics> (new MultiDiagnostics());
+
     // Particle Container
     mypc = std::unique_ptr<MultiParticleContainer> (new MultiParticleContainer(this));
     warpx_do_continuous_injection = mypc->doContinuousInjection();
@@ -589,7 +592,6 @@ WarpX::ReadParameters ()
 #ifdef WARPX_USE_OPENPMD
         pp.query("openpmd_tspf", openpmd_tspf);
 #endif
-        pp.query("plot_costs", plot_costs);
         pp.query("plot_raw_fields", plot_raw_fields);
         pp.query("plot_raw_fields_guards", plot_raw_fields_guards);
         pp.query("plot_coarsening_ratio", plot_coarsening_ratio);
@@ -1190,6 +1192,10 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
                     const std::array<const amrex::MultiFab*, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
+        "ComputeDivB not implemented with do_nodal."
+        "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
+
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
 #ifdef WARPX_DIM_RZ
@@ -1224,6 +1230,10 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
                     const std::array<const amrex::MultiFab*, 3>& B,
                     const std::array<amrex::Real,3>& dx, int ngrow)
 {
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
+        "ComputeDivB not implemented with do_nodal."
+        "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
+
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
 #ifdef WARPX_DIM_RZ
@@ -1251,6 +1261,16 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
                               );
         });
     }
+}
+
+void
+WarpX::ComputeDivE(amrex::MultiFab& divE, int lev)
+{
+#ifdef WARPX_USE_PSATD
+    spectral_solver_fp[lev]->ComputeSpectralDivE( Efield_aux[lev], divE );
+#else
+    m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
+#endif
 }
 
 PML*
@@ -1419,4 +1439,14 @@ WarpX::PicsarVersion ()
 #else
     return std::string("Unknown");
 #endif
+}
+
+void
+WarpX::FieldGather ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        mypc->FieldGather(lev,
+                          *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
+                          *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
+    }
 }
