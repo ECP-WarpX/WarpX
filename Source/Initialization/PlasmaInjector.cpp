@@ -231,8 +231,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         pp.get("injection_file",str_injection_file);
         //StringParseAbortMessage("Injection style", part_pos_s);
 #else
-        amrex::Abort("WarpX has to be compiled with USE_OPMD=True to be able to"
-                     " read the external OpenPMD file with species data");
+        amrex::Abort("WarpX has to be compiled with USE_OPENPMD=TRUE to be able to"
+                     " read the external openPMD file with species data");
 #endif
     } else {
         StringParseAbortMessage("Injection style", part_pos_s);
