@@ -314,7 +314,7 @@ PhysicalParticleContainer::AddExternalFileBeam(std::string s_f)
 {
 #ifdef WARPX_USE_OPENPMD
     openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
-    amrex::Print() << "OpenPMD standard version " << series.openPMD() << "\n";
+    amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
     
     openPMD::Iteration& i = series.iterations[1];
     amrex::Print()  << "File contains " << i.particles.size() << " specie(s):" << "\n";
