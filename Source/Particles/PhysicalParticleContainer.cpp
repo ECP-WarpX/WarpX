@@ -314,7 +314,7 @@ PhysicalParticleContainer::AddExternalFileBeam(std::string s_f, amrex::Real q_to
 {
 #ifdef WARPX_USE_OPENPMD
     openPMD::Series series=openPMD::Series(s_f,openPMD::AccessType::READ_ONLY);
-    amrex::Print() << "OpenPMD standard version " << series.openPMD() << "\n";
+    amrex::Print() << "\nOpenPMD standard version " << series.openPMD() << "\n";
     openPMD::Iteration& i = series.iterations[1];
     
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size()==1,"External file "
@@ -323,7 +323,15 @@ PhysicalParticleContainer::AddExternalFileBeam(std::string s_f, amrex::Real q_to
     std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
     amrex::Real p_m=ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
     amrex::Real p_q=ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
+    series.flush();
     int npart=ps.second["position"]["x"].getExtent()[0];
+    std::shared_ptr<amrex::Real> ptr_x = ps.second["position"]["x"].loadChunk<amrex::Real>();
+    series.flush();
+    std::shared_ptr<amrex::Real> ptr_z = ps.second["position"]["z"].loadChunk<amrex::Real>();
+    series.flush();
+#if (defined WARPX_DIM_3D)
+    std::shared_ptr<amrex::Real> ptr_y = ps.second["position"]["y"].loadChunk<amrex::Real>();
+#endif
     series.flush();
     
     mass=p_m*PhysConst::mev_kg;
@@ -332,7 +340,11 @@ PhysicalParticleContainer::AddExternalFileBeam(std::string s_f, amrex::Real q_to
     
     amrex::Print() << npart << " parts of species " << ps.first << "\nWith"
     << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
-    << npart << " macroparticles with weight " << weight << "\n";
+    << npart << " macroparticles with weights of " << weight << "\n";
+    
+    for (size_t col; col<npart; ++col){
+        amrex::Print() << "x = " << ptr_x.get()[col] << "\n";
+    }
 #endif
     return;
 }
