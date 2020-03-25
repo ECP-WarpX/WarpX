@@ -396,7 +396,12 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
                                            makeParser(str_momentum_function_uy,{"x","y","z"}),
                                            makeParser(str_momentum_function_uz,{"x","y","z"})));
     } else {
-        StringParseAbortMessage("Momentum distribution type", mom_dist_s);
+        //No need for momentum definition if external file is used
+        std::string s_inj_style;
+        pp.query("injection_style", s_inj_style);
+        if (s_inj_style != "external_file") {
+            StringParseAbortMessage("Momentum distribution type", mom_dist_s);
+        }
     }
 }
 
