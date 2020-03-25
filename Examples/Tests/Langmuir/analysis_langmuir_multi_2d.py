@@ -102,4 +102,4 @@ if cc:
     rho  = data['rho' ].to_ndarray()
     divE = data['divE'].to_ndarray()
     Linf_norm = np.amax( np.abs( rho/epsilon_0 - divE ) / np.abs( rho/epsilon_0 ) )
-    assert( Linf_norm < 3.e-1 )
+    assert( Linf_norm < 1.e-9 )
