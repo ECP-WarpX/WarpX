@@ -88,7 +88,13 @@ Diagnostics::InitData ()
             } else if ( varnames[comp] == "jz" ){
                 all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 2), lev);
             } else if ( varnames[comp] == "rho" ){
+                // rho_new is stored in component 1 of rho_fp when using PSATD
+#ifdef WARPX_USE_PSATD
+                MultiFab* rho_new = new MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
+                all_field_functors[lev][comp] = new CellCenterFunctor(rho_new, lev);
+#else
                 all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_rho_fp(lev), lev);
+#endif
             } else if ( varnames[comp] == "F" ){
                 all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_F_fp(lev), lev);
             } else if ( varnames[comp] == "part_per_cell" ){
