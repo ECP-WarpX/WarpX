@@ -313,22 +313,36 @@ void
 PhysicalParticleContainer::AddExternalFileBeam(std::string s_f)
 {
 #ifdef WARPX_USE_OPENPMD
-    openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
+    openPMD::Series series=openPMD::Series(s_f,openPMD::AccessType::READ_ONLY);
     amrex::Print() << "OpenPMD standard version " << series.openPMD() << "\n";
-    
     openPMD::Iteration& i = series.iterations[1];
-    amrex::Print()  << "File contains " << i.particles.size() << " specie(s):";
-    for( auto ps : i.particles ) {
-        std::shared_ptr<amrex::Real> ptr_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>();
-        amrex::Real p_q=ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-        amrex::Real p_m=ptr_m.get()[0];
-        amrex::Real nparts=ptr_m.use_count();
-        series.flush();
-        mass=p_m*PhysConst::mev_kg;
-        charge=p_q*PhysConst::q_e;
-        amrex::Print() << nparts << "\t" << " " << ps.first << "s of";
-        amrex::Print() << " mass = " << mass << " and charge = " << charge << "\n";
-    }
+    
+    // Allocate temporary vectors on the CPU? or GPU?
+    Gpu::HostVector<ParticleReal> particle_x;
+    Gpu::HostVector<ParticleReal> particle_y;
+    Gpu::HostVector<ParticleReal> particle_z;
+    Gpu::HostVector<ParticleReal> particle_ux;
+    Gpu::HostVector<ParticleReal> particle_uy;
+    Gpu::HostVector<ParticleReal> particle_uz;
+    Gpu::HostVector<ParticleReal> particle_w;
+    
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size()==1,"External file "
+                                     "should contain only one species\n");
+    
+    std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
+    amrex::Real p_m=ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
+    amrex::Real p_q=ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
+    auto x = ps.second["position"]["x"];
+    amrex::Print() << typeid(x).name() << "\n";
+    std::shared_ptr<amrex::Real> ptr_x = x.loadChunk<amrex::Real>();
+    series.flush();
+    
+    mass=p_m*PhysConst::mev_kg;
+    charge=p_q*PhysConst::q_e;
+    amrex::Real nparts=x.getExtent()[0];
+    
+    amrex::Print() << nparts << " parts of species " << ps.first << "\nWith";
+    amrex::Print() << " mass = " << mass << " and charge = " << charge << "\n";
 #endif
     return;
 }
