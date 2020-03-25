@@ -319,12 +319,12 @@ PhysicalParticleContainer::AddExternalFileBeam(std::string s_f)
     openPMD::Iteration& i = series.iterations[1];
     amrex::Print()  << "File contains " << i.particles.size() << " specie(s):";
     for( auto ps : i.particles ) {
-        amrex::Print() << "\t* " << ps.first << " with:\n";
-        mass=ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-        charge=ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
+        mass=ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get();
+        charge=ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get();
         series.flush();
-        amrex::Print() << "Mass = " << mass << "\n";
-        amrex::Print() << "Charge = " << charge << "\n";
+        amrex::Print() << typeid(mass).name() <<"\n";
+        amrex::Print() << mass.size() << " " << ps.first << "s of";
+        amrex::Print() << " mass = " << mass[0] << " and charge = " << charge[0] << "\n";
     }
 #endif
     return;
