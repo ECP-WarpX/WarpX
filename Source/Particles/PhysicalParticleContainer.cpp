@@ -317,9 +317,9 @@ PhysicalParticleContainer::AddExternalFileBeam(std::string s_f)
     amrex::Print() << "OpenPMD standard version " << series.openPMD() << "\n";
     
     openPMD::Iteration& i = series.iterations[1];
-    amrex::Print()  << "File contains " << i.particles.size() << " specie(s):";
+    amrex::Print()  << "File contains " << i.particles.size() << " specie(s):" << "\n";
     for( auto const& ps : i.particles ) {
-        amrex::Print() << "\n\t" << ps.first;
+        amrex::Print() << "\t" << ps.first << "\n";
     }
     //ParticleSpecies& part=i.particles[bp.p_name];
 #endif
