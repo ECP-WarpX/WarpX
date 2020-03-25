@@ -382,10 +382,14 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 #endif
 
-// Apply current correction in Fourier space
-// (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
 #ifdef WARPX_USE_PSATD
-    if ( do_current_correction ) CurrentCorrection();
+    // Apply current correction in Fourier space
+    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
+    if ( fft_periodic_single_box == false ) {
+        // For domain decomposition with local FFT over guard cells,
+        // apply this before `SyncCurrent`, i.e. before exchanging guard cells for J
+        if ( do_current_correction ) CurrentCorrection();
+    }
 #endif
 
 #ifdef WARPX_QED
@@ -396,6 +400,17 @@ WarpX::OneStep_nosub (Real cur_time)
     // Synchronize J and rho
     SyncCurrent();
     SyncRho();
+
+#ifdef WARPX_USE_PSATD
+    // Apply current correction in Fourier space
+    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
+    if ( fft_periodic_single_box == true ) {
+        // For periodic, single-box FFT (FFT without guard cells)
+        // apply this after `SyncCurrent`, i.e. after exchanging guard cells for J
+        if ( do_current_correction ) CurrentCorrection();
+    }
+#endif
+
 
     // At this point, J is up-to-date inside the domain, and E and B are
     // up-to-date including enough guard cells for first step of the field
