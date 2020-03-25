@@ -207,7 +207,7 @@ public:
                          amrex::Real x_rms, amrex::Real y_rms, amrex::Real z_rms,
                          amrex::Real q_tot, long npart, int do_symmetrize);
     
-    void AddExternalFileBeam(std::string s_f);
+    void AddExternalFileBeam(std::string s_f, amrex::Real q);
 
     void CheckAndAddParticle(amrex::Real x, amrex::Real y, amrex::Real z,
                              std::array<amrex::Real, 3> u,
