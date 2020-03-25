@@ -37,11 +37,16 @@ public:
     bool DoDump (int step, bool force_flush=false);
 private:
     void ReadParameters ();
-    /** Append varnames with names for all modes of all components of E B and j */
-    void AddRZModesToOutputNames ();
+    /** Append varnames with names for all modes of a field
+     * \param[in] field field name (includes component, e.g., Er)
+     * \param[in] ncomp number of components (modes, real and imag)
+     */
+    void AddRZModesToOutputNames (const std::string& field, int ncomp);
     /** Append all_field_functors[lev] with all modes of all components of E B and j
-     * \param[in] lev level on which source multifabs are defined. */
-    void AddRZModesToInputsFunctors (int lev);
+     * and add name to varnames.
+     * \param[in] lev level on which source multifabs are defined.
+     */
+    void AddRZModesToDiags (int lev);
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string diag_name;
     /** Prefix for output directories */
