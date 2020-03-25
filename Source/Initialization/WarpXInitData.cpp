@@ -475,9 +475,12 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
     const RealBox& real_box = geom[lev].ProbDomain();
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-       const Box& tbx = mfi.tilebox(x_nodal_flag);
+/*        const Box& tbx = mfi.tilebox(x_nodal_flag);
        const Box& tby = mfi.tilebox(y_nodal_flag);
-       const Box& tbz = mfi.tilebox(z_nodal_flag);
+       const Box& tbz = mfi.tilebox(z_nodal_flag); */
+       const Box& tbx = convert(mfi.growntilebox(),x_nodal_flag);
+       const Box& tby = convert(mfi.growntilebox(),y_nodal_flag);
+       const Box& tbz = convert(mfi.growntilebox(),z_nodal_flag);
 
        auto const& mfxfab = mfx->array(mfi);
        auto const& mfyfab = mfy->array(mfi);
@@ -516,7 +519,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the x-component of the field.
+                amrex::Print() << "i = " << i << " j = " << j << "k = " << k << "mfxfab_before = " << mfxfab(i,j,k) << "\n";
                 mfxfab(i,j,k) = (*xfield_parser)(x,y,z);
+                amrex::Print() << "i = " << i << " j = " << j << "k = " << k << "mfxfab_after = " << mfxfab(i,j,k) << "\n";
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 Real fac_x = (1.0 - mfy_type[0]) * dx_lev[0]*0.5;

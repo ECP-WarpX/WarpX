@@ -334,6 +334,13 @@ protected:
     int m_qed_schwinger_ele_product;
     /** Index for Schwinger positron product species in allcontainers */
     int m_qed_schwinger_pos_product;
+    /** Transverse size used in the Schwinger pair production rate calculations */
+    amrex::Real m_qed_schwinger_y_size;
+    /** If the number of physical Schwinger pairs created within a cell is
+     * higher than this threshold we use a Gaussian distribution rather than
+     * a Poisson distribution for the pair production rate calculations
+     */
+    int m_qed_schwinger_threshold_poisson_gaussian = 100;
 
 #endif
 

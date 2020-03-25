@@ -2,12 +2,13 @@
 #define FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 
 template <int N, typename DstTile, typename FAB, typename Index,
-          typename CreateFunc, typename TransFunc,
+          typename CreateFunc1, typename CreateFunc2, typename TransFunc,
           amrex::EnableIf_t<std::is_integral<Index>::value, int> foo = 0>
 Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box,
                                      FAB *src_FAB, Index* mask,
                                     Index dst1_index, Index dst2_index,
-                                    CreateFunc&& create, TransFunc&& transform) noexcept
+                                    CreateFunc1&& create1, CreateFunc2&& create2,
+                                    TransFunc&& transform) noexcept
 {
     using namespace amrex;
 
@@ -16,6 +17,9 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
 
     const auto box_sizex = box.length(0);
     const auto box_sizey = box.length(1);
+
+//    amrex::Print() << "dst1 = " << dst1 << "\n";
+//    amrex::Print() << "dst1 = " << dst2 << "\n";
 
     auto & warpx = WarpX::GetInstance();
     const int level_0 = 0;
@@ -41,6 +45,7 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
     Gpu::streamSynchronize();
 
     const Index num_added = N*(last_mask + last_offset);
+    amrex::Print() << "num_added = "  << num_added << "\n";
     dst1.resize(std::max(dst1_index + num_added, dst1.numParticles()));
     dst2.resize(std::max(dst2_index + num_added, dst2.numParticles()));
 
@@ -53,40 +58,50 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
     {
         if (mask[i])
         {
+            amrex::Print() << "BLAKOU" << i;
             IntVect iv = box.atOffset(i);
             int j = iv[0];
             int k = iv[1];
-            int l = iv[2];
             Real x = xlo_global + j*dx; // I think this should correspond to node positions right ?
+            amrex::Print() << "BLAKA" << i;
 #if (AMREX_SPACEDIM == 3)
+            int l = iv[2];
             Real y = ylo_global + k*dy;
             Real z = zlo_global + l*dz;
 #else
+            int l = 0;
             Real y = 0.;
             Real z = ylo_global + k*dy;
 #endif
-            for (int n = 0; n < N; ++j)
+            for (int n = 0; n < N; ++n)
             {
-                create(dst1_data, N*p_offsets[i] + dst1_index + n, x, y, z);
-                create(dst2_data, N*p_offsets[i] + dst2_index + n, x, y, z);
+                amrex::Print() << "x = " << x << "\n";
+                amrex::Print() << "y = " << y << "\n";
+                amrex::Print() << "z = " << z << "\n";
+                create1(dst1_data, N*p_offsets[i] + dst1_index + n, x, y, z);
+                create2(dst2_data, N*p_offsets[i] + dst2_index + n, x, y, z);
             }
             transform(dst1_data, N*p_offsets[i] + dst1_index, N,
                        arrNumPartCreation(j,k,l));
             transform(dst2_data, N*p_offsets[i] + dst2_index, N,
                        arrNumPartCreation(j,k,l));
+            amrex::Print() << "BLAKO" << i << N;
         }
     });
+
+    amrex::Print() << "BLAKOUT" ;
 
     Gpu::streamSynchronize();
     return num_added;
 }
 
 template <int N, typename DstTile, typename FABs, typename Index,
-          typename PredFunc, typename CreateFunc, typename TransFunc>
+          typename PredFunc, typename CreateFunc1, typename CreateFunc2,
+           typename TransFunc>
 Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box,
                                     const FABs *src_FABs, Index dst1_index,
                                     Index dst2_index,  PredFunc&& filter,
-                                    CreateFunc&& create,
+                                    CreateFunc1&& create1, CreateFunc2&& create2,
                                     TransFunc && transform) noexcept
 {
     using namespace amrex;
@@ -117,7 +132,8 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
 
     return filterCreateTransformFromFAB<N>(dst1, dst2, box, &NumPartCreation,
                                         mask.dataPtr(), dst1_index, dst2_index,
-                                        std::forward<CreateFunc>(create),
+                                        std::forward<CreateFunc1>(create1),
+                                        std::forward<CreateFunc2>(create2),
                                         std::forward<TransFunc>(transform));
 }
 

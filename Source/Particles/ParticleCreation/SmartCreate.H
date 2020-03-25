@@ -47,10 +47,18 @@ struct SmartCreate
         const int id = 0) const noexcept
     {
         prt.m_aos[i_prt].pos(0) = x;
+        amrex::Print() << "x_create = " << x << "\n";
+        amrex::Print() << "i_prt = " << i_prt << "\n";
+        amrex::Print() << "prt.m_aos = " << prt.m_aos << "\n";
+        amrex::Print() << "prt.m_aos[0] = " << prt.m_aos[0] << "\n";
+        amrex::Print() << "prt.m_aos[1] = " << prt.m_aos[1] << "\n";
+        amrex::Print() << "prt.m_aos[2] = " << prt.m_aos[2] << "\n";
 #if (AMREX_SPACEDIM == 3)
         prt.m_aos[i_prt].pos(1) = y;
-#endif
         prt.m_aos[i_prt].pos(2) = z;
+#elif (AMREX_SPACEDIM == 2)
+        prt.m_aos[i_prt].pos(1) = z;
+#endif
 
         prt.m_aos[i_prt].cpu() = cpu;
         prt.m_aos[i_prt].id() = id;

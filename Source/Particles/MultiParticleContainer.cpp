@@ -14,6 +14,7 @@
 #include "WarpX.H"
 #ifdef WARPX_QED
     #include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
+    #include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
     #include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
 #endif
 
@@ -264,14 +265,17 @@ MultiParticleContainer::ReadParameters ()
 
 #ifdef WARPX_QED
         ParmParse ppw("warpx");
-        ppw.query("do_qed_schwinger",m_do_qed_schwinger);
+        ppw.query("do_qed_schwinger", m_do_qed_schwinger);
 
         if (m_do_qed_schwinger) {
             ParmParse ppq("qed_schwinger");
-            ppq.get("ele_product_species",
-                m_qed_schwinger_ele_product_name);
-            ppq.get("pos_product_species",
-                m_qed_schwinger_pos_product_name);
+            ppq.get("ele_product_species", m_qed_schwinger_ele_product_name);
+            ppq.get("pos_product_species", m_qed_schwinger_pos_product_name);
+#if (AMREX_SPACEDIM == 2)
+            ppq.get("y_size",m_qed_schwinger_y_size);
+#endif
+            ppw.query("threshold_poisson_gaussian",
+                      m_qed_schwinger_threshold_poisson_gaussian);
         }
 #endif
         initialized = true;
@@ -1023,7 +1027,7 @@ MultiParticleContainer::doQEDSchwinger ()
     auto& pc_product_ele =
             allcontainers[m_qed_schwinger_ele_product];
     auto& pc_product_pos =
-            allcontainers[m_qed_schwinger_ele_product];
+            allcontainers[m_qed_schwinger_pos_product];
 
     auto & warpx = WarpX::GetInstance();
 
@@ -1043,15 +1047,6 @@ MultiParticleContainer::doQEDSchwinger ()
     const MultiFab & By = warpx.getBfield(level_0,1);
     const MultiFab & Bz = warpx.getBfield(level_0,2);
 
-        // get cell size multiplied by time step
-    Geometry const & geom = warpx.Geom(level_0);
-    auto domain_box = geom.Domain();
-#if (AMREX_SPACEDIM == 2)
-    auto dVdt = geom.CellSize(0) * geom.CellSize(1) * warpx.getdt(0); // getdt(level_0) ??
-#elif (AMREX_SPACEDIM == 3)
-    auto dVdt = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2) * warpx.getdt(0);
-#endif
-
     // Add defineAllParticleTiles(); ??
 
     MFItInfo info;
@@ -1065,25 +1060,22 @@ MultiParticleContainer::doQEDSchwinger ()
 
     for (MFIter mfi(Ex, info); mfi.isValid(); ++mfi )
     {
+        amrex::Print() << "Hi"  << "\n";
         // Make the box cell centered to avoid creating particles twice on the tile edges
         const Box& box = enclosedCells(mfi.tilebox());
 
-        // const FArrayBox& fabEx = Ex[mfi];
+        const Box& grownbox = mfi.growntilebox();
 
-/*         const auto& arrEx = Ex[mfi].array(); */
+        const auto& arrEx = Ex[mfi].array();
+        amrex::ParallelFor(grownbox,            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                amrex::Print() << "i = " << i << " j = " << j << "k = " << k << "Ex = " << arrEx(i,j,k) << "\n";
+            });
 
         const FArrayBox *array_EMFAB [] = {&Ex[mfi],&Ey[mfi],&Ez[mfi],
                                            &Bx[mfi],&By[mfi],&Bz[mfi]};
-// To add in filter
-/*         FArrayBox NumPairCreation(box, 1);
-        auto arrNumPairCreation = NumPairCreation.array();
 
-        amrex::ParallelFor(box,  [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                arrNumPairCreation(i,j,k) = getSchwingerProductionNumber( dVdt,
-                    arrEx(i,j,k),arrEy(i,j,k),arrEz(i,j,k),
-                    arrBx(i,j,k),arrBy(i,j,k),arrBz(i,j,k));
-                amrex::Print(arrNumPairCreation(i,j,k));
-                }); */
+        pc_product_ele->defineAllParticleTiles();
+        pc_product_pos->defineAllParticleTiles();
 
         auto& dst_ele_tile = pc_product_ele->ParticlesAt(level_0, mfi);
         auto& dst_pos_tile = pc_product_pos->ParticlesAt(level_0, mfi);
@@ -1091,14 +1083,25 @@ MultiParticleContainer::doQEDSchwinger ()
         const auto np_ele_dst = dst_ele_tile.numParticles();
         const auto np_pos_dst = dst_pos_tile.numParticles();
 
-        auto filter_dummy= [](auto, auto, auto, auto) {return 0;};
-        auto create_dummy= [](auto, auto, auto, auto, auto) {return 0;};
+        auto Filter  = SchwingerFilterFunc{m_qed_schwinger_y_size,
+                                m_qed_schwinger_threshold_poisson_gaussian};
+
+        SmartCreateFactory create_factory_ele(*pc_product_ele);
+        SmartCreateFactory create_factory_pos(*pc_product_pos);
+        const auto CreateEle = create_factory_ele.getSmartCreate();
+        const auto CreatePos = create_factory_pos.getSmartCreate();
+
         auto transform_dummy= [](auto, auto, auto, auto) {return 0;};
+
+        amrex::Print() << "Hii"  << "\n";
 
         const auto num_added = filterCreateTransformFromFAB<1>( dst_ele_tile,
                               dst_pos_tile, box, array_EMFAB, np_ele_dst,
-                               np_pos_dst,filter_dummy, create_dummy,
+                               np_pos_dst,Filter, CreateEle, CreatePos,
                                 transform_dummy);
+
+        amrex::Print() << "num_added = "  << num_added << "\n";
+
 
         setNewParticleIDs(dst_ele_tile, np_ele_dst, num_added);
         setNewParticleIDs(dst_pos_tile, np_pos_dst, num_added);
