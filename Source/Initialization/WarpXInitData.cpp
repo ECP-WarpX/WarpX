@@ -519,9 +519,7 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
                 Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the x-component of the field.
-                amrex::Print() << "i = " << i << " j = " << j << "k = " << k << "mfxfab_before = " << mfxfab(i,j,k) << "\n";
                 mfxfab(i,j,k) = (*xfield_parser)(x,y,z);
-                amrex::Print() << "i = " << i << " j = " << j << "k = " << k << "mfxfab_after = " << mfxfab(i,j,k) << "\n";
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 Real fac_x = (1.0 - mfy_type[0]) * dx_lev[0]*0.5;
