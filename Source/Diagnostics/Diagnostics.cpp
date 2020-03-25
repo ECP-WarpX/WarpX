@@ -102,9 +102,7 @@ Diagnostics::InitData ()
             }
         }
 
-        AddRZModesToOutputNames();
-
-        AddRZModesToInputsFunctors( lev );
+        AddRZModesToDiags( lev );
 
         // At this point, varnames.size() >= all_field_functors[0].size()
 
@@ -171,7 +169,7 @@ Diagnostics::DoDump (int step, bool force_flush)
 }
 
 void
-Diagnostics::AddRZModesToInputsFunctors (int lev)
+Diagnostics::AddRZModesToDiags (int lev)
 {
 #ifdef WARPX_DIM_RZ
     auto & warpx = WarpX::GetInstance();
@@ -188,6 +186,7 @@ Diagnostics::AddRZModesToInputsFunctors (int lev)
 
     // First index of all_field_functors[lev] where RZ modes are stored
     int icomp = all_field_functors[0].size();
+    const std::array<std::string, 3> coord {"r", "theta", "z"};
 
     // Er, Etheta, Ez, Br, Btheta, Bz, jr, jtheta, jz
     // Each of them being a multi-component multifab
@@ -198,6 +197,8 @@ Diagnostics::AddRZModesToInputsFunctors (int lev)
         all_field_functors[lev][icomp] = new
             CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, dim), lev,
                               false, ncomp_multimodefab);
+        AddRZModesToOutputNames(std::string("E") + coord[dim],
+                                warpx.get_pointer_Efield_aux(0, 0)->nComp());
         icomp += 1;
     }
     // B
@@ -206,6 +207,8 @@ Diagnostics::AddRZModesToInputsFunctors (int lev)
         all_field_functors[lev][icomp] = new
             CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, dim), lev,
                               false, ncomp_multimodefab);
+        AddRZModesToOutputNames(std::string("B") + coord[dim],
+                                warpx.get_pointer_Bfield_aux(0, 0)->nComp());
         icomp += 1;
     }
     // j
@@ -215,6 +218,8 @@ Diagnostics::AddRZModesToInputsFunctors (int lev)
             CellCenterFunctor(warpx.get_pointer_current_fp(lev, dim), lev,
                               false, ncomp_multimodefab);
         icomp += 1;
+        AddRZModesToOutputNames(std::string("J") + coord[dim],
+                                warpx.get_pointer_current_fp(0, 0)->nComp());
     }
     // Sum the number of components in input vector all_field_functors
     // and check that it corresponds to the number of components in varnames
@@ -228,19 +233,15 @@ Diagnostics::AddRZModesToInputsFunctors (int lev)
 }
 
 void
-Diagnostics::AddRZModesToOutputNames (){
+Diagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
 #ifdef WARPX_DIM_RZ
     auto & warpx = WarpX::GetInstance();
     // In cylindrical geometry, real and imag part of each mode are also
     // dumped to file separately, so they need to be added to varnames
-    for (std::string field : {"E", "B", "j"}){
-        for (std::string dir :  {"r", "theta", "z"}){
-            varnames.push_back( field + dir + "_0_real" );
-            for (int ic=1 ; ic < warpx.get_pointer_Efield_aux(0, 0)->nComp() ; ic += 2) {
-                varnames.push_back( field + dir + "_" + std::to_string(ic) + "_real" );
-                varnames.push_back( field + dir + "_" + std::to_string(ic) + "_imag" );
-            }
-        }
+    varnames.push_back( field + "_0_real" );
+    for (int ic=1 ; ic < ncomp ; ic += 2) {
+        varnames.push_back( field + "_" + std::to_string(ic) + "_real" );
+        varnames.push_back( field + "_" + std::to_string(ic) + "_imag" );
     }
 #endif
 }

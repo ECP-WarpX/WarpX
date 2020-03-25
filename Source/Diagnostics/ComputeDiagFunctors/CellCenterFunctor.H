@@ -13,11 +13,12 @@ public:
     /** Constructor.
      * \param[in] mf_src source multifab.
      * \param[in] lev level of multifab. Used for averaging in rz.
-     * \param[in] mode_avg (in cylindrical) whether to average all modes in mf_src
-     *            before cell-centering into dst multifab.
+     * \param[in] convert_RZmodes2cartesian (in cylindrical) whether to
+     *            sum all modes in mf_src before cell-centering into dst multifab.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
-    CellCenterFunctor(amrex::MultiFab* mf_src, int lev, bool mode_avg=true, int ncomp=1);
+    CellCenterFunctor(amrex::MultiFab* mf_src, int lev,
+                      bool convertRZmodes2cartesian=true, int ncomp=1);
 
     /** \brief Cell-center m_mf_src and write the result in mf_dst.
      *
@@ -30,9 +31,11 @@ public:
      */
     virtual void operator()(amrex::MultiFab& mf_dst, int dcomp) const override final;
 private:
-    amrex::MultiFab* m_mf_src; /**< pointer to source multifab (can be multi-component) */
+    /** pointer to source multifab (can be multi-component) */
+    amrex::MultiFab* m_mf_src;
     int m_lev; /**< level on which mf_src is defined (used in cylindrical) */
-    bool m_mode_avg; /**< (for cylindrical) whether to average all modes into 1 comp */
+    /**< (for cylindrical) whether to average all modes into 1 comp */
+    bool m_convertRZmodes2cartesian;
 };
 
 #endif // WARPX_CELLCENTERFUNCTOR_H_
