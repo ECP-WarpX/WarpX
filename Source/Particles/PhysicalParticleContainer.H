@@ -207,7 +207,12 @@ public:
                          amrex::Real x_rms, amrex::Real y_rms, amrex::Real z_rms,
                          amrex::Real q_tot, long npart, int do_symmetrize);
     
-    void AddExternalFileBeam(std::string s_f, amrex::Real q_tot);
+    /** Load a particle beam from an external file
+     *
+     * @param[in] s_f path to an external file in openPMD markup
+     * @param[in] q_tot total charge of the particle species to be initialized
+     */
+    void AddExternalFileBeam(const std::string s_f, amrex::Real q_tot);
 
     void CheckAndAddParticle(amrex::Real x, amrex::Real y, amrex::Real z,
                              std::array<amrex::Real, 3> u,
