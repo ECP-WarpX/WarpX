@@ -7,7 +7,7 @@
  * \brief Functor to compute divE into mf_out.
  */
 class
-DivEFunctor : public ComputeDiagFunctor
+DivEFunctor final : public ComputeDiagFunctor
 {
 public:
     /** Constructor.
@@ -15,7 +15,7 @@ public:
      * \param[in] lev level of multifab.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
-    DivEFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, amrex::IntVect diag_crse_ratio, const int ncomp=1);
+    DivEFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, const amrex::IntVect diag_crse_ratio, const int ncomp=1);
 
     /** \brief Compute DivE directly into mf_dst.
      *
@@ -23,7 +23,7 @@ public:
      * \param[in] dcomp first component of mf_dst in which cell-centered
      *            data is stored
      */
-    virtual void operator()(amrex::MultiFab& mf_dst, const int dcomp) const override final;
+    virtual void operator()(amrex::MultiFab& mf_dst, const int dcomp) const override;
 private:
     /** Vector of pointer to source multifab Bx, By, Bz */
     std::array<const amrex::MultiFab * const, 3> m_arr_mf_src;
