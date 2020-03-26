@@ -1200,8 +1200,8 @@ WarpX::RefRatio (int lev)
 }
 
 void
-WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                    const std::array<const amrex::MultiFab*, 3>& B,
+WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
+                    const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
@@ -1238,9 +1238,9 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
 }
 
 void
-WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                    const std::array<const amrex::MultiFab*, 3>& B,
-                    const std::array<amrex::Real,3>& dx, int ngrow)
+WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
+                    const std::array<const amrex::MultiFab* const, 3>& B,
+                    const std::array<amrex::Real,3>& dx, int const ngrow)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
         "ComputeDivB not implemented with do_nodal."
@@ -1276,7 +1276,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
 }
 
 void
-WarpX::ComputeDivE(amrex::MultiFab& divE, int lev)
+WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 {
 #ifdef WARPX_USE_PSATD
     spectral_solver_fp[lev]->ComputeSpectralDivE( Efield_aux[lev], divE );

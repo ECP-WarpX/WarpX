@@ -3,12 +3,12 @@
 
 using namespace amrex;
 
-DivEFunctor::DivEFunctor(std::array<const amrex::MultiFab*, 3> arr_mf_src, int lev, int ncomp)
+DivEFunctor::DivEFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, const int ncomp)
     : ComputeDiagFunctor(ncomp), m_arr_mf_src(arr_mf_src), m_lev(lev)
 {}
 
 void
-DivEFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
+DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
 {
     auto& warpx = WarpX::GetInstance();
 
