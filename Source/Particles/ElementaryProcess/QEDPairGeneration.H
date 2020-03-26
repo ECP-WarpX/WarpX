@@ -80,7 +80,8 @@ public:
     {}
 
     /**
-    * \brief Functor call. It determines the properties of the generated pair.
+    * \brief Functor call. It determines the properties of the generated pair
+    * and it sets to -1 the id of the source photon
     *
     * @param[in,out] dst1 target species 1 (either electrons or positrons)
     * @param[in,out] dst2 target species 2 (either electrons or positrons)
@@ -91,7 +92,7 @@ public:
     */
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (DstData& dst1, DstData& dst2, const SrcData& src,
+    void operator() (DstData& dst1, DstData& dst2, SrcData& src,
         int const i_src, int const i_dst1, int const i_dst2) const noexcept
     {
         using namespace amrex;
