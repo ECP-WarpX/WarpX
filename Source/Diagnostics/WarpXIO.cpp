@@ -427,7 +427,7 @@ WarpX::GetCellCenteredData() {
 
     for (int lev = finest_level; lev > 0; --lev)
     {
-        Average::FineToCoarse( *cc[lev], *cc[lev-1], 0, nc, refRatio(lev-1) );
+        Average::FineToCoarse( *cc[lev-1], *cc[lev], 0, nc, refRatio(lev-1) );
     }
 
     return std::move(cc[0]);

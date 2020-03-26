@@ -29,66 +29,69 @@ Average::ToCellCenter ( MultiFab& mf_out,
 }
 
 void
-Average::FineToCoarse ( const MultiFab& S_fine,
-                        MultiFab& S_crse,
-                        int scomp,
-                        int ncomp,
-                        const IntVect& ratio )
+Average::FineToCoarse ( MultiFab& mf_cp,
+                        const MultiFab& mf_fp,
+                        const int scomp,
+                        const int ncomp,
+                        const IntVect ratio )
 {
-    BL_PROFILE("amrex::average_down");
-    AMREX_ASSERT(S_crse.nComp() == S_fine.nComp());
-    AMREX_ASSERT((S_crse.is_cell_centered() && S_fine.is_cell_centered()) ||
-                 (S_crse.is_nodal()         && S_fine.is_nodal()));
+    BL_PROFILE( "Average::FineToCoarse" );
+    AMREX_ASSERT( mf_cp.nComp() == mf_fp.nComp() );
+    AMREX_ASSERT( (mf_cp.is_cell_centered() && mf_fp.is_cell_centered()) ||
+                  (mf_cp.is_nodal()         && mf_fp.is_nodal()) );
 
-    bool is_cell_centered = S_crse.is_cell_centered();
+    bool is_cell_centered = mf_cp.is_cell_centered();
 
-    // Coarsen() the fine stuff on processors owning the fine data.
-    BoxArray crse_S_fine_BA = S_fine.boxArray(); crse_S_fine_BA.coarsen(ratio);
+    // Coarsen() fine data
+    BoxArray coarsened_mf_fp_BA = mf_fp.boxArray();
+    coarsened_mf_fp_BA.coarsen( ratio );
 
-    const IntVect stag = S_fine.boxArray().ixType().ixType();
+    // Staggering of fine MultiFab
+    const IntVect stag = mf_fp.boxArray().ixType().ixType();
 
-    if (crse_S_fine_BA == S_crse.boxArray() and S_fine.DistributionMap() == S_crse.DistributionMap())
+    if (coarsened_mf_fp_BA == mf_cp.boxArray() and mf_fp.DistributionMap() == mf_cp.DistributionMap())
     {
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        for (MFIter mfi(S_crse,TilingIfNotGPU()); mfi.isValid(); ++mfi)
+        for (MFIter mfi( mf_cp, TilingIfNotGPU() ); mfi.isValid(); ++mfi)
         {
-            // NOTE: the tilebox is defined at the coarse level.
+            // NOTE: tilebox defined at the coarse level
             const Box& bx = mfi.tilebox();
-            Array4<Real> const& crsearr = S_crse.array(mfi);
-            Array4<Real const> const& finearr = S_fine.const_array(mfi);
+            Array4<Real> const& mf_cp_arr = mf_cp.array( mfi );
+            Array4<Real const> const& mf_fp_arr = mf_fp.const_array( mfi );
 
             AMREX_LAUNCH_HOST_DEVICE_LAMBDA ( bx, tbx,
             {
-                Average::FineToCoarse( tbx, crsearr, finearr, stag, scomp, scomp, ncomp, ratio );
+                Average::FineToCoarse( tbx, mf_cp_arr, mf_fp_arr, stag, scomp, scomp, ncomp, ratio );
             });
         }
     }
     else
     {
-        MultiFab crse_S_fine(crse_S_fine_BA, S_fine.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory());
+        MultiFab coarsened_mf_fp( coarsened_mf_fp_BA, mf_fp.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-        for (MFIter mfi(crse_S_fine,TilingIfNotGPU()); mfi.isValid(); ++mfi)
+        for (MFIter mfi( coarsened_mf_fp, TilingIfNotGPU() ); mfi.isValid(); ++mfi)
         {
-            // NOTE: the tilebox is defined at the coarse level.
+            // NOTE: tilebox defined at the coarse level
             const Box& bx = mfi.tilebox();
-            Array4<Real> const& crsearr = crse_S_fine.array(mfi);
-            Array4<Real const> const& finearr = S_fine.const_array(mfi);
+            Array4<Real> const& mf_cp_arr = coarsened_mf_fp.array(mfi);
+            Array4<Real const> const& mf_fp_arr = mf_fp.const_array(mfi);
 
-            // NOTE: we copy from component scomp of the fine fab into component 0 of the crse fab
-            //       because the crse fab is a temporary which was made starting at comp 0, it is
-            //       not part of the actual crse multifab which came in.
+            // NOTE: we copy from component scomp of the fine FArrayBox into component 0
+            //       of the coarse FArrayBox because the coarse FArrayBox is a temporary
+            //       FArrayBox starting at component 0 and is not part of the actual
+            //       coarse MultiFab mf_cp
 
             AMREX_LAUNCH_HOST_DEVICE_LAMBDA ( bx, tbx,
             {
-                Average::FineToCoarse( tbx, crsearr, finearr, stag, 0, scomp, ncomp, ratio );
+                Average::FineToCoarse( tbx, mf_cp_arr, mf_fp_arr, stag, 0, scomp, ncomp, ratio );
             });
         }
 
-        S_crse.copy(crse_S_fine,0,scomp,ncomp);
+        mf_cp.copy( coarsened_mf_fp, 0, scomp, ncomp );
     }
 }

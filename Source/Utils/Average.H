@@ -93,13 +93,13 @@ namespace Average{
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     void FineToCoarse ( Box const& bx,
-                        Array4<Real> const& crse,
-                        Array4<Real const> const& fine,
+                        Array4<Real> const& mf_cp_arr,
+                        Array4<Real const> const& mf_fp_arr,
                         const IntVect stag,
-                        int ccomp,
-                        int fcomp,
-                        int ncomp,
-                        IntVect const& ratio )
+                        const int ccomp,
+                        const int fcomp,
+                        const int ncomp,
+                        const IntVect ratio )
     {
 
         const int sx = stag[0];
@@ -134,22 +134,22 @@ namespace Average{
                         for (int kref = 0; kref < itz; ++kref) {
                             for (int jref = 0; jref < ity; ++jref) {
                                 for (int iref = 0; iref < itx; ++iref) {
-                                    c += fine(ii+iref,jj+jref,kk+kref,n+fcomp);
+                                    c += mf_fp_arr(ii+iref,jj+jref,kk+kref,n+fcomp);
                                 }
                             }
                         }
-                        crse(i,j,k,n+ccomp) = volfrac * c;
+                        mf_cp_arr(i,j,k,n+ccomp) = volfrac * c;
                     }
                 }
             }
         }
     };
 
-    void FineToCoarse ( const MultiFab& S_fine,
-                        MultiFab& S_crse,
-                        int scomp,
-                        int ncomp,
-                        const IntVect& ratio );
+    void FineToCoarse ( MultiFab& mf_cp,
+                        const MultiFab& mf_fp,
+                        const int scomp,
+                        const int ncomp,
+                        const IntVect ratio );
 }
 
 #endif // WARPX_AVERAGE_H_
