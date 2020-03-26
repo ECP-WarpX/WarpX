@@ -320,8 +320,8 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f)
     amrex::Print()  << "File contains " << i.particles.size() << " specie(s):" << "\n";
     for( auto const& ps : i.particles ) {
         amrex::Print() << "\t" << ps.first << "\n";
+    amrex::Print()<<"WARNING: this is WIP, no particle has been injected!!";
     }
-    //ParticleSpecies& part=i.particles[bp.p_name];
 #endif
     return;
 }
