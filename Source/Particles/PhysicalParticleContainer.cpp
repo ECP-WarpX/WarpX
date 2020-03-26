@@ -321,7 +321,6 @@ PhysicalParticleContainer::AddExternalFileBeam(const std::string s_f)
     for( auto const& ps : i.particles ) {
         amrex::Print() << "\t" << ps.first << "\n";
     }
-    //ParticleSpecies& part=i.particles[bp.p_name];
 #endif
     return;
 }
