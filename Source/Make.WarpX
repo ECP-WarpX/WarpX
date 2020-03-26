@@ -90,7 +90,6 @@ ifeq ($(QED),TRUE)
   CFLAGS   += -DWARPX_QED
   FFLAGS   += -DWARPX_QED
   F90FLAGS += -DWARPX_QED
-  include $(WARPX_HOME)/Source/QED/Make.package
   USERSuffix := $(USERSuffix).QED
 
   ifeq ($(QED_TABLE_GEN),TRUE)
@@ -131,7 +130,7 @@ endif
 
 ifeq ($(USE_OPENPMD), TRUE)
    # try pkg-config query
-   ifeq (0, $(shell pkg-config "openPMD >= 0.10.3"; echo $$?))
+   ifeq (0, $(shell pkg-config "openPMD >= 0.11.0"; echo $$?))
        CXXFLAGS += $(shell pkg-config --cflags openPMD)
        LIBRARY_LOCATIONS += $(shell pkg-config --variable=libdir openPMD)
        libraries += $(shell pkg-config --libs-only-l openPMD)
@@ -156,7 +155,11 @@ ifeq ($(USE_PSATD),TRUE)
   DEFINES += -DWARPX_USE_PSATD
   ifeq ($(USE_CUDA),FALSE) # Running on CPU
      # Use FFTW
-     libraries += -lfftw3_mpi -lfftw3 -lfftw3_threads
+     ifeq ($(PRECISION),FLOAT)
+          libraries += -lfftw3f_mpi -lfftw3f -lfftw3f_threads
+     else
+          libraries += -lfftw3_mpi -lfftw3 -lfftw3_threads
+     endif
      FFTW_HOME ?= NOT_SET
      ifneq ($(FFTW_HOME),NOT_SET)
        VPATH_LOCATIONS += $(FFTW_HOME)/include
@@ -176,10 +179,6 @@ endif
 
 ifeq ($(USE_RZ),TRUE)
   USERSuffix := $(USERSuffix).RZ
-endif
-
-ifeq ($(DO_ELECTROSTATIC),TRUE)
-     DEFINES += -DWARPX_DO_ELECTROSTATIC
 endif
 
 ifeq ($(USE_HDF5),TRUE)

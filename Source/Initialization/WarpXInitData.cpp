@@ -80,6 +80,7 @@ WarpX::InitData ()
 
     if (restart_chkfile.empty())
     {
+        multi_diags->FilterComputePackFlush( 0, true );
         if (plot_int > 0)
             WritePlotFile();
 
@@ -103,6 +104,7 @@ WarpX::InitData ()
 
 void
 WarpX::InitDiagnostics () {
+    multi_diags->InitData();
     if (do_back_transformed_diagnostics) {
         const Real* current_lo = geom[0].ProbLo();
         const Real* current_hi = geom[0].ProbHi();
@@ -138,15 +140,6 @@ WarpX::InitFromScratch ()
     ComputeSpaceChargeField(reset_fields);
 
     InitPML();
-
-#ifdef WARPX_DO_ELECTROSTATIC
-    if (do_electrostatic) {
-        getLevelMasks(masks);
-
-        // the plus one is to convert from num_cells to num_nodes
-        getLevelMasks(gather_masks, n_buffer + 1);
-    }
-#endif // WARPX_DO_ELECTROSTATIC
 }
 
 void
