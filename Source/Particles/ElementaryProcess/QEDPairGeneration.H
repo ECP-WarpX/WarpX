@@ -146,7 +146,7 @@ public:
         dst2.m_rdata[PIdx::uy][i_dst2] = p_py*one_over_me;
         dst2.m_rdata[PIdx::uz][i_dst2] = p_pz*one_over_me;
 
-        auto photons = src.m_aos[i_src].id() = -1; //destroy photon after pair generation
+        src.m_aos[i_src].id() = -1; //destroy photon after pair generation
 
     }
 
