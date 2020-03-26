@@ -7,20 +7,20 @@
 #include "WarpXConst.H"
 #include "SpectralHankelTransformer.H"
 
-SpectralHankelTransformer::SpectralHankelTransformer (int const nr_nodes,
-                                                      int const modes,
+SpectralHankelTransformer::SpectralHankelTransformer (int const nr,
+                                                      int const n_rz_azimuthal_modes,
                                                       amrex::Real const rmax)
-: nr(nr_nodes), n_rz_azimuthal_modes(modes)
+: m_nr(nr), m_n_rz_azimuthal_modes(n_rz_azimuthal_modes)
 {
 
-    dht0.resize(n_rz_azimuthal_modes);
-    dhtp.resize(n_rz_azimuthal_modes);
-    dhtm.resize(n_rz_azimuthal_modes);
+    dht0.resize(m_n_rz_azimuthal_modes);
+    dhtp.resize(m_n_rz_azimuthal_modes);
+    dhtm.resize(m_n_rz_azimuthal_modes);
 
-    for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
-        dht0[mode].reset( new HankelTransform(mode  , mode, nr, rmax) );
-        dhtp[mode].reset( new HankelTransform(mode+1, mode, nr, rmax) );
-        dhtm[mode].reset( new HankelTransform(mode-1, mode, nr, rmax) );
+    for (int mode=0 ; mode < m_n_rz_azimuthal_modes ; mode++) {
+        dht0[mode].reset( new HankelTransform(mode  , mode, m_nr, rmax) );
+        dhtp[mode].reset( new HankelTransform(mode+1, mode, m_nr, rmax) );
+        dhtm[mode].reset( new HankelTransform(mode-1, mode, m_nr, rmax) );
     }
 
     ExtractKrArray();
@@ -32,16 +32,16 @@ SpectralHankelTransformer::SpectralHankelTransformer (int const nr_nodes,
 void
 SpectralHankelTransformer::ExtractKrArray ()
 {
-    kr.resize(nr*n_rz_azimuthal_modes);
+    m_kr.resize(m_nr*m_n_rz_azimuthal_modes);
 
-    for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
+    for (int mode=0 ; mode < m_n_rz_azimuthal_modes ; mode++) {
 
         // Save all of the kr's in one place to allow easy access later
-        amrex::Real *kr_array = kr.dataPtr();
-        auto const & kr_m = dht0[mode]->getSpectralWavenumbers();
-        auto const & kr_m_array = kr_m.dataPtr();
-        int const nr_temp = nr;
-        amrex::ParallelFor(nr,
+        amrex::Real *kr_array = m_kr.dataPtr();
+        auto const & kr_mode = dht0[mode]->getSpectralWavenumbers();
+        auto const & kr_m_array = kr_mode.dataPtr();
+        int const nr_temp = m_nr;
+        amrex::ParallelFor(m_nr,
         [=] AMREX_GPU_DEVICE (int ir)
         {
             int const ii = ir + mode*nr_temp;
@@ -61,7 +61,7 @@ SpectralHankelTransformer::PhysicalToSpectral_Scalar (amrex::Box const & box,
     // can be done.
     // Note that F_physical does not include the imaginary part of mode 0,
     // but G_spectral does.
-    for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
+    for (int mode=0 ; mode < m_n_rz_azimuthal_modes ; mode++) {
         int const mode_r = 2*mode;
         int const mode_i = 2*mode + 1;
         if (mode == 0) {
@@ -92,7 +92,7 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
     amrex::Array4<amrex::Real> const & F_r_physical_array = F_r_physical.array();
     amrex::Array4<amrex::Real> const & F_t_physical_array = F_t_physical.array();
 
-    for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
+    for (int mode=0 ; mode < m_n_rz_azimuthal_modes ; mode++) {
 
         int const mode_r = 2*mode;
         int const mode_i = 2*mode + 1;
@@ -137,7 +137,7 @@ SpectralHankelTransformer::SpectralToPhysical_Scalar (amrex::Box const & box,
 
     amrex::Gpu::streamSynchronize();
 
-    for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
+    for (int mode=0 ; mode < m_n_rz_azimuthal_modes ; mode++) {
         int const mode_r = 2*mode;
         int const mode_i = 2*mode + 1;
         if (mode == 0) {
@@ -164,7 +164,7 @@ SpectralHankelTransformer::SpectralToPhysical_Vector (amrex::Box const & box,
     amrex::Array4<amrex::Real> const & F_r_physical_array = F_r_physical.array();
     amrex::Array4<amrex::Real> const & F_t_physical_array = F_t_physical.array();
 
-    for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
+    for (int mode=0 ; mode < m_n_rz_azimuthal_modes ; mode++) {
 
         int const mode_r = 2*mode;
         int const mode_i = 2*mode + 1;
