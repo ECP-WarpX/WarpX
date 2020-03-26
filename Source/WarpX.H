@@ -138,8 +138,8 @@ public:
 
     // Static public variable to switch on current correction in Fourier space
     // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010): can be set
-    // true by the user as an input parameter (default value is false)
-    static int do_current_correction;
+    // true by the user as an input parameter
+    bool do_current_correction = false;
 
     // div E cleaning
     static int do_dive_cleaning;

@@ -27,7 +27,7 @@ from scipy.constants import e, m_e, epsilon_0, c
 # this will be the name of the plot file
 fn = sys.argv[1]
 
-# Parse test name and check if current correction (warpx.do_current_correction=1) is applied
+# Parse test name and check if current correction (psatd.do_current_correction=1) is applied
 cc = True if re.search( 'cc', fn ) else False
 
 # Parameters (these parameters must match the parameters in `inputs.multi.rt`)
@@ -97,7 +97,7 @@ plt.savefig('langmuir_multi_2d_analysis.png')
 assert overall_max_error < 0.04
 
 # Check relative L-infinity spatial norm of rho/epsilon_0 - div(E) when
-# current correction (warpx.do_current_correction=1) is applied
+# current correction (psatd.do_current_correction=1) is applied
 if cc:
     rho  = data['rho' ].to_ndarray()
     divE = data['divE'].to_ndarray()
