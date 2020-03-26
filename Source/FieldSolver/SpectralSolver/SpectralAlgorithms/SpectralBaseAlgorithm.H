@@ -38,12 +38,10 @@ class SpectralBaseAlgorithm
          * classes (e.g. PsatdAlgorithm, PMLPsatdAlgorithm), but a base-class
          * implementation is provided (empty implementation in this case).
          *
-         * \param[in,out] field_data All fields in Fourier space
-         * \param[in,out] current    Three-dimensional array of unique pointers to
-         *                           <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
-         *                           (current density)
-         * \param[in]     rho        Unique pointer to <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
-         *                           (charge density)
+         * \param[in,out] field_data all fields in Fourier space
+         * \param[in,out] current    three-dimensional array of unique pointers to MultiFab
+         *                           storing the three components of the current density
+         * \param[in]     rho        unique pointer to MultiFab storing the charge density
          */
         virtual void CurrentCorrection ( SpectralFieldData& field_data,
                                          std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
