@@ -135,9 +135,7 @@ public:
             &p_px, &p_py, &p_pz,
             &e_w, &p_w);
 
-        src.m_rdata[PIdx::ux][i_src] = px*one_over_me;
-        src.m_rdata[PIdx::uy][i_src] = py*one_over_me;
-        src.m_rdata[PIdx::uz][i_src] = pz*one_over_me;
+        srd.id() = -1;
 
         dst1.m_rdata[PIdx::w][i_dst1] = e_w;
         dst1.m_rdata[PIdx::ux][i_dst1] = e_px*one_over_me;
