@@ -27,12 +27,12 @@ print('Tolerance:', tolerance)
 #===============================
 
 # load data
-metadata_dict, data_dict, bin_value, h1x = read_reduced_diags_histogram("h1x.txt")
-metadata_dict, data_dict, bin_value, h1y = read_reduced_diags_histogram("h1y.txt")
-metadata_dict, data_dict, bin_value, h1z = read_reduced_diags_histogram("h1z.txt")
-metadata_dict, data_dict, bin_value, h2x = read_reduced_diags_histogram("h2x.txt")
-metadata_dict, data_dict, bin_value, h2y = read_reduced_diags_histogram("h2y.txt")
-metadata_dict, data_dict, bin_value, h2z = read_reduced_diags_histogram("h2z.txt")
+bin_value, h1x = read_reduced_diags_histogram("h1x.txt")[2:]
+h1y = read_reduced_diags_histogram("h1y.txt")[3]
+h1z = read_reduced_diags_histogram("h1z.txt")[3]
+h2x = read_reduced_diags_histogram("h2x.txt")[3]
+h2y = read_reduced_diags_histogram("h2y.txt")[3]
+h2z = read_reduced_diags_histogram("h2z.txt")[3]
 
 # parameters of theory
 u_rms = 0.01
@@ -63,7 +63,7 @@ assert(f2_error < tolerance)
 #================
 
 # load data
-metadata_dict, data_dict, bin_value, bin_data = read_reduced_diags_histogram("h3.txt")
+bin_value, bin_data = read_reduced_diags_histogram("h3.txt")[2:]
 
 # parameters of theory
 theta = 1.0
@@ -90,9 +90,9 @@ assert(f3_error < tolerance)
 #==============
 
 # load data
-metadata_dict, data_dict, bin_value, h4x = read_reduced_diags_histogram("h4x.txt")
-metadata_dict, data_dict, bin_value, h4y = read_reduced_diags_histogram("h4y.txt")
-metadata_dict, data_dict, bin_value, h4z = read_reduced_diags_histogram("h4z.txt")
+bin_value, h4x = read_reduced_diags_histogram("h4x.txt")[2:]
+h4y = read_reduced_diags_histogram("h4y.txt")[3]
+h4z = read_reduced_diags_histogram("h4z.txt")[3]
 
 # parameters of theory
 x_rms = 0.25
