@@ -135,8 +135,6 @@ public:
             &p_px, &p_py, &p_pz,
             &e_w, &p_w);
 
-        src.id() = -1;
-
         dst1.m_rdata[PIdx::w][i_dst1] = e_w;
         dst1.m_rdata[PIdx::ux][i_dst1] = e_px*one_over_me;
         dst1.m_rdata[PIdx::uy][i_dst1] = e_py*one_over_me;
@@ -146,6 +144,9 @@ public:
         dst2.m_rdata[PIdx::ux][i_dst2] = p_px*one_over_me;
         dst2.m_rdata[PIdx::uy][i_dst2] = p_py*one_over_me;
         dst2.m_rdata[PIdx::uz][i_dst2] = p_pz*one_over_me;
+
+        auto pp = scr.GetArrayOfStructs()().data();
+        pp[i_src].id() = -1; //destroy photon
     }
 
 private:
