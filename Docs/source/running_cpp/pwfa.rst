@@ -8,16 +8,16 @@ For illustration porpuses the setup can be explored with **WarpX** using the exa
 The simulation setup consists of 4 particle species: drive beam (driver), witness beam (beam), plasma electrons (plasma_e), and plasma ions (plasma_p).
 The species physical parameters are summarized in the following table.
 
-======== ==================================================
+======== ============================================================
 Species  Parameters
-======== ==================================================
-driver   γ = 48923; N = 2x10^8; σz = 4.0 μm; σx = 2.0 μm
-beam     γ = 48923; N = 6x10^5; σz = 1.0 mm; σx = 0.5 μm
+======== ============================================================
+driver   :math:`\gamma` = 48923; N = 2x10^8; σz = 4.0 μm; σx = 2.0 μm
+beam     :math:`\gamma` = 48923; N = 6x10^5; σz = 1.0 mm; σx = 0.5 μm
 plasma_e n = 1x10^23 m^-3; w = 70 μm; lr = 8 mm; L = 200 mm
 plasma_p n = 1x10^23 m^-3; w = 70 μm; lr = 8 mm; L = 200 mm
-======== ==================================================
+======== ============================================================
 
-Where γ is the beam relativisitc Lorentz factor, N is the number of particles, and σx, σy, σz are the beam widths (root-mean-squares of particle positions) in the transverse (x,y) and longitudinal directions.
+Where :math:`\gamma` is the beam relativisitc Lorentz factor, N is the number of particles, and σx, σy, σz are the beam widths (root-mean-squares of particle positions) in the transverse (x,y) and longitudinal directions.
 The plasma, of total lenght L, has a density profile that consists of a lr long linear up-ramp, ranging from 0 to peak value n, is uniform within a transverse width of w and after the up-ramp.
 
 Listed below are the key arguments and best-practices relevant for chosing the pwfa simulation parameters used in the example.
@@ -33,7 +33,7 @@ Listed below are the key arguments and best-practices relevant for chosing the p
 Finite Difference Time Domain
 -----------------------------
 
-    For standard plasma wakefield configurations, it is possible to model the physics correctly using the PIC Finite Difference Time Domain (FDTD) algorithms (:doc:`picsar_theory`).
+    For standard plasma wakefield configurations, it is possible to model the physics correctly using the Particle-In-Cell (PIC) Finite Difference Time Domain (FDTD) algorithms (:doc:`picsar_theory`).
     If the simulation contains localised extremely high intensity fields, however, numerical instabilities might arise, such as the numerical Cherenkov instability (:doc:`boosted_frame`).
     In that case, it is recommended to use the Pseudo Spectral Analytical Time Domain (PSATD) or the Pseudo-Spectral Time-Domain (PSTD) algorithms.
     In the example we are describing, it is sufficient to use FDTD.
@@ -61,52 +61,37 @@ Lorentz boosted frame
 Resolution
 ----------
 
-    Longitudinal and transverse resolutions should be chosen to accurately describe the physical processes taking place in the simulation.
+    Longitudinal and transverse resolutions (i.e. number and dimensions of the PIC grid cells) should be chosen to accurately describe the physical processes taking place in the simulation.
     Convergence scans, where resolution in both directions is gradually increased, should be used to determine the optimal configuration.
     Multiple cells per beam length and width are recommended (our illustrative example resolution is coarse).
 
 .. note::
     To avoid spurious effects, in the boosted frame, we consider the contrain that the transverse cell size should be larger than the transverse one.
-    Traslating this condition to the cell transverse (dx) and longitudinal dimensions (dz) in the laboratory frame leads to:
-    .. math:: dx > (dz*2*γb)
+    Traslating this condition to the cell transverse (:math:`d_{x}`) and longitudinal dimensions (:math:`d_{z}`) in the laboratory frame leads to:
+    .. math:: d_{x} > (d_{z}*(1+\beta_{b})*\gamma_{b})
+    where :math:`\beta_{b}` is the boosted frame velocity in units of speed-of-ligth (:math:`c`).
 
 
 Time step
 ---------
 
-    The time step is computed differently depending on the Maxwell field FDTD solvers used:
+    The time step (:math:`dt`) is used to iterated over the main PIC loop and is computed by WarpX differently depending on the Maxwell field FDTD solvers used:
     
-    * **For Yee** is equal to the CFL parameter chosen in the input file (:doc:`parameters`) times the Courant–Friedrichs–Lewy condition (that follows the analytical expression in :doc:`picsar_theory`, for 2D and 3D geometries)
-    * **For CKC:** is equal to CFL times the minimum between the cell dimensions
+    * **For Yee** is equal to the CFL parameter chosen in the input file (:doc:`parameters`) times the Courant–Friedrichs–Lewy condition (CFL) that follows the analytical expression in :doc:`picsar_theory`
+    * **For CKC:** is equal to CFL times the minimum between the boosted frame cell dimensions
 
-    where CKC is choosen to be below unity and set an optimal trade-off between making the simulation faster and avoiding NCI and other spurious effects.
-
-
-
-(γb=10)
+    where CFL is choosen to be below unity and set an optimal trade-off between making the simulation faster and avoiding NCI and other spurious effects.
 
 
-The example we use employs the
-boosted frame, with relativistic factor γb=10, to substantially reduce the
-computational costs of the simulation and that is why it includes the definition
-of plasma_p.
+Duration of the simulation
+--------------------------
 
-The separation between the driver and witness beams is set to 125 μm so that the
-witness beam falls in the accelerating and focusing region of the plasma bubble.
-
-
-
-
-Longitudinal and transverse resolutions should be chosen to accurately describe
-the physical processes taking place in the simulation. To avoid spurious effects
- we consider the contrain that, in the boosted frame, the transverse cell size
- (dx=dy) should be larger than the transverse one (dz), i.e. dx > (dz*2*γb).
-
-* the simulation box resolution ratio in the boosted frame should be lower than
-1. In other words
-
-
-
+    To determine the total number of time steps of the simulation, we could either set the `<zmax_plasma_to_compute_max_step>` parameter to the end of the plasma (:math:`z_{end}`), or compute it using:
+    * boosted frame edge of the simulation box - :math:`\textrm{corner} = l_{e}/ ((1-\beta_{b}) \gamma_{b})`
+    * time of interaction in the boosted frame - :math:`T = \frac{z_end/\gamma_{b}-\textrm{corner}}{c (1+\beta_{b})}`
+    * total number of iterations - :math:`i_{\textrm{max}} = T/dt`
+    
+       
 
 
 
