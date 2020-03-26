@@ -11,7 +11,8 @@ CellCenterFunctor::CellCenterFunctor(amrex::MultiFab const * mf_src, int lev,
 
 void
 CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp,
-                              amrex::IntVect diag_crse_ratio) const
+                              amrex::IntVect diag_crse_ratio,
+                              bool coarsen_mfdst) const
 {
 #ifdef WARPX_DIM_RZ
     if (m_convertRZmodes2cartesian) {
@@ -38,7 +39,7 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp,
         Average::ToCellCenter ( mf_dst, *m_mf_src, dcomp, 0, 0, nComp() );
     } else {
         // average down fields from fine m_mf_src to coarse mf_dst.
-        Average::FineToCoarse( mf_dst, *m_mf_src, dcomp, 0, nComp(), diag_crse_ratio);
+//        Average::FineToCoarse( mf_dst, *m_mf_src, dcomp, 0, nComp(), diag_crse_ratio);
     }
 #endif
 }
