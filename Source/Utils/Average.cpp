@@ -40,16 +40,14 @@ Average::FineToCoarse ( MultiFab& mf_cp,
     AMREX_ASSERT( (mf_cp.is_cell_centered() && mf_fp.is_cell_centered()) ||
                   (mf_cp.is_nodal()         && mf_fp.is_nodal()) );
 
-    bool is_cell_centered = mf_cp.is_cell_centered();
-
     // Coarsen() fine data
-    BoxArray coarsened_mf_fp_BA = mf_fp.boxArray();
-    coarsened_mf_fp_BA.coarsen( ratio );
+    BoxArray coarsened_mf_fp_ba = mf_fp.boxArray();
+    coarsened_mf_fp_ba.coarsen( ratio );
 
     // Staggering of fine MultiFab
     const IntVect stag = mf_fp.boxArray().ixType().ixType();
 
-    if (coarsened_mf_fp_BA == mf_cp.boxArray() and mf_fp.DistributionMap() == mf_cp.DistributionMap())
+    if (coarsened_mf_fp_ba == mf_cp.boxArray() and mf_fp.DistributionMap() == mf_cp.DistributionMap())
     {
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -70,7 +68,7 @@ Average::FineToCoarse ( MultiFab& mf_cp,
     }
     else
     {
-        MultiFab coarsened_mf_fp( coarsened_mf_fp_BA, mf_fp.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
+        MultiFab coarsened_mf_fp( coarsened_mf_fp_ba, mf_fp.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -84,8 +82,8 @@ Average::FineToCoarse ( MultiFab& mf_cp,
 
             // NOTE: tilebox defined at the coarse level
             const Box& bx = mfi.tilebox();
-            Array4<Real> const& mf_cp_arr = coarsened_mf_fp.array(mfi);
-            Array4<Real const> const& mf_fp_arr = mf_fp.const_array(mfi);
+            Array4<Real> const& mf_cp_arr = coarsened_mf_fp.array( mfi );
+            Array4<Real const> const& mf_fp_arr = mf_fp.const_array( mfi );
             ParallelFor( bx, ncomp,
                          [=] AMREX_GPU_DEVICE( int i, int j, int k, int n )
                          {
