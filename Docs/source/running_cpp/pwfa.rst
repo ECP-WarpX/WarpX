@@ -58,6 +58,16 @@ Lorentz boosted frame
    Regardless of the frame that is chosen for the simulation, the input file parameters are defined in respect to the laboratory frame.
 
 
+Moving window
+-------------
+
+    To avoid having to simulate the whole 0.2 mm of plasma with the high resolution that is required to model the beam and plasma interaction correctly, we use the moving window.
+    In this way we define a simulation box (grid) with a fixed size that travels at the speed-of-ligth (:math:`c`), i.e. follows the beam.
+
+    .. note::
+    When using moving window the option of continuous injection needs to be active for all particles initialized outside of the simulation box.
+
+
 Resolution
 ----------
 
@@ -65,11 +75,11 @@ Resolution
     Convergence scans, where resolution in both directions is gradually increased, should be used to determine the optimal configuration.
     Multiple cells per beam length and width are recommended (our illustrative example resolution is coarse).
 
-.. note::
-    To avoid spurious effects, in the boosted frame, we consider the contrain that the transverse cell size should be larger than the transverse one.
-    Traslating this condition to the cell transverse (:math:`d_{x}`) and longitudinal dimensions (:math:`d_{z}`) in the laboratory frame leads to:
-    .. math:: d_{x} > (d_{z}*(1+\beta_{b})*\gamma_{b})
-    where :math:`\beta_{b}` is the boosted frame velocity in units of speed-of-ligth (:math:`c`).
+    .. note::
+       To avoid spurious effects, in the boosted frame, we consider the contrain that the transverse cell size should be larger than the transverse one.
+       Traslating this condition to the cell transverse (:math:`d_{x}`) and longitudinal dimensions (:math:`d_{z}`) in the laboratory frame leads to:
+       .. math:: d_{x} > (d_{z}*(1+\beta_{b})*\gamma_{b})
+       where :math:`\beta_{b}` is the boosted frame velocity in units of :math:`c`.
 
 
 Time step
@@ -92,28 +102,23 @@ Duration of the simulation
     * total number of iterations - :math:`i_{\textrm{max}} = T/dt`
 
 
+Plotfiles and snapshots
+-----------------------
+
+    WarpX allows the data to be stored in different formats, such as plotfiles (following the `yt guidelines <https://yt-project.org/doc/index.html>`_), hdf5 and openPMD (with the `standard <https://github.com/openPMD>`_).
+    In the example, we are dumping plotfiles with boosted frame informaiton on the simulation particles and fields.
+    We are also requesting back transformed diagnostics that transform that information back to the laboratory frame.
+    The diagnostics results are analysed and stored in snapshots at each time step and so it is best to make sure that the run does not end before filling the final snapshot.
 
 
+Maximum grid size and blocking factor
+-------------------------------------
+
+    These parameters are carfully chosen to improve the code parallelization, load-balancing and performance (:doc:`parameters`) for each numerical configuration.
+    They define the smallest and lagerst number of cells that can be contained in each simulation box and are carefuly defined in `AMReX <https://amrex-codes.github.io/amrex/docs_html/GridCreation.html?highlight=blocking_factor>`_.
 
 
+Mesh refinement
+---------------
 
-In the example input, all the simulation parameters are defined in the lab frame
-regardless of if the boosted frame is used. This is true also for the
-longitudinal and transverse dimensions of the simulation box, the diagnostic
-time snapshots for back-transformed data to the lab frame from a boosted-frame
-simulation. Thus, when one defines the grid size in the lab frame, the
-longitudinal resolution remains the same, but the transverse grid sizes need to
-be adjusted approximately in the boosted frame with the following relation
-
-The time step in the boosted frame is increased as
-
-Here γ is the Lorentz factor of the boosted frame. In the boosted frame with β close to 1 in the forward direction of the beam propagation, the beam length and plasma length change, respectively, according to
-
-Define the total run time of a simulation by the full transit time of the beam through the plasma, and they are given by, respectively in the lab and boosted frame
-
-
-
-assuming the plasma moving at c opposite to the beam direction. Thus the number of time steps in the lab and boosted frame are
-
-It should be pointed out that this example is performed in 2D x-y geometry, which is not equivalent to the realistic simulation. However, the fast turnaround time in 2D simulation helps determine the numerical requirements and the optimized boosted frame, which can then be used in 3D simulations.
-
+    This example focuses on a physical problem where mesh refinement is not required.
