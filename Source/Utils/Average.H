@@ -92,16 +92,14 @@ namespace Average{
 
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
-    void FineToCoarse ( Box const& bx,
-                        Array4<Real> const& mf_cp_arr,
-                        Array4<Real const> const& mf_fp_arr,
+    Real FineToCoarse ( Array4<Real const> const& mf_fp_arr,
                         const IntVect stag,
-                        const int ccomp,
-                        const int fcomp,
-                        const int ncomp,
+                        const int i,
+                        const int j,
+                        const int k,
+                        const int comp,
                         const IntVect ratio )
     {
-
         const int sx = stag[0];
         const int sy = stag[1];
 #if   (AMREX_SPACEDIM == 2)
@@ -109,8 +107,6 @@ namespace Average{
 #elif (AMREX_SPACEDIM == 3)
         const int sz = stag[2];
 #endif
-        const auto clo = lbound(bx);
-        const auto chi = ubound(bx);
         const int facx = ratio[0];
         const int facy = ratio[1];
 #if   (AMREX_SPACEDIM == 2)
@@ -123,26 +119,18 @@ namespace Average{
         const int itz = facz*(1-sz)+sz;
         const Real volfrac = 1.0 / static_cast<Real>(itx*ity*itz);
 
-        for (int n = 0; n < ncomp; ++n) {
-            for (int k = clo.z; k <= chi.z; ++k) {
-                int kk = k*facz;
-                for (int j = clo.y; j <= chi.y; ++j) {
-                    int jj = j*facy;
-                    for (int i = clo.x; i <= chi.x; ++i) {
-                        int ii = i*facx;
-                        Real c = 0.;
-                        for (int kref = 0; kref < itz; ++kref) {
-                            for (int jref = 0; jref < ity; ++jref) {
-                                for (int iref = 0; iref < itx; ++iref) {
-                                    c += mf_fp_arr(ii+iref,jj+jref,kk+kref,n+fcomp);
-                                }
-                            }
-                        }
-                        mf_cp_arr(i,j,k,n+ccomp) = volfrac * c;
-                    }
+        int kk = k*facz;
+        int jj = j*facy;
+        int ii = i*facx;
+        Real c = 0.0;
+        for (int kref = 0; kref < itz; ++kref) {
+            for (int jref = 0; jref < ity; ++jref) {
+                for (int iref = 0; iref < itx; ++iref) {
+                    c += mf_fp_arr(ii+iref,jj+jref,kk+kref,comp);
                 }
             }
         }
+        return volfrac * c;
     };
 
     void FineToCoarse ( MultiFab& mf_cp,

@@ -54,17 +54,18 @@ Average::FineToCoarse ( MultiFab& mf_cp,
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
+        // Loop over boxes (or tiles if not on GPU)
         for (MFIter mfi( mf_cp, TilingIfNotGPU() ); mfi.isValid(); ++mfi)
         {
             // NOTE: tilebox defined at the coarse level
             const Box& bx = mfi.tilebox();
             Array4<Real> const& mf_cp_arr = mf_cp.array( mfi );
             Array4<Real const> const& mf_fp_arr = mf_fp.const_array( mfi );
-
-            AMREX_LAUNCH_HOST_DEVICE_LAMBDA ( bx, tbx,
-            {
-                Average::FineToCoarse( tbx, mf_cp_arr, mf_fp_arr, stag, scomp, scomp, ncomp, ratio );
-            });
+            ParallelFor( bx, ncomp,
+                         [=] AMREX_GPU_DEVICE( int i, int j, int k, int n )
+                         {
+                             mf_cp_arr(i,j,k,n+scomp) = Average::FineToCoarse( mf_fp_arr, stag, i, j, k, n+scomp, ratio );
+                         } );
         }
     }
     else
@@ -73,22 +74,23 @@ Average::FineToCoarse ( MultiFab& mf_cp,
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
+        // Loop over boxes (or tiles if not on GPU)
         for (MFIter mfi( coarsened_mf_fp, TilingIfNotGPU() ); mfi.isValid(); ++mfi)
         {
-            // NOTE: tilebox defined at the coarse level
-            const Box& bx = mfi.tilebox();
-            Array4<Real> const& mf_cp_arr = coarsened_mf_fp.array(mfi);
-            Array4<Real const> const& mf_fp_arr = mf_fp.const_array(mfi);
-
             // NOTE: we copy from component scomp of the fine FArrayBox into component 0
             //       of the coarse FArrayBox because the coarse FArrayBox is a temporary
             //       FArrayBox starting at component 0 and is not part of the actual
             //       coarse MultiFab mf_cp
 
-            AMREX_LAUNCH_HOST_DEVICE_LAMBDA ( bx, tbx,
-            {
-                Average::FineToCoarse( tbx, mf_cp_arr, mf_fp_arr, stag, 0, scomp, ncomp, ratio );
-            });
+            // NOTE: tilebox defined at the coarse level
+            const Box& bx = mfi.tilebox();
+            Array4<Real> const& mf_cp_arr = coarsened_mf_fp.array(mfi);
+            Array4<Real const> const& mf_fp_arr = mf_fp.const_array(mfi);
+            ParallelFor( bx, ncomp,
+                         [=] AMREX_GPU_DEVICE( int i, int j, int k, int n )
+                         {
+                             mf_cp_arr(i,j,k,n) = Average::FineToCoarse( mf_fp_arr, stag, i, j, k, n+scomp, ratio );
+                         } );
         }
         mf_cp.copy( coarsened_mf_fp, 0, scomp, ncomp );
     }
