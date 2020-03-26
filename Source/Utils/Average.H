@@ -89,6 +89,12 @@ namespace Average{
                         const int ngrow,
                         const int scomp=0,
                         const int ncomp=1 );
+
+    void FineToCoarse ( const MultiFab& S_fine,
+                        MultiFab& S_crse,
+                        int scomp,
+                        int ncomp,
+                        const IntVect& ratio );
 }
 
 #endif // WARPX_AVERAGE_H_
