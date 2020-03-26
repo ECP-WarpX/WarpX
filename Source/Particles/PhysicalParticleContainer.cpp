@@ -313,6 +313,7 @@ void
 PhysicalParticleContainer::AddExternalFileBeam(const std::string s_f, amrex::Real q_tot)
 {
 #ifdef WARPX_USE_OPENPMD
+    
     openPMD::Series series=openPMD::Series(s_f,openPMD::AccessType::READ_ONLY);
     amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
     openPMD::Iteration& i = series.iterations[1];
@@ -342,8 +343,9 @@ PhysicalParticleContainer::AddExternalFileBeam(const std::string s_f, amrex::Rea
     
     //Conversion from Geant4 system of units (http://geant4.web.cern.ch/sites/geant4.web.cern.ch/files/geant4/collaboration/working_groups/electromagnetic/gallery/units/SystemOfUnits.html) to WarpX (SI)
     mass=p_m*PhysConst::mev_kg;
-    charge=p_q*PhysConst::q_e;
+    charge=std::abs(p_q)*PhysConst::q_e;
     amrex::Real mmpns_mps = 1.e6;
+    amrex::Real mm_m = 1.e-3;
     amrex::Real weight=q_tot/charge/npart;
     
     // Allocate temporary vectors on the CPU
@@ -357,12 +359,12 @@ PhysicalParticleContainer::AddExternalFileBeam(const std::string s_f, amrex::Rea
     
     if (ParallelDescriptor::IOProcessor()) {
         for (long i = 0; i < npart; ++i) {
-            amrex::Real x = ptr_x.get()[i];
+            amrex::Real x = ptr_x.get()[i]*mm_m;
             amrex::Real vx = ptr_vx.get()[i]*mmpns_mps;
-            amrex::Real z = ptr_z.get()[i];
+            amrex::Real z = ptr_z.get()[i]*mm_m;
             amrex::Real vz = ptr_vz.get()[i]*mmpns_mps;
 #if (defined WARPX_DIM_3D)
-            amrex::Real y = ptr_y.get()[i];
+            amrex::Real y = ptr_y.get()[i]*mm_m;
             amrex::Real vy = ptr_vy.get()[i]*mmpns_mps;
 #elif (defined WARPX_DIM_XZ)
             amrex::Real y = 0.0;
@@ -381,7 +383,7 @@ PhysicalParticleContainer::AddExternalFileBeam(const std::string s_f, amrex::Rea
                   particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
-    /*
+    
      //Uncoment this block to print the information read from OPMD file
     amrex::Print() << npart << " parts of species " << ps.first << "\nWith"
     << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
@@ -394,7 +396,6 @@ PhysicalParticleContainer::AddExternalFileBeam(const std::string s_f, amrex::Rea
         amrex::Print() << "y = " << ptr_y.get()[col] << "\n";
 #endif
     }
-     */
 #endif
     return;
 }
