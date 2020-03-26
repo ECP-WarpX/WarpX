@@ -5,7 +5,7 @@ Profiling allows us to find the bottle-necks of the code as it is currently impl
 Bottle-necks are the parts of the code that may delay the simulation, making it more computationally expensive.
 Once found, we can update the related code sections and improve its efficiency.
 Profiling tools can also be used to check how load balanced the simulation is, i.e. if the work is well distributed accross all MPI ranks used.
-Load balancing can be activated in WarpX by setting the input parameter `warpx.load_balance_int <https://warpx.readthedocs.io/en/latest/running_cpp/parameters.html#distribution-across-mpi-ranks-and-parallelization>`__.
+Load balancing can be activated in WarpX by setting input parameters, see the parallelization section at :doc:`parameters`.
 
 Profiling with AMReX's built-in profiling tools
 -----------------------------------------------
@@ -31,5 +31,5 @@ Each set of two timers show the exclusive, top, and inclusive, bottom, informati
 
 For more detailed information please visit the `AMReX profiling documentation <https://amrex-codes.github.io/amrex/docs_html/AMReX_Profiling_Tools_Chapter.html>`__.
 
-.. node:
-   We encourage all users to include the TINYPROFILERS simulation information in their github issues, if they verified strong load imbalance.
+.. note:
+   When creating performance-related issues on the WarpX GitHub repo, please include Tiny Profiler tables (besides the usual issue description, input file and submission script), or (even better) the whole standard output.
