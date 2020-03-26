@@ -310,7 +310,7 @@ PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
 }
 
 void
-PhysicalParticleContainer::AddExternalFileBeam(const std::string s_f)
+PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f)
 {
 #ifdef WARPX_USE_OPENPMD
     openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
@@ -383,7 +383,7 @@ PhysicalParticleContainer::AddParticles (int lev)
     }
 
     if (plasma_injector->external_file) {
-        AddExternalFileBeam(plasma_injector->str_injection_file);
+        AddPlasmaFromFile(plasma_injector->str_injection_file);
         return;
     }
 

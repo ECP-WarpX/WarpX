@@ -207,7 +207,7 @@ public:
      *
      * @param[in] s_f path to an external file in openPMD markup
      */
-    void AddExternalFileBeam(const std::string s_f);
+    void AddPlasmaFromFile(const std::string s_f);
 
     void CheckAndAddParticle(amrex::Real x, amrex::Real y, amrex::Real z,
                              std::array<amrex::Real, 3> u,
