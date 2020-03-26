@@ -226,6 +226,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseDensity(pp);
         parseMomentum(pp);
     } else if (part_pos_s == "external_file") {
+#ifdef (WARPX_DIM_RZ)
+        amrex::Abort("The option of reading particle data from an external "
+                     "file has not been implemented nor tested in RZ geometry");
+#endif
 #ifdef WARPX_USE_OPENPMD
         external_file = true;
         pp.get("injection_file",str_injection_file);

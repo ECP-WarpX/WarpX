@@ -252,6 +252,7 @@ Particle initialization
     * ``external_file``: inject macroparticles with properties (charge, mass, position, and momentum) according to data in external file.
       It requires the additional arguments ``<species_name>.injection_file`` and ``<species_name>.q_tot``, which are the string corresponding to the OpenPMD file and the beam charge.
       When using this style, it is not necessary to add other ``<species_name>.(...)`` paramters, because they will be read directly from the file.
+      (Note that this has not yet been implemented nor tested for RZ geometry)
 
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis
