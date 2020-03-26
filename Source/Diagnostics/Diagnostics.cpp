@@ -64,7 +64,7 @@ Diagnostics::ReadParameters ()
         }
         amrex::Print() << " coarsening ratio : " << diag_crse_ratio[idim] << "\n";
     }
-    
+
 }
 
 void
