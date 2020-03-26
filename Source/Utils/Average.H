@@ -90,6 +90,61 @@ namespace Average{
                         const int scomp=0,
                         const int ncomp=1 );
 
+    AMREX_GPU_HOST_DEVICE
+    AMREX_FORCE_INLINE
+    void FineToCoarse ( Box const& bx,
+                        Array4<Real> const& crse,
+                        Array4<Real const> const& fine,
+                        const IntVect stag,
+                        int ccomp,
+                        int fcomp,
+                        int ncomp,
+                        IntVect const& ratio )
+    {
+
+        const int sx = stag[0];
+        const int sy = stag[1];
+#if   (AMREX_SPACEDIM == 2)
+        constexpr int sz = 0;
+#elif (AMREX_SPACEDIM == 3)
+        const int sz = stag[2];
+#endif
+        const auto clo = lbound(bx);
+        const auto chi = ubound(bx);
+        const int facx = ratio[0];
+        const int facy = ratio[1];
+#if   (AMREX_SPACEDIM == 2)
+        const int facz = 1;
+#elif (AMREX_SPACEDIM == 3)
+        const int facz = ratio[2];
+#endif
+        const int itx = facx*(1-sx)+sx;
+        const int ity = facy*(1-sy)+sy;
+        const int itz = facz*(1-sz)+sz;
+        const Real volfrac = 1.0/static_cast<Real>(itx*ity*itz);
+
+        for (int n = 0; n < ncomp; ++n) {
+            for (int k = clo.z; k <= chi.z; ++k) {
+                int kk = k*facz;
+                for (int j = clo.y; j <= chi.y; ++j) {
+                    int jj = j*facy;
+                    for (int i = clo.x; i <= chi.x; ++i) {
+                        int ii = i*facx;
+                        Real c = 0.;
+                        for (int kref = 0; kref < itz; ++kref) {
+                            for (int jref = 0; jref < ity; ++jref) {
+                                for (int iref = 0; iref < itx; ++iref) {
+                                    c += fine(ii+iref,jj+jref,kk+kref,n+fcomp);
+                                }
+                            }
+                        }
+                        crse(i,j,k,n+ccomp) = volfrac * c;
+                    }
+                }
+            }
+        }
+    };
+
     void FineToCoarse ( const MultiFab& S_fine,
                         MultiFab& S_crse,
                         int scomp,
