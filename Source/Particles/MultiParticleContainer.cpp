@@ -1085,8 +1085,6 @@ MultiParticleContainer::doQEDSchwinger ()
 
         const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size};
 
-        auto transform_dummy= [](auto, auto, auto, auto) {return 0;};
-
         const auto num_added = filterCreateTransformFromFAB<1>( dst_ele_tile,
                               dst_pos_tile, box, array_EMFAB, np_ele_dst,
                                np_pos_dst,Filter, CreateEle, CreatePos,
