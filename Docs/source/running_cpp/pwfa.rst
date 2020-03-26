@@ -2,17 +2,12 @@ In-depth explanation of a PWFA simulation
 =========================================
 
 As described in the Introduction
-`Introduction <https://warpx.readthedocs.io/en/latest/theory/intro.html>`_, one
-of the key applications of the WarpX exascale computing platform is in modelling
-future, compact and economic plasma-based accelerators. In this section we
-describe the simulation setup of a realistic electron beam driven plasma
-wakefield accelerator (PWFA) configuration. For illustration porpuses the setup
-can be explored with **WarpX** using the example input file :download:`PWFA
-<../../../Examples/Physics_applications/plasma_acceleration/inputs_2d_boost>`.
+`Introduction <https://warpx.readthedocs.io/en/latest/theory/intro.html>`_, one of the key applications of the WarpX exascale computing platform is in modelling future, compact and economic plasma-based accelerators.
+In this section we describe the simulation setup of a realistic electron beam driven plasma wakefield accelerator (PWFA) configuration.
+For illustration porpuses the setup can be explored with **WarpX** using the example input file :download:`PWFA <../../../Examples/Physics_applications/plasma_acceleration/inputs_2d_boost>`.
 
-The simulation setup consists of 4 particle species: drive
-beam (driver), witness beam (beam), plasma electrons (plasma_e), and plasma
-ions (plasma_p). The species parameters are summarized in the following table.
+The simulation setup consists of 4 particle species: drive beam (driver), witness beam (beam), plasma electrons (plasma_e), and plasma ions (plasma_p).
+The species parameters are summarized in the following table.
 
 ======== ===============================================
 Species  Parameters
@@ -23,61 +18,56 @@ plasma_e n = 1x10^23 m^-3
 plasma_p n = 1x10^23 m^-3
 ======== ===============================================
 
-Where γ is the beam relativisitc Lorentz factor, N is the number of particles,
-and σx, σy, σz are the beam widths (root-mean-squares of particle positions) in
-the transverse (x,y) and longitudinal directions.
+Where γ is the beam relativisitc Lorentz factor, N is the number of particles, and σx, σy, σz are the beam widths (root-mean-squares of particle positions) in the transverse (x,y) and longitudinal directions.
 
-Listed below are the key arguments and best-practices relevant for chosing the
-pwfa simulation parameters used in the example.
+Listed below are the key arguments and best-practices relevant for chosing the pwfa simulation parameters used in the example.
 
 
 2D Geometry
 -----------
 
-    2D cartesian (with longitudinal direction z and transverse x) geometry
-    simulaions can give valuable physical and numerical insight into the
-    simulation requirements and evolution while being much less time consuming
-    than the full 3D cartesian or cylindrical geometries.
+    2D cartesian (with longitudinal direction z and transverse x) geometry simulaions can give valuable physical and numerical insight into the simulation requirements and evolution.
+    At the same time it is much less time consuming than the full 3D cartesian or cylindrical geometries.
 
+
+Finite Difference Time Domain solver
+------------------------------------
 
 Lorentz boosted frame
 ---------------------
 
-    WarpX simulations can be done in the laboratory or `Lorentz-boosted
-    <https://warpx.readthedocs.io/en/latest/theory/boosted_frame.html>`_ frames.
-    In the laboratory frame, there is typically no need to model the palsma ions
-    species, since they are mainly stationary during the short time scales
-    associated with the motion of plasma electrons. In the boosted frame, that
-    argument is no longer valid, as ions have relativistic velocities. The
-    boosted frame still results in a substantial reduction to the simulation
-    computational cost.
+    WarpX simulations can be done in the laboratory or `Lorentz-boosted <https://warpx.readthedocs.io/en/latest/theory/boosted_frame.html>`_ frames.
+    In the laboratory frame, there is typically no need to model the palsma ions species, since they are mainly stationary during the short time scales associated with the motion of plasma electrons.
+    In the boosted frame, that argument is no longer valid, as ions have relativistic velocities.
+    The boosted frame still results in a substantial reduction to the simulation computational cost.
 
 .. note::
-Regardless of the frame that is chosen for the simulation, the
-input file parameters are defined in respect to the laboratory frame.
+   Regardless of the frame that is chosen for the simulation, the input file parameters are defined in respect to the laboratory frame.
 
 
 Resolution
 ----------
 
-    Longitudinal and transverse resolutions should be chosen to accurately
-    describe the physical processes taking place in the simulation. Convergence
-    scans, where resolution in both directions is gradually increased, should be
-    used to determine the optimal configuration. Multiple cells per beam length
-    and width are recommended (our illustrative example resolution is coarse).
+    Longitudinal and transverse resolutions should be chosen to accurately describe the physical processes taking place in the simulation.
+    Convergence scans, where resolution in both directions is gradually increased, should be used to determine the optimal configuration.
+    Multiple cells per beam length and width are recommended (our illustrative example resolution is coarse).
 
 .. note::
-    To avoid spurious effects, in the boosted frame, we consider the contrain
-    that the transverse cell size (dx) should be larger than the transverse one
-    (dz), i.e. dx > (dz*2*γb).
+    To avoid spurious effects, in the boosted frame, we consider the contrain that the transverse cell size should be larger than the transverse one.
+    Traslating this condition to the cell transverse (dx) and longitudinal dimensions (dz) in the laboratory frame leads to:
+    .. math:: dx > (dz*2*γb)
 
 
 Time step
 ---------
 
-    The time step is computed differently depending on the field solver, being
-    computed  (if we
-    would use Yee instead of CKC)
+    The time step is computed differently depending on the Maxwell field FDTD solvers used:
+    
+    * **For Yee** is equal to the CFL parameter chosen in the input file (:doc:`parameters`) times the Courant–Friedrichs–Lewy condition (that follows the analytical expression in :doc:`picsar_theory`, for 2D and 3D geometries)
+    * **For CKC:** is equal to CFL times the minimum between the cell dimensions
+
+    where CKC is choosen to be below unity and set an optimal trade-off between making the simulation faster and avoiding numerical Cherenkov instability (:doc:`boosted_frame`).
+
 
 
 (γb=10)
