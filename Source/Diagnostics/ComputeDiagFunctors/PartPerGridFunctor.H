@@ -16,7 +16,8 @@ public:
      * \param[in] lev level of multifab. Used for averaging in rz.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
-    PartPerGridFunctor(const amrex::MultiFab * const mf_src, const int lev, const int ncomp=1);
+    PartPerGridFunctor(const amrex::MultiFab * const mf_src, const int lev,
+                       amrex::IntVect diag_crse_ratio, const int ncomp=1);
 
     /** \brief Compute the number of particles per cell directly into mf_dst.
      *

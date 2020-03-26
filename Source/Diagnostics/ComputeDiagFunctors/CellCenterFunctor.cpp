@@ -4,15 +4,14 @@
 using namespace amrex;
 
 CellCenterFunctor::CellCenterFunctor(amrex::MultiFab const * mf_src, int lev,
+                                     amrex::IntVect diag_crse_ratio,
                                      bool convertRZmodes2cartesian, int ncomp)
-    : ComputeDiagFunctor(ncomp), m_mf_src(mf_src), m_lev(lev),
+    : ComputeDiagFunctor(ncomp, diag_crse_ratio), m_mf_src(mf_src), m_lev(lev),
       m_convertRZmodes2cartesian(convertRZmodes2cartesian)
 {}
 
 void
-CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp,
-                              amrex::IntVect diag_crse_ratio,
-                              bool coarsen_mfdst) const
+CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
 {
 #ifdef WARPX_DIM_RZ
     if (m_convertRZmodes2cartesian) {
@@ -34,7 +33,7 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp,
         Average::ToCellCenter ( mf_dst, *m_mf_src, dcomp, 0, 0, nComp() );
     }
 #else
-    if (coarsen_mfdst == false ) {
+    if (do_coarsen() == false ) {
         // In cartesian geometry, cell-center m_mf_src to mf_dst.
         Average::ToCellCenter ( mf_dst, *m_mf_src, dcomp, 0, 0, nComp() );
     } else {

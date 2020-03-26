@@ -15,7 +15,7 @@ public:
      * \param[in] lev level of multifab.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
-    DivEFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, const int ncomp=1);
+    DivEFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, amrex::IntVect diag_crse_ratio, const int ncomp=1);
 
     /** \brief Compute DivE directly into mf_dst.
      *
