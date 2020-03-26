@@ -114,14 +114,14 @@ namespace Average{
         const int facx = ratio[0];
         const int facy = ratio[1];
 #if   (AMREX_SPACEDIM == 2)
-        const int facz = 1;
+        constexpr int facz = 1;
 #elif (AMREX_SPACEDIM == 3)
         const int facz = ratio[2];
 #endif
         const int itx = facx*(1-sx)+sx;
         const int ity = facy*(1-sy)+sy;
         const int itz = facz*(1-sz)+sz;
-        const Real volfrac = 1.0/static_cast<Real>(itx*ity*itz);
+        const Real volfrac = 1.0 / static_cast<Real>(itx*ity*itz);
 
         for (int n = 0; n < ncomp; ++n) {
             for (int k = clo.z; k <= chi.z; ++k) {

@@ -70,7 +70,6 @@ Average::FineToCoarse ( MultiFab& mf_cp,
     else
     {
         MultiFab coarsened_mf_fp( coarsened_mf_fp_BA, mf_fp.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
-
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -91,7 +90,6 @@ Average::FineToCoarse ( MultiFab& mf_cp,
                 Average::FineToCoarse( tbx, mf_cp_arr, mf_fp_arr, stag, 0, scomp, ncomp, ratio );
             });
         }
-
         mf_cp.copy( coarsened_mf_fp, 0, scomp, ncomp );
     }
 }
