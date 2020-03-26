@@ -29,7 +29,9 @@ public:
      * \param[in] dcomp first component of mf_dst in which cell-centered
      *            data is stored
      */
-    virtual void operator()(amrex::MultiFab& mf_dst, int dcomp) const override final;
+    virtual void operator()(amrex::MultiFab& mf_dst, int dcomp, 
+                            amrex::IntVect diag_crse_ratio,
+                            bool coarsen_mfdst = false) const override final;
 private:
     /** pointer to source multifab (can be multi-component) */
     amrex::MultiFab const * const m_mf_src;

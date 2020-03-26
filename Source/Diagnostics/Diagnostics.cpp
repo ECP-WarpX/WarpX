@@ -52,6 +52,19 @@ Diagnostics::ReadParameters ()
             std::remove(varnames.begin(), varnames.end(), "proc_number"),
             varnames.end());
     }
+    // Read in the coarsening ratio for the output multifab requested by user.
+    Vector<int> cr_ratio(AMREX_SPACEDIM);
+    pp.queryarr("coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM);
+    // Initialize diag_crse_ratio with default value of 1 for each dimension.
+    diag_crse_ratio = IntVect(AMREX_D_DECL(1,1,1));
+    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
+        if (cr_ratio[idim] > 1) {
+           diag_crse_ratio[idim] = cr_ratio[idim];
+           m_coarsen_mfavg = true;
+        }
+        amrex::Print() << " coarsening ratio : " << diag_crse_ratio[idim] << "\n";
+    }
+    
 }
 
 void
@@ -112,9 +125,14 @@ Diagnostics::InitData ()
 
         // At this point, varnames.size() >= all_field_functors[0].size()
 
+        BoxArray ba = warpx.boxArray(lev);
+        // The boxArray is coarsened if coarsening_ratio in any direction>1
+        if (m_coarsen_mfavg == true) ba.coarsen(diag_crse_ratio);
+        amrex::Print() << " cr_size " << ba.size() << " warpx size " << warpx.boxArray(lev).size() << "\n";
+        AMREX_ALWAYS_ASSERT(ca.size() == warpx.boxArray(lev).size());
         // Allocate output multifab
         // Note: default MultiFab constructor is cell-centered
-        mf_avg[lev] = MultiFab(warpx.boxArray(lev),
+        mf_avg[lev] = MultiFab(ba,
                                warpx.DistributionMap(lev),
                                varnames.size(), 0);
     }
@@ -144,7 +162,7 @@ Diagnostics::ComputeAndPack ()
             // Call all functors in all_field_functors[lev]. Each of them computes
             // a diagnostics and writes in one or more components of the output
             // multifab mf_avg[lev].
-            all_field_functors[lev][icomp]->operator()(mf_avg[lev], icomp_dst);
+            all_field_functors[lev][icomp]->operator()(mf_avg[lev], icomp_dst, diag_crse_ratio, m_coarsen_mfavg);
             // update the index of the next component to fill
             icomp_dst += all_field_functors[lev][icomp]->nComp();
         }
