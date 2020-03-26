@@ -74,10 +74,8 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
                 create1(dst1_data, N*p_offsets[i] + dst1_index + n, x, y, z);
                 create2(dst2_data, N*p_offsets[i] + dst2_index + n, x, y, z);
             }
-            transform(dst1_data, N*p_offsets[i] + dst1_index, N,
-                       arrNumPartCreation(j,k,l));
-            transform(dst2_data, N*p_offsets[i] + dst2_index, N,
-                       arrNumPartCreation(j,k,l));
+            transform(dst1_data, dst2_data, N*p_offsets[i] + dst1_index,
+                    N*p_offsets[i] + dst2_index, N, arrNumPartCreation(j,k,l));
         }
     });
 

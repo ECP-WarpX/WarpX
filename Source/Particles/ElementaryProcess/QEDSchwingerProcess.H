@@ -1,6 +1,8 @@
 #ifndef QED_SCHWINGER_PROCESS_H_
 #define QED_SCHWINGER_PROCESS_H_
 
+#include "WarpXParticleContainer.H"
+
 struct SchwingerFilterFunc
 {
     const amrex::Real m_y_size;
@@ -41,10 +43,24 @@ struct SchwingerFilterFunc
 
 struct SchwingerTransformFunc
 {
-    template <typename DstData>
+
+    const amrex::Real m_y_size;
+
+    template <typename DstData1, typename DstData2>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (DstData& dst, int i_dst, int N, amrex::Real total_weight) const noexcept
+    void operator() (DstData1& dst1, DstData2& dst2, int i_dst1, int i_dst2,
+                               int N, amrex::Real total_weight) const noexcept
     {
+        const auto m_weight_index = ParticleStringNames::to_index.find("w")->second;
+        for (int n = 0; n < N; ++n){
+#if (AMREX_SPACEDIM == 3)
+            dst1.m_rdata[m_weight_index][i_dst1+n] = total_weight/N;
+            dst2.m_rdata[m_weight_index][i_dst2+n] = total_weight/N;
+#elif (AMREX_SPACEDIM == 2)
+            dst1.m_rdata[m_weight_index][i_dst1+n] = total_weight/N/m_y_size;
+            dst2.m_rdata[m_weight_index][i_dst2+n] = total_weight/N/m_y_size;
+#endif
+            }
     }
 };
 
