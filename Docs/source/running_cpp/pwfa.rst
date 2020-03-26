@@ -37,14 +37,14 @@ Finite Difference Time Domain
     If the simulation contains localised extremely high intensity fields, however, numerical instabilities might arise, such as the numerical Cherenkov instability (:doc:`boosted_frame`).
     In that case, it is recommended to use the Pseudo Spectral Analytical Time Domain (PSATD) or the Pseudo-Spectral Time-Domain (PSTD) algorithms.
     In the example we are describing, it is sufficient to use FDTD.
-    
+
 
 Cole-Karkkainen solver with Cowan coefficients
 ----------------------------------------------
 
     There are two FDTD Maxwell field solvers that compute the field push implemented in WarpX: the Yee and Cole-Karkkainen solver with Cowan coefficients (CKC) solvers.
     The later includes a modifitication that allows the numerical dispersion of light in vaccum to be exact, and that is why we choose CKC for the example.
-    
+
 
 Lorentz boosted frame
 ---------------------
@@ -76,7 +76,7 @@ Time step
 ---------
 
     The time step (:math:`dt`) is used to iterated over the main PIC loop and is computed by WarpX differently depending on the Maxwell field FDTD solvers used:
-    
+
     * **For Yee** is equal to the CFL parameter chosen in the input file (:doc:`parameters`) times the Courant–Friedrichs–Lewy condition (CFL) that follows the analytical expression in :doc:`picsar_theory`
     * **For CKC:** is equal to CFL times the minimum between the boosted frame cell dimensions
 
@@ -90,8 +90,8 @@ Duration of the simulation
     * boosted frame edge of the simulation box - :math:`\textrm{corner} = l_{e}/ ((1-\beta_{b}) \gamma_{b})`
     * time of interaction in the boosted frame - :math:`T = \frac{z_end/\gamma_{b}-\textrm{corner}}{c (1+\beta_{b})}`
     * total number of iterations - :math:`i_{\textrm{max}} = T/dt`
-    
-       
+
+
 
 
 
