@@ -316,20 +316,20 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f, amrex::Real 
     openPMD::Series series=openPMD::Series(s_f,openPMD::AccessType::READ_ONLY);
     amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
     openPMD::Iteration& i = series.iterations[1];
-    
+
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size()==1,"External file "
                                      "should contain only one species\n");
-    
+
     std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
     amrex::Real p_m=ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
     amrex::Real p_q=ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
     int npart=ps.second["position"]["x"].getExtent()[0];
     series.flush();
-    
+
     mass=p_m*PhysConst::mevpc2_kg;
     charge=p_q*PhysConst::q_e;
     Real weight=q_tot/charge/npart;
-    
+
     amrex::Print() << npart << " parts of species " << ps.first << "\nWith"
     << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
     << npart << " macroparticles with weight " << weight << "\n";
