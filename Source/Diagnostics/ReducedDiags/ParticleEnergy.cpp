@@ -114,8 +114,8 @@ void ParticleEnergy::ComputeDiags (int step)
         if(myspc.AmIA<PhysicalSpecies::photon>()){
             //Photons have m = 0, but ux,uy and uz are calculated assuming
             //a mass equal to the electron mass. Therefore, photons need a special
-            //tretment to calculate the total energy.
-            const auto me2 = PhysConst::m_e * PhysConst::m_e;
+            //treatment to calculate the total energy.
+            constexpr auto me_c = PhysConst::m_e * PhysConst::c;
             Etot = ReduceSum( myspc,
             [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
             {
@@ -123,8 +123,8 @@ void ParticleEnergy::ComputeDiags (int step)
                 auto ux = p.rdata(PIdx::ux);
                 auto uy = p.rdata(PIdx::uy);
                 auto uz = p.rdata(PIdx::uz);
-                auto us = (ux*ux + uy*uy + uz*uz)*me2;
-                return std::sqrt(us*c2*me2) * w;
+                auto us = (ux*ux + uy*uy + uz*uz);
+                return std::sqrt(us) * me_c * w;
             });
         } else {
             Etot = ReduceSum( myspc,
