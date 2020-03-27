@@ -34,7 +34,8 @@ n_osc_y = 2
 n_osc_z = 2
 lo = [-20.e-6, -20.e-6, -20.e-6]
 hi = [ 20.e-6,  20.e-6,  20.e-6]
-Ncell = [32, 32, 32]
+# Ncell = [32, 32, 32]
+Ncell = [64, 64, 64]
 
 # Wave vector of the wave
 kx = 2.*np.pi*n_osc_x/(hi[0]-lo[0])
@@ -71,15 +72,19 @@ def get_theoretical_field( field, t ):
 ds = yt.load(fn)
 
 # Check that the particle selective output worked:
-for species in ['electrons', 'positrons']:
-    for field in ['particle_weight',
-                  'particle_momentum_x',
-                  'particle_Ey']:
-        assert (species, field) in ds.field_list
-    for field in ['particle_momentum_y',
-                  'particle_momentum_z']:
-        assert (species, field) not in ds.field_list
-
+species = 'electrons'
+for field in ['particle_weight',
+              'particle_momentum_x']:
+    assert (species, field) in ds.field_list
+for field in ['particle_momentum_y',
+              'particle_momentum_z']:
+    assert (species, field) not in ds.field_list
+species = 'positrons'
+for field in ['particle_Ey']:
+    assert (species, field) in ds.field_list
+for field in ['particle_momentum_y',
+              'particle_momentum_z']:
+    assert (species, field) not in ds.field_list
 
 t0 = ds.current_time.to_ndarray().mean()
 data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,

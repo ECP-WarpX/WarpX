@@ -2,7 +2,7 @@
 max_step = 40
 
 # number of grid points
-amr.n_cell =  32 32 32
+amr.n_cell =  64 64 64
 
 # Maximum allowable size of each subdomain in the problem domain;
 #    this is used to decompose the domain for parallel calculations.
@@ -12,7 +12,7 @@ amr.max_grid_size = 16
 amr.max_level = 0
 
 amr.plot_int = 40   # How often to write plotfiles.  "<= 0" means no plotfiles.
-warpx.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell rho
+warpx.fields_to_plot = Ex Ey Ez Bx jz rho
 
 # Geometry
 geometry.coord_sys   = 0                  # 0: Cartesian
@@ -52,14 +52,14 @@ particles.species_names = electrons positrons
 electrons.charge = -q_e
 electrons.mass = m_e
 electrons.injection_style = "NUniformPerCell"
-electrons.num_particles_per_cell_each_dim = 2 1 1
+electrons.num_particles_per_cell_each_dim = 1 1 1
 electrons.xmin = -20.e-6
 electrons.xmax =  20.e-6
 electrons.ymin = -20.e-6
 electrons.ymax = 20.e-6
 electrons.zmin = -20.e-6
 electrons.zmax = 20.e-6
-electrons.plot_vars = w ux Ey
+electrons.plot_vars = w ux
 
 electrons.profile = constant
 electrons.density = 2.e24   # number of electrons per m^3
@@ -71,14 +71,14 @@ electrons.momentum_function_uz(x,y,z) = "epsilon * k/kp * cos(k*x) * cos(k*y) * 
 positrons.charge = q_e
 positrons.mass = m_e
 positrons.injection_style = "NUniformPerCell"
-positrons.num_particles_per_cell_each_dim = 2 1 1
+positrons.num_particles_per_cell_each_dim = 1 1 1
 positrons.xmin = -20.e-6
 positrons.xmax =  20.e-6
 positrons.ymin = -20.e-6
 positrons.ymax = 20.e-6
 positrons.zmin = -20.e-6
 positrons.zmax = 20.e-6
-positrons.plot_vars = w ux Ey
+positrons.plot_vars = Ey
 
 positrons.profile = constant
 positrons.density = 2.e24   # number of positrons per m^3
