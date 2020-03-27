@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Glenn Richardson, Maxence Thevenet
+/* Copyright 2019-2020 Glenn Richardson, Maxence Thevenet, Revathi Jambunathan
  *
  * This file is part of WarpX.
  *
@@ -10,6 +10,7 @@
 #include "BoundaryConditions/WarpX_PML_kernels.H"
 #include "BoundaryConditions/PML_current.H"
 #include "WarpX_FDTD.H"
+
 #ifdef WARPX_USE_PY
 #   include "Python/WarpX_py.H"
 #endif
@@ -106,18 +107,18 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
 
         // Get boxes for E, B, and J
         
-		const Box& tbx = mfi.tilebox(Bx->ixType().ixType());
-		const Box& tby = mfi.tilebox(By->ixType().ixType());
-		const Box& tbz = mfi.tilebox(Bz->ixType().ixType());
+        const Box& tbx = mfi.tilebox(Bx->ixType().ixType());
+        const Box& tby = mfi.tilebox(By->ixType().ixType());
+        const Box& tbz = mfi.tilebox(Bz->ixType().ixType());
 
-		const Box& tex = mfi.tilebox(Ex->ixType().ixType());
-		const Box& tey = mfi.tilebox(Ey->ixType().ixType());
-		const Box& tez = mfi.tilebox(Ez->ixType().ixType());
+        const Box& tex = mfi.tilebox(Ex->ixType().ixType());
+        const Box& tey = mfi.tilebox(Ey->ixType().ixType());
+        const Box& tez = mfi.tilebox(Ez->ixType().ixType());
 
-		const Box& tjx = mfi.tilebox(Jx->ixType().ixType());
-		const Box& tjy = mfi.tilebox(Jy->ixType().ixType());
-		const Box& tjz = mfi.tilebox(Jz->ixType().ixType());
-		
+        const Box& tjx = mfi.tilebox(Jx->ixType().ixType());
+        const Box& tjy = mfi.tilebox(Jy->ixType().ixType());
+        const Box& tjz = mfi.tilebox(Jz->ixType().ixType());
+        
         // Get field arrays
         auto const& Bxfab = Bx->array(mfi);
         auto const& Byfab = By->array(mfi);
@@ -165,6 +166,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
 
         // Make local copy of xi, to use on device.
         const Real xi_c2 = WarpX::quantum_xi_c2;
+        
         // Apply QED correction to electric field, using temporary arrays.
         amrex::ParallelFor(
             tbx,
