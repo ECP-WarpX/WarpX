@@ -32,7 +32,7 @@ import scipy.stats as st
 
 
 # Tolerance
-tol = 1e-2
+tol = 4e-2
 
 # EM fields
 E_f = np.array([-2433321316961438, 973328526784575, 1459992790176863])
@@ -61,7 +61,7 @@ p_begin = {
     "p3": np.array([0.0,0.0,10000.0])*mec,
     "p4": np.array([57735.02691896, 57735.02691896, 57735.02691896])*mec
 }
-initial_particle_number = 262144
+initial_particle_number = 16384
 #______________
 
 def calc_chi_gamma(p, E, B):
@@ -111,7 +111,12 @@ def check():
         exp_scale = 1.0
         loc_discrepancy = np.abs(opt_depth_loc-exp_loc)
         scale_discrepancy = np.abs(opt_depth_scale-exp_scale)
+        print("species " + name)
+        print("exp distrib loc tol = " + str(tol))
+        print("exp distrib loc discrepancy = " + str(loc_discrepancy))
         assert(loc_discrepancy < tol)
+        print("exp distrib scale tol = " + str(tol))
+        print("exp distrib scale discrepancy = " + str(scale_discrepancy/exp_scale))
         assert(scale_discrepancy/exp_scale < tol)
         ###
 
@@ -122,7 +127,9 @@ def check():
         exp_lost= initial_particle_number*(1.0 - np.exp(-dNBW_dt_theo*sim_time))
         lost =  initial_particle_number-np.size(opt_depth)
         discrepancy_lost = np.abs(exp_lost-lost)
-        assert(np.all(discrepancy_lost/exp_lost < tol))
+        print("lost fraction tol = " + str(tol))
+        print("lost fraction discrepancy = " + str(discrepancy_lost/exp_lost))
+        assert(discrepancy_lost/exp_lost < tol)
         ###
 
 def main():
