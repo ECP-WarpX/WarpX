@@ -80,6 +80,7 @@ WarpX::InitData ()
 
     if (restart_chkfile.empty())
     {
+        multi_diags->FilterComputePackFlush( 0, true );
         if (plot_int > 0)
             WritePlotFile();
 
@@ -103,6 +104,7 @@ WarpX::InitData ()
 
 void
 WarpX::InitDiagnostics () {
+    multi_diags->InitData();
     if (do_back_transformed_diagnostics) {
         const Real* current_lo = geom[0].ProbLo();
         const Real* current_hi = geom[0].ProbHi();
@@ -473,9 +475,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
     const RealBox& real_box = geom[lev].ProbDomain();
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-       const Box& tbx = mfi.tilebox(x_nodal_flag);
-       const Box& tby = mfi.tilebox(y_nodal_flag);
-       const Box& tbz = mfi.tilebox(z_nodal_flag);
+       const Box& tbx = convert(mfi.growntilebox(),x_nodal_flag);
+       const Box& tby = convert(mfi.growntilebox(),y_nodal_flag);
+       const Box& tbz = convert(mfi.growntilebox(),z_nodal_flag);
 
        auto const& mfxfab = mfx->array(mfi);
        auto const& mfyfab = mfy->array(mfi);

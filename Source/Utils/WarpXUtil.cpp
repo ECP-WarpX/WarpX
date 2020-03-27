@@ -71,14 +71,14 @@ void ConvertLabParamsToBoost()
     ParmParse pp_slice("slice");
 
     pp_geom.getarr("prob_lo",prob_lo,0,AMREX_SPACEDIM);
-    BL_ASSERT(prob_lo.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(prob_lo.size() == AMREX_SPACEDIM);
     pp_geom.getarr("prob_hi",prob_hi,0,AMREX_SPACEDIM);
-    BL_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
 
     pp_slice.queryarr("dom_lo",slice_lo,0,AMREX_SPACEDIM);
-    BL_ASSERT(slice_lo.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(slice_lo.size() == AMREX_SPACEDIM);
     pp_slice.queryarr("dom_hi",slice_hi,0,AMREX_SPACEDIM);
-    BL_ASSERT(slice_hi.size() == AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(slice_hi.size() == AMREX_SPACEDIM);
 
 
     pp_amr.query("max_level", max_level);
@@ -212,4 +212,38 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
         amrex::Abort("makeParser::Unknown symbol "+s);
     }
     return parser;
+}
+
+namespace WarpXUtilMsg{
+
+void AlwaysAssert(bool is_expression_true, const std::string& msg = "ERROR!")
+{
+    if(is_expression_true) return;
+
+    amrex::Abort(msg);
+}
+
+}
+
+namespace WarpXUtilStr
+{
+    bool is_in(const std::vector<std::string>& vect,
+               const std::string& elem)
+    {
+        bool value = false;
+        if (std::find(vect.begin(), vect.end(), elem) != vect.end()){
+            value = true;
+        }
+        return value;
+    }
+
+    bool is_in(const std::vector<std::string>& vect,
+               const std::vector<std::string>& elems)
+    {
+        bool value = false;
+        for (auto elem : elems){
+            if (is_in(vect, elem)) value = true;
+        }
+        return value;
+    }
 }

@@ -90,11 +90,6 @@ public:
                                 int lev,
                                 int depos_lev,
                                 amrex::Real dt) override {};
-    //Photons are not leptons
-    virtual bool AmIALepton () override
-    {
-        return false;
-    };
 
 #ifdef WARPX_QED
     /**

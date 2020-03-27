@@ -5,6 +5,8 @@
  * License: BSD-3-Clause-LBNL
  */
 
+#include "LoadBalanceCosts.H"
+#include "ParticleHistogram.H"
 #include "BeamRelevant.H"
 #include "ParticleEnergy.H"
 #include "FieldEnergy.H"
@@ -54,6 +56,16 @@ MultiReducedDiags::MultiReducedDiags ()
         {
             m_multi_rd[i_rd].reset
                 ( new BeamRelevant(m_rd_names[i_rd]));
+        }
+        else if (rd_type.compare("LoadBalanceCosts") == 0)
+        {
+            m_multi_rd[i_rd].reset
+                ( new LoadBalanceCosts(m_rd_names[i_rd]));
+        }
+        else if (rd_type.compare("ParticleHistogram") == 0)
+        {
+            m_multi_rd[i_rd].reset
+                ( new ParticleHistogram(m_rd_names[i_rd]));
         }
         else
         { Abort("No matching reduced diagnostics type found."); }
