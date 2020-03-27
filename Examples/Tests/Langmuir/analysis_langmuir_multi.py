@@ -34,7 +34,6 @@ n_osc_y = 2
 n_osc_z = 2
 lo = [-20.e-6, -20.e-6, -20.e-6]
 hi = [ 20.e-6,  20.e-6,  20.e-6]
-# Ncell = [32, 32, 32]
 Ncell = [64, 64, 64]
 
 # Wave vector of the wave
