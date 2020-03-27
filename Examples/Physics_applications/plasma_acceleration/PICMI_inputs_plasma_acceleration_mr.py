@@ -8,7 +8,7 @@ constants = picmi.constants
 
 nx = 32
 ny = 32
-nz = 16
+nz = 32
 
 xmin = -100.e-6
 xmax = +100.e-6
