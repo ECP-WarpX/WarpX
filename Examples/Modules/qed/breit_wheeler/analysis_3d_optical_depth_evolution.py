@@ -57,7 +57,7 @@ spec_names = ["p4"]
 tau_begin_avg = np.array([1.0])
 mec = electron_mass*speed_of_light
 p_begin = [
-    np.array([57735.02691896, 57735.02691896, 57735.02691896])*mec
+    np.array([57735.02691896])*mec
 ]
 #______________
 
