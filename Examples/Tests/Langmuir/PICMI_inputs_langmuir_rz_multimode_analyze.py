@@ -82,8 +82,8 @@ sim = picmi.Simulation(solver = solver,
                        warpx_field_gathering_algo = 'energy-conserving',
                        warpx_particle_pusher_algo = 'boris')
 
-sim.add_species(electrons, layout=picmi.GriddedLayout(n_macroparticle_per_cell=[2,16,2], grid=grid))
-sim.add_species(protons, layout=picmi.GriddedLayout(n_macroparticle_per_cell=[2,16,2], grid=grid))
+sim.add_species(electrons, layout=picmi.GriddedLayout(n_macroparticle_per_cell=[1,6,1], grid=grid))
+sim.add_species(protons, layout=picmi.GriddedLayout(n_macroparticle_per_cell=[1,6,1], grid=grid))
 
 # write_inputs will create an inputs file that can be used to run
 # with the compiled version.

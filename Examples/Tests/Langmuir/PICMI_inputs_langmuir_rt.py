@@ -18,7 +18,7 @@ plasma_x_velocity = 0.1*constants.c
 
 # --- Number of time steps
 max_steps = 40
-diagnostic_interval = 10
+diagnostic_interval = 40
 
 # --- Grid
 nx = 64
@@ -32,7 +32,7 @@ xmax = +20.e-6
 ymax = +20.e-6
 zmax = +20.e-6
 
-number_per_cell_each_dim = [2,2,2]
+number_per_cell_each_dim = [1,1,1]
 
 ##########################
 # physics components
