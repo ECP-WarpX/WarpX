@@ -56,6 +56,7 @@ class Species(picmistandard.PICMI_Species):
                     assert self.charge_state <= element.number, Exception('%s charge state not valid'%self.particle_type)
                     try:
                         element = element.ion[self.charge_state]
+                        self.charge = 'q_e'
                     except ValueError:
                         # Note that not all valid charge states are defined in elements,
                         # so this value error can be ignored.
