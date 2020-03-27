@@ -96,10 +96,11 @@ Time step
 Duration of the simulation
 --------------------------
 
-    To determine the total number of time steps of the simulation, we could either set the `<zmax_plasma_to_compute_max_step>` parameter to the end of the plasma (:math:`z_{end}`), or compute it using:
+    To determine the total number of time steps of the simulation, we could either set the `<zmax_plasma_to_compute_max_step>` parameter to the end of the plasma (:math:`z_{\textrm{end}}`), or compute it using:
     * boosted frame edge of the simulation box - :math:`\textrm{corner} = l_{e}/ ((1-\beta_{b}) \gamma_{b})`
-    * time of interaction in the boosted frame - :math:`T = \frac{z_end/\gamma_{b}-\textrm{corner}}{c (1+\beta_{b})}`
+    * time of interaction in the boosted frame - :math:`T = \frac{z_{\textrm{end}}/\gamma_{b}-\textrm{corner}}{c (1+\beta_{b})}`
     * total number of iterations - :math:`i_{\textrm{max}} = T/dt`
+    where :math:`l_{e}` is the position of the left edge of the simulation box (in respect to propagation direction).
 
 
 Plotfiles and snapshots
