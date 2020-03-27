@@ -74,7 +74,7 @@ RigidInjectedParticleContainer::RemapParticles()
         const Real t_lab = 0.;
 
         const Real uz_boost = WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
-        const Real csq = PhysConst::c*PhysConst::c;
+        const Real csqi = 1./(PhysConst::c*PhysConst::c);
 
         vzbeam_ave_boosted = meanParticleVelocity(false)[2];
 
