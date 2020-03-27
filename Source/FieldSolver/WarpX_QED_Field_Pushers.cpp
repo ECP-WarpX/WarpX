@@ -116,7 +116,17 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
         const Box& tjx = mfi.tilebox(jx_nodal_flag);
         const Box& tjy = mfi.tilebox(jy_nodal_flag);
         const Box& tjz = mfi.tilebox(jz_nodal_flag);
+const Box& tbx = mfi.tilebox(Bx->ixType().ixType());
+const Box& tby = mfi.tilebox(By->ixType().ixType());
+const Box& tbz = mfi.tilebox(Bz->ixType().ixType());
 
+const Box& tex = mfi.tilebox(Ex->ixType().ixType());
+const Box& tey = mfi.tilebox(Ey->ixType().ixType());
+const Box& tez = mfi.tilebox(Ez->ixType().ixType());
+
+const Box& tjx = mfi.tilebox(Jx->ixType().ixType());
+const Box& tjy = mfi.tilebox(Jy->ixType().ixType());
+const Box& tjz = mfi.tilebox(Jz->ixType().ixType());
         // Get field arrays
         auto const& Bxfab = Bx->array(mfi);
         auto const& Byfab = By->array(mfi);
