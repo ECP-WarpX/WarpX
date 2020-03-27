@@ -18,7 +18,7 @@ public:
      * \param[in] dcomp first component of mf_dst in which the result is written
      * \param[im] ncomp number of components of mf_dst to update
      */
-    virtual void operator()(amrex::MultiFab& mf_dst, int dcomp) const = 0;
+    virtual void operator() (amrex::MultiFab& mf_dst, int dcomp) const = 0;
     /** Number of component from the input multifab to write to the output
      * multifab */
     int nComp () const { return m_ncomp; };

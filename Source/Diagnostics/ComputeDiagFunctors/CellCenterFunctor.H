@@ -17,8 +17,8 @@ public:
      *            sum all modes in mf_src before cell-centering into dst multifab.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
-    CellCenterFunctor(amrex::MultiFab const * mf_src, int lev,
-                      amrex::IntVect diag_crse_ratio,
+    CellCenterFunctor(const amrex::MultiFab * const mf_src, const int lev,
+                      const amrex::IntVect diag_crse_ratio,
                       bool convertRZmodes2cartesian=true, int ncomp=1);
 
     /** \brief Cell-center m_mf_src and write the result in mf_dst.
