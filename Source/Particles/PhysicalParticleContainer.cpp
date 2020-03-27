@@ -310,7 +310,7 @@ PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
 }
 
 void
-PhysicalParticleContainer::AddExternalFileBeam(const std::string s_f, amrex::Real q_tot)
+PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f, amrex::Real q_tot)
 {
 #ifdef WARPX_USE_OPENPMD
     openPMD::Series series=openPMD::Series(s_f,openPMD::AccessType::READ_ONLY);
@@ -333,6 +333,8 @@ PhysicalParticleContainer::AddExternalFileBeam(const std::string s_f, amrex::Rea
     amrex::Print() << npart << " parts of species " << ps.first << "\nWith"
     << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
     << npart << " macroparticles with weight " << weight << "\n";
+
+    amrex::Print()<<"WARNING: this is WIP, no particle has been injected!!";
 #endif
     return;
 }
@@ -392,9 +394,9 @@ PhysicalParticleContainer::AddParticles (int lev)
 
         return;
     }
-    
+
     if (plasma_injector->external_file) {
-        AddExternalFileBeam(plasma_injector->str_injection_file,
+        AddPlasmaFromFile(plasma_injector->str_injection_file,
                             plasma_injector->q_tot);
         return;
     }

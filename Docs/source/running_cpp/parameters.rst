@@ -248,7 +248,7 @@ Particle initialization
       ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
       and optional argument ``<species_name>.do_symmetrize`` (whether to
       symmetrize the beam in the x and y directions).
-      
+
     * ``external_file``: inject macroparticles with properties (charge, mass, position, and momentum) according to data in external file.
       It requires the additional arguments ``<species_name>.injection_file`` and ``<species_name>.q_tot``, which are the string corresponding to the OpenPMD file and the beam charge.
       When using this style, it is not necessary to add other ``<species_name>.(...)`` paramters, because they will be read directly from the file.
