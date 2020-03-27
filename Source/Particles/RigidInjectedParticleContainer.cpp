@@ -100,21 +100,21 @@ RigidInjectedParticleContainer::RemapParticles()
 
                     // Loop over particles
                     const long np = pti.numParticles();
-                    Real lvzbeam_ave_boosted = vzbeam_ave_boosted;
-                    Real gamma_boost = WarpX::gamma_boost;
+                    const Real lvzbeam_ave_boosted = vzbeam_ave_boosted;
+                    const Real gamma_boost = WarpX::gamma_boost;
                     amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long i)
                     {
                         ParticleReal xp, yp, zp;
                         GetPosition(i, xp, yp, zp);
 
-                        const Real gammapr = std::sqrt(1. + (uxp[i]*uxp[i] + uyp[i]*uyp[i] + uzp[i]*uzp[i])/csq);
+                        const Real gammapr = std::sqrt(1. + (uxp[i]*uxp[i] + uyp[i]*uyp[i] + uzp[i]*uzp[i])*csqi);
                         const Real vzpr = uzp[i]/gammapr;
 
                         // Back out the value of z_lab
-                        const Real z_lab = (zp + uz_boost*t_lab + gamma_boost*t_lab*vzpr)/(gamma_boost + uz_boost*vzpr/csq);
+                        const Real z_lab = (zp + uz_boost*t_lab + gamma_boost*t_lab*vzpr)/(gamma_boost + uz_boost*vzpr*csqi);
 
                         // Time of the particle in the boosted frame given its position in the lab frame at t=0.
-                        const Real tpr = gamma_boost*t_lab - uz_boost*z_lab/csq;
+                        const Real tpr = gamma_boost*t_lab - uz_boost*z_lab*csqi;
 
                         // Adjust the position, taking away its motion from its own velocity and adding
                         // the motion from the average velocity
@@ -143,7 +143,7 @@ RigidInjectedParticleContainer::BoostandRemapParticles()
         vzbeam_ave_boosted = (vzbeam_ave_lab - WarpX::beta_boost*PhysConst::c)/(1. - vzbeam_ave_lab*WarpX::beta_boost/PhysConst::c);
     }
 
-    const Real csq = PhysConst::c*PhysConst::c;
+    const Real csqi = 1./(PhysConst::c*PhysConst::c);
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -174,7 +174,7 @@ RigidInjectedParticleContainer::BoostandRemapParticles()
                 ParticleReal xp, yp, zp;
                 GetPosition(i, xp, yp, zp);
 
-                const Real gamma_lab = std::sqrt(1. + (uxp[i]*uxp[i] + uyp[i]*uyp[i] + uzp[i]*uzp[i])/csq);
+                const Real gamma_lab = std::sqrt(1. + (uxp[i]*uxp[i] + uyp[i]*uyp[i] + uzp[i]*uzp[i])*csqi);
 
                 const Real vx_lab = uxp[i]/gamma_lab;
                 const Real vy_lab = uyp[i]/gamma_lab;
@@ -212,7 +212,7 @@ RigidInjectedParticleContainer::BoostandRemapParticles()
                 }
                 else {
                     // with the particle moving with its own velocity
-                    const Real gammapr = std::sqrt(1. + (uxp[i]*uxp[i] + uyp[i]*uyp[i] + uzp[i]*uzp[i])/csq);
+                    const Real gammapr = std::sqrt(1. + (uxp[i]*uxp[i] + uyp[i]*uyp[i] + uzp[i]*uzp[i])*csqi);
                     const Real vzpr = uzp[i]/gammapr;
                     zp = zpr - vzpr*tpr;
                 }

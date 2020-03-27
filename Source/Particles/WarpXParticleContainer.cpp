@@ -660,7 +660,7 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
                 const auto uyp = pti.GetAttribs(PIdx::uy).data();
                 const auto uzp = pti.GetAttribs(PIdx::uz).data();
 
-                long np = pti.numParticles();
+                const long np = pti.numParticles();
                 np_total += np;
 
                 reduce_op.eval(np, reduce_data,
@@ -669,7 +669,7 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
                                    Real usq = (uxp[i]*uxp[i] +
                                                uyp[i]*uyp[i] +
                                                uzp[i]*uzp[i])*inv_clight_sq;
-                                   Real gaminv = 1.0/std::sqrt(1.0 + usq);
+                                   Real gaminv = 1.0_rt/std::sqrt(1.0_rt + usq);
                                    return {uxp[i]*gaminv,  uyp[i]*gaminv, uzp[i]*gaminv};
                                });
             }
@@ -697,7 +697,7 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
 
                 for (unsigned long i = 0; i < ux.size(); i++) {
                     Real usq = (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])*inv_clight_sq;
-                    Real gaminv = 1.0/std::sqrt(1.0 + usq);
+                    Real gaminv = 1.0_rt/std::sqrt(1.0_rt + usq);
                     vx_total += ux[i]*gaminv;
                     vy_total += uy[i]*gaminv;
                     vz_total += uz[i]*gaminv;
