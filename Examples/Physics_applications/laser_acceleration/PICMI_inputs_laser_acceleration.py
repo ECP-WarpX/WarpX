@@ -36,20 +36,20 @@ max_steps = 10
 
 # --- grid
 
-nx = 64
-ny = 64
-nz = 480
+nx = 32
+ny = 32
+nz = 120
 
 xmin = 1.5*plasma_min[0]
 xmax = 1.5*plasma_max[0]
 ymin = 1.5*plasma_min[1]
 ymax = 1.5*plasma_max[1]
-zmin = -56.e-6
-zmax = 12.e-6
+zmin = -20.e-6
+zmax = 10.e-6
 
 moving_window_velocity = [0., 0., constants.c]
 
-number_per_cell_each_dim = [2, 2, 1]
+number_per_cell_each_dim = [1, 1, 1]
 
 ##########################
 # physics components
@@ -102,8 +102,8 @@ solver = picmi.ElectromagneticSolver(grid=grid, method='CKC', cfl=1.)
 
 field_diag1 = picmi.FieldDiagnostic(grid = grid,
                                     period = 10,
-                                    warpx_plot_raw_fields = 1,
-                                    warpx_plot_raw_fields_guards = 1)
+                                    warpx_plot_raw_fields = 0,
+                                    warpx_plot_raw_fields_guards = 0)
 
 part_diag1 = picmi.ParticleDiagnostic(period = 10,
                                       species = [electrons])
