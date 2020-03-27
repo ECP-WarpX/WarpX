@@ -167,6 +167,35 @@ Distribution across MPI ranks and parallelization
     perform load-balancing of the simulation.
     If this is `0`: the Knapsack algorithm is used instead.
 
+* ``algo.load_balance_costs_update`` (`Heuristic` or `Timers`) optional (default `Timers`)
+    If this is `Heuristic`: load balance costs are updated according to a measure of
+    particles and cells assigned to each box of the domain.  The cost :math:`c` is
+    computed as
+
+    .. math::
+
+            c = n_{\text{particle}} \cdot w_{\text{particle}} + n_{\text{cell}} \cdot w_{\text{cell}},
+
+    where
+    :math:`n_{\text{particle}}` is the number of particles on the box,
+    :math:`w_{\text{particle}}` is the particle cost weight factor (controlled by ``algo.costs_heuristic_particles_wt``),
+    :math:`n_{\text{cell}}` is the number of cells on the box, and
+    :math:`w_{\text{cell}}` is the cell cost weight factor (controlled by ``algo.costs_heuristic_cells_wt``).
+
+    If this is `Timers`: costs are updated according to in-code timers.
+
+* ``algo.costs_heuristic_particles_wt`` (`float`) optional
+    Particle weight factor used in `Heuristic` strategy for costs update; if running on GPU,
+    the particle weight is set to a value determined from single-GPU tests on Summit,
+    depending on the choice of solver (FDTD or PSATD) and order of the particle shape.
+    If running on CPU, the default value is `0.9`.
+
+* ``algo.costs_heuristic_cells_wt`` (`float`) optional
+    Cell weight factor used in `Heuristic` strategy for costs update; if running on GPU,
+    the cell weight is set to a value determined from single-GPU tests on Summit,
+    depending on the choice of solver (FDTD or PSATD) and order of the particle shape.
+    If running on CPU, the default value is `0.1`.
+
 * ``warpx.do_dynamic_scheduling`` (`0` or `1`) optional (default `1`)
     Whether to activate OpenMP dynamic scheduling.
 
@@ -250,7 +279,7 @@ Particle initialization
       symmetrize the beam in the x and y directions).
 
     * ``external_file``: inject macroparticles with properties (charge, mass, position, and momentum) according to data in external file.
-      It requires the additional arguments ``<species_name>.injection_file`` and ``<species_name>.q_tot``, which are the string corresponding to the OpenPMD file and the beam charge.
+      It requires the additional arguments ``<species_name>.injection_file`` and ``<species_name>.q_tot``, which are the string corresponding to the OpenPMD file name and the beam charge.
       When using this style, it is not necessary to add other ``<species_name>.(...)`` paramters, because they will be read directly from the file.
 
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
@@ -1323,6 +1352,11 @@ Diagnostics and output
             ``x`` produces the position (density) distribution in `x`.
             ``ux`` produces the velocity distribution in `x`,
             ``sqrt(ux*ux+uy*uy+uz*uz)`` produces the speed distribution.
+            The default value of the histogram without normalization is
+            :math:`f = \sum\limits_{i=1}^N w_i`, where
+            :math:`\sum\limits_{i=1}^N` is the sum over :math:`N` particles
+            in that bin,
+            :math:`w_i` denotes the weight of the ith particle.
 
         * ``<reduced_diags_name>.bin_number`` (`int` > 0)
             This is the number of bins used for the histogram.
@@ -1339,7 +1373,9 @@ Diagnostics and output
             ``unity_particle_weight``
             uses unity particle weight to compute the histogram,
             such that the values of the histogram are
-            the number of counted macroparticles in that bin.
+            the number of counted macroparticles in that bin,
+            i.e.  :math:`f = \sum\limits_{i=1}^N 1`,
+            :math:`N` is the number of particles in that bin.
 
             ``max_to_unity`` will normalize the histogram such that
             its maximum value is one.
@@ -1354,6 +1390,9 @@ Diagnostics and output
 
         The output columns are
         values of the 1st bin, the 2nd bin, ..., the nth bin.
+        An example input file and a loading pything script of
+        using the histogram reduced diagnostics
+        are given in ``Examples/Tests/initial_distribution/``.
 
 * ``<reduced_diags_name>.frequency`` (`int`)
     The output frequency (every # time steps).
