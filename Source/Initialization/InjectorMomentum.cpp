@@ -23,21 +23,9 @@ InjectorMomentum::~InjectorMomentum ()
         break;
     }
     case Type::gaussian:
-    {
-        break;
-    }
     case Type::boltzmann:
-    {
-        break;
-    }
     case Type::juttner:
-    {
-        break;
-    }
     case Type::constant:
-    {
-        break;
-    }
     case Type::radial_expansion:
     {
         break;
