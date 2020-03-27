@@ -31,11 +31,11 @@ import scipy.integrate as integ
 
 
 # Tolerance
-tol = 5.e-2
+tol = 2e-2
 
 # EM fields
-E_f = np.array([-486664263392286, 194665705356914, 291998558035372])
-B_f = np.array([ 571429.7142856, 857142.5714284, 1714285.142857 ])
+E_f = np.array([-2433321316961438, 973328526784575, 1459992790176863])
+B_f = np.array([2857142.85714286, 4285714.28571428, 8571428.57142857])
 
 # Physical constants
 electron_mass = 9.10938356e-31
@@ -52,11 +52,14 @@ schwinger_field_norm = electron_mass*speed_of_light*lambda_ref/(2.0*reduced_plan
 #______________
 
 # Initial parameters
-spec_names = ["p4"]
+spec_names = ["p1", "p2", "p3", "p4"]
  #Assumes average = 1 at t = 0 (ok for a large number of particles)
-tau_begin_avg = np.array([1.0])
+tau_begin_avg = np.array([1.0, 1.0, 1.0, 1.0])
 mec = electron_mass*speed_of_light
 p_begin = [
+    np.array([2000.0,0,0])*mec,
+    np.array([0.0,5000.0,0.0])*mec,
+    np.array([0.0,0.0,10000.0])*mec,
     np.array([57735.02691896, 57735.02691896, 57735.02691896])*mec
 ]
 #______________
@@ -113,8 +116,6 @@ def check():
 
     discrepancy = np.abs(dNBW_dt_sim-dNBW_dt_theo)/dNBW_dt_theo
 
-    print("tol = " + str(tol))
-    print("discrepancy = " + str(discrepancy))
     assert(np.all(discrepancy < tol))
 
 def main():
