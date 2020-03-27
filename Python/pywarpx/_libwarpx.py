@@ -161,6 +161,21 @@ libwarpx.warpx_getCurrentDensityCP_PML.restype = _LP_LP_c_real
 libwarpx.warpx_getCurrentDensityCPLoVects_PML.restype = _LP_c_int
 libwarpx.warpx_getCurrentDensityFP_PML.restype = _LP_LP_c_real
 libwarpx.warpx_getCurrentDensityFPLoVects_PML.restype = _LP_c_int
+libwarpx.warpx_getChargeDensityCP.restype = _LP_LP_c_real
+libwarpx.warpx_getChargeDensityCPLoVects.restype = _LP_c_int
+libwarpx.warpx_getChargeDensityFP.restype = _LP_LP_c_real
+libwarpx.warpx_getChargeDensityFPLoVects.restype = _LP_c_int
+
+libwarpx.warpx_getEx_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getEy_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getEz_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getBx_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getBy_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getBz_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getJx_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getJy_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getJz_nodal_flag.restype = _LP_c_int
+libwarpx.warpx_getRho_nodal_flag.restype = _LP_c_int
 
 #libwarpx.warpx_getPMLSigma.restype = _LP_c_real
 #libwarpx.warpx_getPMLSigmaStar.restype = _LP_c_real
@@ -179,6 +194,7 @@ libwarpx.warpx_addNParticles.argtypes = (ctypes.c_int, ctypes.c_int,
 
 libwarpx.warpx_getProbLo.restype = c_real
 libwarpx.warpx_getProbHi.restype = c_real
+libwarpx.warpx_getCellSize.restype = c_real
 libwarpx.warpx_getistep.restype = ctypes.c_int
 libwarpx.warpx_gett_new.restype = c_real
 libwarpx.warpx_getdt.restype = c_real
@@ -195,6 +211,9 @@ libwarpx.warpx_FillBoundaryB.argtypes = []
 libwarpx.warpx_UpdateAuxilaryData.argtypes = []
 libwarpx.warpx_SyncCurrent.argtypes = []
 libwarpx.warpx_PushParticlesandDepose.argtypes = [c_real]
+libwarpx.warpx_getProbLo.argtypes = [ctypes.c_int]
+libwarpx.warpx_getProbHi.argtypes = [ctypes.c_int]
+libwarpx.warpx_getCellSize.argtypes = [ctypes.c_int, ctypes.c_int]
 libwarpx.warpx_getistep.argtypes = [ctypes.c_int]
 libwarpx.warpx_setistep.argtypes = [ctypes.c_int, ctypes.c_int]
 libwarpx.warpx_gett_new.argtypes = [ctypes.c_int]
@@ -261,6 +280,22 @@ def evolve(num_steps=-1):
     '''
 
     libwarpx.warpx_evolve(num_steps);
+
+
+def getProbLo(direction):
+    assert 0 <= direction < dim, 'Inappropriate direction specified'
+    return libwarpx.warpx_getProbLo(direction)
+
+
+def getProbHi(direction):
+    assert 0 <= direction < dim, 'Inappropriate direction specified'
+    return libwarpx.warpx_getProbHi(direction)
+
+
+def getCellSize(direction, level=0):
+    assert 0 <= direction < 3, 'Inappropriate direction specified'
+    assert 0 <= level and level <= libwarpx.warpx_finestLevel(), 'Inappropriate level specified'
+    return libwarpx.warpx_getCellSize(direction, level)
 
 
 #def get_sigma(direction):
@@ -657,9 +692,14 @@ def _get_mesh_field_list(warpx_func, level, direction, include_ghosts):
     size = ctypes.c_int(0)
     ncomps = ctypes.c_int(0)
     ngrow = ctypes.c_int(0)
-    data = warpx_func(level, direction,
-                      ctypes.byref(size), ctypes.byref(ncomps),
-                      ctypes.byref(ngrow), ctypes.byref(shapes))
+    if direction is None:
+        data = warpx_func(level,
+                          ctypes.byref(size), ctypes.byref(ncomps),
+                          ctypes.byref(ngrow), ctypes.byref(shapes))
+    else:
+        data = warpx_func(level, direction,
+                          ctypes.byref(size), ctypes.byref(ncomps),
+                          ctypes.byref(ngrow), ctypes.byref(shapes))
     ng = ngrow.value
     grid_data = []
     shapesize = dim
@@ -690,7 +730,7 @@ def get_mesh_electric_field(level, direction, include_ghosts=True):
     This returns a list of numpy arrays containing the mesh electric field
     data on each grid for this process.
 
-    This version is for the full "auxillary" solution on the given level.
+    This version is for the full "auxiliary" solution on the given level.
 
     The data for the numpy arrays are not copied, but share the underlying
     memory buffer with WarpX. The numpy arrays are fully writeable.
@@ -832,7 +872,7 @@ def get_mesh_magnetic_field(level, direction, include_ghosts=True):
     This returns a list of numpy arrays containing the mesh magnetic field
     data on each grid for this process.
 
-    This version is for the full "auxillary" solution on the given level.
+    This version is for the full "auxiliary" solution on the given level.
 
     The data for the numpy arrays are not copied, but share the underlying
     memory buffer with WarpX. The numpy arrays are fully writeable.
@@ -1106,6 +1146,56 @@ def get_mesh_current_density_fp_pml(level, direction, include_ghosts=True):
         return _get_mesh_field_list(libwarpx.warpx_getCurrentDensityFP_PML, level, direction, include_ghosts)
     except ValueError:
         raise Exception('PML not initialized')
+def get_mesh_charge_density_cp(level, include_ghosts=True):
+    '''
+
+    This returns a list of numpy arrays containing the mesh charge density
+    data on each grid for this process. This version returns the density for
+    the coarse patch on the given level.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+
+    return _get_mesh_field_list(libwarpx.warpx_getChargeDensityCP, level, None, include_ghosts)
+
+
+def get_mesh_charge_density_fp(level, include_ghosts=True):
+    '''
+
+    This returns a list of numpy arrays containing the mesh charge density
+    data on each grid for this process. This version returns the density on
+    the fine patch for the given level.
+
+    The data for the numpy arrays are not copied, but share the underlying
+    memory buffer with WarpX. The numpy arrays are fully writeable.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A List of numpy arrays.
+
+    '''
+
+    return _get_mesh_field_list(libwarpx.warpx_getChargeDensityFP, level, None, include_ghosts)
 
 
 def _get_mesh_array_lovects(level, direction, include_ghosts=True, getarrayfunc=None):
@@ -1113,7 +1203,10 @@ def _get_mesh_array_lovects(level, direction, include_ghosts=True, getarrayfunc=
 
     size = ctypes.c_int(0)
     ngrow = ctypes.c_int(0)
-    data = getarrayfunc(level, direction, ctypes.byref(size), ctypes.byref(ngrow))
+    if direction is None:
+        data = getarrayfunc(level, ctypes.byref(size), ctypes.byref(ngrow))
+    else:
+        data = getarrayfunc(level, direction, ctypes.byref(size), ctypes.byref(ngrow))
 
     lovects_ref = np.ctypeslib.as_array(data, (size.value, dim))
 
@@ -1135,7 +1228,7 @@ def get_mesh_electric_field_lovects(level, direction, include_ghosts=True):
     This returns a list of the lo vectors of the arrays containing the mesh electric field
     data on each grid for this process.
 
-    This version is for the full "auxillary" solution on the given level.
+    This version is for the full "auxiliary" solution on the given level.
 
     Parameters
     ----------
@@ -1253,7 +1346,7 @@ def get_mesh_magnetic_field_lovects(level, direction, include_ghosts=True):
     This returns a list of the lo vectors of the arrays containing the mesh electric field
     data on each grid for this process.
 
-    This version is for the full "auxillary" solution on the given level.
+    This version is for the full "auxiliary" solution on the given level.
 
     Parameters
     ----------
@@ -1477,3 +1570,126 @@ def get_mesh_current_density_fp_lovects_pml(level, direction, include_ghosts=Tru
         return _get_mesh_array_lovects(level, direction, include_ghosts, libwarpx.warpx_getCurrentDensityFPLoVects_PML)
     except ValueError:
         raise Exception('PML not initialized')
+
+
+def get_mesh_charge_density_cp_lovects(level, include_ghosts=True):
+    '''
+
+    This returns a list of the lo vectors of the arrays containing the mesh electric field
+    data on each grid for this process.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
+
+    '''
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getChargeDensityCPLoVects)
+
+def get_mesh_charge_density_fp_lovects(level, include_ghosts=True):
+    '''
+
+    This returns a list of the lo vectors of the arrays containing the mesh electric field
+    data on each grid for this process.
+
+    Parameters
+    ----------
+
+        level          : the AMR level to get the data for
+        include_ghosts : whether to include ghost zones or not
+
+    Returns
+    -------
+
+        A 2d numpy array of the lo vector for each grid with the shape (dims, number of grids)
+
+    '''
+    return _get_mesh_array_lovects(level, None, include_ghosts, libwarpx.warpx_getChargeDensityFPLoVects)
+
+
+def _get_nodal_flag(getdatafunc):
+    data = getdatafunc()
+    nodal_flag_ref = np.ctypeslib.as_array(data, (dim,))
+
+    # --- Make a copy of the data to avoid memory problems
+    nodal_flag = nodal_flag_ref.copy()
+
+    del nodal_flag_ref
+    _libc.free(data)
+    return nodal_flag
+
+
+def get_Ex_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for Ex along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getEx_nodal_flag)
+
+
+def get_Ey_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for Ey along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getEy_nodal_flag)
+
+
+def get_Ez_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for Ez along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getEz_nodal_flag)
+
+
+def get_Bx_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for Bx along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getBx_nodal_flag)
+
+
+def get_By_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for By along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getBy_nodal_flag)
+
+
+def get_Bz_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for Bz along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getBz_nodal_flag)
+
+
+def get_Jx_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for Jx along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getJx_nodal_flag)
+
+
+def get_Jy_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for Jy along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getJy_nodal_flag)
+
+
+def get_Jz_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for Jz along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getJz_nodal_flag)
+
+
+def get_Rho_nodal_flag():
+    '''
+    This returns a 1d array of the nodal flags for Rho along each direction. A 1 means node centered, and 0 cell centered.
+    '''
+    return _get_nodal_flag(libwarpx.warpx_getRho_nodal_flag)

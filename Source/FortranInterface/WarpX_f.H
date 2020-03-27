@@ -27,91 +27,10 @@
 
 #endif
 
-#if (AMREX_SPACEDIM == 3)
-
-#define WRPX_ZERO_OUT_BNDRY              warpx_zero_out_bndry_3d
-#define WRPX_BUILD_MASK                  warpx_build_mask_3d
-#define WRPX_INTERPOLATE_CIC             warpx_interpolate_cic_3d
-#define WRPX_INTERPOLATE_CIC_TWO_LEVELS  warpx_interpolate_cic_two_levels_3d
-#define WRPX_PUSH_LEAPFROG               warpx_push_leapfrog_3d
-#define WRPX_PUSH_LEAPFROG_POSITIONS     warpx_push_leapfrog_positions_3d
-
-#elif (AMREX_SPACEDIM == 2)
-
-#define WRPX_ZERO_OUT_BNDRY              warpx_zero_out_bndry_2d
-#define WRPX_BUILD_MASK                  warpx_build_mask_2d
-#define WRPX_INTERPOLATE_CIC             warpx_interpolate_cic_2d
-#define WRPX_INTERPOLATE_CIC_TWO_LEVELS  warpx_interpolate_cic_two_levels_2d
-#define WRPX_PUSH_LEAPFROG               warpx_push_leapfrog_2d
-#define WRPX_PUSH_LEAPFROG_POSITIONS     warpx_push_leapfrog_positions_2d
-
-#endif
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-///
-/// These functions are used in electrostatic mode.
-///
-    void WRPX_ZERO_OUT_BNDRY(const int* lo, const int* hi,
-                             amrex::Real* input_data, amrex::Real* bndry_data,
-                             const int* mask);
-
-    void WRPX_BUILD_MASK(const int* lo, const int* hi,
-                         const int* tmp_mask, int* mask, const int* ncells);
-
-    void WRPX_INTERPOLATE_CIC_TWO_LEVELS(const amrex::ParticleReal* particles, int ns, int np,
-                                         amrex::Real* Ex_p, amrex::Real* Ey_p,
-#if (AMREX_SPACEDIM == 3)
-                                         amrex::Real* Ez_p,
-#endif
-                                         const amrex::Real* Ex, const amrex::Real* Ey,
-#if (AMREX_SPACEDIM == 3)
-                                         const amrex::Real* Ez,
-#endif
-                                         const int* lo, const int* hi, const amrex::Real* dx,
-                                         const amrex::Real* cEx, const amrex::Real* cEy,
-#if (AMREX_SPACEDIM == 3)
-                                         const amrex::Real* cEz,
-#endif
-                                         const int* mask,
-                                         const int* clo, const int* chi, const amrex::Real* cdx,
-                                         const amrex::Real* plo, const int* ng, const int* lev);
-
-    void WRPX_INTERPOLATE_CIC(const amrex::ParticleReal* particles, int ns, int np,
-                              amrex::Real* Ex_p, amrex::Real* Ey_p,
-#if (AMREX_SPACEDIM == 3)
-                              amrex::Real* Ez_p,
-#endif
-                              const amrex::Real* Ex, const amrex::Real* Ey,
-#if (AMREX_SPACEDIM == 3)
-                              const amrex::Real* Ez,
-#endif
-                              const int* lo, const int* hi,
-                              const amrex::Real* plo, const amrex::Real* dx,
-                              const int* ng);
-
-    void WRPX_PUSH_LEAPFROG(amrex::ParticleReal* particles, int ns, int np,
-                            amrex::ParticleReal* vx_p, amrex::ParticleReal* vy_p,
-#if (AMREX_SPACEDIM == 3)
-                            amrex::ParticleReal* vz_p,
-#endif
-                            const amrex::Real* Ex_p, const amrex::Real* Ey_p,
-#if (AMREX_SPACEDIM == 3)
-                            const amrex::Real* Ez_p,
-#endif
-                            const amrex::Real* charge, const amrex::Real* mass, const amrex::Real* dt,
-                            const amrex::Real* prob_lo, const amrex::Real* prob_hi);
-
-    void WRPX_PUSH_LEAPFROG_POSITIONS(amrex::ParticleReal* particles, int ns, int np,
-                                      amrex::ParticleReal* vx_p, amrex::ParticleReal* vy_p,
-#if (AMREX_SPACEDIM == 3)
-                                      amrex::ParticleReal* vz_p,
-#endif
-                                      const amrex::Real* dt, const amrex::Real* prob_lo,
-                                      const amrex::Real* prob_hi);
 
 #ifdef WARPX_USE_PSATD
     void warpx_fft_mpi_init (int fcomm);
@@ -135,10 +54,6 @@ extern "C"
                             amrex_real* rho_w, const int* r2lo, const int* r2hi);
 
 #endif
-
-    void warpx_build_buffer_masks (const int* lo, const int* hi,
-                                   int* msk, const int* mlo, const int* mhi,
-                                   const int* gmsk, const int* glo, const int* ghi, const int* ng);
 
 #ifdef __cplusplus
 }

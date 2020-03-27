@@ -5,7 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpXOpenPMD.H"
-#include "WarpXAlgorithmSelection.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "FieldIO.H"  // for getReversedVec
 
 #include <algorithm>
@@ -16,6 +16,7 @@
 #include <sstream>
 #include <tuple>
 #include <utility>
+#include <iostream>
 
 
 namespace detail
@@ -29,6 +30,7 @@ namespace detail
     };
     static_assert(sizeof(int) * 2u <= sizeof(uint64_t), "int size might cause collisions in global IDs");
 
+#ifdef WARPX_USE_OPENPMD
     /** Unclutter a real_names to openPMD record
      *
      * @param fullName name as in real_names variable
@@ -88,8 +90,10 @@ namespace detail
         };
         else return {};
     }
+#endif // WARPX_USE_OPENPMD
 }
 
+#ifdef WARPX_USE_OPENPMD
 WarpXOpenPMDPlot::WarpXOpenPMDPlot(bool oneFilePerTS,
     std::string openPMDFileType, std::vector<bool> fieldPMLdirections)
   :m_Series(nullptr),
@@ -140,12 +144,19 @@ void WarpXOpenPMDPlot::GetFileName(std::string& filename)
 
 void WarpXOpenPMDPlot::SetStep(int ts)
 {
-  if (ts < 0)
-    return;
+  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
 
-  m_CurrentStep =  ts;
+  if (m_CurrentStep >= ts) {
+      // note m_Series is reset in Init(), so using m_Series->iterations.contains(ts) is only able to check the
+      // last written step in m_Series's life time, but not other earlier written steps by other m_Series
+      std::string warnMsg = " Warning from openPMD writer: Already written iteration:"+std::to_string(ts);
+      std::cout<<warnMsg<<std::endl;
+      amrex::Warning(warnMsg);
+  }
 
-  Init(openPMD::AccessType::CREATE);
+    m_CurrentStep =  ts;
+    Init(openPMD::AccessType::CREATE);
+
 }
 
 void
@@ -155,6 +166,10 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType)
     // or init a single file for all ts
     std::string filename;
     GetFileName(filename);
+
+    // close a previously open series before creating a new one
+    // see ADIOS1 limitation: https://github.com/openPMD/openPMD-api/pull/686
+    m_Series = nullptr;
 
     if( amrex::ParallelDescriptor::NProcs() > 1 )
     {
@@ -181,19 +196,14 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType)
     uint32_t const openPMD_ED_PIC = 1u;
     m_Series->setOpenPMDextension( openPMD_ED_PIC );
     // meta info
-#if (OPENPMDAPI_VERSION_MAJOR>=0) && (OPENPMDAPI_VERSION_MINOR>=11)
     m_Series->setSoftware( "WarpX", WarpX::Version() );
-#else
-    m_Series->setSoftware( "WarpX" );
-    m_Series->setSoftwareVersion( WarpX::Version() );
-#endif
 }
 
 
 void
 WarpXOpenPMDPlot::WriteOpenPMDParticles(const std::unique_ptr<MultiParticleContainer>& mpc)
 {
-  BL_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
+  WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
   std::vector<std::string> species_names = mpc->GetSpeciesNames();
 
   for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
@@ -530,7 +540,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
                       const double time ) const
 {
   //This is AMReX's tiny profiler. Possibly will apply it later
-  BL_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
+  WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
 
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
 
@@ -665,7 +675,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
       auto const chunk_size = getReversedVec( local_box.size() );
 
       // Write local data
-      double const * local_data = fab.dataPtr( icomp );
+      amrex::Real const * local_data = fab.dataPtr( icomp );
       mesh_comp.storeChunk( openPMD::shareRaw(local_data),
                             chunk_offset, chunk_size );
     }
@@ -673,7 +683,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
   // Flush data to disk after looping over all components
   m_Series->flush();
 }
-
+#endif // WARPX_USE_OPENPMD
 
 
 

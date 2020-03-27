@@ -6,12 +6,15 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpXWrappers.h"
+#include "Particles/WarpXParticleContainer.H"
+#include "WarpX.H"
+#include "Utils/WarpXUtil.H"
+#include "WarpX_py.H"
 
-#include <WarpXWrappers.h>
-#include <WarpXParticleContainer.H>
-#include <WarpX.H>
-#include <WarpXUtil.H>
-#include <WarpX_py.H>
+#include <AMReX.H>
+#include <AMReX_BLProfiler.H>
+
 
 namespace
 {
@@ -53,6 +56,19 @@ namespace
             }
         }
         return loVects;
+    }
+    int* getFieldNodalFlagData(const amrex::IntVect nodal_flag)
+    {
+        /* Copy the nodal flag data and return the copy.
+         * The nodel flag data should not be modifiable from Python. */
+        int *nodel_flag_data = (int*) malloc(AMREX_SPACEDIM * sizeof(int));
+
+        constexpr int NODE = amrex::IndexType::NODE;
+
+        for (int i=0 ; i < AMREX_SPACEDIM ; i++) {
+            nodel_flag_data[i] = (nodal_flag[i] == NODE ? 1 : 0);
+        }
+        return nodel_flag_data;
     }
 }
 
@@ -181,9 +197,9 @@ extern "C"
     }
 
     void warpx_addNParticles(int speciesnumber, int lenx,
-                             amrex::ParticleReal* x, amrex::ParticleReal* y, amrex::ParticleReal* z,
-                             amrex::ParticleReal* vx, amrex::ParticleReal* vy, amrex::ParticleReal* vz,
-                             int nattr, amrex::ParticleReal* attr, int uniqueparticles)
+                             amrex::ParticleReal const * x, amrex::ParticleReal const * y, amrex::ParticleReal const * z,
+                             amrex::ParticleReal const * vx, amrex::ParticleReal const * vy, amrex::ParticleReal const * vz,
+                             int nattr, amrex::ParticleReal const * attr, int uniqueparticles)
     {
         auto & mypc = WarpX::GetInstance().GetPartContainer();
         auto & myspc = mypc.GetParticleContainer(speciesnumber);
@@ -208,6 +224,11 @@ extern "C"
       WarpX& warpx = WarpX::GetInstance();
       const amrex::Geometry& geom = warpx.Geom(0);
       return geom.ProbHi(dir);
+    }
+
+    amrex::Real warpx_getCellSize(int dir, int lev) {
+        const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
+        return dx[dir];
     }
 
     long warpx_getNumParticles(int speciesnumber) {
@@ -253,6 +274,37 @@ extern "C"
     WARPX_GET_LOVECTS(warpx_getCurrentDensityLoVects, WarpX::GetInstance().getcurrent);
     WARPX_GET_LOVECTS(warpx_getCurrentDensityCPLoVects, WarpX::GetInstance().getcurrent_cp);
     WARPX_GET_LOVECTS(warpx_getCurrentDensityFPLoVects, WarpX::GetInstance().getcurrent_fp);
+
+    int* warpx_getEx_nodal_flag() {return getFieldNodalFlagData(WarpX::Ex_nodal_flag);}
+    int* warpx_getEy_nodal_flag() {return getFieldNodalFlagData(WarpX::Ey_nodal_flag);}
+    int* warpx_getEz_nodal_flag() {return getFieldNodalFlagData(WarpX::Ez_nodal_flag);}
+    int* warpx_getBx_nodal_flag() {return getFieldNodalFlagData(WarpX::Bx_nodal_flag);}
+    int* warpx_getBy_nodal_flag() {return getFieldNodalFlagData(WarpX::By_nodal_flag);}
+    int* warpx_getBz_nodal_flag() {return getFieldNodalFlagData(WarpX::Bz_nodal_flag);}
+    int* warpx_getJx_nodal_flag() {return getFieldNodalFlagData(WarpX::jx_nodal_flag);}
+    int* warpx_getJy_nodal_flag() {return getFieldNodalFlagData(WarpX::jy_nodal_flag);}
+    int* warpx_getJz_nodal_flag() {return getFieldNodalFlagData(WarpX::jz_nodal_flag);}
+    int* warpx_getRho_nodal_flag() {return getFieldNodalFlagData(WarpX::rho_nodal_flag);}
+
+#define WARPX_GET_SCALAR(SCALAR, GETTER) \
+    amrex::Real** SCALAR(int lev, \
+                         int *return_size, int *ncomps, int *ngrow, int **shapes) { \
+        auto & mf = GETTER(lev); \
+        return getMultiFabPointers(mf, return_size, ncomps, ngrow, shapes); \
+    }
+
+#define WARPX_GET_LOVECTS_SCALAR(SCALAR, GETTER) \
+    int* SCALAR(int lev, \
+                int *return_size, int *ngrow) { \
+        auto & mf = GETTER(lev); \
+        return getMultiFabLoVects(mf, return_size, ngrow); \
+    }
+
+    WARPX_GET_SCALAR(warpx_getChargeDensityCP, WarpX::GetInstance().getrho_cp);
+    WARPX_GET_SCALAR(warpx_getChargeDensityFP, WarpX::GetInstance().getrho_fp);
+
+    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityCPLoVects, WarpX::GetInstance().getrho_cp);
+    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityFPLoVects, WarpX::GetInstance().getrho_fp);
 
 #define WARPX_GET_FIELD_PML(FIELD, GETTER) \
     amrex::Real** FIELD(int lev, int direction, \

@@ -4,18 +4,17 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <LaserProfiles.H>
+#include "Laser/LaserProfiles.H"
+#include "Utils/WarpX_Complex.H"
 
-#include <WarpX_Complex.H>
 
 using namespace amrex;
-using namespace WarpXLaserProfiles;
 
 void
-FieldFunctionLaserProfile::init (
+WarpXLaserProfiles::FieldFunctionLaserProfile::init (
     const amrex::ParmParse& ppl,
     const amrex::ParmParse& ppc,
-    CommonLaserParameters params)
+    CommonLaserParameters /*params*/)
 {
     // Parse the properties of the parse_field_function profile
     ppl.get("field_function(X,Y,t)", m_params.field_function);
@@ -41,7 +40,7 @@ FieldFunctionLaserProfile::init (
 }
 
 void
-FieldFunctionLaserProfile::fill_amplitude (
+WarpXLaserProfiles::FieldFunctionLaserProfile::fill_amplitude (
     const int np, Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
 {

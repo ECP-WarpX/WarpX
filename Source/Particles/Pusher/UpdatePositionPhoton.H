@@ -8,10 +8,11 @@
 #ifndef WARPX_PARTICLES_PUSHER_UPDATEPOSITIONPHOTON_H_
 #define WARPX_PARTICLES_PUSHER_UPDATEPOSITIONPHOTON_H_
 
-#include <WarpXConst.H>
+#include "Utils/WarpXConst.H"
 
 #include <AMReX_FArrayBox.H>
 #include <AMReX_REAL.H>
+
 
 /**
  * \brief Push the position of a photon particle over one timestep,
@@ -32,7 +33,6 @@ void UpdatePositionPhoton(
     y += uy * c_over_umod * dt;
 #endif
     z += uz * c_over_umod * dt;
-
 }
 
 #endif // WARPX_PARTICLES_PUSHER_UPDATEPOSITION_H_

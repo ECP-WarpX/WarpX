@@ -4,10 +4,13 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <PsatdAlgorithm.H>
-#include <WarpXConst.H>
+#include "PsatdAlgorithm.H"
+#include "Utils/WarpXConst.H"
+
 #include <cmath>
 
+
+#if WARPX_USE_PSATD
 using namespace amrex;
 
 /* \brief Initialize coefficients for the update equation */
@@ -22,11 +25,11 @@ PsatdAlgorithm::PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
     // Allocate the arrays of coefficients
-    C_coef = SpectralCoefficients(ba, dm, 1, 0);
-    S_ck_coef = SpectralCoefficients(ba, dm, 1, 0);
-    X1_coef = SpectralCoefficients(ba, dm, 1, 0);
-    X2_coef = SpectralCoefficients(ba, dm, 1, 0);
-    X3_coef = SpectralCoefficients(ba, dm, 1, 0);
+    C_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    S_ck_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    X1_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    X2_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    X3_coef = SpectralRealCoefficients(ba, dm, 1, 0);
 
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 }
@@ -176,3 +179,4 @@ void PsatdAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spectr
         });
      }
 }
+#endif // WARPX_USE_PSATD

@@ -8,13 +8,15 @@
 #ifndef WARPX_UTILS_H_
 #define WARPX_UTILS_H_
 
+#include "Parser/WarpXParser.H"
+
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
-#include <WarpXParser.H>
 
 #include <string>
+
 
 void ReadBoostedFrameParameters(amrex::Real& gamma_boost, amrex::Real& beta_boost,
                                 amrex::Vector<int>& boost_direction);
@@ -126,6 +128,36 @@ T trilinear_interp(T x0, T x1,T y0, T y1, T z0, T z1,
 *
 * \param parse_function String to read to initialize the parser.
 */
-WarpXParser makeParser (std::string const& parse_function);
+WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames);
+
+namespace WarpXUtilMsg{
+
+/** \brief If is_expression_true is false, this function prints msg and calls amrex::abort()
+ *
+ * @param[in] is_expression_true
+ * @param[in] msg the string to be printed if is_expression_true is false (default value is "ERROR!")
+ */
+void AlwaysAssert(bool is_expression_true, const std::string& msg);
+
+}
+
+namespace WarpXUtilStr
+{
+    /** Return true if elem is in vect, false otherwise
+     * @param[in] vect vector of strings, typically names
+     * @param[in] elem single string
+     * @return true if elem is in vect, false otherwise
+     */
+    bool is_in(const std::vector<std::string>& vect,
+               const std::string& elem);
+
+    /** Return true if any element in elems is in vect, false otherwise
+     * @param[in] vect vector of strings, typically names
+     * @param[in] elems vector of string
+     * @return true if any element in elems is in vect, false otherwise
+     */
+    bool is_in(const std::vector<std::string>& vect,
+               const std::vector<std::string>& elems);
+}
 
 #endif //WARPX_UTILS_H_

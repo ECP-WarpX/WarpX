@@ -4,9 +4,13 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <PMLPsatdAlgorithm.H>
-#include <WarpXConst.H>
+#include "PMLPsatdAlgorithm.H"
+#include "Utils/WarpXConst.H"
+
 #include <cmath>
+
+
+#if WARPX_USE_PSATD
 
 using namespace amrex;
 
@@ -23,8 +27,8 @@ PMLPsatdAlgorithm::PMLPsatdAlgorithm(
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
     // Allocate the arrays of coefficients
-    C_coef = SpectralCoefficients(ba, dm, 1, 0);
-    S_ck_coef = SpectralCoefficients(ba, dm, 1, 0);
+    C_coef = SpectralRealCoefficients(ba, dm, 1, 0);
+    S_ck_coef = SpectralRealCoefficients(ba, dm, 1, 0);
 
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
 }
@@ -150,3 +154,4 @@ void PMLPsatdAlgorithm::InitializeSpectralCoefficients (
         });
     }
 };
+#endif // WARPX_USE_PSATD

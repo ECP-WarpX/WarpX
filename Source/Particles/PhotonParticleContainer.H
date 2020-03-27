@@ -8,7 +8,7 @@
 #ifndef WARPX_PhotonParticleContainer_H_
 #define WARPX_PhotonParticleContainer_H_
 
-#include <PhysicalParticleContainer.H>
+#include "PhysicalParticleContainer.H"
 #include <AMReX_Vector.H>
 
 /**
@@ -55,9 +55,6 @@ public:
                          DtType a_dt_type=DtType::Full) override;
 
     virtual void PushPX(WarpXParIter& pti,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& xp,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& yp,
-                        amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& zp,
                         amrex::Real dt, DtType a_dt_type=DtType::Full) override;
 
     // Do nothing
@@ -87,11 +84,6 @@ public:
                                 int lev,
                                 int depos_lev,
                                 amrex::Real dt) override {};
-    //Photons are not leptons
-    virtual bool AmIALepton () override
-    {
-        return false;
-    };
 
 #ifdef WARPX_QED
     /**

@@ -1,4 +1,4 @@
-/* Copyright 2019 Remi Lehe
+/* Copyright 2019 Remi Lehe, Edoardo Zoni
  *
  * This file is part of WarpX.
  *
@@ -7,8 +7,11 @@
 #ifndef WARPX_SPECTRAL_BASE_ALGORITHM_H_
 #define WARPX_SPECTRAL_BASE_ALGORITHM_H_
 
-#include <SpectralKSpace.H>
-#include <SpectralFieldData.H>
+#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+
+
+#if WARPX_USE_PSATD
 
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
@@ -28,9 +31,19 @@ class SpectralBaseAlgorithm
         // calls the subclass's destructor.
         virtual ~SpectralBaseAlgorithm() {};
 
+        /**
+         * \brief Compute spectral divergence of E
+         */
+        void ComputeSpectralDivE ( SpectralFieldData& field_data,
+                                   const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                                   amrex::MultiFab& divE );
+
     protected: // Meant to be used in the subclasses
 
-        using SpectralCoefficients = amrex::FabArray< amrex::BaseFab <amrex::Real> >;
+        using SpectralRealCoefficients = \
+            amrex::FabArray< amrex::BaseFab <amrex::Real> >;
+        using SpectralComplexCoefficients = \
+            amrex::FabArray< amrex::BaseFab <Complex> >;
 
         // Constructor
         SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
@@ -54,4 +67,5 @@ class SpectralBaseAlgorithm
 #endif
 };
 
+#endif // WARPX_USE_PSATD
 #endif // WARPX_SPECTRAL_BASE_ALGORITHM_H_

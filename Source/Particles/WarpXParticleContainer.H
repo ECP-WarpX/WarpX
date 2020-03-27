@@ -10,7 +10,9 @@
 #ifndef WARPX_WarpXParticleContainer_H_
 #define WARPX_WarpXParticleContainer_H_
 
-#include "WarpXDtType.H"
+#include "Utils/WarpXConst.H"
+#include "SpeciesPhysicalProperties.H"
+#include "Evolve/WarpXDtType.H"
 
 #include <AMReX_Particles.H>
 #include <AMReX_AmrCore.H>
@@ -81,14 +83,6 @@ public:
 
     WarpXParIter (ContainerType& pc, int level);
 
-#if (AMREX_SPACEDIM == 2)
-    void GetPosition (amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& x,
-                      amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& y,
-                      amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& z) const;
-    void SetPosition (const amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& x,
-                      const amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& y,
-                      const amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>& z);
-#endif
     const std::array<RealVector, PIdx::nattribs>& GetAttribs () const {
         return GetStructOfArrays().GetRealData();
     }
@@ -167,12 +161,6 @@ public:
                               const amrex::MultiFab& Ez, const amrex::MultiFab& Bx,
                               const amrex::MultiFab& By, const amrex::MultiFab& Bz) {}
 
-#ifdef WARPX_DO_ELECTROSTATIC
-    virtual void EvolveES (const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                                 amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                           amrex::Real t, amrex::Real dt) = 0;
-#endif // WARPX_DO_ELECTROSTATIC
-
     /**
      * Evolve is the central WarpXParticleContainer function that advances
      * particles for a time dt (typically one timestep). It is a pure virtual
@@ -201,15 +189,6 @@ public:
     /// This pushes the particle positions by one half time step.
     /// It is used to desynchronize the particles after initializaton
     /// or when restarting from a checkpoint.
-    /// This is the electrostatic version of the particle push.
-    ///
-    void PushXES (amrex::Real dt);
-
-    ///
-    /// This pushes the particle positions by one half time step.
-    /// It is used to desynchronize the particles after initializaton
-    /// or when restarting from a checkpoint.
-    /// This is the electromagnetic version of the particle push.
     ///
     void PushX (         amrex::Real dt);
     void PushX (int lev, amrex::Real dt);
@@ -308,38 +287,49 @@ public:
     void AddRealComp (const std::string& name, bool comm=true)
     {
         particle_comps[name] = NumRealComps();
+        particle_runtime_comps[name] = NumRealComps() - PIdx::nattribs;
         AddRealComp(comm);
     }
 
     void AddIntComp (const std::string& name, bool comm=true)
     {
         particle_icomps[name] = NumIntComps();
+        particle_runtime_icomps[name] = NumIntComps() - 0;
         AddIntComp(comm);
     }
 
     int doBackTransformedDiagnostics () const { return do_back_transformed_diagnostics; }
 
-    virtual void buildIonizationMask (const amrex::MFIter& mfi, const int lev,
-                                      amrex::Gpu::ManagedDeviceVector<int>& ionization_mask)
-    {};
-
-    std::map<std::string, int> getParticleComps () { return particle_comps;}
-    std::map<std::string, int> getParticleiComps () { return particle_icomps;}
+    std::map<std::string, int> getParticleComps () const noexcept { return particle_comps;}
+    std::map<std::string, int> getParticleiComps () const noexcept { return particle_icomps;}
+    std::map<std::string, int> getParticleRuntimeComps () const noexcept { return particle_runtime_comps;}
+    std::map<std::string, int> getParticleRuntimeiComps () const noexcept { return particle_runtime_icomps;}
 
     //amrex::Real getCharge () {return charge;}
     amrex::ParticleReal getCharge () const {return charge;}
     //amrex::Real getMass () {return mass;}
     amrex::ParticleReal getMass () const {return mass;}
 
-protected:
+    /* \brief This function tests if the current species
+    *  is of a given PhysicalSpecies (specified as a template parameter).
+    * @tparam PhysSpec the PhysicalSpecies to test against
+    * @return the result of the test
+    */
+    template<PhysicalSpecies PhysSpec>
+    bool AmIA () const noexcept {return (physical_species == PhysSpec);}
 
+protected:
+    amrex::Array<amrex::Real,3> v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
+    std::map<std::string, int> particle_runtime_comps;
+    std::map<std::string, int> particle_runtime_icomps;
 
     int species_id;
 
     amrex::Real charge;
     amrex::Real mass;
+    PhysicalSpecies physical_species;
 
     //! instead of depositing (current, charge) on the finest patch level, deposit to the coarsest grid
     bool m_deposit_on_main_grid = false;
@@ -349,6 +339,7 @@ protected:
 
     int do_not_push = 0;
     int do_not_deposit = 0;
+    int do_not_gather = 0;
 
     // Whether to allow particles outside of the simulation domain to be
     // initialized when they enter the domain.
@@ -382,8 +373,15 @@ protected:
     set_breit_wheeler_engine_ptr(std::shared_ptr<BreitWheelerEngine>){};
     virtual void
     set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){};
-#endif
 
+    int m_qed_breit_wheeler_ele_product;
+    std::string m_qed_breit_wheeler_ele_product_name;
+    int m_qed_breit_wheeler_pos_product;
+    std::string m_qed_breit_wheeler_pos_product_name;
+    int m_qed_quantum_sync_phot_product;
+    std::string m_qed_quantum_sync_phot_product_name;
+
+#endif
     amrex::Vector<amrex::FArrayBox> local_rho;
     amrex::Vector<amrex::FArrayBox> local_jx;
     amrex::Vector<amrex::FArrayBox> local_jy;
@@ -391,8 +389,6 @@ protected:
 
     using DataContainer = amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>;
     using PairIndex = std::pair<int, int>;
-
-    amrex::Vector<DataContainer> m_xp, m_yp, m_zp;
 
     // Whether to dump particle quantities.
     // If true, particle position is always dumped.
@@ -404,6 +400,14 @@ protected:
     amrex::Vector<std::string> plot_vars;
 
     amrex::Vector<std::map<PairIndex, std::array<DataContainer, TmpIdx::nattribs> > > tmp_particle_data;
+
+    /**
+     * When using runtime components, AMReX requires to touch all tiles
+     * in serial and create particles tiles with runtime components if
+     * they do not exist (or if they were defined by default, i.e.,
+     * without runtime component).
+     */
+     void defineAllParticleTiles () noexcept;
 
 private:
     virtual void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld,
