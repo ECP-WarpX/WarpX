@@ -32,7 +32,7 @@ import scipy.stats as st
 
 
 # Tolerance
-tol = 4e-2
+tol = 7.e-2
 
 # EM fields
 E_f = np.array([-2433321316961438, 973328526784575, 1459992790176863])
