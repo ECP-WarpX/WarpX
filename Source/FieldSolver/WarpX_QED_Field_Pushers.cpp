@@ -106,7 +106,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
         Real wt = amrex::second();
 
         // Get boxes for E, B, and J
-        
+
         const Box& tbx = mfi.tilebox(Bx->ixType().ixType());
         const Box& tby = mfi.tilebox(By->ixType().ixType());
         const Box& tbz = mfi.tilebox(Bz->ixType().ixType());
@@ -118,7 +118,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
         const Box& tjx = mfi.tilebox(Jx->ixType().ixType());
         const Box& tjy = mfi.tilebox(Jy->ixType().ixType());
         const Box& tjz = mfi.tilebox(Jz->ixType().ixType());
-        
+
         // Get field arrays
         auto const& Bxfab = Bx->array(mfi);
         auto const& Byfab = By->array(mfi);
@@ -166,7 +166,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
 
         // Make local copy of xi, to use on device.
         const Real xi_c2 = WarpX::quantum_xi_c2;
-        
+
         // Apply QED correction to electric field, using temporary arrays.
         amrex::ParallelFor(
             tbx,
