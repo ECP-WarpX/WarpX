@@ -25,7 +25,8 @@ import glob
 import os
 
 #Maximum acceptable error for this test
-relative_error_threshold = 0.065
+relative_error_threshold_envelope = 0.12
+relative_error_threshold_frequency = 0.05
 
 #Physical parameters
 um = 1.e-6
@@ -169,7 +170,7 @@ def do_analysis(fname, compname, steps):
 
     relative_error_env = np.sum(np.abs(env-env_theory)) / np.sum(np.abs(env))
     print("Relative error envelope: ", relative_error_env)
-    assert(relative_error_env < relative_error_threshold)
+    assert(relative_error_env < relative_error_threshold_envelope)
 
 
 
@@ -184,7 +185,7 @@ def do_analysis(fname, compname, steps):
 
     relative_error_freq = np.abs(freq-exp_freq)/exp_freq
     print("Relative error frequency: ", relative_error_freq)
-    assert(relative_error_freq < relative_error_threshold)
+    assert(relative_error_freq < relative_error_threshold_frequency)
 
 
 
