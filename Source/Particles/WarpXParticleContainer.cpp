@@ -666,8 +666,8 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
                 reduce_op.eval(np, reduce_data,
                                [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                                {
-                                   Real usq = (uxp[i]*uxp[i] + 
-                                               uyp[i]*uyp[i] + 
+                                   Real usq = (uxp[i]*uxp[i] +
+                                               uyp[i]*uyp[i] +
                                                uzp[i]*uzp[i])*inv_clight_sq;
                                    Real gaminv = 1.0/std::sqrt(1.0 + usq);
                                    return {uxp[i]*gaminv,  uyp[i]*gaminv, uzp[i]*gaminv};
@@ -692,9 +692,9 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
                 auto& ux = pti.GetAttribs(PIdx::ux);
                 auto& uy = pti.GetAttribs(PIdx::uy);
                 auto& uz = pti.GetAttribs(PIdx::uz);
-                
+
                 np_total += pti.numParticles();
-                
+
                 for (unsigned long i = 0; i < ux.size(); i++) {
                     Real usq = (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])*inv_clight_sq;
                     Real gaminv = 1.0/std::sqrt(1.0 + usq);

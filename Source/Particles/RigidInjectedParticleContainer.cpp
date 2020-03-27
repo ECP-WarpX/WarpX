@@ -125,7 +125,7 @@ RigidInjectedParticleContainer::RemapParticles()
                 }
             }
         }
-    }    
+    }
 }
 
 void
@@ -216,7 +216,7 @@ RigidInjectedParticleContainer::BoostandRemapParticles()
                     const Real vzpr = uzp[i]/gammapr;
                     zp = zpr - vzpr*tpr;
                 }
-                
+
                 SetPosition(i, xp, yp, zp);
             });
         }
