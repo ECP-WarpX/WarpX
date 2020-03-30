@@ -270,9 +270,6 @@ PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
             Real y = 0.;
             Real z = distz(mt);
 #endif
-            Print()<<"x_cut "<<x_cut<<'\n';
-            Print()<<"y_cut "<<y_cut<<'\n';
-            Print()<<"z_cut "<<z_cut<<'\n';
             if (plasma_injector->insideBounds(x, y, z)  &&
                 std::abs( x - x_m ) < x_cut * x_rms     &&
                 std::abs( y - y_m ) < y_cut * y_rms     &&
