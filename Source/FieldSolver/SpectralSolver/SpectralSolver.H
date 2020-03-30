@@ -67,6 +67,7 @@ class SpectralSolver
         };
 
     private:
+        void ReadParameters ();
 
         // Store field in spectral space and perform the Fourier transforms
         SpectralFieldData field_data;
