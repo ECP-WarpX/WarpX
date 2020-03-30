@@ -230,6 +230,7 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame(Real& x, Real& y, Real
 void
 PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
                                            Real x_rms, Real y_rms, Real z_rms,
+                                           Real x_cut, Real y_cut, Real z_cut,
                                            Real q_tot, long npart,
                                            int do_symmetrize) {
 
@@ -269,7 +270,10 @@ PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
             Real y = 0.;
             Real z = distz(mt);
 #endif
-            if (plasma_injector->insideBounds(x, y, z)) {
+            if (plasma_injector->insideBounds(x, y, z) &&
+                std::abs( x - x_m ) < x_cut * x_rms    &&
+                std::abs( x - x_m ) < x_cut * x_rms    &&
+                std::abs( x - x_m ) < x_cut * x_rms    &&  {
                 XDim3 u = plasma_injector->getMomentum(x, y, z);
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
