@@ -320,7 +320,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f, amrex::Real 
                                      "file should contain only one iteration\n");
     openPMD::Iteration& i = series.iterations[1];
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size()==1u, "External file "
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size() == 1u, "External file "
                                      "should contain only one species\n");
     std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
 
