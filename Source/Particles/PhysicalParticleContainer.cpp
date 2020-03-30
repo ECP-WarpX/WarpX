@@ -332,7 +332,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f, amrex::Real 
 
     mass = p_m*PhysConst::mevpc2_kg;
     charge = p_q*PhysConst::q_e;
-    Real weight = q_tot/charge/npart;
+    Real const weight = q_tot/(charge*amrex::Real(npart));
 
     amrex::Print() << npart << " parts of species " << ps.first << "\nWith"
     << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
