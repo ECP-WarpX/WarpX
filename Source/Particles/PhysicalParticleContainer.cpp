@@ -316,8 +316,8 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f, amrex::Real 
     openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
     amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(series.iterations.size()==1u, "External "
-                                    "file should contain only one iteration\n");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(series.iterations.size() == 1u, "External "
+                                     "file should contain only one iteration\n");
     openPMD::Iteration& i = series.iterations[1];
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size()==1u, "External file "
