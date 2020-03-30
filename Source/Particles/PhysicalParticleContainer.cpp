@@ -228,14 +228,12 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame(Real& x, Real& y, Real
 }
 
 void
-PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
-                                           Real x_rms, Real y_rms, Real z_rms,
-                                           Real x_cut, Real y_cut, Real z_cut,
-                                           Real q_tot, long npart,
-                                           int do_symmetrize) {
-
-    const Geometry& geom     = m_gdb->Geom(0);
-    RealBox containing_bx = geom.ProbDomain();
+PhysicalParticleContainer::AddGaussianBeam (
+    const Real x_m, const Real y_m, const Real z_m,
+    const Real x_rms, const Real y_rms, const Real z_rms,
+    const Real x_cut, const Real y_cut, const Real z_cut,
+    const Real q_tot, long npart,
+    const int do_symmetrize) {
 
     std::mt19937_64 mt(0451);
     std::normal_distribution<double> distx(x_m, x_rms);
@@ -260,15 +258,15 @@ PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
         }
         for (long i = 0; i < npart; ++i) {
 #if (defined WARPX_DIM_3D) || (WARPX_DIM_RZ)
-            Real weight = q_tot/npart/charge;
-            Real x = distx(mt);
-            Real y = disty(mt);
-            Real z = distz(mt);
+            const Real weight = q_tot/(npart*charge);
+            const Real x = distx(mt);
+            const Real y = disty(mt);
+            const Real z = distz(mt);
 #elif (defined WARPX_DIM_XZ)
-            Real weight = q_tot/npart/charge/y_rms;
-            Real x = distx(mt);
-            Real y = 0.;
-            Real z = distz(mt);
+            const Real weight = q_tot/(npart*charge*y_rms);
+            const Real x = distx(mt);
+            constexpr Real y = 0.;
+            const Real z = distz(mt);
 #endif
             if (plasma_injector->insideBounds(x, y, z)  &&
                 std::abs( x - x_m ) < x_cut * x_rms     &&
