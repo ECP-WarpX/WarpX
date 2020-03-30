@@ -313,7 +313,7 @@ void
 PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f, amrex::Real q_tot)
 {
 #ifdef WARPX_USE_OPENPMD
-    openPMD::Series series=openPMD::Series(s_f,openPMD::AccessType::READ_ONLY);
+    openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
     amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
     openPMD::Iteration& i = series.iterations[1];
 
