@@ -1028,12 +1028,12 @@ PhysicalParticleContainer::Evolve (int lev,
             // FArrayBox const* byfab = &(By[pti]);
             // FArrayBox const* bzfab = &(Bz[pti]);
 
-            FArrayBox const* exfab = &(Ex_avg[pti]); //oshapoval
-            FArrayBox const* eyfab = &(Ey_avg[pti]); //oshapoval
-            FArrayBox const* ezfab = &(Ez_avg[pti]); //oshapoval
-            FArrayBox const* bxfab = &(Bx_avg[pti]); //oshapoval
-            FArrayBox const* byfab = &(By_avg[pti]); //oshapoval
-            FArrayBox const* bzfab = &(Bz_avg[pti]); //oshapoval
+            FArrayBox const* exfab = &(Ex_avg[pti]);
+            FArrayBox const* eyfab = &(Ey_avg[pti]);
+            FArrayBox const* ezfab = &(Ez_avg[pti]);
+            FArrayBox const* bxfab = &(Bx_avg[pti]);
+            FArrayBox const* byfab = &(By_avg[pti]);
+            FArrayBox const* bzfab = &(Bz_avg[pti]);
 
 
             Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;

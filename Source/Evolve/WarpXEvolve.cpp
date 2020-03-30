@@ -659,8 +659,8 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type)
     mypc->Evolve(lev,
                  *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                  *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
-                 *Efield_avg_aux[lev][0],*Efield_avg_aux[lev][1],*Efield_avg_aux[lev][2],//oshapoval
-                 *Bfield_avg_aux[lev][0],*Bfield_avg_aux[lev][1],*Bfield_avg_aux[lev][2],//oshapoval
+                 *Efield_avg_aux[lev][0],*Efield_avg_aux[lev][1],*Efield_avg_aux[lev][2],
+                 *Bfield_avg_aux[lev][0],*Bfield_avg_aux[lev][1],*Bfield_avg_aux[lev][2],
                  *current_fp[lev][0],*current_fp[lev][1],*current_fp[lev][2],
                  current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
                  rho_fp[lev].get(), charge_buf[lev].get(),

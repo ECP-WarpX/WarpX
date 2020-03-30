@@ -93,7 +93,6 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
         // Fill the k vector
         IntVect fft_size = realspace_ba[mfi].length();
         const Real dk = 2*MathConst::pi/(fft_size[i_dim]*dx[i_dim]);
-        //amrex::Print() <<"i_dim" << i_dim <<' '  << fft_size[i_dim]<<' ' << dx[i_dim]<<' '  << std::endl; //oshapoval
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( bx.smallEnd(i_dim) == 0,
             "Expected box to start at 0, in spectral space.");
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( bx.bigEnd(i_dim) == N-1,
@@ -103,8 +102,6 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
             // (typically: first axis, in a real-to-complex FFT)
             for (int i=0; i<N; i++ ){
                 k[i] = i*dk;
-                //amrex::Print() << "i and k[i]:"<< i <<' '  << k[i]<<' ' << std::endl; //oshapoval
-
             }
         } else {
             const int mid_point = (N+1)/2;
@@ -205,7 +202,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             //for (int n=0; n<stencil_coef.size(); n++){ //oshapoval
 
                 if (nodal){
-                    //modified_k[i] = k[i];
+                    //modified_k[i] = k[i]; // Non-modified wavenumber for infinite order  oshapoval
 
                     // modified_k[i] += 2.*stencil_coef[n]* \
                     // std::sin( k[i]*(n+1)*delta_x )/( delta_x ); //oshapoval
@@ -225,7 +222,6 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             } else {}
             //oshapoval
 
-            //print::Print() << "  i_dim:"<<' '  << i_dim<<' ' << std::endl; //oshapoval
             amrex::Print() << "  modified_k[i]:"<< i <<' ' << k[i] <<' '  <<"i_dim = " <<i_dim << ' '<<  modified_k[i]<<' ' << std::endl; //oshapoval
         }
     }

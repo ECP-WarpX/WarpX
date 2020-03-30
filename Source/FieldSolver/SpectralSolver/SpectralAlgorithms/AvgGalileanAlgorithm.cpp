@@ -129,8 +129,6 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
                 const Complex e_theta = std::exp( I*c*k_norm*dt );
 
                 Theta2(i,j,k) = theta*theta;
-                //amrex::Print() <<"theta"<<theta<<"------\n"; //oshapoval
-
 
                 if ( (nu != 1.) && (nu != 0) ) {
 
@@ -181,10 +179,11 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
                     Jcoef(i,j,k) = (-C1(i,j,k) + C3(i,j,k)) / (c2*ep0*k_norm*k_norm*dt);//-2. * S1(i,j,k) * S_ck(i,j,k) / (ep0*c*k_norm*dt);
                 }
                 if ( nu == 1.) {
-                    X1(i,j,k) = 1.;//(1. - e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*c*c*ep0*k_norm*k_norm);
-                    X2(i,j,k) = 1.;//(3. - 4.*e_theta + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*k_norm*k_norm*(1.- e_theta));
-                    X3(i,j,k) = 1.;//(3. - 2./e_theta - 2.*e_theta + e_theta*e_theta - 2.*I*c*k_norm*dt) / (4.*ep0*(e_theta - 1.)*k_norm*k_norm);
-                    X4(i,j,k) = 1.;//I*(-1. + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*c*k_norm);
+                    // This case never happens..
+                    // X1(i,j,k) = (1. - e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*c*c*ep0*k_norm*k_norm);
+                    // X2(i,j,k) = (3. - 4.*e_theta + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*k_norm*k_norm*(1.- e_theta));
+                    // X3(i,j,k) = (3. - 2./e_theta - 2.*e_theta + e_theta*e_theta - 2.*I*c*k_norm*dt) / (4.*ep0*(e_theta - 1.)*k_norm*k_norm);
+                    // X4(i,j,k) = I*(-1. + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*c*k_norm);
                 }
 
             } else { // Handle k_norm = 0, by using the analytical limit
@@ -194,8 +193,7 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
               S1(i,j,k) =  0.;
               C3(i,j,k) = 1.;
               S3(i,j,k) = 0.;
-              // !!!!!!
-              //Removed a typo -- there is no c2 coefficient: //              X1(i,j,k) = c2*dt*dt/(2. * ep0); //oshapoval
+
               X1(i,j,k) = dt*dt/(2. * ep0);
               X2(i,j,k) = c2*dt*dt/(6. * ep0);
               X3(i,j,k) = - c2*dt*dt/(3. * ep0);
@@ -211,7 +209,6 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
               CRhonew(i,j,k) = -5.*I*c2 * dt*dt / (24. * ep0);
               Jcoef(i,j,k) = -dt/ep0;
             }
-            //amrex::Print() <<"Jcoef"<<Jcoef<<"------\n"; //oshapoval
 
         });
     }
