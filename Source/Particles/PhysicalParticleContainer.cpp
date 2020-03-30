@@ -902,8 +902,6 @@ PhysicalParticleContainer::FieldGather (int lev,
                                         const amrex::MultiFab& By,
                                         const amrex::MultiFab& Bz)
 {
-    const std::array<Real,3>& dx = WarpX::CellSize(lev);
-
     BL_ASSERT(OnSameGrids(lev,Ex));
 
     amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
@@ -919,8 +917,6 @@ PhysicalParticleContainer::FieldGather (int lev,
                 amrex::Gpu::synchronize();
             }
             Real wt = amrex::second();
-
-            const Box& box = pti.validbox();
 
             auto& attribs = pti.GetAttribs();
 
@@ -976,13 +972,6 @@ PhysicalParticleContainer::Evolve (int lev,
     WARPX_PROFILE_VAR_NS("PPC::FieldGather", blp_fg);
     WARPX_PROFILE_VAR_NS("PPC::EvolveOpticalDepth", blp_ppc_qed_ev);
     WARPX_PROFILE_VAR_NS("PPC::ParticlePush", blp_ppc_pp);
-
-    const std::array<Real,3>& dx = WarpX::CellSize(lev);
-    const std::array<Real,3>& cdx = WarpX::CellSize(std::max(lev-1,0));
-
-    // Get instances of NCI Godfrey filters
-    const auto& nci_godfrey_filter_exeybz = WarpX::GetInstance().nci_godfrey_filter_exeybz;
-    const auto& nci_godfrey_filter_bxbyez = WarpX::GetInstance().nci_godfrey_filter_bxbyez;
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
@@ -1665,16 +1654,12 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
     if (do_not_push) return;
 
-    const std::array<Real,3>& dx = WarpX::CellSize(lev);
-
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
     {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            const Box& box = pti.validbox();
-
             auto& attribs = pti.GetAttribs();
 
             auto& Exp = attribs[PIdx::Ex];
