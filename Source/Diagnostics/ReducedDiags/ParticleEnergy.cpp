@@ -130,11 +130,11 @@ void ParticleEnergy::ComputeDiags (int step)
             Etot = ReduceSum( myspc,
             [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
             {
-                auto w  = p.rdata(PIdx::w);
-                auto ux = p.rdata(PIdx::ux);
-                auto uy = p.rdata(PIdx::uy);
-                auto uz = p.rdata(PIdx::uz);
-                auto us = (ux*ux + uy*uy + uz*uz);
+                const auto w  = p.rdata(PIdx::w);
+                const auto ux = p.rdata(PIdx::ux);
+                const auto uy = p.rdata(PIdx::uy);
+                const auto uz = p.rdata(PIdx::uz);
+                const auto us = ux*ux + uy*uy + uz*uz;
                 return ( std::sqrt(us*c2 + c2*c2) - c2 ) * m * w;
             });
         }
