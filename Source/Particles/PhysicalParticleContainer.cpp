@@ -311,17 +311,17 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
                                                amrex::Real q_tot)
 {
 #ifdef WARPX_USE_OPENPMD
-    openPMD::Series series = penPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
+    openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
     amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
-    
+
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(series.iterations.size() == 1u, "External "
                                      "file should contain only one iteration\n");
     openPMD::Iteration& i = series.iterations[1];
-    
+
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size() == 1u,"External file "
                                      "should contain only one species\n");
     std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
-    
+
     //TODO: In future PRs will add ASSERT_WITH_MESSAGE to test if mass and charge are both const
     amrex::Real p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
     amrex::Real p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
@@ -341,14 +341,14 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     std::shared_ptr<amrex::Real> ptr_vy = ps.second["velocity"]["y"].loadChunk<amrex::Real>();
     series.flush();
 #endif
-    
+
     //Conversion from Geant4 system of units (http://geant4.web.cern.ch/sites/geant4.web.cern.ch/files/geant4/collaboration/working_groups/electromagnetic/gallery/units/SystemOfUnits.html) to WarpX (SI)
     mass = p_m*PhysConst::mevpc2_kg;
     charge = std::abs(p_q)*PhysConst::q_e;
     amrex::Real mmpns_mps = 1.e6;
     amrex::Real mm_m = 1.e-3;
     amrex::Real weight = q_tot/(charge*amrex::Real(npart));
-    
+
     // Allocate temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_w;
     Gpu::HostVector<ParticleReal> particle_x;
@@ -357,7 +357,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     Gpu::HostVector<ParticleReal> particle_ux;
     Gpu::HostVector<ParticleReal> particle_uy;
     Gpu::HostVector<ParticleReal> particle_uz;
-    
+
     if (ParallelDescriptor::IOProcessor()) {
         for (long i = 0; i < npart; ++i) {
             amrex::Real x = ptr_x.get()[i]*mm_m;
@@ -386,7 +386,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
                   particle_z.dataPtr(), particle_ux.dataPtr(),
                   particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
-    
+
     //(Un)comment this block to print the information read from OPMD file
     amrex::Print() << npart << " " << np << " parts of species " << ps.first << "\nWith"
     << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
