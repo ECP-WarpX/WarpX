@@ -6,9 +6,9 @@ import numpy as np
 # define some parameters
 
 c = 299792458.
-m_e = 9.10938356e-31;
-e = 1.6021766208e-19;
-hbar = 1.054571800e-34;
+m_e = 9.10938356e-31
+e = 1.6021766208e-19
+hbar = 1.054571800e-34
 E_S = m_e**2*c**3/e/hbar
 
 numcells = 512 # total number of cells in the test case
@@ -33,14 +33,14 @@ Bz_test2 = 1836353079.9561853
 Ex_test3 = 0.
 Ey_test3 = 1.0321239524474501e+17
 Ez_test3 = 0.
-Bx_test3 = 0. 
+Bx_test3 = 0.
 By_test3 = 0.
 Bz_test3 = 0.
 
 Ex_test4 = 0.
 Ey_test4 = 0.
 Ez_test4 = 2.5e+20
-Bx_test4 = 0. 
+Bx_test4 = 0.
 By_test4 = 833910154604.3563
 Bz_test4 = 0.
 
@@ -68,9 +68,9 @@ def do_analysis(Ex,Ey,Ez,Bx,By,Bz):
     expected_total_physical_pairs_created = dV*dt*calculate_rate(Ex,Ey,Ez,Bx,By,Bz)
 
     if expected_total_physical_pairs_created < 0.01:
-        assert(not os.path.isdir(filename+"/ele_schwinger/Level_0/"))    
+        assert(not os.path.isdir(filename+"/ele_schwinger/Level_0/"))
         ## Assert whether pairs are created or not. Is there a cleaner way to do that?
-    
+
     else:
         data_set = yt.load(filename)
 
@@ -90,19 +90,19 @@ def launch_analysis(executable):
                % (Ex_test1, Ey_test1, Ez_test1, Bx_test1, By_test1, Bz_test1) )
     do_analysis(Ex_test1, Ey_test1, Ez_test1, Bx_test1, By_test1, Bz_test1)
 
-    # Second test with stronger EM field. Many pairs are created and a Gaussian 
+    # Second test with stronger EM field. Many pairs are created and a Gaussian
     # distribution is used to get the weights of the particles.
     os.system("./" + executable + " inputs_3d_schwinger 'warpx.E_external_grid = %.15f %.15f %.15f' 'warpx.B_external_grid = %.15f %.15f %.15f'" \
                % (Ex_test2, Ey_test2, Ez_test2, Bx_test2, By_test2, Bz_test2) )
     do_analysis(Ex_test2, Ey_test2, Ez_test2, Bx_test2, By_test2, Bz_test2)
 
-    # Third test with intermediate electric field such that average created pair per cell is 1. A 
+    # Third test with intermediate electric field such that average created pair per cell is 1. A
     # Poisson distribution is used to obtain the weights of the particles.
     os.system("./" + executable + " inputs_3d_schwinger 'warpx.E_external_grid = %.15f %.15f %.15f' 'warpx.B_external_grid = %.15f %.15f %.15f'" \
                % (Ex_test3, Ey_test3, Ez_test3, Bx_test3, By_test3, Bz_test3) )
     do_analysis(Ex_test3, Ey_test3, Ez_test3, Bx_test3, By_test3, Bz_test3)
 
-    # Fourth test with extremely strong EM field but with E and B perpendicular and nearly equal so 
+    # Fourth test with extremely strong EM field but with E and B perpendicular and nearly equal so
     # that the pair production rate is fairly low. A poisson distribution is used in this case.
     os.system("./" + executable + " inputs_3d_schwinger 'warpx.E_external_grid = %.15f %.15f %.15f' 'warpx.B_external_grid = %.15f %.15f %.15f'" \
                % (Ex_test4, Ey_test4, Ez_test4, Bx_test4, By_test4, Bz_test4) )

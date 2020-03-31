@@ -29,8 +29,9 @@ warpx.serialize_ics = 1
 warpx.do_qed_schwinger = 1
 warpx.do_nodal = 1
 
-
-######### EXTERNAL B FIELD ##########
+#################################
+###### EXTERNAL EM FIELD ########
+#################################
 
 warpx.B_ext_grid_init_style = "constant"
 warpx.E_ext_grid_init_style = "constant"
