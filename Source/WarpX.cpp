@@ -1,9 +1,9 @@
 /* Copyright 2016-2020 Andrew Myers, Ann Almgren, Aurore Blelly
  * Axel Huebl, Burlen Loring, David Grote
  * Glenn Richardson, Jean-Luc Vay, Junmin Gu
- * Mathieu Lobet, Maxence Thevenet, Remi Lehe
- * Revathi Jambunathan, Weiqun Zhang, Yinjian Zhao
- * levinem
+ * Mathieu Lobet, Maxence Thevenet, Michael Rowan
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ * Yinjian Zhao, levinem
  *
  * This file is part of WarpX.
  *
@@ -248,15 +248,7 @@ WarpX::WarpX ()
     charge_buf.resize(nlevs_max);
 
     pml.resize(nlevs_max);
-
-    switch (WarpX::load_balance_costs_update_algo)
-    {
-        case LoadBalanceCostsUpdateAlgo::Timers: costs.resize(nlevs_max);
-            break;
-        case LoadBalanceCostsUpdateAlgo::Heuristic: costs_heuristic.resize(nlevs_max);
-            break;
-        default: amrex::Abort("unknown load balance type");
-    }
+    costs.resize(nlevs_max);
 
     // Set default values for particle and cell weights for costs update;
     // Default values listed here for the case AMREX_USE_GPU are determined
@@ -838,11 +830,7 @@ WarpX::ClearLevel (int lev)
     F_cp  [lev].reset();
     rho_cp[lev].reset();
 
-    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
-        costs[lev].reset();
-    } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic) {
-        costs_heuristic[lev].reset();
-    }
+    costs[lev].reset();
 
 
 #ifdef WARPX_USE_PSATD_HYBRID
@@ -1119,14 +1107,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         }
     }
 
-    if (load_balance_int > 0) {
-        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
-            costs[lev].reset(new MultiFab(ba, dm, 1, 0));
-        } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic) {
-            costs_heuristic[lev].reset(new amrex::Vector<Real>);
-            const int nboxes = Efield_fp[lev][0].get()->size();
-            costs_heuristic[lev]->resize(nboxes);
-        }
+    if (load_balance_int > 0)
+    {
+        costs[lev].reset(new amrex::Vector<Real>);
+        const int nboxes = Efield_fp[lev][0].get()->size();
+        costs[lev]->resize(nboxes);
     }
 }
 
@@ -1186,10 +1171,14 @@ WarpX::RefRatio (int lev)
 }
 
 void
-WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                    const std::array<const amrex::MultiFab*, 3>& B,
+WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
+                    const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
+        "ComputeDivB not implemented with do_nodal."
+        "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
+
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
 #ifdef WARPX_DIM_RZ
@@ -1220,10 +1209,14 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
 }
 
 void
-WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                    const std::array<const amrex::MultiFab*, 3>& B,
-                    const std::array<amrex::Real,3>& dx, int ngrow)
+WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
+                    const std::array<const amrex::MultiFab* const, 3>& B,
+                    const std::array<amrex::Real,3>& dx, int const ngrow)
 {
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
+        "ComputeDivB not implemented with do_nodal."
+        "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
+
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
 #ifdef WARPX_DIM_RZ
@@ -1251,6 +1244,16 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
                               );
         });
     }
+}
+
+void
+WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
+{
+#ifdef WARPX_USE_PSATD
+    spectral_solver_fp[lev]->ComputeSpectralDivE( Efield_aux[lev], divE );
+#else
+    m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
+#endif
 }
 
 PML*
@@ -1419,4 +1422,14 @@ WarpX::PicsarVersion ()
 #else
     return std::string("Unknown");
 #endif
+}
+
+void
+WarpX::FieldGather ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        mypc->FieldGather(lev,
+                          *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
+                          *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
+    }
 }
