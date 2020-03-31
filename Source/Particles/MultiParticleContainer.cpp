@@ -1034,11 +1034,14 @@ MultiParticleContainer::doQEDSchwinger ()
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_nodal,
         "ERROR: Schwinger process only implemented for warpx.do_nodal = 1");
 
-    // So far Schwinger process does not work with mesh refinement
     const int level_0 = 0;
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.maxLevel() == level_0,
         "ERROR: Schwinger process not implemented with mesh refinement");
+
+#ifdef WARPX_DIM_RZ
+    amrex::Abort("Schwinger process not implemented in rz geometry");
+#endif
 
     const MultiFab & Ex = warpx.getEfield(level_0,0);
     const MultiFab & Ey = warpx.getEfield(level_0,1);
@@ -1047,15 +1050,13 @@ MultiParticleContainer::doQEDSchwinger ()
     const MultiFab & By = warpx.getBfield(level_0,1);
     const MultiFab & Bz = warpx.getBfield(level_0,2);
 
-    // Add defineAllParticleTiles(); ??
-
     MFItInfo info;
     if (TilingIfNotGPU()) {
         info.EnableTiling(); // Put EnableTiling(PhysicalParticleContainer::tile_size); instead ??
     }
 #ifdef _OPENMP
     info.SetDynamic(true);
-#pragma omp parallel if (not WarpX::serialize_ics)
+#pragma omp parallel if (not WarpX::serialize_ics) // Do we keep condition on serialize_ics?
 #endif
 
     for (MFIter mfi(Ex, info); mfi.isValid(); ++mfi )

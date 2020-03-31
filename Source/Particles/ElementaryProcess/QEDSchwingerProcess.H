@@ -51,14 +51,14 @@ struct SchwingerTransformFunc
     void operator() (DstData1& dst1, DstData2& dst2, int i_dst1, int i_dst2,
                                int N, amrex::Real total_weight) const noexcept
     {
-        const auto m_weight_index = ParticleStringNames::to_index.find("w")->second;
+        const auto weight_index = ParticleStringNames::to_index.find("w")->second;
         for (int n = 0; n < N; ++n){
 #if (AMREX_SPACEDIM == 3)
-            dst1.m_rdata[m_weight_index][i_dst1+n] = total_weight/N;
-            dst2.m_rdata[m_weight_index][i_dst2+n] = total_weight/N;
+            dst1.m_rdata[weight_index][i_dst1+n] = total_weight/N;
+            dst2.m_rdata[weight_index][i_dst2+n] = total_weight/N;
 #elif (AMREX_SPACEDIM == 2)
-            dst1.m_rdata[m_weight_index][i_dst1+n] = total_weight/N/m_y_size;
-            dst2.m_rdata[m_weight_index][i_dst2+n] = total_weight/N/m_y_size;
+            dst1.m_rdata[weight_index][i_dst1+n] = total_weight/N/m_y_size;
+            dst2.m_rdata[weight_index][i_dst2+n] = total_weight/N/m_y_size;
 #endif
             }
     }
