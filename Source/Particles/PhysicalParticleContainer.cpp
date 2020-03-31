@@ -1,8 +1,8 @@
 /* Copyright 2019-2020 Andrew Myers, Aurore Blelly, Axel Huebl
  * David Grote, Glenn Richardson, Jean-Luc Vay
  * Ligia Diana Amorim, Luca Fedeli, Maxence Thevenet
- * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
- * Yinjian Zhao
+ * Michael Rowan, Remi Lehe, Revathi Jambunathan
+ * Weiqun Zhang, Yinjian Zhao
  *
  * This file is part of WarpX.
  *
@@ -235,9 +235,6 @@ PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
                                            Real q_tot, long npart,
                                            int do_symmetrize) {
 
-    const Geometry& geom     = m_gdb->Geom(0);
-    RealBox containing_bx = geom.ProbDomain();
-
     std::mt19937_64 mt(0451);
     std::normal_distribution<double> distx(x_m, x_rms);
     std::normal_distribution<double> disty(y_m, y_rms);
@@ -312,6 +309,23 @@ PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
 }
 
 void
+PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f)
+{
+#ifdef WARPX_USE_OPENPMD
+    openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
+    amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
+
+    openPMD::Iteration& i = series.iterations[1];
+    amrex::Print()  << "File contains " << i.particles.size() << " specie(s):" << "\n";
+    for( auto const& ps : i.particles ) {
+        amrex::Print() << "\t" << ps.first << "\n";
+    }
+    amrex::Print()<<"WARNING: this is WIP, no particle has been injected!!";
+#endif
+    return;
+}
+
+void
 PhysicalParticleContainer::CheckAndAddParticle(Real x, Real y, Real z,
                                                std::array<Real, 3> u,
                                                Real weight,
@@ -367,6 +381,11 @@ PhysicalParticleContainer::AddParticles (int lev)
         return;
     }
 
+    if (plasma_injector->external_file) {
+        AddPlasmaFromFile(plasma_injector->str_injection_file);
+        return;
+    }
+
     if ( plasma_injector->doInjection() ) {
         AddPlasma( lev );
     }
@@ -408,7 +427,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
     defineAllParticleTiles();
 
-    MultiFab* cost = WarpX::getCosts(lev);
+    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
 
     const int nlevs = numLevels();
     static bool refine_injection = false;
@@ -451,6 +470,10 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #endif
     for (MFIter mfi = MakeMFIter(lev, info); mfi.isValid(); ++mfi)
     {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
         Real wt = amrex::second();
 
         const Box& tile_box = mfi.tilebox();
@@ -791,14 +814,11 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #endif
         });
 
-        if (cost) {
-            wt = (amrex::second() - wt) / tile_box.d_numPts();
-            Array4<Real> const& costarr = cost->array(mfi);
-            amrex::ParallelFor(tile_box,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-            {
-                costarr(i,j,k) += wt;
-            });
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
 
@@ -876,11 +896,9 @@ PhysicalParticleContainer::FieldGather (int lev,
                                         const amrex::MultiFab& By,
                                         const amrex::MultiFab& Bz)
 {
-    const std::array<Real,3>& dx = WarpX::CellSize(lev);
-
     BL_ASSERT(OnSameGrids(lev,Ex));
 
-    MultiFab* cost = WarpX::getCosts(lev);
+    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -888,9 +906,11 @@ PhysicalParticleContainer::FieldGather (int lev,
     {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
             Real wt = amrex::second();
-
-            const Box& box = pti.validbox();
 
             auto& attribs = pti.GetAttribs();
 
@@ -920,15 +940,11 @@ PhysicalParticleContainer::FieldGather (int lev,
                         Ex.nGrow(), e_is_nodal,
                         0, np, lev, lev);
 
-            if (cost) {
-                const Box& tbx = pti.tilebox();
-                wt = (amrex::second() - wt) / tbx.d_numPts();
-                Array4<Real> const& costarr = cost->array(pti);
-                amrex::ParallelFor(tbx,
-                                   [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                                   {
-                                       costarr(i,j,k) += wt;
-                                   });
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
     }
@@ -951,16 +967,9 @@ PhysicalParticleContainer::Evolve (int lev,
     WARPX_PROFILE_VAR_NS("PPC::EvolveOpticalDepth", blp_ppc_qed_ev);
     WARPX_PROFILE_VAR_NS("PPC::ParticlePush", blp_ppc_pp);
 
-    const std::array<Real,3>& dx = WarpX::CellSize(lev);
-    const std::array<Real,3>& cdx = WarpX::CellSize(std::max(lev-1,0));
-
-    // Get instances of NCI Godfrey filters
-    const auto& nci_godfrey_filter_exeybz = WarpX::GetInstance().nci_godfrey_filter_exeybz;
-    const auto& nci_godfrey_filter_bxbyez = WarpX::GetInstance().nci_godfrey_filter_bxbyez;
-
     BL_ASSERT(OnSameGrids(lev,jx));
 
-    MultiFab* cost = WarpX::getCosts(lev);
+    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
 
     const iMultiFab* current_masks = WarpX::CurrentBufferMasks(lev);
     const iMultiFab* gather_masks = WarpX::GatherBufferMasks(lev);
@@ -995,6 +1004,10 @@ PhysicalParticleContainer::Evolve (int lev,
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
             Real wt = amrex::second();
 
             const Box& box = pti.validbox();
@@ -1184,15 +1197,11 @@ PhysicalParticleContainer::Evolve (int lev,
                 }
             }
 
-            if (cost) {
-                const Box& tbx = pti.tilebox();
-                wt = (amrex::second() - wt) / tbx.d_numPts();
-                Array4<Real> const& costarr = cost->array(pti);
-                amrex::ParallelFor(tbx,
-                                   [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                                   {
-                                       costarr(i,j,k) += wt;
-                                   });
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
     }
@@ -1639,16 +1648,12 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
     if (do_not_push) return;
 
-    const std::array<Real,3>& dx = WarpX::CellSize(lev);
-
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
     {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            const Box& box = pti.validbox();
-
             auto& attribs = pti.GetAttribs();
 
             auto& Exp = attribs[PIdx::Ex];
