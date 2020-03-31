@@ -31,6 +31,7 @@ Average::ToCellCenter ( MultiFab& mf_out,
 void
 Average::Coarsen ( MultiFab& mf_cp,
                    const MultiFab& mf_fp,
+                   const int dcomp,
                    const int scomp,
                    const int ncomp,
                    const IntVect ratio )
@@ -62,7 +63,7 @@ Average::Coarsen ( MultiFab& mf_cp,
             ParallelFor( bx, ncomp,
                          [=] AMREX_GPU_DEVICE( int i, int j, int k, int n )
                          {
-                             mf_cp_arr(i,j,k,n+scomp) = Average::Coarsen( mf_fp_arr, stag, i, j, k, n+scomp, ratio );
+                             mf_cp_arr(i,j,k,n+dcomp) = Average::Coarsen( mf_fp_arr, stag, i, j, k, n+scomp, ratio );
                          } );
         }
     }

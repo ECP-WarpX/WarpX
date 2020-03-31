@@ -675,7 +675,7 @@ coarsenCellCenteredFields(
 
         BoxArray small_ba = amrex::coarsen(source_mf[lev].boxArray(), coarse_ratio);
         coarse_mf.push_back( MultiFab(small_ba, source_mf[lev].DistributionMap(), ncomp, 0) );
-        Average::Coarsen( coarse_mf[lev], source_mf[lev], 0, ncomp, IntVect(coarse_ratio) );
+        Average::Coarsen( coarse_mf[lev], source_mf[lev], 0, 0, ncomp, IntVect(coarse_ratio) );
     }
 };
 

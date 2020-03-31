@@ -135,6 +135,7 @@ namespace Average{
 
     void Coarsen ( MultiFab& mf_cp,
                    const MultiFab& mf_fp,
+                   const int dcomp,
                    const int scomp,
                    const int ncomp,
                    const IntVect ratio );
