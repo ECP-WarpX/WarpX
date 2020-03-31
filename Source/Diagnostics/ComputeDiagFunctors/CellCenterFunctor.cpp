@@ -38,7 +38,7 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
         Average::ToCellCenter ( mf_dst, *m_mf_src, dcomp, 0, 0, nComp() );
     } else {
         // average down fields from fine m_mf_src to coarse mf_dst.
-//        Average::FineToCoarse( mf_dst, *m_mf_src, dcomp, 0, nComp(), d_crse_ratio());
+//        Average::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), d_crse_ratio());
     }
 #endif
 }

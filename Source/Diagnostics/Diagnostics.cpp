@@ -62,7 +62,6 @@ Diagnostics::ReadParameters ()
            diag_crse_ratio[idim] = cr_ratio[idim];
            m_coarsen_mfavg = true;
         }
-        amrex::Print() << " coarsening ratio : " << diag_crse_ratio[idim] << "\n";
     }
 
 }
@@ -88,7 +87,6 @@ Diagnostics::InitData ()
                 all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 1), lev, diag_crse_ratio);
             } else if ( varnames[comp] == "Ez" ){
                 all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 2), lev, diag_crse_ratio);
-            } else if ( varnames[comp] == "Bx" ){
                 all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 0), lev, diag_crse_ratio);
             } else if ( varnames[comp] == "By" ){
                 all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 1), lev, diag_crse_ratio);
@@ -220,7 +218,7 @@ Diagnostics::AddRZModesToDiags (int lev)
         // 3 components, r theta z
         all_field_functors[lev][icomp] = new
             CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, dim), lev,
-                              false, ncomp_multimodefab);
+                              diag_crse_ratio, false, ncomp_multimodefab);
         AddRZModesToOutputNames(std::string("E") + coord[dim],
                                 warpx.get_pointer_Efield_aux(0, 0)->nComp());
         icomp += 1;
@@ -230,7 +228,7 @@ Diagnostics::AddRZModesToDiags (int lev)
         // 3 components, r theta z
         all_field_functors[lev][icomp] = new
             CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, dim), lev,
-                              false, ncomp_multimodefab);
+                              diag_crse_ratio, false, ncomp_multimodefab);
         AddRZModesToOutputNames(std::string("B") + coord[dim],
                                 warpx.get_pointer_Bfield_aux(0, 0)->nComp());
         icomp += 1;
@@ -240,7 +238,7 @@ Diagnostics::AddRZModesToDiags (int lev)
         // 3 components, r theta z
         all_field_functors[lev][icomp] = new
             CellCenterFunctor(warpx.get_pointer_current_fp(lev, dim), lev,
-                              false, ncomp_multimodefab);
+                              diag_crse_ratio, false, ncomp_multimodefab);
         icomp += 1;
         AddRZModesToOutputNames(std::string("J") + coord[dim],
                                 warpx.get_pointer_current_fp(0, 0)->nComp());
