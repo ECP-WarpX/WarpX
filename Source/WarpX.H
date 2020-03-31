@@ -1,8 +1,9 @@
 /* Copyright 2016-2020 Andrew Myers, Ann Almgren, Aurore Blelly
  *                     Axel Huebl, Burlen Loring, David Grote
  *                     Glenn Richardson, Junmin Gu, Luca Fedeli
- *                     Mathieu Lobet, Maxence Thevenet, Remi Lehe
- *                     Revathi Jambunathan, Weiqun Zhang, Yinjian Zhao
+ *                     Mathieu Lobet, Maxence Thevenet, Michael Rowan
+ *                     Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ *                     Yinjian Zhao
  *
  * This file is part of WarpX.
  *
@@ -15,6 +16,7 @@
 #include "Particles/MultiParticleContainer.H"
 #include "BoundaryConditions/PML.H"
 #include "Diagnostics/BackTransformedDiagnostic.H"
+#include "Diagnostics/MultiDiagnostics.H"
 #include "Filter/BilinearFilter.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
@@ -186,6 +188,38 @@ public:
     // do nodal
     static int do_nodal;
 
+    std::array<const amrex::MultiFab* const, 3>
+    get_array_Bfield_aux  (const int lev) const {
+        return {
+            Bfield_aux[lev][0].get(),
+            Bfield_aux[lev][1].get(),
+            Bfield_aux[lev][2].get()
+        };
+    }
+    std::array<const amrex::MultiFab* const, 3>
+    get_array_Efield_aux  (const int lev) const {
+        return {
+            Efield_aux[lev][0].get(),
+            Efield_aux[lev][1].get(),
+            Efield_aux[lev][2].get()
+        };
+    }
+
+    amrex::MultiFab * get_pointer_Efield_aux  (int lev, int direction) const { return Efield_aux[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_Bfield_aux  (int lev, int direction) const { return Bfield_aux[lev][direction].get(); }
+
+    amrex::MultiFab * get_pointer_Efield_fp  (int lev, int direction) const { return Efield_fp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_Bfield_fp  (int lev, int direction) const { return Bfield_fp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
+    amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
+
+    amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_Bfield_cp  (int lev, int direction) const { return Bfield_cp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_current_cp  (int lev, int direction) const { return current_cp[lev][direction].get(); }
+    amrex::MultiFab * get_pointer_rho_cp  (int lev) const { return rho_cp[lev].get(); }
+    amrex::MultiFab * get_pointer_F_cp  (int lev) const { return F_cp[lev].get(); }
+
     const amrex::MultiFab& getcurrent (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield  (int lev, int direction) {return *Efield_aux[lev][direction];}
     const amrex::MultiFab& getBfield  (int lev, int direction) {return *Bfield_aux[lev][direction];}
@@ -193,34 +227,22 @@ public:
     const amrex::MultiFab& getcurrent_cp (int lev, int direction) {return *current_cp[lev][direction];}
     const amrex::MultiFab& getEfield_cp  (int lev, int direction) {return  *Efield_cp[lev][direction];}
     const amrex::MultiFab& getBfield_cp  (int lev, int direction) {return  *Bfield_cp[lev][direction];}
+    const amrex::MultiFab& getrho_cp (int lev) {return  *rho_cp[lev];}
 
     const amrex::MultiFab& getcurrent_fp (int lev, int direction) {return *current_fp[lev][direction];}
     const amrex::MultiFab& getEfield_fp  (int lev, int direction) {return *Efield_fp[lev][direction];}
     const amrex::MultiFab& getBfield_fp  (int lev, int direction) {return *Bfield_fp[lev][direction];}
+    const amrex::MultiFab& getrho_fp (int lev) {return *rho_fp[lev];}
+    const amrex::MultiFab& getF_fp (int lev) {return *F_fp[lev];}
 
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
 
-    static amrex::MultiFab* getCosts (int lev) {
-        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
-            if (m_instance) {
+    static amrex::Vector<amrex::Real>* getCosts (int lev) {
+        if (m_instance) {
             return m_instance->costs[lev].get();
-            } else {
-                return nullptr;
-            }
-        } else {
-            return nullptr;
-        }
-    }
-
-    static amrex::Vector<amrex::Real>* getCostsHeuristic (int lev) {
-        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic) {
-            if (m_instance) {
-                return m_instance->costs_heuristic[lev].get();
-            } else {
-                return nullptr;
-            }
-        } else {
+        } else
+        {
             return nullptr;
         }
     }
@@ -265,6 +287,7 @@ public:
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+    void FieldGather ();
 
     /** \brief apply QED correction on electric field
      * \param dt vector of time steps (for all levels)
@@ -289,8 +312,13 @@ public:
     /** \brief perform load balance; compute and communicate new `amrex::DistributionMapping`
      */
     void LoadBalance ();
-    void LoadBalanceTimers ();
-    void LoadBalanceHeuristic ();
+    /** \brief resets costs to zero
+     */
+    void ResetCosts ();
+
+    /** \brief returns the load balance interval
+     */
+    int get_load_balance_int () const {return load_balance_int;}
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -336,12 +364,21 @@ public:
     void SyncCurrent ();
     void SyncRho ();
 
-
+    amrex::Vector<int> getnsubsteps () const {return nsubsteps;};
+    int getnsubsteps (int lev) const {return nsubsteps[lev];};
+    amrex::Vector<int> getistep () const {return istep;}
     int getistep (int lev) const {return istep[lev];}
     void setistep (int lev, int ii) {istep[lev] = ii;}
+    amrex::Vector<amrex::Real> gett_old () const {return t_old;}
+    amrex::Real gett_old (int lev) const {return t_old[lev];}
+    amrex::Vector<amrex::Real> gett_new () const {return t_new;}
     amrex::Real gett_new (int lev) const {return t_new[lev];}
     void sett_new (int lev, amrex::Real time) {t_new[lev] = time;}
+    amrex::Vector<amrex::Real> getdt () const {return dt;}
     amrex::Real getdt (int lev) const {return dt[lev];}
+    amrex::Real getmoving_window_x() const {return moving_window_x;};
+    bool getis_synchronized() const {return is_synchronized;};
+    void setplot_rho (bool a_plot_rho) {plot_rho = a_plot_rho;};
 
     int maxStep () const {return max_step;}
     amrex::Real stopTime () const {return stop_time;}
@@ -388,6 +425,9 @@ public:
     static amrex::IntVect jy_nodal_flag;
     static amrex::IntVect jz_nodal_flag;
 
+    static amrex::IntVect rho_nodal_flag;
+
+    static int do_electrostatic;
     static int do_moving_window;
     static int moving_window_dir;
     static amrex::Real moving_window_v;
@@ -403,24 +443,20 @@ public:
     amrex::RealBox getSliceRealBox() const {return slice_realbox;}
 
     // these should be private, but can't due to Cuda limitations
-    static void ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                             const std::array<const amrex::MultiFab*, 3>& B,
+    static void ComputeDivB (amrex::MultiFab& divB, int const dcomp,
+                             const std::array<const amrex::MultiFab* const, 3>& B,
                              const std::array<amrex::Real,3>& dx);
 
-    static void ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                             const std::array<const amrex::MultiFab*, 3>& B,
-                             const std::array<amrex::Real,3>& dx, int ngrow);
+    static void ComputeDivB (amrex::MultiFab& divB, int const dcomp,
+                             const std::array<const amrex::MultiFab* const, 3>& B,
+                             const std::array<amrex::Real,3>& dx, int const ngrow);
 
-    static void ComputeDivE (amrex::MultiFab& divE, int dcomp,
-                             const std::array<const amrex::MultiFab*, 3>& B,
-                             const std::array<amrex::Real,3>& dx);
-
-    static void ComputeDivE (amrex::MultiFab& divE, int dcomp,
-                             const std::array<const amrex::MultiFab*, 3>& B,
-                             const std::array<amrex::Real,3>& dx, int ngrow);
+    void ComputeDivE(amrex::MultiFab& divE, const int lev);
 
     const amrex::IntVect getngE() const { return guard_cells.ng_alloc_EB; };
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; };
+    const amrex::IntVect getngExtra() const { return guard_cells.ng_Extra; };
+    const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; };
 
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
@@ -450,9 +486,12 @@ public:
          amrex::IntVect y_nodal_flag, amrex::IntVect z_nodal_flag,
          const int lev);
 
-    /** \brief add particle and cell contributions to multifabs in `costs_heuristic`
+    /** \brief adds particle and cell contributions in cells to compute heuristic
+     * cost in each box on each level, and records in `costs`
+     * @param[in] costs vector of (`unique_ptr` to) vectors; expected to be initialized
+     * to correct number of boxes and boxes per level
      */
-    void ComputeCostsHeuristic ();
+    void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& costs);
 
 protected:
 
@@ -537,33 +576,6 @@ private:
     void AddRhoFromFineLevelandSumBoundary (int lev, int icomp, int ncomp);
     void NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp);
 
-#ifdef WARPX_DO_ELECTROSTATIC
-    ///
-    /// Advance the simulation by numsteps steps, electrostatic case.
-    ///
-    void EvolveES(int numsteps);
-
-    //
-    // This stuff is needed by the nodal multigrid solver when running in
-    // electrostatic mode.
-    //
-    void zeroOutBoundary(amrex::MultiFab& input_data, amrex::MultiFab& bndry_data,
-                         const amrex::FabArray<amrex::BaseFab<int> >& mask) const;
-
-    void fixRHSForSolve(amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rhs,
-                        const amrex::Vector<std::unique_ptr<amrex::FabArray<amrex::BaseFab<int> > > >& masks) const ;
-
-    void getLevelMasks(amrex::Vector<std::unique_ptr<amrex::FabArray<amrex::BaseFab<int> > > >& masks,
-                       const int nnodes = 1);
-
-    // used to zero out fine level data on points shared with the coarse grid
-    // in electrostatic mode
-    amrex::Vector<std::unique_ptr<amrex::FabArray<amrex::BaseFab<int> > > > masks;
-
-    // used to gather the field from the coarse level in electrostatic mode.
-    amrex::Vector<std::unique_ptr<amrex::FabArray<amrex::BaseFab<int> > > > gather_masks;
-#endif // WARPX_DO_ELECTROSTATIC
-
     void ReadParameters ();
 
     void InitFromScratch ();
@@ -620,6 +632,7 @@ private:
 
     // Particle container
     std::unique_ptr<MultiParticleContainer> mypc;
+    std::unique_ptr<MultiDiagnostics> multi_diags;
 
     // Boosted Frame Diagnostics
     std::unique_ptr<BackTransformedDiagnostic> myBFD;
@@ -678,7 +691,6 @@ private:
     int num_injected_species = -1;
     amrex::Vector<int> injected_plasma_species;
 
-    int do_electrostatic = 0;
     int n_buffer = 4;
     amrex::Real const_dt = 0.5e-11;
 
@@ -686,12 +698,9 @@ private:
     /** Interval to perform load balance; `load_balance_int=5`, e.g., will load
      * balance during steps 5, 10, 15, etc. */
     int load_balance_int = -1;
-    /** Collection of multifabs to keep track of weights, based on in-code timers,
-     * for use in load balancing routines. */
-    amrex::Vector<std::unique_ptr<amrex::MultiFab> > costs;
-    /** Collection of multifabs to keep track of weights, based on number of cells
-     * and number of particles per box; for use in load balancing routines. */
-    amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > > costs_heuristic;
+    /** Collection of vectors to keep track of weights used in load balancing
+     * routines. Contains timer-based or heuristic-based costs depending on input option */
+    amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > > costs;
     /** Load balance with 'space filling curve' strategy. */
     int load_balance_with_sfc = 0;
     /** Controls the maximum number of boxes that can be assigned to a rank during
@@ -699,10 +708,18 @@ private:
      * `load_balance_knapsack_factor=2` limits the maximum number of boxes that can
      * be assigned to a rank to 8. */
     amrex::Real load_balance_knapsack_factor = 1.24;
-    /** Weight factor for cells in updating `costs_heuristic`. */
-    amrex::Real costs_heuristic_cells_wt = 0.1;
-    /** Weight factor for particles in updating `costs_heuristic`. */
-    amrex::Real costs_heuristic_particles_wt = 0.9;
+    /** Weight factor for cells in `Heuristic` costs update.
+     * Default values on GPU are determined from single-GPU tests on Summit.
+     * The problem setup for these tests is an empty (i.e. no particles) domain
+     * of size 256 by 256 by 256 cells, from which the average time per iteration
+     * per cell is computed. */
+    amrex::Real costs_heuristic_cells_wt = -1;
+    /** Weight factor for particles in `Heuristic` costs update.
+     * Default values on GPU are determined from single-GPU tests on Summit.
+     * The problem setup for these tests is a high-ppc (27 particles per cell)
+     * uniform plasma on a domain of size 128 by 128 by 128, from which the approximate
+     * time per iteration per particle is computed. */
+    amrex::Real costs_heuristic_particles_wt = -1;
 
     // Override sync every ? steps
     int override_sync_int = 1;
@@ -735,7 +752,6 @@ private:
 #endif
 
     bool plot_rho           = false;
-    bool plot_costs         = true;
     bool plot_finepatch     = false;
     bool plot_crsepatch     = false;
     bool plot_raw_fields    = false;

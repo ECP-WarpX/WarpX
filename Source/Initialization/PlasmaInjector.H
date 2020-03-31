@@ -68,6 +68,9 @@ public:
     long npart;
     int do_symmetrize = 0;
 
+    bool external_file = false;
+    std::string str_injection_file;
+
     bool radially_weighted = true;
 
     std::string str_density_function;
@@ -78,7 +81,7 @@ public:
     amrex::Real xmin, xmax;
     amrex::Real ymin, ymax;
     amrex::Real zmin, zmax;
-    amrex::Real density_min = 0;
+    amrex::Real density_min = std::numeric_limits<amrex::Real>::epsilon();
     amrex::Real density_max = std::numeric_limits<amrex::Real>::max();
 
     InjectorPosition* getInjectorPosition ();

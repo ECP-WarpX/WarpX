@@ -116,11 +116,16 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         charge = parseChargeString(pp, charge_s);
     }
     if ( charge_is_specified && species_is_specified ){
-        Print()<<"WARNING: Both <species>.charge and <species>species_type specified\n";
+        Print()<<"WARNING: Both <species>.charge and <species>.species_type specified\n";
         Print()<<"         The charge in <species>.mass overwrite the one from <species>.species_type\n";
     }
     if (!charge_is_specified && !species_is_specified){
-        amrex::Abort("Need to specify at least one of species_type or charge");
+        //No need for charge/species definition if external file is used
+        std::string s_inj_style;
+        pp.query("injection_style", s_inj_style);
+        if (s_inj_style != "external_file") {
+            amrex::Abort("Need to specify at least one of species_type or charge");
+        }
     }
 
     std::string mass_s;
@@ -137,7 +142,12 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         Print()<<"         The mass in <species>.mass overwrite the one from <species>.species_type\n";
     }
     if (!mass_is_specified && !species_is_specified){
-        amrex::Abort("Need to specify at least one of species_type or mass");
+        //No need for mass/species definition if external file is used
+        std::string s_inj_style;
+        pp.query("injection_style", s_inj_style);
+        if (s_inj_style != "external_file") {
+            amrex::Abort("Need to specify at least one of species_type or mass");
+        }
     }
 
     // parse injection style
@@ -177,6 +187,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     // InjectorPosition[Random or Regular].getPositionUnitBox.
     else if (part_pos_s == "nrandompercell") {
         pp.query("num_particles_per_cell", num_particles_per_cell);
+#if WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            num_particles_per_cell>=2*WarpX::n_rz_azimuthal_modes,
+            "Error: For accurate use of WarpX cylindrical gemoetry the number "
+            "of particles should be at least two times n_rz_azimuthal_modes "
+            "(Please visit PR#765 for more information.)");
+#endif
         // Construct InjectorPosition with InjectorPositionRandom.
         inj_pos.reset(new InjectorPosition((InjectorPositionRandom*)nullptr,
                                            xmin, xmax, ymin, ymax, zmin, zmax));
@@ -190,6 +207,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #if WARPX_DIM_XZ
         num_particles_per_cell_each_dim[2] = 1;
 #endif
+#if WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            num_particles_per_cell_each_dim[1]>=2*WarpX::n_rz_azimuthal_modes,
+            "Error: For accurate use of WarpX cylindrical gemoetry the number "
+            "of particles in the theta direction should be at least two times "
+            "n_rz_azimuthal_modes (Please visit PR#765 for more information.)");
+#endif
         // Construct InjectorPosition from InjectorPositionRegular.
         inj_pos.reset(new InjectorPosition((InjectorPositionRegular*)nullptr,
                                            xmin, xmax, ymin, ymax, zmin, zmax,
@@ -201,6 +225,14 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                                  num_particles_per_cell_each_dim[2];
         parseDensity(pp);
         parseMomentum(pp);
+    } else if (part_pos_s == "external_file") {
+#ifdef WARPX_USE_OPENPMD
+        external_file = true;
+        pp.get("injection_file",str_injection_file);
+#else
+        amrex::Abort("WarpX has to be compiled with USE_OPENPMD=TRUE to be able to"
+                     " read the external openPMD file with species data");
+#endif
     } else {
         StringParseAbortMessage("Injection style", part_pos_s);
     }
@@ -232,7 +264,12 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
         inj_rho.reset(new InjectorDensity((InjectorDensityParser*)nullptr,
                                           makeParser(str_density_function,{"x","y","z"})));
     } else {
-        StringParseAbortMessage("Density profile type", rho_prof_s);
+        //No need for profile definition if external file is used
+        std::string s_inj_style;
+        pp.query("injection_style", s_inj_style);
+        if (s_inj_style != "external_file") {
+            StringParseAbortMessage("Density profile type", rho_prof_s);
+        }
     }
 }
 

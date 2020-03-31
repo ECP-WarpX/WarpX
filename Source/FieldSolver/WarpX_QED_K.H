@@ -75,8 +75,8 @@ void warpx_hybrid_QED_push (
     amrex::Array4<amrex::Real const> const& Bz, amrex::Array4<amrex::Real> const& tmpEx,
     amrex::Array4<amrex::Real> const& tmpEy, amrex::Array4<amrex::Real> const& tmpEz,
     amrex::Array4<amrex::Real> const& Jx, amrex::Array4<amrex::Real> const& Jy,
-    amrex::Array4<amrex::Real> const& Jz, amrex::Real dx, amrex::Real dy,
-    amrex::Real dz, amrex::Real dt, const amrex::Real xi_c2)
+    amrex::Array4<amrex::Real> const& Jz, const amrex::Real dx, const amrex::Real dy,
+    const amrex::Real dz, const amrex::Real dt, const amrex::Real xi_c2)
 {
 
 using namespace amrex;

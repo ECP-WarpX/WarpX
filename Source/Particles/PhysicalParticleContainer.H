@@ -21,6 +21,9 @@
     #include <QuantumSyncEngineWrapper.H>
     #include <BreitWheelerEngineWrapper.H>
     #include <QedChiFunctions.H>
+
+    #include <Particles/ElementaryProcess/QEDPairGeneration.H>
+    #include <Particles/ElementaryProcess/QEDPhotonEmission.H>
 #endif
 
 #include <map>
@@ -36,6 +39,14 @@ class PhysicalParticleContainer
     : public WarpXParticleContainer
 {
 public:
+
+    enum PhysicalParticleType{
+        electron,
+        positron,
+        photon,
+        other
+    };
+
     PhysicalParticleContainer (amrex::AmrCore* amr_core,
                                int ispecies,
                                const std::string& name);
@@ -47,15 +58,6 @@ public:
     virtual void InitData () override;
 
     void InitIonizationModule ();
-
-#ifdef WARPX_DO_ELECTROSTATIC
-    virtual void FieldGatherES(const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                               const amrex::Vector<std::unique_ptr<amrex::FabArray<amrex::BaseFab<int> > > >& masks) override;
-
-    virtual void EvolveES (const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                           amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                           amrex::Real t, amrex::Real dt) override;
-#endif // WARPX_DO_ELECTROSTATIC
 
     /**
      * \brief Apply external E and B fields on the particles. The E and B
@@ -201,6 +203,12 @@ public:
                          amrex::Real x_rms, amrex::Real y_rms, amrex::Real z_rms,
                          amrex::Real q_tot, long npart, int do_symmetrize);
 
+    /** Load a particle beam from an external file
+     *
+     * @param[in] s_f path to an external file in openPMD markup
+     */
+    void AddPlasmaFromFile(const std::string s_f);
+
     void CheckAndAddParticle(amrex::Real x, amrex::Real y, amrex::Real z,
                              std::array<amrex::Real, 3> u,
                              amrex::Real weight,
@@ -314,6 +322,10 @@ public:
      */
     virtual void EvolveOpticalDepth(WarpXParIter& pti,
         amrex::Real dt);
+
+    PhotonEmissionFilterFunc getPhotonEmissionFilterFunc ();
+
+    PairGenerationFilterFunc getPairGenerationFilterFunc ();
 #endif
 
 protected:
@@ -331,12 +343,10 @@ protected:
 
     //This function return true if the PhysicalParticleContainer contains electrons
     //or positrons, false otherwise
-    virtual bool AmIALepton ();
 
     //When true PhysicalParticleContainer tries to use a pusher including
     //radiation reaction
     bool do_classical_radiation_reaction = false;
-
 
 #ifdef WARPX_QED
     // A flag to enable quantum_synchrotron process for leptons
@@ -350,6 +360,7 @@ protected:
 
     // A smart pointer to an instance of a Breit Wheeler engine [photons only!]
     std::shared_ptr<BreitWheelerEngine> m_shr_p_bw_engine;
+
 #endif
 
 };

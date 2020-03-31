@@ -52,8 +52,7 @@ text = re.sub('runtime_params =',
 
 # Use only 2 cores for compiling
 text = re.sub( 'numMakeJobs = \d+', 'numMakeJobs = 2', text )
-# Use only 1 MPI and 1 thread proc for tests
-text = re.sub( 'numprocs = \d+', 'numprocs = 2', text)
+# Use only 1 OMP thread for running
 text = re.sub( 'numthreads = \d+', 'numthreads = 1', text)
 # Prevent emails from being sent
 text = re.sub( 'sendEmailWhenFail = 1', 'sendEmailWhenFail = 0', text )
@@ -97,6 +96,8 @@ if ci_regular_cartesian:
 
 if ci_psatd:
     test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], True)
+    # Remove PSATD single-precision, which is done in ci_single_precision
+    test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT'], False)
 
 if ci_python_main:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], True)

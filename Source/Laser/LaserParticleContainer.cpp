@@ -138,6 +138,13 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     }
 
     //Init laser profile
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(e_max > 0.,
+        "Laser amplitude (e_max) must be positive.");
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(wavelength > 0.,
+        "Laser wavelength must be positive.");
+
     CommonLaserParameters common_params;
     common_params.wavelength = wavelength;
     common_params.e_max = e_max;
@@ -178,7 +185,7 @@ LaserParticleContainer::ContinuousInjection (const RealBox& injection_box)
  * The up-to-date antenna position is stored in updated_position.
  */
 void
-LaserParticleContainer::UpdateContinuousInjectionPosition(Real dt)
+LaserParticleContainer::UpdateContinuousInjectionPosition (Real dt)
 {
     int dir = WarpX::moving_window_dir;
     if (do_continuous_injection and (WarpX::gamma_boost > 1)){
@@ -400,7 +407,7 @@ LaserParticleContainer::Evolve (int lev,
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
-    MultiFab* cost = WarpX::getCosts(lev);
+    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -416,6 +423,10 @@ LaserParticleContainer::Evolve (int lev,
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
             Real wt = amrex::second();
 
             auto& attribs = pti.GetAttribs();
@@ -493,15 +504,11 @@ LaserParticleContainer::Evolve (int lev,
                 }
             }
 
-            if (cost) {
-                const Box& tbx = pti.tilebox();
-                wt = (amrex::second() - wt) / tbx.d_numPts();
-                Array4<Real> const& costarr = cost->array(pti);
-                amrex::ParallelFor(tbx,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                {
-                    costarr(i,j,k) += wt;
-                });
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
     }
@@ -521,7 +528,9 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
 {
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
 
+#if !(defined WARPX_DIM_RZ)
     const Real eps = dx[0]*1.e-50;
+#endif
 #if (AMREX_SPACEDIM == 3)
     Sx = std::min(std::min(dx[0]/(std::abs(u_X[0])+eps),
                            dx[1]/(std::abs(u_X[1])+eps)),
@@ -624,14 +633,14 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
  * \param dt: time step.
  */
 void
-LaserParticleContainer::update_laser_particle(WarpXParIter& pti,
-                                              const int np,
-                                              ParticleReal * AMREX_RESTRICT const puxp,
-                                              ParticleReal * AMREX_RESTRICT const puyp,
-                                              ParticleReal * AMREX_RESTRICT const puzp,
-                                              ParticleReal const * AMREX_RESTRICT const pwp,
-                                              Real const * AMREX_RESTRICT const amplitude,
-                                              const Real dt)
+LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
+                                               const int np,
+                                               ParticleReal * AMREX_RESTRICT const puxp,
+                                               ParticleReal * AMREX_RESTRICT const puyp,
+                                               ParticleReal * AMREX_RESTRICT const puzp,
+                                               ParticleReal const * AMREX_RESTRICT const pwp,
+                                               Real const * AMREX_RESTRICT const amplitude,
+                                               const Real dt)
 {
     const auto GetPosition = GetParticlePosition(pti);
     auto       SetPosition = SetParticlePosition(pti);

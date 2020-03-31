@@ -1,6 +1,7 @@
 /* Copyright 2019-2020 Andrew Myers, Ann Almgren, Aurore Blelly
  * Axel Huebl, Burlen Loring, Maxence Thevenet
- * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ * Michael Rowan, Remi Lehe, Revathi Jambunathan
+ * Weiqun Zhang
  *
  *
  * This file is part of WarpX.
@@ -80,6 +81,7 @@ WarpX::InitData ()
 
     if (restart_chkfile.empty())
     {
+        multi_diags->FilterComputePackFlush( 0, true );
         if (plot_int > 0)
             WritePlotFile();
 
@@ -103,6 +105,7 @@ WarpX::InitData ()
 
 void
 WarpX::InitDiagnostics () {
+    multi_diags->InitData();
     if (do_back_transformed_diagnostics) {
         const Real* current_lo = geom[0].ProbLo();
         const Real* current_hi = geom[0].ProbHi();
@@ -138,15 +141,6 @@ WarpX::InitFromScratch ()
     ComputeSpaceChargeField(reset_fields);
 
     InitPML();
-
-#ifdef WARPX_DO_ELECTROSTATIC
-    if (do_electrostatic) {
-        getLevelMasks(masks);
-
-        // the plus one is to convert from num_cells to num_nodes
-        getLevelMasks(gather_masks, n_buffer + 1);
-    }
-#endif // WARPX_DO_ELECTROSTATIC
 }
 
 void
@@ -421,16 +415,10 @@ WarpX::InitLevelData (int lev, Real /*time*/)
         rho_cp[lev]->setVal(0.0);
     }
 
-    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
-        if (costs[lev]) {
-            costs[lev]->setVal(0.0);
-        }
-    } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic) {
-        if (costs_heuristic[lev]) {
-            std::fill((*costs_heuristic[lev]).begin(),
-                      (*costs_heuristic[lev]).end(),
-                      0.0);
-        }
+    if (costs[lev]) {
+        std::fill((*costs[lev]).begin(),
+                  (*costs[lev]).end(),
+                  0.0);
     }
 }
 
@@ -482,9 +470,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
     const RealBox& real_box = geom[lev].ProbDomain();
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-       const Box& tbx = mfi.tilebox(x_nodal_flag);
-       const Box& tby = mfi.tilebox(y_nodal_flag);
-       const Box& tbz = mfi.tilebox(z_nodal_flag);
+       const Box& tbx = convert(mfi.growntilebox(),x_nodal_flag);
+       const Box& tby = convert(mfi.growntilebox(),y_nodal_flag);
+       const Box& tbz = convert(mfi.growntilebox(),z_nodal_flag);
 
        auto const& mfxfab = mfx->array(mfi);
        auto const& mfyfab = mfy->array(mfi);

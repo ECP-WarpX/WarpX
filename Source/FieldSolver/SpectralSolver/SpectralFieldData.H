@@ -8,14 +8,11 @@
 #ifndef WARPX_SPECTRAL_FIELD_DATA_H_
 #define WARPX_SPECTRAL_FIELD_DATA_H_
 
-#include "WarpX_ComplexForFFT.H"
+#include "Utils/WarpX_Complex.H"
 #include "SpectralKSpace.H"
 #include <AMReX_MultiFab.H>
 
 #include <string>
-
-#ifdef WARPX_USE_PSATD
-#   include <fftw3.h>
 
 // Declare type for spectral fields
 using SpectralField = amrex::FabArray< amrex::BaseFab <Complex> >;
@@ -47,7 +44,11 @@ class SpectralFieldData
 #ifdef AMREX_USE_GPU
     using FFTplans = amrex::LayoutData<cufftHandle>;
 #else
+#  ifdef AMREX_USE_FLOAT
+    using FFTplans = amrex::LayoutData<fftwf_plan>;
+#  else
     using FFTplans = amrex::LayoutData<fftw_plan>;
+#  endif
 #endif
 
     public:
@@ -90,5 +91,4 @@ class SpectralFieldData
 #endif
 };
 
-#endif // WARPX_USE_PSATD
 #endif // WARPX_SPECTRAL_FIELD_DATA_H_

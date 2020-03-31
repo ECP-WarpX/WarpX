@@ -28,13 +28,19 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
                                                   const std::string& name)
     : PhysicalParticleContainer(amr_core, ispecies, name)
 {
-
     ParmParse pp(species_name);
 
 #ifdef WARPX_QED
         //IF m_do_qed is enabled, find out if Breit Wheeler process is enabled
         if(m_do_qed)
             pp.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
+
+        //If Breit Wheeler process is enabled, look for the target electron and positron
+        //species
+        if(m_do_qed_breit_wheeler){
+            pp.get("qed_breit_wheeler_ele_product_species", m_qed_breit_wheeler_ele_product_name);
+            pp.get("qed_breit_wheeler_pos_product_species", m_qed_breit_wheeler_pos_product_name);
+        }
 
         //Check for processes which do not make sense for photons
         bool test_quantum_sync = false;
@@ -66,12 +72,6 @@ PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType /*a_dt_type*/
     ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Ex = attribs[PIdx::Ex].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Ey = attribs[PIdx::Ey].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Ez = attribs[PIdx::Ez].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Bx = attribs[PIdx::Bx].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT By = attribs[PIdx::By].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Bz = attribs[PIdx::Bz].dataPtr();
 
     if (WarpX::do_back_transformed_diagnostics && do_back_transformed_diagnostics)
     {
@@ -161,4 +161,5 @@ PhotonParticleContainer::EvolveOpticalDepth(
         }
         );
 }
+
 #endif
