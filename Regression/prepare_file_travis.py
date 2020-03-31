@@ -98,6 +98,8 @@ if ci_psatd:
     test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], True)
     # Remove PSATD single-precision, which is done in ci_single_precision
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT'], False)
+    # Remove PSATD QED, which is done in ci_qed
+    test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT'], False)
 
 if ci_python_main:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], True)
