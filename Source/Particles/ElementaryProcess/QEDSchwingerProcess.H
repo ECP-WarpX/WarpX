@@ -1,7 +1,7 @@
 #ifndef QED_SCHWINGER_PROCESS_H_
 #define QED_SCHWINGER_PROCESS_H_
 
-#include "WarpXParticleContainer.H"
+#include "Particles/WarpXParticleContainer.H"
 
 struct SchwingerFilterFunc
 {
