@@ -668,7 +668,7 @@ WarpX::ComputeDt ()
 #ifdef WARPX_DIM_RZ
 #    ifdef WARPX_USE_PSATD
         deltat = cfl*dx[1]/PhysConst::c;
-    #else
+#    else
         // In the rz case, the Courant limit has been evaluated
         // semi-analytically by R. Lehe, and resulted in the following
         // coefficients.
