@@ -29,13 +29,13 @@ Average::ToCellCenter ( MultiFab& mf_out,
 }
 
 void
-Average::FineToCoarse ( MultiFab& mf_cp,
-                        const MultiFab& mf_fp,
-                        const int scomp,
-                        const int ncomp,
-                        const IntVect ratio )
+Average::Coarsen ( MultiFab& mf_cp,
+                   const MultiFab& mf_fp,
+                   const int scomp,
+                   const int ncomp,
+                   const IntVect ratio )
 {
-    BL_PROFILE( "Average::FineToCoarse" );
+    BL_PROFILE( "Average::Coarsen" );
     AMREX_ASSERT( mf_cp.nComp() == mf_fp.nComp() );
     AMREX_ASSERT( (mf_cp.is_cell_centered() && mf_fp.is_cell_centered()) ||
                   (mf_cp.is_nodal()         && mf_fp.is_nodal()) );
@@ -62,7 +62,7 @@ Average::FineToCoarse ( MultiFab& mf_cp,
             ParallelFor( bx, ncomp,
                          [=] AMREX_GPU_DEVICE( int i, int j, int k, int n )
                          {
-                             mf_cp_arr(i,j,k,n+scomp) = Average::FineToCoarse( mf_fp_arr, stag, i, j, k, n+scomp, ratio );
+                             mf_cp_arr(i,j,k,n+scomp) = Average::Coarsen( mf_fp_arr, stag, i, j, k, n+scomp, ratio );
                          } );
         }
     }
@@ -87,7 +87,7 @@ Average::FineToCoarse ( MultiFab& mf_cp,
             ParallelFor( bx, ncomp,
                          [=] AMREX_GPU_DEVICE( int i, int j, int k, int n )
                          {
-                             mf_cp_arr(i,j,k,n) = Average::FineToCoarse( mf_fp_arr, stag, i, j, k, n+scomp, ratio );
+                             mf_cp_arr(i,j,k,n) = Average::Coarsen( mf_fp_arr, stag, i, j, k, n+scomp, ratio );
                          } );
         }
         mf_cp.copy( coarsened_mf_fp, 0, scomp, ncomp );

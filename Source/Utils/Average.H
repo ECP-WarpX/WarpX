@@ -92,13 +92,13 @@ namespace Average{
 
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
-    Real FineToCoarse ( Array4<Real const> const& mf_fp_arr,
-                        const IntVect stag,
-                        const int i,
-                        const int j,
-                        const int k,
-                        const int comp,
-                        const IntVect ratio )
+    Real Coarsen ( Array4<Real const> const& mf_fp_arr,
+                   const IntVect stag,
+                   const int i,
+                   const int j,
+                   const int k,
+                   const int comp,
+                   const IntVect ratio )
     {
         const int sx = stag[0];
         const int sy = stag[1];
@@ -133,11 +133,11 @@ namespace Average{
         return volfrac * c;
     };
 
-    void FineToCoarse ( MultiFab& mf_cp,
-                        const MultiFab& mf_fp,
-                        const int scomp,
-                        const int ncomp,
-                        const IntVect ratio );
+    void Coarsen ( MultiFab& mf_cp,
+                   const MultiFab& mf_fp,
+                   const int scomp,
+                   const int ncomp,
+                   const IntVect ratio );
 }
 
 #endif // WARPX_AVERAGE_H_
