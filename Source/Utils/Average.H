@@ -114,9 +114,9 @@ namespace Average{
 #elif (AMREX_SPACEDIM == 3)
         const int facz = ratio[2];
 #endif
-        const int itx = facx*(1-sx)+sx;
-        const int ity = facy*(1-sy)+sy;
-        const int itz = facz*(1-sz)+sz;
+        const int itx = sx + facx;
+        const int ity = sy + facy;
+        const int itz = sz + facz;
         const Real volfrac = 1.0 / static_cast<Real>(itx*ity*itz);
 
         int kk = k*facz;
