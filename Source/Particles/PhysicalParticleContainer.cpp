@@ -313,7 +313,7 @@ PhysicalParticleContainer::AddGaussianBeam (
 
 void
 PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
-                                               amrex::Real q_tot)
+                                               amrex::Real physical_q_tot)
 {
 #ifdef WARPX_USE_OPENPMD
     openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
@@ -339,10 +339,11 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     amrex::Real mmpns_mps = 1.e6;
     amrex::Real mm_m = 1.e-3;
     amrex::Real weight;
-    if (q_tot!=0.0){
-        weight = q_tot/(charge*amrex::Real(npart));
+    if (physical_q_tot!=0.0){
+        weight = physical_q_tot/(charge*amrex::Real(npart));
     }
     else {
+        //In case openPMD file contains macroparticle instead of real particle data
         weight = charge;
     }
 
