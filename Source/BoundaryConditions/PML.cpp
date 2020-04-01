@@ -574,7 +574,7 @@ PML::MakeBoxArray (const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
             //  the PML cells surrounding these patches cannot overlap
             // The check is only needed along the axis where PMLs are being used.
             for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-                if (! geom->isPeriodic(idim)) {
+                if (! geom.isPeriodic(idim)) {
                     if (do_pml_Lo[idim] || do_pml_Hi[idim]) {
                         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                             grid_bx.length(idim) > ncell,
