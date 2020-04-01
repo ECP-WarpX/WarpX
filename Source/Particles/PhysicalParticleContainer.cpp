@@ -951,6 +951,11 @@ PhysicalParticleContainer::Evolve (int lev,
                                    const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
                                    Real /*t*/, Real dt, DtType a_dt_type)
 {
+
+    bool fft_do_time_averaging;
+    ParmParse pp("psatd");
+    pp.query("do_time_averaging", fft_do_time_averaging);
+
     WARPX_PROFILE("PPC::Evolve()");
     WARPX_PROFILE_VAR_NS("PPC::Evolve::Copy", blp_copy);
     WARPX_PROFILE_VAR_NS("PPC::FieldGather", blp_fg);
@@ -1028,12 +1033,29 @@ PhysicalParticleContainer::Evolve (int lev,
             // FArrayBox const* byfab = &(By[pti]);
             // FArrayBox const* bzfab = &(Bz[pti]);
 
-            FArrayBox const* exfab = &(Ex_avg[pti]);
-            FArrayBox const* eyfab = &(Ey_avg[pti]);
-            FArrayBox const* ezfab = &(Ez_avg[pti]);
-            FArrayBox const* bxfab = &(Bx_avg[pti]);
-            FArrayBox const* byfab = &(By_avg[pti]);
-            FArrayBox const* bzfab = &(Bz_avg[pti]);
+            FArrayBox const* exfab;
+            FArrayBox const* eyfab;
+            FArrayBox const* ezfab;
+            FArrayBox const* bxfab;
+            FArrayBox const* byfab;
+            FArrayBox const* bzfab;
+
+            if (fft_do_time_averaging){
+                exfab = &(Ex_avg[pti]);
+                eyfab = &(Ey_avg[pti]);
+                ezfab = &(Ez_avg[pti]);
+                bxfab = &(Bx_avg[pti]);
+                byfab = &(By_avg[pti]);
+                bzfab = &(Bz_avg[pti]);
+                }
+            else{
+                exfab = &(Ex[pti]);
+                eyfab = &(Ey[pti]);
+                ezfab = &(Ez[pti]);
+                bxfab = &(Bx[pti]);
+                byfab = &(By[pti]);
+                bzfab = &(Bz[pti]);
+                }
 
 
             Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;

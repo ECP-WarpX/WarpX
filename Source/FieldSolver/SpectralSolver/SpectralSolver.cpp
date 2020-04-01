@@ -69,16 +69,15 @@ SpectralSolver::SpectralSolver(
              k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
         amrex::Print() <<"Algorithm of choice: Standard PSATD" << "\n";
       } else {
-          if (fft_do_time_averaging == false){
-              algorithm = std::unique_ptr<GalileanAlgorithm>( new GalileanAlgorithm(
-                k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt));
-              amrex::Print() <<"Algorithm of choice: Galilean PSATD" << "\n";
-            }
-          else {
+          if (fft_do_time_averaging){
               algorithm = std::unique_ptr<AvgGalileanAlgorithm>( new AvgGalileanAlgorithm(
                 k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt));
               amrex::Print() <<"Algorithm of choice: Averaged Galilean PSATD" << "\n";
-
+            }
+          else {
+              algorithm = std::unique_ptr<GalileanAlgorithm>( new GalileanAlgorithm(
+                k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt));
+              amrex::Print() <<"Algorithm of choice: Galilean PSATD" << "\n";
           }
        }
 
