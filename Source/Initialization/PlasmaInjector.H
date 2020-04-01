@@ -70,7 +70,7 @@ public:
     amrex::Real q_tot;
     long npart;
     int do_symmetrize = 0;
-    
+
     bool external_file = false;
     std::string str_injection_file;
     amrex::Real physical_q_tot = 0.0;

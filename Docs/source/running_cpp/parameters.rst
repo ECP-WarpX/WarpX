@@ -280,7 +280,7 @@ Particle initialization
       ``<species_name>.x/y/z_cut`` (optional, particles with ``abs(x-x_m) > x_cut*x_rms`` are not injected, same for y and z. ``<species_name>.q_tot`` is the charge of the un-cut beam, so that cutting the distribution is likely to result in a lower total charge),
       and optional argument ``<species_name>.do_symmetrize`` (whether to
       symmetrize the beam in the x and y directions).
-      
+
     * ``external_file``: inject macroparticles with properties (charge, mass, position, and momentum) according to data in external file.
       It requires the additional arguments ``<species_name>.injection_file`` and ``<species_name>.q_tot``, which are the string corresponding to the OpenPMD file and the beam charge.
       When using this style, it is not necessary to add other ``<species_name>.(...)`` paramters, because they will be read directly from the file.

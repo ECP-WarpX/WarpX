@@ -330,7 +330,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     //TODO: In future PRs will add ASSERT_WITH_MESSAGE to test if mass and charge are both const
     amrex::Real p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
     amrex::Real p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    int npart = ps.second["position"]["x"].getExtent()[0];
+    long npart = ps.second["position"]["x"].getExtent()[0];
     series.flush();
 
     //Conversion from Geant4 system of units (http://geant4.web.cern.ch/sites/geant4.web.cern.ch/files/geant4/collaboration/working_groups/electromagnetic/gallery/units/SystemOfUnits.html) to WarpX (SI)
@@ -338,9 +338,14 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     charge = p_q*PhysConst::q_e;
     amrex::Real mmpns_mps = 1.e6;
     amrex::Real mm_m = 1.e-3;
-    amrex::Real const weight = q_tot/(charge*amrex::Real(npart));
+    amrex::Real weight;
+    if (q_tot!=0.0){
+        weight = q_tot/(charge*amrex::Real(npart));
+    }
+    else {
+        weight = charge;
+    }
 
-    long npart = ps.second["position"]["x"].getExtent()[0];
     std::shared_ptr<amrex::Real> ptr_x = ps.second["position"]["x"].loadChunk<amrex::Real>();
     series.flush();
     std::shared_ptr<amrex::Real> ptr_vx = ps.second["velocity"]["x"].loadChunk<amrex::Real>();
