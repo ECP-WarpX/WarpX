@@ -76,13 +76,13 @@ namespace Average{
 
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
-    Real CoarsenKernel ( Array4<Real const> const& mf_fp_arr,
-                         const IntVect stag,
-                         const int i,
-                         const int j,
-                         const int k,
-                         const int comp,
-                         const IntVect ratio )
+    Real Coarsen ( Array4<Real const> const& mf_fp_arr,
+                   const IntVect stag,
+                   const int i,
+                   const int j,
+                   const int k,
+                   const int comp,
+                   const IntVect ratio )
     {
         const int sx = stag[0];
         const int sy = stag[1];
@@ -116,13 +116,6 @@ namespace Average{
         }
         return volfrac * c;
     };
-
-    void CoarsenLoop ( MultiFab& mf_cp,
-                       const MultiFab& mf_fp,
-                       const int dcomp,
-                       const int scomp,
-                       const int ncomp,
-                       const IntVect ratio );
 
     void Coarsen ( MultiFab& mf_cp,
                    const MultiFab& mf_fp,
