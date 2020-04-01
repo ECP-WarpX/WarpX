@@ -9,24 +9,19 @@ namespace Average{
 
     /**
      * \brief Returns the cell-centered average of the floating point data contained
-     *        in the input
-     *        <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
-     *        \c mf_in_arr.
+     *        in the input Array4 \c mf_in_arr.
      *
      * \param[in] mf_in_arr floating point data to be averaged
      * \param[in] stag      staggering (index type) of the data
-     * \param[in] i         index along x to access the
-     *                      <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
-     *                      \c mf_in_arr containing the data to be averaged
-     * \param[in] j         index along y to access the
-     *                      <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
-     *                      \c mf_in_arr containing the data to be averaged
-     * \param[in] k         index along z to access the
-     *                      <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
-     *                      \c mf_in_arr containing the data to be averaged
-     * \param[in] comp      index along the fourth component of the
-     *                      <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
-     *                      \c mf_in_arr containing the data to be averaged
+     * \param[in] i         index along x to access the Array4 \c mf_in_arr containing
+     *                      the data to be averaged
+     * \param[in] j         index along y to access the Array4 \c mf_in_arr containing
+     *                      the data to be averaged
+     * \param[in] k         index along z to access the Array4 \c mf_in_arr containing
+     *                      the data to be averaged
+     * \param[in] comp      index along the fourth component of the Array4 \c mf_in_arr
+     *                      containing the data to be averaged
+     *
      * \return averaged field at cell (i,j,k)
      */
     AMREX_GPU_HOST_DEVICE
@@ -57,31 +52,20 @@ namespace Average{
 
     /**
      * \brief Stores the cell-centered average of the floating point data contained
-     *        in the input
-     *        <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
-     *        \c mf_in into the output
-     *        <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
-     *        \c mf_out.
+     *        in the input MultiFab \c mf_in into the output MultiFab \c mf_out.
      *
-     * \param[in,out] mf_out <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
-     *                       containing the floating point data to be filled with cell-centered averages
-     * \param[in]     mf_in  <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
-     *                       containing the floating point data to be averaged
-     * \param[in]     dcomp  offset for the fourth component of the
-     *                       <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
-     *                       object, extracted from its
-     *                       <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
-     *                       , where the cell-centered averages will be stored
-     * \param[in]     scomp  optional offset for the fourth component of the
-     *                       <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
-     *                       object, extracted from its
-     *                       <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
-     *                       , containing the data to be averaged
+     * \param[in,out] mf_out MultiFab containing the floating point data to be filled
+     *                       with cell-centered averages
+     * \param[in]     mf_in  MultiFab containing the floating point data to be averaged
+     * \param[in]     dcomp  offset for the fourth component of the Array4 object,
+     *                       extracted from its MultiFab, where the cell-centered
+     *                       averages will be stored
+     * \param[in]     scomp  optional offset for the fourth component of the Array4
+     *                       object, extracted from its MultiFab, containing the data
+     *                       to be averaged
      * \param[in]     ncomp  optional number of components to loop over for both the
-     *                       input and the output
-     *                       <a href="https://amrex-codes.github.io/amrex/doxygen/structamrex_1_1Array4.html">Array4</a>
-     *                       objects, extracted from their respective
-     *                       <a href="https://amrex-codes.github.io/amrex/doxygen/classamrex_1_1MultiFab.html">MultiFab</a>
+     *                       input and the output Array4 objects, extracted from their
+     *                       respective MultiFab
      */
     void ToCellCenter ( MultiFab& mf_out,
                         const MultiFab& mf_in,
