@@ -38,8 +38,6 @@ Average::Coarsen ( MultiFab& mf_cp,
 {
     BL_PROFILE( "Average::Coarsen" );
     AMREX_ASSERT( mf_cp.nComp() == mf_fp.nComp() );
-    AMREX_ASSERT( (mf_cp.is_cell_centered() && mf_fp.is_cell_centered()) ||
-                  (mf_cp.is_nodal()         && mf_fp.is_nodal()) );
 
     // Coarsen() fine data
     BoxArray coarsened_mf_fp_ba = mf_fp.boxArray();
