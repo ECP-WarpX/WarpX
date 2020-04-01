@@ -399,19 +399,6 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
                   particle_z.dataPtr(), particle_ux.dataPtr(),
                   particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
-    //(Un)comment this block to print the information read from OPMD file
-    amrex::Print() << npart << " " << np << " parts of species " << ps.first << "\nWith"
-    << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
-    << npart << " macroparticles with weights of " << weight << "\n";
-    for (size_t col; col<npart; ++col){
-        amrex::Print() << "x = " << ptr_x.get()[col] << "\n";
-        amrex::Print() << "vx = " << ptr_vx.get()[col] << "\n";
-        amrex::Print() << "z = " << ptr_z.get()[col] << "\n";
-        amrex::Print() << "vz = " << ptr_vz.get()[col] << "\n";
-#if (defined WARPX_DIM_3D)
-        amrex::Print() << "y = " << ptr_y.get()[col] << "\n";
-        amrex::Print() << "vy = " << ptr_vy.get()[col] << "\n";
-#endif
     }
 #endif
     return;
