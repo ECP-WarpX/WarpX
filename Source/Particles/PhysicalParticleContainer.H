@@ -199,15 +199,17 @@ public:
 
     void MapParticletoBoostedFrame(amrex::Real& x, amrex::Real& y, amrex::Real& z, std::array<amrex::Real, 3>& u);
 
-    void AddGaussianBeam(amrex::Real x_m, amrex::Real y_m, amrex::Real z_m,
-                         amrex::Real x_rms, amrex::Real y_rms, amrex::Real z_rms,
-                         amrex::Real q_tot, long npart, int do_symmetrize);
+    void AddGaussianBeam(const amrex::Real x_m, const amrex::Real y_m, const amrex::Real z_m,
+                         const amrex::Real x_rms, const amrex::Real y_rms, const amrex::Real z_rms,
+                         const amrex::Real x_cut, const amrex::Real y_cut, const amrex::Real z_cut,
+                         const amrex::Real q_tot, long npart, const int do_symmetrize);
 
     /** Load a particle beam from an external file
      *
      * @param[in] s_f path to an external file in openPMD markup
+     * @param[in] q_tot total charge of the particle species to be initialized
      */
-    void AddPlasmaFromFile(const std::string s_f);
+    void AddPlasmaFromFile(const std::string s_f, amrex::Real q_tot);
 
     void CheckAndAddParticle(amrex::Real x, amrex::Real y, amrex::Real z,
                              std::array<amrex::Real, 3> u,

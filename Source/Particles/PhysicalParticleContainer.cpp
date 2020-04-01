@@ -228,10 +228,12 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame(Real& x, Real& y, Real
 }
 
 void
-PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
-                                           Real x_rms, Real y_rms, Real z_rms,
-                                           Real q_tot, long npart,
-                                           int do_symmetrize) {
+PhysicalParticleContainer::AddGaussianBeam (
+    const Real x_m, const Real y_m, const Real z_m,
+    const Real x_rms, const Real y_rms, const Real z_rms,
+    const Real x_cut, const Real y_cut, const Real z_cut,
+    const Real q_tot, long npart,
+    const int do_symmetrize) {
 
     std::mt19937_64 mt(0451);
     std::normal_distribution<double> distx(x_m, x_rms);
@@ -256,17 +258,20 @@ PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
         }
         for (long i = 0; i < npart; ++i) {
 #if (defined WARPX_DIM_3D) || (WARPX_DIM_RZ)
-            Real weight = q_tot/npart/charge;
-            Real x = distx(mt);
-            Real y = disty(mt);
-            Real z = distz(mt);
+            const Real weight = q_tot/(npart*charge);
+            const Real x = distx(mt);
+            const Real y = disty(mt);
+            const Real z = distz(mt);
 #elif (defined WARPX_DIM_XZ)
-            Real weight = q_tot/npart/charge/y_rms;
-            Real x = distx(mt);
-            Real y = 0.;
-            Real z = distz(mt);
+            const Real weight = q_tot/(npart*charge*y_rms);
+            const Real x = distx(mt);
+            constexpr Real y = 0.;
+            const Real z = distz(mt);
 #endif
-            if (plasma_injector->insideBounds(x, y, z)) {
+            if (plasma_injector->insideBounds(x, y, z)  &&
+                std::abs( x - x_m ) < x_cut * x_rms     &&
+                std::abs( y - y_m ) < y_cut * y_rms     &&
+                std::abs( z - z_m ) < z_cut * z_rms   ) {
                 XDim3 u = plasma_injector->getMomentum(x, y, z);
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
@@ -307,17 +312,34 @@ PhysicalParticleContainer::AddGaussianBeam(Real x_m, Real y_m, Real z_m,
 }
 
 void
-PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f)
+PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f, amrex::Real q_tot)
 {
 #ifdef WARPX_USE_OPENPMD
     openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
     amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
 
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(series.iterations.size() == 1u, "External "
+                                     "file should contain only one iteration\n");
     openPMD::Iteration& i = series.iterations[1];
-    amrex::Print()  << "File contains " << i.particles.size() << " specie(s):" << "\n";
-    for( auto const& ps : i.particles ) {
-        amrex::Print() << "\t" << ps.first << "\n";
-    }
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size() == 1u, "External file "
+                                     "should contain only one species\n");
+    std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
+
+    //TODO: In future PRs will add AMREX_ALWAYS_ASSERT_WITH_MESSAGE to test if mass and charge are both const
+    amrex::Real p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
+    amrex::Real p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
+    int npart = ps.second["position"]["x"].getExtent()[0];
+    series.flush();
+
+    mass = p_m*PhysConst::mevpc2_kg;
+    charge = p_q*PhysConst::q_e;
+    Real const weight = q_tot/(charge*amrex::Real(npart));
+
+    amrex::Print() << npart << " parts of species " << ps.first << "\nWith"
+    << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
+    << npart << " macroparticles with weight " << weight << "\n";
+
     amrex::Print()<<"WARNING: this is WIP, no particle has been injected!!";
 #endif
     return;
@@ -371,6 +393,9 @@ PhysicalParticleContainer::AddParticles (int lev)
                         plasma_injector->x_rms,
                         plasma_injector->y_rms,
                         plasma_injector->z_rms,
+                        plasma_injector->x_cut,
+                        plasma_injector->y_cut,
+                        plasma_injector->z_cut,
                         plasma_injector->q_tot,
                         plasma_injector->npart,
                         plasma_injector->do_symmetrize);
@@ -380,7 +405,8 @@ PhysicalParticleContainer::AddParticles (int lev)
     }
 
     if (plasma_injector->external_file) {
-        AddPlasmaFromFile(plasma_injector->str_injection_file);
+        AddPlasmaFromFile(plasma_injector->str_injection_file,
+                          plasma_injector->q_tot);
         return;
     }
 
