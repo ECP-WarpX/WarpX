@@ -22,12 +22,14 @@ pattern="\.c$|\.cpp$|\.F90$|\.h$|\.H$|\.ini$|\.py$|"\
 "CMakeLists\.txt|inputs"
 
 for i in $(find . \
-                -not -path "./.git/*"  \
-                -not -path "./.idea/*" \
+                -not -path "./.git/*"          \
+                -not -path "./.idea/*"         \
+                -not -path "*wp_parse*"        \
+                -not -path "./tmp_build_dir/*" \
                 -type f | \
-           grep -P "${pattern}")
+           grep -E "${pattern}")
 do
-  fileHasEOLws=$(grep -q "[[:blank:]]\+$" $i || echo "-FILE CLEAN-")
+  fileHasEOLws=$(grep -e "[[:blank:]]\+$" $i || echo "-FILE CLEAN-")
   if [ "$fileHasEOLws" != "-FILE CLEAN-" ]
   then
     files+=($i)
