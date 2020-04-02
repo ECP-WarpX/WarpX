@@ -12,6 +12,8 @@
 # @result 0 if no files are found, else 1
 #
 
+set -eu -o pipefail
+
 ok=0
 
 pattern="\.c$|\.cpp$|\.F90$|\.h$|\.H$|\.ini$|\.py$|"\
@@ -27,9 +29,9 @@ for i in $(find . \
 do
   # non-ASCII test regex via jerrymouse at stackoverflow under CC-By-SA 3.0:
   #   http://stackoverflow.com/questions/3001177/how-do-i-grep-for-all-non-ascii-characters-in-unix/9395552#9395552
-  result=$(grep --color='always' -P -n "[\x80-\xFF]" $i)
+  result=$(grep --color='always' -P -n "[\x80-\xFF]" $i || echo "-FILE CLEAN-";)
 
-  if [ $? -eq 0 ]
+  if [ "$result" != "-FILE CLEAN-" ]
   then
     echo "$i contains non-ASCII characters!"
     echo "$result"

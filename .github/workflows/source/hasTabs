@@ -9,6 +9,8 @@
 # @result 0 if no files are found, else 1
 #
 
+set -eu -o pipefail
+
 ok=0
 files=()
 
@@ -23,8 +25,8 @@ for i in $(find . \
                 -type f | \
            grep -P "${pattern}")
 do
-  grep -q -P "\t" $i
-  if [ $? -eq 0 ]
+  fileHasTabs=$(grep -q -P "\t" $i || echo "-FILE CLEAN-")
+  if [ "$fileHasTabs" != "-FILE CLEAN-" ]
   then
     files+=($i)
     echo "$i contains TABs instead of spaces!"

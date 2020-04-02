@@ -12,6 +12,8 @@
 # note: .md files can contain EOL white spaces for syntax reasons
 #       (newline without starting a new paragraph)
 
+set -eu -o pipefail
+
 ok=0
 files=()
 
@@ -25,8 +27,8 @@ for i in $(find . \
                 -type f | \
            grep -P "${pattern}")
 do
-  grep -q "[[:blank:]]\+$" $i
-  if [ $? -eq 0 ]
+  fileHasEOLws=$(grep -q "[[:blank:]]\+$" $i || echo "-FILE CLEAN-")
+  if [ "$fileHasEOLws" != "-FILE CLEAN-" ]
   then
     files+=($i)
     echo "$i contains EOL white spaces!"
