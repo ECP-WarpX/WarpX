@@ -1,9 +1,10 @@
-CEXE_headers += Ionization.H
-
 ifeq ($(QED),TRUE)
+<<<<<<< HEAD
     CEXE_headers += QEDPairGeneration.H
     CEXE_headers += QEDPhotonEmission.H
     CEXE_headers += QEDSchwingerProcess.H
+=======
+>>>>>>> upstream/master
     include $(WARPX_HOME)/Source/Particles/ElementaryProcess/QEDInternals/Make.package
     INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/Particles/ElementaryProcess/QEDInternals/
     VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Particles/ElementaryProcess/QEDInternals/
