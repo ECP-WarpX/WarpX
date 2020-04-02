@@ -464,7 +464,7 @@ PhysicalParticleContainer::AddParticles (int lev)
 
     if (plasma_injector->external_file) {
         AddPlasmaFromFile(plasma_injector->str_injection_file,
-                          plasma_injector->q_tot);
+                          plasma_injector->physical_q_tot);
         return;
     }
 
