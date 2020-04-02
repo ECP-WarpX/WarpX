@@ -1,6 +1,6 @@
 # WarpX
 
-[![Code Status master](https://img.shields.io/travis/ECP-WarpX/WarpX/master.svg?label=master)](https://travis-ci.org/ECP-WarpX/WarpX/branches)
+[![Code Status master](https://img.shields.io/travis/ECP-WarpX/WarpX/master.svg?label=master)](https://travis-ci.com/ECP-WarpX/WarpX/branches)
 [![Documentation Status](https://readthedocs.org/projects/warpx/badge/?version=latest)](https://warpx.readthedocs.io/en/latest/?badge=latest)
 [![GitHub commits since last release](https://img.shields.io/github/commits-since/ECP-WarpX/WarpX/latest/master.svg)](https://github.com/ECP-WarpX/WarpX/compare/master)
 [![Language](https://img.shields.io/badge/language-C%2B%2B11-orange.svg)](https://isocpp.org/)
