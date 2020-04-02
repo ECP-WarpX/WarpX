@@ -1043,6 +1043,16 @@ MultiParticleContainer::doQEDSchwinger ()
     amrex::Abort("Schwinger process not implemented in rz geometry");
 #endif
 
+    amrex::Geometry const & geom = warpx.Geom(level_0);
+    auto domain_box = geom.Domain();
+#if (AMREX_SPACEDIM == 2)
+    auto dVdt = geom.CellSize(0) * geom.CellSize(1) * m_y_size
+               * warpx.getdt(level_0);
+#elif (AMREX_SPACEDIM == 3)
+    auto dVdt = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2)
+               * warpx.getdt(level_0);
+#endif
+
     const MultiFab & Ex = warpx.getEfield(level_0,0);
     const MultiFab & Ey = warpx.getEfield(level_0,1);
     const MultiFab & Ez = warpx.getEfield(level_0,2);
@@ -1077,14 +1087,16 @@ MultiParticleContainer::doQEDSchwinger ()
         const auto np_pos_dst = dst_pos_tile.numParticles();
 
         auto Filter  = SchwingerFilterFunc{m_qed_schwinger_y_size,
-                                m_qed_schwinger_threshold_poisson_gaussian};
+                                m_qed_schwinger_threshold_poisson_gaussian,
+                                 dVdt};
 
         SmartCreateFactory create_factory_ele(*pc_product_ele);
         SmartCreateFactory create_factory_pos(*pc_product_pos);
         const auto CreateEle = create_factory_ele.getSmartCreate();
         const auto CreatePos = create_factory_pos.getSmartCreate();
 
-        const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size};
+        const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size,
+                            ParticleStringNames::to_index.find("w")->second};
 
         const auto num_added = filterCreateTransformFromFAB<1>( dst_ele_tile,
                               dst_pos_tile, box, array_EMFAB, np_ele_dst,

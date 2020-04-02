@@ -7,6 +7,7 @@ struct SchwingerFilterFunc
 {
     const amrex::Real m_y_size;
     int m_threshold_poisson_gaussian;
+    const amrex::Real m_dVdt;
 
     template <typename FABs>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -19,22 +20,7 @@ struct SchwingerFilterFunc
         const auto& arrBy = src_FABs[4]->array();
         const auto& arrBz = src_FABs[5]->array();
 
-    // So far Schwinger process does not work with mesh refinement
-    const int level_0 = 0;
-
-    // get cell size multiplied by time step
-    auto & warpx = WarpX::GetInstance();
-    amrex::Geometry const & geom = warpx.Geom(level_0);
-    auto domain_box = geom.Domain();
-#if (AMREX_SPACEDIM == 2)
-    auto dVdt = geom.CellSize(0) * geom.CellSize(1) * m_y_size
-               * warpx.getdt(level_0);
-#elif (AMREX_SPACEDIM == 3)
-    auto dVdt = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2)
-               * warpx.getdt(level_0);
-#endif
-
-        return getSchwingerProductionNumber( dVdt,
+        return getSchwingerProductionNumber( m_dVdt,
                     arrEx(i,j,k),arrEy(i,j,k),arrEz(i,j,k),
                     arrBx(i,j,k),arrBy(i,j,k),arrBz(i,j,k),
                     m_threshold_poisson_gaussian);
@@ -45,20 +31,20 @@ struct SchwingerTransformFunc
 {
 
     const amrex::Real m_y_size;
+    const int m_weight_index;
 
     template <typename DstData1, typename DstData2>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (DstData1& dst1, DstData2& dst2, int i_dst1, int i_dst2,
                                int N, amrex::Real total_weight) const noexcept
     {
-        const auto weight_index = ParticleStringNames::to_index.find("w")->second;
         for (int n = 0; n < N; ++n){
 #if (AMREX_SPACEDIM == 3)
-            dst1.m_rdata[weight_index][i_dst1+n] = total_weight/N;
-            dst2.m_rdata[weight_index][i_dst2+n] = total_weight/N;
+            dst1.m_rdata[m_weight_index][i_dst1+n] = total_weight/N;
+            dst2.m_rdata[m_weight_index][i_dst2+n] = total_weight/N;
 #elif (AMREX_SPACEDIM == 2)
-            dst1.m_rdata[weight_index][i_dst1+n] = total_weight/N/m_y_size;
-            dst2.m_rdata[weight_index][i_dst2+n] = total_weight/N/m_y_size;
+            dst1.m_rdata[m_weight_index][i_dst1+n] = total_weight/N/m_y_size;
+            dst2.m_rdata[m_weight_index][i_dst2+n] = total_weight/N/m_y_size;
 #endif
             }
     }
