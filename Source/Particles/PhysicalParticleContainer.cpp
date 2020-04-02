@@ -399,7 +399,6 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
                   particle_z.dataPtr(), particle_ux.dataPtr(),
                   particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
-    }
 #endif
     return;
 }
