@@ -330,7 +330,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     //TODO: In future PRs will add ASSERT_WITH_MESSAGE to test if mass and charge are both const
     amrex::Real p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
     amrex::Real p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    long npart = ps.second["position"]["x"].getExtent()[0];
+    auto npart = ps.second["position"]["x"].getExtent()[0];
     series.flush();
 
     //Conversion from Geant4 system of units (http://geant4.web.cern.ch/sites/geant4.web.cern.ch/files/geant4/collaboration/working_groups/electromagnetic/gallery/units/SystemOfUnits.html) to WarpX (SI)
