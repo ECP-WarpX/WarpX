@@ -23,6 +23,8 @@ for i in $(find . \
                 -not -path "./.idea/*"         \
                 -not -path "*wp_parse*"        \
                 -not -path "./tmp_build_dir/*" \
+                -not -path "./Docs/build/*"    \
+                -not -path "./Docs/doxy*"      \
                 -type f | \
            grep -E "${pattern}")
 do
