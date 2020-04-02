@@ -419,7 +419,6 @@ private:
     virtual void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld,
                                     const int lev) override;
 
-
 };
 
 #endif

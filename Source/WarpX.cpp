@@ -32,7 +32,7 @@
 #include <cctype>
 #include <cmath>
 #include <numeric>
-#include <iostream>
+
 using namespace amrex;
 
 Vector<Real> WarpX::E_external_grid(3, 0.0);
@@ -176,10 +176,7 @@ WarpX::ResetInstance ()
 WarpX::WarpX ()
 {
     m_instance = this;
-    std::cout << "before" << "\n";
     ReadParameters();
-    std::cout << "after" << "\n";
-
 
 #ifdef WARPX_USE_OPENPMD
     m_OpenPMDPlotWriter = new WarpXOpenPMDPlot(openpmd_tspf, openpmd_backend, WarpX::getPMLdirections());
@@ -761,8 +758,6 @@ WarpX::ReadParameters ()
        {
           slice_crse_ratio[idim] = 1;
        }
-
-       std::cout << "after READSparams" << "\n";
        pp.queryarr("dom_lo",slice_lo,0,AMREX_SPACEDIM);
        pp.queryarr("dom_hi",slice_hi,0,AMREX_SPACEDIM);
        pp.queryarr("coarsening_ratio",slice_crse_ratio,0,AMREX_SPACEDIM);

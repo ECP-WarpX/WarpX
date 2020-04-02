@@ -199,14 +199,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
         for (int i=0; i<k.size(); i++ ){
             modified_k[i] = 0;
             for (int n=1; n<stencil_coef.size(); n++){
-            //for (int n=0; n<stencil_coef.size(); n++){ //oshapoval
-
                 if (nodal){
-                    //modified_k[i] = k[i]; // Non-modified wavenumber for infinite order  oshapoval
-
-                    // modified_k[i] += 2.*stencil_coef[n]* \
-                    // std::sin( k[i]*(n+1)*delta_x )/( delta_x ); //oshapoval
-                    //
                     modified_k[i] += stencil_coef[n]* \
                         std::sin( k[i]*n*delta_x )/( n*delta_x );
                 } else {
@@ -258,15 +251,6 @@ getFonbergStencilCoefficients( const int n_order, const bool nodal )
         }
     }
 
-    // if (nodal == true) {
-    //     for (int n=0; n<m; n++){ // Get the other coefficients by recurrence
-    //         int l = n+1;
-    //         double lognumer = 2.*std::log(tgamma(m+1));
-    //         double logdenom = std::log(tgamma(m+1+l)) + std::log(tgamma(m+1-l)) + std::log(l);
-    //         coefs[n] = std::pow(-1,l+1) * std::exp(lognumer - logdenom);
-    //         Print()<<" Fonberg coeffs:"<< ' '<< n <<' '<<coefs[n]<<' '<<'\n';
-    //         }
-    //    }
     // Coefficients for staggered finite-difference
     else {
         Real prod = 1.;

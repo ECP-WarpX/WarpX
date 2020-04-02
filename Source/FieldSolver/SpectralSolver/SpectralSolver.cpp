@@ -12,8 +12,6 @@
 #include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
 #include "WarpX.H"
 #include "Utils/WarpXProfilerWrapper.H"
-//using namespace amrex;
-//#include <AMReX_ParmParse.H>
 #include "Utils/WarpXUtil.H"
 
 using namespace amrex;
@@ -44,7 +42,6 @@ SpectralSolver::SpectralSolver(
                 const amrex::RealVect dx, const amrex::Real dt,
                 const bool pml, const bool periodic_single_box ) {
 
-    ReadParameters();
     // Initialize all structures using the same distribution mapping dm
 
     // - Initialize k space object (Contains info about the size of
@@ -62,13 +59,10 @@ SpectralSolver::SpectralSolver(
     if (pml) {
         algorithm = std::unique_ptr<PMLPsatdAlgorithm>( new PMLPsatdAlgorithm(
             k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
-        amrex::Print() <<"Algorithm of choice: PML(2-step) + PSATD" << "\n";
-
     } else if ((v_galilean[0]==0) && (v_galilean[1]==0) && (v_galilean[2]==0)){
          // v_galilean is 0: use standard PSATD algorithm
         algorithm = std::unique_ptr<PsatdAlgorithm>( new PsatdAlgorithm(
              k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
-        amrex::Print() <<"Algorithm of choice: Standard PSATD" << "\n";
       } else {
           if (fft_do_time_averaging){
               algorithm = std::unique_ptr<AvgGalileanAlgorithm>( new AvgGalileanAlgorithm(
@@ -113,14 +107,6 @@ SpectralSolver::pushSpectralFields(){
     // on the sub-class of `SpectralBaseAlgorithm` that was
     // initialized in the constructor of `SpectralSolver`
     algorithm->pushSpectralFields( field_data );
-}
-
-void
-SpectralSolver::ReadParameters ()
-{
-    bool fft_do_time_averaging;
-    ParmParse pp("psatd");
-    pp.query("fft_do_time_averaging", fft_do_time_averaging);
 }
 
 #endif // WARPX_USE_PSATD

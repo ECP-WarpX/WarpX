@@ -54,7 +54,6 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
-
     const amrex::Real dxi = 1.0/dx[0];
     const amrex::Real dzi = 1.0/dx[2];
 #if !(defined WARPX_DIM_RZ)
