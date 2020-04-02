@@ -492,7 +492,7 @@ public:
      * to correct number of boxes and boxes per level
      */
     void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& costs);
-    
+
     /** \brief Computes the average cost per MPI rank given a distribution mapping
      * and vector of cost for each FAB.
      * @param[in] dm distribution mapping (mapping from FAB to MPI processes)
