@@ -4,7 +4,7 @@
 max_step = 150
 amr.n_cell =  352 128 128
 amr.plot_int = 150
-amr.max_grid_size = 176 128 128
+amr.max_grid_size = 176
 amr.blocking_factor = 32
 amr.max_level = 0
 geometry.coord_sys   = 0                  # 0: Cartesian
