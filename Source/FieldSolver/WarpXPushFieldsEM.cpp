@@ -240,7 +240,6 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
     const std::array<Real,3>& dx = WarpX::CellSize(patch_level);
     const Real dtsdx_c2 = c2dt/dx[0], dtsdy_c2 = c2dt/dx[1], dtsdz_c2 = c2dt/dx[2];
-    const Real dxinv = 1./dx[0];
 
     MultiFab *Ex, *Ey, *Ez, *Bx, *By, *Bz, *jx, *jy, *jz, *F;
     if (patch_type == PatchType::fine)
@@ -269,13 +268,6 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
         jz = current_cp[lev][2].get();
         F  = F_cp[lev].get();
     }
-
-    MultiFab* cost = WarpX::getCosts(lev);
-    const IntVect& rr = (lev > 0) ? refRatio(lev-1) : IntVect::TheUnitVector();
-
-    // xmin is only used by the kernel for cylindrical geometry,
-    // in which case it is actually rmin.
-    const Real xmin = Geom(0).ProbLo(0);
 
     if (do_pml && pml[lev]->ok())
     {
@@ -506,7 +498,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         // these do not include the guard cells.
         std::array<amrex::Real,3> galilean_shift = {0,0,0};
         const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, lev);
-        const Real rmin  = xyzmin[0] + (tbr.type(0) == NODE ? 0. : 0.5*dx[0]);
+        const Real rmin  = xyzmin[0];
         const Real rminr = xyzmin[0] + (tbr.type(0) == NODE ? 0. : 0.5*dx[0]);
         const Real rmint = xyzmin[0] + (tbt.type(0) == NODE ? 0. : 0.5*dx[0]);
         const Real rminz = xyzmin[0] + (tbz.type(0) == NODE ? 0. : 0.5*dx[0]);
