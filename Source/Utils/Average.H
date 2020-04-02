@@ -117,6 +117,13 @@ namespace Average{
         return volfrac * c;
     };
 
+    void CoarsenLoop ( MultiFab& mf_cp,
+                       const MultiFab& mf_fp,
+                       const int dcomp,
+                       const int scomp,
+                       const int ncomp,
+                       const IntVect ratio );
+
     void Coarsen ( MultiFab& mf_cp,
                    const MultiFab& mf_fp,
                    const int dcomp,
