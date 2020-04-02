@@ -7,7 +7,7 @@
 #ifndef WARPX_schwinger_process_wrapper_h_
 #define WARPX_schwinger_process_wrapper_h_
 
-#include "Particles/ElementaryProcess/QEDInternals/QedWrapperCommons.H"
+#include "QedWrapperCommons.H"
 
 //#define PXRMP_CORE_ONLY allows importing only the 'core functions' of the
 //Schwinger process engine of the QED PICSAR library.
