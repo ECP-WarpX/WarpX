@@ -412,7 +412,7 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
 #if (AMREX_SPACEDIM == 3)
                     int const kz = k % nz;
 #else
-                    int const kz = k; // nz = 1 in 2D
+                    int const kz = 0; // nz = 1 in 2D
 #endif
                     mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i%nx, j%ny, kz);
                 });
