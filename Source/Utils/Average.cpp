@@ -106,9 +106,6 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_cp,
                   AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ratio[2] != 0 and ( ratio[2] == 1 or ratio[2]%2 == 0 ),
                       "coarsening ratio must be an integer power of 2" ); );
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_cp.nComp() == mf_fp.nComp(),
-        "input fine MultiFab and output coarse MultiFab must have the same number of components" );
-
     // Coarsen() fine data
     BoxArray coarsened_mf_fp_ba = mf_fp.boxArray();
     coarsened_mf_fp_ba.coarsen( ratio );
