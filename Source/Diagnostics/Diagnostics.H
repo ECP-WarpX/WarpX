@@ -77,9 +77,9 @@ private:
     bool m_plot_rho = false;
     /** Whether to plot F (charge conservation error) */
     bool m_plot_F = false;
-    /** Coarsening ratio request by the user, such that, fields
+    /** Coarsening ratio requested by the user, such that, fields
       * are averaged to the coarsened grid for visualization and analysis.
-      * The default coarsening ratio is 1.
+      * The default coarsening ratio in each dimension is 1.
       * Only exponents of 2 are valid inputs for the coarsening ratio
       * in each dimension. */
     amrex::IntVect diag_crse_ratio;
