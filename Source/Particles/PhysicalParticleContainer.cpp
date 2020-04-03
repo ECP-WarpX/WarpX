@@ -330,7 +330,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     //TODO: In future PRs will add ASSERT_WITH_MESSAGE to test if mass and charge are both const
     amrex::Real p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
     amrex::Real p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    long npart = ps.second["position"]["x"].getExtent()[0];
+    auto npart = ps.second["position"]["x"].getExtent()[0];
     series.flush();
 
     amrex::Real weight;
