@@ -326,10 +326,10 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
 
     //TODO: In future PRs will add ASSERT_WITH_MESSAGE to test if mass and charge are both const
-    double mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
     amrex::Real p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    double charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
+    double mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
     amrex::Real p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
+    double charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
     auto npart = ps.second["position"]["x"].getExtent()[0];
     series.flush();
     
@@ -341,15 +341,13 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
         weight = physical_q_tot/(p_q*charge_unit*amrex::Real(npart));
     }
     else {
-        //In case openPMD file contains macroparticle instead of real particle data
         weight = charge;
     }
-    double position_unit = ps.second["position"]["x"].unitSI();
-    //AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ps.second["position"]["x"].unitSI()==);
     std::shared_ptr<amrex::Real> ptr_x = ps.second["position"]["x"].loadChunk<amrex::Real>();
+    double position_unit = ps.second["position"]["x"].unitSI();
     series.flush();
-    double velocity_unit = ps.second["velocity"]["x"].unitSI();
     std::shared_ptr<amrex::Real> ptr_vx = ps.second["velocity"]["x"].loadChunk<amrex::Real>();
+    double velocity_unit = ps.second["velocity"]["x"].unitSI();
     series.flush();
     std::shared_ptr<amrex::Real> ptr_z = ps.second["position"]["z"].loadChunk<amrex::Real>();
     series.flush();
@@ -384,6 +382,14 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
             amrex::Real y = 0.0;
             amrex::Real uy = 0.0;
 #endif
+            amrex::Real gamma = 1.0/sqrt(1.0-ux**2+uy**2+uz**2);
+            ux = ux*gamma/PhysConst::c;
+            uy = uy*gamma/PhysConst::c;
+            uz = uz*gamma/PhysConst::c;
+            /*
+            amrex::Print() << "x = " << x << " y = " << y << " z = "<< z << "\n";
+            amrex::Print() << "vx = " << ux << " vy = " << uy << " vz = "<< uz << "\n";
+             */
             if (plasma_injector->insideBounds(x, y, z)) {
                 CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
                                     particle_x,  particle_y,  particle_z,
@@ -392,12 +398,20 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
             }
         }
     }
+    /*
+     amrex::Print() << npart << " = np = " << particle_x.size() << "\n";
+    for (size_t col; col<npart; ++col){
+        amrex::Print() << "weight = " << particle_w[col] << "\n";
+        amrex::Print() << "type = " << typeid(particle_x[col]).name() << "\n"; // d
+        amrex::Print() << "x = " << particle_x[col] << " y = " << particle_y[col] << " z = " << particle_z[col] <<"\n";
+        amrex::Print() << "vx = " << particle_ux[col] << " vy = " << particle_uy[col] << " vz = " << particle_uz[col] <<"\n";
+    }
+     */
     // Add the temporary CPU vectors to the particle structure
-    long np = particle_x.size();
+    long np = particle_z.size();
     AddNParticles(0,np,
-                  particle_x.dataPtr(), particle_y.dataPtr(),
-                  particle_z.dataPtr(), particle_ux.dataPtr(),
-                  particle_uy.dataPtr(), particle_uz.dataPtr(),
+                  particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
+                  particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
 #endif
     return;
