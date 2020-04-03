@@ -42,10 +42,10 @@ params_3d.relative_error_threshold_frequency = 0.05
 #Parameters of the gaussian beam
 params_3d.wavelength = 1.*um
 params_3d.w0 = 2.0*um
-params_3d.tt = 10.*fs
+params_3d.tt = 7.*fs
 params_3d.x_c = 0.*um
 params_3d.y_c = 0.*um
-params_3d.t_c = 20.*fs
+params_3d.t_c = 14.*fs
 params_3d.foc_dist = 10*um
 params_3d.E_max = 1e12
 
@@ -321,6 +321,7 @@ def launch_analysis_3d(executable):
     os.system("sed 's/gauss_3d_unf.txye/gauss_3d.txye/g' inputs.3d_test_txye > inputs.3d_test_txye_non_unf")
     os.system("./" + executable + " inputs.3d_test_txye_non_unf")
     do_analysis_3d("diags/plotfiles/plt00141/", "comp_non_unf.pdf", 141)
+    os.system("rm -r diags/plotfiles/plt00000*")
 
 
 def launch_analysis_2d(executable):
