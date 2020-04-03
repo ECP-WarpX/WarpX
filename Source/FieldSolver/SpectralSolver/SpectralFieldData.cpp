@@ -410,12 +410,11 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
 #endif
                 ParallelFor(
                     mfi.validbox(),
-                    /* nz must be explicitly captured by value when nz = 1 due to a bug
-                       in some versions of GCC (at least 8.1 and 8.2) woth operator %.
-                       All other variables are explicitly captured by value to avoid warning
-                       when using both default and explicit captures (i.e., [=,nz]).
-                    */
-                    [mf_arr,i_comp,inv_N,tmp_arr,nx,ny,nz]
+                    /* GCC 8.1-8.2 work-around (ICE):
+                     *   named capture in nonexcept lambda needed for modulo operands
+                     *   https://godbolt.org/z/ppbAzd
+                     */
+                    [mf_arr, i_comp, inv_N, tmp_arr, nx, ny, nz]
                     AMREX_GPU_DEVICE (int i, int j, int k) noexcept {
                         mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i%nx, j%ny, k%nz);
                     });
