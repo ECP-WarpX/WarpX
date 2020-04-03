@@ -1,16 +1,16 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 150
-amr.n_cell =  352 128 128
-amr.plot_int = 150
+max_step = 141
+amr.n_cell =  352 96 96
+amr.plot_int = 141
 amr.max_grid_size = 176
 amr.blocking_factor = 32
 amr.max_level = 0
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 1 1 1     # Is periodic?
-geometry.prob_lo     = -15.e-6  -6.0e-6  -6.0e-6     # physical domain
-geometry.prob_hi     = 15.e-6   6.e-6    6.e-6
+geometry.prob_lo     = -15.e-6  -5.0e-6  -5.0e-6     # physical domain
+geometry.prob_hi     = 15.e-6   5.e-6    5.e-6
 warpx.verbose = 1
 warpx.serialize_ics = 1
 warpx.fields_to_plot = Ey
