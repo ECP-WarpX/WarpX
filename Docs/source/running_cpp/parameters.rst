@@ -254,6 +254,7 @@ Particle initialization
 * ``<species_name>.charge`` (`float`) optional (default `NaN`)
     The charge of one `physical` particle of this species.
     If ``species_type`` is specified, the charge will be set to the physical value and ``charge`` is optional.
+    When ``<species>.do_field_ionization = 1``, the physical particle charge is equal to ``ionization_initial_level * charge``, so latter parameter should be equal to q_e (which is defined in WarpX as the elementary charge in coulombs).
 
 * ``<species_name>.mass`` (`float`) optional (default `NaN`)
     The mass of one `physical` particle of this species.
@@ -275,11 +276,13 @@ Particle initialization
       ``<species_name>.npart`` (number of particles in the beam),
       ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
       ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
+      ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
+      ``<species_name>.x/y/z_cut`` (optional, particles with ``abs(x-x_m) > x_cut*x_rms`` are not injected, same for y and z. ``<species_name>.q_tot`` is the charge of the un-cut beam, so that cutting the distribution is likely to result in a lower total charge),
       and optional argument ``<species_name>.do_symmetrize`` (whether to
       symmetrize the beam in the x and y directions).
 
     * ``external_file``: inject macroparticles with properties (charge, mass, position, and momentum) according to data in external file.
-      It requires the additional argument ``<species_name>.injection_file``, which is the string corresponding to the OpenPMD file name.
+      It requires the additional arguments ``<species_name>.injection_file`` and ``<species_name>.q_tot``, which are the string corresponding to the openPMD file name and the beam charge.
       When using this style, it is not necessary to add other ``<species_name>.(...)`` paramters, because they will be read directly from the file.
 
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
