@@ -8,7 +8,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PlasmaInjector.H"
-#include "SpeciesPhysicalProperties.H"
+#include "Particles/SpeciesPhysicalProperties.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
@@ -120,7 +120,12 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         Print()<<"         The charge in <species>.mass overwrite the one from <species>.species_type\n";
     }
     if (!charge_is_specified && !species_is_specified){
-        amrex::Abort("Need to specify at least one of species_type or charge");
+        //No need for charge/species definition if external file is used
+        std::string s_inj_style;
+        pp.query("injection_style", s_inj_style);
+        if (s_inj_style != "external_file") {
+            amrex::Abort("Need to specify at least one of species_type or charge");
+        }
     }
 
     std::string mass_s;
@@ -137,7 +142,12 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         Print()<<"         The mass in <species>.mass overwrite the one from <species>.species_type\n";
     }
     if (!mass_is_specified && !species_is_specified){
-        amrex::Abort("Need to specify at least one of species_type or mass");
+        //No need for mass/species definition if external file is used
+        std::string s_inj_style;
+        pp.query("injection_style", s_inj_style);
+        if (s_inj_style != "external_file") {
+            amrex::Abort("Need to specify at least one of species_type or mass");
+        }
     }
 
     // parse injection style
@@ -166,6 +176,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         pp.get("x_rms", x_rms);
         pp.get("y_rms", y_rms);
         pp.get("z_rms", z_rms);
+        pp.query("x_cut", x_cut);
+        pp.query("y_cut", y_cut);
+        pp.query("z_cut", z_cut);
         pp.get("q_tot", q_tot);
         pp.get("npart", npart);
         pp.query("do_symmetrize", do_symmetrize);
@@ -215,6 +228,15 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                                  num_particles_per_cell_each_dim[2];
         parseDensity(pp);
         parseMomentum(pp);
+    } else if (part_pos_s == "external_file") {
+#ifdef WARPX_USE_OPENPMD
+        external_file = true;
+        pp.get("injection_file",str_injection_file);
+        pp.get("q_tot",q_tot);
+#else
+        amrex::Abort("WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
+                     " to read the external openPMD file with species data");
+#endif
     } else {
         StringParseAbortMessage("Injection style", part_pos_s);
     }
@@ -246,7 +268,12 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
         inj_rho.reset(new InjectorDensity((InjectorDensityParser*)nullptr,
                                           makeParser(str_density_function,{"x","y","z"})));
     } else {
-        StringParseAbortMessage("Density profile type", rho_prof_s);
+        //No need for profile definition if external file is used
+        std::string s_inj_style;
+        pp.query("injection_style", s_inj_style);
+        if (s_inj_style != "external_file") {
+            StringParseAbortMessage("Density profile type", rho_prof_s);
+        }
     }
 }
 

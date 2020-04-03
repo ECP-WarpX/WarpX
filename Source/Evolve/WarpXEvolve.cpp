@@ -61,9 +61,8 @@ WarpX::Evolve (int numsteps)
         if (warpx_py_beforestep) warpx_py_beforestep();
 #endif
 
-        MultiFab* cost = WarpX::getCosts(0);
-        amrex::Vector<amrex::Real>* cost_heuristic = WarpX::getCostsHeuristic(0);
-        if (cost != nullptr || cost_heuristic != nullptr) {
+        amrex::Vector<amrex::Real>* cost = WarpX::getCosts(0);
+        if (cost) {
 #ifdef WARPX_USE_PSATD
             amrex::Abort("LoadBalance for PSATD: TODO");
 #endif
@@ -76,12 +75,17 @@ WarpX::Evolve (int numsteps)
             }
             for (int lev = 0; lev <= finest_level; ++lev)
             {
-                MultiFab* cost = WarpX::getCosts(lev);
-                if (cost)
+                cost = WarpX::getCosts(lev);
+                if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
                 {
                     // Perform running average of the costs
-                    // (Giving more importance to most recent costs)
-                    cost->mult( (1. - 2./load_balance_int) );
+                    // (Giving more importance to most recent costs; only needed
+                    // for timers update, heuristic load balance considers the
+                    // instantaneous costs)
+                    for (int i=0; i<cost->size(); ++i)
+                    {
+                        (*cost)[i] *= (1. - 2./load_balance_int);
+                    }
                 }
             }
         }
@@ -235,10 +239,6 @@ WarpX::Evolve (int numsteps)
             reduced_diags->WriteToFile(step);
         }
 
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // WARNING! This is WIP:
-        // - fields on particles is NOT synchronized with other quantities
-        // - plot_rho and plot_F are not supported with these diagnostics
         multi_diags->FilterComputePackFlush( step );
 
         // slice gen //
@@ -254,11 +254,7 @@ WarpX::Evolve (int numsteps)
 #endif
             UpdateAuxilaryData();
 
-            for (int lev = 0; lev <= finest_level; ++lev) {
-                mypc->FieldGather(lev,
-                                  *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
-                                  *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
-            }
+            FieldGather();
 
             last_plot_file_step = step+1;
             last_openPMD_step = step+1;

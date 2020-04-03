@@ -5,7 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "WarpXAlgorithmSelection.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
 #ifdef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
@@ -14,7 +14,7 @@
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #endif
-#include "WarpXConst.H"
+#include "Utils/WarpXConst.H"
 #include "WarpX.H"
 #include <AMReX_Gpu.H>
 
@@ -67,8 +67,6 @@ void FiniteDifferenceSolver::EvolveFCartesian (
     std::unique_ptr<amrex::MultiFab> const& rhofield,
     int const rhocomp,
     amrex::Real const dt ) {
-
-    Real constexpr c2 = PhysConst::c * PhysConst::c;
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP
