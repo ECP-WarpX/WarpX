@@ -52,16 +52,19 @@ Diagnostics::ReadParameters ()
             std::remove(varnames.begin(), varnames.end(), "proc_number"),
             varnames.end());
     }
-    // Read in the coarsening ratio for the output multifab requested by user.
+
     Vector<int> cr_ratio(AMREX_SPACEDIM);
-    pp.queryarr("coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM);
     // Initialize diag_crse_ratio with default value of 1 for each dimension.
-    diag_crse_ratio = IntVect(AMREX_D_DECL(1,1,1));
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        if (cr_ratio[idim] > 1) {
-           diag_crse_ratio[idim] = cr_ratio[idim];
-           m_coarsen_mfavg = true;
+        cr_ratio[idim] = 1; // default value is 1
+    }
+    // Read in the coarsening ratio for the output multifab requested by user.
+    pp.queryarr("coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM);
+    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
+        if (cr_ratio[idim] == 0 || (cr_ratio[idim]>1 and cr_ratio[idim]%2 != 0) ) {
+            amrex::Abort("Input coarsening ratio must non-zero and an integer power of 2");
         }
+        diag_crse_ratio[idim] = cr_ratio[idim];
     }
 
 }
@@ -124,10 +127,10 @@ Diagnostics::InitData ()
         // At this point, varnames.size() >= all_field_functors[0].size()
 
         BoxArray ba = warpx.boxArray(lev);
-        // The boxArray is coarsened if coarsening_ratio in any direction>1
-        // Note that ba.coarsen is only valid if lo and hi are the same
-        if (m_coarsen_mfavg == true) ba.coarsen(diag_crse_ratio);
-        amrex::Print() << " cr_size " << ba.size() << " warpx size " << warpx.boxArray(lev).size() << "\n";
+        // The boxArray is coarsened based on the user-defined coarsening ratio
+        // The default coarsening ratio is 1
+        // Note : ba.coarsen is assumes lo and hi for src and dst are equal
+        ba.coarsen(diag_crse_ratio);
         //  This assert should only be applied if src and dst mf have same lo and hi
         AMREX_ALWAYS_ASSERT(ba.size() == warpx.boxArray(lev).size());
         // Allocate output multifab

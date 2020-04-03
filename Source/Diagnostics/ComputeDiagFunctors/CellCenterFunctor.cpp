@@ -34,11 +34,9 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
     }
 #else
     if (do_coarsen() == false ) {
-        amrex::Print() << " do coarsen is false\n";
         // In cartesian geometry, cell-center m_mf_src to mf_dst.
         Average::ToCellCenter ( mf_dst, *m_mf_src, dcomp, 0, 0, nComp() );
     } else {
-        amrex::Print() << " do coarsen is true\n";
         // average down fields from fine m_mf_src to coarse mf_dst.
         Average::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), d_crse_ratio());
     }
