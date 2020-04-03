@@ -17,7 +17,7 @@
 #   include "Python/WarpX_py.H"
 #endif
 #ifdef WARPX_USE_PSATD
-#include <SpectralSolver.H>
+#include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
 
 #ifdef BL_USE_SENSEI_INSITU
