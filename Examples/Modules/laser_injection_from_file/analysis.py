@@ -113,27 +113,6 @@ def gauss(T,X,Y, params, opt):
 
     return np.real(pre_fact * np.exp(exp_arg))
 
-# Function for the envelope
-def gauss_env_2d(T,XX,ZZ,params):
-    '''Function to compute the theory for the envelope
-    '''
-    X = np.cos(params.rot_angle)*XX + np.sin(params.rot_angle)*ZZ
-    Z = -np.sin(params.rot_angle)*XX + np.cos(params.rot_angle)*ZZ
-
-    inv_tau2 = 1./params.tt/params.tt
-    inv_w_2 = 1.0/(params.w0*params.w0)
-    exp_arg = - (X*X)*inv_w_2 - inv_tau2 / c/c * (Z-T*c)*(Z-T*c)
-    return params.E_max * np.real(np.exp(exp_arg))
-
-# Function for the envelope
-def gauss_env_3d(T,XX,YY,ZZ,params):
-    '''Function to compute the theory for the envelope
-    '''
-
-    inv_tau2 = 1./params.tt/params.tt
-    inv_w_2 = 1.0/(params.w0*params.w0)
-    exp_arg = - (YY*YY + ZZ*ZZ)*inv_w_2 - inv_tau2 / c/c * (XX-T*c)*(XX-T*c)
-    return params.E_max * np.real(np.exp(exp_arg))
 
 def write_file(fname, x, y, t, E):
     """ For a given filename fname, space coordinates x and y, time coordinate t
@@ -176,6 +155,29 @@ def write_file_unf(fname, x, y, t, E):
             file.write(y[0].tobytes())
             file.write(y[-1].tobytes())
         file.write(E.tobytes())
+
+
+# Function for the envelope
+def gauss_env_2d(T,XX,ZZ,params):
+    '''Function to compute the theory for the envelope
+    '''
+    X = np.cos(params.rot_angle)*XX + np.sin(params.rot_angle)*ZZ
+    Z = -np.sin(params.rot_angle)*XX + np.cos(params.rot_angle)*ZZ
+
+    inv_tau2 = 1./params.tt/params.tt
+    inv_w_2 = 1.0/(params.w0*params.w0)
+    exp_arg = - (X*X)*inv_w_2 - inv_tau2 / c/c * (Z-T*c)*(Z-T*c)
+    return params.E_max * np.real(np.exp(exp_arg))
+
+# Function for the envelope
+def gauss_env_3d(T,XX,YY,ZZ,params):
+    '''Function to compute the theory for the envelope
+    '''
+
+    inv_tau2 = 1./params.tt/params.tt
+    inv_w_2 = 1.0/(params.w0*params.w0)
+    exp_arg = - (YY*YY + ZZ*ZZ)*inv_w_2 - inv_tau2 / c/c * (XX-T*c)*(XX-T*c)
+    return params.E_max * np.real(np.exp(exp_arg))
 
 
 def create_gaussian_2d():
