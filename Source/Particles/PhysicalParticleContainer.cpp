@@ -333,14 +333,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     long npart = ps.second["position"]["x"].getExtent()[0];
     series.flush();
 
-    //Conversion from Geant4 system of units (http://geant4.web.cern.ch/sites/geant4.web.cern.ch/files/geant4/collaboration/working_groups/electromagnetic/gallery/units/SystemOfUnits.html) to WarpX (SI)
-    mass = p_m*PhysConst::mevpc2_kg;
-    charge = p_q*PhysConst::q_e;
-    amrex::Real mmpns_mps = 1.e6;
-    amrex::Real mm_m = 1.e-3;
     amrex::Real weight;
     if (physical_q_tot!=0.0){
-        weight = physical_q_tot/(charge*amrex::Real(npart));
+        weight = physical_q_tot/(p_q*amrex::Real(npart));
     }
     else {
         //In case openPMD file contains macroparticle instead of real particle data
@@ -373,13 +368,13 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
 
     if (ParallelDescriptor::IOProcessor()) {
         for (long i = 0; i < npart; ++i) {
-            amrex::Real x = ptr_x.get()[i]*mm_m;
-            amrex::Real ux = ptr_vx.get()[i]*mmpns_mps;
-            amrex::Real z = ptr_z.get()[i]*mm_m;
-            amrex::Real uz = ptr_vz.get()[i]*mmpns_mps;
+            amrex::Real x = ptr_x.get()[i];
+            amrex::Real ux = ptr_vx.get()[i];
+            amrex::Real z = ptr_z.get()[i];
+            amrex::Real uz = ptr_vz.get()[i];
 #if (defined WARPX_DIM_3D)
-            amrex::Real y = ptr_y.get()[i]*mm_m;
-            amrex::Real uy = ptr_vy.get()[i]*mmpns_mps;
+            amrex::Real y = ptr_y.get()[i];
+            amrex::Real uy = ptr_vy.get()[i];
 #elif (defined WARPX_DIM_XZ)
             amrex::Real y = 0.0;
             amrex::Real uy = 0.0;
