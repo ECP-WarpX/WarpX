@@ -318,32 +318,37 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
 #ifdef WARPX_USE_OPENPMD
     openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
     amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
-
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(series.iterations.size() == 1u, "External "
                                      "file should contain only one iteration\n");
     openPMD::Iteration& i = series.iterations[1];
-
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size() == 1u, "External file "
                                      "should contain only one species\n");
     std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
 
     //TODO: In future PRs will add ASSERT_WITH_MESSAGE to test if mass and charge are both const
+    double mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
     amrex::Real p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
+    double charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
     amrex::Real p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
     auto npart = ps.second["position"]["x"].getExtent()[0];
     series.flush();
+    
+    mass=mass*mass_unit;
+    charge=charge*charge_unit;
 
     amrex::Real weight;
     if (physical_q_tot!=0.0){
-        weight = physical_q_tot/(p_q*amrex::Real(npart));
+        weight = physical_q_tot/(p_q*charge_unit*amrex::Real(npart));
     }
     else {
         //In case openPMD file contains macroparticle instead of real particle data
         weight = charge;
     }
-
+    double position_unit = ps.second["position"]["x"].unitSI();
+    //AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ps.second["position"]["x"].unitSI()==);
     std::shared_ptr<amrex::Real> ptr_x = ps.second["position"]["x"].loadChunk<amrex::Real>();
     series.flush();
+    double velocity_unit = ps.second["velocity"]["x"].unitSI();
     std::shared_ptr<amrex::Real> ptr_vx = ps.second["velocity"]["x"].loadChunk<amrex::Real>();
     series.flush();
     std::shared_ptr<amrex::Real> ptr_z = ps.second["position"]["z"].loadChunk<amrex::Real>();
@@ -368,13 +373,13 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
 
     if (ParallelDescriptor::IOProcessor()) {
         for (long i = 0; i < npart; ++i) {
-            amrex::Real x = ptr_x.get()[i];
-            amrex::Real ux = ptr_vx.get()[i];
-            amrex::Real z = ptr_z.get()[i];
-            amrex::Real uz = ptr_vz.get()[i];
+            amrex::Real x = ptr_x.get()[i]*position_unit;
+            amrex::Real ux = ptr_vx.get()[i]*velocity_unit;
+            amrex::Real z = ptr_z.get()[i]*position_unit;
+            amrex::Real uz = ptr_vz.get()[i]*velocity_unit;
 #if (defined WARPX_DIM_3D)
-            amrex::Real y = ptr_y.get()[i];
-            amrex::Real uy = ptr_vy.get()[i];
+            amrex::Real y = ptr_y.get()[i]*position_unit;
+            amrex::Real uy = ptr_vy.get()[i]*velocity_unit;
 #elif (defined WARPX_DIM_XZ)
             amrex::Real y = 0.0;
             amrex::Real uy = 0.0;
