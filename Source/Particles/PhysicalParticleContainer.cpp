@@ -382,16 +382,14 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
             amrex::Real y = 0.0;
             amrex::Real uy = 0.0;
 #endif
-            amrex::Real gamma = 1.0/sqrt(1.0-ux**2+uy**2+uz**2);
-            ux = ux*gamma/PhysConst::c;
-            uy = uy*gamma/PhysConst::c;
-            uz = uz*gamma/PhysConst::c;
-            /*
-            amrex::Print() << "x = " << x << " y = " << y << " z = "<< z << "\n";
-            amrex::Print() << "vx = " << ux << " vy = " << uy << " vz = "<< uz << "\n";
-             */
+            amrex::Real gamma = 1.0/sqrt(1.0-(pow(ux,2)+pow(uy,2)+pow(uz,2)/pow(PhysConst::c,2)));
+            ux = ux*gamma; // so it becomes the momentum in units of c (gamma * beta * c)
+            uy = uy*gamma;
+            uz = uz*gamma;
+            //amrex::Print() << "x = " << x << " y = " << y << " z = "<< z << "\n";
+            //amrex::Print() << "vx = " << ux << " vy = " << uy << " vz = "<< uz << "\n";
             if (plasma_injector->insideBounds(x, y, z)) {
-                CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
+                CheckAndAddParticle(x, y, z, { ux, uy, uz }, weight,
                                     particle_x,  particle_y,  particle_z,
                                     particle_ux, particle_uy, particle_uz,
                                     particle_w);
@@ -400,7 +398,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     }
     /*
      amrex::Print() << npart << " = np = " << particle_x.size() << "\n";
-    for (size_t col; col<npart; ++col){
+    for (int col; col<npart; ++col){
         amrex::Print() << "weight = " << particle_w[col] << "\n";
         amrex::Print() << "type = " << typeid(particle_x[col]).name() << "\n"; // d
         amrex::Print() << "x = " << particle_x[col] << " y = " << particle_y[col] << " z = " << particle_z[col] <<"\n";
@@ -408,7 +406,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     }
      */
     // Add the temporary CPU vectors to the particle structure
-    long np = particle_z.size();
+    long np = particle_x.size();
     AddNParticles(0,np,
                   particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
