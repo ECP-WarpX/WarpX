@@ -405,13 +405,16 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
                 int const ny = realspace_bx.length(1);
 #if (AMREX_SPACEDIM == 3)
                 int const nz = realspace_bx.length(2);
-#else
-                int const nz = 1;
 #endif
                 ParallelFor( mfi.validbox(),
                 [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
                     // Copy and normalize field
-                    mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i%nx,j%ny,k%nz);
+#if (AMREX_SPACEDIM == 3)
+                    int const kz = k % nz;
+#else
+                    int const kz = k;
+#endif
+                    mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i%nx, j%ny, kz);
                 });
             } else {
                 ParallelFor( mfi.validbox(),
