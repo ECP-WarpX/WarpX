@@ -96,7 +96,7 @@ namespace Average{
         // and starting indices of fine array in each direction
         for ( int l = 0; l < 3; ++l ) {
             if ( cr[l] == 1 ) {
-                num_pts[l] = 2-(2*sf[l]*sc[l]-sf[l]-sc[l]+1);
+                num_pts[l] = 1+abs(sf[l]-sc[l]);
                 idx_min[l] = ic[l]-sc[l]*(1-sf[l]);
             }
             else {
@@ -133,11 +133,11 @@ namespace Average{
                                      const IntVect ratio );
 
     void CoarsenAndInterpolate ( MultiFab& mf_cp,
-                   const MultiFab& mf_fp,
-                   const int dcomp,
-                   const int scomp,
-                   const int ncomp,
-                   const IntVect ratio );
+                                 const MultiFab& mf_fp,
+                                 const int dcomp,
+                                 const int scomp,
+                                 const int ncomp,
+                                 const IntVect ratio );
 }
 
 #endif // WARPX_AVERAGE_H_

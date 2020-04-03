@@ -40,7 +40,10 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_cp,
     const IntVect stag_fp = mf_fp.boxArray().ixType().ixType();
     const IntVect stag_cp = mf_cp.boxArray().ixType().ixType();
 
-    // Auxiliary integer arrays (always 3D)
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.nGrowVect() >= IntVect(stag_cp-stag_fp),
+        "input fine MultiFab does not have enough guard cells for this interpolation" );
+
+    // Auxiliary integer arrays (always 3D unlike IntVect objects)
     int sf[3], sc[3], cr[3];
 
     sf[0] = stag_fp[0];
@@ -96,8 +99,15 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_cp,
 {
     BL_PROFILE( "Average::CoarsenAndInterpolate" );
 
-    // TODO: add more checks
-    AMREX_ASSERT( mf_cp.nComp() == mf_fp.nComp() );
+    AMREX_D_TERM( AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ratio[0] != 0 and ( ratio[0] == 1 or ratio[0]%2 == 0 ),
+                      "coarsening ratio must be an integer power of 2" );,
+                  AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ratio[1] != 0 and ( ratio[1] == 1 or ratio[1]%2 == 0 ),
+                      "coarsening ratio must be an integer power of 2" );,
+                  AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ratio[2] != 0 and ( ratio[2] == 1 or ratio[2]%2 == 0 ),
+                      "coarsening ratio must be an integer power of 2" ); );
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_cp.nComp() == mf_fp.nComp(),
+        "input fine MultiFab and output coarse MultiFab must have the same number of components" );
 
     // Coarsen() fine data
     BoxArray coarsened_mf_fp_ba = mf_fp.boxArray();
