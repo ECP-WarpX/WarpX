@@ -76,55 +76,63 @@ namespace Average{
 
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
-    Real Coarsen ( Array4<Real const> const& mf_fp_arr,
-                   const IntVect stag,
-                   const int i,
-                   const int j,
-                   const int k,
-                   const int comp,
-                   const IntVect ratio )
+    Real CoarsenAndInterpolateKernel ( Array4<Real const> const& mf_fp_arr,
+                                       const int sf[3],
+                                       const int sc[3],
+                                       const int cr[3],
+                                       const int i,
+                                       const int j,
+                                       const int k,
+                                       const int comp )
     {
-        const int sx = stag[0];
-        const int sy = stag[1];
-#if   (AMREX_SPACEDIM == 2)
-        constexpr int sz = 0;
-#elif (AMREX_SPACEDIM == 3)
-        const int sz = stag[2];
-#endif
-        const int facx = ratio[0];
-        const int facy = ratio[1];
-#if   (AMREX_SPACEDIM == 2)
-        constexpr int facz = 1;
-#elif (AMREX_SPACEDIM == 3)
-        const int facz = ratio[2];
-#endif
-        const int itx = sx + facx;
-        const int ity = sy + facy;
-        const int itz = sz + facz;
-        const Real volfrac = 1.0 / static_cast<Real>(itx*ity*itz);
+        // Indices of coarse array
+        const int ic[3] = { i, j, k };
 
-        int kk = k*facz;
-        int jj = j*facy;
-        int ii = i*facx;
+        // Auxiliary integer arrays
+        int num_pts[3];
+        int idx_min[3];
+
+        // Compute number of points to loop over (either 1 or 2)
+        // and starting indices of fine array in each direction
+        for ( int l = 0; l < 3; ++l ) {
+            if ( cr[l] == 1 ) {
+                num_pts[l] = 2-(2*sf[l]*sc[l]-sf[l]-sc[l]+1);
+                idx_min[l] = ic[l]-sc[l]*(1-sf[l]);
+            }
+            else {
+                num_pts[l] = 2-sf[l];
+                idx_min[l] = ic[l]*cr[l]+static_cast<int>(cr[l]/2)*(1-sc[l])-(1-sf[l]);
+            }
+        }
+
+        // Auxiliary integer variables
+        const int numx = num_pts[0];
+        const int numy = num_pts[1];
+        const int numz = num_pts[2];
+        const int imin = idx_min[0];
+        const int jmin = idx_min[1];
+        const int kmin = idx_min[2];
+
+        // Interpolate over points computed above
         Real c = 0.0;
-        for (int kref = 0; kref < itz; ++kref) {
-            for (int jref = 0; jref < ity; ++jref) {
-                for (int iref = 0; iref < itx; ++iref) {
-                    c += mf_fp_arr(ii+iref,jj+jref,kk+kref,comp);
+        for (int kref = 0; kref < numz; ++kref) {
+            for (int jref = 0; jref < numy; ++jref) {
+                for (int iref = 0; iref < numx; ++iref) {
+                    c += mf_fp_arr(imin+iref,jmin+jref,kmin+kref,comp);
                 }
             }
         }
-        return volfrac * c;
+        return c / (numx*numy*numz);
     };
 
-    void CoarsenLoop ( MultiFab& mf_cp,
-                       const MultiFab& mf_fp,
-                       const int dcomp,
-                       const int scomp,
-                       const int ncomp,
-                       const IntVect ratio );
+    void CoarsenAndInterpolateLoop ( MultiFab& mf_cp,
+                                     const MultiFab& mf_fp,
+                                     const int dcomp,
+                                     const int scomp,
+                                     const int ncomp,
+                                     const IntVect ratio );
 
-    void Coarsen ( MultiFab& mf_cp,
+    void CoarsenAndInterpolate ( MultiFab& mf_cp,
                    const MultiFab& mf_fp,
                    const int dcomp,
                    const int scomp,

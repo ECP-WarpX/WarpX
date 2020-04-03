@@ -29,14 +29,44 @@ Average::ToCellCenter ( MultiFab& mf_out,
 }
 
 void
-Average::CoarsenLoop ( MultiFab& mf_cp,
-                       const MultiFab& mf_fp,
-                       const int dcomp,
-                       const int scomp,
-                       const int ncomp,
-                       const IntVect ratio )
+Average::CoarsenAndInterpolateLoop ( MultiFab& mf_cp,
+                                     const MultiFab& mf_fp,
+                                     const int dcomp,
+                                     const int scomp,
+                                     const int ncomp,
+                                     const IntVect ratio )
 {
-    const IntVect stag = mf_fp.boxArray().ixType().ixType();
+    // Staggerings of input fine MultiFab and output coarse MultiFab
+    const IntVect stag_fp = mf_fp.boxArray().ixType().ixType();
+    const IntVect stag_cp = mf_cp.boxArray().ixType().ixType();
+
+    // Auxiliary integer arrays (always 3D)
+    int sf[3], sc[3], cr[3];
+
+    sf[0] = stag_fp[0];
+    sf[1] = stag_fp[1];
+#if   (AMREX_SPACEDIM == 2)
+    sf[2] = 0;
+#elif (AMREX_SPACEDIM == 3)
+    sf[2] = stag_fp[2];
+#endif
+
+    sc[0] = stag_cp[0];
+    sc[1] = stag_cp[1];
+#if   (AMREX_SPACEDIM == 2)
+    sc[2] = 0;
+#elif (AMREX_SPACEDIM == 3)
+    sc[2] = stag_cp[2];
+#endif
+
+    cr[0] = ratio[0];
+    cr[1] = ratio[1];
+#if   (AMREX_SPACEDIM == 2)
+    cr[2] = 1;
+#elif (AMREX_SPACEDIM == 3)
+    cr[2] = ratio[2];
+#endif
+
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -50,20 +80,23 @@ Average::CoarsenLoop ( MultiFab& mf_cp,
         ParallelFor( bx, ncomp,
                      [=] AMREX_GPU_DEVICE( int i, int j, int k, int n )
                      {
-                         mf_cp_arr(i,j,k,n+dcomp) = Average::Coarsen( mf_fp_arr, stag, i, j, k, n+scomp, ratio );
+                         mf_cp_arr(i,j,k,n+dcomp) = Average::CoarsenAndInterpolateKernel(
+                             mf_fp_arr, sf, sc, cr, i, j, k, n+scomp );
                      } );
     }
 }
 
 void
-Average::Coarsen ( MultiFab& mf_cp,
-                   const MultiFab& mf_fp,
-                   const int dcomp,
-                   const int scomp,
-                   const int ncomp,
-                   const IntVect ratio )
+Average::CoarsenAndInterpolate ( MultiFab& mf_cp,
+                                 const MultiFab& mf_fp,
+                                 const int dcomp,
+                                 const int scomp,
+                                 const int ncomp,
+                                 const IntVect ratio )
 {
-    BL_PROFILE( "Average::Coarsen" );
+    BL_PROFILE( "Average::CoarsenAndInterpolate" );
+
+    // TODO: add more checks
     AMREX_ASSERT( mf_cp.nComp() == mf_fp.nComp() );
 
     // Coarsen() fine data
@@ -71,14 +104,14 @@ Average::Coarsen ( MultiFab& mf_cp,
     coarsened_mf_fp_ba.coarsen( ratio );
 
     if (coarsened_mf_fp_ba == mf_cp.boxArray() and mf_fp.DistributionMap() == mf_cp.DistributionMap())
-        Average::CoarsenLoop( mf_cp, mf_fp, dcomp, scomp, ncomp, ratio );
+        Average::CoarsenAndInterpolateLoop( mf_cp, mf_fp, dcomp, scomp, ncomp, ratio );
     else
     // Copy from component scomp of the fine FArrayBox into component 0 of the coarse
     // FArrayBox because the coarse FArrayBox is a temporary FArrayBox starting at
     // component 0 and is not part of the actual coarse MultiFab mf_cp
     {
         MultiFab coarsened_mf_fp( coarsened_mf_fp_ba, mf_fp.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
-        Average::CoarsenLoop( coarsened_mf_fp, mf_fp, 0, scomp, ncomp, ratio );
+        Average::CoarsenAndInterpolateLoop( coarsened_mf_fp, mf_fp, 0, scomp, ncomp, ratio );
         mf_cp.copy( coarsened_mf_fp, 0, scomp, ncomp );
     }
 }
