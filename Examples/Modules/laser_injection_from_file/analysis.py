@@ -36,16 +36,16 @@ class params_3d:
     pass
 
 #Maximum acceptable error for this test
-params_3d.relative_error_threshold_envelope = 0.15
-params_3d.relative_error_threshold_frequency = 0.05
+params_3d.relative_error_threshold_envelope = 0.18
+params_3d.relative_error_threshold_frequency = 0.06
 
 #Parameters of the gaussian beam
 params_3d.wavelength = 1.*um
 params_3d.w0 = 2.0*um
-params_3d.tt = 7.*fs
+params_3d.tt = 7.5*fs
 params_3d.x_c = 0.*um
 params_3d.y_c = 0.*um
-params_3d.t_c = 14.*fs
+params_3d.t_c = 15.*fs
 params_3d.foc_dist = 10*um
 params_3d.E_max = 1e12
 
@@ -317,11 +317,12 @@ def do_analysis_3d(fname, compname, steps):
 def launch_analysis_3d(executable):
     create_gaussian_3d()
     os.system("./" + executable + " inputs.3d_test_txye")
-    do_analysis_3d("diags/plotfiles/plt00141/", "comp_unf.pdf", 141)
+    do_analysis_3d("diags/plotfiles/plt00120/", "comp_unf.pdf", 120)
     os.system("sed 's/gauss_3d_unf.txye/gauss_3d.txye/g' inputs.3d_test_txye > inputs.3d_test_txye_non_unf")
     os.system("./" + executable + " inputs.3d_test_txye_non_unf")
-    do_analysis_3d("diags/plotfiles/plt00141/", "comp_non_unf.pdf", 141)
+    do_analysis_3d("diags/plotfiles/plt00120/", "comp_non_unf.pdf", 120)
     os.system("rm -r diags/plotfiles/plt00000*")
+    os.system("rm -r diags/plotfiles/plt?????.old.*")
 
 
 def launch_analysis_2d(executable):
