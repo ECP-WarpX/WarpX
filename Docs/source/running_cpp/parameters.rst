@@ -181,8 +181,7 @@ Distribution across MPI ranks and parallelization
     ``warpx.load_balance_efficiency_ratio_threshold = 2``, the proposed distribution is
     adopted only if doing so would yield a 100% to the load balance efficiency (with this
     threshold value, if the  current efficiency is ``0.45``, the new distribution would only be
-    adopted if the proposed efficiency were greater than ``0.9``).  A suggested value for the
-    threshold is ``warpx.load_balance_efficiency_ratio_threshold = 1.1``.
+    adopted if the proposed efficiency were greater than ``0.9``).
 
 * ``algo.load_balance_costs_update`` (`Heuristic` or `Timers`) optional (default `Timers`)
     If this is `Heuristic`: load balance costs are updated according to a measure of
