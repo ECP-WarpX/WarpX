@@ -77,14 +77,9 @@ private:
     bool m_plot_rho = false;
     /** Whether to plot F (charge conservation error) */
     bool m_plot_F = false;
-    /** Coarsening ratio requested by the user, such that, fields
-      * are averaged to the coarsened grid for visualization and analysis.
-      * The default coarsening ratio in each dimension is 1.
-      * Only exponents of 2 are valid inputs for the coarsening ratio
-      * in each dimension. */
-    amrex::IntVect diag_crse_ratio;
-    /** If the ouput averaged multifab should be coarsened or not */
-    bool m_coarsen_mfavg = false;
+    /** Coarsening ratio such that, fields are averaged to the coarsened grid.
+      * The ratio should render the grid to be coarsenable (as defined by AMReX). */
+    amrex::IntVect m_crse_ratio = amrex::IntVect(AMREX_D_DECL(1,1,1));
 };
 
 #endif // WARPX_DIAGNOSTICS_H_

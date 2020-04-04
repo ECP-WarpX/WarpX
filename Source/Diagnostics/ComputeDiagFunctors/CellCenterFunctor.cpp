@@ -37,7 +37,7 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
         // In cartesian geometry, cell-center m_mf_src to mf_dst.
         Average::ToCellCenter ( mf_dst, *m_mf_src, dcomp, 0, 0, nComp() );
     } else {
-        // average down fields from fine m_mf_src to coarse mf_dst.
+        // average and interpolate from fine m_mf_src to coarse mf_dst.
         Average::CoarsenAndInterpolate( mf_dst, *m_mf_src, dcomp, 0, nComp(), d_crse_ratio());
     }
 #endif

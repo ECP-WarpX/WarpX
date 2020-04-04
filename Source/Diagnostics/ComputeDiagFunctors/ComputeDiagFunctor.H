@@ -17,8 +17,7 @@ public:
      * \param[out] mf_dst output MultiFab where the result is written
      * \param[in] dcomp first component of mf_dst in which the result is written
      * \param[in] ncomp number of components of mf_dst to update
-     * \param[in] diag_crse_ratio used to coarsen mf_dst and interpolate
-                  fields from mf_src to mf_dst
+     * \param[in] m_crse_ratio Source MultiFab is coarsened by this ratio to dst
      */
     virtual void operator() (amrex::MultiFab& mf_dst, int dcomp) const = 0;
     /** Number of component from the input multifab to write to the output
@@ -27,13 +26,7 @@ public:
     /** coarsening ratio for fine-to-coarse averaging */
     amrex::IntVect d_crse_ratio () const {return m_crse_ratio; };
     /** boolean for coarsening */
-    bool do_coarsen () const {
-        bool coarsen_diag = false;
-        for (int idim = 0; idim < AMREX_SPACEDIM; idim ++) {
-            if (m_crse_ratio[idim] > 1) coarsen_diag = true;
-        }
-        return coarsen_diag;
-    };
+    bool do_coarsen () const { return m_crse_ratio.max()>1; }
 private:
     int m_ncomp;
     amrex::IntVect m_crse_ratio;

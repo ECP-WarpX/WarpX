@@ -53,27 +53,14 @@ Diagnostics::ReadParameters ()
             varnames.end());
     }
 
-    Vector<int> cr_ratio(AMREX_SPACEDIM);
-    // Initialize diag_crse_ratio with default value of 1 for each dimension.
-    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        cr_ratio[idim] = 1; // default value is 1
+    // Initialize cr_ratio with default value of 1 for each dimension.
+    Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
+    // Read user-defined coarsening ratio for the output multifab.
+    if (pp.queryarr("coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM)) {
+       for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
+           m_crse_ratio[idim] = cr_ratio[idim];
+       }
     }
-    // Read the coarsening ratio for the output multifab requested by user.
-    pp.queryarr("coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM);
-    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        if (cr_ratio[idim] == 0) {
-            amrex::Abort("Input coarsening ratio must non-zero");
-        }
-        else {
-             int ceil_log_ratio = static_cast<int>( ceil( log2 (double (cr_ratio[idim]))) );
-             int floor_log_ratio = static_cast<int>( floor( log2 (double (cr_ratio[idim]))) );
-             if ( ceil_log_ratio != floor_log_ratio ) {
-                 amrex::Abort("Input coarsening ratio must an integer power of 2");
-             }
-        }
-        diag_crse_ratio[idim] = cr_ratio[idim];
-    }
-
 }
 
 void
@@ -92,40 +79,40 @@ Diagnostics::InitData ()
         // cyclindrical modes
         for (int comp=0, n=all_field_functors[lev].size(); comp<n; comp++){
             if        ( varnames[comp] == "Ex" ){
-                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 0), lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
             } else if ( varnames[comp] == "Ey" ){
-                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 1), lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 1), lev, m_crse_ratio);
             } else if ( varnames[comp] == "Ez" ){
-                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 2), lev, diag_crse_ratio);
-                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 0), lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 2), lev, m_crse_ratio);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 0), lev, m_crse_ratio);
             } else if ( varnames[comp] == "By" ){
-                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 1), lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 1), lev, m_crse_ratio);
             } else if ( varnames[comp] == "Bz" ){
-                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 2), lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 2), lev, m_crse_ratio);
             } else if ( varnames[comp] == "jx" ){
-                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 0), lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 0), lev, m_crse_ratio);
             } else if ( varnames[comp] == "jy" ){
-                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 1), lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 1), lev, m_crse_ratio);
             } else if ( varnames[comp] == "jz" ){
-                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 2), lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio);
             } else if ( varnames[comp] == "rho" ){
                 // rho_new is stored in component 1 of rho_fp when using PSATD
 #ifdef WARPX_USE_PSATD
                 MultiFab* rho_new = new MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
-                all_field_functors[lev][comp] = new CellCenterFunctor(rho_new, lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new CellCenterFunctor(rho_new, lev, m_crse_ratio);
 #else
-                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_rho_fp(lev), lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_rho_fp(lev), lev, m_crse_ratio);
 #endif
             } else if ( varnames[comp] == "F" ){
-                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_F_fp(lev), lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
             } else if ( varnames[comp] == "part_per_cell" ){
-                all_field_functors[lev][comp] = new PartPerCellFunctor(nullptr, lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new PartPerCellFunctor(nullptr, lev, m_crse_ratio);
             } else if ( varnames[comp] == "part_per_grid" ){
-                all_field_functors[lev][comp] = new PartPerGridFunctor(nullptr, lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new PartPerGridFunctor(nullptr, lev, m_crse_ratio);
             } else if ( varnames[comp] == "divB" ){
-                all_field_functors[lev][comp] = new DivBFunctor(warpx.get_array_Bfield_aux(lev), lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new DivBFunctor(warpx.get_array_Bfield_aux(lev), lev, m_crse_ratio);
             } else if ( varnames[comp] == "divE" ){
-                all_field_functors[lev][comp] = new DivEFunctor(warpx.get_array_Efield_aux(lev), lev, diag_crse_ratio);
+                all_field_functors[lev][comp] = new DivEFunctor(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio);
             }
         }
 
@@ -134,10 +121,17 @@ Diagnostics::InitData ()
         // At this point, varnames.size() >= all_field_functors[0].size()
 
         BoxArray ba = warpx.boxArray(lev);
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( 
+            m_crse_ratio.min() > 0, 
+            "Coarsening ratio must be non-zero."
+        );
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
+            ba.coarsenable(m_crse_ratio),
+            "Invalid coarsening ratio for diagnostics. Must be a power of two and an integer divisor of the blocking factor."
+        );
         // The boxArray is coarsened based on the user-defined coarsening ratio
-        // The default coarsening ratio is 1
-        // Note : ba.coarsen is assumes lo and hi for src and dst are equal
-        ba.coarsen(diag_crse_ratio);
+        // Note : ba.coarsen assumes lo and hi for src_mf and dst_mf are equal
+        ba.coarsen(m_crse_ratio);
         //  This assert should only be applied if src and dst mf have same lo and hi
         AMREX_ALWAYS_ASSERT(ba.size() == warpx.boxArray(lev).size());
         // Allocate output multifab
@@ -230,7 +224,7 @@ Diagnostics::AddRZModesToDiags (int lev)
         // 3 components, r theta z
         all_field_functors[lev][icomp] = new
             CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, dim), lev,
-                              diag_crse_ratio, false, ncomp_multimodefab);
+                              m_crse_ratio, false, ncomp_multimodefab);
         AddRZModesToOutputNames(std::string("E") + coord[dim],
                                 warpx.get_pointer_Efield_aux(0, 0)->nComp());
         icomp += 1;
@@ -240,7 +234,7 @@ Diagnostics::AddRZModesToDiags (int lev)
         // 3 components, r theta z
         all_field_functors[lev][icomp] = new
             CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, dim), lev,
-                              diag_crse_ratio, false, ncomp_multimodefab);
+                              m_crse_ratio, false, ncomp_multimodefab);
         AddRZModesToOutputNames(std::string("B") + coord[dim],
                                 warpx.get_pointer_Bfield_aux(0, 0)->nComp());
         icomp += 1;
@@ -250,7 +244,7 @@ Diagnostics::AddRZModesToDiags (int lev)
         // 3 components, r theta z
         all_field_functors[lev][icomp] = new
             CellCenterFunctor(warpx.get_pointer_current_fp(lev, dim), lev,
-                              diag_crse_ratio, false, ncomp_multimodefab);
+                              m_crse_ratio, false, ncomp_multimodefab);
         icomp += 1;
         AddRZModesToOutputNames(std::string("J") + coord[dim],
                                 warpx.get_pointer_current_fp(0, 0)->nComp());
