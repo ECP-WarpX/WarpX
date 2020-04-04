@@ -121,8 +121,8 @@ Diagnostics::InitData ()
         // At this point, varnames.size() >= all_field_functors[0].size()
 
         BoxArray ba = warpx.boxArray(lev);
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( 
-            m_crse_ratio.min() > 0, 
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            m_crse_ratio.min() > 0,
             "Coarsening ratio must be non-zero."
         );
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
