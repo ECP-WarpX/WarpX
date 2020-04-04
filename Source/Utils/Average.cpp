@@ -41,7 +41,7 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_cp,
     const IntVect stag_cp = mf_cp.boxArray().ixType().ixType();
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.nGrowVect() >= IntVect(stag_cp-stag_fp),
-        "input fine MultiFab does not have enough guard cells for this interpolation" );
+        "input MultiFab does not have enough guard cells for this interpolation" );
 
     // Auxiliary integer arrays (always 3D unlike IntVect objects)
     int sf[3], sc[3], cr[3];
@@ -99,12 +99,12 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_cp,
 {
     BL_PROFILE( "Average::CoarsenAndInterpolate" );
 
-    AMREX_D_TERM( AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ratio[0] != 0 and ( ratio[0] == 1 or ratio[0]%2 == 0 ),
-                      "coarsening ratio must be an integer power of 2" );,
-                  AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ratio[1] != 0 and ( ratio[1] == 1 or ratio[1]%2 == 0 ),
-                      "coarsening ratio must be an integer power of 2" );,
-                  AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ratio[2] != 0 and ( ratio[2] == 1 or ratio[2]%2 == 0 ),
-                      "coarsening ratio must be an integer power of 2" ); );
+    AMREX_D_TERM( AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.boxArray().coarsenable( ratio[0] ),
+                      "input MultiFab is not coarsenable along x" );,
+                  AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.boxArray().coarsenable( ratio[1] ),
+                      "input MultiFab is not coarsenable along y" );,
+                  AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.boxArray().coarsenable( ratio[2] ),
+                      "input MultiFab is not coarsenable along z" ); );
 
     // Coarsen() fine data
     BoxArray coarsened_mf_fp_ba = mf_fp.boxArray();
