@@ -332,7 +332,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     double charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
     auto npart = ps.second["position"]["x"].getExtent()[0];
     series.flush();
-    
+
     mass=mass*mass_unit;
     charge=charge*charge_unit;
 
@@ -344,21 +344,20 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
         weight = charge;
     }
     std::shared_ptr<amrex::Real> ptr_x = ps.second["position"]["x"].loadChunk<amrex::Real>();
-    double position_unit = ps.second["position"]["x"].unitSI();
-    series.flush();
+    double position_unit_x = ps.second["position"]["x"].unitSI();
     std::shared_ptr<amrex::Real> ptr_vx = ps.second["velocity"]["x"].loadChunk<amrex::Real>();
-    double velocity_unit = ps.second["velocity"]["x"].unitSI();
-    series.flush();
+    double velocity_unit_x = ps.second["velocity"]["x"].unitSI();
     std::shared_ptr<amrex::Real> ptr_z = ps.second["position"]["z"].loadChunk<amrex::Real>();
-    series.flush();
+    double position_unit_z = ps.second["position"]["z"].unitSI();
     std::shared_ptr<amrex::Real> ptr_vz = ps.second["velocity"]["z"].loadChunk<amrex::Real>();
-    series.flush();
+    double velocity_unit_z = ps.second["velocity"]["z"].unitSI();
 #if (defined WARPX_DIM_3D)
     std::shared_ptr<amrex::Real> ptr_y = ps.second["position"]["y"].loadChunk<amrex::Real>();
-    series.flush();
+    double position_unit_y = ps.second["position"]["y"].unitSI();
     std::shared_ptr<amrex::Real> ptr_vy = ps.second["velocity"]["y"].loadChunk<amrex::Real>();
-    series.flush();
+    double velocity_unit_y = ps.second["velocity"]["y"].unitSI();
 #endif
+    series.flush();
 
     // Allocate temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_w;
@@ -371,23 +370,26 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
 
     if (ParallelDescriptor::IOProcessor()) {
         for (long i = 0; i < npart; ++i) {
-            amrex::Real x = ptr_x.get()[i]*position_unit;
-            amrex::Real ux = ptr_vx.get()[i]*velocity_unit;
-            amrex::Real z = ptr_z.get()[i]*position_unit;
-            amrex::Real uz = ptr_vz.get()[i]*velocity_unit;
+            amrex::Real x = ptr_x.get()[i]*position_unit_x;
+            amrex::Real ux = ptr_vx.get()[i]*velocity_unit_x;
+            amrex::Real z = ptr_z.get()[i]*position_unit_z;
+            amrex::Real uz = ptr_vz.get()[i]*velocity_unit_z;
 #if (defined WARPX_DIM_3D)
-            amrex::Real y = ptr_y.get()[i]*position_unit;
-            amrex::Real uy = ptr_vy.get()[i]*velocity_unit;
+            amrex::Real y = ptr_y.get()[i]*position_unit_y;
+            amrex::Real uy = ptr_vy.get()[i]*velocity_unit_y;
 #elif (defined WARPX_DIM_XZ)
             amrex::Real y = 0.0;
             amrex::Real uy = 0.0;
 #endif
-            amrex::Real gamma = 1.0/sqrt(1.0-(pow(ux,2)+pow(uy,2)+pow(uz,2)/pow(PhysConst::c,2)));
-            ux = ux*gamma; // so it becomes the momentum in units of c (gamma * beta * c)
-            uy = uy*gamma;
-            uz = uz*gamma;
-            //amrex::Print() << "x = " << x << " y = " << y << " z = "<< z << "\n";
-            //amrex::Print() << "vx = " << ux << " vy = " << uy << " vz = "<< uz << "\n";
+            //amrex::Real gamma = 1.0/std::sqrt(1.0-((ux*ux+uy*uy+uz*uz)/(PhysConst::c*PhysConst::c)));
+            //ux = ux*gamma; // so velocity becomes the proper velocity (gamma * beta * c)
+            //uy = uy*gamma;
+            //uz = uz*gamma;
+            /*
+            amrex::Print() << "gamma = " << gamma << "\n";
+            amrex::Print() << "x = " << x << " y = " << y << " z = "<< z << "\n";
+            amrex::Print() << "vx = " << ux << " vy = " << uy << " vz = "<< uz << "\n";
+             */
             if (plasma_injector->insideBounds(x, y, z)) {
                 CheckAndAddParticle(x, y, z, { ux, uy, uz }, weight,
                                     particle_x,  particle_y,  particle_z,
@@ -406,8 +408,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     }
      */
     // Add the temporary CPU vectors to the particle structure
-    long np = particle_x.size();
-    AddNParticles(0,np,
+    AddNParticles(0,npart,
                   particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
