@@ -61,7 +61,7 @@ Diagnostics::ReadParameters ()
     // Read the coarsening ratio for the output multifab requested by user.
     pp.queryarr("coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM);
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        if (cr_ratio[idim] == 0) { 
+        if (cr_ratio[idim] == 0) {
             amrex::Abort("Input coarsening ratio must non-zero");
         }
         else {
