@@ -16,7 +16,9 @@ public:
     /** Compute a field and store the result in mf_dst
      * \param[out] mf_dst output MultiFab where the result is written
      * \param[in] dcomp first component of mf_dst in which the result is written
-     * \param[im] ncomp number of components of mf_dst to update
+     * \param[in] ncomp number of components of mf_dst to update
+     * \param[in] diag_crse_ratio used to coarsen mf_dst and interpolate
+                  fields from mf_src to mf_dst
      */
     virtual void operator() (amrex::MultiFab& mf_dst, int dcomp) const = 0;
     /** Number of component from the input multifab to write to the output

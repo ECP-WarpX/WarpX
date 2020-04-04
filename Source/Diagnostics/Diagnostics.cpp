@@ -58,7 +58,7 @@ Diagnostics::ReadParameters ()
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         cr_ratio[idim] = 1; // default value is 1
     }
-    // Read in the coarsening ratio for the output multifab requested by user.
+    // Read the coarsening ratio for the output multifab requested by user.
     pp.queryarr("coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM);
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         if (cr_ratio[idim] == 0 || (cr_ratio[idim]>1 and cr_ratio[idim]%2 != 0) ) {

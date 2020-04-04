@@ -14,6 +14,8 @@ public:
      * \param[in] mf_src source multifab. Must be nullptr as not source MF is needed
      *            to compute the number of particles per cell, banane.
      * \param[in] lev level of multifab. Used for averaging in rz.
+     * \param[in] diag_crse_ratio for interpolating field values from src_mf
+                  to the coarsened dst_mf
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
     PartPerCellFunctor(const amrex::MultiFab * const mf_src, const int lev,

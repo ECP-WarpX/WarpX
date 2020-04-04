@@ -13,6 +13,8 @@ public:
     /** Constructor.
      * \param[in] arr_mf_src source multifabs (3 elements for x y z).
      * \param[in] lev level of multifab.
+     * \param[in] diag_crse_ratio for interpolating field values from src_mf
+                  to the coarsened dst_mf
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
     DivBFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, amrex::IntVect diag_crse_ratio, const int ncomp=1);
