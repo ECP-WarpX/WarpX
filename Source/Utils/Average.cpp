@@ -99,12 +99,8 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_cp,
 {
     BL_PROFILE( "Average::CoarsenAndInterpolate" );
 
-    AMREX_D_TERM( AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.boxArray().coarsenable( ratio[0] ),
-                      "input MultiFab is not coarsenable along x" );,
-                  AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.boxArray().coarsenable( ratio[1] ),
-                      "input MultiFab is not coarsenable along y" );,
-                  AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.boxArray().coarsenable( ratio[2] ),
-                      "input MultiFab is not coarsenable along z" ); );
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.boxArray().coarsenable( ratio ),
+        "input MultiFab is not coarsenable" );
 
     // Coarsen fine data
     BoxArray coarsened_mf_fp_ba = mf_fp.boxArray();
