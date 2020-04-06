@@ -23,8 +23,6 @@ public:
     /** Number of component from the input multifab to write to the output
      * multifab */
     int nComp () const { return m_ncomp; };
-    /** coarsening ratio for fine-to-coarse averaging */
-    amrex::IntVect d_crse_ratio () const {return m_crse_ratio; };
     /** boolean for coarsening */
     bool do_coarsen () const { return m_crse_ratio.max()>1; }
 private:
