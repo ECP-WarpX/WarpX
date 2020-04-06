@@ -145,7 +145,7 @@ MultiParticleContainer::WritePlotFile (const std::string& dir) const
                 dir, species_names[i],
                 pc->plot_flags, int_flags,
                 real_names, int_names,
-                [=] (const SuperParticleType& p)
+                [=] AMREX_GPU_HOST_DEVICE (const SuperParticleType& p)
                 {
                     return random_filter(p) * uniform_filter(p) * parser_filter(p);
                 });
