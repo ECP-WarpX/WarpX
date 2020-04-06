@@ -32,7 +32,6 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
 #endif
 
     auto arrNumPartCreation = src_FAB->array();
-
     Gpu::DeviceVector<Index> offsets(ncells);
     Gpu::exclusive_scan(mask, mask+ncells, offsets.begin());
 
@@ -87,7 +86,7 @@ template <int N, typename DstTile, typename FABs, typename Index,
           typename PredFunc, typename CreateFunc1, typename CreateFunc2,
            typename TransFunc>
 Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box,
-                                    const FABs *src_FABs, Index dst1_index,
+                                    const FABs& src_FABs, Index dst1_index,
                                     Index dst2_index,  PredFunc&& filter,
                                     CreateFunc1&& create1, CreateFunc2&& create2,
                                     TransFunc && transform) noexcept
@@ -96,6 +95,8 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, amrex::Box box
 
     // FAB representing the number of particles to create
     FArrayBox NumPartCreation(box, 1);
+ //   Elixir tmp_eli = NumPartCreation.elixir(); Should be we using an elixir here ?
+ //   It seems to be workking on GPU both with and without
     auto arrNumPartCreation = NumPartCreation.array();
 
     const Dim3 lo = lbound(box);

@@ -80,31 +80,31 @@ def do_analysis(Ex,Ey,Ez,Bx,By,Bz):
         pos_data = all_data["pos_schwinger",'particle_weight']
 
         std_total_physical_pairs_created = np.sqrt(expected_total_physical_pairs_created)
-        assert(np.array_equal(ele_data,pos_data))
+        assert(np.array_equal(ele_data,pos_data))  # This assert only works if a single box is used in the simulation
         assert(np.abs(np.sum(ele_data)-expected_total_physical_pairs_created)<5*std_total_physical_pairs_created)
 
 
 def launch_analysis(executable):
     # First test with "weak" EM field. No pair should be created.
-    os.system("mpirun -np 2 ./" + executable + " inputs_3d_schwinger 'warpx.E_external_grid = %.15f %.15f %.15f' 'warpx.B_external_grid = %.15f %.15f %.15f'" \
+    os.system("./" + executable + " inputs_3d_schwinger 'warpx.E_external_grid = %.15f %.15f %.15f' 'warpx.B_external_grid = %.15f %.15f %.15f'" \
                % (Ex_test1, Ey_test1, Ez_test1, Bx_test1, By_test1, Bz_test1) )
     do_analysis(Ex_test1, Ey_test1, Ez_test1, Bx_test1, By_test1, Bz_test1)
 
     # Second test with stronger EM field. Many pairs are created and a Gaussian
     # distribution is used to get the weights of the particles.
-    os.system("mpirun -np 2 ./" + executable + " inputs_3d_schwinger 'warpx.E_external_grid = %.15f %.15f %.15f' 'warpx.B_external_grid = %.15f %.15f %.15f'" \
+    os.system("./" + executable + " inputs_3d_schwinger 'warpx.E_external_grid = %.15f %.15f %.15f' 'warpx.B_external_grid = %.15f %.15f %.15f'" \
                % (Ex_test2, Ey_test2, Ez_test2, Bx_test2, By_test2, Bz_test2) )
     do_analysis(Ex_test2, Ey_test2, Ez_test2, Bx_test2, By_test2, Bz_test2)
 
     # Third test with intermediate electric field such that average created pair per cell is 1. A
     # Poisson distribution is used to obtain the weights of the particles.
-    os.system("mpirun -np 2 ./" + executable + " inputs_3d_schwinger 'warpx.E_external_grid = %.15f %.15f %.15f' 'warpx.B_external_grid = %.15f %.15f %.15f'" \
+    os.system("./" + executable + " inputs_3d_schwinger 'warpx.E_external_grid = %.15f %.15f %.15f' 'warpx.B_external_grid = %.15f %.15f %.15f'" \
                % (Ex_test3, Ey_test3, Ez_test3, Bx_test3, By_test3, Bz_test3) )
     do_analysis(Ex_test3, Ey_test3, Ez_test3, Bx_test3, By_test3, Bz_test3)
 
     # Fourth test with extremely strong EM field but with E and B perpendicular and nearly equal so
     # that the pair production rate is fairly low. A poisson distribution is used in this case.
-    os.system("mpirun -np 2 ./" + executable + " inputs_3d_schwinger 'warpx.E_external_grid = %.15f %.15f %.15f' 'warpx.B_external_grid = %.15f %.15f %.15f'" \
+    os.system("./" + executable + " inputs_3d_schwinger 'warpx.E_external_grid = %.15f %.15f %.15f' 'warpx.B_external_grid = %.15f %.15f %.15f'" \
                % (Ex_test4, Ey_test4, Ez_test4, Bx_test4, By_test4, Bz_test4) )
     do_analysis(Ex_test4, Ey_test4, Ez_test4, Bx_test4, By_test4, Bz_test4)
 

@@ -1074,8 +1074,15 @@ MultiParticleContainer::doQEDSchwinger ()
         // Make the box cell centered to avoid creating particles twice on the tile edges
         const Box& box = enclosedCells(mfi.tilebox());
 
-        const FArrayBox *array_EMFAB [] = {&Ex[mfi],&Ey[mfi],&Ez[mfi],
-                                           &Bx[mfi],&By[mfi],&Bz[mfi]};
+        const auto& arrEx = Ex[mfi].array();
+        const auto& arrEy = Ey[mfi].array();
+        const auto& arrEz = Ez[mfi].array();
+        const auto& arrBx = Bx[mfi].array();
+        const auto& arrBy = By[mfi].array();
+        const auto& arrBz = Bz[mfi].array();
+
+        const Array4<const amrex::Real> array_EMFAB [] = {arrEx,arrEy,arrEz,
+                                           arrBx,arrBy,arrBz};
 
         pc_product_ele->defineAllParticleTiles();
         pc_product_pos->defineAllParticleTiles();
@@ -1097,6 +1104,12 @@ MultiParticleContainer::doQEDSchwinger ()
 
         const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size,
                             ParticleStringNames::to_index.find("w")->second};
+
+   //     amrex::ParallelFor(box,  [=] AMREX_GPU_DEVICE (int i, int j, int k){
+   //     const auto& arr_Ex = array_EMFAB[0];
+   //     amrex::Real blaka = 2.*arr_Ex(i,j,k);
+   //     AMREX_ASSERT_WITH_MESSAGE(0>1,"COUCOU");
+   //     });
 
         const auto num_added = filterCreateTransformFromFAB<1>( dst_ele_tile,
                               dst_pos_tile, box, array_EMFAB, np_ele_dst,

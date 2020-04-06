@@ -1,7 +1,7 @@
 #ifndef QED_SCHWINGER_PROCESS_H_
 #define QED_SCHWINGER_PROCESS_H_
 
-#include "Particles/WarpXParticleContainer.H"
+#include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
 
 struct SchwingerFilterFunc
 {
@@ -11,14 +11,14 @@ struct SchwingerFilterFunc
 
     template <typename FABs>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    amrex::Real operator() (const FABs *src_FABs, int i, int j, int k) const noexcept
+    amrex::Real operator() (const FABs& src_FABs, int i, int j, int k) const noexcept
     {
-        const auto& arrEx = src_FABs[0]->array();
-        const auto& arrEy = src_FABs[1]->array();
-        const auto& arrEz = src_FABs[2]->array();
-        const auto& arrBx = src_FABs[3]->array();
-        const auto& arrBy = src_FABs[4]->array();
-        const auto& arrBz = src_FABs[5]->array();
+        const auto& arrEx = src_FABs[0];//->array();
+        const auto& arrEy = src_FABs[1];//->array();
+        const auto& arrEz = src_FABs[2];//->array();
+        const auto& arrBx = src_FABs[3];//->array();
+        const auto& arrBy = src_FABs[4];//->array();
+        const auto& arrBz = src_FABs[5];//->array();
 
         return getSchwingerProductionNumber( m_dVdt,
                     arrEx(i,j,k),arrEy(i,j,k),arrEz(i,j,k),
