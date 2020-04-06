@@ -7,11 +7,12 @@
 #ifndef FILTERFUNCTORS_H
 #define FILTERFUNCTORS_H
 
-#include "AMReX_Gpu.H"
-#include "AMReX_Random.H"
-#include "WarpXParticleContainer.H"
 #include "WarpX.H"
-#include "WarpXConst.H"
+#include "Particles/WarpXParticleContainer.H"
+#include "Utils/WarpXConst.H"
+
+#include <AMReX_Gpu.H>
+#include <AMReX_Random.H>
 
 using SuperParticleType = typename WarpXParticleContainer::SuperParticleType;
 
