@@ -254,6 +254,7 @@ Particle initialization
 * ``<species_name>.charge`` (`float`) optional (default `NaN`)
     The charge of one `physical` particle of this species.
     If ``species_type`` is specified, the charge will be set to the physical value and ``charge`` is optional.
+    When ``<species>.do_field_ionization = 1``, the physical particle charge is equal to ``ionization_initial_level * charge``, so latter parameter should be equal to q_e (which is defined in WarpX as the elementary charge in coulombs).
 
 * ``<species_name>.mass`` (`float`) optional (default `NaN`)
     The mass of one `physical` particle of this species.
@@ -275,8 +276,14 @@ Particle initialization
       ``<species_name>.npart`` (number of particles in the beam),
       ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
       ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
+      ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
+      ``<species_name>.x/y/z_cut`` (optional, particles with ``abs(x-x_m) > x_cut*x_rms`` are not injected, same for y and z. ``<species_name>.q_tot`` is the charge of the un-cut beam, so that cutting the distribution is likely to result in a lower total charge),
       and optional argument ``<species_name>.do_symmetrize`` (whether to
       symmetrize the beam in the x and y directions).
+
+    * ``external_file``: inject macroparticles with properties (charge, mass, position, and momentum) according to data in external file.
+      It requires the additional arguments ``<species_name>.injection_file`` and ``<species_name>.q_tot``, which are the string corresponding to the openPMD file name and the beam charge.
+      When using this style, it is not necessary to add other ``<species_name>.(...)`` paramters, because they will be read directly from the file.
 
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis
@@ -993,6 +1000,13 @@ Numerics and algorithms
     If not set by users, these values are calculated automatically and determined *empirically* and
     would be equal the order of the solver for nodal grid, and half the order of the solver for staggered.
 
+* ``psatd.periodic_single_box_fft`` (`0` or `1`; default: 0)
+    If true, this will *not* incorporate the guard cells into the box over which FFTs are performed.
+    This is only valid when WarpX is run with periodic boundaries and a single box.
+    In this case, using `psatd.periodic_single_box_fft` is equivalent to using a global FFT over the whole domain.
+    Therefore, all the approximations that are usually made when using local FFTs with guard cells
+    (for problems with multiple boxes) become exact in the case of the periodic, single-box FFT without guard cells.
+
 * ``psatd.hybrid_mpi_decomposition`` (`0` or `1`; default: 0)
     Whether to use a different MPI decomposition for the particle-grid operations
     (deposition and gather) and for the PSATD solver. If `1`, the FFT will
@@ -1374,6 +1388,11 @@ Diagnostics and output
             ``x`` produces the position (density) distribution in `x`.
             ``ux`` produces the velocity distribution in `x`,
             ``sqrt(ux*ux+uy*uy+uz*uz)`` produces the speed distribution.
+            The default value of the histogram without normalization is
+            :math:`f = \sum\limits_{i=1}^N w_i`, where
+            :math:`\sum\limits_{i=1}^N` is the sum over :math:`N` particles
+            in that bin,
+            :math:`w_i` denotes the weight of the ith particle.
 
         * ``<reduced_diags_name>.bin_number`` (`int` > 0)
             This is the number of bins used for the histogram.
@@ -1390,7 +1409,9 @@ Diagnostics and output
             ``unity_particle_weight``
             uses unity particle weight to compute the histogram,
             such that the values of the histogram are
-            the number of counted macroparticles in that bin.
+            the number of counted macroparticles in that bin,
+            i.e.  :math:`f = \sum\limits_{i=1}^N 1`,
+            :math:`N` is the number of particles in that bin.
 
             ``max_to_unity`` will normalize the histogram such that
             its maximum value is one.
@@ -1405,6 +1426,9 @@ Diagnostics and output
 
         The output columns are
         values of the 1st bin, the 2nd bin, ..., the nth bin.
+        An example input file and a loading pything script of
+        using the histogram reduced diagnostics
+        are given in ``Examples/Tests/initial_distribution/``.
 
 * ``<reduced_diags_name>.frequency`` (`int`)
     The output frequency (every # time steps).

@@ -7,17 +7,18 @@
  */
 #include "FieldIO.H"
 #include "WarpX.H"
-#include "Average.H"
+#include "Utils/Average.H"
 #include "Utils/WarpXUtil.H"
+
+#ifdef WARPX_USE_PSATD
+#   include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#endif
 
 #include <AMReX_FillPatchUtil_F.H>
 #include <AMReX_Interpolater.H>
 
 #ifdef WARPX_USE_OPENPMD
-#include <openPMD/openPMD.hpp>
-#endif
-#ifdef WARPX_USE_PSATD
-#include <SpectralSolver.H>
+#   include <openPMD/openPMD.hpp>
 #endif
 
 using namespace amrex;
