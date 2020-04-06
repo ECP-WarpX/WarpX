@@ -29,6 +29,7 @@ public:
     bool do_coarsen () const { return m_crse_ratio.max()>1; }
 private:
     int m_ncomp;
+protected:
     amrex::IntVect m_crse_ratio;
 };
 
