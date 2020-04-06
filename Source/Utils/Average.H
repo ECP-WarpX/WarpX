@@ -74,6 +74,23 @@ namespace Average{
                         const int scomp=0,
                         const int ncomp=1 );
 
+    /**
+     * \brief Interpolates the floating point data contained in the input Array4
+     *        \c mf_fp_arr, extracted from a fine MultiFab, by averaging over either
+     *        1 point or 2 equally distant points.
+     *
+     * \param[in] mf_fp_arr floating point data to be interpolated
+     * \param[in] sf        staggering of the input fine MultiFab
+     * \param[in] sc        staggering of the output coarsened MultiFab
+     * \param[in] cr        coarsening ratio along each spatial direction
+     * \param[in] i         index along x of the coarsened Array4 to be filled
+     * \param[in] j         index along y of the coarsened Array4 to be filled
+     * \param[in] k         index along z of the coarsened Array4 to be filled
+     * \param[in] comp      index along the fourth component of the Array4 \c mf_fp_arr
+     *                      containing the data to be interpolated
+     *
+     * \return interpolated field at cell (i,j,k) of a coarsened Array4
+     */
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     Real CoarsenAndInterpolateKernel ( Array4<Real const> const& mf_fp_arr,
@@ -125,6 +142,24 @@ namespace Average{
         return c / (numx*numy*numz);
     };
 
+    /**
+     * \brief Loops over the boxes of the coarsened MultiFab \c mf_cp and fills
+     *        them by interpolating the data contained in the fine MultiFab \c mf_fp.
+     *
+     * \param[in,out] mf_cp coarsened MultiFab containing the floating point data
+     *                      to be filled by interpolating the input fine MultiFab
+     * \param[in]     mf_fp fine MultiFab containing the floating point data to be interpolated
+     * \param[in]     dcomp offset for the fourth component of the coarsened Array4
+     *                      object, extracted from its MultiFab, where the interpolated
+     *                      values will be stored
+     * \param[in]     scomp offset for the fourth component of the fine Array4
+     *                      object, extracted from its MultiFab, containing the
+     *                      data to be interpolated
+     * \param[in]     ncomp number of components to loop over for the coarsened
+     *                      Array4 extracted from the coarsened MultiFab \c mf_cp
+     * \param[in]     ratio coarsening ratio between the fine MultiFab \c mf_fp
+     *                      and the coarsened MultiFab \c mf_cp
+     */
     void CoarsenAndInterpolateLoop ( MultiFab& mf_cp,
                                      const MultiFab& mf_fp,
                                      const int dcomp,
@@ -132,6 +167,24 @@ namespace Average{
                                      const int ncomp,
                                      const IntVect ratio );
 
+    /**
+     * \brief Stores in the coarsened MultiFab \c mf_cp the values obtained by
+     *        interpolating the data contained in the fine MultiFab \c mf_fp.
+     *
+     * \param[in,out] mf_cp coarsened MultiFab containing the floating point data
+     *                      to be filled by interpolating the fine MultiFab \c mf_fp
+     * \param[in]     mf_fp fine MultiFab containing the floating point data to be interpolated
+     * \param[in]     dcomp offset for the fourth component of the coarsened Array4
+     *                      object, extracted from its MultiFab, where the interpolated
+     *                      values will be stored
+     * \param[in]     scomp offset for the fourth component of the fine Array4
+     *                      object, extracted from its MultiFab, containing the
+     *                      data to be interpolated
+     * \param[in]     ncomp number of components to loop over for the coarsened
+     *                      Array4 extracted from the coarsened MultiFab \c mf_cp
+     * \param[in]     ratio coarsening ratio between the fine MultiFab \c mf_fp
+     *                      and the coarsened MultiFab \c mf_cp
+     */
     void CoarsenAndInterpolate ( MultiFab& mf_cp,
                                  const MultiFab& mf_fp,
                                  const int dcomp,
