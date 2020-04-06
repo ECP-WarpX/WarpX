@@ -132,8 +132,6 @@ Diagnostics::InitData ()
         // The boxArray is coarsened based on the user-defined coarsening ratio
         // Note : ba.coarsen assumes lo and hi for src_mf and dst_mf are equal
         ba.coarsen(m_crse_ratio);
-        //  This assert should only be applied if src and dst mf have same lo and hi
-        AMREX_ALWAYS_ASSERT(ba.size() == warpx.boxArray(lev).size());
         // Allocate output multifab
         // Note: default MultiFab constructor is cell-centered
         mf_avg[lev] = MultiFab(ba,
