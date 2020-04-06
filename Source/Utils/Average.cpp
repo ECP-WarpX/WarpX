@@ -119,6 +119,7 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_cp,
     {
         MultiFab coarsened_mf_fp( coarsened_mf_fp_ba, mf_fp.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
         Average::CoarsenAndInterpolateLoop( coarsened_mf_fp, mf_fp, 0, scomp, ncomp, ratio );
-        mf_cp.copy( coarsened_mf_fp, 0, scomp, ncomp );
+        // Copy starts at component 0 in the temporary source MultiFab coarsend_mf_fp
+        mf_cp.copy( coarsened_mf_fp, 0, dcomp, ncomp );
     }
 }
