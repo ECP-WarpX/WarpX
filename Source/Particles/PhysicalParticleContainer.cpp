@@ -384,9 +384,11 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
             ux = ux*gamma; // so velocity becomes the proper velocity (gamma * beta * c)
             uy = uy*gamma;
             uz = uz*gamma;
+            /*
             amrex::Print() << "gamma = " << gamma << "\n";
             amrex::Print() << "x = " << x << " y = " << y << " z = "<< z << "\n";
             amrex::Print() << "vx = " << ux << " vy = " << uy << " vz = "<< uz << "\n";
+             */
             if (plasma_injector->insideBounds(x, y, z)) {
                 CheckAndAddParticle(x, y, z, { ux, uy, uz }, weight,
                                     particle_x,  particle_y,  particle_z,
@@ -395,12 +397,14 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
             }
         }
     }
+    /*
      amrex::Print() << npart << " = np = " << particle_x.size() << "\n";
     for (int col; col<npart; ++col){
         amrex::Print() << "weight = " << particle_w[col] << "\n";
         amrex::Print() << "type = " << typeid(particle_x[col]).name() << "\n"; // d
         amrex::Print() << "x = " << particle_x[col] << " y = " << particle_y[col] << " z = " << particle_z[col] <<"\n";
         amrex::Print() << "vx = " << particle_ux[col] << " vy = " << particle_uy[col] << " vz = " << particle_uz[col] <<"\n";
+     */
     }
     // Add the temporary CPU vectors to the particle structure
     AddNParticles(0,npart,
