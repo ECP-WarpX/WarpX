@@ -109,6 +109,8 @@ HankelTransform::HankelTransform (int const hankel_order,
 
     // Calculate the matrix M by inverting invM
     if (azimuthal_mode !=0 && hankel_order != azimuthal_mode-1) {
+        // In this case, invM is singular, thus we calculate the pseudo-inverse.
+        // The Moore-Penrose psuedo-inverse is calculated using the SVD method.
 
         M.resize(m_nk*m_nr, 0.);
         RealVector invMcopy(invM);
@@ -118,6 +120,8 @@ HankelTransform::HankelTransform (int const hankel_order,
         RealVector sp((m_nr)*(m_nk-1), 0.);
         RealVector temp((m_nr)*(m_nk-1), 0.);
 
+        // Calculate the singlular-value-decomposition of invM (leaving out the first row).
+        // invM = u*sdiag*vt
         // Note that invMcopy.dataPtr()+1 is passed in so that the first ik row is skipped
         // A copy is passed in since the matrix is destroyed
         lapack::gesvd(lapack::Job::AllVec, lapack::Job::AllVec,
@@ -125,6 +129,8 @@ HankelTransform::HankelTransform (int const hankel_order,
                       sdiag.dataPtr(), u.dataPtr(), m_nk-1,
                       vt.dataPtr(), m_nr);
 
+        // Calculate the pseudo-inverse of sdiag, which is trivial since it
+        // only has values of the diagonal.
         for (int i=0 ; i < m_nk-1 ; i++) {
             if (sdiag[i] != 0.) {
                 int const j = i + i*m_nk;
@@ -132,12 +138,18 @@ HankelTransform::HankelTransform (int const hankel_order,
             }
         }
 
-        // a_pseudo(1:n,1:m) = matmul(transpose(vt(1:n,1:n)), matmul(sp(1:n,1:m), transpose(u(1:m,1:m))))
+        // M can be calculated from the SVD
+        // M = v*sp*u_transpose
+
+        // Do the second multiply, temp = sp*u_transpose
+        // temp(1:n,1:m) = matmul(transpose(vt(1:n,1:n)), matmul(sp(1:n,1:m), transpose(u(1:m,1:m))))
         blas::gemm(blas::Layout::ColMajor, blas::Op::NoTrans, blas::Op::Trans,
                    m_nr, m_nk-1, m_nk-1, 1._rt,
                    sp.dataPtr(), m_nr,
                    u.dataPtr(), m_nk-1, 0._rt,
                    temp.dataPtr(), m_nr);
+
+        // Do the first mutiply, M = vt*temp
         // Note that M.dataPtr()+m_nr is passed in so that the first ir column is skipped
         blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                    m_nr, m_nk-1, m_nr, 1.,
@@ -146,6 +158,7 @@ HankelTransform::HankelTransform (int const hankel_order,
                    M.dataPtr()+m_nr, m_nr);
 
     } else {
+        // In this case, invM is invertible; calculate the inverse.
 
         M = invM;
         amrex::Vector<int64_t> ipiv(m_nr);
