@@ -27,7 +27,7 @@ PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     for (MFIter mfi(ppg_mf); mfi.isValid(); ++mfi) {
         ppg_mf[mfi].setVal<RunOn::Host>(static_cast<Real>(npart_in_grid[mfi.index()]));
     }
-    
+
     // Coarsen and interpolate from ppg_mf to mf_dst
     Average::CoarsenAndInterpolate(mf_dst, ppg_mf, dcomp, 0, nComp(), m_crse_ratio);
 }
