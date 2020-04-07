@@ -23,8 +23,6 @@ public:
     /** Number of component from the input multifab to write to the output
      * multifab */
     int nComp () const { return m_ncomp; };
-    /** boolean for coarsening */
-    bool do_coarsen () const { return m_crse_ratio.max()>1; }
 private:
     int m_ncomp;
 protected:

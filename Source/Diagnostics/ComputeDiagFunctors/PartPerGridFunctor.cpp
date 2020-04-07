@@ -19,7 +19,8 @@ PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     const Vector<long>& npart_in_grid = warpx.GetPartContainer().NumberOfParticlesInGrid(m_lev);
     // Temporary MultiFab containing number of particles per grid
     // (stored as constant for all cells in each grid)
-    MultiFab ppg_mf(warpx.boxArray(). warpx.DistributionMap(m_lev), 1, ng);
+    const int ng = 1;
+    MultiFab ppg_mf(warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng);
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
