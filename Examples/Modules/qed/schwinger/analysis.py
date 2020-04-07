@@ -1,3 +1,9 @@
+# Copyright 2020 Luca Fedeli, Neil Zaim
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
 import os
 import glob
 import yt
@@ -9,10 +15,10 @@ c = 299792458.
 m_e = 9.10938356e-31
 e = 1.6021766208e-19
 hbar = 1.054571800e-34
-E_S = m_e**2*c**3/e/hbar
+E_S = m_e**2*c**3/e/hbar # Schwinger field
 
 numcells = 512 # total number of cells in the test case
-dV = (1.e-6)**3 # total volume
+dV = (1.e-6)**3 # total simulation volume
 dt = 2.407291502e-16
 filename = "diags/plotfiles/plt00001"
 
@@ -45,6 +51,7 @@ By_test4 = 833910154604.3563
 Bz_test4 = 0.
 
 def calculate_rate(Ex,Ey,Ez,Bx,By,Bz):
+## Calculate theoretical pair production rate from EM field value
 
     E_squared = Ex**2 + Ey**2 + Ez**2
     H_squared = c**2*(Bx**2 + By**2 + Bz**2)
@@ -80,9 +87,11 @@ def do_analysis(Ex,Ey,Ez,Bx,By,Bz):
         pos_data = all_data["pos_schwinger",'particle_weight']
 
         std_total_physical_pairs_created = np.sqrt(expected_total_physical_pairs_created)
-        assert(np.array_equal(ele_data,pos_data))  # This assert only works if a single box is used in the simulation
-        assert(np.abs(np.sum(ele_data)-expected_total_physical_pairs_created)<5*std_total_physical_pairs_created)
 
+        # This first assert only works if a single box is used in the simulation
+        assert(np.array_equal(ele_data,pos_data))
+        # 5 sigma test that has an intrisic probability to fail of 1 over ~2 millions
+        assert(np.abs(np.sum(ele_data)-expected_total_physical_pairs_created)<5*std_total_physical_pairs_created)
 
 def launch_analysis(executable):
     # First test with "weak" EM field. No pair should be created.
@@ -91,7 +100,8 @@ def launch_analysis(executable):
     do_analysis(Ex_test1, Ey_test1, Ez_test1, Bx_test1, By_test1, Bz_test1)
 
     # Second test with stronger EM field. Many pairs are created and a Gaussian
-    # distribution is used to get the weights of the particles.
+    # distribution is used to get the weights of the particles. This is the most sensitive test
+    # because the relative std is extremely low.
     os.system("./" + executable + " inputs_3d_schwinger 'warpx.E_external_grid = %.15f %.15f %.15f' 'warpx.B_external_grid = %.15f %.15f %.15f'" \
                % (Ex_test2, Ey_test2, Ez_test2, Bx_test2, By_test2, Bz_test2) )
     do_analysis(Ex_test2, Ey_test2, Ez_test2, Bx_test2, By_test2, Bz_test2)

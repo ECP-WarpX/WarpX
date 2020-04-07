@@ -26,8 +26,8 @@ warpx.verbose = 1
 warpx.cfl = 1. # if 1., the time step is set to its CFL limit
 warpx.do_pml = 0 # use Perfectly Matched Layer as boundary condition
 warpx.serialize_ics = 1
-warpx.do_qed_schwinger = 1
 warpx.do_nodal = 1
+psatd.periodic_single_box_fft = 1
 
 #################################
 ###### EXTERNAL EM FIELD ########
@@ -57,9 +57,9 @@ pos_schwinger.density = 0
 ele_schwinger.momentum_distribution_type = "gaussian"
 pos_schwinger.momentum_distribution_type = "gaussian"
 
-
 #################################
 ##########QED####################
+warpx.do_qed_schwinger = 1
 qed_schwinger.ele_product_species = ele_schwinger
 qed_schwinger.pos_product_species = pos_schwinger
 

@@ -1,7 +1,8 @@
 /* Copyright 2019-2020 Andrew Myers, Ann Almgren, Axel Huebl
  * David Grote, Jean-Luc Vay, Luca Fedeli
- * Mathieu Lobet, Maxence Thevenet, Remi Lehe
- * Revathi Jambunathan, Weiqun Zhang, Yinjian Zhao
+ * Mathieu Lobet, Maxence Thevenet, Neil Zaim
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ * Yinjian Zhao
  *
  *
  * This file is part of WarpX.
@@ -1024,11 +1025,6 @@ MultiParticleContainer::doQEDSchwinger ()
 {
     if (!m_do_qed_schwinger) {return;}
 
-    auto& pc_product_ele =
-            allcontainers[m_qed_schwinger_ele_product];
-    auto& pc_product_pos =
-            allcontainers[m_qed_schwinger_pos_product];
-
     auto & warpx = WarpX::GetInstance();
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_nodal,
@@ -1043,15 +1039,22 @@ MultiParticleContainer::doQEDSchwinger ()
     amrex::Abort("Schwinger process not implemented in rz geometry");
 #endif
 
+// Get cell volume multiplied a temporal step. In 2D the transverse size is
+// chosen by the user in the input file.
     amrex::Geometry const & geom = warpx.Geom(level_0);
     auto domain_box = geom.Domain();
 #if (AMREX_SPACEDIM == 2)
-    auto dVdt = geom.CellSize(0) * geom.CellSize(1) * m_y_size
+    auto dVdt = geom.CellSize(0) * geom.CellSize(1) * m_qed_schwinger_y_size
                * warpx.getdt(level_0);
 #elif (AMREX_SPACEDIM == 3)
     auto dVdt = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2)
                * warpx.getdt(level_0);
 #endif
+
+    auto& pc_product_ele =
+            allcontainers[m_qed_schwinger_ele_product];
+    auto& pc_product_pos =
+            allcontainers[m_qed_schwinger_pos_product];
 
     const MultiFab & Ex = warpx.getEfield(level_0,0);
     const MultiFab & Ey = warpx.getEfield(level_0,1);
@@ -1062,11 +1065,11 @@ MultiParticleContainer::doQEDSchwinger ()
 
     MFItInfo info;
     if (TilingIfNotGPU()) {
-        info.EnableTiling(); // Put EnableTiling(PhysicalParticleContainer::tile_size); instead ??
+        info.EnableTiling();
     }
 #ifdef _OPENMP
-    info.SetDynamic(true);
-#pragma omp parallel if (not WarpX::serialize_ics) // Do we keep condition on serialize_ics?
+    info.SetDynamic(WarpX::do_dynamic_scheduling);
+#pragma omp parallel
 #endif
 
     for (MFIter mfi(Ex, info); mfi.isValid(); ++mfi )
@@ -1093,23 +1096,16 @@ MultiParticleContainer::doQEDSchwinger ()
         const auto np_ele_dst = dst_ele_tile.numParticles();
         const auto np_pos_dst = dst_pos_tile.numParticles();
 
-        auto Filter  = SchwingerFilterFunc{m_qed_schwinger_y_size,
-                                m_qed_schwinger_threshold_poisson_gaussian,
-                                 dVdt};
+        const auto Filter  = SchwingerFilterFunc{
+                              m_qed_schwinger_threshold_poisson_gaussian,dVdt};
 
-        SmartCreateFactory create_factory_ele(*pc_product_ele);
-        SmartCreateFactory create_factory_pos(*pc_product_pos);
+        const SmartCreateFactory create_factory_ele(*pc_product_ele);
+        const SmartCreateFactory create_factory_pos(*pc_product_pos);
         const auto CreateEle = create_factory_ele.getSmartCreate();
         const auto CreatePos = create_factory_pos.getSmartCreate();
 
         const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size,
                             ParticleStringNames::to_index.find("w")->second};
-
-   //     amrex::ParallelFor(box,  [=] AMREX_GPU_DEVICE (int i, int j, int k){
-   //     const auto& arr_Ex = array_EMFAB[0];
-   //     amrex::Real blaka = 2.*arr_Ex(i,j,k);
-   //     AMREX_ASSERT_WITH_MESSAGE(0>1,"COUCOU");
-   //     });
 
         const auto num_added = filterCreateTransformFromFAB<1>( dst_ele_tile,
                               dst_pos_tile, box, array_EMFAB, np_ele_dst,

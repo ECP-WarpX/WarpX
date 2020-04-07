@@ -131,6 +131,13 @@ public:
     void doCoulombCollisions ();
 
 #ifdef WARPX_QED
+    /** If Schwinger process is activated, this function is called at every
+     * timestep in Evolve and is used to create Schwinger electron-positron pairs.
+     * Within this function we loop over all cells to calculate the number of
+     * created physical pairs. If this number is higher than 0, we create a single
+     * particle in this cell, with a weight corresponding to the number of physical
+     * particles.
+     */
     void doQEDSchwinger ();
 #endif
 
@@ -334,7 +341,7 @@ protected:
     int m_qed_schwinger_ele_product;
     /** Index for Schwinger positron product species in allcontainers */
     int m_qed_schwinger_pos_product;
-    /** Transverse size used in the Schwinger pair production rate calculations */
+    /** Transverse size used in 2D Schwinger pair production rate calculations */
     amrex::Real m_qed_schwinger_y_size;
     /** If the number of physical Schwinger pairs created within a cell is
      * higher than this threshold we use a Gaussian distribution rather than

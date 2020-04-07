@@ -98,8 +98,6 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
             AddRealComp("optical_depth_BW");
     }
 
-    //TODO: SHOULD CHECK IF SPECIES IS EITHER ELECTRONS OR POSITRONS!!
-
     if(m_do_qed_quantum_sync){
         pp.get("qed_quantum_sync_phot_product_species",
             m_qed_quantum_sync_phot_product_name);
