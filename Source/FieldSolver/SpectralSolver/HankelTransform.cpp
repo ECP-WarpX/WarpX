@@ -159,6 +159,8 @@ HankelTransform::HankelTransform (int const hankel_order,
 
     } else {
         // In this case, invM is invertible; calculate the inverse.
+        // getrf calculates the LU decomposition
+        // getri calculates the inverse from the LU decomposition
 
         M = invM;
         amrex::Vector<int64_t> ipiv(m_nr);
