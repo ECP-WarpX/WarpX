@@ -109,13 +109,14 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_cp,
     if (coarsened_mf_fp_ba == mf_cp.boxArray() and mf_fp.DistributionMap() == mf_cp.DistributionMap())
         Average::CoarsenAndInterpolateLoop( mf_cp, mf_fp, dcomp, scomp, ncomp, ratio );
     else
-    // Copy from component scomp of the fine FArrayBox into component 0 of the coarse
-    // FArrayBox because the coarse FArrayBox is a temporary FArrayBox starting at
-    // component 0 and is not part of the actual coarse MultiFab mf_cp
     {
+        // Cannot coarsen directly into a MultiFab with different BoxArray or DistributionMapping.
+        // Hence, it is done in two steps:
+        // temporary MultiFab on coarsened version of mf_fp.boxArray(), with same distribution mapping
         MultiFab coarsened_mf_fp( coarsened_mf_fp_ba, mf_fp.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
+        // 1) do the interpolation from mf_fp to coarsened_mf_fp (start writing into component 0)
         Average::CoarsenAndInterpolateLoop( coarsened_mf_fp, mf_fp, 0, scomp, ncomp, ratio );
-        // Copy starts at component 0 in the temporary source MultiFab coarsend_mf_fp
+        // 2) copy from coarsened_mf_fp to mf_cp (with different BoxArray or DistributionMapping)
         mf_cp.copy( coarsened_mf_fp, 0, dcomp, ncomp );
     }
 }
