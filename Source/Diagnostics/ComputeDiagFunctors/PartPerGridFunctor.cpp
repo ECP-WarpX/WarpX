@@ -17,12 +17,16 @@ PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
 {
     auto& warpx = WarpX::GetInstance();
     const Vector<long>& npart_in_grid = warpx.GetPartContainer().NumberOfParticlesInGrid(m_lev);
-    // MultiFab containing number of particles per grid
+    // Temporary MultiFab containing number of particles per grid
     // (stored as constant for all cells in each grid)
+    MultiFab ppg_mf(warpx.boxArray(). warpx.DistributionMap(m_lev), 1, ng);
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
-    for (MFIter mfi(mf_dst); mfi.isValid(); ++mfi) {
-        mf_dst[mfi].setVal<RunOn::Host>(static_cast<Real>(npart_in_grid[mfi.index()]));
+    for (MFIter mfi(ppg_mf); mfi.isValid(); ++mfi) {
+        ppg_mf[mfi].setVal<RunOn::Host>(static_cast<Real>(npart_in_grid[mfi.index()]));
     }
+    
+    // Coarsen and interpolate from ppg_mf to mf_dst
+    Average::CoarsenAndInterpolate(mf_dst, ppg_mf, dcomp, 0, nComp(), m_crse_ratio);
 }

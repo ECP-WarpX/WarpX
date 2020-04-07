@@ -11,14 +11,11 @@ void
 DivBFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
 {
     auto& warpx = WarpX::GetInstance();
-
-    const BoxArray& ba = amrex::convert(warpx.boxArray(m_lev),IntVect::TheUnitVector());
-    MultiFab divB( ba, warpx.DistributionMap(m_lev), 1, 0 );
-
-    WarpX::ComputeDivB(mf_dst, 0, m_arr_mf_src, WarpX::CellSize(m_lev) );
-    if (do_coarsen() == false) {
-        Average::ToCellCenter (mf_dst, divB, dcomp, 0, 0, 1);
-    } else {
-        Average::CoarsenAndInterpolate( mf_dst, divB, dcomp, 0, nComp(), m_crse_ratio);    
-    }
+    const ng = 1;
+    // A cell-centered divB multifab spanning the entire domain is generated
+    // and divB is computed on the cell-center, with ng=1.
+    MultiFab divB( warpx.boxArray(), warpx.DistributionMap(m_lev), 1, ng );
+    WarpX::ComputeDivB(divB, 0, m_arr_mf_src, WarpX::CellSize(m_lev) );
+    // Coarsen and Interpolate from divB to coarsened/reduced_domain mf_dst
+    Average::CoarsenAndInterpolate( mf_dst, divB, dcomp, 0, nComp(), m_crse_ratio);    
 }

@@ -28,17 +28,12 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
             // All modes > 0
             MultiFab::Add(mf_dst_stag, *m_mf_src, ic, 0, 1, m_mf_src->nGrowVect());
         }
-        Average::ToCellCenter ( mf_dst, mf_dst_stag, dcomp, 0, 0, nComp() );
+        Average::CoarsenAndInterpolate( mf_dst, mf_dst_stag, dcomp, 0, nComp(), m_crse_ratio);
     } else {
-        Average::ToCellCenter ( mf_dst, *m_mf_src, dcomp, 0, 0, nComp() );
-    }
-#else
-    if (do_coarsen() == false ) {
-        // In cartesian geometry, cell-center m_mf_src to mf_dst.
-        Average::ToCellCenter ( mf_dst, *m_mf_src, dcomp, 0, 0, nComp() );
-    } else {
-        // average and interpolate from fine m_mf_src to coarse mf_dst.
         Average::CoarsenAndInterpolate( mf_dst, *m_mf_src, dcomp, 0, nComp(), m_crse_ratio);
     }
+#else
+    // average and interpolate from fine m_mf_src to coarse mf_dst.
+    Average::CoarsenAndInterpolate( mf_dst, *m_mf_src, dcomp, 0, nComp(), m_crse_ratio);
 #endif
 }

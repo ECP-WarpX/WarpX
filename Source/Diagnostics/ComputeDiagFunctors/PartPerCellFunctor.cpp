@@ -16,10 +16,13 @@ void
 PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
 {
     auto& warpx = WarpX::GetInstance();
-    // Make alias MultiFab* pointing to the component of mf_dst where the
-    // number of particles per cell is to be written.
-    MultiFab * const mf_dst_dcomp = new MultiFab(mf_dst, amrex::make_alias, dcomp, 1);
+    const ng = 1;
+    // Create a tmp cell-centered, single-component MultiFab to compute ppc
+    MultiFab ppc_mf(warpx.boxArray(), warpx.DistributionMap(m_lev), 1, ng);
     // Set value to 0, and increment the value in each cell with ppc.
-    mf_dst_dcomp->setVal(0._rt);
-    warpx.GetPartContainer().Increment(*mf_dst_dcomp, m_lev);
+    ppc_mf->setVal(0._rt);
+    // Compute ppc which includes a summation over all species
+    warpx.GetPartContainer().Increment(ppc_mf, m_lev);
+    // Coarsen and interpolate from ppc_mf to mf_dst
+    Average::CoarsenAndInterpolate(mf_dst, ppc_mf, dcomp, 0, nComp(), m_crse_ratio);
 }
