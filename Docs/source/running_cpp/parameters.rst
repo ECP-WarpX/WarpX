@@ -1508,7 +1508,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     If ``warpx.do_qed_schwinger = 1``, Schwinger product species must be specified in
     ``qed_schwinger.ele_product_species`` and ``qed_schwinger.pos_product_species``.
     **Note: implementation of this feature is in progress.**
-    So far it requires ``warpx.do_nodal=1`` and does not support mesh refinement or cylindrical coordinates.
+    So far it requires ``warpx.do_nodal=1`` and does not support mesh refinement, cylindrical coordinates or single precision.
 
 * ``qed_schwinger.ele_product_species`` (`string`)
     If Schwinger process is activated, an electron product species must be specified
