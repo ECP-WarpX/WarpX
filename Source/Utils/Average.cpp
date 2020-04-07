@@ -34,7 +34,7 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_cp,
                                      const int dcomp,
                                      const int scomp,
                                      const int ncomp,
-                                     const IntVect ratio )
+                                     const IntVect crse_ratio )
 {
     // Staggerings of input fine MultiFab and output coarse MultiFab
     const IntVect stag_fp = mf_fp.boxArray().ixType().ixType();
@@ -62,12 +62,12 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_cp,
     sc[2] = stag_cp[2];
 #endif
 
-    cr[0] = ratio[0];
-    cr[1] = ratio[1];
+    cr[0] = crse_ratio[0];
+    cr[1] = crse_ratio[1];
 #if   (AMREX_SPACEDIM == 2)
     cr[2] = 1;
 #elif (AMREX_SPACEDIM == 3)
-    cr[2] = ratio[2];
+    cr[2] = crse_ratio[2];
 #endif
 
 #ifdef _OPENMP
@@ -95,19 +95,19 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_cp,
                                  const int dcomp,
                                  const int scomp,
                                  const int ncomp,
-                                 const IntVect ratio )
+                                 const IntVect crse_ratio )
 {
     BL_PROFILE( "Average::CoarsenAndInterpolate" );
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.boxArray().coarsenable( ratio ),
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.boxArray().coarsenable( crse_ratio ),
         "input MultiFab is not coarsenable" );
 
     // Coarsen fine data
     BoxArray coarsened_mf_fp_ba = mf_fp.boxArray();
-    coarsened_mf_fp_ba.coarsen( ratio );
+    coarsened_mf_fp_ba.coarsen( crse_ratio );
 
     if (coarsened_mf_fp_ba == mf_cp.boxArray() and mf_fp.DistributionMap() == mf_cp.DistributionMap())
-        Average::CoarsenAndInterpolateLoop( mf_cp, mf_fp, dcomp, scomp, ncomp, ratio );
+        Average::CoarsenAndInterpolateLoop( mf_cp, mf_fp, dcomp, scomp, ncomp, crse_ratio );
     else
     {
         // Cannot coarsen directly into a MultiFab with different BoxArray or DistributionMapping.
@@ -115,7 +115,7 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_cp,
         // temporary MultiFab on coarsened version of mf_fp.boxArray(), with same distribution mapping
         MultiFab coarsened_mf_fp( coarsened_mf_fp_ba, mf_fp.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
         // 1) do the interpolation from mf_fp to coarsened_mf_fp (start writing into component 0)
-        Average::CoarsenAndInterpolateLoop( coarsened_mf_fp, mf_fp, 0, scomp, ncomp, ratio );
+        Average::CoarsenAndInterpolateLoop( coarsened_mf_fp, mf_fp, 0, scomp, ncomp, crse_ratio );
         // 2) copy from coarsened_mf_fp to mf_cp (with different BoxArray or DistributionMapping)
         mf_cp.copy( coarsened_mf_fp, 0, dcomp, ncomp );
     }

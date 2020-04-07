@@ -146,51 +146,51 @@ namespace Average{
      * \brief Loops over the boxes of the coarsened MultiFab \c mf_cp and fills
      *        them by interpolating the data contained in the fine MultiFab \c mf_fp.
      *
-     * \param[in,out] mf_cp coarsened MultiFab containing the floating point data
-     *                      to be filled by interpolating the input fine MultiFab
-     * \param[in]     mf_fp fine MultiFab containing the floating point data to be interpolated
-     * \param[in]     dcomp offset for the fourth component of the coarsened Array4
-     *                      object, extracted from its MultiFab, where the interpolated
-     *                      values will be stored
-     * \param[in]     scomp offset for the fourth component of the fine Array4
-     *                      object, extracted from its MultiFab, containing the
-     *                      data to be interpolated
-     * \param[in]     ncomp number of components to loop over for the coarsened
-     *                      Array4 extracted from the coarsened MultiFab \c mf_cp
-     * \param[in]     ratio coarsening ratio between the fine MultiFab \c mf_fp
-     *                      and the coarsened MultiFab \c mf_cp
+     * \param[in,out] mf_cp      coarsened MultiFab containing the floating point data
+     *                           to be filled by interpolating the input fine MultiFab
+     * \param[in]     mf_fp      fine MultiFab containing the floating point data to be interpolated
+     * \param[in]     dcomp      offset for the fourth component of the coarsened Array4
+     *                           object, extracted from its MultiFab, where the interpolated
+     *                           values will be stored
+     * \param[in]     scomp      offset for the fourth component of the fine Array4
+     *                           object, extracted from its MultiFab, containing the
+     *                           data to be interpolated
+     * \param[in]     ncomp      number of components to loop over for the coarsened
+     *                           Array4 extracted from the coarsened MultiFab \c mf_cp
+     * \param[in]     crse_ratio coarsening ratio between the fine MultiFab \c mf_fp
+     *                           and the coarsened MultiFab \c mf_cp
      */
     void CoarsenAndInterpolateLoop ( MultiFab& mf_cp,
                                      const MultiFab& mf_fp,
                                      const int dcomp,
                                      const int scomp,
                                      const int ncomp,
-                                     const IntVect ratio );
+                                     const IntVect crse_ratio );
 
     /**
      * \brief Stores in the coarsened MultiFab \c mf_cp the values obtained by
      *        interpolating the data contained in the fine MultiFab \c mf_fp.
      *
-     * \param[in,out] mf_cp coarsened MultiFab containing the floating point data
-     *                      to be filled by interpolating the fine MultiFab \c mf_fp
-     * \param[in]     mf_fp fine MultiFab containing the floating point data to be interpolated
-     * \param[in]     dcomp offset for the fourth component of the coarsened Array4
-     *                      object, extracted from its MultiFab, where the interpolated
-     *                      values will be stored
-     * \param[in]     scomp offset for the fourth component of the fine Array4
-     *                      object, extracted from its MultiFab, containing the
-     *                      data to be interpolated
-     * \param[in]     ncomp number of components to loop over for the coarsened
-     *                      Array4 extracted from the coarsened MultiFab \c mf_cp
-     * \param[in]     ratio coarsening ratio between the fine MultiFab \c mf_fp
-     *                      and the coarsened MultiFab \c mf_cp
+     * \param[in,out] mf_cp      coarsened MultiFab containing the floating point data
+     *                           to be filled by interpolating the fine MultiFab \c mf_fp
+     * \param[in]     mf_fp      fine MultiFab containing the floating point data to be interpolated
+     * \param[in]     dcomp      offset for the fourth component of the coarsened Array4
+     *                           object, extracted from its MultiFab, where the interpolated
+     *                           values will be stored
+     * \param[in]     scomp      offset for the fourth component of the fine Array4
+     *                           object, extracted from its MultiFab, containing the
+     *                           data to be interpolated
+     * \param[in]     ncomp      number of components to loop over for the coarsened
+     *                           Array4 extracted from the coarsened MultiFab \c mf_cp
+     * \param[in]     crse_ratio coarsening ratio between the fine MultiFab \c mf_fp
+     *                           and the coarsened MultiFab \c mf_cp
      */
     void CoarsenAndInterpolate ( MultiFab& mf_cp,
                                  const MultiFab& mf_fp,
                                  const int dcomp,
                                  const int scomp,
                                  const int ncomp,
-                                 const IntVect ratio );
+                                 const IntVect crse_ratio );
 }
 
 #endif // WARPX_AVERAGE_H_
