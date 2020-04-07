@@ -171,12 +171,38 @@ HankelTransform::HankelForwardTransform (amrex::FArrayBox const& F, int const F_
     AMREX_ALWAYS_ASSERT(ngr >= 0);
     AMREX_ALWAYS_ASSERT(F_box.bigEnd(0)+1 >= m_nr);
 
+#ifndef AMREX_USE_GPU
+    // On CPU, the blas::gemm is significantly faster
+
     // Note that M is flagged to be transposed since it has dimensions (m_nr, m_nk)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                m_nk, nz, m_nr, 1._rt,
                M.dataPtr(), m_nk,
                F.dataPtr(F_icomp)+ngr, nrF, 0._rt,
                G.dataPtr(G_icomp), m_nk);
+
+#else
+    // On GPU, the explicit loop is significantly faster
+    // It is not clear if the GPU gemm wasn't build properly, it is cycling data out and back
+    // in to the device, or if it is because gemm is launching its own threads.
+
+    amrex::Real const * M_arr = M.dataPtr();
+    amrex::Array4<const amrex::Real> const & F_arr = F.array();
+    amrex::Array4<      amrex::Real> const & G_arr = G.array();
+
+    int const nr = m_nr;
+
+    ParallelFor(G_box,
+    [=] AMREX_GPU_DEVICE(int ik, int iz, int inotused) noexcept {
+        G_arr(ik,iz,G_icomp) = 0.;
+        for (int ir=0 ; ir < nr ; ir++) {
+            int const ii = ir + ik*nr;
+            G_arr(ik,iz,G_icomp) += M_arr[ii]*F_arr(ir,iz,F_icomp);
+        }
+    });
+
+#endif
+
 }
 
 void
@@ -195,10 +221,36 @@ HankelTransform::HankelInverseTransform (amrex::FArrayBox const& G, int const G_
     AMREX_ALWAYS_ASSERT(ngr >= 0);
     AMREX_ALWAYS_ASSERT(F_box.bigEnd(0)+1 >= m_nr);
 
+#ifndef AMREX_USE_GPU
+    // On CPU, the blas::gemm is significantly faster
+
     // Note that invM is flagged to be transposed since it has dimensions (m_nk, m_nr)
     blas::gemm(blas::Layout::ColMajor, blas::Op::Trans, blas::Op::NoTrans,
                m_nr, nz, m_nk, 1._rt,
                invM.dataPtr(), m_nr,
                G.dataPtr(G_icomp), m_nk, 0._rt,
                F.dataPtr(F_icomp)+ngr, nrF);
+
+#else
+    // On GPU, the explicit loop is significantly faster
+    // It is not clear if the GPU gemm wasn't build properly, it is cycling data out and back
+    // in to the device, or if it is because gemm is launching its own threads.
+
+    amrex::Real const * invM_arr = invM.dataPtr();
+    amrex::Array4<const amrex::Real> const & G_arr = G.array();
+    amrex::Array4<      amrex::Real> const & F_arr = F.array();
+
+    int const nk = m_nk;
+
+    ParallelFor(G_box,
+    [=] AMREX_GPU_DEVICE(int ir, int iz, int inotused) noexcept {
+        F_arr(ir,iz,F_icomp) = 0.;
+        for (int ik=0 ; ik < nk ; ik++) {
+            int const ii = ik + ir*nk;
+            F_arr(ir,iz,F_icomp) += invM_arr[ii]*G_arr(ik,iz,G_icomp);
+        }
+    });
+
+#endif
+
 }
