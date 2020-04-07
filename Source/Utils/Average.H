@@ -131,7 +131,7 @@ namespace Average{
         const int kmin = idx_min[2];
 
         // Interpolate over points computed above
-        Real c = 0.0;
+        Real c = 0.0_rt;
         for (int kref = 0; kref < numz; ++kref) {
             for (int jref = 0; jref < numy; ++jref) {
                 for (int iref = 0; iref < numx; ++iref) {
