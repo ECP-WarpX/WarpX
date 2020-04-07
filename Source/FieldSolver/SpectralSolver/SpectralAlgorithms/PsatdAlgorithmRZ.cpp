@@ -82,6 +82,11 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             auto const Bp_m = Idx::Bx + Idx::n_fields*mode;
             auto const Bm_m = Idx::By + Idx::n_fields*mode;
             auto const Bz_m = Idx::Bz + Idx::n_fields*mode;
+            auto const Jp_m = Idx::Jx + Idx::n_fields*mode;
+            auto const Jm_m = Idx::Jy + Idx::n_fields*mode;
+            auto const Jz_m = Idx::Jz + Idx::n_fields*mode;
+            auto const rho_old_m = Idx::rho_old + Idx::n_fields*mode;
+            auto const rho_new_m = Idx::rho_new + Idx::n_fields*mode;
 
             // Record old values of the fields to be updated
             Complex const Ep_old = fields(i,j,k,Ep_m);
@@ -91,11 +96,11 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             Complex const Bm_old = fields(i,j,k,Bm_m);
             Complex const Bz_old = fields(i,j,k,Bz_m);
             // Shortcut for the values of J and rho
-            Complex const Jp = fields(i,j,k,Idx::Jx + Idx::n_fields*mode);
-            Complex const Jm = fields(i,j,k,Idx::Jy + Idx::n_fields*mode);
-            Complex const Jz = fields(i,j,k,Idx::Jz + Idx::n_fields*mode);
-            Complex const rho_old = fields(i,j,k,Idx::rho_old + Idx::n_fields*mode);
-            Complex const rho_new = fields(i,j,k,Idx::rho_new + Idx::n_fields*mode);
+            Complex const Jp = fields(i,j,k,Jp_m);
+            Complex const Jm = fields(i,j,k,Jm_m);
+            Complex const Jz = fields(i,j,k,Jz_m);
+            Complex const rho_old = fields(i,j,k,rho_old_m);
+            Complex const rho_new = fields(i,j,k,rho_new_m);
 
             // k vector values, and coefficients
             // The k values for each mode are grouped together
