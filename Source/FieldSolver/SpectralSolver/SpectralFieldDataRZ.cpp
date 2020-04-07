@@ -28,9 +28,12 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (amrex::BoxArray const & realspace_ba,
 {
     amrex::BoxArray const & spectralspace_ba = k_space.spectralspace_ba;
 
-    // Allocate the arrays that contain the fields in spectral space
-    // (one component per field).
-    // Note that this is complex.
+    // Allocate the arrays that contain the fields in spectral space.
+    // SpectralField is comparable to a MultiFab but stores complex numbers.
+    // This stores all of the transformed fields in one place, with the last dimension
+    // being the list of fields, defined by SpectralFieldIndex, for all of the modes.
+    // The fields of each mode are grouped together, so that the index of a
+    // field for a specific mode is given by field_index + mode*n_fields.
     fields = SpectralField(spectralspace_ba, dm, n_rz_azimuthal_modes*n_field_required, 0);
 
     // Allocate temporary arrays - in real space and spectral space.
