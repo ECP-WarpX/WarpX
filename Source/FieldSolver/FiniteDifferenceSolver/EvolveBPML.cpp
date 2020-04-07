@@ -6,15 +6,15 @@
  */
 
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "FiniteDifferenceSolver.H"
+#include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #ifdef WARPX_DIM_RZ
-#   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
-#   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
-#   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
-#   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #endif
-#include "PMLComponent.H"
+#include "BoundaryConditions/PMLComponent.H"
 #include <AMReX_Gpu.H>
 
 using namespace amrex;
