@@ -1526,9 +1526,9 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
 * ``qed_schwinger.threshold_poisson_gaussian`` (`integer`) optional (default `100`)
     If the expected number of physical pairs created in a cell at a given timestep is smaller than this threshold,
-    a Poisson distribution is used to draw to actual number of physical pairs created.
+    a Poisson distribution is used to draw the actual number of physical pairs created.
     Otherwise a Gaussian distribution is used.
-    Note that, regardless of this parameter, the numbers of macroparticles created is at most one per cell
+    Note that, regardless of this parameter, the number of macroparticles created is at most one per cell
     per timestep per species (with a weight corresponding to the number of physical pairs created).
 
 Checkpoints and restart
