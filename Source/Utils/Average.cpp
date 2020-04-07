@@ -34,14 +34,14 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_cp,
                                      const int dcomp,
                                      const int scomp,
                                      const int ncomp,
-                                     const IntVect ratio )
+                                     const IntVect crse_ratio )
 {
     // Staggerings of input fine MultiFab and output coarse MultiFab
-    const IntVect stag_fp = mf_fp.boxArray().ixType().ixType();
-    const IntVect stag_cp = mf_cp.boxArray().ixType().ixType();
+    const IntVect stag_fp = mf_fp.boxArray().ixType().toIntVect();
+    const IntVect stag_cp = mf_cp.boxArray().ixType().toIntVect();
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.nGrowVect() >= IntVect(stag_cp-stag_fp),
-        "input fine MultiFab does not have enough guard cells for this interpolation" );
+        "input MultiFab does not have enough guard cells for this interpolation" );
 
     // Auxiliary integer arrays (always 3D unlike IntVect objects)
     int sf[3], sc[3], cr[3];
@@ -62,12 +62,12 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_cp,
     sc[2] = stag_cp[2];
 #endif
 
-    cr[0] = ratio[0];
-    cr[1] = ratio[1];
+    cr[0] = crse_ratio[0];
+    cr[1] = crse_ratio[1];
 #if   (AMREX_SPACEDIM == 2)
     cr[2] = 1;
 #elif (AMREX_SPACEDIM == 3)
-    cr[2] = ratio[2];
+    cr[2] = crse_ratio[2];
 #endif
 
 #ifdef _OPENMP
@@ -95,30 +95,28 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_cp,
                                  const int dcomp,
                                  const int scomp,
                                  const int ncomp,
-                                 const IntVect ratio )
+                                 const IntVect crse_ratio )
 {
     BL_PROFILE( "Average::CoarsenAndInterpolate" );
 
-    AMREX_D_TERM( AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ratio[0] != 0 and ( ratio[0] == 1 or ratio[0]%2 == 0 ),
-                      "coarsening ratio must be an integer power of 2" );,
-                  AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ratio[1] != 0 and ( ratio[1] == 1 or ratio[1]%2 == 0 ),
-                      "coarsening ratio must be an integer power of 2" );,
-                  AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ratio[2] != 0 and ( ratio[2] == 1 or ratio[2]%2 == 0 ),
-                      "coarsening ratio must be an integer power of 2" ); );
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.boxArray().coarsenable( crse_ratio ),
+        "input MultiFab is not coarsenable" );
 
-    // Coarsen() fine data
+    // Coarsen fine data
     BoxArray coarsened_mf_fp_ba = mf_fp.boxArray();
-    coarsened_mf_fp_ba.coarsen( ratio );
+    coarsened_mf_fp_ba.coarsen( crse_ratio );
 
     if (coarsened_mf_fp_ba == mf_cp.boxArray() and mf_fp.DistributionMap() == mf_cp.DistributionMap())
-        Average::CoarsenAndInterpolateLoop( mf_cp, mf_fp, dcomp, scomp, ncomp, ratio );
+        Average::CoarsenAndInterpolateLoop( mf_cp, mf_fp, dcomp, scomp, ncomp, crse_ratio );
     else
-    // Copy from component scomp of the fine FArrayBox into component 0 of the coarse
-    // FArrayBox because the coarse FArrayBox is a temporary FArrayBox starting at
-    // component 0 and is not part of the actual coarse MultiFab mf_cp
     {
+        // Cannot coarsen directly into a MultiFab with different BoxArray or DistributionMapping.
+        // Hence, it is done in two steps:
+        // temporary MultiFab on coarsened version of mf_fp.boxArray(), with same distribution mapping
         MultiFab coarsened_mf_fp( coarsened_mf_fp_ba, mf_fp.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
-        Average::CoarsenAndInterpolateLoop( coarsened_mf_fp, mf_fp, 0, scomp, ncomp, ratio );
-        mf_cp.copy( coarsened_mf_fp, 0, scomp, ncomp );
+        // 1) do the interpolation from mf_fp to coarsened_mf_fp (start writing into component 0)
+        Average::CoarsenAndInterpolateLoop( coarsened_mf_fp, mf_fp, 0, scomp, ncomp, crse_ratio );
+        // 2) copy from coarsened_mf_fp to mf_cp (with different BoxArray or DistributionMapping)
+        mf_cp.copy( coarsened_mf_fp, 0, dcomp, ncomp );
     }
 }
