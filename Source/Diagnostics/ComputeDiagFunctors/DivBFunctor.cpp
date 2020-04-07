@@ -10,5 +10,15 @@ DivBFunctor::DivBFunctor(const std::array<const amrex::MultiFab* const, 3> arr_m
 void
 DivBFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
 {
-    WarpX::ComputeDivB(mf_dst, dcomp, m_arr_mf_src, WarpX::CellSize(m_lev) );
+    auto& warpx = WarpX::GetInstance();
+
+    const BoxArray& ba = amrex::convert(warpx.boxArray(m_lev),IntVect::TheUnitVector());
+    MultiFab divB( ba, warpx.DistributionMap(m_lev), 1, 0 );
+
+    WarpX::ComputeDivB(mf_dst, 0, m_arr_mf_src, WarpX::CellSize(m_lev) );
+    if (do_coarsen() == false) {
+        Average::ToCellCenter (mf_dst, divB, dcomp, 0, 0, 1);
+    } else {
+        Average::CoarsenAndInterpolate( mf_dst, divB, dcomp, 0, nComp(), m_crse_ratio);    
+    }
 }
