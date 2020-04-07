@@ -5,7 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PsatdAlgorithmRZ.H"
-#include "WarpXConst.H"
+#include "Utils/WarpXConst.H"
 
 #include <cmath>
 
