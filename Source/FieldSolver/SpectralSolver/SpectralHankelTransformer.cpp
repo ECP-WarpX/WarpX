@@ -67,7 +67,7 @@ SpectralHankelTransformer::PhysicalToSpectral_Scalar (amrex::Box const & box,
         if (mode == 0) {
             int const icomp = 0;
             dht0[mode]->HankelForwardTransform(F_physical, icomp, G_spectral, mode_r);
-            G_spectral.setVal(0., mode_i);
+            G_spectral.setVal<amrex::RunOn::Device>(0., mode_i);
         } else {
             int const icomp = 2*mode - 1;
             dht0[mode]->HankelForwardTransform(F_physical, icomp  , G_spectral, mode_r);
