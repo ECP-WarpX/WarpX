@@ -102,7 +102,7 @@ namespace Average{
                                        const int k,
                                        const int comp )
     {
-        // Indices of coarse array
+        // Indices of source coarse array
         const int ic[3] = { i, j, k };
 
         // Number of points for the interpolation, along each direction (1 or 2)

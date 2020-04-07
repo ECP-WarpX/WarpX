@@ -43,10 +43,8 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_dst,
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_src.nGrowVect() >= IntVect(stag_dst-stag_src),
         "input MultiFab does not have enough guard cells for this interpolation" );
 
-    // Auxiliary integer arrays (always 3D unlike IntVect objects):
-    // sf staggering of source MultiFab (fine)
-    // sc staggering of destination MultiFab (coarse)
-    // cr coarsening ratio
+    // Auxiliary integer arrays (always 3D): staggering of source fine MultiFab (sf),
+    // staggering of destination coarse MultiFab (sc), and coarsening ratio (cr)
     int sf[3], sc[3], cr[3];
 
     sf[0] = stag_src[0];
@@ -106,20 +104,20 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_dst,
         "input MultiFab is not coarsenable" );
 
     // Coarsen fine data
-    BoxArray coarsened_mf_src_ba = mf_src.boxArray();
-    coarsened_mf_src_ba.coarsen( crse_ratio );
+    BoxArray ba_tmp = mf_src.boxArray();
+    ba_tmp.coarsen( crse_ratio );
 
-    if (coarsened_mf_src_ba == mf_dst.boxArray() and mf_src.DistributionMap() == mf_dst.DistributionMap())
+    if ( ba_tmp == mf_dst.boxArray() and mf_src.DistributionMap() == mf_dst.DistributionMap() )
         Average::CoarsenAndInterpolateLoop( mf_dst, mf_src, dcomp, scomp, ncomp, crse_ratio );
     else
     {
         // Cannot coarsen directly into a MultiFab with different BoxArray or DistributionMapping.
         // Hence, it is done in two steps:
         // temporary MultiFab on coarsened version of mf_src.boxArray(), with same distribution mapping
-        MultiFab coarsened_mf_src( coarsened_mf_src_ba, mf_src.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
-        // 1) do the interpolation from mf_src to coarsened_mf_src (start writing into component 0)
-        Average::CoarsenAndInterpolateLoop( coarsened_mf_src, mf_src, 0, scomp, ncomp, crse_ratio );
-        // 2) copy from coarsened_mf_src to mf_dst (with different BoxArray or DistributionMapping)
-        mf_dst.copy( coarsened_mf_src, 0, dcomp, ncomp );
+        MultiFab mf_tmp( ba_tmp, mf_src.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
+        // 1) do the interpolation from mf_src to mf_tmp (start writing into component 0)
+        Average::CoarsenAndInterpolateLoop( mf_tmp, mf_src, 0, scomp, ncomp, crse_ratio );
+        // 2) copy from mf_tmp to mf_dst (with different BoxArray or DistributionMapping)
+        mf_dst.copy( mf_tmp, 0, dcomp, ncomp );
     }
 }
