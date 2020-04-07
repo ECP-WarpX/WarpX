@@ -1,5 +1,6 @@
 import yt
 import matplotlib.pyplot as plt
+from scipy.optimize import fsolve
 from skimage import measure
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
@@ -56,12 +57,14 @@ q_tot = -1e-15
 #from the origin. Note, the "massive" particle is offset by -r_0 from the
 #origin with the weightless particle opposite the origin with distance r. Thus,
 #the initial distance between the particles is 2*r_0 (at r = r_0).
-v_exact = lambda r: np.sqrt((q_e*q_tot)/(2*pi*m_e*eps_0)*(1/(r_0)-1/r))
+v_exact = lambda r: np.sqrt((q_e*q_tot)/(2*pi*m_e*eps_0)*(1/r_0-1/r))
 t_exact = lambda r: np.sqrt(r_0**3*2*pi*m_e*eps_0/(q_e*q_tot)) \
     * (np.sqrt(r/r_0-1)*np.sqrt(r/r_0) \
        + np.log(np.sqrt(r/r_0-1)+np.sqrt(r/r_0)))
-E_exact = lambda r: abs(q_tot)/(4*pi*eps_0*r**2)*(abs(r)>=r_0) \
-    + abs(q_tot*r)/(4*pi*eps_0*r_0**3)*(abs(r)<r_0)
+func = lambda tau: t_exact(tau)-t[-1]
+r_end = fsolve(func,r_0)[0]
+E_exact = lambda r: abs(q_tot)/(4*pi*eps_0*r**2)*(abs(r)>=r_end) \
+    + abs(q_tot*r)/(4*pi*eps_0*r_end**3)*(abs(r)<r_end)
 
 for i in range(len(ts)):    #Loop over plotfiles
     ds = ts[i]
@@ -121,7 +124,7 @@ plt.title('Velocity vs sphere radius')
 
 fig3 = plt.figure(3)
 plt.plot(x_avg,E_exact(x_avg))
-plt.plot(x_avg,E0x[:,1],'o')
+plt.plot(x_avg,E0x[:,-1],'o')
 plt.xlabel('r [m]')
 plt.ylabel('E [V/m]')
 plt.title('Electric field vs distance from origin at t=0')
