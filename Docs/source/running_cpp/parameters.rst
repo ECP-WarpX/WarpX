@@ -1,3 +1,5 @@
+.. _running-cpp-parameters:
+
 Input parameters
 ================
 
@@ -1323,6 +1325,8 @@ Diagnostics and output
         \Big\langle (y-\langle y \rangle) (p_y-\langle p_y \rangle) \Big\rangle^2}`,
         :math:`\epsilon_z = \dfrac{1}{mc} \sqrt{\delta_z^2 \delta_{pz}^2 -
         \Big\langle (z-\langle z \rangle) (p_z-\langle p_z \rangle) \Big\rangle^2}`.
+
+        [18]: The charge of the beam (C).
 
         For 2D-XZ,
         :math:`\langle y \rangle`,
