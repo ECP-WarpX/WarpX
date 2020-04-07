@@ -4,7 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "SpectralHankelKSpace.H"
+#include "SpectralKSpaceRZ.H"
 #include "SpectralSolverRZ.H"
 #include "SpectralAlgorithms/PsatdAlgorithmRZ.H"
 
@@ -44,8 +44,8 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
         new PsatdAlgorithmRZ(k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, dt));
 
     // - Initialize arrays for fields in spectral space + FFT plans
-    field_data = SpectralFieldDataHankel(realspace_ba, k_space, dm,
-                                         algorithm->getRequiredNumberOfFields(),
-                                         n_rz_azimuthal_modes);
+    field_data = SpectralFieldDataRZ(realspace_ba, k_space, dm,
+                                     algorithm->getRequiredNumberOfFields(),
+                                     n_rz_azimuthal_modes);
 
 };

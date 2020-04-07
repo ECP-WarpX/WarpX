@@ -7,8 +7,8 @@
 #ifndef WARPX_SPECTRAL_BASE_ALGORITHM_RZ_H_
 #define WARPX_SPECTRAL_BASE_ALGORITHM_RZ_H_
 
-#include "FieldSolver/SpectralSolver/SpectralHankelKSpace.H"
-#include "FieldSolver/SpectralSolver/SpectralFieldDataHankel.H"
+#include "FieldSolver/SpectralSolver/SpectralKSpaceRZ.H"
+#include "FieldSolver/SpectralSolver/SpectralFieldDataRZ.H"
 
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
@@ -21,7 +21,7 @@ class SpectralBaseAlgorithmRZ
 {
     public:
         // Virtual member function ; meant to be overridden in subclasses
-        virtual void pushSpectralFields(SpectralFieldDataHankel & f) = 0;
+        virtual void pushSpectralFields(SpectralFieldDataRZ & f) = 0;
         virtual int getRequiredNumberOfFields() const = 0;
         // The destructor should also be a virtual function, so that
         // a pointer to subclass of `SpectraBaseAlgorithm` actually
@@ -31,7 +31,7 @@ class SpectralBaseAlgorithmRZ
         /**
          * \brief Compute spectral divergence of E
          */
-        void ComputeSpectralDivE ( SpectralFieldDataHankel& field_data,
+        void ComputeSpectralDivE ( SpectralFieldDataRZ& field_data,
                                    const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                    amrex::MultiFab& divE );
 
@@ -40,7 +40,7 @@ class SpectralBaseAlgorithmRZ
         using SpectralCoefficients = amrex::FabArray< amrex::BaseFab <amrex::Real> >;
 
         // Constructor
-        SpectralBaseAlgorithmRZ(SpectralHankelKSpace const & spectral_kspace,
+        SpectralBaseAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
                                 amrex::DistributionMapping const & dm,
                                 int const norder_z, bool const nodal)
           // Compute and assign the modified k vectors

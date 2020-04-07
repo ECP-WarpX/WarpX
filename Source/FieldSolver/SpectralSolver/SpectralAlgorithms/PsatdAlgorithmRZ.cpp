@@ -13,7 +13,7 @@ using amrex::operator""_rt;
 
 
 /* \brief Initialize coefficients for the update equation */
-PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralHankelKSpace const & spectral_kspace,
+PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                     amrex::DistributionMapping const & dm,
                                     int const n_rz_azimuthal_modes, int const norder_z,
                                     bool const nodal, amrex::Real const dt_step)
@@ -37,12 +37,12 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralHankelKSpace const & spectral_kspace
 /* Advance the E and B field in spectral space (stored in `f`)
  * over one time step */
 void
-PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataHankel & f)
+PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 {
 
     if (not coefficients_initialized) {
         // This is called from here since it needs the kr values
-        // which can be obtained from the SpectralFieldDataHankel
+        // which can be obtained from the SpectralFieldDataRZ
         InitializeSpectralCoefficients(f);
         coefficients_initialized = true;
     }
@@ -136,7 +136,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataHankel & f)
     }
 };
 
-void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataHankel const & f)
+void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
 {
 
     // Fill them with the right values:

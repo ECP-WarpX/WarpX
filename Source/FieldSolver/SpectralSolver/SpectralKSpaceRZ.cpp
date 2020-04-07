@@ -5,7 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "Utils/WarpXConst.H"
-#include "SpectralHankelKSpace.H"
+#include "SpectralKSpaceRZ.H"
 
 #include <cmath>
 
@@ -16,15 +16,15 @@
  * \param dm Indicates which MPI proc owns which box, in realspace_ba.
  * \param realspace_dx Cell size of the grid in real space
  */
-SpectralHankelKSpace::SpectralHankelKSpace (const amrex::BoxArray& realspace_ba,
-                                            const amrex::DistributionMapping& dm,
-                                            const amrex::RealVect realspace_dx)
+SpectralKSpaceRZ::SpectralKSpaceRZ (const amrex::BoxArray& realspace_ba,
+                                    const amrex::DistributionMapping& dm,
+                                    const amrex::RealVect realspace_dx)
 {
     dx = realspace_dx;  // Store the cell size as member `dx`
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         realspace_ba.ixType() == amrex::IndexType::TheCellType(),
-        "SpectralHankelKSpace expects a cell-centered box.");
+        "SpectralKSpaceRZ expects a cell-centered box.");
 
     // Create the box array that corresponds to spectral space
     amrex::BoxList spectral_bl; // Create empty box list

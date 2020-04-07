@@ -15,7 +15,7 @@ using namespace amrex;
  */
 void
 SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
-    SpectralFieldDataHankel& field_data,
+    SpectralFieldDataRZ& field_data,
     const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
     amrex::MultiFab& divE )
 {
