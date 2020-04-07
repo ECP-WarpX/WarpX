@@ -105,8 +105,9 @@ namespace Average{
         // Indices of coarse array
         const int ic[3] = { i, j, k };
 
-        // Auxiliary integer arrays
+        // Number of points for the interpolation, along each direction (1 or 2)
         int num_pts[3];
+        // Index of first point of source Array4 from which interpolation is done
         int idx_min[3];
 
         // Compute number of points to loop over (either 1 or 2)
