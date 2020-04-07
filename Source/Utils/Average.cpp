@@ -37,8 +37,8 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_cp,
                                      const IntVect crse_ratio )
 {
     // Staggerings of input fine MultiFab and output coarse MultiFab
-    const IntVect stag_fp = mf_fp.boxArray().ixType().ixType();
-    const IntVect stag_cp = mf_cp.boxArray().ixType().ixType();
+    const IntVect stag_fp = mf_fp.boxArray().ixType().toIntVect();
+    const IntVect stag_cp = mf_cp.boxArray().ixType().toIntVect();
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_fp.nGrowVect() >= IntVect(stag_cp-stag_fp),
         "input MultiFab does not have enough guard cells for this interpolation" );
