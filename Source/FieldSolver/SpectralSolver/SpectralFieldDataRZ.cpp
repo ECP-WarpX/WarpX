@@ -23,7 +23,8 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (amrex::BoxArray const & realspace_ba,
                                           SpectralKSpaceRZ const & k_space,
                                           amrex::DistributionMapping const & dm,
                                           int const n_field_required,
-                                          int const n_modes)
+                                          int const n_modes,
+                                          int const lev)
     : n_rz_azimuthal_modes(n_modes)
 {
     amrex::BoxArray const & spectralspace_ba = k_space.spectralspace_ba;
@@ -118,7 +119,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (amrex::BoxArray const & realspace_ba,
 #endif
 
         // Create the Hankel transformer for each box.
-        std::array<amrex::Real,3> xmax = WarpX::UpperCorner(mfi.tilebox(), 0); // lev=0 is explicit
+        std::array<amrex::Real,3> xmax = WarpX::UpperCorner(mfi.tilebox(), lev);
         multi_spectral_hankel_transformer[mfi] = SpectralHankelTransformer(grid_size[0], n_rz_azimuthal_modes, xmax[0]);
     }
 }

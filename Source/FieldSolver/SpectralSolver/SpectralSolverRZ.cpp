@@ -27,6 +27,7 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
                                    int const n_rz_azimuthal_modes,
                                    int const norder_z, bool const nodal,
                                    amrex::RealVect const dx, amrex::Real const dt,
+                                   int const lev,
                                    bool const pml )
 {
 
@@ -46,6 +47,6 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
     // - Initialize arrays for fields in spectral space + FFT plans
     field_data = SpectralFieldDataRZ(realspace_ba, k_space, dm,
                                      algorithm->getRequiredNumberOfFields(),
-                                     n_rz_azimuthal_modes);
+                                     n_rz_azimuthal_modes, lev);
 
 };

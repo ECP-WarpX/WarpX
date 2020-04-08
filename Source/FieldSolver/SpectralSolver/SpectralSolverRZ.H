@@ -30,6 +30,7 @@ class SpectralSolverRZ
                          int const n_rz_azimuthal_modes,
                          int const norder_z, bool const nodal,
                          amrex::RealVect const dx, amrex::Real const dt,
+                         int const lev,
                          bool const pml=false);
 
         /* \brief Transform the component `i_comp` of MultiFab `field_mf`
