@@ -53,7 +53,7 @@ Diagnostics::ReadParameters ()
             varnames.end());
     }
 
-    
+
     //// Read user-defined (lo,hi) extents for the diag
     //amrex::Vector<Real> diag_lo(AMREX_SPACEDIM);
     //amrex::Vector<Real> diag_hi(AMREX_SPACEDIM);
