@@ -57,7 +57,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (amrex::BoxArray const & realspace_ba,
     // as the forward plan anyway.
     backward_plan = FFTplans(spectralspace_ba, dm);
 #endif
-    hankeltransformer = HankelTransformer(spectralspace_ba, dm);
+    multi_spectral_hankel_transformer = MultiSpectralHankelTransformer(spectralspace_ba, dm);
 
     // Loop over boxes and allocate the corresponding plan
     // for each box owned by the local MPI proc.
@@ -119,7 +119,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (amrex::BoxArray const & realspace_ba,
 
         // Create the Hankel transformer for each box.
         std::array<amrex::Real,3> xmax = WarpX::UpperCorner(mfi.tilebox(), 0); // lev=0 is explicit
-        hankeltransformer[mfi] = SpectralHankelTransformer(grid_size[0], n_rz_azimuthal_modes, xmax[0]);
+        multi_spectral_hankel_transformer[mfi] = SpectralHankelTransformer(grid_size[0], n_rz_azimuthal_modes, xmax[0]);
     }
 }
 
@@ -313,7 +313,7 @@ SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf, int con
         // field_mf does not.
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
         amrex::FArrayBox field_comp(field_mf[mfi], amrex::make_alias, i_comp*ncomp, ncomp);
-        hankeltransformer[mfi].PhysicalToSpectral_Scalar(realspace_bx, field_comp, tempHTransformedSplit[mfi]);
+        multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Scalar(realspace_bx, field_comp, tempHTransformedSplit[mfi]);
 
         FABZForwardTransform(mfi, tempHTransformedSplit, field_index, is_nodal_z);
 
@@ -351,9 +351,9 @@ SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf_r, int c
 
         // Perform the Hankel transform first.
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
-        hankeltransformer[mfi].PhysicalToSpectral_Vector(realspace_bx,
-                                                         field_mf_r_copy[mfi], field_mf_t_copy[mfi],
-                                                         tempHTransformedSplit_p[mfi], tempHTransformedSplit_m[mfi]);
+        multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Vector(realspace_bx,
+                                                           field_mf_r_copy[mfi], field_mf_t_copy[mfi],
+                                                           tempHTransformedSplit_p[mfi], tempHTransformedSplit_m[mfi]);
 
         FABZForwardTransform(mfi, tempHTransformedSplit_p, field_index_r, is_nodal_z);
         FABZForwardTransform(mfi, tempHTransformedSplit_m, field_index_t, is_nodal_z);
@@ -385,7 +385,7 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf, int const fie
         // field_mf does not.
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
         amrex::FArrayBox field_comp(field_mf[mfi], amrex::make_alias, i_comp*ncomp, ncomp);
-        hankeltransformer[mfi].SpectralToPhysical_Scalar(realspace_bx, tempHTransformedSplit[mfi], field_comp);
+        multi_spectral_hankel_transformer[mfi].SpectralToPhysical_Scalar(realspace_bx, tempHTransformedSplit[mfi], field_comp);
 
     }
 }
@@ -417,9 +417,9 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf_r, int const f
         // tempHTransformedSplit includes the imaginary component of mode 0.
         // field_mf_[ri] do not.
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
-        hankeltransformer[mfi].SpectralToPhysical_Vector(realspace_bx,
-                                                         tempHTransformedSplit_p[mfi], tempHTransformedSplit_m[mfi],
-                                                         field_mf_r_copy[mfi], field_mf_t_copy[mfi]);
+        multi_spectral_hankel_transformer[mfi].SpectralToPhysical_Vector(realspace_bx,
+                                                           tempHTransformedSplit_p[mfi], tempHTransformedSplit_m[mfi],
+                                                           field_mf_r_copy[mfi], field_mf_t_copy[mfi]);
 
         amrex::Array4<amrex::Real> const & field_mf_r_array = field_mf_r[mfi].array();
         amrex::Array4<amrex::Real> const & field_mf_t_array = field_mf_t[mfi].array();

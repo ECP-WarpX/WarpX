@@ -29,7 +29,7 @@ class SpectralFieldDataRZ
         using FFTplans = amrex::LayoutData<fftw_plan>;
 #endif
         // Similarly, define the Hankel transformers for each box.
-        using HankelTransformer = amrex::LayoutData<SpectralHankelTransformer>;
+        using MultiSpectralHankelTransformer = amrex::LayoutData<SpectralHankelTransformer>;
 
         SpectralFieldDataRZ(const amrex::BoxArray& realspace_ba,
                             const SpectralKSpaceRZ& k_space,
@@ -58,7 +58,7 @@ class SpectralFieldDataRZ
 
         // Returns an array that holds the kr for all of the modes
         HankelTransform::RealVector const & getKrArray(amrex::MFIter const & mfi) const {
-            return hankeltransformer[mfi].getKrArray();
+            return multi_spectral_hankel_transformer[mfi].getKrArray();
         }
 
         // `fields` stores fields in spectral space, as multicomponent FabArray
@@ -76,7 +76,7 @@ class SpectralFieldDataRZ
         // Correcting "shift" factors when performing FFT from/to
         // a cell-centered grid in real space, instead of a nodal grid
         SpectralShiftFactor zshift_FFTfromCell, zshift_FFTtoCell;
-        HankelTransformer hankeltransformer;
+        MultiSpectralHankelTransformer multi_spectral_hankel_transformer;
 
 };
 
