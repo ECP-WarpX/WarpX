@@ -28,7 +28,6 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
                                    int const norder_z, bool const nodal,
                                    amrex::RealVect const dx, amrex::Real const dt,
                                    bool const pml )
-    : k_space(realspace_ba, dm, dx)
 {
 
     // Initialize all structures using the same distribution mapping dm
@@ -36,6 +35,7 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
     // - The k space object contains info about the size of
     //   the spectral space corresponding to each box in `realspace_ba`,
     //   as well as the value of the corresponding k coordinates.
+    SpectralKSpaceRZ k_space(realspace_ba, dm, dx);
 
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
