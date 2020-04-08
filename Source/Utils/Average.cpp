@@ -104,7 +104,7 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_dst,
         "input MultiFab is not coarsenable" );
 
     // Coarsen fine data
-    BoxArray ba_tmp = mf_src.boxArray();
+    BoxArray ba_tmp = amrex::convert( mf_src.boxArray(), mf_dst.ixType().toIntVect() );
     ba_tmp.coarsen( crse_ratio );
 
     if ( ba_tmp == mf_dst.boxArray() and mf_src.DistributionMap() == mf_dst.DistributionMap() )
