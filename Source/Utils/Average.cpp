@@ -10,40 +10,46 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_dst,
                                      const int ncomp,
                                      const IntVect crse_ratio )
 {
-    // Staggerings of input fine MultiFab and output coarse MultiFab
+    // Staggering of source fine MultiFab and destination coarse MultiFab
     const IntVect stag_src = mf_src.boxArray().ixType().toIntVect();
     const IntVect stag_dst = mf_dst.boxArray().ixType().toIntVect();
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_src.nGrowVect() >= IntVect(stag_dst-stag_src),
-        "input MultiFab does not have enough guard cells for this interpolation" );
+        "source fine MultiFab does not have enough guard cells for this interpolation" );
 
-    // Auxiliary integer arrays (always 3D): staggering of source fine MultiFab (sf),
-    // staggering of destination coarse MultiFab (sc), and coarsening ratio (cr)
-    int sf[3], sc[3], cr[3];
+    // Auxiliary integer arrays (always 3D)
+    Gpu::ManagedVector<int> sf_gpuarr, sc_gpuarr, cr_gpuarr;
+    sf_gpuarr.resize( 3 ); // staggering of source fine MultiFab
+    sc_gpuarr.resize( 3 ); // staggering of destination coarse MultiFab
+    cr_gpuarr.resize( 3 ); // coarsening ratio
 
-    sf[0] = stag_src[0];
-    sf[1] = stag_src[1];
+    sf_gpuarr[0] = stag_src[0];
+    sf_gpuarr[1] = stag_src[1];
 #if   (AMREX_SPACEDIM == 2)
-    sf[2] = 0;
+    sf_gpuarr[2] = 0;
 #elif (AMREX_SPACEDIM == 3)
-    sf[2] = stag_src[2];
+    sf_gpuarr[2] = stag_src[2];
 #endif
 
-    sc[0] = stag_dst[0];
-    sc[1] = stag_dst[1];
+    sc_gpuarr[0] = stag_dst[0];
+    sc_gpuarr[1] = stag_dst[1];
 #if   (AMREX_SPACEDIM == 2)
-    sc[2] = 0;
+    sc_gpuarr[2] = 0;
 #elif (AMREX_SPACEDIM == 3)
-    sc[2] = stag_dst[2];
+    sc_gpuarr[2] = stag_dst[2];
 #endif
 
-    cr[0] = crse_ratio[0];
-    cr[1] = crse_ratio[1];
+    cr_gpuarr[0] = crse_ratio[0];
+    cr_gpuarr[1] = crse_ratio[1];
 #if   (AMREX_SPACEDIM == 2)
-    cr[2] = 1;
+    cr_gpuarr[2] = 1;
 #elif (AMREX_SPACEDIM == 3)
-    cr[2] = crse_ratio[2];
+    cr_gpuarr[2] = crse_ratio[2];
 #endif
+
+    int const* const AMREX_RESTRICT sf = sf_gpuarr.data();
+    int const* const AMREX_RESTRICT sc = sc_gpuarr.data();
+    int const* const AMREX_RESTRICT cr = cr_gpuarr.data();
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())

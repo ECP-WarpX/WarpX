@@ -27,9 +27,9 @@ namespace Average{
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     Real CoarsenAndInterpolateKernel ( Array4<Real const> const& arr_src,
-                                       const int sf[3],
-                                       const int sc[3],
-                                       const int cr[3],
+                                       int const* const AMREX_RESTRICT sf,
+                                       int const* const AMREX_RESTRICT sc,
+                                       int const* const AMREX_RESTRICT cr,
                                        const int i,
                                        const int j,
                                        const int k,
