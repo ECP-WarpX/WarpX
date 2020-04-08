@@ -8,13 +8,13 @@ namespace Average{
     using namespace amrex;
 
     /**
-     * \brief Interpolates the floating point data contained in the input Array4
+     * \brief Interpolates the floating point data contained in the source Array4
      *        \c mf_fp_arr, extracted from a fine MultiFab, by averaging over either
      *        1 point or 2 equally distant points.
      *
      * \param[in] arr_src floating point data to be interpolated
-     * \param[in] sf      staggering of the input fine MultiFab
-     * \param[in] sc      staggering of the output coarsened MultiFab
+     * \param[in] sf      staggering of the source fine MultiFab
+     * \param[in] sc      staggering of the destination coarsened MultiFab
      * \param[in] cr      coarsening ratio along each spatial direction
      * \param[in] i       index along x of the coarsened Array4 to be filled
      * \param[in] j       index along y of the coarsened Array4 to be filled
@@ -81,7 +81,7 @@ namespace Average{
      *        them by interpolating the data contained in the fine MultiFab \c mf_src.
      *
      * \param[in,out] mf_dst     coarsened MultiFab containing the floating point data
-     *                           to be filled by interpolating the input fine MultiFab
+     *                           to be filled by interpolating the source fine MultiFab
      * \param[in]     mf_src     fine MultiFab containing the floating point data to be interpolated
      * \param[in]     dcomp      offset for the fourth component of the coarsened Array4
      *                           object, extracted from its MultiFab, where the interpolated
@@ -99,7 +99,7 @@ namespace Average{
                                      const int dcomp,
                                      const int scomp,
                                      const int ncomp,
-                                     const IntVect crse_ratio );
+                                     const IntVect crse_ratio=IntVect(1) );
 
     /**
      * \brief Stores in the coarsened MultiFab \c mf_dst the values obtained by
@@ -124,7 +124,7 @@ namespace Average{
                                  const int dcomp,
                                  const int scomp,
                                  const int ncomp,
-                                 const IntVect crse_ratio );
+                                 const IntVect crse_ratio=IntVect(1) );
 }
 
 #endif // WARPX_AVERAGE_H_
