@@ -35,13 +35,13 @@ class SpectralHankelTransformer
         // Returns an array that holds the kr for all of the modes
         HankelTransform::RealVector const & getKrArray() const {return m_kr;}
 
-        // Converts a scalar field from the spectral to the spectral space
+        // Converts a scalar field from the physical to the spectral space
         void
         PhysicalToSpectral_Scalar(amrex::Box const & box,
                                   amrex::FArrayBox const & F_physical,
                                   amrex::FArrayBox       & G_spectral);
 
-        // Converts a vector field from the spectral to the spectral space
+        // Converts a vector field from the physical to the spectral space
         void
         PhysicalToSpectral_Vector(amrex::Box const & box,
                                   amrex::FArrayBox & F_r_physical,

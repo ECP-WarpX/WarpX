@@ -36,7 +36,8 @@ SpectralHankelTransformer::ExtractKrArray ()
 
     for (int mode=0 ; mode < m_n_rz_azimuthal_modes ; mode++) {
 
-        // Save all of the kr's in one place to allow easy access later
+        // Save a copy of all of the kr's in one place to allow easy access later.
+        // They are stored with the kr's of each mode grouped together.
         amrex::Real *kr_array = m_kr.dataPtr();
         auto const & kr_mode = dht0[mode]->getSpectralWavenumbers();
         auto const & kr_m_array = kr_mode.dataPtr();
