@@ -4,9 +4,9 @@
 using namespace amrex;
 
 CellCenterFunctor::CellCenterFunctor(amrex::MultiFab const * mf_src, int lev,
-                                     amrex::IntVect diag_crse_ratio,
+                                     amrex::IntVect crse_ratio,
                                      bool convertRZmodes2cartesian, int ncomp)
-    : ComputeDiagFunctor(ncomp, diag_crse_ratio), m_mf_src(mf_src), m_lev(lev),
+    : ComputeDiagFunctor(ncomp, crse_ratio), m_mf_src(mf_src), m_lev(lev),
       m_convertRZmodes2cartesian(convertRZmodes2cartesian)
 {}
 

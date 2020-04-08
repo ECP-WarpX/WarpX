@@ -13,14 +13,14 @@ public:
     /** Constructor.
      * \param[in] mf_src source multifab.
      * \param[in] lev level of multifab. Used for averaging in rz.
-     * \param[in] diag_crse_ratio for interpolating field values from src_mf
+     * \param[in] crse_ratio for interpolating field values from src_mf
                   to the coarsened dst_mf
      * \param[in] convert_RZmodes2cartesian (in cylindrical) whether to
      *            sum all modes in mf_src before cell-centering into dst multifab.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
     CellCenterFunctor(const amrex::MultiFab * const mf_src, const int lev,
-                      const amrex::IntVect diag_crse_ratio,
+                      const amrex::IntVect crse_ratio,
                       bool convertRZmodes2cartesian=true, int ncomp=1);
 
     /** \brief Cell-center m_mf_src and write the result in mf_dst.

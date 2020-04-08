@@ -3,8 +3,8 @@
 
 using namespace amrex;
 
-DivEFunctor::DivEFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, const amrex::IntVect diag_crse_ratio, const int ncomp)
-    : ComputeDiagFunctor(ncomp, diag_crse_ratio), m_arr_mf_src(arr_mf_src), m_lev(lev)
+DivEFunctor::DivEFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, const amrex::IntVect crse_ratio, const int ncomp)
+    : ComputeDiagFunctor(ncomp, crse_ratio), m_arr_mf_src(arr_mf_src), m_lev(lev)
 {}
 
 void

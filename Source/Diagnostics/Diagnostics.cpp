@@ -53,10 +53,20 @@ Diagnostics::ReadParameters ()
             varnames.end());
     }
 
+    
+    //// Read user-defined (lo,hi) extents for the diag
+    //amrex::Vector<Real> diag_lo(AMREX_SPACEDIM);
+    //amrex::Vector<Real> diag_hi(AMREX_SPACEDIM);
+    //Vector<Geometry> dom_geom = warpx.Geom() ;
+    //pp.queryarr("diag_lo", diag_lo, 0, AMREX_SPACEDIM);
+    //pp.queryarr("diag_hi", diag_hi, 0, AMREX_SPACEDIM);
+    //diag_realbox.setLo(diag_lo);
+    //diag_realbox.setHi(diag_hi);
+
     // Initialize cr_ratio with default value of 1 for each dimension.
     Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
     // Read user-defined coarsening ratio for the output multifab.
-    if (pp.queryarr("coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM)) {
+    if (pp.queryarr("coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM) ) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
            m_crse_ratio[idim] = cr_ratio[idim];
        }
