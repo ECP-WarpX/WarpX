@@ -272,9 +272,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
     const std::array<std::unique_ptr<MultiFab>,3> &vector_total = vector_field;
 #endif
 
-    Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow );
-    Average::ToCellCenter( mf_avg, *(vector_total[1]), dcomp+1, ngrow );
-    Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+2, ngrow );
+    Average::CoarsenAndInterpolate( mf_avg, *(vector_total[0]), dcomp  , 0, 1, IntVect(1) );
+    Average::CoarsenAndInterpolate( mf_avg, *(vector_total[1]), dcomp+1, 0, 1, IntVect(1) );
+    Average::CoarsenAndInterpolate( mf_avg, *(vector_total[2]), dcomp+2, 0, 1, IntVect(1) );
 }
 
 /** \brief Takes all of the components of the three fields and
@@ -330,7 +330,7 @@ AverageAndPackScalarField (MultiFab& mf_avg,
         MultiFab::Copy( mf_avg, *scalar_total, 0, dcomp, 1, ngrow);
     } else if ( scalar_total->is_nodal() ){
         // - Fully nodal
-        Average::ToCellCenter( mf_avg, *scalar_total, dcomp, ngrow, 0, 1 );
+        Average::CoarsenAndInterpolate( mf_avg, *scalar_total, dcomp, 0, 1, IntVect(1) );
     } else {
         amrex::Abort("Unknown staggering.");
     }
