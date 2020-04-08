@@ -33,7 +33,7 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
         Average::CoarsenAndInterpolate( mf_dst, *m_mf_src, dcomp, 0, nComp(), m_crse_ratio);
     }
 #else
-    // average and interpolate from fine m_mf_src to coarse mf_dst.
+    // coarsen and interpolate from fine m_mf_src to coarse mf_dst.
     Average::CoarsenAndInterpolate( mf_dst, *m_mf_src, dcomp, 0, nComp(), m_crse_ratio);
 #endif
 }
