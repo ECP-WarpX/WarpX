@@ -117,81 +117,24 @@ void
 WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
 {
 
+    // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveB( Bfield_fp[lev], Efield_fp[lev], a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveB( Bfield_cp[lev], Efield_cp[lev], a_dt );
     }
 
-    const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
-    const std::array<Real,3>& dx = WarpX::CellSize(patch_level);
-    const Real dtsdx = a_dt/dx[0], dtsdy = a_dt/dx[1], dtsdz = a_dt/dx[2];
-
-    if (do_pml && pml[lev]->ok())
-    {
-        const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
-        const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
-
-#ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-        for ( MFIter mfi(*pml_B[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
-        {
-            const Box& tbx  = mfi.tilebox(Bx_nodal_flag);
-            const Box& tby  = mfi.tilebox(By_nodal_flag);
-            const Box& tbz  = mfi.tilebox(Bz_nodal_flag);
-            auto const& pml_Bxfab = pml_B[0]->array(mfi);
-            auto const& pml_Byfab = pml_B[1]->array(mfi);
-            auto const& pml_Bzfab = pml_B[2]->array(mfi);
-            auto const& pml_Exfab = pml_E[0]->array(mfi);
-            auto const& pml_Eyfab = pml_E[1]->array(mfi);
-            auto const& pml_Ezfab = pml_E[2]->array(mfi);
-            if (WarpX::maxwell_fdtd_solver_id == 0) {
-               amrex::ParallelFor(tbx, tby, tbz,
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_bx_yee(i,j,k,pml_Bxfab,pml_Eyfab,pml_Ezfab,
-                                        dtsdy,dtsdz);
-               },
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_by_yee(i,j,k,pml_Byfab,pml_Exfab,pml_Ezfab,
-                                         dtsdx,dtsdz);
-               },
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_bz_yee(i,j,k,pml_Bzfab,pml_Exfab,pml_Eyfab,
-                                        dtsdx,dtsdy);
-               });
-            }  else if (WarpX::maxwell_fdtd_solver_id == 1) {
-               Real betaxy, betaxz, betayx, betayz, betazx, betazy;
-               Real gammax, gammay, gammaz;
-               Real alphax, alphay, alphaz;
-               warpx_calculate_ckc_coefficients(dtsdx, dtsdy, dtsdz,
-                                                betaxy, betaxz, betayx, betayz,
-                                                betazx, betazy, gammax, gammay,
-                                                gammaz, alphax, alphay, alphaz);
-
-               amrex::ParallelFor(tbx, tby, tbz,
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_bx_ckc(i,j,k,pml_Bxfab,pml_Eyfab,pml_Ezfab,
-                                         betaxy, betaxz, betayx, betayz,
-                                         betazx, betazy, gammax, gammay,
-                                         gammaz, alphax, alphay, alphaz);
-               },
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_by_ckc(i,j,k,pml_Byfab,pml_Exfab,pml_Ezfab,
-                                         betaxy, betaxz, betayx, betayz,
-                                         betazx, betazy, gammax, gammay,
-                                         gammaz, alphax, alphay, alphaz);
-               },
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_bz_ckc(i,j,k,pml_Bzfab,pml_Exfab,pml_Eyfab,
-                                         betaxy, betaxz, betayx, betayz,
-                                         betazx, betazy, gammax, gammay,
-                                         gammaz, alphax, alphay, alphaz);
-               });
-
-            }
+    // Evolve B field in PML cells
+    if (do_pml && pml[lev]->ok()) {
+        if (patch_type == PatchType::fine) {
+            m_fdtd_solver_fp[lev]->EvolveBPML(
+                pml[lev]->GetB_fp(), pml[lev]->GetE_fp(), a_dt );
+        } else {
+            m_fdtd_solver_cp[lev]->EvolveBPML(
+                pml[lev]->GetB_cp(), pml[lev]->GetE_cp(), a_dt );
         }
     }
+
 }
 
 void
