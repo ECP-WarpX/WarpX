@@ -323,7 +323,7 @@ SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf, int con
 
 /* \brief Transform the coupled components of MultiFabs `field_mf_r` and `field_mf_t`
  *  to spectral space, and store the corresponding result internally
- *  (in the spectral fields specified by `field_index_r` and `field_index_r`) */
+ *  (in the spectral fields specified by `field_index_r` and `field_index_t`) */
 void
 SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf_r, int const field_index_r,
                                        amrex::MultiFab const & field_mf_t, int const field_index_t)
