@@ -6,8 +6,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "PML.H"
-#include "PMLComponent.H"
+#include "BoundaryConditions/PML.H"
+#include "BoundaryConditions/PMLComponent.H"
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
 
