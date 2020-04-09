@@ -15,7 +15,10 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_dst,
     const IntVect stag_src = mf_src.boxArray().ixType().toIntVect();
     const IntVect stag_dst = mf_dst.boxArray().ixType().toIntVect();
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_src.nGrowVect() >= IntVect(stag_dst-stag_src),
+    if ( crse_ratio > IntVect(1) ) AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ngrow == 0,
+        "option of filling guard cells of destination MultiFab with coarsening not supported for this interpolation" );
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_src.nGrowVect() >= stag_dst-stag_src+IntVect(ngrow),
         "source fine MultiFab does not have enough guard cells for this interpolation" );
 
     // Auxiliary integer arrays (always 3D)
