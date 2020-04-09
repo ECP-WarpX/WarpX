@@ -19,10 +19,11 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_dst,
         "source fine MultiFab does not have enough guard cells for this interpolation" );
 
     // Auxiliary integer arrays (always 3D)
-    Gpu::ManagedVector<int> sf_gpuarr, sc_gpuarr, cr_gpuarr;
+    Gpu::ManagedVector<int> sf_gpuarr, sc_gpuarr, cr_gpuarr, np_gpuarr;
     sf_gpuarr.resize( 3 ); // staggering of source fine MultiFab
     sc_gpuarr.resize( 3 ); // staggering of destination coarse MultiFab
     cr_gpuarr.resize( 3 ); // coarsening ratio
+    np_gpuarr.resize( 3 ); // number of points to loop over for interpolation
 
     sf_gpuarr[0] = stag_src[0];
     sf_gpuarr[1] = stag_src[1];
@@ -51,6 +52,13 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_dst,
     int const* const AMREX_RESTRICT sf = sf_gpuarr.data();
     int const* const AMREX_RESTRICT sc = sc_gpuarr.data();
     int const* const AMREX_RESTRICT cr = cr_gpuarr.data();
+    int      * const AMREX_RESTRICT np = np_gpuarr.data();
+
+    // Compute number of points to loop over (either 1 or 2) in each direction
+    for ( int l = 0; l < 3; ++l ) {
+        if ( cr[l] == 1 ) np[l] = 1+abs(sf[l]-sc[l]); // no coarsening
+        else              np[l] = 2-sf[l];
+    }
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -66,7 +74,7 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_dst,
                      [=] AMREX_GPU_DEVICE( int i, int j, int k, int n )
                      {
                          arr_dst(i,j,k,n+dcomp) = Average::CoarsenAndInterpolateKernel(
-                             arr_src, sf, sc, cr, i, j, k, n+scomp );
+                             arr_src, sf, sc, cr, np, i, j, k, n+scomp );
                      } );
     }
 }

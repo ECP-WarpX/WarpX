@@ -16,6 +16,7 @@ namespace Average{
      * \param[in] sf      staggering of the source fine MultiFab
      * \param[in] sc      staggering of the destination coarsened MultiFab
      * \param[in] cr      coarsening ratio along each spatial direction
+     * \param[in] np      number of points to loop over for interpolation
      * \param[in] i       index along x of the coarsened Array4 to be filled
      * \param[in] j       index along y of the coarsened Array4 to be filled
      * \param[in] k       index along z of the coarsened Array4 to be filled
@@ -30,6 +31,7 @@ namespace Average{
                                        int const* const AMREX_RESTRICT sf,
                                        int const* const AMREX_RESTRICT sc,
                                        int const* const AMREX_RESTRICT cr,
+                                       int const* const AMREX_RESTRICT np,
                                        const int i,
                                        const int j,
                                        const int k,
@@ -38,28 +40,20 @@ namespace Average{
         // Indices of source coarse array
         const int ic[3] = { i, j, k };
 
-        // Number of points for the interpolation, along each direction (1 or 2)
-        int num_pts[3];
         // Index of first point of source Array4 from which interpolation is done
         int idx_min[3];
 
         // Compute number of points to loop over (either 1 or 2)
         // and starting indices of fine array in each direction
         for ( int l = 0; l < 3; ++l ) {
-            if ( cr[l] == 1 ) {
-                num_pts[l] = 1+abs(sf[l]-sc[l]);
-                idx_min[l] = ic[l]-sc[l]*(1-sf[l]);
-            }
-            else {
-                num_pts[l] = 2-sf[l];
-                idx_min[l] = ic[l]*cr[l]+static_cast<int>(cr[l]/2)*(1-sc[l])-(1-sf[l]);
-            }
+            if ( cr[l] == 1 ) idx_min[l] = ic[l]-sc[l]*(1-sf[l]); // no coarsening
+            else              idx_min[l] = ic[l]*cr[l]+static_cast<int>(cr[l]/2)*(1-sc[l])-(1-sf[l]);
         }
 
         // Auxiliary integer variables
-        const int numx = num_pts[0];
-        const int numy = num_pts[1];
-        const int numz = num_pts[2];
+        const int numx = np[0];
+        const int numy = np[1];
+        const int numz = np[2];
         const int imin = idx_min[0];
         const int jmin = idx_min[1];
         const int kmin = idx_min[2];
