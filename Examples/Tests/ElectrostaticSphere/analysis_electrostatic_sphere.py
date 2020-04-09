@@ -43,7 +43,7 @@ q_tot = -1e-15  #Total charge of sphere in C
 # The solution r(t) solves the ODE: r''(t) = a/(r(t)**2) with initial conditions
 # r(0) = r_0, r'(0) = 0, and a = q_e*q_tot/(4*pi*eps_0*m_e)
 #
-# Note: since E is saved on a staggered time grid shifted by dt/2
+# Note: E might be saved on a staggered time grid shifted by dt/2 (check this!)
 v_exact = lambda r: np.sqrt((q_e*q_tot)/(2*pi*m_e*eps_0)*(1/r_0-1/r))
 t_exact = lambda r: np.sqrt(r_0**3*2*pi*m_e*eps_0/(q_e*q_tot)) \
     * (np.sqrt(r/r_0-1)*np.sqrt(r/r_0) \
@@ -53,11 +53,12 @@ r_end = fsolve(func,r_0)[0]  #Numerically solve for r(t_max)
 E_exact = lambda r: np.sign(r)*(q_tot/(4*pi*eps_0*r**2)*(abs(r)>=r_end) \
     + q_tot*abs(r)/(4*pi*eps_0*r_end**3)*(abs(r)<r_end))
 
-# Open plotfile specified in command line
-if __name__ == "__main__":
-    filename = 'diags/plotfiles/plt00030'
-else:
-    filename = sys.argv[1]
+# Open plotfile specified in command line (commented lines for debugging)
+# if __name__ == "__main__":
+#     filename = 'diags/plotfiles/plt00030'
+# else:
+#     filename = sys.argv[1]
+filename = sys.argv[1]
 ds = yt.load( filename )
 
 # Load data pertaining to fields
