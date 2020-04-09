@@ -146,12 +146,12 @@ Diagnostics::InitData ()
              diag_dom[lev].setLo(idim, max(diag_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
              diag_dom[lev].setHi(idim, min(diag_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
              if ( fabs(warpx.Geom(lev).ProbLo(idim) - diag_dom[lev].lo(idim))
-                                    >  warpx.Geom(lev).CellSize(idim) ) 
+                                    >  warpx.Geom(lev).CellSize(idim) )
                   use_warpxba = false;
              if ( fabs(warpx.Geom(lev).ProbHi(idim) - diag_dom[lev].hi(idim))
-                                    > warpx.Geom(lev).CellSize(idim) ) 
+                                    > warpx.Geom(lev).CellSize(idim) )
                   use_warpxba = false;
-             
+
         }
         if (use_warpxba == false) {
            // Create new box array
@@ -159,13 +159,13 @@ Diagnostics::InitData ()
            IntVect diag_ihi(AMREX_D_DECL(1,1,1));
            for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
                // lo index
-               diag_ilo[idim] = static_cast<int>( floor ( 
+               diag_ilo[idim] = static_cast<int>( floor (
                                     ( diag_dom[lev].lo(idim)
                                     - warpx.Geom(lev).ProbLo(idim) )
-                                    / warpx.Geom(lev).CellSize(idim) ) ); 
+                                    / warpx.Geom(lev).CellSize(idim) ) );
                // hi index
-               diag_ihi[idim] = static_cast<int> ( ceil ( 
-                                    ( diag_dom[lev].hi(idim) 
+               diag_ihi[idim] = static_cast<int> ( ceil (
+                                    ( diag_dom[lev].hi(idim)
                                     - warpx.Geom(lev).ProbLo(idim) )
                                     / warpx.Geom(lev).CellSize(idim) ) ) ;
 
@@ -174,7 +174,7 @@ Diagnostics::InitData ()
                int mod_lo = diag_ilo[idim] % m_crse_ratio[idim];
                int mod_hi = diag_ihi[idim] % m_crse_ratio[idim];
                if (mod_lo > 0) diag_ilo[idim] -= mod_lo;
-               if (mod_hi > 0) diag_ihi[idim] += (m_crse_ratio[idim] - mod_hi); 
+               if (mod_hi > 0) diag_ihi[idim] += (m_crse_ratio[idim] - mod_hi);
                // Subtract hi_index by 1 accounting for cell-centered indextype of mf_avg
                diag_ihi[idim]  -= 1;
                // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
@@ -187,7 +187,7 @@ Diagnostics::InitData ()
            }
            // Box for the reduced-domain diag
            Box diag_box(diag_ilo,diag_ihi);
-           // Define box array 
+           // Define box array
            BoxArray diag_ba;
            diag_ba.define(diag_box);
            const int diag_grid_size = 32;
@@ -203,7 +203,7 @@ Diagnostics::InitData ()
         );
         // The boxArray is coarsened based on the user-defined coarsening ratio
         ba.coarsen(m_crse_ratio);
-        if (use_warpxba == false) dmap = DistributionMapping{ba}; 
+        if (use_warpxba == false) dmap = DistributionMapping{ba};
         // Allocate output multifab
         // Note: default MultiFab constructor is cell-centered
         mf_avg[lev] = MultiFab(ba, dmap, varnames.size(), 0);
