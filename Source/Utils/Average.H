@@ -99,6 +99,7 @@ namespace Average{
                                      const int dcomp,
                                      const int scomp,
                                      const int ncomp,
+                                     const int ngrow,
                                      const IntVect crse_ratio=IntVect(1) );
 
     /**
@@ -124,6 +125,7 @@ namespace Average{
                                  const int dcomp,
                                  const int scomp,
                                  const int ncomp,
+                                 const int ngrow,
                                  const IntVect crse_ratio=IntVect(1) );
 }
 

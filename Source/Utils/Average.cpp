@@ -8,6 +8,7 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_dst,
                                      const int dcomp,
                                      const int scomp,
                                      const int ncomp,
+                                     const int ngrow,
                                      const IntVect crse_ratio )
 {
     // Staggering of source fine MultiFab and destination coarse MultiFab
@@ -58,7 +59,7 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_dst,
     for (MFIter mfi( mf_dst, TilingIfNotGPU() ); mfi.isValid(); ++mfi)
     {
         // Tiles defined at the coarse level
-        const Box& bx = mfi.tilebox();
+        const Box& bx = mfi.growntilebox( ngrow );
         Array4<Real> const& arr_dst = mf_dst.array( mfi );
         Array4<Real const> const& arr_src = mf_src.const_array( mfi );
         ParallelFor( bx, ncomp,
@@ -76,6 +77,7 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_dst,
                                  const int dcomp,
                                  const int scomp,
                                  const int ncomp,
+                                 const int ngrow,
                                  const IntVect crse_ratio )
 {
     BL_PROFILE( "Average::CoarsenAndInterpolate" );
@@ -87,14 +89,14 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_dst,
     ba_tmp.coarsen( crse_ratio );
 
     if ( ba_tmp == mf_dst.boxArray() and mf_src.DistributionMap() == mf_dst.DistributionMap() )
-        Average::CoarsenAndInterpolateLoop( mf_dst, mf_src, dcomp, scomp, ncomp, crse_ratio );
+        Average::CoarsenAndInterpolateLoop( mf_dst, mf_src, dcomp, scomp, ncomp, ngrow, crse_ratio );
     else
     {
         // Cannot coarsen into MultiFab with different BoxArray or DistributionMapping:
         // 1) create temporary MultiFab on coarsened version of source BoxArray with same DistributionMapping
         MultiFab mf_tmp( ba_tmp, mf_src.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
         // 2) interpolate from mf_src to mf_tmp (start writing into component 0)
-        Average::CoarsenAndInterpolateLoop( mf_tmp, mf_src, 0, scomp, ncomp, crse_ratio );
+        Average::CoarsenAndInterpolateLoop( mf_tmp, mf_src, 0, scomp, ncomp, ngrow, crse_ratio );
         // 3) copy from mf_tmp to mf_dst (with different BoxArray or DistributionMapping)
         mf_dst.copy( mf_tmp, 0, dcomp, ncomp );
     }
