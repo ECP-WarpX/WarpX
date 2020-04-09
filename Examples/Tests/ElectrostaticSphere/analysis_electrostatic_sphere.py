@@ -54,7 +54,10 @@ E_exact = lambda r: np.sign(r)*(q_tot/(4*pi*eps_0*r**2)*(abs(r)>=r_end) \
     + q_tot*abs(r)/(4*pi*eps_0*r_end**3)*(abs(r)<r_end))
 
 # Open plotfile specified in command line
-filename = sys.argv[1]
+if __name__ == "__main__":
+    filename = 'diags/plotfiles/plt00030'
+else:
+    filename = sys.argv[1]
 ds = yt.load( filename )
 
 # Load data pertaining to fields
@@ -109,5 +112,3 @@ print("L2 error along z-axis = %s" %L2_error_z)
 assert L2_error_x < 0.05
 assert L2_error_y < 0.05
 assert L2_error_z < 0.05
-
-
