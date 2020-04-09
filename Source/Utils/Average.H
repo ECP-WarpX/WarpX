@@ -91,6 +91,7 @@ namespace Average{
      *                           data to be interpolated
      * \param[in]     ncomp      number of components to loop over for the coarsened
      *                           Array4 extracted from the coarsened MultiFab \c mf_dst
+     * \param[in]     ngrow      number of guard cells to fill
      * \param[in]     crse_ratio coarsening ratio between the fine MultiFab \c mf_src
      *                           and the coarsened MultiFab \c mf_dst
      */
@@ -117,6 +118,7 @@ namespace Average{
      *                           data to be interpolated
      * \param[in]     ncomp      number of components to loop over for the coarsened
      *                           Array4 extracted from the coarsened MultiFab \c mf_dst
+     * \param[in]     ngrow      number of guard cells to fill
      * \param[in]     crse_ratio coarsening ratio between the fine MultiFab \c mf_src
      *                           and the coarsened MultiFab \c mf_dst
      */
