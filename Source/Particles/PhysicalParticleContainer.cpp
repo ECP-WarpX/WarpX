@@ -1223,7 +1223,6 @@ PhysicalParticleContainer::Evolve (int lev,
                     }
                 }
             }
-#endif // ndef WARPX_DO_ELECTROSTATIC
 
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
