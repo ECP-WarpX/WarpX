@@ -102,33 +102,27 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Ex(i, j, k, PMLComp::xz) -= c2 * dt * (
                     T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, PMLComp::yx)
-                  + T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, PMLComp::yy)
                   + T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k, PMLComp::yz) );
                 Ex(i, j, k, PMLComp::xy) += c2 * dt * (
                     T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k, PMLComp::zx)
-                  + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k, PMLComp::zy)
-                  + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k, PMLComp::zz) );
+                  + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k, PMLComp::zy) );
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Ey(i, j, k, PMLComp::yx) -= c2 * dt * (
                     T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, PMLComp::zx)
-                  + T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, PMLComp::zy)
-                  + T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, PMLComp::zz) );
+                  + T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k, PMLComp::zy) );
                 Ey(i, j, k, PMLComp::yz) += c2 * dt * (
-                    T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k, PMLComp::xx)
-                  + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k, PMLComp::xy)
+                    T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k, PMLComp::xy)
                   + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k, PMLComp::xz) );
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Ez(i, j, k, PMLComp::zy) -= c2 * dt * (
-                    T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k, PMLComp::xx)
-                  + T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k, PMLComp::xy)
+                    T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k, PMLComp::xy)
                   + T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k, PMLComp::xz) );
                 Ez(i, j, k, PMLComp::zx) += c2 * dt * (
                     T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k, PMLComp::yx)
-                  + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k, PMLComp::yy)
                   + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k, PMLComp::yz) );
             }
 
