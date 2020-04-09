@@ -160,13 +160,28 @@ WarpX::EvolveE (int lev, amrex::Real a_dt)
 void
 WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 {
-    // Evolve regular grid
+    // Evolve E field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE( Efield_fp[lev], Bfield_fp[lev],
                                       current_fp[lev], F_fp[lev], a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE( Efield_cp[lev], Bfield_cp[lev],
                                       current_cp[lev], F_cp[lev], a_dt );
+    }
+
+    // Evolve E field in PML cells
+    if (do_pml && pml[lev]->ok()) {
+        if (patch_type == PatchType::fine) {
+            m_fdtd_solver_fp[lev]->EvolveEPML(
+                pml[lev]->GetE_fp(), pml[lev]->GetB_fp(),
+                pml[lev]->Getj_fp(), pml[lev]->GetF_fp(),
+                a_dt, pml_has_particles );
+        } else {
+            m_fdtd_solver_cp[lev]->EvolveEPML(
+                pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
+                pml[lev]->Getj_cp(), pml[lev]->GetF_cp(),
+                a_dt, pml_has_particles );
+        }
     }
 
     const Real mu_c2_dt = (PhysConst::mu0*PhysConst::c*PhysConst::c) * a_dt;
@@ -176,37 +191,11 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     const std::array<Real,3>& dx = WarpX::CellSize(patch_level);
     const Real dtsdx_c2 = c2dt/dx[0], dtsdy_c2 = c2dt/dx[1], dtsdz_c2 = c2dt/dx[2];
 
-    MultiFab *Ex, *Ey, *Ez, *Bx, *By, *Bz, *jx, *jy, *jz, *F;
-    if (patch_type == PatchType::fine)
-    {
-        Ex = Efield_fp[lev][0].get();
-        Ey = Efield_fp[lev][1].get();
-        Ez = Efield_fp[lev][2].get();
-        Bx = Bfield_fp[lev][0].get();
-        By = Bfield_fp[lev][1].get();
-        Bz = Bfield_fp[lev][2].get();
-        jx = current_fp[lev][0].get();
-        jy = current_fp[lev][1].get();
-        jz = current_fp[lev][2].get();
-        F  = F_fp[lev].get();
-    }
-    else if (patch_type == PatchType::coarse)
-    {
-        Ex = Efield_cp[lev][0].get();
-        Ey = Efield_cp[lev][1].get();
-        Ez = Efield_cp[lev][2].get();
-        Bx = Bfield_cp[lev][0].get();
-        By = Bfield_cp[lev][1].get();
-        Bz = Bfield_cp[lev][2].get();
-        jx = current_cp[lev][0].get();
-        jy = current_cp[lev][1].get();
-        jz = current_cp[lev][2].get();
-        F  = F_cp[lev].get();
-    }
-
     if (do_pml && pml[lev]->ok())
     {
-        if (F) pml[lev]->ExchangeF(patch_type, F, do_pml_in_domain);
+
+//        Unclear why this was needed
+//        if (F) pml[lev]->ExchangeF(patch_type, F, do_pml_in_domain);
 
         const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
         const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
@@ -229,20 +218,6 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
             auto const& pml_Bxfab = pml_B[0]->array(mfi);
             auto const& pml_Byfab = pml_B[1]->array(mfi);
             auto const& pml_Bzfab = pml_B[2]->array(mfi);
-
-            amrex::ParallelFor(tex, tey, tez,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_push_pml_ex_yee(i,j,k,pml_Exfab,pml_Byfab,pml_Bzfab,
-                                      dtsdy_c2,dtsdz_c2);
-            },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_push_pml_ey_yee(i,j,k,pml_Eyfab,pml_Bxfab,pml_Bzfab,
-                                      dtsdx_c2,dtsdz_c2);
-            },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_push_pml_ez_yee(i,j,k,pml_Ezfab,pml_Bxfab,pml_Byfab,
-                                      dtsdx_c2,dtsdy_c2);
-            });
 
             if (pml_has_particles) {
                 // Update the E field in the PML, using the current

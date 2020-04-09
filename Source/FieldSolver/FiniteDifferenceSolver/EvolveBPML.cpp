@@ -44,11 +44,10 @@ void FiniteDifferenceSolver::EvolveBPML (
 
         EvolveBPMLCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, dt );
 
-#endif
     } else {
         amrex::Abort("Unknown algorithm");
     }
-
+#endif
 }
 
 

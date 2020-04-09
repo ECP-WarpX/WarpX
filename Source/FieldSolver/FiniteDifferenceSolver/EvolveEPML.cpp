@@ -11,10 +11,11 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
 #else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
-#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCECAlgorithm.H"
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #endif
 #include "BoundaryConditions/PMLComponent.H"
+#include "Utils/WarpXConst.H"
 #include <AMReX_Gpu.H>
 
 using namespace amrex;
@@ -25,7 +26,9 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveEPML (
     std::array< amrex::MultiFab*, 3 > Efield,
     std::array< amrex::MultiFab*, 3 > const Bfield,
-    amrex::Real const dt ) {
+    std::array< amrex::MultiFab*, 3 > const Jfield,
+    amrex::MultiFab* const Ffield,
+    amrex::Real const dt, bool pml_has_particles ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
@@ -34,21 +37,23 @@ void FiniteDifferenceSolver::EvolveEPML (
 #else
     if (m_do_nodal) {
 
-        EvolveEPMLCartesian <CartesianNodalAlgorithm> ( Efield, Bfield, dt );
+        EvolveEPMLCartesian <CartesianNodalAlgorithm> (
+            Efield, Bfield, Jfield, Ffield, dt, pml_has_particles );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        EvolveEPMLCartesian <CartesianYeeAlgorithm> ( Efield, Bfield, dt );
+        EvolveEPMLCartesian <CartesianYeeAlgorithm> (
+            Efield, Bfield, Jfield, Ffield, dt, pml_has_particles );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveEPMLCartesian <CartesianCKCAlgorithm> ( Efield, Bfield, dt );
+        EvolveEPMLCartesian <CartesianCKCAlgorithm> (
+            Efield, Bfield, Jfield, Ffield, dt, pml_has_particles );
 
-#endif
     } else {
         amrex::Abort("Unknown algorithm");
     }
-
+#endif
 }
 
 
@@ -58,7 +63,11 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveEPMLCartesian (
     std::array< amrex::MultiFab*, 3 > Efield,
     std::array< amrex::MultiFab*, 3 > const Bfield,
-    amrex::Real const dt ) {
+    std::array< amrex::MultiFab*, 3 > const Jfield,
+    amrex::MultiFab* const Ffield,
+    amrex::Real const dt, bool pml_has_particles ) {
+
+    Real constexpr c2 = PhysConst::c * PhysConst::c;
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP
