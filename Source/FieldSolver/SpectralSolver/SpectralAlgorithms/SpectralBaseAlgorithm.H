@@ -1,4 +1,4 @@
-/* Copyright 2019 Remi Lehe
+/* Copyright 2019 Remi Lehe, Edoardo Zoni
  *
  * This file is part of WarpX.
  *
@@ -7,8 +7,11 @@
 #ifndef WARPX_SPECTRAL_BASE_ALGORITHM_H_
 #define WARPX_SPECTRAL_BASE_ALGORITHM_H_
 
-#include <SpectralKSpace.H>
-#include <SpectralFieldData.H>
+#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+
+
+#if WARPX_USE_PSATD
 
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
@@ -27,6 +30,13 @@ class SpectralBaseAlgorithm
         // a pointer to subclass of `SpectraBaseAlgorithm` actually
         // calls the subclass's destructor.
         virtual ~SpectralBaseAlgorithm() {};
+
+        /**
+         * \brief Compute spectral divergence of E
+         */
+        void ComputeSpectralDivE ( SpectralFieldData& field_data,
+                                   const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                                   amrex::MultiFab& divE );
 
     protected: // Meant to be used in the subclasses
 
@@ -51,10 +61,12 @@ class SpectralBaseAlgorithm
           {};
 
         // Modified finite-order vectors
-        KVectorComponent modified_kx_vec, modified_kz_vec;
+        KVectorComponent modified_kx_vec;
 #if (AMREX_SPACEDIM==3)
         KVectorComponent modified_ky_vec;
 #endif
+        KVectorComponent modified_kz_vec;
 };
 
+#endif // WARPX_USE_PSATD
 #endif // WARPX_SPECTRAL_BASE_ALGORITHM_H_

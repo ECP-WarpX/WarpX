@@ -1,12 +1,13 @@
-/* Copyright 2019-2020 Axel Huebl, Maxence Thevenet, Revathi Jambunathan
- * Weiqun Zhang
+/* Copyright 2019-2020 Andrew Myers, Axel Huebl, Maxence Thevenet,
+ * Revathi Jambunathan, Weiqun Zhang
  *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <InjectorMomentum.H>
-#include <PlasmaInjector.H>
+#include "InjectorMomentum.H"
+#include "PlasmaInjector.H"
+
 
 using namespace amrex;
 
@@ -19,6 +20,14 @@ InjectorMomentum::~InjectorMomentum ()
         object.parser.m_ux_parser.clear();
         object.parser.m_uy_parser.clear();
         object.parser.m_uz_parser.clear();
+        break;
+    }
+    case Type::gaussian:
+    case Type::boltzmann:
+    case Type::juttner:
+    case Type::constant:
+    case Type::radial_expansion:
+    {
         break;
     }
     case Type::custom:

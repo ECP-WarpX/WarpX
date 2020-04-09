@@ -4,11 +4,10 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <LaserProfiles.H>
-
-#include <WarpX_Complex.H>
-#include <WarpXConst.H>
-#include <WarpXUtil.H>
+#include "Laser/LaserProfiles.H"
+#include "Utils/WarpX_Complex.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
 
 #include <AMReX_Print.H>
 #include <AMReX_ParallelDescriptor.H>
@@ -19,11 +18,11 @@
 #include <cstdint>
 #include <algorithm>
 
+
 using namespace amrex;
-using namespace WarpXLaserProfiles;
 
 void
-FromTXYEFileLaserProfile::init (
+WarpXLaserProfiles::FromTXYEFileLaserProfile::init (
     const amrex::ParmParse& ppl,
     const amrex::ParmParse& /* ppc */,
     CommonLaserParameters params)
@@ -66,7 +65,7 @@ FromTXYEFileLaserProfile::init (
 }
 
 void
-FromTXYEFileLaserProfile::update (amrex::Real t)
+WarpXLaserProfiles::FromTXYEFileLaserProfile::update (amrex::Real t)
 {
     if(t >= m_params.t_coords.back())
         return;
@@ -82,7 +81,7 @@ FromTXYEFileLaserProfile::update (amrex::Real t)
 }
 
 void
-FromTXYEFileLaserProfile::fill_amplitude (
+WarpXLaserProfiles::FromTXYEFileLaserProfile::fill_amplitude (
     const int np,
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
     Real t, Real * AMREX_RESTRICT const amplitude) const
@@ -114,7 +113,7 @@ FromTXYEFileLaserProfile::fill_amplitude (
 }
 
 void
-FromTXYEFileLaserProfile::parse_txye_file(std::string txye_file_name)
+WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_file_name)
 {
     if(ParallelDescriptor::IOProcessor()){
         std::ifstream inp(txye_file_name, std::ios::binary);
@@ -227,7 +226,7 @@ FromTXYEFileLaserProfile::parse_txye_file(std::string txye_file_name)
 }
 
 std::pair<int,int>
-FromTXYEFileLaserProfile::find_left_right_time_indices(amrex::Real t) const
+WarpXLaserProfiles::FromTXYEFileLaserProfile::find_left_right_time_indices(amrex::Real t) const
 {
     int idx_t_right;
     if(m_params.is_grid_uniform){
@@ -246,7 +245,7 @@ FromTXYEFileLaserProfile::find_left_right_time_indices(amrex::Real t) const
 }
 
 void
-FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int t_end)
+WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int t_end)
 {
     amrex::Print() <<
         "Reading [" << t_begin << ", " << t_end <<
@@ -290,7 +289,7 @@ FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int t_end)
 }
 
 void
-FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
+WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     const int idx_t_left,
     const int np,
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
@@ -301,8 +300,10 @@ FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
     const auto tmp_e_max = m_common_params.e_max;
     const auto tmp_x_min = m_params.x_coords.front();
     const auto tmp_x_max = m_params.x_coords.back();
+#if (AMREX_SPACEDIM == 3)
     const auto tmp_y_min = m_params.y_coords.front();
     const auto tmp_y_max = m_params.y_coords.back();
+#endif
     const auto tmp_nx = m_params.nx;
 #if (AMREX_SPACEDIM == 3)
     const auto tmp_ny = m_params.ny;
@@ -394,7 +395,7 @@ FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
 }
 
 void
-FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform(
+WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform(
     const int idx_t_left,
     const int np,
     Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
@@ -405,12 +406,16 @@ FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform(
     const auto tmp_e_max = m_common_params.e_max;
     const auto tmp_x_min = m_params.x_coords.front();
     const auto tmp_x_max = m_params.x_coords.back();
+#if (AMREX_SPACEDIM == 3)
     const auto tmp_y_min = m_params.y_coords.front();
     const auto tmp_y_max = m_params.y_coords.back();
+#endif
     const auto p_x_coords = m_params.x_coords.dataPtr();
     const int tmp_x_coords_size = static_cast<int>(m_params.x_coords.size());
+#if (AMREX_SPACEDIM == 3)
     const auto p_y_coords = m_params.y_coords.dataPtr();
     const int tmp_y_coords_size = static_cast<int>(m_params.y_coords.size());
+#endif
     const auto p_E_data = m_params.E_data.dataPtr();
     const auto tmp_idx_first_time = m_params.first_time_index;
     const int idx_t_right = idx_t_left+1;

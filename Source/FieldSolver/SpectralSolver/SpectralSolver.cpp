@@ -4,12 +4,16 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <SpectralKSpace.H>
-#include <SpectralSolver.H>
-#include <PsatdAlgorithm.H>
-#include <GalileanAlgorithm.H>
-#include <PMLPsatdAlgorithm.H>
+#include "SpectralKSpace.H"
+#include "SpectralSolver.H"
+#include "SpectralAlgorithms/PsatdAlgorithm.H"
+#include "SpectralAlgorithms/GalileanAlgorithm.H"
+#include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
+#include "WarpX.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
+
+#if WARPX_USE_PSATD
 
 /* \brief Initialize the spectral Maxwell solver
  *
@@ -24,6 +28,7 @@
  * \param dx       Cell size along each dimension
  * \param dt       Time step
  * \param pml      Whether the boxes in which the solver is applied are PML boxes
+ * \param periodic_single_box Whether the full simulation domain consists of a single periodic box (i.e. the global domain is not MPI parallelized)
  */
 SpectralSolver::SpectralSolver(
                 const amrex::BoxArray& realspace_ba,
@@ -32,7 +37,7 @@ SpectralSolver::SpectralSolver(
                 const int norder_z, const bool nodal,
                 const amrex::Array<amrex::Real,3>& v_galilean,
                 const amrex::RealVect dx, const amrex::Real dt,
-                const bool pml ) {
+                const bool pml, const bool periodic_single_box ) {
 
     // Initialize all structures using the same distribution mapping dm
 
@@ -60,6 +65,34 @@ SpectralSolver::SpectralSolver(
 
     // - Initialize arrays for fields in spectral space + FFT plans
     field_data = SpectralFieldData( realspace_ba, k_space, dm,
-            algorithm->getRequiredNumberOfFields() );
+            algorithm->getRequiredNumberOfFields(), periodic_single_box );
 
-};
+}
+
+void
+SpectralSolver::ForwardTransform( const amrex::MultiFab& mf,
+                                  const int field_index,
+                                  const int i_comp )
+{
+    WARPX_PROFILE("SpectralSolver::ForwardTransform");
+    field_data.ForwardTransform( mf, field_index, i_comp );
+}
+
+void
+SpectralSolver::BackwardTransform( amrex::MultiFab& mf,
+                                   const int field_index,
+                                   const int i_comp )
+{
+    WARPX_PROFILE("SpectralSolver::BackwardTransform");
+    field_data.BackwardTransform( mf, field_index, i_comp );
+}
+
+void
+SpectralSolver::pushSpectralFields(){
+    WARPX_PROFILE("SpectralSolver::pushSpectralFields");
+    // Virtual function: the actual function used here depends
+    // on the sub-class of `SpectralBaseAlgorithm` that was
+    // initialized in the constructor of `SpectralSolver`
+    algorithm->pushSpectralFields( field_data );
+}
+#endif // WARPX_USE_PSATD

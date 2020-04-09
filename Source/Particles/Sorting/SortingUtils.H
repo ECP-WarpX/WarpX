@@ -8,9 +8,11 @@
 #ifndef WARPX_PARTICLES_SORTING_SORTINGUTILS_H_
 #define WARPX_PARTICLES_SORTING_SORTINGUTILS_H_
 
-#include <WarpXParticleContainer.H>
+#include "Particles/WarpXParticleContainer.H"
+
 #include <AMReX_Gpu.H>
 #include <AMReX_Partition.H>
+
 
 /** \brief Fill the elements of the input vector with consecutive integer,
  *        starting from 0
@@ -200,8 +202,8 @@ class copyAndReorder
 {
     public:
         copyAndReorder(
-            amrex::Gpu::ManagedDeviceVector<T> const& src,
-            amrex::Gpu::ManagedDeviceVector<T>& dst,
+            amrex::Gpu::DeviceVector<T> const& src,
+            amrex::Gpu::DeviceVector<T>& dst,
             amrex::Gpu::DeviceVector<long> const& indices ) {
             // Extract simple structure that can be used directly on the GPU
             m_src_ptr = src.dataPtr();

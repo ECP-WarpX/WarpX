@@ -90,7 +90,6 @@ ifeq ($(QED),TRUE)
   CFLAGS   += -DWARPX_QED
   FFLAGS   += -DWARPX_QED
   F90FLAGS += -DWARPX_QED
-  include $(WARPX_HOME)/Source/QED/Make.package
   USERSuffix := $(USERSuffix).QED
 
   ifeq ($(QED_TABLE_GEN),TRUE)
@@ -105,6 +104,13 @@ ifeq ($(QED),TRUE)
     F90FLAGS += -DWARPX_QED_TABLE_GEN
      USERSuffix := $(USERSuffix).GENTABLES
   endif
+endif
+
+ifeq ($(PRECISION),FLOAT)
+  USERSuffix := $(USERSuffix).SP
+endif
+ifeq ($(USE_SINGLE_PRECISION_PARTICLES),TRUE)
+  USERSuffix := $(USERSuffix).pSP
 endif
 
 include $(PICSAR_HOME)/src/Make.package
@@ -124,7 +130,7 @@ endif
 
 ifeq ($(USE_OPENPMD), TRUE)
    # try pkg-config query
-   ifeq (0, $(shell pkg-config "openPMD >= 0.10.3"; echo $$?))
+   ifeq (0, $(shell pkg-config "openPMD >= 0.11.0"; echo $$?))
        CXXFLAGS += $(shell pkg-config --cflags openPMD)
        LIBRARY_LOCATIONS += $(shell pkg-config --variable=libdir openPMD)
        libraries += $(shell pkg-config --libs-only-l openPMD)
@@ -149,7 +155,11 @@ ifeq ($(USE_PSATD),TRUE)
   DEFINES += -DWARPX_USE_PSATD
   ifeq ($(USE_CUDA),FALSE) # Running on CPU
      # Use FFTW
-     libraries += -lfftw3_mpi -lfftw3 -lfftw3_threads
+     ifeq ($(PRECISION),FLOAT)
+          libraries += -lfftw3f_mpi -lfftw3f -lfftw3f_threads
+     else
+          libraries += -lfftw3_mpi -lfftw3 -lfftw3_threads
+     endif
      FFTW_HOME ?= NOT_SET
      ifneq ($(FFTW_HOME),NOT_SET)
        VPATH_LOCATIONS += $(FFTW_HOME)/include
@@ -171,10 +181,6 @@ ifeq ($(USE_RZ),TRUE)
   USERSuffix := $(USERSuffix).RZ
 endif
 
-ifeq ($(DO_ELECTROSTATIC),TRUE)
-     DEFINES += -DWARPX_DO_ELECTROSTATIC
-endif
-
 ifeq ($(USE_HDF5),TRUE)
     HDF5_HOME ?= NOT_SET
     ifneq ($(HDF5_HOME),NOT_SET)
@@ -188,7 +194,6 @@ endif
 
 # job_info support
 CEXE_sources += AMReX_buildInfo.cpp
-CEXE_headers += $(AMREX_HOME)/Tools/C_scripts/AMReX_buildInfo.H
 INCLUDE_LOCATIONS += $(AMREX_HOME)/Tools/C_scripts
 
 ifeq ($(USE_PYTHON_MAIN),TRUE)

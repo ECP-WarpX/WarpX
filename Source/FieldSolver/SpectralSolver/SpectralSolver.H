@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Maxence Thevenet, Remi Lehe
+/* Copyright 2019-2020 Maxence Thevenet, Remi Lehe, Edoardo Zoni
  *
  * This file is part of WarpX.
  *
@@ -7,9 +7,11 @@
 #ifndef WARPX_SPECTRAL_SOLVER_H_
 #define WARPX_SPECTRAL_SOLVER_H_
 
-#include <SpectralBaseAlgorithm.H>
-#include <SpectralFieldData.H>
+#include "SpectralAlgorithms/SpectralBaseAlgorithm.H"
+#include "SpectralFieldData.H"
 
+
+#ifdef WARPX_USE_PSATD
 /**
  * \brief Top-level class for the electromagnetic spectral solver
  *
@@ -32,7 +34,8 @@ class SpectralSolver
                         const int norder_z, const bool nodal,
                         const amrex::Array<amrex::Real,3>& v_galilean,
                         const amrex::RealVect dx, const amrex::Real dt,
-                        const bool pml=false );
+                        const bool pml=false,
+                        const bool periodic_single_box=false );
 
         /**
          * \brief Transform the component `i_comp` of MultiFab `mf`
@@ -40,10 +43,7 @@ class SpectralSolver
          *  (in the spectral field specified by `field_index`) */
         void ForwardTransform( const amrex::MultiFab& mf,
                                const int field_index,
-                               const int i_comp=0 ){
-            BL_PROFILE("SpectralSolver::ForwardTransform");
-            field_data.ForwardTransform( mf, field_index, i_comp );
-        };
+                               const int i_comp=0 );
 
         /**
          * \brief Transform spectral field specified by `field_index` back to
@@ -51,30 +51,31 @@ class SpectralSolver
          */
         void BackwardTransform( amrex::MultiFab& mf,
                                 const int field_index,
-                                const int i_comp=0 ){
-            BL_PROFILE("SpectralSolver::BackwardTransform");
-            field_data.BackwardTransform( mf, field_index, i_comp );
-        };
+                                const int i_comp=0 );
 
         /**
          * \brief Update the fields in spectral space, over one timestep
          */
-        void pushSpectralFields(){
-            BL_PROFILE("SpectralSolver::pushSpectralFields");
-            // Virtual function: the actual function used here depends
-            // on the sub-class of `SpectralBaseAlgorithm` that was
-            // initialized in the constructor of `SpectralSolver`
-            algorithm->pushSpectralFields( field_data );
+        void pushSpectralFields();
+
+        /**
+          * \brief Public interface to call the member function ComputeSpectralDivE
+          * of the base class SpectralBaseAlgorithm from objects of class SpectralSolver
+          */
+        void ComputeSpectralDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                                   amrex::MultiFab& divE ) {
+            algorithm->ComputeSpectralDivE( field_data, Efield, divE );
         };
 
     private:
-        SpectralFieldData field_data; // Store field in spectral space
-                                      // and perform the Fourier transforms
-        std::unique_ptr<SpectralBaseAlgorithm> algorithm;
-        // Defines field update equation in spectral space,
-        // and the associated coefficients.
-        // SpectralBaseAlgorithm is a base class ; this pointer is meant
-        // to point an instance of a *sub-class* defining a specific algorithm
-};
 
+        // Store field in spectral space and perform the Fourier transforms
+        SpectralFieldData field_data;
+
+        // Defines field update equation in spectral space and the associated coefficients.
+        // SpectralBaseAlgorithm is a base class; this pointer is meant to point
+        // to an instance of a sub-class defining a specific algorithm
+        std::unique_ptr<SpectralBaseAlgorithm> algorithm;
+};
+#endif // WARPX_USE_PSATD
 #endif // WARPX_SPECTRAL_SOLVER_H_

@@ -7,11 +7,14 @@
 
 #include "FieldEnergy.H"
 #include "WarpX.H"
-#include "WarpXConst.H"
-#include "AMReX_REAL.H"
-#include "AMReX_ParticleReduce.H"
+#include "Utils/WarpXConst.H"
+
+#include <AMReX_REAL.H>
+#include <AMReX_ParticleReduce.H>
+
 #include <iostream>
 #include <cmath>
+
 
 using namespace amrex;
 
@@ -25,9 +28,6 @@ FieldEnergy::FieldEnergy (std::string rd_name)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "FieldEnergy reduced diagnostics does not work for RZ coordinate.");
     #endif
-
-    // get WarpX class object
-    auto & warpx = WarpX::GetInstance();
 
     // read number of levels
     int nLevel = 0;

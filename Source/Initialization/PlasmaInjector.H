@@ -9,12 +9,13 @@
 #ifndef PLASMA_INJECTOR_H_
 #define PLASMA_INJECTOR_H_
 
-#include <InjectorPosition.H>
-#include <InjectorDensity.H>
-#include <InjectorMomentum.H>
+#include "Particles/SpeciesPhysicalProperties.H"
+#include "InjectorPosition.H"
+#include "InjectorDensity.H"
+#include "InjectorMomentum.H"
 
-#include <WarpXConst.H>
-#include <WarpXParser.H>
+#include "Utils/WarpXConst.H"
+#include "Parser/WarpXParser.H"
 
 #include <AMReX_Vector.H>
 #include <AMReX_ParmParse.H>
@@ -47,6 +48,7 @@ public:
 
     amrex::Real getCharge () {return charge;}
     amrex::Real getMass () {return mass;}
+    PhysicalSpecies getPhysicalSpecies() const {return physical_species;}
 
     bool doInjection () const noexcept { return inj_pos != NULL;}
 
@@ -62,9 +64,15 @@ public:
     amrex::Real x_rms;
     amrex::Real y_rms;
     amrex::Real z_rms;
+    amrex::Real x_cut = std::numeric_limits<amrex::Real>::max();
+    amrex::Real y_cut = std::numeric_limits<amrex::Real>::max();
+    amrex::Real z_cut = std::numeric_limits<amrex::Real>::max();
     amrex::Real q_tot;
     long npart;
     int do_symmetrize = 0;
+
+    bool external_file = false;
+    std::string str_injection_file;
 
     bool radially_weighted = true;
 
@@ -76,7 +84,7 @@ public:
     amrex::Real xmin, xmax;
     amrex::Real ymin, ymax;
     amrex::Real zmin, zmax;
-    amrex::Real density_min = 0;
+    amrex::Real density_min = std::numeric_limits<amrex::Real>::epsilon();
     amrex::Real density_max = std::numeric_limits<amrex::Real>::max();
 
     InjectorPosition* getInjectorPosition ();
@@ -86,6 +94,8 @@ public:
 protected:
 
     amrex::Real mass, charge;
+
+    PhysicalSpecies physical_species;
 
     amrex::Real density;
 
