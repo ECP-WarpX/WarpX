@@ -29,18 +29,20 @@ data = data[:,2:]
 
 # From data header, data layout is:
 #     [step, time,
-#      cost_box_0, proc_box_0, lev_box_0, i_low_box_0, j_low_box_0, k_low_box_0,
-#      cost_box_1, proc_box_1, lev_box_1, i_low_box_1, j_low_box_1, k_low_box_1,
+#      cost_box_0, proc_box_0, lev_box_0, i_low_box_0, j_low_box_0, k_low_box_0(, gpu_ID_box_0 if GPU run), hostname_box_0,
+#      cost_box_1, proc_box_1, lev_box_1, i_low_box_1, j_low_box_1, k_low_box_1(, gpu_ID_box_1 if GPU run), hostname_box_1,
 #      ...
-#      cost_box_n, proc_box_n, lev_box_n, i_low_box_n, j_low_box_n, k_low_box_n]
+#      cost_box_n, proc_box_n, lev_box_n, i_low_box_n, j_low_box_n, k_low_box_n(, gpu_ID_box_n if GPU run), hostname_box_n]
 
 # Function to get efficiency at an iteration i
 def get_efficiency(i):
     # First get the unique ranks
-    costs, ranks = data[i,0::6], data[i,1::6].astype(int)
+    # The spacing of '7' is because we know this is not a GPU run; in a GPU,
+    # this should be '8' because the gpu_ID also is saved for each box
+    costs, ranks = data[i,0::7], data[i,1::7].astype(int)
     rank_to_cost_map = {r:0. for r in set(ranks)}
 
-    # compute efficiency before/after load balance and check it is improved
+    # Compute efficiency before/after load balance and check it is improved
     for c, r in zip(costs, ranks):
         rank_to_cost_map[r] += c
 

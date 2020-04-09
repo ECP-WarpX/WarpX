@@ -1,5 +1,5 @@
 /* Copyright 2019-2020 Andrew Myers, Burlen Loring, Luca Fedeli
- * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+ * Maxence Thevenet, Michael Rowan, Remi Lehe
  * Revathi Jambunathan
  *
  * This file is part of WarpX.
@@ -13,6 +13,10 @@
 #include <AMReX_ParmParse.H>
 
 #include <cmath>
+#include <vector>
+#include <sstream>
+#include <iterator>
+#include <string>
 #include <fstream>
 
 
@@ -245,5 +249,18 @@ namespace WarpXUtilStr
             if (is_in(vect, elem)) value = true;
         }
         return value;
+    }
+
+    amrex::Vector<std::string> splitString(const std::string &str, char sep)
+    {
+        amrex::Vector<std::string> strings;
+        std::back_insert_iterator<amrex::Vector<std::string>> it_strings = std::back_inserter(strings);
+        std::istringstream iss(str);
+        std::string s;
+
+        // iterate through the words separated by sep, write to s, store in strings
+        while (std::getline(iss, s, sep)) { *it_strings++ = s; }
+
+        return strings;
     }
 }
