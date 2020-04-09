@@ -80,6 +80,8 @@ private:
     /** Coarsening ratio such that, fields are averaged to the coarsened grid.
       * The ratio should render the grid to be coarsenable (as defined by AMReX). */
     amrex::IntVect m_crse_ratio = amrex::IntVect(AMREX_D_DECL(1,1,1));
+    amrex::Vector<amrex::Real> diag_lo;
+    amrex::Vector<amrex::Real> diag_hi;
 };
 
 #endif // WARPX_DIAGNOSTICS_H_
