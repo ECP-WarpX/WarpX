@@ -8,7 +8,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "PlasmaInjector.H"
-#include "SpeciesPhysicalProperties.H"
+#include "Particles/SpeciesPhysicalProperties.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
@@ -176,6 +176,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         pp.get("x_rms", x_rms);
         pp.get("y_rms", y_rms);
         pp.get("z_rms", z_rms);
+        pp.query("x_cut", x_cut);
+        pp.query("y_cut", y_cut);
+        pp.query("z_cut", z_cut);
         pp.get("q_tot", q_tot);
         pp.get("npart", npart);
         pp.query("do_symmetrize", do_symmetrize);
@@ -229,9 +232,10 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #ifdef WARPX_USE_OPENPMD
         external_file = true;
         pp.get("injection_file",str_injection_file);
+        pp.get("q_tot",q_tot);
 #else
-        amrex::Abort("WarpX has to be compiled with USE_OPENPMD=TRUE to be able to"
-                     " read the external openPMD file with species data");
+        amrex::Abort("WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
+                     " to read the external openPMD file with species data");
 #endif
     } else {
         StringParseAbortMessage("Injection style", part_pos_s);

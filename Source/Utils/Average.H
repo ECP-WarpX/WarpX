@@ -8,81 +8,15 @@ namespace Average{
     using namespace amrex;
 
     /**
-     * \brief Returns the cell-centered average of the floating point data contained
-     *        in the input Array4 \c mf_in_arr.
-     *
-     * \param[in] mf_in_arr floating point data to be averaged
-     * \param[in] stag      staggering (index type) of the data
-     * \param[in] i         index along x to access the Array4 \c mf_in_arr containing
-     *                      the data to be averaged
-     * \param[in] j         index along y to access the Array4 \c mf_in_arr containing
-     *                      the data to be averaged
-     * \param[in] k         index along z to access the Array4 \c mf_in_arr containing
-     *                      the data to be averaged
-     * \param[in] comp      index along the fourth component of the Array4 \c mf_in_arr
-     *                      containing the data to be averaged
-     *
-     * \return averaged field at cell (i,j,k)
-     */
-    AMREX_GPU_HOST_DEVICE
-    AMREX_FORCE_INLINE
-    Real ToCellCenter ( Array4<Real const> const& mf_in_arr,
-                        const IntVect stag,
-                        const int i,
-                        const int j,
-                        const int k,
-                        const int comp=0 )
-    {
-        const int sx = stag[0];
-        const int sy = stag[1];
-#if   (AMREX_SPACEDIM == 2)
-        constexpr int sz = 0;
-#elif (AMREX_SPACEDIM == 3)
-        const int sz = stag[2];
-#endif
-        return 0.125_rt * (   mf_in_arr(i   ,j   ,k   ,comp)
-                            + mf_in_arr(i+sx,j   ,k   ,comp)
-                            + mf_in_arr(i   ,j+sy,k   ,comp)
-                            + mf_in_arr(i   ,j   ,k+sz,comp)
-                            + mf_in_arr(i+sx,j+sy,k   ,comp)
-                            + mf_in_arr(i   ,j+sy,k+sz,comp)
-                            + mf_in_arr(i+sx,j   ,k+sz,comp)
-                            + mf_in_arr(i+sx,j+sy,k+sz,comp) );
-    };
-
-    /**
-     * \brief Stores the cell-centered average of the floating point data contained
-     *        in the input MultiFab \c mf_in into the output MultiFab \c mf_out.
-     *
-     * \param[in,out] mf_out MultiFab containing the floating point data to be filled
-     *                       with cell-centered averages
-     * \param[in]     mf_in  MultiFab containing the floating point data to be averaged
-     * \param[in]     dcomp  offset for the fourth component of the Array4 object,
-     *                       extracted from its MultiFab, where the cell-centered
-     *                       averages will be stored
-     * \param[in]     scomp  optional offset for the fourth component of the Array4
-     *                       object, extracted from its MultiFab, containing the data
-     *                       to be averaged
-     * \param[in]     ncomp  optional number of components to loop over for both the
-     *                       input and the output Array4 objects, extracted from their
-     *                       respective MultiFab
-     */
-    void ToCellCenter ( MultiFab& mf_out,
-                        const MultiFab& mf_in,
-                        const int dcomp,
-                        const int ngrow,
-                        const int scomp=0,
-                        const int ncomp=1 );
-
-    /**
-     * \brief Interpolates the floating point data contained in the input Array4
+     * \brief Interpolates the floating point data contained in the source Array4
      *        \c mf_fp_arr, extracted from a fine MultiFab, by averaging over either
      *        1 point or 2 equally distant points.
      *
      * \param[in] arr_src floating point data to be interpolated
-     * \param[in] sf      staggering of the input fine MultiFab
-     * \param[in] sc      staggering of the output coarsened MultiFab
+     * \param[in] sf      staggering of the source fine MultiFab
+     * \param[in] sc      staggering of the destination coarsened MultiFab
      * \param[in] cr      coarsening ratio along each spatial direction
+     * \param[in] np      number of points to loop over for interpolation
      * \param[in] i       index along x of the coarsened Array4 to be filled
      * \param[in] j       index along y of the coarsened Array4 to be filled
      * \param[in] k       index along z of the coarsened Array4 to be filled
@@ -94,9 +28,10 @@ namespace Average{
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     Real CoarsenAndInterpolateKernel ( Array4<Real const> const& arr_src,
-                                       const int sf[3],
-                                       const int sc[3],
-                                       const int cr[3],
+                                       int const* const AMREX_RESTRICT sf,
+                                       int const* const AMREX_RESTRICT sc,
+                                       int const* const AMREX_RESTRICT cr,
+                                       int const* const AMREX_RESTRICT np,
                                        const int i,
                                        const int j,
                                        const int k,
@@ -105,28 +40,20 @@ namespace Average{
         // Indices of source coarse array
         const int ic[3] = { i, j, k };
 
-        // Number of points for the interpolation, along each direction (1 or 2)
-        int num_pts[3];
         // Index of first point of source Array4 from which interpolation is done
         int idx_min[3];
 
         // Compute number of points to loop over (either 1 or 2)
         // and starting indices of fine array in each direction
         for ( int l = 0; l < 3; ++l ) {
-            if ( cr[l] == 1 ) {
-                num_pts[l] = 1+abs(sf[l]-sc[l]);
-                idx_min[l] = ic[l]-sc[l]*(1-sf[l]);
-            }
-            else {
-                num_pts[l] = 2-sf[l];
-                idx_min[l] = ic[l]*cr[l]+static_cast<int>(cr[l]/2)*(1-sc[l])-(1-sf[l]);
-            }
+            if ( cr[l] == 1 ) idx_min[l] = ic[l]-sc[l]*(1-sf[l]); // no coarsening
+            else              idx_min[l] = ic[l]*cr[l]+static_cast<int>(cr[l]/2)*(1-sc[l])-(1-sf[l]);
         }
 
         // Auxiliary integer variables
-        const int numx = num_pts[0];
-        const int numy = num_pts[1];
-        const int numz = num_pts[2];
+        const int numx = np[0];
+        const int numy = np[1];
+        const int numz = np[2];
         const int imin = idx_min[0];
         const int jmin = idx_min[1];
         const int kmin = idx_min[2];
@@ -148,7 +75,7 @@ namespace Average{
      *        them by interpolating the data contained in the fine MultiFab \c mf_src.
      *
      * \param[in,out] mf_dst     coarsened MultiFab containing the floating point data
-     *                           to be filled by interpolating the input fine MultiFab
+     *                           to be filled by interpolating the source fine MultiFab
      * \param[in]     mf_src     fine MultiFab containing the floating point data to be interpolated
      * \param[in]     dcomp      offset for the fourth component of the coarsened Array4
      *                           object, extracted from its MultiFab, where the interpolated
@@ -158,6 +85,7 @@ namespace Average{
      *                           data to be interpolated
      * \param[in]     ncomp      number of components to loop over for the coarsened
      *                           Array4 extracted from the coarsened MultiFab \c mf_dst
+     * \param[in]     ngrow      number of guard cells to fill
      * \param[in]     crse_ratio coarsening ratio between the fine MultiFab \c mf_src
      *                           and the coarsened MultiFab \c mf_dst
      */
@@ -166,7 +94,8 @@ namespace Average{
                                      const int dcomp,
                                      const int scomp,
                                      const int ncomp,
-                                     const IntVect crse_ratio );
+                                     const int ngrow,
+                                     const IntVect crse_ratio=IntVect(1) );
 
     /**
      * \brief Stores in the coarsened MultiFab \c mf_dst the values obtained by
@@ -183,6 +112,7 @@ namespace Average{
      *                           data to be interpolated
      * \param[in]     ncomp      number of components to loop over for the coarsened
      *                           Array4 extracted from the coarsened MultiFab \c mf_dst
+     * \param[in]     ngrow      number of guard cells to fill
      * \param[in]     crse_ratio coarsening ratio between the fine MultiFab \c mf_src
      *                           and the coarsened MultiFab \c mf_dst
      */
@@ -191,7 +121,8 @@ namespace Average{
                                  const int dcomp,
                                  const int scomp,
                                  const int ncomp,
-                                 const IntVect crse_ratio );
+                                 const int ngrow,
+                                 const IntVect crse_ratio=IntVect(1) );
 }
 
 #endif // WARPX_AVERAGE_H_
