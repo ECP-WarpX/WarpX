@@ -55,17 +55,17 @@ Diagnostics::ReadParameters ()
 
 
     //// Read user-defined (lo,hi) extents for the diag
-    diag_lo.resize(AMREX_SPACEDIM);
-    diag_hi.resize(AMREX_SPACEDIM);
+    m_lo.resize(AMREX_SPACEDIM);
+    m_hi.resize(AMREX_SPACEDIM);
 
-    if (!pp.queryarr("diag_lo", diag_lo, 0, AMREX_SPACEDIM) ) {
+    if (!pp.queryarr("diag_lo", m_lo, 0, AMREX_SPACEDIM) ) {
        for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-            diag_lo[idim] = warpx.Geom(0).ProbLo(idim);
+            m_lo[idim] = warpx.Geom(0).ProbLo(idim);
        }
     }
-    if (! pp.queryarr("diag_hi", diag_hi, 0, AMREX_SPACEDIM) ) {
+    if (! pp.queryarr("diag_hi", m_hi, 0, AMREX_SPACEDIM) ) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
-            diag_hi[idim] = warpx.Geom(0).ProbHi(idim);
+            m_hi[idim] = warpx.Geom(0).ProbHi(idim);
        }
     }
 
@@ -77,6 +77,7 @@ Diagnostics::ReadParameters ()
            m_crse_ratio[idim] = cr_ratio[idim];
        }
     }
+   
 }
 
 void
@@ -88,12 +89,11 @@ Diagnostics::InitData ()
     // Initialize vector of pointers to the fields requested by the user.
     all_field_functors.resize( nlev );
     mf_avg.resize( nlev );
-    amrex::Vector < amrex::RealBox> diag_dom(nlev);
 
     for ( int lev=0; lev<nlev; lev++ ){
         all_field_functors[lev].resize( varnames.size() );
         // Fill vector of functors for all components except individual
-        // cyclindrical modes
+        // cylindrical modes
         for (int comp=0, n=all_field_functors[lev].size(); comp<n; comp++){
             if        ( varnames[comp] == "Ex" ){
                 all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
@@ -136,77 +136,8 @@ Diagnostics::InitData ()
         AddRZModesToDiags( lev );
 
         // At this point, varnames.size() >= all_field_functors[0].size()
-        // Default BoxArray and DistributionMap for mf_avg from the warpx instance
-        BoxArray ba = warpx.boxArray(lev);
-        DistributionMapping dmap = warpx.DistributionMap(lev);
-        bool use_warpxba = true;
-        // Find if user-defined diag lo and hi are different from the simulation
-        for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-             // To ensure that the diag lo and hi are within the domain defined at lev
-             diag_dom[lev].setLo(idim, max(diag_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
-             diag_dom[lev].setHi(idim, min(diag_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
-             if ( fabs(warpx.Geom(lev).ProbLo(idim) - diag_dom[lev].lo(idim))
-                                    >  warpx.Geom(lev).CellSize(idim) )
-                  use_warpxba = false;
-             if ( fabs(warpx.Geom(lev).ProbHi(idim) - diag_dom[lev].hi(idim))
-                                    > warpx.Geom(lev).CellSize(idim) )
-                  use_warpxba = false;
+        DefineDiagMultiFab( lev );
 
-        }
-        if (use_warpxba == false) {
-           // Create new box array
-           IntVect diag_ilo(AMREX_D_DECL(0,0,0));
-           IntVect diag_ihi(AMREX_D_DECL(1,1,1));
-           for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-               // lo index
-               diag_ilo[idim] = static_cast<int>( floor (
-                                    ( diag_dom[lev].lo(idim)
-                                    - warpx.Geom(lev).ProbLo(idim) )
-                                    / warpx.Geom(lev).CellSize(idim) ) );
-               // hi index
-               diag_ihi[idim] = static_cast<int> ( ceil (
-                                    ( diag_dom[lev].hi(idim)
-                                    - warpx.Geom(lev).ProbLo(idim) )
-                                    / warpx.Geom(lev).CellSize(idim) ) ) ;
-
-               // Modify lo and hi if the crse ratio is power of two
-               // But the lo and hi are still not coarsenable
-               int mod_lo = diag_ilo[idim] % m_crse_ratio[idim];
-               int mod_hi = diag_ihi[idim] % m_crse_ratio[idim];
-               if (mod_lo > 0) diag_ilo[idim] -= mod_lo;
-               if (mod_hi > 0) diag_ihi[idim] += (m_crse_ratio[idim] - mod_hi);
-               // Subtract hi_index by 1 accounting for cell-centered indextype of mf_avg
-               diag_ihi[idim]  -= 1;
-               // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
-               if ( diag_ihi[idim] <= diag_ilo[idim] ) {
-                    diag_ihi[idim] = diag_ilo[idim] + 1;
-                    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                       m_crse_ratio[idim]==1, "coarsening ratio in reduced dimension must be 1."
-                    );
-               }
-           }
-           // Box for the reduced-domain diag
-           Box diag_box(diag_ilo,diag_ihi);
-           // Define box array
-           BoxArray diag_ba;
-           diag_ba.define(diag_box);
-           const int diag_grid_size = 32;
-           ba = diag_ba.maxSize(diag_grid_size);
-        }
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            m_crse_ratio.min() > 0,
-            "Coarsening ratio must be non-zero."
-        );
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
-            ba.coarsenable(m_crse_ratio),
-            "Invalid coarsening ratio for diagnostics. Must be a power of two and an integer divisor of the blocking factor."
-        );
-        // The boxArray is coarsened based on the user-defined coarsening ratio
-        ba.coarsen(m_crse_ratio);
-        if (use_warpxba == false) dmap = DistributionMapping{ba};
-        // Allocate output multifab
-        // Note: default MultiFab constructor is cell-centered
-        mf_avg[lev] = MultiFab(ba, dmap, varnames.size(), 0);
     }
     // Construct Flush class. So far, only Plotfile is implemented.
     m_flush_format = new FlushFormatPlotfile;
@@ -339,4 +270,90 @@ Diagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
         varnames.push_back( field + "_" + std::to_string(ic) + "_imag" );
     }
 #endif
+}
+
+void
+Diagnostics::DefineDiagMultiFab ( int lev ) {
+
+    auto & warpx = WarpX::GetInstance();
+    amrex::RealBox diag_dom;
+    bool use_warpxba = true;
+
+    // Default BoxArray and DistributionMap for mf_avg from the warpx instance
+    BoxArray ba = warpx.boxArray(lev);
+    DistributionMapping dmap = warpx.DistributionMap(lev);
+
+    // Find if user-defined diag lo and hi are different from the simulation
+    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
+         // To ensure that the diag lo and hi are within the domain defined at lev
+         diag_dom.setLo(idim, max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
+         diag_dom.setHi(idim, min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
+         if ( fabs(warpx.Geom(lev).ProbLo(idim) - diag_dom.lo(idim))
+                                >  warpx.Geom(lev).CellSize(idim) )
+              use_warpxba = false;
+         if ( fabs(warpx.Geom(lev).ProbHi(idim) - diag_dom.hi(idim))
+                                > warpx.Geom(lev).CellSize(idim) )
+              use_warpxba = false;
+    }
+
+    if (use_warpxba == false) {
+       // Following are the steps to create a new box array
+       IntVect lo(AMREX_D_DECL(0,0,0));
+       IntVect hi(AMREX_D_DECL(1,1,1));
+       for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
+           // lo index
+           lo[idim] = static_cast<int>( floor (
+                                ( diag_dom.lo(idim)
+                                - warpx.Geom(lev).ProbLo(idim) )
+                                / warpx.Geom(lev).CellSize(idim) ) );
+           // hi index
+           hi[idim] = static_cast<int> ( ceil (
+                                ( diag_dom.hi(idim)
+                                - warpx.Geom(lev).ProbLo(idim) )
+                                / warpx.Geom(lev).CellSize(idim) ) ) ;
+
+           // Modify lo and hi if the crse ratio is power of two
+           // But the lo and hi are still not coarsenable
+           int mod_lo = lo[idim] % m_crse_ratio[idim];
+           int mod_hi = hi[idim] % m_crse_ratio[idim];
+           if (mod_lo > 0) lo[idim] -= mod_lo;
+           if (mod_hi > 0) hi[idim] += (m_crse_ratio[idim] - mod_hi);
+           // Subtract hi_index by 1 accounting for cell-centered indextype of mf_avg
+           hi[idim]  -= 1;
+           // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
+           if ( hi[idim] <= lo[idim] ) {
+                hi[idim]  = lo[idim] + 1;
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                   m_crse_ratio[idim]==1, "coarsening ratio in reduced dimension must be 1."
+                );
+           }
+           // update lo and hi according to the modified ilo and ihi in index space
+           m_lo[idim] = lo[idim] * warpx.Geom(lev).CellSize(idim)
+                      + warpx.Geom(lev).ProbLo(idim);
+           m_hi[idim] = hi[idim] * warpx.Geom(lev).CellSize(idim)
+                      + warpx.Geom(lev).ProbLo(idim);
+       }
+       // Box for the reduced-domain diag
+       Box diag_box( lo, hi );
+       // Define box array
+       BoxArray diag_ba;
+       diag_ba.define(diag_box);
+       ba = diag_ba.maxSize( warpx.maxGridSize( lev ) );
+    }
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_crse_ratio.min() > 0,
+        "Coarsening ratio must be non-zero."
+    );
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
+        ba.coarsenable(m_crse_ratio),
+        "Invalid coarsening ratio for diagnostics. Must be a power of two and an integer divisor of the blocking factor."
+    );
+    // The boxArray is coarsened based on the user-defined coarsening ratio
+    ba.coarsen(m_crse_ratio);
+    // Generate a new distribution map if lo and hi for diag is different from simulation
+    if (use_warpxba == false) dmap = DistributionMapping{ba};
+    // Allocate output multifab
+    // Note: default MultiFab constructor is cell-centered
+    mf_avg[lev] = MultiFab(ba, dmap, varnames.size(), 0);
+
 }
