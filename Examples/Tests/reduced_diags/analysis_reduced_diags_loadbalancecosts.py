@@ -28,10 +28,12 @@ data = np.genfromtxt("./diags/reducedfiles/LBC.txt")
 data = data[:,2:]
 
 # Compute the number of datafields saved per box
+n_data_fields = 0
 with open("./diags/reducedfiles/LBC.txt") as f:
     h = f.readlines()[0]
     unique_headers=[''.join([l for l in w if not l.isdigit()]) for w in h.split()][2::]
     n_data_fields = len(set(unique_headers))
+    f.close()
 
 # From data header, data layout is:
 #     [step, time,
