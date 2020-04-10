@@ -445,17 +445,17 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf_r, int const f
 
 /* \brief Initialize arrays used for filtering */
 void
-SpectralFieldDataHankel::InitFilter (amrex::IntVect const & filter_npass_each_dir, bool const compensation,
-                                     SpectralHankelKSpace const & k_space)
+SpectralFieldDataRZ::InitFilter (amrex::IntVect const & filter_npass_each_dir, bool const compensation,
+                                 SpectralKSpaceRZ const & k_space)
 {
-    binomialfilter = BinomialFilter(hankeltransformer.boxArray(),
-                                    hankeltransformer.DistributionMap());
+    binomialfilter = BinomialFilter(multi_spectral_hankel_transformer.boxArray(),
+                                    multi_spectral_hankel_transformer.DistributionMap());
 
     auto const & dx = k_space.getCellSize();
     auto const & kz = k_space.getKzArray();
 
     for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
-        binomialfilter[mfi].InitFilterArrayR(hankeltransformer[mfi].getKrArray(),
+        binomialfilter[mfi].InitFilterArrayR(multi_spectral_hankel_transformer[mfi].getKrArray(),
                                              dx[0], filter_npass_each_dir[0], compensation);
         binomialfilter[mfi].InitFilterArrayZ(kz[mfi],
                                              dx[1], filter_npass_each_dir[1], compensation);
@@ -464,7 +464,7 @@ SpectralFieldDataHankel::InitFilter (amrex::IntVect const & filter_npass_each_di
 
 /* \brief Apply K-space filtering on a scalar */
 void
-SpectralFieldDataHankel::ApplyFilter (int const field_index)
+SpectralFieldDataRZ::ApplyFilter (int const field_index)
 {
 
     for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
@@ -473,7 +473,7 @@ SpectralFieldDataHankel::ApplyFilter (int const field_index)
         auto const & filter_r_arr = filter_r.dataPtr();
         auto const & filter_z_arr = filter_z.dataPtr();
 
-        amrex::Array4<Complex> const& fields_arr = SpectralFieldDataHankel::fields[mfi].array();
+        amrex::Array4<Complex> const& fields_arr = fields[mfi].array();
 
         int const modes = n_rz_azimuthal_modes;
         constexpr int n_fields = SpectralFieldIndex::n_fields;
@@ -492,7 +492,7 @@ SpectralFieldDataHankel::ApplyFilter (int const field_index)
 
 /* \brief Apply K-space filtering on a vector */
 void
-SpectralFieldDataHankel::ApplyFilter (int const field_index1, int const field_index2, int const field_index3)
+SpectralFieldDataRZ::ApplyFilter (int const field_index1, int const field_index2, int const field_index3)
 {
 
     for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
@@ -501,7 +501,7 @@ SpectralFieldDataHankel::ApplyFilter (int const field_index1, int const field_in
         auto const & filter_r_arr = filter_r.dataPtr();
         auto const & filter_z_arr = filter_z.dataPtr();
 
-        amrex::Array4<Complex> const& fields_arr = SpectralFieldDataHankel::fields[mfi].array();
+        amrex::Array4<Complex> const& fields_arr = fields[mfi].array();
 
         int const modes = n_rz_azimuthal_modes;
         constexpr int n_fields = SpectralFieldIndex::n_fields;

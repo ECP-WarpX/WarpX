@@ -7,7 +7,7 @@
 #ifndef WARPX_SPECTRAL_BINOMIAL_FILTER_H_
 #define WARPX_SPECTRAL_BINOMIAL_FILTER_H_
 
-#include "HankelTransform.H"
+#include "SpectralHankelTransform/HankelTransform.H"
 #include "SpectralKSpace.H"
 
 /**
