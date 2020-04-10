@@ -1030,8 +1030,10 @@ MultiParticleContainer::doQEDSchwinger ()
 
     auto & warpx = WarpX::GetInstance();
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_nodal,
-        "ERROR: Schwinger process only implemented for warpx.do_nodal = 1");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_nodal ||
+       warpx.field_gathering_algo == GatheringAlgo::MomentumConserving,
+          "ERROR: Schwinger process only implemented for warpx.do_nodal = 1"
+                                 "or algo.field_gathering = momentum-conserving");
 
     const int level_0 = 0;
 
