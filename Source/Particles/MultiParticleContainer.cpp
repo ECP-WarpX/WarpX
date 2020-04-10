@@ -1030,8 +1030,10 @@ MultiParticleContainer::doQEDSchwinger ()
 
     auto & warpx = WarpX::GetInstance();
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_nodal,
-        "ERROR: Schwinger process only implemented for warpx.do_nodal = 1");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_nodal ||
+       warpx.field_gathering_algo == GatheringAlgo::MomentumConserving,
+          "ERROR: Schwinger process only implemented for warpx.do_nodal = 1"
+                                 "or algo.field_gathering = momentum-conserving");
 
     const int level_0 = 0;
 
@@ -1046,7 +1048,7 @@ MultiParticleContainer::doQEDSchwinger ()
     amrex::Abort("Schwinger process not implemented in single precision");
 #endif
 
-// Get cell volume multiplied a temporal step. In 2D the transverse size is
+// Get cell volume multiplied by temporal step. In 2D the transverse size is
 // chosen by the user in the input file.
     amrex::Geometry const & geom = warpx.Geom(level_0);
     auto domain_box = geom.Domain();
