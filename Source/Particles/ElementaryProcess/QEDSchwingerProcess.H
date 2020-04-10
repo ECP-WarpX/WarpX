@@ -21,6 +21,8 @@ struct SchwingerFilterFunc
 
     /** Get the number of created pairs in a given cell at a given timestep.
      *
+     * \tparam FABs the src array of Array4 type
+     *
      * @param[in] src_FABs Array of 6 Array4 that contain the EM field in the tile.
      * @param[in] i index of the cell in the first direction.
      * @param[in] j index of the cell in the second direction.
@@ -57,6 +59,8 @@ struct SchwingerTransformFunc
 
     /** Assign a weight to particles created via the Schwinger process.
      *
+     * \tparam DstTile the dst particle tile type
+     *
      * @param[in,out] dst1 Target electron species.
      * @param[in,out] dst2 Target photon species.
      * @param[in] i_dst1 Particle index of target electron species.
@@ -65,9 +69,9 @@ struct SchwingerTransformFunc
      * @param[in] total_weight Number of physical pairs created in the
      *            considered cell.
      */
-    template <typename DstData1, typename DstData2>
+    template <typename DstTile>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (DstData1& dst1, DstData2& dst2, const int i_dst1,
+    void operator() (DstTile& dst1, DstTile& dst2, const int i_dst1,
                        const int i_dst2, const int N,
                         const amrex::Real total_weight) const noexcept
     {

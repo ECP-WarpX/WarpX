@@ -24,14 +24,14 @@
  * \param[in,out] dst2 the second destination tile
  * \param[in] box the box where the particles are created
  * \param[in] src_FAB A FAB defined on box that is used in the transform function
- * \param[in] mask pointer to the mask - 1 means create, 0 means don't create
+ * \param[in] mask pointer to the mask: 1 means create, 0 means don't create
  * \param[in] dst1_index the location at which to starting writing the result to dst1
  * \param[in] dst2_index the location at which to starting writing the result to dst2
  * \param[in] create1 callable that defines what will be done for the create step for dst1.
  * \param[in] create2 callable that defines what will be done for the create step for dst2.
  * \param[in] transform callable that defines the transformation to apply on dst1 and dst2.
  *
- * \return num_added the number of particles that were written to dst 1 and dst 2.
+ * \return num_added the number of particles that were written to dst1 and dst2.
  */
 template <int N, typename DstTile, typename FAB, typename Index,
           typename CreateFunc1, typename CreateFunc2, typename TransFunc,
@@ -142,7 +142,7 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
  * \param[in] create2 callable that defines what will be done for the create step for dst2.
  * \param[in] transform callable that defines the transformation to apply on dst1 and dst2.
  *
- * \return num_added the number of particles that were written to dst 1 and dst 2.
+ * \return num_added the number of particles that were written to dst1 and dst2.
  */
 template <int N, typename DstTile, typename FABs, typename Index,
           typename FilterFunc, typename CreateFunc1, typename CreateFunc2,

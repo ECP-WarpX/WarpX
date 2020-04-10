@@ -347,7 +347,7 @@ protected:
      * higher than this threshold we use a Gaussian distribution rather than
      * a Poisson distribution for the pair production rate calculations
      */
-    int m_qed_schwinger_threshold_poisson_gaussian = 100;
+    int m_qed_schwinger_threshold_poisson_gaussian = 25;
 
 #endif
 

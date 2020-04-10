@@ -275,7 +275,7 @@ MultiParticleContainer::ReadParameters ()
 #if (AMREX_SPACEDIM == 2)
             ppq.get("y_size",m_qed_schwinger_y_size);
 #endif
-            ppw.query("threshold_poisson_gaussian",
+            ppq.query("threshold_poisson_gaussian",
                       m_qed_schwinger_threshold_poisson_gaussian);
         }
 #endif
@@ -1025,6 +1025,9 @@ MultiParticleContainer::doQEDSchwinger ()
 {
     if (!m_do_qed_schwinger) {return;}
 
+    WARPX_PROFILE_VAR_NS("MPC::doQEDSchwinger",blp_schwinger);
+    WARPX_PROFILE_VAR_START(blp_schwinger);
+
     auto & warpx = WarpX::GetInstance();
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_nodal,
@@ -1118,6 +1121,8 @@ MultiParticleContainer::doQEDSchwinger ()
 
         setNewParticleIDs(dst_ele_tile, np_ele_dst, num_added);
         setNewParticleIDs(dst_pos_tile, np_pos_dst, num_added);
+
+        WARPX_PROFILE_VAR_STOP(blp_schwinger);
     }
 }
 

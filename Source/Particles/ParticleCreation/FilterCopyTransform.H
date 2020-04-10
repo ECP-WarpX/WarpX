@@ -28,7 +28,7 @@
  *
  * \param dst the destination tile
  * \param src the source tile
- * \param mask pointer to the mask - 1 means copy, 0 means don't copy
+ * \param mask pointer to the mask: 1 means copy, 0 means don't copy
  * \param dst_index the location at which to starting writing the result to dst
  * \param copy callable that defines what will be done for the "copy" step.
  * \param transform callable that defines the transformation to apply on dst and src.
@@ -162,7 +162,7 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index dst_index,
  * \param dst1 the destination tile
  * \param dst2 the destination tile
  * \param src the source tile
- * \param mask pointer to the mask - 1 means copy, 0 means don't copy
+ * \param mask pointer to the mask: 1 means copy, 0 means don't copy
  * \param dst1_index the location at which to starting writing the result to dst1
  * \param dst2_index the location at which to starting writing the result to dst2
  * \param copy1 callable that defines what will be done for the "copy" step for src-->dst1.

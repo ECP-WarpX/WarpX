@@ -4,6 +4,9 @@
 #
 # License: BSD-3-Clause-LBNL
 
+## The pair production rate is calculated using the formula described in
+## Bulanov, S. S., et al. Physical review letters 104.22 (2010): 220404.
+
 import os
 import glob
 import yt
@@ -17,7 +20,6 @@ e = 1.6021766208e-19
 hbar = 1.054571800e-34
 E_S = m_e**2*c**3/e/hbar # Schwinger field
 
-numcells = 512 # total number of cells in the test case
 dV = (1.e-6)**3 # total simulation volume
 dt = 2.407291502e-16
 filename = "diags/plotfiles/plt00001"
@@ -72,15 +74,14 @@ def calculate_rate(Ex,Ey,Ez,Bx,By,Bz):
 
 def do_analysis(Ex,Ey,Ez,Bx,By,Bz):
 
-    expected_total_physical_pairs_created = dV*dt*calculate_rate(Ex,Ey,Ez,Bx,By,Bz)
+    data_set = yt.load(filename)
 
+    expected_total_physical_pairs_created = dV*dt*calculate_rate(Ex,Ey,Ez,Bx,By,Bz)
     if expected_total_physical_pairs_created < 0.01:
-        assert(not os.path.isdir(filename+"/ele_schwinger/Level_0/"))
-        ## Assert whether pairs are created or not. Is there a cleaner way to do that?
+        assert(not data_set.particle_type_counts)
+        ## Assert whether pairs are created or not.
 
     else:
-        data_set = yt.load(filename)
-
         all_data = data_set.all_data()
 
         ele_data = all_data["ele_schwinger",'particle_weight']
@@ -88,7 +89,7 @@ def do_analysis(Ex,Ey,Ez,Bx,By,Bz):
 
         std_total_physical_pairs_created = np.sqrt(expected_total_physical_pairs_created)
 
-        # This first assert only works if a single box is used in the simulation
+        # This first assert only works if a single tile is used in the simulation
         assert(np.array_equal(ele_data,pos_data))
         # 5 sigma test that has an intrisic probability to fail of 1 over ~2 millions
         assert(np.abs(np.sum(ele_data)-expected_total_physical_pairs_created)<5*std_total_physical_pairs_created)
@@ -113,7 +114,7 @@ def launch_analysis(executable):
     do_analysis(Ex_test3, Ey_test3, Ez_test3, Bx_test3, By_test3, Bz_test3)
 
     # Fourth test with extremely strong EM field but with E and B perpendicular and nearly equal so
-    # that the pair production rate is fairly low. A poisson distribution is used in this case.
+    # that the pair production rate is fairly low. A Gaussian distribution is used in this case.
     os.system("./" + executable + " inputs_3d_schwinger 'warpx.E_external_grid = %.15f %.15f %.15f' 'warpx.B_external_grid = %.15f %.15f %.15f'" \
                % (Ex_test4, Ey_test4, Ez_test4, Bx_test4, By_test4, Bz_test4) )
     do_analysis(Ex_test4, Ey_test4, Ez_test4, Bx_test4, By_test4, Bz_test4)

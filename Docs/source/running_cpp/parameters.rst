@@ -1540,7 +1540,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     This value should correspond to the typical transverse extent for which the EM field has a very high value
     (e.g. the beam waist for a focused laser beam).
 
-* ``qed_schwinger.threshold_poisson_gaussian`` (`integer`) optional (default `100`)
+* ``qed_schwinger.threshold_poisson_gaussian`` (`integer`) optional (default `25`)
     If the expected number of physical pairs created in a cell at a given timestep is smaller than this threshold,
     a Poisson distribution is used to draw the actual number of physical pairs created.
     Otherwise a Gaussian distribution is used.
