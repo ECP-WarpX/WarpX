@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_SPECTRAL_HANKEL_K_SPACE_H_
-#define WARPX_SPECTRAL_HANKEL_K_SPACE_H_
+#ifndef WARPX_SPECTRAL_K_SPACE_RZ_H_
+#define WARPX_SPECTRAL_K_SPACE_RZ_H_
 
 #include "SpectralKSpace.H"
 
@@ -15,18 +15,18 @@
  * to each box in `realspace_ba`, as well as the value of the
  * corresponding kz coordinates)
  */
-class SpectralHankelKSpace
+class SpectralKSpaceRZ
     :
     public SpectralKSpace
 {
     public:
-        SpectralHankelKSpace(const amrex::BoxArray& realspace_ba,
-                             const amrex::DistributionMapping& dm,
-                             const amrex::RealVect realspace_dx);
+        SpectralKSpaceRZ(const amrex::BoxArray& realspace_ba,
+                         const amrex::DistributionMapping& dm,
+                         const amrex::RealVect realspace_dx);
 
         KVectorComponent const & getKzArray () const {return k_vec[1];}
         amrex::RealVect const & getCellSize () const {return dx;}
 
 };
 
-#endif // WARPX_SPECTRAL_HANKEL_K_SPACE_H_
+#endif // WARPX_SPECTRAL_K_SPACE_RZ_H_

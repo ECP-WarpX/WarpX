@@ -4,9 +4,11 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "SpectralFieldDataHankel.H"
+#include "SpectralFieldDataRZ.H"
 
 #include "WarpX.H"
+
+using amrex::operator""_rt;
 
 /* \brief Initialize fields in spectral space, and FFT plans
  *
@@ -17,18 +19,22 @@
  * \param n_field_required Specifies the number of fields that will be transformed
  * \param n_modes Number of cylindrical modes
  * */
-SpectralFieldDataHankel::SpectralFieldDataHankel (amrex::BoxArray const & realspace_ba,
-                                                  SpectralHankelKSpace const & k_space,
-                                                  amrex::DistributionMapping const & dm,
-                                                  int const n_field_required,
-                                                  int const n_modes)
+SpectralFieldDataRZ::SpectralFieldDataRZ (amrex::BoxArray const & realspace_ba,
+                                          SpectralKSpaceRZ const & k_space,
+                                          amrex::DistributionMapping const & dm,
+                                          int const n_field_required,
+                                          int const n_modes,
+                                          int const lev)
     : n_rz_azimuthal_modes(n_modes)
 {
     amrex::BoxArray const & spectralspace_ba = k_space.spectralspace_ba;
 
-    // Allocate the arrays that contain the fields in spectral space
-    // (one component per field).
-    // Note that this is complex.
+    // Allocate the arrays that contain the fields in spectral space.
+    // SpectralField is comparable to a MultiFab but stores complex numbers.
+    // This stores all of the transformed fields in one place, with the last dimension
+    // being the list of fields, defined by SpectralFieldIndex, for all of the modes.
+    // The fields of each mode are grouped together, so that the index of a
+    // field for a specific mode is given by field_index + mode*n_fields.
     fields = SpectralField(spectralspace_ba, dm, n_rz_azimuthal_modes*n_field_required, 0);
 
     // Allocate temporary arrays - in real space and spectral space.
@@ -52,7 +58,7 @@ SpectralFieldDataHankel::SpectralFieldDataHankel (amrex::BoxArray const & realsp
     // as the forward plan anyway.
     backward_plan = FFTplans(spectralspace_ba, dm);
 #endif
-    hankeltransformer = HankelTransformer(spectralspace_ba, dm);
+    multi_spectral_hankel_transformer = MultiSpectralHankelTransformer(spectralspace_ba, dm);
 
     // Loop over boxes and allocate the corresponding plan
     // for each box owned by the local MPI proc.
@@ -113,13 +119,13 @@ SpectralFieldDataHankel::SpectralFieldDataHankel (amrex::BoxArray const & realsp
 #endif
 
         // Create the Hankel transformer for each box.
-        std::array<amrex::Real,3> xmax = WarpX::UpperCorner(mfi.tilebox(), 0); // lev=0 is explicit
-        hankeltransformer[mfi] = SpectralHankelTransformer(grid_size[0], n_rz_azimuthal_modes, xmax[0]);
+        std::array<amrex::Real,3> xmax = WarpX::UpperCorner(mfi.tilebox(), lev);
+        multi_spectral_hankel_transformer[mfi] = SpectralHankelTransformer(grid_size[0], n_rz_azimuthal_modes, xmax[0]);
     }
 }
 
 
-SpectralFieldDataHankel::~SpectralFieldDataHankel()
+SpectralFieldDataRZ::~SpectralFieldDataRZ()
 {
     if (fields.size() > 0){
         for (amrex::MFIter mfi(fields); mfi.isValid(); ++mfi){
@@ -144,9 +150,9 @@ SpectralFieldDataHankel::~SpectralFieldDataHankel()
  *  The input should include the imaginary component of mode 0
  *  (even though it is all zeros). */
 void
-SpectralFieldDataHankel::FABZForwardTransform (amrex::MFIter const & mfi,
-                                               amrex::MultiFab const & tempHTransformedSplit,
-                                               int const field_index, const bool is_nodal_z)
+SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi,
+                                           amrex::MultiFab const & tempHTransformedSplit,
+                                           int const field_index, const bool is_nodal_z)
 {
     // Copy the split complex to the interleaved complex.
 
@@ -189,7 +195,7 @@ SpectralFieldDataHankel::FABZForwardTransform (amrex::MFIter const & mfi,
     // and apply correcting shift factor if the real space data comes
     // from a cell-centered grid in real space instead of a nodal grid.
     amrex::Array4<const Complex> const& tmp_arr = tmpSpectralField[mfi].array();
-    amrex::Array4<Complex> const& fields_arr = SpectralFieldDataHankel::fields[mfi].array();
+    amrex::Array4<Complex> const& fields_arr = fields[mfi].array();
     Complex const* zshift_arr = zshift_FFTfromCell[mfi].dataPtr();
 
     // Loop over indices within one box, all components.
@@ -197,7 +203,7 @@ SpectralFieldDataHankel::FABZForwardTransform (amrex::MFIter const & mfi,
     // are grouped together in memory.
     amrex::Box const& spectralspace_bx = tmpSpectralField[mfi].box();
     int const nz = spectralspace_bx.length(1);
-    amrex::Real inv_nz = 1./nz;
+    amrex::Real inv_nz = 1._rt/nz;
     constexpr int n_fields = SpectralFieldIndex::n_fields;
 
     ParallelFor(spectralspace_bx, modes,
@@ -219,15 +225,15 @@ SpectralFieldDataHankel::FABZForwardTransform (amrex::MFIter const & mfi,
  *  The output includes the imaginary component of mode 0
  *  (even though it is all zeros). */
 void
-SpectralFieldDataHankel::FABZBackwardTransform (amrex::MFIter const & mfi, int const field_index,
-                                                amrex::MultiFab & tempHTransformedSplit,
-                                                const bool is_nodal_z)
+SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, int const field_index,
+                                            amrex::MultiFab & tempHTransformedSplit,
+                                            const bool is_nodal_z)
 {
     // Copy the spectral-space field from the appropriate index of the FabArray
     // `fields` (specified by `field_index`) to field `tmpSpectralField`
     // and apply correcting shift factor if the real space data is on
     // a cell-centered grid in real space instead of a nodal grid.
-    amrex::Array4<const Complex> const& fields_arr = SpectralFieldDataHankel::fields[mfi].array();
+    amrex::Array4<const Complex> const& fields_arr = fields[mfi].array();
     amrex::Array4<Complex> const& tmp_arr = tmpSpectralField[mfi].array();
     Complex const* zshift_arr = zshift_FFTtoCell[mfi].dataPtr();
 
@@ -287,8 +293,8 @@ SpectralFieldDataHankel::FABZBackwardTransform (amrex::MFIter const & mfi, int c
  *  to spectral space, and store the corresponding result internally
  *  (in the spectral field specified by `field_index`) */
 void
-SpectralFieldDataHankel::ForwardTransform (amrex::MultiFab const & field_mf, int const field_index,
-                                           int const i_comp)
+SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf, int const field_index,
+                                       int const i_comp)
 {
     // Check field index type, in order to apply proper shift in spectral space.
     // Only cell centered in r is supported.
@@ -308,7 +314,7 @@ SpectralFieldDataHankel::ForwardTransform (amrex::MultiFab const & field_mf, int
         // field_mf does not.
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
         amrex::FArrayBox field_comp(field_mf[mfi], amrex::make_alias, i_comp*ncomp, ncomp);
-        hankeltransformer[mfi].PhysicalToSpectral_Scalar(realspace_bx, field_comp, tempHTransformedSplit[mfi]);
+        multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Scalar(realspace_bx, field_comp, tempHTransformedSplit[mfi]);
 
         FABZForwardTransform(mfi, tempHTransformedSplit, field_index, is_nodal_z);
 
@@ -317,10 +323,10 @@ SpectralFieldDataHankel::ForwardTransform (amrex::MultiFab const & field_mf, int
 
 /* \brief Transform the coupled components of MultiFabs `field_mf_r` and `field_mf_t`
  *  to spectral space, and store the corresponding result internally
- *  (in the spectral fields specified by `field_index_r` and `field_index_r`) */
+ *  (in the spectral fields specified by `field_index_r` and `field_index_t`) */
 void
-SpectralFieldDataHankel::ForwardTransform (amrex::MultiFab const & field_mf_r, int const field_index_r,
-                                           amrex::MultiFab const & field_mf_t, int const field_index_t)
+SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf_r, int const field_index_r,
+                                       amrex::MultiFab const & field_mf_t, int const field_index_t)
 {
     // Check field index type, in order to apply proper shift in spectral space.
     // Only cell centered in r is supported.
@@ -333,8 +339,8 @@ SpectralFieldDataHankel::ForwardTransform (amrex::MultiFab const & field_mf_r, i
     amrex::MultiFab field_mf_t_copy(field_mf_t.boxArray(), field_mf_t.DistributionMap(), 2*n_rz_azimuthal_modes, field_mf_t.nGrowVect());
     amrex::MultiFab::Copy(field_mf_r_copy, field_mf_r, 0, 0, 1, field_mf_r.nGrowVect()); // Real part of mode 0
     amrex::MultiFab::Copy(field_mf_t_copy, field_mf_t, 0, 0, 1, field_mf_t.nGrowVect()); // Real part of mode 0
-    field_mf_r_copy.setVal(0., 1, 1, field_mf_r.nGrowVect()); // Imaginary part of mode 0
-    field_mf_t_copy.setVal(0., 1, 1, field_mf_t.nGrowVect()); // Imaginary part of mode 0
+    field_mf_r_copy.setVal(0._rt, 1, 1, field_mf_r.nGrowVect()); // Imaginary part of mode 0
+    field_mf_t_copy.setVal(0._rt, 1, 1, field_mf_t.nGrowVect()); // Imaginary part of mode 0
     amrex::MultiFab::Copy(field_mf_r_copy, field_mf_r, 1, 2, 2*n_rz_azimuthal_modes-2, field_mf_r.nGrowVect());
     amrex::MultiFab::Copy(field_mf_t_copy, field_mf_t, 1, 2, 2*n_rz_azimuthal_modes-2, field_mf_t.nGrowVect());
 
@@ -346,9 +352,9 @@ SpectralFieldDataHankel::ForwardTransform (amrex::MultiFab const & field_mf_r, i
 
         // Perform the Hankel transform first.
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
-        hankeltransformer[mfi].PhysicalToSpectral_Vector(realspace_bx,
-                                                         field_mf_r_copy[mfi], field_mf_t_copy[mfi],
-                                                         tempHTransformedSplit_p[mfi], tempHTransformedSplit_m[mfi]);
+        multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Vector(realspace_bx,
+                                                           field_mf_r_copy[mfi], field_mf_t_copy[mfi],
+                                                           tempHTransformedSplit_p[mfi], tempHTransformedSplit_m[mfi]);
 
         FABZForwardTransform(mfi, tempHTransformedSplit_p, field_index_r, is_nodal_z);
         FABZForwardTransform(mfi, tempHTransformedSplit_m, field_index_t, is_nodal_z);
@@ -359,8 +365,8 @@ SpectralFieldDataHankel::ForwardTransform (amrex::MultiFab const & field_mf_r, i
 /* \brief Transform spectral field specified by `field_index` back to
  * real space, and store it in the component `i_comp` of `field_mf` */
 void
-SpectralFieldDataHankel::BackwardTransform (amrex::MultiFab& field_mf, int const field_index,
-                                            int const i_comp)
+SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf, int const field_index,
+                                        int const i_comp)
 {
     // Check field index type, in order to apply proper shift in spectral space.
     bool const is_nodal_z = field_mf.is_nodal(1);
@@ -380,7 +386,7 @@ SpectralFieldDataHankel::BackwardTransform (amrex::MultiFab& field_mf, int const
         // field_mf does not.
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
         amrex::FArrayBox field_comp(field_mf[mfi], amrex::make_alias, i_comp*ncomp, ncomp);
-        hankeltransformer[mfi].SpectralToPhysical_Scalar(realspace_bx, tempHTransformedSplit[mfi], field_comp);
+        multi_spectral_hankel_transformer[mfi].SpectralToPhysical_Scalar(realspace_bx, tempHTransformedSplit[mfi], field_comp);
 
     }
 }
@@ -388,8 +394,8 @@ SpectralFieldDataHankel::BackwardTransform (amrex::MultiFab& field_mf, int const
 /* \brief Transform spectral fields specified by `field_index_r` and
  * `field_index_t` back to real space, and store them in `field_mf_r` and `field_mf_t` */
 void
-SpectralFieldDataHankel::BackwardTransform (amrex::MultiFab& field_mf_r, int const field_index_r,
-                                            amrex::MultiFab& field_mf_t, int const field_index_t)
+SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf_r, int const field_index_r,
+                                        amrex::MultiFab& field_mf_t, int const field_index_t)
 {
     // Check field index type, in order to apply proper shift in spectral space.
     bool const is_nodal_z = field_mf_r.is_nodal(1);
@@ -412,9 +418,9 @@ SpectralFieldDataHankel::BackwardTransform (amrex::MultiFab& field_mf_r, int con
         // tempHTransformedSplit includes the imaginary component of mode 0.
         // field_mf_[ri] do not.
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
-        hankeltransformer[mfi].SpectralToPhysical_Vector(realspace_bx,
-                                                         tempHTransformedSplit_p[mfi], tempHTransformedSplit_m[mfi],
-                                                         field_mf_r_copy[mfi], field_mf_t_copy[mfi]);
+        multi_spectral_hankel_transformer[mfi].SpectralToPhysical_Vector(realspace_bx,
+                                                           tempHTransformedSplit_p[mfi], tempHTransformedSplit_m[mfi],
+                                                           field_mf_r_copy[mfi], field_mf_t_copy[mfi]);
 
         amrex::Array4<amrex::Real> const & field_mf_r_array = field_mf_r[mfi].array();
         amrex::Array4<amrex::Real> const & field_mf_t_array = field_mf_t[mfi].array();
@@ -435,83 +441,4 @@ SpectralFieldDataHankel::BackwardTransform (amrex::MultiFab& field_mf_r, int con
 
     }
 
-}
-
-/* \brief Initialize arrays used for filtering */
-void
-SpectralFieldDataHankel::InitFilter (amrex::IntVect const & filter_npass_each_dir, bool const compensation,
-                                     SpectralHankelKSpace const & k_space)
-{
-    binomialfilter = BinomialFilter(hankeltransformer.boxArray(),
-                                    hankeltransformer.DistributionMap());
-
-    auto const & dx = k_space.getCellSize();
-    auto const & kz = k_space.getKzArray();
-
-    for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
-        binomialfilter[mfi].InitFilterArrayR(hankeltransformer[mfi].getKrArray(),
-                                             dx[0], filter_npass_each_dir[0], compensation);
-        binomialfilter[mfi].InitFilterArrayZ(kz[mfi],
-                                             dx[1], filter_npass_each_dir[1], compensation);
-    }
-}
-
-/* \brief Apply K-space filtering on a scalar */
-void
-SpectralFieldDataHankel::ApplyFilter (int const field_index)
-{
-
-    for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
-        auto const & filter_r = binomialfilter[mfi].getFilterArrayR();
-        auto const & filter_z = binomialfilter[mfi].getFilterArrayZ();
-        auto const & filter_r_arr = filter_r.dataPtr();
-        auto const & filter_z_arr = filter_z.dataPtr();
-
-        amrex::Array4<Complex> const& fields_arr = SpectralFieldDataHankel::fields[mfi].array();
-
-        int const modes = n_rz_azimuthal_modes;
-        constexpr int n_fields = SpectralFieldIndex::n_fields;
-
-        amrex::Box const& spectralspace_bx = fields[mfi].box();
-        int const nr = spectralspace_bx.length(0);
-
-        ParallelFor(spectralspace_bx, modes,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
-            int const ic = field_index + mode*n_fields;
-            int const ir = i + nr*mode;
-            fields_arr(i,j,k,ic) *= filter_r_arr[ir]*filter_z_arr[j];
-        });
-    }
-}
-
-/* \brief Apply K-space filtering on a vector */
-void
-SpectralFieldDataHankel::ApplyFilter (int const field_index1, int const field_index2, int const field_index3)
-{
-
-    for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
-        auto const & filter_r = binomialfilter[mfi].getFilterArrayR();
-        auto const & filter_z = binomialfilter[mfi].getFilterArrayZ();
-        auto const & filter_r_arr = filter_r.dataPtr();
-        auto const & filter_z_arr = filter_z.dataPtr();
-
-        amrex::Array4<Complex> const& fields_arr = SpectralFieldDataHankel::fields[mfi].array();
-
-        int const modes = n_rz_azimuthal_modes;
-        constexpr int n_fields = SpectralFieldIndex::n_fields;
-
-        amrex::Box const& spectralspace_bx = fields[mfi].box();
-        int const nr = spectralspace_bx.length(0);
-
-        ParallelFor(spectralspace_bx, modes,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
-            int const ic1 = field_index1 + mode*n_fields;
-            int const ic2 = field_index2 + mode*n_fields;
-            int const ic3 = field_index3 + mode*n_fields;
-            int const ir = i + nr*mode;
-            fields_arr(i,j,k,ic1) *= filter_r_arr[ir]*filter_z_arr[j];
-            fields_arr(i,j,k,ic2) *= filter_r_arr[ir]*filter_z_arr[j];
-            fields_arr(i,j,k,ic3) *= filter_r_arr[ir]*filter_z_arr[j];
-        });
-    }
 }

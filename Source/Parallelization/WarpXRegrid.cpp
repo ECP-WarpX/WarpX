@@ -1,13 +1,14 @@
 /* Copyright 2019 Andrew Myers, Ann Almgren, Axel Huebl
- * David Grote, Maxence Thevenet, Remi Lehe
- * Weiqun Zhang, levinem
+ * David Grote, Maxence Thevenet, Michael Rowan
+ * Remi Lehe, Weiqun Zhang, levinem
  *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <WarpX.H>
-#include <WarpXAlgorithmSelection.H>
+#include "WarpX.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+
 #include <AMReX_BLProfiler.H>
 
 using namespace amrex;
@@ -18,63 +19,48 @@ WarpX::LoadBalance ()
     WARPX_PROFILE_REGION("LoadBalance");
     WARPX_PROFILE("WarpX::LoadBalance()");
 
-    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-    {
-        LoadBalanceTimers();
-    } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
-    {
-        LoadBalanceHeuristic();
-    }
-}
-
-void
-WarpX::LoadBalanceTimers ()
-{
     AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
 
-    const int nLevels = finestLevel();
-    for (int lev = 0; lev <= nLevels; ++lev)
+    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
     {
-        const Real nboxes = costs[lev]->size();
-        const Real nprocs = ParallelDescriptor::NProcs();
-        const int nmax = static_cast<int>(std::ceil(nboxes/nprocs*load_balance_knapsack_factor));
-        const DistributionMapping newdm = (load_balance_with_sfc)
-            ? DistributionMapping::makeSFC(*costs[lev], false)
-            : DistributionMapping::makeKnapSack(*costs[lev], nmax);
-        RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
+        WarpX::ComputeCostsHeuristic(costs);
     }
-    mypc->Redistribute();
-}
-
-void
-WarpX::LoadBalanceHeuristic ()
-{
-    AMREX_ALWAYS_ASSERT(costs_heuristic[0] != nullptr);
-    WarpX::ComputeCostsHeuristic();
 
     const int nLevels = finestLevel();
     for (int lev = 0; lev <= nLevels; ++lev)
     {
 #ifdef AMREX_USE_MPI
-        // Parallel reduce the costs_heurisitc
-        amrex::Vector<Real>::iterator it = (*costs_heuristic[lev]).begin();
+        // Parallel reduce the costs
+        amrex::Vector<Real>::iterator it = (*costs[lev]).begin();
         amrex::Real* itAddr = &(*it);
-        ParallelAllReduce::Sum(itAddr,
-                               costs_heuristic[lev]->size(),
-                               ParallelContext::CommunicatorSub());
+        ParallelAllReduce::Sum(itAddr, costs[lev]->size(), ParallelContext::CommunicatorSub());
 #endif
-        const amrex::Real nboxes = costs_heuristic[lev]->size();
+        // Compute efficiency for the current distribution mapping
+        const DistributionMapping& currentdm = DistributionMap(lev);
+        amrex::Real currentEfficiency = 0.0;
+        if (load_balance_efficiency_ratio_threshold > 0.0)
+        {
+            ComputeDistributionMappingEfficiency(currentdm, *costs[lev],
+                                                 currentEfficiency);
+        }
+
+        const amrex::Real nboxes = costs[lev]->size();
         const amrex::Real nprocs = ParallelContext::NProcsSub();
         const int nmax = static_cast<int>(std::ceil(nboxes/nprocs*load_balance_knapsack_factor));
 
+        amrex::Real proposedEfficiency = 0.0;
         const DistributionMapping newdm = (load_balance_with_sfc)
-            ? DistributionMapping::makeSFC(*costs_heuristic[lev], boxArray(lev), false)
-            : DistributionMapping::makeKnapSack(*costs_heuristic[lev], nmax);
+            ? DistributionMapping::makeSFC(*costs[lev], boxArray(lev), proposedEfficiency, false)
+            : DistributionMapping::makeKnapSack(*costs[lev], proposedEfficiency, nmax);
 
-        RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
+        if (proposedEfficiency > load_balance_efficiency_ratio_threshold*currentEfficiency)
+        {
+            RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
+        }
     }
     mypc->Redistribute();
 }
+
 
 void
 WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const DistributionMapping& dm)
@@ -84,7 +70,6 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         if (ParallelDescriptor::NProcs() == 1) return;
 
         // Fine patch
-        const auto& period = Geom(lev).periodicity();
         for (int idim=0; idim < 3; ++idim)
         {
             {
@@ -162,7 +147,6 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
         // Coarse patch
         if (lev > 0) {
-            const auto& cperiod = Geom(lev-1).periodicity();
             for (int idim=0; idim < 3; ++idim)
             {
                 {
@@ -258,21 +242,11 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             }
         }
 
-        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (costs[lev] != nullptr)
         {
-            if (costs[lev] != nullptr)
-            {
-                costs[lev].reset(new MultiFab(costs[lev]->boxArray(), dm, 1, 0));
-                costs[lev]->setVal(0.0);
-            }
-        } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
-        {
-            if (costs_heuristic[lev] != nullptr)
-            {
-                costs_heuristic[lev].reset(new amrex::Vector<Real>);
-                const int nboxes = Efield_fp[lev][0].get()->size();
-                costs_heuristic[lev]->resize(nboxes, 0.0); // Initializes to 0.0?
-            }
+            costs[lev].reset(new amrex::Vector<Real>);
+            const int nboxes = Efield_fp[lev][0].get()->size();
+            costs[lev]->resize(nboxes, 0.0);
         }
 
         SetDistributionMap(lev, dm);
@@ -284,22 +258,22 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 }
 
 void
-WarpX::ComputeCostsHeuristic ()
+WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& a_costs)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        auto & mypc = WarpX::GetInstance().GetPartContainer();
-        auto nSpecies = mypc.nSpecies();
+        auto & mypc_ref = WarpX::GetInstance().GetPartContainer();
+        auto nSpecies = mypc_ref.nSpecies();
 
         // Species loop
         for (int i_s = 0; i_s < nSpecies; ++i_s)
         {
-            auto & myspc = mypc.GetParticleContainer(i_s);
+            auto & myspc = mypc_ref.GetParticleContainer(i_s);
 
             // Particle loop
             for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
             {
-                (*costs_heuristic[lev])[pti.index()] += costs_heuristic_particles_wt*pti.numParticles();
+                (*a_costs[lev])[pti.index()] += costs_heuristic_particles_wt*pti.numParticles();
             }
         }
 
@@ -308,7 +282,52 @@ WarpX::ComputeCostsHeuristic ()
         for (MFIter mfi(*Ex, false); mfi.isValid(); ++mfi)
         {
             const Box& gbx = mfi.growntilebox();
-            (*costs_heuristic[lev])[mfi.index()] += costs_heuristic_cells_wt*gbx.numPts();
+            (*a_costs[lev])[mfi.index()] += costs_heuristic_cells_wt*gbx.numPts();
         }
-    } // for (int lev ...)
-} // WarpX::ComputeCostsHeuristic
+    }
+}
+
+void
+WarpX::ResetCosts ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        costs[lev]->assign((*costs[lev]).size(), 0.0);
+    }
+}
+
+void
+WarpX::ComputeDistributionMappingEfficiency (const DistributionMapping& dm,
+                                             const Vector<Real>& cost,
+                                             Real& efficiency)
+{
+    const Real nprocs = ParallelDescriptor::NProcs();
+
+    // Collect costs per fab corresponding to each rank, then collapse into vector
+    // of total cost per proc
+
+    // This will store mapping from (proc) --> ([cost_FAB_1, cost_FAB_2, ... ])
+    // for each proc
+    std::map<int, Vector<Real>> rankToCosts;
+
+    for (int i=0; i<cost.size(); ++i)
+    {
+        rankToCosts[dm[i]].push_back(cost[i]);
+    }
+
+    Real maxCost = -1.0;
+
+    // This will store mapping from (proc) --> (sum of cost) for each proc
+    Vector<Real> rankToCost = {0.0};
+    rankToCost.resize(nprocs);
+    for (int i=0; i<nprocs; ++i) {
+        const Real rwSum = std::accumulate(rankToCosts[i].begin(),
+                                           rankToCosts[i].end(), 0.0);
+        rankToCost[i] = rwSum;
+        maxCost = std::max(maxCost, rwSum);
+    }
+
+    // `efficiency` is mean cost per proc
+    efficiency = (std::accumulate(rankToCost.begin(),
+                  rankToCost.end(), 0.0) / (nprocs*maxCost));
+}

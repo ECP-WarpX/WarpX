@@ -2,7 +2,7 @@ Building WarpX to use RZ geometry
 =================================
 
 WarpX can be built to run with RZ geometry. Both an FDTD solver (the default)
-and a PSATD solver are available. Both solvers allow multiple cylindrical modes.
+and a PSATD solver are available. Both solvers allow multiple azimuthal modes.
 
 To select RZ geometry, set the flag USE_RZ = TRUE when compiling:
 ::
@@ -48,4 +48,3 @@ package and setting ``USE_PSATD=TRUE``.
         ::
 
            make -j 4 USE_RZ=TRUE USE_PSATD=TRUE
-

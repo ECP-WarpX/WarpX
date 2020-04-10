@@ -189,10 +189,6 @@ ifeq ($(USE_RZ),TRUE)
   USERSuffix := $(USERSuffix).RZ
 endif
 
-ifeq ($(DO_ELECTROSTATIC),TRUE)
-     DEFINES += -DWARPX_DO_ELECTROSTATIC
-endif
-
 ifeq ($(USE_HDF5),TRUE)
     HDF5_HOME ?= NOT_SET
     ifneq ($(HDF5_HOME),NOT_SET)
@@ -206,7 +202,6 @@ endif
 
 # job_info support
 CEXE_sources += AMReX_buildInfo.cpp
-CEXE_headers += $(AMREX_HOME)/Tools/C_scripts/AMReX_buildInfo.H
 INCLUDE_LOCATIONS += $(AMREX_HOME)/Tools/C_scripts
 
 ifeq ($(USE_PYTHON_MAIN),TRUE)

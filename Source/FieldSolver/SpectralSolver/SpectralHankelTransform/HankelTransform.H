@@ -29,8 +29,7 @@ class HankelTransform
                         const int nr,
                         const amrex::Real rmax);
 
-        const RealVector & getRadialGrid() {return r;}
-        const RealVector & getSpectralWavenumbers() {return kr;}
+        const RealVector & getSpectralWavenumbers() {return m_kr;}
 
         void HankelForwardTransform(amrex::FArrayBox const& F, int const F_icomp,
                                     amrex::FArrayBox      & G, int const G_icomp);
@@ -40,10 +39,9 @@ class HankelTransform
 
     private:
         // Even though nk == nr always, use a seperate variable for clarity.
-        int nr, nk;
+        int m_nr, m_nk;
 
-        RealVector kr;
-        RealVector r;
+        RealVector m_kr;
 
         RealVector invM;
         RealVector M;

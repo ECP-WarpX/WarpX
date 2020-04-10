@@ -1,9 +1,9 @@
 /* Copyright 2016-2020 Andrew Myers, Ann Almgren, Aurore Blelly
  * Axel Huebl, Burlen Loring, David Grote
  * Glenn Richardson, Jean-Luc Vay, Junmin Gu
- * Mathieu Lobet, Maxence Thevenet, Remi Lehe
- * Revathi Jambunathan, Weiqun Zhang, Yinjian Zhao
- * levinem
+ * Mathieu Lobet, Maxence Thevenet, Michael Rowan
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ * Yinjian Zhao, levinem
  *
  * This file is part of WarpX.
  *
@@ -203,6 +203,9 @@ WarpX::WarpX ()
     t_old.resize(nlevs_max, std::numeric_limits<Real>::lowest());
     dt.resize(nlevs_max, std::numeric_limits<Real>::max());
 
+    // Diagnostics
+    multi_diags = std::unique_ptr<MultiDiagnostics> (new MultiDiagnostics());
+
     // Particle Container
     mypc = std::unique_ptr<MultiParticleContainer> (new MultiParticleContainer(this));
     warpx_do_continuous_injection = mypc->doContinuousInjection();
@@ -245,15 +248,7 @@ WarpX::WarpX ()
     charge_buf.resize(nlevs_max);
 
     pml.resize(nlevs_max);
-
-    switch (WarpX::load_balance_costs_update_algo)
-    {
-        case LoadBalanceCostsUpdateAlgo::Timers: costs.resize(nlevs_max);
-            break;
-        case LoadBalanceCostsUpdateAlgo::Heuristic: costs_heuristic.resize(nlevs_max);
-            break;
-        default: amrex::Abort("unknown load balance type");
-    }
+    costs.resize(nlevs_max);
 
     // Set default values for particle and cell weights for costs update;
     // Default values listed here for the case AMREX_USE_GPU are determined
@@ -587,7 +582,6 @@ WarpX::ReadParameters ()
 #ifdef WARPX_USE_OPENPMD
         pp.query("openpmd_tspf", openpmd_tspf);
 #endif
-        pp.query("plot_costs", plot_costs);
         pp.query("plot_raw_fields", plot_raw_fields);
         pp.query("plot_raw_fields_guards", plot_raw_fields_guards);
         pp.query("plot_coarsening_ratio", plot_coarsening_ratio);
@@ -669,6 +663,7 @@ WarpX::ReadParameters ()
         pp.query("load_balance_int", load_balance_int);
         pp.query("load_balance_with_sfc", load_balance_with_sfc);
         pp.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
+        pp.query("load_balance_efficiency_ratio_threshold", load_balance_efficiency_ratio_threshold);
 
         pp.query("do_dynamic_scheduling", do_dynamic_scheduling);
 
@@ -740,6 +735,7 @@ WarpX::ReadParameters ()
     {
         ParmParse pp("psatd");
         pp.query("hybrid_mpi_decomposition", fft_hybrid_mpi_decomposition);
+        pp.query("periodic_single_box_fft", fft_periodic_single_box);
         pp.query("ngroups_fft", ngroups_fft);
         pp.query("fftw_plan_measure", fftw_plan_measure);
         pp.query("nox", nox_fft);
@@ -854,11 +850,7 @@ WarpX::ClearLevel (int lev)
     F_cp  [lev].reset();
     rho_cp[lev].reset();
 
-    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
-        costs[lev].reset();
-    } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic) {
-        costs_heuristic[lev].reset();
-    }
+    costs[lev].reset();
 
 
 #ifdef WARPX_USE_PSATD_HYBRID
@@ -987,6 +979,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #elif (AMREX_SPACEDIM == 2)
         RealVect dx_vect(dx[0], dx[2]);
 #endif
+
+        // Check whether the option periodic, single box is valid here
+        if (fft_periodic_single_box) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( geom[0].isAllPeriodic() && ba.size()==1 && lev==0,
+            "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box.");
+        }
         // Get the cell-centered box
         BoxArray realspace_ba = ba;  // Copy box
         realspace_ba.enclosedCells(); // Make it cell-centered
@@ -994,11 +992,15 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #ifdef WARPX_DIM_RZ
         realspace_ba.grow(1, ngE[1]); // add guard cells only in z
         spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
-            n_rz_azimuthal_modes, noz_fft, do_nodal, dx_vect, dt[lev] ) );
+            n_rz_azimuthal_modes, noz_fft, do_nodal, dx_vect, dt[lev], lev ) );
 #else
-        realspace_ba.grow(ngE); // add guard cells
+        if ( fft_periodic_single_box == false ) {
+            realspace_ba.grow(ngE); // add guard cells
+        }
+        bool const pml=false;
         spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev] ) );
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
+            pml, fft_periodic_single_box ) );
 #endif
     }
 #endif
@@ -1088,7 +1090,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #ifdef WARPX_DIM_RZ
             realspace_ba.grow(1, ngE[1]); // add guard cells only in z
             spectral_solver_cp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
-                n_rz_azimuthal_modes, noz_fft, do_nodal, cdx_vect, dt[lev] ) );
+                n_rz_azimuthal_modes, noz_fft, do_nodal, cdx_vect, dt[lev], lev ) );
 
 #else
             realspace_ba.grow(ngE); // add guard cells
@@ -1150,14 +1152,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         }
     }
 
-    if (load_balance_int > 0) {
-        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
-            costs[lev].reset(new MultiFab(ba, dm, 1, 0));
-        } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic) {
-            costs_heuristic[lev].reset(new amrex::Vector<Real>);
-            const int nboxes = Efield_fp[lev][0].get()->size();
-            costs_heuristic[lev]->resize(nboxes);
-        }
+    if (load_balance_int > 0)
+    {
+        costs[lev].reset(new amrex::Vector<Real>);
+        const int nboxes = Efield_fp[lev][0].get()->size();
+        costs[lev]->resize(nboxes);
     }
 }
 
@@ -1217,10 +1216,14 @@ WarpX::RefRatio (int lev)
 }
 
 void
-WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                    const std::array<const amrex::MultiFab*, 3>& B,
+WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
+                    const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
+        "ComputeDivB not implemented with do_nodal."
+        "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
+
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
 #ifdef WARPX_DIM_RZ
@@ -1251,10 +1254,14 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
 }
 
 void
-WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
-                    const std::array<const amrex::MultiFab*, 3>& B,
-                    const std::array<amrex::Real,3>& dx, int ngrow)
+WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
+                    const std::array<const amrex::MultiFab* const, 3>& B,
+                    const std::array<amrex::Real,3>& dx, int const ngrow)
 {
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
+        "ComputeDivB not implemented with do_nodal."
+        "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
+
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
 
 #ifdef WARPX_DIM_RZ
@@ -1282,6 +1289,16 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int dcomp,
                               );
         });
     }
+}
+
+void
+WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
+{
+#ifdef WARPX_USE_PSATD
+    spectral_solver_fp[lev]->ComputeSpectralDivE( Efield_aux[lev], divE );
+#else
+    m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
+#endif
 }
 
 PML*
@@ -1450,4 +1467,14 @@ WarpX::PicsarVersion ()
 #else
     return std::string("Unknown");
 #endif
+}
+
+void
+WarpX::FieldGather ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        mypc->FieldGather(lev,
+                          *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
+                          *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
+    }
 }

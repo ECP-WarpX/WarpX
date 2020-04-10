@@ -15,10 +15,11 @@ using namespace amrex;
  */
 void
 SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
-    SpectralFieldDataHankel& field_data,
+    SpectralFieldDataRZ& field_data,
     const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
     amrex::MultiFab& divE )
 {
+    using amrex::operator""_rt;
     using Idx = SpectralFieldIndex;
 
     // Forward Fourier transform of E
@@ -60,7 +61,7 @@ SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
             int const ir = i + nr*mode;
             Real const kr = kr_arr[ir];
             Real const kz = modified_kz_arr[j];
-            Complex const I = Complex{0,1};
+            Complex const I = Complex{0._rt,1._rt};
 
             // div(E) in Fourier space
             int const ic = Idx::divE + mode*n_fields;

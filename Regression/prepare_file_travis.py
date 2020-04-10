@@ -21,6 +21,7 @@ ci_python_main = os.environ.get('WARPX_CI_PYTHON_MAIN') == 'TRUE'
 ci_single_precision = os.environ.get('WARPX_CI_SINGLE_PRECISION') == 'TRUE'
 ci_rz_or_nompi = os.environ.get('WARPX_CI_RZ_OR_NOMPI') == 'TRUE'
 ci_qed = os.environ.get('WARPX_CI_QED') == 'TRUE'
+ci_openpmd = os.environ.get('WARPX_CI_OPENPMD') == 'TRUE'
 
 # Find the directory in which the tests should be run
 current_dir = os.getcwd()
@@ -45,6 +46,11 @@ if arch == 'GPU':
     text = re.sub( 'COMP\s*=.*', 'COMP = pgi', text )
 print('Compiling for %s' %arch)
 
+# Extra dependencies
+if ci_openpmd:
+    text = re.sub('addToCompileString =',
+                  'addToCompileString = USE_OPENPMD=TRUE ', text)
+
 # Add runtime option: crash for unused variables
 text = re.sub('runtime_params =',
               'runtime_params = amrex.abort_on_unused_inputs=1 ',
@@ -52,8 +58,7 @@ text = re.sub('runtime_params =',
 
 # Use only 2 cores for compiling
 text = re.sub( 'numMakeJobs = \d+', 'numMakeJobs = 2', text )
-# Use only 1 MPI and 1 thread proc for tests
-text = re.sub( 'numprocs = \d+', 'numprocs = 2', text)
+# Use only 1 OMP thread for running
 text = re.sub( 'numthreads = \d+', 'numthreads = 1', text)
 # Prevent emails from being sent
 text = re.sub( 'sendEmailWhenFail = 1', 'sendEmailWhenFail = 0', text )
