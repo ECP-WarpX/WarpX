@@ -13,7 +13,8 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
-generator_type = 'aposmm'  # or 'random'
+# 'aposmm' or 'random'
+generator_type = 'random'
 
 print("Reading latest .npy and .pickle files in " + sys.argv[1])
 
@@ -74,6 +75,7 @@ d_yunits = {
 }
 
 # Print input and output parameters for the optimal run
+print("Best run:")
 ind_best = np.argmin(results_dict['f'])
 for key in plot_input + plot_output:
     print(key, results_dict[key][ind_best])
@@ -92,7 +94,7 @@ for icount, iname in enumerate(plot_input):
         if generator_type == 'aposmm':
             # Plot 1 point per run. Runs that are part of the same local
             # minimum search are batched together and plotted with the
-            # same color
+            # same color.
             for batch in pickle_data[1]['run_order']:
                 my_sims = np.isin(results_dict['sim_id'],
                                   pickle_data[1]['run_order'][batch])
@@ -101,7 +103,7 @@ for icount, iname in enumerate(plot_input):
                             s=2)
         elif generator_type == 'random':
             # Plot 1 point per run. Colorbar stands for sim ID
-            # (larger value = later run)
+            # (larger value = later run).
             plt.scatter(np.squeeze(results_dict[iname]),
                         np.squeeze(results_dict[name]),
                         c=results_dict['sim_id'], s=2, cmap='viridis')
@@ -122,4 +124,4 @@ plt.tight_layout()
 
 # Save figure
 plt.savefig('results.pdf', bbox_inches='tight')
-plt.savefig('results.jpg', bbox_inches='tight')
+plt.savefig('results.png', bbox_inches='tight')

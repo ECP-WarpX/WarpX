@@ -173,7 +173,7 @@ elif generator_type == 'aposmm':
         'user': {
             # Number of sims for initial random sampling.
             # Optimizer starts afterwards.
-            'initial_sample_size': max(2*(nworkers-2), 1),
+            'initial_sample_size': max(nworkers-1, 1),
             # APOSMM/NLOPT optimization method
             'localopt_method': 'LN_BOBYQA',
             'num_pts_first_pass': nworkers,
