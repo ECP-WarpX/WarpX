@@ -8,7 +8,7 @@
 #define WARPX_SPECTRAL_SOLVER_RZ_H_
 
 #include "SpectralAlgorithms/SpectralBaseAlgorithmRZ.H"
-#include "SpectralFieldDataHankel.H"
+#include "SpectralFieldDataRZ.H"
 
 /* \brief Top-level class for the electromagnetic spectral solver
  *
@@ -30,6 +30,7 @@ class SpectralSolverRZ
                          int const n_rz_azimuthal_modes,
                          int const norder_z, bool const nodal,
                          amrex::RealVect const dx, amrex::Real const dt,
+                         int const lev,
                          bool const pml=false);
 
         /* \brief Transform the component `i_comp` of MultiFab `field_mf`
@@ -108,9 +109,8 @@ class SpectralSolverRZ
 
     private:
 
-        SpectralHankelKSpace k_space; // Save the instance to initialize filtering
-        SpectralFieldDataHankel field_data; // Store field in spectral space
-                                      // and perform the Fourier transforms
+        SpectralFieldDataRZ field_data; // Store field in spectral space
+                                        // and perform the Fourier transforms
         std::unique_ptr<SpectralBaseAlgorithmRZ> algorithm;
         // Defines field update equation in spectral space,
         // and the associated coefficients.

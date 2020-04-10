@@ -91,6 +91,7 @@ class Species(picmistandard.PICMI_Species):
             self.species.physical_element=self.particle_type
             self.species.ionization_product_species = interaction[2].name
             self.species.ionization_initial_level = self.charge_state
+            self.species.charge = 'q_e'
 
 picmistandard.PICMI_MultiSpecies.Species_class = Species
 class MultiSpecies(picmistandard.PICMI_MultiSpecies):
@@ -338,6 +339,7 @@ class CylindricalGrid(picmistandard.PICMI_CylindricalGrid):
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
         pywarpx.amr.max_grid_size = self.max_grid_size
+        pywarpx.amr.blocking_factor = self.blocking_factor
 
         assert self.lower_bound[0] >= 0., Exception('Lower radial boundary must be >= 0.')
         assert self.bc_rmin != 'periodic' and self.bc_rmax != 'periodic', Exception('Radial boundaries can not be periodic')
@@ -380,6 +382,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
         pywarpx.amr.max_grid_size = self.max_grid_size
+        pywarpx.amr.blocking_factor = self.blocking_factor
 
         # Geometry
         pywarpx.geometry.coord_sys = 0  # Cartesian
@@ -418,7 +421,6 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
         # Maximum allowable size of each subdomain in the problem domain;
         #    this is used to decompose the domain for parallel calculations.
         pywarpx.amr.max_grid_size = self.max_grid_size
-
         pywarpx.amr.blocking_factor = self.blocking_factor
 
         # Geometry
@@ -649,8 +651,6 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
                 pywarpx.warpx.add_field_to_plot('divE')
             elif dataname == 'divb':
                 pywarpx.warpx.add_field_to_plot('divB')
-            elif dataname == 'costs':
-                pywarpx.warpx.plot_costs = 1
             elif dataname == 'raw_fields':
                 self.plot_raw_fields = 1
             elif dataname == 'raw_fields_guards':

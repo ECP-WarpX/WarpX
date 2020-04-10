@@ -32,6 +32,8 @@
 !                                          (www.jpmoreau.fr)
 ! ------------------------------------------------------------------------ */
 
+using amrex::operator""_rt;
+
 void SecantRootFinder(int n, int nitmx, amrex::Real tol, amrex::Real *zeroj, int *ier);
 
 /*----------------------------------------------------------------------
@@ -53,20 +55,20 @@ void GetBesselRoots(int n, int nk, HankelTransform::RealVector& roots, amrex::Ve
     amrex::Real zeroj;
     int ierror, ik, k;
 
-    const amrex::Real tol = 1e-14;
+    const amrex::Real tol = 1e-14_rt;
     const amrex::Real nitmx = 10;
 
-    const amrex::Real c1 = 1.8557571;
-    const amrex::Real c2 = 1.033150;
-    const amrex::Real c3 = 0.00397;
-    const amrex::Real c4 = 0.0908;
-    const amrex::Real c5 = 0.043;
+    const amrex::Real c1 = 1.8557571_rt;
+    const amrex::Real c2 = 1.033150_rt;
+    const amrex::Real c3 = 0.00397_rt;
+    const amrex::Real c4 = 0.0908_rt;
+    const amrex::Real c5 = 0.043_rt;
 
-    const amrex::Real t0 = 4.0*n*n;
-    const amrex::Real t1 = t0 - 1.0;
-    const amrex::Real t3 = 4.0*t1*(7.0*t0 - 31.0);
-    const amrex::Real t5 = 32.0*t1*((83.0*t0 - 982.0)*t0 + 3779.0);
-    const amrex::Real t7 = 64.0*t1*(((6949.0*t0 - 153855.0)*t0 + 1585743.0)*t0 - 6277237.0);
+    const amrex::Real t0 = 4.0_rt*n*n;
+    const amrex::Real t1 = t0 - 1.0_rt;
+    const amrex::Real t3 = 4.0_rt*t1*(7.0_rt*t0 - 31.0_rt);
+    const amrex::Real t5 = 32.0_rt*t1*((83.0_rt*t0 - 982.0_rt)*t0 + 3779.0_rt);
+    const amrex::Real t7 = 64.0_rt*t1*(((6949.0_rt*t0 - 153855.0_rt)*t0 + 1585743.0_rt)*t0 - 6277237.0_rt);
 
     roots.resize(nk);
     ier.resize(nk);
@@ -83,7 +85,7 @@ void GetBesselRoots(int n, int nk, HankelTransform::RealVector& roots, amrex::Ve
         // Include the trivial root
         ier[0] = 0;
         roots[0] = 0.;
-        const amrex::Real f1 = std::pow(n, (1.0/3.0));
+        const amrex::Real f1 = std::pow(n, (1.0_rt/3.0_rt));
         const amrex::Real f2 = f1*f1*n;
         const amrex::Real f3 = f1*n*n;
         zeroj = n + c1*f1 + (c2/f1) - (c3/n) - (c4/f2) + (c5/f3);
@@ -100,12 +102,12 @@ void GetBesselRoots(int n, int nk, HankelTransform::RealVector& roots, amrex::Ve
     while (ik < nk) {
 
         // mac mahon's series for k >> n
-        const amrex::Real b0 = (k + 0.5*n - 0.25)*MathConst::pi;
-        const amrex::Real b1 = 8.0*b0;
+        const amrex::Real b0 = (k + 0.5_rt*n - 0.25_rt)*MathConst::pi;
+        const amrex::Real b1 = 8.0_rt*b0;
         const amrex::Real b2 = b1*b1;
-        const amrex::Real b3 = 3.0*b1*b2;
-        const amrex::Real b5 = 5.0*b3*b2;
-        const amrex::Real b7 = 7.0*b5*b2;
+        const amrex::Real b3 = 3.0_rt*b1*b2;
+        const amrex::Real b5 = 5.0_rt*b3*b2;
+        const amrex::Real b7 = 7.0_rt*b5*b2;
 
         zeroj = b0 - (t1/b1) - (t3/b3) - (t5/b5) - (t7/b7);
 
@@ -127,8 +129,8 @@ void SecantRootFinder(int n, int nitmx, amrex::Real tol, amrex::Real *zeroj, int
     amrex::Real p0, p1, q0, q1, dp, p;
     amrex::Real c[2];
 
-    c[0] = 0.95;
-    c[1] = 0.999;
+    c[0] = 0.95_rt;
+    c[1] = 0.999_rt;
     *ier = 0;
 
     for (int ntry=0 ; ntry <= 1 ; ntry++) {

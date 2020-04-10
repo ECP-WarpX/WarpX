@@ -5,7 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "WarpXAlgorithmSelection.H"
+#include "Utils/WarpXAlgorithmSelection.H"
 #include "FiniteDifferenceSolver.H"
 #ifdef WARPX_DIM_RZ
 #   include "FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
@@ -14,7 +14,7 @@
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #endif
-#include "WarpXConst.H"
+#include "Utils/WarpXConst.H"
 #include "WarpX.H"
 #include <AMReX_Gpu.H>
 
@@ -83,7 +83,7 @@ void FiniteDifferenceSolver::ComputeDivECartesian (
         int const n_coefs_z = m_stencil_coefs_z.size();
 
         // Extract tileboxes for which to loop
-        Box const& tdive = mfi.tilebox(divEfield.ixType().ixType());
+        Box const& tdive = mfi.tilebox(divEfield.ixType().toIntVect());
 
         // Loop over the cells and update the fields
         amrex::ParallelFor(tdive,
@@ -132,7 +132,7 @@ void FiniteDifferenceSolver::ComputeDivECylindrical (
         Real const rmin = m_rmin;
 
         // Extract tileboxes for which to loop
-        Box const& tdive  = mfi.tilebox(divEfield.ixType().ixType());
+        Box const& tdive  = mfi.tilebox(divEfield.ixType().toIntVect());
 
         // Loop over the cells and update the fields
         amrex::ParallelFor(tdive,
