@@ -77,7 +77,7 @@ Diagnostics::ReadParameters ()
            m_crse_ratio[idim] = cr_ratio[idim];
        }
     }
-   
+
 }
 
 void
