@@ -135,7 +135,7 @@ public:
      * timestep in Evolve and is used to create Schwinger electron-positron pairs.
      * Within this function we loop over all cells to calculate the number of
      * created physical pairs. If this number is higher than 0, we create a single
-     * particle in this cell, with a weight corresponding to the number of physical
+     * particle per species in this cell, with a weight corresponding to the number of physical
      * particles.
      */
     void doQEDSchwinger ();
