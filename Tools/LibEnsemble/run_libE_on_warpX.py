@@ -1,11 +1,17 @@
-#!/usr/bin/env pythonA
+#!/usr/bin/env python
 
 """
-Execute locally via the following command:
-   python run_libE_on_warpX.py --comms local --nworkers 3
+This file is part of the suite of scripts to use LibEnsemble on top of WarpX
+simulations. It is the entry point script that runs LibEnsemble. Libensemble
+then launches WarpX simulations.
 
-The number of concurrent evaluations of the objective function will be 4-2=2
-as one MPI rank for the manager and one MPI rank for the persistent gen_f.
+Execute locally via the following command:
+    python run_libE_on_warpX.py --comms local --nworkers 3
+On summit, use the submission script:
+    bsub summit_submit_mproc.sh
+
+The number of concurrent evaluations of the objective function will be
+nworkers=1 as one worker is for the persistent gen_f.
 """
 
 # Either 'random' or 'aposmm'

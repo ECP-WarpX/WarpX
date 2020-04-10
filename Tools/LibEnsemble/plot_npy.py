@@ -13,7 +13,7 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
-generator_type = 'aposmm'  # 'random'
+generator_type = 'aposmm'  # or 'random'
 
 print("Reading latest .npy and .pickle files in " + sys.argv[1])
 

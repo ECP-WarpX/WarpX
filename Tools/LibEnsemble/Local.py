@@ -1,5 +1,11 @@
 import os
 
+"""
+This file is part of the suite of scripts to use LibEnsemble on top of WarpX
+simulations. It contains a dictionary for machine-specific elements.
+"""
+
+
 machine_specs = {
     'name': 'local',  # Machine name
     'cores': 1,  # Number of cores per simulation

@@ -7,8 +7,19 @@ from libensemble.message_numbers import WORKER_DONE, TASK_FAILED
 from read_sim_output import read_sim_output
 from write_sim_input import write_sim_input
 
+"""
+This file is part of the suite of scripts to use LibEnsemble on top of WarpX
+simulations. It defines a sim_f function that takes LibEnsemble history and
+input parameters, run a WarpX simulation and returns 'f'.
+"""
+
 
 def run_warpX(H, persis_info, sim_specs, libE_info):
+    """
+    This function runs a WarpX simulation and returns quantity 'f' as well as
+    other physical quantities measured in the run for convenience. Status check
+    is done periodically on the simulation, provided by LibEnsemble.
+    """
 
     # Setting up variables needed for input and output
     # keys              = variable names

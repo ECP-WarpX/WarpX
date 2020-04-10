@@ -5,11 +5,26 @@ import yt
 import scipy.constants as scc
 import glob
 
+"""
+This file is part of the suite of scripts to use LibEnsemble on top of WarpX
+simulations. It reads the output plotfiles of a simulation and returns beam
+quantity relevant for the LibEnsemble optimizations ('f') as well as other
+beam quantities for convenience.
+"""
 
 yt.funcs.mylog.setLevel(50)
 
 
 def _beam_properties(filepath):
+    """
+    Reads plotfile filepath and compute and return beam parameters
+
+    Parameters
+    ----------
+    filepath : path to plotfile to read
+    """
+
+    # Read beam quantities from plotfile
     ds = yt.load(filepath)
     ad = ds.all_data()
     w = ad['beam', 'particle_weight'].v
@@ -17,6 +32,8 @@ def _beam_properties(filepath):
     ux = ad['beam', 'particle_momentum_x'].v/scc.m_e/scc.c
     uy = ad['beam', 'particle_momentum_y'].v/scc.m_e/scc.c
     uz = ad['beam', 'particle_momentum_z'].v/scc.m_e/scc.c
+
+    # Compute beam parameters
     # Defined like that, the beam charge is > 0.
     charge = np.sum(w) * scc.e
     gamma = np.sqrt(1. + ux**2 + uy**2 + uz**2)
@@ -28,12 +45,19 @@ def _beam_properties(filepath):
 
 
 def read_sim_output(workdir):
-    # Get initial charge
+    """
+    Return optimizing quantity 'f' and other parameters for convenience.
+
+    Parameters
+    ----------
+    workdir : Path to directory where the simulation ran.
+    """
+    # Get beam properties at the beginning of the run
     datafile = 'diags/plotfiles/plt00000/'
     filepath = os.path.join(workdir, datafile)
     charge_i, _, _, emittance_i = _beam_properties(filepath)
 
-    # Get properties of beam at the end
+    # Get beam properties at the end of the run
     file_list = glob.glob('diags/plotfiles/plt?????')
     file_list.sort()
     datafile = file_list[-1]
@@ -49,4 +73,5 @@ def read_sim_output(workdir):
     # we minimize f!
     f = emittance_f + emittance_i*(1.-charge_f/charge_i)*100
     warpX_out = np.array([f, energy_std, energy_avg, charge_f, emittance_f])
+
     return warpX_out
