@@ -7,6 +7,7 @@ from libensemble.message_numbers import WORKER_DONE, TASK_FAILED
 from read_sim_output import read_sim_output
 from write_sim_input import write_sim_input
 
+
 def run_warpX(H, persis_info, sim_specs, libE_info):
 
     # Setting up variables needed for input and output
@@ -26,16 +27,26 @@ def run_warpX(H, persis_info, sim_specs, libE_info):
     # and passed to this sim_f.
     write_sim_input(input_file, H['x'])
 
-    app_args = input_file # Passed to command line in addition to the executable. Here, only input file 
+    # Passed to command line in addition to the executable.
+    # Here, only input file
+    app_args = input_file
     os.environ["OMP_NUM_THREADS"] = machine_specs['OMP_NUM_THREADS']
 
     # Launch the executor to actually run the WarpX simulation
     if machine_specs['name'] == 'summit':
-        task = exctr.submit(calc_type='sim', extra_args=machine_specs['extra_args'], app_args=app_args,
-                            stdout='out.txt', stderr='err.txt', wait_on_run=True)
+        task = exctr.submit(calc_type='sim',
+                            extra_args=machine_specs['extra_args'],
+                            app_args=app_args,
+                            stdout='out.txt',
+                            stderr='err.txt',
+                            wait_on_run=True)
     else:
-        task = exctr.submit(calc_type='sim', num_procs=machine_specs['cores'], app_args=app_args,
-                            stdout='out.txt', stderr='err.txt', wait_on_run=True)
+        task = exctr.submit(calc_type='sim',
+                            num_procs=machine_specs['cores'],
+                            app_args=app_args,
+                            stdout='out.txt',
+                            stderr='err.txt',
+                            wait_on_run=True)
 
     # Periodically check the status of the simulation
     poll_interval = 1  # secs
@@ -50,26 +61,29 @@ def run_warpX(H, persis_info, sim_specs, libE_info):
         if task.state == 'FINISHED':
             calc_status = WORKER_DONE
         elif task.state == 'FAILED':
-            print("Warning: Task {} failed: Error code {}".format(task.name, task.errcode))
+            print("Warning: Task {} failed: Error code {}"
+                  .format(task.name, task.errcode))
             calc_status = TASK_FAILED
         elif task.state == 'USER_KILLED':
-            print("Warning: Task {} has been killed".format(task.name))
+            print("Warning: Task {} has been killed"
+                  .format(task.name))
         else:
-            print("Warning: Task {} in unknown state {}. Error code {}".format(task.name, task.state, task.errcode))
+            print("Warning: Task {} in unknown state {}. Error code {}"
+                  .format(task.name, task.state, task.errcode))
 
     # Safety
     time.sleep(0.2)
 
     try:
         # Get output from a run and delete output files
-        warpX_out = read_sim_output( task.workdir )
+        warpX_out = read_sim_output(task.workdir)
     except Exception:
         warpX_out = np.nan
         print('Warning - output is Nan')
 
     # Pass the sim output values to LibEnsemble.
-    # When optimization is ON, 'f' is then passed to the generating function gen_f
-    # to generate new inputs for next runs.
+    # When optimization is ON, 'f' is then passed to the generating function
+    # gen_f to generate new inputs for next runs.
     # All other parameters are here just for convenience.
     libE_output = np.zeros(1, dtype=sim_specs['out'])
     libE_output['f'] = warpX_out[0]
