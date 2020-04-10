@@ -1046,7 +1046,7 @@ MultiParticleContainer::doQEDSchwinger ()
     amrex::Abort("Schwinger process not implemented in single precision");
 #endif
 
-// Get cell volume multiplied a temporal step. In 2D the transverse size is
+// Get cell volume multiplied by temporal step. In 2D the transverse size is
 // chosen by the user in the input file.
     amrex::Geometry const & geom = warpx.Geom(level_0);
     auto domain_box = geom.Domain();
