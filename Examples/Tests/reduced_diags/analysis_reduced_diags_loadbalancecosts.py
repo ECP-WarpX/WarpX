@@ -27,6 +27,12 @@ fn = sys.argv[1]
 data = np.genfromtxt("./diags/reducedfiles/LBC.txt")
 data = data[:,2:]
 
+# Compute the number of datafields saved per box
+with open("./diags/reducedfiles/LBC.txt") as f:
+    h = f.readlines()[0]
+    unique_headers=[''.join([l for l in w if not l.isdigit()]) for w in h.split()][2::]
+    n_data_fields = len(set(unique_headers))
+
 # From data header, data layout is:
 #     [step, time,
 #      cost_box_0, proc_box_0, lev_box_0, i_low_box_0, j_low_box_0, k_low_box_0(, gpu_ID_box_0 if GPU run), hostname_box_0,
@@ -37,9 +43,7 @@ data = data[:,2:]
 # Function to get efficiency at an iteration i
 def get_efficiency(i):
     # First get the unique ranks
-    # The spacing of '7' is because we know this is not a GPU run; in a GPU,
-    # this should be '8' because the gpu_ID also is saved for each box
-    costs, ranks = data[i,0::7], data[i,1::7].astype(int)
+    costs, ranks = data[i,0::n_data_fields], data[i,1::n_data_fields].astype(int)
     rank_to_cost_map = {r:0. for r in set(ranks)}
 
     # Compute efficiency before/after load balance and check it is improved
