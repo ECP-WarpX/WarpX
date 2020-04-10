@@ -44,7 +44,7 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
 {
     using namespace amrex;
 
-    auto ncells = box.volume();
+    const auto ncells = box.volume();
     if (ncells == 0) return 0;
 
     const auto box_sizex = box.length(0);
