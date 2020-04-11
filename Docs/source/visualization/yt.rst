@@ -13,7 +13,7 @@ From the terminal, install the latest version of yt:
 ::
 
     pip install cython
-    conda install -c conda-forge yt
+    python -m pip install --upgrade yt
 
 Alternatively, yt can be installed via their installation script, see `yt installation web page <https://yt-project.org/doc/installing.html>`__.
 
