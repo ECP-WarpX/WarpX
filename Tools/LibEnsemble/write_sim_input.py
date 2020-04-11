@@ -21,16 +21,22 @@ def _set_value(str_text, str_line, val):
     return str_text
 
 
-def write_sim_input(input_file, parameters):
+def write_sim_input(input_file, x_values):
     """
+    This function modifies input_file to replace the values of some parameters
+    by values provided in x_values.
 
+    Parameters
+    ----------
+    input_file : WarpX input file.
+    x_values : Specific value of input x for this run.
     """
 
     # Parameters exposed to optimization
-    ramp_down_1 = parameters[0][0]
-    ramp_down_2 = parameters[0][1]
-    zlens_1 = parameters[0][2]
-    adjust_factor = parameters[0][3]
+    ramp_down_1 = x_values[0][0]
+    ramp_down_2 = x_values[0][1]
+    zlens_1 = x_values[0][2]
+    adjust_factor = x_values[0][3]
 
     # Fixed parameters
     ramp_up_1 = 0.02

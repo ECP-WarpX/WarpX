@@ -207,7 +207,7 @@ libE_specs['save_every_k_sims'] = 100
 # Sim directory to be copied for each worker
 libE_specs['sim_input_dir'] = 'sim'
 
-sim_max = 3  # Maximum number of simulations
+sim_max = machine_specs['sim_max']  # Maximum number of simulations
 exit_criteria = {'sim_max': sim_max}  # Exit after running sim_max simulations
 
 # Create a different random number stream for each worker and the manager
