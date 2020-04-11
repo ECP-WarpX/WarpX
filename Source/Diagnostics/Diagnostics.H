@@ -82,6 +82,10 @@ private:
     amrex::IntVect m_crse_ratio = amrex::IntVect(AMREX_D_DECL(1,1,1));
     amrex::Vector< amrex::Real> m_lo;
     amrex::Vector< amrex::Real> m_hi;
+    /** Defined the cell-centered multifab for diags with the user-defined
+      * lo and hi and a corresponding BoxArray and DistributionMap
+      * \param[in] lev level on which source multifabs are defined
+      */
     void DefineDiagMultiFab ( int lev );
 };
 
