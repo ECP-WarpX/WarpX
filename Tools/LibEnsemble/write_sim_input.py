@@ -22,6 +22,9 @@ def _set_value(str_text, str_line, val):
 
 
 def write_sim_input(input_file, parameters):
+    """
+
+    """
 
     # Parameters exposed to optimization
     ramp_down_1 = parameters[0][0]

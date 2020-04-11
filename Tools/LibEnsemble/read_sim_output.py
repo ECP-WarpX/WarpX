@@ -72,6 +72,6 @@ def read_sim_output(workdir):
     # same impact as doubling the initial emittance.
     # we minimize f!
     f = emittance_f + emittance_i*(1.-charge_f/charge_i)*100
-    warpX_out = np.array([f, energy_std, energy_avg, charge_f, emittance_f])
+    warpx_out = np.array([f, energy_std, energy_avg, charge_f, emittance_f])
 
-    return warpX_out
+    return warpx_out

@@ -41,3 +41,4 @@ In order to learn to use the code, please see the sections below:
    developers/doxygen
    acknowledge_us
    acknowledgements
+   libensemble/libensemble

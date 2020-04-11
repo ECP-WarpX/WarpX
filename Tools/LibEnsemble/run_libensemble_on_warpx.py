@@ -6,7 +6,7 @@ simulations. It is the entry point script that runs LibEnsemble. Libensemble
 then launches WarpX simulations.
 
 Execute locally via the following command:
-    python run_libE_on_warpX.py --comms local --nworkers 3
+    python run_libE_on_warpx.py --comms local --nworkers 3
 On summit, use the submission script:
     bsub summit_submit_mproc.sh
 
@@ -20,7 +20,7 @@ generator_type = 'aposmm'
 machine = 'local'
 
 import numpy as np
-from warpX_simf import run_warpX  # Sim function from current directory
+from warpx_simf import run_warpx  # Sim function from current directory
 
 # Import libEnsemble modules
 from libensemble.libE import libE
@@ -44,11 +44,13 @@ from libensemble.tools import parse_args, save_libE_output, \
 from libensemble import libE_logger
 from libensemble.executors.mpi_executor import MPIExecutor
 
+import all_machine_specs
+
 # Import machine-specific run parameters
 if machine == 'local':
-    from Local import machine_specs
+    machine_specs = all_machine_specs.local_specs
 elif machine == 'aposmm':
-    from Summit import machine_specs
+    machine_specs = all_machine_specs.summit_specs
 else:
     print("you shouldn' hit that")
     sys.exit()
@@ -74,7 +76,7 @@ exctr.register_calc(full_path=sim_app, calc_type='sim')
 sim_specs = {
     # Function whose output is being minimized. The parallel WarpX run is
     # launched from run_WarpX.
-    'sim_f': run_warpX,
+    'sim_f': run_warpx,
     # Name of input for sim_f, that LibEnsemble is allowed to modify.
     # May be a 1D array.
     'in': ['x'],

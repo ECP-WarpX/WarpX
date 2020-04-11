@@ -14,7 +14,7 @@ input parameters, run a WarpX simulation and returns 'f'.
 """
 
 
-def run_warpX(H, persis_info, sim_specs, libE_info):
+def run_warpx(H, persis_info, sim_specs, libE_info):
     """
     This function runs a WarpX simulation and returns quantity 'f' as well as
     other physical quantities measured in the run for convenience. Status check
@@ -87,9 +87,9 @@ def run_warpX(H, persis_info, sim_specs, libE_info):
 
     try:
         # Get output from a run and delete output files
-        warpX_out = read_sim_output(task.workdir)
+        warpx_out = read_sim_output(task.workdir)
     except Exception:
-        warpX_out = np.nan
+        warpx_out = np.nan
         print('Warning - output is Nan')
 
     # Pass the sim output values to LibEnsemble.
@@ -97,11 +97,11 @@ def run_warpX(H, persis_info, sim_specs, libE_info):
     # gen_f to generate new inputs for next runs.
     # All other parameters are here just for convenience.
     libE_output = np.zeros(1, dtype=sim_specs['out'])
-    libE_output['f'] = warpX_out[0]
-    libE_output['energy_std'] = warpX_out[1]
-    libE_output['energy_avg'] = warpX_out[2]
-    libE_output['charge'] = warpX_out[3]
-    libE_output['emittance'] = warpX_out[4]
+    libE_output['f'] = warpx_out[0]
+    libE_output['energy_std'] = warpx_out[1]
+    libE_output['energy_avg'] = warpx_out[2]
+    libE_output['charge'] = warpx_out[3]
+    libE_output['emittance'] = warpx_out[4]
     libE_output['ramp_down_1'] = H['x'][0][0]
     libE_output['ramp_down_2'] = H['x'][0][1]
     libE_output['zlens_1'] = H['x'][0][2]
