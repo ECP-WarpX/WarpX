@@ -28,7 +28,7 @@ from scipy.constants import e, m_e, epsilon_0, c
 fn = sys.argv[1]
 
 # Parse test name and check if current correction (psatd.do_current_correction=1) is applied
-cc = True if re.search( 'cc', fn ) else False
+cc = True if re.search( 'current_correction', fn ) else False
 
 # Parameters (these parameters must match the parameters in `inputs.multi.rt`)
 epsilon = 0.01
