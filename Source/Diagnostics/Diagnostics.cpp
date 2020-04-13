@@ -304,10 +304,9 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
        IntVect hi(AMREX_D_DECL(1,1,1));
        for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
            // lo index
-           lo[idim] = static_cast<int>( floor (
-                                ( diag_dom.lo(idim)
-                                - warpx.Geom(lev).ProbLo(idim) )
-                                / warpx.Geom(lev).CellSize(idim) ) );
+           lo[idim] = max( static_cast<int>( floor (
+                   (diag_dom.lo(idim) - warpx.Geom(lev).ProbLo(idim)) / warpx.Geom(lev).CellSize(idim)
+           ) ), 0 );
            // hi index
            hi[idim] = static_cast<int> ( ceil (
                                 ( diag_dom.hi(idim)
