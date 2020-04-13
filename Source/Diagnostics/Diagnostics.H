@@ -80,7 +80,9 @@ private:
     /** Coarsening ratio such that, fields are averaged to the coarsened grid.
       * The ratio should render the grid to be coarsenable (as defined by AMReX). */
     amrex::IntVect m_crse_ratio = amrex::IntVect(AMREX_D_DECL(1,1,1));
+    /** Lower corner of the diagnostics output, in physical coordinates */
     amrex::Vector< amrex::Real> m_lo;
+    /** Higher corner of the diagnostics output, in physical coordinates */
     amrex::Vector< amrex::Real> m_hi;
     /** Defined the cell-centered multifab for diags with the user-defined
       * lo and hi and a corresponding BoxArray and DistributionMap
