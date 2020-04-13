@@ -17,7 +17,7 @@ PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
 {
     auto& warpx = WarpX::GetInstance();
     const Vector<long>& npart_in_grid = warpx.GetPartContainer().NumberOfParticlesInGrid(m_lev);
-    // Temporary MultiFab containing number of particles per grid
+    // Temporary MultiFab containing number of particles per grid.
     // (stored as constant for all cells in each grid)
     const int ng = 1;
     MultiFab ppg_mf(warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng);
@@ -28,6 +28,6 @@ PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
         ppg_mf[mfi].setVal<RunOn::Host>(static_cast<Real>(npart_in_grid[mfi.index()]));
     }
 
-    // Coarsen and interpolate from ppg_mf to mf_dst
+    // Coarsen and interpolate from ppg_mf to the output diagnostic MultiFab, mf_dst.
     Average::CoarsenAndInterpolate(mf_dst, ppg_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
 }

@@ -15,7 +15,7 @@ public:
      *            to compute the number of particles per cell, banane.
      * \param[in] lev level of multifab. Used for averaging in rz.
      * \param[in] crse_ratio for interpolating field values from simulation MultiFabs
-                  to diags MultiFab mf_dst
+                  to the output diagnostic MultiFab mf_dst.
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
     PartPerCellFunctor(const amrex::MultiFab * const mf_src, const int lev,

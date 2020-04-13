@@ -18,12 +18,12 @@ PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
 {
     auto& warpx = WarpX::GetInstance();
     const int ng = 1;
-    // Create a tmp cell-centered, single-component MultiFab to compute ppc
+    // Temporary cell-centered, single-component MultiFab for storing particles per cell.
     MultiFab ppc_mf(warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng);
     // Set value to 0, and increment the value in each cell with ppc.
     ppc_mf.setVal(0._rt);
-    // Compute ppc which includes a summation over all species
+    // Compute ppc which includes a summation over all species.
     warpx.GetPartContainer().Increment(ppc_mf, m_lev);
-    // Coarsen and interpolate from ppc_mf to mf_dst
+    // Coarsen and interpolate from ppc_mf to the output diagnostic MultiFab, mf_dst.
     Average::CoarsenAndInterpolate(mf_dst, ppc_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
 }
