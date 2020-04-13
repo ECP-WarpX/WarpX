@@ -84,8 +84,10 @@ private:
     amrex::Vector< amrex::Real> m_lo;
     /** Higher corner of the diagnostics output, in physical coordinates */
     amrex::Vector< amrex::Real> m_hi;
-    /** Defined the cell-centered multifab for diags with the user-defined
-      * lo and hi and a corresponding BoxArray and DistributionMap
+    /** Define the cell-centered multifab mf_avg depending on user-defined
+      * lo and hi and coarsening ratio. This MultiFab may have a different BoxArray and
+      * DistributionMap than field MultiFabs in the simulation.
+      *
       * \param[in] lev level on which source multifabs are defined
       */
     void DefineDiagMultiFab ( int lev );

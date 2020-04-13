@@ -58,12 +58,12 @@ Diagnostics::ReadParameters ()
     m_lo.resize(AMREX_SPACEDIM);
     m_hi.resize(AMREX_SPACEDIM);
 
-    if (!pp.queryarr("diag_lo", m_lo, 0, AMREX_SPACEDIM) ) {
+    if (!pp.queryarr("diag_lo", m_lo) ) {
        for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
             m_lo[idim] = warpx.Geom(0).ProbLo(idim);
        }
     }
-    if (! pp.queryarr("diag_hi", m_hi, 0, AMREX_SPACEDIM) ) {
+    if (! pp.queryarr("diag_hi", m_hi) ) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
             m_hi[idim] = warpx.Geom(0).ProbHi(idim);
        }
@@ -72,7 +72,7 @@ Diagnostics::ReadParameters ()
     // Initialize cr_ratio with default value of 1 for each dimension.
     Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
     // Read user-defined coarsening ratio for the output multifab.
-    if (pp.queryarr("coarsening_ratio", cr_ratio, 0, AMREX_SPACEDIM) ) {
+    if (pp.queryarr("coarsening_ratio", cr_ratio) ) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
            m_crse_ratio[idim] = cr_ratio[idim];
        }
@@ -299,7 +299,7 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
     }
 
     if (use_warpxba == false) {
-       // Following are the steps to create a new box array
+       // Following are the steps to create a new box array (at the simulation resolution for now).
        IntVect lo(AMREX_D_DECL(0,0,0));
        IntVect hi(AMREX_D_DECL(1,1,1));
        for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {

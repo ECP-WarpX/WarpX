@@ -4,8 +4,8 @@
 
 using namespace amrex;
 
-PartPerCellFunctor::PartPerCellFunctor(const amrex::MultiFab* mf_src, const int lev, amrex::IntVect diag_crse_ratio, const int ncomp)
-    : ComputeDiagFunctor(ncomp, diag_crse_ratio), m_lev(lev)
+PartPerCellFunctor::PartPerCellFunctor(const amrex::MultiFab* mf_src, const int lev, amrex::IntVect crse_ratio, const int ncomp)
+    : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev)
 {
     // mf_src will not be used, let's make sure it's null.
     AMREX_ALWAYS_ASSERT(mf_src == nullptr);
