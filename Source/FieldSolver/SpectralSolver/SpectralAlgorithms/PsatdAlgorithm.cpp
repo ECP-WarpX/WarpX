@@ -215,14 +215,14 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
         // Extract arrays for the fields to be updated
         Array4<Complex> fields = field_data.fields[mfi].array();
         // Extract pointers for the k vectors
-        const Real* modified_kx_arr = modified_kx_vec[mfi].dataPtr();
+        const Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
 #if (AMREX_SPACEDIM==3)
-        const Real* modified_ky_arr = modified_ky_vec[mfi].dataPtr();
+        const Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
 #endif
-        const Real* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
+        const Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
 
         // Local copy of member variables before GPU loop
-        Real dt = m_dt;
+        const Real dt = m_dt;
 
         // Loop over indices within one box
         ParallelFor(bx,
@@ -250,7 +250,7 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
             const Real k_norm = std::sqrt( kx*kx + ky*ky + kz*kz );
 
             // div(J) in Fourier space
-            Complex k_dot_J = kx*Jx + ky*Jy + kz*Jz;
+            const Complex k_dot_J = kx*Jx + ky*Jy + kz*Jz;
 
             // Correct J
             if ( k_norm != 0 )
