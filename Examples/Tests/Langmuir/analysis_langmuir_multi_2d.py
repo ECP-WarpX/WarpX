@@ -28,7 +28,7 @@ from scipy.constants import e, m_e, epsilon_0, c
 fn = sys.argv[1]
 
 # Parse test name and check if current correction (psatd.do_current_correction=1) is applied
-cc = True if re.search( 'current_correction', fn ) else False
+current_correction = True if re.search( 'current_correction', fn ) else False
 
 # Parameters (these parameters must match the parameters in `inputs.multi.rt`)
 epsilon = 0.01
@@ -98,8 +98,8 @@ assert overall_max_error < 0.04
 
 # Check relative L-infinity spatial norm of rho/epsilon_0 - div(E) when
 # current correction (psatd.do_current_correction=1) is applied
-if cc:
+if current_correction:
     rho  = data['rho' ].to_ndarray()
     divE = data['divE'].to_ndarray()
-    Linf_norm = np.amax( np.abs( rho/epsilon_0 - divE ) / np.abs( rho/epsilon_0 ) )
+    Linf_norm = np.amax( np.abs( rho/epsilon_0 - divE ) ) / np.amax( np.abs( rho/epsilon_0 ) )
     assert( Linf_norm < 1.e-9 )
