@@ -136,6 +136,8 @@ Diagnostics::InitData ()
         AddRZModesToDiags( lev );
 
         // At this point, varnames.size() >= all_field_functors[0].size()
+
+        // Initialize member variable mf_avg depending on m_crse_ratio, m_lo and m_hi
         DefineDiagMultiFab( lev );
 
     }
