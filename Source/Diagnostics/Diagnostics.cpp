@@ -75,6 +75,10 @@ Diagnostics::ReadParameters ()
     if (pp.queryarr("coarsening_ratio", cr_ratio) ) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
            m_crse_ratio[idim] = cr_ratio[idim];
+            // Check if crse_ratio is power of 2.
+            int floor_log_crse = static_cast<int>( floor ( log2( double(m_crse_ratio[idim]) ) ) );
+            int ceil_log_crse  = static_cast<int>( ceil ( log2( double(m_crse_ratio[idim]) ) ) );
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( floor_log_crse == ceil_log_crse, "coarsening ratio must be power of 2.");
        }
     }
 
@@ -309,7 +313,6 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
             hi[idim] = max( static_cast<int> ( ceil (
                           ( diag_dom.hi(idim) - warpx.Geom(lev).ProbLo(idim)) /
                             warpx.Geom(lev).CellSize(idim) ) ), 0) ;
-            
             // Modify lo and/or hi if they are not coarsenable by crse ratio.
             int mod_lo = lo[idim] % m_crse_ratio[idim];
             int mod_hi = hi[idim] % m_crse_ratio[idim];
@@ -337,9 +340,7 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
         BoxArray diag_ba;
         diag_ba.define(diag_box);
         // At this point in the code, the BoxArray is defined with the same index space and resolution
-        // as the simulation, at level, lev. It is not coarsened yet, but it should be coarsenable
-        // provided the crse_ratio is power of 2, and is an integer divisor of blocking factor. 
-        // The check for coarsenability of the BoxArray is done just before it is coarsened.
+        // as the simulation, at level, lev. It is not coarsened yet, but it should be coarsenable.
         ba = diag_ba.maxSize( warpx.maxGridSize( lev ) );
    
     }
