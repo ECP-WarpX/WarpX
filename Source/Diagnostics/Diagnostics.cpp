@@ -301,7 +301,7 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
 
     if (use_warpxba == false) {
         // Following are the steps to compute the lo and hi index corresponding to user-defined
-        // m_lo and m_hi using the same resolution as the simulation at level, lev.        
+        // m_lo and m_hi using the same resolution as the simulation at level, lev.
         IntVect lo(AMREX_D_DECL(0,0,0));
         IntVect hi(AMREX_D_DECL(1,1,1));
         for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
@@ -328,7 +328,7 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
                  );
             }
             // Update the physical co-ordinates m_lo and m_hi using the modified index values
-            // lo and hi, respectively. 
+            // lo and hi, respectively.
             m_lo[idim] = lo[idim] * warpx.Geom(lev).CellSize(idim)
                        + warpx.Geom(lev).ProbLo(idim);
             m_hi[idim] = hi[idim] * warpx.Geom(lev).CellSize(idim)
@@ -342,7 +342,7 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
         // At this point in the code, the BoxArray is defined with the same index space and resolution
         // as the simulation, at level, lev. It is not coarsened yet, but it should be coarsenable.
         ba = diag_ba.maxSize( warpx.maxGridSize( lev ) );
-   
+
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_crse_ratio.min() > 0, "Coarsening ratio must be non-zero.");

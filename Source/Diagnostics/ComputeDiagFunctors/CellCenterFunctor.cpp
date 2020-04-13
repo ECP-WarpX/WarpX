@@ -33,7 +33,7 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
         Average::CoarsenAndInterpolate( mf_dst, *m_mf_src, dcomp, 0, nComp(), 0, m_crse_ratio);
     }
 #else
-    // In cartesian geometry, coarsen and interpolate from simulation MultiFab, m_mf_src, 
+    // In cartesian geometry, coarsen and interpolate from simulation MultiFab, m_mf_src,
     // to output diagnostic MultiFab, mf_dst.
     Average::CoarsenAndInterpolate( mf_dst, *m_mf_src, dcomp, 0, nComp(), 0, m_crse_ratio);
 #endif
