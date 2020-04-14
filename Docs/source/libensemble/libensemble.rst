@@ -20,7 +20,7 @@ The beam transverse distribution is matched to the first stage and the beam is i
 The two stages are separated by a few-cm gap, and a focusing lens is placed in-between.
 Note that this is a very low resolution simulation to show an example, so it is **not** close to numerical convergence.
 
-The 4 **input parameters** that LibEnsemble is allowed to tune for optimization are:
+In this example, we allow LibEnsemble to tune four **input parameters**:
 
   - Length of the downramp of the first stage
 
@@ -39,16 +39,17 @@ For the latter, we are using the Asynchronously Parallel Optimization Solver for
 Install LibEnsemble
 -------------------
 
-Requirements to use this LibEnsemble+WarpX example are, besides a working WarpX executable,
+Besides a working WarpX executable, you have to install libEnsemble and its dependencies.
 
-.. literalinclude:: ../../../Tools/LibEnsemble/requirements.txt
-
-The least common ones can be installed with
+You can either install all packages via `conda` (recommended),
 
 .. code-block:: sh
 
-   conda install -c conda-forge libensemble
-   conda install -c conda-forge nlopt # if you want to use the APOSMM optimizer.
+   conda install -c conda-forge libensemble matplotlib numpy scipy yt
+
+or try to install the same dependencies via `pip` (pick one *or* the other):
+
+.. literalinclude:: ../../../Tools/LibEnsemble/requirements.txt
 
 
 What's in ``Tools/LibEnsemble``?
@@ -70,38 +71,38 @@ In a nutshell, a user needs to define
 
 The files in ``Tools/LibEnsemble/`` are:
 
-run_libensemble_on_warpx.py
+``run_libensemble_on_warpx.py``
    This is the main LibEnsemble script.
-   It imports ``gen_f`` and ``alloc_f`` from LibEnsemble, ``sim_f`` from file `warpx_simf.py` (see below), defines dictionaries for parameters of each of these objects (``gen_specs`` --includes lower and upper bound of each element in the input array ``'x'``, ``alloc_specs`` and ``sim_specs`` respectively) and runs LibEnsemble.
+   It imports ``gen_f`` and ``alloc_f`` from LibEnsemble, ``sim_f`` from file ``warpx_simf.py`` (see below), defines dictionaries for parameters of each of these objects (``gen_specs`` includes lower and upper bound of each element in the input array ``'x'``, ``alloc_specs`` and ``sim_specs`` respectively) and runs LibEnsemble.
 
-warpx_simf.py
+``warpx_simf.py``
    defines the ``sim_f`` function called ``run_warpx``:
 
    .. doxygenfunction:: run_warpx
 
-sim/inputs
-   WarpX input file.
-   Some of its parameters are modified in ``run_warpx``.
+``sim/inputs``
+   WarpX input file. Some of its parameters are modified in ``run_warpx``.
 
-write_sim_input.py
+``write_sim_input.py``
    (util) update one WarpX input file depending on values in ``'x'`` for this run.
 
    .. doxygenfunction:: write_sim_input
 
-read_sim_output.py
+``read_sim_output.py``
    (util) Read WarpX plotfile and return ``'f'``.
 
    .. doxygenfunction:: read_sim_output
 
-plot_results.py
+``plot_results.py``
    (util) Read LibEnsemble output files ``.npy`` and ``.pickle`` and plot output ``'f'`` (and other output, just for convenience) as a function of input from all simulations.
 
-all_machine_specs.py
+``all_machine_specs.py``
    (util) dictionaries of machine-specific parameters.
    For convenience, the maximum number of WarpX runs is defined there.
 
-summit_submit_mproc.sh
+``summit_submit_mproc.sh``
    Submission script for LibEnsemble+WarpX on Summit.
+   Make sure to edit this file and add your project ID for allocations.
 
 Run the example
 ---------------
@@ -128,7 +129,7 @@ This is adapted to a 4-core machine, as it will use:
 - 2 processes to run 2 concurrent simulations
 
 Run on Summit at OLCF
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: sh
 
