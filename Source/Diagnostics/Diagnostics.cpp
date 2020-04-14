@@ -75,10 +75,6 @@ Diagnostics::ReadParameters ()
     if (pp.queryarr("coarsening_ratio", cr_ratio) ) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
            m_crse_ratio[idim] = cr_ratio[idim];
-            // Check if crse_ratio is power of 2.
-            int floor_log_crse = static_cast<int>( floor ( log2( double(m_crse_ratio[idim]) ) ) );
-            int ceil_log_crse  = static_cast<int>( ceil ( log2( double(m_crse_ratio[idim]) ) ) );
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( floor_log_crse == ceil_log_crse, "coarsening ratio must be power of 2.");
        }
     }
 
@@ -282,10 +278,18 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
     auto & warpx = WarpX::GetInstance();
     amrex::RealBox diag_dom;
     bool use_warpxba = true;
+    const IntVect blockingFactor = warpx.blockingFactor( lev );
 
     // Default BoxArray and DistributionMap for initializing the output MultiFab, mf_avg.
     BoxArray ba = warpx.boxArray(lev);
     DistributionMapping dmap = warpx.DistributionMap(lev);
+
+    // Check if warpx BoxArray is coarsenable.
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
+        ba.coarsenable(m_crse_ratio),
+        "Invalid coarsening ratio for diagnostics. Must be a power of two and an integer divisor of the blocking factor."
+    );
+
     // Find if user-defined physical dimensions are different from the simulation domain.
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
          // To ensure that the diagnostic lo and hi are within the domain defined at level, lev.
@@ -297,13 +301,18 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
         if ( fabs(warpx.Geom(lev).ProbHi(idim) - diag_dom.hi(idim))
                                > warpx.Geom(lev).CellSize(idim) )
              use_warpxba = false;
+
+        // User-defined value for coarsening should be an integer divisor of
+        // blocking factor at level, lev.
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( blockingFactor[idim] % m_crse_ratio[idim]==0,
+                       " coarsening ratio must be integer divisor of blocking factor");
     }
 
     if (use_warpxba == false) {
         // Following are the steps to compute the lo and hi index corresponding to user-defined
         // m_lo and m_hi using the same resolution as the simulation at level, lev.
-        IntVect lo(AMREX_D_DECL(0,0,0));
-        IntVect hi(AMREX_D_DECL(1,1,1));
+        IntVect lo(0);
+        IntVect hi(1);
         for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
             // lo index with same cell-size as simulation at level, lev.
             lo[idim] = max( static_cast<int>( floor (
@@ -312,14 +321,7 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
             // hi index with same cell-size as simulation at level, lev.
             hi[idim] = max( static_cast<int> ( ceil (
                           ( diag_dom.hi(idim) - warpx.Geom(lev).ProbLo(idim)) /
-                            warpx.Geom(lev).CellSize(idim) ) ), 0) ;
-            // Modify lo and/or hi if they are not coarsenable by crse ratio.
-            int mod_lo = lo[idim] % m_crse_ratio[idim];
-            int mod_hi = hi[idim] % m_crse_ratio[idim];
-            if (mod_lo > 0) lo[idim] -= mod_lo;
-            if (mod_hi > 0) hi[idim] += (m_crse_ratio[idim] - mod_hi);
-            // Subtract hi_index by 1 accounting for cell-centered indextype of mf_avg
-            hi[idim]  -= 1;
+                            warpx.Geom(lev).CellSize(idim) ) ), 0) - 1 ;
             // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
             if ( hi[idim] <= lo[idim] ) {
                  hi[idim]  = lo[idim] + 1;
@@ -327,36 +329,35 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
                     m_crse_ratio[idim]==1, "coarsening ratio in reduced dimension must be 1."
                  );
             }
-            // Update the physical co-ordinates m_lo and m_hi using the modified index values
-            // lo and hi, respectively.
-            m_lo[idim] = lo[idim] * warpx.Geom(lev).CellSize(idim)
-                       + warpx.Geom(lev).ProbLo(idim);
-            m_hi[idim] = hi[idim] * warpx.Geom(lev).CellSize(idim)
-                       + warpx.Geom(lev).ProbLo(idim);
         }
+
         // Box for the output MultiFab corresponding to the user-defined physical co-ordinates at lev.
         Box diag_box( lo, hi );
         // Define box array
         BoxArray diag_ba;
         diag_ba.define(diag_box);
-        // At this point in the code, the BoxArray is defined with the same index space and resolution
-        // as the simulation, at level, lev. It is not coarsened yet, but it should be coarsenable.
         ba = diag_ba.maxSize( warpx.maxGridSize( lev ) );
+        // At this point in the code, the BoxArray, ba, is defined with the same index space and
+        // resolution as the simulation, at level, lev. 
+        // Coarsen and refine so that the new BoxArray is coarsenable.
+        ba.coarsen(m_crse_ratio).refine(m_crse_ratio);
 
+        // Update the physical co-ordinates m_lo and m_hi using the final index values
+        // from the coarsenable, cell-centered BoxArray, ba.
+        for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            m_lo[idim] = warpx.Geom(lev).ProbLo(idim) + warpx.Geom(lev).CellSize(idim)/2.0_rt +
+                ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim);
+            m_hi[idim] = warpx.Geom(lev).ProbLo(idim) + warpx.Geom(lev).CellSize(idim)/2.0_rt +
+                ba.getCellCenteredBox( ba.size()-1 ).bigEnd(idim) * warpx.Geom(lev).CellSize(idim);
+        }
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_crse_ratio.min() > 0, "Coarsening ratio must be non-zero.");
-    // Check if the BoxArray is coarsenable.
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
-        ba.coarsenable(m_crse_ratio),
-        "Invalid coarsening ratio for diagnostics. Must be a power of two and an integer divisor of the blocking factor."
-    );
     // The BoxArray is coarsened based on the user-defined coarsening ratio.
     ba.coarsen(m_crse_ratio);
     // Generate a new distribution map if the physical m_lo and m_hi for the output
-    // is different from simulation the lo and hi physical co-ordinates of the domain.
+    // is different from the lo and hi physical co-ordinates of the simulation domain.
     if (use_warpxba == false) dmap = DistributionMapping{ba};
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
     mf_avg[lev] = MultiFab(ba, dmap, varnames.size(), 0);
-
 }
