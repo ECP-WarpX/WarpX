@@ -10,14 +10,15 @@
 #include "Utils/Average.H"
 #include "Utils/WarpXUtil.H"
 
+#ifdef WARPX_USE_PSATD
+#   include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#endif
+
 #include <AMReX_FillPatchUtil_F.H>
 #include <AMReX_Interpolater.H>
 
 #ifdef WARPX_USE_OPENPMD
-#include <openPMD/openPMD.hpp>
-#endif
-#ifdef WARPX_USE_PSATD
-#include <SpectralSolver.H>
+#   include <openPMD/openPMD.hpp>
 #endif
 
 using namespace amrex;
@@ -272,9 +273,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
     const std::array<std::unique_ptr<MultiFab>,3> &vector_total = vector_field;
 #endif
 
-    Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow );
-    Average::ToCellCenter( mf_avg, *(vector_total[1]), dcomp+1, ngrow );
-    Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+2, ngrow );
+    Average::CoarsenAndInterpolate( mf_avg, *(vector_total[0]), dcomp  , 0, 1, ngrow );
+    Average::CoarsenAndInterpolate( mf_avg, *(vector_total[1]), dcomp+1, 0, 1, ngrow );
+    Average::CoarsenAndInterpolate( mf_avg, *(vector_total[2]), dcomp+2, 0, 1, ngrow );
 }
 
 /** \brief Takes all of the components of the three fields and
@@ -330,7 +331,7 @@ AverageAndPackScalarField (MultiFab& mf_avg,
         MultiFab::Copy( mf_avg, *scalar_total, 0, dcomp, 1, ngrow);
     } else if ( scalar_total->is_nodal() ){
         // - Fully nodal
-        Average::ToCellCenter( mf_avg, *scalar_total, dcomp, ngrow, 0, 1 );
+        Average::CoarsenAndInterpolate( mf_avg, *scalar_total, dcomp, 0, 1, ngrow );
     } else {
         amrex::Abort("Unknown staggering.");
     }
@@ -677,7 +678,7 @@ coarsenCellCenteredFields(
 
         BoxArray small_ba = amrex::coarsen(source_mf[lev].boxArray(), coarse_ratio);
         coarse_mf.push_back( MultiFab(small_ba, source_mf[lev].DistributionMap(), ncomp, 0) );
-        average_down(source_mf[lev], coarse_mf[lev], 0, ncomp, IntVect(coarse_ratio));
+        Average::CoarsenAndInterpolate( coarse_mf[lev], source_mf[lev], 0, 0, ncomp, 0, IntVect(coarse_ratio) );
     }
 };
 
@@ -818,7 +819,7 @@ getInterpolatedScalar(
     interpolated_F->setVal(0.);
 
     // Loop through the boxes and interpolate the values from the _cp data
-#ifdef _OPEMP
+#ifdef _OPENMP
 #pragma omp parallel
 #endif
     {
@@ -872,7 +873,7 @@ getInterpolatedVector(
 
     // Loop through the boxes and interpolate the values from the _cp data
     const int use_limiter = 0;
-#ifdef _OPEMP
+#ifdef _OPENMP
 #pragma omp parallel
 #endif
     {

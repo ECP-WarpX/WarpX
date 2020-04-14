@@ -33,13 +33,13 @@ pattern="\.c$|\.cpp$|\.F90$|\.h$|\.H$|\.ini$|\.md$|\.py$|"\
 "\.rst$|\.sh$|\.tex$|\.txt$|\.xml$|\.yml$|"\
 "CMakeLists\.txt|inputs"
 for i in $(find .. \
-                -not -path "../.git/*"   \
-                -not -path "../.idea/*"  \
-                -not -path "../Docs/source/api/*" \
-                -not -path "../Docs/build/*" \
-                -not -path "../Docs/doxyxml/*" \
+                -not -path "../../.git/*"   \
+                -not -path "../../.idea/*"  \
+                -not -path "../../Docs/source/api/*" \
+                -not -path "../../Docs/build/*" \
+                -not -path "../../Docs/doxyxml/*" \
                 -not -path "*wp_parse*" \
-                -not -path "../tmp_build_dir/*" \
+                -not -path "../../tmp_build_dir/*" \
                 -type f | \
            grep -P "${pattern}")
 do
@@ -56,4 +56,10 @@ echo ""
 echo "WARNING: Remaining occurences of $old_release_number are listed below."
 echo "         Is this expected? Or should these be updated too?"
 echo ""
-git grep "$old_release_number" .
+git grep "$old_release_number" . || echo ""
+echo "In order to get a list of PRs merged since date <date>, you can run:"
+echo "git log --since=<date> | grep -A 3 \"Author: \" | grep -B 1 \"\-\-\" | sed '/--/d' | sed -e 's/^    /- /'"
+echo "where <date> is replaced by the date since last relate, say 2020-02-02"
+# The actual command is below (commented), the one in echo above
+# has escape characters for printing purpose.
+# git log --since=<date> | grep -A 3 "Author: " | grep -B 1 "\-\-" | sed '/--/d' | sed -e 's/^    /- /'
