@@ -338,7 +338,7 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
         diag_ba.define(diag_box);
         ba = diag_ba.maxSize( warpx.maxGridSize( lev ) );
         // At this point in the code, the BoxArray, ba, is defined with the same index space and
-        // resolution as the simulation, at level, lev. 
+        // resolution as the simulation, at level, lev.
         // Coarsen and refine so that the new BoxArray is coarsenable.
         ba.coarsen(m_crse_ratio).refine(m_crse_ratio);
 
