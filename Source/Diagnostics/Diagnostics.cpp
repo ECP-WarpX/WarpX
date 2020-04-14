@@ -287,7 +287,7 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
     // Check if warpx BoxArray is coarsenable.
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
         ba.coarsenable(m_crse_ratio),
-        "Invalid coarsening ratio for diagnostics. Must be a power of two and an integer divisor of the blocking factor."
+        "Invalid coarsening ratio for warpx boxArray. Must be an integer divisor of the blocking factor."
     );
 
     // Find if user-defined physical dimensions are different from the simulation domain.
@@ -307,6 +307,7 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( blockingFactor[idim] % m_crse_ratio[idim]==0,
                        " coarsening ratio must be integer divisor of blocking factor");
     }
+
 
     if (use_warpxba == false) {
         // Following are the steps to compute the lo and hi index corresponding to user-defined
