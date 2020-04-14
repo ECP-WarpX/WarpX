@@ -1,7 +1,4 @@
-import os
 import re
-import scipy.constants as scc
-import numpy as np
 
 """
 This file is part of the suite of scripts to use LibEnsemble on top of WarpX
