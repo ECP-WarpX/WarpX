@@ -30,6 +30,10 @@ Diagnostics::ReadParameters ()
     file_prefix = "diags/" + diag_name;
     pp.query("file_prefix", file_prefix);
     pp.query("period", m_period);
+    pp.query("format", m_format);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_format == "plotfile" || m_format == "openpmd",
+        "<diag>.format must be plotfile or openpmd");
     pp.query("plot_raw_fields", m_plot_raw_fields);
     pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_plot_F==false, "cannot plot_F yet");
@@ -118,8 +122,18 @@ Diagnostics::InitData ()
                                warpx.DistributionMap(lev),
                                varnames.size(), 0);
     }
-    // Construct Flush class. So far, only Plotfile is implemented.
-    m_flush_format = new FlushFormatPlotfile;
+    // Construct Flush class.
+    if        (m_format == "plotfile"){
+        m_flush_format = new FlushFormatPlotfile;
+    } else if (m_format == "openpmd"){
+#ifdef WARPX_USE_OPENPMD
+        m_flush_format = new FlushFormatOpenPMD(diag_name);
+#else
+        amrex::Abort("To use openpmd output format, need to compile with USE_OPENPMD=TRUE");
+#endif
+    } else {
+        amrex::Abort("unknown output format");
+    }
 }
 
 void

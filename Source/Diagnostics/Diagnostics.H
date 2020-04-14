@@ -3,6 +3,9 @@
 
 #include "FlushFormats/FlushFormat.H"
 #include "FlushFormats/FlushFormatPlotfile.H"
+#ifdef WARPX_USE_OPENPMD
+#   include "FlushFormats/FlushFormatOpenPMD.H"
+#endif
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
@@ -77,6 +80,8 @@ private:
     bool m_plot_rho = false;
     /** Whether to plot F (charge conservation error) */
     bool m_plot_F = false;
+    /** format for output files, "plotfile" or "openpmd" */
+    std::string m_format = "plotfile";
 };
 
 #endif // WARPX_DIAGNOSTICS_H_
