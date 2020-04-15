@@ -561,6 +561,10 @@ WarpX::ReadParameters ()
         pp.query("pml_has_particles", pml_has_particles);
         pp.query("do_pml_j_damping", do_pml_j_damping);
         pp.query("do_pml_in_domain", do_pml_in_domain);
+#ifdef WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( do_pml==0,
+            "PML are not implemented in RZ geometry ; please set `warpx.do_pml=0`");
+#endif
 
         Vector<int> parse_do_pml_Lo(AMREX_SPACEDIM,1);
         pp.queryarr("do_pml_Lo", parse_do_pml_Lo);
@@ -1098,7 +1102,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             realspace_ba.grow(1, ngE[1]); // add guard cells only in z
             spectral_solver_cp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
                 n_rz_azimuthal_modes, noz_fft, do_nodal, cdx_vect, dt[lev], lev ) );
-
             if (use_kspace_filter) {
                 spectral_solver_cp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
             }

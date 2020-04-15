@@ -273,9 +273,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
     const std::array<std::unique_ptr<MultiFab>,3> &vector_total = vector_field;
 #endif
 
-    Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow );
-    Average::ToCellCenter( mf_avg, *(vector_total[1]), dcomp+1, ngrow );
-    Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+2, ngrow );
+    Average::CoarsenAndInterpolate( mf_avg, *(vector_total[0]), dcomp  , 0, 1, ngrow );
+    Average::CoarsenAndInterpolate( mf_avg, *(vector_total[1]), dcomp+1, 0, 1, ngrow );
+    Average::CoarsenAndInterpolate( mf_avg, *(vector_total[2]), dcomp+2, 0, 1, ngrow );
 }
 
 /** \brief Takes all of the components of the three fields and
@@ -331,7 +331,7 @@ AverageAndPackScalarField (MultiFab& mf_avg,
         MultiFab::Copy( mf_avg, *scalar_total, 0, dcomp, 1, ngrow);
     } else if ( scalar_total->is_nodal() ){
         // - Fully nodal
-        Average::ToCellCenter( mf_avg, *scalar_total, dcomp, ngrow, 0, 1 );
+        Average::CoarsenAndInterpolate( mf_avg, *scalar_total, dcomp, 0, 1, ngrow );
     } else {
         amrex::Abort("Unknown staggering.");
     }
@@ -578,6 +578,8 @@ WarpX::AverageAndPackFields ( Vector<std::string>& varnames,
                 const BoxArray& ba = amrex::convert(boxArray(lev),IntVect::TheUnitVector());
                 MultiFab divE( ba, DistributionMap(lev), 1, 0 );
 #ifdef WARPX_USE_PSATD
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE( fft_hybrid_mpi_decomposition == false,
+                    "Spectral computation of div(E) not implemented with PICSAR spectral solver" );
                 spectral_solver_fp[lev]->ComputeSpectralDivE( Efield_aux[lev], divE );
 #else
                 m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
@@ -676,7 +678,7 @@ coarsenCellCenteredFields(
 
         BoxArray small_ba = amrex::coarsen(source_mf[lev].boxArray(), coarse_ratio);
         coarse_mf.push_back( MultiFab(small_ba, source_mf[lev].DistributionMap(), ncomp, 0) );
-        average_down(source_mf[lev], coarse_mf[lev], 0, ncomp, IntVect(coarse_ratio));
+        Average::CoarsenAndInterpolate( coarse_mf[lev], source_mf[lev], 0, 0, ncomp, 0, IntVect(coarse_ratio) );
     }
 };
 
