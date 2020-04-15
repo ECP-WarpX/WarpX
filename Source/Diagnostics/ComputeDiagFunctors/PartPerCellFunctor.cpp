@@ -17,7 +17,7 @@ void
 PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
 {
     auto& warpx = WarpX::GetInstance();
-    // Guard cell is set to 1 for generality. However, for a cell-centered 
+    // Guard cell is set to 1 for generality. However, for a cell-centered
     // output Multifab, mf_avg, the guard-cell data is not needed especially considering
     // the operations performend in the CoarsenAndInterpolate function.
     constexpr int ng = 1;
