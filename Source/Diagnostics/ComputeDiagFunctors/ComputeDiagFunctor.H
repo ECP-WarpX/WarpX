@@ -25,10 +25,10 @@ public:
      * multifab */
     int nComp () const { return m_ncomp; };
 private:
-    /* Number of components of mf_dst that this functor updates. */
+    /** Number of components of mf_dst that this functor updates. */
     int m_ncomp;
 protected:
-    /* Coarsening ratio used to interpolate fields from simulation MultiFabs to output MultiFab. */
+    /** Coarsening ratio used to interpolate fields from simulation MultiFabs to output MultiFab. */
     amrex::IntVect m_crse_ratio;
 };
 

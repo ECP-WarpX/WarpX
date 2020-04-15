@@ -11,7 +11,7 @@ void
 DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
 {
     auto& warpx = WarpX::GetInstance();
-    const int ng = 1;
+    constexpr int ng = 1;
     // For staggered and nodal calculations, divE is computed on the nodes.
     // The temporary divE MultiFab is generated to comply with the location of divE.
     const BoxArray& ba = amrex::convert(warpx.boxArray(m_lev),IntVect::TheUnitVector());

@@ -17,7 +17,7 @@ void
 PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
 {
     auto& warpx = WarpX::GetInstance();
-    const int ng = 1;
+    constexpr int ng = 1;
     // Temporary cell-centered, single-component MultiFab for storing particles per cell.
     MultiFab ppc_mf(warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng);
     // Set value to 0, and increment the value in each cell with ppc.
