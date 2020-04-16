@@ -8,7 +8,7 @@ class FlushFormatOpenPMD : public FlushFormat
 {
 public:
 
-    FlushFormatOpenPMD ();
+    FlushFormatOpenPMD (const std::string& diag_name);
     
     /** Flush fields and particles to plotfile */
     virtual void WriteToFile (
@@ -21,7 +21,7 @@ public:
         bool plot_raw_fields_guards,
         bool plot_rho, bool plot_F) const override final;
 
-    ~FlushFormatOpenPMD() {};
+    ~FlushFormatOpenPMD ();
 
 private:
     std::string openpmd_backend {"default"};

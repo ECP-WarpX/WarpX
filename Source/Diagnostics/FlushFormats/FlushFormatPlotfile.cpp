@@ -22,8 +22,7 @@ FlushFormatPlotfile::WriteToFile (
     bool plot_raw_fields_guards, bool plot_rho, bool plot_F) const
 {
     auto & warpx = WarpX::GetInstance();
-    const auto step = iteration[0];
-    const std::string& filename = amrex::Concatenate(prefix, step);
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0]);
     amrex::Print() << "  Writing plotfile " << filename << "\n";
 
     Vector<std::string> rfs;

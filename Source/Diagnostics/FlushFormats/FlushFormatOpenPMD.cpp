@@ -11,14 +11,14 @@ namespace
     const std::string level_prefix {"Level_"};
 }
 
-void
 FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 {
     ParmParse pp(diag_name);
     pp.query("openpmd_backend", openpmd_backend);
     pp.query("openpmd_tspf", openpmd_tspf);
+    auto & warpx = WarpX::GetInstance();
     m_OpenPMDPlotWriter = new WarpXOpenPMDPlot(
-        openpmd_tspf, openpmd_backend, WarpX::getPMLdirections()
+        openpmd_tspf, openpmd_backend, warpx.getPMLdirections()
         );
 }
 
@@ -37,7 +37,7 @@ FlushFormatOpenPMD::WriteToFile (
     //auto & warpx = WarpX::GetInstance();
     const auto step = iteration[0];
 
-    m_OpenPMDPlotWriter->SetStep(step);
+    m_OpenPMDPlotWriter->SetStep(step, prefix);
 
     /*
     Vector<std::string> varnames; // Name of the written fields
@@ -49,11 +49,11 @@ FlushFormatOpenPMD::WriteToFile (
     */
     // fields: only dumped for coarse level
     m_OpenPMDPlotWriter->WriteOpenPMDFields(
-        varnames, *mf[0], geom[0], step, iteration);
+        varnames, *mf[0], geom[0], step, iteration[0]);
     // particles: all (reside only on locally finest level)
     m_OpenPMDPlotWriter->WriteOpenPMDParticles(mpc);
 }
 
-void FlushFormatOpenPMD::~FlushFormatOpenPMD (){
+FlushFormatOpenPMD::~FlushFormatOpenPMD (){
     delete m_OpenPMDPlotWriter;
 }
