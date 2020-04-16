@@ -1117,13 +1117,11 @@ Diagnostics and output
 
     * ``<species_name>.uniform_stride`` (`int`) optional
         If provided ``<species_name>.uniform_stride = n``,
-        every `n` particle of this species will be dumped,
-        i.e. if `particle ID % n == 0`, this particle will be dumped.
+        every `n` particle of this species will be dumped, selected uniformly.
         The value provided should be an integer greater than or equal to 0.
 
     * ``<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
-        User can provide an expresion that describs the condition to filter
-        a portion of particles that will be dumped.
+        Users can provide an expression returning a boolean for whether a particle is dumped (the exact test is whether the return value is `> 0.5`).
         `t` represents the physical time in seconds during the simulation.
         `x, y, z` represent particle positions in the unit of meter.
         `ux, uy, uz` represent particle velocities in the unit of

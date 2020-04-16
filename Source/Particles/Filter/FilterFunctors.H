@@ -41,8 +41,8 @@ struct RandomFilter
         else return 0;
     }
 private:
-    bool m_is_active = false; //! select all particles if false
-    amrex::Real m_fraction = 1.0; //! range: [0.0:1.0] where 0 is no & 1 is all particles
+    const bool m_is_active = false; //! select all particles if false
+    const amrex::Real m_fraction = 1.0; //! range: [0.0:1.0] where 0 is no & 1 is all particles
 };
 
 /**
@@ -70,8 +70,8 @@ struct UniformFilter
         else return 0;
     }
 private:
-    bool m_is_active = false; //! select all particles if false
-    int m_stride = 0; //! selection of every n-th particle
+    const bool m_is_active = false; //! select all particles if false
+    const int m_stride = 0; //! selection of every n-th particle
 };
 
 /**
@@ -113,8 +113,8 @@ public:
     amrex::Real m_t;
     ParserWrapper<7> * m_function_partparser;
 private:
-    bool m_is_active = false; //! select all particles if false
-    int  m_species_index = 0; //! species index
+    const bool m_is_active = false; //! select all particles if false
+    const int  m_species_index = 0; //! species index
 };
 
 #endif // FILTERFUNCTORS_H
