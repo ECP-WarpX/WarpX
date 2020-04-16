@@ -1,4 +1,6 @@
 CEXE_sources += FlushFormatPlotfile.cpp
-CEXE_sources += FlushFormatOpenPMD.cpp
+ifeq ($(USE_OPENPMD), TRUE)
+    CEXE_sources += FlushFormatOpenPMD.cpp
+endif
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Diagnostics/FlushFormats
