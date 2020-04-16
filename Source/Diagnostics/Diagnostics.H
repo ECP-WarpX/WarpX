@@ -76,10 +76,10 @@ private:
     bool m_plot_raw_fields = false;
     /** Whether to plot guard cells of raw fields */
     bool m_plot_raw_fields_guards = false;
-    /** Whether to plot charge density rho */
-    bool m_plot_rho = false;
-    /** Whether to plot F (charge conservation error) */
-    bool m_plot_F = false;
+    /** Whether to plot charge density rho in raw fields */
+    bool m_plot_raw_rho = false;
+    /** Whether to plot F (charge conservation error) in raw fields */
+    bool m_plot_raw_F = false;
     /** format for output files, "plotfile" or "openpmd" */
     std::string m_format = "plotfile";
 };

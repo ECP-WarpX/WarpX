@@ -36,7 +36,6 @@ Diagnostics::ReadParameters ()
         "<diag>.format must be plotfile or openpmd");
     pp.query("plot_raw_fields", m_plot_raw_fields);
     pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_plot_F==false, "cannot plot_F yet");
     if (!pp.queryarr("fields_to_plot", varnames)){
         varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
     }
@@ -174,7 +173,7 @@ Diagnostics::Flush ()
     m_flush_format->WriteToFile(
         varnames, GetVecOfConstPtrs(mf_avg), warpx.Geom(), warpx.getistep(),
         warpx.gett_new(0), warpx.GetPartContainer(), nlev, file_prefix,
-        m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_rho, m_plot_F);
+        m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 }
 
 void

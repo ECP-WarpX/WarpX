@@ -30,26 +30,21 @@ FlushFormatOpenPMD::WriteToFile (
     const amrex::Vector<int> iteration, const double time,
     MultiParticleContainer& mpc, int nlev,
     const std::string prefix, bool plot_raw_fields,
-    bool plot_raw_fields_guards, bool plot_rho, bool plot_F) const
+    bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F) const
 {
     WARPX_PROFILE("FlushFormatOpenPMD::WriteToFile()");
 
-    //auto & warpx = WarpX::GetInstance();
-    const auto step = iteration[0];
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !plot_raw_fields && !plot_raw_fields_guards && !plot_raw_rho && !plot_raw_F,
+        "Cannot plot raw data with OpenPMD output format. Use plotfile instead.");
 
-    m_OpenPMDPlotWriter->SetStep(step, prefix);
+    // Set step and output directory name.
+    m_OpenPMDPlotWriter->SetStep(iteration[0], prefix);
 
-    /*
-    Vector<std::string> varnames; // Name of the written fields
-    Vector<MultiFab> mf_avg; // contains the averaged, cell-centered fields
-    Vector<const MultiFab*> output_mf; // will point to the data to be written
-    Vector<Geometry> output_geom;
-
-    prepareFields(step, varnames, mf_avg, output_mf, output_geom);
-    */
     // fields: only dumped for coarse level
     m_OpenPMDPlotWriter->WriteOpenPMDFields(
-        varnames, *mf[0], geom[0], step, iteration[0]);
+        varnames, *mf[0], geom[0], iteration[0], time);
+
     // particles: all (reside only on locally finest level)
     m_OpenPMDPlotWriter->WriteOpenPMDParticles(mpc);
 }
