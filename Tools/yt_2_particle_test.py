@@ -65,7 +65,7 @@ E_exact = lambda r: abs(q_e)/(4*pi*eps_0*abs(r+r_0)**2)
 for i in range(len(ts)):    #Loop over plotfiles
     ds = ts[i]
     data = ds.all_data()
-    
+
     #Read particle data for each plotfile
     [x0[i], x1[i]] = data['particle_position_x'].to_ndarray()
     [y0[i], y1[i]] = data['particle_position_y'].to_ndarray()
@@ -76,7 +76,7 @@ for i in range(len(ts)):    #Loop over plotfiles
     [Ex0[i], Ex1[i]] = data['particle_Ex'].to_ndarray()
     [Ey0[i], Ey1[i]] = data['particle_Ey'].to_ndarray()
     [Ez0[i], Ez1[i]] = data['particle_Ez'].to_ndarray()
-    
+
     #Read field data for each plotfile
     fdata = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
                              dims=ds.domain_dimensions)

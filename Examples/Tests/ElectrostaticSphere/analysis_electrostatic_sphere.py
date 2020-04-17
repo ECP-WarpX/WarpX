@@ -62,7 +62,7 @@ filename = sys.argv[1]
 ds = yt.load( filename )
 
 # Load data pertaining to fields
-data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, 
+data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
                         dims=ds.domain_dimensions)
 Ex = data['Ex'].to_ndarray()
 Ey = data['Ey'].to_ndarray()
