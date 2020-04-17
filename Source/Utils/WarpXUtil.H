@@ -1,5 +1,5 @@
 /* Copyright 2019-2020 Andrew Myers, Luca Fedeli, Maxence Thevenet
- * Michael Rowan, Revathi Jambunathan
+ * Revathi Jambunathan
  *
  * This file is part of WarpX.
  *
@@ -158,7 +158,6 @@ namespace WarpXUtilStr
      */
     bool is_in(const std::vector<std::string>& vect,
                const std::vector<std::string>& elems);
-
 }
 
 #endif //WARPX_UTILS_H_
