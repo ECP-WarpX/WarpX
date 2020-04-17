@@ -1115,34 +1115,44 @@ Boundary conditions
 Diagnostics and output
 ----------------------
 
+WarpX has three types of diagnostics:
+``FullDiagnostics`` consist in dumps of fields and particles at given iterations,
+``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame, and
+``ReducedDiags`` allow the user to compute some reduced quantity (particle temperature, max of a field) and write a small amount of data to text files.
+Similar to what is done for physical species, WarpX has a class Diagnostics that allows users to initialize different diagnostics, each of them with different fields, resolution and period.
+This currently applies to standard diagnostics, but should be extended to back-transformed diagnostics and reduced diagnostics (and others) in a near future.
+
+Full Diagnostics
+^^^^^^^^^^^^^^^^
+
 * ``amr.plot_int`` (`integer`) optional
     The number of PIC cycles (interval) in between two consecutive `plotfile` data dumps.
     Use a negative number to disable data dumping.
     This is ``-1`` (disabled) by default.
 
-    * ``<species_name>.random_fraction`` (`float`) optional
-        If provided ``<species_name>.random_fraction = a``,
-        only `a` fraction of the particle data of this species will be dumped randomly,
-        i.e. if `rand() < a`, this particle will be dumped,
-        where `rand()` denotes a random number generator.
-        The value `a` provided should be between 0 and 1.
+* ``<species_name>.random_fraction`` (`float`) optional
+    If provided ``<species_name>.random_fraction = a``,
+    only `a` fraction of the particle data of this species will be dumped randomly,
+    i.e. if `rand() < a`, this particle will be dumped,
+    where `rand()` denotes a random number generator.
+    The value `a` provided should be between 0 and 1.
 
-    * ``<species_name>.uniform_stride`` (`int`) optional
-        If provided ``<species_name>.uniform_stride = n``,
-        every `n` particle of this species will be dumped, selected uniformly.
-        The value provided should be an integer greater than or equal to 0.
-
-    * ``<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
-        Users can provide an expression returning a boolean for whether a particle is dumped (the exact test is whether the return value is `> 0.5`).
-        `t` represents the physical time in seconds during the simulation.
-        `x, y, z` represent particle positions in the unit of meter.
-        `ux, uy, uz` represent particle velocities in the unit of
-        :math:`\gamma v/c`, where
-        :math:`\gamma` is the Lorentz factor,
-        :math:`v/c` is the particle velocity normalized by the speed of light.
-        E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
-        positions `x` greater than `0`, and those having velocity `uz` less than 10,
-        will be dumped.
+* ``<species_name>.uniform_stride`` (`int`) optional
+    If provided ``<species_name>.uniform_stride = n``,
+    every `n` particle of this species will be dumped, selected uniformly.
+    The value provided should be an integer greater than or equal to 0.
+  
+* ``<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
+    Users can provide an expression returning a boolean for whether a particle is dumped (the exact test is whether the return value is `> 0.5`).
+    `t` represents the physical time in seconds during the simulation.
+    `x, y, z` represent particle positions in the unit of meter.
+    `ux, uy, uz` represent particle velocities in the unit of
+    :math:`\gamma v/c`, where
+    :math:`\gamma` is the Lorentz factor,
+    :math:`v/c` is the particle velocity normalized by the speed of light.
+    E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
+    positions `x` greater than `0`, and those having velocity `uz` less than 10,
+    will be dumped.
 
 * ``warpx.openpmd_int`` (`integer`) optional
     The number of PIC cycles (interval) in between two consecutive `openPMD <https://www.openPMD.org>`_ data dumps.
@@ -1154,41 +1164,6 @@ Diagnostics and output
     ``bp`` is the `ADIOS I/O library <https://csmd.ornl.gov/adios>`_, ``h5`` is the `HDF5 format <https://www.hdfgroup.org/solutions/hdf5/>`_, and ``json`` is a `simple text format <https://en.wikipedia.org/wiki/JSON>`_.
     ``json`` only works with serial/single-rank jobs.
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
-
-* ``warpx.do_back_transformed_diagnostics`` (`0` or `1`)
-    Whether to use the **back-transformed diagnostics** (i.e. diagnostics that
-    perform on-the-fly conversion to the laboratory frame, when running
-    boosted-frame simulations)
-
-* ``warpx.lab_data_directory`` (`string`)
-    The directory in which to save the lab frame data when using the
-    **back-transformed diagnostics**. If not specified, the default is
-    is `lab_frame_data`.
-
-* ``warpx.num_snapshots_lab`` (`integer`)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The number of lab-frame snapshots that will be written.
-
-* ``warpx.dt_snapshots_lab`` (`float`, in seconds)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    The time interval inbetween the lab-frame snapshots (where this
-    time interval is expressed in the laboratory frame).
-
-* ``warpx.dz_snapshots_lab`` (`float`, in meters)
-    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
-    Distance between the lab-frame snapshots (expressed in the laboratory
-    frame). ``dt_snapshots_lab`` is then computed by
-    ``dt_snapshots_lab = dz_snapshots_lab/c``. Either `dt_snapshots_lab`
-    or `dz_snapshot_lab` is required.
-
-* ``warpx.do_back_transformed_fields`` (`0 or 1`)
-    Whether to use the **back-transformed diagnostics** for the fields.
-
-* ``warpx.back_transformed_diag_fields`` (space-separated list of `string`)
-    Which fields to dumped in back-transformed diagnostics. Choices are
-    'Ex', 'Ey', Ez', 'Bx', 'By', Bz', 'jx', 'jy', jz' and 'rho'. Example:
-    ``warpx.back_transformed_diag_fields = Ex Ez By``. By default, all fields
-    are dumped.
 
 * ``warpx.plot_raw_fields`` (`0` or `1`) optional (default `0`)
     By default, the fields written in the plot files are averaged on the nodes.
@@ -1239,6 +1214,44 @@ Diagnostics and output
     The number of PIC cycles inbetween two consecutive data dumps for the slice. Use a
     negative number to disable slice generation and slice data dumping.
 
+Back-Transformed Diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* ``warpx.do_back_transformed_diagnostics`` (`0` or `1`)
+    Whether to use the **back-transformed diagnostics** (i.e. diagnostics that
+    perform on-the-fly conversion to the laboratory frame, when running
+    boosted-frame simulations)
+
+* ``warpx.lab_data_directory`` (`string`)
+    The directory in which to save the lab frame data when using the
+    **back-transformed diagnostics**. If not specified, the default is
+    is `lab_frame_data`.
+
+* ``warpx.num_snapshots_lab`` (`integer`)
+    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
+    The number of lab-frame snapshots that will be written.
+
+* ``warpx.dt_snapshots_lab`` (`float`, in seconds)
+    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
+    The time interval inbetween the lab-frame snapshots (where this
+    time interval is expressed in the laboratory frame).
+
+* ``warpx.dz_snapshots_lab`` (`float`, in meters)
+    Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
+    Distance between the lab-frame snapshots (expressed in the laboratory
+    frame). ``dt_snapshots_lab`` is then computed by
+    ``dt_snapshots_lab = dz_snapshots_lab/c``. Either `dt_snapshots_lab`
+    or `dz_snapshot_lab` is required.
+
+* ``warpx.do_back_transformed_fields`` (`0 or 1`)
+    Whether to use the **back-transformed diagnostics** for the fields.
+
+* ``warpx.back_transformed_diag_fields`` (space-separated list of `string`)
+    Which fields to dumped in back-transformed diagnostics. Choices are
+    'Ex', 'Ey', Ez', 'Bx', 'By', Bz', 'jx', 'jy', jz' and 'rho'. Example:
+    ``warpx.back_transformed_diag_fields = Ex Ez By``. By default, all fields
+    are dumped.
+
 * ``slice.num_slice_snapshots_lab`` (`integer`)
     Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
     The number of back-transformed field and particle data that
@@ -1260,6 +1273,10 @@ Diagnostics and output
     copied from the full back-transformed diagnostic to the reduced
     slice diagnostic if there are within the user-defined width from
     the slice region defined by ``slice.dom_lo`` and ``slice.dom_hi``.
+
+
+Reduced Diagnostics
+^^^^^^^^^^^^^^^^^^^
 
 * ``warpx.reduced_diags_names`` (`strings`, separated by spaces)
     The names given by the user of simple reduced diagnostics.
@@ -1456,7 +1473,8 @@ Diagnostics and output
     The default separator is a whitespace.
 
 Lookup tables and other settings for QED modules (implementation in progress)
-----------------------------------------------------------
+-----------------------------------------------------------------------------
+
 Lookup tables store pre-computed values for functions used by the QED modules.
 **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
 
