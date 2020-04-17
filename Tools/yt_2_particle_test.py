@@ -78,7 +78,7 @@ for i in range(len(ts)):    #Loop over plotfiles
     [Ez0[i], Ez1[i]] = data['particle_Ez'].to_ndarray()
     
     #Read field data for each plotfile
-    fdata = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, 
+    fdata = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
                              dims=ds.domain_dimensions)
     Ex[:,:,:,i] = fdata['Ex'].to_ndarray()
     Ey[:,:,:,i] = fdata['Ey'].to_ndarray()
@@ -119,7 +119,7 @@ plt.ylabel('E [V/m]')
 plt.title('Electric field vs displacement (from origin) of weightless particle')
 
 #Create volume plot of field magnitude at first timestep
-Etot = np.sqrt(np.power(Ex[:,:,:,1],2) + np.power(Ey[:,:,:,1],2) 
+Etot = np.sqrt(np.power(Ex[:,:,:,1],2) + np.power(Ey[:,:,:,1],2)
              + np.power(Ez[:,:,:,1],2))
 lvl = 5e-9
 verts, faces, __, __ = measure.marching_cubes_lewiner\
