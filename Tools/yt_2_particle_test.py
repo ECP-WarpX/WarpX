@@ -1,7 +1,6 @@
 import yt
 import matplotlib.pyplot as plt
 from skimage import measure
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
 yt.funcs.mylog.setLevel(50)    #Mute yt's verbose shenanigans
