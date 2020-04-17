@@ -1200,7 +1200,7 @@ This should be changed in the future.
 
 * ``<diag_name>.diag_hi`` (list `float`, 1 per dimension) optional (default `+infinity +infinity +infinity`)
     Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``).
-    
+
 * ``<species_name>.random_fraction`` (`float`) optional
     If provided ``<species_name>.random_fraction = a``,
     only `a` fraction of the particle data of this species will be dumped randomly,
@@ -1212,7 +1212,7 @@ This should be changed in the future.
     If provided ``<species_name>.uniform_stride = n``,
     every `n` particle of this species will be dumped, selected uniformly.
     The value provided should be an integer greater than or equal to 0.
-  
+
 * ``<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
     Users can provide an expression returning a boolean for whether a particle is dumped (the exact test is whether the return value is `> 0.5`).
     `t` represents the physical time in seconds during the simulation.
