@@ -1,6 +1,5 @@
 /* Copyright 2019-2020 Andrew Myers, Burlen Loring, Luca Fedeli
- * Maxence Thevenet, Michael Rowan, Remi Lehe
- * Revathi Jambunathan
+ * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
  *
  * This file is part of WarpX.
  *
@@ -13,10 +12,6 @@
 #include <AMReX_ParmParse.H>
 
 #include <cmath>
-#include <vector>
-#include <sstream>
-#include <iterator>
-#include <string>
 #include <fstream>
 
 
