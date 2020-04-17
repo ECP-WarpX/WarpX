@@ -28,7 +28,7 @@ public:
     int m_data_string_recvbuf_length = 0;
 
     /** easier storage of strings after the MPI Gatherv */
-    amrex::Vector<std::string> m_data_string;
+    std::vector<std::string> m_data_string;
 
     /** stores information needed for MPI Gatherv */
     amrex::Vector<long> m_data_string_recvcount; // array of size N_procs, how many message root recv from sender

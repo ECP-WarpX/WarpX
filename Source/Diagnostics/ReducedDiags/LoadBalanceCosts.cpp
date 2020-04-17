@@ -157,12 +157,9 @@ void LoadBalanceCosts::ComputeDiags (int step)
     // cleanup
     if (ParallelDescriptor::MyProc() == ParallelDescriptor::IOProcessorNumber())
     {
-        // put the string data into more convenient container
-        m_data_string.resize(ParallelDescriptor::NProcs(), " ");
-        m_data_string.assign(ParallelDescriptor::NProcs(), " ");
-
 #ifdef AMREX_USE_MPI
-        m_data_string = WarpXUtilStr::splitString(&m_data_string_recvbuf[0], ' ');
+        std::string m_data_stdstring_recvbuf(m_data_string_recvbuf.begin(), m_data_string_recvbuf.end());
+        m_data_string = amrex::Tokenize(m_data_stdstring_recvbuf, " ");
 #endif
     }
 

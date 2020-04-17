@@ -159,12 +159,6 @@ namespace WarpXUtilStr
     bool is_in(const std::vector<std::string>& vect,
                const std::vector<std::string>& elems);
 
-    /** Split a string to multiple std::strings
-     * @param[in] str the input string into split up
-     * @param[in] sep separator character delimiting different words in the string
-     * @return split (according to input delimeter) C-style string into std::strings
-     */
-    amrex::Vector<std::string> splitString(const std::string &str, char sep);
 }
 
 #endif //WARPX_UTILS_H_

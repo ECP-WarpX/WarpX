@@ -250,17 +250,4 @@ namespace WarpXUtilStr
         }
         return value;
     }
-
-    amrex::Vector<std::string> splitString(const std::string &str, char sep)
-    {
-        amrex::Vector<std::string> strings;
-        std::back_insert_iterator<amrex::Vector<std::string>> it_strings = std::back_inserter(strings);
-        std::istringstream iss(str);
-        std::string s;
-
-        // iterate through the words separated by sep, write to s, store in strings
-        while (std::getline(iss, s, sep)) { *it_strings++ = s; }
-
-        return strings;
-    }
 }
