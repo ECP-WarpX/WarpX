@@ -92,12 +92,12 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
         int const n_coefs_z = m_stencil_coefs_z.size();
 
         // Extract tileboxes for which to loop
-        Box const& tbx  = mfi.tilebox(Efield[0]->ixType().ixType());
-        Box const& tby  = mfi.tilebox(Efield[1]->ixType().ixType());
-        Box const& tbz  = mfi.tilebox(Efield[2]->ixType().ixType());
+        Box const& tex  = mfi.tilebox(Efield[0]->ixType().ixType());
+        Box const& tey  = mfi.tilebox(Efield[1]->ixType().ixType());
+        Box const& tez  = mfi.tilebox(Efield[2]->ixType().ixType());
 
         // Loop over the cells and update the fields
-        amrex::ParallelFor(tbx, tby, tbz,
+        amrex::ParallelFor(tex, tey, tez,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Ex(i, j, k, PMLComp::xz) -= c2 * dt * (
@@ -127,6 +127,39 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
             }
 
         );
+
+        // If F is not a null pointer, further update E using the grad(F) term
+        // (hyperbolic correction for errors in charge conservation)
+        if (Ffield) {
+
+            // Extract field data for this grid/tile
+            Array4<Real> const& F = Ffield->array(mfi);
+
+            // Loop over the cells and update the fields
+            amrex::ParallelFor(tex, tey, tez,
+
+                [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                    Ex(i, j, k, PMLComp::xx) += c2 * dt * (
+                        T_Algo::UpwardDx(F, coefs_x, n_coefs_x, i, j, k, PMLComp::x)
+                      + T_Algo::UpwardDx(F, coefs_x, n_coefs_x, i, j, k, PMLComp::y)
+                      + T_Algo::UpwardDx(F, coefs_x, n_coefs_x, i, j, k, PMLComp::z) );
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                    Ey(i, j, k, PMLComp::yy) += c2 * dt * (
+                        T_Algo::UpwardDy(F, coefs_y, n_coefs_y, i, j, k, PMLComp::x)
+                      + T_Algo::UpwardDy(F, coefs_y, n_coefs_y, i, j, k, PMLComp::y)
+                      + T_Algo::UpwardDy(F, coefs_y, n_coefs_y, i, j, k, PMLComp::z) );
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                    Ez(i, j, k, PMLComp::zz) += c2 * dt * (
+                        T_Algo::UpwardDz(F, coefs_z, n_coefs_z, i, j, k, PMLComp::x)
+                      + T_Algo::UpwardDz(F, coefs_z, n_coefs_z, i, j, k, PMLComp::y)
+                      + T_Algo::UpwardDz(F, coefs_z, n_coefs_z, i, j, k, PMLComp::z) );
+                }
+
+            );
+
+        }
 
     }
 

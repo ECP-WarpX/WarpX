@@ -279,50 +279,6 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
                 );
             }
 
-
-            if (pml_F)
-            {
-
-               auto const& pml_F_fab = pml_F->array(mfi);
-
-               if (WarpX::maxwell_fdtd_solver_id == 0) {
-
-                  amrex::ParallelFor(tex, tey, tez,
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                      warpx_push_pml_ex_f_yee(i,j,k,pml_Exfab,pml_F_fab,dtsdx_c2);
-                  },
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                      warpx_push_pml_ey_f_yee(i,j,k,pml_Eyfab,pml_F_fab,dtsdy_c2);
-                  },
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                      warpx_push_pml_ez_f_yee(i,j,k,pml_Ezfab,pml_F_fab,dtsdz_c2);
-                  });
-
-               } else if (WarpX::maxwell_fdtd_solver_id == 1) {
-
-                  Real betaxy, betaxz, betayx, betayz, betazx, betazy;
-                  Real gammax, gammay, gammaz;
-                  Real alphax, alphay, alphaz;
-                  warpx_calculate_ckc_coefficients(dtsdx_c2, dtsdy_c2, dtsdz_c2,
-                                                   betaxy, betaxz, betayx, betayz,
-                                                   betazx, betazy, gammax, gammay,
-                                                   gammaz, alphax, alphay, alphaz);
-                  amrex::ParallelFor(tex, tey, tez,
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                      warpx_push_pml_ex_f_ckc(i,j,k,pml_Exfab,pml_F_fab,
-                                              alphax,betaxy,betaxz,gammax);
-                  },
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                      warpx_push_pml_ey_f_ckc(i,j,k,pml_Eyfab,pml_F_fab,
-                                              alphay,betayx,betayz,gammay);
-                  },
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                      warpx_push_pml_ez_f_ckc(i,j,k,pml_Ezfab,pml_F_fab,
-                                              alphaz,betazx,betazy,gammaz);
-                  });
-
-               }
-            }
         }
     }
 
