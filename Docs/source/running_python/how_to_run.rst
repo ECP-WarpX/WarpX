@@ -6,7 +6,7 @@ See `PICMI information and source code <https://github.com/picmi-standard/picmi>
 
 WarpX can be run in one of two modes. It can run as a preprocessor, using the
 Python input file to generate an input file to be used by the C++ version, or
-it can be run directly from Python.  
+it can be run directly from Python.
 
 Example input files can be found in the section :doc:`examples`.
 The examples support running in both modes by commenting and uncommenting the appropriate lines.
