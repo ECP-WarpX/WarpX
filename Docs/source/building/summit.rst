@@ -1,3 +1,5 @@
+.. _building-summit:
+
 Building WarpX for Summit (OLCF)
 ================================
 
