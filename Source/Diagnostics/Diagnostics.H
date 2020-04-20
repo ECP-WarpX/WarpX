@@ -50,7 +50,7 @@ private:
      */
     void AddRZModesToDiags (int lev);
     /** Name of diagnostics: runtime parameter given in the input file. */
-    std::string diag_name;
+    std::string m_diag_name;
     /** Prefix for output directories */
     std::string file_prefix;
     /** Index of diagnostics in MultiDiagnostics::alldiags */

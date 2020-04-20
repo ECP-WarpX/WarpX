@@ -11,7 +11,7 @@
 using namespace amrex;
 
 Diagnostics::Diagnostics (int i, std::string name)
-    : diag_name(name), diag_index(i)
+    : m_diag_name(name), diag_index(i)
 {
     ReadParameters();
 }
@@ -26,8 +26,8 @@ Diagnostics::ReadParameters ()
 {
     auto & warpx = WarpX::GetInstance();
     // Read list of fields requested by the user.
-    ParmParse pp(diag_name);
-    file_prefix = "diags/" + diag_name;
+    ParmParse pp(m_diag_name);
+    file_prefix = "diags/" + m_diag_name;
     pp.query("file_prefix", file_prefix);
     pp.query("period", m_period);
     pp.query("format", m_format);
@@ -149,7 +149,7 @@ Diagnostics::InitData ()
         m_flush_format = new FlushFormatPlotfile;
     } else if (m_format == "openpmd"){
 #ifdef WARPX_USE_OPENPMD
-        m_flush_format = new FlushFormatOpenPMD(diag_name);
+        m_flush_format = new FlushFormatOpenPMD(m_diag_name);
 #else
         amrex::Abort("To use openpmd output format, need to compile with USE_OPENPMD=TRUE");
 #endif
