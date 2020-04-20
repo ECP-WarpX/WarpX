@@ -91,7 +91,7 @@ Diagnostics::InitData ()
     nlev = warpx.finestLevel() + 1;
     // Initialize vector of pointers to the fields requested by the user.
     m_all_field_functors.resize( nlev );
-    mf_avg.resize( nlev );
+    m_mf_output.resize( nlev );
 
     for ( int lev=0; lev<nlev; lev++ ){
         m_all_field_functors[lev].resize( m_varnames.size() );
@@ -140,7 +140,7 @@ Diagnostics::InitData ()
 
         // At this point, m_varnames.size() >= m_all_field_functors[0].size()
 
-        // Initialize member variable mf_avg depending on m_crse_ratio, m_lo and m_hi
+        // Initialize member variable m_mf_output depending on m_crse_ratio, m_lo and m_hi
         DefineDiagMultiFab( lev );
 
     }
@@ -173,19 +173,19 @@ Diagnostics::ComputeAndPack ()
 
     warpx.FieldGather();
 
-    // cell-center fields and store result in mf_avg.
+    // cell-center fields and store result in m_mf_output.
     int icomp_dst = 0;
     for(int lev=0; lev<nlev; lev++){
         for (int icomp=0, n=m_all_field_functors[0].size(); icomp<n; icomp++){
             // Call all functors in m_all_field_functors[lev]. Each of them computes
             // a diagnostics and writes in one or more components of the output
-            // multifab mf_avg[lev].
-            m_all_field_functors[lev][icomp]->operator()(mf_avg[lev], icomp_dst);
+            // multifab m_mf_output[lev].
+            m_all_field_functors[lev][icomp]->operator()(m_mf_output[lev], icomp_dst);
             // update the index of the next component to fill
             icomp_dst += m_all_field_functors[lev][icomp]->nComp();
         }
     }
-    // Check that the proper number of components of mf_avg were updated.
+    // Check that the proper number of components of m_mf_output were updated.
     AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
 }
 
@@ -194,7 +194,7 @@ Diagnostics::Flush ()
 {
     auto & warpx = WarpX::GetInstance();
     m_flush_format->WriteToFile(
-        m_varnames, GetVecOfConstPtrs(mf_avg), warpx.Geom(), warpx.getistep(),
+        m_varnames, GetVecOfConstPtrs(m_mf_output), warpx.Geom(), warpx.getistep(),
         warpx.gett_new(0), warpx.GetPartContainer(), nlev, m_file_prefix,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 }
@@ -265,7 +265,7 @@ Diagnostics::AddRZModesToDiags (int lev)
     }
     // Sum the number of components in input vector m_all_field_functors
     // and check that it corresponds to the number of components in m_varnames
-    // and mf_avg
+    // and m_mf_output
     int ncomp_from_src = 0;
     for (int i=0; i<m_all_field_functors[0].size(); i++){
         ncomp_from_src += m_all_field_functors[lev][i]->nComp();
@@ -294,7 +294,7 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
     bool use_warpxba = true;
     const IntVect blockingFactor = warpx.blockingFactor( lev );
 
-    // Default BoxArray and DistributionMap for initializing the output MultiFab, mf_avg.
+    // Default BoxArray and DistributionMap for initializing the output MultiFab, m_mf_output.
     BoxArray ba = warpx.boxArray(lev);
     DistributionMapping dmap = warpx.DistributionMap(lev);
 
@@ -374,5 +374,5 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
     // is different from the lo and hi physical co-ordinates of the simulation domain.
     if (use_warpxba == false) dmap = DistributionMapping{ba};
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
-    mf_avg[lev] = MultiFab(ba, dmap, m_varnames.size(), 0);
+    m_mf_output[lev] = MultiFab(ba, dmap, m_varnames.size(), 0);
 }

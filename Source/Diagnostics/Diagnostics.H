@@ -21,15 +21,14 @@ class Diagnostics
 public:
     Diagnostics (int i, std::string name);
     ~Diagnostics ();
-    /** Pack (stack) all fields in the cell-centered output MultiFab mf_avg.
+    /** Pack (stack) all fields in the cell-centered output MultiFab m_mf_output.
      * Fields are computed (e.g., cell-centered) on-the-fly using a functor.*/
     void ComputeAndPack ();
-    /** Flush mf_avg and particles to file. */
+    /** Flush m_mf_output and particles to file. */
     void Flush ();
     /** Flush raw data */
     void FlushRaw ();
-    /** Initialize pointers to main fields and allocate output multifab
-     * mf_avg*/
+    /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
     void InitData ();
     /** whether to flush at this time step
      * \param[in] step current time step
@@ -68,7 +67,7 @@ private:
      * fields in cylindrical). */
     amrex::Vector< amrex::Vector <ComputeDiagFunctor const *> > m_all_field_functors;
     /** output multifab, where all fields are cell-centered and stacked */
-    amrex::Vector< amrex::MultiFab > mf_avg;
+    amrex::Vector< amrex::MultiFab > m_mf_output;
     int nlev; /**< number of levels to output */
     /** This class is responsible for flushing the data to file */
     FlushFormat* m_flush_format;
@@ -88,7 +87,7 @@ private:
     amrex::Vector< amrex::Real> m_lo;
     /** Higher corner of the diagnostics output, in physical coordinates */
     amrex::Vector< amrex::Real> m_hi;
-    /** Define the cell-centered multifab mf_avg depending on user-defined
+    /** Define the cell-centered multifab m_mf_output depending on user-defined
       * lo and hi and coarsening ratio. This MultiFab may have a different BoxArray and
       * DistributionMap than field MultiFabs in the simulation.
       *
