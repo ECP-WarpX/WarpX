@@ -10,6 +10,7 @@
 #include "WarpX.H"
 #include "FieldIO.H"
 #include "SliceDiagnostic.H"
+#include "Utils/Average.H"
 
 #ifdef WARPX_USE_OPENPMD
 #   include "Diagnostics/WarpXOpenPMD.H"
@@ -426,7 +427,7 @@ WarpX::GetCellCenteredData() {
 
     for (int lev = finest_level; lev > 0; --lev)
     {
-        amrex::average_down(*cc[lev], *cc[lev-1], 0, nc, refRatio(lev-1));
+        Average::CoarsenAndInterpolate( *cc[lev-1], *cc[lev], 0, 0, nc, 0, refRatio(lev-1) );
     }
 
     return std::move(cc[0]);
@@ -571,7 +572,7 @@ WarpX::WriteOpenPMDFile () const
 #ifdef WARPX_USE_OPENPMD
     const auto step = istep[0];
 
-    m_OpenPMDPlotWriter->SetStep(step);
+    m_OpenPMDPlotWriter->SetStep(step, "diags/");
 
     Vector<std::string> varnames; // Name of the written fields
     Vector<MultiFab> mf_avg; // contains the averaged, cell-centered fields
@@ -583,7 +584,7 @@ WarpX::WriteOpenPMDFile () const
     m_OpenPMDPlotWriter->WriteOpenPMDFields(
         varnames, *output_mf[0], output_geom[0], step, t_new[0]);
     // particles: all (reside only on locally finest level)
-    m_OpenPMDPlotWriter->WriteOpenPMDParticles(mypc);
+    m_OpenPMDPlotWriter->WriteOpenPMDParticles(*mypc);
 #endif
 }
 
