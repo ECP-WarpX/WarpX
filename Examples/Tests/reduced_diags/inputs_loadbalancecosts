@@ -36,9 +36,6 @@ interpolation.noz = 1
 # CFL
 warpx.cfl = 0.99999
 
-# plot frequency
-amr.plot_int = 3
-
 # Particles
 particles.nspecies = 1
 particles.species_names = electrons
@@ -62,3 +59,9 @@ electrons.uz_th = 0.0
 warpx.reduced_diags_names = LBC
 LBC.type = LoadBalanceCosts
 LBC.frequency = 1
+
+# Diagnostics
+diagnostics.ndiags = 1
+diagnostics.diags_names = diag1
+diag1.period = 3
+diag1.diag_type = Full

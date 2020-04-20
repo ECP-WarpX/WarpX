@@ -2,7 +2,6 @@
 #Run check.py without arguments to regenerate
 #
 
-max_step = 50
 amr.n_cell = 64 64 64
 amr.max_level = 0
 amr.blocking_factor = 8
@@ -167,3 +166,8 @@ p_dn_10.single_particle_pos = 0.0 0.0 0.0
 p_dn_10.single_particle_vel = -10.0 -10.0 -10.0
 p_dn_10.single_particle_weight = 1.0
 
+# Diagnostics
+diagnostics.ndiags = 1
+diagnostics.diags_names = diag1
+diag1.period = 50
+diag1.diag_type = Full

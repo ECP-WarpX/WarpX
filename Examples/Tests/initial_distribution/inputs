@@ -11,7 +11,6 @@ geometry.is_periodic = 1 1 1
 geometry.prob_lo     = -1.0 -1.0 -1.0
 geometry.prob_hi     =  1.0  1.0  1.0
 warpx.do_pml         = 0
-amr.plot_int         = 1000
 
 #################################
 ############ NUMERICS ###########
@@ -182,3 +181,9 @@ bmmntr.type                              = BeamRelevant
 bmmntr.frequency                         = 1
 bmmntr.path                              = "./"
 bmmntr.species                           = beam
+
+# Diagnostics
+diagnostics.ndiags = 1
+diagnostics.diags_names = diag1
+diag1.period = 1000
+diag1.diag_type = Full

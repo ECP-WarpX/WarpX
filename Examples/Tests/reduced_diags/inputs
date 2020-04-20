@@ -32,9 +32,6 @@ interpolation.noz = 1
 # CFL
 warpx.cfl = 0.99999
 
-# plot frequency
-amr.plot_int = 200
-
 # Particles
 particles.nspecies = 3
 particles.species_names = electrons protons photons
@@ -80,3 +77,9 @@ EP.type = ParticleEnergy
 EP.frequency = 200
 EF.type = FieldEnergy
 EF.frequency = 200
+
+# Diagnostics
+diagnostics.ndiags = 1
+diagnostics.diags_names = diag1
+diag1.period = 200
+diag1.diag_type = Full
