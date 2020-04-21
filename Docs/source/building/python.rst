@@ -6,7 +6,7 @@ A full Python installation of WarpX can be done, which includes a build of all o
 For a full Python installation of WarpX
 ---------------------------------------
 
-WarpX' Python bindings depend on ``numpy``, ``mpi4py``, and ``picmistandard``.
+WarpX' Python bindings depend on ``numpy``, ``periodictable``, ``picmistandard``, and ``mpi4py``.
 
 Type
 
