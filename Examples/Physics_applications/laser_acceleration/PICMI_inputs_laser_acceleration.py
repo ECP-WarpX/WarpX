@@ -103,7 +103,8 @@ solver = picmi.ElectromagneticSolver(grid=grid, method='CKC', cfl=1.)
 field_diag1 = picmi.FieldDiagnostic(grid = grid,
                                     period = 10,
                                     warpx_plot_raw_fields = 1,
-                                    warpx_plot_raw_fields_guards = 1)
+                                    warpx_plot_raw_fields_guards = 1,
+                                    warpx_file_prefix = 'plotfiles/plt')
 
 part_diag1 = picmi.ParticleDiagnostic(period = 10,
                                       species = [electrons])
