@@ -302,7 +302,7 @@ WarpX::Evolve (int numsteps)
         (istep[0] > last_insitu_step) && (max_time_reached || istep[0] >= max_step);
 
     multi_diags->FilterComputePackFlush( istep[0], true );
-        
+
     if (write_plot_file || write_openPMD || do_insitu)
     {
         // This is probably overkill, but it's not called often
