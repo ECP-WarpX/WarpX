@@ -301,6 +301,8 @@ WarpX::Evolve (int numsteps)
     bool do_insitu = (insitu_start >= istep[0]) && (insitu_int > 0) &&
         (istep[0] > last_insitu_step) && (max_time_reached || istep[0] >= max_step);
 
+    multi_diags->FilterComputePackFlush( istep[0], true );
+        
     if (write_plot_file || write_openPMD || do_insitu)
     {
         // This is probably overkill, but it's not called often
@@ -320,8 +322,6 @@ WarpX::Evolve (int numsteps)
                               *Bfield_aux[lev][0],*Bfield_aux[lev][1],
                               *Bfield_aux[lev][2]);
         }
-
-        multi_diags->FilterComputePackFlush( istep[0], true );
 
         if (write_plot_file)
             WritePlotFile();
