@@ -10,8 +10,8 @@
 #include "WarpXComm_K.H"
 #include "WarpX.H"
 #include "WarpXSumGuardCells.H"
-#include "InterpolateCurrentFineToCoarse.H"
-#include "InterpolateDensityFineToCoarse.H"
+#include "Interpolation/InterpolateCurrentFineToCoarse.H"
+#include "Interpolation/InterpolateDensityFineToCoarse.H"
 
 #include <algorithm>
 #include <cstdlib>
