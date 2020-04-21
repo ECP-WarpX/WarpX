@@ -82,7 +82,9 @@ private:
     /** Whether to plot F (charge conservation error) in raw fields */
     bool m_plot_raw_F = false;
 
+    /** Name of species to write to file */
     std::vector< std::string > m_species_names;
+    /** Each element of this vector handles output for 1 species */
     amrex::Vector< ParticleDiag > m_all_species;
     
     /** Coarsening ratio such that, fields are averaged to the coarsened grid.

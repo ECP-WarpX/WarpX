@@ -33,6 +33,10 @@ public:
                             const bool plot_raw_rho, bool plot_raw_F) const;
     void WriteHeaderParticle(std::ostream& os,
                              const amrex::Vector<ParticleDiag>& particle_diags) const;
+    /** \brief Write particles data to file.
+     * \param[in] filename name of output directory
+     * \param[in] particle_diags Each element of this vector handles output of 1 species.
+     */
     void WriteParticles(const std::string& filename,
                         const amrex::Vector<ParticleDiag>& particle_diags) const;
 

@@ -86,9 +86,6 @@ struct ParserFilter
         : m_is_active(a_is_active), m_function_partparser(a_filter_parser)
     {
         m_t = WarpX::GetInstance().gett_new(0);
-        //auto & mypc   = WarpX::GetInstance().GetPartContainer();
-        //auto & myspc  = mypc.GetParticleContainer(m_species_index);
-        //m_function_partparser = myspc.m_particle_filter_parser.get();
     };
 
     /**
@@ -111,7 +108,7 @@ struct ParserFilter
     }
 public:
     amrex::Real m_t;
-    ParserWrapper<7> * m_function_partparser;
+    ParserWrapper<7> const * const m_function_partparser;
 private:
     const bool m_is_active = false; //! select all particles if false
     const int  m_species_index = 0; //! species index
