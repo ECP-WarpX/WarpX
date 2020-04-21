@@ -313,6 +313,10 @@ public:
     amrex::ParticleReal getMass () const {return mass;}
 
     int DoFieldIonization() const { return do_field_ionization; };
+    int DoQED() const { return m_do_qed; };
+    //Species for which QED effects are relevant should override these methods
+    virtual bool has_quantum_sync() const {return false;};
+    virtual bool has_breit_wheeler() const {return false;};
 
     // build filter functors
     bool m_do_random_filter  = false;
@@ -381,10 +385,6 @@ protected:
 
 #ifdef WARPX_QED
     bool m_do_qed = false;
-
-    //Species for which QED effects are relevant should override these methods
-    virtual bool has_quantum_sync(){return false;};
-    virtual bool has_breit_wheeler(){return false;};
 
     //Species can receive a shared pointer to a QED engine (species for
     //which this is relevant should override these functions)

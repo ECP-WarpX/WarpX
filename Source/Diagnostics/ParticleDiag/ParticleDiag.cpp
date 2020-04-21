@@ -20,7 +20,7 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
         plot_flag_size += 6;
 
 #ifdef WARPX_QED
-    if(m_pc->m_do_qed){
+    if(m_pc->DoQED()){
         // plot_flag will have an entry for the optical depth
         plot_flag_size++;
     }
@@ -49,7 +49,7 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
 #endif
 
 #ifdef WARPX_QED
-    if(m_pc->m_do_qed){
+    if(m_pc->DoQED()){
         //Optical depths is always plotted if QED is on
         plot_flags[plot_flag_size-1] = 1;
     }
