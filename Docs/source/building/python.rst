@@ -42,7 +42,7 @@ For a pure Python installation
 ------------------------------
 
 This avoids the compilation of the C++ and is recommended when only using the Python input files as preprocessors.
-This installation depend on only ``numpy`` and ``picmistandard``.
+This installation depend on ``numpy``, ``periodictable``, and ``picmistandard``.
 
 Go into the ``Python`` subdirectory and run
 
