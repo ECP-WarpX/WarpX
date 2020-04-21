@@ -81,6 +81,8 @@ Diagnostics::ReadParameters ()
        }
     }
 
+    pp.queryarr("species", m_species_names);
+
 }
 
 void
@@ -144,6 +146,14 @@ Diagnostics::InitData ()
         DefineDiagMultiFab( lev );
 
     }
+
+    for (int i=0; i<m_species_names.size(); i++){
+        const MultiParticleContainer& mpc = warpx.GetPartContainer();
+        int idx = mpc.getSpeciesID(m_species_names[i]);
+        m_all_species.push_back(ParticleDiag(diag_name, m_species_names[i],
+                                             mpc.GetParticleContainerPtr(idx)));
+    }
+
     // Construct Flush class.
     if        (m_format == "plotfile"){
         m_flush_format = new FlushFormatPlotfile;

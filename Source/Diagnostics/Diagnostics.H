@@ -7,6 +7,7 @@
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "ParticleDiag/ParticleDiag.H"
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
 
@@ -81,6 +82,9 @@ private:
     /** Whether to plot F (charge conservation error) in raw fields */
     bool m_plot_raw_F = false;
 
+    amrex::Vector< std::string > m_species_names;
+    amrex::Vector< ParticleDiag > m_all_species;
+    
     /** Coarsening ratio such that, fields are averaged to the coarsened grid.
       * The ratio should render the grid to be coarsenable (as defined by AMReX). */
     amrex::IntVect m_crse_ratio = amrex::IntVect(1);
