@@ -23,13 +23,10 @@ interpolation.noy = 3
 interpolation.noz = 3
 warpx.verbose = 1
 warpx.do_dive_cleaning = 0
-warpx.plot_raw_fields = 0
-warpx.plot_raw_fields_guards = 0
 warpx.use_filter = 1
 warpx.cfl = 1. # if 1., the time step is set to its CFL limit
 warpx.do_pml = 1 # use Perfectly Matched Layer as boundary condition
 warpx.serialize_ics = 1
-warpx.fields_to_plot = Ex
 
 #################################
 ############ PLASMA #############
@@ -204,3 +201,4 @@ diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 1
 diag1.diag_type = Full
+diag1.fields_to_plot = Ex
