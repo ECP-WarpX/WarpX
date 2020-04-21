@@ -312,6 +312,8 @@ public:
     //amrex::Real getMass () {return mass;}
     amrex::ParticleReal getMass () const {return mass;}
 
+    int DoFieldIonization() const { return do_field_ionization; };
+
     // build filter functors
     bool m_do_random_filter  = false;
     bool m_do_uniform_filter = false;
@@ -327,6 +329,13 @@ public:
     */
     template<PhysicalSpecies PhysSpec>
     bool AmIA () const noexcept {return (physical_species == PhysSpec);}
+
+    // Whether to dump particle quantities.
+    // If true, particle position is always dumped.
+    int plot_species = 1;
+    // For all particle attribs (execept position), whether or not
+    // to dump to file.
+    amrex::Vector<int> plot_flags;
 
 protected:
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
@@ -400,12 +409,6 @@ protected:
     using DataContainer = amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>;
     using PairIndex = std::pair<int, int>;
 
-    // Whether to dump particle quantities.
-    // If true, particle position is always dumped.
-    int plot_species = 1;
-    // For all particle attribs (execept position), whether or not
-    // to dump to file.
-    amrex::Vector<int> plot_flags;
     // list of names of attributes to dump.
     amrex::Vector<std::string> plot_vars;
 

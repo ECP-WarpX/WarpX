@@ -144,12 +144,14 @@ Diagnostics::InitData ()
 
         // Initialize member variable mf_avg depending on m_crse_ratio, m_lo and m_hi
         DefineDiagMultiFab( lev );
-
     }
 
+    const MultiParticleContainer& mpc = warpx.GetPartContainer();
+    // If not specified, dump all species
+    if (m_species_names.size() == 0) m_species_names = mpc.GetSpeciesNames();
+    // Initialize one ParticleDiag per species requested
     for (int i=0; i<m_species_names.size(); i++){
-        const MultiParticleContainer& mpc = warpx.GetPartContainer();
-        int idx = mpc.getSpeciesID(m_species_names[i]);
+        const int idx = mpc.getSpeciesID(m_species_names[i]);
         m_all_species.push_back(ParticleDiag(diag_name, m_species_names[i],
                                              mpc.GetParticleContainerPtr(idx)));
     }
@@ -205,7 +207,7 @@ Diagnostics::Flush ()
     auto & warpx = WarpX::GetInstance();
     m_flush_format->WriteToFile(
         varnames, GetVecOfConstPtrs(mf_avg), warpx.Geom(), warpx.getistep(),
-        warpx.gett_new(0), warpx.GetPartContainer(), nlev, file_prefix,
+        warpx.gett_new(0), m_all_species, nlev, file_prefix,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 }
 

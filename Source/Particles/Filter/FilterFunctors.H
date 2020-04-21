@@ -82,13 +82,13 @@ struct ParserFilter
     /** constructor
      * \param a_is_active whether the test is active
      */
-    ParserFilter(bool a_is_active, int a_species_index)
-    : m_is_active(a_is_active), m_species_index(a_species_index)
+    ParserFilter(bool a_is_active, ParserWrapper<7>* a_filter_parser)
+        : m_is_active(a_is_active), m_function_partparser(a_filter_parser)
     {
         m_t = WarpX::GetInstance().gett_new(0);
-        auto & mypc   = WarpX::GetInstance().GetPartContainer();
-        auto & myspc  = mypc.GetParticleContainer(m_species_index);
-        m_function_partparser = myspc.m_particle_filter_parser.get();
+        //auto & mypc   = WarpX::GetInstance().GetPartContainer();
+        //auto & myspc  = mypc.GetParticleContainer(m_species_index);
+        //m_function_partparser = myspc.m_particle_filter_parser.get();
     };
 
     /**
