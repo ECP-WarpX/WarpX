@@ -502,8 +502,6 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
 class Simulation(picmistandard.PICMI_Simulation):
     def init(self, kw):
 
-        self.plot_int = kw.pop('warpx_plot_int', None)
-        self.plot_file = kw.pop('warpx_plot_file', None)
         self.current_deposition_algo = kw.pop('warpx_current_deposition_algo', None)
         self.charge_deposition_algo = kw.pop('warpx_charge_deposition_algo', None)
         self.field_gathering_algo = kw.pop('warpx_field_gathering_algo', None)
@@ -531,8 +529,6 @@ class Simulation(picmistandard.PICMI_Simulation):
             pywarpx.warpx.gamma_boost = self.gamma_boost
             pywarpx.warpx.boost_direction = None
 
-        pywarpx.amr.plot_int = self.plot_int
-        pywarpx.amr.plot_file = self.plot_file
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
         pywarpx.algo.field_gathering = self.field_gathering_algo
@@ -610,15 +606,16 @@ class Simulation(picmistandard.PICMI_Simulation):
 # ----------------------------
 
 
-class WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
+class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
     def init(self, kw):
 
         self.plot_raw_fields = kw.pop('warpx_plot_raw_fields', None)
         self.plot_raw_fields_guards = kw.pop('warpx_plot_raw_fields_guards', None)
         self.plot_finepatch = kw.pop('warpx_plot_finepatch', None)
         self.plot_crsepatch = kw.pop('warpx_plot_crsepatch', None)
-        self.file_format = kw.pop('warpx_file_format', 'openpmd')
+        self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
 
     def initialize_inputs(self):
         pywarpx.diagnostics.ndiags += 1
@@ -634,7 +631,7 @@ class WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         pywarpx.Diagnostics.diagnostics_list.append(self.diagnostic)
 
         self.diagnostic.diag_type = 'Full'
-        self.diagnostic.format = self.file_format
+        self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
         self.diagnostic.period = self.period
         self.diagnostic.diag_lo = self.lower_bound
@@ -655,7 +652,7 @@ class WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
                 self.diagnostic.fields_to_plot.add('jx')
                 self.diagnostic.fields_to_plot.add('jy')
                 self.diagnostic.fields_to_plot.add('jz')
-            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'F', 'proc_number']:
+            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'F', 'proc_number', 'part_per_cell']:
                 self.diagnostic.fields_to_plot.add(dataname)
             elif dataname in ['Jx', 'Jy', 'Jz']:
                 self.diagnostic.fields_to_plot.add(dataname.lower())
@@ -677,27 +674,26 @@ class WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.diagnostic.plot_finepatch = self.plot_finepatch
         self.diagnostic.plot_crsepatch = self.plot_crsepatch
 
-        if self.write_dir is not None:
-            self.diagnostic.file_prefix = self.write_dir + '/plotfiles/plt'
+        if self.write_dir is not None or self.file_prefix is not None:
+            write_dir = (self.write_dir or 'diags')
+            file_prefix = (self.file_prefix or self.name)
+            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
 
 
-class FieldDiagnostic(WarpX_FieldDiagnostic, picmistandard.PICMI_FieldDiagnostic):
+class FieldDiagnostic(_WarpX_FieldDiagnostic, picmistandard.PICMI_FieldDiagnostic):
     pass
 
 
-class ElectrostaticFieldDiagnostic(WarpX_FieldDiagnostic, picmistandard.PICMI_ElectrostaticFieldDiagnostic):
+class ElectrostaticFieldDiagnostic(_WarpX_FieldDiagnostic, picmistandard.PICMI_ElectrostaticFieldDiagnostic):
     def initialize_inputs(self):
         if 'phi' in self.data_list:
             # --- phi is not supported by WarpX, but is in the default data_list
             self.data_list.remove('phi')
-        WarpX_FieldDiagnostic.initialize_inputs(self)
+        _WarpX_FieldDiagnostic.initialize_inputs(self)
 
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
     def initialize_inputs(self):
-        # --- For now, the period must be the same as plot_int if set
-        pywarpx.amr.check_consistency('plot_int', self.period, 'The period must be the same for all simulation frame diagnostics')
-        pywarpx.amr.plot_int = self.period
 
         plot_vars = set()
         for dataname in self.data_list:
@@ -727,11 +723,6 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
             for specie in species:
                 for var in plot_vars:
                     specie.species.plot_vars.add(var)
-
-        if self.write_dir is not None:
-            plot_file = self.write_dir + '/plotfiles/plt'
-            pywarpx.amr.check_consistency('plot_file', plot_file, 'The plot directory must be the same for all simulation frame diagnostics')
-            pywarpx.amr.plot_file = plot_file
 
 
 # ----------------------------
