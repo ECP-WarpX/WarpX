@@ -174,8 +174,8 @@ Diagnostics::ComputeAndPack ()
     warpx.FieldGather();
 
     // cell-center fields and store result in mf_avg.
-    int icomp_dst = 0;
     for(int lev=0; lev<nlev; lev++){
+        int icomp_dst = 0;
         for (int icomp=0, n=all_field_functors[0].size(); icomp<n; icomp++){
             // Call all functors in all_field_functors[lev]. Each of them computes
             // a diagnostics and writes in one or more components of the output
@@ -184,9 +184,9 @@ Diagnostics::ComputeAndPack ()
             // update the index of the next component to fill
             icomp_dst += all_field_functors[lev][icomp]->nComp();
         }
+        // Check that the proper number of components of mf_avg were updated.
+        AMREX_ALWAYS_ASSERT( icomp_dst == varnames.size() );
     }
-    // Check that the proper number of components of mf_avg were updated.
-    AMREX_ALWAYS_ASSERT( icomp_dst == varnames.size() );
 }
 
 void
