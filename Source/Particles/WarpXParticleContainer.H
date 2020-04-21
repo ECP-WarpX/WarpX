@@ -313,7 +313,13 @@ public:
     amrex::ParticleReal getMass () const {return mass;}
 
     int DoFieldIonization() const { return do_field_ionization; };
-    int DoQED() const { return m_do_qed; };
+    int DoQED() const {
+#ifdef WARPX_QED
+        return m_do_qed;
+#else
+        return false;
+#endif
+    };
     //Species for which QED effects are relevant should override these methods
     virtual bool has_quantum_sync() const {return false;};
     virtual bool has_breit_wheeler() const {return false;};
