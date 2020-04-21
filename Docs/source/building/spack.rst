@@ -15,6 +15,8 @@ From the `Spack web page <https://spack.io>`_: "Spack is a package management to
 
 Spack is available from `github <https://github.com/spack/spack>`_.
 Spack only needs to be cloned and can be used right away - there are no installation steps.
+Do not miss out on `the official Spack tutorial <https://spack-tutorial.readthedocs.io/>`_ if you are new to Spack.
+
 The spack command, ``spack/bin/spack``, can be used directly or ``spack/bin`` can be added to your ``PATH`` environment variable.
 
 WarpX is built with the single command

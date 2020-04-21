@@ -19,16 +19,20 @@ In order to install spack, you can simply do:
 .. code-block:: bash
 
    git clone https://github.com/spack/spack.git
-   export SPACK_ROOT=/path/to/spack  # note: adjust this path
+   export SPACK_ROOT=$PWD/spack
    . $SPACK_ROOT/share/spack/setup-env.sh
 
-(You may want to add the last 2 lines to your ``.bashrc`` file.)
+You may want to auto-activate spack when you open a new terminal by adding this to your ``$HOME/.bashrc`` file:
+
+.. code-block:: bash
+
+   echo -e "# activate spack package manager\n. ${SPACK_ROOT}/share/spack/setup-env.sh" >> $HOME/.bashrc
 
 
 WarpX Development Environment with Spack
 ----------------------------------------
 
-Create an activate a Spack environment with all software needed to build WarpX
+Create and activate a Spack environment with all software needed to build WarpX
 
 .. code-block:: bash
 

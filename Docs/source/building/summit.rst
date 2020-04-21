@@ -1,6 +1,6 @@
 .. _building-summit:
 
-Building WarpX for Summit (OLCF)
+Building WarpX on Summit (OLCF)
 ================================
 
 For the `Summit cluster
