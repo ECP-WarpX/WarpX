@@ -5,7 +5,6 @@ max_step = 1000
 amr.n_cell =  64  512
 amr.max_grid_size = 64   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 32 # minimum size of each AMReX box, used to decompose the domain
-amr.plot_int = 200
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 0     0      # Is periodic?
 geometry.prob_lo     = -30.e-6   -56.e-6    # physical domain
@@ -83,3 +82,9 @@ laser1.profile_duration = 15.e-15        # The duration of the laser (in s)
 laser1.profile_t_peak = 30.e-15          # Time at which the laser reaches its peak (in s)
 laser1.profile_focal_distance = 100.e-6  # Focal distance from the antenna (in m)
 laser1.wavelength = 0.8e-6               # The wavelength of the laser (in m)
+
+# Diagnostics
+diagnostics.ndiags = 1
+diagnostics.diags_names = diag1
+diag1.period = 200
+diag1.diag_type = Full

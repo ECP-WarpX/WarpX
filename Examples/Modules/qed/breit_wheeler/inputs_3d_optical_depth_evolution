@@ -5,7 +5,6 @@ max_step = 5
 amr.n_cell =  32 32 16
 amr.max_grid_size = 32   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 8 # minimum size of each AMReX box, used to decompose the domain
-amr.plot_int = 10
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 1  1  1      # Is periodic?
 geometry.prob_lo     =  -0.5e-6   -0.5e-6  -0.25e-6  # physical domain
@@ -199,3 +198,9 @@ particles.E_external_particle = -2433321316961438 973328526784575 14599927901768
 particles.B_ext_particle_init_style = "constant"
 particles.B_external_particle = 2857142.85714286 4285714.28571428 8571428.57142857
 ####
+
+# Diagnostics
+diagnostics.ndiags = 1
+diagnostics.diags_names = diag1
+diag1.period = 1
+diag1.diag_type = Full
