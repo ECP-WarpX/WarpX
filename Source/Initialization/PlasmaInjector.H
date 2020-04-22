@@ -73,7 +73,7 @@ public:
 
     bool external_file = false;
     std::string str_injection_file;
-    amrex::Real physical_q_tot = 0.0;
+    amrex::Real physical_q_tot = 0.0;  //! re-scale weight of externally loaded particles to this total charge
 
     bool radially_weighted = true;
 
