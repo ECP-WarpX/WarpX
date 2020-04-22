@@ -80,7 +80,8 @@ private:
     bool m_plot_raw_rho = false;
     /** Whether to plot F (charge conservation error) in raw fields */
     bool m_plot_raw_F = false;
-
+    /** store previous step dumped, to avoid writing data twice */
+    int m_previous_step = -1;
     /** Coarsening ratio such that, fields are averaged to the coarsened grid.
       * The ratio should render the grid to be coarsenable (as defined by AMReX). */
     amrex::IntVect m_crse_ratio = amrex::IntVect(1);
