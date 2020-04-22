@@ -1,3 +1,5 @@
+.. _running-cpp-parameters:
+
 Input parameters
 ================
 
@@ -167,6 +169,22 @@ Distribution across MPI ranks and parallelization
     perform load-balancing of the simulation.
     If this is `0`: the Knapsack algorithm is used instead.
 
+* ``warpx.load_balance_efficiency_ratio_threshold`` (`float`) optional (default `1.1`)
+    Controls whether to adopt a proposed distribution mapping computed during a load balance.
+    If the the ratio of the proposed to current distribution mapping *efficiency* (i.e.,
+    average cost per MPI process; efficiency is a number in the range [0, 1]) is greater
+    than the threshold value, the proposed distribution mapping is adopted.  The suggested
+    range of values is ``warpx.load_balance_efficiency_ratio_threshold >= 1``, which ensures
+    that the new distribution mapping is adopted only if doing so would improve the load
+    balance efficiency. The higher the threshold value, the more conservative is the criterion
+    for adoption of a proposed distribution; for example, with
+    ``warpx.load_balance_efficiency_ratio_threshold = 1``, the proposed distribution is
+    adopted *any* time the proposed distribution improves load balancing; if instead
+    ``warpx.load_balance_efficiency_ratio_threshold = 2``, the proposed distribution is
+    adopted only if doing so would yield a 100% to the load balance efficiency (with this
+    threshold value, if the  current efficiency is ``0.45``, the new distribution would only be
+    adopted if the proposed efficiency were greater than ``0.9``).
+
 * ``algo.load_balance_costs_update`` (`Heuristic` or `Timers`) optional (default `Timers`)
     If this is `Heuristic`: load balance costs are updated according to a measure of
     particles and cells assigned to each box of the domain.  The cost :math:`c` is
@@ -269,6 +287,12 @@ Particle initialization
 
     * ``NRandomPerCell``: injection with a fixed number of randomly-distributed particles per cell.
       This requires the additional parameter ``<species_name>.num_particles_per_cell``.
+
+    * ``SingleParticle``: Inject a single macroparticle.
+      This requires the additional parameters:
+      ``<species_name>.single_particle_pos`` (`3 doubles`, particle 3D position [meter])
+      ``<species_name>.single_particle_vel`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
+      ``<species_name>.single_particle_weight`` ( `double`, macroparticle weight, i.e. number of physical particles it represents)
 
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in
       space in all directions. This requires additional parameters:
@@ -1015,18 +1039,6 @@ Numerics and algorithms
     Therefore, all the approximations that are usually made when using local FFTs with guard cells
     (for problems with multiple boxes) become exact in the case of the periodic, single-box FFT without guard cells.
 
-* ``psatd.hybrid_mpi_decomposition`` (`0` or `1`; default: 0)
-    Whether to use a different MPI decomposition for the particle-grid operations
-    (deposition and gather) and for the PSATD solver. If `1`, the FFT will
-    be performed over MPI groups.
-
-* ``psatd.ngroups_fft`` (`integer`)
-    The number of MPI groups that are created for the FFT, when using the code compiled with a PSATD solver
-    (and only if `hybrid_mpi_decomposition` is `1`).
-    The FFTs are global within one MPI group and use guard cell exchanges in between MPI groups.
-    (If ``ngroups_fft`` is larger than the number of MPI ranks used,
-    than the actual number of MPI ranks is used instead.)
-
 * ``psatd.fftw_plan_measure`` (`0` or `1`)
     Defines whether the parameters of FFTW plans will be initialized by
     measuring and optimizing performance (``FFTW_MEASURE`` mode; activated by default here).
@@ -1115,6 +1127,30 @@ Diagnostics and output
     The number of PIC cycles (interval) in between two consecutive `plotfile` data dumps.
     Use a negative number to disable data dumping.
     This is ``-1`` (disabled) by default.
+
+    * ``<species_name>.random_fraction`` (`float`) optional
+        If provided ``<species_name>.random_fraction = a``,
+        only `a` fraction of the particle data of this species will be dumped randomly,
+        i.e. if `rand() < a`, this particle will be dumped,
+        where `rand()` denotes a random number generator.
+        The value `a` provided should be between 0 and 1.
+
+    * ``<species_name>.uniform_stride`` (`int`) optional
+        If provided ``<species_name>.uniform_stride = n``,
+        every `n` particle of this species will be dumped, selected uniformly.
+        The value provided should be an integer greater than or equal to 0.
+
+    * ``<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
+        Users can provide an expression returning a boolean for whether a particle is dumped (the exact test is whether the return value is `> 0.5`).
+        `t` represents the physical time in seconds during the simulation.
+        `x, y, z` represent particle positions in the unit of meter.
+        `ux, uy, uz` represent particle velocities in the unit of
+        :math:`\gamma v/c`, where
+        :math:`\gamma` is the Lorentz factor,
+        :math:`v/c` is the particle velocity normalized by the speed of light.
+        E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
+        positions `x` greater than `0`, and those having velocity `uz` less than 10,
+        will be dumped.
 
 * ``warpx.openpmd_int`` (`integer`) optional
     The number of PIC cycles (interval) in between two consecutive `openPMD <https://www.openPMD.org>`_ data dumps.
@@ -1331,6 +1367,8 @@ Diagnostics and output
         \Big\langle (y-\langle y \rangle) (p_y-\langle p_y \rangle) \Big\rangle^2}`,
         :math:`\epsilon_z = \dfrac{1}{mc} \sqrt{\delta_z^2 \delta_{pz}^2 -
         \Big\langle (z-\langle z \rangle) (p_z-\langle p_z \rangle) \Big\rangle^2}`.
+
+        [18]: The charge of the beam (C).
 
         For 2D-XZ,
         :math:`\langle y \rangle`,
