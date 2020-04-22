@@ -305,11 +305,10 @@ Particle initialization
       and optional argument ``<species_name>.do_symmetrize`` (whether to
       symmetrize the beam in the x and y directions).
 
-    * ``external_file``: Inject macroparticles with properties (charge, mass, position, and momentum) according to data read from external openPMD file.
+    * ``external_file``: Inject macroparticles with properties (mass, position, and momentum) read from external openPMD file.
       It requires the additional arguments:
-      ``<species_name>.injection_file`` (`string`) name of the openPMD file and
-      ``<species_name>.q_tot`` (`double`) optional (default is ``q_tot=0`` and no weighting is done ``weight=q_p``) when specified, WarpX injects macroparticles with the same properties as the sample of ``N`` physical particles, each with charge ``q_p``, described in the file, except their weight. Their weight is computed via ``weight=<species_name>.q_tot/q_p/N``, so that the injected macroparticles represent the whole physical species.
-      When using this style, it is not necessary to add other ``<species_name>.(...)`` paramters, because they will be read directly from the file.
+      ``<species_name>.injection_file`` (`string`) openPMD file name and
+      ``<species_name>.q_tot`` (`double`) optional (default is ``q_tot=0`` and no re-scaling is done, ``weight=q_p``) when specified it is used to re-scale the weight of externally loaded ``N`` physical particles, each of charge ``q_p``, to inject that total charge with macroparticles of ``weight=<species_name>.q_tot/q_p/N``.
 
       (Note that ``external_file`` has not yet been implemented nor tested for RZ geometry)
 
