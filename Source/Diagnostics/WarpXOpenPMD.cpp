@@ -239,7 +239,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (MultiParticleContainer& mpc)
 
       {
         //
-        SavePlotFile(pc.get(),
+        DumpToFile(pc.get(),
            species_names[i],
            m_CurrentStep,
            pc->plot_flags, // this is protected and accessible by MultiParticleContainer.
@@ -303,7 +303,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 
     {
       //
-      SavePlotFile(pc,
+      DumpToFile(pc,
          particle_diags[i].getSpeciesName(),
          m_CurrentStep,
          particle_diags[i].plot_flags, // this is protected and accessible by MultiParticleContainer.
@@ -318,7 +318,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 }
 
 void
-WarpXOpenPMDPlot::SavePlotFile (WarpXParticleContainer* pc,
+WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                     const std::string& name,
                     int iteration,
                     const amrex::Vector<int>& write_real_comp,

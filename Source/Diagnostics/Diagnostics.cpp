@@ -152,7 +152,7 @@ Diagnostics::InitData ()
     // Initialize one ParticleDiag per species requested
     for (int i=0; i<m_species_names.size(); i++){
         const int idx = mpc.getSpeciesID(m_species_names[i]);
-        m_all_species.push_back(ParticleDiag(diag_name, m_species_names[i],
+        m_all_species.push_back(ParticleDiag(m_diag_name, m_species_names[i],
                                              mpc.GetParticleContainerPtr(idx)));
     }
 

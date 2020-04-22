@@ -159,7 +159,7 @@ private:
    * @param[in] write_int_comp The int attribute ids, from WarpX
    * @param[in] int_comp_names The int attribute names, from WarpX
    */
-  void SavePlotFile(WarpXParticleContainer* pc,
+  void DumpToFile(WarpXParticleContainer* pc,
             const std::string& name,
             int iteration,
             const amrex::Vector<int>& write_real_comp,

@@ -17,6 +17,7 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
     //variable to set plot_flags size
     int plot_flag_size = PIdx::nattribs;
     if(WarpX::do_back_transformed_diagnostics && m_pc->doBackTransformedDiagnostics())
+        // Also output old values for position and momenta
         plot_flag_size += 6;
 
 #ifdef WARPX_QED
