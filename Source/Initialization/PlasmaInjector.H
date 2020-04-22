@@ -67,7 +67,7 @@ public:
     amrex::Real x_cut = std::numeric_limits<amrex::Real>::max();
     amrex::Real y_cut = std::numeric_limits<amrex::Real>::max();
     amrex::Real z_cut = std::numeric_limits<amrex::Real>::max();
-    amrex::Real q_tot = 0.0;
+    amrex::Real q_tot = 0.0;  //! if injection from file, re-scale weight of externally loaded particles to this total charge
     long npart;
     int do_symmetrize = 0;
 
