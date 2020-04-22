@@ -345,7 +345,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     //double mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
     amrex::Real p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
     //double charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
-    auto npart = ps.second["position"]["x"].getExtent()[0];
+    auto const npart = ps.second["position"]["x"].getExtent()[0];
     std::shared_ptr<amrex::Real> ptr_x = ps.second["position"]["x"].loadChunk<amrex::Real>();
     //double position_unit_x = ps.second["position"]["x"].unitSI();
     std::shared_ptr<amrex::Real> ptr_vx = ps.second["velocity"]["x"].loadChunk<amrex::Real>();
@@ -373,7 +373,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
         weight = charge;
     }
 
-    // Allocate temporary vectors on the CPU
+    // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_w;
     Gpu::HostVector<ParticleReal> particle_x;
     Gpu::HostVector<ParticleReal> particle_y;
