@@ -272,7 +272,7 @@ Particle initialization
 
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in
       space in all directions. This requires additional parameters:
-      ``<species_name>.q_tot`` (beam charge),
+      ``<species_name>.q_tot`` (beam charge) optional (default is ``q_tot=0``),
       ``<species_name>.npart`` (number of particles in the beam),
       ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
       ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
@@ -284,7 +284,7 @@ Particle initialization
     * ``external_file``: Inject macroparticles with properties (charge, mass, position, and momentum) according to data read from external openPMD file.
       It requires the additional arguments:
       ``<species_name>.injection_file`` (`string`) name of the openPMD file and
-      ``<species_name>.physical_q_tot`` (`double`) optional (default is no weighting, ``weight=q_p``) when specified, WarpX injects macroparticles with the same properties as the sample of ``N`` physical particles, each with charge ``q_p``, described in the file, except their weight. Their weight is computed via ``weight=<species_name>.physical_q_tot/q_p/N``, so that the injected macroparticles represent the whole physical species.
+      ``<species_name>.q_tot`` (`double`) optional (default is ``q_tot=0`` and no weighting is done ``weight=q_p``) when specified, WarpX injects macroparticles with the same properties as the sample of ``N`` physical particles, each with charge ``q_p``, described in the file, except their weight. Their weight is computed via ``weight=<species_name>.q_tot/q_p/N``, so that the injected macroparticles represent the whole physical species.
       When using this style, it is not necessary to add other ``<species_name>.(...)`` paramters, because they will be read directly from the file.
 
       (Note that ``external_file`` has not yet been implemented nor tested for RZ geometry)

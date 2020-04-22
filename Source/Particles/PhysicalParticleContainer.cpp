@@ -314,7 +314,7 @@ PhysicalParticleContainer::AddGaussianBeam (
 
 void
 PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
-                                               amrex::Real physical_q_tot)
+                                               amrex::Real q_tot)
 {
 #ifdef WARPX_USE_OPENPMD
     openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
@@ -352,8 +352,8 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     charge=charge;//*charge_unit;
 
     amrex::Real weight;
-    if (physical_q_tot!=0.0){
-        weight = physical_q_tot/(p_q*amrex::Real(npart));//*charge_unit*amrex::Real(npart));
+    if (q_tot!=0.0){
+        weight = q_tot/(p_q*amrex::Real(npart));//*charge_unit*amrex::Real(npart));
     }
     else {
         weight = charge;
@@ -478,7 +478,7 @@ PhysicalParticleContainer::AddParticles (int lev)
 
     if (plasma_injector->external_file) {
         AddPlasmaFromFile(plasma_injector->str_injection_file,
-                          plasma_injector->physical_q_tot);
+                          plasma_injector->q_tot);
         return;
     }
 
