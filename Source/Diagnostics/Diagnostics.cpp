@@ -337,8 +337,6 @@ Diagnostics::InitializeFieldFunctors ()
 {
     auto & warpx = WarpX::GetInstance();
     nlev = warpx.finestLevel() + 1;
-    amrex::Print() << " in intialize field functors \n";
-    amrex::Print() << " mfield. size () " << m_all_field_functors.size() << "\n";
     // Initialize vector of pointers to the fields requested by the user.
     m_all_field_functors.resize( nlev );
     for ( int lev=0; lev<nlev; lev++ ){
