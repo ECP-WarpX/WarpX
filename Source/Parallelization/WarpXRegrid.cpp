@@ -70,6 +70,7 @@ WarpX::LoadBalance ()
     }
     if (doRedistribute)
     {
+        multi_diags->InitializeFieldFunctors();
         mypc->Redistribute();
     }
 }

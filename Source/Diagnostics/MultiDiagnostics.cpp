@@ -28,6 +28,14 @@ MultiDiagnostics::InitData ()
 }
 
 void
+MultiDiagnostics::InitializeFieldFunctors ()
+{
+    for( auto& diag : alldiags ){
+        diag->InitializeFieldFunctors();
+    }
+}
+
+void
 MultiDiagnostics::ReadParameters ()
 {
     ParmParse pp("diagnostics");

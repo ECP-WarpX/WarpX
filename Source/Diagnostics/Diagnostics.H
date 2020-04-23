@@ -36,6 +36,7 @@ public:
      * \return bool, whether to flush
      */
     bool DoDump (int step, bool force_flush=false);
+    void InitializeFieldFunctors ();
 private:
     void ReadParameters ();
     /** Append varnames with names for all modes of a field
