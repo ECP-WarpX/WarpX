@@ -19,6 +19,8 @@ public:
     void InitData ();
     /** \brief Called at each iteration. Compute diags and flush. */
     void FilterComputePackFlush (int step, bool force_flush=false);
+    /** \brief Loop over diags in all diags and call their InitializeFieldFunctors.
+               Called when a new partitioning is generated after load-balancing. */
     void InitializeFieldFunctors ();
 private:
     /** Vector of pointers to all diagnostics */

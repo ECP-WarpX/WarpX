@@ -70,6 +70,7 @@ WarpX::LoadBalance ()
     }
     if (doRedistribute)
     {
+        // Re-initialize diagnostic functors that stores pointers to the user-requested fields.
         multi_diags->InitializeFieldFunctors();
         mypc->Redistribute();
     }

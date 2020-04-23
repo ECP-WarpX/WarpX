@@ -97,55 +97,7 @@ Diagnostics::InitData ()
     }
 
     InitializeFieldFunctors ();
-//    // Initialize vector of pointers to the fields requested by the user.
-//    m_all_field_functors.resize( nlev );
-//
-//    for ( int lev=0; lev<nlev; lev++ ){
-//        m_all_field_functors[lev].resize( m_varnames.size() );
-//        // Fill vector of functors for all components except individual cylindrical modes.
-//        for (int comp=0, n=m_all_field_functors[lev].size(); comp<n; comp++){
-//            if        ( m_varnames[comp] == "Ex" ){
-//                m_all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
-//            } else if ( m_varnames[comp] == "Ey" ){
-//                m_all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 1), lev, m_crse_ratio);
-//            } else if ( m_varnames[comp] == "Ez" ){
-//                m_all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Efield_aux(lev, 2), lev, m_crse_ratio);
-//            } else if ( m_varnames[comp] == "Bx" ){
-//                m_all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 0), lev, m_crse_ratio);
-//            } else if ( m_varnames[comp] == "By" ){
-//                m_all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 1), lev, m_crse_ratio);
-//            } else if ( m_varnames[comp] == "Bz" ){
-//                m_all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_Bfield_aux(lev, 2), lev, m_crse_ratio);
-//            } else if ( m_varnames[comp] == "jx" ){
-//                m_all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 0), lev, m_crse_ratio);
-//            } else if ( m_varnames[comp] == "jy" ){
-//                m_all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 1), lev, m_crse_ratio);
-//            } else if ( m_varnames[comp] == "jz" ){
-//                m_all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio);
-//            } else if ( m_varnames[comp] == "rho" ){
-//                // rho_new is stored in component 1 of rho_fp when using PSATD
-//#ifdef WARPX_USE_PSATD
-//                MultiFab* rho_new = new MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
-//                m_all_field_functors[lev][comp] = new CellCenterFunctor(rho_new, lev, m_crse_ratio);
-//#else
-//                m_all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_rho_fp(lev), lev, m_crse_ratio);
-//#endif
-//            } else if ( m_varnames[comp] == "F" ){
-//                m_all_field_functors[lev][comp] = new CellCenterFunctor(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
-//            } else if ( m_varnames[comp] == "part_per_cell" ){
-//                m_all_field_functors[lev][comp] = new PartPerCellFunctor(nullptr, lev, m_crse_ratio);
-//            } else if ( m_varnames[comp] == "part_per_grid" ){
-//                m_all_field_functors[lev][comp] = new PartPerGridFunctor(nullptr, lev, m_crse_ratio);
-//            } else if ( m_varnames[comp] == "divB" ){
-//                m_all_field_functors[lev][comp] = new DivBFunctor(warpx.get_array_Bfield_aux(lev), lev, m_crse_ratio);
-//            } else if ( m_varnames[comp] == "divE" ){
-//                m_all_field_functors[lev][comp] = new DivEFunctor(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio);
-//            }
-//        }
-//
-//        AddRZModesToDiags( lev );
-//        // At this point, m_varnames.size() >= m_all_field_functors[0].size()
-//    }
+
     // Construct Flush class.
     if        (m_format == "plotfile"){
         m_flush_format = new FlushFormatPlotfile;

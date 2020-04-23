@@ -36,6 +36,7 @@ public:
      * \return bool, whether to flush
      */
     bool DoDump (int step, bool force_flush=false);
+    /** Initialize functors that store pointers to the fields requested by the user. */
     void InitializeFieldFunctors ();
 private:
     void ReadParameters ();
