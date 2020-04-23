@@ -1,6 +1,5 @@
 #include "WarpX.H"
 #include "ParticleDiag.H"
-// #include "Utils/WarpXUtil.H"
 
 #include <AMReX_ParmParse.H>
 

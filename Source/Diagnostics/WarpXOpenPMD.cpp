@@ -298,15 +298,13 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     // Convert momentum to SI
     pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
     // real_names contains a list of all real particle attributes.
-    // pc->plot_flags is 1 or 0, whether quantity is dumped or not.
+    // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
 
     {
-      //
       DumpToFile(pc,
          particle_diags[i].getSpeciesName(),
          m_CurrentStep,
-         particle_diags[i].plot_flags, // this is protected and accessible by MultiParticleContainer.
-         // so kept as is
+         particle_diags[i].plot_flags,
          int_flags,
          real_names, int_names);
     }

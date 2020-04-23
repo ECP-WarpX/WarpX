@@ -107,11 +107,13 @@ struct ParserFilter
         else return 0;
     }
 public:
+    /** Store physical time. */
     amrex::Real m_t;
+    /** Parser function with 7 input variables, t,x,y,z,ux,uy,uz */
     ParserWrapper<7> const * const m_function_partparser;
 private:
-    const bool m_is_active = false; //! select all particles if false
-    const int  m_species_index = 0; //! species index
+    /** Whether this diagnostics is activated. Select all particles if false */
+    const bool m_is_active = false;
 };
 
 #endif // FILTERFUNCTORS_H

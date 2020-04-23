@@ -170,7 +170,6 @@ private:
   // no need for ts in the name, openPMD  handles it
     void GetFileName(std::string& filename);
 
-  //std::string m_Dir;
   std::unique_ptr<openPMD::Series> m_Series;
 
   int m_MPIRank = 0;
