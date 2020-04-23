@@ -51,7 +51,10 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
 
 #ifdef WARPX_QED
     if(m_pc->DoQED()){
-        //Optical depths is always plotted if QED is on
+        // TODO: cleaner handling of particle attributes. This should probably be done in
+        // the particle container classes, either by adding "opt_depth_BW" to ParticleStringNames
+        // or by using a std::map for particle attributes.
+        // Optical depths is always plotted if QED is on.
         plot_flags[plot_flag_size-1] = 1;
     }
 #endif

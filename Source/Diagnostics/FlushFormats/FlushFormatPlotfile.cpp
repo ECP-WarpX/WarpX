@@ -43,7 +43,6 @@ FlushFormatPlotfile::WriteToFile (
     WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards,
                       plot_raw_rho, plot_raw_F);
 
-    //mpc.WritePlotFile(filename);
     WriteParticles(filename, particle_diags);
 
     WriteJobInfo(filename);
