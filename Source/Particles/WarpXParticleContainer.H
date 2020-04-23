@@ -417,7 +417,7 @@ protected:
      * they do not exist (or if they were defined by default, i.e.,
      * without runtime component).
      */
-     void defineAllParticleTiles () noexcept;
+    void defineAllParticleTiles () noexcept;
 
 private:
     virtual void particlePostLocate(ParticleType& p, const amrex::ParticleLocData& pld,

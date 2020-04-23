@@ -11,6 +11,7 @@
 #include "Utils/WarpX_Complex.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Utils/CheckDistanceFromBoundary.H"
 
 #include <limits>
 #include <cmath>
@@ -80,6 +81,8 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
         position[1] += (Z0_boost-Z0_lab)*nvec[1];
         position[2] += (Z0_boost-Z0_lab)*nvec[2];
     }
+
+    CheckDistanceFromBoundary(position[0], position[1], position[2], Geom(0).ProbLo(), Geom(0).ProbHi());
 
     // The first polarization vector
     s = 1.0_rt / std::sqrt(p_X[0]*p_X[0] + p_X[1]*p_X[1] + p_X[2]*p_X[2]);

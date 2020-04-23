@@ -17,6 +17,7 @@
 #include "Pusher/UpdatePosition.H"
 #include "Deposition/CurrentDeposition.H"
 #include "Deposition/ChargeDeposition.H"
+#include "Utils/CheckDistanceFromBoundary.H"
 
 #include <AMReX_AmrParGDB.H>
 
@@ -135,6 +136,8 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
 
     for (int i = ibegin; i < iend; ++i)
     {
+        CheckDistanceFromBoundary(x[i], y[i], z[i], Geom(0).ProbLo(), Geom(0).ProbHi());
+
         ParticleType p;
         if (id==-1)
         {
