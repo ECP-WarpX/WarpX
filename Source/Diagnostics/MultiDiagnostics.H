@@ -20,7 +20,7 @@ public:
     /** \brief Called at each iteration. Compute diags and flush. */
     void FilterComputePackFlush (int step, bool force_flush=false);
     /** \brief Loop over diags in all diags and call their InitializeFieldFunctors.
-               Called when a new partitioning at level lev
+               Called when a new partitioning is generated at level, lev.
       * \param[in] lev level at this the field functors are initialized.
       */
     void InitializeFieldFunctors (int lev);

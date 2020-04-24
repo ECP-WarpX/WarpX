@@ -90,7 +90,9 @@ Diagnostics::InitData ()
 {
     Print()<<"Diagnostics::InitData\n";
     auto & warpx = WarpX::GetInstance();
+    // Number of levels 
     nlev = warpx.finestLevel() + 1;
+    // Maximum number of levels that will be allocated in the simulation 
     nmax_lev = warpx.maxLevel() + 1;
     m_mf_output.resize( nmax_lev );
     m_all_field_functors.resize( nmax_lev );
