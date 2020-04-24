@@ -200,7 +200,7 @@ Diagnostics::AddRZModesToDiags (int lev)
     // B
     for (int dim=0; dim<3; dim++){
         // 3 components, r theta z
-        m_all_field_functors[lev][icomp] = 
+        m_all_field_functors[lev][icomp] =
             std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, dim), lev,
                               m_crse_ratio, false, ncomp_multimodefab);
         AddRZModesToOutputNames(std::string("B") + coord[dim],
@@ -210,13 +210,13 @@ Diagnostics::AddRZModesToDiags (int lev)
     // j
     for (int dim=0; dim<3; dim++){
         // 3 components, r theta z
-        m_all_field_functors[lev][icomp] = 
+        m_all_field_functors[lev][icomp] =
             std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, dim), lev,
                               m_crse_ratio, false, ncomp_multimodefab);
         icomp += 1;
         AddRZModesToOutputNames(std::string("J") + coord[dim],
                                 warpx.get_pointer_current_fp(0, 0)->nComp());
-    }    
+    }
     // Sum the number of components in input vector m_all_field_functors
     // and check that it corresponds to the number of components in m_varnames
     // and m_mf_output
@@ -370,7 +370,7 @@ Diagnostics::InitializeFieldFunctors ()
                 MultiFab* rho_new = new MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(rho_new, lev, m_crse_ratio);
                 delete rho_new;
-                rho_new = nullptr; 
+                rho_new = nullptr;
 #else
                 m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_rho_fp(lev), lev, m_crse_ratio);
 #endif
