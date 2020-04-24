@@ -47,6 +47,10 @@ public:
      *  @param[in] rd_name reduced diags name */
     ReducedDiags(std::string rd_name);
 
+    /** Virtual destructor for polymorphism
+     */
+    virtual ~ReducedDiags() = default;
+
     /// function to compute diags
     virtual void ComputeDiags(int step) = 0;
 
