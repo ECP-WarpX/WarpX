@@ -32,7 +32,7 @@ FlushFormatOpenPMD::WriteToFile (
     const amrex::Vector<const amrex::MultiFab*> mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
-    MultiParticleContainer& mpc, int nlev,
+    const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, bool plot_raw_fields,
     bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F) const
 {
@@ -50,7 +50,7 @@ FlushFormatOpenPMD::WriteToFile (
         varnames, *mf[0], geom[0], iteration[0], time);
 
     // particles: all (reside only on locally finest level)
-    m_OpenPMDPlotWriter->WriteOpenPMDParticles(mpc);
+    m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags);
 }
 
 FlushFormatOpenPMD::~FlushFormatOpenPMD (){

@@ -137,7 +137,8 @@ MultiParticleContainer::WritePlotFile (const std::string& dir) const
                                              pc->m_random_fraction);
             UniformFilter const uniform_filter(pc->m_do_uniform_filter,
                                                pc->m_uniform_stride);
-            ParserFilter const parser_filter(pc->m_do_parser_filter,i);
+            ParserFilter const parser_filter(pc->m_do_parser_filter,
+                                             pc->m_particle_filter_parser.get());
 
             // real_names contains a list of all particle attributes.
             // pc->plot_flags is 1 or 0, whether quantity is dumped or not.

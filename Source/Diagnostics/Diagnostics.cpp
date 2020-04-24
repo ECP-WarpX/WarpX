@@ -81,6 +81,8 @@ Diagnostics::ReadParameters ()
        }
     }
 
+    pp.queryarr("species", m_species_names);
+
 }
 
 void
@@ -99,6 +101,16 @@ Diagnostics::InitData ()
     InitializeFieldFunctors ();
 
     // At this point, m_varnames.size() >= m_all_field_functors[0].size()
+
+    const MultiParticleContainer& mpc = warpx.GetPartContainer();
+    // If not specified, dump all species
+    if (m_species_names.size() == 0) m_species_names = mpc.GetSpeciesNames();
+    // Initialize one ParticleDiag per species requested
+    for (int i=0; i<m_species_names.size(); i++){
+        const int idx = mpc.getSpeciesID(m_species_names[i]);
+        m_all_species.push_back(ParticleDiag(m_diag_name, m_species_names[i],
+                                             mpc.GetParticleContainerPtr(idx)));
+    }
 
     // Construct Flush class.
     if        (m_format == "plotfile"){
@@ -151,7 +163,7 @@ Diagnostics::Flush ()
     auto & warpx = WarpX::GetInstance();
     m_flush_format->WriteToFile(
         m_varnames, GetVecOfConstPtrs(m_mf_output), warpx.Geom(), warpx.getistep(),
-        warpx.gett_new(0), warpx.GetPartContainer(), nlev, m_file_prefix,
+        warpx.gett_new(0), m_all_species, nlev, m_file_prefix,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 }
 
