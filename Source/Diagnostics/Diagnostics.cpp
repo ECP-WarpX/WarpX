@@ -98,6 +98,8 @@ Diagnostics::InitData ()
 
     InitializeFieldFunctors ();
 
+    // At this point, m_varnames.size() >= m_all_field_functors[0].size()
+
     // Construct Flush class.
     if        (m_format == "plotfile"){
         m_flush_format = new FlushFormatPlotfile;
@@ -386,6 +388,5 @@ Diagnostics::InitializeFieldFunctors ()
         }
 
         AddRZModesToDiags( lev );
-        // At this point, m_varnames.size() >= m_all_field_functors[0].size()
     }
 }
