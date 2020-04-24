@@ -110,38 +110,6 @@ int WarpX::do_electrostatic = 0;
 int WarpX::do_subcycling = 0;
 bool WarpX::safe_guard_cells = 0;
 
-#if (AMREX_SPACEDIM == 3)
-IntVect WarpX::Bx_nodal_flag(1,0,0);
-IntVect WarpX::By_nodal_flag(0,1,0);
-IntVect WarpX::Bz_nodal_flag(0,0,1);
-#elif (AMREX_SPACEDIM == 2)
-IntVect WarpX::Bx_nodal_flag(1,0);// x is the first dimension to AMReX
-IntVect WarpX::By_nodal_flag(0,0);// y is the missing dimension to 2D AMReX
-IntVect WarpX::Bz_nodal_flag(0,1);// z is the second dimension to 2D AMReX
-#endif
-
-#if (AMREX_SPACEDIM == 3)
-IntVect WarpX::Ex_nodal_flag(0,1,1);
-IntVect WarpX::Ey_nodal_flag(1,0,1);
-IntVect WarpX::Ez_nodal_flag(1,1,0);
-#elif (AMREX_SPACEDIM == 2)
-IntVect WarpX::Ex_nodal_flag(0,1);// x is the first dimension to AMReX
-IntVect WarpX::Ey_nodal_flag(1,1);// y is the missing dimension to 2D AMReX
-IntVect WarpX::Ez_nodal_flag(1,0);// z is the second dimension to 2D AMReX
-#endif
-
-#if (AMREX_SPACEDIM == 3)
-IntVect WarpX::jx_nodal_flag(0,1,1);
-IntVect WarpX::jy_nodal_flag(1,0,1);
-IntVect WarpX::jz_nodal_flag(1,1,0);
-#elif (AMREX_SPACEDIM == 2)
-IntVect WarpX::jx_nodal_flag(0,1);// x is the first dimension to AMReX
-IntVect WarpX::jy_nodal_flag(1,1);// y is the missing dimension to 2D AMReX
-IntVect WarpX::jz_nodal_flag(1,0);// z is the second dimension to 2D AMReX
-#endif
-
-IntVect WarpX::rho_nodal_flag(AMREX_D_DECL(1, 1, 1));
-
 IntVect WarpX::filter_npass_each_dir(1);
 
 int WarpX::n_field_gather_buffer = -1;
@@ -649,39 +617,15 @@ WarpX::ReadParameters ()
         pp.query("do_dynamic_scheduling", do_dynamic_scheduling);
 
         pp.query("do_nodal", do_nodal);
-        if (do_nodal) {
-            Bx_nodal_flag = IntVect::TheNodeVector();
-            By_nodal_flag = IntVect::TheNodeVector();
-            Bz_nodal_flag = IntVect::TheNodeVector();
-            Ex_nodal_flag = IntVect::TheNodeVector();
-            Ey_nodal_flag = IntVect::TheNodeVector();
-            Ez_nodal_flag = IntVect::TheNodeVector();
-            jx_nodal_flag = IntVect::TheNodeVector();
-            jy_nodal_flag = IntVect::TheNodeVector();
-            jz_nodal_flag = IntVect::TheNodeVector();
-            rho_nodal_flag = IntVect::TheNodeVector();
-            // Use same shape factors in all directions, for gathering
-            l_lower_order_in_v = false;
-        }
+        // Use same shape factors in all directions, for gathering
+        if (do_nodal) l_lower_order_in_v = false;
 
-        // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1.
+        // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-        // Force use of cell centered in r and z.
-        // Also, do_nodal is forced to be true. Here, do_nodal effectively
-        // means do_colocated (i.e. not staggered).
+        // Force do_nodal=true (that is, not staggered) and
+        // use same shape factors in all directions, for gathering
         do_nodal = true;
-        Bx_nodal_flag = IntVect::TheCellVector();
-        By_nodal_flag = IntVect::TheCellVector();
-        Bz_nodal_flag = IntVect::TheCellVector();
-        Ex_nodal_flag = IntVect::TheCellVector();
-        Ey_nodal_flag = IntVect::TheCellVector();
-        Ez_nodal_flag = IntVect::TheCellVector();
-        jx_nodal_flag = IntVect::TheCellVector();
-        jy_nodal_flag = IntVect::TheCellVector();
-        jz_nodal_flag = IntVect::TheCellVector();
-        rho_nodal_flag = IntVect::TheCellVector();
-        // Use same shape factors in all directions, for gathering
         l_lower_order_in_v = false;
 #endif
     }
@@ -868,6 +812,63 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                       const IntVect& ngE, const IntVect& ngJ, const IntVect& ngRho,
                       const IntVect& ngF, const IntVect& ngextra, const bool aux_is_nodal)
 {
+    // Declare nodal flags
+    IntVect Ex_nodal_flag, Ey_nodal_flag, Ez_nodal_flag;
+    IntVect Bx_nodal_flag, By_nodal_flag, Bz_nodal_flag;
+    IntVect jx_nodal_flag, jy_nodal_flag, jz_nodal_flag;
+    IntVect rho_nodal_flag;
+
+    // Set nodal flags
+#if   (AMREX_SPACEDIM == 2)
+    // AMReX convention: x = first dimension, y = missing dimension, z = second dimension
+    Ex_nodal_flag = IntVect(0,1);
+    Ey_nodal_flag = IntVect(1,1);
+    Ez_nodal_flag = IntVect(1,0);
+    Bx_nodal_flag = IntVect(1,0);
+    By_nodal_flag = IntVect(0,0);
+    Bz_nodal_flag = IntVect(0,1);
+    jx_nodal_flag = IntVect(0,1);
+    jy_nodal_flag = IntVect(1,1);
+    jz_nodal_flag = IntVect(1,0);
+#elif (AMREX_SPACEDIM == 3)
+    Ex_nodal_flag = IntVect(0,1,1);
+    Ey_nodal_flag = IntVect(1,0,1);
+    Ez_nodal_flag = IntVect(1,1,0);
+    Bx_nodal_flag = IntVect(1,0,0);
+    By_nodal_flag = IntVect(0,1,0);
+    Bz_nodal_flag = IntVect(0,0,1);
+    jx_nodal_flag = IntVect(0,1,1);
+    jy_nodal_flag = IntVect(1,0,1);
+    jz_nodal_flag = IntVect(1,1,0);
+#endif
+    rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
+
+    // Overwrite nodal flags if necessary
+    if (do_nodal) {
+        Ex_nodal_flag  = IntVect::TheNodeVector();
+        Ey_nodal_flag  = IntVect::TheNodeVector();
+        Ez_nodal_flag  = IntVect::TheNodeVector();
+        Bx_nodal_flag  = IntVect::TheNodeVector();
+        By_nodal_flag  = IntVect::TheNodeVector();
+        Bz_nodal_flag  = IntVect::TheNodeVector();
+        jx_nodal_flag  = IntVect::TheNodeVector();
+        jy_nodal_flag  = IntVect::TheNodeVector();
+        jz_nodal_flag  = IntVect::TheNodeVector();
+        rho_nodal_flag = IntVect::TheNodeVector();
+    }
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    // Force cell-centered IndexType in r and z
+    Ex_nodal_flag  = IntVect::TheCellVector();
+    Ey_nodal_flag  = IntVect::TheCellVector();
+    Ez_nodal_flag  = IntVect::TheCellVector();
+    Bx_nodal_flag  = IntVect::TheCellVector();
+    By_nodal_flag  = IntVect::TheCellVector();
+    Bz_nodal_flag  = IntVect::TheCellVector();
+    jx_nodal_flag  = IntVect::TheCellVector();
+    jy_nodal_flag  = IntVect::TheCellVector();
+    jz_nodal_flag  = IntVect::TheCellVector();
+    rho_nodal_flag = IntVect::TheCellVector();
+#endif
 
 #if defined WARPX_DIM_RZ
     // With RZ multimode, there is a real and imaginary component
