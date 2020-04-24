@@ -313,10 +313,6 @@ Particle initialization
       The ``external_file`` option is currently implemented for 2D and 3D geometries, with record components ``x``, ``z`` and ``y`` for 3D.
       For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :doc:`../building/openpmd`.
 
-    * ``external_file``: inject macroparticles with properties (charge, mass, position, and momentum) according to data in external file.
-      It requires the additional arguments ``<species_name>.injection_file`` and ``<species_name>.q_tot``, which are the string corresponding to the openPMD file name and the beam charge.
-      When using this style, it is not necessary to add other ``<species_name>.(...)`` paramters, because they will be read directly from the file.
-
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis
     within a cell. Note that for RZ, the three axis are radius, theta, and z and that the recommended

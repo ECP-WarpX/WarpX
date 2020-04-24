@@ -342,28 +342,28 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
 
     //TODO: Add ASSERT_WITH_MESSAGE to test if mass and charge are both const
-    amrex::Real p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    double mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
-    amrex::Real p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    double charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
+    amrex::ParticleReal p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
+    double const mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
+    amrex::ParticleReal p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
+    double const charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
 #if (defined WARPX_DIM_3D) || (defined WARPX_DIM_2D)
-    long npart = ps.second["position"]["x"].getExtent()[0];
-    std::shared_ptr<amrex::Real> ptr_x = ps.second["position"]["x"].loadChunk<amrex::Real>();
-    double position_unit_x = ps.second["position"]["x"].unitSI();
-    std::shared_ptr<amrex::Real> ptr_z = ps.second["position"]["z"].loadChunk<amrex::Real>();
-    double position_unit_z = ps.second["position"]["z"].unitSI();
-    std::shared_ptr<amrex::Real> ptr_ux = ps.second["momentum"]["x"].loadChunk<amrex::Real>();
-    double momentum_unit_x = ps.second["momentum"]["x"].unitSI();
-    std::shared_ptr<amrex::Real> ptr_uz = ps.second["momentum"]["z"].loadChunk<amrex::Real>();
-    double momentum_unit_z = ps.second["momentum"]["z"].unitSI();
+    auto const npart = ps.second["position"]["x"].getExtent()[0];
+    std::shared_ptr<amrex::ParticleReal> ptr_x = ps.second["position"]["x"].loadChunk<amrex::ParticleReal>();
+    double const position_unit_x = ps.second["position"]["x"].unitSI();
+    std::shared_ptr<amrex::ParticleReal> ptr_z = ps.second["position"]["z"].loadChunk<amrex::ParticleReal>();
+    double const position_unit_z = ps.second["position"]["z"].unitSI();
+    std::shared_ptr<amrex::ParticleReal> ptr_ux = ps.second["momentum"]["x"].loadChunk<amrex::ParticleReal>();
+    double const momentum_unit_x = ps.second["momentum"]["x"].unitSI();
+    std::shared_ptr<amrex::ParticleReal> ptr_uz = ps.second["momentum"]["z"].loadChunk<amrex::ParticleReal>();
+    double const momentum_unit_z = ps.second["momentum"]["z"].unitSI();
 #else
     amrex::Abort("AddPlasmaFromFile is only implemented for 2D and 3D\n")
 #endif
 #if (defined WARPX_DIM_3D)
-    std::shared_ptr<amrex::Real> ptr_y = ps.second["position"]["y"].loadChunk<amrex::Real>();
-    double position_unit_y = ps.second["position"]["y"].unitSI();
-    std::shared_ptr<amrex::Real> ptr_uy = ps.second["momentum"]["y"].loadChunk<amrex::Real>();
-    double momentum_unit_y = ps.second["momentum"]["y"].unitSI();
+    std::shared_ptr<amrex::ParticleReal> ptr_y = ps.second["position"]["y"].loadChunk<amrex::ParticleReal>();
+    double const position_unit_y = ps.second["position"]["y"].unitSI();
+    std::shared_ptr<amrex::ParticleReal> ptr_uy = ps.second["momentum"]["y"].loadChunk<amrex::ParticleReal>();
+    double const momentum_unit_y = ps.second["momentum"]["y"].unitSI();
 #endif
     series.flush();
 
@@ -371,7 +371,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     charge=p_q*charge_unit;
 
     amrex::Real weight;
-    if (q_tot!=0.0){
+    if (q_tot != 0.0){
         weight = q_tot/(p_q*amrex::Real(npart));
     }
     else {
@@ -388,21 +388,21 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     Gpu::HostVector<ParticleReal> particle_uy;
 
     if (ParallelDescriptor::IOProcessor()) {
-        for (long i; i<npart; ++i){
-            amrex::Real x=ptr_x.get()[i]*position_unit_x;
-            amrex::Real z=ptr_z.get()[i]*position_unit_z;
+        for (decltype(npart) i=0; i<npart; ++i){
+            amrex::ParticleReal const x = ptr_x.get()[i]*position_unit_x;
+            amrex::ParticleReal const z = ptr_z.get()[i]*position_unit_z;
 #if (defined WARPX_DIM_2D)
-            amrex::Real y=0.0;
+            amrex::Real const y = 0.0;
 #elif (defined WARPX_DIM_3D)
-            amrex::Real y=ptr_y.get()[i]*position_unit_y;
+            amrex::ParticleReal const y = ptr_y.get()[i]*position_unit_y;
 #endif
             if (plasma_injector->insideBounds(x, y, z)) {
-                amrex::Real ux=ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
-                amrex::Real uz=ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
+                amrex::ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
+                amrex::ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
 #if (defined WARPX_DIM_2D)
-                amrex::Real uy=0.0;
+                amrex::ParticleReal const uy = 0.0;
 #elif (defined WARPX_DIM_3D)
-                amrex::Real uy=ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
+                amrex::ParticleReal const uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
 #endif
                 CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
                 particle_x,  particle_y,  particle_z,
@@ -411,7 +411,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
             }
         }
     }
-    long np = particle_z.size();
+    auto const np = particle_z.size();
     if (np < npart) {
         amrex::Print()<<"WARNING: Simulation box doesn't cover all particles\n";
     }
