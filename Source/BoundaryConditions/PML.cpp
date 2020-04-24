@@ -436,12 +436,18 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     ngf = ngFFT;
  #endif
 
-    pml_E_fp[0].reset(new MultiFab(amrex::convert(ba,WarpX::Ex_nodal_flag), dm, 3, nge));
-    pml_E_fp[1].reset(new MultiFab(amrex::convert(ba,WarpX::Ey_nodal_flag), dm, 3, nge));
-    pml_E_fp[2].reset(new MultiFab(amrex::convert(ba,WarpX::Ez_nodal_flag), dm, 3, nge));
-    pml_B_fp[0].reset(new MultiFab(amrex::convert(ba,WarpX::Bx_nodal_flag), dm, 2, ngb));
-    pml_B_fp[1].reset(new MultiFab(amrex::convert(ba,WarpX::By_nodal_flag), dm, 2, ngb));
-    pml_B_fp[2].reset(new MultiFab(amrex::convert(ba,WarpX::Bz_nodal_flag), dm, 2, ngb));
+    pml_E_fp[0].reset( new MultiFab( amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, 3, nge ) );
+    pml_E_fp[1].reset( new MultiFab( amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, 3, nge ) );
+    pml_E_fp[2].reset( new MultiFab( amrex::convert( ba,
+        WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, 3, nge ) );
+    pml_B_fp[0].reset( new MultiFab( amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,0).ixType().toIntVect() ), dm, 2, ngb ) );
+    pml_B_fp[1].reset( new MultiFab( amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,1).ixType().toIntVect() ), dm, 2, ngb ) );
+    pml_B_fp[2].reset( new MultiFab( amrex::convert( ba,
+        WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect() ), dm, 2, ngb ) );
 
 
     pml_E_fp[0]->setVal(0.0);
@@ -451,9 +457,12 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     pml_B_fp[1]->setVal(0.0);
     pml_B_fp[2]->setVal(0.0);
 
-    pml_j_fp[0].reset(new MultiFab(amrex::convert(ba,WarpX::jx_nodal_flag), dm, 1, ngb));
-    pml_j_fp[1].reset(new MultiFab(amrex::convert(ba,WarpX::jy_nodal_flag), dm, 1, ngb));
-    pml_j_fp[2].reset(new MultiFab(amrex::convert(ba,WarpX::jz_nodal_flag), dm, 1, ngb));
+    pml_j_fp[0].reset( new MultiFab( amrex::convert( ba,
+        WarpX::GetInstance().getcurrent_fp(0,0).ixType().toIntVect() ), dm, 1, ngb ) );
+    pml_j_fp[1].reset( new MultiFab( amrex::convert( ba,
+        WarpX::GetInstance().getcurrent_fp(0,1).ixType().toIntVect() ), dm, 1, ngb ) );
+    pml_j_fp[2].reset( new MultiFab( amrex::convert( ba,
+        WarpX::GetInstance().getcurrent_fp(0,2).ixType().toIntVect() ), dm, 1, ngb ) );
     pml_j_fp[0]->setVal(0.0);
     pml_j_fp[1]->setVal(0.0);
     pml_j_fp[2]->setVal(0.0);
@@ -502,12 +511,18 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 
         DistributionMapping cdm{cba};
 
-        pml_E_cp[0].reset(new MultiFab(amrex::convert(cba,WarpX::Ex_nodal_flag), cdm, 3, nge));
-        pml_E_cp[1].reset(new MultiFab(amrex::convert(cba,WarpX::Ey_nodal_flag), cdm, 3, nge));
-        pml_E_cp[2].reset(new MultiFab(amrex::convert(cba,WarpX::Ez_nodal_flag), cdm, 3, nge));
-        pml_B_cp[0].reset(new MultiFab(amrex::convert(cba,WarpX::Bx_nodal_flag), cdm, 2, ngb));
-        pml_B_cp[1].reset(new MultiFab(amrex::convert(cba,WarpX::By_nodal_flag), cdm, 2, ngb));
-        pml_B_cp[2].reset(new MultiFab(amrex::convert(cba,WarpX::Bz_nodal_flag), cdm, 2, ngb));
+        pml_E_cp[0].reset( new MultiFab( amrex::convert( cba,
+            WarpX::GetInstance().getEfield_cp(1,0).ixType().toIntVect() ), cdm, 3, nge ) );
+        pml_E_cp[1].reset( new MultiFab( amrex::convert( cba,
+            WarpX::GetInstance().getEfield_cp(1,1).ixType().toIntVect() ), cdm, 3, nge ) );
+        pml_E_cp[2].reset( new MultiFab( amrex::convert( cba,
+            WarpX::GetInstance().getEfield_cp(1,2).ixType().toIntVect() ), cdm, 3, nge ) );
+        pml_B_cp[0].reset( new MultiFab( amrex::convert( cba,
+            WarpX::GetInstance().getBfield_cp(1,0).ixType().toIntVect() ), cdm, 2, ngb ) );
+        pml_B_cp[1].reset( new MultiFab( amrex::convert( cba,
+            WarpX::GetInstance().getBfield_cp(1,1).ixType().toIntVect() ), cdm, 2, ngb ) );
+        pml_B_cp[2].reset( new MultiFab( amrex::convert( cba,
+            WarpX::GetInstance().getBfield_cp(1,2).ixType().toIntVect() ), cdm, 2, ngb ) );
 
         pml_E_cp[0]->setVal(0.0);
         pml_E_cp[1]->setVal(0.0);
@@ -522,9 +537,12 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
             pml_F_cp->setVal(0.0);
 
         }
-        pml_j_cp[0].reset(new MultiFab(amrex::convert(cba,WarpX::jx_nodal_flag), cdm, 1, ngb));
-        pml_j_cp[1].reset(new MultiFab(amrex::convert(cba,WarpX::jy_nodal_flag), cdm, 1, ngb));
-        pml_j_cp[2].reset(new MultiFab(amrex::convert(cba,WarpX::jz_nodal_flag), cdm, 1, ngb));
+        pml_j_cp[0].reset( new MultiFab( amrex::convert( cba,
+            WarpX::GetInstance().getcurrent_cp(1,0).ixType().toIntVect() ), cdm, 1, ngb ) );
+        pml_j_cp[1].reset( new MultiFab( amrex::convert( cba,
+            WarpX::GetInstance().getcurrent_cp(1,1).ixType().toIntVect() ), cdm, 1, ngb ) );
+        pml_j_cp[2].reset( new MultiFab( amrex::convert( cba,
+            WarpX::GetInstance().getcurrent_cp(1,2).ixType().toIntVect() ), cdm, 1, ngb ) );
         pml_j_cp[0]->setVal(0.0);
         pml_j_cp[1]->setVal(0.0);
         pml_j_cp[2]->setVal(0.0);
