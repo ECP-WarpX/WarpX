@@ -254,7 +254,7 @@ PhysicalParticleContainer::AddGaussianBeam (
     std::normal_distribution<double> disty(y_m, y_rms);
     std::normal_distribution<double> distz(z_m, z_rms);
 
-    // Allocate temporary vectors on the CPU
+    // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
     Gpu::HostVector<ParticleReal> particle_y;
     Gpu::HostVector<ParticleReal> particle_z;
@@ -331,102 +331,82 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
                                                amrex::Real q_tot)
 {
 #ifdef WARPX_USE_OPENPMD
-    openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
+    openPMD::Series series = openPMD::Series(s_f,
+                                             openPMD::AccessType::READ_ONLY);
     amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(series.iterations.size() == 1u, "External "
-                                     "file should contain only one iteration\n");
+                                     "file should contain only 1 iteration\n");
     openPMD::Iteration& i = series.iterations[1];
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size() == 1u, "External file "
-                                     "should contain only one species\n");
+                                     "should contain only 1 species\n");
     std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
 
-    //TODO: In future PRs will add ASSERT_WITH_MESSAGE to test if mass and charge are both const
+    //TODO: Add ASSERT_WITH_MESSAGE to test if mass and charge are both const
     amrex::Real p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    //double mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
+    double mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
     amrex::Real p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    //double charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
-    auto const npart = ps.second["position"]["x"].getExtent()[0];
+    double charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
+    int npart = ps.second["position"]["x"].getExtent()[0];
     std::shared_ptr<amrex::Real> ptr_x = ps.second["position"]["x"].loadChunk<amrex::Real>();
-    //double position_unit_x = ps.second["position"]["x"].unitSI();
-    std::shared_ptr<amrex::Real> ptr_vx = ps.second["velocity"]["x"].loadChunk<amrex::Real>();
-    //double velocity_unit_x = ps.second["velocity"]["x"].unitSI();
-    std::shared_ptr<amrex::Real> ptr_z = ps.second["position"]["z"].loadChunk<amrex::Real>();
-    //double position_unit_z = ps.second["position"]["z"].unitSI();
-    std::shared_ptr<amrex::Real> ptr_vz = ps.second["velocity"]["z"].loadChunk<amrex::Real>();
-    //double velocity_unit_z = ps.second["velocity"]["z"].unitSI();
-#if (defined WARPX_DIM_3D)
+    double position_unit_x = ps.second["position"]["x"].unitSI();
     std::shared_ptr<amrex::Real> ptr_y = ps.second["position"]["y"].loadChunk<amrex::Real>();
-    //double position_unit_y = ps.second["position"]["y"].unitSI();
-    std::shared_ptr<amrex::Real> ptr_vy = ps.second["velocity"]["y"].loadChunk<amrex::Real>();
-    //double velocity_unit_y = ps.second["velocity"]["y"].unitSI();
-#endif
+    double position_unit_y = ps.second["position"]["y"].unitSI();
+    std::shared_ptr<amrex::Real> ptr_z = ps.second["position"]["z"].loadChunk<amrex::Real>();
+    double position_unit_z = ps.second["position"]["z"].unitSI();
+    std::shared_ptr<amrex::Real> ptr_ux = ps.second["momentum"]["x"].loadChunk<amrex::Real>();
+    double momentum_unit_x = ps.second["momentum"]["x"].unitSI();
+    std::shared_ptr<amrex::Real> ptr_uy = ps.second["momentum"]["y"].loadChunk<amrex::Real>();
+    double momentum_unit_y = ps.second["momentum"]["y"].unitSI();
+    std::shared_ptr<amrex::Real> ptr_uz = ps.second["momentum"]["z"].loadChunk<amrex::Real>();
+    double momentum_unit_z = ps.second["momentum"]["z"].unitSI();
     series.flush();
 
-    mass=mass;//*mass_unit;
-    charge=charge;//*charge_unit;
+    mass=p_m*mass_unit;
+    charge=p_q*charge_unit;
 
     amrex::Real weight;
     if (q_tot!=0.0){
-        weight = q_tot/(p_q*amrex::Real(npart));//*charge_unit*amrex::Real(npart));
+        weight = q_tot/(p_q*amrex::Real(npart));
     }
     else {
         weight = charge;
     }
 
     // Declare temporary vectors on the CPU
-    Gpu::HostVector<ParticleReal> particle_w;
     Gpu::HostVector<ParticleReal> particle_x;
     Gpu::HostVector<ParticleReal> particle_y;
     Gpu::HostVector<ParticleReal> particle_z;
     Gpu::HostVector<ParticleReal> particle_ux;
     Gpu::HostVector<ParticleReal> particle_uy;
     Gpu::HostVector<ParticleReal> particle_uz;
-
+    Gpu::HostVector<ParticleReal> particle_w;
     if (ParallelDescriptor::IOProcessor()) {
-        for (long i = 0; i < npart; ++i) {
-            amrex::Real x = ptr_x.get()[i]*1.e-3;//*position_unit_x;
-            amrex::Real ux = ptr_vx.get()[i]*1.e6;//*velocity_unit_x;
-            amrex::Real z = ptr_z.get()[i]*1.e-3;//*position_unit_z;
-            amrex::Real uz = ptr_vz.get()[i]*1.e6;//*velocity_unit_z;
-#if (defined WARPX_DIM_3D)
-            amrex::Real y = ptr_y.get()[i]*1.e-3;//*position_unit_y;
-            amrex::Real uy = ptr_vy.get()[i]*1.e6;//*velocity_unit_y;
-#elif (defined WARPX_DIM_XZ)
-            amrex::Real y = 0.0;
-            amrex::Real uy = 0.0;
-#endif
-            /*
-            amrex::Real gamma = 1.0/std::sqrt(1.0-((ux*ux+uy*uy+uz*uz)/(PhysConst::c*PhysConst::c)));
-            ux = ux*gamma; // so velocity becomes the proper velocity (gamma * beta * c)
-            uy = uy*gamma;
-            uz = uz*gamma;
-            */
-            /*
-            amrex::Print() << "gamma = " << gamma << "\n";
-            amrex::Print() << "x = " << x << " y = " << y << " z = "<< z << "\n";
-            amrex::Print() << "vx = " << ux << " vy = " << uy << " vz = "<< uz << "\n";
-             */
+        for (int i; i<npart; ++i){
+            amrex::Real x=ptr_x.get()[i]*position_unit_x;
+            amrex::Real y=ptr_y.get()[i]*position_unit_y;
+            amrex::Real z=ptr_z.get()[i]*position_unit_z;
             if (plasma_injector->insideBounds(x, y, z)) {
-                CheckAndAddParticle(x, y, z, { 0.0, 0.0, 2000.*PhysConst::c}, weight,
-                                    particle_x,  particle_y,  particle_z,
-                                    particle_ux, particle_uy, particle_uz,
-                                    particle_w);
+                amrex::Real ux=ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
+                amrex::Real uy=ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
+                amrex::Real uz=ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
+                CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
+                particle_x,  particle_y,  particle_z,
+                particle_ux, particle_uy, particle_uz,
+                particle_w);
+                amrex::Print() << "vz= "<< ptr_uz.get()[i]*momentum_unit_z <<"\n";
+                amrex::Print() << "uz= "<< particle_uz[i] <<"\n";
             }
         }
     }
-    /*
-    amrex::Print() << npart << " = np = " << particle_x.size() << "\n";
-    for (int col; col<npart; ++col){
-        amrex::Print() << "weight = " << particle_w[col] << "\n";
-        amrex::Print() << "x = " << particle_x[col] << " y = " << particle_y[col] << " z = " << particle_z[col] <<"\n";
-        amrex::Print() << "vx = " << particle_ux[col] << " vy = " << particle_uy[col] << " vz = " << particle_uz[col] <<"\n";
-    }
-    */
-    // Add the temporary CPU vectors to the particle structure
-    AddNParticles(0,npart,
+    int np = particle_z.size();
+    AddNParticles(0,np,
                   particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
+    amrex::Print() << npart << " parts of species " << ps.first << "\nWith"
+    << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
+    << npart << " macroparticles with weight " << weight << "\n";
+
 #endif
     return;
 }

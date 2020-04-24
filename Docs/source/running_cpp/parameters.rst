@@ -305,7 +305,7 @@ Particle initialization
       and optional argument ``<species_name>.do_symmetrize`` (whether to
       symmetrize the beam in the x and y directions).
 
-    * ``external_file``: Inject macroparticles with properties (mass, position, and momentum) read from external openPMD file.
+    * ``external_file``: Inject macroparticles with properties (mass, charge, position, and momentum - :math: `\gamma \beta m c`) read from external openPMD file.
       It requires the additional arguments:
       ``<species_name>.injection_file`` (`string`) openPMD file name and
       ``<species_name>.q_tot`` (`double`) optional (default is ``q_tot=0`` and no re-scaling is done, ``weight=q_p``) when specified it is used to re-scale the weight of externally loaded ``N`` physical particles, each of charge ``q_p``, to inject that total charge with macroparticles of ``weight=<species_name>.q_tot/q_p/N``.
