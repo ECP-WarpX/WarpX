@@ -346,19 +346,25 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     double mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
     amrex::Real p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
     double charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
-    int npart = ps.second["position"]["x"].getExtent()[0];
+#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_2D)
+    long npart = ps.second["position"]["x"].getExtent()[0];
     std::shared_ptr<amrex::Real> ptr_x = ps.second["position"]["x"].loadChunk<amrex::Real>();
     double position_unit_x = ps.second["position"]["x"].unitSI();
-    std::shared_ptr<amrex::Real> ptr_y = ps.second["position"]["y"].loadChunk<amrex::Real>();
-    double position_unit_y = ps.second["position"]["y"].unitSI();
     std::shared_ptr<amrex::Real> ptr_z = ps.second["position"]["z"].loadChunk<amrex::Real>();
     double position_unit_z = ps.second["position"]["z"].unitSI();
     std::shared_ptr<amrex::Real> ptr_ux = ps.second["momentum"]["x"].loadChunk<amrex::Real>();
     double momentum_unit_x = ps.second["momentum"]["x"].unitSI();
-    std::shared_ptr<amrex::Real> ptr_uy = ps.second["momentum"]["y"].loadChunk<amrex::Real>();
-    double momentum_unit_y = ps.second["momentum"]["y"].unitSI();
     std::shared_ptr<amrex::Real> ptr_uz = ps.second["momentum"]["z"].loadChunk<amrex::Real>();
     double momentum_unit_z = ps.second["momentum"]["z"].unitSI();
+#else
+    amrex::Abort("AddPlasmaFromFile is only implemented for 2D and 3D\n")
+#endif
+#if (defined WARPX_DIM_3D)
+    std::shared_ptr<amrex::Real> ptr_y = ps.second["position"]["y"].loadChunk<amrex::Real>();
+    double position_unit_y = ps.second["position"]["y"].unitSI();
+    std::shared_ptr<amrex::Real> ptr_uy = ps.second["momentum"]["y"].loadChunk<amrex::Real>();
+    double momentum_unit_y = ps.second["momentum"]["y"].unitSI();
+#endif
     series.flush();
 
     mass=p_m*mass_unit;
@@ -374,39 +380,45 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
 
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
-    Gpu::HostVector<ParticleReal> particle_y;
     Gpu::HostVector<ParticleReal> particle_z;
     Gpu::HostVector<ParticleReal> particle_ux;
-    Gpu::HostVector<ParticleReal> particle_uy;
     Gpu::HostVector<ParticleReal> particle_uz;
     Gpu::HostVector<ParticleReal> particle_w;
+    Gpu::HostVector<ParticleReal> particle_y;
+    Gpu::HostVector<ParticleReal> particle_uy;
+
     if (ParallelDescriptor::IOProcessor()) {
-        for (int i; i<npart; ++i){
+        for (long i; i<npart; ++i){
             amrex::Real x=ptr_x.get()[i]*position_unit_x;
-            amrex::Real y=ptr_y.get()[i]*position_unit_y;
             amrex::Real z=ptr_z.get()[i]*position_unit_z;
+#if (defined WARPX_DIM_2D)
+            amrex::Real y=0.0;
+#elif (defined WARPX_DIM_3D)
+            amrex::Real y=ptr_y.get()[i]*position_unit_y;
+#endif
             if (plasma_injector->insideBounds(x, y, z)) {
                 amrex::Real ux=ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
-                amrex::Real uy=ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
                 amrex::Real uz=ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
+#if (defined WARPX_DIM_2D)
+                amrex::Real uy=0.0;
+#elif (defined WARPX_DIM_3D)
+                amrex::Real uy=ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
+#endif
                 CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
                 particle_x,  particle_y,  particle_z,
                 particle_ux, particle_uy, particle_uz,
                 particle_w);
-                amrex::Print() << "vz= "<< ptr_uz.get()[i]*momentum_unit_z <<"\n";
-                amrex::Print() << "uz= "<< particle_uz[i] <<"\n";
             }
         }
     }
-    int np = particle_z.size();
+    long np = particle_z.size();
+    if (np < npart) {
+        amrex::Print()<<"WARNING: Simulation box doesn't cover all particles\n";
+    }
     AddNParticles(0,np,
                   particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
-    amrex::Print() << npart << " parts of species " << ps.first << "\nWith"
-    << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
-    << npart << " macroparticles with weight " << weight << "\n";
-
 #endif
     return;
 }
