@@ -98,7 +98,7 @@ Diagnostics::InitData ()
     m_all_field_functors.resize( nmax_lev );
 
     for ( int lev=0; lev<nlev; lev++ ){
-        InitializeFieldFunctors ( lev );
+        InitializeFieldFunctors( lev );
         // At this point, m_varnames.size() >= m_all_field_functors[0].size()
 
         // Initialize member variable m_mf_output depending on m_crse_ratio, m_lo and m_hi
