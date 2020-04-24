@@ -5,7 +5,6 @@
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
 #include "WarpX.H"
-#include "Utils/Average.H"
 #include "Utils/WarpXUtil.H"
 
 using namespace amrex;

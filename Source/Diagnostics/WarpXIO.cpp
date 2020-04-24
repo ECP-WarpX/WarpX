@@ -10,7 +10,7 @@
 #include "WarpX.H"
 #include "FieldIO.H"
 #include "SliceDiagnostic.H"
-#include "Utils/Average.H"
+#include "Utils/Coarsen.H"
 
 #ifdef WARPX_USE_OPENPMD
 #   include "Diagnostics/WarpXOpenPMD.H"

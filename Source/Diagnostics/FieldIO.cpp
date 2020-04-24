@@ -7,7 +7,7 @@
  */
 #include "FieldIO.H"
 #include "WarpX.H"
-#include "Utils/Average.H"
+#include "Utils/Coarsen.H"
 #include "Utils/WarpXUtil.H"
 
 #ifdef WARPX_USE_PSATD

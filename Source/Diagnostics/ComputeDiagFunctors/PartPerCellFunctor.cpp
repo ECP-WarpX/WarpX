@@ -1,6 +1,6 @@
 #include "PartPerCellFunctor.H"
 #include "WarpX.H"
-#include "Utils/Average.H"
+#include "Utils/Coarsen.H"
 
 using namespace amrex;
 

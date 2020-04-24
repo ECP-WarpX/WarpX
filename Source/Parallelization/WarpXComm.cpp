@@ -10,7 +10,7 @@
 #include "WarpXComm_K.H"
 #include "WarpX.H"
 #include "WarpXSumGuardCells.H"
-#include "Utils/Average.H"
+#include "Utils/Coarsen.H"
 
 #include <algorithm>
 #include <cstdlib>

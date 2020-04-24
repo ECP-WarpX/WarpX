@@ -1,5 +1,5 @@
 #include "DivEFunctor.H"
-#include "Utils/Average.H"
+#include "Utils/Coarsen.H"
 
 using namespace amrex;
 
