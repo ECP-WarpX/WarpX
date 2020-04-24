@@ -7,9 +7,12 @@
 # License: BSD-3-Clause-LBNL
 
 """
-This script checks the space-charge initialization routine, by
-verifying that the space-charge field of a Gaussian beam corresponds to
-the expected theoretical field.
+This script checks the dive cleaning and PML routines, by initializing a
+Gaussian beam in the center of the simulation box, and let the error in
+space-charge field propagate away and be absorbed in the PML.
+
+This script verifies that the field at the end of the simulation corresponds
+to the theoretical field of a Gaussian beam.
 """
 import sys
 import matplotlib
