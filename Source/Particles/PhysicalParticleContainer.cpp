@@ -388,7 +388,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
     Gpu::HostVector<ParticleReal> particle_uy;
 
     if (ParallelDescriptor::IOProcessor()) {
-        for (decltype(npart) i=0; i<npart; ++i){
+        for (auto i = decltype(npart){0}; i<npart; ++i){
             amrex::ParticleReal const x = ptr_x.get()[i]*position_unit_x;
             amrex::ParticleReal const z = ptr_z.get()[i]*position_unit_z;
 #if (defined WARPX_DIM_2D)
