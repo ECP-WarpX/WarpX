@@ -20,8 +20,6 @@ public:
      */
     PartPerCellFunctor(const amrex::MultiFab * const mf_src, const int lev,
                        const amrex::IntVect crse_ratio, const int ncomp=1);
-    /** Destructor */
-    ~PartPerCellFunctor() {};
 
     /** \brief Compute the number of particles per cell directly into mf_dst.
      *

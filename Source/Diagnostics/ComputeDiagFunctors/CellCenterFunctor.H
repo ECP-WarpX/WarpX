@@ -22,8 +22,6 @@ public:
     CellCenterFunctor(const amrex::MultiFab * const mf_src, const int lev,
                       const amrex::IntVect crse_ratio,
                       bool convertRZmodes2cartesian=true, int ncomp=1);
-    /** Destructor */
-    ~CellCenterFunctor() {};
     /** \brief Cell-center m_mf_src and write the result in mf_dst.
      *
      * In cylindrical geometry, by default this functor average all components
@@ -36,7 +34,7 @@ public:
     virtual void operator()(amrex::MultiFab& mf_dst, int dcomp) const override;
 private:
     /** pointer to source multifab (can be multi-component) */
-    amrex::MultiFab const * const m_mf_src;
+    amrex::MultiFab const * const m_mf_src = nullptr;
     int m_lev; /**< level on which mf_src is defined (used in cylindrical) */
     /**< (for cylindrical) whether to average all modes into 1 comp */
     bool m_convertRZmodes2cartesian;

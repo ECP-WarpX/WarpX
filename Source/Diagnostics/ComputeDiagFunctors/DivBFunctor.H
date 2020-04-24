@@ -18,8 +18,6 @@ public:
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
     DivBFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, amrex::IntVect crse_ratio, const int ncomp=1);
-    /** Destructor */
-    ~DivBFunctor() {};
 
     /** \brief Compute DivB directly into mf_dst.
      *

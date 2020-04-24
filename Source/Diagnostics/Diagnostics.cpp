@@ -91,16 +91,17 @@ Diagnostics::InitData ()
     Print()<<"Diagnostics::InitData\n";
     auto & warpx = WarpX::GetInstance();
     nlev = warpx.finestLevel() + 1;
-    m_mf_output.resize( nlev );
+    nmax_lev = warpx.maxLevel() + 1;
+    m_mf_output.resize( nmax_lev );
+    m_all_field_functors.resize( nmax_lev );
 
     for ( int lev=0; lev<nlev; lev++ ){
+        InitializeFieldFunctors ( lev );
+        // At this point, m_varnames.size() >= m_all_field_functors[0].size()
+
         // Initialize member variable m_mf_output depending on m_crse_ratio, m_lo and m_hi
         DefineDiagMultiFab( lev );
     }
-
-    InitializeFieldFunctors ();
-
-    // At this point, m_varnames.size() >= m_all_field_functors[0].size()
 
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     // If not specified, dump all species
@@ -347,16 +348,18 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
 
 
 void
-Diagnostics::InitializeFieldFunctors ()
+Diagnostics::InitializeFieldFunctors (int lev)
 {
     auto & warpx = WarpX::GetInstance();
-    nlev = warpx.finestLevel() + 1;
+//    nlev = warpx.finestLevel() + 1;
     // Clear any pre-existing vector and this also releases any memory stored in the inner vector.
-    m_all_field_functors.clear();
+//    m_all_field_functors.clear();
     // Resize outer vector with nlev.
-    m_all_field_functors.resize( nlev );
+//    m_all_field_functors.resize( nlev );
     // Initialize vector of unique pointers to the fields requested by the user.
-    for ( int lev=0; lev<nlev; lev++ ){
+//    for ( int lev=0; lev<nlev; lev++ ){
+        // Clear any pre-existing vector to release stored data.
+        m_all_field_functors[lev].clear();
         m_all_field_functors[lev].resize( m_varnames.size() );
         // Fill vector of functors for all components except individual cylindrical modes.
         for (int comp=0, n=m_all_field_functors[lev].size(); comp<n; comp++){
@@ -400,5 +403,5 @@ Diagnostics::InitializeFieldFunctors ()
         }
 
         AddRZModesToDiags( lev );
-    }
+//    }
 }

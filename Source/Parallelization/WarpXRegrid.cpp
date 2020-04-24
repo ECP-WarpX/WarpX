@@ -70,8 +70,6 @@ WarpX::LoadBalance ()
     }
     if (doRedistribute)
     {
-        // Re-initialize diagnostic functors that stores pointers to the user-requested fields.
-        multi_diags->InitializeFieldFunctors();
         mypc->Redistribute();
     }
 }
@@ -270,6 +268,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
     {
         amrex::Abort("RemakeLevel: to be implemented");
     }
+    // Re-initialize diagnostic functors that stores pointers to the user-requested fields at level, lev.
+    multi_diags->InitializeFieldFunctors( lev );
 }
 
 void

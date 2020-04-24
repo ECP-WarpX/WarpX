@@ -38,7 +38,7 @@ public:
      */
     bool DoDump (int step, bool force_flush=false);
     /** Initialize functors that store pointers to the fields requested by the user. */
-    void InitializeFieldFunctors ();
+    void InitializeFieldFunctors (int lev);
 private:
     void ReadParameters ();
     /** Append varnames with names for all modes of a field
@@ -72,6 +72,7 @@ private:
     /** output multifab, where all fields are cell-centered and stacked */
     amrex::Vector< amrex::MultiFab > m_mf_output;
     int nlev; /**< number of levels to output */
+    int nmax_lev; /**< max_level to allocate output multifab and vector of field functors. */
     /** This class is responsible for flushing the data to file */
     FlushFormat* m_flush_format;
     /** Whether to plot raw (i.e., NOT cell-centered) fields */

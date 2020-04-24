@@ -21,7 +21,7 @@ public:
     void FilterComputePackFlush (int step, bool force_flush=false);
     /** \brief Loop over diags in all diags and call their InitializeFieldFunctors.
                Called when a new partitioning is generated after load-balancing. */
-    void InitializeFieldFunctors ();
+    void InitializeFieldFunctors (int lev);
 private:
     /** Vector of pointers to all diagnostics */
     amrex::Vector<std::unique_ptr<Diagnostics> > alldiags;
