@@ -90,9 +90,9 @@ Diagnostics::InitData ()
 {
     Print()<<"Diagnostics::InitData\n";
     auto & warpx = WarpX::GetInstance();
-    // Number of levels 
+    // Number of levels
     nlev = warpx.finestLevel() + 1;
-    // Maximum number of levels that will be allocated in the simulation 
+    // Maximum number of levels that will be allocated in the simulation
     nmax_lev = warpx.maxLevel() + 1;
     m_mf_output.resize( nmax_lev );
     m_all_field_functors.resize( nmax_lev );
@@ -355,7 +355,7 @@ Diagnostics::InitializeFieldFunctors (int lev)
     auto & warpx = WarpX::GetInstance();
     // Clear any pre-existing vector to release stored data.
     m_all_field_functors[lev].clear();
-    
+
     m_all_field_functors[lev].resize( m_varnames.size() );
     // Fill vector of functors for all components except individual cylindrical modes.
     for (int comp=0, n=m_all_field_functors[lev].size(); comp<n; comp++){
