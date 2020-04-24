@@ -11,6 +11,7 @@
 #include "WarpXParticleContainer.H"
 #include "WarpX.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/Average.H"
 #include "Parallelization/WarpXComm.H"
 // Import low-level single-particle kernels
 #include "Pusher/GetAndSetPosition.H"
@@ -553,7 +554,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 
         int const refinement_ratio = 2;
 
-        interpolateDensityFineToCoarse( *rho[lev+1], coarsened_fine_data, refinement_ratio );
+        Coarsen::CoarsenMR( coarsened_fine_data, *rho[lev+1], IntVect(refinement_ratio) );
         rho[lev]->ParallelAdd( coarsened_fine_data, m_gdb->Geom(lev).periodicity() );
     }
 }
