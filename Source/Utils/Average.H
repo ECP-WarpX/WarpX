@@ -1,9 +1,9 @@
-#ifndef WARPX_AVERAGE_H_
-#define WARPX_AVERAGE_H_
+#ifndef WARPX_COARSEN_H_
+#define WARPX_COARSEN_H_
 
 #include "WarpX.H"
 
-namespace Average{
+namespace Coarsen{
 
     using namespace amrex;
 
@@ -27,24 +27,23 @@ namespace Average{
      */
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
-    Real CoarsenAndInterpolateKernel ( Array4<Real const> const& arr_src,
-                                       int const* const AMREX_RESTRICT sf,
-                                       int const* const AMREX_RESTRICT sc,
-                                       int const* const AMREX_RESTRICT cr,
-                                       int const* const AMREX_RESTRICT np,
-                                       const int i,
-                                       const int j,
-                                       const int k,
-                                       const int comp )
+    Real CoarsenIOkernel ( Array4<Real const> const& arr_src,
+                           int const* const AMREX_RESTRICT sf,
+                           int const* const AMREX_RESTRICT sc,
+                           int const* const AMREX_RESTRICT cr,
+                           int const* const AMREX_RESTRICT np,
+                           const int i,
+                           const int j,
+                           const int k,
+                           const int comp )
     {
-        // Indices of source coarse array
+        // Indices of destination coarse array
         const int ic[3] = { i, j, k };
 
         // Index of first point of source Array4 from which interpolation is done
         int idx_min[3];
 
-        // Compute number of points to loop over (either 1 or 2)
-        // and starting indices of fine array in each direction
+        // Compute starting indices of fine array in each direction
         for ( int l = 0; l < 3; ++l ) {
             if ( cr[l] == 1 ) idx_min[l] = ic[l]-sc[l]*(1-sf[l]); // no coarsening
             else              idx_min[l] = ic[l]*cr[l]+static_cast<int>(cr[l]/2)*(1-sc[l])-(1-sf[l]);
@@ -89,13 +88,13 @@ namespace Average{
      * \param[in]     crse_ratio coarsening ratio between the fine MultiFab \c mf_src
      *                           and the coarsened MultiFab \c mf_dst
      */
-    void CoarsenAndInterpolateLoop ( MultiFab& mf_dst,
-                                     const MultiFab& mf_src,
-                                     const int dcomp,
-                                     const int scomp,
-                                     const int ncomp,
-                                     const int ngrow,
-                                     const IntVect crse_ratio=IntVect(1) );
+    void CoarsenIOloop ( MultiFab& mf_dst,
+                         const MultiFab& mf_src,
+                         const int dcomp,
+                         const int scomp,
+                         const int ncomp,
+                         const int ngrow,
+                         const IntVect crse_ratio=IntVect(1) );
 
     /**
      * \brief Stores in the coarsened MultiFab \c mf_dst the values obtained by
@@ -116,13 +115,13 @@ namespace Average{
      * \param[in]     crse_ratio coarsening ratio between the fine MultiFab \c mf_src
      *                           and the coarsened MultiFab \c mf_dst
      */
-    void CoarsenAndInterpolate ( MultiFab& mf_dst,
-                                 const MultiFab& mf_src,
-                                 const int dcomp,
-                                 const int scomp,
-                                 const int ncomp,
-                                 const int ngrow,
-                                 const IntVect crse_ratio=IntVect(1) );
+    void CoarsenIO ( MultiFab& mf_dst,
+                     const MultiFab& mf_src,
+                     const int dcomp,
+                     const int scomp,
+                     const int ncomp,
+                     const int ngrow,
+                     const IntVect crse_ratio=IntVect(1) );
 }
 
-#endif // WARPX_AVERAGE_H_
+#endif // WARPX_COARSEN_H_

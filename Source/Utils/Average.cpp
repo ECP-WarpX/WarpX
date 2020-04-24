@@ -3,13 +3,13 @@
 using namespace amrex;
 
 void
-Average::CoarsenAndInterpolateLoop ( MultiFab& mf_dst,
-                                     const MultiFab& mf_src,
-                                     const int dcomp,
-                                     const int scomp,
-                                     const int ncomp,
-                                     const int ngrow,
-                                     const IntVect crse_ratio )
+Coarsen::CoarsenIOloop ( MultiFab& mf_dst,
+                         const MultiFab& mf_src,
+                         const int dcomp,
+                         const int scomp,
+                         const int ncomp,
+                         const int ngrow,
+                         const IntVect crse_ratio )
 {
     // Staggering of source fine MultiFab and destination coarse MultiFab
     const IntVect stag_src = mf_src.boxArray().ixType().toIntVect();
@@ -76,22 +76,22 @@ Average::CoarsenAndInterpolateLoop ( MultiFab& mf_dst,
         ParallelFor( bx, ncomp,
                      [=] AMREX_GPU_DEVICE( int i, int j, int k, int n )
                      {
-                         arr_dst(i,j,k,n+dcomp) = Average::CoarsenAndInterpolateKernel(
+                         arr_dst(i,j,k,n+dcomp) = Coarsen::CoarsenIOkernel(
                              arr_src, sf, sc, cr, np, i, j, k, n+scomp );
                      } );
     }
 }
 
 void
-Average::CoarsenAndInterpolate ( MultiFab& mf_dst,
-                                 const MultiFab& mf_src,
-                                 const int dcomp,
-                                 const int scomp,
-                                 const int ncomp,
-                                 const int ngrow,
-                                 const IntVect crse_ratio )
+Coarsen::CoarsenIO ( MultiFab& mf_dst,
+                     const MultiFab& mf_src,
+                     const int dcomp,
+                     const int scomp,
+                     const int ncomp,
+                     const int ngrow,
+                     const IntVect crse_ratio )
 {
-    BL_PROFILE( "Average::CoarsenAndInterpolate" );
+    BL_PROFILE( "Coarsen::CoarsenIO" );
 
     // Convert BoxArray of source MultiFab to staggering of destination MultiFab and coarsen it (if possible)
     BoxArray ba_tmp = amrex::convert( mf_src.boxArray(), mf_dst.ixType().toIntVect() );
@@ -100,14 +100,14 @@ Average::CoarsenAndInterpolate ( MultiFab& mf_dst,
     ba_tmp.coarsen( crse_ratio );
 
     if ( ba_tmp == mf_dst.boxArray() and mf_src.DistributionMap() == mf_dst.DistributionMap() )
-        Average::CoarsenAndInterpolateLoop( mf_dst, mf_src, dcomp, scomp, ncomp, ngrow, crse_ratio );
+        Coarsen::CoarsenIOloop( mf_dst, mf_src, dcomp, scomp, ncomp, ngrow, crse_ratio );
     else
     {
         // Cannot coarsen into MultiFab with different BoxArray or DistributionMapping:
         // 1) create temporary MultiFab on coarsened version of source BoxArray with same DistributionMapping
         MultiFab mf_tmp( ba_tmp, mf_src.DistributionMap(), ncomp, 0, MFInfo(), FArrayBoxFactory() );
         // 2) interpolate from mf_src to mf_tmp (start writing into component 0)
-        Average::CoarsenAndInterpolateLoop( mf_tmp, mf_src, 0, scomp, ncomp, ngrow, crse_ratio );
+        Coarsen::CoarsenIOloop( mf_tmp, mf_src, 0, scomp, ncomp, ngrow, crse_ratio );
         // 3) copy from mf_tmp to mf_dst (with different BoxArray or DistributionMapping)
         mf_dst.copy( mf_tmp, 0, dcomp, ncomp );
     }

@@ -21,6 +21,6 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     MultiFab divE(ba, warpx.DistributionMap(m_lev), 1, ng );
     warpx.ComputeDivE(divE, m_lev);
     // Coarsen and interpolate from divE on the entire domain to the cell-centered mf_dst.
-    Average::CoarsenAndInterpolate(mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
+    Coarsen::CoarsenIO(mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
 
 }

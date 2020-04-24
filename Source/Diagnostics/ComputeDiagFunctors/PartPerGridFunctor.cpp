@@ -32,5 +32,5 @@ PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     }
 
     // Coarsen and interpolate from ppg_mf to the output diagnostic MultiFab, mf_dst.
-    Average::CoarsenAndInterpolate(mf_dst, ppg_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
+    Coarsen::CoarsenIO(mf_dst, ppg_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
 }

@@ -28,5 +28,5 @@ PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     // Compute ppc which includes a summation over all species.
     warpx.GetPartContainer().Increment(ppc_mf, m_lev);
     // Coarsen and interpolate from ppc_mf to the output diagnostic MultiFab, mf_dst.
-    Average::CoarsenAndInterpolate(mf_dst, ppc_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
+    Coarsen::CoarsenIO(mf_dst, ppc_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
 }
