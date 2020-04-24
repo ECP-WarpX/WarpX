@@ -13,6 +13,7 @@ endif
 
 include $(WARPX_HOME)/Source/Diagnostics/ReducedDiags/Make.package
 include $(WARPX_HOME)/Source/Diagnostics/ComputeDiagFunctors/Make.package
+include $(WARPX_HOME)/Source/Diagnostics/ParticleDiag/Make.package
 include $(WARPX_HOME)/Source/Diagnostics/FlushFormats/Make.package
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Diagnostics
