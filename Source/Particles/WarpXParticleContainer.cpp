@@ -12,7 +12,6 @@
 #include "WarpX.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/Coarsen.H"
-#include "Parallelization/WarpXComm.H"
 // Import low-level single-particle kernels
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"

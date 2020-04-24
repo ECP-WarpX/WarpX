@@ -6,7 +6,6 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpXComm.H"
 #include "WarpXComm_K.H"
 #include "WarpX.H"
 #include "WarpXSumGuardCells.H"
