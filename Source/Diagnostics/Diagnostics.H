@@ -67,7 +67,7 @@ private:
      * cell-center for standard EB fields) as well as more involved operations
      * (back-transformed diagnostics, filtering, reconstructing cartesian
      * fields in cylindrical). */
-    amrex::Vector< amrex::Vector <ComputeDiagFunctor const *> > m_all_field_functors;
+    amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor const> > > m_all_field_functors;
     /** output multifab, where all fields are cell-centered and stacked */
     amrex::Vector< amrex::MultiFab > m_mf_output;
     int nlev; /**< number of levels to output */

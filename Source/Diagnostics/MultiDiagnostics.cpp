@@ -31,6 +31,7 @@ void
 MultiDiagnostics::InitializeFieldFunctors ()
 {
     for( auto& diag : alldiags ){
+        // Initialize functors to store pointers to fields.
         diag->InitializeFieldFunctors();
     }
 }
