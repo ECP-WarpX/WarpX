@@ -37,7 +37,9 @@ public:
      * \return bool, whether to flush
      */
     bool DoDump (int step, bool force_flush=false);
-    /** Initialize functors that store pointers to the fields requested by the user. */
+    /** Initialize functors that store pointers to the fields requested by the user. 
+      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+      */
     void InitializeFieldFunctors (int lev);
 private:
     void ReadParameters ();
