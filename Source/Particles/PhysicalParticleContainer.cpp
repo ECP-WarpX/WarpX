@@ -290,7 +290,6 @@ PhysicalParticleContainer::AddGaussianBeam (
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
                 u.z *= PhysConst::c;
-                amrex::Print() << "Type u.x " << typeid(u.x).name() << "\n";
                 if (do_symmetrize){
                     // Add four particles to the beam:
                     CheckAndAddParticle(x, y, z, { u.x, u.y, u.z}, weight/4.,
@@ -331,63 +330,63 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
                                                amrex::Real q_tot)
 {
 #ifdef WARPX_USE_OPENPMD
-    openPMD::Series series = openPMD::Series(s_f,
-                                             openPMD::AccessType::READ_ONLY);
-    amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(series.iterations.size() == 1u, "External "
-                                     "file should contain only 1 iteration\n");
-    openPMD::Iteration& i = series.iterations[1];
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size() == 1u, "External file "
-                                     "should contain only 1 species\n");
-    std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
-
-    //TODO: Add ASSERT_WITH_MESSAGE to test if mass and charge are both const
-    amrex::ParticleReal p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
-    double const mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
-    amrex::ParticleReal p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
-    double const charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
-#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_2D)
-    auto const npart = ps.second["position"]["x"].getExtent()[0];
-    std::shared_ptr<amrex::ParticleReal> ptr_x = ps.second["position"]["x"].loadChunk<amrex::ParticleReal>();
-    double const position_unit_x = ps.second["position"]["x"].unitSI();
-    std::shared_ptr<amrex::ParticleReal> ptr_z = ps.second["position"]["z"].loadChunk<amrex::ParticleReal>();
-    double const position_unit_z = ps.second["position"]["z"].unitSI();
-    std::shared_ptr<amrex::ParticleReal> ptr_ux = ps.second["momentum"]["x"].loadChunk<amrex::ParticleReal>();
-    double const momentum_unit_x = ps.second["momentum"]["x"].unitSI();
-    std::shared_ptr<amrex::ParticleReal> ptr_uz = ps.second["momentum"]["z"].loadChunk<amrex::ParticleReal>();
-    double const momentum_unit_z = ps.second["momentum"]["z"].unitSI();
-#else
-    amrex::Abort("AddPlasmaFromFile is only implemented for 2D and 3D\n")
-#endif
-#if (defined WARPX_DIM_3D)
-    std::shared_ptr<amrex::ParticleReal> ptr_y = ps.second["position"]["y"].loadChunk<amrex::ParticleReal>();
-    double const position_unit_y = ps.second["position"]["y"].unitSI();
-    std::shared_ptr<amrex::ParticleReal> ptr_uy = ps.second["momentum"]["y"].loadChunk<amrex::ParticleReal>();
-    double const momentum_unit_y = ps.second["momentum"]["y"].unitSI();
-#endif
-    series.flush();
-
-    mass=p_m*mass_unit;
-    charge=p_q*charge_unit;
-
-    amrex::Real weight;
-    if (q_tot != 0.0){
-        weight = q_tot/(p_q*amrex::Real(npart));
-    }
-    else {
-        weight = charge;
-    }
-
-    // Declare temporary vectors on the CPU
-    Gpu::HostVector<ParticleReal> particle_x;
-    Gpu::HostVector<ParticleReal> particle_z;
-    Gpu::HostVector<ParticleReal> particle_ux;
-    Gpu::HostVector<ParticleReal> particle_uz;
-    Gpu::HostVector<ParticleReal> particle_w;
-    Gpu::HostVector<ParticleReal> particle_y;
-    Gpu::HostVector<ParticleReal> particle_uy;
-
     if (ParallelDescriptor::IOProcessor()) {
+        openPMD::Series series = openPMD::Series(s_f,
+                                                 openPMD::AccessType::READ_ONLY);
+        amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(series.iterations.size() == 1u, "External "
+                                         "file should contain only 1 iteration\n");
+        openPMD::Iteration& i = series.iterations[1];
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size() == 1u, "External file "
+                                         "should contain only 1 species\n");
+        std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
+
+        //TODO: Add ASSERT_WITH_MESSAGE to test if mass and charge are both const
+        amrex::ParticleReal p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
+        double const mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
+        amrex::ParticleReal p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
+        double const charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
+    #if (defined WARPX_DIM_3D) || (defined WARPX_DIM_2D)
+        auto const npart = ps.second["position"]["x"].getExtent()[0];
+        std::shared_ptr<amrex::ParticleReal> ptr_x = ps.second["position"]["x"].loadChunk<amrex::ParticleReal>();
+        double const position_unit_x = ps.second["position"]["x"].unitSI();
+        std::shared_ptr<amrex::ParticleReal> ptr_z = ps.second["position"]["z"].loadChunk<amrex::ParticleReal>();
+        double const position_unit_z = ps.second["position"]["z"].unitSI();
+        std::shared_ptr<amrex::ParticleReal> ptr_ux = ps.second["momentum"]["x"].loadChunk<amrex::ParticleReal>();
+        double const momentum_unit_x = ps.second["momentum"]["x"].unitSI();
+        std::shared_ptr<amrex::ParticleReal> ptr_uz = ps.second["momentum"]["z"].loadChunk<amrex::ParticleReal>();
+        double const momentum_unit_z = ps.second["momentum"]["z"].unitSI();
+    #else
+        amrex::Abort("AddPlasmaFromFile is only implemented for 2D and 3D\n")
+    #endif
+    #if (defined WARPX_DIM_3D)
+        std::shared_ptr<amrex::ParticleReal> ptr_y = ps.second["position"]["y"].loadChunk<amrex::ParticleReal>();
+        double const position_unit_y = ps.second["position"]["y"].unitSI();
+        std::shared_ptr<amrex::ParticleReal> ptr_uy = ps.second["momentum"]["y"].loadChunk<amrex::ParticleReal>();
+        double const momentum_unit_y = ps.second["momentum"]["y"].unitSI();
+    #endif
+        series.flush();
+
+        mass=p_m*mass_unit;
+        charge=p_q*charge_unit;
+
+        amrex::Real weight;
+        if (q_tot != 0.0){
+            weight = q_tot/(p_q*amrex::Real(npart));
+        }
+        else {
+            weight = charge;
+        }
+
+        // Declare temporary vectors on the CPU
+        Gpu::HostVector<ParticleReal> particle_x;
+        Gpu::HostVector<ParticleReal> particle_z;
+        Gpu::HostVector<ParticleReal> particle_ux;
+        Gpu::HostVector<ParticleReal> particle_uz;
+        Gpu::HostVector<ParticleReal> particle_w;
+        Gpu::HostVector<ParticleReal> particle_y;
+        Gpu::HostVector<ParticleReal> particle_uy;
+
         for (auto i = decltype(npart){0}; i<npart; ++i){
             amrex::ParticleReal const x = ptr_x.get()[i]*position_unit_x;
             amrex::ParticleReal const z = ptr_z.get()[i]*position_unit_z;
@@ -410,17 +409,17 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
                 particle_w);
             }
         }
+        auto const np = particle_z.size();
+        if (np < npart) {
+            amrex::Print()<<"WARNING: Simulation box doesn't cover all particles\n";
+        }
+        AddNParticles(0,np,
+                      particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
+                      particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
+                      1, particle_w.dataPtr(),1);
     }
-    auto const np = particle_z.size();
-    if (np < npart) {
-        amrex::Print()<<"WARNING: Simulation box doesn't cover all particles\n";
-    }
-    AddNParticles(0,np,
-                  particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
-                  particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
-                  1, particle_w.dataPtr(),1);
-#endif
-    return;
+    #endif
+        return;
 }
 
 void
