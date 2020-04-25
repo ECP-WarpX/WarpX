@@ -475,7 +475,7 @@ extern "C"
     }
     void warpx_WritePlotFile () {
         WarpX& warpx = WarpX::GetInstance();
-        warpx.WritePlotFile ();
+        //warpx.WritePlotFile ();
     }
     void warpx_WriteOpenPMDFile () {
         WarpX& warpx = WarpX::GetInstance();

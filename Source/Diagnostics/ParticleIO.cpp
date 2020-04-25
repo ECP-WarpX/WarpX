@@ -82,6 +82,7 @@ MultiParticleContainer::Checkpoint (const std::string& dir) const
     }
 }
 
+/*
 void
 MultiParticleContainer::WritePlotFile (const std::string& dir) const
 {
@@ -157,6 +158,7 @@ MultiParticleContainer::WritePlotFile (const std::string& dir) const
         }
     }
 }
+*/
 
 void
 MultiParticleContainer::Restart (const std::string& dir)

@@ -588,6 +588,7 @@ WarpX::WriteOpenPMDFile () const
 #endif
 }
 
+/*
 void
 WarpX::WritePlotFile () const
 {
@@ -694,6 +695,7 @@ WarpX::WritePlotFile () const
     VisMF::SetHeaderVersion(current_version);
 
 }
+*/
 
 void
 WarpX::WriteJobInfo (const std::string& dir) const

@@ -82,12 +82,13 @@ WarpX::InitData ()
     if (restart_chkfile.empty())
     {
         multi_diags->FilterComputePackFlush( 0, true );
+        /*
         if (plot_int > 0)
             WritePlotFile();
 
         if (openpmd_int > 0)
             WriteOpenPMDFile();
-
+        */
         if (check_int > 0)
             WriteCheckPointFile();
 

@@ -34,7 +34,7 @@ WarpX::Evolve (int numsteps)
 
     Real cur_time = t_new[0];
     static int last_plot_file_step = 0;
-    static int last_openPMD_step = 0;
+    //static int last_openPMD_step = 0;
     static int last_check_file_step = 0;
     static int last_insitu_step = 0;
 
@@ -165,7 +165,7 @@ WarpX::Evolve (int numsteps)
         cur_time += dt[0];
 
         bool to_make_plot = ( (plot_int > 0) && ((step+1) % plot_int == 0) );
-        bool to_write_openPMD = ( (openpmd_int > 0) && ((step+1) % openpmd_int == 0) );
+        //bool to_write_openPMD = ( (openpmd_int > 0) && ((step+1) % openpmd_int == 0) );
 
         // slice generation //
         bool to_make_slice_plot = (slice_plot_int > 0) && ( (step+1)% slice_plot_int == 0);
@@ -181,7 +181,7 @@ WarpX::Evolve (int numsteps)
             myBFD->writeLabFrameData(cell_centered_data.get(), *mypc, geom[0], cur_time, dt[0]);
         }
 
-        bool move_j = is_synchronized || to_make_plot || to_write_openPMD || do_insitu;
+        bool move_j = is_synchronized || to_make_plot || do_insitu;
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
         // We might need to move j because we are going to make a plotfile.
 
@@ -242,7 +242,7 @@ WarpX::Evolve (int numsteps)
         multi_diags->FilterComputePackFlush( step );
 
         // slice gen //
-        if (to_make_plot || to_write_openPMD || do_insitu || to_make_slice_plot)
+        if (to_make_plot || do_insitu || to_make_slice_plot)
         {
             // This is probably overkill, but it's not called often
             FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
@@ -257,13 +257,13 @@ WarpX::Evolve (int numsteps)
             FieldGather();
 
             last_plot_file_step = step+1;
-            last_openPMD_step = step+1;
+            //last_openPMD_step = step+1;
             last_insitu_step = step+1;
 
-            if (to_make_plot)
-                WritePlotFile();
-            if (to_write_openPMD)
-                WriteOpenPMDFile();
+            //if (to_make_plot)
+            //    WritePlotFile();
+            //if (to_write_openPMD)
+            //    WriteOpenPMDFile();
 
             if (to_make_slice_plot)
             {
@@ -295,15 +295,15 @@ WarpX::Evolve (int numsteps)
 
     bool write_plot_file = plot_int > 0 && istep[0] > last_plot_file_step
         && (max_time_reached || istep[0] >= max_step);
-    bool write_openPMD = openpmd_int > 0 && istep[0] > last_openPMD_step
-        && (max_time_reached || istep[0] >= max_step);
+    //bool write_openPMD = openpmd_int > 0 && istep[0] > last_openPMD_step
+    //    && (max_time_reached || istep[0] >= max_step);
 
     bool do_insitu = (insitu_start >= istep[0]) && (insitu_int > 0) &&
         (istep[0] > last_insitu_step) && (max_time_reached || istep[0] >= max_step);
 
     multi_diags->FilterComputePackFlush( istep[0], true );
 
-    if (write_plot_file || write_openPMD || do_insitu)
+    if (write_plot_file || do_insitu)
     {
         // This is probably overkill, but it's not called often
         FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
@@ -323,10 +323,10 @@ WarpX::Evolve (int numsteps)
                               *Bfield_aux[lev][2]);
         }
 
-        if (write_plot_file)
-            WritePlotFile();
-        if (write_openPMD)
-            WriteOpenPMDFile();
+        //if (write_plot_file)
+        //    WritePlotFile();
+        //if (write_openPMD)
+        //    WriteOpenPMDFile();
 
         if (do_insitu)
             UpdateInSitu();

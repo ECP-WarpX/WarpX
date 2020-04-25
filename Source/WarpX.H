@@ -390,7 +390,7 @@ public:
 
     void WriteCheckPointFile () const;
     void WriteOpenPMDFile () const;
-    void WritePlotFile () const;
+    //void WritePlotFile () const;
     void UpdateInSitu () const;
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, const int ngrow) const;
@@ -399,9 +399,9 @@ public:
         amrex::Vector<const amrex::MultiFab*>& output_mf,
         amrex::Vector<amrex::Geometry>& output_geom ) const;
 
-    void WritePlotFileES(const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                         const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E);
+    //void WritePlotFileES(const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
+    //                     const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+    //                     const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E);
 
     static std::array<amrex::Real,3> CellSize (int lev);
     static amrex::RealBox getRealBox(const amrex::Box& bx, int lev);
