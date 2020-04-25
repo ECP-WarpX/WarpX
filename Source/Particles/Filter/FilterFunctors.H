@@ -82,13 +82,10 @@ struct ParserFilter
     /** constructor
      * \param a_is_active whether the test is active
      */
-    ParserFilter(bool a_is_active, int a_species_index)
-    : m_is_active(a_is_active), m_species_index(a_species_index)
+    ParserFilter(bool a_is_active, ParserWrapper<7>* a_filter_parser)
+        : m_is_active(a_is_active), m_function_partparser(a_filter_parser)
     {
         m_t = WarpX::GetInstance().gett_new(0);
-        auto & mypc   = WarpX::GetInstance().GetPartContainer();
-        auto & myspc  = mypc.GetParticleContainer(m_species_index);
-        m_function_partparser = myspc.m_particle_filter_parser.get();
     };
 
     /**
@@ -110,11 +107,13 @@ struct ParserFilter
         else return 0;
     }
 public:
+    /** Store physical time. */
     amrex::Real m_t;
-    ParserWrapper<7> * m_function_partparser;
+    /** Parser function with 7 input variables, t,x,y,z,ux,uy,uz */
+    ParserWrapper<7> const * const m_function_partparser;
 private:
-    const bool m_is_active = false; //! select all particles if false
-    const int  m_species_index = 0; //! species index
+    /** Whether this diagnostics is activated. Select all particles if false */
+    const bool m_is_active = false;
 };
 
 #endif // FILTERFUNCTORS_H

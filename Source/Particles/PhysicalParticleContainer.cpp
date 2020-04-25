@@ -2232,12 +2232,12 @@ PhysicalParticleContainer::getIonizationFunc ()
 #ifdef WARPX_QED
 
 
-bool PhysicalParticleContainer::has_quantum_sync ()
+bool PhysicalParticleContainer::has_quantum_sync () const
 {
     return m_do_qed_quantum_sync;
 }
 
-bool PhysicalParticleContainer::has_breit_wheeler ()
+bool PhysicalParticleContainer::has_breit_wheeler () const
 {
     return m_do_qed_breit_wheeler;
 }
