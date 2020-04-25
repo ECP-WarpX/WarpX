@@ -4,6 +4,11 @@
 #include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
+#include "FlushFormats/FlushFormatPlotfile.H"
+#include "FlushFormats/FlushFormatCheckpoint.H"
+#ifdef WARPX_USE_OPENPMD
+#   include "FlushFormats/FlushFormatOpenPMD.H"
+#endif
 #include "WarpX.H"
 #include "Utils/Average.H"
 #include "Utils/WarpXUtil.H"
@@ -118,6 +123,8 @@ Diagnostics::InitData ()
     // Construct Flush class.
     if        (m_format == "plotfile"){
         m_flush_format = new FlushFormatPlotfile;
+    } else if (m_format == "checkpoint"){
+        m_flush_format = new FlushFormatCheckpoint;
     } else if (m_format == "openpmd"){
 #ifdef WARPX_USE_OPENPMD
         m_flush_format = new FlushFormatOpenPMD(m_diag_name);
