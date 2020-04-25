@@ -541,163 +541,6 @@ WarpX::UpdateInSitu () const
 }
 
 void
-WarpX::prepareFields(
-        int const /*step*/,
-        Vector<std::string>& varnames,
-        Vector<MultiFab>& mf_avg,
-        Vector<const MultiFab*>& output_mf,
-        Vector<Geometry>& output_geom
-) const {
-    // Average the fields from the simulation grid to the cell centers
-    const int ngrow = 0;
-    WarpX::AverageAndPackFields( varnames, mf_avg, ngrow );
-
-    // Coarsen the fields, if requested by the user
-    Vector<MultiFab> coarse_mf; // will remain empty if there is no coarsening
-    if (plot_coarsening_ratio != 1) {
-        coarsenCellCenteredFields( coarse_mf, output_geom, mf_avg, Geom(),
-                                   plot_coarsening_ratio, finest_level );
-        output_mf = amrex::GetVecOfConstPtrs(coarse_mf);
-    } else {  // No averaging necessary, simply point to mf_avg
-        output_mf = amrex::GetVecOfConstPtrs(mf_avg);
-        output_geom = Geom();
-    }
-}
-
-void
-WarpX::WriteOpenPMDFile () const
-{
-    WARPX_PROFILE("WarpX::WriteOpenPMDFile()");
-
-#ifdef WARPX_USE_OPENPMD
-    const auto step = istep[0];
-
-    m_OpenPMDPlotWriter->SetStep(step, "diags/");
-
-    Vector<std::string> varnames; // Name of the written fields
-    Vector<MultiFab> mf_avg; // contains the averaged, cell-centered fields
-    Vector<const MultiFab*> output_mf; // will point to the data to be written
-    Vector<Geometry> output_geom;
-
-    prepareFields(step, varnames, mf_avg, output_mf, output_geom);
-    // fields: only dumped for coarse level
-    m_OpenPMDPlotWriter->WriteOpenPMDFields(
-        varnames, *output_mf[0], output_geom[0], step, t_new[0]);
-    // particles: all (reside only on locally finest level)
-    m_OpenPMDPlotWriter->WriteOpenPMDParticles(*mypc);
-#endif
-}
-
-/*
-void
-WarpX::WritePlotFile () const
-{
-    WARPX_PROFILE("WarpX::WritePlotFile()");
-
-    const auto step = istep[0];
-    const std::string& plotfilename = amrex::Concatenate(plot_file,step);
-    amrex::Print() << "  Writing plotfile " << plotfilename << "\n";
-
-    Vector<std::string> varnames; // Name of the written fields
-    Vector<MultiFab> mf_avg; // contains the averaged, cell-centered fields
-    Vector<const MultiFab*> output_mf; // will point to the data to be written
-    Vector<Geometry> output_geom;
-
-    prepareFields(step, varnames, mf_avg, output_mf, output_geom);
-
-    // Write the fields contained in `mf_avg`, and corresponding to the
-    // names `varnames`, into a plotfile.
-    // Prepare extra directory (filled later), for the raw fields
-    Vector<std::string> rfs;
-    VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
-    VisMF::SetHeaderVersion(plotfile_headerversion);
-    if (plot_raw_fields) rfs.emplace_back("raw_fields");
-    amrex::WriteMultiLevelPlotfile(plotfilename, finest_level+1,
-                                   output_mf, varnames, output_geom,
-                                   t_new[0], istep, refRatio(),
-                                   "HyperCLaw-V1.1",
-                                   "Level_",
-                                   "Cell",
-                                   rfs
-                                   );
-
-
-    if (plot_raw_fields)
-    {
-        const int nlevels = finestLevel()+1;
-        for (int lev = 0; lev < nlevels; ++lev)
-        {
-            const std::unique_ptr<MultiFab> empty_ptr;
-            const std::string raw_pltname = plotfilename + "/raw_fields";
-            const DistributionMapping& dm = DistributionMap(lev);
-
-            // Auxiliary patch
-            WriteRawField( *Efield_aux[lev][0], dm, raw_pltname, level_prefix, "Ex_aux", lev, plot_raw_fields_guards);
-            WriteRawField( *Efield_aux[lev][1], dm, raw_pltname, level_prefix, "Ey_aux", lev, plot_raw_fields_guards);
-            WriteRawField( *Efield_aux[lev][2], dm, raw_pltname, level_prefix, "Ez_aux", lev, plot_raw_fields_guards);
-            WriteRawField( *Bfield_aux[lev][0], dm, raw_pltname, level_prefix, "Bx_aux", lev, plot_raw_fields_guards);
-            WriteRawField( *Bfield_aux[lev][1], dm, raw_pltname, level_prefix, "By_aux", lev, plot_raw_fields_guards);
-            WriteRawField( *Bfield_aux[lev][2], dm, raw_pltname, level_prefix, "Bz_aux", lev, plot_raw_fields_guards);
-
-            // Fine patch
-            if (plot_finepatch) {
-                WriteRawField( *Efield_fp[lev][0], dm, raw_pltname, level_prefix, "Ex_fp", lev, plot_raw_fields_guards);
-                WriteRawField( *Efield_fp[lev][1], dm, raw_pltname, level_prefix, "Ey_fp", lev, plot_raw_fields_guards);
-                WriteRawField( *Efield_fp[lev][2], dm, raw_pltname, level_prefix, "Ez_fp", lev, plot_raw_fields_guards);
-                WriteRawField( *current_fp[lev][0], dm, raw_pltname, level_prefix, "jx_fp", lev, plot_raw_fields_guards);
-                WriteRawField( *current_fp[lev][1], dm, raw_pltname, level_prefix, "jy_fp", lev, plot_raw_fields_guards);
-                WriteRawField( *current_fp[lev][2], dm, raw_pltname, level_prefix, "jz_fp", lev, plot_raw_fields_guards);
-                WriteRawField( *Bfield_fp[lev][0], dm, raw_pltname, level_prefix, "Bx_fp", lev, plot_raw_fields_guards);
-                WriteRawField( *Bfield_fp[lev][1], dm, raw_pltname, level_prefix, "By_fp", lev, plot_raw_fields_guards);
-                WriteRawField( *Bfield_fp[lev][2], dm, raw_pltname, level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
-                if (F_fp[lev]) WriteRawField( *F_fp[lev], dm, raw_pltname, level_prefix, "F_fp", lev, plot_raw_fields_guards);
-                if (plot_rho) {
-                    // Use the component 1 of `rho_fp`, i.e. rho_new for time synchronization
-                    // If nComp > 1, this is the upper half of the list of components.
-                    MultiFab rho_new(*rho_fp[lev], amrex::make_alias, rho_fp[lev]->nComp()/2, rho_fp[lev]->nComp()/2);
-                    WriteRawField( rho_new, dm, raw_pltname, level_prefix, "rho_fp", lev, plot_raw_fields_guards);
-                }
-            }
-
-            // Coarse path
-            if (plot_crsepatch) {
-                WriteCoarseVector( "E",
-                    Efield_cp[lev][0], Efield_cp[lev][1], Efield_cp[lev][2],
-                    Efield_fp[lev][0], Efield_fp[lev][1], Efield_fp[lev][2],
-                    dm, raw_pltname, level_prefix, lev, plot_raw_fields_guards);
-                WriteCoarseVector( "B",
-                    Bfield_cp[lev][0], Bfield_cp[lev][1], Bfield_cp[lev][2],
-                    Bfield_fp[lev][0], Bfield_fp[lev][1], Bfield_fp[lev][2],
-                    dm, raw_pltname, level_prefix, lev, plot_raw_fields_guards);
-                WriteCoarseVector( "j",
-                    current_cp[lev][0], current_cp[lev][1], current_cp[lev][2],
-                    current_fp[lev][0], current_fp[lev][1], current_fp[lev][2],
-                    dm, raw_pltname, level_prefix, lev, plot_raw_fields_guards);
-                if (F_cp[lev]) WriteCoarseScalar(
-                        "F", F_cp[lev], F_fp[lev],
-                        dm, raw_pltname, level_prefix, lev,
-                        plot_raw_fields_guards);
-                if (plot_rho) WriteCoarseScalar(
-                        "rho", rho_cp[lev], rho_fp[lev],
-                        dm, raw_pltname, level_prefix, lev,
-                        plot_raw_fields_guards, 1);
-                        // Use the component 1 of `rho_cp`, i.e. rho_new for time synchronization
-            }
-        }
-    }
-
-    mypc->WritePlotFile(plotfilename);
-
-    WriteJobInfo(plotfilename);
-
-    WriteWarpXHeader(plotfilename);
-
-    VisMF::SetHeaderVersion(current_version);
-
-}
-*/
-
-void
 WarpX::WriteJobInfo (const std::string& dir) const
 {
     if (ParallelDescriptor::IOProcessor())
@@ -707,8 +550,6 @@ WarpX::WriteJobInfo (const std::string& dir) const
         std::string FullPathJobInfoFile = dir;
 
         std::string PrettyLine = std::string(78, '=') + "\n";
-//        std::string OtherLine = std::string(78, '-') + "\n";
-//        std::string SkipSpace = std::string(8, ' ') + "\n";
 
         FullPathJobInfoFile += "/warpx_job_info";
         jobInfoFile.open(FullPathJobInfoFile.c_str(), std::ios::out);
@@ -816,7 +657,6 @@ WarpX::WriteJobInfo (const std::string& dir) const
     }
 }
 
-
 /* \brief
  *  The raw slice data is written out in the plotfile format and can be visualized using yt.
  *  The slice data is written to diags/slice_plotfiles/pltXXXXX at the plotting interval.
@@ -884,7 +724,6 @@ WarpX::WriteSlicePlotFile () const
 
     VisMF::SetHeaderVersion(current_version);
 }
-
 
 void
 WarpX::InitializeSliceMultiFabs ()

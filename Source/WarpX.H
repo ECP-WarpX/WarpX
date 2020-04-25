@@ -389,7 +389,7 @@ public:
     int openpmdInt () const {return openpmd_int;}
 
     void WriteCheckPointFile () const;
-    void WriteOpenPMDFile () const;
+    //void WriteOpenPMDFile () const;
     //void WritePlotFile () const;
     void UpdateInSitu () const;
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,

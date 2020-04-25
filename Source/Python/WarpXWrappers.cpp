@@ -474,12 +474,12 @@ extern "C"
         warpx.WriteCheckPointFile ();
     }
     void warpx_WritePlotFile () {
-        WarpX& warpx = WarpX::GetInstance();
+        //WarpX& warpx = WarpX::GetInstance();
         //warpx.WritePlotFile ();
     }
     void warpx_WriteOpenPMDFile () {
-        WarpX& warpx = WarpX::GetInstance();
-        warpx.WriteOpenPMDFile ();
+        //WarpX& warpx = WarpX::GetInstance();
+        //warpx.WriteOpenPMDFile ();
     }
 
     int warpx_finestLevel () {
