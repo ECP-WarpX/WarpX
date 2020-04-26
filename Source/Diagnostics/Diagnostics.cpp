@@ -89,7 +89,7 @@ Diagnostics::ReadParameters ()
            m_crse_ratio[idim] = cr_ratio[idim];
        }
     }
-    
+
     bool species_specified = pp.queryarr("species", m_species_names);
 
     if (m_format == "checkpoint"){
