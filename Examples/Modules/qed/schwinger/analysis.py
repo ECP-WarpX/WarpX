@@ -78,7 +78,11 @@ def do_analysis(Ex,Ey,Ez,Bx,By,Bz):
 
     expected_total_physical_pairs_created = dV*dt*calculate_rate(Ex,Ey,Ez,Bx,By,Bz)
     if expected_total_physical_pairs_created < 0.01:
-        assert(not data_set.particle_type_counts)
+        np_ele = data_set.particle_type_counts["ele_schwinger"] if \
+            "ele_schwinger" in data_set.particle_type_counts.keys() else 0
+        np_pos = data_set.particle_type_counts["pos_schwinger"] if \
+            "pos_schwinger" in data_set.particle_type_counts.keys() else 0
+        assert(np_ele == 0 and np_pos == 0)
         ## Assert whether pairs are created or not.
 
     else:
