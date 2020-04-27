@@ -346,10 +346,10 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
         amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(series.iterations.size() == 1u, "External "
                                          "file should contain only 1 iteration\n");
-        openPMD::Iteration& i = series.iterations[1];
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size() == 1u, "External file "
+        openPMD::Iteration& iter = series.iterations[1];
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(iter.particles.size() == 1u, "External file "
                                          "should contain only 1 species\n");
-        std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
+        std::pair<std::string,openPMD::ParticleSpecies> ps = *iter.particles.begin();
 
         //TODO: Add ASSERT_WITH_MESSAGE to test if mass and charge are both const
         amrex::ParticleReal p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
