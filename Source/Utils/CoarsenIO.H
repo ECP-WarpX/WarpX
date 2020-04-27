@@ -16,7 +16,6 @@ namespace CoarsenIO{
      * \param[in] sf      staggering of the source fine MultiFab
      * \param[in] sc      staggering of the destination coarsened MultiFab
      * \param[in] cr      coarsening ratio along each spatial direction
-     * \param[in] np      number of points to loop over for interpolation
      * \param[in] i       index along x of the coarsened Array4 to be filled
      * \param[in] j       index along y of the coarsened Array4 to be filled
      * \param[in] k       index along z of the coarsened Array4 to be filled
@@ -31,19 +30,24 @@ namespace CoarsenIO{
                   int const* const AMREX_RESTRICT sf,
                   int const* const AMREX_RESTRICT sc,
                   int const* const AMREX_RESTRICT cr,
-                  int const* const AMREX_RESTRICT np,
                   const int i,
                   const int j,
                   const int k,
                   const int comp )
     {
-        // Indices of destination coarse array
+        // Indices of destination array (coarse)
         const int ic[3] = { i, j, k };
 
-        // Index of first point of source Array4 from which interpolation is done
-        int idx_min[3];
+        // Number of points and starting indices of source array (fine)
+        int np[3], idx_min[3];
 
-        // Compute starting indices of fine array in each direction
+        // Compute number of points
+        for ( int l = 0; l < 3; ++l ) {
+            if ( cr[l] == 1 ) np[l] = 1+abs(sf[l]-sc[l]); // no coarsening
+            else              np[l] = 2-sf[l];
+        }
+
+        // Compute starting indices of source array (fine)
         for ( int l = 0; l < 3; ++l ) {
             if ( cr[l] == 1 ) idx_min[l] = ic[l]-sc[l]*(1-sf[l]); // no coarsening
             else              idx_min[l] = ic[l]*cr[l]+static_cast<int>(cr[l]/2)*(1-sc[l])-(1-sf[l]);
@@ -56,17 +60,25 @@ namespace CoarsenIO{
         const int imin = idx_min[0];
         const int jmin = idx_min[1];
         const int kmin = idx_min[2];
+        int  ii, jj, kk;
+        Real wx, wy, wz;
 
         // Interpolate over points computed above
         Real c = 0.0_rt;
-        for (int kref = 0; kref < numz; ++kref) {
-            for (int jref = 0; jref < numy; ++jref) {
+        for         (int kref = 0; kref < numz; ++kref) {
+            for     (int jref = 0; jref < numy; ++jref) {
                 for (int iref = 0; iref < numx; ++iref) {
-                    c += arr_src(imin+iref,jmin+jref,kmin+kref,comp);
+                    ii = imin+iref;
+                    jj = jmin+jref;
+                    kk = kmin+kref;
+                    wx = 1.0_rt/static_cast<Real>(numx);
+                    wy = 1.0_rt/static_cast<Real>(numy);
+                    wz = 1.0_rt/static_cast<Real>(numz);
+                    c += wx*wy*wz*arr_src(ii,jj,kk,comp);
                 }
             }
         }
-        return c / (numx*numy*numz);
+        return c;
     };
 
     /**
