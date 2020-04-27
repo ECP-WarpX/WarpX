@@ -12,6 +12,10 @@
  * \brief Apply a filter on a list of FABs, then create and apply a transform
  * operation to the particles depending on the output of the filter.
  *
+ * This version of the function takes as inputs a mask and a FAB that can be
+ * used in the transform function, both of which can be obtained using another version
+ * of filterCreateTransformFromFAB that takes a filter function as input.
+ *
  * \tparam N number of particles created in the dst(s) in each cell
  * \tparam DstTile the dst particle tile type
  * \tparam FAB the src FAB type
@@ -83,6 +87,9 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     const auto dst1_data = dst1.getParticleTileData();
     const auto dst2_data = dst2.getParticleTileData();
 
+    // For loop over all cells in the box. If mask is true in the given cell,
+    // we create the particles in the cell and apply a transform function to the
+    // created particles.
     AMREX_HOST_DEVICE_FOR_1D( ncells, i,
     {
         if (mask[i])
@@ -119,6 +126,10 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
 /**
  * \brief Apply a filter on a list of FABs, then create and apply a transform
  * operation to the particles depending on the output of the filter.
+ *
+ * This version of the function takes as input a filter functor (and an array of FABs that
+ * can be used in the filter functor), uses it to obtain a mask and a FAB and then calls another
+ * version of filterCreateTransformFromFAB that takes the mask and the FAB as inputs.
  *
  * \tparam N number of particles created in the dst(s) in each cell
  * \tparam DstTile the dst particle tile type
@@ -173,6 +184,9 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
 
     auto p_mask = mask.dataPtr();
 
+    // for loop over all cells in the box. We apply the filter function to each cell
+    // and store the result in arrNumPartCreation. If the result is strictly greater than
+    // 0, the mask is set to true at the given cell position.
     amrex::ParallelFor(box,  [=] AMREX_GPU_DEVICE (int i, int j, int k){
         arrNumPartCreation(i,j,k) = filter(src_FABs,i,j,k);
         const IntVect iv(AMREX_D_DECL(i,j,k));
