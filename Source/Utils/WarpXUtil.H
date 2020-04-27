@@ -245,6 +245,7 @@ class SliceParser
     */
     SliceParser (const std::string& instr);
 
+public:
     /**
     * \brief A method that returns true if the input integer is contained in the slice. (e.g. if
     * the list is initialized with "300:500:100", this method returns true if and only if n is
@@ -252,7 +253,7 @@ class SliceParser
     *
     * @param[in] n the input integer
     */
-    bool contains (int n);
+    bool contains (const int n) const;
 };
 
 /**
@@ -262,6 +263,7 @@ class SliceParser
  */
 class MultiSliceParser
 {
+private:
     std::vector<SliceParser> m_slices;
     std::string m_separator = ",";
     bool m_activated = false;
@@ -272,7 +274,7 @@ class MultiSliceParser
     * @param[in] instr an input string of the form "x,y,z,...". This will call the constructor of
     * SliceParser using x, y and z as input arguments.
     */
-    public:
+public:
     MultiSliceParser (const std::string& instr);
 
     /**
@@ -281,13 +283,13 @@ class MultiSliceParser
     *
     * @param[in] n the input integer
     */
-    bool contains (int n);
+    bool contains (const int n) const;
 
 /**
     * \brief A method that returns true if any of the slices contained by the MultiSliceParser
     * has a strictly positive period.
     */
-    bool isActivated ();
+    bool isActivated () const;
 };
 
 #endif //WARPX_UTILS_H_

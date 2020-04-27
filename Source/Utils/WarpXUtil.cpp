@@ -277,11 +277,11 @@ SliceParser::SliceParser (const std::string& instr)
     }
 }
 
-bool SliceParser::contains (int n)
+bool SliceParser::contains (const int n) const
 {
     if (m_period <= 0) {return false;}
     else{
-    return (n - m_start) % m_period == 0 && n >= m_start && n <= m_stop;}
+        return (n - m_start) % m_period == 0 && n >= m_start && n <= m_stop;}
 }
 
 MultiSliceParser::MultiSliceParser (const std::string& instr)
@@ -296,7 +296,7 @@ MultiSliceParser::MultiSliceParser (const std::string& instr)
     }
 }
 
-bool MultiSliceParser::contains (int n)
+bool MultiSliceParser::contains (const int n) const
 {
     for(int i=0; i<m_slices.size(); i++){
         if (m_slices[i].contains(n)) return true;
@@ -304,4 +304,4 @@ bool MultiSliceParser::contains (int n)
     return false;
 }
 
-bool MultiSliceParser::isActivated () {return m_activated;}
+bool MultiSliceParser::isActivated () const {return m_activated;}
