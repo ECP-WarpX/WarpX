@@ -58,6 +58,8 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     const int level_0 = 0;
     Geometry const & geom = warpx.Geom(level_0);
 
+    // Note that we use here x and y for the 2 directions in 2D, which is not consistent with
+    // the rest of the code (x and z are usually chosen)
     const Real xlo_global = geom.ProbLo(0);
     const Real ylo_global = geom.ProbLo(1);
     const Real dx         = geom.CellSize(0);
