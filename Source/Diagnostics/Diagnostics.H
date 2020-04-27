@@ -2,10 +2,6 @@
 #define WARPX_DIAGNOSTICS_H_
 
 #include "FlushFormats/FlushFormat.H"
-#include "FlushFormats/FlushFormatPlotfile.H"
-#ifdef WARPX_USE_OPENPMD
-#   include "FlushFormats/FlushFormatOpenPMD.H"
-#endif
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ParticleDiag/ParticleDiag.H"
 #include <AMReX_Vector.H>
