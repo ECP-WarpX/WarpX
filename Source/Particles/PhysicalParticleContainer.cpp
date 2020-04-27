@@ -385,7 +385,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
             weight = std::abs(q_tot)/(std::abs(charge)*amrex::ParticleReal(npart));
         }
         else {
-            weight = abs(p_q); //TODO: Explain how codes can make use of this option
+            weight = std::abs(p_q); //TODO: Explain how codes can make use of this option
         }
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
