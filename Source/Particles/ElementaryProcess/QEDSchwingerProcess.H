@@ -83,7 +83,7 @@ struct SchwingerTransformFunc
             dst1.m_rdata[m_weight_index][i_dst1+n] = total_weight/N/m_y_size;
             dst2.m_rdata[m_weight_index][i_dst2+n] = total_weight/N/m_y_size;
 #endif
-            }
+        }
     }
 };
 

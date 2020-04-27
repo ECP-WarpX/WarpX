@@ -54,16 +54,16 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     const int level_0 = 0;
     Geometry const & geom = warpx.Geom(level_0);
 
-    Real xlo_global = geom.ProbLo(0);
-    Real ylo_global = geom.ProbLo(1);
-    Real dx         = geom.CellSize(0);
-    Real dy         = geom.CellSize(1);
+    const Real xlo_global = geom.ProbLo(0);
+    const Real ylo_global = geom.ProbLo(1);
+    const Real dx         = geom.CellSize(0);
+    const Real dy         = geom.CellSize(1);
 #if (AMREX_SPACEDIM == 3)
-    Real zlo_global = geom.ProbLo(2);
-    Real dz         = geom.CellSize(2);
+    const Real zlo_global = geom.ProbLo(2);
+    const Real dz         = geom.CellSize(2);
 #endif
 
-    auto arrNumPartCreation = src_FAB->array();
+    const auto arrNumPartCreation = src_FAB->array();
     Gpu::DeviceVector<Index> offsets(ncells);
     Gpu::exclusive_scan(mask, mask+ncells, offsets.begin());
 

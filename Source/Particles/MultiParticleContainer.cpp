@@ -1023,10 +1023,9 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 void
 MultiParticleContainer::doQEDSchwinger ()
 {
-    if (!m_do_qed_schwinger) {return;}
+    WARPX_PROFILE("MPC::doQEDSchwinger");
 
-    WARPX_PROFILE_VAR_NS("MPC::doQEDSchwinger",blp_schwinger);
-    WARPX_PROFILE_VAR_START(blp_schwinger);
+    if (!m_do_qed_schwinger) {return;}
 
     auto & warpx = WarpX::GetInstance();
 
@@ -1053,11 +1052,11 @@ MultiParticleContainer::doQEDSchwinger ()
     amrex::Geometry const & geom = warpx.Geom(level_0);
     auto domain_box = geom.Domain();
 #if (AMREX_SPACEDIM == 2)
-    auto dVdt = geom.CellSize(0) * geom.CellSize(1) * m_qed_schwinger_y_size
-               * warpx.getdt(level_0);
+    const auto dVdt = geom.CellSize(0) * geom.CellSize(1)
+        * m_qed_schwinger_y_size * warpx.getdt(level_0);
 #elif (AMREX_SPACEDIM == 3)
-    auto dVdt = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2)
-               * warpx.getdt(level_0);
+    const auto dVdt = geom.CellSize(0) * geom.CellSize(1)
+        * geom.CellSize(2) * warpx.getdt(level_0);
 #endif
 
     auto& pc_product_ele =
@@ -1124,7 +1123,6 @@ MultiParticleContainer::doQEDSchwinger ()
         setNewParticleIDs(dst_ele_tile, np_ele_dst, num_added);
         setNewParticleIDs(dst_pos_tile, np_pos_dst, num_added);
 
-        WARPX_PROFILE_VAR_STOP(blp_schwinger);
     }
 }
 

@@ -38,7 +38,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE amrex::Real
 getSchwingerProductionNumber (const amrex::Real dVdt,
               const amrex::Real Ex, const amrex::Real Ey, const amrex::Real Ez,
               const amrex::Real Bx, const amrex::Real By, const amrex::Real Bz,
-              const amrex::Real PoissonToGaussianThreshold = 100.)
+              const amrex::Real PoissonToGaussianThreshold)
 {
     using namespace amrex;
     using namespace picsar::multi_physics;
