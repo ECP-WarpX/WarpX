@@ -346,8 +346,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
 
 #if (AMREX_SPACEDIM == 2)
         //Interpolate amplitude
-        const auto idx = [=](int i, int j){
-            return (i-tmp_idx_first_time) * tmp_nx + j;
+        const auto idx = [=](int i_interp, int j_interp){
+            return (i_interp-tmp_idx_first_time) * tmp_nx + j_interp;
         };
         amplitude[i] = WarpXUtilAlgo::bilinear_interp(
             t_left, t_right,
@@ -371,10 +371,10 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             idx_y_right*(tmp_y_max-tmp_y_min)/(tmp_ny-1) + tmp_y_min;
 
         //Interpolate amplitude
-        const auto idx = [=](int i, int j, int k){
+        const auto idx = [=](int i_interp, int j_interp, int k_interp){
             return
-                (i-tmp_idx_first_time)*tmp_nx*tmp_ny+
-                j*tmp_ny + k;
+                (i_interp-tmp_idx_first_time)*tmp_nx*tmp_ny+
+                j_interp*tmp_ny + k_interp;
         };
         amplitude[i] = WarpXUtilAlgo::trilinear_interp(
             t_left, t_right,
@@ -425,22 +425,22 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
     // Loop through the macroparticle to calculate the proper amplitude
     amrex::ParallelFor(
     np,
-    [=] AMREX_GPU_DEVICE (int i) {
+    [=] AMREX_GPU_DEVICE (int ip) {
         //Amplitude is zero if we are out of bounds
-        if (Xp[i] <= tmp_x_min || Xp[i] >= tmp_x_max){
-            amplitude[i] = 0.0_rt;
+        if (Xp[ip] <= tmp_x_min || Xp[ip] >= tmp_x_max){
+            amplitude[ip] = 0.0_rt;
             return;
         }
 #if (AMREX_SPACEDIM == 3)
-        if (Yp[i] <= tmp_y_min || Yp[i] >= tmp_y_max){
-            amplitude[i] = 0.0_rt;
+        if (Yp[ip] <= tmp_y_min || Yp[ip] >= tmp_y_max){
+            amplitude[ip] = 0.0_rt;
             return;
         }
 #endif
 
         //Find indices along x
         auto const p_x_right = WarpXUtilAlgo::upper_bound(
-                p_x_coords, p_x_coords+tmp_x_coords_size, Xp[i]);
+                p_x_coords, p_x_coords+tmp_x_coords_size, Xp[ip]);
         const int idx_x_right = p_x_right - p_x_coords;
         const int idx_x_left = idx_x_right - 1;
 
@@ -449,19 +449,19 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
         const auto idx = [=](int i, int j){
             return (i-tmp_idx_first_time) * tmp_x_coords_size + j;
         };
-        amplitude[i] = WarpXUtilAlgo::bilinear_interp(
+        amplitude[ip] = WarpXUtilAlgo::bilinear_interp(
             t_left, t_right,
             p_x_coords[idx_x_left], p_x_coords[idx_x_right],
             p_E_data[idx(idx_t_left, idx_x_left)],
             p_E_data[idx(idx_t_left, idx_x_right)],
             p_E_data[idx(idx_t_right, idx_x_left)],
             p_E_data[idx(idx_t_right, idx_x_right)],
-            t, Xp[i])*tmp_e_max;
+            t, Xp[ip])*tmp_e_max;
 
 #elif (AMREX_SPACEDIM == 3)
         //Find indices along y
         auto const p_y_right = WarpXUtilAlgo::upper_bound(
-            p_y_coords, p_y_coords+tmp_y_coords_size, Yp[i]);
+            p_y_coords, p_y_coords+tmp_y_coords_size, Yp[ip]);
         const int idx_y_right = p_y_right - p_y_coords;
         const int idx_y_left = idx_y_right - 1;
 
@@ -471,7 +471,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
                 (i-tmp_idx_first_time)*tmp_x_coords_size*tmp_y_coords_size+
                 j*tmp_y_coords_size + k;
         };
-        amplitude[i] = WarpXUtilAlgo::trilinear_interp(
+        amplitude[ip] = WarpXUtilAlgo::trilinear_interp(
             t_left, t_right,
             p_x_coords[idx_x_left], p_x_coords[idx_x_right],
             p_y_coords[idx_y_left], p_y_coords[idx_y_right],
@@ -483,7 +483,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
             p_E_data[idx(idx_t_right, idx_x_left, idx_y_right)],
             p_E_data[idx(idx_t_right, idx_x_right, idx_y_left)],
             p_E_data[idx(idx_t_right, idx_x_right, idx_y_right)],
-            t, Xp[i], Yp[i])*tmp_e_max;
+            t, Xp[ip], Yp[ip])*tmp_e_max;
 #endif
         }
     );

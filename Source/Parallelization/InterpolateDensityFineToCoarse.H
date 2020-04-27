@@ -63,9 +63,9 @@ public:
 
         // return zero for out-of-bounds accesses during interpolation
         // this is efficiently used as a method to add neutral elements beyond guards in the average below
-        auto const fine = [fine_unsafe] AMREX_GPU_DEVICE (int const j, int const k, int const l, int const m) noexcept
+        auto const fine = [fine_unsafe] AMREX_GPU_DEVICE (int const j2, int const k2, int const l2, int const m2) noexcept
         {
-            return fine_unsafe.contains(j, k, l) ? fine_unsafe(j, k, l, m) :  amrex::Real{0.};
+            return fine_unsafe.contains(j2, k2, l2) ? fine_unsafe(j2, k2, l2, m2) :  amrex::Real{0.};
         };
 
         int const ii = i * m_refinement_ratio;

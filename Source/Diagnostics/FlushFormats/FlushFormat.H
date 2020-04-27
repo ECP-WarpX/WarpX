@@ -2,6 +2,7 @@
 #define WARPX_FLUSHFORMAT_H_
 
 #include "Particles/MultiParticleContainer.H"
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
 
 class FlushFormat
 {
@@ -12,7 +13,7 @@ public:
         const amrex::Vector<const amrex::MultiFab*> mf,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double time,
-        MultiParticleContainer& mpc, int nlev,
+        const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
         const std::string prefix,
         bool plot_raw_fields,
         bool plot_raw_fields_guards,

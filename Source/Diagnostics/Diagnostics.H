@@ -7,6 +7,7 @@
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
+#include "ParticleDiag/ParticleDiag.H"
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
 
@@ -36,6 +37,10 @@ public:
      * \return bool, whether to flush
      */
     bool DoDump (int step, bool force_flush=false);
+    /** Initialize functors that store pointers to the fields requested by the user.
+      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+      */
+    void InitializeFieldFunctors (int lev);
 private:
     void ReadParameters ();
     /** Append varnames with names for all modes of a field
@@ -65,10 +70,11 @@ private:
      * cell-center for standard EB fields) as well as more involved operations
      * (back-transformed diagnostics, filtering, reconstructing cartesian
      * fields in cylindrical). */
-    amrex::Vector< amrex::Vector <ComputeDiagFunctor const *> > m_all_field_functors;
+    amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor const> > > m_all_field_functors;
     /** output multifab, where all fields are cell-centered and stacked */
     amrex::Vector< amrex::MultiFab > m_mf_output;
     int nlev; /**< number of levels to output */
+    int nmax_lev; /**< max_level to allocate output multifab and vector of field functors. */
     /** This class is responsible for flushing the data to file */
     FlushFormat* m_flush_format;
     /** Whether to plot raw (i.e., NOT cell-centered) fields */
@@ -79,6 +85,11 @@ private:
     bool m_plot_raw_rho = false;
     /** Whether to plot F (charge conservation error) in raw fields */
     bool m_plot_raw_F = false;
+
+    /** Name of species to write to file */
+    std::vector< std::string > m_species_names;
+    /** Each element of this vector handles output for 1 species */
+    amrex::Vector< ParticleDiag > m_all_species;
 
     /** Coarsening ratio such that, fields are averaged to the coarsened grid.
       * The ratio should render the grid to be coarsenable (as defined by AMReX). */
