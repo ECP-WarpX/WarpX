@@ -382,7 +382,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
 
         amrex::Real weight;
         if (q_tot != 0.0){
-            weight = abs(q_tot)/(abs(charge)*amrex::ParticleReal(npart));
+            weight = std::abs(q_tot)/(std::abs(charge)*amrex::ParticleReal(npart));
         }
         else {
             weight = abs(p_q); //TODO: Explain how codes can make use of this option
