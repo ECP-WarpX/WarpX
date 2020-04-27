@@ -1,5 +1,5 @@
 #include "CellCenterFunctor.H"
-#include "Utils/Coarsen.H"
+#include "Utils/CoarsenIO.H"
 
 using namespace amrex;
 
@@ -28,13 +28,13 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
             // All modes > 0
             MultiFab::Add(mf_dst_stag, *m_mf_src, ic, 0, 1, m_mf_src->nGrowVect());
         }
-        Coarsen::CoarsenIO( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
+        CoarsenIO::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
     } else {
-        Coarsen::CoarsenIO( mf_dst, *m_mf_src, dcomp, 0, nComp(), 0, m_crse_ratio);
+        CoarsenIO::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), 0, m_crse_ratio);
     }
 #else
     // In cartesian geometry, coarsen and interpolate from simulation MultiFab, m_mf_src,
     // to output diagnostic MultiFab, mf_dst.
-    Coarsen::CoarsenIO( mf_dst, *m_mf_src, dcomp, 0, nComp(), 0, m_crse_ratio);
+    CoarsenIO::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), 0, m_crse_ratio);
 #endif
 }

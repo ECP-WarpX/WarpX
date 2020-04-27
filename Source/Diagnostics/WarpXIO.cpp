@@ -10,7 +10,7 @@
 #include "WarpX.H"
 #include "FieldIO.H"
 #include "SliceDiagnostic.H"
-#include "Utils/Coarsen.H"
+#include "Utils/CoarsenIO.H"
 
 #ifdef WARPX_USE_OPENPMD
 #   include "Diagnostics/WarpXOpenPMD.H"
@@ -427,7 +427,7 @@ WarpX::GetCellCenteredData() {
 
     for (int lev = finest_level; lev > 0; --lev)
     {
-        Coarsen::CoarsenIO( *cc[lev-1], *cc[lev], 0, 0, nc, 0, refRatio(lev-1) );
+        CoarsenIO::Coarsen( *cc[lev-1], *cc[lev], 0, 0, nc, 0, refRatio(lev-1) );
     }
 
     return std::move(cc[0]);

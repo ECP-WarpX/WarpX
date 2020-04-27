@@ -1,5 +1,5 @@
 #include "PartPerGridFunctor.H"
-#include "Utils/Coarsen.H"
+#include "Utils/CoarsenIO.H"
 
 using namespace amrex;
 
@@ -32,5 +32,5 @@ PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     }
 
     // Coarsen and interpolate from ppg_mf to the output diagnostic MultiFab, mf_dst.
-    Coarsen::CoarsenIO(mf_dst, ppg_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
+    CoarsenIO::Coarsen(mf_dst, ppg_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
 }

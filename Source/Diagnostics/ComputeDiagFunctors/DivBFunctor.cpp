@@ -1,5 +1,5 @@
 #include "DivBFunctor.H"
-#include "Utils/Coarsen.H"
+#include "Utils/CoarsenIO.H"
 
 using namespace amrex;
 
@@ -20,5 +20,5 @@ DivBFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
     MultiFab divB( warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng );
     warpx.ComputeDivB(divB, 0, m_arr_mf_src, WarpX::CellSize(m_lev) );
     // Coarsen and Interpolate from divB to coarsened/reduced_domain mf_dst
-    Coarsen::CoarsenIO( mf_dst, divB, dcomp, 0, nComp(), 0, m_crse_ratio);
+    CoarsenIO::Coarsen( mf_dst, divB, dcomp, 0, nComp(), 0, m_crse_ratio);
 }
