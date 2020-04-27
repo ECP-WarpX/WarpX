@@ -13,6 +13,8 @@ ComputeDiagFunctor
 public:
     ComputeDiagFunctor( int ncomp, amrex::IntVect crse_ratio) :
                         m_ncomp(ncomp), m_crse_ratio(crse_ratio) {};
+    //** Virtual Destructor to handle clean destruction of derived classes */
+    virtual ~ComputeDiagFunctor() = default;
     /** Compute a field and store the result in mf_dst
      * \param[out] mf_dst output MultiFab where the result is written
      * \param[in] dcomp first component of mf_dst in which the result is written
