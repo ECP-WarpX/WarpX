@@ -1,7 +1,7 @@
 #ifndef WARPX_AVG_GALILEAN_ALGORITHM_H_
 #define WARPX_AVG_GALILEAN_ALGORITHM_H_
 
-#include "Source/FieldSolver/SpectralSolver/SpectralAlgorithms/SpectralBaseAlgorithm.H"
+#include "FieldSolver/SpectralSolver/SpectralAlgorithms/SpectralBaseAlgorithm.H"
 
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
