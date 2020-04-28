@@ -4,8 +4,8 @@
 
 using namespace amrex;
 
-PartPerCellFunctor::PartPerCellFunctor(const amrex::MultiFab* mf_src, const int lev, amrex::IntVect crse_ratio, const int ncomp)
-    : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev)
+PartPerCellFunctor::PartPerCellFunctor(const amrex::MultiFab* mf_src, const int lev, const int ncomp)
+    : ComputeDiagFunctor(ncomp), m_lev(lev)
 {
     // mf_src will not be used, let's make sure it's null.
     AMREX_ALWAYS_ASSERT(mf_src == nullptr);
@@ -14,7 +14,7 @@ PartPerCellFunctor::PartPerCellFunctor(const amrex::MultiFab* mf_src, const int 
 }
 
 void
-PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
+PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const amrex::IntVect crse_ratio) const
 {
     auto& warpx = WarpX::GetInstance();
     // Guard cell is set to 1 for generality. However, for a cell-centered
@@ -28,5 +28,5 @@ PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     // Compute ppc which includes a summation over all species.
     warpx.GetPartContainer().Increment(ppc_mf, m_lev);
     // Coarsen and interpolate from ppc_mf to the output diagnostic MultiFab, mf_dst.
-    Average::CoarsenAndInterpolate(mf_dst, ppc_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
+    Average::CoarsenAndInterpolate(mf_dst, ppc_mf, dcomp, 0, nComp(), 0, crse_ratio);
 }

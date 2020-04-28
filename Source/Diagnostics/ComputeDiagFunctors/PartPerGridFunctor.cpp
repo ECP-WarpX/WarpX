@@ -3,8 +3,8 @@
 
 using namespace amrex;
 
-PartPerGridFunctor::PartPerGridFunctor(const amrex::MultiFab * const mf_src, const int lev, const amrex::IntVect crse_ratio, const int ncomp)
-    : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev)
+PartPerGridFunctor::PartPerGridFunctor(const amrex::MultiFab * const mf_src, const int lev, const int ncomp)
+    : ComputeDiagFunctor(ncomp), m_lev(lev)
 {
     // mf_src will not be used, let's make sure it's null.
     AMREX_ALWAYS_ASSERT(mf_src == nullptr);
@@ -13,7 +13,7 @@ PartPerGridFunctor::PartPerGridFunctor(const amrex::MultiFab * const mf_src, con
 }
 
 void
-PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
+PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const amrex::IntVect crse_ratio) const
 {
     auto& warpx = WarpX::GetInstance();
     const Vector<long>& npart_in_grid = warpx.GetPartContainer().NumberOfParticlesInGrid(m_lev);
@@ -32,5 +32,5 @@ PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     }
 
     // Coarsen and interpolate from ppg_mf to the output diagnostic MultiFab, mf_dst.
-    Average::CoarsenAndInterpolate(mf_dst, ppg_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
+    Average::CoarsenAndInterpolate(mf_dst, ppg_mf, dcomp, 0, nComp(), 0, crse_ratio);
 }

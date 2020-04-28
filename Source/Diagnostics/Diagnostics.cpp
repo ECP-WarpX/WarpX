@@ -149,7 +149,7 @@ Diagnostics::ComputeAndPack ()
             // Call all functors in m_all_field_functors[lev]. Each of them computes
             // a diagnostics and writes in one or more components of the output
             // multifab m_mf_output[lev].
-            m_all_field_functors[lev][icomp]->operator()(m_mf_output[lev], icomp_dst);
+            m_all_field_functors[lev][icomp]->operator()(m_mf_output[lev], icomp_dst, m_crse_ratio);
             // update the index of the next component to fill
             icomp_dst += m_all_field_functors[lev][icomp]->nComp();
         }
@@ -207,7 +207,7 @@ Diagnostics::AddRZModesToDiags (int lev)
         // 3 components, r theta z
         m_all_field_functors[lev][icomp] =
             std::make_unique<CellCenterFunctor<FieldTypes::E>>(lev, dim,
-                              m_crse_ratio, false, ncomp_multimodefab);
+                              false, ncomp_multimodefab);
         AddRZModesToOutputNames(std::string("E") + coord[dim],
                                 warpx.get_pointer_Efield_aux(0, 0)->nComp());
         icomp += 1;
@@ -217,7 +217,7 @@ Diagnostics::AddRZModesToDiags (int lev)
         // 3 components, r theta z
         m_all_field_functors[lev][icomp] =
             std::make_unique<CellCenterFunctor<FieldTypes::B>>(lev, dim,
-                              m_crse_ratio, false, ncomp_multimodefab);
+                              false, ncomp_multimodefab);
         AddRZModesToOutputNames(std::string("B") + coord[dim],
                                 warpx.get_pointer_Bfield_aux(0, 0)->nComp());
         icomp += 1;
@@ -227,7 +227,7 @@ Diagnostics::AddRZModesToDiags (int lev)
         // 3 components, r theta z
         m_all_field_functors[lev][icomp] =
             std::make_unique<CellCenterFunctor<FieldTypes::J>>(lev, dim,
-                              m_crse_ratio, false, ncomp_multimodefab);
+                              false, ncomp_multimodefab);
         icomp += 1;
         AddRZModesToOutputNames(std::string("J") + coord[dim],
                                 warpx.get_pointer_current_fp(0, 0)->nComp());
@@ -358,35 +358,35 @@ Diagnostics::InitializeFieldFunctors (int lev)
     // Fill vector of functors for all components except individual cylindrical modes.
     for (int comp=0, n=m_all_field_functors[lev].size(); comp<n; comp++){
         if        ( m_varnames[comp] == "Ex" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::E>>(lev, 0, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::E>>(lev, 0);
         } else if ( m_varnames[comp] == "Ey" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::E>>(lev, 1, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::E>>(lev, 1);
         } else if ( m_varnames[comp] == "Ez" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::E>>(lev, 2, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::E>>(lev, 2);
         } else if ( m_varnames[comp] == "Bx" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::B>>(lev, 0, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::B>>(lev, 0);
         } else if ( m_varnames[comp] == "By" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::B>>(lev, 1, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::B>>(lev, 1);
         } else if ( m_varnames[comp] == "Bz" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::B>>(lev, 2, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::B>>(lev, 2);
         } else if ( m_varnames[comp] == "jx" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::J>>(lev, 0, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::J>>(lev, 0);
         } else if ( m_varnames[comp] == "jy" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::J>>(lev, 1, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::J>>(lev, 1);
         } else if ( m_varnames[comp] == "jz" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::J>>(lev, 2, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::J>>(lev, 2);
         } else if ( m_varnames[comp] == "rho" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::rho>>(lev, 0, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::rho>>(lev);
         } else if ( m_varnames[comp] == "F" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::F>>(lev, 0, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::F>>(lev);
         } else if ( m_varnames[comp] == "part_per_cell" ){
-            m_all_field_functors[lev][comp] = std::make_unique<PartPerCellFunctor>(nullptr, lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<PartPerCellFunctor>(nullptr, lev);
         } else if ( m_varnames[comp] == "part_per_grid" ){
-            m_all_field_functors[lev][comp] = std::make_unique<PartPerGridFunctor>(nullptr, lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<PartPerGridFunctor>(nullptr, lev);
         } else if ( m_varnames[comp] == "divB" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::divB>>(lev, 0, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::divB>>(lev);
         } else if ( m_varnames[comp] == "divE" ){
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::divE>>(lev, 0, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::divE>>(lev);
         }
     }
     AddRZModesToDiags( lev );

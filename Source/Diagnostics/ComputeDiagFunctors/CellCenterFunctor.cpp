@@ -86,15 +86,14 @@ amrex::MultiFab * get_field_pointer <FieldTypes::divB> (const int lev, const int
 
 template <FieldTypes::TypeEnum FIELDTYPE>
 CellCenterFunctor<FIELDTYPE>::CellCenterFunctor (const int lev, const int dir,
-                                                 const amrex::IntVect crse_ratio,
                                                  const bool convertRZmodes2cartesian, const int ncomp)
-    : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev), m_dir(dir),
+    : ComputeDiagFunctor(ncomp), m_lev(lev), m_dir(dir),
       m_convertRZmodes2cartesian(convertRZmodes2cartesian)
 {}
 
 template <FieldTypes::TypeEnum FIELDTYPE>
 void
-CellCenterFunctor<FIELDTYPE>::operator()(amrex::MultiFab& mf_dst, int dcomp) const
+CellCenterFunctor<FIELDTYPE>::operator()(amrex::MultiFab& mf_dst, int dcomp, const amrex::IntVect crse_ratio) const
 {
 
     MultiFab const * const mf_src = get_field_pointer <FIELDTYPE> (m_lev, m_dir);
@@ -114,14 +113,14 @@ CellCenterFunctor<FIELDTYPE>::operator()(amrex::MultiFab& mf_dst, int dcomp) con
             // All modes > 0
             MultiFab::Add(mf_dst_stag, *mf_src, ic, 0, 1, mf_src->nGrowVect());
         }
-        Average::CoarsenAndInterpolate(mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
+        Average::CoarsenAndInterpolate(mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  crse_ratio);
     } else {
-        Average::CoarsenAndInterpolate(mf_dst, *mf_src, dcomp, 0, nComp(), 0, m_crse_ratio);
+        Average::CoarsenAndInterpolate(mf_dst, *mf_src, dcomp, 0, nComp(), 0, crse_ratio);
     }
 #else
     // In cartesian geometry, coarsen and interpolate from simulation MultiFab, mf_src,
     // to output diagnostic MultiFab, mf_dst.
-    Average::CoarsenAndInterpolate(mf_dst, *mf_src, dcomp, 0, nComp(), 0, m_crse_ratio);
+    Average::CoarsenAndInterpolate(mf_dst, *mf_src, dcomp, 0, nComp(), 0, crse_ratio);
 #endif
 }
 
