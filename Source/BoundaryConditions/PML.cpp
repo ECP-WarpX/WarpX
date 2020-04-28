@@ -434,7 +434,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     nge = ngFFT;
     ngb = ngFFT;
     ngf = ngFFT;
- #endif
+#endif
 
     pml_E_fp[0].reset( new MultiFab( amrex::convert( ba,
         WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, 3, nge ) );
