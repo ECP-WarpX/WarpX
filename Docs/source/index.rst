@@ -39,5 +39,7 @@ In order to learn to use the code, please see the sections below:
    theory/theory
    developers/developers
    developers/doxygen
+   libensemble/libensemble
+   contact_us
    acknowledge_us
    acknowledgements

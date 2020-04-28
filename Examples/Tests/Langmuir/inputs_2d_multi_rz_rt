@@ -11,7 +11,7 @@ amr.max_grid_size = 64
 # Maximum level in hierarchy (for now must be 0, i.e., one level in total)
 amr.max_level = 0
 
-amr.plot_int = 40   # How often to write plotfiles.  "<= 0" means no plotfiles.
+amr.plot_int = 100   # How often to write plotfiles.  "<= 0" means no plotfiles.
 warpx.fields_to_plot = jx jz Ex Ez By
 
 # Geometry
@@ -26,6 +26,7 @@ warpx.serialize_ics = 1
 warpx.verbose = 1
 
 # Algorithms
+warpx.do_pml = 0
 algo.field_gathering = energy-conserving
 algo.current_deposition = esirkepov
 
