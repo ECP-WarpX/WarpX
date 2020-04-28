@@ -22,7 +22,7 @@
 //Lookup table building function is in a dedicated (optional) class to
 //avoid including heavy dependencies if they are not needed.
 #ifdef WARPX_QED_TABLE_GEN
-    #include "BreitWheelerEngineTableBuilder.H"
+#    include "BreitWheelerEngineTableBuilder.H"
 #endif
 
 #include <string>
