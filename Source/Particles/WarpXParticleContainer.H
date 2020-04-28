@@ -16,8 +16,8 @@
 #include "Evolve/WarpXDtType.H"
 
 #ifdef WARPX_QED
-    #include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
-    #include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
 #endif
 
 #include <AMReX_Particles.H>
