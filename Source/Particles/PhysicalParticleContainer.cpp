@@ -157,12 +157,12 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     // Scale the velocity by the speed of light
     for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
 
-    #ifdef WARPX_QED
+#ifdef WARPX_QED
         if(m_do_qed){
             //Optical depths is always plotted if QED is on
             plot_flags[plot_flag_size-1] = 1;
         }
-    #endif
+#endif
 
     // build filter functors
     m_do_random_filter  = pp.query("random_fraction", m_random_fraction);

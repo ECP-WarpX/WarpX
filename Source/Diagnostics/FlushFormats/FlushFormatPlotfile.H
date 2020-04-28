@@ -21,7 +21,7 @@ public:
         const amrex::Vector<ParticleDiag>& particle_diags, int nlev, const std::string prefix,
         bool plot_raw_fields,
         bool plot_raw_fields_guards,
-        bool plot_raw_rho, bool plot_raw_F) const override final;
+        bool plot_raw_rho, bool plot_raw_F) const override;
 
     /** Write general info of the run into the plotfile */
     void WriteJobInfo(const std::string& dir) const;
