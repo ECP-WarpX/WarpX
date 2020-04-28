@@ -364,12 +364,6 @@ WarpX::ReadParameters ()
     {
         ParmParse pp("amr");// Traditionally, these have prefix, amr.
 
-        pp.query("check_file", check_file);
-        pp.query("check_int", check_int);
-
-        pp.query("plot_file", plot_file);
-        pp.query("plot_int", plot_int);
-
         pp.query("restart", restart_chkfile);
     }
 
@@ -565,7 +559,6 @@ WarpX::ReadParameters ()
 #endif
         pp.query("plot_raw_fields", plot_raw_fields);
         pp.query("plot_raw_fields_guards", plot_raw_fields_guards);
-        pp.query("plot_coarsening_ratio", plot_coarsening_ratio);
         bool user_fields_to_plot;
         user_fields_to_plot = pp.queryarr("fields_to_plot", fields_to_plot);
         if (not user_fields_to_plot){
