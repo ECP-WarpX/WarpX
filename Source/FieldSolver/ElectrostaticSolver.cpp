@@ -157,7 +157,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
         const Real* dx = Geom(lev).CellSize();
 
 #ifdef _OPENMP
-        #pragma omp parallel if (Gpu::notInLaunchRegion())
+#    pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
@@ -259,7 +259,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
         const Real* dx = Geom(lev).CellSize();
 
 #ifdef _OPENMP
-        #pragma omp parallel if (Gpu::notInLaunchRegion())
+#    pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
