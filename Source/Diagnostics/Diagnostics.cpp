@@ -1,7 +1,5 @@
 #include "Diagnostics.H"
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
-#include "ComputeDiagFunctors/PartPerCellFunctor.H"
-#include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "WarpX.H"
 #include "Utils/Average.H"
 #include "Utils/WarpXUtil.H"
@@ -380,9 +378,9 @@ Diagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "F" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::F>>(lev);
         } else if ( m_varnames[comp] == "part_per_cell" ){
-            m_all_field_functors[lev][comp] = std::make_unique<PartPerCellFunctor>(nullptr, lev);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::PartCell>>(lev, 0, false);
         } else if ( m_varnames[comp] == "part_per_grid" ){
-            m_all_field_functors[lev][comp] = std::make_unique<PartPerGridFunctor>(nullptr, lev);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::PartGrid>>(lev, 0, false);
         } else if ( m_varnames[comp] == "divB" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor<FieldTypes::divB>>(lev);
         } else if ( m_varnames[comp] == "divE" ){

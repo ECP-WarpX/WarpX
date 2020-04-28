@@ -3,7 +3,7 @@
 
 #include "ComputeDiagFunctor.H"
 
-struct FieldTypes { enum TypeEnum { E=0, B, J, rho, F, divE, divB }; };
+struct FieldTypes { enum TypeEnum { E=0, B, J, rho, F, divE, divB, PartCell, PartGrid }; };
 
 /**
  * \brief Functor to cell-center MF and store result in mf_out.

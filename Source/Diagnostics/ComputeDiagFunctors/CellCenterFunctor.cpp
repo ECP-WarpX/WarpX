@@ -84,6 +84,47 @@ amrex::MultiFab * get_field_pointer <FieldTypes::divB> (const int lev, const int
     return divB.get();
 }
 
+template <>
+amrex::MultiFab * get_field_pointer <FieldTypes::PartCell> (const int lev, const int dir)
+{
+    auto& warpx = WarpX::GetInstance();
+    // Guard cell is set to 1 for generality. However, for a cell-centered
+    // output Multifab, mf_dst, the guard-cell data is not needed especially considering
+    // the operations performend in the CoarsenAndInterpolate function.
+    constexpr int ng = 1;
+    // Temporary cell-centered, single-component MultiFab for storing particles per cell.
+    const amrex::BoxArray& ba = warpx.boxArray(lev);
+    // Set value to 0, and increment the value in each cell with ppc.
+    std::unique_ptr<amrex::MultiFab> ppc_mf = std::make_unique<amrex::MultiFab>(ba, warpx.DistributionMap(lev), 1, ng);
+    ppc_mf->setVal(0._rt);
+    // Compute ppc which includes a summation over all species.
+    warpx.GetPartContainer().Increment(*ppc_mf, lev);
+    return ppc_mf.get();
+}
+
+template <>
+amrex::MultiFab * get_field_pointer <FieldTypes::PartGrid> (const int lev, const int dir)
+{
+    auto& warpx = WarpX::GetInstance();
+    const Vector<long>& npart_in_grid = warpx.GetPartContainer().NumberOfParticlesInGrid(lev);
+    // Guard cell is set to 1 for generality. However, for a cell-centered
+    // output Multifab, mf_dst, the guard-cell data is not needed especially considering
+    // the operations performend in the CoarsenAndInterpolate function.
+    constexpr int ng = 1;
+    // Temporary MultiFab containing number of particles per grid.
+    // (stored as constant for all cells in each grid)
+    const amrex::BoxArray& ba = warpx.boxArray(lev);
+    std::unique_ptr<amrex::MultiFab> ppg_mf = std::make_unique<amrex::MultiFab>(ba, warpx.DistributionMap(lev), 1, ng);
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+    for (amrex::MFIter mfi(*ppg_mf); mfi.isValid(); ++mfi) {
+        (*ppg_mf)[mfi].setVal<RunOn::Host>(static_cast<Real>(npart_in_grid[mfi.index()]));
+    }
+    return ppg_mf.get();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template <FieldTypes::TypeEnum FIELDTYPE>
 CellCenterFunctor<FIELDTYPE>::CellCenterFunctor (const int lev, const int dir,
                                                  const bool convertRZmodes2cartesian, const int ncomp)
@@ -132,3 +173,5 @@ template class CellCenterFunctor<FieldTypes::rho>;
 template class CellCenterFunctor<FieldTypes::F>;
 template class CellCenterFunctor<FieldTypes::divE>;
 template class CellCenterFunctor<FieldTypes::divB>;
+template class CellCenterFunctor<FieldTypes::PartCell>;
+template class CellCenterFunctor<FieldTypes::PartGrid>;
