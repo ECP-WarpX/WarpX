@@ -495,18 +495,6 @@ public:
      */
     void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& costs);
 
-    /** \brief Computes the average cost per MPI rank given a distribution mapping
-     * and vector of cost for each FAB.
-     * @param[in] dm distribution mapping (mapping from FAB to MPI processes)
-     * @param[in] cost vector which gives mapping from FAB index space to the
-     * respective FAB's cost
-     * @param[out] efficiency average cost per MPI process computed from the
-     * given distribution mapping and and cost
-     */
-    void ComputeDistributionMappingEfficiency (const amrex::DistributionMapping& dm,
-                                               const amrex::Vector<amrex::Real>& cost,
-                                               amrex::Real& efficiency);
-
 protected:
 
     /**
