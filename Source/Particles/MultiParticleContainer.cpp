@@ -586,7 +586,7 @@ MultiParticleContainer::mapSpeciesProduct ()
 /* \brief Given a species name, return its ID.
  */
 int
-MultiParticleContainer::getSpeciesID (std::string product_str)
+MultiParticleContainer::getSpeciesID (std::string product_str) const
 {
     int i_product;
     bool found = 0;
@@ -1157,6 +1157,5 @@ void MultiParticleContainer::CheckQEDProductSpecies()
         }
     }
 }
-
 
 #endif

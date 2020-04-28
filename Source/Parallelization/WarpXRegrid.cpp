@@ -26,28 +26,52 @@ WarpX::LoadBalance ()
         WarpX::ComputeCostsHeuristic(costs);
     }
 
+    // By default, do not do a redistribute; this toggles to true if RemakeLevel
+    // is called for any level
+    bool doRedistribute = false;
+
     const int nLevels = finestLevel();
     for (int lev = 0; lev <= nLevels; ++lev)
     {
 #ifdef AMREX_USE_MPI
-        // Parallel reduce the costs_heurisitc
+        // Parallel reduce the costs
         amrex::Vector<Real>::iterator it = (*costs[lev]).begin();
         amrex::Real* itAddr = &(*it);
-        ParallelAllReduce::Sum(itAddr,
-                               costs[lev]->size(),
-                               ParallelContext::CommunicatorSub());
+        ParallelAllReduce::Sum(itAddr, costs[lev]->size(), ParallelContext::CommunicatorSub());
 #endif
+        // To store efficiency (meaning, the  average 'cost' over all ranks, normalized to the
+        // max cost) for current distribution mapping
+        amrex::Real currentEfficiency = 0.0;
+
+        // Compute efficiency for the current distribution mapping
+        const DistributionMapping& currentdm = DistributionMap(lev);
+        if (load_balance_efficiency_ratio_threshold > 0.0)
+        {
+            ComputeDistributionMappingEfficiency(currentdm, *costs[lev],
+                                                 currentEfficiency);
+        }
+
         const amrex::Real nboxes = costs[lev]->size();
         const amrex::Real nprocs = ParallelContext::NProcsSub();
         const int nmax = static_cast<int>(std::ceil(nboxes/nprocs*load_balance_knapsack_factor));
 
-        const DistributionMapping newdm = (load_balance_with_sfc)
-            ? DistributionMapping::makeSFC(*costs[lev], boxArray(lev), false)
-            : DistributionMapping::makeKnapSack(*costs[lev], nmax);
+        // To store efficiency for proposed distribution mapping
+        amrex::Real proposedEfficiency = 0.0;
 
-        RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
+        const DistributionMapping newdm = (load_balance_with_sfc)
+            ? DistributionMapping::makeSFC(*costs[lev], boxArray(lev), proposedEfficiency, false)
+            : DistributionMapping::makeKnapSack(*costs[lev], proposedEfficiency, nmax);
+
+        if (proposedEfficiency > load_balance_efficiency_ratio_threshold*currentEfficiency)
+        {
+            RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
+            doRedistribute = true;
+        }
     }
-    mypc->Redistribute();
+    if (doRedistribute)
+    {
+        mypc->Redistribute();
+    }
 }
 
 
@@ -244,6 +268,8 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
     {
         amrex::Abort("RemakeLevel: to be implemented");
     }
+    // Re-initialize diagnostic functors that stores pointers to the user-requested fields at level, lev.
+    multi_diags->InitializeFieldFunctors( lev );
 }
 
 void
@@ -283,4 +309,40 @@ WarpX::ResetCosts ()
     {
         costs[lev]->assign((*costs[lev]).size(), 0.0);
     }
+}
+
+void
+WarpX::ComputeDistributionMappingEfficiency (const DistributionMapping& dm,
+                                             const Vector<Real>& cost,
+                                             Real& efficiency)
+{
+    const Real nprocs = ParallelDescriptor::NProcs();
+
+    // Collect costs per fab corresponding to each rank, then collapse into vector
+    // of total cost per proc
+
+    // This will store mapping from (proc) --> ([cost_FAB_1, cost_FAB_2, ... ])
+    // for each proc
+    std::map<int, Vector<Real>> rankToCosts;
+
+    for (int i=0; i<cost.size(); ++i)
+    {
+        rankToCosts[dm[i]].push_back(cost[i]);
+    }
+
+    Real maxCost = -1.0;
+
+    // This will store mapping from (proc) --> (sum of cost) for each proc
+    Vector<Real> rankToCost = {0.0};
+    rankToCost.resize(nprocs);
+    for (int i=0; i<nprocs; ++i) {
+        const Real rwSum = std::accumulate(rankToCosts[i].begin(),
+                                           rankToCosts[i].end(), 0.0);
+        rankToCost[i] = rwSum;
+        maxCost = std::max(maxCost, rwSum);
+    }
+
+    // `efficiency` is mean cost per proc
+    efficiency = (std::accumulate(rankToCost.begin(),
+                  rankToCost.end(), 0.0) / (nprocs*maxCost));
 }
