@@ -253,7 +253,7 @@ WarpX::Evolve (int numsteps)
 
             UpdateInSitu();
         }
-        
+
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
             max_time_reached = true;
             break;
@@ -292,7 +292,7 @@ WarpX::Evolve (int numsteps)
 
         UpdateInSitu();
     }
-    
+
     if (do_back_transformed_diagnostics) {
         myBFD->Flush(geom[0]);
     }
