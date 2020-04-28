@@ -16,12 +16,12 @@
 #include "Particles/ElementaryProcess/Ionization.H"
 
 #ifdef WARPX_QED
-    #include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
-    #include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
-    #include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
+#    include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#    include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#    include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
 
-    #include "Particles/ElementaryProcess/QEDPairGeneration.H"
-    #include "Particles/ElementaryProcess/QEDPhotonEmission.H"
+#    include "Particles/ElementaryProcess/QEDPairGeneration.H"
+#    include "Particles/ElementaryProcess/QEDPhotonEmission.H"
 #endif
 
 #include <AMReX_IArrayBox.H>
