@@ -179,10 +179,6 @@ WarpX::WarpX ()
 
     ReadParameters();
 
-#ifdef WARPX_USE_OPENPMD
-    m_OpenPMDPlotWriter = new WarpXOpenPMDPlot(openpmd_tspf, openpmd_backend, WarpX::getPMLdirections());
-#endif
-
     // Geometry on all levels has been defined already.
 
     // No valid BoxArray and DistributionMapping have been defined.
@@ -344,10 +340,6 @@ WarpX::~WarpX ()
 
 #ifdef BL_USE_SENSEI_INSITU
     delete insitu_bridge;
-#endif
-
-#ifdef WARPX_USE_OPENPMD
-    delete m_OpenPMDPlotWriter;
 #endif
 }
 
@@ -552,13 +544,7 @@ WarpX::ReadParameters ()
             amrex::Abort("J-damping can only be done when PML are inside simulation domain (do_pml_in_domain=1)");
         }
 
-        pp.query("openpmd_int", openpmd_int);
-        pp.query("openpmd_backend", openpmd_backend);
-#ifdef WARPX_USE_OPENPMD
-        pp.query("openpmd_tspf", openpmd_tspf);
-#endif
-        pp.query("plot_raw_fields", plot_raw_fields);
-        pp.query("plot_raw_fields_guards", plot_raw_fields_guards);
+        // only used for in-situ
         bool user_fields_to_plot;
         user_fields_to_plot = pp.queryarr("fields_to_plot", fields_to_plot);
         if (not user_fields_to_plot){
@@ -588,23 +574,13 @@ WarpX::ReadParameters ()
                                  fields_to_plot.end());
         }
 
-        // Check that the coarsening_ratio can divide the blocking factor
-        const int nlevs_max = maxLevel();
-        for (int lev=0; lev<nlevs_max; lev++){
-          for (int comp=0; comp<AMREX_SPACEDIM; comp++){
-            if ( blockingFactor(lev)[comp] % plot_coarsening_ratio != 0 ){
-              amrex::Abort("plot_coarsening_ratio should be an integer "
-                           "divisor of the blocking factor.");
-            }
-          }
-        }
-
         pp.query("plot_finepatch", plot_finepatch);
         if (maxLevel() > 0) {
             pp.query("plot_crsepatch", plot_crsepatch);
         }
 
         {
+            // Parameters below control all plotfile diagnostics
             bool plotfile_min_max = true;
             pp.query("plotfile_min_max", plotfile_min_max);
             if (plotfile_min_max) {

@@ -34,9 +34,6 @@
 
 #include "Parallelization/GuardCellManager.H"
 
-#ifdef WARPX_USE_OPENPMD
-#   include "Diagnostics/WarpXOpenPMD.H"
-#endif
 #include "Parser/WarpXParserWrapper.H"
 
 #include <AMReX_AmrCore.H>
@@ -741,28 +738,11 @@ private:
 
     std::string restart_chkfile;
 
-    //std::string check_file {"checkpoints/chk"};
-    //std::string plot_file {"diags/plotfiles/plt"};
-    //std::string slice_plot_file {"diags/slice_plotfiles/plt"};
-    //int check_int = -1;
-    //int plot_int = -1;
-
-    std::string openpmd_backend {"default"};
-    int openpmd_int = -1;
-    bool openpmd_tspf = true; //!< one file per timestep (or one file for all steps)
-#ifdef WARPX_USE_OPENPMD
-    WarpXOpenPMDPlot* m_OpenPMDPlotWriter = nullptr;
-#endif
-
     bool plot_rho           = false;
     bool plot_finepatch     = false;
     bool plot_crsepatch     = false;
-    bool plot_raw_fields    = false;
-    bool plot_raw_fields_guards = false;
     amrex::Vector<std::string> fields_to_plot;
-    int plot_coarsening_ratio = 1;
 
-    amrex::VisMF::Header::Version checkpoint_headerversion = amrex::VisMF::Header::NoFabHeader_v1;
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
 
