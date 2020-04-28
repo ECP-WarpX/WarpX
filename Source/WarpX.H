@@ -34,6 +34,10 @@
 
 #include "Parallelization/GuardCellManager.H"
 
+#ifdef WARPX_USE_OPENPMD
+#   include "Diagnostics/WarpXOpenPMD.H"
+#endif
+
 #include "Parser/WarpXParserWrapper.H"
 
 #include <AMReX_AmrCore.H>
