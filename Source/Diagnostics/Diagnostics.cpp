@@ -199,7 +199,14 @@ Diagnostics::AddRZModesToDiags (int lev)
 
     // Er, Etheta, Ez, Br, Btheta, Bz, jr, jtheta, jz
     // Each of them being a multi-component multifab
-    m_all_field_functors[lev].resize( m_all_field_functors[0].size() + 9 );
+    int extra_comps = 9;
+
+    // Check if divE or divB are requested
+    if (WarpXUtilStr::is_in(m_varnames, "divE")) extra_comps += 1;
+    if (WarpXUtilStr::is_in(m_varnames, "divB")) extra_comps += 1;
+
+    m_all_field_functors[lev].resize( m_all_field_functors[0].size() + extra_comps );
+
     // E
     for (int dim=0; dim<3; dim++){
         // 3 components, r theta z
@@ -229,6 +236,18 @@ Diagnostics::AddRZModesToDiags (int lev)
         icomp += 1;
         AddRZModesToOutputNames(std::string("J") + coord[dim],
                                 warpx.get_pointer_current_fp(0, 0)->nComp());
+    }
+    if (WarpXUtilStr::is_in(m_varnames, "divE")) {
+        m_all_field_functors[lev][icomp] =
+            std::make_unique<CellCenterFunctor<FieldTypes::divE>>(lev, 0, false, ncomp_multimodefab);
+        icomp += 1;
+        AddRZModesToOutputNames(std::string("divE"), ncomp_multimodefab);
+    }
+    if (WarpXUtilStr::is_in(m_varnames, "divB")) {
+        m_all_field_functors[lev][icomp] =
+            std::make_unique<CellCenterFunctor<FieldTypes::divB>>(lev, 0, false, ncomp_multimodefab);
+        icomp += 1;
+        AddRZModesToOutputNames(std::string("divB"), ncomp_multimodefab);
     }
     // Sum the number of components in input vector m_all_field_functors
     // and check that it corresponds to the number of components in m_varnames

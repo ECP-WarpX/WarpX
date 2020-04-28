@@ -62,7 +62,9 @@ amrex::MultiFab * get_field_pointer <FieldTypes::divE> (const int lev, const int
     // For staggered and nodal calculations, divE is computed on the nodes.
     // The temporary divE MultiFab is generated to comply with the location of divE.
     const amrex::BoxArray& ba = amrex::convert(warpx.boxArray(lev),amrex::IntVect::TheUnitVector());
-    std::unique_ptr<amrex::MultiFab> divE = std::make_unique<amrex::MultiFab>(ba, warpx.DistributionMap(lev), 1, ng);
+    const amrex::DistributionMapping dm = warpx.DistributionMap(lev);
+    const int modes = warpx.n_rz_azimuthal_modes;
+    std::unique_ptr<amrex::MultiFab> divE = std::make_unique<amrex::MultiFab>(ba, dm, modes, ng);
     warpx.ComputeDivE(*divE, lev);
     return divE.get();
 }
@@ -78,7 +80,9 @@ amrex::MultiFab * get_field_pointer <FieldTypes::divB> (const int lev, const int
     // A cell-centered divB multifab spanning the entire domain is generated
     // and divB is computed on the cell-center, with ng=1.
     const amrex::BoxArray& ba = warpx.boxArray(lev);
-    std::unique_ptr<amrex::MultiFab> divB = std::make_unique<amrex::MultiFab>(ba, warpx.DistributionMap(lev), 1, ng);
+    const amrex::DistributionMapping dm = warpx.DistributionMap(lev);
+    const int modes = warpx.n_rz_azimuthal_modes;
+    std::unique_ptr<amrex::MultiFab> divB = std::make_unique<amrex::MultiFab>(ba, dm, modes, ng);
     auto Bfield = warpx.get_array_Bfield_aux(lev);
     warpx.ComputeDivB(*divB, 0, Bfield, WarpX::CellSize(lev));
     return divB.get();
@@ -94,8 +98,9 @@ amrex::MultiFab * get_field_pointer <FieldTypes::PartCell> (const int lev, const
     constexpr int ng = 1;
     // Temporary cell-centered, single-component MultiFab for storing particles per cell.
     const amrex::BoxArray& ba = warpx.boxArray(lev);
+    const amrex::DistributionMapping dm = warpx.DistributionMap(lev);
     // Set value to 0, and increment the value in each cell with ppc.
-    std::unique_ptr<amrex::MultiFab> ppc_mf = std::make_unique<amrex::MultiFab>(ba, warpx.DistributionMap(lev), 1, ng);
+    std::unique_ptr<amrex::MultiFab> ppc_mf = std::make_unique<amrex::MultiFab>(ba, dm, 1, ng);
     ppc_mf->setVal(0._rt);
     // Compute ppc which includes a summation over all species.
     warpx.GetPartContainer().Increment(*ppc_mf, lev);
@@ -114,7 +119,8 @@ amrex::MultiFab * get_field_pointer <FieldTypes::PartGrid> (const int lev, const
     // Temporary MultiFab containing number of particles per grid.
     // (stored as constant for all cells in each grid)
     const amrex::BoxArray& ba = warpx.boxArray(lev);
-    std::unique_ptr<amrex::MultiFab> ppg_mf = std::make_unique<amrex::MultiFab>(ba, warpx.DistributionMap(lev), 1, ng);
+    const amrex::DistributionMapping dm = warpx.DistributionMap(lev);
+    std::unique_ptr<amrex::MultiFab> ppg_mf = std::make_unique<amrex::MultiFab>(ba, dm, 1, ng);
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
@@ -125,6 +131,7 @@ amrex::MultiFab * get_field_pointer <FieldTypes::PartGrid> (const int lev, const
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 template <FieldTypes::TypeEnum FIELDTYPE>
 CellCenterFunctor<FIELDTYPE>::CellCenterFunctor (const int lev, const int dir,
                                                  const bool convertRZmodes2cartesian, const int ncomp)
@@ -147,7 +154,8 @@ CellCenterFunctor<FIELDTYPE>::operator()(amrex::MultiFab& mf_dst, int dcomp, con
             nComp()==1,
             "The RZ averaging over modes must write into 1 single component");
         auto& warpx = WarpX::GetInstance();
-        MultiFab mf_dst_stag(mf_src->boxArray(), warpx.DistributionMap(m_lev), 1, mf_src->nGrowVect());
+        const amrex::DistributionMapping dm = warpx.DistributionMap(m_lev);
+        MultiFab mf_dst_stag(mf_src->boxArray(), dm, 1, mf_src->nGrowVect());
         // Mode 0
         MultiFab::Copy(mf_dst_stag, *mf_src, 0, 0, 1, mf_src->nGrowVect());
         for (int ic=1 ; ic < mf_src->nComp() ; ic += 2) {
