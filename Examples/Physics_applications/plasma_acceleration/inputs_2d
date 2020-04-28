@@ -6,7 +6,6 @@ amr.n_cell = 64 128
 amr.max_grid_size = 128
 amr.blocking_factor = 32
 amr.max_level = 0
-amr.plot_file = "plotfiles/plt"
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 0 0      # Is periodic?
 geometry.prob_lo     = -125.e-6 -149.e-6
