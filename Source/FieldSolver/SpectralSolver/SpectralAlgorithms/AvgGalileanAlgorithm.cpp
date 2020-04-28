@@ -1,5 +1,5 @@
-#include "Source/FieldSolver/SpectralSolver/SpectralAlgorithms/AvgGalileanAlgorithm.H"
-#include "Source/Utils/WarpXConst.H"
+#include "FieldSolver/SpectralSolver/SpectralAlgorithms/AvgGalileanAlgorithm.H"
+#include "Utils/WarpXConst.H"
 #include <cmath>
 
 using namespace amrex;
