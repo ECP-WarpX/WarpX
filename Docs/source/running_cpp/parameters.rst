@@ -1534,35 +1534,43 @@ Intervals parser
 --------------------------------------
 
 WarpX provides an interval parser that reads expressions in the input file of the form
-`1:2:3, 4: :,5:6,  :  ,etc.`.
+``1:2:3, 4: :,5:6,  :  ,etc.``.
 A comma is used as a separator between different slices and whitespaces are trimmed and not taken
 into account.
 A single slice can have 0, 1 or 2 colons.
+
 * For 0 colon the given value is the period
-* For 1 colon the given string is of the type `start:stop`
-* For 2 colons the given string is of the type `start:stop:period`
+
+* For 1 colon the given string is of the type ``start:stop``
+
+* For 2 colons the given string is of the type ``start:stop:period``
 
 Any value that is not given is set to default.
-Default is `0` for the start, `std::numeric_limits<int>::max()` for the stop and `1` for the
+Default is ``0`` for the start, ``std::numeric_limits<int>::max()`` for the stop and ``1`` for the
 period.
 For the 1 and 2 colon syntax, actually having the integers in the string is optional
-(this means that `::5`, `100 ::10` and `100 :` are all valid syntaxes).
+(this means that ``::5``, ``100 ::10`` and ``100 :`` are all valid syntaxes).
 
-** Examples**
+**Examples**
 
-* `something_int = 50` -> do something at timesteps 0, 50, 100, 150, etc.
-(equivalent to `something_int = ::50`)
-* `something_int = 300:600:100` -> do something at timesteps 300, 400, 500 and 600.
-* `something_int = 300::50` -> do something at timesteps 300, 350, 400, 450, etc.
-* `something_int = 105:108,205:208` -> do something at timesteps 105, 106, 107, 108,
-205, 206, 207 and 208. (equivalent to `something_int = 105 : 108 : , 205 : 208 :`)
-* `something_int = :` or  `something_int = ::` -> do something at every timestep.
-* `something_int = 167:167,253:253,275:425:50` do something at timesteps 167, 253, 275,
-325, 375 and 425.
+* ``something_int = 50`` -> do something at timesteps 0, 50, 100, 150, etc.
+  (equivalent to ``something_int = ::50``)
+
+* ``something_int = 300:600:100`` -> do something at timesteps 300, 400, 500 and 600.
+
+* ``something_int = 300::50`` -> do something at timesteps 300, 350, 400, 450, etc.
+
+* ``something_int = 105:108,205:208`` -> do something at timesteps 105, 106, 107, 108,
+  205, 206, 207 and 208. (equivalent to ``something_int = 105 : 108 : , 205 : 208 :``)
+
+* ``something_int = :`` or  ``something_int = ::`` -> do something at every timestep.
+
+* ``something_int = 167:167,253:253,275:425:50`` do something at timesteps 167, 253, 275,
+  325, 375 and 425.
 
 This is essentially the python slicing syntax except that the stop is inclusive
-(`0:100` contains 100) and that no colon means that the given value is the period.
+(``0:100`` contains 100) and that no colon means that the given value is the period.
 
 Note that if a given period is zero or negative, the correspoding slice is disregarded.
-For example, `something_int = -1` deactivates `something` and `something_int = ::-1,100:1000:25`
-is equivalent to `something_int = 100:1000:25`.
+For example, ``something_int = -1`` deactivates ``something`` and
+``something_int = ::-1,100:1000:25`` is equivalent to ``something_int = 100:1000:25``.
