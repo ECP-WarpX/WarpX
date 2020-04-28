@@ -2,9 +2,6 @@
 #include "WarpX.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
-//#include <AMReX_MultiFabUtil.H>
-//#include <AMReX_PlotFileUtil.H>
-//#include <AMReX_FillPatchUtil_F.H>
 #include <AMReX_buildInfo.H>
 
 using namespace amrex;

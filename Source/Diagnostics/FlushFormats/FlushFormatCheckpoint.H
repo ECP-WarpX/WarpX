@@ -3,7 +3,7 @@
 
 #include "FlushFormatPlotfile.H"
 
-class FlushFormatCheckpoint : public FlushFormatPlotfile
+class FlushFormatCheckpoint final : public FlushFormatPlotfile
 {
     /** Flush fields and particles to plotfile */
     virtual void WriteToFile (
