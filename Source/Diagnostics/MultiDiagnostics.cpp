@@ -28,6 +28,15 @@ MultiDiagnostics::InitData ()
 }
 
 void
+MultiDiagnostics::InitializeFieldFunctors ( int lev )
+{
+    for( auto& diag : alldiags ){
+        // Initialize functors to store pointers to fields.
+        diag->InitializeFieldFunctors( lev );
+    }
+}
+
+void
 MultiDiagnostics::ReadParameters ()
 {
     ParmParse pp("diagnostics");

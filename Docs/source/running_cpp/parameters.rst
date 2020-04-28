@@ -288,9 +288,15 @@ Particle initialization
     * ``NRandomPerCell``: injection with a fixed number of randomly-distributed particles per cell.
       This requires the additional parameter ``<species_name>.num_particles_per_cell``.
 
+    * ``SingleParticle``: Inject a single macroparticle.
+      This requires the additional parameters:
+      ``<species_name>.single_particle_pos`` (`3 doubles`, particle 3D position [meter])
+      ``<species_name>.single_particle_vel`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
+      ``<species_name>.single_particle_weight`` ( `double`, macroparticle weight, i.e. number of physical particles it represents)
+
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in
       space in all directions. This requires additional parameters:
-      ``<species_name>.q_tot`` (beam charge),
+      ``<species_name>.q_tot`` (beam charge) optional (default is ``q_tot=0``),
       ``<species_name>.npart`` (number of particles in the beam),
       ``<species_name>.x/y/z_m`` (average position in `x/y/z`),
       ``<species_name>.x/y/z_rms`` (standard deviation in `x/y/z`),
@@ -299,9 +305,13 @@ Particle initialization
       and optional argument ``<species_name>.do_symmetrize`` (whether to
       symmetrize the beam in the x and y directions).
 
-    * ``external_file``: inject macroparticles with properties (charge, mass, position, and momentum) according to data in external file.
-      It requires the additional arguments ``<species_name>.injection_file`` and ``<species_name>.q_tot``, which are the string corresponding to the openPMD file name and the beam charge.
-      When using this style, it is not necessary to add other ``<species_name>.(...)`` paramters, because they will be read directly from the file.
+    * ``external_file``: Inject macroparticles with properties (mass, charge, position, and momentum - :math:`\gamma \beta m c`) read from an external openPMD file.
+      It requires the additional arguments:
+      ``<species_name>.injection_file`` (`string`) openPMD file name and
+      ``<species_name>.q_tot`` (`double`) optional (default is ``q_tot=0`` and no re-scaling is done, ``weight=q_p``) when specified it is used to re-scale the weight of externally loaded ``N`` physical particles, each of charge ``q_p``, to inject macroparticles of ``weight=<species_name>.q_tot/q_p/N``.
+      The external file should include the species ``openPMD::Record`` s labeled ``mass`` and ``charge`` (`double` scalars) and also the ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
+      The ``external_file`` option is currently implemented for 2D and 3D geometries, with record components ``x``, ``z`` and ``y`` for 3D.
+      For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :doc:`../building/openpmd`.
 
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
     With the NUniformPerCell injection style, this specifies the number of particles along each axis
@@ -1025,18 +1035,6 @@ Numerics and algorithms
     Therefore, all the approximations that are usually made when using local FFTs with guard cells
     (for problems with multiple boxes) become exact in the case of the periodic, single-box FFT without guard cells.
 
-* ``psatd.hybrid_mpi_decomposition`` (`0` or `1`; default: 0)
-    Whether to use a different MPI decomposition for the particle-grid operations
-    (deposition and gather) and for the PSATD solver. If `1`, the FFT will
-    be performed over MPI groups.
-
-* ``psatd.ngroups_fft`` (`integer`)
-    The number of MPI groups that are created for the FFT, when using the code compiled with a PSATD solver
-    (and only if `hybrid_mpi_decomposition` is `1`).
-    The FFTs are global within one MPI group and use guard cell exchanges in between MPI groups.
-    (If ``ngroups_fft`` is larger than the number of MPI ranks used,
-    than the actual number of MPI ranks is used instead.)
-
 * ``psatd.fftw_plan_measure`` (`0` or `1`)
     Defines whether the parameters of FFTW plans will be initialized by
     measuring and optimizing performance (``FFTW_MEASURE`` mode; activated by default here).
@@ -1125,6 +1123,30 @@ Diagnostics and output
     The number of PIC cycles (interval) in between two consecutive `plotfile` data dumps.
     Use a negative number to disable data dumping.
     This is ``-1`` (disabled) by default.
+
+    * ``<species_name>.random_fraction`` (`float`) optional
+        If provided ``<species_name>.random_fraction = a``,
+        only `a` fraction of the particle data of this species will be dumped randomly,
+        i.e. if `rand() < a`, this particle will be dumped,
+        where `rand()` denotes a random number generator.
+        The value `a` provided should be between 0 and 1.
+
+    * ``<species_name>.uniform_stride`` (`int`) optional
+        If provided ``<species_name>.uniform_stride = n``,
+        every `n` particle of this species will be dumped, selected uniformly.
+        The value provided should be an integer greater than or equal to 0.
+
+    * ``<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
+        Users can provide an expression returning a boolean for whether a particle is dumped (the exact test is whether the return value is `> 0.5`).
+        `t` represents the physical time in seconds during the simulation.
+        `x, y, z` represent particle positions in the unit of meter.
+        `ux, uy, uz` represent particle velocities in the unit of
+        :math:`\gamma v/c`, where
+        :math:`\gamma` is the Lorentz factor,
+        :math:`v/c` is the particle velocity normalized by the speed of light.
+        E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
+        positions `x` greater than `0`, and those having velocity `uz` less than 10,
+        will be dumped.
 
 * ``warpx.openpmd_int`` (`integer`) optional
     The number of PIC cycles (interval) in between two consecutive `openPMD <https://www.openPMD.org>`_ data dumps.

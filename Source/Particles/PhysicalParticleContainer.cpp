@@ -11,7 +11,6 @@
 #include "PhysicalParticleContainer.H"
 
 #include "MultiParticleContainer.H"
-#include "FortranInterface/WarpX_f.H"
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -158,12 +157,26 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     // Scale the velocity by the speed of light
     for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
 
-    #ifdef WARPX_QED
+#ifdef WARPX_QED
         if(m_do_qed){
             //Optical depths is always plotted if QED is on
             plot_flags[plot_flag_size-1] = 1;
         }
-    #endif
+#endif
+
+    // build filter functors
+    m_do_random_filter  = pp.query("random_fraction", m_random_fraction);
+    m_do_uniform_filter = pp.query("uniform_stride",  m_uniform_stride);
+    std::string buf;
+    m_do_parser_filter  = pp.query("plot_filter_function(t,x,y,z,ux,uy,uz)", buf);
+    if (m_do_parser_filter) {
+        std::string function_string = "";
+        Store_parserString(pp,"plot_filter_function(t,x,y,z,ux,uy,uz)",
+                           function_string);
+        m_particle_filter_parser.reset(new ParserWrapper<7>(
+            makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
+    }
+
 }
 
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
@@ -241,7 +254,7 @@ PhysicalParticleContainer::AddGaussianBeam (
     std::normal_distribution<double> disty(y_m, y_rms);
     std::normal_distribution<double> distz(z_m, z_rms);
 
-    // Allocate temporary vectors on the CPU
+    // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
     Gpu::HostVector<ParticleReal> particle_y;
     Gpu::HostVector<ParticleReal> particle_z;
@@ -313,36 +326,101 @@ PhysicalParticleContainer::AddGaussianBeam (
 }
 
 void
-PhysicalParticleContainer::AddPlasmaFromFile (const std::string s_f, amrex::Real q_tot)
+PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
+                                               amrex::Real q_tot)
 {
+    // Declare temporary vectors on the CPU
+    Gpu::HostVector<ParticleReal> particle_x;
+    Gpu::HostVector<ParticleReal> particle_z;
+    Gpu::HostVector<ParticleReal> particle_ux;
+    Gpu::HostVector<ParticleReal> particle_uz;
+    Gpu::HostVector<ParticleReal> particle_w;
+    Gpu::HostVector<ParticleReal> particle_y;
+    Gpu::HostVector<ParticleReal> particle_uy;
+
 #ifdef WARPX_USE_OPENPMD
-    openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
-    amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
+    //TODO: Make changes for read/write in multiple MPI ranks
+    if (ParallelDescriptor::IOProcessor()) {
+        openPMD::Series series = openPMD::Series(s_f,
+                                                 openPMD::AccessType::READ_ONLY);
+        amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(series.iterations.size() == 1u, "External "
+                                         "file should contain only 1 iteration\n");
+        openPMD::Iteration& i = series.iterations[1];
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size() == 1u, "External file "
+                                         "should contain only 1 species\n");
+        std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(series.iterations.size() == 1u, "External "
-                                     "file should contain only one iteration\n");
-    openPMD::Iteration& i = series.iterations[1];
+        //TODO: Add ASSERT_WITH_MESSAGE to test if mass and charge are both const
+        amrex::ParticleReal p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
+        double const mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
+        amrex::ParticleReal p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
+        double const charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
+#   if (defined WARPX_DIM_3D) || (defined WARPX_DIM_2D)
+        auto const npart = ps.second["position"]["x"].getExtent()[0];
+        std::shared_ptr<amrex::ParticleReal> ptr_x = ps.second["position"]["x"].loadChunk<amrex::ParticleReal>();
+        double const position_unit_x = ps.second["position"]["x"].unitSI();
+        std::shared_ptr<amrex::ParticleReal> ptr_z = ps.second["position"]["z"].loadChunk<amrex::ParticleReal>();
+        double const position_unit_z = ps.second["position"]["z"].unitSI();
+        std::shared_ptr<amrex::ParticleReal> ptr_ux = ps.second["momentum"]["x"].loadChunk<amrex::ParticleReal>();
+        double const momentum_unit_x = ps.second["momentum"]["x"].unitSI();
+        std::shared_ptr<amrex::ParticleReal> ptr_uz = ps.second["momentum"]["z"].loadChunk<amrex::ParticleReal>();
+        double const momentum_unit_z = ps.second["momentum"]["z"].unitSI();
+#   else
+        amrex::Abort("AddPlasmaFromFile is only implemented for 2D and 3D\n")
+#   endif
+#   if (defined WARPX_DIM_3D)
+        std::shared_ptr<amrex::ParticleReal> ptr_y = ps.second["position"]["y"].loadChunk<amrex::ParticleReal>();
+        double const position_unit_y = ps.second["position"]["y"].unitSI();
+        std::shared_ptr<amrex::ParticleReal> ptr_uy = ps.second["momentum"]["y"].loadChunk<amrex::ParticleReal>();
+        double const momentum_unit_y = ps.second["momentum"]["y"].unitSI();
+#   endif
+        series.flush();
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size() == 1u, "External file "
-                                     "should contain only one species\n");
-    std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
+        mass=p_m*mass_unit;
+        charge=p_q*charge_unit;
 
-    //TODO: In future PRs will add AMREX_ALWAYS_ASSERT_WITH_MESSAGE to test if mass and charge are both const
-    amrex::Real p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    amrex::Real p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    int npart = ps.second["position"]["x"].getExtent()[0];
-    series.flush();
+        amrex::Real weight;
+        if (q_tot != 0.0){
+            weight = q_tot/(p_q*amrex::Real(npart));
+        }
+        else {
+            weight = charge;
+        }
 
-    mass = p_m*PhysConst::mevpc2_kg;
-    charge = p_q*PhysConst::q_e;
-    Real const weight = q_tot/(charge*amrex::Real(npart));
-
-    amrex::Print() << npart << " parts of species " << ps.first << "\nWith"
-    << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
-    << npart << " macroparticles with weight " << weight << "\n";
-
-    amrex::Print()<<"WARNING: this is WIP, no particle has been injected!!";
-#endif
+        for (auto i = decltype(npart){0}; i<npart; ++i){
+            amrex::ParticleReal const x = ptr_x.get()[i]*position_unit_x;
+            amrex::ParticleReal const z = ptr_z.get()[i]*position_unit_z;
+#   if (defined WARPX_DIM_2D)
+            amrex::Real const y = 0.0;
+#   elif (defined WARPX_DIM_3D)
+            amrex::ParticleReal const y = ptr_y.get()[i]*position_unit_y;
+#   endif
+            if (plasma_injector->insideBounds(x, y, z)) {
+                amrex::ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
+                amrex::ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
+#   if (defined WARPX_DIM_2D)
+                amrex::ParticleReal const uy = 0.0;
+#   elif (defined WARPX_DIM_3D)
+                amrex::ParticleReal const uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
+#   endif
+                CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
+                particle_x,  particle_y,  particle_z,
+                particle_ux, particle_uy, particle_uz,
+                particle_w);
+            }
+        }
+        auto const np = particle_z.size();
+        if (np < npart) {
+            amrex::Print()<<"WARNING: Simulation box doesn't cover all particles\n";
+        }
+    } //IO Processor
+    auto const np = particle_z.size();
+    AddNParticles(0,np,
+                  particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
+                  particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
+                  1, particle_w.dataPtr(),1);
+#endif //OPENPMD
     return;
 }
 
@@ -2219,12 +2297,12 @@ PhysicalParticleContainer::getIonizationFunc ()
 #ifdef WARPX_QED
 
 
-bool PhysicalParticleContainer::has_quantum_sync ()
+bool PhysicalParticleContainer::has_quantum_sync () const
 {
     return m_do_qed_quantum_sync;
 }
 
-bool PhysicalParticleContainer::has_breit_wheeler ()
+bool PhysicalParticleContainer::has_breit_wheeler () const
 {
     return m_do_qed_breit_wheeler;
 }
