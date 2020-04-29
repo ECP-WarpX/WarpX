@@ -57,11 +57,11 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
 
     // Initialize temporary local arrays for charge/current deposition
     int num_threads = 1;
-    #ifdef _OPENMP
-    #pragma omp parallel
-    #pragma omp single
+#ifdef _OPENMP
+#pragma omp parallel
+#pragma omp single
     num_threads = omp_get_num_threads();
-    #endif
+#endif
     local_rho.resize(num_threads);
     local_jx.resize(num_threads);
     local_jy.resize(num_threads);
@@ -511,7 +511,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 
         // Loop over particle tiles and deposit charge on each level
 #ifdef _OPENMP
-        #pragma omp parallel
+#pragma omp parallel
         {
         int thread_num = omp_get_thread_num();
 #else

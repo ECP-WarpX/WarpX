@@ -4,6 +4,11 @@
 #include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
+#include "FlushFormats/FlushFormatPlotfile.H"
+#include "FlushFormats/FlushFormatCheckpoint.H"
+#ifdef WARPX_USE_OPENPMD
+#   include "FlushFormats/FlushFormatOpenPMD.H"
+#endif
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
 
@@ -31,11 +36,12 @@ Diagnostics::ReadParameters ()
     pp.query("period", m_period);
     pp.query("format", m_format);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_format == "plotfile" || m_format == "openpmd",
-        "<diag>.format must be plotfile or openpmd");
-    pp.query("plot_raw_fields", m_plot_raw_fields);
-    pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
-    if (!pp.queryarr("fields_to_plot", m_varnames)){
+        m_format == "plotfile" || m_format == "openpmd" || m_format == "checkpoint",
+        "<diag>.format must be plotfile or openpmd or checkpoint");
+    bool raw_specified = pp.query("plot_raw_fields", m_plot_raw_fields);
+    raw_specified += pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
+    bool varnames_specified = pp.queryarr("fields_to_plot", m_varnames);
+    if (!varnames_specified){
         m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
     }
     // set plot_rho to true of the users requests it, so that
@@ -55,17 +61,19 @@ Diagnostics::ReadParameters ()
             m_varnames.end());
     }
 
-
     // Read user-defined physical extents for the output and store in m_lo and m_hi.
     m_lo.resize(AMREX_SPACEDIM);
     m_hi.resize(AMREX_SPACEDIM);
 
-    if (!pp.queryarr("diag_lo", m_lo) ) {
+    bool lo_specified = pp.queryarr("diag_lo", m_lo);
+
+    if (!lo_specified) {
        for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
             m_lo[idim] = warpx.Geom(0).ProbLo(idim);
        }
     }
-    if (! pp.queryarr("diag_hi", m_hi) ) {
+    bool hi_specified = pp.queryarr("diag_hi", m_hi);
+    if (!hi_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
             m_hi[idim] = warpx.Geom(0).ProbHi(idim);
        }
@@ -74,13 +82,26 @@ Diagnostics::ReadParameters ()
     // Initialize cr_ratio with default value of 1 for each dimension.
     Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
     // Read user-defined coarsening ratio for the output MultiFab.
-    if (pp.queryarr("coarsening_ratio", cr_ratio) ) {
+    bool cr_specified = pp.queryarr("coarsening_ratio", cr_ratio);
+    if (cr_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
            m_crse_ratio[idim] = cr_ratio[idim];
        }
     }
 
-    pp.queryarr("species", m_species_names);
+    bool species_specified = pp.queryarr("species", m_species_names);
+
+    if (m_format == "checkpoint"){
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            raw_specified == false &&
+            varnames_specified == false &&
+            lo_specified == false &&
+            hi_specified == false &&
+            cr_specified == false &&
+            species_specified == false,
+            "For a checkpoint output, cannot specify these parameters as all data must be dumped "
+            "to file for a restart");
+    }
 
 }
 
@@ -117,6 +138,8 @@ Diagnostics::InitData ()
     // Construct Flush class.
     if        (m_format == "plotfile"){
         m_flush_format = new FlushFormatPlotfile;
+    } else if (m_format == "checkpoint"){
+        m_flush_format = new FlushFormatCheckpoint;
     } else if (m_format == "openpmd"){
 #ifdef WARPX_USE_OPENPMD
         m_flush_format = new FlushFormatOpenPMD(m_diag_name);
