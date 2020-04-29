@@ -1553,13 +1553,14 @@ WarpX supports checkpoints/restart via AMReX.
     or if it is not properly formatted.
 
 Intervals parser
---------------------------------------
+----------------
 
-WarpX provides an interval parser that reads expressions in the input file of the form
-``1:2:3, 4: :,5:6,  :  ,etc.``.
-A comma is used as a separator between different slices and whitespaces are trimmed and not taken
-into account.
-A single slice can have 0, 1 or 2 colons.
+WarpX can parse time step interval expressions of the form ``start:stop:period``, e.g.
+``1:2:3, 4::, 5:6, :, ::10``.
+A comma is used as a separator between groups of intervals, which we call slices.
+The resulting time steps are the `union set <https://en.wikipedia.org/wiki/Union_(set_theory)>`_ of all given slices.
+White spaces are ignored.
+A single slice can have 0, 1 or 2 colons ``:``, just as `numpy slices <https://numpy.org/doc/stable/reference/generated/numpy.s_.html>`_, but with inclusive upper bound for ``stop``.
 
 * For 0 colon the given value is the period
 
