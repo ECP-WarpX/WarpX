@@ -8,6 +8,8 @@ WarpX can be run in one of two modes. It can run as a preprocessor, using the
 Python input file to generate an input file to be used by the C++ version, or
 it can be run directly from Python.
 
+In either mode, if using a `virtual environment <https://docs.python.org/3/tutorial/venv.html>`__, be sure to activate it.
+
 Example input files can be found in the section :doc:`examples`.
 The examples support running in both modes by commenting and uncommenting the appropriate lines.
 
