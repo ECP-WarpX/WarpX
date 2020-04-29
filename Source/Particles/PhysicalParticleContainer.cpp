@@ -369,7 +369,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
 #   else
         amrex::Abort("AddPlasmaFromFile is only implemented for 2D and 3D\n");
 #   endif
-#   if (defined WARPX_DIM_XZ)
+#   if (defined WARPX_DIM_3D)
         std::shared_ptr<amrex::ParticleReal> ptr_y = ps.second["position"]["y"].loadChunk<amrex::ParticleReal>();
         double const position_unit_y = ps.second["position"]["y"].unitSI();
         std::shared_ptr<amrex::ParticleReal> ptr_uy = ps.second["momentum"]["y"].loadChunk<amrex::ParticleReal>();
