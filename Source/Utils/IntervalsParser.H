@@ -125,7 +125,7 @@ public:
 
     /**
     * \brief A method the local period (in timesteps) of the IntervalsParser at timestep n.
-    * The period is defined by nextContains(n) - previousContainsInclusive(n) 
+    * The period is defined by nextContains(n) - previousContainsInclusive(n)
     *
     * @param[in] n the input integer
     */
