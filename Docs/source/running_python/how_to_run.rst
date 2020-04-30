@@ -8,7 +8,7 @@ WarpX can be run in one of two modes. It can run as a preprocessor, using the
 Python input file to generate an input file to be used by the C++ version, or
 it can be run directly from Python.
 
-In either mode, if using a `virtual environment <https://docs.python.org/3/tutorial/venv.html>`__, be sure to activate it.
+In either mode, if using a `virtual environment <https://docs.python.org/3/tutorial/venv.html>`__, be sure to activate it before compiling and running WarpX.
 
 Example input files can be found in the section :doc:`examples`.
 The examples support running in both modes by commenting and uncommenting the appropriate lines.
@@ -59,4 +59,3 @@ The input file should have the line "sim.step()" which runs the simulation.
 
 where ``<n_ranks>`` is the number of MPI ranks used, and ``<python_script>``
 is the name of the script.
-
