@@ -193,9 +193,9 @@ void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spe
 #endif
 
                 const Real nu = kv/(k_norm*c);
-                const Complex theta = MathFunc::exp( 0.5_rt*I*kv*dt );
-                const Complex theta_star = MathFunc::exp( -0.5_rt*I*kv*dt );
-                const Complex e_theta = MathFunc::exp( I*c*k_norm*dt );
+                const Complex theta = amrex::exp( 0.5_rt*I*kv*dt );
+                const Complex theta_star = amrex::exp( -0.5_rt*I*kv*dt );
+                const Complex e_theta = amrex::exp( I*c*k_norm*dt );
 
                 Theta2(i,j,k) = theta*theta;
 
