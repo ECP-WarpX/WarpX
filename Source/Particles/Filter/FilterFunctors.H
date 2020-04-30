@@ -41,7 +41,7 @@ struct RandomFilter
         else return 0;
     }
 private:
-    const bool m_is_active = false; //! select all particles if false
+    const bool m_is_active; //! select all particles if false
     const amrex::Real m_fraction = 1.0; //! range: [0.0:1.0] where 0 is no & 1 is all particles
 };
 
@@ -70,7 +70,7 @@ struct UniformFilter
         else return 0;
     }
 private:
-    const bool m_is_active = false; //! select all particles if false
+    const bool m_is_active; //! select all particles if false
     const int m_stride = 0; //! selection of every n-th particle
 };
 
@@ -106,14 +106,14 @@ struct ParserFilter
         if ( (*m_function_partparser)(m_t,x,y,z,ux,uy,uz) > 0.5 ) return 1;
         else return 0;
     }
-public:
-    /** Store physical time. */
-    amrex::Real m_t;
-    /** Parser function with 7 input variables, t,x,y,z,ux,uy,uz */
-    ParserWrapper<7> const * const m_function_partparser;
 private:
     /** Whether this diagnostics is activated. Select all particles if false */
-    const bool m_is_active = false;
+    const bool m_is_active;
+public:
+    /** Parser function with 7 input variables, t,x,y,z,ux,uy,uz */
+    ParserWrapper<7> const * const m_function_partparser;
+    /** Store physical time. */
+    amrex::Real m_t;
 };
 
 #endif // FILTERFUNCTORS_H
