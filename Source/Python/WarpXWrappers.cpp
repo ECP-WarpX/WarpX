@@ -455,19 +455,6 @@ extern "C"
         return warpx.stopTime ();
     }
 
-    void warpx_WriteCheckPointFile () {
-        //WarpX& warpx = WarpX::GetInstance();
-        //warpx.WriteCheckPointFile ();
-    }
-    void warpx_WritePlotFile () {
-        //WarpX& warpx = WarpX::GetInstance();
-        //warpx.WritePlotFile ();
-    }
-    void warpx_WriteOpenPMDFile () {
-        //WarpX& warpx = WarpX::GetInstance();
-        //warpx.WriteOpenPMDFile ();
-    }
-
     int warpx_finestLevel () {
         WarpX& warpx = WarpX::GetInstance();
         return warpx.finestLevel ();
