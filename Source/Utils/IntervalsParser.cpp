@@ -32,11 +32,31 @@ SliceParser::SliceParser (const std::string& instr)
 bool SliceParser::contains (const int n) const
 {
     if (m_period <= 0) {return false;}
-    else{
-        return (n - m_start) % m_period == 0 && n >= m_start && n <= m_stop;}
+    return (n - m_start) % m_period == 0 && n >= m_start && n <= m_stop;
+}
+
+int SliceParser::nextContains (const int n) const
+{
+    if (m_period <= 0) {return std::numeric_limits<int>::max();}
+    int next = m_start;
+    if (n >= m_start) {next = ((n-m_start)/m_period + 1)*m_period+m_start;}
+    if (next > m_stop) {next = std::numeric_limits<int>::max();}
+    return next;
+}
+
+int SliceParser::previousContains (const int n) const
+{
+    if (m_period <= 0) {return false;}
+    int previous = ((std::min(n-1,m_stop)-m_start)/m_period)*m_period+m_start;
+    if ((n < m_start) || (previous < 0)) {previous = 0;}
+    return previous;
 }
 
 int SliceParser::getPeriod () const {return m_period;}
+
+int SliceParser::getStart () const {return m_start;}
+
+int SliceParser::getStop () const {return m_stop;}
 
 IntervalsParser::IntervalsParser (const std::string& instr)
 {
@@ -46,7 +66,8 @@ IntervalsParser::IntervalsParser (const std::string& instr)
     {
         SliceParser temp_slice(insplit[i]);
         m_slices.push_back(temp_slice);
-        if (temp_slice.getPeriod() > 0) m_activated = true;
+        if ((temp_slice.getPeriod() > 0) &&
+               (temp_slice.getStop() >= temp_slice.getStart())) m_activated = true;
     }
 }
 
@@ -56,6 +77,35 @@ bool IntervalsParser::contains (const int n) const
         if (m_slices[i].contains(n)) return true;
     }
     return false;
+}
+
+int IntervalsParser::nextContains (const int n) const
+{
+    int next = std::numeric_limits<int>::max();
+    for(int i=0; i<m_slices.size(); i++){
+        next = std::min(m_slices[i].nextContains(n),next);
+    }
+    return next;
+}
+
+int IntervalsParser::previousContains (const int n) const
+{
+    int previous = 0;
+    for(int i=0; i<m_slices.size(); i++){
+        previous = std::max(m_slices[i].previousContains(n),previous);
+    }
+    return previous;
+}
+
+int IntervalsParser::previousContainsInclusive (const int n) const
+{
+    if (contains(n)){return n;}
+    else {return previousContains(n);}
+}
+
+int IntervalsParser::localPeriod (const int n) const
+{
+    return nextContains(n) - previousContainsInclusive(n);
 }
 
 bool IntervalsParser::isActivated () const {return m_activated;}

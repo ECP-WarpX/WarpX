@@ -22,6 +22,7 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/IntervalsParser.H"
 
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #ifdef WARPX_USE_PSATD
@@ -320,7 +321,7 @@ public:
 
     /** \brief returns the load balance interval
      */
-    int get_load_balance_int () const {return load_balance_int;}
+    IntervalsParser get_load_balance_intervals () const {return load_balance_intervals;}
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -709,9 +710,9 @@ private:
     amrex::Real const_dt = 0.5e-11;
 
     // Load balancing
-    /** Interval to perform load balance; `load_balance_int=5`, e.g., will load
-     * balance during steps 5, 10, 15, etc. */
-    int load_balance_int = -1;
+    /** Load balancing intervals that reads the "load_balance_int" string int the input file
+     * for getting steps at which load balancing is performed */
+    IntervalsParser load_balance_intervals;
     /** Collection of vectors to keep track of weights used in load balancing
      * routines. Contains timer-based or heuristic-based costs depending on input option */
     amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > > costs;

@@ -641,7 +641,9 @@ WarpX::ReadParameters ()
             fine_tag_hi = RealVect{hi};
         }
 
-        pp.query("load_balance_int", load_balance_int);
+        std::string load_balance_int_string = "0";
+        pp.query("load_balance_int", load_balance_int_string);
+        load_balance_intervals = IntervalsParser(load_balance_int_string);
         pp.query("load_balance_with_sfc", load_balance_with_sfc);
         pp.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
         pp.query("load_balance_efficiency_ratio_threshold", load_balance_efficiency_ratio_threshold);
@@ -1088,7 +1090,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         }
     }
 
-    if (load_balance_int > 0)
+    if (load_balance_intervals.isActivated())
     {
         costs[lev].reset(new amrex::Vector<Real>);
         const int nboxes = Efield_fp[lev][0].get()->size();

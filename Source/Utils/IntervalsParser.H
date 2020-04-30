@@ -29,16 +29,44 @@ public:
     bool contains (const int n) const;
 
     /**
+    * \brief A method that returns the smallest integer strictly greater than n such that
+    * contains(n) is true. Returns std::numeric_limits<int>::max() if there is no such integer.
+    *
+    * @param[in] n the input integer
+    */
+    int nextContains (const int n) const;
+
+    /**
+    * \brief A method that returns the greatest integer strictly smaller than n such that
+    * contains(n) is true. Returns 0 if there is no such integer.
+    *
+    * @param[in] n the input integer
+    */
+    int previousContains (const int n) const;
+
+    /**
     * \brief A method that returns the slice period.
     *
     */
     int getPeriod () const;
 
+    /**
+    * \brief A method that returns the slice start.
+    *
+    */
+    int getStart () const;
+
+    /**
+    * \brief A method that returns the slice stop.
+    *
+    */
+    int getStop () const;
+
 private:
     int m_start = 0;
     int m_stop = std::numeric_limits<int>::max();
     int m_period = 1;
-    const std::string m_separator = ":";
+    std::string m_separator = ":";
 
 };
 
@@ -50,6 +78,11 @@ private:
 class IntervalsParser
 {
 public:
+    /**
+    * \brief Default constructor of the IntervalsParser class.
+    */
+    IntervalsParser () = default;
+
     /**
     * \brief Constructor of the IntervalsParser class.
     *
@@ -66,6 +99,38 @@ public:
     */
     bool contains (const int n) const;
 
+    /**
+    * \brief A method that returns the smallest integer strictly greater than n such that
+    * contains(n) is true. Returns std::numeric_limits<int>::max() if there is no such integer.
+    *
+    * @param[in] n the input integer
+    */
+    int nextContains (const int n) const;
+
+    /**
+    * \brief A method that returns the greatest integer strictly smaller than n such that
+    * contains(n) is true. Returns 0 if there is no such integer.
+    *
+    * @param[in] n the input integer
+    */
+    int previousContains (const int n) const;
+
+    /**
+    * \brief A method that returns the greatest integer smaller than or equal to n such that
+    * contains(n) is true. Returns 0 if there is no such integer.
+    *
+    * @param[in] n the input integer
+    */
+    int previousContainsInclusive (const int n) const;
+
+    /**
+    * \brief A method the local period (in timesteps) of the IntervalsParser at timestep n.
+    * The period is defined by nextContains(n) - previousContainsInclusive(n) 
+    *
+    * @param[in] n the input integer
+    */
+    int localPeriod (const int n) const;
+
 /**
     * \brief A method that returns true if any of the slices contained by the IntervalsParser
     * has a strictly positive period.
@@ -74,7 +139,7 @@ public:
 
 private:
     std::vector<SliceParser> m_slices;
-    const std::string m_separator = ",";
+    std::string m_separator = ",";
     bool m_activated = false;
 };
 

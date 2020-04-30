@@ -151,10 +151,11 @@ Distribution across MPI ranks and parallelization
     When using mesh refinement, this number applies to the subdomains
     of the coarsest level, but also to any of the finer level.
 
-* ``warpx.load_balance_int`` (`integer`) optional (default `-1`)
-    How often WarpX should try to redistribute the work across MPI ranks,
-    in order to have better load balancing (expressed in number of PIC cycles
-    inbetween two consecutive attempts at redistributing the work).
+* ``warpx.load_balance_int`` (`string`) optional (default `0`)
+    Using the `Intervals parser`_ syntax, this string defines the timesteps at which
+    WarpX should try to redistribute the work across MPI ranks, in order to have
+    better load balancing (expressed in number of PIC cycles inbetween two
+    consecutive attempts at redistributing the work).
     Use 0 to disable load_balancing.
 
     When performing load balancing, WarpX measures the wall time for
