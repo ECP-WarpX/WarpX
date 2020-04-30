@@ -454,21 +454,7 @@ extern "C"
         WarpX& warpx = WarpX::GetInstance();
         return warpx.stopTime ();
     }
-/*
-    int warpx_checkInt () {
-        WarpX& warpx = WarpX::GetInstance();
-        return warpx.checkInt ();
-    }
-    int warpx_plotInt () {
-        WarpX& warpx = WarpX::GetInstance();
-        return warpx.plotInt ();
-    }
 
-    int warpx_openpmdInt () {
-        WarpX& warpx = WarpX::GetInstance();
-        return warpx.openpmdInt ();
-    }
-*/
     void warpx_WriteCheckPointFile () {
         //WarpX& warpx = WarpX::GetInstance();
         //warpx.WriteCheckPointFile ();

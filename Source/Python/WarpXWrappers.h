@@ -110,10 +110,6 @@ extern "C" {
   int warpx_maxStep ();
   amrex::Real warpx_stopTime ();
 
-  int warpx_checkInt ();
-  int warpx_plotInt ();
-  int warpx_openpmdInt ();
-
   void warpx_WriteCheckPointFile ();
   void warpx_WritePlotFile ();
   void warpx_WriteOpenPMDFile ();
