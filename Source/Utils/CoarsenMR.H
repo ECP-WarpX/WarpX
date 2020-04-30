@@ -7,7 +7,7 @@ using namespace amrex;
 
 namespace CoarsenMR{
 
-    AMREX_GPU_HOST_DEVICE
+    AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     Real Interp ( Array4<Real const> const& arr_src,
                   int const* const AMREX_RESTRICT sf,
@@ -59,9 +59,9 @@ namespace CoarsenMR{
 
         // Add neutral elements (=0) beyond guard cells in source array (fine)
         auto const arr_src_safe = [arr_src]
-            AMREX_GPU_DEVICE (int const i, int const j, int const k, int const n) noexcept
+            AMREX_GPU_DEVICE (int const ix, int const iy, int const iz, int const n) noexcept
             {
-                return arr_src.contains(i, j, k) ? arr_src(i, j, k, n) :  0.0_rt;
+                return arr_src.contains( ix, iy, iz ) ? arr_src(ix,iy,iz,n) :  0.0_rt;
             };
 
         // Interpolate over points computed above
