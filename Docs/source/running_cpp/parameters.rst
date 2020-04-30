@@ -154,8 +154,7 @@ Distribution across MPI ranks and parallelization
 * ``warpx.load_balance_int`` (`string`) optional (default `0`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
     WarpX should try to redistribute the work across MPI ranks, in order to have
-    better load balancing (expressed in number of PIC cycles inbetween two
-    consecutive attempts at redistributing the work).
+    better load balancing.
     Use 0 to disable load_balancing.
 
     When performing load balancing, WarpX measures the wall time for
