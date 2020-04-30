@@ -3,56 +3,62 @@
 
 using namespace amrex;
 
-template <FieldTypes::TypeEnum FIELDTYPE>
-amrex::MultiFab * get_field_pointer (const int lev, const int dir)
-{
-    return nullptr;
-};
-
 template <>
-amrex::MultiFab * get_field_pointer <FieldTypes::E> (const int lev, const int dir)
+amrex::MultiFab *
+CellCenterFunctor<FieldTypes::E>::get_field_diag (const int lev, const int dir) const
 {
     auto & warpx = WarpX::GetInstance();
+    m_do_delete = false;
     return warpx.get_pointer_Efield_aux(lev, dir);
 };
 
 template <>
-amrex::MultiFab * get_field_pointer <FieldTypes::B> (const int lev, const int dir)
+amrex::MultiFab *
+CellCenterFunctor<FieldTypes::B>::get_field_diag (const int lev, const int dir) const
 {
     auto & warpx = WarpX::GetInstance();
+    m_do_delete = false;
     return warpx.get_pointer_Bfield_aux(lev, dir);
 };
 
 template <>
-amrex::MultiFab * get_field_pointer <FieldTypes::J> (const int lev, const int dir)
+amrex::MultiFab *
+CellCenterFunctor<FieldTypes::J>::get_field_diag (const int lev, const int dir) const
 {
     auto & warpx = WarpX::GetInstance();
+    m_do_delete = false;
     return warpx.get_pointer_current_fp(lev, dir);
 };
 
 template <>
-amrex::MultiFab * get_field_pointer <FieldTypes::rho> (const int lev, const int dir)
+amrex::MultiFab *
+CellCenterFunctor<FieldTypes::rho>::get_field_diag (const int lev, const int dir) const
 {
     auto & warpx = WarpX::GetInstance();
 #ifdef WARPX_USE_PSATD
     // rho_new is stored in component 1 of rho_fp when using PSATD
-    std::unique_ptr<amrex::MultiFab> rho_new = std::make_unique<amrex::MultiFab>(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
-    return rho_new.get();
+    amrex::MultiFab * rho_new = new amrex::MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
+    m_do_delete = true;
+    return rho_new;
 #else
+    m_do_delete = false;
     return warpx.get_pointer_rho_fp(lev);
 #endif
 };
 
 template <>
-amrex::MultiFab * get_field_pointer <FieldTypes::F> (const int lev, const int dir)
+amrex::MultiFab *
+CellCenterFunctor<FieldTypes::F>::get_field_diag (const int lev, const int dir) const
 {
     auto & warpx = WarpX::GetInstance();
+    m_do_delete = false;
     return warpx.get_pointer_F_fp(lev);
 };
 
 
 template <>
-amrex::MultiFab * get_field_pointer <FieldTypes::divE> (const int lev, const int dir)
+amrex::MultiFab *
+CellCenterFunctor<FieldTypes::divE>::get_field_diag (const int lev, const int dir) const
 {
     auto& warpx = WarpX::GetInstance();
     // Guard cell is set to 1 for generality. However, for a cell-centered
@@ -64,13 +70,15 @@ amrex::MultiFab * get_field_pointer <FieldTypes::divE> (const int lev, const int
     const amrex::BoxArray& ba = amrex::convert(warpx.boxArray(lev),amrex::IntVect::TheUnitVector());
     const amrex::DistributionMapping dm = warpx.DistributionMap(lev);
     const int modes = warpx.n_rz_azimuthal_modes;
-    std::unique_ptr<amrex::MultiFab> divE = std::make_unique<amrex::MultiFab>(ba, dm, modes, ng);
+    amrex::MultiFab * divE = new amrex::MultiFab(ba, dm, modes, ng);
     warpx.ComputeDivE(*divE, lev);
-    return divE.get();
+    m_do_delete = true;
+    return divE;
 }
 
 template <>
-amrex::MultiFab * get_field_pointer <FieldTypes::divB> (const int lev, const int dir)
+amrex::MultiFab *
+CellCenterFunctor<FieldTypes::divB>::get_field_diag (const int lev, const int dir) const
 {
     auto& warpx = WarpX::GetInstance();
     // Guard cell is set to 1 for generality. However, for a cell-centered
@@ -82,14 +90,16 @@ amrex::MultiFab * get_field_pointer <FieldTypes::divB> (const int lev, const int
     const amrex::BoxArray& ba = warpx.boxArray(lev);
     const amrex::DistributionMapping dm = warpx.DistributionMap(lev);
     const int modes = warpx.n_rz_azimuthal_modes;
-    std::unique_ptr<amrex::MultiFab> divB = std::make_unique<amrex::MultiFab>(ba, dm, modes, ng);
+    amrex::MultiFab * divB = new amrex::MultiFab(ba, dm, modes, ng);
     auto Bfield = warpx.get_array_Bfield_aux(lev);
     warpx.ComputeDivB(*divB, 0, Bfield, WarpX::CellSize(lev));
-    return divB.get();
+    m_do_delete = true;
+    return divB;
 }
 
 template <>
-amrex::MultiFab * get_field_pointer <FieldTypes::PartCell> (const int lev, const int dir)
+amrex::MultiFab *
+CellCenterFunctor<FieldTypes::PartCell>::get_field_diag (const int lev, const int dir) const
 {
     auto& warpx = WarpX::GetInstance();
     // Guard cell is set to 1 for generality. However, for a cell-centered
@@ -100,15 +110,17 @@ amrex::MultiFab * get_field_pointer <FieldTypes::PartCell> (const int lev, const
     const amrex::BoxArray& ba = warpx.boxArray(lev);
     const amrex::DistributionMapping dm = warpx.DistributionMap(lev);
     // Set value to 0, and increment the value in each cell with ppc.
-    std::unique_ptr<amrex::MultiFab> ppc_mf = std::make_unique<amrex::MultiFab>(ba, dm, 1, ng);
+    amrex::MultiFab * ppc_mf = new amrex::MultiFab(ba, dm, 1, ng);
     ppc_mf->setVal(0._rt);
     // Compute ppc which includes a summation over all species.
     warpx.GetPartContainer().Increment(*ppc_mf, lev);
-    return ppc_mf.get();
+    m_do_delete = true;
+    return ppc_mf;
 }
 
 template <>
-amrex::MultiFab * get_field_pointer <FieldTypes::PartGrid> (const int lev, const int dir)
+amrex::MultiFab *
+CellCenterFunctor<FieldTypes::PartGrid>::get_field_diag (const int lev, const int dir) const
 {
     auto& warpx = WarpX::GetInstance();
     const Vector<long>& npart_in_grid = warpx.GetPartContainer().NumberOfParticlesInGrid(lev);
@@ -120,31 +132,25 @@ amrex::MultiFab * get_field_pointer <FieldTypes::PartGrid> (const int lev, const
     // (stored as constant for all cells in each grid)
     const amrex::BoxArray& ba = warpx.boxArray(lev);
     const amrex::DistributionMapping dm = warpx.DistributionMap(lev);
-    std::unique_ptr<amrex::MultiFab> ppg_mf = std::make_unique<amrex::MultiFab>(ba, dm, 1, ng);
+    amrex::MultiFab * ppg_mf = new amrex::MultiFab(ba, dm, 1, ng);
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
     for (amrex::MFIter mfi(*ppg_mf); mfi.isValid(); ++mfi) {
         (*ppg_mf)[mfi].setVal<RunOn::Host>(static_cast<Real>(npart_in_grid[mfi.index()]));
     }
-    return ppg_mf.get();
+    m_do_delete = true;
+    return ppg_mf;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-template <FieldTypes::TypeEnum FIELDTYPE>
-CellCenterFunctor<FIELDTYPE>::CellCenterFunctor (const int lev, const int dir,
-                                                 const bool convertRZmodes2cartesian, const int ncomp)
-    : ComputeDiagFunctor(ncomp), m_lev(lev), m_dir(dir),
-      m_convertRZmodes2cartesian(convertRZmodes2cartesian)
-{}
 
 template <FieldTypes::TypeEnum FIELDTYPE>
 void
 CellCenterFunctor<FIELDTYPE>::operator()(amrex::MultiFab& mf_dst, int dcomp, const amrex::IntVect crse_ratio) const
 {
 
-    MultiFab const * const mf_src = get_field_pointer <FIELDTYPE> (m_lev, m_dir);
+    MultiFab const * const mf_src = get_field_diag(m_lev, m_dir);
 
 #ifdef WARPX_DIM_RZ
     if (m_convertRZmodes2cartesian) {
@@ -171,6 +177,9 @@ CellCenterFunctor<FIELDTYPE>::operator()(amrex::MultiFab& mf_dst, int dcomp, con
     // to output diagnostic MultiFab, mf_dst.
     Average::CoarsenAndInterpolate(mf_dst, *mf_src, dcomp, 0, nComp(), 0, crse_ratio);
 #endif
+    if (m_do_delete) {
+        delete mf_src;
+    }
 }
 
 // These are needed to force the compiler to build these versions

@@ -22,7 +22,12 @@ public:
      * \param[in] ncomp Number of component of mf_src to cell-center in dst multifab.
      */
     CellCenterFunctor(const int lev, const int dir=0,
-                      const bool convertRZmodes2cartesian=true, const int ncomp=1);
+                      const bool convertRZmodes2cartesian=true, const int ncomp=1)
+        : ComputeDiagFunctor(ncomp), m_lev(lev), m_dir(dir),
+          m_convertRZmodes2cartesian(convertRZmodes2cartesian)
+    {}
+
+    amrex::MultiFab * get_field_diag (const int lev, const int dir) const;
 
     /** \brief Fetch the field, and cell-center it, and write the result in mf_dst.
      *
@@ -42,6 +47,9 @@ protected:
     /**< (for cylindrical) whether to average all modes into 1 comp */
     int m_dir;
     bool m_convertRZmodes2cartesian;
+
+    // Flags whether the diagnostic MF should be deleted
+    mutable bool m_do_delete;
 
 };
 
