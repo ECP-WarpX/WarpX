@@ -199,7 +199,7 @@ Diagnostics::FlushRaw () {}
 bool
 Diagnostics::DoDump (int step, bool force_flush)
 {
-    if (step == m_previous_step) return false;
+    if (step == m_previous_step && !m_period == 1) return false;
     if (force_flush){
         m_previous_step = step+1;
         return true;

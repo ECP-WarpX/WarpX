@@ -41,6 +41,6 @@ diag1.period = 4
 diag1.diag_type = Full
 diag1.electrons.variables = ux uy uz Ey Ez w
 
-chk.period = 3
+chk.period = 6
 chk.diag_type = Full
 chk.format = checkpoint
