@@ -43,14 +43,25 @@ proton_beam = picmi.GaussianBunchDistribution(n_physical_particles = total_charg
 electrons = picmi.Species(particle_type='electron', name='electrons', initial_distribution=electron_beam)
 protons = picmi.Species(particle_type='proton', name='protons', initial_distribution=proton_beam)
 
+field_diag1 = picmi.FieldDiagnostic(grid = grid,
+                                    period = 10,
+                                    data_list = ['E', 'B', 'J', 'part_per_cell'],
+                                    warpx_file_prefix = 'plotfiles/plt')
+
+part_diag1 = picmi.ParticleDiagnostic(period = 10,
+                                      species = [electrons, protons],
+                                      data_list = ['weighting', 'momentum', 'fields'])
+
 sim = picmi.Simulation(solver = solver,
                        max_steps = 10,
                        verbose = 1,
-                       warpx_plot_int = 10,
                        warpx_current_deposition_algo = 'direct')
 
 sim.add_species(electrons, layout=picmi.PseudoRandomLayout(n_macroparticles=number_sim_particles))
 sim.add_species(protons, layout=picmi.PseudoRandomLayout(n_macroparticles=number_sim_particles))
+
+sim.add_diagnostic(field_diag1)
+sim.add_diagnostic(part_diag1)
 
 # write_inputs will create an inputs file that can be used to run
 # with the compiled version.
