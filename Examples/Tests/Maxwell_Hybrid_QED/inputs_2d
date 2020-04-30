@@ -52,6 +52,3 @@ diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 300
 diag1.diag_type = Full
-# diag1.plot_raw_fields = 1
-# diag1.plot_raw_fields_guards = 1
-# diag1.plot_finepatch = 1

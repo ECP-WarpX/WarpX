@@ -72,7 +72,4 @@ diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 2
 diag1.diag_type = Full
-# diag1.plot_raw_fields = 1
-# diag1.plot_finepatch = 1
-# diag1.plot_crsepatch = 1
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell divE divB

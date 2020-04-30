@@ -16,8 +16,6 @@ geometry.prob_hi     =  125.e-6    1.e-6
 #################################
 algo.maxwell_fdtd_solver = ckc
 warpx.verbose = 1
-warpx.plot_raw_fields = 0
-warpx.do_dive_cleaning = 0
 warpx.use_filter = 1
 warpx.do_pml = 1
 warpx.pml_ncell = 10
