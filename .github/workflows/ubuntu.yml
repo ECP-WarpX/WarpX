@@ -1,0 +1,38 @@
+name: Ubuntu build
+
+on: [push, pull_request]
+
+jobs:
+  build_icc:
+    name: oneAPI ICC [Linux]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        path: 'warpx_directory/WarpX'
+    - name: install dependencies
+      run: |
+        export DEBIAN_FRONTEND=noninteractive
+        sudo apt-get -qqq update
+        sudo apt-get install -y wget build-essential pkg-config cmake ca-certificates gnupg
+        sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        sudo apt-get update
+        sudo apt-get install -y intel-oneapi-icc intel-oneapi-ifort
+        source /opt/intel/inteloneapi/setvars.sh
+        sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
+        sudo chmod a+x /usr/local/bin/cmake-easyinstall
+        sudo CXX=$(which icpc) CC=$(which icc) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+    - name: build WarpX
+      run: |
+        cd warpx_directory
+        git clone --depth 1 https://bitbucket.org/berkeleylab/picsar.git
+        git clone --depth 1 --branch development https://github.com/AMReX-Codes/amrex.git
+        cd WarpX
+        source /opt/intel/inteloneapi/setvars.sh
+        export CXX=$(which icpc)
+        export CC=$(which icc)
+        make -j 2 COMP=intel USE_MPI=FALSE USE_OPENPMD=TRUE
+        make -j 2 COMP=intel USE_MPI=FALSE USE_OPENPMD=TRUE PRECISION=FLOAT USE_SINGLE_PRECISION_PARTICLES=TRUE
+# Ref.: https://github.com/rscohn2/oneapi-ci
