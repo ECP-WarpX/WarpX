@@ -82,7 +82,6 @@ positrons.momentum_function_uy(x,y,z) = "-epsilon * k/kp * cos(k*x) * sin(k*y) *
 positrons.momentum_function_uz(x,y,z) = "-epsilon * k/kp * cos(k*x) * cos(k*y) * sin(k*z)"
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 40
 diag1.diag_type = Full

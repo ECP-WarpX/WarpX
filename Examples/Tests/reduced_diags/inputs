@@ -79,7 +79,6 @@ EF.type = FieldEnergy
 EF.frequency = 200
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 200
 diag1.diag_type = Full

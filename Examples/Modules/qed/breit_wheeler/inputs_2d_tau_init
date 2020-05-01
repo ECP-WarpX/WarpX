@@ -103,7 +103,6 @@ qed_bw.lookup_table_mode = "dummy_builtin"
 #################################
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 1
 diag1.diag_type = Full

@@ -111,7 +111,6 @@ slice.dt_slice_snapshots_lab = 3.3356409519815207e-12
 slice.particle_slice_width_lab = 2.e-6
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 10000
 diag1.diag_type = Full

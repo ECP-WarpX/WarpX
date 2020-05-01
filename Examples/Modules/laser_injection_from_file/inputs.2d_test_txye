@@ -45,7 +45,6 @@ txye_laser.txye_file_name = "gauss_2d_unf.txye"
 txye_laser.time_chunk_size = 50
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 250
 diag1.diag_type = Full

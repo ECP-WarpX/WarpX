@@ -122,7 +122,6 @@ laser1.profile_focal_distance = 0.5e-3  # Focal distance from the antenna (in me
 laser1.wavelength = 0.81e-6         # The wavelength of the laser (in meters)
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 100
 diag1.diag_type = Full

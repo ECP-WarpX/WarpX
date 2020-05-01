@@ -118,7 +118,6 @@ qed_qs.photon_creation_energy_threshold = 1.63742112993e-13
 #################################
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 1
 diag1.diag_type = Full

@@ -89,7 +89,6 @@ beam.uy_th = 2.
 beam.uz_th = 200.
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 100
 diag1.diag_type = Full

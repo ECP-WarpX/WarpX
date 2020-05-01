@@ -22,7 +22,6 @@ electron.single_particle_vel = 1.e20 0.0 0.0  # gamma*beta
 electron.single_particle_weight = 1.0
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 1
 diag1.diag_type = Full

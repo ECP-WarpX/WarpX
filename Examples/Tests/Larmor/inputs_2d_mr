@@ -68,7 +68,6 @@ warpx.do_moving_window = 0
 warpx.do_dive_cleaning = 1
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 2
 diag1.diag_type = Full

@@ -117,7 +117,6 @@ warpx.moving_window_dir = z
 warpx.moving_window_v = 1. # in units of the speed of light
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 200
 diag1.diag_type = Full

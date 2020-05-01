@@ -69,7 +69,6 @@ ions.ymin = -10.e-6
 ions.ymax = +10.e-6
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 10000
 diag1.diag_type = Full

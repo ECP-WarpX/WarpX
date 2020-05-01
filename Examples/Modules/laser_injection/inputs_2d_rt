@@ -43,7 +43,6 @@ laser1.profile_t_peak = 30.e-15    # The time at which the laser reaches its pea
 laser1.profile_focal_distance = 100.e-6  # Focal distance from the antenna (in meters)
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 10000
 diag1.diag_type = Full

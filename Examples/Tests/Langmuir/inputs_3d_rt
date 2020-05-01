@@ -55,7 +55,6 @@ electrons.density = 1.e25  # number of electrons per m^3
 electrons.momentum_distribution_type = "constant"
 
 # Diagnostics
-diagnostics.ndiags = 1
 diagnostics.diags_names = diag1
 diag1.period = 100
 diag1.diag_type = Full
