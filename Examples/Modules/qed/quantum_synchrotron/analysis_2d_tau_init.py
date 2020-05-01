@@ -17,7 +17,7 @@ import sys
 
 # Tolerance
 tolerance_rel = 1e-2
-print("tolerance_rel: " + str(tol))
+print("tolerance_rel: " + str(tolerance_rel))
 
 def check():
     filename = sys.argv[1]
