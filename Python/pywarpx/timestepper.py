@@ -71,6 +71,4 @@ class TimeStepper(object):
             libwarpx.warpx_sett_new(i, self.cur_time)
             libwarpx.warpx_setistep(i, self.istep)
 
-        max_time_reached = ((self.cur_time >= libwarpx.warpx_stopTime() - 1.e-6*dt) or (self.istep >= libwarpx.warpx_maxStep()))
-
         callbacks._afterstep()
