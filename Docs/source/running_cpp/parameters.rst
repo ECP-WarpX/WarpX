@@ -1119,12 +1119,8 @@ The user specifies the number of diagnostics and the name of each of them, and t
 Note that some parameter (those that do not start with a ``<diag_name>.`` prefix) apply to all diagnostics.
 This should be changed in the future.
 
-* ``diagnostics.ndiags`` (`integer` optional, default ``0``)
-    Number of different Full diagnostics.
-    example: ``diagnostics.ndiags = 2``.
-
 * ``diagnostics.diags_names`` (list of `string` optional, default `empty`)
-    Name of each diagnostics. the number of elements in ``diagnostics.diags_names`` should be ``diagnostics.ndiags``.
+    Name of each diagnostics.
     example: ``diagnostics.diags_names = diag1 my_second_diag``.
 
 * ``<diag_name>.period`` (`integer` optional, default ``-1``)
