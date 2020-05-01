@@ -100,7 +100,6 @@ public:
    */
   void SetStep(int ts, const std::string& filePrefix);
 
-  void WriteOpenPMDParticles (MultiParticleContainer&);
   void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags);
 
   void WriteOpenPMDFields(

@@ -37,6 +37,7 @@
 #ifdef WARPX_USE_OPENPMD
 #   include "Diagnostics/WarpXOpenPMD.H"
 #endif
+
 #include "Parser/WarpXParserWrapper.H"
 
 #include <AMReX_AmrCore.H>
@@ -385,24 +386,14 @@ public:
     int maxStep () const {return max_step;}
     amrex::Real stopTime () const {return stop_time;}
 
-    int checkInt () const {return check_int;}
-    int plotInt () const {return plot_int;}
-    int openpmdInt () const {return openpmd_int;}
-
-    void WriteCheckPointFile () const;
-    void WriteOpenPMDFile () const;
-    void WritePlotFile () const;
-    void UpdateInSitu () const;
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, const int ngrow) const;
+
+    void UpdateInSitu () const;
     void prepareFields( int const step, amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg,
         amrex::Vector<const amrex::MultiFab*>& output_mf,
         amrex::Vector<amrex::Geometry>& output_geom ) const;
-
-    void WritePlotFileES(const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                         const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E);
 
     static std::array<amrex::Real,3> CellSize (int lev);
     static amrex::RealBox getRealBox(const amrex::Box& bx, int lev);
@@ -435,10 +426,6 @@ public:
     static amrex::Real moving_window_v;
 
     // slice generation //
-    void InitializeSliceMultiFabs ();
-    void SliceGenerationForDiagnostics ();
-    void WriteSlicePlotFile () const;
-    void ClearSliceMultiFabs ();
     static int num_slice_snapshots_lab;
     static amrex::Real dt_slice_snapshots_lab;
     static amrex::Real particle_slice_width_lab;
@@ -597,9 +584,6 @@ private:
 
     void InitNCICorrector ();
 
-    void WriteWarpXHeader(const std::string& name) const;
-    void WriteJobInfo (const std::string& dir) const;
-
     std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
 
     std::array<std::unique_ptr<amrex::MultiFab>, 3> getInterpolatedE(int lev) const;
@@ -746,28 +730,11 @@ private:
 
     std::string restart_chkfile;
 
-    std::string check_file {"checkpoints/chk"};
-    std::string plot_file {"diags/plotfiles/plt"};
-    std::string slice_plot_file {"diags/slice_plotfiles/plt"};
-    int check_int = -1;
-    int plot_int = -1;
-
-    std::string openpmd_backend {"default"};
-    int openpmd_int = -1;
-    bool openpmd_tspf = true; //!< one file per timestep (or one file for all steps)
-#ifdef WARPX_USE_OPENPMD
-    WarpXOpenPMDPlot* m_OpenPMDPlotWriter = nullptr;
-#endif
-
     bool plot_rho           = false;
     bool plot_finepatch     = false;
     bool plot_crsepatch     = false;
-    bool plot_raw_fields    = false;
-    bool plot_raw_fields_guards = false;
     amrex::Vector<std::string> fields_to_plot;
-    int plot_coarsening_ratio = 1;
 
-    amrex::VisMF::Header::Version checkpoint_headerversion = amrex::VisMF::Header::NoFabHeader_v1;
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
 

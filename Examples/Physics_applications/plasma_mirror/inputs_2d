@@ -3,7 +3,6 @@
 #################################
 max_step = 1000
 amr.n_cell =  1024 512
-amr.plot_int = 10
 amr.max_grid_size = 128
 amr.blocking_factor = 32
 amr.max_level = 0
@@ -76,3 +75,8 @@ laser1.profile_waist = 5.e-6      # The waist of the laser (in meters)
 laser1.profile_duration = 15.e-15  # The duration of the laser (in seconds)
 laser1.profile_t_peak = 25.e-15    # The time at which the laser reaches its peak (in seconds)
 laser1.profile_focal_distance = 15.e-6  # Focal distance from the antenna (in meters)
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 10
+diag1.diag_type = Full
