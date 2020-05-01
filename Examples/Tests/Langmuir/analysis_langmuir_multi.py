@@ -72,17 +72,22 @@ ds = yt.load(fn)
 
 # Check that the particle selective output worked:
 species = 'electrons'
+print('ds.field_list', field_list)
 for field in ['particle_weight',
               'particle_momentum_x']:
+    print('assert that this is in ds.field_list', (species, field))
     assert (species, field) in ds.field_list
 for field in ['particle_momentum_y',
               'particle_momentum_z']:
+    print('assert that this is NOT in ds.field_list', (species, field))
     assert (species, field) not in ds.field_list
 species = 'positrons'
 for field in ['particle_Ey']:
+    print('assert that this is in ds.field_list', (species, field))
     assert (species, field) in ds.field_list
 for field in ['particle_momentum_y',
               'particle_momentum_z']:
+    print('assert that this is NOT in ds.field_list', (species, field))
     assert (species, field) not in ds.field_list
 
 t0 = ds.current_time.to_ndarray().mean()
@@ -90,14 +95,14 @@ data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
                                     dims=ds.domain_dimensions)
 
 # Check the validity of the fields
-overall_max_error = 0
+error_rel = 0
 for field in ['Ex', 'Ey', 'Ez']:
     E_sim = data[field].to_ndarray()
 
     E_th = get_theoretical_field(field, t0)
     max_error = abs(E_sim-E_th).max()/abs(E_th).max()
     print('%s: Max error: %.2e' %(field,max_error))
-    overall_max_error = max( overall_max_error, max_error )
+    error_rel = max( error_rel, max_error )
 
 # Plot the last field from the loop (Ez at iteration 40)
 plt.subplot2grid( (1,2), (0,0) )
@@ -111,5 +116,9 @@ plt.title('Ez, last iteration\n(theory)')
 plt.tight_layout()
 plt.savefig('langmuir_multi_analysis.png')
 
-# Automatically check the validity
-assert overall_max_error < 0.15
+tolerance_rel = 0.15
+
+print("error_rel    : " + str(error_rel))
+print("tolerance_rel: " + str(tolerance_rel))
+
+assert( error_rel < tolerance_rel )
