@@ -63,7 +63,6 @@ include $(WARPX_HOME)/Source/BoundaryConditions/Make.package
 include $(WARPX_HOME)/Source/Diagnostics/Make.package
 include $(WARPX_HOME)/Source/FieldSolver/Make.package
 include $(WARPX_HOME)/Source/Filter/Make.package
-include $(WARPX_HOME)/Source/FortranInterface/Make.package
 include $(WARPX_HOME)/Source/Initialization/Make.package
 include $(WARPX_HOME)/Source/Laser/Make.package
 include $(WARPX_HOME)/Source/Parallelization/Make.package
@@ -147,6 +146,7 @@ ifeq ($(USE_OPENPMD), TRUE)
        libraries += -lopenPMD
    endif
    DEFINES += -DWARPX_USE_OPENPMD
+   USERSuffix := $(USERSuffix).OPMD
 endif
 
 
@@ -166,14 +166,17 @@ ifeq ($(USE_PSATD),TRUE)
        INCLUDE_LOCATIONS += $(FFTW_HOME)/include
        LIBRARY_LOCATIONS += $(FFTW_HOME)/lib
      endif
-     ifeq ($(USE_PSATD_PICSAR),TRUE)
-        # Compile with PICSAR's Hybrid-MPI PSATD
-        DEFINES += -DWARPX_USE_PSATD_HYBRID
-        DEFINES += -DFFTW # PICSAR uses it
-     endif
   else
     # Use cuFFT
     libraries += -lcufft
+  endif
+  ifeq ($(USE_RZ),TRUE)
+    # Use blas and lapack
+    INCLUDE_LOCATIONS += $(LAPACKPP_HOME)/include
+    INCLUDE_LOCATIONS += $(BLASPP_HOME)/include
+    LIBRARY_LOCATIONS += $(LAPACKPP_HOME)/lib
+    LIBRARY_LOCATIONS += $(BLASPP_HOME)/lib
+    libraries += -llapackpp -lblaspp
   endif
 endif
 
@@ -194,7 +197,6 @@ endif
 
 # job_info support
 CEXE_sources += AMReX_buildInfo.cpp
-CEXE_headers += $(AMREX_HOME)/Tools/C_scripts/AMReX_buildInfo.H
 INCLUDE_LOCATIONS += $(AMREX_HOME)/Tools/C_scripts
 
 ifeq ($(USE_PYTHON_MAIN),TRUE)

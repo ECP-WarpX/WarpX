@@ -10,6 +10,25 @@ from pywarpx import picmi
 
 constants = picmi.constants
 
+##########################
+# physics parameters
+##########################
+
+density = 2.e24
+epsilon0 = 0.001*constants.c
+epsilon1 = 0.001*constants.c
+epsilon2 = 0.001*constants.c
+w0 = 5.e-6
+n_osc_z = 3
+
+# Plasma frequency
+wp = np.sqrt((density*constants.q_e**2)/(constants.m_e*constants.ep0))
+kp = wp/constants.c
+
+##########################
+# numerics parameters
+##########################
+
 nr = 64
 nz = 200
 
@@ -18,20 +37,14 @@ zmin =  0.e0
 rmax = +20.e-6
 zmax = +40.e-6
 
-# Parameters describing particle distribution
-density = 2.e24
-epsilon0 = 0.001*constants.c
-epsilon1 = 0.001*constants.c
-epsilon2 = 0.001*constants.c
-w0 = 5.e-6
-n_osc_z = 3
-
 # Wave vector of the wave
 k0 = 2.*np.pi*n_osc_z/(zmax - zmin)
 
-# Plasma frequency
-wp = np.sqrt((density*constants.q_e**2)/(constants.m_e*constants.ep0))
-kp = wp/constants.c
+diagnostic_interval = 40
+
+##########################
+# physics components
+##########################
 
 uniform_plasma = picmi.UniformDistribution(density = density,
                                            upper_bound = [+18e-6, +18e-6, None],
@@ -63,6 +76,10 @@ analytic_plasma = picmi.AnalyticDistribution(density_expression = density,
 electrons = picmi.Species(particle_type='electron', name='electrons', initial_distribution=analytic_plasma)
 protons = picmi.Species(particle_type='proton', name='protons', initial_distribution=uniform_plasma)
 
+##########################
+# numerics components
+##########################
+
 grid = picmi.CylindricalGrid(number_of_cells = [nr, nz],
                              n_azimuthal_modes = 3,
                              lower_bound = [rmin, zmin],
@@ -72,18 +89,41 @@ grid = picmi.CylindricalGrid(number_of_cells = [nr, nz],
                              moving_window_zvelocity = 0.,
                              warpx_max_grid_size=64)
 
-solver = picmi.ElectromagneticSolver(grid=grid, cfl=1.)
+solver = picmi.ElectromagneticSolver(grid=grid, cfl=1., warpx_do_pml=0)
+
+##########################
+# diagnostics
+##########################
+
+field_diag1 = picmi.FieldDiagnostic(grid = grid,
+                                    period = diagnostic_interval,
+                                    data_list = ['E', 'B', 'J', 'part_per_cell'],
+                                    warpx_file_prefix = 'plotfiles/plt')
+
+part_diag1 = picmi.ParticleDiagnostic(period = diagnostic_interval,
+                                      species = [electrons],
+                                      data_list = ['weighting', 'momentum', 'fields'])
+
+##########################
+# simulation setup
+##########################
 
 sim = picmi.Simulation(solver = solver,
                        max_steps = 40,
                        verbose = 1,
-                       warpx_plot_int = 40,
                        warpx_current_deposition_algo = 'esirkepov',
                        warpx_field_gathering_algo = 'energy-conserving',
                        warpx_particle_pusher_algo = 'boris')
 
 sim.add_species(electrons, layout=picmi.GriddedLayout(n_macroparticle_per_cell=[2,16,2], grid=grid))
 sim.add_species(protons, layout=picmi.GriddedLayout(n_macroparticle_per_cell=[2,16,2], grid=grid))
+
+sim.add_diagnostic(field_diag1)
+sim.add_diagnostic(part_diag1)
+
+##########################
+# simulation run
+##########################
 
 # write_inputs will create an inputs file that can be used to run
 # with the compiled version.

@@ -69,13 +69,13 @@ data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
                                     dims=ds.domain_dimensions)
 
 # Check the validity of the fields
-overall_max_error = 0
+error_rel = 0
 for field in ['Ex', 'Ez']:
     E_sim = data[field].to_ndarray()[:,:,0]
     E_th = get_theoretical_field(field, t0)
     max_error = abs(E_sim-E_th).max()/abs(E_th).max()
     print('%s: Max error: %.2e' %(field,max_error))
-    overall_max_error = max( overall_max_error, max_error )
+    error_rel = max( error_rel, max_error )
 
 # Plot the last field from the loop (Ez at iteration 40)
 plt.subplot2grid( (1,2), (0,0) )
@@ -89,5 +89,9 @@ plt.title('Ez, last iteration\n(theory)')
 plt.tight_layout()
 plt.savefig('langmuir_multi_2d_analysis.png')
 
-# Automatically check the validity
-assert overall_max_error < 0.04
+tolerance_rel = 0.04
+
+print("error_rel    : " + str(error_rel))
+print("tolerance_rel: " + str(tolerance_rel))
+
+assert( error_rel < tolerance_rel )

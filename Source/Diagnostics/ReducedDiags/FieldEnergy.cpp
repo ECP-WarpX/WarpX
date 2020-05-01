@@ -24,13 +24,10 @@ FieldEnergy::FieldEnergy (std::string rd_name)
 {
 
     // RZ coordinate is not working
-    #if (defined WARPX_DIM_RZ)
+#if (defined WARPX_DIM_RZ)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
         "FieldEnergy reduced diagnostics does not work for RZ coordinate.");
-    #endif
-
-    // get WarpX class object
-    auto & warpx = WarpX::GetInstance();
+#endif
 
     // read number of levels
     int nLevel = 0;
@@ -103,11 +100,11 @@ void FieldEnergy::ComputeDiags (int step)
         // get cell size
         Geometry const & geom = warpx.Geom(lev);
         auto domain_box = geom.Domain();
-        #if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 2)
         auto dV = geom.CellSize(0) * geom.CellSize(1);
-        #elif (AMREX_SPACEDIM == 3)
+#elif (AMREX_SPACEDIM == 3)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-        #endif
+#endif
 
         // compute E squared
         Real tmpx = Ex.norm2(0,geom.periodicity());

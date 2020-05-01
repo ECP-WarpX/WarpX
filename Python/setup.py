@@ -28,10 +28,10 @@ else:
     package_data = {}
 
 setup (name = 'pywarpx',
-       version = '20.03',
+       version = '20.04',
        packages = ['pywarpx'],
        package_dir = {'pywarpx':'pywarpx'},
        description = """Wrapper of WarpX""",
        package_data = package_data,
-       install_requires=['picmistandard', 'periodictable']
+       install_requires=['numpy', 'picmistandard', 'periodictable']
        )

@@ -235,13 +235,13 @@ LaserParticleContainer::InitData (int lev)
                  position[2] + (S_X*(Real(i)+0.5_rt))*u_X[2] + (S_Y*(Real(j)+0.5_rt))*u_Y[2] };
 #else
 #   if (defined WARPX_DIM_RZ)
-        return { position[0] + (S_X*(Real(i)+0.5)),
-                 0.0,
+        return { position[0] + (S_X*(Real(i)+0.5_rt)),
+                 0.0_rt,
                  position[2]};
 #   else
-        return { position[0] + (S_X*(Real(i)+0.5))*u_X[0],
-                 0.0,
-                 position[2] + (S_X*(Real(i)+0.5))*u_X[2] };
+        return { position[0] + (S_X*(Real(i)+0.5_rt))*u_X[0],
+                 0.0_rt,
+                 position[2] + (S_X*(Real(i)+0.5_rt))*u_X[2] };
 #   endif
 #endif
     };
@@ -253,9 +253,9 @@ LaserParticleContainer::InitData (int lev)
                 u_Y[0]*(pos[0]-position[0])+u_Y[1]*(pos[1]-position[1])+u_Y[2]*(pos[2]-position[2])};
 #else
 #   if (defined WARPX_DIM_RZ)
-        return {pos[0]-position[0], 0.0};
+        return {pos[0]-position[0], 0.0_rt};
 #   else
-        return {u_X[0]*(pos[0]-position[0])+u_X[2]*(pos[2]-position[2]), 0.0};
+        return {u_X[0]*(pos[0]-position[0])+u_X[2]*(pos[2]-position[2]), 0.0_rt};
 #   endif
 #endif
     };
@@ -407,7 +407,7 @@ LaserParticleContainer::Evolve (int lev,
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
-    MultiFab* cost = WarpX::getCosts(lev);
+    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -423,6 +423,10 @@ LaserParticleContainer::Evolve (int lev,
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
             Real wt = amrex::second();
 
             auto& attribs = pti.GetAttribs();
@@ -500,15 +504,11 @@ LaserParticleContainer::Evolve (int lev,
                 }
             }
 
-            if (cost) {
-                const Box& tbx = pti.tilebox();
-                wt = (amrex::second() - wt) / tbx.d_numPts();
-                Array4<Real> const& costarr = cost->array(pti);
-                amrex::ParallelFor(tbx,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                {
-                    costarr(i,j,k) += wt;
-                });
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
     }
@@ -528,7 +528,9 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
 {
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
 
+#if !(defined WARPX_DIM_RZ)
     const Real eps = dx[0]*1.e-50;
+#endif
 #if (AMREX_SPACEDIM == 3)
     Sx = std::min(std::min(dx[0]/(std::abs(u_X[0])+eps),
                            dx[1]/(std::abs(u_X[1])+eps)),

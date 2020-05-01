@@ -141,9 +141,9 @@ void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spe
 
         // Extract pointers for the k vectors
         const Real* modified_kx = modified_kx_vec[mfi].dataPtr();
-    #if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM==3)
         const Real* modified_ky = modified_ky_vec[mfi].dataPtr();
-    #endif
+#endif
         const Real* modified_kz = modified_kz_vec[mfi].dataPtr();
         // Extract arrays for the coefficients
         Array4<Real> C = C_coef[mfi].array();
@@ -155,7 +155,9 @@ void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spe
         Array4<Complex> Theta2 = Theta2_coef[mfi].array();
         // Extract reals (for portability on GPU)
         Real vx = v_galilean[0];
+#if (AMREX_SPACEDIM==3)
         Real vy = v_galilean[1];
+#endif
         Real vz = v_galilean[2];
 
         // Loop over indices within one box
@@ -165,12 +167,12 @@ void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spe
             // Calculate norm of vector
             const Real k_norm = std::sqrt(
                 std::pow(modified_kx[i], 2) +
-    #if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM==3)
                 std::pow(modified_ky[j], 2) +
                 std::pow(modified_kz[k], 2));
-    #else
+#else
                 std::pow(modified_kz[j], 2));
-    #endif
+#endif
 
             // Calculate coefficients
             constexpr Real c = PhysConst::c;
@@ -183,17 +185,17 @@ void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spe
 
                 // Calculate dot product with galilean velocity
                 const Real kv = modified_kx[i]*vx +
-    #if (AMREX_SPACEDIM==3)
+#if (AMREX_SPACEDIM==3)
                                  modified_ky[j]*vy +
                                  modified_kz[k]*vz;
-    #else
+#else
                                  modified_kz[j]*vz;
-    #endif
+#endif
 
                 const Real nu = kv/(k_norm*c);
-                const Complex theta = MathFunc::exp( 0.5_rt*I*kv*dt );
-                const Complex theta_star = MathFunc::exp( -0.5_rt*I*kv*dt );
-                const Complex e_theta = MathFunc::exp( I*c*k_norm*dt );
+                const Complex theta = amrex::exp( 0.5_rt*I*kv*dt );
+                const Complex theta_star = amrex::exp( -0.5_rt*I*kv*dt );
+                const Complex e_theta = amrex::exp( I*c*k_norm*dt );
 
                 Theta2(i,j,k) = theta*theta;
 

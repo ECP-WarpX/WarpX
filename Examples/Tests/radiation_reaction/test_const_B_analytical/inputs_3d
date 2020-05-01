@@ -20,10 +20,6 @@ warpx.serialize_ics = 1
 particles.nspecies = 5
 particles.species_names =  ele_para0 ele_perp0 ele_perp1 ele_perp2 pos_perp2
 
-amr.plot_int = 64
-
-warpx.fields_to_plot = rho
-
 ele_para0.species_type = "electron"
 ele_para0.injection_style = "SingleParticle"
 ele_para0.single_particle_pos = 0.0 0.0 0.0
@@ -61,3 +57,9 @@ pos_perp2.do_classical_radiation_reaction = 1
 
 particles.B_ext_particle_init_style = "constant"
 particles.B_external_particle = 917978.2333474257 1376967.350021139 2753934.700042278
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 64
+diag1.diag_type = Full
+diag1.fields_to_plot = rho

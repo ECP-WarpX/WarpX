@@ -1,13 +1,14 @@
 /* Copyright 2019 Andrew Myers, Ann Almgren, Axel Huebl
- * David Grote, Maxence Thevenet, Remi Lehe
- * Weiqun Zhang, levinem
+ * David Grote, Maxence Thevenet, Michael Rowan
+ * Remi Lehe, Weiqun Zhang, levinem
  *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <WarpX.H>
-#include <WarpXAlgorithmSelection.H>
+#include "WarpX.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+
 #include <AMReX_BLProfiler.H>
 
 using namespace amrex;
@@ -18,63 +19,87 @@ WarpX::LoadBalance ()
     WARPX_PROFILE_REGION("LoadBalance");
     WARPX_PROFILE("WarpX::LoadBalance()");
 
-    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-    {
-        LoadBalanceTimers();
-    } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
-    {
-        LoadBalanceHeuristic();
-    }
-}
-
-void
-WarpX::LoadBalanceTimers ()
-{
     AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
 
-    const int nLevels = finestLevel();
-    for (int lev = 0; lev <= nLevels; ++lev)
-    {
-        const Real nboxes = costs[lev]->size();
-        const Real nprocs = ParallelDescriptor::NProcs();
-        const int nmax = static_cast<int>(std::ceil(nboxes/nprocs*load_balance_knapsack_factor));
-        const DistributionMapping newdm = (load_balance_with_sfc)
-            ? DistributionMapping::makeSFC(*costs[lev], false)
-            : DistributionMapping::makeKnapSack(*costs[lev], nmax);
-        RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
-    }
-    mypc->Redistribute();
-}
-
-void
-WarpX::LoadBalanceHeuristic ()
-{
-    AMREX_ALWAYS_ASSERT(costs_heuristic[0] != nullptr);
-    WarpX::ComputeCostsHeuristic(costs_heuristic);
-
-    const int nLevels = finestLevel();
-    for (int lev = 0; lev <= nLevels; ++lev)
-    {
 #ifdef AMREX_USE_MPI
-        // Parallel reduce the costs_heurisitc
-        amrex::Vector<Real>::iterator it = (*costs_heuristic[lev]).begin();
-        amrex::Real* itAddr = &(*it);
-        ParallelAllReduce::Sum(itAddr,
-                               costs_heuristic[lev]->size(),
-                               ParallelContext::CommunicatorSub());
-#endif
-        const amrex::Real nboxes = costs_heuristic[lev]->size();
+    if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
+    {
+        // compute the costs on a per-rank basis
+        WarpX::ComputeCostsHeuristic(costs);
+    }
+
+    // By default, do not do a redistribute; this toggles to true if RemakeLevel
+    // is called for any level
+    int doLoadBalance = 0;
+
+    const int nLevels = finestLevel();
+    for (int lev = 0; lev <= nLevels; ++lev)
+    {
+        LayoutData<Real> costsLayoutData(boxArray(lev), DistributionMap(lev));
+        for (auto i : costsLayoutData.IndexArray())
+        {
+            costsLayoutData[i] = (*costs[lev])[i];
+        }
+
+        // Compute the new distribution mapping
+        DistributionMapping newdm;
+        const amrex::Real nboxes = costs[lev]->size();
         const amrex::Real nprocs = ParallelContext::NProcsSub();
         const int nmax = static_cast<int>(std::ceil(nboxes/nprocs*load_balance_knapsack_factor));
+        // These store efficiency (meaning, the  average 'cost' over all ranks,
+        // normalized to max cost) for current and proposed distribution mappings
+        amrex::Real currentEfficiency = 0.0;
+        amrex::Real proposedEfficiency = 0.0;
 
-        const DistributionMapping newdm = (load_balance_with_sfc)
-            ? DistributionMapping::makeSFC(*costs_heuristic[lev], boxArray(lev), false)
-            : DistributionMapping::makeKnapSack(*costs_heuristic[lev], nmax);
+        newdm = (load_balance_with_sfc)
+            ? DistributionMapping::makeSFC(costsLayoutData,
+                                           currentEfficiency, proposedEfficiency,
+                                           false,
+                                           ParallelDescriptor::IOProcessorNumber())
+            : DistributionMapping::makeKnapSack(costsLayoutData,
+                                                currentEfficiency, proposedEfficiency,
+                                                nmax,
+                                                false,
+                                                ParallelDescriptor::IOProcessorNumber());
+        // As specified in the above calls to makeSFC and makeKnapSack, the new
+        // distribution mapping is NOT communicated to all ranks; the loadbalanced
+        // dm is up-to-date only on root, and we can decide whether to broadcast
+        if (load_balance_efficiency_ratio_threshold > 0.0
+            & ParallelDescriptor::MyProc() == ParallelDescriptor::IOProcessorNumber())
+        {
+            doLoadBalance = (proposedEfficiency > load_balance_efficiency_ratio_threshold*currentEfficiency);
+        }
 
-        RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
+        ParallelDescriptor::Bcast(&doLoadBalance, 1,
+                                  ParallelDescriptor::IOProcessorNumber());
+
+        if (doLoadBalance)
+        {
+            Vector<int> pmap;
+            if (ParallelDescriptor::MyProc() == ParallelDescriptor::IOProcessorNumber())
+            {
+                pmap = newdm.ProcessorMap();
+            } else
+            {
+                pmap.resize(nboxes);
+            }
+            ParallelDescriptor::Bcast(&pmap[0], pmap.size(), ParallelDescriptor::IOProcessorNumber());
+
+            if (ParallelDescriptor::MyProc() != ParallelDescriptor::IOProcessorNumber())
+            {
+                newdm = DistributionMapping(pmap);
+            }
+
+            RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
+        }
     }
-    mypc->Redistribute();
+    if (doLoadBalance)
+    {
+        mypc->Redistribute();
+    }
+#endif
 }
+
 
 void
 WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const DistributionMapping& dm)
@@ -84,7 +109,6 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         if (ParallelDescriptor::NProcs() == 1) return;
 
         // Fine patch
-        const auto& period = Geom(lev).periodicity();
         for (int idim=0; idim < 3; ++idim)
         {
             {
@@ -162,7 +186,6 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
         // Coarse patch
         if (lev > 0) {
-            const auto& cperiod = Geom(lev-1).periodicity();
             for (int idim=0; idim < 3; ++idim)
             {
                 {
@@ -258,21 +281,11 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             }
         }
 
-        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        if (costs[lev] != nullptr)
         {
-            if (costs[lev] != nullptr)
-            {
-                costs[lev].reset(new MultiFab(costs[lev]->boxArray(), dm, 1, 0));
-                costs[lev]->setVal(0.0);
-            }
-        } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
-        {
-            if (costs_heuristic[lev] != nullptr)
-            {
-                costs_heuristic[lev].reset(new amrex::Vector<Real>);
-                const int nboxes = Efield_fp[lev][0].get()->size();
-                costs_heuristic[lev]->resize(nboxes, 0.0); // Initializes to 0.0?
-            }
+            costs[lev].reset(new amrex::Vector<Real>);
+            const int nboxes = Efield_fp[lev][0].get()->size();
+            costs[lev]->resize(nboxes, 0.0);
         }
 
         SetDistributionMap(lev, dm);
@@ -281,25 +294,27 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
     {
         amrex::Abort("RemakeLevel: to be implemented");
     }
+    // Re-initialize diagnostic functors that stores pointers to the user-requested fields at level, lev.
+    multi_diags->InitializeFieldFunctors( lev );
 }
 
 void
-WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& costs)
+WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& a_costs)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        auto & mypc = WarpX::GetInstance().GetPartContainer();
-        auto nSpecies = mypc.nSpecies();
+        auto & mypc_ref = WarpX::GetInstance().GetPartContainer();
+        auto nSpecies = mypc_ref.nSpecies();
 
         // Species loop
         for (int i_s = 0; i_s < nSpecies; ++i_s)
         {
-            auto & myspc = mypc.GetParticleContainer(i_s);
+            auto & myspc = mypc_ref.GetParticleContainer(i_s);
 
             // Particle loop
             for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
             {
-                (*costs[lev])[pti.index()] += costs_heuristic_particles_wt*pti.numParticles();
+                (*a_costs[lev])[pti.index()] += costs_heuristic_particles_wt*pti.numParticles();
             }
         }
 
@@ -308,7 +323,7 @@ WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex:
         for (MFIter mfi(*Ex, false); mfi.isValid(); ++mfi)
         {
             const Box& gbx = mfi.growntilebox();
-            (*costs[lev])[mfi.index()] += costs_heuristic_cells_wt*gbx.numPts();
+            (*a_costs[lev])[mfi.index()] += costs_heuristic_cells_wt*gbx.numPts();
         }
     }
 }
@@ -318,12 +333,6 @@ WarpX::ResetCosts ()
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
-        {
-            costs[lev]->setVal(0.0);
-        } else if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
-        {
-            costs_heuristic[lev]->assign((*costs_heuristic[lev]).size(), 0.0);
-        }
+        costs[lev]->assign((*costs[lev]).size(), 0.0);
     }
 }

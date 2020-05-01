@@ -25,7 +25,7 @@ algo.maxwell_fdtd_solver = yee # or ckc
 
 # Load balancing
 warpx.load_balance_int = 2
-algo.load_balance_costs_update = Heuristic
+#algo.load_balance_costs_update = Timers
 
 # Interpolation
 # 1: Linear; 2: Quadratic; 3: Cubic.
@@ -35,9 +35,6 @@ interpolation.noz = 1
 
 # CFL
 warpx.cfl = 0.99999
-
-# plot frequency
-amr.plot_int = 3
 
 # Particles
 particles.nspecies = 1
@@ -62,3 +59,8 @@ electrons.uz_th = 0.0
 warpx.reduced_diags_names = LBC
 LBC.type = LoadBalanceCosts
 LBC.frequency = 1
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 3
+diag1.diag_type = Full

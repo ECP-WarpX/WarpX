@@ -1,7 +1,7 @@
 /* Copyright 2019-2020 Andrew Myers, Axel Huebl, David Grote
  * Jean-Luc Vay, Luca Fedeli, Maxence Thevenet
- * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
- * Yinjian Zhao, levinem
+ * Michael Rowan, Remi Lehe, Revathi Jambunathan
+ * Weiqun Zhang, Yinjian Zhao, levinem
  *
  * This file is part of WarpX.
  *
@@ -57,11 +57,11 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
 
     // Initialize temporary local arrays for charge/current deposition
     int num_threads = 1;
-    #ifdef _OPENMP
-    #pragma omp parallel
-    #pragma omp single
+#ifdef _OPENMP
+#pragma omp parallel
+#pragma omp single
     num_threads = omp_get_num_threads();
-    #endif
+#endif
     local_rho.resize(num_threads);
     local_jx.resize(num_threads);
     local_jy.resize(num_threads);
@@ -158,7 +158,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
 #endif
 
         if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
-            auto& ptile = DefineAndReturnParticleTile(0, 0, 0);
+            DefineAndReturnParticleTile(0, 0, 0);
         }
 
         particle_tile.push_back(p);
@@ -172,7 +172,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         particle_tile.push_back_real(PIdx::uz,     vz + ibegin,     vz + iend);
 
         if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
-            auto& ptile = DefineAndReturnParticleTile(0, 0, 0);
+            DefineAndReturnParticleTile(0, 0, 0);
         }
 
         for (int comp = PIdx::uz+1; comp < PIdx::nattribs; ++comp)
@@ -309,6 +309,9 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
+        if (WarpX::do_nodal==1) {
+          amrex::Abort("The Esirkepov algorithm cannot be used with a nodal grid.");
+        }
         if ( (v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)){
             amrex::Abort("The Esirkepov algorithm cannot be used with the Galilean algorithm.");
         }
@@ -508,7 +511,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 
         // Loop over particle tiles and deposit charge on each level
 #ifdef _OPENMP
-        #pragma omp parallel
+#pragma omp parallel
         {
         int thread_num = omp_get_thread_num();
 #else
@@ -646,25 +649,62 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
     amrex::Real inv_clight_sq = 1.0/PhysConst::c/PhysConst::c;
 
     const int nLevels = finestLevel();
-    for (int lev = 0; lev <= nLevels; ++lev) {
 
+#ifdef AMREX_USE_GPU
+    if (Gpu::inLaunchRegion())
+    {
+        ReduceOps<ReduceOpSum, ReduceOpSum, ReduceOpSum> reduce_op;
+        ReduceData<Real, Real, Real> reduce_data(reduce_op);
+        using ReduceTuple = typename decltype(reduce_data)::Type;
+        for (int lev = 0; lev <= nLevels; ++lev) {
+            for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+            {
+                const auto uxp = pti.GetAttribs(PIdx::ux).data();
+                const auto uyp = pti.GetAttribs(PIdx::uy).data();
+                const auto uzp = pti.GetAttribs(PIdx::uz).data();
+
+                const long np = pti.numParticles();
+                np_total += np;
+
+                reduce_op.eval(np, reduce_data,
+                               [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
+                               {
+                                   Real usq = (uxp[i]*uxp[i] +
+                                               uyp[i]*uyp[i] +
+                                               uzp[i]*uzp[i])*inv_clight_sq;
+                                   Real gaminv = 1.0_rt/std::sqrt(1.0_rt + usq);
+                                   return {uxp[i]*gaminv,  uyp[i]*gaminv, uzp[i]*gaminv};
+                               });
+            }
+        }
+
+        ReduceTuple hv = reduce_data.value();
+        vx_total = amrex::get<0>(hv);
+        vy_total = amrex::get<1>(hv);
+        vz_total = amrex::get<2>(hv);
+    }
+    else
+#endif
+    {
+        for (int lev = 0; lev <= nLevels; ++lev) {
 #ifdef _OPENMP
 #pragma omp parallel reduction(+:vx_total, vy_total, vz_total, np_total)
 #endif
-        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
-        {
-            auto& ux = pti.GetAttribs(PIdx::ux);
-            auto& uy = pti.GetAttribs(PIdx::uy);
-            auto& uz = pti.GetAttribs(PIdx::uz);
+            for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+            {
+                auto& ux = pti.GetAttribs(PIdx::ux);
+                auto& uy = pti.GetAttribs(PIdx::uy);
+                auto& uz = pti.GetAttribs(PIdx::uz);
 
-            np_total += pti.numParticles();
+                np_total += pti.numParticles();
 
-            for (unsigned long i = 0; i < ux.size(); i++) {
-                Real usq = (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])*inv_clight_sq;
-                Real gaminv = 1.0/std::sqrt(1.0 + usq);
-                vx_total += ux[i]*gaminv;
-                vy_total += uy[i]*gaminv;
-                vz_total += uz[i]*gaminv;
+                for (unsigned long i = 0; i < ux.size(); i++) {
+                    Real usq = (ux[i]*ux[i] + uy[i]*uy[i] + uz[i]*uz[i])*inv_clight_sq;
+                    Real gaminv = 1.0_rt/std::sqrt(1.0_rt + usq);
+                    vx_total += ux[i]*gaminv;
+                    vy_total += uy[i]*gaminv;
+                    vz_total += uz[i]*gaminv;
+                }
             }
         }
     }
@@ -728,7 +768,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
     if (do_not_push) return;
 
-    MultiFab* cost = WarpX::getCosts(lev);
+    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -737,6 +777,10 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+            }
             Real wt = amrex::second();
 
             //
@@ -751,11 +795,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
             ParticleReal* AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
             ParticleReal* AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
             ParticleReal* AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
-#ifdef WARPX_DIM_RZ
-            auto& aos = pti.GetArrayOfStructs();
-            ParticleType* AMREX_RESTRICT const pstruct = aos().dataPtr();
-            ParticleReal* AMREX_RESTRICT theta = attribs[PIdx::theta].dataPtr();
-#endif
+
             // Loop over the particles and update their position
             amrex::ParallelFor( pti.numParticles(),
                 [=] AMREX_GPU_DEVICE (long i) {
@@ -766,15 +806,11 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
                 }
             );
 
-            if (cost) {
-                const Box& tbx = pti.tilebox();
-                wt = (amrex::second() - wt) / tbx.d_numPts();
-                Array4<Real> const& costarr = cost->array(pti);
-                amrex::ParallelFor(tbx,
-                [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-                {
-                    costarr(i,j,k) += wt;
-                });
+            if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+            {
+                amrex::Gpu::synchronize();
+                wt = amrex::second() - wt;
+                amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
     }

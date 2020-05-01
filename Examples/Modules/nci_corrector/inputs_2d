@@ -4,9 +4,6 @@ max_step = 600
 # number of grid points
 amr.n_cell =  128 128
 
-amr.plot_int = 1000   # How often to write plotfiles.
-amr.plot_file = plt
-
 # Maximum allowable size of each subdomain in the problem domain;
 #    this is used to decompose the domain for parallel calculations.
 amr.max_grid_size = 32
@@ -70,3 +67,8 @@ ions.xmin = -10.e-6
 ions.xmax = +10.e-6
 ions.ymin = -10.e-6
 ions.ymax = +10.e-6
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 10000
+diag1.diag_type = Full

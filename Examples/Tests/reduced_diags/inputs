@@ -32,12 +32,10 @@ interpolation.noz = 1
 # CFL
 warpx.cfl = 0.99999
 
-# plot frequency
-amr.plot_int = 200
-
 # Particles
-particles.nspecies = 2
-particles.species_names = electrons protons
+particles.nspecies = 3
+particles.species_names = electrons protons photons
+particles.photon_species = photons
 
 electrons.charge = -q_e
 electrons.mass = m_e
@@ -61,6 +59,16 @@ protons.ux_th = 0.
 protons.uy_th = 0.
 protons.uz_th = 0.
 
+photons.species_type = "photon"
+photons.injection_style = "NUniformPerCell"
+photons.num_particles_per_cell_each_dim = 1 1 1
+photons.profile = constant
+photons.density = 1.e14   # number of protons per m^3
+photons.momentum_distribution_type = gaussian
+photons.ux_th = 0.2
+photons.uy_th = 0.2
+photons.uz_th = 0.2
+
 #################################
 ###### REDUCED DIAGS ############
 #################################
@@ -69,3 +77,8 @@ EP.type = ParticleEnergy
 EP.frequency = 200
 EF.type = FieldEnergy
 EF.frequency = 200
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 200
+diag1.diag_type = Full

@@ -6,8 +6,6 @@ amr.n_cell = 64 640
 amr.max_grid_size = 128
 amr.blocking_factor = 32
 amr.max_level = 0
-amr.plot_file = "plotfiles/plt"
-amr.plot_int = 500
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 0 0      # Is periodic?
 geometry.prob_lo     = -125.e-6 -149.e-6
@@ -18,8 +16,6 @@ geometry.prob_hi     =  125.e-6    1.e-6
 #################################
 algo.maxwell_fdtd_solver = ckc
 warpx.verbose = 1
-warpx.plot_raw_fields = 0
-warpx.do_dive_cleaning = 0
 warpx.use_filter = 1
 warpx.do_pml = 1
 warpx.pml_ncell = 10
@@ -124,3 +120,8 @@ beam.zinject_plane = 0.
 beam.rigid_advance = true
 beam.projected = true
 beam.focused = false
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 500
+diag1.diag_type = Full
