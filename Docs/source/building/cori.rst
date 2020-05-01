@@ -128,3 +128,14 @@ Finally, compile WarpX:
    make -j 16 COMP=gcc USE_OPENPMD=TRUE
 
 In order to run WarpX, load the same modules again.
+
+Building a Python Module
+------------------------
+
+When building with Python, it is recommended to use the cray-python, version 3. For example,
+
+.. code-block:: bash
+
+   module load cray-python/3.7.3.2
+
+Otherwise, follow the instructions for a general Python install here :ref:`building-python`.

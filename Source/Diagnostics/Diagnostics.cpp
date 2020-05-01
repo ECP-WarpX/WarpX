@@ -167,8 +167,8 @@ Diagnostics::ComputeAndPack ()
     warpx.FieldGather();
 
     // cell-center fields and store result in m_mf_output.
-    int icomp_dst = 0;
     for(int lev=0; lev<nlev; lev++){
+        int icomp_dst = 0;
         for (int icomp=0, n=m_all_field_functors[0].size(); icomp<n; icomp++){
             // Call all functors in m_all_field_functors[lev]. Each of them computes
             // a diagnostics and writes in one or more components of the output
@@ -177,9 +177,9 @@ Diagnostics::ComputeAndPack ()
             // update the index of the next component to fill
             icomp_dst += m_all_field_functors[lev][icomp]->nComp();
         }
+        // Check that the proper number of components of mf_avg were updated.
+        AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
     }
-    // Check that the proper number of components of m_mf_output were updated.
-    AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
 }
 
 void
@@ -198,8 +198,15 @@ Diagnostics::FlushRaw () {}
 bool
 Diagnostics::DoDump (int step, bool force_flush)
 {
-    if (force_flush) return true;
-    if ( m_period>0 && (step+1)%m_period==0 ) return true;
+    if (step == m_previous_step && !m_period == 1) return false;
+    if (force_flush){
+        m_previous_step = step+1;
+        return true;
+    }
+    if ( m_period>0 && (step+1)%m_period==0){
+        m_previous_step = step+1;
+        return true;
+    }
     return false;
 }
 
@@ -402,8 +409,8 @@ Diagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "rho" ){
             // rho_new is stored in component 1 of rho_fp when using PSATD
 #ifdef WARPX_USE_PSATD
-            std::unique_ptr<MultiFab> rho_new = std::make_unique<MultiFab>(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(rho_new.get(), lev, m_crse_ratio);
+            MultiFab* rho_new = new MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(rho_new, lev, m_crse_ratio);
 #else
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_rho_fp(lev), lev, m_crse_ratio);
 #endif

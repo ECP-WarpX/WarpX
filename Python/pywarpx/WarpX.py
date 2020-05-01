@@ -15,6 +15,7 @@ from .Interpolation import interpolation
 from .Lasers import lasers, lasers_list
 from . import Particles
 from .Particles import particles, particles_list
+from .Diagnostics import diagnostics, diagnostics_list
 
 
 class WarpX(Bucket):
@@ -31,8 +32,6 @@ class WarpX(Bucket):
         argv += algo.attrlist()
         argv += langmuirwave.attrlist()
         argv += interpolation.attrlist()
-        argv += particles.attrlist()
-        argv += lasers.attrlist()
 
         # --- Search through species_names and add any predefined particle objects in the list.
         particles_list_names = [p.instancename for p in particles_list]
@@ -47,21 +46,19 @@ class WarpX(Bucket):
             else:
                 raise Exception('Species %s listed in species_names not defined'%pstring)
 
+        argv += particles.attrlist()
         for particle in particles_list:
             argv += particle.attrlist()
 
+        argv += lasers.attrlist()
         for laser in lasers_list:
             argv += laser.attrlist()
 
-        return argv
+        argv += diagnostics.attrlist()
+        for diagnostic in diagnostics_list:
+            argv += diagnostic.attrlist()
 
-    def add_field_to_plot(self, field):
-        try:
-            # Check if the field was already added to the string
-            if field not in self.fields_to_plot:
-                self.fields_to_plot.append(field)
-        except AttributeError:
-            self.fields_to_plot = [field]
+        return argv
 
     def init(self):
         from . import wx

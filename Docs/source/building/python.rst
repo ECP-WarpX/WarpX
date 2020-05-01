@@ -1,3 +1,5 @@
+.. _building-python:
+
 Installing WarpX as a Python package
 ====================================
 
@@ -23,14 +25,17 @@ or edit the ``GNUmakefile`` and set ``USE_PYTHON_MAIN=TRUE``, and type
 Additional compile time options can be specified as needed.
 This will compile the code, and install the Python bindings and the Python scripts as a package (named ``pywarpx``) in your standard Python installation (i.e. in your ``site-packages`` directory).
 
-If you do not have write permission to the default Python installation (e.g. typical on computer clusters), add the ``--user`` install option to have WarpX installed elsewhere.
+If you do not have write permission to the default Python installation (e.g. typical on computer clusters), there are two options.
+The recommended option is to use a `virtual environment <https://docs.python.org/3/tutorial/venv.html>`__, which provides the most flexibility and robustness.
+
+Alternatively, add the ``--user`` install option to have WarpX installed elsewhere.
 
 .. code-block:: bash
 
    make -j 4 PYINSTALLOPTIONS=--user
 
-With ``--user``, the default location will be in your home directory, in ``~/.local``.
-The location can be controlled by setting the environment variable ``PYTHONUSERBASE``.
+With ``--user``, the default location will be in your home directory, ``~/.local``, or the location defined by the environment variable ``PYTHONUSERBASE``.
+
 In HPC environments, it is often recommended to install codes in scratch or work space which typically have faster disk access.
 
 The different dimensioned versions of WarpX, 3D, 2D, and RZ, can coexist in the Python installation.
@@ -51,11 +56,13 @@ Go into the ``Python`` subdirectory and run
    python setup.py install
 
 This installs the Python scripts as a package (named ``pywarpx``) in your standard Python installation (i.e. in your ``site-packages`` directory).
-If you do not have write permissions to the default Python installation (e.g. typical on computer clusters), add the ``--user`` install option to have WarpX installed elsewhere.
+If you do not have write permission to the default Python installation (e.g. typical on computer clusters), there are two options.
+The recommended option is to use a `virtual environment <https://docs.python.org/3/tutorial/venv.html>`__, which provides the most flexibility and robustness.
+
+Alternatively, add the ``--user`` install option to have WarpX installed elsewhere.
 
 .. code-block:: bash
 
    python setup.py install --user
 
-With ``--user``, the default location will be in your home directory, in ``~/.local``.
-The location can be controlled by setting the environment variable ``PYTHONUSERBASE``.
+With ``--user``, the default location will be in your home directory, ``~/.local``, or the location defined by the environment variable ``PYTHONUSERBASE``.

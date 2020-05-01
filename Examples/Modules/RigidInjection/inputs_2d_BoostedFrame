@@ -11,7 +11,6 @@ amr.n_cell =  256 512 # 32 64
 amr.max_grid_size = 512
 amr.blocking_factor = 16
 amr.max_level = 0
-amr.plot_int = 100000
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 1     0            # Is periodic?
 geometry.prob_lo     = -50.e-6   -10.e-6
@@ -47,3 +46,8 @@ beam.zinject_plane = 20.e-6
 beam.rigid_advance = true
 beam.projected = true
 beam.focused = false
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 10000
+diag1.diag_type = Full
