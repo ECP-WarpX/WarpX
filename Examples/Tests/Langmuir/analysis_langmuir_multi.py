@@ -72,7 +72,7 @@ ds = yt.load(fn)
 
 # Check that the particle selective output worked:
 species = 'electrons'
-print('ds.field_list', field_list)
+print('ds.field_list', ds.field_list)
 for field in ['particle_weight',
               'particle_momentum_x']:
     print('assert that this is in ds.field_list', (species, field))

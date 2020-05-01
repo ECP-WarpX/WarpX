@@ -97,7 +97,7 @@ plt.title('Ez, last iteration\n(theory)')
 plt.tight_layout()
 plt.savefig('langmuir_multi_rz_analysis.png')
 
-error_rel = overal_max_error
+error_rel = overall_max_error
 tolerance_rel = 0.04
 
 print("error_rel    : " + str(error_rel))

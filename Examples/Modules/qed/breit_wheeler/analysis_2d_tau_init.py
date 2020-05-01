@@ -15,7 +15,7 @@ import sys
 # do actually have an exponentially distributed optical depth
 
 # Tolerance
-toloerance_rel = 1e-2
+tolerance_rel = 1e-2
 
 def check():
     filename = sys.argv[1]
