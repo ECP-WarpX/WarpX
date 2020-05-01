@@ -64,7 +64,7 @@ WarpX::Evolve (int numsteps)
 #ifdef WARPX_USE_PSATD
             amrex::Abort("LoadBalance for PSATD: TODO");
 #endif
-            if (step > 0 && (step+1) % load_balance_int == 0)
+            if (step > 0 && load_balance_intervals.contains(step+1))
             {
                 LoadBalance();
 
@@ -82,7 +82,7 @@ WarpX::Evolve (int numsteps)
                     // instantaneous costs)
                     for (int i=0; i<cost->size(); ++i)
                     {
-                        (*cost)[i] *= (1. - 2./load_balance_int);
+                        (*cost)[i] *= (1. - 2./load_balance_intervals.localPeriod(step+1));
                     }
                 }
             }

@@ -245,4 +245,6 @@ namespace WarpXUtilStr
         }
         return value;
     }
+
 }
+

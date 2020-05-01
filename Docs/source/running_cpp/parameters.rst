@@ -151,10 +151,10 @@ Distribution across MPI ranks and parallelization
     When using mesh refinement, this number applies to the subdomains
     of the coarsest level, but also to any of the finer level.
 
-* ``warpx.load_balance_int`` (`integer`) optional (default `-1`)
-    How often WarpX should try to redistribute the work across MPI ranks,
-    in order to have better load balancing (expressed in number of PIC cycles
-    inbetween two consecutive attempts at redistributing the work).
+* ``warpx.load_balance_int`` (`string`) optional (default `0`)
+    Using the `Intervals parser`_ syntax, this string defines the timesteps at which
+    WarpX should try to redistribute the work across MPI ranks, in order to have
+    better load balancing.
     Use 0 to disable load_balancing.
 
     When performing load balancing, WarpX measures the wall time for
@@ -1586,3 +1586,49 @@ The checkpoint capability can be turned with regular diagnostics: ``<diag_name>.
 * ``amr.restart`` (`string`)
     Name of the checkpoint file to restart from. Returns an error if the folder does not exist
     or if it is not properly formatted.
+
+Intervals parser
+----------------
+
+WarpX can parse time step interval expressions of the form ``start:stop:period``, e.g.
+``1:2:3, 4::, 5:6, :, ::10``.
+A comma is used as a separator between groups of intervals, which we call slices.
+The resulting time steps are the `union set <https://en.wikipedia.org/wiki/Union_(set_theory)>`_ of all given slices.
+White spaces are ignored.
+A single slice can have 0, 1 or 2 colons ``:``, just as `numpy slices <https://numpy.org/doc/stable/reference/generated/numpy.s_.html>`_, but with inclusive upper bound for ``stop``.
+
+* For 0 colon the given value is the period
+
+* For 1 colon the given string is of the type ``start:stop``
+
+* For 2 colons the given string is of the type ``start:stop:period``
+
+Any value that is not given is set to default.
+Default is ``0`` for the start, ``std::numeric_limits<int>::max()`` for the stop and ``1`` for the
+period.
+For the 1 and 2 colon syntax, actually having the integers in the string is optional
+(this means that ``::5``, ``100 ::10`` and ``100 :`` are all valid syntaxes).
+
+**Examples**
+
+* ``something_int = 50`` -> do something at timesteps 0, 50, 100, 150, etc.
+  (equivalent to ``something_int = ::50``)
+
+* ``something_int = 300:600:100`` -> do something at timesteps 300, 400, 500 and 600.
+
+* ``something_int = 300::50`` -> do something at timesteps 300, 350, 400, 450, etc.
+
+* ``something_int = 105:108,205:208`` -> do something at timesteps 105, 106, 107, 108,
+  205, 206, 207 and 208. (equivalent to ``something_int = 105 : 108 : , 205 : 208 :``)
+
+* ``something_int = :`` or  ``something_int = ::`` -> do something at every timestep.
+
+* ``something_int = 167:167,253:253,275:425:50`` do something at timesteps 167, 253, 275,
+  325, 375 and 425.
+
+This is essentially the python slicing syntax except that the stop is inclusive
+(``0:100`` contains 100) and that no colon means that the given value is the period.
+
+Note that if a given period is zero or negative, the correspoding slice is disregarded.
+For example, ``something_int = -1`` deactivates ``something`` and
+``something_int = ::-1,100:1000:25`` is equivalent to ``something_int = 100:1000:25``.
