@@ -7,7 +7,6 @@ amr.n_cell =  128 1024
 amr.max_grid_size = 64
 amr.blocking_factor = 32
 amr.max_level = 0
-amr.plot_int = 100
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 1     0            # Is periodic?
 # physical domain
@@ -121,3 +120,8 @@ laser1.profile_duration = 20.e-15   # The duration of the laser (in seconds)
 laser1.profile_t_peak = 40.e-15    # The time at which the laser reaches its peak (in seconds)
 laser1.profile_focal_distance = 0.5e-3  # Focal distance from the antenna (in meters)
 laser1.wavelength = 0.81e-6         # The wavelength of the laser (in meters)
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 100
+diag1.diag_type = Full

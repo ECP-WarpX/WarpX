@@ -81,7 +81,8 @@ private:
     bool m_plot_raw_rho = false;
     /** Whether to plot F (charge conservation error) in raw fields */
     bool m_plot_raw_F = false;
-
+    /** store previous step dumped, to avoid writing data twice */
+    int m_previous_step = -1;
     /** Name of species to write to file */
     std::vector< std::string > m_species_names;
     /** Each element of this vector handles output for 1 species */

@@ -356,7 +356,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
         double const mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
         amrex::ParticleReal p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
         double const charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
-#   if (defined WARPX_DIM_3D) || (defined WARPX_DIM_2D)
+#   if (defined WARPX_DIM_3D) || (defined WARPX_DIM_XZ)
         auto const npart = ps.second["position"]["x"].getExtent()[0];
         std::shared_ptr<amrex::ParticleReal> ptr_x = ps.second["position"]["x"].loadChunk<amrex::ParticleReal>();
         double const position_unit_x = ps.second["position"]["x"].unitSI();
@@ -367,7 +367,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
         std::shared_ptr<amrex::ParticleReal> ptr_uz = ps.second["momentum"]["z"].loadChunk<amrex::ParticleReal>();
         double const momentum_unit_z = ps.second["momentum"]["z"].unitSI();
 #   else
-        amrex::Abort("AddPlasmaFromFile is only implemented for 2D and 3D\n")
+        amrex::Abort("AddPlasmaFromFile is only implemented for 2D and 3D\n");
 #   endif
 #   if (defined WARPX_DIM_3D)
         std::shared_ptr<amrex::ParticleReal> ptr_y = ps.second["position"]["y"].loadChunk<amrex::ParticleReal>();
@@ -391,7 +391,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
         for (auto i = decltype(npart){0}; i<npart; ++i){
             amrex::ParticleReal const x = ptr_x.get()[i]*position_unit_x;
             amrex::ParticleReal const z = ptr_z.get()[i]*position_unit_z;
-#   if (defined WARPX_DIM_2D)
+#   if (defined WARPX_DIM_XZ)
             amrex::Real const y = 0.0;
 #   elif (defined WARPX_DIM_3D)
             amrex::ParticleReal const y = ptr_y.get()[i]*position_unit_y;
@@ -399,7 +399,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
             if (plasma_injector->insideBounds(x, y, z)) {
                 amrex::ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
                 amrex::ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
-#   if (defined WARPX_DIM_2D)
+#   if (defined WARPX_DIM_XZ)
                 amrex::ParticleReal const uy = 0.0;
 #   elif (defined WARPX_DIM_3D)
                 amrex::ParticleReal const uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
