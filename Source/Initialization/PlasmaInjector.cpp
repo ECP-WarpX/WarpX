@@ -229,10 +229,14 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseDensity(pp);
         parseMomentum(pp);
     } else if (part_pos_s == "external_file") {
+#ifdef WARPX_DIM_RZ
+        amrex::Abort("The option of reading particle data from an external "
+                     "file has not been implemented nor tested in RZ geometry");
+#endif
 #ifdef WARPX_USE_OPENPMD
         external_file = true;
-        pp.get("injection_file",str_injection_file);
-        pp.get("q_tot",q_tot);
+        pp.get("injection_file", str_injection_file);
+        pp.query("q_tot", q_tot);
 #else
         amrex::Abort("WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
                      " to read the external openPMD file with species data");
@@ -398,7 +402,12 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
                                            makeParser(str_momentum_function_uy,{"x","y","z"}),
                                            makeParser(str_momentum_function_uz,{"x","y","z"})));
     } else {
-        StringParseAbortMessage("Momentum distribution type", mom_dist_s);
+        //No need for momentum definition if external file is used
+        std::string s_inj_style;
+        pp.query("injection_style", s_inj_style);
+        if (s_inj_style != "external_file") {
+            StringParseAbortMessage("Momentum distribution type", mom_dist_s);
+        }
     }
 }
 

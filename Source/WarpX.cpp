@@ -179,10 +179,6 @@ WarpX::WarpX ()
 
     ReadParameters();
 
-#ifdef WARPX_USE_OPENPMD
-    m_OpenPMDPlotWriter = new WarpXOpenPMDPlot(openpmd_tspf, openpmd_backend, WarpX::getPMLdirections());
-#endif
-
     // Geometry on all levels has been defined already.
 
     // No valid BoxArray and DistributionMapping have been defined.
@@ -303,29 +299,6 @@ WarpX::WarpX ()
 #endif
     m_fdtd_solver_fp.resize(nlevs_max);
     m_fdtd_solver_cp.resize(nlevs_max);
-#ifdef WARPX_USE_PSATD_HYBRID
-    Efield_fp_fft.resize(nlevs_max);
-    Bfield_fp_fft.resize(nlevs_max);
-    current_fp_fft.resize(nlevs_max);
-    rho_fp_fft.resize(nlevs_max);
-
-    Efield_cp_fft.resize(nlevs_max);
-    Bfield_cp_fft.resize(nlevs_max);
-    current_cp_fft.resize(nlevs_max);
-    rho_cp_fft.resize(nlevs_max);
-
-    dataptr_fp_fft.resize(nlevs_max);
-    dataptr_cp_fft.resize(nlevs_max);
-
-    ba_valid_fp_fft.resize(nlevs_max);
-    ba_valid_cp_fft.resize(nlevs_max);
-
-    domain_fp_fft.resize(nlevs_max);
-    domain_cp_fft.resize(nlevs_max);
-
-    comm_fft.resize(nlevs_max,MPI_COMM_NULL);
-    color_fft.resize(nlevs_max,-1);
-#endif
 
 #ifdef BL_USE_SENSEI_INSITU
     insitu_bridge = nullptr;
@@ -368,10 +341,6 @@ WarpX::~WarpX ()
 #ifdef BL_USE_SENSEI_INSITU
     delete insitu_bridge;
 #endif
-
-#ifdef WARPX_USE_OPENPMD
-    delete m_OpenPMDPlotWriter;
-#endif
 }
 
 void
@@ -386,12 +355,6 @@ WarpX::ReadParameters ()
 
     {
         ParmParse pp("amr");// Traditionally, these have prefix, amr.
-
-        pp.query("check_file", check_file);
-        pp.query("check_int", check_int);
-
-        pp.query("plot_file", plot_file);
-        pp.query("plot_int", plot_int);
 
         pp.query("restart", restart_chkfile);
     }
@@ -581,14 +544,7 @@ WarpX::ReadParameters ()
             amrex::Abort("J-damping can only be done when PML are inside simulation domain (do_pml_in_domain=1)");
         }
 
-        pp.query("openpmd_int", openpmd_int);
-        pp.query("openpmd_backend", openpmd_backend);
-#ifdef WARPX_USE_OPENPMD
-        pp.query("openpmd_tspf", openpmd_tspf);
-#endif
-        pp.query("plot_raw_fields", plot_raw_fields);
-        pp.query("plot_raw_fields_guards", plot_raw_fields_guards);
-        pp.query("plot_coarsening_ratio", plot_coarsening_ratio);
+        // only used for in-situ
         bool user_fields_to_plot;
         user_fields_to_plot = pp.queryarr("fields_to_plot", fields_to_plot);
         if (not user_fields_to_plot){
@@ -618,23 +574,13 @@ WarpX::ReadParameters ()
                                  fields_to_plot.end());
         }
 
-        // Check that the coarsening_ratio can divide the blocking factor
-        const int nlevs_max = maxLevel();
-        for (int lev=0; lev<nlevs_max; lev++){
-          for (int comp=0; comp<AMREX_SPACEDIM; comp++){
-            if ( blockingFactor(lev)[comp] % plot_coarsening_ratio != 0 ){
-              amrex::Abort("plot_coarsening_ratio should be an integer "
-                           "divisor of the blocking factor.");
-            }
-          }
-        }
-
         pp.query("plot_finepatch", plot_finepatch);
         if (maxLevel() > 0) {
             pp.query("plot_crsepatch", plot_crsepatch);
         }
 
         {
+            // Parameters below control all plotfile diagnostics
             bool plotfile_min_max = true;
             pp.query("plotfile_min_max", plotfile_min_max);
             if (plotfile_min_max) {
@@ -738,9 +684,7 @@ WarpX::ReadParameters ()
 #ifdef WARPX_USE_PSATD
     {
         ParmParse pp("psatd");
-        pp.query("hybrid_mpi_decomposition", fft_hybrid_mpi_decomposition);
         pp.query("periodic_single_box_fft", fft_periodic_single_box);
-        pp.query("ngroups_fft", ngroups_fft);
         pp.query("fftw_plan_measure", fftw_plan_measure);
         pp.query("nox", nox_fft);
         pp.query("noy", noy_fft);
@@ -809,17 +753,6 @@ WarpX::MakeNewLevelFromScratch (int lev, Real time, const BoxArray& new_grids,
 {
     AllocLevelData(lev, new_grids, new_dmap);
     InitLevelData(lev, time);
-
-#ifdef WARPX_USE_PSATD
-    if (fft_hybrid_mpi_decomposition){
-#ifdef WARPX_USE_PSATD_HYBRID
-        AllocLevelDataFFT(lev);
-        InitLevelDataFFT(lev, time);
-#else
-    amrex::Abort("The option `psatd.fft_hybrid_mpi_decomposition` does not work on GPU.");
-#endif
-    }
-#endif
 }
 
 void
@@ -855,30 +788,6 @@ WarpX::ClearLevel (int lev)
     rho_cp[lev].reset();
 
     costs[lev].reset();
-
-
-#ifdef WARPX_USE_PSATD_HYBRID
-    for (int i = 0; i < 3; ++i) {
-        Efield_fp_fft[lev][i].reset();
-        Bfield_fp_fft[lev][i].reset();
-        current_fp_fft[lev][i].reset();
-
-        Efield_cp_fft[lev][i].reset();
-        Bfield_cp_fft[lev][i].reset();
-        current_cp_fft[lev][i].reset();
-    }
-
-    rho_fp_fft[lev].reset();
-    rho_cp_fft[lev].reset();
-
-    dataptr_fp_fft[lev].reset();
-    dataptr_cp_fft[lev].reset();
-
-    ba_valid_fp_fft[lev] = BoxArray();
-    ba_valid_cp_fft[lev] = BoxArray();
-
-    FreeFFT(lev);
-#endif
 }
 
 void
@@ -892,7 +801,6 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::use_fdtd_nci_corr,
         do_nodal,
         do_moving_window,
-        fft_hybrid_mpi_decomposition,
         aux_is_nodal,
         moving_window_dir,
         WarpX::nox,
@@ -942,6 +850,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     //
     // The fine patch
     //
+    std::array<Real,3> dx = CellSize(lev);
+
     Bfield_fp[lev][0].reset( new MultiFab(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE+ngextra));
     Bfield_fp[lev][1].reset( new MultiFab(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE+ngextra));
     Bfield_fp[lev][2].reset( new MultiFab(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE+ngextra));
@@ -975,40 +885,35 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         rho_fp[lev].reset(new MultiFab(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho));
     }
-    if (fft_hybrid_mpi_decomposition == false){
-        // Allocate and initialize the spectral solver
-        std::array<Real,3> dx = CellSize(lev);
-#if (AMREX_SPACEDIM == 3)
-        RealVect dx_vect(dx[0], dx[1], dx[2]);
-#elif (AMREX_SPACEDIM == 2)
-        RealVect dx_vect(dx[0], dx[2]);
-#endif
-
-        // Check whether the option periodic, single box is valid here
-        if (fft_periodic_single_box) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( geom[0].isAllPeriodic() && ba.size()==1 && lev==0,
-            "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box.");
-        }
-        // Get the cell-centered box
-        BoxArray realspace_ba = ba;  // Copy box
-        realspace_ba.enclosedCells(); // Make it cell-centered
-        // Define spectral solver
-#ifdef WARPX_DIM_RZ
-        realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-        spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
-            n_rz_azimuthal_modes, noz_fft, do_nodal, dx_vect, dt[lev], lev ) );
-#else
-        if ( fft_periodic_single_box == false ) {
-            realspace_ba.grow(ngE); // add guard cells
-        }
-        bool const pml=false;
-        spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
-            pml, fft_periodic_single_box ) );
-#endif
+    // Allocate and initialize the spectral solver
+#   if (AMREX_SPACEDIM == 3)
+    RealVect dx_vect(dx[0], dx[1], dx[2]);
+#   elif (AMREX_SPACEDIM == 2)
+    RealVect dx_vect(dx[0], dx[2]);
+#   endif
+    // Check whether the option periodic, single box is valid here
+    if (fft_periodic_single_box) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( geom[0].isAllPeriodic() && ba.size()==1 && lev==0,
+        "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box.");
     }
+    // Get the cell-centered box
+    BoxArray realspace_ba = ba;  // Copy box
+    realspace_ba.enclosedCells(); // Make it cell-centered
+    // Define spectral solver
+#   ifdef WARPX_DIM_RZ
+    realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+    spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
+        n_rz_azimuthal_modes, noz_fft, do_nodal, dx_vect, dt[lev], lev ) );
+#   else
+    if ( fft_periodic_single_box == false ) {
+        realspace_ba.grow(ngE); // add guard cells
+    }
+    bool const pml=false;
+    spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
+        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
+        pml, fft_periodic_single_box ) );
+#   endif
 #endif
-    std::array<Real,3> const dx = CellSize(lev);
     m_fdtd_solver_fp[lev].reset(
         new FiniteDifferenceSolver(maxwell_fdtd_solver_id, dx, do_nodal) );
     //
@@ -1051,6 +956,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         BoxArray cba = ba;
         cba.coarsen(refRatio(lev-1));
+        std::array<Real,3> cdx = CellSize(lev-1);
 
         // Create the MultiFabs for B
         Bfield_cp[lev][0].reset( new MultiFab(amrex::convert(cba,Bx_nodal_flag),dm,ncomps,ngE));
@@ -1079,33 +985,28 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         {
             rho_cp[lev].reset(new MultiFab(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho));
         }
-        if (fft_hybrid_mpi_decomposition == false){
-            // Allocate and initialize the spectral solver
-            std::array<Real,3> cdx = CellSize(lev-1);
-#if (AMREX_SPACEDIM == 3)
-            RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
-#elif (AMREX_SPACEDIM == 2)
-            RealVect cdx_vect(cdx[0], cdx[2]);
+        // Allocate and initialize the spectral solver
+#   if (AMREX_SPACEDIM == 3)
+        RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
+#   elif (AMREX_SPACEDIM == 2)
+        RealVect cdx_vect(cdx[0], cdx[2]);
+#   endif
+        // Get the cell-centered box, with guard cells
+        BoxArray realspace_ba = cba;// Copy box
+        realspace_ba.enclosedCells(); // Make it cell-centered
+        // Define spectral solver
+#   ifdef WARPX_DIM_RZ
+        realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+        spectral_solver_cp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
+            n_rz_azimuthal_modes, noz_fft, do_nodal, cdx_vect, dt[lev], lev ) );
+#   else
+        realspace_ba.grow(ngE); // add guard cells
+        spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev] ) );
+#   endif
 #endif
-            // Get the cell-centered box, with guard cells
-            BoxArray realspace_ba = cba;// Copy box
-            realspace_ba.enclosedCells(); // Make it cell-centered
-            // Define spectral solver
-#ifdef WARPX_DIM_RZ
-            realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-            spectral_solver_cp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
-                n_rz_azimuthal_modes, noz_fft, do_nodal, cdx_vect, dt[lev], lev ) );
-
-#else
-            realspace_ba.grow(ngE); // add guard cells
-            spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
-                nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev] ) );
-#endif
-        }
-#endif
-    std::array<Real,3> cdx = CellSize(lev-1);
-    m_fdtd_solver_cp[lev].reset(
-        new FiniteDifferenceSolver( maxwell_fdtd_solver_id, cdx, do_nodal ) );
+        m_fdtd_solver_cp[lev].reset(
+            new FiniteDifferenceSolver( maxwell_fdtd_solver_id, cdx, do_nodal ) );
     }
 
     //
