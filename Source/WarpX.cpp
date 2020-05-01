@@ -1090,9 +1090,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (load_balance_int > 0)
     {
-        costs[lev].reset(new amrex::Vector<Real>);
-        const int nboxes = Efield_fp[lev][0].get()->size();
-        costs[lev]->resize(nboxes);
+        costs[lev].reset(new amrex::LayoutData<Real>(ba, dm));
     }
 }
 

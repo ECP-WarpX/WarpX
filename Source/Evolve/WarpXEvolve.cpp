@@ -61,7 +61,7 @@ WarpX::Evolve (int numsteps)
         if (warpx_py_beforestep) warpx_py_beforestep();
 #endif
 
-        amrex::Vector<amrex::Real>* cost = WarpX::getCosts(0);
+        amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
         if (cost) {
 #ifdef WARPX_USE_PSATD
             amrex::Abort("LoadBalance for PSATD: TODO");
@@ -82,7 +82,7 @@ WarpX::Evolve (int numsteps)
                     // (Giving more importance to most recent costs; only needed
                     // for timers update, heuristic load balance considers the
                     // instantaneous costs)
-                    for (int i=0; i<cost->size(); ++i)
+                    for (int i : cost->IndexArray())
                     {
                         (*cost)[i] *= (1. - 2./load_balance_int);
                     }
