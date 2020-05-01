@@ -618,8 +618,7 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.file_prefix = kw.pop('warpx_file_prefix', None)
 
     def initialize_inputs(self):
-        pywarpx.diagnostics.ndiags += 1
-        self.diagnostics_number = pywarpx.diagnostics.ndiags
+        self.diagnostics_number = len(pywarpx.Diagnostics.diagnostics_list) + 1
 
         # --- This a placeholder until the name attribute is added to the picmi standard
         name = getattr(self, 'name', None)

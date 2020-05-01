@@ -6,6 +6,6 @@
 
 from .Bucket import Bucket
 
-diagnostics = Bucket('diagnostics', ndiags=0, diags_names=[])
+diagnostics = Bucket('diagnostics', diags_names=[])
 diagnostics_list = []
 

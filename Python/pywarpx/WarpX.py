@@ -32,9 +32,6 @@ class WarpX(Bucket):
         argv += algo.attrlist()
         argv += langmuirwave.attrlist()
         argv += interpolation.attrlist()
-        argv += particles.attrlist()
-        argv += lasers.attrlist()
-        argv += diagnostics.attrlist()
 
         # --- Search through species_names and add any predefined particle objects in the list.
         particles_list_names = [p.instancename for p in particles_list]
@@ -49,12 +46,15 @@ class WarpX(Bucket):
             else:
                 raise Exception('Species %s listed in species_names not defined'%pstring)
 
+        argv += particles.attrlist()
         for particle in particles_list:
             argv += particle.attrlist()
 
+        argv += lasers.attrlist()
         for laser in lasers_list:
             argv += laser.attrlist()
 
+        argv += diagnostics.attrlist()
         for diagnostic in diagnostics_list:
             argv += diagnostic.attrlist()
 
