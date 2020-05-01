@@ -490,22 +490,6 @@ Particle initialization
     If `1` is given, this species will not be pushed
     by any pusher during the simulation.
 
-* ``<species>.plot_species`` (`0` or `1` optional; default `1`)
-    Whether to plot particle quantities for this species.
-
-* ``<species>.plot_vars`` (list of `strings` separated by spaces, optional)
-    List of particle quantities to write to `plotfiles`. By defaults, all
-    quantities are written to file. Choices are
-
-    * ``w`` for the particle weight,
-    * ``ux`` ``uy`` ``uz`` for the particle momentum,
-    * ``Ex`` ``Ey`` ``Ez`` for the electric field on particles,
-    * ``Bx`` ``By`` ``Bz`` for the magnetic field on particles.
-
-    The particle positions are always included. Use
-    ``<species>.plot_vars = none`` to plot no particle data, except
-    particle position.
-
 * ``<species>.do_back_transformed_diagnostics`` (`0` or `1` optional, default `1`)
     Only used when ``warpx.do_back_transformed_diagnostics=1``. When running in a
     boosted frame, whether or not to plot back-transformed diagnostics for
@@ -1123,45 +1107,141 @@ Boundary conditions
 Diagnostics and output
 ----------------------
 
-* ``amr.plot_int`` (`integer`) optional
-    The number of PIC cycles (interval) in between two consecutive `plotfile` data dumps.
+WarpX has three types of diagnostics:
+``FullDiagnostics`` consist in dumps of fields and particles at given iterations,
+``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame, and
+``ReducedDiags`` allow the user to compute some reduced quantity (particle temperature, max of a field) and write a small amount of data to text files.
+Similar to what is done for physical species, WarpX has a class Diagnostics that allows users to initialize different diagnostics, each of them with different fields, resolution and period.
+This currently applies to standard diagnostics, but should be extended to back-transformed diagnostics and reduced diagnostics (and others) in a near future.
+
+Full Diagnostics
+^^^^^^^^^^^^^^^^
+
+``FullDiagnostics`` consist in dumps of fields and particles at given iterations.
+Similar to what is done for physical species, WarpX has a class Diagnostics that allows users to initialize different diagnostics, each of them with different fields, resolution and period.
+The user specifies the number of diagnostics and the name of each of them, and then specifies options for each of them separately.
+Note that some parameter (those that do not start with a ``<diag_name>.`` prefix) apply to all diagnostics.
+This should be changed in the future.
+
+* ``diagnostics.diags_names`` (list of `string` optional, default `empty`)
+    Name of each diagnostics.
+    example: ``diagnostics.diags_names = diag1 my_second_diag``.
+
+* ``<diag_name>.period`` (`integer` optional, default ``-1``)
+    The number of PIC cycles (interval) in between two consecutive data dumps.
     Use a negative number to disable data dumping.
     This is ``-1`` (disabled) by default.
+    example: ``diag1.period = 10``.
 
-    * ``<species_name>.random_fraction`` (`float`) optional
-        If provided ``<species_name>.random_fraction = a``,
-        only `a` fraction of the particle data of this species will be dumped randomly,
-        i.e. if `rand() < a`, this particle will be dumped,
-        where `rand()` denotes a random number generator.
-        The value `a` provided should be between 0 and 1.
+* ``<diag_name>.diag_type`` (`string`)
+    Type of diagnostics. So far, only ``Full`` is supported.
+    example: ``diag1.diag_type = Full``.
 
-    * ``<species_name>.uniform_stride`` (`int`) optional
-        If provided ``<species_name>.uniform_stride = n``,
-        every `n` particle of this species will be dumped, selected uniformly.
-        The value provided should be an integer greater than or equal to 0.
+* ``<diag_name>.format`` (`string` optional, default ``plotfile``)
+    Flush format. Possible values are:
 
-    * ``<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
-        Users can provide an expression returning a boolean for whether a particle is dumped (the exact test is whether the return value is `> 0.5`).
-        `t` represents the physical time in seconds during the simulation.
-        `x, y, z` represent particle positions in the unit of meter.
-        `ux, uy, uz` represent particle velocities in the unit of
-        :math:`\gamma v/c`, where
-        :math:`\gamma` is the Lorentz factor,
-        :math:`v/c` is the particle velocity normalized by the speed of light.
-        E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
-        positions `x` greater than `0`, and those having velocity `uz` less than 10,
-        will be dumped.
+    * ``plotfile`` for native AMReX format.
 
-* ``warpx.openpmd_int`` (`integer`) optional
-    The number of PIC cycles (interval) in between two consecutive `openPMD <https://www.openPMD.org>`_ data dumps.
-    Requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
-    This is ``-1`` (disabled) by default.
+    * ``checkpoint`` for a checkpoint file, only wirks with ``<diag_name>.diag_type = Full``.
 
-* ``warpx.openpmd_backend`` (``bp``, ``h5`` or ``json``) optional
+    * ``openpmd`` for OpenPMD format `openPMD <https://www.openPMD.org>`_.
+      ``openpmd`` requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
+
+    example: ``diag1.format = openpmd``.
+
+* ``<diag_name>.openpmd_backend`` (``bp``, ``h5`` or ``json``) optional, only used if ``<diag_name>.format = openpmd``
     `I/O backend <https://openpmd-api.readthedocs.io/en/latest/backends/overview.html>`_ for `openPMD <https://www.openPMD.org>`_ data dumps.
     ``bp`` is the `ADIOS I/O library <https://csmd.ornl.gov/adios>`_, ``h5`` is the `HDF5 format <https://www.hdfgroup.org/solutions/hdf5/>`_, and ``json`` is a `simple text format <https://en.wikipedia.org/wiki/JSON>`_.
     ``json`` only works with serial/single-rank jobs.
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
+
+* ``<diag_name>.openpmd_tspf`` (`bool`, optional, default ``true``) only read if ``<diag_name>.format = openpmd``.
+    Whether to write one file per timestep.
+
+* ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
+    Fields written to plotfiles. Possible values: ``Ex`` ``Ey`` ``Ez``
+    ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho``
+    ``F`` ``part_per_grid`` ``part_per_proc`` ``divE`` ``divB``.
+    Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
+
+* ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
+    By default, the fields written in the plot files are averaged on the nodes.
+    When ```warpx.plot_raw_fields`` is `1`, then the raw (i.e. unaveraged)
+    fields are also saved in the output files.
+    Only works with ``<diag_name>.format = plotfile``.
+
+* ``<diag_name>.plot_raw_fields_guards`` (`0` or `1`) optional (default `0`)
+    Only used when ``warpx.plot_raw_fields`` is ``1``.
+    Whether to include the guard cells in the output of the raw fields.
+    Only works with ``<diag_name>.format = plotfile``.
+
+* ``<diag_name>.plot_finepatch`` (`0` or `1`) optional (default `0`)
+    Only used when mesh refinement is activated and ``warpx.plot_raw_fields`` is ``1``.
+    Whether to output the data of the fine patch, in the plot files.
+    Only works with ``<diag_name>.format = plotfile``.
+
+* ``<diag_name>.plot_crsepatch`` (`0` or `1`) optional (default `0`)
+    Only used when mesh refinement is activated and ``warpx.plot_raw_fields`` is ``1``.
+    Whether to output the data of the coarse patch, in the plot files.
+    Only works with ``<diag_name>.format = plotfile``.
+
+* ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
+    Reduce size of the field output by this ratio in each dimension.
+    (This is done by averaging the field over 1 or 2 points along each direction, depending on the staggering).
+    ``plot_coarsening_ratio`` should be an integer divisor of ``blocking_factor``.
+
+* ``<diag_name>.file_prefix`` (`string`) optional (default `diags/plotfiles/plt`)
+    Root for output file names. Supports sub-directories.
+
+* ``<diag_name>.diag_lo`` (list `float`, 1 per dimension) optional (default `-infinity -infinity -infinity`)
+    Lower corner of the output fields (if smaller than ``warpx.dom_lo``, then set to ``warpx.dom_lo``).
+
+* ``<diag_name>.diag_hi`` (list `float`, 1 per dimension) optional (default `+infinity +infinity +infinity`)
+    Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``).
+
+* ``<diag_name>.species`` (list of `string`, default all physical species in the simulation)
+    Which species dumped in this diagnostics.
+
+* ``<diag_name>.<species_name>.variables`` (list of `strings` separated by spaces, optional)
+    List of particle quantities to write to output file.
+    By defaults, all quantities are written to file. Choices are
+
+    * ``w`` for the particle weight,
+
+    * ``ux`` ``uy`` ``uz`` for the particle momentum,
+
+    * ``Ex`` ``Ey`` ``Ez`` for the electric field on particles,
+
+    * ``Bx`` ``By`` ``Bz`` for the magnetic field on particles.
+
+    The particle positions are always included.
+    Use ``<species>.variables = none`` to plot no particle data, except particle position.
+
+* ``<diag_name>.<species_name>.random_fraction`` (`float`) optional
+    If provided ``<diag_name>.<species_name>.random_fraction = a``, only `a` fraction of the particle data of this species will be dumped randomly in diag ``<diag_name>``, i.e. if `rand() < a`, this particle will be dumped, where `rand()` denotes a random number generator.
+    The value `a` provided should be between 0 and 1.
+
+* ``<diag_name>.<species_name>.uniform_stride`` (`int`) optional
+    If provided ``<diag_name>.<species_name>.uniform_stride = n``,
+    every `n` particle of this species will be dumped, selected uniformly.
+    The value provided should be an integer greater than or equal to 0.
+
+* ``<diag_name>.<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
+    Users can provide an expression returning a boolean for whether a particle is dumped (the exact test is whether the return value is `> 0.5`).
+    `t` represents the physical time in seconds during the simulation.
+    `x, y, z` represent particle positions in the unit of meter.
+    `ux, uy, uz` represent particle velocities in the unit of
+    :math:`\gamma v/c`, where
+    :math:`\gamma` is the Lorentz factor,
+    :math:`v/c` is the particle velocity normalized by the speed of light.
+    E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
+    positions `x` greater than `0`, and those having velocity `uz` less than 10,
+    will be dumped.
+
+Back-Transformed Diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame, and
 
 * ``warpx.do_back_transformed_diagnostics`` (`0` or `1`)
     Whether to use the **back-transformed diagnostics** (i.e. diagnostics that
@@ -1198,55 +1278,6 @@ Diagnostics and output
     ``warpx.back_transformed_diag_fields = Ex Ez By``. By default, all fields
     are dumped.
 
-* ``warpx.plot_raw_fields`` (`0` or `1`) optional (default `0`)
-    By default, the fields written in the plot files are averaged on the nodes.
-    When ```warpx.plot_raw_fields`` is `1`, then the raw (i.e. unaveraged)
-    fields are also saved in the plot files.
-
-* ``warpx.plot_raw_fields_guards`` (`0` or `1`)
-    Only used when ``warpx.plot_raw_fields`` is ``1``.
-    Whether to include the guard cells in the output of the raw fields.
-
-* ``warpx.plot_finepatch`` (`0` or `1`)
-    Only used when mesh refinement is activated and ``warpx.plot_raw_fields`` is ``1``.
-    Whether to output the data of the fine patch, in the plot files.
-
-* ``warpx.plot_crsepatch`` (`0` or `1`)
-    Only used when mesh refinement is activated and ``warpx.plot_raw_fields`` is ``1``.
-    Whether to output the data of the coarse patch, in the plot files.
-
-* ``warpx.plot_coarsening_ratio`` (`int` ; default: `1`)
-    Reduce size of the field output by this ratio in each dimension.
-    (This is done by averaging the field.) ``plot_coarsening_ratio`` should
-    be an integer divisor of ``blocking_factor``.
-
-* ``amr.plot_file`` (`string`)
-    Root for output file names. Supports sub-directories. Default `diags/plotfiles/plt`
-
-* ``warpx.fields_to_plot`` (`list of strings`)
-    Fields written to plotfiles. Possible values: ``Ex`` ``Ey`` ``Ez``
-    ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho``
-    ``F`` ``part_per_grid`` ``part_per_proc`` ``divE`` ``divB``.
-    Default is
-    ``warpx.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell``.
-
-* ``slice.dom_lo`` and ``slice.dom_hi`` (`2 floats in 2D`, `3 floats in 3D`; in meters similar to the units of the simulation box.)
-    The extent of the slice are defined by the co-ordinates of the lower
-    corner (``slice.dom_lo``) and upper corner (``slice.dom_hi``).
-    The slice could be 1D, 2D, or 3D, aligned with the co-ordinate axes
-    and the first axis of the coordinates is x. For example: if for a
-    3D simulation, an x-z slice is to be extracted at y = 0.0,
-    then the y-value of slice.dom_lo and slice.dom_hi must be equal to 0.0
-
-* ``slice.coarsening_ratio`` (`2 integers in 2D`, `3 integers in 3D`; default `1`)
-    The coarsening ratio input must be greater than 0. Default is 1 in all directions.
-    In the directions that is reduced, i.e., for an x-z slice in 3D,
-    the reduced y-dimension has a default coarsening ratio equal to 1.
-
-* ``slice.plot_int`` (`integer`)
-    The number of PIC cycles inbetween two consecutive data dumps for the slice. Use a
-    negative number to disable slice generation and slice data dumping.
-
 * ``slice.num_slice_snapshots_lab`` (`integer`)
     Only used when ``warpx.do_back_transformed_diagnostics`` is ``1``.
     The number of back-transformed field and particle data that
@@ -1268,6 +1299,12 @@ Diagnostics and output
     copied from the full back-transformed diagnostic to the reduced
     slice diagnostic if there are within the user-defined width from
     the slice region defined by ``slice.dom_lo`` and ``slice.dom_hi``.
+
+
+Reduced Diagnostics
+^^^^^^^^^^^^^^^^^^^
+
+``ReducedDiags`` allow the user to compute some reduced quantity (particle temperature, max of a field) and write a small amount of data to text files.
 
 * ``warpx.reduced_diags_names`` (`strings`, separated by spaces)
     The names given by the user of simple reduced diagnostics.
@@ -1464,7 +1501,8 @@ Diagnostics and output
     The default separator is a whitespace.
 
 Lookup tables and other settings for QED modules (implementation in progress)
-----------------------------------------------------------
+-----------------------------------------------------------------------------
+
 Lookup tables store pre-computed values for functions used by the QED modules.
 **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
 
@@ -1547,10 +1585,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 Checkpoints and restart
 -----------------------
 WarpX supports checkpoints/restart via AMReX.
-
-* ``amr.check_int`` (`integer`)
-    The number of iterations between two consecutive checkpoints. Use a
-    negative number to disable checkpoints.
+The checkpoint capability can be turned with regular diagnostics: ``<diag_name>.format = checkpoint``.
 
 * ``amr.restart`` (`string`)
     Name of the checkpoint file to restart from. Returns an error if the folder does not exist

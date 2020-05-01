@@ -207,10 +207,10 @@ def do_analysis(fname, compname, steps):
 
 def launch_analysis(executable):
     create_gaussian_2d()
-    os.system("./" + executable + " inputs.2d_test_txye")
+    os.system("./" + executable + " inputs.2d_test_txye diag1.file_prefix=diags/plotfiles/plt")
     do_analysis("diags/plotfiles/plt00250/", "comp_unf.pdf", 250)
     os.system("sed 's/gauss_2d_unf.txye/gauss_2d.txye/g' inputs.2d_test_txye > inputs.2d_test_txye_non_unf")
-    os.system("./" + executable + " inputs.2d_test_txye_non_unf")
+    os.system("./" + executable + " inputs.2d_test_txye_non_unf diag1.file_prefix=diags/plotfiles/plt")
     do_analysis("diags/plotfiles/plt00250/", "comp_non_unf.pdf", 250)
 
 

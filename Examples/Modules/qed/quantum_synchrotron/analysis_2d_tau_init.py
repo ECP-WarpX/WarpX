@@ -16,7 +16,8 @@ import sys
 # do actually have an exponentially distributed optical depth
 
 # Tolerance
-tol = 1e-2
+tolerance_rel = 1e-2
+print("tolerance_rel: " + str(tolerance_rel))
 
 def check():
     filename = sys.argv[1]
@@ -30,10 +31,21 @@ def check():
     loc_pos, scale_pos = st.expon.fit(res_pos_tau)
 
     # loc should be very close to 0, scale should be very close to 1
-    assert(np.abs(loc_ele - 0) < tol)
-    assert(np.abs(loc_pos - 0) < tol)
-    assert(np.abs(scale_ele - 1) < tol)
-    assert(np.abs(scale_pos - 1) < tol)
+    error_rel = np.abs(loc_ele - 0)
+    print("error_rel loc_ele: " + str(error_rel))
+    assert( error_rel < tolerance_rel )
+
+    error_rel = np.abs(loc_pos - 0)
+    print("error_rel loc_pos: " + str(error_rel))
+    assert( error_rel < tolerance_rel )
+
+    error_rel = np.abs(scale_ele - 1)
+    print("error_rel scale_ele: " + str(error_rel))
+    assert( error_rel < tolerance_rel )
+
+    error_rel = np.abs(scale_pos - 1)
+    print("error_rel scale_pos: " + str(error_rel))
+    assert( error_rel < tolerance_rel )
 
 def main():
     check()
