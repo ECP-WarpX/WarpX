@@ -16,7 +16,7 @@ import sys
 # do actually have an exponentially distributed optical depth
 
 # Tolerance
-tol = 1e-2
+tolerance_rel = 1e-2
 print("tolerance_rel: " + str(tol))
 
 def check():
