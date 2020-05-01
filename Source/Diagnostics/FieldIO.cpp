@@ -142,11 +142,17 @@ WriteOpenPMDFields( const std::string& filename,
 
   // Create new file and store the time/iteration info
   auto series = [filename](){
-      if( ParallelDescriptor::NProcs() > 1 )
+      if( ParallelDescriptor::NProcs() > 1 ) {
+#if defined(AMREX_USE_MPI)
           return openPMD::Series( filename,
                                   openPMD::AccessType::CREATE,
                                   ParallelDescriptor::Communicator() );
-      else
+#else
+          amrex::Abort("openPMD-api not built with MPI support!");
+          return openPMD::Series( filename,
+                                  openPMD::AccessType::CREATE );
+#endif
+      } else
           return openPMD::Series( filename,
                                   openPMD::AccessType::CREATE );
   }();
