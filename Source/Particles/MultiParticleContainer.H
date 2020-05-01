@@ -59,9 +59,11 @@ public:
 
     ~MultiParticleContainer() {}
 
-    WarpXParticleContainer& GetParticleContainer (int ispecies) {
-        return *allcontainers[ispecies];
-    }
+    WarpXParticleContainer&
+    GetParticleContainer (int ispecies) const {return *allcontainers[ispecies];}
+
+    WarpXParticleContainer*
+    GetParticleContainerPtr (int ispecies) const {return allcontainers[ispecies].get();}
 
 #ifdef WARPX_USE_OPENPMD
     std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int ispecies) {
@@ -209,7 +211,7 @@ public:
     void doQedEvents();
 #endif
 
-
+    int getSpeciesID (std::string product_str) const;
 
 protected:
 
@@ -329,7 +331,6 @@ private:
     void ReadParameters ();
 
     void mapSpeciesProduct ();
-    int getSpeciesID (std::string product_str);
 
     // Number of species dumped in BackTransformedDiagnostics
     int nspecies_back_transformed_diagnostics = 0;

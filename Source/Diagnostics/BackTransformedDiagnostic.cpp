@@ -620,17 +620,19 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
                                           ( (1.+m_beta_boost_)*m_gamma_boost_);
         const amrex::Real zmax_slice_lab = current_slice_hi[AMREX_SPACEDIM-1] /
                                           ( (1.+m_beta_boost_)*m_gamma_boost_);
-        int Nz_slice_lab = static_cast<unsigned>((
-                           zmax_slice_lab - zmin_slice_lab) * m_inv_dz_lab_);
-        int Nx_slice_lab = ( current_slice_hi[0] - current_slice_lo[0] ) /
-                           geom.CellSize(0);
+        auto Nz_slice_lab = static_cast<int>(
+            (zmax_slice_lab - zmin_slice_lab) * m_inv_dz_lab_);
+        auto Nx_slice_lab = static_cast<int>(
+            (current_slice_hi[0] - current_slice_lo[0] ) /
+            geom.CellSize(0));
         if (Nx_slice_lab == 0 ) Nx_slice_lab = 1;
         // if the x-dimension is reduced, increase total_cells by 1
         // to be consistent with the number of cells created for the output.
         if (Nx_lab != Nx_slice_lab) Nx_slice_lab++;
 #if (AMREX_SPACEDIM == 3)
-        int Ny_slice_lab = ( current_slice_hi[1] - current_slice_lo[1]) /
-                             geom.CellSize(1);
+        auto Ny_slice_lab = static_cast<int>(
+            (current_slice_hi[1] - current_slice_lo[1]) /
+            geom.CellSize(1));
         if (Ny_slice_lab == 0 ) Ny_slice_lab = 1;
         // if the y-dimension is reduced, increase total_cells by 1
         // to be consistent with the number of cells created for the output.
@@ -645,10 +647,12 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
 
         for ( int i_dim=0; i_dim<AMREX_SPACEDIM; ++i_dim)
         {
-           slice_lo[i_dim] = (slice_realbox.lo(i_dim) - geom.ProbLo(i_dim) -
-                              0.5*geom.CellSize(i_dim))/geom.CellSize(i_dim);
-           slice_hi[i_dim] = (slice_realbox.hi(i_dim) - geom.ProbLo(i_dim) -
-                              0.5*geom.CellSize(i_dim))/geom.CellSize(i_dim);
+           slice_lo[i_dim] = static_cast<int>(
+               (slice_realbox.lo(i_dim) - geom.ProbLo(i_dim) -
+                0.5*geom.CellSize(i_dim))/geom.CellSize(i_dim));
+           slice_hi[i_dim] = static_cast<int>(
+               (slice_realbox.hi(i_dim) - geom.ProbLo(i_dim) -
+                0.5*geom.CellSize(i_dim))/geom.CellSize(i_dim));
            if (slice_lo[i_dim] == slice_hi[i_dim])
            {
               slice_hi[i_dim] = slice_lo[i_dim] + 1;
@@ -697,7 +701,8 @@ void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
     for (int i = 0; i < m_LabFrameDiags_.size(); ++i) {
 
         Real zmin_lab = m_LabFrameDiags_[i]->m_prob_domain_lab_.lo(AMREX_SPACEDIM-1);
-        int i_lab = (m_LabFrameDiags_[i]->m_current_z_lab - zmin_lab) / m_dz_lab_;
+        auto i_lab = static_cast<unsigned>(
+            (m_LabFrameDiags_[i]->m_current_z_lab - zmin_lab) / m_dz_lab_);
 
         if (m_LabFrameDiags_[i]->m_buff_counter_ != 0) {
             if (WarpX::do_back_transformed_fields) {
@@ -808,7 +813,8 @@ writeLabFrameData(const MultiFab* cell_centered_data,
         // simulation domain (t', [zmin',zmax']), back-transformed to lab
         // frame, intersects with snapshot.
         Real dom_zmin_lab = m_LabFrameDiags_[i]->m_prob_domain_lab_.lo(AMREX_SPACEDIM-1);
-        int i_lab = ( m_LabFrameDiags_[i]->m_current_z_lab - dom_zmin_lab) / m_dz_lab_;
+        auto i_lab = static_cast<unsigned>(
+            ( m_LabFrameDiags_[i]->m_current_z_lab - dom_zmin_lab) / m_dz_lab_);
         // If buffer of snapshot i is empty...
         if ( m_LabFrameDiags_[i]->m_buff_counter_ == 0) {
             // ... reset fields buffer data_buffer_
@@ -850,8 +856,9 @@ writeLabFrameData(const MultiFab* cell_centered_data,
              }
              // Create a 2D box for the slice in the boosted frame
              Real dx = geom.CellSize(m_boost_direction_);
-             int i_boost = ( m_LabFrameDiags_[i]->m_current_z_boost -
-                             geom.ProbLo(m_boost_direction_))/dx;
+             auto i_boost = static_cast<int>(
+                 ( m_LabFrameDiags_[i]->m_current_z_boost -
+                   geom.ProbLo(m_boost_direction_))/dx);
              //Box slice_box = geom.Domain();
              Box slice_box = m_LabFrameDiags_[i]->m_buff_box_;
              slice_box.setSmall(m_boost_direction_, i_boost);
@@ -1132,7 +1139,7 @@ LabFrameSnapShot(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
    m_current_z_boost = 0.0;
    updateCurrentZPositions(t_boost, m_inv_gamma_boost_, m_inv_beta_boost_);
    Real zmin_lab = m_prob_domain_lab_.lo(AMREX_SPACEDIM-1);
-   m_initial_i = (m_current_z_lab - zmin_lab) / m_dz_lab_ ;
+   m_initial_i = static_cast<int>((m_current_z_lab - zmin_lab) / m_dz_lab_) ;
    m_file_name = Concatenate(WarpX::lab_data_directory + "/snapshots/snapshot",
                            m_file_num, 5);
    createLabFrameDirectories();
@@ -1301,7 +1308,7 @@ LabFrameSlice(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
     m_current_z_boost = 0.0;
     updateCurrentZPositions(t_boost, m_inv_gamma_boost_, m_inv_beta_boost_);
     Real zmin_lab = m_prob_domain_lab_.lo(AMREX_SPACEDIM-1);
-    m_initial_i = (m_current_z_lab - zmin_lab)/m_dz_lab_;
+    m_initial_i = static_cast<int>((m_current_z_lab - zmin_lab)/m_dz_lab_);
     m_file_name = Concatenate(WarpX::lab_data_directory+"/slices/slice",m_file_num,5);
     createLabFrameDirectories();
     m_buff_counter_ = 0;

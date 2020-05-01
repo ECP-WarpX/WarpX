@@ -82,14 +82,6 @@ WarpX::InitData ()
     if (restart_chkfile.empty())
     {
         multi_diags->FilterComputePackFlush( 0, true );
-        if (plot_int > 0)
-            WritePlotFile();
-
-        if (openpmd_int > 0)
-            WriteOpenPMDFile();
-
-        if (check_int > 0)
-            WriteCheckPointFile();
 
         if ((insitu_int > 0) && (insitu_start == 0))
             UpdateInSitu();
@@ -421,41 +413,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                   0.0);
     }
 }
-
-#ifdef WARPX_USE_PSATD_HYBRID
-
-void
-WarpX::InitLevelDataFFT (int lev, Real time)
-{
-
-    Efield_fp_fft[lev][0]->setVal(0.0);
-    Efield_fp_fft[lev][1]->setVal(0.0);
-    Efield_fp_fft[lev][2]->setVal(0.0);
-    Bfield_fp_fft[lev][0]->setVal(0.0);
-    Bfield_fp_fft[lev][1]->setVal(0.0);
-    Bfield_fp_fft[lev][2]->setVal(0.0);
-    current_fp_fft[lev][0]->setVal(0.0);
-    current_fp_fft[lev][1]->setVal(0.0);
-    current_fp_fft[lev][2]->setVal(0.0);
-    rho_fp_fft[lev]->setVal(0.0);
-
-    if (lev > 0)
-    {
-        Efield_cp_fft[lev][0]->setVal(0.0);
-        Efield_cp_fft[lev][1]->setVal(0.0);
-        Efield_cp_fft[lev][2]->setVal(0.0);
-        Bfield_cp_fft[lev][0]->setVal(0.0);
-        Bfield_cp_fft[lev][1]->setVal(0.0);
-        Bfield_cp_fft[lev][2]->setVal(0.0);
-        current_cp_fft[lev][0]->setVal(0.0);
-        current_cp_fft[lev][1]->setVal(0.0);
-        current_cp_fft[lev][2]->setVal(0.0);
-        rho_cp_fft[lev]->setVal(0.0);
-    }
-
-}
-
-#endif
 
 void
 WarpX::InitializeExternalFieldsOnGridUsingParser (
