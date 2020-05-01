@@ -36,9 +36,12 @@ print( "max_Efield = %s" %max_Efield )
 # The field associated with the particle does not have
 # the same amplitude in 2d and 3d
 if ds.dimensionality == 2:
-    assert max_Efield < 0.0003
+    tolerance_abs = 0.0003
 elif ds.dimensionality == 3:
-    assert max_Efield < 10
+    tolerance_abs = 10
 else:
     raise ValueError("Unknown dimensionality")
+
+print("tolerance_abs: " + str(tolerance_abs))
+assert max_Efield < tolerance_abs
 
