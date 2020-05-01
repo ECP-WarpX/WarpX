@@ -407,20 +407,6 @@ public:
     static const amrex::iMultiFab* CurrentBufferMasks (int lev);
     static const amrex::iMultiFab* GatherBufferMasks (int lev);
 
-    static amrex::IntVect Bx_nodal_flag;
-    static amrex::IntVect By_nodal_flag;
-    static amrex::IntVect Bz_nodal_flag;
-
-    static amrex::IntVect Ex_nodal_flag;
-    static amrex::IntVect Ey_nodal_flag;
-    static amrex::IntVect Ez_nodal_flag;
-
-    static amrex::IntVect jx_nodal_flag;
-    static amrex::IntVect jy_nodal_flag;
-    static amrex::IntVect jz_nodal_flag;
-
-    static amrex::IntVect rho_nodal_flag;
-
     static int do_electrostatic;
     static int do_moving_window;
     static int moving_window_dir;
