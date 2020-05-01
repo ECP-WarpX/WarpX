@@ -25,7 +25,7 @@ def check():
     res_tau = all_data["photons", 'particle_optical_depth_BW']
 
     loc, scale = st.expon.fit(res_tau)
-    
+
     # loc should be very close to 0, scale should be very close to 1
 
     error_rel = np.abs(loc - 0)
@@ -43,4 +43,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

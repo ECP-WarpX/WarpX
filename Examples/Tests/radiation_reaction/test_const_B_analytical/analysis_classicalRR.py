@@ -140,10 +140,10 @@ def check():
         exp_gamma = exp_res(cc[0], sim_time)
 
         error_rel = np.abs(end_gamma-exp_gamma)/exp_gamma
-        
+
         print("error_rel    : " + str(error_rel))
         print("tolerance_rel: " + str(tolerance_rel))
-        
+
         assert( error_rel < tolerance_rel )
 
 def generate():
