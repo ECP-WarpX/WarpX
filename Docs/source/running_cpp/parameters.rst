@@ -490,22 +490,6 @@ Particle initialization
     If `1` is given, this species will not be pushed
     by any pusher during the simulation.
 
-* ``<species>.plot_species`` (`0` or `1` optional; default `1`)
-    Whether to plot particle quantities for this species.
-
-* ``<species>.plot_vars`` (list of `strings` separated by spaces, optional)
-    List of particle quantities to write to `plotfiles`. By defaults, all
-    quantities are written to file. Choices are
-
-    * ``w`` for the particle weight,
-    * ``ux`` ``uy`` ``uz`` for the particle momentum,
-    * ``Ex`` ``Ey`` ``Ez`` for the electric field on particles,
-    * ``Bx`` ``By`` ``Bz`` for the magnetic field on particles.
-
-    The particle positions are always included. Use
-    ``<species>.plot_vars = none`` to plot no particle data, except
-    particle position.
-
 * ``<species>.do_back_transformed_diagnostics`` (`0` or `1` optional, default `1`)
     Only used when ``warpx.do_back_transformed_diagnostics=1``. When running in a
     boosted frame, whether or not to plot back-transformed diagnostics for
@@ -1154,15 +1138,25 @@ This should be changed in the future.
     example: ``diag1.diag_type = Full``.
 
 * ``<diag_name>.format`` (`string` optional, default ``plotfile``)
-    Flush format. Either ``plotfile`` for native AMReX format or ``openpmd`` for OpenPMD format `openPMD <https://www.openPMD.org>`_.
-    ``openpmd`` requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
+    Flush format. Possible values are:
+
+    * ``plotfile`` for native AMReX format.
+
+    * ``checkpoint`` for a checkpoint file, only wirks with ``<diag_name>.diag_type = Full``.
+
+    * ``openpmd`` for OpenPMD format `openPMD <https://www.openPMD.org>`_.
+      ``openpmd`` requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
+
     example: ``diag1.format = openpmd``.
 
-* ``<diag_name>.openpmd_backend`` (``bp``, ``h5`` or ``json``) optional
+* ``<diag_name>.openpmd_backend`` (``bp``, ``h5`` or ``json``) optional, only used if ``<diag_name>.format = openpmd``
     `I/O backend <https://openpmd-api.readthedocs.io/en/latest/backends/overview.html>`_ for `openPMD <https://www.openPMD.org>`_ data dumps.
     ``bp`` is the `ADIOS I/O library <https://csmd.ornl.gov/adios>`_, ``h5`` is the `HDF5 format <https://www.hdfgroup.org/solutions/hdf5/>`_, and ``json`` is a `simple text format <https://en.wikipedia.org/wiki/JSON>`_.
     ``json`` only works with serial/single-rank jobs.
     When WarpX is compiled with openPMD support, the first available backend in the order given above is taken.
+
+* ``<diag_name>.openpmd_tspf`` (`bool`, optional, default ``true``) only read if ``<diag_name>.format = openpmd``.
+    Whether to write one file per timestep.
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to plotfiles. Possible values: ``Ex`` ``Ey`` ``Ez``
@@ -1205,19 +1199,34 @@ This should be changed in the future.
 * ``<diag_name>.diag_hi`` (list `float`, 1 per dimension) optional (default `+infinity +infinity +infinity`)
     Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``).
 
-* ``<species_name>.random_fraction`` (`float`) optional
-    If provided ``<species_name>.random_fraction = a``,
-    only `a` fraction of the particle data of this species will be dumped randomly,
-    i.e. if `rand() < a`, this particle will be dumped,
-    where `rand()` denotes a random number generator.
+* ``<diag_name>.species`` (list of `string`, default all physical species in the simulation)
+    Which species dumped in this diagnostics.
+
+* ``<diag_name>.<species_name>.variables`` (list of `strings` separated by spaces, optional)
+    List of particle quantities to write to output file.
+    By defaults, all quantities are written to file. Choices are
+
+    * ``w`` for the particle weight,
+
+    * ``ux`` ``uy`` ``uz`` for the particle momentum,
+
+    * ``Ex`` ``Ey`` ``Ez`` for the electric field on particles,
+
+    * ``Bx`` ``By`` ``Bz`` for the magnetic field on particles.
+
+    The particle positions are always included.
+    Use ``<species>.variables = none`` to plot no particle data, except particle position.
+
+* ``<diag_name>.<species_name>.random_fraction`` (`float`) optional
+    If provided ``<diag_name>.<species_name>.random_fraction = a``, only `a` fraction of the particle data of this species will be dumped randomly in diag ``<diag_name>``, i.e. if `rand() < a`, this particle will be dumped, where `rand()` denotes a random number generator.
     The value `a` provided should be between 0 and 1.
 
-* ``<species_name>.uniform_stride`` (`int`) optional
-    If provided ``<species_name>.uniform_stride = n``,
+* ``<diag_name>.<species_name>.uniform_stride`` (`int`) optional
+    If provided ``<diag_name>.<species_name>.uniform_stride = n``,
     every `n` particle of this species will be dumped, selected uniformly.
     The value provided should be an integer greater than or equal to 0.
 
-* ``<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
+* ``<diag_name>.<species_name>.plot_filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
     Users can provide an expression returning a boolean for whether a particle is dumped (the exact test is whether the return value is `> 0.5`).
     `t` represents the physical time in seconds during the simulation.
     `x, y, z` represent particle positions in the unit of meter.
@@ -1576,10 +1585,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 Checkpoints and restart
 -----------------------
 WarpX supports checkpoints/restart via AMReX.
-
-* ``amr.check_int`` (`integer`)
-    The number of iterations between two consecutive checkpoints. Use a
-    negative number to disable checkpoints.
+The checkpoint capability can be turned with regular diagnostics: ``<diag_name>.format = checkpoint``.
 
 * ``amr.restart`` (`string`)
     Name of the checkpoint file to restart from. Returns an error if the folder does not exist
