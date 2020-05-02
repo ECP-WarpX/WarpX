@@ -327,6 +327,7 @@ Particle initialization
 * ``<species_name>.initialize_self_fields`` (`0` or `1`)
     Whether to calculate the space-charge fields associated with this species
     at the beginning of the simulation.
+    The fields are calculated for the mean gamma of the species.
 
 * ``<species_name>.self_fields_required_precision`` (`float`, default: 1.e-11)
     The relative precision with which the initial space-charge fields should
