@@ -36,9 +36,7 @@ int main(int argc, char* argv[])
 
     ConvertLabParamsToBoost();
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     CheckGriddingForRZSpectral();
-#endif
 
     WARPX_PROFILE_VAR("main()", pmain);
 

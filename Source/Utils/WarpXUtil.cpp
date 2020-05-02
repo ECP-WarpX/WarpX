@@ -238,9 +238,8 @@ void CheckGriddingForRZSpectral ()
     max_grid_size_x[0] = n_cell[0];
 
     for (int lev=1 ; lev <= max_level ; lev++) {
-        // This assumes a refinement ratio of 2
-        blocking_factor_x[lev] = blocking_factor_x[lev-1]/2;
-        max_grid_size_x[lev] = max_grid_size_x[lev-1]/2;
+        blocking_factor_x[lev] = blocking_factor_x[lev-1]*refRatio(lev-1);
+        max_grid_size_x[lev] = max_grid_size_x[lev-1]*refRatio(lev-1);
     }
 
     pp_amr.addarr("blocking_factor_x", blocking_factor_x);
@@ -249,8 +248,8 @@ void CheckGriddingForRZSpectral ()
     // Adjust the longitudinal block sizes, making sure that there are
     // more blocks than processors.
     int nprocs = ParallelDescriptor::NProcs();
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_cell[1] > nprocs,
-                                     "With RZ spectral, the number of z cells must be greater than the number of processors.");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_cell[1] >= 2*nprocs,
+                                     "With RZ spectral, there must be at least two z-cells per processor so that there can be at least one block per processor.");
 
     // Get the longitudinal blocking factor in case it was set by the user.
     // If not set, use the default value of 8.
