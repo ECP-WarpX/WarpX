@@ -11,8 +11,6 @@ amr.max_grid_size = 128
 # Maximum level in hierarchy (for now must be 0, i.e., one level in total)
 amr.max_level = 0
 
-amr.plot_int = 50   # How often to write plotfiles.  "<= 0" means no plotfiles.
-
 # Geometry
 geometry.coord_sys   = 0
 geometry.is_periodic = 0   0   0
@@ -45,3 +43,8 @@ laser1.profile_duration = 15.e-15  # The duration of the laser (in seconds)
 laser1.profile_t_peak = 30.e-15    # The time at which the laser reaches its peak (in seconds)
 laser1.profile_focal_distance = 1.e-6  # Focal distance from the antenna (in meters)
 laser1.wavelength = 2.e-6         # The wavelength of the laser (in meters)
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 50
+diag1.diag_type = Full

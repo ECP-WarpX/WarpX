@@ -59,12 +59,12 @@ WarpX::DampPML (int lev, PatchType patch_type)
 #endif
         for ( MFIter mfi(*pml_E[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            const Box& tex  = mfi.tilebox(Ex_nodal_flag);
-            const Box& tey  = mfi.tilebox(Ey_nodal_flag);
-            const Box& tez  = mfi.tilebox(Ez_nodal_flag);
-            const Box& tbx  = mfi.tilebox(Bx_nodal_flag);
-            const Box& tby  = mfi.tilebox(By_nodal_flag);
-            const Box& tbz  = mfi.tilebox(Bz_nodal_flag);
+            const Box& tex  = mfi.tilebox( pml_E[0]->ixType().toIntVect() );
+            const Box& tey  = mfi.tilebox( pml_E[1]->ixType().toIntVect() );
+            const Box& tez  = mfi.tilebox( pml_E[2]->ixType().toIntVect() );
+            const Box& tbx  = mfi.tilebox( pml_B[0]->ixType().toIntVect() );
+            const Box& tby  = mfi.tilebox( pml_B[1]->ixType().toIntVect() );
+            const Box& tbz  = mfi.tilebox( pml_B[2]->ixType().toIntVect() );
 
             auto const& pml_Exfab = pml_E[0]->array(mfi);
             auto const& pml_Eyfab = pml_E[1]->array(mfi);
@@ -196,9 +196,9 @@ WarpX::DampJPML (int lev, PatchType patch_type)
             const Real* sigma_cumsum_fac_j_z = sigba[mfi].sigma_cumsum_fac[1].data();
             const Real* sigma_star_cumsum_fac_j_z = sigba[mfi].sigma_star_cumsum_fac[1].data();
 #endif
-            const Box& tjx  = mfi.tilebox(jx_nodal_flag);
-            const Box& tjy  = mfi.tilebox(jy_nodal_flag);
-            const Box& tjz  = mfi.tilebox(jz_nodal_flag);
+            const Box& tjx  = mfi.tilebox( pml_j[0]->ixType().toIntVect() );
+            const Box& tjy  = mfi.tilebox( pml_j[1]->ixType().toIntVect() );
+            const Box& tjz  = mfi.tilebox( pml_j[2]->ixType().toIntVect() );
 
             int const x_lo = sigba[mfi].sigma_cumsum_fac[0].lo();
 #if (AMREX_SPACEDIM == 3)

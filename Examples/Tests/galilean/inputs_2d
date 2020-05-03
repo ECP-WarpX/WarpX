@@ -24,7 +24,6 @@ algo.current_deposition = direct
 algo.particle_pusher = vay
 
 warpx.cfl = 1.
-amr.plot_int = 100
 interpolation.nox = 3
 interpolation.noy = 3
 interpolation.noz = 3
@@ -68,3 +67,8 @@ ions.xmin = -38.68
 ions.xmax = 38.68
 ions.zmin =  -38.68
 ions.zmax =38.68
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 100
+diag1.diag_type = Full

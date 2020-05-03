@@ -2,7 +2,6 @@ max_step = 420
 amr.n_cell =  16 800
 amr.max_grid_size = 64
 amr.blocking_factor = 16
-amr.plot_int = 10000
 geometry.coord_sys   = 0
 geometry.is_periodic = 1     0
 geometry.prob_lo     = -5.e-6 -40.e-6
@@ -59,3 +58,8 @@ laser1.profile_duration = 26.685e-15
 laser1.profile_t_peak = 60.e-15
 laser1.profile_focal_distance = 0
 laser1.wavelength = 0.8e-6
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 10000
+diag1.diag_type = Full
