@@ -142,7 +142,6 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
 
                     Complex C_rho = I* c2 /( (1.-theta*theta) * ep0);
 
-
                     Psi1(i,j,k) = theta * ((S1(i,j,k) + I*nu*C1(i,j,k)) - Theta2(i,j,k) * (S3(i,j,k) + I*nu*C3(i,j,k))) /(c*k_norm*dt * (nu*nu - 1.));
                     Psi2(i,j,k) = theta * ((C1(i,j,k) - I*nu*S1(i,j,k)) - Theta2(i,j,k) * (C3(i,j,k) - I*nu*S3(i,j,k))) /(c*c*k_norm*k_norm*dt * (nu*nu - 1.));
                     Psi3(i,j,k) = I * theta * (1. - theta*theta) /(c*k_norm*dt*nu);
@@ -365,7 +364,6 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
                           + I*Psi2*(kx*Ey_old - ky*Ex_old)
                           + A1*I*(kx*Jy     - ky*Jx)*inv_ep0;
 
-            //
             // fields(i,j,k,Idx::Ex_avg) =  fields(i,j,k,Idx::Ex);
             // fields(i,j,k,Idx::Ey_avg) =  fields(i,j,k,Idx::Ey);
             // fields(i,j,k,Idx::Ez_avg) =  fields(i,j,k,Idx::Ez);
@@ -374,11 +372,8 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
             // fields(i,j,k,Idx::By_avg) =  fields(i,j,k,Idx::By);
             // fields(i,j,k,Idx::Bz_avg) =  fields(i,j,k,Idx::Bz);
 
-
-            //Print()<<"Ez_avg "<< ' ' << i<<' '<< j<<' '<<k<<' '<< fields(i,j,k,Idx::Ez)<< fields(i,j,k,Idx::Ez_avg)<<'-------------'<<'\n';
+            //Print()<<"Ez_avg "<< ' ' << i<<' '<< j<<' '<<k<<' '<< fields(i,j,k,Idx::Ez) << fields(i,j,k,Idx::Ez_avg)<<'-------------'<<'\n';
             //Print()<<"Ez"<<i<<j<<k<<fields(i,j,k,Idx::Ez)<<'-------------'<<'\n';
-
-
             });
     }
 };

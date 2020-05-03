@@ -1168,7 +1168,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 byfab = &(By_avg[pti]);
                 bzfab = &(Bz_avg[pti]);
                 }
-            else{
+            else {
                 exfab = &(Ex[pti]);
                 eyfab = &(Ey[pti]);
                 ezfab = &(Ez[pti]);
@@ -1176,7 +1176,6 @@ PhysicalParticleContainer::Evolve (int lev,
                 byfab = &(By[pti]);
                 bzfab = &(Bz[pti]);
                 }
-
 
             Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
 
