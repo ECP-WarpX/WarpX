@@ -40,6 +40,8 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     : WarpXParticleContainer(amr_core, ispecies),
       species_name(name)
 {
+    BackwardCompatibility();
+
     plasma_injector.reset(new PlasmaInjector(species_id, species_name));
     physical_species = plasma_injector->getPhysicalSpecies();
     charge = plasma_injector->getCharge();
@@ -130,6 +132,23 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
     : WarpXParticleContainer(amr_core, 0)
 {
     plasma_injector.reset(new PlasmaInjector());
+}
+
+void
+PhysicalParticleContainer::BackwardCompatibility ()
+{
+    ParmParse pps(species_name);
+    std::vector<std::string> backward_strings;
+    if (pps.queryarr("plot_vars", backward_strings)){
+        amrex::Abort("<species>.plot_vars is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
+    }
+
+    int backward_int;
+    if (pps.query("plot_species", backward_int)){
+        amrex::Abort("<species>.plot_species is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
+    }
 }
 
 void PhysicalParticleContainer::InitData ()

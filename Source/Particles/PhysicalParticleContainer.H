@@ -53,6 +53,8 @@ public:
 
     PhysicalParticleContainer (amrex::AmrCore* amr_core);
 
+    void BackwardCompatibility ();
+
     virtual ~PhysicalParticleContainer () {}
 
     virtual void InitData () override;

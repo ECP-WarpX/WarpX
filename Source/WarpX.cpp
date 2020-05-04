@@ -147,6 +147,8 @@ WarpX::WarpX ()
 
     ReadParameters();
 
+    BackwardCompatibility();
+
     // Geometry on all levels has been defined already.
 
     // No valid BoxArray and DistributionMapping have been defined.
@@ -690,6 +692,33 @@ WarpX::ReadParameters ()
        }
 
     }
+}
+
+void
+WarpX::BackwardCompatibility ()
+{
+    ParmParse ppa("amr");
+    int backward_int;
+    if (ppa.query("plot_int", backward_int)){
+        amrex::Abort("amr.plot_int is not supported anymore. Please use the new syntax for diagnostics:\n"
+            "diagnostics.diags_names = my_diag\n"
+            "my_diag.period = 10\n"
+            "for output every 10 iterations. See documentation for more information");
+    }
+
+    std::string backward_str;
+    if (ppa.query("plot_file", backward_str)){
+        amrex::Abort("amr.plot_file is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
+    }
+
+    ParmParse ppw("warpx");
+    std::vector<std::string> backward_strings;
+    if (ppw.queryarr("fields_to_plot", backward_strings)){
+        amrex::Abort("warpx.fields_to_plot is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
+    }
+
 }
 
 // This is a virtual function.
