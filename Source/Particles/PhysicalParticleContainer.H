@@ -53,6 +53,8 @@ public:
 
     PhysicalParticleContainer (amrex::AmrCore* amr_core);
 
+    /** This function queries deprecated input parameters and abort
+     *  the run if one of them is specified. */
     void BackwardCompatibility ();
 
     virtual ~PhysicalParticleContainer () {}
