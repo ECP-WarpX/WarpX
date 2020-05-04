@@ -56,7 +56,6 @@ electrons.ymin = -20.e-6
 electrons.ymax = 20.e-6
 electrons.zmin = -20.e-6
 electrons.zmax = 20.e-6
-electrons.plot_vars = w ux
 
 electrons.profile = constant
 electrons.density = 2.e24   # number of electrons per m^3
@@ -75,7 +74,6 @@ positrons.ymin = -20.e-6
 positrons.ymax = 20.e-6
 positrons.zmin = -20.e-6
 positrons.zmax = 20.e-6
-positrons.plot_vars = Ey
 
 positrons.profile = constant
 positrons.density = 2.e24   # number of positrons per m^3
@@ -89,5 +87,5 @@ diagnostics.diags_names = diag1
 diag1.period = 40
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell rho
-diag1.electrons.variables = ux w Ey
-diag1.positrons.variables = ux w Ey
+diag1.electrons.variables = w ux
+diag1.positrons.variables = Ey
