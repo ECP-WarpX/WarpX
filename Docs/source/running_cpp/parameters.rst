@@ -67,6 +67,13 @@ Overall simulation parameters
     electromagnetic effects (e.g. propagation of radiation, lasers, etc.)
     are not captured.
 
+Setting up in situ visualization
+-------------------------
+
+* ``insitu.int`` (`integer`; 0 by default)
+Turns in situ processing on or off and controls how often data is processed.
+
+
 Setting up the field mesh
 -------------------------
 
