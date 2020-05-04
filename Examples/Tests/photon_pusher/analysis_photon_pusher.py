@@ -130,8 +130,7 @@ def generate():
         f.write("\namr.plot_int = 50\n\n")
 
         for name in spec_names:
-            f.write("{}.plot_species = 1\n".format(name))
-            f.write("{}.plot_vars  = ux uy uz\n".format(name))
+            f.write("diag1.{}.variables  = ux uy uz\n".format(name))
 
         f.write("\n")
 

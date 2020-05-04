@@ -55,7 +55,6 @@ p1.uz_m = 0.0
 p1.ux_th = 0.
 p1.uy_th = 0.
 p1.uz_th = 0.
-p1.plot_vars = ux uy uz
 ##########QED####################
 p1.do_qed = 1
 p1.do_qed_breit_wheeler = 1
@@ -82,7 +81,6 @@ p2.uz_m = 0.0
 p2.ux_th = 0.
 p2.uy_th = 0.
 p2.uz_th = 0.
-p2.plot_vars = ux uy uz
 ##########QED####################
 p2.do_qed = 1
 p2.do_qed_breit_wheeler = 1
@@ -109,7 +107,6 @@ p3.uz_m = 10000.0
 p3.ux_th = 0.
 p3.uy_th = 0.
 p3.uz_th = 0.
-p3.plot_vars = ux uy uz
 ##########QED####################
 p3.do_qed = 1
 p3.do_qed_breit_wheeler = 1
@@ -136,7 +133,6 @@ p4.uz_m = 57735.02691896
 p4.ux_th = 0.
 p4.uy_th = 0.
 p4.uz_th = 0.
-p4.plot_vars = ux uy uz
 ##########QED####################
 p4.do_qed = 1
 p4.do_qed_breit_wheeler = 1
@@ -154,7 +150,6 @@ ele_bw.momentum_distribution_type = "gaussian"
 ele_bw.xmin = 1 ## Ugly trick to avoid electrons at T=0
 ele_bw.xmax = -1 ##  Ugly trick to avoid electrons at T=0
 ele_bw.do_qed = 0
-ele_bw.plot_species = 1
 
 pos_bw.species_type = "positron"
 pos_bw.injection_style = nuniformpercell
@@ -165,7 +160,6 @@ pos_bw.momentum_distribution_type = "gaussian"
 pos_bw.xmin = 1 ## Ugly trick to avoid positrons at T=0
 pos_bw.xmax = -1 ##  Ugly trick to avoid positrons at T=0
 pos_bw.do_qed = 0
-pos_bw.plot_species = 1
 #################################
 
 ##########QED TABLES####################
@@ -201,3 +195,7 @@ diagnostics.diags_names = diag1
 diag1.period = 1
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex
+diag1.p1.variables = ux uy uz
+diag1.p2.variables = ux uy uz
+diag1.p3.variables = ux uy uz
+diag1.p4.variables = ux uy uz
