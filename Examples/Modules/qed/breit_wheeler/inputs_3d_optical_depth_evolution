@@ -154,7 +154,6 @@ ele_bw.momentum_distribution_type = "gaussian"
 ele_bw.xmin = 1 ## Ugly trick to avoid electrons at T=0
 ele_bw.xmax = -1 ##  Ugly trick to avoid electrons at T=0
 ele_bw.do_qed = 0
-ele_bw.plot_species = 1
 
 pos_bw.species_type = "positron"
 pos_bw.injection_style = nuniformpercell
@@ -165,7 +164,6 @@ pos_bw.momentum_distribution_type = "gaussian"
 pos_bw.xmin = 1 ## Ugly trick to avoid positrons at T=0
 pos_bw.xmax = -1 ##  Ugly trick to avoid positrons at T=0
 pos_bw.do_qed = 0
-pos_bw.plot_species = 1
 #################################
 
 ##########QED TABLES####################
