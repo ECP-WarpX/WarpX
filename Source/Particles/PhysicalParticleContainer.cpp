@@ -250,9 +250,9 @@ PhysicalParticleContainer::AddGaussianBeam (
     const int do_symmetrize) {
 
     std::mt19937_64 mt(0451);
-    std::normal_distribution<double> distx(x_m, x_rms);
-    std::normal_distribution<double> disty(y_m, y_rms);
-    std::normal_distribution<double> distz(z_m, z_rms);
+    std::normal_distribution<double> distx((double) x_m, (double) x_rms);
+    std::normal_distribution<double> disty((double) y_m, (double) y_rms);
+    std::normal_distribution<double> distz((double) z_m, (double) z_rms);
 
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
