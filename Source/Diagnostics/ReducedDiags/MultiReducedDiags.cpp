@@ -10,6 +10,7 @@
 #include "BeamRelevant.H"
 #include "ParticleEnergy.H"
 #include "FieldEnergy.H"
+#include "MaxField.H"
 #include "MultiReducedDiags.H"
 #include "AMReX_ParmParse.H"
 #include "AMReX_ParallelDescriptor.H"
@@ -51,6 +52,11 @@ MultiReducedDiags::MultiReducedDiags ()
         {
             m_multi_rd[i_rd].reset
                 ( new FieldEnergy(m_rd_names[i_rd]));
+        }
+        else if (rd_type.compare("MaxField") == 0)
+        {
+            m_multi_rd[i_rd].reset
+                ( new MaxField(m_rd_names[i_rd]));
         }
         else if (rd_type.compare("BeamRelevant") == 0)
         {
@@ -99,6 +105,7 @@ void MultiReducedDiags::WriteToFile (int step)
     // loop over all reduced diags
     for (int i_rd = 0; i_rd < m_rd_names.size(); ++i_rd)
     {
+        amrex::Print() << "Hi i_rd is " << i_rd << "freq is " << m_multi_rd[i_rd]->m_freq << "\n";
 
         // Judge if the diags should be done
         if ( (step+1) % m_multi_rd[i_rd]->m_freq != 0 ) { return; }

@@ -1,12 +1,13 @@
 # Maximum number of time steps
-max_step = 200
+max_step = 11
 
 # number of grid points
-amr.n_cell =   32  32  32
+amr.n_cell = 4 4 4
 
 # Maximum allowable size of each subdomain in the problem domain;
 # this is used to decompose the domain for parallel calculations.
 amr.max_grid_size = 32
+amr.blocking_factor = 4
 
 # Maximum level in hierarchy
 amr.max_level = 0
@@ -18,7 +19,7 @@ geometry.prob_lo     = -1.  -1.  -1. # physical domain
 geometry.prob_hi     =  1.   1.   1.
 
 # Algorithms
-algo.current_deposition = esirkepov
+#algo.current_deposition = esirkepov
 algo.field_gathering = energy-conserving # or momentum-conserving
 warpx.use_filter = 1
 algo.maxwell_fdtd_solver = yee # or ckc
@@ -72,13 +73,16 @@ photons.uz_th = 0.2
 #################################
 ###### REDUCED DIAGS ############
 #################################
-warpx.reduced_diags_names = EP EF
+warpx.reduced_diags_names = EP EF MF
 EP.type = ParticleEnergy
-EP.frequency = 200
+EP.frequency = 1
 EF.type = FieldEnergy
-EF.frequency = 200
+EF.frequency = 2
+MF.type = MaxField
+MF.frequency = 3
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 200
+diag1.period = 5
 diag1.diag_type = Full
+diag1.plot_raw_fields = 1

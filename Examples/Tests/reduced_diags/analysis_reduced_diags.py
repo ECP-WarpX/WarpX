@@ -64,13 +64,32 @@ Bs = np.sum(Bx**2)+np.sum(By**2)+np.sum(Bz**2)
 N  = np.array( ds.domain_width / ds.domain_dimensions )
 dV = N[0]*N[1]*N[2]
 EFyt = 0.5*Es*scc.epsilon_0*dV + 0.5*Bs/scc.mu_0*dV
+max_Ex = np.amax(np.abs(Ex))
+max_Ey = np.amax(np.abs(Ey))
+max_Ez = np.amax(np.abs(Ez))
+max_E = np.sqrt(np.amax(Ex**2+Ey**2+Ez**2))
+max_Bx = np.amax(np.abs(Bx))
+max_By = np.amax(np.abs(By))
+max_Bz = np.amax(np.abs(Bz))
+max_B = np.sqrt(np.amax(Bx**2+By**2+Bz**2))
+
+print('Ex :',Ex)
 
 # PART2: get results from reduced diagnostics
 
 EFdata = np.genfromtxt("./diags/reducedfiles/EF.txt")
 EPdata = np.genfromtxt("./diags/reducedfiles/EP.txt")
+MFdata = np.genfromtxt("./diags/reducedfiles/MF.txt")
 EF = EFdata[1][2]
 EP = EPdata[1][2]
+max_Exdata = MFdata[1][2]
+max_Eydata = MFdata[1][3]
+max_Ezdata = MFdata[1][4]
+max_Edata  = MFdata[1][5]
+max_Bxdata = MFdata[1][6]
+max_Bydata = MFdata[1][7]
+max_Bzdata = MFdata[1][8]
+max_Bdata  = MFdata[1][9]
 
 # PART3: print and assert
 
@@ -78,6 +97,15 @@ print('difference of field energy:', abs(EFyt-EF))
 print('tolerance of field energy:', 1.0e-3)
 print('difference of particle energy:', abs(EPyt-EP))
 print('tolerance of particle energy:', 1.0e-8)
+
+print('max Ex:', max_Ex,max_Exdata)
+print('max Ey:', max_Ey,max_Eydata)
+print('max Ez:', max_Ez,max_Ezdata)
+print('max E:', max_E,max_Edata)
+print('max Bx:', max_Bx,max_Bxdata)
+print('max By:', max_By,max_Bydata)
+print('max Bz:', max_Bz,max_Bzdata)
+print('max B:', max_B,max_Bdata)
 
 assert(abs(EFyt-EF) < 1.0e-3)
 assert(abs(EPyt-EP) < 1.0e-8)
