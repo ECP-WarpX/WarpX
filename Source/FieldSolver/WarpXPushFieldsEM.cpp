@@ -409,6 +409,7 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     }
 }
 
+
 void
 WarpX::EvolveF (amrex::Real a_dt, DtType a_dt_type)
 {
@@ -476,6 +477,36 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
             });
 
         }
+    }
+}
+
+void
+WarpX::MacroEvolveE (amrex::Real a_dt)
+{
+    for (int lev = 0; lev <= finest_level; ++lev ) {
+        MacroEvolveE(lev, a_dt);
+    }
+}
+
+void
+WarpX::MacroEvolveE (int lev, amrex::Real a_dt) {
+    MacroEvolveE(lev, PatchType::fine, a_dt);
+    if (lev > 0) {
+        amrex::Abort("Macroscopic EvolveE is not implemented for lev>0, yet.");
+    }
+}
+
+void
+WarpX::MacroEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
+    if (patch_type == PatchType::fine) {
+        m_fdtd_solver_fp[lev]->MacroEvolveE( Efield_fp[lev], Bfield_fp[lev],
+                                             current_fp[lev], a_dt);
+    }
+    else {
+        amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet."); 
+    }
+    if (do_pml) {
+        amrex::Abort("Macroscopic EvolveE is not implemented for pml boundary condition, yet");
     }
 }
 

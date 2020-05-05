@@ -139,6 +139,8 @@ public:
     static long particle_pusher_algo;
     static int maxwell_fdtd_solver_id;
     static long load_balance_costs_update_algo;
+    static int em_solver_medium;
+    static int macroscopic_solver_algo;
 
     // div E cleaning
     static int do_dive_cleaning;
@@ -291,6 +293,9 @@ public:
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+    void MacroEvolveE (         amrex::Real dt);
+    void MacroEvolveE (int lev, amrex::Real dt);
+    void MacroEvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void FieldGather ();
 
     /** \brief apply QED correction on electric field

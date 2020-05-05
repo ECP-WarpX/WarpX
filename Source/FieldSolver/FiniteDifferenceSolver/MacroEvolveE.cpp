@@ -7,7 +7,7 @@
 #endif
 #include "Utils/WarpXConst.H"
 #include <AMReX_Gpu.H>
-
+#include <WarpX.H>
 
 using namespace amrex;
 
@@ -17,6 +17,7 @@ using namespace amrex;
 void FiniteDifferenceSolver::MacroEvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     amrex::Real const dt ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
@@ -29,7 +30,7 @@ void FiniteDifferenceSolver::MacroEvolveE (
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        MacroEvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, dt );
+        MacroEvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
@@ -49,9 +50,11 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::MacroEvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     amrex::Real const dt ) {
 
-    
+    const int &macroscopic_solver_algo = WarpX::macroscopic_solver_algo; 
+    amrex::Print() << " sigma method " << macroscopic_solver_algo <<" \n";
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP
@@ -84,20 +87,21 @@ void FiniteDifferenceSolver::MacroEvolveECartesian (
         // sigma_method == 0 for Lax_Wandroff or semi-implicit approach
         // sigma_metha == 1 for Backward Euler
         // These material properties will be read from input file.
-        Real const alpha, beta;
-        Real const sigma = 0._rt; // for now, sigma = 0
+        Real alpha = 0._rt;
+        Real sigma = 0._rt; // for now, sigma = 0
         Real const mu = PhysConst::mu0;
         Real const epsilon = PhysConst::ep0;
        
-        fac1 = 0.5_rt * sigma * dt / epsilon;
-        inv_fac = 1._rt / ( 1._rt + fac1);
+        Real const fac1 = 0.5_rt * sigma * dt / epsilon;
+        Real const inv_fac = 1._rt / ( 1._rt + fac1);
+        int const sigma_method = macroscopic_solver_algo;
         if (sigma_method == 0) {
            alpha = (1.0_rt - fac1) * inv_fac;
         }
         else if (sigma_method == 1) {
            alpha = inv_fac;
         }
-        beta  = dt * inv_fac / epsilon ;
+        Real const beta  = dt * inv_fac / epsilon;
 
         // Loop over the cells and update the fields
         amrex::ParallelFor(tex, tey, tez,
@@ -105,25 +109,41 @@ void FiniteDifferenceSolver::MacroEvolveECartesian (
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Ex(i, j, k) = alpha * Ex(i, j, k) + (beta/mu)
                      * ( - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
-                         + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k))
-                         - beta * jz(i, j, k);                    
+                         + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k));
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Ey(i, j, k) = alpha * Ey(i, j, k) + (beta/mu)
                      * ( - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
-                         + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k))
-                         - beta * jy(i, j, k);
+                         + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k));
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 Ez(i, j, k) = alpha * Ez(i, j, k) + (beta/mu)
                      * ( - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
-                         + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k))
-                         - beta * jz(i, j, k);
+                         + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k));
             }
 
         );
+       
+        // update E using J, if source currents are specified.
+        if (Jfield[0]) {
+            Array4<Real> const& jx = Jfield[0]->array(mfi);
+            Array4<Real> const& jy = Jfield[1]->array(mfi);
+            Array4<Real> const& jz = Jfield[2]->array(mfi);
+
+            amrex::ParallelFor(tex, tey, tez, 
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    Ex(i, j, k) += -beta * jx(i, j, k);
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    Ey(i, j, k) += -beta * jy(i, j, k);
+                },
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    Ez(i, j, k) += -beta * jz(i, j, k);
+                }    
+            );
+        }
     }
 
 }

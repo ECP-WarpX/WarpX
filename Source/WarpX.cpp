@@ -69,6 +69,8 @@ long WarpX::particle_pusher_algo;
 int WarpX::maxwell_fdtd_solver_id;
 long WarpX::load_balance_costs_update_algo;
 int WarpX::do_dive_cleaning = 0;
+int WarpX::em_solver_medium;
+int WarpX::macroscopic_solver_algo;
 
 long WarpX::n_rz_azimuthal_modes = 1;
 long WarpX::ncomps = 1;
@@ -623,6 +625,8 @@ WarpX::ReadParameters ()
             l_lower_order_in_v = false;
         }
         load_balance_costs_update_algo = GetAlgorithmInteger(pp, "load_balance_costs_update");
+        em_solver_medium = GetAlgorithmInteger(pp, "em_solver_medium");
+        macroscopic_solver_algo = GetAlgorithmInteger(pp,"macroscopic_sigma_method");
         pp.query("costs_heuristic_cells_wt", costs_heuristic_cells_wt);
         pp.query("costs_heuristic_particles_wt", costs_heuristic_particles_wt);
     }

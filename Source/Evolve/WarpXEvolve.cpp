@@ -383,7 +383,13 @@ WarpX::OneStep_nosub (Real cur_time)
         EvolveB(0.5*dt[0]); // We now have B^{n+1/2}
 
         FillBoundaryB(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
-        EvolveE(dt[0]); // We now have E^{n+1}
+        if (WarpX::em_solver_medium == 0) {
+            amrex::Print() << " evolve E for vacuum \n";
+            EvolveE(dt[0]); // We now have E^{n+1}
+        } else {
+            amrex::Print() << " evolve E macro \n";
+            MacroEvolveE(dt[0]);
+        }
 
         FillBoundaryE(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
         EvolveF(0.5*dt[0], DtType::SecondHalf);

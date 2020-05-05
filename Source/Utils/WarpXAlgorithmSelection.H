@@ -11,6 +11,21 @@
 #include <AMReX_ParmParse.H>
 #include <string>
 
+
+struct MediumForEM {
+    enum {
+        Vacuum = 0,
+        Macroscopic = 1  
+    };
+};
+
+struct MacroscopicSolverAlgo {
+    enum {
+        LaxWandroff = 0,
+        BackwardEuler = 1
+    };
+};
+
 struct MaxwellSolverAlgo {
     enum {
         Yee = 0,
