@@ -6,6 +6,18 @@
 
 from .Bucket import Bucket
 
-diagnostics = Bucket('diagnostics', diags_names=[])
-diagnostics_list = []
+diagnostics = Bucket('diagnostics', _diagnostics_dict={})
+
+class Diagnostic(Bucket):
+    """
+    This is the same as a Bucket, but checks that any attributes are always given the same value.
+    """
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            self._localsetattr(name, value)
+        else:
+            if name in self.argvattrs:
+                assert value == self.argvattrs[name], Exception(f'Diagnostic attributes not consistent for {self.instancename}')
+            self.argvattrs[name] = value
+
 
