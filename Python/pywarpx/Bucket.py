@@ -16,12 +16,12 @@ class Bucket(object):
         self._localsetattr('instancename', instancename)
         self._localsetattr('argvattrs', {})
         for name, value in defaults.items():
-            self.__setattr__(name, value)
+            self.add_new_attr(name, value)
 
     def _localsetattr(self, name, value):
         object.__setattr__(self, name, value)
 
-    def __setattr__(self, name, value):
+    def add_new_attr(self, name, value):
         """Names starting with "_" are make instance attributes.
         Otherwise the attribute is added to the args list.
         """
@@ -29,6 +29,9 @@ class Bucket(object):
             self._localsetattr(name, value)
         else:
             self.argvattrs[name] = value
+
+    def __setattr__(self, name, value):
+        self.add_new_attr(name, value)
 
     def __getattr__(self, name):
         try:
