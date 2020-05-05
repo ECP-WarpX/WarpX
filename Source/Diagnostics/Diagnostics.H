@@ -37,6 +37,9 @@ public:
       * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
       */
     void InitializeFieldFunctors (int lev);
+    /** Start a new iteration, i.e., dump has not been done yet. */
+    void NewIteration () {m_already_done = false;};
+
 private:
     void ReadParameters ();
     /** Append varnames with names for all modes of a field
@@ -81,8 +84,8 @@ private:
     bool m_plot_raw_rho = false;
     /** Whether to plot F (charge conservation error) in raw fields */
     bool m_plot_raw_F = false;
-    /** store previous step dumped, to avoid writing data twice */
-    int m_previous_step = -1;
+    /** Whether this iteration has already been dumped, to avoid writing data twice */
+    int m_already_done = false;
     /** Name of species to write to file */
     std::vector< std::string > m_species_names;
     /** Each element of this vector handles output for 1 species */
