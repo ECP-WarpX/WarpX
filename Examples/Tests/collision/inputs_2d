@@ -18,8 +18,6 @@ warpx.do_pml = 0
 warpx.serialize_ics = 1
 warpx.verbose = 1
 warpx.cfl = 1.0
-amr.plot_int = 10
-warpx.plot_raw_fields = 0
 
 #################################
 ############ PLASMA #############
@@ -63,3 +61,8 @@ collision3.species = ion ion
 collision1.CoulombLog = 15.9
 collision2.CoulombLog = 15.9
 collision3.CoulombLog = 15.9
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 10
+diag1.diag_type = Full

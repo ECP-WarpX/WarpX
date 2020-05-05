@@ -29,7 +29,8 @@ void LoadBalanceCosts::ComputeDiags (int step)
 
     // judge if the diags should be done
     // costs is initialized only if we're doing load balance
-    if ( ((step+1) % m_freq != 0) || warpx.get_load_balance_int() < 1 ) { return; }
+    if ( ((step+1) % m_freq != 0) ||
+          !warpx.get_load_balance_intervals().isActivated() ) { return; }
 
     // get number of boxes over all levels
     auto nLevels = warpx.finestLevel() + 1;
@@ -233,52 +234,52 @@ void LoadBalanceCosts::WriteToFile (int step) const
     {
         // open tmp file to copy data
         std::string fileTmpName = m_path + m_rd_name + ".tmp." + m_extension;
-        std::ofstream ofs(fileTmpName, std::ofstream::out);
+        std::ofstream ofstmp(fileTmpName, std::ofstream::out);
 
         // write header row
         // for each box on each level we saved 7 data fields: [cost, proc, lev, i_low, j_low, k_low, hostname])
         // nDataFieldsToWrite = below accounts for the Real data fields (m_nDataFields), then 1 string output to write
         int nDataFieldsToWrite = m_nDataFields + 1;
 
-        ofs << "#";
-        ofs << "[1]step()";
-        ofs << m_sep;
-        ofs << "[2]time(s)";
+        ofstmp << "#";
+        ofstmp << "[1]step()";
+        ofstmp << m_sep;
+        ofstmp << "[2]time(s)";
 
         for (int boxNumber=0; boxNumber<m_nBoxesMax; ++boxNumber)
         {
-            ofs << m_sep;
-            ofs << "[" + std::to_string(3 + nDataFieldsToWrite*boxNumber) + "]";
-            ofs << "cost_box_"+std::to_string(boxNumber)+"()";
-            ofs << m_sep;
-            ofs << "[" + std::to_string(4 + nDataFieldsToWrite*boxNumber) + "]";
-            ofs << "proc_box_"+std::to_string(boxNumber)+"()";
-            ofs << m_sep;
-            ofs << "[" + std::to_string(5 + nDataFieldsToWrite*boxNumber) + "]";
-            ofs << "lev_box_"+std::to_string(boxNumber)+"()";
-            ofs << m_sep;
-            ofs << "[" + std::to_string(6 + nDataFieldsToWrite*boxNumber) + "]";
-            ofs << "i_low_box_"+std::to_string(boxNumber)+"()";
-            ofs << m_sep;
-            ofs << "[" + std::to_string(7 + nDataFieldsToWrite*boxNumber) + "]";
-            ofs << "j_low_box_"+std::to_string(boxNumber)+"()";
-            ofs << m_sep;
-            ofs << "[" + std::to_string(8 + nDataFieldsToWrite*boxNumber) + "]";
-            ofs << "k_low_box_"+std::to_string(boxNumber)+"()";
+            ofstmp << m_sep;
+            ofstmp << "[" + std::to_string(3 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "cost_box_"+std::to_string(boxNumber)+"()";
+            ofstmp << m_sep;
+            ofstmp << "[" + std::to_string(4 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "proc_box_"+std::to_string(boxNumber)+"()";
+            ofstmp << m_sep;
+            ofstmp << "[" + std::to_string(5 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "lev_box_"+std::to_string(boxNumber)+"()";
+            ofstmp << m_sep;
+            ofstmp << "[" + std::to_string(6 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "i_low_box_"+std::to_string(boxNumber)+"()";
+            ofstmp << m_sep;
+            ofstmp << "[" + std::to_string(7 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "j_low_box_"+std::to_string(boxNumber)+"()";
+            ofstmp << m_sep;
+            ofstmp << "[" + std::to_string(8 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "k_low_box_"+std::to_string(boxNumber)+"()";
 #ifdef AMREX_USE_GPU
-            ofs << m_sep;
-            ofs << "[" + std::to_string(9 + nDataFieldsToWrite*boxNumber) + "]";
-            ofs << "gpu_ID_box_"+std::to_string(boxNumber)+"()";
-            ofs << m_sep;
-            ofs << "[" + std::to_string(10 + nDataFieldsToWrite*boxNumber) + "]";
-            ofs << "hostname_box_"+std::to_string(boxNumber)+"()";
+            ofstmp << m_sep;
+            ofstmp << "[" + std::to_string(9 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "gpu_ID_box_"+std::to_string(boxNumber)+"()";
+            ofstmp << m_sep;
+            ofstmp << "[" + std::to_string(10 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "hostname_box_"+std::to_string(boxNumber)+"()";
 #else
-            ofs << m_sep;
-            ofs << "[" + std::to_string(9 + nDataFieldsToWrite*boxNumber) + "]";
-            ofs << "hostname_box_"+std::to_string(boxNumber)+"()";
+            ofstmp << m_sep;
+            ofstmp << "[" + std::to_string(9 + nDataFieldsToWrite*boxNumber) + "]";
+            ofstmp << "hostname_box_"+std::to_string(boxNumber)+"()";
 #endif
         }
-        ofs << std::endl;
+        ofstmp << std::endl;
 
         // open the data-containing file
         std::string fileDataName = m_path + m_rd_name + "." + m_extension;
@@ -302,17 +303,17 @@ void LoadBalanceCosts::WriteToFile (int step) const
             // then nBoxes*1 columns for hostname;
             // then fill the remaining columns (i.e., up to 2 + m_nBoxesMax*nDataFieldsToWrite)
             // with NaN, so the array is not jagged
-            ofs << lineIn;
+            ofstmp << lineIn;
             for (int i=0; i<(m_nBoxesMax*nDataFieldsToWrite - (cnt - 2)); ++i)
             {
-                ofs << m_sep << "NaN";
+                ofstmp << m_sep << "NaN";
             }
-            ofs << std::endl;
+            ofstmp << std::endl;
         }
 
         // close files
         ifs.close();
-        ofs.close();
+        ofstmp.close();
 
         // remove the original, rename tmp file
         std::remove(fileDataName.c_str());

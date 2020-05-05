@@ -16,8 +16,8 @@
 #include "Evolve/WarpXDtType.H"
 
 #ifdef WARPX_QED
-    #include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
-    #include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
 #endif
 
 #include <AMReX_Particles.H>
@@ -312,6 +312,18 @@ public:
     //amrex::Real getMass () {return mass;}
     amrex::ParticleReal getMass () const {return mass;}
 
+    int DoFieldIonization() const { return do_field_ionization; };
+    int DoQED() const {
+#ifdef WARPX_QED
+        return m_do_qed;
+#else
+        return false;
+#endif
+    };
+    //Species for which QED effects are relevant should override these methods
+    virtual bool has_quantum_sync() const {return false;};
+    virtual bool has_breit_wheeler() const {return false;};
+
     // build filter functors
     bool m_do_random_filter  = false;
     bool m_do_uniform_filter = false;
@@ -373,10 +385,6 @@ protected:
 #ifdef WARPX_QED
     bool m_do_qed = false;
 
-    //Species for which QED effects are relevant should override these methods
-    virtual bool has_quantum_sync(){return false;};
-    virtual bool has_breit_wheeler(){return false;};
-
     //Species can receive a shared pointer to a QED engine (species for
     //which this is relevant should override these functions)
     virtual void
@@ -399,15 +407,6 @@ protected:
 
     using DataContainer = amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>;
     using PairIndex = std::pair<int, int>;
-
-    // Whether to dump particle quantities.
-    // If true, particle position is always dumped.
-    int plot_species = 1;
-    // For all particle attribs (execept position), whether or not
-    // to dump to file.
-    amrex::Vector<int> plot_flags;
-    // list of names of attributes to dump.
-    amrex::Vector<std::string> plot_vars;
 
     amrex::Vector<std::map<PairIndex, std::array<DataContainer, TmpIdx::nattribs> > > tmp_particle_data;
 

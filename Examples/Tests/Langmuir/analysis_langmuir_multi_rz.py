@@ -97,5 +97,10 @@ plt.title('Ez, last iteration\n(theory)')
 plt.tight_layout()
 plt.savefig('langmuir_multi_rz_analysis.png')
 
-# Automatically check the validity
-assert overall_max_error < 0.04
+error_rel = overall_max_error
+tolerance_rel = 0.04
+
+print("error_rel    : " + str(error_rel))
+print("tolerance_rel: " + str(tolerance_rel))
+
+assert( error_rel < tolerance_rel )

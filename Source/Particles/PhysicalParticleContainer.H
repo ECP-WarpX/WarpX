@@ -16,12 +16,12 @@
 #include "Particles/ElementaryProcess/Ionization.H"
 
 #ifdef WARPX_QED
-    #include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
-    #include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
-    #include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
+#    include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#    include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#    include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
 
-    #include "Particles/ElementaryProcess/QEDPairGeneration.H"
-    #include "Particles/ElementaryProcess/QEDPhotonEmission.H"
+#    include "Particles/ElementaryProcess/QEDPairGeneration.H"
+#    include "Particles/ElementaryProcess/QEDPhotonEmission.H"
 #endif
 
 #include <AMReX_IArrayBox.H>
@@ -295,14 +295,14 @@ public:
      * Synchrotron process enabled
      * @return true if process is enabled
      */
-    bool has_quantum_sync () override;
+    bool has_quantum_sync () const override;
 
     /**
      * Tells if this PhysicalParticleContainer has Breit
      * Wheeler process enabled
      * @return true if process is enabled
      */
-    bool has_breit_wheeler () override;
+    bool has_breit_wheeler () const override;
 
     /**
      * Acquires a shared smart pointer to a BreitWheelerEngine
