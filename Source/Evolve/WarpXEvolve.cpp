@@ -53,6 +53,8 @@ WarpX::Evolve (int numsteps)
     {
         Real walltime_beg_step = amrex::second();
 
+        multi_diags->NewIteration();
+
         // Start loop on time steps
         amrex::Print() << "\nSTEP " << step+1 << " starts ...\n";
 #ifdef WARPX_USE_PY

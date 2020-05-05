@@ -24,6 +24,8 @@ public:
       * \param[in] lev level at this the field functors are initialized.
       */
     void InitializeFieldFunctors (int lev);
+    /** Start a new iteration, i.e., dump has not been done yet. */
+    void NewIteration ();
 private:
     /** Vector of pointers to all diagnostics */
     amrex::Vector<std::unique_ptr<Diagnostics> > alldiags;
