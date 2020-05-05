@@ -64,3 +64,11 @@ MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush)
         diag->FlushRaw();
     }
 }
+
+void
+MultiDiagnostics::NewIteration ()
+{
+    for( auto& diag : alldiags ){
+        diag->NewIteration();
+    }
+}

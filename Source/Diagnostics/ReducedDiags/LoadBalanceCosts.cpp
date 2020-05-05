@@ -29,7 +29,8 @@ void LoadBalanceCosts::ComputeDiags (int step)
 
     // judge if the diags should be done
     // costs is initialized only if we're doing load balance
-    if ( ((step+1) % m_freq != 0) || warpx.get_load_balance_int() < 1 ) { return; }
+    if ( ((step+1) % m_freq != 0) ||
+          !warpx.get_load_balance_intervals().isActivated() ) { return; }
 
     // get number of boxes over all levels
     auto nLevels = warpx.finestLevel() + 1;
