@@ -503,7 +503,7 @@ WarpX::MacroEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
                                              current_fp[lev], a_dt);
     }
     else {
-        amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet."); 
+        amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
     }
     if (do_pml) {
         amrex::Abort("Macroscopic EvolveE is not implemented for pml boundary condition, yet");

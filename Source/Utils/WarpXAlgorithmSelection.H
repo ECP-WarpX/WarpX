@@ -15,7 +15,7 @@
 struct MediumForEM {
     enum {
         Vacuum = 0,
-        Macroscopic = 1  
+        Macroscopic = 1
     };
 };
 

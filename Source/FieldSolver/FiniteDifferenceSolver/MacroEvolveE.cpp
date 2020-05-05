@@ -26,7 +26,7 @@ void FiniteDifferenceSolver::MacroEvolveE (
     amrex::Abort("currently macro E-push does not work for RZ");
 #else
     if (m_do_nodal) {
-        amrex::Abort(" macro E-push does not work for nodal ");   
+        amrex::Abort(" macro E-push does not work for nodal ");
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
@@ -34,7 +34,7 @@ void FiniteDifferenceSolver::MacroEvolveE (
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        amrex::Abort("macro E-push not implemented for CKC -- yet");  
+        amrex::Abort("macro E-push not implemented for CKC -- yet");
 
 #endif
     } else {
@@ -53,7 +53,7 @@ void FiniteDifferenceSolver::MacroEvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     amrex::Real const dt ) {
 
-    const int &macroscopic_solver_algo = WarpX::macroscopic_solver_algo; 
+    const int &macroscopic_solver_algo = WarpX::macroscopic_solver_algo;
     amrex::Print() << " sigma method " << macroscopic_solver_algo <<" \n";
 
     // Loop through the grids, and over the tiles within each grid
@@ -91,7 +91,7 @@ void FiniteDifferenceSolver::MacroEvolveECartesian (
         Real sigma = 0._rt; // for now, sigma = 0
         Real const mu = PhysConst::mu0;
         Real const epsilon = PhysConst::ep0;
-       
+
         Real const fac1 = 0.5_rt * sigma * dt / epsilon;
         Real const inv_fac = 1._rt / ( 1._rt + fac1);
         int const sigma_method = macroscopic_solver_algo;
@@ -125,14 +125,14 @@ void FiniteDifferenceSolver::MacroEvolveECartesian (
             }
 
         );
-       
+
         // update E using J, if source currents are specified.
         if (Jfield[0]) {
             Array4<Real> const& jx = Jfield[0]->array(mfi);
             Array4<Real> const& jy = Jfield[1]->array(mfi);
             Array4<Real> const& jz = Jfield[2]->array(mfi);
 
-            amrex::ParallelFor(tex, tey, tez, 
+            amrex::ParallelFor(tex, tey, tez,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ex(i, j, k) += -beta * jx(i, j, k);
                 },
@@ -141,7 +141,7 @@ void FiniteDifferenceSolver::MacroEvolveECartesian (
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ez(i, j, k) += -beta * jz(i, j, k);
-                }    
+                }
             );
         }
     }
