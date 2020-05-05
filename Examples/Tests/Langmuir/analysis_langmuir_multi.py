@@ -133,4 +133,6 @@ if current_correction:
     rho  = data['rho' ].to_ndarray()
     divE = data['divE'].to_ndarray()
     Linf_norm = np.amax( np.abs( rho/epsilon_0 - divE ) ) / np.amax( np.abs( rho/epsilon_0 ) )
+    print("error: " + str(Linf_norm))
+    print("tolerance: 1.e-9")
     assert( Linf_norm < 1.e-9 )
