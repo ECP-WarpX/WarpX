@@ -1506,7 +1506,7 @@ Reduced Diagnostics
 * ``<reduced_diags_name>.separator`` (`string`) optional (default a `whitespace`)
     The separator between row values in the output file.
     The default separator is a whitespace.
-    
+
 In-situ visualization
 ^^^^^^^^^^^^^^^^^^^^^
 
