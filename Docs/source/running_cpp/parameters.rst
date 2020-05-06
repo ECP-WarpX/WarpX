@@ -309,7 +309,10 @@ Particle initialization
       It requires the additional arguments:
       ``<species_name>.injection_file`` (`string`) openPMD file name and
       ``<species_name>.q_tot`` (`double`) optional (default is ``q_tot=0`` and no re-scaling is done, ``weight=q_p``) when specified it is used to re-scale the weight of externally loaded ``N`` physical particles, each of charge ``q_p``, to inject macroparticles of ``weight=<species_name>.q_tot/q_p/N``.
-      The external file should include the species ``openPMD::Record`` s labeled ``mass`` and ``charge`` (`double` scalars) and also the ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
+      ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
+      ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
+      The external file must include the species ``openPMD::Record``s labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
+      If the external file also contains ``openPMD::Records``s for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ```<species_name>.charge`` or ```<species_name>.species_type``).
       The ``external_file`` option is currently implemented for 2D and 3D geometries, with record components ``x``, ``z`` and ``y`` for 3D.
       For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :doc:`../building/openpmd`.
 
@@ -1171,6 +1174,8 @@ This should be changed in the future.
     When ```warpx.plot_raw_fields`` is `1`, then the raw (i.e. unaveraged)
     fields are also saved in the output files.
     Only works with ``<diag_name>.format = plotfile``.
+    See `this section <https://yt-project.org/doc/examining/loading_data.html#viewing-raw-fields-in-warpx>`_
+    in the yt documentation for more details on how to view raw fields.
 
 * ``<diag_name>.plot_raw_fields_guards`` (`0` or `1`) optional (default `0`)
     Only used when ``warpx.plot_raw_fields`` is ``1``.

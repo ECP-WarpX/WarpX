@@ -116,7 +116,7 @@ Then, in the ``warpx_directory``, download and build openPMD-api:
    mkdir openPMD-api-build
    cd openPMD-api-build
    cmake ../openPMD-api -DopenPMD_USE_PYTHON=OFF -DCMAKE_INSTALL_PREFIX=../openPMD-install/ -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_RPATH='$ORIGIN'
-   cmake --build . --target install
+   cmake --build . --target install --parallel 16
 
 Finally, compile WarpX:
 
