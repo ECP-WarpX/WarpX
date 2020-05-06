@@ -313,9 +313,6 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot)
         double const momentum_unit_x = ps["momentum"]["x"].unitSI();
         std::shared_ptr<ParticleReal> ptr_uz = ps["momentum"]["z"].loadChunk<ParticleReal>();
         double const momentum_unit_z = ps["momentum"]["z"].unitSI();
-#   ifndef WARPX_DIM_XZ
-        Abort("AddPlasmaFromFile is only implemented for 2D and 3D\n");
-#   endif
 #   ifdef WARPX_DIM_3D
         std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
         double const position_unit_y = ps["position"]["y"].unitSI();
