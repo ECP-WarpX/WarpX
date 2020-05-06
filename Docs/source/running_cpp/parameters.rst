@@ -1171,6 +1171,8 @@ This should be changed in the future.
     When ```warpx.plot_raw_fields`` is `1`, then the raw (i.e. unaveraged)
     fields are also saved in the output files.
     Only works with ``<diag_name>.format = plotfile``.
+    See `this section <https://yt-project.org/doc/examining/loading_data.html#viewing-raw-fields-in-warpx>`_
+    in the yt documentation for more details on how to view raw fields.
 
 * ``<diag_name>.plot_raw_fields_guards`` (`0` or `1`) optional (default `0`)
     Only used when ``warpx.plot_raw_fields`` is ``1``.
