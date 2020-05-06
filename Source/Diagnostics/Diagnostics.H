@@ -84,6 +84,8 @@ private:
     bool m_plot_raw_rho = false;
     /** Whether to plot F (charge conservation error) in raw fields */
     bool m_plot_raw_F = false;
+    /** Whether to dump the RZ modes */
+    bool m_dump_rz_modes = false;
     /** Whether this iteration has already been dumped, to avoid writing data twice */
     int m_already_done = false;
     /** Name of species to write to file */
