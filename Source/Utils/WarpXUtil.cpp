@@ -213,14 +213,17 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
     return parser;
 }
 
+/**
+ * \brief Ensures that the blocks are setup correctly for the RZ spectral solver
+ * When using the RZ spectral solver, the Hankel transform cannot be
+ * divided among multiple blocks. Each block must extend over the
+ * entire radial extent.
+ * The grid can be divided up along z, but the number of blocks
+ * must be >= the number of processors.
+ */
 void CheckGriddingForRZSpectral ()
 {
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-// When using the RZ spectral solver, the Hankel transform cannot be
-// divided among multiple blocks. Each block must extend over the
-// entire radial extent.
-// The grid can be divided up along z, but the number of blocks
-// must be >= the number of processors.
 
     int max_level;
     Vector<int> n_cell(AMREX_SPACEDIM, -1);
@@ -247,8 +250,10 @@ void CheckGriddingForRZSpectral ()
 
     // Adjust the longitudinal block sizes, making sure that there are
     // more blocks than processors.
+    // The factor of 8 is there to make some room for higher order
+    // shape factors and filtering.
     int nprocs = ParallelDescriptor::NProcs();
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_cell[1] >= 2*nprocs,
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_cell[1] >= 8*nprocs,
                                      "With RZ spectral, there must be at least two z-cells per processor so that there can be at least one block per processor.");
 
     // Get the longitudinal blocking factor in case it was set by the user.
@@ -258,9 +263,10 @@ void CheckGriddingForRZSpectral ()
     pp_amr.queryarr("blocking_factor_y",bf);
     bf.resize(std::max(static_cast<int>(bf.size()),1),8);
 
-    // Make sure that the blocking factor (of the finest level) is small
-    // enough so that there will be at least as many blocks as there
-    // are processors.
+    // Make sure that the blocking factor is small enough so
+    // that there will be at least as many blocks as there
+    // are processors. Because of the ASSERT above, bf will
+    // never be less than 8.
     while (n_cell[1] < nprocs*bf[0]) {
         bf[0] /= 2;
     }
