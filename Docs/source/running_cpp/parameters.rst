@@ -1525,7 +1525,6 @@ This is controlled by the following option(s):
 * ``insitu.pin_mesh`` (`integer`; 0 by default)
     when 1 lower left corner of the mesh is pinned to 0.,0.,0.
 
-
 Lookup tables and other settings for QED modules (implementation in progress)
 -----------------------------------------------------------------------------
 
