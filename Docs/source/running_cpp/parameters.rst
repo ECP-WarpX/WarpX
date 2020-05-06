@@ -1506,6 +1506,25 @@ Reduced Diagnostics
 * ``<reduced_diags_name>.separator`` (`string`) optional (default a `whitespace`)
     The separator between row values in the output file.
     The default separator is a whitespace.
+    
+In-situ visualization
+^^^^^^^^^^^^^^^^^^^^^
+
+Besides the diagnostics described above, WarpX has in-situ visualization capabilities.
+This is controlled by the following option(s):
+
+* ``insitu.int`` (`integer`; 0 by default)
+    Turns in situ processing on or off and controls how often data is processed.
+
+* ``insitu.start`` (`integer`; 0 by default)
+    Controls when in situ processing starts.
+
+* ``insitu.config`` (`string`)
+    Points to the SENSEI XML file which selects and configures the desired back end.
+
+* ``insitu.pin_mesh`` (`integer`; 0 by default)
+    when 1 lower left corner of the mesh is pinned to 0.,0.,0.
+
 
 Lookup tables and other settings for QED modules (implementation in progress)
 -----------------------------------------------------------------------------
