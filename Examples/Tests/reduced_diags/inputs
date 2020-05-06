@@ -2,7 +2,7 @@
 max_step = 200
 
 # number of grid points
-amr.n_cell = 32 32 32
+amr.n_cell =   32  32  32
 
 # Maximum allowable size of each subdomain in the problem domain;
 # this is used to decompose the domain for parallel calculations.
@@ -82,6 +82,6 @@ MF.frequency = 200
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 10
+diag1.period = 200
 diag1.diag_type = Full
 diag1.plot_raw_fields = 1
