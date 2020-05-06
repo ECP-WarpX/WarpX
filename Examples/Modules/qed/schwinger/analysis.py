@@ -22,7 +22,7 @@ E_S = m_e**2*c**3/e/hbar # Schwinger field
 
 dV = (1.e-6)**3 # total simulation volume
 dt = 2.407291502e-16
-filename = "diags/plotfiles/plt00001"
+filename = "diags/diag100001/"
 
 Ex_test1 = 1.e16
 Ey_test1 = 0.

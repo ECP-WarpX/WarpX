@@ -5,7 +5,6 @@ max_step = 1
 amr.n_cell =  8 8 8
 amr.max_grid_size = 8   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 8 # minimum size of each AMReX box, used to decompose the domain
-amr.plot_int = 1
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 1     1     1  # Is periodic?
 geometry.prob_lo     =  -5.e-7  -5.e-7  -5.e-7   # physical domain
@@ -56,8 +55,16 @@ ele_schwinger.momentum_distribution_type = "gaussian"
 pos_schwinger.momentum_distribution_type = "gaussian"
 
 #################################
-##########QED####################
+############## QED ##############
+#################################
 warpx.do_qed_schwinger = 1
 qed_schwinger.ele_product_species = ele_schwinger
 qed_schwinger.pos_product_species = pos_schwinger
+
+#################################
+########## DIAGNOSTICS ##########
+#################################
+diagnostics.diags_names = diag1
+diag1.diag_type = Full
+diag1.period = 1
 

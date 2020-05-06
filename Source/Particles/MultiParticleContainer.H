@@ -55,9 +55,6 @@ class MultiParticleContainer
 
 public:
 
-    using AllContainerType =
-        amrex::Vector<std::unique_ptr<WarpXParticleContainer>>;
-
     MultiParticleContainer (amrex::AmrCore* amr_core);
 
     ~MultiParticleContainer() {}
@@ -356,7 +353,7 @@ protected:
 private:
 
     // physical particles (+ laser)
-    AllContainerType allcontainers;
+    amrex::Vector<std::unique_ptr<WarpXParticleContainer>> allcontainers;
     // Temporary particle container, used e.g. for particle splitting.
     std::unique_ptr<PhysicalParticleContainer> pc_tmp;
 
