@@ -242,7 +242,7 @@ public:
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
 
-    static amrex::Vector<amrex::Real>* getCosts (int lev) {
+    static amrex::LayoutData<amrex::Real>* getCosts (int lev) {
         if (m_instance) {
             return m_instance->costs[lev].get();
         } else
@@ -467,7 +467,7 @@ public:
      * @param[in] costs vector of (`unique_ptr` to) vectors; expected to be initialized
      * to correct number of boxes and boxes per level
      */
-    void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& costs);
+    void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > >& costs);
 
 protected:
 
@@ -671,9 +671,9 @@ private:
     /** Load balancing intervals that reads the "load_balance_int" string int the input file
      * for getting steps at which load balancing is performed */
     IntervalsParser load_balance_intervals;
-    /** Collection of vectors to keep track of weights used in load balancing
+    /** Collection of LayoutData to keep track of weights used in load balancing
      * routines. Contains timer-based or heuristic-based costs depending on input option */
-    amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > > costs;
+    amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > > costs;
     /** Load balance with 'space filling curve' strategy. */
     int load_balance_with_sfc = 0;
     /** Controls the maximum number of boxes that can be assigned to a rank during

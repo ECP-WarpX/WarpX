@@ -35,12 +35,6 @@ WarpX::LoadBalance ()
     const int nLevels = finestLevel();
     for (int lev = 0; lev <= nLevels; ++lev)
     {
-        LayoutData<Real> costsLayoutData(boxArray(lev), DistributionMap(lev));
-        for (auto i : costsLayoutData.IndexArray())
-        {
-            costsLayoutData[i] = (*costs[lev])[i];
-        }
-
         // Compute the new distribution mapping
         DistributionMapping newdm;
         const amrex::Real nboxes = costs[lev]->size();
@@ -52,11 +46,11 @@ WarpX::LoadBalance ()
         amrex::Real proposedEfficiency = 0.0;
 
         newdm = (load_balance_with_sfc)
-            ? DistributionMapping::makeSFC(costsLayoutData,
+            ? DistributionMapping::makeSFC(*costs[lev],
                                            currentEfficiency, proposedEfficiency,
                                            false,
                                            ParallelDescriptor::IOProcessorNumber())
-            : DistributionMapping::makeKnapSack(costsLayoutData,
+            : DistributionMapping::makeKnapSack(*costs[lev],
                                                 currentEfficiency, proposedEfficiency,
                                                 nmax,
                                                 false,
@@ -283,9 +277,11 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
         if (costs[lev] != nullptr)
         {
-            costs[lev].reset(new amrex::Vector<Real>);
-            const int nboxes = Efield_fp[lev][0].get()->size();
-            costs[lev]->resize(nboxes, 0.0);
+            costs[lev].reset(new amrex::LayoutData<Real>(ba, dm));
+            for (int i : costs[lev]->IndexArray())
+            {
+                (*costs[lev])[i] = 0.0;
+            }
         }
 
         SetDistributionMap(lev, dm);
@@ -299,7 +295,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 }
 
 void
-WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& a_costs)
+WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > >& a_costs)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -333,6 +329,9 @@ WarpX::ResetCosts ()
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        costs[lev]->assign((*costs[lev]).size(), 0.0);
+        for (int i : costs[lev]->IndexArray())
+        {
+            (*costs[lev])[i] = 0.0;
+        }
     }
 }
