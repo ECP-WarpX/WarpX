@@ -88,20 +88,26 @@ void FiniteDifferenceSolver::MacroEvolveECartesian (
         // sigma_metha == 1 for Backward Euler
         // These material properties will be read from input file.
         Real alpha = 0._rt;
+        Real beta  = 0._rt;
         Real sigma = 0._rt; // for now, sigma = 0
         Real const mu = PhysConst::mu0;
         Real const epsilon = PhysConst::ep0;
 
-        Real const fac1 = 0.5_rt * sigma * dt / epsilon;
-        Real const inv_fac = 1._rt / ( 1._rt + fac1);
         int const sigma_method = macroscopic_solver_algo;
+        Real fac1 = 0._rt;
+        Real inv_fac = 0._rt;
         if (sigma_method == 0) {
-           alpha = (1.0_rt - fac1) * inv_fac;
+            fac1 = 0.5_rt * sigma * dt / epsilon;
+            inv_fac = 1._rt / ( 1._rt + fac1);
+            alpha = (1.0_rt - fac1) * inv_fac;
+            beta  = dt * inv_fac / epsilon;
         }
         else if (sigma_method == 1) {
-           alpha = inv_fac;
+            fac1 = sigma * dt / epsilon;
+            inv_fac = 1._rt / ( 1._rt + fac1);
+            alpha = inv_fac;
+            beta  = dt * inv_fac / epsilon;
         }
-        Real const beta  = dt * inv_fac / epsilon;
 
         // Loop over the cells and update the fields
         amrex::ParallelFor(tex, tey, tez,
