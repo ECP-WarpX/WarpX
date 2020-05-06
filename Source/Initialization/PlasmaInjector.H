@@ -9,7 +9,7 @@
 #ifndef PLASMA_INJECTOR_H_
 #define PLASMA_INJECTOR_H_
 
-#include "SpeciesPhysicalProperties.H"
+#include "Particles/SpeciesPhysicalProperties.H"
 #include "InjectorPosition.H"
 #include "InjectorDensity.H"
 #include "InjectorMomentum.H"
@@ -67,7 +67,7 @@ public:
     amrex::Real x_cut = std::numeric_limits<amrex::Real>::max();
     amrex::Real y_cut = std::numeric_limits<amrex::Real>::max();
     amrex::Real z_cut = std::numeric_limits<amrex::Real>::max();
-    amrex::Real q_tot;
+    amrex::Real q_tot = 0.0;
     long npart;
     int do_symmetrize = 0;
 

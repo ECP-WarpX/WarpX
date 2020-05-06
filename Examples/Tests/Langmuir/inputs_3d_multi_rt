@@ -2,17 +2,14 @@
 max_step = 40
 
 # number of grid points
-amr.n_cell =   64  64  64
+amr.n_cell =  64 64 64
 
 # Maximum allowable size of each subdomain in the problem domain;
 #    this is used to decompose the domain for parallel calculations.
-amr.max_grid_size = 32
+amr.max_grid_size = 64
 
 # Maximum level in hierarchy (for now must be 0, i.e., one level in total)
 amr.max_level = 0
-
-amr.plot_int = 40   # How often to write plotfiles.  "<= 0" means no plotfiles.
-warpx.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell rho
 
 # Geometry
 geometry.coord_sys   = 0                  # 0: Cartesian
@@ -26,7 +23,7 @@ warpx.serialize_ics = 1
 warpx.verbose = 1
 
 # Algorithms
-algo.current_deposition = direct
+algo.current_deposition = esirkepov
 algo.field_gathering = energy-conserving
 warpx.do_pml = 0
 
@@ -52,14 +49,13 @@ particles.species_names = electrons positrons
 electrons.charge = -q_e
 electrons.mass = m_e
 electrons.injection_style = "NUniformPerCell"
-electrons.num_particles_per_cell_each_dim = 2 2 2
+electrons.num_particles_per_cell_each_dim = 1 1 1
 electrons.xmin = -20.e-6
 electrons.xmax =  20.e-6
 electrons.ymin = -20.e-6
 electrons.ymax = 20.e-6
 electrons.zmin = -20.e-6
 electrons.zmax = 20.e-6
-electrons.plot_vars = w ux Ey
 
 electrons.profile = constant
 electrons.density = 2.e24   # number of electrons per m^3
@@ -71,14 +67,13 @@ electrons.momentum_function_uz(x,y,z) = "epsilon * k/kp * cos(k*x) * cos(k*y) * 
 positrons.charge = q_e
 positrons.mass = m_e
 positrons.injection_style = "NUniformPerCell"
-positrons.num_particles_per_cell_each_dim = 2 2 2
+positrons.num_particles_per_cell_each_dim = 1 1 1
 positrons.xmin = -20.e-6
 positrons.xmax =  20.e-6
 positrons.ymin = -20.e-6
 positrons.ymax = 20.e-6
 positrons.zmin = -20.e-6
 positrons.zmax = 20.e-6
-positrons.plot_vars = w ux Ey
 
 positrons.profile = constant
 positrons.density = 2.e24   # number of positrons per m^3
@@ -86,3 +81,11 @@ positrons.momentum_distribution_type = parse_momentum_function
 positrons.momentum_function_ux(x,y,z) = "-epsilon * k/kp * sin(k*x) * cos(k*y) * cos(k*z)"
 positrons.momentum_function_uy(x,y,z) = "-epsilon * k/kp * cos(k*x) * sin(k*y) * cos(k*z)"
 positrons.momentum_function_uz(x,y,z) = "-epsilon * k/kp * cos(k*x) * cos(k*y) * sin(k*z)"
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 40
+diag1.diag_type = Full
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell rho
+diag1.electrons.variables = w ux
+diag1.positrons.variables = Ey

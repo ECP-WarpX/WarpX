@@ -36,8 +36,8 @@ class params_3d:
     pass
 
 #Maximum acceptable error for this test
-params_3d.relative_error_threshold_envelope = 0.18
-params_3d.relative_error_threshold_frequency = 0.06
+params_3d.relative_error_threshold_envelope = 0.16
+params_3d.relative_error_threshold_frequency = 0.03
 
 #Parameters of the gaussian beam
 params_3d.wavelength = 1.*um
@@ -316,22 +316,21 @@ def do_analysis_3d(fname, compname, steps):
 
 def launch_analysis_3d(executable):
     create_gaussian_3d()
-    os.system("./" + executable + " inputs.3d_test_txye")
-    do_analysis_3d("diags/plotfiles/plt00120/", "comp_unf.pdf", 120)
+    os.system("./" + executable + " inputs.3d_test_txye diag_full.file_prefix=diags/plotfiles/plt diag_reduced.file_prefix=diags/plotfiles/rplt")
+    do_analysis_3d("diags/plotfiles/plt00175/", "comp_unf.pdf", 175)
     os.system("sed 's/gauss_3d_unf.txye/gauss_3d.txye/g' inputs.3d_test_txye > inputs.3d_test_txye_non_unf")
-    os.system("./" + executable + " inputs.3d_test_txye_non_unf")
-    do_analysis_3d("diags/plotfiles/plt00120/", "comp_non_unf.pdf", 120)
-    os.system("rm -r diags/plotfiles/plt00000*")
-    os.system("rm -r diags/plotfiles/plt?????.old.*")
-
+    os.system("./" + executable + " inputs.3d_test_txye_non_unf diag_full.file_prefix=diags/plotfiles/plt diag_reduced.file_prefix=diags/plotfiles/rplt")
+    do_analysis_3d("diags/plotfiles/plt00175/", "comp_non_unf.pdf", 175)
+    os.system("rm -r diags/plotfiles/rplt00000*") #delete low resolution plots at 0
+    os.system("rm -r diags/plotfiles/plt*") #delete all high resolution plots
 
 def launch_analysis_2d(executable):
     create_gaussian_2d()
-    os.system("./" + executable + " inputs.2d_test_txye")
-    do_analysis_2d("diags/plotfiles/plt00250/", "comp_unf.pdf", 250)
+    os.system("./" + executable + " inputs.2d_test_txye diag1.file_prefix=diags/plotfiles/plt")
+    do_analysis("diags/plotfiles/plt00250/", "comp_unf.pdf", 250)
     os.system("sed 's/gauss_2d_unf.txye/gauss_2d.txye/g' inputs.2d_test_txye > inputs.2d_test_txye_non_unf")
-    os.system("./" + executable + " inputs.2d_test_txye_non_unf")
-    do_analysis_2d("diags/plotfiles/plt00250/", "comp_non_unf.pdf", 250)
+    os.system("./" + executable + " inputs.2d_test_txye_non_unf diag1.file_prefix=diags/plotfiles/plt")
+    do_analysis("diags/plotfiles/plt00250/", "comp_non_unf.pdf", 250)
 
 
 def do_2d():

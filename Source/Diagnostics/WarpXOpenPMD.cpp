@@ -5,8 +5,9 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpXOpenPMD.H"
-#include "Utils/WarpXAlgorithmSelection.H"
 #include "FieldIO.H"  // for getReversedVec
+#include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/WarpXUtil.H"
 
 #include <algorithm>
 #include <cstdint>
@@ -21,15 +22,6 @@
 
 namespace detail
 {
-
-    /** Convert AMReX AoS .id and .cpu to a globally unique particle ID
-     */
-    union GlobalID {
-        struct { int id; int cpu; }; //! MPI-rank local ID (and rank/cpu)
-        uint64_t global_id; //! global ID that is unique in the whole simulation
-    };
-    static_assert(sizeof(int) * 2u <= sizeof(uint64_t), "int size might cause collisions in global IDs");
-
 #ifdef WARPX_USE_OPENPMD
     /** Unclutter a real_names to openPMD record
      *
@@ -129,9 +121,6 @@ WarpXOpenPMDPlot::~WarpXOpenPMDPlot()
 //
 void WarpXOpenPMDPlot::GetFileName(std::string& filename)
 {
-  std::string dir = "diags/";
-
-  filename = dir;
   filename.append(m_OpenPMDFileType).append("/simData");
   //
   // OpenPMD supports timestepped names
@@ -142,7 +131,7 @@ void WarpXOpenPMDPlot::GetFileName(std::string& filename)
 }
 
 
-void WarpXOpenPMDPlot::SetStep(int ts)
+void WarpXOpenPMDPlot::SetStep(int ts, const std::string& filePrefix)
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
 
@@ -155,16 +144,16 @@ void WarpXOpenPMDPlot::SetStep(int ts)
   }
 
     m_CurrentStep =  ts;
-    Init(openPMD::AccessType::CREATE);
+    Init(openPMD::AccessType::CREATE, filePrefix);
 
 }
 
 void
-WarpXOpenPMDPlot::Init(openPMD::AccessType accessType)
+WarpXOpenPMDPlot::Init(openPMD::AccessType accessType, const std::string& filePrefix)
 {
     // either for the next ts file,
     // or init a single file for all ts
-    std::string filename;
+    std::string filename = filePrefix;
     GetFileName(filename);
 
     // close a previously open series before creating a new one
@@ -173,12 +162,16 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType)
 
     if( amrex::ParallelDescriptor::NProcs() > 1 )
     {
+#if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
             filename, accessType,
             amrex::ParallelDescriptor::Communicator()
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
+#else
+        amrex::Abort("openPMD-api not built with MPI support!");
+#endif
     }
     else
     {
@@ -199,77 +192,68 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType)
     m_Series->setSoftware( "WarpX", WarpX::Version() );
 }
 
-
 void
-WarpXOpenPMDPlot::WriteOpenPMDParticles(const std::unique_ptr<MultiParticleContainer>& mpc)
+WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags)
 {
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
-  std::vector<std::string> species_names = mpc->GetSpeciesNames();
 
-  for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
-    auto& pc  = mpc->GetUniqueContainer(i);
-    if (pc->plot_species) {
+  for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
+    WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
+    // names of amrex::Real and int particle attributes in SoA data
+    amrex::Vector<std::string> real_names;
+    amrex::Vector<std::string> int_names;
+    amrex::Vector<int> int_flags;
 
-      // names of amrex::Real and int particle attributes in SoA data
-      amrex::Vector<std::string> real_names;
-      amrex::Vector<std::string> int_names;
-      amrex::Vector<int> int_flags;
+    // see openPMD ED-PIC extension for namings
+    // note: an underscore separates the record name from its component
+    //       for non-scalar records
+    real_names.push_back("weighting");
 
-      // see openPMD ED-PIC extension for namings
-      // note: an underscore separates the record name from its component
-      //       for non-scalar records
-      real_names.push_back("weighting");
+    real_names.push_back("momentum_x");
+    real_names.push_back("momentum_y");
+    real_names.push_back("momentum_z");
 
-      real_names.push_back("momentum_x");
-      real_names.push_back("momentum_y");
-      real_names.push_back("momentum_z");
+    real_names.push_back("E_x");
+    real_names.push_back("E_y");
+    real_names.push_back("E_z");
 
-      real_names.push_back("E_x");
-      real_names.push_back("E_y");
-      real_names.push_back("E_z");
-
-      real_names.push_back("B_x");
-      real_names.push_back("B_y");
-      real_names.push_back("B_z");
+    real_names.push_back("B_x");
+    real_names.push_back("B_y");
+    real_names.push_back("B_z");
 
 #ifdef WARPX_DIM_RZ
-      real_names.push_back("theta");
+    real_names.push_back("theta");
 #endif
-      if(pc->do_field_ionization){
-         int_names.push_back("ionization_level");
-         // int_flags specifies, for each integer attribs, whether it is
-         // dumped as particle record in a plotfile. So far, ionization_level is the only
-         // integer attribs, and it is automatically dumped as particle record
-         // when ionization is on.
-         int_flags.resize(1, 1);
-      }
-
-      // Convert momentum to SI
-      pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
-      // real_names contains a list of all real particle attributes.
-      // pc->plot_flags is 1 or 0, whether quantity is dumped or not.
-
-      {
-        //
-        SavePlotFile(pc,
-           species_names[i],
-           m_CurrentStep,
-           pc->plot_flags, // this is protected and accessible by MultiParticleContainer.
-           // so kept as is
-           int_flags,
-           real_names, int_names);
-      }
-
-      // Convert momentum back to WarpX units
-      pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
+    if(pc->DoFieldIonization()){
+       int_names.push_back("ionization_level");
+       // int_flags specifies, for each integer attribs, whether it is
+       // dumped as particle record in a plotfile. So far, ionization_level is the only
+       // integer attribs, and it is automatically dumped as particle record
+       // when ionization is on.
+       int_flags.resize(1, 1);
     }
+
+    // Convert momentum to SI
+    pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
+    // real_names contains a list of all real particle attributes.
+    // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
+
+    {
+      DumpToFile(pc,
+         particle_diags[i].getSpeciesName(),
+         m_CurrentStep,
+         particle_diags[i].plot_flags,
+         int_flags,
+         real_names, int_names);
+    }
+
+    // Convert momentum back to WarpX units
+    pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
   }
 }
 
-
-
 void
-WarpXOpenPMDPlot::SavePlotFile (const std::unique_ptr<WarpXParticleContainer>& pc,
+WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                     const std::string& name,
                     int iteration,
                     const amrex::Vector<int>& write_real_comp,
@@ -359,8 +343,7 @@ WarpXOpenPMDPlot::SavePlotFile (const std::unique_ptr<WarpXParticleContainer>& p
                [](uint64_t const *p){ delete[] p; }
            );
            for (auto i=0; i<numParticleOnTile; i++) {
-               detail::GlobalID const nextID = { aos[i].m_idata.id, aos[i].m_idata.cpu };
-               ids.get()[i] = nextID.global_id;
+               ids.get()[i] = WarpXUtilIO::localIDtoGlobal( aos[i].m_idata.id, aos[i].m_idata.cpu );
            }
            auto const scalar = openPMD::RecordComponent::SCALAR;
            currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
@@ -488,7 +471,7 @@ WarpXOpenPMDPlot::SaveRealProperty(WarpXParIter& pti,
 
 
 void
-WarpXOpenPMDPlot::SetupPos(const std::unique_ptr<WarpXParticleContainer>& pc,
+WarpXOpenPMDPlot::SetupPos(WarpXParticleContainer* pc,
     openPMD::ParticleSpecies& currSpecies,
     const unsigned long long& np) const
 {
@@ -595,7 +578,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
   auto meshes = series_iteration.meshes;
   meshes.setAttribute( "fieldSolver", [](){
 #ifdef WARPX_USE_PSATD
-      return "PSATD"; // TODO double-check if WARPX_USE_PSATD_HYBRID is covered
+      return "PSATD";
 #else
       switch( WarpX::particle_pusher_algo ) {
           case MaxwellSolverAlgo::Yee : return "Yee";
@@ -690,7 +673,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
 //
 //
 //
-WarpXParticleCounter::WarpXParticleCounter(const std::unique_ptr<WarpXParticleContainer>& pc)
+WarpXParticleCounter::WarpXParticleCounter(WarpXParticleContainer* pc)
 {
   m_MPISize = amrex::ParallelDescriptor::NProcs();
   m_MPIRank = amrex::ParallelDescriptor::MyProc();

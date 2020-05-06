@@ -1,6 +1,7 @@
 #include "FlushFormatPlotfile.H"
 #include "WarpX.H"
-#include "Interpolate.H"
+#include "Utils/Interpolate.H"
+#include "Particles/Filter/FilterFunctors.H"
 
 #include <AMReX_buildInfo.H>
 
@@ -17,13 +18,12 @@ FlushFormatPlotfile::WriteToFile (
     const amrex::Vector<const amrex::MultiFab*> mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
-    MultiParticleContainer& mpc, int nlev,
+    const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, bool plot_raw_fields,
-    bool plot_raw_fields_guards, bool plot_rho, bool plot_F) const
+    bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F) const
 {
     auto & warpx = WarpX::GetInstance();
-    const auto step = iteration[0];
-    const std::string& filename = amrex::Concatenate(prefix, step);
+    const std::string& filename = amrex::Concatenate(prefix, iteration[0]);
     amrex::Print() << "  Writing plotfile " << filename << "\n";
 
     Vector<std::string> rfs;
@@ -41,13 +41,13 @@ FlushFormatPlotfile::WriteToFile (
                                    );
 
     WriteAllRawFields(plot_raw_fields, nlev, filename, plot_raw_fields_guards,
-                      plot_rho, plot_F);
+                      plot_raw_rho, plot_raw_F);
 
-    mpc.WritePlotFile(filename);
+    WriteParticles(filename, particle_diags);
 
     WriteJobInfo(filename);
 
-    WriteWarpXHeader(filename);
+    WriteWarpXHeader(filename, particle_diags);
 
     VisMF::SetHeaderVersion(current_version);
 }
@@ -175,7 +175,9 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
 }
 
 void
-FlushFormatPlotfile::WriteWarpXHeader(const std::string& name) const
+FlushFormatPlotfile::WriteWarpXHeader(
+    const std::string& name,
+    const amrex::Vector<ParticleDiag>& particle_diags) const
 {
     auto & warpx = WarpX::GetInstance();
     if (ParallelDescriptor::IOProcessor())
@@ -242,7 +244,90 @@ FlushFormatPlotfile::WriteWarpXHeader(const std::string& name) const
             HeaderFile << '\n';
         }
 
-        warpx.GetPartContainer().WriteHeader(HeaderFile);
+        WriteHeaderParticle(HeaderFile, particle_diags);
+    }
+}
+
+void
+FlushFormatPlotfile::WriteHeaderParticle(
+    std::ostream& os, const amrex::Vector<ParticleDiag>& particle_diags) const
+{
+    for (const auto& particle_diag : particle_diags)
+    {
+        particle_diag.getParticleContainer()->WriteHeader(os);
+    }
+}
+
+void
+FlushFormatPlotfile::WriteParticles(const std::string& dir,
+                                    const amrex::Vector<ParticleDiag>& particle_diags) const
+{
+
+    for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
+        WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
+        Vector<std::string> real_names;
+        Vector<std::string> int_names;
+        Vector<int> int_flags;
+
+        real_names.push_back("weight");
+
+        real_names.push_back("momentum_x");
+        real_names.push_back("momentum_y");
+        real_names.push_back("momentum_z");
+
+        real_names.push_back("Ex");
+        real_names.push_back("Ey");
+        real_names.push_back("Ez");
+
+        real_names.push_back("Bx");
+        real_names.push_back("By");
+        real_names.push_back("Bz");
+
+#ifdef WARPX_DIM_RZ
+        real_names.push_back("theta");
+#endif
+
+        if(pc->DoFieldIonization()){
+            int_names.push_back("ionization_level");
+            // int_flags specifies, for each integer attribs, whether it is
+            // dumped to plotfiles. So far, ionization_level is the only
+            // integer attribs, and it is automatically dumped to plotfiles
+            // when ionization is on.
+            int_flags.resize(1, 1);
+        }
+
+#ifdef WARPX_QED
+        if( pc->has_breit_wheeler() ) {
+            real_names.push_back("optical_depth_BW");
+        }
+        if( pc->has_quantum_sync() ) {
+            real_names.push_back("optical_depth_QSR");
+        }
+#endif
+
+        // Convert momentum to SI
+        pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
+
+        RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
+                                         particle_diags[i].m_random_fraction);
+        UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
+                                           particle_diags[i].m_uniform_stride);
+        ParserFilter const parser_filter(particle_diags[i].m_do_parser_filter,
+                                         particle_diags[i].m_particle_filter_parser.get());
+
+        // real_names contains a list of all particle attributes.
+        // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
+        pc->WritePlotFile(
+            dir, particle_diags[i].getSpeciesName(),
+            particle_diags[i].plot_flags, int_flags,
+            real_names, int_names,
+            [=] AMREX_GPU_HOST_DEVICE (const SuperParticleType& p)
+            {
+                return random_filter(p) * uniform_filter(p) * parser_filter(p);
+            });
+
+        // Convert momentum back to WarpX units
+        pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
     }
 }
 
@@ -368,7 +453,7 @@ WriteCoarseScalar( const std::string field_name,
 void
 FlushFormatPlotfile::WriteAllRawFields(
     const bool plot_raw_fields, const int nlevels, const std::string& plotfilename,
-    const bool plot_raw_fields_guards, const bool plot_rho, bool plot_F) const
+    const bool plot_raw_fields_guards, const bool plot_raw_rho, bool plot_raw_F) const
 {
     if (!plot_raw_fields) return;
     auto & warpx = WarpX::GetInstance();
@@ -397,8 +482,8 @@ FlushFormatPlotfile::WriteAllRawFields(
         WriteRawMF( warpx.getBfield_fp(lev, 0), dm, raw_pltname, level_prefix, "Bx_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getBfield_fp(lev, 1), dm, raw_pltname, level_prefix, "By_fp", lev, plot_raw_fields_guards);
         WriteRawMF( warpx.getBfield_fp(lev, 2), dm, raw_pltname, level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
-        if (plot_F) WriteRawMF( warpx.getF_fp(lev), dm, raw_pltname, level_prefix, "F_fp", lev, plot_raw_fields_guards);
-        if (plot_rho) {
+        if (plot_raw_F) WriteRawMF( warpx.getF_fp(lev), dm, raw_pltname, level_prefix, "F_fp", lev, plot_raw_fields_guards);
+        if (plot_raw_rho) {
             // Use the component 1 of `rho_fp`, i.e. rho_new for time synchronization
             // If nComp > 1, this is the upper half of the list of components.
             MultiFab rho_new(warpx.getF_fp(lev), amrex::make_alias, warpx.getF_fp(lev).nComp()/2, warpx.getF_fp(lev).nComp()/2);
@@ -420,11 +505,11 @@ FlushFormatPlotfile::WriteAllRawFields(
                                warpx.get_pointer_current_fp(lev, 0), warpx.get_pointer_current_fp(lev, 1), warpx.get_pointer_current_fp(lev, 2),
                                dm, raw_pltname, level_prefix, lev, plot_raw_fields_guards);
         }
-        if (plot_F) WriteCoarseScalar(
+        if (plot_raw_F) WriteCoarseScalar(
             "F", warpx.get_pointer_F_cp(lev), warpx.get_pointer_F_fp(lev),
             dm, raw_pltname, level_prefix, lev,
             plot_raw_fields_guards, 0);
-        if (plot_rho) WriteCoarseScalar(
+        if (plot_raw_rho) WriteCoarseScalar(
             "rho", warpx.get_pointer_rho_cp(lev), warpx.get_pointer_rho_fp(lev),
             dm, raw_pltname, level_prefix, lev,
             plot_raw_fields_guards, 1);

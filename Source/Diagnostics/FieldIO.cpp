@@ -10,14 +10,15 @@
 #include "Utils/Average.H"
 #include "Utils/WarpXUtil.H"
 
+#ifdef WARPX_USE_PSATD
+#   include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#endif
+
 #include <AMReX_FillPatchUtil_F.H>
 #include <AMReX_Interpolater.H>
 
 #ifdef WARPX_USE_OPENPMD
-#include <openPMD/openPMD.hpp>
-#endif
-#ifdef WARPX_USE_PSATD
-#include <SpectralSolver.H>
+#   include <openPMD/openPMD.hpp>
 #endif
 
 using namespace amrex;
@@ -105,107 +106,6 @@ getReversedVec( const Real* v )
   return u;
 }
 
-/** \brief Write the `ncomp` components of `mf` (with names `varnames`)
- * into a file `filename` in openPMD format.
- **/
-void
-WriteOpenPMDFields( const std::string& filename,
-                  const std::vector<std::string>& varnames,
-                  const MultiFab& mf, const Geometry& geom,
-                  const int iteration, const double time )
-{
-  WARPX_PROFILE("WriteOpenPMDFields()");
-
-  const int ncomp = mf.nComp();
-
-  // Create a few vectors that store info on the global domain
-  // Swap the indices for each of them, since AMReX data is Fortran order
-  // and since the openPMD API assumes contiguous C order
-  // - Size of the box, in integer number of cells
-  const Box& global_box = geom.Domain();
-  auto global_size = getReversedVec(global_box.size());
-  // - Grid spacing
-  std::vector<double> grid_spacing = getReversedVec(geom.CellSize());
-  // - Global offset
-  std::vector<double> global_offset = getReversedVec(geom.ProbLo());
-  // - AxisLabels
-#if AMREX_SPACEDIM==3
-  std::vector<std::string> axis_labels{"x", "y", "z"};
-#else
-  std::vector<std::string> axis_labels{"x", "z"};
-#endif
-
-  // Prepare the type of dataset that will be written
-  openPMD::Datatype datatype = openPMD::determineDatatype<Real>();
-  auto dataset = openPMD::Dataset(datatype, global_size);
-
-  // Create new file and store the time/iteration info
-  auto series = [filename](){
-      if( ParallelDescriptor::NProcs() > 1 )
-          return openPMD::Series( filename,
-                                  openPMD::AccessType::CREATE,
-                                  ParallelDescriptor::Communicator() );
-      else
-          return openPMD::Series( filename,
-                                  openPMD::AccessType::CREATE );
-  }();
-
-  auto series_iteration = series.iterations[iteration];
-  series_iteration.setTime( time );
-
-  // Loop through the different components, i.e. different fields stored in mf
-  for (int icomp=0; icomp<ncomp; icomp++){
-
-    // Check if this field is a vector or a scalar, and extract the field name
-    const std::string& varname = varnames[icomp];
-    std::string field_name = varname;
-    std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
-    bool is_vector = false;
-    for (const char* vector_field: {"E", "B", "j"}){
-        for (const char* comp: {"x", "y", "z"}){
-            if (varname[0] == *vector_field && varname[1] == *comp ){
-                is_vector = true;
-                field_name = varname[0] + varname.substr(2); // Strip component
-                comp_name = varname[1];
-            }
-        }
-    }
-
-    // Setup the mesh record accordingly
-    auto mesh = series_iteration.meshes[field_name];
-    mesh.setDataOrder(openPMD::Mesh::DataOrder::F); // MultiFab: Fortran order
-    mesh.setAxisLabels( axis_labels );
-    mesh.setGridSpacing( grid_spacing );
-    mesh.setGridGlobalOffset( global_offset );
-    setOpenPMDUnit( mesh, field_name );
-
-    // Create a new mesh record component, and store the associated metadata
-    auto mesh_comp = mesh[comp_name];
-    mesh_comp.resetDataset( dataset );
-    // Cell-centered data: position is at 0.5 of a cell size.
-    mesh_comp.setPosition(std::vector<double>{AMREX_D_DECL(0.5, 0.5, 0.5)});
-
-    // Loop through the multifab, and store each box as a chunk,
-    // in the openPMD file.
-    for (MFIter mfi(mf); mfi.isValid(); ++mfi) {
-
-      const FArrayBox& fab = mf[mfi];
-      const Box& local_box = fab.box();
-
-      // Determine the offset and size of this chunk
-      IntVect box_offset = local_box.smallEnd() - global_box.smallEnd();
-      auto chunk_offset = getReversedVec(box_offset);
-      auto chunk_size = getReversedVec(local_box.size());
-
-      // Write local data
-      Real const * local_data = fab.dataPtr(icomp);
-      mesh_comp.storeChunk(openPMD::shareRaw(local_data),
-                           chunk_offset, chunk_size);
-    }
-  }
-  // Flush data to disk after looping over all components
-  series.flush();
-}
 #endif // WARPX_USE_OPENPMD
 
 #ifdef WARPX_DIM_RZ
@@ -272,9 +172,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
     const std::array<std::unique_ptr<MultiFab>,3> &vector_total = vector_field;
 #endif
 
-    Average::ToCellCenter( mf_avg, *(vector_total[0]), dcomp  , ngrow );
-    Average::ToCellCenter( mf_avg, *(vector_total[1]), dcomp+1, ngrow );
-    Average::ToCellCenter( mf_avg, *(vector_total[2]), dcomp+2, ngrow );
+    Average::CoarsenAndInterpolate( mf_avg, *(vector_total[0]), dcomp  , 0, 1, ngrow );
+    Average::CoarsenAndInterpolate( mf_avg, *(vector_total[1]), dcomp+1, 0, 1, ngrow );
+    Average::CoarsenAndInterpolate( mf_avg, *(vector_total[2]), dcomp+2, 0, 1, ngrow );
 }
 
 /** \brief Takes all of the components of the three fields and
@@ -330,7 +230,7 @@ AverageAndPackScalarField (MultiFab& mf_avg,
         MultiFab::Copy( mf_avg, *scalar_total, 0, dcomp, 1, ngrow);
     } else if ( scalar_total->is_nodal() ){
         // - Fully nodal
-        Average::ToCellCenter( mf_avg, *scalar_total, dcomp, ngrow, 0, 1 );
+        Average::CoarsenAndInterpolate( mf_avg, *scalar_total, dcomp, 0, 1, ngrow );
     } else {
         amrex::Abort("Unknown staggering.");
     }
@@ -675,7 +575,7 @@ coarsenCellCenteredFields(
 
         BoxArray small_ba = amrex::coarsen(source_mf[lev].boxArray(), coarse_ratio);
         coarse_mf.push_back( MultiFab(small_ba, source_mf[lev].DistributionMap(), ncomp, 0) );
-        average_down(source_mf[lev], coarse_mf[lev], 0, ncomp, IntVect(coarse_ratio));
+        Average::CoarsenAndInterpolate( coarse_mf[lev], source_mf[lev], 0, 0, ncomp, 0, IntVect(coarse_ratio) );
     }
 };
 
@@ -816,7 +716,7 @@ getInterpolatedScalar(
     interpolated_F->setVal(0.);
 
     // Loop through the boxes and interpolate the values from the _cp data
-#ifdef _OPEMP
+#ifdef _OPENMP
 #pragma omp parallel
 #endif
     {
@@ -870,7 +770,7 @@ getInterpolatedVector(
 
     // Loop through the boxes and interpolate the values from the _cp data
     const int use_limiter = 0;
-#ifdef _OPEMP
+#ifdef _OPENMP
 #pragma omp parallel
 #endif
     {

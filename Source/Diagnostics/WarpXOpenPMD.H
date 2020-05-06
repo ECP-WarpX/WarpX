@@ -11,6 +11,8 @@
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/MultiParticleContainer.H" // PIdx
 
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
+
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Utility.H>
@@ -48,7 +50,7 @@ private:
 class WarpXParticleCounter
 {
 public:
-  WarpXParticleCounter(const std::unique_ptr<WarpXParticleContainer>& pc);
+  WarpXParticleCounter(WarpXParticleContainer* pc);
   unsigned long GetTotalNumParticles() {return m_Total;}
 
   std::vector<unsigned long long> m_ParticleOffsetAtRank;;
@@ -96,9 +98,9 @@ public:
    * @note If an iteration has been written, then it will give a warning
    *
    */
-  void SetStep(int ts);
+  void SetStep(int ts, const std::string& filePrefix);
 
-  void WriteOpenPMDParticles(const std::unique_ptr<MultiParticleContainer>&);
+  void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags);
 
   void WriteOpenPMDFields(
               const std::vector<std::string>& varnames,
@@ -108,8 +110,7 @@ public:
 
 
 private:
-  void Init(//const std::string& filename,
-        openPMD::AccessType accessType);
+  void Init(openPMD::AccessType accessType, const std::string& filePrefix);
 
   /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
   *
@@ -117,7 +118,7 @@ private:
   * @param[in] currSpecies Corresponding openPMD species
   * @param[in] np          Number of particles
   */
-  void SetupPos(const std::unique_ptr<WarpXParticleContainer>& pc,
+  void SetupPos(WarpXParticleContainer* pc,
         openPMD::ParticleSpecies& currSpecies,
         const unsigned long long& np) const ;
 
@@ -157,7 +158,7 @@ private:
    * @param[in] write_int_comp The int attribute ids, from WarpX
    * @param[in] int_comp_names The int attribute names, from WarpX
    */
-  void SavePlotFile(const std::unique_ptr<WarpXParticleContainer>& pc,
+  void DumpToFile(WarpXParticleContainer* pc,
             const std::string& name,
             int iteration,
             const amrex::Vector<int>& write_real_comp,
@@ -166,9 +167,8 @@ private:
             const amrex::Vector<std::string>&  int_comp_names) const;
 
   // no need for ts in the name, openPMD  handles it
-  void GetFileName(std::string& filename);
+    void GetFileName(std::string& filename);
 
-  //std::string m_Dir;
   std::unique_ptr<openPMD::Series> m_Series;
 
   int m_MPIRank = 0;

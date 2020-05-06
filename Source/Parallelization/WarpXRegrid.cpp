@@ -6,8 +6,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include <WarpX.H>
-#include <WarpXAlgorithmSelection.H>
+#include "WarpX.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+
 #include <AMReX_BLProfiler.H>
 
 using namespace amrex;
@@ -20,33 +21,77 @@ WarpX::LoadBalance ()
 
     AMREX_ALWAYS_ASSERT(costs[0] != nullptr);
 
+#ifdef AMREX_USE_MPI
     if (WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)
     {
+        // compute the costs on a per-rank basis
         WarpX::ComputeCostsHeuristic(costs);
     }
+
+    // By default, do not do a redistribute; this toggles to true if RemakeLevel
+    // is called for any level
+    int doLoadBalance = 0;
 
     const int nLevels = finestLevel();
     for (int lev = 0; lev <= nLevels; ++lev)
     {
-#ifdef AMREX_USE_MPI
-        // Parallel reduce the costs_heurisitc
-        amrex::Vector<Real>::iterator it = (*costs[lev]).begin();
-        amrex::Real* itAddr = &(*it);
-        ParallelAllReduce::Sum(itAddr,
-                               costs[lev]->size(),
-                               ParallelContext::CommunicatorSub());
-#endif
+        // Compute the new distribution mapping
+        DistributionMapping newdm;
         const amrex::Real nboxes = costs[lev]->size();
         const amrex::Real nprocs = ParallelContext::NProcsSub();
         const int nmax = static_cast<int>(std::ceil(nboxes/nprocs*load_balance_knapsack_factor));
+        // These store efficiency (meaning, the  average 'cost' over all ranks,
+        // normalized to max cost) for current and proposed distribution mappings
+        amrex::Real currentEfficiency = 0.0;
+        amrex::Real proposedEfficiency = 0.0;
 
-        const DistributionMapping newdm = (load_balance_with_sfc)
-            ? DistributionMapping::makeSFC(*costs[lev], boxArray(lev), false)
-            : DistributionMapping::makeKnapSack(*costs[lev], nmax);
+        newdm = (load_balance_with_sfc)
+            ? DistributionMapping::makeSFC(*costs[lev],
+                                           currentEfficiency, proposedEfficiency,
+                                           false,
+                                           ParallelDescriptor::IOProcessorNumber())
+            : DistributionMapping::makeKnapSack(*costs[lev],
+                                                currentEfficiency, proposedEfficiency,
+                                                nmax,
+                                                false,
+                                                ParallelDescriptor::IOProcessorNumber());
+        // As specified in the above calls to makeSFC and makeKnapSack, the new
+        // distribution mapping is NOT communicated to all ranks; the loadbalanced
+        // dm is up-to-date only on root, and we can decide whether to broadcast
+        if (load_balance_efficiency_ratio_threshold > 0.0
+            & ParallelDescriptor::MyProc() == ParallelDescriptor::IOProcessorNumber())
+        {
+            doLoadBalance = (proposedEfficiency > load_balance_efficiency_ratio_threshold*currentEfficiency);
+        }
 
-        RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
+        ParallelDescriptor::Bcast(&doLoadBalance, 1,
+                                  ParallelDescriptor::IOProcessorNumber());
+
+        if (doLoadBalance)
+        {
+            Vector<int> pmap;
+            if (ParallelDescriptor::MyProc() == ParallelDescriptor::IOProcessorNumber())
+            {
+                pmap = newdm.ProcessorMap();
+            } else
+            {
+                pmap.resize(nboxes);
+            }
+            ParallelDescriptor::Bcast(&pmap[0], pmap.size(), ParallelDescriptor::IOProcessorNumber());
+
+            if (ParallelDescriptor::MyProc() != ParallelDescriptor::IOProcessorNumber())
+            {
+                newdm = DistributionMapping(pmap);
+            }
+
+            RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
+        }
     }
-    mypc->Redistribute();
+    if (doLoadBalance)
+    {
+        mypc->Redistribute();
+    }
+#endif
 }
 
 
@@ -232,9 +277,11 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
 
         if (costs[lev] != nullptr)
         {
-            costs[lev].reset(new amrex::Vector<Real>);
-            const int nboxes = Efield_fp[lev][0].get()->size();
-            costs[lev]->resize(nboxes, 0.0);
+            costs[lev].reset(new amrex::LayoutData<Real>(ba, dm));
+            for (int i : costs[lev]->IndexArray())
+            {
+                (*costs[lev])[i] = 0.0;
+            }
         }
 
         SetDistributionMap(lev, dm);
@@ -243,10 +290,12 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
     {
         amrex::Abort("RemakeLevel: to be implemented");
     }
+    // Re-initialize diagnostic functors that stores pointers to the user-requested fields at level, lev.
+    multi_diags->InitializeFieldFunctors( lev );
 }
 
 void
-WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& a_costs)
+WarpX::ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > >& a_costs)
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -280,6 +329,9 @@ WarpX::ResetCosts ()
 {
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        costs[lev]->assign((*costs[lev]).size(), 0.0);
+        for (int i : costs[lev]->IndexArray())
+        {
+            (*costs[lev])[i] = 0.0;
+        }
     }
 }

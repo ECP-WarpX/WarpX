@@ -34,7 +34,8 @@ class SpectralSolver
                         const int norder_z, const bool nodal,
                         const amrex::Array<amrex::Real,3>& v_galilean,
                         const amrex::RealVect dx, const amrex::Real dt,
-                        const bool pml=false );
+                        const bool pml=false,
+                        const bool periodic_single_box=false );
 
         /**
          * \brief Transform the component `i_comp` of MultiFab `mf`
@@ -64,6 +65,21 @@ class SpectralSolver
         void ComputeSpectralDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                    amrex::MultiFab& divE ) {
             algorithm->ComputeSpectralDivE( field_data, Efield, divE );
+        };
+
+        /**
+         * \brief Public interface to call the virtual function \c CurrentCorrection,
+         * defined in the base class SpectralBaseAlgorithm and possibly overridden
+         * by its derived classes (e.g. PsatdAlgorithm, PMLPsatdAlgorithm), from
+         * objects of class SpectralSolver through the private unique pointer \c algorithm
+         *
+         * \param[in,out] current three-dimensional array of unique pointers to MultiFab
+         *                        storing the three components of the current density
+         * \param[in]     rho     unique pointer to MultiFab storing the charge density
+         */
+        void CurrentCorrection ( std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                 const std::unique_ptr<amrex::MultiFab>& rho ) {
+             algorithm->CurrentCorrection( field_data, current, rho );
         };
 
     private:

@@ -41,5 +41,10 @@ Reflectivity_theory = 1.8015e-06
 print("Reflectivity: %s" %Reflectivity)
 print("Reflectivity_theory: %s" %Reflectivity_theory)
 
-assert( Reflectivity < 105./100 * Reflectivity_theory )
+error_rel = abs(Reflectivity-Reflectivity_theory) / Reflectivity_theory
+tolerance_rel = 5./100
 
+print("error_rel    : " + str(error_rel))
+print("tolerance_rel: " + str(tolerance_rel))
+
+assert( error_rel < tolerance_rel )

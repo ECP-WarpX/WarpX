@@ -57,11 +57,11 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
 
     // Initialize temporary local arrays for charge/current deposition
     int num_threads = 1;
-    #ifdef _OPENMP
-    #pragma omp parallel
-    #pragma omp single
+#ifdef _OPENMP
+#pragma omp parallel
+#pragma omp single
     num_threads = omp_get_num_threads();
-    #endif
+#endif
     local_rho.resize(num_threads);
     local_jx.resize(num_threads);
     local_jy.resize(num_threads);
@@ -254,9 +254,9 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     }
 
     // Staggered tile boxes (different in each direction)
-    Box tbx = convert(tilebox, WarpX::jx_nodal_flag);
-    Box tby = convert(tilebox, WarpX::jy_nodal_flag);
-    Box tbz = convert(tilebox, WarpX::jz_nodal_flag);
+    Box tbx = convert( tilebox, jx->ixType().toIntVect() );
+    Box tby = convert( tilebox, jy->ixType().toIntVect() );
+    Box tbz = convert( tilebox, jz->ixType().toIntVect() );
     tilebox.grow(ngJ);
 
 #ifdef AMREX_USE_GPU
@@ -309,6 +309,9 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
+        if (WarpX::do_nodal==1) {
+          amrex::Abort("The Esirkepov algorithm cannot be used with a nodal grid.");
+        }
         if ( (v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)){
             amrex::Abort("The Esirkepov algorithm cannot be used with the Galilean algorithm.");
         }
@@ -423,7 +426,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     }
 
     tilebox.grow(ngRho);
-    const Box tb = amrex::convert(tilebox, WarpX::rho_nodal_flag);
+    const Box tb = amrex::convert( tilebox, rho->ixType().toIntVect() );
 
     const int nc = (rho->nComp() == 1 ? 1 : rho->nComp()/2);
 
@@ -508,7 +511,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 
         // Loop over particle tiles and deposit charge on each level
 #ifdef _OPENMP
-        #pragma omp parallel
+#pragma omp parallel
         {
         int thread_num = omp_get_thread_num();
 #else
@@ -765,7 +768,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
     if (do_not_push) return;
 
-    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef _OPENMP
 #pragma omp parallel
