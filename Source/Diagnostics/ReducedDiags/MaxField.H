@@ -9,7 +9,6 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_MAXFIELD_H_
 
 #include "ReducedDiags.H"
-#include <fstream>
 
 /**
  *  This class mainly contains a function that computes the maximum value of each component

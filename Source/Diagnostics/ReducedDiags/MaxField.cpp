@@ -7,14 +7,6 @@
 
 #include "MaxField.H"
 #include "WarpX.H"
-#include "Utils/WarpXConst.H"
-
-#include <AMReX_REAL.H>
-#include <AMReX_ParticleReduce.H>
-
-#include <iostream>
-#include <cmath>
-
 
 using namespace amrex;
 
@@ -97,7 +89,7 @@ void MaxField::ComputeDiags (int step)
     auto & warpx = WarpX::GetInstance();
 
     // get number of level
-    auto nLevel = warpx.finestLevel() + 1;
+    const auto nLevel = warpx.finestLevel() + 1;
 
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)

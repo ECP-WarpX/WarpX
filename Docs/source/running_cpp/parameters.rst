@@ -1365,7 +1365,7 @@ Reduced Diagnostics
         This type computes the maximum value of each component of the electric and magnetic fields
         and of the norm of the electric and magnetic field vectors.
         Note that, if the fields are staggered, the values for the vector norms might be slightly
-        inaccurate since they are obtained by summing field components defined at different
+        inaccurate because they are obtained by summing field components defined at different
         positions in the grid.
 
         The output columns are
