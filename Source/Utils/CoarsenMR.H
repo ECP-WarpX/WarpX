@@ -3,9 +3,9 @@
 
 #include "WarpX.H"
 
-using namespace amrex;
-
 namespace CoarsenMR{
+
+using namespace amrex;
 
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE

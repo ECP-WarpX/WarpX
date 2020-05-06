@@ -3,9 +3,9 @@
 
 #include "WarpX.H"
 
-using namespace amrex;
-
 namespace CoarsenIO{
+
+using namespace amrex;
 
     /**
      * \brief Interpolates the floating point data contained in the source Array4
