@@ -105,64 +105,11 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
 #endif
 
-    //variable to set plot_flags size
-    int plot_flag_size = PIdx::nattribs;
-    if(WarpX::do_back_transformed_diagnostics && do_back_transformed_diagnostics)
-        plot_flag_size += 6;
-
-#ifdef WARPX_QED
-    if(m_do_qed){
-        // plot_flag will have an entry for the optical depth
-        plot_flag_size++;
-    }
-#endif
-    //_______________________________
-
-    pp.query("plot_species", plot_species);
-    int do_user_plot_vars;
-    do_user_plot_vars = pp.queryarr("plot_vars", plot_vars);
-    if (not do_user_plot_vars){
-        // By default, all particle variables are dumped to plotfiles,
-        // including {x,y,z,ux,uy,uz}old variables when running in a
-        // boosted frame
-        plot_flags.resize(plot_flag_size, 1);
-    } else {
-        // Set plot_flag to 0 for all attribs
-        plot_flags.resize(plot_flag_size, 0);
-
-        // If not none, set plot_flags values to 1 for elements in plot_vars.
-        if (plot_vars[0] != "none"){
-            for (const auto& var : plot_vars){
-                // Return error if var not in PIdx.
-                WarpXUtilMsg::AlwaysAssert(
-                    ParticleStringNames::to_index.count(var),
-                    "ERROR: plot_vars argument '" + var +
-                    "' not in ParticleStringNames"
-                );
-                plot_flags[ParticleStringNames::to_index.at(var)] = 1;
-            }
-        }
-
-#ifdef WARPX_DIM_RZ
-        // Always write out theta, whether or not it's requested,
-        // to be consistent with always writing out r and z.
-        plot_flags[ParticleStringNames::to_index.at("theta")] = 1;
-#endif
-
-    }
-
     // Parse galilean velocity
     ParmParse ppsatd("psatd");
     ppsatd.query("v_galilean", v_galilean);
     // Scale the velocity by the speed of light
     for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
-
-    #ifdef WARPX_QED
-        if(m_do_qed){
-            //Optical depths is always plotted if QED is on
-            plot_flags[plot_flag_size-1] = 1;
-        }
-    #endif
 
     // build filter functors
     m_do_random_filter  = pp.query("random_fraction", m_random_fraction);
@@ -356,7 +303,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
         double const mass_unit = ps.second["mass"][openPMD::RecordComponent::SCALAR].unitSI();
         amrex::ParticleReal p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::ParticleReal>().get()[0];
         double const charge_unit = ps.second["charge"][openPMD::RecordComponent::SCALAR].unitSI();
-#   if (defined WARPX_DIM_3D) || (defined WARPX_DIM_2D)
+#   if (defined WARPX_DIM_3D) || (defined WARPX_DIM_XZ)
         auto const npart = ps.second["position"]["x"].getExtent()[0];
         std::shared_ptr<amrex::ParticleReal> ptr_x = ps.second["position"]["x"].loadChunk<amrex::ParticleReal>();
         double const position_unit_x = ps.second["position"]["x"].unitSI();
@@ -367,7 +314,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
         std::shared_ptr<amrex::ParticleReal> ptr_uz = ps.second["momentum"]["z"].loadChunk<amrex::ParticleReal>();
         double const momentum_unit_z = ps.second["momentum"]["z"].unitSI();
 #   else
-        amrex::Abort("AddPlasmaFromFile is only implemented for 2D and 3D\n")
+        amrex::Abort("AddPlasmaFromFile is only implemented for 2D and 3D\n");
 #   endif
 #   if (defined WARPX_DIM_3D)
         std::shared_ptr<amrex::ParticleReal> ptr_y = ps.second["position"]["y"].loadChunk<amrex::ParticleReal>();
@@ -391,7 +338,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
         for (auto i = decltype(npart){0}; i<npart; ++i){
             amrex::ParticleReal const x = ptr_x.get()[i]*position_unit_x;
             amrex::ParticleReal const z = ptr_z.get()[i]*position_unit_z;
-#   if (defined WARPX_DIM_2D)
+#   if (defined WARPX_DIM_XZ)
             amrex::Real const y = 0.0;
 #   elif (defined WARPX_DIM_3D)
             amrex::ParticleReal const y = ptr_y.get()[i]*position_unit_y;
@@ -399,7 +346,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(const std::string s_f,
             if (plasma_injector->insideBounds(x, y, z)) {
                 amrex::ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
                 amrex::ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
-#   if (defined WARPX_DIM_2D)
+#   if (defined WARPX_DIM_XZ)
                 amrex::ParticleReal const uy = 0.0;
 #   elif (defined WARPX_DIM_3D)
                 amrex::ParticleReal const uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
@@ -531,7 +478,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
     defineAllParticleTiles();
 
-    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     const int nlevs = numLevels();
     static bool refine_injection = false;
@@ -1003,7 +950,7 @@ PhysicalParticleContainer::FieldGather (int lev,
 {
     BL_ASSERT(OnSameGrids(lev,Ex));
 
-    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -1074,7 +1021,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
-    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     const iMultiFab* current_masks = WarpX::CurrentBufferMasks(lev);
     const iMultiFab* gather_masks = WarpX::GatherBufferMasks(lev);

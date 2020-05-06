@@ -62,7 +62,8 @@ solver = picmi.ElectromagneticSolver(grid=grid, cfl=1.)
 
 field_diag1 = picmi.FieldDiagnostic(grid = grid,
                                     period = diagnostic_interval,
-                                    data_list = ['Ex', 'Jx'])
+                                    data_list = ['Ex', 'Jx'],
+                                    warpx_file_prefix = 'plotfiles/plt')
 
 part_diag1 = picmi.ParticleDiagnostic(period = diagnostic_interval,
                                       species = [electrons],

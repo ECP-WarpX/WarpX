@@ -4,7 +4,6 @@ amr.n_cell =  32 32 64
 amr.max_grid_size = 64
 amr.blocking_factor = 32
 amr.max_level = 0
-amr.plot_int = 10000
 
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 1  1   0            # Is periodic?
@@ -110,3 +109,8 @@ slice.plot_int = -1
 slice.num_slice_snapshots_lab = 4
 slice.dt_slice_snapshots_lab = 3.3356409519815207e-12
 slice.particle_slice_width_lab = 2.e-6
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 10000
+diag1.diag_type = Full

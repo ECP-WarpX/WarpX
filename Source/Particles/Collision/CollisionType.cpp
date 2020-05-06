@@ -14,9 +14,9 @@ CollisionType::CollisionType(
     std::string const collision_name)
 {
 
-    #if defined WARPX_DIM_RZ
+#if defined WARPX_DIM_RZ
     amrex::Abort("Collisions only work in Cartesian geometry for now.");
-    #endif
+#endif
 
     // read collision species
     std::vector<std::string> collision_species;
@@ -133,11 +133,11 @@ void CollisionType::doCoulombCollisionsWithinTile
 
         const Real dt = WarpX::GetInstance().getdt(lev);
         Geometry const& geom = WarpX::GetInstance().Geom(lev);
-        #if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 2)
         auto dV = geom.CellSize(0) * geom.CellSize(1);
-        #elif (AMREX_SPACEDIM == 3)
+#elif (AMREX_SPACEDIM == 3)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-        #endif
+#endif
 
         // Loop over cells
         amrex::ParallelFor( n_cells,
@@ -209,11 +209,11 @@ void CollisionType::doCoulombCollisionsWithinTile
 
         const Real dt = WarpX::GetInstance().getdt(lev);
         Geometry const& geom = WarpX::GetInstance().Geom(lev);
-        #if (AMREX_SPACEDIM == 2)
+#if (AMREX_SPACEDIM == 2)
         auto dV = geom.CellSize(0) * geom.CellSize(1);
-        #elif (AMREX_SPACEDIM == 3)
+#elif (AMREX_SPACEDIM == 3)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
-        #endif
+#endif
 
         // Loop over cells
         amrex::ParallelFor( n_cells,

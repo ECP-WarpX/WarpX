@@ -3,7 +3,6 @@ amr.n_cell = 16 16
 amr.max_level = 0
 amr.blocking_factor = 8
 amr.max_grid_size = 8
-amr.plot_int = 1
 geometry.coord_sys   = 0
 geometry.is_periodic = 0 0
 geometry.prob_lo     = -8 -12
@@ -21,3 +20,8 @@ electron.injection_style = "SingleParticle"
 electron.single_particle_pos = 0.0   0.0 0.0
 electron.single_particle_vel = 1.e20 0.0 0.0  # gamma*beta
 electron.single_particle_weight = 1.0
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 1
+diag1.diag_type = Full

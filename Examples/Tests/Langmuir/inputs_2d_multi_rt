@@ -11,8 +11,6 @@ amr.max_grid_size = 64
 # Maximum level in hierarchy (for now must be 0, i.e., one level in total)
 amr.max_level = 0
 
-amr.plot_int = 40   # How often to write plotfiles.  "<= 0" means no plotfiles.
-
 # Geometry
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 1     1            # Is periodic?
@@ -82,3 +80,8 @@ positrons.momentum_distribution_type = parse_momentum_function
 positrons.momentum_function_ux(x,y,z) = "-epsilon * k/kp * sin(k*x) * cos(k*y) * cos(k*z)"
 positrons.momentum_function_uy(x,y,z) = "-epsilon * k/kp * cos(k*x) * sin(k*y) * cos(k*z)"
 positrons.momentum_function_uz(x,y,z) = "-epsilon * k/kp * cos(k*x) * cos(k*y) * sin(k*z)"
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 40
+diag1.diag_type = Full
