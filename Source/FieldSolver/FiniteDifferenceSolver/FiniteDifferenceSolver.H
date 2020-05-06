@@ -53,7 +53,7 @@ class FiniteDifferenceSolver
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
 
-        void MacroEvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+        void MacroscopicEvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
                             amrex::Real const dt);
@@ -136,7 +136,7 @@ class FiniteDifferenceSolver
             amrex::MultiFab& divE );
 
         template< typename T_Algo >
-        void MacroEvolveECartesian (
+        void MacroscopicEvolveECartesian (
             std::array< std::unique_ptr< amrex::MultiFab>, 3>& Efield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Bfield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,

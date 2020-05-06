@@ -14,7 +14,7 @@ using namespace amrex;
 /**
  * \brief Update the E field, over one timestep
  */
-void FiniteDifferenceSolver::MacroEvolveE (
+void FiniteDifferenceSolver::MacroscopicEvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
@@ -30,7 +30,7 @@ void FiniteDifferenceSolver::MacroEvolveE (
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        MacroEvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, dt );
+        MacroscopicEvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
@@ -47,7 +47,7 @@ void FiniteDifferenceSolver::MacroEvolveE (
 #ifndef WARPX_DIM_RZ
 
 template<typename T_Algo>
-void FiniteDifferenceSolver::MacroEvolveECartesian (
+void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,

@@ -388,7 +388,7 @@ WarpX::OneStep_nosub (Real cur_time)
             EvolveE(dt[0]); // We now have E^{n+1}
         } else {
             amrex::Print() << " evolve E macro \n";
-            MacroEvolveE(dt[0]);
+            MacroscopicEvolveE(dt[0]);
         }
 
         FillBoundaryE(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
