@@ -169,8 +169,9 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     using namespace amrex;
 
     FArrayBox NumPartCreation(box, 1);
-    Elixir tmp_eli = NumPartCreation.elixir(); // Do we actually need this elixir?
-                            // The tests on GPU seem to be working well without it.
+    // This may be unnecessary because of the Gpu::streamSynchronize() in
+    // filterCreateTransformFromFAB called below, but let us keep it for safety.
+    Elixir tmp_eli = NumPartCreation.elixir();
     auto arrNumPartCreation = NumPartCreation.array();
 
     const Dim3 lo = lbound(box);
