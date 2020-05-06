@@ -1361,6 +1361,24 @@ Reduced Diagnostics
         :math:`E` field energy,
         :math:`B` field energy, at mesh refinement levels from 0 to :math:`n`.
 
+    * ``MaxField``
+        This type computes the maximum value of each component of the electric and magnetic fields
+        and of the norm of the electric and magnetic field vectors.
+        Note that, if the fields are staggered, the values for the vector norms might be slightly
+        inaccurate since they are obtained by summing field components defined at different
+        positions in the grid.
+
+        The output columns are
+        the maximum value of the :math:`E_x` field,
+        the maximum value of the :math:`E_y` field,
+        the maximum value of the :math:`E_z` field,
+        the maximum value of the norm :math:`|E|` of the electric field,
+        the maximum value of the :math:`B_x` field,
+        the maximum value of the :math:`B_y` field,
+        the maximum value of the :math:`B_z` field and
+        the maximum value of the norm :math:`|B|` of the magnetic field,
+        at mesh refinement levels from  0 to :math:`n`.
+
     * ``BeamRelevant``
         This type computes properties of a particle beam relevant for particle accelerators,
         like position, momentum, emittance, etc.

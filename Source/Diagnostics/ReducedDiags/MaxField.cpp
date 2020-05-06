@@ -55,28 +55,28 @@ MaxField::MaxField (std::string rd_name)
             {
                 ofs << m_sep;
                 ofs << "[" + std::to_string(3+8*lev) + "]";
-                ofs << "max(Ex)"+std::to_string(lev)+"(V/m)";
+                ofs << "max_Ex_lev"+std::to_string(lev)+" (V/m)";
                 ofs << m_sep;
                 ofs << "[" + std::to_string(4+8*lev) + "]";
-                ofs << "max(Ey)"+std::to_string(lev)+"(V/m)";
+                ofs << "max_Ey_lev"+std::to_string(lev)+" (V/m)";
                 ofs << m_sep;
                 ofs << "[" + std::to_string(5+8*lev) + "]";
-                ofs << "max(Ez)"+std::to_string(lev)+"(V/m)";
+                ofs << "max_Ez_lev"+std::to_string(lev)+" (V/m)";
                 ofs << m_sep;
                 ofs << "[" + std::to_string(6+8*lev) + "]";
-                ofs << "max(|E|)"+std::to_string(lev)+"(V/m)";
+                ofs << "max_|E|_lev"+std::to_string(lev)+" (V/m)";
                 ofs << m_sep;
                 ofs << "[" + std::to_string(7+8*lev) + "]";
-                ofs << "max(Bx)"+std::to_string(lev)+"(T)";
+                ofs << "max_Bx_lev"+std::to_string(lev)+" (T)";
                 ofs << m_sep;
                 ofs << "[" + std::to_string(8+8*lev) + "]";
-                ofs << "max(By)"+std::to_string(lev)+"(T)";
+                ofs << "max_By_lev"+std::to_string(lev)+" (T)";
                 ofs << m_sep;
                 ofs << "[" + std::to_string(9+8*lev) + "]";
-                ofs << "max(Bz)"+std::to_string(lev)+"(T)";
+                ofs << "max_Bz_lev"+std::to_string(lev)+" (T)";
                 ofs << m_sep;
                 ofs << "[" + std::to_string(10+8*lev) + "]";
-                ofs << "max(|B|)"+std::to_string(lev)+"(T)";
+                ofs << "max_|B|_lev"+std::to_string(lev)+" (T)";
             }
             ofs << std::endl;
             // close file
@@ -113,9 +113,6 @@ void MaxField::ComputeDiags (int step)
 
         // get Maximums of E field components
         m_data[lev*8] = Ex.norm0();
-        amrex::Print() << "Norm0 of Ex is : " << m_data[lev*8] << "\n";
-        amrex::Print() << "Max of Ex is : " << Ex.max(0) << "\n";
-        amrex::Print() << "Min of Ex is : " << Ex.min(0) << "\n";
         m_data[lev*8+1] = Ey.norm0();
         m_data[lev*8+2] = Ez.norm0();
 
@@ -153,8 +150,6 @@ void MaxField::ComputeDiags (int step)
             amrex::ParallelFor(box,  [=] AMREX_GPU_DEVICE (int i, int j, int k){
             arrtemp(i,j,k) = arrEx(i,j,k)*arrEx(i,j,k) + arrEy(i,j,k)*arrEy(i,j,k)
                                + arrEz(i,j,k)*arrEz(i,j,k);
-            amrex::Print() << "i = " << i << "; j = " << j << "; k = " << k << "; Ex = " << arrEx(i,j,k) << "\n"; 
-
         });
         }
         m_data[lev*8+3] = std::sqrt(mftemp.max(0));

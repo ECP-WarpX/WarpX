@@ -105,9 +105,7 @@ void MultiReducedDiags::WriteToFile (int step)
     // loop over all reduced diags
     for (int i_rd = 0; i_rd < m_rd_names.size(); ++i_rd)
     {
-        amrex::Print() << "Hi i_rd is " << i_rd << "freq is " << m_multi_rd[i_rd]->m_freq << "\n";
-
-        // Judge if the diags should be done
+    // Judge if the diags should be done
         if ( (step+1) % m_multi_rd[i_rd]->m_freq != 0 ) { continue; }
 
         // call the write to file function
