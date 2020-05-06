@@ -22,5 +22,4 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     warpx.ComputeDivE(divE, m_lev);
     // Coarsen and interpolate from divE on the entire domain to the cell-centered mf_dst.
     CoarsenIO::Coarsen(mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
-
 }

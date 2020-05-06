@@ -5,7 +5,7 @@
 
 namespace CoarsenMR{
 
-using namespace amrex;
+    using namespace amrex;
 
     /**
      * \brief Interpolates the floating point data contained in the source Array4
