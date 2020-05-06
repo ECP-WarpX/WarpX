@@ -1028,6 +1028,11 @@ Numerics and algorithms
     See `this section of the FFTW documentation <http://www.fftw.org/fftw3_doc/Planner-Flags.html>`__
     for more information.
 
+* ``psatd.do_current_correction`` (`0` or `1`; default: `0`)
+    If true, the current correction defined by equation (19) of
+    `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_ is applied.
+    Only used when compiled and running with the PSATD solver.
+
 * ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
     Defines the galilean velocity.
     Non-zero `v_galilean` activates Galilean algorithm, which suppresses the Numerical Cherenkov instability

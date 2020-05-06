@@ -140,6 +140,11 @@ public:
     static int maxwell_fdtd_solver_id;
     static long load_balance_costs_update_algo;
 
+    // Static public variable to switch on current correction in Fourier space
+    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010): can be set
+    // true by the user as an input parameter
+    bool do_current_correction = false;
+
     // div E cleaning
     static int do_dive_cleaning;
 
@@ -551,6 +556,15 @@ private:
     void ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp);
     void AddRhoFromFineLevelandSumBoundary (int lev, int icomp, int ncomp);
     void NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp);
+
+    /**
+     * \brief Private function for current correction in Fourier space
+     * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010):
+     * loops over the MR levels and applies the correction on the fine and coarse
+     * patches (calls the virtual method \c CurrentCorrection of the spectral
+     * algorithm in use, via the public interface defined in the class SpectralSolver).
+     */
+    void CurrentCorrection ();
 
     void ReadParameters ();
 

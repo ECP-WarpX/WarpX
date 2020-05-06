@@ -16,6 +16,9 @@
 #ifdef WARPX_USE_PY
 #   include "Python/WarpX_py.H"
 #endif
+#ifdef WARPX_USE_PSATD
+#include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#endif
 
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -341,14 +344,35 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 #endif
 
+#ifdef WARPX_USE_PSATD
+    // Apply current correction in Fourier space
+    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
+    if ( fft_periodic_single_box == false ) {
+        // For domain decomposition with local FFT over guard cells,
+        // apply this before `SyncCurrent`, i.e. before exchanging guard cells for J
+        if ( do_current_correction ) CurrentCorrection();
+    }
+#endif
+
 #ifdef WARPX_QED
     //Do QED processes
     mypc->doQedEvents();
 #endif
 
+    // Synchronize J and rho
     SyncCurrent();
-
     SyncRho();
+
+#ifdef WARPX_USE_PSATD
+    // Apply current correction in Fourier space
+    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
+    if ( fft_periodic_single_box == true ) {
+        // For periodic, single-box FFT (FFT without guard cells)
+        // apply this after `SyncCurrent`, i.e. after exchanging guard cells for J
+        if ( do_current_correction ) CurrentCorrection();
+    }
+#endif
+
 
     // At this point, J is up-to-date inside the domain, and E and B are
     // up-to-date including enough guard cells for first step of the field
@@ -785,3 +809,20 @@ WarpX::applyMirrors(Real time){
         }
     }
 }
+
+#ifdef WARPX_USE_PSATD
+void
+WarpX::CurrentCorrection ()
+{
+    for ( int lev = 0; lev <= finest_level; ++lev )
+    {
+        // Apply correction on fine patch
+        spectral_solver_fp[lev]->CurrentCorrection( current_fp[lev], rho_fp[lev] );
+        if ( spectral_solver_cp[lev] )
+        {
+            // Apply correction on coarse patch
+            spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
+        }
+    }
+}
+#endif
