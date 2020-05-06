@@ -9,7 +9,7 @@ using namespace amrex;
 
     /**
      * \brief Interpolates the floating point data contained in the source Array4
-     *        \c mf_fp_arr, extracted from a fine MultiFab, by averaging over either
+     *        \c arr_src, extracted from a fine MultiFab, by averaging over either
      *        1 point or 2 equally distant points.
      *
      * \param[in] arr_src floating point data to be interpolated
@@ -98,7 +98,7 @@ using namespace amrex;
      *                           Array4 extracted from the coarsened MultiFab \c mf_dst
      * \param[in]     ngrow      number of guard cells to fill
      * \param[in]     crse_ratio coarsening ratio between the fine MultiFab \c mf_src
-     *                           and the coarsened MultiFab \c mf_dst
+     *                           and the coarsened MultiFab \c mf_dst along each spatial direction
      */
     void Loop ( MultiFab& mf_dst,
                 const MultiFab& mf_src,
@@ -125,7 +125,7 @@ using namespace amrex;
      *                           Array4 extracted from the coarsened MultiFab \c mf_dst
      * \param[in]     ngrow      number of guard cells to fill
      * \param[in]     crse_ratio coarsening ratio between the fine MultiFab \c mf_src
-     *                           and the coarsened MultiFab \c mf_dst
+     *                           and the coarsened MultiFab \c mf_dst along each spatial direction
      */
     void Coarsen ( MultiFab& mf_dst,
                    const MultiFab& mf_src,
