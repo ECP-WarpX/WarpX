@@ -15,19 +15,19 @@ filename = sys.argv[1]
 
 
 ds = yt.load( filename )
-all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
-Ex = all_data_level_0['boxlib', 'Ex'].v.squeeze()
-Ey = all_data_level_0['boxlib', 'Ey'].v.squeeze()
-Ez = all_data_level_0['boxlib', 'Ez'].v.squeeze()
+
+Ex= ds.index.grids[0]['boxlib', 'Ex'].squeeze().v
+Ey= ds.index.grids[0]['boxlib', 'Ey'].squeeze().v
+Ez= ds.index.grids[0]['boxlib', 'Ez'].squeeze().v
 
 #E field energy calculated with Galilean method (v_galilean = (0,0,0.99498743710662))
 energyE_gal_psatd = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
 
 #E field energy precalculated with standard PSATD (v_galilean = (0,0,0))
-energyE_psatd = 270975.396667626 #E field energy calculated with PSATD (v_galilean = (0,0,0))
+energyE_psatd = 21135.7074524
 
 error_rel = energyE_gal_psatd / energyE_psatd
-tolerance_rel = 1e-10
+tolerance_rel = 1e-7
 
 print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
