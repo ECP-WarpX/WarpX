@@ -26,7 +26,7 @@ void UpdateMomentumBorisWithRadiationReaction (
     const amrex::Real q, const amrex::Real m, const amrex::Real dt )
 {
     using namespace amrex;
-    
+
     //RR algorithm needs to store old value of the normalized momentum
     const Real ux_old = ux;
     const Real uy_old = uy;

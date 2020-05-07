@@ -29,7 +29,7 @@
  */
 template <int depos_order, int lower_in_v>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void doGatherShapeN (const amrex::ParticleReal xp, 
+void doGatherShapeN (const amrex::ParticleReal xp,
                      const amrex::ParticleReal yp,
                      const amrex::ParticleReal zp,
                      amrex::ParticleReal& Exp,
@@ -51,7 +51,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      const amrex::IndexType by_type,
                      const amrex::IndexType bz_type,
                      const amrex::Real dxi, const amrex::Real dyi, const amrex::Real dzi,
-                     const amrex::Real xmin, const amrex::Real ymin, const amrex::Real zmin, 
+                     const amrex::Real xmin, const amrex::Real ymin, const amrex::Real zmin,
                      const amrex::Dim3& lo,
                      const long n_rz_azimuthal_modes)
 {
@@ -60,7 +60,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     constexpr int zdir = (AMREX_SPACEDIM - 1);
     constexpr int NODE = IndexType::NODE;
     constexpr int CELL = IndexType::CELL;
-    
+
     // --- Compute shape factors
     // x direction
     // Get particle position
@@ -379,7 +379,7 @@ void doGatherShapeN (const GetParticlePosition& GetPosition,
                      const long n_rz_azimuthal_modes)
 {
     using namespace amrex;
-    
+
     const Real dxi = 1.0/dx[0];
     const Real dzi = 1.0/dx[2];
 #if (AMREX_SPACEDIM == 3)

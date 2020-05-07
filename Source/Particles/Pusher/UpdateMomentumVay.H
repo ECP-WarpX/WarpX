@@ -24,7 +24,7 @@ void UpdateMomentumVay (
     const amrex::Real q, const amrex::Real m, const amrex::Real dt )
 {
     using namespace amrex;
-    
+
     // Constants
     const Real econst = q*dt/m;
     const Real bconst = 0.5*q*dt/m;
