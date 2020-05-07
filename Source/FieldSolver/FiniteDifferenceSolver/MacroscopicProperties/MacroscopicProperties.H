@@ -11,7 +11,7 @@ public :
      MacroscopicProperties ();
      /** \brief Read input parameters. This function is called in class constructor. */
      void ReadParameters ();
-     amrex::Real sigma () {return m_sigma;} 
+     amrex::Real sigma () {return m_sigma;}
      amrex::Real epsilon () {return m_epsilon;}
      amrex::Real mu () {return m_mu;}
 private :

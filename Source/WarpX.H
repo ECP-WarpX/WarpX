@@ -675,7 +675,7 @@ private:
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
-    
+
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_int" string int the input file
