@@ -34,7 +34,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        amrex::Abort("macro E-push not implemented for CKC -- yet");
+        // Note : EvolveE is the same for CKC and Yee.
+        // In the templated Yee and CKC calls, the core operations for EvolveE is the same.
+        MacroscopicEvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, dt );
 
 #endif
     } else {
