@@ -219,7 +219,6 @@ WarpX::WarpX ()
 
     if (em_solver_medium == 1) {
         // create object for macroscopic solver
-        amrex::Print() << " create mcro prop object \n";
         m_macroscopic_properties = std::unique_ptr<MacroscopicProperties> (new MacroscopicProperties());
     }
 

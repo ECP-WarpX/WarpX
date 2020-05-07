@@ -11,8 +11,7 @@ MacroscopicProperties::MacroscopicProperties ()
 void
 MacroscopicProperties::ReadParameters ()
 {
-    ParmParse pp("macroscopic");
-    amrex::Print() << " read in parameters for macro\n";
+    ParmParse pp("macroscopic");    
     // Since macroscopic maxwell solve is turned on, user must define sigma, mu, and epsilon //
     pp.get("sigma", m_sigma);
     pp.get("mu", m_mu);

@@ -4,6 +4,8 @@
 
 #include <AMReX_MultiFab.H>
 
+
+
 class
 MacroscopicProperties
 {
