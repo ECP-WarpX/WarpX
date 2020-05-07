@@ -50,13 +50,25 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      const amrex::IndexType bx_type,
                      const amrex::IndexType by_type,
                      const amrex::IndexType bz_type,
-                     const amrex::Real dxi, const amrex::Real dyi, const amrex::Real dzi,
-                     const amrex::Real xmin, const amrex::Real ymin, const amrex::Real zmin,
+                     const amrex::GpuArray<amrex::Real, 3>& dx,
+                     const amrex::GpuArray<amrex::Real, 3>& xyzmin,
                      const amrex::Dim3& lo,
                      const long n_rz_azimuthal_modes)
 {
     using namespace amrex;
 
+    const Real dxi = 1.0/dx[0];
+    const Real dzi = 1.0/dx[2];
+#if (AMREX_SPACEDIM == 3)
+    const Real dyi = 1.0/dx[1];
+#endif
+
+    const Real xmin = xyzmin[0];
+#if (AMREX_SPACEDIM == 3)
+    const Real ymin = xyzmin[1];
+#endif
+    const Real zmin = xyzmin[2];
+    
     constexpr int zdir = (AMREX_SPACEDIM - 1);
     constexpr int NODE = IndexType::NODE;
     constexpr int CELL = IndexType::CELL;
@@ -71,279 +83,278 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     const Real x = (xp-xmin)*dxi;
 #endif
 
-            // j_[eb][xyz] leftmost grid point in x that the particle touches for the centering of each current
-            // sx_[eb][xyz] shape factor along x for the centering of each current
-            // There are only two possible centerings, node or cell centered, so at most only two shape factor
-            // arrays will be needed.
-            Real sx_node[depos_order + 1];
-            Real sx_cell[depos_order + 1];
-            Real sx_node_v[depos_order + 1 - lower_in_v];
-            Real sx_cell_v[depos_order + 1 - lower_in_v];
-            int j_node;
-            int j_cell;
-            int j_node_v;
-            int j_cell_v;
-            if ((ey_type[0] == NODE) || (ez_type[0] == NODE) || (bx_type[0] == NODE)) {
-                j_node = compute_shape_factor<depos_order>(sx_node, x);
-            }
-            if ((ey_type[0] == CELL) || (ez_type[0] == CELL) || (bx_type[0] == CELL)) {
-                j_cell = compute_shape_factor<depos_order>(sx_cell, x - 0.5);
-            }
-            if ((ex_type[0] == NODE) || (by_type[0] == NODE) || (bz_type[0] == NODE)) {
-                j_node_v = compute_shape_factor<depos_order-lower_in_v>(sx_node_v, x);
-            }
-            if ((ex_type[0] == CELL) || (by_type[0] == CELL) || (bz_type[0] == CELL)) {
-                j_cell_v = compute_shape_factor<depos_order-lower_in_v>(sx_cell_v, x - 0.5);
-            }
-            const Real (&sx_ex)[depos_order + 1 - lower_in_v] = ((ex_type[0] == NODE) ? sx_node_v : sx_cell_v);
-            const Real (&sx_ey)[depos_order + 1             ] = ((ey_type[0] == NODE) ? sx_node   : sx_cell  );
-            const Real (&sx_ez)[depos_order + 1             ] = ((ez_type[0] == NODE) ? sx_node   : sx_cell  );
-            const Real (&sx_bx)[depos_order + 1             ] = ((bx_type[0] == NODE) ? sx_node   : sx_cell  );
-            const Real (&sx_by)[depos_order + 1 - lower_in_v] = ((by_type[0] == NODE) ? sx_node_v : sx_cell_v);
-            const Real (&sx_bz)[depos_order + 1 - lower_in_v] = ((bz_type[0] == NODE) ? sx_node_v : sx_cell_v);
-            int const j_ex = ((ex_type[0] == NODE) ? j_node_v : j_cell_v);
-            int const j_ey = ((ey_type[0] == NODE) ? j_node   : j_cell  );
-            int const j_ez = ((ez_type[0] == NODE) ? j_node   : j_cell  );
-            int const j_bx = ((bx_type[0] == NODE) ? j_node   : j_cell  );
-            int const j_by = ((by_type[0] == NODE) ? j_node_v : j_cell_v);
-            int const j_bz = ((bz_type[0] == NODE) ? j_node_v : j_cell_v);
-
+    // j_[eb][xyz] leftmost grid point in x that the particle touches for the centering of each current
+    // sx_[eb][xyz] shape factor along x for the centering of each current
+    // There are only two possible centerings, node or cell centered, so at most only two shape factor
+    // arrays will be needed.
+    Real sx_node[depos_order + 1];
+    Real sx_cell[depos_order + 1];
+    Real sx_node_v[depos_order + 1 - lower_in_v];
+    Real sx_cell_v[depos_order + 1 - lower_in_v];
+    int j_node;
+    int j_cell;
+    int j_node_v;
+    int j_cell_v;
+    if ((ey_type[0] == NODE) || (ez_type[0] == NODE) || (bx_type[0] == NODE)) {
+        j_node = compute_shape_factor<depos_order>(sx_node, x);
+    }
+    if ((ey_type[0] == CELL) || (ez_type[0] == CELL) || (bx_type[0] == CELL)) {
+        j_cell = compute_shape_factor<depos_order>(sx_cell, x - 0.5);
+    }
+    if ((ex_type[0] == NODE) || (by_type[0] == NODE) || (bz_type[0] == NODE)) {
+        j_node_v = compute_shape_factor<depos_order-lower_in_v>(sx_node_v, x);
+    }
+    if ((ex_type[0] == CELL) || (by_type[0] == CELL) || (bz_type[0] == CELL)) {
+        j_cell_v = compute_shape_factor<depos_order-lower_in_v>(sx_cell_v, x - 0.5);
+    }
+    const Real (&sx_ex)[depos_order + 1 - lower_in_v] = ((ex_type[0] == NODE) ? sx_node_v : sx_cell_v);
+    const Real (&sx_ey)[depos_order + 1             ] = ((ey_type[0] == NODE) ? sx_node   : sx_cell  );
+    const Real (&sx_ez)[depos_order + 1             ] = ((ez_type[0] == NODE) ? sx_node   : sx_cell  );
+    const Real (&sx_bx)[depos_order + 1             ] = ((bx_type[0] == NODE) ? sx_node   : sx_cell  );
+    const Real (&sx_by)[depos_order + 1 - lower_in_v] = ((by_type[0] == NODE) ? sx_node_v : sx_cell_v);
+    const Real (&sx_bz)[depos_order + 1 - lower_in_v] = ((bz_type[0] == NODE) ? sx_node_v : sx_cell_v);
+    int const j_ex = ((ex_type[0] == NODE) ? j_node_v : j_cell_v);
+    int const j_ey = ((ey_type[0] == NODE) ? j_node   : j_cell  );
+    int const j_ez = ((ez_type[0] == NODE) ? j_node   : j_cell  );
+    int const j_bx = ((bx_type[0] == NODE) ? j_node   : j_cell  );
+    int const j_by = ((by_type[0] == NODE) ? j_node_v : j_cell_v);
+    int const j_bz = ((bz_type[0] == NODE) ? j_node_v : j_cell_v);
+    
 #if (AMREX_SPACEDIM == 3)
-            // y direction
-            const Real y = (yp-ymin)*dyi;
-            Real sy_node[depos_order + 1];
-            Real sy_cell[depos_order + 1];
-            Real sy_node_v[depos_order + 1 - lower_in_v];
-            Real sy_cell_v[depos_order + 1 - lower_in_v];
-            int k_node;
-            int k_cell;
-            int k_node_v;
-            int k_cell_v;
-            if ((ex_type[1] == NODE) || (ez_type[1] == NODE) || (by_type[1] == NODE)) {
-                k_node = compute_shape_factor<depos_order>(sy_node, y);
-            }
-            if ((ex_type[1] == CELL) || (ez_type[1] == CELL) || (by_type[1] == CELL)) {
-                k_cell = compute_shape_factor<depos_order>(sy_cell, y - 0.5);
-            }
-            if ((ey_type[1] == NODE) || (bx_type[1] == NODE) || (bz_type[1] == NODE)) {
-                k_node_v = compute_shape_factor<depos_order-lower_in_v>(sy_node_v, y);
-            }
-            if ((ey_type[1] == CELL) || (bx_type[1] == CELL) || (bz_type[1] == CELL)) {
-                k_cell_v = compute_shape_factor<depos_order-lower_in_v>(sy_cell_v, y - 0.5);
-            }
-            const Real (&sy_ex)[depos_order + 1             ] = ((ex_type[1] == NODE) ? sy_node   : sy_cell  );
-            const Real (&sy_ey)[depos_order + 1 - lower_in_v] = ((ey_type[1] == NODE) ? sy_node_v : sy_cell_v);
-            const Real (&sy_ez)[depos_order + 1             ] = ((ez_type[1] == NODE) ? sy_node   : sy_cell  );
-            const Real (&sy_bx)[depos_order + 1 - lower_in_v] = ((bx_type[1] == NODE) ? sy_node_v : sy_cell_v);
-            const Real (&sy_by)[depos_order + 1             ] = ((by_type[1] == NODE) ? sy_node   : sy_cell  );
-            const Real (&sy_bz)[depos_order + 1 - lower_in_v] = ((bz_type[1] == NODE) ? sy_node_v : sy_cell_v);
-            int const k_ex = ((ex_type[1] == NODE) ? k_node   : k_cell  );
-            int const k_ey = ((ey_type[1] == NODE) ? k_node_v : k_cell_v);
-            int const k_ez = ((ez_type[1] == NODE) ? k_node   : k_cell  );
-            int const k_bx = ((bx_type[1] == NODE) ? k_node_v : k_cell_v);
-            int const k_by = ((by_type[1] == NODE) ? k_node   : k_cell  );
-            int const k_bz = ((bz_type[1] == NODE) ? k_node_v : k_cell_v);
-
+    // y direction
+    const Real y = (yp-ymin)*dyi;
+    Real sy_node[depos_order + 1];
+    Real sy_cell[depos_order + 1];
+    Real sy_node_v[depos_order + 1 - lower_in_v];
+    Real sy_cell_v[depos_order + 1 - lower_in_v];
+    int k_node;
+    int k_cell;
+    int k_node_v;
+    int k_cell_v;
+    if ((ex_type[1] == NODE) || (ez_type[1] == NODE) || (by_type[1] == NODE)) {
+        k_node = compute_shape_factor<depos_order>(sy_node, y);
+    }
+    if ((ex_type[1] == CELL) || (ez_type[1] == CELL) || (by_type[1] == CELL)) {
+        k_cell = compute_shape_factor<depos_order>(sy_cell, y - 0.5);
+    }
+    if ((ey_type[1] == NODE) || (bx_type[1] == NODE) || (bz_type[1] == NODE)) {
+        k_node_v = compute_shape_factor<depos_order-lower_in_v>(sy_node_v, y);
+    }
+    if ((ey_type[1] == CELL) || (bx_type[1] == CELL) || (bz_type[1] == CELL)) {
+        k_cell_v = compute_shape_factor<depos_order-lower_in_v>(sy_cell_v, y - 0.5);
+    }
+    const Real (&sy_ex)[depos_order + 1             ] = ((ex_type[1] == NODE) ? sy_node   : sy_cell  );
+    const Real (&sy_ey)[depos_order + 1 - lower_in_v] = ((ey_type[1] == NODE) ? sy_node_v : sy_cell_v);
+    const Real (&sy_ez)[depos_order + 1             ] = ((ez_type[1] == NODE) ? sy_node   : sy_cell  );
+    const Real (&sy_bx)[depos_order + 1 - lower_in_v] = ((bx_type[1] == NODE) ? sy_node_v : sy_cell_v);
+    const Real (&sy_by)[depos_order + 1             ] = ((by_type[1] == NODE) ? sy_node   : sy_cell  );
+    const Real (&sy_bz)[depos_order + 1 - lower_in_v] = ((bz_type[1] == NODE) ? sy_node_v : sy_cell_v);
+    int const k_ex = ((ex_type[1] == NODE) ? k_node   : k_cell  );
+    int const k_ey = ((ey_type[1] == NODE) ? k_node_v : k_cell_v);
+    int const k_ez = ((ez_type[1] == NODE) ? k_node   : k_cell  );
+    int const k_bx = ((bx_type[1] == NODE) ? k_node_v : k_cell_v);
+    int const k_by = ((by_type[1] == NODE) ? k_node   : k_cell  );
+    int const k_bz = ((bz_type[1] == NODE) ? k_node_v : k_cell_v);
+    
 #endif
-            // z direction
-            const Real z = (zp-zmin)*dzi;
-            Real sz_node[depos_order + 1];
-            Real sz_cell[depos_order + 1];
-            Real sz_node_v[depos_order + 1 - lower_in_v];
-            Real sz_cell_v[depos_order + 1 - lower_in_v];
-            int l_node;
-            int l_cell;
-            int l_node_v;
-            int l_cell_v;
-            if ((ex_type[zdir] == NODE) || (ey_type[zdir] == NODE) || (bz_type[zdir] == NODE)) {
-                l_node = compute_shape_factor<depos_order>(sz_node, z);
-            }
-            if ((ex_type[zdir] == CELL) || (ey_type[zdir] == CELL) || (bz_type[zdir] == CELL)) {
-                l_cell = compute_shape_factor<depos_order>(sz_cell, z - 0.5);
-            }
-            if ((ez_type[zdir] == NODE) || (bx_type[zdir] == NODE) || (by_type[zdir] == NODE)) {
-                l_node_v = compute_shape_factor<depos_order-lower_in_v>(sz_node_v, z);
-            }
-            if ((ez_type[zdir] == CELL) || (bx_type[zdir] == CELL) || (by_type[zdir] == CELL)) {
-                l_cell_v = compute_shape_factor<depos_order-lower_in_v>(sz_cell_v, z - 0.5);
-            }
-            const Real (&sz_ex)[depos_order + 1             ] = ((ex_type[zdir] == NODE) ? sz_node   : sz_cell  );
-            const Real (&sz_ey)[depos_order + 1             ] = ((ey_type[zdir] == NODE) ? sz_node   : sz_cell  );
-            const Real (&sz_ez)[depos_order + 1 - lower_in_v] = ((ez_type[zdir] == NODE) ? sz_node_v : sz_cell_v);
-            const Real (&sz_bx)[depos_order + 1 - lower_in_v] = ((bx_type[zdir] == NODE) ? sz_node_v : sz_cell_v);
-            const Real (&sz_by)[depos_order + 1 - lower_in_v] = ((by_type[zdir] == NODE) ? sz_node_v : sz_cell_v);
-            const Real (&sz_bz)[depos_order + 1             ] = ((bz_type[zdir] == NODE) ? sz_node   : sz_cell  );
-            int const l_ex = ((ex_type[zdir] == NODE) ? l_node   : l_cell  );
-            int const l_ey = ((ey_type[zdir] == NODE) ? l_node   : l_cell  );
-            int const l_ez = ((ez_type[zdir] == NODE) ? l_node_v : l_cell_v);
-            int const l_bx = ((bx_type[zdir] == NODE) ? l_node_v : l_cell_v);
-            int const l_by = ((by_type[zdir] == NODE) ? l_node_v : l_cell_v);
-            int const l_bz = ((bz_type[zdir] == NODE) ? l_node   : l_cell  );
-
-
-            // Each field is gathered in a separate block of
-            // AMREX_SPACEDIM nested loops because the deposition
-            // order can differ for each component of each field
-            // when lower_in_v is set to 1
+    // z direction
+    const Real z = (zp-zmin)*dzi;
+    Real sz_node[depos_order + 1];
+    Real sz_cell[depos_order + 1];
+    Real sz_node_v[depos_order + 1 - lower_in_v];
+    Real sz_cell_v[depos_order + 1 - lower_in_v];
+    int l_node;
+    int l_cell;
+    int l_node_v;
+    int l_cell_v;
+    if ((ex_type[zdir] == NODE) || (ey_type[zdir] == NODE) || (bz_type[zdir] == NODE)) {
+        l_node = compute_shape_factor<depos_order>(sz_node, z);
+    }
+    if ((ex_type[zdir] == CELL) || (ey_type[zdir] == CELL) || (bz_type[zdir] == CELL)) {
+        l_cell = compute_shape_factor<depos_order>(sz_cell, z - 0.5);
+    }
+    if ((ez_type[zdir] == NODE) || (bx_type[zdir] == NODE) || (by_type[zdir] == NODE)) {
+        l_node_v = compute_shape_factor<depos_order-lower_in_v>(sz_node_v, z);
+    }
+    if ((ez_type[zdir] == CELL) || (bx_type[zdir] == CELL) || (by_type[zdir] == CELL)) {
+        l_cell_v = compute_shape_factor<depos_order-lower_in_v>(sz_cell_v, z - 0.5);
+    }
+    const Real (&sz_ex)[depos_order + 1             ] = ((ex_type[zdir] == NODE) ? sz_node   : sz_cell  );
+    const Real (&sz_ey)[depos_order + 1             ] = ((ey_type[zdir] == NODE) ? sz_node   : sz_cell  );
+    const Real (&sz_ez)[depos_order + 1 - lower_in_v] = ((ez_type[zdir] == NODE) ? sz_node_v : sz_cell_v);
+    const Real (&sz_bx)[depos_order + 1 - lower_in_v] = ((bx_type[zdir] == NODE) ? sz_node_v : sz_cell_v);
+    const Real (&sz_by)[depos_order + 1 - lower_in_v] = ((by_type[zdir] == NODE) ? sz_node_v : sz_cell_v);
+    const Real (&sz_bz)[depos_order + 1             ] = ((bz_type[zdir] == NODE) ? sz_node   : sz_cell  );
+    int const l_ex = ((ex_type[zdir] == NODE) ? l_node   : l_cell  );
+    int const l_ey = ((ey_type[zdir] == NODE) ? l_node   : l_cell  );
+    int const l_ez = ((ez_type[zdir] == NODE) ? l_node_v : l_cell_v);
+    int const l_bx = ((bx_type[zdir] == NODE) ? l_node_v : l_cell_v);
+    int const l_by = ((by_type[zdir] == NODE) ? l_node_v : l_cell_v);
+    int const l_bz = ((bz_type[zdir] == NODE) ? l_node   : l_cell  );
+        
+    // Each field is gathered in a separate block of
+    // AMREX_SPACEDIM nested loops because the deposition
+    // order can differ for each component of each field
+    // when lower_in_v is set to 1
 #if (AMREX_SPACEDIM == 2)
-            // Gather field on particle Eyp[i] from field on grid ey_arr
-            for (int iz=0; iz<=depos_order; iz++){
-                for (int ix=0; ix<=depos_order; ix++){
-                    Eyp += sx_ey[ix]*sz_ey[iz]*
-                        ey_arr(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 0);
-                }
-            }
-            // Gather field on particle Exp[I] from field on grid ex_arr
-            // Gather field on particle Bzp[i] from field on grid bz_arr
-            for (int iz=0; iz<=depos_order; iz++){
-                for (int ix=0; ix<=depos_order-lower_in_v; ix++){
-                    Exp += sx_ex[ix]*sz_ex[iz]*
-                        ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 0);
-                    Bzp += sx_bz[ix]*sz_bz[iz]*
-                        bz_arr(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 0);
-                }
-            }
-            // Gather field on particle Ezp[i] from field on grid ez_arr
-            // Gather field on particle Bxp[i] from field on grid bx_arr
-            for (int iz=0; iz<=depos_order-lower_in_v; iz++){
-                for (int ix=0; ix<=depos_order; ix++){
-                    Ezp += sx_ez[ix]*sz_ez[iz]*
-                        ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 0);
-                    Bxp += sx_bx[ix]*sz_bx[iz]*
-                        bx_arr(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 0);
-                }
-            }
-            // Gather field on particle Byp[i] from field on grid by_arr
-            for (int iz=0; iz<=depos_order-lower_in_v; iz++){
-                for (int ix=0; ix<=depos_order-lower_in_v; ix++){
-                    Byp += sx_by[ix]*sz_by[iz]*
-                        by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 0);
-                }
-            }
-
+    // Gather field on particle Eyp[i] from field on grid ey_arr
+    for (int iz=0; iz<=depos_order; iz++){
+        for (int ix=0; ix<=depos_order; ix++){
+            Eyp += sx_ey[ix]*sz_ey[iz]*
+                ey_arr(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 0);
+        }
+    }
+    // Gather field on particle Exp[I] from field on grid ex_arr
+    // Gather field on particle Bzp[i] from field on grid bz_arr
+    for (int iz=0; iz<=depos_order; iz++){
+        for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+            Exp += sx_ex[ix]*sz_ex[iz]*
+                ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 0);
+            Bzp += sx_bz[ix]*sz_bz[iz]*
+                bz_arr(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 0);
+        }
+    }
+    // Gather field on particle Ezp[i] from field on grid ez_arr
+    // Gather field on particle Bxp[i] from field on grid bx_arr
+    for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+        for (int ix=0; ix<=depos_order; ix++){
+            Ezp += sx_ez[ix]*sz_ez[iz]*
+                ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 0);
+            Bxp += sx_bx[ix]*sz_bx[iz]*
+                bx_arr(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 0);
+        }
+    }
+    // Gather field on particle Byp[i] from field on grid by_arr
+    for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+        for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+            Byp += sx_by[ix]*sz_by[iz]*
+                by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 0);
+        }
+    }
+    
 #ifdef WARPX_DIM_RZ
-
-            Real costheta;
-            Real sintheta;
-            if (rp > 0.) {
-                costheta = xp/rp;
-                sintheta = yp/rp;
-            } else {
-                costheta = 1.;
-                sintheta = 0.;
+    
+    Real costheta;
+    Real sintheta;
+    if (rp > 0.) {
+        costheta = xp/rp;
+        sintheta = yp/rp;
+    } else {
+        costheta = 1.;
+        sintheta = 0.;
+    }
+    const Complex xy0 = Complex{costheta, -sintheta};
+    Complex xy = xy0;
+    
+    for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
+        
+        // Gather field on particle Eyp[i] from field on grid ey_arr
+        for (int iz=0; iz<=depos_order; iz++){
+            for (int ix=0; ix<=depos_order; ix++){
+                const Real dEy = (+ ey_arr(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 2*imode-1)*xy.real()
+                                  - ey_arr(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 2*imode)*xy.imag());
+                Eyp += sx_ey[ix]*sz_ey[iz]*dEy;
             }
-            const Complex xy0 = Complex{costheta, -sintheta};
-            Complex xy = xy0;
-
-            for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
-
-                // Gather field on particle Eyp[i] from field on grid ey_arr
-                for (int iz=0; iz<=depos_order; iz++){
-                    for (int ix=0; ix<=depos_order; ix++){
-                        const Real dEy = (+ ey_arr(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 2*imode-1)*xy.real()
-                                                 - ey_arr(lo.x+j_ey+ix, lo.y+l_ey+iz, 0, 2*imode)*xy.imag());
-                        Eyp += sx_ey[ix]*sz_ey[iz]*dEy;
-                    }
-                }
-                // Gather field on particle Exp[i] from field on grid ex_arr
-                // Gather field on particle Bzp[i] from field on grid bz_arr
-                for (int iz=0; iz<=depos_order; iz++){
-                    for (int ix=0; ix<=depos_order-lower_in_v; ix++){
-                        const Real dEx = (+ ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 2*imode-1)*xy.real()
-                                                 - ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 2*imode)*xy.imag());
-                        Exp += sx_ex[ix]*sz_ex[iz]*dEx;
-                        const Real dBz = (+ bz_arr(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 2*imode-1)*xy.real()
-                                                 - bz_arr(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 2*imode)*xy.imag());
-                        Bzp += sx_bz[ix]*sz_bz[iz]*dBz;
-                    }
-                }
-                // Gather field on particle Ezp[i] from field on grid ez_arr
-                // Gather field on particle Bxp[i] from field on grid bx_arr
-                for (int iz=0; iz<=depos_order-lower_in_v; iz++){
-                    for (int ix=0; ix<=depos_order; ix++){
-                        const Real dEz = (+ ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 2*imode-1)*xy.real()
-                                                 - ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 2*imode)*xy.imag());
-                        Ezp += sx_ez[ix]*sz_ez[iz]*dEz;
-                        const Real dBx = (+ bx_arr(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 2*imode-1)*xy.real()
-                                                 - bx_arr(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 2*imode)*xy.imag());
-                        Bxp += sx_bx[ix]*sz_bx[iz]*dBx;
-                    }
-                }
-                // Gather field on particle Byp[i] from field on grid by_arr
-                for (int iz=0; iz<=depos_order-lower_in_v; iz++){
-                    for (int ix=0; ix<=depos_order-lower_in_v; ix++){
-                        const Real dBy = (+ by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 2*imode-1)*xy.real()
-                                                 - by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 2*imode)*xy.imag());
-                        Byp += sx_by[ix]*sz_by[iz]*dBy;
-                    }
-                }
-                xy = xy*xy0;
+        }
+        // Gather field on particle Exp[i] from field on grid ex_arr
+        // Gather field on particle Bzp[i] from field on grid bz_arr
+        for (int iz=0; iz<=depos_order; iz++){
+            for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+                const Real dEx = (+ ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 2*imode-1)*xy.real()
+                                  - ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 2*imode)*xy.imag());
+                Exp += sx_ex[ix]*sz_ex[iz]*dEx;
+                const Real dBz = (+ bz_arr(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 2*imode-1)*xy.real()
+                                  - bz_arr(lo.x+j_bz+ix, lo.y+l_bz+iz, 0, 2*imode)*xy.imag());
+                Bzp += sx_bz[ix]*sz_bz[iz]*dBz;
             }
-
-            // Convert Exp and Eyp (which are actually Er and Etheta) to Ex and Ey
-            const Real Exp_save = Exp;
-            Exp = costheta*Exp - sintheta*Eyp;
-            Eyp = costheta*Eyp + sintheta*Exp_save;
-            const Real Bxp_save = Bxp;
-            Bxp = costheta*Bxp - sintheta*Byp;
-            Byp = costheta*Byp + sintheta*Bxp_save;
+        }
+        // Gather field on particle Ezp[i] from field on grid ez_arr
+        // Gather field on particle Bxp[i] from field on grid bx_arr
+        for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+            for (int ix=0; ix<=depos_order; ix++){
+                const Real dEz = (+ ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 2*imode-1)*xy.real()
+                                  - ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 2*imode)*xy.imag());
+                Ezp += sx_ez[ix]*sz_ez[iz]*dEz;
+                const Real dBx = (+ bx_arr(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 2*imode-1)*xy.real()
+                                  - bx_arr(lo.x+j_bx+ix, lo.y+l_bx+iz, 0, 2*imode)*xy.imag());
+                Bxp += sx_bx[ix]*sz_bx[iz]*dBx;
+            }
+        }
+        // Gather field on particle Byp[i] from field on grid by_arr
+        for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+            for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+                const Real dBy = (+ by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 2*imode-1)*xy.real()
+                                  - by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 2*imode)*xy.imag());
+                Byp += sx_by[ix]*sz_by[iz]*dBy;
+            }
+        }
+        xy = xy*xy0;
+    }
+    
+    // Convert Exp and Eyp (which are actually Er and Etheta) to Ex and Ey
+    const Real Exp_save = Exp;
+    Exp = costheta*Exp - sintheta*Eyp;
+    Eyp = costheta*Eyp + sintheta*Exp_save;
+    const Real Bxp_save = Bxp;
+    Bxp = costheta*Bxp - sintheta*Byp;
+    Byp = costheta*Byp + sintheta*Bxp_save;
 #endif
-
+    
 #else // (AMREX_SPACEDIM == 3)
-            // Gather field on particle Exp[i] from field on grid ex_arr
-            for (int iz=0; iz<=depos_order; iz++){
-                for (int iy=0; iy<=depos_order; iy++){
-                    for (int ix=0; ix<=depos_order-lower_in_v; ix++){
-                        Exp += sx_ex[ix]*sy_ex[iy]*sz_ex[iz]*
-                            ex_arr(lo.x+j_ex+ix, lo.y+k_ex+iy, lo.z+l_ex+iz);
-                    }
-                }
+    // Gather field on particle Exp[i] from field on grid ex_arr
+    for (int iz=0; iz<=depos_order; iz++){
+        for (int iy=0; iy<=depos_order; iy++){
+            for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+                Exp += sx_ex[ix]*sy_ex[iy]*sz_ex[iz]*
+                    ex_arr(lo.x+j_ex+ix, lo.y+k_ex+iy, lo.z+l_ex+iz);
             }
-            // Gather field on particle Eyp[i] from field on grid ey_arr
-            for (int iz=0; iz<=depos_order; iz++){
-                for (int iy=0; iy<=depos_order-lower_in_v; iy++){
-                    for (int ix=0; ix<=depos_order; ix++){
-                        Eyp += sx_ey[ix]*sy_ey[iy]*sz_ey[iz]*
-                            ey_arr(lo.x+j_ey+ix, lo.y+k_ey+iy, lo.z+l_ey+iz);
-                    }
-                }
+        }
+    }
+    // Gather field on particle Eyp[i] from field on grid ey_arr
+    for (int iz=0; iz<=depos_order; iz++){
+        for (int iy=0; iy<=depos_order-lower_in_v; iy++){
+            for (int ix=0; ix<=depos_order; ix++){
+                Eyp += sx_ey[ix]*sy_ey[iy]*sz_ey[iz]*
+                    ey_arr(lo.x+j_ey+ix, lo.y+k_ey+iy, lo.z+l_ey+iz);
             }
-            // Gather field on particle Ezp[i] from field on grid ez_arr
-            for (int iz=0; iz<=depos_order-lower_in_v; iz++){
-                for (int iy=0; iy<=depos_order; iy++){
-                    for (int ix=0; ix<=depos_order; ix++){
-                        Ezp += sx_ez[ix]*sy_ez[iy]*sz_ez[iz]*
-                            ez_arr(lo.x+j_ez+ix, lo.y+k_ez+iy, lo.z+l_ez+iz);
-                    }
-                }
+        }
+    }
+    // Gather field on particle Ezp[i] from field on grid ez_arr
+    for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+        for (int iy=0; iy<=depos_order; iy++){
+            for (int ix=0; ix<=depos_order; ix++){
+                Ezp += sx_ez[ix]*sy_ez[iy]*sz_ez[iz]*
+                    ez_arr(lo.x+j_ez+ix, lo.y+k_ez+iy, lo.z+l_ez+iz);
             }
-            // Gather field on particle Bzp[i] from field on grid bz_arr
-            for (int iz=0; iz<=depos_order; iz++){
-                for (int iy=0; iy<=depos_order-lower_in_v; iy++){
-                    for (int ix=0; ix<=depos_order-lower_in_v; ix++){
-                        Bzp += sx_bz[ix]*sy_bz[iy]*sz_bz[iz]*
-                            bz_arr(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz);
-                    }
-                }
+        }
+    }
+    // Gather field on particle Bzp[i] from field on grid bz_arr
+    for (int iz=0; iz<=depos_order; iz++){
+        for (int iy=0; iy<=depos_order-lower_in_v; iy++){
+            for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+                Bzp += sx_bz[ix]*sy_bz[iy]*sz_bz[iz]*
+                    bz_arr(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz);
             }
-            // Gather field on particle Byp[i] from field on grid by_arr
-            for (int iz=0; iz<=depos_order-lower_in_v; iz++){
-                for (int iy=0; iy<=depos_order; iy++){
-                    for (int ix=0; ix<=depos_order-lower_in_v; ix++){
-                        Byp += sx_by[ix]*sy_by[iy]*sz_by[iz]*
-                            by_arr(lo.x+j_by+ix, lo.y+k_by+iy, lo.z+l_by+iz);
-                    }
-                }
+        }
+    }
+    // Gather field on particle Byp[i] from field on grid by_arr
+    for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+        for (int iy=0; iy<=depos_order; iy++){
+            for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+                Byp += sx_by[ix]*sy_by[iy]*sz_by[iz]*
+                    by_arr(lo.x+j_by+ix, lo.y+k_by+iy, lo.z+l_by+iz);
             }
-            // Gather field on particle Bxp[i] from field on grid bx_arr
-            for (int iz=0; iz<=depos_order-lower_in_v; iz++){
-                for (int iy=0; iy<=depos_order-lower_in_v; iy++){
-                    for (int ix=0; ix<=depos_order; ix++){
-                        Bxp += sx_bx[ix]*sy_bx[iy]*sz_bx[iz]*
-                            bx_arr(lo.x+j_bx+ix, lo.y+k_bx+iy, lo.z+l_bx+iz);
-                    }
-                }
+        }
+    }
+    // Gather field on particle Bxp[i] from field on grid bx_arr
+    for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+        for (int iy=0; iy<=depos_order-lower_in_v; iy++){
+            for (int ix=0; ix<=depos_order; ix++){
+                Bxp += sx_bx[ix]*sy_bx[iy]*sz_bx[iz]*
+                    bx_arr(lo.x+j_bx+ix, lo.y+k_bx+iy, lo.z+l_bx+iz);
             }
+        }
+    }
 #endif
 }
 
@@ -374,23 +385,14 @@ void doGatherShapeN (const GetParticlePosition& GetPosition,
                      amrex::FArrayBox const * const bzfab,
                      const long np_to_gather,
                      const std::array<amrex::Real, 3>& dx,
-                     const std::array<amrex::Real, 3> xyzmin,
+                     const std::array<amrex::Real, 3>& xyzmin,
                      const amrex::Dim3 lo,
                      const long n_rz_azimuthal_modes)
 {
     using namespace amrex;
 
-    const Real dxi = 1.0/dx[0];
-    const Real dzi = 1.0/dx[2];
-#if (AMREX_SPACEDIM == 3)
-    const Real dyi = 1.0/dx[1];
-#endif
-
-    const Real xmin = xyzmin[0];
-#if (AMREX_SPACEDIM == 3)
-    const Real ymin = xyzmin[1];
-#endif
-    const Real zmin = xyzmin[2];
+    GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+    GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
     Array4<const Real> const& ex_arr = exfab->array();
     Array4<const Real> const& ey_arr = eyfab->array();
@@ -423,7 +425,7 @@ void doGatherShapeN (const GetParticlePosition& GetPosition,
                 xp, yp, zp, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip],
                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                dxi, dyi, dzi, xmin, ymin, zmin, lo, n_rz_azimuthal_modes);
+                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         });
 }
 
