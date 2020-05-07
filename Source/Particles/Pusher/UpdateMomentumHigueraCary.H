@@ -19,7 +19,7 @@
  */
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void UpdateMomentumHigueraCary(
+void UpdateMomentumHigueraCary (
     amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
     const amrex::ParticleReal Ex, const amrex::ParticleReal Ey, const amrex::ParticleReal Ez,
     const amrex::ParticleReal Bx, const amrex::ParticleReal By, const amrex::ParticleReal Bz,

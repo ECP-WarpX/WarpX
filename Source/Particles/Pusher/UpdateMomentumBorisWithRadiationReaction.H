@@ -19,7 +19,7 @@
  * https://doi.org/10.1088/1367-2630/12/12/123005
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void UpdateMomentumBorisWithRadiationReaction(
+void UpdateMomentumBorisWithRadiationReaction (
     amrex::ParticleReal& ux, amrex::ParticleReal& uy, amrex::ParticleReal& uz,
     const amrex::ParticleReal Ex, const amrex::ParticleReal Ey, const amrex::ParticleReal Ez,
     const amrex::ParticleReal Bx, const amrex::ParticleReal By, const amrex::ParticleReal Bz,

@@ -35,21 +35,21 @@
  * /param q            : species charge.
  */
 template <int depos_order>
-void doDepositionShapeN(const GetParticlePosition& GetPosition,
-                        const amrex::ParticleReal * const wp,
-                        const amrex::ParticleReal * const uxp,
-                        const amrex::ParticleReal * const uyp,
-                        const amrex::ParticleReal * const uzp,
-                        const int * const ion_lev,
-                        amrex::FArrayBox& jx_fab,
-                        amrex::FArrayBox& jy_fab,
-                        amrex::FArrayBox& jz_fab,
-                        const long np_to_depose, const amrex::Real dt,
-                        const std::array<amrex::Real,3>& dx,
-                        const std::array<amrex::Real,3>& xyzmin,
-                        const amrex::Dim3 lo,
-                        const amrex::Real q,
-                        const long n_rz_azimuthal_modes)
+void doDepositionShapeN (const GetParticlePosition& GetPosition,
+                         const amrex::ParticleReal * const wp,
+                         const amrex::ParticleReal * const uxp,
+                         const amrex::ParticleReal * const uyp,
+                         const amrex::ParticleReal * const uzp,
+                         const int * const ion_lev,
+                         amrex::FArrayBox& jx_fab,
+                         amrex::FArrayBox& jy_fab,
+                         amrex::FArrayBox& jz_fab,
+                         const long np_to_depose, const amrex::Real dt,
+                         const std::array<amrex::Real,3>& dx,
+                         const std::array<amrex::Real,3>& xyzmin,
+                         const amrex::Dim3 lo,
+                         const amrex::Real q,
+                         const long n_rz_azimuthal_modes)
 {
     using namespace amrex;
 

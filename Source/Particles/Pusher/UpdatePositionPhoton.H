@@ -19,7 +19,7 @@
  *    given the value of its momenta `ux`, `uy`, `uz`
  */
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
-void UpdatePositionPhoton(
+void UpdatePositionPhoton (
     amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::ParticleReal& z,
     const amrex::ParticleReal ux, const amrex::ParticleReal uy, const amrex::ParticleReal uz,
     const amrex::Real dt )
