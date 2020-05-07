@@ -4,6 +4,7 @@
     // currently works only for 3D
 #else
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
+#   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #endif
 #include "Utils/WarpXConst.H"
 #include <AMReX_Gpu.H>
