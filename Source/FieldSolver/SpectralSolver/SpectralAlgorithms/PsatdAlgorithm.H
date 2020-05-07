@@ -1,4 +1,4 @@
-/* Copyright 2019 Maxence Thevenet, Remi Lehe, Revathi Jambunathan
+/* Copyright 2019 Maxence Thevenet, Remi Lehe, Revathi Jambunathan, Edoardo Zoni
  *
  *
  * This file is part of WarpX.
@@ -36,8 +36,25 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
                                     const amrex::DistributionMapping& dm,
                                     const amrex::Real dt);
 
+        /**
+         * \brief Virtual function for current correction in Fourier space
+         * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010).
+         * This function overrides the virtual function \c CurrentCorrection in the
+         * base class \c SpectralBaseAlgorithm (qualifier \c override) and cannot be
+         * overridden by further derived classes (qualifier \c final).
+         *
+         * \param[in,out] field_data all fields in Fourier space
+         * \param[in,out] current    three-dimensional array of unique pointers to MultiFab
+         *                           storing the three components of the current density
+         * \param[in]     rho        unique pointer to MultiFab storing the charge density
+         */
+        virtual void CurrentCorrection ( SpectralFieldData& field_data,
+                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                         const std::unique_ptr<amrex::MultiFab>& rho ) override final;
+
     private:
         SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
+        amrex::Real m_dt;
 };
 
 #endif // WARPX_USE_PSATD

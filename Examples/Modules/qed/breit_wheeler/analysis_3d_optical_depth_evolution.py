@@ -111,6 +111,7 @@ def check():
         exp_scale = 1.0
         loc_discrepancy = np.abs(opt_depth_loc-exp_loc)
         scale_discrepancy = np.abs(opt_depth_scale-exp_scale)
+        print("tolerance_rel: " + str(tol))
         print("species " + name)
         print("exp distrib loc tol = " + str(tol))
         print("exp distrib loc discrepancy = " + str(loc_discrepancy))

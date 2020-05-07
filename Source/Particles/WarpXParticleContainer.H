@@ -16,8 +16,8 @@
 #include "Evolve/WarpXDtType.H"
 
 #ifdef WARPX_QED
-    #include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
-    #include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
 #endif
 
 #include <AMReX_Particles.H>
@@ -345,13 +345,6 @@ public:
     template<PhysicalSpecies PhysSpec>
     bool AmIA () const noexcept {return (physical_species == PhysSpec);}
 
-    // Whether to dump particle quantities.
-    // If true, particle position is always dumped.
-    int plot_species = 1;
-    // For all particle attribs (execept position), whether or not
-    // to dump to file.
-    amrex::Vector<int> plot_flags;
-
 protected:
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
@@ -419,9 +412,6 @@ protected:
 
     using DataContainer = amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>;
     using PairIndex = std::pair<int, int>;
-
-    // list of names of attributes to dump.
-    amrex::Vector<std::string> plot_vars;
 
     amrex::Vector<std::map<PairIndex, std::array<DataContainer, TmpIdx::nattribs> > > tmp_particle_data;
 

@@ -183,6 +183,43 @@ namespace WarpXUtilStr
      */
     bool is_in(const std::vector<std::string>& vect,
                const std::vector<std::string>& elems);
+
+    /** \brief Splits a string using a string separator. This is somewhat similar to
+     *  amrex::Tokenize. The main difference is that, if the separator ":" is used,
+     *  amrex::Tokenize will split ":3::2" into ["3","2"] while this functio will
+     *  split ":3::2" into ["","3","","2"]. This function can also perform a trimming to
+     *  remove whitespaces (or any other arbitrary string) from the split string.
+     *
+     * @tparam Container the type of the split string.
+     *
+     * @param[in] instr the input string
+     * @param[in] separator the separator string
+     * @param[in] trim true to trim the split string, false otherwise.
+     * @param[in] trim_space the string to trim if trim is true.
+     * @return cont the split string
+     */
+    template <typename Container>
+    auto split (std::string const& instr, std::string const& separator,
+                  bool const trim = false, std::string const& trim_space = " \t")
+    {
+        Container cont;
+        std::size_t current = instr.find(separator);
+        std::size_t previous = 0;
+        while (current != std::string::npos) {
+            if (trim){
+                cont.push_back(amrex::trim(instr.substr(previous, current - previous),trim_space));}
+            else{
+                cont.push_back(instr.substr(previous, current - previous));}
+            previous = current + separator.size();
+            current = instr.find(separator, previous);
+        }
+        if (trim){
+            cont.push_back(amrex::trim(instr.substr(previous, current - previous),trim_space));}
+        else{
+            cont.push_back(instr.substr(previous, current - previous));}
+        return cont;
+    }
+
 }
 
 #endif //WARPX_UTILS_H_

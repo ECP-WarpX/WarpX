@@ -3,7 +3,6 @@ amr.n_cell =  64 64 64
 amr.max_grid_size = 32
 amr.max_level = 0
 
-amr.plot_int = 1
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 0     0     0       # Is periodic?
 geometry.prob_lo     = -50.e-6   -50.e-6    -50.e-6
@@ -28,3 +27,8 @@ beam.momentum_distribution_type = "gaussian"
 beam.ux_m = 0.0
 beam.uy_m = 0.0
 beam.uz_m = 100.0
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 1
+diag1.diag_type = Full
