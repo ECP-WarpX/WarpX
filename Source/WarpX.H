@@ -23,6 +23,7 @@
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/IntervalsParser.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #ifdef WARPX_USE_PSATD
@@ -671,6 +672,10 @@ private:
 
     int n_buffer = 4;
     amrex::Real const_dt = 0.5e-11;
+
+    // Macroscopic properties
+    std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
+    
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_int" string int the input file
