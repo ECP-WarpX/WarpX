@@ -254,9 +254,9 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     }
 
     // Staggered tile boxes (different in each direction)
-    Box tbx = convert(tilebox, WarpX::jx_nodal_flag);
-    Box tby = convert(tilebox, WarpX::jy_nodal_flag);
-    Box tbz = convert(tilebox, WarpX::jz_nodal_flag);
+    Box tbx = convert( tilebox, jx->ixType().toIntVect() );
+    Box tby = convert( tilebox, jy->ixType().toIntVect() );
+    Box tbz = convert( tilebox, jz->ixType().toIntVect() );
     tilebox.grow(ngJ);
 
 #ifdef AMREX_USE_GPU
@@ -426,7 +426,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     }
 
     tilebox.grow(ngRho);
-    const Box tb = amrex::convert(tilebox, WarpX::rho_nodal_flag);
+    const Box tb = amrex::convert( tilebox, rho->ixType().toIntVect() );
 
     const int nc = (rho->nComp() == 1 ? 1 : rho->nComp()/2);
 
@@ -768,7 +768,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
     if (do_not_push) return;
 
-    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef _OPENMP
 #pragma omp parallel

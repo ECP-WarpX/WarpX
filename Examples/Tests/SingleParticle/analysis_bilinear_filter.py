@@ -48,6 +48,10 @@ all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=
 F_filtered = all_data_level_0['boxlib', 'jx'].v.squeeze()
 
 # Compare theory and PIC for filtered value
-error = np.sum( np.abs(F_filtered - my_F_filtered) ) / np.sum( np.abs(my_F_filtered) )
-print( "error: np.sum( np.abs(F_filtered - my_F_filtered) ) / np.sum( np.abs(my_F_filtered) ) = %s" %error )
-assert( error < 1.e-14 )
+error_rel = np.sum( np.abs(F_filtered - my_F_filtered) ) / np.sum( np.abs(my_F_filtered) )
+tolerance_rel = 1.e-14
+
+print("error_rel    : " + str(error_rel))
+print("tolerance_rel: " + str(tolerance_rel))
+
+assert( error_rel < tolerance_rel )

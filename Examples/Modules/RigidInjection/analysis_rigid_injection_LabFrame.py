@@ -68,9 +68,14 @@ if ( error_no_rigid < 0.05):
 
 # Theoretical beam width after propagation if rigid ON
 wth = np.sqrt( w0**2 + (z-z0)**2*theta0**2 )
-error = np.abs((w-wth)/wth)
+error_rel = np.abs((w-wth)/wth)
+tolerance_rel = 0.05
+
 # Print error and assert small error
 print("Beam position: " + str(z))
 print("Beam width   : " + str(w))
-print("error: " + str(error))
-assert( error < 0.05 )
+
+print("error_rel    : " + str(error_rel))
+print("tolerance_rel: " + str(tolerance_rel))
+
+assert( error_rel < tolerance_rel )

@@ -36,8 +36,10 @@ Fs = allrd['Ez']
 print("Fs.shape", Fs.shape)
 Fs_1D = np.squeeze(Fs[Fs.shape[0]//2,1,:])
 
-error = np.max(np.abs(Fs_1D - F_1D)) / np.max(np.abs(F_1D))
+error_rel = np.max(np.abs(Fs_1D - F_1D)) / np.max(np.abs(F_1D))
+tolerance_rel = 1E-15
 
-# Print error and assert small error
-print("relative error: " + str(error))
-assert( error < 1E-15 )
+print("error_rel    : " + str(error_rel))
+print("tolerance_rel: " + str(tolerance_rel))
+
+assert( error_rel < tolerance_rel )

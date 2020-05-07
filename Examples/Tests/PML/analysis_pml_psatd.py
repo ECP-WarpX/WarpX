@@ -40,10 +40,13 @@ energy_end = energyE + energyB
 Reflectivity = energy_end/energy_start
 Reflectivity_theory = 1.3806831258153887e-06
 
-print("Reflectivity: %s" %Reflectivity)
-print("Reflectivity_theory: %s" %Reflectivity_theory)
+error_rel = abs(Reflectivity-Reflectivity_theory) / Reflectivity_theory
+tolerance_rel = 5./100
 
-assert( abs(Reflectivity-Reflectivity_theory) < 5./100 * Reflectivity_theory )
+print("error_rel    : " + str(error_rel))
+print("tolerance_rel: " + str(tolerance_rel))
+
+assert( error_rel < tolerance_rel )
 
 # Check relative L-infinity spatial norm of rho/epsilon_0 - div(E)
 Linf_norm = np.amax( np.abs( rho/scc.epsilon_0 - divE ) ) / np.amax( np.abs( rho/scc.epsilon_0 ) )

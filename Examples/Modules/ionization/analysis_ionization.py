@@ -80,4 +80,10 @@ if do_plot:
     plt.ylabel("x (m)")
     plt.savefig("image_ionization.pdf", bbox_inches='tight')
 
-assert ((N5_fraction > 0.30) and (N5_fraction < 0.34))
+error_rel = abs(N5_fraction-0.32) / 0.32
+tolerance_rel = 0.07
+
+print("error_rel    : " + str(error_rel))
+print("tolerance_rel: " + str(tolerance_rel))
+
+assert( error_rel < tolerance_rel )

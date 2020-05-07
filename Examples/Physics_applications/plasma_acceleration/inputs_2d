@@ -6,8 +6,6 @@ amr.n_cell = 64 128
 amr.max_grid_size = 128
 amr.blocking_factor = 32
 amr.max_level = 0
-amr.plot_file = "plotfiles/plt"
-amr.plot_int = 100
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 0 0      # Is periodic?
 geometry.prob_lo     = -125.e-6 -149.e-6
@@ -89,3 +87,8 @@ beam.uz_m = 2000.
 beam.ux_th = 2.
 beam.uy_th = 2.
 beam.uz_th = 200.
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 100
+diag1.diag_type = Full
