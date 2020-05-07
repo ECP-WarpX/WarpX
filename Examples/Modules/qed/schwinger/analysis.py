@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Copyright 2020 Luca Fedeli, Neil Zaim
 #
 # This file is part of WarpX.
