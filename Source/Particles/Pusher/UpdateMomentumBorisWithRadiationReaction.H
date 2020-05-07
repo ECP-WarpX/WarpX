@@ -25,13 +25,15 @@ void UpdateMomentumBorisWithRadiationReaction(
     const amrex::ParticleReal Bx, const amrex::ParticleReal By, const amrex::ParticleReal Bz,
     const amrex::Real q, const amrex::Real m, const amrex::Real dt )
 {
+    using namespace amrex;
+    
     //RR algorithm needs to store old value of the normalized momentum
-    const amrex::Real ux_old = ux;
-    const amrex::Real uy_old = uy;
-    const amrex::Real uz_old = uz;
+    const Real ux_old = ux;
+    const Real uy_old = uy;
+    const Real uz_old = uz;
 
     //Useful constant
-    constexpr amrex::Real inv_c2 = 1./(PhysConst::c*PhysConst::c);
+    constexpr Real inv_c2 = 1./(PhysConst::c*PhysConst::c);
 
     //Call to regular Boris pusher
     UpdateMomentumBoris(
@@ -41,44 +43,44 @@ void UpdateMomentumBorisWithRadiationReaction(
         q, m, dt );
 
     //Estimation of the normalized momentum at intermediate (integer) time
-    const amrex::Real ux_n = (ux+ux_old)*0.5;
-    const amrex::Real uy_n = (uy+uy_old)*0.5;
-    const amrex::Real uz_n = (uz+uz_old)*0.5;
+    const Real ux_n = (ux+ux_old)*0.5;
+    const Real uy_n = (uy+uy_old)*0.5;
+    const Real uz_n = (uz+uz_old)*0.5;
 
     // Compute Lorentz factor (and inverse) at intermediate (integer) time
-    const amrex::Real gamma_n = std::sqrt( 1. +
+    const Real gamma_n = std::sqrt( 1. +
         (ux_n*ux_n + uy_n*uy_n + uz_n*uz_n)*inv_c2);
-    const amrex::Real inv_gamma_n = 1.0/gamma_n;
+    const Real inv_gamma_n = 1.0/gamma_n;
 
     //Estimation of the velocity at intermediate (integer) time
-    const amrex::Real vx_n = ux_n*inv_gamma_n;
-    const amrex::Real vy_n = uy_n*inv_gamma_n;
-    const amrex::Real vz_n = uz_n*inv_gamma_n;
-    const amrex::Real bx_n = vx_n/PhysConst::c;
-    const amrex::Real by_n = vy_n/PhysConst::c;
-    const amrex::Real bz_n = vz_n/PhysConst::c;
+    const Real vx_n = ux_n*inv_gamma_n;
+    const Real vy_n = uy_n*inv_gamma_n;
+    const Real vz_n = uz_n*inv_gamma_n;
+    const Real bx_n = vx_n/PhysConst::c;
+    const Real by_n = vy_n/PhysConst::c;
+    const Real bz_n = vz_n/PhysConst::c;
 
     //Lorentz force over charge
-    const amrex::Real flx_q = (Ex + vy_n*Bz - vz_n*By);
-    const amrex::Real fly_q = (Ey + vz_n*Bx - vx_n*Bz);
-    const amrex::Real flz_q = (Ez + vx_n*By - vy_n*Bx);
-    const amrex::Real fl_q2 = flx_q*flx_q + fly_q*fly_q + flz_q*flz_q;
+    const Real flx_q = (Ex + vy_n*Bz - vz_n*By);
+    const Real fly_q = (Ey + vz_n*Bx - vx_n*Bz);
+    const Real flz_q = (Ez + vx_n*By - vy_n*Bx);
+    const Real fl_q2 = flx_q*flx_q + fly_q*fly_q + flz_q*flz_q;
 
     //Calculation of auxiliary quantities
-    const amrex::Real bdotE = (bx_n*Ex + by_n*Ey + bz_n*Ez);
-    const amrex::Real bdotE2 = bdotE*bdotE;
-    const amrex::Real coeff = gamma_n*gamma_n*(fl_q2-bdotE2);
+    const Real bdotE = (bx_n*Ex + by_n*Ey + bz_n*Ez);
+    const Real bdotE2 = bdotE*bdotE;
+    const Real coeff = gamma_n*gamma_n*(fl_q2-bdotE2);
 
     //Radiation reaction constant
-    const amrex::Real RRcoeff = 2.0*PhysConst::r_e*q*q/
+    const Real RRcoeff = 2.0*PhysConst::r_e*q*q/
         (3.0*m*m*PhysConst::c*PhysConst::c);
 
     //Compute the components of the RR force
-    const amrex::Real frx =
+    const Real frx =
         RRcoeff*(PhysConst::c*(fly_q*Bz - flz_q*By) + bdotE*Ex - coeff*bx_n);
-    const amrex::Real fry =
+    const Real fry =
         RRcoeff*(PhysConst::c*(flz_q*Bx - flx_q*Bz) + bdotE*Ey - coeff*by_n);
-    const amrex::Real frz =
+    const Real frz =
         RRcoeff*(PhysConst::c*(flx_q*By - fly_q*Bx) + bdotE*Ez - coeff*bz_n);
 
     //Update momentum using the RR force
