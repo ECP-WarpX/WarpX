@@ -19,7 +19,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-    amrex::Real const dt ) {
+    amrex::Real const dt, std::unique_ptr<MacroscopicProperties> const& macroscopic_properties ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
@@ -31,13 +31,15 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        MacroscopicEvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, dt );
+        MacroscopicEvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, dt,
+                                                              macroscopic_properties );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
         // Note : EvolveE is the same for CKC and Yee.
         // In the templated Yee and CKC calls, the core operations for EvolveE is the same.
-        MacroscopicEvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, dt );
+        MacroscopicEvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, dt,
+                                                              macroscopic_properties );
 
 #endif
     } else {
@@ -54,10 +56,32 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-    amrex::Real const dt ) {
+    amrex::Real const dt, std::unique_ptr<MacroscopicProperties> const& macroscopic_properties ) {
 
     const int &macroscopic_solver_algo = WarpX::macroscopic_solver_algo;
-    amrex::Print() << " sigma method " << macroscopic_solver_algo <<" \n";
+    Real sigma = macroscopic_properties->sigma();
+    Real const mu = macroscopic_properties->mu();
+    Real const epsilon = macroscopic_properties->epsilon();
+
+    Real alpha = 0._rt;
+    Real beta  = 0._rt;
+    Real fac1 = 0._rt;
+    Real inv_fac = 0._rt;
+
+    // sigma_method == 0 for Lax_Wandroff or semi-implicit approach
+    // sigma_metha == 1 for Backward Euler
+    if (macroscopic_solver_algo == 0) { // sigma method == 0
+        fac1 = 0.5_rt * sigma * dt / epsilon;
+        inv_fac = 1._rt / ( 1._rt + fac1);
+        alpha = (1.0_rt - fac1) * inv_fac;
+        beta  = dt * inv_fac / epsilon;
+    }
+    else if (macroscopic_solver_algo == 1) { // sigma method == 1
+        fac1 = sigma * dt / epsilon;
+        inv_fac = 1._rt / ( 1._rt + fac1);
+        alpha = inv_fac;
+        beta  = dt * inv_fac / epsilon;
+    }
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP
@@ -86,31 +110,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Box const& tey  = mfi.tilebox(Efield[1]->ixType().toIntVect());
         Box const& tez  = mfi.tilebox(Efield[2]->ixType().toIntVect());
 
-        // Assuming constant material properties for now :
-        // sigma_method == 0 for Lax_Wandroff or semi-implicit approach
-        // sigma_metha == 1 for Backward Euler
-        // These material properties will be read from input file.
-        Real alpha = 0._rt;
-        Real beta  = 0._rt;
-        Real sigma = 0._rt; // for now, sigma = 0
-        Real const mu = PhysConst::mu0;
-        Real const epsilon = PhysConst::ep0;
-
-        int const sigma_method = macroscopic_solver_algo;
-        Real fac1 = 0._rt;
-        Real inv_fac = 0._rt;
-        if (sigma_method == 0) {
-            fac1 = 0.5_rt * sigma * dt / epsilon;
-            inv_fac = 1._rt / ( 1._rt + fac1);
-            alpha = (1.0_rt - fac1) * inv_fac;
-            beta  = dt * inv_fac / epsilon;
-        }
-        else if (sigma_method == 1) {
-            fac1 = sigma * dt / epsilon;
-            inv_fac = 1._rt / ( 1._rt + fac1);
-            alpha = inv_fac;
-            beta  = dt * inv_fac / epsilon;
-        }
 
         // Loop over the cells and update the fields
         amrex::ParallelFor(tex, tey, tez,

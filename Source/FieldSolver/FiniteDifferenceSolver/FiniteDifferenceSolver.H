@@ -9,6 +9,7 @@
 #define WARPX_FINITE_DIFFERENCE_SOLVER_H_
 
 #include <AMReX_MultiFab.H>
+#include "MacroscopicProperties/MacroscopicProperties.H"
 
 /**
  * \brief Top-level class for the electromagnetic finite-difference solver
@@ -56,7 +57,8 @@ class FiniteDifferenceSolver
         void MacroscopicEvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
                             std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
                             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
-                            amrex::Real const dt);
+                            amrex::Real const dt,
+                            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
 
     private:
@@ -140,7 +142,8 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr< amrex::MultiFab>, 3>& Efield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Bfield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
-            amrex::Real const dt);
+            amrex::Real const dt,
+            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
 #endif
 
