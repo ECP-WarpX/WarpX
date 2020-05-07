@@ -1,6 +1,6 @@
 #! /usr/bin/env python
-
-# Copyright 2019-2020 Luca Fedeli, Maxence Thevenet, Remi Lehe
+#
+# Copyright 2019-2020 David Bizzozero
 #
 #
 # This file is part of WarpX.
@@ -53,11 +53,7 @@ r_end = fsolve(func,r_0)[0]  #Numerically solve for r(t_max)
 E_exact = lambda r: np.sign(r)*(q_tot/(4*pi*eps_0*r**2)*(abs(r)>=r_end) \
     + q_tot*abs(r)/(4*pi*eps_0*r_end**3)*(abs(r)<r_end))
 
-# Open plotfile specified in command line (commented lines for debugging)
-# if __name__ == "__main__":
-#     filename = 'diags/plotfiles/plt00030'
-# else:
-#     filename = sys.argv[1]
+# Open plotfile specified in command line
 filename = sys.argv[1]
 ds = yt.load( filename )
 
@@ -67,7 +63,7 @@ data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
 Ex = data['Ex'].to_ndarray()
 Ey = data['Ey'].to_ndarray()
 Ez = data['Ez'].to_ndarray()
-nx = Ex.shape[0];  ny = Ey.shape[1];  nz = Ez.shape[2]
+nx, ny, nz = Ex.shape
 
 # Extract longitudinal fields along x-, y-, and z-axes
 Ex_axis = Ex[:,int(ny/2),int(nz/2)]
