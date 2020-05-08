@@ -2,7 +2,7 @@
 #define WARPX_PARTICLEDIAG_H_
 
 #include "Parser/WarpXParserWrapper.H"
-#include "Source/Utils/WarpXUtil.H"
+#include "Utils/WarpXUtil.H"
 #include "Particles/WarpXParticleContainer.H"
 
 class ParticleDiag

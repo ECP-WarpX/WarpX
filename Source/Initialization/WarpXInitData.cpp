@@ -420,9 +420,9 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     }
 
     if (costs[lev]) {
-        std::fill((*costs[lev]).begin(),
-                  (*costs[lev]).end(),
-                  0.0);
+        for (int i : costs[lev]->IndexArray()) {
+            (*costs[lev])[i] = 0.0;
+        }
     }
 }
 
