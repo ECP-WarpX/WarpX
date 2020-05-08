@@ -90,14 +90,15 @@ namespace {
 #endif
         solver.BackwardTransform(*Bfield[2], Idx::Bz);
 
-        solver.BackwardTransform(*Efield_avg[0], Idx::Ex_avg);
-        solver.BackwardTransform(*Efield_avg[1], Idx::Ey_avg);
-        solver.BackwardTransform(*Efield_avg[2], Idx::Ez_avg);
+        if (solver.fft_do_time_averaging){
+            solver.BackwardTransform(*Efield_avg[0], Idx::Ex_avg);
+            solver.BackwardTransform(*Efield_avg[1], Idx::Ey_avg);
+            solver.BackwardTransform(*Efield_avg[2], Idx::Ez_avg);
 
-        solver.BackwardTransform(*Bfield_avg[0], Idx::Bx_avg);
-        solver.BackwardTransform(*Bfield_avg[1], Idx::By_avg);
-        solver.BackwardTransform(*Bfield_avg[2], Idx::Bz_avg);
-
+            solver.BackwardTransform(*Bfield_avg[0], Idx::Bx_avg);
+            solver.BackwardTransform(*Bfield_avg[1], Idx::By_avg);
+            solver.BackwardTransform(*Bfield_avg[2], Idx::Bz_avg);
+        }
     }
 }
 

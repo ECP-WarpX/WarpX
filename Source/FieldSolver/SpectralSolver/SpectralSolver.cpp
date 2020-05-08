@@ -52,7 +52,6 @@ SpectralSolver::SpectralSolver(
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
 
-    bool fft_do_time_averaging;
     ParmParse pp("psatd");
     pp.query("do_time_averaging", fft_do_time_averaging);
 
