@@ -25,7 +25,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
     // get WarpX class object
     auto& warpx = WarpX::GetInstance();
 
-    const amrex::Vector<amrex::Real>* cost = warpx.getCosts(0);
+    const amrex::LayoutData<amrex::Real>* cost = warpx.getCosts(0);
 
     // judge if the diags should be done
     // costs is initialized only if we're doing load balance
@@ -51,20 +51,12 @@ void LoadBalanceCosts::ComputeDiags (int step)
     m_data.assign(dataSize, 0.0);
 
     // read in WarpX costs to local copy; compute if using `Heuristic` update
-    amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > > costs;
+    amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > > costs;
 
     costs.resize(nLevels);
     for (int lev = 0; lev < nLevels; ++lev)
     {
-        costs[lev].reset(new amrex::Vector<Real>);
-        const int nBoxesLev = warpx.getCosts(lev)->size();
-        costs[lev]->resize(nBoxesLev);
-        for (int i = 0; i < nBoxesLev; ++i)
-        {
-            // If `Heuristic` update, this fills with zeros;
-            // if `Timers` update, this fills with timer-based costs
-            (*costs[lev])[i] = (*warpx.getCosts(lev))[i];
-        }
+        costs[lev].reset(new amrex::LayoutData<Real>(*warpx.getCosts(lev)));
     }
 
     if (warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)

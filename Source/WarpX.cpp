@@ -648,6 +648,7 @@ WarpX::ReadParameters ()
         pp.query("nox", nox_fft);
         pp.query("noy", noy_fft);
         pp.query("noz", noz_fft);
+        pp.query("do_current_correction", do_current_correction);
         pp.query("v_galilean", v_galilean);
       // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
@@ -1075,9 +1076,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (load_balance_intervals.isActivated())
     {
-        costs[lev].reset(new amrex::Vector<Real>);
-        const int nboxes = Efield_fp[lev][0].get()->size();
-        costs[lev]->resize(nboxes);
+        costs[lev].reset(new amrex::LayoutData<Real>(ba, dm));
     }
 }
 

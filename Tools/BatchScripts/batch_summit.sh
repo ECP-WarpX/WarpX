@@ -13,7 +13,7 @@
 #BSUB -o WarpXo.%J
 #BSUB -e WarpXe.%J
 
-module load pgi
+module load gcc
 module load cuda
 
 omp=1
