@@ -45,7 +45,7 @@ void doGatherShapeN (const GetParticlePosition& GetPosition,
                      const long n_rz_azimuthal_modes)
 {
     using namespace amrex;
-    
+
     const Real dxi = 1.0/dx[0];
     const Real dzi = 1.0/dx[2];
 #if (AMREX_SPACEDIM == 3)

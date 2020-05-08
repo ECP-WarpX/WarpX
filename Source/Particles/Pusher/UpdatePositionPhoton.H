@@ -25,7 +25,7 @@ void UpdatePositionPhoton (
     const amrex::Real dt )
 {
     using namespace amrex;
-    
+
     // Compute speed of light over inverse of momentum modulus
     const Real c_over_umod = PhysConst::c/std::sqrt(ux*ux + uy*uy + uz*uz);
 

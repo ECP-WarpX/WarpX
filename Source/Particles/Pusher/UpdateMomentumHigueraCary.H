@@ -26,7 +26,7 @@ void UpdateMomentumHigueraCary (
     const amrex::Real q, const amrex::Real m, const amrex::Real dt )
 {
     using namespace amrex;
-    
+
     // Constants
     const Real qmt = 0.5*q*dt/m;
     constexpr Real invclight = 1./PhysConst::c;

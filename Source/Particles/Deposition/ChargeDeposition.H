@@ -38,7 +38,7 @@ void doChargeDepositionShapeN (const GetParticlePosition& GetPosition,
                                const long n_rz_azimuthal_modes)
 {
     using namespace amrex;
-    
+
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;

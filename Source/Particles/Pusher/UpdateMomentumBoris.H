@@ -20,7 +20,7 @@ void UpdateMomentumBoris (
     const amrex::Real q, const amrex::Real m, const amrex::Real dt )
 {
     using namespace amrex;
-    
+
     const Real econst = 0.5*q*dt/m;
 
     // First half-push for E
