@@ -5,21 +5,31 @@
 #include <AMReX_MultiFab.H>
 
 
-
+/**
+ * \brief This class contains the macroscopic parameters of the medium needed to 
+ * evaluate macroscopic Maxwell equation.
+ */
 class
 MacroscopicProperties
 {
-public :
-     MacroscopicProperties ();
-     /** \brief Read input parameters. This function is called in class constructor. */
+public:
+     MacroscopicProperties (); // constructor
+     /** \brief Read user-defined macroscopic properties. Called in constructor. */
      void ReadParameters ();
-     amrex::Real sigma () {return m_sigma;}
-     amrex::Real epsilon () {return m_epsilon;}
-     amrex::Real mu () {return m_mu;}
-private :
-     amrex::Real m_sigma; // conductivity (constant for now)
-     amrex::Real m_epsilon; // permittivity (constant for now)
-     amrex::Real m_mu;  // permeability (constant for now)
+     /** return Real, sigma (conductivity) of the medium. */
+     amrex::Real const sigma () {return m_sigma;}
+     /** return Real, epsilon (permittivity) of the medium. */
+     amrex::Real const epsilon () {return m_epsilon;}
+     /** return Real, mu (permeability) of the medium. */
+     amrex::Real const mu () {return m_mu;}
+
+private:
+     /** Conductivity, sigma, of the medium */
+     amrex::Real m_sigma; 
+     /** Permittivity, epsilon, of the medium */
+     amrex::Real m_epsilon; 
+     /** Permeability, mu, of the medium */
+     amrex::Real m_mu;
 };
 
 #endif // WARPX_MACROSCOPIC_PROPERTIES_H_
