@@ -140,6 +140,11 @@ public:
     static int maxwell_fdtd_solver_id;
     static long load_balance_costs_update_algo;
 
+    // Static public variable to switch on current correction in Fourier space
+    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010): can be set
+    // true by the user as an input parameter
+    bool do_current_correction = false;
+
     // div E cleaning
     static int do_dive_cleaning;
 
@@ -242,7 +247,7 @@ public:
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
 
-    static amrex::Vector<amrex::Real>* getCosts (int lev) {
+    static amrex::LayoutData<amrex::Real>* getCosts (int lev) {
         if (m_instance) {
             return m_instance->costs[lev].get();
         } else
@@ -467,7 +472,7 @@ public:
      * @param[in] costs vector of (`unique_ptr` to) vectors; expected to be initialized
      * to correct number of boxes and boxes per level
      */
-    void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& costs);
+    void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > >& costs);
 
 protected:
 
@@ -551,6 +556,15 @@ private:
     void ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp);
     void AddRhoFromFineLevelandSumBoundary (int lev, int icomp, int ncomp);
     void NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp);
+
+    /**
+     * \brief Private function for current correction in Fourier space
+     * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010):
+     * loops over the MR levels and applies the correction on the fine and coarse
+     * patches (calls the virtual method \c CurrentCorrection of the spectral
+     * algorithm in use, via the public interface defined in the class SpectralSolver).
+     */
+    void CurrentCorrection ();
 
     void ReadParameters ();
 
@@ -671,9 +685,9 @@ private:
     /** Load balancing intervals that reads the "load_balance_int" string int the input file
      * for getting steps at which load balancing is performed */
     IntervalsParser load_balance_intervals;
-    /** Collection of vectors to keep track of weights used in load balancing
+    /** Collection of LayoutData to keep track of weights used in load balancing
      * routines. Contains timer-based or heuristic-based costs depending on input option */
-    amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > > costs;
+    amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > > costs;
     /** Load balance with 'space filling curve' strategy. */
     int load_balance_with_sfc = 0;
     /** Controls the maximum number of boxes that can be assigned to a rank during

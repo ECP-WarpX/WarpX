@@ -7,7 +7,7 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "FilterFunctors.H"
+#include "Particles/Filter/FilterFunctors.H"
 #include "Particles/MultiParticleContainer.H"
 #include "WarpX.H"
 
