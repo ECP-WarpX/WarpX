@@ -22,7 +22,7 @@ E_S = m_e**2*c**3/e/hbar # Schwinger field
 
 dV = (1.e-6)**3 # total simulation volume
 dt = 2.407291502e-16
-filename = "diags/diag100001/"
+filename = sys.argv[1]
 
 def calculate_rate(Ex,Ey,Ez,Bx,By,Bz):
 ## Calculate theoretical pair production rate from EM field value
