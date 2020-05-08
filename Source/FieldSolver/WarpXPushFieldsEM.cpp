@@ -267,31 +267,13 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     const std::array<Real,3>& dx = WarpX::CellSize(patch_level);
     const Real dtsdx_c2 = c2dt/dx[0], dtsdy_c2 = c2dt/dx[1], dtsdz_c2 = c2dt/dx[2];
 
-    MultiFab *Ex, *Ey, *Ez, *Bx, *By, *Bz, *jx, *jy, *jz, *F;
+    MultiFab* F;
     if (patch_type == PatchType::fine)
     {
-        Ex = Efield_fp[lev][0].get();
-        Ey = Efield_fp[lev][1].get();
-        Ez = Efield_fp[lev][2].get();
-        Bx = Bfield_fp[lev][0].get();
-        By = Bfield_fp[lev][1].get();
-        Bz = Bfield_fp[lev][2].get();
-        jx = current_fp[lev][0].get();
-        jy = current_fp[lev][1].get();
-        jz = current_fp[lev][2].get();
         F  = F_fp[lev].get();
     }
     else if (patch_type == PatchType::coarse)
     {
-        Ex = Efield_cp[lev][0].get();
-        Ey = Efield_cp[lev][1].get();
-        Ez = Efield_cp[lev][2].get();
-        Bx = Bfield_cp[lev][0].get();
-        By = Bfield_cp[lev][1].get();
-        Bz = Bfield_cp[lev][2].get();
-        jx = current_cp[lev][0].get();
-        jy = current_cp[lev][1].get();
-        jz = current_cp[lev][2].get();
         F  = F_cp[lev].get();
     }
 
