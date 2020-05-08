@@ -358,19 +358,18 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 }
 
 /**
- * \brief Field gather for particles handled by thread thread_num
- * /param GetPosition : A functor for returning the particle position.
- * \param Exp, Eyp, Ezp: Pointer to array of electric field on particles.
- * \param Bxp, Byp, Bzp: Pointer to array of magnetic field on particles.
- * \param ex_arr ey_arr: Array4 of current density, either full array or tile.
- * \param ez_arr bx_arr: Array4 of current density, either full array or tile.
- * \param by_arr bz_arr: Array4 of current density, either full array or tile.
- * \param np_to_gather : Number of particles for which field is gathered.
- * \param dx           : 3D cell size
- * \param xyzmin       : Physical lower bounds of domain.
- * \param lo           : Index lower bounds of domain.
- * \param stagger_shift: 0 if nodal, 0.5 if staggered.
- * \param n_rz_azimuthal_modes: Number of azimuthal modes when using RZ geometry
+ * \brief Field gather for particles
+ *
+ * /param GetPosition          : A functor for returning the particle position.
+ * \param Exp, Eyp, Ezp        : Pointer to array of electric field on particles.
+ * \param Bxp, Byp, Bzp        : Pointer to array of magnetic field on particles.
+ * \param exfab eyfab ezfab    : Array4 of the electric field, either full array or tile.
+ * \param ezfab bxfab bzfab    : Array4 of the magnetic field, either full array or tile.
+ * \param np_to_gather         : Number of particles for which field is gathered.
+ * \param dx                   : 3D cell size
+ * \param xyzmin               : Physical lower bounds of domain.
+ * \param lo                   : Index lower bounds of domain.
+ * \param n_rz_azimuthal_modes : Number of azimuthal modes when using RZ geometry
  */
 template <int depos_order, int lower_in_v>
 void doGatherShapeN(const GetParticlePosition& GetPosition,
