@@ -17,11 +17,11 @@ public:
      /** \brief Read user-defined macroscopic properties. Called in constructor. */
      void ReadParameters ();
      /** return Real, sigma (conductivity) of the medium. */
-     amrex::Real const sigma () {return m_sigma;}
+     amrex::Real sigma () const noexcept {return m_sigma;}
      /** return Real, epsilon (permittivity) of the medium. */
-     amrex::Real const epsilon () {return m_epsilon;}
+     amrex::Real epsilon () const noexcept {return m_epsilon;}
      /** return Real, mu (permeability) of the medium. */
-     amrex::Real const mu () {return m_mu;}
+     amrex::Real mu () const noexcept {return m_mu;}
 
 private:
      /** Conductivity, sigma, of the medium */
