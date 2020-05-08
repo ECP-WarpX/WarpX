@@ -61,6 +61,9 @@ Diagnostics::ReadParameters ()
             std::remove(m_varnames.begin(), m_varnames.end(), "proc_number"),
             m_varnames.end());
     }
+#ifdef WARPX_DIM_RZ
+    pp.query("dump_rz_modes", m_dump_rz_modes);
+#endif
 
     // Read user-defined physical extents for the output and store in m_lo and m_hi.
     m_lo.resize(AMREX_SPACEDIM);
@@ -199,13 +202,9 @@ Diagnostics::FlushRaw () {}
 bool
 Diagnostics::DoDump (int step, bool force_flush)
 {
-    if (step == m_previous_step && !m_period == 1) return false;
-    if (force_flush){
-        m_previous_step = step+1;
-        return true;
-    }
-    if ( m_period>0 && (step+1)%m_period==0){
-        m_previous_step = step+1;
+    if (m_already_done) return false;
+    if ( force_flush || (m_period>0 && (step+1)%m_period==0) ){
+        m_already_done = true;
         return true;
     }
     return false;
@@ -215,6 +214,9 @@ void
 Diagnostics::AddRZModesToDiags (int lev)
 {
 #ifdef WARPX_DIM_RZ
+
+    if (!m_dump_rz_modes) return;
+
     auto & warpx = WarpX::GetInstance();
     int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0, 0)->nComp();
     // Make sure all multifabs have the same number of components
