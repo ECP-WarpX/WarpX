@@ -30,7 +30,7 @@ struct MediumForEM {
   */
 struct MacroscopicSolverAlgo {
     enum {
-        LaxWandroff = 0,
+        LaxWendroff = 0,
         BackwardEuler = 1
     };
 };

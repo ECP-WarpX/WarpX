@@ -66,7 +66,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     Real inv_fac = 0._rt;
 
     if (macroscopic_solver_algo == 0) {
-        // sigma_method == 0 for Lax_Wandroff or semi-implicit approach
+        // sigma_method == 0 for Lax_Wendroff or semi-implicit approach
         fac1 = 0.5_rt * sigma * dt / epsilon;
         inv_fac = 1._rt / ( 1._rt + fac1);
         alpha = (1.0_rt - fac1) * inv_fac;
