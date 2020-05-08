@@ -54,7 +54,7 @@ class FiniteDifferenceSolver
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
 
-        /** 
+        /**
           * \brief Macroscopic E-update for non-vacuum medium using the user-selected
           * finite-difference algorithm and macroscopic sigma-method defined in
           * WarpXAlgorithmSelection.H

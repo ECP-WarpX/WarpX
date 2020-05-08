@@ -6,7 +6,7 @@
 
 
 /**
- * \brief This class contains the macroscopic parameters of the medium needed to 
+ * \brief This class contains the macroscopic parameters of the medium needed to
  * evaluate macroscopic Maxwell equation.
  */
 class
@@ -25,9 +25,9 @@ public:
 
 private:
      /** Conductivity, sigma, of the medium */
-     amrex::Real m_sigma; 
+     amrex::Real m_sigma;
      /** Permittivity, epsilon, of the medium */
-     amrex::Real m_epsilon; 
+     amrex::Real m_epsilon;
      /** Permeability, mu, of the medium */
      amrex::Real m_mu;
 };

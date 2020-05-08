@@ -973,7 +973,7 @@ Numerics and algorithms
 
 * ``algo.em_solver_medium`` (`string`, optional)
     The medium for evaluating the Maxwell solver. Available options are :
-    
+
     - ``vacuum``: vacuum properties are used in the Maxwell solver.
     - ``macroscopic``: macroscopic Maxwell equation is evaluated. If this option is selected, then the corresponding properties of the medium must be provided using ``macroscopic.sigma``, ``macroscopic.epsilon``, and ``macroscopic.mu``.
 

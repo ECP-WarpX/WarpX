@@ -386,7 +386,7 @@ WarpX::OneStep_nosub (Real cur_time)
         if (WarpX::em_solver_medium == 0) {
             // vacuum medium
             EvolveE(dt[0]); // We now have E^{n+1}
-        } else { 
+        } else {
             // macroscopic medium
             MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
         }
