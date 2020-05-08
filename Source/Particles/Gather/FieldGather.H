@@ -80,7 +80,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 #else
     const amrex::Real x = (xp-xmin)*dxi;
 #endif
-    
+
     // j_[eb][xyz] leftmost grid point in x that the particle touches for the centering of each current
     // sx_[eb][xyz] shape factor along x for the centering of each current
     // There are only two possible centerings, node or cell centered, so at most only two shape factor
@@ -117,7 +117,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int const j_bx = ((bx_type[0] == NODE) ? j_node   : j_cell  );
     int const j_by = ((by_type[0] == NODE) ? j_node_v : j_cell_v);
     int const j_bz = ((bz_type[0] == NODE) ? j_node_v : j_cell_v);
-    
+
 #if (AMREX_SPACEDIM == 3)
     // y direction
     const amrex::Real y = (yp-ymin)*dyi;
@@ -153,7 +153,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int const k_bx = ((bx_type[1] == NODE) ? k_node_v : k_cell_v);
     int const k_by = ((by_type[1] == NODE) ? k_node   : k_cell  );
     int const k_bz = ((bz_type[1] == NODE) ? k_node_v : k_cell_v);
-    
+
 #endif
     // z direction
     const amrex::Real z = (zp-zmin)*dzi;
@@ -189,8 +189,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int const l_bx = ((bx_type[zdir] == NODE) ? l_node_v : l_cell_v);
     int const l_by = ((by_type[zdir] == NODE) ? l_node_v : l_cell_v);
     int const l_bz = ((bz_type[zdir] == NODE) ? l_node   : l_cell  );
-    
-    
+
+
     // Each field is gathered in a separate block of
     // AMREX_SPACEDIM nested loops because the deposition
     // order can differ for each component of each field
@@ -230,9 +230,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                 by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 0);
         }
     }
-    
+
 #ifdef WARPX_DIM_RZ
-    
+
     amrex::Real costheta;
     amrex::Real sintheta;
     if (rp > 0.) {
@@ -244,9 +244,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     }
     const Complex xy0 = Complex{costheta, -sintheta};
     Complex xy = xy0;
-    
+
     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
-        
+
         // Gather field on particle Eyp[i] from field on grid ey_arr
         for (int iz=0; iz<=depos_order; iz++){
             for (int ix=0; ix<=depos_order; ix++){
@@ -289,7 +289,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         }
         xy = xy*xy0;
     }
-    
+
     // Convert Exp and Eyp (which are actually Er and Etheta) to Ex and Ey
     const amrex::Real Exp_save = Exp;
     Exp = costheta*Exp - sintheta*Eyp;
@@ -298,7 +298,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     Bxp = costheta*Bxp - sintheta*Byp;
     Byp = costheta*Byp + sintheta*Bxp_save;
 #endif
-    
+
 #else // (AMREX_SPACEDIM == 3)
     // Gather field on particle Exp[i] from field on grid ex_arr
     for (int iz=0; iz<=depos_order; iz++){
@@ -354,7 +354,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
             }
         }
     }
-#endif    
+#endif
 }
 
 /**
@@ -391,7 +391,7 @@ void doGatherShapeN(const GetParticlePosition& GetPosition,
 
     amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
     amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
-    
+
     amrex::Array4<const amrex::Real> const& ex_arr = exfab->array();
     amrex::Array4<const amrex::Real> const& ey_arr = eyfab->array();
     amrex::Array4<const amrex::Real> const& ez_arr = ezfab->array();
@@ -405,7 +405,7 @@ void doGatherShapeN(const GetParticlePosition& GetPosition,
     amrex::IndexType const bx_type = bxfab->box().ixType();
     amrex::IndexType const by_type = byfab->box().ixType();
     amrex::IndexType const bz_type = bzfab->box().ixType();
-    
+
     // Loop over particles and gather fields from
     // {e,b}{x,y,z}_arr to {E,B}{xyz}p.
     amrex::ParallelFor(
