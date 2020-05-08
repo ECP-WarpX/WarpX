@@ -124,9 +124,9 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
 #endif
 
                 const Real nu = kv/(k_norm*c);
-                const Complex theta = std::exp( 0.5*I*kv*dt );
-                const Complex theta_star = std::exp( -0.5*I*kv*dt );
-                const Complex e_theta = std::exp( I*c*k_norm*dt );
+                const Complex theta = amrex::exp( 0.5*I*kv*dt );
+                const Complex theta_star = amrex::exp( -0.5*I*kv*dt );
+                const Complex e_theta = amrex::exp( I*c*k_norm*dt );
 
                 Theta2(i,j,k) = theta*theta;
 
