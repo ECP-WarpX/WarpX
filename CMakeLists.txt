@@ -65,6 +65,10 @@ endif()
 #include(CTest)
 # automatically defines: BUILD_TESTING, default is ON
 
+#if(ENABLE_CUDA)
+#    enable_language(CUDA)
+#endif()
+
 # Dependencies ################################################################
 #
 # external library: MPI (optional)
@@ -125,37 +129,35 @@ if(WarpX_USE_INTERNAL_AMReX)
     # TEMPORARY until fixed upstream
     set(ENABLE_FORTRAN_INTERFACES ON CACHE INTERNAL "")
     #set(ENABLE_FORTRAN ON CACHE INTERNAL "")
-    FetchContent_Declare(AMReX
+    FetchContent_Declare(fetchedamrex
       GIT_REPOSITORY "https://github.com/AMReX-Codes/amrex.git"
       GIT_TAG        "development"
       #GIT_REPOSITORY "/home/axel/src/amrex/.git"
       #GIT_REPOSITORY "https://github.com/ax3l/amrex.git"
-      #GIT_TAG        "topic-cudaTargetFlags"
+      #GIT_TAG        "fix-randomStaticFunc"
       BUILD_IN_SOURCE 0
     )
-    FetchContent_MakeAvailable(AMReX)
+    #FetchContent_MakeAvailable(fetchedamrex)
+    FetchContent_GetProperties(fetchedamrex)
+    if(NOT fetchedamrex_POPULATED)
+      FetchContent_Populate(fetchedamrex)
+      list(APPEND CMAKE_MODULE_PATH "${fetchedamrex_SOURCE_DIR}/Tools/CMake")
+      if(ENABLE_CUDA)
+          enable_language(CUDA)
+          include(AMReX_SetupCUDA)
+      endif()
+      add_subdirectory(${fetchedamrex_SOURCE_DIR} ${fetchedamrex_BINARY_DIR})
+    endif()
 
-    # FIXME hackity-hack path
-    list(APPEND CMAKE_MODULE_PATH "${PROJECT_BINARY_DIR}/_deps/amrex-src/Tools/CMake")
-
-    message(WARNING "VERSION: ${AMREX_GIT_VERSION}")
-    # message(WARNING "VERSION: ${AMReX_VERSION}")  # FIXME missing upstream
-
-    message(STATUS "AMReX: Using INTERNAL version ${AMReX_VERSION}")
+    message(STATUS "AMReX: Using INTERNAL version '${AMREX_PKG_VERSION}' (${AMREX_GIT_VERSION})")
 else()
     find_package(AMReX 3.7.0 CONFIG REQUIRED)
-    message(STATUS "AMReX: Found version ${AMReX_VERSION}")
+    message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
 endif()
 
-if(ENABLE_CUDA)
-    enable_language(CUDA)
-    include(AMReX_SetupCUDA)
-    # set_source_files_properties(main.cpp PROPERTIES LANGUAGE CUDA)
-endif()
-
-add_library(WarpX::thirdparty::AMReX INTERFACE IMPORTED)
-target_link_libraries(WarpX::thirdparty::AMReX
-    INTERFACE AMReX::amrex)
+#add_library(WarpX::thirdparty::AMReX INTERFACE IMPORTED)
+#target_link_libraries(WarpX::thirdparty::AMReX
+#    INTERFACE AMReX::amrex)
 
 # external library: PICSAR (required)
 # external library: FFTW (optional)
@@ -164,17 +166,8 @@ target_link_libraries(WarpX::thirdparty::AMReX
 
 # Targets #####################################################################
 #
-set(CORE_SOURCE
-    Source/main.cpp
-    Source/WarpX.cpp
-)
-
-#if(ENABLE_CUDA)
-#    set_source_files_properties(Source/main.cpp Source/WarpX.cpp PROPERTIES LANGUAGE CUDA)
-#endif()
-
 # executable
-add_executable(WarpX ${CORE_SOURCE})
+add_executable(WarpX)
 add_executable(WarpX::WarpX ALIAS WarpX)
 
 # own headers
@@ -182,6 +175,17 @@ target_include_directories(WarpX PUBLIC
     $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
 #    $<BUILD_INTERFACE:${WarpX_BINARY_DIR}/Source>
 #    $<INSTALL_INTERFACE:Source>
+)
+
+# we include <AMReX_buildInfo.H>
+include(AMReXBuildInfo)  # FIXME this requires Python at build time...
+# FIXME hackity-hack path
+generate_buildinfo(WarpX "${WarpX_SOURCE_DIR}")
+
+target_sources(WarpX
+  PRIVATE
+    Source/main.cpp
+    Source/WarpX.cpp
 )
 
 # more sources
@@ -200,11 +204,6 @@ add_subdirectory(Source/Particles)
 #add_subdirectory(Source/QED)
 add_subdirectory(Source/Utils)
 
-# we include <AMReX_buildInfo.H>
-include(AMReXBuildInfo)  # FIXME this requires Python at build time...
-# FIXME hackity-hack path
-generate_buildinfo(WarpX "${PROJECT_BINARY_DIR}/_deps/amrex-src/")
-
 # FIXME
 #set_target_properties(WarpX
 #   PROPERTIES
@@ -213,17 +212,17 @@ generate_buildinfo(WarpX "${PROJECT_BINARY_DIR}/_deps/amrex-src/")
 #)
 
 # properties
-target_compile_features(WarpX
-    PUBLIC cxx_std_14
-)
-set_target_properties(WarpX PROPERTIES
-    CXX_EXTENSIONS OFF
-    CXX_STANDARD_REQUIRED ON
-)
+#target_compile_features(WarpX
+#    PUBLIC cxx_std_14
+#)
+#set_target_properties(WarpX PROPERTIES
+#    CXX_EXTENSIONS OFF
+#    CXX_STANDARD_REQUIRED ON
+#)
 
-if(ENABLE_CUDA)
-    set_cpp_sources_to_cuda_language( WarpX )
-endif()
+#if(ENABLE_CUDA)
+#    set_cpp_sources_to_cuda_language( WarpX )
+#endif()
 
 
 # FIXME hackity-hack path to PICSAR
@@ -243,11 +242,12 @@ target_include_directories(WarpX PRIVATE
 #    $<TARGET_PROPERTY:WarpX::thirdparty::AMReX,INTERFACE_INCLUDE_DIRECTORIES>)
 #target_link_libraries(WarpX PRIVATE WarpX::thirdparty::AMReX)
 # should not be needed... if we setup cuda via amrex helpers...
-target_compile_options(
-    WarpX::thirdparty::AMReX INTERFACE
-      $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
-      $<$<COMPILE_LANGUAGE:CUDA>:--expt-extended-lambda>)
-target_link_libraries(WarpX PRIVATE WarpX::thirdparty::AMReX)
+#target_compile_options(
+#    WarpX::thirdparty::AMReX INTERFACE
+#      $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
+#      $<$<COMPILE_LANGUAGE:CUDA>:--expt-extended-lambda>)
+#target_link_libraries(WarpX PRIVATE WarpX::thirdparty::AMReX)
+target_link_libraries(WarpX PUBLIC AMReX::amrex)
 
 # HDF5 Backend
 #if(WarpX_HAVE_HDF5)
@@ -464,3 +464,11 @@ endforeach()
 message("    DIM: ${WarpX_DIM}")
 message("")
 
+if(ENABLE_CUDA)
+    set_cpp_sources_to_cuda_language( WarpX )
+    # mainly due to amrex::Random which uses global device variables
+    set_target_properties( WarpX
+      PROPERTIES
+      CUDA_SEPARABLE_COMPILATION ON  # This add -dc flag
+    )
+endif()
