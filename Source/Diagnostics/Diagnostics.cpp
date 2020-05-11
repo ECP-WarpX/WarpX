@@ -10,7 +10,6 @@
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
 #include "WarpX.H"
-#include "Utils/Average.H"
 #include "Utils/WarpXUtil.H"
 
 using namespace amrex;
@@ -34,7 +33,9 @@ Diagnostics::ReadParameters ()
     ParmParse pp(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp.query("file_prefix", m_file_prefix);
-    pp.query("period", m_period);
+    std::string period_string = "0";
+    pp.query("period", period_string);
+    m_intervals = IntervalsParser(period_string);
     pp.query("format", m_format);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd" || m_format == "checkpoint",
@@ -203,7 +204,7 @@ bool
 Diagnostics::DoDump (int step, bool force_flush)
 {
     if (m_already_done) return false;
-    if ( force_flush || (m_period>0 && (step+1)%m_period==0) ){
+    if ( force_flush || (m_intervals.contains(step+1)) ){
         m_already_done = true;
         return true;
     }
