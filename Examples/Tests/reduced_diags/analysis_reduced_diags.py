@@ -25,6 +25,7 @@ import sys
 import yt
 import numpy as np
 import scipy.constants as scc
+import read_raw_data
 
 fn = sys.argv[1]
 
@@ -55,12 +56,14 @@ w  = ad['photons','particle_weight'].to_ndarray()
 EPyt = EPyt + np.sum( (np.sqrt(px**2+py**2+pz**2)*scc.c)*w )
 
 # Use raw field plotfiles to compare with maximum field reduced diag
-Ex_raw = ad['raw','Ex_aux'].to_ndarray()[:,0]
-Ey_raw = ad['raw','Ey_aux'].to_ndarray()[:,0]
-Ez_raw = ad['raw','Ez_aux'].to_ndarray()[:,0]
-Bx_raw = ad['raw','Bx_aux'].to_ndarray()[:,0]
-By_raw = ad['raw','By_aux'].to_ndarray()[:,0]
-Bz_raw = ad['raw','Bz_aux'].to_ndarray()[:,0]
+ad_raw = read_raw_data.read_data(fn)
+# We trim the last nodal cells in the raw output to directly compare with reduced diag output
+Ex_raw = ad_raw[0]['Ex_aux'][:,:-1,:-1]
+Ey_raw = ad_raw[0]['Ey_aux'][:-1,:,:-1]
+Ez_raw = ad_raw[0]['Ez_aux'][:-1,:-1,:]
+Bx_raw = ad_raw[0]['Bx_aux'][:-1,:,:]
+By_raw = ad_raw[0]['By_aux'][:,:-1,:]
+Bz_raw = ad_raw[0]['Bz_aux'][:,:,:-1]
 max_Ex = np.amax(np.abs(Ex_raw))
 max_Ey = np.amax(np.abs(Ey_raw))
 max_Ez = np.amax(np.abs(Ez_raw))
