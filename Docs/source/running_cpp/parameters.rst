@@ -1132,11 +1132,11 @@ This should be changed in the future.
     Name of each diagnostics.
     example: ``diagnostics.diags_names = diag1 my_second_diag``.
 
-* ``<diag_name>.period`` (`integer` optional, default ``-1``)
-    The number of PIC cycles (interval) in between two consecutive data dumps.
-    Use a negative number to disable data dumping.
-    This is ``-1`` (disabled) by default.
-    example: ``diag1.period = 10``.
+* ``<diag_name>.period`` (`string` optional, default `0`)
+    Using the `Intervals parser`_ syntax, this string defines the timesteps at which data is dumped.
+    Use a negative number or 0 to disable data dumping.
+    This is ``0`` (disabled) by default.
+    example: ``diag1.period = 10,20:25:1``.
 
 * ``<diag_name>.diag_type`` (`string`)
     Type of diagnostics. So far, only ``Full`` is supported.
