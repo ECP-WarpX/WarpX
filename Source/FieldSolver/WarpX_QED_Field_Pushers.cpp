@@ -90,7 +90,7 @@ WarpX::Hybrid_QED_Push (int lev, PatchType patch_type, Real a_dt)
         Jz = current_cp[lev][2].get();
     }
 
-    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP

@@ -12,6 +12,7 @@ jobs:
         path: 'warpx_directory/WarpX'
     - name: install dependencies
       run: |
+        brew update
         brew install cmake
         brew install fftw
         brew install libomp
