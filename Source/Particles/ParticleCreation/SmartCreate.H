@@ -39,9 +39,7 @@ struct SmartCreate
     void operator() (
         PartData& prt, const int i_prt,
         const amrex::Real x = 0.0,
-#if (AMREX_SPACEDIM == 3)
         const amrex::Real y = 0.0,
-#endif
         const amrex::Real z = 0.0,
         const int cpu = 0,
         const int id = 0) const noexcept
@@ -49,8 +47,10 @@ struct SmartCreate
         prt.m_aos[i_prt].pos(0) = x;
 #if (AMREX_SPACEDIM == 3)
         prt.m_aos[i_prt].pos(1) = y;
-#endif
         prt.m_aos[i_prt].pos(2) = z;
+#elif (AMREX_SPACEDIM == 2)
+        prt.m_aos[i_prt].pos(1) = z;
+#endif
 
         prt.m_aos[i_prt].cpu() = cpu;
         prt.m_aos[i_prt].id() = id;

@@ -233,10 +233,10 @@ SpectralFieldData::ForwardTransform( const MultiFab& mf,
                 realspace_bx = mf[mfi].box(); // Keep guard cells
             }
             realspace_bx.enclosedCells(); // Discard last point in nodal direction
-            AMREX_ALWAYS_ASSERT( realspace_bx == tmpRealField[mfi].box() );
+            AMREX_ALWAYS_ASSERT( realspace_bx.contains(tmpRealField[mfi].box()) );
             Array4<const Real> mf_arr = mf[mfi].array();
             Array4<Real> tmp_arr = tmpRealField[mfi].array();
-            ParallelFor( realspace_bx,
+            ParallelFor( tmpRealField[mfi].box(),
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
                 tmp_arr(i,j,k) = mf_arr(i,j,k,i_comp);
             });
