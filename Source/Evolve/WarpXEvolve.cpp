@@ -16,6 +16,9 @@
 #ifdef WARPX_USE_PY
 #   include "Python/WarpX_py.H"
 #endif
+#ifdef WARPX_USE_PSATD
+#include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#endif
 
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -53,18 +56,20 @@ WarpX::Evolve (int numsteps)
     {
         Real walltime_beg_step = amrex::second();
 
+        multi_diags->NewIteration();
+
         // Start loop on time steps
         amrex::Print() << "\nSTEP " << step+1 << " starts ...\n";
 #ifdef WARPX_USE_PY
         if (warpx_py_beforestep) warpx_py_beforestep();
 #endif
 
-        amrex::Vector<amrex::Real>* cost = WarpX::getCosts(0);
+        amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
         if (cost) {
 #ifdef WARPX_USE_PSATD
             amrex::Abort("LoadBalance for PSATD: TODO");
 #endif
-            if (step > 0 && (step+1) % load_balance_int == 0)
+            if (step > 0 && load_balance_intervals.contains(step+1))
             {
                 LoadBalance();
 
@@ -80,9 +85,9 @@ WarpX::Evolve (int numsteps)
                     // (Giving more importance to most recent costs; only needed
                     // for timers update, heuristic load balance considers the
                     // instantaneous costs)
-                    for (int i=0; i<cost->size(); ++i)
+                    for (int i : cost->IndexArray())
                     {
-                        (*cost)[i] *= (1. - 2./load_balance_int);
+                        (*cost)[i] *= (1. - 2./load_balance_intervals.localPeriod(step+1));
                     }
                 }
             }
@@ -324,6 +329,9 @@ WarpX::OneStep_nosub (Real cur_time)
     // product species.
     mypc->doFieldIonization();
     mypc->doCoulombCollisions();
+#ifdef WARPX_QED
+    mypc->doQEDSchwinger();
+#endif
     // Push particle from x^{n} to x^{n+1}
     //               from p^{n-1/2} to p^{n+1/2}
     // Deposit current j^{n+1/2}
@@ -339,14 +347,35 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 #endif
 
+#ifdef WARPX_USE_PSATD
+    // Apply current correction in Fourier space
+    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
+    if ( fft_periodic_single_box == false ) {
+        // For domain decomposition with local FFT over guard cells,
+        // apply this before `SyncCurrent`, i.e. before exchanging guard cells for J
+        if ( do_current_correction ) CurrentCorrection();
+    }
+#endif
+
 #ifdef WARPX_QED
     //Do QED processes
     mypc->doQedEvents();
 #endif
 
+    // Synchronize J and rho
     SyncCurrent();
-
     SyncRho();
+
+#ifdef WARPX_USE_PSATD
+    // Apply current correction in Fourier space
+    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
+    if ( fft_periodic_single_box == true ) {
+        // For periodic, single-box FFT (FFT without guard cells)
+        // apply this after `SyncCurrent`, i.e. after exchanging guard cells for J
+        if ( do_current_correction ) CurrentCorrection();
+    }
+#endif
+
 
     // At this point, J is up-to-date inside the domain, and E and B are
     // up-to-date including enough guard cells for first step of the field
@@ -783,3 +812,20 @@ WarpX::applyMirrors(Real time){
         }
     }
 }
+
+#ifdef WARPX_USE_PSATD
+void
+WarpX::CurrentCorrection ()
+{
+    for ( int lev = 0; lev <= finest_level; ++lev )
+    {
+        // Apply correction on fine patch
+        spectral_solver_fp[lev]->CurrentCorrection( current_fp[lev], rho_fp[lev] );
+        if ( spectral_solver_cp[lev] )
+        {
+            // Apply correction on coarse patch
+            spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
+        }
+    }
+}
+#endif

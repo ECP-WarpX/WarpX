@@ -101,7 +101,7 @@ void MultiReducedDiags::WriteToFile (int step)
     {
 
         // Judge if the diags should be done
-        if ( (step+1) % m_multi_rd[i_rd]->m_freq != 0 ) { return; }
+        if ( (step+1) % m_multi_rd[i_rd]->m_freq != 0 ) { continue; }
 
         // call the write to file function
         m_multi_rd[i_rd]->WriteToFile(step);
