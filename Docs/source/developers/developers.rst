@@ -17,6 +17,7 @@ Our Doxygen API documentation in classic formatting `is located here <../_static
    initialization
    diagnostics
    moving_window
+   qed
    portability
    profiling
    contributing
