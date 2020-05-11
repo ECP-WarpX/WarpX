@@ -10,7 +10,6 @@
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
 #include "WarpX.H"
-#include "Utils/Average.H"
 #include "Utils/WarpXUtil.H"
 
 using namespace amrex;
