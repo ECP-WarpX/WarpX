@@ -198,100 +198,16 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
             m_fdtd_solver_fp[lev]->EvolveEPML(
                 pml[lev]->GetE_fp(), pml[lev]->GetB_fp(),
                 pml[lev]->Getj_fp(), pml[lev]->GetF_fp(),
+                pml[lev]->GetMultiSigmaBox_fp(),
                 a_dt, pml_has_particles );
         } else {
             m_fdtd_solver_cp[lev]->EvolveEPML(
                 pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
                 pml[lev]->Getj_cp(), pml[lev]->GetF_cp(),
+                pml[lev]->GetMultiSigmaBox_cp(),
                 a_dt, pml_has_particles );
         }
     }
-
-    const Real mu_c2_dt = (PhysConst::mu0*PhysConst::c*PhysConst::c) * a_dt;
-    const Real c2dt = (PhysConst::c*PhysConst::c) * a_dt;
-
-    const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
-    const std::array<Real,3>& dx = WarpX::CellSize(patch_level);
-    const Real dtsdx_c2 = c2dt/dx[0], dtsdy_c2 = c2dt/dx[1], dtsdz_c2 = c2dt/dx[2];
-
-    if (do_pml && pml[lev]->ok())
-    {
-
-        const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
-        const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
-        const auto& pml_j = (patch_type == PatchType::fine) ? pml[lev]->Getj_fp() : pml[lev]->Getj_cp();
-        const auto& pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
-        const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp()
-                                                            : pml[lev]->GetMultiSigmaBox_cp();
-#ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-        for ( MFIter mfi(*pml_E[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
-        {
-            const Box& tex  = mfi.tilebox( pml_E[0]->ixType().toIntVect() );
-            const Box& tey  = mfi.tilebox( pml_E[1]->ixType().toIntVect() );
-            const Box& tez  = mfi.tilebox( pml_E[2]->ixType().toIntVect() );
-
-            auto const& pml_Exfab = pml_E[0]->array(mfi);
-            auto const& pml_Eyfab = pml_E[1]->array(mfi);
-            auto const& pml_Ezfab = pml_E[2]->array(mfi);
-            auto const& pml_Bxfab = pml_B[0]->array(mfi);
-            auto const& pml_Byfab = pml_B[1]->array(mfi);
-            auto const& pml_Bzfab = pml_B[2]->array(mfi);
-
-            if (pml_has_particles) {
-                // Update the E field in the PML, using the current
-                // deposited by the particles in the PML
-                auto const& pml_jxfab = pml_j[0]->array(mfi);
-                auto const& pml_jyfab = pml_j[1]->array(mfi);
-                auto const& pml_jzfab = pml_j[2]->array(mfi);
-                const Real* sigmaj_x = sigba[mfi].sigma[0].data();
-                const Real* sigmaj_y = sigba[mfi].sigma[1].data();
-                const Real* sigmaj_z = sigba[mfi].sigma[2].data();
-
-                int const x_lo = sigba[mfi].sigma[0].lo();
-#if (AMREX_SPACEDIM == 3)
-                int const y_lo = sigba[mfi].sigma[1].lo();
-                int const z_lo = sigba[mfi].sigma[2].lo();
-#else
-                int const y_lo = 0;
-                int const z_lo = sigba[mfi].sigma[1].lo();
-#endif
-                amrex::ParallelFor( tex, tey, tez,
-                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                        push_ex_pml_current(i,j,k,
-                            pml_Exfab, pml_jxfab, sigmaj_y, sigmaj_z,
-                            y_lo, z_lo, mu_c2_dt);
-                    },
-                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                        push_ey_pml_current(i,j,k,
-                            pml_Eyfab, pml_jyfab, sigmaj_x, sigmaj_z,
-                            x_lo, z_lo, mu_c2_dt);
-                    },
-                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                        push_ez_pml_current(i,j,k,
-                            pml_Ezfab, pml_jzfab, sigmaj_x, sigmaj_y,
-                            x_lo, y_lo, mu_c2_dt);
-                    }
-                );
-            }
-
-        }
-    }
-
-/*
-    // Evolve PML
-    if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveEPML(
-            pml[lev]->GetE_fp(), pml[lev]->GetB_fp(),
-            pml[lev]->Getj_fp(), pml[lev]->GetF_fp(), a_dt, pml_has_particles );
-    } else {
-        m_fdtd_solver_cp[lev]->EvolveEPML(
-            pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
-            pml[lev]->Getj_cp(), pml[lev]->GetF_cp(), a_dt, pml_has_particles );
-    }
-
-*/
 }
 
 void

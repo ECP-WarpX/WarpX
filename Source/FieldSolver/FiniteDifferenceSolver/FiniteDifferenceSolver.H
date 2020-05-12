@@ -9,6 +9,7 @@
 #define WARPX_FINITE_DIFFERENCE_SOLVER_H_
 
 #include <AMReX_MultiFab.H>
+#include "BoundaryConditions/PML.H"
 
 /**
  * \brief Top-level class for the electromagnetic finite-difference solver
@@ -61,6 +62,7 @@ class FiniteDifferenceSolver
                       std::array< amrex::MultiFab*, 3 > const Bfield,
                       std::array< amrex::MultiFab*, 3 > const Jfield,
                       amrex::MultiFab* const Ffield,
+                      MultiSigmaBox const& sigba,
                       amrex::Real const dt, bool pml_has_particles );
 
     private:
@@ -151,6 +153,7 @@ class FiniteDifferenceSolver
             std::array< amrex::MultiFab*, 3 > const Bfield,
             std::array< amrex::MultiFab*, 3 > const Jfield,
             amrex::MultiFab* const Ffield,
+            MultiSigmaBox const& sigba,
             amrex::Real const dt, bool pml_has_particles );
 
 #endif
