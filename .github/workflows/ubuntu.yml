@@ -23,7 +23,11 @@ jobs:
         source /opt/intel/inteloneapi/setvars.sh
         sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
         sudo chmod a+x /usr/local/bin/cmake-easyinstall
-        sudo CXX=$(which icpc) CC=$(which icc) FC=$(which ifort) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+        export CXX=$(which icpc)
+        export CC=$(which icc)
+        export FC=$(which ifort)
+        export CEI_SUDO="sudo"
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
     - name: build WarpX
       run: |
         cd warpx_directory
@@ -61,19 +65,15 @@ jobs:
         set +e
         source /opt/intel/inteloneapi/setvars.sh
         set -e
-        ldd /opt/intel/inteloneapi/compiler/latest/linux/bin/dpcpp
-        ls /opt/intel/inteloneapi/compiler/latest/linux/bin/*
-        ldd $(which dpcpp)
-        ldd $(which clang)
-        ldd $(which ifort)
-        dpcpp --help
-        echo "int main() { return 0; }" > test.cpp
-        dpcpp test.cpp
-        ./a.out
-        cmake --version
-        sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
-        sudo chmod a+x /usr/local/bin/cmake-easyinstall
-        sudo CXX=$(which dpcpp) CC=$(which clang) FC=$(which ifort) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY
+        export CXXFLAGS="-fsycl-targets=spir64_x86_64-unknown-linux-sycldevice"
+        export CXX=$(which dpcpp)
+        export CC=$(which clang)
+        export FC=$(which ifort)
+        export LD_LIBRARY_PATH
+        export LIBRARY_PATH
+        set +e
+        export CEI_SUDO="sudo"
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY
     - name: build WarpX
       shell: bash
       run: |
