@@ -1,11 +1,13 @@
-/* Copyright 2019 Remi Lehe, Revathi Jambunathan
+/* Copyright 2019 Remi Lehe, Revathi Jambunathan, Edoardo Zoni
  *
  * This file is part of WarpX.
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpX.H"
 #include "PsatdAlgorithm.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <cmath>
 
@@ -13,7 +15,9 @@
 #if WARPX_USE_PSATD
 using namespace amrex;
 
-/* \brief Initialize coefficients for the update equation */
+/**
+ * \brief Constructor
+ */
 PsatdAlgorithm::PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                          const DistributionMapping& dm,
                          const int norder_x, const int norder_y,
@@ -31,11 +35,15 @@ PsatdAlgorithm::PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
     X2_coef = SpectralRealCoefficients(ba, dm, 1, 0);
     X3_coef = SpectralRealCoefficients(ba, dm, 1, 0);
 
+    // Initialize coefficients for update equations
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
+
+    m_dt = dt;
 }
 
-/* Advance the E and B field in spectral space (stored in `f`)
- * over one time step */
+/**
+ * \brief Advance E and B fields in spectral space (stored in `f`) over one time step
+ */
 void
 PsatdAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
 
@@ -120,6 +128,9 @@ PsatdAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
     }
 };
 
+/**
+ * \brief Initialize coefficients for update equations
+ */
 void PsatdAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spectral_kspace,
                                     const amrex::DistributionMapping& dm,
                                     const amrex::Real dt)
@@ -178,5 +189,82 @@ void PsatdAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spectr
             }
         });
      }
+}
+
+void
+PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
+                                   std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                   const std::unique_ptr<amrex::MultiFab>& rho ) {
+    // Profiling
+    WARPX_PROFILE( "PsatdAlgorithm::CurrentCorrection" );
+
+    using Idx = SpectralFieldIndex;
+
+    // Forward Fourier transform of J and rho
+    field_data.ForwardTransform( *current[0], Idx::Jx, 0 );
+    field_data.ForwardTransform( *current[1], Idx::Jy, 0 );
+    field_data.ForwardTransform( *current[2], Idx::Jz, 0 );
+    field_data.ForwardTransform( *rho, Idx::rho_old, 0 );
+    field_data.ForwardTransform( *rho, Idx::rho_new, 1 );
+
+    // Loop over boxes
+    for (MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
+
+        const Box& bx = field_data.fields[mfi].box();
+
+        // Extract arrays for the fields to be updated
+        Array4<Complex> fields = field_data.fields[mfi].array();
+        // Extract pointers for the k vectors
+        const Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
+#if (AMREX_SPACEDIM==3)
+        const Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
+#endif
+        const Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
+
+        // Local copy of member variables before GPU loop
+        const Real dt = m_dt;
+
+        // Loop over indices within one box
+        ParallelFor(bx,
+        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            // Record old values of the fields to be updated
+            using Idx = SpectralFieldIndex;
+            // Shortcuts for the values of J and rho
+            const Complex Jx = fields(i,j,k,Idx::Jx);
+            const Complex Jy = fields(i,j,k,Idx::Jy);
+            const Complex Jz = fields(i,j,k,Idx::Jz);
+            const Complex rho_old = fields(i,j,k,Idx::rho_old);
+            const Complex rho_new = fields(i,j,k,Idx::rho_new);
+            // k vector values, and coefficients
+            const Real kx = modified_kx_arr[i];
+#if (AMREX_SPACEDIM==3)
+            const Real ky = modified_ky_arr[j];
+            const Real kz = modified_kz_arr[k];
+#else
+            constexpr Real ky = 0;
+            const Real kz = modified_kz_arr[j];
+#endif
+            constexpr Complex I = Complex{0,1};
+
+            const Real k_norm = std::sqrt( kx*kx + ky*ky + kz*kz );
+
+            // div(J) in Fourier space
+            const Complex k_dot_J = kx*Jx + ky*Jy + kz*Jz;
+
+            // Correct J
+            if ( k_norm != 0 )
+            {
+                fields(i,j,k,Idx::Jx) = Jx - (k_dot_J-I*(rho_new-rho_old)/dt)*kx/(k_norm*k_norm);
+                fields(i,j,k,Idx::Jy) = Jy - (k_dot_J-I*(rho_new-rho_old)/dt)*ky/(k_norm*k_norm);
+                fields(i,j,k,Idx::Jz) = Jz - (k_dot_J-I*(rho_new-rho_old)/dt)*kz/(k_norm*k_norm);
+            }
+        });
+    }
+
+    // Backward Fourier transform of J
+    field_data.BackwardTransform( *current[0], Idx::Jx, 0 );
+    field_data.BackwardTransform( *current[1], Idx::Jy, 0 );
+    field_data.BackwardTransform( *current[2], Idx::Jz, 0 );
 }
 #endif // WARPX_USE_PSATD

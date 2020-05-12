@@ -10,7 +10,6 @@
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
 #include "WarpX.H"
-#include "Utils/Average.H"
 #include "Utils/WarpXUtil.H"
 
 using namespace amrex;
@@ -34,7 +33,9 @@ Diagnostics::ReadParameters ()
     ParmParse pp(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp.query("file_prefix", m_file_prefix);
-    pp.query("period", m_period);
+    std::string period_string = "0";
+    pp.query("period", period_string);
+    m_intervals = IntervalsParser(period_string);
     pp.query("format", m_format);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd" || m_format == "checkpoint",
@@ -61,6 +62,9 @@ Diagnostics::ReadParameters ()
             std::remove(m_varnames.begin(), m_varnames.end(), "proc_number"),
             m_varnames.end());
     }
+#ifdef WARPX_DIM_RZ
+    pp.query("dump_rz_modes", m_dump_rz_modes);
+#endif
 
     // Read user-defined physical extents for the output and store in m_lo and m_hi.
     m_lo.resize(AMREX_SPACEDIM);
@@ -168,8 +172,8 @@ Diagnostics::ComputeAndPack ()
     warpx.FieldGather();
 
     // cell-center fields and store result in m_mf_output.
-    int icomp_dst = 0;
     for(int lev=0; lev<nlev; lev++){
+        int icomp_dst = 0;
         for (int icomp=0, n=m_all_field_functors[0].size(); icomp<n; icomp++){
             // Call all functors in m_all_field_functors[lev]. Each of them computes
             // a diagnostics and writes in one or more components of the output
@@ -178,9 +182,9 @@ Diagnostics::ComputeAndPack ()
             // update the index of the next component to fill
             icomp_dst += m_all_field_functors[lev][icomp]->nComp();
         }
+        // Check that the proper number of components of mf_avg were updated.
+        AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
     }
-    // Check that the proper number of components of m_mf_output were updated.
-    AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
 }
 
 void
@@ -199,8 +203,11 @@ Diagnostics::FlushRaw () {}
 bool
 Diagnostics::DoDump (int step, bool force_flush)
 {
-    if (force_flush) return true;
-    if ( m_period>0 && (step+1)%m_period==0 ) return true;
+    if (m_already_done) return false;
+    if ( force_flush || (m_intervals.contains(step+1)) ){
+        m_already_done = true;
+        return true;
+    }
     return false;
 }
 
@@ -208,6 +215,9 @@ void
 Diagnostics::AddRZModesToDiags (int lev)
 {
 #ifdef WARPX_DIM_RZ
+
+    if (!m_dump_rz_modes) return;
+
     auto & warpx = WarpX::GetInstance();
     int ncomp_multimodefab = warpx.get_pointer_Efield_aux(0, 0)->nComp();
     // Make sure all multifabs have the same number of components
@@ -403,8 +413,8 @@ Diagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "rho" ){
             // rho_new is stored in component 1 of rho_fp when using PSATD
 #ifdef WARPX_USE_PSATD
-            std::unique_ptr<MultiFab> rho_new = std::make_unique<MultiFab>(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(rho_new.get(), lev, m_crse_ratio);
+            MultiFab* rho_new = new MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(rho_new, lev, m_crse_ratio);
 #else
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_rho_fp(lev), lev, m_crse_ratio);
 #endif

@@ -7,8 +7,6 @@ amr.blocking_factor = 16
 
 # Maximum level in hierarchy (for now must be 0, i.e., one level in total)
 amr.max_level = 1
-amr.plot_file = "plotfiles/plt"
-amr.plot_int = 200
 
 warpx.fine_tag_lo = -2.e-6   -15.e-6
 warpx.fine_tag_hi =  2.e-6    -7.e-6
@@ -22,14 +20,11 @@ geometry.prob_hi     =  30.e-6     0.e-6
 
 # Verbosity
 warpx.verbose = 1
-warpx.plot_raw_fields = 1
 warpx.do_dive_cleaning = 0
 warpx.use_filter = 1
 warpx.do_pml = 1
 warpx.do_subcycling = 1
 warpx.refine_plasma = 0
-warpx.plot_raw_fields = 1
-warpx.plot_raw_fields_guards = 1
 warpx.plot_finepatch = 1
 warpx.plot_crsepatch = 1
 warpx.n_current_deposition_buffer = 0
@@ -120,3 +115,8 @@ plasma_p.do_continuous_injection = 1
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1. # in units of the speed of light
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 200
+diag1.diag_type = Full

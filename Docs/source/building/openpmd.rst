@@ -29,6 +29,8 @@ You may want to auto-activate spack when you open a new terminal by adding this 
    echo -e "# activate spack package manager\n. ${SPACK_ROOT}/share/spack/setup-env.sh" >> $HOME/.bashrc
 
 
+.. _building-openpmd-spack:
+
 WarpX Development Environment with Spack
 ----------------------------------------
 
@@ -68,6 +70,8 @@ You can check which Spack environments exist and if one is still active with
    spack env list  # already created environments
    spack env st    # is an environment active?
 
+
+.. _building-openpmd-source:
 
 Installing openPMD-api from source
 ----------------------------------

@@ -29,7 +29,7 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
     // Set plot_flag to 0 for all attribs
     plot_flags.resize(plot_flag_size, 0);
 
-    // If not none, set plot_flags values to 1 for elements in plot_vars.
+    // If not none, set plot_flags values to 1 for elements in variables.
     if (variables[0] != "none"){
         for (const auto& var : variables){
             // Return error if var not in PIdx.

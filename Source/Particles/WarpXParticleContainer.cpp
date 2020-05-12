@@ -11,7 +11,7 @@
 #include "WarpXParticleContainer.H"
 #include "WarpX.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "Parallelization/WarpXComm.H"
+#include "Utils/CoarsenMR.H"
 // Import low-level single-particle kernels
 #include "Pusher/GetAndSetPosition.H"
 #include "Pusher/UpdatePosition.H"
@@ -254,9 +254,9 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     }
 
     // Staggered tile boxes (different in each direction)
-    Box tbx = convert(tilebox, WarpX::jx_nodal_flag);
-    Box tby = convert(tilebox, WarpX::jy_nodal_flag);
-    Box tbz = convert(tilebox, WarpX::jz_nodal_flag);
+    Box tbx = convert( tilebox, jx->ixType().toIntVect() );
+    Box tby = convert( tilebox, jy->ixType().toIntVect() );
+    Box tbz = convert( tilebox, jz->ixType().toIntVect() );
     tilebox.grow(ngJ);
 
 #ifdef AMREX_USE_GPU
@@ -426,7 +426,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     }
 
     tilebox.grow(ngRho);
-    const Box tb = amrex::convert(tilebox, WarpX::rho_nodal_flag);
+    const Box tb = amrex::convert( tilebox, rho->ixType().toIntVect() );
 
     const int nc = (rho->nComp() == 1 ? 1 : rho->nComp()/2);
 
@@ -556,7 +556,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 
         int const refinement_ratio = 2;
 
-        interpolateDensityFineToCoarse( *rho[lev+1], coarsened_fine_data, refinement_ratio );
+        CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], IntVect(refinement_ratio) );
         rho[lev]->ParallelAdd( coarsened_fine_data, m_gdb->Geom(lev).periodicity() );
     }
 }
@@ -768,7 +768,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
     if (do_not_push) return;
 
-    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef _OPENMP
 #pragma omp parallel

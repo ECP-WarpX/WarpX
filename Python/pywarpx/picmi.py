@@ -476,7 +476,8 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 class GaussianLaser(picmistandard.PICMI_GaussianLaser):
     def initialize_inputs(self):
         self.laser_number = pywarpx.lasers.nlasers + 1
-        self.name = 'laser{}'.format(self.laser_number)
+        if self.name is None:
+            self.name = 'laser{}'.format(self.laser_number)
 
         self.laser = pywarpx.Lasers.newlaser(self.name)
 
@@ -491,19 +492,36 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
         self.laser.phi2 = self.phi2
 
 
+class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
+    def initialize_inputs(self):
+        self.laser_number = pywarpx.lasers.nlasers + 1
+        if self.name is None:
+            self.name = 'laser{}'.format(self.laser_number)
+
+        self.laser = pywarpx.Lasers.newlaser(self.name)
+
+        self.laser.profile = "parse_field_function"
+        self.laser.wavelength = self.wavelength  # The wavelength of the laser (in meters)
+        self.laser.e_max = self.Emax  # Maximum amplitude of the laser field (in V/m)
+        self.laser.polarization = self.polarization_direction  # The main polarization vector
+        self.laser.__setattr__('field_function(X,Y,t)', self.field_expression)
+
+        for k,v in self.user_defined_kw.items():
+            setattr(pywarpx.my_constants, k, v)
+
+
 class LaserAntenna(picmistandard.PICMI_LaserAntenna):
     def initialize_inputs(self, laser):
         laser.laser.position = self.position  # This point is on the laser plane
         laser.laser.direction = self.normal_vector  # The plane normal direction
-        laser.laser.profile_focal_distance = laser.focal_position[2] - self.position[2]  # Focal distance from the antenna (in meters)
-        laser.laser.profile_t_peak = (self.position[2] - laser.centroid_position[2])/constants.c  # The time at which the laser reaches its peak (in seconds)
+        if isinstance(laser, GaussianLaser):
+            laser.laser.profile_focal_distance = laser.focal_position[2] - self.position[2]  # Focal distance from the antenna (in meters)
+            laser.laser.profile_t_peak = (self.position[2] - laser.centroid_position[2])/constants.c  # The time at which the laser reaches its peak (in seconds)
 
 
 class Simulation(picmistandard.PICMI_Simulation):
     def init(self, kw):
 
-        self.plot_int = kw.pop('warpx_plot_int', None)
-        self.plot_file = kw.pop('warpx_plot_file', None)
         self.current_deposition_algo = kw.pop('warpx_current_deposition_algo', None)
         self.charge_deposition_algo = kw.pop('warpx_charge_deposition_algo', None)
         self.field_gathering_algo = kw.pop('warpx_field_gathering_algo', None)
@@ -531,8 +549,6 @@ class Simulation(picmistandard.PICMI_Simulation):
             pywarpx.warpx.gamma_boost = self.gamma_boost
             pywarpx.warpx.boost_direction = None
 
-        pywarpx.amr.plot_int = self.plot_int
-        pywarpx.amr.plot_file = self.plot_file
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
         pywarpx.algo.field_gathering = self.field_gathering_algo
@@ -610,40 +626,59 @@ class Simulation(picmistandard.PICMI_Simulation):
 # ----------------------------
 
 
-class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
+class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
     def init(self, kw):
 
         self.plot_raw_fields = kw.pop('warpx_plot_raw_fields', None)
         self.plot_raw_fields_guards = kw.pop('warpx_plot_raw_fields_guards', None)
         self.plot_finepatch = kw.pop('warpx_plot_finepatch', None)
         self.plot_crsepatch = kw.pop('warpx_plot_crsepatch', None)
+        self.format = kw.pop('warpx_format', 'plotfile')
+        self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
 
     def initialize_inputs(self):
-        # --- For now, the period must be the same as plot_int if set
-        pywarpx.amr.check_consistency('plot_int', self.period, 'The period must be the same for all simulation frame diagnostics')
-        pywarpx.amr.plot_int = self.period
+        self.diagnostics_number = len(pywarpx.Diagnostics.diagnostics_list) + 1
+
+        # --- This a placeholder until the name attribute is added to the picmi standard
+        name = getattr(self, 'name', None)
+        if name is None:
+            self.name = 'diag{}'.format(self.diagnostics_number)
+
+        self.diagnostic = pywarpx.Bucket.Bucket(self.name)
+        pywarpx.diagnostics.diags_names.append(self.name)
+        pywarpx.Diagnostics.diagnostics_list.append(self.diagnostic)
+
+        self.diagnostic.diag_type = 'Full'
+        self.diagnostic.format = self.format
+        self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.period = self.period
+        self.diagnostic.diag_lo = self.lower_bound
+        self.diagnostic.diag_hi = self.upper_bound
+        self.diagnostic.coarsening_ratio = (np.array(self.grid.number_of_cells)/np.array(self.number_of_cells)).astype(int)
+        self.diagnostic.fields_to_plot = set()
 
         for dataname in self.data_list:
             if dataname == 'E':
-                pywarpx.warpx.add_field_to_plot('Ex')
-                pywarpx.warpx.add_field_to_plot('Ey')
-                pywarpx.warpx.add_field_to_plot('Ez')
+                self.diagnostic.fields_to_plot.add('Ex')
+                self.diagnostic.fields_to_plot.add('Ey')
+                self.diagnostic.fields_to_plot.add('Ez')
             elif dataname == 'B':
-                pywarpx.warpx.add_field_to_plot('Bx')
-                pywarpx.warpx.add_field_to_plot('By')
-                pywarpx.warpx.add_field_to_plot('Bz')
+                self.diagnostic.fields_to_plot.add('Bx')
+                self.diagnostic.fields_to_plot.add('By')
+                self.diagnostic.fields_to_plot.add('Bz')
             elif dataname == 'J':
-                pywarpx.warpx.add_field_to_plot('jx')
-                pywarpx.warpx.add_field_to_plot('jy')
-                pywarpx.warpx.add_field_to_plot('jz')
-            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'F', 'proc_number']:
-                pywarpx.warpx.add_field_to_plot(dataname)
+                self.diagnostic.fields_to_plot.add('jx')
+                self.diagnostic.fields_to_plot.add('jy')
+                self.diagnostic.fields_to_plot.add('jz')
+            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'F', 'proc_number', 'part_per_cell']:
+                self.diagnostic.fields_to_plot.add(dataname)
             elif dataname in ['Jx', 'Jy', 'Jz']:
-                pywarpx.warpx.add_field_to_plot(dataname.lower())
+                self.diagnostic.fields_to_plot.add(dataname.lower())
             elif dataname == 'dive':
-                pywarpx.warpx.add_field_to_plot('divE')
+                self.diagnostic.fields_to_plot.add('divE')
             elif dataname == 'divb':
-                pywarpx.warpx.add_field_to_plot('divB')
+                self.diagnostic.fields_to_plot.add('divB')
             elif dataname == 'raw_fields':
                 self.plot_raw_fields = 1
             elif dataname == 'raw_fields_guards':
@@ -653,36 +688,31 @@ class FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
             elif dataname == 'crsepatch':
                 self.plot_crsepatch = 1
 
-        pywarpx.warpx.plot_raw_fields = self.plot_raw_fields
-        pywarpx.warpx.plot_raw_fields_guards = self.plot_raw_fields_guards
+        self.diagnostic.plot_raw_fields = self.plot_raw_fields
+        self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
+        self.diagnostic.plot_finepatch = self.plot_finepatch
+        self.diagnostic.plot_crsepatch = self.plot_crsepatch
 
-        pywarpx.warpx.check_consistency('plot_finepatch', self.plot_finepatch, 'The fine patch flag must be the same for all simulation frame field diagnostics')
-        pywarpx.warpx.check_consistency('plot_crsepatch', self.plot_crsepatch, 'The coarse patch flag must be the same for all simulation frame field diagnostics')
-        pywarpx.warpx.plot_finepatch = self.plot_finepatch
-        pywarpx.warpx.plot_crsepatch = self.plot_crsepatch
+        if self.write_dir is not None or self.file_prefix is not None:
+            write_dir = (self.write_dir or 'diags')
+            file_prefix = (self.file_prefix or self.name)
+            self.diagnostic.file_prefix = write_dir + '/' + file_prefix
 
-        if self.write_dir is not None:
-            plot_file = self.write_dir + '/plotfiles/plt'
-            pywarpx.amr.check_consistency('plot_file', plot_file, 'The plot directory must be the same for all simulation frame diagnostics')
-            pywarpx.amr.plot_file = plot_file
 
-class ElectrostaticFieldDiagnostic(picmistandard.PICMI_ElectrostaticFieldDiagnostic):
+class FieldDiagnostic(_WarpX_FieldDiagnostic, picmistandard.PICMI_FieldDiagnostic):
+    pass
+
+
+class ElectrostaticFieldDiagnostic(_WarpX_FieldDiagnostic, picmistandard.PICMI_ElectrostaticFieldDiagnostic):
     def initialize_inputs(self):
-        # --- For now, the period must be the same as plot_int if set
-        pywarpx.amr.check_consistency('plot_int', self.period, 'The period must be the same for all simulation frame diagnostics')
-        pywarpx.amr.plot_int = self.period
-
-        if self.write_dir is not None:
-            plot_file = self.write_dir + '/plotfiles/plt'
-            pywarpx.amr.check_consistency('plot_file', plot_file, 'The plot directory must be the same for all simulation frame diagnostics')
-            pywarpx.amr.plot_file = plot_file
+        if 'phi' in self.data_list:
+            # --- phi is not supported by WarpX, but is in the default data_list
+            self.data_list.remove('phi')
+        _WarpX_FieldDiagnostic.initialize_inputs(self)
 
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
     def initialize_inputs(self):
-        # --- For now, the period must be the same as plot_int if set
-        pywarpx.amr.check_consistency('plot_int', self.period, 'The period must be the same for all simulation frame diagnostics')
-        pywarpx.amr.plot_int = self.period
 
         plot_vars = set()
         for dataname in self.data_list:
@@ -704,8 +734,6 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
                 plot_vars.add('Bz')
             elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
                 plot_vars.add(dataname)
-            elif dataname in ['part_per_cell', 'part_per_grid', 'part_per_proc']:
-                pywarpx.warpx.add_field_to_plot(dataname)
 
         if plot_vars:
             species = self.species
@@ -714,11 +742,6 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
             for specie in species:
                 for var in plot_vars:
                     specie.species.plot_vars.add(var)
-
-        if self.write_dir is not None:
-            plot_file = self.write_dir + '/plotfiles/plt'
-            pywarpx.amr.check_consistency('plot_file', plot_file, 'The plot directory must be the same for all simulation frame diagnostics')
-            pywarpx.amr.plot_file = plot_file
 
 
 # ----------------------------

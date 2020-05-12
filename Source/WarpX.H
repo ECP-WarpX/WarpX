@@ -22,6 +22,7 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
+#include "Utils/IntervalsParser.H"
 
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #ifdef WARPX_USE_PSATD
@@ -37,6 +38,7 @@
 #ifdef WARPX_USE_OPENPMD
 #   include "Diagnostics/WarpXOpenPMD.H"
 #endif
+
 #include "Parser/WarpXParserWrapper.H"
 
 #include <AMReX_AmrCore.H>
@@ -137,6 +139,11 @@ public:
     static long particle_pusher_algo;
     static int maxwell_fdtd_solver_id;
     static long load_balance_costs_update_algo;
+
+    // Static public variable to switch on current correction in Fourier space
+    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010): can be set
+    // true by the user as an input parameter
+    bool do_current_correction = false;
 
     // div E cleaning
     static int do_dive_cleaning;
@@ -240,7 +247,7 @@ public:
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
 
-    static amrex::Vector<amrex::Real>* getCosts (int lev) {
+    static amrex::LayoutData<amrex::Real>* getCosts (int lev) {
         if (m_instance) {
             return m_instance->costs[lev].get();
         } else
@@ -320,7 +327,7 @@ public:
 
     /** \brief returns the load balance interval
      */
-    int get_load_balance_int () const {return load_balance_int;}
+    IntervalsParser get_load_balance_intervals () const {return load_balance_intervals;}
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -385,24 +392,14 @@ public:
     int maxStep () const {return max_step;}
     amrex::Real stopTime () const {return stop_time;}
 
-    int checkInt () const {return check_int;}
-    int plotInt () const {return plot_int;}
-    int openpmdInt () const {return openpmd_int;}
-
-    void WriteCheckPointFile () const;
-    void WriteOpenPMDFile () const;
-    void WritePlotFile () const;
-    void UpdateInSitu () const;
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, const int ngrow) const;
+
+    void UpdateInSitu () const;
     void prepareFields( int const step, amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg,
         amrex::Vector<const amrex::MultiFab*>& output_mf,
         amrex::Vector<amrex::Geometry>& output_geom ) const;
-
-    void WritePlotFileES(const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
-                         const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
-                         const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E);
 
     static std::array<amrex::Real,3> CellSize (int lev);
     static amrex::RealBox getRealBox(const amrex::Box& bx, int lev);
@@ -415,30 +412,12 @@ public:
     static const amrex::iMultiFab* CurrentBufferMasks (int lev);
     static const amrex::iMultiFab* GatherBufferMasks (int lev);
 
-    static amrex::IntVect Bx_nodal_flag;
-    static amrex::IntVect By_nodal_flag;
-    static amrex::IntVect Bz_nodal_flag;
-
-    static amrex::IntVect Ex_nodal_flag;
-    static amrex::IntVect Ey_nodal_flag;
-    static amrex::IntVect Ez_nodal_flag;
-
-    static amrex::IntVect jx_nodal_flag;
-    static amrex::IntVect jy_nodal_flag;
-    static amrex::IntVect jz_nodal_flag;
-
-    static amrex::IntVect rho_nodal_flag;
-
     static int do_electrostatic;
     static int do_moving_window;
     static int moving_window_dir;
     static amrex::Real moving_window_v;
 
     // slice generation //
-    void InitializeSliceMultiFabs ();
-    void SliceGenerationForDiagnostics ();
-    void WriteSlicePlotFile () const;
-    void ClearSliceMultiFabs ();
     static int num_slice_snapshots_lab;
     static amrex::Real dt_slice_snapshots_lab;
     static amrex::Real particle_slice_width_lab;
@@ -493,19 +472,7 @@ public:
      * @param[in] costs vector of (`unique_ptr` to) vectors; expected to be initialized
      * to correct number of boxes and boxes per level
      */
-    void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > >& costs);
-
-    /** \brief Computes the average cost per MPI rank given a distribution mapping
-     * and vector of cost for each FAB.
-     * @param[in] dm distribution mapping (mapping from FAB to MPI processes)
-     * @param[in] cost vector which gives mapping from FAB index space to the
-     * respective FAB's cost
-     * @param[out] efficiency average cost per MPI process computed from the
-     * given distribution mapping and and cost
-     */
-    void ComputeDistributionMappingEfficiency (const amrex::DistributionMapping& dm,
-                                               const amrex::Vector<amrex::Real>& cost,
-                                               amrex::Real& efficiency);
+    void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > >& costs);
 
 protected:
 
@@ -590,6 +557,15 @@ private:
     void AddRhoFromFineLevelandSumBoundary (int lev, int icomp, int ncomp);
     void NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp);
 
+    /**
+     * \brief Private function for current correction in Fourier space
+     * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010):
+     * loops over the MR levels and applies the correction on the fine and coarse
+     * patches (calls the virtual method \c CurrentCorrection of the spectral
+     * algorithm in use, via the public interface defined in the class SpectralSolver).
+     */
+    void CurrentCorrection ();
+
     void ReadParameters ();
 
     void InitFromScratch ();
@@ -608,9 +584,6 @@ private:
     void InitDiagnostics ();
 
     void InitNCICorrector ();
-
-    void WriteWarpXHeader(const std::string& name) const;
-    void WriteJobInfo (const std::string& dir) const;
 
     std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
 
@@ -709,12 +682,12 @@ private:
     amrex::Real const_dt = 0.5e-11;
 
     // Load balancing
-    /** Interval to perform load balance; `load_balance_int=5`, e.g., will load
-     * balance during steps 5, 10, 15, etc. */
-    int load_balance_int = -1;
-    /** Collection of vectors to keep track of weights used in load balancing
+    /** Load balancing intervals that reads the "load_balance_int" string int the input file
+     * for getting steps at which load balancing is performed */
+    IntervalsParser load_balance_intervals;
+    /** Collection of LayoutData to keep track of weights used in load balancing
      * routines. Contains timer-based or heuristic-based costs depending on input option */
-    amrex::Vector<std::unique_ptr<amrex::Vector<amrex::Real> > > costs;
+    amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > > costs;
     /** Load balance with 'space filling curve' strategy. */
     int load_balance_with_sfc = 0;
     /** Controls the maximum number of boxes that can be assigned to a rank during
@@ -741,8 +714,8 @@ private:
      * time per iteration per particle is computed. */
     amrex::Real costs_heuristic_particles_wt = -1;
 
-    // Override sync every ? steps
-    int override_sync_int = 1;
+    // Determines timesteps for override sync
+    IntervalsParser override_sync_intervals;
 
     // Other runtime parameters
     int verbose = 1;
@@ -758,28 +731,11 @@ private:
 
     std::string restart_chkfile;
 
-    std::string check_file {"checkpoints/chk"};
-    std::string plot_file {"diags/plotfiles/plt"};
-    std::string slice_plot_file {"diags/slice_plotfiles/plt"};
-    int check_int = -1;
-    int plot_int = -1;
-
-    std::string openpmd_backend {"default"};
-    int openpmd_int = -1;
-    bool openpmd_tspf = true; //!< one file per timestep (or one file for all steps)
-#ifdef WARPX_USE_OPENPMD
-    WarpXOpenPMDPlot* m_OpenPMDPlotWriter = nullptr;
-#endif
-
     bool plot_rho           = false;
     bool plot_finepatch     = false;
     bool plot_crsepatch     = false;
-    bool plot_raw_fields    = false;
-    bool plot_raw_fields_guards = false;
     amrex::Vector<std::string> fields_to_plot;
-    int plot_coarsening_ratio = 1;
 
-    amrex::VisMF::Header::Version checkpoint_headerversion = amrex::VisMF::Header::NoFabHeader_v1;
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
 
