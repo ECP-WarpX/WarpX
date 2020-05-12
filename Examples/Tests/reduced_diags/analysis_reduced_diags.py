@@ -88,19 +88,18 @@ EFyt = 0.5*Es*scc.epsilon_0*dV + 0.5*Bs/scc.mu_0*dV
 
 # PART2: get results from reduced diagnostics
 
-EFdata = np.genfromtxt("./diags/reducedfiles/EF.txt")
+Fdata = np.genfromtxt("./diags/reducedfiles/F.txt")
 EPdata = np.genfromtxt("./diags/reducedfiles/EP.txt")
-MFdata = np.genfromtxt("./diags/reducedfiles/MF.txt")
-EF = EFdata[1][2]
+EF = Fdata[1][2]
 EP = EPdata[1][2]
-max_Exdata = MFdata[1][2]
-max_Eydata = MFdata[1][3]
-max_Ezdata = MFdata[1][4]
-max_Edata  = MFdata[1][5]
-max_Bxdata = MFdata[1][6]
-max_Bydata = MFdata[1][7]
-max_Bzdata = MFdata[1][8]
-max_Bdata  = MFdata[1][9]
+max_Exdata = Fdata[1][5]
+max_Eydata = Fdata[1][6]
+max_Ezdata = Fdata[1][7]
+max_Edata  = Fdata[1][8]
+max_Bxdata = Fdata[1][9]
+max_Bydata = Fdata[1][10]
+max_Bzdata = Fdata[1][11]
+max_Bdata  = Fdata[1][12]
 
 # PART3: print and assert
 

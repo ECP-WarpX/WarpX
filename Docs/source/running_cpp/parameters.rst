@@ -1325,7 +1325,7 @@ Reduced Diagnostics
 
 * ``<reduced_diags_name>.type`` (`string`)
     The type of reduced diagnostics associated with this `<reduced_diags_name>`.
-    For example, ``ParticleEnergy`` and ``FieldEnergy``.
+    For example, ``ParticleEnergy`` and ``Field``.
     All available types will be described below in detail.
     For all reduced diagnostics,
     the first and the second columns in the output file are
@@ -1351,43 +1351,51 @@ Reduced Diagnostics
         total mean energy :math:`E_p / \sum w_i`,
         mean energy of each species.
 
-    * ``FieldEnergy``
-        This type computes the electric and magnetic field energy.
+    * ``Field``
+        This type computes values related to the electric and magnetic fields.
+        The list of values to be written must be specified in ``<reduced_diags_name>.field_type``,
+        separated by whitespaces.
+        ``FieldEnergy`` and ``MaxField`` are currently available (e.g.
+        ``<reduced_diags_name>.field_type = FieldEnergy`` or
+        ``<reduced_diags_name>.field_type = FieldEnergy MaxField``).
 
-        .. math::
+        * ``FieldEnergy``
+            This type computes the electric and magnetic field energy.
 
-            E_f = \sum [ \varepsilon_0 E^2 / 2 + B^2 / ( 2 \mu_0 ) ] \Delta V
+            .. math::
 
-        where
-        :math:`E` is the electric field,
-        :math:`B` is the magnetic field,
-        :math:`\varepsilon_0` is the vacuum permittivity,
-        :math:`\mu_0` is the vacuum permeability,
-        :math:`\Delta V` is the cell volume (or area for 2D),
-        the sum is over all cells.
+                E_f = \sum [ \varepsilon_0 E^2 / 2 + B^2 / ( 2 \mu_0 ) ] \Delta V
 
-        The output columns are
-        total field energy :math:`E_f`,
-        :math:`E` field energy,
-        :math:`B` field energy, at mesh refinement levels from 0 to :math:`n`.
+            where
+            :math:`E` is the electric field,
+            :math:`B` is the magnetic field,
+            :math:`\varepsilon_0` is the vacuum permittivity,
+            :math:`\mu_0` is the vacuum permeability,
+            :math:`\Delta V` is the cell volume (or area for 2D),
+            the sum is over all cells.
 
-    * ``MaxField``
-        This type computes the maximum value of each component of the electric and magnetic fields
-        and of the norm of the electric and magnetic field vectors.
-        Note that, if the fields are staggered, the values for the vector norms might be slightly
-        inaccurate because they are obtained by summing field components defined at different
-        positions in the grid.
+            The output columns are
+            total field energy :math:`E_f`,
+            :math:`E` field energy,
+            :math:`B` field energy, at mesh refinement levels from 0 to :math:`n`.
 
-        The output columns are
-        the maximum value of the :math:`E_x` field,
-        the maximum value of the :math:`E_y` field,
-        the maximum value of the :math:`E_z` field,
-        the maximum value of the norm :math:`|E|` of the electric field,
-        the maximum value of the :math:`B_x` field,
-        the maximum value of the :math:`B_y` field,
-        the maximum value of the :math:`B_z` field and
-        the maximum value of the norm :math:`|B|` of the magnetic field,
-        at mesh refinement levels from  0 to :math:`n`.
+        * ``MaxField``
+            This type computes the maximum value of each component of the electric and magnetic fields
+            and of the norm of the electric and magnetic field vectors.
+            Note that, if the fields are staggered, the values for the vector norms might be slightly
+            inaccurate because they are obtained by summing field components defined at different
+            positions in the grid.
+
+            The output columns are
+            the maximum value of the :math:`E_x` field,
+            the maximum value of the :math:`E_y` field,
+            the maximum value of the :math:`E_z` field,
+            the maximum value of the norm :math:`|E|` of the electric field,
+            the maximum value of the :math:`B_x` field,
+            the maximum value of the :math:`B_y` field,
+            the maximum value of the :math:`B_z` field and
+            the maximum value of the norm :math:`|B|` of the magnetic field,
+            at mesh refinement levels from  0 to :math:`n`.
 
     * ``BeamRelevant``
         This type computes properties of a particle beam relevant for particle accelerators,
