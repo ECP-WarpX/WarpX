@@ -1,6 +1,6 @@
 #include "PartPerCellFunctor.H"
 #include "WarpX.H"
-#include "Utils/Average.H"
+#include "Utils/CoarsenIO.H"
 
 using namespace amrex;
 
@@ -18,7 +18,7 @@ PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
 {
     auto& warpx = WarpX::GetInstance();
     // Guard cell is set to 1 for generality. However, for a cell-centered
-    // output Multifab, mf_avg, the guard-cell data is not needed especially considering
+    // output Multifab, mf_dst, the guard-cell data is not needed especially considering
     // the operations performend in the CoarsenAndInterpolate function.
     constexpr int ng = 1;
     // Temporary cell-centered, single-component MultiFab for storing particles per cell.
@@ -28,5 +28,5 @@ PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     // Compute ppc which includes a summation over all species.
     warpx.GetPartContainer().Increment(ppc_mf, m_lev);
     // Coarsen and interpolate from ppc_mf to the output diagnostic MultiFab, mf_dst.
-    Average::CoarsenAndInterpolate(mf_dst, ppc_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
+    CoarsenIO::Coarsen(mf_dst, ppc_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
 }

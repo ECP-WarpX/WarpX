@@ -57,18 +57,19 @@ namespace
         }
         return loVects;
     }
-    int* getFieldNodalFlagData(const amrex::IntVect nodal_flag)
+    // Copy the nodal flag data and return the copy:
+    // the nodal flag data should not be modifiable from Python.
+    int* getFieldNodalFlagData ( const amrex::MultiFab& mf )
     {
-        /* Copy the nodal flag data and return the copy.
-         * The nodel flag data should not be modifiable from Python. */
-        int *nodel_flag_data = (int*) malloc(AMREX_SPACEDIM * sizeof(int));
+        const amrex::IntVect nodal_flag( mf.ixType().toIntVect() );
+        int *nodal_flag_data = (int*) malloc(AMREX_SPACEDIM * sizeof(int));
 
         constexpr int NODE = amrex::IndexType::NODE;
 
         for (int i=0 ; i < AMREX_SPACEDIM ; i++) {
-            nodel_flag_data[i] = (nodal_flag[i] == NODE ? 1 : 0);
+            nodal_flag_data[i] = (nodal_flag[i] == NODE ? 1 : 0);
         }
-        return nodel_flag_data;
+        return nodal_flag_data;
     }
 }
 
@@ -275,16 +276,16 @@ extern "C"
     WARPX_GET_LOVECTS(warpx_getCurrentDensityCPLoVects, WarpX::GetInstance().getcurrent_cp);
     WARPX_GET_LOVECTS(warpx_getCurrentDensityFPLoVects, WarpX::GetInstance().getcurrent_fp);
 
-    int* warpx_getEx_nodal_flag() {return getFieldNodalFlagData(WarpX::Ex_nodal_flag);}
-    int* warpx_getEy_nodal_flag() {return getFieldNodalFlagData(WarpX::Ey_nodal_flag);}
-    int* warpx_getEz_nodal_flag() {return getFieldNodalFlagData(WarpX::Ez_nodal_flag);}
-    int* warpx_getBx_nodal_flag() {return getFieldNodalFlagData(WarpX::Bx_nodal_flag);}
-    int* warpx_getBy_nodal_flag() {return getFieldNodalFlagData(WarpX::By_nodal_flag);}
-    int* warpx_getBz_nodal_flag() {return getFieldNodalFlagData(WarpX::Bz_nodal_flag);}
-    int* warpx_getJx_nodal_flag() {return getFieldNodalFlagData(WarpX::jx_nodal_flag);}
-    int* warpx_getJy_nodal_flag() {return getFieldNodalFlagData(WarpX::jy_nodal_flag);}
-    int* warpx_getJz_nodal_flag() {return getFieldNodalFlagData(WarpX::jz_nodal_flag);}
-    int* warpx_getRho_nodal_flag() {return getFieldNodalFlagData(WarpX::rho_nodal_flag);}
+    int* warpx_getEx_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getEfield(0,0) );}
+    int* warpx_getEy_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getEfield(0,1) );}
+    int* warpx_getEz_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getEfield(0,2) );}
+    int* warpx_getBx_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getBfield(0,0) );}
+    int* warpx_getBy_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getBfield(0,1) );}
+    int* warpx_getBz_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getBfield(0,2) );}
+    int* warpx_getJx_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getcurrent(0,0) );}
+    int* warpx_getJy_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getcurrent(0,1) );}
+    int* warpx_getJz_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getcurrent(0,2) );}
+    int* warpx_getRho_nodal_flag() {return getFieldNodalFlagData( WarpX::GetInstance().getrho_fp(0) );}
 
 #define WARPX_GET_SCALAR(SCALAR, GETTER) \
     amrex::Real** SCALAR(int lev, \
@@ -453,33 +454,6 @@ extern "C"
     amrex::Real warpx_stopTime () {
         WarpX& warpx = WarpX::GetInstance();
         return warpx.stopTime ();
-    }
-
-    int warpx_checkInt () {
-        WarpX& warpx = WarpX::GetInstance();
-        return warpx.checkInt ();
-    }
-    int warpx_plotInt () {
-        WarpX& warpx = WarpX::GetInstance();
-        return warpx.plotInt ();
-    }
-
-    int warpx_openpmdInt () {
-        WarpX& warpx = WarpX::GetInstance();
-        return warpx.openpmdInt ();
-    }
-
-    void warpx_WriteCheckPointFile () {
-        WarpX& warpx = WarpX::GetInstance();
-        warpx.WriteCheckPointFile ();
-    }
-    void warpx_WritePlotFile () {
-        WarpX& warpx = WarpX::GetInstance();
-        warpx.WritePlotFile ();
-    }
-    void warpx_WriteOpenPMDFile () {
-        WarpX& warpx = WarpX::GetInstance();
-        warpx.WriteOpenPMDFile ();
     }
 
     int warpx_finestLevel () {

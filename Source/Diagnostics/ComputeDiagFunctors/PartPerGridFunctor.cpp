@@ -1,5 +1,5 @@
 #include "PartPerGridFunctor.H"
-#include "Utils/Average.H"
+#include "Utils/CoarsenIO.H"
 
 using namespace amrex;
 
@@ -18,7 +18,7 @@ PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     auto& warpx = WarpX::GetInstance();
     const Vector<long>& npart_in_grid = warpx.GetPartContainer().NumberOfParticlesInGrid(m_lev);
     // Guard cell is set to 1 for generality. However, for a cell-centered
-    // output Multifab, mf_avg, the guard-cell data is not needed especially considering
+    // output Multifab, mf_dst, the guard-cell data is not needed especially considering
     // the operations performend in the CoarsenAndInterpolate function.
     constexpr int ng = 1;
     // Temporary MultiFab containing number of particles per grid.
@@ -32,5 +32,5 @@ PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     }
 
     // Coarsen and interpolate from ppg_mf to the output diagnostic MultiFab, mf_dst.
-    Average::CoarsenAndInterpolate(mf_dst, ppg_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
+    CoarsenIO::Coarsen(mf_dst, ppg_mf, dcomp, 0, nComp(), 0, m_crse_ratio);
 }

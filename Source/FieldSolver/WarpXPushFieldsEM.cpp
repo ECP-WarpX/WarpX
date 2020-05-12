@@ -217,9 +217,6 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     if (do_pml && pml[lev]->ok())
     {
 
-//        Unclear why this was needed
-//        if (F) pml[lev]->ExchangeF(patch_type, F, do_pml_in_domain);
-
         const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
         const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
         const auto& pml_j = (patch_type == PatchType::fine) ? pml[lev]->Getj_fp() : pml[lev]->Getj_cp();
@@ -231,9 +228,9 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 #endif
         for ( MFIter mfi(*pml_E[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            const Box& tex  = mfi.tilebox(Ex_nodal_flag);
-            const Box& tey  = mfi.tilebox(Ey_nodal_flag);
-            const Box& tez  = mfi.tilebox(Ez_nodal_flag);
+            const Box& tex  = mfi.tilebox( pml_E[0]->ixType().toIntVect() );
+            const Box& tey  = mfi.tilebox( pml_E[1]->ixType().toIntVect() );
+            const Box& tez  = mfi.tilebox( pml_E[2]->ixType().toIntVect() );
 
             auto const& pml_Exfab = pml_E[0]->array(mfi);
             auto const& pml_Eyfab = pml_E[1]->array(mfi);
@@ -391,9 +388,9 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         Array4<Real> const& Jz_arr = Jz->array(mfi);
 
         Box const & tilebox = mfi.tilebox();
-        Box tbr = convert(tilebox, WarpX::jx_nodal_flag);
-        Box tbt = convert(tilebox, WarpX::jy_nodal_flag);
-        Box tbz = convert(tilebox, WarpX::jz_nodal_flag);
+        Box tbr = convert( tilebox, Jx->ixType().toIntVect() );
+        Box tbt = convert( tilebox, Jy->ixType().toIntVect() );
+        Box tbz = convert( tilebox, Jz->ixType().toIntVect() );
 
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
@@ -557,7 +554,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         Array4<Real> const& Rho_arr = Rho->array(mfi);
 
         tilebox = mfi.tilebox();
-        Box tb = convert(tilebox, rho_nodal_flag);
+        Box tb = convert( tilebox, Rho->ixType().toIntVect() );
 
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that

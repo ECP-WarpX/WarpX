@@ -1,5 +1,5 @@
 #include "DivEFunctor.H"
-#include "Utils/Average.H"
+#include "Utils/CoarsenIO.H"
 
 using namespace amrex;
 
@@ -12,7 +12,7 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
 {
     auto& warpx = WarpX::GetInstance();
     // Guard cell is set to 1 for generality. However, for a cell-centered
-    // output Multifab, mf_avg, the guard-cell data is not needed especially considering
+    // output Multifab, mf_dst, the guard-cell data is not needed especially considering
     // the operations performend in the CoarsenAndInterpolate function.
     constexpr int ng = 1;
     // For staggered and nodal calculations, divE is computed on the nodes.
@@ -21,6 +21,5 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     MultiFab divE(ba, warpx.DistributionMap(m_lev), 1, ng );
     warpx.ComputeDivE(divE, m_lev);
     // Coarsen and interpolate from divE on the entire domain to the cell-centered mf_dst.
-    Average::CoarsenAndInterpolate(mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
-
+    CoarsenIO::Coarsen(mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
 }

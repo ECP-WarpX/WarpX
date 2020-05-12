@@ -2,11 +2,11 @@
 max_step = 1000
 
 # number of grid points
-amr.n_cell =  64  64  240
+amr.n_cell =  32  32  240
 
 # Maximum allowable size of each subdomain in the problem domain;
 #    this is used to decompose the domain for parallel calculations.
-amr.max_grid_size = 32
+amr.max_grid_size = 16
 
 # Maximum level in hierarchy (for now must be 0, i.e., one level in total)
 amr.max_level = 0
@@ -23,6 +23,7 @@ warpx.serialize_ics = 1
 warpx.verbose = 1
 
 # Algorithms
+warpx.do_pml = 0
 
 # CFL
 warpx.cfl = 1.0
@@ -41,10 +42,11 @@ laser1.profile_t_peak = 30.e-15    # The time at which the laser reaches its pea
 laser1.profile_focal_distance = 100.e-6  # Focal distance from the antenna (in meters)
 laser1.wavelength = 0.8e-6         # The wavelength of the laser (in meters)
 
-# I/O
-amr.plot_int = 20
-warpx.fields_to_plot = jx jy jz Ex Ey Ez Bx Bz
-warpx.do_pml = 0
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 20
+diag1.diag_type = Full
+diag1.fields_to_plot = jx jy jz Ex Ey Ez Bx Bz
 
 # Moving window
 warpx.do_moving_window = 1

@@ -146,6 +146,7 @@ ifeq ($(USE_OPENPMD), TRUE)
        libraries += -lopenPMD
    endif
    DEFINES += -DWARPX_USE_OPENPMD
+   USERSuffix := $(USERSuffix).OPMD
 endif
 
 
