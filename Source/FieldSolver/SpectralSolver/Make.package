@@ -6,6 +6,7 @@ ifeq ($(USE_RZ),TRUE)
   CEXE_sources += SpectralSolverRZ.cpp
   CEXE_sources += SpectralFieldDataRZ.cpp
   CEXE_sources += SpectralKSpaceRZ.cpp
+  CEXE_sources += SpectralBinomialFilter.cpp
   include $(WARPX_HOME)/Source/FieldSolver/SpectralSolver/SpectralHankelTransform/Make.package
 endif
 
