@@ -68,7 +68,7 @@ CellCenterFunctor<FieldTypes::divE>::get_field_diag (const int lev, const int di
     // For staggered and nodal calculations, divE is computed on the nodes.
     // The temporary divE MultiFab is generated to comply with the location of divE.
     const amrex::BoxArray& ba = amrex::convert(warpx.boxArray(lev),amrex::IntVect::TheUnitVector());
-    const amrex::DistributionMapping dm = warpx.DistributionMap(lev);
+    const amrex::DistributionMapping& dm = warpx.DistributionMap(lev);
     const int modes = warpx.n_rz_azimuthal_modes;
     amrex::MultiFab * divE = new amrex::MultiFab(ba, dm, modes, ng);
     warpx.ComputeDivE(*divE, lev);
@@ -88,7 +88,7 @@ CellCenterFunctor<FieldTypes::divB>::get_field_diag (const int lev, const int di
     // A cell-centered divB multifab spanning the entire domain is generated
     // and divB is computed on the cell-center, with ng=1.
     const amrex::BoxArray& ba = warpx.boxArray(lev);
-    const amrex::DistributionMapping dm = warpx.DistributionMap(lev);
+    const amrex::DistributionMapping& dm = warpx.DistributionMap(lev);
     const int modes = warpx.n_rz_azimuthal_modes;
     amrex::MultiFab * divB = new amrex::MultiFab(ba, dm, modes, ng);
     auto Bfield = warpx.get_array_Bfield_aux(lev);
@@ -108,7 +108,7 @@ CellCenterFunctor<FieldTypes::PartCell>::get_field_diag (const int lev, const in
     constexpr int ng = 1;
     // Temporary cell-centered, single-component MultiFab for storing particles per cell.
     const amrex::BoxArray& ba = warpx.boxArray(lev);
-    const amrex::DistributionMapping dm = warpx.DistributionMap(lev);
+    const amrex::DistributionMapping& dm = warpx.DistributionMap(lev);
     // Set value to 0, and increment the value in each cell with ppc.
     amrex::MultiFab * ppc_mf = new amrex::MultiFab(ba, dm, 1, ng);
     ppc_mf->setVal(0._rt);
@@ -131,7 +131,7 @@ CellCenterFunctor<FieldTypes::PartGrid>::get_field_diag (const int lev, const in
     // Temporary MultiFab containing number of particles per grid.
     // (stored as constant for all cells in each grid)
     const amrex::BoxArray& ba = warpx.boxArray(lev);
-    const amrex::DistributionMapping dm = warpx.DistributionMap(lev);
+    const amrex::DistributionMapping& dm = warpx.DistributionMap(lev);
     amrex::MultiFab * ppg_mf = new amrex::MultiFab(ba, dm, 1, ng);
 #ifdef _OPENMP
 #pragma omp parallel
@@ -160,7 +160,7 @@ CellCenterFunctor<FIELDTYPE>::operator()(amrex::MultiFab& mf_dst, int dcomp, con
             nComp()==1,
             "The RZ averaging over modes must write into 1 single component");
         auto& warpx = WarpX::GetInstance();
-        const amrex::DistributionMapping dm = warpx.DistributionMap(m_lev);
+        const amrex::DistributionMapping& dm = warpx.DistributionMap(m_lev);
         MultiFab mf_dst_stag(mf_src->boxArray(), dm, 1, mf_src->nGrowVect());
         // Mode 0
         MultiFab::Copy(mf_dst_stag, *mf_src, 0, 0, 1, mf_src->nGrowVect());
