@@ -210,6 +210,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
                     amrex::Gpu::Atomic::Add(
                         &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 0),
                         sx_jy[ix]*sz_jy[iz]*wqy);
+std::cout << "lo.x+j_jy+ix: " << lo.x+j_jy+ix << " lo.y+l_jy+iz: " << lo.y+l_jy+iz << std::endl;
                     amrex::Gpu::Atomic::Add(
                         &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0),
                         sx_jz[ix]*sz_jz[iz]*wqz);
@@ -498,7 +499,11 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 for (int i=dil; i<=depos_order+2-diu; i++) {
                     Real const sdyj = wq*vy*invvol*((sz_new[k] + 0.5_rt * (sz_old[k] - sz_new[k]))*sx_new[i] +
                                                            (0.5_rt * sz_new[k] + 1._rt / 3._rt *(sz_old[k] - sz_new[k]))*(sx_old[i] - sx_new[i]));
+std::cout << "sdyj: " << sdyj << std::endl;
+std::cout << "Jy_arr (before): " << Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0) << std::endl;
                     amrex::Gpu::Atomic::Add( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdyj);
+std::cout << "lo.x+i_new-1+i: " << lo.x+i_new-1+i << " lo.y+k_new-1+k: " << lo.y+k_new-1+k << std::endl;
+std::cout << "Jy_arr ( after): " << Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0) << std::endl;
 #if (defined WARPX_DIM_RZ)
                     Complex xy_new = xy_new0;
                     Complex xy_mid = xy_mid0;
@@ -522,7 +527,10 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 Real sdzk = 0.;
                 for (int k=dkl; k<=depos_order+1-dku; k++) {
                     sdzk += wqz*(sz_old[k] - sz_new[k])*(sx_new[i] + 0.5_rt * (sx_old[i] - sx_new[i]));
+std::cout << "sdzk: " << sdzk << std::endl;
+std::cout << "Jz_arr (before): " << Jz_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0) << std::endl;
                     amrex::Gpu::Atomic::Add( &Jz_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdzk);
+std::cout << "Jz_arr ( after): " << Jz_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0) << std::endl;
 #if (defined WARPX_DIM_RZ)
                     Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
