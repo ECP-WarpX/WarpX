@@ -32,10 +32,10 @@ MacroscopicProperties::ReadParameters ()
 void
 MacroscopicProperties::InitData ()
 {
-    amrex::Print() << "we are in init data of macro \n";    
+    amrex::Print() << "we are in init data of macro \n";
     auto & warpx = WarpX::GetInstance();
-    
-    // Get BoxArray and DistributionMap of warpX. 
+
+    // Get BoxArray and DistributionMap of warpX.
     int lev = 0;
     BoxArray ba = warpx.boxArray(lev);
     DistributionMapping dmap = warpx.DistributionMap(lev);
@@ -50,7 +50,7 @@ MacroscopicProperties::InitData ()
       // mu - node-based
     m_mu_mf = std::make_unique<MultiFab>(amrex::convert(ba,amrex::IntVect::TheUnitVector()), dmap, 1, ng);
     m_mu_mf->setVal(m_mu);
-    
+
 }
 
 

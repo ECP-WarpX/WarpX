@@ -57,7 +57,7 @@ WarpX::InitData ()
     BuildBufferMasks();
 
     if (WarpX::em_solver_medium==1) {
-        m_macroscopic_properties->InitData();        
+        m_macroscopic_properties->InitData();
     }
 
     InitDiagnostics();

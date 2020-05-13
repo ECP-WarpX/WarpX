@@ -30,13 +30,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
-            MacroscopicEvolveECartesian <CartesianYeeAlgorithm, LaxWendroffAlgo> 
+            MacroscopicEvolveECartesian <CartesianYeeAlgorithm, LaxWendroffAlgo>
                        ( Efield, Bfield, Jfield, dt, macroscopic_properties );
 
         }
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
 
-            MacroscopicEvolveECartesian <CartesianYeeAlgorithm, BackwardEulerAlgo> 
+            MacroscopicEvolveECartesian <CartesianYeeAlgorithm, BackwardEulerAlgo>
                        ( Efield, Bfield, Jfield, dt, macroscopic_properties );
 
         }
@@ -47,12 +47,12 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         // In the templated Yee and CKC calls, the core operations for EvolveE is tihe same.
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
-            MacroscopicEvolveECartesian <CartesianCKCAlgorithm, LaxWendroffAlgo> 
+            MacroscopicEvolveECartesian <CartesianCKCAlgorithm, LaxWendroffAlgo>
                        ( Efield, Bfield, Jfield, dt, macroscopic_properties );
 
         } else if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
-            MacroscopicEvolveECartesian <CartesianCKCAlgorithm, BackwardEulerAlgo> 
+            MacroscopicEvolveECartesian <CartesianCKCAlgorithm, BackwardEulerAlgo>
                        ( Efield, Bfield, Jfield, dt, macroscopic_properties );
 
         }
@@ -115,7 +115,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Array4<Real> const& Bx = Bfield[0]->array(mfi);
         Array4<Real> const& By = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
- 
+
         // material prop //
         Array4<Real> const& sigma_arr = sigma_mf.array(mfi);
         Array4<Real> const& eps_arr = epsilon_mf.array(mfi);
@@ -139,7 +139,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         amrex::ParallelFor(tex, tey, tez,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt, 
+                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt,
                                                  i, j, k, amrex::IntVect(1,0,0) );
                 amrex::Real beta = T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
                                                 i, j, k, amrex::IntVect(1,0,0) );
@@ -151,7 +151,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt, 
+                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt,
                                                  i, j, k, amrex::IntVect(0,1,0) );
                 amrex::Real beta = T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
                                                 i, j, k, amrex::IntVect(0,1,0) );
@@ -163,7 +163,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt, 
+                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt,
                                                  i, j, k, amrex::IntVect(0,0,1) );
                 amrex::Real beta = T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
                                                 i, j, k, amrex::IntVect(0,0,1) );
@@ -184,13 +184,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 
             amrex::ParallelFor(tex, tey, tez,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    Ex(i, j, k) += -T_MacroAlgo::beta(sigma_arr, eps_arr, dt, 
+                    Ex(i, j, k) += -T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
                                                       i, j, k, amrex::IntVect(0, 0, 1) )
                                    * jx(i, j, k);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ey(i, j, k) += -T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
-                                                      i, j, k, amrex::IntVect(0, 1, 0) ) 
+                                                      i, j, k, amrex::IntVect(0, 1, 0) )
                                    * jy(i, j, k);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {

@@ -24,7 +24,7 @@ public:
      void ReadParameters ();
      /** Initialize multifabs storing macroscopic multifabs */
      void InitData ();
-     
+
 //     /** return Real, sigma (conductivity) of the medium. */
 //     amrex::Real sigma () const noexcept {return m_sigma;}
 //     /** return Real, epsilon (permittivity) of the medium. */
@@ -63,39 +63,39 @@ struct LaxWendroffAlgo {
      // iv(1,0,1) for nodal macroparameters to Ey edge
      // iv(1,1,0) for nodal macroparameters to Ez edge
      AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-     static amrex::Real macro_avg_to_edge (int i, int j, int k, amrex::IntVect iv, 
+     static amrex::Real macro_avg_to_edge (int i, int j, int k, amrex::IntVect iv,
                                            amrex::Array4<amrex::Real> const& macro_prop) {
          using namespace amrex;
-         return ( 0.125_rt * ( macro_prop(i,         j,         k        ) 
-                             + macro_prop(i+iv[0]-1, j,         k        ) 
+         return ( 0.125_rt * ( macro_prop(i,         j,         k        )
+                             + macro_prop(i+iv[0]-1, j,         k        )
                              + macro_prop(i,         j+iv[1]-1, k        )
                              + macro_prop(i,         j,         k+iv[2]-1)
-                             + macro_prop(i+iv[0]-1, j+iv[1]-1, k        ) 
-                             + macro_prop(i+iv[0]-1, j        , k+iv[2]-1) 
+                             + macro_prop(i+iv[0]-1, j+iv[1]-1, k        )
+                             + macro_prop(i+iv[0]-1, j        , k+iv[2]-1)
                              + macro_prop(i,         j+iv[1]-1, k+iv[2]-1)
                              + macro_prop(i+iv[0]-1, j+iv[1]-1, k+iv[2]-1) ) );
      }
 
      /** */
      AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-     static amrex::Real alpha (amrex::Array4<amrex::Real> const& sigma, 
+     static amrex::Real alpha (amrex::Array4<amrex::Real> const& sigma,
                                amrex::Array4<amrex::Real> const& epsilon,
                                amrex::Real dt, int i, int j, int k,
                                amrex::IntVect iv_cc) {
          using namespace amrex;
-         amrex::Real fac1 = 0.5_rt * macro_avg_to_edge(i, j, k, iv_cc, sigma) * dt 
+         amrex::Real fac1 = 0.5_rt * macro_avg_to_edge(i, j, k, iv_cc, sigma) * dt
                                    / macro_avg_to_edge(i, j, k, iv_cc, epsilon);
          amrex::Real alpha = (1._rt - fac1)/(1._rt + fac1);
          return alpha;
      };
- 
+
      AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
      static amrex::Real beta (amrex::Array4<amrex::Real> const& sigma,
                               amrex::Array4<amrex::Real> const& epsilon,
                               amrex::Real dt, int i, int j, int k,
                               amrex::IntVect iv_cc) {
          using namespace amrex;
-         amrex::Real fac1 = 0.5_rt * macro_avg_to_edge(i, j, k, iv_cc, sigma) * dt 
+         amrex::Real fac1 = 0.5_rt * macro_avg_to_edge(i, j, k, iv_cc, sigma) * dt
                                    / macro_avg_to_edge(i, j, k, iv_cc, epsilon);
          amrex::Real beta = dt / ( macro_avg_to_edge(i, j, k, iv_cc, epsilon) * (1._rt + fac1) );
          return beta;
@@ -111,21 +111,21 @@ struct BackwardEulerAlgo {
      // iv(1,2,1) for nodal macroparameters to Ey edge
      // iv(1,1,2) for nodal macroparameters to Ez edge
      AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-     static amrex::Real macro_avg_to_edge (int i, int j, int k, amrex::IntVect iv, 
+     static amrex::Real macro_avg_to_edge (int i, int j, int k, amrex::IntVect iv,
                                            amrex::Array4<amrex::Real> const& macro_prop) {
          using namespace amrex;
-         return ( 0.125_rt * ( macro_prop(i,         j,         k        ) 
-                             + macro_prop(i+iv[0]-1, j,         k        ) 
+         return ( 0.125_rt * ( macro_prop(i,         j,         k        )
+                             + macro_prop(i+iv[0]-1, j,         k        )
                              + macro_prop(i,         j+iv[1]-1, k        )
                              + macro_prop(i,         j,         k+iv[2]-1)
-                             + macro_prop(i+iv[0]-1, j+iv[1]-1, k        ) 
-                             + macro_prop(i+iv[0]-1, j        , k+iv[2]-1) 
+                             + macro_prop(i+iv[0]-1, j+iv[1]-1, k        )
+                             + macro_prop(i+iv[0]-1, j        , k+iv[2]-1)
                              + macro_prop(i,         j+iv[1]-1, k+iv[2]-1)
                              + macro_prop(i+iv[0]-1, j+iv[1]-1, k+iv[2]-1) ) );
      }
 
      AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-     static amrex::Real alpha (amrex::Array4<amrex::Real> const& sigma, 
+     static amrex::Real alpha (amrex::Array4<amrex::Real> const& sigma,
                                amrex::Array4<amrex::Real> const& epsilon,
                                amrex::Real dt, int i, int j, int k,
                                amrex::IntVect iv_cc) {
@@ -134,7 +134,7 @@ struct BackwardEulerAlgo {
                             / macro_avg_to_edge(i, j, k, iv_cc, epsilon);
          amrex::Real alpha = 1._rt/ (1._rt + fac1);
          return alpha;
-     };    
+     };
 
      AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
      static amrex::Real beta (amrex::Array4<amrex::Real> const& sigma,
