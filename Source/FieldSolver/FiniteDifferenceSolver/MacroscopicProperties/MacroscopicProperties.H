@@ -39,6 +39,8 @@ public:
      amrex::MultiFab& getepsilon_mf  () {return (*m_eps_mf);}
      amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
 
+     void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
+                                  ParserWrapper<3> *macro_parser, int lev);
 private:
      /** Conductivity, sigma, of the medium */
      amrex::Real m_sigma;
@@ -56,8 +58,6 @@ private:
      std::string m_epsilon_s;
      std::string m_mu_s;
 
-     void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
-                                  ParserWrapper<3> *macro_parser, int lev);
 
      /** string for storing parser function */
      std::string m_str_sigma_function;
