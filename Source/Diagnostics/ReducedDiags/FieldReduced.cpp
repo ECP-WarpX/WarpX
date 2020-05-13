@@ -81,28 +81,28 @@ FieldReduced::FieldReduced (const std::string& rd_name, const std::vector<std::s
                 for (int lev = 0; lev < nLevel; ++lev)
                 {
                     ofs << m_sep;
-                    ofs << "[" + std::to_string(3+8*lev) + "]";
+                    ofs << "[" + std::to_string(m_offset_maxField+3+8*lev) + "]";
                     ofs << "max_Ex_lev"+std::to_string(lev)+" (V/m)";
                     ofs << m_sep;
-                    ofs << "[" + std::to_string(4+8*lev) + "]";
+                    ofs << "[" + std::to_string(m_offset_maxField+4+8*lev) + "]";
                     ofs << "max_Ey_lev"+std::to_string(lev)+" (V/m)";
                     ofs << m_sep;
-                    ofs << "[" + std::to_string(5+8*lev) + "]";
+                    ofs << "[" + std::to_string(m_offset_maxField+5+8*lev) + "]";
                     ofs << "max_Ez_lev"+std::to_string(lev)+" (V/m)";
                     ofs << m_sep;
-                    ofs << "[" + std::to_string(6+8*lev) + "]";
+                    ofs << "[" + std::to_string(m_offset_maxField+6+8*lev) + "]";
                     ofs << "max_|E|_lev"+std::to_string(lev)+" (V/m)";
                     ofs << m_sep;
-                    ofs << "[" + std::to_string(7+8*lev) + "]";
+                    ofs << "[" + std::to_string(m_offset_maxField+7+8*lev) + "]";
                     ofs << "max_Bx_lev"+std::to_string(lev)+" (T)";
                     ofs << m_sep;
-                    ofs << "[" + std::to_string(8+8*lev) + "]";
+                    ofs << "[" + std::to_string(m_offset_maxField+8+8*lev) + "]";
                     ofs << "max_By_lev"+std::to_string(lev)+" (T)";
                     ofs << m_sep;
-                    ofs << "[" + std::to_string(9+8*lev) + "]";
+                    ofs << "[" + std::to_string(m_offset_maxField+9+8*lev) + "]";
                     ofs << "max_Bz_lev"+std::to_string(lev)+" (T)";
                     ofs << m_sep;
-                    ofs << "[" + std::to_string(10+8*lev) + "]";
+                    ofs << "[" + std::to_string(m_offset_maxField+10+8*lev) + "]";
                     ofs << "max_|B|_lev"+std::to_string(lev)+" (T)";
                 }
             }
