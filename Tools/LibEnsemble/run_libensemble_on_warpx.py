@@ -6,7 +6,7 @@ simulations. It is the entry point script that runs LibEnsemble. Libensemble
 then launches WarpX simulations.
 
 Execute locally via the following command:
-    python run_libE_on_warpx.py --comms local --nworkers 3
+    python run_libensemble_on_warpx.py --comms local --nworkers 3
 On summit, use the submission script:
     bsub summit_submit_mproc.sh
 
