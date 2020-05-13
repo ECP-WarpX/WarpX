@@ -25,7 +25,7 @@ hbar = 1.054571800e-34
 E_S = m_e**2*c**3/e/hbar # Schwinger field
 
 dV = (1.e-6)**3 # total simulation volume
-dt = 2.407291502e-16
+dt = 9.827726403e-17
 filename = sys.argv[1]
 
 Ex_test = 0.
@@ -54,13 +54,13 @@ elif test_number == '2':
 elif test_number == '3':
 # Third Schwinger test with intermediate electric field such that average created pair per cell
 # is 1. A Poisson distribution is used to obtain the weights of the particles.
-    Ey_test = 1.0321239524474501e+17
+    Ey_test = 1.090934525450495e+17
 elif test_number == '4':
 # Fourth Schwinger test with extremely strong EM field but with E and B perpendicular and nearly
 # equal so that the pair production rate is fairly low. A Gaussian distribution is used in this
 # case.
     Ez_test = 2.5e+20
-    By_test = 833910154604.3563
+    By_test = 833910140000.
 else:
     assert(False)
 
@@ -105,8 +105,9 @@ def do_analysis(Ex,Ey,Ez,Bx,By,Bz):
 
         std_total_physical_pairs_created = np.sqrt(expected_total_physical_pairs_created)
 
-        # This first assert only works if a single tile is used in the simulation
-        assert(np.array_equal(ele_data,pos_data))
+        # Sorting the arrays is required because electrons and positrons are not necessarily
+        # dumped in the same order.
+        assert(np.array_equal(np.sort(ele_data),np.sort(pos_data)))
         # 5 sigma test that has an intrisic probability to fail of 1 over ~2 millions
         error = np.abs(np.sum(ele_data)-expected_total_physical_pairs_created)
         print("difference between expected and actual number of pairs created: " + str(error))

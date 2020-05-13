@@ -2,8 +2,8 @@
 ####### GENERAL PARAMETERS ######
 #################################
 max_step = 1
-amr.n_cell =  8 8 8
-amr.max_grid_size = 8   # maximum size of each AMReX box, used to decompose the domain
+amr.n_cell =  8 8 32
+amr.max_grid_size = 16   # maximum size of each AMReX box, used to decompose the domain
 amr.blocking_factor = 8 # minimum size of each AMReX box, used to decompose the domain
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 1     1     1  # Is periodic?
