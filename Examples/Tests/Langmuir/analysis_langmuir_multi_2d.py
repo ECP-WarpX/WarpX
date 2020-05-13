@@ -93,7 +93,7 @@ plt.title('Ez, last iteration\n(theory)')
 plt.tight_layout()
 plt.savefig('langmuir_multi_2d_analysis.png')
 
-tolerance_rel = 0.04
+tolerance_rel = 0.05
 
 print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
