@@ -10,6 +10,9 @@
 #include <algorithm>
 #include <array>
 
+#include "Parser/WarpXParser.H"
+#include "Parser/WarpXParserWrapper.H"
+
 
 /**
  * \brief This class contains the macroscopic parameters of the medium needed to
@@ -52,6 +55,18 @@ private:
      std::string m_sigma_s;
      std::string m_epsilon_s;
      std::string m_mu_s;
+     
+     void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
+                                  ParserWrapper<3> *macro_parser, int lev);
+
+     /** string for storing parser function */
+     std::string m_str_sigma_function;
+     std::string m_str_epsilon_function;
+     std::string m_str_mu_function;
+     /** Parser Wrappers */
+     std::unique_ptr<ParserWrapper<3> > m_sigma_parser;
+     std::unique_ptr<ParserWrapper<3> > m_epsilon_parser;
+     std::unique_ptr<ParserWrapper<3> > m_mu_parser;
 };
 
 struct LaxWendroffAlgo {
