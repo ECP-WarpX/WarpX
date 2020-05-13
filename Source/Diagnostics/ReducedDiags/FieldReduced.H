@@ -1,4 +1,4 @@
-/* Copyright 2019-2020 Yinjian Zhao
+/* Copyright 2019-2020 Neil Zaim, Yinjian Zhao
  *
  * This file is part of WarpX.
  *
