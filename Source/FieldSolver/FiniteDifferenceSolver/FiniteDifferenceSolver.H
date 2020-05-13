@@ -149,7 +149,7 @@ class FiniteDifferenceSolver
             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
             amrex::MultiFab& divE );
 
-        template< typename T_Algo >
+        template< typename T_Algo, typename T_MacroAlgo >
         void MacroscopicEvolveECartesian (
             std::array< std::unique_ptr< amrex::MultiFab>, 3>& Efield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Bfield,

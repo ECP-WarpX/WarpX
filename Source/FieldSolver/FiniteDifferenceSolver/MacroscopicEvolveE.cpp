@@ -28,15 +28,34 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        MacroscopicEvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, dt,
-                                                              macroscopic_properties );
+        if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
+
+            MacroscopicEvolveECartesian <CartesianYeeAlgorithm, LaxWendroffAlgo> 
+                       ( Efield, Bfield, Jfield, dt, macroscopic_properties );
+
+        }
+        if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
+
+            MacroscopicEvolveECartesian <CartesianYeeAlgorithm, BackwardEulerAlgo> 
+                       ( Efield, Bfield, Jfield, dt, macroscopic_properties );
+
+        }
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
         // Note : EvolveE is the same for CKC and Yee.
-        // In the templated Yee and CKC calls, the core operations for EvolveE is the same.
-        MacroscopicEvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, dt,
-                                                              macroscopic_properties );
+        // In the templated Yee and CKC calls, the core operations for EvolveE is tihe same.
+        if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
+
+            MacroscopicEvolveECartesian <CartesianCKCAlgorithm, LaxWendroffAlgo> 
+                       ( Efield, Bfield, Jfield, dt, macroscopic_properties );
+
+        } else if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
+
+            MacroscopicEvolveECartesian <CartesianCKCAlgorithm, BackwardEulerAlgo> 
+                       ( Efield, Bfield, Jfield, dt, macroscopic_properties );
+
+        }
 
 #endif
     } else {
@@ -48,37 +67,40 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 
 #ifndef WARPX_DIM_RZ
 
-template<typename T_Algo>
+template<typename T_Algo, typename T_MacroAlgo>
 void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     amrex::Real const dt, std::unique_ptr<MacroscopicProperties> const& macroscopic_properties ) {
 
-    const int &macroscopic_solver_algo = WarpX::macroscopic_solver_algo;
-    Real sigma = macroscopic_properties->sigma();
-    Real const mu = macroscopic_properties->mu();
-    Real const epsilon = macroscopic_properties->epsilon();
+    //const int &macroscopic_solver_algo = WarpX::macroscopic_solver_algo;
+    //Real sigma = macroscopic_properties->sigma();
+    //Real const mu = macroscopic_properties->mu();
+    //Real const epsilon = macroscopic_properties->epsilon();
 
-    Real alpha = 0._rt;
-    Real beta  = 0._rt;
-    Real fac1 = 0._rt;
-    Real inv_fac = 0._rt;
+    auto& sigma_mf = macroscopic_properties->getsigma_mf();
+    auto& epsilon_mf = macroscopic_properties->getepsilon_mf();
+    auto& mu_mf = macroscopic_properties->getmu_mf();
 
-    if (macroscopic_solver_algo == 0) {
-        // sigma_method == 0 for Lax_Wendroff or semi-implicit approach
-        fac1 = 0.5_rt * sigma * dt / epsilon;
-        inv_fac = 1._rt / ( 1._rt + fac1);
-        alpha = (1.0_rt - fac1) * inv_fac;
-        beta  = dt * inv_fac / epsilon;
-    }
-    else if (macroscopic_solver_algo == 1) { // sigma method == 1
-        // sigma_metha == 1 for Backward Euler
-        fac1 = sigma * dt / epsilon;
-        inv_fac = 1._rt / ( 1._rt + fac1);
-        alpha = inv_fac;
-        beta  = dt * inv_fac / epsilon;
-    }
+    //Real alpha = 0._rt;
+    //Real beta  = 0._rt;
+    //Real fac1 = 0._rt;
+    //Real inv_fac = 0._rt;
+    //if (macroscopic_solver_algo == 0) {
+    //    // sigma_method == 0 for Lax_Wendroff or semi-implicit approach
+    //    fac1 = 0.5_rt * sigma * dt / epsilon;
+    //    inv_fac = 1._rt / ( 1._rt + fac1);
+    //    alpha = (1.0_rt - fac1) * inv_fac;
+    //    beta  = dt * inv_fac / epsilon;
+    //}
+    //else if (macroscopic_solver_algo == 1) { // sigma method == 1
+    //    // sigma_metha == 1 for Backward Euler
+    //    fac1 = sigma * dt / epsilon;
+    //    inv_fac = 1._rt / ( 1._rt + fac1);
+    //    alpha = inv_fac;
+    //    beta  = dt * inv_fac / epsilon;
+    //}
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP
@@ -93,6 +115,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Array4<Real> const& Bx = Bfield[0]->array(mfi);
         Array4<Real> const& By = Bfield[1]->array(mfi);
         Array4<Real> const& Bz = Bfield[2]->array(mfi);
+ 
+        // material prop //
+        Array4<Real> const& sigma_arr = sigma_mf.array(mfi);
+        Array4<Real> const& eps_arr = epsilon_mf.array(mfi);
+        Array4<Real> const& mu_arr = mu_mf.array(mfi);
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
@@ -112,18 +139,36 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         amrex::ParallelFor(tex, tey, tez,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt, 
+                                                 i, j, k, amrex::IntVect(1,0,0) );
+                amrex::Real beta = T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
+                                                i, j, k, amrex::IntVect(1,0,0) );
+                amrex::Real mu = T_MacroAlgo::macro_avg_to_edge(i, j, k, amrex::IntVect(2,1,1),
+                                                    mu_arr);
                 Ex(i, j, k) = alpha * Ex(i, j, k) + (beta/mu)
                      * ( - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
                          + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k));
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt, 
+                                                 i, j, k, amrex::IntVect(0,1,0) );
+                amrex::Real beta = T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
+                                                i, j, k, amrex::IntVect(0,1,0) );
+                amrex::Real mu = T_MacroAlgo::macro_avg_to_edge(i, j, k, amrex::IntVect(1,2,1),
+                                                    mu_arr);
                 Ey(i, j, k) = alpha * Ey(i, j, k) + (beta/mu)
                      * ( - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
                          + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k));
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt, 
+                                                 i, j, k, amrex::IntVect(0,0,1) );
+                amrex::Real beta = T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
+                                                i, j, k, amrex::IntVect(0,0,1) );
+                amrex::Real mu = T_MacroAlgo::macro_avg_to_edge(i, j, k, amrex::IntVect(1,1,2),
+                                                    mu_arr);
                 Ez(i, j, k) = alpha * Ez(i, j, k) + (beta/mu)
                      * ( - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
                          + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k));
@@ -139,18 +184,23 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 
             amrex::ParallelFor(tex, tey, tez,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    Ex(i, j, k) += -beta * jx(i, j, k);
+                    Ex(i, j, k) += -T_MacroAlgo::beta(sigma_arr, eps_arr, dt, 
+                                                      i, j, k, amrex::IntVect(0, 0, 1) )
+                                   * jx(i, j, k);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    Ey(i, j, k) += -beta * jy(i, j, k);
+                    Ey(i, j, k) += -T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
+                                                      i, j, k, amrex::IntVect(0, 1, 0) ) 
+                                   * jy(i, j, k);
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                    Ez(i, j, k) += -beta * jz(i, j, k);
+                    Ez(i, j, k) += -T_MacroAlgo::beta(sigma_arr, eps_arr, dt,
+                                                      i, j, k, amrex::IntVect(0, 0, 1)  )
+                                    * jz(i, j, k);
                 }
             );
         }
     }
-
 }
 
 #endif // corresponds to ifndef WARPX_DIM_RZ
