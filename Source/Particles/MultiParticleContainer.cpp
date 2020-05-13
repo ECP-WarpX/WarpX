@@ -1083,7 +1083,7 @@ MultiParticleContainer::doQEDSchwinger ()
     for (MFIter mfi(Ex, info); mfi.isValid(); ++mfi )
     {
         // Make the box cell centered to avoid creating particles twice on the tile edges
-        const Box& box = enclosedCells(mfi.tilebox());
+        const Box& box = enclosedCells(mfi.nodaltilebox());
 
         const auto& arrEx = Ex[mfi].array();
         const auto& arrEy = Ey[mfi].array();
