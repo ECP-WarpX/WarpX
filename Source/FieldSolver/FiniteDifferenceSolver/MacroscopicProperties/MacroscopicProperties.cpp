@@ -64,7 +64,7 @@ MacroscopicProperties::InitData ()
     m_eps_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
     m_mu_mf = std::make_unique<MultiFab>(amrex::convert(ba,amrex::IntVect::TheUnitVector()), dmap, 1, ng);
 
-    if (m_sigma_s == "constant") { 
+    if (m_sigma_s == "constant") {
 
         m_sigma_mf->setVal(m_sigma);
 
@@ -88,7 +88,7 @@ MacroscopicProperties::InitData ()
         m_mu_mf->setVal(m_mu);
 
     } else if (m_mu_s == "parse_mu_function") {
-  
+
         InitializeMacroMultiFabUsingParser(m_mu_mf.get(), m_mu_parser.get(), lev);
 
     }
@@ -110,7 +110,7 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
         const Box& tb = convert(mfi.growntilebox(), iv);
 
         auto const& macro_fab =  macro_mf->array(mfi);
-  
+
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Shift x, y, z position based on index type
@@ -122,11 +122,11 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
 
                 Real fac_z = (1._rt - iv[2]) * dx_lev[2] * 0.5_rt;
                 Real z = k * dx_lev[2] + real_box.lo(2) + fac_z;
-     
+
                 // initialize the macroparameter
                 macro_fab(i,j,k) = (*macro_parser)(x,y,z);
         });
-       
+
     }
 
 

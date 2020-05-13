@@ -55,7 +55,7 @@ private:
      std::string m_sigma_s;
      std::string m_epsilon_s;
      std::string m_mu_s;
-     
+
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
                                   ParserWrapper<3> *macro_parser, int lev);
 
