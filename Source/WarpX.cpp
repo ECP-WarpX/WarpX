@@ -356,7 +356,9 @@ WarpX::ReadParameters ()
         pp.query("do_subcycling", do_subcycling);
         pp.query("use_hybrid_QED", use_hybrid_QED);
         pp.query("safe_guard_cells", safe_guard_cells);
-        pp.query("override_sync_int", override_sync_int);
+        std::string override_sync_int_string = "1";
+        pp.query("override_sync_int", override_sync_int_string);
+        override_sync_intervals = IntervalsParser(override_sync_int_string);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
                                          "Subcycling method 1 only works for 2 levels.");
