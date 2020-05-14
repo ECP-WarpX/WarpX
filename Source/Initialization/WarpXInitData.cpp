@@ -447,68 +447,52 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
        auto const& mfyfab = mfy->array(mfi);
        auto const& mfzfab = mfz->array(mfi);
 
-       auto const& mfx_IndexType = (*mfx).ixType();
-       auto const& mfy_IndexType = (*mfy).ixType();
-       auto const& mfz_IndexType = (*mfz).ixType();
-
-       // Initialize IntVect based on the index type of multiFab
-       // 0 if cell-centered, 1 if node-centered.
-       IntVect mfx_type(AMREX_D_DECL(0,0,0));
-       IntVect mfy_type(AMREX_D_DECL(0,0,0));
-       IntVect mfz_type(AMREX_D_DECL(0,0,0));
-
-       for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-           mfx_type[idim] = mfx_IndexType.nodeCentered(idim);
-           mfy_type[idim] = mfy_IndexType.nodeCentered(idim);
-           mfz_type[idim] = mfz_IndexType.nodeCentered(idim);
-       }
-
        amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
-                Real fac_x = (1.0 - mfx_type[0]) * dx_lev[0]*0.5;
+                Real fac_x = (1.0 - x_nodal_flag[0]) * dx_lev[0]*0.5;
                 Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
                 Real y = 0.0;
-                Real fac_z = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
+                Real fac_z = (1.0 - x_nodal_flag[1]) * dx_lev[1]*0.5;
                 Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
 #else
-                Real fac_y = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
+                Real fac_y = (1.0 - x_nodal_flag[1]) * dx_lev[1]*0.5;
                 Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                Real fac_z = (1.0 - mfx_type[2]) * dx_lev[2]*0.5;
+                Real fac_z = (1.0 - x_nodal_flag[2]) * dx_lev[2]*0.5;
                 Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the x-component of the field.
                 mfxfab(i,j,k) = (*xfield_parser)(x,y,z);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Real fac_x = (1.0 - mfy_type[0]) * dx_lev[0]*0.5;
+                Real fac_x = (1.0 - y_nodal_flag[0]) * dx_lev[0]*0.5;
                 Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
                 Real y = 0.0;
-                Real fac_z = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
+                Real fac_z = (1.0 - y_nodal_flag[1]) * dx_lev[1]*0.5;
                 Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
 #elif (AMREX_SPACEDIM==3)
-                Real fac_y = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
+                Real fac_y = (1.0 - y_nodal_flag[1]) * dx_lev[1]*0.5;
                 Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                Real fac_z = (1.0 - mfx_type[2]) * dx_lev[2]*0.5;
+                Real fac_z = (1.0 - y_nodal_flag[2]) * dx_lev[2]*0.5;
                 Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the y-component of the field.
                 mfyfab(i,j,k)  = (*yfield_parser)(x,y,z);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Real fac_x = (1.0 - mfz_type[0]) * dx_lev[0]*0.5;
+                Real fac_x = (1.0 - z_nodal_flag[0]) * dx_lev[0]*0.5;
                 Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
                 Real y = 0.0;
-                Real fac_z = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
+                Real fac_z = (1.0 - z_nodal_flag[1]) * dx_lev[1]*0.5;
                 Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
 #elif (AMREX_SPACEDIM==3)
-                Real fac_y = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
+                Real fac_y = (1.0 - z_nodal_flag[1]) * dx_lev[1]*0.5;
                 Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                Real fac_z = (1.0 - mfz_type[2]) * dx_lev[2]*0.5;
+                Real fac_z = (1.0 - z_nodal_flag[2]) * dx_lev[2]*0.5;
                 Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the z-component of the field.
