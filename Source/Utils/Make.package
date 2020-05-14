@@ -2,7 +2,8 @@ CEXE_sources += WarpXMovingWindow.cpp
 CEXE_sources += WarpXTagging.cpp
 CEXE_sources += WarpXUtil.cpp
 CEXE_sources += WarpXAlgorithmSelection.cpp
-CEXE_sources += Average.cpp
+CEXE_sources += CoarsenIO.cpp
+CEXE_sources += CoarsenMR.cpp
 CEXE_sources += Interpolate.cpp
 CEXE_sources += IntervalsParser.cpp
 

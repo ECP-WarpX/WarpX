@@ -309,7 +309,10 @@ Particle initialization
       It requires the additional arguments:
       ``<species_name>.injection_file`` (`string`) openPMD file name and
       ``<species_name>.q_tot`` (`double`) optional (default is ``q_tot=0`` and no re-scaling is done, ``weight=q_p``) when specified it is used to re-scale the weight of externally loaded ``N`` physical particles, each of charge ``q_p``, to inject macroparticles of ``weight=<species_name>.q_tot/q_p/N``.
-      The external file should include the species ``openPMD::Record`` s labeled ``mass`` and ``charge`` (`double` scalars) and also the ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
+      ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
+      ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
+      The external file must include the species ``openPMD::Record``s labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
+      If the external file also contains ``openPMD::Records``s for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ```<species_name>.charge`` or ```<species_name>.species_type``).
       The ``external_file`` option is currently implemented for 2D and 3D geometries, with record components ``x``, ``z`` and ``y`` for 3D.
       For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :doc:`../building/openpmd`.
 
@@ -1042,12 +1045,12 @@ Numerics and algorithms
     It also requires the use of the `direct` current deposition option
     `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
 
-* ``warpx.override_sync_int`` (`integer`) optional (default `10`)
-    Number of time steps between synchronization of sources (`rho` and `J`) on
-    grid nodes at box boundaries. Since the grid nodes at the interface between
-    two neighbor boxes are duplicated in both boxes, an instability can occur
-    if they have too different values. This option makes sure that they are
-    synchronized periodically.
+* ``warpx.override_sync_int`` (`string`) optional (default `1`)
+    Using the `Intervals parser`_ syntax, this string defines the timesteps at which
+    synchronization of sources (`rho` and `J`) on grid nodes at box boundaries is performed.
+    Since the grid nodes at the interface between two neighbor boxes are duplicated in both
+    boxes, an instability can occur if they have too different values.
+    This option makes sure that they are synchronized periodically.
 
 * ``warpx.use_hybrid_QED`` ('bool'; default: 0)
     Will use the Hybird QED Maxwell solver when pushing fields: a QED correction is added to the
@@ -1129,11 +1132,11 @@ This should be changed in the future.
     Name of each diagnostics.
     example: ``diagnostics.diags_names = diag1 my_second_diag``.
 
-* ``<diag_name>.period`` (`integer` optional, default ``-1``)
-    The number of PIC cycles (interval) in between two consecutive data dumps.
-    Use a negative number to disable data dumping.
-    This is ``-1`` (disabled) by default.
-    example: ``diag1.period = 10``.
+* ``<diag_name>.period`` (`string` optional, default `0`)
+    Using the `Intervals parser`_ syntax, this string defines the timesteps at which data is dumped.
+    Use a negative number or 0 to disable data dumping.
+    This is ``0`` (disabled) by default.
+    example: ``diag1.period = 10,20:25:1``.
 
 * ``<diag_name>.diag_type`` (`string`)
     Type of diagnostics. So far, only ``Full`` is supported.
@@ -1171,6 +1174,8 @@ This should be changed in the future.
     When ```warpx.plot_raw_fields`` is `1`, then the raw (i.e. unaveraged)
     fields are also saved in the output files.
     Only works with ``<diag_name>.format = plotfile``.
+    See `this section <https://yt-project.org/doc/examining/loading_data.html#viewing-raw-fields-in-warpx>`_
+    in the yt documentation for more details on how to view raw fields.
 
 * ``<diag_name>.plot_raw_fields_guards`` (`0` or `1`) optional (default `0`)
     Only used when ``warpx.plot_raw_fields`` is ``1``.
@@ -1502,6 +1507,24 @@ Reduced Diagnostics
     The separator between row values in the output file.
     The default separator is a whitespace.
 
+In-situ visualization
+^^^^^^^^^^^^^^^^^^^^^
+
+Besides the diagnostics described above, WarpX has in-situ visualization capabilities.
+This is controlled by the following option(s):
+
+* ``insitu.int`` (`integer`; 0 by default)
+    Turns in situ processing on or off and controls how often data is processed.
+
+* ``insitu.start`` (`integer`; 0 by default)
+    Controls when in situ processing starts.
+
+* ``insitu.config`` (`string`)
+    Points to the SENSEI XML file which selects and configures the desired back end.
+
+* ``insitu.pin_mesh`` (`integer`; 0 by default)
+    when 1 lower left corner of the mesh is pinned to 0.,0.,0.
+
 Lookup tables and other settings for QED modules (implementation in progress)
 -----------------------------------------------------------------------------
 
@@ -1583,6 +1606,35 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
 * ``qed_qs.photon_creation_energy_threshold`` (`float`) optional (default `2*me*c^2`)
     Energy threshold for photon particle creation in SI units.
+
+* ``warpx.do_qed_schwinger`` (`bool`) optional (default `0`)
+    If this is 1, Schwinger electron-positron pairs can be generated in vacuum in the cells where the EM field is high enough.
+    Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR`` on the branch ``QED``.
+    If ``warpx.do_qed_schwinger = 1``, Schwinger product species must be specified with
+    ``qed_schwinger.ele_product_species`` and ``qed_schwinger.pos_product_species``.
+    **Note: implementation of this feature is in progress.**
+    So far it requires ``warpx.do_nodal=1`` and does not support mesh refinement, cylindrical coordinates or single precision.
+
+* ``qed_schwinger.ele_product_species`` (`string`)
+    If Schwinger process is activated, an electron product species must be specified
+    (the name of an existing electron species must be provided).
+
+* ``qed_schwinger.pos_product_species`` (`string`)
+    If Schwinger process is activated, a positron product species must be specified
+    (the name of an existing positron species must be provided).
+
+* ``qed_schwinger.y_size`` (`float`; in meters)
+    If Schwinger process is activated with ``DIM=2D``, a transverse size must be specified.
+    It is used to convert the pair production rate per unit volume into an actual number of created particles.
+    This value should correspond to the typical transverse extent for which the EM field has a very high value
+    (e.g. the beam waist for a focused laser beam).
+
+* ``qed_schwinger.threshold_poisson_gaussian`` (`integer`) optional (default `25`)
+    If the expected number of physical pairs created in a cell at a given timestep is smaller than this threshold,
+    a Poisson distribution is used to draw the actual number of physical pairs created.
+    Otherwise a Gaussian distribution is used.
+    Note that, regardless of this parameter, the number of macroparticles created is at most one per cell
+    per timestep per species (with a weight corresponding to the number of physical pairs created).
 
 Checkpoints and restart
 -----------------------
