@@ -47,7 +47,7 @@ MultiReducedDiags::MultiReducedDiags ()
             m_multi_rd[i_rd].reset
                 ( new ParticleEnergy(m_rd_names[i_rd]));
         }
-        else if (rd_type.compare("Field") == 0)
+        else if (rd_type.compare("FieldReduced") == 0)
         {
             std::vector<std::string> field_type;
             pp_rd.getarr("field_type", field_type);

@@ -1351,7 +1351,7 @@ Reduced Diagnostics
         total mean energy :math:`E_p / \sum w_i`,
         mean energy of each species.
 
-    * ``Field``
+    * ``FieldReduced``
         This type computes values related to the electric and magnetic fields.
         The list of values to be written must be specified in ``<reduced_diags_name>.field_type``,
         separated by whitespaces.
