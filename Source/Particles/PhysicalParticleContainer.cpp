@@ -2049,7 +2049,7 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
     // Add guard cells to the box.
     box.grow(ngE);
 
-    const auto getPosition = GetParticlePosition(pti, offset);    
+    const auto getPosition = GetParticlePosition(pti, offset);
     const auto getEField = GetEField(pti, offset);
     const auto getBField = GetBField(pti, offset);
 

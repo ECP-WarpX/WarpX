@@ -424,7 +424,7 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
 
             amrex::ParticleReal Bxp, Byp, Bzp;
             getBField(ip, Bxp, Byp, Bzp);
-            
+
             doGatherShapeN<depos_order, lower_in_v>(
                 xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
