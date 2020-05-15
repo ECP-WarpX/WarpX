@@ -28,6 +28,13 @@
 #include "Particles/Pusher/UpdateMomentumBorisWithRadiationReaction.H"
 #include "Particles/Pusher/UpdateMomentumHigueraCary.H"
 
+#include <AMReX_Print.H>
+
+#ifdef WARPX_USE_OPENPMD
+#   include <openPMD/openPMD.hpp>
+#endif
+
+#include <cmath>
 #include <limits>
 #include <sstream>
 #include <string>
@@ -105,64 +112,11 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
 #endif
 
-    //variable to set plot_flags size
-    int plot_flag_size = PIdx::nattribs;
-    if(WarpX::do_back_transformed_diagnostics && do_back_transformed_diagnostics)
-        plot_flag_size += 6;
-
-#ifdef WARPX_QED
-    if(m_do_qed){
-        // plot_flag will have an entry for the optical depth
-        plot_flag_size++;
-    }
-#endif
-    //_______________________________
-
-    pp.query("plot_species", plot_species);
-    int do_user_plot_vars;
-    do_user_plot_vars = pp.queryarr("plot_vars", plot_vars);
-    if (not do_user_plot_vars){
-        // By default, all particle variables are dumped to plotfiles,
-        // including {x,y,z,ux,uy,uz}old variables when running in a
-        // boosted frame
-        plot_flags.resize(plot_flag_size, 1);
-    } else {
-        // Set plot_flag to 0 for all attribs
-        plot_flags.resize(plot_flag_size, 0);
-
-        // If not none, set plot_flags values to 1 for elements in plot_vars.
-        if (plot_vars[0] != "none"){
-            for (const auto& var : plot_vars){
-                // Return error if var not in PIdx.
-                WarpXUtilMsg::AlwaysAssert(
-                    ParticleStringNames::to_index.count(var),
-                    "ERROR: plot_vars argument '" + var +
-                    "' not in ParticleStringNames"
-                );
-                plot_flags[ParticleStringNames::to_index.at(var)] = 1;
-            }
-        }
-
-#ifdef WARPX_DIM_RZ
-        // Always write out theta, whether or not it's requested,
-        // to be consistent with always writing out r and z.
-        plot_flags[ParticleStringNames::to_index.at("theta")] = 1;
-#endif
-
-    }
-
     // Parse galilean velocity
     ParmParse ppsatd("psatd");
     ppsatd.query("v_galilean", v_galilean);
     // Scale the velocity by the speed of light
     for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
-
-    #ifdef WARPX_QED
-        if(m_do_qed){
-            //Optical depths is always plotted if QED is on
-            plot_flags[plot_flag_size-1] = 1;
-        }
-    #endif
 
     // build filter functors
     m_do_random_filter  = pp.query("random_fraction", m_random_fraction);
@@ -254,7 +208,7 @@ PhysicalParticleContainer::AddGaussianBeam (
     std::normal_distribution<double> disty(y_m, y_rms);
     std::normal_distribution<double> distz(z_m, z_rms);
 
-    // Allocate temporary vectors on the CPU
+    // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
     Gpu::HostVector<ParticleReal> particle_y;
     Gpu::HostVector<ParticleReal> particle_z;
@@ -326,36 +280,101 @@ PhysicalParticleContainer::AddGaussianBeam (
 }
 
 void
-PhysicalParticleContainer::AddPlasmaFromFile (const std::string s_f, amrex::Real q_tot)
+PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot)
 {
+    // Declare temporary vectors on the CPU
+    Gpu::HostVector<ParticleReal> particle_x;
+    Gpu::HostVector<ParticleReal> particle_z;
+    Gpu::HostVector<ParticleReal> particle_ux;
+    Gpu::HostVector<ParticleReal> particle_uz;
+    Gpu::HostVector<ParticleReal> particle_w;
+    Gpu::HostVector<ParticleReal> particle_y;
+    Gpu::HostVector<ParticleReal> particle_uy;
+
 #ifdef WARPX_USE_OPENPMD
-    openPMD::Series series = openPMD::Series(s_f, openPMD::AccessType::READ_ONLY);
-    amrex::Print() << "openPMD standard version " << series.openPMD() << "\n";
+    //TODO: Make changes for read/write in multiple MPI ranks
+    if (ParallelDescriptor::IOProcessor()) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(plasma_injector,
+                                         "AddPlasmaFromFile: plasma injector not initialized.\n");
+        // take ownership of the series and close it when done
+        auto series = std::move(plasma_injector->m_openpmd_input_series);
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(series.iterations.size() == 1u, "External "
-                                     "file should contain only one iteration\n");
-    openPMD::Iteration& i = series.iterations[1];
+        // assumption asserts: see PlasmaInjector
+        openPMD::Iteration it = series->iterations.begin()->second;
+        std::string const ps_name = it.particles.begin()->first;
+        openPMD::ParticleSpecies ps = it.particles.begin()->second;
 
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(i.particles.size() == 1u, "External file "
-                                     "should contain only one species\n");
-    std::pair<std::string,openPMD::ParticleSpecies> ps = *i.particles.begin();
+        auto const npart = ps["position"]["x"].getExtent()[0];
+        std::shared_ptr<ParticleReal> ptr_x = ps["position"]["x"].loadChunk<ParticleReal>();
+        double const position_unit_x = ps["position"]["x"].unitSI();
+        std::shared_ptr<ParticleReal> ptr_z = ps["position"]["z"].loadChunk<ParticleReal>();
+        double const position_unit_z = ps["position"]["z"].unitSI();
+        std::shared_ptr<ParticleReal> ptr_ux = ps["momentum"]["x"].loadChunk<ParticleReal>();
+        double const momentum_unit_x = ps["momentum"]["x"].unitSI();
+        std::shared_ptr<ParticleReal> ptr_uz = ps["momentum"]["z"].loadChunk<ParticleReal>();
+        double const momentum_unit_z = ps["momentum"]["z"].unitSI();
+#   ifdef WARPX_DIM_3D
+        std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
+        double const position_unit_y = ps["position"]["y"].unitSI();
+#   endif
+        std::shared_ptr<ParticleReal> ptr_uy = nullptr;
+        double momentum_unit_y = 1.0;
+        if (ps["momentum"].contains("y")) {
+            ptr_uy = ps["momentum"]["y"].loadChunk<ParticleReal>();
+             momentum_unit_y = ps["momentum"]["y"].unitSI();
+        }
+        series->flush();  // shared_ptr data can be read now
 
-    //TODO: In future PRs will add AMREX_ALWAYS_ASSERT_WITH_MESSAGE to test if mass and charge are both const
-    amrex::Real p_m = ps.second["mass"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    amrex::Real p_q = ps.second["charge"][openPMD::RecordComponent::SCALAR].loadChunk<amrex::Real>().get()[0];
-    int npart = ps.second["position"]["x"].getExtent()[0];
-    series.flush();
+        ParticleReal weight = 1.0_prt;  // base standard: no info means "real" particles
+        if (q_tot != 0.0) {
+            weight = std::abs(q_tot) / ( std::abs(charge) * ParticleReal(npart) );
+            if (ps.contains("weighting")) {
+                Print() << "WARNING: Both '" << ps_name << ".q_tot' and '"
+                        << ps_name << ".injection_file' specify a total charge.\n'"
+                        << ps_name << ".q_tot' will take precedence.\n";
+            }
+        }
+        // ED-PIC extension?
+        else if (ps.contains("weighting")) {
+            // TODO: Add ASSERT_WITH_MESSAGE to test if weighting is a constant record
+            // TODO: Add ASSERT_WITH_MESSAGE for macroWeighted value in ED-PIC
+            ParticleReal w = ps["weighting"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>().get()[0];
+            double const w_unit = ps["weighting"][openPMD::RecordComponent::SCALAR].unitSI();
+            weight = w * w_unit;
+        }
 
-    mass = p_m*PhysConst::mevpc2_kg;
-    charge = p_q*PhysConst::q_e;
-    Real const weight = q_tot/(charge*amrex::Real(npart));
-
-    amrex::Print() << npart << " parts of species " << ps.first << "\nWith"
-    << " mass = " << mass << " and charge = " << charge << "\nTo initialize "
-    << npart << " macroparticles with weight " << weight << "\n";
-
-    amrex::Print()<<"WARNING: this is WIP, no particle has been injected!!";
-#endif
+        for (auto i = decltype(npart){0}; i<npart; ++i){
+            ParticleReal const x = ptr_x.get()[i]*position_unit_x;
+            ParticleReal const z = ptr_z.get()[i]*position_unit_z;
+#   ifndef WARPX_DIM_3D
+            ParticleReal const y = 0.0_prt;
+#   else
+            ParticleReal const y = ptr_y.get()[i]*position_unit_y;
+#   endif
+            if (plasma_injector->insideBounds(x, y, z)) {
+                ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
+                ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
+                ParticleReal uy = 0.0_prt;
+                if (ps["momentum"].contains("y")) {
+                    uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
+                }
+                CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
+                particle_x,  particle_y,  particle_z,
+                particle_ux, particle_uy, particle_uz,
+                particle_w);
+            }
+        }
+        auto const np = particle_z.size();
+        if (np < npart) {
+            Print() << "WARNING: Simulation box doesn't cover all particles\n";
+        }
+    } // IO Processor
+    auto const np = particle_z.size();
+    AddNParticles(0, np,
+                  particle_x.dataPtr(),  particle_y.dataPtr(),  particle_z.dataPtr(),
+                  particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
+                  1, particle_w.dataPtr(),1);
+#endif // WARPX_USE_OPENPMD
     return;
 }
 
@@ -420,8 +439,7 @@ PhysicalParticleContainer::AddParticles (int lev)
     }
 
     if (plasma_injector->external_file) {
-        AddPlasmaFromFile(plasma_injector->str_injection_file,
-                          plasma_injector->q_tot);
+        AddPlasmaFromFile(plasma_injector->q_tot);
         return;
     }
 
@@ -466,7 +484,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
     defineAllParticleTiles();
 
-    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     const int nlevs = numLevels();
     static bool refine_injection = false;
@@ -938,7 +956,7 @@ PhysicalParticleContainer::FieldGather (int lev,
 {
     BL_ASSERT(OnSameGrids(lev,Ex));
 
-    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -1009,7 +1027,7 @@ PhysicalParticleContainer::Evolve (int lev,
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
-    amrex::Vector<amrex::Real>* cost = WarpX::getCosts(lev);
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
     const iMultiFab* current_masks = WarpX::CurrentBufferMasks(lev);
     const iMultiFab* gather_masks = WarpX::GatherBufferMasks(lev);
@@ -2232,12 +2250,12 @@ PhysicalParticleContainer::getIonizationFunc ()
 #ifdef WARPX_QED
 
 
-bool PhysicalParticleContainer::has_quantum_sync ()
+bool PhysicalParticleContainer::has_quantum_sync () const
 {
     return m_do_qed_quantum_sync;
 }
 
-bool PhysicalParticleContainer::has_breit_wheeler ()
+bool PhysicalParticleContainer::has_breit_wheeler () const
 {
     return m_do_qed_breit_wheeler;
 }

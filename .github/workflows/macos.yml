@@ -1,0 +1,31 @@
+name: macOS build
+
+on: [push, pull_request]
+
+jobs:
+  build_gcc9:
+    name: AppleClang [macOS]
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        path: 'warpx_directory/WarpX'
+    - name: install dependencies
+      run: |
+        brew update
+        brew install cmake
+        brew install fftw
+        brew install libomp
+        brew install open-mpi
+        brew install pkg-config
+        brew tap openpmd/openpmd
+        brew install openpmd-api
+    - name: build WarpX
+      run: |
+        cd warpx_directory
+        git clone --depth 1 https://bitbucket.org/berkeleylab/picsar.git
+        git clone --depth 1 --branch development https://github.com/AMReX-Codes/amrex.git
+        cd WarpX
+        export LDFLAGS="-lomp"
+        make -j 2 COMP=llvm USE_OMP=FALSE USE_OPENPMD=TRUE XTRA_CXXFLAGS="-Xpreprocessor -fopenmp"
+        make -j 2 COMP=llvm USE_OMP=FALSE USE_OPENPMD=TRUE XTRA_CXXFLAGS="-Xpreprocessor -fopenmp" PRECISION=FLOAT USE_SINGLE_PRECISION_PARTICLES=TRUE

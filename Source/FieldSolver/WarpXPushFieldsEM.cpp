@@ -160,9 +160,9 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
 #endif
         for ( MFIter mfi(*pml_B[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            const Box& tbx  = mfi.tilebox(Bx_nodal_flag);
-            const Box& tby  = mfi.tilebox(By_nodal_flag);
-            const Box& tbz  = mfi.tilebox(Bz_nodal_flag);
+            const Box& tbx  = mfi.tilebox( pml_B[0]->ixType().toIntVect() );
+            const Box& tby  = mfi.tilebox( pml_B[1]->ixType().toIntVect() );
+            const Box& tbz  = mfi.tilebox( pml_B[2]->ixType().toIntVect() );
             auto const& pml_Bxfab = pml_B[0]->array(mfi);
             auto const& pml_Byfab = pml_B[1]->array(mfi);
             auto const& pml_Bzfab = pml_B[2]->array(mfi);
@@ -256,38 +256,18 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     const std::array<Real,3>& dx = WarpX::CellSize(patch_level);
     const Real dtsdx_c2 = c2dt/dx[0], dtsdy_c2 = c2dt/dx[1], dtsdz_c2 = c2dt/dx[2];
 
-    MultiFab *Ex, *Ey, *Ez, *Bx, *By, *Bz, *jx, *jy, *jz, *F;
+    MultiFab* F;
     if (patch_type == PatchType::fine)
     {
-        Ex = Efield_fp[lev][0].get();
-        Ey = Efield_fp[lev][1].get();
-        Ez = Efield_fp[lev][2].get();
-        Bx = Bfield_fp[lev][0].get();
-        By = Bfield_fp[lev][1].get();
-        Bz = Bfield_fp[lev][2].get();
-        jx = current_fp[lev][0].get();
-        jy = current_fp[lev][1].get();
-        jz = current_fp[lev][2].get();
         F  = F_fp[lev].get();
     }
     else if (patch_type == PatchType::coarse)
     {
-        Ex = Efield_cp[lev][0].get();
-        Ey = Efield_cp[lev][1].get();
-        Ez = Efield_cp[lev][2].get();
-        Bx = Bfield_cp[lev][0].get();
-        By = Bfield_cp[lev][1].get();
-        Bz = Bfield_cp[lev][2].get();
-        jx = current_cp[lev][0].get();
-        jy = current_cp[lev][1].get();
-        jz = current_cp[lev][2].get();
         F  = F_cp[lev].get();
     }
 
     if (do_pml && pml[lev]->ok())
     {
-        if (F) pml[lev]->ExchangeF(patch_type, F, do_pml_in_domain);
-
         const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
         const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
         const auto& pml_j = (patch_type == PatchType::fine) ? pml[lev]->Getj_fp() : pml[lev]->Getj_cp();
@@ -299,9 +279,9 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 #endif
         for ( MFIter mfi(*pml_E[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            const Box& tex  = mfi.tilebox(Ex_nodal_flag);
-            const Box& tey  = mfi.tilebox(Ey_nodal_flag);
-            const Box& tez  = mfi.tilebox(Ez_nodal_flag);
+            const Box& tex  = mfi.tilebox( pml_E[0]->ixType().toIntVect() );
+            const Box& tey  = mfi.tilebox( pml_E[1]->ixType().toIntVect() );
+            const Box& tez  = mfi.tilebox( pml_E[2]->ixType().toIntVect() );
 
             auto const& pml_Exfab = pml_E[0]->array(mfi);
             auto const& pml_Eyfab = pml_E[1]->array(mfi);
@@ -503,9 +483,9 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         Array4<Real> const& Jz_arr = Jz->array(mfi);
 
         Box const & tilebox = mfi.tilebox();
-        Box tbr = convert(tilebox, WarpX::jx_nodal_flag);
-        Box tbt = convert(tilebox, WarpX::jy_nodal_flag);
-        Box tbz = convert(tilebox, WarpX::jz_nodal_flag);
+        Box tbr = convert( tilebox, Jx->ixType().toIntVect() );
+        Box tbt = convert( tilebox, Jy->ixType().toIntVect() );
+        Box tbz = convert( tilebox, Jz->ixType().toIntVect() );
 
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
@@ -669,7 +649,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         Array4<Real> const& Rho_arr = Rho->array(mfi);
 
         tilebox = mfi.tilebox();
-        Box tb = convert(tilebox, rho_nodal_flag);
+        Box tb = convert( tilebox, Rho->ixType().toIntVect() );
 
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that

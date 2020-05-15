@@ -21,6 +21,10 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_Utility.H>
 
+#ifdef WARPX_USE_OPENPMD
+#   include <openPMD/openPMD.hpp>
+#endif
+
 #include <array>
 
 ///
@@ -67,12 +71,15 @@ public:
     amrex::Real x_cut = std::numeric_limits<amrex::Real>::max();
     amrex::Real y_cut = std::numeric_limits<amrex::Real>::max();
     amrex::Real z_cut = std::numeric_limits<amrex::Real>::max();
-    amrex::Real q_tot;
+    amrex::Real q_tot = 0.0;
     long npart;
     int do_symmetrize = 0;
 
-    bool external_file = false;
-    std::string str_injection_file;
+    bool external_file = false; //! initialize from an openPMD file
+#ifdef WARPX_USE_OPENPMD
+    //! openPMD::Series to load from in external_file injection
+    std::unique_ptr<openPMD::Series> m_openpmd_input_series;
+#endif
 
     bool radially_weighted = true;
 

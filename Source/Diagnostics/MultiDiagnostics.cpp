@@ -28,12 +28,24 @@ MultiDiagnostics::InitData ()
 }
 
 void
+MultiDiagnostics::InitializeFieldFunctors ( int lev )
+{
+    for( auto& diag : alldiags ){
+        // Initialize functors to store pointers to fields.
+        diag->InitializeFieldFunctors( lev );
+    }
+}
+
+void
 MultiDiagnostics::ReadParameters ()
 {
     ParmParse pp("diagnostics");
-    pp.query("ndiags", ndiags);
+
+    pp.queryarr("diags_names", diags_names);
+    ndiags = diags_names.size();
+    Print()<<"ndiags "<<ndiags<<'\n';
+
     diags_types.resize( ndiags );
-    if (ndiags > 0) pp.getarr("diags_names", diags_names);
     for (int i=0; i<ndiags; i++){
         ParmParse ppd(diags_names[i]);
         std::string diag_type_str;
@@ -46,9 +58,17 @@ void
 MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
     for (auto& diag : alldiags){
-        if ( !diag->DoDump( step, force_flush ) ) return;
+        if ( !diag->DoDump( step, force_flush ) ) continue;
         diag->ComputeAndPack();
         diag->Flush();
         diag->FlushRaw();
+    }
+}
+
+void
+MultiDiagnostics::NewIteration ()
+{
+    for( auto& diag : alldiags ){
+        diag->NewIteration();
     }
 }

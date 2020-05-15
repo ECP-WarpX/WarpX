@@ -1,0 +1,70 @@
+#################################
+####### GENERAL PARAMETERS ######
+#################################
+max_step = 1
+amr.n_cell =  8 8 8
+amr.max_grid_size = 8   # maximum size of each AMReX box, used to decompose the domain
+amr.blocking_factor = 8 # minimum size of each AMReX box, used to decompose the domain
+geometry.coord_sys   = 0                  # 0: Cartesian
+geometry.is_periodic = 1     1     1  # Is periodic?
+geometry.prob_lo     =  -5.e-7  -5.e-7  -5.e-7   # physical domain
+geometry.prob_hi     =  5.e-7   5.e-7  5.e-7
+amr.max_level = 0 # Maximum level in hierarchy (1 might be unstable, >1 is not supported)
+
+#################################
+############ NUMERICS ###########
+#################################
+algo.current_deposition = esirkepov
+algo.charge_deposition = standard
+algo.field_gathering = momentum-conserving
+algo.particle_pusher = boris
+interpolation.nox = 1 # Particle interpolation order. Must be the same in x, y, and z
+interpolation.noy = 1
+interpolation.noz = 1
+warpx.verbose = 1
+warpx.cfl = 1. # if 1., the time step is set to its CFL limit
+warpx.do_pml = 0 # use Perfectly Matched Layer as boundary condition
+warpx.serialize_ics = 1
+
+#################################
+###### EXTERNAL EM FIELD ########
+#################################
+
+warpx.B_ext_grid_init_style = "constant"
+warpx.E_ext_grid_init_style = "constant"
+warpx.B_external_grid = 0. 0. 0.
+warpx.E_external_grid = 0. 0. 0.
+
+#################################
+############ PLASMA #############
+#################################
+particles.nspecies = 2 # number of species
+particles.species_names =  ele_schwinger pos_schwinger
+
+ele_schwinger.species_type = "electron"
+pos_schwinger.species_type = "positron"
+ele_schwinger.injection_style = "NUniformPerCell"
+pos_schwinger.injection_style = "NUniformPerCell"
+ele_schwinger.num_particles_per_cell_each_dim = 0 0
+pos_schwinger.num_particles_per_cell_each_dim = 0 0
+ele_schwinger.profile = "constant"
+pos_schwinger.profile = "constant"
+ele_schwinger.density = 0
+pos_schwinger.density = 0
+ele_schwinger.momentum_distribution_type = "gaussian"
+pos_schwinger.momentum_distribution_type = "gaussian"
+
+#################################
+############## QED ##############
+#################################
+warpx.do_qed_schwinger = 1
+qed_schwinger.ele_product_species = ele_schwinger
+qed_schwinger.pos_product_species = pos_schwinger
+
+#################################
+########## DIAGNOSTICS ##########
+#################################
+diagnostics.diags_names = diag1
+diag1.diag_type = Full
+diag1.period = 1
+

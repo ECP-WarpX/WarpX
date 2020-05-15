@@ -116,7 +116,7 @@ Then, in the ``warpx_directory``, download and build openPMD-api:
    mkdir openPMD-api-build
    cd openPMD-api-build
    cmake ../openPMD-api -DopenPMD_USE_PYTHON=OFF -DCMAKE_INSTALL_PREFIX=../openPMD-install/ -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_RPATH='$ORIGIN'
-   cmake --build . --target install
+   cmake --build . --target install --parallel 16
 
 Finally, compile WarpX:
 
@@ -128,3 +128,14 @@ Finally, compile WarpX:
    make -j 16 COMP=gcc USE_OPENPMD=TRUE
 
 In order to run WarpX, load the same modules again.
+
+Building a Python Module
+------------------------
+
+When building with Python, it is recommended to use the cray-python, version 3. For example,
+
+.. code-block:: bash
+
+   module load cray-python/3.7.3.2
+
+Otherwise, follow the instructions for a general Python install here :ref:`building-python`.
