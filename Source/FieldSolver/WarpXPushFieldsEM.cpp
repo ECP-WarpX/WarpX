@@ -252,47 +252,13 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveFPML(
-                pml[lev]->GetF_fp(), pml[lev]->GetE_fp(),
-                pml[lev]->Getrho_fp(), rhocomp, a_dt );
+                pml[lev]->GetF_fp(), pml[lev]->GetE_fp(), a_dt );
         } else {
             m_fdtd_solver_cp[lev]->EvolveFPML(
-                pml[lev]->GetF_cp(), pml[lev]->GetE_cp(),
-                pml[lev]->Getrho_cp(), rhocomp, a_dt );
+                pml[lev]->GetF_cp(), pml[lev]->GetE_cp(), a_dt );
         }
     }
 
-
-    const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
-    const auto& dx = WarpX::CellSize(patch_level);
-    const std::array<Real,3> dtsdx {a_dt/dx[0], a_dt/dx[1], a_dt/dx[2]};
-
-    if (do_pml && pml[lev]->ok())
-    {
-        const auto& pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
-        const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
-
-#ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-        for ( MFIter mfi(*pml_F, TilingIfNotGPU()); mfi.isValid(); ++mfi )
-        {
-            const Box& bx = mfi.tilebox();
-
-            auto const& pml_F_fab = pml_F->array(mfi);
-            auto const& pml_Exfab = pml_E[0]->array(mfi);
-            auto const& pml_Eyfab = pml_E[1]->array(mfi);
-            auto const& pml_Ezfab = pml_E[2]->array(mfi);
-
-            amrex::ParallelFor(bx,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k)
-            {
-                warpx_push_pml_F(i, j, k, pml_F_fab, pml_Exfab,
-                                pml_Eyfab, pml_Ezfab,
-                                dtsdx[0], dtsdx[1], dtsdx[2]);
-            });
-
-        }
-    }
 }
 
 #ifdef WARPX_DIM_RZ

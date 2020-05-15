@@ -14,10 +14,7 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #endif
-#include "BoundaryConditions/PML.H"
-#include "BoundaryConditions/PML_current.H"
 #include "BoundaryConditions/PMLComponent.H"
-#include "Utils/WarpXConst.H"
 #include <AMReX_Gpu.H>
 
 using namespace amrex;
@@ -28,8 +25,7 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveFPML (
     amrex::MultiFab* Ffield,
     std::array< amrex::MultiFab*, 3 > const Efield,
-    amrex::MultiFab* const rhofield,
-    int const rhocomp, amrex::Real const dt ) {
+    amrex::Real const dt ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
@@ -38,18 +34,15 @@ void FiniteDifferenceSolver::EvolveFPML (
 #else
     if (m_do_nodal) {
 
-        EvolveFPMLCartesian <CartesianNodalAlgorithm> (
-            Ffield, Efield, rhofield, rhocomp, dt );
+        EvolveFPMLCartesian <CartesianNodalAlgorithm> ( Ffield, Efield, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        EvolveFPMLCartesian <CartesianYeeAlgorithm> (
-            Ffield, Efield, rhofield, rhocomp, dt );
+        EvolveFPMLCartesian <CartesianYeeAlgorithm> ( Ffield, Efield, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveFPMLCartesian <CartesianCKCAlgorithm> (
-            Ffield, Efield, rhofield, rhocomp, dt );
+        EvolveFPMLCartesian <CartesianCKCAlgorithm> ( Ffield, Efield, dt );
 
     } else {
         amrex::Abort("Unknown algorithm");
@@ -61,11 +54,10 @@ void FiniteDifferenceSolver::EvolveFPML (
 #ifndef WARPX_DIM_RZ
 
 template<typename T_Algo>
-void FiniteDifferenceSolver::EvolveEPMLCartesian (
+void FiniteDifferenceSolver::EvolveFPMLCartesian (
     amrex::MultiFab* Ffield,
     std::array< amrex::MultiFab*, 3 > const Efield,
-    amrex::MultiFab* const rhofield,
-    int const rhocomp, amrex::Real const dt ) {
+    amrex::Real const dt ) {
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP
@@ -78,7 +70,6 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
         Array4<Real> const& Ex = Efield[0]->array(mfi);
         Array4<Real> const& Ey = Efield[1]->array(mfi);
         Array4<Real> const& Ez = Efield[2]->array(mfi);
-        Array4<Real> const& rho = rhofield->array(mfi);
 
         // Extract stencil coefficients
         Real const * const AMREX_RESTRICT coefs_x = m_stencil_coefs_x.dataPtr();
@@ -102,9 +93,9 @@ void FiniteDifferenceSolver::EvolveEPMLCartesian (
                     + T_Algo::DownwardDx(Ex, coefs_x, n_coefs_x, i, j, k, PMLComp::xz) );
 
                 F(i, j, k, PMLComp::y) += dt * (
-                      T_Algo::DownwardDx(Ey, coefs_y, n_coefs_y, i, j, k, PMLComp::yx)
-                    + T_Algo::DownwardDx(Ey, coefs_y, n_coefs_y, i, j, k, PMLComp::yy)
-                    + T_Algo::DownwardDx(Ey, coefs_y, n_coefs_y, i, j, k, PMLComp::yz) );
+                      T_Algo::DownwardDy(Ey, coefs_y, n_coefs_y, i, j, k, PMLComp::yx)
+                    + T_Algo::DownwardDy(Ey, coefs_y, n_coefs_y, i, j, k, PMLComp::yy)
+                    + T_Algo::DownwardDy(Ey, coefs_y, n_coefs_y, i, j, k, PMLComp::yz) );
 
                 F(i, j, k, PMLComp::z) += dt * (
                       T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, k, PMLComp::zx)

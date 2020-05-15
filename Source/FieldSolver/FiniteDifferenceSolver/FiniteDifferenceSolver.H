@@ -65,6 +65,10 @@ class FiniteDifferenceSolver
                       MultiSigmaBox const& sigba,
                       amrex::Real const dt, bool pml_has_particles );
 
+       void EvolveFPML ( amrex::MultiFab* Ffield,
+                     std::array< amrex::MultiFab*, 3 > const Efield,
+                     amrex::Real const dt );
+
     private:
 
         int m_fdtd_algo;
@@ -155,6 +159,11 @@ class FiniteDifferenceSolver
             amrex::MultiFab* const Ffield,
             MultiSigmaBox const& sigba,
             amrex::Real const dt, bool pml_has_particles );
+
+        template< typename T_Algo >
+        void EvolveFPMLCartesian ( amrex::MultiFab* Ffield,
+                      std::array< amrex::MultiFab*, 3 > const Efield,
+                      amrex::Real const dt );
 
 #endif
 

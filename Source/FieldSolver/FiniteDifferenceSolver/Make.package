@@ -5,5 +5,6 @@ CEXE_sources += EvolveF.cpp
 CEXE_sources += ComputeDivE.cpp
 CEXE_sources += EvolveBPML.cpp
 CEXE_sources += EvolveEPML.cpp
+CEXE_sources += EvolveFPML.cpp
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver/FiniteDifferenceSolver
