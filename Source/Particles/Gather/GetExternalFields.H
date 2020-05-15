@@ -15,15 +15,15 @@ enum ExternalFieldInitType { Constant, Parser };
 struct GetField
 {
     ExternalFieldInitType m_type;
-    
+
     amrex::GpuArray<amrex::ParticleReal, 3> m_field_value;
-    
+
     ParserWrapper<4>* m_xfield_partparser = nullptr;
     ParserWrapper<4>* m_yfield_partparser = nullptr;
     ParserWrapper<4>* m_zfield_partparser = nullptr;
     GetParticlePosition m_get_position;
     amrex::Real m_time;
-    
+
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator () (long i,
                       amrex::ParticleReal& field_x,
