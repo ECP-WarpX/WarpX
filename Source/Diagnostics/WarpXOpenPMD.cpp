@@ -42,18 +42,22 @@ namespace detail
         return make_pair(record_name, component_name);
     }
 
-    /** Return the components of particle positions
+    /** Return the componen labels for particle positions
      */
     inline std::vector< std::string >
-    getParticlePositionComponents()
+    getParticlePositionComponentLabels()
     {
         using vs = std::vector< std::string >;
-#if AMREX_SPACEDIM==3
-        vs const positionComponents{"x", "y", "z"};
-#elif defined(WARPX_DIM_RZ)
-        vs const positionComponents{"r", "z"};
-#else
+#if defined(WARPX_DIM_XZ)
         vs const positionComponents{"x", "z"};
+#elif defined(WARPX_DIM_RZ)
+        // note: this will change when we back-transform
+        //       z,r,theta on the fly to cartesian coordiantes
+        vs const positionComponents{"r", "z"};
+#elif (AMREX_SPACEDIM==3)
+        vs const positionComponents{"x", "y", "z"};
+#else
+#   error Unknown WarpX dimensionality.
 #endif
         return positionComponents;
     }
@@ -64,12 +68,14 @@ namespace detail
     getFieldAxisLabels()
     {
         using vs = std::vector< std::string >;
-#if AMREX_SPACEDIM==3
-        vs const axisLabels{"x", "y", "z"};
+#if defined(WARPX_DIM_XZ)
+        vs const axisLabels{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
         vs const axisLabels{"r", "z"};
+#elif (AMREX_SPACEDIM==3)
+        vs const axisLabels{"x", "y", "z"};
 #else
-        vs const axisLabels{"x", "z"};
+#   error Unknown WarpX dimensionality.
 #endif
         return axisLabels;
     }
@@ -372,7 +378,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
          const auto& aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
          {
            // Save positions
-           auto const positionComponents = detail::getParticlePositionComponents();
+           auto const positionComponents = detail::getParticlePositionComponentLabels();
            for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
                 std::shared_ptr< amrex::ParticleReal > curr(
                     new amrex::ParticleReal[numParticleOnTile],
@@ -526,7 +532,7 @@ WarpXOpenPMDPlot::SetupPos(WarpXParticleContainer* pc,
   auto const realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
   auto const idType = openPMD::Dataset(openPMD::determineDatatype< uint64_t >(), {np});
 
-  auto const positionComponents = detail::getParticlePositionComponents();
+  auto const positionComponents = detail::getParticlePositionComponentLabels();
   for( auto const& comp : positionComponents ) {
       currSpecies["positionOffset"][comp].resetDataset( realType );
       currSpecies["positionOffset"][comp].makeConstant( 0. );
