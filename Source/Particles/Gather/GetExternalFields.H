@@ -9,7 +9,7 @@
 
 enum ExternalFieldInitType { Constant, Parser };
 
-/** \brief Functor that can be used to assign the external 
+/** \brief Functor that can be used to assign the external
  *         E field to a particle inside a ParallelFor kernel
 */
 struct GetEField
@@ -25,7 +25,7 @@ struct GetEField
     amrex::Real m_time;
 
     GetEField (const WarpXParIter& a_pti, int a_offset = 0) noexcept
-    {        
+    {
         auto& warpx = WarpX::GetInstance();
         auto& mypc = warpx.GetPartContainer();
         if (mypc.m_E_ext_particle_s=="constant" || mypc.m_E_ext_particle_s=="default")
@@ -42,7 +42,7 @@ struct GetEField
             m_get_position = GetParticlePosition(a_pti, a_offset);
             m_xfield_partparser = mypc.m_Ex_particle_parser.get();
             m_yfield_partparser = mypc.m_Ey_particle_parser.get();
-            m_zfield_partparser = mypc.m_Ez_particle_parser.get();            
+            m_zfield_partparser = mypc.m_Ez_particle_parser.get();
         }
     }
 
@@ -63,7 +63,7 @@ struct GetEField
             AMREX_ASSERT(m_xfield_partparser != nullptr);
             AMREX_ASSERT(m_yfield_partparser != nullptr);
             AMREX_ASSERT(m_zfield_partparser != nullptr);
-            
+
             amrex::ParticleReal x, y, z;
             m_get_position(i, x, y, z);
             Exp = (*m_xfield_partparser)(x, y, z, m_time);
@@ -77,7 +77,7 @@ struct GetEField
     }
 };
 
-/** \brief Functor that can be used to assign the external 
+/** \brief Functor that can be used to assign the external
  *         B field to a particle inside a ParallelFor kernel
 */
 struct GetBField
@@ -91,9 +91,9 @@ struct GetBField
     ParserWrapper<4>* m_zfield_partparser = nullptr;
     GetParticlePosition m_get_position;
     amrex::Real m_time;
-    
+
     GetBField (const WarpXParIter& a_pti, int a_offset = 0) noexcept
-    {        
+    {
         auto& warpx = WarpX::GetInstance();
         auto& mypc = warpx.GetPartContainer();
         if (mypc.m_B_ext_particle_s=="constant" || mypc.m_B_ext_particle_s=="default")
@@ -110,7 +110,7 @@ struct GetBField
             m_get_position = GetParticlePosition(a_pti, a_offset);
             m_xfield_partparser = mypc.m_Bx_particle_parser.get();
             m_yfield_partparser = mypc.m_By_particle_parser.get();
-            m_zfield_partparser = mypc.m_Bz_particle_parser.get();            
+            m_zfield_partparser = mypc.m_Bz_particle_parser.get();
         }
     }
 
@@ -131,7 +131,7 @@ struct GetBField
             AMREX_ASSERT(m_xfield_partparser != nullptr);
             AMREX_ASSERT(m_yfield_partparser != nullptr);
             AMREX_ASSERT(m_zfield_partparser != nullptr);
-            
+
             amrex::ParticleReal x, y, z;
             m_get_position(i, x, y, z);
             Bxp = (*m_xfield_partparser)(x, y, z, m_time);
