@@ -12,7 +12,7 @@ enum ExternalFieldInitType { Constant, Parser };
 /** \brief Base class for functors that assign external
  *         field values (E or B) to particles.
 */
-struct GetField
+struct GetExternalField
 {
     ExternalFieldInitType m_type;
 
@@ -58,9 +58,9 @@ struct GetField
 /** \brief Functor that can be used to assign the external
  *         E field to a particle inside a ParallelFor kernel
 */
-struct GetEField : GetField
+struct GetExternalEField : GetExternalField
 {
-    GetEField (const WarpXParIter& a_pti, int a_offset = 0) noexcept
+    GetExternalEField (const WarpXParIter& a_pti, int a_offset = 0) noexcept
     {
         auto& warpx = WarpX::GetInstance();
         auto& mypc = warpx.GetPartContainer();
@@ -86,9 +86,9 @@ struct GetEField : GetField
 /** \brief Functor that can be used to assign the external
  *         B field to a particle inside a ParallelFor kernel
 */
-struct GetBField : GetField
+struct GetExternalBField : GetExternalField
 {
-    GetBField (const WarpXParIter& a_pti, int a_offset = 0) noexcept
+    GetExternalBField (const WarpXParIter& a_pti, int a_offset = 0) noexcept
     {
         auto& warpx = WarpX::GetInstance();
         auto& mypc = warpx.GetPartContainer();

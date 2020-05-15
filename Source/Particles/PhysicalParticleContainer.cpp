@@ -2050,8 +2050,9 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
     box.grow(ngE);
 
     const auto getPosition = GetParticlePosition(pti, offset);
-    const auto getEField = GetEField(pti, offset);
-    const auto getBField = GetBField(pti, offset);
+
+    const auto getExternalE = GetExternalEField(pti, offset);
+    const auto getExternalB = GetExternalBField(pti, offset);
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
     Real cur_time = WarpX::GetInstance().gett_new(lev);
@@ -2066,7 +2067,7 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
     // different versions of template function doGatherShapeN
     if (WarpX::l_lower_order_in_v){
         if        (WarpX::nox == 1){
-            doGatherShapeN<1,1>(getPosition, getEField, getBField,
+            doGatherShapeN<1,1>(getPosition, getExternalE, getExternalB,
                                 Exp.dataPtr() + offset, Eyp.dataPtr() + offset,
                                 Ezp.dataPtr() + offset, Bxp.dataPtr() + offset,
                                 Byp.dataPtr() + offset, Bzp.dataPtr() + offset,
@@ -2074,7 +2075,7 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
                                 np_to_gather, dx,
                                 xyzmin, lo, WarpX::n_rz_azimuthal_modes);
         } else if (WarpX::nox == 2){
-            doGatherShapeN<2,1>(getPosition, getEField, getBField,
+            doGatherShapeN<2,1>(getPosition, getExternalE, getExternalB,
                                 Exp.dataPtr() + offset, Eyp.dataPtr() + offset,
                                 Ezp.dataPtr() + offset, Bxp.dataPtr() + offset,
                                 Byp.dataPtr() + offset, Bzp.dataPtr() + offset,
@@ -2082,7 +2083,7 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
                                 np_to_gather, dx,
                                 xyzmin, lo, WarpX::n_rz_azimuthal_modes);
         } else if (WarpX::nox == 3){
-            doGatherShapeN<3,1>(getPosition, getEField, getBField,
+            doGatherShapeN<3,1>(getPosition, getExternalE, getExternalB,
                                 Exp.dataPtr() + offset, Eyp.dataPtr() + offset,
                                 Ezp.dataPtr() + offset, Bxp.dataPtr() + offset,
                                 Byp.dataPtr() + offset, Bzp.dataPtr() + offset,
@@ -2092,7 +2093,7 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
         }
     } else {
         if        (WarpX::nox == 1){
-            doGatherShapeN<1,0>(getPosition, getEField, getBField,
+            doGatherShapeN<1,0>(getPosition, getExternalE, getExternalB,
                                 Exp.dataPtr() + offset, Eyp.dataPtr() + offset,
                                 Ezp.dataPtr() + offset, Bxp.dataPtr() + offset,
                                 Byp.dataPtr() + offset, Bzp.dataPtr() + offset,
@@ -2100,7 +2101,7 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
                                 np_to_gather, dx,
                                 xyzmin, lo, WarpX::n_rz_azimuthal_modes);
         } else if (WarpX::nox == 2){
-            doGatherShapeN<2,0>(getPosition, getEField, getBField,
+            doGatherShapeN<2,0>(getPosition, getExternalE, getExternalB,
                                 Exp.dataPtr() + offset, Eyp.dataPtr() + offset,
                                 Ezp.dataPtr() + offset, Bxp.dataPtr() + offset,
                                 Byp.dataPtr() + offset, Bzp.dataPtr() + offset,
@@ -2108,7 +2109,7 @@ PhysicalParticleContainer::FieldGather (WarpXParIter& pti,
                                 np_to_gather, dx,
                                 xyzmin, lo, WarpX::n_rz_azimuthal_modes);
         } else if (WarpX::nox == 3){
-            doGatherShapeN<3,0>(getPosition, getEField, getBField,
+            doGatherShapeN<3,0>(getPosition, getExternalE, getExternalB,
                                 Exp.dataPtr() + offset, Eyp.dataPtr() + offset,
                                 Ezp.dataPtr() + offset, Bxp.dataPtr() + offset,
                                 Byp.dataPtr() + offset, Bzp.dataPtr() + offset,
