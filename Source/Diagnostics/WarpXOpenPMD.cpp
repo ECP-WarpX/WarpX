@@ -42,7 +42,7 @@ namespace detail
         return make_pair(record_name, component_name);
     }
 
-    /** Return the componen labels for particle positions
+    /** Return the component labels for particle positions
      */
     inline std::vector< std::string >
     getParticlePositionComponentLabels()
