@@ -472,31 +472,6 @@ void warpx_push_pml_ez_f_ckc(int i, int j, int k,
 
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void warpx_push_pml_F(int i, int j, int k, Array4<Real> const& F_fab,
-                      Array4<Real const> const& Exfab,
-                      Array4<Real const> const& Eyfab,
-                      Array4<Real const> const& Ezfab,
-                      Real dtsdx, Real dtsdy, Real dtsdz)
-{
-   F_fab(i,j,k,0) += dtsdx * (Exfab(i,j,k,0) - Exfab(i-1,j,k,0)
-                            + Exfab(i,j,k,1) - Exfab(i-1,j,k,1)
-                            + Exfab(i,j,k,2) - Exfab(i-1,j,k,2));
-#if (AMREX_SPACEDIM==3)
-   F_fab(i,j,k,1) += dtsdy * (Eyfab(i,j,k,0) - Eyfab(i,j-1,k,0)
-                            + Eyfab(i,j,k,1) - Eyfab(i,j-1,k,1)
-                            + Eyfab(i,j,k,2) - Eyfab(i,j-1,k,2));
-   F_fab(i,j,k,2) += dtsdz * (Ezfab(i,j,k,0) - Ezfab(i,j,k-1,0)
-                            + Ezfab(i,j,k,1) - Ezfab(i,j,k-1,1)
-                            + Ezfab(i,j,k,2) - Ezfab(i,j,k-1,2));
-#else
-   F_fab(i,j,k,2) += dtsdz * (Ezfab(i,j,k,0) - Ezfab(i,j-1,k,0)
-                            + Ezfab(i,j,k,1) - Ezfab(i,j-1,k,1)
-                            + Ezfab(i,j,k,2) - Ezfab(i,j-1,k,2));
-#endif
-}
-
-
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void warpx_damp_pml_ex (int i, int j, int k, Array4<Real> const& Ex,
                         const Real* const sigma_fac_y,
                         const Real* const sigma_fac_z,

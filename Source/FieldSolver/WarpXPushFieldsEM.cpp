@@ -239,6 +239,7 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
 
     const int rhocomp = (a_dt_type == DtType::FirstHalf) ? 0 : 1;
 
+    // Evolve F field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveF( F_fp[lev], Efield_fp[lev],
                                         rho_fp[lev], rhocomp, a_dt );
@@ -246,6 +247,20 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
         m_fdtd_solver_cp[lev]->EvolveF( F_cp[lev], Efield_cp[lev],
                                         rho_cp[lev], rhocomp, a_dt );
     }
+
+    // Evolve F field in PML cells
+    if (do_pml && pml[lev]->ok()) {
+        if (patch_type == PatchType::fine) {
+            m_fdtd_solver_fp[lev]->EvolveFPML(
+                pml[lev]->GetF_fp(), pml[lev]->GetE_fp(),
+                pml[lev]->Getrho_fp(), rhocomp, a_dt );
+        } else {
+            m_fdtd_solver_cp[lev]->EvolveFPML(
+                pml[lev]->GetF_cp(), pml[lev]->GetE_cp(),
+                pml[lev]->Getrho_cp(), rhocomp, a_dt );
+        }
+    }
+
 
     const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
     const auto& dx = WarpX::CellSize(patch_level);
