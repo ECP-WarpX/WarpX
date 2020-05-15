@@ -9,6 +9,7 @@
 #define FIELDGATHER_H_
 
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Gather/GetExternalFields.H"
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpX_Complex.H"
 
@@ -360,7 +361,9 @@ void doGatherShapeN (const amrex::ParticleReal xp,
 /**
  * \brief Field gather for particles
  *
- * /param GetPosition          : A functor for returning the particle position.
+ * /param getPosition          : A functor for returning the particle position.
+ * /param getEField            : A functor for assigning the external E field.
+ * /param getBField            : A functor for assigning the external B field.
  * \param Exp, Eyp, Ezp        : Pointer to array of electric field on particles.
  * \param Bxp, Byp, Bzp        : Pointer to array of magnetic field on particles.
  * \param exfab eyfab ezfab    : Array4 of the electric field, either full array or tile.
@@ -372,7 +375,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
  * \param n_rz_azimuthal_modes : Number of azimuthal modes when using RZ geometry
  */
 template <int depos_order, int lower_in_v>
-void doGatherShapeN(const GetParticlePosition& GetPosition,
+void doGatherShapeN(const GetParticlePosition& getPosition,
+                    const GetEField& getEField, const GetBField& getBField,
                     amrex::ParticleReal * const Exp, amrex::ParticleReal * const Eyp,
                     amrex::ParticleReal * const Ezp, amrex::ParticleReal * const Bxp,
                     amrex::ParticleReal * const Byp, amrex::ParticleReal * const Bzp,
@@ -413,10 +417,16 @@ void doGatherShapeN(const GetParticlePosition& GetPosition,
         [=] AMREX_GPU_DEVICE (long ip) {
 
             amrex::ParticleReal xp, yp, zp;
-            GetPosition(ip, xp, yp, zp);
+            getPosition(ip, xp, yp, zp);
 
+            amrex::ParticleReal Exp, Eyp, Ezp;
+            getEField(ip, Exp, Eyp, Ezp);
+
+            amrex::ParticleReal Bxp, Byp, Bzp;
+            getBField(ip, Bxp, Byp, Bzp);
+            
             doGatherShapeN<depos_order, lower_in_v>(
-                xp, yp, zp, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip],
+                xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                 ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                 ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
