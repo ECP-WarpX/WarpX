@@ -15,7 +15,7 @@ from .Interpolation import interpolation
 from .Lasers import lasers, lasers_list
 from . import Particles
 from .Particles import particles, particles_list
-from .Diagnostics import diagnostics, diagnostics_list
+from .Diagnostics import diagnostics
 
 
 class WarpX(Bucket):
@@ -54,9 +54,13 @@ class WarpX(Bucket):
         for laser in lasers_list:
             argv += laser.attrlist()
 
+        diagnostics.diags_names = diagnostics._diagnostics_dict.keys()
         argv += diagnostics.attrlist()
-        for diagnostic in diagnostics_list:
+        for diagnostic in diagnostics._diagnostics_dict.values():
+            diagnostic.species = diagnostic._species_dict.keys()
             argv += diagnostic.attrlist()
+            for species_diagnostic in diagnostic._species_dict.values():
+                argv += species_diagnostic.attrlist()
 
         return argv
 

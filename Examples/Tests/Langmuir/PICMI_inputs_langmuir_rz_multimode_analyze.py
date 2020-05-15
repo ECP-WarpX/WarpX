@@ -95,12 +95,14 @@ solver = picmi.ElectromagneticSolver(grid=grid, cfl=1., warpx_do_pml=0)
 # diagnostics
 ##########################
 
-field_diag1 = picmi.FieldDiagnostic(grid = grid,
+field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
+                                    grid = grid,
                                     period = diagnostic_interval,
                                     data_list = ['E', 'B', 'J', 'part_per_cell'],
                                     warpx_file_prefix = 'plotfiles/plt')
 
-part_diag1 = picmi.ParticleDiagnostic(period = diagnostic_interval,
+part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
+                                      period = diagnostic_interval,
                                       species = [electrons],
                                       data_list = ['weighting', 'momentum', 'fields'])
 
