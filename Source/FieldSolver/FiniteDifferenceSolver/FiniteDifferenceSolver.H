@@ -54,9 +54,9 @@ class FiniteDifferenceSolver
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
 
-        void EvolveBPML ( std::array< amrex::MultiFab*, 3 > const Bfield,
-                          std::array< amrex::MultiFab const*, 3 > const Efield,
-                          amrex::Real const dt ) const;
+        void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
+                      std::array< amrex::MultiFab*, 3 > const Efield,
+                      amrex::Real const dt );
 
        void EvolveEPML ( std::array< amrex::MultiFab*, 3 > Efield,
                       std::array< amrex::MultiFab*, 3 > const Bfield,
