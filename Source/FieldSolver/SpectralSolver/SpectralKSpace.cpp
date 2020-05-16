@@ -205,6 +205,13 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                 }
             }
         }
+        if (nodal){
+            if (i_dim == 0){
+                modified_k[k.size()-1] = 0.0_rt;
+          }   else {
+                modified_k[k.size()/2] = 0.0_rt;
+          }
+        }
     }
     return modified_k_comp;
 }
