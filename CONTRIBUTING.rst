@@ -193,4 +193,5 @@ Style and conventions
 - ``#include`` directives in C++ have a distinct order to avoid bugs, see :ref:`the WarpX repo structure <developers-repo-structure>` for details
 
 - For all new code, we should avoid relying on ``using namespace amrex;`` and all amrex types should be prefixed with `amrex::`.
+  Inside limited scopes, AMReX type literals can be included with ``using namespace amrex::literals;``.
   Ideally, old code should be modified accordingly.
