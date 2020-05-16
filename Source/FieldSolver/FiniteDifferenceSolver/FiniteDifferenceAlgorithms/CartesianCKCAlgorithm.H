@@ -91,6 +91,14 @@ struct CartesianCKCAlgorithm {
     }
 
     /**
+     * Compute the maximum timestep, for which the scheme remains stable
+     * (Courant-Friedrichs-Levy limit) */
+    static amrex::Real ComputeMaxDt ( amrex::Real const * const dx ) {
+        amrex::Real deltat = amrex::Reduce::Min( AMREX_SPACEDIM, dx )/PhysConst::c;
+        return deltat;
+    }
+
+    /**
      * Perform derivative along x on a cell-centered grid, from a nodal field `F` */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDx (
