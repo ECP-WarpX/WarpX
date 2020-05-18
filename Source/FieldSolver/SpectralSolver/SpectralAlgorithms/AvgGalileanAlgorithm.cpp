@@ -109,10 +109,10 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
                 C(i,j,k) = std::cos(c*k_norm*dt);
                 S_ck(i,j,k) = std::sin(c*k_norm*dt)/(c*k_norm);
 
-                C1(i,j,k) = std::cos(0.5*c*k_norm*dt);
-                S1(i,j,k) = std::sin(0.5*c*k_norm*dt);
-                C3(i,j,k) = std::cos(1.5*c*k_norm*dt);
-                S3(i,j,k) = std::sin(1.5*c*k_norm*dt);
+                C1(i,j,k) = std::cos(0.5_rt*c*k_norm*dt);
+                S1(i,j,k) = std::sin(0.5_rt*c*k_norm*dt);
+                C3(i,j,k) = std::cos(1.5_rt*c*k_norm*dt);
+                S3(i,j,k) = std::sin(1.5_rt*c*k_norm*dt);
 
                 // Calculate dot product with galilean velocity
                 const Real kv = modified_kx[i]*vx +
@@ -124,8 +124,8 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
 #endif
 
                 const Real nu = kv/(k_norm*c);
-                const Complex theta = amrex::exp( 0.5*I*kv*dt );
-                const Complex theta_star = amrex::exp( -0.5*I*kv*dt );
+                const Complex theta = amrex::exp( 0.5_rt*I*kv*dt );
+                const Complex theta_star = amrex::exp( -0.5_rt*I*kv*dt );
                 const Complex e_theta = amrex::exp( I*c*k_norm*dt );
 
                 Theta2(i,j,k) = theta*theta;
@@ -137,75 +137,78 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
                     // update equation have been modified accordingly so that
                     // the expressions/ below (with the update equations)
                     // are mathematically equivalent to those of the paper.
-                    Complex x1 = 1./(1.-nu*nu) *
+                    Complex x1 = 1._rt/(1._rt-nu*nu) *
                         (theta_star - C(i,j,k)*theta + I*kv*S_ck(i,j,k)*theta);
 
-                    Complex C_rho = I* c2 /( (1.-theta*theta) * ep0);
+                    Complex C_rho = I* c2 /( (1._rt-theta*theta) * ep0);
 
-                    Psi1(i,j,k) = theta * ((S1(i,j,k) + I*nu*C1(i,j,k)) - Theta2(i,j,k) * (S3(i,j,k) + I*nu*C3(i,j,k))) /(c*k_norm*dt * (nu*nu - 1.));
-                    Psi2(i,j,k) = theta * ((C1(i,j,k) - I*nu*S1(i,j,k)) - Theta2(i,j,k) * (C3(i,j,k) - I*nu*S3(i,j,k))) /(c*c*k_norm*k_norm*dt * (nu*nu - 1.));
-                    Psi3(i,j,k) = I * theta * (1. - theta*theta) /(c*k_norm*dt*nu);
+                    Psi1(i,j,k) = theta * ((S1(i,j,k) + I*nu*C1(i,j,k))
+                                  - Theta2(i,j,k) * (S3(i,j,k) + I*nu*C3(i,j,k))) /(c*k_norm*dt * (nu*nu - 1._rt));
+                    Psi2(i,j,k) = theta * ((C1(i,j,k) - I*nu*S1(i,j,k))
+                                  - Theta2(i,j,k) * (C3(i,j,k) - I*nu*S3(i,j,k))) /(c2*k_norm*k_norm*dt * (nu*nu - 1._rt));
+                    Psi3(i,j,k) = I * theta * (1._rt - theta*theta) /(c*k_norm*dt*nu);
 
-                    A1(i,j,k) = (Psi1(i,j,k)  - 1. + I * kv*Psi2(i,j,k)    )/ (c2* k_norm*k_norm * (nu*nu - 1.));
-                    A2(i,j,k) = (Psi3(i,j,k) - Psi1(i,j,k)) / (c2* k_norm*k_norm);
+                    A1(i,j,k) = (Psi1(i,j,k)  - 1._rt + I * kv*Psi2(i,j,k)    )/ (c2* k_norm*k_norm * (nu*nu - 1._rt));
+                    A2(i,j,k) = (Psi3(i,j,k) - Psi1(i,j,k)) / (c2*k_norm*k_norm);
 
-                    CRhoold(i,j,k) = C_rho* (theta*theta * A1(i,j,k) - A2(i,j,k));
-                    CRhonew(i,j,k) = C_rho* (A2(i,j,k) - A1(i,j,k));
+                    CRhoold(i,j,k) = C_rho * (theta*theta * A1(i,j,k) - A2(i,j,k));
+                    CRhonew(i,j,k) = C_rho * (A2(i,j,k) - A1(i,j,k));
                     Jcoef(i,j,k) = (I*kv*A1(i,j,k) + Psi2(i,j,k))/ep0;
                     // x1, above, is identical to the original paper
                     X1(i,j,k) = theta*x1/(ep0*c*c*k_norm*k_norm);
                     // The difference betwen X2 and X3 below, and those
                     // from the original paper is the factor ep0*k_norm*k_norm
-                    X2(i,j,k) = (x1 - theta*(1 - C(i,j,k)))
+                    X2(i,j,k) = (x1 - theta*(1._rt - C(i,j,k)))
                                 /(theta_star-theta)/(ep0*k_norm*k_norm);
-                    X3(i,j,k) = (x1 - theta_star*(1 - C(i,j,k)))
+                    X3(i,j,k) = (x1 - theta_star*(1._rt - C(i,j,k)))
                                 /(theta_star-theta)/(ep0*k_norm*k_norm);
                     X4(i,j,k) = I*kv*X1(i,j,k) - theta*theta*S_ck(i,j,k)/ep0;
                 }
                 if ( nu == 0) {
-                    X1(i,j,k) = (1. - C(i,j,k)) / (ep0*c*c*k_norm*k_norm);
-                    X2(i,j,k) = (1. - S_ck(i,j,k)/dt) / (ep0*k_norm*k_norm);
+                    X1(i,j,k) = (1._rt - C(i,j,k)) / (ep0*c*c*k_norm*k_norm);
+                    X2(i,j,k) = (1._rt - S_ck(i,j,k)/dt) / (ep0*k_norm*k_norm);
                     X3(i,j,k) = (C(i,j,k) - S_ck(i,j,k)/dt) / (ep0*k_norm*k_norm);
                     X4(i,j,k) = -S_ck(i,j,k)/ep0;
 
                     Psi1(i,j,k) = (-S1(i,j,k) + S3(i,j,k)) / (c*k_norm*dt);
-                    Psi2(i,j,k) = (-C1(i,j,k) + C3(i,j,k)) / (c2*k_norm*k_norm*dt);//-2. * S1(i,j,k)*S_ck(i,j,k) / (c*k_norm*dt);
-                    Psi3(i,j,k) = 1.;
+                    Psi2(i,j,k) = (-C1(i,j,k) + C3(i,j,k)) / (c2*k_norm*k_norm*dt);
+                    Psi3(i,j,k) = 1._rt;
                     A1(i,j,k) = (c*k_norm*dt + S1(i,j,k) - S3(i,j,k)) / (c*c2 * k_norm*k_norm*k_norm * dt);
                     A2(i,j,k) =  (c*k_norm*dt + S1(i,j,k) - S3(i,j,k)) / (c*c2 * k_norm*k_norm*k_norm * dt);
-                    CRhoold(i,j,k) = 2. * I * S1(i,j,k)  * ( dt*C(i,j,k) - S_ck(i,j,k)) / (c*k_norm*k_norm*k_norm*dt*dt*ep0);
-                    CRhonew(i,j,k) =  - I * (c2* k_norm*k_norm * dt*dt - C1(i,j,k) + C3(i,j,k))  / (c2 * k_norm*k_norm*k_norm*k_norm * ep0 * dt*dt);
-                    Jcoef(i,j,k) = (-C1(i,j,k) + C3(i,j,k)) / (c2*ep0*k_norm*k_norm*dt);//-2. * S1(i,j,k) * S_ck(i,j,k) / (ep0*c*k_norm*dt);
+                    CRhoold(i,j,k) = 2._rt * I * S1(i,j,k)  * ( dt*C(i,j,k) - S_ck(i,j,k))
+                                    / (c*k_norm*k_norm*k_norm*dt*dt*ep0);
+                    CRhonew(i,j,k) =  - I * (c2* k_norm*k_norm * dt*dt - C1(i,j,k) + C3(i,j,k))
+                                    / (c2 * k_norm*k_norm*k_norm*k_norm * ep0 * dt*dt);
+                    Jcoef(i,j,k) = (-C1(i,j,k) + C3(i,j,k)) / (c2*ep0*k_norm*k_norm*dt);
                 }
                 if ( nu == 1.) {
-                    // This case never happens..
-                    // X1(i,j,k) = (1. - e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*c*c*ep0*k_norm*k_norm);
-                    // X2(i,j,k) = (3. - 4.*e_theta + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*k_norm*k_norm*(1.- e_theta));
-                    // X3(i,j,k) = (3. - 2./e_theta - 2.*e_theta + e_theta*e_theta - 2.*I*c*k_norm*dt) / (4.*ep0*(e_theta - 1.)*k_norm*k_norm);
-                    // X4(i,j,k) = I*(-1. + e_theta*e_theta + 2.*I*c*k_norm*dt) / (4.*ep0*c*k_norm);
+                    X1(i,j,k) = (1._rt - e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*c*c*ep0*k_norm*k_norm);
+                    X2(i,j,k) = (3._rt - 4._rt*e_theta + e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*ep0*k_norm*k_norm*(1._rt- e_theta));
+                    X3(i,j,k) = (3._rt - 2._rt/e_theta - 2._rt*e_theta + e_theta*e_theta - 2._rt*I*c*k_norm*dt) / (4._rt*ep0*(e_theta - 1._rt)*k_norm*k_norm);
+                    X4(i,j,k) = I*(-1._rt + e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*ep0*c*k_norm);
                 }
 
             } else { // Handle k_norm = 0, by using the analytical limit
-              C(i,j,k) = 1.;
+              C(i,j,k) = 1._rt;
               S_ck(i,j,k) = dt;
-              C1(i,j,k) = 1.;
-              S1(i,j,k) =  0.;
-              C3(i,j,k) = 1.;
-              S3(i,j,k) = 0.;
+              C1(i,j,k) = 1._rt;
+              S1(i,j,k) =  0._rt;
+              C3(i,j,k) = 1._rt;
+              S3(i,j,k) = 0._rt;
 
-              X1(i,j,k) = dt*dt/(2. * ep0);
-              X2(i,j,k) = c2*dt*dt/(6. * ep0);
-              X3(i,j,k) = - c2*dt*dt/(3. * ep0);
+              X1(i,j,k) = dt*dt/(2._rt * ep0);
+              X2(i,j,k) = c2*dt*dt/(6._rt * ep0);
+              X3(i,j,k) = - c2*dt*dt/(3._rt * ep0);
               X4(i,j,k) = -dt/ep0;
-              Theta2(i,j,k) = 1.;
+              Theta2(i,j,k) = 1._rt;
 
-              Psi1(i,j,k) = 1.;
+              Psi1(i,j,k) = 1._rt;
               Psi2(i,j,k) = -dt;
-              Psi3(i,j,k) = 1.;
-              A1(i,j,k) = 13. * dt*dt /24.;
-              A2(i,j,k) = 13. * dt*dt /24.;
-              CRhoold(i,j,k) = -I*c2 * dt*dt / (3. * ep0);
-              CRhonew(i,j,k) = -5.*I*c2 * dt*dt / (24. * ep0);
+              Psi3(i,j,k) = 1._rt;
+              A1(i,j,k) = 13._rt * dt*dt /24._rt;
+              A2(i,j,k) = 13._rt * dt*dt /24._rt;
+              CRhoold(i,j,k) = -I*c2 * dt*dt / (3._rt * ep0);
+              CRhonew(i,j,k) = -5._rt*I*c2 * dt*dt / (24._rt * ep0);
               Jcoef(i,j,k) = -dt/ep0;
             }
 
@@ -293,7 +296,7 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
 #endif
             constexpr Real c = PhysConst::c;
             constexpr Real c2 = PhysConst::c*PhysConst::c;
-            constexpr Real inv_ep0 = 1./PhysConst::ep0;
+            constexpr Real inv_ep0 = 1._rt/PhysConst::ep0;
             constexpr Complex I = Complex{0,1};
 
             const Real C = C_arr(i,j,k);
@@ -343,7 +346,7 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
                         - T2*S_ck*I*(kx*Ey_old - ky*Ex_old)
                         +      X1*I*(kx*Jy     - ky*Jx);
 
-//Update teh averaged fields
+//Update the averaged E,B fields in time on the interval [(n-1/2)dx, (n+1/2)dx]
             fields(i,j,k,Idx::Ex_avg) = Psi1*Ex_old
                           - Psi2*c2*I*(ky*Bz_old - kz*By_old)
                           + Jcoef*Jx + ( CRhonew * rho_new +  CRhoold*rho_old )*kx;
@@ -363,17 +366,6 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
             fields(i,j,k,Idx::Bz_avg) =  Psi1*Bz_old
                           + I*Psi2*(kx*Ey_old - ky*Ex_old)
                           + A1*I*(kx*Jy     - ky*Jx)*inv_ep0;
-
-            // fields(i,j,k,Idx::Ex_avg) =  fields(i,j,k,Idx::Ex);
-            // fields(i,j,k,Idx::Ey_avg) =  fields(i,j,k,Idx::Ey);
-            // fields(i,j,k,Idx::Ez_avg) =  fields(i,j,k,Idx::Ez);
-            //
-            // fields(i,j,k,Idx::Bx_avg) =  fields(i,j,k,Idx::Bx);
-            // fields(i,j,k,Idx::By_avg) =  fields(i,j,k,Idx::By);
-            // fields(i,j,k,Idx::Bz_avg) =  fields(i,j,k,Idx::Bz);
-
-            //Print()<<"Ez_avg "<< ' ' << i<<' '<< j<<' '<<k<<' '<< fields(i,j,k,Idx::Ez) << fields(i,j,k,Idx::Ez_avg)<<'-------------'<<'\n';
-            //Print()<<"Ez"<<i<<j<<k<<fields(i,j,k,Idx::Ez)<<'-------------'<<'\n';
-            });
+                        });
     }
 };
