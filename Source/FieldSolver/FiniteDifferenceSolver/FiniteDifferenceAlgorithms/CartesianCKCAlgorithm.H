@@ -11,9 +11,12 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
+#include <AMReX_Reduce.H>
 
 #include <algorithm>
 #include <array>
+
+#include "Utils/WarpXConst.H"
 
 /**
  * This struct contains only static functions to initialize the stencil coefficients

@@ -14,6 +14,8 @@
 
 #include <array>
 
+#include "Utils/WarpXConst.H"
+
 /**
  * This struct contains only static functions to initialize the stencil coefficients
  * and to compute finite-difference derivatives for the Cartesian nodal algorithm.
