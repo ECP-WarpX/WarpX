@@ -11,7 +11,6 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
-#include <AMReX_Reduce.H>
 
 #include <algorithm>
 #include <array>
@@ -99,10 +98,10 @@ struct CartesianCKCAlgorithm {
     static amrex::Real ComputeMaxDt ( amrex::Real const * const dx ) {
 #if (defined WARPX_DIM_XZ)
             // - In Cartesian 2D geometry: determined by the minimum cell size in all direction
-            amrex::Real deltat = cfl * std::min( dx[0], dx[1] )/PhysConst::c;
+            amrex::Real deltat = std::min( dx[0], dx[1] )/PhysConst::c;
 #else
             // - In Cartesian 3D geometry: determined by the minimum cell size in all direction
-            amrex::Real deltat = cfl * std::min( dx[0], std::min( dx[1], dx[2] ) )/PhysConst::c;
+            amrex::Real deltat = std::min( dx[0], std::min( dx[1], dx[2] ) )/PhysConst::c;
 #endif
         return deltat;
     }
