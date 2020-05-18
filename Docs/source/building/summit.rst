@@ -30,7 +30,7 @@ See :doc:`../running_cpp/platforms` for more information on how to run WarpX on 
 See :doc:`../visualization/yt` for more information on how to visualize the simulation results.
 
 
-.. _building-cori-openPMD:
+.. _building-summit-openPMD:
 
 Building WarpX with openPMD support
 -----------------------------------
@@ -43,6 +43,7 @@ First, load the appropriate modules:
     module load cuda
     module load cmake
     module load hdf5/1.10.4
+    module load adios2/2.5.0
 
 Then, in the ``warpx_directory``, download and build openPMD-api:
 

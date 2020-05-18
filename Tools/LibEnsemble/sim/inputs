@@ -13,7 +13,7 @@ warpx.zmax_plasma_to_compute_max_step = -1.
 amr.n_cell = 32 2048 # 64 3072
 
 amr.max_grid_size = 4096
-amr.blocking_factor = 32
+amr.blocking_factor = 16
 
 geometry.coord_sys   = 0
 geometry.is_periodic = 0 0
@@ -148,7 +148,7 @@ beam.z_cut = 2.
 beam.x_m = 0.
 beam.y_m = 0.
 beam.z_m = -98.e-6
-beam.npart = 10000
+beam.npart = 100000
 beam.q_tot = -0.9e-12
 beam.momentum_distribution_type = "gaussian"
 beam.ux_m = 0.
