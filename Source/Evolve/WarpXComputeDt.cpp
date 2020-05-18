@@ -24,12 +24,15 @@ WarpX::ComputeDt ()
 #if WARPX_USE_PSATD
     // Computation of dt for spectral algorithm
 
-#   ifdef WARPX_DIM_RZ
+#   if (defined WARPX_DIM_RZ)
     // - In RZ geometry: dz/c
     deltat = cfl * dx[1]/PhysConst::c;
+#   elif (defined WARPX_DIM_XZ)
+    // - In Cartesian 2D geometry: determined by the minimum cell size in all direction
+    deltat = cfl * std::min( dx[0], dx[1] )/PhysConst::c;
 #   else
-    // - In Cartesian geometry: determined by the minimum cell size in all direction
-    deltat = cfl * amrex::Reduce::Min( AMREX_SPACEDIM, dx )/PhysConst::c;
+    // - In Cartesian 3D geometry: determined by the minimum cell size in all direction
+    deltat = cfl * std::min( dx[0], std::min( dx[1], dx[2] ) )/PhysConst::c;
 #   endif
 
 
