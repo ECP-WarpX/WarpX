@@ -32,7 +32,7 @@ echo "Replace release number $old_release_number by $new_release_number"
 pattern="\.c$|\.cpp$|\.F90$|\.h$|\.H$|\.ini$|\.md$|\.py$|"\
 "\.rst$|\.sh$|\.tex$|\.txt$|\.xml$|\.yml$|"\
 "CMakeLists\.txt|inputs"
-for i in $(find .. \
+for i in $(find ../.. \
                 -not -path "../../.git/*"   \
                 -not -path "../../.idea/*"  \
                 -not -path "../../Docs/source/api/*" \

@@ -1056,12 +1056,12 @@ Numerics and algorithms
     It also requires the use of the `direct` current deposition option
     `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
 
-* ``warpx.override_sync_int`` (`integer`) optional (default `10`)
-    Number of time steps between synchronization of sources (`rho` and `J`) on
-    grid nodes at box boundaries. Since the grid nodes at the interface between
-    two neighbor boxes are duplicated in both boxes, an instability can occur
-    if they have too different values. This option makes sure that they are
-    synchronized periodically.
+* ``warpx.override_sync_int`` (`string`) optional (default `1`)
+    Using the `Intervals parser`_ syntax, this string defines the timesteps at which
+    synchronization of sources (`rho` and `J`) on grid nodes at box boundaries is performed.
+    Since the grid nodes at the interface between two neighbor boxes are duplicated in both
+    boxes, an instability can occur if they have too different values.
+    This option makes sure that they are synchronized periodically.
 
 * ``warpx.use_hybrid_QED`` ('bool'; default: 0)
     Will use the Hybird QED Maxwell solver when pushing fields: a QED correction is added to the

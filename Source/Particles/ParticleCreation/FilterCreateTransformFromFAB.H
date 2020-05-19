@@ -51,9 +51,6 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     const auto ncells = box.volume();
     if (ncells == 0) return 0;
 
-    const auto box_sizex = box.length(0);
-    const auto box_sizey = box.length(1);
-
     auto & warpx = WarpX::GetInstance();
     const int level_0 = 0;
     Geometry const & geom = warpx.Geom(level_0);
@@ -173,12 +170,6 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     // filterCreateTransformFromFAB called below, but let us keep it for safety.
     Elixir tmp_eli = NumPartCreation.elixir();
     auto arrNumPartCreation = NumPartCreation.array();
-
-    const Dim3 lo = lbound(box);
-    const Dim3 hi = ubound(box);
-
-    const auto box_sizex = box.length(0);
-    const auto box_sizey = box.length(1);
 
     const auto ncells = box.volume();
     if (ncells == 0) return 0;
