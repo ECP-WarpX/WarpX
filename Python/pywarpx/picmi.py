@@ -655,7 +655,8 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.diagnostic.period = self.period
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
-        self.diagnostic.coarsening_ratio = (np.array(self.grid.number_of_cells)/np.array(self.number_of_cells)).astype(int)
+        if self.number_of_cells is not None:
+            self.diagnostic.coarsening_ratio = (np.array(self.grid.number_of_cells)/np.array(self.number_of_cells)).astype(int)
         self.diagnostic.fields_to_plot = set()
 
         for dataname in self.data_list:
