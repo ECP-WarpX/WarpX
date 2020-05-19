@@ -304,7 +304,7 @@ Diagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
     // In cylindrical geometry, real and imag part of each mode are also
     // dumped to file separately, so they need to be added to m_varnames
     m_varnames.push_back( field + "_0_real" );
-    for (int ic=1 ; ic < ncomp ; ic += 2) {
+    for (int ic=1 ; ic < (ncomp+1)/2 ; ic += 1) {
         m_varnames.push_back( field + "_" + std::to_string(ic) + "_real" );
         m_varnames.push_back( field + "_" + std::to_string(ic) + "_imag" );
     }
