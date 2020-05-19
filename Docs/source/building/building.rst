@@ -1,3 +1,5 @@
+.. _building-source:
+
 Building/installing WarpX
 =========================
 

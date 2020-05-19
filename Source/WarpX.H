@@ -568,6 +568,10 @@ private:
 
     void ReadParameters ();
 
+    /** This function queries deprecated input parameters and abort
+     *  the run if one of them is specified. */
+    void BackwardCompatibility ();
+
     void InitFromScratch ();
 
     void AllocLevelData (int lev, const amrex::BoxArray& new_grids,
@@ -714,8 +718,8 @@ private:
      * time per iteration per particle is computed. */
     amrex::Real costs_heuristic_particles_wt = -1;
 
-    // Override sync every ? steps
-    int override_sync_int = 1;
+    // Determines timesteps for override sync
+    IntervalsParser override_sync_intervals;
 
     // Other runtime parameters
     int verbose = 1;
