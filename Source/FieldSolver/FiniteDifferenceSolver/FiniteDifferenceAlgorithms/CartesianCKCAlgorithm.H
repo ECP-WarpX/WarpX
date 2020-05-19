@@ -96,7 +96,7 @@ struct CartesianCKCAlgorithm {
     static amrex::Real UpwardDx (
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_x, int const n_coefs_x,
-        int const i, int const j, int const k ) {
+        int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const alphax = coefs_x[1];
 #if defined WARPX_DIM_3D
@@ -107,19 +107,19 @@ struct CartesianCKCAlgorithm {
         amrex::Real const gammax = coefs_x[4];
 #endif
 #if defined WARPX_DIM_3D
-        return alphax * (F(i+1,j  ,k  ) - F(i,  j,  k  ))
-             + betaxy * (F(i+1,j+1,k  ) - F(i  ,j+1,k  )
-                      +  F(i+1,j-1,k  ) - F(i  ,j-1,k  ))
-             + betaxz * (F(i+1,j  ,k+1) - F(i  ,j  ,k+1)
-                      +  F(i+1,j  ,k-1) - F(i  ,j  ,k-1))
-             + gammax * (F(i+1,j+1,k+1) - F(i  ,j+1,k+1)
-                      +  F(i+1,j-1,k+1) - F(i  ,j-1,k+1)
-                      +  F(i+1,j+1,k-1) - F(i  ,j+1,k-1)
-                      +  F(i+1,j-1,k-1) - F(i  ,j-1,k-1));
+        return alphax * (F(i+1,j  ,k  ,ncomp) - F(i,  j,  k  ,ncomp))
+             + betaxy * (F(i+1,j+1,k  ,ncomp) - F(i  ,j+1,k  ,ncomp)
+                      +  F(i+1,j-1,k  ,ncomp) - F(i  ,j-1,k  ,ncomp))
+             + betaxz * (F(i+1,j  ,k+1,ncomp) - F(i  ,j  ,k+1,ncomp)
+                      +  F(i+1,j  ,k-1,ncomp) - F(i  ,j  ,k-1,ncomp))
+             + gammax * (F(i+1,j+1,k+1,ncomp) - F(i  ,j+1,k+1,ncomp)
+                      +  F(i+1,j-1,k+1,ncomp) - F(i  ,j-1,k+1,ncomp)
+                      +  F(i+1,j+1,k-1,ncomp) - F(i  ,j+1,k-1,ncomp)
+                      +  F(i+1,j-1,k-1,ncomp) - F(i  ,j-1,k-1,ncomp));
 #elif (defined WARPX_DIM_XZ)
-        return alphax * (F(i+1,j  ,k  ) - F(i,  j,  k  ))
-             + betaxz * (F(i+1,j+1,k  ) - F(i  ,j+1,k  )
-                      +  F(i+1,j-1,k  ) - F(i  ,j-1,k  ));
+        return alphax * (F(i+1,j  ,k  ,ncomp) - F(i,  j,  k  ,ncomp))
+             + betaxz * (F(i+1,j+1,k  ,ncomp) - F(i  ,j+1,k  ,ncomp)
+                      +  F(i+1,j-1,k  ,ncomp) - F(i  ,j-1,k  ,ncomp));
 #endif
     };
 
@@ -129,10 +129,10 @@ struct CartesianCKCAlgorithm {
     static amrex::Real DownwardDx (
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_x, int const n_coefs_x,
-        int const i, int const j, int const k ) {
+        int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const inv_dx = coefs_x[0];
-        return inv_dx*( F(i,j,k) - F(i-1,j,k) );
+        return inv_dx*( F(i,j,k,ncomp) - F(i-1,j,k,ncomp) );
     };
 
     /**
@@ -141,7 +141,7 @@ struct CartesianCKCAlgorithm {
     static amrex::Real UpwardDy (
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_y, int const n_coefs_y,
-        int const i, int const j, int const k ) {
+        int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
 #if defined WARPX_DIM_3D
@@ -149,15 +149,15 @@ struct CartesianCKCAlgorithm {
         Real const betayz = coefs_y[2];
         Real const betayx = coefs_y[3];
         Real const gammay = coefs_y[4];
-        return alphay * (F(i  ,j+1,k  ) - F(i  ,j  ,k  ))
-             + betayx * (F(i+1,j+1,k  ) - F(i+1,j  ,k  )
-                      +  F(i-1,j+1,k  ) - F(i-1,j  ,k  ))
-             + betayz * (F(i  ,j+1,k+1) - F(i  ,j  ,k+1)
-                      +  F(i  ,j+1,k-1) - F(i  ,j  ,k-1))
-             + gammay * (F(i+1,j+1,k+1) - F(i+1,j  ,k+1)
-                      +  F(i-1,j+1,k+1) - F(i-1,j  ,k+1)
-                      +  F(i+1,j+1,k-1) - F(i+1,j  ,k-1)
-                       +  F(i-1,j+1,k-1) - F(i-1,j  ,k-1));
+        return alphay * (F(i  ,j+1,k  ,ncomp) - F(i  ,j  ,k  ,ncomp))
+             + betayx * (F(i+1,j+1,k  ,ncomp) - F(i+1,j  ,k  ,ncomp)
+                      +  F(i-1,j+1,k  ,ncomp) - F(i-1,j  ,k  ,ncomp))
+             + betayz * (F(i  ,j+1,k+1,ncomp) - F(i  ,j  ,k+1,ncomp)
+                      +  F(i  ,j+1,k-1,ncomp) - F(i  ,j  ,k-1,ncomp))
+             + gammay * (F(i+1,j+1,k+1,ncomp) - F(i+1,j  ,k+1,ncomp)
+                      +  F(i-1,j+1,k+1,ncomp) - F(i-1,j  ,k+1,ncomp)
+                      +  F(i+1,j+1,k-1,ncomp) - F(i+1,j  ,k-1,ncomp)
+                       +  F(i-1,j+1,k-1,ncomp) - F(i-1,j  ,k-1,ncomp));
 #elif (defined WARPX_DIM_XZ)
             return 0._rt; // 2D Cartesian: derivative along y is 0
 #endif
@@ -169,12 +169,12 @@ struct CartesianCKCAlgorithm {
     static amrex::Real DownwardDy (
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_y, int const n_coefs_y,
-        int const i, int const j, int const k ) {
+        int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
 #if defined WARPX_DIM_3D
         Real const inv_dy = coefs_y[0];
-        return inv_dy*( F(i,j,k) - F(i,j-1,k) );
+        return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
 #elif (defined WARPX_DIM_XZ)
         return 0._rt; // 2D Cartesian: derivative along y is 0
 #endif
@@ -186,7 +186,7 @@ struct CartesianCKCAlgorithm {
     static amrex::Real UpwardDz (
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_z, int const n_coefs_z,
-        int const i, int const j, int const k ) {
+        int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
         Real const alphaz = coefs_z[1];
@@ -196,19 +196,19 @@ struct CartesianCKCAlgorithm {
         Real const gammaz = coefs_z[4];
 #endif
 #if defined WARPX_DIM_3D
-        return alphaz * (F(i  ,j  ,k+1) - F(i  ,j  ,k  ))
-             + betazx * (F(i+1,j  ,k+1) - F(i+1,j  ,k  )
-                      +  F(i-1,j  ,k+1) - F(i-1,j  ,k  ))
-             + betazy * (F(i  ,j+1,k+1) - F(i  ,j+1,k  )
-                      +  F(i  ,j-1,k+1) - F(i  ,j-1,k  ))
-             + gammaz * (F(i+1,j+1,k+1) - F(i+1,j+1,k  )
-                      +  F(i-1,j+1,k+1) - F(i-1,j+1,k  )
-                      +  F(i+1,j-1,k+1) - F(i+1,j-1,k  )
-                      +  F(i-1,j-1,k+1) - F(i-1,j-1,k  ));
+        return alphaz * (F(i  ,j  ,k+1,ncomp) - F(i  ,j  ,k  ,ncomp))
+             + betazx * (F(i+1,j  ,k+1,ncomp) - F(i+1,j  ,k  ,ncomp)
+                      +  F(i-1,j  ,k+1,ncomp) - F(i-1,j  ,k  ,ncomp))
+             + betazy * (F(i  ,j+1,k+1,ncomp) - F(i  ,j+1,k  ,ncomp)
+                      +  F(i  ,j-1,k+1,ncomp) - F(i  ,j-1,k  ,ncomp))
+             + gammaz * (F(i+1,j+1,k+1,ncomp) - F(i+1,j+1,k  ,ncomp)
+                      +  F(i-1,j+1,k+1,ncomp) - F(i-1,j+1,k  ,ncomp)
+                      +  F(i+1,j-1,k+1,ncomp) - F(i+1,j-1,k  ,ncomp)
+                      +  F(i-1,j-1,k+1,ncomp) - F(i-1,j-1,k  ,ncomp));
 #elif (defined WARPX_DIM_XZ)
-        return alphaz * (F(i  ,j+1,k  ) - F(i  ,j  ,k  ))
-             + betazx * (F(i+1,j+1,k  ) - F(i+1,j  ,k  )
-                      +  F(i-1,j+1,k  ) - F(i-1,j  ,k  ));
+        return alphaz * (F(i  ,j+1,k  ,ncomp) - F(i  ,j  ,k  ,ncomp))
+             + betazx * (F(i+1,j+1,k  ,ncomp) - F(i+1,j  ,k  ,ncomp)
+                      +  F(i-1,j+1,k  ,ncomp) - F(i-1,j  ,k  ,ncomp));
 #endif
     };
 
@@ -218,13 +218,13 @@ struct CartesianCKCAlgorithm {
     static amrex::Real DownwardDz (
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_z, int const n_coefs_z,
-        int const i, int const j, int const k ) {
+        int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const inv_dz = coefs_z[0];
 #if defined WARPX_DIM_3D
-        return inv_dz*( F(i,j,k) - F(i,j,k-1) );
+        return inv_dz*( F(i,j,k,ncomp) - F(i,j,k-1,ncomp) );
 #elif (defined WARPX_DIM_XZ)
-        return inv_dz*( F(i,j,k) - F(i,j-1,k) );
+        return inv_dz*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
 #endif
     };
 
