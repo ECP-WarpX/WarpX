@@ -230,13 +230,26 @@ Diagnostics::AddRZModesToDiags (int lev)
             warpx.get_pointer_current_fp(lev, dim)->nComp() == ncomp_multimodefab );
     }
 
+    // Check if divE is requested
+    // If so, all components will be written out
+    bool divE_requested = false;
+    for (int comp = 0; comp < m_varnames.size(); comp++) {
+        if ( m_varnames[comp] == "divE" ) {
+            divE_requested = true;
+        }
+    }
+
     // First index of m_all_field_functors[lev] where RZ modes are stored
     int icomp = m_all_field_functors[0].size();
     const std::array<std::string, 3> coord {"r", "theta", "z"};
 
     // Er, Etheta, Ez, Br, Btheta, Bz, jr, jtheta, jz
     // Each of them being a multi-component multifab
-    m_all_field_functors[lev].resize( m_all_field_functors[0].size() + 9 );
+    int n_new_fields = 9;
+    if (divE_requested) {
+        n_new_fields += 1;
+    }
+    m_all_field_functors[lev].resize( m_all_field_functors[0].size() + n_new_fields );
     // E
     for (int dim=0; dim<3; dim++){
         // 3 components, r theta z
@@ -266,6 +279,13 @@ Diagnostics::AddRZModesToDiags (int lev)
         icomp += 1;
         AddRZModesToOutputNames(std::string("J") + coord[dim],
                                 warpx.get_pointer_current_fp(0, 0)->nComp());
+    }
+    // divE
+    if (divE_requested) {
+        m_all_field_functors[lev][icomp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev,
+                              m_crse_ratio, false, ncomp_multimodefab);
+        icomp += 1;
+        AddRZModesToOutputNames(std::string("divE"), ncomp_multimodefab);
     }
     // Sum the number of components in input vector m_all_field_functors
     // and check that it corresponds to the number of components in m_varnames
