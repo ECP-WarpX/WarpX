@@ -407,10 +407,14 @@ protected:
     amrex::Vector<amrex::FArrayBox> local_jy;
     amrex::Vector<amrex::FArrayBox> local_jz;
 
+public:
     using DataContainer = amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>;
     using PairIndex = std::pair<int, int>;
-
-    amrex::Vector<std::map<PairIndex, std::array<DataContainer, TmpIdx::nattribs> > > tmp_particle_data;
+    using TmpParticleTile = std::array<DataContainer, TmpIdx::nattribs>;
+    using TmpParticles = amrex::Vector<std::map<PairIndex, TmpParticleTile> >;
+    
+protected:
+    TmpParticles tmp_particle_data;
 
     /**
      * When using runtime components, AMReX requires to touch all tiles

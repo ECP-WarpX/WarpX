@@ -18,6 +18,7 @@
 #include "Utils/IonizationEnergiesTable.H"
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Pusher/CopyParticleAttribs.H"
 #include "Particles/Gather/GetExternalFields.H"
 
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -1490,11 +1491,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
     const ParticleReal* const AMREX_RESTRICT By = attribs[PIdx::By].dataPtr();
     const ParticleReal* const AMREX_RESTRICT Bz = attribs[PIdx::Bz].dataPtr();
 
-    if (WarpX::do_back_transformed_diagnostics && do_back_transformed_diagnostics && (a_dt_type!=DtType::SecondHalf))
-    {
-        copy_attribs(pti);
-    }
-
+    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data);
+    int do_copy = (WarpX::do_back_transformed_diagnostics &&
+                          do_back_transformed_diagnostics &&
+                   (a_dt_type!=DtType::SecondHalf));
+    
     int* AMREX_RESTRICT ion_lev = nullptr;
     if (do_field_ionization){
         ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
@@ -1511,6 +1512,9 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
             amrex::ParallelFor(
                 pti.numParticles(),
                 [=] AMREX_GPU_DEVICE (long i) {
+
+                    if (do_copy) copyAttribs(i);
+                    
                     auto chi = QedUtils::chi_lepton(m*ux[i], m*uy[i], m*uz[i],
                          Ex[i], Ey[i], Ez[i],
                          Bx[i], By[i], Bz[i]);
@@ -1534,6 +1538,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
             amrex::ParallelFor(
                 pti.numParticles(),
                 [=] AMREX_GPU_DEVICE (long i) {
+                    if (do_copy) copyAttribs(i);
                     UpdateMomentumBorisWithRadiationReaction( ux[i], uy[i], uz[i],
                                        Ex[i], Ey[i], Ez[i], Bx[i],
                                        By[i], Bz[i], q, m, dt);
@@ -1549,6 +1554,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
         amrex::ParallelFor(
             pti.numParticles(),
             [=] AMREX_GPU_DEVICE (long i) {
+                if (do_copy) copyAttribs(i);
                 Real qp = q;
                 if (ion_lev){ qp *= ion_lev[i]; }
                 UpdateMomentumBorisWithRadiationReaction( ux[i], uy[i], uz[i],
@@ -1565,6 +1571,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
         amrex::ParallelFor(
             pti.numParticles(),
             [=] AMREX_GPU_DEVICE (long i) {
+                if (do_copy) copyAttribs(i);
                 Real qp = q;
                 if (ion_lev){ qp *= ion_lev[i]; }
                 UpdateMomentumBoris( ux[i], uy[i], uz[i],
@@ -1580,6 +1587,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
         amrex::ParallelFor(
             pti.numParticles(),
             [=] AMREX_GPU_DEVICE (long i) {
+                if (do_copy) copyAttribs(i);
                 Real qp = q;
                 if (ion_lev){ qp *= ion_lev[i]; }
                 UpdateMomentumVay( ux[i], uy[i], uz[i],
@@ -1595,6 +1603,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
         amrex::ParallelFor(
             pti.numParticles(),
             [=] AMREX_GPU_DEVICE (long i) {
+                if (do_copy) copyAttribs(i);
                 Real qp = q;
                 if (ion_lev){ qp *= ion_lev[i]; }
                 UpdateMomentumHigueraCary( ux[i], uy[i], uz[i],
@@ -1768,41 +1777,6 @@ PhysicalParticleContainer::PushP (
 
         }
     }
-}
-
-void
-PhysicalParticleContainer::copy_attribs (WarpXParIter& pti)
-{
-    auto& attribs = pti.GetAttribs();
-    ParticleReal* AMREX_RESTRICT uxp = attribs[PIdx::ux].dataPtr();
-    ParticleReal* AMREX_RESTRICT uyp = attribs[PIdx::uy].dataPtr();
-    ParticleReal* AMREX_RESTRICT uzp = attribs[PIdx::uz].dataPtr();
-
-    const auto np = pti.numParticles();
-    const auto lev = pti.GetLevel();
-    const auto index = pti.GetPairIndex();
-    ParticleReal* AMREX_RESTRICT xpold  = tmp_particle_data[lev][index][TmpIdx::xold ].dataPtr();
-    ParticleReal* AMREX_RESTRICT ypold  = tmp_particle_data[lev][index][TmpIdx::yold ].dataPtr();
-    ParticleReal* AMREX_RESTRICT zpold  = tmp_particle_data[lev][index][TmpIdx::zold ].dataPtr();
-    ParticleReal* AMREX_RESTRICT uxpold = tmp_particle_data[lev][index][TmpIdx::uxold].dataPtr();
-    ParticleReal* AMREX_RESTRICT uypold = tmp_particle_data[lev][index][TmpIdx::uyold].dataPtr();
-    ParticleReal* AMREX_RESTRICT uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr();
-
-    const auto GetPosition = GetParticlePosition(pti);
-
-    ParallelFor( np,
-                 [=] AMREX_GPU_DEVICE (long i) {
-                     ParticleReal x, y, z;
-                     GetPosition(i, x, y, z);
-                     xpold[i]=x;
-                     ypold[i]=y;
-                     zpold[i]=z;
-
-                     uxpold[i]=uxp[i];
-                     uypold[i]=uyp[i];
-                     uzpold[i]=uzp[i];
-                 }
-        );
 }
 
 void
