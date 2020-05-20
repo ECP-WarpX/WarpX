@@ -64,9 +64,9 @@ struct CopyParticleAttribs
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (const int i) const noexcept
     {
-        AMREX_ASSERT(xp != nullptr);
-        AMREX_ASSERT(yp != nullptr);
-        AMREX_ASSERT(zp != nullptr);
+        AMREX_ASSERT(uxp != nullptr);
+        AMREX_ASSERT(uyp != nullptr);
+        AMREX_ASSERT(uzp != nullptr);
 
         AMREX_ASSERT(xpold != nullptr);
         AMREX_ASSERT(ypold != nullptr);
