@@ -2167,7 +2167,7 @@ PhysicalParticleContainer::FieldGatherAndPushPX (WarpXParIter& pti,
     const ParticleReal* const AMREX_RESTRICT By = attribs[PIdx::By].dataPtr();
     const ParticleReal* const AMREX_RESTRICT Bz = attribs[PIdx::Bz].dataPtr();
 
-    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data);
+    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
     int do_copy = (WarpX::do_back_transformed_diagnostics &&
                           do_back_transformed_diagnostics &&
                    (a_dt_type!=DtType::SecondHalf));
