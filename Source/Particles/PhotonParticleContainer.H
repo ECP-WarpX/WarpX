@@ -55,7 +55,17 @@ public:
                          DtType a_dt_type=DtType::Full) override;
 
     virtual void PushPX(WarpXParIter& pti,
-                        amrex::Real dt, DtType a_dt_type=DtType::Full) override;
+                        amrex::FArrayBox const * exfab,
+                        amrex::FArrayBox const * eyfab,
+                        amrex::FArrayBox const * ezfab,
+                        amrex::FArrayBox const * bxfab,
+                        amrex::FArrayBox const * byfab,
+                        amrex::FArrayBox const * bzfab,
+                        const int ngE, const int /*e_is_nodal*/,
+                        const long offset,
+                        const long np_to_push,
+                        int lev, int gather_lev,
+                        amrex::Real dt, DtType a_dt_type) override;
 
     // Do nothing
     virtual void PushP (int lev,

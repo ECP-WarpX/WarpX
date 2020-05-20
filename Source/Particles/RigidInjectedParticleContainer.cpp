@@ -224,9 +224,19 @@ RigidInjectedParticleContainer::BoostandRemapParticles()
 }
 
 void
-RigidInjectedParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
+RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
+                                        amrex::FArrayBox const * exfab,
+                                        amrex::FArrayBox const * eyfab,
+                                        amrex::FArrayBox const * ezfab,
+                                        amrex::FArrayBox const * bxfab,
+                                        amrex::FArrayBox const * byfab,
+                                        amrex::FArrayBox const * bzfab,
+                                        const int ngE, const int e_is_nodal,
+                                        const long offset,
+                                        const long np_to_push,
+                                        int lev, int gather_lev,
+                                        amrex::Real dt, DtType a_dt_type)
 {
-
     // This wraps the momentum and position advance so that inheritors can modify the call.
     auto& attribs = pti.GetAttribs();
     auto& uxp = attribs[PIdx::ux];
@@ -307,7 +317,9 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_
             );
     }
 
-    PhysicalParticleContainer::PushPX(pti, dt, a_dt_type);
+    PhysicalParticleContainer::PushPX(pti, exfab, eyfab, ezfab, bxfab, byfab, bzfab,
+                                      ngE, e_is_nodal, offset, np_to_push, lev, gather_lev,
+                                      dt, a_dt_type);
 
     if (!done_injecting_lev) {
 

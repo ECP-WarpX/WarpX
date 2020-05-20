@@ -63,10 +63,19 @@ void PhotonParticleContainer::InitData()
 }
 
 void
-PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType /*a_dt_type*/)
+PhotonParticleContainer::PushPX(WarpXParIter& pti,
+                                amrex::FArrayBox const * /*exfab*/,
+                                amrex::FArrayBox const * /*eyfab*/,
+                                amrex::FArrayBox const * /*ezfab*/,
+                                amrex::FArrayBox const * /*bxfab*/,
+                                amrex::FArrayBox const * /*byfab*/,
+                                amrex::FArrayBox const * /*bzfab*/,
+                                const int /*ngE*/, const int /*e_is_nodal*/,
+                                const long offset,
+                                const long np_to_push,
+                                int /*lev*/, int /*gather_lev*/,
+                                amrex::Real dt, DtType /*a_dt_type*/)
 {
-
-    // This wraps the momentum and position advance so that inheritors can modify the call.
     auto& attribs = pti.GetAttribs();
 
     // Extract pointers to the different particle quantities
@@ -74,15 +83,15 @@ PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType /*a_dt_type*/
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
-    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data);
+    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
     int do_copy = (WarpX::do_back_transformed_diagnostics &&
                           do_back_transformed_diagnostics );
 
-    const auto GetPosition = GetParticlePosition(pti);
-          auto SetPosition = SetParticlePosition(pti);
+    const auto GetPosition = GetParticlePosition(pti, offset);
+    auto SetPosition = SetParticlePosition(pti, offset);
 
     amrex::ParallelFor(
-        pti.numParticles(),
+        np_to_push,
         [=] AMREX_GPU_DEVICE (long i) {
             if (do_copy) copyAttribs(i);
             ParticleReal x, y, z;
