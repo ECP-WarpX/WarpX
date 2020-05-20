@@ -6,11 +6,6 @@
 
 using namespace amrex;
 
-namespace
-{
-    const std::string level_prefix {"Level_"};
-}
-
 FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 {
     ParmParse pp(diag_name);
