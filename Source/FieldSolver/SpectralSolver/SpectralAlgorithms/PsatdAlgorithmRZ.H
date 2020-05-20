@@ -32,7 +32,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
          * \brief Virtual function for current correction in Fourier space
          * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010).
          * This function overrides the virtual function \c CurrentCorrection in the
-         * base class \c SpectralBaseAlgorithm (qualifier \c override) and cannot be
+         * base class \c SpectralBaseAlgorithmRZ (qualifier \c override) and cannot be
          * overridden by further derived classes (qualifier \c final).
          *
          * \param[in,out] field_data all fields in Fourier space

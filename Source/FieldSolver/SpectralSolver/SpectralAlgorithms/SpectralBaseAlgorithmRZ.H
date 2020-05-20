@@ -32,7 +32,7 @@ class SpectralBaseAlgorithmRZ
          * \brief Virtual function for current correction in Fourier space
          * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010).
          * This virtual function is not pure: it can be overridden in derived
-         * classes (e.g. PsatdAlgorithm, PMLPsatdAlgorithm), but a base-class
+         * classes (e.g. PsatdAlgorithmRZ), but a base-class
          * implementation is provided (empty implementation in this case).
          *
          * \param[in,out] field_data all fields in Fourier space
