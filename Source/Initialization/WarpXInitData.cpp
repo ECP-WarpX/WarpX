@@ -439,9 +439,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
     const RealBox& real_box = geom[lev].ProbDomain();
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-       const Box& tbx = convert(mfi.growntilebox(),x_nodal_flag);
-       const Box& tby = convert(mfi.growntilebox(),y_nodal_flag);
-       const Box& tbz = convert(mfi.growntilebox(),z_nodal_flag);
+       const Box& tbx = mfi.growntilebox(x_nodal_flag);
+       const Box& tby = mfi.growntilebox(y_nodal_flag);
+       const Box& tbz = mfi.growntilebox(z_nodal_flag);
 
        auto const& mfxfab = mfx->array(mfi);
        auto const& mfyfab = mfy->array(mfi);
