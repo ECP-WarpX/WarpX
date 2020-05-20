@@ -348,12 +348,15 @@ WarpX::OneStep_nosub (Real cur_time)
 #endif
 
 #ifdef WARPX_USE_PSATD
-    // Apply current correction in Fourier space
-    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
+    // For domain decomposition with local FFT over guard cells,
+    // apply this before `SyncCurrent`, i.e. before exchanging guard cells for J
     if ( fft_periodic_single_box == false ) {
-        // For domain decomposition with local FFT over guard cells,
-        // apply this before `SyncCurrent`, i.e. before exchanging guard cells for J
+        // Apply current correction in Fourier space
+        // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
         if ( do_current_correction ) CurrentCorrection();
+        // Compute current in Fourier space
+        // (equations (20)-(24) of https://doi.org/10.1016/j.jcp.2013.03.010)
+        if ( WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay ) VayDeposition();
     }
 #endif
 
@@ -825,6 +828,23 @@ WarpX::CurrentCorrection ()
         {
             // Apply correction on coarse patch
             spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
+        }
+    }
+}
+#endif
+
+#ifdef WARPX_USE_PSATD
+void
+WarpX::VayDeposition ()
+{
+    for ( int lev = 0; lev <= finest_level; ++lev )
+    {
+        // Compute current in Fourier space on fine patch
+        spectral_solver_fp[lev]->VayDeposition( current_fp[lev] );
+        if ( spectral_solver_cp[lev] )
+        {
+            // Compute current in Fourier space on coarse patch
+            spectral_solver_cp[lev]->VayDeposition( current_cp[lev] );
         }
     }
 }

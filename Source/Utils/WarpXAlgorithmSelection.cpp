@@ -34,6 +34,7 @@ const std::map<std::string, int> particle_pusher_algo_to_int = {
 const std::map<std::string, int> current_deposition_algo_to_int = {
     {"esirkepov", CurrentDepositionAlgo::Esirkepov },
     {"direct",    CurrentDepositionAlgo::Direct },
+    {"vay",       CurrentDepositionAlgo::Vay },
 #ifdef WARPX_USE_PSATD
     {"default",   CurrentDepositionAlgo::Direct }
 #else

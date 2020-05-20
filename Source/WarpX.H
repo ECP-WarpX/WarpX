@@ -566,6 +566,15 @@ private:
      */
     void CurrentCorrection ();
 
+    /**
+     * \brief Private function for Vay deposition in Fourier space
+     * (equations (20)-(24) of https://doi.org/10.1016/j.jcp.2013.03.010):
+     * loops over the MR levels and applies the correction on the fine and coarse
+     * patches (calls the virtual method \c VayDeposition of the spectral
+     * algorithm in use, via the public interface defined in the class SpectralSolver).
+     */
+    void VayDeposition ();
+
     void ReadParameters ();
 
     void InitFromScratch ();

@@ -48,6 +48,20 @@ class SpectralBaseAlgorithm
                                          const std::unique_ptr<amrex::MultiFab>& rho ) {};
 
         /**
+         * \brief Virtual function for Vay deposition in Fourier space
+         * (equations (20)-(24) of https://doi.org/10.1016/j.jcp.2013.03.010).
+         * This virtual function is not pure: it can be overridden in derived
+         * classes (e.g. PsatdAlgorithm, PMLPsatdAlgorithm), but a base-class
+         * implementation is provided (empty implementation in this case).
+         *
+         * \param[in,out] field_data all fields in Fourier space
+         * \param[in,out] current    three-dimensional array of unique pointers to MultiFab
+         *                           storing the three components of the current density
+         */
+        virtual void VayDeposition ( SpectralFieldData& field_data,
+                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current ) {};
+
+        /**
          * \brief Compute spectral divergence of E
          */
         void ComputeSpectralDivE ( SpectralFieldData& field_data,
