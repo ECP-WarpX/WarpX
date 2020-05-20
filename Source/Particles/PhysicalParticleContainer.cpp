@@ -2066,7 +2066,6 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     
     amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
     {
-        // first gather E and B to the particle positions
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
         
@@ -2075,42 +2074,13 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         
         amrex::ParticleReal Bxp, Byp, Bzp;
         getExternalB(ip, Bxp, Byp, Bzp);
-        
-        if (l_lower_order_in_v) {
-            if (nox == 1) {
-                doGatherShapeN<1,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
-            } else if (nox == 2) {
-                doGatherShapeN<2,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
-            } else if (nox == 3) {
-                doGatherShapeN<3,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
-            }
-        } else {
-            if (nox == 1) {
-                doGatherShapeN<1,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
-            } else if (nox == 2) {
-                doGatherShapeN<2,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
-            } else if (nox == 3) {
-                doGatherShapeN<3,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
-            }
-        }
+
+        // first gather E and B to the particle positions
+        doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                       dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                       l_lower_order_in_v, nox);
 
         // now push the momentum and position
         if (do_copy) copyAttribs(ip);  // note, need to handle offset
@@ -2136,8 +2106,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                 UpdatePosition(x, y, z, ux[ip], uy[ip], uz[ip], dt );
                 setPosition(ip, x, y, z);
             } else {
-                UpdateMomentumBorisWithRadiationReaction(
-                                                         ux[ip], uy[ip], uz[ip],
+                UpdateMomentumBorisWithRadiationReaction(ux[ip], uy[ip], uz[ip],
                                                          Ex[ip], Ey[ip], Ez[ip], Bx[ip],
                                                          By[ip], Bz[ip], q, m, dt);
                 ParticleReal x, y, z;
@@ -2148,8 +2117,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #else
             Real qp = q;
             if (ion_lev) { qp *= ion_lev[ip]; }
-            UpdateMomentumBorisWithRadiationReaction(
-                                                     ux[ip], uy[ip], uz[ip],
+            UpdateMomentumBorisWithRadiationReaction(ux[ip], uy[ip], uz[ip],
                                                      Ex[ip], Ey[ip], Ez[ip], Bx[ip],
                                                      By[ip], Bz[ip], qp, m, dt);
             ParticleReal x, y, z;
