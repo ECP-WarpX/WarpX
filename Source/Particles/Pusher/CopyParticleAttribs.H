@@ -41,6 +41,8 @@ struct CopyParticleAttribs
 
     CopyParticleAttribs (const WarpXParIter& a_pti, TmpParticles& tmp_particle_data) noexcept
     {
+        if (tmp_particle_data.size() == 0) return;
+        
         auto& attribs = a_pti.GetAttribs();
         uxp = attribs[PIdx::ux].dataPtr();
         uyp = attribs[PIdx::uy].dataPtr();
