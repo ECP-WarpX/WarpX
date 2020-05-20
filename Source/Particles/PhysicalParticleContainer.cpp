@@ -1509,7 +1509,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
     const auto do_crr = do_classical_radiation_reaction;
 #ifdef WARPX_QED
     const auto do_sync = m_do_qed_quantum_sync;
-    const auto t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
+    amrex::Real t_chi_max = 0.0;
+    if (do_sync) t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
 #endif
 
     amrex::ParallelFor(pti.numParticles(),
