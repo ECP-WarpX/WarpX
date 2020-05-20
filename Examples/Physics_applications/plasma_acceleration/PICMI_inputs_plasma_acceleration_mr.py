@@ -57,13 +57,15 @@ sim = picmi.Simulation(solver = solver,
 sim.add_species(beam, layout=picmi.GriddedLayout(grid=grid, n_macroparticle_per_cell=number_per_cell_each_dim))
 sim.add_species(plasma, layout=picmi.GriddedLayout(grid=grid, n_macroparticle_per_cell=number_per_cell_each_dim))
 
-field_diag = picmi.FieldDiagnostic(grid = grid,
+field_diag = picmi.FieldDiagnostic(name = 'diag1',
+                                   grid = grid,
                                    period = 2,
                                    data_list = ['Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz', 'part_per_cell'],
                                    write_dir = 'diags',
                                    warpx_file_prefix = 'plotfiles/plt')
 
-part_diag = picmi.ParticleDiagnostic(period = 2,
+part_diag = picmi.ParticleDiagnostic(name = 'diag1',
+                                     period = 2,
                                      species = [beam, plasma],
                                      data_list = ['ux', 'uy', 'uz', 'weighting', 'Ex', 'Ey', 'Ez'],
                                      write_dir = 'diags')

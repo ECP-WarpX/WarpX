@@ -13,9 +13,7 @@ warpx.zmax_plasma_to_compute_max_step = -1.
 amr.n_cell = 32 2048 # 64 3072
 
 amr.max_grid_size = 4096
-amr.blocking_factor = 32
-
-amr.plot_int = 10000 # 100
+amr.blocking_factor = 16
 
 geometry.coord_sys   = 0
 geometry.is_periodic = 0 0
@@ -82,8 +80,6 @@ electrons.predefined_profile_name = "parabolic_channel"
 #         predefined_profile_params = z_start   ramp_up   plateau   ramp_down   rc       n0
 electrons.predefined_profile_params = 0.0       .02       .297      .003        40.e-6   1.7e23
 electrons.do_continuous_injection = 1
-electrons.plot_species=1
-electrons.plot_vars=w
 electrons.do_back_transformed_diagnostics=0
 
 ions.charge = q_e
@@ -102,7 +98,6 @@ ions.predefined_profile_name = "parabolic_channel"
 #    predefined_profile_params = z_start   ramp_up   plateau   ramp_down   rc       n0
 ions.predefined_profile_params = 0.0       .02       .297      .003        40.e-6   1.7e23
 ions.do_continuous_injection = 1
-ions.plot_species=0
 ions.do_back_transformed_diagnostics=0
 
 electrons2.charge = -q_e
@@ -121,8 +116,6 @@ electrons2.predefined_profile_name = "parabolic_channel"
 #         predefined_profile_params = z_start   ramp_up   plateau   ramp_down   rc       n0
 electrons2.predefined_profile_params = 0.3485       .02       .297       .003        40.e-6   1.7e23
 electrons2.do_continuous_injection = 1
-electrons2.plot_species=1
-electrons2.plot_vars=w
 electrons2.do_back_transformed_diagnostics=0
 
 ions2.charge = q_e
@@ -141,7 +134,6 @@ ions2.predefined_profile_name = "parabolic_channel"
 #    predefined_profile_params = z_start   ramp_up   plateau   ramp_down   rc       n0
 ions2.predefined_profile_params = 0.3485       .02       .297       .003        40.e-6   1.7e23
 ions2.do_continuous_injection = 1
-ions2.plot_species=0
 ions2.do_back_transformed_diagnostics=0
 
 beam.charge = -q_e
@@ -156,7 +148,7 @@ beam.z_cut = 2.
 beam.x_m = 0.
 beam.y_m = 0.
 beam.z_m = -98.e-6
-beam.npart = 10000
+beam.npart = 100000
 beam.q_tot = -0.9e-12
 beam.momentum_distribution_type = "gaussian"
 beam.ux_m = 0.
@@ -169,8 +161,6 @@ beam.zinject_plane = 0.02
 beam.rigid_advance = true
 beam.projected = true
 beam.focused = false
-beam.plot_species=1
-beam.plot_vars= w ux uy uz
 beam.do_back_transformed_diagnostics=1
 
 #################################
@@ -230,3 +220,12 @@ laser2.profile_t_peak = 1.1626176366295598e-09  # The time at which the laser re
 laser2.profile_focal_distance = 0.00875  # Focal distance from the antenna (in meters)
 laser2.wavelength = 0.8e-6         # The wavelength of the laser (in meters)
 laser2.do_continuous_injection = 1 # Lasers are initialized outside of initial box
+
+diagnostics.diags_names = diag
+diag.file_prefix = diags/plotfiles/plt
+diag.diag_type = Full
+diag.period = 10000
+diag.species = electrons electrons2 beam
+diag.electrons.variables = w
+diag.electrons2.variables = w
+diag.beam.variables = w ux uy uz
