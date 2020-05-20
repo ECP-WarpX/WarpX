@@ -412,7 +412,7 @@ public:
     using PairIndex = std::pair<int, int>;
     using TmpParticleTile = std::array<DataContainer, TmpIdx::nattribs>;
     using TmpParticles = amrex::Vector<std::map<PairIndex, TmpParticleTile> >;
-    
+
 protected:
     TmpParticles tmp_particle_data;
 

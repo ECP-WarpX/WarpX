@@ -1495,7 +1495,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
     int do_copy = (WarpX::do_back_transformed_diagnostics &&
                           do_back_transformed_diagnostics &&
                    (a_dt_type!=DtType::SecondHalf));
-    
+
     int* AMREX_RESTRICT ion_lev = nullptr;
     if (do_field_ionization){
         ion_lev = pti.GetiAttribs(particle_icomps["ionization_level"]).dataPtr();
@@ -1511,13 +1511,13 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
     const auto do_sync = m_do_qed_quantum_sync;
     const auto t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
 #endif
-    
+
     amrex::ParallelFor(pti.numParticles(),
-                       [=] AMREX_GPU_DEVICE (long i) {                           
+                       [=] AMREX_GPU_DEVICE (long i) {
                            if (do_copy) copyAttribs(i);
                            if (do_crr) {
 #ifdef WARPX_QED
-                               if (do_sync) {                    
+                               if (do_sync) {
                                    auto chi = QedUtils::chi_lepton(m*ux[i], m*uy[i], m*uz[i],
                                                                    Ex[i], Ey[i], Ez[i],
                                                                    Bx[i], By[i], Bz[i]);
@@ -1556,7 +1556,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
                                ParticleReal x, y, z;
                                GetPosition(i, x, y, z);
                                UpdatePosition(x, y, z, ux[i], uy[i], uz[i], dt );
-                               SetPosition(i, x, y, z);                           
+                               SetPosition(i, x, y, z);
 #endif
                            } else if (pusher_algo == ParticlePusherAlgo::Boris) {
                                Real qp = q;
@@ -1593,7 +1593,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
                            }
                        });
 }
-    
+
 #ifdef WARPX_QED
 void PhysicalParticleContainer::EvolveOpticalDepth(
     WarpXParIter& pti, amrex::Real dt)

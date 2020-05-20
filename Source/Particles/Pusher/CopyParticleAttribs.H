@@ -15,7 +15,7 @@
 
 
 /** \brief Functor that creates copies of the current particle
- *         positions and momenta for later use. This is needed 
+ *         positions and momenta for later use. This is needed
  *         by the back-transformed diagnostics.
  *
  * \param a_pti iterator to the tile containing the macroparticles
@@ -26,7 +26,7 @@ struct CopyParticleAttribs
     using TmpParticles = WarpXParticleContainer::TmpParticles;
 
     GetParticlePosition m_get_position;
-    
+
     const amrex::ParticleReal* AMREX_RESTRICT uxp = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT uyp = nullptr;
     const amrex::ParticleReal* AMREX_RESTRICT uzp = nullptr;
@@ -38,7 +38,7 @@ struct CopyParticleAttribs
     amrex::ParticleReal* AMREX_RESTRICT uxpold = nullptr;
     amrex::ParticleReal* AMREX_RESTRICT uypold = nullptr;
     amrex::ParticleReal* AMREX_RESTRICT uzpold = nullptr;
-    
+
     CopyParticleAttribs (const WarpXParIter& a_pti, TmpParticles& tmp_particle_data) noexcept
     {
         auto& attribs = a_pti.GetAttribs();
@@ -58,7 +58,7 @@ struct CopyParticleAttribs
         m_get_position = GetParticlePosition(a_pti);
     }
 
-    /** \brief copy the position and momentum of particle i to the 
+    /** \brief copy the position and momentum of particle i to the
      *         temporary data holder
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -78,14 +78,14 @@ struct CopyParticleAttribs
 
         amrex::ParticleReal x, y, z;
         m_get_position(i, x, y, z);
-        
+
         xpold[i] = x;
         ypold[i] = y;
         zpold[i] = z;
 
         uxpold[i] = uxp[i];
         uypold[i] = uyp[i];
-        uzpold[i] = uzp[i];        
+        uzpold[i] = uzp[i];
     }
 };
 
