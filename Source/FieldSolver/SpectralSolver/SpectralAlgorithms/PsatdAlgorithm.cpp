@@ -323,6 +323,8 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             if ( kx != 0 ) fields(i,j,k,Idx::Jx) = I*Dx/kx;
             if ( ky != 0 ) fields(i,j,k,Idx::Jy) = I*Dy/ky;
             if ( kz != 0 ) fields(i,j,k,Idx::Jz) = I*Dz/kz;
+
+            // TODO Adjust average value
         });
     }
 

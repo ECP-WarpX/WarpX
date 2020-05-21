@@ -15,6 +15,8 @@
 #include <AMReX_Array4.H>
 #include <AMReX_REAL.H>
 
+using namespace amrex::literals;
+
 /**
  * \brief Current Deposition for thread thread_num
  * /param GetPosition : A functor for returning the particle position.
@@ -548,207 +550,330 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
                              const amrex::ParticleReal * const uxp,
                              const amrex::ParticleReal * const uyp,
                              const amrex::ParticleReal * const uzp,
-                             const int * const ion_lev,
+                             const int* const ion_lev,
                              amrex::FArrayBox& jx_fab,
                              amrex::FArrayBox& jy_fab,
                              amrex::FArrayBox& jz_fab,
-                             const long np_to_depose, const amrex::Real dt,
+                             const long np_to_depose,
+                             const amrex::Real dt,
                              const std::array<amrex::Real,3>& dx,
                              const std::array<amrex::Real,3>& xyzmin,
                              const amrex::Dim3 lo,
                              const amrex::Real q,
                              const long n_rz_azimuthal_modes )
 {
-    // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
-    // (do_ionization=1)
+    // If ion_lev is a null pointer, then do_ionization=0, else do_ionization=1
     const bool do_ionization = ion_lev;
-    const amrex::Real dxi = 1.0/dx[0];
-    const amrex::Real dzi = 1.0/dx[2];
-#if !(defined WARPX_DIM_RZ)
-    const amrex::Real dts2dx = 0.5*dt*dxi;
+
+    // Inverse cell volume in each direction
+    const amrex::Real dxi = 1.0_rt/dx[0];
+    const amrex::Real dzi = 1.0_rt/dx[2];
+#if (defined WARPX_DIM_3D)
+    const amrex::Real dyi = 1.0_rt/dx[1];
 #endif
-    const amrex::Real dts2dz = 0.5*dt*dzi;
-#if (AMREX_SPACEDIM == 2)
+
+    //
+#if !(defined WARPX_DIM_RZ)
+    const amrex::Real dtsdx = dt*dxi;
+#endif
+    const amrex::Real dtsdz = dt*dzi;
+#if (defined WARPX_DIM_3D)
+    const amrex::Real dtsdy = dt*dyi;
+#endif
+
+    // Total inverse cell volume
+#if (defined WARPX_DIM_XZ)
     const amrex::Real invvol = dxi*dzi;
 #elif (defined WARPX_DIM_3D)
-    const amrex::Real dyi = 1.0/dx[1];
-    const amrex::Real dts2dy = 0.5*dt*dyi;
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
 
+    // Lower bound of physical domain in each direction
     const amrex::Real xmin = xyzmin[0];
+    const amrex::Real zmin = xyzmin[2];
 #if (defined WARPX_DIM_3D)
     const amrex::Real ymin = xyzmin[1];
 #endif
-    const amrex::Real zmin = xyzmin[2];
 
-    const amrex::Real clightsq = 1.0/PhysConst::c/PhysConst::c;
+    // Inverse of light speed squared
+    const amrex::Real invcsq = 1.0_rt/(PhysConst::c*PhysConst::c);
 
+    // Arrays where (Dx,Dy,Dz) will be stored
     amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
     amrex::Array4<amrex::Real> const& jy_arr = jy_fab.array();
     amrex::Array4<amrex::Real> const& jz_arr = jz_fab.array();
+
+    // Index type (staggering) of current in each direction
     amrex::IntVect const jx_type = jx_fab.box().type();
     amrex::IntVect const jy_type = jy_fab.box().type();
     amrex::IntVect const jz_type = jz_fab.box().type();
 
-    constexpr int zdir = (AMREX_SPACEDIM - 1);
+    // Aliases for 1 (NODE) and 0 (CELL)
     constexpr int NODE = amrex::IndexType::NODE;
     constexpr int CELL = amrex::IndexType::CELL;
 
-    // Loop over particles and deposit into jx_fab, jy_fab and jz_fab
+    // Index of z direction
+    constexpr int zdir = (AMREX_SPACEDIM - 1);
+
+    // Loop over particles and deposit (Dx,Dy,Dz) into jx_fab, jy_fab and jz_fab
     amrex::ParallelFor(
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long ip) {
-            // --- Get particle quantities
-            const amrex::Real gaminv = 1.0/std::sqrt(1.0 + uxp[ip]*uxp[ip]*clightsq
-                                                         + uyp[ip]*uyp[ip]*clightsq
-                                                         + uzp[ip]*uzp[ip]*clightsq);
-            amrex::Real wq  = q*wp[ip];
-            if (do_ionization){
-                wq *= ion_lev[ip];
-            }
 
+            // Inverse of Lorentz factor gamma
+            const amrex::Real invgam = 1.0_rt/std::sqrt(1.0_rt+uxp[ip]*uxp[ip]*invcsq
+                                                              +uyp[ip]*uyp[ip]*invcsq
+                                                              +uzp[ip]*uzp[ip]*invcsq);
+            // Product of particle charges and weights
+            amrex::Real wq = q*wp[ip];
+            if (do_ionization) wq *= ion_lev[ip];
+
+            // Particle positions (in physical units and after particle push)
             amrex::ParticleReal xp, yp, zp;
             GetPosition(ip, xp, yp, zp);
 
-            const amrex::Real vx  = uxp[ip]*gaminv;
-            const amrex::Real vy  = uyp[ip]*gaminv;
-            const amrex::Real vz  = uzp[ip]*gaminv;
-            // wqx, wqy wqz are particle current in each direction
-#if (defined WARPX_DIM_RZ)
-            // In RZ, wqx is actually wqr, and wqy is wqtheta
-            // Convert to cylindrical at the mid point
-            const amrex::Real xpmid = xp - 0.5*dt*vx;
-            const amrex::Real ypmid = yp - 0.5*dt*vy;
-            const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);
-            amrex::Real costheta;
-            amrex::Real sintheta;
-            if (rpmid > 0.) {
-                costheta = xpmid/rpmid;
-                sintheta = ypmid/rpmid;
-            } else {
-                costheta = 1.;
-                sintheta = 0.;
-            }
-            const Complex xy0 = Complex{costheta, sintheta};
-            const amrex::Real wqx = wq*invvol*(+vx*costheta + vy*sintheta);
-            const amrex::Real wqy = wq*invvol*(-vx*sintheta + vy*costheta);
-#else
+            // Particle velocities
+            const amrex::Real vx = uxp[ip]*invgam;
+            const amrex::Real vy = uyp[ip]*invgam;
+            const amrex::Real vz = uzp[ip]*invgam;
+
+            // Particle currents
+#if !(defined WARPX_DIM_RZ)
             const amrex::Real wqx = wq*invvol*vx;
             const amrex::Real wqy = wq*invvol*vy;
 #endif
             const amrex::Real wqz = wq*invvol*vz;
 
-            // --- Compute shape factors
-            // x direction
-            // Get particle position after 1/2 push back in position
-#if (defined WARPX_DIM_RZ)
-            const amrex::Real xmid = (rpmid - xmin)*dxi;
-#else
-            const amrex::Real xmid = (xp - xmin)*dxi - dts2dx*vx;
+            // Current and old particle positions in grid units
+            amrex::Real const x_new = (xp-xmin)*dxi;
+            amrex::Real const x_old = x_new-dtsdx*vx;
+            amrex::Real const z_new = (zp-zmin)*dzi;
+            amrex::Real const z_old = z_new-dtsdz*vz;
+#if (defined WARPX_DIM_3D)
+            amrex::Real const y_new = (yp-ymin)*dyi;
+            amrex::Real const y_old = y_new-dtsdy*vy;
 #endif
-            // j_j[xyz] leftmost grid point in x that the particle touches for the centering of each current
-            // sx_j[xyz] shape factor along x for the centering of each current
-            // There are only two possible centerings, node or cell centered, so at most only two shape factor
-            // arrays will be needed.
-            amrex::Real sx_node[depos_order + 1];
-            amrex::Real sx_cell[depos_order + 1];
-            int j_node;
-            int j_cell;
+
+            // Shape factor arrays for current and old positions (nodal):
+            // as in Esirkepov deposition, there are extra values to take
+            // into account the fact that the old position can be at a
+            // different grid location
+            amrex::Real sx_node_new[depos_order+3] = {0.0_rt};
+            amrex::Real sx_node_old[depos_order+3] = {0.0_rt};
+            amrex::Real sz_node_new[depos_order+3] = {0.0_rt};
+            amrex::Real sz_node_old[depos_order+3] = {0.0_rt};
+#if (defined WARPX_DIM_3D)
+            amrex::Real sy_node_new[depos_order+3] = {0.0_rt};
+            amrex::Real sy_node_old[depos_order+3] = {0.0_rt};
+#endif
+
+            // Shape factor arrays for current and old positions (cell-centered)
+            // as in Esirkepov deposition, there are extra values to take
+            // into account the fact that the old position can be at a
+            // different grid location
+            amrex::Real sx_cell_new[depos_order+3] = {0.0_rt};
+            amrex::Real sx_cell_old[depos_order+3] = {0.0_rt};
+            amrex::Real sz_cell_new[depos_order+3] = {0.0_rt};
+            amrex::Real sz_cell_old[depos_order+3] = {0.0_rt};
+#if (defined WARPX_DIM_3D)
+            amrex::Real sy_cell_new[depos_order+3] = {0.0_rt};
+            amrex::Real sy_cell_old[depos_order+3] = {0.0_rt};
+#endif
+
+            // Compute shape factors for current positions
+
+            // i_j[xyz]_new leftmost grid point in x that the particle touches
+            // sx_j[xyz]_new shape factor along x for the centering of each current
+            int i_node_new, i_cell_new;
             if (jx_type[0] == NODE || jy_type[0] == NODE || jz_type[0] == NODE) {
-                j_node = compute_shape_factor<depos_order>(sx_node, xmid);
+                i_node_new = compute_shape_factor<depos_order>(sx_node_new, x_new);
             }
             if (jx_type[0] == CELL || jy_type[0] == CELL || jz_type[0] == CELL) {
-                j_cell = compute_shape_factor<depos_order>(sx_cell, xmid - 0.5);
+                i_cell_new = compute_shape_factor<depos_order>(sx_cell_new, x_new-0.5_rt);
             }
-            const amrex::Real (&sx_jx)[depos_order + 1] = ((jx_type[0] == NODE) ? sx_node : sx_cell);
-            const amrex::Real (&sx_jy)[depos_order + 1] = ((jy_type[0] == NODE) ? sx_node : sx_cell);
-            const amrex::Real (&sx_jz)[depos_order + 1] = ((jz_type[0] == NODE) ? sx_node : sx_cell);
-            int const j_jx = ((jx_type[0] == NODE) ? j_node : j_cell);
-            int const j_jy = ((jy_type[0] == NODE) ? j_node : j_cell);
-            int const j_jz = ((jz_type[0] == NODE) ? j_node : j_cell);
+            const amrex::Real (&sx_jx_new)[depos_order+3] = ((jx_type[0] == NODE) ? sx_node_new : sx_cell_new);
+            const amrex::Real (&sx_jy_new)[depos_order+3] = ((jy_type[0] == NODE) ? sx_node_new : sx_cell_new);
+            const amrex::Real (&sx_jz_new)[depos_order+3] = ((jz_type[0] == NODE) ? sx_node_new : sx_cell_new);
+            int const i_jx_new = ((jx_type[0] == NODE) ? i_node_new : i_cell_new);
+            int const i_jy_new = ((jy_type[0] == NODE) ? i_node_new : i_cell_new);
+            int const i_jz_new = ((jz_type[0] == NODE) ? i_node_new : i_cell_new);
 
 #if (defined WARPX_DIM_3D)
-            // y direction
-            const amrex::Real ymid = (yp - ymin)*dyi - dts2dy*vy;
-            amrex::Real sy_node[depos_order + 1];
-            amrex::Real sy_cell[depos_order + 1];
-            int k_node;
-            int k_cell;
+            // j_j[xyz]_new leftmost grid point in y that the particle touches
+            // sy_j[xyz]_new shape factor along y for the centering of each current
+            int j_node_new, j_cell_new;
             if (jx_type[1] == NODE || jy_type[1] == NODE || jz_type[1] == NODE) {
-                k_node = compute_shape_factor<depos_order>(sy_node, ymid);
+                j_node_new = compute_shape_factor<depos_order>(sy_node_new, y_new);
             }
             if (jx_type[1] == CELL || jy_type[1] == CELL || jz_type[1] == CELL) {
-                k_cell = compute_shape_factor<depos_order>(sy_cell, ymid - 0.5);
+                j_cell_new = compute_shape_factor<depos_order>(sy_cell_new, y_new-0.5_rt);
             }
-            const amrex::Real (&sy_jx)[depos_order + 1] = ((jx_type[1] == NODE) ? sy_node : sy_cell);
-            const amrex::Real (&sy_jy)[depos_order + 1] = ((jy_type[1] == NODE) ? sy_node : sy_cell);
-            const amrex::Real (&sy_jz)[depos_order + 1] = ((jz_type[1] == NODE) ? sy_node : sy_cell);
-            int const k_jx = ((jx_type[1] == NODE) ? k_node : k_cell);
-            int const k_jy = ((jy_type[1] == NODE) ? k_node : k_cell);
-            int const k_jz = ((jz_type[1] == NODE) ? k_node : k_cell);
+            const amrex::Real (&sy_jx_new)[depos_order+3] = ((jx_type[1] == NODE) ? sy_node_new : sy_cell_new);
+            const amrex::Real (&sy_jy_new)[depos_order+3] = ((jy_type[1] == NODE) ? sy_node_new : sy_cell_new);
+            const amrex::Real (&sy_jz_new)[depos_order+3] = ((jz_type[1] == NODE) ? sy_node_new : sy_cell_new);
+            int const j_jx_new = ((jx_type[1] == NODE) ? j_node_new : j_cell_new);
+            int const j_jy_new = ((jy_type[1] == NODE) ? j_node_new : j_cell_new);
+            int const j_jz_new = ((jz_type[1] == NODE) ? j_node_new : j_cell_new);
 #endif
 
-            // z direction
-            const amrex::Real zmid = (zp - zmin)*dzi - dts2dz*vz;
-            amrex::Real sz_node[depos_order + 1];
-            amrex::Real sz_cell[depos_order + 1];
-            int l_node;
-            int l_cell;
+            // k_j[xyz]_new leftmost grid point in z that the particle touches
+            // sz_j[xyz]_new shape factor along z for the centering of each current
+            int k_node_new, k_cell_new;
             if (jx_type[zdir] == NODE || jy_type[zdir] == NODE || jz_type[zdir] == NODE) {
-                l_node = compute_shape_factor<depos_order>(sz_node, zmid);
+                k_node_new = compute_shape_factor<depos_order>(sz_node_new, z_new);
             }
             if (jx_type[zdir] == CELL || jy_type[zdir] == CELL || jz_type[zdir] == CELL) {
-                l_cell = compute_shape_factor<depos_order>(sz_cell, zmid - 0.5);
+                k_cell_new = compute_shape_factor<depos_order>(sz_cell_new, z_new - 0.5);
             }
-            const amrex::Real (&sz_jx)[depos_order + 1] = ((jx_type[zdir] == NODE) ? sz_node : sz_cell);
-            const amrex::Real (&sz_jy)[depos_order + 1] = ((jy_type[zdir] == NODE) ? sz_node : sz_cell);
-            const amrex::Real (&sz_jz)[depos_order + 1] = ((jz_type[zdir] == NODE) ? sz_node : sz_cell);
-            int const l_jx = ((jx_type[zdir] == NODE) ? l_node : l_cell);
-            int const l_jy = ((jy_type[zdir] == NODE) ? l_node : l_cell);
-            int const l_jz = ((jz_type[zdir] == NODE) ? l_node : l_cell);
+            const amrex::Real (&sz_jx_new)[depos_order+3] = ((jx_type[zdir] == NODE) ? sz_node_new : sz_cell_new);
+            const amrex::Real (&sz_jy_new)[depos_order+3] = ((jy_type[zdir] == NODE) ? sz_node_new : sz_cell_new);
+            const amrex::Real (&sz_jz_new)[depos_order+3] = ((jz_type[zdir] == NODE) ? sz_node_new : sz_cell_new);
+            int const k_jx_new = ((jx_type[zdir] == NODE) ? k_node_new : k_cell_new);
+            int const k_jy_new = ((jy_type[zdir] == NODE) ? k_node_new : k_cell_new);
+            int const k_jz_new = ((jz_type[zdir] == NODE) ? k_node_new : k_cell_new);
+
+            // Compute shape factors for old positions
+
+            // i_j[xyz]_old leftmost grid point in x that the particle touches
+            // sx_j[xyz]_old shape factor along x for the centering of each current
+            int i_node_old, i_cell_old;
+            if (jx_type[0] == NODE || jy_type[0] == NODE || jz_type[0] == NODE) {
+                i_node_old = compute_shape_factor<depos_order>(sx_node_old, x_old);
+            }
+            if (jx_type[0] == CELL || jy_type[0] == CELL || jz_type[0] == CELL) {
+                i_cell_old = compute_shape_factor<depos_order>(sx_cell_old, x_old-0.5_rt);
+            }
+            const amrex::Real (&sx_jx_old)[depos_order+3] = ((jx_type[0] == NODE) ? sx_node_old : sx_cell_old);
+            const amrex::Real (&sx_jy_old)[depos_order+3] = ((jy_type[0] == NODE) ? sx_node_old : sx_cell_old);
+            const amrex::Real (&sx_jz_old)[depos_order+3] = ((jz_type[0] == NODE) ? sx_node_old : sx_cell_old);
+            int const i_jx_old = ((jx_type[0] == NODE) ? i_node_old : i_cell_old);
+            int const i_jy_old = ((jy_type[0] == NODE) ? i_node_old : i_cell_old);
+            int const i_jz_old = ((jz_type[0] == NODE) ? i_node_old : i_cell_old);
+
+#if (defined WARPX_DIM_3D)
+            // j_j[xyz]_old leftmost grid point in y that the particle touches
+            // sy_j[xyz]_old shape factor along y for the centering of each current
+            int j_node_old, j_cell_old;
+            if (jx_type[1] == NODE || jy_type[1] == NODE || jz_type[1] == NODE) {
+                j_node_old = compute_shape_factor<depos_order>(sy_node_old, y_old);
+            }
+            if (jx_type[1] == CELL || jy_type[1] == CELL || jz_type[1] == CELL) {
+                j_cell_old = compute_shape_factor<depos_order>(sy_cell_old, y_old-0.5_rt);
+            }
+            const amrex::Real (&sy_jx_old)[depos_order+3] = ((jx_type[1] == NODE) ? sy_node_old : sy_cell_old);
+            const amrex::Real (&sy_jy_old)[depos_order+3] = ((jy_type[1] == NODE) ? sy_node_old : sy_cell_old);
+            const amrex::Real (&sy_jz_old)[depos_order+3] = ((jz_type[1] == NODE) ? sy_node_old : sy_cell_old);
+            int const j_jx_old = ((jx_type[1] == NODE) ? j_node_old : j_cell_old);
+            int const j_jy_old = ((jy_type[1] == NODE) ? j_node_old : j_cell_old);
+            int const j_jz_old = ((jz_type[1] == NODE) ? j_node_old : j_cell_old);
+#endif
+
+            // k_j[xyz]_old leftmost grid point in z that the particle touches
+            // sz_j[xyz]_old shape factor along z for the centering of each current
+            int k_node_old, k_cell_old;
+            if (jx_type[zdir] == NODE || jy_type[zdir] == NODE || jz_type[zdir] == NODE) {
+                k_node_old = compute_shape_factor<depos_order>(sz_node_old, z_old);
+            }
+            if (jx_type[zdir] == CELL || jy_type[zdir] == CELL || jz_type[zdir] == CELL) {
+                k_cell_old = compute_shape_factor<depos_order>(sz_cell_old, z_old - 0.5);
+            }
+            const amrex::Real (&sz_jx_old)[depos_order+3] = ((jx_type[zdir] == NODE) ? sz_node_old : sz_cell_old);
+            const amrex::Real (&sz_jy_old)[depos_order+3] = ((jy_type[zdir] == NODE) ? sz_node_old : sz_cell_old);
+            const amrex::Real (&sz_jz_old)[depos_order+3] = ((jz_type[zdir] == NODE) ? sz_node_old : sz_cell_old);
+            int const k_jx_old = ((jx_type[zdir] == NODE) ? k_node_old : k_cell_old);
+            int const k_jy_old = ((jy_type[zdir] == NODE) ? k_node_old : k_cell_old);
+            int const k_jz_old = ((jz_type[zdir] == NODE) ? k_node_old : k_cell_old);
+
+            // Computes min and max positions of current contributions along x
+            int dil_jx = 1, diu_jx = 1;
+            if (i_jx_old < i_jx_new) dil_jx = 0;
+            if (i_jx_old > i_jx_new) diu_jx = 0;
+#if (defined WARPX_DIM_3D)
+            int djl_jx = 1, dju_jx = 1;
+            if (j_jx_old < j_jx_new) djl_jx = 0;
+            if (j_jx_old > j_jx_new) dju_jx = 0;
+#endif
+            int dkl_jx = 1, dku_jx = 1;
+            if (k_jx_old < k_jx_new) dkl_jx = 0;
+            if (k_jx_old > k_jx_new) dku_jx = 0;
+
+            // Computes min and max positions of current contributions along y
+            int dil_jy = 1, diu_jy = 1;
+            if (i_jy_old < i_jy_new) dil_jy = 0;
+            if (i_jy_old > i_jy_new) diu_jy = 0;
+#if (defined WARPX_DIM_3D)
+            int djl_jy = 1, dju_jy = 1;
+            if (j_jy_old < j_jy_new) djl_jy = 0;
+            if (j_jy_old > j_jy_new) dju_jy = 0;
+#endif
+            int dkl_jy = 1, dku_jy = 1;
+            if (k_jy_old < k_jy_new) dkl_jy = 0;
+            if (k_jy_old > k_jy_new) dku_jy = 0;
+
+            // Computes min and max positions of current contributions along z
+            int dil_jz = 1, diu_jz = 1;
+            if (i_jz_old < i_jz_new) dil_jz = 0;
+            if (i_jz_old > i_jz_new) diu_jz = 0;
+#if (defined WARPX_DIM_3D)
+            int djl_jz = 1, dju_jz = 1;
+            if (j_jz_old < j_jz_new) djl_jz = 0;
+            if (j_jz_old > j_jz_new) dju_jz = 0;
+#endif
+            int dkl_jz = 1, dku_jz = 1;
+            if (k_jz_old < k_jz_new) dkl_jz = 0;
+            if (k_jz_old > k_jz_new) dku_jz = 0;
 
             // Deposit current into jx_arr, jy_arr and jz_arr
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-            for (int iz=0; iz<=depos_order; iz++){
-                for (int ix=0; ix<=depos_order; ix++){
-                    amrex::Gpu::Atomic::Add(
-                        &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 0),
-                        sx_jx[ix]*sz_jx[iz]*wqx);
-                    amrex::Gpu::Atomic::Add(
-                        &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 0),
-                        sx_jy[ix]*sz_jy[iz]*wqy);
-                    amrex::Gpu::Atomic::Add(
-                        &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0),
-                        sx_jz[ix]*sz_jz[iz]*wqz);
-#if (defined WARPX_DIM_RZ)
-                    Complex xy = xy0; // Note that xy is equal to e^{i m theta}
-                    for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
-                        // The factor 2 on the weighting comes from the normalization of the modes
-                        amrex::Gpu::Atomic::Add( &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode-1), 2.*sx_jx[ix]*sz_jx[iz]*wqx*xy.real());
-                        amrex::Gpu::Atomic::Add( &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode  ), 2.*sx_jx[ix]*sz_jx[iz]*wqx*xy.imag());
-                        amrex::Gpu::Atomic::Add( &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode-1), 2.*sx_jy[ix]*sz_jy[iz]*wqy*xy.real());
-                        amrex::Gpu::Atomic::Add( &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode  ), 2.*sx_jy[ix]*sz_jy[iz]*wqy*xy.imag());
-                        amrex::Gpu::Atomic::Add( &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode-1), 2.*sx_jz[ix]*sz_jz[iz]*wqz*xy.real());
-                        amrex::Gpu::Atomic::Add( &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode  ), 2.*sx_jz[ix]*sz_jz[iz]*wqz*xy.imag());
-                        xy = xy*xy0;
-                    }
-#endif
+#if (defined WARPX_DIM_XZ)
+            for (int k=dkl_jx; k<=depos_order+2-dku_jx; k++) {
+                amrex::Real sdxi = 0.;
+                for (int i=dil_jx; i<=depos_order+1-diu_jx; i++) {
+                    sdxi += wqx*(sx_jx_old[i] - sx_jx_new[i])*(sz_jx_new[k] + 0.5*(sz_jx_old[k] - sz_jx_new[k]));
+                    amrex::Gpu::Atomic::Add( &jx_arr(lo.x+i_jx_new-1+i, lo.y+k_jx_new-1+k, 0, 0), sdxi);
+                }
+            }
+            for (int k=dkl_jy; k<=depos_order+2-dku_jy; k++) {
+                for (int i=dil_jy; i<=depos_order+2-diu_jy; i++) {
+                    amrex::Real const sdyj = wq*vy*invvol*((sz_jy_new[k] + 0.5_rt * (sz_jy_old[k] - sz_jy_new[k]))*sx_jy_new[i] +
+                                                           (0.5_rt * sz_jy_new[k] + 1._rt / 3._rt *(sz_jy_old[k] - sz_jy_new[k]))*(sx_jy_old[i] - sx_jy_new[i]));
+                    amrex::Gpu::Atomic::Add( &jy_arr(lo.x+i_jy_new-1+i, lo.y+k_jy_new-1+k, 0, 0), sdyj);
+                }
+            }
+            for (int i=dil_jz; i<=depos_order+2-diu_jz; i++) {
+                amrex::Real sdzk = 0.;
+                for (int k=dkl_jz; k<=depos_order+1-dku_jz; k++) {
+                    sdzk += wqz*(sz_jz_old[k] - sz_jz_new[k])*(sx_jz_new[i] + 0.5_rt * (sx_jz_old[i] - sx_jz_new[i]));
+                    amrex::Gpu::Atomic::Add( &jz_arr(lo.x+i_jz_new-1+i, lo.y+k_jz_new-1+k, 0, 0), sdzk);
                 }
             }
 #elif (defined WARPX_DIM_3D)
-            for (int iz=0; iz<=depos_order; iz++){
-                for (int iy=0; iy<=depos_order; iy++){
-                    for (int ix=0; ix<=depos_order; ix++){
-                        amrex::Gpu::Atomic::Add(
-                            &jx_arr(lo.x+j_jx+ix, lo.y+k_jx+iy, lo.z+l_jx+iz),
-                            sx_jx[ix]*sy_jx[iy]*sz_jx[iz]*wqx);
-                        amrex::Gpu::Atomic::Add(
-                            &jy_arr(lo.x+j_jy+ix, lo.y+k_jy+iy, lo.z+l_jy+iz),
-                            sx_jy[ix]*sy_jy[iy]*sz_jy[iz]*wqy);
-                        amrex::Gpu::Atomic::Add(
-                            &jz_arr(lo.x+j_jz+ix, lo.y+k_jz+iy, lo.z+l_jz+iz),
-                            sx_jz[ix]*sy_jz[iy]*sz_jz[iz]*wqz);
+            for (int k=dkl_jx; k<=depos_order+2-dku_jx; k++) {
+                for (int j=djl_jx; j<=depos_order+2-dju_jx; j++) {
+                    amrex::Real sdxi = 0.;
+                    for (int i=dil_jx; i<=depos_order+1-diu_jx; i++) {
+                        sdxi += wqx*(sx_jx_old[i] - sx_jx_new[i])*((sy_jx_new[j] + 0.5*(sy_jx_old[j] - sy_jx_new[j]))*sz_jx_new[k] +
+                                                             (0.5*sy_jx_new[j] + 1./3.*(sy_jx_old[j] - sy_jx_new[j]))*(sz_jx_old[k] - sz_jx_new[k]));
+                        amrex::Gpu::Atomic::Add( &jx_arr(lo.x+i_jx_new-1+i, lo.y+j_jx_new-1+j, lo.z+k_jx_new-1+k), sdxi);
+                    }
+                }
+            }
+            for (int k=dkl_jy; k<=depos_order+2-dku_jy; k++) {
+                for (int i=dil_jy; i<=depos_order+2-diu_jy; i++) {
+                    amrex::Real sdyj = 0.;
+                    for (int j=djl_jy; j<=depos_order+1-dju_jy; j++) {
+                        sdyj += wqy*(sy_jy_old[j] - sy_jy_new[j])*((sz_jy_new[k] + 0.5*(sz_jy_old[k] - sz_jy_new[k]))*sx_jy_new[i] +
+                                                             (0.5*sz_jy_new[k] + 1./3.*(sz_jy_old[k] - sz_jy_new[k]))*(sx_jy_old[i] - sx_jy_new[i]));
+                        amrex::Gpu::Atomic::Add( &jy_arr(lo.x+i_jy_new-1+i, lo.y+j_jy_new-1+j, lo.z+k_jy_new-1+k), sdyj);
+                    }
+                }
+            }
+            for (int j=djl_jz; j<=depos_order+2-dju_jz; j++) {
+                for (int i=dil_jz; i<=depos_order+2-diu_jz; i++) {
+                    amrex::Real sdzk = 0.;
+                    for (int k=dkl_jz; k<=depos_order+1-dku_jz; k++) {
+                        sdzk += wqz*(sz_jz_old[k] - sz_jz_new[k])*((sx_jz_new[i] + 0.5*(sx_jz_old[i] - sx_jz_new[i]))*sy_jz_new[j] +
+                                                             (0.5*sx_jz_new[i] + 1./3.*(sx_jz_old[i] - sx_jz_new[i]))*(sy_jz_old[j] - sy_jz_new[j]));
+                        amrex::Gpu::Atomic::Add( &jz_arr(lo.x+i_jz_new-1+i, lo.y+j_jz_new-1+j, lo.z+k_jz_new-1+k), sdzk);
                     }
                 }
             }
