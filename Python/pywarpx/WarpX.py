@@ -98,4 +98,3 @@ class WarpX(Bucket):
                 ff.write('{0}\n'.format(arg))
 
 warpx = WarpX('warpx')
-

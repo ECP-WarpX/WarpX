@@ -457,7 +457,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         pywarpx.warpx.do_pml = self.do_pml
         pywarpx.warpx.pml_ncell = self.pml_ncell
-        
+
         pywarpx.psatd.v_galilean = self.v_galilean
 
         # --- Same method names are used, though mapped to lower case.
@@ -469,10 +469,10 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         if self.source_smoother is not None:
             self.source_smoother.initialize_inputs(self)
-            
+
         if self.l_nodal is not None:
             pywarpx.warpx.do_nodal = self.l_nodal
-            
+
         if self.stencil_order is not None:
             if type(self.stencil_order) is type(0.):
                 pywarpx.psatd.nox = self.stencil_order
@@ -578,7 +578,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.load_balance_int = self.load_balance_int
         pywarpx.warpx.load_balance_with_sfc = self.load_balance_with_sfc
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
-        
+
         particle_shape = self.particle_shape
         for s in self.species:
             if s.particle_shape is not None:
