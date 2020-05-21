@@ -62,7 +62,7 @@ void PhotonParticleContainer::InitData()
 }
 
 void
-PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType /*a_dt_type*/)
+PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType a_dt_type)
 {
 
     // This wraps the momentum and position advance so that inheritors can modify the call.
@@ -73,7 +73,7 @@ PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType /*a_dt_type*/
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
-    if (WarpX::do_back_transformed_diagnostics && do_back_transformed_diagnostics)
+    if (WarpX::do_back_transformed_diagnostics && do_back_transformed_diagnostics && (a_dt_type!=DtType::SecondHalf))
     {
         copy_attribs(pti);
     }
