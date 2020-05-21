@@ -46,21 +46,23 @@ plasma = picmi.Species(particle_type='electron', name='plasma', initial_distribu
 sim = picmi.Simulation(solver = solver,
                        max_steps = max_steps,
                        verbose = 1,
-                       warpx_plot_int = max_steps,
                        warpx_current_deposition_algo = 'esirkepov')
 
 sim.add_species(beam, layout=picmi.GriddedLayout(grid=grid, n_macroparticle_per_cell=number_per_cell_each_dim))
 sim.add_species(plasma, layout=picmi.GriddedLayout(grid=grid, n_macroparticle_per_cell=number_per_cell_each_dim))
 
-field_diag = picmi.FieldDiagnostic(grid = grid,
-                                    period = max_steps,
-                                    data_list = ['Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz', 'part_per_cell'],
-                                    write_dir = 'diags')
+field_diag = picmi.FieldDiagnostic(name = 'diag1',
+                                   grid = grid,
+                                   period = max_steps,
+                                   data_list = ['Ex', 'Ey', 'Ez', 'Jx', 'Jy', 'Jz', 'part_per_cell'],
+                                   write_dir = 'diags',
+                                   warpx_file_prefix = 'plotfiles/plt')
 
-part_diag = picmi.ParticleDiagnostic(period = max_steps,
-                                      species = [beam, plasma],
-                                      data_list = ['ux', 'uy', 'uz', 'weighting', 'Ex', 'Ey', 'Ez'],
-                                      write_dir = 'diags')
+part_diag = picmi.ParticleDiagnostic(name = 'diag1',
+                                     period = max_steps,
+                                     species = [beam, plasma],
+                                     data_list = ['ux', 'uy', 'uz', 'weighting', 'Ex', 'Ey', 'Ez'],
+                                     write_dir = 'diags')
 
 sim.add_diagnostic(field_diag)
 sim.add_diagnostic(part_diag)

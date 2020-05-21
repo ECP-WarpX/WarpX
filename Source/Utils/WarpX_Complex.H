@@ -14,11 +14,10 @@
 
 #include <complex>
 
-// Define complex type on GPU/CPU
-#ifdef AMREX_USE_GPU
-
+// Defines a complex type on GPU & CPU
 using Complex = amrex::GpuComplex<amrex::Real>;
 
+#ifdef AMREX_USE_GPU
 #    ifdef WARPX_USE_PSATD
 #    include <cufft.h>
 #        ifdef AMREX_USE_FLOAT
@@ -31,8 +30,6 @@ static_assert( sizeof(Complex) == sizeof(cuDoubleComplex),
 #    endif // WARPX_USE_PSATD
 
 #else
-
-using Complex = std::complex<amrex::Real>;
 
 #    ifdef WARPX_USE_PSATD
 #    include <fftw3.h>
@@ -48,39 +45,5 @@ static_assert( sizeof(Complex) == sizeof(fftw_complex),
 #endif // AMREX_USE_GPU
 static_assert(sizeof(Complex) == sizeof(amrex::Real[2]),
               "Unexpected complex type.");
-
-// wrapper around math functions, to run on CPU or accelerator.
-namespace MathFunc
-{
-    // exp function
-    template<typename T>
-    AMREX_GPU_HOST_DEVICE T exp (const T& val){
-#ifdef AMREX_USE_GPU
-        return amrex::exp(val);
-#else
-        return std::exp(val);
-#endif
-    }
-
-    // sqrt function
-    template<typename T>
-    AMREX_GPU_HOST_DEVICE T sqrt (const T& val){
-#ifdef AMREX_USE_GPU
-        return amrex::sqrt(val);
-#else
-        return std::sqrt(val);
-#endif
-    }
-
-    // power function
-    template<typename T1, typename T2>
-    AMREX_GPU_HOST_DEVICE T1 pow (const T1& val, const T2& power){
-#ifdef AMREX_USE_GPU
-        return amrex::pow(val, power);
-#else
-        return std::pow(val, power);
-#endif
-    }
-}
 
 #endif //WARPX_COMPLEX_H_

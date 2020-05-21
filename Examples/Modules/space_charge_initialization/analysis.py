@@ -90,7 +90,9 @@ plt.savefig('Comparison.png')
 def check(E, E_th, label):
     print( 'Relative error in %s: %.3f'%(
             label, abs(E-E_th).max()/E_th.max()))
-    assert np.allclose( E, E_th, atol=0.1*E_th.max() )
+    tolerance_rel = 0.1
+    print("tolerance_rel: " + str(tolerance_rel))
+    assert np.allclose( E, E_th, atol=tolerance_rel*E_th.max() )
 
 check( Ex_array, Ex_th, 'Ex' )
 check( Ey_array, Ey_th, 'Ey' )

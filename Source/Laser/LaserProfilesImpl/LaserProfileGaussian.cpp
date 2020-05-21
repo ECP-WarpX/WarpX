@@ -103,7 +103,7 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
 
     // Amplitude and monochromatic oscillations
     Complex prefactor =
-        m_common_params.e_max * MathFunc::exp( I * oscillation_phase );
+        m_common_params.e_max * amrex::exp( I * oscillation_phase );
 
     // Because diffract_factor is a complex, the code below takes into
     // account the impact of the dimensionality on both the Gouy phase
@@ -111,7 +111,7 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
 #if (AMREX_SPACEDIM == 3)
     prefactor = prefactor / diffract_factor;
 #elif (AMREX_SPACEDIM == 2)
-    prefactor = prefactor / MathFunc::sqrt(diffract_factor);
+    prefactor = prefactor / amrex::sqrt(diffract_factor);
 #endif
 
     // Copy member variables to tmp copies for GPU runs.
@@ -125,16 +125,16 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
         np,
         [=] AMREX_GPU_DEVICE (int i) {
             const Complex stc_exponent = 1._rt / stretch_factor * inv_tau2 *
-                MathFunc::pow((t - tmp_profile_t_peak -
+                amrex::pow((t - tmp_profile_t_peak -
                     tmp_beta*k0*(Xp[i]*std::cos(tmp_theta_stc) + Yp[i]*std::sin(tmp_theta_stc)) -
                     2._rt *I*(Xp[i]*std::cos(tmp_theta_stc) + Yp[i]*std::sin(tmp_theta_stc))
                     *( tmp_zeta - tmp_beta*tmp_profile_focal_distance ) * inv_complex_waist_2),2);
             // stcfactor = everything but complex transverse envelope
-            const Complex stcfactor = prefactor * MathFunc::exp( - stc_exponent );
+            const Complex stcfactor = prefactor * amrex::exp( - stc_exponent );
             // Exp argument for transverse envelope
             const Complex exp_argument = - ( Xp[i]*Xp[i] + Yp[i]*Yp[i] ) * inv_complex_waist_2;
             // stcfactor + transverse envelope
-            amplitude[i] = ( stcfactor * MathFunc::exp( exp_argument ) ).real();
+            amplitude[i] = ( stcfactor * amrex::exp( exp_argument ) ).real();
         }
         );
 }

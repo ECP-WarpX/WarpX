@@ -42,6 +42,59 @@ namespace detail
         return make_pair(record_name, component_name);
     }
 
+    /** Return the component labels for particle positions
+     */
+    inline std::vector< std::string >
+    getParticlePositionComponentLabels()
+    {
+        using vs = std::vector< std::string >;
+#if defined(WARPX_DIM_XZ)
+        vs const positionComponents{"x", "z"};
+#elif defined(WARPX_DIM_RZ)
+        // note: this will change when we back-transform
+        //       z,r,theta on the fly to cartesian coordiantes
+        vs const positionComponents{"r", "z"};
+#elif (AMREX_SPACEDIM==3)
+        vs const positionComponents{"x", "y", "z"};
+#else
+#   error Unknown WarpX dimensionality.
+#endif
+        return positionComponents;
+    }
+
+    /** Return the axis (index) names of a mesh
+     */
+    inline std::vector< std::string >
+    getFieldAxisLabels()
+    {
+        using vs = std::vector< std::string >;
+#if defined(WARPX_DIM_XZ)
+        vs const axisLabels{"x", "z"};
+#elif defined(WARPX_DIM_RZ)
+        vs const axisLabels{"r", "z"};
+#elif (AMREX_SPACEDIM==3)
+        vs const axisLabels{"x", "y", "z"};
+#else
+#   error Unknown WarpX dimensionality.
+#endif
+        return axisLabels;
+    }
+
+    /** Return the component names of a mesh
+     */
+    inline std::vector< std::string >
+    getFieldComponentLabels()
+    {
+        using vs = std::vector< std::string >;
+#if defined(WARPX_DIM_RZ)
+        vs const fieldComponents{"r", "z"};
+#else
+        // note: 1D3V and 2D3V simulations still have 3 components for the fields
+        vs const fieldComponents{"x", "y", "z"};
+#endif
+        return fieldComponents;
+    }
+
     /** Get the openPMD physical dimensionality of a record
      *
      * @param record_name name of the openPMD record
@@ -162,12 +215,16 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType, const std::string& filePr
 
     if( amrex::ParallelDescriptor::NProcs() > 1 )
     {
+#if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
             filename, accessType,
             amrex::ParallelDescriptor::Communicator()
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
+#else
+        amrex::Abort("openPMD-api not built with MPI support!");
+#endif
     }
     else
     {
@@ -186,72 +243,6 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType, const std::string& filePr
     m_Series->setOpenPMDextension( openPMD_ED_PIC );
     // meta info
     m_Series->setSoftware( "WarpX", WarpX::Version() );
-}
-
-void
-WarpXOpenPMDPlot::WriteOpenPMDParticles (MultiParticleContainer& mpc)
-{
-  WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDParticles()");
-  std::vector<std::string> species_names = mpc.GetSpeciesNames();
-
-  for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
-    auto& pc  = mpc.GetUniqueContainer(i);
-    if (pc->plot_species) {
-
-      // names of amrex::Real and int particle attributes in SoA data
-      amrex::Vector<std::string> real_names;
-      amrex::Vector<std::string> int_names;
-      amrex::Vector<int> int_flags;
-
-      // see openPMD ED-PIC extension for namings
-      // note: an underscore separates the record name from its component
-      //       for non-scalar records
-      real_names.push_back("weighting");
-
-      real_names.push_back("momentum_x");
-      real_names.push_back("momentum_y");
-      real_names.push_back("momentum_z");
-
-      real_names.push_back("E_x");
-      real_names.push_back("E_y");
-      real_names.push_back("E_z");
-
-      real_names.push_back("B_x");
-      real_names.push_back("B_y");
-      real_names.push_back("B_z");
-
-#ifdef WARPX_DIM_RZ
-      real_names.push_back("theta");
-#endif
-      if(pc->do_field_ionization){
-         int_names.push_back("ionization_level");
-         // int_flags specifies, for each integer attribs, whether it is
-         // dumped as particle record in a plotfile. So far, ionization_level is the only
-         // integer attribs, and it is automatically dumped as particle record
-         // when ionization is on.
-         int_flags.resize(1, 1);
-      }
-
-      // Convert momentum to SI
-      pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
-      // real_names contains a list of all real particle attributes.
-      // pc->plot_flags is 1 or 0, whether quantity is dumped or not.
-
-      {
-        //
-        DumpToFile(pc.get(),
-           species_names[i],
-           m_CurrentStep,
-           pc->plot_flags, // this is protected and accessible by MultiParticleContainer.
-           // so kept as is
-           int_flags,
-           real_names, int_names);
-      }
-
-      // Convert momentum back to WarpX units
-      pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
-    }
-  }
 }
 
 void
@@ -387,7 +378,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
          const auto& aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
          {
            // Save positions
-           std::vector<std::string> axisNames={"x", "y", "z"};
+           auto const positionComponents = detail::getParticlePositionComponentLabels();
            for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
                 std::shared_ptr< amrex::ParticleReal > curr(
                     new amrex::ParticleReal[numParticleOnTile],
@@ -396,7 +387,8 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                 for (auto i=0; i<numParticleOnTile; i++) {
                      curr.get()[i] = aos[i].m_rdata.pos[currDim];
                 }
-                currSpecies["position"][axisNames[currDim]].storeChunk(curr, {offset}, {numParticleOnTile64});
+                std::string const positionComponent = positionComponents[currDim];
+                currSpecies["position"][positionComponent].storeChunk(curr, {offset}, {numParticleOnTile64});
            }
 
            // save particle ID after converting it to a globally unique ID
@@ -540,7 +532,8 @@ WarpXOpenPMDPlot::SetupPos(WarpXParticleContainer* pc,
   auto const realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
   auto const idType = openPMD::Dataset(openPMD::determineDatatype< uint64_t >(), {np});
 
-  for( auto const& comp : {"x", "y", "z"} ) {
+  auto const positionComponents = detail::getParticlePositionComponentLabels();
+  for( auto const& comp : positionComponents ) {
       currSpecies["positionOffset"][comp].resetDataset( realType );
       currSpecies["positionOffset"][comp].makeConstant( 0. );
       currSpecies["position"][comp].resetDataset( realType );
@@ -602,11 +595,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
   // - Global offset
   std::vector<double> const global_offset = getReversedVec(geom.ProbLo());
   // - AxisLabels
-#if AMREX_SPACEDIM==3
-  std::vector<std::string> const axis_labels{"x", "y", "z"};
-#else
-  std::vector<std::string> const axis_labels{"x", "z"};
-#endif
+  std::vector<std::string> axis_labels = detail::getFieldAxisLabels();
 
   // Prepare the type of dataset that will be written
   openPMD::Datatype const datatype = openPMD::determineDatatype<amrex::Real>();
@@ -678,16 +667,27 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
 
   // Loop through the different components, i.e. different fields stored in mf
   for (int icomp=0; icomp<ncomp; icomp++){
-
-    // Check if this field is a vector or a scalar, and extract the field name
     std::string const & varname = varnames[icomp];
+
+    // assume fields are scalar unless they match the following match of known vector fields
     std::string field_name = varname;
     std::string comp_name = openPMD::MeshRecordComponent::SCALAR;
-    for( char const* vector_field: {"E", "B", "j"} ) {
-        for( char const* comp: {"x", "y", "z"} ) {
-            if( varname[0] == *vector_field && varname[1] == *comp ) {
-                field_name = varname[0] + varname.substr(2); // Strip component
-                comp_name = varname[1];
+
+    if (varname.size() >= 2u ) {
+        std::string const varname_1st = varname.substr(0u, 1u); // 1st character
+        std::string const varname_2nd = varname.substr(1u, 1u); // 2nd character
+
+        // Check if this field is a vector. If so, then extract the field name
+        std::vector< std::string > const vector_fields = {"E", "B", "j"};
+        std::vector< std::string > const field_components = detail::getFieldComponentLabels();
+        for( std::string const field : vector_fields ) {
+            for( std::string const component : field_components ) {
+                if( field.compare( varname_1st ) == 0 &&
+                    component.compare( varname_2nd ) == 0 )
+                {
+                    field_name = varname_1st + varname.substr(2); // Strip component
+                    comp_name = varname_2nd;
+                }
             }
         }
     }

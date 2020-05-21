@@ -74,7 +74,7 @@ B = p_0 * B_val
 #________________________________________
 
 #Tolerance
-tol = 0.05
+tolerance_rel = 0.05
 #________________________________________
 
 #tau_c
@@ -138,7 +138,13 @@ def check():
         init_gamma = gamma(cc[0].init_mom)
         end_gamma = gamma(cc[1]/m_e/c)
         exp_gamma = exp_res(cc[0], sim_time)
-        assert(np.abs(end_gamma-exp_gamma)/exp_gamma < tol)
+
+        error_rel = np.abs(end_gamma-exp_gamma)/exp_gamma
+
+        print("error_rel    : " + str(error_rel))
+        print("tolerance_rel: " + str(tolerance_rel))
+
+        assert( error_rel < tolerance_rel )
 
 def generate():
 

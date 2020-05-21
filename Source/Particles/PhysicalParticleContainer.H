@@ -53,28 +53,15 @@ public:
 
     PhysicalParticleContainer (amrex::AmrCore* amr_core);
 
+    /** This function queries deprecated input parameters and abort
+     *  the run if one of them is specified. */
+    void BackwardCompatibility ();
+
     virtual ~PhysicalParticleContainer () {}
 
     virtual void InitData () override;
 
     void InitIonizationModule ();
-
-    /**
-     * \brief Apply external E and B fields on the particles. The E and B
-     * fields could be defined as a constant or using a parser for reading
-     * in a mathematical expression. The default value for the E- and B-fields
-     * is (0.0,0.0,0.0).
-     *
-     * \param[in,out] Exp-Bzp pointer to fields on particles modified based
-     *                  on external E and B
-     * \param[in] xp,yp,zp arrays of particle positions required to compute
-     *                  mathematical expression for the external fields
-     *                  using parser.
-     */
-    void AssignExternalFieldOnParticles ( WarpXParIter& pti,
-                                          RealVector& Exp, RealVector& Eyp,
-                                          RealVector& Ezp, RealVector& Bxp,
-                                          RealVector& Byp, RealVector& Bzp, int lev);
 
     virtual void FieldGather (int lev,
                               const amrex::MultiFab& Ex,
@@ -207,10 +194,9 @@ public:
 
     /** Load a particle beam from an external file
      *
-     * @param[in] s_f path to an external file in openPMD markup
      * @param[in] q_tot total charge of the particle species to be initialized
      */
-    void AddPlasmaFromFile (const std::string s_f, amrex::Real q_tot);
+    void AddPlasmaFromFile (amrex::ParticleReal q_tot);
 
     void CheckAndAddParticle (
         amrex::Real x, amrex::Real y, amrex::Real z,

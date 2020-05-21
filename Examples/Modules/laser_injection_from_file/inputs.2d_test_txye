@@ -3,7 +3,6 @@
 #################################
 max_step = 250
 amr.n_cell =  672 672
-amr.plot_int = 250
 amr.max_grid_size = 512
 amr.blocking_factor = 32
 amr.max_level = 0
@@ -44,3 +43,8 @@ txye_laser.wavelength = 1.0e-6         # The wavelength of the laser (in meters)
 txye_laser.profile      = from_txye_file
 txye_laser.txye_file_name = "gauss_2d_unf.txye"
 txye_laser.time_chunk_size = 50
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 250
+diag1.diag_type = Full

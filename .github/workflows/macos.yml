@@ -12,6 +12,7 @@ jobs:
         path: 'warpx_directory/WarpX'
     - name: install dependencies
       run: |
+        brew update
         brew install cmake
         brew install fftw
         brew install libomp
@@ -27,4 +28,4 @@ jobs:
         cd WarpX
         export LDFLAGS="-lomp"
         make -j 2 COMP=llvm USE_OMP=FALSE USE_OPENPMD=TRUE XTRA_CXXFLAGS="-Xpreprocessor -fopenmp"
-
+        make -j 2 COMP=llvm USE_OMP=FALSE USE_OPENPMD=TRUE XTRA_CXXFLAGS="-Xpreprocessor -fopenmp" PRECISION=FLOAT USE_SINGLE_PRECISION_PARTICLES=TRUE
