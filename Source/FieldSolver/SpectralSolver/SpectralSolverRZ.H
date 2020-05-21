@@ -39,7 +39,7 @@ class SpectralSolverRZ
         void ForwardTransform (amrex::MultiFab const & field_mf,
                                int const field_index,
                                int const i_comp=0 ) {
-            WARPX_PROFILE("SpectralSolverRZ::ForwardTransform");
+            BL_PROFILE("SpectralSolverRZ::ForwardTransform");
             field_data.ForwardTransform(field_mf, field_index, i_comp);
         };
 
@@ -48,7 +48,7 @@ class SpectralSolverRZ
          *  (in the spectral field specified by `field_index1` and `field_index2`) */
         void ForwardTransform (amrex::MultiFab const & field_mf1, int const field_index1,
                                amrex::MultiFab const & field_mf2, int const field_index2) {
-            WARPX_PROFILE("SpectralSolverRZ::ForwardTransform");
+            BL_PROFILE("SpectralSolverRZ::ForwardTransform");
             field_data.ForwardTransform(field_mf1, field_index1,
                                         field_mf2, field_index2);
         };
@@ -58,7 +58,7 @@ class SpectralSolverRZ
         void BackwardTransform (amrex::MultiFab& field_mf,
                                 int const field_index,
                                 int const i_comp=0) {
-            WARPX_PROFILE("SpectralSolverRZ::BackwardTransform");
+            BL_PROFILE("SpectralSolverRZ::BackwardTransform");
             field_data.BackwardTransform(field_mf, field_index, i_comp);
         };
 
@@ -66,14 +66,14 @@ class SpectralSolverRZ
          * back to real space, and store it in `field_mf1` and `field_mf2`*/
         void BackwardTransform (amrex::MultiFab& field_mf1, int const field_index1,
                                 amrex::MultiFab& field_mf2, int const field_index2) {
-            WARPX_PROFILE("SpectralSolverRZ::BackwardTransform");
+            BL_PROFILE("SpectralSolverRZ::BackwardTransform");
             field_data.BackwardTransform(field_mf1, field_index1,
                                          field_mf2, field_index2);
         };
 
         /* \brief Update the fields in spectral space, over one timestep */
         void pushSpectralFields () {
-            WARPX_PROFILE("SpectralSolverRZ::pushSpectralFields");
+            BL_PROFILE("SpectralSolverRZ::pushSpectralFields");
             // Virtual function: the actual function used here depends
             // on the sub-class of `SpectralBaseAlgorithm` that was
             // initialized in the constructor of `SpectralSolverRZ`
