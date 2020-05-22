@@ -63,7 +63,7 @@ void PhotonParticleContainer::InitData()
 }
 
 void
-PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType /*a_dt_type*/)
+PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType a_dt_type)
 {
 
     // This wraps the momentum and position advance so that inheritors can modify the call.
@@ -76,7 +76,7 @@ PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType /*a_dt_type*/
 
     auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data);
     int do_copy = (WarpX::do_back_transformed_diagnostics &&
-                          do_back_transformed_diagnostics );
+                   do_back_transformed_diagnostics && a_dt_type!=DtType::SecondHalf);
 
     const auto GetPosition = GetParticlePosition(pti);
           auto SetPosition = SetParticlePosition(pti);
