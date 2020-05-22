@@ -272,6 +272,8 @@ public:
 
     static void ReadParameters ();
 
+    static void BackwardCompatibility ();
+
     static int NextID () { return ParticleType::NextID(); }
 
     void setNextID(int next_id) { ParticleType::NextID(next_id); }

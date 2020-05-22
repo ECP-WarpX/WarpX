@@ -165,21 +165,33 @@ Style and conventions
 ---------------------
 
 - For indentation, WarpX uses four spaces (no tabs)
-  - Some text editors automatically modify the files you open.
-    We recommend to turn on to remove trailing spaces and replace Tabs with 4 spaces.
+
+- Some text editors automatically modify the files you open. We recommend to turn on to remove trailing spaces and replace Tabs with 4 spaces.
+
 - The number of characters per line should be <100
 
-  - Exception: in documentation files (``.rst``/``.md``) use one sentence per line independent of its number of characters, which will allow easier edits.
+- Exception: in documentation files (``.rst``/``.md``) use one sentence per line independent of its number of characters, which will allow easier edits.
+
 - Space before and after assignment operator (``=``)
+
 - To define a function , for e.g., ``myfunction()`` use a space between the name of the function and the paranthesis - ``myfunction ()``.
   To call the function, the space is not required, i.e., just use ``myfunction()``.
 
-  - The reason this is beneficial is that when we do a ``git grep`` to search for ``myfunction ()``, we can clearly see the locations where ``myfunction ()`` is defined and where ``myfunction()`` is called.
-  - Also, using ``git grep "myfunction ()"`` searches for files only in the git repo, which is more efficient compared to the ``grep "myfunction ()"`` command that searches through all the files in a directory, including plotfiles for example.
+- The reason this is beneficial is that when we do a ``git grep`` to search for ``myfunction ()``, we can clearly see the locations where ``myfunction ()`` is defined and where ``myfunction()`` is called.
+
+- Also, using ``git grep "myfunction ()"`` searches for files only in the git repo, which is more efficient compared to the ``grep "myfunction ()"`` command that searches through all the files in a directory, including plotfiles for example.
+
 - It is recommended that style changes are not included in the PR where new code is added.
   This is to avoid any errors that may be introduced in a PR just to do style change.
+
 - WarpX uses ``CamelCase`` convention for file names and class names, rather than ``snake_case``.
+
 - The names of all member variables should be prefixed with ``m_``.
   This is particularly useful to avoid capturing member variables by value in a lambda function, which causes the whole object to be copied to GPU when running on a GPU-accelerated architecture.
   This convention should be used for all new piece of code, and it should be applied progressively to old code.
+
 - ``#include`` directives in C++ have a distinct order to avoid bugs, see :ref:`the WarpX repo structure <developers-repo-structure>` for details
+
+- For all new code, we should avoid relying on ``using namespace amrex;`` and all amrex types should be prefixed with `amrex::`.
+  Inside limited scopes, AMReX type literals can be included with ``using namespace amrex::literals;``.
+  Ideally, old code should be modified accordingly.
