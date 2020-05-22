@@ -1508,13 +1508,13 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
 
     amrex::ParallelFor(pti.numParticles(),
                        [=] AMREX_GPU_DEVICE (long i) {
-                           doParticlePush(GetPosition, SetPosition, copyAttribs, i, 
+                           doParticlePush(GetPosition, SetPosition, copyAttribs, i,
                                           ux[i], uy[i], uz[i],
                                           Ex[i], Ey[i], Ez[i],
                                           Bx[i], By[i], Bz[i],
                                           ion_lev ? ion_lev[i] : 0,
                                           m, q, pusher_algo, do_crr, do_copy,
-#ifdef WARPX_QED                                          
+#ifdef WARPX_QED
                                           do_sync,
                                           t_chi_max,
 #endif
