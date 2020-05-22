@@ -53,7 +53,8 @@ class SpectralBaseAlgorithmRZ
 
     protected: // Meant to be used in the subclasses
 
-        using SpectralCoefficients = amrex::FabArray< amrex::BaseFab <amrex::Real> >;
+        using SpectralRealCoefficients = amrex::FabArray< amrex::BaseFab <amrex::Real> >;
+        using SpectralComplexCoefficients = amrex::FabArray< amrex::BaseFab <Complex> >;
 
         // Constructor
         SpectralBaseAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,

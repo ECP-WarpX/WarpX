@@ -4,22 +4,24 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef WARPX_PSATD_ALGORITHM_RZ_H_
-#define WARPX_PSATD_ALGORITHM_RZ_H_
+#ifndef WARPX_GALILEAN_PSATD_ALGORITHM_RZ_H_
+#define WARPX_GALILEAN_PSATD_ALGORITHM_RZ_H_
 
 #include "SpectralBaseAlgorithmRZ.H"
 
 /* \brief Class that updates the field in spectral space
  * and stores the coefficients of the corresponding update equation.
  */
-class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
+class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
 {
 
     public:
-        PsatdAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
-                         amrex::DistributionMapping const & dm,
-                         int const n_rz_azimuthal_modes, int const norder_z,
-                         bool const nodal, amrex::Real const dt_step);
+        GalileanPsatdAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
+                                 amrex::DistributionMapping const & dm,
+                                 int const n_rz_azimuthal_modes, int const norder_z,
+                                 bool const nodal,
+                                 const amrex::Array<amrex::Real,3>& v_galilean,
+                                 amrex::Real const dt_step);
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldDataRZ & f) override final;
         virtual int getRequiredNumberOfFields() const override final {
@@ -46,9 +48,13 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
 
     private:
         bool coefficients_initialized;
-        // Note that dt is saved to use in InitializeSpectralCoefficients
-        amrex::Real m_dt;
-        SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
+        // Note that dt and v_galilean are saved to use in InitializeSpectralCoefficients
+        amrex::Real const m_dt;
+        amrex::Array<amrex::Real,3> m_v_galilean;
+
+        SpectralRealCoefficients C_coef, S_ck_coef;
+        SpectralComplexCoefficients Theta2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
+
 };
 
-#endif // WARPX_PSATD_ALGORITHM_RZ_H_
+#endif // WARPX_GALILEAN_PSATD_ALGORITHM_RZ_H_

@@ -29,6 +29,7 @@ class SpectralSolverRZ
                          amrex::DistributionMapping const & dm,
                          int const n_rz_azimuthal_modes,
                          int const norder_z, bool const nodal,
+                         const amrex::Array<amrex::Real,3>& v_galilean,
                          amrex::RealVect const dx, amrex::Real const dt,
                          int const lev,
                          bool const pml=false);

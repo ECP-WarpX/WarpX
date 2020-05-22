@@ -4,7 +4,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "PsatdAlgorithmRZ.H"
+#include "GalileanPsatdAlgorithmRZ.H"
 #include "Utils/WarpXConst.H"
 
 #include <cmath>
@@ -13,23 +13,28 @@ using amrex::operator""_rt;
 
 
 /* \brief Initialize coefficients for the update equation */
-PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
-                                    amrex::DistributionMapping const & dm,
-                                    int const n_rz_azimuthal_modes, int const norder_z,
-                                    bool const nodal, amrex::Real const dt)
+GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
+                                                    amrex::DistributionMapping const & dm,
+                                                    int const n_rz_azimuthal_modes, int const norder_z,
+                                                    bool const nodal,
+                                                    const amrex::Array<amrex::Real,3>& v_galilean,
+                                                    amrex::Real const dt)
      // Initialize members of base class
      : SpectralBaseAlgorithmRZ(spectral_kspace, dm,
                                norder_z, nodal),
        m_dt(dt)
 {
+    m_v_galilean = v_galilean;
 
     // Allocate the arrays of coefficients
     amrex::BoxArray const & ba = spectral_kspace.spectralspace_ba;
     C_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
     S_ck_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
-    X1_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
-    X2_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
-    X3_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
+    X1_coef = SpectralComplexCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
+    X2_coef = SpectralComplexCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
+    X3_coef = SpectralComplexCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
+    X4_coef = SpectralComplexCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
+    Theta2_coef = SpectralComplexCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
 
     coefficients_initialized = false;
 }
@@ -37,7 +42,7 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
 /* Advance the E and B field in spectral space (stored in `f`)
  * over one time step */
 void
-PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
+GalileanPsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 {
 
     if (not coefficients_initialized) {
@@ -57,9 +62,11 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
         // Extract arrays for the coefficients
         amrex::Array4<const amrex::Real> const& C_arr = C_coef[mfi].array();
         amrex::Array4<const amrex::Real> const& S_ck_arr = S_ck_coef[mfi].array();
-        amrex::Array4<const amrex::Real> const& X1_arr = X1_coef[mfi].array();
-        amrex::Array4<const amrex::Real> const& X2_arr = X2_coef[mfi].array();
-        amrex::Array4<const amrex::Real> const& X3_arr = X3_coef[mfi].array();
+        amrex::Array4<const Complex> const& X1_arr = X1_coef[mfi].array();
+        amrex::Array4<const Complex> const& X2_arr = X2_coef[mfi].array();
+        amrex::Array4<const Complex> const& X3_arr = X3_coef[mfi].array();
+        amrex::Array4<const Complex> const& X4_arr = X4_coef[mfi].array();
+        amrex::Array4<const Complex> const& Theta2_arr = Theta2_coef[mfi].array();
 
         // Extract pointers for the k vectors
         auto const & kr_modes = f.getKrArray(mfi);
@@ -113,35 +120,39 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             Complex const I = Complex{0._rt,1._rt};
             amrex::Real const C = C_arr(i,j,k,mode);
             amrex::Real const S_ck = S_ck_arr(i,j,k,mode);
-            amrex::Real const X1 = X1_arr(i,j,k,mode);
-            amrex::Real const X2 = X2_arr(i,j,k,mode);
-            amrex::Real const X3 = X3_arr(i,j,k,mode);
+            Complex const X1 = X1_arr(i,j,k,mode);
+            Complex const X2 = X2_arr(i,j,k,mode);
+            Complex const X3 = X3_arr(i,j,k,mode);
+            Complex const X4 = X4_arr(i,j,k,mode);
+            Complex const T2 = Theta2_arr(i,j,k,mode);
 
             // Update E (see WarpX online documentation: theory section)
-            fields(i,j,k,Ep_m) = C*Ep_old
-                        + S_ck*(-c2*I*kr/2._rt*Bz_old + c2*kz*Bp_old - inv_ep0*Jp)
-                        + kr*(X2*rho_new - X3*rho_old);
-            fields(i,j,k,Em_m) = C*Em_old
-                        + S_ck*(-c2*I*kr/2._rt*Bz_old - c2*kz*Bm_old - inv_ep0*Jm)
-                        - kr*(X2*rho_new - X3*rho_old);
-            fields(i,j,k,Ez_m) = C*Ez_old
-                        + S_ck*(c2*I*kr*Bp_old + c2*I*kr*Bm_old - inv_ep0*Jz)
-                        - I*kz*(X2*rho_new - X3*rho_old);
+            fields(i,j,k,Ep_m) = T2*C*Ep_old
+                        + T2*S_ck*(-c2*I*kr/2._rt*Bz_old + c2*kz*Bp_old)
+                        + X4*Jp + kr*(X2*rho_new - T2*X3*rho_old);
+            fields(i,j,k,Em_m) = T2*C*Em_old
+                        + T2*S_ck*(-c2*I*kr/2._rt*Bz_old - c2*kz*Bm_old)
+                        + X4*Jm - kr*(X2*rho_new - T2*X3*rho_old);
+            fields(i,j,k,Ez_m) = T2*C*Ez_old
+                        + T2*S_ck*(c2*I*kr*Bp_old + c2*I*kr*Bm_old)
+                        + X4*Jz - I*kz*(X2*rho_new - T2*X3*rho_old);
             // Update B (see WarpX online documentation: theory section)
-            fields(i,j,k,Bp_m) = C*Bp_old
-                        - S_ck*(-I*kr/2._rt*Ez_old + kz*Ep_old)
+            // Note: here X1 is T2*x1/(ep0*c*c*k_norm*k_norm), where
+            // x1 has the same definition as in the original paper
+            fields(i,j,k,Bp_m) = T2*C*Bp_old
+                        - T2*S_ck*(-I*kr/2._rt*Ez_old + kz*Ep_old)
                         + X1*(-I*kr/2._rt*Jz + kz*Jp);
-            fields(i,j,k,Bm_m) = C*Bm_old
-                        - S_ck*(-I*kr/2._rt*Ez_old - kz*Em_old)
+            fields(i,j,k,Bm_m) = T2*C*Bm_old
+                        - T2*S_ck*(-I*kr/2._rt*Ez_old - kz*Em_old)
                         + X1*(-I*kr/2._rt*Jz - kz*Jm);
-            fields(i,j,k,Bz_m) = C*Bz_old
-                        - S_ck*I*(kr*Ep_old + kr*Em_old)
+            fields(i,j,k,Bz_m) = T2*C*Bz_old
+                        - T2*S_ck*I*(kr*Ep_old + kr*Em_old)
                         + X1*I*(kr*Jp + kr*Jm);
         });
     }
 };
 
-void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
+void GalileanPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
 {
 
     // Fill them with the right values:
@@ -157,9 +168,14 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
         // Extract arrays for the coefficients
         amrex::Array4<amrex::Real> const& C = C_coef[mfi].array();
         amrex::Array4<amrex::Real> const& S_ck = S_ck_coef[mfi].array();
-        amrex::Array4<amrex::Real> const& X1 = X1_coef[mfi].array();
-        amrex::Array4<amrex::Real> const& X2 = X2_coef[mfi].array();
-        amrex::Array4<amrex::Real> const& X3 = X3_coef[mfi].array();
+        amrex::Array4<Complex> const& X1 = X1_coef[mfi].array();
+        amrex::Array4<Complex> const& X2 = X2_coef[mfi].array();
+        amrex::Array4<Complex> const& X3 = X3_coef[mfi].array();
+        amrex::Array4<Complex> const& X4 = X4_coef[mfi].array();
+        amrex::Array4<Complex> const& Theta2 = Theta2_coef[mfi].array();
+
+        // Extract real (for portability on GPU)
+        amrex::Real vz = m_v_galilean[2];
 
         auto const & kr_modes = f.getKrArray(mfi);
         amrex::Real const* kr_arr = kr_modes.dataPtr();
@@ -171,6 +187,10 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
         amrex::ParallelFor(bx, modes,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
+            constexpr amrex::Real c = PhysConst::c;
+            constexpr amrex::Real ep0 = PhysConst::ep0;
+            Complex const I = Complex{0._rt,1._rt};
+
             // Calculate norm of vector
             int const ir = i + nr*mode;
             amrex::Real const kr = kr_arr[ir];
@@ -178,29 +198,71 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
             amrex::Real const k_norm = std::sqrt(kr*kr + kz*kz);
 
             // Calculate coefficients
-            constexpr amrex::Real c = PhysConst::c;
-            constexpr amrex::Real ep0 = PhysConst::ep0;
             if (k_norm != 0){
+
                 C(i,j,k,mode) = std::cos(c*k_norm*dt);
                 S_ck(i,j,k,mode) = std::sin(c*k_norm*dt)/(c*k_norm);
-                X1(i,j,k,mode) = (1._rt - C(i,j,k,mode))/(ep0 * c*c * k_norm*k_norm);
-                X2(i,j,k,mode) = (1._rt - S_ck(i,j,k,mode)/dt)/(ep0 * k_norm*k_norm);
-                X3(i,j,k,mode) = (C(i,j,k,mode) - S_ck(i,j,k,mode)/dt)/(ep0 * k_norm*k_norm);
+
+                // Calculate dot product with galilean velocity
+                amrex::Real const kv = kz*vz;
+
+                amrex::Real const nu = kv/(k_norm*c);
+                Complex const theta = amrex::exp( 0.5_rt*I*kv*dt );
+                Complex const theta_star = amrex::exp( -0.5_rt*I*kv*dt );
+                Complex const e_theta = amrex::exp( I*c*k_norm*dt );
+
+                Theta2(i,j,k,mode) = theta*theta;
+
+                if ( (nu != 1.) && (nu != 0) ) {
+
+                    // Note: the coefficients X1, X2, X do not correspond
+                    // exactly to the original Galilean paper, but the
+                    // update equation have been modified accordingly so that
+                    // the expressions/ below (with the update equations)
+                    // are mathematically equivalent to those of the paper.
+                    Complex x1 = 1._rt/(1._rt-nu*nu) *
+                        (theta_star - C(i,j,k,mode)*theta + I*kv*S_ck(i,j,k,mode)*theta);
+                    // x1, above, is identical to the original paper
+                    X1(i,j,k,mode) = theta*x1/(ep0*c*c*k_norm*k_norm);
+                    // The difference betwen X2 and X3 below, and those
+                    // from the original paper is the factor ep0*k_norm*k_norm
+                    X2(i,j,k,mode) = (x1 - theta*(1._rt - C(i,j,k,mode)))
+                                     /(theta_star-theta)/(ep0*k_norm*k_norm);
+                    X3(i,j,k,mode) = (x1 - theta_star*(1._rt - C(i,j,k,mode)))
+                                     /(theta_star-theta)/(ep0*k_norm*k_norm);
+                    X4(i,j,k,mode) = I*kv*X1(i,j,k,mode) - theta*theta*S_ck(i,j,k,mode)/ep0;
+
+                } else if (nu == 0.) {
+
+                    X1(i,j,k,mode) = (1._rt - C(i,j,k,mode))/(ep0 * c*c * k_norm*k_norm);
+                    X2(i,j,k,mode) = (1._rt - S_ck(i,j,k,mode)/dt)/(ep0 * k_norm*k_norm);
+                    X3(i,j,k,mode) = (C(i,j,k,mode) - S_ck(i,j,k,mode)/dt)/(ep0 * k_norm*k_norm);
+                    X4(i,j,k,mode) = -S_ck(i,j,k,mode)/ep0;
+
+                } else if ( nu == 1.) {
+                    X1(i,j,k,mode) = (1._rt - e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*c*c*ep0*k_norm*k_norm);
+                    X2(i,j,k,mode) = (3._rt - 4._rt*e_theta + e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*ep0*k_norm*k_norm*(1._rt - e_theta));
+                    X3(i,j,k,mode) = (3._rt - 2._rt/e_theta - 2._rt*e_theta + e_theta*e_theta - 2._rt*I*c*k_norm*dt) / (4._rt*ep0*(e_theta - 1._rt)*k_norm*k_norm);
+                    X4(i,j,k,mode) = I*(-1._rt + e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*ep0*c*k_norm);
+                }
+
             } else { // Handle k_norm = 0, by using the analytical limit
                 C(i,j,k,mode) = 1._rt;
                 S_ck(i,j,k,mode) = dt;
                 X1(i,j,k,mode) = 0.5_rt * dt*dt / ep0;
                 X2(i,j,k,mode) = c*c * dt*dt / (6._rt*ep0);
                 X3(i,j,k,mode) = - c*c * dt*dt / (3._rt*ep0);
+                X4(i,j,k,mode) = -dt/ep0;
+                Theta2(i,j,k,mode) = 1._rt;
             }
         });
      }
 }
 
 void
-PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
-                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                     const std::unique_ptr<amrex::MultiFab>& rho )
+GalileanPsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
+                                             std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                             const std::unique_ptr<amrex::MultiFab>& rho )
 {
     // Profiling
     /* WARPX_PROFILE( "PsatdAlgorithmRZ::CurrentCorrection" ); */
@@ -220,6 +282,7 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
         int const nr = bx.length(0);
 
         // Local copy of member variables before GPU loop
+        amrex::Real vz = m_v_galilean[2];
         amrex::Real const dt = m_dt;
 
         // Loop over indices within one box
@@ -250,12 +313,17 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
             amrex::Real const kz = modified_kz_arr[j];
             amrex::Real const k_norm2 = kr*kr + kz*kz;
 
-            constexpr Complex I = Complex{0,1};
+            Complex const I = Complex{0._rt,1._rt};
+
 
             // Correct J
             if ( k_norm2 != 0 )
             {
-                Complex const F = - ((rho_new - rho_old)/dt + I*kz*Jz + kr*(Jp - Jm))/k_norm2;
+                Complex const theta2 = amrex::exp(I*kz*vz*dt);
+                Complex const inv_1_T2 = 1._rt/(kz*vz == 0 ?  1._rt : 1._rt - theta2);
+                Complex const j_corr_coef = (kz == 0 ? 1._rt/dt : I*kz*vz*inv_1_T2);
+                Complex const F = - (j_corr_coef*(rho_new - rho_old*theta2) + I*kz*Jz + kr*(Jp - Jm))/k_norm2;
+
 
                 fields(i,j,k,Jp_m) += +0.5*kr*F;
                 fields(i,j,k,Jm_m) += -0.5*kr*F;

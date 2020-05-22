@@ -7,6 +7,7 @@
 #include "SpectralKSpaceRZ.H"
 #include "SpectralSolverRZ.H"
 #include "SpectralAlgorithms/PsatdAlgorithmRZ.H"
+#include "SpectralAlgorithms/GalileanPsatdAlgorithmRZ.H"
 
 /* \brief Initialize the spectral Maxwell solver
  *
@@ -26,6 +27,7 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
                                    amrex::DistributionMapping const & dm,
                                    int const n_rz_azimuthal_modes,
                                    int const norder_z, bool const nodal,
+                                   const amrex::Array<amrex::Real,3>& v_galilean,
                                    amrex::RealVect const dx, amrex::Real const dt,
                                    int const lev,
                                    bool const pml )
@@ -41,8 +43,15 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
     //   PML is not supported.
-    algorithm = std::unique_ptr<PsatdAlgorithmRZ>(
-        new PsatdAlgorithmRZ(k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, dt));
+    if (v_galilean[2] == 0) {
+         // v_galilean is 0: use standard PSATD algorithm
+        algorithm = std::unique_ptr<PsatdAlgorithmRZ>(
+            new PsatdAlgorithmRZ(k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, dt));
+    } else {
+        // Otherwise: use the Galilean algorithm
+        algorithm = std::unique_ptr<GalileanPsatdAlgorithmRZ>(
+            new GalileanPsatdAlgorithmRZ(k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, v_galilean, dt));
+    }
 
     // - Initialize arrays for fields in spectral space + FFT plans
     field_data = SpectralFieldDataRZ(realspace_ba, k_space, dm,
