@@ -286,6 +286,8 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
     const amrex::IntVect stag_jy = current[1]->ixType().toIntVect();
     const amrex::IntVect stag_jz = current[2]->ixType().toIntVect();
 
+    const amrex::RealVect dx = m_dx;
+
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
 
@@ -348,7 +350,7 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             // Compute Jx
             if ( kx_mod != 0 ) {
                 // Jx cell-centered along x
-                if      ( stag_jx[0] == 0 ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod*exp(I*kx*m_dx[0]*0.5_rt);
+                if      ( stag_jx[0] == 0 ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod*exp(I*kx*dx[0]*0.5_rt);
                 // Jx nodal along x
                 else if ( stag_jx[0] == 1 ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod;
             }
@@ -356,7 +358,7 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             // Compute Jx (can enter this loop only in 3D, because ky_mod=0 in 2D)
             if ( ky_mod != 0 ) {
                 // Jy cell-centered along y
-                if      ( stag_jy[1] == 0 ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod*exp(I*ky*m_dx[1]*0.5_rt);
+                if      ( stag_jy[1] == 0 ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod*exp(I*ky*dx[1]*0.5_rt);
                 // Jy nodal along y
                 else if ( stag_jy[1] == 1 ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod;
             }
@@ -364,7 +366,7 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             // Compute Jz
             if ( kz_mod != 0 ) {
                 // Jz cell-centered along z
-                if       ( stag_jz[zdir] == 0 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod*exp(I*kz*m_dx[zdir]*0.5_rt);
+                if       ( stag_jz[zdir] == 0 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod*exp(I*kz*dx[zdir]*0.5_rt);
                 // Jz nodal along z
                 else  if ( stag_jz[zdir] == 1 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod;
             }
