@@ -80,15 +80,29 @@ class SpectralBaseAlgorithm
                               const amrex::DistributionMapping& dm,
                               const int norder_x, const int norder_y,
                               const int norder_z, const bool nodal)
-          // Compute and assign the modified k vectors
-          : modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,nodal)),
+          : dx( spectral_kspace.dx ),
+            // Compute and assign k vectors and modified k vectors
+            kx_vec( spectral_kspace.k_vec[0] ),
+            modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,nodal)),
 #if (AMREX_SPACEDIM==3)
+            ky_vec( spectral_kspace.k_vec[1] ),
+            kz_vec( spectral_kspace.k_vec[2] ),
             modified_ky_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_y,nodal)),
             modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,2,norder_z,nodal))
 #else
+            kz_vec( spectral_kspace.k_vec[1] ),
             modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_z,nodal))
 #endif
           {};
+
+        amrex::RealVect dx;
+
+        // Spectral k vectors
+        KVectorComponent kx_vec;
+#if (AMREX_SPACEDIM==3)
+        KVectorComponent ky_vec;
+#endif
+        KVectorComponent kz_vec;
 
         // Modified finite-order vectors
         KVectorComponent modified_kx_vec;
