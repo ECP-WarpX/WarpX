@@ -281,35 +281,39 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
     field_data.ForwardTransform( *current[1], Idx::Jy, 0 );
     field_data.ForwardTransform( *current[2], Idx::Jz, 0 );
 
-    const IntVect stag_jx = current[0]->ixType().toIntVect();
-    const IntVect stag_jy = current[1]->ixType().toIntVect();
-    const IntVect stag_jz = current[2]->ixType().toIntVect();
+    // Index type of D and J (either nodal or cell-centered)
+    const amrex::IntVect stag_jx = current[0]->ixType().toIntVect();
+    const amrex::IntVect stag_jy = current[1]->ixType().toIntVect();
+    const amrex::IntVect stag_jz = current[2]->ixType().toIntVect();
 
     // Loop over boxes
-    for (MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
+    for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
 
-        const Box& bx = field_data.fields[mfi].box();
+        const amrex::Box& bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        Array4<Complex> fields = field_data.fields[mfi].array();
+        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the k vectors
-        const Real* const kx_arr = kx_vec[mfi].dataPtr();
+        const amrex::Real* const kx_arr = kx_vec[mfi].dataPtr();
 #if (AMREX_SPACEDIM==3)
-        const Real* const ky_arr = ky_vec[mfi].dataPtr();
+        const amrex::Real* const ky_arr = ky_vec[mfi].dataPtr();
 #endif
-        const Real* const kz_arr = kz_vec[mfi].dataPtr();
+        const amrex::Real* const kz_arr = kz_vec[mfi].dataPtr();
 
         // Extract pointers for the modified k vectors
-        const Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
 #if (AMREX_SPACEDIM==3)
-        const Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
 #endif
-        const Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
+
+        // Index of z direction
+        constexpr int zdir = AMREX_SPACEDIM - 1;
 
         // Loop over indices within one box
-        ParallelFor(bx,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        ParallelFor( bx,
+        [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
         {
             // Record old values of the fields to be updated
             using Idx = SpectralFieldIndex;
@@ -320,53 +324,49 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             const Complex Dz = fields(i,j,k,Idx::Jz);
 
             // k vector values
-            const Real kx = kx_arr[i];
+            const amrex::Real kx = kx_arr[i];
 #if (AMREX_SPACEDIM==3)
-            const Real ky = ky_arr[j];
-            const Real kz = kz_arr[k];
+            const amrex::Real ky = ky_arr[j];
+            const amrex::Real kz = kz_arr[k];
 #else
-            constexpr Real ky = 0;
-            const Real kz = kz_arr[j];
+            constexpr amrex::Real ky = 0;
+            const     amrex::Real kz = kz_arr[j];
 #endif
             // Imaginary unit
             constexpr Complex I = Complex{0,1};
 
             // Modified k vector values
-            const Real kx_mod = modified_kx_arr[i];
+            const amrex::Real kx_mod = modified_kx_arr[i];
 #if (AMREX_SPACEDIM==3)
-            const Real ky_mod = modified_ky_arr[j];
-            const Real kz_mod = modified_kz_arr[k];
+            const amrex::Real ky_mod = modified_ky_arr[j];
+            const amrex::Real kz_mod = modified_kz_arr[k];
 #else
-            constexpr Real ky_mod = 0;
-            const Real kz_mod = modified_kz_arr[j];
+            constexpr amrex::Real ky_mod = 0;
+            const     amrex::Real kz_mod = modified_kz_arr[j];
 #endif
 
             // Compute Jx
             if ( kx_mod != 0 ) {
                 // Jx cell-centered along x
-                if ( stag_jx[0] == 0 ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod*exp(I*kx*dx[0]*0.5_rt);
+                if      ( stag_jx[0] == 0 ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod*exp(I*kx*m_dx[0]*0.5_rt);
                 // Jx nodal along x
-                else                   fields(i,j,k,Idx::Jx) = I*Dx/kx_mod;
+                else if ( stag_jx[0] == 1 ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod;
             }
 
             // Compute Jx (can enter this loop only in 3D, because ky_mod=0 in 2D)
             if ( ky_mod != 0 ) {
                 // Jy cell-centered along y
-                if ( stag_jy[1] == 0 ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod*exp(I*ky*dx[1]*0.5_rt);
+                if      ( stag_jy[1] == 0 ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod*exp(I*ky*m_dx[1]*0.5_rt);
                 // Jy nodal along y
-                else                   fields(i,j,k,Idx::Jy) = I*Dy/ky_mod;
+                else if ( stag_jy[1] == 1 ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod;
             }
 
             // Compute Jz
             if ( kz_mod != 0 ) {
                 // Jz cell-centered along z
-#if   (AMREX_SPACEDIM==2)
-                if ( stag_jz[1] == 0 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod*exp(I*kz*dx[1]*0.5_rt);
-#elif (AMREX_SPACEDIM==3)
-                if ( stag_jz[2] == 0 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod*exp(I*kz*dx[2]*0.5_rt);
-#endif
+                if       ( stag_jz[zdir] == 0 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod*exp(I*kz*m_dx[zdir]*0.5_rt);
                 // Jz nodal along z
-                else                   fields(i,j,k,Idx::Jz) = I*Dz/kz_mod;
+                else  if ( stag_jz[zdir] == 1 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod;
             }
         });
     }

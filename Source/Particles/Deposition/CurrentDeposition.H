@@ -618,7 +618,7 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
     constexpr int CELL = amrex::IndexType::CELL;
 
     // Index of z direction
-    constexpr int zdir = (AMREX_SPACEDIM - 1);
+    constexpr int zdir = AMREX_SPACEDIM - 1;
 
     // Loop over particles and deposit (Dx,Dy,Dz) into jx_fab, jy_fab and jz_fab
     amrex::ParallelFor(
@@ -633,7 +633,7 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
             amrex::Real wq = q*wp[ip];
             if (do_ionization) wq *= ion_lev[ip];
 
-            // Particle positions (in physical units and after particle push)
+            // Current particle positions (in physical units)
             amrex::ParticleReal xp, yp, zp;
             GetPosition(ip, xp, yp, zp);
 
