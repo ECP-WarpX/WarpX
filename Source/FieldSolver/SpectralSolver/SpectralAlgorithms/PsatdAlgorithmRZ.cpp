@@ -263,5 +263,4 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
             }
         });
     }
-
 }
