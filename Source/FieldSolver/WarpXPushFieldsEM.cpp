@@ -19,7 +19,7 @@
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 
-#include <cmath>
+#include <AMReX_Math.H>
 #include <limits>
 
 
@@ -531,7 +531,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // Apply the inverse volume scaling
             // Since Jr is never node centered in r, no need for distinction
             // between on axis and off-axis factors
-            const amrex::Real r = std::abs(rminr + (i - irmin)*dr);
+            const amrex::Real r = amrex::Math::abs(rminr + (i - irmin)*dr);
             Jr_arr(i,j,0,0) /= (2.*MathConst::pi*r);
 
             for (int imode=1 ; imode < nmodes ; imode++) {
@@ -562,7 +562,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
 
             // Apply the inverse volume scaling
             // Jt is forced to zero on axis.
-            const amrex::Real r = std::abs(rmint + (i - irmin)*dr);
+            const amrex::Real r = amrex::Math::abs(rmint + (i - irmin)*dr);
             if (r == 0.) {
                 Jt_arr(i,j,0,0) = 0.;
             } else {
@@ -600,7 +600,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             }
 
             // Apply the inverse volume scaling
-            const amrex::Real r = std::abs(rminz + (i - irmin)*dr);
+            const amrex::Real r = amrex::Math::abs(rminz + (i - irmin)*dr);
             if (r == 0.) {
                 // Verboncoeur JCP 164, 421-427 (2001) : corrected volume on axis
                 Jz_arr(i,j,0,0) /= (MathConst::pi*dr/3.);
@@ -685,7 +685,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
             }
 
             // Apply the inverse volume scaling
-            const amrex::Real r = std::abs(rminr + (i - irmin)*dr);
+            const amrex::Real r = amrex::Math::abs(rminr + (i - irmin)*dr);
             if (r == 0.) {
                 // Verboncoeur JCP 164, 421-427 (2001) : corrected volume on axis
                 Rho_arr(i,j,0,icomp) /= (MathConst::pi*dr/3.);

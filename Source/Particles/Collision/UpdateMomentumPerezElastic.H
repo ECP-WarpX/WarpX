@@ -9,6 +9,7 @@
 
 #include "Utils/WarpXConst.H"
 #include <AMReX_Random.H>
+#include <AMReX_Math.H>
 
 #include <cmath>  // isnan() isinf()
 #include <limits> // numeric_limits<float>::min()
@@ -35,9 +36,9 @@ void UpdateMomentumPerezElastic (
 {
 
     // If g = u1 - u2 = 0, do not collide.
-    if ( std::abs(u1x-u2x) < std::numeric_limits<T_R>::min() &&
-         std::abs(u1y-u2y) < std::numeric_limits<T_R>::min() &&
-         std::abs(u1z-u2z) < std::numeric_limits<T_R>::min() )
+    if ( amrex::Math::abs(u1x-u2x) < std::numeric_limits<T_R>::min() &&
+         amrex::Math::abs(u1y-u2y) < std::numeric_limits<T_R>::min() &&
+         amrex::Math::abs(u1z-u2z) < std::numeric_limits<T_R>::min() )
     { return; }
 
     T_R constexpr inv_c2 = T_R(1.0) / ( PhysConst::c * PhysConst::c );
@@ -96,7 +97,7 @@ void UpdateMomentumPerezElastic (
     else
     {
         // Compute b0
-        T_R const b0 = std::abs(q1*q2) * inv_c2 /
+        T_R const b0 = amrex::Math::abs(q1*q2) * inv_c2 /
                (T_R(4.0)*MathConst::pi*PhysConst::ep0) * gc/mass_g *
                ( m1*g1s*m2*g2s/(p1sm*p1sm*inv_c2) + T_R(1.0) );
 
