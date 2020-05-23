@@ -243,8 +243,10 @@ void UpdateMomentumPerezElastic (
         u1x  = p1fx / m1;
         u1y  = p1fy / m1;
         u1z  = p1fz / m1;
+#ifndef AMREX_USE_DPCPP
         AMREX_ASSERT(!std::isnan(u1x+u1y+u1z+u2x+u2y+u2z));
         AMREX_ASSERT(!std::isinf(u1x+u1y+u1z+u2x+u2y+u2z));
+#endif
     }
     r = amrex::Random();
     if ( w1 > r*amrex::max(w1, w2) )
@@ -252,8 +254,10 @@ void UpdateMomentumPerezElastic (
         u2x  = p2fx / m2;
         u2y  = p2fy / m2;
         u2z  = p2fz / m2;
+#ifndef AMREX_USE_DPCPP
         AMREX_ASSERT(!std::isnan(u1x+u1y+u1z+u2x+u2y+u2z));
         AMREX_ASSERT(!std::isinf(u1x+u1y+u1z+u2x+u2y+u2z));
+#endif
     }
 
 }
