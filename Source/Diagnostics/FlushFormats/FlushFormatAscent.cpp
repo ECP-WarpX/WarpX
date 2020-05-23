@@ -1,11 +1,6 @@
 #include "FlushFormatAscent.H"
 #include "WarpX.H"
 
-#ifdef AMREX_USE_ASCENT
-#   include <ascent.hpp>
-#   include <AMReX_Conduit_Blueprint.H>
-#endif
-
 using namespace amrex;
 
 void

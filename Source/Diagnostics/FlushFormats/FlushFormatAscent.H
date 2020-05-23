@@ -4,6 +4,12 @@
 #include "FlushFormat.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 
+
+#ifdef AMREX_USE_ASCENT
+#   include <ascent.hpp>
+#   include <AMReX_Conduit_Blueprint.H>
+#endif
+
 /**
  * \brief This class aims at dumping performing in-situ diagnostics with ASCENT.
  * In particular, function WriteToFile takes fields and particles as input arguments,
