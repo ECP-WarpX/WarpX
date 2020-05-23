@@ -24,12 +24,14 @@ void UpdateMomentumVay(
     const amrex::Real q, const amrex::Real m, const amrex::Real dt )
 {
     // Constants
-    const amrex::Real econst = q*dt/m;
-    const amrex::Real bconst = 0.5*q*dt/m;
+    const amrex::Real econst = q/m*dt;
+    const amrex::Real bconst = 0.5*q/m*dt;
     constexpr amrex::Real invclight = 1./PhysConst::c;
-    constexpr amrex::Real invclightsq = 1./(PhysConst::c*PhysConst::c);
     // Compute initial gamma
-    const amrex::Real inv_gamma = 1./std::sqrt(1. + (ux*ux + uy*uy + uz*uz)*invclightsq);
+    const amrex::Real uxc = ux / PhysConst::c;
+    const amrex::Real uyc = uy / PhysConst::c;
+    const amrex::Real uzc = uz / PhysConst::c;
+    const amrex::Real inv_gamma = 1./std::sqrt(1. + uxc*uxc + uyc*uyc + uzc*uzc);
     // Get tau
     const amrex::Real taux = bconst*Bx;
     const amrex::Real tauy = bconst*By;
@@ -39,7 +41,10 @@ void UpdateMomentumVay(
     const amrex::Real uxpr = ux + econst*Ex + (uy*tauz-uz*tauy)*inv_gamma;
     const amrex::Real uypr = uy + econst*Ey + (uz*taux-ux*tauz)*inv_gamma;
     const amrex::Real uzpr = uz + econst*Ez + (ux*tauy-uy*taux)*inv_gamma;
-    const amrex::Real gprsq = (1. + (uxpr*uxpr + uypr*uypr + uzpr*uzpr)*invclightsq);
+    const amrex::Real uxprc = uxpr / PhysConst::c;
+    const amrex::Real uyprc = uypr / PhysConst::c;
+    const amrex::Real uzprc = uzpr / PhysConst::c;
+    const amrex::Real gprsq = (1. + uxprc*uxprc + uyprc*uyprc + uzprc*uzprc);
     // Get u*
     const amrex::Real ust = (uxpr*taux + uypr*tauy + uzpr*tauz)*invclight;
     // Get new gamma
