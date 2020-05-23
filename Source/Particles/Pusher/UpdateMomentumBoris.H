@@ -19,15 +19,17 @@ void UpdateMomentumBoris(
     const amrex::ParticleReal Bx, const amrex::ParticleReal By, const amrex::ParticleReal Bz,
     const amrex::Real q, const amrex::Real m, const amrex::Real dt )
 {
-    const amrex::Real econst = 0.5*q*dt/m;
+    const amrex::Real econst = 0.5*q/m*dt;
 
     // First half-push for E
     ux += econst*Ex;
     uy += econst*Ey;
     uz += econst*Ez;
     // Compute temporary gamma factor
-    constexpr amrex::Real inv_c2 = 1./(PhysConst::c*PhysConst::c);
-    const amrex::Real inv_gamma = 1./std::sqrt(1. + (ux*ux + uy*uy + uz*uz)*inv_c2);
+    const amrex::Real uxc = ux / PhysConst::c;
+    const amrex::Real uyc = uy / PhysConst::c;
+    const amrex::Real uzc = uz / PhysConst::c;
+    const amrex::Real inv_gamma = 1./std::sqrt(1. + uxc*uxc + uyc*uyc + uzc*uzc);
     // Magnetic rotation
     // - Compute temporary variables
     const amrex::Real tx = econst*inv_gamma*Bx;
