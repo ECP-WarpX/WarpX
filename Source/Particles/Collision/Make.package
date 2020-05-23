@@ -1,3 +1,4 @@
 CEXE_sources += CollisionType.cpp
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Particles/Collision
+INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/Particles/Collision

@@ -14,3 +14,4 @@ include $(WARPX_HOME)/Source/Particles/Collision/Make.package
 include $(WARPX_HOME)/Source/Particles/Filter/Make.package
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Particles
+INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/Particles

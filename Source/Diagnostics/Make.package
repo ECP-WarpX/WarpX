@@ -17,3 +17,4 @@ include $(WARPX_HOME)/Source/Diagnostics/ParticleDiag/Make.package
 include $(WARPX_HOME)/Source/Diagnostics/FlushFormats/Make.package
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Diagnostics
+INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/Diagnostics

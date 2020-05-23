@@ -5,3 +5,4 @@ CEXE_sources += EvolveF.cpp
 CEXE_sources += ComputeDivE.cpp
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver/FiniteDifferenceSolver
+INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/FieldSolver/FiniteDifferenceSolver

@@ -5,3 +5,4 @@ ifeq ($(USE_OPENPMD), TRUE)
 endif
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Diagnostics/FlushFormats
+INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/Diagnostics/FlushFormats

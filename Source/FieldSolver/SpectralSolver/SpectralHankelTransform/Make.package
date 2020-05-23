@@ -3,4 +3,5 @@ ifeq ($(USE_RZ),TRUE)
   CEXE_sources += HankelTransform.cpp
 
   VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver/SpectralSolver/SpectralHankelTransform
+  INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/FieldSolver/SpectralSolver/SpectralHankelTransform
 endif

@@ -9,3 +9,4 @@ ifeq ($(USE_RZ),TRUE)
 endif
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver/SpectralSolver/SpectralAlgorithms
+INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/FieldSolver/SpectralSolver/SpectralAlgorithms

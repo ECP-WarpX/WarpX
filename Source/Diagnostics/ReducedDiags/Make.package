@@ -7,3 +7,4 @@ CEXE_sources += LoadBalanceCosts.cpp
 CEXE_sources += ParticleHistogram.cpp
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Diagnostics/ReducedDiags
+INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/Diagnostics/ReducedDiags

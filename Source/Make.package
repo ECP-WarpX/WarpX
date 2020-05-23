@@ -4,5 +4,5 @@ endif
 
 CEXE_sources += WarpX.cpp
 
-INCLUDE_LOCATIONS += $(WARPX_HOME)/Source
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source
+INCLUDE_LOCATIONS += $(WARPX_HOME)/Source

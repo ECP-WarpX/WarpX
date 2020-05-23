@@ -4,3 +4,4 @@ CEXE_sources += LaserProfileFieldFunction.cpp
 CEXE_sources += LaserProfileFromTXYEFile.cpp
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Laser/LaserProfilesImpl
+INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/Laser/LaserProfilesImpl

@@ -12,3 +12,4 @@ endif
 include $(WARPX_HOME)/Source/FieldSolver/SpectralSolver/SpectralAlgorithms/Make.package
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver/SpectralSolver
+INCLUDE_LOCATIONS += $(WARPX_HOME)/Source/FieldSolver/SpectralSolver
