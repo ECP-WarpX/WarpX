@@ -370,12 +370,76 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
                 // Jz nodal along z
                 else  if ( stag_jz[zdir] == 1 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod;
             }
-        });
+        } );
     }
+
+    // Alias MultiFab for (Dx,Dy,Dz) before overwriting
+    MultiFab Dx_mf( *current[0], amrex::make_alias, 0, 3 );
+    MultiFab Dy_mf( *current[1], amrex::make_alias, 0, 3 );
+    MultiFab Dz_mf( *current[2], amrex::make_alias, 0, 3 );
 
     // Backward Fourier transform of J
     field_data.BackwardTransform( *current[0], Idx::Jx, 0 );
     field_data.BackwardTransform( *current[1], Idx::Jy, 0 );
     field_data.BackwardTransform( *current[2], Idx::Jz, 0 );
+
+    // Adjust average value
+
+    // Loop over boxes (use Dx for MultiFab iterator)
+    for (amrex::MFIter mfi(Dx_mf); mfi.isValid(); ++mfi) {
+
+        const amrex::Box& bx = Dx_mf[mfi].box();
+
+        // Original current D deposited in CurrentDeposition.H
+        amrex::Array4<amrex::Real> Dx_arr = Dx_mf[mfi].array();
+        amrex::Array4<amrex::Real> Dy_arr = Dy_mf[mfi].array();
+        amrex::Array4<amrex::Real> Dz_arr = Dz_mf[mfi].array();
+
+        const amrex::Dim3 lo_jx = lbound( Dx_arr );
+        const amrex::Dim3 hi_jx = ubound( Dx_arr );
+        const amrex::Dim3 lo_jy = lbound( Dy_arr );
+        const amrex::Dim3 hi_jy = ubound( Dy_arr );
+        const amrex::Dim3 lo_jz = lbound( Dz_arr );
+        const amrex::Dim3 hi_jz = ubound( Dz_arr );
+
+        const int nx = hi_jx.x-lo_jx.x+1;
+        const int ny = hi_jy.y-lo_jy.y+1;
+        const int nz = hi_jz.z-lo_jz.z+1;
+
+        // 2D array to store directional average of cumulative sum
+        amrex::Array4<amrex::Real> avg_jx = Dx_mf[mfi].array();
+        amrex::Array4<amrex::Real> avg_jy = Dy_mf[mfi].array();
+        amrex::Array4<amrex::Real> avg_jz = Dz_mf[mfi].array();
+
+        // 3D array to store directional cumulative sum of D
+        amrex::Array4<amrex::Real> Dx_cumsum = Dx_mf[mfi].array();
+        amrex::Array4<amrex::Real> Dy_cumsum = Dy_mf[mfi].array();
+        amrex::Array4<amrex::Real> Dz_cumsum = Dz_mf[mfi].array();
+
+        // Reference to J
+        amrex::Array4<amrex::Real> Jx_arr = (*current[0])[mfi].array();
+        amrex::Array4<amrex::Real> Jy_arr = (*current[1])[mfi].array();
+        amrex::Array4<amrex::Real> Jz_arr = (*current[2])[mfi].array();
+
+        // Loop over indices within one box
+        ParallelFor( bx,
+        [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
+        {
+            // Compute cumulative sums of Dx, Dy, Dz along x, y, z
+            for ( int ii = lo_jx.x; ii <= i; ++ii ) Dx_cumsum(i,j,k) += Dx_arr(ii,j,k);
+            for ( int jj = lo_jy.y; jj <= j; ++jj ) Dy_cumsum(i,j,k) += Dy_arr(i,jj,k);
+            for ( int kk = lo_jz.z; kk <= k; ++kk ) Dz_cumsum(i,j,k) += Dz_arr(i,j,kk);
+
+            // Compute average of cumulative sums along x, y, z
+            avg_jx(j,k,0) += Dx_cumsum(i,j,k)/nx;
+            avg_jy(i,k,0) += Dy_cumsum(i,j,k)/ny;
+            avg_jz(i,j,0) += Dz_cumsum(i,j,k)/nz;
+
+            // Subtract average element-wise to avoid duplication of ParallelFor
+            Jx_arr(i,j,k) -= avg_jx(j,k,0);
+            Jy_arr(i,j,k) -= avg_jy(i,k,0);
+            Jz_arr(i,j,k) -= avg_jz(i,j,0);
+        } );
+    }
 }
 #endif // WARPX_USE_PSATD
