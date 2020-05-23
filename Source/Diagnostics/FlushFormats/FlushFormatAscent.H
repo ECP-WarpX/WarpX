@@ -25,8 +25,11 @@ public:
 
     /** \brief Do in-situ visualization for particle data.
      * \param[in] particle_diags Each element of this vector handles output of 1 species.
+     * Only compile if AMREX_USE_ASCENT because we need to pass a conduit class
      */
-    void WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags) const;
+#ifdef AMREX_USE_ASCENT
+    void WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags, conduit::Node& a_bp_mesh) const;
+#endif
 
     ~FlushFormatAscent() {};
 };
