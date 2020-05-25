@@ -316,9 +316,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Bxfield_parser.get(),
                                                  Byfield_parser.get(),
                                                  Bzfield_parser.get(),
-                                                 Bfield_fp[lev][0]->ixType().toIntVect(),
-                                                 Bfield_fp[lev][1]->ixType().toIntVect(),
-                                                 Bfield_fp[lev][2]->ixType().toIntVect(),
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Bfield_aux[lev][0].get(),
@@ -327,9 +324,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Bxfield_parser.get(),
                                                     Byfield_parser.get(),
                                                     Bzfield_parser.get(),
-                                                    Bfield_aux[lev][0]->ixType().toIntVect(),
-                                                    Bfield_aux[lev][1]->ixType().toIntVect(),
-                                                    Bfield_aux[lev][2]->ixType().toIntVect(),
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Bfield_cp[lev][0].get(),
@@ -338,9 +332,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Bxfield_parser.get(),
                                                     Byfield_parser.get(),
                                                     Bzfield_parser.get(),
-                                                    Bfield_cp[lev][0]->ixType().toIntVect(),
-                                                    Bfield_cp[lev][1]->ixType().toIntVect(),
-                                                    Bfield_cp[lev][2]->ixType().toIntVect(),
                                                     lev);
        }
     }
@@ -374,9 +365,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Exfield_parser.get(),
                                                  Eyfield_parser.get(),
                                                  Ezfield_parser.get(),
-                                                 Efield_fp[lev][0]->ixType().toIntVect(),
-                                                 Efield_fp[lev][1]->ixType().toIntVect(),
-                                                 Efield_fp[lev][2]->ixType().toIntVect(),
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
@@ -385,9 +373,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Exfield_parser.get(),
                                                     Eyfield_parser.get(),
                                                     Ezfield_parser.get(),
-                                                    Efield_aux[lev][0]->ixType().toIntVect(),
-                                                    Efield_aux[lev][1]->ixType().toIntVect(),
-                                                    Efield_aux[lev][2]->ixType().toIntVect(),
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
@@ -396,9 +381,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Exfield_parser.get(),
                                                     Eyfield_parser.get(),
                                                     Ezfield_parser.get(),
-                                                    Efield_cp[lev][0]->ixType().toIntVect(),
-                                                    Efield_cp[lev][1]->ixType().toIntVect(),
-                                                    Efield_cp[lev][2]->ixType().toIntVect(),
                                                     lev);
        }
     }
@@ -430,13 +412,14 @@ void
 WarpX::InitializeExternalFieldsOnGridUsingParser (
        MultiFab *mfx, MultiFab *mfy, MultiFab *mfz,
        ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
-       ParserWrapper<3> *zfield_parser, IntVect x_nodal_flag,
-       IntVect y_nodal_flag, IntVect z_nodal_flag,
-       const int lev)
+       ParserWrapper<3> *zfield_parser, const int lev)
 {
 
     const auto dx_lev = geom[lev].CellSizeArray();
     const RealBox& real_box = geom[lev].ProbDomain();
+    IntVect x_nodal_flag = mfx->ixType().toIntVect();
+    IntVect y_nodal_flag = mfy->ixType().toIntVect();
+    IntVect z_nodal_flag = mfz->ixType().toIntVect();
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
        const Box& tbx = mfi.growntilebox(x_nodal_flag);
