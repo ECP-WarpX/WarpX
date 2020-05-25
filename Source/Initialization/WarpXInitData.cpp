@@ -417,9 +417,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
 
     const auto dx_lev = geom[lev].CellSizeArray();
     const RealBox& real_box = geom[lev].ProbDomain();
-    IntVect x_nodal_flag = mfx->ixType().toIntVect();
-    IntVect y_nodal_flag = mfy->ixType().toIntVect();
-    IntVect z_nodal_flag = mfz->ixType().toIntVect();
+    amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
+    amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
+    amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
        const Box& tbx = mfi.growntilebox(x_nodal_flag);
