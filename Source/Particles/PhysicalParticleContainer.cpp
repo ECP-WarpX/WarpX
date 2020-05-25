@@ -18,16 +18,10 @@
 #include "Utils/IonizationEnergiesTable.H"
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Pusher/CopyParticleAttribs.H"
+#include "Particles/Pusher/PushSelector.H"
 #include "Particles/Gather/GetExternalFields.H"
-
 #include "Utils/WarpXAlgorithmSelection.H"
-
-// Import low-level single-particle kernels
-#include "Particles/Pusher/UpdatePosition.H"
-#include "Particles/Pusher/UpdateMomentumBoris.H"
-#include "Particles/Pusher/UpdateMomentumVay.H"
-#include "Particles/Pusher/UpdateMomentumBorisWithRadiationReaction.H"
-#include "Particles/Pusher/UpdateMomentumHigueraCary.H"
 
 #include <AMReX_Print.H>
 
@@ -1490,10 +1484,10 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
     const ParticleReal* const AMREX_RESTRICT By = attribs[PIdx::By].dataPtr();
     const ParticleReal* const AMREX_RESTRICT Bz = attribs[PIdx::Bz].dataPtr();
 
-    if (WarpX::do_back_transformed_diagnostics && do_back_transformed_diagnostics && (a_dt_type!=DtType::SecondHalf))
-    {
-        copy_attribs(pti);
-    }
+    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data);
+    int do_copy = (WarpX::do_back_transformed_diagnostics &&
+                          do_back_transformed_diagnostics &&
+                   (a_dt_type!=DtType::SecondHalf));
 
     int* AMREX_RESTRICT ion_lev = nullptr;
     if (do_field_ionization){
@@ -1504,111 +1498,28 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti, Real dt, DtType a_dt_type)
     const Real q = this->charge;
     const Real m = this-> mass;
 
+    const auto pusher_algo = WarpX::particle_pusher_algo;
+    const auto do_crr = do_classical_radiation_reaction;
 #ifdef WARPX_QED
-    if(do_classical_radiation_reaction){
-        if(m_do_qed_quantum_sync){
-            const auto t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
-            amrex::ParallelFor(
-                pti.numParticles(),
-                [=] AMREX_GPU_DEVICE (long i) {
-                    auto chi = QedUtils::chi_lepton(m*ux[i], m*uy[i], m*uz[i],
-                         Ex[i], Ey[i], Ez[i],
-                         Bx[i], By[i], Bz[i]);
-                    if(chi < t_chi_max){
-                        UpdateMomentumBorisWithRadiationReaction( ux[i], uy[i], uz[i],
-                                           Ex[i], Ey[i], Ez[i], Bx[i],
-                                           By[i], Bz[i], q, m, dt);
-                    }
-                    else{
-                        UpdateMomentumBoris( ux[i], uy[i], uz[i],
-                                           Ex[i], Ey[i], Ez[i], Bx[i],
-                                           By[i], Bz[i], q, m, dt);
-                    }
-                    ParticleReal x, y, z;
-                    GetPosition(i, x, y, z);
-                    UpdatePosition(x, y, z, ux[i], uy[i], uz[i], dt );
-                    SetPosition(i, x, y, z);
-                }
-            );
-        }else{
-            amrex::ParallelFor(
-                pti.numParticles(),
-                [=] AMREX_GPU_DEVICE (long i) {
-                    UpdateMomentumBorisWithRadiationReaction( ux[i], uy[i], uz[i],
-                                       Ex[i], Ey[i], Ez[i], Bx[i],
-                                       By[i], Bz[i], q, m, dt);
-                    ParticleReal x, y, z;
-                    GetPosition(i, x, y, z);
-                    UpdatePosition(x, y, z, ux[i], uy[i], uz[i], dt );
-                    SetPosition(i, x, y, z);
-                }
-            );
-        }
-#else
-    if(do_classical_radiation_reaction){
-        amrex::ParallelFor(
-            pti.numParticles(),
-            [=] AMREX_GPU_DEVICE (long i) {
-                Real qp = q;
-                if (ion_lev){ qp *= ion_lev[i]; }
-                UpdateMomentumBorisWithRadiationReaction( ux[i], uy[i], uz[i],
-                                   Ex[i], Ey[i], Ez[i], Bx[i],
-                                   By[i], Bz[i], qp, m, dt);
-                ParticleReal x, y, z;
-                GetPosition(i, x, y, z);
-                UpdatePosition(x, y, z, ux[i], uy[i], uz[i], dt );
-                SetPosition(i, x, y, z);
-            }
-        );
+    const auto do_sync = m_do_qed_quantum_sync;
+    amrex::Real t_chi_max = 0.0;
+    if (do_sync) t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
 #endif
-    } else if (WarpX::particle_pusher_algo == ParticlePusherAlgo::Boris){
-        amrex::ParallelFor(
-            pti.numParticles(),
-            [=] AMREX_GPU_DEVICE (long i) {
-                Real qp = q;
-                if (ion_lev){ qp *= ion_lev[i]; }
-                UpdateMomentumBoris( ux[i], uy[i], uz[i],
-                                     Ex[i], Ey[i], Ez[i], Bx[i],
-                                     By[i], Bz[i], qp, m, dt);
-                ParticleReal x, y, z;
-                GetPosition(i, x, y, z);
-                UpdatePosition(x, y, z, ux[i], uy[i], uz[i], dt );
-                SetPosition(i, x, y, z);
-            }
-        );
-    } else if (WarpX::particle_pusher_algo == ParticlePusherAlgo::Vay) {
-        amrex::ParallelFor(
-            pti.numParticles(),
-            [=] AMREX_GPU_DEVICE (long i) {
-                Real qp = q;
-                if (ion_lev){ qp *= ion_lev[i]; }
-                UpdateMomentumVay( ux[i], uy[i], uz[i],
-                                   Ex[i], Ey[i], Ez[i], Bx[i],
-                                   By[i], Bz[i], qp, m, dt);
-                ParticleReal x, y, z;
-                GetPosition(i, x, y, z);
-                UpdatePosition(x, y, z, ux[i], uy[i], uz[i], dt );
-                SetPosition(i, x, y, z);
-            }
-        );
-    } else if (WarpX::particle_pusher_algo == ParticlePusherAlgo::HigueraCary) {
-        amrex::ParallelFor(
-            pti.numParticles(),
-            [=] AMREX_GPU_DEVICE (long i) {
-                Real qp = q;
-                if (ion_lev){ qp *= ion_lev[i]; }
-                UpdateMomentumHigueraCary( ux[i], uy[i], uz[i],
-                                   Ex[i], Ey[i], Ez[i], Bx[i],
-                                   By[i], Bz[i], qp, m, dt);
-                ParticleReal x, y, z;
-                GetPosition(i, x, y, z);
-                UpdatePosition(x, y, z, ux[i], uy[i], uz[i], dt );
-                SetPosition(i, x, y, z);
-            }
-        );
-    } else {
-      amrex::Abort("Unknown particle pusher");
-    };
+
+    amrex::ParallelFor(pti.numParticles(),
+                       [=] AMREX_GPU_DEVICE (long i) {
+                           doParticlePush(GetPosition, SetPosition, copyAttribs, i,
+                                          ux[i], uy[i], uz[i],
+                                          Ex[i], Ey[i], Ez[i],
+                                          Bx[i], By[i], Bz[i],
+                                          ion_lev ? ion_lev[i] : 0,
+                                          m, q, pusher_algo, do_crr, do_copy,
+#ifdef WARPX_QED
+                                          do_sync,
+                                          t_chi_max,
+#endif
+                                          dt);
+                       });
 }
 
 #ifdef WARPX_QED
@@ -1768,41 +1679,6 @@ PhysicalParticleContainer::PushP (
 
         }
     }
-}
-
-void
-PhysicalParticleContainer::copy_attribs (WarpXParIter& pti)
-{
-    auto& attribs = pti.GetAttribs();
-    ParticleReal* AMREX_RESTRICT uxp = attribs[PIdx::ux].dataPtr();
-    ParticleReal* AMREX_RESTRICT uyp = attribs[PIdx::uy].dataPtr();
-    ParticleReal* AMREX_RESTRICT uzp = attribs[PIdx::uz].dataPtr();
-
-    const auto np = pti.numParticles();
-    const auto lev = pti.GetLevel();
-    const auto index = pti.GetPairIndex();
-    ParticleReal* AMREX_RESTRICT xpold  = tmp_particle_data[lev][index][TmpIdx::xold ].dataPtr();
-    ParticleReal* AMREX_RESTRICT ypold  = tmp_particle_data[lev][index][TmpIdx::yold ].dataPtr();
-    ParticleReal* AMREX_RESTRICT zpold  = tmp_particle_data[lev][index][TmpIdx::zold ].dataPtr();
-    ParticleReal* AMREX_RESTRICT uxpold = tmp_particle_data[lev][index][TmpIdx::uxold].dataPtr();
-    ParticleReal* AMREX_RESTRICT uypold = tmp_particle_data[lev][index][TmpIdx::uyold].dataPtr();
-    ParticleReal* AMREX_RESTRICT uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr();
-
-    const auto GetPosition = GetParticlePosition(pti);
-
-    ParallelFor( np,
-                 [=] AMREX_GPU_DEVICE (long i) {
-                     ParticleReal x, y, z;
-                     GetPosition(i, x, y, z);
-                     xpold[i]=x;
-                     ypold[i]=y;
-                     zpold[i]=z;
-
-                     uxpold[i]=uxp[i];
-                     uypold[i]=uyp[i];
-                     uzpold[i]=uzp[i];
-                 }
-        );
 }
 
 void
