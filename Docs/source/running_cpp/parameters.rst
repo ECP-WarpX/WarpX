@@ -1150,7 +1150,9 @@ This should be changed in the future.
     * ``checkpoint`` for a checkpoint file, only wirks with ``<diag_name>.diag_type = Full``.
 
     * ``openpmd`` for OpenPMD format `openPMD <https://www.openPMD.org>`_.
-      ``openpmd`` requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
+      Requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
+
+    * ``ascent`` for in-situ visualization using Ascent.
 
     example: ``diag1.format = openpmd``.
 
