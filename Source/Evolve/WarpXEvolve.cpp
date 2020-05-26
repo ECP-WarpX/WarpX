@@ -202,8 +202,7 @@ WarpX::Evolve (int numsteps)
             }
         }
 
-        bool to_sort = (sort_int > 0) && ((step+1) % sort_int == 0);
-        if (to_sort) {
+        if (sort_intervals.contains(step+1)) {
             amrex::Print() << "re-sorting particles \n";
             mypc->SortParticlesByBin(sort_bin_size);
         }

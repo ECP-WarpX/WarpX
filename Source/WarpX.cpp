@@ -86,11 +86,7 @@ bool WarpX::refine_plasma     = false;
 
 int WarpX::num_mirrors = 0;
 
-#ifdef AMREX_USE_GPU
-int  WarpX::sort_int = 4;
-#else
-int  WarpX::sort_int = -1;
-#endif
+IntervalsParser WarpX::sort_intervals;
 amrex::IntVect WarpX::sort_bin_size(AMREX_D_DECL(4,4,4));
 
 bool WarpX::do_back_transformed_diagnostics = false;
@@ -278,17 +274,6 @@ WarpX::WarpX ()
     // Sanity checks. Must be done after calling the MultiParticleContainer
     // constructor, as it reads additional parameters
     // (e.g., use_fdtd_nci_corr)
-
-#ifndef WARPX_USE_PSATD
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        not ( do_pml && do_nodal ),
-        "PML + do_nodal for finite-difference not implemented"
-        );
-#endif
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        not ( do_dive_cleaning && do_nodal ),
-        "divE cleaning + do_nodal not implemented"
-        );
 #ifdef WARPX_USE_PSATD
     AMREX_ALWAYS_ASSERT(use_fdtd_nci_corr == 0);
     AMREX_ALWAYS_ASSERT(do_subcycling == 0);
@@ -464,7 +449,13 @@ WarpX::ReadParameters ()
         pp.query("do_dive_cleaning", do_dive_cleaning);
         pp.query("n_field_gather_buffer", n_field_gather_buffer);
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
-        pp.query("sort_int", sort_int);
+#ifdef AMREX_USE_GPU
+        std::string sort_int_string = "4";
+#else
+        std::string sort_int_string = "-1";
+#endif
+        pp.query("sort_int", sort_int_string);
+        sort_intervals = IntervalsParser(sort_int_string);
 
         Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
         bool sort_bin_size_is_specified = pp.queryarr("sort_bin_size", vect_sort_bin_size);

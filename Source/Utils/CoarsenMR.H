@@ -2,6 +2,7 @@
 #define WARPX_COARSEN_MR_H_
 
 #include "WarpX.H"
+#include <AMReX_Math.H>
 
 namespace CoarsenMR{
 
@@ -97,11 +98,11 @@ namespace CoarsenMR{
                     jj = jmin+jref;
                     kk = kmin+kref;
                     wx = (1.0_rt/static_cast<Real>(numx))*(1-sfx)*(1-scx) // if cell-centered
-                         +((abs(crx-abs(ii-i*crx)))/static_cast<Real>(crx*crx))*sfx*scx; // if nodal
+                         +((amrex::Math::abs(crx-amrex::Math::abs(ii-i*crx)))/static_cast<Real>(crx*crx))*sfx*scx; // if nodal
                     wy = (1.0_rt/static_cast<Real>(numy))*(1-sfy)*(1-scy) // if cell-centered
-                         +((abs(cry-abs(jj-j*cry)))/static_cast<Real>(cry*cry))*sfy*scy; // if nodal
+                         +((amrex::Math::abs(cry-amrex::Math::abs(jj-j*cry)))/static_cast<Real>(cry*cry))*sfy*scy; // if nodal
                     wz = (1.0_rt/static_cast<Real>(numz))*(1-sfz)*(1-scz) // if cell-centered
-                         +((abs(crz-abs(kk-k*crz)))/static_cast<Real>(crz*crz))*sfz*scz; // if nodal
+                         +((amrex::Math::abs(crz-amrex::Math::abs(kk-k*crz)))/static_cast<Real>(crz*crz))*sfz*scz; // if nodal
                     c += wx*wy*wz*arr_src_safe(ii,jj,kk,comp);
                 }
             }

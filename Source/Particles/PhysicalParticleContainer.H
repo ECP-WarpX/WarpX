@@ -171,8 +171,6 @@ public:
                         RealVector& uzp,
                         RealVector& wp );
 
-    void copy_attribs (WarpXParIter& pti);
-
     virtual void PostRestart () final {}
 
     void SplitParticles (int lev);
