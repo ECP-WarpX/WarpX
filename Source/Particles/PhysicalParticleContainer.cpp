@@ -2086,7 +2086,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         Bx[ip] = Bxp;
         By[ip] = Byp;
         Bz[ip] = Bzp;
-        
+
         doParticlePush(getPosition, setPosition, copyAttribs, ip,
                        ux[ip], uy[ip], uz[ip],
                        Exp, Eyp, Ezp, Bxp, Byp, Bzp,
