@@ -2076,11 +2076,11 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                        dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                        l_lower_order_in_v, nox);
 
-        doParticlePush(GetPosition, SetPosition, copyAttribs, i,
-                       ux[i], uy[i], uz[i],
-                       Ex[i], Ey[i], Ez[i],
-                       Bx[i], By[i], Bz[i],
-                       ion_lev ? ion_lev[i] : 0,
+        doParticlePush(getPosition, setPosition, copyAttribs, ip,
+                       ux[ip], uy[ip], uz[ip],
+                       Ex[ip], Ey[ip], Ez[ip],
+                       Bx[ip], By[ip], Bz[ip],
+                       ion_lev ? ion_lev[ip] : 0,
                        m, q, pusher_algo, do_crr, do_copy,
 #ifdef WARPX_QED
                        do_sync,
