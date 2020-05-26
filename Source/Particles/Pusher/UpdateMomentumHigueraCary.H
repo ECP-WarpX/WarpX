@@ -25,16 +25,18 @@ void UpdateMomentumHigueraCary(
     const amrex::ParticleReal Bx, const amrex::ParticleReal By, const amrex::ParticleReal Bz,
     const amrex::Real q, const amrex::Real m, const amrex::Real dt )
 {
+    using namespace amrex::literals;
+
     // Constants
-    const amrex::Real qmt = 0.5*q*dt/m;
-    constexpr amrex::Real invclight = 1./PhysConst::c;
-    constexpr amrex::Real invclightsq = 1./(PhysConst::c*PhysConst::c);
+    const amrex::Real qmt = 0.5_rt*q*dt/m;
+    constexpr amrex::Real invclight = 1._rt/PhysConst::c;
+    constexpr amrex::Real invclightsq = 1._rt/(PhysConst::c*PhysConst::c);
     // Compute u_minus
     const amrex::Real umx = ux + qmt*Ex;
     const amrex::Real umy = uy + qmt*Ey;
     const amrex::Real umz = uz + qmt*Ez;
     // Compute gamma squared of u_minus
-    amrex::Real gamma = 1. + (umx*umx + umy*umy + umz*umz)*invclightsq;
+    amrex::Real gamma = 1._rt + (umx*umx + umy*umy + umz*umz)*invclightsq;
     // Compute beta and betam squared
     const amrex::Real betax = qmt*Bx;
     const amrex::Real betay = qmt*By;
@@ -45,13 +47,13 @@ void UpdateMomentumHigueraCary(
     // Get u*
     const amrex::Real ust = (umx*betax + umy*betay + umz*betaz)*invclight;
     // Get new gamma inversed
-    gamma = 1./std::sqrt(0.5*(sigma + std::sqrt(sigma*sigma + 4.*(betam + ust*ust)) ));
+    gamma = 1._rt/std::sqrt(0.5_rt*(sigma + std::sqrt(sigma*sigma + 4._rt*(betam + ust*ust)) ));
     // Compute t
     const amrex::Real tx = gamma*betax;
     const amrex::Real ty = gamma*betay;
     const amrex::Real tz = gamma*betaz;
     // Compute s
-    const amrex::Real s = 1./(1.+(tx*tx + ty*ty + tz*tz));
+    const amrex::Real s = 1._rt/(1._rt+(tx*tx + ty*ty + tz*tz));
     // Compute um dot t
     const amrex::Real umt = umx*tx + umy*ty + umz*tz;
     // Compute u_plus
