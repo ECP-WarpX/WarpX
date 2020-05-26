@@ -25,11 +25,6 @@
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 
-#ifdef AMREX_USE_ASCENT
-#   include <ascent.hpp>
-#   include <AMReX_Conduit_Blueprint.H>
-#endif
-
 
 using namespace amrex;
 
@@ -287,7 +282,7 @@ WarpX::GetCellCenteredData() {
 void
 WarpX::UpdateInSitu () const
 {
-#if defined(BL_USE_SENSEI_INSITU) || defined(AMREX_USE_ASCENT)
+#if defined(BL_USE_SENSEI_INSITU)
     WARPX_PROFILE("WarpX::UpdateInSitu()");
 
     // Average the fields from the simulation to the cell centers
@@ -297,7 +292,7 @@ WarpX::UpdateInSitu () const
     Vector<MultiFab> mf_avg;
     WarpX::AverageAndPackFields( varnames, mf_avg, ngrow );
 
-#ifdef BL_USE_SENSEI_INSITU
+#   ifdef BL_USE_SENSEI_INSITU
     if (insitu_bridge->update(istep[0], t_new[0],
         dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(this)),
         {&mf_avg}, {varnames}))
@@ -308,85 +303,7 @@ WarpX::UpdateInSitu () const
 
         amrex::Abort();
     }
-#endif
-
-#ifdef AMREX_USE_ASCENT
-    // wrap mesh data
-    conduit::Node bp_mesh;
-    MultiLevelToBlueprint(finest_level+1,
-            amrex::GetVecOfConstPtrs(mf_avg),
-            varnames,
-            Geom(),
-            t_new[0],
-            istep,
-            refRatio(),
-            bp_mesh);
-
-    // wrap particle data for each species
-    // we prefix the fields with "particle_{species_name}" b/c we
-    // want to to uniquely name all the fields that can be plotted
-
-    std::vector<std::string> species_names = mypc->GetSpeciesNames();
-
-    for (unsigned i = 0, n = species_names.size(); i < n; ++i)
-    {
-
-        Vector<std::string> particle_varnames;
-        Vector<std::string> particle_int_varnames;
-        std::string prefix = "particle_" + species_names[i];
-
-        // Get pc for species
-        auto& pc = mypc->GetParticleContainer(i);
-
-        // get names of real comps
-        std::map<std::string, int> real_comps_map = pc.getParticleComps();
-        std::map<std::string, int>::const_iterator r_itr = real_comps_map.begin();
-
-        // TODO: Looking at other code paths, I am not sure compile time
-        //  QED field is included in getParticleComps()?
-        while (r_itr != real_comps_map.end())
-        {
-            // get next real particle name
-            std::string varname = r_itr->first;
-            particle_varnames.push_back(prefix + "_" + varname);
-            r_itr++;
-        }
-
-        // get names of int comps
-        std::map<std::string, int> int_comps_map = pc.getParticleiComps();
-        std::map<std::string, int>::const_iterator i_itr = int_comps_map.begin();
-
-        while (i_itr != int_comps_map.end())
-        {
-            // get next real particle name
-            std::string varname = i_itr->first;
-            particle_int_varnames.push_back(prefix + "_" + varname);
-            i_itr++;
-        }
-
-        // wrap pc for current species into a blueprint topology
-        amrex::ParticleContainerToBlueprint(pc,
-                                            particle_varnames,
-                                            particle_int_varnames,
-                                            bp_mesh,
-                                            prefix);
-    }
-
-    // // If you want to save blueprint HDF5 files w/o using an Ascent
-    // // extract, you can call the following AMReX helper:
-    // const auto step = istep[0];
-    // WriteBlueprintFiles(bp_mesh,"bp_export",step,"hdf5");
-
-    ascent::Ascent ascent;
-    conduit::Node opts;
-    opts["exceptions"] = "catch";
-    opts["mpi_comm"] = MPI_Comm_c2f(ParallelDescriptor::Communicator());
-    ascent.open(opts);
-    ascent.publish(bp_mesh);
-    conduit::Node actions;
-    ascent.execute(actions);
-    ascent.close();
-#endif
+#   endif
 
 #endif
 }

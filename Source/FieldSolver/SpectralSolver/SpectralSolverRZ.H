@@ -91,8 +91,8 @@ class SpectralSolverRZ
 
         /**
          * \brief Public interface to call the virtual function \c CurrentCorrection,
-         * defined in the base class SpectralBaseAlgorithm and possibly overridden
-         * by its derived classes (e.g. PsatdAlgorithm, PMLPsatdAlgorithm), from
+         * defined in the base class SpectralBaseAlgorithmRZ and possibly overridden
+         * by its derived classes (e.g. PsatdAlgorithmRZ), from
          * objects of class SpectralSolverRZ through the private unique pointer \c algorithm
          *
          * \param[in,out] current two-dimensional array of unique pointers to MultiFab
