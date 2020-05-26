@@ -22,7 +22,7 @@ void UpdatePosition(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::Parti
                     const amrex::Real dt )
 {
     using namespace amrex::literals;
-    
+
     constexpr amrex::Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
 
     // Compute inverse Lorentz factor
