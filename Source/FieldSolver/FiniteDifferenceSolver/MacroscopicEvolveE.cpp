@@ -37,11 +37,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         // In the templated Yee and CKC calls, the core operations for EvolveE is the same.
         MacroscopicEvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, dt,
                                                               macroscopic_properties );
-
-#endif
     } else {
         amrex::Abort("Unknown algorithm");
     }
+#endif
 
 }
 
