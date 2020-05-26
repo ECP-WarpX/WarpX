@@ -5,6 +5,7 @@
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_Extension.H>
 #include <AMReX_REAL.H>
+#include <cassert>
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,6 +26,10 @@ AMREX_GPU_HOST_DEVICE
 inline amrex_real
 wp_ast_eval (struct wp_node* node, amrex_real const* x)
 {
+#if defined(__SYCL_DEVICE_ONLY__)
+    assert(0); // Recursive funciton is not support in DPC++
+    return 0.;
+#else
     amrex_real result;
 
     switch (node->type)
@@ -181,6 +186,7 @@ wp_ast_eval (struct wp_node* node, amrex_real const* x)
     }
 
     return result;
+#endif
 }
 
 inline

@@ -10,6 +10,7 @@
 
 #include <AMReX_MultiFab.H>
 #include "MacroscopicProperties/MacroscopicProperties.H"
+#include "BoundaryConditions/PML.H"
 
 /**
  * \brief Top-level class for the electromagnetic finite-difference solver
@@ -72,6 +73,20 @@ class FiniteDifferenceSolver
                             amrex::Real const dt,
                             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
+        void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
+                      std::array< amrex::MultiFab*, 3 > const Efield,
+                      amrex::Real const dt );
+
+       void EvolveEPML ( std::array< amrex::MultiFab*, 3 > Efield,
+                      std::array< amrex::MultiFab*, 3 > const Bfield,
+                      std::array< amrex::MultiFab*, 3 > const Jfield,
+                      amrex::MultiFab* const Ffield,
+                      MultiSigmaBox const& sigba,
+                      amrex::Real const dt, bool pml_has_particles );
+
+       void EvolveFPML ( amrex::MultiFab* Ffield,
+                     std::array< amrex::MultiFab*, 3 > const Efield,
+                     amrex::Real const dt );
 
     private:
 
@@ -156,6 +171,24 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
             amrex::Real const dt,
             std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
+        void EvolveBPMLCartesian (
+            std::array< amrex::MultiFab*, 3 > Bfield,
+            std::array< amrex::MultiFab*, 3 > const Efield,
+            amrex::Real const dt );
+
+        template< typename T_Algo >
+        void EvolveEPMLCartesian (
+            std::array< amrex::MultiFab*, 3 > Efield,
+            std::array< amrex::MultiFab*, 3 > const Bfield,
+            std::array< amrex::MultiFab*, 3 > const Jfield,
+            amrex::MultiFab* const Ffield,
+            MultiSigmaBox const& sigba,
+            amrex::Real const dt, bool pml_has_particles );
+
+        template< typename T_Algo >
+        void EvolveFPMLCartesian ( amrex::MultiFab* Ffield,
+                      std::array< amrex::MultiFab*, 3 > const Efield,
+                      amrex::Real const dt );
 
 #endif
 

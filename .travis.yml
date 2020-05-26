@@ -5,7 +5,7 @@
 #
 # License: BSD-3-Clause-LBNL
 
-dist: xenial
+dist: bionic
 language: c++
 sudo: true
 cache: pip
