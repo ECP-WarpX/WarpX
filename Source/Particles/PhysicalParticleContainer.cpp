@@ -2030,6 +2030,12 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
+    ParticleReal* const AMREX_RESTRICT Ex = attribs[PIdx::Ex].dataPtr();
+    ParticleReal* const AMREX_RESTRICT Ey = attribs[PIdx::Ey].dataPtr();
+    ParticleReal* const AMREX_RESTRICT Ez = attribs[PIdx::Ez].dataPtr();
+    ParticleReal* const AMREX_RESTRICT Bx = attribs[PIdx::Bx].dataPtr();
+    ParticleReal* const AMREX_RESTRICT By = attribs[PIdx::By].dataPtr();
+    ParticleReal* const AMREX_RESTRICT Bz = attribs[PIdx::Bz].dataPtr();
 
     auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
     int do_copy = (WarpX::do_back_transformed_diagnostics &&
@@ -2073,6 +2079,14 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
+        Ex[ip] = Exp;
+        Ey[ip] = Eyp;
+        Ez[ip] = Ezp;
+
+        Bx[ip] = Bxp;
+        By[ip] = Byp;
+        Bz[ip] = Bzp;
+        
         doParticlePush(getPosition, setPosition, copyAttribs, ip,
                        ux[ip], uy[ip], uz[ip],
                        Exp, Eyp, Ezp, Bxp, Byp, Bzp,

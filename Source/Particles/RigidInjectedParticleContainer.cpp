@@ -254,12 +254,6 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT ux = uxp.dataPtr();
     ParticleReal* const AMREX_RESTRICT uy = uyp.dataPtr();
     ParticleReal* const AMREX_RESTRICT uz = uzp.dataPtr();
-    ParticleReal* const AMREX_RESTRICT Exp = attribs[PIdx::Ex].dataPtr();
-    ParticleReal* const AMREX_RESTRICT Eyp = attribs[PIdx::Ey].dataPtr();
-    ParticleReal* const AMREX_RESTRICT Ezp = attribs[PIdx::Ez].dataPtr();
-    ParticleReal* const AMREX_RESTRICT Bxp = attribs[PIdx::Bx].dataPtr();
-    ParticleReal* const AMREX_RESTRICT Byp = attribs[PIdx::By].dataPtr();
-    ParticleReal* const AMREX_RESTRICT Bzp = attribs[PIdx::Bz].dataPtr();
 
     if (!done_injecting_lev)
     {
