@@ -27,11 +27,7 @@ FlushFormatAscent::WriteToFile (
     amrex::MultiLevelToBlueprint(
         nlev, mf, varnames, geom, time, iteration, warpx.refRatio(), bp_mesh);
 
-<<<<<<< HEAD
     WriteParticles(particle_diags);
-=======
-    WriteParticles(particle_diags, bp_mesh);
->>>>>>> master
 
     // If you want to save blueprint HDF5 files w/o using an Ascent
     // extract, you can call the following AMReX helper:
@@ -51,17 +47,10 @@ FlushFormatAscent::WriteToFile (
 #endif // AMREX_USE_ASCENT
 }
 
-<<<<<<< HEAD
-void
-FlushFormatAscent::WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags) const
-{
-#ifdef AMREX_USE_ASCENT
-=======
 #ifdef AMREX_USE_ASCENT
 void
 FlushFormatAscent::WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags, conduit::Node& a_bp_mesh) const
 {
->>>>>>> master
     // wrap particle data for each species
     // we prefix the fields with "particle_{species_name}" b/c we
     // want to to uniquely name all the fields that can be plotted
@@ -105,16 +94,8 @@ FlushFormatAscent::WriteParticles(const amrex::Vector<ParticleDiag>& particle_di
         amrex::ParticleContainerToBlueprint(*pc,
                                             particle_varnames,
                                             particle_int_varnames,
-<<<<<<< HEAD
-                                            bp_mesh,
-                                            prefix);
-    }
-#endif // AMREX_USE_ASCENT
-}
-=======
                                             a_bp_mesh,
                                             prefix);
     }
 }
 #endif // AMREX_USE_ASCENT
->>>>>>> master

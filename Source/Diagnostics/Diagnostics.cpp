@@ -7,10 +7,7 @@
 #include "FlushFormats/FlushFormatPlotfile.H"
 #include "FlushFormats/FlushFormatCheckpoint.H"
 #include "FlushFormats/FlushFormatAscent.H"
-<<<<<<< HEAD
 #include "FlushFormats/FlushFormatSensei.H"
-=======
->>>>>>> master
 #ifdef WARPX_USE_OPENPMD
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
@@ -43,15 +40,10 @@ Diagnostics::ReadParameters ()
     m_intervals = IntervalsParser(period_string);
     pp.query("format", m_format);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-<<<<<<< HEAD
         m_format == "plotfile" || m_format == "openpmd" ||
         m_format == "checkpoint" || m_format == "ascent" ||
         m_format == "sensei",
         "<diag>.format must be plotfile or openpmd or checkpoint or ascent or sensei");
-=======
-        m_format == "plotfile" || m_format == "openpmd" || m_format == "checkpoint" || m_format == "ascent",
-        "<diag>.format must be plotfile or openpmd or checkpoint or ascent");
->>>>>>> master
     bool raw_specified = pp.query("plot_raw_fields", m_plot_raw_fields);
     raw_specified += pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
     bool varnames_specified = pp.queryarr("fields_to_plot", m_varnames);
@@ -159,11 +151,8 @@ Diagnostics::InitData ()
         m_flush_format = new FlushFormatCheckpoint;
     } else if (m_format == "ascent"){
         m_flush_format = new FlushFormatAscent;
-<<<<<<< HEAD
     } else if (m_format == "sensei"){
         m_flush_format = new FlushFormatSensei(m_diag_name);
-=======
->>>>>>> master
     } else if (m_format == "openpmd"){
 #ifdef WARPX_USE_OPENPMD
         m_flush_format = new FlushFormatOpenPMD(m_diag_name);
