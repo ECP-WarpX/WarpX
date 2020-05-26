@@ -20,6 +20,7 @@
 #include "Pusher/UpdateMomentumBorisWithRadiationReaction.H"
 #include "Pusher/UpdateMomentumHigueraCary.H"
 #include "Pusher/GetAndSetPosition.H"
+#include "Gather/ScaleFields.H"
 
 #include <limits>
 #include <sstream>
@@ -235,9 +236,9 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                         const long offset,
                                         const long np_to_push,
                                         int lev, int gather_lev,
-                                        amrex::Real dt, DtType a_dt_type)
+                                        amrex::Real dt, ScaleFields /*scaleFields*/,
+                                        DtType a_dt_type)
 {
-    // This wraps the momentum and position advance so that inheritors can modify the call.
     auto& attribs = pti.GetAttribs();
     auto& uxp = attribs[PIdx::ux];
     auto& uyp = attribs[PIdx::uy];
@@ -292,35 +293,16 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                 uyp_save_ptr[i] = uy[i];
                                 uzp_save_ptr[i] = uz[i];
                             });
-
-        // Scale the fields of particles about to cross the injection plane.
-        // This only approximates what should be happening. The particles
-        // should by advanced a fraction of a time step instead.
-        // Scaling the fields is much easier and may be good enough.
-        const Real v_boost = WarpX::beta_boost*PhysConst::c;
-        const Real z_plane_previous = zinject_plane_lev_previous;
-        const Real vz_ave_boosted = vzbeam_ave_boosted;
-        amrex::ParallelFor( pti.numParticles(),
-            [=] AMREX_GPU_DEVICE (long i) {
-                                ParticleReal xp, yp, zp;
-                                GetPosition(i, xp, yp, zp);
-                                const Real dtscale = dt - (z_plane_previous - zp)/(vz_ave_boosted + v_boost);
-                                if (0. < dtscale && dtscale < dt) {
-                                    Exp[i] *= dtscale;
-                                    Eyp[i] *= dtscale;
-                                    Ezp[i] *= dtscale;
-                                    Bxp[i] *= dtscale;
-                                    Byp[i] *= dtscale;
-                                    Bzp[i] *= dtscale;
-                                }
-                            }
-            );
     }
 
+    const bool do_scale = not done_injecting_lev;
+    const Real v_boost = WarpX::beta_boost*PhysConst::c;
     PhysicalParticleContainer::PushPX(pti, exfab, eyfab, ezfab, bxfab, byfab, bzfab,
-                                      ngE, e_is_nodal, offset, np_to_push, lev, gather_lev,
-                                      dt, a_dt_type);
-
+                                      ngE, e_is_nodal, offset, np_to_push, lev, gather_lev, dt,
+                                      ScaleFields(do_scale, dt, zinject_plane_lev_previous,
+                                                  vzbeam_ave_boosted, v_boost),
+                                      a_dt_type);
+    
     if (!done_injecting_lev) {
 
         ParticleReal* AMREX_RESTRICT x_save = xp_save.dataPtr();

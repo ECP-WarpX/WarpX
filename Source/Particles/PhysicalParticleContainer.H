@@ -14,6 +14,7 @@
 #include "WarpXParticleContainer.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/ElementaryProcess/Ionization.H"
+#include "Particles/Gather/ScaleFields.H"
 
 #ifdef WARPX_QED
 #    include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
@@ -159,7 +160,8 @@ public:
                          const long offset,
                          const long np_to_push,
                          int lev, int gather_lev,
-                         amrex::Real dt, DtType a_dt_type=DtType::Full);
+                         amrex::Real dt, ScaleFields scaleFields,
+                         DtType a_dt_type=DtType::Full);
     
     virtual void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& Ex,

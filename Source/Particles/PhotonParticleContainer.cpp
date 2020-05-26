@@ -74,7 +74,7 @@ PhotonParticleContainer::PushPX(WarpXParIter& pti,
                                 const long offset,
                                 const long np_to_push,
                                 int /*lev*/, int /*gather_lev*/,
-                                amrex::Real dt, DtType a_dt_type)
+                                amrex::Real dt, ScaleFields /*scaleFields*/, DtType a_dt_type)
 {
     auto& attribs = pti.GetAttribs();
 

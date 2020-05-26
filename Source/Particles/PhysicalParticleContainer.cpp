@@ -1107,7 +1107,7 @@ PhysicalParticleContainer::Evolve (int lev,
                 PushPX(pti, exfab, eyfab, ezfab,
                        bxfab, byfab, bzfab,
                        Ex.nGrow(), e_is_nodal,
-                       0, np_gather, lev, lev, dt, a_dt_type);
+                       0, np_gather, lev, lev, dt, ScaleFields(false), a_dt_type);
 
                 if (np_gather < np)
                 {
@@ -1142,7 +1142,7 @@ PhysicalParticleContainer::Evolve (int lev,
                            cbxfab, cbyfab, cbzfab,
                            cEx->nGrow(), e_is_nodal,
                            nfine_gather, np-nfine_gather,
-                           lev, lev-1, dt, a_dt_type);
+                           lev, lev-1, dt, ScaleFields(false), a_dt_type);
                 }
 
                 WARPX_PROFILE_VAR_STOP(blp_fg);
@@ -1964,7 +1964,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                    const long offset,
                                    const long np_to_push,
                                    int lev, int gather_lev,
-                                   amrex::Real dt, DtType a_dt_type)
+                                   amrex::Real dt, ScaleFields scaleFields,
+                                   DtType a_dt_type)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE((gather_lev==(lev-1)) ||
                                      (gather_lev==(lev  )),
@@ -2076,6 +2077,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                        dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                        l_lower_order_in_v, nox);
 
+        scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
+        
         doParticlePush(getPosition, setPosition, copyAttribs, ip,
                        ux[ip], uy[ip], uz[ip],
                        Ex[ip], Ey[ip], Ez[ip],

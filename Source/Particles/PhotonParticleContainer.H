@@ -65,7 +65,8 @@ public:
                         const long offset,
                         const long np_to_push,
                         int lev, int gather_lev,
-                        amrex::Real dt, DtType a_dt_type) override;
+                        amrex::Real dt, ScaleFields scaleFields,
+                        DtType a_dt_type) override;
 
     // Do nothing
     virtual void PushP (int lev,
