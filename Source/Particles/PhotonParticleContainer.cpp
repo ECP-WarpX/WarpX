@@ -15,7 +15,7 @@
 #include "Particles/Pusher/CopyParticleAttribs.H"
 
 #ifdef _OPENMP
-#   include <omp.h>
+#include <omp.h>
 #endif
 
 #include <limits>
@@ -74,7 +74,7 @@ PhotonParticleContainer::PushPX(WarpXParIter& pti,
                                 const long offset,
                                 const long np_to_push,
                                 int /*lev*/, int /*gather_lev*/,
-                                amrex::Real dt, DtType /*a_dt_type*/)
+                                amrex::Real dt, DtType a_dt_type)
 {
     auto& attribs = pti.GetAttribs();
 
@@ -83,9 +83,9 @@ PhotonParticleContainer::PushPX(WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
-    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
+    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data);
     int do_copy = (WarpX::do_back_transformed_diagnostics &&
-                          do_back_transformed_diagnostics );
+                   do_back_transformed_diagnostics && a_dt_type!=DtType::SecondHalf);
 
     const auto GetPosition = GetParticlePosition(pti, offset);
     auto SetPosition = SetParticlePosition(pti, offset);

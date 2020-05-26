@@ -19,16 +19,9 @@
 #include "Particles/Gather/FieldGather.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/Pusher/CopyParticleAttribs.H"
+#include "Particles/Pusher/PushSelector.H"
 #include "Particles/Gather/GetExternalFields.H"
-
 #include "Utils/WarpXAlgorithmSelection.H"
-
-// Import low-level single-particle kernels
-#include "Particles/Pusher/UpdatePosition.H"
-#include "Particles/Pusher/UpdateMomentumBoris.H"
-#include "Particles/Pusher/UpdateMomentumVay.H"
-#include "Particles/Pusher/UpdateMomentumBorisWithRadiationReaction.H"
-#include "Particles/Pusher/UpdateMomentumHigueraCary.H"
 
 #include <AMReX_Print.H>
 
@@ -2083,82 +2076,17 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                        dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                        l_lower_order_in_v, nox);
 
-        // now push the momentum and position
-        if (do_copy) copyAttribs(ip);  // note, need to handle offset
-        if (do_crr) {
+        doParticlePush(GetPosition, SetPosition, copyAttribs, i,
+                       ux[i], uy[i], uz[i],
+                       Ex[i], Ey[i], Ez[i],
+                       Bx[i], By[i], Bz[i],
+                       ion_lev ? ion_lev[i] : 0,
+                       m, q, pusher_algo, do_crr, do_copy,
 #ifdef WARPX_QED
-            if (do_sync) {
-                auto chi = QedUtils::chi_lepton(m*ux[ip], m*uy[ip], m*uz[ip],
-                                                Ex[ip], Ey[ip], Ez[ip],
-                                                Bx[ip], By[ip], Bz[ip]);
-                if (chi < t_chi_max) {
-                    UpdateMomentumBorisWithRadiationReaction(
-                                                             ux[ip], uy[ip], uz[ip],
-                                                             Ex[ip], Ey[ip], Ez[ip], Bx[ip],
-                                                             By[ip], Bz[ip], q, m, dt);
-                }
-                else {
-                    UpdateMomentumBoris( ux[ip], uy[ip], uz[ip],
-                                         Ex[ip], Ey[ip], Ez[ip], Bx[ip],
-                                         By[ip], Bz[ip], q, m, dt);
-                }
-                ParticleReal x, y, z;
-                getPosition(ip, x, y, z);
-                UpdatePosition(x, y, z, ux[ip], uy[ip], uz[ip], dt );
-                setPosition(ip, x, y, z);
-            } else {
-                UpdateMomentumBorisWithRadiationReaction(ux[ip], uy[ip], uz[ip],
-                                                         Ex[ip], Ey[ip], Ez[ip], Bx[ip],
-                                                         By[ip], Bz[ip], q, m, dt);
-                ParticleReal x, y, z;
-                getPosition(ip, x, y, z);
-                UpdatePosition(x, y, z, ux[ip], uy[ip], uz[ip], dt );
-                setPosition(ip, x, y, z);
-            }
-#else
-            Real qp = q;
-            if (ion_lev) { qp *= ion_lev[ip]; }
-            UpdateMomentumBorisWithRadiationReaction(ux[ip], uy[ip], uz[ip],
-                                                     Ex[ip], Ey[ip], Ez[ip], Bx[ip],
-                                                     By[ip], Bz[ip], qp, m, dt);
-            ParticleReal x, y, z;
-            getPosition(ip, x, y, z);
-            UpdatePosition(x, y, z, ux[ip], uy[ip], uz[ip], dt );
-            setPosition(ip, x, y, z);
+                       do_sync,
+                       t_chi_max,
 #endif
-        } else if (pusher_algo == ParticlePusherAlgo::Boris) {
-            Real qp = q;
-            if (ion_lev) { qp *= ion_lev[ip]; }
-            UpdateMomentumBoris( ux[ip], uy[ip], uz[ip],
-                                 Ex[ip], Ey[ip], Ez[ip], Bx[ip],
-                                 By[ip], Bz[ip], qp, m, dt);
-            ParticleReal x, y, z;
-            getPosition(ip, x, y, z);
-            UpdatePosition(x, y, z, ux[ip], uy[ip], uz[ip], dt );
-            setPosition(ip, x, y, z);
-        } else if (pusher_algo == ParticlePusherAlgo::Vay) {
-            Real qp = q;
-            if (ion_lev){ qp *= ion_lev[ip]; }
-            UpdateMomentumVay( ux[ip], uy[ip], uz[ip],
-                               Ex[ip], Ey[ip], Ez[ip], Bx[ip],
-                               By[ip], Bz[ip], qp, m, dt);
-            ParticleReal x, y, z;
-            getPosition(ip, x, y, z);
-            UpdatePosition(x, y, z, ux[ip], uy[ip], uz[ip], dt );
-            setPosition(ip, x, y, z);
-        } else if (pusher_algo == ParticlePusherAlgo::HigueraCary) {
-            Real qp = q;
-            if (ion_lev){ qp *= ion_lev[ip]; }
-            UpdateMomentumHigueraCary( ux[ip], uy[ip], uz[ip],
-                                       Ex[ip], Ey[ip], Ez[ip], Bx[ip],
-                                       By[ip], Bz[ip], qp, m, dt);
-            ParticleReal x, y, z;
-            getPosition(ip, x, y, z);
-            UpdatePosition(x, y, z, ux[ip], uy[ip], uz[ip], dt );
-            setPosition(ip, x, y, z);
-        } else {
-            amrex::Abort("Unknown particle pusher");
-        }        
+                       dt);
     });
 }
 

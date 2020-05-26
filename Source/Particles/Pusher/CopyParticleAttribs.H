@@ -45,6 +45,7 @@ struct CopyParticleAttribs
         if (tmp_particle_data.size() == 0) return;
 
         auto& attribs = a_pti.GetAttribs();
+
         uxp = attribs[PIdx::ux].dataPtr() + a_offset;
         uyp = attribs[PIdx::uy].dataPtr() + a_offset;
         uzp = attribs[PIdx::uz].dataPtr() + a_offset;
