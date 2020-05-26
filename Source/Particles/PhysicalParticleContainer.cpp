@@ -2030,12 +2030,6 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Ex = attribs[PIdx::Ex].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Ey = attribs[PIdx::Ey].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Ez = attribs[PIdx::Ez].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Bx = attribs[PIdx::Bx].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT By = attribs[PIdx::By].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Bz = attribs[PIdx::Bz].dataPtr();
 
     auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data, offset);
     int do_copy = (WarpX::do_back_transformed_diagnostics &&
@@ -2081,8 +2075,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
         doParticlePush(getPosition, setPosition, copyAttribs, ip,
                        ux[ip], uy[ip], uz[ip],
-                       Ex[ip], Ey[ip], Ez[ip],
-                       Bx[ip], By[ip], Bz[ip],
+                       Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                        ion_lev ? ion_lev[ip] : 0,
                        m, q, pusher_algo, do_crr, do_copy,
 #ifdef WARPX_QED
