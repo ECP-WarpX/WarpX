@@ -1992,7 +1992,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto getPosition = GetParticlePosition(pti, offset);
           auto setPosition = SetParticlePosition(pti, offset);
-    
+
     const auto getExternalE = GetExternalEField(pti, offset);
     const auto getExternalB = GetExternalBField(pti, offset);
 
@@ -2008,7 +2008,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     int l_lower_order_in_v = WarpX::l_lower_order_in_v;
     int nox = WarpX::nox;
     int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
-    
+
     amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
     amrex::GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
@@ -2058,15 +2058,15 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     amrex::Real t_chi_max = 0.0;
     if (do_sync) t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
 #endif
-    
+
     amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
-        
+
         amrex::ParticleReal Exp, Eyp, Ezp;
         getExternalE(ip, Exp, Eyp, Ezp);
-        
+
         amrex::ParticleReal Bxp, Byp, Bzp;
         getExternalB(ip, Bxp, Byp, Bzp);
 
@@ -2078,7 +2078,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                        l_lower_order_in_v, nox);
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
-        
+
         doParticlePush(getPosition, setPosition, copyAttribs, ip,
                        ux[ip], uy[ip], uz[ip],
                        Ex[ip], Ey[ip], Ez[ip],

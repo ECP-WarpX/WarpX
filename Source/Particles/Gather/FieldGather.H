@@ -445,7 +445,7 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
  * \param lo                        : Index lower bounds of domain.
  * \param n_rz_azimuthal_modes      : Number of azimuthal modes when using RZ geometry
  * \param nox                       : order of the particle shape function
- * \param l_lower_order_in_v        : whether to use lower order in v 
+ * \param l_lower_order_in_v        : whether to use lower order in v
  */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void doGatherShapeN (const amrex::ParticleReal xp,

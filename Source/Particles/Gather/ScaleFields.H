@@ -7,7 +7,7 @@
 
 #include <limits>
 
-/** \brief Functor that scales E and B by a factor before pushing the particles. 
+/** \brief Functor that scales E and B by a factor before pushing the particles.
  *   This is used for rigid injection.
  */
 struct ScaleFields
@@ -21,13 +21,13 @@ struct ScaleFields
     ScaleFields(bool do_scale) noexcept
         : m_do_scale(do_scale)
     {}
-    
+
     ScaleFields (bool do_scale, amrex::Real dt, amrex::Real z_plane_previous,
                  amrex::Real vz_ave_boosted, amrex::Real v_boost) noexcept
     : m_do_scale(do_scale), m_dt(dt), m_z_plane_previous(z_plane_previous),
         m_vz_ave_boosted(vz_ave_boosted), m_v_boost(v_boost)
     {}
-    
+
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator () (amrex::ParticleReal  /*xp*/,
                       amrex::ParticleReal  /*yp*/,
@@ -46,7 +46,7 @@ struct ScaleFields
         // Scale the fields of particles about to cross the injection plane.
         // This only approximates what should be happening. The particles
         // should by advanced a fraction of a time step instead.
-        // Scaling the fields is much easier and may be good enough.        
+        // Scaling the fields is much easier and may be good enough.
         const amrex::Real dtscale = m_dt - (m_z_plane_previous - zp)/(m_vz_ave_boosted + m_v_boost);
         if (0._rt < dtscale && dtscale < m_dt)
         {

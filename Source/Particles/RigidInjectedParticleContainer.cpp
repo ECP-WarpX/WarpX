@@ -302,7 +302,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
                                       ScaleFields(do_scale, dt, zinject_plane_lev_previous,
                                                   vzbeam_ave_boosted, v_boost),
                                       a_dt_type);
-    
+
     if (!done_injecting_lev) {
 
         ParticleReal* AMREX_RESTRICT x_save = xp_save.dataPtr();
