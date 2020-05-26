@@ -27,7 +27,7 @@ FlushFormatAscent::WriteToFile (
     amrex::MultiLevelToBlueprint(
         nlev, mf, varnames, geom, time, iteration, warpx.refRatio(), bp_mesh);
 
-    WriteParticles(particle_diags);
+    WriteParticles(particle_diags, bp_mesh);
 
     // If you want to save blueprint HDF5 files w/o using an Ascent
     // extract, you can call the following AMReX helper:
