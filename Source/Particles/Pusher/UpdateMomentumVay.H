@@ -23,13 +23,15 @@ void UpdateMomentumVay(
     const amrex::ParticleReal Bx, const amrex::ParticleReal By, const amrex::ParticleReal Bz,
     const amrex::Real q, const amrex::Real m, const amrex::Real dt )
 {
+    using namespace amrex::literals;
+
     // Constants
     const amrex::Real econst = q*dt/m;
-    const amrex::Real bconst = 0.5*q*dt/m;
-    constexpr amrex::Real invclight = 1./PhysConst::c;
-    constexpr amrex::Real invclightsq = 1./(PhysConst::c*PhysConst::c);
+    const amrex::Real bconst = 0.5_rt*q*dt/m;
+    constexpr amrex::Real invclight = 1._rt/PhysConst::c;
+    constexpr amrex::Real invclightsq = 1._rt/(PhysConst::c*PhysConst::c);
     // Compute initial gamma
-    const amrex::Real inv_gamma = 1./std::sqrt(1. + (ux*ux + uy*uy + uz*uz)*invclightsq);
+    const amrex::Real inv_gamma = 1._rt/std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)*invclightsq);
     // Get tau
     const amrex::Real taux = bconst*Bx;
     const amrex::Real tauy = bconst*By;
@@ -39,18 +41,18 @@ void UpdateMomentumVay(
     const amrex::Real uxpr = ux + econst*Ex + (uy*tauz-uz*tauy)*inv_gamma;
     const amrex::Real uypr = uy + econst*Ey + (uz*taux-ux*tauz)*inv_gamma;
     const amrex::Real uzpr = uz + econst*Ez + (ux*tauy-uy*taux)*inv_gamma;
-    const amrex::Real gprsq = (1. + (uxpr*uxpr + uypr*uypr + uzpr*uzpr)*invclightsq);
+    const amrex::Real gprsq = (1._rt + (uxpr*uxpr + uypr*uypr + uzpr*uzpr)*invclightsq);
     // Get u*
     const amrex::Real ust = (uxpr*taux + uypr*tauy + uzpr*tauz)*invclight;
     // Get new gamma
     const amrex::Real sigma = gprsq-tausq;
-    const amrex::Real gisq = 2./(sigma + std::sqrt(sigma*sigma + 4.*(tausq + ust*ust)) );
+    const amrex::Real gisq = 2._rt/(sigma + std::sqrt(sigma*sigma + 4._rt*(tausq + ust*ust)) );
     // Get t, s
     const amrex::Real bg = bconst*std::sqrt(gisq);
     const amrex::Real tx = bg*Bx;
     const amrex::Real ty = bg*By;
     const amrex::Real tz = bg*Bz;
-    const amrex::Real s = 1./(1.+tausq*gisq);
+    const amrex::Real s = 1._rt/(1._rt+tausq*gisq);
     // Get t.u'
     const amrex::Real tu = tx*uxpr + ty*uypr + tz*uzpr;
     // Get new U
