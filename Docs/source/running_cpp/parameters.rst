@@ -987,7 +987,7 @@ Numerics and algorithms
 
     - ``backwardeuler`` is a fully-implicit, first-order in time scheme for E-update (default).
     - ``laxwendroff`` is the semi-implicit, second order in time scheme for E-update. 
-    Comparing the two methods, LaxWendroff may be more prone to developing oscillations, while Backward Euler is more robust. However, since LaxWendroff is second order in time, it has a higher order of accuracy compared to BackwardEuler. 
+    Comparing the two methods, LaxWendroff is more prone to developing oscillations and requires a smaller timestep for stability. On the other hand, Backward Euler is more robust but is first order accurte in time compared to the second-order Lax-Wendroff method.
 
 * ``macroscopic.sigma``, ``macroscopic.epsilon``, ``macroscopic.mu`` (`double`)
     The conductivity, permittivity, and permeability of the computational medium, respectively.
