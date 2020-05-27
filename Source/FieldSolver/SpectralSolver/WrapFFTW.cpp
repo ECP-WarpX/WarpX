@@ -46,7 +46,7 @@ FFTplan CreatePlan(int nx, int ny, int nz,
         return fft_plan;
     }
 
-    void DestroyPlan(FFTplan fft_plan)
+    void DestroyPlan(FFTplan& fft_plan)
     {
 #  ifdef AMREX_USE_FLOAT
         fftwf_destroy_plan( fft_plan.m_plan );
@@ -55,7 +55,7 @@ FFTplan CreatePlan(int nx, int ny, int nz,
 #  endif        
     }
 
-    void Execute(FFTplan fft_plan){
+    void Execute(FFTplan& fft_plan){
 #  ifdef AMREX_USE_FLOAT
         fftwf_execute( fft_plan.m_plan );
 #  else

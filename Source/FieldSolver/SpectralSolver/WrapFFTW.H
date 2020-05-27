@@ -26,9 +26,9 @@ namespace AnyFFT
     FFTplan CreatePlan(int nx, int ny, int nz,
                        amrex::Real* real_array, PrecisionComplex* complex_array, direction dir);
 
-    void DestroyPlan(FFTplan fft_plan);
+    void DestroyPlan(FFTplan& fft_plan);
 
-    void Execute(FFTplan fft_plan);
+    void Execute(FFTplan& fft_plan);
 }
 
 #endif
