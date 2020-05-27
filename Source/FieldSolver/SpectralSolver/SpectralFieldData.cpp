@@ -9,12 +9,10 @@
 
 #include <map>
 
-
-
 #if WARPX_USE_PSATD
 
 using namespace amrex;
-
+/*
 #ifdef AMREX_USE_GPU
 #  ifdef AMREX_USE_FLOAT
 using cuPrecisionComplex = cuComplex;
@@ -28,6 +26,7 @@ using fftw_precision_complex = fftwf_complex;
 using fftw_precision_complex = fftw_complex;
 #  endif
 #endif
+*/
 
 /* \brief Initialize fields in spectral space, and FFT plans */
 SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
@@ -73,8 +72,10 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
 #endif
 
     // Allocate and initialize the FFT plans
-    forward_plan = FFTplans(spectralspace_ba, dm);
-    backward_plan = FFTplans(spectralspace_ba, dm);
+    // forward_plan = AnyFFT::FFTplans(spectralspace_ba, dm);
+    // backward_plan = AnyFFT::FFTplans(spectralspace_ba, dm);
+    forward_plan = AnyFFT::FFTplans(spectralspace_ba, dm);
+    backward_plan = AnyFFT::FFTplans(spectralspace_ba, dm);
     // Loop over boxes and allocate the corresponding plan
     // for each box owned by the local MPI proc
     for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
@@ -82,6 +83,12 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
         // differ when using real-to-complex FFT. When initializing
         // the FFT plan, the valid dimensions are those of the real-space box.
         IntVect fft_size = realspace_ba[mfi].length();
+        forward_plan[mfi] = AnyFFT::CreatePlan(
+            fft_size[0], fft_size[1], fft_size[2],
+            tmpRealField[mfi].dataPtr(),
+            reinterpret_cast<AnyFFT::PrecisionComplex*>( tmpSpectralField[mfi].dataPtr()),
+            AnyFFT::direction::R2C);
+/*
 #ifdef AMREX_USE_GPU
         // Create cuFFT plans
         // Creating 3D plan for real to complex -- double precision
@@ -174,6 +181,7 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
             tmpRealField[mfi].dataPtr(),
             FFTW_ESTIMATE );
 #endif
+*/
     }
 }
 
@@ -182,6 +190,9 @@ SpectralFieldData::~SpectralFieldData()
 {
     if (tmpRealField.size() > 0){
         for ( MFIter mfi(tmpRealField); mfi.isValid(); ++mfi ){
+            AnyFFT::DestroyPlan(forward_plan[mfi]);
+            AnyFFT::DestroyPlan(backward_plan[mfi]);
+            /*
 #ifdef AMREX_USE_GPU
             // Destroy cuFFT plans
             cufftDestroy( forward_plan[mfi] );
@@ -196,6 +207,7 @@ SpectralFieldData::~SpectralFieldData()
             fftw_destroy_plan( backward_plan[mfi] );
 #  endif
 #endif
+            */
         }
     }
 }
@@ -242,6 +254,8 @@ SpectralFieldData::ForwardTransform( const MultiFab& mf,
             });
         }
 
+        AnyFFT::Execute(forward_plan[mfi]);
+/*
         // Perform Fourier transform from `tmpRealField` to `tmpSpectralField`
 #ifdef AMREX_USE_GPU
         // Perform Fast Fourier Transform on GPU using cuFFT
@@ -271,7 +285,7 @@ SpectralFieldData::ForwardTransform( const MultiFab& mf,
         fftw_execute( forward_plan[mfi] );
 #  endif
 #endif
-
+*/
         // Copy the spectral-space field `tmpSpectralField` to the appropriate
         // index of the FabArray `fields` (specified by `field_index`)
         // and apply correcting shift factor if the real space data comes
@@ -356,7 +370,8 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
             });
 
         }
-
+        AnyFFT::Execute(backward_plan[mfi]);
+        /*
         // Perform Fourier transform from `tmpSpectralField` to `tmpRealField`
 #ifdef AMREX_USE_GPU
         // Perform Fast Fourier Transform on GPU using cuFFT.
@@ -386,7 +401,8 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
         fftw_execute( backward_plan[mfi] );
 #  endif
 #endif
-
+        */
+        
         // Copy the temporary field `tmpRealField` to the real-space field `mf`
         // (only in the valid cells ; not in the guard cells)
         // Normalize (divide by 1/N) since the FFT+IFFT results in a factor N
