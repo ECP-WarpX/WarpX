@@ -40,14 +40,6 @@ struct SpectralPMLIndex {
 class SpectralFieldData
 {
 
-    // Define the FFTplans type, which holds one fft plan per box
-    // (plans are only initialized for the boxes that are owned by
-    // the local MPI rank)
-    /*
-#ifdef AMREX_USE_GPU
-    using FFTplans = amrex::LayoutData<cufftHandle>;
-#endif
-    */
     public:
         SpectralFieldData( const amrex::BoxArray& realspace_ba,
                            const SpectralKSpace& k_space,

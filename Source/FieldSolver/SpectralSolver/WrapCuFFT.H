@@ -5,11 +5,13 @@
 
 namespace AnyFFT
 {
+    /** Define the FFTplans type, which holds one fft plan per box
+     * (plans are only initialized for the boxes that are owned by the local MPI rank). */
     using VendorFFTPlan = cufftHandle;
 #ifdef AMREX_USE_FLOAT
-    using Complex = cuComplex;
+    using Complex = cuComplex; /**< Complex type for cuFFT in single precision */
 #else
-    using Complex = cuDoubleComplex;
+    using Complex = cuDoubleComplex; /**< Complex type for cuFFT in double precision */
 #endif
 
     /**

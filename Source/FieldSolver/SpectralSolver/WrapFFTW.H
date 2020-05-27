@@ -7,8 +7,12 @@ namespace AnyFFT
 {
 #ifdef AMREX_USE_FLOAT
     using Complex = fftwf_complex; /**< Complex type for FFTW in single precision */
+    /** Define the FFTplans type, which holds one fft plan per box
+     * (plans are only initialized for the boxes that are owned by the local MPI rank). */
     using VendorFFTPlan = fftwf_plan;
 #else
+    /** Define the FFTplans type, which holds one fft plan per box
+     * (plans are only initialized for the boxes that are owned by the local MPI rank). */
     using Complex = fftw_complex; /**< Complex type for FFTW in double precision */
     using VendorFFTPlan = fftw_plan;
 #endif
