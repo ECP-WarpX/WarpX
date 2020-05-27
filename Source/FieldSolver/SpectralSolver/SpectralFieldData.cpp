@@ -88,6 +88,11 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
             tmpRealField[mfi].dataPtr(),
             reinterpret_cast<AnyFFT::PrecisionComplex*>( tmpSpectralField[mfi].dataPtr()),
             AnyFFT::direction::R2C);
+        backward_plan[mfi] = AnyFFT::CreatePlan(
+            fft_size[0], fft_size[1], fft_size[2],
+            tmpRealField[mfi].dataPtr(),
+            reinterpret_cast<AnyFFT::PrecisionComplex*>( tmpSpectralField[mfi].dataPtr()),
+            AnyFFT::direction::C2R);
 /*
 #ifdef AMREX_USE_GPU
         // Create cuFFT plans
