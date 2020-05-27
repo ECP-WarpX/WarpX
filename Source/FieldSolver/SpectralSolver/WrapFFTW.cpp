@@ -36,7 +36,7 @@ FFTplan CreatePlan(int nx, int ny, int nz,
 #  ifdef AMREX_USE_FLOAT
             fftwf_plan_dft_c2r_2d( ny, nx, complex_array, real_array, FFTW_ESTIMATE);
 #  else
-            fftw_plan_dft_c2r_2d( ny, nx, complex_array, real_arrayç, FFTW_ESTIMATE);
+            fftw_plan_dft_c2r_2d( ny, nx, complex_array, real_array, FFTW_ESTIMATE);
 #  endif
 #endif
         }
