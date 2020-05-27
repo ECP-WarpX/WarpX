@@ -316,9 +316,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Bxfield_parser.get(),
                                                  Byfield_parser.get(),
                                                  Bzfield_parser.get(),
-                                                 Bfield_fp[lev][0]->ixType().toIntVect(),
-                                                 Bfield_fp[lev][1]->ixType().toIntVect(),
-                                                 Bfield_fp[lev][2]->ixType().toIntVect(),
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Bfield_aux[lev][0].get(),
@@ -327,9 +324,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Bxfield_parser.get(),
                                                     Byfield_parser.get(),
                                                     Bzfield_parser.get(),
-                                                    Bfield_aux[lev][0]->ixType().toIntVect(),
-                                                    Bfield_aux[lev][1]->ixType().toIntVect(),
-                                                    Bfield_aux[lev][2]->ixType().toIntVect(),
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Bfield_cp[lev][0].get(),
@@ -338,9 +332,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Bxfield_parser.get(),
                                                     Byfield_parser.get(),
                                                     Bzfield_parser.get(),
-                                                    Bfield_cp[lev][0]->ixType().toIntVect(),
-                                                    Bfield_cp[lev][1]->ixType().toIntVect(),
-                                                    Bfield_cp[lev][2]->ixType().toIntVect(),
                                                     lev);
        }
     }
@@ -374,9 +365,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                  Exfield_parser.get(),
                                                  Eyfield_parser.get(),
                                                  Ezfield_parser.get(),
-                                                 Efield_fp[lev][0]->ixType().toIntVect(),
-                                                 Efield_fp[lev][1]->ixType().toIntVect(),
-                                                 Efield_fp[lev][2]->ixType().toIntVect(),
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
@@ -385,9 +373,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Exfield_parser.get(),
                                                     Eyfield_parser.get(),
                                                     Ezfield_parser.get(),
-                                                    Efield_aux[lev][0]->ixType().toIntVect(),
-                                                    Efield_aux[lev][1]->ixType().toIntVect(),
-                                                    Efield_aux[lev][2]->ixType().toIntVect(),
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
@@ -396,9 +381,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     Exfield_parser.get(),
                                                     Eyfield_parser.get(),
                                                     Ezfield_parser.get(),
-                                                    Efield_cp[lev][0]->ixType().toIntVect(),
-                                                    Efield_cp[lev][1]->ixType().toIntVect(),
-                                                    Efield_cp[lev][2]->ixType().toIntVect(),
                                                     lev);
        }
     }
@@ -430,91 +412,75 @@ void
 WarpX::InitializeExternalFieldsOnGridUsingParser (
        MultiFab *mfx, MultiFab *mfy, MultiFab *mfz,
        ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
-       ParserWrapper<3> *zfield_parser, IntVect x_nodal_flag,
-       IntVect y_nodal_flag, IntVect z_nodal_flag,
-       const int lev)
+       ParserWrapper<3> *zfield_parser, const int lev)
 {
 
     const auto dx_lev = geom[lev].CellSizeArray();
     const RealBox& real_box = geom[lev].ProbDomain();
+    amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
+    amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
+    amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-       const Box& tbx = convert(mfi.growntilebox(),x_nodal_flag);
-       const Box& tby = convert(mfi.growntilebox(),y_nodal_flag);
-       const Box& tbz = convert(mfi.growntilebox(),z_nodal_flag);
+       const Box& tbx = mfi.growntilebox(x_nodal_flag);
+       const Box& tby = mfi.growntilebox(y_nodal_flag);
+       const Box& tbz = mfi.growntilebox(z_nodal_flag);
 
        auto const& mfxfab = mfx->array(mfi);
        auto const& mfyfab = mfy->array(mfi);
        auto const& mfzfab = mfz->array(mfi);
 
-       auto const& mfx_IndexType = (*mfx).ixType();
-       auto const& mfy_IndexType = (*mfy).ixType();
-       auto const& mfz_IndexType = (*mfz).ixType();
-
-       // Initialize IntVect based on the index type of multiFab
-       // 0 if cell-centered, 1 if node-centered.
-       IntVect mfx_type(AMREX_D_DECL(0,0,0));
-       IntVect mfy_type(AMREX_D_DECL(0,0,0));
-       IntVect mfz_type(AMREX_D_DECL(0,0,0));
-
-       for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-           mfx_type[idim] = mfx_IndexType.nodeCentered(idim);
-           mfy_type[idim] = mfy_IndexType.nodeCentered(idim);
-           mfz_type[idim] = mfz_IndexType.nodeCentered(idim);
-       }
-
        amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
-                Real fac_x = (1.0 - mfx_type[0]) * dx_lev[0]*0.5;
-                Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
-                Real y = 0.0;
-                Real fac_z = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
-                Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
 #else
-                Real fac_y = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
-                Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                Real fac_z = (1.0 - mfx_type[2]) * dx_lev[2]*0.5;
-                Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+                amrex::Real fac_y = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                amrex::Real fac_z = (1._rt - x_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
+                amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the x-component of the field.
                 mfxfab(i,j,k) = (*xfield_parser)(x,y,z);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Real fac_x = (1.0 - mfy_type[0]) * dx_lev[0]*0.5;
-                Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
-                Real y = 0.0;
-                Real fac_z = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
-                Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
 #elif (AMREX_SPACEDIM==3)
-                Real fac_y = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
-                Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                Real fac_z = (1.0 - mfx_type[2]) * dx_lev[2]*0.5;
-                Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+                amrex::Real fac_y = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                amrex::Real fac_z = (1._rt - y_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
+                amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the y-component of the field.
                 mfyfab(i,j,k)  = (*yfield_parser)(x,y,z);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Real fac_x = (1.0 - mfz_type[0]) * dx_lev[0]*0.5;
-                Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
-                Real y = 0.0;
-                Real fac_z = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
-                Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
 #elif (AMREX_SPACEDIM==3)
-                Real fac_y = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
-                Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                Real fac_z = (1.0 - mfz_type[2]) * dx_lev[2]*0.5;
-                Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+                amrex::Real fac_y = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                amrex::Real fac_z = (1._rt - z_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
+                amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the z-component of the field.
                 mfzfab(i,j,k) = (*zfield_parser)(x,y,z);
             }
         );
     }
-
 }

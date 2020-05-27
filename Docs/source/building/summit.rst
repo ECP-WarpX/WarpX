@@ -29,6 +29,20 @@ See :doc:`../running_cpp/platforms` for more information on how to run WarpX on 
 
 See :doc:`../visualization/yt` for more information on how to visualize the simulation results.
 
+.. note::
+
+   To compile and run WarpX on Summit CPUs, the cuda module is not necessary.
+
+   But to build with the spectral solver, PSATD, you need to use an MPI-enabled version of FFTW like the `fftw` module (because the `cuFFT` tool is not available when cuda is not loaded).
+
+   ::
+
+      module load gcc
+      module load fftw
+      make -j 16 COMP=gcc USE_PSATD=TRUE
+
+
+
 
 .. _building-summit-openPMD:
 
