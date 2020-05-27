@@ -2,28 +2,43 @@
 
 namespace AnyFFT
 {
-#ifdef AMREX_USE_FLOAT
-    const auto mapdir std::map<direction, cufftType>{
-        {R2C, CUFFT_R2C},
-        {C2R, CUFFT_C2R}};
-#else
-    const auto mapdir std::map<direction, cufftType>{
-        {R2C, CUFFT_D2Z},
-        {C2R, CUFFT_Z2D}};
-#endif
-
     std::string cufftErrorToString (const cufftResult& err);
 
     FFTplan CreatePlan(int nx, int ny, int nz,
                        amrex::Real* real_array, Complex* complex_array, direction dir)
     {
         FFTplan fft_plan;
-
+        cufftResult result;
+        if (dir == direction::R2C){
 #if (AMREX_SPACEDIM == 3)
-        cufftResult result = cufftPlan3d( &(fft_plan.m_plan), nz, ny, nx, mapdir[direction]);
+#  ifdef AMREX_USE_FLOAT
+            result = cufftPlan3d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_R2C);
+#  else
+            result = cufftPlan3d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_D2Z);
+#  endif
 #else
-        cufftResult result = cufftPlan2d( &(fft_plan.m_plan), nz, ny, nx, mapdir[direction]);
+#  ifdef AMREX_USE_FLOAT
+            result = cufftPlan2d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_R2C);
+#  else
+            result = cufftPlan2d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_D2Z);
+#  endif
 #endif
+        } else {
+#if (AMREX_SPACEDIM == 3)
+#  ifdef AMREX_USE_FLOAT
+            result = cufftPlan3d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_C2R);
+#  else
+            result = cufftPlan3d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_Z2D);
+#  endif
+#else
+#  ifdef AMREX_USE_FLOAT
+            result = cufftPlan2d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_C2R);
+#  else
+            result = cufftPlan2d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_Z2D);
+#  endif
+#endif
+        }
+
         if ( result != CUFFT_SUCCESS ) {
             amrex::Print() << " cufftplan failed! Error: " <<
                 cufftErrorToString(result) << "\n";
@@ -47,17 +62,17 @@ namespace AnyFFT
         cufftSetStream ( fft_plan.m_plan, stream);
         cufftResult result;
         if (fft_plan.m_dir == direction::R2C){
-#  ifdef AMREX_USE_FLOAT
+#ifdef AMREX_USE_FLOAT
             result = cufftExecR2C(fft_plan.m_plan, fft_plan.m_real_array, fft_plan.m_complex_array);
-#  else
+#else
             result = cufftExecD2Z(fft_plan.m_plan, fft_plan.m_real_array, fft_plan.m_complex_array);
-#  endif
+#endif
         } else if (fft_plan.m_dir == direction::C2R){
-#  ifdef AMREX_USE_FLOAT
+#ifdef AMREX_USE_FLOAT
             result = cufftExecC2R(fft_plan.m_plan, fft_plan.m_complex_array, fft_plan.m_real_array);
-#  else
+#else
             result = cufftExecZ2D(fft_plan.m_plan, fft_plan.m_complex_array, fft_plan.m_real_array);
-#  endif
+#endif
         } else {
             amrex::Abort("direction must be AnyFFT::direction::R2C or AnyFFT::direction::C2R");
         }
