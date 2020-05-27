@@ -22,9 +22,15 @@ Schwinger process
 
 If the code is compiled with QED and the user activates the Schwinger process in the input file,
 electron-positron pairs can be created in vacuum in the function
-``MultiParticleContainer::doQEDSchwinger`` which is called at every time step in ``Evolve``.
-``MultiParticleContainer::doQEDSchwinger`` in turn calls the function ``filterCreateTransformFromFAB``,
-which proceeds in three steps.
+``MultiParticleContainer::doQEDSchwinger``:
+
+.. doxygenfunction:: MultiParticleContainer::doQEDSchwinger
+
+``MultiParticleContainer::doQEDSchwinger`` in turn calls the function ``filterCreateTransformFromFAB``:
+
+.. doxygenfunction:: filterCreateTransformFromFAB(DstTile&, DstTile&, const amrex::Box, const FABs&, const Index, const Index, FilterFunc&&, CreateFunc1&&, CreateFunc2&&, TransFunc&&)
+
+``filterCreateTransformFromFAB`` proceeds in three steps.
 In the filter phase, we loop on every cell and calculate the number of physical pairs created within
 the time step dt as a function of the electromagnetic field at the given cell position.
 This probabilistic calculation is done via a wrapper that calls the ``PICSAR`` library.
