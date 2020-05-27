@@ -95,19 +95,6 @@ public:
                                 int lev,
                                 int depos_lev,
                                 amrex::Real dt) override {};
-
-#ifdef WARPX_QED
-    /**
-     * This function evolves the optical depth of the photons if QED effects
-     * are enabled.
-     * @param[in,out] pti particle iterator (optical depth will be modified)
-     * @param[in] dt temporal step
-     */
-    virtual void EvolveOpticalDepth(WarpXParIter& pti,
-        amrex::Real dt) override;
-
-#endif
-
 };
 
 #endif // #ifndef WARPX_PhotonParticleContainer_H_

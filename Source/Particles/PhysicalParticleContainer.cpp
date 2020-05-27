@@ -973,7 +973,6 @@ PhysicalParticleContainer::Evolve (int lev,
     WARPX_PROFILE("PPC::Evolve()");
     WARPX_PROFILE_VAR_NS("PPC::Evolve::Copy", blp_copy);
     WARPX_PROFILE_VAR_NS("PPC::FieldGather", blp_fg);
-    WARPX_PROFILE_VAR_NS("PPC::EvolveOpticalDepth", blp_ppc_qed_ev);
     WARPX_PROFILE_VAR_NS("PPC::ParticlePush", blp_ppc_pp);
 
     BL_ASSERT(OnSameGrids(lev,jx));
@@ -1146,16 +1145,6 @@ PhysicalParticleContainer::Evolve (int lev,
                 }
 
                 WARPX_PROFILE_VAR_STOP(blp_fg);
-
-                // NEED TO MOVE
-#ifdef WARPX_QED
-                //
-                //Evolve Optical Depth
-                //
-                WARPX_PROFILE_VAR_START(blp_ppc_qed_ev);
-                EvolveOpticalDepth(pti, dt);
-                WARPX_PROFILE_VAR_STOP(blp_ppc_qed_ev);
-#endif
 
                 //
                 // Current Deposition (only needed for electromagnetic solver)
@@ -1455,49 +1444,6 @@ PhysicalParticleContainer::SplitParticles (int lev)
     // Clear tmp container
     pctmp_split.clearParticles();
 }
-
-#ifdef WARPX_QED
-void PhysicalParticleContainer::EvolveOpticalDepth(
-    WarpXParIter& pti, amrex::Real dt)
-{
-    if(!has_quantum_sync())
-        return;
-
-    QuantumSynchrotronEvolveOpticalDepth evolve_opt =
-        m_shr_p_qs_engine->build_evolve_functor();
-
-    auto& attribs = pti.GetAttribs();
-    const ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Ex = attribs[PIdx::Ex].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Ey = attribs[PIdx::Ey].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Ez = attribs[PIdx::Ez].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Bx = attribs[PIdx::Bx].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT By = attribs[PIdx::By].dataPtr();
-    const ParticleReal* const AMREX_RESTRICT Bz = attribs[PIdx::Bz].dataPtr();
-
-    ParticleReal* const AMREX_RESTRICT p_optical_depth_QSR =
-        pti.GetAttribs(particle_comps["optical_depth_QSR"]).dataPtr();
-
-    const ParticleReal m = this->mass;
-
-    amrex::ParallelFor(pti.numParticles(),
-            [=] AMREX_GPU_DEVICE (long i) {
-                const ParticleReal px = m * ux[i];
-                const ParticleReal py = m * uy[i];
-                const ParticleReal pz = m * uz[i];
-
-                bool has_event_happened = evolve_opt(
-                    px, py, pz,
-                    Ex[i], Ey[i], Ez[i],
-                    Bx[i], By[i], Bz[i],
-                    dt, p_optical_depth_QSR[i]);
-            }
-    );
-
-}
-#endif
 
 void
 PhysicalParticleContainer::PushP (
@@ -2054,9 +2000,16 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const auto pusher_algo = WarpX::particle_pusher_algo;
     const auto do_crr = do_classical_radiation_reaction;
 #ifdef WARPX_QED
+    AMREX_ASSERT(has_quantum_sync());
     const auto do_sync = m_do_qed_quantum_sync;
     amrex::Real t_chi_max = 0.0;
     if (do_sync) t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
+
+    QuantumSynchrotronEvolveOpticalDepth evolve_opt =
+        m_shr_p_qs_engine->build_evolve_functor();
+    
+    ParticleReal* const AMREX_RESTRICT p_optical_depth_QSR =
+        pti.GetAttribs(particle_comps["optical_depth_QSR"]).dataPtr();
 #endif
 
     amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
@@ -2079,6 +2032,17 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
+#ifdef WARPX_WED
+        const ParticleReal px = m * ux[ip];
+        const ParticleReal py = m * uy[ip];
+        const ParticleReal pz = m * uz[ip];
+
+        bool has_event_happened = evolve_opt(px, py, pz,
+                                             Exp, Eyp, Ezp,
+                                             Bxp, Byp, Bzp,
+                                             dt, p_optical_depth_QSR[ip]);
+#endif
+        
         Ex[ip] = Exp;
         Ey[ip] = Eyp;
         Ez[ip] = Ezp;
