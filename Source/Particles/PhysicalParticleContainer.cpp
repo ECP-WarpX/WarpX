@@ -1026,12 +1026,6 @@ PhysicalParticleContainer::Evolve (int lev,
             auto& uxp = attribs[PIdx::ux];
             auto& uyp = attribs[PIdx::uy];
             auto& uzp = attribs[PIdx::uz];
-            auto& Exp = attribs[PIdx::Ex];
-            auto& Eyp = attribs[PIdx::Ey];
-            auto& Ezp = attribs[PIdx::Ez];
-            auto& Bxp = attribs[PIdx::Bx];
-            auto& Byp = attribs[PIdx::By];
-            auto& Bzp = attribs[PIdx::Bz];
 
             const long np = pti.numParticles();
 
@@ -2000,16 +1994,17 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const auto pusher_algo = WarpX::particle_pusher_algo;
     const auto do_crr = do_classical_radiation_reaction;
 #ifdef WARPX_QED
-    AMREX_ASSERT(has_quantum_sync());
     const auto do_sync = m_do_qed_quantum_sync;
     amrex::Real t_chi_max = 0.0;
     if (do_sync) t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
 
-    QuantumSynchrotronEvolveOpticalDepth evolve_opt =
-        m_shr_p_qs_engine->build_evolve_functor();
-
-    ParticleReal* const AMREX_RESTRICT p_optical_depth_QSR =
-        pti.GetAttribs(particle_comps["optical_depth_QSR"]).dataPtr();
+    QuantumSynchrotronEvolveOpticalDepth evolve_opt;
+    ParticleReal* AMREX_RESTRICT p_optical_depth_QSR = nullptr;
+    const bool local_has_quantum_sync = has_quantum_sync();
+    if (local_has_quantum_sync) {
+        evolve_opt = m_shr_p_qs_engine->build_evolve_functor();
+        p_optical_depth_QSR = pti.GetAttribs(particle_comps["optical_depth_QSR"]).dataPtr();
+    }    
 #endif
 
     amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
@@ -2033,6 +2028,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
 #ifdef WARPX_WED
+    if (local_has_quantum_sync) {
         const ParticleReal px = m * ux[ip];
         const ParticleReal py = m * uy[ip];
         const ParticleReal pz = m * uz[ip];
@@ -2041,6 +2037,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                              Exp, Eyp, Ezp,
                                              Bxp, Byp, Bzp,
                                              dt, p_optical_depth_QSR[ip]);
+    }
 #endif
 
         Ex[ip] = Exp;
