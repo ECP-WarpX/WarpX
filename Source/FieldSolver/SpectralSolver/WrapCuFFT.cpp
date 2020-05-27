@@ -66,7 +66,7 @@ namespace AnyFFT
                 cufftErrorToString(result) << "\n";
         }
     }
-    
+
     /** \brief This method converts a cufftResult
      * into the corresponding string
      *
