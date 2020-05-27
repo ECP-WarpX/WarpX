@@ -986,7 +986,7 @@ Numerics and algorithms
     The algorithm for updating electric field when ``algo.em_solver_medium`` is macroscopic. Available options are:
 
     - ``backwardeuler`` is a fully-implicit, first-order in time scheme for E-update (default).
-    - ``laxwendroff`` is the semi-implicit, second order in time scheme for E-update. 
+    - ``laxwendroff`` is the semi-implicit, second order in time scheme for E-update.
     Comparing the two methods, LaxWendroff is more prone to developing oscillations and requires a smaller timestep for stability. On the other hand, Backward Euler is more robust but is first order accurte in time compared to the second-order Lax-Wendroff method.
 
 * ``macroscopic.sigma``, ``macroscopic.epsilon``, ``macroscopic.mu`` (`double`)

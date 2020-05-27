@@ -64,7 +64,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     Real fac1 = 0._rt;
     Real inv_fac = 0._rt;
 
-    if (macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) { 
+    if (macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) {
         fac1 = sigma * dt / epsilon;
         inv_fac = 1._rt / ( 1._rt + fac1);
         alpha = inv_fac;
