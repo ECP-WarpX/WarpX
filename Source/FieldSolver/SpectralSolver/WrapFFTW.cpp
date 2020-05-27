@@ -6,7 +6,7 @@ FFTplan CreatePlan(int nx, int ny, int nz,
         amrex::Real* real_array, PrecisionComplex* complex_array, direction dir)
     {
         FFTplan fft_plan;
-        
+
         if (dir == direction::R2C){
         // Create FFTW plans
         fft_plan.m_plan =
@@ -26,6 +26,7 @@ FFTplan CreatePlan(int nx, int ny, int nz,
 #endif
         } else if (dir == direction::C2R){
             // Swap dimensions: AMReX FAB are Fortran-order but FFTW is C-order
+        fft_plan.m_plan =
 #if (AMREX_SPACEDIM == 3)
 #  ifdef AMREX_USE_FLOAT
             fftwf_plan_dft_c2r_3d( nz, ny, nx, complex_array, real_array, FFTW_ESTIMATE);
@@ -52,7 +53,7 @@ FFTplan CreatePlan(int nx, int ny, int nz,
         fftwf_destroy_plan( fft_plan.m_plan );
 #  else
         fftw_destroy_plan( fft_plan.m_plan );
-#  endif        
+#  endif
     }
 
     void Execute(FFTplan& fft_plan){
