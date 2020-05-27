@@ -35,7 +35,7 @@ public:
     {
 #ifdef AMREX_USE_GPU
         amrex::GpuArray<amrex::Real,N> l_var{var...};
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#if AMREX_DEVICE_COMPILE
 // WarpX compiled for GPU, function compiled for __device__
         return wp_ast_eval(m_gpu_parser.ast, l_var.data());
 #else
