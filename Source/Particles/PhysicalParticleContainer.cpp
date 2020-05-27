@@ -2004,7 +2004,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     if (local_has_quantum_sync) {
         evolve_opt = m_shr_p_qs_engine->build_evolve_functor();
         p_optical_depth_QSR = pti.GetAttribs(particle_comps["optical_depth_QSR"]).dataPtr();
-    }    
+    }
 #endif
 
     amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)

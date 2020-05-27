@@ -97,7 +97,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     const bool local_has_breit_wheeler = has_breit_wheeler();
     if (local_has_breit_wheeler) {
         evolve_opt = m_shr_p_bw_engine->build_evolve_functor();
-        p_optical_depth_BW = pti.GetAttribs(particle_comps["optical_depth_BW"]).dataPtr();        
+        p_optical_depth_BW = pti.GetAttribs(particle_comps["optical_depth_BW"]).dataPtr();
     }
 
     const auto me = PhysConst::m_e;
@@ -118,7 +118,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
             GetPosition(i, x, y, z);
 
 #ifdef WARPX_QED
-    if (local_has_breit_wheeler) {            
+    if (local_has_breit_wheeler) {
             const ParticleReal px = me * ux[i];
             const ParticleReal py = me * uy[i];
             const ParticleReal pz = me * uz[i];
