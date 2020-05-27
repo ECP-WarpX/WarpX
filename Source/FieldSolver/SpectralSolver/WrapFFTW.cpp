@@ -2,48 +2,53 @@
 
 namespace AnyFFT
 {
-FFTplan CreatePlan(int nx, int ny, int nz,
-        amrex::Real* real_array, PrecisionComplex* complex_array, direction dir)
+#ifdef AMREX_USE_FLOAT
+#  if (AMREX_SPACEDIM == 3)
+    const auto VendorCreatePlanR2C3D = fftwf_plan_dft_r2c_3d;
+    const auto VendorCreatePlanC2R3D = fftwf_plan_dft_c2r_3d;
+#  else
+    const auto VendorCreatePlanR2C2D = fftwf_plan_dft_r2c_2d;
+    const auto VendorCreatePlanC2R2D = fftwf_plan_dft_c2r_2d;
+#  endif
+#else
+#  if (AMREX_SPACEDIM == 3)
+    const auto VendorCreatePlanR2C3D = fftw_plan_dft_r2c_3d;
+    const auto VendorCreatePlanC2R3D = fftw_plan_dft_c2r_3d;
+#  else
+    const auto VendorCreatePlanR2C2D = fftw_plan_dft_r2c_2d;
+    const auto VendorCreatePlanC2R2D = fftw_plan_dft_c2r_2d;
+#  endif
+#endif
+
+    FFTplan CreatePlan(int nx, int ny, int nz,
+                       amrex::Real* real_array, Complex* complex_array, direction dir)
     {
         FFTplan fft_plan;
 
         if (dir == direction::R2C){
-        // Create FFTW plans
-        fft_plan.m_plan =
             // Swap dimensions: AMReX FAB are Fortran-order but FFTW is C-order
 #if (AMREX_SPACEDIM == 3)
-#  ifdef AMREX_USE_FLOAT
-            fftwf_plan_dft_r2c_3d( nz, ny, nx, real_array, complex_array, FFTW_ESTIMATE);
-#  else
-            fftw_plan_dft_r2c_3d( nz, ny, nx, real_array, complex_array, FFTW_ESTIMATE);
-#  endif
+            fft_plan.m_plan = VendorCreatePlanR2C3D(
+                nz, ny, nx, real_array, complex_array, FFTW_ESTIMATE);
 #else
-#  ifdef AMREX_USE_FLOAT
-            fftwf_plan_dft_r2c_2d( ny, nx, real_array, complex_array, FFTW_ESTIMATE);
-#  else
-            fftw_plan_dft_r2c_2d( ny, nx, real_array, complex_array, FFTW_ESTIMATE);
-#  endif
+            fft_plan.m_plan = VendorCreatePlanR2C2D(
+                ny, nx, real_array, complex_array, FFTW_ESTIMATE);
 #endif
         } else if (dir == direction::C2R){
             // Swap dimensions: AMReX FAB are Fortran-order but FFTW is C-order
-        fft_plan.m_plan =
 #if (AMREX_SPACEDIM == 3)
-#  ifdef AMREX_USE_FLOAT
-            fftwf_plan_dft_c2r_3d( nz, ny, nx, complex_array, real_array, FFTW_ESTIMATE);
-#  else
-            fftw_plan_dft_c2r_3d( nz, ny, nx, complex_array, real_array, FFTW_ESTIMATE);
-#  endif
+            fft_plan.m_plan = VendorCreatePlanC2R3D(
+                nz, ny, nx, complex_array, real_array, FFTW_ESTIMATE);
 #else
-#  ifdef AMREX_USE_FLOAT
-            fftwf_plan_dft_c2r_2d( ny, nx, complex_array, real_array, FFTW_ESTIMATE);
-#  else
-            fftw_plan_dft_c2r_2d( ny, nx, complex_array, real_array, FFTW_ESTIMATE);
-#  endif
+            fft_plan.m_plan = VendorCreatePlanC2R2D(
+                ny, nx, complex_array, real_array, FFTW_ESTIMATE);
 #endif
         }
+
         fft_plan.m_real_array = real_array;
         fft_plan.m_complex_array = complex_array;
         fft_plan.m_dir = dir;
+
         return fft_plan;
     }
 

@@ -8,6 +8,8 @@
 #ifndef WARPX_COMPLEX_H_
 #define WARPX_COMPLEX_H_
 
+#include "FieldSolver/SpectralSolver/AnyFFT.H"
+
 #include <AMReX_REAL.H>
 #include <AMReX_Gpu.H>
 #include <AMReX_GpuComplex.H>
@@ -29,6 +31,7 @@ static_assert( sizeof(Complex) == sizeof(cuDoubleComplex),
 #        endif
 #    endif // WARPX_USE_PSATD
 
+/*
 #else
 
 #    ifdef WARPX_USE_PSATD
@@ -41,8 +44,13 @@ static_assert( sizeof(Complex) == sizeof(fftw_complex),
     "The complex types in WarpX and FFTW do not match.");
 #        endif
 #    endif // WARPX_USE_PSATD
+*/
 
 #endif // AMREX_USE_GPU
+
+static_assert(sizeof(Complex) == sizeof(AnyFFT::Complex),
+    "The complex type in WarpX and the FFT library do not match.");
+
 static_assert(sizeof(Complex) == sizeof(amrex::Real[2]),
               "Unexpected complex type.");
 

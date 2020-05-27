@@ -1,54 +1,51 @@
 #ifndef WRAPCUFFT_H_
 #define WRAPCUFFT_H_
 
+#include <cufft.h>
+
 namespace AnyFFT
-{    
+{
+    using VendorFFTPlan = cufftHandle;
 #ifdef AMREX_USE_FLOAT
-    using PrecisionComplex = cuComplex;
+    using Complex = cuComplex;
 #else
-    using PrecisionComplex = cuDoubleComplex;
+    using Complex = cuDoubleComplex;
 #endif
 
-    using FFTplans = amrex::LayoutData<cufftHandle>;
-
-#ifdef AMREX_USE_FLOAT
-    const auto mapdir std::map<direction, cufftType>{
-        {R2C, CUFFT_R2C},
-        {C2R, CUFFT_C2R}};
-#else
-    const auto mapdir std::map<direction, cufftType>{
-        {R2C, CUFFT_D2Z},
-        {C2R, CUFFT_Z2D}};
-#endif
-
-    struct FFTPlans {
-        amrex::Real* m_real_array;
-        PrecisionComplex* m_complex_array;
-        amrex::LayoutData<cufftHandle> m_plan;
-    }
-
-    CreatePlan(
-        FFTPlans& fft_plan, int nx, int ny, int nz,
-        amrex::Real* real_array, PrecisionComplex* complex_array, direction dir)
+    /**
+     * This struct contains the vendor FFT plan and additional metadata
+     */
+    struct FFTplan
     {
-        // Create cuFFT plans
-        // Creating 3D plan for real to complex -- double precision
-        // Assuming CUDA is used for programming GPU
-        // Note that D2Z is inherently forward plan
-        // and  Z2D is inherently backward plan
-        cufftResult result;
-#if (AMREX_SPACEDIM == 3)
-        result = cufftPlan3d( &(fft_plan.m_plan), nz, ny, nx, mapdir[direction]);
-#else
-        result = cufftPlan2d( &(fft_plan.m_plan), nz, ny, nx, mapdir[direction]);
-#endif
-        if ( result != CUFFT_SUCCESS ) {
-            amrex::Print() << " cufftplan failed! Error: " <<
-                cufftErrorToString(result) << "\n";
-        }
-        fft_plan.m_real_array = real_array;
-        fft_plan.m_complex_array = complex_array;
-    }
+        amrex::Real* m_real_array; /**< pointer to real array */
+        Complex* m_complex_array; /**< pointer to complex array */
+        VendorFFTPlan m_plan; /**< cuFFT plan */
+        direction m_dir;  /**< direction (C2R or R2C) */
+    };
+
+    /** Collection of FFT plans, one FFTplan per box */
+    using FFTplans = amrex::LayoutData<FFTplan>;
+
+    /** \brief create cuFFT plan assuming CUDA is used for programming GPU
+     * \param[in] nx array size in 1st direction
+     * \param[in] ny array size in 2nd direction
+     * \param[in] nz array size in 3rd direction
+     * \param[out] real_array Real array from/to where R2C/C2R FFT is performed
+     * \param[out] complex_array Complex array to/from where R2C/C2R FFT is performed
+     * \param[in] dir direction, either R2C or C2R
+     */
+    FFTplan CreatePlan(int nx, int ny, int nz,
+                       amrex::Real* real_array, Complex* complex_array, direction dir);
+
+    /** \brief Destroy cuFFT plan
+     * \param[out] fft_plan plan to destroy
+     */
+    void DestroyPlan(FFTplan& fft_plan);
+
+    /** \brief Perform FFT with cuFFT
+     * \param[out] fft_plan plan for which the FFT is performed
+     */
+    void Execute(FFTplan& fft_plan);
 }
 
 #endif
