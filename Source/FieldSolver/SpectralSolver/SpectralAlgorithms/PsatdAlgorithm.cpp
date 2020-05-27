@@ -277,6 +277,7 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
     using Idx = SpectralFieldIndex;
 
     // Forward Fourier transform of D (temporarily stored in current)
+    // (units multiplied by [L])
     field_data.ForwardTransform( *current[0], Idx::Jx, 0 );
     field_data.ForwardTransform( *current[1], Idx::Jy, 0 );
     field_data.ForwardTransform( *current[2], Idx::Jz, 0 );
@@ -286,7 +287,14 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
     const amrex::IntVect stag_jy = current[1]->ixType().toIntVect();
     const amrex::IntVect stag_jz = current[2]->ixType().toIntVect();
 
-    const amrex::RealVect dx = m_dx;
+    // Index of z direction in 2D and 3D
+    constexpr int zdir = AMREX_SPACEDIM-1;
+
+    const amrex::Real dx = m_dx[0];
+#if (AMREX_SPACEDIM==3)
+    const amrex::Real dy = m_dx[1];
+#endif
+    const amrex::Real dz = m_dx[zdir];
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -310,12 +318,8 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
 #endif
         const amrex::Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
 
-        // Index of z direction
-        constexpr int zdir = AMREX_SPACEDIM - 1;
-
         // Loop over indices within one box
-        ParallelFor( bx,
-        [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
+        ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
         {
             // Record old values of the fields to be updated
             using Idx = SpectralFieldIndex;
@@ -347,185 +351,138 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             const     amrex::Real kz_mod = modified_kz_arr[j];
 #endif
 
-            // Compute Jx
+
+            // Compute Jx cell-centered or nodal
+            // (units multiplied by [L] again)
             if ( kx_mod != 0 ) {
-                // Jx cell-centered along x
-                if      ( stag_jx[0] == 0 ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod*exp(I*kx*dx[0]*0.5_rt);
-                // Jx nodal along x
+                if      ( stag_jx[0] == 0 ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod*exp(I*kx*dx*0.5_rt);
                 else if ( stag_jx[0] == 1 ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod;
             }
 
-            // Compute Jy (can enter this loop only in 3D, because ky_mod=0 in 2D)
+#if (AMREX_SPACEDIM==3)
+            // Compute Jy cell-centered or nodal
+            // (units multiplied by [L] again)
             if ( ky_mod != 0 ) {
-                // Jy cell-centered along y
-                if      ( stag_jy[1] == 0 ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod*exp(I*ky*dx[1]*0.5_rt);
-                // Jy nodal along y
+                if      ( stag_jy[1] == 0 ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod*exp(I*ky*dy*0.5_rt);
                 else if ( stag_jy[1] == 1 ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod;
             }
+#endif
 
-            // Compute Jz
+            // Compute Jz cell-centered or nodal
+            // (units multiplied by [L] again)
             if ( kz_mod != 0 ) {
-                // Jz cell-centered along z
-                if       ( stag_jz[zdir] == 0 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod*exp(I*kz*dx[zdir]*0.5_rt);
-                // Jz nodal along z
+                if       ( stag_jz[zdir] == 0 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod*exp(I*kz*dz*0.5_rt);
                 else  if ( stag_jz[zdir] == 1 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod;
             }
         } );
     }
 
-    // Alias MultiFab for (Dx,Dy,Dz) before overwriting
-    MultiFab Dx_mf( *current[0], amrex::make_alias, 0, 1 );
-    MultiFab Dy_mf( *current[1], amrex::make_alias, 0, 1 );
-    MultiFab Dz_mf( *current[2], amrex::make_alias, 0, 1 );
+//    // Alias MultiFab for (Dx,Dy,Dz) before overwriting
+//    amrex::MultiFab Dx_mf( *current[0], amrex::make_alias, 0, 1 );
+//    amrex::MultiFab Dy_mf( *current[1], amrex::make_alias, 0, 1 );
+//    amrex::MultiFab Dz_mf( *current[2], amrex::make_alias, 0, 1 );
 
     // Backward Fourier transform of J
+    // (units divided by [L]: one factor [L] from before remains)
     field_data.BackwardTransform( *current[0], Idx::Jx, 0 );
     field_data.BackwardTransform( *current[1], Idx::Jy, 0 );
     field_data.BackwardTransform( *current[2], Idx::Jz, 0 );
 
-    // Adjust average value
-
-    //// TODO Can this single loop replace the three separate loops over boxes?
-    //// Loop over boxes
-    //for (amrex::MFIter mfi(Dx_mf); mfi.isValid(); ++mfi) { // which MultiFab?
-
-    //    const amrex::Box& bx = Dx_mf[mfi].box();
-
-    //    // Original current D deposited in CurrentDeposition.H
-    //    amrex::Array4<amrex::Real> Dx_arr = Dx_mf.array( mfi );
-    //    amrex::Array4<amrex::Real> Dy_arr = Dy_mf.array( mfi );
-    //    amrex::Array4<amrex::Real> Dz_arr = Dz_mf.array( mfi );
-
-    //    const amrex::Dim3 lo_jx = lbound( Dx_arr );
-    //    const amrex::Dim3 hi_jx = ubound( Dx_arr );
-    //    const amrex::Dim3 lo_jy = lbound( Dy_arr );
-    //    const amrex::Dim3 hi_jy = ubound( Dy_arr );
-    //    const amrex::Dim3 lo_jz = lbound( Dz_arr );
-    //    const amrex::Dim3 hi_jz = ubound( Dz_arr );
-
-    //    const int nx = hi_jx.x-lo_jx.x+1;
-    //    const int ny = hi_jy.y-lo_jy.y+1;
-    //    const int nz = hi_jz.z-lo_jz.z+1;
-
-    //    // 3D array to store directional cumulative sum of D
-    //    amrex::Array4<amrex::Real> const Dx_cumsum = Dx_mf.array( mfi );
-    //    amrex::Array4<amrex::Real> const Dy_cumsum = Dy_mf.array( mfi );
-    //    amrex::Array4<amrex::Real> const Dz_cumsum = Dz_mf.array( mfi );
-
-    //    // Reference to J
-    //    amrex::Array4<amrex::Real> const& Jx_arr = (*current[0]).array( mfi );
-    //    amrex::Array4<amrex::Real> const& Jy_arr = (*current[1]).array( mfi );
-    //    amrex::Array4<amrex::Real> const& Jz_arr = (*current[2]).array( mfi );
-
-    //    // Loop over indices within one box
-    //    ParallelFor( bx,
-    //    [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
-    //    {
-    //        // Compute cumulative sums of Dx, Dy, Dz along x, y, z
-    //        for ( int ii = lo_jx.x; ii <= i; ++ii ) Dx_cumsum(i,j,k) += Dx_arr(ii,j,k);
-    //        for ( int jj = lo_jy.y; jj <= j; ++jj ) Dy_cumsum(i,j,k) += Dy_arr(i,jj,k);
-    //        for ( int kk = lo_jz.z; kk <= k; ++kk ) Dz_cumsum(i,j,k) += Dz_arr(i,j,kk);
-
-    //        // Subtract average of cumulative sums element-wise to avoid duplication of ParallelFor
-    //        Jx_arr(i,j,k) -= Dx_cumsum(i,j,k)/nx;
-    //        Jy_arr(i,j,k) -= Dy_cumsum(i,j,k)/ny;
-    //        Jz_arr(i,j,k) -= Dz_cumsum(i,j,k)/nz;
-    //    } );
-    //}
-
-    // Loop over boxes for Jx
-    for (amrex::MFIter mfi(Dx_mf); mfi.isValid(); ++mfi) {
-
-        const amrex::Box& bx = Dx_mf[mfi].box();
-
-        // Original current D deposited in CurrentDeposition.H
-        amrex::Array4<amrex::Real> Dx_arr = Dx_mf.array( mfi );
-
-        const amrex::Dim3 lo_jx = lbound( Dx_arr );
-        const amrex::Dim3 hi_jx = ubound( Dx_arr );
-
-        const int nx = hi_jx.x-lo_jx.x+1;
-
-        // 3D array to store directional cumulative sum of D
-        amrex::Array4<amrex::Real> const Dx_cumsum = Dx_mf.array( mfi );
-
-        // Reference to J
-        amrex::Array4<amrex::Real> const& Jx_arr = (*current[0]).array( mfi );
-
-        // Loop over indices within one box
-        ParallelFor( bx,
-        [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
-        {
-            // Compute cumulative sums of Dx along x
-            for ( int ii = lo_jx.x; ii <= i; ++ii ) Dx_cumsum(i,j,k) += Dx_arr(ii,j,k);
-
-            // Subtract average of cumulative sum element-wise to avoid duplication of ParallelFor
-            Jx_arr(i,j,k) -= Dx_cumsum(i,j,k)/nx;
-        } );
-    }
-
-#if (AMREX_SPACEDIM==3)
-    // Loop over boxes for Jy
-    for (amrex::MFIter mfi(Dy_mf); mfi.isValid(); ++mfi) {
-
-        const amrex::Box& bx = Dy_mf[mfi].box();
-
-        // Original current D deposited in CurrentDeposition.H
-        amrex::Array4<amrex::Real> Dy_arr = Dy_mf.array( mfi );
-
-        const amrex::Dim3 lo_jy = lbound( Dy_arr );
-        const amrex::Dim3 hi_jy = ubound( Dy_arr );
-
-        const int ny = hi_jy.y-lo_jy.y+1;
-
-        // 3D array to store directional cumulative sum of D
-        amrex::Array4<amrex::Real> const Dy_cumsum = Dy_mf.array( mfi );
-
-        // Reference to J
-        amrex::Array4<amrex::Real> const& Jy_arr = (*current[1]).array( mfi );
-
-        // Loop over indices within one box
-        ParallelFor( bx,
-        [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
-        {
-            // Compute cumulative sums of Dy along y
-            for ( int jj = lo_jy.y; jj <= j; ++jj ) Dy_cumsum(i,j,k) += Dy_arr(i,jj,k);
-
-            // Subtract average of cumulative sum element-wise to avoid duplication of ParallelFor
-            Jy_arr(i,j,k) -= Dy_cumsum(i,j,k)/ny;
-        } );
-    }
-#endif
-
-    // Loop over boxes for Jz
-    for (amrex::MFIter mfi(Dz_mf); mfi.isValid(); ++mfi) {
-
-        const amrex::Box& bx = Dz_mf[mfi].box();
-
-        // Original current D deposited in CurrentDeposition.H
-        amrex::Array4<amrex::Real> Dz_arr = Dz_mf.array( mfi );
-
-        const amrex::Dim3 lo_jz = lbound( Dz_arr );
-        const amrex::Dim3 hi_jz = ubound( Dz_arr );
-
-        const int nz = hi_jz.z-lo_jz.z+1;
-
-        // 3D array to store directional cumulative sum of D
-        amrex::Array4<amrex::Real> const Dz_cumsum = Dz_mf.array( mfi );
-
-        // Reference to J
-        amrex::Array4<amrex::Real> const& Jz_arr = (*current[2]).array( mfi );
-
-        // Loop over indices within one box
-        ParallelFor( bx,
-        [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
-        {
-            // Compute cumulative sums of Dz along z
-            for ( int kk = lo_jz.z; kk <= k; ++kk ) Dz_cumsum(i,j,k) += Dz_arr(i,j,kk);
-
-            // Subtract average of cumulative sum element-wise to avoid duplication of ParallelFor
-            Jz_arr(i,j,k) -= Dz_cumsum(i,j,k)/nz;
-        } );
-    }
+//    // TODO Adjust average value: can this be done with a single loop over boxes?
+//
+//    // Loop over boxes for Jx
+//    for (amrex::MFIter mfi(Dx_mf); mfi.isValid(); ++mfi) {
+//
+//        const amrex::Box& bx = Dx_mf[mfi].box();
+//
+//        // Original current D deposited in CurrentDeposition.H
+//        amrex::Array4<amrex::Real const> const& Dx_arr = Dx_mf.array( mfi );
+//
+//        const amrex::Dim3 lo_jx = lbound( Dx_arr );
+//        const amrex::Dim3 hi_jx = ubound( Dx_arr );
+//
+//        const int nx = hi_jx.x-lo_jx.x+1;
+//
+//        // 3D array to store directional cumulative sum of D
+//        amrex::Array4<amrex::Real> const Dx_cumsum = Dx_mf.array( mfi );
+//
+//        // Reference to J
+//        amrex::Array4<amrex::Real> const& Jx_arr = (*current[0]).array( mfi );
+//
+//        // Loop over indices within one box
+//        ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
+//        {
+//            // Compute cumulative sums of Dx along x
+//            for ( int ii = lo_jx.x; ii <= i; ++ii ) Dx_cumsum(i,j,k) += Dx_arr(ii,j,k);
+//
+//            // Subtract average of cumulative sum element-wise to avoid duplication of ParallelFor
+//            Jx_arr(i,j,k) -= Dx_cumsum(i,j,k)/static_cast<Real>(nx);
+//            Jx_arr(i,j,k) *= dx;
+//        } );
+//    }
+//
+//#if (AMREX_SPACEDIM==3)
+//    // Loop over boxes for Jy
+//    for (amrex::MFIter mfi(Dy_mf); mfi.isValid(); ++mfi) {
+//
+//        const amrex::Box& bx = Dy_mf[mfi].box();
+//
+//        // Original current D deposited in CurrentDeposition.H
+//        amrex::Array4<amrex::Real const> const& Dy_arr = Dy_mf.array( mfi );
+//
+//        const amrex::Dim3 lo_jy = lbound( Dy_arr );
+//        const amrex::Dim3 hi_jy = ubound( Dy_arr );
+//
+//        const int ny = hi_jy.y-lo_jy.y+1;
+//
+//        // 3D array to store directional cumulative sum of D
+//        amrex::Array4<amrex::Real> const Dy_cumsum = Dy_mf.array( mfi );
+//
+//        // Reference to J
+//        amrex::Array4<amrex::Real> const& Jy_arr = (*current[1]).array( mfi );
+//
+//        // Loop over indices within one box
+//        ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
+//        {
+//            // Compute cumulative sums of Dy along y
+//            for ( int jj = lo_jy.y; jj <= j; ++jj ) Dy_cumsum(i,j,k) += Dy_arr(i,jj,k);
+//
+//            // Subtract average of cumulative sum element-wise to avoid duplication of ParallelFor
+//            Jy_arr(i,j,k) -= Dy_cumsum(i,j,k)/static_cast<Real>(ny);
+//            Jy_arr(i,j,k) *= dy;
+//        } );
+//    }
+//#endif
+//
+//    // Loop over boxes for Jz
+//    for (amrex::MFIter mfi(Dz_mf); mfi.isValid(); ++mfi) {
+//
+//        const amrex::Box& bx = Dz_mf[mfi].box();
+//
+//        // Original current D deposited in CurrentDeposition.H
+//        amrex::Array4<amrex::Real const> const& Dz_arr = Dz_mf.array( mfi );
+//
+//        const amrex::Dim3 lo_jz = lbound( Dz_arr );
+//        const amrex::Dim3 hi_jz = ubound( Dz_arr );
+//
+//        const int nz = hi_jz.z-lo_jz.z+1;
+//
+//        // 3D array to store directional cumulative sum of D
+//        amrex::Array4<amrex::Real> const Dz_cumsum = Dz_mf.array( mfi );
+//
+//        // Reference to J
+//        amrex::Array4<amrex::Real> const& Jz_arr = (*current[2]).array( mfi );
+//
+//        // Loop over indices within one box
+//        ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
+//        {
+//            // Compute cumulative sums of Dz along z
+//            for ( int kk = lo_jz.z; kk <= k; ++kk ) Dz_cumsum(i,j,k) += Dz_arr(i,j,kk);
+//
+//            // Subtract average of cumulative sum element-wise to avoid duplication of ParallelFor
+//            Jz_arr(i,j,k) -= Dz_cumsum(i,j,k)/static_cast<Real>(nz);
+//            Jz_arr(i,j,k) *= dz;
+//        } );
+//    }
 }
 #endif // WARPX_USE_PSATD
