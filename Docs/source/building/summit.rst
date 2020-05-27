@@ -29,8 +29,22 @@ See :doc:`../running_cpp/platforms` for more information on how to run WarpX on 
 
 See :doc:`../visualization/yt` for more information on how to visualize the simulation results.
 
+.. note::
 
-.. _building-cori-openPMD:
+   To compile and run WarpX on Summit CPUs, the cuda module is not necessary.
+
+   But to build with the spectral solver, PSATD, you need to use an MPI-enabled version of FFTW like the `fftw` module (because the `cuFFT` tool is not available when cuda is not loaded).
+
+   ::
+
+      module load gcc
+      module load fftw
+      make -j 16 COMP=gcc USE_PSATD=TRUE
+
+
+
+
+.. _building-summit-openPMD:
 
 Building WarpX with openPMD support
 -----------------------------------
@@ -43,6 +57,7 @@ First, load the appropriate modules:
     module load cuda
     module load cmake
     module load hdf5/1.10.4
+    module load adios2/2.5.0
 
 Then, in the ``warpx_directory``, download and build openPMD-api:
 
@@ -51,7 +66,7 @@ Then, in the ``warpx_directory``, download and build openPMD-api:
    git clone https://github.com/openPMD/openPMD-api.git
    mkdir openPMD-api-build
    cd openPMD-api-build
-   cmake ../openPMD-api -DopenPMD_USE_PYTHON=OFF -DCMAKE_INSTALL_PREFIX=../openPMD-install/ -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_RPATH='$ORIGIN'
+   cmake ../openPMD-api -DopenPMD_USE_PYTHON=OFF -DCMAKE_INSTALL_PREFIX=../openPMD-install/ -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_RPATH='$ORIGIN' -DMPIEXEC_EXECUTABLE=$(which jsrun)
    cmake --build . --target install --parallel 16
 
 .. note:

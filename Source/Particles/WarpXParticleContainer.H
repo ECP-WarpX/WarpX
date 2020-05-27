@@ -272,6 +272,8 @@ public:
 
     static void ReadParameters ();
 
+    static void BackwardCompatibility ();
+
     static int NextID () { return ParticleType::NextID(); }
 
     void setNextID(int next_id) { ParticleType::NextID(next_id); }
@@ -405,10 +407,14 @@ protected:
     amrex::Vector<amrex::FArrayBox> local_jy;
     amrex::Vector<amrex::FArrayBox> local_jz;
 
+public:
     using DataContainer = amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>;
     using PairIndex = std::pair<int, int>;
+    using TmpParticleTile = std::array<DataContainer, TmpIdx::nattribs>;
+    using TmpParticles = amrex::Vector<std::map<PairIndex, TmpParticleTile> >;
 
-    amrex::Vector<std::map<PairIndex, std::array<DataContainer, TmpIdx::nattribs> > > tmp_particle_data;
+protected:
+    TmpParticles tmp_particle_data;
 
     /**
      * When using runtime components, AMReX requires to touch all tiles

@@ -15,7 +15,7 @@
 
 using namespace amrex;
 
-#ifdef AMREX_USE_CUDA
+#ifdef AMREX_USE_GPU
 
 /* \brief Apply stencil on MultiFab (GPU version, 2D/3D).
  * \param dstmf Destination MultiFab

@@ -839,7 +839,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
 void
 WarpX::NodalSyncJ (int lev, PatchType patch_type)
 {
-    if (override_sync_int <= 0 or istep[0] % override_sync_int != 0) return;
+    if (!override_sync_intervals.contains(istep[0])) return;
 
     if (patch_type == PatchType::fine)
     {
@@ -860,7 +860,7 @@ WarpX::NodalSyncJ (int lev, PatchType patch_type)
 void
 WarpX::NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp)
 {
-    if (override_sync_int <= 0 or istep[0] % override_sync_int != 0) return;
+    if (!override_sync_intervals.contains(istep[0])) return;
 
     if (patch_type == PatchType::fine && rho_fp[lev])
     {

@@ -181,7 +181,7 @@ public:
     static bool do_dynamic_scheduling;
     static bool refine_plasma;
 
-    static int sort_int;
+    static IntervalsParser sort_intervals;
     static amrex::IntVect sort_bin_size;
 
     static int do_subcycling;
@@ -463,9 +463,7 @@ public:
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
          ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
-         ParserWrapper<3> *zfield_parser, amrex::IntVect x_nodal_flag,
-         amrex::IntVect y_nodal_flag, amrex::IntVect z_nodal_flag,
-         const int lev);
+         ParserWrapper<3> *zfield_parser, const int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`
@@ -567,6 +565,10 @@ private:
     void CurrentCorrection ();
 
     void ReadParameters ();
+
+    /** This function queries deprecated input parameters and abort
+     *  the run if one of them is specified. */
+    void BackwardCompatibility ();
 
     void InitFromScratch ();
 
@@ -714,8 +716,8 @@ private:
      * time per iteration per particle is computed. */
     amrex::Real costs_heuristic_particles_wt = -1;
 
-    // Override sync every ? steps
-    int override_sync_int = 1;
+    // Determines timesteps for override sync
+    IntervalsParser override_sync_intervals;
 
     // Other runtime parameters
     int verbose = 1;
