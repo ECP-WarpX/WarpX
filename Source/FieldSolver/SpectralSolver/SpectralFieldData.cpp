@@ -19,12 +19,6 @@ using cuPrecisionComplex = cuComplex;
 #  else
 using cuPrecisionComplex = cuDoubleComplex;
 #  endif
-#else
-#  ifdef AMREX_USE_FLOAT
-using fftw_precision_complex = fftwf_complex;
-#  else
-using fftw_precision_complex = fftw_complex;
-#  endif
 #endif
 */
 
@@ -72,8 +66,6 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
 #endif
 
     // Allocate and initialize the FFT plans
-    // forward_plan = AnyFFT::FFTplans(spectralspace_ba, dm);
-    // backward_plan = AnyFFT::FFTplans(spectralspace_ba, dm);
     forward_plan = AnyFFT::FFTplans(spectralspace_ba, dm);
     backward_plan = AnyFFT::FFTplans(spectralspace_ba, dm);
     // Loop over boxes and allocate the corresponding plan
