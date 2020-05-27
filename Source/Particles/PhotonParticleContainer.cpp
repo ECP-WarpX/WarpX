@@ -100,7 +100,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto me = PhysConst::m_e;
 #endif
-    
+
     auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data);
     int do_copy = (WarpX::do_back_transformed_diagnostics &&
                    do_back_transformed_diagnostics && a_dt_type!=DtType::SecondHalf);
@@ -126,7 +126,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                 Bx[i], By[i], Bz[i],
                 dt, p_optical_depth_BW[i]);
 #endif
-            
+
             UpdatePositionPhoton( x, y, z, ux[i], uy[i], uz[i], dt );
             SetPosition(i, x, y, z);
         }

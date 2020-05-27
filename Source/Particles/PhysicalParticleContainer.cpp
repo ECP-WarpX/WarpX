@@ -2007,7 +2007,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     QuantumSynchrotronEvolveOpticalDepth evolve_opt =
         m_shr_p_qs_engine->build_evolve_functor();
-    
+
     ParticleReal* const AMREX_RESTRICT p_optical_depth_QSR =
         pti.GetAttribs(particle_comps["optical_depth_QSR"]).dataPtr();
 #endif
@@ -2042,7 +2042,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                              Bxp, Byp, Bzp,
                                              dt, p_optical_depth_QSR[ip]);
 #endif
-        
+
         Ex[ip] = Exp;
         Ey[ip] = Eyp;
         Ez[ip] = Ezp;
