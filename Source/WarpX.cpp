@@ -219,7 +219,7 @@ WarpX::WarpX ()
     costs.resize(nlevs_max);
 
 
-    if (em_solver_medium == 1) {
+    if (em_solver_medium == MediumForEM::Macroscopic) {
         // create object for macroscopic solver
         m_macroscopic_properties = std::unique_ptr<MacroscopicProperties> (new MacroscopicProperties());
     }
@@ -626,7 +626,7 @@ WarpX::ReadParameters ()
         }
         load_balance_costs_update_algo = GetAlgorithmInteger(pp, "load_balance_costs_update");
         em_solver_medium = GetAlgorithmInteger(pp, "em_solver_medium");
-        if (em_solver_medium == 1) {
+        if (em_solver_medium == MediumForEM::Macroscopic ) {
             macroscopic_solver_algo = GetAlgorithmInteger(pp,"macroscopic_sigma_method");
         }
         pp.query("costs_heuristic_cells_wt", costs_heuristic_cells_wt);

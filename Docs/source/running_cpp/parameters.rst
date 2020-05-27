@@ -985,10 +985,9 @@ Numerics and algorithms
 * ``algo.macroscopic_sigma_method`` (`string`, optional)
     The algorithm for updating electric field when ``algo.em_solver_medium`` is macroscopic. Available options are:
 
-    - ``laxwendroff`` is the semi-implicit scheme for E-update.
-    - ``backwardeuler`` is an explicit scheme for E-update.
-
-    If ``algo.em_solver_medium`` is set to macroscopic, and ``algo.macroscopic_sigma_method`` is not specified, then ``laxwendroff`` is the default.
+    - ``backwardeuler`` is a fully-implicit, first-order in time scheme for E-update (default).
+    - ``laxwendroff`` is the semi-implicit, second order in time scheme for E-update. 
+    Comparing the two methods, LaxWendroff may be more prone to developing oscillations, while Backward Euler is more robust. However, since LaxWendroff is second order in time, it has a higher order of accuracy compared to BackwardEuler. 
 
 * ``macroscopic.sigma``, ``macroscopic.epsilon``, ``macroscopic.mu`` (`double`)
     The conductivity, permittivity, and permeability of the computational medium, respectively.

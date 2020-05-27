@@ -65,9 +65,9 @@ const std::map<std::string, int> MaxwellSolver_medium_algo_to_int = {
 };
 
 const std::map<std::string, int> MacroscopicSolver_algo_to_int = {
-    {"laxwendroff", MacroscopicSolverAlgo::LaxWendroff},
     {"backwardeuler", MacroscopicSolverAlgo::BackwardEuler},
-    {"default", MacroscopicSolverAlgo::LaxWendroff},
+    {"laxwendroff", MacroscopicSolverAlgo::LaxWendroff},
+    {"default", MacroscopicSolverAlgo::BackwardEuler},
 };
 
 int

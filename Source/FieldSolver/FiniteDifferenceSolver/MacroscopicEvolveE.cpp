@@ -64,18 +64,15 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     Real fac1 = 0._rt;
     Real inv_fac = 0._rt;
 
-    if (macroscopic_solver_algo == 0) {
-        // sigma_method == 0 for Lax_Wendroff or semi-implicit approach
-        fac1 = 0.5_rt * sigma * dt / epsilon;
-        inv_fac = 1._rt / ( 1._rt + fac1);
-        alpha = (1.0_rt - fac1) * inv_fac;
-        beta  = dt * inv_fac / epsilon;
-    }
-    else if (macroscopic_solver_algo == 1) { // sigma method == 1
-        // sigma_metha == 1 for Backward Euler
+    if (macroscopic_solver_algo == MacroscopicSolverAlgo::BackwardEuler) { 
         fac1 = sigma * dt / epsilon;
         inv_fac = 1._rt / ( 1._rt + fac1);
         alpha = inv_fac;
+        beta  = dt * inv_fac / epsilon;
+    } else if (macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
+        fac1 = 0.5_rt * sigma * dt / epsilon;
+        inv_fac = 1._rt / ( 1._rt + fac1);
+        alpha = (1.0_rt - fac1) * inv_fac;
         beta  = dt * inv_fac / epsilon;
     }
 
