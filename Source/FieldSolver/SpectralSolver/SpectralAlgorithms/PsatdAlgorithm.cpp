@@ -518,8 +518,7 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             amrex::Real Dx_cumavg = 0.0_rt;
             for ( int ii = lo_jx.x; ii <= hi_jx.x; ++ii ) Dx_cumavg += Dx_cumsum_arr(ii,j,k);
             Dx_cumavg /= static_cast<Real>(nx);
-            Dx_arr(i,j,k) /= dx;
-            Dx_arr(i,j,k) -= Dx_cumavg;
+            Dx_arr(i,j,k) -= Dx_cumavg*dx;
         } );
     }
 
@@ -546,8 +545,7 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             amrex::Real Dz_cumavg = 0.0_rt;
             for ( int jj = lo_jz.y; jj <= hi_jz.y; ++jj ) Dz_cumavg += Dz_cumsum_arr(i,jj,k);
             Dz_cumavg /= static_cast<Real>(nz);
-            Dz_arr(i,j,k) /= dz;
-            Dz_arr(i,j,k) -= Dz_cumavg;
+            Dz_arr(i,j,k) -= Dz_cumavg*dz;
         } );
     }
 
@@ -574,8 +572,7 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             amrex::Real Dy_cumavg = 0.0_rt;
             for ( int jj = lo_jy.y; jj <= hi_jy.y; ++jj ) Dy_cumavg += Dy_cumsum_arr(i,jj,k);
             Dy_cumavg /= static_cast<Real>(ny);
-            Dy_arr(i,j,k) /= dy;
-            Dy_arr(i,j,k) -= Dy_cumavg;
+            Dy_arr(i,j,k) -= Dy_cumavg*dy;
         } );
     }
 
@@ -600,8 +597,7 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             amrex::Real Dz_cumavg = 0.0_rt;
             for ( int kk = lo_jz.z; kk <= hi_jz.z; ++kk ) Dz_cumavg += Dz_cumsum_arr(i,j,kk);
             Dz_cumavg /= static_cast<Real>(nz);
-            Dz_arr(i,j,k) /= dz;
-            Dz_arr(i,j,k) -= Dz_cumavg;
+            Dz_arr(i,j,k) -= Dz_cumavg*dz;
         } );
     }
 

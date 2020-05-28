@@ -828,8 +828,8 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
                        -sx_jx_old[i]*sz_jx_new[k]
                        +sx_jx_new[i]*sz_jx_old[k]
                        -sx_jx_old[i]*sz_jx_old[k];
-                //sdxi = wq*invvol*invdt*0.5_rt*sdxi;
-                sdxi = wqx*0.5_rt*sdxi;
+                sdxi = wq*invvol*invdt*0.5_rt*sdxi;
+                //sdxi = wqx*0.5_rt*sdxi;
                 amrex::Gpu::Atomic::Add( &jx_arr(lo.x+i_jx_new-1+i, lo.y+k_jx_new-1+k, 0, 0), sdxi);
             }
         }
@@ -850,8 +850,8 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
                        -sx_jz_new[i]*sz_jz_old[k]
                        +sx_jz_old[i]*sz_jz_new[k]
                        -sx_jz_old[i]*sz_jz_old[k];
-                //sdzk = wq*invvol*invdt*0.5_rt*sdzk;
-                sdzk = wqz*0.5_rt*sdzk;
+                sdzk = wq*invvol*invdt*0.5_rt*sdzk;
+                //sdzk = wqz*0.5_rt*sdzk;
                 amrex::Gpu::Atomic::Add( &jz_arr(lo.x+i_jz_new-1+i, lo.y+k_jz_new-1+k, 0, 0), sdzk);
             }
         }
@@ -868,8 +868,8 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
                                   -sx_jx_old[i]*sy_jx_new[j]*sz_jx_old[k]
                            +2.0_rt*sx_jx_new[i]*sy_jx_old[j]*sz_jx_old[k]
                            -2.0_rt*sx_jx_old[i]*sy_jx_old[j]*sz_jx_old[k];
-                    //sdxi = wq*invvol*invdt*onesixth*sdxi;
-                    sdxi = wqx*onesixth*sdxi;
+                    sdxi = wq*invvol*invdt*onesixth*sdxi;
+                    //sdxi = wqx*onesixth*sdxi;
                     amrex::Gpu::Atomic::Add( &jx_arr(lo.x+i_jx_new-1+i, lo.y+j_jx_new-1+j, lo.z+k_jx_new-1+k), sdxi);
                 }
             }
@@ -886,8 +886,8 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
                                   -sx_jy_old[i]*sy_jy_old[j]*sz_jy_new[k]
                            +2.0_rt*sx_jy_old[i]*sy_jy_new[j]*sz_jy_old[k]
                            -2.0_rt*sx_jy_old[i]*sy_jy_old[j]*sz_jy_old[k];
-                    //sdyj = wq*invvol*invdt*onesixth*sdyj;
-                    sdyj = wqy*onesixth*sdyj;
+                    sdyj = wq*invvol*invdt*onesixth*sdyj;
+                    //sdyj = wqy*onesixth*sdyj;
                     amrex::Gpu::Atomic::Add( &jy_arr(lo.x+i_jy_new-1+i, lo.y+j_jy_new-1+j, lo.z+k_jy_new-1+k), sdyj);
                 }
             }
@@ -904,8 +904,8 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
                                   -sx_jy_new[i]*sy_jy_old[j]*sz_jy_old[k]
                            +2.0_rt*sx_jy_old[i]*sy_jy_old[j]*sz_jy_new[k]
                            -2.0_rt*sx_jy_old[i]*sy_jy_old[j]*sz_jy_old[k];
-                    //sdzk = wq*invvol*invdt*onesixth*sdzk;
-                    sdzk = wqz*onesixth*sdzk;
+                    sdzk = wq*invvol*invdt*onesixth*sdzk;
+                    //sdzk = wqz*onesixth*sdzk;
                     amrex::Gpu::Atomic::Add( &jz_arr(lo.x+i_jz_new-1+i, lo.y+j_jz_new-1+j, lo.z+k_jz_new-1+k), sdzk);
                 }
             }
