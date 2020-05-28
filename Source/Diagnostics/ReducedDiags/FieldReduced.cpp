@@ -183,6 +183,7 @@ void FieldReduced::ComputeDiags (int step)
             m_data[m_offset_maxField+lev*8+6] = Bz.norm0();
 
             // Create temporary MultiFAB to be filled with |E| and |B| squared
+            // Note that allocating a full MultiFAB is probably not optimal for memory usage
             const int ncomp = 1;
             const int ngrow = 0;  // no ghost cells for temporary MultiFAB
             MultiFab mftemp(amrex::convert(Ex.boxArray(), IntVect{AMREX_D_DECL(0,0,0)}),
