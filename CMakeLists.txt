@@ -1,167 +1,72 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.14.0)
-project(WarpX VERSION 0.20.2)
+project(WarpX VERSION 0.20.5)
 
-# list(APPEND CMAKE_MODULE_PATH "${WarpX_SOURCE_DIR}/cmake")
+include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
 
-# Project structure ###########################################################
+# Output Directories ##########################################################
 #
 # temporary build directories
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    CACHE PATH "Build directory for archives")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-    CACHE PATH "Build directory for libraries")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-    CACHE PATH "Build directory for binaries")
+set_default_build_dirs()
 
 # install directories
-include(GNUInstallDirs)
-set(CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/WarpX"
-    CACHE PATH "CMake config package location for installed targets")
-if(WIN32)
-    set(CMAKE_INSTALL_LIBDIR Lib
-        CACHE PATH "Object code libraries")
-    set_property(CACHE CMAKE_INSTALL_CMAKEDIR PROPERTY VALUE "cmake")
-endif()
+set_default_install_dirs()
 
 
 # Options and Variants ########################################################
 #
-function(WarpX_option name description default)
-    set(WarpX_USE_${name} ${default} CACHE STRING "${description}")
-    set_property(CACHE WarpX_USE_${name} PROPERTY
-        STRINGS "ON;TRUE;AUTO;OFF;FALSE"
-    )
-    if(WarpX_HAVE_${name})
-        set(WarpX_HAVE_${name} TRUE)
-    else()
-        set(WarpX_HAVE_${name})
-    endif()
-    # list of all possible options
-    set(WarpX_CONFIG_OPTIONS ${WarpX_CONFIG_OPTIONS} ${name} PARENT_SCOPE)
-endfunction()
+warpx_option(QED                "PICSAR QED (requires Boost)"              OFF)
+warpx_option(OPENPMD            "openPMD I/O"                              OFF)
+#warpx_option(PYTHON             "Enable Python bindings"                  AUTO)
+# PSATD (fftw; RZ:+blaspp+lapackpp), PICSAR/QED, hdf5, sensei, conduit, ascent, BL_ASSERT et al. (ON)
 
-WarpX_option(MPI            "Parallel, Multi-Node for clusters"         AUTO)
-WarpX_option(openPMD        "openPMD I/O"                               AUTO)
-WarpX_option(PYTHON         "Enable Python bindings"                    AUTO)
-# PSATD (fftw; RZ:+blas+lapack), PICSAR/QED, hdf5, sensei, conduit, ascent, BL_ASSERT et al. (ON)
+option(WarpX_amrex_internal    "Download & build AMReX" ON)
+option(WarpX_picsar_internal   "Download & build PICSAR" ON)
+option(WarpX_openpmd_internal  "Download & build openPMD-api" ON)
 
-option(WarpX_DIM             "Spatial dimensions"      3)
-option(WarpX_USE_INTERNAL_AMReX  "Download & build AMReX"  ON)
-option(WarpX_USE_INTERNAL_PICSAR "Download & build PICSAR" OFF)
-# CUDA/HIP
-# OpenMP
-# SP or DP; SP or DP for particles
-# tiny profiler
+# change the default build type to RelWithDebInfo (or Release) instead of Debug
+set_default_build_type("RelWithDebInfo")
 
-set(CMAKE_CONFIGURATION_TYPES "Release;Debug;MinSizeRel;RelWithDebInfo")
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING
-        "Choose the build type, e.g. Release or Debug." FORCE)
-endif()
-
-#include(CTest)
-# automatically defines: BUILD_TESTING, default is ON
-
-#if(ENABLE_CUDA)
-#    enable_language(CUDA)
-#endif()
 
 # Dependencies ################################################################
 #
-# external library: MPI (optional)
-#if(WarpX_USE_MPI STREQUAL AUTO)
-#    find_package(MPI)
-#    if(MPI_FOUND)
-#        set(WarpX_HAVE_MPI TRUE)
-#    else()
-#        set(WarpX_HAVE_MPI FALSE)
-#    endif()
-#elseif(WarpX_USE_MPI)
-#    find_package(MPI REQUIRED)
-#    set(WarpX_HAVE_MPI TRUE)
-#else()
-#    set(WarpX_HAVE_MPI FALSE)
-#endif()
 
-# external library: AMReX (required)
+# AMReX
+#   builds AMReX from source (default) or finds an existing install
+set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
+    CACHE STRING
+    "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
+set(WarpX_amrex_branch "development"
+    CACHE STRING
+    "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
+include(${WarpX_SOURCE_DIR}/cmake/dependencies/AMReX.cmake)
+#   suppress warnings in AMReX headers (use -isystem instead of -I)
+make_third_party_includes_system(AMReX::amrex AMReX)
 
-# ENABLE_MPI = ON
-# ENABLE_OMP = OFF
-# ENABLE_CUDA = OFF
-# ENABLE_DP = ON
-# ENABLE_EB = OFF
-# ENABLE_FORTRAN_INTERFACES = OFF
-# ENABLE_LINEAR_SOLVERS = ON
-# ENABLE_AMRDATA = OFF
-# ENABLE_PARTICLES = ON
-# ENABLE_DP_PARTICLES = ON
-# ENABLE_SENSEI_INSITU = OFF
-# ENABLE_CONDUIT = OFF
-# ENABLE_SUNDIALS = OFF
-# ENABLE_HYPRE = OFF
-# ENABLE_PETSC =
-# ENABLE_FPE = OFF
-# ENABLE_ASSERTIONS = OFF
-# ENABLE_BASE_PROFILE = OFF
-# ENABLE_TINY_PROFILE = OFF
-# ENABLE_TRACE_PROFILE = OFF
-# ENABLE_MEM_PROFILE = OFF
-# ENABLE_COMM_PROFILE = OFF
-# ENABLE_BACKTRACE = OFF
-# ENABLE_PROFPARSER = OFF
-# TP_PROFILE = None
-# ENABLE_CUDA = OFF
-# ENABLE_ACC = OFF
+# PICSAR
+#   builds PICSAR from source
+set(WarpX_picsar_repo "https://bitbucket.org/berkeleylab/picsar.git"
+    CACHE STRING
+    "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
+set(WarpX_picsar_branch "master"
+    CACHE STRING
+    "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
+include(${WarpX_SOURCE_DIR}/cmake/dependencies/PICSAR.cmake)
 
-if(WarpX_USE_INTERNAL_AMReX)
-    include(FetchContent)
-    set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-    #set(BUILD_TESTING OFF)
-    #set(BUILD_EXAMPLES OFF)
-    set(ENABLE_TUTORIALS OFF CACHE INTERNAL "")
-    set(ENABLE_PARTICLES ON CACHE INTERNAL "")
-    set(ENABLE_TINY_PROFILE ON CACHE INTERNAL "")
-    set(AMReX_DIM ${WarpX_DIM} CACHE INTERNAL "")
-    #set(AMReX_ENABLE_PIC ON CACHE INTERNAL "")
-    # TEMPORARY until fixed upstream
-    set(ENABLE_FORTRAN_INTERFACES ON CACHE INTERNAL "")
-    #set(ENABLE_FORTRAN ON CACHE INTERNAL "")
-    FetchContent_Declare(fetchedamrex
-      GIT_REPOSITORY "https://github.com/AMReX-Codes/amrex.git"
-      GIT_TAG        "development"
-      #GIT_REPOSITORY "/home/axel/src/amrex/.git"
-      #GIT_REPOSITORY "https://github.com/ax3l/amrex.git"
-      #GIT_TAG        "fix-randomStaticFunc"
-      BUILD_IN_SOURCE 0
-    )
-    #FetchContent_MakeAvailable(fetchedamrex)
-    FetchContent_GetProperties(fetchedamrex)
-    if(NOT fetchedamrex_POPULATED)
-      FetchContent_Populate(fetchedamrex)
-      list(APPEND CMAKE_MODULE_PATH "${fetchedamrex_SOURCE_DIR}/Tools/CMake")
-      if(ENABLE_CUDA)
-          enable_language(CUDA)
-          include(AMReX_SetupCUDA)
-      endif()
-      add_subdirectory(${fetchedamrex_SOURCE_DIR} ${fetchedamrex_BINARY_DIR})
-    endif()
+# openPMD
+#   builds openPMD-api from source (default) or finds an existing install
+set(WarpX_openpmd_repo "https://github.com/openPMD/openPMD-api.git"
+    CACHE STRING
+    "Repository URI to pull and build openPMD-api from if(WarpX_openpmd_internal)")
+set(WarpX_openpmd_branch "dev"
+    CACHE STRING
+    "Repository branch for WarpX_openpmd_repo if(WarpX_openpmd_internal)")
+include(${WarpX_SOURCE_DIR}/cmake/dependencies/openPMD.cmake)
 
-    message(STATUS "AMReX: Using INTERNAL version '${AMREX_PKG_VERSION}' (${AMREX_GIT_VERSION})")
-else()
-    find_package(AMReX 3.7.0 CONFIG REQUIRED)
-    message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
-endif()
-
-#add_library(WarpX::thirdparty::AMReX INTERFACE IMPORTED)
-#target_link_libraries(WarpX::thirdparty::AMReX
-#    INTERFACE AMReX::amrex)
-
-# external library: PICSAR (required)
 # external library: FFTW (optional)
-# external library: openPMD-api (optional)
+# external library: BLASPP LAPACKPP (optional)
 
 
 # Targets #####################################################################
@@ -173,22 +78,20 @@ add_executable(WarpX::WarpX ALIAS WarpX)
 # own headers
 target_include_directories(WarpX PUBLIC
     $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
-#    $<BUILD_INTERFACE:${WarpX_BINARY_DIR}/Source>
-#    $<INSTALL_INTERFACE:Source>
+    $<BUILD_INTERFACE:${WarpX_BINARY_DIR}/Source>
+    $<INSTALL_INTERFACE:Source>
 )
 
-# we include <AMReX_buildInfo.H>
-include(AMReXBuildInfo)  # FIXME this requires Python at build time...
-# FIXME hackity-hack path
+# if we include <AMReX_buildInfo.H> we will need to call:
+include(AMReXBuildInfo)
 generate_buildinfo(WarpX "${WarpX_SOURCE_DIR}")
 
+# add sources
 target_sources(WarpX
   PRIVATE
     Source/main.cpp
     Source/WarpX.cpp
 )
-
-# more sources
 add_subdirectory(Source/BoundaryConditions)
 add_subdirectory(Source/Diagnostics)
 add_subdirectory(Source/Evolve)
@@ -201,161 +104,58 @@ add_subdirectory(Source/Parallelization)
 add_subdirectory(Source/Parser)
 add_subdirectory(Source/Particles)
 #add_subdirectory(Source/Python)
-#add_subdirectory(Source/QED)
 add_subdirectory(Source/Utils)
 
-# FIXME
-#set_target_properties(WarpX
-#   PROPERTIES
-#     LINKER_LANGUAGE
-#       Fortran
-#)
-
-# properties
-#target_compile_features(WarpX
-#    PUBLIC cxx_std_14
-#)
-#set_target_properties(WarpX PROPERTIES
-#    CXX_EXTENSIONS OFF
-#    CXX_STANDARD_REQUIRED ON
-#)
-
-#if(ENABLE_CUDA)
-#    set_cpp_sources_to_cuda_language( WarpX )
-#endif()
-
-
-# FIXME hackity-hack path to PICSAR
-target_include_directories(WarpX PRIVATE
-    /home/axel/src/picsar/src/multi_physics/QED/src
+# C++ properties: at least a C++14 capable compiler is needed
+target_compile_features(WarpX
+    PUBLIC cxx_std_14
+)
+set_target_properties(WarpX PROPERTIES
+    CXX_EXTENSIONS OFF
+    CXX_STANDARD_REQUIRED ON
 )
 
-#if(WarpX_HAVE_MPI)
-#    # MPI targets: CMake 3.9+
-#    # note: often the PUBLIC dependency to CXX is missing in C targets...
-#    target_link_libraries(WarpX PUBLIC MPI::MPI_C MPI::MPI_CXX)
-#endif()
-
-# JSON Backend and User-Facing Runtime Options
-#target_link_libraries(WarpX PRIVATE WarpX::thirdparty::AMReX)
-#target_include_directories(WarpX SYSTEM PRIVATE
-#    $<TARGET_PROPERTY:WarpX::thirdparty::AMReX,INTERFACE_INCLUDE_DIRECTORIES>)
-#target_link_libraries(WarpX PRIVATE WarpX::thirdparty::AMReX)
-# should not be needed... if we setup cuda via amrex helpers...
-#target_compile_options(
-#    WarpX::thirdparty::AMReX INTERFACE
-#      $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
-#      $<$<COMPILE_LANGUAGE:CUDA>:--expt-extended-lambda>)
-#target_link_libraries(WarpX PRIVATE WarpX::thirdparty::AMReX)
+# link dependencies
+# FIXME use HiPACE::thirdparty::AMReX as soon as
+#       missing _deps/fetchedamrex-build/mod_files is solved
 target_link_libraries(WarpX PUBLIC AMReX::amrex)
+if(WarpX_HAVE_OPENPMD)
+    target_compile_definitions(WarpX PUBLIC WARPX_USE_OPENPMD)
+    target_link_libraries(WarpX PUBLIC openPMD::openPMD)
+endif()
+if(WarpX_HAVE_QED)
+    target_compile_definitions(WarpX PUBLIC WARPX_QED)
+    # FIXME WARPX_QED_TABLE_GEN
+    target_link_libraries(WarpX PUBLIC pxrmp_qed)
+endif()
 
-# HDF5 Backend
-#if(WarpX_HAVE_HDF5)
-#    target_link_libraries(WarpX PRIVATE ${HDF5_LIBRARIES})
-#    target_include_directories(WarpX SYSTEM PRIVATE ${HDF5_INCLUDE_DIRS})
-#    target_compile_definitions(WarpX PRIVATE ${HDF5_DEFINITIONS})
-#endif()
+# AMReX helper function: propagate CUDA specific target & source properties
+if(ENABLE_CUDA)
+    setup_target_for_cuda_compilation(WarpX)
+endif()
+
 
 # Defines #####################################################################
 #
 target_compile_definitions(WarpX PRIVATE -DWARPX_DIM_3D)
 target_compile_definitions(WarpX PRIVATE -DDWARPX_DIM_XZ)
 
-# DEFINES += -DWARPX_USE_PY
-# DEFINES += -DWARPX_DIM_3D
-# DEFINES += -DWARPX_DIM_RZ
-# DEFINES += -DWARPX_DIM_XZ
-# CXXFLAGS += -DWARPX_QED
-# CXXFLAGS += -DWARPX_QED_TABLE_GEN
-# DEFINES += -DWARPX_GIT_VERSION=\"$(WARPX_GIT_VERSION)\"
-# DEFINES += -DWARPX_USE_OPENPMD
-# DEFINES += -DWARPX_USE_PSATD
-# DEFINES += -DWARPX_USE_PSATD_HYBRID
-# DEFINES += -DWARPX_DO_ELECTROSTATIC
-# DEFINES += -DWARPX_USE_HDF5
-
 
 # Warnings ####################################################################
 #
-# TODO: LEGACY! Use CMake TOOLCHAINS instead!
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    # list(APPEND CMAKE_CXX_FLAGS "-fsanitize=address") # address, memory, undefined
-    # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
-    # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address")
-    # set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fsanitize=address")
-
-    # note: might still need a
-    #   export LD_PRELOAD=libclang_rt.asan.so
-    # or on Debian 9 with Clang 6.0
-    #   export LD_PRELOAD=/usr/lib/llvm-6.0/lib/clang/6.0.0/lib/linux/libclang_rt.asan-x86_64.so:
-    #                     /usr/lib/llvm-6.0/lib/clang/6.0.0/lib/linux/libclang_rt.ubsan_minimal-x86_64.so
-    # at runtime when used with symbol-hidden code (e.g. pybind11 module)
-
-    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weverything")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wshadow -Woverloaded-virtual -Wunreachable-code")
-elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    # Warning C4503: "decorated name length exceeded, name was truncated"
-    # Symbols longer than 4096 chars are truncated (and hashed instead)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd4503")
-    # Yes, you should build against the same C++ runtime and with same
-    # configuration (Debug/Release). MSVC does inconvenient choices for their
-    # developers, so be it. (Our Windows-users use conda-forge builds, which
-    # are consistent.)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd4251")
-endif ()
+set_cxx_warnings()
 
 
-# Generate Files with Configuration Options ###################################
+# Generate Configuration and .pc Files ########################################
 #
-# TODO configure a version.hpp
-#configure_file(
-#    ${WarpX_SOURCE_DIR}/include/WarpX/config.hpp.in
-#    ${WarpX_BINARY_DIR}/include/WarpX/config.hpp
-#    @ONLY
+# these files are used if WarpX is installed and picked up by a downstream
+# project (not needed yet)
+
+#include(CMakePackageConfigHelpers)
+#write_basic_package_version_file("WarpXConfigVersion.cmake"
+#    VERSION ${WarpX_VERSION}
+#    COMPATIBILITY SameMajorVersion
 #)
-
-#configure_file(
-#    ${WarpX_SOURCE_DIR}/WarpXConfig.cmake.in
-#    ${WarpX_BINARY_DIR}/WarpXConfig.cmake
-#    @ONLY
-#)
-
-# get absolute paths to linked libraries
-function(WarpXreclibs tgtname outname)
-    get_target_property(PC_PRIVATE_LIBS_TGT ${tgtname} INTERFACE_LINK_LIBRARIES)
-    foreach(PC_LIB IN LISTS PC_PRIVATE_LIBS_TGT)
-       if(TARGET ${PC_LIB})
-           WarpXreclibs(${PC_LIB} ${outname})
-       else()
-           if(PC_LIB)
-               string(APPEND ${outname} " ${PC_LIB}")
-           endif()
-       endif()
-    endforeach()
-    set(${outname} ${${outname}} PARENT_SCOPE)
-endfunction()
-
-if(WarpX_HAVE_PKGCONFIG)
-    WarpXreclibs(WarpX WarpX_PC_PRIVATE_LIBS)
-    if(BUILD_SHARED_LIBS)
-        set(WarpX_PC_STATIC false)
-    else()
-        set(WarpX_PC_STATIC true)
-    endif()
-    configure_file(
-        ${WarpX_SOURCE_DIR}/WarpX.pc.in
-        ${WarpX_BINARY_DIR}/WarpX.pc
-        @ONLY
-    )
-endif()
-
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file("WarpXConfigVersion.cmake"
-    VERSION ${WarpX_VERSION}
-    COMPATIBILITY SameMajorVersion
-)
 
 
 # Installs ####################################################################
@@ -370,19 +170,6 @@ install(TARGETS ${WarpX_INSTALL_TARGET_NAMES}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
-#if(WarpX_HAVE_PYTHON)
-#    install(TARGETS WarpX.py
-#        DESTINATION ${CMAKE_INSTALL_PYTHONDIR}
-#    )
-#endif()
-#install(DIRECTORY "${WarpX_SOURCE_DIR}/include/WarpX"
-#    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-#    FILES_MATCHING PATTERN "*.hpp"
-#)
-#install(
-#    FILES ${WarpX_BINARY_DIR}/include/WarpX/config.hpp
-#    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/WarpX
-#)
 
 # CMake package file for find_package(WarpX::WarpX) in depending projects
 #install(EXPORT WarpXTargets
@@ -396,20 +183,13 @@ install(TARGETS ${WarpX_INSTALL_TARGET_NAMES}
 #        ${WarpX_BINARY_DIR}/WarpXConfigVersion.cmake
 #    DESTINATION ${CMAKE_INSTALL_CMAKEDIR}
 #)
-# pkg-config .pc file for depending legacy projects
-#   This is for projects that do not use a build file generator, e.g.
-#   because they compile manually on the command line or write their
-#   Makefiles by hand.
-if(WarpX_HAVE_PKGCONFIG)
-    install(
-        FILES       ${WarpX_BINARY_DIR}/WarpX.pc
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-    )
-endif()
 
 
 # Tests #######################################################################
 #
+# this defined the variable BUILD_TESTING which is ON by default
+include(CTest)
+
 #if(BUILD_TESTING)
 #    enable_testing()
 #
@@ -417,14 +197,7 @@ endif()
 #endif()
 
 
-# Examples ####################################################################
-#
-if(BUILD_EXAMPLES)
-    # ...
-endif()
-
-
-# Status Message for Build Options ############################################
+# Status Summary for Build Options ############################################
 #
 message("")
 message("WarpX build configuration:")
@@ -463,12 +236,3 @@ foreach(opt IN LISTS WarpX_CONFIG_OPTIONS)
 endforeach()
 message("    DIM: ${WarpX_DIM}")
 message("")
-
-if(ENABLE_CUDA)
-    set_cpp_sources_to_cuda_language( WarpX )
-    # mainly due to amrex::Random which uses global device variables
-    set_target_properties( WarpX
-      PROPERTIES
-      CUDA_SEPARABLE_COMPILATION ON  # This add -dc flag
-    )
-endif()

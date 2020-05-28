@@ -1,6 +1,7 @@
 target_sources(WarpX
   PRIVATE
-    Average.cpp
+    CoarsenIO.cpp
+    CoarsenMR.cpp
     Interpolate.cpp
     IntervalsParser.cpp
     WarpXAlgorithmSelection.cpp
