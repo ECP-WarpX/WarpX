@@ -12,7 +12,7 @@
 namespace AnyFFT
 {
     // First, define library-independent types (complex, FFT plan)
-    
+
     /** Complex type for FFT, depends on FFT library */
 #ifdef AMREX_USE_GPU
 #  ifdef AMREX_USE_FLOAT
@@ -27,7 +27,7 @@ namespace AnyFFT
     using Complex = fftw_complex;
 #  endif
 #endif
-    
+
     /** Library-dependent FFT plans type, which holds one fft plan per box
      * (plans are only initialized for the boxes that are owned by the local MPI rank). */
 #ifdef AMREX_USE_GPU
@@ -54,7 +54,7 @@ namespace AnyFFT
         VendorFFTPlan m_plan; /**< Vendor FFT plan */
         direction m_dir;  /**< direction (C2R or R2C) */
     };
-    
+
     /** Collection of FFT plans, one FFTplan per box */
     using FFTplans = amrex::LayoutData<FFTplan>;
 
