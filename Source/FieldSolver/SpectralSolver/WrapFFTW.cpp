@@ -20,8 +20,8 @@ namespace AnyFFT
 #  endif
 #endif
 
-    FFTplan CreatePlan(int nx, int ny, int nz,
-                       amrex::Real* real_array, Complex* complex_array, direction dir)
+    FFTplan CreatePlan(IntVect real_size, amrex::Real* real_array,
+                       Complex* complex_array, direction dir)
     {
         FFTplan fft_plan;
 
@@ -29,19 +29,19 @@ namespace AnyFFT
             // Swap dimensions: AMReX FAB are Fortran-order but FFTW is C-order
 #if (AMREX_SPACEDIM == 3)
             fft_plan.m_plan = VendorCreatePlanR2C3D(
-                nz, ny, nx, real_array, complex_array, FFTW_ESTIMATE);
+                real_size[2], real_size[1], real_size[0], real_array, complex_array, FFTW_ESTIMATE);
 #else
             fft_plan.m_plan = VendorCreatePlanR2C2D(
-                ny, nx, real_array, complex_array, FFTW_ESTIMATE);
+                real_size[1], real_size[0], real_array, complex_array, FFTW_ESTIMATE);
 #endif
         } else if (dir == direction::C2R){
             // Swap dimensions: AMReX FAB are Fortran-order but FFTW is C-order
 #if (AMREX_SPACEDIM == 3)
             fft_plan.m_plan = VendorCreatePlanC2R3D(
-                nz, ny, nx, complex_array, real_array, FFTW_ESTIMATE);
+                real_size[2], real_size[1], real_size[0], complex_array, real_array, FFTW_ESTIMATE);
 #else
             fft_plan.m_plan = VendorCreatePlanC2R2D(
-                ny, nx, complex_array, real_array, FFTW_ESTIMATE);
+                real_size[1], real_size[0], complex_array, real_array, FFTW_ESTIMATE);
 #endif
         }
 

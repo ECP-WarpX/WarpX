@@ -29,15 +29,13 @@ namespace AnyFFT
     using FFTplans = amrex::LayoutData<FFTplan>;
 
     /** \brief create cuFFT plan assuming CUDA is used for programming GPU
-     * \param[in] nx array size in 1st direction
-     * \param[in] ny array size in 2nd direction
-     * \param[in] nz array size in 3rd direction
+     * \param[in] real_size size of the real array
      * \param[out] real_array Real array from/to where R2C/C2R FFT is performed
      * \param[out] complex_array Complex array to/from where R2C/C2R FFT is performed
      * \param[in] dir direction, either R2C or C2R
      */
-    FFTplan CreatePlan(int nx, int ny, int nz,
-                       amrex::Real* real_array, Complex* complex_array, direction dir);
+    FFTplan CreatePlan(IntVect real_size, amrex::Real* real_array,
+                       Complex* complex_array, direction dir);
 
     /** \brief Destroy cuFFT plan
      * \param[out] fft_plan plan to destroy

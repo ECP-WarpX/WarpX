@@ -4,37 +4,37 @@ namespace AnyFFT
 {
     std::string cufftErrorToString (const cufftResult& err);
 
-    FFTplan CreatePlan(int nx, int ny, int nz,
-                       amrex::Real* real_array, Complex* complex_array, direction dir)
+    FFTplan CreatePlan(IntVect real_size, amrex::Real* real_array,
+                       Complex* complex_array, direction dir)
     {
         FFTplan fft_plan;
         cufftResult result;
         if (dir == direction::R2C){
 #if (AMREX_SPACEDIM == 3)
 #  ifdef AMREX_USE_FLOAT
-            result = cufftPlan3d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_R2C);
+            result = cufftPlan3d( &(fft_plan.m_plan), real_size[2], real_size[1], real_size[0], CUFFT_R2C);
 #  else
-            result = cufftPlan3d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_D2Z);
+            result = cufftPlan3d( &(fft_plan.m_plan), real_size[2], real_size[1], real_size[0], CUFFT_D2Z);
 #  endif
 #else
 #  ifdef AMREX_USE_FLOAT
-            result = cufftPlan2d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_R2C);
+            result = cufftPlan2d( &(fft_plan.m_plan), real_size[1], real_size[0], CUFFT_R2C);
 #  else
-            result = cufftPlan2d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_D2Z);
+            result = cufftPlan2d( &(fft_plan.m_plan), real_size[1], real_size[0], CUFFT_D2Z);
 #  endif
 #endif
         } else {
 #if (AMREX_SPACEDIM == 3)
 #  ifdef AMREX_USE_FLOAT
-            result = cufftPlan3d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_C2R);
+            result = cufftPlan3d( &(fft_plan.m_plan), real_size[2], real_size[1], real_size[0], CUFFT_C2R);
 #  else
-            result = cufftPlan3d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_Z2D);
+            result = cufftPlan3d( &(fft_plan.m_plan), real_size[2], real_size[1], real_size[0], CUFFT_Z2D);
 #  endif
 #else
 #  ifdef AMREX_USE_FLOAT
-            result = cufftPlan2d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_C2R);
+            result = cufftPlan2d( &(fft_plan.m_plan), real_size[1], real_size[0], CUFFT_C2R);
 #  else
-            result = cufftPlan2d( &(fft_plan.m_plan), nz, ny, nx, CUFFT_Z2D);
+            result = cufftPlan2d( &(fft_plan.m_plan), real_size[1], real_size[0], CUFFT_Z2D);
 #  endif
 #endif
         }
