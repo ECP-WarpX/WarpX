@@ -66,6 +66,8 @@ Then, in the ``warpx_directory``, download and build openPMD-api:
    git clone https://github.com/openPMD/openPMD-api.git
    mkdir openPMD-api-build
    cd openPMD-api-build
+   export CXX=$(which g++)
+   export CC=$(which gcc)
    cmake ../openPMD-api -DopenPMD_USE_PYTHON=OFF -DCMAKE_INSTALL_PREFIX=../openPMD-install/ -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_RPATH='$ORIGIN' -DMPIEXEC_EXECUTABLE=$(which jsrun)
    cmake --build . --target install --parallel 16
 
