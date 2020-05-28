@@ -20,7 +20,7 @@ namespace AnyFFT
 #  endif
 #endif
 
-    FFTplan CreatePlan(IntVect real_size, amrex::Real* real_array,
+    FFTplan CreatePlan(amrex::IntVect real_size, amrex::Real* real_array,
                        Complex* complex_array, direction dir)
     {
         FFTplan fft_plan;

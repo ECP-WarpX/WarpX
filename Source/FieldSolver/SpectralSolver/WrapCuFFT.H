@@ -34,7 +34,7 @@ namespace AnyFFT
      * \param[out] complex_array Complex array to/from where R2C/C2R FFT is performed
      * \param[in] dir direction, either R2C or C2R
      */
-    FFTplan CreatePlan(IntVect real_size, amrex::Real* real_array,
+    FFTplan CreatePlan(amrex::IntVect real_size, amrex::Real* real_array,
                        Complex* complex_array, direction dir);
 
     /** \brief Destroy cuFFT plan
