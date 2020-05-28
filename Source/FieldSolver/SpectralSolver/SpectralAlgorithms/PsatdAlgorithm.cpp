@@ -351,10 +351,9 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             const     amrex::Real kz_mod = modified_kz_arr[j];
 #endif
 
-
             // Compute Jx cell-centered or nodal
             // (units multiplied by [L] again)
-            if ( kx_mod != 0 ) {
+            if ( kx_mod != 0.0_rt ) {
                 if      ( stag_jx[0] == 0 ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod*exp(I*kx*dx*0.5_rt);
                 else if ( stag_jx[0] == 1 ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod;
             }
@@ -362,7 +361,7 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
 #if (AMREX_SPACEDIM==3)
             // Compute Jy cell-centered or nodal
             // (units multiplied by [L] again)
-            if ( ky_mod != 0 ) {
+            if ( ky_mod != 0.0_rt ) {
                 if      ( stag_jy[1] == 0 ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod*exp(I*ky*dy*0.5_rt);
                 else if ( stag_jy[1] == 1 ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod;
             }
@@ -370,7 +369,7 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
 
             // Compute Jz cell-centered or nodal
             // (units multiplied by [L] again)
-            if ( kz_mod != 0 ) {
+            if ( kz_mod != 0.0_rt ) {
                 if       ( stag_jz[zdir] == 0 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod*exp(I*kz*dz*0.5_rt);
                 else  if ( stag_jz[zdir] == 1 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod;
             }
@@ -390,14 +389,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
     amrex::MultiFab Dz_cumsum( Dz_mf.boxArray(), Dz_mf.DistributionMap(), Dz_mf.nComp(), Dz_mf.nGrow(),
                                amrex::MFInfo() , amrex::FArrayBoxFactory() );
 
-    // Temporary MultiFabs for averages of cumulative sums
-    amrex::MultiFab Dx_cumavg( Dx_mf.boxArray(), Dx_mf.DistributionMap(), Dx_mf.nComp(), Dx_mf.nGrow(),
-                               amrex::MFInfo() , amrex::FArrayBoxFactory() );
-    amrex::MultiFab Dy_cumavg( Dy_mf.boxArray(), Dy_mf.DistributionMap(), Dy_mf.nComp(), Dy_mf.nGrow(),
-                               amrex::MFInfo() , amrex::FArrayBoxFactory() );
-    amrex::MultiFab Dz_cumavg( Dz_mf.boxArray(), Dz_mf.DistributionMap(), Dz_mf.nComp(), Dz_mf.nGrow(),
-                               amrex::MFInfo() , amrex::FArrayBoxFactory() );
-
     // Compute cumulative sums of D
 
     // Loop over boxes for Jx
@@ -413,7 +404,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
 
         const amrex::Dim3 lo_jx = lbound( Dx_arr );
         const amrex::Dim3 hi_jx = ubound( Dx_arr );
-        const int nx = hi_jx.x-lo_jx.x+1;
 
         // Loop over indices within one box
         ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
@@ -439,7 +429,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
 
         const amrex::Dim3 lo_jz = lbound( Dz_arr );
         const amrex::Dim3 hi_jz = ubound( Dz_arr );
-        const int nz = hi_jz.y-lo_jz.y+1;
 
         // Loop over indices within one box
         ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
@@ -465,7 +454,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
 
         const amrex::Dim3 lo_jy = lbound( Dy_arr );
         const amrex::Dim3 hi_jy = ubound( Dy_arr );
-        const int ny = hi_jy.y-lo_jy.y+1;
 
         // Loop over indices within one box
         ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
@@ -489,7 +477,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
 
         const amrex::Dim3 lo_jz = lbound( Dz_arr );
         const amrex::Dim3 hi_jz = ubound( Dz_arr );
-        const int nz = hi_jz.z-lo_jz.z+1;
 
         // Loop over indices within one box
         ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
@@ -521,9 +508,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
         // 3D array to store directional cumulative sum of D
         amrex::Array4<amrex::Real> const Dx_cumsum_arr = Dx_cumsum.array( mfi );
 
-        // 3D array to store average of cumulative sum of D
-        amrex::Array4<amrex::Real> const Dx_cumavg_arr = Dx_cumavg.array( mfi );
-
         const amrex::Dim3 lo_jx = lbound( Dx_arr );
         const amrex::Dim3 hi_jx = ubound( Dx_arr );
         const int nx = hi_jx.x-lo_jx.x+1;
@@ -531,10 +515,11 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
         // Compute average of cumulative sums of Dx along x
         ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
         {
-            Dx_cumavg_arr(i,j,k) = 0.0_rt;
-            for ( int ii = lo_jx.x; ii <= hi_jx.x; ++ii ) Dx_cumavg_arr(i,j,k) += Dx_cumsum_arr(ii,j,k);
-            Dx_cumavg_arr(i,j,k) /= static_cast<Real>(nx);
-            Dx_arr(i,j,k) -= Dx_cumavg_arr(i,j,k);
+            amrex::Real Dx_cumavg = 0.0_rt;
+            for ( int ii = lo_jx.x; ii <= hi_jx.x; ++ii ) Dx_cumavg += Dx_cumsum_arr(ii,j,k);
+            Dx_cumavg /= static_cast<Real>(nx);
+            Dx_arr(i,j,k) /= dx;
+            Dx_arr(i,j,k) -= Dx_cumavg;
         } );
     }
 
@@ -551,9 +536,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
         // 3D array to store directional cumulative sum of D
         amrex::Array4<amrex::Real> const Dz_cumsum_arr = Dz_cumsum.array( mfi );
 
-        // 3D array to store average of cumulative sum of D
-        amrex::Array4<amrex::Real> const Dz_cumavg_arr = Dz_cumavg.array( mfi );
-
         const amrex::Dim3 lo_jz = lbound( Dz_arr );
         const amrex::Dim3 hi_jz = ubound( Dz_arr );
         const int nz = hi_jz.y-lo_jz.y+1;
@@ -561,10 +543,11 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
         // Compute average of cumulative sums of Dz along z (second index)
         ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
         {
-            Dz_cumavg_arr(i,j,k) = 0.0_rt;
-            for ( int jj = lo_jz.y; jj <= hi_jz.y; ++jj ) Dz_cumavg_arr(i,j,k) += Dz_cumsum_arr(i,jj,k);
-            Dz_cumavg_arr(i,j,k) /= static_cast<Real>(nz);
-            Dz_arr(i,j,k) -= Dz_cumavg_arr(i,j,k);
+            amrex::Real Dz_cumavg = 0.0_rt;
+            for ( int jj = lo_jz.y; jj <= hi_jz.y; ++jj ) Dz_cumavg += Dz_cumsum_arr(i,jj,k);
+            Dz_cumavg /= static_cast<Real>(nz);
+            Dz_arr(i,j,k) /= dz;
+            Dz_arr(i,j,k) -= Dz_cumavg;
         } );
     }
 
@@ -581,9 +564,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
         // 3D array to store directional cumulative sum of D
         amrex::Array4<amrex::Real> const Dy_cumsum_arr = Dy_cumsum.array( mfi );
 
-        // 3D array to store average of cumulative sum of D
-        amrex::Array4<amrex::Real> const Dy_cumavg_arr = Dy_cumavg.array( mfi );
-
         const amrex::Dim3 lo_jy = lbound( Dy_arr );
         const amrex::Dim3 hi_jy = ubound( Dy_arr );
         const int ny = hi_jy.y-lo_jy.y+1;
@@ -591,10 +571,11 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
         // Compute average of cumulative sums of Dy along y
         ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
         {
-            Dy_cumavg_arr(i,j,k) = 0.0_rt;
-            for ( int jj = lo_jy.y; jj <= hi_jy.y; ++jj ) Dy_cumavg_arr(i,j,k) += Dy_cumsum_arr(i,jj,k);
-            Dy_cumavg_arr(i,j,k) /= static_cast<Real>(ny);
-            Dy_arr(i,j,k) -= Dy_cumavg_arr(i,j,k);
+            amrex::Real Dy_cumavg = 0.0_rt;
+            for ( int jj = lo_jy.y; jj <= hi_jy.y; ++jj ) Dy_cumavg += Dy_cumsum_arr(i,jj,k);
+            Dy_cumavg /= static_cast<Real>(ny);
+            Dy_arr(i,j,k) /= dy;
+            Dy_arr(i,j,k) -= Dy_cumavg;
         } );
     }
 
@@ -609,9 +590,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
         // 3D array to store directional cumulative sum of D
         amrex::Array4<amrex::Real> const Dz_cumsum_arr = Dz_cumsum.array( mfi );
 
-        // 3D array to store average of cumulative sum of D
-        amrex::Array4<amrex::Real> const Dz_cumavg_arr = Dz_cumavg.array( mfi );
-
         const amrex::Dim3 lo_jz = lbound( Dz_arr );
         const amrex::Dim3 hi_jz = ubound( Dz_arr );
         const int nz = hi_jz.z-lo_jz.z+1;
@@ -619,10 +597,11 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
         // Compute average of cumulative sums of Dz along z (third index)
         ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
         {
-            Dz_cumavg_arr(i,j,k) = 0.0_rt;
-            for ( int kk = lo_jz.z; kk <= hi_jz.z; ++kk ) Dz_cumavg_arr(i,j,k) += Dz_cumsum_arr(i,j,kk);
-            Dz_cumavg_arr(i,j,k) /= static_cast<Real>(nz);
-            Dz_arr(i,j,k) -= Dz_cumavg_arr(i,j,k);
+            amrex::Real Dz_cumavg = 0.0_rt;
+            for ( int kk = lo_jz.z; kk <= hi_jz.z; ++kk ) Dz_cumavg += Dz_cumsum_arr(i,j,kk);
+            Dz_cumavg /= static_cast<Real>(nz);
+            Dz_arr(i,j,k) /= dz;
+            Dz_arr(i,j,k) -= Dz_cumavg;
         } );
     }
 
