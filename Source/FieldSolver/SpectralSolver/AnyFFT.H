@@ -11,7 +11,7 @@
 
 namespace AnyFFT
 {
-    // First, define library-independent types (complex, FFT plan)
+    // First, define library-dependent types (complex, FFT plan)
 
     /** Complex type for FFT, depends on FFT library */
 #ifdef AMREX_USE_GPU
@@ -40,7 +40,7 @@ namespace AnyFFT
 #  endif
 #endif
 
-    // Second, define library-independent types and functions
+    // Second, define library-independent API
 
     /** Direction in which the FFT is performed. */
     enum struct direction {R2C, C2R};
