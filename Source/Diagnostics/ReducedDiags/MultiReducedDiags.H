@@ -42,6 +42,10 @@ public:
      *  @param[in] step current iteration time */
     void WriteToFile(int step);
 
+    /** This function queries deprecated input parameters and abort
+     *  the run if one of them is specified. */
+    void BackwardCompatibility ();
+
 };
 
 #endif

@@ -28,6 +28,8 @@ MultiReducedDiags::MultiReducedDiags ()
     // if names are not given, reduced diags will not be done
     if ( m_plot_rd == 0 ) { return; }
 
+    BackwardCompatibility();
+
     // resize
     m_multi_rd.resize(m_rd_names.size());
 
@@ -118,3 +120,26 @@ void MultiReducedDiags::WriteToFile (int step)
     // end loop over all reduced diags
 }
 // end void MultiReducedDiags::WriteToFile
+
+void MultiReducedDiags::BackwardCompatibility ()
+{
+    // read reduced diags names
+    ParmParse pp("warpx");
+    m_plot_rd = pp.queryarr("reduced_diags_names", m_rd_names);
+
+    // loop over all reduced diags
+    for (int i_rd = 0; i_rd < m_rd_names.size(); ++i_rd)
+    {
+        ParmParse pp_rd(m_rd_names[i_rd]);
+
+        // read reduced diags type
+        std::string rd_type;
+        pp_rd.query("type", rd_type);
+        if (rd_type.compare("FieldEnergy") == 0)
+        {
+            Abort("The syntax for field energy reduced diagnostic has changed. "
+                  "You should now use reduced_diag.type = Field and "
+                  "reduced_diag.field_type = FieldEnergy, see documentation.");
+        }
+    }
+}
