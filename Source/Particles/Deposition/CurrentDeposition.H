@@ -318,7 +318,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
 
 #if (defined WARPX_DIM_RZ)
-    Complex const I = Complex{0., 1.};
+    Complex const I = Complex{0._rt, 1._rt};
 #endif
 
     Real const clightsq = 1.0_rt / ( PhysConst::c * PhysConst::c );
@@ -329,9 +329,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
         [=] AMREX_GPU_DEVICE (long const ip) {
 
             // --- Get particle quantities
-        Real const gaminv = 1.0/std::sqrt(1.0 + uxp[ip]*uxp[ip]*clightsq
-                                              + uyp[ip]*uyp[ip]*clightsq
-                                              + uzp[ip]*uzp[ip]*clightsq);
+      Real const gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*clightsq
+                           + uyp[ip]*uyp[ip]*clightsq
+                           + uzp[ip]*uzp[ip]*clightsq);
 
             // wqx, wqy wqz are particle current in each direction
             Real wq = q*wp[ip];
@@ -363,24 +363,24 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 costheta_new = xp/rp_new;
                 sintheta_new = yp/rp_new;
             } else {
-                costheta_new = 1.;
-                sintheta_new = 0.;
+                costheta_new = 1._rt;
+                sintheta_new = 0._rt;
             }
             amrex::Real costheta_mid, sintheta_mid;
             if (rp_mid > 0._rt) {
                 costheta_mid = xp_mid/rp_mid;
                 sintheta_mid = yp_mid/rp_mid;
             } else {
-                costheta_mid = 1.;
-                sintheta_mid = 0.;
+                costheta_mid = 1._rt;
+                sintheta_mid = 0._rt;
             }
             amrex::Real costheta_old, sintheta_old;
             if (rp_old > 0._rt) {
                 costheta_old = xp_old/rp_old;
                 sintheta_old = yp_old/rp_old;
             } else {
-                costheta_old = 1.;
-                sintheta_old = 0.;
+                costheta_old = 1._rt;
+                sintheta_old = 0._rt;
             }
             const Complex xy_new0 = Complex{costheta_new, sintheta_new};
             const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
@@ -408,14 +408,14 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             // Note that there are extra values above and below
             // to possibly hold the factor for the old particle
             // which can be at a different grid location.
-            Real sx_new[depos_order + 3] = {0.};
-            Real sx_old[depos_order + 3] = {0.};
+            Real sx_new[depos_order + 3] = {0._rt};
+            Real sx_old[depos_order + 3] = {0._rt};
 #if (defined WARPX_DIM_3D)
-            Real sy_new[depos_order + 3] = {0.};
-            Real sy_old[depos_order + 3] = {0.};
+            Real sy_new[depos_order + 3] = {0._rt};
+            Real sy_old[depos_order + 3] = {0._rt};
 #endif
-            Real sz_new[depos_order + 3] = {0.};
-            Real sz_old[depos_order + 3] = {0.};
+            Real sz_new[depos_order + 3] = {0._rt};
+            Real sz_old[depos_order + 3] = {0._rt};
 
             // --- Compute shape factors
             // Compute shape factors for position as they are now and at old positions
@@ -446,30 +446,30 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 for (int j=djl; j<=depos_order+2-dju; j++) {
-                    amrex::Real sdxi = 0.;
+                    amrex::Real sdxi = 0._rt;
                     for (int i=dil; i<=depos_order+1-diu; i++) {
-                        sdxi += wqx*(sx_old[i] - sx_new[i])*((sy_new[j] + 0.5*(sy_old[j] - sy_new[j]))*sz_new[k] +
-                                                             (0.5*sy_new[j] + 1./3.*(sy_old[j] - sy_new[j]))*(sz_old[k] - sz_new[k]));
+                        sdxi += wqx*(sx_old[i] - sx_new[i])*((sy_new[j] + 0.5_rt*(sy_old[j] - sy_new[j]))*sz_new[k] +
+                                                             (0.5_rt*sy_new[j] + 1._rt/3._rt*(sy_old[j] - sy_new[j]))*(sz_old[k] - sz_new[k]));
                         amrex::Gpu::Atomic::Add( &Jx_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxi);
                     }
                 }
             }
             for (int k=dkl; k<=depos_order+2-dku; k++) {
                 for (int i=dil; i<=depos_order+2-diu; i++) {
-                    amrex::Real sdyj = 0.;
+                    amrex::Real sdyj = 0._rt;
                     for (int j=djl; j<=depos_order+1-dju; j++) {
-                        sdyj += wqy*(sy_old[j] - sy_new[j])*((sz_new[k] + 0.5*(sz_old[k] - sz_new[k]))*sx_new[i] +
-                                                             (0.5*sz_new[k] + 1./3.*(sz_old[k] - sz_new[k]))*(sx_old[i] - sx_new[i]));
+                        sdyj += wqy*(sy_old[j] - sy_new[j])*((sz_new[k] + 0.5_rt*(sz_old[k] - sz_new[k]))*sx_new[i] +
+                                                             (0.5_rt*sz_new[k] + 1._rt/3._rt*(sz_old[k] - sz_new[k]))*(sx_old[i] - sx_new[i]));
                         amrex::Gpu::Atomic::Add( &Jy_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdyj);
                     }
                 }
             }
             for (int j=djl; j<=depos_order+2-dju; j++) {
                 for (int i=dil; i<=depos_order+2-diu; i++) {
-                    amrex::Real sdzk = 0.;
+                    amrex::Real sdzk = 0._rt;
                     for (int k=dkl; k<=depos_order+1-dku; k++) {
-                        sdzk += wqz*(sz_old[k] - sz_new[k])*((sx_new[i] + 0.5*(sx_old[i] - sx_new[i]))*sy_new[j] +
-                                                             (0.5*sx_new[i] + 1./3.*(sx_old[i] - sx_new[i]))*(sy_old[j] - sy_new[j]));
+                        sdzk += wqz*(sz_old[k] - sz_new[k])*((sx_new[i] + 0.5_rt*(sx_old[i] - sx_new[i]))*sy_new[j] +
+                                                             (0.5_rt*sx_new[i] + 1._rt/3._rt*(sx_old[i] - sx_new[i]))*(sy_old[j] - sy_new[j]));
                         amrex::Gpu::Atomic::Add( &Jz_arr(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdzk);
                     }
                 }
@@ -478,9 +478,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 #elif (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
 
             for (int k=dkl; k<=depos_order+2-dku; k++) {
-                amrex::Real sdxi = 0.;
+                amrex::Real sdxi = 0._rt;
                 for (int i=dil; i<=depos_order+1-diu; i++) {
-                    sdxi += wqx*(sx_old[i] - sx_new[i])*(sz_new[k] + 0.5*(sz_old[k] - sz_new[k]));
+                    sdxi += wqx*(sx_old[i] - sx_new[i])*(sz_new[k] + 0.5_rt*(sz_old[k] - sz_new[k]));
                     amrex::Gpu::Atomic::Add( &Jx_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdxi);
 #if (defined WARPX_DIM_RZ)
                     Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
@@ -519,7 +519,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                 }
             }
             for (int i=dil; i<=depos_order+2-diu; i++) {
-                Real sdzk = 0.;
+                Real sdzk = 0._rt;
                 for (int k=dkl; k<=depos_order+1-dku; k++) {
                     sdzk += wqz*(sz_old[k] - sz_new[k])*(sx_new[i] + 0.5_rt * (sx_old[i] - sx_new[i]));
                     amrex::Gpu::Atomic::Add( &Jz_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 0), sdzk);

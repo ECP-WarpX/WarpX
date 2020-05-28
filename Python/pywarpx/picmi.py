@@ -77,8 +77,7 @@ class Species(picmistandard.PICMI_Species):
                                              mass = self.mass,
                                              charge = self.charge,
                                              injection_style = 'python',
-                                             initialize_self_fields = int(initialize_self_fields),
-                                             plot_vars = set())
+                                             initialize_self_fields = int(initialize_self_fields))
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
@@ -636,26 +635,30 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
 
     def initialize_inputs(self):
-        self.diagnostics_number = len(pywarpx.Diagnostics.diagnostics_list) + 1
 
-        # --- This a placeholder until the name attribute is added to the picmi standard
         name = getattr(self, 'name', None)
         if name is None:
-            self.name = 'diag{}'.format(self.diagnostics_number)
+            diagnostics_number = len(pywarpx.diagnostics._diagnostics_dict) + 1
+            self.name = 'diag{}'.format(diagnostics_number)
 
-        self.diagnostic = pywarpx.Bucket.Bucket(self.name)
-        pywarpx.diagnostics.diags_names.append(self.name)
-        pywarpx.Diagnostics.diagnostics_list.append(self.diagnostic)
+        try:
+            self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
+        except KeyError:
+            self.diagnostic = pywarpx.Diagnostics.Diagnostic(self.name, _species_dict={})
+            pywarpx.diagnostics._diagnostics_dict[self.name] = self.diagnostic
 
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.dump_rz_modes = self.dump_rz_modes
         self.diagnostic.period = self.period
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
-        self.diagnostic.coarsening_ratio = (np.array(self.grid.number_of_cells)/np.array(self.number_of_cells)).astype(int)
+        if self.number_of_cells is not None:
+            self.diagnostic.coarsening_ratio = (np.array(self.grid.number_of_cells)/np.array(self.number_of_cells)).astype(int)
         self.diagnostic.fields_to_plot = set()
 
         for dataname in self.data_list:
@@ -712,37 +715,66 @@ class ElectrostaticFieldDiagnostic(_WarpX_FieldDiagnostic, picmistandard.PICMI_E
 
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
+    def init(self, kw):
+
+        self.format = kw.pop('warpx_format', 'plotfile')
+        self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.random_fraction = kw.pop('warpx_random_fraction', None)
+        self.uniform_stride = kw.pop('warpx_uniform_stride', None)
+        self.plot_filter_function = kw.pop('warpx_plot_filter_function', None)
+
     def initialize_inputs(self):
 
-        plot_vars = set()
+        name = getattr(self, 'name', None)
+        if name is None:
+            diagnostics_number = len(pywarpx.diagnostics._diagnostics_dict) + 1
+            self.name = 'diag{}'.format(diagnostics_number)
+
+        try:
+            self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
+        except KeyError:
+            self.diagnostic = pywarpx.Diagnostics.Diagnostic(self.name, _species_dict={})
+            pywarpx.diagnostics._diagnostics_dict[self.name] = self.diagnostic
+
+        self.diagnostic.diag_type = 'Full'
+        self.diagnostic.format = self.format
+        self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.period = self.period
+
+        variables = set()
         for dataname in self.data_list:
             if dataname == 'position':
                 # --- The positions are alway written out anyway
                 pass
             elif dataname == 'momentum':
-                plot_vars.add('ux')
-                plot_vars.add('uy')
-                plot_vars.add('uz')
+                variables.add('ux')
+                variables.add('uy')
+                variables.add('uz')
             elif dataname == 'weighting':
-                plot_vars.add('w')
+                variables.add('w')
             elif dataname == 'fields':
-                plot_vars.add('Ex')
-                plot_vars.add('Ey')
-                plot_vars.add('Ez')
-                plot_vars.add('Bx')
-                plot_vars.add('By')
-                plot_vars.add('Bz')
+                variables.add('Ex')
+                variables.add('Ey')
+                variables.add('Ez')
+                variables.add('Bx')
+                variables.add('By')
+                variables.add('Bz')
             elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
-                plot_vars.add(dataname)
+                variables.add(dataname)
 
-        if plot_vars:
-            species = self.species
-            if not np.iterable(species):
-                species = [species]
-            for specie in species:
-                for var in plot_vars:
-                    specie.species.plot_vars.add(var)
+        if np.iterable(self.species):
+            species_list = self.species
+        else:
+            species_list = [species]
 
+        for specie in species_list:
+            diag = pywarpx.Bucket.Bucket(self.name + '.' + specie.name,
+                                         variables = variables,
+                                         random_fraction = self.random_fraction,
+                                         uniform_stride = self.uniform_stride)
+            diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', self.plot_filter_function)
+            self.diagnostic._species_dict[specie.name] = diag
 
 # ----------------------------
 # Lab frame diagnostics

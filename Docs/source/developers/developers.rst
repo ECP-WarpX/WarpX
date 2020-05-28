@@ -12,11 +12,13 @@ Our Doxygen API documentation in classic formatting `is located here <../_static
 
    amrex_basics
    repo_organization
+   dimensionality
    fields
    particles
    initialization
    diagnostics
    moving_window
+   qed
    portability
    profiling
    contributing

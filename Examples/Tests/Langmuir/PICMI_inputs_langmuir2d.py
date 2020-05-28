@@ -60,12 +60,14 @@ solver = picmi.ElectromagneticSolver(grid=grid, cfl=1.)
 # diagnostics
 ##########################
 
-field_diag1 = picmi.FieldDiagnostic(grid = grid,
+field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
+                                    grid = grid,
                                     period = diagnostic_interval,
                                     data_list = ['Ex', 'Jx'],
                                     warpx_file_prefix = 'plotfiles/plt')
 
-part_diag1 = picmi.ParticleDiagnostic(period = diagnostic_interval,
+part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
+                                      period = diagnostic_interval,
                                       species = [electrons],
                                       data_list = ['weighting', 'ux', 'Ex'])
 
@@ -90,7 +92,7 @@ sim.add_diagnostic(part_diag1)
 
 # write_inputs will create an inputs file that can be used to run
 # with the compiled version.
-#sim.write_input_file(file_name = 'inputs2d_from_PICMI')
+sim.write_input_file(file_name = 'inputs2d_from_PICMI')
 
 # Alternatively, sim.step will run WarpX, controlling it from Python
 sim.step()

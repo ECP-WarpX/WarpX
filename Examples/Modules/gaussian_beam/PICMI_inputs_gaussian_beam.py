@@ -43,12 +43,14 @@ proton_beam = picmi.GaussianBunchDistribution(n_physical_particles = total_charg
 electrons = picmi.Species(particle_type='electron', name='electrons', initial_distribution=electron_beam)
 protons = picmi.Species(particle_type='proton', name='protons', initial_distribution=proton_beam)
 
-field_diag1 = picmi.FieldDiagnostic(grid = grid,
+field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
+                                    grid = grid,
                                     period = 10,
                                     data_list = ['E', 'B', 'J', 'part_per_cell'],
                                     warpx_file_prefix = 'plotfiles/plt')
 
-part_diag1 = picmi.ParticleDiagnostic(period = 10,
+part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
+                                      period = 10,
                                       species = [electrons, protons],
                                       data_list = ['weighting', 'momentum', 'fields'])
 

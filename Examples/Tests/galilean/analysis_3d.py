@@ -24,7 +24,7 @@ Ez= ds.index.grids[0]['boxlib', 'Ez'].squeeze().v
 energyE_gal_psatd = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
 
 #E field energy precalculated with standard PSATD (v_galilean = (0,0,0))
-energyE_psatd = 21135.7074524
+energyE_psatd = 154618.93650990006
 
 error_rel = energyE_gal_psatd / energyE_psatd
 tolerance_rel = 1e-7
