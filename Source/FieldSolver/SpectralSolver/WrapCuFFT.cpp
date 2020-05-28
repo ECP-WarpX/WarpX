@@ -4,8 +4,8 @@ namespace AnyFFT
 {
     std::string cufftErrorToString (const cufftResult& err);
 
-    FFTplan CreatePlan(amrex::IntVect real_size, amrex::Real* real_array,
-                       Complex* complex_array, direction dir)
+    FFTplan CreatePlan(const amrex::IntVect& real_size, amrex::Real * const real_array,
+                       Complex * const complex_array, const direction dir)
     {
         FFTplan fft_plan;
         cufftResult result;
