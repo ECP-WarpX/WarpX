@@ -23,6 +23,7 @@
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/IntervalsParser.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #ifdef WARPX_USE_PSATD
@@ -139,6 +140,8 @@ public:
     static long particle_pusher_algo;
     static int maxwell_fdtd_solver_id;
     static long load_balance_costs_update_algo;
+    static int em_solver_medium;
+    static int macroscopic_solver_algo;
 
     // Static public variable to switch on current correction in Fourier space
     // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010): can be set
@@ -296,6 +299,9 @@ public:
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+    void MacroscopicEvolveE (         amrex::Real dt);
+    void MacroscopicEvolveE (int lev, amrex::Real dt);
+    void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void FieldGather ();
 
     /** \brief apply QED correction on electric field
@@ -682,6 +688,10 @@ private:
 
     int n_buffer = 4;
     amrex::Real const_dt = 0.5e-11;
+
+    // Macroscopic properties
+    std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
+
 
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_int" string int the input file
