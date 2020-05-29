@@ -9,6 +9,12 @@
 
 #include <AMReX_LayoutData.H>
 
+/**
+ * Wrapper around FFT libraries. The header file defines the API and the base types
+ * (Complex and VendorFFTPlan), and the implementation for different FFT libraries is
+ * done in different cpp files. This wrapper only depends on the underlying FFT library
+ * AND on AMReX (There is no dependence on WarpX).
+ */
 namespace AnyFFT
 {
     // First, define library-dependent types (complex, FFT plan)
@@ -29,7 +35,8 @@ namespace AnyFFT
 #endif
 
     /** Library-dependent FFT plans type, which holds one fft plan per box
-     * (plans are only initialized for the boxes that are owned by the local MPI rank). */
+     * (plans are only initialized for the boxes that are owned by the local MPI rank).
+     */
 #ifdef AMREX_USE_GPU
     using VendorFFTPlan = cufftHandle;
 #else
