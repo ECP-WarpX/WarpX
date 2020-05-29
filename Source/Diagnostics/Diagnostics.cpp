@@ -152,7 +152,13 @@ Diagnostics::InitData ()
     } else if (m_format == "ascent"){
         m_flush_format = new FlushFormatAscent;
     } else if (m_format == "sensei"){
-        m_flush_format = new FlushFormatSensei(m_diag_name);
+#ifdef BL_USE_SENSEI_INSITU
+        m_flush_format = new FlushFormatSensei(
+            dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
+            m_diag_name);
+#else
+        amrex::Abort("To use SENSEI in situ, compile with USE_SENSEI=TRUE");
+#endif
     } else if (m_format == "openpmd"){
 #ifdef WARPX_USE_OPENPMD
         m_flush_format = new FlushFormatOpenPMD(m_diag_name);
