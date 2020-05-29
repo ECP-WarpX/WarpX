@@ -9,6 +9,7 @@
 #define WARPX_FINITE_DIFFERENCE_SOLVER_H_
 
 #include <AMReX_MultiFab.H>
+#include "MacroscopicProperties/MacroscopicProperties.H"
 #include "BoundaryConditions/PML.H"
 
 /**
@@ -53,6 +54,24 @@ class FiniteDifferenceSolver
 
         void ComputeDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                            amrex::MultiFab& divE );
+
+        /**
+          * \brief Macroscopic E-update for non-vacuum medium using the user-selected
+          * finite-difference algorithm and macroscopic sigma-method defined in
+          * WarpXAlgorithmSelection.H
+          *
+          * \param[out] Efield  vector of electric field MultiFabs updated at a given level
+          * \param[in] Bfield   vector of magnetic field MultiFabs at a given level
+          * \param[in] Jfield   vector of current density MultiFabs at a given level
+          * \param[in] dt       timestep of the simulation
+          * \param[in] macroscopic_properties contains user-defined properties of the medium.
+          */
+
+        void MacroscopicEvolveE ( std::array< std::unique_ptr<amrex::MultiFab>, 3>& Efield,
+                            std::array< std::unique_ptr<amrex::MultiFab>, 3> const& Bfield,
+                            std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
+                            amrex::Real const dt,
+                            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
         void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
@@ -144,6 +163,14 @@ class FiniteDifferenceSolver
         void ComputeDivECartesian (
             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
             amrex::MultiFab& divE );
+
+        template< typename T_Algo >
+        void MacroscopicEvolveECartesian (
+            std::array< std::unique_ptr< amrex::MultiFab>, 3>& Efield,
+            std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Bfield,
+            std::array< std::unique_ptr< amrex::MultiFab>, 3> const& Jfield,
+            amrex::Real const dt,
+            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
 
         template< typename T_Algo >
         void EvolveBPMLCartesian (

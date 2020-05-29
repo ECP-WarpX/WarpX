@@ -12,12 +12,14 @@ jobs:
         path: 'warpx_directory/WarpX'
     - name: install dependencies
       run: |
+        set +e
         brew update
         brew install cmake
         brew install fftw
         brew install libomp
         brew install open-mpi
         brew install pkg-config
+        set -e
         brew tap openpmd/openpmd
         brew install openpmd-api
     - name: build WarpX
