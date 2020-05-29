@@ -210,8 +210,7 @@ WarpX::Evolve (int numsteps)
             }
         }
 
-        bool to_sort = (sort_int > 0) && ((step+1) % sort_int == 0);
-        if (to_sort) {
+        if (sort_intervals.contains(step+1)) {
             amrex::Print() << "re-sorting particles \n";
             mypc->SortParticlesByBin(sort_bin_size);
         }
@@ -412,7 +411,15 @@ WarpX::OneStep_nosub (Real cur_time)
         EvolveB(0.5*dt[0]); // We now have B^{n+1/2}
 
         FillBoundaryB(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
-        EvolveE(dt[0]); // We now have E^{n+1}
+        if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
+            // vacuum medium
+            EvolveE(dt[0]); // We now have E^{n+1}
+        } else if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+            // macroscopic medium
+            MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
+        } else {
+            amrex::Abort(" Medium for EM is unknown \n");
+        }
 
         FillBoundaryE(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
         EvolveF(0.5*dt[0], DtType::SecondHalf);
