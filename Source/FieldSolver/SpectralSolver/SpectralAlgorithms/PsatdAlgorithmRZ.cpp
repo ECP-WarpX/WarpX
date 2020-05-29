@@ -4,8 +4,10 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpX.H"
 #include "PsatdAlgorithmRZ.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <cmath>
 
@@ -203,7 +205,16 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
                                      const std::unique_ptr<amrex::MultiFab>& rho )
 {
     // Profiling
-    /* WARPX_PROFILE( "PsatdAlgorithmRZ::CurrentCorrection" ); */
+    WARPX_PROFILE( "PsatdAlgorithmRZ::CurrentCorrection" );
+
+    using Idx = SpectralFieldIndex;
+
+    // Forward Fourier transform of J and rho
+    field_data.ForwardTransform( *current[0], Idx::Jx,
+                                 *current[1], Idx::Jy);
+    field_data.ForwardTransform( *current[2], Idx::Jz, 0);
+    field_data.ForwardTransform( *rho, Idx::rho_old, 0 );
+    field_data.ForwardTransform( *rho, Idx::rho_new, 1 );
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -250,17 +261,23 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
             amrex::Real const kz = modified_kz_arr[j];
             amrex::Real const k_norm2 = kr*kr + kz*kz;
 
-            constexpr Complex I = Complex{0,1};
+            constexpr Complex I = Complex{0._rt,1._rt};
 
             // Correct J
-            if ( k_norm2 != 0 )
+            if ( k_norm2 != 0._rt )
             {
                 Complex const F = - ((rho_new - rho_old)/dt + I*kz*Jz + kr*(Jp - Jm))/k_norm2;
 
-                fields(i,j,k,Jp_m) += +0.5*kr*F;
-                fields(i,j,k,Jm_m) += -0.5*kr*F;
+                fields(i,j,k,Jp_m) += +0.5_rt*kr*F;
+                fields(i,j,k,Jm_m) += -0.5_rt*kr*F;
                 fields(i,j,k,Jz_m) += -I*kz*F;
             }
         });
     }
+
+    // Backward Fourier transform of J
+    field_data.BackwardTransform( *current[0], Idx::Jx,
+                                  *current[1], Idx::Jy);
+    field_data.BackwardTransform( *current[2], Idx::Jz, 0 );
+
 }
