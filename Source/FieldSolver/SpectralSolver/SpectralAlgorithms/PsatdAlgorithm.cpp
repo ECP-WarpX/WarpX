@@ -282,11 +282,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
     field_data.ForwardTransform( *current[1], Idx::Jy, 0 );
     field_data.ForwardTransform( *current[2], Idx::Jz, 0 );
 
-    // Index type of D and J (either nodal or cell-centered)
-    const amrex::IntVect stag_jx = current[0]->ixType().toIntVect();
-    const amrex::IntVect stag_jy = current[1]->ixType().toIntVect();
-    const amrex::IntVect stag_jz = current[2]->ixType().toIntVect();
-
     // Index of z direction in 2D and 3D
     constexpr int zdir = AMREX_SPACEDIM-1;
 
@@ -324,7 +319,7 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             // Record old values of the fields to be updated
             using Idx = SpectralFieldIndex;
 
-            // Shortcuts for the values of J and rho
+            // Shortcuts for the values of D
             const Complex Dx = fields(i,j,k,Idx::Jx);
             const Complex Dy = fields(i,j,k,Idx::Jy);
             const Complex Dz = fields(i,j,k,Idx::Jz);
@@ -352,24 +347,19 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
 #endif
 
             // Compute Jx cell-centered or nodal (units multiplied by [L] again)
-            if ( kx_mod != 0.0_rt ) {
-                if      ( stag_jx[0] == 0 ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod*exp(I*kx*dx*0.5_rt);
-                else if ( stag_jx[0] == 1 ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod;
-            }
+            if ( kx_mod != 0.0_rt ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod;
+            else                    fields(i,j,k,Idx::Jx) = 0.0_rt;
 
 #if (AMREX_SPACEDIM==3)
             // Compute Jy cell-centered or nodal (units multiplied by [L] again)
-            if ( ky_mod != 0.0_rt ) {
-                if      ( stag_jy[1] == 0 ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod*exp(I*ky*dy*0.5_rt);
-                else if ( stag_jy[1] == 1 ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod;
-            }
+            if ( ky_mod != 0.0_rt ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod;
+            else                    fields(i,j,k,Idx::Jy) = 0.0_rt;
 #endif
 
             // Compute Jz cell-centered or nodal (units multiplied by [L] again)
-            if ( kz_mod != 0.0_rt ) {
-                if       ( stag_jz[zdir] == 0 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod*exp(I*kz*dz*0.5_rt);
-                else  if ( stag_jz[zdir] == 1 ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod;
-            }
+            if ( kz_mod != 0.0_rt ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod;
+            else                    fields(i,j,k,Idx::Jz) = 0.0_rt;
+
         } );
     }
 
