@@ -4,11 +4,11 @@ namespace AnyFFT
 {
 
 #ifdef AMREX_USE_FLOAT
-    using VendorR2C = CUFFT_R2C;
-    using VendorC2R = CUFFT_C2R;
+    cufftType VendorR2C = CUFFT_R2C;
+    cufftType VendorC2R = CUFFT_C2R;
 #else
-    using VendorR2C = CUFFT_D2Z;
-    using VendorC2R = CUFFT_Z2D;
+    cufftType VendorR2C = CUFFT_D2Z;
+    cufftType VendorC2R = CUFFT_Z2D;
 #endif
 
     std::string cufftErrorToString (const cufftResult& err);
@@ -51,7 +51,7 @@ namespace AnyFFT
         fft_plan.m_real_array = real_array;
         fft_plan.m_complex_array = complex_array;
         fft_plan.m_dir = dir;
-        fft_plan.m_dir = dim;
+        fft_plan.m_dim = dim;
 
         return fft_plan;
     }
