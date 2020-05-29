@@ -69,6 +69,8 @@ long WarpX::particle_pusher_algo;
 int WarpX::maxwell_fdtd_solver_id;
 long WarpX::load_balance_costs_update_algo;
 int WarpX::do_dive_cleaning = 0;
+int WarpX::em_solver_medium;
+int WarpX::macroscopic_solver_algo;
 
 long WarpX::n_rz_azimuthal_modes = 1;
 long WarpX::ncomps = 1;
@@ -89,11 +91,7 @@ bool WarpX::refine_plasma     = false;
 
 int WarpX::num_mirrors = 0;
 
-#ifdef AMREX_USE_GPU
-int  WarpX::sort_int = 4;
-#else
-int  WarpX::sort_int = -1;
-#endif
+IntervalsParser WarpX::sort_intervals;
 amrex::IntVect WarpX::sort_bin_size(AMREX_D_DECL(4,4,4));
 
 bool WarpX::do_back_transformed_diagnostics = false;
@@ -219,6 +217,13 @@ WarpX::WarpX ()
     pml.resize(nlevs_max);
     costs.resize(nlevs_max);
 
+
+    if (em_solver_medium == MediumForEM::Macroscopic) {
+        // create object for macroscopic solver
+        m_macroscopic_properties = std::unique_ptr<MacroscopicProperties> (new MacroscopicProperties());
+    }
+
+
     // Set default values for particle and cell weights for costs update;
     // Default values listed here for the case AMREX_USE_GPU are determined
     // from single-GPU tests on Summit.
@@ -285,17 +290,6 @@ WarpX::WarpX ()
     // Sanity checks. Must be done after calling the MultiParticleContainer
     // constructor, as it reads additional parameters
     // (e.g., use_fdtd_nci_corr)
-
-#ifndef WARPX_USE_PSATD
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        not ( do_pml && do_nodal ),
-        "PML + do_nodal for finite-difference not implemented"
-        );
-#endif
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        not ( do_dive_cleaning && do_nodal ),
-        "divE cleaning + do_nodal not implemented"
-        );
 #ifdef WARPX_USE_PSATD
     AMREX_ALWAYS_ASSERT(use_fdtd_nci_corr == 0);
     AMREX_ALWAYS_ASSERT(do_subcycling == 0);
@@ -477,7 +471,13 @@ WarpX::ReadParameters ()
         pp.query("do_dive_cleaning", do_dive_cleaning);
         pp.query("n_field_gather_buffer", n_field_gather_buffer);
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
-        pp.query("sort_int", sort_int);
+#ifdef AMREX_USE_GPU
+        std::string sort_int_string = "4";
+#else
+        std::string sort_int_string = "-1";
+#endif
+        pp.query("sort_int", sort_int_string);
+        sort_intervals = IntervalsParser(sort_int_string);
 
         Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
         bool sort_bin_size_is_specified = pp.queryarr("sort_bin_size", vect_sort_bin_size);
@@ -632,6 +632,10 @@ WarpX::ReadParameters ()
             l_lower_order_in_v = false;
         }
         load_balance_costs_update_algo = GetAlgorithmInteger(pp, "load_balance_costs_update");
+        em_solver_medium = GetAlgorithmInteger(pp, "em_solver_medium");
+        if (em_solver_medium == MediumForEM::Macroscopic ) {
+            macroscopic_solver_algo = GetAlgorithmInteger(pp,"macroscopic_sigma_method");
+        }
         pp.query("costs_heuristic_cells_wt", costs_heuristic_cells_wt);
         pp.query("costs_heuristic_particles_wt", costs_heuristic_particles_wt);
     }

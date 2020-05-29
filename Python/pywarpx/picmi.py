@@ -643,6 +643,7 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
 
     def initialize_inputs(self):
 
@@ -660,10 +661,12 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.dump_rz_modes = self.dump_rz_modes
         self.diagnostic.period = self.period
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
-        self.diagnostic.coarsening_ratio = (np.array(self.grid.number_of_cells)/np.array(self.number_of_cells)).astype(int)
+        if self.number_of_cells is not None:
+            self.diagnostic.coarsening_ratio = (np.array(self.grid.number_of_cells)/np.array(self.number_of_cells)).astype(int)
         self.diagnostic.fields_to_plot = set()
 
         for dataname in self.data_list:
