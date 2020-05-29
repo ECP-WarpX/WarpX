@@ -415,7 +415,7 @@ WarpX::ReadParameters ()
                 snapshot_interval_is_specified,
                 "When using back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab.");
 
-            pp.get("gamma_boost", gamma_boost);
+            pp.get("gamma_boost", gamma_boost); // this is read in ReadBoostedFrameParameters()
 
             pp.query("do_back_transformed_fields", do_back_transformed_fields);
 

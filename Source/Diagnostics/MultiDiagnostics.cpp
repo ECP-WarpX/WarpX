@@ -13,6 +13,8 @@ MultiDiagnostics::MultiDiagnostics ()
     for (int i=0; i<ndiags; i++){
         if ( diags_types[i] == DiagTypes::Full ){
             alldiags[i].reset( new FullDiagnostics(i, diags_names[i]) );
+        } else if ( diags_types[i] == DiagTypes::BackTransformed ){
+            alldiags[i].reset( new BTDiagnostics(i, diags_names[i]) );
         } else {
             amrex::Abort("Unknown diagnostic type");
         }
@@ -23,6 +25,7 @@ void
 MultiDiagnostics::InitData ()
 {
     for( auto& diag : alldiags ){
+//        diag->BTInitData();
         diag->InitData();
     }
 }
@@ -51,6 +54,7 @@ MultiDiagnostics::ReadParameters ()
         std::string diag_type_str;
         ppd.get("diag_type", diag_type_str);
         if (diag_type_str == "Full") diags_types[i] = DiagTypes::Full;
+        if (diag_type_str == "BackTransformed") diags_types[i] = DiagTypes::BackTransformed;
     }
 }
 
