@@ -70,12 +70,12 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
         forward_plan[mfi] = AnyFFT::CreatePlan(
             fft_size, tmpRealField[mfi].dataPtr(),
             reinterpret_cast<AnyFFT::Complex*>( tmpSpectralField[mfi].dataPtr()),
-            AnyFFT::direction::R2C);
+            AnyFFT::direction::R2C, AMREX_SPACEDIM);
 
         backward_plan[mfi] = AnyFFT::CreatePlan(
             fft_size, tmpRealField[mfi].dataPtr(),
             reinterpret_cast<AnyFFT::Complex*>( tmpSpectralField[mfi].dataPtr()),
-            AnyFFT::direction::C2R);
+            AnyFFT::direction::C2R, AMREX_SPACEDIM);
     }
 }
 

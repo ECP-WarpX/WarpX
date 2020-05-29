@@ -53,19 +53,22 @@ namespace AnyFFT
         Complex* m_complex_array; /**< pointer to complex array */
         VendorFFTPlan m_plan; /**< Vendor FFT plan */
         direction m_dir;  /**< direction (C2R or R2C) */
+        int m_dim; /**< Dimensionality of the FFT plan */
     };
 
     /** Collection of FFT plans, one FFTplan per box */
     using FFTplans = amrex::LayoutData<FFTplan>;
 
     /** \brief create FFT plan for the backend FFT library.
-     * \param[in] real_size size of the real array
+     * \param[in] real_size Size of the real array, along each dimension.
+     *                      Only the first dim elements are used.
      * \param[out] real_array Real array from/to where R2C/C2R FFT is performed
      * \param[out] complex_array Complex array to/from where R2C/C2R FFT is performed
      * \param[in] dir direction, either R2C or C2R
+     * \param[in] dim direction, number of dimensions of the arrays. Must be <= AMREX_SPACEDIM.
      */
     FFTplan CreatePlan(const amrex::IntVect& real_size, amrex::Real * const real_array,
-                       Complex * const complex_array, const direction dir);
+                       Complex * const complex_array, const direction dir, const int dim);
 
     /** \brief Destroy library FFT plan.
      * \param[out] fft_plan plan to destroy

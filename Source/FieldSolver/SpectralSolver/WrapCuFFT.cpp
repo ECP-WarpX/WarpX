@@ -2,41 +2,44 @@
 
 namespace AnyFFT
 {
+
+#ifdef AMREX_USE_FLOAT
+    using VendorR2C = CUFFT_R2C;
+    using VendorC2R = CUFFT_C2R;
+#else
+    using VendorR2C = CUFFT_D2Z;
+    using VendorC2R = CUFFT_Z2D;
+#endif
+
     std::string cufftErrorToString (const cufftResult& err);
 
     FFTplan CreatePlan(const amrex::IntVect& real_size, amrex::Real * const real_array,
-                       Complex * const complex_array, const direction dir)
+                       Complex * const complex_array, const direction dir, const int dim)
     {
         FFTplan fft_plan;
+
+        // Initialize fft_plan.m_plan with the vendor fft plan.
         cufftResult result;
         if (dir == direction::R2C){
-#if (AMREX_SPACEDIM == 3)
-#  ifdef AMREX_USE_FLOAT
-            result = cufftPlan3d( &(fft_plan.m_plan), real_size[2], real_size[1], real_size[0], CUFFT_R2C);
-#  else
-            result = cufftPlan3d( &(fft_plan.m_plan), real_size[2], real_size[1], real_size[0], CUFFT_D2Z);
-#  endif
-#else
-#  ifdef AMREX_USE_FLOAT
-            result = cufftPlan2d( &(fft_plan.m_plan), real_size[1], real_size[0], CUFFT_R2C);
-#  else
-            result = cufftPlan2d( &(fft_plan.m_plan), real_size[1], real_size[0], CUFFT_D2Z);
-#  endif
-#endif
+            if (dim == 3) {
+                result = cufftPlan3d(
+                    &(fft_plan.m_plan), real_size[2], real_size[1], real_size[0], VendorR2C);
+            } else if (dim == 2) {
+                result = cufftPlan2d(
+                    &(fft_plan.m_plan), real_size[1], real_size[0], VendorR2C);
+            } else {
+                amrex::Abort("only dim=2 and dim=3 have been implemented");
+            }
         } else {
-#if (AMREX_SPACEDIM == 3)
-#  ifdef AMREX_USE_FLOAT
-            result = cufftPlan3d( &(fft_plan.m_plan), real_size[2], real_size[1], real_size[0], CUFFT_C2R);
-#  else
-            result = cufftPlan3d( &(fft_plan.m_plan), real_size[2], real_size[1], real_size[0], CUFFT_Z2D);
-#  endif
-#else
-#  ifdef AMREX_USE_FLOAT
-            result = cufftPlan2d( &(fft_plan.m_plan), real_size[1], real_size[0], CUFFT_C2R);
-#  else
-            result = cufftPlan2d( &(fft_plan.m_plan), real_size[1], real_size[0], CUFFT_Z2D);
-#  endif
-#endif
+            if (dim == 3) {
+                result = cufftPlan3d(
+                    &(fft_plan.m_plan), real_size[2], real_size[1], real_size[0], VendorC2R);
+            } else if (dim == 2) {
+                result = cufftPlan2d(
+                    &(fft_plan.m_plan), real_size[1], real_size[0], VendorC2R);
+            } else {
+                amrex::Abort("only dim=2 and dim=3 have been implemented");
+            }
         }
 
         if ( result != CUFFT_SUCCESS ) {
@@ -44,9 +47,11 @@ namespace AnyFFT
                 cufftErrorToString(result) << "\n";
         }
 
+        // Store meta-data in fft_plan
         fft_plan.m_real_array = real_array;
         fft_plan.m_complex_array = complex_array;
         fft_plan.m_dir = dir;
+        fft_plan.m_dir = dim;
 
         return fft_plan;
     }
