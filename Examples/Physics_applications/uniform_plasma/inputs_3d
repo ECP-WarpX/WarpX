@@ -2,9 +2,9 @@
 ####### GENERAL PARAMETERS ######
 #################################
 max_step = 10
-amr.n_cell =  64 32 32
-amr.max_grid_size = 32
-amr.blocking_factor = 16
+amr.n_cell =  16 8 8
+amr.max_grid_size = 16
+amr.blocking_factor = 8
 amr.max_level = 0
 geometry.coord_sys   = 0                  # 0: Cartesian
 geometry.is_periodic = 1     1     1      # Is periodic?
@@ -36,9 +36,10 @@ electrons.uz_th  = 0.01 # uth the std of the (unitless) momentum
 
 # Diagnostics
 diagnostics.diags_names = diag1 chk
-diag1.period = 4
+diag1.period = 20
 diag1.diag_type = Full
 diag1.electrons.variables = ux uy uz Ey Ez w
+diag1.electrons.random_fraction = .01
 
 chk.period = 6
 chk.diag_type = Full

@@ -45,3 +45,4 @@ particles.E_external_particle =  -2.994174829214179e+08  0.0  0.0
 diagnostics.diags_names = diag1
 diag1.period = 10000
 diag1.diag_type = Full
+diag1.positron.random_fraction = .01

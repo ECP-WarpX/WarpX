@@ -68,7 +68,8 @@ part_diag = picmi.ParticleDiagnostic(name = 'diag1',
                                      period = 2,
                                      species = [beam, plasma],
                                      data_list = ['ux', 'uy', 'uz', 'weighting', 'Ex', 'Ey', 'Ez'],
-                                     write_dir = 'diags')
+                                     write_dir = 'diags',
+                                     warpx_random_fraction = 0.01)
 
 sim.add_diagnostic(field_diag)
 sim.add_diagnostic(part_diag)

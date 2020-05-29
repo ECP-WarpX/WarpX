@@ -52,7 +52,8 @@ field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       period = 10,
                                       species = [electrons, protons],
-                                      data_list = ['weighting', 'momentum', 'fields'])
+                                      data_list = ['weighting', 'momentum', 'fields'],
+                                      warpx_random_fraction = 0.01)
 
 sim = picmi.Simulation(solver = solver,
                        max_steps = 10,

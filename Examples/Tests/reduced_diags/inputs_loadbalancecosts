@@ -64,3 +64,4 @@ LBC.frequency = 1
 diagnostics.diags_names = diag1
 diag1.period = 3
 diag1.diag_type = Full
+diag1.electrons.random_fraction = .01
