@@ -296,7 +296,6 @@ public:
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
-    void FieldGather ();
 
     /** \brief apply QED correction on electric field
      * \param dt vector of time steps (for all levels)
@@ -406,6 +405,8 @@ public:
     static std::array<amrex::Real,3> LowerCorner (const amrex::Box& bx,
                                                   std::array<amrex::Real,3> galilean_shift, int lev);
     static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, int lev);
+
+    std::array<amrex::Real,3> LowerCornerWithGalilean (const amrex::Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev);
 
     static amrex::IntVect RefRatio (int lev);
 

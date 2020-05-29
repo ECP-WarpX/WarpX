@@ -36,12 +36,19 @@ struct IonizationFilterFunc
             amrex::ParticleReal ux = ptd.m_rdata[PIdx::ux][i];
             amrex::ParticleReal uy = ptd.m_rdata[PIdx::uy][i];
             amrex::ParticleReal uz = ptd.m_rdata[PIdx::uz][i];
-            amrex::ParticleReal ex = ptd.m_rdata[PIdx::Ex][i];
-            amrex::ParticleReal ey = ptd.m_rdata[PIdx::Ey][i];
-            amrex::ParticleReal ez = ptd.m_rdata[PIdx::Ez][i];
-            amrex::ParticleReal bx = ptd.m_rdata[PIdx::Bx][i];
-            amrex::ParticleReal by = ptd.m_rdata[PIdx::By][i];
-            amrex::ParticleReal bz = ptd.m_rdata[PIdx::Bz][i];
+            // amrex::ParticleReal ex = ptd.m_rdata[PIdx::Ex][i];
+            // amrex::ParticleReal ey = ptd.m_rdata[PIdx::Ey][i];
+            // amrex::ParticleReal ez = ptd.m_rdata[PIdx::Ez][i];
+            // amrex::ParticleReal bx = ptd.m_rdata[PIdx::Bx][i];
+            // amrex::ParticleReal by = ptd.m_rdata[PIdx::By][i];
+            // amrex::ParticleReal bz = ptd.m_rdata[PIdx::Bz][i];
+
+            amrex::ParticleReal ex = 0.0;
+            amrex::ParticleReal ey = 0.0;
+            amrex::ParticleReal ez = 0.0;
+            amrex::ParticleReal bx = 0.0;
+            amrex::ParticleReal by = 0.0;
+            amrex::ParticleReal bz = 0.0;
 
             amrex::Real ga = std::sqrt(1. + (ux*ux + uy*uy + uz*uz) * c2_inv);
             amrex::Real E = std::sqrt(

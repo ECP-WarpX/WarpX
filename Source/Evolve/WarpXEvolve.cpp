@@ -250,8 +250,6 @@ WarpX::Evolve (int numsteps)
 #endif
             UpdateAuxilaryData();
 
-            FieldGather();
-
             last_plot_file_step = step+1;
             //last_openPMD_step = step+1;
             last_insitu_step = step+1;
@@ -286,14 +284,6 @@ WarpX::Evolve (int numsteps)
         FillBoundaryAux(guard_cells.ng_UpdateAux);
 #endif
         UpdateAuxilaryData();
-
-        for (int lev = 0; lev <= finest_level; ++lev) {
-            mypc->FieldGather(lev,
-                              *Efield_aux[lev][0],*Efield_aux[lev][1],
-                              *Efield_aux[lev][2],
-                              *Bfield_aux[lev][0],*Bfield_aux[lev][1],
-                              *Bfield_aux[lev][2]);
-        }
 
         UpdateInSitu();
     }

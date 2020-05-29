@@ -104,12 +104,19 @@ public:
         const ParticleReal ux = src.m_rdata[PIdx::ux][i_src];
         const ParticleReal uy = src.m_rdata[PIdx::uy][i_src];
         const ParticleReal uz = src.m_rdata[PIdx::uz][i_src];
-        const ParticleReal ex = src.m_rdata[PIdx::Ex][i_src];
-        const ParticleReal ey = src.m_rdata[PIdx::Ey][i_src];
-        const ParticleReal ez = src.m_rdata[PIdx::Ez][i_src];
-        const ParticleReal bx = src.m_rdata[PIdx::Bx][i_src];
-        const ParticleReal by = src.m_rdata[PIdx::By][i_src];
-        const ParticleReal bz = src.m_rdata[PIdx::Bz][i_src];
+        // const ParticleReal ex = src.m_rdata[PIdx::Ex][i_src];
+        // const ParticleReal ey = src.m_rdata[PIdx::Ey][i_src];
+        // const ParticleReal ez = src.m_rdata[PIdx::Ez][i_src];
+        // const ParticleReal bx = src.m_rdata[PIdx::Bx][i_src];
+        // const ParticleReal by = src.m_rdata[PIdx::By][i_src];
+        // const ParticleReal bz = src.m_rdata[PIdx::Bz][i_src];
+
+        amrex::ParticleReal ex = 0.0;
+        amrex::ParticleReal ey = 0.0;
+        amrex::ParticleReal ez = 0.0;
+        amrex::ParticleReal bx = 0.0;
+        amrex::ParticleReal by = 0.0;
+        amrex::ParticleReal bz = 0.0;
 
         const auto px = ux*me;
         const auto py = uy*me;

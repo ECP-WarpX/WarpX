@@ -172,8 +172,6 @@ Diagnostics::ComputeAndPack ()
 #endif
     warpx.UpdateAuxilaryData();
 
-    warpx.FieldGather();
-
     // cell-center fields and store result in m_mf_output.
     for(int lev=0; lev<nlev; lev++){
         int icomp_dst = 0;

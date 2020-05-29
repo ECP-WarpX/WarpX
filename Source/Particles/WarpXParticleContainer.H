@@ -32,7 +32,7 @@ struct PIdx
 {
     enum { // Particle Attributes stored in amrex::ParticleContainer's struct of array
         w = 0,  // weight
-        ux, uy, uz, Ex, Ey, Ez, Bx, By, Bz,
+        ux, uy, uz,
 #ifdef WARPX_DIM_RZ
         theta, // RZ needs all three position components
 #endif
@@ -65,12 +65,6 @@ namespace ParticleStringNames
         {"ux",    PIdx::ux   },
         {"uy",    PIdx::uy   },
         {"uz",    PIdx::uz   },
-        {"Ex",    PIdx::Ex   },
-        {"Ey",    PIdx::Ey   },
-        {"Ez",    PIdx::Ez   },
-        {"Bx",    PIdx::Bx   },
-        {"By",    PIdx::By   },
-        {"Bz",    PIdx::Bz   }
 #ifdef WARPX_DIM_RZ
         ,{"theta", PIdx::theta}
 #endif
@@ -128,9 +122,7 @@ class MultiParticleContainer;
  * push.
  *
  * Note: many functions are pure virtual (meaning they MUST be defined in
- * derived classes, e.g., Evolve) or empty function (meaning they
- * do not do anything, e.g., FieldGather, meant to be overriden by derived
- * function) or actual functions (e.g. CurrentDeposition).
+ * derived classes, e.g., Evolve) or actual functions (e.g. CurrentDeposition).
  */
 class WarpXParticleContainer
     : public amrex::ParticleContainer<0,0,PIdx::nattribs>
@@ -154,14 +146,6 @@ public:
     virtual ~WarpXParticleContainer() {}
 
     virtual void InitData () = 0;
-
-    virtual void FieldGatherES (const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                                const amrex::Vector<std::unique_ptr<amrex::FabArray<amrex::BaseFab<int> > > >& masks) {}
-
-    virtual void FieldGather (int lev,
-                              const amrex::MultiFab& Ex, const amrex::MultiFab& Ey,
-                              const amrex::MultiFab& Ez, const amrex::MultiFab& Bx,
-                              const amrex::MultiFab& By, const amrex::MultiFab& Bz) {}
 
     /**
      * Evolve is the central WarpXParticleContainer function that advances
