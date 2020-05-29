@@ -406,7 +406,8 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
     // is different from the lo and hi physical co-ordinates of the simulation domain.
     if (use_warpxba == false) dmap = DistributionMapping{ba};
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
-    m_mf_output[lev] = MultiFab(ba, dmap, m_varnames.size(), 0);
+    int ngrow = (m_format == "sensei") ? 1 : 0;
+    m_mf_output[lev] = MultiFab(ba, dmap, m_varnames.size(), ngrow);
 }
 
 
