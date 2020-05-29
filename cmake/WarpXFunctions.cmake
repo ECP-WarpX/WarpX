@@ -6,14 +6,17 @@ macro(set_default_build_dirs)
     if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
         set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
                 CACHE PATH "Build directory for archives")
+        mark_as_advanced(CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
     endif()
     if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
         set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
                 CACHE PATH "Build directory for libraries")
+        mark_as_advanced(CMAKE_LIBRARY_OUTPUT_DIRECTORY)
     endif()
     if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
         set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
                 CACHE PATH "Build directory for binaries")
+        mark_as_advanced(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
     endif()
 endmacro()
 

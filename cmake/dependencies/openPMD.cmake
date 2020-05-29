@@ -36,15 +36,34 @@ function(find_openpmd)
         mark_as_advanced(openPMD_USE_INTERNAL_CATCH)
         mark_as_advanced(openPMD_USE_INTERNAL_PYBIND11)
         mark_as_advanced(openPMD_USE_INTERNAL_JSON)
+        mark_as_advanced(openPMD_HAVE_PKGCONFIG)
+        mark_as_advanced(openPMD_USE_INVASIVE_TESTS)
+        mark_as_advanced(openPMD_USE_VERIFY)
+        mark_as_advanced(ADIOS2_DOR)
+        mark_as_advanced(ADIOS_CONFIG)
+        mark_as_advanced(HDF5_DIR)
+        mark_as_advanced(JSON_MultipleHeaders)
 
         message(STATUS "openPMD-api: Using INTERNAL version '${WarpX_openpmd_branch}'")
     else()
-        find_package(openPMD 0.11.1 CONFIG REQUIRED)  # FIXME: COMPONENTS MPI ...
+        if(ENABLE_MPI)
+            set(COMPONENT_WMPI MPI)
+        else()
+            set(COMPONENT_WMPI NOMPI)
+        endif()
+        find_package(openPMD 0.11.1 CONFIG REQUIRED COMPONENTS ${COMPONENT_WMPI})
         message(STATUS "openPMD-api: Found version '${openPMD_VERSION}'")
     endif()
 endfunction()
 
 if(WarpX_USE_OPENPMD)
+    set(WarpX_openpmd_repo "https://github.com/openPMD/openPMD-api.git"
+        CACHE STRING
+        "Repository URI to pull and build openPMD-api from if(WarpX_openpmd_internal)")
+    set(WarpX_openpmd_branch "dev"
+        CACHE STRING
+        "Repository branch for WarpX_openpmd_repo if(WarpX_openpmd_internal)")
+
     set(WarpX_HAVE_OPENPMD TRUE)
     find_openpmd()
 endif()

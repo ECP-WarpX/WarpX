@@ -22,6 +22,13 @@ warpx_option(OPENPMD            "openPMD I/O"                              OFF)
 #warpx_option(PYTHON             "Enable Python bindings"                  AUTO)
 # PSATD (fftw; RZ:+blaspp+lapackpp), PICSAR/QED, hdf5, sensei, conduit, ascent, BL_ASSERT et al. (ON)
 
+set(WarpX_DIMS_VALUES 2 3 RZ)
+set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality")
+set_property(CACHE WarpX_DIMS PROPERTY STRINGS ${WarpX_DIMS_VALUES})
+if(NOT WarpX_DIMS IN_LIST WarpX_DIMS_VALUES)
+    message(FATAL_ERROR "WarpX_DIMS (${WarpX_DIMS}) must be one of ${WarpX_DIMS_VALUES}")
+endif()
+
 option(WarpX_amrex_internal    "Download & build AMReX" ON)
 option(WarpX_picsar_internal   "Download & build PICSAR" ON)
 option(WarpX_openpmd_internal  "Download & build openPMD-api" ON)
@@ -35,34 +42,16 @@ set_default_build_type("RelWithDebInfo")
 
 # AMReX
 #   builds AMReX from source (default) or finds an existing install
-set(WarpX_amrex_repo "https://github.com/AMReX-Codes/amrex.git"
-    CACHE STRING
-    "Repository URI to pull and build AMReX from if(WarpX_amrex_internal)")
-set(WarpX_amrex_branch "development"
-    CACHE STRING
-    "Repository branch for WarpX_amrex_repo if(WarpX_amrex_internal)")
 include(${WarpX_SOURCE_DIR}/cmake/dependencies/AMReX.cmake)
 #   suppress warnings in AMReX headers (use -isystem instead of -I)
 make_third_party_includes_system(AMReX::amrex AMReX)
 
 # PICSAR
 #   builds PICSAR from source
-set(WarpX_picsar_repo "https://bitbucket.org/berkeleylab/picsar.git"
-    CACHE STRING
-    "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
-set(WarpX_picsar_branch "master"
-    CACHE STRING
-    "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
 include(${WarpX_SOURCE_DIR}/cmake/dependencies/PICSAR.cmake)
 
 # openPMD
 #   builds openPMD-api from source (default) or finds an existing install
-set(WarpX_openpmd_repo "https://github.com/openPMD/openPMD-api.git"
-    CACHE STRING
-    "Repository URI to pull and build openPMD-api from if(WarpX_openpmd_internal)")
-set(WarpX_openpmd_branch "dev"
-    CACHE STRING
-    "Repository branch for WarpX_openpmd_repo if(WarpX_openpmd_internal)")
 include(${WarpX_SOURCE_DIR}/cmake/dependencies/openPMD.cmake)
 
 # external library: FFTW (optional)
@@ -76,10 +65,8 @@ add_executable(WarpX)
 add_executable(WarpX::WarpX ALIAS WarpX)
 
 # own headers
-target_include_directories(WarpX PUBLIC
+target_include_directories(WarpX PRIVATE
     $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
-    $<BUILD_INTERFACE:${WarpX_BINARY_DIR}/Source>
-    $<INSTALL_INTERFACE:Source>
 )
 
 # if we include <AMReX_buildInfo.H> we will need to call:
@@ -107,16 +94,14 @@ add_subdirectory(Source/Particles)
 add_subdirectory(Source/Utils)
 
 # C++ properties: at least a C++14 capable compiler is needed
-target_compile_features(WarpX
-    PUBLIC cxx_std_14
-)
+target_compile_features(WarpX PUBLIC cxx_std_14)
 set_target_properties(WarpX PROPERTIES
     CXX_EXTENSIONS OFF
     CXX_STANDARD_REQUIRED ON
 )
 
 # link dependencies
-# FIXME use HiPACE::thirdparty::AMReX as soon as
+# FIXME use AMReX::thirdparty::AMReX as soon as
 #       missing _deps/fetchedamrex-build/mod_files is solved
 target_link_libraries(WarpX PUBLIC AMReX::amrex)
 if(WarpX_HAVE_OPENPMD)
@@ -137,8 +122,13 @@ endif()
 
 # Defines #####################################################################
 #
-target_compile_definitions(WarpX PRIVATE -DWARPX_DIM_3D)
-target_compile_definitions(WarpX PRIVATE -DDWARPX_DIM_XZ)
+if(WarpX_DIMS STREQUAL 3)
+    target_compile_definitions(WarpX PRIVATE WARPX_DIM_3D)
+elseif(WarpX_DIMS STREQUAL 2)
+    target_compile_definitions(WarpX PRIVATE WARPX_DIM_XZ)
+elseif(WarpX_DIMS STREQUAL RZ)
+    target_compile_definitions(WarpX PRIVATE WARPX_DIM_RZ)
+endif()
 
 
 # Warnings ####################################################################
@@ -234,5 +224,5 @@ foreach(opt IN LISTS WarpX_CONFIG_OPTIONS)
     message("    ${opt}: OFF")
   endif()
 endforeach()
-message("    DIM: ${WarpX_DIM}")
+message("    DIMS: ${WarpX_DIMS}")
 message("")

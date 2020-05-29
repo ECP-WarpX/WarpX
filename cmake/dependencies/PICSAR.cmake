@@ -37,6 +37,13 @@ function(find_picsar)
 endfunction()
 
 if(WarpX_USE_QED)
+    set(WarpX_picsar_repo "https://bitbucket.org/berkeleylab/picsar.git"
+        CACHE STRING
+        "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
+    set(WarpX_picsar_branch "master"
+        CACHE STRING
+        "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
+
     set(WarpX_HAVE_QED TRUE)
     find_picsar()
 endif()
