@@ -974,6 +974,25 @@ Numerics and algorithms
 
      If ``algo.maxwell_fdtd_solver`` is not specified, ``yee`` is the default.
 
+* ``algo.em_solver_medium`` (`string`, optional)
+    The medium for evaluating the Maxwell solver. Available options are :
+
+    - ``vacuum``: vacuum properties are used in the Maxwell solver.
+    - ``macroscopic``: macroscopic Maxwell equation is evaluated. If this option is selected, then the corresponding properties of the medium must be provided using ``macroscopic.sigma``, ``macroscopic.epsilon``, and ``macroscopic.mu``.
+
+    If ``algo.em_solver_medium`` is not specified, ``vacuum`` is the default.
+
+* ``algo.macroscopic_sigma_method`` (`string`, optional)
+    The algorithm for updating electric field when ``algo.em_solver_medium`` is macroscopic. Available options are:
+
+    - ``backwardeuler`` is a fully-implicit, first-order in time scheme for E-update (default).
+    - ``laxwendroff`` is the semi-implicit, second order in time scheme for E-update.
+    Comparing the two methods, Lax-Wendroff is more prone to developing oscillations and requires a smaller timestep for stability. On the other hand, Backward Euler is more robust but it is first-order accurate in time compared to the second-order Lax-Wendroff method.
+
+* ``macroscopic.sigma``, ``macroscopic.epsilon``, ``macroscopic.mu`` (`double`)
+    The conductivity, permittivity, and permeability of the computational medium, respectively.
+    If ``algo.em_solver_medium`` is set to macroscopic, then these properties must be provided.
+
 * ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`integer`)
     The order of the shape factors for the macroparticles, for the 3 dimensions of space.
     Lower-order shape factors result in faster simulations, but more noisy results,
@@ -1068,12 +1087,14 @@ Numerics and algorithms
     When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
     This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
 
- * ``warpx.sort_int`` (`int`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
-     If ``<=0``, do not sort particles. If ``>0``, sort particles by bin every ``sort_int`` iteration.
+ * ``warpx.sort_int`` (`string`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
+     Using the `Intervals parser`_ syntax, this string defines the timesteps at which particles are
+     sorted by bin.
+     If ``<=0``, do not sort particles.
      It is turned on on GPUs for performance reasons (to improve memory locality).
 
  * ``warpx.sort_bin_size`` (list of `int`) optional (default ``4 4 4``)
-     If ``sort_int > 0`` particles are sorted in bins of ``sort_bin_size`` cells.
+     If ``sort_int`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
 
 Boundary conditions
@@ -1150,7 +1171,9 @@ This should be changed in the future.
     * ``checkpoint`` for a checkpoint file, only wirks with ``<diag_name>.diag_type = Full``.
 
     * ``openpmd`` for OpenPMD format `openPMD <https://www.openPMD.org>`_.
-      ``openpmd`` requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
+      Requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
+
+    * ``ascent`` for in-situ visualization using Ascent.
 
     example: ``diag1.format = openpmd``.
 

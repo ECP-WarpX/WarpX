@@ -205,6 +205,24 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                 }
             }
         }
+
+        // By construction, at finite order and for a nodal grid,
+        // the *modified* k corresponding to the Nyquist frequency
+        // (i.e. highest *real* k) is 0. However, the above calculation
+        // based on stencil coefficients does not give 0 to machine precision.
+        // Therefore, we need to enforce the fact that the modified k be 0 here.
+        if (nodal){
+            if (i_dim == 0){
+                // Because of the real-to-complex FFTs, the first axis (idim=0)
+                // contains only the positive k, and the Nyquist frequency is
+                // the last element of the array.
+                modified_k[k.size()-1] = 0.0_rt;
+          }   else {
+                // The other axes contains both positive and negative k ;
+                // the Nyquist frequency is in the middle of the array.
+                modified_k[k.size()/2] = 0.0_rt;
+          }
+        }
     }
     return modified_k_comp;
 }

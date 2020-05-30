@@ -4,6 +4,11 @@
 #include "FlushFormat.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 
+#ifdef AMREX_USE_ASCENT
+#   include <ascent.hpp>
+#   include <AMReX_Conduit_Blueprint.H>
+#endif
+
 /**
  * \brief This class aims at dumping performing in-situ diagnostics with ASCENT.
  * In particular, function WriteToFile takes fields and particles as input arguments,
@@ -15,7 +20,7 @@ public:
     /** Do in-situ visualization for field and particle data */
     virtual void WriteToFile (
         const amrex::Vector<std::string> varnames,
-        const amrex::Vector<const amrex::MultiFab*> mf,
+        const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double time,
         const amrex::Vector<ParticleDiag>& particle_diags, int nlev, const std::string prefix,
@@ -25,8 +30,11 @@ public:
 
     /** \brief Do in-situ visualization for particle data.
      * \param[in] particle_diags Each element of this vector handles output of 1 species.
+     * Only compile if AMREX_USE_ASCENT because we need to pass a conduit class
      */
-    void WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags) const;
+#ifdef AMREX_USE_ASCENT
+    void WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags, conduit::Node& a_bp_mesh) const;
+#endif
 
     ~FlushFormatAscent() {};
 };
