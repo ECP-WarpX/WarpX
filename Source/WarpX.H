@@ -587,10 +587,6 @@ private:
 
     std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
 
-    std::array<std::unique_ptr<amrex::MultiFab>, 3> getInterpolatedE(int lev) const;
-
-    std::array<std::unique_ptr<amrex::MultiFab>, 3> getInterpolatedB(int lev) const;
-
     void ExchangeWithPmlB (int lev);
     void ExchangeWithPmlE (int lev);
     void ExchangeWithPmlF (int lev);
@@ -736,9 +732,6 @@ private:
     std::string restart_chkfile;
 
     bool plot_rho           = false;
-    bool plot_finepatch     = false;
-    bool plot_crsepatch     = false;
-    amrex::Vector<std::string> fields_to_plot;
 
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
