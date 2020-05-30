@@ -278,32 +278,3 @@ WarpX::GetCellCenteredData() {
 
     return std::move(cc[0]);
 }
-
-void
-WarpX::UpdateInSitu () const
-{
-#if defined(BL_USE_SENSEI_INSITU)
-    WARPX_PROFILE("WarpX::UpdateInSitu()");
-
-    // Average the fields from the simulation to the cell centers
-    const int ngrow = 1;
-    Vector<std::string> varnames; // Name of the written fields
-    // mf_avg will contain the averaged, cell-centered fields
-    Vector<MultiFab> mf_avg;
-    WarpX::AverageAndPackFields( varnames, mf_avg, ngrow );
-
-#   ifdef BL_USE_SENSEI_INSITU
-    if (insitu_bridge->update(istep[0], t_new[0],
-        dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(this)),
-        {&mf_avg}, {varnames}))
-    {
-        amrex::ErrorStream()
-            << "WarpXIO::UpdateInSitu : Failed to update the in situ bridge."
-            << std::endl;
-
-        amrex::Abort();
-    }
-#   endif
-
-#endif
-}

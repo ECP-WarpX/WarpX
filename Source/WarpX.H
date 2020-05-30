@@ -60,13 +60,6 @@
 #include <memory>
 #include <array>
 
-
-#if defined(BL_USE_SENSEI_INSITU)
-namespace amrex {
-class AmrMeshInSituBridge;
-}
-#endif
-
 enum struct PatchType : int
 {
     fine,
@@ -401,7 +394,6 @@ public:
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, const int ngrow) const;
 
-    void UpdateInSitu () const;
     void prepareFields( int const step, amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg,
         amrex::Vector<const amrex::MultiFab*>& output_mf,
@@ -798,14 +790,6 @@ private:
 #endif
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_cp;
-
-#if defined(BL_USE_SENSEI_INSITU)
-    amrex::AmrMeshInSituBridge *insitu_bridge;
-#endif
-    int insitu_int;
-    int insitu_start;
-    std::string insitu_config;
-    int insitu_pin_mesh;
 };
 
 #endif

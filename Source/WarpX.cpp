@@ -275,10 +275,6 @@ WarpX::WarpX ()
     m_fdtd_solver_fp.resize(nlevs_max);
     m_fdtd_solver_cp.resize(nlevs_max);
 
-#ifdef BL_USE_SENSEI_INSITU
-    insitu_bridge = nullptr;
-#endif
-
     // NCI Godfrey filters can have different stencils
     // at different levels (the stencil depends on c*dt/dz)
     nci_godfrey_filter_exeybz.resize(nlevs_max);
@@ -301,10 +297,6 @@ WarpX::~WarpX ()
     }
 
     delete reduced_diags;
-
-#ifdef BL_USE_SENSEI_INSITU
-    delete insitu_bridge;
-#endif
 }
 
 void
@@ -649,19 +641,6 @@ WarpX::ReadParameters ()
         for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
     }
 #endif
-
-    {
-        insitu_start = 0;
-        insitu_int = 0;
-        insitu_config = "";
-        insitu_pin_mesh = 0;
-
-        ParmParse pp("insitu");
-        pp.query("int", insitu_int);
-        pp.query("start", insitu_start);
-        pp.query("config", insitu_config);
-        pp.query("pin_mesh", insitu_pin_mesh);
-    }
 
     // for slice generation //
     {
