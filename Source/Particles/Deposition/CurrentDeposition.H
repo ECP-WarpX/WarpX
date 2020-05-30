@@ -653,6 +653,7 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         amrex::Real const y_new = (yp-ymin)*dyi;
         amrex::Real const y_old = y_new-vy*dt*dyi;
 #endif
+
         // Shape factor arrays for current and old positions (nodal):
         // as in Esirkepov deposition, there are extra values to take into account
         // the fact that the old position can be at a different grid location
@@ -777,136 +778,86 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         int const k_jy_old = ((jy_type[zdir] == NODE) ? k_node_old : k_cell_old);
         int const k_jz_old = ((jz_type[zdir] == NODE) ? k_node_old : k_cell_old);
 
-        // Computes min and max positions of current contributions along x
-        int dil_jx = 1, diu_jx = 1;
-        if (i_jx_old < i_jx_new) dil_jx = 0;
-        if (i_jx_old > i_jx_new) diu_jx = 0;
-#if (defined WARPX_DIM_3D)
-        int djl_jx = 1, dju_jx = 1;
-        if (j_jx_old < j_jx_new) djl_jx = 0;
-        if (j_jx_old > j_jx_new) dju_jx = 0;
-#endif
-        int dkl_jx = 1, dku_jx = 1;
-        if (k_jx_old < k_jx_new) dkl_jx = 0;
-        if (k_jx_old > k_jx_new) dku_jx = 0;
-
-        // Computes min and max positions of current contributions along y
-        int dil_jy = 1, diu_jy = 1;
-        if (i_jy_old < i_jy_new) dil_jy = 0;
-        if (i_jy_old > i_jy_new) diu_jy = 0;
-#if (defined WARPX_DIM_3D)
-        int djl_jy = 1, dju_jy = 1;
-        if (j_jy_old < j_jy_new) djl_jy = 0;
-        if (j_jy_old > j_jy_new) dju_jy = 0;
-#endif
-        int dkl_jy = 1, dku_jy = 1;
-        if (k_jy_old < k_jy_new) dkl_jy = 0;
-        if (k_jy_old > k_jy_new) dku_jy = 0;
-
-        // Computes min and max positions of current contributions along z
-        int dil_jz = 1, diu_jz = 1;
-        if (i_jz_old < i_jz_new) dil_jz = 0;
-        if (i_jz_old > i_jz_new) diu_jz = 0;
-#if (defined WARPX_DIM_3D)
-        int djl_jz = 1, dju_jz = 1;
-        if (j_jz_old < j_jz_new) djl_jz = 0;
-        if (j_jz_old > j_jz_new) dju_jz = 0;
-#endif
-        int dkl_jz = 1, dku_jz = 1;
-        if (k_jz_old < k_jz_new) dkl_jz = 0;
-        if (k_jz_old > k_jz_new) dku_jz = 0;
-
         amrex::Real sdxi, sdyj, sdzk;
 
         // Deposit current into jx_arr, jy_arr and jz_arr
-        // TODO Units should be different for components modified in Fourier space later?
 #if (defined WARPX_DIM_XZ)
-        for (int k=dkl_jx; k<=depos_order+2-dku_jx; k++) {
-            sdxi = 0.0_rt;
-            for (int i=dil_jx; i<=depos_order+1-diu_jx; i++) {
-                sdxi += sx_jx_new[i]*sz_jx_new[k]
-                       -sx_jx_old[i]*sz_jx_new[k]
-                       +sx_jx_new[i]*sz_jx_old[k]
-                       -sx_jx_old[i]*sz_jx_old[k];
+        for (int k=0; k<=depos_order; k++) {
+            for (int i=0; i<=depos_order; i++) {
+                sdxi = sx_jx_new[i]*sz_jx_new[k]
+                      -sx_jx_old[i]*sz_jx_new[k]
+                      +sx_jx_new[i]*sz_jx_old[k]
+                      -sx_jx_old[i]*sz_jx_old[k];
                 sdxi = wq*invvol*invdt*0.5_rt*sdxi;
-                //sdxi = wqx*0.5_rt*sdxi;
-                amrex::Gpu::Atomic::Add( &jx_arr(lo.x+i_jx_new-1+i, lo.y+k_jx_new-1+k, 0, 0), sdxi);
+                amrex::Gpu::Atomic::Add( &jx_arr(lo.x+i_jx_new+i, lo.y+k_jx_new+k, 0, 0), sdxi);
             }
         }
-        for (int k=dkl_jy; k<=depos_order+2-dku_jy; k++) {
-            for (int i=dil_jy; i<=depos_order+2-diu_jy; i++) {
+        for (int k=0; k<=depos_order; k++) {
+            for (int i=0; i<=depos_order; i++) {
                 sdyj = sx_jy_new[i]*sz_jy_new[k]
                       +sx_jy_new[i]*sz_jy_old[k]
                       +sx_jy_old[i]*sz_jy_new[k]
                       +sx_jy_old[i]*sz_jy_old[k];
                 sdyj = wqy*0.25_rt*sdyj;
-                amrex::Gpu::Atomic::Add( &jy_arr(lo.x+i_jy_new-1+i, lo.y+k_jy_new-1+k, 0, 0), sdyj);
+                amrex::Gpu::Atomic::Add( &jy_arr(lo.x+i_jy_new+i, lo.y+k_jy_new+k, 0, 0), sdyj);
             }
         }
-        for (int i=dil_jz; i<=depos_order+2-diu_jz; i++) {
-            sdzk = 0.0_rt;
-            for (int k=dkl_jz; k<=depos_order+1-dku_jz; k++) {
-                sdzk += sx_jz_new[i]*sz_jz_new[k]
-                       -sx_jz_new[i]*sz_jz_old[k]
-                       +sx_jz_old[i]*sz_jz_new[k]
-                       -sx_jz_old[i]*sz_jz_old[k];
+        for (int k=0; k<=depos_order; k++) {
+            for (int i=0; i<=depos_order; i++) {
+                sdzk = sx_jz_new[i]*sz_jz_new[k]
+                      -sx_jz_new[i]*sz_jz_old[k]
+                      +sx_jz_old[i]*sz_jz_new[k]
+                      -sx_jz_old[i]*sz_jz_old[k];
                 sdzk = wq*invvol*invdt*0.5_rt*sdzk;
-                //sdzk = wqz*0.5_rt*sdzk;
-                amrex::Gpu::Atomic::Add( &jz_arr(lo.x+i_jz_new-1+i, lo.y+k_jz_new-1+k, 0, 0), sdzk);
+                amrex::Gpu::Atomic::Add( &jz_arr(lo.x+i_jz_new+i, lo.y+k_jz_new+k, 0, 0), sdzk);
             }
         }
 #elif (defined WARPX_DIM_3D)
-        for (int k=dkl_jx; k<=depos_order+2-dku_jx; k++) {
-            for (int j=djl_jx; j<=depos_order+2-dju_jx; j++) {
-                sdxi = 0.0_rt;
-                for (int i=dil_jx; i<=depos_order+1-diu_jx; i++) {
-                    sdxi += 2.0_rt*sx_jx_new[i]*sy_jx_new[j]*sz_jx_new[k]
-                           -2.0_rt*sx_jx_old[i]*sy_jx_new[j]*sz_jx_new[k]
-                                  +sx_jx_new[i]*sy_jx_old[j]*sz_jx_new[k]
-                                  -sx_jx_old[i]*sy_jx_old[j]*sz_jx_new[k]
-                                  +sx_jx_new[i]*sy_jx_new[j]*sz_jx_old[k]
-                                  -sx_jx_old[i]*sy_jx_new[j]*sz_jx_old[k]
-                           +2.0_rt*sx_jx_new[i]*sy_jx_old[j]*sz_jx_old[k]
-                           -2.0_rt*sx_jx_old[i]*sy_jx_old[j]*sz_jx_old[k];
+        for (int k=0; k<=depos_order; k++) {
+            for (int j=0; j<=depos_order; j++) {
+                for (int i=0; i<=depos_order; i++) {
+                    sdxi = 2.0_rt*sx_jx_new[i]*sy_jx_new[j]*sz_jx_new[k]
+                          -2.0_rt*sx_jx_old[i]*sy_jx_new[j]*sz_jx_new[k]
+                                 +sx_jx_new[i]*sy_jx_old[j]*sz_jx_new[k]
+                                 -sx_jx_old[i]*sy_jx_old[j]*sz_jx_new[k]
+                                 +sx_jx_new[i]*sy_jx_new[j]*sz_jx_old[k]
+                                 -sx_jx_old[i]*sy_jx_new[j]*sz_jx_old[k]
+                          +2.0_rt*sx_jx_new[i]*sy_jx_old[j]*sz_jx_old[k]
+                          -2.0_rt*sx_jx_old[i]*sy_jx_old[j]*sz_jx_old[k];
                     sdxi = wq*invvol*invdt*onesixth*sdxi;
-                    //sdxi = wqx*onesixth*sdxi;
-                    amrex::Gpu::Atomic::Add( &jx_arr(lo.x+i_jx_new-1+i, lo.y+j_jx_new-1+j, lo.z+k_jx_new-1+k), sdxi);
+                    amrex::Gpu::Atomic::Add( &jx_arr(lo.x+i_jx_new+i, lo.y+j_jx_new+j, lo.z+k_jx_new+k), sdxi);
                 }
             }
         }
-        for (int k=dkl_jy; k<=depos_order+2-dku_jy; k++) {
-            for (int i=dil_jy; i<=depos_order+2-diu_jy; i++) {
-                sdyj = 0.0_rt;
-                for (int j=djl_jy; j<=depos_order+1-dju_jy; j++) {
-                    sdyj += 2.0_rt*sx_jy_new[i]*sy_jy_new[j]*sz_jy_new[k]
-                           -2.0_rt*sx_jy_new[i]*sy_jy_old[j]*sz_jy_new[k]
-                                  +sx_jy_new[i]*sy_jy_new[j]*sz_jy_old[k]
-                                  -sx_jy_new[i]*sy_jy_old[j]*sz_jy_old[k]
-                                  +sx_jy_old[i]*sy_jy_new[j]*sz_jy_new[k]
-                                  -sx_jy_old[i]*sy_jy_old[j]*sz_jy_new[k]
-                           +2.0_rt*sx_jy_old[i]*sy_jy_new[j]*sz_jy_old[k]
-                           -2.0_rt*sx_jy_old[i]*sy_jy_old[j]*sz_jy_old[k];
+        for (int k=0; k<=depos_order; k++) {
+            for (int j=0; j<=depos_order; j++) {
+                for (int i=0; i<=depos_order; i++) {
+                    sdyj = 2.0_rt*sx_jy_new[i]*sy_jy_new[j]*sz_jy_new[k]
+                          -2.0_rt*sx_jy_new[i]*sy_jy_old[j]*sz_jy_new[k]
+                                 +sx_jy_new[i]*sy_jy_new[j]*sz_jy_old[k]
+                                 -sx_jy_new[i]*sy_jy_old[j]*sz_jy_old[k]
+                                 +sx_jy_old[i]*sy_jy_new[j]*sz_jy_new[k]
+                                 -sx_jy_old[i]*sy_jy_old[j]*sz_jy_new[k]
+                          +2.0_rt*sx_jy_old[i]*sy_jy_new[j]*sz_jy_old[k]
+                          -2.0_rt*sx_jy_old[i]*sy_jy_old[j]*sz_jy_old[k];
                     sdyj = wq*invvol*invdt*onesixth*sdyj;
-                    //sdyj = wqy*onesixth*sdyj;
-                    amrex::Gpu::Atomic::Add( &jy_arr(lo.x+i_jy_new-1+i, lo.y+j_jy_new-1+j, lo.z+k_jy_new-1+k), sdyj);
+                    amrex::Gpu::Atomic::Add( &jy_arr(lo.x+i_jy_new+i, lo.y+j_jy_new+j, lo.z+k_jy_new+k), sdyj);
                 }
             }
         }
-        for (int j=djl_jz; j<=depos_order+2-dju_jz; j++) {
-            for (int i=dil_jz; i<=depos_order+2-diu_jz; i++) {
-                sdzk = 0.0_rt;
-                for (int k=dkl_jz; k<=depos_order+1-dku_jz; k++) {
-                    sdzk += 2.0_rt*sx_jy_new[i]*sy_jy_new[j]*sz_jy_new[k]
-                           -2.0_rt*sx_jy_new[i]*sy_jy_new[j]*sz_jy_old[k]
-                                  +sx_jy_old[i]*sy_jy_new[j]*sz_jy_new[k]
-                                  -sx_jy_old[i]*sy_jy_new[j]*sz_jy_old[k]
-                                  +sx_jy_new[i]*sy_jy_old[j]*sz_jy_new[k]
-                                  -sx_jy_new[i]*sy_jy_old[j]*sz_jy_old[k]
-                           +2.0_rt*sx_jy_old[i]*sy_jy_old[j]*sz_jy_new[k]
-                           -2.0_rt*sx_jy_old[i]*sy_jy_old[j]*sz_jy_old[k];
+        for (int k=0; k<=depos_order; k++) {
+            for (int j=0; j<=depos_order; j++) {
+                for (int i=0; i<=depos_order; i++) {
+                    sdzk = 2.0_rt*sx_jy_new[i]*sy_jy_new[j]*sz_jy_new[k]
+                          -2.0_rt*sx_jy_new[i]*sy_jy_new[j]*sz_jy_old[k]
+                                 +sx_jy_old[i]*sy_jy_new[j]*sz_jy_new[k]
+                                 -sx_jy_old[i]*sy_jy_new[j]*sz_jy_old[k]
+                                 +sx_jy_new[i]*sy_jy_old[j]*sz_jy_new[k]
+                                 -sx_jy_new[i]*sy_jy_old[j]*sz_jy_old[k]
+                          +2.0_rt*sx_jy_old[i]*sy_jy_old[j]*sz_jy_new[k]
+                          -2.0_rt*sx_jy_old[i]*sy_jy_old[j]*sz_jy_old[k];
                     sdzk = wq*invvol*invdt*onesixth*sdzk;
-                    //sdzk = wqz*onesixth*sdzk;
-                    amrex::Gpu::Atomic::Add( &jz_arr(lo.x+i_jz_new-1+i, lo.y+j_jz_new-1+j, lo.z+k_jz_new-1+k), sdzk);
+                    amrex::Gpu::Atomic::Add( &jz_arr(lo.x+i_jz_new+i, lo.y+j_jz_new+j, lo.z+k_jz_new+k), sdzk);
                 }
             }
         }
