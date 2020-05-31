@@ -39,7 +39,7 @@ class SpectralFieldDataRZ
                             const amrex::DistributionMapping& dm,
                             const int n_field_required,
                             const int n_modes,
-                            const int lev);
+                            const int lev, const bool periodic_single_box);
         SpectralFieldDataRZ() = default; // Default constructor
         SpectralFieldDataRZ& operator=(SpectralFieldDataRZ&& field_data) = default;
         ~SpectralFieldDataRZ();
@@ -53,10 +53,11 @@ class SpectralFieldDataRZ
         void BackwardTransform(amrex::MultiFab& mf_r, const int field_index_r,
                                amrex::MultiFab& mf_t, const int field_index_t);
 
-        void FABZForwardTransform(amrex::MFIter const & mfi,
+        void FABZForwardTransform(amrex::MFIter const & mfi, amrex::Box const & realspace_bx,
                                   amrex::MultiFab const & tempHTransformedSplit,
                                   int field_index, const bool is_nodal_z);
-        void FABZBackwardTransform(amrex::MFIter const & mfi, const int field_index,
+        void FABZBackwardTransform(amrex::MFIter const & mfi, amrex::Box const & realspace_bx,
+                                   const int field_index,
                                    amrex::MultiFab & tempHTransformedSplit,
                                    const bool is_nodal_z);
 
@@ -88,6 +89,8 @@ class SpectralFieldDataRZ
         SpectralShiftFactor zshift_FFTfromCell, zshift_FFTtoCell;
         MultiSpectralHankelTransformer multi_spectral_hankel_transformer;
         BinomialFilter binomialfilter;
+
+        bool m_periodic_single_box;
 
 };
 

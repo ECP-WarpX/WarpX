@@ -31,7 +31,8 @@ class SpectralSolverRZ
                          int const norder_z, bool const nodal,
                          amrex::RealVect const dx, amrex::Real const dt,
                          int const lev,
-                         bool const pml=false);
+                         bool const pml=false,
+                         bool const periodic_single_box=false );
 
         /* \brief Transform the component `i_comp` of MultiFab `field_mf`
          *  to spectral space, and store the corresponding result internally

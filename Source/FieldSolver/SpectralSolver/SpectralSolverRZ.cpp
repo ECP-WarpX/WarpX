@@ -21,6 +21,8 @@
  * \param dt       Time step
  * \param pml      Whether the boxes in which the solver is applied are PML boxes
  *                 PML is not supported.
+ * \param periodic_single_box Whether the full simulation domain consists of a single periodic box (i.e. the global domain is not MPI parallelized)
+
  */
 SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
                                    amrex::DistributionMapping const & dm,
@@ -28,7 +30,7 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
                                    int const norder_z, bool const nodal,
                                    amrex::RealVect const dx, amrex::Real const dt,
                                    int const lev,
-                                   bool const pml )
+                                   bool const pml, bool const periodic_single_box )
     : k_space(realspace_ba, dm, dx)
 {
 
@@ -47,6 +49,6 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
     // - Initialize arrays for fields in spectral space + FFT plans
     field_data = SpectralFieldDataRZ(realspace_ba, k_space, dm,
                                      algorithm->getRequiredNumberOfFields(),
-                                     n_rz_azimuthal_modes, lev);
+                                     n_rz_azimuthal_modes, lev, periodic_single_box);
 
 };
