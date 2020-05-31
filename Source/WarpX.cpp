@@ -932,7 +932,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   endif
     // Check whether the option periodic, single box is valid here
     if (fft_periodic_single_box) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( geom[0].isAllPeriodic() && ba.size()==1 && lev==0,
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+#   ifdef WARPX_DIM_RZ
+                                          geom[0].isPeriodic(1)
+#   else
+                                          geom[0].isAllPeriodic()
+#   endif
+                                          && ba.size()==1 && lev==0,
         "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box.");
     }
     // Get the cell-centered box
@@ -940,9 +946,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     realspace_ba.enclosedCells(); // Make it cell-centered
     // Define spectral solver
 #   ifdef WARPX_DIM_RZ
-    realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+    if ( fft_periodic_single_box == false ) {
+        realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+    }
+    bool const pml=false;
     spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
-        n_rz_azimuthal_modes, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev], lev ) );
+        n_rz_azimuthal_modes, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev], lev, pml, fft_periodic_single_box ) );
 #   else
     if ( fft_periodic_single_box == false ) {
         realspace_ba.grow(ngE); // add guard cells
