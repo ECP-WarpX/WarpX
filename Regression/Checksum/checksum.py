@@ -50,8 +50,6 @@ class Checksum:
             # Warning: For now, we assume all levels are rectangular
             LeftEdge = np.min(
                 np.array([grid.LeftEdge.v for grid in lev_grids]), axis=0)
-            RightEdge = np.max(
-                np.array([grid.RightEdge.v for grid in lev_grids]), axis=0)
             all_data_level = ds.covering_grid(
                 level=lev, left_edge=LeftEdge, dims=ds.domain_dimensions)
             for field in grid_fields:
