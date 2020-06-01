@@ -54,8 +54,10 @@ class SpectralKSpace
             const amrex::DistributionMapping& dm, const int i_dim,
             const int shift_type ) const;
 
-        // k_vec=(kx,kz) in 2D and k_vec=(kx,ky,kz) in 3D
+    protected:
         amrex::Array<KVectorComponent, AMREX_SPACEDIM> k_vec;
+        // 3D: k_vec is an Array of 3 components, corresponding to kx, ky, kz
+        // 2D: k_vec is an Array of 2 components, corresponding to kx, kz
         amrex::RealVect dx;
 };
 

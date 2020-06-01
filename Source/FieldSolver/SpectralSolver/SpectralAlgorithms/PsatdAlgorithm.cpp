@@ -282,15 +282,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
     field_data.ForwardTransform( *current[1], Idx::Jy, 0 );
     field_data.ForwardTransform( *current[2], Idx::Jz, 0 );
 
-    // Index of z direction in 2D and 3D
-    constexpr int zdir = AMREX_SPACEDIM-1;
-
-    const amrex::Real dx = m_dx[0];
-#if (AMREX_SPACEDIM==3)
-    const amrex::Real dy = m_dx[1];
-#endif
-    const amrex::Real dz = m_dx[zdir];
-
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi) {
 
@@ -298,13 +289,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
 
         // Extract arrays for the fields to be updated
         amrex::Array4<Complex> fields = field_data.fields[mfi].array();
-
-        // Extract pointers for the k vectors
-        const amrex::Real* const kx_arr = kx_vec[mfi].dataPtr();
-#if (AMREX_SPACEDIM==3)
-        const amrex::Real* const ky_arr = ky_vec[mfi].dataPtr();
-#endif
-        const amrex::Real* const kz_arr = kz_vec[mfi].dataPtr();
 
         // Extract pointers for the modified k vectors
         const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
@@ -324,15 +308,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             const Complex Dy = fields(i,j,k,Idx::Jy);
             const Complex Dz = fields(i,j,k,Idx::Jz);
 
-            // k vector values
-            const amrex::Real kx = kx_arr[i];
-#if (AMREX_SPACEDIM==3)
-            const amrex::Real ky = ky_arr[j];
-            const amrex::Real kz = kz_arr[k];
-#else
-            constexpr amrex::Real ky = 0;
-            const     amrex::Real kz = kz_arr[j];
-#endif
             // Imaginary unit
             constexpr Complex I = Complex{0,1};
 

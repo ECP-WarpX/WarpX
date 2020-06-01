@@ -350,12 +350,12 @@ WarpX::OneStep_nosub (Real cur_time)
     // For domain decomposition with local FFT over guard cells, apply current
     // correction or Vay deposition in Fourier space before exchanging guard cells for J
     if ( fft_periodic_single_box == false ) {
-        // Apply current correction in Fourier space
-        // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
-        if ( do_current_correction ) CurrentCorrection();
         // Compute current from Vay deposition in Fourier space
         // (equations (20)-(24) of https://doi.org/10.1016/j.jcp.2013.03.010)
         if ( WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay ) VayDeposition();
+        // Apply current correction in Fourier space
+        // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
+        if ( do_current_correction ) CurrentCorrection();
     }
 #endif
 
@@ -372,12 +372,12 @@ WarpX::OneStep_nosub (Real cur_time)
     // For periodic single-box FFT (FFT without guard cells), apply current
     // correction of Vay deposition in Fourier space after exchanging guard cells for J
     if ( fft_periodic_single_box == true ) {
-        // Apply current correction in Fourier space
-        // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
-        if ( do_current_correction ) CurrentCorrection();
         // Compute current from Vay deposition in Fourier space
         // (equations (20)-(24) of https://doi.org/10.1016/j.jcp.2013.03.010)
         if ( WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay ) VayDeposition();
+        // Apply current correction in Fourier space
+        // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
+        if ( do_current_correction ) CurrentCorrection();
     }
 #endif
 
