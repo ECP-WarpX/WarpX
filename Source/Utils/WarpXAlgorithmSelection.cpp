@@ -58,6 +58,17 @@ const std::map<std::string, int> load_balance_costs_update_algo_to_int = {
     {"default",   LoadBalanceCostsUpdateAlgo::Timers }
 };
 
+const std::map<std::string, int> MaxwellSolver_medium_algo_to_int = {
+    {"vacuum", MediumForEM::Vacuum},
+    {"macroscopic", MediumForEM::Macroscopic},
+    {"default", MediumForEM::Vacuum}
+};
+
+const std::map<std::string, int> MacroscopicSolver_algo_to_int = {
+    {"backwardeuler", MacroscopicSolverAlgo::BackwardEuler},
+    {"laxwendroff", MacroscopicSolverAlgo::LaxWendroff},
+    {"default", MacroscopicSolverAlgo::BackwardEuler},
+};
 
 int
 GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
@@ -82,6 +93,10 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
         algo_to_int = gathering_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "load_balance_costs_update")) {
         algo_to_int = load_balance_costs_update_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "em_solver_medium")) {
+        algo_to_int = MaxwellSolver_medium_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "macroscopic_sigma_method")) {
+        algo_to_int = MacroscopicSolver_algo_to_int;
     } else {
         std::string pp_search_string = pp_search_key;
         amrex::Abort("Unknown algorithm type: " + pp_search_string);

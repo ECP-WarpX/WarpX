@@ -29,6 +29,7 @@ Depending on the build variant of WarpX, the following preprocessor macros will 
 Macro               3D3V         2D3V         RZ
 ==================  ===========  ===========  ===========
 ``AMREX_SPACEDIM``  ``3``        ``2``        ``2``
+``WARPX_DIM_3D``    **defined**  *undefined*  *undefined*
 ``WARPX_DIM_XZ``    *undefined*  **defined**  *undefined*
 ``WARPX_DIM_RZ``    *undefined*  *undefined*  **defined**
 ==================  ===========  ===========  ===========

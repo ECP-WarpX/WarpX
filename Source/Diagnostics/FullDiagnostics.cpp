@@ -62,8 +62,10 @@ FullDiagnostics::ReadParameters ()
     ParmParse pp(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_format == "plotfile" || m_format == "openpmd" || m_format == "checkpoint" || m_format == "ascent",
-        "<diag>.format must be plotfile or openpmd or checkpoint or ascent");
+        m_format == "plotfile" || m_format == "openpmd" ||
+        m_format == "checkpoint" || m_format == "ascent" ||
+        m_format == "sensei",
+        "<diag>.format must be plotfile or openpmd or checkpoint or ascent or sensei");
     std::string period_string = "0";
     pp.query("period", period_string);
     m_intervals = IntervalsParser(period_string);
