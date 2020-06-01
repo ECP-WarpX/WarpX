@@ -108,8 +108,16 @@ class Checksum:
         # Dictionaries have same values?
         for key1 in ref_benchmark.data.keys():
             for key2 in ref_benchmark.data[key1].keys():
-                if (abs(self.data[key1][key2] - ref_benchmark.data[key1][key2])
-                   > tolerance*abs(ref_benchmark.data[key1][key2])):
+                failed = False
+                # case 1: benchmark == 0.
+                if ref_benchmark.data[key1][key2] == 0. \
+                   and self.data[key1][key2] != 0:
+                    failed = True
+                # case 2: benchmark != 0
+                elif (abs(self.data[key1][key2] - ref_benchmark.data[key1][key2])
+                    > tolerance*abs(ref_benchmark.data[key1][key2])):
+                    failed = True
+                if failed:
                     print("ERROR: Benchmark and plotfile checksum have "
                           "different value for key [%s,%s]" % (key1, key2))
                     print("Benchmark: [%s,%s] %.15f"
