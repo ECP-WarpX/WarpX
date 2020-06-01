@@ -78,7 +78,5 @@ plt.ylabel( 'Ex' )
 plt.xlabel( 'Time' )
 plt.savefig("langmuir2d_analysis.png")
 
-sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-import checksumAPI
 test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn)

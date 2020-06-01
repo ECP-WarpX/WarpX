@@ -5,7 +5,7 @@ import numpy as np
 
 yt.funcs.mylog.setLevel(50)
 
-tolerance = 1.e-12
+tolerance = 1.e-10
 
 
 class Checksum:
@@ -114,8 +114,8 @@ class Checksum:
                    > tolerance*abs(ref_benchmark.data[key1][key2])):
                     print("ERROR: Benchmark and plotfile checksum have "
                           "different value for key [%s,%s]" % (key1, key2))
-                    print("Benchmark: [%s,%s] %f"
+                    print("Benchmark: [%s,%s] %.15f"
                           % (key1, key2, ref_benchmark.data[key1][key2]))
-                    print("Plotfile : [%s,%s] %f"
+                    print("Plotfile : [%s,%s] %.15f"
                           % (key1, key2, self.data[key1][key2]))
                     sys.exit(1)
