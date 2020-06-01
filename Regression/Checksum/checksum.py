@@ -5,7 +5,7 @@ import numpy as np
 
 yt.funcs.mylog.setLevel(50)
 
-tolerance = 1.e-10
+tolerance = 1.e-9
 
 
 class Checksum:
