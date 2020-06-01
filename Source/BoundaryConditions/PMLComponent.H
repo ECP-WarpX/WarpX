@@ -15,7 +15,8 @@
  struct PMLComp {
    enum { xy=0, xz=1, xx=2,
           yz=0, yx=1, yy=2,
-          zx=0, zy=1, zz=2 };
+          zx=0, zy=1, zz=2,
+          x=0, y=1, z=2 }; // Used for the PML components of F
  };
 
 #endif
