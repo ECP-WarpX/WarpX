@@ -1,1 +1,3 @@
-benchmark_location = './benchmarks_json'
+import os
+
+benchmark_location = os.path.split(__file__)[0] + '/benchmarks_json'
