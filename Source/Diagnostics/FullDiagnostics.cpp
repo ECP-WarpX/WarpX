@@ -1,13 +1,21 @@
 #include "FullDiagnostics.H"
 #include "WarpX.H"
+#include <AMReX_Vector.H>
+#include <AMReX_MultiFab.H>
+#include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
 #include "ComputeDiagFunctors/PartPerCellFunctor.H"
 #include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
+#include "FlushFormats/FlushFormat.H"
 #include "FlushFormats/FlushFormatPlotfile.H"
 #include "FlushFormats/FlushFormatCheckpoint.H"
 #include "FlushFormats/FlushFormatAscent.H"
+#ifdef WARPX_USE_OPENPMD
+#    include "FlushFormats/FlushFormatOpenPMD.H"
+#endif
+
 
 using namespace amrex;
 
@@ -15,7 +23,6 @@ FullDiagnostics::FullDiagnostics (int i, std::string name)
     : Diagnostics(i, name)
 {
 
-    amrex::Print() << " calling read parameters base \n";
     ReadParameters();
 }
 
@@ -25,6 +32,7 @@ FullDiagnostics::InitData ()
     InitBaseData();
 
     auto & warpx = WarpX::GetInstance();
+    m_mf_output.resize( nmax_lev );
 
     for ( int lev=0; lev<nlev; lev++ ){
         InitializeFieldFunctors( lev );
@@ -48,8 +56,8 @@ FullDiagnostics::InitData ()
 void
 FullDiagnostics::ReadParameters ()
 {
+    // Read list of full diagnostics fields requested by the user.
     bool checkpoint_compatibility = ReadBaseParameters();
-    amrex::Print() << " full diag read parameter \n";
     auto & warpx = WarpX::GetInstance();
     ParmParse pp(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
@@ -61,6 +69,10 @@ FullDiagnostics::ReadParameters ()
     m_intervals = IntervalsParser(period_string);
     bool raw_specified = pp.query("plot_raw_fields", m_plot_raw_fields);
     raw_specified += pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
+
+#ifdef WARPX_DIM_RZ
+    pp.query("dump_rz_modes", m_dump_rz_modes);
+#endif
 
     if (m_format == "checkpoint"){
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -74,7 +86,6 @@ FullDiagnostics::ReadParameters ()
 void
 FullDiagnostics::Flush ()
 {
-    amrex::Print() << " in FD flush \n";
     auto & warpx = WarpX::GetInstance();
     m_flush_format->WriteToFile(
         m_varnames, GetVecOfConstPtrs(m_mf_output), warpx.Geom(), warpx.getistep(),
@@ -358,7 +369,6 @@ FullDiagnostics::ComputeAndPack ()
     warpx.FieldGather();
 
     // cell-center fields and store result in m_mf_output.
-    amrex::Print() << " m_varnems : " << m_varnames.size() << "\n";
     for(int lev=0; lev<nlev; lev++){
         int icomp_dst = 0;
         for (int icomp=0, n=m_all_field_functors[0].size(); icomp<n; icomp++){
@@ -368,7 +378,6 @@ FullDiagnostics::ComputeAndPack ()
             m_all_field_functors[lev][icomp]->operator()(m_mf_output[lev], icomp_dst);
             // update the index of the next component to fill
             icomp_dst += m_all_field_functors[lev][icomp]->nComp();
-            amrex::Print() << " icomp_dst : " << icomp_dst << "\n";
         }
         // Check that the proper number of components of mf_avg were updated.
         AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );

@@ -10,7 +10,6 @@ using namespace amrex;
 BTDiagnostics::BTDiagnostics (int i, std::string name)
     : Diagnostics(i, name)
 {
-    amrex::Print() << " Read parameters base \n";
     ReadParameters();
     
 }
@@ -31,23 +30,48 @@ BTDiagnostics::InitData ()
     m_inv_beta_boost = 1._rt / m_beta_boost;
     m_dz_lab = PhysConst::c * m_dt_boost * m_inv_beta_boost * m_inv_gamma_boost;
     m_inv_dz_lab = 1._rt / m_dz_lab;    
- 
-    amrex::Real zmin_lab = warpx.Geom(0).ProbLo(m_moving_window_dir)
+
+
+    writeMetaData();
+
+
+    // The ncells are required for writing the Header file //
+    // Note : the cell size must be different for each level //
+    amrex::Real zmin_lab = m_lo[m_moving_window_dir]
                            / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-    amrex::Real zmax_lab = warpx.Geom(0).ProbHi(m_moving_window_dir)
+    amrex::Real zmax_lab = m_hi[m_moving_window_dir]
                            / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
 
-    int Nz_lab = static_cast<unsigned>( (zmax_lab - zmin_lab) * m_inv_dz_lab );
-    int Nx_lab = warpx.Geom(0).Domain().length(0);
+    int Nz_lab = static_cast<int>( (zmax_lab - zmin_lab) * m_inv_dz_lab );
+    int Nx_lab = static_cast<int>(m_hi[0] - m_lo[0])/warpx.Geom(0).CellSize(0);
 #if (AMREX_SPACEDIM == 3)
-    int Ny_lab = warpx.Geom(0).Domain().length(1);
+    // compute ny_lab m_hi - m_lo 
+    int Ny_lab = static_cast<int>(m_hi[1] - m_lo[1])/warpx.Geom(0).CellSize(1);
     amrex::IntVect prob_ncells_lab = {Nx_lab, Ny_lab, Nz_lab};
 #else
     amrex::IntVect prob_ncells_lab = {Nx_lab, Nz_lab};
 #endif    
 
-    writeMetaData();
-    
+
+   
+
+    // allocate vector of buffers //
+    m_mf_output_buffer.resize(m_num_snapshots_lab);
+    for (int i=0; i<m_num_snapshots_lab; ++i) {
+        m_mf_output_buffer[i].resize(nmax_lev);
+    }
+
+    // allocate vector of m_t_lab (m_num_snapshots_lab) ;
+    m_t_lab.resize(m_num_snapshots_lab);
+    // allocate vector of RealBox of the diag domain
+    m_domain_lab.resize(m_num_snapshots_lab);
+    // define box correctly (one for all snapshots)
+    m_buffer_box.resize(m_num_snapshots_lab);
+    // allocate vector of m_current_z_lab, m_current_z_boost
+    m_current_z_lab.resize(m_num_snapshots_lab);
+    m_current_z_boost.resize(m_num_snapshots_lab);
+    // allocate vector of m_buff_counter
+    m_buffer_counter.resize(m_num_snapshots_lab);
 
 }
 

@@ -68,12 +68,32 @@ private:
 
     int m_num_buffer = 256;
     int m_max_box_size = 256;
+
+    /**  Lab-frame time of the back-transformed snapshot */
+    amrex::Vector<amrex::Real> m_t_lab;
+    /**  Physical domain with lab-frame co-ordinates of the back-transformed snapshot */
+    amrex::Vector<amrex::RealBox> m_domain_lab;
+    /**  Number of cells in the lab-frame for all back-transformed snapshots */
+    amrex::IntVect m_ncells_lab;
+    /**  Box-dimension in boosted-frame index space for each back-transformed snapshot */
+    amrex::Vector<amrex::Box> m_buffer_box;
+    /**  Lab-frame z co-ordinate of the back-transformed snapshot at the current timestep */
+    amrex::Vector<amrex::Real> m_current_z_lab;
+    /**  Boosted-frame z co-ordinate corresponding to the back-transformed 
+         snapshot at the current timestep */
+    amrex::Vector<amrex::Real> m_current_z_boost;
+    /**  Number of back-transformed z-slices in the output buffer multifab */
+    amrex::Vector<int> m_buffer_counter;
+    
+    
+    
+    
+    
+    
+  
+    
    
     void writeMetaData ();
-//    // common with full diags
-//    std::string m_diag_name;
-//    std::string m_file_prefix;
-//    amrex::Vector< std::string > m_varnames;
 };
 
 #endif // WARPX_BTDIAGNOSTICS_H_

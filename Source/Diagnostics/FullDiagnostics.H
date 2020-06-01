@@ -26,7 +26,13 @@ private:
     void Flush () override; 
     /** Flush raw data */
     void FlushRaw () override;
+    /** whether to flush at this time step
+     * \param[in] step current time step
+     * \param[in] force_flush if true, return true for any step
+     * \return bool, whether to flush
+     */
     bool DoDump (int step, bool force_flush=false) override;
+    /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
     void InitData () override;
     /** Append varnames with names for all modes of a field
      * \param[in] field field name (includes component, e.g., Er)
