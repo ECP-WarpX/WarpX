@@ -59,6 +59,11 @@ First, load the appropriate modules:
     module load hdf5/1.10.4
     module load adios2/2.5.0
 
+    export CC=$(which gcc)
+    export CXX=$(which g++)
+    export CUDACXX=$(which nvcc)
+    export CUDAHOSTCXX=$(which g++)
+
 Then, in the ``warpx_directory``, download and build openPMD-api:
 
 .. code-block:: bash
