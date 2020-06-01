@@ -106,7 +106,7 @@ def check():
 
     test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename)
-    
+
 # This function generates the input file to test the photon pusher.
 def generate():
     with open(inputname,'w') as f:
