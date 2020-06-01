@@ -1,0 +1,30 @@
+{
+  "beam": {
+    "particle_Bx": NaN,
+    "particle_By": NaN,
+    "particle_Bz": NaN,
+    "particle_Ex": NaN,
+    "particle_Ey": NaN,
+    "particle_Ez": NaN,
+    "particle_cpu": 0.0,
+    "particle_id": 200010000.0,
+    "particle_momentum_x": NaN,
+    "particle_momentum_y": NaN,
+    "particle_momentum_z": NaN,
+    "particle_position_x": 0.031880969779242374,
+    "particle_position_y": 0.03175704658379704,
+    "particle_position_z": 0.03183674192208247,
+    "particle_weight": 0.06241509074460764
+  },
+  "lev=0": {
+    "Bx": NaN,
+    "By": NaN,
+    "Bz": NaN,
+    "Ex": NaN,
+    "Ey": NaN,
+    "Ez": NaN,
+    "jx": NaN,
+    "jy": NaN,
+    "jz": NaN
+  }
+}
