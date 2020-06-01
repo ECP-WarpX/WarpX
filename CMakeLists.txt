@@ -5,6 +5,28 @@ project(WarpX VERSION 0.20.5)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
+# In-source tree builds are messy and can screw up the build system.
+# Avoid building at least in the same dir as the root dir:
+if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    message(FATAL_ERROR "Building in-source is not supported! "
+            "Create a build directory and remove "
+            "${CMAKE_SOURCE_DIR}/CMakeCache.txt ${CMAKE_SOURCE_DIR}/CMakeFiles/")
+endif()
+
+
+# CCache Support ##############################################################
+#
+# this is an optional tool that stores compiled object files; allows fast
+# re-builds even with "make clean" in between. Mainly used to store AMReX
+# objects
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    if(ENABLE_CUDA)
+        set(CMAKE_CUDA_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    endif()
+endif()
+
 
 # Output Directories ##########################################################
 #
