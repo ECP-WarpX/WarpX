@@ -848,14 +848,14 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         for (int k=0; k<=depos_order; k++) {
             for (int j=0; j<=depos_order; j++) {
                 for (int i=0; i<=depos_order; i++) {
-                    sdzk = 2.0_rt*sx_jy_new[i]*sy_jy_new[j]*sz_jy_new[k]
-                          -2.0_rt*sx_jy_new[i]*sy_jy_new[j]*sz_jy_old[k]
-                                 +sx_jy_old[i]*sy_jy_new[j]*sz_jy_new[k]
-                                 -sx_jy_old[i]*sy_jy_new[j]*sz_jy_old[k]
-                                 +sx_jy_new[i]*sy_jy_old[j]*sz_jy_new[k]
-                                 -sx_jy_new[i]*sy_jy_old[j]*sz_jy_old[k]
-                          +2.0_rt*sx_jy_old[i]*sy_jy_old[j]*sz_jy_new[k]
-                          -2.0_rt*sx_jy_old[i]*sy_jy_old[j]*sz_jy_old[k];
+                    sdzk = 2.0_rt*sx_jz_new[i]*sy_jz_new[j]*sz_jz_new[k]
+                          -2.0_rt*sx_jz_new[i]*sy_jz_new[j]*sz_jz_old[k]
+                                 +sx_jz_old[i]*sy_jz_new[j]*sz_jz_new[k]
+                                 -sx_jz_old[i]*sy_jz_new[j]*sz_jz_old[k]
+                                 +sx_jz_new[i]*sy_jz_old[j]*sz_jz_new[k]
+                                 -sx_jz_new[i]*sy_jz_old[j]*sz_jz_old[k]
+                          +2.0_rt*sx_jz_old[i]*sy_jz_old[j]*sz_jz_new[k]
+                          -2.0_rt*sx_jz_old[i]*sy_jz_old[j]*sz_jz_old[k];
                     sdzk = wq*invvol*invdt*onesixth*sdzk;
                     amrex::Gpu::Atomic::Add( &jz_arr(lo.x+i_jz_new+i, lo.y+j_jz_new+j, lo.z+k_jz_new+k), sdzk);
                 }
