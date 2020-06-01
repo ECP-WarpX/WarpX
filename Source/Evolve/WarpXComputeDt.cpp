@@ -14,8 +14,6 @@
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
 #endif
 
-/**
- * Determine the timestep of the simulation. */
 void
 WarpX::ComputeDt ()
 {
