@@ -2,6 +2,7 @@
 #define WARPX_COARSEN_IO_H_
 
 #include "WarpX.H"
+#include <AMReX_Math.H>
 
 namespace CoarsenIO{
 
@@ -43,7 +44,7 @@ namespace CoarsenIO{
 
         // Compute number of points
         for ( int l = 0; l < 3; ++l ) {
-            if ( cr[l] == 1 ) np[l] = 1+abs(sf[l]-sc[l]); // no coarsening
+            if ( cr[l] == 1 ) np[l] = 1+amrex::Math::abs(sf[l]-sc[l]); // no coarsening
             else              np[l] = 2-sf[l];
         }
 

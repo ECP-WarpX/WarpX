@@ -14,10 +14,6 @@ MacroscopicProperties::ReadParameters ()
 {
     ParmParse pp("macroscopic");
     // Since macroscopic maxwell solve is turned on, user must define sigma, mu, and epsilon //
-//    pp.get("sigma", m_sigma);
-//    pp.get("mu", m_mu);
-//    pp.get("epsilon", m_epsilon);
-
     pp.get("sigma_init_style", m_sigma_s);
     // constant initialization
     if (m_sigma_s == "constant") pp.get("sigma", m_sigma);
@@ -131,6 +127,5 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
 
 
 }
-
 
 

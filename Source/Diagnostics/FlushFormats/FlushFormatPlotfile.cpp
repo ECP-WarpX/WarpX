@@ -15,7 +15,7 @@ namespace
 void
 FlushFormatPlotfile::WriteToFile (
     const amrex::Vector<std::string> varnames,
-    const amrex::Vector<const amrex::MultiFab*> mf,
+    const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
@@ -31,7 +31,7 @@ FlushFormatPlotfile::WriteToFile (
     VisMF::SetHeaderVersion(amrex::VisMF::Header::Version_v1);
     if (plot_raw_fields) rfs.emplace_back("raw_fields");
     amrex::WriteMultiLevelPlotfile(filename, nlev,
-                                   mf,
+                                   amrex::GetVecOfConstPtrs(mf),
                                    varnames, geom,
                                    time, iteration, warpx.refRatio(),
                                    "HyperCLaw-V1.1",

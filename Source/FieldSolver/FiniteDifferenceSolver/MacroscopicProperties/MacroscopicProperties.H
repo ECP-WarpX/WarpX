@@ -2,6 +2,7 @@
 #define WARPX_MACROSCOPICPROPERTIES_H_
 
 
+<<<<<<< HEAD
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
@@ -12,6 +13,9 @@
 
 #include "Parser/WarpXParser.H"
 #include "Parser/WarpXParserWrapper.H"
+=======
+#include <AMReX_MultiFab.H>
+>>>>>>> 36b4ef471cbc72b739cee2027f4dc420e1d20608
 
 
 /**
@@ -25,6 +29,7 @@ public:
      MacroscopicProperties (); // constructor
      /** \brief Read user-defined macroscopic properties. Called in constructor. */
      void ReadParameters ();
+<<<<<<< HEAD
      /** Initialize multifabs storing macroscopic multifabs */
      void InitData ();
 
@@ -41,6 +46,15 @@ public:
 
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
                                   ParserWrapper<3> *macro_parser, int lev);
+=======
+     /** return Real, sigma (conductivity) of the medium. */
+     amrex::Real sigma () const noexcept {return m_sigma;}
+     /** return Real, epsilon (permittivity) of the medium. */
+     amrex::Real epsilon () const noexcept {return m_epsilon;}
+     /** return Real, mu (permeability) of the medium. */
+     amrex::Real mu () const noexcept {return m_mu;}
+
+>>>>>>> 36b4ef471cbc72b739cee2027f4dc420e1d20608
 private:
      /** Conductivity, sigma, of the medium */
      amrex::Real m_sigma;
@@ -48,6 +62,7 @@ private:
      amrex::Real m_epsilon;
      /** Permeability, mu, of the medium */
      amrex::Real m_mu;
+<<<<<<< HEAD
      /** Multifab for m_sigma */
      std::unique_ptr<amrex::MultiFab> m_sigma_mf;
      /** Multifab for m_epsilon */
@@ -162,6 +177,8 @@ struct BackwardEulerAlgo {
          amrex::Real beta = dt / ( macro_avg_to_edge(i, j, k, iv_cc, epsilon) * (1._rt + fac1) );
          return beta;
      };
+=======
+>>>>>>> 36b4ef471cbc72b739cee2027f4dc420e1d20608
 };
 
 #endif // WARPX_MACROSCOPIC_PROPERTIES_H_
