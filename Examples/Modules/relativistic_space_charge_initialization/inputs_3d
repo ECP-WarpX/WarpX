@@ -32,3 +32,4 @@ beam.uz_m = 100.0
 diagnostics.diags_names = diag1
 diag1.period = 1
 diag1.diag_type = Full
+diag1.beam.random_fraction = .01

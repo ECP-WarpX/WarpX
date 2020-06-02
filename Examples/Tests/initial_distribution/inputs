@@ -186,3 +186,7 @@ bmmntr.species                           = beam
 diagnostics.diags_names = diag1
 diag1.period = 1000
 diag1.diag_type = Full
+diag1.gaussian.random_fraction = .01
+diag1.maxwell_boltzmann.random_fraction = .01
+diag1.maxwell_juttner.random_fraction = .01
+diag1.beam.random_fraction = .01

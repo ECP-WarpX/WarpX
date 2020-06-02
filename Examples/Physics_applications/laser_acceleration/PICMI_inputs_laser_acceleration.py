@@ -106,6 +106,7 @@ field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
 
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       period = 10,
+                                      warpx_random_fraction = 0.01,
                                       species = [electrons])
 
 ##########################

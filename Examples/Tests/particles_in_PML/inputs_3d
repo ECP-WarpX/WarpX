@@ -55,3 +55,5 @@ interpolation.noz = 3
 diagnostics.diags_names = diag1
 diag1.period = 120
 diag1.diag_type = Full
+diag1.electron.random_fraction = .01
+diag1.proton.random_fraction = .01
