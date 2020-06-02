@@ -657,24 +657,24 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         // Shape factor arrays for current and old positions (nodal):
         // as in Esirkepov deposition, there are extra values to take into account
         // the fact that the old position can be at a different grid location
-        amrex::Real sx_node_new[depos_order+3] = {0.0_rt};
-        amrex::Real sx_node_old[depos_order+3] = {0.0_rt};
-        amrex::Real sz_node_new[depos_order+3] = {0.0_rt};
-        amrex::Real sz_node_old[depos_order+3] = {0.0_rt};
+        amrex::Real sx_node_new[depos_order+1] = {0.0_rt};
+        amrex::Real sx_node_old[depos_order+1] = {0.0_rt};
+        amrex::Real sz_node_new[depos_order+1] = {0.0_rt};
+        amrex::Real sz_node_old[depos_order+1] = {0.0_rt};
 #if (defined WARPX_DIM_3D)
-        amrex::Real sy_node_new[depos_order+3] = {0.0_rt};
-        amrex::Real sy_node_old[depos_order+3] = {0.0_rt};
+        amrex::Real sy_node_new[depos_order+1] = {0.0_rt};
+        amrex::Real sy_node_old[depos_order+1] = {0.0_rt};
 #endif
         // Shape factor arrays for current and old positions (cell-centered):
         // as in Esirkepov deposition, there are extra values to take into account
         // the fact that the old position can be at a different grid location
-        amrex::Real sx_cell_new[depos_order+3] = {0.0_rt};
-        amrex::Real sx_cell_old[depos_order+3] = {0.0_rt};
-        amrex::Real sz_cell_new[depos_order+3] = {0.0_rt};
-        amrex::Real sz_cell_old[depos_order+3] = {0.0_rt};
+        amrex::Real sx_cell_new[depos_order+1] = {0.0_rt};
+        amrex::Real sx_cell_old[depos_order+1] = {0.0_rt};
+        amrex::Real sz_cell_new[depos_order+1] = {0.0_rt};
+        amrex::Real sz_cell_old[depos_order+1] = {0.0_rt};
 #if (defined WARPX_DIM_3D)
-        amrex::Real sy_cell_new[depos_order+3] = {0.0_rt};
-        amrex::Real sy_cell_old[depos_order+3] = {0.0_rt};
+        amrex::Real sy_cell_new[depos_order+1] = {0.0_rt};
+        amrex::Real sy_cell_old[depos_order+1] = {0.0_rt};
 #endif
         // Compute shape factors for current positions
 
@@ -687,9 +687,9 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         if (jx_type[0] == CELL || jy_type[0] == CELL || jz_type[0] == CELL) {
             i_cell_new = compute_shape_factor<depos_order>(sx_cell_new, x_new-0.5_rt);
         }
-        const amrex::Real (&sx_jx_new)[depos_order+3] = ((jx_type[0] == NODE) ? sx_node_new : sx_cell_new);
-        const amrex::Real (&sx_jy_new)[depos_order+3] = ((jy_type[0] == NODE) ? sx_node_new : sx_cell_new);
-        const amrex::Real (&sx_jz_new)[depos_order+3] = ((jz_type[0] == NODE) ? sx_node_new : sx_cell_new);
+        const amrex::Real (&sx_jx_new)[depos_order+1] = ((jx_type[0] == NODE) ? sx_node_new : sx_cell_new);
+        const amrex::Real (&sx_jy_new)[depos_order+1] = ((jy_type[0] == NODE) ? sx_node_new : sx_cell_new);
+        const amrex::Real (&sx_jz_new)[depos_order+1] = ((jz_type[0] == NODE) ? sx_node_new : sx_cell_new);
         int const i_jx_new = ((jx_type[0] == NODE) ? i_node_new : i_cell_new);
         int const i_jy_new = ((jy_type[0] == NODE) ? i_node_new : i_cell_new);
         int const i_jz_new = ((jz_type[0] == NODE) ? i_node_new : i_cell_new);
@@ -704,9 +704,9 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         if (jx_type[1] == CELL || jy_type[1] == CELL || jz_type[1] == CELL) {
             j_cell_new = compute_shape_factor<depos_order>(sy_cell_new, y_new-0.5_rt);
         }
-        const amrex::Real (&sy_jx_new)[depos_order+3] = ((jx_type[1] == NODE) ? sy_node_new : sy_cell_new);
-        const amrex::Real (&sy_jy_new)[depos_order+3] = ((jy_type[1] == NODE) ? sy_node_new : sy_cell_new);
-        const amrex::Real (&sy_jz_new)[depos_order+3] = ((jz_type[1] == NODE) ? sy_node_new : sy_cell_new);
+        const amrex::Real (&sy_jx_new)[depos_order+1] = ((jx_type[1] == NODE) ? sy_node_new : sy_cell_new);
+        const amrex::Real (&sy_jy_new)[depos_order+1] = ((jy_type[1] == NODE) ? sy_node_new : sy_cell_new);
+        const amrex::Real (&sy_jz_new)[depos_order+1] = ((jz_type[1] == NODE) ? sy_node_new : sy_cell_new);
         int const j_jx_new = ((jx_type[1] == NODE) ? j_node_new : j_cell_new);
         int const j_jy_new = ((jy_type[1] == NODE) ? j_node_new : j_cell_new);
         int const j_jz_new = ((jz_type[1] == NODE) ? j_node_new : j_cell_new);
@@ -720,9 +720,9 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         if (jx_type[zdir] == CELL || jy_type[zdir] == CELL || jz_type[zdir] == CELL) {
             k_cell_new = compute_shape_factor<depos_order>(sz_cell_new, z_new-0.5_rt);
         }
-        const amrex::Real (&sz_jx_new)[depos_order+3] = ((jx_type[zdir] == NODE) ? sz_node_new : sz_cell_new);
-        const amrex::Real (&sz_jy_new)[depos_order+3] = ((jy_type[zdir] == NODE) ? sz_node_new : sz_cell_new);
-        const amrex::Real (&sz_jz_new)[depos_order+3] = ((jz_type[zdir] == NODE) ? sz_node_new : sz_cell_new);
+        const amrex::Real (&sz_jx_new)[depos_order+1] = ((jx_type[zdir] == NODE) ? sz_node_new : sz_cell_new);
+        const amrex::Real (&sz_jy_new)[depos_order+1] = ((jy_type[zdir] == NODE) ? sz_node_new : sz_cell_new);
+        const amrex::Real (&sz_jz_new)[depos_order+1] = ((jz_type[zdir] == NODE) ? sz_node_new : sz_cell_new);
         int const k_jx_new = ((jx_type[zdir] == NODE) ? k_node_new : k_cell_new);
         int const k_jy_new = ((jy_type[zdir] == NODE) ? k_node_new : k_cell_new);
         int const k_jz_new = ((jz_type[zdir] == NODE) ? k_node_new : k_cell_new);
@@ -738,9 +738,9 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         if (jx_type[0] == CELL || jy_type[0] == CELL || jz_type[0] == CELL) {
             i_cell_old = compute_shape_factor<depos_order>(sx_cell_old, x_old-0.5_rt);
         }
-        const amrex::Real (&sx_jx_old)[depos_order+3] = ((jx_type[0] == NODE) ? sx_node_old : sx_cell_old);
-        const amrex::Real (&sx_jy_old)[depos_order+3] = ((jy_type[0] == NODE) ? sx_node_old : sx_cell_old);
-        const amrex::Real (&sx_jz_old)[depos_order+3] = ((jz_type[0] == NODE) ? sx_node_old : sx_cell_old);
+        const amrex::Real (&sx_jx_old)[depos_order+1] = ((jx_type[0] == NODE) ? sx_node_old : sx_cell_old);
+        const amrex::Real (&sx_jy_old)[depos_order+1] = ((jy_type[0] == NODE) ? sx_node_old : sx_cell_old);
+        const amrex::Real (&sx_jz_old)[depos_order+1] = ((jz_type[0] == NODE) ? sx_node_old : sx_cell_old);
         int const i_jx_old = ((jx_type[0] == NODE) ? i_node_old : i_cell_old);
         int const i_jy_old = ((jy_type[0] == NODE) ? i_node_old : i_cell_old);
         int const i_jz_old = ((jz_type[0] == NODE) ? i_node_old : i_cell_old);
@@ -755,9 +755,9 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         if (jx_type[1] == CELL || jy_type[1] == CELL || jz_type[1] == CELL) {
             j_cell_old = compute_shape_factor<depos_order>(sy_cell_old, y_old-0.5_rt);
         }
-        const amrex::Real (&sy_jx_old)[depos_order+3] = ((jx_type[1] == NODE) ? sy_node_old : sy_cell_old);
-        const amrex::Real (&sy_jy_old)[depos_order+3] = ((jy_type[1] == NODE) ? sy_node_old : sy_cell_old);
-        const amrex::Real (&sy_jz_old)[depos_order+3] = ((jz_type[1] == NODE) ? sy_node_old : sy_cell_old);
+        const amrex::Real (&sy_jx_old)[depos_order+1] = ((jx_type[1] == NODE) ? sy_node_old : sy_cell_old);
+        const amrex::Real (&sy_jy_old)[depos_order+1] = ((jy_type[1] == NODE) ? sy_node_old : sy_cell_old);
+        const amrex::Real (&sy_jz_old)[depos_order+1] = ((jz_type[1] == NODE) ? sy_node_old : sy_cell_old);
         int const j_jx_old = ((jx_type[1] == NODE) ? j_node_old : j_cell_old);
         int const j_jy_old = ((jy_type[1] == NODE) ? j_node_old : j_cell_old);
         int const j_jz_old = ((jz_type[1] == NODE) ? j_node_old : j_cell_old);
@@ -771,9 +771,9 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         if (jx_type[zdir] == CELL || jy_type[zdir] == CELL || jz_type[zdir] == CELL) {
             k_cell_old = compute_shape_factor<depos_order>(sz_cell_old, z_old-0.5_rt);
         }
-        const amrex::Real (&sz_jx_old)[depos_order+3] = ((jx_type[zdir] == NODE) ? sz_node_old : sz_cell_old);
-        const amrex::Real (&sz_jy_old)[depos_order+3] = ((jy_type[zdir] == NODE) ? sz_node_old : sz_cell_old);
-        const amrex::Real (&sz_jz_old)[depos_order+3] = ((jz_type[zdir] == NODE) ? sz_node_old : sz_cell_old);
+        const amrex::Real (&sz_jx_old)[depos_order+1] = ((jx_type[zdir] == NODE) ? sz_node_old : sz_cell_old);
+        const amrex::Real (&sz_jy_old)[depos_order+1] = ((jy_type[zdir] == NODE) ? sz_node_old : sz_cell_old);
+        const amrex::Real (&sz_jz_old)[depos_order+1] = ((jz_type[zdir] == NODE) ? sz_node_old : sz_cell_old);
         int const k_jx_old = ((jx_type[zdir] == NODE) ? k_node_old : k_cell_old);
         int const k_jy_old = ((jy_type[zdir] == NODE) ? k_node_old : k_cell_old);
         int const k_jz_old = ((jz_type[zdir] == NODE) ? k_node_old : k_cell_old);
@@ -834,10 +834,10 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
                 for (int i=0; i<=depos_order; i++) {
                     sdyj = 2.0_rt*sx_jy_new[i]*sy_jy_new[j]*sz_jy_new[k]
                           -2.0_rt*sx_jy_new[i]*sy_jy_old[j]*sz_jy_new[k]
-                                 +sx_jy_new[i]*sy_jy_new[j]*sz_jy_old[k]
-                                 -sx_jy_new[i]*sy_jy_old[j]*sz_jy_old[k]
                                  +sx_jy_old[i]*sy_jy_new[j]*sz_jy_new[k]
                                  -sx_jy_old[i]*sy_jy_old[j]*sz_jy_new[k]
+                                 +sx_jy_new[i]*sy_jy_new[j]*sz_jy_old[k]
+                                 -sx_jy_new[i]*sy_jy_old[j]*sz_jy_old[k]
                           +2.0_rt*sx_jy_old[i]*sy_jy_new[j]*sz_jy_old[k]
                           -2.0_rt*sx_jy_old[i]*sy_jy_old[j]*sz_jy_old[k];
                     sdyj = wq*invvol*invdt*onesixth*sdyj;
