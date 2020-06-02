@@ -294,7 +294,9 @@ PhysicalParticleContainer::AddGaussianBeam (
 }
 
 void
-PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot)
+PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
+                                             bool use_q_shift,
+                                             ParticleReal q_shift)
 {
     // Declare temporary vectors on the CPU
     Gpu::HostVector<ParticleReal> particle_x;
@@ -359,7 +361,12 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot)
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
             ParticleReal const x = ptr_x.get()[i]*position_unit_x;
-            ParticleReal const z = ptr_z.get()[i]*position_unit_z;
+            if (use_q_shift) {
+                ParticleReal const z = ptr_z.get()[i]*position_unit_z+q_shift;
+            }
+            else {
+                ParticleReal const z = ptr_z.get()[i]*position_unit_z;
+            }
 #   ifndef WARPX_DIM_3D
             ParticleReal const y = 0.0_prt;
 #   else
@@ -453,7 +460,9 @@ PhysicalParticleContainer::AddParticles (int lev)
     }
 
     if (plasma_injector->external_file) {
-        AddPlasmaFromFile(plasma_injector->q_tot);
+        AddPlasmaFromFile(plasma_injector->q_tot,
+                          plasma_injector->use_q_shift,
+                          plasma_injector->q_shift);
         return;
     }
 
