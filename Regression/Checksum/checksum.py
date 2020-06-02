@@ -119,6 +119,6 @@ class Checksum:
                           % (key1, key2, ref_benchmark.data[key1][key2]))
                     print("Plotfile : [%s,%s] %.40f"
                           % (key1, key2, self.data[key1][key2]))
-                    checksum_differ = True
+                    checksums_differ = True
         if checksums_differ:
             sys.exit(1)
