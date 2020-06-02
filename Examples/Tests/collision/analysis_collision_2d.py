@@ -76,4 +76,4 @@ assert(error < tolerance)
 
 fn = fn_list[-1]
 test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn)
+checksumAPI.evaluate_checksum(test_name, fn, do_particles=False)

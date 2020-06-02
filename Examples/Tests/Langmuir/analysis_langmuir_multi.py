@@ -140,4 +140,8 @@ if current_correction:
     assert( Linf_norm < 1.e-9 )
 
 test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, fn)
+
+if re.search( 'single_precision', fn ):
+    checksumAPI.evaluate_checksum(test_name, fn, rtol=1.e-3)
+else:
+    checksumAPI.evaluate_checksum(test_name, fn)

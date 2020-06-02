@@ -18,14 +18,16 @@ API for WarpX checksum tests. It can be used in two ways:
 
 - As a script, to evaluate or to reset a benchmark:
   * Evaluate a benchmark. From a bash terminal:
-    $ ./checksumAPI.py --evaluate --plotfile <path/to/plotfile> --test-name <test name>
+    $ ./checksumAPI.py --evaluate --plotfile <path/to/plotfile> \
+                       --test-name <test name>
   * Reset a benchmark. From a bash terminal:
     $ ./checksumAPI.py --reset-benchmark --plotfile <path/to/plotfile> \
                        --test-name <test name>
 '''
 
 
-def evaluate_checksum(test_name, plotfile):
+def evaluate_checksum(test_name, plotfile, rtol=1.e-9, atol=1.e-40,
+                      do_fields=True, do_particles=True):
     '''Compare plotfile checksum with benchmark.
 
     Read checksum from input plotfile, read benchmark
@@ -33,12 +35,17 @@ def evaluate_checksum(test_name, plotfile):
 
     @param test_name Name of test, as found between [] in .ini file.
     @param plotfile Plotfile from which the checksum is computed.
+    @param rtol Relative tolerance for the comparison.
+    @param atol Absolute tolerance for the comparison.
+    @param do_fields Whether to compare fields in the checksum.
+    @param do_particles Whether to compare particles in the checksum.
     '''
-    test_checksum = Checksum(test_name, plotfile)
-    test_checksum.evaluate()
+    test_checksum = Checksum(test_name, plotfile, do_fields=do_fields,
+                             do_particles=do_particles)
+    test_checksum.evaluate(rtol=rtol, atol=atol)
 
 
-def reset_benchmark(test_name, plotfile):
+def reset_benchmark(test_name, plotfile, do_fields=True, do_particles=True):
     '''Update the benchmark (overwrites reference json file).
 
     Overwrite value of benchmark corresponding to
@@ -46,8 +53,11 @@ def reset_benchmark(test_name, plotfile):
 
     @param test_name Name of test, as found between [] in .ini file.
     @param plotfile Plotfile from which the checksum is computed.
+    @param do_fields Whether to write field checksums in the benchmark.
+    @param do_particles Whether to write particles checksums in the benchmark.
     '''
-    ref_checksum = Checksum(test_name, plotfile)
+    ref_checksum = Checksum(test_name, plotfile, do_fields=do_fields,
+                            do_particles=do_particles)
     ref_benchmark = Benchmark(test_name, ref_checksum.data)
     ref_benchmark.reset()
 
@@ -76,6 +86,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
+    # Options relevant to evaluate a checksum or reset a benchmark
     parser.add_argument('--evaluate', dest='evaluate', action='store_true',
                         default=False, help='Evaluate a checksum.')
     parser.add_argument('--reset-benchmark', dest='reset_benchmark',
@@ -90,6 +101,22 @@ if __name__ == '__main__':
                         '--reset-benchmark' in sys.argv,
                         help='Name of WarpX plotfile')
 
+    parser.add_argument('--skip-fields', dest='do_fields',
+                        default=True, action='store_false',
+                        help='If used, do not read/write field checksums')
+    parser.add_argument('--skip-particles', dest='do_particles',
+                        default=True, action='store_false',
+                        help='If used, do not read/write particle checksums')
+
+    # Fields and/or particles are read from plotfile/written to benchmark?
+    parser.add_argument('--rtol', dest='rtol',
+                        type=float, default=1.e-9,
+                        help='relative tolerance for comparison')
+    parser.add_argument('--atol', dest='atol',
+                        type=float, default=1.e-40,
+                        help='absolute tolerance for comparison')
+
+    # Option to reset all benchmarks present in a folder.
     parser.add_argument('--reset-all-benchmarks', dest='reset_all_benchmarks',
                         action='store_true', default=False,
                         help='Reset all benchmarks.')
@@ -103,10 +130,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.reset_benchmark:
-        reset_benchmark(args.test_name, args.plotfile)
+        reset_benchmark(args.test_name, args.plotfile,
+                        do_fields=args.do_fields,
+                        do_particles=args.do_particles)
 
     if args.evaluate:
-        evaluate_checksum(args.test_name, args.plotfile)
+        evaluate_checksum(args.test_name, args.plotfile, rtol=args.rtol,
+                          atol=args.atol, do_fields=args.do_fields,
+                          do_particles=args.do_particles)
 
     if args.reset_all_benchmarks:
+        # WARNING: this mode does not support skip-fields/particles
+        # and tolerances
         reset_all_benchmarks(args.path_to_all_plotfiles)

@@ -32,3 +32,4 @@ beam.uz_m = 0.0
 diagnostics.diags_names = diag1
 diag1.period = 1
 diag1.diag_type = Full
+diag1.fields_to_plot = Ex Ey Ez jx jy jz

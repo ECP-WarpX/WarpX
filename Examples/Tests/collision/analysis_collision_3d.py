@@ -75,4 +75,4 @@ print('tolerance = ', tolerance)
 assert(error < tolerance)
 
 test_name = last_fn[:-9] # Could also be os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, last_fn)
+checksumAPI.evaluate_checksum(test_name, last_fn, do_particles=False)

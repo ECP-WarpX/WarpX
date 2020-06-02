@@ -85,4 +85,4 @@ def check(E, E_th, label):
 check( Ex_array, Ex_th, 'Ex' )
 
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+checksumAPI.evaluate_checksum(test_name, filename, do_particles=False)
