@@ -5,8 +5,8 @@ import numpy as np
 
 yt.funcs.mylog.setLevel(50)
 
-tolerance = 1.e-9
-
+rtol = 1.e-9
+atol = 1.e-40
 
 class Checksum:
     '''Class for checksum comparison of one test.
@@ -106,22 +106,19 @@ class Checksum:
                 sys.exit(1)
 
         # Dictionaries have same values?
+        checksums_differ = False
         for key1 in ref_benchmark.data.keys():
             for key2 in ref_benchmark.data[key1].keys():
-                failed = False
-                # case 1: benchmark == 0.
-                if ref_benchmark.data[key1][key2] == 0. \
-                   and self.data[key1][key2] != 0:
-                    failed = True
-                # case 2: benchmark != 0
-                elif (abs(self.data[key1][key2] - ref_benchmark.data[key1][key2])
-                    > tolerance*abs(ref_benchmark.data[key1][key2])):
-                    failed = True
-                if failed:
+                passed = np.isclose(self.data[key1][key2],
+                                    ref_benchmark.data[key1][key2],
+                                    rtol=rtol, atol=atol)
+                if not passed:
                     print("ERROR: Benchmark and plotfile checksum have "
                           "different value for key [%s,%s]" % (key1, key2))
-                    print("Benchmark: [%s,%s] %.15f"
+                    print("Benchmark: [%s,%s] %.40f"
                           % (key1, key2, ref_benchmark.data[key1][key2]))
-                    print("Plotfile : [%s,%s] %.15f"
+                    print("Plotfile : [%s,%s] %.40f"
                           % (key1, key2, self.data[key1][key2]))
-                    sys.exit(1)
+                    checksum_differ = True
+        if checksums_differ:
+            sys.exit(1)

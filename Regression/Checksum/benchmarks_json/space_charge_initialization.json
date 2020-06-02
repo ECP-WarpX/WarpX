@@ -1,30 +1,30 @@
 {
   "beam": {
-    "particle_Bx": NaN,
-    "particle_By": NaN,
-    "particle_Bz": NaN,
-    "particle_Ex": NaN,
-    "particle_Ey": NaN,
-    "particle_Ez": NaN,
+    "particle_Bx": 5.0090850207867955e-24,
+    "particle_By": 6.121194610280304e-24,
+    "particle_Bz": 6.232271475432777e-24,
+    "particle_Ex": 41991.17916789438,
+    "particle_Ey": 41951.999051659,
+    "particle_Ez": 42038.57597863067,
     "particle_cpu": 0.0,
     "particle_id": 200010000.0,
-    "particle_momentum_x": NaN,
-    "particle_momentum_y": NaN,
-    "particle_momentum_z": NaN,
+    "particle_momentum_x": 2.0244504886775942e-32,
+    "particle_momentum_y": 2.022561563264426e-32,
+    "particle_momentum_z": 2.0267355518398652e-32,
     "particle_position_x": 0.031880969779242374,
     "particle_position_y": 0.03175704658379704,
     "particle_position_z": 0.03183674192208247,
     "particle_weight": 0.06241509074460764
   },
   "lev=0": {
-    "Bx": NaN,
-    "By": NaN,
-    "Bz": NaN,
-    "Ex": NaN,
-    "Ey": NaN,
-    "Ez": NaN,
-    "jx": NaN,
-    "jy": NaN,
-    "jz": NaN
+    "Bx": 8.997922421883945e-25,
+    "By": 9.067215809721373e-25,
+    "Bz": 9.034421315366126e-25,
+    "Ex": 7874.567902742338,
+    "Ey": 7876.183218584557,
+    "Ez": 7875.262728446799,
+    "jx": 0.0,
+    "jy": 0.0,
+    "jz": 0.0
   }
 }
