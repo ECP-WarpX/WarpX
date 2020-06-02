@@ -70,7 +70,7 @@ plt.title('By: Theory')
 plt.imshow(make_2d(Ex_th/scc.c))
 plt.colorbar()
 plt.subplot(224)
-plt.title('Bz: Simulation')
+plt.title('By: Simulation')
 plt.imshow(make_2d(By_array))
 plt.colorbar()
 

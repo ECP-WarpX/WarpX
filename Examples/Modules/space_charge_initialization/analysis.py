@@ -102,4 +102,4 @@ if ds.dimensionality == 3:
     check( Ez_array, Ez_th, 'Ez' )
 
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
-checksumAPI.evaluate_checksum(test_name, filename)
+checksumAPI.evaluate_checksum(test_name, filename, do_particles=0)
