@@ -139,6 +139,11 @@ endif()
 # AMReX helper function: propagate CUDA specific target & source properties
 if(ENABLE_CUDA)
     setup_target_for_cuda_compilation(WarpX)
+    target_compile_features(WarpX PUBLIC cuda_std_14)
+    set_target_properties(WarpX PROPERTIES
+        CUDA_EXTENSIONS OFF
+        CUDA_STANDARD_REQUIRED ON
+    )
 endif()
 
 
