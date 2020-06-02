@@ -14,20 +14,20 @@
     "particle_weight": 7031249999.999999
   },
   "lev=0": {
-    "Ex": 19091561484766.926,
-    "Ey": 83072.0,
-    "Ez": 1267816446833707.5,
+    "Ex": 7074528555636.087,
+    "Ey": 7074528078305.145,
+    "Ez": 19091561484766.926,
     "jx": 92775315721769.94,
-    "jy": 7074528555636.087,
-    "jz": 92775315721769.94,
-    "part_per_cell": 7074528586209.145
+    "jy": 92775315721769.94,
+    "jz": 1267816446833707.5,
+    "part_per_cell": 590976.0
   },
   "plasma": {
     "particle_Ex": 0.0,
     "particle_Ey": 0.0,
     "particle_Ez": 0.0,
-    "particle_cpu": 589824.0,
-    "particle_id": 514063630336.0,
+    "particle_cpu": 0.0,
+    "particle_id": 1171797606400.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,
