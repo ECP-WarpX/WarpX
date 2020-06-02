@@ -57,10 +57,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
 
         }
 
-#endif
     } else {
         amrex::Abort("Unknown algorithm");
     }
+#endif
 
 }
 
