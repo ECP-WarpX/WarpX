@@ -304,7 +304,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 mass = p_m * mass_unit;
             }
 
-            pp.get("q_shift",q_shift);
+            pp.get("z_shift",z_shift);
         } // IOProcessor
 
         // Broadcast charge and mass to non-IO processors
