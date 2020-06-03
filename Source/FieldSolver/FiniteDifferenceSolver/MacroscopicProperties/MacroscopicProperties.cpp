@@ -106,7 +106,7 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
 
         IntVect iv = macro_mf->ixType().toIntVect();
         // Initialize ghost cells in addition to valid cells
-        const Box& tb = mfi.growntilebox(iv);
+        const Box& tb = mfi.growntilebox();
 
         auto const& macro_fab =  macro_mf->array(mfi);
 
