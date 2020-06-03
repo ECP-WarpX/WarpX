@@ -15,7 +15,7 @@
 
 
 /**
- * \brief This class contains the macroscopic parameters of the medium needed to
+ * \brief This class contains the macroscopic properties of the medium needed to
  * evaluate macroscopic Maxwell equation.
  */
 class
@@ -50,10 +50,10 @@ private:
      std::unique_ptr<amrex::MultiFab> m_eps_mf;
      /** Multifab for m_mu */
      std::unique_ptr<amrex::MultiFab> m_mu_mf;
+
      std::string m_sigma_s;
      std::string m_epsilon_s;
      std::string m_mu_s;
-
 
      /** string for storing parser function */
      std::string m_str_sigma_function;
@@ -86,8 +86,7 @@ struct LaxWendroffAlgo {
                              + macro_prop(i,         j+iv[1]-1, k+iv[2]-1)
                              + macro_prop(i+iv[0]-1, j+iv[1]-1, k+iv[2]-1) ) );
      }
-
-     /** */
+    
      AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
      static amrex::Real alpha (amrex::Array4<amrex::Real> const& sigma,
                                amrex::Array4<amrex::Real> const& epsilon,

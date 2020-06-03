@@ -17,7 +17,7 @@ MacroscopicProperties::ReadParameters ()
     pp.get("sigma_init_style", m_sigma_s);
     // constant initialization
     if (m_sigma_s == "constant") pp.get("sigma", m_sigma);
-    // initialization with parser
+    // initialization of sigma (conductivity) with parser
     if (m_sigma_s == "parse_sigma_function") {
         Store_parserString(pp, "sigma_function(x,y,z)", m_str_sigma_function);
         m_sigma_parser.reset(new ParserWrapper<3>(
@@ -26,7 +26,7 @@ MacroscopicProperties::ReadParameters ()
 
     pp.get("epsilon_init_style", m_epsilon_s);
     if (m_epsilon_s == "constant") pp.get("epsilon", m_epsilon);
-    // initialization with parser
+    // initialization of epsilon (permittivity) with parser
     if (m_epsilon_s == "parse_epsilon_function") {
         Store_parserString(pp, "epsilon_function(x,y,z)", m_str_epsilon_function);
         m_epsilon_parser.reset(new ParserWrapper<3>(
@@ -35,7 +35,7 @@ MacroscopicProperties::ReadParameters ()
 
     pp.get("mu_init_style", m_mu_s);
     if (m_mu_s == "constant") pp.get("mu", m_mu);
-    // initialization with parser
+    // initialization of mu (permeability) with parser
     if (m_mu_s == "parse_mu_function") {
         Store_parserString(pp, "mu_function(x,y,z)", m_str_mu_function);
         m_mu_parser.reset(new ParserWrapper<3>(
@@ -50,16 +50,19 @@ MacroscopicProperties::InitData ()
     amrex::Print() << "we are in init data of macro \n";
     auto & warpx = WarpX::GetInstance();
 
-    // Get BoxArray and DistributionMap of warpX.
+    // Get BoxArray and DistributionMap of warpx instant.
     int lev = 0;
     BoxArray ba = warpx.boxArray(lev);
     DistributionMapping dmap = warpx.DistributionMap(lev);
     int ng = 3;
-      // allocate multifabs using ba and dmap from WarpX instance
-    m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng); // cell-centered
+    // Define material property multifabs using ba and dmap from WarpX instance
+    // sigma is cell-centered MultiFab
+    m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng); 
+    // epsilon is cell-centered MultiFab
     m_eps_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+    // mu is nodal MultiFab
     m_mu_mf = std::make_unique<MultiFab>(amrex::convert(ba,amrex::IntVect::TheUnitVector()), dmap, 1, ng);
-
+    // Initialize sigma
     if (m_sigma_s == "constant") {
 
         m_sigma_mf->setVal(m_sigma);
@@ -68,7 +71,7 @@ MacroscopicProperties::InitData ()
 
         InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), m_sigma_parser.get(), lev);
     }
-      // eps - cell-centered
+    // Initialize epsilon
     if (m_epsilon_s == "constant") {
 
         m_eps_mf->setVal(m_epsilon);
@@ -78,7 +81,7 @@ MacroscopicProperties::InitData ()
         InitializeMacroMultiFabUsingParser(m_eps_mf.get(), m_epsilon_parser.get(), lev);
 
     }
-      // mu - node-based
+    // Initialize mu
     if (m_mu_s == "constant") {
 
         m_mu_mf->setVal(m_mu);
