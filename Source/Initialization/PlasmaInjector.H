@@ -79,7 +79,6 @@ public:
 #ifdef WARPX_USE_OPENPMD
     //! openPMD::Series to load from in external_file injection
     std::unique_ptr<openPMD::Series> m_openpmd_input_series;
-    bool use_q_shift = false;
     amrex::Real q_shift = 0.0;
 #endif
 
