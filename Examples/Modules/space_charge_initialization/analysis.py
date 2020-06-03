@@ -20,6 +20,8 @@ import numpy as np
 import scipy.constants as scc
 from scipy.special import gammainc
 yt.funcs.mylog.setLevel(0)
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 # Parameters from the Simulation
 Qtot = -1.e-20
@@ -98,3 +100,6 @@ check( Ex_array, Ex_th, 'Ex' )
 check( Ey_array, Ey_th, 'Ey' )
 if ds.dimensionality == 3:
     check( Ez_array, Ez_th, 'Ez' )
+
+test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename, do_particles=0)

@@ -10,6 +10,8 @@ import yt
 import numpy as np
 import scipy.stats as st
 import sys
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 # This script checks if electrons and positrons initialized with
 # Quantum Synchrotron process enabled
@@ -46,6 +48,9 @@ def check():
     error_rel = np.abs(scale_pos - 1)
     print("error_rel scale_pos: " + str(error_rel))
     assert( error_rel < tolerance_rel )
+
+    test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+    checksumAPI.evaluate_checksum(test_name, filename)
 
 def main():
     check()

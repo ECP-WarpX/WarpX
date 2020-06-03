@@ -27,6 +27,8 @@ import re
 import math
 import numpy
 from glob import glob
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 tolerance = 0.001
 
@@ -71,3 +73,7 @@ error = error / nt
 print('error = ', error)
 print('tolerance = ', tolerance)
 assert(error < tolerance)
+
+fn = fn_list[-1]
+test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, fn, do_particles=False)
