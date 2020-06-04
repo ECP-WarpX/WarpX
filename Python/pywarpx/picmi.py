@@ -659,29 +659,31 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.diagnostic.diag_hi = self.upper_bound
         if self.number_of_cells is not None:
             self.diagnostic.coarsening_ratio = (np.array(self.grid.number_of_cells)/np.array(self.number_of_cells)).astype(int)
-        self.diagnostic.fields_to_plot = set()
+
+        # --- Use a set to ensure that fields don't get repeated.
+        fields_to_plot = set()
 
         for dataname in self.data_list:
             if dataname == 'E':
-                self.diagnostic.fields_to_plot.add('Ex')
-                self.diagnostic.fields_to_plot.add('Ey')
-                self.diagnostic.fields_to_plot.add('Ez')
+                fields_to_plot.add('Ex')
+                fields_to_plot.add('Ey')
+                fields_to_plot.add('Ez')
             elif dataname == 'B':
-                self.diagnostic.fields_to_plot.add('Bx')
-                self.diagnostic.fields_to_plot.add('By')
-                self.diagnostic.fields_to_plot.add('Bz')
+                fields_to_plot.add('Bx')
+                fields_to_plot.add('By')
+                fields_to_plot.add('Bz')
             elif dataname == 'J':
-                self.diagnostic.fields_to_plot.add('jx')
-                self.diagnostic.fields_to_plot.add('jy')
-                self.diagnostic.fields_to_plot.add('jz')
+                fields_to_plot.add('jx')
+                fields_to_plot.add('jy')
+                fields_to_plot.add('jz')
             elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'F', 'proc_number', 'part_per_cell']:
-                self.diagnostic.fields_to_plot.add(dataname)
+                fields_to_plot.add(dataname)
             elif dataname in ['Jx', 'Jy', 'Jz']:
-                self.diagnostic.fields_to_plot.add(dataname.lower())
+                fields_to_plot.add(dataname.lower())
             elif dataname == 'dive':
-                self.diagnostic.fields_to_plot.add('divE')
+                fields_to_plot.add('divE')
             elif dataname == 'divb':
-                self.diagnostic.fields_to_plot.add('divB')
+                fields_to_plot.add('divB')
             elif dataname == 'raw_fields':
                 self.plot_raw_fields = 1
             elif dataname == 'raw_fields_guards':
@@ -690,6 +692,12 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
                 self.plot_finepatch = 1
             elif dataname == 'crsepatch':
                 self.plot_crsepatch = 1
+
+        # --- Convert the set to a sorted list so that the order
+        # --- is the same on all processors.
+        fields_to_plot = list(fields_to_plot)
+        fields_to_plot.sort()
+        self.diagnostic.fields_to_plot = fields_to_plot
 
         self.diagnostic.plot_raw_fields = self.plot_raw_fields
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
@@ -742,7 +750,9 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.diagnostic.openpmd_backend = self.openpmd_backend
         self.diagnostic.period = self.period
 
+        # --- Use a set to ensure that fields don't get repeated.
         variables = set()
+
         for dataname in self.data_list:
             if dataname == 'position':
                 # --- The positions are alway written out anyway
@@ -762,6 +772,11 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
                 variables.add('Bz')
             elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
                 variables.add(dataname)
+
+        # --- Convert the set to a sorted list so that the order
+        # --- is the same on all processors.
+        variables = list(variables)
+        variables.sort()
 
         if np.iterable(self.species):
             species_list = self.species
