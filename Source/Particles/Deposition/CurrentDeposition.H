@@ -567,6 +567,8 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
     amrex::Abort( "Vay deposition not implemented in RZ geometry" );
 #endif
 
+#if !(defined WARPX_DIM_RZ)
+
     // If ion_lev is a null pointer, then do_ionization=0, else do_ionization=1
     const bool do_ionization = ion_lev;
 
@@ -908,5 +910,7 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         }
 #endif
     } );
+
+#endif // #if !(defined WARPX_DIM_RZ)
 }
 #endif // CURRENTDEPOSITION_H_
