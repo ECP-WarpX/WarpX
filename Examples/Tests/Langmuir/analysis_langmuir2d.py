@@ -17,6 +17,9 @@ import numpy as np
 import yt
 yt.funcs.mylog.setLevel(50)
 
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
+
 # this will be the name of the plot file
 fn = sys.argv[1]
 
@@ -74,3 +77,6 @@ plt.plot( t, E_predicted, 'o' )
 plt.ylabel( 'Ex' )
 plt.xlabel( 'Time' )
 plt.savefig("langmuir2d_analysis.png")
+
+test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, fn)

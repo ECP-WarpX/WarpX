@@ -6,7 +6,7 @@ using namespace amrex;
 void
 FlushFormatAscent::WriteToFile (
     const amrex::Vector<std::string> varnames,
-    const amrex::Vector<const amrex::MultiFab*> mf,
+    const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
@@ -20,7 +20,7 @@ FlushFormatAscent::WriteToFile (
     // wrap mesh data
     conduit::Node bp_mesh;
     amrex::MultiLevelToBlueprint(
-        nlev, mf, varnames, geom, time, iteration, warpx.refRatio(), bp_mesh);
+        nlev, amrex::GetVecOfConstPtrs(mf), varnames, geom, time, iteration, warpx.refRatio(), bp_mesh);
 
     WriteParticles(particle_diags, bp_mesh);
 
