@@ -241,8 +241,11 @@ void CheckGriddingForRZSpectral ()
     max_grid_size_x[0] = n_cell[0];
 
     for (int lev=1 ; lev <= max_level ; lev++) {
-        blocking_factor_x[lev] = blocking_factor_x[lev-1]*refRatio(lev-1);
-        max_grid_size_x[lev] = max_grid_size_x[lev-1]*refRatio(lev-1);
+        // For this to be correct, this needs to read in any user specified refinement ratios.
+        // But since that is messy and unlikely to be needed anytime soon, the ratio is
+        // fixed to 2 which will be the most likely value.
+        blocking_factor_x[lev] = blocking_factor_x[lev-1]*2; // refRatio(lev-1);
+        max_grid_size_x[lev] = max_grid_size_x[lev-1]*2; // refRatio(lev-1);
     }
 
     pp_amr.addarr("blocking_factor_x", blocking_factor_x);
