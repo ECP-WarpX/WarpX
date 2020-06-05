@@ -25,3 +25,4 @@ Our Doxygen API documentation in classic formatting `is located here <../_static
    testing
    documentation
    workflow
+   checksum

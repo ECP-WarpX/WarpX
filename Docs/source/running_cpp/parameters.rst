@@ -974,6 +974,25 @@ Numerics and algorithms
 
      If ``algo.maxwell_fdtd_solver`` is not specified, ``yee`` is the default.
 
+* ``algo.em_solver_medium`` (`string`, optional)
+    The medium for evaluating the Maxwell solver. Available options are :
+
+    - ``vacuum``: vacuum properties are used in the Maxwell solver.
+    - ``macroscopic``: macroscopic Maxwell equation is evaluated. If this option is selected, then the corresponding properties of the medium must be provided using ``macroscopic.sigma``, ``macroscopic.epsilon``, and ``macroscopic.mu``.
+
+    If ``algo.em_solver_medium`` is not specified, ``vacuum`` is the default.
+
+* ``algo.macroscopic_sigma_method`` (`string`, optional)
+    The algorithm for updating electric field when ``algo.em_solver_medium`` is macroscopic. Available options are:
+
+    - ``backwardeuler`` is a fully-implicit, first-order in time scheme for E-update (default).
+    - ``laxwendroff`` is the semi-implicit, second order in time scheme for E-update.
+    Comparing the two methods, Lax-Wendroff is more prone to developing oscillations and requires a smaller timestep for stability. On the other hand, Backward Euler is more robust but it is first-order accurate in time compared to the second-order Lax-Wendroff method.
+
+* ``macroscopic.sigma``, ``macroscopic.epsilon``, ``macroscopic.mu`` (`double`)
+    The conductivity, permittivity, and permeability of the computational medium, respectively.
+    If ``algo.em_solver_medium`` is set to macroscopic, then these properties must be provided.
+
 * ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`integer`)
     The order of the shape factors for the macroparticles, for the 3 dimensions of space.
     Lower-order shape factors result in faster simulations, but more noisy results,
@@ -1114,6 +1133,9 @@ Boundary conditions
 Diagnostics and output
 ----------------------
 
+In-situ visualization
+^^^^^^^^^^^^^^^^^^^^^
+
 WarpX has three types of diagnostics:
 ``FullDiagnostics`` consist in dumps of fields and particles at given iterations,
 ``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame, and
@@ -1129,6 +1151,7 @@ Similar to what is done for physical species, WarpX has a class Diagnostics that
 The user specifies the number of diagnostics and the name of each of them, and then specifies options for each of them separately.
 Note that some parameter (those that do not start with a ``<diag_name>.`` prefix) apply to all diagnostics.
 This should be changed in the future.
+In-situ capabilities can be used by turning on Sensei or Ascent (provided they are installed) through the output format, see below.
 
 * ``diagnostics.diags_names`` (list of `string` optional, default `empty`)
     Name of each diagnostics.
@@ -1156,7 +1179,17 @@ This should be changed in the future.
 
     * ``ascent`` for in-situ visualization using Ascent.
 
+    * ``sensei`` for in-situ visualization using Sensei.
+
     example: ``diag1.format = openpmd``.
+
+* ``<diag_name>.sensei_config`` (`string`)
+  Only read if ``<diag_name>.format = sensei``.
+  Points to the SENSEI XML file which selects and configures the desired back end.
+
+* ``<diag_name>.sensei_pin_mesh`` (`integer`; 0 by default)
+  Only read if ``<diag_name>.format = sensei``.
+  When 1 lower left corner of the mesh is pinned to 0.,0.,0.
 
 * ``<diag_name>.openpmd_backend`` (``bp``, ``h5`` or ``json``) optional, only used if ``<diag_name>.format = openpmd``
     `I/O backend <https://openpmd-api.readthedocs.io/en/latest/backends/overview.html>`_ for `openPMD <https://www.openPMD.org>`_ data dumps.
@@ -1536,24 +1569,6 @@ Reduced Diagnostics
 * ``<reduced_diags_name>.separator`` (`string`) optional (default a `whitespace`)
     The separator between row values in the output file.
     The default separator is a whitespace.
-
-In-situ visualization
-^^^^^^^^^^^^^^^^^^^^^
-
-Besides the diagnostics described above, WarpX has in-situ visualization capabilities.
-This is controlled by the following option(s):
-
-* ``insitu.int`` (`integer`; 0 by default)
-    Turns in situ processing on or off and controls how often data is processed.
-
-* ``insitu.start`` (`integer`; 0 by default)
-    Controls when in situ processing starts.
-
-* ``insitu.config`` (`string`)
-    Points to the SENSEI XML file which selects and configures the desired back end.
-
-* ``insitu.pin_mesh`` (`integer`; 0 by default)
-    when 1 lower left corner of the mesh is pinned to 0.,0.,0.
 
 Lookup tables and other settings for QED modules (implementation in progress)
 -----------------------------------------------------------------------------

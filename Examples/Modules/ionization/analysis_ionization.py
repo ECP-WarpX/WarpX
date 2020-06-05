@@ -22,6 +22,8 @@ import sys
 import yt
 import numpy as np
 yt.funcs.mylog.setLevel(0)
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 # Open plotfile specified in command line, and get ion's ionization level.
 filename = sys.argv[1]
@@ -87,3 +89,6 @@ print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
+
+test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)
