@@ -657,9 +657,7 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         amrex::Real const y_old = y_new-vy*dt*dyi;
 #endif
 
-        // Shape factor arrays for current and old positions (nodal):
-        // as in Esirkepov deposition, there are extra values to take into account
-        // the fact that the old position can be at a different grid location
+        // Shape factor arrays for current and old positions (nodal)
         amrex::Real sx_node_new[depos_order+1] = {0.0_rt};
         amrex::Real sx_node_old[depos_order+1] = {0.0_rt};
         amrex::Real sz_node_new[depos_order+1] = {0.0_rt};
@@ -668,9 +666,7 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         amrex::Real sy_node_new[depos_order+1] = {0.0_rt};
         amrex::Real sy_node_old[depos_order+1] = {0.0_rt};
 #endif
-        // Shape factor arrays for current and old positions (cell-centered):
-        // as in Esirkepov deposition, there are extra values to take into account
-        // the fact that the old position can be at a different grid location
+        // Shape factor arrays for current and old positions (cell-centered)
         amrex::Real sx_cell_new[depos_order+1] = {0.0_rt};
         amrex::Real sx_cell_old[depos_order+1] = {0.0_rt};
         amrex::Real sz_cell_new[depos_order+1] = {0.0_rt};
@@ -782,7 +778,9 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         int const k_jz_old = ((jz_type[zdir] == NODE) ? k_node_old : k_cell_old);
 
         // Deposit current into jx_arr, jy_arr and jz_arr
+
 #if (defined WARPX_DIM_XZ)
+
         for (int k=0; k<=depos_order; k++) {
             for (int i=0; i<=depos_order; i++) {
 
@@ -826,7 +824,9 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
                                         -wq*invvol*invdt*0.5_rt*sx_jz_old[i]*sz_jz_old[k] );
             }
         }
+
 #elif (defined WARPX_DIM_3D)
+
         for (int k=0; k<=depos_order; k++) {
             for (int j=0; j<=depos_order; j++) {
                 for (int i=0; i<=depos_order; i++) {
@@ -910,7 +910,6 @@ void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
         }
 #endif
     } );
-
 #endif // #if !(defined WARPX_DIM_RZ)
 }
 #endif // CURRENTDEPOSITION_H_

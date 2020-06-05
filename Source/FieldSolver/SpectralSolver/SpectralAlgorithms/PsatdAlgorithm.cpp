@@ -321,16 +321,19 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             const     amrex::Real kz_mod = modified_kz_arr[j];
 #endif
 
-            // Compute Jx cell-centered or nodal (units multiplied by [L] again)
+            // Compute Jx (units multiplied by [L] again)
             if ( kx_mod != 0.0_rt ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod;
+            else                    fields(i,j,k,Idx::Jx) = 0.0_rt;
 
 #if (AMREX_SPACEDIM==3)
-            // Compute Jy cell-centered or nodal (units multiplied by [L] again)
+            // Compute Jy (units multiplied by [L] again)
             if ( ky_mod != 0.0_rt ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod;
+            else                    fields(i,j,k,Idx::Jy) = 0.0_rt;
 #endif
 
-            // Compute Jz cell-centered or nodal (units multiplied by [L] again)
+            // Compute Jz (units multiplied by [L] again)
             if ( kz_mod != 0.0_rt ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod;
+            else                    fields(i,j,k,Idx::Jy) = 0.0_rt;
 
         } );
     }
