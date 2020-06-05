@@ -71,12 +71,6 @@ MultiReducedDiags::MultiReducedDiags ()
             m_multi_rd[i_rd].reset
                 ( new ParticleHistogram(m_rd_names[i_rd]));
         }
-        else if (rd_type.compare("FieldEnergy") == 0)
-        {
-            Abort("The syntax for field energy reduced diagnostic has changed. "
-                  "You should now use reduced_diag.type = Field and "
-                  "reduced_diag.field_type = FieldEnergy, see documentation.");
-        }
         else
         { Abort("No matching reduced diagnostics type found."); }
         // end if match diags
