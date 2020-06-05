@@ -15,6 +15,7 @@ from .Interpolation import interpolation
 from .Lasers import lasers, lasers_list
 from . import Particles
 from .Particles import particles, particles_list
+from .PSATD import psatd
 from .Diagnostics import diagnostics
 
 
@@ -32,6 +33,7 @@ class WarpX(Bucket):
         argv += algo.attrlist()
         argv += langmuirwave.attrlist()
         argv += interpolation.attrlist()
+        argv += psatd.attrlist()
 
         # --- Search through species_names and add any predefined particle objects in the list.
         particles_list_names = [p.instancename for p in particles_list]
