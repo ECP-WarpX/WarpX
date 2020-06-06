@@ -333,7 +333,7 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
 
             // Compute Jz (units multiplied by [L] again)
             if ( kz_mod != 0.0_rt ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod;
-            else                    fields(i,j,k,Idx::Jy) = 0.0_rt;
+            else                    fields(i,j,k,Idx::Jz) = 0.0_rt;
 
         } );
     }
