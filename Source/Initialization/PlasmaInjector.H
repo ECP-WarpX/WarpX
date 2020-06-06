@@ -76,10 +76,10 @@ public:
     int do_symmetrize = 0;
 
     bool external_file = false; //! initialize from an openPMD file
+    amrex::Real z_shift = 0.0; //! additional z offset for particle positions
 #ifdef WARPX_USE_OPENPMD
     //! openPMD::Series to load from in external_file injection
     std::unique_ptr<openPMD::Series> m_openpmd_input_series;
-    amrex::Real z_shift = 0.0;
 #endif
 
     bool radially_weighted = true;
