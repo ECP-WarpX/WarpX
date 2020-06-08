@@ -12,6 +12,8 @@ import sys
 import yt ; yt.funcs.mylog.setLevel(0)
 import numpy as np
 import scipy.constants as scc
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 filename = sys.argv[1]
 
@@ -51,3 +53,6 @@ assert( error_rel < tolerance_rel )
 # Check relative L-infinity spatial norm of rho/epsilon_0 - div(E)
 Linf_norm = np.amax( np.abs( rho/scc.epsilon_0 - divE ) ) / np.amax( np.abs( rho/scc.epsilon_0 ) )
 assert( Linf_norm < 2.e-2 )
+
+test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)
