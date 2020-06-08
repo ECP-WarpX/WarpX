@@ -1105,7 +1105,7 @@ Boundary conditions
     and around the refinement patches. See the section :doc:`../../theory/PML`
     for more details.
 
-* ``warpx.pml_ncells`` (`int`; default: 10)
+* ``warpx.pml_ncell`` (`int`; default: 10)
     The depth of the PML, in number of cells.
 
 * ``warpx.pml_delta`` (`int`; default: 10)
