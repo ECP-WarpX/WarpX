@@ -62,9 +62,11 @@ protected:
     int m_already_done = false;
     /** This class is responsible for flushing the data to file */
     FlushFormat* m_flush_format;
-    /** output multifab, where all fields are cell-centered and stacked */
-    amrex::Vector< amrex::Vector< amrex::MultiFab > >  m_mf_output_buffer;
-    amrex::Vector< amrex::MultiFab > m_mf_output;
+    /** output multifab, where all fields are cell-centered and stacked.
+        The first vector is for total number of snapshots. (=1 for FullDiagnostics)
+        The second vector is loops over the total number of levels.
+      */
+    amrex::Vector< amrex::Vector< amrex::MultiFab > >  m_mf_output;
     int nlev; /**< number of levels to output */
     int nmax_lev; /**< max_level to allocate output multifab and vector of field functors. */
     /** Name of species to write to file */
@@ -84,6 +86,7 @@ protected:
     amrex::Vector< amrex::Real> m_lo;
     /** Higher corner of the diagnostics output, in physical coordinates */
     amrex::Vector< amrex::Real> m_hi;
+    int m_num_buffers;
 };
 
 #endif // WARPX_DIAGNOSTICS_H_

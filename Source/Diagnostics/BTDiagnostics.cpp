@@ -55,11 +55,6 @@ BTDiagnostics::InitData ()
 
    
 
-    // allocate vector of buffers //
-    m_mf_output_buffer.resize(m_num_snapshots_lab);
-    for (int i=0; i<m_num_snapshots_lab; ++i) {
-        m_mf_output_buffer[i].resize(nmax_lev);
-    }
 
     // allocate vector of m_t_lab (m_num_snapshots_lab) ;
     m_t_lab.resize(m_num_snapshots_lab);
@@ -105,7 +100,8 @@ BTDiagnostics::ReadParameters ()
     AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);    
 
     pp.get("num_snapshots_lab", m_num_snapshots_lab);
-    
+    m_num_buffers = m_num_snapshots_lab;
+ 
     // Read either dz_snapshots_lab or dt_snapshots_lab
     bool snapshot_interval_is_specified = 0;
     amrex::Real m_dz_snapshots_lab = 0.0_rt;

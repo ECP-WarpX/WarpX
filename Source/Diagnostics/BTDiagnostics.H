@@ -66,7 +66,7 @@ private:
     amrex::Real m_dt_snapshots_lab = std::numeric_limits<amrex::Real>::lowest();
     amrex::Real m_dz_snapshots_lab;
 
-    int m_num_buffer = 256;
+    int m_buffer_size = 256;
     int m_max_box_size = 256;
 
     /**  Lab-frame time of the back-transformed snapshot */

@@ -32,7 +32,6 @@ FullDiagnostics::InitData ()
     InitBaseData();
 
     auto & warpx = WarpX::GetInstance();
-    m_mf_output.resize( nmax_lev );
 
     for ( int lev=0; lev<nlev; lev++ ){
         InitializeFieldFunctors( lev );
@@ -83,6 +82,8 @@ FullDiagnostics::ReadParameters ()
             "For a checkpoint output, cannot specify these parameters as all data must be dumped "
             "to file for a restart");
     }
+
+    m_num_buffers = 1;
 }
 
 void
@@ -90,7 +91,7 @@ FullDiagnostics::Flush ()
 {
     auto & warpx = WarpX::GetInstance();
     m_flush_format->WriteToFile(
-        m_varnames, GetVecOfConstPtrs(m_mf_output), warpx.Geom(), warpx.getistep(),
+        m_varnames, m_mf_output[0], warpx.Geom(), warpx.getistep(),
         warpx.gett_new(0), m_all_species, nlev, m_file_prefix,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 }
@@ -298,7 +299,8 @@ FullDiagnostics::DefineDiagMultiFab ( int lev ) {
     // is different from the lo and hi physical co-ordinates of the simulation domain.
     if (use_warpxba == false) dmap = DistributionMapping{ba};
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
-    m_mf_output[lev] = MultiFab(ba, dmap, m_varnames.size(), 0);
+    int ngrow = (m_format == "sensei") ? 1 : 0;
+    m_mf_output[0][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow);
 
 }
 
@@ -377,7 +379,7 @@ FullDiagnostics::ComputeAndPack ()
             // Call all functors in m_all_field_functors[lev]. Each of them computes
             // a diagnostics and writes in one or more components of the output
             // multifab m_mf_output[lev].
-            m_all_field_functors[lev][icomp]->operator()(m_mf_output[lev], icomp_dst);
+            m_all_field_functors[lev][icomp]->operator()(m_mf_output[0][lev], icomp_dst);
             // update the index of the next component to fill
             icomp_dst += m_all_field_functors[lev][icomp]->nComp();
         }
