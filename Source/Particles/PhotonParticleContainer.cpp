@@ -12,6 +12,7 @@
 // Import low-level single-particle kernels
 #include "Particles/Pusher/UpdatePositionPhoton.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
+#include "Particles/Pusher/CopyParticleAttribs.H"
 
 #ifdef _OPENMP
 #   include <omp.h>
@@ -62,7 +63,7 @@ void PhotonParticleContainer::InitData()
 }
 
 void
-PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType /*a_dt_type*/)
+PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType a_dt_type)
 {
 
     // This wraps the momentum and position advance so that inheritors can modify the call.
@@ -73,10 +74,9 @@ PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType /*a_dt_type*/
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
-    if (WarpX::do_back_transformed_diagnostics && do_back_transformed_diagnostics)
-    {
-        copy_attribs(pti);
-    }
+    auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data);
+    int do_copy = (WarpX::do_back_transformed_diagnostics &&
+                   do_back_transformed_diagnostics && a_dt_type!=DtType::SecondHalf);
 
     const auto GetPosition = GetParticlePosition(pti);
           auto SetPosition = SetParticlePosition(pti);
@@ -84,6 +84,7 @@ PhotonParticleContainer::PushPX(WarpXParIter& pti, Real dt, DtType /*a_dt_type*/
     amrex::ParallelFor(
         pti.numParticles(),
         [=] AMREX_GPU_DEVICE (long i) {
+            if (do_copy) copyAttribs(i);
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
             UpdatePositionPhoton( x, y, z, ux[i], uy[i], uz[i], dt );

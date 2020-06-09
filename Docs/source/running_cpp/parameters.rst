@@ -974,6 +974,25 @@ Numerics and algorithms
 
      If ``algo.maxwell_fdtd_solver`` is not specified, ``yee`` is the default.
 
+* ``algo.em_solver_medium`` (`string`, optional)
+    The medium for evaluating the Maxwell solver. Available options are :
+
+    - ``vacuum``: vacuum properties are used in the Maxwell solver.
+    - ``macroscopic``: macroscopic Maxwell equation is evaluated. If this option is selected, then the corresponding properties of the medium must be provided using ``macroscopic.sigma``, ``macroscopic.epsilon``, and ``macroscopic.mu``.
+
+    If ``algo.em_solver_medium`` is not specified, ``vacuum`` is the default.
+
+* ``algo.macroscopic_sigma_method`` (`string`, optional)
+    The algorithm for updating electric field when ``algo.em_solver_medium`` is macroscopic. Available options are:
+
+    - ``backwardeuler`` is a fully-implicit, first-order in time scheme for E-update (default).
+    - ``laxwendroff`` is the semi-implicit, second order in time scheme for E-update.
+    Comparing the two methods, Lax-Wendroff is more prone to developing oscillations and requires a smaller timestep for stability. On the other hand, Backward Euler is more robust but it is first-order accurate in time compared to the second-order Lax-Wendroff method.
+
+* ``macroscopic.sigma``, ``macroscopic.epsilon``, ``macroscopic.mu`` (`double`)
+    The conductivity, permittivity, and permeability of the computational medium, respectively.
+    If ``algo.em_solver_medium`` is set to macroscopic, then these properties must be provided.
+
 * ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`integer`)
     The order of the shape factors for the macroparticles, for the 3 dimensions of space.
     Lower-order shape factors result in faster simulations, but more noisy results,
@@ -1048,12 +1067,12 @@ Numerics and algorithms
 * ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
     Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
 
-* ``warpx.override_sync_int`` (`integer`) optional (default `10`)
-    Number of time steps between synchronization of sources (`rho` and `J`) on
-    grid nodes at box boundaries. Since the grid nodes at the interface between
-    two neighbor boxes are duplicated in both boxes, an instability can occur
-    if they have too different values. This option makes sure that they are
-    synchronized periodically.
+* ``warpx.override_sync_int`` (`string`) optional (default `1`)
+    Using the `Intervals parser`_ syntax, this string defines the timesteps at which
+    synchronization of sources (`rho` and `J`) on grid nodes at box boundaries is performed.
+    Since the grid nodes at the interface between two neighbor boxes are duplicated in both
+    boxes, an instability can occur if they have too different values.
+    This option makes sure that they are synchronized periodically.
 
 * ``warpx.use_hybrid_QED`` ('bool'; default: 0)
     Will use the Hybird QED Maxwell solver when pushing fields: a QED correction is added to the
@@ -1071,12 +1090,14 @@ Numerics and algorithms
     When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
     This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
 
- * ``warpx.sort_int`` (`int`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
-     If ``<=0``, do not sort particles. If ``>0``, sort particles by bin every ``sort_int`` iteration.
+ * ``warpx.sort_int`` (`string`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
+     Using the `Intervals parser`_ syntax, this string defines the timesteps at which particles are
+     sorted by bin.
+     If ``<=0``, do not sort particles.
      It is turned on on GPUs for performance reasons (to improve memory locality).
 
  * ``warpx.sort_bin_size`` (list of `int`) optional (default ``4 4 4``)
-     If ``sort_int > 0`` particles are sorted in bins of ``sort_bin_size`` cells.
+     If ``sort_int`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
 
 Boundary conditions
@@ -1087,7 +1108,7 @@ Boundary conditions
     and around the refinement patches. See the section :doc:`../../theory/PML`
     for more details.
 
-* ``warpx.pml_ncells`` (`int`; default: 10)
+* ``warpx.pml_ncell`` (`int`; default: 10)
     The depth of the PML, in number of cells.
 
 * ``warpx.pml_delta`` (`int`; default: 10)
@@ -1115,6 +1136,9 @@ Boundary conditions
 Diagnostics and output
 ----------------------
 
+In-situ visualization
+^^^^^^^^^^^^^^^^^^^^^
+
 WarpX has three types of diagnostics:
 ``FullDiagnostics`` consist in dumps of fields and particles at given iterations,
 ``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame, and
@@ -1130,16 +1154,17 @@ Similar to what is done for physical species, WarpX has a class Diagnostics that
 The user specifies the number of diagnostics and the name of each of them, and then specifies options for each of them separately.
 Note that some parameter (those that do not start with a ``<diag_name>.`` prefix) apply to all diagnostics.
 This should be changed in the future.
+In-situ capabilities can be used by turning on Sensei or Ascent (provided they are installed) through the output format, see below.
 
 * ``diagnostics.diags_names`` (list of `string` optional, default `empty`)
     Name of each diagnostics.
     example: ``diagnostics.diags_names = diag1 my_second_diag``.
 
-* ``<diag_name>.period`` (`integer` optional, default ``-1``)
-    The number of PIC cycles (interval) in between two consecutive data dumps.
-    Use a negative number to disable data dumping.
-    This is ``-1`` (disabled) by default.
-    example: ``diag1.period = 10``.
+* ``<diag_name>.period`` (`string` optional, default `0`)
+    Using the `Intervals parser`_ syntax, this string defines the timesteps at which data is dumped.
+    Use a negative number or 0 to disable data dumping.
+    This is ``0`` (disabled) by default.
+    example: ``diag1.period = 10,20:25:1``.
 
 * ``<diag_name>.diag_type`` (`string`)
     Type of diagnostics. So far, only ``Full`` is supported.
@@ -1153,9 +1178,21 @@ This should be changed in the future.
     * ``checkpoint`` for a checkpoint file, only wirks with ``<diag_name>.diag_type = Full``.
 
     * ``openpmd`` for OpenPMD format `openPMD <https://www.openPMD.org>`_.
-      ``openpmd`` requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
+      Requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).
+
+    * ``ascent`` for in-situ visualization using Ascent.
+
+    * ``sensei`` for in-situ visualization using Sensei.
 
     example: ``diag1.format = openpmd``.
+
+* ``<diag_name>.sensei_config`` (`string`)
+  Only read if ``<diag_name>.format = sensei``.
+  Points to the SENSEI XML file which selects and configures the desired back end.
+
+* ``<diag_name>.sensei_pin_mesh`` (`integer`; 0 by default)
+  Only read if ``<diag_name>.format = sensei``.
+  When 1 lower left corner of the mesh is pinned to 0.,0.,0.
 
 * ``<diag_name>.openpmd_backend`` (``bp``, ``h5`` or ``json``) optional, only used if ``<diag_name>.format = openpmd``
     `I/O backend <https://openpmd-api.readthedocs.io/en/latest/backends/overview.html>`_ for `openPMD <https://www.openPMD.org>`_ data dumps.
@@ -1510,24 +1547,6 @@ Reduced Diagnostics
     The separator between row values in the output file.
     The default separator is a whitespace.
 
-In-situ visualization
-^^^^^^^^^^^^^^^^^^^^^
-
-Besides the diagnostics described above, WarpX has in-situ visualization capabilities.
-This is controlled by the following option(s):
-
-* ``insitu.int`` (`integer`; 0 by default)
-    Turns in situ processing on or off and controls how often data is processed.
-
-* ``insitu.start`` (`integer`; 0 by default)
-    Controls when in situ processing starts.
-
-* ``insitu.config`` (`string`)
-    Points to the SENSEI XML file which selects and configures the desired back end.
-
-* ``insitu.pin_mesh`` (`integer`; 0 by default)
-    when 1 lower left corner of the mesh is pinned to 0.,0.,0.
-
 Lookup tables and other settings for QED modules (implementation in progress)
 -----------------------------------------------------------------------------
 
@@ -1609,6 +1628,35 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
 * ``qed_qs.photon_creation_energy_threshold`` (`float`) optional (default `2*me*c^2`)
     Energy threshold for photon particle creation in SI units.
+
+* ``warpx.do_qed_schwinger`` (`bool`) optional (default `0`)
+    If this is 1, Schwinger electron-positron pairs can be generated in vacuum in the cells where the EM field is high enough.
+    Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR`` on the branch ``QED``.
+    If ``warpx.do_qed_schwinger = 1``, Schwinger product species must be specified with
+    ``qed_schwinger.ele_product_species`` and ``qed_schwinger.pos_product_species``.
+    **Note: implementation of this feature is in progress.**
+    So far it requires ``warpx.do_nodal=1`` and does not support mesh refinement, cylindrical coordinates or single precision.
+
+* ``qed_schwinger.ele_product_species`` (`string`)
+    If Schwinger process is activated, an electron product species must be specified
+    (the name of an existing electron species must be provided).
+
+* ``qed_schwinger.pos_product_species`` (`string`)
+    If Schwinger process is activated, a positron product species must be specified
+    (the name of an existing positron species must be provided).
+
+* ``qed_schwinger.y_size`` (`float`; in meters)
+    If Schwinger process is activated with ``DIM=2D``, a transverse size must be specified.
+    It is used to convert the pair production rate per unit volume into an actual number of created particles.
+    This value should correspond to the typical transverse extent for which the EM field has a very high value
+    (e.g. the beam waist for a focused laser beam).
+
+* ``qed_schwinger.threshold_poisson_gaussian`` (`integer`) optional (default `25`)
+    If the expected number of physical pairs created in a cell at a given timestep is smaller than this threshold,
+    a Poisson distribution is used to draw the actual number of physical pairs created.
+    Otherwise a Gaussian distribution is used.
+    Note that, regardless of this parameter, the number of macroparticles created is at most one per cell
+    per timestep per species (with a weight corresponding to the number of physical pairs created).
 
 Checkpoints and restart
 -----------------------

@@ -63,6 +63,7 @@ mkdir -p rt-WarpX/WarpX-benchmarks
 cd warpx/Regression
 python prepare_file_travis.py
 cp travis-tests.ini ../../rt-WarpX
+cp -r Checksum ../../regression_testing/
 
 # Run tests
 cd ../../regression_testing/

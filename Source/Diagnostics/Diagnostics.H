@@ -4,6 +4,7 @@
 #include "FlushFormats/FlushFormat.H"
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ParticleDiag/ParticleDiag.H"
+#include "Utils/IntervalsParser.H"
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
 
@@ -58,8 +59,8 @@ private:
     std::string m_file_prefix;
     /** Index of diagnostics in MultiDiagnostics::alldiags */
     int m_diag_index;
-    /** Period at which diagnostics is written to file */
-    int m_period = -1;
+    /** Determines timesteps at which diagnostics are written to file */
+    IntervalsParser m_intervals;
     /** Names of  each component requested by the user.
      * in cylindrical geometry, this list is appended with
      * automatically-constructed names for all modes of all fields */
