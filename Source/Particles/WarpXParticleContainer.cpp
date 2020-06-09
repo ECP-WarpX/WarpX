@@ -299,11 +299,6 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
-    // xyzmin is built on pti.tilebox(), so it does
-    // not include staggering, so the stagger_shift has to be done by hand.
-    // Alternatively, we could define xyzminx from tbx (and the same for 3
-    // directions and for jx, jy, jz). This way, sx0 would not be needed.
-    // Better for memory? worth trying?
 
     const Dim3 lo = lbound(tilebox);
     // Take into account Galilean shift

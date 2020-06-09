@@ -1050,13 +1050,6 @@ PhysicalParticleContainer::Evolve (int lev,
             const long np = pti.numParticles();
 
             // Data on the grid
-            // FArrayBox const* exfab = &(Ex[pti]);
-            // FArrayBox const* eyfab = &(Ey[pti]);
-            // FArrayBox const* ezfab = &(Ez[pti]);
-            // FArrayBox const* bxfab = &(Bx[pti]);
-            // FArrayBox const* byfab = &(By[pti]);
-            // FArrayBox const* bzfab = &(Bz[pti]);
-
             FArrayBox const* exfab;
             FArrayBox const* eyfab;
             FArrayBox const* ezfab;
