@@ -917,9 +917,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         realspace_ba.grow(ngE); // add guard cells
     }
     bool const pml=false;
-    spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
-        pml, fft_periodic_single_box ) );
+    spectral_solver_fp[lev].reset(
+        new SpectralSolver(
+            realspace_ba, dm, nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
+            pml, fft_periodic_single_box, fft_do_time_averaging ) );
 #   endif
 #endif
     m_fdtd_solver_fp[lev].reset(

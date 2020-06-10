@@ -35,7 +35,8 @@ class SpectralSolver
                         const amrex::Array<amrex::Real,3>& v_galilean,
                         const amrex::RealVect dx, const amrex::Real dt,
                         const bool pml=false,
-                        const bool periodic_single_box=false );
+                        const bool periodic_single_box=false,
+                        const bool fft_do_time_averaging=false);
 
         /**
          * \brief Transform the component `i_comp` of MultiFab `mf`

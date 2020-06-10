@@ -90,7 +90,7 @@ namespace {
 #endif
         solver.BackwardTransform(*Bfield[2], Idx::Bz);
 
-        if (solver.fft_do_time_averaging){
+        if (fft_do_time_averaging){
             solver.BackwardTransform(*Efield_avg[0], Idx::Ex_avg);
             solver.BackwardTransform(*Efield_avg[1], Idx::Ey_avg);
             solver.BackwardTransform(*Efield_avg[2], Idx::Ez_avg);
