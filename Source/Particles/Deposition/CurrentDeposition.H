@@ -1,5 +1,5 @@
 /* Copyright 2019 Axel Huebl, David Grote, Maxence Thevenet
- * Remi Lehe, Weiqun Zhang
+ * Remi Lehe, Weiqun Zhang, Michael Rowan
  *
  * This file is part of WarpX.
  *
@@ -135,67 +135,87 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // x direction
             // Get particle position after 1/2 push back in position
 #if (defined WARPX_DIM_RZ)
-            const amrex::Real xmid = (rpmid - xmin)*dxi;
+            const double xmid = (rpmid - xmin)*dxi;
 #else
-            const amrex::Real xmid = (xp - xmin)*dxi - dts2dx*vx;
+            const double xmid = (xp - xmin)*dxi - dts2dx*vx;
 #endif
             // j_j[xyz] leftmost grid point in x that the particle touches for the centering of each current
             // sx_j[xyz] shape factor along x for the centering of each current
             // There are only two possible centerings, node or cell centered, so at most only two shape factor
             // arrays will be needed.
-            amrex::Real sx_node[depos_order + 1];
-            amrex::Real sx_cell[depos_order + 1];
+            double sx_node[depos_order + 1];
+            double sx_cell[depos_order + 1];
             int j_node;
             int j_cell;
             if (jx_type[0] == NODE || jy_type[0] == NODE || jz_type[0] == NODE) {
-                j_node = compute_shape_factor<depos_order>(sx_node, xmid);
+                j_node = compute_shape_factor_dbl<depos_order>(sx_node, xmid);
             }
             if (jx_type[0] == CELL || jy_type[0] == CELL || jz_type[0] == CELL) {
-                j_cell = compute_shape_factor<depos_order>(sx_cell, xmid - 0.5);
+                j_cell = compute_shape_factor_dbl<depos_order>(sx_cell, xmid - 0.5);
             }
-            const amrex::Real (&sx_jx)[depos_order + 1] = ((jx_type[0] == NODE) ? sx_node : sx_cell);
-            const amrex::Real (&sx_jy)[depos_order + 1] = ((jy_type[0] == NODE) ? sx_node : sx_cell);
-            const amrex::Real (&sx_jz)[depos_order + 1] = ((jz_type[0] == NODE) ? sx_node : sx_cell);
+
+            amrex::Real sx_jx[depos_order + 1] = {0.};
+            amrex::Real sx_jy[depos_order + 1] = {0.};
+            amrex::Real sx_jz[depos_order + 1] = {0.};
+            for (int ix=0; ix<=depos_order; ix++)
+            {
+                sx_jx[ix] = ((jx_type[0] == NODE) ? amrex::Real(sx_node[ix]) : amrex::Real(sx_cell[ix]));
+                sx_jy[ix] = ((jy_type[0] == NODE) ? amrex::Real(sx_node[ix]) : amrex::Real(sx_cell[ix]));
+                sx_jz[ix] = ((jz_type[0] == NODE) ? amrex::Real(sx_node[ix]) : amrex::Real(sx_cell[ix]));
+            }
+
             int const j_jx = ((jx_type[0] == NODE) ? j_node : j_cell);
             int const j_jy = ((jy_type[0] == NODE) ? j_node : j_cell);
             int const j_jz = ((jz_type[0] == NODE) ? j_node : j_cell);
 
 #if (defined WARPX_DIM_3D)
             // y direction
-            const amrex::Real ymid = (yp - ymin)*dyi - dts2dy*vy;
-            amrex::Real sy_node[depos_order + 1];
-            amrex::Real sy_cell[depos_order + 1];
+            const double ymid = (yp - ymin)*dyi - dts2dy*vy;
+            double sy_node[depos_order + 1];
+            double sy_cell[depos_order + 1];
             int k_node;
             int k_cell;
             if (jx_type[1] == NODE || jy_type[1] == NODE || jz_type[1] == NODE) {
-                k_node = compute_shape_factor<depos_order>(sy_node, ymid);
+                k_node = compute_shape_factor_dbl<depos_order>(sy_node, ymid);
             }
             if (jx_type[1] == CELL || jy_type[1] == CELL || jz_type[1] == CELL) {
-                k_cell = compute_shape_factor<depos_order>(sy_cell, ymid - 0.5);
+                k_cell = compute_shape_factor_dbl<depos_order>(sy_cell, ymid - 0.5);
+            }            
+            amrex::Real sy_jx[depos_order + 1] = {0.};
+            amrex::Real sy_jy[depos_order + 1] = {0.};
+            amrex::Real sy_jz[depos_order + 1] = {0.};
+            for (int iy=0; iy<=depos_order; iy++)
+            {
+                sy_jx[iy] = ((jx_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
+                sy_jy[iy] = ((jy_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
+                sy_jz[iy] = ((jz_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
             }
-            const amrex::Real (&sy_jx)[depos_order + 1] = ((jx_type[1] == NODE) ? sy_node : sy_cell);
-            const amrex::Real (&sy_jy)[depos_order + 1] = ((jy_type[1] == NODE) ? sy_node : sy_cell);
-            const amrex::Real (&sy_jz)[depos_order + 1] = ((jz_type[1] == NODE) ? sy_node : sy_cell);
             int const k_jx = ((jx_type[1] == NODE) ? k_node : k_cell);
             int const k_jy = ((jy_type[1] == NODE) ? k_node : k_cell);
             int const k_jz = ((jz_type[1] == NODE) ? k_node : k_cell);
 #endif
 
             // z direction
-            const amrex::Real zmid = (zp - zmin)*dzi - dts2dz*vz;
-            amrex::Real sz_node[depos_order + 1];
-            amrex::Real sz_cell[depos_order + 1];
+            const double zmid = (zp - zmin)*dzi - dts2dz*vz;
+            double sz_node[depos_order + 1];
+            double sz_cell[depos_order + 1];
             int l_node;
             int l_cell;
             if (jx_type[zdir] == NODE || jy_type[zdir] == NODE || jz_type[zdir] == NODE) {
-                l_node = compute_shape_factor<depos_order>(sz_node, zmid);
+                l_node = compute_shape_factor_dbl<depos_order>(sz_node, zmid);
             }
             if (jx_type[zdir] == CELL || jy_type[zdir] == CELL || jz_type[zdir] == CELL) {
-                l_cell = compute_shape_factor<depos_order>(sz_cell, zmid - 0.5);
+                l_cell = compute_shape_factor_dbl<depos_order>(sz_cell, zmid - 0.5);
             }
-            const amrex::Real (&sz_jx)[depos_order + 1] = ((jx_type[zdir] == NODE) ? sz_node : sz_cell);
-            const amrex::Real (&sz_jy)[depos_order + 1] = ((jy_type[zdir] == NODE) ? sz_node : sz_cell);
-            const amrex::Real (&sz_jz)[depos_order + 1] = ((jz_type[zdir] == NODE) ? sz_node : sz_cell);
+            amrex::Real sz_jx[depos_order + 1] = {0.};
+            amrex::Real sz_jy[depos_order + 1] = {0.};
+            amrex::Real sz_jz[depos_order + 1] = {0.};
+            for (int iz=0; iz<=depos_order; iz++)
+            {
+                sz_jx[iz] = ((jx_type[zdir] == NODE) ? amrex::Real(sz_node[iz]) : amrex::Real(sz_cell[iz]));
+                sz_jy[iz] = ((jy_type[zdir] == NODE) ? amrex::Real(sz_node[iz]) : amrex::Real(sz_cell[iz]));
+                sz_jz[iz] = ((jz_type[zdir] == NODE) ? amrex::Real(sz_node[iz]) : amrex::Real(sz_cell[iz]));
+            }            
             int const l_jx = ((jx_type[zdir] == NODE) ? l_node : l_cell);
             int const l_jy = ((jy_type[zdir] == NODE) ? l_node : l_cell);
             int const l_jz = ((jz_type[zdir] == NODE) ? l_node : l_cell);
@@ -385,18 +405,18 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             const Complex xy_new0 = Complex{costheta_new, sintheta_new};
             const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
             const Complex xy_old0 = Complex{costheta_old, sintheta_old};
-            Real const x_new = (rp_new - xmin)*dxi;
-            Real const x_old = (rp_old - xmin)*dxi;
+            double const x_new = (rp_new - xmin)*dxi;
+            double const x_old = (rp_old - xmin)*dxi;
 #else
-            Real const x_new = (xp - xmin)*dxi;
-            Real const x_old = x_new - dtsdx0*uxp[ip]*gaminv;
+            double const x_new = (xp - xmin)*dxi;
+            double const x_old = x_new - dtsdx0*uxp[ip]*gaminv;
 #endif
 #if (defined WARPX_DIM_3D)
-            Real const y_new = (yp - ymin)*dyi;
-            Real const y_old = y_new - dtsdy0*uyp[ip]*gaminv;
+            double const y_new = (yp - ymin)*dyi;
+            double const y_old = y_new - dtsdy0*uyp[ip]*gaminv;
 #endif
-            Real const z_new = (zp - zmin)*dzi;
-            Real const z_old = z_new - dtsdz0*uzp[ip]*gaminv;
+            double const z_new = (zp - zmin)*dzi;
+            double const z_old = z_new - dtsdz0*uzp[ip]*gaminv;
 
 #if (defined WARPX_DIM_RZ)
             Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
@@ -408,26 +428,26 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             // Note that there are extra values above and below
             // to possibly hold the factor for the old particle
             // which can be at a different grid location.
-            Real sx_new[depos_order + 3] = {0._rt};
-            Real sx_old[depos_order + 3] = {0._rt};
+            double sx_new[depos_order + 3] = {0.};
+            double sx_old[depos_order + 3] = {0.};
 #if (defined WARPX_DIM_3D)
-            Real sy_new[depos_order + 3] = {0._rt};
-            Real sy_old[depos_order + 3] = {0._rt};
+            double sy_new[depos_order + 3] = {0.};
+            double sy_old[depos_order + 3] = {0.};
 #endif
-            Real sz_new[depos_order + 3] = {0._rt};
-            Real sz_old[depos_order + 3] = {0._rt};
+            double sz_new[depos_order + 3] = {0.};
+            double sz_old[depos_order + 3] = {0.};
 
             // --- Compute shape factors
             // Compute shape factors for position as they are now and at old positions
             // [ijk]_new: leftmost grid point that the particle touches
-            const int i_new = compute_shape_factor<depos_order>(sx_new+1, x_new);
-            const int i_old = compute_shifted_shape_factor<depos_order>(sx_old, x_old, i_new);
+            const int i_new = compute_shape_factor_dbl<depos_order>(sx_new+1, x_new);
+            const int i_old = compute_shifted_shape_factor_dbl<depos_order>(sx_old, x_old, i_new);
 #if (defined WARPX_DIM_3D)
-            const int j_new = compute_shape_factor<depos_order>(sy_new+1, y_new);
-            const int j_old = compute_shifted_shape_factor<depos_order>(sy_old, y_old, j_new);
+            const int j_new = compute_shape_factor_dbl<depos_order>(sy_new+1, y_new);
+            const int j_old = compute_shifted_shape_factor_dbl<depos_order>(sy_old, y_old, j_new);
 #endif
-            const int k_new = compute_shape_factor<depos_order>(sz_new+1, z_new);
-            const int k_old = compute_shifted_shape_factor<depos_order>(sz_old, z_old, k_new);
+            const int k_new = compute_shape_factor_dbl<depos_order>(sz_new+1, z_new);
+            const int k_old = compute_shifted_shape_factor_dbl<depos_order>(sz_old, z_old, k_new);
 
             // computes min/max positions of current contributions
             int dil = 1, diu = 1;
