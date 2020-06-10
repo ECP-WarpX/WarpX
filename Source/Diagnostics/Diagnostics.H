@@ -86,6 +86,7 @@ protected:
     amrex::Vector< amrex::Real> m_lo;
     /** Higher corner of the diagnostics output, in physical coordinates */
     amrex::Vector< amrex::Real> m_hi;
+    /** Number of output buffers. The value is set to 1 for all FullDiagnostics */
     int m_num_buffers;
 };
 
