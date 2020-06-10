@@ -116,7 +116,9 @@ public:
     ///
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
-    void doFieldIonization ();
+    void doFieldIonization (int lev,
+                            const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
+                            const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
 
     void doCoulombCollisions ();
 

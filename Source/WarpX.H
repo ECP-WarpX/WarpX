@@ -350,6 +350,9 @@ public:
 
     PML* GetPML (int lev);
 
+    void doFieldIonization ();
+    void doFieldIonization (int lev);
+
     void PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full);
     void PushParticlesandDepose (         amrex::Real cur_time);
 

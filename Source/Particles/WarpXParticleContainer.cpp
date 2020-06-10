@@ -30,6 +30,11 @@ WarpXParIter::WarpXParIter (ContainerType& pc, int level)
 {
 }
 
+WarpXParIter::WarpXParIter (ContainerType& pc, int level, MFItInfo& info)
+    : ParIter(pc, level, info.SetDynamic(WarpX::do_dynamic_scheduling))
+{
+}
+
 WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     : ParticleContainer<0,0,PIdx::nattribs>(amr_core->GetParGDB())
     , species_id(ispecies)

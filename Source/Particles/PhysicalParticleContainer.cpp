@@ -1918,16 +1918,26 @@ PhysicalParticleContainer::InitIonizationModule ()
 }
 
 IonizationFilterFunc
-PhysicalParticleContainer::getIonizationFunc ()
+PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
+                                              int lev,
+                                              int ngE,
+                                              const amrex::FArrayBox& Ex,
+                                              const amrex::FArrayBox& Ey,
+                                              const amrex::FArrayBox& Ez,
+                                              const amrex::FArrayBox& Bx,
+                                              const amrex::FArrayBox& By,
+                                              const amrex::FArrayBox& Bz)
 {
     WARPX_PROFILE("PPC::getIonizationFunc");
 
-    return IonizationFilterFunc{ionization_energies.dataPtr(),
+    return IonizationFilterFunc(pti, lev, ngE, Ex, Ey, Ez, Ex, By, Bz,
+                                v_galilean,
+                                ionization_energies.dataPtr(),
                                 adk_prefactor.dataPtr(),
                                 adk_exp_prefactor.dataPtr(),
                                 adk_power.dataPtr(),
                                 particle_icomps["ionization_level"],
-                                ion_atomic_number};
+                                ion_atomic_number);
 }
 
 #ifdef WARPX_QED

@@ -317,7 +317,8 @@ WarpX::OneStep_nosub (Real cur_time)
 
     // Loop over species. For each ionizable species, create particles in
     // product species.
-    mypc->doFieldIonization();
+    doFieldIonization();
+
     mypc->doCoulombCollisions();
 #ifdef WARPX_QED
     mypc->doQEDSchwinger();
@@ -450,7 +451,7 @@ WarpX::OneStep_sub1 (Real curtime)
     // TODO: we could save some charge depositions
     // Loop over species. For each ionizable species, create particles in
     // product species.
-    mypc->doFieldIonization();
+    doFieldIonization();
 
 #ifdef WARPX_QED
     //Do QED processes
@@ -589,6 +590,22 @@ WarpX::OneStep_sub1 (Real curtime)
     }
     if ( safe_guard_cells )
         FillBoundaryB(coarse_lev, PatchType::fine, guard_cells.ng_FieldSolver);
+}
+
+void
+WarpX::doFieldIonization ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        doFieldIonization(lev);
+    }
+}
+
+void
+WarpX::doFieldIonization (int lev)
+{
+    mypc->doFieldIonization(lev,
+                            *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
+                            *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
 }
 
 void

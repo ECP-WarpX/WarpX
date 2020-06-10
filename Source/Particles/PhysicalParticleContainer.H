@@ -161,7 +161,15 @@ public:
 
     void SplitParticles (int lev);
 
-    IonizationFilterFunc getIonizationFunc ();
+    IonizationFilterFunc getIonizationFunc (const WarpXParIter& pti,
+                                            int lev,
+                                            int ngE,
+                                            const amrex::FArrayBox& Ex,
+                                            const amrex::FArrayBox& Ey,
+                                            const amrex::FArrayBox& Ez,
+                                            const amrex::FArrayBox& Bx,
+                                            const amrex::FArrayBox& By,
+                                            const amrex::FArrayBox& Bz);
 
     // Inject particles in Box 'part_box'
     virtual void AddParticles (int lev);

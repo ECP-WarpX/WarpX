@@ -79,6 +79,8 @@ public:
 
     WarpXParIter (ContainerType& pc, int level);
 
+    WarpXParIter (ContainerType& pc, int level, amrex::MFItInfo& info);
+
     const std::array<RealVector, PIdx::nattribs>& GetAttribs () const {
         return GetStructOfArrays().GetRealData();
     }

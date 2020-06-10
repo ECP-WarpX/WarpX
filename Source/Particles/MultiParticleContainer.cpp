@@ -623,7 +623,13 @@ MultiParticleContainer::getSpeciesID (std::string product_str) const
 }
 
 void
-MultiParticleContainer::doFieldIonization ()
+MultiParticleContainer::doFieldIonization (int lev,
+                                           const MultiFab& Ex,
+                                           const MultiFab& Ey,
+                                           const MultiFab& Ez,
+                                           const MultiFab& Bx,
+                                           const MultiFab& By,
+                                           const MultiFab& Bz)
 {
     WARPX_PROFILE("MPC::doFieldIonization");
 
@@ -638,31 +644,31 @@ MultiParticleContainer::doFieldIonization ()
         SmartCopyFactory copy_factory(*pc_source, *pc_product);
         auto phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
 
-        auto Filter    = phys_pc_ptr->getIonizationFunc();
         auto Copy      = copy_factory.getSmartCopy();
         auto Transform = IonizationTransformFunc();
 
         pc_source ->defineAllParticleTiles();
         pc_product->defineAllParticleTiles();
 
-        for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
-        {
-            const auto info = getMFItInfo(*pc_source, *pc_product);
+        auto info = getMFItInfo(*pc_source, *pc_product);
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-            for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
-            {
-                auto& src_tile = pc_source ->ParticlesAt(lev, mfi);
-                auto& dst_tile = pc_product->ParticlesAt(lev, mfi);
+        for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
+        {
+            auto& src_tile = pc_source ->ParticlesAt(lev, pti);
+            auto& dst_tile = pc_product->ParticlesAt(lev, pti);
 
-                const auto np_dst = dst_tile.numParticles();
-                const auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
-                                                                 Filter, Copy, Transform);
+            auto Filter = phys_pc_ptr->getIonizationFunc(pti, lev, Ex.nGrow(),
+                                                         Ex[pti], Ey[pti], Ez[pti],
+                                                         Bx[pti], By[pti], Bz[pti]);
 
-                setNewParticleIDs(dst_tile, np_dst, num_added);
-            }
+            const auto np_dst = dst_tile.numParticles();
+            const auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
+                                                                   Filter, Copy, Transform);
+
+            setNewParticleIDs(dst_tile, np_dst, num_added);
         }
     }
 }
