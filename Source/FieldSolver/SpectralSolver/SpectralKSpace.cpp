@@ -205,15 +205,6 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                         std::sin( k[i]*(n-0.5)*delta_x )/( (n-0.5)*delta_x );
                 }
             }
-            //oshapoval
-            if (i_dim == 0){
-                modified_k[k.size()-1] = 0.;
-            } if (i_dim == 1){
-                modified_k[k.size()/2] = 0.;
-            } else {}
-            //oshapoval
-
-            amrex::Print() << "  modified_k[i]:"<< i <<' ' << k[i] <<' '  <<"i_dim = " <<i_dim << ' '<<  modified_k[i]<<' ' << std::endl; //oshapoval
         }
 
         // By construction, at finite order and for a nodal grid,

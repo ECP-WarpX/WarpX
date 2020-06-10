@@ -83,8 +83,6 @@ class SpectralSolver
              algorithm->CurrentCorrection( field_data, current, rho );
         };
 
-        bool fft_do_time_averaging = false;
-
     private:
         void ReadParameters ();
 
