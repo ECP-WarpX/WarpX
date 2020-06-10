@@ -979,10 +979,6 @@ PhysicalParticleContainer::Evolve (int lev,
                                    Real /*t*/, Real dt, DtType a_dt_type)
 {
 
-    bool fft_do_time_averaging;
-    ParmParse pp("psatd");
-    pp.query("do_time_averaging", fft_do_time_averaging);
-
     WARPX_PROFILE("PPC::Evolve()");
     WARPX_PROFILE_VAR_NS("PPC::Evolve::Copy", blp_copy);
     WARPX_PROFILE_VAR_NS("PPC::FieldGather", blp_fg);
@@ -1050,13 +1046,6 @@ PhysicalParticleContainer::Evolve (int lev,
             const long np = pti.numParticles();
 
             // Data on the grid
-            // FArrayBox const* exfab = &(Ex[pti]);
-            // FArrayBox const* eyfab = &(Ey[pti]);
-            // FArrayBox const* ezfab = &(Ez[pti]);
-            // FArrayBox const* bxfab = &(Bx[pti]);
-            // FArrayBox const* byfab = &(By[pti]);
-            // FArrayBox const* bzfab = &(Bz[pti]);
-
             FArrayBox const* exfab;
             FArrayBox const* eyfab;
             FArrayBox const* ezfab;
@@ -1064,7 +1053,7 @@ PhysicalParticleContainer::Evolve (int lev,
             FArrayBox const* byfab;
             FArrayBox const* bzfab;
 
-            if (fft_do_time_averaging){
+            if (WarpX::fft_do_time_averaging){
                 exfab = &(Ex_avg[pti]);
                 eyfab = &(Ey_avg[pti]);
                 ezfab = &(Ez_avg[pti]);

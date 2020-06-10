@@ -776,7 +776,7 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_slice;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_slice;
 
-    bool fft_do_time_averaging  = false;
+    static bool fft_do_time_averaging = false;
     bool fft_periodic_single_box = false;
     int nox_fft = 16;
     int noy_fft = 16;
