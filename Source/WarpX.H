@@ -423,6 +423,8 @@ public:
     static int moving_window_dir;
     static amrex::Real moving_window_v;
 
+    static bool fft_do_time_averaging;
+
     // slice generation //
     static int num_slice_snapshots_lab;
     static amrex::Real dt_slice_snapshots_lab;
@@ -776,7 +778,6 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_slice;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_slice;
 
-    static bool fft_do_time_averaging;
     bool fft_periodic_single_box = false;
     int nox_fft = 16;
     int noy_fft = 16;
