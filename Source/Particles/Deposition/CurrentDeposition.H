@@ -180,7 +180,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             }
             if (jx_type[1] == CELL || jy_type[1] == CELL || jz_type[1] == CELL) {
                 k_cell = compute_shape_factor_dbl<depos_order>(sy_cell, ymid - 0.5);
-            }            
+            }
             amrex::Real sy_jx[depos_order + 1] = {0.};
             amrex::Real sy_jy[depos_order + 1] = {0.};
             amrex::Real sy_jz[depos_order + 1] = {0.};
@@ -215,7 +215,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
                 sz_jx[iz] = ((jx_type[zdir] == NODE) ? amrex::Real(sz_node[iz]) : amrex::Real(sz_cell[iz]));
                 sz_jy[iz] = ((jy_type[zdir] == NODE) ? amrex::Real(sz_node[iz]) : amrex::Real(sz_cell[iz]));
                 sz_jz[iz] = ((jz_type[zdir] == NODE) ? amrex::Real(sz_node[iz]) : amrex::Real(sz_cell[iz]));
-            }            
+            }
             int const l_jx = ((jx_type[zdir] == NODE) ? l_node : l_cell);
             int const l_jy = ((jy_type[zdir] == NODE) ? l_node : l_cell);
             int const l_jz = ((jz_type[zdir] == NODE) ? l_node : l_cell);

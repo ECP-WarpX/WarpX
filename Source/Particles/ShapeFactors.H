@@ -12,10 +12,10 @@
  *  particle writes.
  *  Specialized templates are defined below for orders 0 to 3.
  *  The `double` version of shape factor functions can be used
- *  in current deposition to ensure that current deposited by 
+ *  in current deposition to ensure that current deposited by
  *  particles that move only a small distance is still resolved.
  *  Without this, single and double precision version of the code
- *  can give disagreeing results in the time evolution for some 
+ *  can give disagreeing results in the time evolution for some
  *  problem setups.
  */
 template <int depos_order>
