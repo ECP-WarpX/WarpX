@@ -69,6 +69,8 @@ long WarpX::particle_pusher_algo;
 int WarpX::maxwell_fdtd_solver_id;
 long WarpX::load_balance_costs_update_algo;
 int WarpX::do_dive_cleaning = 0;
+int WarpX::em_solver_medium;
+int WarpX::macroscopic_solver_algo;
 
 long WarpX::n_rz_azimuthal_modes = 1;
 long WarpX::ncomps = 1;
@@ -86,11 +88,7 @@ bool WarpX::refine_plasma     = false;
 
 int WarpX::num_mirrors = 0;
 
-#ifdef AMREX_USE_GPU
-int  WarpX::sort_int = 4;
-#else
-int  WarpX::sort_int = -1;
-#endif
+IntervalsParser WarpX::sort_intervals;
 amrex::IntVect WarpX::sort_bin_size(AMREX_D_DECL(4,4,4));
 
 bool WarpX::do_back_transformed_diagnostics = false;
@@ -145,6 +143,8 @@ WarpX::WarpX ()
 {
     m_instance = this;
     ReadParameters();
+
+    BackwardCompatibility();
 
     // Geometry on all levels has been defined already.
 
@@ -220,6 +220,13 @@ WarpX::WarpX ()
     pml.resize(nlevs_max);
     costs.resize(nlevs_max);
 
+
+    if (em_solver_medium == MediumForEM::Macroscopic) {
+        // create object for macroscopic solver
+        m_macroscopic_properties = std::unique_ptr<MacroscopicProperties> (new MacroscopicProperties());
+    }
+
+
     // Set default values for particle and cell weights for costs update;
     // Default values listed here for the case AMREX_USE_GPU are determined
     // from single-GPU tests on Summit.
@@ -274,10 +281,6 @@ WarpX::WarpX ()
     m_fdtd_solver_fp.resize(nlevs_max);
     m_fdtd_solver_cp.resize(nlevs_max);
 
-#ifdef BL_USE_SENSEI_INSITU
-    insitu_bridge = nullptr;
-#endif
-
     // NCI Godfrey filters can have different stencils
     // at different levels (the stencil depends on c*dt/dz)
     nci_godfrey_filter_exeybz.resize(nlevs_max);
@@ -286,17 +289,6 @@ WarpX::WarpX ()
     // Sanity checks. Must be done after calling the MultiParticleContainer
     // constructor, as it reads additional parameters
     // (e.g., use_fdtd_nci_corr)
-
-#ifndef WARPX_USE_PSATD
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        not ( do_pml && do_nodal ),
-        "PML + do_nodal for finite-difference not implemented"
-        );
-#endif
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        not ( do_dive_cleaning && do_nodal ),
-        "divE cleaning + do_nodal not implemented"
-        );
 #ifdef WARPX_USE_PSATD
     AMREX_ALWAYS_ASSERT(use_fdtd_nci_corr == 0);
     AMREX_ALWAYS_ASSERT(do_subcycling == 0);
@@ -311,10 +303,6 @@ WarpX::~WarpX ()
     }
 
     delete reduced_diags;
-
-#ifdef BL_USE_SENSEI_INSITU
-    delete insitu_bridge;
-#endif
 }
 
 void
@@ -360,7 +348,9 @@ WarpX::ReadParameters ()
         pp.query("do_subcycling", do_subcycling);
         pp.query("use_hybrid_QED", use_hybrid_QED);
         pp.query("safe_guard_cells", safe_guard_cells);
-        pp.query("override_sync_int", override_sync_int);
+        std::string override_sync_int_string = "1";
+        pp.query("override_sync_int", override_sync_int_string);
+        override_sync_intervals = IntervalsParser(override_sync_int_string);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
                                          "Subcycling method 1 only works for 2 levels.");
@@ -474,7 +464,13 @@ WarpX::ReadParameters ()
         pp.query("do_dive_cleaning", do_dive_cleaning);
         pp.query("n_field_gather_buffer", n_field_gather_buffer);
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
-        pp.query("sort_int", sort_int);
+#ifdef AMREX_USE_GPU
+        std::string sort_int_string = "4";
+#else
+        std::string sort_int_string = "-1";
+#endif
+        pp.query("sort_int", sort_int_string);
+        sort_intervals = IntervalsParser(sort_int_string);
 
         Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
         bool sort_bin_size_is_specified = pp.queryarr("sort_bin_size", vect_sort_bin_size);
@@ -516,41 +512,6 @@ WarpX::ReadParameters ()
 
         if ( (do_pml_j_damping==1)&&(do_pml_in_domain==0) ){
             amrex::Abort("J-damping can only be done when PML are inside simulation domain (do_pml_in_domain=1)");
-        }
-
-        // only used for in-situ
-        bool user_fields_to_plot;
-        user_fields_to_plot = pp.queryarr("fields_to_plot", fields_to_plot);
-        if (not user_fields_to_plot){
-            // If not specified, set default values
-            fields_to_plot = {"Ex", "Ey", "Ez", "Bx", "By",
-                              "Bz", "jx", "jy", "jz",
-                              "part_per_cell"};
-        }
-        // set plot_rho to true of the users requests it, so that
-        // rho is computed at each iteration.
-        if (std::find(fields_to_plot.begin(), fields_to_plot.end(), "rho")
-            != fields_to_plot.end()){
-            plot_rho = true;
-        }
-        // Sanity check if user requests to plot F
-        if (std::find(fields_to_plot.begin(), fields_to_plot.end(), "F")
-            != fields_to_plot.end()){
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_dive_cleaning,
-                "plot F only works if warpx.do_dive_cleaning = 1");
-        }
-        // If user requests to plot proc_number for a serial run,
-        // delete proc_number from fields_to_plot
-        if (ParallelDescriptor::NProcs() == 1){
-            fields_to_plot.erase(std::remove(fields_to_plot.begin(),
-                                             fields_to_plot.end(),
-                                             "proc_number"),
-                                 fields_to_plot.end());
-        }
-
-        pp.query("plot_finepatch", plot_finepatch);
-        if (maxLevel() > 0) {
-            pp.query("plot_crsepatch", plot_crsepatch);
         }
 
         {
@@ -629,6 +590,10 @@ WarpX::ReadParameters ()
             l_lower_order_in_v = false;
         }
         load_balance_costs_update_algo = GetAlgorithmInteger(pp, "load_balance_costs_update");
+        em_solver_medium = GetAlgorithmInteger(pp, "em_solver_medium");
+        if (em_solver_medium == MediumForEM::Macroscopic ) {
+            macroscopic_solver_algo = GetAlgorithmInteger(pp,"macroscopic_sigma_method");
+        }
         pp.query("costs_heuristic_cells_wt", costs_heuristic_cells_wt);
         pp.query("costs_heuristic_particles_wt", costs_heuristic_particles_wt);
     }
@@ -648,19 +613,6 @@ WarpX::ReadParameters ()
         for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
     }
 #endif
-
-    {
-        insitu_start = 0;
-        insitu_int = 0;
-        insitu_config = "";
-        insitu_pin_mesh = 0;
-
-        ParmParse pp("insitu");
-        pp.query("int", insitu_int);
-        pp.query("start", insitu_start);
-        pp.query("config", insitu_config);
-        pp.query("pin_mesh", insitu_pin_mesh);
-    }
 
     // for slice generation //
     {
@@ -697,6 +649,40 @@ WarpX::ReadParameters ()
           }
        }
 
+    }
+}
+
+void
+WarpX::BackwardCompatibility ()
+{
+    ParmParse ppa("amr");
+    int backward_int;
+    if (ppa.query("plot_int", backward_int)){
+        amrex::Abort("amr.plot_int is not supported anymore. Please use the new syntax for diagnostics:\n"
+            "diagnostics.diags_names = my_diag\n"
+            "my_diag.period = 10\n"
+            "for output every 10 iterations. See documentation for more information");
+    }
+
+    std::string backward_str;
+    if (ppa.query("plot_file", backward_str)){
+        amrex::Abort("amr.plot_file is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
+    }
+
+    ParmParse ppw("warpx");
+    std::vector<std::string> backward_strings;
+    if (ppw.queryarr("fields_to_plot", backward_strings)){
+        amrex::Abort("warpx.fields_to_plot is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
+    }
+    if (ppw.query("plot_finepatch", backward_int)){
+        amrex::Abort("warpx.plot_finepatch is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
+    }
+    if (ppw.query("plot_crsepatch", backward_int)){
+        amrex::Abort("warpx.plot_crsepatch is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
     }
 }
 

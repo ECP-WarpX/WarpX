@@ -6,11 +6,12 @@
 #include "ComputeDiagFunctors/DivEFunctor.H"
 #include "FlushFormats/FlushFormatPlotfile.H"
 #include "FlushFormats/FlushFormatCheckpoint.H"
+#include "FlushFormats/FlushFormatAscent.H"
+#include "FlushFormats/FlushFormatSensei.H"
 #ifdef WARPX_USE_OPENPMD
 #   include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
 #include "WarpX.H"
-#include "Utils/Average.H"
 #include "Utils/WarpXUtil.H"
 
 using namespace amrex;
@@ -34,11 +35,15 @@ Diagnostics::ReadParameters ()
     ParmParse pp(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp.query("file_prefix", m_file_prefix);
-    pp.query("period", m_period);
+    std::string period_string = "0";
+    pp.query("period", period_string);
+    m_intervals = IntervalsParser(period_string);
     pp.query("format", m_format);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        m_format == "plotfile" || m_format == "openpmd" || m_format == "checkpoint",
-        "<diag>.format must be plotfile or openpmd or checkpoint");
+        m_format == "plotfile" || m_format == "openpmd" ||
+        m_format == "checkpoint" || m_format == "ascent" ||
+        m_format == "sensei",
+        "<diag>.format must be plotfile or openpmd or checkpoint or ascent or sensei");
     bool raw_specified = pp.query("plot_raw_fields", m_plot_raw_fields);
     raw_specified += pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
     bool varnames_specified = pp.queryarr("fields_to_plot", m_varnames);
@@ -144,6 +149,16 @@ Diagnostics::InitData ()
         m_flush_format = new FlushFormatPlotfile;
     } else if (m_format == "checkpoint"){
         m_flush_format = new FlushFormatCheckpoint;
+    } else if (m_format == "ascent"){
+        m_flush_format = new FlushFormatAscent;
+    } else if (m_format == "sensei"){
+#ifdef BL_USE_SENSEI_INSITU
+        m_flush_format = new FlushFormatSensei(
+            dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
+            m_diag_name);
+#else
+        amrex::Abort("To use SENSEI in situ, compile with USE_SENSEI=TRUE");
+#endif
     } else if (m_format == "openpmd"){
 #ifdef WARPX_USE_OPENPMD
         m_flush_format = new FlushFormatOpenPMD(m_diag_name);
@@ -191,7 +206,7 @@ Diagnostics::Flush ()
 {
     auto & warpx = WarpX::GetInstance();
     m_flush_format->WriteToFile(
-        m_varnames, GetVecOfConstPtrs(m_mf_output), warpx.Geom(), warpx.getistep(),
+        m_varnames, m_mf_output, warpx.Geom(), warpx.getistep(),
         warpx.gett_new(0), m_all_species, nlev, m_file_prefix,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 }
@@ -203,7 +218,7 @@ bool
 Diagnostics::DoDump (int step, bool force_flush)
 {
     if (m_already_done) return false;
-    if ( force_flush || (m_period>0 && (step+1)%m_period==0) ){
+    if ( force_flush || (m_intervals.contains(step+1)) ){
         m_already_done = true;
         return true;
     }
@@ -229,13 +244,26 @@ Diagnostics::AddRZModesToDiags (int lev)
             warpx.get_pointer_current_fp(lev, dim)->nComp() == ncomp_multimodefab );
     }
 
+    // Check if divE is requested
+    // If so, all components will be written out
+    bool divE_requested = false;
+    for (int comp = 0; comp < m_varnames.size(); comp++) {
+        if ( m_varnames[comp] == "divE" ) {
+            divE_requested = true;
+        }
+    }
+
     // First index of m_all_field_functors[lev] where RZ modes are stored
     int icomp = m_all_field_functors[0].size();
     const std::array<std::string, 3> coord {"r", "theta", "z"};
 
     // Er, Etheta, Ez, Br, Btheta, Bz, jr, jtheta, jz
     // Each of them being a multi-component multifab
-    m_all_field_functors[lev].resize( m_all_field_functors[0].size() + 9 );
+    int n_new_fields = 9;
+    if (divE_requested) {
+        n_new_fields += 1;
+    }
+    m_all_field_functors[lev].resize( m_all_field_functors[0].size() + n_new_fields );
     // E
     for (int dim=0; dim<3; dim++){
         // 3 components, r theta z
@@ -266,6 +294,13 @@ Diagnostics::AddRZModesToDiags (int lev)
         AddRZModesToOutputNames(std::string("J") + coord[dim],
                                 warpx.get_pointer_current_fp(0, 0)->nComp());
     }
+    // divE
+    if (divE_requested) {
+        m_all_field_functors[lev][icomp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev,
+                              m_crse_ratio, false, ncomp_multimodefab);
+        icomp += 1;
+        AddRZModesToOutputNames(std::string("divE"), ncomp_multimodefab);
+    }
     // Sum the number of components in input vector m_all_field_functors
     // and check that it corresponds to the number of components in m_varnames
     // and m_mf_output
@@ -283,7 +318,7 @@ Diagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
     // In cylindrical geometry, real and imag part of each mode are also
     // dumped to file separately, so they need to be added to m_varnames
     m_varnames.push_back( field + "_0_real" );
-    for (int ic=1 ; ic < ncomp ; ic += 2) {
+    for (int ic=1 ; ic < (ncomp+1)/2 ; ic += 1) {
         m_varnames.push_back( field + "_" + std::to_string(ic) + "_real" );
         m_varnames.push_back( field + "_" + std::to_string(ic) + "_imag" );
     }
@@ -377,7 +412,8 @@ Diagnostics::DefineDiagMultiFab ( int lev ) {
     // is different from the lo and hi physical co-ordinates of the simulation domain.
     if (use_warpxba == false) dmap = DistributionMapping{ba};
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
-    m_mf_output[lev] = MultiFab(ba, dmap, m_varnames.size(), 0);
+    int ngrow = (m_format == "sensei") ? 1 : 0;
+    m_mf_output[lev] = MultiFab(ba, dmap, m_varnames.size(), ngrow);
 }
 
 

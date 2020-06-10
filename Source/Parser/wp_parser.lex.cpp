@@ -521,12 +521,9 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "wp_parser.l"
-#line 3 "wp_parser.l"
 #include "wp_parser_y.h"
 #include "wp_parser.tab.h"
 #line 529 "wp_parser.lex.c"
-#line 8 "wp_parser.l"
  /* Tokens NUMBER, SYMBOL, F1, POW, F2, etc. are defined in wp_parser.y. */
  /* Types WP_SQRT, WP_SQRT, etc. are defined in wp_parser_y.h. */
  /* Used leater to define NUMBER */
@@ -747,7 +744,6 @@ YY_DECL
 		}
 
 	{
-#line 14 "wp_parser.l"
 
 
 #line 754 "wp_parser.lex.c"
@@ -808,213 +804,166 @@ do_action:	/* This label is used only to access EOF actions. */
 			goto yy_find_action;
 
 case 1:
-#line 17 "wp_parser.l"
 case 2:
-#line 18 "wp_parser.l"
 case 3:
-#line 19 "wp_parser.l"
 case 4:
-#line 20 "wp_parser.l"
 case 5:
-#line 21 "wp_parser.l"
 case 6:
-#line 22 "wp_parser.l"
 case 7:
-#line 23 "wp_parser.l"
 case 8:
-#line 24 "wp_parser.l"
 case 9:
-#line 25 "wp_parser.l"
 case 10:
-#line 26 "wp_parser.l"
 case 11:
 YY_RULE_SETUP
-#line 26 "wp_parser.l"
 { return yytext[0]; } /* simply pass through */
 	YY_BREAK
 /* yylval is union type defined in wp_parser.tab.h that is generated
   * by bison with wp_parser.y */
 case 12:
 YY_RULE_SETUP
-#line 31 "wp_parser.l"
 { yylval.f1 = WP_SQRT;      return F1; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 32 "wp_parser.l"
 { yylval.f1 = WP_EXP;       return F1; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 33 "wp_parser.l"
 { yylval.f1 = WP_LOG;       return F1; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 34 "wp_parser.l"
 { yylval.f1 = WP_LOG10;     return F1; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 35 "wp_parser.l"
 { yylval.f1 = WP_SIN;       return F1; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 36 "wp_parser.l"
 { yylval.f1 = WP_COS;       return F1; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 37 "wp_parser.l"
 { yylval.f1 = WP_TAN;       return F1; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 38 "wp_parser.l"
 { yylval.f1 = WP_ASIN;      return F1; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 39 "wp_parser.l"
 { yylval.f1 = WP_ACOS;      return F1; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 40 "wp_parser.l"
 { yylval.f1 = WP_ATAN;      return F1; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 41 "wp_parser.l"
 { yylval.f1 = WP_SINH;      return F1; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 42 "wp_parser.l"
 { yylval.f1 = WP_COSH;      return F1; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 43 "wp_parser.l"
 { yylval.f1 = WP_TANH;      return F1; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 44 "wp_parser.l"
 { yylval.f1 = WP_ABS;       return F1; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 45 "wp_parser.l"
 { yylval.f1 = WP_ABS;       return F1; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 46 "wp_parser.l"
 { yylval.f2 = WP_POW;       return POW;}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 47 "wp_parser.l"
 { yylval.f2 = WP_POW;       return POW;}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 48 "wp_parser.l"
 { yylval.f2 = WP_GEQ;       return GEQ;}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 49 "wp_parser.l"
 { yylval.f2 = WP_LEQ;       return LEQ;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 50 "wp_parser.l"
 { yylval.f2 = WP_EQ;        return EQ;}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 51 "wp_parser.l"
 { yylval.f2 = WP_NEQ;       return NEQ;}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 52 "wp_parser.l"
 { yylval.f2 = WP_AND;       return AND;}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 53 "wp_parser.l"
 { yylval.f2 = WP_OR;        return OR;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 54 "wp_parser.l"
 { yylval.f2 = WP_POW;       return F2; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 55 "wp_parser.l"
 { yylval.f2 = WP_HEAVISIDE; return F2; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 56 "wp_parser.l"
 { yylval.f2 = WP_MIN;       return F2; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 57 "wp_parser.l"
 { yylval.f2 = WP_MAX;       return F2; }
 	YY_BREAK
 /* We use SYMBOL to hold variables and constants */
 case 39:
 YY_RULE_SETUP
-#line 60 "wp_parser.l"
 { yylval.s = wp_makesymbol(yytext); return SYMBOL; }
 	YY_BREAK
 /* Number */
 case 40:
-#line 64 "wp_parser.l"
 case 41:
 YY_RULE_SETUP
-#line 64 "wp_parser.l"
 { yylval.d = atof(yytext);   return NUMBER; }
 	YY_BREAK
 /* Special characters */
 case 42:
 YY_RULE_SETUP
-#line 67 "wp_parser.l"
 
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 68 "wp_parser.l"
 /* ignore white space */
 	YY_BREAK
 case 44:
 /* rule 44 can match eol */
 YY_RULE_SETUP
-#line 69 "wp_parser.l"
 /* ignore line continuation */
 	YY_BREAK
 case 45:
 /* rule 45 can match eol */
 YY_RULE_SETUP
-#line 70 "wp_parser.l"
 { return EOL; }
 	YY_BREAK
 /* everything else */
 case 46:
 YY_RULE_SETUP
-#line 73 "wp_parser.l"
 { yyerror("Unknow character %c\n", *yytext); }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 75 "wp_parser.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
 #line 1021 "wp_parser.lex.c"
@@ -2022,6 +1971,5 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 75 "wp_parser.l"
 
 

@@ -23,6 +23,7 @@
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/IntervalsParser.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #ifdef WARPX_USE_PSATD
@@ -58,13 +59,6 @@
 #include <iostream>
 #include <memory>
 #include <array>
-
-
-#if defined(BL_USE_SENSEI_INSITU)
-namespace amrex {
-class AmrMeshInSituBridge;
-}
-#endif
 
 enum struct PatchType : int
 {
@@ -140,6 +134,8 @@ public:
     static long particle_pusher_algo;
     static int maxwell_fdtd_solver_id;
     static long load_balance_costs_update_algo;
+    static int em_solver_medium;
+    static int macroscopic_solver_algo;
 
     // Static public variable to switch on current correction in Fourier space
     // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010): can be set
@@ -182,7 +178,7 @@ public:
     static bool do_dynamic_scheduling;
     static bool refine_plasma;
 
-    static int sort_int;
+    static IntervalsParser sort_intervals;
     static amrex::IntVect sort_bin_size;
 
     static int do_subcycling;
@@ -298,6 +294,9 @@ public:
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+    void MacroscopicEvolveE (         amrex::Real dt);
+    void MacroscopicEvolveE (int lev, amrex::Real dt);
+    void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void FieldGather ();
 
     /** \brief apply QED correction on electric field
@@ -403,7 +402,6 @@ public:
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, const int ngrow) const;
 
-    void UpdateInSitu () const;
     void prepareFields( int const step, amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg,
         amrex::Vector<const amrex::MultiFab*>& output_mf,
@@ -471,9 +469,7 @@ public:
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
          ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
-         ParserWrapper<3> *zfield_parser, amrex::IntVect x_nodal_flag,
-         amrex::IntVect y_nodal_flag, amrex::IntVect z_nodal_flag,
-         const int lev);
+         ParserWrapper<3> *zfield_parser, const int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`
@@ -579,6 +575,10 @@ private:
 
     void ReadParameters ();
 
+    /** This function queries deprecated input parameters and abort
+     *  the run if one of them is specified. */
+    void BackwardCompatibility ();
+
     void InitFromScratch ();
 
     void AllocLevelData (int lev, const amrex::BoxArray& new_grids,
@@ -597,10 +597,6 @@ private:
     void InitNCICorrector ();
 
     std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
-
-    std::array<std::unique_ptr<amrex::MultiFab>, 3> getInterpolatedE(int lev) const;
-
-    std::array<std::unique_ptr<amrex::MultiFab>, 3> getInterpolatedB(int lev) const;
 
     void ExchangeWithPmlB (int lev);
     void ExchangeWithPmlE (int lev);
@@ -697,6 +693,10 @@ private:
     int n_buffer = 4;
     amrex::Real const_dt = 0.5e-11;
 
+    // Macroscopic properties
+    std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
+
+
     // Load balancing
     /** Load balancing intervals that reads the "load_balance_int" string int the input file
      * for getting steps at which load balancing is performed */
@@ -730,8 +730,8 @@ private:
      * time per iteration per particle is computed. */
     amrex::Real costs_heuristic_particles_wt = -1;
 
-    // Override sync every ? steps
-    int override_sync_int = 1;
+    // Determines timesteps for override sync
+    IntervalsParser override_sync_intervals;
 
     // Other runtime parameters
     int verbose = 1;
@@ -748,9 +748,6 @@ private:
     std::string restart_chkfile;
 
     bool plot_rho           = false;
-    bool plot_finepatch     = false;
-    bool plot_crsepatch     = false;
-    amrex::Vector<std::string> fields_to_plot;
 
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
@@ -803,14 +800,6 @@ private:
 #endif
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_cp;
-
-#if defined(BL_USE_SENSEI_INSITU)
-    amrex::AmrMeshInSituBridge *insitu_bridge;
-#endif
-    int insitu_int;
-    int insitu_start;
-    std::string insitu_config;
-    int insitu_pin_mesh;
 };
 
 #endif
