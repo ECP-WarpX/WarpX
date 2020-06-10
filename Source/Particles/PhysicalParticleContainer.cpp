@@ -937,21 +937,37 @@ PhysicalParticleContainer::FieldGather (int lev,
             auto& Bzp = attribs[PIdx::Bz];
 
             const long np = pti.numParticles();
-
+            
             // Data on the grid
-            const FArrayBox& exfab = Ex[pti];
-            const FArrayBox& eyfab = Ey[pti];
-            const FArrayBox& ezfab = Ez[pti];
-            const FArrayBox& bxfab = Bx[pti];
-            const FArrayBox& byfab = By[pti];
-            const FArrayBox& bzfab = Bz[pti];
+            FArrayBox const* exfab;
+            FArrayBox const* eyfab;
+            FArrayBox const* ezfab;
+            FArrayBox const* bxfab;
+            FArrayBox const* byfab;
+            FArrayBox const* bzfab;
+
+            if (WarpX::fft_do_time_averaging){
+                exfab = &(Ex_avg[pti]);
+                eyfab = &(Ey_avg[pti]);
+                ezfab = &(Ez_avg[pti]);
+                bxfab = &(Bx_avg[pti]);
+                byfab = &(By_avg[pti]);
+                bzfab = &(Bz_avg[pti]);
+            } else {
+                exfab = &(Ex[pti]);
+                eyfab = &(Ey[pti]);
+                ezfab = &(Ez[pti]);
+                bxfab = &(Bx[pti]);
+                byfab = &(By[pti]);
+                bzfab = &(Bz[pti]);
+            }
 
             //
             // Field Gather
             //
             int e_is_nodal = Ex.is_nodal() and Ey.is_nodal() and Ez.is_nodal();
             FieldGather(pti, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                        &exfab, &eyfab, &ezfab, &bxfab, &byfab, &bzfab,
+                        exfab, eyfab, ezfab, bxfab, byfab, bzfab,
                         Ex.nGrow(), e_is_nodal,
                         0, np, lev, lev);
 
@@ -1060,15 +1076,14 @@ PhysicalParticleContainer::Evolve (int lev,
                 bxfab = &(Bx_avg[pti]);
                 byfab = &(By_avg[pti]);
                 bzfab = &(Bz_avg[pti]);
-                }
-            else {
+            } else {
                 exfab = &(Ex[pti]);
                 eyfab = &(Ey[pti]);
                 ezfab = &(Ez[pti]);
                 bxfab = &(Bx[pti]);
                 byfab = &(By[pti]);
                 bzfab = &(Bz[pti]);
-                }
+            }
 
             Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
 
