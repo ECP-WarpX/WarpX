@@ -1,5 +1,4 @@
 /* Copyright 2019 Axel Huebl, Maxence Thevenet, Weiqun Zhang
- * Michael Rowan
  *
  *
  * This file is part of WarpX.
