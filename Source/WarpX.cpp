@@ -108,7 +108,7 @@ int WarpX::do_electrostatic = 0;
 int WarpX::do_subcycling = 0;
 bool WarpX::safe_guard_cells = 0;
 
-bool fft_do_time_averaging = false;
+bool WarpX::fft_do_time_averaging = false;
 
 IntVect WarpX::filter_npass_each_dir(1);
 
