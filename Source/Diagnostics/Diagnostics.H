@@ -25,7 +25,7 @@ public:
     void ComputeAndPack ();
     /** Flush m_mf_output and particles to file. */
     virtual void Flush (){};
-    /** Flush raw data */
+    /** Flush raw data (applies only to full diagnostics)*/
     virtual void FlushRaw (){};
     /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
     virtual void InitData (){};
