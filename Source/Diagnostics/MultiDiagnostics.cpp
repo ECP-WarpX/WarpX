@@ -25,7 +25,6 @@ void
 MultiDiagnostics::InitData ()
 {
     for( auto& diag : alldiags ){
-//        diag->BTInitData();
         diag->InitData();
     }
 }
@@ -65,7 +64,6 @@ MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush)
         if ( !diag->DoDump( step, force_flush ) ) continue;
         diag->ComputeAndPack();
         diag->Flush();
-        diag->FlushRaw();
     }
 }
 

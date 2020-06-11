@@ -96,6 +96,8 @@ FullDiagnostics::Flush ()
         m_varnames, m_mf_output[0], warpx.Geom(), warpx.getistep(),
         warpx.gett_new(0), m_all_species, nlev, m_file_prefix,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
+
+    FlushRaw();
 }
 
 void

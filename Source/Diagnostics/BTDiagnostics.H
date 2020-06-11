@@ -144,6 +144,7 @@ private:
      *  \param[in] ref_ratio, refinement ratio at level, lev
      */
     amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio) {
+        using namespace amrex::literals;
         return PhysConst::c * dt * 1._rt/m_beta_boost * 1._rt/m_gamma_boost * 1._rt/ref_ratio;
     }
 

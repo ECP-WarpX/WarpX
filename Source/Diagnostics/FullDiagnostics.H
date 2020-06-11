@@ -24,7 +24,7 @@ private:
     /** Flush m_mf_output and particles to file. */
     void Flush () override;
     /** Flush raw data */
-    void FlushRaw () override;
+    void FlushRaw ();
     /** whether to flush at this time step
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
