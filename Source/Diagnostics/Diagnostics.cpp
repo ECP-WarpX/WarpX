@@ -98,6 +98,31 @@ Diagnostics::ReadBaseParameters ()
 
 }
 
+
+void
+Diagnostics::InitData ()
+{
+    // initialize member variables and arrays in base class::Diagnostics
+    InitBaseData();
+    // initialize member variables and arrays specific to each derived class 
+    // (FullDiagnostics, BTDiagnostics, etc.)
+    InitDerivedData();
+    // loop over all buffers
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        // loop over all levels
+        for (int lev = 0; lev < nmax_lev; ++lev) {
+            // allocate and initialize m_all_field_functors depending on diag type
+            InitializeFieldFunctors(i_buffer, lev);
+            // Initialize field buffer data, m_mf_output
+            InitializeFieldBufferData(i_buffer, lev);            
+        }
+    }
+    // When particle buffers, m_particle_buffers are included, they will be initialized here
+    InitializeParticleBuffer();
+ 
+}
+
+
 void
 Diagnostics::InitBaseData ()
 {

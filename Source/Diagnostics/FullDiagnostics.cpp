@@ -26,20 +26,20 @@ FullDiagnostics::FullDiagnostics (int i, std::string name)
 }
 
 void
-FullDiagnostics::InitData ()
+FullDiagnostics::InitializeParticleBuffers ()
 {
-    // Initialize data in the base class Diagnostics
-    InitBaseData();
-
-    auto & warpx = WarpX::GetInstance();
-
-    for ( int lev=0; lev<nlev; lev++ ){
-        InitializeFieldFunctors( lev );
-        // At this point, m_varnames.size() >= m_all_field_functors[0].size()
-
-        // Initialize member variable m_mf_output depending on m_crse_ratio, m_lo and m_hi
-        DefineDiagMultiFab( lev );
-    }
+//    // Initialize data in the base class Diagnostics
+//    InitBaseData();
+//
+//    auto & warpx = WarpX::GetInstance();
+//
+//    for ( int lev=0; lev<nlev; lev++ ){
+//        InitializeFieldFunctors( lev );
+//        // At this point, m_varnames.size() >= m_all_field_functors[0].size()
+//
+//        // Initialize member variable m_mf_output depending on m_crse_ratio, m_lo and m_hi
+//        DefineDiagMultiFab( lev );
+//    }
 
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     // If not specified, dump all species
@@ -49,7 +49,7 @@ FullDiagnostics::InitData ()
         const int idx = mpc.getSpeciesID(m_species_names[i]);
         m_all_species.push_back(ParticleDiag(m_diag_name, m_species_names[i],
                                              mpc.GetParticleContainerPtr(idx)));
-    }
+//    }
 }
 
 void
@@ -217,7 +217,7 @@ FullDiagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
 
 
 void
-FullDiagnostics::DefineDiagMultiFab ( int lev ) {
+FullDiagnostics::InitializeFieldBufferData ( int lev ) {
     auto & warpx = WarpX::GetInstance();
     amrex::RealBox diag_dom;
     bool use_warpxba = true;

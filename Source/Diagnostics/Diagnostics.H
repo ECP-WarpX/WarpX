@@ -39,7 +39,7 @@ public:
      */
     virtual void Flush (){};
     /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
-    virtual void InitData () = 0;
+    void InitData ();
     /** whether to flush at this time step
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
@@ -50,6 +50,7 @@ public:
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
     virtual void InitializeFieldFunctors (int lev){};
+    virtual void InitializeParticleBuffers () = default;
     /** Start a new iteration, i.e., dump has not been done yet. */
     void NewIteration () {m_already_done = false;};
 
@@ -61,6 +62,7 @@ protected:
     /** Prepare data (either fill-boundary or cell-centered data for
         back-transform diagnostics) to be processed for diagnostics.
      */
+    virtual void InitDerivedData() = default;
     virtual void PrepareFieldDataForOutput () {};
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string m_diag_name;

@@ -32,7 +32,7 @@ private:
      */
     bool DoDump (int step, bool force_flush=false) override;
     /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
-    void InitData () override;
+    void InitDerivedData () override {};
     /** Append varnames with names for all modes of a field
      * \param[in] field field name (includes component, e.g., Er)
      * \param[in] ncomp number of components (modes, real and imag)
@@ -51,11 +51,12 @@ private:
       *
       * \param[in] lev level on which source multifabs are defined
       */
-    void DefineDiagMultiFab ( int lev );
+    void InitializeFieldBufferData ( int i_buffer, int lev ) override;
     /** Initialize functors that store pointers to the fields requested by the user.
       * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
       */
     void InitializeFieldFunctors (int lev) override;
+    void InitializeParticleBuffers () override;
     /** Prepare field data to be used for diagnostics */
     void PrepareFieldDataForOutput () override;
 

@@ -9,8 +9,6 @@ BTDiagnostics final : public Diagnostics
 public:
 
     BTDiagnostics (int i, std::string name);
-    /** Initialize Data required to compute back-transformed diagnostics */
-    void InitData () override;
 
 private:
     /** Read relevant parameters for BTD */
@@ -28,10 +26,13 @@ private:
      */
     // To be discussed : may be this function should have a different name?
     bool DoDump (int step, bool force_flush=false) override;
+    /** Initialize Data required to compute back-transformed diagnostics */
+    void InitDerivedData ();
     /** Initialize functors that store pointers to the fields requested by the user.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
     void InitializeFieldFunctors (int lev);
+    void InitializeParticleBuffers () override {};
     /** Compute the cell-centered data for all user-requested fields and store in
      *  the multi-level cell-centered multifab, m_mf_cc. This MultiFab extends
      *  over the entire domain and is coarsened using the user-defined crse_ratio
@@ -42,7 +43,7 @@ private:
      * \param[in] i_buffer i^th snapshot or buffer
      * \param[in] lev level
      */
-    void InitBufferData(int i_buffer, int lev);
+    void InitializeFieldBufferData ( int i_buffer , int lev) override;
     /** Whether to compute back-tranformed values for field-data */
     bool m_do_back_transformed_fields = true;
     /** Whether to compute back-tranformed values for particle-data */

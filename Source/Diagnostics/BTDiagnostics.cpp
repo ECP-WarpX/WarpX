@@ -15,10 +15,9 @@ BTDiagnostics::BTDiagnostics (int i, std::string name)
     ReadParameters();
 }
 
-void
-BTDiagnostics::InitData ()
+
+void BTDiagnostics::InitDerivedData ()
 {
-    InitBaseData();
     // storing BTD related member variables
     auto & warpx = WarpX::GetInstance();
     m_gamma_boost = WarpX::gamma_boost;
@@ -53,17 +52,11 @@ BTDiagnostics::InitData ()
         // temporary variable name for customized BTD output to verify accuracy
         m_file_name[i] = amrex::Concatenate(m_file_prefix +"/snapshots/snapshot",i,5);
         for (int lev = 0; lev < nmax_lev; ++lev) {
-            // Initialize buffer domain, buffer_box, and ncells in lab-frame
-            InitBufferData(i, lev);
             // Define cell-centered multifab over the whole domain with user-defined crse_ratio
             // for nlevels
             DefineCellCenteredMultiFab(lev);
-            // Pointers to field functors are initialized for back-transform output
-            // and to prepare cell-centered data required to compute back-transform diags
-            InitializeFieldFunctors(lev);
         }
     }
-
 
 }
 
@@ -135,7 +128,7 @@ BTDiagnostics::DoDump (int step, bool force_flush)
 }
 
 void
-BTDiagnostics::InitBufferData(int i_buffer, int lev)
+BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev) override;
 {
     auto & warpx = WarpX::GetInstance();
     // 1. Lab-frame time for the i^th snapshot
