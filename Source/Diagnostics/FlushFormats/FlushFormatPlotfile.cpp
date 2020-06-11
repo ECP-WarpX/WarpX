@@ -24,7 +24,7 @@ FlushFormatPlotfile::WriteToFile (
 {
     WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
-    const std::string& filename = amrex::Concatenate(prefix, iteration[0]);
+    const std::string filename = prefix + amrex::Concatenate("/plt", iteration[0], 6);
     amrex::Print() << "  Writing plotfile " << filename << "\n";
 
     Vector<std::string> rfs;
