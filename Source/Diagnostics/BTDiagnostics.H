@@ -2,7 +2,6 @@
 #define WARPX_BTDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
-using namespace amrex::literals;
 
 class
 BTDiagnostics final : public Diagnostics
