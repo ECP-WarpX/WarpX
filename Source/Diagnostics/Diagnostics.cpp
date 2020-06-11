@@ -112,7 +112,7 @@ Diagnostics::InitBaseData ()
     if        (m_format == "plotfile"){
         m_flush_format = new FlushFormatPlotfile;
     } else if (m_format == "checkpoint"){
-        // creating checkpoint format 
+        // creating checkpoint format
         m_flush_format = new FlushFormatCheckpoint;
     } else if (m_format == "ascent"){
         m_flush_format = new FlushFormatAscent;
@@ -158,7 +158,7 @@ Diagnostics::ComputeAndPack ()
             icomp_dst += m_all_field_functors[lev][icomp]->nComp();
         }
         // Check that the proper number of components of mf_avg were updated.
-        // to be discussed at review. 
+        // to be discussed at review.
         // The assert below will work only for FullDiags. to be checked at review?
         //AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
     }

@@ -19,7 +19,7 @@ private:
     /** Flush m_mf_output and particles to file. */
     // Currently this is an empty function. When OpenPMD/Plotfile is supported
     // this function can be moved to the base class Diagnostics.
-    void Flush () override {} ; 
+    void Flush () override {} ;
     /** whether to write output files at this time step
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
@@ -31,7 +31,7 @@ private:
     bool DoDump (int step, bool force_flush=false) override;
     /** Initialize functors that store pointers to the fields requested by the user.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
-     */    
+     */
     void InitializeFieldFunctors (int lev);
     /** Compute the cell-centered data for all user-requested fields and store in
      *  the multi-level cell-centered multifab, m_mf_cc. This MultiFab extends
@@ -44,9 +44,9 @@ private:
      * \param[in] lev level
      */
     void InitBufferData(int i_buffer, int lev);
-    /** Whether to compute back-tranformed values for field-data */ 
+    /** Whether to compute back-tranformed values for field-data */
     bool m_do_back_transformed_fields = true;
-    /** Whether to compute back-tranformed values for particle-data */ 
+    /** Whether to compute back-tranformed values for particle-data */
     bool m_do_back_transformed_particles = true;
 
     /** Map field names and component number in cell-centered_data */
@@ -66,11 +66,11 @@ private:
       * snapshots i. By default, all fields are dumped.
       */
     amrex::Gpu::ManagedDeviceVector<int> m_map_actual_fields_to_dump;
-    
+
     // boost parameters
     amrex::Real m_gamma_boost;
     amrex::Real m_beta_boost;
-    int m_boost_direction; 
+    int m_boost_direction;
     int m_moving_window_dir;
 
     /** Number of back-transformed snapshots in the lab-frame requested by the user */
@@ -81,8 +81,8 @@ private:
       * m_dz_snapshots_lab = m_dt_snapshots_lab/c
       */
     amrex::Real m_dz_snapshots_lab;
-    
-    /** Number of z-slices in each buffer of the snapshot */ 
+
+    /** Number of z-slices in each buffer of the snapshot */
     int m_buffer_size = 256;
     /** max grid size used to generate BoxArray to define output MultiFabs */
     int m_max_box_size = 256;
@@ -97,12 +97,12 @@ private:
     amrex::Vector<amrex::Box> m_buffer_box;
     /**  Lab-frame z co-ordinate of the back-transformed snapshot at the current timestep */
     amrex::Vector<amrex::Real> m_current_z_lab;
-    /**  Boosted-frame z co-ordinate corresponding to the back-transformed 
+    /**  Boosted-frame z co-ordinate corresponding to the back-transformed
          snapshot at the current timestep */
     amrex::Vector<amrex::Real> m_current_z_boost;
     /**  Number of back-transformed z-slices in the output buffer multifab */
     amrex::Vector<int> m_buffer_counter;
-    /** Multi-level cell-centered multifab with all field-data components 
+    /** Multi-level cell-centered multifab with all field-data components
         which will be sliced and transformed. The same multifab will be used
         for all snapshots.
       */
@@ -112,7 +112,7 @@ private:
      *  using the coarsening-ratio provided by the user.
      */
     amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor const> > > m_cell_center_functors;
-   
+
     /** Customized function to write back-transformed data */
     void writeMetaData ();
     /** Customized functions to write back-transformed data */

@@ -57,13 +57,13 @@ BTDiagnostics::InitData ()
             InitBufferData(i, lev);
             // Define cell-centered multifab over the whole domain with user-defined crse_ratio
             // for nlevels
-            DefineCellCenteredMultiFab(lev); 
+            DefineCellCenteredMultiFab(lev);
             // Pointers to field functors are initialized for back-transform output
             // and to prepare cell-centered data required to compute back-transform diags
             InitializeFieldFunctors(lev);
-        }  
+        }
     }
-    
+
 
 }
 
@@ -94,11 +94,11 @@ BTDiagnostics::ReadParameters ()
     pp.query("file_prefix", m_file_prefix);
     pp.query("do_back_transformed_fields", m_do_back_transformed_fields);
     pp.query("do_back_transformed_particles", m_do_back_transformed_particles);
-    AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);    
+    AMREX_ALWAYS_ASSERT(m_do_back_transformed_fields or m_do_back_transformed_particles);
 
     pp.get("num_snapshots_lab", m_num_snapshots_lab);
     m_num_buffers = m_num_snapshots_lab;
- 
+
     // Read either dz_snapshots_lab or dt_snapshots_lab
     bool snapshot_interval_is_specified = 0;
     amrex::Real m_dz_snapshots_lab = 0.0_rt;
@@ -120,7 +120,7 @@ BTDiagnostics::ReadParameters ()
 void
 BTDiagnostics::writeMetaData ()
 {
-    // This function will have the same functionality as writeMetaData in 
+    // This function will have the same functionality as writeMetaData in
     // previously used BackTransformedDiagnostics class to write
     // back-transformed data in a customized format
 }
@@ -129,7 +129,7 @@ bool
 BTDiagnostics::DoDump (int step, bool force_flush)
 {
     // always set to true for BTDiagnostics since back-transform buffers are potentially
-    // filled every timstep. They will be flushed if m_buffer_counter for 
+    // filled every timstep. They will be flushed if m_buffer_counter for
     // the snapshot is equal to m_buffer_size
     return true;
 }
@@ -143,10 +143,10 @@ BTDiagnostics::InitBufferData(int i_buffer, int lev)
     // 3. Initializing the m_buffer_box for the i^th snapshot.
     //    At initialization, the Box has the same index space as the boosted-frame
     //    As time-progresses, the z-dimension indices will be modified based on
-    //    current_z_lab 
+    //    current_z_lab
     // 4. Define buffer_domain  in lab-frame for the i^th snapshot.
-    //    Replace z-dimension with lab-frame co-ordinates. 
-    // 5. Initialize buffer counter and z-positions of the  i^th snapshot in 
+    //    Replace z-dimension with lab-frame co-ordinates.
+    // 5. Initialize buffer counter and z-positions of the  i^th snapshot in
     //    boosted-frame and lab-frame
     // 6. Compute ncells_lab required for writing Header file and potentially to generate
     //    Back-Transform geometry to ensure compatibility with plotfiles //

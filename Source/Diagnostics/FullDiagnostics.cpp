@@ -83,7 +83,7 @@ FullDiagnostics::ReadParameters ()
             "to file for a restart");
     }
     // Number of buffers = 1 for FullDiagnostics.
-    // It is used to allocate the number of output multu-level MultiFab, m_mf_output 
+    // It is used to allocate the number of output multu-level MultiFab, m_mf_output
     m_num_buffers = 1;
 }
 

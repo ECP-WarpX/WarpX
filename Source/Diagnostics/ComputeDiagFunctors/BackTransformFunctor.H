@@ -21,7 +21,7 @@ public:
     // in boosted-frame and lab-frame.i
     // Unlike cell-center functor, coarsening ratio is not provided to this functor,
     // since the data is coarsened when preparing fields in m_mf_cc (mf_src).
-    
+
     /** Constructor description
      * \param[in] mf_src cell-centered multifab containing all user-requested
                          fields in boosted-frame
@@ -31,10 +31,10 @@ public:
      */
 
     // initializing crse_ratio with 1, to accurately initialize ComputeDiagFunctor
-          
+
     BackTransformFunctor( const amrex::MultiFab * const mf_src, const int lev,
                           const int ncomp, amrex::IntVect crse_ratio= amrex::IntVect(1));
-    
+
 private:
     /** pointer to source multifab (cell-centered multi-component multifab) */
     amrex::MultiFab const * const m_mf_src = nullptr;

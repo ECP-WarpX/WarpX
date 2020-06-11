@@ -22,7 +22,7 @@ private:
     /** Whether to plot F (charge conservation error) in raw fields */
     bool m_plot_raw_F = false;
     /** Flush m_mf_output and particles to file. */
-    void Flush () override; 
+    void Flush () override;
     /** Flush raw data */
     void FlushRaw () override;
     /** whether to flush at this time step
@@ -58,7 +58,7 @@ private:
     void InitializeFieldFunctors (int lev) override;
     /** Prepare field data to be used for diagnostics */
     void PrepareFieldDataForOutput () override;
-    
+
 };
 
 #endif // WARPX_FULLDIAGNOSTICS_H_
