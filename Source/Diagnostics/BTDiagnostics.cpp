@@ -53,7 +53,7 @@ BTDiagnostics::InitData ()
         // temporary variable name for customized BTD output to verify accuracy
         m_file_name[i] = amrex::Concatenate(m_file_prefix +"/snapshots/snapshot",i,5);
         for (int lev = 0; lev < nmax_lev; ++lev) {
-            // Initialize 
+            // Initialize buffer domain, buffer_box, and ncells in lab-frame
             InitBufferData(i, lev);
             // Define cell-centered multifab over the whole domain with user-defined crse_ratio
             // for nlevels
@@ -120,28 +120,9 @@ BTDiagnostics::ReadParameters ()
 void
 BTDiagnostics::writeMetaData ()
 {
-    WARPX_PROFILE("BTDiagnostic::WriteMetaData");
-    
-    if (ParallelDescriptor::IOProcessor()) {
-        const std::string fullpath = m_file_prefix + "/snapshots";
-        if (!UtilCreateDirectory(fullpath, 0755)) CreateDirectoryFailed(fullpath);
-        
-        VisMF::IO_Buffer io_buffer(VisMF::IO_Buffer_Size);
-        std::ofstream HeaderFile;
-        HeaderFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
-        std::string HeaderFileName(m_file_prefix + "/snapshots/Header");
-        HeaderFile.open(HeaderFileName.c_str(), std::ofstream::out   |
-                                                std::ofstream::trunc |
-                                                std::ofstream::binary);
-        if (!HeaderFile.good()) FileOpenFailed( HeaderFileName );
-        
-        HeaderFile.precision(17);
-        HeaderFile << m_num_snapshots_lab << "\n";
-        HeaderFile << m_dt_snapshots_lab << "\n";
-        HeaderFile << m_gamma_boost << "\n";
-        HeaderFile << m_beta_boost << "\n";
-
-    }       
+    // This function will have the same functionality as writeMetaData in 
+    // previously used BackTransformedDiagnostics class to write
+    // back-transformed data in a customized format
 }
 
 bool
@@ -157,79 +138,19 @@ void
 BTDiagnostics::InitBufferData(int i_buffer, int lev)
 {
     auto & warpx = WarpX::GetInstance();
-    // Lab-frame time for the i^th snapshot
-    m_t_lab[i_buffer] = i_buffer * m_dt_snapshots_lab;
-    // define domain in boosted frame at level, lev
-    amrex::RealBox diag_dom;
-    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim ) {
-        diag_dom.setLo(idim, max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
-        diag_dom.setHi(idim, min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
-    }
-    // The ncells are required for writing the Header file and potentially to generate
-    // Back-Transform geometry to ensure compatibility with plotfiles //
-    amrex::Real zmin_lab = diag_dom.lo(m_boost_direction)
-                           / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-    amrex::Real zmax_lab = diag_dom.hi(m_boost_direction)
-                           / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-    // Initializing the m_buffer_box for the i^th snapshot.
-    // At initialization, the Box has the same index space as the boosted-frame
-    // As time-progresses, the z-dimension indices will be modified based on
-    // current_z_lab
-    IntVect lo(0);
-    IntVect hi(1);
-    for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
-        // lo index with same cell-size as simulation at level, lev.
-        lo[idim] = max( static_cast<int>( floor (
-                      ( diag_dom.lo(idim) - warpx.Geom(lev).ProbLo(idim)) /
-                        warpx.Geom(lev).CellSize(idim)) ), 0 );
-        // hi index with same cell-size as simulation at level, lev.
-        hi[idim] = max( static_cast<int> ( ceil (
-                      ( diag_dom.hi(idim) - warpx.Geom(lev).ProbLo(idim)) /
-                        warpx.Geom(lev).CellSize(idim) ) ), 0) - 1 ;
-        // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
-        if ( hi[idim] <= lo[idim] ) {
-             hi[idim]  = lo[idim] + 1;
-             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                m_crse_ratio[idim]==1, "coarsening ratio in reduced dimension must be 1."
-             );
-        }
-    }
-    Box diag_box( lo, hi );
-    // The box is not coarsened yet. Should this be coarsened here or when
-    // the buffer multifab is initialized?
-    m_buffer_box[i_buffer] = diag_box;
-    
-    // Define buffer_domain  in lab-frame for the i^th snapshot.
-    // Replace z-dimension with lab-frame co-ordinates. 
-    m_buffer_domain_lab[i_buffer] = warpx.Geom(lev).ProbDomain();
-    m_buffer_domain_lab[i_buffer].setLo(m_boost_direction, zmin_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
-    m_buffer_domain_lab[i_buffer].setHi(m_boost_direction, zmin_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
-
-
-    m_buffer_counter[i_buffer] = 0;
-    m_current_z_lab[i_buffer] = 0.0;
-    m_current_z_boost[i_buffer] = 0.0;
-    // Now Update Current Z Positions
-    m_current_z_boost[i_buffer] = UpdateCurrentZBoostCoordinate(m_t_lab[i_buffer],
-                                                              warpx.gett_new(lev) );
-    m_current_z_lab[i_buffer] = UpdateCurrentZLabCoordinate(m_t_lab[i_buffer],
-                                                              warpx.gett_new(lev) );
-
-    // Needs to include coarsening ratio. Currently not account for.
-    IntVect ref_ratio = WarpX::RefRatio(lev);
-    int Nz_lab = max( static_cast<int>( floor ( ( zmax_lab - zmin_lab)
-                      / dz_lab(warpx.getdt(lev), ref_ratio[AMREX_SPACEDIM-1]) ) ), 0);
-    int Nx_lab = max( static_cast<int>( floor( (diag_dom.hi(0) - diag_dom.lo(0) )
-                      / warpx.Geom(lev).CellSize(0) )), 0);
-#if (AMREX_SPACEDIM == 3)
-    int Ny_lab = max( static_cast<int>( floor( (diag_dom.hi(1) - diag_dom.lo(1) ) 
-                      / warpx.Geom(lev).CellSize(1) )), 0);
-    m_buffer_ncells_lab[i_buffer] = {Nx_lab, Ny_lab, Nz_lab};
-#else
-    int Ny_lab = 0;
-    m_buffer_ncells_lab[i_buffer] = {Nx_lab, Nz_lab};
-#endif
-
+    // 1. Lab-frame time for the i^th snapshot
+    // 2. Define domain in boosted frame at level, lev
+    // 3. Initializing the m_buffer_box for the i^th snapshot.
+    //    At initialization, the Box has the same index space as the boosted-frame
+    //    As time-progresses, the z-dimension indices will be modified based on
+    //    current_z_lab 
+    // 4. Define buffer_domain  in lab-frame for the i^th snapshot.
+    //    Replace z-dimension with lab-frame co-ordinates. 
+    // 5. Initialize buffer counter and z-positions of the  i^th snapshot in 
+    //    boosted-frame and lab-frame
+    // 6. Compute ncells_lab required for writing Header file and potentially to generate
+    //    Back-Transform geometry to ensure compatibility with plotfiles //
+    // 7. Call funtion to create directories for customized output format
     createLabFrameDirectories(i_buffer, lev);
 }
 
@@ -237,13 +158,9 @@ void
 BTDiagnostics::DefineCellCenteredMultiFab(int lev)
 {
     // Creating MultiFab to store cell-centered data in boosted-frame for the entire-domain
+    // This MultiFab will store all the user-requested fields in the boosted-frame
     auto & warpx = WarpX::GetInstance();
-    BoxArray ba = warpx.boxArray(lev);
     // The BoxArray is coarsened based on the user-defined coarsening ratio
-    ba.coarsen(m_crse_ratio);
-    DistributionMapping dmap = warpx.DistributionMap(lev);
-    int ngrow = 1;
-    m_cell_centered_data[lev].reset( new amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow) );
 }
 
 void
@@ -251,52 +168,19 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
 {
     auto & warpx = WarpX::GetInstance();
     // Clear any pre-existing vector to release stored data
+    // This ensures that when domain is load-balanced, the functors point
+    // to the correct field-data pointers
     m_all_field_functors[lev].clear();
     // For back-transformed data, all the components are cell-centered and stored in a single multifab. Therefore, size of functors at all levels is 1.
     int num_BT_functors = 1;
     m_all_field_functors[lev].resize(num_BT_functors);
-    for (int i = 0; i < num_BT_functors; ++i)
-    {
-//        m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>( 
-//                  m_mf_cc[lev].get(), lev, m_crse_ratio, m_varnames.size() );
-    }
-
-    
-    // Fill vector of cell-center functors for all components
-    // The clear and resizing ensures that when domain is load-balanced,
-    // the functors point to the corect field-data pointers
-    // Only E,B, j, and rho are included in the cell-center functors for BackTransform Diags
     m_cell_center_functors[lev].clear();
     m_cell_center_functors[lev].resize( m_varnames.size() );
-    for (int comp=0, n=m_cell_center_functors[lev].size(); comp<n; comp++){
-        if        ( m_varnames[comp] == "Ex" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
-        } else if ( m_varnames[comp] == "Ey" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 1), lev, m_crse_ratio);
-        } else if ( m_varnames[comp] == "Ez" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 2), lev, m_crse_ratio);
-        } else if ( m_varnames[comp] == "Bx" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 0), lev, m_crse_ratio);
-        } else if ( m_varnames[comp] == "By" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 1), lev, m_crse_ratio);
-        } else if ( m_varnames[comp] == "Bz" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Bfield_aux(lev, 2), lev, m_crse_ratio);
-        } else if ( m_varnames[comp] == "jx" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 0), lev, m_crse_ratio);
-        } else if ( m_varnames[comp] == "jy" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 1), lev, m_crse_ratio);
-        } else if ( m_varnames[comp] == "jz" ){
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio);
-        } else if ( m_varnames[comp] == "rho" ){
-            // rho_new is stored in component 1 of rho_fp when using PSATD
-#ifdef WARPX_USE_PSATD
-            MultiFab* rho_new = new MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(rho_new, lev, m_crse_ratio);
-#else
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_rho_fp(lev), lev, m_crse_ratio);
-#endif
-        }
-    }       
+    // 1. create an object of class BackTransformFunctor
+
+    // 2. Define all cell-centered functors required to compute cell-centere data
+    //    Fill vector of cell-center functors for all components
+    //    Only E,B, j, and rho are included in the cell-center functors for BackTransform Diags
 }
 
 // Temporary function only to debug the current implementation.

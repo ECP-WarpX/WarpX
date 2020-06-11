@@ -22,13 +22,13 @@ using namespace amrex;
 FullDiagnostics::FullDiagnostics (int i, std::string name)
     : Diagnostics(i, name)
 {
-
     ReadParameters();
 }
 
 void
 FullDiagnostics::InitData ()
 {
+    // Initialize data in the base class Diagnostics
     InitBaseData();
 
     auto & warpx = WarpX::GetInstance();
@@ -82,13 +82,16 @@ FullDiagnostics::ReadParameters ()
             "For a checkpoint output, cannot specify these parameters as all data must be dumped "
             "to file for a restart");
     }
-
+    // Number of buffers = 1 for FullDiagnostics.
+    // It is used to allocate the number of output multu-level MultiFab, m_mf_output 
     m_num_buffers = 1;
 }
 
 void
 FullDiagnostics::Flush ()
 {
+    // This function can be moved to Diagnostics when plotfiles/openpmd format
+    // is supported for BackTransformed Diagnostics
     auto & warpx = WarpX::GetInstance();
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[0], warpx.Geom(), warpx.getistep(),
@@ -300,6 +303,7 @@ FullDiagnostics::DefineDiagMultiFab ( int lev ) {
     if (use_warpxba == false) dmap = DistributionMapping{ba};
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
     int ngrow = (m_format == "sensei") ? 1 : 0;
+    // The zero is hard-coded since the number of output buffers = 1 for FullDiagnostics
     m_mf_output[0][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow);
 
 }

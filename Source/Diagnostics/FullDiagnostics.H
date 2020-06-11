@@ -8,9 +8,8 @@ FullDiagnostics final : public Diagnostics
 {
 public:
     FullDiagnostics (int i, std::string name);
-//    ~FullDiagnostics ();
-//    void BTInitData (){};
 private:
+    /** Read user-requested parameters for full diagnostics */
     void ReadParameters ();
     /** Determines timesteps at which full diagnostics are written to file */
     IntervalsParser m_intervals;

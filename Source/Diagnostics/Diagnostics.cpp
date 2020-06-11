@@ -158,7 +158,8 @@ Diagnostics::ComputeAndPack ()
             icomp_dst += m_all_field_functors[lev][icomp]->nComp();
         }
         // Check that the proper number of components of mf_avg were updated.
-        // to be discussed at review. The assert below will work only for FullDiags
+        // to be discussed at review. 
+        // The assert below will work only for FullDiags. to be checked at review?
         //AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
     }
 }

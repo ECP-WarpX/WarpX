@@ -10,26 +10,28 @@ BTDiagnostics final : public Diagnostics
 public:
 
     BTDiagnostics (int i, std::string name);
-    
+    /** Initialize Data required to compute back-transformed diagnostics */
     void InitData () override;
-    
 
 private:
     /** Read relevant parameters for BTD */
     void ReadParameters ();
     /** Flush m_mf_output and particles to file. */
+    // Currently this is an empty function. When OpenPMD/Plotfile is supported
+    // this function can be moved to the base class Diagnostics.
     void Flush () override {} ; 
-    /** whether to flush at this time step
-      * \param[in] step current time step
-      * \param[in] force_flush if true, return true for any step
-      *  The return bool is always set to true since data is back-transformed
-      *  to lab-frame and added to the output buffer every timestep.
-      *  The data is flushed when the buffer is full and/or when the simulation ends.
-      */
+    /** whether to write output files at this time step
+     * \param[in] step current time step
+     * \param[in] force_flush if true, return true for any step
+     *  The return bool is always set to true since data is back-transformed
+     *  to lab-frame and added to the output buffer every timestep.
+     *  The data is flushed when the buffer is full and/or when the simulation ends.
+     */
+    // To be discussed : may be this function should have a different name?
     bool DoDump (int step, bool force_flush=false) override;
     /** Initialize functors that store pointers to the fields requested by the user.
-      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
-      */    
+     * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+     */    
     void InitializeFieldFunctors (int lev);
     /** Compute the cell-centered data for all user-requested fields and store in
      *  the multi-level cell-centered multifab, m_mf_cc. This MultiFab extends
@@ -65,12 +67,12 @@ private:
       */
     amrex::Gpu::ManagedDeviceVector<int> m_map_actual_fields_to_dump;
     
-    // BTD related variables
+    // boost parameters
     amrex::Real m_gamma_boost;
     amrex::Real m_beta_boost;
-//    amrex::Real m_dz_lab;
     int m_boost_direction; 
     int m_moving_window_dir;
+
     /** Number of back-transformed snapshots in the lab-frame requested by the user */
     int m_num_snapshots_lab = std::numeric_limits<int>::lowest();
     /** Time interval in lab-frame between the back-transformed snapshots */
@@ -80,8 +82,9 @@ private:
       */
     amrex::Real m_dz_snapshots_lab;
     
-   
+    /** Number of z-slices in each buffer of the snapshot */ 
     int m_buffer_size = 256;
+    /** max grid size used to generate BoxArray to define output MultiFabs */
     int m_max_box_size = 256;
 
     /**  Time in lab-frame of the back-transformed snapshot */
@@ -110,14 +113,18 @@ private:
      */
     amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor const> > > m_cell_center_functors;
    
-    /** Customized meta-data for BTD */
+    /** Customized function to write back-transformed data */
     void writeMetaData ();
+    /** Customized functions to write back-transformed data */
+    void createLabFrameDirectories (int i_buffer, int lev);
+    /** Define the cell-centered multi-component MultiFab at level, lev.
+     *  \param[in] lev level at which the cell-centered MultiFab is defined.
+     */
+    void DefineCellCenteredMultiFab(int lev);
     /** Returns z-position in the boosted-frame
       * \param[in] lab-frame time of the snapshot
       * \param[in] boosted-frame time at level, lev
       */
-    void DefineCellCenteredMultiFab(int lev);
-
     amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost)
     {
         amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
@@ -140,7 +147,6 @@ private:
         return PhysConst::c * dt * 1._rt/m_beta_boost * 1._rt/m_gamma_boost * 1._rt/ref_ratio;
     }
 
-    void createLabFrameDirectories (int i_buffer, int lev);
 };
 
 #endif // WARPX_BTDIAGNOSTICS_H_

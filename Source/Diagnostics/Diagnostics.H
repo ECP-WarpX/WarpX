@@ -67,11 +67,13 @@ protected:
     int m_already_done = false;
     /** This class is responsible for flushing the data to file */
     FlushFormat* m_flush_format;
-    /** output multifab, where all fields are cell-centered and stacked.
-        The first vector is for total number of snapshots. (=1 for FullDiagnostics)
-        The second vector is loops over the total number of levels.
-      */
+    /** output multifab, where all fields are computed (cell-centered or back-transformed)
+     *  and stacked.
+     *  The first vector is for total number of snapshots. (=1 for FullDiagnostics)
+     *  The second vector is loops over the total number of levels.
+     */
     amrex::Vector< amrex::Vector< amrex::MultiFab > >  m_mf_output;
+    // a particle buffer here?
     int nlev; /**< number of levels to output */
     int nmax_lev; /**< max_level to allocate output multifab and vector of field functors. */
     /** Name of species to write to file */
