@@ -113,8 +113,10 @@ WarpX::Evolve (int numsteps)
             FillBoundaryB(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
             // E and B: enough guard cells to update Aux or call Field Gather in fp and cp
             // Need to update Aux on lower levels, to interpolate to higher levels.
-            FillBoundaryE_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
-            FillBoundaryB_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+            if (fft_do_time_averaging){
+              FillBoundaryE_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+              FillBoundaryB_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+            }
 
 #ifndef WARPX_USE_PSATD
             FillBoundaryAux(guard_cells.ng_UpdateAux);
