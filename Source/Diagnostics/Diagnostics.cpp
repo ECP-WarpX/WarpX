@@ -112,7 +112,7 @@ Diagnostics::InitData ()
         // loop over all levels
         for (int lev = 0; lev < nmax_lev; ++lev) {
             // allocate and initialize m_all_field_functors depending on diag type
-            InitializeFieldFunctors(i_buffer, lev);
+            InitializeFieldFunctors(lev);
             // Initialize field buffer data, m_mf_output
             InitializeFieldBufferData(i_buffer, lev);            
         }

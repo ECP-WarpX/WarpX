@@ -128,7 +128,7 @@ BTDiagnostics::DoDump (int step, bool force_flush)
 }
 
 void
-BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev) override;
+BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 {
     auto & warpx = WarpX::GetInstance();
     // 1. Lab-frame time for the i^th snapshot

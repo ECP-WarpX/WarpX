@@ -26,12 +26,12 @@ FullDiagnostics::FullDiagnostics (int i, std::string name)
 }
 
 void
-FullDiagnostics::InitializeParticleBuffers ()
+FullDiagnostics::InitializeParticleBuffer ()
 {
 //    // Initialize data in the base class Diagnostics
 //    InitBaseData();
 //
-//    auto & warpx = WarpX::GetInstance();
+    auto & warpx = WarpX::GetInstance();
 //
 //    for ( int lev=0; lev<nlev; lev++ ){
 //        InitializeFieldFunctors( lev );
@@ -49,7 +49,7 @@ FullDiagnostics::InitializeParticleBuffers ()
         const int idx = mpc.getSpeciesID(m_species_names[i]);
         m_all_species.push_back(ParticleDiag(m_diag_name, m_species_names[i],
                                              mpc.GetParticleContainerPtr(idx)));
-//    }
+    }
 }
 
 void
@@ -217,7 +217,7 @@ FullDiagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
 
 
 void
-FullDiagnostics::InitializeFieldBufferData ( int lev ) {
+FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     auto & warpx = WarpX::GetInstance();
     amrex::RealBox diag_dom;
     bool use_warpxba = true;
@@ -305,7 +305,7 @@ FullDiagnostics::InitializeFieldBufferData ( int lev ) {
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
     int ngrow = (m_format == "sensei") ? 1 : 0;
     // The zero is hard-coded since the number of output buffers = 1 for FullDiagnostics
-    m_mf_output[0][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow);
+    m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow);
 
 }
 

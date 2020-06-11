@@ -32,7 +32,10 @@ private:
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
     void InitializeFieldFunctors (int lev);
-    void InitializeParticleBuffers () override {};
+    /** This function initialized and allocates particle buffers for all the snapshots.
+     *  The particle containers required for this must be added to populate this function.
+     */
+    void InitializeParticleBuffer () override {};
     /** Compute the cell-centered data for all user-requested fields and store in
      *  the multi-level cell-centered multifab, m_mf_cc. This MultiFab extends
      *  over the entire domain and is coarsened using the user-defined crse_ratio
