@@ -47,9 +47,12 @@ public:
      */
     virtual bool DoDump (int step, bool force_flush=false){ return false;};
     /** Initialize functors that store pointers to the fields requested by the user.
+     *
+     * Derived classes MUST implement this function, and it must allocate m_all_field_functors
+     * and fill it with ComputeDiagFunctor objects.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
-    virtual void InitializeFieldFunctors (int lev){};
+    virtual void InitializeFieldFunctors (int lev) = 0;
     /** Start a new iteration, i.e., dump has not been done yet. */
     void NewIteration () {m_already_done = false;};
 
