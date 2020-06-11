@@ -306,11 +306,12 @@ Particle initialization
       symmetrize the beam in the x and y directions).
 
     * ``external_file``: Inject macroparticles with properties (mass, charge, position, and momentum - :math:`\gamma \beta m c`) read from an external openPMD file.
-      It requires the additional arguments:
+      With it users can specify the additional arguments:
       ``<species_name>.injection_file`` (`string`) openPMD file name and
       ``<species_name>.q_tot`` (`double`) optional (default is ``q_tot=0`` and no re-scaling is done, ``weight=q_p``) when specified it is used to re-scale the weight of externally loaded ``N`` physical particles, each of charge ``q_p``, to inject macroparticles of ``weight=<species_name>.q_tot/q_p/N``.
       ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
+      ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
       The external file must include the species ``openPMD::Record``s labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
       If the external file also contains ``openPMD::Records``s for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ```<species_name>.charge`` or ```<species_name>.species_type``).
       The ``external_file`` option is currently implemented for 2D and 3D geometries, with record components ``x``, ``z`` and ``y`` for 3D.
@@ -1105,7 +1106,7 @@ Boundary conditions
     and around the refinement patches. See the section :doc:`../../theory/PML`
     for more details.
 
-* ``warpx.pml_ncells`` (`int`; default: 10)
+* ``warpx.pml_ncell`` (`int`; default: 10)
     The depth of the PML, in number of cells.
 
 * ``warpx.pml_delta`` (`int`; default: 10)
@@ -1133,6 +1134,9 @@ Boundary conditions
 Diagnostics and output
 ----------------------
 
+In-situ visualization
+^^^^^^^^^^^^^^^^^^^^^
+
 WarpX has three types of diagnostics:
 ``FullDiagnostics`` consist in dumps of fields and particles at given iterations,
 ``BackTransformedDiagnostics`` are used when running a simulation in a boosted frame, to reconstruct output data to the lab frame, and
@@ -1148,6 +1152,7 @@ Similar to what is done for physical species, WarpX has a class Diagnostics that
 The user specifies the number of diagnostics and the name of each of them, and then specifies options for each of them separately.
 Note that some parameter (those that do not start with a ``<diag_name>.`` prefix) apply to all diagnostics.
 This should be changed in the future.
+In-situ capabilities can be used by turning on Sensei or Ascent (provided they are installed) through the output format, see below.
 
 * ``diagnostics.diags_names`` (list of `string` optional, default `empty`)
     Name of each diagnostics.
@@ -1175,7 +1180,17 @@ This should be changed in the future.
 
     * ``ascent`` for in-situ visualization using Ascent.
 
+    * ``sensei`` for in-situ visualization using Sensei.
+
     example: ``diag1.format = openpmd``.
+
+* ``<diag_name>.sensei_config`` (`string`)
+  Only read if ``<diag_name>.format = sensei``.
+  Points to the SENSEI XML file which selects and configures the desired back end.
+
+* ``<diag_name>.sensei_pin_mesh`` (`integer`; 0 by default)
+  Only read if ``<diag_name>.format = sensei``.
+  When 1 lower left corner of the mesh is pinned to 0.,0.,0.
 
 * ``<diag_name>.openpmd_backend`` (``bp``, ``h5`` or ``json``) optional, only used if ``<diag_name>.format = openpmd``
     `I/O backend <https://openpmd-api.readthedocs.io/en/latest/backends/overview.html>`_ for `openPMD <https://www.openPMD.org>`_ data dumps.
@@ -1529,24 +1544,6 @@ Reduced Diagnostics
 * ``<reduced_diags_name>.separator`` (`string`) optional (default a `whitespace`)
     The separator between row values in the output file.
     The default separator is a whitespace.
-
-In-situ visualization
-^^^^^^^^^^^^^^^^^^^^^
-
-Besides the diagnostics described above, WarpX has in-situ visualization capabilities.
-This is controlled by the following option(s):
-
-* ``insitu.int`` (`integer`; 0 by default)
-    Turns in situ processing on or off and controls how often data is processed.
-
-* ``insitu.start`` (`integer`; 0 by default)
-    Controls when in situ processing starts.
-
-* ``insitu.config`` (`string`)
-    Points to the SENSEI XML file which selects and configures the desired back end.
-
-* ``insitu.pin_mesh`` (`integer`; 0 by default)
-    when 1 lower left corner of the mesh is pinned to 0.,0.,0.
 
 Lookup tables and other settings for QED modules (implementation in progress)
 -----------------------------------------------------------------------------

@@ -275,10 +275,6 @@ WarpX::WarpX ()
     m_fdtd_solver_fp.resize(nlevs_max);
     m_fdtd_solver_cp.resize(nlevs_max);
 
-#ifdef BL_USE_SENSEI_INSITU
-    insitu_bridge = nullptr;
-#endif
-
     // NCI Godfrey filters can have different stencils
     // at different levels (the stencil depends on c*dt/dz)
     nci_godfrey_filter_exeybz.resize(nlevs_max);
@@ -301,10 +297,6 @@ WarpX::~WarpX ()
     }
 
     delete reduced_diags;
-
-#ifdef BL_USE_SENSEI_INSITU
-    delete insitu_bridge;
-#endif
 }
 
 void
@@ -516,41 +508,6 @@ WarpX::ReadParameters ()
             amrex::Abort("J-damping can only be done when PML are inside simulation domain (do_pml_in_domain=1)");
         }
 
-        // only used for in-situ
-        bool user_fields_to_plot;
-        user_fields_to_plot = pp.queryarr("fields_to_plot", fields_to_plot);
-        if (not user_fields_to_plot){
-            // If not specified, set default values
-            fields_to_plot = {"Ex", "Ey", "Ez", "Bx", "By",
-                              "Bz", "jx", "jy", "jz",
-                              "part_per_cell"};
-        }
-        // set plot_rho to true of the users requests it, so that
-        // rho is computed at each iteration.
-        if (std::find(fields_to_plot.begin(), fields_to_plot.end(), "rho")
-            != fields_to_plot.end()){
-            plot_rho = true;
-        }
-        // Sanity check if user requests to plot F
-        if (std::find(fields_to_plot.begin(), fields_to_plot.end(), "F")
-            != fields_to_plot.end()){
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_dive_cleaning,
-                "plot F only works if warpx.do_dive_cleaning = 1");
-        }
-        // If user requests to plot proc_number for a serial run,
-        // delete proc_number from fields_to_plot
-        if (ParallelDescriptor::NProcs() == 1){
-            fields_to_plot.erase(std::remove(fields_to_plot.begin(),
-                                             fields_to_plot.end(),
-                                             "proc_number"),
-                                 fields_to_plot.end());
-        }
-
-        pp.query("plot_finepatch", plot_finepatch);
-        if (maxLevel() > 0) {
-            pp.query("plot_crsepatch", plot_crsepatch);
-        }
-
         {
             // Parameters below control all plotfile diagnostics
             bool plotfile_min_max = true;
@@ -650,19 +607,6 @@ WarpX::ReadParameters ()
     }
 #endif
 
-    {
-        insitu_start = 0;
-        insitu_int = 0;
-        insitu_config = "";
-        insitu_pin_mesh = 0;
-
-        ParmParse pp("insitu");
-        pp.query("int", insitu_int);
-        pp.query("start", insitu_start);
-        pp.query("config", insitu_config);
-        pp.query("pin_mesh", insitu_pin_mesh);
-    }
-
     // for slice generation //
     {
        ParmParse pp("slice");
@@ -725,7 +669,14 @@ WarpX::BackwardCompatibility ()
         amrex::Abort("warpx.fields_to_plot is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
     }
-
+    if (ppw.query("plot_finepatch", backward_int)){
+        amrex::Abort("warpx.plot_finepatch is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
+    }
+    if (ppw.query("plot_crsepatch", backward_int)){
+        amrex::Abort("warpx.plot_crsepatch is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
+    }
 }
 
 // This is a virtual function.
