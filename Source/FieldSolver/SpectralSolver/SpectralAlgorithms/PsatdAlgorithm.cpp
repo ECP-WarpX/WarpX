@@ -228,8 +228,8 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
         ParallelFor(bx,
         [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
-            // Record old values of the fields to be updated
             using Idx = SpectralFieldIndex;
+
             // Shortcuts for the values of J and rho
             const Complex Jx = fields(i,j,k,Idx::Jx);
             const Complex Jy = fields(i,j,k,Idx::Jy);
@@ -259,6 +259,7 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
                 fields(i,j,k,Idx::Jy) = Jy - (k_dot_J-I*(rho_new-rho_old)/dt)*ky/(k_norm*k_norm);
                 fields(i,j,k,Idx::Jz) = Jz - (k_dot_J-I*(rho_new-rho_old)/dt)*kz/(k_norm*k_norm);
             }
+
         });
     }
 
@@ -282,6 +283,14 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
     field_data.ForwardTransform( *current[1], Idx::Jy, 0 );
     field_data.ForwardTransform( *current[2], Idx::Jz, 0 );
 
+    // Staggering of D
+    const IntVect stag_Dx = current[0]->ixType().toIntVect();
+    const IntVect stag_Dy = current[1]->ixType().toIntVect();
+    const IntVect stag_Dz = current[2]->ixType().toIntVect();
+
+    // Alias for 0
+    constexpr int CELL = amrex::IndexType::CELL;
+
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi) {
 
@@ -297,11 +306,26 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
 #endif
         const amrex::Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
 
+        const Complex* xshift_arr = field_data.xshift_FFTfromCell[mfi].dataPtr();
+#if (AMREX_SPACEDIM == 3 )
+        const Complex* yshift_arr = field_data.yshift_FFTfromCell[mfi].dataPtr();
+#endif
+        const Complex* zshift_arr = field_data.zshift_FFTfromCell[mfi].dataPtr();
+
         // Loop over indices within one box
         ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
         {
-            // Record old values of the fields to be updated
             using Idx = SpectralFieldIndex;
+
+            // Revert extra shifts applied in forward FFT due to wrong index type
+            // (minimal set of operations for a staggered simulation)
+            if ( stag_Dx[0] == CELL ) fields(i,j,k,Idx::Jx) /= xshift_arr[i];
+#if   (AMREX_SPACEDIM == 2 )
+            if ( stag_Dz[1] == CELL ) fields(i,j,k,Idx::Jz) /= zshift_arr[j];
+#elif   (AMREX_SPACEDIM == 3 )
+            if ( stag_Dy[1] == CELL ) fields(i,j,k,Idx::Jy) /= yshift_arr[j];
+            if ( stag_Dz[2] == CELL ) fields(i,j,k,Idx::Jz) /= zshift_arr[k];
+#endif
 
             // Shortcuts for the values of D
             const Complex Dx = fields(i,j,k,Idx::Jx);
