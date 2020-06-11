@@ -4,7 +4,6 @@
 #include "FlushFormat.H"
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 
-
 #ifdef AMREX_USE_ASCENT
 #   include <ascent.hpp>
 #   include <AMReX_Conduit_Blueprint.H>
@@ -21,7 +20,7 @@ public:
     /** Do in-situ visualization for field and particle data */
     virtual void WriteToFile (
         const amrex::Vector<std::string> varnames,
-        const amrex::Vector<const amrex::MultiFab*> mf,
+        const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double time,
         const amrex::Vector<ParticleDiag>& particle_diags, int nlev, const std::string prefix,
