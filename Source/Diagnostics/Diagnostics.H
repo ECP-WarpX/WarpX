@@ -20,8 +20,9 @@ public:
     Diagnostics (int i, std::string name);
     ~Diagnostics ();
     /** Pack (stack) all fields in the cell-centered output MultiFab m_mf_output.
-     * Fields are computed (e.g., cell-centered) on-the-fly using a functor.*/
-    virtual void ComputeAndPack () {};
+     * Fields are computed (e.g., cell-centered or back-transformed) 
+       on-the-fly using a functor.*/
+    void ComputeAndPack ();
     /** Flush m_mf_output and particles to file. */
     virtual void Flush (){};
     /** Flush raw data */
@@ -35,8 +36,8 @@ public:
      */
     virtual bool DoDump (int step, bool force_flush=false){ return false;};
     /** Initialize functors that store pointers to the fields requested by the user.
-      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
-      */
+     * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+     */
     virtual void InitializeFieldFunctors (int lev){};
     /** Start a new iteration, i.e., dump has not been done yet. */
     void NewIteration () {m_already_done = false;};
@@ -46,6 +47,10 @@ protected:
     bool ReadBaseParameters ();
     /** Initialize member variables of the base Diagnostics class. */
     void InitBaseData ();
+    /** Prepare data (either fill-boundary or cell-centered data for
+        back-transform diagnostics) to be processed for diagnostics.
+     */
+    virtual void PrepareFieldDataForOutput () {};
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string m_diag_name;
     /** Prefix for output directories */

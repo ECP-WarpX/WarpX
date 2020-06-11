@@ -141,3 +141,25 @@ Diagnostics::InitBaseData ()
     }
 }
 
+void
+Diagnostics::ComputeAndPack ()
+{
+    // prepare the field-data necessary to compute output data
+    PrepareFieldDataForOutput();
+    // compute the necessary fields and store result in m_mf_output.
+    for(int lev=0; lev<nlev; lev++){
+        int icomp_dst = 0;
+        for (int icomp=0, n=m_all_field_functors[0].size(); icomp<n; icomp++){
+            // Call all functors in m_all_field_functors[lev]. Each of them computes
+            // a diagnostics and writes in one or more components of the output
+            // multifab m_mf_output[lev].
+            m_all_field_functors[lev][icomp]->operator()(m_mf_output[0][lev], icomp_dst);
+            // update the index of the next component to fill
+            icomp_dst += m_all_field_functors[lev][icomp]->nComp();
+        }
+        // Check that the proper number of components of mf_avg were updated.
+        // to be discussed at review. The assert below will work only for FullDiags
+        //AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
+    }
+}
+

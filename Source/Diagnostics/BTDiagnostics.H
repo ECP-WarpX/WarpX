@@ -2,6 +2,7 @@
 #define WARPX_BTDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
+using namespace amrex::literals;
 
 class
 BTDiagnostics final : public Diagnostics
@@ -18,8 +19,6 @@ private:
     void ReadParameters ();
     /** Flush m_mf_output and particles to file. */
     void Flush () override {} ; 
-    /** Flush raw data */
-    void FlushRaw () override {};
     /** whether to flush at this time step
       * \param[in] step current time step
       * \param[in] force_flush if true, return true for any step
@@ -31,7 +30,18 @@ private:
     /** Initialize functors that store pointers to the fields requested by the user.
       * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
       */    
-    void InitializeFieldFunctors (int lev){};
+    void InitializeFieldFunctors (int lev);
+    /** Compute the cell-centered data for all user-requested fields and store in
+     *  the multi-level cell-centered multifab, m_mf_cc. This MultiFab extends
+     *  over the entire domain and is coarsened using the user-defined crse_ratio
+     */
+    void PrepareFieldDataForOutput ();
+    /** Initialize buffer domain, buffer box and lab-frame parameters such as
+     *  m_t_lab, and z-positions for the i^th snapshot, i_buffer, and level, lev.
+     * \param[in] i_buffer i^th snapshot or buffer
+     * \param[in] lev level
+     */
+    void InitBufferData(int i_buffer, int lev);
     /** Whether to compute back-tranformed values for field-data */ 
     bool m_do_back_transformed_fields = true;
     /** Whether to compute back-tranformed values for particle-data */ 
@@ -57,12 +67,8 @@ private:
     
     // BTD related variables
     amrex::Real m_gamma_boost;
-    amrex::Real m_inv_gamma_boost;
     amrex::Real m_beta_boost;
-    amrex::Real m_inv_beta_boost;
-    amrex::Real m_dz_lab;
-    amrex::Real m_inv_dz_lab;
-    amrex::Real m_dt_boost;
+//    amrex::Real m_dz_lab;
     int m_boost_direction; 
     int m_moving_window_dir;
     /** Number of back-transformed snapshots in the lab-frame requested by the user */
@@ -81,9 +87,9 @@ private:
     /**  Time in lab-frame of the back-transformed snapshot */
     amrex::Vector<amrex::Real> m_t_lab;
     /**  Physical domain with lab-frame co-ordinates of the back-transformed snapshot */
-    amrex::Vector<amrex::RealBox> m_domain_lab;
+    amrex::Vector<amrex::RealBox> m_buffer_domain_lab;
     /**  Number of cells in the lab-frame for all back-transformed snapshots */
-    amrex::IntVect m_ncells_lab;
+    amrex::Vector<amrex::IntVect> m_buffer_ncells_lab;
     /**  Box-dimension in boosted-frame index space for each back-transformed snapshot */
     amrex::Vector<amrex::Box> m_buffer_box;
     /**  Lab-frame z co-ordinate of the back-transformed snapshot at the current timestep */
@@ -93,9 +99,48 @@ private:
     amrex::Vector<amrex::Real> m_current_z_boost;
     /**  Number of back-transformed z-slices in the output buffer multifab */
     amrex::Vector<int> m_buffer_counter;
+    /** Multi-level cell-centered multifab with all field-data components 
+        which will be sliced and transformed. The same multifab will be used
+        for all snapshots.
+      */
+    amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_cell_centered_data;
+    std::vector<std::string> m_file_name;
+    /** Vector of pointers to compute cell-centered data, per level, per component
+     *  using the coarsening-ratio provided by the user.
+     */
+    amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor const> > > m_cell_center_functors;
    
     /** Customized meta-data for BTD */
     void writeMetaData ();
+    /** Returns z-position in the boosted-frame
+      * \param[in] lab-frame time of the snapshot
+      * \param[in] boosted-frame time at level, lev
+      */
+    void DefineCellCenteredMultiFab(int lev);
+
+    amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost)
+    {
+        amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
+        return current_z_boost;
+    }
+    /** Returns z-position in the lab-frame
+      * \param[in] lab-frame time of the snapshot
+      * \param[in] boosted-frame time at level, lev
+      */
+    amrex::Real UpdateCurrentZLabCoordinate(amrex::Real t_lab, amrex::Real t_boost)
+    {
+        amrex::Real current_z_lab = (t_lab - t_boost / m_gamma_boost ) * PhysConst::c / m_beta_boost;
+        return current_z_lab;
+    }
+    /** Returns cell-size of the grid in z-direction in the lab-frame at level, lev
+     *  \param[in] dt in boosted-frame at level, lev
+     *  \param[in] ref_ratio, refinement ratio at level, lev
+     */
+    amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio) {
+        return PhysConst::c * dt * 1._rt/m_beta_boost * 1._rt/m_gamma_boost * 1._rt/ref_ratio;
+    }
+
+    void createLabFrameDirectories (int i_buffer, int lev);
 };
 
 #endif // WARPX_BTDIAGNOSTICS_H_

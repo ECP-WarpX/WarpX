@@ -57,9 +57,8 @@ private:
       * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
       */
     void InitializeFieldFunctors (int lev) override;
-    /** Pack (stack) all fields in the cell-centered output MultiFab m_mf_output.
-     * Fields are computed (e.g., cell-centered) on-the-fly using a functor.*/
-    void ComputeAndPack () override;
+    /** Prepare field data to be used for diagnostics */
+    void PrepareFieldDataForOutput () override;
     
 };
 
