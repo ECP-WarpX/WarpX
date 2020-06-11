@@ -353,6 +353,11 @@ public:
     void doFieldIonization ();
     void doFieldIonization (int lev);
 
+#ifdef WARPX_QED
+    void doQEDEvents ();
+    void doQEDEvents (int lev);
+#endif
+
     void PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full);
     void PushParticlesandDepose (         amrex::Real cur_time);
 

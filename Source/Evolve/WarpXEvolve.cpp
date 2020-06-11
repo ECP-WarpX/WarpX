@@ -299,8 +299,7 @@ WarpX::OneStep_nosub (Real cur_time)
 #endif
 
 #ifdef WARPX_QED
-    //Do QED processes
-    mypc->doQedEvents();
+    doQEDEvents();
 #endif
 
     // Synchronize J and rho
@@ -412,8 +411,7 @@ WarpX::OneStep_sub1 (Real curtime)
     doFieldIonization();
 
 #ifdef WARPX_QED
-    //Do QED processes
-    mypc->doQedEvents();
+    doQEDEvents();
 #endif
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
@@ -565,6 +563,24 @@ WarpX::doFieldIonization (int lev)
                             *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
 }
+
+#ifdef WARPX_QED
+void
+WarpX::doQEDEvents ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        doQEDEvents(lev);
+    }
+}
+
+void
+WarpX::doQEDEvents (int lev)
+{
+    mypc->doQedEvents(lev,
+                      *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
+                      *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
+}
+#endif
 
 void
 WarpX::PushParticlesandDepose (amrex::Real cur_time)

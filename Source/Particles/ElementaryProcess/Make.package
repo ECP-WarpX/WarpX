@@ -1,4 +1,6 @@
 CEXE_sources += Ionization.cpp
+CEXE_sources += QEDPairGeneration.cpp
+CEXE_sources += QEDPhotonEmission.cpp
 
 ifeq ($(QED),TRUE)
     include $(WARPX_HOME)/Source/Particles/ElementaryProcess/QEDInternals/Make.package

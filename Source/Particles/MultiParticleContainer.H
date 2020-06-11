@@ -212,7 +212,13 @@ public:
     /**
     * \brief Performs QED events (Breit-Wheeler process and photon emission)
     */
-    void doQedEvents();
+    void doQedEvents (int lev,
+                      const amrex::MultiFab& Ex,
+                      const amrex::MultiFab& Ey,
+                      const amrex::MultiFab& Ez,
+                      const amrex::MultiFab& Bx,
+                      const amrex::MultiFab& By,
+                      const amrex::MultiFab& Bz);
 #endif
 
     int getSpeciesID (std::string product_str) const;
@@ -223,12 +229,24 @@ protected:
     /**
     * \brief Performs Breit-Wheeler process for the species for which it is enabled
     */
-    void doQedBreitWheeler();
+    void doQedBreitWheeler (int lev,
+                            const amrex::MultiFab& Ex,
+                            const amrex::MultiFab& Ey,
+                            const amrex::MultiFab& Ez,
+                            const amrex::MultiFab& Bx,
+                            const amrex::MultiFab& By,
+                            const amrex::MultiFab& Bz);
 
     /**
     * \brief Performs QED photon emission for the species for which it is enabled
     */
-    void doQedQuantumSync();
+    void doQedQuantumSync (int lev,
+                           const amrex::MultiFab& Ex,
+                           const amrex::MultiFab& Ey,
+                           const amrex::MultiFab& Ez,
+                           const amrex::MultiFab& Bx,
+                           const amrex::MultiFab& By,
+                           const amrex::MultiFab& Bz);
 #endif
 
     // Particle container types

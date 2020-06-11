@@ -328,6 +328,8 @@ public:
     template<PhysicalSpecies PhysSpec>
     bool AmIA () const noexcept {return (physical_species == PhysSpec);}
 
+    amrex::Array<amrex::Real,3> get_v_galilean () {return v_galilean;}
+
 protected:
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
