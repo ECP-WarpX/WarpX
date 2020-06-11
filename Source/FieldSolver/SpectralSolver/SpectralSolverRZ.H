@@ -33,63 +33,41 @@ class SpectralSolverRZ
                          amrex::RealVect const dx, amrex::Real const dt,
                          int const lev,
                          bool const pml=false,
-                         bool const periodic_single_box=false );
+                         bool const periodic_single_box=false);
 
         /* \brief Transform the component `i_comp` of MultiFab `field_mf`
          *  to spectral space, and store the corresponding result internally
          *  (in the spectral field specified by `field_index`) */
-        void ForwardTransform (amrex::MultiFab const & field_mf,
-                               int const field_index,
-                               int const i_comp=0 ) {
-            BL_PROFILE("SpectralSolverRZ::ForwardTransform");
-            field_data.ForwardTransform(field_mf, field_index, i_comp);
-        };
+        void ForwardTransform(amrex::MultiFab const & field_mf,
+                              int const field_index,
+                               int const i_comp=0);
 
         /* \brief Transform the two MultiFabs `field_mf1` and `field_mf2`
          *  to spectral space, and store the corresponding results internally
          *  (in the spectral field specified by `field_index1` and `field_index2`) */
-        void ForwardTransform (amrex::MultiFab const & field_mf1, int const field_index1,
-                               amrex::MultiFab const & field_mf2, int const field_index2) {
-            BL_PROFILE("SpectralSolverRZ::ForwardTransform");
-            field_data.ForwardTransform(field_mf1, field_index1,
-                                        field_mf2, field_index2);
-        };
+        void ForwardTransform(amrex::MultiFab const & field_mf1, int const field_index1,
+                              amrex::MultiFab const & field_mf2, int const field_index2);
 
         /* \brief Transform spectral field specified by `field_index` back to
          * real space, and store it in the component `i_comp` of `field_mf` */
-        void BackwardTransform (amrex::MultiFab& field_mf,
-                                int const field_index,
-                                int const i_comp=0) {
-            BL_PROFILE("SpectralSolverRZ::BackwardTransform");
-            field_data.BackwardTransform(field_mf, field_index, i_comp);
-        };
+        void BackwardTransform(amrex::MultiFab& field_mf,
+                               int const field_index,
+                               int const i_comp=0);
 
         /* \brief Transform spectral fields specified by `field_index1` and `field_index2`
          * back to real space, and store it in `field_mf1` and `field_mf2`*/
-        void BackwardTransform (amrex::MultiFab& field_mf1, int const field_index1,
-                                amrex::MultiFab& field_mf2, int const field_index2) {
-            BL_PROFILE("SpectralSolverRZ::BackwardTransform");
-            field_data.BackwardTransform(field_mf1, field_index1,
-                                         field_mf2, field_index2);
-        };
+        void BackwardTransform(amrex::MultiFab& field_mf1, int const field_index1,
+                               amrex::MultiFab& field_mf2, int const field_index2);
 
         /* \brief Update the fields in spectral space, over one timestep */
-        void pushSpectralFields () {
-            BL_PROFILE("SpectralSolverRZ::pushSpectralFields");
-            // Virtual function: the actual function used here depends
-            // on the sub-class of `SpectralBaseAlgorithm` that was
-            // initialized in the constructor of `SpectralSolverRZ`
-            algorithm->pushSpectralFields(field_data);
-        };
+        void pushSpectralFields();
 
         /**
           * \brief Public interface to call the member function ComputeSpectralDivE
           * of the base class SpectralBaseAlgorithmRZ from objects of class SpectralSolverRZ
           */
-        void ComputeSpectralDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
-                                   amrex::MultiFab& divE ) {
-            algorithm->ComputeSpectralDivE( field_data, Efield, divE );
-        };
+        void ComputeSpectralDivE(const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                                 amrex::MultiFab& divE);
 
         /**
          * \brief Public interface to call the virtual function \c CurrentCorrection,
@@ -101,10 +79,8 @@ class SpectralSolverRZ
          *                        storing the three components of the current density
          * \param[in]     rho     unique pointer to MultiFab storing the charge density
          */
-        void CurrentCorrection ( std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                 const std::unique_ptr<amrex::MultiFab>& rho ) {
-             algorithm->CurrentCorrection( field_data, current, rho );
-        };
+        void CurrentCorrection(std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                               const std::unique_ptr<amrex::MultiFab>& rho);
 
     private:
 
