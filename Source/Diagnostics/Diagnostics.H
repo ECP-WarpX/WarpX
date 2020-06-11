@@ -25,9 +25,21 @@ public:
        on-the-fly using a functor.*/
     void ComputeAndPack ();
     /** Flush m_mf_output and particles to file. */
+    /** \brief Flush particle and field buffers to file using the FlushFormat member variable.
+     *
+     * This function should belong to class Diagnostics and not be virtual, as it flushes
+     * the particle buffers (name not found yet) and the field buffers (m_mf_output), both
+     * of which are members of Diagnostics. Yet, the implementation is left to derived classes
+     * for now because:
+     * - The functions underlying FlushFormat::WriteToFile expect a geometry object, which is
+     *   WarpX::geom for FullDiagnostics but should be constructed for BTDiagnostics;
+     * - The functions underlying FlushFormat::WriteToFile do not support writing a buffer to file
+     *   multiple times yet.
+     * When these are fixed, the implementation of Flush should be in Diagnostics.cpp
+     */
     virtual void Flush (){};
     /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
-    virtual void InitData (){};
+    virtual void InitData () = 0;
     /** whether to flush at this time step
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
