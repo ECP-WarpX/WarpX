@@ -8,4 +8,7 @@ target_sources(WarpX
     EvolveF.cpp
     EvolveFPML.cpp
     FiniteDifferenceSolver.cpp
+    MacroscopicEvolveE.cpp
 )
+
+add_subdirectory(MacroscopicProperties)
