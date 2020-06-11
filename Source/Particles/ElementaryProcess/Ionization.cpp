@@ -69,8 +69,4 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
     m_n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
     m_lo = amrex::lbound(box);
-
-    m_get_position  = GetParticlePosition(a_pti, a_offset);
-    m_get_externalE = GetExternalEField  (a_pti, a_offset);
-    m_get_externalB = GetExternalBField  (a_pti, a_offset);
 }
