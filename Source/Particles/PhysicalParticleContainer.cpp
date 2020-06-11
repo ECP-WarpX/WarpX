@@ -1930,7 +1930,7 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
 {
     WARPX_PROFILE("PPC::getIonizationFunc");
 
-    return IonizationFilterFunc(pti, lev, ngE, Ex, Ey, Ez, Ex, By, Bz,
+    return IonizationFilterFunc(pti, lev, ngE, Ex, Ey, Ez, Bx, By, Bz,
                                 v_galilean,
                                 ionization_energies.dataPtr(),
                                 adk_prefactor.dataPtr(),
