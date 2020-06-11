@@ -23,6 +23,8 @@ import sys
 import yt
 import numpy as np
 import scipy.constants as scc
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 fn = sys.argv[1]
 
@@ -81,3 +83,6 @@ print('tolerance of particle energy:', 1.0e-8)
 
 assert(abs(EFyt-EF) < 1.0e-3)
 assert(abs(EPyt-EP) < 1.0e-8)
+
+test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, fn)

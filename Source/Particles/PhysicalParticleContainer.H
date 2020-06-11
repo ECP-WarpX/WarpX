@@ -194,7 +194,8 @@ public:
      *
      * @param[in] q_tot total charge of the particle species to be initialized
      */
-    void AddPlasmaFromFile (amrex::ParticleReal q_tot);
+    void AddPlasmaFromFile (amrex::ParticleReal q_tot,
+                            amrex::ParticleReal z_shift);
 
     void CheckAndAddParticle (
         amrex::Real x, amrex::Real y, amrex::Real z,
