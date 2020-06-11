@@ -59,7 +59,6 @@ FullDiagnostics::ReadParameters ()
     bool checkpoint_compatibility = ReadBaseParameters();
     auto & warpx = WarpX::GetInstance();
     ParmParse pp(m_diag_name);
-    m_file_prefix = "diags/" + m_diag_name;
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd" ||
         m_format == "checkpoint" || m_format == "ascent" ||
