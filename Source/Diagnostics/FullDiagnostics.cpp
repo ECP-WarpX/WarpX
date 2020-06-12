@@ -15,9 +15,8 @@
 #endif
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
+using namespace amrex::literals;
 
-
-using namespace amrex;
 
 FullDiagnostics::FullDiagnostics (int i, std::string name)
     : Diagnostics(i, name)
@@ -50,7 +49,7 @@ FullDiagnostics::ReadParameters ()
     // Read list of full diagnostics fields requested by the user.
     bool checkpoint_compatibility = BaseReadParameters();
     auto & warpx = WarpX::GetInstance();
-    ParmParse pp(m_diag_name);
+    amrex::ParmParse pp(m_diag_name);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd" ||
         m_format == "checkpoint" || m_format == "ascent" ||
@@ -225,11 +224,11 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     auto & warpx = WarpX::GetInstance();
     amrex::RealBox diag_dom;
     bool use_warpxba = true;
-    const IntVect blockingFactor = warpx.blockingFactor( lev );
+    const amrex::IntVect blockingFactor = warpx.blockingFactor( lev );
 
     // Default BoxArray and DistributionMap for initializing the output MultiFab, m_mf_output.
-    BoxArray ba = warpx.boxArray(lev);
-    DistributionMapping dmap = warpx.DistributionMap(lev);
+    amrex::BoxArray ba = warpx.boxArray(lev);
+    amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
 
     // Check if warpx BoxArray is coarsenable.
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
@@ -240,8 +239,8 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     // Find if user-defined physical dimensions are different from the simulation domain.
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
          // To ensure that the diagnostic lo and hi are within the domain defined at level, lev.
-        diag_dom.setLo(idim, max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
-        diag_dom.setHi(idim, min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
+        diag_dom.setLo(idim, std::max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
+        diag_dom.setHi(idim, std::min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
         if ( fabs(warpx.Geom(lev).ProbLo(idim) - diag_dom.lo(idim))
                                >  warpx.Geom(lev).CellSize(idim) )
              use_warpxba = false;
@@ -258,15 +257,15 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     if (use_warpxba == false) {
         // Following are the steps to compute the lo and hi index corresponding to user-defined
         // m_lo and m_hi using the same resolution as the simulation at level, lev.
-        IntVect lo(0);
-        IntVect hi(1);
+        amrex::IntVect lo(0);
+        amrex::IntVect hi(1);
         for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
             // lo index with same cell-size as simulation at level, lev.
-            lo[idim] = max( static_cast<int>( floor (
+            lo[idim] = std::max( static_cast<int>( floor (
                           ( diag_dom.lo(idim) - warpx.Geom(lev).ProbLo(idim)) /
                             warpx.Geom(lev).CellSize(idim)) ), 0 );
             // hi index with same cell-size as simulation at level, lev.
-            hi[idim] = max( static_cast<int> ( ceil (
+            hi[idim] = std::max( static_cast<int> ( ceil (
                           ( diag_dom.hi(idim) - warpx.Geom(lev).ProbLo(idim)) /
                             warpx.Geom(lev).CellSize(idim) ) ), 0) - 1 ;
             // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
@@ -279,9 +278,9 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
         }
 
         // Box for the output MultiFab corresponding to the user-defined physical co-ordinates at lev.
-        Box diag_box( lo, hi );
+        amrex::Box diag_box( lo, hi );
         // Define box array
-        BoxArray diag_ba;
+        amrex::BoxArray diag_ba;
         diag_ba.define(diag_box);
         ba = diag_ba.maxSize( warpx.maxGridSize( lev ) );
         // At this point in the code, the BoxArray, ba, is defined with the same index space and
@@ -305,7 +304,7 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     ba.coarsen(m_crse_ratio);
     // Generate a new distribution map if the physical m_lo and m_hi for the output
     // is different from the lo and hi physical co-ordinates of the simulation domain.
-    if (use_warpxba == false) dmap = DistributionMapping{ba};
+    if (use_warpxba == false) dmap = amrex::DistributionMapping{ba};
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
     int ngrow = (m_format == "sensei") ? 1 : 0;
     // The zero is hard-coded since the number of output buffers = 1 for FullDiagnostics

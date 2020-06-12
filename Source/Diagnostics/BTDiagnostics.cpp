@@ -7,7 +7,6 @@
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_VisMF.H>
 using namespace amrex::literals;
-using namespace amrex;
 
 BTDiagnostics::BTDiagnostics (int i, std::string name)
     : Diagnostics(i, name)
@@ -198,4 +197,11 @@ BTDiagnostics::PrepareFieldDataForOutput ()
     // In this function, we will get cell-centered data for every level, lev,
     // using the cell-center functors and their respective opeators()
     // Call m_cell_center_functors->operator
+}
+
+
+amrex::Real
+BTDiagnostics::dz_lab (amrex::Real dt, amrex::Real ref_ratio)
+{
+    return PhysConst::c * dt * 1._rt/m_beta_boost * 1._rt/m_gamma_boost * 1._rt/ref_ratio;
 }

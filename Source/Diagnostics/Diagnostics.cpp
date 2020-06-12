@@ -14,7 +14,6 @@
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
 
-using namespace amrex;
 
 Diagnostics::Diagnostics (int i, std::string name)
     : m_diag_name(name), m_diag_index(i)
@@ -31,7 +30,7 @@ Diagnostics::BaseReadParameters ()
 {
     auto & warpx = WarpX::GetInstance();
     // Read list of fields requested by the user.
-    ParmParse pp(m_diag_name);
+    amrex::ParmParse pp(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp.query("file_prefix", m_file_prefix);
     pp.query("format", m_format);
@@ -50,7 +49,7 @@ Diagnostics::BaseReadParameters ()
     }
     // If user requests to plot proc_number for a serial run,
     // delete proc_number from fields_to_plot
-    if (ParallelDescriptor::NProcs() == 1){
+    if (amrex::ParallelDescriptor::NProcs() == 1){
         m_varnames.erase(
             std::remove(m_varnames.begin(), m_varnames.end(), "proc_number"),
             m_varnames.end());
@@ -75,7 +74,7 @@ Diagnostics::BaseReadParameters ()
     }
 
     // Initialize cr_ratio with default value of 1 for each dimension.
-    Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
+    amrex::Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
     // Read user-defined coarsening ratio for the output MultiFab.
     bool cr_specified = pp.queryarr("coarsening_ratio", cr_ratio);
     if (cr_specified) {
