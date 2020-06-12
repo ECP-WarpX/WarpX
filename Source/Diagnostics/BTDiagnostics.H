@@ -101,7 +101,7 @@ private:
     /** Customized function to write back-transformed data */
     void writeMetaData ();
     /** Customized functions to write back-transformed data */
-    void createLabFrameDirectories (int i_buffer, int lev);
+    void TMP_createLabFrameDirectories (int i_buffer, int lev);
     /** Define the cell-centered multi-component MultiFab at level, lev.
      *  \param[in] lev level at which the cell-centered MultiFab is defined.
      */

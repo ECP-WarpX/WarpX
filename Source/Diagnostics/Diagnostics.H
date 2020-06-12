@@ -54,13 +54,13 @@ public:
      * \param[in] force_flush if true, return true for any step
      * \return bool, whether to compute and pack data
      */
-    virtual bool DoComputeAndPack(int step, bool force_flush=false){ return false;};
+    virtual bool DoComputeAndPack(int step, bool force_flush=false) = 0;
     /** whether to flush at this time step
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
      * \return bool, whether to flush
      */
-    virtual bool DoDump (int step, int i_buffer, bool force_flush=false){ return false;};
+    virtual bool DoDump (int step, int i_buffer, bool force_flush=false) = 0;
     /** Start a new iteration, i.e., dump has not been done yet. */
     void NewIteration () {m_already_done = false;};
     /** Perform necessary operations with user-defined diagnostic parameters
@@ -73,7 +73,7 @@ public:
 
 protected:
     /** Read Parameters of the base Diagnostics class */
-    bool ReadBaseParameters ();
+    bool BaseReadParameters ();
     /** Initialize member variables of the base Diagnostics class. */
     void InitBaseData ();
     /** Initialize m_mf_output vectors and data required to construct the buffers
@@ -84,13 +84,13 @@ protected:
     /** Initialize member variables and arrays specific to the diagnostics in the
      *  derived classes.(FullDiagnostics, BTDiagnostics)
      */
-    virtual void InitDerivedData() = 0;
+    virtual void DerivedInitData () {};
     /** This function initialized particle buffers (not implemented in diagnostics, yet) */
     virtual void InitializeParticleBuffer () = 0;
     /** Prepare data (either fill-boundary or cell-centered data for
         back-transform diagnostics) to be processed for diagnostics.
      */
-    virtual void PrepareFieldDataForOutput () = 0;
+    virtual void PrepareFieldDataForOutput () {};
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string m_diag_name;
     /** Prefix for output directories */
