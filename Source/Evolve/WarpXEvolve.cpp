@@ -293,7 +293,8 @@ WarpX::OneStep_nosub (Real cur_time)
     if ( fft_periodic_single_box == false ) {
         // Compute current from Vay deposition in Fourier space
         // (equations (20)-(24) of https://doi.org/10.1016/j.jcp.2013.03.010)
-        if ( WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay ) VayDeposition();
+        if ( WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay )
+            amrex::Abort( "Vay current deposition not implemented with domain decomposition" );
         // Apply current correction in Fourier space
         // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
         if ( do_current_correction ) CurrentCorrection();
