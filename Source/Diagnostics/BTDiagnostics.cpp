@@ -51,11 +51,11 @@ void BTDiagnostics::InitDerivedData ()
     for (int i = 0; i < m_num_buffers; ++i) {
         // temporary variable name for customized BTD output to verify accuracy
         m_file_name[i] = amrex::Concatenate(m_file_prefix +"/snapshots/snapshot",i,5);
-        for (int lev = 0; lev < nmax_lev; ++lev) {
-            // Define cell-centered multifab over the whole domain with user-defined crse_ratio
-            // for nlevels
-            DefineCellCenteredMultiFab(lev);
-        }
+    }
+    for (int lev = 0; lev < nmax_lev; ++lev) {
+        // Define cell-centered multifab over the whole domain with user-defined crse_ratio
+        // for nlevels
+        DefineCellCenteredMultiFab(lev);
     }
 
 }
