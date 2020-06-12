@@ -6,11 +6,6 @@
 
 using namespace amrex;
 
-namespace
-{
-    const std::string level_prefix {"Level_"};
-}
-
 FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 {
     ParmParse pp(diag_name);
@@ -29,7 +24,7 @@ FlushFormatOpenPMD::FlushFormatOpenPMD (const std::string& diag_name)
 void
 FlushFormatOpenPMD::WriteToFile (
     const amrex::Vector<std::string> varnames,
-    const amrex::Vector<const amrex::MultiFab*> mf,
+    const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
@@ -47,7 +42,7 @@ FlushFormatOpenPMD::WriteToFile (
 
     // fields: only dumped for coarse level
     m_OpenPMDPlotWriter->WriteOpenPMDFields(
-        varnames, *mf[0], geom[0], iteration[0], time);
+        varnames, mf[0], geom[0], iteration[0], time);
 
     // particles: all (reside only on locally finest level)
     m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags);

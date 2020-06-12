@@ -60,13 +60,6 @@
 #include <memory>
 #include <array>
 
-
-#if defined(BL_USE_SENSEI_INSITU)
-namespace amrex {
-class AmrMeshInSituBridge;
-}
-#endif
-
 enum struct PatchType : int
 {
     fine,
@@ -404,7 +397,6 @@ public:
     void AverageAndPackFields( amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg, const int ngrow) const;
 
-    void UpdateInSitu () const;
     void prepareFields( int const step, amrex::Vector<std::string>& varnames,
         amrex::Vector<amrex::MultiFab>& mf_avg,
         amrex::Vector<const amrex::MultiFab*>& output_mf,
@@ -598,10 +590,6 @@ private:
 
     std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
 
-    std::array<std::unique_ptr<amrex::MultiFab>, 3> getInterpolatedE(int lev) const;
-
-    std::array<std::unique_ptr<amrex::MultiFab>, 3> getInterpolatedB(int lev) const;
-
     void ExchangeWithPmlB (int lev);
     void ExchangeWithPmlE (int lev);
     void ExchangeWithPmlF (int lev);
@@ -747,9 +735,6 @@ private:
     std::string restart_chkfile;
 
     bool plot_rho           = false;
-    bool plot_finepatch     = false;
-    bool plot_crsepatch     = false;
-    amrex::Vector<std::string> fields_to_plot;
 
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
@@ -801,14 +786,6 @@ private:
 #endif
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_cp;
-
-#if defined(BL_USE_SENSEI_INSITU)
-    amrex::AmrMeshInSituBridge *insitu_bridge;
-#endif
-    int insitu_int;
-    int insitu_start;
-    std::string insitu_config;
-    int insitu_pin_mesh;
 };
 
 #endif

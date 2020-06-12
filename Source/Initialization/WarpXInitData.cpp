@@ -63,28 +63,9 @@ WarpX::InitData ()
         printGridSummary(std::cout, 0, finestLevel());
     }
 
-#ifdef BL_USE_SENSEI_INSITU
-    insitu_bridge = new amrex::AmrMeshInSituBridge;
-    insitu_bridge->setEnabled(insitu_int > 0 ? 1 : 0);
-    insitu_bridge->setConfig(insitu_config);
-    insitu_bridge->setPinMesh(insitu_pin_mesh);
-    if (insitu_bridge->initialize())
-    {
-        amrex::ErrorStream()
-            << "WarpX::InitData : Failed to initialize the in situ bridge."
-            << std::endl;
-
-        amrex::Abort();
-    }
-    insitu_bridge->setFrequency(1);
-#endif
-
     if (restart_chkfile.empty())
     {
         multi_diags->FilterComputePackFlush( 0, true );
-
-        if ((insitu_int > 0) && (insitu_start == 0))
-            UpdateInSitu();
 
         // Write reduced diagnostics before the first iteration.
         if (reduced_diags->m_plot_rd != 0)

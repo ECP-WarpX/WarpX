@@ -1,4 +1,4 @@
-max_step = 0
+max_step = 1
 amr.n_cell =  64 64 64
 amr.max_grid_size = 32
 amr.max_level = 0
@@ -8,6 +8,7 @@ geometry.is_periodic = 0     0     0       # Is periodic?
 geometry.prob_lo     = -50.e-6   -50.e-6    -50.e-6
 geometry.prob_hi     =  50.e-6    50.e-6     50.e-6
 
+warpx.cfl = 1.e-3
 particles.nspecies = 1
 particles.species_names = beam
 beam.charge = -q_e
@@ -31,3 +32,4 @@ beam.uz_m = 0.0
 diagnostics.diags_names = diag1
 diag1.period = 1
 diag1.diag_type = Full
+diag1.fields_to_plot = Ex Ey Ez jx jy jz

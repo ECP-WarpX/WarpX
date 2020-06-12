@@ -20,10 +20,6 @@
 #include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
 
-#ifdef BL_USE_SENSEI_INSITU
-#   include <AMReX_AmrMeshInSituBridge.H>
-#endif
-
 #include <cmath>
 #include <limits>
 
@@ -37,7 +33,6 @@ WarpX::Evolve (int numsteps)
 
     Real cur_time = t_new[0];
     static int last_plot_file_step = 0;
-    static int last_insitu_step = 0;
 
     if (do_compute_max_step_from_zmax) {
         computeMaxStepBoostAccelerator(geom[0]);
@@ -167,9 +162,6 @@ WarpX::Evolve (int numsteps)
 
         cur_time += dt[0];
 
-        bool do_insitu = ((step+1) >= insitu_start) &&
-            (insitu_int > 0) && ((step+1) % insitu_int == 0);
-
         if (do_back_transformed_diagnostics) {
             std::unique_ptr<MultiFab> cell_centered_data = nullptr;
             if (WarpX::do_back_transformed_fields) {
@@ -178,7 +170,7 @@ WarpX::Evolve (int numsteps)
             myBFD->writeLabFrameData(cell_centered_data.get(), *mypc, geom[0], cur_time, dt[0]);
         }
 
-        bool move_j = is_synchronized || do_insitu;
+        bool move_j = is_synchronized;
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
         // We might need to move j because we are going to make a plotfile.
 
@@ -237,27 +229,6 @@ WarpX::Evolve (int numsteps)
 
         multi_diags->FilterComputePackFlush( step );
 
-        if (do_insitu)
-        {
-            // This is probably overkill, but it's not called often
-            FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-            // This is probably overkill, but it's not called often
-            FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-            // This is probably overkill, but it's not called often
-#ifndef WARPX_USE_PSATD
-            FillBoundaryAux(guard_cells.ng_UpdateAux);
-#endif
-            UpdateAuxilaryData();
-
-            FieldGather();
-
-            last_plot_file_step = step+1;
-            //last_openPMD_step = step+1;
-            last_insitu_step = step+1;
-
-            UpdateInSitu();
-        }
-
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
             max_time_reached = true;
             break;
@@ -269,41 +240,11 @@ WarpX::Evolve (int numsteps)
         // End loop on time steps
     }
 
-    bool do_insitu = (insitu_start >= istep[0]) && (insitu_int > 0) &&
-        (istep[0] > last_insitu_step) && (max_time_reached || istep[0] >= max_step);
-
     multi_diags->FilterComputePackFlush( istep[0], true );
-
-    if (do_insitu)
-    {
-        // This is probably overkill, but it's not called often
-        FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-        // This is probably overkill, but it's not called often
-        FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-        // This is probably overkill
-#ifndef WARPX_USE_PSATD
-        FillBoundaryAux(guard_cells.ng_UpdateAux);
-#endif
-        UpdateAuxilaryData();
-
-        for (int lev = 0; lev <= finest_level; ++lev) {
-            mypc->FieldGather(lev,
-                              *Efield_aux[lev][0],*Efield_aux[lev][1],
-                              *Efield_aux[lev][2],
-                              *Bfield_aux[lev][0],*Bfield_aux[lev][1],
-                              *Bfield_aux[lev][2]);
-        }
-
-        UpdateInSitu();
-    }
 
     if (do_back_transformed_diagnostics) {
         myBFD->Flush(geom[0]);
     }
-
-#ifdef BL_USE_SENSEI_INSITU
-    insitu_bridge->finalize();
-#endif
 }
 
 /* /brief Perform one PIC iteration, without subcycling
