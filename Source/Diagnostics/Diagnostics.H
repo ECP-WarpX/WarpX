@@ -81,7 +81,7 @@ protected:
      * \param[in] lev level on which the output MultiFab is defined
      */
     virtual void InitializeFieldBufferData (int i_buffer, int lev) = 0;
-    /** Initialize member variables and arrays specific to the diagnostics in the 
+    /** Initialize member variables and arrays specific to the diagnostics in the
      *  derived classes.(FullDiagnostics, BTDiagnostics)
      */
     virtual void InitDerivedData() = 0;

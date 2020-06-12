@@ -27,7 +27,7 @@ private:
     void FlushRaw ();
     /** whether to compute and pack cell-centered data in m_mf_output
      * \param[in] step current time step
-     * \param[in] force_flush if true, return true for any step since output must be 
+     * \param[in] force_flush if true, return true for any step since output must be
                   computed in this case
      * \return bool, whether to flush
      */

@@ -110,7 +110,7 @@ FullDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 bool
 FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
-    // Data must be computed and packed for full diagnostics 
+    // Data must be computed and packed for full diagnostics
     // whenever the data needs to be flushed.
     if (force_flush || m_intervals.contains(step+1) ){
         return true;

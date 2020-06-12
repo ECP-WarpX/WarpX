@@ -132,7 +132,7 @@ private:
         using namespace amrex::literals;
         return PhysConst::c * dt * 1._rt/m_beta_boost * 1._rt/m_gamma_boost * 1._rt/ref_ratio;
     }
-    /** whether field buffer is full 
+    /** whether field buffer is full
      * \param[in] i_buffer buffer id for which the buffer size is checked.
      * returns bool = true is buffer is full
      */

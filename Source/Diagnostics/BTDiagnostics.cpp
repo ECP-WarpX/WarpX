@@ -120,7 +120,7 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
     if ( buffer_full(i_buffer) || force_flush) {
         return true;
     }
-    return false;    
+    return false;
 }
 
 
@@ -128,7 +128,7 @@ bool
 BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
     // always set to true for BTDiagnostics since back-transform buffers are potentially
-    // computed and packed every timstep. 
+    // computed and packed every timstep.
     return true;
 }
 

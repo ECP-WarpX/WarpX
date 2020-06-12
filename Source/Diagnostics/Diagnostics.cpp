@@ -104,7 +104,7 @@ Diagnostics::InitData ()
 {
     // initialize member variables and arrays in base class::Diagnostics
     InitBaseData();
-    // initialize member variables and arrays specific to each derived class 
+    // initialize member variables and arrays specific to each derived class
     // (FullDiagnostics, BTDiagnostics, etc.)
     InitDerivedData();
     // loop over all buffers
@@ -114,12 +114,12 @@ Diagnostics::InitData ()
             // allocate and initialize m_all_field_functors depending on diag type
             InitializeFieldFunctors(lev);
             // Initialize field buffer data, m_mf_output
-            InitializeFieldBufferData(i_buffer, lev);            
+            InitializeFieldBufferData(i_buffer, lev);
         }
     }
     // When particle buffers, m_particle_buffers are included, they will be initialized here
     InitializeParticleBuffer();
- 
+
 }
 
 
@@ -202,5 +202,5 @@ Diagnostics::FilterComputePackFlush (int step, bool force_flush)
         }
 
     }
-    
+
 }
