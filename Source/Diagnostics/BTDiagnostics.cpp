@@ -3,6 +3,7 @@
 #include "Utils/WarpXConst.H"
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
+#include "ComputeDiagFunctors/BackTransformFunctor.H"
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_VisMF.H>
@@ -51,11 +52,11 @@ void BTDiagnostics::InitDerivedData ()
     for (int i = 0; i < m_num_buffers; ++i) {
         // temporary variable name for customized BTD output to verify accuracy
         m_file_name[i] = amrex::Concatenate(m_file_prefix +"/snapshots/snapshot",i,5);
-        for (int lev = 0; lev < nmax_lev; ++lev) {
-            // Define cell-centered multifab over the whole domain with user-defined crse_ratio
-            // for nlevels
-            DefineCellCenteredMultiFab(lev);
-        }
+    }
+    for (int lev = 0; lev < nmax_lev; ++lev) {
+        // Define cell-centered multifab over the whole domain with
+        // user-defined crse_ratio for nlevels
+        DefineCellCenteredMultiFab(lev);
     }
 
 }
@@ -111,6 +112,28 @@ BTDiagnostics::writeMetaData ()
     // This function will have the same functionality as writeMetaData in
     // previously used BackTransformedDiagnostics class to write
     // back-transformed data in a customized format
+
+    if (ParallelDescriptor::IOProcessor()) {
+        const std::string fullpath = m_file_prefix + "/snapshots";
+        if (!UtilCreateDirectory(fullpath, 0755)) CreateDirectoryFailed(fullpath);
+
+        VisMF::IO_Buffer io_buffer(VisMF::IO_Buffer_Size);
+        std::ofstream HeaderFile;
+        HeaderFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
+        std::string HeaderFileName(m_file_prefix + "/snapshots/Header");
+        HeaderFile.open(HeaderFileName.c_str(), std::ofstream::out   |
+                                                std::ofstream::trunc |
+                                                std::ofstream::binary);
+        if (!HeaderFile.good()) FileOpenFailed( HeaderFileName );
+
+        HeaderFile.precision(17);
+        HeaderFile << m_num_snapshots_lab << "\n";
+        HeaderFile << m_dt_snapshots_lab << "\n";
+        HeaderFile << m_gamma_boost << "\n";
+        HeaderFile << m_beta_boost << "\n";
+
+    }
+
 }
 
 bool
@@ -246,8 +269,10 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     // 1. create an object of class BackTransformFunctor
     for (int i = 0; i < num_BT_functors; ++i)
     {
+        // coarsening ratio is not provided since the source MultiFab, m_cell_centered_data
+        // is coarsened based on the user-defined m_crse_ratio
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>( 
-                  m_mf_cc[lev].get(), lev, m_crse_ratio, m_varnames.size() );
+                  m_cell_centered_data[lev].get(), lev, m_varnames.size() );
     }
 
     // 2. Define all cell-centered functors required to compute cell-centere data
@@ -302,4 +327,16 @@ BTDiagnostics::PrepareFieldDataForOutput ()
     // In this function, we will get cell-centered data for every level, lev,
     // using the cell-center functors and their respective opeators()
     // Call m_cell_center_functors->operator
+    for (int lev = 0; lev < nmax_lev; ++lev) {
+        int icomp_dst = 0;
+        for (int icomp = 0, n=m_cell_center_functors[0].size(); icomp<n; ++icomp) {
+            // Call all the cell-center functors in m_cell_center_functors.
+            // Each of them computes cell-centered data for a field and
+            // stores it in cell-centered MultiFab, m_cell_centered_data[lev].
+//            m_cell_center_functors[lev][icomp]->operator()(*m_cell_centered_data[lev], icomp_dst);
+//            icomp_dst += m_cell_center_functors[lev][icomp]->nComp();
+        }
+        // Check that the proper number of user-requested components are cell-centered
+//        AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
+    }
 }
