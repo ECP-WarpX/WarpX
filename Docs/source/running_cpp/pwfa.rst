@@ -64,7 +64,9 @@ Lorentz boosted frame
     The boosted frame still results in a substantial reduction to the simulation computational cost.
 
 .. note::
-   Regardless of the frame that is chosen for the simulation, the input file parameters are defined in respect to the laboratory frame.
+   Even if the simulations uses the boosted frame, most of its input file parameters are defined in respect to the laboratory frame.
+
+   We recommend that you design your numerical setup so that the width of the box is not significantly narrower than the distance from 0 to its right edge (done, for example, by setting the right edge equal to 0).
 
 
 Moving window
