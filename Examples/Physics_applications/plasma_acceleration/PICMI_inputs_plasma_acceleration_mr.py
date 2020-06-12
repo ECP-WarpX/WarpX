@@ -67,7 +67,7 @@ field_diag = picmi.FieldDiagnostic(name = 'diag1',
 part_diag = picmi.ParticleDiagnostic(name = 'diag1',
                                      period = 2,
                                      species = [beam, plasma],
-                                     data_list = ['ux', 'uy', 'uz', 'weighting')
+                                     data_list = ['ux', 'uy', 'uz', 'weighting'])
 
 sim.add_diagnostic(field_diag)
 sim.add_diagnostic(part_diag)
