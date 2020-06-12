@@ -173,7 +173,8 @@ Diagnostics::ComputeAndPack ()
     PrepareFieldDataForOutput();
     // compute the necessary fields and stiore result in m_mf_output.
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        for(int lev=0; lev<nlev; lev++){
+        // max-level of the buffer
+        for(int lev=0; lev<m_mf_output[i_buffer].size(); lev++){
             int icomp_dst = 0;
             for (int icomp=0, n=m_all_field_functors[0].size(); icomp<n; icomp++){
                 // Call all functors in m_all_field_functors[lev]. Each of them computes
