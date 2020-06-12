@@ -32,13 +32,13 @@ jobs:
         export CC=$(which icc)
 
         mkdir build_dp && cd build_dp
-        cmake .. -DENABLE_MPI=OFF -DENABLE_OMP=ON -DWarpX_USE_OPENPMD=ON -DWarpX_openpmd_internal=OFF
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_MPI=OFF -DENABLE_OMP=ON -DWarpX_USE_OPENPMD=ON -DWarpX_openpmd_internal=OFF
         make -j 2
 
         cd ..
 
         mkdir build_sp && cd build_sp
-        cmake .. -DENABLE_MPI=OFF -DENABLE_OMP=ON -DWarpX_USE_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DENABLE_DP=OFF -DENABLE_DP_PARTICLES=OFF
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_MPI=OFF -DENABLE_OMP=ON -DWarpX_USE_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DENABLE_DP=OFF -DENABLE_DP_PARTICLES=OFF
         make -j 2
 
   build_dpcc:
@@ -68,7 +68,7 @@ jobs:
         git clone https://github.com/openPMD/openPMD-api.git
         mkdir openPMD-api/build
         cd openPMD-api/build
-        CXX=$(which dpcpp) CC=$(which clang) cmake .. -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+        CXX=$(which dpcpp) CC=$(which clang) cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
         make -j 2
         sudo make install
     - name: build WarpX

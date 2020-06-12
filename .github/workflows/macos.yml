@@ -23,11 +23,11 @@ jobs:
     - name: build WarpX
       run: |
         mkdir build_dp && cd build_dp
-        cmake .. -DENABLE_OMP=ON -DWarpX_USE_OPENPMD=ON -DWarpX_openpmd_internal=OFF
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_OMP=ON -DWarpX_USE_OPENPMD=ON -DWarpX_openpmd_internal=OFF
         make -j 2
 
         cd ..
 
         mkdir build_sp && cd build_sp
-        cmake .. -DENABLE_OMP=ON -DWarpX_USE_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DENABLE_DP=OFF -DENABLE_DP_PARTICLES=OFF
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_OMP=ON -DWarpX_USE_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DENABLE_DP=OFF -DENABLE_DP_PARTICLES=OFF
         make -j 2
