@@ -6,5 +6,6 @@ target_sources(WarpX
 )
 
 add_subdirectory(FiniteDifferenceSolver)
-# FIXME: with PSATD
-# add_subdirectory(SpectralSolver)
+if(WarpX_PSATD)
+    add_subdirectory(SpectralSolver)
+endif()
