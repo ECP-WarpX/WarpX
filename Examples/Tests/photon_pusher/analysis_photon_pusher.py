@@ -10,6 +10,8 @@
 import yt
 import numpy as np
 import sys
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 #This script checks if photons initialized with different momenta and
 #different initial directions propagate along straight lines at the speed of
@@ -101,6 +103,9 @@ def check():
     print("tol_mom = %s" %tol_mom)
 
     assert ((max(disc_pos) <= tol_pos) and (max(disc_mom) <= tol_mom))
+
+    test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+    checksumAPI.evaluate_checksum(test_name, filename)
 
 # This function generates the input file to test the photon pusher.
 def generate():

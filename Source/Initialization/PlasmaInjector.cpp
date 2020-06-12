@@ -303,6 +303,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 double const mass_unit = ps["mass"][openPMD::RecordComponent::SCALAR].unitSI();
                 mass = p_m * mass_unit;
             }
+
+            pp.query("z_shift",z_shift);
         } // IOProcessor
 
         // Broadcast charge and mass to non-IO processors
