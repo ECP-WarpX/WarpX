@@ -28,18 +28,10 @@ FullDiagnostics::FullDiagnostics (int i, std::string name)
 void
 FullDiagnostics::InitializeParticleBuffer ()
 {
-//    // Initialize data in the base class Diagnostics
-//    InitBaseData();
-//
+    // When particle buffers are included, the vector of particle containers
+    // must be allocated in this function.
+    // Initialize data in the base class Diagnostics
     auto & warpx = WarpX::GetInstance();
-//
-//    for ( int lev=0; lev<nlev; lev++ ){
-//        InitializeFieldFunctors( lev );
-//        // At this point, m_varnames.size() >= m_all_field_functors[0].size()
-//
-//        // Initialize member variable m_mf_output depending on m_crse_ratio, m_lo and m_hi
-//        DefineDiagMultiFab( lev );
-//    }
 
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     // If not specified, dump all species
