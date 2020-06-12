@@ -271,7 +271,7 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     {
         // coarsening ratio is not provided since the source MultiFab, m_cell_centered_data
         // is coarsened based on the user-defined m_crse_ratio
-        m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>( 
+        m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
                   m_cell_centered_data[lev].get(), lev, m_varnames.size() );
     }
 
@@ -307,7 +307,7 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
 #endif
         }
     }
-    
+
 }
 
 // Temporary function only to debug the current implementation.
