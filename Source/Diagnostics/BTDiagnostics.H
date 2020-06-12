@@ -16,16 +16,16 @@ private:
     /** Flush m_mf_output and particles to file. */
     // Currently this is an empty function. When OpenPMD/Plotfile is supported
     // this function can be moved to the base class Diagnostics.
-    void Flush () override {} ;
+    void Flush (int i_buffer) override {} ;
     /** whether to write output files at this time step
+     *  The data is flushed when the buffer is full and/or
+     *   when the simulation ends or when forced.
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
-     *  The return bool is always set to true since data is back-transformed
-     *  to lab-frame and added to the output buffer every timestep.
-     *  The data is flushed when the buffer is full and/or when the simulation ends.
+     *  The return bool is used to determine when to write buffer data out
      */
-    // To be discussed : may be this function should have a different name?
-    bool DoDump (int step, bool force_flush=false) override;
+    bool DoDump (int step, int i_buffer, bool force_flush=false) override;
+    bool DoComputeAndPack (int step, bool force_flush=false) override;
     /** Initialize Data required to compute back-transformed diagnostics */
     void InitDerivedData ();
     /** Initialize functors that store pointers to the fields requested by the user.
@@ -150,7 +150,13 @@ private:
         using namespace amrex::literals;
         return PhysConst::c * dt * 1._rt/m_beta_boost * 1._rt/m_gamma_boost * 1._rt/ref_ratio;
     }
-
+    /** whether field buffer is full 
+     * \param[in] i_buffer buffer id for which the buffer size is checked.
+     * returns bool = true is buffer is full
+     */
+    bool buffer_full (int i_buffer) {
+        return ( m_buffer_counter[i_buffer] == m_buffer_size );
+    }
 };
 
 #endif // WARPX_BTDIAGNOSTICS_H_

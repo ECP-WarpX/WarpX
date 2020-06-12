@@ -35,8 +35,9 @@ public:
      * - The functions underlying FlushFormat::WriteToFile do not support writing a buffer to file
      *   multiple times yet.
      *  When these are fixed, the implementation of Flush should be in Diagnostics.cpp
+     * \param[in] i_buffer index of the buffer data to be flushed.
      */
-    virtual void Flush () = 0;
+    virtual void Flush (int i_buffer) = 0;
     /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
     void InitData ();
     /** Initialize functors that store pointers to the fields requested by the user.
@@ -48,14 +49,27 @@ public:
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
     virtual void InitializeFieldFunctors (int lev) = 0;
+    /** whether to compute and pack data in output buffers at this time step
+     * \param[in] step current time step
+     * \param[in] force_flush if true, return true for any step
+     * \return bool, whether to compute and pack data
+     */
+    virtual bool DoComputeAndPack(int step, bool force_flush=false){ return false;};
     /** whether to flush at this time step
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
      * \return bool, whether to flush
      */
-    virtual bool DoDump (int step, bool force_flush=false){ return false;};
+    virtual bool DoDump (int step, int i_buffer, bool force_flush=false){ return false;};
     /** Start a new iteration, i.e., dump has not been done yet. */
     void NewIteration () {m_already_done = false;};
+    /** Perform necessary operations with user-defined diagnostic parameters
+     *  to filter (coarsen, slice), compute (cell-center, back-transform),
+     *  and flush the output data stored in buffers, m_mf_output.
+     * \param[in] step current timestep
+     * \param[in] force_flush used to force-fully write data stored in buffers.
+     */
+    void FilterComputePackFlush (int step, bool force_flush=false);
 
 protected:
     /** Read Parameters of the base Diagnostics class */

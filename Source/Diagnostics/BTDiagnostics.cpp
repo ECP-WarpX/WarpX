@@ -119,11 +119,21 @@ BTDiagnostics::writeMetaData ()
 }
 
 bool
-BTDiagnostics::DoDump (int step, bool force_flush)
+BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
+{
+    // check if buffer is full (m_buffer_counter[i_buffer] == m_) or if force_flush == true
+    if ( buffer_full(i_buffer) || force_flush) {
+        return true;
+    }
+    return false;    
+}
+
+
+bool
+BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
     // always set to true for BTDiagnostics since back-transform buffers are potentially
-    // filled every timstep. They will be flushed if m_buffer_counter for
-    // the snapshot is equal to m_buffer_size
+    // computed and packed every timstep. 
     return true;
 }
 

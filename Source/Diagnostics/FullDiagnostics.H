@@ -21,16 +21,23 @@ private:
     bool m_plot_raw_rho = false;
     /** Whether to plot F (charge conservation error) in raw fields */
     bool m_plot_raw_F = false;
-    /** Flush m_mf_output and particles to file. */
-    void Flush () override;
+    /** Flush m_mf_output and particles to file for the i^th buffer */
+    void Flush (int i_buffer) override;
     /** Flush raw data */
     void FlushRaw ();
+    /** whether to compute and pack cell-centered data in m_mf_output
+     * \param[in] step current time step
+     * \param[in] force_flush if true, return true for any step since output must be 
+                  computed in this case
+     * \return bool, whether to flush
+     */
+    bool DoComputeAndPack (int step, bool force_flush=false) override;
     /** whether to flush at this time step
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
      * \return bool, whether to flush
      */
-    bool DoDump (int step, bool force_flush=false) override;
+    bool DoDump (int step, int i_buffer, bool force_flush=false) override;
     /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
     void InitDerivedData () override {};
     /** Append varnames with names for all modes of a field

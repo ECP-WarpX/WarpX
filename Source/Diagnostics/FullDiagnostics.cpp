@@ -87,13 +87,13 @@ FullDiagnostics::ReadParameters ()
 }
 
 void
-FullDiagnostics::Flush ()
+FullDiagnostics::Flush ( int i_buffer )
 {
-    // This function can be moved to Diagnostics when plotfiles/openpmd format
-    // is supported for BackTransformed Diagnostics
+    // This function should be moved to Diagnostics when plotfiles/openpmd format
+    // is supported for BackTransformed Diagnostics, in BTDiagnostics class.
     auto & warpx = WarpX::GetInstance();
     m_flush_format->WriteToFile(
-        m_varnames, m_mf_output[0], warpx.Geom(), warpx.getistep(),
+        m_varnames, m_mf_output[i_buffer], warpx.Geom(), warpx.getistep(),
         warpx.gett_new(0), m_all_species, nlev, m_file_prefix,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 
@@ -105,7 +105,7 @@ FullDiagnostics::FlushRaw () {}
 
 
 bool
-FullDiagnostics::DoDump (int step, bool force_flush)
+FullDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 {
     if (m_already_done) return false;
     if ( force_flush || (m_intervals.contains(step+1)) ){
@@ -114,6 +114,18 @@ FullDiagnostics::DoDump (int step, bool force_flush)
     }
     return false;
 }
+
+bool
+FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
+{
+    // Data must be computed and packed for full diagnostics 
+    // whenever the data needs to be flushed.
+    if (force_flush || m_intervals.contains(step+1) ){
+        return true;
+    }
+    return false;
+}
+
 
 void
 FullDiagnostics::AddRZModesToDiags (int lev)
