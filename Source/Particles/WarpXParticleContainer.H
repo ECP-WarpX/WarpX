@@ -66,7 +66,7 @@ namespace ParticleStringNames
         {"uy",    PIdx::uy   },
         {"uz",    PIdx::uz   },
 #ifdef WARPX_DIM_RZ
-        ,{"theta", PIdx::theta}
+        {"theta", PIdx::theta}
 #endif
     };
 }
