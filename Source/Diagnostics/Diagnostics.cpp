@@ -98,6 +98,31 @@ Diagnostics::ReadBaseParameters ()
 
 }
 
+
+void
+Diagnostics::InitData ()
+{
+    // initialize member variables and arrays in base class::Diagnostics
+    InitBaseData();
+    // initialize member variables and arrays specific to each derived class
+    // (FullDiagnostics, BTDiagnostics, etc.)
+    InitDerivedData();
+    // loop over all buffers
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        // loop over all levels
+        for (int lev = 0; lev < nmax_lev; ++lev) {
+            // allocate and initialize m_all_field_functors depending on diag type
+            InitializeFieldFunctors(lev);
+            // Initialize field buffer data, m_mf_output
+            InitializeFieldBufferData(i_buffer, lev);
+        }
+    }
+    // When particle buffers, m_particle_buffers are included, they will be initialized here
+    InitializeParticleBuffer();
+
+}
+
+
 void
 Diagnostics::InitBaseData ()
 {
@@ -146,21 +171,36 @@ Diagnostics::ComputeAndPack ()
 {
     // prepare the field-data necessary to compute output data
     PrepareFieldDataForOutput();
-    // compute the necessary fields and store result in m_mf_output.
-    for(int lev=0; lev<nlev; lev++){
-        int icomp_dst = 0;
-        for (int icomp=0, n=m_all_field_functors[0].size(); icomp<n; icomp++){
-            // Call all functors in m_all_field_functors[lev]. Each of them computes
-            // a diagnostics and writes in one or more components of the output
-            // multifab m_mf_output[lev].
-            m_all_field_functors[lev][icomp]->operator()(m_mf_output[0][lev], icomp_dst);
-            // update the index of the next component to fill
-            icomp_dst += m_all_field_functors[lev][icomp]->nComp();
+    // compute the necessary fields and stiore result in m_mf_output.
+    for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+        for(int lev=0; lev<nlev; lev++){
+            int icomp_dst = 0;
+            for (int icomp=0, n=m_all_field_functors[0].size(); icomp<n; icomp++){
+                // Call all functors in m_all_field_functors[lev]. Each of them computes
+                // a diagnostics and writes in one or more components of the output
+                // multifab m_mf_output[lev].
+                m_all_field_functors[lev][icomp]->operator()(m_mf_output[i_buffer][lev], icomp_dst);
+                // update the index of the next component to fill
+                icomp_dst += m_all_field_functors[lev][icomp]->nComp();
+            }
+            // Check that the proper number of components of mf_avg were updated.
+            AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
         }
-        // Check that the proper number of components of mf_avg were updated.
-        // to be discussed at review.
-        // The assert below will work only for FullDiags. to be checked at review?
-        //AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
     }
 }
 
+
+void
+Diagnostics::FilterComputePackFlush (int step, bool force_flush)
+{
+    if ( DoComputeAndPack (step, force_flush) ) {
+        ComputeAndPack();
+
+        for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
+            if ( !DoDump (step, i_buffer, force_flush) ) continue;
+                Flush(i_buffer);
+        }
+
+    }
+
+}

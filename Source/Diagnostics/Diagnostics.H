@@ -24,34 +24,73 @@ public:
      * Fields are computed (e.g., cell-centered or back-transformed)
        on-the-fly using a functor.*/
     void ComputeAndPack ();
-    /** Flush m_mf_output and particles to file. */
-    virtual void Flush (){};
-    /** Flush raw data (applies only to full diagnostics)*/
-    virtual void FlushRaw (){};
+    /** \brief Flush particle and field buffers to file using the FlushFormat member variable.
+     *
+     * This function should belong to class Diagnostics and not be virtual, as it flushes
+     * the particle buffers (name not found yet) and the field buffers (m_mf_output), both
+     * of which are members of Diagnostics. Yet, the implementation is left to derived classes
+     * for now because:
+     * - The functions underlying FlushFormat::WriteToFile expect a geometry object, which is
+     *   WarpX::geom for FullDiagnostics but should be constructed for BTDiagnostics;
+     * - The functions underlying FlushFormat::WriteToFile do not support writing a buffer to file
+     *   multiple times yet.
+     *  When these are fixed, the implementation of Flush should be in Diagnostics.cpp
+     * \param[in] i_buffer index of the buffer data to be flushed.
+     */
+    virtual void Flush (int i_buffer) = 0;
     /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
-    virtual void InitData (){};
+    void InitData ();
+    /** Initialize functors that store pointers to the fields requested by the user.
+     *
+     * Derived classes MUST implement this function, and it must allocate m_all_field_functors
+     * and fill it with ComputeDiagFunctor objects.
+     * The functions is called at intiailization and when the domain is decomposed
+     * during the simulation to load-balance.
+     * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+     */
+    virtual void InitializeFieldFunctors (int lev) = 0;
+    /** whether to compute and pack data in output buffers at this time step
+     * \param[in] step current time step
+     * \param[in] force_flush if true, return true for any step
+     * \return bool, whether to compute and pack data
+     */
+    virtual bool DoComputeAndPack(int step, bool force_flush=false){ return false;};
     /** whether to flush at this time step
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
      * \return bool, whether to flush
      */
-    virtual bool DoDump (int step, bool force_flush=false){ return false;};
-    /** Initialize functors that store pointers to the fields requested by the user.
-     * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
-     */
-    virtual void InitializeFieldFunctors (int lev){};
+    virtual bool DoDump (int step, int i_buffer, bool force_flush=false){ return false;};
     /** Start a new iteration, i.e., dump has not been done yet. */
     void NewIteration () {m_already_done = false;};
+    /** Perform necessary operations with user-defined diagnostic parameters
+     *  to filter (coarsen, slice), compute (cell-center, back-transform),
+     *  and flush the output data stored in buffers, m_mf_output.
+     * \param[in] step current timestep
+     * \param[in] force_flush used to force-fully write data stored in buffers.
+     */
+    void FilterComputePackFlush (int step, bool force_flush=false);
 
 protected:
     /** Read Parameters of the base Diagnostics class */
     bool ReadBaseParameters ();
     /** Initialize member variables of the base Diagnostics class. */
     void InitBaseData ();
+    /** Initialize m_mf_output vectors and data required to construct the buffers
+     * \param[in] i_buffer index of buffer for which the output MultiFab is defined.
+     * \param[in] lev level on which the output MultiFab is defined
+     */
+    virtual void InitializeFieldBufferData (int i_buffer, int lev) = 0;
+    /** Initialize member variables and arrays specific to the diagnostics in the
+     *  derived classes.(FullDiagnostics, BTDiagnostics)
+     */
+    virtual void InitDerivedData() = 0;
+    /** This function initialized particle buffers (not implemented in diagnostics, yet) */
+    virtual void InitializeParticleBuffer () = 0;
     /** Prepare data (either fill-boundary or cell-centered data for
         back-transform diagnostics) to be processed for diagnostics.
      */
-    virtual void PrepareFieldDataForOutput () {};
+    virtual void PrepareFieldDataForOutput () = 0;
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string m_diag_name;
     /** Prefix for output directories */

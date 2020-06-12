@@ -26,20 +26,12 @@ FullDiagnostics::FullDiagnostics (int i, std::string name)
 }
 
 void
-FullDiagnostics::InitData ()
+FullDiagnostics::InitializeParticleBuffer ()
 {
+    // When particle buffers are included, the vector of particle containers
+    // must be allocated in this function.
     // Initialize data in the base class Diagnostics
-    InitBaseData();
-
     auto & warpx = WarpX::GetInstance();
-
-    for ( int lev=0; lev<nlev; lev++ ){
-        InitializeFieldFunctors( lev );
-        // At this point, m_varnames.size() >= m_all_field_functors[0].size()
-
-        // Initialize member variable m_mf_output depending on m_crse_ratio, m_lo and m_hi
-        DefineDiagMultiFab( lev );
-    }
 
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     // If not specified, dump all species
@@ -87,15 +79,17 @@ FullDiagnostics::ReadParameters ()
 }
 
 void
-FullDiagnostics::Flush ()
+FullDiagnostics::Flush ( int i_buffer )
 {
-    // This function can be moved to Diagnostics when plotfiles/openpmd format
-    // is supported for BackTransformed Diagnostics
+    // This function should be moved to Diagnostics when plotfiles/openpmd format
+    // is supported for BackTransformed Diagnostics, in BTDiagnostics class.
     auto & warpx = WarpX::GetInstance();
     m_flush_format->WriteToFile(
-        m_varnames, m_mf_output[0], warpx.Geom(), warpx.getistep(),
+        m_varnames, m_mf_output[i_buffer], warpx.Geom(), warpx.getistep(),
         warpx.gett_new(0), m_all_species, nlev, m_file_prefix,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
+
+    FlushRaw();
 }
 
 void
@@ -103,7 +97,7 @@ FullDiagnostics::FlushRaw () {}
 
 
 bool
-FullDiagnostics::DoDump (int step, bool force_flush)
+FullDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 {
     if (m_already_done) return false;
     if ( force_flush || (m_intervals.contains(step+1)) ){
@@ -112,6 +106,18 @@ FullDiagnostics::DoDump (int step, bool force_flush)
     }
     return false;
 }
+
+bool
+FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
+{
+    // Data must be computed and packed for full diagnostics
+    // whenever the data needs to be flushed.
+    if (force_flush || m_intervals.contains(step+1) ){
+        return true;
+    }
+    return false;
+}
+
 
 void
 FullDiagnostics::AddRZModesToDiags (int lev)
@@ -215,7 +221,7 @@ FullDiagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
 
 
 void
-FullDiagnostics::DefineDiagMultiFab ( int lev ) {
+FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     auto & warpx = WarpX::GetInstance();
     amrex::RealBox diag_dom;
     bool use_warpxba = true;
@@ -303,7 +309,7 @@ FullDiagnostics::DefineDiagMultiFab ( int lev ) {
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
     int ngrow = (m_format == "sensei") ? 1 : 0;
     // The zero is hard-coded since the number of output buffers = 1 for FullDiagnostics
-    m_mf_output[0][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow);
+    m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow);
 
 }
 

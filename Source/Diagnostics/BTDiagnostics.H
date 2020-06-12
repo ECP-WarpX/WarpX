@@ -2,7 +2,6 @@
 #define WARPX_BTDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
-using namespace amrex::literals;
 
 class
 BTDiagnostics final : public Diagnostics
@@ -10,8 +9,6 @@ BTDiagnostics final : public Diagnostics
 public:
 
     BTDiagnostics (int i, std::string name);
-    /** Initialize Data required to compute back-transformed diagnostics */
-    void InitData () override;
 
 private:
     /** Read relevant parameters for BTD */
@@ -19,20 +16,26 @@ private:
     /** Flush m_mf_output and particles to file. */
     // Currently this is an empty function. When OpenPMD/Plotfile is supported
     // this function can be moved to the base class Diagnostics.
-    void Flush () override {} ;
+    void Flush (int i_buffer) override {} ;
     /** whether to write output files at this time step
+     *  The data is flushed when the buffer is full and/or
+     *   when the simulation ends or when forced.
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
-     *  The return bool is always set to true since data is back-transformed
-     *  to lab-frame and added to the output buffer every timestep.
-     *  The data is flushed when the buffer is full and/or when the simulation ends.
+     *  The return bool is used to determine when to write buffer data out
      */
-    // To be discussed : may be this function should have a different name?
-    bool DoDump (int step, bool force_flush=false) override;
+    bool DoDump (int step, int i_buffer, bool force_flush=false) override;
+    bool DoComputeAndPack (int step, bool force_flush=false) override;
+    /** Initialize Data required to compute back-transformed diagnostics */
+    void InitDerivedData ();
     /** Initialize functors that store pointers to the fields requested by the user.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
     void InitializeFieldFunctors (int lev);
+    /** This function initialized and allocates particle buffers for all the snapshots.
+     *  The particle containers required for this must be added to populate this function.
+     */
+    void InitializeParticleBuffer () override {};
     /** Compute the cell-centered data for all user-requested fields and store in
      *  the multi-level cell-centered multifab, m_mf_cc. This MultiFab extends
      *  over the entire domain and is coarsened using the user-defined crse_ratio
@@ -43,29 +46,11 @@ private:
      * \param[in] i_buffer i^th snapshot or buffer
      * \param[in] lev level
      */
-    void InitBufferData(int i_buffer, int lev);
+    void InitializeFieldBufferData ( int i_buffer , int lev) override;
     /** Whether to compute back-tranformed values for field-data */
     bool m_do_back_transformed_fields = true;
     /** Whether to compute back-tranformed values for particle-data */
     bool m_do_back_transformed_particles = true;
-
-    /** Map field names and component number in cell-centered_data */
-    std::map<std::string, int> m_possible_fields_to_dump = {
-        {"Ex" , 0},
-        {"Ey" , 1},
-        {"Ez" , 2},
-        {"Bx" , 3},
-        {"By" , 4},
-        {"Bz" , 5},
-        {"jx" , 6},
-        {"jy" , 7},
-        {"jz" , 8},
-        {"rho", 9} };
-
-    /** Map of field index in m_mf_output[i] that contained cell-centered BTD for
-      * snapshots i. By default, all fields are dumped.
-      */
-    amrex::Gpu::ManagedDeviceVector<int> m_map_actual_fields_to_dump;
 
     // boost parameters
     amrex::Real m_gamma_boost;
@@ -144,9 +129,16 @@ private:
      *  \param[in] ref_ratio, refinement ratio at level, lev
      */
     amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio) {
+        using namespace amrex::literals;
         return PhysConst::c * dt * 1._rt/m_beta_boost * 1._rt/m_gamma_boost * 1._rt/ref_ratio;
     }
-
+    /** whether field buffer is full
+     * \param[in] i_buffer buffer id for which the buffer size is checked.
+     * returns bool = true is buffer is full
+     */
+    bool buffer_full (int i_buffer) {
+        return ( m_buffer_counter[i_buffer] == m_buffer_size );
+    }
 };
 
 #endif // WARPX_BTDIAGNOSTICS_H_

@@ -15,10 +15,9 @@ BTDiagnostics::BTDiagnostics (int i, std::string name)
     ReadParameters();
 }
 
-void
-BTDiagnostics::InitData ()
+
+void BTDiagnostics::InitDerivedData ()
 {
-    InitBaseData();
     // storing BTD related member variables
     auto & warpx = WarpX::GetInstance();
     m_gamma_boost = WarpX::gamma_boost;
@@ -53,17 +52,11 @@ BTDiagnostics::InitData ()
         // temporary variable name for customized BTD output to verify accuracy
         m_file_name[i] = amrex::Concatenate(m_file_prefix +"/snapshots/snapshot",i,5);
         for (int lev = 0; lev < nmax_lev; ++lev) {
-            // Initialize buffer domain, buffer_box, and ncells in lab-frame
-            InitBufferData(i, lev);
             // Define cell-centered multifab over the whole domain with user-defined crse_ratio
             // for nlevels
             DefineCellCenteredMultiFab(lev);
-            // Pointers to field functors are initialized for back-transform output
-            // and to prepare cell-centered data required to compute back-transform diags
-            InitializeFieldFunctors(lev);
         }
     }
-
 
 }
 
@@ -110,11 +103,6 @@ BTDiagnostics::ReadParameters ()
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
 
-    m_map_actual_fields_to_dump.resize(m_varnames.size());
-    for (int i=0; i < m_varnames.size(); ++i) {
-        m_map_actual_fields_to_dump[i] = m_possible_fields_to_dump[ m_varnames[i] ];
-    }
-
 }
 
 void
@@ -126,16 +114,26 @@ BTDiagnostics::writeMetaData ()
 }
 
 bool
-BTDiagnostics::DoDump (int step, bool force_flush)
+BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
+{
+    // check if buffer is full (m_buffer_counter[i_buffer] == m_) or if force_flush == true
+    if ( buffer_full(i_buffer) || force_flush) {
+        return true;
+    }
+    return false;
+}
+
+
+bool
+BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
     // always set to true for BTDiagnostics since back-transform buffers are potentially
-    // filled every timstep. They will be flushed if m_buffer_counter for
-    // the snapshot is equal to m_buffer_size
+    // computed and packed every timstep.
     return true;
 }
 
 void
-BTDiagnostics::InitBufferData(int i_buffer, int lev)
+BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 {
     auto & warpx = WarpX::GetInstance();
     // 1. Lab-frame time for the i^th snapshot
