@@ -27,7 +27,7 @@ Diagnostics::~Diagnostics ()
 }
 
 bool
-Diagnostics::ReadBaseParameters ()
+Diagnostics::BaseReadParameters ()
 {
     auto & warpx = WarpX::GetInstance();
     // Read list of fields requested by the user.
@@ -106,7 +106,7 @@ Diagnostics::InitData ()
     InitBaseData();
     // initialize member variables and arrays specific to each derived class
     // (FullDiagnostics, BTDiagnostics, etc.)
-    InitDerivedData();
+    DerivedInitData();
     // loop over all buffers
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         // loop over all levels

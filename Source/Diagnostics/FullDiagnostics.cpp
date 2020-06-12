@@ -48,7 +48,7 @@ void
 FullDiagnostics::ReadParameters ()
 {
     // Read list of full diagnostics fields requested by the user.
-    bool checkpoint_compatibility = ReadBaseParameters();
+    bool checkpoint_compatibility = BaseReadParameters();
     auto & warpx = WarpX::GetInstance();
     ParmParse pp(m_diag_name);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(

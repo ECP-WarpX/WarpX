@@ -16,7 +16,7 @@ BTDiagnostics::BTDiagnostics (int i, std::string name)
 }
 
 
-void BTDiagnostics::InitDerivedData ()
+void BTDiagnostics::DerivedInitData ()
 {
     // storing BTD related member variables
     auto & warpx = WarpX::GetInstance();
@@ -25,7 +25,7 @@ void BTDiagnostics::InitDerivedData ()
     m_moving_window_dir = warpx.moving_window_dir;
 
     // temporary function related to customized output from previous BTD to verify accuracy
-    writeMetaData();
+    TMP_writeMetaData();
 
     // allocate vector of m_t_lab with m_num_buffers;
     m_t_lab.resize(m_num_buffers);
@@ -49,7 +49,7 @@ void BTDiagnostics::InitDerivedData ()
     m_cell_center_functors.resize(nmax_lev);
 
     for (int i = 0; i < m_num_buffers; ++i) {
-        // temporary variable name for customized BTD output to verify accuracy
+        // TMP variable name for customized BTD output to verify accuracy
         m_file_name[i] = amrex::Concatenate(m_file_prefix +"/snapshots/snapshot",i,5);
     }
     for (int lev = 0; lev < nmax_lev; ++lev) {
@@ -63,7 +63,7 @@ void BTDiagnostics::InitDerivedData ()
 void
 BTDiagnostics::ReadParameters ()
 {
-    ReadBaseParameters();
+    BaseReadParameters();
     auto & warpx = WarpX::GetInstance();
     // Read list of back-transform diag parameters requested by the user //
     amrex::Print() << " in read parameters for BTD \n";
@@ -106,7 +106,7 @@ BTDiagnostics::ReadParameters ()
 }
 
 void
-BTDiagnostics::writeMetaData ()
+BTDiagnostics::TMP_writeMetaData ()
 {
     // This function will have the same functionality as writeMetaData in
     // previously used BackTransformedDiagnostics class to write
@@ -149,7 +149,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     // 6. Compute ncells_lab required for writing Header file and potentially to generate
     //    Back-Transform geometry to ensure compatibility with plotfiles //
     // 7. Call funtion to create directories for customized output format
-    createLabFrameDirectories(i_buffer, lev);
+    TMP_createLabFrameDirectories(i_buffer, lev);
 }
 
 void
@@ -184,7 +184,7 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
 // Temporary function only to debug the current implementation.
 // Will be replaced with plotfile/OpenPMD functionality
 void
-BTDiagnostics::createLabFrameDirectories(int i_buffer, int lev)
+BTDiagnostics::TMP_createLabFrameDirectories(int i_buffer, int lev)
 {
     // This function will include relevant code from class BackTransformedDiagnostics
     // to create lab-frame directories. Note that here we will also add level, lev

@@ -38,8 +38,6 @@ private:
      * \return bool, whether to flush
      */
     bool DoDump (int step, int i_buffer, bool force_flush=false) override;
-    /** Initialize pointers to main fields and allocate output multifab m_mf_output. */
-    void InitDerivedData () override {};
     /** Append varnames with names for all modes of a field
      * \param[in] field field name (includes component, e.g., Er)
      * \param[in] ncomp number of components (modes, real and imag)

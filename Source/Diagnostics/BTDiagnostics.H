@@ -27,7 +27,7 @@ private:
     bool DoDump (int step, int i_buffer, bool force_flush=false) override;
     bool DoComputeAndPack (int step, bool force_flush=false) override;
     /** Initialize Data required to compute back-transformed diagnostics */
-    void InitDerivedData ();
+    void DerivedInitData ();
     /** Initialize functors that store pointers to the fields requested by the user.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
@@ -99,7 +99,7 @@ private:
     amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor const> > > m_cell_center_functors;
 
     /** Customized function to write back-transformed data */
-    void writeMetaData ();
+    void TMP_writeMetaData ();
     /** Customized functions to write back-transformed data */
     void TMP_createLabFrameDirectories (int i_buffer, int lev);
     /** Define the cell-centered multi-component MultiFab at level, lev.
