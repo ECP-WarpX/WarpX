@@ -103,11 +103,6 @@ BTDiagnostics::ReadParameters ()
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
 
-    m_map_actual_fields_to_dump.resize(m_varnames.size());
-    for (int i=0; i < m_varnames.size(); ++i) {
-        m_map_actual_fields_to_dump[i] = m_possible_fields_to_dump[ m_varnames[i] ];
-    }
-
 }
 
 void

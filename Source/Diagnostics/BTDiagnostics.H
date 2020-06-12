@@ -52,24 +52,6 @@ private:
     /** Whether to compute back-tranformed values for particle-data */
     bool m_do_back_transformed_particles = true;
 
-    /** Map field names and component number in cell-centered_data */
-    std::map<std::string, int> m_possible_fields_to_dump = {
-        {"Ex" , 0},
-        {"Ey" , 1},
-        {"Ez" , 2},
-        {"Bx" , 3},
-        {"By" , 4},
-        {"Bz" , 5},
-        {"jx" , 6},
-        {"jy" , 7},
-        {"jz" , 8},
-        {"rho", 9} };
-
-    /** Map of field index in m_mf_output[i] that contained cell-centered BTD for
-      * snapshots i. By default, all fields are dumped.
-      */
-    amrex::Gpu::ManagedDeviceVector<int> m_map_actual_fields_to_dump;
-
     // boost parameters
     amrex::Real m_gamma_boost;
     amrex::Real m_beta_boost;
