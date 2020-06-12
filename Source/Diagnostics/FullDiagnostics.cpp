@@ -85,7 +85,7 @@ FullDiagnostics::Flush ( int i_buffer )
     auto & warpx = WarpX::GetInstance();
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], warpx.Geom(), warpx.getistep(),
-        warpx.gett_new(0), m_all_species, nlev, m_file_prefix,
+        warpx.gett_new(0), m_all_species, nlev_output, m_file_prefix,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 
     FlushRaw();

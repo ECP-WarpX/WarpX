@@ -22,7 +22,10 @@ void BTDiagnostics::DerivedInitData ()
     m_gamma_boost = WarpX::gamma_boost;
     m_beta_boost = std::sqrt( 1._rt - 1._rt/( m_gamma_boost * m_gamma_boost) );
     m_moving_window_dir = warpx.moving_window_dir;
-
+    // Currently, for BTD, all the data is averaged+coarsened to coarsest level
+    // and then sliced+back-transformed+filled_to_buffer.
+    // The number of levels to be output is nlev_output.
+    nlev_output = 1;
     // temporary function related to customized output from previous BTD to verify accuracy
     TMP_writeMetaData();
 

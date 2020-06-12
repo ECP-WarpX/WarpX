@@ -116,6 +116,8 @@ protected:
     // a particle buffer here?
     int nlev; /**< number of levels to output */
     int nmax_lev; /**< max_level to allocate output multifab and vector of field functors. */
+    /** Number of levels to be output*/
+    int nlev_output
     /** Name of species to write to file */
     std::vector< std::string > m_species_names;
     /** Each element of this vector handles output for 1 species */

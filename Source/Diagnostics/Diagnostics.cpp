@@ -126,8 +126,10 @@ void
 Diagnostics::InitBaseData ()
 {
     auto & warpx = WarpX::GetInstance();
-    // Number of levels
+    // Number of levels in the simulation at the current timestep
     nlev = warpx.finestLevel() + 1;
+    // default number of levels to be output = nlev
+    nlev_output = nlev;
     // Maximum number of levels that will be allocated in the simulation
     nmax_lev = warpx.maxLevel() + 1;
     m_all_field_functors.resize( nmax_lev );
@@ -172,7 +174,7 @@ Diagnostics::ComputeAndPack ()
     PrepareFieldDataForOutput();
     // compute the necessary fields and stiore result in m_mf_output.
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        for(int lev=0; lev<nlev; lev++){
+        for(int lev=0; lev<nlev_output; lev++){
             int icomp_dst = 0;
             for (int icomp=0, n=m_all_field_functors[0].size(); icomp<n; icomp++){
                 // Call all functors in m_all_field_functors[lev]. Each of them computes
