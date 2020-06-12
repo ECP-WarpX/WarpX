@@ -6,6 +6,7 @@ macro(find_amrex)
         # see https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#customization-options
         # ENABLE_DP
         # ENABLE_DP_PARTICLES
+        enable_language(Fortran)
         set(ENABLE_FORTRAN ON CACHE INTERNAL "")
         set(ENABLE_FORTRAN_INTERFACES ON CACHE INTERNAL "")
         set(ENABLE_TUTORIALS OFF CACHE INTERNAL "")
