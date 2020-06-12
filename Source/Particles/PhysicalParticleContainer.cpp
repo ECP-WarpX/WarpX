@@ -358,16 +358,17 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
             weight = w * w_unit;
         }
 
-        const Geometry& geom = Geom(lev);
+        // TODO: Add option for different levels of injection
+        const Geometry& geom = Geom(0);
         const auto problo = geom.ProbLoArray();
         const auto probhi = geom.ProbHiArray();
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
             ParticleReal const x = ptr_x.get()[i]*position_unit_x;
-            if (x>problo[0] && x<problo[0]){
+            if (x>problo[0] && x<probhi[0]){
                 ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
 #   ifndef WARPX_DIM_3D
-                if (z>problo[1] && z<problo[1]){
+                if (z>problo[1] && z<probhi[1]){
                     ParticleReal const y = 0.0_prt;
                     ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
                     ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
@@ -381,9 +382,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                     particle_w);
                 }
 #   else
-                if (z>problo[2] && z<problo[2]){
+                if (z>problo[2] && z<probhi[2]){
                     ParticleReal const y = ptr_y.get()[i]*position_unit_y;
-                    if (y>problo[1] && y<problo[1]) {
+                    if (y>problo[1] && y<probhi[1]) {
                         ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
                         ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
                         ParticleReal uy = 0.0_prt;
