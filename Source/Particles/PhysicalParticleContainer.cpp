@@ -358,27 +358,48 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
             weight = w * w_unit;
         }
 
+        const Geometry& geom = Geom(lev);
+        const auto problo = geom.ProbLoArray();
+        const auto probhi = geom.ProbHiArray();
+
         for (auto i = decltype(npart){0}; i<npart; ++i){
             ParticleReal const x = ptr_x.get()[i]*position_unit_x;
-            ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
+            if (x>problo[0] && x<problo[0]){
+                ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
 #   ifndef WARPX_DIM_3D
-            ParticleReal const y = 0.0_prt;
-#   else
-            ParticleReal const y = ptr_y.get()[i]*position_unit_y;
-#   endif
-            if (plasma_injector->insideBounds(x, y, z)) {
-                ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
-                ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
-                ParticleReal uy = 0.0_prt;
-                if (ps["momentum"].contains("y")) {
-                    uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
+                if (z>problo[1] && z<problo[1]){
+                    ParticleReal const y = 0.0_prt;
+                    ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
+                    ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
+                    ParticleReal uy = 0.0_prt;
+                    if (ps["momentum"].contains("y")) {
+                        uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
+                    }
+                    CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
+                    particle_x,  particle_y,  particle_z,
+                    particle_ux, particle_uy, particle_uz,
+                    particle_w);
                 }
-                CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
-                particle_x,  particle_y,  particle_z,
-                particle_ux, particle_uy, particle_uz,
-                particle_w);
+#   else
+                if (z>problo[2] && z<problo[2]){
+                    ParticleReal const y = ptr_y.get()[i]*position_unit_y;
+                    if (y>problo[1] && y<problo[1]) {
+                        ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
+                        ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
+                        ParticleReal uy = 0.0_prt;
+                        if (ps["momentum"].contains("y")) {
+                            uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
+                        }
+                        CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
+                        particle_x,  particle_y,  particle_z,
+                        particle_ux, particle_uy, particle_uz,
+                        particle_w);
+                    }
+                }
+#   endif
             }
         }
+
         auto const np = particle_z.size();
         if (np < npart) {
             Print() << "WARNING: Simulation box doesn't cover all particles\n";
