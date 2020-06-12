@@ -341,7 +341,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         }
         // Check that the proper number of user-requested components are cell-centered
         AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
-        // fill boundary call is required to average_down (flatten) data to 
+        // fill boundary call is required to average_down (flatten) data to
         // the coarsest level.
         m_cell_centered_data[lev]->FillBoundary(warpx.Geom(lev).periodicity() );
     }
