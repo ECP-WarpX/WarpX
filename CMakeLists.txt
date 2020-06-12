@@ -19,13 +19,7 @@ endif()
 # this is an optional tool that stores compiled object files; allows fast
 # re-builds even with "make clean" in between. Mainly used to store AMReX
 # objects
-find_program(CCACHE_PROGRAM ccache)
-if(CCACHE_PROGRAM)
-    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-    if(ENABLE_CUDA)
-        set(CMAKE_CUDA_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-    endif()
-endif()
+set_ccache()
 
 
 # Output Directories ##########################################################
@@ -39,24 +33,39 @@ set_default_install_dirs()
 
 # Options and Variants ########################################################
 #
-warpx_option(QED                "PICSAR QED (requires Boost)"              OFF)
-warpx_option(OPENPMD            "openPMD I/O"                              OFF)
-#warpx_option(PYTHON             "Enable Python bindings"                  AUTO)
-# PSATD (fftw; RZ:+blaspp+lapackpp), PICSAR/QED, hdf5, sensei, conduit, ascent, BL_ASSERT et al. (ON)
+option(WarpX_OPENPMD       "openPMD I/O"                                OFF)
+option(WarpX_PSATD         "spectral solver support"                    OFF)
+option(WarpX_QED           "PICSAR QED (requires Boost)"                OFF)
+# TODO: python, hdf5, sensei, conduit, ascent
 
 set(WarpX_DIMS_VALUES 2 3 RZ)
-set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality")
+set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality (2/3/RZ)")
 set_property(CACHE WarpX_DIMS PROPERTY STRINGS ${WarpX_DIMS_VALUES})
 if(NOT WarpX_DIMS IN_LIST WarpX_DIMS_VALUES)
     message(FATAL_ERROR "WarpX_DIMS (${WarpX_DIMS}) must be one of ${WarpX_DIMS_VALUES}")
 endif()
 
-option(WarpX_amrex_internal    "Download & build AMReX" ON)
-option(WarpX_picsar_internal   "Download & build PICSAR" ON)
-option(WarpX_openpmd_internal  "Download & build openPMD-api" ON)
+set(WarpX_PRECISION_VALUES double single)
+set(WarpX_PRECISION double CACHE STRING "Floating point precision (single/double)")
+set_property(CACHE WarpX_PRECISION PROPERTY STRINGS ${WarpX_PRECISION_VALUES})
+if(NOT WarpX_PRECISION IN_LIST WarpX_PRECISION_VALUES)
+    message(FATAL_ERROR "WarpX_PRECISION (${WarpX_PRECISION}) must be one of ${WarpX_PRECISION_VALUES}")
+endif()
+
+set(WarpX_COMPUTE_VALUES NONE CUDA OMP) # HIP DPCPP
+set(WarpX_COMPUTE NONE CACHE STRING "Parallel, on-node computing backend (NONE/CUDA/OMP)")
+set_property(CACHE WarpX_COMPUTE PROPERTY STRINGS ${WarpX_COMPUTE_VALUES})
+if(NOT WarpX_COMPUTE IN_LIST WarpX_COMPUTE_VALUES)
+    message(FATAL_ERROR "WarpX_PRECISION (${WarpX_COMPUTE}) must be one of ${WarpX_COMPUTE_VALUES}")
+endif()
+
+option(WarpX_amrex_internal                    "Download & build AMReX" ON)
 
 # change the default build type to RelWithDebInfo (or Release) instead of Debug
 set_default_build_type("RelWithDebInfo")
+
+# this defined the variable BUILD_TESTING which is ON by default
+include(CTest)
 
 
 # Dependencies ################################################################
@@ -76,8 +85,25 @@ include(${WarpX_SOURCE_DIR}/cmake/dependencies/PICSAR.cmake)
 #   builds openPMD-api from source (default) or finds an existing install
 include(${WarpX_SOURCE_DIR}/cmake/dependencies/openPMD.cmake)
 
-# external library: FFTW (optional)
-# external library: BLASPP LAPACKPP (optional)
+# PSATD
+if(WarpX_PSATD)
+    # FFTW (non-GPU) and cuFFT (GPU)
+    if(NOT ENABLE_CUDA)
+        find_package(PkgConfig REQUIRED QUIET)
+        if(WarpX_PRECISION STREQUAL "double")
+            pkg_check_modules(fftw3 REQUIRED IMPORTED_TARGET fftw3)
+        else()
+            pkg_check_modules(fftw3f REQUIRED IMPORTED_TARGET fftw3f)
+        endif()
+    endif()
+    # BLASPP and LAPACKPP
+    if(WarpX_DIMS STREQUAL RZ)
+        # FIXME send a couple of upstream PRs to those repos...
+        find_package(blaspp REQUIRED)
+        find_package(lapackpp REQUIRED)
+        find_package(OpenMP REQUIRED)  # pulled by the two above
+    endif()
+endif()
 
 
 # Targets #####################################################################
@@ -125,11 +151,31 @@ set_target_properties(WarpX PROPERTIES
 # FIXME use AMReX::thirdparty::AMReX as soon as
 #       missing _deps/fetchedamrex-build/mod_files is solved
 target_link_libraries(WarpX PUBLIC AMReX::amrex)
-if(WarpX_HAVE_OPENPMD)
+
+if(WarpX_PSATD)
+    if(ENABLE_CUDA)
+        # CUDA_ADD_CUFFT_TO_TARGET(WarpX)
+        target_link_libraries(WarpX PUBLIC cufft)
+    else()
+        if(WarpX_PRECISION STREQUAL "double")
+            target_link_libraries(WarpX PUBLIC PkgConfig::fftw3)
+        else()
+            target_link_libraries(WarpX PUBLIC PkgConfig::fftw3f)
+        endif()
+    endif()
+    if(WarpX_DIMS STREQUAL RZ)
+        # FIXME send a couple of upstream PRs to those repos...
+        target_link_libraries(WarpX PUBLIC blaspp)
+        target_link_libraries(WarpX PUBLIC lapackpp)
+    endif()
+endif()
+
+if(WarpX_OPENPMD)
     target_compile_definitions(WarpX PUBLIC WARPX_USE_OPENPMD)
     target_link_libraries(WarpX PUBLIC openPMD::openPMD)
 endif()
-if(WarpX_HAVE_QED)
+
+if(WarpX_QED)
     target_compile_definitions(WarpX PUBLIC WARPX_QED)
     # FIXME WARPX_QED_TABLE_GEN
     target_link_libraries(WarpX PUBLIC pxrmp_qed)
@@ -154,6 +200,21 @@ elseif(WarpX_DIMS STREQUAL 2)
     target_compile_definitions(WarpX PRIVATE WARPX_DIM_XZ)
 elseif(WarpX_DIMS STREQUAL RZ)
     target_compile_definitions(WarpX PRIVATE WARPX_DIM_RZ)
+endif()
+
+if(WarpX_OPENPMD)
+    target_compile_definitions(WarpX PRIVATE WARPX_USE_OPENPMD)
+endif()
+
+if(WarpX_QED)
+    target_compile_definitions(WarpX PRIVATE WARPX_QED)
+    if(WarpX_QED_TABLE_GEN)
+        target_compile_definitions(WarpX PRIVATE WarpX_QED_TABLE_GEN)
+    endif()
+endif()
+
+if(WarpX_PSATD)
+    target_compile_definitions(WarpX PRIVATE WARPX_USE_PSATD)
 endif()
 
 
@@ -203,8 +264,6 @@ install(TARGETS ${WarpX_INSTALL_TARGET_NAMES}
 
 # Tests #######################################################################
 #
-# this defined the variable BUILD_TESTING which is ON by default
-include(CTest)
 
 #if(BUILD_TESTING)
 #    enable_testing()
@@ -215,40 +274,4 @@ include(CTest)
 
 # Status Summary for Build Options ############################################
 #
-message("")
-message("WarpX build configuration:")
-message("  Version: ${WarpX_VERSION}")
-message("  C++ Compiler: ${CMAKE_CXX_COMPILER_ID} "
-                        "${CMAKE_CXX_COMPILER_VERSION} "
-                        "${CMAKE_CXX_COMPILER_WRAPPER}")
-message("    ${CMAKE_CXX_COMPILER}")
-message("")
-message("  Installation prefix: ${CMAKE_INSTALL_PREFIX}")
-message("        bin: ${CMAKE_INSTALL_BINDIR}")
-message("        lib: ${CMAKE_INSTALL_LIBDIR}")
-message("    include: ${CMAKE_INSTALL_INCLUDEDIR}")
-message("      cmake: ${CMAKE_INSTALL_CMAKEDIR}")
-if(WarpX_HAVE_PYTHON)
-    message("     python: ${CMAKE_INSTALL_PYTHONDIR}")
-endif()
-message("")
-message("  Build Type: ${CMAKE_BUILD_TYPE}")
-#if(BUILD_SHARED_LIBS)
-#    message("  Library: shared")
-#else()
-#    message("  Library: static")
-#endif()
-message("  Testing: ${BUILD_TESTING}")
-#message("  Invasive Tests: ${WarpX_USE_INVASIVE_TESTS}")
-#message("  Internal VERIFY: ${WarpX_USE_VERIFY}")
-message("  Build Options:")
-
-foreach(opt IN LISTS WarpX_CONFIG_OPTIONS)
-  if(${WarpX_HAVE_${opt}})
-    message("    ${opt}: ON")
-  else()
-    message("    ${opt}: OFF")
-  endif()
-endforeach()
-message("    DIMS: ${WarpX_DIMS}")
-message("")
+warpx_print_summary()

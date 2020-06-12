@@ -3,6 +3,8 @@ function(find_picsar)
         include(FetchContent)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
+        # FIXME no option to control WarpX_QED_TABLE_GEN / Boost trigger yet
+
         FetchContent_Declare(fetchedpicsar
             GIT_REPOSITORY ${WarpX_picsar_repo}
             GIT_TAG        ${WarpX_picsar_branch}
@@ -36,7 +38,8 @@ function(find_picsar)
     endif()
 endfunction()
 
-if(WarpX_USE_QED)
+if(WarpX_QED)
+    option(WarpX_picsar_internal   "Download & build PICSAR" ON)
     set(WarpX_picsar_repo "https://bitbucket.org/berkeleylab/picsar.git"
         CACHE STRING
         "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
@@ -44,6 +47,8 @@ if(WarpX_USE_QED)
         CACHE STRING
         "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
 
-    set(WarpX_HAVE_QED TRUE)
+    cmake_dependent_option(WarpX_QED_TABLE_GEN "generate QED lookup tables (requires boost)"
+        ON "WarpX_QED" OFF)
+
     find_picsar()
 endif()

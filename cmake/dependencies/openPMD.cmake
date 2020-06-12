@@ -56,7 +56,8 @@ function(find_openpmd)
     endif()
 endfunction()
 
-if(WarpX_USE_OPENPMD)
+if(WarpX_OPENPMD)
+    option(WarpX_openpmd_internal   "Download & build openPMD-api" ON)
     set(WarpX_openpmd_repo "https://github.com/openPMD/openPMD-api.git"
         CACHE STRING
         "Repository URI to pull and build openPMD-api from if(WarpX_openpmd_internal)")

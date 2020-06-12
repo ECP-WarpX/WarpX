@@ -1,3 +1,17 @@
+# find the CCache tool and use it if found
+#
+macro(set_ccache)
+    find_program(CCACHE_PROGRAM ccache)
+    if(CCACHE_PROGRAM)
+        set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+        if(ENABLE_CUDA)
+            set(CMAKE_CUDA_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+        endif()
+    endif()
+    mark_as_advanced(CCACHE_PROGRAM)
+endmacro()
+
+
 # set names and paths of temporary build directories
 # the defaults in CMake are sub-ideal for historic reasons, lets make them more
 # Unix-ish and portable.
@@ -122,23 +136,6 @@ function(configure_mpiexec num_ranks)
 endfunction()
 
 
-# ...
-#
-function(warpx_option name description default)
-    set(WarpX_USE_${name} ${default} CACHE STRING "${description}")
-    set_property(CACHE WarpX_USE_${name} PROPERTY
-        STRINGS "ON;TRUE;AUTO;OFF;FALSE"
-    )
-    if(WarpX_HAVE_${name})
-        set(WarpX_HAVE_${name} TRUE)
-    else()
-        set(WarpX_HAVE_${name})
-    endif()
-    # list of all possible options
-    set(WarpX_CONFIG_OPTIONS ${WarpX_CONFIG_OPTIONS} ${name} PARENT_SCOPE)
-endfunction()
-
-
 # Prints a summary of WarpX options at the end of the CMake configuration
 #
 function(warpx_print_summary)
@@ -159,21 +156,21 @@ function(warpx_print_summary)
         message("     python: ${CMAKE_INSTALL_PYTHONDIR}")
     endif()
     message("")
-    message("  Build Type: ${CMAKE_BUILD_TYPE}")
+    message("  Build type: ${CMAKE_BUILD_TYPE}")
     #if(BUILD_SHARED_LIBS)
     #    message("  Library: shared")
     #else()
     #    message("  Library: static")
     #endif()
     message("  Testing: ${BUILD_TESTING}")
-    message("  Build Options:")
-
-    foreach(opt IN LISTS WarpX_CONFIG_OPTIONS)
-      if(${WarpX_HAVE_${opt}})
-        message("    ${opt}: ON")
-      else()
-        message("    ${opt}: OFF")
-      endif()
-    endforeach()
+    #message("  Invasive Tests: ${WarpX_USE_INVASIVE_TESTS}")
+    #message("  Internal VERIFY: ${WarpX_USE_VERIFY}")
+    message("  Build options:")
+    message("    COMPUTE: ${WarpX_COMPUTE}")
+    message("    DIMS: ${WarpX_DIMS}")
+    message("    PSATD: ${WarpX_PSATD}")
+    message("    PRECISION: ${WarpX_PRECISION}")
+    message("    OPENPMD: ${WarpX_OPENPMD}")
+    message("    QED: ${WarpX_QED}")
     message("")
 endfunction()
