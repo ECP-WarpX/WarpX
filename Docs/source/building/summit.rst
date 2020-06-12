@@ -3,7 +3,7 @@
 Building WarpX on Summit (OLCF)
 ================================
 
-The `Summit cluster <https://www.olcf.ornl.gov/summit/>`_ is located OLCF.
+The `Summit cluster <https://www.olcf.ornl.gov/summit/>`_ is located at OLCF.
 
 If you are new to this system, please see the following resources:
 
@@ -106,4 +106,3 @@ Running
 Please see :ref:`our example job scripts <running-cpp-summit>` on how to run WarpX on Summit.
 
 See :doc:`../visualization/yt` for more information on how to visualize the simulation results.
-
