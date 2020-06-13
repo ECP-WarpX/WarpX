@@ -116,18 +116,18 @@ BTDiagnostics::TMP_writeMetaData ()
     // previously used BackTransformedDiagnostics class to write
     // back-transformed data in a customized format
 
-    if (ParallelDescriptor::IOProcessor()) {
+    if (amrex::ParallelDescriptor::IOProcessor()) {
         const std::string fullpath = m_file_prefix + "/snapshots";
-        if (!UtilCreateDirectory(fullpath, 0755)) CreateDirectoryFailed(fullpath);
+        if (!amrex::UtilCreateDirectory(fullpath, 0755)) amrex::CreateDirectoryFailed(fullpath);
 
-        VisMF::IO_Buffer io_buffer(VisMF::IO_Buffer_Size);
+        amrex::VisMF::IO_Buffer io_buffer(amrex::VisMF::IO_Buffer_Size);
         std::ofstream HeaderFile;
         HeaderFile.rdbuf()->pubsetbuf(io_buffer.dataPtr(), io_buffer.size());
         std::string HeaderFileName(m_file_prefix + "/snapshots/Header");
         HeaderFile.open(HeaderFileName.c_str(), std::ofstream::out   |
                                                 std::ofstream::trunc |
                                                 std::ofstream::binary);
-        if (!HeaderFile.good()) FileOpenFailed( HeaderFileName );
+        if (!HeaderFile.good()) amrex::FileOpenFailed( HeaderFileName );
 
         HeaderFile.precision(17);
         HeaderFile << m_num_snapshots_lab << "\n";
@@ -167,22 +167,22 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     // 2. Define domain in boosted frame at level, lev
     amrex::RealBox diag_dom;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim ) {
-        diag_dom.setLo(idim, max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
-        diag_dom.setHi(idim, min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
+        diag_dom.setLo(idim, std::max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
+        diag_dom.setHi(idim, std::min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
     }
     // 3. Initializing the m_buffer_box for the i^th snapshot.
     //    At initialization, the Box has the same index space as the boosted-frame
     //    As time-progresses, the z-dimension indices will be modified based on
     //    current_z_lab
-    IntVect lo(0);
-    IntVect hi(1);
+    amrex::IntVect lo(0);
+    amrex::IntVect hi(1);
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         // lo index with same cell-size as simulation at level, lev.
-        lo[idim] = max( static_cast<int>( floor (
+        lo[idim] = std::max( static_cast<int>( floor (
                       ( diag_dom.lo(idim) - warpx.Geom(lev).ProbLo(idim)) /
                         warpx.Geom(lev).CellSize(idim)) ), 0 );
         // hi index with same cell-size as simulation at level, lev.
-        hi[idim] = max( static_cast<int> ( ceil (
+        hi[idim] = std::max( static_cast<int> ( ceil (
                       ( diag_dom.hi(idim) - warpx.Geom(lev).ProbLo(idim)) /
                         warpx.Geom(lev).CellSize(idim) ) ), 0) - 1 ;
         // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
@@ -193,7 +193,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
              );
         }
     }
-    Box diag_box( lo, hi );
+    amrex::Box diag_box( lo, hi );
     // The box is not coarsened yet. Should this be coarsened here or when
     // the buffer multifab is initialized?
     m_buffer_box[i_buffer] = diag_box;
@@ -223,13 +223,13 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 
     // 6. Compute ncells_lab required for writing Header file and potentially to generate
     //    Back-Transform geometry to ensure compatibility with plotfiles //
-    IntVect ref_ratio = WarpX::RefRatio(lev);
-    int Nz_lab = max( static_cast<int>( floor ( ( zmax_lab - zmin_lab)
+    amrex::IntVect ref_ratio = WarpX::RefRatio(lev);
+    int Nz_lab = std::max( static_cast<int>( floor ( ( zmax_lab - zmin_lab)
                       / dz_lab(warpx.getdt(lev), ref_ratio[AMREX_SPACEDIM-1]) ) ), 0);
-    int Nx_lab = max( static_cast<int>( floor( (diag_dom.hi(0) - diag_dom.lo(0) )
+    int Nx_lab = std::max( static_cast<int>( floor( (diag_dom.hi(0) - diag_dom.lo(0) )
                       / warpx.Geom(lev).CellSize(0) )), 0);
 #if (AMREX_SPACEDIM == 3)
-    int Ny_lab = max( static_cast<int>( floor( (diag_dom.hi(1) - diag_dom.lo(1) )
+    int Ny_lab = std::max( static_cast<int>( floor( (diag_dom.hi(1) - diag_dom.lo(1) )
                       / warpx.Geom(lev).CellSize(1) )), 0);
     m_buffer_ncells_lab[i_buffer] = {Nx_lab, Ny_lab, Nz_lab};
 #else
@@ -248,9 +248,9 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     // This MultiFab will store all the user-requested fields in the boosted-frame
     auto & warpx = WarpX::GetInstance();
     // The BoxArray is coarsened based on the user-defined coarsening ratio
-    BoxArray ba = warpx.boxArray(lev);
+    amrex::BoxArray ba = warpx.boxArray(lev);
     ba.coarsen(m_crse_ratio);
-    DistributionMapping dmap = warpx.DistributionMap(lev);
+    amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     int ngrow = 1;
     m_cell_centered_data[lev].reset( new amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow) );
 
