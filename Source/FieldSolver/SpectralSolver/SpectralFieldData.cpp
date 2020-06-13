@@ -96,15 +96,16 @@ SpectralFieldData::~SpectralFieldData()
 void
 SpectralFieldData::ForwardTransform( const MultiFab& mf,
                                      const int field_index,
-                                     const int i_comp )
+                                     const int i_comp,
+                                     const IntVect& stag )
 {
     // Check field index type, in order to apply proper shift in spectral space
-    const bool is_nodal_x = mf.is_nodal(0);
+    const bool is_nodal_x = ( ( stag[0] == amrex::IndexType::NODE ) ? true : false );
 #if (AMREX_SPACEDIM == 3)
-    const bool is_nodal_y = mf.is_nodal(1);
-    const bool is_nodal_z = mf.is_nodal(2);
+    const bool is_nodal_y = ( ( stag[1] == amrex::IndexType::NODE ) ? true : false );
+    const bool is_nodal_z = ( ( stag[2] == amrex::IndexType::NODE ) ? true : false );
 #else
-    const bool is_nodal_z = mf.is_nodal(1);
+    const bool is_nodal_z = ( ( stag[1] == amrex::IndexType::NODE ) ? true : false );
 #endif
 
     // Loop over boxes
@@ -167,7 +168,6 @@ SpectralFieldData::ForwardTransform( const MultiFab& mf,
         }
     }
 }
-
 
 /* \brief Transform spectral field specified by `field_index` back to
  * real space, and store it in the component `i_comp` of `mf` */

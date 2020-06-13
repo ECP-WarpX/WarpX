@@ -277,16 +277,11 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
 
     using Idx = SpectralFieldIndex;
 
-    // Forward Fourier transform of D (temporarily stored in current)
-    // (units multiplied by [L])
-    field_data.ForwardTransform( *current[0], Idx::Jx, 0 );
-    field_data.ForwardTransform( *current[1], Idx::Jy, 0 );
-    field_data.ForwardTransform( *current[2], Idx::Jz, 0 );
-
-    // Staggering of D
-    const IntVect stag_Dx = current[0]->ixType().toIntVect();
-    const IntVect stag_Dy = current[1]->ixType().toIntVect();
-    const IntVect stag_Dz = current[2]->ixType().toIntVect();
+    // Forward Fourier transform of D (temporarily stored in current):
+    // D is nodal and does not match the staggering of J
+    field_data.ForwardTransform( *current[0], Idx::Jx, 0, IntVect(1) );
+    field_data.ForwardTransform( *current[1], Idx::Jy, 0, IntVect(1) );
+    field_data.ForwardTransform( *current[2], Idx::Jz, 0, IntVect(1) );
 
     // Alias for 0
     constexpr int CELL = amrex::IndexType::CELL;
@@ -306,26 +301,10 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
 #endif
         const amrex::Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
 
-        const Complex* xshift_arr = field_data.xshift_FFTfromCell[mfi].dataPtr();
-#if (AMREX_SPACEDIM == 3 )
-        const Complex* yshift_arr = field_data.yshift_FFTfromCell[mfi].dataPtr();
-#endif
-        const Complex* zshift_arr = field_data.zshift_FFTfromCell[mfi].dataPtr();
-
         // Loop over indices within one box
         ParallelFor( bx, [=] AMREX_GPU_DEVICE( int i, int j, int k ) noexcept
         {
             using Idx = SpectralFieldIndex;
-
-            // Revert extra shifts applied in forward FFT due to wrong index type
-            // (minimal set of operations for a staggered simulation)
-            if ( stag_Dx[0] == CELL ) fields(i,j,k,Idx::Jx) /= xshift_arr[i];
-#if   (AMREX_SPACEDIM == 2 )
-            if ( stag_Dz[1] == CELL ) fields(i,j,k,Idx::Jz) /= zshift_arr[j];
-#elif   (AMREX_SPACEDIM == 3 )
-            if ( stag_Dy[1] == CELL ) fields(i,j,k,Idx::Jy) /= yshift_arr[j];
-            if ( stag_Dz[2] == CELL ) fields(i,j,k,Idx::Jz) /= zshift_arr[k];
-#endif
 
             // Shortcuts for the values of D
             const Complex Dx = fields(i,j,k,Idx::Jx);
@@ -345,17 +324,17 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
             const     amrex::Real kz_mod = modified_kz_arr[j];
 #endif
 
-            // Compute Jx (units multiplied by [L] again)
+            // Compute Jx
             if ( kx_mod != 0.0_rt ) fields(i,j,k,Idx::Jx) = I*Dx/kx_mod;
             else                    fields(i,j,k,Idx::Jx) = 0.0_rt;
 
 #if (AMREX_SPACEDIM==3)
-            // Compute Jy (units multiplied by [L] again)
+            // Compute Jy
             if ( ky_mod != 0.0_rt ) fields(i,j,k,Idx::Jy) = I*Dy/ky_mod;
             else                    fields(i,j,k,Idx::Jy) = 0.0_rt;
 #endif
 
-            // Compute Jz (units multiplied by [L] again)
+            // Compute Jz
             if ( kz_mod != 0.0_rt ) fields(i,j,k,Idx::Jz) = I*Dz/kz_mod;
             else                    fields(i,j,k,Idx::Jz) = 0.0_rt;
 
@@ -363,7 +342,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
     }
 
     // Backward Fourier transform of J
-    // (units divided by [L]: one factor [L] from before remains)
     field_data.BackwardTransform( *current[0], Idx::Jx, 0 );
     field_data.BackwardTransform( *current[1], Idx::Jy, 0 );
     field_data.BackwardTransform( *current[2], Idx::Jz, 0 );
