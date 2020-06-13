@@ -1,0 +1,8 @@
+target_sources(WarpX
+  PRIVATE
+    CellCenterFunctor.cpp
+    DivBFunctor.cpp
+    DivEFunctor.cpp
+    PartPerCellFunctor.cpp
+    PartPerGridFunctor.cpp
+)
