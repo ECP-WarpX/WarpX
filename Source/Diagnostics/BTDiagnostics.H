@@ -27,7 +27,7 @@ private:
     bool DoDump (int step, int i_buffer, bool force_flush=false) override;
     bool DoComputeAndPack (int step, bool force_flush=false) override;
     /** Initialize Data required to compute back-transformed diagnostics */
-    void InitDerivedData ();
+    void DerivedInitData ();
     /** Initialize functors that store pointers to the fields requested by the user.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
@@ -99,9 +99,9 @@ private:
     amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor const> > > m_cell_center_functors;
 
     /** Customized function to write back-transformed data */
-    void writeMetaData ();
+    void TMP_writeMetaData ();
     /** Customized functions to write back-transformed data */
-    void createLabFrameDirectories (int i_buffer, int lev);
+    void TMP_createLabFrameDirectories (int i_buffer, int lev);
     /** Define the cell-centered multi-component MultiFab at level, lev.
      *  \param[in] lev level at which the cell-centered MultiFab is defined.
      */
@@ -128,10 +128,7 @@ private:
      *  \param[in] dt in boosted-frame at level, lev
      *  \param[in] ref_ratio, refinement ratio at level, lev
      */
-    amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio) {
-        using namespace amrex::literals;
-        return PhysConst::c * dt * 1._rt/m_beta_boost * 1._rt/m_gamma_boost * 1._rt/ref_ratio;
-    }
+    amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio);
     /** whether field buffer is full
      * \param[in] i_buffer buffer id for which the buffer size is checked.
      * returns bool = true is buffer is full

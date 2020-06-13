@@ -40,7 +40,7 @@ private:
     /** pointer to source multifab (cell-centered multi-component multifab) */
     amrex::MultiFab const * const m_mf_src = nullptr;
     /** level at which m_mf_src is defined */
-    int m_lev;
+    int const m_lev;
 };
 
 #endif

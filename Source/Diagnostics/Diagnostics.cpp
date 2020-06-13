@@ -14,7 +14,6 @@
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
 
-using namespace amrex;
 
 Diagnostics::Diagnostics (int i, std::string name)
     : m_diag_name(name), m_diag_index(i)
@@ -27,11 +26,11 @@ Diagnostics::~Diagnostics ()
 }
 
 bool
-Diagnostics::ReadBaseParameters ()
+Diagnostics::BaseReadParameters ()
 {
     auto & warpx = WarpX::GetInstance();
     // Read list of fields requested by the user.
-    ParmParse pp(m_diag_name);
+    amrex::ParmParse pp(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp.query("file_prefix", m_file_prefix);
     pp.query("format", m_format);
@@ -50,7 +49,7 @@ Diagnostics::ReadBaseParameters ()
     }
     // If user requests to plot proc_number for a serial run,
     // delete proc_number from fields_to_plot
-    if (ParallelDescriptor::NProcs() == 1){
+    if (amrex::ParallelDescriptor::NProcs() == 1){
         m_varnames.erase(
             std::remove(m_varnames.begin(), m_varnames.end(), "proc_number"),
             m_varnames.end());
@@ -75,7 +74,7 @@ Diagnostics::ReadBaseParameters ()
     }
 
     // Initialize cr_ratio with default value of 1 for each dimension.
-    Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
+    amrex::Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
     // Read user-defined coarsening ratio for the output MultiFab.
     bool cr_specified = pp.queryarr("coarsening_ratio", cr_ratio);
     if (cr_specified) {
@@ -106,7 +105,7 @@ Diagnostics::InitData ()
     InitBaseData();
     // initialize member variables and arrays specific to each derived class
     // (FullDiagnostics, BTDiagnostics, etc.)
-    InitDerivedData();
+    DerivedInitData();
     // loop over all buffers
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         // loop over all levels
@@ -127,8 +126,10 @@ void
 Diagnostics::InitBaseData ()
 {
     auto & warpx = WarpX::GetInstance();
-    // Number of levels
+    // Number of levels in the simulation at the current timestep
     nlev = warpx.finestLevel() + 1;
+    // default number of levels to be output = nlev
+    nlev_output = nlev;
     // Maximum number of levels that will be allocated in the simulation
     nmax_lev = warpx.maxLevel() + 1;
     m_all_field_functors.resize( nmax_lev );
@@ -173,8 +174,7 @@ Diagnostics::ComputeAndPack ()
     PrepareFieldDataForOutput();
     // compute the necessary fields and stiore result in m_mf_output.
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-        // max-level of the buffer
-        for(int lev=0; lev<nlev; lev++){
+        for(int lev=0; lev<nlev_output; lev++){
             int icomp_dst = 0;
             for (int icomp=0, n=m_all_field_functors[0].size(); icomp<n; icomp++){
                 // Call all functors in m_all_field_functors[lev]. Each of them computes
