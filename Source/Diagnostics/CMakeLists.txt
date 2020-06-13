@@ -9,6 +9,7 @@ target_sources(WarpX
     SliceDiagnostic.cpp
     WarpXIO.cpp
     WarpXOpenPMD.cpp
+    BTDiagnostics.cpp
 )
 
 add_subdirectory(ComputeDiagFunctors)
