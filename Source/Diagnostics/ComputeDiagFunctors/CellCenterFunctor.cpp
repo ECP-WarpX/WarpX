@@ -1,8 +1,6 @@
 #include "CellCenterFunctor.H"
 #include "Utils/CoarsenIO.H"
 
-using namespace amrex;
-
 CellCenterFunctor::CellCenterFunctor(amrex::MultiFab const * mf_src, int lev,
                                      amrex::IntVect crse_ratio,
                                      bool convertRZmodes2cartesian, int ncomp)
@@ -21,12 +19,12 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
             nComp()==1,
             "The RZ averaging over modes must write into 1 single component");
         auto& warpx = WarpX::GetInstance();
-        MultiFab mf_dst_stag(m_mf_src->boxArray(), warpx.DistributionMap(m_lev), 1, m_mf_src->nGrowVect());
+        amrex::MultiFab mf_dst_stag(m_mf_src->boxArray(), warpx.DistributionMap(m_lev), 1, m_mf_src->nGrowVect());
         // Mode 0
-        MultiFab::Copy(mf_dst_stag, *m_mf_src, 0, 0, 1, m_mf_src->nGrowVect());
+        amrex::MultiFab::Copy(mf_dst_stag, *m_mf_src, 0, 0, 1, m_mf_src->nGrowVect());
         for (int ic=1 ; ic < m_mf_src->nComp() ; ic += 2) {
             // All modes > 0
-            MultiFab::Add(mf_dst_stag, *m_mf_src, ic, 0, 1, m_mf_src->nGrowVect());
+            amrex::MultiFab::Add(mf_dst_stag, *m_mf_src, ic, 0, 1, m_mf_src->nGrowVect());
         }
         CoarsenIO::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
     } else {

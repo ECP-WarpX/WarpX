@@ -8,6 +8,8 @@ Input parameters
    This section is currently in development.
 
 
+.. _running-cpp-parameters-overall:
+
 Overall simulation parameters
 -----------------------------
 
@@ -66,6 +68,8 @@ Overall simulation parameters
     equation. There is no limitation on the timestep in this case, but
     electromagnetic effects (e.g. propagation of radiation, lasers, etc.)
     are not captured.
+
+.. _running-cpp-parameters-box:
 
 Setting up the field mesh
 -------------------------
@@ -131,6 +135,8 @@ Setting up the field mesh
 
 * ``warpx.n_rz_azimuthal_modes`` (`integer`; 1 by default)
     When using the RZ version, this is the number of azimuthal modes.
+
+.. _running-cpp-parameters-parallelization:
 
 Distribution across MPI ranks and parallelization
 -------------------------------------------------
@@ -220,6 +226,8 @@ Distribution across MPI ranks and parallelization
 * ``warpx.safe_guard_cells`` (`0` or `1`) optional (default `0`)
     For developers: run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
 
+.. _running-cpp-parameters-parser:
+
 Math parser and user-defined constants
 --------------------------------------
 
@@ -241,6 +249,8 @@ For example, parameters ``a0`` and ``z_plateau`` can be specified with:
 
 * ``my_constants.a0 = 3.0``
 * ``my_constants.z_plateau = 150.e-6``
+
+.. _running-cpp-parameters-particle:
 
 Particle initialization
 -----------------------
@@ -560,6 +570,7 @@ Particle initialization
     (the name of an existing positron species must be provided).
     **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
 
+.. _running-cpp-parameters-laser:
 
 Laser initialization
 --------------------
@@ -881,6 +892,8 @@ Laser initialization
     B-field to each particle which is then added to the field values gathered
     from the grid in the PIC cycle.
 
+.. _running-cpp-parameters-collision:
+
 Collision initialization
 ------------------------
 
@@ -908,6 +921,8 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     ``<collision_name>``.
     If this is not provided, or if a non-positive value is provided,
     a Coulomb logarithm will be computed automatically according to the algorithm.
+
+.. _running-cpp-parameters-numerics:
 
 Numerics and algorithms
 -----------------------
@@ -1098,6 +1113,8 @@ Numerics and algorithms
      If ``sort_int`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
 
+.. _running-cpp-parameters-boundary:
+
 Boundary conditions
 -------------------
 
@@ -1130,6 +1147,8 @@ Boundary conditions
 
 * ``warpx.do_pml_Hi`` (`2 floats in 2D`, `3 floats in 3D`; default: `1 1 1`)
     The directions along which one wants a pml boundary condition for upper boundaries on mother grid.
+
+.. _running-cpp-parameters-diagnostics:
 
 Diagnostics and output
 ----------------------
