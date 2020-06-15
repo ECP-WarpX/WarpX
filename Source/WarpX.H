@@ -421,6 +421,9 @@ public:
                                                   std::array<amrex::Real,3> galilean_shift, int lev);
     static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, int lev);
 
+    /*
+      /brief This computes the lower of the problem domain, taking into account any shift when using the Galilean algorithm.
+     */
     std::array<amrex::Real,3> LowerCornerWithGalilean (const amrex::Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev);
 
     static amrex::IntVect RefRatio (int lev);
