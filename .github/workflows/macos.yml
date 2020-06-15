@@ -8,8 +8,6 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
-      with:
-        path: 'warpx_directory/WarpX'
     - name: install dependencies
       run: |
         set +e
@@ -24,10 +22,12 @@ jobs:
         brew install openpmd-api
     - name: build WarpX
       run: |
-        cd warpx_directory
-        git clone --depth 1 https://bitbucket.org/berkeleylab/picsar.git
-        git clone --depth 1 --branch development https://github.com/AMReX-Codes/amrex.git
-        cd WarpX
-        export LDFLAGS="-lomp"
-        make -j 2 COMP=llvm USE_OMP=FALSE USE_OPENPMD=TRUE XTRA_CXXFLAGS="-Xpreprocessor -fopenmp"
-        make -j 2 COMP=llvm USE_OMP=FALSE USE_OPENPMD=TRUE XTRA_CXXFLAGS="-Xpreprocessor -fopenmp" PRECISION=FLOAT USE_SINGLE_PRECISION_PARTICLES=TRUE
+        mkdir build_dp && cd build_dp
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF
+        make -j 2
+
+        cd ..
+
+        mkdir build_sp && cd build_sp
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DENABLE_DP=OFF -DENABLE_DP_PARTICLES=OFF
+        make -j 2
