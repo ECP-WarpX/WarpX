@@ -350,11 +350,19 @@ public:
 
     PML* GetPML (int lev);
 
+    /** Run the ionization module on all species */
     void doFieldIonization ();
+    /** Run the ionization module on all species at level lev
+     * \param lev level
+     */
     void doFieldIonization (int lev);
 
 #ifdef WARPX_QED
+    /** Run the QED module on all species */
     void doQEDEvents ();
+    /** Run the QED module on all species at level lev
+     * \param lev level
+     */
     void doQEDEvents (int lev);
 #endif
 
