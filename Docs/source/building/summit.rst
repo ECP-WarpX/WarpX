@@ -1,7 +1,7 @@
 .. _building-summit:
 
 Building WarpX on Summit (OLCF)
-================================
+===============================
 
 The `Summit cluster <https://www.olcf.ornl.gov/summit/>`_ is located at OLCF.
 
@@ -47,6 +47,9 @@ We use the following modules and environments on the system.
    module load adios2/2.5.0
    export PKG_CONFIG_PATH=$HOME/sw/openPMD-api-install/lib64/pkgconfig:$PKG_CONFIG_PATH
    export CMAKE_PREFIX_PATH=$HOME/sw/openPMD-api-install:$CMAKE_PREFIX_PATH
+
+   # optional: for Ascent support (work-in-progress)
+   export ASCENT_DIR=/gpfs/alpine/world-shared/csc340/software/ascent/0.5.3-pre/summit/cuda/gnu/ascent-install/
 
    # optional: just an additional text editor
    module load nano
