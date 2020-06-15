@@ -95,12 +95,12 @@ BTDiagnostics::ReadParameters ()
     m_num_buffers = m_num_snapshots_lab;
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
-    bool snapshot_interval_is_specified = 0;
+    bool snapshot_interval_is_specified = false;
     amrex::Real m_dz_snapshots_lab = 0.0_rt;
     snapshot_interval_is_specified = pp.query("dt_snapshots_lab", m_dt_snapshots_lab);
     if ( pp.query("dz_snapshots_lab", m_dz_snapshots_lab) ) {
         m_dt_snapshots_lab = m_dz_snapshots_lab/PhysConst::c;
-        snapshot_interval_is_specified = 1;
+        snapshot_interval_is_specified = true;
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
