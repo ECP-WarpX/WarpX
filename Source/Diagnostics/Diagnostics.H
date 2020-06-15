@@ -102,7 +102,9 @@ protected:
      * in cylindrical geometry, this list is appended with
      * automatically-constructed names for all modes of all fields */
     amrex::Vector< std::string > m_varnames;
-    /** format for output files, "plotfile" or "openpmd" */
+    /** format for output files, "plotfile" or "openpmd" or "sensei" or "ascent"
+     * The checkpoint format is applicable for FullDiagnostics only.
+     */
     std::string m_format = "plotfile";
     /** Whether this iteration has already been dumped, to avoid writing data twice */
     int m_already_done = false;
