@@ -283,9 +283,6 @@ PsatdAlgorithm::VayDeposition( SpectralFieldData& field_data,
     field_data.ForwardTransform( *current[1], Idx::Jy, 0, IntVect(1) );
     field_data.ForwardTransform( *current[2], Idx::Jz, 0, IntVect(1) );
 
-    // Alias for 0
-    constexpr int CELL = amrex::IndexType::CELL;
-
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi) {
 
