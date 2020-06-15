@@ -69,13 +69,6 @@ class SpectralFieldData
 
         // `fields` stores fields in spectral space, as multicomponent FabArray
         SpectralField fields;
-        // Correcting "shift" factors when performing FFT from/to
-        // a cell-centered grid in real space, instead of a nodal grid
-        SpectralShiftFactor xshift_FFTfromCell, xshift_FFTtoCell,
-                            zshift_FFTfromCell, zshift_FFTtoCell;
-#if (AMREX_SPACEDIM==3)
-        SpectralShiftFactor yshift_FFTfromCell, yshift_FFTtoCell;
-#endif
 
     private:
         // tmpRealField and tmpSpectralField store fields
@@ -83,6 +76,13 @@ class SpectralFieldData
         SpectralField tmpSpectralField; // contains Complexs
         amrex::MultiFab tmpRealField; // contains Reals
         AnyFFT::FFTplans forward_plan, backward_plan;
+        // Correcting "shift" factors when performing FFT from/to
+        // a cell-centered grid in real space, instead of a nodal grid
+        SpectralShiftFactor xshift_FFTfromCell, xshift_FFTtoCell,
+                            zshift_FFTfromCell, zshift_FFTtoCell;
+#if (AMREX_SPACEDIM==3)
+        SpectralShiftFactor yshift_FFTfromCell, yshift_FFTtoCell;
+#endif
 
 #ifdef AMREX_USE_GPU
         /** \brief This method converts a cufftResult
