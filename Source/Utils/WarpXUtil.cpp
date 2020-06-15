@@ -248,6 +248,7 @@ void CheckGriddingForRZSpectral ()
         max_grid_size_x[lev] = max_grid_size_x[lev-1]*2; // refRatio(lev-1);
     }
 
+    // Note that any user input values for these parameters are discarded.
     pp_amr.addarr("blocking_factor_x", blocking_factor_x);
     pp_amr.addarr("max_grid_size_x", max_grid_size_x);
 
@@ -257,7 +258,7 @@ void CheckGriddingForRZSpectral ()
     // shape factors and filtering.
     int nprocs = ParallelDescriptor::NProcs();
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_cell[1] >= 8*nprocs,
-                                     "With RZ spectral, there must be at least two z-cells per processor so that there can be at least one block per processor.");
+                                     "With RZ spectral, there must be at least eight z-cells per processor so that there can be at least one block per processor.");
 
     // Get the longitudinal blocking factor in case it was set by the user.
     // If not set, use the default value of 8.
@@ -266,10 +267,9 @@ void CheckGriddingForRZSpectral ()
     pp_amr.queryarr("blocking_factor_y",bf);
     bf.resize(std::max(static_cast<int>(bf.size()),1),8);
 
-    // Make sure that the blocking factor is small enough so
-    // that there will be at least as many blocks as there
-    // are processors. Because of the ASSERT above, bf will
-    // never be less than 8.
+    // Modify the default or any user input, making sure that the blocking factor
+    // is small enough so that there will be at least as many blocks as there are
+    // processors. Because of the ASSERT above, bf will never be less than 8.
     while (n_cell[1] < nprocs*bf[0]) {
         bf[0] /= 2;
     }
@@ -282,9 +282,9 @@ void CheckGriddingForRZSpectral ()
     pp_amr.queryarr("max_grid_size_y",mg);
     mg.resize(std::max(static_cast<int>(mg.size()),1),128);
 
-    // Make sure that the max grid size (of the finest level) is small
-    // enough so that there will be at least as many blocks as there
-    // are processors.
+    // Modify the default or any user input, making sure that the max grid size
+    // (of the coarsest level) is small enough so that there will be at least
+    // as many blocks as there are processors.
     while (n_cell[1] < nprocs*mg[0]) {
         mg[0] /= 2;
     }
