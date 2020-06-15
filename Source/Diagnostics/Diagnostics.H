@@ -21,7 +21,7 @@ public:
     /** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~Diagnostics () ;
     /** Pack (stack) all fields in the cell-centered output MultiFab m_mf_output.
-     * 
+     *
      * Fields are computed (e.g., cell-centered or back-transformed)
        on-the-fly using a functor. */
     void ComputeAndPack ();
