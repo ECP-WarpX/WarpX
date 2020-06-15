@@ -1856,7 +1856,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #endif
 
         doParticlePush(getPosition, setPosition, copyAttribs, ip,
-                       ux[ip], uy[ip], uz[ip],
+                       ux[ip+offset], uy[ip+offset], uz[ip+offset],
                        Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                        ion_lev ? ion_lev[ip] : 0,
                        m, q, pusher_algo, do_crr, do_copy,
