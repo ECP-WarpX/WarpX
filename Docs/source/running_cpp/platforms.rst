@@ -1,5 +1,9 @@
+.. _running-cpp:
+
 Running on specific platforms
 =============================
+
+.. _running-cpp-cori:
 
 Running on Cori KNL at NERSC
 ----------------------------
@@ -32,6 +36,9 @@ regime), the following set of parameters provided good performance:
   system).
 
 * **2 grids per MPI**, *i.e.*, 16 grids per KNL node.
+
+
+.. _running-cpp-summit:
 
 Running on Summit at OLCF
 -------------------------

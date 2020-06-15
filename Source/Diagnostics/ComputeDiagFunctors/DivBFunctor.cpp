@@ -1,8 +1,6 @@
 #include "DivBFunctor.H"
 #include "Utils/CoarsenIO.H"
 
-using namespace amrex;
-
 DivBFunctor::DivBFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev, const amrex::IntVect crse_ratio, const int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_arr_mf_src(arr_mf_src), m_lev(lev)
 {}
@@ -17,7 +15,7 @@ DivBFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
     constexpr int ng = 1;
     // A cell-centered divB multifab spanning the entire domain is generated
     // and divB is computed on the cell-center, with ng=1.
-    MultiFab divB( warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng );
+    amrex::MultiFab divB( warpx.boxArray(m_lev), warpx.DistributionMap(m_lev), 1, ng );
     warpx.ComputeDivB(divB, 0, m_arr_mf_src, WarpX::CellSize(m_lev) );
     // Coarsen and Interpolate from divB to coarsened/reduced_domain mf_dst
     CoarsenIO::Coarsen( mf_dst, divB, dcomp, 0, nComp(), 0, m_crse_ratio);
