@@ -1254,10 +1254,6 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
     * ``ux`` ``uy`` ``uz`` for the particle momentum,
 
-    * ``Ex`` ``Ey`` ``Ez`` for the electric field on particles,
-
-    * ``Bx`` ``By`` ``Bz`` for the magnetic field on particles.
-
     The particle positions are always included.
     Use ``<species>.variables = none`` to plot no particle data, except particle position.
 
