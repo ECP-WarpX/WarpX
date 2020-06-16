@@ -5,4 +5,5 @@ target_sources(WarpX
     DivEFunctor.cpp
     PartPerCellFunctor.cpp
     PartPerGridFunctor.cpp
+    BackTransformFunctor.cpp
 )
