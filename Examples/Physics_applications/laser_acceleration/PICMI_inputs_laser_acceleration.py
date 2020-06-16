@@ -14,7 +14,7 @@ laser_a0              = 4.        # Normalized potential vector
 laser_wavelength      = 8e-07     # Wavelength of the laser (in meters)
 laser_waist           = 5e-06     # Waist of the laser (in meters)
 laser_duration        = 15e-15    # Duration of the laser (in seconds)
-laser_polarization    = np.pi/2.  # Polarization angle (in rad)
+laser_polarization    = 0.        # Polarization angle (in rad)
 laser_injection_loc   = 9.e-6     # Position of injection (in meters, along z)
 laser_focal_distance  = 100.e-6   # Focal distance from the injection (in meters)
 laser_t_peak          = 30.e-15   # The time at which the laser reaches its peak
@@ -62,7 +62,7 @@ laser = picmi.GaussianLaser(wavelength            = laser_wavelength,
                             duration              = laser_duration,
                             focal_position        = [0., 0., laser_focal_distance + laser_injection_loc],
                             centroid_position     = [0., 0., laser_injection_loc - constants.c*laser_t_peak],
-                            polarization_angle    = laser_polarization,
+                            polarization_direction = [np.cos(laser_polarization), np.sin(laser_polarization), 0.],
                             propagation_direction = [0,0,1],
                             E0 = laser_a0*2.*np.pi*constants.m_e*constants.c**2/(constants.q_e*laser_wavelength)) # Maximum amplitude of the laser field (in V/m)
 
@@ -102,7 +102,9 @@ solver = picmi.ElectromagneticSolver(grid=grid, method='CKC', cfl=1.)
 
 field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     grid = grid,
-                                    period = 10)
+                                    period = 10,
+                                    write_dir = '.',
+                                    warpx_file_prefix = 'Python_LaserAccelerationMR_plt')
 
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       period = 10,
@@ -115,7 +117,6 @@ part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
 sim = picmi.Simulation(solver = solver,
                        max_steps = max_steps,
                        verbose = 1,
-                       cfl = 1.0,
                        warpx_current_deposition_algo = 'esirkepov')
 
 sim.add_species(electrons, layout=picmi.GriddedLayout(grid=grid, n_macroparticle_per_cell=number_per_cell_each_dim))

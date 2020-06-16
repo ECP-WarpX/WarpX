@@ -34,7 +34,7 @@ The **output parameter** that LibEnsemble minimizes is the beam emittance at the
 
 The scripts provided can run on a local machine or on the Summit supercomputer at OLCF.
 Two options are available: random sampling of parameter space or optimization on the output parameter.
-For the latter, we are using the Asynchronously Parallel Optimization Solver for finding Multiple Minima `APOSMM <https://libensemble.readthedocs.io/en/develop/examples/gen_funcs.html#module-aposmm>`__ method provided by LibEnsemble.
+For the latter, we are using the Asynchronously Parallel Optimization Solver for finding Multiple Minima `APOSMM <https://libensemble.readthedocs.io/en/develop/examples/aposmm.html>`__ method provided by LibEnsemble.
 
 Install LibEnsemble
 -------------------

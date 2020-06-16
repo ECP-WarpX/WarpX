@@ -10,6 +10,8 @@ import sys
 import yt ; yt.funcs.mylog.setLevel(0)
 import numpy as np
 import scipy.constants as scc
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 filename = sys.argv[1]
 
@@ -24,7 +26,7 @@ Ez= ds.index.grids[0]['boxlib', 'Ez'].squeeze().v
 energyE_gal_psatd = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
 
 #E field energy precalculated with standard PSATD (v_galilean = (0,0,0))
-energyE_psatd = 21135.7074524
+energyE_psatd = 154618.93650990006
 
 error_rel = energyE_gal_psatd / energyE_psatd
 tolerance_rel = 1e-7
@@ -33,3 +35,6 @@ print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
+
+test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)
