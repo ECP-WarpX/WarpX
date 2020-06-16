@@ -1,3 +1,5 @@
+.. _parallelization_warpx:
+
 Parallelization in  WarpX
 =========================
 
@@ -17,12 +19,22 @@ the parallelization. The main user-defined parameters are
 AMReX ``max_grid_size`` and ``blocking_factor``
 -----------------------------------------------
 
-* ``amr.max_grid_size`` is the maximum number of points per **grid** along each
+* ``amr.max_grid_size`` is the maximum number of cells per **grid** along each
   direction (default ``amr.max_grid_size=32`` in 3D).
 
-* ``amr.blocking_factor``: The size of each **grid** must be divisible by the
-  `blocking_factor` along all dimensions (default ``amr.blocking_factor=8``).
+* ``amr.blocking_factor``: is the minimum number of cells per **grid** along each
+  direction (default ``amr.blocking_factor=8``).
   Note that the ``max_grid_size`` also has to be divisible by ``blocking_factor``.
+
+  .. note::
+
+     You can use the parameters above if you want the same number of cells in all directions.
+     Or you can set ``amr.max_grid_size_x``, ``amr.max_grid_size_y`` and ``amr.max_grid_size_z``;
+     ``amr.blocking_factor_x``, ``amr.blocking_factor_x`` and ``amr.blocking_factor_x`` to different numbers of cells.
+
+The total number of **grids** is determined using those two restrictions and the number of
+ranks used to run the simulation. You can visit `AMReX <https://amrex-codes.github.io/amrex/docs_html/GridCreation.html?highlight=blocking_factor>`_
+documentation for more information on the two parameters.
 
 These parameters can have a dramatic impact on the code performance. Each
 **grid** in the decomposition is surrounded by guard cells, thus increasing the
