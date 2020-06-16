@@ -76,8 +76,6 @@ public:
     int do_symmetrize = 0;
 
     bool external_file = false; //! initialize from an openPMD file
-    amrex::Real x_shift = 0.0; //! additional x offset for particle positions
-    amrex::Real y_shift = 0.0; //! additional y offset for particle positions
     amrex::Real z_shift = 0.0; //! additional z offset for particle positions
 #ifdef WARPX_USE_OPENPMD
     //! openPMD::Series to load from in external_file injection

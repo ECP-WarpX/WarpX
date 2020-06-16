@@ -295,8 +295,6 @@ PhysicalParticleContainer::AddGaussianBeam (
 
 void
 PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
-                                             ParticleReal x_shift,
-                                             ParticleReal y_shift,
                                              ParticleReal z_shift)
 {
     // Declare temporary vectors on the CPU
@@ -366,19 +364,21 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         const auto probhi = geom.ProbHiArray();
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
-            ParticleReal const x = ptr_x.get()[i]*position_unit_x+x_shift;
+            ParticleReal const x = ptr_x.get()[i]*position_unit_x;
             bool const in_box_x = x>problo[0] && x<probhi[0];
-            if( not in_x_bounds ) continue;
+            if( not in_box_x ) continue;
             ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
-            bool const in_box_z = z>problo[0] && z<probhi[0];
-            if( not in_z_bounds ) continue;
 #   ifndef WARPX_DIM_3D
+            bool const in_box_z = z>problo[1] && z<probhi[1];
+            if( not in_box_z ) continue;
             ParticleReal const y = 0.0_prt;
             ParticleReal const uy = 0.0_prt;
 #   else
-            ParticleReal const y = ptr_y.get()[i]*position_unit_y+y_shift;
-            bool const in_box_y = y>problo[0] && y<probhi[0];
-            if( not in_y_bounds ) continue;
+            bool const in_box_z = z>problo[2] && z<probhi[2];
+            if( not in_box_z ) continue;
+            ParticleReal const y = ptr_y.get()[i]*position_unit_y;
+            bool const in_box_y = y>problo[1] && y<probhi[1];
+            if( not in_box_y ) continue;
             ParticleReal const uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
 #   endif
             ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
@@ -466,8 +466,6 @@ PhysicalParticleContainer::AddParticles (int lev)
 
     if (plasma_injector->external_file) {
         AddPlasmaFromFile(plasma_injector->q_tot,
-                          plasma_injector->x_shift
-                          plasma_injector->y_shift
                           plasma_injector->z_shift);
         return;
     }
