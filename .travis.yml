@@ -46,4 +46,4 @@ script:
 
     # Run the script that prepares the test environment and runs the tests
     - export OMP_NUM_THREADS=1
-    - ./run_test.sh
+    - travis_wait 50 ./run_test.sh
