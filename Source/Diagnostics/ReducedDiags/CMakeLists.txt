@@ -1,7 +1,7 @@
 target_sources(WarpX
   PRIVATE
     BeamRelevant.cpp
-    FieldEnergy.cpp
+    FieldReduced.cpp
     LoadBalanceCosts.cpp
     MultiReducedDiags.cpp
     ParticleEnergy.cpp
