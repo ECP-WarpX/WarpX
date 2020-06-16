@@ -388,7 +388,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
                 pywarpx.warpx.moving_window_dir = 'x'
                 pywarpx.warpx.moving_window_v = self.moving_window_velocity[0]/constants.c  # in units of the speed of light
             if self.moving_window_velocity[1] != 0.:
-                pywarpx.warpx.moving_window_dir = 'y'
+                pywarpx.warpx.moving_window_dir = 'z'
                 pywarpx.warpx.moving_window_v = self.moving_window_velocity[1]/constants.c  # in units of the speed of light
 
         if self.refined_regions:
@@ -445,10 +445,15 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
 
 class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
     def init(self, kw):
-        assert self.method is None or self.method in ['Yee', 'CKC'], Exception("Only 'Yee' and 'CKC' FDTD are supported")
+        assert self.method is None or self.method in ['Yee', 'CKC', 'PSATD'], Exception("Only 'Yee', 'CKC', and 'PSATD' are supported")
 
         self.do_pml = kw.pop('warpx_do_pml', None)
         self.pml_ncell = kw.pop('warpx_pml_ncell', None)
+
+        if self.method == 'PSATD':
+            self.periodic_single_box_fft = kw.pop('warpx_periodic_single_box_fft', None)
+            self.fftw_plan_measure = kw.pop('warpx_fftw_plan_measure', None)
+            self.do_current_correction = kw.pop('warpx_do_current_correction', None)
 
     def initialize_inputs(self):
 
@@ -456,9 +461,24 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         pywarpx.warpx.do_pml = self.do_pml
         pywarpx.warpx.pml_ncell = self.pml_ncell
+        pywarpx.warpx.do_nodal = self.l_nodal
 
-        # --- Same method names are used, though mapped to lower case.
-        pywarpx.algo.maxwell_fdtd_solver = self.method
+        if self.method == 'PSATD':
+            pywarpx.psatd.periodic_single_box_fft = self.periodic_single_box_fft
+            pywarpx.psatd.fftw_plan_measure = self.fftw_plan_measure
+            pywarpx.psatd.do_current_correction = self.do_current_correction
+
+            if self.stencil_order is not None:
+                pywarpx.psatd.nox = self.stencil_order[0]
+                pywarpx.psatd.noy = self.stencil_order[1]
+                pywarpx.psatd.noz = self.stencil_order[2]
+
+            if self.galilean_velocity is not None:
+                pywarpx.psatd.v_galilean = np.array(self.galilean_velocity)/constants.c
+
+        else:
+            # --- Same method names are used, though mapped to lower case.
+            pywarpx.algo.maxwell_fdtd_solver = self.method
 
         if self.cfl is not None:
             pywarpx.warpx.cfl = self.cfl
@@ -530,6 +550,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
         self.load_balance_int = kw.pop('warpx_load_balance_int', None)
         self.load_balance_with_sfc = kw.pop('warpx_load_balance_with_sfc', None)
+        self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -546,7 +567,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         if self.gamma_boost is not None:
             pywarpx.warpx.gamma_boost = self.gamma_boost
-            pywarpx.warpx.boost_direction = None
+            pywarpx.warpx.boost_direction = 'z'
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
@@ -559,6 +580,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
         pywarpx.warpx.load_balance_int = self.load_balance_int
         pywarpx.warpx.load_balance_with_sfc = self.load_balance_with_sfc
+
+        pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 
         particle_shape = self.particle_shape
         for s in self.species:

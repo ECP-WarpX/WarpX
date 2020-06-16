@@ -43,3 +43,22 @@ analysis script :download:`video_yt.py<../../../Tools/PostProcessing/video_yt.py
 as a parallel analysis script
 :download:`video_yt.py<../../../Tools/PostProcessing/yt3d_mpi.py>` used to make a similar
 rendering for a beam-driven wakefield simulation, running parallel.
+
+Warning: currently, quantities in the output file for iteration ``n`` are not all defined at the same physical time due to the staggering in time in WarpX.
+The table below provides the physical time at which each quantity in the output file is written, in units of time step, for time step n.
+"E part" means the electric field at each particle position.
+
+======== ===== =====
+quantity staggering
+-------- -----------
+         FDTD  PSATD
+======== ===== =====
+E        n     n
+B        n     n
+j        n-1/2 n-1/2
+rho      n-1   n
+position n     n
+momentum n-1/2 n-1/2
+E part   n     n
+B part   n     n
+======== ===== =====
