@@ -358,7 +358,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
             weight = w * w_unit;
         }
 
-        // TODO: Only injects particles on coarsest grid, so changes are needed to allow injection to finer grid levels.
+        // FIXME: Only injects particles on coarsest grid, so changes are needed to allow injection to finer grid levels.
         const Geometry& geom = Geom(0);
         const auto problo = geom.ProbLoArray();
         const auto probhi = geom.ProbHiArray();
