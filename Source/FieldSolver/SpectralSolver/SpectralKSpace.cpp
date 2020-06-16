@@ -37,7 +37,6 @@ SpectralKSpace::SpectralKSpace( const BoxArray& realspace_ba,
         // For local FFTs, boxes in spectral space start at 0 in
         // each direction and have the same number of points as the
         // (cell-centered) real space box
-        // TODO: this will be different for the hybrid FFT scheme
         Box realspace_bx = realspace_ba[i];
         IntVect fft_size = realspace_bx.length();
         // Because the spectral solver uses real-to-complex FFTs, we only
@@ -115,7 +114,6 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
                 k[i] = (i-N)*dk;
             }
         }
-        // TODO: this will be different for the hybrid FFT scheme
     }
     return k_comp;
 }
@@ -206,6 +204,24 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                         std::sin( k[i]*(n-0.5)*delta_x )/( (n-0.5)*delta_x );
                 }
             }
+        }
+
+        // By construction, at finite order and for a nodal grid,
+        // the *modified* k corresponding to the Nyquist frequency
+        // (i.e. highest *real* k) is 0. However, the above calculation
+        // based on stencil coefficients does not give 0 to machine precision.
+        // Therefore, we need to enforce the fact that the modified k be 0 here.
+        if (nodal){
+            if (i_dim == 0){
+                // Because of the real-to-complex FFTs, the first axis (idim=0)
+                // contains only the positive k, and the Nyquist frequency is
+                // the last element of the array.
+                modified_k[k.size()-1] = 0.0_rt;
+          }   else {
+                // The other axes contains both positive and negative k ;
+                // the Nyquist frequency is in the middle of the array.
+                modified_k[k.size()/2] = 0.0_rt;
+          }
         }
     }
     return modified_k_comp;

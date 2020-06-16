@@ -1,5 +1,4 @@
 max_step = 180
-amr.plot_int = 30
 amr.n_cell =  224 224
 
 amr.blocking_factor = 8
@@ -51,3 +50,8 @@ proton.single_particle_weight = 1.
 interpolation.nox = 3
 interpolation.noy = 3
 interpolation.noz = 3
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 20
+diag1.diag_type = Full

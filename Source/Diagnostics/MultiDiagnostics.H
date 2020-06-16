@@ -2,9 +2,10 @@
 #define WARPX_MULTIDIAGNOSTICS_H_
 
 #include "FullDiagnostics.H"
+#include "BTDiagnostics.H"
 
 /** All types of diagnostics. */
-enum struct DiagTypes {Full};
+enum struct DiagTypes {Full, BackTransformed};
 
 /**
  * \brief This class contains a vector of all diagnostics in the simulation.
@@ -19,6 +20,13 @@ public:
     void InitData ();
     /** \brief Called at each iteration. Compute diags and flush. */
     void FilterComputePackFlush (int step, bool force_flush=false);
+    /** \brief Loop over diags in all diags and call their InitializeFieldFunctors.
+               Called when a new partitioning is generated at level, lev.
+      * \param[in] lev level at this the field functors are initialized.
+      */
+    void InitializeFieldFunctors (int lev);
+    /** Start a new iteration, i.e., dump has not been done yet. */
+    void NewIteration ();
 private:
     /** Vector of pointers to all diagnostics */
     amrex::Vector<std::unique_ptr<Diagnostics> > alldiags;

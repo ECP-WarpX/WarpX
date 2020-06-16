@@ -32,6 +32,9 @@ struct GetParticlePosition
 #elif (AMREX_SPACEDIM == 2)
     static constexpr RType m_snan = std::numeric_limits<RType>::quiet_NaN();
 #endif
+
+    GetParticlePosition () = default;
+
     GetParticlePosition (const WarpXParIter& a_pti, int a_offset = 0) noexcept
     {
         const auto& aos = a_pti.GetArrayOfStructs();

@@ -59,9 +59,11 @@ public:
 
     ~MultiParticleContainer() {}
 
-    WarpXParticleContainer& GetParticleContainer (int ispecies) {
-        return *allcontainers[ispecies];
-    }
+    WarpXParticleContainer&
+    GetParticleContainer (int ispecies) const {return *allcontainers[ispecies];}
+
+    WarpXParticleContainer*
+    GetParticleContainerPtr (int ispecies) const {return allcontainers[ispecies].get();}
 
 #ifdef WARPX_USE_OPENPMD
     std::unique_ptr<WarpXParticleContainer>& GetUniqueContainer(int ispecies) {
@@ -126,6 +128,17 @@ public:
     void doFieldIonization ();
 
     void doCoulombCollisions ();
+
+#ifdef WARPX_QED
+    /** If Schwinger process is activated, this function is called at every
+     * timestep in Evolve and is used to create Schwinger electron-positron pairs.
+     * Within this function we loop over all cells to calculate the number of
+     * created physical pairs. If this number is higher than 0, we create a single
+     * particle per species in this cell, with a weight corresponding to the number of physical
+     * particles.
+     */
+    void doQEDSchwinger ();
+#endif
 
     void Checkpoint (const std::string& dir) const;
 
@@ -209,7 +222,7 @@ public:
     void doQedEvents();
 #endif
 
-
+    int getSpeciesID (std::string product_str) const;
 
 protected:
 
@@ -317,19 +330,36 @@ protected:
      */
     void BreitWheelerGenerateTable();
 
+    /** Whether or not to activate Schwinger process */
+    bool m_do_qed_schwinger = 0;
+    /** Name of Schwinger electron product species */
+    std::string m_qed_schwinger_ele_product_name;
+    /** Name of Schwinger positron product species */
+    std::string m_qed_schwinger_pos_product_name;
+    /** Index for Schwinger electron product species in allcontainers */
+    int m_qed_schwinger_ele_product;
+    /** Index for Schwinger positron product species in allcontainers */
+    int m_qed_schwinger_pos_product;
+    /** Transverse size used in 2D Schwinger pair production rate calculations */
+    amrex::Real m_qed_schwinger_y_size;
+    /** If the number of physical Schwinger pairs created within a cell is
+     * higher than this threshold we use a Gaussian distribution rather than
+     * a Poisson distribution for the pair production rate calculations
+     */
+    int m_qed_schwinger_threshold_poisson_gaussian = 25;
+
 #endif
 
 private:
 
     // physical particles (+ laser)
-    amrex::Vector<std::unique_ptr<WarpXParticleContainer> > allcontainers;
+    amrex::Vector<std::unique_ptr<WarpXParticleContainer>> allcontainers;
     // Temporary particle container, used e.g. for particle splitting.
     std::unique_ptr<PhysicalParticleContainer> pc_tmp;
 
     void ReadParameters ();
 
     void mapSpeciesProduct ();
-    int getSpeciesID (std::string product_str);
 
     // Number of species dumped in BackTransformedDiagnostics
     int nspecies_back_transformed_diagnostics = 0;

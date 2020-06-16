@@ -82,14 +82,6 @@ getInterpolatedVector(
     const int r_ratio, const amrex::Real* dx,
     const int ngrow );
 
-void
-coarsenCellCenteredFields(
-    amrex::Vector<amrex::MultiFab>& coarse_mf,
-    amrex::Vector<amrex::Geometry>& coarse_geom,
-    const amrex::Vector<amrex::MultiFab>& source_mf,
-    const amrex::Vector<amrex::Geometry>& source_geom,
-    int coarse_ratio, int finest_level );
-
 #ifdef WARPX_USE_OPENPMD
 void
 setOpenPMDUnit( openPMD::Mesh mesh, const std::string field_name );
@@ -100,11 +92,6 @@ getReversedVec( const amrex::IntVect& v );
 std::vector<double>
 getReversedVec( const amrex::Real* v );
 
-void
-WriteOpenPMDFields( const std::string& filename,
-                    const std::vector<std::string>& varnames,
-                    const amrex::MultiFab& mf, const amrex::Geometry& geom,
-                    const int iteration, const double time );
 #endif // WARPX_USE_OPENPMD
 
 #endif // WARPX_FielIO_H_

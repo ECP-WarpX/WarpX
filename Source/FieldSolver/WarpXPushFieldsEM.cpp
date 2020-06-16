@@ -19,7 +19,7 @@
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 
-#include <cmath>
+#include <AMReX_Math.H>
 #include <limits>
 
 
@@ -29,7 +29,11 @@ using namespace amrex;
 namespace {
     void
     PushPSATDSinglePatch (
+#ifdef WARPX_DIM_RZ
+        SpectralSolverRZ& solver,
+#else
         SpectralSolver& solver,
+#endif
         std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
         std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield,
         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
@@ -38,25 +42,50 @@ namespace {
         using Idx = SpectralFieldIndex;
 
         // Perform forward Fourier transform
+#ifdef WARPX_DIM_RZ
+        solver.ForwardTransform(*Efield[0], Idx::Ex,
+                                *Efield[1], Idx::Ey);
+#else
         solver.ForwardTransform(*Efield[0], Idx::Ex);
         solver.ForwardTransform(*Efield[1], Idx::Ey);
+#endif
         solver.ForwardTransform(*Efield[2], Idx::Ez);
+#ifdef WARPX_DIM_RZ
+        solver.ForwardTransform(*Bfield[0], Idx::Bx,
+                                *Bfield[1], Idx::By);
+#else
         solver.ForwardTransform(*Bfield[0], Idx::Bx);
         solver.ForwardTransform(*Bfield[1], Idx::By);
+#endif
         solver.ForwardTransform(*Bfield[2], Idx::Bz);
+#ifdef WARPX_DIM_RZ
+        solver.ForwardTransform(*current[0], Idx::Jx,
+                                *current[1], Idx::Jy);
+#else
         solver.ForwardTransform(*current[0], Idx::Jx);
         solver.ForwardTransform(*current[1], Idx::Jy);
+#endif
         solver.ForwardTransform(*current[2], Idx::Jz);
         solver.ForwardTransform(*rho, Idx::rho_old, 0);
         solver.ForwardTransform(*rho, Idx::rho_new, 1);
         // Advance fields in spectral space
         solver.pushSpectralFields();
         // Perform backward Fourier Transform
+#ifdef WARPX_DIM_RZ
+        solver.BackwardTransform(*Efield[0], Idx::Ex,
+                                 *Efield[1], Idx::Ey);
+#else
         solver.BackwardTransform(*Efield[0], Idx::Ex);
         solver.BackwardTransform(*Efield[1], Idx::Ey);
+#endif
         solver.BackwardTransform(*Efield[2], Idx::Ez);
+#ifdef WARPX_DIM_RZ
+        solver.BackwardTransform(*Bfield[0], Idx::Bx,
+                                 *Bfield[1], Idx::By);
+#else
         solver.BackwardTransform(*Bfield[0], Idx::Bx);
         solver.BackwardTransform(*Bfield[1], Idx::By);
+#endif
         solver.BackwardTransform(*Bfield[2], Idx::Bz);
     }
 }
@@ -66,13 +95,7 @@ WarpX::PushPSATD (amrex::Real a_dt)
 {
     for (int lev = 0; lev <= finest_level; ++lev) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(dt[lev] == a_dt, "dt must be consistent");
-        if (fft_hybrid_mpi_decomposition){
-#ifdef WARPX_USE_PSATD_HYBRID
-            PushPSATD_hybridFFT(lev, a_dt);
-#endif
-        } else {
-            PushPSATD_localFFT(lev, a_dt);
-        }
+        PushPSATD(lev, a_dt);
 
         // Evolve the fields in the PML boxes
         if (do_pml && pml[lev]->ok()) {
@@ -82,7 +105,7 @@ WarpX::PushPSATD (amrex::Real a_dt)
 }
 
 void
-WarpX::PushPSATD_localFFT (int lev, amrex::Real /* dt */)
+WarpX::PushPSATD (int lev, amrex::Real /* dt */)
 {
     // Update the fields on the fine and coarse patch
     PushPSATDSinglePatch( *spectral_solver_fp[lev],
@@ -117,81 +140,24 @@ void
 WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
 {
 
+    // Evolve B field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveB( Bfield_fp[lev], Efield_fp[lev], a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveB( Bfield_cp[lev], Efield_cp[lev], a_dt );
     }
 
-    const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
-    const std::array<Real,3>& dx = WarpX::CellSize(patch_level);
-    const Real dtsdx = a_dt/dx[0], dtsdy = a_dt/dx[1], dtsdz = a_dt/dx[2];
-
-    if (do_pml && pml[lev]->ok())
-    {
-        const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
-        const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
-
-#ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-        for ( MFIter mfi(*pml_B[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
-        {
-            const Box& tbx  = mfi.tilebox(Bx_nodal_flag);
-            const Box& tby  = mfi.tilebox(By_nodal_flag);
-            const Box& tbz  = mfi.tilebox(Bz_nodal_flag);
-            auto const& pml_Bxfab = pml_B[0]->array(mfi);
-            auto const& pml_Byfab = pml_B[1]->array(mfi);
-            auto const& pml_Bzfab = pml_B[2]->array(mfi);
-            auto const& pml_Exfab = pml_E[0]->array(mfi);
-            auto const& pml_Eyfab = pml_E[1]->array(mfi);
-            auto const& pml_Ezfab = pml_E[2]->array(mfi);
-            if (WarpX::maxwell_fdtd_solver_id == 0) {
-               amrex::ParallelFor(tbx, tby, tbz,
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_bx_yee(i,j,k,pml_Bxfab,pml_Eyfab,pml_Ezfab,
-                                        dtsdy,dtsdz);
-               },
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_by_yee(i,j,k,pml_Byfab,pml_Exfab,pml_Ezfab,
-                                         dtsdx,dtsdz);
-               },
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_bz_yee(i,j,k,pml_Bzfab,pml_Exfab,pml_Eyfab,
-                                        dtsdx,dtsdy);
-               });
-            }  else if (WarpX::maxwell_fdtd_solver_id == 1) {
-               Real betaxy, betaxz, betayx, betayz, betazx, betazy;
-               Real gammax, gammay, gammaz;
-               Real alphax, alphay, alphaz;
-               warpx_calculate_ckc_coefficients(dtsdx, dtsdy, dtsdz,
-                                                betaxy, betaxz, betayx, betayz,
-                                                betazx, betazy, gammax, gammay,
-                                                gammaz, alphax, alphay, alphaz);
-
-               amrex::ParallelFor(tbx, tby, tbz,
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_bx_ckc(i,j,k,pml_Bxfab,pml_Eyfab,pml_Ezfab,
-                                         betaxy, betaxz, betayx, betayz,
-                                         betazx, betazy, gammax, gammay,
-                                         gammaz, alphax, alphay, alphaz);
-               },
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_by_ckc(i,j,k,pml_Byfab,pml_Exfab,pml_Ezfab,
-                                         betaxy, betaxz, betayx, betayz,
-                                         betazx, betazy, gammax, gammay,
-                                         gammaz, alphax, alphay, alphaz);
-               },
-               [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                   warpx_push_pml_bz_ckc(i,j,k,pml_Bzfab,pml_Exfab,pml_Eyfab,
-                                         betaxy, betaxz, betayx, betayz,
-                                         betazx, betazy, gammax, gammay,
-                                         gammaz, alphax, alphay, alphaz);
-               });
-
-            }
+    // Evolve B field in PML cells
+    if (do_pml && pml[lev]->ok()) {
+        if (patch_type == PatchType::fine) {
+            m_fdtd_solver_fp[lev]->EvolveBPML(
+                pml[lev]->GetB_fp(), pml[lev]->GetE_fp(), a_dt );
+        } else {
+            m_fdtd_solver_cp[lev]->EvolveBPML(
+                pml[lev]->GetB_cp(), pml[lev]->GetE_cp(), a_dt );
         }
     }
+
 }
 
 void
@@ -217,7 +183,7 @@ WarpX::EvolveE (int lev, amrex::Real a_dt)
 void
 WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
 {
-
+    // Evolve E field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE( Efield_fp[lev], Bfield_fp[lev],
                                       current_fp[lev], F_fp[lev], a_dt );
@@ -226,165 +192,24 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
                                       current_cp[lev], F_cp[lev], a_dt );
     }
 
-    const Real mu_c2_dt = (PhysConst::mu0*PhysConst::c*PhysConst::c) * a_dt;
-    const Real c2dt = (PhysConst::c*PhysConst::c) * a_dt;
-
-    const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
-    const std::array<Real,3>& dx = WarpX::CellSize(patch_level);
-    const Real dtsdx_c2 = c2dt/dx[0], dtsdy_c2 = c2dt/dx[1], dtsdz_c2 = c2dt/dx[2];
-
-    MultiFab *Ex, *Ey, *Ez, *Bx, *By, *Bz, *jx, *jy, *jz, *F;
-    if (patch_type == PatchType::fine)
-    {
-        Ex = Efield_fp[lev][0].get();
-        Ey = Efield_fp[lev][1].get();
-        Ez = Efield_fp[lev][2].get();
-        Bx = Bfield_fp[lev][0].get();
-        By = Bfield_fp[lev][1].get();
-        Bz = Bfield_fp[lev][2].get();
-        jx = current_fp[lev][0].get();
-        jy = current_fp[lev][1].get();
-        jz = current_fp[lev][2].get();
-        F  = F_fp[lev].get();
-    }
-    else if (patch_type == PatchType::coarse)
-    {
-        Ex = Efield_cp[lev][0].get();
-        Ey = Efield_cp[lev][1].get();
-        Ez = Efield_cp[lev][2].get();
-        Bx = Bfield_cp[lev][0].get();
-        By = Bfield_cp[lev][1].get();
-        Bz = Bfield_cp[lev][2].get();
-        jx = current_cp[lev][0].get();
-        jy = current_cp[lev][1].get();
-        jz = current_cp[lev][2].get();
-        F  = F_cp[lev].get();
-    }
-
-    if (do_pml && pml[lev]->ok())
-    {
-        if (F) pml[lev]->ExchangeF(patch_type, F, do_pml_in_domain);
-
-        const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
-        const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
-        const auto& pml_j = (patch_type == PatchType::fine) ? pml[lev]->Getj_fp() : pml[lev]->Getj_cp();
-        const auto& pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
-        const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp()
-                                                            : pml[lev]->GetMultiSigmaBox_cp();
-#ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-        for ( MFIter mfi(*pml_E[0], TilingIfNotGPU()); mfi.isValid(); ++mfi )
-        {
-            const Box& tex  = mfi.tilebox(Ex_nodal_flag);
-            const Box& tey  = mfi.tilebox(Ey_nodal_flag);
-            const Box& tez  = mfi.tilebox(Ez_nodal_flag);
-
-            auto const& pml_Exfab = pml_E[0]->array(mfi);
-            auto const& pml_Eyfab = pml_E[1]->array(mfi);
-            auto const& pml_Ezfab = pml_E[2]->array(mfi);
-            auto const& pml_Bxfab = pml_B[0]->array(mfi);
-            auto const& pml_Byfab = pml_B[1]->array(mfi);
-            auto const& pml_Bzfab = pml_B[2]->array(mfi);
-
-            amrex::ParallelFor(tex, tey, tez,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_push_pml_ex_yee(i,j,k,pml_Exfab,pml_Byfab,pml_Bzfab,
-                                      dtsdy_c2,dtsdz_c2);
-            },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_push_pml_ey_yee(i,j,k,pml_Eyfab,pml_Bxfab,pml_Bzfab,
-                                      dtsdx_c2,dtsdz_c2);
-            },
-            [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_push_pml_ez_yee(i,j,k,pml_Ezfab,pml_Bxfab,pml_Byfab,
-                                      dtsdx_c2,dtsdy_c2);
-            });
-
-            if (pml_has_particles) {
-                // Update the E field in the PML, using the current
-                // deposited by the particles in the PML
-                auto const& pml_jxfab = pml_j[0]->array(mfi);
-                auto const& pml_jyfab = pml_j[1]->array(mfi);
-                auto const& pml_jzfab = pml_j[2]->array(mfi);
-                const Real* sigmaj_x = sigba[mfi].sigma[0].data();
-                const Real* sigmaj_y = sigba[mfi].sigma[1].data();
-                const Real* sigmaj_z = sigba[mfi].sigma[2].data();
-
-                int const x_lo = sigba[mfi].sigma[0].lo();
-#if (AMREX_SPACEDIM == 3)
-                int const y_lo = sigba[mfi].sigma[1].lo();
-                int const z_lo = sigba[mfi].sigma[2].lo();
-#else
-                int const y_lo = 0;
-                int const z_lo = sigba[mfi].sigma[1].lo();
-#endif
-                amrex::ParallelFor( tex, tey, tez,
-                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                        push_ex_pml_current(i,j,k,
-                            pml_Exfab, pml_jxfab, sigmaj_y, sigmaj_z,
-                            y_lo, z_lo, mu_c2_dt);
-                    },
-                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                        push_ey_pml_current(i,j,k,
-                            pml_Eyfab, pml_jyfab, sigmaj_x, sigmaj_z,
-                            x_lo, z_lo, mu_c2_dt);
-                    },
-                    [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                        push_ez_pml_current(i,j,k,
-                            pml_Ezfab, pml_jzfab, sigmaj_x, sigmaj_y,
-                            x_lo, y_lo, mu_c2_dt);
-                    }
-                );
-            }
-
-
-            if (pml_F)
-            {
-
-               auto const& pml_F_fab = pml_F->array(mfi);
-
-               if (WarpX::maxwell_fdtd_solver_id == 0) {
-
-                  amrex::ParallelFor(tex, tey, tez,
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                      warpx_push_pml_ex_f_yee(i,j,k,pml_Exfab,pml_F_fab,dtsdx_c2);
-                  },
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                      warpx_push_pml_ey_f_yee(i,j,k,pml_Eyfab,pml_F_fab,dtsdy_c2);
-                  },
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                      warpx_push_pml_ez_f_yee(i,j,k,pml_Ezfab,pml_F_fab,dtsdz_c2);
-                  });
-
-               } else if (WarpX::maxwell_fdtd_solver_id == 1) {
-
-                  Real betaxy, betaxz, betayx, betayz, betazx, betazy;
-                  Real gammax, gammay, gammaz;
-                  Real alphax, alphay, alphaz;
-                  warpx_calculate_ckc_coefficients(dtsdx_c2, dtsdy_c2, dtsdz_c2,
-                                                   betaxy, betaxz, betayx, betayz,
-                                                   betazx, betazy, gammax, gammay,
-                                                   gammaz, alphax, alphay, alphaz);
-                  amrex::ParallelFor(tex, tey, tez,
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                      warpx_push_pml_ex_f_ckc(i,j,k,pml_Exfab,pml_F_fab,
-                                              alphax,betaxy,betaxz,gammax);
-                  },
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                      warpx_push_pml_ey_f_ckc(i,j,k,pml_Eyfab,pml_F_fab,
-                                              alphay,betayx,betayz,gammay);
-                  },
-                  [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                      warpx_push_pml_ez_f_ckc(i,j,k,pml_Ezfab,pml_F_fab,
-                                              alphaz,betazx,betazy,gammaz);
-                  });
-
-               }
-            }
+    // Evolve E field in PML cells
+    if (do_pml && pml[lev]->ok()) {
+        if (patch_type == PatchType::fine) {
+            m_fdtd_solver_fp[lev]->EvolveEPML(
+                pml[lev]->GetE_fp(), pml[lev]->GetB_fp(),
+                pml[lev]->Getj_fp(), pml[lev]->GetF_fp(),
+                pml[lev]->GetMultiSigmaBox_fp(),
+                a_dt, pml_has_particles );
+        } else {
+            m_fdtd_solver_cp[lev]->EvolveEPML(
+                pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
+                pml[lev]->Getj_cp(), pml[lev]->GetF_cp(),
+                pml[lev]->GetMultiSigmaBox_cp(),
+                a_dt, pml_has_particles );
         }
     }
 }
+
 
 void
 WarpX::EvolveF (amrex::Real a_dt, DtType a_dt_type)
@@ -415,6 +240,7 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
 
     const int rhocomp = (a_dt_type == DtType::FirstHalf) ? 0 : 1;
 
+    // Evolve F field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveF( F_fp[lev], Efield_fp[lev],
                                         rho_fp[lev], rhocomp, a_dt );
@@ -423,36 +249,49 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, DtType a_dt_typ
                                         rho_cp[lev], rhocomp, a_dt );
     }
 
-    const int patch_level = (patch_type == PatchType::fine) ? lev : lev-1;
-    const auto& dx = WarpX::CellSize(patch_level);
-    const std::array<Real,3> dtsdx {a_dt/dx[0], a_dt/dx[1], a_dt/dx[2]};
-
-    if (do_pml && pml[lev]->ok())
-    {
-        const auto& pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
-        const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
-
-#ifdef _OPENMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-        for ( MFIter mfi(*pml_F, TilingIfNotGPU()); mfi.isValid(); ++mfi )
-        {
-            const Box& bx = mfi.tilebox();
-
-            auto const& pml_F_fab = pml_F->array(mfi);
-            auto const& pml_Exfab = pml_E[0]->array(mfi);
-            auto const& pml_Eyfab = pml_E[1]->array(mfi);
-            auto const& pml_Ezfab = pml_E[2]->array(mfi);
-
-            amrex::ParallelFor(bx,
-            [=] AMREX_GPU_DEVICE (int i, int j, int k)
-            {
-                warpx_push_pml_F(i, j, k, pml_F_fab, pml_Exfab,
-                                pml_Eyfab, pml_Ezfab,
-                                dtsdx[0], dtsdx[1], dtsdx[2]);
-            });
-
+    // Evolve F field in PML cells
+    if (do_pml && pml[lev]->ok()) {
+        if (patch_type == PatchType::fine) {
+            m_fdtd_solver_fp[lev]->EvolveFPML(
+                pml[lev]->GetF_fp(), pml[lev]->GetE_fp(), a_dt );
+        } else {
+            m_fdtd_solver_cp[lev]->EvolveFPML(
+                pml[lev]->GetF_cp(), pml[lev]->GetE_cp(), a_dt );
         }
+    }
+
+}
+
+void
+WarpX::MacroscopicEvolveE (amrex::Real a_dt)
+{
+    for (int lev = 0; lev <= finest_level; ++lev ) {
+        MacroscopicEvolveE(lev, a_dt);
+    }
+}
+
+void
+WarpX::MacroscopicEvolveE (int lev, amrex::Real a_dt) {
+
+    WARPX_PROFILE("WarpX::MacroscopicEvolveE()");
+    MacroscopicEvolveE(lev, PatchType::fine, a_dt);
+    if (lev > 0) {
+        amrex::Abort("Macroscopic EvolveE is not implemented for lev>0, yet.");
+    }
+}
+
+void
+WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
+    if (patch_type == PatchType::fine) {
+        m_fdtd_solver_fp[lev]->MacroscopicEvolveE( Efield_fp[lev], Bfield_fp[lev],
+                                             current_fp[lev], a_dt,
+                                             m_macroscopic_properties);
+    }
+    else {
+        amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
+    }
+    if (do_pml) {
+        amrex::Abort("Macroscopic EvolveE is not implemented for pml boundary condition, yet");
     }
 }
 
@@ -471,7 +310,6 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(Jx->ixType().toIntVect()[0] != NODE,
         "Jr should never node-centered in r");
 
-    Box tilebox;
 
     for ( MFIter mfi(*Jx, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
@@ -480,10 +318,10 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         Array4<Real> const& Jt_arr = Jy->array(mfi);
         Array4<Real> const& Jz_arr = Jz->array(mfi);
 
-        tilebox = mfi.tilebox();
-        Box tbr = convert(tilebox, WarpX::jx_nodal_flag);
-        Box tbt = convert(tilebox, WarpX::jy_nodal_flag);
-        Box tbz = convert(tilebox, WarpX::jz_nodal_flag);
+        Box const & tilebox = mfi.tilebox();
+        Box tbr = convert( tilebox, Jx->ixType().toIntVect() );
+        Box tbt = convert( tilebox, Jy->ixType().toIntVect() );
+        Box tbz = convert( tilebox, Jz->ixType().toIntVect() );
 
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
@@ -529,7 +367,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // Apply the inverse volume scaling
             // Since Jr is never node centered in r, no need for distinction
             // between on axis and off-axis factors
-            const amrex::Real r = std::abs(rminr + (i - irmin)*dr);
+            const amrex::Real r = amrex::Math::abs(rminr + (i - irmin)*dr);
             Jr_arr(i,j,0,0) /= (2.*MathConst::pi*r);
 
             for (int imode=1 ; imode < nmodes ; imode++) {
@@ -560,7 +398,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
 
             // Apply the inverse volume scaling
             // Jt is forced to zero on axis.
-            const amrex::Real r = std::abs(rmint + (i - irmin)*dr);
+            const amrex::Real r = amrex::Math::abs(rmint + (i - irmin)*dr);
             if (r == 0.) {
                 Jt_arr(i,j,0,0) = 0.;
             } else {
@@ -598,7 +436,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             }
 
             // Apply the inverse volume scaling
-            const amrex::Real r = std::abs(rminz + (i - irmin)*dr);
+            const amrex::Real r = amrex::Math::abs(rminz + (i - irmin)*dr);
             if (r == 0.) {
                 // Verboncoeur JCP 164, 421-427 (2001) : corrected volume on axis
                 Jz_arr(i,j,0,0) /= (MathConst::pi*dr/3.);
@@ -647,7 +485,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         Array4<Real> const& Rho_arr = Rho->array(mfi);
 
         tilebox = mfi.tilebox();
-        Box tb = convert(tilebox, rho_nodal_flag);
+        Box tb = convert( tilebox, Rho->ixType().toIntVect() );
 
         // Lower corner of tile box physical domain
         // Note that this is done before the tilebox.grow so that
@@ -683,7 +521,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
             }
 
             // Apply the inverse volume scaling
-            const amrex::Real r = std::abs(rminr + (i - irmin)*dr);
+            const amrex::Real r = amrex::Math::abs(rminr + (i - irmin)*dr);
             if (r == 0.) {
                 // Verboncoeur JCP 164, 421-427 (2001) : corrected volume on axis
                 Rho_arr(i,j,0,icomp) /= (MathConst::pi*dr/3.);

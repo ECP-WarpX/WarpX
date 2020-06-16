@@ -20,6 +20,8 @@ import numpy as np
 import scipy.constants as scc
 from scipy.special import gammainc
 yt.funcs.mylog.setLevel(0)
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 # Parameters from the Simulation
 Qtot = -1.e-20
@@ -90,9 +92,14 @@ plt.savefig('Comparison.png')
 def check(E, E_th, label):
     print( 'Relative error in %s: %.3f'%(
             label, abs(E-E_th).max()/E_th.max()))
-    assert np.allclose( E, E_th, atol=0.1*E_th.max() )
+    tolerance_rel = 0.1
+    print("tolerance_rel: " + str(tolerance_rel))
+    assert np.allclose( E, E_th, atol=tolerance_rel*E_th.max() )
 
 check( Ex_array, Ex_th, 'Ex' )
 check( Ey_array, Ey_th, 'Ey' )
 if ds.dimensionality == 3:
     check( Ez_array, Ez_th, 'Ez' )
+
+test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename, do_particles=0)

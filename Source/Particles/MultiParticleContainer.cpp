@@ -1,7 +1,8 @@
 /* Copyright 2019-2020 Andrew Myers, Ann Almgren, Axel Huebl
  * David Grote, Jean-Luc Vay, Luca Fedeli
- * Mathieu Lobet, Maxence Thevenet, Remi Lehe
- * Revathi Jambunathan, Weiqun Zhang, Yinjian Zhao
+ * Mathieu Lobet, Maxence Thevenet, Neil Zaim
+ * Remi Lehe, Revathi Jambunathan, Weiqun Zhang
+ * Yinjian Zhao
  *
  *
  * This file is part of WarpX.
@@ -12,6 +13,11 @@
 #include "SpeciesPhysicalProperties.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
+#ifdef WARPX_QED
+    #include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
+    #include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
+    #include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
+#endif
 
 #include <AMReX_Vector.H>
 
@@ -258,6 +264,21 @@ MultiParticleContainer::ReadParameters ()
             AMREX_ALWAYS_ASSERT(lasers_names.size() == nlasers);
         }
 
+#ifdef WARPX_QED
+        ParmParse ppw("warpx");
+        ppw.query("do_qed_schwinger", m_do_qed_schwinger);
+
+        if (m_do_qed_schwinger) {
+            ParmParse ppq("qed_schwinger");
+            ppq.get("ele_product_species", m_qed_schwinger_ele_product_name);
+            ppq.get("pos_product_species", m_qed_schwinger_pos_product_name);
+#if (AMREX_SPACEDIM == 2)
+            ppq.get("y_size",m_qed_schwinger_y_size);
+#endif
+            ppq.query("threshold_poisson_gaussian",
+                      m_qed_schwinger_threshold_poisson_gaussian);
+        }
+#endif
         initialized = true;
     }
 }
@@ -576,12 +597,20 @@ MultiParticleContainer::mapSpeciesProduct ()
 
     }
 
+#ifdef WARPX_QED
+    if (m_do_qed_schwinger) {
+    m_qed_schwinger_ele_product =
+        getSpeciesID(m_qed_schwinger_ele_product_name);
+    m_qed_schwinger_pos_product =
+        getSpeciesID(m_qed_schwinger_pos_product_name);
+    }
+#endif
 }
 
 /* \brief Given a species name, return its ID.
  */
 int
-MultiParticleContainer::getSpeciesID (std::string product_str)
+MultiParticleContainer::getSpeciesID (std::string product_str) const
 {
     int i_product;
     bool found = 0;
@@ -991,6 +1020,112 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
     }
 }
 
+void
+MultiParticleContainer::doQEDSchwinger ()
+{
+    WARPX_PROFILE("MPC::doQEDSchwinger");
+
+    if (!m_do_qed_schwinger) {return;}
+
+    auto & warpx = WarpX::GetInstance();
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.do_nodal ||
+       warpx.field_gathering_algo == GatheringAlgo::MomentumConserving,
+          "ERROR: Schwinger process only implemented for warpx.do_nodal = 1"
+                                 "or algo.field_gathering = momentum-conserving");
+
+    const int level_0 = 0;
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.maxLevel() == level_0,
+        "ERROR: Schwinger process not implemented with mesh refinement");
+
+#ifdef WARPX_DIM_RZ
+    amrex::Abort("Schwinger process not implemented in rz geometry");
+#endif
+
+#ifdef AMREX_USE_FLOAT
+    amrex::Abort("Schwinger process not implemented in single precision");
+#endif
+
+// Get cell volume multiplied by temporal step. In 2D the transverse size is
+// chosen by the user in the input file.
+    amrex::Geometry const & geom = warpx.Geom(level_0);
+    auto domain_box = geom.Domain();
+#if (AMREX_SPACEDIM == 2)
+    const auto dVdt = geom.CellSize(0) * geom.CellSize(1)
+        * m_qed_schwinger_y_size * warpx.getdt(level_0);
+#elif (AMREX_SPACEDIM == 3)
+    const auto dVdt = geom.CellSize(0) * geom.CellSize(1)
+        * geom.CellSize(2) * warpx.getdt(level_0);
+#endif
+
+    auto& pc_product_ele =
+            allcontainers[m_qed_schwinger_ele_product];
+    auto& pc_product_pos =
+            allcontainers[m_qed_schwinger_pos_product];
+
+    const MultiFab & Ex = warpx.getEfield(level_0,0);
+    const MultiFab & Ey = warpx.getEfield(level_0,1);
+    const MultiFab & Ez = warpx.getEfield(level_0,2);
+    const MultiFab & Bx = warpx.getBfield(level_0,0);
+    const MultiFab & By = warpx.getBfield(level_0,1);
+    const MultiFab & Bz = warpx.getBfield(level_0,2);
+
+    MFItInfo info;
+    if (TilingIfNotGPU()) {
+        info.EnableTiling();
+    }
+#ifdef _OPENMP
+    info.SetDynamic(WarpX::do_dynamic_scheduling);
+#pragma omp parallel
+#endif
+
+    for (MFIter mfi(Ex, info); mfi.isValid(); ++mfi )
+    {
+        // Make the box cell centered to avoid creating particles twice on the tile edges
+        const Box& box = enclosedCells(mfi.nodaltilebox());
+
+        const auto& arrEx = Ex[mfi].array();
+        const auto& arrEy = Ey[mfi].array();
+        const auto& arrEz = Ez[mfi].array();
+        const auto& arrBx = Bx[mfi].array();
+        const auto& arrBy = By[mfi].array();
+        const auto& arrBz = Bz[mfi].array();
+
+        const Array4<const amrex::Real> array_EMFAB [] = {arrEx,arrEy,arrEz,
+                                           arrBx,arrBy,arrBz};
+
+        pc_product_ele->defineAllParticleTiles();
+        pc_product_pos->defineAllParticleTiles();
+
+        auto& dst_ele_tile = pc_product_ele->ParticlesAt(level_0, mfi);
+        auto& dst_pos_tile = pc_product_pos->ParticlesAt(level_0, mfi);
+
+        const auto np_ele_dst = dst_ele_tile.numParticles();
+        const auto np_pos_dst = dst_pos_tile.numParticles();
+
+        const auto Filter  = SchwingerFilterFunc{
+                              m_qed_schwinger_threshold_poisson_gaussian,dVdt};
+
+        const SmartCreateFactory create_factory_ele(*pc_product_ele);
+        const SmartCreateFactory create_factory_pos(*pc_product_pos);
+        const auto CreateEle = create_factory_ele.getSmartCreate();
+        const auto CreatePos = create_factory_pos.getSmartCreate();
+
+        const auto Transform = SchwingerTransformFunc{m_qed_schwinger_y_size,
+                            ParticleStringNames::to_index.find("w")->second};
+
+        const auto num_added = filterCreateTransformFromFAB<1>( dst_ele_tile,
+                              dst_pos_tile, box, array_EMFAB, np_ele_dst,
+                               np_pos_dst,Filter, CreateEle, CreatePos,
+                                Transform);
+
+        setNewParticleIDs(dst_ele_tile, np_ele_dst, num_added);
+        setNewParticleIDs(dst_pos_tile, np_pos_dst, num_added);
+
+    }
+}
+
 void MultiParticleContainer::doQedEvents()
 {
     WARPX_PROFILE("MPC::doQedEvents");
@@ -1151,7 +1286,17 @@ void MultiParticleContainer::CheckQEDProductSpecies()
                 "ERROR: Quantum Synchrotron product species is of wrong type");
         }
     }
-}
 
+    if (m_do_qed_schwinger) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                allcontainers[m_qed_schwinger_ele_product]->
+                    AmIA<PhysicalSpecies::electron>()
+                &&
+                allcontainers[m_qed_schwinger_pos_product]->
+                    AmIA<PhysicalSpecies::positron>(),
+                "ERROR: Schwinger process product species are of wrong type");
+    }
+
+}
 
 #endif

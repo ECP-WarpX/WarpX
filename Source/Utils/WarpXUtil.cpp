@@ -1,6 +1,5 @@
 /* Copyright 2019-2020 Andrew Myers, Burlen Loring, Luca Fedeli
  * Maxence Thevenet, Remi Lehe, Revathi Jambunathan
- * Revathi Jambunathan
  *
  * This file is part of WarpX.
  *
@@ -135,11 +134,11 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
     for(amrex::MFIter mfi(mf, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi){
         const amrex::Box& bx = mfi.tilebox();
         // Get box lower and upper physical z bound, and dz
-        #if (AMREX_SPACEDIM == 3)
+#if (AMREX_SPACEDIM == 3)
             amrex::Array<amrex::Real,3> galilean_shift = { 0., 0., 0., };
-        #elif (AMREX_SPACEDIM == 2)
+#elif (AMREX_SPACEDIM == 2)
             amrex::Array<amrex::Real,3> galilean_shift = { 0., std::numeric_limits<Real>::quiet_NaN(),  0., } ;
-        #endif
+#endif
         const amrex::Real zmin_box = WarpX::LowerCorner(bx, galilean_shift, lev)[2];
         const amrex::Real zmax_box = WarpX::UpperCorner(bx, lev)[2];
         amrex::Real dz  = WarpX::CellSize(lev)[2];
@@ -246,4 +245,6 @@ namespace WarpXUtilStr
         }
         return value;
     }
+
 }
+

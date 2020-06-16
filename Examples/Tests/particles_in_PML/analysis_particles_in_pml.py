@@ -20,6 +20,8 @@ charge, with associated fields, behind them.
 import sys
 import yt
 yt.funcs.mylog.setLevel(0)
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 # Open plotfile specified in command line
 filename = sys.argv[1]
@@ -36,9 +38,14 @@ print( "max_Efield = %s" %max_Efield )
 # The field associated with the particle does not have
 # the same amplitude in 2d and 3d
 if ds.dimensionality == 2:
-    assert max_Efield < 0.0003
+    tolerance_abs = 0.0003
 elif ds.dimensionality == 3:
-    assert max_Efield < 10
+    tolerance_abs = 10
 else:
     raise ValueError("Unknown dimensionality")
 
+print("tolerance_abs: " + str(tolerance_abs))
+assert max_Efield < tolerance_abs
+
+test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)

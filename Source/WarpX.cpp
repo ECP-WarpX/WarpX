@@ -69,6 +69,8 @@ long WarpX::particle_pusher_algo;
 int WarpX::maxwell_fdtd_solver_id;
 long WarpX::load_balance_costs_update_algo;
 int WarpX::do_dive_cleaning = 0;
+int WarpX::em_solver_medium;
+int WarpX::macroscopic_solver_algo;
 
 long WarpX::n_rz_azimuthal_modes = 1;
 long WarpX::ncomps = 1;
@@ -86,11 +88,7 @@ bool WarpX::refine_plasma     = false;
 
 int WarpX::num_mirrors = 0;
 
-#ifdef AMREX_USE_GPU
-int  WarpX::sort_int = 4;
-#else
-int  WarpX::sort_int = -1;
-#endif
+IntervalsParser WarpX::sort_intervals;
 amrex::IntVect WarpX::sort_bin_size(AMREX_D_DECL(4,4,4));
 
 bool WarpX::do_back_transformed_diagnostics = false;
@@ -109,38 +107,6 @@ bool WarpX::do_dynamic_scheduling = true;
 int WarpX::do_electrostatic = 0;
 int WarpX::do_subcycling = 0;
 bool WarpX::safe_guard_cells = 0;
-
-#if (AMREX_SPACEDIM == 3)
-IntVect WarpX::Bx_nodal_flag(1,0,0);
-IntVect WarpX::By_nodal_flag(0,1,0);
-IntVect WarpX::Bz_nodal_flag(0,0,1);
-#elif (AMREX_SPACEDIM == 2)
-IntVect WarpX::Bx_nodal_flag(1,0);// x is the first dimension to AMReX
-IntVect WarpX::By_nodal_flag(0,0);// y is the missing dimension to 2D AMReX
-IntVect WarpX::Bz_nodal_flag(0,1);// z is the second dimension to 2D AMReX
-#endif
-
-#if (AMREX_SPACEDIM == 3)
-IntVect WarpX::Ex_nodal_flag(0,1,1);
-IntVect WarpX::Ey_nodal_flag(1,0,1);
-IntVect WarpX::Ez_nodal_flag(1,1,0);
-#elif (AMREX_SPACEDIM == 2)
-IntVect WarpX::Ex_nodal_flag(0,1);// x is the first dimension to AMReX
-IntVect WarpX::Ey_nodal_flag(1,1);// y is the missing dimension to 2D AMReX
-IntVect WarpX::Ez_nodal_flag(1,0);// z is the second dimension to 2D AMReX
-#endif
-
-#if (AMREX_SPACEDIM == 3)
-IntVect WarpX::jx_nodal_flag(0,1,1);
-IntVect WarpX::jy_nodal_flag(1,0,1);
-IntVect WarpX::jz_nodal_flag(1,1,0);
-#elif (AMREX_SPACEDIM == 2)
-IntVect WarpX::jx_nodal_flag(0,1);// x is the first dimension to AMReX
-IntVect WarpX::jy_nodal_flag(1,1);// y is the missing dimension to 2D AMReX
-IntVect WarpX::jz_nodal_flag(1,0);// z is the second dimension to 2D AMReX
-#endif
-
-IntVect WarpX::rho_nodal_flag(AMREX_D_DECL(1, 1, 1));
 
 IntVect WarpX::filter_npass_each_dir(1);
 
@@ -179,9 +145,7 @@ WarpX::WarpX ()
 
     ReadParameters();
 
-#ifdef WARPX_USE_OPENPMD
-    m_OpenPMDPlotWriter = new WarpXOpenPMDPlot(openpmd_tspf, openpmd_backend, WarpX::getPMLdirections());
-#endif
+    BackwardCompatibility();
 
     // Geometry on all levels has been defined already.
 
@@ -250,6 +214,13 @@ WarpX::WarpX ()
     pml.resize(nlevs_max);
     costs.resize(nlevs_max);
 
+
+    if (em_solver_medium == MediumForEM::Macroscopic) {
+        // create object for macroscopic solver
+        m_macroscopic_properties = std::unique_ptr<MacroscopicProperties> (new MacroscopicProperties());
+    }
+
+
     // Set default values for particle and cell weights for costs update;
     // Default values listed here for the case AMREX_USE_GPU are determined
     // from single-GPU tests on Summit.
@@ -303,33 +274,6 @@ WarpX::WarpX ()
 #endif
     m_fdtd_solver_fp.resize(nlevs_max);
     m_fdtd_solver_cp.resize(nlevs_max);
-#ifdef WARPX_USE_PSATD_HYBRID
-    Efield_fp_fft.resize(nlevs_max);
-    Bfield_fp_fft.resize(nlevs_max);
-    current_fp_fft.resize(nlevs_max);
-    rho_fp_fft.resize(nlevs_max);
-
-    Efield_cp_fft.resize(nlevs_max);
-    Bfield_cp_fft.resize(nlevs_max);
-    current_cp_fft.resize(nlevs_max);
-    rho_cp_fft.resize(nlevs_max);
-
-    dataptr_fp_fft.resize(nlevs_max);
-    dataptr_cp_fft.resize(nlevs_max);
-
-    ba_valid_fp_fft.resize(nlevs_max);
-    ba_valid_cp_fft.resize(nlevs_max);
-
-    domain_fp_fft.resize(nlevs_max);
-    domain_cp_fft.resize(nlevs_max);
-
-    comm_fft.resize(nlevs_max,MPI_COMM_NULL);
-    color_fft.resize(nlevs_max,-1);
-#endif
-
-#ifdef BL_USE_SENSEI_INSITU
-    insitu_bridge = nullptr;
-#endif
 
     // NCI Godfrey filters can have different stencils
     // at different levels (the stencil depends on c*dt/dz)
@@ -339,17 +283,6 @@ WarpX::WarpX ()
     // Sanity checks. Must be done after calling the MultiParticleContainer
     // constructor, as it reads additional parameters
     // (e.g., use_fdtd_nci_corr)
-
-#ifndef WARPX_USE_PSATD
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        not ( do_pml && do_nodal ),
-        "PML + do_nodal for finite-difference not implemented"
-        );
-#endif
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        not ( do_dive_cleaning && do_nodal ),
-        "divE cleaning + do_nodal not implemented"
-        );
 #ifdef WARPX_USE_PSATD
     AMREX_ALWAYS_ASSERT(use_fdtd_nci_corr == 0);
     AMREX_ALWAYS_ASSERT(do_subcycling == 0);
@@ -364,14 +297,6 @@ WarpX::~WarpX ()
     }
 
     delete reduced_diags;
-
-#ifdef BL_USE_SENSEI_INSITU
-    delete insitu_bridge;
-#endif
-
-#ifdef WARPX_USE_OPENPMD
-    delete m_OpenPMDPlotWriter;
-#endif
 }
 
 void
@@ -386,12 +311,6 @@ WarpX::ReadParameters ()
 
     {
         ParmParse pp("amr");// Traditionally, these have prefix, amr.
-
-        pp.query("check_file", check_file);
-        pp.query("check_int", check_int);
-
-        pp.query("plot_file", plot_file);
-        pp.query("plot_int", plot_int);
 
         pp.query("restart", restart_chkfile);
     }
@@ -423,7 +342,9 @@ WarpX::ReadParameters ()
         pp.query("do_subcycling", do_subcycling);
         pp.query("use_hybrid_QED", use_hybrid_QED);
         pp.query("safe_guard_cells", safe_guard_cells);
-        pp.query("override_sync_int", override_sync_int);
+        std::string override_sync_int_string = "1";
+        pp.query("override_sync_int", override_sync_int_string);
+        override_sync_intervals = IntervalsParser(override_sync_int_string);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
                                          "Subcycling method 1 only works for 2 levels.");
@@ -537,7 +458,13 @@ WarpX::ReadParameters ()
         pp.query("do_dive_cleaning", do_dive_cleaning);
         pp.query("n_field_gather_buffer", n_field_gather_buffer);
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
-        pp.query("sort_int", sort_int);
+#ifdef AMREX_USE_GPU
+        std::string sort_int_string = "4";
+#else
+        std::string sort_int_string = "-1";
+#endif
+        pp.query("sort_int", sort_int_string);
+        sort_intervals = IntervalsParser(sort_int_string);
 
         Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
         bool sort_bin_size_is_specified = pp.queryarr("sort_bin_size", vect_sort_bin_size);
@@ -557,6 +484,10 @@ WarpX::ReadParameters ()
         pp.query("pml_has_particles", pml_has_particles);
         pp.query("do_pml_j_damping", do_pml_j_damping);
         pp.query("do_pml_in_domain", do_pml_in_domain);
+#ifdef WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( do_pml==0,
+            "PML are not implemented in RZ geometry ; please set `warpx.do_pml=0`");
+#endif
 
         Vector<int> parse_do_pml_Lo(AMREX_SPACEDIM,1);
         pp.queryarr("do_pml_Lo", parse_do_pml_Lo);
@@ -577,60 +508,8 @@ WarpX::ReadParameters ()
             amrex::Abort("J-damping can only be done when PML are inside simulation domain (do_pml_in_domain=1)");
         }
 
-        pp.query("openpmd_int", openpmd_int);
-        pp.query("openpmd_backend", openpmd_backend);
-#ifdef WARPX_USE_OPENPMD
-        pp.query("openpmd_tspf", openpmd_tspf);
-#endif
-        pp.query("plot_raw_fields", plot_raw_fields);
-        pp.query("plot_raw_fields_guards", plot_raw_fields_guards);
-        pp.query("plot_coarsening_ratio", plot_coarsening_ratio);
-        bool user_fields_to_plot;
-        user_fields_to_plot = pp.queryarr("fields_to_plot", fields_to_plot);
-        if (not user_fields_to_plot){
-            // If not specified, set default values
-            fields_to_plot = {"Ex", "Ey", "Ez", "Bx", "By",
-                              "Bz", "jx", "jy", "jz",
-                              "part_per_cell"};
-        }
-        // set plot_rho to true of the users requests it, so that
-        // rho is computed at each iteration.
-        if (std::find(fields_to_plot.begin(), fields_to_plot.end(), "rho")
-            != fields_to_plot.end()){
-            plot_rho = true;
-        }
-        // Sanity check if user requests to plot F
-        if (std::find(fields_to_plot.begin(), fields_to_plot.end(), "F")
-            != fields_to_plot.end()){
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_dive_cleaning,
-                "plot F only works if warpx.do_dive_cleaning = 1");
-        }
-        // If user requests to plot proc_number for a serial run,
-        // delete proc_number from fields_to_plot
-        if (ParallelDescriptor::NProcs() == 1){
-            fields_to_plot.erase(std::remove(fields_to_plot.begin(),
-                                             fields_to_plot.end(),
-                                             "proc_number"),
-                                 fields_to_plot.end());
-        }
-
-        // Check that the coarsening_ratio can divide the blocking factor
-        const int nlevs_max = maxLevel();
-        for (int lev=0; lev<nlevs_max; lev++){
-          for (int comp=0; comp<AMREX_SPACEDIM; comp++){
-            if ( blockingFactor(lev)[comp] % plot_coarsening_ratio != 0 ){
-              amrex::Abort("plot_coarsening_ratio should be an integer "
-                           "divisor of the blocking factor.");
-            }
-          }
-        }
-
-        pp.query("plot_finepatch", plot_finepatch);
-        if (maxLevel() > 0) {
-            pp.query("plot_crsepatch", plot_crsepatch);
-        }
-
         {
+            // Parameters below control all plotfile diagnostics
             bool plotfile_min_max = true;
             pp.query("plotfile_min_max", plotfile_min_max);
             if (plotfile_min_max) {
@@ -660,7 +539,9 @@ WarpX::ReadParameters ()
             fine_tag_hi = RealVect{hi};
         }
 
-        pp.query("load_balance_int", load_balance_int);
+        std::string load_balance_int_string = "0";
+        pp.query("load_balance_int", load_balance_int_string);
+        load_balance_intervals = IntervalsParser(load_balance_int_string);
         pp.query("load_balance_with_sfc", load_balance_with_sfc);
         pp.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
         pp.query("load_balance_efficiency_ratio_threshold", load_balance_efficiency_ratio_threshold);
@@ -668,23 +549,17 @@ WarpX::ReadParameters ()
         pp.query("do_dynamic_scheduling", do_dynamic_scheduling);
 
         pp.query("do_nodal", do_nodal);
-        if (do_nodal) {
-            Bx_nodal_flag = IntVect::TheNodeVector();
-            By_nodal_flag = IntVect::TheNodeVector();
-            Bz_nodal_flag = IntVect::TheNodeVector();
-            Ex_nodal_flag = IntVect::TheNodeVector();
-            Ey_nodal_flag = IntVect::TheNodeVector();
-            Ez_nodal_flag = IntVect::TheNodeVector();
-            jx_nodal_flag = IntVect::TheNodeVector();
-            jy_nodal_flag = IntVect::TheNodeVector();
-            jz_nodal_flag = IntVect::TheNodeVector();
-            rho_nodal_flag = IntVect::TheNodeVector();
-            // Use same shape factors in all directions, for gathering
-            l_lower_order_in_v = false;
-        }
+        // Use same shape factors in all directions, for gathering
+        if (do_nodal) l_lower_order_in_v = false;
 
-        // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1.
+        // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+        // Force do_nodal=true (that is, not staggered) and
+        // use same shape factors in all directions, for gathering
+        do_nodal = true;
+        l_lower_order_in_v = false;
+#endif
     }
 
     {
@@ -709,6 +584,10 @@ WarpX::ReadParameters ()
             l_lower_order_in_v = false;
         }
         load_balance_costs_update_algo = GetAlgorithmInteger(pp, "load_balance_costs_update");
+        em_solver_medium = GetAlgorithmInteger(pp, "em_solver_medium");
+        if (em_solver_medium == MediumForEM::Macroscopic ) {
+            macroscopic_solver_algo = GetAlgorithmInteger(pp,"macroscopic_sigma_method");
+        }
         pp.query("costs_heuristic_cells_wt", costs_heuristic_cells_wt);
         pp.query("costs_heuristic_particles_wt", costs_heuristic_particles_wt);
     }
@@ -716,31 +595,17 @@ WarpX::ReadParameters ()
 #ifdef WARPX_USE_PSATD
     {
         ParmParse pp("psatd");
-        pp.query("hybrid_mpi_decomposition", fft_hybrid_mpi_decomposition);
         pp.query("periodic_single_box_fft", fft_periodic_single_box);
-        pp.query("ngroups_fft", ngroups_fft);
         pp.query("fftw_plan_measure", fftw_plan_measure);
         pp.query("nox", nox_fft);
         pp.query("noy", noy_fft);
         pp.query("noz", noz_fft);
+        pp.query("do_current_correction", do_current_correction);
         pp.query("v_galilean", v_galilean);
       // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
     }
 #endif
-
-    {
-        insitu_start = 0;
-        insitu_int = 0;
-        insitu_config = "";
-        insitu_pin_mesh = 0;
-
-        ParmParse pp("insitu");
-        pp.query("int", insitu_int);
-        pp.query("start", insitu_start);
-        pp.query("config", insitu_config);
-        pp.query("pin_mesh", insitu_pin_mesh);
-    }
 
     // for slice generation //
     {
@@ -780,6 +645,40 @@ WarpX::ReadParameters ()
     }
 }
 
+void
+WarpX::BackwardCompatibility ()
+{
+    ParmParse ppa("amr");
+    int backward_int;
+    if (ppa.query("plot_int", backward_int)){
+        amrex::Abort("amr.plot_int is not supported anymore. Please use the new syntax for diagnostics:\n"
+            "diagnostics.diags_names = my_diag\n"
+            "my_diag.period = 10\n"
+            "for output every 10 iterations. See documentation for more information");
+    }
+
+    std::string backward_str;
+    if (ppa.query("plot_file", backward_str)){
+        amrex::Abort("amr.plot_file is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
+    }
+
+    ParmParse ppw("warpx");
+    std::vector<std::string> backward_strings;
+    if (ppw.queryarr("fields_to_plot", backward_strings)){
+        amrex::Abort("warpx.fields_to_plot is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
+    }
+    if (ppw.query("plot_finepatch", backward_int)){
+        amrex::Abort("warpx.plot_finepatch is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
+    }
+    if (ppw.query("plot_crsepatch", backward_int)){
+        amrex::Abort("warpx.plot_crsepatch is not supported anymore. "
+                     "Please use the new syntax for diagnostics, see documentation.");
+    }
+}
+
 // This is a virtual function.
 void
 WarpX::MakeNewLevelFromScratch (int lev, Real time, const BoxArray& new_grids,
@@ -787,17 +686,6 @@ WarpX::MakeNewLevelFromScratch (int lev, Real time, const BoxArray& new_grids,
 {
     AllocLevelData(lev, new_grids, new_dmap);
     InitLevelData(lev, time);
-
-#ifdef WARPX_USE_PSATD
-    if (fft_hybrid_mpi_decomposition){
-#ifdef WARPX_USE_PSATD_HYBRID
-        AllocLevelDataFFT(lev);
-        InitLevelDataFFT(lev, time);
-#else
-    amrex::Abort("The option `psatd.fft_hybrid_mpi_decomposition` does not work on GPU.");
-#endif
-    }
-#endif
 }
 
 void
@@ -833,30 +721,6 @@ WarpX::ClearLevel (int lev)
     rho_cp[lev].reset();
 
     costs[lev].reset();
-
-
-#ifdef WARPX_USE_PSATD_HYBRID
-    for (int i = 0; i < 3; ++i) {
-        Efield_fp_fft[lev][i].reset();
-        Bfield_fp_fft[lev][i].reset();
-        current_fp_fft[lev][i].reset();
-
-        Efield_cp_fft[lev][i].reset();
-        Bfield_cp_fft[lev][i].reset();
-        current_cp_fft[lev][i].reset();
-    }
-
-    rho_fp_fft[lev].reset();
-    rho_cp_fft[lev].reset();
-
-    dataptr_fp_fft[lev].reset();
-    dataptr_cp_fft[lev].reset();
-
-    ba_valid_fp_fft[lev] = BoxArray();
-    ba_valid_cp_fft[lev] = BoxArray();
-
-    FreeFFT(lev);
-#endif
 }
 
 void
@@ -870,7 +734,6 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::use_fdtd_nci_corr,
         do_nodal,
         do_moving_window,
-        fft_hybrid_mpi_decomposition,
         aux_is_nodal,
         moving_window_dir,
         WarpX::nox,
@@ -907,6 +770,63 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                       const IntVect& ngE, const IntVect& ngJ, const IntVect& ngRho,
                       const IntVect& ngF, const IntVect& ngextra, const bool aux_is_nodal)
 {
+    // Declare nodal flags
+    IntVect Ex_nodal_flag, Ey_nodal_flag, Ez_nodal_flag;
+    IntVect Bx_nodal_flag, By_nodal_flag, Bz_nodal_flag;
+    IntVect jx_nodal_flag, jy_nodal_flag, jz_nodal_flag;
+    IntVect rho_nodal_flag;
+
+    // Set nodal flags
+#if   (AMREX_SPACEDIM == 2)
+    // AMReX convention: x = first dimension, y = missing dimension, z = second dimension
+    Ex_nodal_flag = IntVect(0,1);
+    Ey_nodal_flag = IntVect(1,1);
+    Ez_nodal_flag = IntVect(1,0);
+    Bx_nodal_flag = IntVect(1,0);
+    By_nodal_flag = IntVect(0,0);
+    Bz_nodal_flag = IntVect(0,1);
+    jx_nodal_flag = IntVect(0,1);
+    jy_nodal_flag = IntVect(1,1);
+    jz_nodal_flag = IntVect(1,0);
+#elif (AMREX_SPACEDIM == 3)
+    Ex_nodal_flag = IntVect(0,1,1);
+    Ey_nodal_flag = IntVect(1,0,1);
+    Ez_nodal_flag = IntVect(1,1,0);
+    Bx_nodal_flag = IntVect(1,0,0);
+    By_nodal_flag = IntVect(0,1,0);
+    Bz_nodal_flag = IntVect(0,0,1);
+    jx_nodal_flag = IntVect(0,1,1);
+    jy_nodal_flag = IntVect(1,0,1);
+    jz_nodal_flag = IntVect(1,1,0);
+#endif
+    rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
+
+    // Overwrite nodal flags if necessary
+    if (do_nodal) {
+        Ex_nodal_flag  = IntVect::TheNodeVector();
+        Ey_nodal_flag  = IntVect::TheNodeVector();
+        Ez_nodal_flag  = IntVect::TheNodeVector();
+        Bx_nodal_flag  = IntVect::TheNodeVector();
+        By_nodal_flag  = IntVect::TheNodeVector();
+        Bz_nodal_flag  = IntVect::TheNodeVector();
+        jx_nodal_flag  = IntVect::TheNodeVector();
+        jy_nodal_flag  = IntVect::TheNodeVector();
+        jz_nodal_flag  = IntVect::TheNodeVector();
+        rho_nodal_flag = IntVect::TheNodeVector();
+    }
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    // Force cell-centered IndexType in r and z
+    Ex_nodal_flag  = IntVect::TheCellVector();
+    Ey_nodal_flag  = IntVect::TheCellVector();
+    Ez_nodal_flag  = IntVect::TheCellVector();
+    Bx_nodal_flag  = IntVect::TheCellVector();
+    By_nodal_flag  = IntVect::TheCellVector();
+    Bz_nodal_flag  = IntVect::TheCellVector();
+    jx_nodal_flag  = IntVect::TheCellVector();
+    jy_nodal_flag  = IntVect::TheCellVector();
+    jz_nodal_flag  = IntVect::TheCellVector();
+    rho_nodal_flag = IntVect::TheCellVector();
+#endif
 
 #if defined WARPX_DIM_RZ
     // With RZ multimode, there is a real and imaginary component
@@ -920,6 +840,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     //
     // The fine patch
     //
+    std::array<Real,3> dx = CellSize(lev);
+
     Bfield_fp[lev][0].reset( new MultiFab(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE+ngextra));
     Bfield_fp[lev][1].reset( new MultiFab(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE+ngextra));
     Bfield_fp[lev][2].reset( new MultiFab(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE+ngextra));
@@ -953,35 +875,35 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         rho_fp[lev].reset(new MultiFab(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho));
     }
-    if (fft_hybrid_mpi_decomposition == false){
-        // Allocate and initialize the spectral solver
-        std::array<Real,3> dx = CellSize(lev);
-#if (AMREX_SPACEDIM == 3)
-        RealVect dx_vect(dx[0], dx[1], dx[2]);
-#elif (AMREX_SPACEDIM == 2)
-        RealVect dx_vect(dx[0], dx[2]);
-#endif
-
-        // Check whether the option periodic, single box is valid here
-        if (fft_periodic_single_box) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( geom[0].isAllPeriodic() && ba.size()==1 && lev==0,
-            "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box.");
-        }
-
-        // Get the cell-centered box, with guard cells
-        BoxArray realspace_ba = ba;  // Copy box
-        realspace_ba.enclosedCells(); // cell-centered
-        if ( fft_periodic_single_box == false ) {
-            realspace_ba.grow(ngE); // add guard cells
-        }
-        // Define spectral solver
-        bool const pml=false;
-        spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
-            pml, fft_periodic_single_box ) );
+    // Allocate and initialize the spectral solver
+#   if (AMREX_SPACEDIM == 3)
+    RealVect dx_vect(dx[0], dx[1], dx[2]);
+#   elif (AMREX_SPACEDIM == 2)
+    RealVect dx_vect(dx[0], dx[2]);
+#   endif
+    // Check whether the option periodic, single box is valid here
+    if (fft_periodic_single_box) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( geom[0].isAllPeriodic() && ba.size()==1 && lev==0,
+        "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box.");
     }
+    // Get the cell-centered box
+    BoxArray realspace_ba = ba;  // Copy box
+    realspace_ba.enclosedCells(); // Make it cell-centered
+    // Define spectral solver
+#   ifdef WARPX_DIM_RZ
+    realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+    spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
+        n_rz_azimuthal_modes, noz_fft, do_nodal, dx_vect, dt[lev], lev ) );
+#   else
+    if ( fft_periodic_single_box == false ) {
+        realspace_ba.grow(ngE); // add guard cells
+    }
+    bool const pml=false;
+    spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
+        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
+        pml, fft_periodic_single_box ) );
+#   endif
 #endif
-    std::array<Real,3> const dx = CellSize(lev);
     m_fdtd_solver_fp[lev].reset(
         new FiniteDifferenceSolver(maxwell_fdtd_solver_id, dx, do_nodal) );
     //
@@ -1024,6 +946,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         BoxArray cba = ba;
         cba.coarsen(refRatio(lev-1));
+        std::array<Real,3> cdx = CellSize(lev-1);
 
         // Create the MultiFabs for B
         Bfield_cp[lev][0].reset( new MultiFab(amrex::convert(cba,Bx_nodal_flag),dm,ncomps,ngE));
@@ -1052,25 +975,28 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         {
             rho_cp[lev].reset(new MultiFab(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho));
         }
-        if (fft_hybrid_mpi_decomposition == false){
-            // Allocate and initialize the spectral solver
-            std::array<Real,3> cdx = CellSize(lev-1);
-#if (AMREX_SPACEDIM == 3)
-            RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
-#elif (AMREX_SPACEDIM == 2)
-            RealVect cdx_vect(cdx[0], cdx[2]);
+        // Allocate and initialize the spectral solver
+#   if (AMREX_SPACEDIM == 3)
+        RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
+#   elif (AMREX_SPACEDIM == 2)
+        RealVect cdx_vect(cdx[0], cdx[2]);
+#   endif
+        // Get the cell-centered box, with guard cells
+        BoxArray realspace_ba = cba;// Copy box
+        realspace_ba.enclosedCells(); // Make it cell-centered
+        // Define spectral solver
+#   ifdef WARPX_DIM_RZ
+        realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+        spectral_solver_cp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
+            n_rz_azimuthal_modes, noz_fft, do_nodal, cdx_vect, dt[lev], lev ) );
+#   else
+        realspace_ba.grow(ngE); // add guard cells
+        spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev] ) );
+#   endif
 #endif
-            // Get the cell-centered box, with guard cells
-            BoxArray realspace_ba = cba;// Copy box
-            realspace_ba.enclosedCells().grow(ngE);// cell-centered + guard cells
-            // Define spectral solver
-            spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
-                nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev] ) );
-        }
-#endif
-    std::array<Real,3> cdx = CellSize(lev-1);
-    m_fdtd_solver_cp[lev].reset(
-        new FiniteDifferenceSolver( maxwell_fdtd_solver_id, cdx, do_nodal ) );
+        m_fdtd_solver_cp[lev].reset(
+            new FiniteDifferenceSolver( maxwell_fdtd_solver_id, cdx, do_nodal ) );
     }
 
     //
@@ -1121,11 +1047,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         }
     }
 
-    if (load_balance_int > 0)
+    if (load_balance_intervals.isActivated())
     {
-        costs[lev].reset(new amrex::Vector<Real>);
-        const int nboxes = Efield_fp[lev][0].get()->size();
-        costs[lev]->resize(nboxes);
+        costs[lev].reset(new amrex::LayoutData<Real>(ba, dm));
     }
 }
 

@@ -14,9 +14,12 @@
 #include "WarpX.H"
 
 #include <AMReX.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_Print.H>
 
-#include <sstream>
 #include <functional>
+#include <sstream>
+#include <string>
 
 
 using namespace amrex;
@@ -105,9 +108,15 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         mass = species::get_mass( physical_species );
     }
 
+    std::string s_inj_style;
+    pp.query("injection_style", s_inj_style);
+
     // parse charge and mass
     std::string charge_s;
+    std::string mass_s;
     bool charge_is_specified = pp.query("charge", charge_s);
+    bool mass_is_specified = pp.query("mass", mass_s);
+
     if (charge_is_specified){
         std::transform(charge_s.begin(),
                        charge_s.end(),
@@ -116,20 +125,15 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         charge = parseChargeString(pp, charge_s);
     }
     if ( charge_is_specified && species_is_specified ){
-        Print()<<"WARNING: Both <species>.charge and <species>.species_type specified\n";
-        Print()<<"         The charge in <species>.mass overwrite the one from <species>.species_type\n";
+        Print() << "WARNING: Both '" << species_name << ".charge' and "
+                << species_name << ".species_type' are specified\n'"
+                << species_name << ".charge' will take precedence.\n";
     }
-    if (!charge_is_specified && !species_is_specified){
-        //No need for charge/species definition if external file is used
-        std::string s_inj_style;
-        pp.query("injection_style", s_inj_style);
-        if (s_inj_style != "external_file") {
-            amrex::Abort("Need to specify at least one of species_type or charge");
-        }
+    if (!charge_is_specified && !species_is_specified && s_inj_style != "external_file"){
+        // external file will throw own assertions below if charge cannot be found
+        amrex::Abort("Need to specify at least one of species_type or charge");
     }
 
-    std::string mass_s;
-    bool mass_is_specified = pp.query("mass", mass_s);
     if (mass_is_specified){
         std::transform(mass_s.begin(),
                        mass_s.end(),
@@ -138,16 +142,13 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         mass = parseMassString(pp, mass_s);
     }
     if ( mass_is_specified && species_is_specified ){
-        Print()<<"WARNING: Both <species>.mass and <species>species_type specified\n";
-        Print()<<"         The mass in <species>.mass overwrite the one from <species>.species_type\n";
+        Print() << "WARNING: Both '" << species_name << ".mass' and "
+                << species_name << ".species_type' are specified\n'"
+                << species_name << ".mass' will take precedence.\n";
     }
-    if (!mass_is_specified && !species_is_specified){
-        //No need for mass/species definition if external file is used
-        std::string s_inj_style;
-        pp.query("injection_style", s_inj_style);
-        if (s_inj_style != "external_file") {
-            amrex::Abort("Need to specify at least one of species_type or mass");
-        }
+    if (!mass_is_specified && !species_is_specified && s_inj_style != "external_file"){
+        // external file will throw own assertions below if mass cannot be found
+        amrex::Abort("Need to specify at least one of species_type or mass");
     }
 
     // parse injection style
@@ -229,14 +230,95 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseDensity(pp);
         parseMomentum(pp);
     } else if (part_pos_s == "external_file") {
-#ifdef WARPX_USE_OPENPMD
-        external_file = true;
-        pp.get("injection_file",str_injection_file);
-        pp.get("q_tot",q_tot);
-#else
+#ifdef WARPX_DIM_RZ
+        amrex::Abort("The option of reading particle data from an external "
+                     "file has not been implemented nor tested in RZ geometry");
+#endif
+        pp.query("q_tot", q_tot); // optional
+#ifndef WARPX_USE_OPENPMD
         amrex::Abort("WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
                      " to read the external openPMD file with species data");
 #endif
+        external_file = true;
+        std::string str_injection_file;
+        pp.get("injection_file", str_injection_file);
+
+#ifdef WARPX_USE_OPENPMD
+        if (ParallelDescriptor::IOProcessor()) {
+            m_openpmd_input_series = std::make_unique<openPMD::Series>(
+                str_injection_file, openPMD::AccessType::READ_ONLY);
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                m_openpmd_input_series->iterations.size() == 1u,
+                "External file should contain only 1 iteration\n");
+            openPMD::Iteration it = m_openpmd_input_series->iterations.begin()->second;
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                it.particles.size() == 1u,
+                "External file should contain only 1 species\n");
+            std::string const ps_name = it.particles.begin()->first;
+            openPMD::ParticleSpecies ps = it.particles.begin()->second;
+
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ps.contains("charge") || charge_is_specified || species_is_specified,
+                std::string("'") + ps_name +
+                ".injection_file' does not contain a 'charge' species record. "
+                "Please specify '" + ps_name + ".charge' or "
+                "'" + ps_name + ".species_type' in your input file!\n");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ps.contains("mass") || mass_is_specified || species_is_specified,
+                std::string("'") + ps_name +
+                ".injection_file' does not contain a 'mass' species record. "
+                "Please specify '" + ps_name + ".mass' or "
+                "'" + ps_name + ".species_type' in your input file!\n");
+
+            if (charge_is_specified) {
+                Print() << "WARNING: Both '" << ps_name << ".charge' and '"
+                        << ps_name << ".injection_file' specify a charge.\n'"
+                        << ps_name << ".charge' will take precedence.\n";
+            }
+            else if (species_is_specified) {
+                Print() << "WARNING: Both '" << ps_name << ".species_type' and '"
+                        << ps_name << ".injection_file' specify a charge.\n'"
+                        << ps_name << ".species_type' will take precedence.\n";
+            }
+            else {
+                // TODO: Add ASSERT_WITH_MESSAGE to test if charge is a constant record
+                ParticleReal const p_q = ps["charge"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>().get()[0];
+                double const charge_unit = ps["charge"][openPMD::RecordComponent::SCALAR].unitSI();
+                charge = p_q * charge_unit;
+            }
+            if (mass_is_specified) {
+                Print() << "WARNING: Both '" << ps_name << ".mass' and '"
+                        << ps_name << ".injection_file' specify a mass.\n'"
+                        << ps_name << ".mass' will take precedence.\n";
+            }
+            else if (species_is_specified) {
+                Print() << "WARNING: Both '" << ps_name << ".species_type' and '"
+                        << ps_name << ".injection_file' specify a mass.\n'"
+                        << ps_name << ".species_type' will take precedence.\n";
+            }
+            else {
+                // TODO: Add ASSERT_WITH_MESSAGE to test if mass is a constant record
+                ParticleReal const p_m = ps["mass"][openPMD::RecordComponent::SCALAR].loadChunk<ParticleReal>().get()[0];
+                double const mass_unit = ps["mass"][openPMD::RecordComponent::SCALAR].unitSI();
+                mass = p_m * mass_unit;
+            }
+
+            pp.query("z_shift",z_shift);
+        } // IOProcessor
+
+        // Broadcast charge and mass to non-IO processors
+        if (!charge_is_specified && !species_is_specified)
+            ParallelDescriptor::Bcast(&charge, 1,
+                ParallelDescriptor::IOProcessorNumber());
+        if (!mass_is_specified && !species_is_specified)
+            ParallelDescriptor::Bcast(&mass, 1,
+                ParallelDescriptor::IOProcessorNumber());
+#else
+        Abort("Plasma injection via external_file requires openPMD support: "
+                     "Add USE_OPENPMD=TRUE when compiling WarpX.\n");
+#endif  // WARPX_USE_OPENPMD
+
     } else {
         StringParseAbortMessage("Injection style", part_pos_s);
     }
@@ -398,7 +480,12 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
                                            makeParser(str_momentum_function_uy,{"x","y","z"}),
                                            makeParser(str_momentum_function_uz,{"x","y","z"})));
     } else {
-        StringParseAbortMessage("Momentum distribution type", mom_dist_s);
+        //No need for momentum definition if external file is used
+        std::string s_inj_style;
+        pp.query("injection_style", s_inj_style);
+        if (s_inj_style != "external_file") {
+            StringParseAbortMessage("Momentum distribution type", mom_dist_s);
+        }
     }
 }
 
