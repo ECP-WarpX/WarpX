@@ -295,6 +295,8 @@ PhysicalParticleContainer::AddGaussianBeam (
 
 void
 PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
+                                             ParticleReal x_shift,
+                                             ParticleReal y_shift,
                                              ParticleReal z_shift)
 {
     // Declare temporary vectors on the CPU
@@ -364,41 +366,28 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         const auto probhi = geom.ProbHiArray();
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
-            ParticleReal const x = ptr_x.get()[i]*position_unit_x;
-            if (x>problo[0] && x<probhi[0]){
-                ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
+            ParticleReal const x = ptr_x.get()[i]*position_unit_x+x_shift;
+            bool const in_box_x = x>problo[0] && x<probhi[0];
+            if( not in_x_bounds ) continue;
+            ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
+            bool const in_box_z = z>problo[0] && z<probhi[0];
+            if( not in_z_bounds ) continue;
 #   ifndef WARPX_DIM_3D
-                if (z>problo[1] && z<probhi[1]){
-                    ParticleReal const y = 0.0_prt;
-                    ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
-                    ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
-                    ParticleReal uy = 0.0_prt;
-                    if (ps["momentum"].contains("y")) {
-                        uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
-                    }
-                    CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
-                    particle_x,  particle_y,  particle_z,
-                    particle_ux, particle_uy, particle_uz,
-                    particle_w);
-                }
+            ParticleReal const y = 0.0_prt;
+            ParticleReal const uy = 0.0_prt;
 #   else
-                if (z>problo[2] && z<probhi[2]){
-                    ParticleReal const y = ptr_y.get()[i]*position_unit_y;
-                    if (y>problo[1] && y<probhi[1]) {
-                        ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
-                        ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
-                        ParticleReal uy = 0.0_prt;
-                        if (ps["momentum"].contains("y")) {
-                            uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
-                        }
-                        CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
-                        particle_x,  particle_y,  particle_z,
-                        particle_ux, particle_uy, particle_uz,
-                        particle_w);
-                    }
-                }
+            ParticleReal const y = ptr_y.get()[i]*position_unit_y+y_shift;
+            bool const in_box_y = y>problo[0] && y<probhi[0];
+            if( not in_y_bounds ) continue;
+            ParticleReal const uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
 #   endif
-            }
+            ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
+            ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
+
+            CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
+                                particle_x,  particle_y,  particle_z,
+                                particle_ux, particle_uy, particle_uz,
+                                particle_w);
         }
 
         auto const np = particle_z.size();
@@ -477,6 +466,8 @@ PhysicalParticleContainer::AddParticles (int lev)
 
     if (plasma_injector->external_file) {
         AddPlasmaFromFile(plasma_injector->q_tot,
+                          plasma_injector->x_shift
+                          plasma_injector->y_shift
                           plasma_injector->z_shift);
         return;
     }
