@@ -79,7 +79,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     pp.query("radially_weighted", radially_weighted);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
 
-    // box boundaries
+    // Unlimited boundaries
     xmin = std::numeric_limits<amrex::Real>::lowest();
     ymin = std::numeric_limits<amrex::Real>::lowest();
     zmin = std::numeric_limits<amrex::Real>::lowest();
