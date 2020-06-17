@@ -90,25 +90,25 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 
     // NOTE: Default injection range, when periodic boundaries are used, is set to mother grid dimensions.
     const Geometry& geom = WarpX::GetInstance().Geom(0);
-    if( geom.periodicity(0)==1 ) {
-        xmin = geom.ProbLoArray(0);
-        xmax = geom.ProbHiArray(0);
+    if( geom.isPeriodic(0)==1 ) {
+        xmin = geom.ProbLo(0);
+        xmax = geom.ProbHi(0);
     }
 
-    if( geom.periodicity(1)==1 ) {
+    if( geom.isPeriodic(1)==1 ) {
 #       ifndef WARPX_DIM_3D
-        zmin = geom.ProbLoArray(1);
-        zmax = geom.ProbHiArray(1);
+        zmin = geom.ProbLo(1);
+        zmax = geom.ProbHi(1);
 #       else
-        ymin = geom.ProbLoArray(1);
-        ymax = geom.ProbHiArray(1);
+        ymin = geom.ProbLo(1);
+        ymax = geom.ProbHi(1);
 #       endif
     }
 
 #   ifdef WARPX_DIM_3D
-    if( geom.periodicity(2)==1 ) {
-        zmin = geom.ProbLoArray(2);
-        zmax = geom.ProbHiArray(2);
+    if( geom.isPeriodic(2)==1 ) {
+        zmin = geom.ProbLo(2);
+        zmax = geom.ProbHi(2);
     }
 #   endif
 

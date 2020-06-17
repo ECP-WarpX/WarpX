@@ -363,14 +363,17 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
             ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
 #   ifndef WARPX_DIM_3D
             ParticleReal const y = 0.0_prt;
-            ParticleReal const uy = 0.0_prt;
+            }
 #   else
             ParticleReal const y = ptr_y.get()[i]*position_unit_y;
-            ParticleReal const uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
 #   endif
             if (plasma_injector->insideBounds(x, y, z)) {
                 ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
                 ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
+                ParticleReal uy = 0.0_prt;
+                if (ps["momentum"].contains("y")) {
+                    uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
+                }
                 CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
                                     particle_x,  particle_y,  particle_z,
                                     particle_ux, particle_uy, particle_uz,
