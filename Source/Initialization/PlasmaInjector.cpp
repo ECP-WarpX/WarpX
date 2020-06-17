@@ -80,7 +80,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
 
     // box boundaries
-    // FIXME: Only injects particles on coarsest grid, so changes are needed to allow injection to finer grid levels.
+    // NOTE: Default injection range is set to the dimensions of the mother grid.
     const Geometry& geom = WarpX::GetInstance().Geom(0);
     const auto problo = geom.ProbLoArray();
     const auto probhi = geom.ProbHiArray();
