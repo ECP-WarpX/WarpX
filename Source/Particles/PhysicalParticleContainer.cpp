@@ -363,7 +363,6 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
             ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
 #   ifndef WARPX_DIM_3D
             ParticleReal const y = 0.0_prt;
-            }
 #   else
             ParticleReal const y = ptr_y.get()[i]*position_unit_y;
 #   endif
