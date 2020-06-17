@@ -521,12 +521,8 @@ XDim3 PlasmaInjector::getMomentum (Real x, Real y, Real z) const noexcept
 bool PlasmaInjector::insideBounds (Real x, Real y, Real z) const noexcept
 {
     return (x < xmax and x >= xmin and
-#ifndef WARPX_DIM_3D
-            z < zmax and z >= zmin);
-#else
             y < ymax and y >= ymin and
             z < zmax and z >= zmin);
-#endif
 }
 
 InjectorPosition*
