@@ -288,6 +288,12 @@ Particle initialization
     The mass of one `physical` particle of this species.
     If ``species_type`` is specified, the mass will be set to the physical value and ``mass`` is optional.
 
+* ``<species_name>.xmin,ymin,zmin`` (`float`) optional (default `geometry.prob_lo[0],[1],[2]`)
+    Particles within the region delimited by ``<species_name>.xmin`` and ``<species_name>.xmax`` in the direction ``x,y`` or ``z`` are injected.
+    If not set, the region corresponds to the simulation box.
+
+* ``<species_name>.xmax,ymax,zmax`` (`float`) optional (default `geometry.prob_hi[0],[1],[2]`)
+
 * ``<species_name>.injection_style`` (`string`)
     Determines how the particles will be injected in the simulation.
     The options are:

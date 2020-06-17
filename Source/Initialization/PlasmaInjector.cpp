@@ -81,7 +81,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 
     // box boundaries
     // FIXME: Only injects particles on coarsest grid, so changes are needed to allow injection to finer grid levels.
-    const Geometry& geom = Geom(0);
+    const Geometry& geom = WarpX::GetInstance().Geom(0);
     const auto problo = geom.ProbLoArray();
     const auto probhi = geom.ProbHiArray();
     xmin = problo[0];
