@@ -854,7 +854,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     current_fp[lev][1].reset( new MultiFab(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ));
     current_fp[lev][2].reset( new MultiFab(amrex::convert(ba,jz_nodal_flag),dm,ncomps,ngJ));
 
-    if (do_dive_cleaning || plot_rho)
+    if (do_dive_cleaning)
     {
         rho_fp[lev].reset(new MultiFab(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho));
     }
@@ -963,7 +963,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         current_cp[lev][1].reset( new MultiFab(amrex::convert(cba,jy_nodal_flag),dm,ncomps,ngJ));
         current_cp[lev][2].reset( new MultiFab(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ));
 
-        if (do_dive_cleaning || plot_rho){
+        if (do_dive_cleaning) {
             rho_cp[lev].reset(new MultiFab(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho));
         }
         if (do_dive_cleaning)

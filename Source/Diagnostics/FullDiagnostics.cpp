@@ -6,6 +6,7 @@
 #include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
+#include "ComputeDiagFunctors/RhoFunctor.H"
 #include "FlushFormats/FlushFormat.H"
 #include "FlushFormats/FlushFormatPlotfile.H"
 #include "FlushFormats/FlushFormatCheckpoint.H"
@@ -342,13 +343,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "jz" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "rho" ){
-            // rho_new is stored in component 1 of rho_fp when using PSATD
-#ifdef WARPX_USE_PSATD
-            amrex::MultiFab* rho_new = new amrex::MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(rho_new, lev, m_crse_ratio);
-#else
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_rho_fp(lev), lev, m_crse_ratio);
-#endif
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(nullptr, lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "F" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_cell" ){

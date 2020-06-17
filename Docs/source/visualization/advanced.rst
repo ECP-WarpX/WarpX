@@ -25,7 +25,6 @@ with parameters
     warpx.plot_finepatch = 1
     warpx.plot_crsepatch = 1
     warpx.plot_dive = 1
-    warpx.plot_rho = 1
 
 see :doc:`../running_cpp/parameters` for more information on these parameters.
 
