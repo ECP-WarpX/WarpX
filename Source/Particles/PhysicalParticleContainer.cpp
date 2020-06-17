@@ -372,9 +372,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                 ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
                 ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
                 CheckAndAddParticle(x, y, z, { ux, uy, uz}, weight,
-                                    particle_x, particle_y,  particle_z,
-                                    particle_ux, particle_uy,
-                                    particle_uz, particle_w);
+                                    particle_x,  particle_y,  particle_z,
+                                    particle_ux, particle_uy, particle_uz,
+                                    particle_w);
             }
         }
         auto const np = particle_z.size();
