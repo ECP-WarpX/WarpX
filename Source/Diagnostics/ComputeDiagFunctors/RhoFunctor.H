@@ -4,7 +4,7 @@
 #include "ComputeDiagFunctor.H"
 
 /**
- * \brief Functor to compute rho into mf_out
+ * \brief Functor to compute charge density rho into mf_out
  */
 class
 RhoFunctor final : public ComputeDiagFunctor
@@ -16,7 +16,7 @@ public:
      * \brief Constructor
      *
      * \param[in] mf_src source MultiFab (must be nullptr as no source MF is
-     *                   needed to compute the number of particles per cell)
+     *                   needed to compute the charge density)
      * \param[in] lev level of MultiFab
      * \param[in] crse_ratio coarsening ratio for interpolation of field values
      *                       from simulation MultiFabs to the output MultiFab mf_dst
