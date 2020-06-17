@@ -80,21 +80,37 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
 
     // box boundaries
-    // NOTE: Default injection range is set to the dimensions of the mother grid.
+    xmin = std::numeric_limits<amrex::Real>::lowest();
+    ymin = std::numeric_limits<amrex::Real>::lowest();
+    zmin = std::numeric_limits<amrex::Real>::lowest();
+
+    xmax = std::numeric_limits<amrex::Real>::max();
+    ymax = std::numeric_limits<amrex::Real>::max();
+    zmax = std::numeric_limits<amrex::Real>::max();
+
+    // NOTE: Default injection range, when periodic boundaries are used, is set to mother grid dimensions.
     const Geometry& geom = WarpX::GetInstance().Geom(0);
-    const auto problo = geom.ProbLoArray();
-    const auto probhi = geom.ProbHiArray();
-    xmin = problo[0];
-    xmax = probhi[0];
-#ifndef WARPX_DIM_3D
-    zmin = problo[1];
-    zmax = probhi[1];
-#else
-    ymin = problo[1];
-    ymax = probhi[1];
-    zmin = problo[2];
-    zmax = probhi[2];
-#endif
+    if( geom.periodicity(0)==1 ) {
+        xmin = geom.ProbLoArray(0);
+        xmax = geom.ProbHiArray(0);
+    }
+
+    if( geom.periodicity(1)==1 ) {
+#       ifndef WARPX_DIM_3D
+        zmin = geom.ProbLoArray(1);
+        zmax = geom.ProbHiArray(1);
+#       else
+        ymin = geom.ProbLoArray(1);
+        ymax = geom.ProbHiArray(1);
+#       endif
+    }
+
+#   ifdef WARPX_DIM_3D
+    if( geom.periodicity(2)==1 ) {
+        zmin = geom.ProbLoArray(2);
+        zmax = geom.ProbHiArray(2);
+    }
+#   endif
 
     pp.query("xmin", xmin);
     pp.query("ymin", ymin);
