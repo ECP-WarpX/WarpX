@@ -88,7 +88,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     ymax = std::numeric_limits<amrex::Real>::max();
     zmax = std::numeric_limits<amrex::Real>::max();
 
-    // NOTE: Default injection range, when periodic boundaries are used, is set to mother grid dimensions.
+    // NOTE: When periodic boundaries are used, default injection range is set to mother grid dimensions.
     const Geometry& geom = WarpX::GetInstance().Geom(0);
     if( geom.isPeriodic(0)==1 ) {
         xmin = geom.ProbLo(0);
