@@ -8,10 +8,13 @@
 #include "SpectralSolver.H"
 #include "SpectralAlgorithms/PsatdAlgorithm.H"
 #include "SpectralAlgorithms/GalileanAlgorithm.H"
+#include "SpectralAlgorithms/AvgGalileanAlgorithm.H"
 #include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
 #include "WarpX.H"
 #include "Utils/WarpXProfilerWrapper.H"
+#include "Utils/WarpXUtil.H"
 
+using namespace amrex;
 
 #if WARPX_USE_PSATD
 
@@ -37,7 +40,8 @@ SpectralSolver::SpectralSolver(
                 const int norder_z, const bool nodal,
                 const amrex::Array<amrex::Real,3>& v_galilean,
                 const amrex::RealVect dx, const amrex::Real dt,
-                const bool pml, const bool periodic_single_box ) {
+                const bool pml, const bool periodic_single_box,
+                const bool fft_do_time_averaging) {
 
     // Initialize all structures using the same distribution mapping dm
 
@@ -50,18 +54,30 @@ SpectralSolver::SpectralSolver(
     //   Initialize the corresponding coefficients over k space
 
     if (pml) {
-        algorithm = std::unique_ptr<PMLPsatdAlgorithm>( new PMLPsatdAlgorithm(
-            k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
-    } else if ((v_galilean[0]==0) && (v_galilean[1]==0) && (v_galilean[2]==0)){
-         // v_galilean is 0: use standard PSATD algorithm
-         algorithm = std::unique_ptr<PsatdAlgorithm>( new PsatdAlgorithm(
-             k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
-      } else {
-          // Otherwise: use the Galilean algorithm
-          algorithm = std::unique_ptr<GalileanAlgorithm>( new GalileanAlgorithm(
-              k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt ));
-       }
-
+        algorithm = std::unique_ptr<PMLPsatdAlgorithm>(
+            new PMLPsatdAlgorithm(
+                k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
+    }
+    else {
+        if (fft_do_time_averaging){
+            algorithm = std::unique_ptr<AvgGalileanAlgorithm>(
+                new AvgGalileanAlgorithm(
+                    k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt));
+        }
+        else {
+            if ((v_galilean[0]==0) && (v_galilean[1]==0) && (v_galilean[2]==0)){
+                // v_galilean is 0: use standard PSATD algorithm
+                algorithm = std::unique_ptr<PsatdAlgorithm>(
+                    new PsatdAlgorithm(
+                        k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
+            }
+            else {
+                algorithm = std::unique_ptr<GalileanAlgorithm>(
+                    new GalileanAlgorithm(
+                        k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt));
+            }
+        }
+    }
 
     // - Initialize arrays for fields in spectral space + FFT plans
     field_data = SpectralFieldData( realspace_ba, k_space, dm,
@@ -95,4 +111,5 @@ SpectralSolver::pushSpectralFields(){
     // initialized in the constructor of `SpectralSolver`
     algorithm->pushSpectralFields( field_data );
 }
+
 #endif // WARPX_USE_PSATD

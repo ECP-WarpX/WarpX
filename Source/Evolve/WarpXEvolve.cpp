@@ -113,12 +113,14 @@ WarpX::Evolve (int numsteps)
             FillBoundaryB(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
             // E and B: enough guard cells to update Aux or call Field Gather in fp and cp
             // Need to update Aux on lower levels, to interpolate to higher levels.
+            FillBoundaryE_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+            FillBoundaryB_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+
 #ifndef WARPX_USE_PSATD
             FillBoundaryAux(guard_cells.ng_UpdateAux);
 #endif
             UpdateAuxilaryData();
         }
-
         if (do_subcycling == 0 || finest_level == 0) {
             OneStep_nosub(cur_time);
             // E : guard cells are up-to-date
@@ -126,6 +128,7 @@ WarpX::Evolve (int numsteps)
             // F : guard cells are NOT up-to-date
         } else if (do_subcycling == 1 && finest_level == 1) {
             OneStep_sub1(cur_time);
+
         } else {
             amrex::Print() << "Error: do_subcycling = " << do_subcycling << std::endl;
             amrex::Abort("Unsupported do_subcycling type");
@@ -143,15 +146,18 @@ WarpX::Evolve (int numsteps)
         if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
             // At the end of last step, push p by 0.5*dt to synchronize
             UpdateAuxilaryData();
+
             for (int lev = 0; lev <= finest_level; ++lev) {
                 mypc->PushP(lev, 0.5*dt[lev],
                             *Efield_aux[lev][0],*Efield_aux[lev][1],
                             *Efield_aux[lev][2],
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],
                             *Bfield_aux[lev][2]);
+
             }
             is_synchronized = true;
         }
+
 #ifdef WARPX_USE_PY
         if (warpx_py_afterEsolve) warpx_py_afterEsolve();
 #endif
@@ -281,7 +287,9 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_particlescraper) warpx_py_particlescraper();
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
 #endif
+
     PushParticlesandDepose(cur_time);
+
 
 #ifdef WARPX_USE_PY
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
@@ -565,6 +573,8 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type)
     mypc->Evolve(lev,
                  *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                  *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
+                 *Efield_avg_aux[lev][0],*Efield_avg_aux[lev][1],*Efield_avg_aux[lev][2],
+                 *Bfield_avg_aux[lev][0],*Bfield_avg_aux[lev][1],*Bfield_avg_aux[lev][2],
                  *current_fp[lev][0],*current_fp[lev][1],*current_fp[lev][2],
                  current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
                  rho_fp[lev].get(), charge_buf[lev].get(),

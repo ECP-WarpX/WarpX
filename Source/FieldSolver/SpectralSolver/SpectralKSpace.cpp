@@ -9,6 +9,7 @@
 #include "SpectralKSpace.H"
 
 #include <cmath>
+#include <math.h>
 
 
 using namespace amrex;
@@ -224,6 +225,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
           }
         }
     }
+
     return modified_k_comp;
 }
 
@@ -255,6 +257,7 @@ getFonbergStencilCoefficients( const int n_order, const bool nodal )
             coefs[n] = - (m+1-n)*1./(m+n)*coefs[n-1];
         }
     }
+
     // Coefficients for staggered finite-difference
     else {
         Real prod = 1.;

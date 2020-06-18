@@ -353,6 +353,25 @@ WarpX::FillBoundaryF (IntVect ng)
 }
 
 void
+WarpX::FillBoundaryB_avg (IntVect ng, IntVect ng_extra_fine)
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        FillBoundaryB_avg(lev, ng, ng_extra_fine);
+    }
+}
+
+void
+WarpX::FillBoundaryE_avg (IntVect ng, IntVect ng_extra_fine)
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        FillBoundaryE_avg(lev, ng, ng_extra_fine);
+    }
+}
+
+
+void
 WarpX::FillBoundaryE(int lev, IntVect ng, IntVect ng_extra_fine)
 {
     FillBoundaryE(lev, PatchType::fine, ng+ng_extra_fine);
@@ -473,6 +492,112 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
         }
     }
 }
+
+void
+WarpX::FillBoundaryE_avg(int lev, IntVect ng, IntVect ng_extra_fine)
+{
+    FillBoundaryE_avg(lev, PatchType::fine, ng+ng_extra_fine);
+    if (lev > 0) FillBoundaryE_avg(lev, PatchType::coarse, ng);
+}
+
+void
+WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
+{
+    if (patch_type == PatchType::fine)
+    {
+        if (do_pml && pml[lev]->ok())
+         {
+            amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
+         }
+
+        const auto& period = Geom(lev).periodicity();
+        if ( safe_guard_cells ){
+            Vector<MultiFab*> mf{Efield_avg_fp[lev][0].get(),Efield_avg_fp[lev][1].get(),Efield_avg_fp[lev][2].get()};
+            amrex::FillBoundary(mf, period);
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Efield_avg_fp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryE_avg, requested more guard cells than allocated");
+            Efield_avg_fp[lev][0]->FillBoundary(ng, period);
+            Efield_avg_fp[lev][1]->FillBoundary(ng, period);
+            Efield_avg_fp[lev][2]->FillBoundary(ng, period);
+        }
+    }
+    else if (patch_type == PatchType::coarse)
+    {
+        if (do_pml && pml[lev]->ok())
+         {
+            amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
+         }
+
+        const auto& cperiod = Geom(lev-1).periodicity();
+        if ( safe_guard_cells ) {
+            Vector<MultiFab*> mf{Efield_avg_cp[lev][0].get(),Efield_avg_cp[lev][1].get(),Efield_avg_cp[lev][2].get()};
+            amrex::FillBoundary(mf, cperiod);
+
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Efield_avg_cp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryE, requested more guard cells than allocated");
+            Efield_avg_cp[lev][0]->FillBoundary(ng, cperiod);
+            Efield_avg_cp[lev][1]->FillBoundary(ng, cperiod);
+            Efield_avg_cp[lev][2]->FillBoundary(ng, cperiod);
+        }
+    }
+}
+
+
+void
+WarpX::FillBoundaryB_avg (int lev, IntVect ng, IntVect ng_extra_fine)
+{
+    FillBoundaryB_avg(lev, PatchType::fine, ng + ng_extra_fine);
+    if (lev > 0) FillBoundaryB_avg(lev, PatchType::coarse, ng);
+}
+
+void
+WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
+{
+    if (patch_type == PatchType::fine)
+    {
+        if (do_pml && pml[lev]->ok())
+          {
+            amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
+          }
+        const auto& period = Geom(lev).periodicity();
+        if ( safe_guard_cells ) {
+            Vector<MultiFab*> mf{Bfield_avg_fp[lev][0].get(),Bfield_avg_fp[lev][1].get(),Bfield_avg_fp[lev][2].get()};
+            amrex::FillBoundary(mf, period);
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Bfield_fp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryB, requested more guard cells than allocated");
+            Bfield_avg_fp[lev][0]->FillBoundary(ng, period);
+            Bfield_avg_fp[lev][1]->FillBoundary(ng, period);
+            Bfield_avg_fp[lev][2]->FillBoundary(ng, period);
+        }
+    }
+    else if (patch_type == PatchType::coarse)
+    {
+        if (do_pml && pml[lev]->ok())
+          {
+            amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
+          }
+
+        const auto& cperiod = Geom(lev-1).periodicity();
+        if ( safe_guard_cells ){
+            Vector<MultiFab*> mf{Bfield_avg_cp[lev][0].get(),Bfield_avg_cp[lev][1].get(),Bfield_avg_cp[lev][2].get()};
+            amrex::FillBoundary(mf, cperiod);
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Bfield_avg_cp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryB_avg, requested more guard cells than allocated");
+            Bfield_avg_cp[lev][0]->FillBoundary(ng, cperiod);
+            Bfield_avg_cp[lev][1]->FillBoundary(ng, cperiod);
+            Bfield_avg_cp[lev][2]->FillBoundary(ng, cperiod);
+        }
+    }
+}
+
 
 void
 WarpX::FillBoundaryF (int lev, IntVect ng)

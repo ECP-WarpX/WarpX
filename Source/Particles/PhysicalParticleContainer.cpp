@@ -905,7 +905,13 @@ PhysicalParticleContainer::FieldGather (int lev,
                                         const amrex::MultiFab& Ez,
                                         const amrex::MultiFab& Bx,
                                         const amrex::MultiFab& By,
-                                        const amrex::MultiFab& Bz)
+                                        const amrex::MultiFab& Bz,
+                                        const amrex::MultiFab& Ex_avg,
+                                        const amrex::MultiFab& Ey_avg,
+                                        const amrex::MultiFab& Ez_avg,
+                                        const amrex::MultiFab& Bx_avg,
+                                        const amrex::MultiFab& By_avg,
+                                        const amrex::MultiFab& Bz_avg)
 {
     BL_ASSERT(OnSameGrids(lev,Ex));
 
@@ -935,19 +941,35 @@ PhysicalParticleContainer::FieldGather (int lev,
             const long np = pti.numParticles();
 
             // Data on the grid
-            const FArrayBox& exfab = Ex[pti];
-            const FArrayBox& eyfab = Ey[pti];
-            const FArrayBox& ezfab = Ez[pti];
-            const FArrayBox& bxfab = Bx[pti];
-            const FArrayBox& byfab = By[pti];
-            const FArrayBox& bzfab = Bz[pti];
+            FArrayBox const* exfab;
+            FArrayBox const* eyfab;
+            FArrayBox const* ezfab;
+            FArrayBox const* bxfab;
+            FArrayBox const* byfab;
+            FArrayBox const* bzfab;
+
+            if (WarpX::fft_do_time_averaging){
+                exfab = &(Ex_avg[pti]);
+                eyfab = &(Ey_avg[pti]);
+                ezfab = &(Ez_avg[pti]);
+                bxfab = &(Bx_avg[pti]);
+                byfab = &(By_avg[pti]);
+                bzfab = &(Bz_avg[pti]);
+            } else {
+                exfab = &(Ex[pti]);
+                eyfab = &(Ey[pti]);
+                ezfab = &(Ez[pti]);
+                bxfab = &(Bx[pti]);
+                byfab = &(By[pti]);
+                bzfab = &(Bz[pti]);
+            }
 
             //
             // Field Gather
             //
             int e_is_nodal = Ex.is_nodal() and Ey.is_nodal() and Ez.is_nodal();
             FieldGather(pti, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                        &exfab, &eyfab, &ezfab, &bxfab, &byfab, &bzfab,
+                        exfab, eyfab, ezfab, bxfab, byfab, bzfab,
                         Ex.nGrow(), e_is_nodal,
                         0, np, lev, lev);
 
@@ -965,6 +987,8 @@ void
 PhysicalParticleContainer::Evolve (int lev,
                                    const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                    const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                                   const MultiFab& Ex_avg, const MultiFab& Ey_avg, const MultiFab& Ez_avg,
+                                   const MultiFab& Bx_avg, const MultiFab& By_avg, const MultiFab& Bz_avg,
                                    MultiFab& jx, MultiFab& jy, MultiFab& jz,
                                    MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
                                    MultiFab* rho, MultiFab* crho,
@@ -972,6 +996,7 @@ PhysicalParticleContainer::Evolve (int lev,
                                    const MultiFab* cBx, const MultiFab* cBy, const MultiFab* cBz,
                                    Real /*t*/, Real dt, DtType a_dt_type)
 {
+
     WARPX_PROFILE("PPC::Evolve()");
     WARPX_PROFILE_VAR_NS("PPC::Evolve::Copy", blp_copy);
     WARPX_PROFILE_VAR_NS("PPC::FieldGather", blp_fg);
@@ -1039,12 +1064,28 @@ PhysicalParticleContainer::Evolve (int lev,
             const long np = pti.numParticles();
 
             // Data on the grid
-            FArrayBox const* exfab = &(Ex[pti]);
-            FArrayBox const* eyfab = &(Ey[pti]);
-            FArrayBox const* ezfab = &(Ez[pti]);
-            FArrayBox const* bxfab = &(Bx[pti]);
-            FArrayBox const* byfab = &(By[pti]);
-            FArrayBox const* bzfab = &(Bz[pti]);
+            FArrayBox const* exfab;
+            FArrayBox const* eyfab;
+            FArrayBox const* ezfab;
+            FArrayBox const* bxfab;
+            FArrayBox const* byfab;
+            FArrayBox const* bzfab;
+
+            if (WarpX::fft_do_time_averaging){
+                exfab = &(Ex_avg[pti]);
+                eyfab = &(Ey_avg[pti]);
+                ezfab = &(Ez_avg[pti]);
+                bxfab = &(Bx_avg[pti]);
+                byfab = &(By_avg[pti]);
+                bzfab = &(Bz_avg[pti]);
+            } else {
+                exfab = &(Ex[pti]);
+                eyfab = &(Ey[pti]);
+                ezfab = &(Ez[pti]);
+                bxfab = &(Bx[pti]);
+                byfab = &(By[pti]);
+                bzfab = &(Bz[pti]);
+            }
 
             Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
 
