@@ -14,9 +14,6 @@
 #   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
 
-#include <AMReX_FillPatchUtil_F.H>
-#include <AMReX_Interpolater.H>
-
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
 #endif
