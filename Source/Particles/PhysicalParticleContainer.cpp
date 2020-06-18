@@ -360,7 +360,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         }
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
-            if (rz_take_absolute){
+            if (rz_take_absolute==true){
                 ParticleReal const x = std::abs(ptr_x.get()[i]*position_unit_x);
             }
             else {
