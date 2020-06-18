@@ -10,8 +10,6 @@ RhoFunctor::RhoFunctor ( const amrex::MultiFab* const mf_src, const int lev,
 {
     // mf_src should not be used, let's make sure it is null
     AMREX_ALWAYS_ASSERT(mf_src == nullptr);
-    // Write only in one output component
-    AMREX_ALWAYS_ASSERT(ncomp == 1);
 }
 
 void
