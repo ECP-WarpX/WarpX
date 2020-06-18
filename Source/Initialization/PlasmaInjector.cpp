@@ -94,7 +94,6 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         xmin = geom.ProbLo(0);
         xmax = geom.ProbHi(0);
     }
-
     if( geom.isPeriodic(1)==1 ) {
 #       ifndef WARPX_DIM_3D
         zmin = geom.ProbLo(1);
@@ -110,6 +109,11 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         zmin = geom.ProbLo(2);
         zmax = geom.ProbHi(2);
     }
+#   endif
+    // Lines below avoid particles at x<0 to be injected with r>0
+#   ifdef WARPX_DIM_RZ
+    xmin = geom.ProbLo(0);
+    xmax = geom.ProbHi(0);
 #   endif
 
     pp.query("xmin", xmin);
