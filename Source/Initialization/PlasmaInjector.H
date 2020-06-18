@@ -77,6 +77,7 @@ public:
 
     bool external_file = false; //! initialize from an openPMD file
     amrex::Real z_shift = 0.0; //! additional z offset for particle positions
+    bool rz_take_absolute = true; //! mirror negative x positions into r>0 in RZ run
 #ifdef WARPX_USE_OPENPMD
     //! openPMD::Series to load from in external_file injection
     std::unique_ptr<openPMD::Series> m_openpmd_input_series;

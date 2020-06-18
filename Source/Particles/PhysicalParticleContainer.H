@@ -191,8 +191,8 @@ public:
         const amrex::Real q_tot, long npart, const int do_symmetrize);
 
     /** Load a particle beam from an external file
-     *
      * @param[in] q_tot total charge of the particle species to be initialized
+     * @param[in] rz_take_absolute detrmines if in RZ runs, the negative x positions are mirrored
      */
     void AddPlasmaFromFile (amrex::ParticleReal q_tot,
                             amrex::ParticleReal z_shift);

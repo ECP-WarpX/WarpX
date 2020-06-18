@@ -295,6 +295,7 @@ PhysicalParticleContainer::AddGaussianBeam (
 
 void
 PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
+                                             bool rz_take_absolute,
                                              ParticleReal z_shift)
 {
     // Declare temporary vectors on the CPU
@@ -359,7 +360,12 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         }
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
-            ParticleReal const x = ptr_x.get()[i]*position_unit_x;
+            if (rz_take_absolute){
+                ParticleReal const x = std::abs(ptr_x.get()[i]*position_unit_x);
+            }
+            else {
+                ParticleReal const x = ptr_x.get()[i]*position_unit_x;
+            }
             ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
 #   ifndef WARPX_DIM_3D
             ParticleReal const y = 0.0_prt;
@@ -455,6 +461,7 @@ PhysicalParticleContainer::AddParticles (int lev)
 
     if (plasma_injector->external_file) {
         AddPlasmaFromFile(plasma_injector->q_tot,
+                          bool rz_take_absolute,
                           plasma_injector->z_shift);
         return;
     }
