@@ -340,7 +340,6 @@ BTDiagnostics::PrepareFieldDataForOutput ()
             // stores it in cell-centered MultiFab, m_cell_centered_data[lev].
             m_cell_center_functors[lev][icomp]->operator()(*m_cell_centered_data[lev], icomp_dst);
             icomp_dst += m_cell_center_functors[lev][icomp]->nComp();
-//            m_cell_centered_data[lev]->FillBoundary(warpx.Geom(lev).periodocity() );
         }
         // Check that the proper number of user-requested components are cell-centered
         AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
@@ -348,8 +347,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         // the coarsest level.
         m_cell_centered_data[lev]->FillBoundary(warpx.Geom(lev).periodicity() );
     }
-    // Flattening out MF over levels -- this will be moved to a general place
-    // so that it can be called for FullDiagnostics as well.
+    // Flattening out MF over levels 
     for (int lev = nmax_lev; lev > 0; --lev) {
         CoarsenIO::Coarsen( *m_cell_centered_data[lev-1], *m_cell_centered_data[lev], 0, 0, m_varnames.size(), 0, WarpX::RefRatio(lev-1) );
     }
