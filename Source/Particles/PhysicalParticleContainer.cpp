@@ -1720,6 +1720,10 @@ PhysicalParticleContainer::GetParticleSlice (
 
     for (int lev = 0; lev < nlevs; ++lev) {
 
+        // temporary arrays to store copy_flag and copy_index
+        // for particles that cross the z-slice
+        amrex::Gpu::ManagedDeviceVector<int> FlagForPartCopy;
+        amrex::Gpu::ManagedDeviceVector<int> IndexForPartCopy;
         const Real* dx  = Geom(lev).CellSize();
         const Real* plo = Geom(lev).ProbLo();
 
@@ -1768,10 +1772,8 @@ PhysicalParticleContainer::GetParticleSlice (
                 Real uzfrm = -WarpX::gamma_boost*WarpX::beta_boost*PhysConst::c;
                 Real inv_c2 = 1.0/PhysConst::c/PhysConst::c;
 
-                // temporary arrays to store copy_flag and copy_index
-                // for particles that cross the z-slice
-                amrex::Gpu::ManagedDeviceVector<int> FlagForPartCopy(np);
-                amrex::Gpu::ManagedDeviceVector<int> IndexForPartCopy(np);
+                FlagForPartCopy.resize(np);
+                IndexForPartCopy.resize(np);
 
                 int* const AMREX_RESTRICT Flag = FlagForPartCopy.dataPtr();
                 int* const AMREX_RESTRICT IndexLocation = IndexForPartCopy.dataPtr();
