@@ -203,8 +203,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     }
     // rho
     if (rho_requested) {
-        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(nullptr, lev,
-                              m_crse_ratio, false, ncomp_multimodefab);
+        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, false, ncomp_multimodefab);
         icomp += 1;
         AddRZModesToOutputNames(std::string("rho"), ncomp_multimodefab);
     }
@@ -356,7 +355,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "jz" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "rho" ){
-            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(nullptr, lev, m_crse_ratio);
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "F" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_cell" ){

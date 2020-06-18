@@ -2,26 +2,17 @@
 #include "RhoFunctor.H"
 #include "Utils/CoarsenIO.H"
 
-RhoFunctor::RhoFunctor ( const amrex::MultiFab* const mf_src, const int lev,
-                         const amrex::IntVect crse_ratio, bool convertRZmodes2cartesian,
-                         const int ncomp )
+RhoFunctor::RhoFunctor ( const int lev, const amrex::IntVect crse_ratio,
+                         bool convertRZmodes2cartesian, const int ncomp )
     : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev),
       m_convertRZmodes2cartesian(convertRZmodes2cartesian)
-{
-    // mf_src should not be used, let's make sure it is null
-    AMREX_ALWAYS_ASSERT(mf_src == nullptr);
-}
+{}
 
 void
 RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp ) const
 {
     auto& warpx = WarpX::GetInstance();
     auto& mypc  = warpx.GetPartContainer();
-
-    // Guard cell is set to 1 for generality. However, for a cell-centered
-    // output Multifab the guard-cell data is not needed, especially considering
-    // the operations performed in CoarsenIO::Coarsen
-    constexpr int ng = 1;
 
     // Deposit charge density
     std::unique_ptr<amrex::MultiFab> rho = mypc.GetChargeDensity( m_lev );
