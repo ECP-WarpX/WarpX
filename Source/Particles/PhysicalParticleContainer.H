@@ -180,6 +180,16 @@ public:
     // Inject particles in Box 'part_box'
     virtual void AddParticles (int lev);
 
+    /**
+     * Create new macroparticles for this species, with a fixed
+     * number of particles per cell (in the cells of `part_realbox`).
+     * The new particles are only created inside the intersection of `part_realbox`
+     * with the local grid for the current proc.
+     * @param[in]  lev the index of the refinement level
+     * @param[in] part_realbox the box in which new particles should be created
+     * (this box should correspond to an integer number of cells in each direction,
+     * but its boundaries need not be aligned with the actual cells of the simulation)
+    */
     void AddPlasma (int lev, amrex::RealBox part_realbox = amrex::RealBox());
 
     void MapParticletoBoostedFrame (amrex::Real& x, amrex::Real& y, amrex::Real& z, std::array<amrex::Real, 3>& u);
@@ -195,6 +205,7 @@ public:
      * @param[in] rz_take_absolute detrmines if in RZ runs, the negative x positions are mirrored
      */
     void AddPlasmaFromFile (amrex::ParticleReal q_tot,
+                            bool rz_take_absolute,
                             amrex::ParticleReal z_shift);
 
     void CheckAndAddParticle (

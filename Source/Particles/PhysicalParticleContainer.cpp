@@ -360,7 +360,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         }
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
-            if (rz_take_absolute){
+            if (rz_take_absolute==true){
                 ParticleReal const x = std::abs(ptr_x.get()[i]*position_unit_x);
             }
             else {
@@ -461,7 +461,7 @@ PhysicalParticleContainer::AddParticles (int lev)
 
     if (plasma_injector->external_file) {
         AddPlasmaFromFile(plasma_injector->q_tot,
-                          bool rz_take_absolute,
+                          plasma_injector->rz_take_absolute,
                           plasma_injector->z_shift);
         return;
     }
@@ -471,16 +471,6 @@ PhysicalParticleContainer::AddParticles (int lev)
     }
 }
 
-/**
- * Create new macroparticles for this species, with a fixed
- * number of particles per cell (in the cells of `part_realbox`).
- * The new particles are only created inside the intersection of `part_realbox`
- * with the local grid for the current proc.
- * @param lev the index of the refinement level
- * @param part_realbox the box in which new particles should be created
- * (this box should correspond to an integer number of cells in each direction,
- * but its boundaries need not be aligned with the actual cells of the simulation)
- */
 void
 PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 {
