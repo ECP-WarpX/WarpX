@@ -347,7 +347,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         // the coarsest level.
         m_cell_centered_data[lev]->FillBoundary(warpx.Geom(lev).periodicity() );
     }
-    // Flattening out MF over levels 
+    // Flattening out MF over levels
     for (int lev = nmax_lev; lev > 0; --lev) {
         CoarsenIO::Coarsen( *m_cell_centered_data[lev-1], *m_cell_centered_data[lev], 0, 0, m_varnames.size(), 0, WarpX::RefRatio(lev-1) );
     }
