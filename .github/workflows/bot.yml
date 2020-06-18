@@ -1,0 +1,46 @@
+# Copyright 2020 Axel Huebl
+#
+# This file is part of WarpX.
+#
+# License: BSD-3-Clause-LBNL
+
+name: bot
+
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  # This bot:
+  #   - replaces TABs to four spaces
+  #   - removes EOL whitespaces
+  spaces:
+    if: github.event.label.name == ${{ 'bot:\ spaces' }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Unlabel
+      run: |
+        curl -X DELETE -H "Authorization: token ${{ github.token }}" https://api.github.com/repos/ECP-WarpX/WarpX/issues/${{ github.event.pull_request.number }}/labels/bot:%20spaces
+#       https://developer.github.com/v3/issues/labels/#remove-a-label-from-an-issue
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: Fix Spaces
+      run: |
+        eval "$(.github/workflows/source/hasTabs)"
+        eval "$(.github/workflows/source/hasEOLwhiteSpace)"
+    - name: Commit Changes
+      run: |
+        git config --local user.email "warpx@lbl.gov"
+        git config --local user.name "Tools"
+        git commit -m "Bot: Fix Spaces" -a
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ github.token }}
+        branch: +pull/${{ github.event.pull_request.number }}/head
+#       https://github.com/ad-m/github-push-action
+#       https://help.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions
+
+# We now need to do something with a personal access token to trigger workflows again
+#   https://help.github.com/en/actions/reference/events-that-trigger-workflows

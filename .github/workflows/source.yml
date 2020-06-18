@@ -15,19 +15,5 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Non-ASCII characters
-      run: .github/workflows/source/hasNonASCII
-    - name: TABs
-      run: .github/workflows/source/hasTabs
     - name: End-of-Line whitespaces
       run: .github/workflows/source/hasEOLwhiteSpace
-    - name: Proper file names in Examples
-      run: .github/workflows/source/wrongFileNameInExamples
-    - name: Examples are tested
-      run: .github/workflows/source/inputsNotTested
-    - name: Check that the test matrix for Travis includes all tests
-      run: .github/workflows/source/test_travis_matrix.sh
-    - name: Doxygen
-      run: |
-        sudo apt-get install -y --no-install-recommends doxygen
-        .github/workflows/source/doxygen
