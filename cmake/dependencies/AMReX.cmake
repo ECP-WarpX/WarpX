@@ -4,6 +4,11 @@ macro(find_amrex)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
         # see https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#customization-options
+        if(WarpX_ASCENT)
+            set(ENABLE_ASCENT ON CACHE INTERNAL "")
+            set(ENABLE_CONDUIT ON CACHE INTERNAL "")
+        endif()
+
         if(WarpX_COMPUTE STREQUAL CUDA)
             set(ENABLE_ACC   OFF CACHE INTERNAL "")
             set(ENABLE_CUDA  ON  CACHE INTERNAL "")
@@ -90,12 +95,19 @@ macro(find_amrex)
 
         message(STATUS "AMReX: Using INTERNAL version '${AMREX_PKG_VERSION}' (${AMREX_GIT_VERSION})")
     else()
+        # https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#importing-amrex-into-your-cmake-project
+        if(WarpX_ASCENT)
+            set(COMP_ASCENT ENABLE_ASCENT ENABLE_CONDUIT)
+        else()
+            set(COMP_ASCENT)
+        endif()
         if(WarpX_DIMS STREQUAL RZ)
             set(COMP_DIM 2D)
         else()
             set(COMP_DIM ${WarpX_DIMS}D)
         endif()
-        find_package(AMReX 20.05 CONFIG REQUIRED COMPONENTS ${COMP_DIM} PARTICLES DPARTICLES DP TINYP LSOLVERS FINTERFACES)
+
+        find_package(AMReX 20.05 CONFIG REQUIRED COMPONENTS ${COMP_ASCENT} ${COMP_DIM} PARTICLES DPARTICLES DP TINYP LSOLVERS FINTERFACES)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()

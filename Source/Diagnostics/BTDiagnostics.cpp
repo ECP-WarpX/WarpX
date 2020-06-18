@@ -57,8 +57,13 @@ void BTDiagnostics::DerivedInitData ()
         m_file_name[i] = amrex::Concatenate(m_file_prefix +"/snapshots/snapshot",i,5);
     }
     for (int lev = 0; lev < nmax_lev; ++lev) {
+<<<<<<< HEAD
         // Define cell-centered multifab over the whole domain with
         // user-defined crse_ratio for nlevels
+=======
+        // Define cell-centered multifab over the whole domain with user-defined crse_ratio
+        // for nlevels
+>>>>>>> 2a2ef9db49693898295e7d1b2726af58e73da97d
         DefineCellCenteredMultiFab(lev);
     }
 
@@ -97,12 +102,20 @@ BTDiagnostics::ReadParameters ()
     m_num_buffers = m_num_snapshots_lab;
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
+<<<<<<< HEAD
     bool snapshot_interval_is_specified = 0;
+=======
+    bool snapshot_interval_is_specified = false;
+>>>>>>> 2a2ef9db49693898295e7d1b2726af58e73da97d
     amrex::Real m_dz_snapshots_lab = 0.0_rt;
     snapshot_interval_is_specified = pp.query("dt_snapshots_lab", m_dt_snapshots_lab);
     if ( pp.query("dz_snapshots_lab", m_dz_snapshots_lab) ) {
         m_dt_snapshots_lab = m_dz_snapshots_lab/PhysConst::c;
+<<<<<<< HEAD
         snapshot_interval_is_specified = 1;
+=======
+        snapshot_interval_is_specified = true;
+>>>>>>> 2a2ef9db49693898295e7d1b2726af58e73da97d
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
@@ -115,6 +128,7 @@ BTDiagnostics::TMP_writeMetaData ()
     // This function will have the same functionality as writeMetaData in
     // previously used BackTransformedDiagnostics class to write
     // back-transformed data in a customized format
+<<<<<<< HEAD
 
     if (amrex::ParallelDescriptor::IOProcessor()) {
         const std::string fullpath = m_file_prefix + "/snapshots";
@@ -137,6 +151,8 @@ BTDiagnostics::TMP_writeMetaData ()
 
     }
 
+=======
+>>>>>>> 2a2ef9db49693898295e7d1b2726af58e73da97d
 }
 
 bool
@@ -163,6 +179,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 {
     auto & warpx = WarpX::GetInstance();
     // 1. Lab-frame time for the i^th snapshot
+<<<<<<< HEAD
     m_t_lab[i_buffer] = i_buffer * m_dt_snapshots_lab;
     // 2. Define domain in boosted frame at level, lev
     amrex::RealBox diag_dom;
@@ -170,10 +187,14 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
         diag_dom.setLo(idim, std::max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
         diag_dom.setHi(idim, std::min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
     }
+=======
+    // 2. Define domain in boosted frame at level, lev
+>>>>>>> 2a2ef9db49693898295e7d1b2726af58e73da97d
     // 3. Initializing the m_buffer_box for the i^th snapshot.
     //    At initialization, the Box has the same index space as the boosted-frame
     //    As time-progresses, the z-dimension indices will be modified based on
     //    current_z_lab
+<<<<<<< HEAD
     amrex::IntVect lo(0);
     amrex::IntVect hi(1);
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
@@ -237,6 +258,14 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     m_buffer_ncells_lab[i_buffer] = {Nx_lab, Nz_lab};
 #endif
 
+=======
+    // 4. Define buffer_domain  in lab-frame for the i^th snapshot.
+    //    Replace z-dimension with lab-frame co-ordinates.
+    // 5. Initialize buffer counter and z-positions of the  i^th snapshot in
+    //    boosted-frame and lab-frame
+    // 6. Compute ncells_lab required for writing Header file and potentially to generate
+    //    Back-Transform geometry to ensure compatibility with plotfiles //
+>>>>>>> 2a2ef9db49693898295e7d1b2726af58e73da97d
     // 7. Call funtion to create directories for customized output format
     TMP_createLabFrameDirectories(i_buffer, lev);
 }
@@ -248,12 +277,15 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     // This MultiFab will store all the user-requested fields in the boosted-frame
     auto & warpx = WarpX::GetInstance();
     // The BoxArray is coarsened based on the user-defined coarsening ratio
+<<<<<<< HEAD
     amrex::BoxArray ba = warpx.boxArray(lev);
     ba.coarsen(m_crse_ratio);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     int ngrow = 1;
     m_cell_centered_data[lev].reset( new amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow) );
 
+=======
+>>>>>>> 2a2ef9db49693898295e7d1b2726af58e73da97d
 }
 
 void
@@ -270,6 +302,7 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     m_cell_center_functors[lev].clear();
     m_cell_center_functors[lev].resize( m_varnames.size() );
     // 1. create an object of class BackTransformFunctor
+<<<<<<< HEAD
     for (int i = 0; i < num_BT_functors; ++i)
     {
         // coarsening ratio is not provided since the source MultiFab, m_cell_centered_data
@@ -277,10 +310,13 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
         m_all_field_functors[lev][i] = std::make_unique<BackTransformFunctor>(
                   m_cell_centered_data[lev].get(), lev, m_varnames.size() );
     }
+=======
+>>>>>>> 2a2ef9db49693898295e7d1b2726af58e73da97d
 
     // 2. Define all cell-centered functors required to compute cell-centere data
     //    Fill vector of cell-center functors for all components
     //    Only E,B, j, and rho are included in the cell-center functors for BackTransform Diags
+<<<<<<< HEAD
     for (int comp=0, n=m_cell_center_functors[lev].size(); comp<n; comp++){
         if        ( m_varnames[comp] == "Ex" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
@@ -311,6 +347,8 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
         }
     }
 
+=======
+>>>>>>> 2a2ef9db49693898295e7d1b2726af58e73da97d
 }
 
 // Temporary function only to debug the current implementation.
@@ -327,6 +365,7 @@ BTDiagnostics::TMP_createLabFrameDirectories(int i_buffer, int lev)
 void
 BTDiagnostics::PrepareFieldDataForOutput ()
 {
+<<<<<<< HEAD
     auto & warpx = WarpX::GetInstance();
     // In this function, we will get cell-centered data for every level, lev,
     // using the cell-center functors and their respective opeators()
@@ -352,6 +391,11 @@ BTDiagnostics::PrepareFieldDataForOutput ()
     for (int lev = nmax_lev; lev > 0; --lev) {
         CoarsenIO::Coarsen( *m_cell_centered_data[lev-1], *m_cell_centered_data[lev], 0, 0, m_varnames.size(), 0, WarpX::RefRatio(lev-1) );
     }
+=======
+    // In this function, we will get cell-centered data for every level, lev,
+    // using the cell-center functors and their respective opeators()
+    // Call m_cell_center_functors->operator
+>>>>>>> 2a2ef9db49693898295e7d1b2726af58e73da97d
 }
 
 

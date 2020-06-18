@@ -21,8 +21,9 @@ public:
     /** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~Diagnostics () ;
     /** Pack (stack) all fields in the cell-centered output MultiFab m_mf_output.
+     *
      * Fields are computed (e.g., cell-centered or back-transformed)
-       on-the-fly using a functor.*/
+       on-the-fly using a functor. */
     void ComputeAndPack ();
     /** \brief Flush particle and field buffers to file using the FlushFormat member variable.
      *
@@ -101,7 +102,13 @@ protected:
      * in cylindrical geometry, this list is appended with
      * automatically-constructed names for all modes of all fields */
     amrex::Vector< std::string > m_varnames;
+<<<<<<< HEAD
     /** format for output files, "plotfile" or "openpmd" */
+=======
+    /** format for output files, "plotfile" or "openpmd" or "sensei" or "ascent"
+     * The checkpoint format is applicable for FullDiagnostics only.
+     */
+>>>>>>> 2a2ef9db49693898295e7d1b2726af58e73da97d
     std::string m_format = "plotfile";
     /** Whether this iteration has already been dumped, to avoid writing data twice */
     int m_already_done = false;
