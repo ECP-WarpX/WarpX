@@ -70,6 +70,17 @@ In order to clean a previously compiled version (typically useful for troublesho
 
 before re-attempting compilation.
 
+Preview: CMake Build System
+---------------------------
+
+We are currently transitioning to support CMake as our primary build system.
+Until we have transitioned our documentation and functionality completely, please read the following preview section for details.
+
+.. toctree::
+   :maxdepth: 1
+
+   cmake
+
 Advanced building instructions
 ------------------------------
 
