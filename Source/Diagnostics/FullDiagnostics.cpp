@@ -49,7 +49,6 @@ FullDiagnostics::ReadParameters ()
 {
     // Read list of full diagnostics fields requested by the user.
     bool checkpoint_compatibility = BaseReadParameters();
-    auto & warpx = WarpX::GetInstance();
     amrex::ParmParse pp(m_diag_name);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd" ||
@@ -147,6 +146,10 @@ FullDiagnostics::AddRZModesToDiags (int lev)
         }
     }
 
+    // Check if rho is requested
+    // If so, all components will be written out
+    bool rho_requested = WarpXUtilStr::is_in( m_varnames, "rho" );
+
     // First index of m_all_field_functors[lev] where RZ modes are stored
     int icomp = m_all_field_functors[0].size();
     const std::array<std::string, 3> coord {"r", "theta", "z"};
@@ -155,6 +158,9 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     // Each of them being a multi-component multifab
     int n_new_fields = 9;
     if (divE_requested) {
+        n_new_fields += 1;
+    }
+    if (rho_requested) {
         n_new_fields += 1;
     }
     m_all_field_functors[lev].resize( m_all_field_functors[0].size() + n_new_fields );
@@ -194,6 +200,13 @@ FullDiagnostics::AddRZModesToDiags (int lev)
                               m_crse_ratio, false, ncomp_multimodefab);
         icomp += 1;
         AddRZModesToOutputNames(std::string("divE"), ncomp_multimodefab);
+    }
+    // rho
+    if (rho_requested) {
+        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(nullptr, lev,
+                              m_crse_ratio, false, ncomp_multimodefab);
+        icomp += 1;
+        AddRZModesToOutputNames(std::string("rho"), ncomp_multimodefab);
     }
     // Sum the number of components in input vector m_all_field_functors
     // and check that it corresponds to the number of components in m_varnames
