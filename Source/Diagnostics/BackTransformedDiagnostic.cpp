@@ -115,7 +115,7 @@ namespace
     /*
       Creates a dataset with the given cell dimensions, at the path
       "/native_fields/(field_name)".
-      Should be run only by the master rank.
+      Should be run only by the root rank.
     */
     void output_create_field(const std::string& file_path, const std::string& field_path,
                              const unsigned nx, const unsigned ny, const unsigned nz)
@@ -175,7 +175,7 @@ namespace
 
     /*
       Resize an extendible dataset, suitable for storing particle data.
-      Should be run only by the master rank.
+      Should be run only by the root rank.
     */
     long output_resize_particle_field(const std::string& file_path, const std::string& field_path,
                                       const long num_to_add)
