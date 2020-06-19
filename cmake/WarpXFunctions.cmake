@@ -104,7 +104,7 @@ endmacro()
 #
 function(make_third_party_includes_system imported_target propagated_name)
     add_library(WarpX::thirdparty::${propagated_name} INTERFACE IMPORTED)
-    target_link_libraries(WarpX::thirdparty::${propagated_name} INTERFACE AMReX::amrex)
+    target_link_libraries(WarpX::thirdparty::${propagated_name} INTERFACE ${imported_target})
     get_target_property(ALL_INCLUDES ${imported_target} INCLUDE_DIRECTORIES)
     set_target_properties(WarpX::thirdparty::${propagated_name} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "")
     target_include_directories(WarpX::thirdparty::${propagated_name} SYSTEM INTERFACE ${ALL_INCLUDES})
