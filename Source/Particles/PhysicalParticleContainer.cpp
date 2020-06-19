@@ -1720,10 +1720,6 @@ PhysicalParticleContainer::GetParticleSlice (
 
     for (int lev = 0; lev < nlevs; ++lev) {
 
-        // temporary arrays to store copy_flag and copy_index
-        // for particles that cross the z-slice
-        amrex::Gpu::ManagedDeviceVector<int> FlagForPartCopy;
-        amrex::Gpu::ManagedDeviceVector<int> IndexForPartCopy;
         const Real* dx  = Geom(lev).CellSize();
         const Real* plo = Geom(lev).ProbLo();
 
@@ -1738,6 +1734,14 @@ PhysicalParticleContainer::GetParticleSlice (
 #pragma omp parallel
 #endif
         {
+            // Temporary arrays to store copy_flag and copy_index
+            // for particles that cross the z-slice
+            // These arrays are defined before the WarpXParIter to prevent them
+            // from going out of scope after each iteration, while the kernels
+            // may still need access to them.
+            // Note that the destructor for WarpXParIter is synchronized.
+            amrex::Gpu::ManagedDeviceVector<int> FlagForPartCopy;
+            amrex::Gpu::ManagedDeviceVector<int> IndexForPartCopy;
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
             {
                 const Box& box = pti.validbox();
