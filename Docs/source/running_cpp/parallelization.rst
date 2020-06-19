@@ -24,7 +24,7 @@ AMReX ``max_grid_size`` and ``blocking_factor``
 
 * ``amr.blocking_factor``: is the minimum number of cells per **grid** along each
   direction (default ``amr.blocking_factor=8``).
-  Note that the ``max_grid_size`` also has to be divisible by ``blocking_factor``.
+  Note that both the domain (at each level) and ``max_grid_size`` must be divisible by ``blocking_factor``.
 
   .. note::
 
