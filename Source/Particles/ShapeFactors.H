@@ -17,7 +17,7 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 int compute_shape_factor(amrex::Real* const sx, amrex::Real xint)
 {
     return 0;
-};
+}
 
 /**
  *  Compute shape factor and return index of leftmost cell where
