@@ -492,7 +492,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                 );
             } else {
               amrex::Abort("Unknown particle pusher");
-            };
+            }
 
             // Undo the push for particles not injected yet.
             // It is assumed that PushP will only be called on the first and last steps
