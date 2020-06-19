@@ -359,13 +359,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         }
 
         for (auto i = decltype(npart){0}; i<npart; ++i){
-            ParticleReal x = 0.0_prt;
-            if (rz_take_absolute==true){
-                x = std::abs(ptr_x.get()[i]*position_unit_x);
-            }
-            else {
-                x = ptr_x.get()[i]*position_unit_x;
-            }
+            ParticleReal const x = ptr_x.get()[i]*position_unit_x;
             ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
 #   ifndef WARPX_DIM_XZ
             ParticleReal const y = ptr_y.get()[i]*position_unit_y;
