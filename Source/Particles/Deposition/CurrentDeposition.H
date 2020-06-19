@@ -543,8 +543,29 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
         );
 }
 
-// TODO Implement deposition in RZ geometry
-// TODO Add Doxygen documentation
+/**
+ * \brief Vay current deposition for thread thread_num: deposit D in real space
+ * (equations (21)-(22) of https://doi.org/10.1016/j.jcp.2013.03.010)
+ *
+ * /param GetPosition  Functor that returns the particle position.
+ * \param wp           Pointer to array of particle weights.
+ * \param uxp          Pointer to arrays of particle momentum along x.
+ * \param uyp          Pointer to arrays of particle momentum along y.
+ * \param uzp          Pointer to arrays of particle momentum along z.
+ * \param ion_lev      Pointer to array of particle ionization level. This is
+                       required to have the charge of each macroparticle since q
+                       is a scalar. For non-ionizable species, ion_lev is null.
+ * \param jx_fab       FArrayBox of current density, either full array or tile.
+ * \param jy_fab       FArrayBox of current density, either full array or tile.
+ * \param jz_fab       FArrayBox of current density, either full array or tile.
+ * \param np_to_depose Number of particles for which current is deposited.
+ * \param dt           Time step for particle level
+ * \param dx           3D cell size
+ * \param xyzmin       3D lower bounds of physical domain.
+ * \param lo           Dimension-agnostic lower bounds of index domain.
+ * /param q            Species charge.
+ * \param n_rz_azimuthal_modes Number of azimuthal modes in RZ geometry.
+ */
 template <int depos_order>
 void doVayDepositionShapeN ( const GetParticlePosition& GetPosition,
                              const amrex::ParticleReal * const wp,

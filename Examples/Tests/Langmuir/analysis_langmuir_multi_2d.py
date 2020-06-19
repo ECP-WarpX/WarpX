@@ -111,10 +111,11 @@ assert( error_rel < tolerance_rel )
 if current_correction or vay_deposition:
     rho  = data['rho' ].to_ndarray()
     divE = data['divE'].to_ndarray()
-    Linf_norm = np.amax( np.abs( divE - rho/epsilon_0 ) ) / np.amax( np.abs( rho/epsilon_0 ) )
-    print("error: " + str(Linf_norm))
-    print("tolerance: 1.e-9")
-    assert( Linf_norm < 1.e-9 )
+    error_rel = np.amax( np.abs( divE - rho/epsilon_0 ) ) / np.amax( np.abs( rho/epsilon_0 ) )
+    print("Check charge conservation:")
+    print("error_rel = {}".format(error_rel))
+    print("tolerance = {}".format(tolerance))
+    assert( error_rel < tolerance )
 
 test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn)
