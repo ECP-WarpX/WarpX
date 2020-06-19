@@ -16,7 +16,7 @@
 /**
  * \brief Field gather for a single particle
  *
- * /param xp, yp, zp                : Particle position coordinates
+ * \param xp, yp, zp                : Particle position coordinates
  * \param Exp, Eyp, Ezp             : Electric field on particles.
  * \param Bxp, Byp, Bzp             : Magnetic field on particles.
  * \param ex_arr ey_arr ez_arr      : Array4 of the electric field, either full array or tile.
