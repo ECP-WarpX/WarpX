@@ -1,5 +1,5 @@
 #include "Interpolate.H"
-#include <AMReX_FillPatchUtil_F.H>
+#include "Interpolate_K.H"
 
 namespace Interpolate
 {
@@ -64,84 +64,40 @@ namespace Interpolate
         interpolated_F[0].reset( new MultiFab(Fx_fp->boxArray(), dm, 1, ngrow) );
         interpolated_F[1].reset( new MultiFab(Fy_fp->boxArray(), dm, 1, ngrow) );
         interpolated_F[2].reset( new MultiFab(Fz_fp->boxArray(), dm, 1, ngrow) );
-        for (int i=0; i<3; i++) interpolated_F[i]->setVal(0.);
 
-        // Loop through the boxes and interpolate the values from the _cp data
-        const int use_limiter = 0;
+        IntVect fx_type = interpolated_F[0]->ixType().toIntVect();
+        IntVect fy_type = interpolated_F[1]->ixType().toIntVect();
+        IntVect fz_type = interpolated_F[2]->ixType().toIntVect();
+
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
+        for (MFIter mfi(*interpolated_F[0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
-            std::array<FArrayBox,3> ffab; // Temporary array ; contains interpolated fields
-            for (MFIter mfi(*interpolated_F[0]); mfi.isValid(); ++mfi)
-            {
-                Box ccbx = mfi.fabbox();
-                ccbx.enclosedCells();
-                ccbx.coarsen(r_ratio).refine(r_ratio); // so that ccbx is coarsenable
+            Box const& boxx = mfi.growntilebox(fx_type);
+            Box const& boxy = mfi.growntilebox(fy_type);
+            Box const& boxz = mfi.growntilebox(fz_type);
 
-                const FArrayBox& cxfab = (*Fx_cp)[mfi];
-                const FArrayBox& cyfab = (*Fy_cp)[mfi];
-                const FArrayBox& czfab = (*Fz_cp)[mfi];
-                ffab[0].resize(amrex::convert(ccbx,(*Fx_fp)[mfi].box().type()));
-                ffab[1].resize(amrex::convert(ccbx,(*Fy_fp)[mfi].box().type()));
-                ffab[2].resize(amrex::convert(ccbx,(*Fz_fp)[mfi].box().type()));
+            Array4<Real      > const& fx = interpolated_F[0]->array(mfi);
+            Array4<Real      > const& fy = interpolated_F[1]->array(mfi);
+            Array4<Real      > const& fz = interpolated_F[2]->array(mfi);
+            Array4<Real const> const& cx = Fx_cp->const_array(mfi);
+            Array4<Real const> const& cy = Fy_cp->const_array(mfi);
+            Array4<Real const> const& cz = Fz_cp->const_array(mfi);
 
-                // - Face centered, in the same way as B on a Yee grid
-                if ( (*Fx_fp)[mfi].box().type() == IntVect{AMREX_D_DECL(1,0,0)} ){
-#if (AMREX_SPACEDIM == 3)
-                    amrex_interp_div_free_bfield(ccbx.loVect(), ccbx.hiVect(),
-                                                 BL_TO_FORTRAN_ANYD(ffab[0]),
-                                                 BL_TO_FORTRAN_ANYD(ffab[1]),
-                                                 BL_TO_FORTRAN_ANYD(ffab[2]),
-                                                 BL_TO_FORTRAN_ANYD(cxfab),
-                                                 BL_TO_FORTRAN_ANYD(cyfab),
-                                                 BL_TO_FORTRAN_ANYD(czfab),
-                                                 dx, &r_ratio, &use_limiter);
-#else
-                    amrex_interp_div_free_bfield(ccbx.loVect(), ccbx.hiVect(),
-                                                 BL_TO_FORTRAN_ANYD(ffab[0]),
-                                                 BL_TO_FORTRAN_ANYD(ffab[2]),
-                                                 BL_TO_FORTRAN_ANYD(cxfab),
-                                                 BL_TO_FORTRAN_ANYD(czfab),
-                                                 dx, &r_ratio, &use_limiter);
-                    amrex_interp_cc_bfield(ccbx.loVect(), ccbx.hiVect(),
-                                           BL_TO_FORTRAN_ANYD(ffab[1]),
-                                           BL_TO_FORTRAN_ANYD(cyfab),
-                                           &r_ratio, &use_limiter);
-#endif
-                    // - Edge centered, in the same way as E on a Yee grid
-                } else if ( (*Fx_fp)[mfi].box().type() == IntVect{AMREX_D_DECL(0,1,1)} ){
-#if (AMREX_SPACEDIM == 3)
-                    amrex_interp_efield(ccbx.loVect(), ccbx.hiVect(),
-                                        BL_TO_FORTRAN_ANYD(ffab[0]),
-                                        BL_TO_FORTRAN_ANYD(ffab[1]),
-                                        BL_TO_FORTRAN_ANYD(ffab[2]),
-                                        BL_TO_FORTRAN_ANYD(cxfab),
-                                        BL_TO_FORTRAN_ANYD(cyfab),
-                                        BL_TO_FORTRAN_ANYD(czfab),
-                                        &r_ratio, &use_limiter);
-#else
-                    amrex_interp_efield(ccbx.loVect(), ccbx.hiVect(),
-                                        BL_TO_FORTRAN_ANYD(ffab[0]),
-                                        BL_TO_FORTRAN_ANYD(ffab[2]),
-                                        BL_TO_FORTRAN_ANYD(cxfab),
-                                        BL_TO_FORTRAN_ANYD(czfab),
-                                        &r_ratio,&use_limiter);
-                    amrex_interp_nd_efield(ccbx.loVect(), ccbx.hiVect(),
-                                           BL_TO_FORTRAN_ANYD(ffab[1]),
-                                           BL_TO_FORTRAN_ANYD(cyfab),
-                                           &r_ratio);
-#endif
-                } else {
-                    amrex::Abort("Unknown field staggering.");
-                }
-
-                // Add temporary array to the returned structure
-                for (int i = 0; i < 3; ++i) {
-                    const Box& bx = (*interpolated_F[i])[mfi].box();
-                    (*interpolated_F[i])[mfi].plus<RunOn::Host>(ffab[i], bx, bx, 0, 0, 1);
-                }
-            }
+            amrex::ParallelFor(boxx, boxy, boxz,
+                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                {
+                    interp(j,k,l,fx,cx,r_ratio,fx_type);
+                },
+                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                {
+                    interp(j,k,l,fy,cy,r_ratio,fy_type);
+                },
+                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+                {
+                    interp(j,k,l,fz,cz,r_ratio,fz_type);
+                });
         }
         return interpolated_F;
     }

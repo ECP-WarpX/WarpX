@@ -174,7 +174,7 @@ file that ParaView can open will be generated.
 Obtaining SENSEI
 -----------------
 SENSEI is hosted on Kitware's Gitlab site at https://gitlab.kitware.com/sensei/sensei
-It's best to checkout the latest release rather than working on the master branch.
+It's best to checkout the latest release rather than working on the ``develop`` branch.
 
 To ease the burden of wrangling back end installs SENSEI provides two platforms
 with all dependencies pre-installed, a VirtualBox VM, and a NERSC Cori
