@@ -295,7 +295,6 @@ PhysicalParticleContainer::AddGaussianBeam (
 
 void
 PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
-                                             bool rz_take_absolute,
                                              ParticleReal z_shift)
 {
     // Declare temporary vectors on the CPU
@@ -329,7 +328,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         double const momentum_unit_x = ps["momentum"]["x"].unitSI();
         std::shared_ptr<ParticleReal> ptr_uz = ps["momentum"]["z"].loadChunk<ParticleReal>();
         double const momentum_unit_z = ps["momentum"]["z"].unitSI();
-#   ifdef WARPX_DIM_3D
+#   ifndef WARPX_DIM_XZ
         std::shared_ptr<ParticleReal> ptr_y = ps["position"]["y"].loadChunk<ParticleReal>();
         double const position_unit_y = ps["position"]["y"].unitSI();
 #   endif
@@ -368,10 +367,10 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                 x = ptr_x.get()[i]*position_unit_x;
             }
             ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
-#   ifndef WARPX_DIM_3D
-            ParticleReal const y = 0.0_prt;
-#   else
+#   ifndef WARPX_DIM_XZ
             ParticleReal const y = ptr_y.get()[i]*position_unit_y;
+#   else
+            ParticleReal const y = 0.0_prt;
 #   endif
             if (plasma_injector->insideBounds(x, y, z)) {
                 ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
@@ -462,7 +461,6 @@ PhysicalParticleContainer::AddParticles (int lev)
 
     if (plasma_injector->external_file) {
         AddPlasmaFromFile(plasma_injector->q_tot,
-                          plasma_injector->rz_take_absolute,
                           plasma_injector->z_shift);
         return;
     }
