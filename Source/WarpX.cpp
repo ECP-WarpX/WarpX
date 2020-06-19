@@ -1105,8 +1105,8 @@ WarpX::UpperCorner(const Box& bx, int lev)
 std::array<Real,3>
 WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev)
 {
-    Real cur_time = gett_new(lev);
-    Real time_shift = (cur_time - time_of_last_gal_shift);
+    amrex::Real cur_time = gett_new(lev);
+    amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
     amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
     return WarpX::LowerCorner(bx, galilean_shift, lev);
 }

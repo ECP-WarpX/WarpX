@@ -392,7 +392,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
     {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            Box box = pti.tilebox();
+            amrex::Box box = pti.tilebox();
             box.grow(Ex.nGrow());
 
             const long np = pti.numParticles();
@@ -440,9 +440,9 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             auto& uxp = attribs[PIdx::ux];
             auto& uyp = attribs[PIdx::uy];
             auto& uzp = attribs[PIdx::uz];
-            ParticleReal* const AMREX_RESTRICT uxpp = attribs[PIdx::ux].dataPtr();
-            ParticleReal* const AMREX_RESTRICT uypp = attribs[PIdx::uy].dataPtr();
-            ParticleReal* const AMREX_RESTRICT uzpp = attribs[PIdx::uz].dataPtr();
+            amrex::ParticleReal* const AMREX_RESTRICT uxpp = attribs[PIdx::ux].dataPtr();
+            amrex::ParticleReal* const AMREX_RESTRICT uypp = attribs[PIdx::uy].dataPtr();
+            amrex::ParticleReal* const AMREX_RESTRICT uzpp = attribs[PIdx::uz].dataPtr();
 
             int* AMREX_RESTRICT ion_lev = nullptr;
             if (do_field_ionization) {
@@ -455,8 +455,8 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             auto uzp_save = uzp;
 
             // Loop over the particles and update their momentum
-            const Real q = this->charge;
-            const Real m = this-> mass;
+            const amrex::Real q = this->charge;
+            const amrex::Real m = this-> mass;
 
             const auto pusher_algo = WarpX::particle_pusher_algo;
             const auto do_crr = do_classical_radiation_reaction;

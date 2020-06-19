@@ -26,12 +26,14 @@
 using namespace amrex;
 
 WarpXParIter::WarpXParIter (ContainerType& pc, int level)
-    : ParIter(pc, level, MFItInfo().SetDynamic(WarpX::do_dynamic_scheduling))
+    : amrex::ParIter<0,0,PIdx::nattribs>(pc, level,
+             MFItInfo().SetDynamic(WarpX::do_dynamic_scheduling))
 {
 }
 
 WarpXParIter::WarpXParIter (ContainerType& pc, int level, MFItInfo& info)
-    : ParIter(pc, level, info.SetDynamic(WarpX::do_dynamic_scheduling))
+    : amrex::ParIter<0,0,PIdx::nattribs>(pc, level,
+                   info.SetDynamic(WarpX::do_dynamic_scheduling))
 {
 }
 

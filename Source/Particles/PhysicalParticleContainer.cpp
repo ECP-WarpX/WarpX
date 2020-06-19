@@ -1385,7 +1385,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
     if (do_not_push) return;
 
-    const std::array<Real,3>& dx = WarpX::CellSize(std::max(lev,0));
+    const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev,0));
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -1393,7 +1393,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
     {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
-            Box box = pti.tilebox();
+            amrex::Box box = pti.tilebox();
             box.grow(Ex.nGrow());
 
             const long np = pti.numParticles();
@@ -1448,8 +1448,8 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             }
 
             // Loop over the particles and update their momentum
-            const Real q = this->charge;
-            const Real m = this-> mass;
+            const amrex::Real q = this->charge;
+            const amrex::Real m = this-> mass;
 
             const auto pusher_algo = WarpX::particle_pusher_algo;
             const auto do_crr = do_classical_radiation_reaction;
@@ -1805,8 +1805,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     }
 
     // Loop over the particles and update their momentum
-    const Real q = this->charge;
-    const Real m = this-> mass;
+    const amrex::Real q = this->charge;
+    const amrex::Real m = this-> mass;
 
     const auto pusher_algo = WarpX::particle_pusher_algo;
     const auto do_crr = do_classical_radiation_reaction;
@@ -1816,7 +1816,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     if (do_sync) t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
 
     QuantumSynchrotronEvolveOpticalDepth evolve_opt;
-    ParticleReal* AMREX_RESTRICT p_optical_depth_QSR = nullptr;
+    amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR = nullptr;
     const bool local_has_quantum_sync = has_quantum_sync();
     if (local_has_quantum_sync) {
         evolve_opt = m_shr_p_qs_engine->build_evolve_functor();

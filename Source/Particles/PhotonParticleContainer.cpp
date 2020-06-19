@@ -83,7 +83,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     // Get box from which field is gathered.
     // If not gathering from the finest level, the box is coarsened.
-    Box box;
+    amrex::Box box;
     if (lev == gather_lev) {
         box = pti.tilebox();
     } else {
@@ -126,9 +126,9 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     const auto getExternalB = GetExternalBField(pti, offset);
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
-    Real cur_time = WarpX::GetInstance().gett_new(lev);
+    amrex::Real cur_time = WarpX::GetInstance().gett_new(lev);
     const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
-    Real time_shift = (cur_time - time_of_last_gal_shift);
+    amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
     amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, gather_lev);
 
