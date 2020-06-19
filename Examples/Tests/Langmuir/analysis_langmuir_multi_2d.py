@@ -112,6 +112,7 @@ if current_correction or vay_deposition:
     rho  = data['rho' ].to_ndarray()
     divE = data['divE'].to_ndarray()
     error_rel = np.amax( np.abs( divE - rho/epsilon_0 ) ) / np.amax( np.abs( rho/epsilon_0 ) )
+    tolerance = 1.e-9
     print("Check charge conservation:")
     print("error_rel = {}".format(error_rel))
     print("tolerance = {}".format(tolerance))
