@@ -12,7 +12,7 @@
 #ifndef WARPX_H_
 #define WARPX_H_
 
-#include "Evolve/WarpXDtType.H"
+#include "Evolve/WarpXDtType.H"   
 #include "Particles/MultiParticleContainer.H"
 #include "BoundaryConditions/PML.H"
 #include "Diagnostics/BackTransformedDiagnostic.H"
@@ -28,7 +28,7 @@
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
-#       include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
+#   	include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
 #   else
 #       include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #   endif
