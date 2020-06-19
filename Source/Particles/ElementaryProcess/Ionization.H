@@ -71,6 +71,8 @@ struct IonizationFilterFunc
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator() (const PData& ptd, int i) const noexcept
     {
+        using namespace amrex::literals;
+
         const int ion_lev = ptd.m_runtime_idata[comp][i];
         if (ion_lev < m_atomic_number)
         {
@@ -81,10 +83,10 @@ struct IonizationFilterFunc
             amrex::ParticleReal xp, yp, zp;
             m_get_position(i, xp, yp, zp);
 
-            amrex::ParticleReal ex, ey, ez;
+            amrex::ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
             m_get_externalE(i, ex, ey, ez);
 
-            amrex::ParticleReal bx, by, bz;
+            amrex::ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
             m_get_externalB(i, bx, by, bz);
 
             doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,

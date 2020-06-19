@@ -466,10 +466,10 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
-                amrex::ParticleReal Exp, Eyp, Ezp;
+                amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
                 getExternalE(ip, Exp, Eyp, Ezp);
 
-                amrex::ParticleReal Bxp, Byp, Bzp;
+                amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
                 getExternalB(ip, Bxp, Byp, Bzp);
 
                 // first gather E and B to the particle positions

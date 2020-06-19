@@ -118,10 +118,10 @@ public:
         amrex::ParticleReal xp, yp, zp;
         m_get_position(i_src, xp, yp, zp);
 
-        amrex::ParticleReal ex, ey, ez;
+        amrex::ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
         m_get_externalE(i_src, ex, ey, ez);
 
-        amrex::ParticleReal bx, by, bz;
+        amrex::ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
         m_get_externalB(i_src, bx, by, bz);
 
         doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
