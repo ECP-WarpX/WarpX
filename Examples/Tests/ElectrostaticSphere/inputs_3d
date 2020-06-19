@@ -3,8 +3,6 @@ amr.n_cell = 64 64 64
 amr.max_level = 0
 amr.blocking_factor = 8
 amr.max_grid_size = 128
-amr.plot_int = 30
-warpx.openpmd_int = 1
 geometry.coord_sys   = 0
 geometry.is_periodic = 0 0 0
 geometry.prob_lo     = -0.5 -0.5 -0.5
@@ -29,3 +27,7 @@ electron.num_particles_per_cell_each_dim = 2 2 2
 electron.profile = parse_density_function
 electron.density_function(x,y,z) = "(x*x + y*y + z*z < R0*R0)*n0"
 electron.momentum_distribution_type = constant
+
+diagnostics.diags_names = diag1
+diag1.period = 30
+diag1.diag_type = Full
