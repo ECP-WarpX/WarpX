@@ -916,6 +916,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
+        amrex::Gpu::synchronize();
     }
 
     // The function that calls this is responsible for redistributing particles.
