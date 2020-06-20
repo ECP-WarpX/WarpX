@@ -12,6 +12,8 @@ import sys
 import yt ; yt.funcs.mylog.setLevel(0)
 import numpy as np
 import scipy.constants as scc
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 filename = sys.argv[1]
 
@@ -40,11 +42,17 @@ energy_end = energyE + energyB
 Reflectivity = energy_end/energy_start
 Reflectivity_theory = 1.3806831258153887e-06
 
-print("Reflectivity: %s" %Reflectivity)
-print("Reflectivity_theory: %s" %Reflectivity_theory)
+error_rel = abs(Reflectivity-Reflectivity_theory) / Reflectivity_theory
+tolerance_rel = 5./100
 
-assert( abs(Reflectivity-Reflectivity_theory) < 5./100 * Reflectivity_theory )
+print("error_rel    : " + str(error_rel))
+print("tolerance_rel: " + str(tolerance_rel))
+
+assert( error_rel < tolerance_rel )
 
 # Check relative L-infinity spatial norm of rho/epsilon_0 - div(E)
 Linf_norm = np.amax( np.abs( rho/scc.epsilon_0 - divE ) ) / np.amax( np.abs( rho/scc.epsilon_0 ) )
 assert( Linf_norm < 2.e-2 )
+
+test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)

@@ -1,0 +1,85 @@
+name: Ubuntu build
+
+on: [push, pull_request]
+
+jobs:
+# Ref.: https://github.com/rscohn2/oneapi-ci
+# intel-basekit intel-hpckit are too large in size
+  build_icc:
+    name: oneAPI ICC SP&DP [Linux]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: install dependencies
+      run: |
+        export DEBIAN_FRONTEND=noninteractive
+        sudo apt-get -qqq update
+        sudo apt-get install -y wget build-essential pkg-config cmake ca-certificates gnupg
+        sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        sudo apt-get update
+        sudo apt-get install -y intel-oneapi-icc intel-oneapi-ifort
+        source /opt/intel/inteloneapi/setvars.sh
+        sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
+        sudo chmod a+x /usr/local/bin/cmake-easyinstall
+        export CEI_SUDO="sudo"
+        CXX=$(which icpc) CC=$(which icc) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+    - name: build WarpX
+      run: |
+        source /opt/intel/inteloneapi/setvars.sh
+        export CXX=$(which icpc)
+        export CC=$(which icc)
+
+        mkdir build_dp && cd build_dp
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_MPI=OFF -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF
+        make -j 2
+
+        cd ..
+
+        mkdir build_sp && cd build_sp
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_MPI=OFF -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DENABLE_DP=OFF -DENABLE_DP_PARTICLES=OFF
+        make -j 2
+
+  build_dpcc:
+    name: oneAPI DPC++ SP [Linux]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        path: 'warpx_directory/WarpX'
+    - name: install dependencies
+      shell: bash
+      run: |
+        set -ex
+        export DEBIAN_FRONTEND=noninteractive
+        sudo apt-get -qqq update
+        sudo apt-get install -y wget build-essential pkg-config ca-certificates gnupg
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade cmake
+        sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        sudo apt-get update
+        sudo apt-get install -y intel-oneapi-dpcpp-compiler intel-oneapi-mkl
+        set +e
+        source /opt/intel/inteloneapi/setvars.sh
+        set -e
+        git clone https://github.com/openPMD/openPMD-api.git
+        mkdir openPMD-api/build
+        cd openPMD-api/build
+        CXX=$(which dpcpp) CC=$(which clang) cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+        make -j 2
+        sudo make install
+    - name: build WarpX
+      shell: bash
+      run: |
+        set -ex
+        cd warpx_directory
+        git clone --depth 1 https://bitbucket.org/berkeleylab/picsar.git
+        git clone --depth 1 --branch development https://github.com/AMReX-Codes/amrex.git
+        cd WarpX
+        set +e
+        source /opt/intel/inteloneapi/setvars.sh
+        set -e
+        make -j 2 USE_DPCPP=TRUE USE_MPI=FALSE USE_OPENPMD=TRUE USE_OMP=FALSE PRECISION=FLOAT USE_SINGLE_PRECISION_PARTICLES=TRUE

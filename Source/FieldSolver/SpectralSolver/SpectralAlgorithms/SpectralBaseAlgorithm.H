@@ -32,6 +32,22 @@ class SpectralBaseAlgorithm
         virtual ~SpectralBaseAlgorithm() {};
 
         /**
+         * \brief Virtual function for current correction in Fourier space
+         * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010).
+         * This virtual function is not pure: it can be overridden in derived
+         * classes (e.g. PsatdAlgorithm, PMLPsatdAlgorithm), but a base-class
+         * implementation is provided (empty implementation in this case).
+         *
+         * \param[in,out] field_data all fields in Fourier space
+         * \param[in,out] current    three-dimensional array of unique pointers to MultiFab
+         *                           storing the three components of the current density
+         * \param[in]     rho        unique pointer to MultiFab storing the charge density
+         */
+        virtual void CurrentCorrection ( SpectralFieldData& field_data,
+                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                         const std::unique_ptr<amrex::MultiFab>& rho ) {};
+
+        /**
          * \brief Compute spectral divergence of E
          */
         void ComputeSpectralDivE ( SpectralFieldData& field_data,

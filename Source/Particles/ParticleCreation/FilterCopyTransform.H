@@ -19,6 +19,10 @@
  * Note that the transform function operates on both the src and the dst,
  * so both can be modified.
  *
+ * This version of the function takes as inputs a mask which can be obtained
+ * using another version of filterCopyTransformParticles that takes a filter
+ * function as input.
+ *
  * \tparam N number of particles created in the dst(s) for each filtered src particle
  * \tparam DstTile the dst particle tile type
  * \tparam SrcTile the src particle tile type
@@ -28,7 +32,7 @@
  *
  * \param dst the destination tile
  * \param src the source tile
- * \param mask pointer to the mask - 1 means copy, 0 means don't copy
+ * \param mask pointer to the mask: 1 means copy, 0 means don't copy
  * \param dst_index the location at which to starting writing the result to dst
  * \param copy callable that defines what will be done for the "copy" step.
  * \param transform callable that defines the transformation to apply on dst and src.
@@ -78,7 +82,7 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index* mask, Ind
                 copy(dst_data, src_data, i, N*p_offsets[i] + dst_index + j);
             transform(dst_data, src_data, i, N*p_offsets[i] + dst_index);
         }
-    });
+    })
 
     Gpu::streamSynchronize();
     return num_added;
@@ -91,6 +95,10 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index* mask, Ind
  *
  * Note that the transform function operates on both the src and the dst,
  * so both can be modified.
+ *
+ * This version of the function takes as input a filter functor, uses it to obtain
+ * a mask and then calls another version of filterCopyTransformParticles that takes the
+ * mask as input.
  *
  * \tparam N number of particles created in the dst(s) for each filtered src particle
  * \tparam DstTile the dst particle tile type
@@ -135,7 +143,7 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index dst_index,
     AMREX_HOST_DEVICE_FOR_1D(np, i,
     {
         p_mask[i] = filter(src_data, i);
-    });
+    })
 
     return filterCopyTransformParticles<N>(dst, src, mask.dataPtr(), dst_index,
                                                       std::forward<CopyFunc>(copy),
@@ -151,6 +159,10 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index dst_index,
  * Note that the transform function operates on all of src, dst1, and dst2,
  * so all of them can be modified.
  *
+ * This version of the function takes as inputs a mask which can be obtained
+ * using another version of filterCopyTransformParticles that takes a filter
+ * function as input.
+ *
  * \tparam N number of particles created in the dst(s) for each filtered src particle
  * \tparam DstTile the dst particle tile type
  * \tparam SrcTile the src particle tile type
@@ -162,7 +174,7 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index dst_index,
  * \param dst1 the destination tile
  * \param dst2 the destination tile
  * \param src the source tile
- * \param mask pointer to the mask - 1 means copy, 0 means don't copy
+ * \param mask pointer to the mask: 1 means copy, 0 means don't copy
  * \param dst1_index the location at which to starting writing the result to dst1
  * \param dst2_index the location at which to starting writing the result to dst2
  * \param copy1 callable that defines what will be done for the "copy" step for src-->dst1.
@@ -223,7 +235,7 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src, 
                       N*p_offsets[i] + dst1_index,
                       N*p_offsets[i] + dst2_index);
         }
-    });
+    })
 
     Gpu::streamSynchronize();
     return num_added;
@@ -237,6 +249,10 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src, 
  *
  * Note that the transform function operates on all of src, dst1, and dst2,
  * so all of them can be modified.
+ *
+ * This version of the function takes as input a filter functor, uses it to obtain
+ * a mask and then calls another version of filterCopyTransformParticles that takes the
+ * mask as input.
  *
  * \tparam N number of particles created in the dst(s) for each filtered src particle
  * \tparam DstTile the dst particle tile type
@@ -287,7 +303,7 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src,
     AMREX_HOST_DEVICE_FOR_1D(np, i,
     {
         p_mask[i] = filter(src_data, i);
-    });
+    })
 
     return filterCopyTransformParticles<N>(dst1, dst2, src, mask.dataPtr(),
                                         dst1_index, dst2_index,

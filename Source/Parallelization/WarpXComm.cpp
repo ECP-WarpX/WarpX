@@ -6,12 +6,10 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpXComm.H"
 #include "WarpXComm_K.H"
 #include "WarpX.H"
 #include "WarpXSumGuardCells.H"
-#include "InterpolateCurrentFineToCoarse.H"
-#include "InterpolateDensityFineToCoarse.H"
+#include "Utils/CoarsenMR.H"
 
 #include <algorithm>
 #include <cstdlib>
@@ -294,7 +292,7 @@ WarpX::UpdateAuxilaryDataSameType ()
             MultiFab::Subtract(dEy, *Efield_cp[lev][1], 0, 0, Efield_cp[lev][1]->nComp(), ng);
             MultiFab::Subtract(dEz, *Efield_cp[lev][2], 0, 0, Efield_cp[lev][2]->nComp(), ng);
 
-#ifdef _OPEMP
+#ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
@@ -568,7 +566,9 @@ WarpX::SyncCurrent ()
         std::array<      MultiFab*,3> crse { current_cp[lev][0].get(),
                                              current_cp[lev][1].get(),
                                              current_cp[lev][2].get() };
-        interpolateCurrentFineToCoarse(fine, crse, refinement_ratio[0]);
+        CoarsenMR::Coarsen( *crse[0], *fine[0], refinement_ratio );
+        CoarsenMR::Coarsen( *crse[1], *fine[1], refinement_ratio );
+        CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
     }
 
     // For each level
@@ -577,40 +577,6 @@ WarpX::SyncCurrent ()
     // - sum guard cells of the coarse patch of `lev+1` and fine patch of `lev`
     for (int lev=0; lev <= finest_level; ++lev) {
         AddCurrentFromFineLevelandSumBoundary(lev);
-    }
-}
-
-void
-interpolateCurrentFineToCoarse ( std::array< amrex::MultiFab const *, 3 > const & fine,
-                                 std::array< amrex::MultiFab       *, 3 > const & coarse,
-                                 int const refinement_ratio)
-{
-    WARPX_PROFILE("interpolateCurrentFineToCoarse()");
-    BL_ASSERT(refinement_ratio == 2);
-    const IntVect& ng = (fine[0]->nGrowVect() + 1) / refinement_ratio; // add equivalent no. of guards to coarse patch
-
-#ifdef _OPEMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-    {
-        for (int idim = 0; idim < fine.size(); ++idim)  // j-field components
-        {
-            // OMP in-box decomposition of coarse into tilebox
-            for (MFIter mfi(*coarse[idim], TilingIfNotGPU()); mfi.isValid(); ++mfi)
-            {
-                const Box& bx = mfi.growntilebox(ng); // only grow to outer directions of tileboxes for filling guards
-
-                auto const & arrFine = fine[idim]->const_array(mfi);
-                auto const & arrCoarse = coarse[idim]->array(mfi);
-
-                if( idim == 0 )
-                    amrex::ParallelFor( bx, InterpolateCurrentFineToCoarse<0>(arrFine, arrCoarse, refinement_ratio) );
-                else if( idim == 1 )
-                    amrex::ParallelFor( bx, InterpolateCurrentFineToCoarse<1>(arrFine, arrCoarse, refinement_ratio) );
-                else if( idim == 2 )
-                    amrex::ParallelFor( bx, InterpolateCurrentFineToCoarse<2>(arrFine, arrCoarse, refinement_ratio) );
-            }
-        }
     }
 }
 
@@ -628,7 +594,7 @@ WarpX::SyncRho ()
     {
         rho_cp[lev]->setVal(0.0);
         const IntVect& refinement_ratio = refRatio(lev-1);
-        interpolateDensityFineToCoarse(*rho_fp[lev], *rho_cp[lev], refinement_ratio[0]);
+        CoarsenMR::Coarsen( *rho_cp[lev], *rho_fp[lev], refinement_ratio );
     }
 
     // For each level
@@ -637,31 +603,6 @@ WarpX::SyncRho ()
     // - sum guard cells of the coarse patch of `lev+1` and fine patch of `lev`
     for (int lev=0; lev <= finest_level; ++lev) {
         AddRhoFromFineLevelandSumBoundary(lev, 0, ncomp);
-    }
-}
-
-void
-interpolateDensityFineToCoarse (const MultiFab& fine, MultiFab& coarse, int const refinement_ratio)
-{
-    WARPX_PROFILE("interpolateDensityFineToCoarse()");
-    BL_ASSERT(refinement_ratio == 2);
-    const IntVect& ng = (fine.nGrowVect() + 1) / refinement_ratio;  // add equivalent no. of guards to coarse patch
-    const int nc = fine.nComp();
-
-#ifdef _OPEMP
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-    {
-        // OMP in-box decomposition of coarse into tilebox
-        for (MFIter mfi(coarse, TilingIfNotGPU()); mfi.isValid(); ++mfi)
-        {
-            const Box& bx = mfi.growntilebox(ng); // only grow to outer directions of tileboxes for filling guards
-
-            amrex::ParallelFor(
-                bx,
-                InterpolateDensityFineToCoarse(fine.const_array(mfi), coarse.array(mfi), refinement_ratio, nc)
-            );
-        }
     }
 }
 
@@ -683,7 +624,9 @@ WarpX::RestrictCurrentFromFineToCoarsePatch (int lev)
     std::array<      MultiFab*,3> crse { current_cp[lev][0].get(),
                                          current_cp[lev][1].get(),
                                          current_cp[lev][2].get() };
-    interpolateCurrentFineToCoarse(fine, crse, refinement_ratio[0]);
+    CoarsenMR::Coarsen( *crse[0], *fine[0], refinement_ratio );
+    CoarsenMR::Coarsen( *crse[1], *fine[1], refinement_ratio );
+    CoarsenMR::Coarsen( *crse[2], *fine[2], refinement_ratio );
 }
 
 void
@@ -792,7 +735,7 @@ WarpX::RestrictRhoFromFineToCoarsePatch (int lev)
     if (rho_fp[lev]) {
         rho_cp[lev]->setVal(0.0);
         const IntVect& refinement_ratio = refRatio(lev-1);
-        interpolateDensityFineToCoarse(*rho_fp[lev], *rho_cp[lev], refinement_ratio[0]);
+        CoarsenMR::Coarsen( *rho_cp[lev], *rho_fp[lev], refinement_ratio );
     }
 }
 
@@ -896,7 +839,7 @@ WarpX::AddRhoFromFineLevelandSumBoundary(int lev, int icomp, int ncomp)
 void
 WarpX::NodalSyncJ (int lev, PatchType patch_type)
 {
-    if (override_sync_int <= 0 or istep[0] % override_sync_int != 0) return;
+    if (!override_sync_intervals.contains(istep[0])) return;
 
     if (patch_type == PatchType::fine)
     {
@@ -917,7 +860,7 @@ WarpX::NodalSyncJ (int lev, PatchType patch_type)
 void
 WarpX::NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp)
 {
-    if (override_sync_int <= 0 or istep[0] % override_sync_int != 0) return;
+    if (!override_sync_intervals.contains(istep[0])) return;
 
     if (patch_type == PatchType::fine && rho_fp[lev])
     {

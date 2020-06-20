@@ -1,7 +1,7 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step             = 0
+max_step             = 1
 amr.n_cell           = 8 8 8
 amr.max_grid_size    = 8
 amr.blocking_factor  = 8
@@ -11,13 +11,12 @@ geometry.is_periodic = 1 1 1
 geometry.prob_lo     = -1.0 -1.0 -1.0
 geometry.prob_hi     =  1.0  1.0  1.0
 warpx.do_pml         = 0
-amr.plot_int         = 1000
 
 #################################
 ############ NUMERICS ###########
 #################################
 warpx.verbose = 1
-warpx.cfl     = 1.0
+warpx.cfl     = 1.e-8
 
 #################################
 ############ PLASMA #############
@@ -85,7 +84,7 @@ beam.focused                    = false
 # 2 for maxwell-boltzmann
 # 3 for maxwell-juttner
 # 4 for beam
-warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h4x h4y h4z
+warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h4x h4y h4z bmmntr
 
 h1x.type                                 = ParticleHistogram
 h1x.frequency                            = 1
@@ -176,3 +175,14 @@ h4z.bin_number                           = 50
 h4z.bin_min                              = -1.0
 h4z.bin_max                              = +1.0
 h4z.histogram_function(t,x,y,z,ux,uy,uz) = "z"
+
+# our little beam monitor
+bmmntr.type                              = BeamRelevant
+bmmntr.frequency                         = 1
+bmmntr.path                              = "./"
+bmmntr.species                           = beam
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 1000
+diag1.diag_type = Full

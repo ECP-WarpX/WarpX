@@ -1,10 +1,8 @@
 max_step = 30
-amr.n_cell = 64 64 64
+amr.n_cell = 32 32 32
 amr.max_level = 0
 amr.blocking_factor = 8
 amr.max_grid_size = 128
-amr.plot_int = 30
-warpx.openpmd_int = 1
 geometry.coord_sys   = 0
 geometry.is_periodic = 0 0 0
 geometry.prob_lo     = -1 -1 -1
@@ -12,7 +10,6 @@ geometry.prob_hi     = 1 1 1
 warpx.do_pml = 0
 warpx.const_dt = 2e-4
 warpx.do_electrostatic = 1
-warpx.fields_to_plot = Ex Ey Ez rho
 
 particles.nspecies = 2
 particles.species_names = electron1 electron2
@@ -32,3 +29,9 @@ electron2.injection_style = "SingleParticle"
 electron2.single_particle_pos = -0.057735026918963 -0.057735026918963 -0.057735026918963
 electron2.single_particle_vel = 0.0 0.0 0.0
 electron2.single_particle_weight = 1.0
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 30
+diag1.diag_type = Full
+diag1.fields_to_plot = Ex Ey Ez rho
