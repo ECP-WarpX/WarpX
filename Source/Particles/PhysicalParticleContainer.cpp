@@ -76,7 +76,7 @@ namespace
         pos.z = lo_corner[2] + (iv[2]+r.z)*dx[2];
 #else
         pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
-        pos.y = 0.0;
+        pos.y = 0.0_rt;
 #if   defined WARPX_DIM_XZ
         pos.z = lo_corner[1] + (iv[1]+r.y)*dx[1];
 #elif defined WARPX_DIM_RZ
