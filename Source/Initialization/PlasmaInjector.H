@@ -44,7 +44,7 @@ public:
     // bool: whether the point (x, y, z) is inside the plasma region
     bool insideBounds (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
 
-    // bool: whether the region defined by lo and hi overaps with the plasma region
+    // bool: whether the region defined by lo and hi overlaps with the plasma region
     bool overlapsWith (const amrex::XDim3& lo, const amrex::XDim3& hi) const noexcept;
 
     int num_particles_per_cell;
