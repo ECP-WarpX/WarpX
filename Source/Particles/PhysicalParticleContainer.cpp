@@ -777,7 +777,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     continue;
                 }
 #else
-                if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0})) {
+                if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
                     p.id() = -1;
                     continue;
                 }
