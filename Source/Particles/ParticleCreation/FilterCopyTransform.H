@@ -82,7 +82,7 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index* mask, Ind
                 copy(dst_data, src_data, i, N*p_offsets[i] + dst_index + j);
             transform(dst_data, src_data, i, N*p_offsets[i] + dst_index);
         }
-    });
+    })
 
     Gpu::streamSynchronize();
     return num_added;
@@ -143,7 +143,7 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index dst_index,
     AMREX_HOST_DEVICE_FOR_1D(np, i,
     {
         p_mask[i] = filter(src_data, i);
-    });
+    })
 
     return filterCopyTransformParticles<N>(dst, src, mask.dataPtr(), dst_index,
                                                       std::forward<CopyFunc>(copy),
@@ -235,7 +235,7 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src, 
                       N*p_offsets[i] + dst1_index,
                       N*p_offsets[i] + dst2_index);
         }
-    });
+    })
 
     Gpu::streamSynchronize();
     return num_added;
@@ -303,7 +303,7 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src,
     AMREX_HOST_DEVICE_FOR_1D(np, i,
     {
         p_mask[i] = filter(src_data, i);
-    });
+    })
 
     return filterCopyTransformParticles<N>(dst1, dst2, src, mask.dataPtr(),
                                         dst1_index, dst2_index,

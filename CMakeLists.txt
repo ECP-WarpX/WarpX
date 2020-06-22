@@ -33,10 +33,11 @@ set_default_install_dirs()
 
 # Options and Variants ########################################################
 #
+option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
 option(WarpX_OPENPMD       "openPMD I/O"                                OFF)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
 option(WarpX_QED           "PICSAR QED (requires Boost)"                OFF)
-# TODO: python, hdf5, sensei, conduit, ascent
+# TODO: python, sensei, legacy hdf5?
 
 set(WarpX_DIMS_VALUES 2 3 RZ)
 set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality (2/3/RZ)")
@@ -148,9 +149,14 @@ set_target_properties(WarpX PROPERTIES
 )
 
 # link dependencies
-# FIXME use AMReX::thirdparty::AMReX as soon as
-#       missing _deps/fetchedamrex-build/mod_files is solved
-target_link_libraries(WarpX PUBLIC AMReX::amrex)
+target_link_libraries(WarpX PUBLIC WarpX::thirdparty::AMReX)
+
+if(WarpX_ASCENT)
+    # work-around until ascent's CMake Config scripts are properly placed
+    #   https://github.com/Alpine-DAV/ascent/pull/540
+    target_include_directories(WarpX SYSTEM PUBLIC ${Ascent_DIR}/../../include)
+    target_include_directories(WarpX SYSTEM PUBLIC ${Ascent_DIR}/../../include/ascent)
+endif()
 
 if(WarpX_PSATD)
     if(ENABLE_CUDA)

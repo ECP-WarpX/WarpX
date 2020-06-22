@@ -84,6 +84,9 @@ public:
 class BreitWheelerEvolveOpticalDepth
 {
 public:
+
+    BreitWheelerEvolveOpticalDepth () = default;
+
     /**
      * Constructor acquires a reference to control parameters and
      * lookup tables data.
@@ -138,10 +141,10 @@ public:
     }
 
 private:
-    //laser wavelenght is not used with SI units
-    const amrex::Real m_dummy_lambda{1.0};
+    //laser wavelength is not used with SI units
+    amrex::Real m_dummy_lambda{1.0};
 
-    const PicsarBreitWheelerCtrl m_ctrl;
+    PicsarBreitWheelerCtrl m_ctrl;
 
     //lookup table data
     size_t m_TTfunc_size;

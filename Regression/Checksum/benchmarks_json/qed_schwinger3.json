@@ -1,11 +1,5 @@
 {
   "ele_schwinger": {
-    "particle_Bx": 1.348034558144351,
-    "particle_By": 0.0,
-    "particle_Bz": 0.33927654383456507,
-    "particle_Ex": 0.0,
-    "particle_Ey": 1.3909415199145668e+20,
-    "particle_Ez": 0.0,
     "particle_cpu": 631.0,
     "particle_id": 610043.0,
     "particle_momentum_x": 7.391180107793151e-28,
@@ -28,12 +22,6 @@
     "jz": 0.0
   },
   "pos_schwinger": {
-    "particle_Bx": 1.3398489034143053,
-    "particle_By": 0.0,
-    "particle_Bz": 0.3427233099177752,
-    "particle_Ex": 0.0,
-    "particle_Ey": 1.3909415199145551e+20,
-    "particle_Ez": 0.0,
     "particle_cpu": 631.0,
     "particle_id": 1017026.0,
     "particle_momentum_x": 7.723864257907636e-28,
