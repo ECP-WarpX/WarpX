@@ -56,10 +56,10 @@ namespace
                                   Real gamma_boost, Real beta_boost, Real t) noexcept
     {
         const XDim3 u_bulk = inj_mom->getBulkMomentum(pos.x, pos.y, pos.z);
-        const Real gamma_bulk = std::sqrt(1. +
+        const Real gamma_bulk = std::sqrt(1._rt +
                   (u_bulk.x*u_bulk.x+u_bulk.y*u_bulk.y+u_bulk.z*u_bulk.z));
         const Real betaz_bulk = u_bulk.z/gamma_bulk;
-        const Real z0 = gamma_boost * ( pos.z*(1-beta_boost*betaz_bulk)
+        const Real z0 = gamma_boost * ( pos.z*(1.0_rt-beta_boost*betaz_bulk)
                              - PhysConst::c*t*(betaz_bulk-beta_boost) );
         return z0;
     }
@@ -236,11 +236,11 @@ void PhysicalParticleContainer::MapParticletoBoostedFrame (
     Real zpr = WarpX::gamma_boost*z - uz_boost*t_lab;
 
     // transform u and gamma to the boosted frame
-    Real gamma_lab = std::sqrt(1. + (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])/(PhysConst::c*PhysConst::c));
+    Real gamma_lab = std::sqrt(1._rt + (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])/(PhysConst::c*PhysConst::c));
     // u[0] = u[0];
     // u[1] = u[1];
     u[2] = WarpX::gamma_boost*u[2] - uz_boost*gamma_lab;
-    Real gammapr = std::sqrt(1. + (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])/(PhysConst::c*PhysConst::c));
+    Real gammapr = std::sqrt(1._rt + (u[0]*u[0] + u[1]*u[1] + u[2]*u[2])/(PhysConst::c*PhysConst::c));
 
     Real vxpr = u[0]/gammapr;
     Real vypr = u[1]/gammapr;
@@ -298,7 +298,7 @@ PhysicalParticleContainer::AddGaussianBeam (
 #elif (defined WARPX_DIM_XZ)
             const Real weight = q_tot/(npart*charge*y_rms);
             const Real x = distx(mt);
-            constexpr Real y = 0.;
+            constexpr Real y = 0._prt;
             const Real z = distz(mt);
 #endif
             if (plasma_injector->insideBounds(x, y, z)  &&
@@ -654,8 +654,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         amrex::ParallelFor(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
         {
             IntVect iv(AMREX_D_DECL(i, j, k));
-            auto lo = getCellCoords(overlap_corner, dx, {0., 0., 0.}, iv);
-            auto hi = getCellCoords(overlap_corner, dx, {1., 1., 1.}, iv);
+            auto lo = getCellCoords(overlap_corner, dx, {0._rt, 0._rt, 0._rt}, iv);
+            auto hi = getCellCoords(overlap_corner, dx, {1._rt, 1._rt, 1._rt}, iv);
 
             lo.z = applyBallisticCorrection(lo, inj_mom, gamma_boost, beta_boost, t);
             hi.z = applyBallisticCorrection(hi, inj_mom, gamma_boost, beta_boost, t);
@@ -795,9 +795,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 if (nmodes == 1) {
                     // With only 1 mode, the angle doesn't matter so
                     // choose it randomly.
-                    theta = 2.*MathConst::pi*amrex::Random();
+                    theta = 2._rt*MathConst::pi*amrex::Random();
                 } else {
-                    theta = 2.*MathConst::pi*r.y;
+                    theta = 2._rt*MathConst::pi*r.y;
                 }
                 pos.x = xb*std::cos(theta);
                 pos.y = xb*std::sin(theta);
@@ -805,7 +805,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
                 Real dens;
                 XDim3 u;
-                if (gamma_boost == 1.) {
+                if (gamma_boost == 1._rt) {
                     // Lab-frame simulation
                     // If the particle is not within the species's
                     // xmin, xmax, ymin, ymax, zmin, zmax, go to
@@ -851,13 +851,13 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     dens = amrex::min(dens, density_max);
 
                     // get the full momentum, including thermal motion
-                    u = inj_mom->getMomentum(pos.x, pos.y, 0.);
-                    const Real gamma_lab = std::sqrt( 1.+(u.x*u.x+u.y*u.y+u.z*u.z) );
+                    u = inj_mom->getMomentum(pos.x, pos.y, 0._rt);
+                    const Real gamma_lab = std::sqrt( 1._rt+(u.x*u.x+u.y*u.y+u.z*u.z) );
                     const Real betaz_lab = u.z/(gamma_lab);
 
                     // At this point u and dens are the lab-frame quantities
                     // => Perform Lorentz transform
-                    dens = gamma_boost * dens * ( 1.0 - beta_boost*betaz_lab );
+                    dens = gamma_boost * dens * ( 1.0_rt - beta_boost*betaz_lab );
                     u.z = gamma_boost * ( u.z -beta_boost*gamma_lab );
                 }
 
@@ -883,7 +883,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 Real weight = dens * scale_fac;
 #ifdef WARPX_DIM_RZ
                 if (radially_weighted) {
-                    weight *= 2.*MathConst::pi*xb;
+                    weight *= 2._rt*MathConst::pi*xb;
                 } else {
                     // This is not correct since it might shift the particle
                     // out of the local grid
