@@ -201,14 +201,15 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 
     // 4. Define buffer_domain  in lab-frame for the i^th snapshot.
     //    Replace z-dimension with lab-frame co-ordinates.
-    amrex::Real zmin_lab = diag_dom.lo(m_boost_direction)
+    amrex::Real zmin_lab = diag_dom.lo(m_moving_window_dir)
                            / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-    amrex::Real zmax_lab = diag_dom.hi(m_boost_direction)
+    amrex::Real zmax_lab = diag_dom.hi(m_moving_window_dir)
                            / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
+ 
 
     m_buffer_domain_lab[i_buffer] = warpx.Geom(lev).ProbDomain();
-    m_buffer_domain_lab[i_buffer].setLo(m_boost_direction, zmin_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
-    m_buffer_domain_lab[i_buffer].setHi(m_boost_direction, zmin_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+    m_buffer_domain_lab[i_buffer].setLo(m_moving_window_dir, zmin_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+    m_buffer_domain_lab[i_buffer].setHi(m_moving_window_dir, zmin_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
 
     // 5. Initialize buffer counter and z-positions of the  i^th snapshot in
     //    boosted-frame and lab-frame
@@ -348,7 +349,8 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         m_cell_centered_data[lev]->FillBoundary(warpx.Geom(lev).periodicity() );
     }
     // Flattening out MF over levels
-    for (int lev = nmax_lev; lev > 0; --lev) {
+   
+    for (int lev = warpx.finestLevel(); lev > 0; --lev) {
         CoarsenIO::Coarsen( *m_cell_centered_data[lev-1], *m_cell_centered_data[lev], 0, 0, m_varnames.size(), 0, WarpX::RefRatio(lev-1) );
     }
 }
