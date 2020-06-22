@@ -163,7 +163,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 {
     auto & warpx = WarpX::GetInstance();
     // 1. Lab-frame time for the i^th snapshot
-    m_t_lab[i_buffer] = i_buffer * m_dt_snapshots_lab;
+    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab;
     // 2. Define domain in boosted frame at level, lev
     amrex::RealBox diag_dom;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim ) {
@@ -176,16 +176,24 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     //    As time-progresses, the z-dimension indices will be modified based on
     //    current_z_lab
     amrex::IntVect lo(0);
-    amrex::IntVect hi(1);
+    amrex::IntVect hi(-1);
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         // lo index with same cell-size as simulation at level, lev.
-        lo[idim] = std::max( static_cast<int>( floor (
-                      ( diag_dom.lo(idim) - warpx.Geom(lev).ProbLo(idim)) /
-                        warpx.Geom(lev).CellSize(idim)) ), 0 );
+        lo[idim] = std::max(
+            0,
+            static_cast<int>( floor(
+                ( diag_dom.lo(idim) - warpx.Geom(lev).ProbLo(idim) ) /
+                  warpx.Geom(lev).CellSize(idim)
+            ))
+        );
         // hi index with same cell-size as simulation at level, lev.
-        hi[idim] = std::max( static_cast<int> ( ceil (
-                      ( diag_dom.hi(idim) - warpx.Geom(lev).ProbLo(idim)) /
-                        warpx.Geom(lev).CellSize(idim) ) ), 0) - 1 ;
+        hi[idim] = std::max(
+            0,
+            static_cast<int>( ceil(
+                ( diag_dom.hi(idim) - warpx.Geom(lev).ProbLo(idim) ) /
+                  warpx.Geom(lev).CellSize(idim)
+            ))
+        ) - 1;
         // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
         if ( hi[idim] <= lo[idim] ) {
              hi[idim]  = lo[idim] + 1;
