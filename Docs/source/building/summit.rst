@@ -90,7 +90,7 @@ Use the following commands to download the WarpX source code and switch to the c
    cd ~/src
 
    git clone https://github.com/ECP-WarpX/WarpX.git warpx
-   git clone --branch QED https://bitbucket.org/berkeleylab/picsar.git
+   git clone --branch QED https://github.com/ECP-WarpX/picsar.git
    git clone --branch development https://github.com/AMReX-Codes/amrex.git
 
 Optionally, download and build openPMD-api for I/O:
