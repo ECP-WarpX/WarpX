@@ -76,7 +76,7 @@ jobs:
       run: |
         set -ex
         cd warpx_directory
-        git clone --depth 1 https://bitbucket.org/berkeleylab/picsar.git
+        git clone --depth 1 https://github.com/ECP-WarpX/picsar.git
         git clone --depth 1 --branch development https://github.com/AMReX-Codes/amrex.git
         cd WarpX
         set +e
