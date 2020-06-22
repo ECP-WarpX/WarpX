@@ -1,8 +1,5 @@
 {
   "beam": {
-    "particle_Ex": 107128787405.89337,
-    "particle_Ey": 107128787405.88715,
-    "particle_Ez": 118963821845577.23,
     "particle_cpu": 0.0,
     "particle_id": 46454366187008.0,
     "particle_momentum_x": 3.8119259477932654e-21,
@@ -32,9 +29,6 @@
     "part_per_cell": 21632.0
   },
   "plasma": {
-    "particle_Ex": 0.0,
-    "particle_Ey": 0.0,
-    "particle_Ez": 0.0,
     "particle_cpu": 8388608.0,
     "particle_id": 1231405243432960.0,
     "particle_momentum_x": 0.0,

@@ -88,11 +88,8 @@ for field in ['particle_momentum_y',
     print('assert that this is NOT in ds.field_list', (species, field))
     assert (species, field) not in ds.field_list
 species = 'positrons'
-for field in ['particle_Ey']:
-    print('assert that this is in ds.field_list', (species, field))
-    assert (species, field) in ds.field_list
-for field in ['particle_momentum_y',
-              'particle_momentum_z']:
+for field in ['particle_momentum_x',
+              'particle_momentum_y']:
     print('assert that this is NOT in ds.field_list', (species, field))
     assert (species, field) not in ds.field_list
 
