@@ -36,6 +36,8 @@ int main(int argc, char* argv[])
 
     ConvertLabParamsToBoost();
 
+    CheckGriddingForRZSpectral();
+
     WARPX_PROFILE_VAR("main()", pmain);
 
     const Real strt_total = amrex::second();

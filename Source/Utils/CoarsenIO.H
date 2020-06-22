@@ -80,7 +80,7 @@ namespace CoarsenIO{
             }
         }
         return c;
-    };
+    }
 
     /**
      * \brief Loops over the boxes of the coarsened MultiFab \c mf_dst and fills

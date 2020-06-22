@@ -53,8 +53,8 @@ public:
   WarpXParticleCounter(WarpXParticleContainer* pc);
   unsigned long GetTotalNumParticles() {return m_Total;}
 
-  std::vector<unsigned long long> m_ParticleOffsetAtRank;;
-  std::vector<unsigned long long> m_ParticleSizeAtRank;;
+  std::vector<unsigned long long> m_ParticleOffsetAtRank;
+  std::vector<unsigned long long> m_ParticleSizeAtRank;
 private:
   /** get the offset in the overall particle id collection
   *
