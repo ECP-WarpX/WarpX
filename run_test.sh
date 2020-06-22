@@ -50,9 +50,9 @@ cd test_dir
 git clone --branch development https://github.com/AMReX-Codes/amrex.git
 # Use QED brach for QED tests
 if [ "${WARPX_CI_QED}" = "TRUE" ]; then
-    git clone --branch QED https://bitbucket.org/berkeleylab/picsar.git
+    git clone --branch QED https://github.com/ECP-WarpX/picsar.git
 else
-    git clone --branch master https://bitbucket.org/berkeleylab/picsar.git
+    git clone --branch master https://github.com/ECP-WarpX/picsar.git
 fi
 
 # Clone the AMReX regression test utility
