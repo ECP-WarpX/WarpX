@@ -17,9 +17,6 @@
 /** \brief Functor that creates copies of the current particle
  *         positions and momenta for later use. This is needed
  *         by the back-transformed diagnostics.
- *
- * \param a_pti iterator to the tile containing the macroparticles
- * \param a_tmp holder for the temporary particle data
 */
 struct CopyParticleAttribs
 {
@@ -39,25 +36,35 @@ struct CopyParticleAttribs
     amrex::ParticleReal* AMREX_RESTRICT uypold = nullptr;
     amrex::ParticleReal* AMREX_RESTRICT uzpold = nullptr;
 
-    CopyParticleAttribs (const WarpXParIter& a_pti, TmpParticles& tmp_particle_data) noexcept
+    /** \brief Construct a new functor
+     *
+     * \param a_pti iterator to the tile containing the macroparticles
+     * \param a_tmp holder for the temporary particle data
+     * \param a_offset offset to apply when reading / writing particle data
+     *        This is needed because when we use field gather buffers we don't
+     *        always start at the particle with index 0.
+     */
+    CopyParticleAttribs (const WarpXParIter& a_pti, TmpParticles& tmp_particle_data,
+                         int a_offset = 0) noexcept
     {
         if (tmp_particle_data.size() == 0) return;
 
         auto& attribs = a_pti.GetAttribs();
-        uxp = attribs[PIdx::ux].dataPtr();
-        uyp = attribs[PIdx::uy].dataPtr();
-        uzp = attribs[PIdx::uz].dataPtr();
+
+        uxp = attribs[PIdx::ux].dataPtr() + a_offset;
+        uyp = attribs[PIdx::uy].dataPtr() + a_offset;
+        uzp = attribs[PIdx::uz].dataPtr() + a_offset;
 
         const auto lev = a_pti.GetLevel();
         const auto index = a_pti.GetPairIndex();
-        xpold  = tmp_particle_data[lev][index][TmpIdx::xold ].dataPtr();
-        ypold  = tmp_particle_data[lev][index][TmpIdx::yold ].dataPtr();
-        zpold  = tmp_particle_data[lev][index][TmpIdx::zold ].dataPtr();
-        uxpold = tmp_particle_data[lev][index][TmpIdx::uxold].dataPtr();
-        uypold = tmp_particle_data[lev][index][TmpIdx::uyold].dataPtr();
-        uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr();
+        xpold  = tmp_particle_data[lev][index][TmpIdx::xold ].dataPtr() + a_offset;
+        ypold  = tmp_particle_data[lev][index][TmpIdx::yold ].dataPtr() + a_offset;
+        zpold  = tmp_particle_data[lev][index][TmpIdx::zold ].dataPtr() + a_offset;
+        uxpold = tmp_particle_data[lev][index][TmpIdx::uxold].dataPtr() + a_offset;
+        uypold = tmp_particle_data[lev][index][TmpIdx::uyold].dataPtr() + a_offset;
+        uzpold = tmp_particle_data[lev][index][TmpIdx::uzold].dataPtr() + a_offset;
 
-        m_get_position = GetParticlePosition(a_pti);
+        m_get_position = GetParticlePosition(a_pti, a_offset);
     }
 
     /** \brief copy the position and momentum of particle i to the

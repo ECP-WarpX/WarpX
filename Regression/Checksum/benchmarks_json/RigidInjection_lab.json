@@ -1,11 +1,5 @@
 {
   "beam": {
-    "particle_Bx": 2.6566894511996866e-05,
-    "particle_By": 0.0008575397894793725,
-    "particle_Bz": 3.651332298602814e-06,
-    "particle_Ex": 257689.1138980855,
-    "particle_Ey": 8160.730985703307,
-    "particle_Ez": 51350.93704570909,
     "particle_cpu": 0.0,
     "particle_id": 2001000.0,
     "particle_momentum_x": 4.2999340454016905e-17,

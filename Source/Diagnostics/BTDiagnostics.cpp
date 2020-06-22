@@ -163,29 +163,37 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 {
     auto & warpx = WarpX::GetInstance();
     // 1. Lab-frame time for the i^th snapshot
-    m_t_lab[i_buffer] = i_buffer * m_dt_snapshots_lab;
+    m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab;
     // 2. Define domain in boosted frame at level, lev
     amrex::RealBox diag_dom;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim ) {
+        // Setting lo-coordinate for the diag domain by taking the max of user-defined
+        // lo-cordinate and lo-coordinat of the simulation domain at level, lev
         diag_dom.setLo(idim, std::max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
+        // Setting hi-coordinate for the diag domain by taking the max of user-defined
+        // hi-cordinate and hi-coordinate of the simulation domain at level, lev
         diag_dom.setHi(idim, std::min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
     }
-    // 2. Define domain in boosted frame at level, lev
     // 3. Initializing the m_buffer_box for the i^th snapshot.
     //    At initialization, the Box has the same index space as the boosted-frame
     //    As time-progresses, the z-dimension indices will be modified based on
     //    current_z_lab
     amrex::IntVect lo(0);
-    amrex::IntVect hi(1);
+    amrex::IntVect hi(-1);
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         // lo index with same cell-size as simulation at level, lev.
-        lo[idim] = std::max( static_cast<int>( floor (
-                      ( diag_dom.lo(idim) - warpx.Geom(lev).ProbLo(idim)) /
-                        warpx.Geom(lev).CellSize(idim)) ), 0 );
+        const int lo_index = static_cast<int>( floor(
+                ( diag_dom.lo(idim) - warpx.Geom(lev).ProbLo(idim) ) /
+                  warpx.Geom(lev).CellSize(idim) ) );
+        // Taking max of (0,lo_index) because lo_index must always be >=0
+        lo[idim] = std::max( 0, lo_index );
         // hi index with same cell-size as simulation at level, lev.
-        hi[idim] = std::max( static_cast<int> ( ceil (
-                      ( diag_dom.hi(idim) - warpx.Geom(lev).ProbLo(idim)) /
-                        warpx.Geom(lev).CellSize(idim) ) ), 0) - 1 ;
+        const int hi_index =  static_cast<int>( ceil(
+                ( diag_dom.hi(idim) - warpx.Geom(lev).ProbLo(idim) ) /
+                  warpx.Geom(lev).CellSize(idim) ) );
+        // Taking max of (0,hi_index) because hi_index must always be >=0
+        // Subtracting by 1 because lo,hi indices are set to cell-centered staggering.
+        hi[idim] = std::max( 0, hi_index) - 1;
         // if hi<=lo, then hi = lo + 1, to ensure one cell in that dimension
         if ( hi[idim] <= lo[idim] ) {
              hi[idim]  = lo[idim] + 1;
@@ -201,20 +209,21 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 
     // 4. Define buffer_domain  in lab-frame for the i^th snapshot.
     //    Replace z-dimension with lab-frame co-ordinates.
-    amrex::Real zmin_lab = diag_dom.lo(m_boost_direction)
+    amrex::Real zmin_lab = diag_dom.lo(m_moving_window_dir)
                            / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-    amrex::Real zmax_lab = diag_dom.hi(m_boost_direction)
+    amrex::Real zmax_lab = diag_dom.hi(m_moving_window_dir)
                            / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
 
+
     m_buffer_domain_lab[i_buffer] = warpx.Geom(lev).ProbDomain();
-    m_buffer_domain_lab[i_buffer].setLo(m_boost_direction, zmin_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
-    m_buffer_domain_lab[i_buffer].setHi(m_boost_direction, zmin_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+    m_buffer_domain_lab[i_buffer].setLo(m_moving_window_dir, zmin_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
+    m_buffer_domain_lab[i_buffer].setHi(m_moving_window_dir, zmin_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
 
     // 5. Initialize buffer counter and z-positions of the  i^th snapshot in
     //    boosted-frame and lab-frame
     m_buffer_counter[i_buffer] = 0;
-    m_current_z_lab[i_buffer] = 0.0;
-    m_current_z_boost[i_buffer] = 0.0;
+    m_current_z_lab[i_buffer] = 0.0_rt;
+    m_current_z_boost[i_buffer] = 0.0_rt;
     // Now Update Current Z Positions
     m_current_z_boost[i_buffer] = UpdateCurrentZBoostCoordinate(m_t_lab[i_buffer],
                                                               warpx.gett_new(lev) );
@@ -224,14 +233,31 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 
     // 6. Compute ncells_lab required for writing Header file and potentially to generate
     //    Back-Transform geometry to ensure compatibility with plotfiles //
+    // For the z-dimension, number of cells in the lab-frame is
+    // computed using the coarsened cell-size in the lab-frame obtained using
+    // the ref_ratio at level, lev.
     amrex::IntVect ref_ratio = WarpX::RefRatio(lev);
-    int Nz_lab = std::max( static_cast<int>( floor ( ( zmax_lab - zmin_lab)
-                      / dz_lab(warpx.getdt(lev), ref_ratio[AMREX_SPACEDIM-1]) ) ), 0);
-    int Nx_lab = std::max( static_cast<int>( floor( (diag_dom.hi(0) - diag_dom.lo(0) )
-                      / warpx.Geom(lev).CellSize(0) )), 0);
+    // Number of lab-frame cells in z-direction at level, lev
+    const int num_zcells_lab = static_cast<int>( floor (
+                                   ( zmax_lab - zmin_lab)
+                                   / dz_lab(warpx.getdt(lev), ref_ratio[AMREX_SPACEDIM-1] )                               ) );
+    // Take the max of 0 and num_zcells_lab
+    int Nz_lab = std::max( 0, num_zcells_lab );
+    // Number of lab-frame cells in x-direction at level, lev
+    const int num_xcells_lab = static_cast<int>( floor (
+                                  ( diag_dom.hi(0) - diag_dom.lo(0) )
+                                  / warpx.Geom(lev).CellSize(0)
+                              ) );
+    // Take the max of 0 and num_ycells_lab
+    int Nx_lab = std::max( 0, num_xcells_lab);
 #if (AMREX_SPACEDIM == 3)
-    int Ny_lab = std::max( static_cast<int>( floor( (diag_dom.hi(1) - diag_dom.lo(1) )
-                      / warpx.Geom(lev).CellSize(1) )), 0);
+    // Number of lab-frame cells in the y-direction at level, lev
+    const int num_ycells_lab = static_cast<int>( floor (
+                                   ( diag_dom.hi(1) - diag_dom.lo(1) )
+                                   / warpx.Geom(lev).CellSize(1)
+                               ) );
+    // Take the max of 0 and num_xcells_lab
+    int Ny_lab = std::max( 0, num_ycells_lab );
     m_buffer_ncells_lab[i_buffer] = {Nx_lab, Ny_lab, Nz_lab};
 #else
     int Ny_lab = 0;
@@ -348,7 +374,8 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         m_cell_centered_data[lev]->FillBoundary(warpx.Geom(lev).periodicity() );
     }
     // Flattening out MF over levels
-    for (int lev = nmax_lev; lev > 0; --lev) {
+
+    for (int lev = warpx.finestLevel(); lev > 0; --lev) {
         CoarsenIO::Coarsen( *m_cell_centered_data[lev-1], *m_cell_centered_data[lev], 0, 0, m_varnames.size(), 0, WarpX::RefRatio(lev-1) );
     }
 }
