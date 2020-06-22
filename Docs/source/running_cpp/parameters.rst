@@ -288,6 +288,13 @@ Particle initialization
     The mass of one `physical` particle of this species.
     If ``species_type`` is specified, the mass will be set to the physical value and ``mass`` is optional.
 
+* ``<species_name>.xmin,ymin,zmin`` (`float`) optional (default unlimited)
+    When ``<species_name>.xmin`` and ``<species_name>.xmax`` (see below) are set, they delimit the region within which particles are injected.
+    The same is applicable in the other directions.
+    If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
+
+* ``<species_name>.xmax,ymax,zmax`` (`float`) optional (default unlimited)
+
 * ``<species_name>.injection_style`` (`string`)
     Determines how the particles will be injected in the simulation.
     The options are:
@@ -1273,10 +1280,6 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     * ``w`` for the particle weight,
 
     * ``ux`` ``uy`` ``uz`` for the particle momentum,
-
-    * ``Ex`` ``Ey`` ``Ez`` for the electric field on particles,
-
-    * ``Bx`` ``By`` ``Bz`` for the magnetic field on particles.
 
     The particle positions are always included.
     Use ``<species>.variables = none`` to plot no particle data, except particle position.

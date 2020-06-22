@@ -10,7 +10,7 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
 {
     ParmParse pp(diag_name + "." + name);
     if (!pp.queryarr("variables", variables)){
-        variables = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "ux", "uy", "uz", "w"};
+        variables = {"ux", "uy", "uz", "w"};
     }
 
     //variable to set plot_flags size
