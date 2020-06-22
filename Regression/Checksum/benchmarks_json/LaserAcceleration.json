@@ -1,11 +1,5 @@
 {
   "electrons": {
-    "particle_Bx": 1823612.763420117,
-    "particle_By": 1594.036464819075,
-    "particle_Bz": 47860.82957589165,
-    "particle_Ex": 3400199636487.5806,
-    "particle_Ey": 726835961770741.9,
-    "particle_Ez": 34114413425319.66,
     "particle_cpu": 69212.0,
     "particle_id": 10198484142.0,
     "particle_momentum_x": 1.7927320949196398e-20,

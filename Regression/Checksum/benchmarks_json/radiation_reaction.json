@@ -1,11 +1,5 @@
 {
   "ele_para0": {
-    "particle_Bx": 917978.2333474257,
-    "particle_By": 1376967.350021139,
-    "particle_Bz": 2753934.700042278,
-    "particle_Ex": 0.003842707741931274,
-    "particle_Ey": 0.015625799690926225,
-    "particle_Ez": 0.023446517674477488,
     "particle_cpu": 0.0,
     "particle_id": 1.0,
     "particle_momentum_x": 7.802641516393779e-20,
@@ -17,12 +11,6 @@
     "particle_weight": 1e-08
   },
   "ele_perp0": {
-    "particle_Bx": 917978.2333474257,
-    "particle_By": 1376967.350021139,
-    "particle_Bz": 2753934.700042278,
-    "particle_Ex": 0.1250313976349998,
-    "particle_Ey": 0.0776652150231756,
-    "particle_Ez": 0.06187021356968523,
     "particle_cpu": 0.0,
     "particle_id": 2.0,
     "particle_momentum_x": 8.11389431708072e-21,
@@ -34,12 +22,6 @@
     "particle_weight": 1e-08
   },
   "ele_perp1": {
-    "particle_Bx": 917978.2333474257,
-    "particle_By": 1376967.350021139,
-    "particle_Bz": 2753934.700042278,
-    "particle_Ex": 0.03710062023180817,
-    "particle_Ey": 0.002435032603780963,
-    "particle_Ez": 0.023704514044336038,
     "particle_cpu": 0.0,
     "particle_id": 3.0,
     "particle_momentum_x": 2.3334382603801444e-20,
@@ -51,12 +33,6 @@
     "particle_weight": 1e-08
   },
   "ele_perp2": {
-    "particle_Bx": 917978.2333474257,
-    "particle_By": 1376967.350021139,
-    "particle_Bz": 2753934.700042278,
-    "particle_Ex": 0.0002716012778477919,
-    "particle_Ey": 0.005385504253127432,
-    "particle_Ez": 0.016067456901663155,
     "particle_cpu": 0.0,
     "particle_id": 4.0,
     "particle_momentum_x": 1.81896887291916e-20,
@@ -71,12 +47,6 @@
     "rho": 0.00051269652288
   },
   "pos_perp2": {
-    "particle_Bx": 917978.2333474257,
-    "particle_By": 1376967.350021139,
-    "particle_Bz": 2753934.700042278,
-    "particle_Ex": 0.004491380475289906,
-    "particle_Ey": 0.012777393943318885,
-    "particle_Ez": 0.02007316097507273,
     "particle_cpu": 0.0,
     "particle_id": 5.0,
     "particle_momentum_x": 1.818968872919164e-20,
