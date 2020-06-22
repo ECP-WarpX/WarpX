@@ -184,13 +184,13 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
         // lo index with same cell-size as simulation at level, lev.
         const int lo_index = static_cast<int>( floor(
                 ( diag_dom.lo(idim) - warpx.Geom(lev).ProbLo(idim) ) /
-                  warpx.Geom(lev).CellSize(idim) ) )
+                  warpx.Geom(lev).CellSize(idim) ) );
         // Taking max of (0,lo_index) because lo_index must always be >=0
         lo[idim] = std::max( 0, lo_index );
         // hi index with same cell-size as simulation at level, lev.
         const int hi_index =  static_cast<int>( ceil(
                 ( diag_dom.hi(idim) - warpx.Geom(lev).ProbLo(idim) ) /
-                  warpx.Geom(lev).CellSize(idim) ) )
+                  warpx.Geom(lev).CellSize(idim) ) );
         // Taking max of (0,hi_index) because hi_index must always be >=0
         // Subtracting by 1 because lo,hi indices are set to cell-centered staggering.
         hi[idim] = std::max( 0, hi_index) - 1;
@@ -238,7 +238,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     // the ref_ratio at level, lev.
     amrex::IntVect ref_ratio = WarpX::RefRatio(lev);
     // Number of lab-frame cells in z-direction at level, lev
-    const int num_zcells_lab = static_cast<int>( floor ( 
+    const int num_zcells_lab = static_cast<int>( floor (
                                    ( zmax_lab - zmin_lab)
                                    / dz_lab(warpx.getdt(lev), ref_ratio[AMREX_SPACEDIM-1] )                               ) );
     // Take the max of 0 and num_zcells_lab
@@ -246,7 +246,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     // Number of lab-frame cells in x-direction at level, lev
     const int num_xcells_lab = static_cast<int>( floor (
                                   ( diag_dom.hi(0) - diag_dom.lo(0) )
-                                  / warpx.Geom(lev).CellSize(0) 
+                                  / warpx.Geom(lev).CellSize(0)
                               ) );
     // Take the max of 0 and num_ycells_lab
     int Nx_lab = std::max( 0, num_xcells_lab);
