@@ -76,7 +76,7 @@ include(CTest)
 #   builds AMReX from source (default) or finds an existing install
 include(${WarpX_SOURCE_DIR}/cmake/dependencies/AMReX.cmake)
 #   suppress warnings in AMReX headers (use -isystem instead of -I)
-#make_third_party_includes_system(AMReX::amrex AMReX)
+make_third_party_includes_system(AMReX::amrex AMReX)
 
 # PICSAR
 #   builds PICSAR from source
@@ -149,9 +149,7 @@ set_target_properties(WarpX PROPERTIES
 )
 
 # link dependencies
-# FIXME use AMReX::thirdparty::AMReX as soon as
-#       missing _deps/fetchedamrex-build/mod_files is solved
-target_link_libraries(WarpX PUBLIC AMReX::amrex)
+target_link_libraries(WarpX PUBLIC WarpX::thirdparty::AMReX)
 
 if(WarpX_ASCENT)
     # work-around until ascent's CMake Config scripts are properly placed

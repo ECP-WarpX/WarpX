@@ -18,7 +18,6 @@
 
 #include <AMReX_MultiFabUtil.H>
 #include <AMReX_PlotFileUtil.H>
-#include <AMReX_FillPatchUtil_F.H>
 #include <AMReX_buildInfo.H>
 
 #ifdef BL_USE_SENSEI_INSITU
