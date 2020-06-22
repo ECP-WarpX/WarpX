@@ -1,11 +1,5 @@
 {
   "beam": {
-    "particle_Bx": 30.446171922907517,
-    "particle_By": 3870.917493104042,
-    "particle_Bz": 0.34755106738400265,
-    "particle_Ex": 1014015529098.6418,
-    "particle_Ey": 19826252289.36772,
-    "particle_Ez": 1908690024876.2688,
     "particle_cpu": 0.0,
     "particle_id": 2147483644000.0,
     "particle_momentum_x": 4.323192428952614e-19,
@@ -16,12 +10,6 @@
     "particle_weight": 12483018148921.53
   },
   "driver": {
-    "particle_Bx": 31.940096497888742,
-    "particle_By": 15604.732356054985,
-    "particle_Bz": 1.2252572333665939,
-    "particle_Ex": 4364681742392.5117,
-    "particle_Ey": 9873744504.0512,
-    "particle_Ez": 18055631247141.04,
     "particle_cpu": 0.0,
     "particle_id": 10236500.0,
     "particle_momentum_x": 4.273571972654775e-19,
@@ -54,12 +42,6 @@
     "jz": 4439666503460565.0
   },
   "plasma_e": {
-    "particle_Bx": 6.9776518155443075,
-    "particle_By": 65971.4138126626,
-    "particle_Bz": 2.2431702261360305,
-    "particle_Ex": 14972474416018.527,
-    "particle_Ey": 2292688361.624074,
-    "particle_Ez": 17838346022653.637,
     "particle_cpu": 3600.0,
     "particle_id": 41596488.0,
     "particle_momentum_x": 1.5130313200302403e-19,

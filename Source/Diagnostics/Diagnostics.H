@@ -63,7 +63,7 @@ public:
      */
     virtual bool DoDump (int step, int i_buffer, bool force_flush=false) = 0;
     /** Start a new iteration, i.e., dump has not been done yet. */
-    void NewIteration () {m_already_done = false;};
+    void NewIteration () {m_already_done = false;}
     /** Perform necessary operations with user-defined diagnostic parameters
      *  to filter (coarsen, slice), compute (cell-center, back-transform),
      *  and flush the output data stored in buffers, m_mf_output.

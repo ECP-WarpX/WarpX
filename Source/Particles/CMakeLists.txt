@@ -10,7 +10,7 @@ target_sources(WarpX
 add_subdirectory(Collision)
 #add_subdirectory(Deposition)
 add_subdirectory(ElementaryProcess)
-#add_subdirectory(Gather)
+add_subdirectory(Gather)
 add_subdirectory(ParticleCreation)
 #add_subdirectory(Pusher)
 add_subdirectory(Sorting)
