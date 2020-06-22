@@ -310,7 +310,7 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
                 AMREX_PARALLEL_FOR_4D ( outbox, nc, i, j, k, n,
                 {
                     srcfab(i,j,k,n) = external_field;
-                });
+                })
             } else if (useparser == true) {
                 // index type of the src mf
                 auto const& mf_IndexType = (tmpmf).ixType();
@@ -350,7 +350,7 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
         AMREX_PARALLEL_FOR_4D ( dstBox, nc, i, j, k, n,
         {
             dstfab(i,j,k,n) = srcfab(i+shift.x,j+shift.y,k+shift.z,n);
-        });
+        })
     }
 }
 
