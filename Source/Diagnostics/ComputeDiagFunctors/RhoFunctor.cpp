@@ -23,7 +23,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp ) const
         // temporary MultiFab mf_dst_stag, and cell-center it to mf_dst
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             nComp()==1,
-            "The RZ averaging over modes must write into 1 single component");
+            "The RZ averaging over modes must write into one single component");
         amrex::MultiFab mf_dst_stag( rho->boxArray(), warpx.DistributionMap(m_lev), 1, rho->nGrowVect() );
         // Mode 0
         amrex::MultiFab::Copy( mf_dst_stag, *rho, 0, 0, 1, rho->nGrowVect() );

@@ -15,12 +15,10 @@ public:
     /**
      * \brief Constructor
      *
-     * \param[in] mf_src source MultiFab (must be nullptr as no source MF is
-     *                   needed to compute the charge density)
      * \param[in] lev level of MultiFab
      * \param[in] crse_ratio coarsening ratio for interpolation of field values
      *                       from simulation MultiFabs to the output MultiFab mf_dst
-     * \param[in] convertRZmodes2cartesian
+     * \param[in] convertRZmodes2cartesian if true, all RZ modes are averaged into one component
      * \param[in] ncomp optional number of component of source MultiFab mf_src
      *                  to be cell-centered in output MultiFab mf_dst
      */
@@ -40,7 +38,7 @@ private:
     // Level on which source MultiFab mf_src is defined in RZ geometry
     int const m_lev;
 
-    // Whether to average all modes into 1 component in RZ geometry
+    // Whether to average all modes into one component in RZ geometry
     bool m_convertRZmodes2cartesian;
 };
 
