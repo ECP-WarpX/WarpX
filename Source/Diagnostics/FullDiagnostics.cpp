@@ -146,8 +146,7 @@ FullDiagnostics::AddRZModesToDiags (int lev)
         }
     }
 
-    // Check if rho is requested
-    // If so, all components will be written out
+    // If rho is requested, all components will be written out
     bool rho_requested = WarpXUtilStr::is_in( m_varnames, "rho" );
 
     // First index of m_all_field_functors[lev] where RZ modes are stored
@@ -355,7 +354,18 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "jz" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "rho" ){
-            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
+            if ( WarpX::do_back_transformed_diagnostics ) {
+#ifdef WARPX_USE_PSATD
+                // rho_new is stored in component 1 of rho_fp when using PSATD
+                amrex::MultiFab* rho_new = new amrex::MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
+                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(rho_new, lev, m_crse_ratio);
+#else
+                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_rho_fp(lev), lev, m_crse_ratio);
+#endif
+            }
+            else {
+                m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
+            }
         } else if ( m_varnames[comp] == "F" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_cell" ){
