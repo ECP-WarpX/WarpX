@@ -20,9 +20,9 @@
     "rho": 714843849.3851601
   },
   "positrons": {
-    "particle_Ey": 85648654999175.17,
     "particle_cpu": 0.0,
     "particle_id": 112722575360.0,
+    "particle_momentum_z": 9.427578386573408e-20,
     "particle_position_x": 2.6214400000000015,
     "particle_position_y": 2.621440000000001,
     "particle_position_z": 2.6214400000000007
