@@ -92,6 +92,33 @@ MacroscopicProperties::InitData ()
 
     }
 
+
+    sigma_IndexType.resize( 3 );
+    epsilon_IndexType.resize( 3 );
+    mu_IndexType.resize( 3 );
+    Ex_IndexType.resize( 3 );
+    Ey_IndexType.resize( 3 );
+    Ez_IndexType.resize( 3 );
+    macro_cr_ratio.resize( 3 );
+
+    IntVect sigma_stag = m_sigma_mf->ixType().toIntVect();
+    IntVect epsilon_stag = m_eps_mf->ixType().toIntVect();
+    IntVect mu_stag = m_mu_mf->ixType().toIntVect();
+    IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
+    IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
+    IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
+    
+    for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        sigma_IndexType[idim]   = sigma_stag[idim];
+        epsilon_IndexType[idim] = epsilon_stag[idim];
+        mu_IndexType[idim]      = mu_stag[idim];
+        Ex_IndexType[idim]      = Ex_stag[idim];
+        Ey_IndexType[idim]      = Ey_stag[idim];
+        Ez_IndexType[idim]      = Ez_stag[idim];
+        macro_cr_ratio[idim]    = 1;
+    }
+    
+
 }
 
 void

@@ -37,6 +37,14 @@ public:
 
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
                                   ParserWrapper<3> *macro_parser, int lev);
+     amrex::Gpu::ManagedVector<int> sigma_IndexType;
+     amrex::Gpu::ManagedVector<int> epsilon_IndexType;
+     amrex::Gpu::ManagedVector<int> mu_IndexType;
+     amrex::Gpu::ManagedVector<int> Ex_IndexType;
+     amrex::Gpu::ManagedVector<int> Ey_IndexType;
+     amrex::Gpu::ManagedVector<int> Ez_IndexType;
+     amrex::Gpu::ManagedVector<int> macro_cr_ratio;
+
 private:
      /** Conductivity, sigma, of the medium */
      amrex::Real m_sigma;
@@ -100,6 +108,16 @@ struct LaxWendroffAlgo {
      };
 
      AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+     static amrex::Real alpha (amrex::Real const sigma,
+                               amrex::Real const epsilon,
+                               amrex::Real dt) {
+         using namespace amrex;
+         amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
+         amrex::Real alpha = (1._rt - fac1)/(1._rt + fac1);
+         return alpha;
+     };
+
+     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
      static amrex::Real beta (amrex::Array4<amrex::Real> const& sigma,
                               amrex::Array4<amrex::Real> const& epsilon,
                               amrex::Real dt, int i, int j, int k,
@@ -110,6 +128,17 @@ struct LaxWendroffAlgo {
          amrex::Real beta = dt / ( macro_avg_to_edge(i, j, k, iv_cc, epsilon) * (1._rt + fac1) );
          return beta;
      };
+
+     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+     static amrex::Real beta (amrex::Real const sigma,
+                              amrex::Real const epsilon,
+                              amrex::Real dt) {
+         using namespace amrex;
+         amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
+         amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
+         return beta;
+     };
+
 };
 
 struct BackwardEulerAlgo {
@@ -147,6 +176,17 @@ struct BackwardEulerAlgo {
      };
 
      AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+     static amrex::Real alpha (amrex::Real const sigma,
+                               amrex::Real const epsilon,
+                               amrex::Real dt) {
+         using namespace amrex;
+         amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
+         amrex::Real alpha = (1._rt - fac1)/(1._rt + fac1);
+         return alpha;
+     };
+
+
+     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
      static amrex::Real beta (amrex::Array4<amrex::Real> const& sigma,
                               amrex::Array4<amrex::Real> const& epsilon,
                               amrex::Real dt, int i, int j, int k,
@@ -157,6 +197,17 @@ struct BackwardEulerAlgo {
          amrex::Real beta = dt / ( macro_avg_to_edge(i, j, k, iv_cc, epsilon) * (1._rt + fac1) );
          return beta;
      };
+
+     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+     static amrex::Real beta (amrex::Real const sigma,
+                              amrex::Real const epsilon,
+                              amrex::Real dt) {
+         using namespace amrex;
+         amrex::Real fac1 = 0.5_rt * sigma * dt / epsilon;
+         amrex::Real beta = dt / ( epsilon * (1._rt + fac1) );
+         return beta;
+     };
+
 };
 
 #endif // WARPX_MACROSCOPIC_PROPERTIES_H_
