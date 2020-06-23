@@ -239,7 +239,7 @@ PhysicalParticleContainer::AddGaussianBeam (
             npart /= 4;
         }
         for (long i = 0; i < npart; ++i) {
-#if (defined WARPX_DIM_3D) || (WARPX_DIM_RZ)
+#if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
             const Real weight = q_tot/(npart*charge);
             const Real x = distx(mt);
             const Real y = disty(mt);
@@ -361,26 +361,18 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
         for (auto i = decltype(npart){0}; i<npart; ++i){
             ParticleReal const x = ptr_x.get()[i]*position_unit_x;
             ParticleReal const z = ptr_z.get()[i]*position_unit_z+z_shift;
-#   ifdef (defined WARPX_DIM_3D) || (WARPX_DIM_RZ)
+#   if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ)
             ParticleReal const y = ptr_y.get()[i]*position_unit_y;
 #   else
             ParticleReal const y = 0.0_prt;
 #   endif
 #           ifdef WarpX_DIM_RZ
             ParticleReal const r = sqrt(x*x+y*y);
-            //Uncomment line below to get particle theta
-            //ParticleReal const theta =  acos(x/r);
+            //ParticleReal const theta =  acos(x/r); //Not necessary
             if (plasma_injector->insideBounds(r, 0.0, z)) {
-                ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
-                ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
-                ParticleReal const uy = ptr_uy.get()[i]*momentum_unit_y/PhysConst::m_e;
-                CheckAndAddParticle(r, 0.0, z, { ux, uy, uz}, weight,
-                                    particle_x,  particle_y,  particle_z,
-                                    particle_ux, particle_uy, particle_uz,
-                                    particle_w);
-            }
 #           else
             if (plasma_injector->insideBounds(x, y, z)) {
+#           endif
                 ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
                 ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
                 ParticleReal uy = 0.0_prt;
@@ -392,7 +384,6 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                                     particle_ux, particle_uy, particle_uz,
                                     particle_w);
             }
-#           endif
         }
         auto const np = particle_z.size();
         if (np < npart) {
