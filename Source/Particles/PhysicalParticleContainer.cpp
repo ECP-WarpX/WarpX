@@ -366,13 +366,7 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
 #   else
             ParticleReal const y = 0.0_prt;
 #   endif
-#           ifdef WarpX_DIM_RZ
-            ParticleReal const r = sqrt(x*x+y*y);
-            //ParticleReal const theta =  acos(x/r); //Not necessary
-            if (plasma_injector->insideBounds(r, 0.0, z)) {
-#           else
             if (plasma_injector->insideBounds(x, y, z)) {
-#           endif
                 ParticleReal const ux = ptr_ux.get()[i]*momentum_unit_x/PhysConst::m_e;
                 ParticleReal const uz = ptr_uz.get()[i]*momentum_unit_z/PhysConst::m_e;
                 ParticleReal uy = 0.0_prt;
