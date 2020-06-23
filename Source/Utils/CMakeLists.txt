@@ -1,0 +1,11 @@
+target_sources(WarpX
+  PRIVATE
+    CoarsenIO.cpp
+    CoarsenMR.cpp
+    Interpolate.cpp
+    IntervalsParser.cpp
+    WarpXAlgorithmSelection.cpp
+    WarpXMovingWindow.cpp
+    WarpXTagging.cpp
+    WarpXUtil.cpp
+)

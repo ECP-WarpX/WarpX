@@ -79,8 +79,8 @@ public:
     WarpX ();
     ~WarpX ();
 
-    static std::string Version (); //! Version of WarpX executable
-    static std::string PicsarVersion (); //! Version of PICSAR dependency
+    static std::string Version (); //!< Version of WarpX executable
+    static std::string PicsarVersion (); //!< Version of PICSAR dependency
 
     int Verbose () const { return verbose; }
 
@@ -292,10 +292,10 @@ public:
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
-    void FieldGather ();
 
     /** \brief apply QED correction on electric field
      * \param dt vector of time steps (for all levels)
@@ -349,6 +349,22 @@ public:
     void CopyJPML ();
 
     PML* GetPML (int lev);
+
+    /** Run the ionization module on all species */
+    void doFieldIonization ();
+    /** Run the ionization module on all species at level lev
+     * \param lev level
+     */
+    void doFieldIonization (int lev);
+
+#ifdef WARPX_QED
+    /** Run the QED module on all species */
+    void doQEDEvents ();
+    /** Run the QED module on all species at level lev
+     * \param lev level
+     */
+    void doQEDEvents (int lev);
+#endif
 
     void PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full);
     void PushParticlesandDepose (         amrex::Real cur_time);
@@ -404,6 +420,11 @@ public:
     static std::array<amrex::Real,3> LowerCorner (const amrex::Box& bx,
                                                   std::array<amrex::Real,3> galilean_shift, int lev);
     static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, int lev);
+
+    /*
+      /brief This computes the lower of the problem domain, taking into account any shift when using the Galilean algorithm.
+     */
+    std::array<amrex::Real,3> LowerCornerWithGalilean (const amrex::Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev);
 
     static amrex::IntVect RefRatio (int lev);
 

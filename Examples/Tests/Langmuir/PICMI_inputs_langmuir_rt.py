@@ -66,12 +66,13 @@ field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     grid = grid,
                                     period = diagnostic_interval,
                                     data_list = ['Ex', 'Jx'],
-                                    warpx_file_prefix = 'plotfiles/plt')
+                                    write_dir = '.',
+                                    warpx_file_prefix = 'Python_Langmuir_plt')
 
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       period = diagnostic_interval,
                                       species = [electrons],
-                                      data_list = ['weighting', 'ux', 'Ex'])
+                                      data_list = ['weighting', 'ux'])
 
 ##########################
 # simulation setup

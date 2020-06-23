@@ -22,7 +22,7 @@ The basic WarpX workflow is:
 
 1. Fork the main repo (or update it if you already created it).
 2. Implement your changes and push them on a new branch ``<branch_name>`` on your fork.
-3. Create a Pull Request from branch ``<branch_name>`` on your fork to branch `master` on the main WarpX repo.
+3. Create a Pull Request from branch ``<branch_name>`` on your fork to branch ``development`` on the main WarpX repo.
 
 First, let us setup your local git repo. Make your own fork of the main (``upstream``) WarpX repo:
 on the `WarpX Github page <https://github.com/ECP-WarpX/WarpX>`_, press the fork button.
@@ -33,7 +33,7 @@ Then, you can execute:
    # These 4 first lines are the same as for a standard WarpX install
    mkdir warpx_directory
    cd warpx_directory
-   git clone --branch master https://bitbucket.org/berkeleylab/picsar.git
+   git clone --branch master https://github.com/ECP-WarpX/picsar.git
    git clone --branch development https://github.com/AMReX-Codes/amrex.git
 
    # Clone your fork on your local computer. You can get this address on your fork's Github page.
@@ -48,18 +48,18 @@ Now you are free to play with your fork (for additional information, you can vis
 .. note::
 
    You do not have to re-do the setup above every time.
-   Instead, in the future, all you need is to update the ``master`` branch on your fork with:
+   Instead, in the future, all you need is to update the ``development`` branch on your fork with:
 
    .. code-block:: sh
 
-      git checkout master
-      git pull upstream master
+      git checkout development
+      git pull upstream development
 
-Make sure you are on WarpX ``master`` branch with
+Make sure you are on WarpX ``development`` branch with
 
 .. code-block:: sh
 
-   git checkout master
+   git checkout development
 
 in the WarpX directory.
 
@@ -95,11 +95,11 @@ You can push them to your fork with
 
    git push -u origin <branch_name>
 
-If you want to synchronize your branch with the ``master`` branch (this is useful when the ``master`` branch is being modified while you are working on ``<branch_name>``), you can use
+If you want to synchronize your branch with the ``development`` branch (this is useful when the ``development`` branch is being modified while you are working on ``<branch_name>``), you can use
 
 .. code-block:: sh
 
-   git pull upstream master
+   git pull upstream development
 
 and fix any conflict that may occur.
 

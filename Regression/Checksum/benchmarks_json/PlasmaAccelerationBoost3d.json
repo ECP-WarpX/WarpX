@@ -1,0 +1,68 @@
+{
+  "beam": {
+    "particle_cpu": 0.0,
+    "particle_id": 550364500.0,
+    "particle_momentum_x": 4.275414307401172e-19,
+    "particle_momentum_y": 4.17353489404236e-19,
+    "particle_momentum_z": 2.7466540338095267e-17,
+    "particle_position_x": 0.00038227754420858974,
+    "particle_position_y": 0.00040084804060639605,
+    "particle_position_z": 1.9713557063568812,
+    "particle_weight": 3120754537.230381
+  },
+  "driver": {
+    "particle_cpu": 0.0,
+    "particle_id": 500500.0,
+    "particle_momentum_x": 4.747251762692475e+21,
+    "particle_momentum_y": 4.957368621566192e+21,
+    "particle_momentum_z": 2.9967719884827463e+25,
+    "particle_position_x": 0.001529110176834359,
+    "particle_position_y": 0.0016033921624255842,
+    "particle_position_z": 0.37579166250443896,
+    "particle_weight": 6241509074.460762
+  },
+  "driverback": {
+    "particle_cpu": 0.0,
+    "particle_id": 551364500.0,
+    "particle_momentum_x": 4.6831534563358655e+21,
+    "particle_momentum_y": 5.084648482174756e+21,
+    "particle_momentum_z": 2.999729460061163e+25,
+    "particle_position_x": 0.0015291546455735929,
+    "particle_position_y": 0.0016035722265970865,
+    "particle_position_z": 0.422197910576549,
+    "particle_weight": 6241509074.460762
+  },
+  "lev=0": {
+    "Bx": 44941.49413640603,
+    "By": 44979.43825578673,
+    "Bz": 13.934939072805973,
+    "Ex": 1826216104868.1426,
+    "Ey": 1823330229384.4048,
+    "Ez": 15903140534253.646,
+    "jx": 478635383386.41437,
+    "jy": 287752998229.3329,
+    "jz": 1808527844770048.0
+  },
+  "plasma_e": {
+    "particle_cpu": 3600.0,
+    "particle_id": 1461156360.0,
+    "particle_momentum_x": 2.0860691311063294e-24,
+    "particle_momentum_y": 2.0163771091033843e-24,
+    "particle_momentum_z": 9.78204978521714e-18,
+    "particle_position_x": 0.12656250418442266,
+    "particle_position_y": 0.12656250385223128,
+    "particle_position_z": 0.06789177847668806,
+    "particle_weight": 3869103021.3870597
+  },
+  "plasma_p": {
+    "particle_cpu": 3600.0,
+    "particle_id": 1970570760.0,
+    "particle_momentum_x": 2.0860707893867245e-24,
+    "particle_momentum_y": 2.016379117137926e-24,
+    "particle_momentum_z": 1.7961333877559267e-14,
+    "particle_position_x": 0.1265624999977211,
+    "particle_position_y": 0.12656249999790198,
+    "particle_position_z": 0.0678917784374789,
+    "particle_weight": 3869103021.3870597
+  }
+}

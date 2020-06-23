@@ -79,7 +79,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     pp.query("radially_weighted", radially_weighted);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
 
-    // parse plasma boundaries
+    // Unlimited boundaries
     xmin = std::numeric_limits<amrex::Real>::lowest();
     ymin = std::numeric_limits<amrex::Real>::lowest();
     zmin = std::numeric_limits<amrex::Real>::lowest();
@@ -87,6 +87,30 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     xmax = std::numeric_limits<amrex::Real>::max();
     ymax = std::numeric_limits<amrex::Real>::max();
     zmax = std::numeric_limits<amrex::Real>::max();
+
+    // NOTE: When periodic boundaries are used, default injection range is set to mother grid dimensions.
+    const Geometry& geom = WarpX::GetInstance().Geom(0);
+    if( geom.isPeriodic(0) ) {
+        xmin = geom.ProbLo(0);
+        xmax = geom.ProbHi(0);
+    }
+
+    if( geom.isPeriodic(1) ) {
+#       ifndef WARPX_DIM_3D
+        zmin = geom.ProbLo(1);
+        zmax = geom.ProbHi(1);
+#       else
+        ymin = geom.ProbLo(1);
+        ymax = geom.ProbHi(1);
+#       endif
+    }
+
+#   ifdef WARPX_DIM_3D
+    if( geom.isPeriodic(2) ) {
+        zmin = geom.ProbLo(2);
+        zmax = geom.ProbHi(2);
+    }
+#   endif
 
     pp.query("xmin", xmin);
     pp.query("ymin", ymin);
@@ -303,6 +327,8 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 double const mass_unit = ps["mass"][openPMD::RecordComponent::SCALAR].unitSI();
                 mass = p_m * mass_unit;
             }
+
+            pp.query("z_shift",z_shift);
         } // IOProcessor
 
         // Broadcast charge and mass to non-IO processors

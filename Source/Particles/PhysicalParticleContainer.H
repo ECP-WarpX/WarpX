@@ -14,6 +14,7 @@
 #include "WarpXParticleContainer.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/ElementaryProcess/Ionization.H"
+#include "Particles/Gather/ScaleFields.H"
 
 #ifdef WARPX_QED
 #    include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
@@ -62,33 +63,6 @@ public:
     virtual void InitData () override;
 
     void InitIonizationModule ();
-
-    virtual void FieldGather (int lev,
-                              const amrex::MultiFab& Ex,
-                              const amrex::MultiFab& Ey,
-                              const amrex::MultiFab& Ez,
-                              const amrex::MultiFab& Bx,
-                              const amrex::MultiFab& By,
-                              const amrex::MultiFab& Bz) final;
-
-    void FieldGather (WarpXParIter& pti,
-                      RealVector& Exp,
-                      RealVector& Eyp,
-                      RealVector& Ezp,
-                      RealVector& Bxp,
-                      RealVector& Byp,
-                      RealVector& Bzp,
-                      amrex::FArrayBox const * exfab,
-                      amrex::FArrayBox const * eyfab,
-                      amrex::FArrayBox const * ezfab,
-                      amrex::FArrayBox const * bxfab,
-                      amrex::FArrayBox const * byfab,
-                      amrex::FArrayBox const * bzfab,
-                      const int ngE, const int e_is_nodal,
-                      const long offset,
-                      const long np_to_gather,
-                      int lev,
-                      int depos_lev);
 
     /**
      * \brief Evolve is the central function PhysicalParticleContainer that
@@ -148,7 +122,19 @@ public:
                          amrex::Real dt,
                          DtType a_dt_type=DtType::Full) override;
 
-    virtual void PushPX (WarpXParIter& pti, amrex::Real dt, DtType a_dt_type=DtType::Full);
+    virtual void PushPX (WarpXParIter& pti,
+                         amrex::FArrayBox const * exfab,
+                         amrex::FArrayBox const * eyfab,
+                         amrex::FArrayBox const * ezfab,
+                         amrex::FArrayBox const * bxfab,
+                         amrex::FArrayBox const * byfab,
+                         amrex::FArrayBox const * bzfab,
+                         const int ngE, const int /*e_is_nodal*/,
+                         const long offset,
+                         const long np_to_push,
+                         int lev, int gather_lev,
+                         amrex::Real dt, ScaleFields scaleFields,
+                         DtType a_dt_type=DtType::Full);
 
     virtual void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& Ex,
@@ -175,7 +161,15 @@ public:
 
     void SplitParticles (int lev);
 
-    IonizationFilterFunc getIonizationFunc ();
+    IonizationFilterFunc getIonizationFunc (const WarpXParIter& pti,
+                                            int lev,
+                                            int ngE,
+                                            const amrex::FArrayBox& Ex,
+                                            const amrex::FArrayBox& Ey,
+                                            const amrex::FArrayBox& Ez,
+                                            const amrex::FArrayBox& Bx,
+                                            const amrex::FArrayBox& By,
+                                            const amrex::FArrayBox& Bz);
 
     // Inject particles in Box 'part_box'
     virtual void AddParticles (int lev);
@@ -194,7 +188,8 @@ public:
      *
      * @param[in] q_tot total charge of the particle species to be initialized
      */
-    void AddPlasmaFromFile (amrex::ParticleReal q_tot);
+    void AddPlasmaFromFile (amrex::ParticleReal q_tot,
+                            amrex::ParticleReal z_shift);
 
     void CheckAndAddParticle (
         amrex::Real x, amrex::Real y, amrex::Real z,
@@ -302,15 +297,6 @@ public:
     void set_quantum_sync_engine_ptr
         (std::shared_ptr<QuantumSynchrotronEngine> ptr) override;
     //__________
-
-    /**
-     * This function evolves the optical depth of the particles if QED effects
-     * are enabled.
-     * @param[in,out] pti particle iterator (optical depth will be modified)
-     * @param[in] dt temporal step
-     */
-    virtual void EvolveOpticalDepth (WarpXParIter& pti,
-        amrex::Real dt);
 
     PhotonEmissionFilterFunc getPhotonEmissionFilterFunc ();
 

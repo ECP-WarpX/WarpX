@@ -1,0 +1,32 @@
+{
+  "electrons": {
+    "particle_cpu": 131072.0,
+    "particle_id": 18862440448.0,
+    "particle_momentum_x": 9.313026326765904e-20,
+    "particle_position_x": 2.6214400000125964,
+    "particle_position_y": 2.621440000012595,
+    "particle_position_z": 2.62144,
+    "particle_weight": 128000000000.00002
+  },
+  "lev=0": {
+    "Bx": 15.076849705018862,
+    "By": 15.076849706227831,
+    "Bz": 15.07711591152293,
+    "Ex": 86034772984177.19,
+    "Ey": 86034772984177.0,
+    "Ez": 86034760818989.11,
+    "jx": 5.854806321272408e+16,
+    "jy": 5.854806321272421e+16,
+    "jz": 5.854804280396036e+16,
+    "part_per_cell": 524288.0,
+    "rho": 720374346.6048285
+  },
+  "positrons": {
+    "particle_cpu": 131072.0,
+    "particle_id": 56518901760.0,
+    "particle_momentum_z": 9.313023242196424e-20,
+    "particle_position_x": 2.6214400000125964,
+    "particle_position_y": 2.6214400000125946,
+    "particle_position_z": 2.62144
+  }
+}

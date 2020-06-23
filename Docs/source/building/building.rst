@@ -20,7 +20,7 @@ single directory (e.g. ``warpx_directory``):
     mkdir warpx_directory
     cd warpx_directory
     git clone https://github.com/ECP-WarpX/WarpX.git
-    git clone https://bitbucket.org/berkeleylab/picsar.git
+    git clone https://github.com/ECP-WarpX/picsar.git
     git clone --branch development https://github.com/AMReX-Codes/amrex.git
 
 Basic compilation
@@ -51,6 +51,8 @@ options are:
     * ``COMP=gcc`` or ``intel``: Compiler.
     * ``USE_MPI=TRUE`` or ``FALSE``: Whether to compile with MPI support.
     * ``USE_OMP=TRUE`` or ``FALSE``: Whether to compile with OpenMP support.
+    * ``USE_GPU=TRUE`` or ``FALSE``: Whether to compile for Nvidia GPUs (requires CUDA).
+    * ``USE_OPENPMD=TRUE`` or ``FALSE``: Whether to support openPMD for I/O (requires openPMD-api).
 
 For a description of these different options, see the `corresponding page <https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html>`__ in the AMReX documentation.
 
@@ -67,6 +69,17 @@ In order to clean a previously compiled version (typically useful for troublesho
     make realclean
 
 before re-attempting compilation.
+
+Preview: CMake Build System
+---------------------------
+
+We are currently transitioning to support CMake as our primary build system.
+Until we have transitioned our documentation and functionality completely, please read the following preview section for details.
+
+.. toctree::
+   :maxdepth: 1
+
+   cmake
 
 Advanced building instructions
 ------------------------------

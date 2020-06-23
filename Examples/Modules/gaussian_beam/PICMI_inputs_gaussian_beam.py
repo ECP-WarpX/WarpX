@@ -47,12 +47,13 @@ field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     grid = grid,
                                     period = 10,
                                     data_list = ['E', 'B', 'J', 'part_per_cell'],
-                                    warpx_file_prefix = 'plotfiles/plt')
+                                    write_dir = '.',
+                                    warpx_file_prefix = 'Python_gaussian_beam_plt')
 
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       period = 10,
                                       species = [electrons, protons],
-                                      data_list = ['weighting', 'momentum', 'fields'])
+                                      data_list = ['weighting', 'momentum'])
 
 sim = picmi.Simulation(solver = solver,
                        max_steps = 10,

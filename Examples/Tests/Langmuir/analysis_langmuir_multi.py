@@ -23,6 +23,8 @@ import yt
 yt.funcs.mylog.setLevel(50)
 import numpy as np
 from scipy.constants import e, m_e, epsilon_0, c
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 # this will be the name of the plot file
 fn = sys.argv[1]
@@ -86,11 +88,8 @@ for field in ['particle_momentum_y',
     print('assert that this is NOT in ds.field_list', (species, field))
     assert (species, field) not in ds.field_list
 species = 'positrons'
-for field in ['particle_Ey']:
-    print('assert that this is in ds.field_list', (species, field))
-    assert (species, field) in ds.field_list
-for field in ['particle_momentum_y',
-              'particle_momentum_z']:
+for field in ['particle_momentum_x',
+              'particle_momentum_y']:
     print('assert that this is NOT in ds.field_list', (species, field))
     assert (species, field) not in ds.field_list
 
@@ -136,3 +135,10 @@ if current_correction:
     print("error: " + str(Linf_norm))
     print("tolerance: 1.e-9")
     assert( Linf_norm < 1.e-9 )
+
+test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+
+if re.search( 'single_precision', fn ):
+    checksumAPI.evaluate_checksum(test_name, fn, rtol=1.e-3)
+else:
+    checksumAPI.evaluate_checksum(test_name, fn)

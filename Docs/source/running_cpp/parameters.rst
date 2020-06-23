@@ -8,6 +8,8 @@ Input parameters
    This section is currently in development.
 
 
+.. _running-cpp-parameters-overall:
+
 Overall simulation parameters
 -----------------------------
 
@@ -66,6 +68,8 @@ Overall simulation parameters
     equation. There is no limitation on the timestep in this case, but
     electromagnetic effects (e.g. propagation of radiation, lasers, etc.)
     are not captured.
+
+.. _running-cpp-parameters-box:
 
 Setting up the field mesh
 -------------------------
@@ -131,6 +135,8 @@ Setting up the field mesh
 
 * ``warpx.n_rz_azimuthal_modes`` (`integer`; 1 by default)
     When using the RZ version, this is the number of azimuthal modes.
+
+.. _running-cpp-parameters-parallelization:
 
 Distribution across MPI ranks and parallelization
 -------------------------------------------------
@@ -220,6 +226,8 @@ Distribution across MPI ranks and parallelization
 * ``warpx.safe_guard_cells`` (`0` or `1`) optional (default `0`)
     For developers: run in safe mode, exchanging more guard cells, and more often in the PIC loop (for debugging).
 
+.. _running-cpp-parameters-parser:
+
 Math parser and user-defined constants
 --------------------------------------
 
@@ -241,6 +249,8 @@ For example, parameters ``a0`` and ``z_plateau`` can be specified with:
 
 * ``my_constants.a0 = 3.0``
 * ``my_constants.z_plateau = 150.e-6``
+
+.. _running-cpp-parameters-particle:
 
 Particle initialization
 -----------------------
@@ -278,6 +288,13 @@ Particle initialization
     The mass of one `physical` particle of this species.
     If ``species_type`` is specified, the mass will be set to the physical value and ``mass`` is optional.
 
+* ``<species_name>.xmin,ymin,zmin`` (`float`) optional (default unlimited)
+    When ``<species_name>.xmin`` and ``<species_name>.xmax`` (see below) are set, they delimit the region within which particles are injected.
+    The same is applicable in the other directions.
+    If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
+
+* ``<species_name>.xmax,ymax,zmax`` (`float`) optional (default unlimited)
+
 * ``<species_name>.injection_style`` (`string`)
     Determines how the particles will be injected in the simulation.
     The options are:
@@ -306,11 +323,12 @@ Particle initialization
       symmetrize the beam in the x and y directions).
 
     * ``external_file``: Inject macroparticles with properties (mass, charge, position, and momentum - :math:`\gamma \beta m c`) read from an external openPMD file.
-      It requires the additional arguments:
+      With it users can specify the additional arguments:
       ``<species_name>.injection_file`` (`string`) openPMD file name and
       ``<species_name>.q_tot`` (`double`) optional (default is ``q_tot=0`` and no re-scaling is done, ``weight=q_p``) when specified it is used to re-scale the weight of externally loaded ``N`` physical particles, each of charge ``q_p``, to inject macroparticles of ``weight=<species_name>.q_tot/q_p/N``.
       ``<species_name>.charge`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
       ``<species_name>.mass`` (`double`) optional (default is read from openPMD file) when set this will be the charge of the physical particle represented by the injected macroparticles.
+      ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
       The external file must include the species ``openPMD::Record``s labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
       If the external file also contains ``openPMD::Records``s for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ```<species_name>.charge`` or ```<species_name>.species_type``).
       The ``external_file`` option is currently implemented for 2D and 3D geometries, with record components ``x``, ``z`` and ``y`` for 3D.
@@ -503,12 +521,12 @@ Particle initialization
     Whether or not to use OpenMP threading for particle initialization.
 
 * ``<species>.do_field_ionization`` (`0` or `1`) optional (default `0`)
-    Do field ionization for this species (using the ADK theory). Currently,
-    this is slow on GPU.
+    Do field ionization for this species (using the ADK theory).
 
 * ``<species>.physical_element`` (`string`)
     Only read if `do_field_ionization = 1`. Symbol of chemical element for
     this species. Example: for Helium, use ``physical_element = He``.
+    Elements up to atomic number Z=86 (Radon) are supported, let us know if you need higher Z.
 
 * ``<species>.ionization_product_species`` (`string`)
     Only read if `do_field_ionization = 1`. Name of species in which ionized
@@ -559,6 +577,7 @@ Particle initialization
     (the name of an existing positron species must be provided).
     **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
 
+.. _running-cpp-parameters-laser:
 
 Laser initialization
 --------------------
@@ -880,6 +899,8 @@ Laser initialization
     B-field to each particle which is then added to the field values gathered
     from the grid in the PIC cycle.
 
+.. _running-cpp-parameters-collision:
+
 Collision initialization
 ------------------------
 
@@ -907,6 +928,8 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     ``<collision_name>``.
     If this is not provided, or if a non-positive value is provided,
     a Coulomb logarithm will be computed automatically according to the algorithm.
+
+.. _running-cpp-parameters-numerics:
 
 Numerics and algorithms
 -----------------------
@@ -1097,6 +1120,8 @@ Numerics and algorithms
      If ``sort_int`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
 
+.. _running-cpp-parameters-boundary:
+
 Boundary conditions
 -------------------
 
@@ -1105,7 +1130,7 @@ Boundary conditions
     and around the refinement patches. See the section :doc:`../../theory/PML`
     for more details.
 
-* ``warpx.pml_ncells`` (`int`; default: 10)
+* ``warpx.pml_ncell`` (`int`; default: 10)
     The depth of the PML, in number of cells.
 
 * ``warpx.pml_delta`` (`int`; default: 10)
@@ -1129,6 +1154,8 @@ Boundary conditions
 
 * ``warpx.do_pml_Hi`` (`2 floats in 2D`, `3 floats in 3D`; default: `1 1 1`)
     The directions along which one wants a pml boundary condition for upper boundaries on mother grid.
+
+.. _running-cpp-parameters-diagnostics:
 
 Diagnostics and output
 ----------------------
@@ -1232,7 +1259,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
     Reduce size of the field output by this ratio in each dimension.
     (This is done by averaging the field over 1 or 2 points along each direction, depending on the staggering).
-    ``plot_coarsening_ratio`` should be an integer divisor of ``blocking_factor``.
+    ``plot_coarsening_ratio`` should be an integer divisor of ``blocking_factor``, defined in the :ref:`parallelization <parallelization_warpx>` section.
 
 * ``<diag_name>.file_prefix`` (`string`) optional (default `diags/plotfiles/plt`)
     Root for output file names. Supports sub-directories.
@@ -1253,10 +1280,6 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     * ``w`` for the particle weight,
 
     * ``ux`` ``uy`` ``uz`` for the particle momentum,
-
-    * ``Ex`` ``Ey`` ``Ez`` for the electric field on particles,
-
-    * ``Bx`` ``By`` ``Bz`` for the magnetic field on particles.
 
     The particle positions are always included.
     Use ``<species>.variables = none`` to plot no particle data, except particle position.

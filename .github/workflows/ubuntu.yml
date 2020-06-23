@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-      with:
-        path: 'warpx_directory/WarpX'
     - name: install dependencies
       run: |
         export DEBIAN_FRONTEND=noninteractive
@@ -29,15 +27,19 @@ jobs:
         CXX=$(which icpc) CC=$(which icc) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
     - name: build WarpX
       run: |
-        cd warpx_directory
-        git clone --depth 1 https://bitbucket.org/berkeleylab/picsar.git
-        git clone --depth 1 --branch development https://github.com/AMReX-Codes/amrex.git
-        cd WarpX
         source /opt/intel/inteloneapi/setvars.sh
         export CXX=$(which icpc)
         export CC=$(which icc)
-        make -j 2 COMP=intel USE_MPI=FALSE USE_OPENPMD=TRUE
-        make -j 2 COMP=intel USE_MPI=FALSE USE_OPENPMD=TRUE PRECISION=FLOAT USE_SINGLE_PRECISION_PARTICLES=TRUE
+
+        mkdir build_dp && cd build_dp
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_MPI=OFF -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF
+        make -j 2
+
+        cd ..
+
+        mkdir build_sp && cd build_sp
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_MPI=OFF -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DENABLE_DP=OFF -DENABLE_DP_PARTICLES=OFF
+        make -j 2
 
   build_dpcc:
     name: oneAPI DPC++ SP [Linux]
@@ -59,14 +61,14 @@ jobs:
         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
         echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
         sudo apt-get update
-        sudo apt-get install -y intel-oneapi-dpcpp-compiler intel-oneapi-mkl gfortran
+        sudo apt-get install -y intel-oneapi-dpcpp-compiler intel-oneapi-mkl
         set +e
         source /opt/intel/inteloneapi/setvars.sh
         set -e
         git clone https://github.com/openPMD/openPMD-api.git
         mkdir openPMD-api/build
         cd openPMD-api/build
-        CXX=$(which dpcpp) CC=$(which clang) cmake .. -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+        CXX=$(which dpcpp) CC=$(which clang) cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
         make -j 2
         sudo make install
     - name: build WarpX
@@ -74,7 +76,7 @@ jobs:
       run: |
         set -ex
         cd warpx_directory
-        git clone --depth 1 https://bitbucket.org/berkeleylab/picsar.git
+        git clone --depth 1 https://github.com/ECP-WarpX/picsar.git
         git clone --depth 1 --branch development https://github.com/AMReX-Codes/amrex.git
         cd WarpX
         set +e
