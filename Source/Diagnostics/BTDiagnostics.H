@@ -55,7 +55,6 @@ private:
     // boost parameters
     amrex::Real m_gamma_boost;
     amrex::Real m_beta_boost;
-    int m_boost_direction;
     int m_moving_window_dir;
 
     /** Number of back-transformed snapshots in the lab-frame requested by the user */
