@@ -6,6 +6,7 @@ CXXSTD        = c++14
 USE_MPI       = TRUE
 USE_PARTICLES = TRUE
 USE_RPATH     = TRUE
+BL_NO_FORT    = TRUE
 
 ifeq ($(USE_GPU),TRUE)
   USE_OMP  = FALSE
@@ -21,9 +22,9 @@ ifeq ($(USE_RZ),TRUE)
 endif
 
 ifeq ($(USE_ASCENT_INSITU),TRUE)
-  ASCENT_HOME ?= NOT_SET
-  ifneq ($(ASCENT_HOME),NOT_SET)
-    include $(ASCENT_HOME)/share/ascent/ascent_config.mk
+  ASCENT_DIR ?= NOT_SET
+  ifneq ($(ASCENT_DIR),NOT_SET)
+    include $(ASCENT_DIR)/share/ascent/ascent_config.mk
   endif
   USE_CONDUIT = TRUE
   USE_ASCENT = TRUE

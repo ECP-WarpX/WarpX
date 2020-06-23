@@ -26,7 +26,14 @@
 using namespace amrex;
 
 WarpXParIter::WarpXParIter (ContainerType& pc, int level)
-    : ParIter(pc, level, MFItInfo().SetDynamic(WarpX::do_dynamic_scheduling))
+    : amrex::ParIter<0,0,PIdx::nattribs>(pc, level,
+             MFItInfo().SetDynamic(WarpX::do_dynamic_scheduling))
+{
+}
+
+WarpXParIter::WarpXParIter (ContainerType& pc, int level, MFItInfo& info)
+    : amrex::ParIter<0,0,PIdx::nattribs>(pc, level,
+                   info.SetDynamic(WarpX::do_dynamic_scheduling))
 {
 }
 
@@ -34,9 +41,6 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     : ParticleContainer<0,0,PIdx::nattribs>(amr_core->GetParGDB())
     , species_id(ispecies)
 {
-    for (unsigned int i = PIdx::Ex; i <= PIdx::Bz; ++i) {
-        communicate_real_comp[i] = false; // Don't need to communicate E and B.
-    }
     SetParticleSize();
     ReadParameters();
 
@@ -45,12 +49,6 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     particle_comps["ux"] = PIdx::ux;
     particle_comps["uy"] = PIdx::uy;
     particle_comps["uz"] = PIdx::uz;
-    particle_comps["Ex"] = PIdx::Ex;
-    particle_comps["Ey"] = PIdx::Ey;
-    particle_comps["Ez"] = PIdx::Ez;
-    particle_comps["Bx"] = PIdx::Bx;
-    particle_comps["By"] = PIdx::By;
-    particle_comps["Bz"] = PIdx::Bz;
 #ifdef WARPX_DIM_RZ
     particle_comps["theta"] = PIdx::theta;
 #endif

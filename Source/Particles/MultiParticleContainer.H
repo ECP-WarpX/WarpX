@@ -79,18 +79,6 @@ public:
     void InitData ();
 
     ///
-    /// Performs the field gather operation using the input fields E and B, for all the species
-    /// in the MultiParticleContainer. This is the electromagnetic version of the field gather.
-    ///
-    void FieldGather (int lev,
-                      const amrex::MultiFab& Ex, const amrex::MultiFab& Ey,
-                      const amrex::MultiFab& Ez, const amrex::MultiFab& Bx,
-                      const amrex::MultiFab& By, const amrex::MultiFab& Bz,
-                      const amrex::MultiFab& Ex_avg, const amrex::MultiFab& Ey_avg,
-                      const amrex::MultiFab& Ez_avg, const amrex::MultiFab& Bx_avg,
-                      const amrex::MultiFab& By_avg, const amrex::MultiFab& Bz_avg);
-
-    ///
     /// This evolves all the particles by one PIC time step, including current deposition, the
     /// field solve, and pushing the particles, for all the species in the MultiParticleContainer.
     /// This is the electromagnetic version.
@@ -130,7 +118,9 @@ public:
     ///
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
-    void doFieldIonization ();
+    void doFieldIonization (int lev,
+                            const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
+                            const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
 
     void doCoulombCollisions ();
 
@@ -224,7 +214,13 @@ public:
     /**
     * \brief Performs QED events (Breit-Wheeler process and photon emission)
     */
-    void doQedEvents();
+    void doQedEvents (int lev,
+                      const amrex::MultiFab& Ex,
+                      const amrex::MultiFab& Ey,
+                      const amrex::MultiFab& Ez,
+                      const amrex::MultiFab& Bx,
+                      const amrex::MultiFab& By,
+                      const amrex::MultiFab& Bz);
 #endif
 
     int getSpeciesID (std::string product_str) const;
@@ -235,12 +231,24 @@ protected:
     /**
     * \brief Performs Breit-Wheeler process for the species for which it is enabled
     */
-    void doQedBreitWheeler();
+    void doQedBreitWheeler (int lev,
+                            const amrex::MultiFab& Ex,
+                            const amrex::MultiFab& Ey,
+                            const amrex::MultiFab& Ez,
+                            const amrex::MultiFab& Bx,
+                            const amrex::MultiFab& By,
+                            const amrex::MultiFab& Bz);
 
     /**
     * \brief Performs QED photon emission for the species for which it is enabled
     */
-    void doQedQuantumSync();
+    void doQedQuantumSync (int lev,
+                           const amrex::MultiFab& Ex,
+                           const amrex::MultiFab& Ey,
+                           const amrex::MultiFab& Ez,
+                           const amrex::MultiFab& Bx,
+                           const amrex::MultiFab& By,
+                           const amrex::MultiFab& Bz);
 #endif
 
     // Particle container types
