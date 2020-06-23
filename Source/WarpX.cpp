@@ -554,11 +554,17 @@ WarpX::ReadParameters ()
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#if (defined WARPX_DIM_RZ)
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( Geom(0).isPeriodic(0) == 0, "In RZ,"
+                                         " the boundary condition in r can not"
+                                         " be periodic.\nPlease change "
+                                         " `geometry.is_periodic` in the input");
+#if (defined WARPX_USE_PSATD)
         // Force do_nodal=true (that is, not staggered) and
         // use same shape factors in all directions, for gathering
         do_nodal = true;
         l_lower_order_in_v = false;
+#endif
 #endif
     }
 
