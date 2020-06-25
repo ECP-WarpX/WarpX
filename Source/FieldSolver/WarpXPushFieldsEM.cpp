@@ -90,6 +90,7 @@ namespace {
 #endif
         solver.BackwardTransform(*Bfield[2], Idx::Bz);
 
+#ifndef WARPX_DIM_RZ
         if (solver.fft_do_time_averaging){
             solver.BackwardTransform(*Efield_avg[0], Idx::Ex_avg);
             solver.BackwardTransform(*Efield_avg[1], Idx::Ey_avg);
@@ -99,6 +100,7 @@ namespace {
             solver.BackwardTransform(*Bfield_avg[1], Idx::By_avg);
             solver.BackwardTransform(*Bfield_avg[2], Idx::Bz_avg);
         }
+#endif
     }
 }
 
