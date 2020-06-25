@@ -912,7 +912,7 @@ PhysicalParticleContainer::Evolve (int lev,
                                    Real /*t*/, Real dt, DtType a_dt_type)
 {
 
-    bool fft_do_time_averaging;
+    bool fft_do_time_averaging = false;
     ParmParse pp("psatd");
     pp.query("do_time_averaging", fft_do_time_averaging);
 
