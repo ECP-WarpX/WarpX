@@ -32,13 +32,13 @@ jobs:
         export CC=$(which icc)
 
         mkdir build_dp && cd build_dp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_MPI=OFF -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF
         make -j 2
 
         cd ..
 
         mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_MPI=OFF -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DENABLE_DP=OFF -DENABLE_DP_PARTICLES=OFF
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DENABLE_DP=OFF -DENABLE_DP_PARTICLES=OFF
         make -j 2
 
   build_dpcc:
