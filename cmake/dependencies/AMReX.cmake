@@ -9,6 +9,12 @@ macro(find_amrex)
             set(ENABLE_CONDUIT ON CACHE INTERNAL "")
         endif()
 
+        if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+            set(ENABLE_ASSERTIONS ON CACHE INTERNAL "")
+        else()
+            set(ENABLE_ASSERTIONS OFF CACHE INTERNAL "")
+        endif()
+
         if(WarpX_COMPUTE STREQUAL CUDA)
             set(ENABLE_ACC   OFF CACHE INTERNAL "")
             set(ENABLE_CUDA  ON  CACHE INTERNAL "")
@@ -86,18 +92,20 @@ macro(find_amrex)
         # AMReX options not relevant to WarpX users
         mark_as_advanced(AMREX_BUILD_DATETIME)
         mark_as_advanced(DIM)
+        mark_as_advanced(ENABLE_ACC)
+        mark_as_advanced(ENABLE_ASSERTIONS)
+        mark_as_advanced(ENABLE_AMRDATA)
+        mark_as_advanced(ENABLE_CUDA)
         mark_as_advanced(ENABLE_DP)
         mark_as_advanced(ENABLE_DP_PARTICLES)
+        mark_as_advanced(ENABLE_DPCPP)
         mark_as_advanced(ENABLE_FORTRAN)
         mark_as_advanced(ENABLE_FORTRAN_INTERFACES)
         mark_as_advanced(ENABLE_LINEAR_SOLVERS)
         mark_as_advanced(ENABLE_MPI)
+        mark_as_advanced(ENABLE_OMP)
         mark_as_advanced(ENABLE_PIC)
         mark_as_advanced(USE_XSDK_DEFAULTS)
-        # ENABLE_ACC
-        # ENABLE_CUDA
-        # ENABLE_DPCPP
-        # ENABLE_OMP
 
         message(STATUS "AMReX: Using INTERNAL version '${AMREX_PKG_VERSION}' (${AMREX_GIT_VERSION})")
     else()
