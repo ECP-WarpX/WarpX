@@ -487,13 +487,11 @@ public:
      * \param[in] yfield_parser, parser function to initialize y-field
      * \param[in] zfield_parser, parser function to initialize z-field
      * \param[in] lev, level of the Multifabs that is initialized
-     * \param[in] init_guard_cells, boolean flag to initialize guard cells
-     *            (default value for init_guard_cells is true)
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
          ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
-         ParserWrapper<3> *zfield_parser, const int lev, bool init_guard_cells = true);
+         ParserWrapper<3> *zfield_parser, const int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`
