@@ -404,9 +404,9 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
        // Box index-space includes the staggering of the multifabs
-       const Box& tbx = mfi.tilebox( x_nodal_flag );
-       const Box& tby = mfi.tilebox( y_nodal_flag );
-       const Box& tbz = mfi.tilebox( z_nodal_flag );
+       amrex::Box tbx = mfi.tilebox( x_nodal_flag );
+       amrex::Box tby = mfi.tilebox( y_nodal_flag );
+       amrex::Box tbz = mfi.tilebox( z_nodal_flag );
        if (init_guard_cells) {
            // Box index-space includes staggering and guard cells of multifabs
            tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
