@@ -61,8 +61,10 @@ macro(set_default_build_type default_build_type)
     set(CMAKE_CONFIGURATION_TYPES "Release;Debug;MinSizeRel;RelWithDebInfo")
     if(NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE ${default_build_type}
-                CACHE STRING
-                "Choose the build type, e.g. Release, Debug, or RelWithDebInfo." FORCE)
+            CACHE STRING
+            "Choose the build type, e.g. Release, Debug, or RelWithDebInfo." FORCE)
+        set_property(CACHE CMAKE_BUILD_TYPE
+            PROPERTY STRINGS ${CMAKE_CONFIGURATION_TYPES})
     endif()
 endmacro()
 
