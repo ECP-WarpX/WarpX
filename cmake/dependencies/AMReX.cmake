@@ -52,8 +52,6 @@ macro(find_amrex)
         set(ENABLE_PARTICLES ON CACHE INTERNAL "")
         set(ENABLE_TINY_PROFILE ON CACHE INTERNAL "")
 
-        # ENABLE_ASCENT
-        # ENABLE_CONDUIT
         # ENABLE_SENSEI_IN_SITU
         # we'll need this for Python bindings
         #set(ENABLE_PIC ON CACHE INTERNAL "")
@@ -95,16 +93,26 @@ macro(find_amrex)
         mark_as_advanced(ENABLE_ACC)
         mark_as_advanced(ENABLE_ASSERTIONS)
         mark_as_advanced(ENABLE_AMRDATA)
+        mark_as_advanced(ENABLE_BACKTRACE) # BT files are written anyway
+        mark_as_advanced(ENABLE_BASE_PROFILE) # mutually exclusive to tiny profile
+        mark_as_advanced(ENABLE_CONDUIT)
         mark_as_advanced(ENABLE_CUDA)
         mark_as_advanced(ENABLE_DP)
         mark_as_advanced(ENABLE_DP_PARTICLES)
         mark_as_advanced(ENABLE_DPCPP)
+        mark_as_advanced(ENABLE_EB)
+        mark_as_advanced(ENABLE_FPE)
         mark_as_advanced(ENABLE_FORTRAN)
         mark_as_advanced(ENABLE_FORTRAN_INTERFACES)
+        mark_as_advanced(ENABLE_HDF5)  # we do HDF5 I/O (and more) via openPMD-api
         mark_as_advanced(ENABLE_LINEAR_SOLVERS)
+        mark_as_advanced(ENABLE_MEM_PROFILE)
         mark_as_advanced(ENABLE_MPI)
         mark_as_advanced(ENABLE_OMP)
         mark_as_advanced(ENABLE_PIC)
+        mark_as_advanced(ENABLE_SENSEI_INSITU)
+        mark_as_advanced(ENABLE_TINY_PROFILE)
+        mark_as_advanced(TP_PROFILE)
         mark_as_advanced(USE_XSDK_DEFAULTS)
 
         message(STATUS "AMReX: Using INTERNAL version '${AMREX_PKG_VERSION}' (${AMREX_GIT_VERSION})")
