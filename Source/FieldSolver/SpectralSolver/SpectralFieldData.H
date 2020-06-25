@@ -51,8 +51,25 @@ class SpectralFieldData
         ~SpectralFieldData();
         void ForwardTransform( const amrex::MultiFab& mf,
                                const int field_index, const int i_comp);
-        void BackwardTransform( amrex::MultiFab& mf,
-                               const int field_index, const int i_comp);
+
+        /**
+         * \brief Perform inverse Fourier transform of a given spectral field
+         *
+         * \param[inout] mf Reference to the destination MultiFab where the inverse
+         *                  Fourier transform will be stored
+         * \param[in] field_index Index of the spectral field to be transformed back
+         *                        to real space
+         * \param[in] i_comp Index of the component of the destination MultiFab where
+         *                   the inverse Fourier transform will be stored
+         * \param[in] fill_guard_cells Optional argument (default=false): if true,
+         *                             the guard cells of the destination MultiFab
+         *                             will be filled in addition to its valid cells
+         */
+        void BackwardTransform ( amrex::MultiFab& mf,
+                                 const int field_index,
+                                 const int i_comp,
+                                 const bool fill_guard_cells=false );
+
         // `fields` stores fields in spectral space, as multicomponent FabArray
         SpectralField fields;
 

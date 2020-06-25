@@ -168,13 +168,11 @@ SpectralFieldData::ForwardTransform( const MultiFab& mf,
     }
 }
 
-
-/* \brief Transform spectral field specified by `field_index` back to
- * real space, and store it in the component `i_comp` of `mf` */
 void
-SpectralFieldData::BackwardTransform( MultiFab& mf,
-                                      const int field_index,
-                                      const int i_comp )
+SpectralFieldData::BackwardTransform ( MultiFab& mf,
+                                       const int field_index,
+                                       const int i_comp,
+                                       const bool fill_guard_cells )
 {
     // Check field index type, in order to apply proper shift in spectral space
     const bool is_nodal_x = mf.is_nodal(0);
@@ -188,27 +186,30 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
     // Loop over boxes
     for ( MFIter mfi(mf); mfi.isValid(); ++mfi ){
 
-        // Copy the spectral-space field `tmpSpectralField` to the appropriate
-        // field (specified by the input argument field_index)
-        // and apply correcting shift factor if the field is to be transformed
-        // to a cell-centered grid in real space instead of a nodal grid.
+        // Copy the spectral-space field tmpSpectralField to the appropriate field
+        // (specified by the input argument field_index) and apply correcting shift
+        // factor if the field is transformed to a cell-centered grid in real space
+        // instead of a nodal grid
         {
             Array4<const Complex> field_arr = SpectralFieldData::fields[mfi].array();
             Array4<Complex> tmp_arr = tmpSpectralField[mfi].array();
+
             const Complex* xshift_arr = xshift_FFTtoCell[mfi].dataPtr();
 #if (AMREX_SPACEDIM == 3)
             const Complex* yshift_arr = yshift_FFTtoCell[mfi].dataPtr();
 #endif
             const Complex* zshift_arr = zshift_FFTtoCell[mfi].dataPtr();
-            // Loop over indices within one box
+
             const Box spectralspace_bx = tmpSpectralField[mfi].box();
 
-            ParallelFor( spectralspace_bx,
-            [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+            // Loop over cells within one box
+            ParallelFor( spectralspace_bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+            {
                 Complex spectral_field_value = field_arr(i,j,k,field_index);
-                // Apply proper shift in each dimension
+
+                // Apply proper shift in each direction
                 if (is_nodal_x==false) spectral_field_value *= xshift_arr[i];
-#if (AMREX_SPACEDIM == 3)
+#if   (AMREX_SPACEDIM == 3)
                 if (is_nodal_y==false) spectral_field_value *= yshift_arr[j];
                 if (is_nodal_z==false) spectral_field_value *= zshift_arr[k];
 #elif (AMREX_SPACEDIM == 2)
@@ -217,26 +218,25 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
                 // Copy field into temporary array
                 tmp_arr(i,j,k) = spectral_field_value;
             });
-
         }
 
-        // Perform Fourier transform from `tmpSpectralField` to `tmpRealField`
+        // Perform Fourier transform from tmpSpectralField to tmpRealField
         AnyFFT::Execute(backward_plan[mfi]);
 
-        // Copy the temporary field `tmpRealField` to the real-space field `mf`
-        // (only in the valid cells ; not in the guard cells)
-        // Normalize (divide by 1/N) since the FFT+IFFT results in a factor N
+        // Copy the temporary field tmpRealField to the real-space field in the
+        // destination MultiFab mf. Normalize (divide by 1/N) since FFT + IFFT
+        // results in a factor N
         {
             Array4<Real> mf_arr = mf[mfi].array();
             Array4<const Real> tmp_arr = tmpRealField[mfi].array();
-            // Normalization: divide by the number of points in realspace
-            // (includes the guard cells)
+
+            // Normalization: divide by number of points in real space (includes guard cells)
             const Box realspace_bx = tmpRealField[mfi].box();
-            const Real inv_N = 1./realspace_bx.numPts();
+            const Real inv_N = 1.0_rt / realspace_bx.numPts();
 
             if (m_periodic_single_box) {
                 // Enforce periodicity on the nodes, by using modulo in indices
-                // This is because `tmp_arr` is cell-centered while `mf_arr` can be nodal
+                // This is because tmp_arr is cell-centered while mf_arr can be nodal
                 int const nx = realspace_bx.length(0);
                 int const ny = realspace_bx.length(1);
 #if (AMREX_SPACEDIM == 3)
@@ -244,8 +244,8 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
 #else
                 int constexpr nz = 1;
 #endif
-                ParallelFor(
-                    mfi.validbox(),
+                // Loop over cells within one box
+                ParallelFor( mfi.validbox(),
                     /* GCC 8.1-8.2 work-around (ICE):
                      *   named capture in nonexcept lambda needed for modulo operands
                      *   https://godbolt.org/z/ppbAzd
@@ -255,13 +255,17 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
                         mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i%nx, j%ny, k%nz);
                     });
             } else {
-                ParallelFor( mfi.validbox(),
-                [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-                    // Copy and normalize field
+                amrex::Box bx;
+                if (fill_guard_cells) {
+                    bx = mf[mfi].box();  // fill valid cells + guard cells
+                } else {
+                    bx = mfi.validbox(); // fill valid cells only (default)
+                }
+                // Loop over cells within one box: copy and normalize field
+                ParallelFor( bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
                     mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i,j,k);
                 });
             }
-
         }
     }
 }
