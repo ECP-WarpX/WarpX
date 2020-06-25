@@ -11,8 +11,10 @@ macro(find_amrex)
 
         if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
             set(ENABLE_ASSERTIONS ON CACHE INTERNAL "")
+            set(ENABLE_FPE ON CACHE INTERNAL "")
         else()
             set(ENABLE_ASSERTIONS OFF CACHE INTERNAL "")
+            set(ENABLE_FPE OFF CACHE INTERNAL "")
         endif()
 
         if(WarpX_COMPUTE STREQUAL CUDA)
