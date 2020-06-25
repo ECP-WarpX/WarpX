@@ -476,13 +476,24 @@ public:
      * This function initializes the E and B fields on each level
      * using the parser and the user-defined function for the external fields.
      * The subroutine will parse the x_/y_z_external_grid_function and
-     * then, the B or E multifab is initialized based on the (x,y,z) position
-     * on the staggered yee-grid or cell-centered grid.
+     * then, the field multifab is initialized based on the (x,y,z) position
+     * on the staggered yee-grid or cell-centered grid, in the interior cells
+     * and guard cells.
+     *
+     * \param[in] mfx, x-component of the field to be initialized
+     * \param[in] mfy, y-component of the field to be initialized
+     * \param[in] mfz, z-component of the field to be initialized
+     * \param[in] xfield_parser, parser function to initialize x-field
+     * \param[in] yfield_parser, parser function to initialize y-field
+     * \param[in] zfield_parser, parser function to initialize z-field
+     * \param[in] lev, level of the Multifabs that is initialized
+     * \param[in] init_guard_cells, boolean flag to initialize guard cells
+     *            (default value for init_guard_cells is true)
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
          ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
-         ParserWrapper<3> *zfield_parser, const int lev);
+         ParserWrapper<3> *zfield_parser, const int lev, init_guard_cells = true);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`

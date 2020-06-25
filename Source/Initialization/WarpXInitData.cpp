@@ -393,7 +393,7 @@ void
 WarpX::InitializeExternalFieldsOnGridUsingParser (
        MultiFab *mfx, MultiFab *mfy, MultiFab *mfz,
        ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
-       ParserWrapper<3> *zfield_parser, const int lev)
+       ParserWrapper<3> *zfield_parser, const int lev, bool init_guard_cells)
 {
 
     const auto dx_lev = geom[lev].CellSizeArray();
@@ -403,9 +403,16 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
     amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-       const Box& tbx = mfi.growntilebox(x_nodal_flag);
-       const Box& tby = mfi.growntilebox(y_nodal_flag);
-       const Box& tbz = mfi.growntilebox(z_nodal_flag);
+       // Box index-space includes the staggering of the multifabs
+       const Box& tbx = mfi.tilebox( x_nodal_flag );
+       const Box& tby = mfi.tilebox( y_nodal_flag );
+       const Box& tbz = mfi.tilebox( z_nodal_flag );
+       if (init_guard_cells) {
+           // Box index-space includes staggering and guard cells of multifabs
+           tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
+           tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
+           tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
+       }
 
        auto const& mfxfab = mfx->array(mfi);
        auto const& mfyfab = mfy->array(mfi);
