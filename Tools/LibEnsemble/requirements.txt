@@ -1,6 +1,7 @@
 matplotlib
 numpy
 scipy
+pytest
 libensemble
 yt
 nlopt
