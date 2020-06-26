@@ -3,7 +3,7 @@ Run LibEnsemble on WarpX
 
 `LibEnsemble <https://github.com/Libensemble>`__ is a library to coordinate the concurrent evaluation of dynamic ensembles of calculations.
 While a WarpX simulation can provide insight in some physics, it remains a single point evaluation in the space of parameters.
-If you have a simulation ready for use, but would like to (i) scan over some input parameters uniformly for, e.g., a tolerance study, or (ii) have a random evaluation of the space of input parameters within a given span or (iii) tune some input parameters to optimize an output parameter, e.g., beam emittance, energy spread, etc., LibEnsemble provides these capabilities and will take care of tasks monitoring with fault tolerance on multiple platform (LibEnsemble targets modern HPC platforms like Summit).
+If you have a simulation ready for use, but would like to (i) scan over some input parameters uniformly for, e.g., a tolerance study, or (ii) have a random evaluation of the space of input parameters within a given span or (iii) tune some input parameters to optimize an output parameter, e.g., beam emittance, energy spread, etc., LibEnsemble provides these capabilities and will take care of tasks monitoring with fault tolerance on multiple platforms (LibEnsemble targets modern HPC platforms like Summit).
 
 Scripts to run LibEnsemble on WarpX simulations can be found in ``WarpX/Tools/LibEnsemble/``.
 This documentation does not aim at giving a training on LibEnsemble, so please refer to the `LibEnsemble documentation <https://libensemble.readthedocs.io/en/develop/>`__ for technical details.
@@ -118,7 +118,7 @@ Adjust the ``local_specs`` dictionary in ``all_machine_specs.py`` to fix the pat
 
 .. code-block:: sh
 
-    python run_libE_on_warpx.py --comms local --nworkers 3
+    python run_libensemble_on_warpx.py --comms local --nworkers 3
 
 This is adapted to a 4-core machine, as it will use:
 

@@ -554,6 +554,11 @@ WarpX::ReadParameters ()
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
+
+#if defined WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
+                   "The problem must not be periodic in the radial direction");
+#endif
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
         // Force do_nodal=true (that is, not staggered) and
         // use same shape factors in all directions, for gathering
