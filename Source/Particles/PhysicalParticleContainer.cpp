@@ -974,29 +974,12 @@ PhysicalParticleContainer::Evolve (int lev,
             const long np = pti.numParticles();
 
             // Data on the grid
-            FArrayBox const* exfab;
-            FArrayBox const* eyfab;
-            FArrayBox const* ezfab;
-            FArrayBox const* bxfab;
-            FArrayBox const* byfab;
-            FArrayBox const* bzfab;
-
-            if (fft_do_time_averaging){
-                exfab = &(Ex_avg[pti]);
-                eyfab = &(Ey_avg[pti]);
-                ezfab = &(Ez_avg[pti]);
-                bxfab = &(Bx_avg[pti]);
-                byfab = &(By_avg[pti]);
-                bzfab = &(Bz_avg[pti]);
-                }
-            else {
-                exfab = &(Ex[pti]);
-                eyfab = &(Ey[pti]);
-                ezfab = &(Ez[pti]);
-                bxfab = &(Bx[pti]);
-                byfab = &(By[pti]);
-                bzfab = &(Bz[pti]);
-                }
+            FArrayBox const* exfab = fft_do_time_averaging ? &(Ex_avg[pti]) : &(Ex[pti]);
+            FArrayBox const* eyfab = fft_do_time_averaging ? &(Ey_avg[pti]) : &(Ey[pti]);
+            FArrayBox const* ezfab = fft_do_time_averaging ? &(Ez_avg[pti]) : &(Ez[pti]);
+            FArrayBox const* bxfab = fft_do_time_averaging ? &(Bx_avg[pti]) : &(Bx[pti]);
+            FArrayBox const* byfab = fft_do_time_averaging ? &(By_avg[pti]) : &(By[pti]);
+            FArrayBox const* bzfab = fft_do_time_averaging ? &(Bz_avg[pti]) : &(Bz[pti]);
 
             Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
 
