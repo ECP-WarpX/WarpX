@@ -1,3 +1,5 @@
+.. _libensemble:
+
 Run LibEnsemble on WarpX
 ========================
 

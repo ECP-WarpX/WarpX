@@ -152,13 +152,6 @@ set_target_properties(WarpX PROPERTIES
 # link dependencies
 target_link_libraries(WarpX PUBLIC WarpX::thirdparty::AMReX)
 
-if(WarpX_ASCENT)
-    # work-around until ascent's CMake Config scripts are properly placed
-    #   https://github.com/Alpine-DAV/ascent/pull/540
-    target_include_directories(WarpX SYSTEM PUBLIC ${Ascent_DIR}/../../include)
-    target_include_directories(WarpX SYSTEM PUBLIC ${Ascent_DIR}/../../include/ascent)
-endif()
-
 if(WarpX_PSATD)
     if(ENABLE_CUDA)
         # CUDA_ADD_CUFFT_TO_TARGET(WarpX)
