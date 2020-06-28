@@ -135,14 +135,11 @@ PsatdAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
 
             // Update B (see WarpX online documentation: theory section)
 
-            fields(i,j,k,Idx::Bx) = C*Bx_old - S_ck*I*(ky*Ez_old-kz*Ey_old)
-                                    + X1*I*(ky*Jz-kz*Jy);
+            fields(i,j,k,Idx::Bx) = C*Bx_old - S_ck*I*(ky*Ez_old-kz*Ey_old) + X1*I*(ky*Jz-kz*Jy);
 
-            fields(i,j,k,Idx::By) = C*By_old - S_ck*I*(kz*Ex_old-kx*Ez_old)
-                                    + X1*I*(kz*Jx-kx*Jz);
+            fields(i,j,k,Idx::By) = C*By_old - S_ck*I*(kz*Ex_old-kx*Ez_old) + X1*I*(kz*Jx-kx*Jz);
 
-            fields(i,j,k,Idx::Bz) = C*Bz_old - S_ck*I*(kx*Ey_old-ky*Ex_old)
-                                    + X1*I*(kx*Jy-ky*Jx);
+            fields(i,j,k,Idx::Bz) = C*Bz_old - S_ck*I*(kx*Ey_old-ky*Ex_old) + X1*I*(kx*Jy-ky*Jx);
         });
     }
 };
