@@ -37,7 +37,8 @@ SpectralSolver::SpectralSolver(
                 const int norder_z, const bool nodal,
                 const amrex::Array<amrex::Real,3>& v_galilean,
                 const amrex::RealVect dx, const amrex::Real dt,
-                const bool pml, const bool periodic_single_box ) {
+                const bool pml, const bool periodic_single_box,
+                const bool update_with_rho ) {
 
     // Initialize all structures using the same distribution mapping dm
 
@@ -55,7 +56,7 @@ SpectralSolver::SpectralSolver(
     } else if ((v_galilean[0]==0) && (v_galilean[1]==0) && (v_galilean[2]==0)){
          // v_galilean is 0: use standard PSATD algorithm
          algorithm = std::unique_ptr<PsatdAlgorithm>( new PsatdAlgorithm(
-             k_space, dm, norder_x, norder_y, norder_z, nodal, dt ) );
+             k_space, dm, norder_x, norder_y, norder_z, nodal, dt, update_with_rho ) );
       } else {
           // Otherwise: use the Galilean algorithm
           algorithm = std::unique_ptr<GalileanAlgorithm>( new GalileanAlgorithm(

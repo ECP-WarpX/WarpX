@@ -1078,6 +1078,14 @@ Numerics and algorithms
     `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_ is applied.
     Only used when compiled and running with the PSATD solver.
 
+* ``psatd.update_with_rho`` (`0` or `1`; default: `0`)
+    If true, the terms containing :math:`\widehat{\boldsymbol{k}}\cdot\widetilde{\boldsymbol{E}}^{\,n}`
+    and :math:`\widehat{\boldsymbol{k}}\cdot\widetilde{\boldsymbol{J}}^{\,n+1/2}`
+    in the update equation for :math:`\widetilde{\boldsymbol{E}}^{\,n+1}`,
+    equation (13) of `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_,
+    are computed using :math:`\rho^n` and :math:`\rho^{n+1}`.
+    Only used when compiled with ``USE_PSATD=TRUE``.
+
 * ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
     Defines the galilean velocity.
     Non-zero `v_galilean` activates Galilean algorithm, which suppresses the Numerical Cherenkov instability
