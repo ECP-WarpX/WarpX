@@ -18,10 +18,11 @@ env:
     - WARPX_CI_SINGLE_PRECISION=TRUE
     - WARPX_CI_RZ_OR_NOMPI=TRUE
     - WARPX_CI_QED=TRUE
+    - WARPX_CI_PSATD_RZ=TRUE
 
 before_install:
     - sudo apt-get update
-    - sudo apt-get install -y gcc gfortran g++ openmpi-bin libopenmpi-dev libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev pkg-config make python3 python3-pip python3-setuptools
+    - sudo apt-get install -y gcc gfortran g++ openmpi-bin libopenmpi-dev libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev pkg-config make python3 python3-pip python3-setuptools libblas-dev liblapack-dev
       # xenial misses "libadios-openmpi-dev"
     - sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 2
     - sudo update-alternatives --set python /usr/bin/python3
@@ -36,10 +37,19 @@ install:
           -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
           -DCMAKE_INSTALL_PREFIX=/usr/local;
       fi
+    - if [ "${WARPX_CI_PSATD_RZ:-FALSE}" == "TRUE" ]; then
+        sudo cmake-easyinstall git+https://bitbucket.org/icl/blaspp.git
+          -DBLAS_LIBRARY=generic -DUSE_OPENMP=off -DBLASPP_BUILD_TESTS=off -DCMAKE_INSTALL_PREFIX=/usr/local;
+        sudo cmake-easyinstall git+https://bitbucket.org/icl/lapackpp.git
+          -DUSE_OPENMP=off -DLAPACKPP_BUILD_TESTS=off -DCMAKE_INSTALL_PREFIX=/usr/local;
+      fi
 
 script:
     - export FFTW_HOME=/usr/
+    - export BLASPP_HOME=/usr/local/
+    - export LAPACKPP_HOME=/usr/local/
     - if [ -z ${WARPX_CI_OPENPMD} ]; then WARPX_CI_OPENPMD=TRUE; fi
+    - if [ -z ${WARPX_CI_PSATD_RZ} ]; then WARPX_CI_PSATD_RZ=TRUE; fi
 
     # Run the tests on the current commit
     - export WARPX_TEST_COMMIT=$TRAVIS_COMMIT
