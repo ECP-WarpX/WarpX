@@ -160,8 +160,8 @@ void CollisionType::doCoulombCollisionsWithinTile
                         indices_1, cell_start_1, cell_half_1 );
 
 #if defined WARPX_DIM_RZ
-                    auto dV = MathConst::pi*(2.0*((i_cell-i_cell%nr)/nr)+1.0) *
-                        dr*dr*dz;
+                    int ri = (i_cell - i_cell%nr) / nr;
+                    auto dV = MathConst::pi*(2.0*ri+1.0)*dr*dr*dz;
 #endif
 
                     // Call the function in order to perform collisions
@@ -255,8 +255,8 @@ void CollisionType::doCoulombCollisionsWithinTile
                     ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2);
 
 #if defined WARPX_DIM_RZ
-                    auto dV = MathConst::pi*(2.0*((i_cell-i_cell%nr)/nr)+1.0) *
-                        dr*dr*dz;
+                    int ri = (i_cell - i_cell%nr) / nr;
+                    auto dV = MathConst::pi*(2.0*ri+1.0)*dr*dr*dz;
 #endif
 
                     // Call the function in order to perform collisions
