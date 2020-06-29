@@ -136,8 +136,8 @@ void CollisionType::doCoulombCollisionsWithinTile
 #if defined WARPX_DIM_XZ
         auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined WARPX_DIM_RZ
-        auto dr = geom.CellSize(0)
-        auto dz = geom.CellSize(1)
+        auto dr = geom.CellSize(0);
+        auto dz = geom.CellSize(1);
 #elif (AMREX_SPACEDIM == 3)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
@@ -224,8 +224,8 @@ void CollisionType::doCoulombCollisionsWithinTile
 #if defined WARPX_DIM_XZ
         auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined WARPX_DIM_RZ
-        auto dr = geom.CellSize(0)
-        auto dz = geom.CellSize(1)
+        auto dr = geom.CellSize(0);
+        auto dz = geom.CellSize(1);
 #elif (AMREX_SPACEDIM == 3)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
