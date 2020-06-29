@@ -1,7 +1,7 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 600
+max_step = 500
 
 amr.n_cell = 128 128
 amr.max_grid_size = 128

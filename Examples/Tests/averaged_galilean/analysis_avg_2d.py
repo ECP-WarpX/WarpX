@@ -26,10 +26,10 @@ Ez= ds.index.grids[0]['boxlib', 'Ez'].squeeze().v
 energyE_averaged_psatd = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
 
 #E field energy precalculated with standard Galilean PSATD (v_galilean = (0,0,0.98503756273))
-energyE_galilean_psatd = 2.3364135466773267e-12
+energyE_galilean_psatd = 2.969286927314708e-14
 
 error_rel = energyE_averaged_psatd / energyE_galilean_psatd
-tolerance_rel = 1e-6
+tolerance_rel = 1e-3
 
 print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
