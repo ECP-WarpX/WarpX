@@ -174,6 +174,16 @@ public:
     // Inject particles in Box 'part_box'
     virtual void AddParticles (int lev);
 
+    /**
+     * Create new macroparticles for this species, with a fixed
+     * number of particles per cell (in the cells of `part_realbox`).
+     * The new particles are only created inside the intersection of `part_realbox`
+     * with the local grid for the current proc.
+     * @param[in] lev the index of the refinement level
+     * @param[in] part_realbox the box in which new particles should be created
+     * (this box should correspond to an integer number of cells in each direction,
+     * but its boundaries need not be aligned with the actual cells of the simulation)
+    */
     void AddPlasma (int lev, amrex::RealBox part_realbox = amrex::RealBox());
 
     void MapParticletoBoostedFrame (amrex::Real& x, amrex::Real& y, amrex::Real& z, std::array<amrex::Real, 3>& u);
@@ -185,8 +195,8 @@ public:
         const amrex::Real q_tot, long npart, const int do_symmetrize);
 
     /** Load a particle beam from an external file
-     *
      * @param[in] q_tot total charge of the particle species to be initialized
+     * @param[in] z_shift optional shift to the z position of particles (useful for boosted frame runs)
      */
     void AddPlasmaFromFile (amrex::ParticleReal q_tot,
                             amrex::ParticleReal z_shift);

@@ -602,72 +602,6 @@ def get_particle_uz(species_number, level=0):
     return get_particle_arrays(species_number, 3, level)
 
 
-def get_particle_Ex(species_number, level=0):
-    '''
-
-    Return a list of numpy arrays containing the particle
-    x electric field on each tile.
-
-    '''
-
-    return get_particle_arrays(species_number, 4, level)
-
-
-def get_particle_Ey(species_number, level=0):
-    '''
-
-    Return a list of numpy arrays containing the particle
-    y electric field on each tile.
-
-    '''
-
-    return get_particle_arrays(species_number, 5, level)
-
-
-def get_particle_Ez(species_number, level=0):
-    '''
-
-    Return a list of numpy arrays containing the particle
-    z electric field on each tile.
-
-    '''
-
-    return get_particle_arrays(species_number, 6, level)
-
-
-def get_particle_Bx(species_number, level=0):
-    '''
-
-    Return a list of numpy arrays containing the particle
-    x magnetic field on each tile.
-
-    '''
-
-    return get_particle_arrays(species_number, 7, level)
-
-
-def get_particle_By(species_number, level=0):
-    '''
-
-    Return a list of numpy arrays containing the particle
-    y magnetic field on each tile.
-
-    '''
-
-    return get_particle_arrays(species_number, 8, level)
-
-
-def get_particle_Bz(species_number, level=0):
-    '''
-
-    Return a list of numpy arrays containing the particle
-    z magnetic field on each tile.
-
-    '''
-
-    return get_particle_arrays(species_number, 9, level)
-
-
 def get_particle_theta(species_number, level=0):
     '''
 
@@ -677,7 +611,7 @@ def get_particle_theta(species_number, level=0):
     '''
 
     if geometry_dim == 'rz':
-        return get_particle_arrays(species_number, 10, level)
+        return get_particle_arrays(species_number, 4, level)
     elif geometry_dim == '3d':
         return [np.arctan2(struct['y'], struct['x']) for struct in structs]
     elif geometry_dim == '2d':

@@ -1,10 +1,11 @@
 function(find_openpmd)
     if(WarpX_openpmd_internal)
+        message(STATUS "Downloading openPMD-api ...")
         include(FetchContent)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
         # see https://openpmd-api.readthedocs.io/en/0.11.1-alpha/dev/buildoptions.html
-        set(openPMD_USE_MPI    ${ENABLE_MPI} CACHE INTERNAL "")
+        set(openPMD_USE_MPI    ${WarpX_MPI}  CACHE INTERNAL "")
         set(openPMD_USE_PYTHON OFF           CACHE INTERNAL "")
         set(BUILD_CLI_TOOLS    OFF           CACHE INTERNAL "")  # FIXME
         set(BUILD_EXAMPLES     OFF           CACHE INTERNAL "")  # FIXME
@@ -46,7 +47,7 @@ function(find_openpmd)
 
         message(STATUS "openPMD-api: Using INTERNAL version '${WarpX_openpmd_branch}'")
     else()
-        if(ENABLE_MPI)
+        if(WarpX_MPI)
             set(COMPONENT_WMPI MPI)
         else()
             set(COMPONENT_WMPI NOMPI)
