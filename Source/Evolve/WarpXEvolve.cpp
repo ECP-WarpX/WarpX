@@ -288,14 +288,13 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 #endif
 
+// TODO
+// Apply current correction in Fourier space: for domain decomposition with local
+// FFTs over guard cells, apply this before calling SyncCurrent
 #ifdef WARPX_USE_PSATD
-    // Apply current correction in Fourier space
-    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
-    if ( fft_periodic_single_box == false ) {
-        // For domain decomposition with local FFT over guard cells,
-        // apply this before `SyncCurrent`, i.e. before exchanging guard cells for J
-        if ( do_current_correction ) CurrentCorrection();
-    }
+    if ( !fft_periodic_single_box && current_correction )
+        amrex::Abort("\nCurrent correction does not guarantee charge conservation with local FFTs over guard cells:\n"
+                     "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
 #endif
 
 #ifdef WARPX_QED
@@ -306,14 +305,10 @@ WarpX::OneStep_nosub (Real cur_time)
     SyncCurrent();
     SyncRho();
 
+// Apply current correction in Fourier space: for periodic single-box global FFTs
+// without guard cells, apply this after calling SyncCurrent
 #ifdef WARPX_USE_PSATD
-    // Apply current correction in Fourier space
-    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
-    if ( fft_periodic_single_box == true ) {
-        // For periodic, single-box FFT (FFT without guard cells)
-        // apply this after `SyncCurrent`, i.e. after exchanging guard cells for J
-        if ( do_current_correction ) CurrentCorrection();
-    }
+    if ( fft_periodic_single_box && current_correction ) CurrentCorrection();
 #endif
 
 
