@@ -1,5 +1,6 @@
 function(find_openpmd)
     if(WarpX_openpmd_internal)
+        message(STATUS "Downloading openPMD-api ...")
         include(FetchContent)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 

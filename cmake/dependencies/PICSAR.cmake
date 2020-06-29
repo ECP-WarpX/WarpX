@@ -1,5 +1,6 @@
 function(find_picsar)
     if(WarpX_picsar_internal)
+        message(STATUS "Downloading PICSAR ...")
         include(FetchContent)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
