@@ -49,7 +49,7 @@ You can either install all packages via `conda` (recommended),
 
    conda install -c conda-forge libensemble matplotlib numpy scipy yt
 
-or try to install the same dependencies via `pip` (pick one *or* the other):
+or try to install the same dependencies via `pip` (pick one *or* the other; note our :ref:`installation details on Summit <building-summit>`):
 
 .. literalinclude:: ../../../Tools/LibEnsemble/requirements.txt
 
