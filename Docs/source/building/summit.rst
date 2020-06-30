@@ -88,6 +88,7 @@ We use the following modules and environments on the system.
    # compiler environment hints
    export CC=$(which gcc)
    export CXX=$(which g++)
+   export FC=$(which gfortran)
    export CUDACXX=$(which nvcc)
    export CUDAHOSTCXX=$(which g++)
 
