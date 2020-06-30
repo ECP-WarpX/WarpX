@@ -10,6 +10,17 @@ See `this page <https://apps.fz-juelich.de/jsc/hps/juwels/quickintro.html>`__ fo
 Installation
 ------------
 
+Use the following commands to download the WarpX source code and switch to the correct branch:
+
+.. code-block:: bash
+
+   mkdir ~/src
+   cd ~/src
+
+   git clone https://github.com/ECP-WarpX/WarpX.git warpx
+   git clone --branch QED https://github.com/ECP-WarpX/picsar.git
+   git clone --branch development https://github.com/AMReX-Codes/amrex.git
+
 We use the following modules and environments on the system.
 
 .. code-block:: bash
@@ -33,17 +44,6 @@ We recommend to store the above lines in a file, such as ``$HOME/warpx.profile``
 .. code-block:: bash
 
    source $HOME/warpx.profile
-
-Use the following commands to download the WarpX source code and switch to the correct branch:
-
-.. code-block:: bash
-
-   mkdir ~/src
-   cd ~/src
-
-   git clone https://github.com/ECP-WarpX/WarpX.git warpx
-   git clone --branch QED https://github.com/ECP-WarpX/picsar.git
-   git clone --branch development https://github.com/AMReX-Codes/amrex.git
 
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
 
