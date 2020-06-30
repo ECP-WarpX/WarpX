@@ -1093,7 +1093,7 @@ Numerics and algorithms
        \end{split}
 
     where :math:`C=\cos(k\,c\,\Delta t)` and :math:`S=\sin(k\,c\,\Delta t)`, respectively.
-    
+
     If true, the update equation for the electric field reads instead
 
     .. math::
@@ -1105,7 +1105,7 @@ Numerics and algorithms
        & -i\frac{1}{\epsilon_0}\,\frac{1}{k^2}\,\bigg[
        \left(1-\frac{S}{c\,k}\frac{1}{\Delta t}\right)\widetilde{\rho}^{n+1}
        -\left(C-\frac{S}{c\,k}\frac{1}{\Delta t}\right)\widetilde{\rho}^{n}\bigg]
-       \,\boldsymbol{k} 
+       \,\boldsymbol{k}
        \end{split}
 
     See `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_
