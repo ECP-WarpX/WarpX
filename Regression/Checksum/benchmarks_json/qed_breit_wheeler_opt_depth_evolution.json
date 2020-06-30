@@ -1,9 +1,9 @@
 {
   "ele_bw": {
     "particle_cpu": 7868.0,
-    "particle_id": 909726920.0,
+    "particle_id": 646554824.0,
     "particle_momentum_x": 2.5371833905509472e-14,
-    "particle_momentum_y": 2.3900945928864857e-14,
+    "particle_momentum_y": 2.390094592886486e-14,
     "particle_momentum_z": 3.195830540752922e-14,
     "particle_position_x": 0.0038628680559308396,
     "particle_position_y": 0.0038691826866907985,
@@ -59,7 +59,7 @@
   },
   "pos_bw": {
     "particle_cpu": 7868.0,
-    "particle_id": 911804493.0,
+    "particle_id": 648632397.0,
     "particle_momentum_x": 2.5161516094347012e-14,
     "particle_momentum_y": 2.4559377145598413e-14,
     "particle_momentum_z": 3.330888308559405e-14,
