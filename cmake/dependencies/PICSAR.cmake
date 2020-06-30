@@ -1,5 +1,6 @@
 function(find_picsar)
     if(WarpX_picsar_internal)
+        message(STATUS "Downloading PICSAR ...")
         include(FetchContent)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
@@ -40,7 +41,7 @@ endfunction()
 
 if(WarpX_QED)
     option(WarpX_picsar_internal   "Download & build PICSAR" ON)
-    set(WarpX_picsar_repo "https://bitbucket.org/berkeleylab/picsar.git"
+    set(WarpX_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
         CACHE STRING
         "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
     set(WarpX_picsar_branch "master"

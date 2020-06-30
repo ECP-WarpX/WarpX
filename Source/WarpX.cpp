@@ -560,6 +560,11 @@ WarpX::ReadParameters ()
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
+
+#if defined WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
+                   "The problem must not be periodic in the radial direction");
+#endif
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
         // Force do_nodal=true (that is, not staggered) and
         // use same shape factors in all directions, for gathering
@@ -870,7 +875,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_avg_fp[lev][1].reset( new MultiFab(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE));
     Efield_avg_fp[lev][2].reset( new MultiFab(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE));
 
-    if (do_dive_cleaning || plot_rho)
+    if (do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics))
     {
         rho_fp[lev].reset(new MultiFab(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho));
     }
@@ -1002,7 +1007,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         current_cp[lev][1].reset( new MultiFab(amrex::convert(cba,jy_nodal_flag),dm,ncomps,ngJ));
         current_cp[lev][2].reset( new MultiFab(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ));
 
-        if (do_dive_cleaning || plot_rho){
+        if (do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)) {
             rho_cp[lev].reset(new MultiFab(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho));
         }
         if (do_dive_cleaning)

@@ -34,9 +34,10 @@ set_default_install_dirs()
 # Options and Variants ########################################################
 #
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
-option(WarpX_OPENPMD       "openPMD I/O"                                OFF)
+option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
+option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
-option(WarpX_QED           "PICSAR QED (requires Boost)"                OFF)
+option(WarpX_QED           "PICSAR QED (requires Boost and PICSAR)"     OFF)
 # TODO: python, sensei, legacy hdf5?
 
 set(WarpX_DIMS_VALUES 2 3 RZ)
@@ -150,13 +151,6 @@ set_target_properties(WarpX PROPERTIES
 
 # link dependencies
 target_link_libraries(WarpX PUBLIC WarpX::thirdparty::AMReX)
-
-if(WarpX_ASCENT)
-    # work-around until ascent's CMake Config scripts are properly placed
-    #   https://github.com/Alpine-DAV/ascent/pull/540
-    target_include_directories(WarpX SYSTEM PUBLIC ${Ascent_DIR}/../../include)
-    target_include_directories(WarpX SYSTEM PUBLIC ${Ascent_DIR}/../../include/ascent)
-endif()
 
 if(WarpX_PSATD)
     if(ENABLE_CUDA)

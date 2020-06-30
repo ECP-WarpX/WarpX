@@ -1,5 +1,6 @@
 macro(find_amrex)
     if(WarpX_amrex_internal)
+        message(STATUS "Downloading AMReX ...")
         include(FetchContent)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
@@ -7,6 +8,15 @@ macro(find_amrex)
         if(WarpX_ASCENT)
             set(ENABLE_ASCENT ON CACHE INTERNAL "")
             set(ENABLE_CONDUIT ON CACHE INTERNAL "")
+        endif()
+
+        if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+            set(ENABLE_ASSERTIONS ON CACHE BOOL "")
+            # note: floating-point exceptions can slow down debug runs a lot
+            set(ENABLE_FPE ON CACHE BOOL "")
+        else()
+            set(ENABLE_ASSERTIONS OFF CACHE BOOL "")
+            set(ENABLE_FPE OFF CACHE BOOL "")
         endif()
 
         if(WarpX_COMPUTE STREQUAL CUDA)
@@ -26,6 +36,12 @@ macro(find_amrex)
             set(ENABLE_OMP   OFF CACHE INTERNAL "")
         endif()
 
+        if(WarpX_MPI)
+            set(ENABLE_MPI ON CACHE INTERNAL "")
+        else()
+            set(ENABLE_MPI OFF CACHE INTERNAL "")
+        endif()
+
         if(WarpX_PRECISION STREQUAL "double")
             set(ENABLE_DP ON CACHE INTERNAL "")
             set(ENABLE_DP_PARTICLES ON CACHE INTERNAL "")
@@ -38,10 +54,8 @@ macro(find_amrex)
         set(ENABLE_FORTRAN_INTERFACES OFF CACHE INTERNAL "")
         set(ENABLE_TUTORIALS OFF CACHE INTERNAL "")
         set(ENABLE_PARTICLES ON CACHE INTERNAL "")
-        set(ENABLE_TINY_PROFILE ON CACHE INTERNAL "")
+        set(ENABLE_TINY_PROFILE ON CACHE BOOL "")
 
-        # ENABLE_ASCENT
-        # ENABLE_CONDUIT
         # ENABLE_SENSEI_IN_SITU
         # we'll need this for Python bindings
         #set(ENABLE_PIC ON CACHE INTERNAL "")
@@ -80,17 +94,29 @@ macro(find_amrex)
         # AMReX options not relevant to WarpX users
         mark_as_advanced(AMREX_BUILD_DATETIME)
         mark_as_advanced(DIM)
+        mark_as_advanced(ENABLE_ACC)
+        mark_as_advanced(ENABLE_ASSERTIONS)
+        mark_as_advanced(ENABLE_AMRDATA)
+        mark_as_advanced(ENABLE_BASE_PROFILE) # mutually exclusive to tiny profile
+        mark_as_advanced(ENABLE_CONDUIT)
+        mark_as_advanced(ENABLE_CUDA)
         mark_as_advanced(ENABLE_DP)
         mark_as_advanced(ENABLE_DP_PARTICLES)
+        mark_as_advanced(ENABLE_DPCPP)
+        mark_as_advanced(ENABLE_EB)
+        mark_as_advanced(ENABLE_FPE)
         mark_as_advanced(ENABLE_FORTRAN)
         mark_as_advanced(ENABLE_FORTRAN_INTERFACES)
+        mark_as_advanced(ENABLE_HDF5)  # we do HDF5 I/O (and more) via openPMD-api
         mark_as_advanced(ENABLE_LINEAR_SOLVERS)
+        mark_as_advanced(ENABLE_MEM_PROFILE)
+        mark_as_advanced(ENABLE_MPI)
+        mark_as_advanced(ENABLE_OMP)
         mark_as_advanced(ENABLE_PIC)
+        mark_as_advanced(ENABLE_SENSEI_INSITU)
+        mark_as_advanced(ENABLE_TINY_PROFILE)
+        mark_as_advanced(TP_PROFILE)
         mark_as_advanced(USE_XSDK_DEFAULTS)
-        # ENABLE_ACC
-        # ENABLE_CUDA
-        # ENABLE_DPCPP
-        # ENABLE_OMP
 
         message(STATUS "AMReX: Using INTERNAL version '${AMREX_PKG_VERSION}' (${AMREX_GIT_VERSION})")
     else()

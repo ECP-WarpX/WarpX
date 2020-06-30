@@ -34,7 +34,7 @@ GetExternalBField::GetExternalBField (const WarpXParIter& a_pti, int a_offset) n
         m_field_value[1] = mypc.m_B_external_particle[1];
         m_field_value[2] = mypc.m_B_external_particle[2];
     }
-    else if (mypc.m_B_ext_particle_s=="parse_e_ext_particle_function")
+    else if (mypc.m_B_ext_particle_s=="parse_b_ext_particle_function")
     {
         m_type = Parser;
         m_time = warpx.gett_new(a_pti.GetLevel());
