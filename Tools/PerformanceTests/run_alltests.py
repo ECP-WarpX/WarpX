@@ -346,4 +346,4 @@ if args.mode == 'read':
     if args.commit == True:
         os.system('git add ' + log_dir + log_file + ';'\
                   'git commit -m "performance tests";'\
-                  'git push -u origin master')
+                  'git push -u origin development')
