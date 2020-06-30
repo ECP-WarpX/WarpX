@@ -1,3 +1,5 @@
+.. _libensemble:
+
 Run LibEnsemble on WarpX
 ========================
 
@@ -47,7 +49,7 @@ You can either install all packages via `conda` (recommended),
 
    conda install -c conda-forge libensemble matplotlib numpy scipy yt
 
-or try to install the same dependencies via `pip` (pick one *or* the other):
+or try to install the same dependencies via `pip` (pick one *or* the other; note our :ref:`installation details on Summit <building-summit>`):
 
 .. literalinclude:: ../../../Tools/LibEnsemble/requirements.txt
 
@@ -130,6 +132,12 @@ This is adapted to a 4-core machine, as it will use:
 
 Run on Summit at OLCF
 ^^^^^^^^^^^^^^^^^^^^^
+
+- ``cp -r $HOME/warpx/Tools/LibEnsemble/* sim_directory``
+- modify ``run_libensemble_on_warpx.py`` to have ``machine = 'summit'``
+- modify ``all_machine_specs.py`` to put the right path to the WarpX executable
+- modify ``summit_submit_mproc.sh`` to set ``LIBE_PLOTS`` to ``false`` and set the project ID
+- ``bsub summit_submit_mproc.sh``:
 
 .. code-block:: sh
 
