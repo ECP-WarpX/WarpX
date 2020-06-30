@@ -22,6 +22,10 @@ We use the following modules and environments on the system.
    module load OpenMPI
    module load CUDA
 
+   # AMReX specifics
+   export GPUS_PER_SOCKET=2
+   export GPUS_PER_NODE=4
+
 Note that for now WarpX must rely on OpenMPI instead of the recommended MPI implementation on this platform MVAPICH2.
 
 We recommend to store the above lines in a file, such as ``$HOME/warpx.profile``, and load it into your shell after a login:
