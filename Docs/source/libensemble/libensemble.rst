@@ -133,6 +133,12 @@ This is adapted to a 4-core machine, as it will use:
 Run on Summit at OLCF
 ^^^^^^^^^^^^^^^^^^^^^
 
+- ``cp -r $HOME/warpx/Tools/LibEnsemble/* sim_directory``
+- modify ``run_libensemble_on_warpx.py`` to have ``machine = 'summit'``
+- modify ``all_machine_specs.py`` to put the right path to the WarpX executable
+- modify ``summit_submit_mproc.sh`` to set ``LIBE_PLOTS`` to ``false`` and set the project ID
+- ``bsub summit_submit_mproc.sh``:
+
 .. code-block:: sh
 
     bsub summit_submit_mproc.sh
