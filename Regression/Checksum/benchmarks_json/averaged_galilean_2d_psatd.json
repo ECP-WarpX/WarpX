@@ -2,21 +2,21 @@
   "electrons": {
     "particle_cpu": 0.0,
     "particle_id": 2147516416.0,
-    "particle_momentum_x": 2.836621098701473e-29,
+    "particle_momentum_x": 2.7096989898e-29,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 1.780767522665555e-16,
     "particle_position_x": 405589.1967999996,
-    "particle_position_y": 29911821.1109623,
+    "particle_position_y": 24918067.8175352551043033599853515625,
     "particle_weight": 6.917460794691972e+17
   },
   "ions": {
      "particle_cpu": 0.0,
      "particle_id": 6442483712.0,
-     "particle_momentum_x": 2.8366210987003924e-29,
+     "particle_momentum_x": 2.70969898980e-29,
      "particle_momentum_y": 0.0,
      "particle_momentum_z": 3.269761047517472e-13,
      "particle_position_x": 405589.19680000003,
-     "particle_position_y": 29911821.110962756,
+     "particle_position_y": 24918067.817535527050495147705078125,
      "particle_weight": 6.917460794691972e+17
   },
  "lev=0": {
