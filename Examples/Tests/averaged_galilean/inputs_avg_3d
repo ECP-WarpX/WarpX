@@ -1,7 +1,7 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 600
+max_step = 400
 
 amr.n_cell = 32 32 32
 amr.max_grid_size = 32
@@ -14,8 +14,8 @@ psatd.do_time_averaging  = 1
 geometry.coord_sys   = 0
 geometry.is_periodic = 1 1 1
 
-geometry.prob_lo     = -6.1888 -6.1888 -12.3776
-geometry.prob_hi     =  6.1888  6.1888 12.3776
+geometry.prob_lo     = -6.1888 -6.1888 -18.5664
+geometry.prob_hi     =  6.1888  6.1888 18.5664
 
 #################################
 ############ NUMERICS ###########
@@ -57,11 +57,9 @@ electrons.xmin = -6.1888
 electrons.xmax =  6.1888
 electrons.ymin = -6.1888
 electrons.ymax =  6.1888
-electrons.zmin =    -12.3776
-electrons.zmax =    12.3776
-electrons.ux_th = 0.0001
-electrons.uy_th = 0.0001
-electrons.uz_th = 0.0001
+electrons.zmin =    -18.5664
+electrons.zmax =  18.5664
+
 
 ions.charge = q_e
 ions.mass = m_p
@@ -75,11 +73,9 @@ ions.xmin = -6.1888
 ions.xmax =  6.1888
 ions.ymin = -6.1888
 ions.ymax =  6.1888
-ions.zmin =  -12.3776
-ions.zmax = 12.3776
-ions.ux_th = 0.0001
-ions.uy_th = 0.0001
-ions.uz_th = 0.0001
+ions.zmin =  -18.5664
+ions.zmax = 18.5664
+
 
 # Diagnostics
 diagnostics.diags_names = diag1
