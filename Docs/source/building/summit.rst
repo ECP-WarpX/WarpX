@@ -123,6 +123,7 @@ Optionally, download and install :ref:`libEnsemble <libensemble>` for dynamic en
    python3 -m pip install --upgrade cython
    python3 -m pip install --upgrade numpy
    python3 -m pip install --upgrade scipy
+   python3 -m pip install --upgrade mpi4py --no-binary mpi4py
    python3 -m pip install --upgrade -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
