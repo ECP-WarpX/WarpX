@@ -108,7 +108,8 @@ BTDiagnostics::ReadParameters ()
     }
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(snapshot_interval_is_specified,
         "For back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab");
-
+    // For BTD, we always need rho to perform Lorentz Transform of current-density
+    if (WarpXUtilStr::is_in(m_cellcenter_varnames, "rho")) warpx.setplot_rho(true);
 }
 
 void
