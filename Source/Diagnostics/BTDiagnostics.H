@@ -41,6 +41,14 @@ private:
      *  over the entire domain and is coarsened using the user-defined crse_ratio
      */
     void PrepareFieldDataForOutput ();
+
+    void PrepareDataForBackTransformFunctor ();
+    /** whether z-slice that corresponds to the ith buffer is in the 
+     *  boosted-domain and lab-frame domain
+     */
+    bool GetZSliceInDomainFlag (const int i_buffer, const int lev);
+
+    void ResetFieldBuffer (const int i_buffer);
     /** Initialize buffer domain, buffer box and lab-frame parameters such as
      *  m_t_lab, and z-positions for the i^th snapshot, i_buffer, and level, lev.
      * \param[in] i_buffer i^th snapshot or buffer
@@ -73,7 +81,11 @@ private:
 
     /**  Time in lab-frame of the back-transformed snapshot */
     amrex::Vector<amrex::Real> m_t_lab;
-    /**  Physical domain with lab-frame co-ordinates of the back-transformed snapshot */
+    /**  Lab-frame physical domain corresponding to the full boosted-frame simulation
+     *   domain at lab-frame time corresponding to the back-transformed snapshot*/
+    amrex::Vector<amrex::RealBox> m_prob_domain_lab;
+    /**  Physical domain of the user-defined region 
+     *   with lab-frame co-ordinates of the back-transformed snapshot */
     amrex::Vector<amrex::RealBox> m_buffer_domain_lab;
     /**  Number of cells in the lab-frame for all back-transformed snapshots */
     amrex::Vector<amrex::IntVect> m_buffer_ncells_lab;
@@ -105,6 +117,13 @@ private:
      *  \param[in] lev level at which the cell-centered MultiFab is defined.
      */
     void DefineCellCenteredMultiFab(int lev);
+    /** Define the cell-centered multi-component output buffer MultiFab for
+     *  snapshot, i_buffer, at level, lev.
+     *
+     * \param[in] i_buffer buffer-id of the back-transformed snapshot
+     * \param[in] lev, level at which the output buffer MultiFab is defined
+     */
+    void DefineFieldBufferMultiFab (const int i_buffer, const int lev);
     /** Returns z-position in the boosted-frame
       * \param[in] lab-frame time of the snapshot
       * \param[in] boosted-frame time at level, lev
@@ -135,6 +154,19 @@ private:
     bool buffer_full (int i_buffer) {
         return ( m_buffer_counter[i_buffer] == m_buffer_size );
     }
+
+    /** whether field buffer is empty
+     * \param[in] i_buffer buffer id for which the buffer size is checked.
+     * returns bool = true is buffer is empty
+     */
+    bool buffer_empty (int i_buffer) {
+        return ( m_buffer_counter[i_buffer] == 0) ;
+    }
+
+    amrex::Vector< std::string > m_cellcenter_varnames = {"Ex", "Ey", "Ez",
+                                                          "Bx", "By", "Bz",
+                                                          "jx", "jy", "jz", "rho"};
+    
 };
 
 #endif // WARPX_BTDIAGNOSTICS_H_
