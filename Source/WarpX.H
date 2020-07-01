@@ -141,6 +141,12 @@ public:
     // true by the user as an input parameter
     bool do_current_correction = false;
 
+#ifdef WARPX_USE_PSATD
+    // If true (overwritten by the user in the input file), the update equation
+    // for E contains both J and rho (at times n and n+1) on the right hand side
+    bool update_with_rho = false;
+#endif
+
     // div E cleaning
     static int do_dive_cleaning;
 
