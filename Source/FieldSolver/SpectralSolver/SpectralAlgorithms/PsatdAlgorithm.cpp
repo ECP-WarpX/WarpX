@@ -23,8 +23,8 @@ PsatdAlgorithm::PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                          const int norder_x, const int norder_y,
                          const int norder_z, const bool nodal, const Real dt)
      // Initialize members of base class
-     : SpectralBaseAlgorithm( spectral_kspace, dm,
-                              norder_x, norder_y, norder_z, nodal )
+     : m_dt( dt ),
+       SpectralBaseAlgorithm( spectral_kspace, dm, norder_x, norder_y, norder_z, nodal )
 {
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -37,8 +37,6 @@ PsatdAlgorithm::PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
 
     // Initialize coefficients for update equations
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
-
-    m_dt = dt;
 }
 
 /**
@@ -214,6 +212,7 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
 
         // Extract arrays for the fields to be updated
         Array4<Complex> fields = field_data.fields[mfi].array();
+
         // Extract pointers for the k vectors
         const Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
 #if (AMREX_SPACEDIM==3)
@@ -225,17 +224,18 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
         const Real dt = m_dt;
 
         // Loop over indices within one box
-        ParallelFor(bx,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        ParallelFor( bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Record old values of the fields to be updated
             using Idx = SpectralFieldIndex;
+
             // Shortcuts for the values of J and rho
             const Complex Jx = fields(i,j,k,Idx::Jx);
             const Complex Jy = fields(i,j,k,Idx::Jy);
             const Complex Jz = fields(i,j,k,Idx::Jz);
             const Complex rho_old = fields(i,j,k,Idx::rho_old);
             const Complex rho_new = fields(i,j,k,Idx::rho_new);
+
             // k vector values, and coefficients
             const Real kx = modified_kx_arr[i];
 #if (AMREX_SPACEDIM==3)
@@ -245,9 +245,9 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
             constexpr Real ky = 0;
             const Real kz = modified_kz_arr[j];
 #endif
-            constexpr Complex I = Complex{0,1};
-
             const Real k_norm = std::sqrt( kx*kx + ky*ky + kz*kz );
+
+            constexpr Complex I = Complex{0,1};
 
             // div(J) in Fourier space
             const Complex k_dot_J = kx*Jx + ky*Jy + kz*Jz;
@@ -259,7 +259,7 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
                 fields(i,j,k,Idx::Jy) = Jy - (k_dot_J-I*(rho_new-rho_old)/dt)*ky/(k_norm*k_norm);
                 fields(i,j,k,Idx::Jz) = Jz - (k_dot_J-I*(rho_new-rho_old)/dt)*kz/(k_norm*k_norm);
             }
-        });
+        } );
     }
 
     // Backward Fourier transform of J
