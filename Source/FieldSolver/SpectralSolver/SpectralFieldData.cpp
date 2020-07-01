@@ -258,14 +258,41 @@ SpectralFieldData::BackwardTransform ( MultiFab& mf,
             } else {
                 amrex::Box bx;
                 if (fill_guard_cells) {
-                    bx = mf[mfi].box();  // fill valid cells + guard cells
+                    // Fill valid cells + guard cells
+                    bx = mf[mfi].box();
+                    // Extract number of guard cells along each direction
+                    const amrex::IntVect ng = mf.nGrowVect();
+                    // Store total number of cells (valid cells + guard cells)
+                    const int nx  = bx.length(0);
+                    const int ny  = bx.length(1);
+                    const int nz  = ( ( AMREX_SPACEDIM == 2 ) ? 1 : bx.length(2) );
+                    // Store number of guard cells
+                    const int ngx = ng[0];
+                    const int ngy = ng[1];
+                    const int ngz = ( ( AMREX_SPACEDIM == 2 ) ? 0 : ng[2] );
+                    // Loop over cells within one box
+                    ParallelFor( bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+                        // Assume periodicity and set the last guard cell equal
+                        // to the first one: this is necessary in order to get
+                        // the correct value along the nodal directions, because
+                        // the last points along the nodal directions are always
+                        // discarded when FFTs are computed, as the real-space box
+                        // is always cell-centered (see constructor of SpectralKSpace)
+                        const int ii = ( ( i == nx-ngx-1 ) ? nx-ngx*2-i-1 : i );
+                        const int jj = ( ( j == ny-ngy-1 ) ? ny-ngy*2-j-1 : j );
+                        const int kk = ( ( k == nz-ngz-1 ) ? nz-ngz*2-k-1 : k );
+                        // Copy and normalize field
+                        mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(ii,jj,kk);
+                    } );
                 } else {
-                    bx = mfi.validbox(); // fill valid cells only (default)
+                    // Fill valid cells only (default)
+                    bx = mfi.validbox();
+                    // Loop over cells within one box
+                    ParallelFor( bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
+                        // Copy and normalize field
+                        mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i,j,k);
+                    });
                 }
-                // Loop over cells within one box: copy and normalize field
-                ParallelFor( bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept {
-                    mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(i,j,k);
-                });
             }
         }
     }
