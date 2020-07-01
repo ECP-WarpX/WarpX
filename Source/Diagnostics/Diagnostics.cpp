@@ -180,7 +180,7 @@ Diagnostics::ComputeAndPack ()
                 // Call all functors in m_all_field_functors[lev]. Each of them computes
                 // a diagnostics and writes in one or more components of the output
                 // multifab m_mf_output[lev].
-                m_all_field_functors[lev][icomp]->operator()(m_mf_output[i_buffer][lev], icomp_dst);
+                m_all_field_functors[lev][icomp]->operator()(m_mf_output[i_buffer][lev], icomp_dst, i_buffer);
                 // update the index of the next component to fill
                 icomp_dst += m_all_field_functors[lev][icomp]->nComp();
             }
