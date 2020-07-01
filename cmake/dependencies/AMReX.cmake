@@ -1,5 +1,6 @@
 macro(find_amrex)
     if(WarpX_amrex_internal)
+        message(STATUS "Downloading AMReX ...")
         include(FetchContent)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
@@ -10,11 +11,12 @@ macro(find_amrex)
         endif()
 
         if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-            set(ENABLE_ASSERTIONS ON CACHE INTERNAL "")
-            set(ENABLE_FPE ON CACHE INTERNAL "")
+            set(ENABLE_ASSERTIONS ON CACHE BOOL "")
+            # note: floating-point exceptions can slow down debug runs a lot
+            set(ENABLE_FPE ON CACHE BOOL "")
         else()
-            set(ENABLE_ASSERTIONS OFF CACHE INTERNAL "")
-            set(ENABLE_FPE OFF CACHE INTERNAL "")
+            set(ENABLE_ASSERTIONS OFF CACHE BOOL "")
+            set(ENABLE_FPE OFF CACHE BOOL "")
         endif()
 
         if(WarpX_COMPUTE STREQUAL CUDA)
@@ -52,7 +54,7 @@ macro(find_amrex)
         set(ENABLE_FORTRAN_INTERFACES OFF CACHE INTERNAL "")
         set(ENABLE_TUTORIALS OFF CACHE INTERNAL "")
         set(ENABLE_PARTICLES ON CACHE INTERNAL "")
-        set(ENABLE_TINY_PROFILE ON CACHE INTERNAL "")
+        set(ENABLE_TINY_PROFILE ON CACHE BOOL "")
 
         # ENABLE_SENSEI_IN_SITU
         # we'll need this for Python bindings
@@ -95,7 +97,6 @@ macro(find_amrex)
         mark_as_advanced(ENABLE_ACC)
         mark_as_advanced(ENABLE_ASSERTIONS)
         mark_as_advanced(ENABLE_AMRDATA)
-        mark_as_advanced(ENABLE_BACKTRACE) # BT files are written anyway
         mark_as_advanced(ENABLE_BASE_PROFILE) # mutually exclusive to tiny profile
         mark_as_advanced(ENABLE_CONDUIT)
         mark_as_advanced(ENABLE_CUDA)
