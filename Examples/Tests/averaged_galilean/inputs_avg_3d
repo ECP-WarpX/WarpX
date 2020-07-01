@@ -1,7 +1,7 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 400
+max_step = 200
 
 amr.n_cell = 32 32 32
 amr.max_grid_size = 32
@@ -26,7 +26,7 @@ algo.maxwell_fdtd_solver = ckc
 algo.current_deposition = direct
 algo.particle_pusher = vay
 
-warpx.cfl = 2.
+warpx.cfl = 3.
 interpolation.nox = 3
 interpolation.noy = 3
 interpolation.noz = 3
@@ -57,7 +57,7 @@ electrons.xmin = -6.1888
 electrons.xmax =  6.1888
 electrons.ymin = -6.1888
 electrons.ymax =  6.1888
-electrons.zmin =    -18.5664
+electrons.zmin =  -18.5664
 electrons.zmax =  18.5664
 
 
@@ -73,7 +73,7 @@ ions.xmin = -6.1888
 ions.xmax =  6.1888
 ions.ymin = -6.1888
 ions.ymax =  6.1888
-ions.zmin =  -18.5664
+ions.zmin = -18.5664
 ions.zmax = 18.5664
 
 
