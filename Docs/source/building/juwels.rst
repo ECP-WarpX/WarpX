@@ -5,7 +5,13 @@ Juwels (JSC)
 
 The `Juwels supercomputer <https://www.fz-juelich.de/ias/jsc/EN/Expertise/Supercomputers/JUWELS/JUWELS_node.html>`_ is located at JSC.
 
-See `this page <https://apps.fz-juelich.de/jsc/hps/juwels/quickintro.html>`__ for a quick introduction.
+See `this page <https://apps.fz-juelich.de/jsc/hps/juwels/quickintro.html>`_ for a quick introduction.
+
+* Batch system: `Slurm <https://apps.fz-juelich.de/jsc/hps/juwels/quickintro.html#batch-system-on-system-name>`_
+* `Production directories <https://apps.fz-juelich.de/jsc/hps/juwels/environment.html?highlight=scratch#available-filesystems>`_:
+  * ``$SCRATCH``: Scratch filesystem for temporary data (90 day purge)
+  * ``$FASTDATA/``: Storage location for large data (backuped)
+  * Note that the ``$HOME`` directory is not designed for simulation runs and producing output there will impact performance.
 
 Installation
 ------------
