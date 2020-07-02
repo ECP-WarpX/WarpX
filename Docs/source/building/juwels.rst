@@ -33,7 +33,10 @@ We use the following modules and environments on the system.
    module load OpenMPI
    module load CUDA
 
-   # AMReX specifics
+   # JEWELS' job scheduler may not map ranks to GPUs,
+   # so we give a hint to AMReX about the node layout.
+   # This is usually done in Make.<supercomputing center> files in AMReX
+   # but there is no such file for JSC yet.
    export GPUS_PER_SOCKET=2
    export GPUS_PER_NODE=4
 
