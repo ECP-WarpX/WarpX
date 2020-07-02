@@ -1,11 +1,5 @@
 {
   "electron1": {
-    "particle_Bx": 2.5036214403545607e-33,
-    "particle_By": 3.6007341350514865e-33,
-    "particle_Bz": 1.0868573384860435e-33,
-    "particle_Ex": 3.4123501299430056e-08,
-    "particle_Ey": 3.412350127746802e-08,
-    "particle_Ez": 3.4123501245407426e-08,
     "particle_cpu": 0.0,
     "particle_id": 1.0,
     "particle_momentum_x": 3.346088201352191e-29,
@@ -17,12 +11,6 @@
     "particle_weight": 1.0
   },
   "electron2": {
-    "particle_Bx": 1.96192602420799e-33,
-    "particle_By": 1.6876606788059644e-33,
-    "particle_Bz": 3.644858398013685e-33,
-    "particle_Ex": 3.4123501222575865e-08,
-    "particle_Ey": 3.412350127595063e-08,
-    "particle_Ez": 3.412350126765692e-08,
     "particle_cpu": 0.0,
     "particle_id": 2.0,
     "particle_momentum_x": 3.346088199424244e-29,

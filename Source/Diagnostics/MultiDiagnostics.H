@@ -2,9 +2,10 @@
 #define WARPX_MULTIDIAGNOSTICS_H_
 
 #include "FullDiagnostics.H"
+#include "BTDiagnostics.H"
 
 /** All types of diagnostics. */
-enum struct DiagTypes {Full};
+enum struct DiagTypes {Full, BackTransformed};
 
 /**
  * \brief This class contains a vector of all diagnostics in the simulation.

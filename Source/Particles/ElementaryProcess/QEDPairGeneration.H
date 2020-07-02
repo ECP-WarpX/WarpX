@@ -10,7 +10,9 @@
 
 #include "Utils/WarpXConst.H"
 #include "Particles/WarpXParticleContainer.H"
-
+#include "Particles/Gather/GetExternalFields.H"
+#include "Particles/Gather/FieldGather.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 #include "QEDInternals/BreitWheelerEngineWrapper.H"
 
 /** @file
@@ -32,9 +34,9 @@ public:
     *
     * @param[in] opt_depth_runtime_comp index of the optical depth component
     */
-    PairGenerationFilterFunc(int const opt_depth_runtime_comp):
-        m_opt_depth_runtime_comp{opt_depth_runtime_comp}
-    {}
+    PairGenerationFilterFunc(int const opt_depth_runtime_comp)
+        : m_opt_depth_runtime_comp(opt_depth_runtime_comp)
+        {}
 
     /**
     * \brief Functor call. This method determines if a given (photon) particle
@@ -75,9 +77,16 @@ public:
     *
     * @param[in] generate_functor functor to be called to determine the properties of the generated pairs
     */
-    PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor):
-        m_generate_functor{generate_functor}
-    {}
+    PairGenerationTransformFunc(BreitWheelerGeneratePairs const generate_functor,
+                                const WarpXParIter& a_pti, int lev, int ngE,
+                                amrex::FArrayBox const& exfab,
+                                amrex::FArrayBox const& eyfab,
+                                amrex::FArrayBox const& ezfab,
+                                amrex::FArrayBox const& bxfab,
+                                amrex::FArrayBox const& byfab,
+                                amrex::FArrayBox const& bzfab,
+                                amrex::Array<amrex::Real,3> v_galilean,
+                                int a_offset = 0);
 
     /**
     * \brief Functor call. It determines the properties of the generated pair
@@ -104,12 +113,22 @@ public:
         const ParticleReal ux = src.m_rdata[PIdx::ux][i_src];
         const ParticleReal uy = src.m_rdata[PIdx::uy][i_src];
         const ParticleReal uz = src.m_rdata[PIdx::uz][i_src];
-        const ParticleReal ex = src.m_rdata[PIdx::Ex][i_src];
-        const ParticleReal ey = src.m_rdata[PIdx::Ey][i_src];
-        const ParticleReal ez = src.m_rdata[PIdx::Ez][i_src];
-        const ParticleReal bx = src.m_rdata[PIdx::Bx][i_src];
-        const ParticleReal by = src.m_rdata[PIdx::By][i_src];
-        const ParticleReal bz = src.m_rdata[PIdx::Bz][i_src];
+
+        // gather E and B
+        amrex::ParticleReal xp, yp, zp;
+        m_get_position(i_src, xp, yp, zp);
+
+        amrex::ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
+        m_get_externalE(i_src, ex, ey, ez);
+
+        amrex::ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
+        m_get_externalB(i_src, bx, by, bz);
+
+        doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
+                       m_ex_arr, m_ey_arr, m_ez_arr, m_bx_arr, m_by_arr, m_bz_arr,
+                       m_ex_type, m_ey_type, m_ez_type, m_bx_type, m_by_type, m_bz_type,
+                       m_dx_arr, m_xyzmin_arr, m_lo, m_n_rz_azimuthal_modes,
+                       m_nox, m_l_lower_order_in_v);
 
         const auto px = ux*me;
         const auto py = uy*me;
@@ -153,7 +172,34 @@ public:
 private:
 
     const BreitWheelerGeneratePairs
-        m_generate_functor; /*!< A copy of the functor to generate pairs. It contains only pointers to the lookup tables.*/
+    m_generate_functor; /*!< A copy of the functor to generate pairs. It contains only pointers to the lookup tables.*/
+
+    GetParticlePosition m_get_position;
+    GetExternalEField m_get_externalE;
+    GetExternalBField m_get_externalB;
+
+    amrex::Array4<const amrex::Real> m_ex_arr;
+    amrex::Array4<const amrex::Real> m_ey_arr;
+    amrex::Array4<const amrex::Real> m_ez_arr;
+    amrex::Array4<const amrex::Real> m_bx_arr;
+    amrex::Array4<const amrex::Real> m_by_arr;
+    amrex::Array4<const amrex::Real> m_bz_arr;
+
+    amrex::IndexType m_ex_type;
+    amrex::IndexType m_ey_type;
+    amrex::IndexType m_ez_type;
+    amrex::IndexType m_bx_type;
+    amrex::IndexType m_by_type;
+    amrex::IndexType m_bz_type;
+
+    amrex::GpuArray<amrex::Real, 3> m_dx_arr;
+    amrex::GpuArray<amrex::Real, 3> m_xyzmin_arr;
+
+    int m_l_lower_order_in_v;
+    int m_nox;
+    int m_n_rz_azimuthal_modes;
+
+    amrex::Dim3 m_lo;
 };
 
 #endif //QED_PAIR_GENERATION_H_

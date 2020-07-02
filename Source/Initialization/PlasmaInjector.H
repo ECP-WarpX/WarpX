@@ -41,7 +41,11 @@ public:
 
     PlasmaInjector (int ispecies, const std::string& name);
 
+    // bool: whether the point (x, y, z) is inside the plasma region
     bool insideBounds (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
+
+    // bool: whether the region defined by lo and hi overlaps with the plasma region
+    bool overlapsWith (const amrex::XDim3& lo, const amrex::XDim3& hi) const noexcept;
 
     int num_particles_per_cell;
 
@@ -76,6 +80,7 @@ public:
     int do_symmetrize = 0;
 
     bool external_file = false; //! initialize from an openPMD file
+    amrex::Real z_shift = 0.0; //! additional z offset for particle positions
 #ifdef WARPX_USE_OPENPMD
     //! openPMD::Series to load from in external_file injection
     std::unique_ptr<openPMD::Series> m_openpmd_input_series;
