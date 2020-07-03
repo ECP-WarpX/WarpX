@@ -1,7 +1,7 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 200
+max_step = 500
 
 amr.n_cell = 32 32 32
 amr.max_grid_size = 32
@@ -9,13 +9,13 @@ amr.blocking_factor = 32
 amr.max_level = 0
 psatd.v_galilean = 0 0 0.98503756273
 
-psatd.do_time_averaging  = 1
+psatd.do_time_averaging  = 0
 
 geometry.coord_sys   = 0
 geometry.is_periodic = 1 1 1
 
-geometry.prob_lo     = -6.1888 -6.1888 -18.5664
-geometry.prob_hi     =  6.1888  6.1888 18.5664
+geometry.prob_lo     = -3.0944 -3.0944 -9.2832
+geometry.prob_hi     =  3.0944 3.0944 9.2832
 
 #################################
 ############ NUMERICS ###########
@@ -53,12 +53,15 @@ electrons.profile = constant
 electrons.density = 282197938148984.7
 electrons.momentum_distribution_type = "gaussian"
 electrons.uz_m = 9.9498743710661994
-electrons.xmin = -6.1888
-electrons.xmax =  6.1888
-electrons.ymin = -6.1888
-electrons.ymax =  6.1888
-electrons.zmin =  -18.5664
-electrons.zmax =  18.5664
+electrons.xmin = -3.0944
+electrons.xmax =  3.0944
+electrons.ymin = -3.0944
+electrons.ymax =  3.0944
+electrons.zmin =  -9.2832
+electrons.zmax =  9.2832
+electrons.ux_th = 1e-4
+electrons.uy_th = 1e-4
+electrons.uz_th = 1e-4
 
 
 ions.charge = q_e
@@ -69,13 +72,15 @@ ions.profile = constant
 ions.density =  282197938148984.7
 ions.momentum_distribution_type = "gaussian"
 ions.uz_m = 9.9498743710661994
-ions.xmin = -6.1888
-ions.xmax =  6.1888
-ions.ymin = -6.1888
-ions.ymax =  6.1888
-ions.zmin = -18.5664
-ions.zmax = 18.5664
-
+ions.xmin = -3.0944
+ions.xmax =  3.0944
+ions.ymin = -3.0944
+ions.ymax =  3.0944
+ions.zmin = -9.2832
+ions.zmax = 9.2832
+ions.ux_th = 1e-4
+ions.uy_th = 1e-4
+ions.uz_th = 1e-4
 
 # Diagnostics
 diagnostics.diags_names = diag1

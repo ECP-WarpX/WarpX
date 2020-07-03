@@ -2,34 +2,34 @@
   "electrons": {
     "particle_cpu": 0.0,
     "particle_id": 536887296.0,
-    "particle_momentum_x": 5.7293693466616446e-31,
-    "particle_momentum_y": 2.9199745694710406e-31,
-    "particle_momentum_z": 8.903837613327814e-17,
-    "particle_position_x": 101397.29919999992,
-    "particle_position_y": 101397.29919999998,
-    "particle_position_z": 7452605.952940575,
-    "particle_weight": 1.6054043012321119e+18
+    "particle_momentum_x": 7.720980370533044e-22,
+    "particle_momentum_y": 7.73982420671006e-22,
+    "particle_momentum_z": 8.903837559399484e-17,
+    "particle_position_x": 50698.698704618124,
+    "particle_position_y": 50698.93946112219,
+    "particle_position_z": 9344275.430723537,
+    "particle_weight": 2.0067553765401398e+17
   },
   "ions": {
     "particle_cpu": 0.0,
     "particle_id": 1610629120.0,
-    "particle_momentum_x": 5.729369346669255e-31,
-    "particle_momentum_y": 2.919974569476679e-31,
-    "particle_momentum_z": 1.6348805237587363e-13,
-    "particle_position_x": 101397.29919999998,
-    "particle_position_y": 101397.29919999998,
-    "particle_position_z": 7452605.9529406065,
-    "particle_weight": 1.6054043012321119e+18
+    "particle_momentum_x": 1.3155700855437223e-18,
+    "particle_momentum_y": 1.3115345850325282e-18,
+    "particle_momentum_z": 1.6348805261393762e-13,
+    "particle_position_x": 50698.76510768456,
+    "particle_position_y": 50698.9087921475,
+    "particle_position_z": 9344275.430748452,
+    "particle_weight": 2.0067553765401398e+17
   },
   "lev=0": {
-    "Bx": 1.3605454277083161e-11,
-    "By": 3.7914641350692525e-11,
-    "Bz": 4.903167700115463e-23,
-    "Ex": 0.01137834026817087,
-    "Ey": 0.004085755645933079,
-    "Ez": 0.019215789479609238,
-    "jx": 2.340714101538578e-06,
-    "jy": 1.170646500391302e-06,
-    "jz": 1.8573603451533074e-05
+    "Bx": 0.0024985933497282684,
+    "By": 0.0024879766565274754,
+    "Bz": 0.0003917839185598478,
+    "Ex": 744746.5538085271,
+    "Ey": 746956.3886505195,
+    "Ez": 163428.385477947,
+    "jx": 494.76963412150315,
+    "jy": 484.963530345065,
+    "jz": 23145.471670395018
     }
   }
