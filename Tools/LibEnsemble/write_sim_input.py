@@ -99,7 +99,7 @@ def write_sim_input(input_file, x_values):
         str(zmax_stop_run))
     # Set laser2 position
     output_text = _set_value(
-        output_text, 'laser2.position = ', str(z_antenna_2))
+        output_text, 'laser2.position = ', '0. 0. '+ str(z_antenna_2))
     # Set laser2 time until peak field is reached
     output_text = _set_value(
         output_text, 'laser2.profile_t_peak = ', str(z_t_peak_2))
