@@ -9,7 +9,7 @@ amr.blocking_factor = 32
 amr.max_level = 0
 psatd.v_galilean = 0 0 0.98503756273
 
-psatd.do_time_averaging  = 0
+psatd.do_time_averaging  = 1
 
 geometry.coord_sys   = 0
 geometry.is_periodic = 1 1 1
