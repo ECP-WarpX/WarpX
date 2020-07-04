@@ -15,7 +15,8 @@ class GalileanAlgorithm : public SpectralBaseAlgorithm
                          const int norder_x, const int norder_y,
                          const int norder_z, const bool nodal,
                          const amrex::Array<amrex::Real,3>& v_galilean,
-                         const amrex::Real dt);
+                         const amrex::Real dt,
+                         const bool update_with_rho);
         // Redefine update equation from base class
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
         virtual int getRequiredNumberOfFields() const override final {
@@ -29,6 +30,7 @@ class GalileanAlgorithm : public SpectralBaseAlgorithm
     private:
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients Theta2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
+        bool m_update_with_rho;
 };
 #endif // WARPX_USE_PSATD
 #endif // WARPX_GALILEAN_ALGORITHM_H_

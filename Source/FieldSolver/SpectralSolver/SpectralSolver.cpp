@@ -60,7 +60,7 @@ SpectralSolver::SpectralSolver(
       } else {
           // Otherwise: use the Galilean algorithm
           algorithm = std::unique_ptr<GalileanAlgorithm>( new GalileanAlgorithm(
-              k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt ));
+              k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt, update_with_rho ));
        }
 
 
