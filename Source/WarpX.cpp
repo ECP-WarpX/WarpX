@@ -605,7 +605,7 @@ WarpX::ReadParameters ()
         pp.query("nox", nox_fft);
         pp.query("noy", noy_fft);
         pp.query("noz", noz_fft);
-        pp.query("do_current_correction", do_current_correction);
+        pp.query("current_correction", current_correction);
         pp.query("update_with_rho", update_with_rho);
         pp.query("v_galilean", v_galilean);
       // Scale the velocity by the speed of light
