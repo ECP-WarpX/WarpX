@@ -284,8 +284,7 @@ GalileanAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
         amrex::Real vgz = m_v_galilean[2];
 
         // Loop over indices within one box
-        ParallelFor(bx,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        ParallelFor( bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Record old values of the fields to be updated
             using Idx = SpectralFieldIndex;
@@ -304,26 +303,28 @@ GalileanAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
             constexpr Real ky = 0;
             const Real kz = modified_kz_arr[j];
 #endif
-
             constexpr Complex I = Complex{0,1};
 
             const Real k_norm = std::sqrt( kx*kx + ky*ky + kz*kz );
 
-            // div(J) in Fourier space
-            const Complex k_dot_J = kx*Jx + ky*Jy + kz*Jz;
-
-            const amrex::Real k_dot_vg = kx*vgx + ky*vgy + kz*vgz;
-
             // Correct J
-            if ( k_norm != 0.0 )
+            if ( k_norm != 0.0_rt )
             {
-                const Complex rho_old_mod = rho_old*exp(I*k_dot_vg*dt);
-                const Complex den = 1.0_rt-exp(I*k_dot_vg*dt);
-                fields(i,j,k,Idx::Jx) = Jx - (k_dot_J-k_dot_vg*(rho_new-rho_old_mod)/den)*kx/(k_norm*k_norm);
-                fields(i,j,k,Idx::Jy) = Jy - (k_dot_J-k_dot_vg*(rho_new-rho_old_mod)/den)*ky/(k_norm*k_norm);
-                fields(i,j,k,Idx::Jz) = Jz - (k_dot_J-k_dot_vg*(rho_new-rho_old_mod)/den)*kz/(k_norm*k_norm);
+                const Complex k_dot_J = kx*Jx + ky*Jy + kz*Jz;
+                const amrex::Real k_dot_vg = kx*vgx + ky*vgy + kz*vgz;
+                if ( k_dot_vg != 0.0_rt ) {
+                    const Complex rho_old_mod = rho_old*exp(I*k_dot_vg*dt);
+                    const Complex den = 1.0_rt-exp(I*k_dot_vg*dt);
+                    fields(i,j,k,Idx::Jx) = Jx - (k_dot_J-k_dot_vg*(rho_new-rho_old_mod)/den)*kx/(k_norm*k_norm);
+                    fields(i,j,k,Idx::Jy) = Jy - (k_dot_J-k_dot_vg*(rho_new-rho_old_mod)/den)*ky/(k_norm*k_norm);
+                    fields(i,j,k,Idx::Jz) = Jz - (k_dot_J-k_dot_vg*(rho_new-rho_old_mod)/den)*kz/(k_norm*k_norm);
+                } else {
+                    fields(i,j,k,Idx::Jx) = Jx - (k_dot_J-I*(rho_new-rho_old)/dt)*kx/(k_norm*k_norm);
+                    fields(i,j,k,Idx::Jy) = Jy - (k_dot_J-I*(rho_new-rho_old)/dt)*ky/(k_norm*k_norm);
+                    fields(i,j,k,Idx::Jz) = Jz - (k_dot_J-I*(rho_new-rho_old)/dt)*kz/(k_norm*k_norm);
+                }
             }
-        });
+        } );
     }
 
     // Backward Fourier transform of J
