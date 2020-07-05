@@ -54,8 +54,8 @@ if(NOT WarpX_PRECISION IN_LIST WarpX_PRECISION_VALUES)
     message(FATAL_ERROR "WarpX_PRECISION (${WarpX_PRECISION}) must be one of ${WarpX_PRECISION_VALUES}")
 endif()
 
-set(WarpX_COMPUTE_VALUES NONE CUDA OMP) # HIP DPCPP
-set(WarpX_COMPUTE NONE CACHE STRING "Parallel, on-node computing backend (NONE/CUDA/OMP)")
+set(WarpX_COMPUTE_VALUES NOACC OMP CUDA DPCPP) # HIP
+set(WarpX_COMPUTE OMP CACHE STRING "On-node, accelerated computing backend (NOACC/OMP/CUDA/DPCPP)")
 set_property(CACHE WarpX_COMPUTE PROPERTY STRINGS ${WarpX_COMPUTE_VALUES})
 if(NOT WarpX_COMPUTE IN_LIST WarpX_COMPUTE_VALUES)
     message(FATAL_ERROR "WarpX_PRECISION (${WarpX_COMPUTE}) must be one of ${WarpX_COMPUTE_VALUES}")
@@ -67,7 +67,7 @@ option(WarpX_amrex_internal                    "Download & build AMReX" ON)
 set_default_build_type("RelWithDebInfo")
 
 # this defined the variable BUILD_TESTING which is ON by default
-include(CTest)
+#include(CTest)
 
 
 # Dependencies ################################################################
@@ -152,13 +152,6 @@ set_target_properties(WarpX PROPERTIES
 # link dependencies
 target_link_libraries(WarpX PUBLIC WarpX::thirdparty::AMReX)
 
-if(WarpX_ASCENT)
-    # work-around until ascent's CMake Config scripts are properly placed
-    #   https://github.com/Alpine-DAV/ascent/pull/540
-    target_include_directories(WarpX SYSTEM PUBLIC ${Ascent_DIR}/../../include)
-    target_include_directories(WarpX SYSTEM PUBLIC ${Ascent_DIR}/../../include/ascent)
-endif()
-
 if(WarpX_PSATD)
     if(ENABLE_CUDA)
         # CUDA_ADD_CUFFT_TO_TARGET(WarpX)
@@ -191,12 +184,17 @@ endif()
 # AMReX helper function: propagate CUDA specific target & source properties
 if(ENABLE_CUDA)
     setup_target_for_cuda_compilation(WarpX)
-    target_compile_features(WarpX PUBLIC cuda_std_14)
-    set_target_properties(WarpX PROPERTIES
-        CUDA_EXTENSIONS OFF
-        CUDA_STANDARD_REQUIRED ON
-    )
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.17)
+        target_compile_features(WarpX PUBLIC cuda_std_14)
+        set_target_properties(WarpX PROPERTIES
+            CUDA_EXTENSIONS OFF
+            CUDA_STANDARD_REQUIRED ON
+        )
+    endif()
 endif()
+
+# fancy binary name for build variants
+set_warpx_binary_name()
 
 
 # Defines #####################################################################
