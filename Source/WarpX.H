@@ -136,10 +136,11 @@ public:
     static int em_solver_medium;
     static int macroscopic_solver_algo;
 
-    // Static public variable to switch on current correction in Fourier space
-    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010): can be set
-    // true by the user as an input parameter
-    bool do_current_correction = false;
+#ifdef WARPX_USE_PSATD
+    // If true (overwritten by the user in the input file), the current correction
+    // defined in equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010 is applied
+    bool current_correction = false;
+#endif
 
     // div E cleaning
     static int do_dive_cleaning;
@@ -761,7 +762,7 @@ private:
 
     std::string restart_chkfile;
 
-    bool plot_rho           = false;
+    bool plot_rho = false;
 
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;

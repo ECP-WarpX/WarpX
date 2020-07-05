@@ -1,11 +1,11 @@
 {
   "beam": {
     "particle_cpu": 0.0,
-    "particle_id": 302285376.0,
+    "particle_id": 1290816.0,
     "particle_momentum_x": 5.708397145757236e-20,
-    "particle_momentum_y": 5.708397145757228e-20,
+    "particle_momentum_y": 5.708397145757229e-20,
     "particle_momentum_z": 7.574215683313995e-19,
-    "particle_position_x": 0.009793902444696391,
+    "particle_position_x": 0.009793902444696388,
     "particle_position_y": 0.00979390244469639,
     "particle_position_z": 0.1047802881481609,
     "particle_weight": 7031249999.999999
@@ -14,14 +14,14 @@
     "Ex": 7074528555636.087,
     "Ey": 7074528078305.145,
     "Ez": 19091561484766.926,
-    "jx": 92775315721769.94,
+    "jx": 92775315721769.97,
     "jy": 92775315721769.94,
     "jz": 1267816446833707.5,
     "part_per_cell": 590976.0
   },
   "plasma": {
     "particle_cpu": 589824.0,
-    "particle_id": 514063630336.0,
+    "particle_id": 185196642304.0,
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,

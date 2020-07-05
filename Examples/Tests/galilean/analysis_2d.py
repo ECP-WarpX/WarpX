@@ -16,7 +16,7 @@ import checksumAPI
 
 filename = sys.argv[1]
 
-# Parse test name and check if current correction (psatd.do_current_correction=1) is applied
+# Parse test name and check if current correction (psatd.current_correction=1) is applied
 current_correction = True if re.search( 'current_correction', filename ) else False
 
 ds = yt.load( filename )
@@ -40,7 +40,7 @@ print("tolerance_rel: " + str(tolerance_rel))
 assert( error_rel < tolerance_rel )
 
 # Check relative L-infinity spatial norm of div(E) - rho/epsilon_0 when
-# current correction (psatd.do_current_correction=1) is applied
+# current correction (psatd.current_correction=1) is applied
 if current_correction:
     rho  = ds.index.grids[0]['boxlib','rho' ].squeeze().v
     divE = ds.index.grids[0]['boxlib','divE'].squeeze().v
