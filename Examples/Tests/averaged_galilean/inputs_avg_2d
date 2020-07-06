@@ -1,13 +1,14 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 500
+max_step = 400
 
 amr.n_cell = 128 128
 amr.max_grid_size = 128
 amr.blocking_factor = 128
 amr.max_level = 0
-psatd.v_galilean = 0 0 0.98503756273
+psatd.v_galilean = 0 0 0.99498743710662
+#0.98503756273
 
 psatd.do_time_averaging  = 1
 
@@ -57,7 +58,9 @@ electrons.xmin = -12.3776
 electrons.xmax = 12.3776
 electrons.zmin =  -49.5104
 electrons.zmax =  49.5104
-
+electrons.ux_th = 1e-4
+electrons.uy_th = 1e-4
+electrons.uz_th = 1e-4
 
 ions.charge = q_e
 ions.mass = m_p
@@ -71,7 +74,9 @@ ions.xmin = -12.3776
 ions.xmax = 12.3776
 ions.zmin =  -49.5104
 ions.zmax = 49.5104
-
+ions.ux_th = 1e-4
+ions.uy_th = 1e-4
+ions.uz_th = 1e-4
 
 # Diagnostics
 diagnostics.diags_names = diag1
