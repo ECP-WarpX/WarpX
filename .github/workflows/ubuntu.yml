@@ -32,13 +32,13 @@ jobs:
         export CC=$(which icc)
 
         mkdir build_dp && cd build_dp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF
         make -j 2
 
         cd ..
 
         mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DENABLE_DP=OFF -DENABLE_DP_PARTICLES=OFF
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single
         make -j 2
 
   build_dpcc:
@@ -46,8 +46,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-      with:
-        path: 'warpx_directory/WarpX'
     - name: install dependencies
       shell: bash
       run: |
@@ -74,12 +72,12 @@ jobs:
     - name: build WarpX
       shell: bash
       run: |
-        set -ex
-        cd warpx_directory
-        git clone --depth 1 https://github.com/ECP-WarpX/picsar.git
-        git clone --depth 1 --branch development https://github.com/AMReX-Codes/amrex.git
-        cd WarpX
         set +e
         source /opt/intel/inteloneapi/setvars.sh
         set -e
-        make -j 2 USE_DPCPP=TRUE USE_MPI=FALSE USE_OPENPMD=TRUE USE_OMP=FALSE PRECISION=FLOAT USE_SINGLE_PRECISION_PARTICLES=TRUE
+        export CXX=$(which dpcpp)
+        export CC=$(which clang)
+
+        mkdir build_sp && cd build_sp
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=DPCPP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single
+        make -j 2

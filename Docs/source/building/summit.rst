@@ -1,7 +1,7 @@
 .. _building-summit:
 
-Building WarpX on Summit (OLCF)
-===============================
+Summit (OLCF)
+=============
 
 The `Summit cluster <https://www.olcf.ornl.gov/summit/>`_ is located at OLCF.
 
@@ -20,6 +20,17 @@ If you are new to this system, please see the following resources:
 
 Installation
 ------------
+
+Use the following commands to download the WarpX source code and switch to the correct branch:
+
+.. code-block:: bash
+
+   mkdir ~/src
+   cd ~/src
+
+   git clone https://github.com/ECP-WarpX/WarpX.git warpx
+   git clone --branch QED https://github.com/ECP-WarpX/picsar.git
+   git clone --branch development https://github.com/AMReX-Codes/amrex.git
 
 We use the following modules and environments on the system.
 
@@ -49,16 +60,21 @@ We use the following modules and environments on the system.
    export CMAKE_PREFIX_PATH=$HOME/sw/openPMD-api-install:$CMAKE_PREFIX_PATH
 
    # optional: Ascent in situ support
-   #   note: you cannot yet use openPMD with parallel HDF5 and
-   #         Ascent (with serial HDF5) at the same time
+   #   note: build WarpX with CMake
    export Alpine=/gpfs/alpine/world-shared/csc340/software/ascent/0.5.3-pre/summit/cuda/gnu
    export Ascent_DIR=$Alpine/ascent-install
    export Conduit_DIR=$Alpine/conduit-install
-   #   work-around for ill-placed AscentConfig.cmake
-   export Ascent_DIR=$Ascent_DIR/lib/cmake
 
-   # optional: for Ascent support (work-in-progress)
-   export ASCENT_DIR=/gpfs/alpine/world-shared/csc340/software/ascent/0.5.3-pre/summit/cuda/gnu/ascent-install/
+   # optional: for Python bindings or libEnsemble
+   module load python/3.7.0
+
+   # optional: for libEnsemble
+   module load openblas/0.3.9-omp
+   module load netlib-lapack/3.8.0
+   if [ -d "$HOME/sw/venvs/warpx-libE" ]
+   then
+     source $HOME/sw/venvs/warpx-libE/bin/activate
+   fi
 
    # optional: just an additional text editor
    module load nano
@@ -72,6 +88,7 @@ We use the following modules and environments on the system.
    # compiler environment hints
    export CC=$(which gcc)
    export CXX=$(which g++)
+   export FC=$(which gfortran)
    export CUDACXX=$(which nvcc)
    export CUDAHOSTCXX=$(which g++)
 
@@ -82,17 +99,6 @@ We recommend to store the above lines in a file, such as ``$HOME/warpx.profile``
 
    source $HOME/warpx.profile
 
-Use the following commands to download the WarpX source code and switch to the correct branch:
-
-.. code-block:: bash
-
-   mkdir ~/src
-   cd ~/src
-
-   git clone https://github.com/ECP-WarpX/WarpX.git warpx
-   git clone --branch QED https://github.com/ECP-WarpX/picsar.git
-   git clone --branch development https://github.com/AMReX-Codes/amrex.git
-
 Optionally, download and build openPMD-api for I/O:
 
 .. code-block:: bash
@@ -102,6 +108,23 @@ Optionally, download and build openPMD-api for I/O:
    cd openPMD-api-build
    cmake ../openPMD-api -DopenPMD_USE_PYTHON=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/openPMD-api-install/ -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_RPATH='$ORIGIN' -DMPIEXEC_EXECUTABLE=$(which jsrun)
    cmake --build . --target install --parallel 16
+
+Optionally, download and install :ref:`libEnsemble <libensemble>` for dynamic ensemble optimizations:
+
+.. code-block:: bash
+
+   export BLAS=$OLCF_OPENBLAS_ROOT/lib/libopenblas.so
+   export LAPACK=$OLCF_NETLIB_LAPACK_ROOT/lib64/liblapack.so
+   python3 -m pip install --user --upgrade pip
+   python3 -m pip install --user virtualenv
+   python3 -m venv $HOME/sw/venvs/warpx-libE
+   source $HOME/sw/venvs/warpx-libE/bin/activate
+   python3 -m pip install --upgrade pip
+   python3 -m pip install --upgrade cython
+   python3 -m pip install --upgrade numpy
+   python3 -m pip install --upgrade scipy
+   python3 -m pip install --upgrade mpi4py --no-binary mpi4py
+   python3 -m pip install --upgrade -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 
 Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
 
