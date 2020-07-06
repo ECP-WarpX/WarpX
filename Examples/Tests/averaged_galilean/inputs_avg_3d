@@ -1,21 +1,19 @@
 #################################
 ####### GENERAL PARAMETERS ######
 #################################
-max_step = 500
+max_step = 400
 
 amr.n_cell = 32 32 32
 amr.max_grid_size = 32
 amr.blocking_factor = 32
 amr.max_level = 0
-psatd.v_galilean = 0 0 0.98503756273
-
+psatd.v_galilean = 0. 0. 0.99498743710662
 psatd.do_time_averaging  = 1
 
 geometry.coord_sys   = 0
 geometry.is_periodic = 1 1 1
-
-geometry.prob_lo     = -3.0944 -3.0944 -9.2832
-geometry.prob_hi     =  3.0944 3.0944 9.2832
+geometry.prob_lo     = -9.67 -9.67 -19.34
+geometry.prob_hi     = 9.67 9.67 19.34
 
 #################################
 ############ NUMERICS ###########
@@ -26,7 +24,7 @@ algo.maxwell_fdtd_solver = ckc
 algo.current_deposition = direct
 algo.particle_pusher = vay
 
-warpx.cfl = 3.
+warpx.cfl = 2.
 interpolation.nox = 3
 interpolation.noy = 3
 interpolation.noz = 3
@@ -53,16 +51,15 @@ electrons.profile = constant
 electrons.density = 282197938148984.7
 electrons.momentum_distribution_type = "gaussian"
 electrons.uz_m = 9.9498743710661994
-electrons.xmin = -3.0944
-electrons.xmax =  3.0944
-electrons.ymin = -3.0944
-electrons.ymax =  3.0944
-electrons.zmin =  -9.2832
-electrons.zmax =  9.2832
-electrons.ux_th = 1e-4
-electrons.uy_th = 1e-4
-electrons.uz_th = 1e-4
-
+electrons.xmin = -9.67
+electrons.xmax = 9.67
+electrons.ymin = -9.67
+electrons.ymax = 9.67
+electrons.zmin =    -19.34
+electrons.zmax =   19.34
+electrons.ux_th = 0.0001
+electrons.uy_th = 0.0001
+electrons.uz_th = 0.0001
 
 ions.charge = q_e
 ions.mass = m_p
@@ -72,15 +69,15 @@ ions.profile = constant
 ions.density =  282197938148984.7
 ions.momentum_distribution_type = "gaussian"
 ions.uz_m = 9.9498743710661994
-ions.xmin = -3.0944
-ions.xmax =  3.0944
-ions.ymin = -3.0944
-ions.ymax =  3.0944
-ions.zmin = -9.2832
-ions.zmax = 9.2832
-ions.ux_th = 1e-4
-ions.uy_th = 1e-4
-ions.uz_th = 1e-4
+ions.xmin = -9.67
+ions.xmax = 9.67
+ions.ymin = -9.67
+ions.ymax = 9.67
+ions.zmin =  -19.34
+ions.zmax = 19.34
+ions.ux_th = 0.0001
+ions.uy_th = 0.0001
+ions.uz_th = 0.0001
 
 # Diagnostics
 diagnostics.diags_names = diag1
