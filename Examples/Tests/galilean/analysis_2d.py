@@ -10,7 +10,7 @@ import sys
 import re
 import yt ; yt.funcs.mylog.setLevel(0)
 import numpy as np
-from scipy.constants import c, epsilon_0
+from scipy.constants import epsilon_0
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
