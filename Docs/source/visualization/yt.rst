@@ -43,7 +43,7 @@ The list of field data and particle data stored can be seen with:
 
 For a quick start-up, the most useful commands for post-processing can be found
 in our Jupyter notebook
-:download:`Visualization.ipynb<../../../Tools/Visualization.ipynb>`
+:download:`Visualization.ipynb<../../../Tools/PostProcessing/Visualization.ipynb>`
 
 Field data
 ~~~~~~~~~~

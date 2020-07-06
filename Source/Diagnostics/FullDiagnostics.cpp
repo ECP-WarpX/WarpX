@@ -6,6 +6,7 @@
 #include "ComputeDiagFunctors/PartPerGridFunctor.H"
 #include "ComputeDiagFunctors/DivBFunctor.H"
 #include "ComputeDiagFunctors/DivEFunctor.H"
+#include "ComputeDiagFunctors/RhoFunctor.H"
 #include "FlushFormats/FlushFormat.H"
 #include "FlushFormats/FlushFormatPlotfile.H"
 #include "FlushFormats/FlushFormatCheckpoint.H"
@@ -48,7 +49,6 @@ FullDiagnostics::ReadParameters ()
 {
     // Read list of full diagnostics fields requested by the user.
     bool checkpoint_compatibility = BaseReadParameters();
-    auto & warpx = WarpX::GetInstance();
     amrex::ParmParse pp(m_diag_name);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd" ||
@@ -146,6 +146,9 @@ FullDiagnostics::AddRZModesToDiags (int lev)
         }
     }
 
+    // If rho is requested, all components will be written out
+    bool rho_requested = WarpXUtilStr::is_in( m_varnames, "rho" );
+
     // First index of m_all_field_functors[lev] where RZ modes are stored
     int icomp = m_all_field_functors[0].size();
     const std::array<std::string, 3> coord {"r", "theta", "z"};
@@ -154,6 +157,9 @@ FullDiagnostics::AddRZModesToDiags (int lev)
     // Each of them being a multi-component multifab
     int n_new_fields = 9;
     if (divE_requested) {
+        n_new_fields += 1;
+    }
+    if (rho_requested) {
         n_new_fields += 1;
     }
     m_all_field_functors[lev].resize( m_all_field_functors[0].size() + n_new_fields );
@@ -193,6 +199,12 @@ FullDiagnostics::AddRZModesToDiags (int lev)
                               m_crse_ratio, false, ncomp_multimodefab);
         icomp += 1;
         AddRZModesToOutputNames(std::string("divE"), ncomp_multimodefab);
+    }
+    // rho
+    if (rho_requested) {
+        m_all_field_functors[lev][icomp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, false, ncomp_multimodefab);
+        icomp += 1;
+        AddRZModesToOutputNames(std::string("rho"), ncomp_multimodefab);
     }
     // Sum the number of components in input vector m_all_field_functors
     // and check that it corresponds to the number of components in m_varnames
@@ -342,13 +354,18 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "jz" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "rho" ){
-            // rho_new is stored in component 1 of rho_fp when using PSATD
+            if ( WarpX::do_back_transformed_diagnostics ) {
 #ifdef WARPX_USE_PSATD
-            amrex::MultiFab* rho_new = new amrex::MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(rho_new, lev, m_crse_ratio);
+                // rho_new is stored in component 1 of rho_fp when using PSATD
+                amrex::MultiFab* rho_new = new amrex::MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
+                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(rho_new, lev, m_crse_ratio);
 #else
-            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_rho_fp(lev), lev, m_crse_ratio);
+                m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_rho_fp(lev), lev, m_crse_ratio);
 #endif
+            }
+            else {
+                m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
+            }
         } else if ( m_varnames[comp] == "F" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_cell" ){
