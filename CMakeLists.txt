@@ -189,6 +189,7 @@ if(ENABLE_CUDA)
         set_target_properties(WarpX PROPERTIES
             CUDA_EXTENSIONS OFF
             CUDA_STANDARD_REQUIRED ON
+            CUDA_RESOLVE_DEVICE_SYMBOLS ON
         )
     endif()
 endif()
