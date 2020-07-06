@@ -281,7 +281,6 @@ void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spe
                 }
 
             } else { // Handle k_norm = 0, by using the analytical limit
-                const Complex theta = amrex::exp( 0.5_rt*I*kv*dt );
                 C(i,j,k) = 1._rt;
                 S_ck(i,j,k) = dt;
                 X1(i,j,k) = dt*dt/(2._rt * ep0);
