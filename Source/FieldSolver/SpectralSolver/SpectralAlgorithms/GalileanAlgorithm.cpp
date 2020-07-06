@@ -101,10 +101,6 @@ GalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
             const Complex X4 = X4_arr(i,j,k);
             const Complex T2 = Theta2_arr(i,j,k);
 
-            // Used only when updating E without rho
-            Complex k_dot_J = kx*Jx + ky*Jy + kz*Jz;
-            Complex k_dot_E = kx*Ex_old + ky*Ey_old + kz*Ez_old;
-
             // Update E (see the original Galilean article)
 
             if (update_with_rho) {
@@ -121,6 +117,9 @@ GalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
                             + T2*S_ck*c2*I*(kx*By_old - ky*Bx_old)
                             + X4*Jz - I*(X2*rho_new - T2*X3*rho_old)*kz;
             } else {
+
+                Complex k_dot_J = kx*Jx + ky*Jy + kz*Jz;
+                Complex k_dot_E = kx*Ex_old + ky*Ey_old + kz*Ez_old;
 
                 fields(i,j,k,Idx::Ex) = T2*C*Ex_old + T2*S_ck*c2*I*(ky*Bz_old-kz*By_old) + X4*Jx
                                         + X2*k_dot_E*kx + X3*k_dot_J*kx;
@@ -291,7 +290,7 @@ void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spe
                     X3(i,j,k) = - c*c*dt*dt/(3._rt * ep0);
                 } else {
                     X2(i,j,k) = c*c*dt*dt*0.5_rt;
-                    X3(i,j,k) = -dt*c*c*dt*dt/(6.0_rt*ep0);
+                    X3(i,j,k) = -c*c*dt*dt*dt/(6.0_rt*ep0);
                 }
                 X4(i,j,k) = -dt/ep0;
                 Theta2(i,j,k) = 1._rt;
