@@ -611,7 +611,8 @@ WarpX::ReadParameters ()
         pp.query("nox", nox_fft);
         pp.query("noy", noy_fft);
         pp.query("noz", noz_fft);
-        pp.query("do_current_correction", do_current_correction);
+        pp.query("current_correction", current_correction);
+        pp.query("update_with_rho", update_with_rho);
         pp.query("v_galilean", v_galilean);
         pp.query("do_time_averaging", fft_do_time_averaging);
       // Scale the velocity by the speed of light
@@ -922,7 +923,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     bool const pml=false;
     spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
         nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
-        pml, fft_periodic_single_box ) );
+        pml, fft_periodic_single_box, update_with_rho ) );
 #   endif
 #endif
     m_fdtd_solver_fp[lev].reset(
@@ -1036,7 +1037,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   else
         realspace_ba.grow(ngE); // add guard cells
         spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev] ) );
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev],
+            pml, fft_periodic_single_box, update_with_rho ) );
 #   endif
 #endif
         m_fdtd_solver_cp[lev].reset(

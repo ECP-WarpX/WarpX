@@ -1,7 +1,7 @@
 .. _building-summit:
 
-Building WarpX on Summit (OLCF)
-===============================
+Summit (OLCF)
+=============
 
 The `Summit cluster <https://www.olcf.ornl.gov/summit/>`_ is located at OLCF.
 
