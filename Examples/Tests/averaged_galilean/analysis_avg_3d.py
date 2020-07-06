@@ -22,11 +22,11 @@ Ex= ds.index.grids[0]['boxlib', 'Ex'].squeeze().v
 Ey= ds.index.grids[0]['boxlib', 'Ey'].squeeze().v
 Ez= ds.index.grids[0]['boxlib', 'Ez'].squeeze().v
 
-#E field energy calculated with averaged Galilean PSATD method (v_galilean = (0,0,0.98503756273))
+#E field energy calculated with averaged Galilean PSATD method (v_galilean = (0,0,0.99498743710662))
 energyE_averaged_psatd = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
 
-#E field energy precalculated with standard Galilean PSATD (v_galilean = (0,0,0.98503756273))
-energyE_galilean_psatd = 1015600.5836183146#0.4570158831939449
+#E field energy precalculated with standard Galilean PSATD (v_galilean = (0,0,0.99498743710662))
+energyE_galilean_psatd = 1015600.5836183146
 
 error_rel = energyE_averaged_psatd / energyE_galilean_psatd
 tolerance_rel = 1e-3
