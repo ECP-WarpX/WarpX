@@ -103,7 +103,7 @@ def write_sim_input(input_file, x_values):
         str(zmax_stop_run))
     # Set mirrors position
     output_text = _set_value(
-    output_text, 'warpx.mirror_z = ', str(mirror_z_1)+' '+str(mirror_z_2))
+        output_text, 'warpx.mirror_z = ', str(mirror_z_1)+' '+str(mirror_z_2))
     # Set laser2 position
     output_text = _set_value(
         output_text, 'laser2.position = ', '0. 0. '+ str(z_antenna_2))
