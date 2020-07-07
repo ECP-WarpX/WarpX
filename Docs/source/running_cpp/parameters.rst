@@ -1074,51 +1074,109 @@ Numerics and algorithms
     for more information.
 
 * ``psatd.current_correction`` (`0` or `1`; default: `0`)
-    If true, the current correction `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_
+    If true, a current correction scheme in Fourier space is applied in order to
+    guarantee charge conservation.
+    
+    If ``psatd.v_galilean`` is zero, the spectral solver used is the standard PSATD
+    scheme described in
+    `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_
+    and the current correction reads
 
     .. math::
-       \widetilde{\boldsymbol{J}}^{\,n+1/2}_{\mathrm{correct}} = \widetilde{\boldsymbol{J}}^{\,n+1/2}
-       -\bigg[\boldsymbol{k}\cdot\widetilde{\boldsymbol{J}}^{\,n+1/2}
-       -i\frac{\widetilde{\rho}^{n+1}-\widetilde{\rho}^{n}}{\Delta t}\bigg]
-       \frac{\boldsymbol{k}}{k^2}
+       \widehat{\boldsymbol{J}}^{\,n+1/2}_{\mathrm{correct}} = \widehat{\boldsymbol{J}}^{\,n+1/2}
+       - \bigg(\boldsymbol{k}\cdot\widehat{\boldsymbol{J}}^{\,n+1/2}
+       - i \frac{\widehat{\rho}^{n+1} - \widehat{\rho}^{n}}{\Delta{t}}\bigg) \frac{\boldsymbol{k}}{k^2}
 
-    is applied. This option guarantees charge conservation only when used in combination
-    with ``psatd.periodic_single_box_fft=1``, that is, only for periodic single-box
+    If ``psatd.v_galilean`` is non-zero, the spectral solver used is the Galilean
+    PSATD scheme described in
+    `(Lehe et al, PRE 94, 2016) <https://doi.org/10.1103/PhysRevE.94.053305>`_
+    and the current correction reads
+
+    .. math::
+       \widehat{\boldsymbol{J}}^{\,n+1/2}_{\mathrm{correct}} = \widehat{\boldsymbol{J}}^{\,n+1/2}
+       - \bigg(\boldsymbol{k}\cdot\widehat{\boldsymbol{J}}^{\,n+1/2} - (\boldsymbol{k}\cdot\boldsymbol{v}_G)
+       \,\frac{\widehat\rho^{n+1} - \widehat\rho^{n}\theta^2}{1 - \theta^2}\bigg) \frac{\boldsymbol{k}}{k^2}
+
+    where :math:`\theta=\exp(i\,\boldsymbol{k}\cdot\boldsymbol{v}_G\,\Delta{t}/2)`.
+    This option guarantees charge conservation only when used in combination
+    with ``psatd.periodic_single_box_fft=1``, namely for periodic single-box
     simulations with global FFTs without guard cells. The implementation for domain
     decomposition with local FFTs over guard cells is planned but not yet completed.
 
 * ``psatd.update_with_rho`` (`0` or `1`; default: `0`)
-    If false, the update equation for the electric field reads
+    If true, the update equation for the electric field is expressed in terms of
+    both the current density and the charge density, namely :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}`,
+    :math:`\widehat\rho^{n}`, and :math:`\widehat\rho^{n+1}`. If false, instead,
+    the update equation for the electric field is expressed in terms of the current
+    density :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}` only. If charge is expected
+    to be conserved (by setting, for example, ``psatd.current_correction=1``), then
+    the two formulations are expected to be equivalent.
+    
+    If ``psatd.v_galilean`` is zero, the spectral solver used is the standard PSATD
+    scheme described in `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_:
+    
+    1. if ``psatd.update_with_rho=0``, the update equation for the electric field reads
 
     .. math::
        \begin{split}
-       \widetilde{\boldsymbol{E}}^{\,n+1}= & \:
-       C\widetilde{\boldsymbol{E}}^{\,n}+i\frac{S}{c\,k}\,c^2\,\boldsymbol{k}
-       \times\widetilde{\boldsymbol{B}}^{\,n}-\frac{1}{\epsilon_0}\,\frac{S}{c\,k}\,
-       \,\widetilde{\boldsymbol{J}}^{\,n+1/2} \\
-       & +\frac{1-C}{k^2}\,(\boldsymbol{k}\cdot\widetilde{\boldsymbol{E}}^{\,n})\,\boldsymbol{k}
-       +\frac{1}{\epsilon_0}\,\frac{1}{k^2}\,\left(\frac{S}{c\,k}-\Delta t\right)\,
-       (\boldsymbol{k}\cdot\widetilde{\boldsymbol{J}}^{\,n+1/2})\,\boldsymbol{k}
+       \widehat{\boldsymbol{E}}^{\,n+1}= & \:
+       C \widehat{\boldsymbol{E}}^{\,n} + i \, \frac{S c}{k} \boldsymbol{k}\times\widehat{\boldsymbol{B}}^{\,n}
+       - \frac{S}{\epsilon_0 c \, k} \widehat{\boldsymbol{J}}^{\,n+1/2} \\[0.2cm]
+       & +\frac{1-C}{k^2} (\boldsymbol{k}\cdot\widehat{\boldsymbol{E}}^{\,n}) \boldsymbol{k}
+       + \frac{1}{\epsilon_0 k^2} \left(\frac{S}{c \, k}-\Delta{t}\right)
+       (\boldsymbol{k}\cdot\widehat{\boldsymbol{J}}^{\,n+1/2}) \boldsymbol{k}
        \end{split}
 
-    where :math:`C=\cos(k\,c\,\Delta t)` and :math:`S=\sin(k\,c\,\Delta t)`, respectively.
-
-    If true, the update equation for the electric field reads instead
+    2. if ``psatd.update_with_rho=1``, the update equation for the electric field reads
 
     .. math::
        \begin{split}
-       \widetilde{\boldsymbol{E}}^{\,n+1}= & \:
-       C\widetilde{\boldsymbol{E}}^{\,n}+i\frac{S}{c\,k}\,c^2\,\boldsymbol{k}
-       \times\widetilde{\boldsymbol{B}}^{\,n}-\frac{1}{\epsilon_0}\,\frac{S}{c\,k}
-       \,\widetilde{\boldsymbol{J}}^{\,n+1/2} \\
-       & -i\frac{1}{\epsilon_0}\,\frac{1}{k^2}\,\bigg[
-       \left(1-\frac{S}{c\,k}\frac{1}{\Delta t}\right)\widetilde{\rho}^{n+1}
-       -\left(C-\frac{S}{c\,k}\frac{1}{\Delta t}\right)\widetilde{\rho}^{n}\bigg]
-       \,\boldsymbol{k}
+       \widehat{\boldsymbol{E}}^{\,n+1}= & \:
+       C\widehat{\boldsymbol{E}}^{\,n} + i \, \frac{S c}{k} \boldsymbol{k}\times\widehat{\boldsymbol{B}}^{\,n}
+       - \frac{S}{\epsilon_0 c \, k} \widehat{\boldsymbol{J}}^{\,n+1/2} \\[0.2cm]
+       & + \frac{i}{\epsilon_0 k^2} \left(C-\frac{S}{c\,k}\frac{1}{\Delta{t}}\right)
+       \widehat{\rho}^{n} \boldsymbol{k} - \frac{i}{\epsilon_0 k^2} \left(1-\frac{S}{c \, k}
+       \frac{1}{\Delta{t}}\right)\widehat{\rho}^{n+1} \boldsymbol{k}
        \end{split}
 
-    See `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_
-    for more details about the derivation of these equations.
+    The coefficients :math:`C` and :math:`S` are defined in
+    `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_.
+
+    If ``psatd.v_galilean`` is non-zero, the spectral solver used is the Galilean
+    PSATD scheme described in
+    `(Lehe et al, PRE 94, 2016) <https://doi.org/10.1103/PhysRevE.94.053305>`_:
+
+    1. if ``psatd.update_with_rho=0``, the update equation for the electric field reads
+
+    .. math::
+       \begin{split}
+       \widehat{\boldsymbol{E}}^{\,n+1} = & \:
+       \theta^{2} C \widehat{\boldsymbol{E}}^{\,n} + i \, \theta^{2} \frac{S c}{k}
+       \boldsymbol{k}\times\widehat{\boldsymbol{B}}^{\,n}
+       + \frac{i \, \nu \, \theta \, \chi_1 - \theta^{2} S}{\epsilon_0 c \, k}
+       \widehat{\boldsymbol{J}}^{\,n+1/2} \\[0.2cm]
+       & + \theta^{2} \frac{\chi_2-\chi_3}{k^{2}}
+       (\boldsymbol{k}\cdot\widehat{\boldsymbol{E}}^{\,n}) \boldsymbol{k}
+       + i \, \frac{\chi_2\left(\theta^{2}-1\right)}{\epsilon_0 c \, k^{3} \nu}
+       (\boldsymbol{k}\cdot\widehat{\boldsymbol{J}}^{\,n+1/2}) \boldsymbol{k}
+       \end{split}
+
+    2. if ``psatd.update_with_rho=1``, the update equation for the electric field reads
+
+    .. math::
+       \begin{split}
+       \widehat{\boldsymbol{E}}^{\,n+1} = & \:
+       \theta^{2} C \widehat{\boldsymbol{E}}^{\,n} + i \, \theta^{2} \frac{S c}{k}
+       \boldsymbol{k}\times\widehat{\boldsymbol{B}}^{\,n}
+       + \frac{i \, \nu \, \theta \, \chi_1 - \theta^{2} S}{\epsilon_0 c \, k}
+       \widehat{\boldsymbol{J}}^{\,n+1/2} \\[0.2cm]
+       & + i \, \frac{\theta^{2} \chi_3}{\epsilon_0 k^{2}} \widehat{\rho}^{\,n} \boldsymbol{k}
+       - i \, \frac{\chi_2}{\epsilon_0 k^{2}} \widehat{\rho}^{\,n+1} \boldsymbol{k}
+       \end{split}
+
+    The coefficients :math:`C`, :math:`S`, :math:`\theta`, :math:`\nu`, :math:`\chi_1`,
+    :math:`\chi_2`, and :math:`\chi_3` are defined in
+    `(Lehe et al, PRE 94, 2016) <https://doi.org/10.1103/PhysRevE.94.053305>`_.
 
 * ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
     Defines the galilean velocity.
