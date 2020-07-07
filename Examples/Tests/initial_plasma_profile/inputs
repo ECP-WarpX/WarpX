@@ -44,7 +44,7 @@ electrons.predefined_profile_params = 0.0       .02       .297      .003        
 #################################
 ########## DIAGNOSTIC ###########
 #################################
-diagnostics.diags_names = diag
-diag.diag_type = Full
-diag.fields_to_plot = rho
-diag.period = 1
+diagnostics.diags_names = diag1
+diag1.diag_type = Full
+diag1.fields_to_plot = rho
+diag1.period = 1
