@@ -1,10 +1,18 @@
 #! /usr/bin/env python
 """
-This script tests the result of the Galilen method in WarpX.
-It compares the energy of the electric field calculated using Galilean method with
-'v_galiean = (0.,0., 0.99498743710662)' versus standard PSATD (v_galiean = (0.,0.,0.)):
-    * if 'v_galilean == 0': simulation is unstable because of the arosen NCI;
-    * if 'v_galilean != 0 : NCI is suppresed => simulation is stable.
+This script tests the result of the averaged Galilean PSATD with large
+timestep: dz/dx = 2. and c*dt = dz in WarpX.
+It compares the energy of the electric field of the uniform plasma calculated
+using the averaged Galilean PSATD versus standard Galilean PSATD
+with v_galilean = (0.,0.,0.99498743710662):
+
+    * if standard Galilean PSATD is used (psatd.do_time_averaging == 0'):
+      simulation is unstable because of the arosen NCI.
+
+    * if averaged Galilean PSATD is used ('psatd.do_time_averaging == 1) :
+      NCI is suppresed => simulation is stable.
+
+Accepted relative tolerance: 1e-4
 """
 import sys
 import yt ; yt.funcs.mylog.setLevel(0)
