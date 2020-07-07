@@ -37,7 +37,7 @@ energyE_averaged_psatd = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
 energyE_galilean_psatd = 460315.9845556079
 
 error_rel = energyE_averaged_psatd / energyE_galilean_psatd
-tolerance_rel = 1e-3
+tolerance_rel = 1e-4
 
 print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
