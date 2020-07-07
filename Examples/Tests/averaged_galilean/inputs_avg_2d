@@ -8,7 +8,6 @@ amr.max_grid_size = 128
 amr.blocking_factor = 128
 amr.max_level = 0
 psatd.v_galilean = 0 0 0.99498743710662
-#0.98503756273
 
 psatd.do_time_averaging  = 1
 
@@ -56,7 +55,7 @@ electrons.momentum_distribution_type = "gaussian"
 electrons.uz_m = 9.9498743710661994
 electrons.xmin = -12.3776
 electrons.xmax = 12.3776
-electrons.zmin =  -49.5104
+electrons.zmin = -49.5104
 electrons.zmax =  49.5104
 electrons.ux_th = 1e-4
 electrons.uy_th = 1e-4
@@ -72,7 +71,7 @@ ions.momentum_distribution_type = "gaussian"
 ions.uz_m = 9.9498743710661994
 ions.xmin = -12.3776
 ions.xmax = 12.3776
-ions.zmin =  -49.5104
+ions.zmin = -49.5104
 ions.zmax = 49.5104
 ions.ux_th = 1e-4
 ions.uy_th = 1e-4
