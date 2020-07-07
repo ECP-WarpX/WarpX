@@ -56,5 +56,5 @@ electrons.momentum_distribution_type = "constant"
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 40
+diag1.period = 100
 diag1.diag_type = Full
