@@ -71,7 +71,7 @@ class SpectralSolver
         /**
          * \brief Public interface to call the virtual function \c CurrentCorrection,
          * defined in the base class SpectralBaseAlgorithm and possibly overridden
-         * by its derived classes (e.g. PsatdAlgorithm, PMLPsatdAlgorithm), from
+         * by its derived classes (e.g. PsatdAlgorithm, GalileanAlgorithm), from
          * objects of class SpectralSolver through the private unique pointer \c algorithm
          *
          * \param[in,out] current three-dimensional array of unique pointers to MultiFab
