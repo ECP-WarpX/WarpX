@@ -34,6 +34,11 @@ int main(int argc, char* argv[])
 
     amrex::Initialize(argc,argv);
 
+    // we need a larger stack limit that usual bc of the parser.
+#if defined(AMREX_USE_GPU) && defined(AMREX_USE_CUDA)
+    AMREX_CUDA_SAFE_CALL(cudaDeviceSetLimit(cudaLimitStackSize, 20*1024));
+#endif
+
     ConvertLabParamsToBoost();
 
     CheckGriddingForRZSpectral();
