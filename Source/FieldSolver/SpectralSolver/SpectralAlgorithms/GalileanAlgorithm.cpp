@@ -301,20 +301,20 @@ void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spe
 }
 
 void
-GalileanAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
+GalileanAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
                                       std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                      const std::unique_ptr<amrex::MultiFab>& rho ) {
+                                      const std::unique_ptr<amrex::MultiFab>& rho) {
     // Profiling
     BL_PROFILE( "GalileanAlgorithm::CurrentCorrection" );
 
     using Idx = SpectralFieldIndex;
 
     // Forward Fourier transform of J and rho
-    field_data.ForwardTransform( *current[0], Idx::Jx, 0 );
-    field_data.ForwardTransform( *current[1], Idx::Jy, 0 );
-    field_data.ForwardTransform( *current[2], Idx::Jz, 0 );
-    field_data.ForwardTransform( *rho, Idx::rho_old, 0 );
-    field_data.ForwardTransform( *rho, Idx::rho_new, 1 );
+    field_data.ForwardTransform(*current[0], Idx::Jx, 0);
+    field_data.ForwardTransform(*current[1], Idx::Jy, 0);
+    field_data.ForwardTransform(*current[2], Idx::Jz, 0);
+    field_data.ForwardTransform(*rho, Idx::rho_old, 0);
+    field_data.ForwardTransform(*rho, Idx::rho_new, 1);
 
     // Loop over boxes
     for (MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){

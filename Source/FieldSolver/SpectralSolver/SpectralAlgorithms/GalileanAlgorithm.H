@@ -39,9 +39,9 @@ class GalileanAlgorithm : public SpectralBaseAlgorithm
          *                           storing the three components of the current density
          * \param[in]     rho        unique pointer to MultiFab storing the charge density
          */
-        virtual void CurrentCorrection ( SpectralFieldData& field_data,
-                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                         const std::unique_ptr<amrex::MultiFab>& rho ) override final;
+        virtual void CurrentCorrection (SpectralFieldData& field_data,
+                                        std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                        const std::unique_ptr<amrex::MultiFab>& rho) override final;
 
     private:
         SpectralRealCoefficients C_coef, S_ck_coef;
