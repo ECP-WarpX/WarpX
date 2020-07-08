@@ -29,7 +29,7 @@ import checksumAPI
 # this will be the name of the plot file
 fn = sys.argv[1]
 
-# Parse test name and check if current correction (psatd.do_current_correction=1) is applied
+# Parse test name and check if current correction (psatd.current_correction=1) is applied
 current_correction = True if re.search( 'current_correction', fn ) else False
 
 # Parse test name and check if Vay current deposition (algo.current_deposition=vay) is used

@@ -66,7 +66,7 @@ author = 'WarpX collaboration'
 # built documents.
 #
 # The short X.Y version.
-version = '20.06'
+version = '20.07'
 # The full version, including alpha/beta/rc tags.
 release = ''
 
