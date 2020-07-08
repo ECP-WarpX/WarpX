@@ -9,15 +9,15 @@
 class AvgGalileanAlgorithm : public SpectralBaseAlgorithm
 {
     public:
-        AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace,
-                         const amrex::DistributionMapping& dm,
-                         const int norder_x, const int norder_y,
-                         const int norder_z, const bool nodal,
-                         const amrex::Array<amrex::Real,3>& v_galilean,
-                         const amrex::Real dt);
+        AvgGalileanAlgorithm (const SpectralKSpace& spectral_kspace,
+                              const amrex::DistributionMapping& dm,
+                              const int norder_x, const int norder_y,
+                              const int norder_z, const bool nodal,
+                              const amrex::Array<amrex::Real,3>& v_galilean,
+                              const amrex::Real dt);
         // Redefine update equation from base class
-        virtual void pushSpectralFields(SpectralFieldData& f) const override final;
-        virtual int getRequiredNumberOfFields() const override final {
+        virtual void pushSpectralFields (SpectralFieldData& f) const override final;
+        virtual int getRequiredNumberOfFields () const override final {
              return SpectralAvgFieldIndex::n_fields;
     }
 
