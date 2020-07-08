@@ -27,7 +27,7 @@ struct SpectralFieldIndex {
   enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields, divE=3 };
 };
 
-/** Index for the PML fields, when stored in spectral space */
+/* Index for the PML fields, when stored in spectral space */
 struct SpectralPMLIndex {
   enum { Exy=0, Exz, Eyx, Eyz, Ezx, Ezy,
            Bxy, Bxz, Byx, Byz, Bzx, Bzy, n_fields };
@@ -41,17 +41,13 @@ class SpectralFieldData
 {
 
     public:
-
         SpectralFieldData( const amrex::BoxArray& realspace_ba,
                            const SpectralKSpace& k_space,
                            const amrex::DistributionMapping& dm,
                            const int n_field_required,
                            const bool periodic_single_box );
-
         SpectralFieldData() = default; // Default constructor
-
         SpectralFieldData& operator=(SpectralFieldData&& field_data) = default;
-
         ~SpectralFieldData();
 
         void ForwardTransform ( const amrex::MultiFab& mf,
@@ -64,23 +60,8 @@ class SpectralFieldData
                                 const int i_comp ) {
              ForwardTransform( mf, field_index, i_comp, mf.ixType().toIntVect() ); }
 
-        /**
-         * \brief Perform inverse Fourier transform of a given spectral field
-         *
-         * \param[inout] mf Reference to the destination MultiFab where the inverse
-         *                  Fourier transform will be stored
-         * \param[in] field_index Index of the spectral field to be transformed back
-         *                        to real space
-         * \param[in] i_comp Index of the component of the destination MultiFab where
-         *                   the inverse Fourier transform will be stored
-         * \param[in] fill_guard_cells Optional argument (default=false): if true,
-         *                             the guard cells of the destination MultiFab
-         *                             will be filled in addition to its valid cells
-         */
         void BackwardTransform ( amrex::MultiFab& mf,
-                                 const int field_index,
-                                 const int i_comp,
-                                 const bool fill_guard_cells=false );
+                                 const int field_index, const int i_comp );
 
         // `fields` stores fields in spectral space, as multicomponent FabArray
         SpectralField fields;
