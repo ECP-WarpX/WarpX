@@ -60,21 +60,21 @@ SpectralSolver::SpectralSolver(
     }
     else {
         if (fft_do_time_averaging){
-              algorithm = std::unique_ptr<AvgGalileanAlgorithm>( new AvgGalileanAlgorithm(
+            algorithm = std::unique_ptr<AvgGalileanAlgorithm>( new AvgGalileanAlgorithm(
                 k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt ) );
-            }
+        }
         else {
             if ((v_galilean[0]==0) && (v_galilean[1]==0) && (v_galilean[2]==0)){
-               // v_galilean is 0: use standard PSATD algorithm
-              algorithm = std::unique_ptr<PsatdAlgorithm>( new PsatdAlgorithm(
+                // v_galilean is 0: use standard PSATD algorithm
+                algorithm = std::unique_ptr<PsatdAlgorithm>( new PsatdAlgorithm(
                    k_space, dm, norder_x, norder_y, norder_z, nodal, dt, update_with_rho ) );
             }
             else {
                 algorithm = std::unique_ptr<GalileanAlgorithm>( new GalileanAlgorithm(
                     k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt ) );
-          }
             }
         }
+    }
 
     // - Initialize arrays for fields in spectral space + FFT plans
     field_data = SpectralFieldData( realspace_ba, k_space, dm,
