@@ -14,8 +14,6 @@
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
 
-using namespace amrex;
-
 #if WARPX_USE_PSATD
 
 /* \brief Initialize the spectral Maxwell solver
@@ -53,7 +51,7 @@ SpectralSolver::SpectralSolver(
     // - Select the algorithm depending on the input parameters
     //   Initialize the corresponding coefficients over k space
 
-    ParmParse pp("psatd");
+    amrex::ParmParse pp("psatd");
     pp.query("do_time_averaging", fft_do_time_averaging);
 
     if (pml) {
