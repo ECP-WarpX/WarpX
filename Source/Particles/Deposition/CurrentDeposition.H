@@ -641,8 +641,8 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     {
         // Inverse of Lorentz factor gamma
         const amrex::Real invgam = 1._rt / std::sqrt(1._rt + uxp[ip] * uxp[ip] * invcsq
-                                                            + uyp[ip] * uyp[ip] * invcsq
-                                                            + uzp[ip] * uzp[ip] * invcsq);
+                                                           + uyp[ip] * uyp[ip] * invcsq
+                                                           + uzp[ip] * uzp[ip] * invcsq);
         // Product of particle charges and weights
         amrex::Real wq = q * wp[ip];
         if (do_ionization) wq *= ion_lev[ip];
