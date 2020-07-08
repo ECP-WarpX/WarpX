@@ -9,8 +9,6 @@
 #include "SpectralKSpace.H"
 
 #include <cmath>
-#include <math.h>
-
 
 using namespace amrex;
 using namespace Gpu;
