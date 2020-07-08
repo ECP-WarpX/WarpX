@@ -297,7 +297,6 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
-
     const Dim3 lo = lbound(tilebox);
     // Take into account Galilean shift
     auto& warpx_instance = WarpX::GetInstance();
