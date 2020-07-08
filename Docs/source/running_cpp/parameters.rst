@@ -1406,8 +1406,10 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     (This is done by averaging the field over 1 or 2 points along each direction, depending on the staggering).
     ``plot_coarsening_ratio`` should be an integer divisor of ``blocking_factor``, defined in the :ref:`parallelization <parallelization_warpx>` section.
 
-* ``<diag_name>.file_prefix`` (`string`) optional (default `diags/plotfiles/plt`)
-    Root for output file names. Supports sub-directories.
+* ``<diag_name>.file_prefix`` (`string`) optional (default ``<diag_name>/``)
+    Directory root for output files relative to ``diags/``.
+    Supports sub-directories.
+    Actual file names in the herein set directory are determined by the ``<diag_name>.format``: ``openpmd_<N>.bp|h5|json`` for ``openpmd``, ``plt<N>`` for ``plotfile``
 
 * ``<diag_name>.diag_lo`` (list `float`, 1 per dimension) optional (default `-infinity -infinity -infinity`)
     Lower corner of the output fields (if smaller than ``warpx.dom_lo``, then set to ``warpx.dom_lo``). Currently, when the ``diag_lo`` is different from ``warpx.dom_lo``, particle output is disabled.
