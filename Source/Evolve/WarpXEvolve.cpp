@@ -118,7 +118,6 @@ WarpX::Evolve (int numsteps)
                 FillBoundaryE_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
                 FillBoundaryB_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
             }
-
 #ifndef WARPX_USE_PSATD
             FillBoundaryAux(guard_cells.ng_UpdateAux);
 #endif
@@ -131,7 +130,6 @@ WarpX::Evolve (int numsteps)
             // F : guard cells are NOT up-to-date
         } else if (do_subcycling == 1 && finest_level == 1) {
             OneStep_sub1(cur_time);
-
         } else {
             amrex::Print() << "Error: do_subcycling = " << do_subcycling << std::endl;
             amrex::Abort("Unsupported do_subcycling type");
@@ -149,18 +147,15 @@ WarpX::Evolve (int numsteps)
         if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
             // At the end of last step, push p by 0.5*dt to synchronize
             UpdateAuxilaryData();
-
             for (int lev = 0; lev <= finest_level; ++lev) {
                 mypc->PushP(lev, 0.5*dt[lev],
                             *Efield_aux[lev][0],*Efield_aux[lev][1],
                             *Efield_aux[lev][2],
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],
                             *Bfield_aux[lev][2]);
-
             }
             is_synchronized = true;
         }
-
 #ifdef WARPX_USE_PY
         if (warpx_py_afterEsolve) warpx_py_afterEsolve();
 #endif
@@ -291,9 +286,7 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_particlescraper) warpx_py_particlescraper();
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
 #endif
-
     PushParticlesandDepose(cur_time);
-
 
 #ifdef WARPX_USE_PY
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
