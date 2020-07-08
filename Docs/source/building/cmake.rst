@@ -114,7 +114,7 @@ CMake Option                Default & Values                             Descrip
 =========================== ============================================ =======================================================
 ``CMAKE_BUILD_TYPE``        **RelWithDebInfo**/Release/Debug             Type of build, symbols & optimizations
 ``WarpX_ASCENT``            ON/**OFF**                                   Ascent in situ visualization
-``WarpX_COMPUTE``           **NONE**/CUDA/OMP                            Parallel, on-node computing backend
+``WarpX_COMPUTE``           NOACC/**OMP**/CUDA/DPCPP                     On-node, accelerated computing backend
 ``WarpX_DIMS``              **3**/2/RZ                                   Simulation dimensionality
 ``WarpX_MPI``               **ON**/OFF                                   Multi-node support (message-passing)
 ``WarpX_OPENPMD``           ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)

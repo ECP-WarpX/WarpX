@@ -10,7 +10,6 @@
 
 #include <cmath>
 
-
 using namespace amrex;
 using namespace Gpu;
 
@@ -217,11 +216,11 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                 // contains only the positive k, and the Nyquist frequency is
                 // the last element of the array.
                 modified_k[k.size()-1] = 0.0_rt;
-          }   else {
+            } else {
                 // The other axes contains both positive and negative k ;
                 // the Nyquist frequency is in the middle of the array.
                 modified_k[k.size()/2] = 0.0_rt;
-          }
+            }
         }
     }
     return modified_k_comp;
