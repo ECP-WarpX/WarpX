@@ -64,8 +64,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
          * \param[in,out] current    three-dimensional array of unique pointers to MultiFab
          *                           storing the three components of the current density
          */
-        virtual void VayDeposition ( SpectralFieldData& field_data,
-                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current ) override final;
+        virtual void VayDeposition (SpectralFieldData& field_data,
+                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:
         SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;

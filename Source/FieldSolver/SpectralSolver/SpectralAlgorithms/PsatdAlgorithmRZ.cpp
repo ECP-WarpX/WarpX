@@ -202,12 +202,12 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
                                      std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                      const std::unique_ptr<amrex::MultiFab>& rho )
 {
-    amrex::Abort("Current correction not implemented in RZ geometry");
+    amrex::Abort("Current correction not implemented in RZ");
 }
 
 void
-PsatdAlgorithmRZ::VayDeposition( SpectralFieldDataRZ& field_data,
-                               std::array<std::unique_ptr<amrex::MultiFab>,3>& current )
+PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& field_data,
+                                 std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
 {
-    amrex::Abort( "Vay deposition not implemented in RZ geometry" );
+    amrex::Abort("Vay deposition not implemented in RZ geometry");
 }

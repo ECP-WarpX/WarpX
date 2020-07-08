@@ -818,10 +818,10 @@ WarpX::CurrentCorrection ()
 void
 WarpX::VayDeposition ()
 {
-    for ( int lev = 0; lev <= finest_level; ++lev )
+    for (int lev = 0; lev <= finest_level; ++lev)
     {
-        spectral_solver_fp[lev]->VayDeposition( current_fp[lev] );
-        if ( spectral_solver_cp[lev] ) spectral_solver_cp[lev]->VayDeposition( current_cp[lev] );
+        spectral_solver_fp[lev]->VayDeposition(current_fp[lev]);
+        if (spectral_solver_cp[lev]) spectral_solver_cp[lev]->VayDeposition(current_cp[lev]);
     }
 }
 #endif

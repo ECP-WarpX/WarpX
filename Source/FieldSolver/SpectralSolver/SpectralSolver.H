@@ -92,9 +92,10 @@ class SpectralSolver
          * \param[in,out] current three-dimensional array of unique pointers to MultiFab
          *                        storing the three components of the current density
          */
-        void VayDeposition ( std::array<std::unique_ptr<amrex::MultiFab>,3>& current ) {
-             algorithm->VayDeposition( field_data, current );
-        };
+        void VayDeposition (std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+        {
+            algorithm->VayDeposition(field_data, current);
+        }
 
         bool fft_do_time_averaging = false;
 

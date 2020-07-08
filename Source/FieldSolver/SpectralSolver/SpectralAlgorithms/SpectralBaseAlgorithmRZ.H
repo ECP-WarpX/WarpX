@@ -62,8 +62,8 @@ class SpectralBaseAlgorithmRZ
          * \param[in,out] current    three-dimensional array of unique pointers to MultiFab
          *                           storing the three components of the current density
          */
-        virtual void VayDeposition ( SpectralFieldDataRZ& field_data,
-                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current ) {};
+        virtual void VayDeposition (SpectralFieldDataRZ& field_data,
+                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current) {}
 
     protected: // Meant to be used in the subclasses
 
