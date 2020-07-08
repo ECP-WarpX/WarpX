@@ -1076,7 +1076,7 @@ Numerics and algorithms
 * ``psatd.current_correction`` (`0` or `1`; default: `0`)
     If true, a current correction scheme in Fourier space is applied in order to
     guarantee charge conservation.
-    
+
     If ``psatd.v_galilean`` is zero, the spectral solver used is the standard PSATD
     scheme described in
     `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_
@@ -1111,10 +1111,10 @@ Numerics and algorithms
     density :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}` only. If charge is expected
     to be conserved (by setting, for example, ``psatd.current_correction=1``), then
     the two formulations are expected to be equivalent.
-    
+
     If ``psatd.v_galilean`` is zero, the spectral solver used is the standard PSATD
     scheme described in `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_:
-    
+
     1. if ``psatd.update_with_rho=0``, the update equation for the electric field reads
 
     .. math::
