@@ -16,7 +16,7 @@ private:
     /** Flush m_mf_output and particles to file. */
     // Currently this is an empty function. When OpenPMD/Plotfile is supported
     // this function can be moved to the base class Diagnostics.
-    void Flush (int i_buffer) override {} ;
+    void Flush (int i_buffer) override ;
     /** whether to write output files at this time step
      *  The data is flushed when the buffer is full and/or
      *   when the simulation ends or when forced.
@@ -113,6 +113,7 @@ private:
     void TMP_writeMetaData ();
     /** Customized functions to write back-transformed data */
     void TMP_createLabFrameDirectories (int i_buffer, int lev);
+    void TMP_writeLabFrameHeader (int i_buffer);
     /** Define the cell-centered multi-component MultiFab at level, lev.
      *  \param[in] lev level at which the cell-centered MultiFab is defined.
      */
@@ -147,6 +148,7 @@ private:
      *  \param[in] ref_ratio, refinement ratio at level, lev
      */
     amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio);
+    const int k_index_zlab (int i_buffer, int lev);
     /** whether field buffer is full
      * \param[in] i_buffer buffer id for which the buffer size is checked.
      * returns bool = true is buffer is full
@@ -163,10 +165,14 @@ private:
         return ( m_buffer_counter[i_buffer] == 0) ;
     }
 
+    void ResetBufferCounter(int i_buffer) {
+        m_buffer_counter[i_buffer] = 0;
+    }
     amrex::Vector< std::string > m_cellcenter_varnames = {"Ex", "Ey", "Ez",
                                                           "Bx", "By", "Bz",
                                                           "jx", "jy", "jz", "rho"};
     
+    void TMP_FlushLabFrameData ( int i_buffer );
 };
 
 #endif // WARPX_BTDIAGNOSTICS_H_

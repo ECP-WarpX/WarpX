@@ -1,11 +1,14 @@
 #include "BackTransformFunctor.H"
 #include "WarpX.H"
+#include <AMReX_MultiFabUtil.H>
+#include <AMReX_MultiFabUtil_C.H>
 using namespace amrex;
 
 BackTransformFunctor::BackTransformFunctor (amrex::MultiFab const * mf_src, int lev,
                                             const int ncomp, const int num_buffers,
+                                            amrex::Vector< std::string > varnames,
                                             const amrex::IntVect crse_ratio)
-    : ComputeDiagFunctor(ncomp, crse_ratio), m_mf_src(mf_src), m_lev(lev), m_num_buffers(num_buffers)
+    : ComputeDiagFunctor(ncomp, crse_ratio), m_mf_src(mf_src), m_lev(lev), m_num_buffers(num_buffers), m_varnames(varnames)
 {
     InitData();
 }
@@ -13,26 +16,91 @@ BackTransformFunctor::BackTransformFunctor (amrex::MultiFab const * mf_src, int 
 void
 BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int dcomp, const int i_buffer) const
 {
-    amrex::Print() << " we are in BTFunctor operator \n";
-    auto& warpx = WarpX::GetInstance();
-    amrex::Real gamma_boost = warpx.gamma_boost;
-    int moving_window_dir = warpx.moving_window_dir;
-    amrex::Real beta_boost = std::sqrt( 1._rt - 1._rt/( gamma_boost * gamma_boost) );
-    // Get the right slice of each field in the CC MultiFab, transform it and store it in the output.
-    // 1. ncomp, scomp = 0, dcomp = dcomp, bool interpolate = true
-    // 2. slice = amrex::get_slice_data
-    amrex::MultiFab slice;
-    LorentzTransformZ( slice, gamma_boost, beta_boost);
+    if ( m_perform_backtransform[i_buffer] == 1) {
+        amrex::Print() << " we are in BTFunctor operator \n";
+        auto& warpx = WarpX::GetInstance();
+        auto geom = warpx.Geom(m_lev);
+        amrex::Real gamma_boost = warpx.gamma_boost;
+        int moving_window_dir = warpx.moving_window_dir;
+        amrex::Real beta_boost = std::sqrt( 1._rt - 1._rt/( gamma_boost * gamma_boost) );
+        bool interpolate = true;
+        amrex::Print() << " m_lev " << m_lev << "\n";  
+        std::unique_ptr< amrex::MultiFab > slice = nullptr;
+        int scomp = 0; 
+        slice =  amrex::get_slice_data (moving_window_dir, m_current_z_boost[i_buffer],
+                     *m_mf_src, geom, scomp, m_mf_src->nComp(), interpolate);
+        LorentzTransformZ( *slice, gamma_boost, beta_boost);
+        
+        // Create a 2D box for the slice in the boosted frame
+        amrex::Real dx = geom.CellSize(moving_window_dir);
+        // index corresponding to z_boost location in the boost-frame
+        int i_boost = static_cast<int> ( ( m_current_z_boost[i_buffer] 
+                                            - geom.ProbLo(moving_window_dir) ) / dx );
+        // z-Slice at i_boost with x,y indices same as buffer_box
+        amrex::Box slice_box = m_buffer_box[i_buffer];
+        slice_box.setSmall(moving_window_dir, i_boost);
+        slice_box.setBig(moving_window_dir, i_boost);
+
+        // Make it a BoxArray
+        amrex::BoxArray slice_ba(slice_box);
+        slice_ba.maxSize( m_max_box_size );
+        //Define MultiFab with the distribution map of the destination multifab
+        std::unique_ptr< amrex::MultiFab > tmp_slice_ptr = nullptr;
+        tmp_slice_ptr.reset( new MultiFab ( slice_ba, mf_dst.DistributionMap(),
+                                            slice->nComp(), 0) );
+        // Parallel copy the lab-frame data from "slice" MultiFab with 
+        // ncomp=10 and boosted-frame dmap to "tmp_slice_ptr" MultiFab with
+        // ncomp=10 and dmap of the destination Multifab, which will store the final data
+        tmp_slice_ptr->copy( *slice, 0, 0, slice->nComp() );
+        // Now we will cherry pick only the user-defined fields from 
+        // tmp_slice_ptr to dst_mf
+        const int k_lab = m_k_index_zlab[i_buffer];
+        const int ncomp_dst = mf_dst.nComp();
+        amrex::MultiFab& tmp = *tmp_slice_ptr;
+        for (amrex::MFIter mfi(tmp, TilingIfNotGPU()); mfi.isValid(); ++mfi)
+        {
+            // Box spanning the user-defined index-space for diagnostic, mf_dst
+            amrex::Box bx = m_buffer_box[i_buffer];
+            // Box of tmp_slice_ptr spanning full domain in x,y and z_boost
+            // of the respective buffer , i_buffer
+            const Box& tbx = mfi.tilebox();
+            // Modify bx, such that the z-index is equal to the sliced tmp_mf
+            bx.setSmall( moving_window_dir, tbx.smallEnd( moving_window_dir ) );
+            bx.setBig( moving_window_dir, tbx.bigEnd( moving_window_dir ) );
+            amrex::Array4<amrex::Real> src_arr = tmp[mfi].array();
+            amrex::Array4<amrex::Real> dst_arr = mf_dst[mfi].array();
+            const auto field_map_ptr = m_map_varnames.dataPtr();
+            amrex::ParallelFor( bx, ncomp_dst,
+                [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
+                {
+                    const int icomp = field_map_ptr[n];
+#if (AMREX_SPACEDIM == 3)
+                    dst_arr(i, j, k_lab, n) = src_arr(i, j, k, icomp);        
+#else
+                    dst_arr(i, k_lab, k, n) = src_arr(i, j, k, icomp);
+#endif
+                } );
+        }
+        
+
+        slice.reset(new MultiFab);
+        slice.reset(nullptr);
+        tmp_slice_ptr.reset(new MultiFab);
+        tmp_slice_ptr.reset(nullptr);
+
+
+    } // 
     
 }
 
 void
 BackTransformFunctor::PrepareFunctorData (int i_buffer,
                           bool ZSliceInDomain, amrex::Real current_z_boost, 
-                          amrex::Box buffer_box )
+                          amrex::Box buffer_box, const int k_index_zlab )
 {
     m_buffer_box[i_buffer] = buffer_box;
     m_current_z_boost[i_buffer] = current_z_boost;
+    m_k_index_zlab[i_buffer] = k_index_zlab;
     m_perform_backtransform[i_buffer] = 0;
     if (ZSliceInDomain) m_perform_backtransform[i_buffer] = 1;
 }
@@ -41,9 +109,32 @@ void
 BackTransformFunctor::InitData ()
 {
 
-     m_buffer_box.resize( m_num_buffers );
-     m_current_z_boost.resize( m_num_buffers );
-     m_perform_backtransform.resize( m_num_buffers );     
+    m_buffer_box.resize( m_num_buffers );
+    m_current_z_boost.resize( m_num_buffers );
+    m_perform_backtransform.resize( m_num_buffers );     
+    m_k_index_zlab.resize( m_num_buffers );
+    m_map_varnames.resize( m_varnames.size() );
+
+    std::map<std::string, int> m_possible_fields_to_dump = {
+        {"Ex", 0},
+        {"Ey", 1},
+        {"Ez", 2},
+        {"Bx", 3},
+        {"By", 4},
+        {"Bz", 5},
+        {"jx", 6},
+        {"jy", 7},
+        {"jz", 8},
+        {"rho", 9}
+    };
+
+    for (int i = 0; i < m_varnames.size(); ++i)
+    {
+        amrex::Print() << " i " << i << " varname : " << m_varnames[i];
+        m_map_varnames[i] = m_possible_fields_to_dump[ m_varnames[i] ] ;
+        amrex::Print() << " map : " << m_map_varnames[i] << "\n";
+    }
+     
 }
 
 void
@@ -58,6 +149,7 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
         amrex::Array4< amrex::Real > arr = data[mfi].array();
         amrex::Real clight = PhysConst::c;
         amrex::Real inv_clight = 1.0_rt/clight;
+        amrex::Print() << " new tbx : " << tbx << "\n";
         // arr(x,y,z,comp) has ten-components namely,
         // Ex Ey Ez Bx By Bz jx jy jz rho in that order.
         amrex::ParallelFor( tbx,
@@ -86,6 +178,10 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
            
                 // Transform charge density (ncomp=9)
                 // and z-component of current density (ncomp=8)
+                if (i==0 && j==0 ) {
+                    amrex::Print() << " new hack : i j k " << i << " " << j << " " << k << " jz before update " << arr(i, j, k, 8) << " rho before " << arr(i, j, k, 9) << "\n";
+                }
+
                 j_lab = gamma_boost * ( arr(i, j, k, 8)
                                         + beta_boost * clight * arr(i, j, k, 9) );
                 rho_lab = gamma_boost * ( arr(i, j, k, 9)
@@ -93,12 +189,12 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
                 // Store lab-frame jz and rho in-place 
                 arr(i, j, k, 8) = j_lab;
                 arr(i, j, k, 9) = rho_lab;
-
-
-                
-                
+                if (i==0 && j==0) {
+                    amrex::Print() << " new hack : i j k " << i << " " << j << " " << k << " jz after update " << arr(i, j, k, 8) << " rho after " << arr(i, j, k, 9) << "\n";
+                }
             }      
         );
     }    
 
 }
+

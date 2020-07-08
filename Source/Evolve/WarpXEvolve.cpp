@@ -167,8 +167,23 @@ WarpX::Evolve (int numsteps)
             if (WarpX::do_back_transformed_fields) {
                 cell_centered_data = GetCellCenteredData();
             }
+            amrex::Print() << " current time : " << cur_time << "\n";
             myBFD->writeLabFrameData(cell_centered_data.get(), *mypc, geom[0], cur_time, dt[0]);
         }
+
+        // sync up time
+        for (int i = 0; i <= max_level; ++i) {
+            t_new[i] = cur_time;
+        }
+
+        /// reduced diags
+        if (reduced_diags->m_plot_rd != 0)
+        {
+            reduced_diags->ComputeDiags(step);
+            reduced_diags->WriteToFile(step);
+        }
+        amrex::Print() << " step : " << step << "\n";
+        multi_diags->FilterComputePackFlush( step );
 
         bool move_j = is_synchronized;
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
@@ -177,6 +192,7 @@ WarpX::Evolve (int numsteps)
         ShiftGalileanBoundary();
 
         int num_moved = MoveWindow(move_j);
+        amrex::Print() << " num moved : " << num_moved << " move j : " << move_j<< "\n";
 
         // Electrostatic solver: particles can move by an arbitrary number of cells
         if( do_electrostatic )
@@ -215,19 +231,19 @@ WarpX::Evolve (int numsteps)
                       << " s; This step = " << walltime_end_step-walltime_beg_step
                       << " s; Avg. per step = " << walltime/(step+1) << " s\n";
 
-        // sync up time
-        for (int i = 0; i <= max_level; ++i) {
-            t_new[i] = cur_time;
-        }
+        //// sync up time
+        //for (int i = 0; i <= max_level; ++i) {
+        //    t_new[i] = cur_time;
+        //}
 
-        /// reduced diags
-        if (reduced_diags->m_plot_rd != 0)
-        {
-            reduced_diags->ComputeDiags(step);
-            reduced_diags->WriteToFile(step);
-        }
-
-        multi_diags->FilterComputePackFlush( step );
+        ///// reduced diags
+        //if (reduced_diags->m_plot_rd != 0)
+        //{
+        //    reduced_diags->ComputeDiags(step);
+        //    reduced_diags->WriteToFile(step);
+        //}
+        //amrex::Print() << " step : " << step << "\n";
+        //multi_diags->FilterComputePackFlush( step );
 
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
             max_time_reached = true;
