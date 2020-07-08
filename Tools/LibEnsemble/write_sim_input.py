@@ -52,8 +52,8 @@ def write_sim_input(input_file, x_values):
     mirror_z_2 = end_stage_2 + 1.0e-3
 
     # Updating laser 2 configuration
-    z_antenna_2 = beg_stage_2 -1.0e-9 #with value used for stage 1
-    z_t_peak_2 = z_antenna_2/scc.c + 2 * 7.33841e-14 # using pulse duration
+    z_antenna_2 = beg_stage_2 - 1.0e-9 #with value used for stage 1
+    z_t_peak_2 = z_antenna_2 / scc.c + 2 * 7.33841e-14 # using pulse duration
 
     # End simulation when beam has just escaped the last stage
     gamma_b = 30.
