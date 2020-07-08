@@ -134,7 +134,6 @@ private:
         amrex::Real zeta           = 0;
         amrex::Real beta           = 0;
         amrex::Real phi2           = 0;
-        // Igor
         amrex::Real phi0           = 0;
 
         amrex::Vector<amrex::Real> stc_direction; //! Direction of the spatio-temporal couplings

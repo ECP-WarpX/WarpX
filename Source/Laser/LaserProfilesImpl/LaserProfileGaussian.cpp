@@ -31,8 +31,6 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
     ppl.query("zeta", m_params.zeta);
     ppl.query("beta", m_params.beta);
     ppl.query("phi2", m_params.phi2);
-
-    // Igor
     ppl.query("phi0", m_params.phi0);
 
     m_params.stc_direction = m_common_params.p_X;
