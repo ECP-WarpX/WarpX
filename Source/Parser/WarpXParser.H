@@ -84,9 +84,9 @@ amrex::Real
 WarpXParser::eval () const noexcept
 {
 #ifdef _OPENMP
-    return wp_ast_eval(m_parser[omp_get_thread_num()]->ast,nullptr);
+    return wp_ast_eval<0>(m_parser[omp_get_thread_num()]->ast,nullptr);
 #else
-    return wp_ast_eval(m_parser->ast,nullptr);
+    return wp_ast_eval<0>(m_parser->ast,nullptr);
 #endif
 }
 

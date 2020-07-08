@@ -2,14 +2,15 @@
 #define WP_PARSER_Y_H_
 
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_GpuPrint.H>
 #include <AMReX_REAL.H>
+#include <AMReX_Math.H>
+#include <AMReX_Print.H>
 
-#ifdef __cplusplus
 #include <cstdlib>
-extern "C" {
-#else
-#include <stdlib.h>
-#endif
+#include <cstdio>
+#include <cstring>
+#include <iostream>
 
 enum wp_f1_t {  // Bulit-in functions with one argument
     WP_SQRT = 1,
@@ -132,7 +133,6 @@ struct wp_node* wp_newf1 (enum wp_f1_t ftype, struct wp_node* l);
 struct wp_node* wp_newf2 (enum wp_f2_t ftype, struct wp_node* l,
                           struct wp_node* r);
 
-AMREX_GPU_HOST_DEVICE
 void yyerror (char const *s, ...);
 
 /*******************************************************************/
@@ -166,11 +166,79 @@ void wp_ast_regvar (struct wp_node* node, char const* name, amrex_real* p);
 void wp_ast_regvar_gpu (struct wp_node* node, char const* name, int i);
 void wp_ast_setconst (struct wp_node* node, char const* name, amrex_real c);
 
-AMREX_GPU_HOST_DEVICE amrex_real wp_call_f1 (enum wp_f1_t type, amrex_real a);
-AMREX_GPU_HOST_DEVICE amrex_real wp_call_f2 (enum wp_f2_t type, amrex_real a, amrex_real b);
-
-#ifdef __cplusplus
-}
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex_real
+wp_call_f1 (enum wp_f1_t type, amrex_real a)
+{
+    switch (type) {
+    case WP_SQRT:        return std::sqrt(a);
+    case WP_EXP:         return std::exp(a);
+    case WP_LOG:         return std::log(a);
+    case WP_LOG10:       return std::log10(a);
+    case WP_SIN:         return std::sin(a);
+    case WP_COS:         return std::cos(a);
+    case WP_TAN:         return std::tan(a);
+    case WP_ASIN:        return std::asin(a);
+    case WP_ACOS:        return std::acos(a);
+    case WP_ATAN:        return std::atan(a);
+    case WP_SINH:        return std::sinh(a);
+    case WP_COSH:        return std::cosh(a);
+    case WP_TANH:        return std::tanh(a);
+    case WP_ABS:         return amrex::Math::abs(a);
+    case WP_POW_M3:      return 1.0/(a*a*a);
+    case WP_POW_M2:      return 1.0/(a*a);
+    case WP_POW_M1:      return 1.0/a;
+    case WP_POW_P1:      return a;
+    case WP_POW_P2:      return a*a;
+    case WP_POW_P3:      return a*a*a;
+    default:
+#if AMREX_DEVICE_COMPILE
+        AMREX_DEVICE_PRINTF("wp_call_f1: Unknown function %d\n", type);
+#else
+        amrex::AllPrint() << "wp_call_f1: Unknown function " << type << "\n";
 #endif
+        return 0.0;
+    }
+}
+
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex_real
+wp_call_f2 (enum wp_f2_t type, amrex_real a, amrex_real b)
+{
+    switch (type) {
+    case WP_POW:
+        return std::pow(a,b);
+    case WP_GT:
+        return (a > b) ? 1.0 : 0.0;
+    case WP_LT:
+        return (a < b) ? 1.0 : 0.0;
+    case WP_GEQ:
+        return (a >= b) ? 1.0 : 0.0;
+    case WP_LEQ:
+        return (a <= b) ? 1.0 : 0.0;
+    case WP_EQ:
+        return (a == b) ? 1.0 : 0.0;
+    case WP_NEQ:
+        return (a != b) ? 1.0 : 0.0;
+    case WP_AND:
+        return (a && b) ? 1.0 : 0.0;
+    case WP_OR:
+        return (a || b) ? 1.0 : 0.0;
+    case WP_HEAVISIDE:
+        return (a < 0.0) ? 0.0 : ((a > 0.0) ? 1.0 : b);
+    case WP_MIN:
+        return (a < b) ? a : b;
+    case WP_MAX:
+        return (a > b) ? a : b;
+    default:
+#if AMREX_DEVICE_COMPILE
+        AMREX_DEVICE_PRINTF("wp_call_f2: Unknown function %d\n", type);
+#else
+        amrex::AllPrint() << "wp_call_f2: Unknown function " << type << "\n";
+#endif
+        amrex::Abort();
+        return 0.0;
+    }
+}
 
 #endif
