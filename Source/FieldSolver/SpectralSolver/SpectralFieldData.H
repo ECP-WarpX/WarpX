@@ -27,7 +27,13 @@ struct SpectralFieldIndex {
   enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields, divE=3 };
 };
 
-/** Index for the PML fields, when stored in spectral space */
+/* Index for the regular fields + averaged fields, when stored in spectral space */
+struct SpectralAvgFieldIndex {
+  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg,n_fields };
+  // n_fields is automatically the total number of fields
+};
+
+/* Index for the PML fields, when stored in spectral space */
 struct SpectralPMLIndex {
   enum { Exy=0, Exz, Eyx, Eyz, Ezx, Ezy,
            Bxy, Bxz, Byx, Byz, Bzx, Bzy, n_fields };
