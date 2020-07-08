@@ -216,14 +216,13 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                 // contains only the positive k, and the Nyquist frequency is
                 // the last element of the array.
                 modified_k[k.size()-1] = 0.0_rt;
-          }   else {
+            } else {
                 // The other axes contains both positive and negative k ;
                 // the Nyquist frequency is in the middle of the array.
                 modified_k[k.size()/2] = 0.0_rt;
-          }
+            }
         }
     }
-
     return modified_k_comp;
 }
 
@@ -255,7 +254,6 @@ getFonbergStencilCoefficients( const int n_order, const bool nodal )
             coefs[n] = - (m+1-n)*1./(m+n)*coefs[n-1];
         }
     }
-
     // Coefficients for staggered finite-difference
     else {
         Real prod = 1.;
