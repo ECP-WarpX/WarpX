@@ -46,6 +46,7 @@ def _beam_properties(filepath):
     charge = np.sum(w) * scc.e
     gamma = np.sqrt(1. + ux**2 + uy**2 + uz**2)
     beta = beta = np.sqrt(1.0 - 1.0 / gamma**2)
+    energy_MeV = scc.physical_constants["electron mass energy equivalent in MeV"][0] * (gamma - 1.)
     energy_avg = np.average(energy_MeV, weights = w)
     energy_std = np.average((energy_MeV - energy_avg)**2, weight = w) / energy_avg
     nslices = 20
