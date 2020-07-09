@@ -60,7 +60,6 @@ def _beam_properties(filepath):
         bslice = np.select(cond, beta)
         exlist[slicei] = slice_emittance(x, xpslice, gslice, bslice, wslice)
     emittance = np.mean(exlist)
-#    emittance = np.sqrt(np.std(x)**2 * np.std(ux)**2 - np.mean(x*ux)**2)
     return charge, energy_avg, energy_std, emittance
 
 
