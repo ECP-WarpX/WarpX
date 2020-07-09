@@ -293,9 +293,8 @@ void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spe
 
                         X3(i,j,k) = (3._rt - 2._rt / e_theta - 2._rt * e_theta + e_theta * e_theta
                             - 2._rt * I * c * k_norm * dt) / (4._rt * ep0 * (e_theta - 1._rt) * k_norm * k_norm);
-                    }
 
-                    else {
+                    } else {
 
                         X2(i,j,k) = (1._rt - C(i,j,k)) * e_theta / (k_norm * k_norm);
 
