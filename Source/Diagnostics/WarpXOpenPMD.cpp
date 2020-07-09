@@ -174,12 +174,12 @@ WarpXOpenPMDPlot::~WarpXOpenPMDPlot()
 //
 void WarpXOpenPMDPlot::GetFileName(std::string& filename)
 {
-  filename.append(m_OpenPMDFileType).append("/simData");
+  filename.append("/openpmd");
   //
   // OpenPMD supports timestepped names
   //
   if (m_OneFilePerTS)
-      filename = filename.append("_%07T");
+      filename = filename.append("_%06T");
   filename.append(".").append(m_OpenPMDFileType);
 }
 
