@@ -17,10 +17,10 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
                          const Real dt,
                          const bool update_with_rho)
      // Initialize members of base class
-     : m_update_with_rho( update_with_rho ),
-       m_dt( dt ),
-       m_v_galilean( v_galilean ),
-       SpectralBaseAlgorithm( spectral_kspace, dm, norder_x, norder_y, norder_z, nodal )
+     : m_update_with_rho(update_with_rho),
+       m_dt(dt),
+       m_v_galilean(v_galilean),
+       SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal)
 {
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -120,17 +120,17 @@ GalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
                             + X4*Jz - I*(X2*rho_new - T2*X3*rho_old)*kz;
             } else {
 
-                Complex k_dot_J = kx*Jx + ky*Jy + kz*Jz;
-                Complex k_dot_E = kx*Ex_old + ky*Ey_old + kz*Ez_old;
+                Complex k_dot_J = kx * Jx + ky * Jy + kz * Jz;
+                Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
 
-                fields(i,j,k,Idx::Ex) = T2*C*Ex_old + T2*S_ck*c2*I*(ky*Bz_old-kz*By_old) + X4*Jx
-                                        + X2*k_dot_E*kx + X3*k_dot_J*kx;
+                fields(i,j,k,Idx::Ex) = T2 * C * Ex_old + I * T2 * S_ck * c2
+                    * (ky * Bz_old - kz * By_old) + X4 * Jx + X2 * k_dot_E * kx + X3 * k_dot_J * kx;
 
-                fields(i,j,k,Idx::Ey) = T2*C*Ey_old + T2*S_ck*c2*I*(kz*Bx_old-kx*Bz_old) + X4*Jy
-                                        + X2*k_dot_E*ky + X3*k_dot_J*ky;
+                fields(i,j,k,Idx::Ey) = T2 * C * Ey_old + I * T2 * S_ck * c2
+                    * (kz * Bx_old - kx * Bz_old) + X4 * Jy + X2 * k_dot_E * ky + X3 * k_dot_J * ky;
 
-                fields(i,j,k,Idx::Ez) = T2*C*Ez_old + T2*S_ck*c2*I*(kx*By_old-ky*Bx_old) + X4*Jz
-                                        + X2*k_dot_E*kz + X3*k_dot_J*kz;
+                fields(i,j,k,Idx::Ez) = T2 * C * Ez_old + I * T2 * S_ck * c2
+                    * (kx * By_old - ky * Bx_old) + X4 * Jz + X2 * k_dot_E * kz + X3 * k_dot_J * kz;
             }
 
             // Update B (see the original Galilean article)
@@ -220,10 +220,10 @@ void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spe
                 modified_kz[j]*vz;
 #endif
 
-            if (k_norm != 0){
+            if (k_norm != 0._rt) {
 
-                C(i,j,k) = std::cos(c*k_norm*dt);
-                S_ck(i,j,k) = std::sin(c*k_norm*dt)/(c*k_norm);
+                C(i,j,k) = std::cos(c * k_norm * dt);
+                S_ck(i,j,k) = std::sin(c * k_norm * dt) / (c * k_norm);
 
                 const Real nu = kv/(k_norm*c);
                 const Complex theta = amrex::exp( 0.5_rt*I*kv*dt );
@@ -241,59 +241,91 @@ void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spe
                     // are mathematically equivalent to those of the paper.
                     Complex x1 = 1._rt/(1._rt-nu*nu) *
                         (theta_star - C(i,j,k)*theta + I*kv*S_ck(i,j,k)*theta);
+
                     // x1, above, is identical to the original paper
                     X1(i,j,k) = theta*x1/(ep0*c*c*k_norm*k_norm);
+
                     // The difference betwen X2 and X3 below, and those
                     // from the original paper is the factor ep0*k_norm*k_norm
                     if (update_with_rho) {
-                        X2(i,j,k) = (x1 - theta*(1._rt - C(i,j,k)))
-                                    /(theta_star-theta)/(ep0*k_norm*k_norm);
-                        X3(i,j,k) = (x1 - theta_star*(1._rt - C(i,j,k)))
-                                    /(theta_star-theta)/(ep0*k_norm*k_norm);
+
+                        X2(i,j,k) = (x1 - theta * (1._rt - C(i,j,k))) / (theta_star - theta) / (ep0 * k_norm * k_norm);
+                        X3(i,j,k) = (x1 - theta_star * (1._rt - C(i,j,k))) / (theta_star - theta) / (ep0 * k_norm * k_norm);
+
                     } else {
-                        X2_old = (x1-theta*(1.0_rt-C(i,j,k)))/(theta_star-theta);
-                        X3_old = (x1-theta_star*(1.0_rt-C(i,j,k)))/(theta_star-theta);
-                        X2(i,j,k) = Theta2(i,j,k)*(X2_old-X3_old)/(k_norm*k_norm);
-                        X3(i,j,k) = I*X2_old*(Theta2(i,j,k)-1.0_rt)/(ep0*k_norm*k_norm*kv);
+
+                        X2_old = (x1 - theta * (1._rt - C(i,j,k))) / (theta_star - theta);
+                        X3_old = (x1 - theta_star * (1._rt - C(i,j,k))) / (theta_star - theta);
+
+                        X2(i,j,k) = Theta2(i,j,k) * (X2_old - X3_old) / (k_norm * k_norm);
+                        X3(i,j,k) = I * X2_old * (Theta2(i,j,k) - 1._rt) / (ep0 * k_norm * k_norm * kv);
                     }
+
                     X4(i,j,k) = I*kv*X1(i,j,k) - theta*theta*S_ck(i,j,k)/ep0;
                 }
+
                 if ( nu == 0) {
+
                     X1(i,j,k) = (1._rt - C(i,j,k)) / (ep0*c*c*k_norm*k_norm);
+
                     if (update_with_rho) {
-                        X2(i,j,k) = (1._rt - S_ck(i,j,k)/dt) / (ep0*k_norm*k_norm);
-                        X3(i,j,k) = (C(i,j,k) - S_ck(i,j,k)/dt) / (ep0*k_norm*k_norm);
+
+                        X2(i,j,k) = (1._rt - S_ck(i,j,k) / dt) / (ep0 * k_norm * k_norm);
+                        X3(i,j,k) = (C(i,j,k) - S_ck(i,j,k) / dt) / (ep0 * k_norm * k_norm);
+
                     } else {
-                        X2(i,j,k) = (1.0_rt-C(i,j,k))/(k_norm*k_norm);
-                        X3(i,j,k) = -dt*(1.0_rt-S_ck(i,j,k)/dt)/(ep0*k_norm*k_norm);
+
+                        X2(i,j,k) = (1._rt - C(i,j,k)) / (k_norm * k_norm);
+                        X3(i,j,k) = -dt * (1._rt - S_ck(i,j,k) / dt) / (ep0 * k_norm * k_norm);
                     }
+
                     X4(i,j,k) = -S_ck(i,j,k)/ep0;
                 }
+
                 if ( nu == 1.) {
+
                     X1(i,j,k) = (1._rt - e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*c*c*ep0*k_norm*k_norm);
+
                     if (update_with_rho) {
-                        X2(i,j,k) = (3._rt - 4._rt*e_theta + e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*ep0*k_norm*k_norm*(1._rt - e_theta));
-                        X3(i,j,k) = (3._rt - 2._rt/e_theta - 2._rt*e_theta + e_theta*e_theta - 2._rt*I*c*k_norm*dt) / (4._rt*ep0*(e_theta - 1._rt)*k_norm*k_norm);
+
+                        X2(i,j,k) = (3._rt - 4._rt * e_theta + e_theta * e_theta + 2._rt * I * c * k_norm * dt)
+                            / (4._rt * ep0 * k_norm * k_norm * (1._rt - e_theta));
+
+                        X3(i,j,k) = (3._rt - 2._rt / e_theta - 2._rt * e_theta + e_theta * e_theta
+                            - 2._rt * I * c * k_norm * dt) / (4._rt * ep0 * (e_theta - 1._rt) * k_norm * k_norm);
                     }
+
                     else {
-                        X2(i,j,k) = (1.0_rt-C(i,j,k))*e_theta/(k_norm*k_norm);
-                        X3(i,j,k) = (2.0_rt*dt*c*k_norm-I*e_theta*e_theta+4.0_rt*I*e_theta-3.0_rt*I)/(4.0_rt*ep0*c*k_norm*k_norm*k_norm);
+
+                        X2(i,j,k) = (1._rt - C(i,j,k)) * e_theta / (k_norm * k_norm);
+
+                        X3(i,j,k) = (2._rt * dt * c * k_norm - I * e_theta * e_theta + 4._rt * I * e_theta - 3._rt * I)
+                            / (4._rt * ep0 * c * k_norm * k_norm * k_norm);
                     }
+
                     X4(i,j,k) = I*(-1._rt + e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*ep0*c*k_norm);
                 }
+            // Handle k_norm = 0, by using the analytical limit
+            } else {
 
-            } else { // Handle k_norm = 0, by using the analytical limit
                 C(i,j,k) = 1._rt;
                 S_ck(i,j,k) = dt;
+
                 X1(i,j,k) = dt*dt/(2._rt * ep0);
+
                 if (update_with_rho) {
-                    X2(i,j,k) = c*c*dt*dt/(6._rt * ep0);
-                    X3(i,j,k) = - c*c*dt*dt/(3._rt * ep0);
+
+                    X2(i,j,k) = c * c * dt * dt / (6._rt * ep0);
+                    X3(i,j,k) = - c * c * dt * dt / (3._rt * ep0);
+
                 } else {
-                    X2(i,j,k) = c*c*dt*dt*0.5_rt;
-                    X3(i,j,k) = -c*c*dt*dt*dt/(6.0_rt*ep0);
+
+                    X2(i,j,k) = c * c * dt *dt * 0.5_rt;
+                    X3(i,j,k) = - c * c * dt * dt * dt / (6._rt * ep0);
                 }
+
                 X4(i,j,k) = -dt/ep0;
+
                 Theta2(i,j,k) = 1._rt;
             }
         });
@@ -305,7 +337,7 @@ GalileanAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
                                       std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                       const std::unique_ptr<amrex::MultiFab>& rho) {
     // Profiling
-    BL_PROFILE( "GalileanAlgorithm::CurrentCorrection" );
+    BL_PROFILE("GalileanAlgorithm::CurrentCorrection");
 
     using Idx = SpectralFieldIndex;
 
@@ -317,74 +349,82 @@ GalileanAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
     field_data.ForwardTransform(*rho, Idx::rho_new, 1);
 
     // Loop over boxes
-    for (MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
+    for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
 
-        const Box& bx = field_data.fields[mfi].box();
+        const amrex::Box& bx = field_data.fields[mfi].box();
 
         // Extract arrays for the fields to be updated
-        Array4<Complex> fields = field_data.fields[mfi].array();
+        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+
         // Extract pointers for the k vectors
-        const Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
 #if (AMREX_SPACEDIM==3)
-        const Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
 #endif
-        const Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
 
         // Local copy of member variables before GPU loop
-        const Real dt = m_dt;
+        const amrex::Real dt = m_dt;
 
         // Galilean velocity
-        amrex::Real vgx = m_v_galilean[0];
-        amrex::Real vgy = m_v_galilean[1];
-        amrex::Real vgz = m_v_galilean[2];
+        const amrex::Real vgx = m_v_galilean[0];
+        const amrex::Real vgy = m_v_galilean[1];
+        const amrex::Real vgz = m_v_galilean[2];
 
         // Loop over indices within one box
-        ParallelFor( bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
             // Record old values of the fields to be updated
             using Idx = SpectralFieldIndex;
+
             // Shortcuts for the values of J and rho
             const Complex Jx = fields(i,j,k,Idx::Jx);
             const Complex Jy = fields(i,j,k,Idx::Jy);
             const Complex Jz = fields(i,j,k,Idx::Jz);
             const Complex rho_old = fields(i,j,k,Idx::rho_old);
             const Complex rho_new = fields(i,j,k,Idx::rho_new);
-            // k vector values, and coefficients
-            const Real kx = modified_kx_arr[i];
-#if (AMREX_SPACEDIM==3)
-            const Real ky = modified_ky_arr[j];
-            const Real kz = modified_kz_arr[k];
-#else
-            constexpr Real ky = 0;
-            const Real kz = modified_kz_arr[j];
-#endif
-            constexpr Complex I = Complex{0,1};
 
-            const Real k_norm = std::sqrt( kx*kx + ky*ky + kz*kz );
+            // k vector values, and coefficients
+            const amrex::Real kx = modified_kx_arr[i];
+#if (AMREX_SPACEDIM==3)
+            const amrex::Real ky = modified_ky_arr[j];
+            const amrex::Real kz = modified_kz_arr[k];
+#else
+            constexpr amrex::Real ky = 0._rt;
+            const amrex::Real kz = modified_kz_arr[j];
+#endif
+            constexpr Complex I = Complex{0._rt,1._rt};
+
+            const amrex::Real k_norm = std::sqrt(kx * kx + ky * ky + kz * kz);
 
             // Correct J
-            if ( k_norm != 0.0_rt )
+            if (k_norm != 0._rt)
             {
-                const Complex k_dot_J = kx*Jx + ky*Jy + kz*Jz;
-                const amrex::Real k_dot_vg = kx*vgx + ky*vgy + kz*vgz;
-                if ( k_dot_vg != 0.0_rt ) {
-                    const Complex rho_old_mod = rho_old*exp(I*k_dot_vg*dt);
-                    const Complex den = 1.0_rt-exp(I*k_dot_vg*dt);
-                    fields(i,j,k,Idx::Jx) = Jx - (k_dot_J-k_dot_vg*(rho_new-rho_old_mod)/den)*kx/(k_norm*k_norm);
-                    fields(i,j,k,Idx::Jy) = Jy - (k_dot_J-k_dot_vg*(rho_new-rho_old_mod)/den)*ky/(k_norm*k_norm);
-                    fields(i,j,k,Idx::Jz) = Jz - (k_dot_J-k_dot_vg*(rho_new-rho_old_mod)/den)*kz/(k_norm*k_norm);
+                const Complex k_dot_J = kx * Jx + ky * Jy + kz * Jz;
+                const amrex::Real k_dot_vg = kx * vgx + ky * vgy + kz * vgz;
+
+                if ( k_dot_vg != 0._rt ) {
+
+                    const Complex rho_old_mod = rho_old * amrex::exp(I * k_dot_vg * dt);
+                    const Complex den = 1._rt - amrex::exp(I * k_dot_vg * dt);
+
+                    fields(i,j,k,Idx::Jx) = Jx - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den) * kx / (k_norm * k_norm);
+                    fields(i,j,k,Idx::Jy) = Jy - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den) * ky / (k_norm * k_norm);
+                    fields(i,j,k,Idx::Jz) = Jz - (k_dot_J - k_dot_vg * (rho_new - rho_old_mod) / den) * kz / (k_norm * k_norm);
+
                 } else {
-                    fields(i,j,k,Idx::Jx) = Jx - (k_dot_J-I*(rho_new-rho_old)/dt)*kx/(k_norm*k_norm);
-                    fields(i,j,k,Idx::Jy) = Jy - (k_dot_J-I*(rho_new-rho_old)/dt)*ky/(k_norm*k_norm);
-                    fields(i,j,k,Idx::Jz) = Jz - (k_dot_J-I*(rho_new-rho_old)/dt)*kz/(k_norm*k_norm);
+
+                    fields(i,j,k,Idx::Jx) = Jx - (k_dot_J - I * (rho_new - rho_old) / dt) * kx / (k_norm * k_norm);
+                    fields(i,j,k,Idx::Jy) = Jy - (k_dot_J - I * (rho_new - rho_old) / dt) * ky / (k_norm * k_norm);
+                    fields(i,j,k,Idx::Jz) = Jz - (k_dot_J - I * (rho_new - rho_old) / dt) * kz / (k_norm * k_norm);
                 }
             }
-        } );
+        });
     }
 
     // Backward Fourier transform of J
-    field_data.BackwardTransform( *current[0], Idx::Jx, 0 );
-    field_data.BackwardTransform( *current[1], Idx::Jy, 0 );
-    field_data.BackwardTransform( *current[2], Idx::Jz, 0 );
+    field_data.BackwardTransform(*current[0], Idx::Jx, 0);
+    field_data.BackwardTransform(*current[1], Idx::Jy, 0);
+    field_data.BackwardTransform(*current[2], Idx::Jz, 0);
 }
 #endif // WARPX_USE_PSATD
