@@ -51,7 +51,7 @@ def _beam_properties(filepath):
     energy_std = np.average((energy_MeV - energy_avg)**2, weight = w) / energy_avg
     nslices = 20
     zslices = np.linspace(np.min(z), np.max(z), nslices+1)
-    exlist = [np.zeros(nslices) for v in range(2)]
+    exlist = np.zeros(nslices)
     for slicei in range(nslices):
         cond = [z > zslices[slicei], z < zslices[slicei+1]]
         xslice = np.select(cond, x)
