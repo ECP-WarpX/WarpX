@@ -376,11 +376,9 @@ BTDiagnostics::TMP_createLabFrameDirectories(int i_buffer, int lev)
         if ( !amrex::UtilCreateDirectory (m_file_name[i_buffer], 0755) )
             amrex::CreateDirectoryFailed(m_file_name[i_buffer]);
 
-        for (int lev = 0; lev < nlev_output; ++lev) {
-            const std::string &fullpath = amrex::LevelFullPath(lev, m_file_name[i_buffer]);
-            if ( !amrex::UtilCreateDirectory(fullpath, 0755) )
-                amrex::CreateDirectoryFailed(fullpath);
-        }
+        const std::string &fullpath = amrex::LevelFullPath(lev, m_file_name[i_buffer]);
+        if ( !amrex::UtilCreateDirectory(fullpath, 0755) )
+            amrex::CreateDirectoryFailed(fullpath);
     }
     amrex::ParallelDescriptor::Barrier();
     TMP_writeLabFrameHeader(i_buffer);
