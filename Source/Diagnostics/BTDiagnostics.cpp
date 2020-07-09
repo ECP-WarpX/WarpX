@@ -4,6 +4,7 @@
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
 #include "ComputeDiagFunctors/BackTransformFunctor.H"
+#include "ComputeDiagFunctors/RhoFunctor.H"
 #include "Utils/CoarsenIO.H"
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_PlotFileUtil.H>
@@ -217,7 +218,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
         // hi index with same cell-size as simulation at level, lev.
         const int hi_index =  static_cast<int>( ceil(
                 ( diag_dom.hi(idim) - warpx.Geom(lev).ProbLo(idim) ) /
-                  warpx.Geom(lev).CellSize(idim) ) ) ;
+                  warpx.Geom(lev).CellSize(idim) ) );
         // Taking max of (0,hi_index) because hi_index must always be >=0
         // Subtracting by 1 because lo,hi indices are set to cell-centered staggering.
         hi[idim] = std::max( 0, hi_index) - 1;
@@ -362,15 +363,7 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_cellcenter_varnames[comp] == "jz" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio);
         } else if ( m_cellcenter_varnames[comp] == "rho" ){
-            // rho_new is stored in component 1 of rho_fp when using PSATD
-#ifdef WARPX_USE_PSATD
-            amrex::MultiFab* rho_new = new amrex::MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(rho_new, lev, m_crse_ratio);
-#else
-            amrex::MultiFab* rho_new = new amrex::MultiFab(*warpx.get_pointer_rho_fp(lev), amrex::make_alias, 1, 1);
-            m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(rho_new, lev, m_crse_ratio);
-            //m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_rho_fp(lev), lev, m_crse_ratio);
-#endif
+            m_cell_center_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
         }
     }
 
@@ -430,7 +423,6 @@ BTDiagnostics::PrepareFieldDataForOutput ()
     }
 
     int num_BT_functors = 1;
-    int lev = 0;
 
     for (int lev = 0; lev < nlev_output; ++lev)
     {

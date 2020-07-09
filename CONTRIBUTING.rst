@@ -33,7 +33,7 @@ Then, you can execute:
    # These 4 first lines are the same as for a standard WarpX install
    mkdir warpx_directory
    cd warpx_directory
-   git clone --branch master https://github.com/ECP-WarpX/picsar.git
+   git clone --branch development https://github.com/ECP-WarpX/picsar.git
    git clone --branch development https://github.com/AMReX-Codes/amrex.git
 
    # Clone your fork on your local computer. You can get this address on your fork's Github page.

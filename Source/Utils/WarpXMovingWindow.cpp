@@ -130,6 +130,10 @@ WarpX::MoveWindow (bool move_j)
             }
             shiftMF(*Bfield_fp[lev][dim], geom[lev], num_shift, dir, ng_extra, B_external_grid[dim], use_Bparser, Bfield_parser);
             shiftMF(*Efield_fp[lev][dim], geom[lev], num_shift, dir, ng_extra, E_external_grid[dim], use_Eparser, Efield_parser);
+            if (fft_do_time_averaging) {
+                shiftMF(*Bfield_avg_fp[lev][dim], geom[lev], num_shift, dir, ng_extra, B_external_grid[dim], use_Bparser, Bfield_parser);
+                shiftMF(*Efield_avg_fp[lev][dim], geom[lev], num_shift, dir, ng_extra, E_external_grid[dim], use_Eparser, Efield_parser);
+            }
             if (move_j) {
                 shiftMF(*current_fp[lev][dim], geom[lev], num_shift, dir, ng_zero);
             }
@@ -146,6 +150,12 @@ WarpX::MoveWindow (bool move_j)
                 shiftMF(*Efield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, ng_zero, E_external_grid[dim], use_Eparser, Efield_parser);
                 shiftMF(*Bfield_aux[lev][dim], geom[lev], num_shift, dir, ng_zero);
                 shiftMF(*Efield_aux[lev][dim], geom[lev], num_shift, dir, ng_zero);
+                if (fft_do_time_averaging) {
+                    shiftMF(*Bfield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, ng_zero, B_external_grid[dim], use_Bparser, Bfield_parser);
+                    shiftMF(*Efield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, ng_zero, E_external_grid[dim], use_Eparser, Efield_parser);
+                    shiftMF(*Bfield_avg_aux[lev][dim], geom[lev], num_shift, dir, ng_zero);
+                    shiftMF(*Efield_avg_aux[lev][dim], geom[lev], num_shift, dir, ng_zero);
+                }
                 if (move_j) {
                     shiftMF(*current_cp[lev][dim], geom[lev-1], num_shift_crse, dir, ng_zero);
                 }

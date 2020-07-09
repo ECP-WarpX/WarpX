@@ -1,7 +1,7 @@
 .. _building-cori:
 
-Building WarpX for Cori (NERSC)
-===============================
+Cori (NERSC)
+============
 
 Standard build
 --------------

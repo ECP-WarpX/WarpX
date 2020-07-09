@@ -38,9 +38,11 @@ Diagnostics::BaseReadParameters ()
     if (!varnames_specified){
         m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
     }
-    // set plot_rho to true of the users requests it, so that
-    // rho is computed at each iteration.
-    if (WarpXUtilStr::is_in(m_varnames, "rho")) warpx.setplot_rho(true);
+    // If user requests rho with back-transformed diagnostics, we set plot_rho=true
+    // and compute rho at each iteration
+    if (WarpXUtilStr::is_in(m_varnames, "rho") && WarpX::do_back_transformed_diagnostics) {
+        warpx.setplot_rho(true);
+    }
     // Sanity check if user requests to plot F
     if (WarpXUtilStr::is_in(m_varnames, "F")){
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(

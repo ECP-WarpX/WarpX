@@ -453,7 +453,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         if self.method == 'PSATD':
             self.periodic_single_box_fft = kw.pop('warpx_periodic_single_box_fft', None)
             self.fftw_plan_measure = kw.pop('warpx_fftw_plan_measure', None)
-            self.do_current_correction = kw.pop('warpx_do_current_correction', None)
+            self.current_correction = kw.pop('warpx_current_correction', None)
 
     def initialize_inputs(self):
 
@@ -466,7 +466,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         if self.method == 'PSATD':
             pywarpx.psatd.periodic_single_box_fft = self.periodic_single_box_fft
             pywarpx.psatd.fftw_plan_measure = self.fftw_plan_measure
-            pywarpx.psatd.do_current_correction = self.do_current_correction
+            pywarpx.psatd.current_correction = self.current_correction
 
             if self.stencil_order is not None:
                 pywarpx.psatd.nox = self.stencil_order[0]
