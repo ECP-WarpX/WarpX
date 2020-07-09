@@ -147,11 +147,11 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 {
 
     // check if buffer is full (m_buffer_counter[i_buffer] == m_) or if force_flush == true
-    if (step < 0 ) return false; 
+    if (step < 0 ) return false;
     else if ( buffer_full(i_buffer) || force_flush) {
         return true;
     }
-    
+
     return false;
 }
 
@@ -182,11 +182,11 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
                                       / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
     amrex::Real zmax_prob_domain_lab = m_prob_domain_lab[i_buffer].hi(m_moving_window_dir)
                                       / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
-    m_prob_domain_lab[i_buffer].setLo(m_moving_window_dir, zmin_prob_domain_lab + 
+    m_prob_domain_lab[i_buffer].setLo(m_moving_window_dir, zmin_prob_domain_lab +
                                                warpx.moving_window_v * m_t_lab[i_buffer] );
-    m_prob_domain_lab[i_buffer].setHi(m_moving_window_dir, zmax_prob_domain_lab + 
+    m_prob_domain_lab[i_buffer].setHi(m_moving_window_dir, zmax_prob_domain_lab +
                                                warpx.moving_window_v * m_t_lab[i_buffer] );
-    
+
 
     // 2. Define buffer domain in boosted frame at level, lev, with user-defined lo and hi
     amrex::RealBox diag_dom;
@@ -306,7 +306,7 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     ba.coarsen(m_crse_ratio);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     int ngrow = 1;
-    m_cell_centered_data[lev].reset( new amrex::MultiFab(ba, dmap, 
+    m_cell_centered_data[lev].reset( new amrex::MultiFab(ba, dmap,
                                      m_cellcenter_varnames.size(), ngrow) );
 
 }
@@ -437,7 +437,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                     if ( buffer_empty(i_buffer) ) DefineFieldBufferMultiFab(i_buffer, lev);
                 }
                 m_all_field_functors[lev][i]->PrepareFunctorData (
-                                             i_buffer, ZSliceInDomain, 
+                                             i_buffer, ZSliceInDomain,
                                              m_current_z_boost[i_buffer],
                                              m_buffer_box[i_buffer],
                                              k_index_zlab(i_buffer, lev) );
@@ -503,7 +503,7 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
     auto & warpx = WarpX::GetInstance();
     bool ZSliceInDomain = true;
     const amrex::RealBox& boost_domain = warpx.Geom(lev).ProbDomain();
-    
+
     amrex::Real buffer_zmin_lab = m_buffer_domain_lab[i_buffer].lo( m_moving_window_dir );
     amrex::Real buffer_zmax_lab = m_buffer_domain_lab[i_buffer].hi( m_moving_window_dir );
 
@@ -514,8 +514,8 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
     {
         ZSliceInDomain = false;
     }
-    
-    return ZSliceInDomain; 
+
+    return ZSliceInDomain;
 }
 
 void
@@ -532,7 +532,7 @@ BTDiagnostics::TMP_writeLabFrameHeader (int i_buffer)
                                                 std::ofstream::binary );
 
         if ( !HeaderFile.good() ) amrex::FileOpenFailed( HeaderFileName );
-        
+
         HeaderFile.precision(17);
 
         HeaderFile << m_t_lab[i_buffer] << "\n";
@@ -583,9 +583,9 @@ BTDiagnostics::TMP_FlushLabFrameData ( int i_buffer )
             const amrex::BoxArray& ba = m_mf_output[i_buffer][lev].boxArray();
             const int hi = ba[0].bigEnd(m_moving_window_dir);
             const int lo = hi - m_buffer_counter[i_buffer] + 1;
- 
+
             amrex::Box buffer_box = m_buffer_box[i_buffer];
-            buffer_box.setSmall(m_moving_window_dir, lo); 
+            buffer_box.setSmall(m_moving_window_dir, lo);
             buffer_box.setBig(m_moving_window_dir, hi);
             amrex::BoxArray buffer_ba(buffer_box);
             buffer_ba.maxSize(m_max_box_size);
@@ -598,7 +598,7 @@ BTDiagnostics::TMP_FlushLabFrameData ( int i_buffer )
             ss << m_file_name[i_buffer] << "/Level_0/"
                << amrex::Concatenate("buffer", k_lab, 5);
             amrex::VisMF::Write(tmp, ss.str());
-            
+
        }
     }
     amrex::VisMF::SetHeaderVersion(current_version);

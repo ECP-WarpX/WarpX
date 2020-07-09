@@ -38,16 +38,16 @@ public:
                            const amrex::IntVect crse_ratio= amrex::IntVect(1));
 
     void operator ()(amrex::MultiFab& mf_dst, int dcomp, const int i_buffer) const override;
- 
+
     /** Prepare data for back-transform functor for each lab-frame snapshot, i_buffer
      */
     void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
                               amrex::Real current_z_boost,
                               amrex::Box buffer_box, const int k_index_zlab ) override;
     void InitData () override;
-    /** In-place conversion of MultiFab data from boosted-frame to the 
+    /** In-place conversion of MultiFab data from boosted-frame to the
      *  back-transformed lab-frame/
-     *   
+     *
      *  \param[in] data z-slice field-data MultiFab to be back-transformed in-place
      *                 from boosted-frame to lab-frame
      *  \param[in] gamma_boost The Lorentz factor of the boosted-frame in which

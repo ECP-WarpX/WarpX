@@ -43,7 +43,7 @@ private:
     void PrepareFieldDataForOutput ();
 
     void PrepareDataForBackTransformFunctor ();
-    /** whether z-slice that corresponds to the ith buffer is in the 
+    /** whether z-slice that corresponds to the ith buffer is in the
      *  boosted-domain and lab-frame domain
      */
     bool GetZSliceInDomainFlag (const int i_buffer, const int lev);
@@ -84,7 +84,7 @@ private:
     /**  Lab-frame physical domain corresponding to the full boosted-frame simulation
      *   domain at lab-frame time corresponding to the back-transformed snapshot*/
     amrex::Vector<amrex::RealBox> m_prob_domain_lab;
-    /**  Physical domain of the user-defined region 
+    /**  Physical domain of the user-defined region
      *   with lab-frame co-ordinates of the back-transformed snapshot */
     amrex::Vector<amrex::RealBox> m_buffer_domain_lab;
     /**  Number of cells in the lab-frame for all back-transformed snapshots */
@@ -171,7 +171,7 @@ private:
     amrex::Vector< std::string > m_cellcenter_varnames = {"Ex", "Ey", "Ez",
                                                           "Bx", "By", "Bz",
                                                           "jx", "jy", "jz", "rho"};
-    
+
     void TMP_FlushLabFrameData ( int i_buffer );
 };
 

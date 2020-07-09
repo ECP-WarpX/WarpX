@@ -24,15 +24,15 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int dcomp, const int 
         amrex::Real beta_boost = std::sqrt( 1._rt - 1._rt/( gamma_boost * gamma_boost) );
         bool interpolate = true;
         std::unique_ptr< amrex::MultiFab > slice = nullptr;
-        int scomp = 0; 
+        int scomp = 0;
         slice =  amrex::get_slice_data (moving_window_dir, m_current_z_boost[i_buffer],
                      *m_mf_src, geom, scomp, m_mf_src->nComp(), interpolate);
         LorentzTransformZ( *slice, gamma_boost, beta_boost);
-        
+
         // Create a 2D box for the slice in the boosted frame
         amrex::Real dx = geom.CellSize(moving_window_dir);
         // index corresponding to z_boost location in the boost-frame
-        int i_boost = static_cast<int> ( ( m_current_z_boost[i_buffer] 
+        int i_boost = static_cast<int> ( ( m_current_z_boost[i_buffer]
                                             - geom.ProbLo(moving_window_dir) ) / dx );
         // z-Slice at i_boost with x,y indices same as buffer_box
         amrex::Box slice_box = m_buffer_box[i_buffer];
@@ -46,11 +46,11 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int dcomp, const int 
         std::unique_ptr< amrex::MultiFab > tmp_slice_ptr = nullptr;
         tmp_slice_ptr.reset( new MultiFab ( slice_ba, mf_dst.DistributionMap(),
                                             slice->nComp(), 0) );
-        // Parallel copy the lab-frame data from "slice" MultiFab with 
+        // Parallel copy the lab-frame data from "slice" MultiFab with
         // ncomp=10 and boosted-frame dmap to "tmp_slice_ptr" MultiFab with
         // ncomp=10 and dmap of the destination Multifab, which will store the final data
         tmp_slice_ptr->copy( *slice, 0, 0, slice->nComp() );
-        // Now we will cherry pick only the user-defined fields from 
+        // Now we will cherry pick only the user-defined fields from
         // tmp_slice_ptr to dst_mf
         const int k_lab = m_k_index_zlab[i_buffer];
         const int ncomp_dst = mf_dst.nComp();
@@ -73,13 +73,13 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int dcomp, const int 
                 {
                     const int icomp = field_map_ptr[n];
 #if (AMREX_SPACEDIM == 3)
-                    dst_arr(i, j, k_lab, n) = src_arr(i, j, k, icomp);        
+                    dst_arr(i, j, k_lab, n) = src_arr(i, j, k, icomp);
 #else
                     dst_arr(i, k_lab, k, n) = src_arr(i, j, k, icomp);
 #endif
                 } );
         }
-        
+
 
         slice.reset(new MultiFab);
         slice.reset(nullptr);
@@ -87,13 +87,13 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int dcomp, const int 
         tmp_slice_ptr.reset(nullptr);
 
 
-    } // 
-    
+    } //
+
 }
 
 void
 BackTransformFunctor::PrepareFunctorData (int i_buffer,
-                          bool ZSliceInDomain, amrex::Real current_z_boost, 
+                          bool ZSliceInDomain, amrex::Real current_z_boost,
                           amrex::Box buffer_box, const int k_index_zlab )
 {
     m_buffer_box[i_buffer] = buffer_box;
@@ -109,7 +109,7 @@ BackTransformFunctor::InitData ()
 
     m_buffer_box.resize( m_num_buffers );
     m_current_z_boost.resize( m_num_buffers );
-    m_perform_backtransform.resize( m_num_buffers );     
+    m_perform_backtransform.resize( m_num_buffers );
     m_k_index_zlab.resize( m_num_buffers );
     m_map_varnames.resize( m_varnames.size() );
 
@@ -130,7 +130,7 @@ BackTransformFunctor::InitData ()
     {
         m_map_varnames[i] = m_possible_fields_to_dump[ m_varnames[i] ] ;
     }
-     
+
 }
 
 void
@@ -161,7 +161,7 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
                 // Store lab-frame data in-place
                 arr(i, j, k, 0) = e_lab;
                 arr(i, j, k, 4) = b_lab;
-                
+
                 // Transform Ey_boost (ncomp=1) & Bx_boost (ncomp=3) to lab-frame
                 e_lab = gamma_boost * ( arr(i, j, k, 1)
                                         - beta_boost * clight * arr(i, j, k, 3) );
@@ -170,19 +170,19 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
                 // Store lab-frame data in-place
                 arr(i, j, k, 1) = e_lab;
                 arr(i, j, k, 3) = b_lab;
-           
+
                 // Transform charge density (ncomp=9)
                 // and z-component of current density (ncomp=8)
                 j_lab = gamma_boost * ( arr(i, j, k, 8)
                                         + beta_boost * clight * arr(i, j, k, 9) );
                 rho_lab = gamma_boost * ( arr(i, j, k, 9)
                                           + beta_boost * inv_clight * arr(i, j, k, 8) );
-                // Store lab-frame jz and rho in-place 
+                // Store lab-frame jz and rho in-place
                 arr(i, j, k, 8) = j_lab;
                 arr(i, j, k, 9) = rho_lab;
-            }      
+            }
         );
-    }    
+    }
 
 }
 
