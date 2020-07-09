@@ -15,6 +15,7 @@ import checksumAPI
 
 filename = sys.argv[1]
 
+
 ds = yt.load( filename )
 
 Ex= ds.index.grids[0]['boxlib', 'Ex'].squeeze().v
