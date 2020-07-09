@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <type_traits>
 
 enum wp_f1_t {  // Bulit-in functions with one argument
     WP_SQRT = 1,
@@ -166,9 +167,13 @@ void wp_ast_regvar (struct wp_node* node, char const* name, amrex_real* p);
 void wp_ast_regvar_gpu (struct wp_node* node, char const* name, int i);
 void wp_ast_setconst (struct wp_node* node, char const* name, amrex_real c);
 
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-amrex_real
-wp_call_f1 (enum wp_f1_t type, amrex_real a)
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value,int> = 0>
+AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_GPU
+AMREX_NO_INLINE
+#endif
+T
+wp_call_f1 (enum wp_f1_t type, T a)
 {
     switch (type) {
     case WP_SQRT:        return std::sqrt(a);
@@ -201,9 +206,14 @@ wp_call_f1 (enum wp_f1_t type, amrex_real a)
     }
 }
 
-AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-amrex_real
-wp_call_f2 (enum wp_f2_t type, amrex_real a, amrex_real b)
+
+template <typename T, std::enable_if_t<std::is_floating_point<T>::value,int> = 0>
+AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_GPU
+AMREX_NO_INLINE
+#endif
+T
+wp_call_f2 (enum wp_f2_t type, T a, T b)
 {
     switch (type) {
     case WP_POW:
