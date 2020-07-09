@@ -14,6 +14,14 @@ beam quantities for convenience.
 
 yt.funcs.mylog.setLevel(50)
 
+def slice_emittance(x, xp, g, b, w):
+    xav = np.average(x, aweights = w)
+    xpav = np.average(xp * g * b, aweights = w)
+    xstd2 = np.average((x - xav)**2, aweights = w)
+    xpstd2 = np.average((xp * g * b - xpav)**2, aweights = w)
+    xp2 = (np.average((x - xav) * (xp * g * b-xpav), weights = w))**2
+    em = np.sqrt(xstd2 * pstd2 - xp2)
+    return em
 
 def _beam_properties(filepath):
     """
@@ -37,10 +45,22 @@ def _beam_properties(filepath):
     # Defined like that, the beam charge is > 0.
     charge = np.sum(w) * scc.e
     gamma = np.sqrt(1. + ux**2 + uy**2 + uz**2)
-    energy_MeV = .511 * (gamma - 1.)
-    energy_avg = np.mean(energy_MeV)
-    energy_std = np.std(energy_MeV) / energy_avg
-    emittance = np.sqrt(np.std(x)**2 * np.std(ux)**2 - np.mean(x*ux)**2)
+    beta = beta = np.sqrt(1.0 - 1.0 / gamma**2)
+    energy_avg = np.average(energy_MeV, weights = w)
+    energy_std = np.average((energy_MeV - energy_avg)**2, weight = w) / energy_avg
+    nslices = 20
+    zslices = np.linspace(np.min(z), np.max(z), nslices+1)
+    exlist, eylist = [np.zeros(nslices) for v in range(2)]
+    for slicei in range(nslices):
+        cond = [z > zslices[slicei], z < zslices[slicei+1]]
+        xslice = np.select(cond, x)
+        wslice = np.select(cond, w)
+        xpslice = np.select(cond, ux/uz)
+        gslice = np.select(cond, gamma)
+        bslice = np.select(cond, beta)
+        exlist[slicei] = slice_emittance(x, xpslice, gslice, bslice, wslice)
+    emittance = np.mean(exlist)
+#    emittance = np.sqrt(np.std(x)**2 * np.std(ux)**2 - np.mean(x*ux)**2)
     return charge, energy_avg, energy_std, emittance
 
 
