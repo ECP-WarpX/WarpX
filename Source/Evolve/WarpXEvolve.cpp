@@ -173,7 +173,6 @@ WarpX::Evolve (int numsteps)
             if (WarpX::do_back_transformed_fields) {
                 cell_centered_data = GetCellCenteredData();
             }
-            amrex::Print() << " current time : " << cur_time << "\n";
             myBFD->writeLabFrameData(cell_centered_data.get(), *mypc, geom[0], cur_time, dt[0]);
         }
 

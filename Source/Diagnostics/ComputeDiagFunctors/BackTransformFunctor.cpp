@@ -17,14 +17,12 @@ void
 BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int dcomp, const int i_buffer) const
 {
     if ( m_perform_backtransform[i_buffer] == 1) {
-        amrex::Print() << " we are in BTFunctor operator \n";
         auto& warpx = WarpX::GetInstance();
         auto geom = warpx.Geom(m_lev);
         amrex::Real gamma_boost = warpx.gamma_boost;
         int moving_window_dir = warpx.moving_window_dir;
         amrex::Real beta_boost = std::sqrt( 1._rt - 1._rt/( gamma_boost * gamma_boost) );
         bool interpolate = true;
-        amrex::Print() << " m_lev " << m_lev << "\n";  
         std::unique_ptr< amrex::MultiFab > slice = nullptr;
         int scomp = 0; 
         slice =  amrex::get_slice_data (moving_window_dir, m_current_z_boost[i_buffer],
@@ -130,9 +128,7 @@ BackTransformFunctor::InitData ()
 
     for (int i = 0; i < m_varnames.size(); ++i)
     {
-        amrex::Print() << " i " << i << " varname : " << m_varnames[i];
         m_map_varnames[i] = m_possible_fields_to_dump[ m_varnames[i] ] ;
-        amrex::Print() << " map : " << m_map_varnames[i] << "\n";
     }
      
 }
@@ -149,7 +145,6 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
         amrex::Array4< amrex::Real > arr = data[mfi].array();
         amrex::Real clight = PhysConst::c;
         amrex::Real inv_clight = 1.0_rt/clight;
-        amrex::Print() << " new tbx : " << tbx << "\n";
         // arr(x,y,z,comp) has ten-components namely,
         // Ex Ey Ez Bx By Bz jx jy jz rho in that order.
         amrex::ParallelFor( tbx,
@@ -178,10 +173,6 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
            
                 // Transform charge density (ncomp=9)
                 // and z-component of current density (ncomp=8)
-                if (i==0 && j==0 ) {
-                    amrex::Print() << " new hack : i j k " << i << " " << j << " " << k << " jz before update " << arr(i, j, k, 8) << " rho before " << arr(i, j, k, 9) << "\n";
-                }
-
                 j_lab = gamma_boost * ( arr(i, j, k, 8)
                                         + beta_boost * clight * arr(i, j, k, 9) );
                 rho_lab = gamma_boost * ( arr(i, j, k, 9)
@@ -189,9 +180,6 @@ BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamm
                 // Store lab-frame jz and rho in-place 
                 arr(i, j, k, 8) = j_lab;
                 arr(i, j, k, 9) = rho_lab;
-                if (i==0 && j==0) {
-                    amrex::Print() << " new hack : i j k " << i << " " << j << " " << k << " jz after update " << arr(i, j, k, 8) << " rho after " << arr(i, j, k, 9) << "\n";
-                }
             }      
         );
     }    

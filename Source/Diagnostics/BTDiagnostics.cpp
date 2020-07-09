@@ -73,7 +73,6 @@ BTDiagnostics::ReadParameters ()
     BaseReadParameters();
     auto & warpx = WarpX::GetInstance();
     // Read list of back-transform diag parameters requested by the user //
-    amrex::Print() << " in read parameters for BTD \n";
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ( warpx.do_back_transformed_diagnostics==true),
         "the do_back_transformed_diagnostics flag must be set to true for BTDiagnostics");
@@ -83,7 +82,6 @@ BTDiagnostics::ReadParameters ()
         "The back transformed diagnostics currently only works if the boost is in the z-direction");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.do_moving_window,
            "The moving window should be on if using the boosted frame diagnostic.");
-    amrex::Print() << " moving window dir : " << warpx.moving_window_dir << "\n";
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( warpx.moving_window_dir == AMREX_SPACEDIM-1,
            "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -147,15 +145,14 @@ BTDiagnostics::TMP_writeMetaData ()
 bool
 BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 {
+
     // check if buffer is full (m_buffer_counter[i_buffer] == m_) or if force_flush == true
-    amrex::Print() << " buffer full : " << buffer_full(i_buffer) << " force_flush :: " << force_flush << " \n";
-    if (step < 1 ) return false;
-    if ( buffer_full(i_buffer) || force_flush) {
+    if (step < 0 ) return false; 
+    else if ( buffer_full(i_buffer) || force_flush) {
         return true;
     }
-    else {
-        return false;
-    }
+    
+    return false;
 }
 
 
@@ -164,7 +161,6 @@ BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
     // always set to true for BTDiagnostics since back-transform buffers are potentially
     // computed and packed every timstep.
-    amrex::Print() << " in do compute and pack :: " << step << "\n";
     if (step>=0) {
         return true;
     }
@@ -268,7 +264,6 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     // the ref_ratio at level, lev.
     amrex::IntVect ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
-    amrex::Print() << " ref ratio : " << ref_ratio << "\n"; 
     // Number of lab-frame cells in z-direction at level, lev
     const int num_zcells_lab = static_cast<int>( floor (
                                    ( zmax_buffer_lab - zmin_buffer_lab)
@@ -327,7 +322,6 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     // For back-transformed data, all the components are cell-centered and stored in a single multifab. Therefore, size of functors at all levels is 1.
     int num_BT_functors = 1;
     m_all_field_functors[lev].resize(num_BT_functors);
-    amrex::Print() << " field functor size : " << m_all_field_functors[0].size() << "\n";
     m_cell_center_functors[lev].clear();
     m_cell_center_functors[lev].resize( m_cellcenter_varnames.size() );
     // 1. create an object of class BackTransformFunctor
@@ -433,7 +427,6 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                 // Current z-boost is stored as old z-boost position before updating
                 const amrex::Real old_z_boost = m_current_z_boost[i_buffer];
                 // Update z-boost and z-lab positions
-                amrex::Print() << " time in new BTD : " << warpx.gett_new(lev) << "\n";
                 m_current_z_boost[i_buffer] = UpdateCurrentZBoostCoordinate(m_t_lab[i_buffer],
                                                                       warpx.gett_new(lev) );
                 m_current_z_lab[i_buffer] = UpdateCurrentZLabCoordinate(m_t_lab[i_buffer],
@@ -443,7 +436,6 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                 if (ZSliceInDomain) {
                     if ( buffer_empty(i_buffer) ) DefineFieldBufferMultiFab(i_buffer, lev);
                 }
-                amrex::Print() << " i_buffer : " << i_buffer << " buffer box : " << m_buffer_box[i_buffer] << "\n";
                 m_all_field_functors[lev][i]->PrepareFunctorData (
                                              i_buffer, ZSliceInDomain, 
                                              m_current_z_boost[i_buffer],
@@ -451,7 +443,6 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                              k_index_zlab(i_buffer, lev) );
 
                 if (ZSliceInDomain) ++m_buffer_counter[i_buffer];
-                amrex::Print() << " i_buffer " << i_buffer << " counter : " << m_buffer_counter[i_buffer] << "\n";
             }
         }
     }
@@ -461,26 +452,21 @@ BTDiagnostics::PrepareFieldDataForOutput ()
 
 amrex::Real
 BTDiagnostics::dz_lab (amrex::Real dt, amrex::Real ref_ratio){
-    amrex::Print() << " in dz lab :: " << dt << " m_beta_boost : " << m_beta_boost << " m_gamma_boost << " << m_gamma_boost << " : ref_ratio " << ref_ratio << "\n";
     return PhysConst::c * dt * 1._rt/m_beta_boost * 1._rt/m_gamma_boost * 1._rt/ref_ratio;
 }
 
 
-const int
+int
 BTDiagnostics::k_index_zlab (int i_buffer, int lev)
 {
     auto & warpx = WarpX::GetInstance();
     amrex::Real prob_domain_zmin_lab = m_prob_domain_lab[i_buffer].lo( m_moving_window_dir );
     amrex::IntVect ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
-    amrex::Print() << " new : "<< i_buffer << " current z lab : " << m_current_z_lab[i_buffer];
-    amrex::Print() << " dom zmin : " << prob_domain_zmin_lab;
-    amrex::Print() << " dz : " << dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] ) << "\n";
-    const int k_lab = static_cast<unsigned>( (
+    int k_lab = static_cast<unsigned>( (
                           ( m_current_z_lab[i_buffer] - prob_domain_zmin_lab )
                           / dz_lab( warpx.getdt(lev), ref_ratio[m_moving_window_dir] )
                       ) );
-    amrex::Print() << " ibuffer : " << i_buffer << " k lab: " << k_lab << "\n";
     return k_lab;
 }
 
@@ -493,14 +479,12 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     if ( m_do_back_transformed_fields ) {
 
         const int k_lab = k_index_zlab (i_buffer, lev);
-        amrex::Print() << " new i_buffer : k_lab " << k_lab << "\n"; 
         m_buffer_box[i_buffer].setSmall( m_moving_window_dir, k_lab - m_buffer_size + 1);
         m_buffer_box[i_buffer].setBig( m_moving_window_dir, k_lab);
 
         amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
         buffer_ba.maxSize(m_max_box_size);
 
-        amrex::Print() << " new buffer " << i_buffer << " ba at define : " << buffer_ba << "\n";
         // CHECK at review : Coarsen back-transformed data here?
         // Generate a new distribution map for the back-transformed buffer multifab
         // with different lo and hi physical co-ordinates compare to the simulation domain.
@@ -510,7 +494,6 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         int ngrow = 0;
         m_mf_output[i_buffer][lev] = amrex::MultiFab ( buffer_ba, buffer_dmap,
                                                   m_varnames.size(), ngrow ) ;
-        amrex::Print() << " mvarnames : " << m_varnames.size() << "\n";
     }
 }
 
@@ -523,11 +506,6 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
     
     amrex::Real buffer_zmin_lab = m_buffer_domain_lab[i_buffer].lo( m_moving_window_dir );
     amrex::Real buffer_zmax_lab = m_buffer_domain_lab[i_buffer].hi( m_moving_window_dir );
-    amrex::Print() << " at compare new ibufer " << i_buffer << " current z boost " << m_current_z_boost[i_buffer];
-    amrex::Print() << " current z lab " << m_current_z_lab[i_buffer];
-    amrex::Print() << " boost lo " << boost_domain.lo(m_moving_window_dir);
-    amrex::Print() << " boost hi " << boost_domain.hi(m_moving_window_dir);
-    amrex::Print() << " zmin lab " << buffer_zmin_lab << " zmax lab " << buffer_zmax_lab << "\n"; 
 
     if ( ( m_current_z_boost[i_buffer] < boost_domain.lo(m_moving_window_dir) ) or
          ( m_current_z_boost[i_buffer] > boost_domain.hi(m_moving_window_dir) ) or
@@ -609,7 +587,6 @@ BTDiagnostics::TMP_FlushLabFrameData ( int i_buffer )
             amrex::Box buffer_box = m_buffer_box[i_buffer];
             buffer_box.setSmall(m_moving_window_dir, lo); 
             buffer_box.setBig(m_moving_window_dir, hi);
-            amrex::Print() << " flush i buffer : " << i_buffer << " box at flush: " << buffer_box << "\n"; 
             amrex::BoxArray buffer_ba(buffer_box);
             buffer_ba.maxSize(m_max_box_size);
             amrex::DistributionMapping buffer_dm(buffer_ba);

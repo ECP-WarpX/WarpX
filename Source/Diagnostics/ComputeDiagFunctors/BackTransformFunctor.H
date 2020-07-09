@@ -45,6 +45,17 @@ public:
                               amrex::Real current_z_boost,
                               amrex::Box buffer_box, const int k_index_zlab ) override;
     void InitData () override;
+    /** In-place conversion of MultiFab data from boosted-frame to the 
+     *  back-transformed lab-frame/
+     *   
+     *  \param[in] data z-slice field-data MultiFab to be back-transformed in-place
+     *                 from boosted-frame to lab-frame
+     *  \param[in] gamma_boost The Lorentz factor of the boosted-frame in which
+                       the simulation is run
+     *  \param[in] beta_boost The ratio of boost velocity to the speed of light
+     */
+    void LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamma_boost,
+                           amrex::Real beta_boost) const;
 private:
     /** pointer to source multifab (cell-centered multi-component multifab) */
     amrex::MultiFab const * const m_mf_src = nullptr;
@@ -57,17 +68,6 @@ private:
     amrex::Vector<int> m_k_index_zlab;
     amrex::Vector< std::string > m_varnames;
 
-    /** In-place conversion of MultiFab data from boosted-frame to the 
-     *  back-transformed lab-frame/
-     *   
-     *  \param[in] data z-slice field-data MultiFab to be back-transformed in-place
-     *                 from boosted-frame to lab-frame
-     *  \param[in] gamma_boost The Lorentz factor of the boosted-frame in which
-                       the simulation is run
-     *  \param[in] beta_boost The ratio of boost velocity to the speed of light
-     */
-    void LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamma_boost,
-                           amrex::Real beta_boost) const;
     /** max grid size used to generate BoxArray to define output MultiFabs */
     int m_max_box_size = 256;
     /** Indices that map user-defined fields to plot to the fields

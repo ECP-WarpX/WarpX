@@ -11,7 +11,6 @@ CellCenterFunctor::CellCenterFunctor(amrex::MultiFab const * mf_src, int lev,
 void
 CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, int i_buffer) const
 {
-    amrex::Print() << " cc operator : " << dcomp << " ibuffer " << i_buffer << "\n";
 #ifdef WARPX_DIM_RZ
     if (m_convertRZmodes2cartesian) {
         // In cylindrical geometry, sum real part of all modes of m_mf_src in
@@ -34,8 +33,6 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, int i_buffer) 
 #else
     // In cartesian geometry, coarsen and interpolate from simulation MultiFab, m_mf_src,
     // to output diagnostic MultiFab, mf_dst.
-    amrex::Print() << " before coarsen " << dcomp << " nComp() " << nComp() << "\n";
     CoarsenIO::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), mf_dst.nGrow(0), m_crse_ratio);
-    amrex::Print() << " after coarsen " << dcomp << " nComp() " << nComp() << "\n";
 #endif
 }

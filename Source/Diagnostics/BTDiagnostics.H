@@ -148,7 +148,7 @@ private:
      *  \param[in] ref_ratio, refinement ratio at level, lev
      */
     amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio);
-    const int k_index_zlab (int i_buffer, int lev);
+    int k_index_zlab (int i_buffer, int lev);
     /** whether field buffer is full
      * \param[in] i_buffer buffer id for which the buffer size is checked.
      * returns bool = true is buffer is full
