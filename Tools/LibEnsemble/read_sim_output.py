@@ -15,12 +15,12 @@ beam quantities for convenience.
 yt.funcs.mylog.setLevel(50)
 
 def slice_emittance(x, xp, g, b, w):
-    xav = np.average(x, aweights = w)
-    xpav = np.average(xp * g * b, aweights = w)
-    xstd2 = np.average((x - xav)**2, aweights = w)
-    xpstd2 = np.average((xp * g * b - xpav)**2, aweights = w)
+    xav = np.average(x, weights = w)
+    xpav = np.average(xp * g * b, weights = w)
+    xstd2 = np.average((x - xav)**2, weights = w)
+    xpstd2 = np.average((xp * g * b - xpav)**2, weights = w)
     xp2 = (np.average((x - xav) * (xp * g * b-xpav), weights = w))**2
-    em = np.sqrt(xstd2 * pstd2 - xp2)
+    em = np.sqrt(xstd2 * xpstd2 - xp2)
     return em
 
 def _beam_properties(filepath):
@@ -37,6 +37,7 @@ def _beam_properties(filepath):
     ad = ds.all_data()
     w = ad['beam', 'particle_weight'].v
     x = ad['beam', 'particle_position_x'].v
+    z = ad['beam', 'particle_position_y'].v
     ux = ad['beam', 'particle_momentum_x'].v/scc.m_e/scc.c
     uy = ad['beam', 'particle_momentum_y'].v/scc.m_e/scc.c
     uz = ad['beam', 'particle_momentum_z'].v/scc.m_e/scc.c
@@ -53,13 +54,13 @@ def _beam_properties(filepath):
     zslices = np.linspace(np.min(z), np.max(z), nslices+1)
     exlist = np.zeros(nslices)
     for slicei in range(nslices):
-        cond = [z > zslices[slicei], z < zslices[slicei+1]]
-        xslice = np.select(cond, x)
-        wslice = np.select(cond, w)
-        xpslice = np.select(cond, ux/uz)
-        gslice = np.select(cond, gamma)
-        bslice = np.select(cond, beta)
-        exlist[slicei] = slice_emittance(x, xpslice, gslice, bslice, wslice)
+        cond = [(z > zslices[slicei]) & (z < zslices[slicei+1])][0]
+        xslice = x[cond]
+        wslice = w[cond]
+        xpslice = ux[cond]/uz[cond]
+        gslice = gamma[cond]
+        bslice = beta[cond]
+        exlist[slicei] = slice_emittance(xslice, xpslice, gslice, bslice, wslice)
     emittance = np.mean(exlist)
     return charge, energy_avg, energy_std, emittance
 
