@@ -94,7 +94,7 @@ This will update the database but not the online plots. For this, you need to pe
    git add -u
    git commit -m "upload new html page"
    git push
-   
+
 Setup on Cori @ NERSC
 ---------------------
 
