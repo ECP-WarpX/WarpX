@@ -57,3 +57,9 @@ ions.uz_th  = 0.01
 ions.ux_m  = 0.
 ions.uy_m  = 0.
 ions.uz_m  = 0.
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 1
+diag1.file_prefix = "./diags/plt"
+diag1.diag_type = Full
