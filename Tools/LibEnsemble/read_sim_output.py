@@ -48,7 +48,7 @@ def _beam_properties(filepath):
     beta = beta = np.sqrt(1.0 - 1.0 / gamma**2)
     energy_MeV = scc.physical_constants["electron mass energy equivalent in MeV"][0] * (gamma - 1.)
     energy_avg = np.average(energy_MeV, weights = w)
-    energy_std = np.average((energy_MeV - energy_avg)**2, weight = w) / energy_avg
+    energy_std = np.average((energy_MeV - energy_avg)**2, weights = w) / energy_avg
     nslices = 20
     zslices = np.linspace(np.min(z), np.max(z), nslices+1)
     exlist = np.zeros(nslices)
