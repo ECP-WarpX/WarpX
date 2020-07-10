@@ -114,7 +114,7 @@ CMake Option                Default & Values                             Descrip
 =========================== ============================================ =======================================================
 ``CMAKE_BUILD_TYPE``        **RelWithDebInfo**/Release/Debug             Type of build, symbols & optimizations
 ``WarpX_ASCENT``            ON/**OFF**                                   Ascent in situ visualization
-``WarpX_COMPUTE``           **NONE**/CUDA/OMP                            Parallel, on-node computing backend
+``WarpX_COMPUTE``           NOACC/**OMP**/CUDA/DPCPP                     On-node, accelerated computing backend
 ``WarpX_DIMS``              **3**/2/RZ                                   Simulation dimensionality
 ``WarpX_MPI``               **ON**/OFF                                   Multi-node support (message-passing)
 ``WarpX_OPENPMD``           ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
@@ -131,3 +131,10 @@ For example, one can also build against a local AMReX git repo.
 Assuming AMReX' source is located in ``$HOME/src/amrex`` and changes are committed into a branch such as ``my-amrex-branch`` then pass to ``cmake`` the arguments: ``-DWarpX_amrex_repo=file://$HOME/src/amrex -DWarpX_amrex_branch=my-amrex-branch``.
 
 For developers, WarpX can be configured in further detail with options from AMReX, which are `documented in the AMReX manual <https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#customization-options>`_.
+
+Run
+===
+
+An executable WarpX binary with the current compile-time options encoded in its file name will be created in ``bin/``.
+
+Additionally, a `symbolic link <https://en.wikipedia.org/wiki/Symbolic_link>`_ named ``warpx`` can be found in that directory, which points to the last built WarpX executable.

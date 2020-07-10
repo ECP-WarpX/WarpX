@@ -101,6 +101,7 @@ macro(set_cxx_warnings)
     endif ()
 endmacro()
 
+
 # Take an <imported_target> and expose it as INTERFACE target with
 # WarpX::thirdparty::<propagated_name> naming and SYSTEM includes.
 #
@@ -110,6 +111,62 @@ function(make_third_party_includes_system imported_target propagated_name)
     get_target_property(ALL_INCLUDES ${imported_target} INCLUDE_DIRECTORIES)
     set_target_properties(WarpX::thirdparty::${propagated_name} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "")
     target_include_directories(WarpX::thirdparty::${propagated_name} SYSTEM INTERFACE ${ALL_INCLUDES})
+endfunction()
+
+
+# Set a feature-based binary name for the WarpX executable and create a generic
+# warpx symlink to it. Only sets options relevant for users (see summary).
+#
+function(set_warpx_binary_name)
+    set_target_properties(WarpX PROPERTIES OUTPUT_NAME "warpx")
+    if(WarpX_DIMS STREQUAL 3)
+        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".3d")
+    elseif(WarpX_DIMS STREQUAL 2)
+        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".2d")
+    elseif(WarpX_DIMS STREQUAL RZ)
+        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".RZ")
+    endif()
+
+    if(WarpX_MPI)
+        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".MPI")
+    else()
+        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".NOMPI")
+    endif()
+
+    set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".${WarpX_COMPUTE}")
+
+    if(WarpX_PRECISION STREQUAL "double")
+        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".DP")
+    else()
+        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".SP")
+    endif()
+
+    if(WarpX_ASCENT)
+        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".ASCENT")
+    endif()
+
+    if(WarpX_OPENPMD)
+        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".OMP")
+    endif()
+
+    if(WarpX_PSATD)
+        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".PSATD")
+    endif()
+
+    if(WarpX_QED)
+        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".QED")
+    endif()
+
+    if(CMAKE_BUILD_TYPE MATCHES "Debug")
+        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".DEBUG")
+    endif()
+
+    # alias to the latest build, because using the full name is often confusing
+    add_custom_command(TARGET WarpX POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            $<TARGET_FILE:WarpX>
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/warpx
+    )
 endfunction()
 
 
@@ -164,7 +221,7 @@ function(warpx_print_summary)
     #else()
     #    message("  Library: static")
     #endif()
-    message("  Testing: ${BUILD_TESTING}")
+    #message("  Testing: ${BUILD_TESTING}")
     #message("  Invasive Tests: ${WarpX_USE_INVASIVE_TESTS}")
     #message("  Internal VERIFY: ${WarpX_USE_VERIFY}")
     message("  Build options:")
