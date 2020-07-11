@@ -46,7 +46,7 @@ Running on Summit at OLCF
 .. _running-cpp-summit-V100-GPUs:
 
 V100 GPUs
-~~~~~~~~~
+^^^^^^^^^
 
 The batch script below can be used to run a WarpX simulation on 2 nodes on
 the supercomputer Summit at OLCF. Replace descriptions between chevrons ``<>``
@@ -83,7 +83,7 @@ A batch script with more options regarding profiling on Summit can be found at
 .. _running-cpp-summit-Power9-CPUs:
 
 Power9 CPUs
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 Similar to above, the batch script below can be used to run a WarpX simulation on
 1 node on the supercomputer Summit at OLCF, on Power9 CPUs (i.e., the GPUs are
