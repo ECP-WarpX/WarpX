@@ -17,7 +17,6 @@
 #BSUB -o WarpXo.%J
 #BSUB -e WarpXe.%J
 
-module load gcc
 
 export OMP_NUM_THREADS=21
 jsrun -n 2 -a 1 -c 21 -r 2 -l CPU-CPU -d packed -b rs <path/to/executable> <input file> > output.txt
