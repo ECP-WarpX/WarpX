@@ -16,9 +16,12 @@ Here's my setup on Summit, feel free to adapt it to your needs:
 
 .. code-block:: sh
 
+   # I put the next three lines in $HOME/my_bashrc.sh
+   export proj=aph114  # project for job submission
+   export AUTOMATED_PERF_TESTS=$HOME/AUTOMATED_PERF_TESTS/
+   export SCRATCH=/gpfs/alpine/scratch/$(whoami)/$proj/
+   
    mkdir $HOME/AUTOMATED_PERF_TESTS
-   export AUTOMATED_PERF_TESTS=$HOME/AUTOMATED_PERF_TESTS/ # I put it in $HOME/my_bashrc.sh
-   export SCRATCH=/gpfs/alpine/scratch/<user name>/aph114/ # I put it in $HOME/my_bashrc.sh
    cd $AUTOMATED_PERF_TESTS
    git clone https://github.com/ECP-WarpX/WarpX.git warpx
    git clone https://github.com/ECP-WarpX/picsar.git
@@ -39,16 +42,20 @@ Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_te
 
    source $HOME/my_bashrc.sh
 
-   # Make sure all dependencies are install (in $HOME/.local/)
+   # Make sure all dependencies are installed and loaded
    cd $HOME
-   module load python/3.7.0-anaconda3-5.3.0
-   pip install numpy==1.15.4 --user
-   pip install pandas --user
-   pip install bokeh --user
-   pip install gitpython --user
+   module load python/3.7.0
+   python3 -m pip install --user --upgrade pip
+   python3 -m pip install --user virtualenv
+   python3 -m venv $HOME/sw/venvs/warpx-perftest
+   source $HOME/sw/venvs/warpx-perftest/bin/activate
+   python3 -m pip install numpy==1.15.4
+   python3 -m pip install pandas
+   python3 -m pip install bokeh
+   python3 -m pip install gitpython
 
    # Check where numpy is installed, and prepend its parent directory to PYTHONPATH
-   home_to_numpy=$(python -c "import numpy ; import os ; print(os.path.split(os.path.split(numpy.__file__)[0])[0])")
+   home_to_numpy=$(python3 -c "import numpy ; import os ; print(os.path.split(os.path.split(numpy.__file__)[0])[0])")
    export PYTHONPATH=$home_to_numpy:$PYTHONPATH
 
    # Run the performance test suite
@@ -74,7 +81,7 @@ will submit this job once, and all the following ones. It will:
  - Submit an analysis job, that will read the results ONLY AFTER all runs are finished. This uses the dependency feature of the batch system.
  - This job reads the Tiny Profiler output for each run, and stores the results in a pandas file at the hdf5 format.
  - Execute ``write_csv.py`` from the ``perf_logs`` repo to append a csv and a hdf5 file with the new results.
- - Commit the results (but DOES NOT PUSH)
+ - Commit the results (but DO NOT PUSH YET)
 
 Then, the user periodically has to
 
