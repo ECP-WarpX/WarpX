@@ -64,7 +64,7 @@ def run_batch(run_name, res_dir, bin_name, config_command, architecture='knl',\
         shutil.rmtree(res_dir)
     os.makedirs(res_dir)
     # Copy files to res_dir
-    cwd = os.environ['WARPX'] + '/Tools/performance_tests/'
+    cwd = os.environ['WARPX'] + '/Tools/PerformanceTests/'
     bin_dir = cwd + 'Bin/'
     shutil.copy(bin_dir + bin_name, res_dir)
     shutil.copyfile(cwd + run_name, res_dir + 'inputs')
