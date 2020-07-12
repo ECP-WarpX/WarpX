@@ -20,7 +20,7 @@ Here's my setup on Summit, feel free to adapt it to your needs:
    export proj=aph114  # project for job submission
    export AUTOMATED_PERF_TESTS=$HOME/AUTOMATED_PERF_TESTS/
    export SCRATCH=/gpfs/alpine/scratch/$(whoami)/$proj/
-   
+
    mkdir $HOME/AUTOMATED_PERF_TESTS
    cd $AUTOMATED_PERF_TESTS
    git clone https://github.com/ECP-WarpX/WarpX.git warpx
