@@ -25,7 +25,8 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
                          const amrex::DistributionMapping& dm,
                          const int norder_x, const int norder_y,
                          const int norder_z, const bool nodal,
-                         const amrex::Real dt);
+                         const amrex::Real dt,
+                         const bool update_with_rho);
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldData& f) const override final;
         virtual int getRequiredNumberOfFields() const override final {
@@ -55,6 +56,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
     private:
         SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
         amrex::Real m_dt;
+        bool m_update_with_rho;
 };
 
 #endif // WARPX_USE_PSATD
