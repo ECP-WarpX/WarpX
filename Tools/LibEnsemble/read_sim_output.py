@@ -63,7 +63,6 @@ def _beam_properties(filepath):
             wslice = w[cond]
             if (wslice.shape[0] > 10):
                 xslice = x[cond]
-                wslice = w[cond]
                 xpslice = ux[cond]/uz[cond]
                 gslice = gamma[cond]
                 bslice = beta[cond]
