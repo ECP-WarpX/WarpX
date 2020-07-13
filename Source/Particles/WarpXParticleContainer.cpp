@@ -426,7 +426,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     tilebox.grow(ngRho);
     const Box tb = amrex::convert( tilebox, rho->ixType().toIntVect() );
 
-    const int nc = (rho->nComp() == 1 ? 1 : rho->nComp()/2);
+    const int nc = WarpX::ncomps;
 
 #ifdef AMREX_USE_GPU
     // No tiling on GPU: rho_fab points to the full rho array.
