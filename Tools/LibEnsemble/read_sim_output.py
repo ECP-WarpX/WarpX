@@ -38,7 +38,7 @@ def _beam_properties(filepath):
     ad = ds.all_data()
     w = ad['beam', 'particle_weight'].v
     if (w.shape[0] <= 200):
-        print('No particles in ',filepath)
+        print('Insufficient particles in ',filepath)
         return 0.0, 0.0, 0.0, 0.0
     else:
         x = ad['beam', 'particle_position_x'].v
