@@ -1,0 +1,14 @@
+{
+  "electrons": {
+    "particle_cpu": 4096.0,
+    "particle_id": 17305600.0,
+    "particle_momentum_x": 9.646555269782835e-21,
+    "particle_position_x": 0.08204532524996466,
+    "particle_position_y": 0.0819199985189698,
+    "particle_weight": 7999999359057920.0
+  },
+  "lev=0": {
+    "Ex": 5668777331048.034,
+    "jx": 5419032429461504.0
+  }
+}

@@ -15,7 +15,7 @@ namespace
 void
 FlushFormatPlotfile::WriteToFile (
     const amrex::Vector<std::string> varnames,
-    const amrex::Vector<const amrex::MultiFab*> mf,
+    const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
@@ -31,7 +31,7 @@ FlushFormatPlotfile::WriteToFile (
     VisMF::SetHeaderVersion(amrex::VisMF::Header::Version_v1);
     if (plot_raw_fields) rfs.emplace_back("raw_fields");
     amrex::WriteMultiLevelPlotfile(filename, nlev,
-                                   mf,
+                                   amrex::GetVecOfConstPtrs(mf),
                                    varnames, geom,
                                    time, iteration, warpx.refRatio(),
                                    "HyperCLaw-V1.1",
@@ -274,14 +274,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         real_names.push_back("momentum_x");
         real_names.push_back("momentum_y");
         real_names.push_back("momentum_z");
-
-        real_names.push_back("Ex");
-        real_names.push_back("Ey");
-        real_names.push_back("Ez");
-
-        real_names.push_back("Bx");
-        real_names.push_back("By");
-        real_names.push_back("Bz");
 
 #ifdef WARPX_DIM_RZ
         real_names.push_back("theta");

@@ -1,9 +1,11 @@
+.. _libensemble:
+
 Run LibEnsemble on WarpX
 ========================
 
 `LibEnsemble <https://github.com/Libensemble>`__ is a library to coordinate the concurrent evaluation of dynamic ensembles of calculations.
 While a WarpX simulation can provide insight in some physics, it remains a single point evaluation in the space of parameters.
-If you have a simulation ready for use, but would like to (i) scan over some input parameters uniformly for, e.g., a tolerance study, or (ii) have a random evaluation of the space of input parameters within a given span or (iii) tune some input parameters to optimize an output parameter, e.g., beam emittance, energy spread, etc., LibEnsemble provides these capabilities and will take care of tasks monitoring with fault tolerance on multiple platform (LibEnsemble targets modern HPC platforms like Summit).
+If you have a simulation ready for use, but would like to (i) scan over some input parameters uniformly for, e.g., a tolerance study, or (ii) have a random evaluation of the space of input parameters within a given span or (iii) tune some input parameters to optimize an output parameter, e.g., beam emittance, energy spread, etc., LibEnsemble provides these capabilities and will take care of tasks monitoring with fault tolerance on multiple platforms (LibEnsemble targets modern HPC platforms like Summit).
 
 Scripts to run LibEnsemble on WarpX simulations can be found in ``WarpX/Tools/LibEnsemble/``.
 This documentation does not aim at giving a training on LibEnsemble, so please refer to the `LibEnsemble documentation <https://libensemble.readthedocs.io/en/develop/>`__ for technical details.
@@ -34,7 +36,7 @@ The **output parameter** that LibEnsemble minimizes is the beam emittance at the
 
 The scripts provided can run on a local machine or on the Summit supercomputer at OLCF.
 Two options are available: random sampling of parameter space or optimization on the output parameter.
-For the latter, we are using the Asynchronously Parallel Optimization Solver for finding Multiple Minima `APOSMM <https://libensemble.readthedocs.io/en/develop/examples/gen_funcs.html#module-aposmm>`__ method provided by LibEnsemble.
+For the latter, we are using the Asynchronously Parallel Optimization Solver for finding Multiple Minima `APOSMM <https://libensemble.readthedocs.io/en/develop/examples/aposmm.html>`__ method provided by LibEnsemble.
 
 Install LibEnsemble
 -------------------
@@ -47,7 +49,7 @@ You can either install all packages via `conda` (recommended),
 
    conda install -c conda-forge libensemble matplotlib numpy scipy yt
 
-or try to install the same dependencies via `pip` (pick one *or* the other):
+or try to install the same dependencies via `pip` (pick one *or* the other; note our :ref:`installation details on Summit <building-summit>`):
 
 .. literalinclude:: ../../../Tools/LibEnsemble/requirements.txt
 
@@ -118,7 +120,7 @@ Adjust the ``local_specs`` dictionary in ``all_machine_specs.py`` to fix the pat
 
 .. code-block:: sh
 
-    python run_libE_on_warpx.py --comms local --nworkers 3
+    python run_libensemble_on_warpx.py --comms local --nworkers 3
 
 This is adapted to a 4-core machine, as it will use:
 
@@ -130,6 +132,12 @@ This is adapted to a 4-core machine, as it will use:
 
 Run on Summit at OLCF
 ^^^^^^^^^^^^^^^^^^^^^
+
+- ``cp -r $HOME/warpx/Tools/LibEnsemble/* sim_directory``
+- modify ``run_libensemble_on_warpx.py`` to have ``machine = 'summit'``
+- modify ``all_machine_specs.py`` to put the right path to the WarpX executable
+- modify ``summit_submit_mproc.sh`` to set ``LIBE_PLOTS`` to ``false`` and set the project ID
+- ``bsub summit_submit_mproc.sh``:
 
 .. code-block:: sh
 

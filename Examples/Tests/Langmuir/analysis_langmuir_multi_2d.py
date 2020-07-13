@@ -23,11 +23,13 @@ import yt
 yt.funcs.mylog.setLevel(50)
 import numpy as np
 from scipy.constants import e, m_e, epsilon_0, c
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 # this will be the name of the plot file
 fn = sys.argv[1]
 
-# Parse test name and check if current correction (psatd.do_current_correction=1) is applied
+# Parse test name and check if current correction (psatd.current_correction=1) is applied
 current_correction = True if re.search( 'current_correction', fn ) else False
 
 # Parameters (these parameters must match the parameters in `inputs.multi.rt`)
@@ -101,7 +103,7 @@ print("tolerance_rel: " + str(tolerance_rel))
 assert( error_rel < tolerance_rel )
 
 # Check relative L-infinity spatial norm of rho/epsilon_0 - div(E) when
-# current correction (psatd.do_current_correction=1) is applied
+# current correction (psatd.current_correction=1) is applied
 if current_correction:
     rho  = data['rho' ].to_ndarray()
     divE = data['divE'].to_ndarray()
@@ -109,3 +111,6 @@ if current_correction:
     print("error: " + str(Linf_norm))
     print("tolerance: 1.e-9")
     assert( Linf_norm < 1.e-9 )
+
+test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, fn)

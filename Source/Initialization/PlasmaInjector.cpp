@@ -79,7 +79,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     pp.query("radially_weighted", radially_weighted);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
 
-    // parse plasma boundaries
+    // Unlimited boundaries
     xmin = std::numeric_limits<amrex::Real>::lowest();
     ymin = std::numeric_limits<amrex::Real>::lowest();
     zmin = std::numeric_limits<amrex::Real>::lowest();
@@ -87,6 +87,30 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     xmax = std::numeric_limits<amrex::Real>::max();
     ymax = std::numeric_limits<amrex::Real>::max();
     zmax = std::numeric_limits<amrex::Real>::max();
+
+    // NOTE: When periodic boundaries are used, default injection range is set to mother grid dimensions.
+    const Geometry& geom = WarpX::GetInstance().Geom(0);
+    if( geom.isPeriodic(0) ) {
+        xmin = geom.ProbLo(0);
+        xmax = geom.ProbHi(0);
+    }
+
+    if( geom.isPeriodic(1) ) {
+#       ifndef WARPX_DIM_3D
+        zmin = geom.ProbLo(1);
+        zmax = geom.ProbHi(1);
+#       else
+        ymin = geom.ProbLo(1);
+        ymax = geom.ProbHi(1);
+#       endif
+    }
+
+#   ifdef WARPX_DIM_3D
+    if( geom.isPeriodic(2) ) {
+        zmin = geom.ProbLo(2);
+        zmax = geom.ProbHi(2);
+    }
+#   endif
 
     pp.query("xmin", xmin);
     pp.query("ymin", ymin);
@@ -230,11 +254,6 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseDensity(pp);
         parseMomentum(pp);
     } else if (part_pos_s == "external_file") {
-#ifdef WARPX_DIM_RZ
-        amrex::Abort("The option of reading particle data from an external "
-                     "file has not been implemented nor tested in RZ geometry");
-#endif
-        pp.query("q_tot", q_tot); // optional
 #ifndef WARPX_USE_OPENPMD
         amrex::Abort("WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
                      " to read the external openPMD file with species data");
@@ -242,6 +261,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         external_file = true;
         std::string str_injection_file;
         pp.get("injection_file", str_injection_file);
+        // optional parameters
+        pp.query("q_tot", q_tot);
+        pp.query("z_shift",z_shift);
 
 #ifdef WARPX_USE_OPENPMD
         if (ParallelDescriptor::IOProcessor()) {
@@ -497,6 +519,14 @@ bool PlasmaInjector::insideBounds (Real x, Real y, Real z) const noexcept
     return (x < xmax and x >= xmin and
             y < ymax and y >= ymin and
             z < zmax and z >= zmin);
+}
+
+bool PlasmaInjector::overlapsWith (const amrex::XDim3& lo,
+                                   const amrex::XDim3& hi) const noexcept
+{
+    return ! (   (xmin > hi.x) || (xmax < lo.x)
+              || (ymin > hi.y) || (ymax < lo.y)
+              || (zmin > hi.z) || (zmax < lo.z) );
 }
 
 InjectorPosition*

@@ -174,7 +174,7 @@ file that ParaView can open will be generated.
 Obtaining SENSEI
 -----------------
 SENSEI is hosted on Kitware's Gitlab site at https://gitlab.kitware.com/sensei/sensei
-It's best to checkout the latest release rather than working on the master branch.
+It's best to checkout the latest release rather than working on the ``develop`` branch.
 
 To ease the burden of wrangling back end installs SENSEI provides two platforms
 with all dependencies pre-installed, a VirtualBox VM, and a NERSC Cori
@@ -252,7 +252,7 @@ First, log into cori and clone the git repo's.
    cd warpx/
    git clone https://github.com/ECP-WarpX/WarpX.git WarpX-libsim
    git clone --branch development https://github.com/AMReX-Codes/amrex
-   git clone https://bitbucket.org/berkeleylab/picsar.git
+   git clone https://github.com/ECP-WarpX/picsar.git
    cd WarpX-libsim
    vim GNUmakefile
 
@@ -303,7 +303,7 @@ First, log into cori and clone the git repo's.
    cd warpx/
    git clone https://github.com/ECP-WarpX/WarpX.git WarpX-catalyst
    git clone --branch development https://github.com/AMReX-Codes/amrex
-   git clone https://bitbucket.org/berkeleylab/picsar.git
+   git clone https://github.com/ECP-WarpX/picsar.git
    cd WarpX-catalyst
    vim GNUmakefile
 

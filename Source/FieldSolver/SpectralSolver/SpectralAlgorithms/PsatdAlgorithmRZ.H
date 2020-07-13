@@ -28,6 +28,22 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
 
         void InitializeSpectralCoefficients(SpectralFieldDataRZ const & f);
 
+        /**
+         * \brief Virtual function for current correction in Fourier space
+         * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010).
+         * This function overrides the virtual function \c CurrentCorrection in the
+         * base class \c SpectralBaseAlgorithmRZ (qualifier \c override) and cannot be
+         * overridden by further derived classes (qualifier \c final).
+         *
+         * \param[in,out] field_data all fields in Fourier space
+         * \param[in,out] current    two-dimensional array of unique pointers to MultiFab
+         *                           storing the three components of the current density
+         * \param[in]     rho        unique pointer to MultiFab storing the charge density
+         */
+        virtual void CurrentCorrection ( SpectralFieldDataRZ& field_data,
+                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                         const std::unique_ptr<amrex::MultiFab>& rho ) override final;
+
     private:
         bool coefficients_initialized;
         // Note that dt is saved to use in InitializeSpectralCoefficients

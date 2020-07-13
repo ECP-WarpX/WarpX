@@ -14,6 +14,7 @@
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Utility.H>
 
 #include <cstdint>
 #include <string>
@@ -23,6 +24,11 @@ void ReadBoostedFrameParameters(amrex::Real& gamma_boost, amrex::Real& beta_boos
                                 amrex::Vector<int>& boost_direction);
 
 void ConvertLabParamsToBoost();
+
+/**
+ * \brief Ensures that the blocks are setup correctly for the RZ spectral solver
+ */
+void CheckGriddingForRZSpectral();
 
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin,
                amrex::Real zmax);

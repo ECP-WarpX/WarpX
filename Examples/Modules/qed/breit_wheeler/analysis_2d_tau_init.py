@@ -10,6 +10,8 @@ import yt
 import numpy as np
 import scipy.stats as st
 import sys
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 # This script checks if photons initialized with Breit Wheeler process enabled
 # do actually have an exponentially distributed optical depth
@@ -37,6 +39,9 @@ def check():
     print("error_rel for scale: " + str(error_rel))
     print("tolerance_rel: " + str(tolerance_rel))
     assert( error_rel < tolerance_rel )
+
+    test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+    checksumAPI.evaluate_checksum(test_name, filename)
 
 def main():
     check()
