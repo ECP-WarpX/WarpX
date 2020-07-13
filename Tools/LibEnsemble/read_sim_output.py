@@ -15,11 +15,12 @@ beam quantities for convenience.
 yt.funcs.mylog.setLevel(50)
 
 def slice_emittance(x, xp, g, b, w):
+    xpgb = xp * g * b
     xav = np.average(x, weights = w)
-    xpav = np.average(xp * g * b, weights = w)
+    xpav = np.average(xpgb, weights = w)
     xstd2 = np.average((x - xav)**2, weights = w)
-    xpstd2 = np.average((xp * g * b - xpav)**2, weights = w)
-    xp2 = (np.average((x - xav) * (xp * g * b-xpav), weights = w))**2
+    xpstd2 = np.average((xpgb - xpav)**2, weights = w)
+    xp2 = (np.average((x - xav) * (xpgb-xpav), weights = w))**2
     em = np.sqrt(xstd2 * xpstd2 - xp2)
     return em
 
