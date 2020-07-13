@@ -213,6 +213,11 @@ extern "C"
       ConvertLabParamsToBoost();
     }
 
+    void warpx_CheckGriddingForRZSpectral()
+    {
+      CheckGriddingForRZSpectral();
+    }
+
     amrex::Real warpx_getProbLo(int dir)
     {
       WarpX& warpx = WarpX::GetInstance();

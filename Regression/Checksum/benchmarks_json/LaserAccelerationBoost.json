@@ -1,13 +1,7 @@
 {
   "beam": {
-    "particle_Bx": 2.0543216636907036,
-    "particle_By": 14.900417906604332,
-    "particle_Bz": 0.22233327031927602,
-    "particle_Ex": 4517976547.436662,
-    "particle_Ey": 633564460.6160239,
-    "particle_Ez": 15405468837.772211,
     "particle_cpu": 0.0,
-    "particle_id": 35060500.0,
+    "particle_id": 500500.0,
     "particle_momentum_x": 4.3244537833987973e-19,
     "particle_momentum_y": 4.51585729236226e-19,
     "particle_momentum_z": 2.666058436389631e-18,
@@ -16,15 +10,9 @@
     "particle_weight": 62415090744.60765
   },
   "electrons": {
-    "particle_Bx": 530.8105746418198,
-    "particle_By": 0.00010417687909189867,
-    "particle_Bz": 35.72584920547117,
-    "particle_Ex": 23373.585397386178,
-    "particle_Ey": 164837019826.8382,
-    "particle_Ez": 750684.6954455632,
     "particle_cpu": 1140.0,
-    "particle_id": 43482810.0,
-    "particle_momentum_x": 4.8513146378506466e-27,
+    "particle_id": 1254690.0,
+    "particle_momentum_x": 4.851314637850439e-27,
     "particle_momentum_y": 2.198172635551489e-22,
     "particle_momentum_z": 3.0976485630303994e-18,
     "particle_position_x": 0.06840000000361957,
@@ -32,30 +20,24 @@
     "particle_weight": 6.28658221073865e+16
   },
   "ions": {
-    "particle_Bx": 530.8105522074252,
-    "particle_By": 0.00010417687513907945,
-    "particle_Bz": 35.72584997453756,
-    "particle_Ex": 23373.584547084207,
-    "particle_Ey": 164837012558.85843,
-    "particle_Ez": 750684.6439845883,
     "particle_cpu": 1140.0,
-    "particle_id": 43628730.0,
-    "particle_momentum_x": 3.360051969962725e-30,
+    "particle_id": 1390110.0,
+    "particle_momentum_x": 3.360051969537704e-30,
     "particle_momentum_y": 2.1981727064697293e-22,
-    "particle_momentum_z": 5.687755728408194e-15,
+    "particle_momentum_z": 5.687755728408193e-15,
     "particle_position_x": 0.0684,
     "particle_position_y": 0.0393001381332615,
     "particle_weight": 6.28658221073865e+16
   },
   "lev=0": {
     "Bx": 7187.973258845824,
-    "By": 16.40364440449975,
-    "Bz": 426.103118917313,
-    "Ex": 4521887802.403418,
+    "By": 16.40364440449974,
+    "Bz": 426.10311891731305,
+    "Ex": 4521887802.403417,
     "Ey": 1984359719957.4739,
-    "Ez": 6310696230.623612,
+    "Ez": 6310696230.623689,
     "jx": 5122915921.273047,
     "jy": 551785946484956.7,
-    "jz": 448986139469.4084
+    "jz": 448986139469.4807
   }
 }

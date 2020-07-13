@@ -29,7 +29,7 @@ import checksumAPI
 # this will be the name of the plot file
 fn = sys.argv[1]
 
-# Parse test name and check if current correction (psatd.do_current_correction=1) is applied
+# Parse test name and check if current correction (psatd.current_correction=1) is applied
 current_correction = True if re.search( 'current_correction', fn ) else False
 
 # Parameters (these parameters must match the parameters in `inputs.multi.rt`)
@@ -88,11 +88,8 @@ for field in ['particle_momentum_y',
     print('assert that this is NOT in ds.field_list', (species, field))
     assert (species, field) not in ds.field_list
 species = 'positrons'
-for field in ['particle_Ey']:
-    print('assert that this is in ds.field_list', (species, field))
-    assert (species, field) in ds.field_list
-for field in ['particle_momentum_y',
-              'particle_momentum_z']:
+for field in ['particle_momentum_x',
+              'particle_momentum_y']:
     print('assert that this is NOT in ds.field_list', (species, field))
     assert (species, field) not in ds.field_list
 
@@ -130,7 +127,7 @@ print("tolerance_rel: " + str(tolerance_rel))
 assert( error_rel < tolerance_rel )
 
 # Check relative L-infinity spatial norm of rho/epsilon_0 - div(E) when
-# current correction (psatd.do_current_correction=1) is applied
+# current correction (psatd.current_correction=1) is applied
 if current_correction:
     rho  = data['rho' ].to_ndarray()
     divE = data['divE'].to_ndarray()

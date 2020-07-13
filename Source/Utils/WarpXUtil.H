@@ -25,6 +25,11 @@ void ReadBoostedFrameParameters(amrex::Real& gamma_boost, amrex::Real& beta_boos
 
 void ConvertLabParamsToBoost();
 
+/**
+ * \brief Ensures that the blocks are setup correctly for the RZ spectral solver
+ */
+void CheckGriddingForRZSpectral();
+
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin,
                amrex::Real zmax);
 

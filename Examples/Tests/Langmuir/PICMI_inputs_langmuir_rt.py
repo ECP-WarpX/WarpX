@@ -72,7 +72,7 @@ field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
                                       period = diagnostic_interval,
                                       species = [electrons],
-                                      data_list = ['weighting', 'ux', 'Ex'])
+                                      data_list = ['weighting', 'ux'])
 
 ##########################
 # simulation setup
