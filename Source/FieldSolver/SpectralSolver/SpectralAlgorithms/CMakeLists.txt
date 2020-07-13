@@ -4,6 +4,7 @@ target_sources(WarpX
     PMLPsatdAlgorithm.cpp
     PsatdAlgorithm.cpp
     SpectralBaseAlgorithm.cpp
+    AvgGalileanAlgorithm.cpp
 )
 
 if(WarpX_DIMS STREQUAL RZ)
