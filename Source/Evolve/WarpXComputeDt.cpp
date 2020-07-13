@@ -6,7 +6,9 @@
  */
 #include "WarpX.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#ifndef WARPX_DIM_RZ
+#ifdef WARPX_DIM_RZ
+#   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CylindricalYeeAlgorithm.H"
+#else
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
 #   include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceAlgorithms/CartesianNodalAlgorithm.H"
@@ -40,22 +42,9 @@ WarpX::ComputeDt ()
     // Computation of dt for FDTD algorithm
 
 #   ifdef WARPX_DIM_RZ
-    // In the rz case, the Courant limit has been evaluated
-    // semi-analytically by R. Lehe, and resulted in the following
-    // coefficients.
-    // NB : Here the coefficient for m=1 as compared to this document,
-    // as it was observed in practice that this coefficient was not
-    // high enough (The simulation became unstable).
-    amrex::Real multimode_coeffs[6] = { 0.2105, 1.0, 3.5234, 8.5104, 15.5059, 24.5037 };
-    amrex::Real multimode_alpha;
-    if (n_rz_azimuthal_modes < 7) {
-        // Use the table of the coefficients
-        multimode_alpha = multimode_coeffs[n_rz_azimuthal_modes-1];
-    } else {
-        // Use a realistic extrapolation
-        multimode_alpha = (n_rz_azimuthal_modes - 1)*(n_rz_azimuthal_modes - 1) - 0.4;
-    }
-    deltat  = cfl * 1./( std::sqrt((1+multimode_alpha)/(dx[0]*dx[0]) + 1./(dx[1]*dx[1])) * PhysConst::c );
+    // - In RZ geometry
+    if (maxwell_fdtd_solver_id == MaxwellSolverAlgo::Yee) {
+        deltat = cfl * CylindricalYeeAlgorithm::ComputeMaxDt(dx,  n_rz_azimuthal_modes);
 #   else
     // - In Cartesian geometry
     if (do_nodal) {
@@ -64,10 +53,10 @@ WarpX::ComputeDt ()
         deltat = cfl * CartesianYeeAlgorithm::ComputeMaxDt( dx );
     } else if (maxwell_fdtd_solver_id == MaxwellSolverAlgo::CKC) {
         deltat = cfl * CartesianCKCAlgorithm::ComputeMaxDt( dx );
+#   endif
     } else {
         amrex::Abort("Unknown algorithm");
     }
-#   endif
 
 #endif
 

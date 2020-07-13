@@ -279,7 +279,10 @@ public:
 
     void applyMirrors(amrex::Real time);
 
+    /**
+     * Determine the timestep of the simulation. */
     void ComputeDt ();
+
     // Compute max_step automatically for simulations in a boosted frame.
     void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
     int  MoveWindow (bool move_j);
