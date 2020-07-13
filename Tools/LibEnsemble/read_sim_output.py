@@ -61,7 +61,7 @@ def _beam_properties(filepath):
         for slicei in range(nslices):
             cond = [(z > zslices[slicei]) & (z < zslices[slicei+1])][0]
             wslice = w[cond]
-            if (wslice.shape[0] > 10):   
+            if (wslice.shape[0] > 10):
                 xslice = x[cond]
                 wslice = w[cond]
                 xpslice = ux[cond]/uz[cond]
