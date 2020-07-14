@@ -74,7 +74,12 @@ Diagnostics::BaseReadParameters ()
             m_hi[idim] = warpx.Geom(0).ProbHi(idim);
        }
     }
-    if (warpx.boost_direction[warpx.moving_window_dir] == 1) {
+#if (AMREX_SPACEDIM == 3)
+    amrex::Vector<int> dim_map {0, 1, 2};
+#else
+    amrex::Vector<int> dim_map {0, 2};
+#endif
+    if (warpx.boost_direction[ dim_map[warpx.moving_window_dir] ] == 1) {
         // Convert user-defined lo and hi for diagnostics to account for boosted-frame
         // simulations with moving window
         amrex::Real convert_factor = 1._rt/(warpx.gamma_boost * (1._rt - warpx.beta_boost) );
