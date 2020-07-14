@@ -1077,6 +1077,11 @@ Numerics and algorithms
     same points in space) or a staggered grid (i.e. Yee grid ; different
     fields are defined at different points in space)
 
+  * ``warpx.stagger_mode`` (default: ``yee``)
+      Which staggering to use. In 2D, valid options are ``yee``,``nodal``,``destagger_Jz``, or ``nodal_in_z``.
+      In 3D, valid options are ``yee`` or ``nodal``.
+      Setting ``do_nodal`` to ``1`` is equivalent to setting ``stagger_mode`` to ``nodal``, but otherwise ``stagger_mode`` overrides ``do_nodal``.
+
 * ``warpx.do_subcycling`` (`0` or `1`; default: 0)
     Whether or not to use sub-cycling. Different refinement levels have a
     different cell size, which results in different Courant–Friedrichs–Lewy
