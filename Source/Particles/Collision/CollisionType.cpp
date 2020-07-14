@@ -132,7 +132,7 @@ void CollisionType::doCoulombCollisionsWithinTile
         Box const& cbx = mfi.tilebox(IntVect::TheZeroVector()); //Cell-centered box
         const auto lo = lbound(cbx);
         const auto hi = ubound(cbx);
-        int nr = hi.y-lo.y+1;
+        int nz = hi.y-lo.y+1;
 #if defined WARPX_DIM_XZ
         auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined WARPX_DIM_RZ
@@ -160,7 +160,7 @@ void CollisionType::doCoulombCollisionsWithinTile
                         indices_1, cell_start_1, cell_half_1 );
 
 #if defined WARPX_DIM_RZ
-                    int ri = (i_cell - i_cell%nr) / nr;
+                    int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0*ri+1.0)*dr*dr*dz;
 #endif
 
@@ -220,7 +220,7 @@ void CollisionType::doCoulombCollisionsWithinTile
         Box const& cbx = mfi.tilebox(IntVect::TheZeroVector()); //Cell-centered box
         const auto lo = lbound(cbx);
         const auto hi = ubound(cbx);
-        int nr = hi.y-lo.y+1;
+        int nz = hi.y-lo.y+1;
 #if defined WARPX_DIM_XZ
         auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif defined WARPX_DIM_RZ
@@ -255,7 +255,7 @@ void CollisionType::doCoulombCollisionsWithinTile
                     ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2);
 
 #if defined WARPX_DIM_RZ
-                    int ri = (i_cell - i_cell%nr) / nr;
+                    int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0*ri+1.0)*dr*dr*dz;
 #endif
 
