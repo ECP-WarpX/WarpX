@@ -119,6 +119,7 @@ int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
 int WarpX::do_nodal = false;
+std::string WarpX::stagger_mode = "yee";
 
 #ifdef AMREX_USE_GPU
 bool WarpX::do_device_synchronize_before_profile = true;
@@ -566,7 +567,7 @@ WarpX::ReadParameters ()
         pp.query("stagger_mode", stagger_mode);
         if (do_nodal) stagger_mode = "nodal";
         if (stagger_mode == "nodal") do_nodal = true; // enforce consistency
-        
+
         // Use same shape factors in all directions, for gathering
         if (do_nodal) galerkin_interpolation = false;
 
