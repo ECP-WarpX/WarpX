@@ -84,14 +84,17 @@ def read_sim_output(workdir):
     workdir : Path to directory where the simulation ran.
     """
     # Get beam properties at the beginning of the run
-    datafile = 'diags/plotfiles/plt00000/'
+    file_list = glob.glob('diags/plotfiles/plt?????')
+    if (len(file_list) <2):
+        print(workdir,' did not have final plotfile')
+        return np.array([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
+    file_list.sort()
+    datafile = file_list[0]
     filepath = os.path.join(workdir, datafile)
     charge_i, _, _, emittance_i = _beam_properties(filepath)
 
     # Get beam properties at the end of the run
-    file_list = glob.glob('diags/plotfiles/plt?????')
-    file_list.sort()
-    datafile = file_list[-1]
+    datafile = file_list[1]
     filepath = os.path.join(workdir, datafile)
     charge_f, energy_avg, energy_std, emittance_f = _beam_properties(filepath)
 
