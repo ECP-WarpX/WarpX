@@ -35,41 +35,45 @@ def _beam_properties(filepath):
 
     # Read beam quantities from plotfile
     ds = yt.load(filepath)
-    ad = ds.all_data()
-    w = ad['beam', 'particle_weight'].v
-    if (w.shape[0] <= 200):
-        print('Insufficient particles in ',filepath)
-        return 0.0, 0.0, 0.0, 0.0
+
+    if ('beam' in [i[0] for i in ds.fld_list]:
+        ad = ds.all_data()
+        w = ad['beam', 'particle_weight'].v
+        if (w.shape[0] <= 200):
+            print('Insufficient particles in ',filepath)
+            return 0.0, 0.0, 0.0, 0.0, 0.0
+        else:
+            x = ad['beam', 'particle_position_x'].v
+            z = ad['beam', 'particle_position_y'].v
+            ux = ad['beam', 'particle_momentum_x'].v/scc.m_e/scc.c
+            uy = ad['beam', 'particle_momentum_y'].v/scc.m_e/scc.c
+            uz = ad['beam', 'particle_momentum_z'].v/scc.m_e/scc.c
+
+            # Compute beam parameters
+            # Defined like that, the beam charge is > 0.
+            charge = np.sum(w) * scc.e
+            gamma = np.sqrt(1. + ux**2 + uy**2 + uz**2)
+            beta = np.sqrt(1.0 - 1.0 / gamma**2)
+            energy_MeV = scc.physical_constants["electron mass energy equivalent in MeV"][0] * (gamma - 1.)
+            energy_avg = np.average(energy_MeV, weights = w)
+            energy_std = np.average((energy_MeV - energy_avg)**2, weights = w) / energy_avg
+            nslices = 20
+            zslices = np.linspace(np.min(z), np.max(z), nslices+1)
+            exlist = np.zeros(nslices)
+            for slicei in range(nslices):
+                cond = [(z > zslices[slicei]) & (z < zslices[slicei+1])][0]
+                wslice = w[cond]
+                if (wslice.shape[0] > 10):
+                    xslice = x[cond]
+                    xpslice = ux[cond]/uz[cond]
+                    gslice = gamma[cond]
+                    bslice = beta[cond]
+                    exlist[slicei] = slice_emittance(xslice, xpslice, gslice, bslice, wslice)
+            emittance = np.mean(exlist)
+            return charge, energy_avg, energy_std, emittance
     else:
-        x = ad['beam', 'particle_position_x'].v
-        z = ad['beam', 'particle_position_y'].v
-        ux = ad['beam', 'particle_momentum_x'].v/scc.m_e/scc.c
-        uy = ad['beam', 'particle_momentum_y'].v/scc.m_e/scc.c
-        uz = ad['beam', 'particle_momentum_z'].v/scc.m_e/scc.c
-
-        # Compute beam parameters
-        # Defined like that, the beam charge is > 0.
-        charge = np.sum(w) * scc.e
-        gamma = np.sqrt(1. + ux**2 + uy**2 + uz**2)
-        beta = np.sqrt(1.0 - 1.0 / gamma**2)
-        energy_MeV = scc.physical_constants["electron mass energy equivalent in MeV"][0] * (gamma - 1.)
-        energy_avg = np.average(energy_MeV, weights = w)
-        energy_std = np.average((energy_MeV - energy_avg)**2, weights = w) / energy_avg
-        nslices = 20
-        zslices = np.linspace(np.min(z), np.max(z), nslices+1)
-        exlist = np.zeros(nslices)
-        for slicei in range(nslices):
-            cond = [(z > zslices[slicei]) & (z < zslices[slicei+1])][0]
-            wslice = w[cond]
-            if (wslice.shape[0] > 10):
-                xslice = x[cond]
-                xpslice = ux[cond]/uz[cond]
-                gslice = gamma[cond]
-                bslice = beta[cond]
-                exlist[slicei] = slice_emittance(xslice, xpslice, gslice, bslice, wslice)
-        emittance = np.mean(exlist)
-        return charge, energy_avg, energy_std, emittance
-
+        print('No beam particles in ',filepath)
+        return 0.0, 0.0, 0.0, 0.0, 0.0
 
 def read_sim_output(workdir):
     """
