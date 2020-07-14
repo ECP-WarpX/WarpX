@@ -20,7 +20,6 @@ BTDiagnostics::BTDiagnostics (int i, std::string name)
 
 void BTDiagnostics::DerivedInitData ()
 {
-    // storing BTD related member variables
     auto & warpx = WarpX::GetInstance();
     m_gamma_boost = WarpX::gamma_boost;
     m_beta_boost = std::sqrt( 1._rt - 1._rt/( m_gamma_boost * m_gamma_boost) );
@@ -65,6 +64,7 @@ void BTDiagnostics::DerivedInitData ()
         DefineCellCenteredMultiFab(lev);
     }
 
+    
 }
 
 void
@@ -72,7 +72,6 @@ BTDiagnostics::ReadParameters ()
 {
     BaseReadParameters();
     auto & warpx = WarpX::GetInstance();
-    // Read list of back-transform diag parameters requested by the user //
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( ( warpx.do_back_transformed_diagnostics==true),
         "the do_back_transformed_diagnostics flag must be set to true for BTDiagnostics");
@@ -87,6 +86,9 @@ BTDiagnostics::ReadParameters ()
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd",
         "<diag>.format must be plotfile or openpmd for back transformed diagnostics");
+
+
+    // Read list of back-transform diag parameters requested by the user //
     amrex::ParmParse pp(m_diag_name);
 
     m_file_prefix = "diags/lab_frame_data/" + m_diag_name;
@@ -145,13 +147,12 @@ BTDiagnostics::TMP_writeMetaData ()
 bool
 BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 {
-
-    // check if buffer is full (m_buffer_counter[i_buffer] == m_) or if force_flush == true
+    // Return true if buffer is full or if force_flush == true
+    // Return false if timestep < 0, i.e., at initialization when step == -1.
     if (step < 0 ) return false;
     else if ( buffer_full(i_buffer) || force_flush) {
         return true;
     }
-
     return false;
 }
 
@@ -160,7 +161,7 @@ bool
 BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
     // always set to true for BTDiagnostics since back-transform buffers are potentially
-    // computed and packed every timstep.
+    // computed and packed every timstep, except at initialization when step == -1.
     if (step>=0) {
         return true;
     }
@@ -171,12 +172,12 @@ void
 BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 {
     auto & warpx = WarpX::GetInstance();
-    // 1. Lab-frame time for the i^th snapshot
+    // Lab-frame time for the i^th snapshot
     m_t_lab.at(i_buffer) = i_buffer * m_dt_snapshots_lab;
 
 
-    // Compute lab-frame co-ordinates that correspoing to the simulation domain
-    // at level, lev, and time, m_t_lab[i_buffer]
+    // Compute lab-frame co-ordinates that correspond to the simulation domain
+    // at level, lev, and time, m_t_lab[i_buffer] for each ith buffer.
     m_prob_domain_lab[i_buffer] = warpx.Geom(lev).ProbDomain();
     amrex::Real zmin_prob_domain_lab = m_prob_domain_lab[i_buffer].lo(m_moving_window_dir)
                                       / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
@@ -188,7 +189,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
                                                warpx.moving_window_v * m_t_lab[i_buffer] );
 
 
-    // 2. Define buffer domain in boosted frame at level, lev, with user-defined lo and hi
+    // Define buffer domain in boosted frame at level, lev, with user-defined lo and hi
     amrex::RealBox diag_dom;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim ) {
         // Setting lo-coordinate for the diag domain by taking the max of user-defined
@@ -198,10 +199,10 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
         // hi-cordinate and hi-coordinate of the simulation domain at level, lev
         diag_dom.setHi(idim, std::min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
     }
-    // 3. Initializing the m_buffer_box for the i^th snapshot.
-    //    At initialization, the Box has the same index space as the boosted-frame
-    //    As time-progresses, the z-dimension indices will be modified based on
-    //    current_z_lab
+    // Initializing the m_buffer_box for the i^th snapshot.
+    // At initialization, the Box has the same index space as the boosted-frame
+    // As time-progresses, the z-dimension indices will be modified based on
+    // current_z_lab
     amrex::IntVect lo(0);
     amrex::IntVect hi(-1);
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
@@ -227,26 +228,24 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
         }
     }
     amrex::Box diag_box( lo, hi );
-    // The box is not coarsened yet. Should this be coarsened here or when
-    // the buffer multifab is initialized?
     m_buffer_box[i_buffer] = diag_box;
 
-    // 4. Define buffer_domain  in lab-frame for the i^th snapshot.
-    //    Replace z-dimension with lab-frame co-ordinates.
+    // Define buffer_domain in lab-frame for the i^th snapshot.
+    // Replace z-dimension with lab-frame co-ordinates.
     amrex::Real zmin_buffer_lab = diag_dom.lo(m_moving_window_dir)
                                  / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
     amrex::Real zmax_buffer_lab = diag_dom.hi(m_moving_window_dir)
                                  / ( (1.0_rt + m_beta_boost) * m_gamma_boost);
 
 
-    m_buffer_domain_lab[i_buffer] = warpx.Geom(lev).ProbDomain();
+    m_buffer_domain_lab[i_buffer] = diag_dom;
     m_buffer_domain_lab[i_buffer].setLo(m_moving_window_dir,
                                   zmin_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
     m_buffer_domain_lab[i_buffer].setHi(m_moving_window_dir,
                                   zmax_buffer_lab + warpx.moving_window_v * m_t_lab[i_buffer]);
 
-    // 5. Initialize buffer counter and z-positions of the  i^th snapshot in
-    //    boosted-frame and lab-frame
+    // Initialize buffer counter and z-positions of the  i^th snapshot in
+    // boosted-frame and lab-frame
     m_buffer_counter[i_buffer] = 0;
     m_current_z_lab[i_buffer] = 0.0_rt;
     m_current_z_boost[i_buffer] = 0.0_rt;
@@ -257,11 +256,12 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
                                                               warpx.gett_new(lev) );
 
 
-    // 6. Compute ncells_lab required for writing Header file and potentially to generate
-    //    Back-Transform geometry to ensure compatibility with plotfiles //
+    // Compute number of cells in lab-frame required for writing Header file
+    // and potentially to generate Back-Transform geometry to ensure 
+    // compatibility with plotfiles.
     // For the z-dimension, number of cells in the lab-frame is
     // computed using the coarsened cell-size in the lab-frame obtained using
-    // the ref_ratio at level, lev.
+    // the ref_ratio at level, lev-1.
     amrex::IntVect ref_ratio = amrex::IntVect(1);
     if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
     // Number of lab-frame cells in z-direction at level, lev
@@ -290,8 +290,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     int Ny_lab = 0;
     m_buffer_ncells_lab[i_buffer] = {Nx_lab, Nz_lab};
 #endif
-
-    // 7. Call funtion to create directories for customized output format
+    // Call funtion to create directories for customized output format
     TMP_createLabFrameDirectories(i_buffer, lev);
 }
 
@@ -319,12 +318,14 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     // This ensures that when domain is load-balanced, the functors point
     // to the correct field-data pointers
     m_all_field_functors[lev].clear();
-    // For back-transformed data, all the components are cell-centered and stored in a single multifab. Therefore, size of functors at all levels is 1.
+    // For back-transformed data, all the components are cell-centered and stored 
+    // in a single multifab, m_cell_centered_data. 
+    // Therefore, size of functors at all levels is 1.
     int num_BT_functors = 1;
     m_all_field_functors[lev].resize(num_BT_functors);
     m_cell_center_functors[lev].clear();
     m_cell_center_functors[lev].resize( m_cellcenter_varnames.size() );
-    // 1. create an object of class BackTransformFunctor
+    // Create an object of class BackTransformFunctor
     for (int i = 0; i < num_BT_functors; ++i)
     {
         // coarsening ratio is not provided since the source MultiFab, m_cell_centered_data
@@ -334,9 +335,10 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
                   m_varnames.size(), m_num_buffers, m_varnames);
     }
 
-    // 2. Define all cell-centered functors required to compute cell-centere data
-    //    Fill vector of cell-center functors for all components
-    //    Only E,B, j, and rho are included in the cell-center functors for BackTransform Diags
+    // Define all cell-centered functors required to compute cell-centere data
+    // Fill vector of cell-center functors for all field-components, namely, 
+    // Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho are included in the
+    // cell-center functors for BackTransform Diags
     for (int comp=0, n=m_cell_center_functors[lev].size(); comp<n; comp++){
         if        ( m_cellcenter_varnames[comp] == "Ex" ){
             m_cell_center_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_Efield_aux(lev, 0), lev, m_crse_ratio);
@@ -368,9 +370,7 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
 void
 BTDiagnostics::TMP_createLabFrameDirectories(int i_buffer, int lev)
 {
-    // This function will include relevant code from class BackTransformedDiagnostics
-    // to create lab-frame directories. Note that here we will also add level, lev
-    // if required.
+    // This is a creates lab-frame directories for writing out customized BTD output.
     if (amrex::ParallelDescriptor::IOProcessor())
     {
         if ( !amrex::UtilCreateDirectory (m_file_name[i_buffer], 0755) )
@@ -483,9 +483,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
         buffer_ba.maxSize(m_max_box_size);
 
-        // CHECK at review : Coarsen back-transformed data here?
         // Generate a new distribution map for the back-transformed buffer multifab
-        // with different lo and hi physical co-ordinates compare to the simulation domain.
         amrex::DistributionMapping buffer_dmap(buffer_ba);
         // Number of guard cells for the output buffer is zero.
         // Unlike FullDiagnostics, "m_format == sensei" option is not included here.
@@ -499,7 +497,6 @@ bool
 BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
 {
     auto & warpx = WarpX::GetInstance();
-    bool ZSliceInDomain = true;
     const amrex::RealBox& boost_domain = warpx.Geom(lev).ProbDomain();
 
     amrex::Real buffer_zmin_lab = m_buffer_domain_lab[i_buffer].lo( m_moving_window_dir );
@@ -510,10 +507,11 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
          ( m_current_z_lab[i_buffer] < buffer_zmin_lab ) or
          ( m_current_z_lab[i_buffer] > buffer_zmax_lab ) )
     {
-        ZSliceInDomain = false;
+        // the slice is not in the boosted domain or lab-frame domain
+        return false;
     }
 
-    return ZSliceInDomain;
+    return true;
 }
 
 void
@@ -566,12 +564,14 @@ void
 BTDiagnostics::Flush (int i_buffer)
 {
     TMP_FlushLabFrameData (i_buffer);
+    // Reset the buffer counter to zero after flushing out data stored in the buffer.
     ResetBufferCounter(i_buffer);
 }
 
 void
 BTDiagnostics::TMP_FlushLabFrameData ( int i_buffer )
 {
+    // customized output format for writing data stored in buffers to the disk.
     amrex::VisMF::Header::Version current_version = amrex::VisMF::GetHeaderVersion();
     amrex::VisMF::SetHeaderVersion(amrex::VisMF::Header::NoFabHeader_v1);
 

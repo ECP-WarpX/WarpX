@@ -188,7 +188,6 @@ WarpX::Evolve (int numsteps)
         // We might need to move j because we are going to make a plotfile.
 
         int num_moved = MoveWindow(move_j);
-        amrex::Print() << " num moved : " << num_moved << " move j : " << move_j<< "\n";
 
         // Electrostatic solver: particles can move by an arbitrary number of cells
         if( do_electrostatic )

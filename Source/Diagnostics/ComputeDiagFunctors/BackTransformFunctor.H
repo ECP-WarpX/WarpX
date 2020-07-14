@@ -12,13 +12,13 @@ BackTransformFunctor final : public ComputeDiagFunctor
 {
 public:
     // This class will handle the slicing of the cell-centered field-data (stored as mf_src)
-    // It will Lorentz-Transform the sliced data from boosted-frame at z=zboost
-    // to lab-frame at z=zlab and add the lab-frame slice to the destination
-    // multifab that will be provided in the operator () function, for all ncomponents
-    // starting from icomp_dst.
+    // Then, the field data stored in the slice is Lorentz-Transformed from 
+    // boosted-frame at z=zboost to lab-frame at z=zlab.
+    // The lab-frame data is then copied to the destination multifab provided in 
+    // the operator () function, for all ncomponents starting from icomp_dst.
     // The operator() function will also need a few boosted-frame parameters, such as,
     // current_z_boost of the corresponding snapshot, to generate appropriate slices
-    // in boosted-frame and lab-frame.i
+    // in boosted-frame and lab-frame.
     // Unlike cell-center functor, coarsening ratio is not provided to this functor,
     // since the data is coarsened when preparing fields in m_mf_cc (mf_src).
 
@@ -29,24 +29,45 @@ public:
      * \param[in] ncom number of components of mf_src to Lorentz-Transform
                        and store in destination multifab.
      */
-
-    // initializing crse_ratio with 1, to accurately initialize ComputeDiagFunctor
-
     BackTransformFunctor ( const amrex::MultiFab * const mf_src, const int lev,
                            const int ncomp, const int num_buffers,
                            amrex::Vector< std::string > varnames,
                            const amrex::IntVect crse_ratio= amrex::IntVect(1));
 
+    /** \brief Lorentz-transform mf_src for the ith buffer and write the result in mf_dst.
+     *
+     * The source multifab, is a ten-component cell-centered multifab storing
+     * field-data in the boosted-frame. An z-slice is generated
+     * at the z-boost location for the ith buffer, stored in m_current_z_boost[i_buffer].
+     * The data is then lorentz-transformed in-place using LorenzTransformZ ().
+     * The user-requested fields are then copied to mf_dst.
+     *
+     * \param[out] mf_dst output MuliFab where the back-transformed data is written 
+     * \param[in] dcomp first component of mf_dst in which the back-transformed 
+     *            lab-frame data for the user-request fields is written.
+     * \param[in] i_buffer buffer index for which the data is transformed.
+     */ 
     void operator ()(amrex::MultiFab& mf_dst, int dcomp, const int i_buffer) const override;
 
-    /** Prepare data for back-transform functor for each lab-frame snapshot, i_buffer
+    /** \brief Prepare data required to back-transform fields for lab-frame snapshot, i_buffer
+     *
+     * \param[in] i_buffer, index of the snapshot
+     * \param[in] ZSliceInDomain if the z-slice at current_z_boost is within
+     *            the boosted-frame and lab-frame domain. 
+     *            The fields are sliced and back-transformed only if this value is true.
+     * \param[in] buffer_box, Box with index-space in lab-frame for the ith buffer
+     * \param[in] k_index_zlab, k-index in the lab-frame corresponding to the 
+     *                          current z co-ordinate in the lab-frame for the ith buffer.
      */
     void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
                               amrex::Real current_z_boost,
                               amrex::Box buffer_box, const int k_index_zlab ) override;
+    /** Allocate and initialize member variables and arrays required to back-transform
+     *  field-data from boosted-frame to lab-frame.
+     */
     void InitData () override;
-    /** In-place conversion of MultiFab data from boosted-frame to the
-     *  back-transformed lab-frame/
+    /** \brief In-place Lorentz-transform of MultiFab, data, from boosted-frame to the
+     *  lab-frame for all fields, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho.
      *
      *  \param[in] data z-slice field-data MultiFab to be back-transformed in-place
      *                 from boosted-frame to lab-frame
@@ -61,17 +82,27 @@ private:
     amrex::MultiFab const * const m_mf_src = nullptr;
     /** level at which m_mf_src is defined */
     int const m_lev;
+    /** Number of buffers or snapshots */
     int const m_num_buffers;
+    /** Vector of amrex::Box with index-space in the lab-frame */
     amrex::Vector<amrex::Box> m_buffer_box;
+    /** Vector of current z co-ordinate in the boosted-frame for each buffer */
     amrex::Vector<amrex::Real> m_current_z_boost;
+    /** Vector of 0s and 1s stored to check if back-transformation is to be performed
+     *  for the ith buffer. The value is set 0 (false) or 1 (true) using the boolean
+     *  ZSliceInDomain in PrepareFunctorData().
+     */
     amrex::Vector<int> m_perform_backtransform;
+    /** Vector of k-index correspoding to the current lab-frame z co-ordinate for each buffer */
     amrex::Vector<int> m_k_index_zlab;
+    /** Vector of user-defined field names to be stored in the output multifab */
     amrex::Vector< std::string > m_varnames;
 
     /** max grid size used to generate BoxArray to define output MultiFabs */
     int m_max_box_size = 256;
     /** Indices that map user-defined fields to plot to the fields
      *  stored in the cell-centered MultiFab, m_mf_src.
+     *  The cell-centered MultiFab stores Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho.
      */
     amrex::Gpu::ManagedDeviceVector<int> m_map_varnames;
 };

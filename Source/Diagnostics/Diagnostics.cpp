@@ -74,6 +74,14 @@ Diagnostics::BaseReadParameters ()
             m_hi[idim] = warpx.Geom(0).ProbHi(idim);
        }
     }
+    if (warpx.boost_direction[warpx.moving_window_dir] == 1) {
+        // Convert user-defined lo and hi for diagnostics to account for boosted-frame
+        // simulations with moving window
+        amrex::Real convert_factor = 1._rt/(m_gamma_boost * (1._rt - m_beta_boost) );
+        // Assuming that the window travels with speed c
+        m_lo[m_moving_window_dir] *= convert_factor;
+        m_hi[m_moving_window_dir] *= convert_factor;
+    }
 
     // Initialize cr_ratio with default value of 1 for each dimension.
     amrex::Vector<int> cr_ratio(AMREX_SPACEDIM, 1);

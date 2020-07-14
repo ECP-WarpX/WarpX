@@ -16,6 +16,8 @@ BackTransformFunctor::BackTransformFunctor (amrex::MultiFab const * mf_src, int 
 void
 BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int dcomp, const int i_buffer) const
 {
+    // Perform back-transformation only if z slice is within the domain stored as 0/1
+    // in m_perform_backtransform[i_buffer]
     if ( m_perform_backtransform[i_buffer] == 1) {
         auto& warpx = WarpX::GetInstance();
         auto geom = warpx.Geom(m_lev);
@@ -25,8 +27,11 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int dcomp, const int 
         bool interpolate = true;
         std::unique_ptr< amrex::MultiFab > slice = nullptr;
         int scomp = 0;
+        // Generate slice of the cell-centered multifab containing boosted-frame field-data
+        // at current z-boost location for the ith buffer
         slice =  amrex::get_slice_data (moving_window_dir, m_current_z_boost[i_buffer],
                      *m_mf_src, geom, scomp, m_mf_src->nComp(), interpolate);
+        // Perform in-place Lorentz-transform of all the fields stored in the slice.
         LorentzTransformZ( *slice, gamma_boost, beta_boost);
 
         // Create a 2D box for the slice in the boosted frame
@@ -42,7 +47,8 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int dcomp, const int 
         // Make it a BoxArray
         amrex::BoxArray slice_ba(slice_box);
         slice_ba.maxSize( m_max_box_size );
-        //Define MultiFab with the distribution map of the destination multifab
+        // Define MultiFab with the distribution map of the destination multifab and 
+        // containing all ten components that were in the slice generated from m_mf_src.
         std::unique_ptr< amrex::MultiFab > tmp_slice_ptr = nullptr;
         tmp_slice_ptr.reset( new MultiFab ( slice_ba, mf_dst.DistributionMap(),
                                             slice->nComp(), 0) );
@@ -80,12 +86,11 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int dcomp, const int 
                 } );
         }
 
-
+        // Reset the temporary MultiFabs generated
         slice.reset(new MultiFab);
         slice.reset(nullptr);
         tmp_slice_ptr.reset(new MultiFab);
         tmp_slice_ptr.reset(nullptr);
-
 
     } //
 
