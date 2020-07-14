@@ -85,12 +85,12 @@ class SpectralSolver
 
         /**
          * \brief Public interface to call the virtual function \c VayDeposition,
-         * defined in the base class SpectralBaseAlgorithm and possibly overridden
-         * by its derived classes (e.g. PsatdAlgorithm, PsatdAlgorithmRZ, PMLPsatdAlgorithm),
-         * from objects of class SpectralSolver through the private unique pointer \c algorithm
+         * declared in the base class SpectralBaseAlgorithm and defined in its
+         * derived classes, from objects of class SpectralSolver through the private
+         * unique pointer \c algorithm.
          *
-         * \param[in,out] current three-dimensional array of unique pointers to MultiFab
-         *                        storing the three components of the current density
+         * \param[in,out] current Array of unique pointers to \c MultiFab storing
+         *                        the three components of the current density
          */
         void VayDeposition (std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
         {

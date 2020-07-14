@@ -54,15 +54,15 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
                                          const std::unique_ptr<amrex::MultiFab>& rho ) override final;
 
         /**
-         * \brief Virtual function for Vay deposition in Fourier space
-         * (equations (20)-(24) of https://doi.org/10.1016/j.jcp.2013.03.010).
+         * \brief Virtual function for Vay current deposition in Fourier space
+         * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).
          * This function overrides the virtual function \c VayDeposition in the
-         * base class \c SpectralBaseAlgorithm (qualifier \c override) and cannot be
-         * overridden by further derived classes (qualifier \c final).
+         * base class \c SpectralBaseAlgorithm and cannot be overridden by further
+         * derived classes.
          *
-         * \param[in,out] field_data all fields in Fourier space
-         * \param[in,out] current    three-dimensional array of unique pointers to MultiFab
-         *                           storing the three components of the current density
+         * \param[in,out] field_data All fields in Fourier space
+         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
+         *                           the three components of the current density
          */
         virtual void VayDeposition (SpectralFieldData& field_data,
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;

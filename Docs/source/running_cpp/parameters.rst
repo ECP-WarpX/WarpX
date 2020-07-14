@@ -957,7 +957,7 @@ Numerics and algorithms
 
     1. ``direct``
 
-       The current density is deposited as described in the section :doc:`../theory/picsar_theory`.
+       The current density is deposited as described in the section :ref:`current_deposition`.
        This deposition scheme does not conserve charge.
 
     2. ``esirkepov``
@@ -968,81 +968,7 @@ Numerics and algorithms
 
     3. ``vay``
 
-       The current density is deposited as described in
-       `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_.
-       This deposition scheme is the generalization of the Esirkepov deposition scheme
-       for the spectral case with arbitrary-order stencils. The current density
-       :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}` in Fourier space is computed as
-       :math:`\widehat{\boldsymbol{J}}^{\,n+1/2} = i \, \widehat{\boldsymbol{D}} / \boldsymbol{k}`
-       when :math:`\boldsymbol{k} \neq 0` and set to zero otherwise. The quantity
-       :math:`\boldsymbol{D}` is deposited in real space by averaging the currents
-       over all possible grid paths between the initial position :math:`\boldsymbol{x}^{\,n}`
-       and the final position :math:`\boldsymbol{x}^{\,n+1}` and is defined as
-
-       - 2D Cartesian geometry:
-
-         .. math::
-            \begin{align}
-            D_x = & \: \sum_i \frac{1}{\Delta x \Delta z} \frac{q_i w_i}{2 \Delta t}
-            \bigg[
-            \Gamma(x_i^{n+1},z_i^{n+1}) - \Gamma(x_i^{n},z_i^{n+1})
-            + \Gamma(x_i^{n+1},z_i^{n}) - \Gamma(x_i^{n},z_i^{n})
-            \bigg]
-            \\[16pt]
-            D_y = & \: \sum_i \frac{v_i^y}{\Delta x \Delta z} \frac{q_i w_i}{4}
-            \bigg[
-            \Gamma(x_i^{n+1},z_i^{n+1}) + \Gamma(x_i^{n+1},z_i^{n})
-            + \Gamma(x_i^{n},z_i^{n+1}) + \Gamma(x_i^{n},z_i^{n})
-            \bigg]
-            \\[16pt]
-            D_z = & \: \sum_i \frac{1}{\Delta x \Delta z} \frac{q_i w_i}{2 \Delta t}
-            \bigg[
-            \Gamma(x_i^{n+1},z_i^{n+1}) - \Gamma(x_i^{n+1},z_i^{n})
-            + \Gamma(x_i^{n},z_i^{n+1}) - \Gamma(x_i^{n},z_i^{n})
-            \bigg]
-            \end{align}
-
-       - 3D Cartesian geometry:
-
-         .. math::
-            \begin{align}
-            \begin{split}
-            D_x = & \: \sum_i \frac{1}{\Delta x\Delta y\Delta z} \frac{q_i w_i}{6\Delta t}
-            \bigg[
-            2 \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n+1}) - 2 \Gamma(x_i^{n},y_i^{n+1},z_i^{n+1}) \\[4pt]
-            & + \Gamma(x_i^{n+1},y_i^{n},z_i^{n+1}) - \Gamma(x_i^{n},y_i^{n},z_i^{n+1})
-            + \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n}) \\[4pt]
-            & - \Gamma(x_i^{n},y_i^{n+1},z_i^{n}) + 2 \Gamma(x_i^{n+1},y_i^{n},z_i^{n})
-            - 2 \Gamma(x_i^{n},y_i^{n},z_i^{n})
-            \bigg]
-            \end{split} \\[16pt]
-            \begin{split}
-            D_y = & \: \sum_i \frac{1}{\Delta x\Delta y\Delta z} \frac{q_i w_i}{6\Delta t}
-            \bigg[
-            2 \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n+1}) - 2 \Gamma(x_i^{n+1},y_i^{n},z_i^{n+1}) \\[4pt]
-            & + \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n}) - \Gamma(x_i^{n+1},y_i^{n},z_i^{n})
-            + \Gamma(x_i^{n},y_i^{n+1},z_i^{n+1}) \\[4pt]
-            & - \Gamma(x_i^{n},y_i^{n},z_i^{n+1}) + 2 \Gamma(x_i^{n},y_i^{n+1},z_i^{n})
-            - 2 \Gamma(x_i^{n},y_i^{n},z_i^{n})
-            \bigg]
-            \end{split} \\[16pt]
-            \begin{split}
-            D_z = & \: \sum_i \frac{1}{\Delta x\Delta y\Delta z} \frac{q_i w_i}{6\Delta t}
-            \bigg[
-            2 \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n+1}) - 2 \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n}) \\[4pt]
-            & + \Gamma(x_i^{n},y_i^{n+1},z_i^{n+1}) - \Gamma(x_i^{n},y_i^{n+1},z_i^{n})
-            + \Gamma(x_i^{n+1},y_i^{n},z_i^{n+1}) \\[4pt]
-            & - \Gamma(x_i^{n+1},y_i^{n},z_i^{n}) + 2 \Gamma(x_i^{n},y_i^{n},z_i^{n+1})
-            - 2 \Gamma(x_i^{n},y_i^{n},z_i^{n})
-            \bigg]
-            \end{split}
-            \end{align}
-
-       Here, :math:`w_i` represents the weight of the :math:`i`-th macro-particle
-       and :math:`\Gamma` represents its shape factor. Please note that in 2D Cartesian
-       geometry, :math:`D_y` is effectively :math:`J_y` and does not require additional
-       operations in Fourier space.
-
+       The current density is deposited as described in `(Vay et al, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_ (see section :ref:`current_deposition` for more details).
        This option guarantees charge conservation only when used in combination
        with ``psatd.periodic_single_box_fft=1``, that is, only for periodic single-box
        simulations with global FFTs without guard cells. The implementation for domain
