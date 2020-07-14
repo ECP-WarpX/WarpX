@@ -7,15 +7,13 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+#include "Initialization/WarpXAMReXInit.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
-#include <AMReX_ParmParse.H>
 #include <AMReX_BLProfiler.H>
 #include <AMReX_ParallelDescriptor.H>
-
-#include <iostream>
 
 
 int main(int argc, char* argv[])
@@ -32,7 +30,7 @@ int main(int argc, char* argv[])
 #   endif
 #endif
 
-    amrex::Initialize(argc,argv);
+    warpx_amrex_init(argc, argv);
 
     // in Debug mode, we need a larger stack limit than usual bc of the parser.
 #if defined(AMREX_USE_CUDA) && defined(AMREX_DEBUG)
