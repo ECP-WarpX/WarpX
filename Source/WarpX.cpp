@@ -329,7 +329,7 @@ WarpX::ReadParameters ()
         pp.query("nox", nox);
         pp.query("noy", noy);
         pp.query("noz", noz);
-        pp.query("match_shape_factors", match_shape_factors)
+        pp.query("match_shape_factors", match_shape_factors);
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox == noy and nox == noz ,
             "warpx.nox, noy and noz must be equal");
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox >= 1, "warpx.nox must >= 1");
