@@ -369,3 +369,10 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
                         });
     }
 };
+
+void
+AvgGalileanAlgorithm::VayDeposition (SpectralFieldData& field_data,
+                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+{
+    amrex::Abort("Vay deposition not implemented for averaged Galilean PSATD");
+}
