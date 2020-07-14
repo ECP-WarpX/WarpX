@@ -21,7 +21,7 @@ namespace {
         amrex::ParmParse pp("amrex");
 
         // https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters
-        bool abort_on_out_of_gpu_memory = true; // default: false
+        bool abort_on_out_of_gpu_memory = true; // AMReX' default: false
         pp.query("abort_on_out_of_gpu_memory", abort_on_out_of_gpu_memory);
         pp.add("abort_on_out_of_gpu_memory", abort_on_out_of_gpu_memory);
     }
@@ -31,8 +31,8 @@ amrex::AMReX*
 warpx_amrex_init(int& argc, char**& argv)
 {
     // note: AMReX defines a placeholder/"mock-up" for MPI_COMM_WORLD in serial builds
-    bool const build_parm_parse = true; // default
-    MPI_Comm const mpi_comm = MPI_COMM_WORLD; // default
+    bool const build_parm_parse = true; // AMReX' default
+    MPI_Comm const mpi_comm = MPI_COMM_WORLD; // AMReX' default
 
     return amrex::Initialize(
         argc,

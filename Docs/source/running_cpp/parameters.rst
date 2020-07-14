@@ -45,7 +45,7 @@ Overall simulation parameters
     printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
 
-* ``warpx.verbose`` (``0`` or ``1``; default is ``0`` for false)
+* ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
     Controls how much information is printed to the terminal, when running WarpX.
 
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
@@ -72,7 +72,7 @@ Overall simulation parameters
 * ``amrex.abort_on_out_of_gpu_memory``  (``0`` or ``1``; default is ``1`` for true)
     When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
     This will cause severe performance drops.
-    Note that even with this set to ``1`` we will not catch all out-of-memory events yet when operating close to maximum device memory.
+    Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
     `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
 
 .. _running-cpp-parameters-box:
