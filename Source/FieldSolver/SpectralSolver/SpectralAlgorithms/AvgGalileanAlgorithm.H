@@ -19,7 +19,12 @@ class AvgGalileanAlgorithm : public SpectralBaseAlgorithm
         virtual void pushSpectralFields (SpectralFieldData& f) const override final;
         virtual int getRequiredNumberOfFields () const override final {
              return SpectralAvgFieldIndex::n_fields;
-    }
+        };
+        void InitializeSpectralCoefficients(
+           const SpectralKSpace& spectral_kspace,
+           const amrex::DistributionMapping& dm,
+           const amrex::Array<amrex::Real, 3>& v_galilean,
+           const amrex::Real dt);
 
     private:
         SpectralRealCoefficients C_coef, S_ck_coef, C1_coef, C3_coef, S1_coef,S3_coef;
