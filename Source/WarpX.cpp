@@ -556,7 +556,12 @@ WarpX::ReadParameters ()
 
         pp.query("do_dynamic_scheduling", do_dynamic_scheduling);
 
+        // check staggering options:
         pp.query("do_nodal", do_nodal);
+        pp.query("stagger_mode", stagger_mode);
+        if (do_nodal) stagger_mode = "nodal";
+        if (stagger_mode == "nodal") do_nodal = true; // enforce consistency
+        
         // Use same shape factors in all directions, for gathering
         if (do_nodal) l_lower_order_in_v = false;
 
