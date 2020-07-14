@@ -156,6 +156,7 @@ public:
     static long nox;
     static long noy;
     static long noz;
+    static bool match_shape_factors;
 
     // Number of modes for the RZ multimode version
     static long n_rz_azimuthal_modes;
