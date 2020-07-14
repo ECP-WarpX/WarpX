@@ -12,7 +12,7 @@ The test runs a weak scaling (1,2,8,64,256,512 nodes) for 6 different tests ``To
 Setup on Summit @ OLCF
 ----------------------
 
-Here's my setup on Summit, feel free to adapt it to your needs:
+Here is an example setup for Summit:
 
 .. code-block:: sh
 
