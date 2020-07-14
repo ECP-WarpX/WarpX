@@ -644,6 +644,8 @@ WarpX::ReadParameters ()
         pp.query("current_correction", current_correction);
         pp.query("update_with_rho", update_with_rho);
         pp.query("v_galilean", v_galilean);
+        pp.query("do_time_averaging", fft_do_time_averaging);
+        
       // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
     }
