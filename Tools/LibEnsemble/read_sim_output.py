@@ -36,7 +36,7 @@ def _beam_properties(filepath):
     # Read beam quantities from plotfile
     ds = yt.load(filepath)
 
-    if ('beam' in [i[0] for i in ds.fld_list]:
+    if ('beam' in [i[0] for i in ds.fld_list]):
         ad = ds.all_data()
         w = ad['beam', 'particle_weight'].v
         if (w.shape[0] <= 200):
