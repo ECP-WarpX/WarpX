@@ -810,6 +810,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jx_nodal_flag = IntVect(0,1);
         jy_nodal_flag = IntVect(1,1);
         jz_nodal_flag = IntVect(1,0);
+        rho_nodal_flag = IntVect(1,1);
 
     } else if (stagger_mode == "destagger_Jz"){
         Ex_nodal_flag = IntVect(0,1);
@@ -821,6 +822,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jx_nodal_flag = IntVect(0,1);
         jy_nodal_flag = IntVect(1,1);
         jz_nodal_flag = IntVect(1,1);
+        rho_nodal_flag = IntVect(1,1);
 
   } else if (stagger_mode == "nodal_in_z"){
         Ex_nodal_flag = IntVect(0,1);
@@ -832,24 +834,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jx_nodal_flag = IntVect(0,1);
         jy_nodal_flag = IntVect(1,1);
         jz_nodal_flag = IntVect(1,1);
-  } else{
-    throw "Unrecognized stagger option";
-  }
-#elif (AMREX_SPACEDIM == 3)
-    Ex_nodal_flag = IntVect(0,1,1);
-    Ey_nodal_flag = IntVect(1,0,1);
-    Ez_nodal_flag = IntVect(1,1,0);
-    Bx_nodal_flag = IntVect(1,0,0);
-    By_nodal_flag = IntVect(0,1,0);
-    Bz_nodal_flag = IntVect(0,0,1);
-    jx_nodal_flag = IntVect(0,1,1);
-    jy_nodal_flag = IntVect(1,0,1);
-    jz_nodal_flag = IntVect(1,1,0);
-#endif
-    rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
-
-    // Overwrite nodal flags if necessary
-    if (do_nodal) {
+        rho_nodal_flag = IntVect(1,1);
+  } else if (stagger_mode == "nodal") {
         Ex_nodal_flag  = IntVect::TheNodeVector();
         Ey_nodal_flag  = IntVect::TheNodeVector();
         Ez_nodal_flag  = IntVect::TheNodeVector();
@@ -860,7 +846,39 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jy_nodal_flag  = IntVect::TheNodeVector();
         jz_nodal_flag  = IntVect::TheNodeVector();
         rho_nodal_flag = IntVect::TheNodeVector();
-    }
+
+  } else{
+    throw "Unrecognized stagger option";
+  }
+#elif (AMREX_SPACEDIM == 3)
+  if (stagger_mode == "yee"){
+      Ex_nodal_flag = IntVect(0,1,1);
+      Ey_nodal_flag = IntVect(1,0,1);
+      Ez_nodal_flag = IntVect(1,1,0);
+      Bx_nodal_flag = IntVect(1,0,0);
+      By_nodal_flag = IntVect(0,1,0);
+      Bz_nodal_flag = IntVect(0,0,1);
+      jx_nodal_flag = IntVect(0,1,1);
+      jy_nodal_flag = IntVect(1,0,1);
+      jz_nodal_flag = IntVect(1,1,0);
+      rho_nodal_flag = IntVect(1,1,1);
+
+  } else if (stagger_mode == "nodal"){
+      Ex_nodal_flag  = IntVect::TheNodeVector();
+      Ey_nodal_flag  = IntVect::TheNodeVector();
+      Ez_nodal_flag  = IntVect::TheNodeVector();
+      Bx_nodal_flag  = IntVect::TheNodeVector();
+      By_nodal_flag  = IntVect::TheNodeVector();
+      Bz_nodal_flag  = IntVect::TheNodeVector();
+      jx_nodal_flag  = IntVect::TheNodeVector();
+      jy_nodal_flag  = IntVect::TheNodeVector();
+      jz_nodal_flag  = IntVect::TheNodeVector();
+      rho_nodal_flag = IntVect::TheNodeVector();
+  } else {
+    throw "Unrecognized stagger option";
+  }
+#endif
+
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     // Force cell-centered IndexType in r and z
     Ex_nodal_flag  = IntVect::TheCellVector();
