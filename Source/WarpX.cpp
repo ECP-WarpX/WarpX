@@ -800,15 +800,41 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     // Set nodal flags
 #if   (AMREX_SPACEDIM == 2)
     // AMReX convention: x = first dimension, y = missing dimension, z = second dimension
-    Ex_nodal_flag = IntVect(0,1);
-    Ey_nodal_flag = IntVect(1,1);
-    Ez_nodal_flag = IntVect(1,0);
-    Bx_nodal_flag = IntVect(1,0);
-    By_nodal_flag = IntVect(0,0);
-    Bz_nodal_flag = IntVect(0,1);
-    jx_nodal_flag = IntVect(0,1);
-    jy_nodal_flag = IntVect(1,1);
-    jz_nodal_flag = IntVect(1,0);
+    if (stagger_mode == "yee"){
+        Ex_nodal_flag = IntVect(0,1);
+        Ey_nodal_flag = IntVect(1,1);
+        Ez_nodal_flag = IntVect(1,0);
+        Bx_nodal_flag = IntVect(1,0);
+        By_nodal_flag = IntVect(0,0);
+        Bz_nodal_flag = IntVect(0,1);
+        jx_nodal_flag = IntVect(0,1);
+        jy_nodal_flag = IntVect(1,1);
+        jz_nodal_flag = IntVect(1,0);
+
+    } else if (stagger_mode == "destagger_Jz"){
+        Ex_nodal_flag = IntVect(0,1);
+        Ey_nodal_flag = IntVect(1,1);
+        Ez_nodal_flag = IntVect(1,0);
+        Bx_nodal_flag = IntVect(1,0);
+        By_nodal_flag = IntVect(0,0);
+        Bz_nodal_flag = IntVect(0,1);
+        jx_nodal_flag = IntVect(0,1);
+        jy_nodal_flag = IntVect(1,1);
+        jz_nodal_flag = IntVect(1,1);
+
+  } else if (stagger_mode == "nodal_in_z"){
+        Ex_nodal_flag = IntVect(0,1);
+        Ey_nodal_flag = IntVect(1,1);
+        Ez_nodal_flag = IntVect(1,1);
+        Bx_nodal_flag = IntVect(1,1);
+        By_nodal_flag = IntVect(0,1);
+        Bz_nodal_flag = IntVect(0,1);
+        jx_nodal_flag = IntVect(0,1);
+        jy_nodal_flag = IntVect(1,1);
+        jz_nodal_flag = IntVect(1,1);
+  } else{
+    throw "Unrecognized stagger option";
+  }
 #elif (AMREX_SPACEDIM == 3)
     Ex_nodal_flag = IntVect(0,1,1);
     Ey_nodal_flag = IntVect(1,0,1);
