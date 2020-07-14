@@ -41,7 +41,7 @@ def _beam_properties(filepath):
         w = ad['beam', 'particle_weight'].v
         if (w.shape[0] <= 200):
             print('Insufficient particles in ',filepath)
-            return 0.0, 0.0, 0.0, 0.0, 0.0
+            return 0.0, 0.0, 0.0, 0.0
         else:
             x = ad['beam', 'particle_position_x'].v
             z = ad['beam', 'particle_position_y'].v
@@ -73,7 +73,7 @@ def _beam_properties(filepath):
             return charge, energy_avg, energy_std, emittance
     else:
         print('No beam particles in ',filepath)
-        return 0.0, 0.0, 0.0, 0.0, 0.0
+        return 0.0, 0.0, 0.0, 0.0
 
 def read_sim_output(workdir):
     """
@@ -87,7 +87,7 @@ def read_sim_output(workdir):
     file_list = glob.glob('diags/plotfiles/plt?????')
     if (len(file_list) <2):
         print(workdir,' did not have final plotfile')
-        return np.array([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
+        return np.array([np.nan, np.nan, np.nan, np.nan, np.nan])
     file_list.sort()
     datafile = file_list[0]
     filepath = os.path.join(workdir, datafile)
