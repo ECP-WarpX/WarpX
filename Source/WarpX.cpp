@@ -812,6 +812,18 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jz_nodal_flag = IntVect(1,0);
         rho_nodal_flag = IntVect(1,1);
 
+    } else if (stagger_mode == "nodal") {
+          Ex_nodal_flag  = IntVect::TheNodeVector();
+          Ey_nodal_flag  = IntVect::TheNodeVector();
+          Ez_nodal_flag  = IntVect::TheNodeVector();
+          Bx_nodal_flag  = IntVect::TheNodeVector();
+          By_nodal_flag  = IntVect::TheNodeVector();
+          Bz_nodal_flag  = IntVect::TheNodeVector();
+          jx_nodal_flag  = IntVect::TheNodeVector();
+          jy_nodal_flag  = IntVect::TheNodeVector();
+          jz_nodal_flag  = IntVect::TheNodeVector();
+          rho_nodal_flag = IntVect::TheNodeVector();
+
     } else if (stagger_mode == "destagger_Jz"){
         Ex_nodal_flag = IntVect(0,1);
         Ey_nodal_flag = IntVect(1,1);
@@ -822,7 +834,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jx_nodal_flag = IntVect(0,1);
         jy_nodal_flag = IntVect(1,1);
         jz_nodal_flag = IntVect(1,1);
-        rho_nodal_flag = IntVect(1,1);
+        rho_nodal_flag = IntVect(1,1); // might change
 
   } else if (stagger_mode == "nodal_in_z"){
         Ex_nodal_flag = IntVect(0,1);
@@ -834,19 +846,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jx_nodal_flag = IntVect(0,1);
         jy_nodal_flag = IntVect(1,1);
         jz_nodal_flag = IntVect(1,1);
-        rho_nodal_flag = IntVect(1,1);
-  } else if (stagger_mode == "nodal") {
-        Ex_nodal_flag  = IntVect::TheNodeVector();
-        Ey_nodal_flag  = IntVect::TheNodeVector();
-        Ez_nodal_flag  = IntVect::TheNodeVector();
-        Bx_nodal_flag  = IntVect::TheNodeVector();
-        By_nodal_flag  = IntVect::TheNodeVector();
-        Bz_nodal_flag  = IntVect::TheNodeVector();
-        jx_nodal_flag  = IntVect::TheNodeVector();
-        jy_nodal_flag  = IntVect::TheNodeVector();
-        jz_nodal_flag  = IntVect::TheNodeVector();
-        rho_nodal_flag = IntVect::TheNodeVector();
-
+        rho_nodal_flag = IntVect(1,1); // might change
   } else{
     throw "Unrecognized stagger option";
   }
