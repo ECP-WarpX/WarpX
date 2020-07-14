@@ -12,9 +12,9 @@ BackTransformFunctor final : public ComputeDiagFunctor
 {
 public:
     // This class will handle the slicing of the cell-centered field-data (stored as mf_src)
-    // Then, the field data stored in the slice is Lorentz-Transformed from 
+    // Then, the field data stored in the slice is Lorentz-Transformed from
     // boosted-frame at z=zboost to lab-frame at z=zlab.
-    // The lab-frame data is then copied to the destination multifab provided in 
+    // The lab-frame data is then copied to the destination multifab provided in
     // the operator () function, for all ncomponents starting from icomp_dst.
     // The operator() function will also need a few boosted-frame parameters, such as,
     // current_z_boost of the corresponding snapshot, to generate appropriate slices
@@ -42,21 +42,21 @@ public:
      * The data is then lorentz-transformed in-place using LorenzTransformZ ().
      * The user-requested fields are then copied to mf_dst.
      *
-     * \param[out] mf_dst output MuliFab where the back-transformed data is written 
-     * \param[in] dcomp first component of mf_dst in which the back-transformed 
+     * \param[out] mf_dst output MuliFab where the back-transformed data is written
+     * \param[in] dcomp first component of mf_dst in which the back-transformed
      *            lab-frame data for the user-request fields is written.
      * \param[in] i_buffer buffer index for which the data is transformed.
-     */ 
+     */
     void operator ()(amrex::MultiFab& mf_dst, int dcomp, const int i_buffer) const override;
 
     /** \brief Prepare data required to back-transform fields for lab-frame snapshot, i_buffer
      *
      * \param[in] i_buffer, index of the snapshot
      * \param[in] ZSliceInDomain if the z-slice at current_z_boost is within
-     *            the boosted-frame and lab-frame domain. 
+     *            the boosted-frame and lab-frame domain.
      *            The fields are sliced and back-transformed only if this value is true.
      * \param[in] buffer_box, Box with index-space in lab-frame for the ith buffer
-     * \param[in] k_index_zlab, k-index in the lab-frame corresponding to the 
+     * \param[in] k_index_zlab, k-index in the lab-frame corresponding to the
      *                          current z co-ordinate in the lab-frame for the ith buffer.
      */
     void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,

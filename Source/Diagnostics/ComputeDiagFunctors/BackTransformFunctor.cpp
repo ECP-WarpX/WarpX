@@ -47,7 +47,7 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int dcomp, const int 
         // Make it a BoxArray
         amrex::BoxArray slice_ba(slice_box);
         slice_ba.maxSize( m_max_box_size );
-        // Define MultiFab with the distribution map of the destination multifab and 
+        // Define MultiFab with the distribution map of the destination multifab and
         // containing all ten components that were in the slice generated from m_mf_src.
         std::unique_ptr< amrex::MultiFab > tmp_slice_ptr = nullptr;
         tmp_slice_ptr.reset( new MultiFab ( slice_ba, mf_dst.DistributionMap(),

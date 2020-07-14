@@ -64,7 +64,7 @@ void BTDiagnostics::DerivedInitData ()
         DefineCellCenteredMultiFab(lev);
     }
 
-    
+
 }
 
 void
@@ -257,7 +257,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
 
 
     // Compute number of cells in lab-frame required for writing Header file
-    // and potentially to generate Back-Transform geometry to ensure 
+    // and potentially to generate Back-Transform geometry to ensure
     // compatibility with plotfiles.
     // For the z-dimension, number of cells in the lab-frame is
     // computed using the coarsened cell-size in the lab-frame obtained using
@@ -318,8 +318,8 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     // This ensures that when domain is load-balanced, the functors point
     // to the correct field-data pointers
     m_all_field_functors[lev].clear();
-    // For back-transformed data, all the components are cell-centered and stored 
-    // in a single multifab, m_cell_centered_data. 
+    // For back-transformed data, all the components are cell-centered and stored
+    // in a single multifab, m_cell_centered_data.
     // Therefore, size of functors at all levels is 1.
     int num_BT_functors = 1;
     m_all_field_functors[lev].resize(num_BT_functors);
@@ -336,7 +336,7 @@ BTDiagnostics::InitializeFieldFunctors (int lev)
     }
 
     // Define all cell-centered functors required to compute cell-centere data
-    // Fill vector of cell-center functors for all field-components, namely, 
+    // Fill vector of cell-center functors for all field-components, namely,
     // Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho are included in the
     // cell-center functors for BackTransform Diags
     for (int comp=0, n=m_cell_center_functors[lev].size(); comp<n; comp++){
