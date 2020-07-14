@@ -1023,6 +1023,11 @@ Numerics and algorithms
     Note that the implementation in WarpX is more efficient when these 3 numbers are equal,
     and when they are between 1 and 3.
 
+* ``interpolation.match_shape_factors`` (`0` or `1` ; default: `0`)
+    On a staggered grid, default shape factors are different for different field components.
+    When ``match_shape_factors = 1``, shape factors are of the same order for every field component along every direction.
+    If `psatd.do_nodal = 1`, this parameter has no effect.
+
 * ``warpx.do_dive_cleaning`` (`0` or `1` ; default: 0)
     Whether to use modified Maxwell equations that progressively eliminate
     the error in :math:`div(E)-\rho`. This can be useful when using a current
