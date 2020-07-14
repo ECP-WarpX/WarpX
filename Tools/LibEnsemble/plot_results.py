@@ -71,7 +71,7 @@ d_yunits = {
     'emittance': " (m rad)",
     'charge': " (pC/m)",
     'energy_avg': " (MeV)",
-    'energy_std': " (dimless)"
+    'energy_std': " (%)"
 }
 
 # Print input and output parameters for the optimal run
