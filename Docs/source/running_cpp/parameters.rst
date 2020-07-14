@@ -1025,7 +1025,7 @@ Numerics and algorithms
 
 * ``interpolation.match_shape_factors`` (`0` or `1` ; default: `0`)
     On a staggered grid, default shape factors are different for different field components.
-    When ``match_shape_factors = 1``, shape factors are of the same order for every field component along every direction.
+    When ``match_shape_factors = 1``, shape factors are the same for every field component.
     If `psatd.do_nodal = 1`, this parameter has no effect.
 
 * ``warpx.do_dive_cleaning`` (`0` or `1` ; default: 0)
