@@ -80,6 +80,7 @@ long WarpX::ncomps = 1;
 long WarpX::nox = 1;
 long WarpX::noy = 1;
 long WarpX::noz = 1;
+bool WarpX::match_shape_factors = false;
 
 bool WarpX::use_fdtd_nci_corr = false;
 int  WarpX::l_lower_order_in_v = true;
@@ -324,6 +325,17 @@ WarpX::ReadParameters ()
     }
 
     {
+        ParmParse pp("interpolation");
+        pp.query("nox", nox);
+        pp.query("noy", noy);
+        pp.query("noz", noz);
+        pp.query("match_shape_factors", match_shape_factors)
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox == noy and nox == noz ,
+            "warpx.nox, noy and noz must be equal");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox >= 1, "warpx.nox must >= 1");
+    }
+
+    {
         ParmParse pp("warpx");
 
         // set random seed
@@ -558,7 +570,7 @@ WarpX::ReadParameters ()
 
         pp.query("do_nodal", do_nodal);
         // Use same shape factors in all directions, for gathering
-        if (do_nodal) l_lower_order_in_v = false;
+        if (do_nodal || match_shape_factors) l_lower_order_in_v = false;
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
@@ -573,16 +585,6 @@ WarpX::ReadParameters ()
         do_nodal = true;
         l_lower_order_in_v = false;
 #endif
-    }
-
-    {
-        ParmParse pp("interpolation");
-        pp.query("nox", nox);
-        pp.query("noy", noy);
-        pp.query("noz", noz);
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox == noy and nox == noz ,
-            "warpx.nox, noy and noz must be equal");
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox >= 1, "warpx.nox must >= 1");
     }
 
     {
