@@ -55,6 +55,8 @@ int WarpX::do_moving_window = 0;
 int WarpX::moving_window_dir = -1;
 Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
+bool WarpX::fft_do_time_averaging = false;
+
 Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
 Real WarpX::gamma_boost = 1.;
 Real WarpX::beta_boost = 0.;
@@ -923,7 +925,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     bool const pml=false;
     spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
         nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
-        pml, fft_periodic_single_box, update_with_rho ) );
+        pml, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
     m_fdtd_solver_fp[lev].reset(
@@ -1038,7 +1040,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         realspace_ba.grow(ngE); // add guard cells
         spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev],
-            pml, fft_periodic_single_box, update_with_rho ) );
+            pml, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
         m_fdtd_solver_cp[lev].reset(

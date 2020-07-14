@@ -19,7 +19,12 @@ class AvgGalileanAlgorithm : public SpectralBaseAlgorithm
         virtual void pushSpectralFields (SpectralFieldData& f) const override final;
         virtual int getRequiredNumberOfFields () const override final {
              return SpectralAvgFieldIndex::n_fields;
-    }
+        };
+        void InitializeSpectralCoefficients(
+           const SpectralKSpace& spectral_kspace,
+           const amrex::DistributionMapping& dm,
+           const amrex::Array<amrex::Real, 3>& v_galilean,
+           const amrex::Real dt);
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space

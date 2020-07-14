@@ -929,10 +929,6 @@ PhysicalParticleContainer::Evolve (int lev,
                                    Real /*t*/, Real dt, DtType a_dt_type)
 {
 
-    bool fft_do_time_averaging = false;
-    ParmParse pp("psatd");
-    pp.query("do_time_averaging", fft_do_time_averaging);
-
     WARPX_PROFILE("PPC::Evolve()");
     WARPX_PROFILE_VAR_NS("PPC::GatherAndPush", blp_fg);
 
@@ -991,12 +987,12 @@ PhysicalParticleContainer::Evolve (int lev,
             const long np = pti.numParticles();
 
             // Data on the grid
-            FArrayBox const* exfab = fft_do_time_averaging ? &(Ex_avg[pti]) : &(Ex[pti]);
-            FArrayBox const* eyfab = fft_do_time_averaging ? &(Ey_avg[pti]) : &(Ey[pti]);
-            FArrayBox const* ezfab = fft_do_time_averaging ? &(Ez_avg[pti]) : &(Ez[pti]);
-            FArrayBox const* bxfab = fft_do_time_averaging ? &(Bx_avg[pti]) : &(Bx[pti]);
-            FArrayBox const* byfab = fft_do_time_averaging ? &(By_avg[pti]) : &(By[pti]);
-            FArrayBox const* bzfab = fft_do_time_averaging ? &(Bz_avg[pti]) : &(Bz[pti]);
+            FArrayBox const* exfab = WarpX::fft_do_time_averaging ? &(Ex_avg[pti]) : &(Ex[pti]);
+            FArrayBox const* eyfab = WarpX::fft_do_time_averaging ? &(Ey_avg[pti]) : &(Ey[pti]);
+            FArrayBox const* ezfab = WarpX::fft_do_time_averaging ? &(Ez_avg[pti]) : &(Ez[pti]);
+            FArrayBox const* bxfab = WarpX::fft_do_time_averaging ? &(Bx_avg[pti]) : &(Bx[pti]);
+            FArrayBox const* byfab = WarpX::fft_do_time_averaging ? &(By_avg[pti]) : &(By[pti]);
+            FArrayBox const* bzfab = WarpX::fft_do_time_averaging ? &(Bz_avg[pti]) : &(Bz[pti]);
 
             Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
 

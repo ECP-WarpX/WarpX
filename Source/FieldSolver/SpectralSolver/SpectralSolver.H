@@ -36,7 +36,8 @@ class SpectralSolver
                         const amrex::RealVect dx, const amrex::Real dt,
                         const bool pml=false,
                         const bool periodic_single_box=false,
-                        const bool update_with_rho=false );
+                        const bool update_with_rho=false,
+                        const bool fft_do_time_averaging=false);
 
         /**
          * \brief Transform the component `i_comp` of MultiFab `mf`
@@ -96,8 +97,6 @@ class SpectralSolver
         {
             algorithm->VayDeposition(field_data, current);
         }
-
-        bool fft_do_time_averaging = false;
 
     private:
         void ReadParameters ();
