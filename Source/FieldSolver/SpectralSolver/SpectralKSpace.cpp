@@ -180,7 +180,6 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
 
     if (n_order == -1) { // Infinite-order case
         for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
-            Real delta_x = dx[i_dim];
             const ManagedVector<Real>& k = k_vec[i_dim][mfi];
             ManagedVector<Real>& modified_k = modified_k_comp[mfi];
 
