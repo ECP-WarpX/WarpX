@@ -36,7 +36,8 @@ class SpectralSolver
                         const amrex::RealVect dx, const amrex::Real dt,
                         const bool pml=false,
                         const bool periodic_single_box=false,
-                        const bool update_with_rho=false );
+                        const bool update_with_rho=false,
+                        const bool fft_do_time_averaging=false);
 
         /**
          * \brief Transform the component `i_comp` of MultiFab `mf`
@@ -82,8 +83,6 @@ class SpectralSolver
                                  const std::unique_ptr<amrex::MultiFab>& rho ) {
              algorithm->CurrentCorrection( field_data, current, rho );
         };
-
-        bool fft_do_time_averaging = false;
 
     private:
         void ReadParameters ();
