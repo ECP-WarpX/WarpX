@@ -937,7 +937,7 @@ Numerics and algorithms
     them from the macroparticles. This uses a bilinear filter
     (see the sub-section **Filtering** in :doc:`../theory/theory`).
 
-* ``warpx.use_kspace_filter`` (`0 or 1`)
+* ``warpx.use_kspace_filter`` (`0` or `1`; default: `0`)
     Whether to smooth the charge and currents on the mesh, after depositing
     them from the macroparticles. This uses a bilinear filter, applying the
     filter in k-space. It is only supported with the RZ spectral solver.
