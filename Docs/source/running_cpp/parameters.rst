@@ -947,7 +947,7 @@ Numerics and algorithms
     Number of passes along each direction for the bilinear filter.
     In 2D simulations, only the first two values are read.
 
-* ``warpx.use_filter_compensation`` (`0 or 1`)
+* ``warpx.use_filter_compensation`` (`0` or `1`; default: `0`)
     Whether to add compensation when applying k-space filtering.
     This requires `warpx.use_kspace_filter=1` and is only supported
     with the RZ spectral solver.
