@@ -10,7 +10,6 @@
 
 #include <cmath>
 
-
 using namespace amrex;
 using namespace Gpu;
 
