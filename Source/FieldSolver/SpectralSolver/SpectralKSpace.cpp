@@ -169,9 +169,6 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
  * \param nodal Whether the stencil is to be applied to a nodal or
                 staggered set of fields
  */
-
-
-
 KVectorComponent
 SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                                        const int i_dim,
