@@ -3,12 +3,10 @@
 This script is used to test the results of the Galilean PSATD method and
 averaged Galilean PSATD method in WarpX.
 It compares the energy of the electric field with precalculated reference energy.
-
   1) Galilean PSATD test: reference energy was calculated with
      standard PSATD (v_galilean = (0.,0.,0.)):
          * if 'v_galilean == 0': simulation is unstable because of the arosen NCI;
          * if 'v_galilean != 0 : NCI is suppressed => simulation is stable.
-
   2) Averaged Galilean PSATD with large timestep dz/dx = 4. and c*dt = dz:
      reference energy was calculated with Galilean PSATD (v_galilean = (0.,0.,0.99498743710662):
          * if standard Galilean PSATD is used (psatd.do_time_averaging == 0'):
