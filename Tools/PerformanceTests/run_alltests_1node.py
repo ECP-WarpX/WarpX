@@ -298,7 +298,7 @@ if args.mode == 'read':
     if do_commit == True:
         os.system('git add ' + log_dir + log_file + ';'\
                   'git commit -m "performance tests";'\
-                  'git push -u origin master')
+                  'git push -u origin development')
 
     # Plot file
     import numpy as np

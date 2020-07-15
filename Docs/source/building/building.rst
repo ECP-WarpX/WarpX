@@ -20,7 +20,7 @@ single directory (e.g. ``warpx_directory``):
     mkdir warpx_directory
     cd warpx_directory
     git clone https://github.com/ECP-WarpX/WarpX.git
-    git clone https://bitbucket.org/berkeleylab/picsar.git
+    git clone https://github.com/ECP-WarpX/picsar.git
     git clone --branch development https://github.com/AMReX-Codes/amrex.git
 
 Basic compilation
@@ -70,6 +70,17 @@ In order to clean a previously compiled version (typically useful for troublesho
 
 before re-attempting compilation.
 
+Preview: CMake Build System
+---------------------------
+
+We are currently transitioning to support CMake as our primary build system.
+Until we have transitioned our documentation and functionality completely, please read the following preview section for details.
+
+.. toctree::
+   :maxdepth: 1
+
+   cmake
+
 Advanced building instructions
 ------------------------------
 
@@ -91,3 +102,4 @@ Building for specific platforms
 
    cori
    summit
+   juwels

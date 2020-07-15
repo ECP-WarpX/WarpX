@@ -33,10 +33,12 @@ set_default_install_dirs()
 
 # Options and Variants ########################################################
 #
-option(WarpX_OPENPMD       "openPMD I/O"                                OFF)
+option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
+option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
+option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
-option(WarpX_QED           "PICSAR QED (requires Boost)"                OFF)
-# TODO: python, hdf5, sensei, conduit, ascent
+option(WarpX_QED           "PICSAR QED (requires Boost and PICSAR)"     OFF)
+# TODO: python, sensei, legacy hdf5?
 
 set(WarpX_DIMS_VALUES 2 3 RZ)
 set(WarpX_DIMS 3 CACHE STRING "Simulation dimensionality (2/3/RZ)")
@@ -52,8 +54,8 @@ if(NOT WarpX_PRECISION IN_LIST WarpX_PRECISION_VALUES)
     message(FATAL_ERROR "WarpX_PRECISION (${WarpX_PRECISION}) must be one of ${WarpX_PRECISION_VALUES}")
 endif()
 
-set(WarpX_COMPUTE_VALUES NONE CUDA OMP) # HIP DPCPP
-set(WarpX_COMPUTE NONE CACHE STRING "Parallel, on-node computing backend (NONE/CUDA/OMP)")
+set(WarpX_COMPUTE_VALUES NOACC OMP CUDA DPCPP) # HIP
+set(WarpX_COMPUTE OMP CACHE STRING "On-node, accelerated computing backend (NOACC/OMP/CUDA/DPCPP)")
 set_property(CACHE WarpX_COMPUTE PROPERTY STRINGS ${WarpX_COMPUTE_VALUES})
 if(NOT WarpX_COMPUTE IN_LIST WarpX_COMPUTE_VALUES)
     message(FATAL_ERROR "WarpX_PRECISION (${WarpX_COMPUTE}) must be one of ${WarpX_COMPUTE_VALUES}")
@@ -65,7 +67,7 @@ option(WarpX_amrex_internal                    "Download & build AMReX" ON)
 set_default_build_type("RelWithDebInfo")
 
 # this defined the variable BUILD_TESTING which is ON by default
-include(CTest)
+#include(CTest)
 
 
 # Dependencies ################################################################
@@ -148,9 +150,7 @@ set_target_properties(WarpX PROPERTIES
 )
 
 # link dependencies
-# FIXME use AMReX::thirdparty::AMReX as soon as
-#       missing _deps/fetchedamrex-build/mod_files is solved
-target_link_libraries(WarpX PUBLIC AMReX::amrex)
+target_link_libraries(WarpX PUBLIC WarpX::thirdparty::AMReX)
 
 if(WarpX_PSATD)
     if(ENABLE_CUDA)
@@ -184,12 +184,17 @@ endif()
 # AMReX helper function: propagate CUDA specific target & source properties
 if(ENABLE_CUDA)
     setup_target_for_cuda_compilation(WarpX)
-    target_compile_features(WarpX PUBLIC cuda_std_14)
-    set_target_properties(WarpX PROPERTIES
-        CUDA_EXTENSIONS OFF
-        CUDA_STANDARD_REQUIRED ON
-    )
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.17)
+        target_compile_features(WarpX PUBLIC cuda_std_14)
+        set_target_properties(WarpX PROPERTIES
+            CUDA_EXTENSIONS OFF
+            CUDA_STANDARD_REQUIRED ON
+        )
+    endif()
 endif()
+
+# fancy binary name for build variants
+set_warpx_binary_name()
 
 
 # Defines #####################################################################

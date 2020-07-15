@@ -55,6 +55,8 @@ int WarpX::do_moving_window = 0;
 int WarpX::moving_window_dir = -1;
 Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 
+bool WarpX::fft_do_time_averaging = false;
+
 Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
 Real WarpX::gamma_boost = 1.;
 Real WarpX::beta_boost = 0.;
@@ -145,7 +147,6 @@ WarpX::ResetInstance ()
 WarpX::WarpX ()
 {
     m_instance = this;
-
     ReadParameters();
 
     BackwardCompatibility();
@@ -193,11 +194,16 @@ WarpX::WarpX ()
     Efield_aux.resize(nlevs_max);
     Bfield_aux.resize(nlevs_max);
 
+    Efield_avg_aux.resize(nlevs_max);
+    Bfield_avg_aux.resize(nlevs_max);
+
     F_fp.resize(nlevs_max);
     rho_fp.resize(nlevs_max);
     current_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
+    Efield_avg_fp.resize(nlevs_max);
+    Bfield_avg_fp.resize(nlevs_max);
 
     current_store.resize(nlevs_max);
 
@@ -206,6 +212,8 @@ WarpX::WarpX ()
     current_cp.resize(nlevs_max);
     Efield_cp.resize(nlevs_max);
     Bfield_cp.resize(nlevs_max);
+    Efield_avg_cp.resize(nlevs_max);
+    Bfield_avg_cp.resize(nlevs_max);
 
     Efield_cax.resize(nlevs_max);
     Bfield_cax.resize(nlevs_max);
@@ -559,6 +567,11 @@ WarpX::ReadParameters ()
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
+
+#if defined WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
+                   "The problem must not be periodic in the radial direction");
+#endif
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
         // Force do_nodal=true (that is, not staggered) and
         // use same shape factors in all directions, for gathering
@@ -605,8 +618,10 @@ WarpX::ReadParameters ()
         pp.query("nox", nox_fft);
         pp.query("noy", noy_fft);
         pp.query("noz", noz_fft);
-        pp.query("do_current_correction", do_current_correction);
+        pp.query("current_correction", current_correction);
+        pp.query("update_with_rho", update_with_rho);
         pp.query("v_galilean", v_galilean);
+        pp.query("do_time_averaging", fft_do_time_averaging);
       // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
     }
@@ -859,7 +874,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     current_fp[lev][1].reset( new MultiFab(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ));
     current_fp[lev][2].reset( new MultiFab(amrex::convert(ba,jz_nodal_flag),dm,ncomps,ngJ));
 
-    if (do_dive_cleaning || plot_rho)
+
+    Bfield_avg_fp[lev][0].reset( new MultiFab(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE));
+    Bfield_avg_fp[lev][1].reset( new MultiFab(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE));
+    Bfield_avg_fp[lev][2].reset( new MultiFab(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE));
+
+    Efield_avg_fp[lev][0].reset( new MultiFab(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngE));
+    Efield_avg_fp[lev][1].reset( new MultiFab(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE));
+    Efield_avg_fp[lev][2].reset( new MultiFab(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE));
+
+    if (do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics))
     {
         rho_fp[lev].reset(new MultiFab(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho));
     }
@@ -909,7 +933,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     bool const pml=false;
     spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
         nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
-        pml, fft_periodic_single_box ) );
+        pml, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
     m_fdtd_solver_fp[lev].reset(
@@ -934,6 +958,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         for (int idir = 0; idir < 3; ++idir) {
             Efield_aux[lev][idir].reset(new MultiFab(*Efield_fp[lev][idir], amrex::make_alias, 0, ncomps));
             Bfield_aux[lev][idir].reset(new MultiFab(*Bfield_fp[lev][idir], amrex::make_alias, 0, ncomps));
+
+            Efield_avg_aux[lev][idir].reset(new MultiFab(*Efield_avg_fp[lev][idir], amrex::make_alias, 0, ncomps));
+            Bfield_avg_aux[lev][idir].reset(new MultiFab(*Bfield_avg_fp[lev][idir], amrex::make_alias, 0, ncomps));
         }
     }
     else
@@ -945,6 +972,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_aux[lev][0].reset( new MultiFab(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngE));
         Efield_aux[lev][1].reset( new MultiFab(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE));
         Efield_aux[lev][2].reset( new MultiFab(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE));
+
+
+        Bfield_avg_aux[lev][0].reset( new MultiFab(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE));
+        Bfield_avg_aux[lev][1].reset( new MultiFab(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE));
+        Bfield_avg_aux[lev][2].reset( new MultiFab(amrex::convert(ba,Bz_nodal_flag),dm,ncomps,ngE));
+
+        Efield_avg_aux[lev][0].reset( new MultiFab(amrex::convert(ba,Ex_nodal_flag),dm,ncomps,ngE));
+        Efield_avg_aux[lev][1].reset( new MultiFab(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE));
+        Efield_avg_aux[lev][2].reset( new MultiFab(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE));
+
     }
 
     //
@@ -966,12 +1003,22 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_cp[lev][1].reset( new MultiFab(amrex::convert(cba,Ey_nodal_flag),dm,ncomps,ngE));
         Efield_cp[lev][2].reset( new MultiFab(amrex::convert(cba,Ez_nodal_flag),dm,ncomps,ngE));
 
+        // Create the MultiFabs for B_avg
+        Bfield_avg_cp[lev][0].reset( new MultiFab(amrex::convert(cba,Bx_nodal_flag),dm,ncomps,ngE));
+        Bfield_avg_cp[lev][1].reset( new MultiFab(amrex::convert(cba,By_nodal_flag),dm,ncomps,ngE));
+        Bfield_avg_cp[lev][2].reset( new MultiFab(amrex::convert(cba,Bz_nodal_flag),dm,ncomps,ngE));
+
+        // Create the MultiFabs for E_avg
+        Efield_avg_cp[lev][0].reset( new MultiFab(amrex::convert(cba,Ex_nodal_flag),dm,ncomps,ngE));
+        Efield_avg_cp[lev][1].reset( new MultiFab(amrex::convert(cba,Ey_nodal_flag),dm,ncomps,ngE));
+        Efield_avg_cp[lev][2].reset( new MultiFab(amrex::convert(cba,Ez_nodal_flag),dm,ncomps,ngE));
+
         // Create the MultiFabs for the current
         current_cp[lev][0].reset( new MultiFab(amrex::convert(cba,jx_nodal_flag),dm,ncomps,ngJ));
         current_cp[lev][1].reset( new MultiFab(amrex::convert(cba,jy_nodal_flag),dm,ncomps,ngJ));
         current_cp[lev][2].reset( new MultiFab(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ));
 
-        if (do_dive_cleaning || plot_rho){
+        if (do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)) {
             rho_cp[lev].reset(new MultiFab(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho));
         }
         if (do_dive_cleaning)
@@ -1003,7 +1050,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   else
         realspace_ba.grow(ngE); // add guard cells
         spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev] ) );
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev],
+            pml, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
         m_fdtd_solver_cp[lev].reset(
@@ -1111,6 +1159,15 @@ WarpX::UpperCorner(const Box& bx, int lev)
 #elif (AMREX_SPACEDIM == 2)
     return { xyzmax[0], std::numeric_limits<Real>::max(), xyzmax[1] };
 #endif
+}
+
+std::array<Real,3>
+WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev)
+{
+    amrex::Real cur_time = gett_new(lev);
+    amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
+    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    return WarpX::LowerCorner(bx, galilean_shift, lev);
 }
 
 IntVect
@@ -1371,14 +1428,4 @@ WarpX::PicsarVersion ()
 #else
     return std::string("Unknown");
 #endif
-}
-
-void
-WarpX::FieldGather ()
-{
-    for (int lev = 0; lev <= finest_level; ++lev) {
-        mypc->FieldGather(lev,
-                          *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
-                          *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
-    }
 }
