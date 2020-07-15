@@ -135,23 +135,28 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // x direction
             // Get particle position after 1/2 push back in position
 #if (defined WARPX_DIM_RZ)
+            // Keep this double to avoid bug in single precision
             const double xmid = (rpmid - xmin)*dxi;
 #else
+            // Keep this double to avoid bug in single precision
             const double xmid = (xp - xmin)*dxi - dts2dx*vx;
 #endif
             // j_j[xyz] leftmost grid point in x that the particle touches for the centering of each current
             // sx_j[xyz] shape factor along x for the centering of each current
             // There are only two possible centerings, node or cell centered, so at most only two shape factor
             // arrays will be needed.
+            // Keep these double to avoid bug in single precision
             double sx_node[depos_order + 1];
             double sx_cell[depos_order + 1];
             int j_node;
             int j_cell;
+            // Keep this double to avoid bug in single precision
+            Compute_shape_factor< depos_order > const compute_shape_factor;
             if (jx_type[0] == NODE || jy_type[0] == NODE || jz_type[0] == NODE) {
-                j_node = compute_shape_factor_dbl<depos_order>(sx_node, xmid);
+                j_node = compute_shape_factor(sx_node, xmid);
             }
             if (jx_type[0] == CELL || jy_type[0] == CELL || jz_type[0] == CELL) {
-                j_cell = compute_shape_factor_dbl<depos_order>(sx_cell, xmid - 0.5);
+                j_cell = compute_shape_factor(sx_cell, xmid - 0.5);
             }
 
             amrex::Real sx_jx[depos_order + 1] = {0.};
@@ -170,16 +175,18 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 
 #if (defined WARPX_DIM_3D)
             // y direction
+            // Keep these double to avoid bug in single precision
             const double ymid = (yp - ymin)*dyi - dts2dy*vy;
             double sy_node[depos_order + 1];
             double sy_cell[depos_order + 1];
             int k_node;
             int k_cell;
+            // Keep this double to avoid bug in single precision
             if (jx_type[1] == NODE || jy_type[1] == NODE || jz_type[1] == NODE) {
-                k_node = compute_shape_factor_dbl<depos_order>(sy_node, ymid);
+                k_node = compute_shape_factor(sy_node, ymid);
             }
             if (jx_type[1] == CELL || jy_type[1] == CELL || jz_type[1] == CELL) {
-                k_cell = compute_shape_factor_dbl<depos_order>(sy_cell, ymid - 0.5);
+                k_cell = compute_shape_factor(sy_cell, ymid - 0.5);
             }
             amrex::Real sy_jx[depos_order + 1] = {0.};
             amrex::Real sy_jy[depos_order + 1] = {0.};
@@ -196,16 +203,18 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 #endif
 
             // z direction
+            // Keep these double to avoid bug in single precision
             const double zmid = (zp - zmin)*dzi - dts2dz*vz;
             double sz_node[depos_order + 1];
             double sz_cell[depos_order + 1];
             int l_node;
             int l_cell;
+            // Keep this double to avoid bug in single precision
             if (jx_type[zdir] == NODE || jy_type[zdir] == NODE || jz_type[zdir] == NODE) {
-                l_node = compute_shape_factor_dbl<depos_order>(sz_node, zmid);
+                l_node = compute_shape_factor(sz_node, zmid);
             }
             if (jx_type[zdir] == CELL || jy_type[zdir] == CELL || jz_type[zdir] == CELL) {
-                l_cell = compute_shape_factor_dbl<depos_order>(sz_cell, zmid - 0.5);
+                l_cell = compute_shape_factor(sz_cell, zmid - 0.5);
             }
             amrex::Real sz_jx[depos_order + 1] = {0.};
             amrex::Real sz_jy[depos_order + 1] = {0.};
@@ -405,16 +414,20 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             const Complex xy_new0 = Complex{costheta_new, sintheta_new};
             const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
             const Complex xy_old0 = Complex{costheta_old, sintheta_old};
+            // Keep these double to avoid bug in single precision
             double const x_new = (rp_new - xmin)*dxi;
             double const x_old = (rp_old - xmin)*dxi;
 #else
+            // Keep these double to avoid bug in single precision
             double const x_new = (xp - xmin)*dxi;
             double const x_old = x_new - dtsdx0*uxp[ip]*gaminv;
 #endif
 #if (defined WARPX_DIM_3D)
+            // Keep these double to avoid bug in single precision
             double const y_new = (yp - ymin)*dyi;
             double const y_old = y_new - dtsdy0*uyp[ip]*gaminv;
 #endif
+            // Keep these double to avoid bug in single precision
             double const z_new = (zp - zmin)*dzi;
             double const z_old = z_new - dtsdz0*uzp[ip]*gaminv;
 
@@ -428,26 +441,35 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             // Note that there are extra values above and below
             // to possibly hold the factor for the old particle
             // which can be at a different grid location.
+            // Keep these double to avoid bug in single precision
             double sx_new[depos_order + 3] = {0.};
             double sx_old[depos_order + 3] = {0.};
 #if (defined WARPX_DIM_3D)
+            // Keep these double to avoid bug in single precision
             double sy_new[depos_order + 3] = {0.};
             double sy_old[depos_order + 3] = {0.};
 #endif
+            // Keep these double to avoid bug in single precision
             double sz_new[depos_order + 3] = {0.};
             double sz_old[depos_order + 3] = {0.};
 
             // --- Compute shape factors
             // Compute shape factors for position as they are now and at old positions
             // [ijk]_new: leftmost grid point that the particle touches
-            const int i_new = compute_shape_factor_dbl<depos_order>(sx_new+1, x_new);
-            const int i_old = compute_shifted_shape_factor_dbl<depos_order>(sx_old, x_old, i_new);
+            // Keep these double to avoid bug in single precision
+            Compute_shape_factor< depos_order > compute_shape_factor;
+            Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
+            
+            const int i_new = compute_shape_factor(sx_new+1, x_new);
+            const int i_old = compute_shifted_shape_factor(sx_old, x_old, i_new);
 #if (defined WARPX_DIM_3D)
-            const int j_new = compute_shape_factor_dbl<depos_order>(sy_new+1, y_new);
-            const int j_old = compute_shifted_shape_factor_dbl<depos_order>(sy_old, y_old, j_new);
+            // Keep these double to avoid bug in single precision
+            const int j_new = compute_shape_factor(sy_new+1, y_new);
+            const int j_old = compute_shifted_shape_factor(sy_old, y_old, j_new);
 #endif
-            const int k_new = compute_shape_factor_dbl<depos_order>(sz_new+1, z_new);
-            const int k_old = compute_shifted_shape_factor_dbl<depos_order>(sz_old, z_old, k_new);
+            // Keep these double to avoid bug in single precision
+            const int k_new = compute_shape_factor(sz_new+1, z_new);
+            const int k_old = compute_shifted_shape_factor(sz_old, z_old, k_new);
 
             // computes min/max positions of current contributions
             int dil = 1, diu = 1;
