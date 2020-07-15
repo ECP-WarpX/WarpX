@@ -60,11 +60,11 @@ class SpectralFieldDataRZ
                                    amrex::MultiFab & tempHTransformedSplit,
                                    const bool is_nodal_z);
 
-        void InitFilter(amrex::IntVect const & filter_npass_each_dir, bool const compensation,
-                        SpectralKSpaceRZ const & k_space);
+        void InitFilter (amrex::IntVect const & filter_npass_each_dir, bool const compensation,
+                         SpectralKSpaceRZ const & k_space);
 
-        void ApplyFilter(int const field_index);
-        void ApplyFilter(int const field_index1, int const field_index2, int const field_index3);
+        void ApplyFilter (int const field_index);
+        void ApplyFilter (int const field_index1, int const field_index2, int const field_index3);
 
         // Returns an array that holds the kr for all of the modes
         HankelTransform::RealVector const & getKrArray(amrex::MFIter const & mfi) const {
