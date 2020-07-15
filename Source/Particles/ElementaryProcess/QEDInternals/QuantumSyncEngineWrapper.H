@@ -84,6 +84,9 @@ public:
 class QuantumSynchrotronEvolveOpticalDepth
 {
 public:
+
+    QuantumSynchrotronEvolveOpticalDepth () = default;
+
     /**
      * Constructor acquires pointers to control parameters and
      * lookup tables data.
@@ -139,10 +142,10 @@ public:
     }
 
 private:
-    //laser wavelenght is not used with SI units
-    const amrex::Real m_dummy_lambda{1.0};
+    //laser wavelength is not used with SI units
+    amrex::Real m_dummy_lambda{1.0};
 
-    const PicsarQuantumSynchrotronCtrl m_ctrl;
+    PicsarQuantumSynchrotronCtrl m_ctrl;
 
     //lookup table data
     size_t m_KKfunc_size;

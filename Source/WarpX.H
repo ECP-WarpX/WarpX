@@ -79,10 +79,11 @@ public:
     WarpX ();
     ~WarpX ();
 
-    static std::string Version (); //! Version of WarpX executable
-    static std::string PicsarVersion (); //! Version of PICSAR dependency
+    static std::string Version (); //!< Version of WarpX executable
+    static std::string PicsarVersion (); //!< Version of PICSAR dependency
 
     int Verbose () const { return verbose; }
+
 
     void InitData ();
 
@@ -136,10 +137,17 @@ public:
     static int em_solver_medium;
     static int macroscopic_solver_algo;
 
-    // Static public variable to switch on current correction in Fourier space
-    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010): can be set
-    // true by the user as an input parameter
-    bool do_current_correction = false;
+#ifdef WARPX_USE_PSATD
+    // If true (overwritten by the user in the input file), the current correction
+    // defined in equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010 is applied
+    bool current_correction = false;
+#endif
+
+#ifdef WARPX_USE_PSATD
+    // If true (overwritten by the user in the input file), the update equation
+    // for E contains both J and rho (at times n and n+1) on the right hand side
+    bool update_with_rho = false;
+#endif
 
     // div E cleaning
     static int do_dive_cleaning;
@@ -260,6 +268,7 @@ public:
     amrex::Real time_of_last_gal_shift  = 0;
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
 
+
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
     amrex::Vector<amrex::Real> mirror_z_width;
@@ -292,10 +301,10 @@ public:
     void EvolveB (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveE (int lev, PatchType patch_type, amrex::Real dt);
     void EvolveF (int lev, PatchType patch_type, amrex::Real dt, DtType dt_type);
+
     void MacroscopicEvolveE (         amrex::Real dt);
     void MacroscopicEvolveE (int lev, amrex::Real dt);
     void MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real dt);
-    void FieldGather ();
 
     /** \brief apply QED correction on electric field
      * \param dt vector of time steps (for all levels)
@@ -350,6 +359,22 @@ public:
 
     PML* GetPML (int lev);
 
+    /** Run the ionization module on all species */
+    void doFieldIonization ();
+    /** Run the ionization module on all species at level lev
+     * \param lev level
+     */
+    void doFieldIonization (int lev);
+
+#ifdef WARPX_QED
+    /** Run the QED module on all species */
+    void doQEDEvents ();
+    /** Run the QED module on all species at level lev
+     * \param lev level
+     */
+    void doQEDEvents (int lev);
+#endif
+
     void PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full);
     void PushParticlesandDepose (         amrex::Real cur_time);
 
@@ -362,10 +387,16 @@ public:
     // Fill boundary cells including coarse/fine boundaries
     void FillBoundaryB   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
     void FillBoundaryE   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+    void FillBoundaryB_avg   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+    void FillBoundaryE_avg   (amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+
     void FillBoundaryF   (amrex::IntVect ng);
     void FillBoundaryAux (amrex::IntVect ng);
     void FillBoundaryE   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
     void FillBoundaryB   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+    void FillBoundaryE_avg   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+    void FillBoundaryB_avg   (int lev, amrex::IntVect ng, amrex::IntVect ng_extra_fine=amrex::IntVect::TheZeroVector());
+
     void FillBoundaryF   (int lev, amrex::IntVect ng);
     void FillBoundaryAux (int lev, amrex::IntVect ng);
 
@@ -405,6 +436,11 @@ public:
                                                   std::array<amrex::Real,3> galilean_shift, int lev);
     static std::array<amrex::Real,3> UpperCorner (const amrex::Box& bx, int lev);
 
+    /*
+      /brief This computes the lower of the problem domain, taking into account any shift when using the Galilean algorithm.
+     */
+    std::array<amrex::Real,3> LowerCornerWithGalilean (const amrex::Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev);
+
     static amrex::IntVect RefRatio (int lev);
 
     static const amrex::iMultiFab* CurrentBufferMasks (int lev);
@@ -414,6 +450,7 @@ public:
     static int do_moving_window;
     static int moving_window_dir;
     static amrex::Real moving_window_v;
+    static bool fft_do_time_averaging;
 
     // slice generation //
     static int num_slice_snapshots_lab;
@@ -455,8 +492,17 @@ public:
      * This function initializes the E and B fields on each level
      * using the parser and the user-defined function for the external fields.
      * The subroutine will parse the x_/y_z_external_grid_function and
-     * then, the B or E multifab is initialized based on the (x,y,z) position
-     * on the staggered yee-grid or cell-centered grid.
+     * then, the field multifab is initialized based on the (x,y,z) position
+     * on the staggered yee-grid or cell-centered grid, in the interior cells
+     * and guard cells.
+     *
+     * \param[in] mfx, x-component of the field to be initialized
+     * \param[in] mfy, y-component of the field to be initialized
+     * \param[in] mfz, z-component of the field to be initialized
+     * \param[in] xfield_parser, parser function to initialize x-field
+     * \param[in] yfield_parser, parser function to initialize y-field
+     * \param[in] zfield_parser, parser function to initialize z-field
+     * \param[in] lev, level of the Multifabs that is initialized
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
@@ -537,6 +583,9 @@ private:
     void FillBoundaryB (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryE (int lev, PatchType patch_type, amrex::IntVect ng);
     void FillBoundaryF (int lev, PatchType patch_type, amrex::IntVect ng);
+
+    void FillBoundaryB_avg (int lev, PatchType patch_type, amrex::IntVect ng);
+    void FillBoundaryE_avg (int lev, PatchType patch_type, amrex::IntVect ng);
 
     void OneStep_nosub (amrex::Real t);
     void OneStep_sub1 (amrex::Real t);
@@ -627,6 +676,8 @@ private:
     // Full solution
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_aux;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_aux;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_aux;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_aux;
 
     // Fine patch
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_fp;
@@ -634,7 +685,8 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
-
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_fp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_fp;
     // store fine patch
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_store;
 
@@ -644,6 +696,8 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_cp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_avg_cp;
+    amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_avg_cp;
 
     // Copy of the coarse aux
     amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3 > > Efield_cax;
@@ -731,7 +785,7 @@ private:
 
     std::string restart_chkfile;
 
-    bool plot_rho           = false;
+    bool plot_rho = false;
 
     amrex::VisMF::Header::Version plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
     amrex::VisMF::Header::Version slice_plotfile_headerversion  = amrex::VisMF::Header::Version_v1;
