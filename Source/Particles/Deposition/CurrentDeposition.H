@@ -455,7 +455,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             // [ijk]_new: leftmost grid point that the particle touches
             Compute_shape_factor< depos_order > compute_shape_factor;
             Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
-            
+
             const int i_new = compute_shape_factor(sx_new+1, x_new);
             const int i_old = compute_shifted_shape_factor(sx_old, x_old, i_new);
 #if (defined WARPX_DIM_3D)
