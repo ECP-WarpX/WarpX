@@ -1073,10 +1073,52 @@ Numerics and algorithms
     See `this section of the FFTW documentation <http://www.fftw.org/fftw3_doc/Planner-Flags.html>`__
     for more information.
 
-* ``psatd.do_current_correction`` (`0` or `1`; default: `0`)
-    If true, the current correction defined by equation (19) of
-    `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_ is applied.
-    Only used when compiled and running with the PSATD solver.
+* ``psatd.current_correction`` (`0` or `1`; default: `0`)
+    If true, the current correction `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_
+
+    .. math::
+       \widetilde{\boldsymbol{J}}^{\,n+1/2}_{\mathrm{correct}} = \widetilde{\boldsymbol{J}}^{\,n+1/2}
+       -\bigg[\boldsymbol{k}\cdot\widetilde{\boldsymbol{J}}^{\,n+1/2}
+       -i\frac{\widetilde{\rho}^{n+1}-\widetilde{\rho}^{n}}{\Delta t}\bigg]
+       \frac{\boldsymbol{k}}{k^2}
+
+    is applied. This option guarantees charge conservation only when used in combination
+    with ``psatd.periodic_single_box_fft=1``, that is, only for periodic single-box
+    simulations with global FFTs without guard cells. The implementation for domain
+    decomposition with local FFTs over guard cells is planned but not yet completed.
+
+* ``psatd.update_with_rho`` (`0` or `1`; default: `0`)
+    If false, the update equation for the electric field reads
+
+    .. math::
+       \begin{split}
+       \widetilde{\boldsymbol{E}}^{\,n+1}= & \:
+       C\widetilde{\boldsymbol{E}}^{\,n}+i\frac{S}{c\,k}\,c^2\,\boldsymbol{k}
+       \times\widetilde{\boldsymbol{B}}^{\,n}-\frac{1}{\epsilon_0}\,\frac{S}{c\,k}\,
+       \,\widetilde{\boldsymbol{J}}^{\,n+1/2} \\
+       & +\frac{1-C}{k^2}\,(\boldsymbol{k}\cdot\widetilde{\boldsymbol{E}}^{\,n})\,\boldsymbol{k}
+       +\frac{1}{\epsilon_0}\,\frac{1}{k^2}\,\left(\frac{S}{c\,k}-\Delta t\right)\,
+       (\boldsymbol{k}\cdot\widetilde{\boldsymbol{J}}^{\,n+1/2})\,\boldsymbol{k}
+       \end{split}
+
+    where :math:`C=\cos(k\,c\,\Delta t)` and :math:`S=\sin(k\,c\,\Delta t)`, respectively.
+
+    If true, the update equation for the electric field reads instead
+
+    .. math::
+       \begin{split}
+       \widetilde{\boldsymbol{E}}^{\,n+1}= & \:
+       C\widetilde{\boldsymbol{E}}^{\,n}+i\frac{S}{c\,k}\,c^2\,\boldsymbol{k}
+       \times\widetilde{\boldsymbol{B}}^{\,n}-\frac{1}{\epsilon_0}\,\frac{S}{c\,k}
+       \,\widetilde{\boldsymbol{J}}^{\,n+1/2} \\
+       & -i\frac{1}{\epsilon_0}\,\frac{1}{k^2}\,\bigg[
+       \left(1-\frac{S}{c\,k}\frac{1}{\Delta t}\right)\widetilde{\rho}^{n+1}
+       -\left(C-\frac{S}{c\,k}\frac{1}{\Delta t}\right)\widetilde{\rho}^{n}\bigg]
+       \,\boldsymbol{k}
+       \end{split}
+
+    See `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_
+    for more details about the derivation of these equations.
 
 * ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
     Defines the galilean velocity.
@@ -1086,6 +1128,9 @@ Numerics and algorithms
     in a Galilean frame in :doc:`../theory/boosted-frame`).
     It also requires the use of the `direct` current deposition option
     `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
+
+* ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
+    Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
 
 * ``warpx.override_sync_int`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which

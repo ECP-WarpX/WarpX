@@ -52,7 +52,7 @@ git clone --branch development https://github.com/AMReX-Codes/amrex.git
 if [ "${WARPX_CI_QED}" = "TRUE" ]; then
     git clone --branch QED https://github.com/ECP-WarpX/picsar.git
 else
-    git clone --branch master https://github.com/ECP-WarpX/picsar.git
+    git clone --branch development https://github.com/ECP-WarpX/picsar.git
 fi
 
 # Clone the AMReX regression test utility
