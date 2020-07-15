@@ -509,6 +509,7 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
         self.laser.zeta = self.zeta
         self.laser.beta = self.beta
         self.laser.phi2 = self.phi2
+        self.laser.phi0 = self.phi0
 
 
 class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
