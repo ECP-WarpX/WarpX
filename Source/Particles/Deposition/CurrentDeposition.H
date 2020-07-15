@@ -150,7 +150,6 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             double sx_cell[depos_order + 1];
             int j_node;
             int j_cell;
-            // Keep this double to avoid bug in single precision
             Compute_shape_factor< depos_order > const compute_shape_factor;
             if (jx_type[0] == NODE || jy_type[0] == NODE || jz_type[0] == NODE) {
                 j_node = compute_shape_factor(sx_node, xmid);
@@ -181,7 +180,6 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             double sy_cell[depos_order + 1];
             int k_node;
             int k_cell;
-            // Keep this double to avoid bug in single precision
             if (jx_type[1] == NODE || jy_type[1] == NODE || jz_type[1] == NODE) {
                 k_node = compute_shape_factor(sy_node, ymid);
             }
@@ -209,7 +207,6 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             double sz_cell[depos_order + 1];
             int l_node;
             int l_cell;
-            // Keep this double to avoid bug in single precision
             if (jx_type[zdir] == NODE || jy_type[zdir] == NODE || jz_type[zdir] == NODE) {
                 l_node = compute_shape_factor(sz_node, zmid);
             }
@@ -456,18 +453,15 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             // --- Compute shape factors
             // Compute shape factors for position as they are now and at old positions
             // [ijk]_new: leftmost grid point that the particle touches
-            // Keep these double to avoid bug in single precision
             Compute_shape_factor< depos_order > compute_shape_factor;
             Compute_shifted_shape_factor< depos_order > compute_shifted_shape_factor;
             
             const int i_new = compute_shape_factor(sx_new+1, x_new);
             const int i_old = compute_shifted_shape_factor(sx_old, x_old, i_new);
 #if (defined WARPX_DIM_3D)
-            // Keep these double to avoid bug in single precision
             const int j_new = compute_shape_factor(sy_new+1, y_new);
             const int j_old = compute_shifted_shape_factor(sy_old, y_old, j_new);
 #endif
-            // Keep these double to avoid bug in single precision
             const int k_new = compute_shape_factor(sz_new+1, z_new);
             const int k_old = compute_shifted_shape_factor(sz_old, z_old, k_new);
 
