@@ -44,11 +44,11 @@ SpectralBinomialFilter::InitFilterArrayZ (RealKVector const & kz,
     filter_z.resize(kz.size());
 
     for (int i=0 ; i < kz.size() ; i++) {
-        amrex::Real const sz = std::sin(0.5*kz[i]*dz);
+        amrex::Real const sz = std::sin(0.5_rt*kz[i]*dz);
         amrex::Real const sz2 = sz*sz;
-        amrex::Real filt_z = std::pow(1. - sz2, npasses);
+        amrex::Real filt_z = std::pow(1._rt - sz2, npasses);
         if (compensation) {
-            filt_z *= (1. + npasses*sz2);
+            filt_z *= (1._rt + npasses*sz2);
         }
         filter_z[i] = filt_z;
     }
