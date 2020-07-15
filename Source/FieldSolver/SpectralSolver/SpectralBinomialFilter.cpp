@@ -10,6 +10,8 @@
 
 #include <cmath>
 
+using namespace amrex::literals;
+
 /* \brief Initialize the radial filter array */
 void
 SpectralBinomialFilter::InitFilterArrayR (HankelTransform::RealVector const & kr,
@@ -22,11 +24,11 @@ SpectralBinomialFilter::InitFilterArrayR (HankelTransform::RealVector const & kr
     filter_r.resize(kr.size());
 
     for (int i=0 ; i < kr.size() ; i++) {
-        amrex::Real const sr = std::sin(0.5*kr[i]*dr);
+        amrex::Real const sr = std::sin(0.5_rt*kr[i]*dr);
         amrex::Real const sr2 = sr*sr;
-        amrex::Real filt_r = std::pow(1. - sr2, npasses);
+        amrex::Real filt_r = std::pow(1._rt - sr2, npasses);
         if (compensation) {
-            filt_r *= (1. + npasses*sr2);
+            filt_r *= (1._rt + npasses*sr2);
         }
         filter_r[i] = filt_r;
     }
