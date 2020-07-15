@@ -37,6 +37,8 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
                               const amrex::Real q,
                               const long n_rz_azimuthal_modes)
 {
+    using namespace amrex;
+    
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
@@ -103,7 +105,7 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
             if (rho_type[0] == NODE) {
                 i = compute_shape_factor(sx, x);
             } else if (rho_type[0] == CELL) {
-                i = compute_shape_factor(sx, x - 0.5);
+                i = compute_shape_factor(sx, x - 0.5_rt);
             }
 
 #if (defined WARPX_DIM_3D)
@@ -114,7 +116,7 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
             if (rho_type[1] == NODE) {
                 j = compute_shape_factor(sy, y);
             } else if (rho_type[1] == CELL) {
-                j = compute_shape_factor(sy, y - 0.5);
+                j = compute_shape_factor(sy, y - 0.5_rt);
             }
 #endif
             // z direction
@@ -124,7 +126,7 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
             if (rho_type[zdir] == NODE) {
                 k = compute_shape_factor(sz, z);
             } else if (rho_type[zdir] == CELL) {
-                k = compute_shape_factor(sz, z - 0.5);
+                k = compute_shape_factor(sz, z - 0.5_rt);
             }
 
             // Deposit charge into rho_arr
