@@ -94,7 +94,7 @@ def read_sim_output(workdir):
     charge_i, _, _, emittance_i = _beam_properties(filepath)
 
     # Get beam properties at the end of the run
-    datafile = file_list[1]
+    datafile = file_list[-1]
     filepath = os.path.join(workdir, datafile)
     charge_f, energy_avg, energy_std, emittance_f = _beam_properties(filepath)
 
