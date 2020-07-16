@@ -3,6 +3,42 @@ name: Ubuntu build
 on: [push, pull_request]
 
 jobs:
+# Ref.:
+#   https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/ubuntu18.04/10.1/base/Dockerfile
+#   https://github.com/ComputationalRadiationPhysics/picongpu/blob/0.5.0/share/picongpu/dockerfiles/ubuntu-1604/Dockerfile
+  build_nvcc:
+    name: NVCC 10.1.243 SP [Linux]
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: install dependencies
+      run: |
+        export DEBIAN_FRONTEND=noninteractive
+        sudo apt-get -qqq update
+        sudo apt-get install -y wget build-essential pkg-config cmake ca-certificates gnupg
+        sudo wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+        sudo apt-key add 7fa2af80.pub
+        echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
+        echo "deb https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64 /" | sudo tee /etc/apt/sources.list.d/nvidia-ml.list
+        sudo apt-get update
+        export CUDA_VERSION=10.1.243
+        export CUDA_PKG_VERSION="10-1=${CUDA_VERSION}-1"
+        sudo apt-get install -y cuda-cupti-$CUDA_PKG_VERSION cuda-command-line-tools-$CUDA_PKG_VERSION cuda-compiler-$CUDA_PKG_VERSION cuda-cudart-dev-$CUDA_PKG_VERSION cuda-curand-dev-$CUDA_PKG_VERSION cuda-minimal-build-$CUDA_PKG_VERSION cuda-misc-headers-$CUDA_PKG_VERSION cuda-nvml-dev-$CUDA_PKG_VERSION
+        sudo ln -s cuda-10.1 /usr/local/cuda
+        sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
+        sudo chmod a+x /usr/local/bin/cmake-easyinstall
+        export CEI_SUDO="sudo"
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+    - name: build WarpX
+      run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
+        which nvcc || echo "nvcc not in PATH!!"
+
+        mkdir build_sp && cd build_sp
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=CUDA -DCUDA_ARCH=6.0 -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single
+        make -j 2
+
 # Ref.: https://github.com/rscohn2/oneapi-ci
 # intel-basekit intel-hpckit are too large in size
   build_icc:
