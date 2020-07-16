@@ -844,9 +844,9 @@ Laser initialization
     Note that the current implementation of the parser for external E-field
     does not work with RZ and the code will abort with an error message.
 
-* ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `int`)
-    required when ``warpx.B_ext_grid_init_style="parse_B_ext_grid_function"``
-    and when ``warpx.E_ext_grid_init_style="parse_E_ext_grid_function"``, respectively.
+* ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `3 floats`)
+    required when ``warpx.E_ext_grid_init_style="constant"``
+    and when ``warpx.B_ext_grid_init_style="constant"``, respectively.
     External uniform and constant electrostatic and magnetostatic field added
     to the grid at initialization. Use with caution as these fields are used for
     the field solver. In particular, do not use any other boundary condition
