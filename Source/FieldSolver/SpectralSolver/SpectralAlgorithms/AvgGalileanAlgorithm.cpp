@@ -11,7 +11,7 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
                          const int norder_z, const bool nodal,
                          const amrex::Array<amrex::Real,3>& v_galilean,
                          const Real dt)
-     // Initialize members of base classinde
+     // Initialize members of base class
      : SpectralBaseAlgorithm( spectral_kspace, dm,
                               norder_x, norder_y, norder_z, nodal )
 {
@@ -44,6 +44,17 @@ AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace
     Rhonew_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
     Jcoef_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
 
+    InitializeSpectralCoefficients(spectral_kspace, dm, v_galilean, dt);
+
+}
+
+void AvgGalileanAlgorithm::InitializeSpectralCoefficients(
+         const SpectralKSpace& spectral_kspace,
+         const amrex::DistributionMapping& dm,
+         const Array<Real, 3>& v_galilean,
+         const amrex::Real dt)
+{
+    const BoxArray& ba = spectral_kspace.spectralspace_ba;
     // Fill them with the right values:
     // Loop over boxes and allocate the corresponding coefficients
     // for each box owned by the local MPI proc
