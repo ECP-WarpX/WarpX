@@ -135,10 +135,9 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // x direction
             // Get particle position after 1/2 push back in position
 #if (defined WARPX_DIM_RZ)
-            // Keep this double to avoid bug in single precision
+            // Keep these double to avoid bug in single precision
             const double xmid = (rpmid - xmin)*dxi;
 #else
-            // Keep this double to avoid bug in single precision
             const double xmid = (xp - xmin)*dxi - dts2dx*vx;
 #endif
             // j_j[xyz] leftmost grid point in x that the particle touches for the centering of each current
