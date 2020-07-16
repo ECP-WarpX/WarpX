@@ -10,22 +10,21 @@
 class GalileanAlgorithm : public SpectralBaseAlgorithm
 {
     public:
-        GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
-                         const amrex::DistributionMapping& dm,
-                         const int norder_x, const int norder_y,
-                         const int norder_z, const bool nodal,
-                         const amrex::Array<amrex::Real,3>& v_galilean,
-                         const amrex::Real dt,
-                         const bool update_with_rho);
+        GalileanAlgorithm (const SpectralKSpace& spectral_kspace,
+                           const amrex::DistributionMapping& dm,
+                           const int norder_x, const int norder_y,
+                           const int norder_z, const bool nodal,
+                           const amrex::Array<amrex::Real,3>& v_galilean,
+                           const amrex::Real dt,
+                           const bool update_with_rho);
         // Redefine update equation from base class
-        virtual void pushSpectralFields(SpectralFieldData& f) const override final;
-        virtual int getRequiredNumberOfFields() const override final {
+        virtual void pushSpectralFields (SpectralFieldData& f) const override final;
+        virtual int getRequiredNumberOfFields () const override final {
             return SpectralFieldIndex::n_fields;
         };
-        void InitializeSpectralCoefficients(const SpectralKSpace& spectral_kspace,
-                                    const amrex::DistributionMapping& dm,
-                                    const amrex::Array<amrex::Real, 3>& v_galilean,
-                                    const amrex::Real dt);
+        void InitializeSpectralCoefficients (const SpectralKSpace& spectral_kspace,
+                                             const amrex::DistributionMapping& dm,
+                                             const amrex::Real dt);
 
         /**
          * \brief Virtual function for current correction in Fourier space
@@ -46,9 +45,9 @@ class GalileanAlgorithm : public SpectralBaseAlgorithm
     private:
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients Theta2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
-        bool m_update_with_rho;
-        amrex::Real m_dt;
         amrex::Array<amrex::Real,3> m_v_galilean;
+        amrex::Real m_dt;
+        bool m_update_with_rho;
 };
 #endif // WARPX_USE_PSATD
 #endif // WARPX_GALILEAN_ALGORITHM_H_

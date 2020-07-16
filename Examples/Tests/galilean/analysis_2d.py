@@ -7,6 +7,7 @@ It compares the energy of the electric field calculated using Galilean method wi
     * if 'v_galilean != 0 : NCI is suppresed => simulation is stable.
 """
 import sys
+import re
 import yt ; yt.funcs.mylog.setLevel(0)
 import numpy as np
 import scipy.constants as scc
@@ -15,6 +16,8 @@ import checksumAPI
 
 filename = sys.argv[1]
 
+# Parse test name and check if current_correction (psatd.current_correction=1) is applied
+current_correction = True if re.search( 'current_correction', filename ) else False
 
 ds = yt.load( filename )
 
@@ -35,6 +38,18 @@ print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
+
+# Check relative L-infinity spatial norm of div(E) - rho/epsilon_0 when
+# current correction (psatd.current_correction=1) is applied
+if current_correction:
+    rho  = ds.index.grids[0]['boxlib', 'rho' ].squeeze().v
+    divE = ds.index.grids[0]['boxlib', 'divE'].squeeze().v
+    error_rel = np.amax( np.abs( divE - rho/scc.epsilon_0 ) ) / np.amax( np.abs( rho/scc.epsilon_0 ) )
+    tolerance = 1.e-9
+    print("Check charge conservation:")
+    print("error_rel = {}".format(error_rel))
+    print("tolerance = {}".format(tolerance))
+    assert( error_rel < tolerance )
 
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
