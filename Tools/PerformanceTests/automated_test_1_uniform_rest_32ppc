@@ -1,8 +1,6 @@
 # Maximum number of time steps: command-line argument
 # number of grid points: command-line argument
 
-amr.plot_int = -1   # How often to write plotfiles.
-
 # Maximum allowable size of each subdomain in the problem domain;
 #    this is used to decompose the domain for parallel calculations.
 amr.max_grid_size = 64
