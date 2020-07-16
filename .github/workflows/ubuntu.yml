@@ -16,7 +16,7 @@ jobs:
       run: |
         export DEBIAN_FRONTEND=noninteractive
         sudo apt-get -qqq update
-        sudo apt-get install -y wget build-essential pkg-config cmake ca-certificates gnupg
+        sudo apt-get install -y build-essential ca-certificates cmake gnupg libopenmpi-dev openmpi-bin pkg-config wget
         sudo wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
         sudo apt-key add 7fa2af80.pub
         echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
@@ -35,7 +35,7 @@ jobs:
         which nvcc || echo "nvcc not in PATH!"
 
         mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=CUDA -DCUDA_ARCH=6.0 -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single -DCUDA_ERROR_CAPTURE_THIS=ON
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_COMPUTE=CUDA -DCUDA_ARCH=6.0 -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single -DCUDA_ERROR_CAPTURE_THIS=ON
         make -j 2
 
 # Ref.: https://github.com/rscohn2/oneapi-ci
