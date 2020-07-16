@@ -11,10 +11,10 @@
  *  Compute shape factor and return index of leftmost cell where
  *  particle writes.
  *  Specialized templates are defined below for orders 0 to 3.
- *  The `double` version of shape factor functions can be used
+ *  Shape factor functors may be evaluated with double arguments
  *  in current deposition to ensure that current deposited by
  *  particles that move only a small distance is still resolved.
- *  Without this, single and double precision version of the code
+ *  Without this safeguard, single and double precision versions
  *  can give disagreeing results in the time evolution for some
  *  problem setups.
  */
