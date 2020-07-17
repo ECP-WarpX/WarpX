@@ -28,7 +28,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
     pp.get("species",m_beam_name);
 
     // resize data array
-#if (AMREX_SPACEDIM == 3 || defined WARPX_DIM_RZ)
+#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
     //  0, 1, 2: mean x,y,z
     //  3, 4, 5: mean px,py,pz
     //        6: gamma
@@ -59,7 +59,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
             ofs.open(m_path + m_rd_name + "." + m_extension,
                 std::ofstream::out | std::ofstream::app);
             // write header row
-#if (AMREX_SPACEDIM == 3 || defined WARPX_DIM_RZ)
+#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
             ofs << "#";
             ofs << "[1]step()";           ofs << m_sep;
             ofs << "[2]time(s)";          ofs << m_sep;
@@ -129,7 +129,7 @@ void BeamRelevant::ComputeDiags (int step)
     Real constexpr inv_c2 = 1.0 / (PhysConst::c * PhysConst::c);
 
     // If 2D-XZ, p.pos(1) is z, rather than p.pos(2).
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
     int const index_z = 2;
 #elif (defined WARPX_DIM_XZ || defined WARPX_DIM_RZ)
     int const index_z = 1;
@@ -177,7 +177,7 @@ void BeamRelevant::ComputeDiags (int step)
         { return p.pos(0) * p.rdata(PIdx::w); });
 #endif
 
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
         // y mean
         Real y_mean = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
@@ -222,7 +222,7 @@ void BeamRelevant::ComputeDiags (int step)
 
         // reduced sum over mpi ranks
         ParallelDescriptor::ReduceRealSum(x_mean);  x_mean  /= w_sum;
-#if (AMREX_SPACEDIM == 3 || defined WARPX_DIM_RZ)
+#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
         ParallelDescriptor::ReduceRealSum(y_mean);  y_mean  /= w_sum;
 #endif
         ParallelDescriptor::ReduceRealSum(z_mean);  z_mean  /= w_sum;
@@ -250,7 +250,7 @@ void BeamRelevant::ComputeDiags (int step)
         });
 #endif
 
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
         // y mean square
         Real y_ms = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
@@ -336,7 +336,7 @@ void BeamRelevant::ComputeDiags (int step)
         });
 #endif
 
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
         // y times uy
         Real yuy = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
@@ -375,7 +375,7 @@ void BeamRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum
             ( x_ms, ParallelDescriptor::IOProcessorNumber());
         x_ms /= w_sum;
-#if (AMREX_SPACEDIM == 3 || defined WARPX_DIM_RZ)
+#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
         ParallelDescriptor::ReduceRealSum
             ( y_ms, ParallelDescriptor::IOProcessorNumber());
         y_ms /= w_sum;
@@ -398,7 +398,7 @@ void BeamRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum
             (   xux, ParallelDescriptor::IOProcessorNumber());
         xux /= w_sum;
-#if (AMREX_SPACEDIM == 3 || defined WARPX_DIM_RZ)
+#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
         ParallelDescriptor::ReduceRealSum
             (   yuy, ParallelDescriptor::IOProcessorNumber());
         yuy /= w_sum;
@@ -410,7 +410,7 @@ void BeamRelevant::ComputeDiags (int step)
             ( charge, ParallelDescriptor::IOProcessorNumber());
 
         // save data
-#if (AMREX_SPACEDIM == 3 || defined WARPX_DIM_RZ)
+#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
         m_data[0]  = x_mean;
         m_data[1]  = y_mean;
         m_data[2]  = z_mean;
