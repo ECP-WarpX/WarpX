@@ -38,8 +38,8 @@ struct Compute_shape_factor< 0 >
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     int operator()(T* const sx, T xmid) const
     {
-        const auto j = static_cast<int>(xmid + (T)0.5);
-        sx[0] = (T)1.0;
+        const auto j = static_cast<int>(xmid + T(0.5));
+        sx[0] = T(1.0);
         return j;
     };
 };
@@ -57,8 +57,8 @@ struct Compute_shape_factor< 1 >
     int operator()(T* const sx, T xmid) const
     {
         const auto j = static_cast<int>(xmid);
-        const T xint = xmid - (T)j;
-        sx[0] = (T)1.0 - xint;
+        const T xint = xmid - T(j);
+        sx[0] = T(1.0) - xint;
         sx[1] = xint;
         return j;
     };
@@ -76,11 +76,11 @@ struct Compute_shape_factor< 2 >
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     int operator()(T* const sx, T xmid) const
     {
-        const auto j = static_cast<int>(xmid + (T)0.5);
-        const T xint = xmid - (T)j;
-        sx[0] = (T)0.5*((T)0.5 - xint)*((T)0.5 - xint);
-        sx[1] = (T)0.75 - xint*xint;
-        sx[2] = (T)0.5*((T)0.5 + xint)*((T)0.5 + xint);
+        const auto j = static_cast<int>(xmid + T(0.5));
+        const T xint = xmid - T(j);
+        sx[0] = T(0.5)*(T(0.5) - xint)*(T(0.5) - xint);
+        sx[1] = T(0.75) - xint*xint;
+        sx[2] = T(0.5)*(T(0.5) + xint)*(T(0.5) + xint);
         // index of the leftmost cell where particle deposits
         return j-1;
     };
@@ -99,11 +99,11 @@ struct Compute_shape_factor< 3 >
     int operator()(T* const sx, T xmid) const
     {
         const auto j = static_cast<int>(xmid);
-        const T xint = xmid - (T)j;
-        sx[0] = ((T)1.0)/((T)6.0)*((T)1.0 - xint)*((T)1.0 - xint)*((T)1.0 - xint);
-        sx[1] = ((T)2.0)/((T)3.0) - xint*xint*((T)1.0 - xint/((T)2.0));
-        sx[2] = ((T)2.0)/((T)3.0) - ((T)1.0 - xint)*((T)1.0 - xint)*((T)1.0 - (T)0.5*((T)1.0 - xint));
-        sx[3] = ((T)1.0)/((T)6.0)*xint*xint*xint;
+        const T xint = xmid - T(j);
+        sx[0] = (T(1.0))/(T(6.0))*(T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - xint);
+        sx[1] = (T(2.0))/(T(3.0)) - xint*xint*(T(1.0) - xint/(T(2.0)));
+        sx[2] = (T(2.0))/(T(3.0)) - (T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - T(0.5)*(T(1.0) - xint));
+        sx[3] = (T(1.0))/(T(6.0))*xint*xint*xint;
         // index of the leftmost cell where particle deposits
         return j-1;
     };
@@ -136,8 +136,8 @@ struct Compute_shifted_shape_factor< 1 >
     {
         const auto i = static_cast<int>(x_old);
         const int i_shift = i - i_new;
-        const T xint = x_old - (T)i;
-        sx[1+i_shift] = (T)1.0 - xint;
+        const T xint = x_old - T(i);
+        sx[1+i_shift] = T(1.0) - xint;
         sx[2+i_shift] = xint;
         return i;
     };
@@ -155,12 +155,12 @@ struct Compute_shifted_shape_factor< 2 >
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     int operator()(T* const sx, const T x_old, const int i_new) const
     {
-        const auto i = static_cast<int>(x_old + (T)0.5);
+        const auto i = static_cast<int>(x_old + T(0.5));
         const int i_shift = i - (i_new + 1);
-        const T xint = x_old - (T)i;
-        sx[1+i_shift] = (T)0.5*((T)0.5 - xint)*((T)0.5 - xint);
-        sx[2+i_shift] = (T)0.75 - xint*xint;
-        sx[3+i_shift] = (T)0.5*((T)0.5 + xint)*((T)0.5 + xint);
+        const T xint = x_old - T(i);
+        sx[1+i_shift] = T(0.5)*(T(0.5) - xint)*(T(0.5) - xint);
+        sx[2+i_shift] = T(0.75) - xint*xint;
+        sx[3+i_shift] = T(0.5)*(T(0.5) + xint)*(T(0.5) + xint);
         // index of the leftmost cell where particle deposits
         return i - 1;
     };
@@ -181,10 +181,10 @@ struct Compute_shifted_shape_factor< 3 >
         const auto i = static_cast<int>(x_old);
         const int i_shift = i - (i_new + 1);
         const T xint = x_old - i;
-        sx[1+i_shift] = ((T)1.0)/((T)6.0)*((T)1.0 - xint)*((T)1.0 - xint)*((T)1.0 - xint);
-        sx[2+i_shift] = ((T)2.0)/((T)3.0) - xint*xint*((T)1.0 - xint/((T)2.0));
-        sx[3+i_shift] = ((T)2.0)/((T)3.0) - ((T)1.0 - xint)*((T)1.0 - xint)*((T)1.0 - (T)0.5*((T)1.0 - xint));
-        sx[4+i_shift] = ((T)1.0)/((T)6.0)*xint*xint*xint;
+        sx[1+i_shift] = (T(1.0))/(T(6.0))*(T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - xint);
+        sx[2+i_shift] = (T(2.0))/(T(3.0)) - xint*xint*(T(1.0) - xint/(T(2.0)));
+        sx[3+i_shift] = (T(2.0))/(T(3.0)) - (T(1.0) - xint)*(T(1.0) - xint)*(T(1.0) - T(0.5)*(T(1.0) - xint));
+        sx[4+i_shift] = (T(1.0))/(T(6.0))*xint*xint*xint;
         // index of the leftmost cell where particle deposits
         return i - 1;
     };
