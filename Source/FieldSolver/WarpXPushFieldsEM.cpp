@@ -290,8 +290,23 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     else {
         amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
     }
-    if (do_pml) {
-        amrex::Abort("Macroscopic EvolveE is not implemented for pml boundary condition, yet");
+    //if (do_pml) {
+    //    amrex::Abort("Macroscopic EvolveE is not implemented for pml boundary condition, yet");
+    // Evolve E field in PML cells
+    if (do_pml && pml[lev]->ok()) {
+        if (patch_type == PatchType::fine) {
+            m_fdtd_solver_fp[lev]->EvolveEPML(
+                pml[lev]->GetE_fp(), pml[lev]->GetB_fp(),
+                pml[lev]->Getj_fp(), pml[lev]->GetF_fp(),
+                pml[lev]->GetMultiSigmaBox_fp(),
+                a_dt, pml_has_particles );
+        } else {
+            m_fdtd_solver_cp[lev]->EvolveEPML(
+                pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
+                pml[lev]->Getj_cp(), pml[lev]->GetF_cp(),
+                pml[lev]->GetMultiSigmaBox_cp(),
+                a_dt, pml_has_particles );
+        }
     }
 }
 

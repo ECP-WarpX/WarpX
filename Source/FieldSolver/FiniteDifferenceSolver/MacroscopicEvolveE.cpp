@@ -171,6 +171,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                                            Ex_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
+//                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt,
+//                                            i, j, k, amrex::IntVect(1,0,0) );
+//                amrex::Real beta = T_MacroAlgo::beta( sigma_arr, eps_arr, dt,
+//                                            i, j, k, amrex::IntVect(1,0,0) );
+//                amrex::Real mu = T_MacroAlgo::macro_avg_to_edge( i, j, k, amrex::IntVect(1,0,0), mu_arr);
 
                 Ex(i, j, k) = alpha * Ex(i, j, k) + (beta/mu)
                      * ( - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
@@ -187,6 +192,11 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                                            Ex_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
+//                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt,
+//                                            i, j, k, amrex::IntVect(0,1,0) );
+//                amrex::Real beta = T_MacroAlgo::beta( sigma_arr, eps_arr, dt,
+//                                            i, j, k, amrex::IntVect(0,1,0) );
+//                amrex::Real mu = T_MacroAlgo::macro_avg_to_edge( i, j, k, amrex::IntVect(0,1,0), mu_arr);
 
                 Ey(i, j, k) = alpha * Ey(i, j, k) + (beta/mu)
                      * ( - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
@@ -203,11 +213,16 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                                            Ex_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
+               // amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt,
+               //                             i, j, k, amrex::IntVect(0,0,1) );
+               // amrex::Real beta = T_MacroAlgo::beta( sigma_arr, eps_arr, dt,
+               //                             i, j, k, amrex::IntVect(0,0,1) );
+               // amrex::Real mu = T_MacroAlgo::macro_avg_to_edge( i, j, k, amrex::IntVect(0,0,1), mu_arr);
 
                 Ez(i, j, k) = alpha * Ez(i, j, k) + (beta/mu)
                      * ( - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
                          + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k))
-                           - beta * jz(i, j, k);
+                             - beta * jz(i, j, k);
             }
 
         );

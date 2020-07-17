@@ -61,7 +61,8 @@ MacroscopicProperties::InitData ()
     // epsilon is cell-centered MultiFab
     m_eps_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
     // mu is nodal MultiFab
-    m_mu_mf = std::make_unique<MultiFab>(amrex::convert(ba,amrex::IntVect::TheUnitVector()), dmap, 1, ng);
+    //m_mu_mf = std::make_unique<MultiFab>(amrex::convert(ba,amrex::IntVect::TheUnitVector()), dmap, 1, ng);
+    m_mu_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
     // Initialize sigma
     if (m_sigma_s == "constant") {
 
@@ -129,14 +130,13 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
     auto& warpx = WarpX::GetInstance();
     const auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
+    IntVect iv = macro_mf->ixType().toIntVect();
+    IntVect grown_iv = iv + amrex::IntVect(macro_mf->nGrow());
     for ( MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-
-        IntVect iv = macro_mf->ixType().toIntVect();
         // Initialize ghost cells in addition to valid cells
-        const Box& tb = mfi.growntilebox();
-
+      
+        const Box& tb = mfi.growntilebox(grown_iv);
         auto const& macro_fab =  macro_mf->array(mfi);
-
         amrex::ParallelFor (tb,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Shift x, y, z position based on index type
@@ -157,5 +157,4 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
 
 
 }
-
 
