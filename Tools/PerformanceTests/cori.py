@@ -98,6 +98,8 @@ def get_batch_string(test_list, job_time_min, Cname, n_node):
     batch_string += '#SBATCH -q regular\n'
     batch_string += '#SBATCH -e error.txt\n'
     batch_string += '#SBATCH --account=m2852\n'
+    batch_string += 'module unload PrgEnv-gnu\n'
+    batch_string += 'module load PrgEnv-intel\n'
     return batch_string
 
 def get_run_string(current_test, architecture, n_node, count, bin_name, runtime_param_string):
