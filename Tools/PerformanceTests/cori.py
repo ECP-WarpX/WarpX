@@ -165,6 +165,6 @@ def get_test_list(n_repeat):
                                        n_cell=[128, 256, 256],
                                        max_grid_size=64,
                                        blocking_factor=32,
-                                       n_step=0) )
+                                       n_step=1) )
     test_list = [copy.deepcopy(item) for item in test_list_unq for _ in range(n_repeat) ]
     return test_list
