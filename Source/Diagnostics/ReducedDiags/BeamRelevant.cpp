@@ -129,9 +129,9 @@ void BeamRelevant::ComputeDiags (int step)
     Real constexpr inv_c2 = 1.0 / (PhysConst::c * PhysConst::c);
 
     // If 2D-XZ, p.pos(1) is z, rather than p.pos(2).
-#if (AMREX_SPACEDIM == 3 || defined WARPX_DIM_RZ)
+#if (AMREX_SPACEDIM == 3)
     int const index_z = 2;
-#elif (defined WARPX_DIM_XZ)
+#elif (defined WARPX_DIM_XZ || defined WARPX_DIM_RZ)
     int const index_z = 1;
 #endif
 
