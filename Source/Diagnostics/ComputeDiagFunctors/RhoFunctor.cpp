@@ -9,7 +9,7 @@ RhoFunctor::RhoFunctor ( const int lev, const amrex::IntVect crse_ratio,
 {}
 
 void
-RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, int i_buffer ) const
+RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/ ) const
 {
     auto& warpx = WarpX::GetInstance();
     auto& mypc  = warpx.GetPartContainer();
