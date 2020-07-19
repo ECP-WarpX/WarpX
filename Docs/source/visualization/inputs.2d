@@ -9,7 +9,6 @@ amr.blocking_factor = 32
 amr.max_level = 0
 amr.plot_file = "plotfiles/plt"
 amr.plot_int = 0
-warpx.plot_rho = 1
 insitu.int = 2
 insitu.start = 0
 insitu.config = ez2d.xml

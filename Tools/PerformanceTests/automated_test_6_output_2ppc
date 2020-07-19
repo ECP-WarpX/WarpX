@@ -1,8 +1,6 @@
 # Maximum number of time steps: command-line argument
 # number of grid points: command-line argument
 
-amr.plot_int = 1   # How often to write plotfiles.
-
 # Maximum allowable size of each subdomain in the problem domain;
 #    this is used to decompose the domain for parallel calculations.
 amr.max_grid_size = 64
@@ -57,3 +55,9 @@ ions.uz_th  = 0.01
 ions.ux_m  = 0.
 ions.uy_m  = 0.
 ions.uz_m  = 0.
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 1
+diag1.file_prefix = "./diags/plt"
+diag1.diag_type = Full

@@ -45,7 +45,7 @@ Overall simulation parameters
     printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
 
-* ``warpx.verbose`` (`0` or `1`)
+* ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
     Controls how much information is printed to the terminal, when running WarpX.
 
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
@@ -61,13 +61,19 @@ Overall simulation parameters
     one should not expect to obtain the same random numbers,
     even if a fixed ``warpx.random_seed`` is provided.
 
-* ``warpx.do_electrostatic`` (`0` or `1`; default is `0`)
+* ``warpx.do_electrostatic`` (``0`` or ``1``; default is ``0`` for false)
     Run WarpX in electrostatic mode. Instead of updating the fields
     at each iteration with the full Maxwell equations, the fields are
     instead recomputed at each iteration from the (relativistic) Poisson
     equation. There is no limitation on the timestep in this case, but
     electromagnetic effects (e.g. propagation of radiation, lasers, etc.)
     are not captured.
+
+* ``amrex.abort_on_out_of_gpu_memory``  (``0`` or ``1``; default is ``1`` for true)
+    When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
+    This will cause severe performance drops.
+    Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
+    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
 
 .. _running-cpp-parameters-box:
 
@@ -844,9 +850,9 @@ Laser initialization
     Note that the current implementation of the parser for external E-field
     does not work with RZ and the code will abort with an error message.
 
-* ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `int`)
-    required when ``warpx.B_ext_grid_init_style="parse_B_ext_grid_function"``
-    and when ``warpx.E_ext_grid_init_style="parse_E_ext_grid_function"``, respectively.
+* ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `3 floats`)
+    required when ``warpx.E_ext_grid_init_style="constant"``
+    and when ``warpx.B_ext_grid_init_style="constant"``, respectively.
     External uniform and constant electrostatic and magnetostatic field added
     to the grid at initialization. Use with caution as these fields are used for
     the field solver. In particular, do not use any other boundary condition
@@ -1052,6 +1058,7 @@ Numerics and algorithms
 
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
+    If ``psatd.periodic_single_box_fft`` is used, these can be set to ``inf`` for infinite-order PSATD.
 
 * ``psatd.nx_guard`, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
     The number of guard cells to use with PSATD solver.
@@ -1073,10 +1080,52 @@ Numerics and algorithms
     See `this section of the FFTW documentation <http://www.fftw.org/fftw3_doc/Planner-Flags.html>`__
     for more information.
 
-* ``psatd.do_current_correction`` (`0` or `1`; default: `0`)
-    If true, the current correction defined by equation (19) of
-    `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_ is applied.
-    Only used when compiled and running with the PSATD solver.
+* ``psatd.current_correction`` (`0` or `1`; default: `0`)
+    If true, the current correction `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_
+
+    .. math::
+       \widetilde{\boldsymbol{J}}^{\,n+1/2}_{\mathrm{correct}} = \widetilde{\boldsymbol{J}}^{\,n+1/2}
+       -\bigg[\boldsymbol{k}\cdot\widetilde{\boldsymbol{J}}^{\,n+1/2}
+       -i\frac{\widetilde{\rho}^{n+1}-\widetilde{\rho}^{n}}{\Delta t}\bigg]
+       \frac{\boldsymbol{k}}{k^2}
+
+    is applied. This option guarantees charge conservation only when used in combination
+    with ``psatd.periodic_single_box_fft=1``, that is, only for periodic single-box
+    simulations with global FFTs without guard cells. The implementation for domain
+    decomposition with local FFTs over guard cells is planned but not yet completed.
+
+* ``psatd.update_with_rho`` (`0` or `1`; default: `0`)
+    If false, the update equation for the electric field reads
+
+    .. math::
+       \begin{split}
+       \widetilde{\boldsymbol{E}}^{\,n+1}= & \:
+       C\widetilde{\boldsymbol{E}}^{\,n}+i\frac{S}{c\,k}\,c^2\,\boldsymbol{k}
+       \times\widetilde{\boldsymbol{B}}^{\,n}-\frac{1}{\epsilon_0}\,\frac{S}{c\,k}\,
+       \,\widetilde{\boldsymbol{J}}^{\,n+1/2} \\
+       & +\frac{1-C}{k^2}\,(\boldsymbol{k}\cdot\widetilde{\boldsymbol{E}}^{\,n})\,\boldsymbol{k}
+       +\frac{1}{\epsilon_0}\,\frac{1}{k^2}\,\left(\frac{S}{c\,k}-\Delta t\right)\,
+       (\boldsymbol{k}\cdot\widetilde{\boldsymbol{J}}^{\,n+1/2})\,\boldsymbol{k}
+       \end{split}
+
+    where :math:`C=\cos(k\,c\,\Delta t)` and :math:`S=\sin(k\,c\,\Delta t)`, respectively.
+
+    If true, the update equation for the electric field reads instead
+
+    .. math::
+       \begin{split}
+       \widetilde{\boldsymbol{E}}^{\,n+1}= & \:
+       C\widetilde{\boldsymbol{E}}^{\,n}+i\frac{S}{c\,k}\,c^2\,\boldsymbol{k}
+       \times\widetilde{\boldsymbol{B}}^{\,n}-\frac{1}{\epsilon_0}\,\frac{S}{c\,k}
+       \,\widetilde{\boldsymbol{J}}^{\,n+1/2} \\
+       & -i\frac{1}{\epsilon_0}\,\frac{1}{k^2}\,\bigg[
+       \left(1-\frac{S}{c\,k}\frac{1}{\Delta t}\right)\widetilde{\rho}^{n+1}
+       -\left(C-\frac{S}{c\,k}\frac{1}{\Delta t}\right)\widetilde{\rho}^{n}\bigg]
+       \,\boldsymbol{k}
+       \end{split}
+
+    See `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_
+    for more details about the derivation of these equations.
 
 * ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
     Defines the galilean velocity.
@@ -1086,6 +1135,9 @@ Numerics and algorithms
     in a Galilean frame in :doc:`../theory/boosted-frame`).
     It also requires the use of the `direct` current deposition option
     `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
+
+* ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
+    Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
 
 * ``warpx.override_sync_int`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which

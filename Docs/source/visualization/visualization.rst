@@ -56,7 +56,7 @@ quantity staggering
 E        n     n
 B        n     n
 j        n-1/2 n-1/2
-rho      n-1   n
+rho      n     n
 position n     n
 momentum n-1/2 n-1/2
 E part   n     n

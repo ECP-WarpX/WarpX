@@ -17,7 +17,7 @@ Dump additional data
 --------------------
 
 In order to dump additional data in WarpX (mostly for debugging purpose), run the simulation
-with parameters
+with parameters (``warpx.plot_rho`` only when using back-transformed diagnostics)
 
 ::
 
