@@ -45,7 +45,7 @@ Overall simulation parameters
     printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
 
-* ``warpx.verbose`` (`0` or `1`)
+* ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
     Controls how much information is printed to the terminal, when running WarpX.
 
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
@@ -61,13 +61,19 @@ Overall simulation parameters
     one should not expect to obtain the same random numbers,
     even if a fixed ``warpx.random_seed`` is provided.
 
-* ``warpx.do_electrostatic`` (`0` or `1`; default is `0`)
+* ``warpx.do_electrostatic`` (``0`` or ``1``; default is ``0`` for false)
     Run WarpX in electrostatic mode. Instead of updating the fields
     at each iteration with the full Maxwell equations, the fields are
     instead recomputed at each iteration from the (relativistic) Poisson
     equation. There is no limitation on the timestep in this case, but
     electromagnetic effects (e.g. propagation of radiation, lasers, etc.)
     are not captured.
+
+* ``amrex.abort_on_out_of_gpu_memory``  (``0`` or ``1``; default is ``1`` for true)
+    When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
+    This will cause severe performance drops.
+    Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
+    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
 
 .. _running-cpp-parameters-box:
 
@@ -844,9 +850,9 @@ Laser initialization
     Note that the current implementation of the parser for external E-field
     does not work with RZ and the code will abort with an error message.
 
-* ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `int`)
-    required when ``warpx.B_ext_grid_init_style="parse_B_ext_grid_function"``
-    and when ``warpx.E_ext_grid_init_style="parse_E_ext_grid_function"``, respectively.
+* ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `3 floats`)
+    required when ``warpx.E_ext_grid_init_style="constant"``
+    and when ``warpx.B_ext_grid_init_style="constant"``, respectively.
     External uniform and constant electrostatic and magnetostatic field added
     to the grid at initialization. Use with caution as these fields are used for
     the field solver. In particular, do not use any other boundary condition
@@ -1066,6 +1072,7 @@ Numerics and algorithms
 
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
+    If ``psatd.periodic_single_box_fft`` is used, these can be set to ``inf`` for infinite-order PSATD.
 
 * ``psatd.nx_guard`, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
     The number of guard cells to use with PSATD solver.
