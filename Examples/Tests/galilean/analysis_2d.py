@@ -1,10 +1,18 @@
 #! /usr/bin/env python
 """
-This script tests the result of the Galilen method in WarpX.
-It compares the energy of the electric field calculated using Galilean method with
-'v_galiean = (0.,0., 0.99498743710662)' versus standard PSATD (v_galiean = (0.,0.,0.)):
-    * if 'v_galilean == 0': simulation is unstable because of the arosen NCI;
-    * if 'v_galilean != 0 : NCI is suppresed => simulation is stable.
+This script is used to test the results of the Galilean PSATD method and
+averaged Galilean PSATD method in WarpX.
+It compares the energy of the electric field with precalculated reference energy.
+  1) Galilean PSATD test: reference energy was calculated with
+     standard PSATD (v_galilean = (0.,0.,0.)):
+         * if 'v_galilean == 0': simulation is unstable because of the arosen NCI;
+         * if 'v_galilean != 0 : NCI is suppressed => simulation is stable.
+  2) Averaged Galilean PSATD with large timestep dz/dx = 4. and c*dt = dz:
+     reference energy was calculated with Galilean PSATD (v_galilean = (0.,0.,0.99498743710662):
+         * if standard Galilean PSATD is used (psatd.do_time_averaging == 0'):
+           simulation is unstable because of the arosen NCI.
+         * if averaged Galilean PSATD is used ('psatd.do_time_averaging == 1) :
+           NCI is suppressed => simulation is stable.
 """
 import sys
 import re
@@ -21,18 +29,24 @@ current_correction = True if re.search( 'current_correction', filename ) else Fa
 
 ds = yt.load( filename )
 
+averaged = True if re.search( 'averaged', filename ) else False
+
 Ex= ds.index.grids[0]['boxlib', 'Ex'].squeeze().v
 Ey= ds.index.grids[0]['boxlib', 'Ey'].squeeze().v
 Ez= ds.index.grids[0]['boxlib', 'Ez'].squeeze().v
 
-#E field energy calculated with Galilean method (v_galilean = (0,0,0.99498743710662))
-energyE_gal_psatd = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
+if (averaged):
+    # energyE_ref was calculated with Galilean PSATD method (v_galilean = (0,0,0.99498743710662))
+    energyE_ref = 26913.546573259937
+    tolerance_rel = 1e-5
+else:
+    # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
+    energyE_ref = 38362.88743899688
+    tolerance_rel = 1e-8;
 
-#E field energy precalculated with standard PSATD (v_galilean = (0,0,0))
-energyE_psatd = 38362.88743899688
+energyE = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
 
-error_rel = energyE_gal_psatd / energyE_psatd
-tolerance_rel = 1e-8
+error_rel = energyE / energyE_ref
 
 print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
