@@ -8,16 +8,13 @@
 #define WARPX_breit_wheeler_engine_wrapper_h_
 
 #include "QedWrapperCommons.H"
-#include "BreitWheelerEngineInnards.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Vector.H>
 #include <AMReX_Gpu.H>
 
-//#define PXRMP_CORE_ONLY allows importing only the 'core functions' of the
-//Breit Wheeler engine of the QED PICSAR library.
-#define PXRMP_CORE_ONLY
-#include <breit_wheeler_engine.hpp>
+#include <physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
+#include <physics/breit_wheeler/breit_wheeler_engine_core.hpp>
 
 //Lookup table building function is in a dedicated (optional) class to
 //avoid including heavy dependencies if they are not needed.
@@ -27,20 +24,36 @@
 
 #include <string>
 
-//Some handy aliases
+// Aliases =============================
+using BW_dndt_table_params =
+    picsar::multi_physics::phys::breit_wheeler::
+    dndt_lookup_table_params<amrex::Real>;
 
-// The engine has two templated arguments: the numerical type
-// and a random number generator. However, random numbers are not
-// used to generate the lookup tables and the static member
-// functions which are called in the functors do not use
-// random numbers as well. Therefore, an empty "DummyStruct"
-// can be passed as a template parameter.
-using PicsarBreitWheelerEngine = picsar::multi_physics::
-    breit_wheeler_engine<amrex::Real, QedUtils::DummyStruct>;
+using BW_dndt_table =
+    picsar::multi_physics::phys::breit_wheeler::
+    dndt_lookup_table<
+    amrex::Real,
+    amrex::Gpu::ManagedVector<amrex::Real>>;
 
-using PicsarBreitWheelerCtrl =
-    picsar::multi_physics::breit_wheeler_engine_ctrl<amrex::Real>;
-//__________
+using BW_dndt_table_view = BW_dndt_table::view_type;
+
+using BW_pair_prod_table_params =
+    picsar::multi_physics::phys::breit_wheeler::
+    pair_prod_lookup_table_params<amrex::Real>;
+
+using BW_pair_prod_table =
+    picsar::multi_physics::phys::breit_wheeler::
+    pair_prod_lookup_table<
+    amrex::Real,
+    amrex::Gpu::ManagedVector<amrex::Real>>;
+
+using BW_pair_prod_table_view = BW_pair_prod_table::view_type;
+
+struct PicsarBreitWheelerCtrl
+{
+    BW_dndt_table_params dndt;
+    BW_pair_prod_table_params pairprod;
+};
 
 // Functors ==================================
 
@@ -70,9 +83,10 @@ public:
     AMREX_FORCE_INLINE
     amrex::Real operator() () const noexcept
     {
+        namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
+
         //A random number in [0,1) should be provided as an argument.
-        return PicsarBreitWheelerEngine::
-            internal_get_optical_depth(amrex::Random());
+        return pxr_bw::get_optical_depth(amrex::Random());
     }
 };
 //____________________________________________
@@ -93,18 +107,13 @@ public:
      * lookup_table uses non-owning vectors under the hood. So no new data
      * allocations should be triggered on GPU
      */
-    BreitWheelerEvolveOpticalDepth(BreitWheelerEngineInnards& r_innards):
-        m_ctrl{r_innards.ctrl},
-        m_TTfunc_size{r_innards.TTfunc_coords.size()},
-        m_p_TTfunc_coords{r_innards.TTfunc_coords.dataPtr()},
-        m_p_TTfunc_data{r_innards.TTfunc_data.dataPtr()}
-        {};
+    BreitWheelerEvolveOpticalDepth(BW_pair_prod_table_view table_view):
+        m_table_view{table_view}{};
 
     /**
      * Evolves the optical depth. It can be used on GPU.
-     * @param[in] px,py,pz momentum components of the photon (SI units)
-     * @param[in] ex,ey,ez electric field components (SI units)
-     * @param[in] bx,by,bz magnetic field components (SI units)
+     * @param[in] energy energy of the photon (SI units)
+     * @param[in] chi_phot quantum parameter of the photon
      * @param[in] dt timestep (SI units)
      * @param[in,out] opt_depth optical depth of the photon. It is modified by the method.
      * @return a flag which is 1 if optical depth becomes negative (i.e. a pair has to be generated).
@@ -112,44 +121,24 @@ public:
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     int operator()(
-    amrex::Real px, amrex::Real py, amrex::Real pz,
-    amrex::Real ex, amrex::Real ey, amrex::Real ez,
-    amrex::Real bx, amrex::Real by, amrex::Real bz,
-    amrex::Real dt, amrex::Real& opt_depth) const noexcept
+    const amrex::Real energy, const amrex::Real chi_phot,
+    const amrex::Real dt, amrex::Real& opt_depth) const noexcept
     {
-        bool has_event_happened{false};
+        namespace pxr_p = picsar::multi_physics::phys;
+        namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
 
-        //the library provides the time (< dt) at which the event occurs, but this
-        //feature won't be used in WarpX for now.
-        amrex::Real unused_event_time{0.0};
+        const auto is_table_out =
+        pxr_bw::evolve_optical_depth<
+            amrex::Real,
+            BW_dndt_table_view,
+            pxr_p::unit_system::SI>(
+                energy, chi_phot, dt, opt_depth, m_table_view);
 
-        PicsarBreitWheelerEngine::
-        internal_evolve_opt_depth_and_determine_event(
-            px, py, pz,
-            ex, ey, ez,
-            bx, by, bz,
-            dt, opt_depth,
-            has_event_happened, unused_event_time,
-            m_dummy_lambda,
-            picsar::multi_physics::lookup_1d<amrex::Real>{
-                m_TTfunc_size,
-                m_p_TTfunc_coords,
-                m_p_TTfunc_data},
-            m_ctrl);
-
-        return has_event_happened;
+        return is_table_out;
     }
 
 private:
-    //laser wavelength is not used with SI units
-    amrex::Real m_dummy_lambda{1.0};
-
-    PicsarBreitWheelerCtrl m_ctrl;
-
-    //lookup table data
-    size_t m_TTfunc_size;
-    amrex::Real* m_p_TTfunc_coords;
-    amrex::Real* m_p_TTfunc_data;
+    const BW_dndt_table_view m_table_view;
 };
 
 /**
@@ -165,15 +154,8 @@ public:
      * lookup_table uses non-owning vectors under the hood. So no new data
      * allocations should be triggered on GPU
      */
-    BreitWheelerGeneratePairs(
-        BreitWheelerEngineInnards& r_innards):
-        m_ctrl{r_innards.ctrl},
-        m_cum_distrib_coords_1_size{r_innards.cum_distrib_coords_1.size()},
-        m_cum_distrib_coords_2_size{r_innards.cum_distrib_coords_2.size()},
-        m_p_distrib_coords_1{r_innards.cum_distrib_coords_1.data()},
-        m_p_distrib_coords_2{r_innards.cum_distrib_coords_2.data()},
-        m_p_cum_distrib_data{r_innards.cum_distrib_data.data()
-        }{};
+    BreitWheelerGeneratePairs(BW_pair_prod_table_view table_view):
+        m_table_view{table_view}{};
 
     /**
      * Generates sampling (template parameter) pairs according to Breit Wheeler process.
@@ -186,58 +168,40 @@ public:
      * @param[out] p_px,p_py,p_pz momenta of generated positrons. Each array should have size=sampling (SI units)
      * @param[out] e_weight,p_weight weight of the generated particles Each array should have size=sampling (code units).
      */
-    template <size_t sampling>
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     void operator()(
     amrex::Real px, amrex::Real py, amrex::Real pz,
     amrex::Real ex, amrex::Real ey, amrex::Real ez,
     amrex::Real bx, amrex::Real by, amrex::Real bz,
-    amrex::Real weight,
     amrex::Real* e_px, amrex::Real* e_py, amrex::Real* e_pz,
-    amrex::Real* p_px, amrex::Real* p_py, amrex::Real* p_pz,
-    amrex::Real* e_weight, amrex::Real* p_weight) const noexcept
+    amrex::Real* p_px, amrex::Real* p_py, amrex::Real* p_pz) const noexcept
     {
-        //[sampling] random numbers are needed
-        picsar::multi_physics::picsar_array<amrex::Real, sampling>
-            rand_zero_one_minus_epsi;
-        for(auto& el : rand_zero_one_minus_epsi) el = amrex::Random();
+        namespace pxr_m = picsar::multi_physics::math;
+        namespace pxr_p = picsar::multi_physics::phys;
+        namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
 
-        const auto p_rand = rand_zero_one_minus_epsi.data();
+        const auto rand_zero_one_minus_epsi = amrex::Random();
 
-        PicsarBreitWheelerEngine::
-        internal_generate_breit_wheeler_pairs(
-            px, py, pz,
-            ex, ey, ez,
-            bx, by, bz,
-            weight, sampling,
-            e_px, e_py, e_pz,
-            p_px, p_py, p_pz,
-            e_weight, p_weight,
-            m_dummy_lambda,
-            picsar::multi_physics::lookup_2d<amrex::Real>{
-                m_cum_distrib_coords_1_size,
-                m_p_distrib_coords_1,
-                m_cum_distrib_coords_2_size,
-                m_p_distrib_coords_2,
-                m_p_cum_distrib_data
-            },
-            m_ctrl,
-            p_rand);
+        const auto chi_photon = QedUtils::chi_photon(
+            px, py, pz, ex, ey, ez, bx, by, bz);
+
+        const auto momentum_photon = pxr_m::vec3<amrex::Real>{px, py, pz};
+        auto momentum_ele = pxr_m::vec3<amrex::Real>();
+        auto momentum_pos = pxr_m::vec3<amrex::Real>();
+
+        const auto is_table_out = pxr_bw::generate_breit_wheeler_pairs<
+            amrex::Real,
+            BW_pair_prod_table_view,
+            pxr_p::unit_system::SI>(
+                chi_photon, momentum_photon,
+                unf_zero_one_minus_epsi,
+                m_table_view,
+                momentum_ele, momentum_pos);
     }
 
 private:
-    //laser wavelenght is not used with SI units
-    const amrex::Real m_dummy_lambda{1.0};
-
-    const PicsarBreitWheelerCtrl m_ctrl;
-
-    //lookup table data
-    size_t m_cum_distrib_coords_1_size;
-    size_t m_cum_distrib_coords_2_size;
-    amrex::Real* m_p_distrib_coords_1;
-    amrex::Real* m_p_distrib_coords_2;
-    amrex::Real* m_p_cum_distrib_data;
+    const BW_pair_prod_table_view m_table_view;
 };
 
 // Factory class =============================
@@ -284,7 +248,7 @@ public:
      * Init lookup tables using built-in dummy tables
      * for test purposes.
      */
-    void init_dummy_tables();
+    void init_builtin_tables();
 
     /**
      * Export lookup tables data into a raw binary Vector
@@ -316,6 +280,9 @@ private:
 
     BreitWheelerEngineInnards m_innards;
 
+    BW_dndt_table_params m_params;
+    BW_dndt_table m_dndt_table;
+    BW_pair_prod_table m_pair_prod_table;
 //Table builing is available only if WarpX is compiled with QED_TABLE_GEN=TRUE
 #ifdef WARPX_QED_TABLE_GEN
     BreitWheelerEngineTableBuilder m_table_builder;

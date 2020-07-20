@@ -15,10 +15,7 @@
 
 #include "QedWrapperCommons.H"
 
-//#define PXRMP_CORE_ONLY allows importing only the 'core functions' of the
-//QED library.
-#define PXRMP_CORE_ONLY
-#include <chi_functions.hpp>
+#include <physics/chi_functions.hpp>
 
 namespace QedUtils{
     /**
@@ -36,10 +33,9 @@ namespace QedUtils{
         amrex::Real ex, amrex::Real ey, amrex::Real ez,
         amrex::Real bx, amrex::Real by, amrex::Real bz)
     {
-        //laser wavelength is unused if SI units are set
-        const amrex::Real dummy_lambda = 1.0;
-        return picsar::multi_physics::chi_photon(
-            px, py, pz, ex, ey, ez, bx, by, bz, dummy_lambda);
+        namespace pxr_p = picsar::multi_physics::phys;
+        return pxr_p::chi_photon<amrex::Real, unit_system::SI>(
+            px, py, pz, ex, ey, ez, bx, by, bz);
     }
 
     /**
@@ -57,10 +53,9 @@ namespace QedUtils{
         amrex::Real ex, amrex::Real ey, amrex::Real ez,
         amrex::Real bx, amrex::Real by, amrex::Real bz)
     {
-        //laser wavelength is unused if SI units are set
-        const amrex::Real dummy_lambda = 1.0;
-        return picsar::multi_physics::chi_lepton(
-            px, py, pz, ex, ey, ez, bx, by, bz, dummy_lambda);
+            namespace pxr_p = picsar::multi_physics::phys;
+            return pxr_p::chi_ele_pos<amrex::Real, unit_system::SI>(
+            px, py, pz, ex, ey, ez, bx, by, bz);
     }
     //_________
 };
