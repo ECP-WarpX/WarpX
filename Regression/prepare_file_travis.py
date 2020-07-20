@@ -17,7 +17,6 @@ arch = os.environ.get('WARPX_TEST_ARCH', 'CPU')
 
 ci_regular_cartesian = os.environ.get('WARPX_CI_REGULAR_CARTESIAN') == 'TRUE'
 ci_psatd = os.environ.get('WARPX_CI_PSATD') == 'TRUE'
-ci_psatd_rz = os.environ.get('WARPX_CI_PSATD_RZ') == 'TRUE'
 ci_python_main = os.environ.get('WARPX_CI_PYTHON_MAIN') == 'TRUE'
 ci_single_precision = os.environ.get('WARPX_CI_SINGLE_PRECISION') == 'TRUE'
 ci_rz_or_nompi = os.environ.get('WARPX_CI_RZ_OR_NOMPI') == 'TRUE'
@@ -103,13 +102,8 @@ if ci_regular_cartesian:
 
 if ci_psatd:
     test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], True)
-    test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
     # Remove PSATD single-precision, which is done in ci_single_precision
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT'], False)
-
-if ci_psatd_rz:
-    test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], True)
-    test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], True)
 
 if ci_python_main:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], True)

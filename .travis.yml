@@ -18,7 +18,6 @@ env:
     - WARPX_CI_SINGLE_PRECISION=TRUE
     - WARPX_CI_RZ_OR_NOMPI=TRUE
     - WARPX_CI_QED=TRUE
-    - WARPX_CI_PSATD_RZ=TRUE
 
 before_install:
     - sudo apt-get update
@@ -37,7 +36,7 @@ install:
         cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git
           -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF;
       fi
-    - if [ "${WARPX_CI_PSATD_RZ:-FALSE}" == "TRUE" ]; then
+    - if [ "${WARPX_CI_PSATD:-FALSE}" == "TRUE" ]; then
         cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git
           -DBLAS_LIBRARY=generic -DUSE_OPENMP=OFF -DBLASPP_BUILD_TESTS=OFF;
         cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git
@@ -49,7 +48,7 @@ script:
     - export BLASPP_HOME=/usr/local/
     - export LAPACKPP_HOME=/usr/local/
     - if [ -z ${WARPX_CI_OPENPMD} ]; then WARPX_CI_OPENPMD=TRUE; fi
-    - if [ -z ${WARPX_CI_PSATD_RZ} ]; then WARPX_CI_PSATD_RZ=TRUE; fi
+    - if [ -z ${WARPX_CI_PSATD} ]; then WARPX_CI_PSATD=TRUE; fi
 
     # Run the tests on the current commit
     - export WARPX_TEST_COMMIT=$TRAVIS_COMMIT
