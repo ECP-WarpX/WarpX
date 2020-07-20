@@ -36,7 +36,8 @@ class SpectralSolver
                         const amrex::RealVect dx, const amrex::Real dt,
                         const bool pml=false,
                         const bool periodic_single_box=false,
-                        const bool update_with_rho=false );
+                        const bool update_with_rho=false,
+                        const bool fft_do_time_averaging=false);
 
         /**
          * \brief Transform the component `i_comp` of MultiFab `mf`
@@ -83,7 +84,19 @@ class SpectralSolver
              algorithm->CurrentCorrection( field_data, current, rho );
         };
 
-        bool fft_do_time_averaging = false;
+        /**
+         * \brief Public interface to call the virtual function \c VayDeposition,
+         * declared in the base class SpectralBaseAlgorithm and defined in its
+         * derived classes, from objects of class SpectralSolver through the private
+         * unique pointer \c algorithm.
+         *
+         * \param[in,out] current Array of unique pointers to \c MultiFab storing
+         *                        the three components of the current density
+         */
+        void VayDeposition (std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+        {
+            algorithm->VayDeposition(field_data, current);
+        }
 
     private:
         void ReadParameters ();

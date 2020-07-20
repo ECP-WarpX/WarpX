@@ -351,6 +351,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
   currSpecies.setAttribute( "currentDeposition", [](){
       switch( WarpX::current_deposition_algo ) {
           case CurrentDepositionAlgo::Esirkepov : return "Esirkepov";
+          case CurrentDepositionAlgo::Vay : return "Vay";
           default: return "directMorseNielson";
       }
   }() );

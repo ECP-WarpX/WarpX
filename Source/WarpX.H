@@ -450,6 +450,7 @@ public:
     static int do_moving_window;
     static int moving_window_dir;
     static amrex::Real moving_window_v;
+    static bool fft_do_time_averaging;
 
     // slice generation //
     static int num_slice_snapshots_lab;
@@ -609,6 +610,15 @@ private:
      * algorithm in use, via the public interface defined in the class SpectralSolver).
      */
     void CurrentCorrection ();
+
+    /**
+     * \brief Private function for Vay deposition in Fourier space
+     * (equations (20)-(24) of https://doi.org/10.1016/j.jcp.2013.03.010):
+     * loops over the MR levels and applies the correction on the fine and coarse
+     * patches (calls the virtual method \c VayDeposition of the spectral
+     * algorithm in use, via the public interface defined in the class SpectralSolver).
+     */
+    void VayDeposition ();
 
     void ReadParameters ();
 
@@ -813,7 +823,6 @@ private:
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_slice;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_slice;
 
-    bool fft_do_time_averaging  = false;
     bool fft_periodic_single_box = false;
     int nox_fft = 16;
     int noy_fft = 16;
