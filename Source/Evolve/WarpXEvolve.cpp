@@ -32,7 +32,6 @@ WarpX::Evolve (int numsteps)
     WARPX_PROFILE("WarpX::Evolve()");
 
     Real cur_time = t_new[0];
-    static int last_plot_file_step = 0;
 
     if (do_compute_max_step_from_zmax) {
         computeMaxStepBoostAccelerator(geom[0]);
@@ -45,7 +44,6 @@ WarpX::Evolve (int numsteps)
         numsteps_max = std::min(istep[0]+numsteps, max_step);
     }
 
-    bool max_time_reached = false;
     Real walltime, walltime_start = amrex::second();
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
@@ -234,7 +232,6 @@ WarpX::Evolve (int numsteps)
         multi_diags->FilterComputePackFlush( step );
 
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
-            max_time_reached = true;
             break;
         }
 
