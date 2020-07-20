@@ -5,8 +5,8 @@
 
 /**
  * \brief Functor to back-transform cell-centered data and store result in mf_out
- * 
- * The cell-centered data is a ten-component multifab with field-data averaged-down 
+ *
+ * The cell-centered data is a ten-component multifab with field-data averaged-down
  * from the finest to coarsest level, and stored as single-level data.
  * For every i^th buffer, a z-slice corresponding to the z-boost location of the
  * slice at the current timestep is extracted. This slice containing field-data
