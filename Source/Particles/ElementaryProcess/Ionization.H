@@ -45,7 +45,7 @@ struct IonizationFilterFunc
     amrex::GpuArray<amrex::Real, 3> m_dx_arr;
     amrex::GpuArray<amrex::Real, 3> m_xyzmin_arr;
 
-    int m_galerkin_interpolation;
+    bool m_galerkin_interpolation;
     int m_nox;
     int m_n_rz_azimuthal_modes;
 
