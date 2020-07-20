@@ -474,7 +474,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      const amrex::Dim3& lo,
                      const long n_rz_azimuthal_modes,
                      const int nox,
-                     const int galerkin_interpolation)
+                     const bool galerkin_interpolation)
 {
     if (galerkin_interpolation) {
         if (nox == 1) {

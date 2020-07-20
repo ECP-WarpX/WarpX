@@ -162,7 +162,7 @@ public:
     static long ncomps;
 
     static bool use_fdtd_nci_corr;
-    static int  galerkin_interpolation;
+    static bool galerkin_interpolation;
 
     static bool use_filter;
     static bool serialize_ics;
