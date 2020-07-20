@@ -76,7 +76,7 @@ d_yunits = {
 
 # Print input and output parameters for the optimal run
 print("Best run:")
-ind_best = np.argmin(results_dict['f'])
+ind_best = np.nanargmin(results_dict['f'])
 for key in plot_input + plot_output:
     print(key, results_dict[key][ind_best])
 print("charge_f/charge_i ",
