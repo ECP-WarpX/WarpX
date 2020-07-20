@@ -7,6 +7,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpXWrappers.h"
+#include "Initialization/WarpXAMReXInit.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
@@ -114,13 +115,13 @@ extern "C"
 
     void amrex_init (int argc, char* argv[])
     {
-        amrex::Initialize(argc,argv);
+        warpx_amrex_init(argc, argv);
     }
 
 #ifdef BL_USE_MPI
     void amrex_init_with_inited_mpi (int argc, char* argv[], MPI_Comm mpicomm)
     {
-        amrex::Initialize(argc,argv,true,mpicomm);
+        warpx_amrex_init(argc, argv, true, mpicomm);
     }
 #endif
 

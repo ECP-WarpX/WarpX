@@ -28,7 +28,7 @@ before_install:
 
 install:
     - python -m pip install --upgrade pip
-    - python -m pip install --upgrade cmake matplotlib mpi4py numpy scipy yt
+    - python -m pip install --upgrade cmake matplotlib==3.2.2 mpi4py numpy scipy yt
     - export CEI_CMAKE="/home/travis/.local/bin/cmake"
     - export CEI_SUDO="sudo"
     - sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY && sudo chmod a+x /usr/local/bin/cmake-easyinstall

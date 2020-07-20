@@ -84,6 +84,20 @@ class SpectralSolver
              algorithm->CurrentCorrection( field_data, current, rho );
         };
 
+        /**
+         * \brief Public interface to call the virtual function \c VayDeposition,
+         * declared in the base class SpectralBaseAlgorithm and defined in its
+         * derived classes, from objects of class SpectralSolver through the private
+         * unique pointer \c algorithm.
+         *
+         * \param[in,out] current Array of unique pointers to \c MultiFab storing
+         *                        the three components of the current density
+         */
+        void VayDeposition (std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+        {
+            algorithm->VayDeposition(field_data, current);
+        }
+
     private:
         void ReadParameters ();
 
