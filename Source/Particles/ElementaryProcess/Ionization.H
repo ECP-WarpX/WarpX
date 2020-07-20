@@ -45,7 +45,7 @@ struct IonizationFilterFunc
     amrex::GpuArray<amrex::Real, 3> m_dx_arr;
     amrex::GpuArray<amrex::Real, 3> m_xyzmin_arr;
 
-    int m_l_lower_order_in_v;
+    int m_galerkin_interpolation;
     int m_nox;
     int m_n_rz_azimuthal_modes;
 
@@ -93,7 +93,7 @@ struct IonizationFilterFunc
                            m_ex_arr, m_ey_arr, m_ez_arr, m_bx_arr, m_by_arr, m_bz_arr,
                            m_ex_type, m_ey_type, m_ez_type, m_bx_type, m_by_type, m_bz_type,
                            m_dx_arr, m_xyzmin_arr, m_lo, m_n_rz_azimuthal_modes,
-                           m_nox, m_l_lower_order_in_v);
+                           m_nox, m_galerkin_interpolation);
 
             // Compute electric field amplitude in the particle's frame of
             // reference (particularly important when in boosted frame).
