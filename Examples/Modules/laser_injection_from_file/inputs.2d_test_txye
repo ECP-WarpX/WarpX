@@ -23,7 +23,7 @@ warpx.cfl = 0.98
 warpx.do_dynamic_scheduling = 0
 warpx.load_balance_int = -1
 warpx.use_filter = 0
-algo.maxwell_fdtd_solver = ckc
+algo.maxwell_solver = ckc
 
 #################################
 ############ PLASMA #############
