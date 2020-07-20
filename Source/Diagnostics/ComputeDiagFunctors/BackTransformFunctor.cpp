@@ -92,7 +92,7 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int dcomp, const int 
         tmp_slice_ptr.reset(new MultiFab);
         tmp_slice_ptr.reset(nullptr);
 
-    } //
+    }
 
 }
 

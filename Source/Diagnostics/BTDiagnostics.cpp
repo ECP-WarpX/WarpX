@@ -86,7 +86,10 @@ BTDiagnostics::ReadParameters ()
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_format == "plotfile" || m_format == "openpmd",
         "<diag>.format must be plotfile or openpmd for back transformed diagnostics");
-
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_crse_ratio == amrex::IntVect(1),
+        "Only support for coarsening ratio of 1 in all directions is included for BTD\n"
+        );
 
     // Read list of back-transform diag parameters requested by the user //
     amrex::ParmParse pp(m_diag_name);

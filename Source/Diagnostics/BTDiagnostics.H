@@ -156,21 +156,21 @@ private:
      */
     amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor const> > > m_cell_center_functors;
 
-    /** Customized function to flush out back-transformed data */
+    /** Customized (temporary) function to flush out back-transformed data */
     void TMP_writeMetaData ();
-    /** Customized functions creating lab-frame directories
+    /** Customized (temporary) functions creating lab-frame directories
      *  to flush out back-transformed data
      * \param[in] i_buffer, index of the buffer data that is being flushed out
      * \param[in] lev, level of the buffer data.
      *  (Currently only single-level data is supported.)
      */
     void TMP_createLabFrameDirectories (int i_buffer, int lev);
-    /** Customized functions creating header files
+    /** Customized (temporary) functions creating header files
      *  to flush out back-transformed data for the ith buffer
      * \param[in] i_buffer, ith buffer storing data for the ith snapshot
      */
     void TMP_writeLabFrameHeader (int i_buffer);
-    /** Customized output format for flushing out lab-frame data stored in
+    /** Customized (temporary) output format for flushing out lab-frame data stored in
      *  the output buffer, m_mf_output.
      * \param[in] i_buffer, ith buffer for which the lab-farme data is flushed out.
      */

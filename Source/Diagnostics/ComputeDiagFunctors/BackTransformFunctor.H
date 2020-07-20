@@ -5,24 +5,21 @@
 
 /**
  * \brief Functor to back-transform cell-centered data and store result in mf_out
+ * 
+ * The cell-centered data is a ten-component multifab with field-data averaged-down 
+ * from the finest to coarsest level, and stored as single-level data.
+ * For every i^th buffer, a z-slice corresponding to the z-boost location of the
+ * slice at the current timestep is extracted. This slice containing field-data
+ * in the boosted-frame is Lorentz-transformed to the lab-frame. The user-requested
+ * lab-frame field data is then stored in mf_dst.
  */
 
 class
 BackTransformFunctor final : public ComputeDiagFunctor
 {
 public:
-    // This class will handle the slicing of the cell-centered field-data (stored as mf_src)
-    // Then, the field data stored in the slice is Lorentz-Transformed from
-    // boosted-frame at z=zboost to lab-frame at z=zlab.
-    // The lab-frame data is then copied to the destination multifab provided in
-    // the operator () function, for all ncomponents starting from icomp_dst.
-    // The operator() function will also need a few boosted-frame parameters, such as,
-    // current_z_boost of the corresponding snapshot, to generate appropriate slices
-    // in boosted-frame and lab-frame.
-    // Unlike cell-center functor, coarsening ratio is not provided to this functor,
-    // since the data is coarsened when preparing fields in m_mf_cc (mf_src).
-
     /** Constructor description
+     *
      * \param[in] mf_src cell-centered multifab containing all user-requested
                          fields in boosted-frame
      * \param[in] lev level of multifab.
