@@ -134,7 +134,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const Dim3 lo = lbound(box);
 
-    int l_lower_order_in_v = WarpX::l_lower_order_in_v;
+    int galerkin_interpolation = WarpX::galerkin_interpolation;
     int nox = WarpX::nox;
     int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
@@ -173,7 +173,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                            ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                            ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                            dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                           nox, l_lower_order_in_v);
+                           nox, galerkin_interpolation);
 
 #ifdef WARPX_QED
             if (local_has_breit_wheeler) {
