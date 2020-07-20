@@ -2,10 +2,10 @@
 #define WARPX_FLUSHFORMATSENSEI_H_
 
 #include "FlushFormat.H"
-#include "AMReX_AmrMesh.H"
 
+#include <AMReX_AmrMesh.H>
 #if defined(BL_USE_SENSEI_INSITU)
-#include "AMReX_AmrMeshInSituBridge.H"
+#  include <AMReX_AmrMeshInSituBridge.H>
 #else
 namespace amrex {
 using AmrMeshInSituBridge = void;

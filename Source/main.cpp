@@ -7,15 +7,13 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+#include "Initialization/WarpXAMReXInit.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
-#include <AMReX_ParmParse.H>
 #include <AMReX_BLProfiler.H>
 #include <AMReX_ParallelDescriptor.H>
-
-#include <iostream>
 
 
 int main(int argc, char* argv[])
@@ -23,16 +21,22 @@ int main(int argc, char* argv[])
     using namespace amrex;
 
 #if defined(AMREX_USE_MPI)
-#   if defined(_OPENMP) && defined(WARPX_USE_PSATD)
-    int provided;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
-    AMREX_ALWAYS_ASSERT(provided >= MPI_THREAD_FUNNELED);
+#   ifdef AMREX_MPI_THREAD_MULTIPLE
+    int provided = -1;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+    AMREX_ALWAYS_ASSERT(provided >= MPI_THREAD_MULTIPLE);
 #   else
-    MPI_Init(&argc, &argv);
+#      if defined(_OPENMP) && defined(WARPX_USE_PSATD)
+       int provided = -1;
+       MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
+       AMREX_ALWAYS_ASSERT(provided >= MPI_THREAD_FUNNELED);
+#      else
+       MPI_Init(&argc, &argv);
+#      endif
 #   endif
 #endif
 
-    amrex::Initialize(argc,argv);
+    warpx_amrex_init(argc, argv);
 
     // in Debug mode, we need a larger stack limit than usual bc of the parser.
 #if defined(AMREX_USE_CUDA) && defined(AMREX_DEBUG)

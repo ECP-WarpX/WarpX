@@ -102,9 +102,9 @@ guardCellManager::Init(
     // is determined *empirically* to be the order of the solver
     // for nodal, and half the order of the solver for staggered.
 
-    int ngFFt_x = do_nodal ? nox_fft : nox_fft/2.;
-    int ngFFt_y = do_nodal ? noy_fft : noy_fft/2.;
-    int ngFFt_z = do_nodal ? noz_fft : noz_fft/2.;
+    int ngFFt_x = do_nodal ? nox_fft : nox_fft/2;
+    int ngFFt_y = do_nodal ? noy_fft : noy_fft/2;
+    int ngFFt_z = do_nodal ? noz_fft : noz_fft/2;
 
     ParmParse pp("psatd");
     pp.query("nx_guard", ngFFt_x);

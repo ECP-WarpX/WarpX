@@ -32,7 +32,6 @@ WarpX::Evolve (int numsteps)
     WARPX_PROFILE("WarpX::Evolve()");
 
     Real cur_time = t_new[0];
-    static int last_plot_file_step = 0;
 
     if (do_compute_max_step_from_zmax) {
         computeMaxStepBoostAccelerator(geom[0]);
@@ -45,7 +44,6 @@ WarpX::Evolve (int numsteps)
         numsteps_max = std::min(istep[0]+numsteps, max_step);
     }
 
-    bool max_time_reached = false;
     Real walltime, walltime_start = amrex::second();
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
@@ -234,7 +232,6 @@ WarpX::Evolve (int numsteps)
         multi_diags->FilterComputePackFlush( step );
 
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
-            max_time_reached = true;
             break;
         }
 
@@ -299,6 +296,9 @@ WarpX::OneStep_nosub (Real cur_time)
     if ( !fft_periodic_single_box && current_correction )
         amrex::Abort("\nCurrent correction does not guarantee charge conservation with local FFTs over guard cells:\n"
                      "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
+    if ( !fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) )
+        amrex::Abort("\nVay current deposition does not guarantee charge conservation with local FFTs over guard cells:\n"
+                     "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
 #endif
 
 #ifdef WARPX_QED
@@ -313,6 +313,8 @@ WarpX::OneStep_nosub (Real cur_time)
 // without guard cells, apply this after calling SyncCurrent
 #ifdef WARPX_USE_PSATD
     if ( fft_periodic_single_box && current_correction ) CurrentCorrection();
+    if ( fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) )
+        VayDeposition();
 #endif
 
 
@@ -726,19 +728,28 @@ WarpX::applyMirrors(Real time){
     }
 }
 
+// Apply current correction in Fourier space
 #ifdef WARPX_USE_PSATD
 void
 WarpX::CurrentCorrection ()
 {
     for ( int lev = 0; lev <= finest_level; ++lev )
     {
-        // Apply correction on fine patch
         spectral_solver_fp[lev]->CurrentCorrection( current_fp[lev], rho_fp[lev] );
-        if ( spectral_solver_cp[lev] )
-        {
-            // Apply correction on coarse patch
-            spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
-        }
+        if ( spectral_solver_cp[lev] ) spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
+    }
+}
+#endif
+
+// Compute current from Vay deposition in Fourier space
+#ifdef WARPX_USE_PSATD
+void
+WarpX::VayDeposition ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->VayDeposition(current_fp[lev]);
+        if (spectral_solver_cp[lev]) spectral_solver_cp[lev]->VayDeposition(current_cp[lev]);
     }
 }
 #endif

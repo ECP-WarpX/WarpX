@@ -12,7 +12,7 @@ import datetime
 
 # This script runs automated performance tests for WarpX.
 # It runs tests in list test_list defined below, and write
-# results in file performance_log.txt in warpx/performance_tests/
+# results in file performance_log.txt in warpx/Tools/PerformanceTests/
 
 # ---- User's manual ----
 # Before running performance tests, make sure you have the latest version
@@ -23,7 +23,7 @@ import datetime
 # > python run_alltests.py
 # To add a new test item, extent the test_list with a line like
 # test_list.extend([['my_input_file', n_node, n_mpi, n_omp]]*3)
-# - my_input_file must be in warpx/performance_tests
+# - my_input_file must be in warpx/Tools/PerformanceTests
 # - the test will run 3 times, to have some statistics
 # - the test must take <1h or it will timeout
 
