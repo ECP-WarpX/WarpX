@@ -576,16 +576,6 @@ WarpX::ReadParameters ()
     }
 
     {
-        ParmParse pp("interpolation");
-        pp.query("nox", nox);
-        pp.query("noy", noy);
-        pp.query("noz", noz);
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox == noy and nox == noz ,
-            "warpx.nox, noy and noz must be equal");
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox >= 1, "warpx.nox must >= 1");
-    }
-
-    {
         ParmParse pp("algo");
         current_deposition_algo = GetAlgorithmInteger(pp, "current_deposition");
         charge_deposition_algo = GetAlgorithmInteger(pp, "charge_deposition");
@@ -603,6 +593,19 @@ WarpX::ReadParameters ()
         }
         pp.query("costs_heuristic_cells_wt", costs_heuristic_cells_wt);
         pp.query("costs_heuristic_particles_wt", costs_heuristic_particles_wt);
+    }
+
+    {
+        ParmParse pp("interpolation");
+        pp.query("nox", nox);
+        pp.query("noy", noy);
+        pp.query("noz", noz);
+
+        pp.query("galerkin_scheme",galerkin_interpolation)
+
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox == noy and nox == noz ,
+            "warpx.nox, noy and noz must be equal");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox >= 1, "warpx.nox must >= 1");
     }
 
 #ifdef WARPX_USE_PSATD
