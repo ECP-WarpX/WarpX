@@ -279,8 +279,7 @@ public:
 
     void applyMirrors(amrex::Real time);
 
-    /**
-     * Determine the timestep of the simulation. */
+    /** Determine the timestep of the simulation. */
     void ComputeDt ();
 
     // Compute max_step automatically for simulations in a boosted frame.
