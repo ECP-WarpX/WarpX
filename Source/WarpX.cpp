@@ -82,7 +82,7 @@ long WarpX::noy = 1;
 long WarpX::noz = 1;
 
 bool WarpX::use_fdtd_nci_corr = false;
-int  WarpX::galerkin_interpolation = true;
+bool WarpX::galerkin_interpolation = true;
 
 bool WarpX::use_filter        = false;
 bool WarpX::use_kspace_filter       = false;
