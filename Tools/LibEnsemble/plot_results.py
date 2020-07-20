@@ -80,7 +80,7 @@ ind_best = np.nanargmin(results_dict['f'])
 for key in plot_input + plot_output:
     print(key, results_dict[key][ind_best])
 print("charge_f/charge_i ",
-      results[ind_best]['charge']/np.max(results_dict['charge']))
+      results[ind_best]['charge']/np.nanmax(results_dict['charge']))
 
 # And now plotting begins
 plt.figure(figsize=(16, 10))
