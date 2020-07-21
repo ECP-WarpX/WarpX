@@ -28,6 +28,7 @@ struct CylindricalYeeAlgorithm {
         amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_z ) {
 
         using namespace amrex;
+        using namespace amrex::literals;
         // Store the inverse cell size along each direction in the coefficients
         stencil_coefs_r.resize(1);
         stencil_coefs_r[0] = 1._rt/cell_size[0];  // 1./dr
@@ -42,6 +43,7 @@ struct CylindricalYeeAlgorithm {
      */
     static amrex::Real ComputeMaxDt ( amrex::Real const * const dx,
                                       int const n_rz_azimuthal_modes ) {
+        using namespace amrex::literals;
         // In the rz case, the Courant limit has been evaluated
         // semi-analytically by R. Lehe, and resulted in the following
         // coefficients.
@@ -73,6 +75,7 @@ struct CylindricalYeeAlgorithm {
         int const i, int const j, int const k, int const comp ) {
 
         using namespace amrex;
+        using namespace amrex::literals;
         Real const inv_dr = coefs_r[0];
         return 1._rt/r * inv_dr*( (r+0.5_rt*dr)*F(i+1,j,k,comp) - (r-0.5_rt*dr)*F(i,j,k,comp) );
     };
@@ -89,6 +92,7 @@ struct CylindricalYeeAlgorithm {
         int const i, int const j, int const k, int const comp ) {
 
         using namespace amrex;
+        using namespace amrex::literals;
         Real const inv_dr = coefs_r[0];
         return 1._rt/r * inv_dr*( (r+0.5_rt*dr)*F(i,j,k,comp) - (r-0.5_rt*dr)*F(i-1,j,k,comp) );
     };

@@ -29,6 +29,7 @@ struct CartesianNodalAlgorithm {
         amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_z ) {
 
         using namespace amrex;
+        using namespace amrex::literals;
 
         // Store the inverse cell size along each direction in the coefficients
         stencil_coefs_x.resize(1);
@@ -43,6 +44,7 @@ struct CartesianNodalAlgorithm {
      * Compute the maximum timestep, for which the scheme remains stable
      * (Courant-Friedrichs-Levy limit) */
     static amrex::Real ComputeMaxDt ( amrex::Real const * const dx ) {
+        using namespace amrex::literals;
         amrex::Real const delta_t  = 1._rt / ( std::sqrt( AMREX_D_TERM(
                                            1._rt/(dx[0]*dx[0]),
                                          + 1._rt/(dx[1]*dx[1]),
@@ -62,6 +64,7 @@ struct CartesianNodalAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
+        using namespace amrex::literals;
         Real const inv_dx = coefs_x[0];
         return 0.5_rt*inv_dx*( F(i+1,j,k,ncomp) - F(i-1,j,k,ncomp) );
     };
@@ -91,6 +94,7 @@ struct CartesianNodalAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
+        using namespace amrex::literals;
 #if defined WARPX_DIM_3D
         Real const inv_dy = coefs_y[0];
         return 0.5_rt*inv_dy*( F(i,j+1,k,ncomp) - F(i,j-1,k,ncomp) );
@@ -124,6 +128,7 @@ struct CartesianNodalAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
+        using namespace amrex::literals;
         Real const inv_dz = coefs_z[0];
 #if defined WARPX_DIM_3D
         return 0.5_rt*inv_dz*( F(i,j,k+1,ncomp) - F(i,j,k-1,ncomp) );
