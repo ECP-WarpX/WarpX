@@ -42,6 +42,7 @@ struct CartesianYeeAlgorithm {
      * Compute the maximum timestep, for which the scheme remains stable
      * (Courant-Friedrichs-Levy limit) */
     static amrex::Real ComputeMaxDt ( amrex::Real const * const dx ) {
+        using namespace amrex::literals;
         amrex::Real const delta_t  = 1._rt / ( std::sqrt( AMREX_D_TERM(
                                            1._rt / (dx[0]*dx[0]),
                                          + 1._rt / (dx[1]*dx[1]),

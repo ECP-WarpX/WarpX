@@ -42,6 +42,7 @@ struct CylindricalYeeAlgorithm {
      */
     static amrex::Real ComputeMaxDt ( amrex::Real const * const dx,
                                       int const n_rz_azimuthal_modes ) {
+        using namespace amrex::literals;
         // In the rz case, the Courant limit has been evaluated
         // semi-analytically by R. Lehe, and resulted in the following
         // coefficients.
