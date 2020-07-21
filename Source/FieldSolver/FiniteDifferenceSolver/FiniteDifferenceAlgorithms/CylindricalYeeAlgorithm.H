@@ -13,6 +13,7 @@
 #include <AMReX_Gpu.H>
 
 #include <array>
+#include <cmath>
 
 #include "Utils/WarpXConst.H"
 
