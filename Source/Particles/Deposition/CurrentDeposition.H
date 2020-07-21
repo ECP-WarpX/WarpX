@@ -699,24 +699,30 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
 
         // Current and old particle positions in grid units
-        amrex::Real const x_new = (xp - xmin) * dxi;
-        amrex::Real const x_old = x_new - vx * dt * dxi;
+        // Keep these double to avoid bug in single precision.
+        double const x_new = (xp - xmin) * dxi;
+        double const x_old = x_new - vx * dt * dxi;
 #if (defined WARPX_DIM_3D)
-        amrex::Real const y_new = (yp - ymin) * dyi;
-        amrex::Real const y_old = y_new - vy * dt * dyi;
+        // Keep these double to avoid bug in single precision.
+        double const y_new = (yp - ymin) * dyi;
+        double const y_old = y_new - vy * dt * dyi;
 #endif
-        amrex::Real const z_new = (zp - zmin) * dzi;
-        amrex::Real const z_old = z_new - vz * dt * dzi;
+        // Keep these double to avoid bug in single precision.
+        double const z_new = (zp - zmin) * dzi;
+        double const z_old = z_new - vz * dt * dzi;
 
         // Shape factor arrays for current and old positions (nodal)
-        amrex::Real sx_new[depos_order+1] = {0._rt};
-        amrex::Real sx_old[depos_order+1] = {0._rt};
+        // Keep these double to avoid bug in single precision.
+        double sx_new[depos_order+1] = {0.};
+        double sx_old[depos_order+1] = {0.};
 #if (defined WARPX_DIM_3D)
-        amrex::Real sy_new[depos_order+1] = {0._rt};
-        amrex::Real sy_old[depos_order+1] = {0._rt};
+        // Keep these double to avoid bug in single precision.
+        double sy_new[depos_order+1] = {0.};
+        double sy_old[depos_order+1] = {0.};
 #endif
-        amrex::Real sz_new[depos_order+1] = {0._rt};
-        amrex::Real sz_old[depos_order+1] = {0._rt};
+        // Keep these double to avoid bug in single precision.
+        double sz_new[depos_order+1] = {0.};
+        double sz_old[depos_order+1] = {0.};
 
         // Compute shape factors for current positions
 
