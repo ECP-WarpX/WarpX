@@ -699,98 +699,111 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
 
         // Current and old particle positions in grid units
-        amrex::Real const x_new = (xp - xmin) * dxi;
-        amrex::Real const x_old = x_new - vx * dt * dxi;
+        // Keep these double to avoid bug in single precision.
+        double const x_new = (xp - xmin) * dxi;
+        double const x_old = x_new - vx * dt * dxi;
 #if (defined WARPX_DIM_3D)
-        amrex::Real const y_new = (yp - ymin) * dyi;
-        amrex::Real const y_old = y_new - vy * dt * dyi;
+        // Keep these double to avoid bug in single precision.
+        double const y_new = (yp - ymin) * dyi;
+        double const y_old = y_new - vy * dt * dyi;
 #endif
-        amrex::Real const z_new = (zp - zmin) * dzi;
-        amrex::Real const z_old = z_new - vz * dt * dzi;
+        // Keep these double to avoid bug in single precision.
+        double const z_new = (zp - zmin) * dzi;
+        double const z_old = z_new - vz * dt * dzi;
 
         // Shape factor arrays for current and old positions (nodal)
-        amrex::Real sx_new[depos_order+1] = {0._rt};
-        amrex::Real sx_old[depos_order+1] = {0._rt};
+        // Keep these double to avoid bug in single precision.
+        double sx_new[depos_order+1] = {0.};
+        double sx_old[depos_order+1] = {0.};
 #if (defined WARPX_DIM_3D)
-        amrex::Real sy_new[depos_order+1] = {0._rt};
-        amrex::Real sy_old[depos_order+1] = {0._rt};
+        // Keep these double to avoid bug in single precision.
+        double sy_new[depos_order+1] = {0.};
+        double sy_old[depos_order+1] = {0.};
 #endif
-        amrex::Real sz_new[depos_order+1] = {0._rt};
-        amrex::Real sz_old[depos_order+1] = {0._rt};
+        // Keep these double to avoid bug in single precision.
+        double sz_new[depos_order+1] = {0.};
+        double sz_old[depos_order+1] = {0.};
 
         // Compute shape factors for current positions
 
         // i_new leftmost grid point in x that the particle touches
         // sx_new shape factor along x for the centering of each current
-        const int i_new = compute_shape_factor<depos_order>(sx_new, x_new);
+        Compute_shape_factor< depos_order > const compute_shape_factor;
+        const int i_new = compute_shape_factor(sx_new, x_new);
 #if (defined WARPX_DIM_3D)
         // j_new leftmost grid point in y that the particle touches
         // sy_new shape factor along y for the centering of each current
-        const int j_new = compute_shape_factor<depos_order>(sy_new, y_new);
+        const int j_new = compute_shape_factor(sy_new, y_new);
 #endif
         // k_new leftmost grid point in z that the particle touches
         // sz_new shape factor along z for the centering of each current
-        const int k_new = compute_shape_factor<depos_order>(sz_new, z_new);
+        const int k_new = compute_shape_factor(sz_new, z_new);
 
         // Compute shape factors for old positions
 
         // i_old leftmost grid point in x that the particle touches
         // sx_old shape factor along x for the centering of each current
-        const int i_old = compute_shape_factor<depos_order>(sx_old, x_old);
+        const int i_old = compute_shape_factor(sx_old, x_old);
 #if (defined WARPX_DIM_3D)
         // j_old leftmost grid point in y that the particle touches
         // sy_old shape factor along y for the centering of each current
-        const int j_old = compute_shape_factor<depos_order>(sy_old, y_old);
+        const int j_old = compute_shape_factor(sy_old, y_old);
 #endif
         // k_old leftmost grid point in z that the particle touches
         // sz_old shape factor along z for the centering of each current
-        const int k_old = compute_shape_factor<depos_order>(sz_old, z_old);
+        const int k_old = compute_shape_factor(sz_old, z_old);
 
         // Deposit current into jx_arr, jy_arr and jz_arr
-
 #if (defined WARPX_DIM_XZ)
 
         for (int k=0; k<=depos_order; k++) {
             for (int i=0; i<=depos_order; i++) {
 
+                // Re-casting sx_new and sz_new from double to amrex::Real so that
+                // Atomic::Add has consistent types in its argument
+                amrex::Real const sxn_szn = sx_new[i] * sz_new[k];
+                amrex::Real const sxo_szn = sx_old[i] * sz_new[k];
+                amrex::Real const sxn_szo = sx_new[i] * sz_old[k];
+                amrex::Real const sxo_szo = sx_old[i] * sz_old[k];
+
                 // Jx
                 amrex::Gpu::Atomic::Add(&jx_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
-                    wq * invvol * invdt * 0.5_rt * sx_new[i] * sz_new[k]);
+                    wq * invvol * invdt * 0.5_rt * sxn_szn);
 
                 amrex::Gpu::Atomic::Add(&jx_arr(lo.x + i_old + i, lo.y + k_new + k, 0, 0),
-                    - wq * invvol * invdt * 0.5_rt * sx_old[i] * sz_new[k]);
+                    - wq * invvol * invdt * 0.5_rt * sxo_szn);
 
                 amrex::Gpu::Atomic::Add(&jx_arr(lo.x + i_new + i, lo.y + k_old + k, 0, 0),
-                    wq * invvol * invdt * 0.5_rt * sx_new[i] * sz_old[k]);
+                    wq * invvol * invdt * 0.5_rt * sxn_szo);
 
                 amrex::Gpu::Atomic::Add(&jx_arr(lo.x + i_old + i, lo.y + k_old + k, 0, 0),
-                    - wq * invvol * invdt * 0.5_rt * sx_old[i] * sz_old[k]);
+                    - wq * invvol * invdt * 0.5_rt * sxo_szo);
 
                 // Jy
                 amrex::Gpu::Atomic::Add(&jy_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
-                    wqy * 0.25_rt * sx_new[i] * sz_new[k]);
+                    wqy * 0.25_rt * sxn_szn);
 
                 amrex::Gpu::Atomic::Add(&jy_arr(lo.x + i_new + i, lo.y + k_old + k, 0, 0),
-                    wqy * 0.25_rt * sx_new[i] * sz_old[k]);
+                    wqy * 0.25_rt * sxn_szo);
 
                 amrex::Gpu::Atomic::Add(&jy_arr(lo.x + i_old + i, lo.y + k_new + k, 0, 0),
-                    wqy * 0.25_rt * sx_old[i] * sz_new[k]);
+                    wqy * 0.25_rt * sxo_szn);
 
                 amrex::Gpu::Atomic::Add(&jy_arr(lo.x + i_old + i, lo.y + k_old + k, 0, 0),
-                    wqy * 0.25_rt * sx_old[i] * sz_old[k]);
+                    wqy * 0.25_rt * sxo_szo);
 
                 // Jz
                 amrex::Gpu::Atomic::Add(&jz_arr(lo.x + i_new + i, lo.y + k_new + k, 0, 0),
-                    wq * invvol * invdt * 0.5_rt * sx_new[i] * sz_new[k]);
+                    wq * invvol * invdt * 0.5_rt * sxn_szn);
 
                 amrex::Gpu::Atomic::Add(&jz_arr(lo.x+i_new+i,lo.y+k_old+k,0,0),
-                    - wq * invvol * invdt * 0.5_rt * sx_new[i] * sz_old[k]);
+                    - wq * invvol * invdt * 0.5_rt * sxn_szo);
 
                 amrex::Gpu::Atomic::Add(&jz_arr(lo.x+i_old+i,lo.y+k_new+k,0,0),
-                    wq * invvol * invdt * 0.5_rt * sx_old[i] * sz_new[k]);
+                    wq * invvol * invdt * 0.5_rt * sxo_szn);
 
                 amrex::Gpu::Atomic::Add(&jz_arr(lo.x + i_old + i, lo.y + k_old + k, 0, 0),
-                    - wq * invvol * invdt * 0.5_rt * sx_old[i] * sz_old[k]);
+                    - wq * invvol * invdt * 0.5_rt * sxo_szo);
             }
         }
 
@@ -798,82 +811,97 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 
         for (int k=0; k<=depos_order; k++) {
             for (int j=0; j<=depos_order; j++) {
+
+                amrex::Real const syn_szn = sy_new[j] * sz_new[k];
+                amrex::Real const syo_szn = sy_old[j] * sz_new[k];
+                amrex::Real const syn_szo = sy_new[j] * sz_old[k];
+                amrex::Real const syo_szo = sy_old[j] * sz_old[k];
+
                 for (int i=0; i<=depos_order; i++) {
+
+                    amrex::Real const sxn_syn_szn = sx_new[i] * syn_szn;
+                    amrex::Real const sxo_syn_szn = sx_old[i] * syn_szn;
+                    amrex::Real const sxn_syo_szn = sx_new[i] * syo_szn;
+                    amrex::Real const sxo_syo_szn = sx_old[i] * syo_szn;
+                    amrex::Real const sxn_syn_szo = sx_new[i] * syn_szo;
+                    amrex::Real const sxo_syn_szo = sx_old[i] * syn_szo;
+                    amrex::Real const sxn_syo_szo = sx_new[i] * syo_szo;
+                    amrex::Real const sxo_syo_szo = sx_old[i] * syo_szo;
 
                     // Jx
                     amrex::Gpu::Atomic::Add(&jx_arr(lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k),
-                        wq * invvol * invdt * onethird * sx_new[i] * sy_new[j] * sz_new[k]);
+                        wq * invvol * invdt * onethird * sxn_syn_szn);
 
                     amrex::Gpu::Atomic::Add(&jx_arr(lo.x + i_old + i, lo.y + j_new + j, lo.z + k_new + k),
-                        - wq * invvol * invdt * onethird * sx_old[i] * sy_new[j] * sz_new[k]);
+                        - wq * invvol * invdt * onethird * sxo_syn_szn);
 
                     amrex::Gpu::Atomic::Add(&jx_arr(lo.x + i_new + i, lo.y + j_old + j, lo.z + k_new + k),
-                        wq * invvol * invdt * onesixth * sx_new[i] * sy_old[j] * sz_new[k]);
+                        wq * invvol * invdt * onesixth * sxn_syo_szn);
 
                     amrex::Gpu::Atomic::Add(&jx_arr(lo.x + i_old + i, lo.y + j_old + j,lo.z + k_new + k),
-                        - wq * invvol * invdt * onesixth * sx_old[i] * sy_old[j] * sz_new[k]);
+                        - wq * invvol * invdt * onesixth * sxo_syo_szn);
 
                     amrex::Gpu::Atomic::Add(&jx_arr(lo.x + i_new + i, lo.y + j_new + j, lo.z + k_old + k),
-                        wq * invvol * invdt * onesixth * sx_new[i] * sy_new[j] * sz_old[k]);
+                        wq * invvol * invdt * onesixth * sxn_syn_szo);
 
                     amrex::Gpu::Atomic::Add(&jx_arr(lo.x + i_old + i, lo.y + j_new + j, lo.z + k_old + k),
-                        - wq * invvol * invdt * onesixth * sx_old[i] * sy_new[j] * sz_old[k]);
+                        - wq * invvol * invdt * onesixth * sxo_syn_szo);
 
                     amrex::Gpu::Atomic::Add(&jx_arr(lo.x + i_new + i, lo.y + j_old + j, lo.z + k_old + k),
-                        wq * invvol * invdt * onethird * sx_new[i] * sy_old[j] * sz_old[k]);
+                        wq * invvol * invdt * onethird * sxn_syo_szo);
 
                     amrex::Gpu::Atomic::Add(&jx_arr(lo.x + i_old + i, lo.y + j_old + j, lo.z + k_old + k),
-                        - wq * invvol * invdt * onethird * sx_old[i] * sy_old[j] * sz_old[k]);
+                        - wq * invvol * invdt * onethird * sxo_syo_szo);
 
                     // Jy
                     amrex::Gpu::Atomic::Add(&jy_arr(lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k),
-                        wq * invvol * invdt * onethird * sx_new[i] * sy_new[j] * sz_new[k]);
+                        wq * invvol * invdt * onethird * sxn_syn_szn);
 
                     amrex::Gpu::Atomic::Add(&jy_arr(lo.x + i_new + i, lo.y + j_old + j, lo.z + k_new + k),
-                        - wq * invvol * invdt * onethird * sx_new[i] * sy_old[j] * sz_new[k]);
+                        - wq * invvol * invdt * onethird * sxn_syo_szn);
 
                     amrex::Gpu::Atomic::Add(&jy_arr(lo.x + i_old + i, lo.y + j_new + j, lo.z + k_new + k),
-                        wq * invvol * invdt * onesixth * sx_old[i] * sy_new[j] * sz_new[k]);
+                        wq * invvol * invdt * onesixth * sxo_syn_szn);
 
                     amrex::Gpu::Atomic::Add(&jy_arr(lo.x + i_old + i, lo.y + j_old + j, lo.z + k_new + k),
-                        - wq * invvol * invdt * onesixth * sx_old[i] * sy_old[j] * sz_new[k]);
+                        - wq * invvol * invdt * onesixth * sxo_syo_szn);
 
                     amrex::Gpu::Atomic::Add(&jy_arr(lo.x + i_new + i, lo.y + j_new + j, lo.z + k_old + k),
-                        wq * invvol * invdt * onesixth * sx_new[i] * sy_new[j] * sz_old[k]);
+                        wq * invvol * invdt * onesixth * sxn_syn_szo);
 
                     amrex::Gpu::Atomic::Add(&jy_arr(lo.x + i_new + i, lo.y + j_old + j, lo.z + k_old + k),
-                        - wq * invvol * invdt * onesixth * sx_new[i] * sy_old[j] * sz_old[k]);
+                        - wq * invvol * invdt * onesixth * sxn_syo_szo);
 
                     amrex::Gpu::Atomic::Add(&jy_arr(lo.x + i_old + i, lo.y + j_new + j, lo.z + k_old + k),
-                        wq * invvol * invdt * onethird * sx_old[i] * sy_new[j] * sz_old[k]);
+                        wq * invvol * invdt * onethird * sxo_syn_szo);
 
                     amrex::Gpu::Atomic::Add(&jy_arr(lo.x + i_old + i, lo.y + j_old + j, lo.z + k_old + k),
-                        - wq * invvol * invdt * onethird * sx_old[i] * sy_old[j] * sz_old[k]);
+                        - wq * invvol * invdt * onethird * sxo_syo_szo);
 
                     // Jz
                     amrex::Gpu::Atomic::Add(&jz_arr( lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k),
-                        wq * invvol * invdt * onethird * sx_new[i] * sy_new[j] * sz_new[k]);
+                        wq * invvol * invdt * onethird * sxn_syn_szn);
 
                     amrex::Gpu::Atomic::Add(&jz_arr( lo.x + i_new + i, lo.y + j_new + j, lo.z + k_old + k),
-                        - wq * invvol * invdt * onethird * sx_new[i] * sy_new[j] * sz_old[k]);
+                        - wq * invvol * invdt * onethird * sxn_syn_szo);
 
                     amrex::Gpu::Atomic::Add(&jz_arr( lo.x + i_old + i, lo.y + j_new + j, lo.z + k_new + k),
-                        wq * invvol * invdt * onesixth * sx_old[i] * sy_new[j] * sz_new[k]);
+                        wq * invvol * invdt * onesixth * sxo_syn_szn);
 
                     amrex::Gpu::Atomic::Add(&jz_arr( lo.x + i_old + i, lo.y + j_new + j, lo.z + k_old + k),
-                        - wq * invvol * invdt * onesixth * sx_old[i] * sy_new[j] * sz_old[k]);
+                        - wq * invvol * invdt * onesixth * sxo_syn_szo);
 
                     amrex::Gpu::Atomic::Add(&jz_arr( lo.x + i_new + i, lo.y + j_old + j, lo.z + k_new + k),
-                        wq * invvol * invdt * onesixth * sx_new[i] * sy_old[j] * sz_new[k]);
+                        wq * invvol * invdt * onesixth * sxn_syo_szn);
 
                     amrex::Gpu::Atomic::Add(&jz_arr( lo.x + i_new + i, lo.y + j_old + j, lo.z + k_old + k),
-                        - wq * invvol * invdt * onesixth * sx_new[i] * sy_old[j] * sz_old[k]);
+                        - wq * invvol * invdt * onesixth * sxn_syo_szo);
 
                     amrex::Gpu::Atomic::Add(&jz_arr( lo.x + i_old + i, lo.y + j_old + j, lo.z + k_new + k),
-                        wq * invvol * invdt * onethird * sx_old[i] * sy_old[j] * sz_new[k]);
+                        wq * invvol * invdt * onethird * sxo_syo_szn);
 
                     amrex::Gpu::Atomic::Add(&jz_arr( lo.x + i_old + i, lo.y + j_old + j, lo.z + k_old + k),
-                        - wq * invvol * invdt * onethird * sx_old[i] * sy_old[j] * sz_old[k]);
+                        - wq * invvol * invdt * onethird * sxo_syo_szo);
                 }
             }
         }
