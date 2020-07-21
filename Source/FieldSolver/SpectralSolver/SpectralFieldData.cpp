@@ -276,9 +276,9 @@ SpectralFieldData::BackwardTransform ( MultiFab& mf,
                         // the last points along the nodal directions are always
                         // discarded when FFTs are computed, as the real-space box
                         // is always cell-centered (see constructor of SpectralKSpace)
-                        const int ii = ( ( i == nx-ngx-1 ) ? nx-ngx*2-i-1 : i );
-                        const int jj = ( ( j == ny-ngy-1 ) ? ny-ngy*2-j-1 : j );
-                        const int kk = ( ( k == nz-ngz-1 ) ? nz-ngz*2-k-1 : k );
+                        const int ii = ( ( i == nx-ngx-1 ) ? -ngx : i );
+                        const int jj = ( ( j == ny-ngy-1 ) ? -ngy : j );
+                        const int kk = ( ( k == nz-ngz-1 ) ? -ngz : k );
                         // Copy and normalize field
                         mf_arr(i,j,k,i_comp) = inv_N*tmp_arr(ii,jj,kk);
                     } );
