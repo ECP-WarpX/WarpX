@@ -1039,20 +1039,19 @@ MultiParticleContainer::doQEDSchwinger ()
     amrex::Abort("Schwinger process not implemented in rz geometry");
 #endif
 
-#ifdef AMREX_USE_FLOAT
-    amrex::Abort("Schwinger process not implemented in single precision");
-#endif
-
-// Get cell volume multiplied by temporal step. In 2D the transverse size is
+// Get cell volume. In 2D the transverse size is
 // chosen by the user in the input file.
     amrex::Geometry const & geom = warpx.Geom(level_0);
 #if (AMREX_SPACEDIM == 2)
-    const auto dVdt = geom.CellSize(0) * geom.CellSize(1)
-        * m_qed_schwinger_y_size * warpx.getdt(level_0);
+    const auto dV = geom.CellSize(0) * geom.CellSize(1)
+        * m_qed_schwinger_y_size;
 #elif (AMREX_SPACEDIM == 3)
-    const auto dVdt = geom.CellSize(0) * geom.CellSize(1)
-        * geom.CellSize(2) * warpx.getdt(level_0);
+    const auto dV = geom.CellSize(0) * geom.CellSize(1)
+        * geom.CellSize(2);
 #endif
+
+   // Get the temporal step
+   const auto dt =  warpx.getdt(level_0);
 
     auto& pc_product_ele =
             allcontainers[m_qed_schwinger_ele_product];
@@ -1100,7 +1099,8 @@ MultiParticleContainer::doQEDSchwinger ()
         const auto np_pos_dst = dst_pos_tile.numParticles();
 
         const auto Filter  = SchwingerFilterFunc{
-                              m_qed_schwinger_threshold_poisson_gaussian,dVdt};
+                              m_qed_schwinger_threshold_poisson_gaussian,
+                              dV, dt};
 
         const SmartCreateFactory create_factory_ele(*pc_product_ele);
         const SmartCreateFactory create_factory_pos(*pc_product_pos);

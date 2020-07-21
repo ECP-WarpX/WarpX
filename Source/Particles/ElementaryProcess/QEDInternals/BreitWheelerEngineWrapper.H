@@ -16,13 +16,8 @@
 #include <physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
 #include <physics/breit_wheeler/breit_wheeler_engine_core.hpp>
 
-//Lookup table building function is in a dedicated (optional) class to
-//avoid including heavy dependencies if they are not needed.
-#ifdef WARPX_QED_TABLE_GEN
-#    include "BreitWheelerEngineTableBuilder.H"
-#endif
-
 #include <string>
+#include <vector>
 
 // Aliases =============================
 using BW_dndt_table_params =
@@ -51,9 +46,9 @@ using BW_pair_prod_table_view = BW_pair_prod_table::view_type;
 
 struct PicsarBreitWheelerCtrl
 {
-    BW_dndt_table_params dndt;
-    BW_pair_prod_table_params pairprod;
-};
+    BW_dndt_table_params dndt_params;
+    BW_pair_prod_table_params pair_prod_params;
+}
 
 // Functors ==================================
 
@@ -220,17 +215,17 @@ public:
     /**
      * Builds the functor to initialize the optical depth
      */
-    BreitWheelerGetOpticalDepth build_optical_depth_functor ();
+    BreitWheelerGetOpticalDepth build_optical_depth_functor () const;
 
     /**
      * Builds the functor to evolve the optical depth
      */
-    BreitWheelerEvolveOpticalDepth build_evolve_functor ();
+    BreitWheelerEvolveOpticalDepth build_evolve_functor () const;
 
     /**
      * Builds the functor to generate the pairs
      */
-    BreitWheelerGeneratePairs build_pair_functor ();
+    BreitWheelerGeneratePairs build_pair_functor () const;
 
     /**
      * Checks if the optical tables are properly initialized
@@ -238,24 +233,23 @@ public:
     bool are_lookup_tables_initialized () const;
 
     /**
-     * Init lookup tables from raw binary data.
-     * @param[in] raw_data a Vector of char
-     * @return true if it succeeds, false if it cannot parse raw_data
-     */
-    bool init_lookup_tables_from_raw_data (const amrex::Vector<char>& raw_data);
-
-    /**
-     * Init lookup tables using built-in dummy tables
-     * for test purposes.
-     */
-    void init_builtin_tables();
-
-    /**
      * Export lookup tables data into a raw binary Vector
      * @return the data in binary format. The Vector is empty if tables were
      * not previously initialized.
      */
-    amrex::Vector<char> export_lookup_tables_data () const;
+    std::vector<char> export_lookup_tables_data () const;
+
+    /**
+     * Init lookup tables from raw binary data.
+     * @param[in] raw_data a Vector of char
+     * @return true if it succeeds, false if it cannot parse raw_data
+     */
+    bool init_lookup_tables_from_raw_data (const std::vector<char>& raw_data);
+
+    /**
+     * Init lookup tables using built-in (low resolution) tables
+     */
+    void init_builtin_tables();
 
     /**
      * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
@@ -264,29 +258,21 @@ public:
     void compute_lookup_tables (PicsarBreitWheelerCtrl ctrl);
 
     /**
-     * gets default (reasonable) values for the control parameters
+     * gets default values for the control parameters
      * @return default control params to generate the tables
      */
     PicsarBreitWheelerCtrl get_default_ctrl() const;
 
-    /**
-     * returns a constant reference to the control parameters
-     * @return const reference to control parameters
-     */
-    const PicsarBreitWheelerCtrl& get_ref_ctrl() const;
 
 private:
     bool m_lookup_tables_initialized = false;
 
-    BreitWheelerEngineInnards m_innards;
-
-    BW_dndt_table_params m_params;
     BW_dndt_table m_dndt_table;
     BW_pair_prod_table m_pair_prod_table;
-//Table builing is available only if WarpX is compiled with QED_TABLE_GEN=TRUE
-#ifdef WARPX_QED_TABLE_GEN
-    BreitWheelerEngineTableBuilder m_table_builder;
-#endif
+
+    void init_builtin_dndt_table();
+    void init_builtin_pair_prod_table();
+
 
 };
 
