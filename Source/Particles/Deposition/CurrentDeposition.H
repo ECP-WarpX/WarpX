@@ -722,29 +722,30 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 
         // i_new leftmost grid point in x that the particle touches
         // sx_new shape factor along x for the centering of each current
-        const int i_new = compute_shape_factor<depos_order>(sx_new, x_new);
+        Compute_shape_factor< depos_order > const compute_shape_factor;
+        const int i_new = compute_shape_factor(sx_new, x_new);
 #if (defined WARPX_DIM_3D)
         // j_new leftmost grid point in y that the particle touches
         // sy_new shape factor along y for the centering of each current
-        const int j_new = compute_shape_factor<depos_order>(sy_new, y_new);
+        const int j_new = compute_shape_factor(sy_new, y_new);
 #endif
         // k_new leftmost grid point in z that the particle touches
         // sz_new shape factor along z for the centering of each current
-        const int k_new = compute_shape_factor<depos_order>(sz_new, z_new);
+        const int k_new = compute_shape_factor(sz_new, z_new);
 
         // Compute shape factors for old positions
 
         // i_old leftmost grid point in x that the particle touches
         // sx_old shape factor along x for the centering of each current
-        const int i_old = compute_shape_factor<depos_order>(sx_old, x_old);
+        const int i_old = compute_shape_factor(sx_old, x_old);
 #if (defined WARPX_DIM_3D)
         // j_old leftmost grid point in y that the particle touches
         // sy_old shape factor along y for the centering of each current
-        const int j_old = compute_shape_factor<depos_order>(sy_old, y_old);
+        const int j_old = compute_shape_factor(sy_old, y_old);
 #endif
         // k_old leftmost grid point in z that the particle touches
         // sz_old shape factor along z for the centering of each current
-        const int k_old = compute_shape_factor<depos_order>(sz_old, z_old);
+        const int k_old = compute_shape_factor(sz_old, z_old);
 
         // Deposit current into jx_arr, jy_arr and jz_arr
 
