@@ -1371,6 +1371,11 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     positions `x` greater than `0`, and those having velocity `uz` less than 10,
     will be dumped.
 
+* ``amrex.async_out`` (`0` or `1`) optional (default `0`)
+    Whether to use asynchronous IO when writing plotfiles. This only has an effect
+    when using the AMReX plotfile format. Please see :doc:`../visualization/visualization`
+    for more information.
+
 Back-Transformed Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
