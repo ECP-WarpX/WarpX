@@ -8,6 +8,8 @@
 #ifndef WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
 #define WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
 
+#include "Utils/WarpXConst.H"
+
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
@@ -15,7 +17,6 @@
 #include <algorithm>
 #include <array>
 
-#include "Utils/WarpXConst.H"
 
 /**
  * This struct contains only static functions to initialize the stencil coefficients
