@@ -28,12 +28,8 @@ namespace {
 }
 
 amrex::AMReX*
-warpx_amrex_init(int& argc, char**& argv)
+warpx_amrex_init(int& argc, char**& argv, bool const build_parm_parse, MPI_Comm const mpi_comm)
 {
-    // note: AMReX defines a placeholder/"mock-up" for MPI_COMM_WORLD in serial builds
-    bool const build_parm_parse = true; // AMReX' default
-    MPI_Comm const mpi_comm = MPI_COMM_WORLD; // AMReX' default
-
     return amrex::Initialize(
         argc,
         argv,

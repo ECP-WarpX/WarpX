@@ -435,4 +435,12 @@ GalileanAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
     field_data.BackwardTransform(*current[1], Idx::Jy, 0);
     field_data.BackwardTransform(*current[2], Idx::Jz, 0);
 }
+
+void
+GalileanAlgorithm::VayDeposition (SpectralFieldData& field_data,
+                                  std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+{
+    amrex::Abort("Vay deposition not implemented for Galilean PSATD");
+}
+
 #endif // WARPX_USE_PSATD
