@@ -53,7 +53,7 @@ options are:
     * ``USE_OMP=TRUE`` or ``FALSE``: Whether to compile with OpenMP support.
     * ``USE_GPU=TRUE`` or ``FALSE``: Whether to compile for Nvidia GPUs (requires CUDA).
     * ``USE_OPENPMD=TRUE`` or ``FALSE``: Whether to support openPMD for I/O (requires openPMD-api).
-    * ``MPI_THREAD_MULTIPLE=TRUE`` or ``FALSE``: Whether to initialize MPI with thread multiple support. Required to use asynchronous IO with more than 64 MPI tasks.
+    * ``MPI_THREAD_MULTIPLE=TRUE`` or ``FALSE``: Whether to initialize MPI with thread multiple support. Required to use asynchronous IO with more than ``amrex.async_out_nfiles`` (by default, 64) MPI tasks. Please see :doc:`../visualization/visualization` for more information.
 
 For a description of these different options, see the `corresponding page <https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html>`__ in the AMReX documentation.
 
