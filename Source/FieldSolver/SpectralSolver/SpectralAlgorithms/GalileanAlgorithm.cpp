@@ -243,4 +243,12 @@ void GalileanAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spe
         });
     }
 }
+
+void
+GalileanAlgorithm::VayDeposition (SpectralFieldData& field_data,
+                                  std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+{
+    amrex::Abort("Vay deposition not implemented for Galilean PSATD");
+}
+
 #endif // WARPX_USE_PSATD
