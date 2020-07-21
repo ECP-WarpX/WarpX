@@ -606,7 +606,7 @@ WarpX::ReadParameters ()
         pp.query("noy", noy);
         pp.query("noz", noz);
 
-        pp.query("galerkin_scheme",galerkin_interpolation)
+        pp.query("galerkin_scheme",galerkin_interpolation);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox == noy and nox == noz ,
             "warpx.nox, noy and noz must be equal");
