@@ -812,21 +812,21 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
         for (int k=0; k<=depos_order; k++) {
             for (int j=0; j<=depos_order; j++) {
 
-                amrex::Real syn_szn = sy_new[j] * sz_new[k];
-                amrex::Real syo_szn = sy_old[j] * sz_new[k];
-                amrex::Real syn_szo = sy_new[j] * sz_old[k];
-                amrex::Real syo_szo = sy_old[j] * sz_old[k];
+                amrex::Real const syn_szn = sy_new[j] * sz_new[k];
+                amrex::Real const syo_szn = sy_old[j] * sz_new[k];
+                amrex::Real const syn_szo = sy_new[j] * sz_old[k];
+                amrex::Real const syo_szo = sy_old[j] * sz_old[k];
 
                 for (int i=0; i<=depos_order; i++) {
 
-                    amrex::Real sxn_syn_szn = sx_new[i] * syn_szn;
-                    amrex::Real sxo_syn_szn = sx_old[i] * syn_szn;
-                    amrex::Real sxn_syo_szn = sx_new[i] * syo_szn;
-                    amrex::Real sxo_syo_szn = sx_old[i] * syo_szn;
-                    amrex::Real sxn_syn_szo = sx_new[i] * syn_szo;
-                    amrex::Real sxo_syn_szo = sx_old[i] * syn_szo;
-                    amrex::Real sxn_syo_szo = sx_new[i] * syo_szo;
-                    amrex::Real sxo_syo_szo = sx_old[i] * syo_szo;
+                    amrex::Real const sxn_syn_szn = sx_new[i] * syn_szn;
+                    amrex::Real const sxo_syn_szn = sx_old[i] * syn_szn;
+                    amrex::Real const sxn_syo_szn = sx_new[i] * syo_szn;
+                    amrex::Real const sxo_syo_szn = sx_old[i] * syo_szn;
+                    amrex::Real const sxn_syn_szo = sx_new[i] * syn_szo;
+                    amrex::Real const sxo_syn_szo = sx_old[i] * syn_szo;
+                    amrex::Real const sxn_syo_szo = sx_new[i] * syo_szo;
+                    amrex::Real const sxo_syo_szo = sx_old[i] * syo_szo;
 
                     // Jx
                     amrex::Gpu::Atomic::Add(&jx_arr(lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k),
