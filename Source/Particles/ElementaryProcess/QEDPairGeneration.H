@@ -109,7 +109,6 @@ public:
         constexpr ParticleReal me = PhysConst::m_e;
         constexpr ParticleReal one_over_me = 1._prt/me;
 
-        const ParticleReal w = src.m_rdata[PIdx::w][i_src];
         const ParticleReal ux = src.m_rdata[PIdx::ux][i_src];
         const ParticleReal uy = src.m_rdata[PIdx::uy][i_src];
         const ParticleReal uz = src.m_rdata[PIdx::uz][i_src];
@@ -134,8 +133,6 @@ public:
         const auto py = uy*me;
         const auto pz = uz*me;
 
-        auto e_w = 0.0_rt;
-        auto p_w = 0.0_rt;
         auto e_px = 0.0_rt;
         auto e_py = 0.0_rt;
         auto e_pz = 0.0_rt;
@@ -146,21 +143,17 @@ public:
         //Despite the names of the variables, positrons and electrons
         //can be exchanged, since the physical process is completely
         //symmetric with respect to this exchange.
-        m_generate_functor.operator()<1>(
+        m_generate_functor(
             px, py, pz,
             ex, ey, ez,
             bx, by, bz,
-            w,
-            &e_px, &e_py, &e_pz,
-            &p_px, &p_py, &p_pz,
-            &e_w, &p_w);
+            e_px, e_py, e_pz,
+            p_px, p_py, p_pz);
 
-        dst1.m_rdata[PIdx::w][i_dst1] = e_w;
         dst1.m_rdata[PIdx::ux][i_dst1] = e_px*one_over_me;
         dst1.m_rdata[PIdx::uy][i_dst1] = e_py*one_over_me;
         dst1.m_rdata[PIdx::uz][i_dst1] = e_pz*one_over_me;
 
-        dst2.m_rdata[PIdx::w][i_dst2] = p_w;
         dst2.m_rdata[PIdx::ux][i_dst2] = p_px*one_over_me;
         dst2.m_rdata[PIdx::uy][i_dst2] = p_py*one_over_me;
         dst2.m_rdata[PIdx::uz][i_dst2] = p_pz*one_over_me;

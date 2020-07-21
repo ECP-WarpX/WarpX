@@ -8,6 +8,7 @@
 #define WARPX_breit_wheeler_engine_wrapper_h_
 
 #include "QedWrapperCommons.H"
+#include "QedChiFunctions.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Vector.H>
@@ -48,7 +49,7 @@ struct PicsarBreitWheelerCtrl
 {
     BW_dndt_table_params dndt_params;
     BW_pair_prod_table_params pair_prod_params;
-}
+};
 
 // Functors ==================================
 
@@ -94,15 +95,14 @@ class BreitWheelerEvolveOpticalDepth
 {
 public:
 
-    BreitWheelerEvolveOpticalDepth () = default;
-
     /**
      * Constructor acquires a reference to control parameters and
      * lookup tables data.
      * lookup_table uses non-owning vectors under the hood. So no new data
      * allocations should be triggered on GPU
      */
-    BreitWheelerEvolveOpticalDepth(BW_pair_prod_table_view table_view):
+    BreitWheelerEvolveOpticalDepth(
+        BW_dndt_table_view table_view):
         m_table_view{table_view}{};
 
     /**
@@ -110,8 +110,8 @@ public:
      * @param[in] energy energy of the photon (SI units)
      * @param[in] chi_phot quantum parameter of the photon
      * @param[in] dt timestep (SI units)
-     * @param[in,out] opt_depth optical depth of the photon. It is modified by the method.
-     * @return a flag which is 1 if optical depth becomes negative (i.e. a pair has to be generated).
+     * @param[in,out] opt_depth optical depth of the photon.
+     * @return a flag which is 1 if chi_phot was out of table
      */
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
@@ -122,14 +122,13 @@ public:
         namespace pxr_p = picsar::multi_physics::phys;
         namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
 
-        const auto is_table_out =
-        pxr_bw::evolve_optical_depth<
+        const auto is_out = pxr_bw::evolve_optical_depth<
             amrex::Real,
             BW_dndt_table_view,
             pxr_p::unit_system::SI>(
                 energy, chi_phot, dt, opt_depth, m_table_view);
 
-        return is_table_out;
+        return is_out;
     }
 
 private:
@@ -149,28 +148,27 @@ public:
      * lookup_table uses non-owning vectors under the hood. So no new data
      * allocations should be triggered on GPU
      */
-    BreitWheelerGeneratePairs(BW_pair_prod_table_view table_view):
+    BreitWheelerGeneratePairs (BW_pair_prod_table_view table_view):
         m_table_view{table_view}{};
 
     /**
-     * Generates sampling (template parameter) pairs according to Breit Wheeler process.
+     * Generates pairs according to Breit Wheeler process.
      * It can be used on GPU.
      * @param[in] px,py,pz momentum components of the photon (SI units)
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
-     * @param[in] weight of the photon (code units)
-     * @param[out] e_px,e_py,e_pz momenta of generated electrons. Each array should have size=sampling (SI units)
-     * @param[out] p_px,p_py,p_pz momenta of generated positrons. Each array should have size=sampling (SI units)
-     * @param[out] e_weight,p_weight weight of the generated particles Each array should have size=sampling (code units).
+     * @param[out] e_px,e_py,e_pz momentum components of generated electron (SI units)
+     * @param[out] p_px,p_py,p_pz momentum components of generated positron (SI units)
+     * @return a flag which is 1 if chi_photon was out of table
      */
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
-    void operator()(
+    int operator()(
     amrex::Real px, amrex::Real py, amrex::Real pz,
     amrex::Real ex, amrex::Real ey, amrex::Real ez,
     amrex::Real bx, amrex::Real by, amrex::Real bz,
-    amrex::Real* e_px, amrex::Real* e_py, amrex::Real* e_pz,
-    amrex::Real* p_px, amrex::Real* p_py, amrex::Real* p_pz) const noexcept
+    amrex::Real& e_px, amrex::Real& e_py, amrex::Real& e_pz,
+    amrex::Real& p_px, amrex::Real& p_py, amrex::Real& p_pz) const noexcept
     {
         namespace pxr_m = picsar::multi_physics::math;
         namespace pxr_p = picsar::multi_physics::phys;
@@ -185,14 +183,23 @@ public:
         auto momentum_ele = pxr_m::vec3<amrex::Real>();
         auto momentum_pos = pxr_m::vec3<amrex::Real>();
 
-        const auto is_table_out = pxr_bw::generate_breit_wheeler_pairs<
+        const auto is_out = pxr_bw::generate_breit_wheeler_pairs<
             amrex::Real,
             BW_pair_prod_table_view,
             pxr_p::unit_system::SI>(
                 chi_photon, momentum_photon,
-                unf_zero_one_minus_epsi,
+                rand_zero_one_minus_epsi,
                 m_table_view,
                 momentum_ele, momentum_pos);
+
+        e_px = momentum_ele[0];
+        e_py = momentum_ele[1];
+        e_pz = momentum_ele[2];
+        p_px = momentum_pos[0];
+        p_py = momentum_pos[1];
+        p_pz = momentum_pos[2];
+
+        return is_out;
     }
 
 private:
@@ -241,7 +248,7 @@ public:
 
     /**
      * Init lookup tables from raw binary data.
-     * @param[in] raw_data a Vector of char
+     * @param[in] raw_data a vector of char
      * @return true if it succeeds, false if it cannot parse raw_data
      */
     bool init_lookup_tables_from_raw_data (const std::vector<char>& raw_data);

@@ -86,7 +86,7 @@ public:
     PhotonEmissionTransformFunc (
         QuantumSynchrotronGetOpticalDepth opt_depth_functor,
         int const opt_depth_runtime_comp,
-        QuantumSynchrotronGeneratePhotonAndUpdateMomentum const emission_functor,
+        QuantumSynchrotronPhotonEmission const emission_functor,
         const WarpXParIter& a_pti, int lev, int ngE,
         amrex::FArrayBox const& exfab,
         amrex::FArrayBox const& eyfab,
@@ -115,7 +115,6 @@ public:
         constexpr ParticleReal me = PhysConst::m_e;
         constexpr ParticleReal one_over_me = 1._prt/me;
 
-        const ParticleReal w = src.m_rdata[PIdx::w][i_src];
         const ParticleReal ux = src.m_rdata[PIdx::ux][i_src];
         const ParticleReal uy = src.m_rdata[PIdx::uy][i_src];
         const ParticleReal uz = src.m_rdata[PIdx::uz][i_src];
@@ -142,25 +141,21 @@ public:
         auto py = uy*me;
         auto pz = uz*me;
 
-        auto g_w = 0.0_rt;
         auto g_px = 0.0_rt;
         auto g_py = 0.0_rt;
         auto g_pz = 0.0_rt;
 
-        m_emission_functor.operator()<1>(
-            &px, &py, &pz,
+        m_emission_functor(
+            px, py, pz,
             ex, ey, ez,
             bx, by, bz,
-            w,
-            &g_px, &g_py, &g_pz,
-            &g_w);
+            g_px, g_py, g_pz);
 
         // Then convert back to WarpX convention.
         src.m_rdata[PIdx::ux][i_src] = px*one_over_me;
         src.m_rdata[PIdx::uy][i_src] = py*one_over_me;
         src.m_rdata[PIdx::uz][i_src] = pz*one_over_me;
 
-        dst.m_rdata[PIdx::w][i_dst] = g_w;
         dst.m_rdata[PIdx::ux][i_dst] = g_px*one_over_me;
         dst.m_rdata[PIdx::uy][i_dst] = g_py*one_over_me;
         dst.m_rdata[PIdx::uz][i_dst] = g_pz*one_over_me;
@@ -173,7 +168,7 @@ public:
 private:
     const QuantumSynchrotronGetOpticalDepth
         m_opt_depth_functor;  /*!< A copy of the functor to initialize the optical depth of the source species. */
-    const QuantumSynchrotronGeneratePhotonAndUpdateMomentum
+    const QuantumSynchrotronPhotonEmission
         m_emission_functor;  /*!< A copy of the functor to generate photons. It contains only pointers to the lookup tables.*/
     const int m_opt_depth_runtime_comp = 0;  /*!< Index of the optical depth component of source species*/
 

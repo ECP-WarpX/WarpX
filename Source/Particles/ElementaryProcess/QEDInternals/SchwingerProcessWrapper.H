@@ -40,6 +40,7 @@ getSchwingerProductionNumber (const amrex::Real dV, const amrex::Real dt,
               const amrex::Real Bx, const amrex::Real By, const amrex::Real Bz,
               const amrex::Real PoissonToGaussianThreshold)
 {
+    using namespace amrex;
     namespace pxr_p = picsar::multi_physics::phys;
     namespace pxr_sh = picsar::multi_physics::phys::schwinger;
 

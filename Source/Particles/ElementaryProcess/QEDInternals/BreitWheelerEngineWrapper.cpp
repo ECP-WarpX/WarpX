@@ -1,4 +1,4 @@
-_rt, /* Copyright 2019 Luca Fedeli, Maxence Thevenet
+/* Copyright 2019 Luca Fedeli, Maxence Thevenet
  *
  * This file is part of WarpX.
  *
@@ -66,11 +66,11 @@ BreitWheelerEngine::init_lookup_tables_from_raw_data (
     const auto raw_dndt_table = vector<char>{
         raw_iter, raw_iter+size_first};
 
-    const auto raw_second_table = vector<char>{
+    const auto raw_pair_prod_table = vector<char>{
         raw_iter+size_first, raw_data.end()};
 
     m_dndt_table = BW_dndt_table{raw_dndt_table};
-    m_pair_prod_table = BW_pair_prod_table{raw_second_table};
+    m_pair_prod_table = BW_pair_prod_table{raw_pair_prod_table};
 
     if (!m_dndt_table.is_init() || !m_pair_prod_table.is_init())
         return false;
@@ -91,19 +91,19 @@ void BreitWheelerEngine::init_builtin_tables()
 vector<char> BreitWheelerEngine::export_lookup_tables_data () const
 {
    if(!m_lookup_tables_initialized)
-        return res;
+        return vector<char>{};
 
     const auto data_dndt = m_dndt_table.serialize();
-    const auto m_pair_prod_table = m_pair_prod_table.serialize();
+    const auto data_pair_prod = m_pair_prod_table.serialize();
 
     const uint64_t size_fist = data_dndt.size();
 
     vector<char> res{};
-    pxr_sr.put_in(size_fist, res);
+    pxr_sr::put_in(size_fist, res);
     for (const auto& tmp : data_dndt)
-        pxr_sr.put_in(tmp, res);
-    for (const auto& tmp : data_dndt)
-        pxr_sr.put_in(tmp, res);
+        pxr_sr::put_in(tmp, res);
+    for (const auto& tmp : data_pair_prod)
+        pxr_sr::put_in(tmp, res);
 
     return res;
 }
@@ -111,13 +111,11 @@ vector<char> BreitWheelerEngine::export_lookup_tables_data () const
 PicsarBreitWheelerCtrl
 BreitWheelerEngine::get_default_ctrl() const
 {
-    return PicsarBreitWheelerCtrl();
-}
-
-const PicsarBreitWheelerCtrl&
-BreitWheelerEngine::get_ref_ctrl() const
-{
-    return m_innards.ctrl;
+    namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
+    return PicsarBreitWheelerCtrl{
+        pxr_bw::default_dndt_lookup_table_params<amrex::Real>,
+        pxr_bw::default_pair_prod_lookup_table_params<amrex::Real>
+    };
 }
 
 void BreitWheelerEngine::compute_lookup_tables (
@@ -128,7 +126,7 @@ void BreitWheelerEngine::compute_lookup_tables (
     m_pair_prod_table.generate(ctrl.pair_prod_params);
     m_lookup_tables_initialized = true;
 #else
-    amrex::Abort("WarpX must be compiled with table generation support!");
+    amrex::Abort("WarpX was not compiled with table generation support!");
 #endif
 }
 

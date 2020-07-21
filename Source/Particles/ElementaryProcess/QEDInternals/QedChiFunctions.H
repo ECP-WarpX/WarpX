@@ -34,7 +34,7 @@ namespace QedUtils{
         amrex::Real bx, amrex::Real by, amrex::Real bz)
     {
         namespace pxr_p = picsar::multi_physics::phys;
-        return pxr_p::chi_photon<amrex::Real, unit_system::SI>(
+        return pxr_p::chi_photon<amrex::Real, pxr_p::unit_system::SI>(
             px, py, pz, ex, ey, ez, bx, by, bz);
     }
 
@@ -48,14 +48,14 @@ namespace QedUtils{
     */
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
-    amrex::Real chi_lepton(
+    amrex::Real chi_ele_pos(
         amrex::Real px, amrex::Real py, amrex::Real pz,
         amrex::Real ex, amrex::Real ey, amrex::Real ez,
         amrex::Real bx, amrex::Real by, amrex::Real bz)
     {
             namespace pxr_p = picsar::multi_physics::phys;
-            return pxr_p::chi_ele_pos<amrex::Real, unit_system::SI>(
-            px, py, pz, ex, ey, ez, bx, by, bz);
+            return pxr_p::chi_ele_pos<amrex::Real, pxr_p::unit_system::SI>(
+                px, py, pz, ex, ey, ez, bx, by, bz);
     }
     //_________
 };
