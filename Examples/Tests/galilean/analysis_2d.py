@@ -24,12 +24,11 @@ import checksumAPI
 
 filename = sys.argv[1]
 
-# Parse test name and check if current_correction (psatd.current_correction=1) is applied
+# Parse test name
+averaged = True if re.search( 'averaged', filename ) else False
 current_correction = True if re.search( 'current_correction', filename ) else False
 
 ds = yt.load( filename )
-
-averaged = True if re.search( 'averaged', filename ) else False
 
 Ex= ds.index.grids[0]['boxlib', 'Ex'].squeeze().v
 Ey= ds.index.grids[0]['boxlib', 'Ey'].squeeze().v
@@ -58,13 +57,12 @@ print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
 
-# Check relative L-infinity spatial norm of div(E) - rho/epsilon_0 when
-# current correction (psatd.current_correction=1) is applied
+# Check charge conservation (relative L-infinity norm of error) with current correction
 if current_correction:
     rho  = ds.index.grids[0]['boxlib', 'rho' ].squeeze().v
     divE = ds.index.grids[0]['boxlib', 'divE'].squeeze().v
     error_rel = np.amax( np.abs( divE - rho/scc.epsilon_0 ) ) / np.amax( np.abs( rho/scc.epsilon_0 ) )
-    tolerance = 1.e-9
+    tolerance = 1e-9
     print("Check charge conservation:")
     print("error_rel = {}".format(error_rel))
     print("tolerance = {}".format(tolerance))
