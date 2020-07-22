@@ -114,6 +114,7 @@ GalileanAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 
             // Update E (equation (11b) or its rho-free formulation):
             if (update_with_rho) {
+
                 // Ex
                 fields(i,j,k,Idx::Ex) = T2*C*Ex_old
                             + T2*S_ck*c2*I*(ky*Bz_old - kz*By_old)
@@ -127,8 +128,10 @@ GalileanAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                             + T2*S_ck*c2*I*(kx*By_old - ky*Bx_old)
                             + X4*Jz - I*(X2*rho_new - T2*X3*rho_old)*kz;
             } else {
+
                 Complex k_dot_J = kx * Jx + ky * Jy + kz * Jz;
                 Complex k_dot_E = kx * Ex_old + ky * Ey_old + kz * Ez_old;
+
                 // Ex
                 fields(i,j,k,Idx::Ex) = T2 * C * Ex_old + I * T2 * S_ck * c2 * (ky * Bz_old - kz * By_old)
                     + X4 * Jx + X2 * k_dot_E * kx + X3 * k_dot_J * kx;
@@ -139,6 +142,7 @@ GalileanAlgorithm::pushSpectralFields (SpectralFieldData& f) const
                 fields(i,j,k,Idx::Ez) = T2 * C * Ez_old + I * T2 * S_ck * c2 * (kx * By_old - ky * Bx_old)
                     + X4 * Jz + X2 * k_dot_E * kz + X3 * k_dot_J * kz;
             }
+
             // Update B (equation (11a) with X1 rescaled by theta/(epsilon_0*c**2*k**2)):
             // Bx
             fields(i,j,k,Idx::Bx) = T2*C*Bx_old - T2*S_ck*I*(ky*Ez_old - kz*Ey_old) + X1*I*(ky*Jz - kz*Jy);
@@ -198,7 +202,6 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
 #else
                 std::pow(modified_kz[j], 2));
 #endif
-
             // Physical constants c, c**2, and epsilon_0, and imaginary unit
             constexpr Real c    = PhysConst::c;
             constexpr Real c2   = c*c;
@@ -265,11 +268,14 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
                         X2(i,j,k) = T2(i,j,k) * (X2_old - X3_old) / k2;
                         X3(i,j,k) = I * X2_old * (T2(i,j,k) - 1._rt) / (ep0 * k2 * kv);
                     }
+
                     // X4 multiplies J in the update equation for E
                     X4(i,j,k) = I * kv * X1(i,j,k) - T2(i,j,k) * S_ck(i,j,k) / ep0;
                 }
+
                 // Limits for nu=0
                 if (nu == 0.) {
+
                     // X1 multiplies i*(k \times J) in the update equation for B
                     X1(i,j,k) = (1._rt - C(i,j,k)) / (ep0 * c2 * k2);
 
@@ -284,11 +290,14 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
                         X2(i,j,k) = (1._rt - C(i,j,k)) / k2;
                         X3(i,j,k) = (S_ck(i,j,k) / dt - 1._rt) * dt / (ep0 * k2);
                     }
+
                     // Coefficient multiplying J in update equation for E
                     X4(i,j,k) = - S_ck(i,j,k) / ep0;
                 }
+
                 // Limits for nu=1
                 if (nu == 1.) {
+
                     // X1 multiplies i*(k \times J) in the update equation for B
                     X1(i,j,k) = (1._rt - T2aux*T2aux + 2._rt * I * ckdt) / (4._rt * ep0 * c2 * k2);
 
@@ -306,12 +315,15 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
                         X3(i,j,k) = (2._rt * ckdt- I * T2aux * T2aux + 4._rt * I * T2aux - 3._rt * I)
                             / (4._rt * ep0 * ck * k2);
                     }
+
                     // Coefficient multiplying J in update equation for E
                     X4(i,j,k) = I * (- 1._rt + T2aux * T2aux + 2._rt * I * ckdt) / (4._rt * ep0 * ck);
                 }
             }
+
             // Limits for k=0
             else {
+
                 // Limits of cos(c*k*dt) and sin(c*k*dt)/(c*k)
                 C(i,j,k) = 1._rt;
                 S_ck(i,j,k) = dt;
@@ -330,6 +342,7 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
                     X2(i,j,k) =   c2 * dt2 * 0.5_rt;
                     X3(i,j,k) = - c2 * dt3 / (6._rt * ep0);
                 }
+
                 // Coefficient multiplying J in update equation for E
                 X4(i,j,k) = -dt / ep0;
 
