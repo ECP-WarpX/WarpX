@@ -270,7 +270,7 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
                 }
                 // Limits for nu=0
                 if (nu == 0.) {
-                    // X1 multiplies (k \times J) in the update equation for B
+                    // X1 multiplies i*(k \times J) in the update equation for B
                     X1(i,j,k) = (1._rt - C(i,j,k)) / (ep0 * c2 * k2);
 
                     if (update_with_rho) {
@@ -289,7 +289,7 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
                 }
                 // Limits for nu=1
                 if (nu == 1.) {
-                    // X1 multiplies (k \times J) in the update equation for B
+                    // X1 multiplies i*(k \times J) in the update equation for B
                     X1(i,j,k) = (1._rt - T2aux*T2aux + 2._rt * I * ckdt) / (4._rt * ep0 * c2 * k2);
 
                     if (update_with_rho) {
@@ -316,7 +316,7 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
                 C(i,j,k) = 1._rt;
                 S_ck(i,j,k) = dt;
 
-                // X1 multiplies (k \times J) in the update equation for B
+                // X1 multiplies i*(k \times J) in the update equation for B
                 X1(i,j,k) = dt2 / (2._rt * ep0);
 
                 if (update_with_rho) {
