@@ -234,34 +234,34 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
                 S_ck(i,j,k) = std::sin(ckdt) / ck;
 
                 // See equation (12b)
-                const Real    nu      = kv / ck;
-                const Complex th      = amrex::exp(  I * 0.5_rt * kv * dt);
-                const Complex th_star = amrex::exp(- I * 0.5_rt * kv * dt);
+                const Real    nu         = kv / ck;
+                const Complex theta      = amrex::exp(  I * 0.5_rt * kv * dt);
+                const Complex theta_star = amrex::exp(- I * 0.5_rt * kv * dt);
 
                 // This is exp(i*(k \dot v_gal)*dt)
-                T2(i,j,k) = th * th;
+                T2(i,j,k) = theta * theta;
 
                 if ( (nu != 1.) && (nu != 0.) ) {
 
                     // x1 is the coefficient chi_1 in equation (12c)
                     Complex x1 = 1._rt / (1._rt - nu*nu)
-                        * (th_star - C(i,j,k) * th + I * kv * S_ck(i,j,k) * th);
+                        * (theta_star - C(i,j,k) * theta + I * kv * S_ck(i,j,k) * theta);
 
                     // X1 multiplies i*(k \times J) in the update equation for B
-                    X1(i,j,k) = th * x1 / (ep0 * c2 * k2);
+                    X1(i,j,k) = theta * x1 / (ep0 * c2 * k2);
 
                     if (update_with_rho) {
                         // X2 multiplies rho_new in the update equation for E
                         // X3 multiplies rho_old in the update equation for E
-                        X2(i,j,k) = (x1 - th * (1._rt - C(i,j,k))) / (th_star - th) / (ep0 * k2);
-                        X3(i,j,k) = (x1 - th_star * (1._rt - C(i,j,k))) / (th_star - th) / (ep0 * k2);
+                        X2(i,j,k) = (x1 - theta * (1._rt - C(i,j,k))) / (theta_star - theta) / (ep0 * k2);
+                        X3(i,j,k) = (x1 - theta_star * (1._rt - C(i,j,k))) / (theta_star - theta) / (ep0 * k2);
                     } else {
                         // X2_old is the coefficient chi_2 in equation (12d)
                         // X3_old is the coefficient chi_3 in equation (12d)
                         // X2 multiplies (k \dot E) in the update equation for E
                         // X3 multiplies (k \dot J) in the update equation for E
-                        X2_old = (x1 - th * (1._rt - C(i,j,k))) / (th_star - th);
-                        X3_old = (x1 - th_star * (1._rt - C(i,j,k))) / (th_star - th);
+                        X2_old = (x1 - theta * (1._rt - C(i,j,k))) / (theta_star - theta);
+                        X3_old = (x1 - theta_star * (1._rt - C(i,j,k))) / (theta_star - theta);
                         X2(i,j,k) = T2(i,j,k) * (X2_old - X3_old) / k2;
                         X3(i,j,k) = I * X2_old * (T2(i,j,k) - 1._rt) / (ep0 * k2 * kv);
                     }
