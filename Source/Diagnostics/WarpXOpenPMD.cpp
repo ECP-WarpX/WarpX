@@ -750,8 +750,8 @@ WarpXParticleCounter::WarpXParticleCounter(WarpXParticleContainer* pc)
       long numParticles = 0; // numParticles in this processor
 
       for (WarpXParIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
-    auto numParticleOnTile = pti.numParticles();
-    numParticles += numParticleOnTile;
+          auto numParticleOnTile = pti.numParticles();
+          numParticles += numParticleOnTile;
       }
 
       unsigned long long offset=0; // offset of this level
@@ -789,14 +789,18 @@ WarpXParticleCounter::GetParticleOffsetOfProcessor(const long& numParticles,
 
 
 {
-      std::vector<long> result(m_MPISize,  0);
-      amrex::ParallelGather::Gather (numParticles, result.data(), -1, amrex::ParallelDescriptor::Communicator());
+    offset = 0;
+#if defined(AMREX_USE_MPI)
+    std::vector<long> result(m_MPISize, 0);
+    amrex::ParallelGather::Gather (numParticles, result.data(), -1, amrex::ParallelDescriptor::Communicator());
 
-      sum = 0;
-      offset = 0;
-      for (int i=0;  i<result.size();  i++) {
-    sum +=  result[i];
-    if (i<m_MPIRank)
-      offset +=  result[i];
-      }
+    sum = 0;
+    for (int i=0; i<result.size(); i++) {
+        sum += result[i];
+        if (i<m_MPIRank)
+            offset += result[i];
+    }
+#else
+    sum = numParticles;
+#endif
 }
