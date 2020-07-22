@@ -3,6 +3,41 @@ name: Ubuntu build
 on: [push, pull_request]
 
 jobs:
+# Ref.:
+#   https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/ubuntu18.04/10.1/base/Dockerfile
+#   https://github.com/ComputationalRadiationPhysics/picongpu/blob/0.5.0/share/picongpu/dockerfiles/ubuntu-1604/Dockerfile
+#   https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/
+  build_nvcc:
+    name: NVCC 11.0.2 SP [Linux]
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: install dependencies
+      run: |
+        export DEBIAN_FRONTEND=noninteractive
+        sudo apt-get -qqq update
+        sudo apt-get install -y build-essential ca-certificates cmake gnupg libopenmpi-dev openmpi-bin pkg-config wget
+        sudo wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+        sudo apt-key add 7fa2af80.pub
+        echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
+        echo "deb https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64 /" | sudo tee /etc/apt/sources.list.d/nvidia-ml.list
+        sudo apt-get update
+        sudo apt-get install -y cuda-command-line-tools-11-0 cuda-compiler-11-0 cuda-cupti-dev-11-0 cuda-minimal-build-11-0 cuda-nvml-dev-11-0 cuda-nvtx-11-0 libcurand-dev-11-0
+        sudo ln -s cuda-11.0 /usr/local/cuda
+        sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
+        sudo chmod a+x /usr/local/bin/cmake-easyinstall
+        export CEI_SUDO="sudo"
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+    - name: build WarpX
+      run: |
+        export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
+        which nvcc || echo "nvcc not in PATH!"
+
+        mkdir build_sp && cd build_sp
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_COMPUTE=CUDA -DCUDA_ARCH=6.0 -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single -DCUDA_ERROR_CAPTURE_THIS=ON
+        make -j 2
+
 # Ref.: https://github.com/rscohn2/oneapi-ci
 # intel-basekit intel-hpckit are too large in size
   build_icc:
@@ -32,13 +67,13 @@ jobs:
         export CC=$(which icc)
 
         mkdir build_dp && cd build_dp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_MPI=OFF -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF
         make -j 2
 
         cd ..
 
         mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DENABLE_MPI=OFF -DWarpX_COMPUTE=OMP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DENABLE_DP=OFF -DENABLE_DP_PARTICLES=OFF
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single
         make -j 2
 
   build_dpcc:
@@ -46,8 +81,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-      with:
-        path: 'warpx_directory/WarpX'
     - name: install dependencies
       shell: bash
       run: |
@@ -74,12 +107,12 @@ jobs:
     - name: build WarpX
       shell: bash
       run: |
-        set -ex
-        cd warpx_directory
-        git clone --depth 1 https://github.com/ECP-WarpX/picsar.git
-        git clone --depth 1 --branch development https://github.com/AMReX-Codes/amrex.git
-        cd WarpX
         set +e
         source /opt/intel/inteloneapi/setvars.sh
         set -e
-        make -j 2 USE_DPCPP=TRUE USE_MPI=FALSE USE_OPENPMD=TRUE USE_OMP=FALSE PRECISION=FLOAT USE_SINGLE_PRECISION_PARTICLES=TRUE
+        export CXX=$(which dpcpp)
+        export CC=$(which clang)
+
+        mkdir build_sp && cd build_sp
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=DPCPP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single
+        make -j 2

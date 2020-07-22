@@ -186,14 +186,7 @@ ifeq ($(USE_RZ),TRUE)
 endif
 
 ifeq ($(USE_HDF5),TRUE)
-    HDF5_HOME ?= NOT_SET
-    ifneq ($(HDF5_HOME),NOT_SET)
-        VPATH_LOCATIONS += $(HDF5_HOME)/include
-        INCLUDE_LOCATIONS += $(HDF5_HOME)/include
-        LIBRARY_LOCATIONS += $(HDF5_HOME)/lib
-    endif
     DEFINES += -DWARPX_USE_HDF5
-    libraries += -lhdf5 -lz
 endif
 
 # job_info support

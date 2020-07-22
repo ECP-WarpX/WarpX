@@ -125,27 +125,27 @@ class PGroup(object):
     gaminv = property(getgaminv)
 
     def getex(self):
-        return _libwarpx.get_particle_Ex(self.ispecie, self.level)[self.igroup]
+        raise Exception('Particle E fields not supported')
     ex = property(getex)
 
     def getey(self):
-        return _libwarpx.get_particle_Ey(self.ispecie, self.level)[self.igroup]
+        raise Exception('Particle E fields not supported')
     ey = property(getey)
 
     def getez(self):
-        return _libwarpx.get_particle_Ez(self.ispecie, self.level)[self.igroup]
+        raise Exception('Particle E fields not supported')
     ez = property(getez)
 
     def getbx(self):
-        return _libwarpx.get_particle_Bx(self.ispecie, self.level)[self.igroup]
+        raise Exception('Particle B fields not supported')
     bx = property(getbx)
 
     def getby(self):
-        return _libwarpx.get_particle_By(self.ispecie, self.level)[self.igroup]
+        raise Exception('Particle B fields not supported')
     by = property(getby)
 
     def getbz(self):
-        return _libwarpx.get_particle_Bz(self.ispecie, self.level)[self.igroup]
+        raise Exception('Particle B fields not supported')
     bz = property(getbz)
 
     def gettheta(self):

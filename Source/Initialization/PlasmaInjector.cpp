@@ -254,11 +254,6 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         parseDensity(pp);
         parseMomentum(pp);
     } else if (part_pos_s == "external_file") {
-#ifdef WARPX_DIM_RZ
-        amrex::Abort("The option of reading particle data from an external "
-                     "file has not been implemented nor tested in RZ geometry");
-#endif
-        pp.query("q_tot", q_tot); // optional
 #ifndef WARPX_USE_OPENPMD
         amrex::Abort("WarpX has to be compiled with USE_OPENPMD=TRUE to be able"
                      " to read the external openPMD file with species data");
@@ -266,6 +261,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         external_file = true;
         std::string str_injection_file;
         pp.get("injection_file", str_injection_file);
+        // optional parameters
+        pp.query("q_tot", q_tot);
+        pp.query("z_shift",z_shift);
 
 #ifdef WARPX_USE_OPENPMD
         if (ParallelDescriptor::IOProcessor()) {
@@ -327,8 +325,6 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
                 double const mass_unit = ps["mass"][openPMD::RecordComponent::SCALAR].unitSI();
                 mass = p_m * mass_unit;
             }
-
-            pp.query("z_shift",z_shift);
         } // IOProcessor
 
         // Broadcast charge and mass to non-IO processors
@@ -523,6 +519,14 @@ bool PlasmaInjector::insideBounds (Real x, Real y, Real z) const noexcept
     return (x < xmax and x >= xmin and
             y < ymax and y >= ymin and
             z < zmax and z >= zmin);
+}
+
+bool PlasmaInjector::overlapsWith (const amrex::XDim3& lo,
+                                   const amrex::XDim3& hi) const noexcept
+{
+    return ! (   (xmin > hi.x) || (xmax < lo.x)
+              || (ymin > hi.y) || (ymax < lo.y)
+              || (zmin > hi.z) || (zmax < lo.z) );
 }
 
 InjectorPosition*

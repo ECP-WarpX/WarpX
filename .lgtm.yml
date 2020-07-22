@@ -17,10 +17,10 @@ extraction:
       - unzip development.zip
       - mv amrex-development third-party/amrex
       - rm development.zip
-      - wget https://github.com/ECP-WarpX/picsar/archive/master.zip
-      - unzip master.zip
-      - mv picsar-master third-party/picsar
-      - rm master.zip
+      - wget https://github.com/ECP-WarpX/picsar/archive/development.zip
+      - unzip development.zip
+      - mv picsar-development third-party/picsar
+      - rm development.zip
     configure:
       command:
       - echo "Yeah"

@@ -32,7 +32,6 @@ WarpX::Evolve (int numsteps)
     WARPX_PROFILE("WarpX::Evolve()");
 
     Real cur_time = t_new[0];
-    static int last_plot_file_step = 0;
 
     if (do_compute_max_step_from_zmax) {
         computeMaxStepBoostAccelerator(geom[0]);
@@ -45,7 +44,6 @@ WarpX::Evolve (int numsteps)
         numsteps_max = std::min(istep[0]+numsteps, max_step);
     }
 
-    bool max_time_reached = false;
     Real walltime, walltime_start = amrex::second();
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
@@ -113,12 +111,16 @@ WarpX::Evolve (int numsteps)
             FillBoundaryB(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
             // E and B: enough guard cells to update Aux or call Field Gather in fp and cp
             // Need to update Aux on lower levels, to interpolate to higher levels.
+            if (fft_do_time_averaging)
+            {
+                FillBoundaryE_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+                FillBoundaryB_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+            }
 #ifndef WARPX_USE_PSATD
             FillBoundaryAux(guard_cells.ng_UpdateAux);
 #endif
             UpdateAuxilaryData();
         }
-
         if (do_subcycling == 0 || finest_level == 0) {
             OneStep_nosub(cur_time);
             // E : guard cells are up-to-date
@@ -162,6 +164,8 @@ WarpX::Evolve (int numsteps)
 
         cur_time += dt[0];
 
+        ShiftGalileanBoundary();
+
         if (do_back_transformed_diagnostics) {
             std::unique_ptr<MultiFab> cell_centered_data = nullptr;
             if (WarpX::do_back_transformed_fields) {
@@ -173,8 +177,6 @@ WarpX::Evolve (int numsteps)
         bool move_j = is_synchronized;
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
         // We might need to move j because we are going to make a plotfile.
-
-        ShiftGalileanBoundary();
 
         int num_moved = MoveWindow(move_j);
 
@@ -230,7 +232,6 @@ WarpX::Evolve (int numsteps)
         multi_diags->FilterComputePackFlush( step );
 
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
-            max_time_reached = true;
             break;
         }
 
@@ -288,14 +289,16 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 #endif
 
+// TODO
+// Apply current correction in Fourier space: for domain decomposition with local
+// FFTs over guard cells, apply this before calling SyncCurrent
 #ifdef WARPX_USE_PSATD
-    // Apply current correction in Fourier space
-    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
-    if ( fft_periodic_single_box == false ) {
-        // For domain decomposition with local FFT over guard cells,
-        // apply this before `SyncCurrent`, i.e. before exchanging guard cells for J
-        if ( do_current_correction ) CurrentCorrection();
-    }
+    if ( !fft_periodic_single_box && current_correction )
+        amrex::Abort("\nCurrent correction does not guarantee charge conservation with local FFTs over guard cells:\n"
+                     "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
+    if ( !fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) )
+        amrex::Abort("\nVay current deposition does not guarantee charge conservation with local FFTs over guard cells:\n"
+                     "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
 #endif
 
 #ifdef WARPX_QED
@@ -306,14 +309,12 @@ WarpX::OneStep_nosub (Real cur_time)
     SyncCurrent();
     SyncRho();
 
+// Apply current correction in Fourier space: for periodic single-box global FFTs
+// without guard cells, apply this after calling SyncCurrent
 #ifdef WARPX_USE_PSATD
-    // Apply current correction in Fourier space
-    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
-    if ( fft_periodic_single_box == true ) {
-        // For periodic, single-box FFT (FFT without guard cells)
-        // apply this after `SyncCurrent`, i.e. after exchanging guard cells for J
-        if ( do_current_correction ) CurrentCorrection();
-    }
+    if ( fft_periodic_single_box && current_correction ) CurrentCorrection();
+    if ( fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) )
+        VayDeposition();
 #endif
 
 
@@ -598,6 +599,8 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type)
     mypc->Evolve(lev,
                  *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                  *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
+                 *Efield_avg_aux[lev][0],*Efield_avg_aux[lev][1],*Efield_avg_aux[lev][2],
+                 *Bfield_avg_aux[lev][0],*Bfield_avg_aux[lev][1],*Bfield_avg_aux[lev][2],
                  *current_fp[lev][0],*current_fp[lev][1],*current_fp[lev][2],
                  current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
                  rho_fp[lev].get(), charge_buf[lev].get(),
@@ -794,19 +797,28 @@ WarpX::applyMirrors(Real time){
     }
 }
 
+// Apply current correction in Fourier space
 #ifdef WARPX_USE_PSATD
 void
 WarpX::CurrentCorrection ()
 {
     for ( int lev = 0; lev <= finest_level; ++lev )
     {
-        // Apply correction on fine patch
         spectral_solver_fp[lev]->CurrentCorrection( current_fp[lev], rho_fp[lev] );
-        if ( spectral_solver_cp[lev] )
-        {
-            // Apply correction on coarse patch
-            spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
-        }
+        if ( spectral_solver_cp[lev] ) spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
+    }
+}
+#endif
+
+// Compute current from Vay deposition in Fourier space
+#ifdef WARPX_USE_PSATD
+void
+WarpX::VayDeposition ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->VayDeposition(current_fp[lev]);
+        if (spectral_solver_cp[lev]) spectral_solver_cp[lev]->VayDeposition(current_cp[lev]);
     }
 }
 #endif
