@@ -57,7 +57,8 @@ bool BreitWheelerEngine::are_lookup_tables_initialized () const
 
 bool
 BreitWheelerEngine::init_lookup_tables_from_raw_data (
-    const vector<char>& raw_data)
+    const vector<char>& raw_data,
+    const amrex::Real bw_minimum_chi_phot)
 {
     auto raw_iter = raw_data.begin();
     const auto size_first = pxr_sr::get_out<uint64_t>(raw_iter);
@@ -75,15 +76,19 @@ BreitWheelerEngine::init_lookup_tables_from_raw_data (
     if (!m_dndt_table.is_init() || !m_pair_prod_table.is_init())
         return false;
 
+    m_bw_minimum_chi_phot = bw_minimum_chi_phot;
+
     m_lookup_tables_initialized = true;
 
     return true;
 }
 
-void BreitWheelerEngine::init_builtin_tables()
+void BreitWheelerEngine::init_builtin_tables(
+    const amrex::Real bw_minimum_chi_phot)
 {
     init_builtin_dndt_table();
     init_builtin_pair_prod_table();
+    m_bw_minimum_chi_phot = bw_minimum_chi_phot;
 
     m_lookup_tables_initialized = true;
 }
@@ -118,12 +123,21 @@ BreitWheelerEngine::get_default_ctrl() const
     };
 }
 
+amrex::Real
+BreitWheelerEngine::get_minimum_chi_phot() const
+{
+    return m_bw_minimum_chi_phot;
+}
+
 void BreitWheelerEngine::compute_lookup_tables (
-    PicsarBreitWheelerCtrl ctrl)
+    PicsarBreitWheelerCtrl ctrl,
+    const amrex::Real bw_minimum_chi_phot)
 {
 #ifdef WARPX_QED_TABLE_GEN
     m_dndt_table.generate(ctrl.dndt_params);
     m_pair_prod_table.generate(ctrl.pair_prod_params);
+    m_bw_minimum_chi_phot = bw_minimum_chi_phot;
+
     m_lookup_tables_initialized = true;
 #else
     amrex::Abort("WarpX was not compiled with table generation support!");

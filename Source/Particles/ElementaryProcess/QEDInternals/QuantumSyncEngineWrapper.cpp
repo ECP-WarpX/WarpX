@@ -54,7 +54,8 @@ bool QuantumSynchrotronEngine::are_lookup_tables_initialized () const
 
 bool
 QuantumSynchrotronEngine::init_lookup_tables_from_raw_data (
-    const vector<char>& raw_data)
+    const vector<char>& raw_data,
+    const amrex::Real qs_minimum_chi_part)
 {
     auto raw_iter = raw_data.begin();
     const auto size_first = pxr_sr::get_out<uint64_t>(raw_iter);
@@ -72,15 +73,19 @@ QuantumSynchrotronEngine::init_lookup_tables_from_raw_data (
     if (!m_dndt_table.is_init() || !m_phot_em_table.is_init())
         return false;
 
+    m_qs_minimum_chi_part = qs_minimum_chi_part;
+
     m_lookup_tables_initialized = true;
 
     return true;
 }
 
-void QuantumSynchrotronEngine::init_builtin_tables()
+void QuantumSynchrotronEngine::init_builtin_tables(
+    const amrex::Real qs_minimum_chi_part)
 {
     init_builtin_dndt_table();
     init_builtin_phot_em_table();
+    m_qs_minimum_chi_part = qs_minimum_chi_part;
 
     m_lookup_tables_initialized = true;
 }
@@ -115,12 +120,21 @@ QuantumSynchrotronEngine::get_default_ctrl() const
     };
 }
 
+amrex::Real
+QuantumSynchrotronEngine::get_minimum_chi_part() const
+{
+    return m_qs_minimum_chi_part;
+}
+
 void QuantumSynchrotronEngine::compute_lookup_tables (
-    PicsarQuantumSynchrotronCtrl ctrl)
+    PicsarQuantumSynchrotronCtrl ctrl,
+    const amrex::Real qs_minimum_chi_part)
 {
 #ifdef WARPX_QED_TABLE_GEN
     m_dndt_table.generate(ctrl.dndt_params);
     m_phot_em_table.generate(ctrl.phot_em_params);
+    m_qs_minimum_chi_part = qs_minimum_chi_part;
+
     m_lookup_tables_initialized = true;
 #else
     amrex::Abort("WarpX was not compiled with table generation support!");

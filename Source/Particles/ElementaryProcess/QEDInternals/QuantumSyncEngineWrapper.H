@@ -96,6 +96,11 @@ class QuantumSynchrotronEvolveOpticalDepth
 public:
 
     /**
+     * Constructor
+     */
+    QuantumSynchrotronEvolveOpticalDepth(){}
+
+    /**
      * Constructor acquires pointers to control parameters and
      * lookup tables data.
      * lookup_table uses non-owning vectors under the hood. So no new data
@@ -132,7 +137,7 @@ public:
     }
 
 private:
-    const QS_dndt_table_view m_table_view;
+    QS_dndt_table_view m_table_view;
 };
 
 /**
@@ -201,7 +206,7 @@ public:
     }
 
 private:
-    const QS_phot_em_table_view m_table_view;
+    QS_phot_em_table_view m_table_view;
 
 };
 
@@ -250,18 +255,20 @@ public:
      * @param[in] raw_data a vector of char
      * @return true if it succeeds, false if it cannot parse raw_data
      */
-    bool init_lookup_tables_from_raw_data (const std::vector<char>& raw_data);
+    bool init_lookup_tables_from_raw_data (const std::vector<char>& raw_data,
+        amrex::Real qs_minimum_chi_part);
 
     /**
      * Init lookup tables using built-in (low resolution) tables
      */
-    void init_builtin_tables();
+    void init_builtin_tables(amrex::Real qs_minimum_chi_part);
 
     /**
      * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
      * @param[in] ctrl control params to generate the tables
      */
-    void compute_lookup_tables (PicsarQuantumSyncCtrl ctrl);
+    void compute_lookup_tables (PicsarQuantumSyncCtrl ctrl,
+        amrex::Real qs_minimum_chi_part);
 
     /**
      * gets default values for the control parameters
@@ -269,8 +276,14 @@ public:
      */
     PicsarQuantumSyncCtrl get_default_ctrl() const;
 
+    amrex::Real get_minimum_chi_part() const;
+
 private:
     bool m_lookup_tables_initialized = false;
+
+    //Variables to store the minimum chi parameters to enable
+    //Quantum Synchrotron process
+    amrex::Real m_qs_minimum_chi_part;
 
     QS_dndt_table m_dndt_table;
     QS_phot_em_table m_phot_em_table;

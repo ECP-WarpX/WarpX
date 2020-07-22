@@ -1850,7 +1850,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #ifdef WARPX_QED
     const auto do_sync = m_do_qed_quantum_sync;
     amrex::Real t_chi_max = 0.0;
-    if (do_sync) t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
+    if (do_sync) t_chi_max = m_shr_p_qs_engine->get_minimum_chi_part();
 
     QuantumSynchrotronEvolveOpticalDepth evolve_opt;
     amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR = nullptr;

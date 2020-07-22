@@ -764,10 +764,11 @@ void MultiParticleContainer::InitQuantumSync ()
             " for photon energy creaction threshold \n" ;
     }
 
-    // m_qs_minimum_chi_part is the minium chi parameter to be
+    // qs_minimum_chi_part is the minium chi parameter to be
     // considered for Synchrotron emission. If a lepton has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
-    if(!pp.query("chi_min", m_qs_minimum_chi_part))
+    amrex::Real qs_minimum_chi_part;
+    if(!pp.query("chi_min", qs_minimum_chi_part))
         amrex::Abort("qed_qs.chi_min should be provided!");
 
 
@@ -791,14 +792,15 @@ void MultiParticleContainer::InitQuantumSync ()
         if(load_table_name.empty()){
             amrex::Abort("Quantum Synchrotron table name should be provided");
         }
-        std::vector<char> table_data;
+        Vector<char> table_data;
         ParallelDescriptor::ReadAndBcastFile(load_table_name, table_data);
         ParallelDescriptor::Barrier();
-        m_shr_p_qs_engine->init_lookup_tables_from_raw_data(table_data);
+        m_shr_p_qs_engine->init_lookup_tables_from_raw_data(table_data,
+            qs_minimum_chi_part);
     }
     else if(lookup_table_mode == "builtin"){
         amrex::Print() << "Built-in Quantum Synchrotron table will be used. \n" ;
-        m_shr_p_qs_engine->init_builtin_tables();
+        m_shr_p_qs_engine->init_builtin_tables(qs_minimum_chi_part);
     }
     else{
         amrex::Abort("Unknown Quantum Synchrotron table mode");
@@ -813,6 +815,14 @@ void MultiParticleContainer::InitBreitWheeler ()
 {
     std::string lookup_table_mode;
     ParmParse pp("qed_bw");
+
+    // bw_minimum_chi_phot is the minium chi parameter to be
+    // considered for Pair production. If a photon has chi < chi_min,
+    // the optical depth is not evolved and photon generation is ignored
+    amrex::Real bw_minimum_chi_part;
+    if(!pp.query("chi_min", bw_minimum_chi_part))
+        amrex::Abort("qed_bw.chi_min should be provided!");
+
     pp.query("lookup_table_mode", lookup_table_mode);
     if(lookup_table_mode.empty()){
         amrex::Abort("Breit Wheeler table mode should be provided");
@@ -836,11 +846,12 @@ void MultiParticleContainer::InitBreitWheeler ()
         Vector<char> table_data;
         ParallelDescriptor::ReadAndBcastFile(load_table_name, table_data);
         ParallelDescriptor::Barrier();
-        m_shr_p_bw_engine->init_lookup_tables_from_raw_data(table_data);
+        m_shr_p_bw_engine->init_lookup_tables_from_raw_data(
+            table_data, bw_minimum_chi_part);
     }
     else if(lookup_table_mode == "builtin"){
         amrex::Print() << "Built-in Breit Wheeler table will be used. \n" ;
-        m_shr_p_bw_engine->init_builtin_tables();
+        m_shr_p_bw_engine->init_builtin_tables(bw_minimum_chi_part);
     }
     else{
         amrex::Abort("Unknown Breit Wheeler table mode");
@@ -859,6 +870,13 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
     pp.query("save_table_in", table_name);
     if(table_name.empty())
         amrex::Abort("qed_qs.save_table_in should be provided!");
+
+    // qs_minimum_chi_part is the minium chi parameter to be
+    // considered for Synchrotron emission. If a lepton has chi < chi_min,
+    // the optical depth is not evolved and photon generation is ignored
+    amrex::Real qs_minimum_chi_part;
+    if(!pp.query("chi_min", qs_minimum_chi_part))
+        amrex::Abort("qed_qs.chi_min should be provided!");
 
     if(ParallelDescriptor::IOProcessor()){
         PicsarQuantumSyncCtrl ctrl;
@@ -909,19 +927,20 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
         //The other axis of the table is the ratio between the quantum
         //parameter of the emitted photon and the quantum parameter of the
         //lepton. This parameter is the minimum ratio to consider for the table.
-        if(!pp.query("tab_em_frac_min", ctrl.phot_em_params.chi_frac_min))
+        if(!pp.query("tab_em_frac_min", ctrl.phot_em_params.frac_min))
             amrex::Abort("qed_qs.tab_em_frac_min should be provided!");
 
         //This parameter is the number of different points to consider for the second
         //axis
         if(!pp.query("tab_em_prob_how_many", t_int))
-            amrex::Abort("qed_qs.tab_em_prob_how_many should be provided!");
-        ctrl.prob_tem_how_many = t_int;
+            amrex::Abort("qed_qs.tab_em_frac_how_many should be provided!");
+        ctrl.phot_em_params.frac_how_many = t_int;
         //====================
 
-        m_shr_p_qs_engine->compute_lookup_tables(ctrl);
+        m_shr_p_qs_engine->compute_lookup_tables(ctrl, qs_minimum_chi_part);
+        const auto data = m_shr_p_qs_engine->export_lookup_tables_data();
         WarpXUtilIO::WriteBinaryDataOnFile(table_name,
-            m_shr_p_qs_engine->export_lookup_tables_data());
+            Vector<char>{data.begin(), data.end()});
     }
 
     ParallelDescriptor::Barrier();
@@ -932,7 +951,8 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
     //No need to initialize from raw data for the processor that
     //has just generated the table
     if(!ParallelDescriptor::IOProcessor()){
-        m_shr_p_qs_engine->init_lookup_tables_from_raw_data(table_data);
+        m_shr_p_qs_engine->init_lookup_tables_from_raw_data(
+            table_data, qs_minimum_chi_part);
     }
 }
 
@@ -945,16 +965,16 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
     if(table_name.empty())
         amrex::Abort("qed_bw.save_table_in should be provided!");
 
+    // bw_minimum_chi_phot is the minium chi parameter to be
+    // considered for Pair production. If a photon has chi < chi_min,
+    // the optical depth is not evolved and photon generation is ignored
+    amrex::Real bw_minimum_chi_part;
+    if(!pp.query("chi_min", bw_minimum_chi_part))
+        amrex::Abort("qed_bw.chi_min should be provided!");
+
     if(ParallelDescriptor::IOProcessor()){
         PicsarBreitWheelerCtrl ctrl;
         int t_int;
-
-        // m_bw_minimum_chi_phot is the minium chi parameter to be
-        // considered for Breit-Wheeler pair production.
-        // If a photon has chi < m_bw_minimum_chi_phot,
-        // the optical depth is not evolved and pair generation is ignored
-        if(!pp.query("chi_min", m_bw_minimum_chi_phot))
-            amrex::Abort("qed_bw.chi_min should be provided!");
 
         //==Table parameters==
 
@@ -964,18 +984,18 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 
         //Minimun chi for the table. If a photon has chi < chi_phot_tdndt_min,
         //an analytical approximation is used.
-        if(!pp.query("tab_dndt_chi_min", ctrl.chi_phot_tdndt_min))
+        if(!pp.query("tab_dndt_chi_min", ctrl.dndt_params.chi_phot_min))
             amrex::Abort("qed_bw.tab_dndt_chi_min should be provided!");
 
         //Maximum chi for the table. If a photon has chi > chi_phot_tdndt_min,
         //an analytical approximation is used.
-        if(!pp.query("tab_dndt_chi_max", ctrl.chi_phot_tdndt_max))
+        if(!pp.query("tab_dndt_chi_max", ctrl.dndt_params.chi_phot_max))
             amrex::Abort("qed_bw.tab_dndt_chi_max should be provided!");
 
         //How many points should be used for chi in the table
         if(!pp.query("tab_dndt_how_many", t_int))
             amrex::Abort("qed_bw.tab_dndt_how_many should be provided!");
-        ctrl.chi_phot_tdndt_how_many = t_int;
+        ctrl.dndt_params.chi_phot_how_many = t_int;
         //------
 
         //--- sub-table 2 (2D)
@@ -985,30 +1005,31 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 
         //Minimun chi for the table. If a photon has chi < chi_phot_tpair_min
         //chi is considered as it were equal to chi_phot_tpair_min
-        if(!pp.query("tab_pair_chi_min", ctrl.chi_phot_tpair_min))
+        if(!pp.query("tab_pair_chi_min", ctrl.pair_prod_params.chi_phot_min))
             amrex::Abort("qed_bw.tab_pair_chi_min should be provided!");
 
         //Maximum chi for the table. If a photon has chi > chi_phot_tpair_max
         //chi is considered as it were equal to chi_phot_tpair_max
-        if(!pp.query("tab_pair_chi_max", ctrl.chi_phot_tpair_max))
+        if(!pp.query("tab_pair_chi_max", ctrl.pair_prod_params.chi_phot_max))
             amrex::Abort("qed_bw.tab_pair_chi_max should be provided!");
 
         //How many points should be used for chi in the table
         if(!pp.query("tab_pair_chi_how_many", t_int))
             amrex::Abort("qed_bw.tab_pair_chi_how_many should be provided!");
-        ctrl.chi_phot_tpair_how_many = t_int;
+        ctrl.pair_prod_params.chi_phot_how_many = t_int;
 
         //The other axis of the table is the fraction of the initial energy
         //'taken away' by the most energetic particle of the pair.
         //This parameter is the number of different fractions to consider
         if(!pp.query("tab_pair_frac_how_many", t_int))
             amrex::Abort("qed_bw.tab_pair_frac_how_many should be provided!");
-        ctrl.chi_frac_tpair_how_many = t_int;
+        ctrl.pair_prod_params.frac_how_many = t_int;
         //====================
 
-        m_shr_p_bw_engine->compute_lookup_tables(ctrl);
+        m_shr_p_bw_engine->compute_lookup_tables(ctrl, bw_minimum_chi_part);
+        const auto data = m_shr_p_bw_engine->export_lookup_tables_data();
         WarpXUtilIO::WriteBinaryDataOnFile(table_name,
-            m_shr_p_bw_engine->export_lookup_tables_data());
+            Vector<char>{data.begin(), data.end()});
     }
 
     ParallelDescriptor::Barrier();
@@ -1019,7 +1040,8 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
     //No need to initialize from raw data for the processor that
     //has just generated the table
     if(!ParallelDescriptor::IOProcessor()){
-        m_shr_p_bw_engine->init_lookup_tables_from_raw_data(table_data);
+        m_shr_p_bw_engine->init_lookup_tables_from_raw_data(
+            table_data, bw_minimum_chi_part);
     }
 }
 

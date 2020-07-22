@@ -96,6 +96,12 @@ class BreitWheelerEvolveOpticalDepth
 public:
 
     /**
+     * Constructor
+     */
+    BreitWheelerEvolveOpticalDepth(){}
+
+
+    /**
      * Constructor acquires a reference to control parameters and
      * lookup tables data.
      * lookup_table uses non-owning vectors under the hood. So no new data
@@ -132,7 +138,7 @@ public:
     }
 
 private:
-    const BW_dndt_table_view m_table_view;
+    BW_dndt_table_view m_table_view;
 };
 
 /**
@@ -142,6 +148,12 @@ private:
 class BreitWheelerGeneratePairs
 {
 public:
+
+    /**
+     * Constructor
+     */
+    BreitWheelerGeneratePairs(){}
+
     /**
      * Constructor acquires pointers to control parameters and
      * lookup tables data.
@@ -203,7 +215,7 @@ public:
     }
 
 private:
-    const BW_pair_prod_table_view m_table_view;
+    BW_pair_prod_table_view m_table_view;
 };
 
 // Factory class =============================
@@ -251,18 +263,21 @@ public:
      * @param[in] raw_data a vector of char
      * @return true if it succeeds, false if it cannot parse raw_data
      */
-    bool init_lookup_tables_from_raw_data (const std::vector<char>& raw_data);
+    bool init_lookup_tables_from_raw_data (
+        const std::vector<char>& raw_data,
+        amrex::Real bw_minimum_chi_phot);
 
     /**
      * Init lookup tables using built-in (low resolution) tables
      */
-    void init_builtin_tables();
+    void init_builtin_tables(amrex::Real bw_minimum_chi_phot);
 
     /**
      * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
      * @param[in] ctrl control params to generate the tables
      */
-    void compute_lookup_tables (PicsarBreitWheelerCtrl ctrl);
+    void compute_lookup_tables (PicsarBreitWheelerCtrl ctrl,
+        amrex::Real bw_minimum_chi_phot);
 
     /**
      * gets default values for the control parameters
@@ -270,9 +285,14 @@ public:
      */
     PicsarBreitWheelerCtrl get_default_ctrl() const;
 
+    amrex::Real get_minimum_chi_phot() const;
 
 private:
     bool m_lookup_tables_initialized = false;
+
+    //Variables to store the minimum chi parameters to enable
+    //Quantum Synchrotron process
+    amrex::Real m_bw_minimum_chi_phot;
 
     BW_dndt_table m_dndt_table;
     BW_pair_prod_table m_pair_prod_table;
