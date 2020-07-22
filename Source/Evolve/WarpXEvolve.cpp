@@ -209,7 +209,7 @@ WarpX::Evolve (int numsteps)
         for (int i = 0; i <= max_level; ++i) {
             t_new[i] = cur_time;
         }
-        
+
         multi_diags->FilterComputePackFlush( step );
 
         if (sort_intervals.contains(step+1)) {
