@@ -9,6 +9,7 @@
 
 #include "QedWrapperCommons.H"
 #include "QedChiFunctions.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Vector.H>
@@ -112,8 +113,9 @@ public:
 
     /**
      * Evolves the optical depth. It can be used on GPU.
-     * @param[in] energy energy of the particle (SI units)
-     * @param[in] chi_part quantum parameter of the particle
+     * @param[in] ux,uy,uz gamma*v components of the lepton.
+     * @param[in] ex,ey,ez electric field components (SI units)
+     * @param[in] bx,by,bz magnetic field components (SI units)
      * @param[in] dt timestep (SI units)
      * @param[in,out] opt_depth optical depth of the particle.
      * @return a flag which is 1 if chi_part was out of table.
@@ -121,11 +123,22 @@ public:
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     int operator()(
-        const amrex::Real energy, const amrex::Real chi_part,
+        const amrex::Real ux, const amrex::Real uy, const amrex::Real uz,
+        const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
+        const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
         const amrex::Real dt, amrex::Real& opt_depth) const noexcept
     {
+        using namespace amrex::literals;
         namespace pxr_p = picsar::multi_physics::phys;
         namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
+
+        constexpr amrex::Real m_e = PhysConst::m_e;
+        constexpr amrex::Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
+        const amrex::Real gamma = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)*inv_c2);
+        const auto energy = gamma*m_e*PhysConst::c*PhysConst::c;
+
+        const auto chi_part = QedUtils::chi_ele_pos(
+            m_e*ux, m_e*uy, m_e*uz, ex, ey, ez, bx, by, bz);
 
         const auto is_out = pxr_qs::evolve_optical_depth<
             amrex::Real,
@@ -160,25 +173,35 @@ public:
     /**
      * Generates photons according to Quantum Synchrotron process.
      * It can be used on GPU.
-     * @param[in,out] px,py,pz momentum components of the lepton. They are modified (SI units)
+     * @param[in,out] ux,uy,uz gamma*v components of the lepton. They are modified (SI units)
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
-     * @param[out] g_px,g_py,g_pz momentum components of the generated photon (SI units)
+     * @param[out] g_ux,g_uy,g_uz gamma*v components of the generated photon (SI units)
      * @return a flag which is 1 if chi_photon was out of table
      */
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     bool operator()(
-    amrex::Real& px, amrex::Real& py, amrex::Real& pz,
+    amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
     amrex::Real ex, amrex::Real ey, amrex::Real ez,
     amrex::Real bx, amrex::Real by, amrex::Real bz,
-    amrex::Real& g_px, amrex::Real& g_py, amrex::Real& g_pz) const noexcept
+    amrex::Real& g_ux, amrex::Real& g_uy, amrex::Real& g_uz) const noexcept
     {
+        using namespace amrex;
         namespace pxr_m = picsar::multi_physics::math;
         namespace pxr_p = picsar::multi_physics::phys;
         namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
 
         const auto rand_zero_one_minus_epsi = amrex::Random();
+
+        constexpr ParticleReal me = PhysConst::m_e;
+        constexpr ParticleReal one_over_me = 1._prt/me;
+
+        // Particle momentum is stored as gamma * velocity.
+        // Convert to m * gamma * velocity
+        auto px = ux*me;
+        auto py = uy*me;
+        auto pz = uz*me;
 
         const auto chi_particle = QedUtils::chi_ele_pos(
             px, py, pz, ex, ey, ez, bx, by, bz);
@@ -195,12 +218,12 @@ public:
                 m_table_view,
                 momentum_photon);
 
-        px = momentum_particle[0];
-        py = momentum_particle[1];
-        pz = momentum_particle[2];
-        g_px = momentum_photon[0];
-        g_py = momentum_photon[1];
-        g_pz = momentum_photon[2];
+        ux = momentum_particle[0]*one_over_me;
+        uy = momentum_particle[1]*one_over_me;
+        uz = momentum_particle[2]*one_over_me;
+        g_ux = momentum_photon[0]*one_over_me;
+        g_uy = momentum_photon[1]*one_over_me;
+        g_uz = momentum_photon[2]*one_over_me;
 
         return is_out;
     }

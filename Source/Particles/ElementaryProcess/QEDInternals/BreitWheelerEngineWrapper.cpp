@@ -134,8 +134,10 @@ void BreitWheelerEngine::compute_lookup_tables (
     const amrex::Real bw_minimum_chi_phot)
 {
 #ifdef WARPX_QED_TABLE_GEN
-    m_dndt_table.generate(ctrl.dndt_params);
-    m_pair_prod_table.generate(ctrl.pair_prod_params);
+    m_dndt_table = BW_dndt_table{ctrl.dndt_params};
+    m_dndt_table.generate(false); //No progress bar is displayed
+    m_pair_prod_table = BW_pair_prod_table{ctrl.pair_prod_params};
+    m_pair_prod_table.generate(false); //No progress bar is displayed
     m_bw_minimum_chi_phot = bw_minimum_chi_phot;
 
     m_lookup_tables_initialized = true;
@@ -146,12 +148,12 @@ void BreitWheelerEngine::compute_lookup_tables (
 
 void BreitWheelerEngine::init_builtin_dndt_table()
 {
-    auto dndt_params = BW_dndt_table_params;
+    BW_dndt_table_params dndt_params;
     dndt_params.chi_phot_min = 0.02_rt;
     dndt_params.chi_phot_max = 200.0_rt;
     dndt_params.chi_phot_how_many = 64;
 
-    const auto vals = std::vector<amrex::Real>{
+    const auto vals = amrex::Gpu::ManagedVector<amrex::Real>{
         -1.34808e+02_rt, -1.16674e+02_rt, -1.01006e+02_rt, -8.74694e+01_rt,
         -7.57742e+01_rt, -6.56699e+01_rt, -5.69401e+01_rt, -4.93981e+01_rt,
         -4.28821e+01_rt, -3.72529e+01_rt, -3.23897e+01_rt, -2.81885e+01_rt,
@@ -174,13 +176,13 @@ void BreitWheelerEngine::init_builtin_dndt_table()
 
 void BreitWheelerEngine::init_builtin_pair_prod_table()
 {
-    auto pair_prod_params = BW_pair_prod_table_params;
+    BW_pair_prod_table_params pair_prod_params;
     pair_prod_params.chi_phot_min = 0.02_rt;
     pair_prod_params.chi_phot_max = 200.0_rt;
     pair_prod_params.chi_phot_how_many = 64;
     pair_prod_params.frac_how_many = 64;
 
-    const auto vals = std::vector<double>{
+    const auto vals = amrex::Gpu::ManagedVector<amrex::Real>{
         0.00000e+00_rt, 0.00000e+00_rt, 0.00000e+00_rt, 0.00000e+00_rt,
         0.00000e+00_rt, 0.00000e+00_rt, 0.00000e+00_rt, 3.35120e-221_rt,
         1.13067e-188_rt, 2.14228e-163_rt, 3.39948e-143_rt, 1.09215e-126_rt,

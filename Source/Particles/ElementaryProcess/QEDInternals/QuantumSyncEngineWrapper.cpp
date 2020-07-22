@@ -110,13 +110,13 @@ vector<char> QuantumSynchrotronEngine::export_lookup_tables_data () const
     return res;
 }
 
-PicsarQuantumSynchrotronCtrl
+PicsarQuantumSyncCtrl
 QuantumSynchrotronEngine::get_default_ctrl() const
 {
     namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
-    return PicsarQuantumSynchrotronCtrl{
+    return PicsarQuantumSyncCtrl{
         pxr_qs::default_dndt_lookup_table_params<amrex::Real>,
-        pxr_qs::default_phot_em_lookup_table_params<amrex::Real>
+        pxr_qs::default_photon_emission_lookup_table_params<amrex::Real>
     };
 }
 
@@ -127,12 +127,14 @@ QuantumSynchrotronEngine::get_minimum_chi_part() const
 }
 
 void QuantumSynchrotronEngine::compute_lookup_tables (
-    PicsarQuantumSynchrotronCtrl ctrl,
+    PicsarQuantumSyncCtrl ctrl,
     const amrex::Real qs_minimum_chi_part)
 {
 #ifdef WARPX_QED_TABLE_GEN
-    m_dndt_table.generate(ctrl.dndt_params);
-    m_phot_em_table.generate(ctrl.phot_em_params);
+    m_dndt_table = QS_dndt_table{ctrl.dndt_params};
+    m_dndt_table.generate(false); //No progress bar is displayed
+    m_phot_em_table = QS_phot_em_table{ctrl.phot_em_params};
+    m_phot_em_table.generate(false); //No progress bar is displayed
     m_qs_minimum_chi_part = qs_minimum_chi_part;
 
     m_lookup_tables_initialized = true;
@@ -143,13 +145,13 @@ void QuantumSynchrotronEngine::compute_lookup_tables (
 
 void QuantumSynchrotronEngine::init_builtin_dndt_table()
 {
-    auto dndt_params = QS_dndt_table_params;
+    QS_dndt_table_params dndt_params;
     dndt_params.chi_part_min = 1.0e-3_rt;
     dndt_params.chi_part_max = 200.0_rt;
     dndt_params.chi_part_how_many = 64;
 
 
-    const auto vals = std::vector<double>{
+    const auto vals = amrex::Gpu::ManagedVector<amrex::Real>{
     	-6.13623e+00_rt, -5.94268e+00_rt, -5.74917e+00_rt, -5.55571e+00_rt,
     	-5.36231e+00_rt, -5.16898e+00_rt, -4.97575e+00_rt, -4.78262e+00_rt,
     	-4.58961e+00_rt, -4.39677e+00_rt, -4.20410e+00_rt, -4.01166e+00_rt,
@@ -172,7 +174,7 @@ void QuantumSynchrotronEngine::init_builtin_dndt_table()
 
 void QuantumSynchrotronEngine::init_builtin_phot_em_table()
 {
-    auto phot_em_params = QS_phot_em_table_params;
+    QS_phot_em_table_params phot_em_params;
     phot_em_params.chi_part_min = 1.0e-3_rt;
     phot_em_params.chi_part_max = 200.0_rt;
     phot_em_params.frac_min = 1.0e-12_rt;
@@ -180,7 +182,7 @@ void QuantumSynchrotronEngine::init_builtin_phot_em_table()
     phot_em_params.frac_how_many = 64;
 
 
-const auto vals = std::vector<double>{
+const auto vals = amrex::Gpu::ManagedVector<amrex::Real>{
 -6.83368e+00_rt, -6.68749e+00_rt, -6.54129e+00_rt, -6.39510e+00_rt,
 -6.24890e+00_rt, -6.10271e+00_rt, -5.95651e+00_rt, -5.81031e+00_rt,
 -5.66412e+00_rt, -5.51792e+00_rt, -5.37173e+00_rt, -5.22554e+00_rt,

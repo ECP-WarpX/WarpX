@@ -1888,14 +1888,9 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
 #ifdef WARPX_QED
     if (local_has_quantum_sync) {
-        const ParticleReal px = m * ux[ip];
-        const ParticleReal py = m * uy[ip];
-        const ParticleReal pz = m * uz[ip];
-
-        bool has_event_happened = evolve_opt(px, py, pz,
-                                             Exp, Eyp, Ezp,
-                                             Bxp, Byp, Bzp,
-                                             dt, p_optical_depth_QSR[ip]);
+        evolve_opt(ux[ip], uy[ip], uz[ip],
+                   Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                   dt, p_optical_depth_QSR[ip]);
     }
 #endif
 

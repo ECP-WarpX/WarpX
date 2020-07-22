@@ -112,13 +112,6 @@ public:
     {
         using namespace amrex;
 
-        constexpr ParticleReal me = PhysConst::m_e;
-        constexpr ParticleReal one_over_me = 1._prt/me;
-
-        const ParticleReal ux = src.m_rdata[PIdx::ux][i_src];
-        const ParticleReal uy = src.m_rdata[PIdx::uy][i_src];
-        const ParticleReal uz = src.m_rdata[PIdx::uz][i_src];
-
         // gather E and B
         amrex::ParticleReal xp, yp, zp;
         m_get_position(i_src, xp, yp, zp);
@@ -135,30 +128,17 @@ public:
                        m_dx_arr, m_xyzmin_arr, m_lo, m_n_rz_azimuthal_modes,
                        m_nox, m_galerkin_interpolation);
 
-        // Particle momentum is stored as gamma * velocity.
-        // Convert to m * gamma * velocity before applying the emission functor.
-        auto px = ux*me;
-        auto py = uy*me;
-        auto pz = uz*me;
-
-        auto g_px = 0.0_rt;
-        auto g_py = 0.0_rt;
-        auto g_pz = 0.0_rt;
-
+        auto& ux = src.m_rdata[PIdx::ux][i_src];
+        auto& uy = src.m_rdata[PIdx::uy][i_src];
+        auto& uz = src.m_rdata[PIdx::uz][i_src];
+        auto& g_ux = dst.m_rdata[PIdx::ux][i_dst];
+        auto& g_uy = dst.m_rdata[PIdx::uy][i_dst];
+        auto& g_uz = dst.m_rdata[PIdx::uz][i_dst];
         m_emission_functor(
-            px, py, pz,
+            ux, uy, uz,
             ex, ey, ez,
             bx, by, bz,
-            g_px, g_py, g_pz);
-
-        // Then convert back to WarpX convention.
-        src.m_rdata[PIdx::ux][i_src] = px*one_over_me;
-        src.m_rdata[PIdx::uy][i_src] = py*one_over_me;
-        src.m_rdata[PIdx::uz][i_src] = pz*one_over_me;
-
-        dst.m_rdata[PIdx::ux][i_dst] = g_px*one_over_me;
-        dst.m_rdata[PIdx::uy][i_dst] = g_py*one_over_me;
-        dst.m_rdata[PIdx::uz][i_dst] = g_pz*one_over_me;
+            g_ux, g_uy, g_uz);
 
         //Initialize the optical depth component of the source species.
         src.m_runtime_rdata[m_opt_depth_runtime_comp][i_src] =

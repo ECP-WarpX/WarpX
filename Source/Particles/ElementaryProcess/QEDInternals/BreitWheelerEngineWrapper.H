@@ -9,6 +9,7 @@
 
 #include "QedWrapperCommons.H"
 #include "QedChiFunctions.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Vector.H>
@@ -113,8 +114,9 @@ public:
 
     /**
      * Evolves the optical depth. It can be used on GPU.
-     * @param[in] energy energy of the photon (SI units)
-     * @param[in] chi_phot quantum parameter of the photon
+     * @param[in] ux,uy,uz gamma*v components of the photon.
+     * @param[in] ex,ey,ez electric field components (SI units)
+     * @param[in] bx,by,bz magnetic field components (SI units)
      * @param[in] dt timestep (SI units)
      * @param[in,out] opt_depth optical depth of the photon.
      * @return a flag which is 1 if chi_phot was out of table
@@ -122,11 +124,19 @@ public:
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     int operator()(
-    const amrex::Real energy, const amrex::Real chi_phot,
-    const amrex::Real dt, amrex::Real& opt_depth) const noexcept
+        const amrex::Real ux, const amrex::Real uy, const amrex::Real uz,
+        const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
+        const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
+        const amrex::Real dt, amrex::Real& opt_depth) const noexcept
     {
         namespace pxr_p = picsar::multi_physics::phys;
         namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
+
+        constexpr amrex::Real m_e = PhysConst::m_e;
+        const auto energy = std::sqrt(ux*ux + uy*uy + uz*uz)*m_e*PhysConst::c;
+
+        const auto chi_phot = QedUtils::chi_photon(
+            m_e*ux, m_e*uy, m_e*uz, ex, ey, ez, bx, by, bz);
 
         const auto is_out = pxr_bw::evolve_optical_depth<
             amrex::Real,
@@ -166,27 +176,37 @@ public:
     /**
      * Generates pairs according to Breit Wheeler process.
      * It can be used on GPU.
-     * @param[in] px,py,pz momentum components of the photon (SI units)
+     * @param[in] ux,uy,uz gamma*v components of the photon (SI units)
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
-     * @param[out] e_px,e_py,e_pz momentum components of generated electron (SI units)
-     * @param[out] p_px,p_py,p_pz momentum components of generated positron (SI units)
+     * @param[out] e_ux,e_uy,e_uz gamma*v components of generated electron (SI units)
+     * @param[out] p_ux,p_uy,p_uz gamma*v components of generated positron (SI units)
      * @return a flag which is 1 if chi_photon was out of table
      */
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
     int operator()(
-    amrex::Real px, amrex::Real py, amrex::Real pz,
+    amrex::Real ux, amrex::Real uy, amrex::Real uz,
     amrex::Real ex, amrex::Real ey, amrex::Real ez,
     amrex::Real bx, amrex::Real by, amrex::Real bz,
-    amrex::Real& e_px, amrex::Real& e_py, amrex::Real& e_pz,
-    amrex::Real& p_px, amrex::Real& p_py, amrex::Real& p_pz) const noexcept
+    amrex::Real& e_ux, amrex::Real& e_uy, amrex::Real& e_uz,
+    amrex::Real& p_ux, amrex::Real& p_uy, amrex::Real& p_uz) const noexcept
     {
+        using namespace amrex;
         namespace pxr_m = picsar::multi_physics::math;
         namespace pxr_p = picsar::multi_physics::phys;
         namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
 
         const auto rand_zero_one_minus_epsi = amrex::Random();
+
+        constexpr ParticleReal me = PhysConst::m_e;
+        constexpr ParticleReal one_over_me = 1._prt/me;
+
+        // Particle momentum is stored as gamma * velocity.
+        // Convert to m * gamma * velocity
+        auto px = ux*me;
+        auto py = uy*me;
+        auto pz = uz*me;
 
         const auto chi_photon = QedUtils::chi_photon(
             px, py, pz, ex, ey, ez, bx, by, bz);
@@ -204,12 +224,12 @@ public:
                 m_table_view,
                 momentum_ele, momentum_pos);
 
-        e_px = momentum_ele[0];
-        e_py = momentum_ele[1];
-        e_pz = momentum_ele[2];
-        p_px = momentum_pos[0];
-        p_py = momentum_pos[1];
-        p_pz = momentum_pos[2];
+        e_ux = momentum_ele[0]*one_over_me;
+        e_uy = momentum_ele[1]*one_over_me;
+        e_uz = momentum_ele[2]*one_over_me;
+        p_ux = momentum_pos[0]*one_over_me;
+        p_uy = momentum_pos[1]*one_over_me;
+        p_uz = momentum_pos[2]*one_over_me;
 
         return is_out;
     }

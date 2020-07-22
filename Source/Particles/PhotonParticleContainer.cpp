@@ -180,12 +180,8 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
 #ifdef WARPX_QED
             if (local_has_breit_wheeler) {
-                const ParticleReal px = me * ux[i];
-                const ParticleReal py = me * uy[i];
-                const ParticleReal pz = me * uz[i];
-
-                bool has_event_happened = evolve_opt(px, py, pz, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                                     dt, p_optical_depth_BW[i]);
+                evolve_opt(ux[i], uy[i], uz[i], Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                    dt, p_optical_depth_BW[i]);
             }
 #endif
 
