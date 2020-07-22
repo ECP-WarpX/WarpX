@@ -1095,23 +1095,16 @@ Numerics and algorithms
     for more information.
 
 * ``psatd.current_correction`` (`0` or `1`; default: `0`)
-    If true, a current correction scheme in Fourier space is applied in order to
-    guarantee charge conservation.
+    If true, a current correction scheme in Fourier space is applied in order to guarantee charge conservation.
 
-    If ``psatd.v_galilean`` is zero, the spectral solver used is the standard PSATD
-    scheme described in
-    `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_
-    and the current correction reads
+    If ``psatd.v_galilean`` is zero, the spectral solver used is the standard PSATD scheme described in (`Vay et al, JCP 243, 2013 <https://doi.org/10.1016/j.jcp.2013.03.010>`_) and the current correction reads
 
     .. math::
        \widehat{\boldsymbol{J}}^{\,n+1/2}_{\mathrm{correct}} = \widehat{\boldsymbol{J}}^{\,n+1/2}
        - \bigg(\boldsymbol{k}\cdot\widehat{\boldsymbol{J}}^{\,n+1/2}
        - i \frac{\widehat{\rho}^{n+1} - \widehat{\rho}^{n}}{\Delta{t}}\bigg) \frac{\boldsymbol{k}}{k^2}
 
-    If ``psatd.v_galilean`` is non-zero, the spectral solver used is the Galilean
-    PSATD scheme described in
-    `(Lehe et al, PRE 94, 2016) <https://doi.org/10.1103/PhysRevE.94.053305>`_
-    and the current correction reads
+    If ``psatd.v_galilean`` is non-zero, the spectral solver used is the Galilean PSATD scheme described in (`Lehe et al, PRE 94, 2016 <https://doi.org/10.1103/PhysRevE.94.053305>`_) and the current correction reads
 
     .. math::
        \widehat{\boldsymbol{J}}^{\,n+1/2}_{\mathrm{correct}} = \widehat{\boldsymbol{J}}^{\,n+1/2}
@@ -1119,22 +1112,20 @@ Numerics and algorithms
        \,\frac{\widehat\rho^{n+1} - \widehat\rho^{n}\theta^2}{1 - \theta^2}\bigg) \frac{\boldsymbol{k}}{k^2}
 
     where :math:`\theta=\exp(i\,\boldsymbol{k}\cdot\boldsymbol{v}_G\,\Delta{t}/2)`.
-    This option guarantees charge conservation only when used in combination
-    with ``psatd.periodic_single_box_fft=1``, namely for periodic single-box
-    simulations with global FFTs without guard cells. The implementation for domain
-    decomposition with local FFTs over guard cells is planned but not yet completed.
+
+    This option is currently implemented only for the standard PSATD and Galilean PSATD schemes, while it is not yet available for the averaged Galilean PSATD scheme (activated by the input parameter ``psatd.do_time_averaging``).
+
+    This option guarantees charge conservation only when used in combination with ``psatd.periodic_single_box_fft=1``, namely for periodic single-box simulations with global FFTs without guard cells.
+    The implementation for domain decomposition with local FFTs over guard cells is planned but not yet completed.
 
 * ``psatd.update_with_rho`` (`0` or `1`; default: `0`)
-    If true, the update equation for the electric field is expressed in terms of
-    both the current density and the charge density, namely :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}`,
-    :math:`\widehat\rho^{n}`, and :math:`\widehat\rho^{n+1}`. If false, instead,
-    the update equation for the electric field is expressed in terms of the current
-    density :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}` only. If charge is expected
-    to be conserved (by setting, for example, ``psatd.current_correction=1``), then
-    the two formulations are expected to be equivalent.
+    If true, the update equation for the electric field is expressed in terms of both the current density and the charge density, namely :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}`, :math:`\widehat\rho^{n}`, and :math:`\widehat\rho^{n+1}`.
+    If false, instead, the update equation for the electric field is expressed in terms of the current density :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}` only.
+    If charge is expected to be conserved (by setting, for example, ``psatd.current_correction=1``), then the two formulations are expected to be equivalent.
 
-    If ``psatd.v_galilean`` is zero, the spectral solver used is the standard PSATD
-    scheme described in `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_:
+    This option is currently implemented only for the standard PSATD and Galilean PSATD schemes, while it is not yet available for the averaged Galilean PSATD scheme (activated by the input parameter ``psatd.do_time_averaging``).
+
+    If ``psatd.v_galilean`` is zero, the spectral solver used is the standard PSATD scheme described in (`Vay et al, JCP 243, 2013 <https://doi.org/10.1016/j.jcp.2013.03.010>`_):
 
     1. if ``psatd.update_with_rho=0``, the update equation for the electric field reads
 
@@ -1160,12 +1151,9 @@ Numerics and algorithms
        \frac{1}{\Delta{t}}\right)\widehat{\rho}^{n+1} \boldsymbol{k}
        \end{split}
 
-    The coefficients :math:`C` and :math:`S` are defined in
-    `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_.
+    The coefficients :math:`C` and :math:`S` are defined in (`Vay et al, JCP 243, 2013 <https://doi.org/10.1016/j.jcp.2013.03.010>`_).
 
-    If ``psatd.v_galilean`` is non-zero, the spectral solver used is the Galilean
-    PSATD scheme described in
-    `(Lehe et al, PRE 94, 2016) <https://doi.org/10.1103/PhysRevE.94.053305>`_:
+    If ``psatd.v_galilean`` is non-zero, the spectral solver used is the Galilean PSATD scheme described in (`Lehe et al, PRE 94, 2016 <https://doi.org/10.1103/PhysRevE.94.053305>`_):
 
     1. if ``psatd.update_with_rho=0``, the update equation for the electric field reads
 
@@ -1195,9 +1183,7 @@ Numerics and algorithms
        - i \, \frac{\chi_2}{\epsilon_0 k^{2}} \widehat{\rho}^{\,n+1} \boldsymbol{k}
        \end{split}
 
-    The coefficients :math:`C`, :math:`S`, :math:`\theta`, :math:`\nu`, :math:`\chi_1`,
-    :math:`\chi_2`, and :math:`\chi_3` are defined in
-    `(Lehe et al, PRE 94, 2016) <https://doi.org/10.1103/PhysRevE.94.053305>`_.
+    The coefficients :math:`C`, :math:`S`, :math:`\theta`, :math:`\nu`, :math:`\chi_1`, :math:`\chi_2`, and :math:`\chi_3` are defined in (`Lehe et al, PRE 94, 2016 <https://doi.org/10.1103/PhysRevE.94.053305>`_).
 
 * ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
     Defines the galilean velocity.
