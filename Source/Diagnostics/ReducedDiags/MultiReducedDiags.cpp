@@ -11,8 +11,10 @@
 #include "ParticleEnergy.H"
 #include "FieldEnergy.H"
 #include "MultiReducedDiags.H"
-#include "AMReX_ParmParse.H"
-#include "AMReX_ParallelDescriptor.H"
+
+#include <AMReX_ParmParse.H>
+#include <AMReX_ParallelDescriptor.H>
+
 #include <fstream>
 
 using namespace amrex;

@@ -21,25 +21,34 @@ env:
 
 before_install:
     - sudo apt-get update
-    - sudo apt-get install -y gcc gfortran g++ openmpi-bin libopenmpi-dev libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev pkg-config make python3 python3-pip python3-setuptools
+    - sudo apt-get install -y gcc gfortran g++ openmpi-bin libopenmpi-dev libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev pkg-config make python3 python3-pip python3-setuptools libblas-dev liblapack-dev
       # xenial misses "libadios-openmpi-dev"
     - sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 2
     - sudo update-alternatives --set python /usr/bin/python3
 
 install:
     - python -m pip install --upgrade pip
-    - python -m pip install --upgrade cmake matplotlib mpi4py numpy scipy yt
+    - python -m pip install --upgrade cmake matplotlib==3.2.2 mpi4py numpy scipy yt
     - export CEI_CMAKE="/home/travis/.local/bin/cmake"
+    - export CEI_SUDO="sudo"
     - sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY && sudo chmod a+x /usr/local/bin/cmake-easyinstall
     - if [ "${WARPX_CI_OPENPMD}" != "FALSE" ]; then
-        sudo cmake-easyinstall git+https://github.com/openPMD/openPMD-api.git
-          -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
-          -DCMAKE_INSTALL_PREFIX=/usr/local;
+        cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git
+          -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF;
+      fi
+    - if [ "${WARPX_CI_PSATD:-FALSE}" == "TRUE" ]; then
+        cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git
+          -DBLAS_LIBRARY=generic -DUSE_OPENMP=OFF -DBLASPP_BUILD_TESTS=OFF;
+        cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git
+          -DUSE_OPENMP=off -DLAPACKPP_BUILD_TESTS=OFF;
       fi
 
 script:
     - export FFTW_HOME=/usr/
+    - export BLASPP_HOME=/usr/local/
+    - export LAPACKPP_HOME=/usr/local/
     - if [ -z ${WARPX_CI_OPENPMD} ]; then WARPX_CI_OPENPMD=TRUE; fi
+    - if [ -z ${WARPX_CI_PSATD} ]; then WARPX_CI_PSATD=TRUE; fi
 
     # Run the tests on the current commit
     - export WARPX_TEST_COMMIT=$TRAVIS_COMMIT
