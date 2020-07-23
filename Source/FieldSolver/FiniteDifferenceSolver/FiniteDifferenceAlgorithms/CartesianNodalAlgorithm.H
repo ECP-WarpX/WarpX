@@ -8,11 +8,15 @@
 #ifndef WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_NODAL_H_
 #define WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_NODAL_H_
 
+#include "Utils/WarpXConst.H"
+
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
 
 #include <array>
+#include <cmath>
+
 
 /**
  * This struct contains only static functions to initialize the stencil coefficients
@@ -35,6 +39,19 @@ struct CartesianNodalAlgorithm {
         stencil_coefs_y[0] = 1._rt/cell_size[1];
         stencil_coefs_z.resize(1);
         stencil_coefs_z[0] = 1._rt/cell_size[2];
+    }
+
+    /**
+     * Compute the maximum timestep, for which the scheme remains stable
+     * (Courant-Friedrichs-Levy limit) */
+    static amrex::Real ComputeMaxDt ( amrex::Real const * const dx ) {
+        using namespace amrex::literals;
+        amrex::Real const delta_t  = 1._rt / ( std::sqrt( AMREX_D_TERM(
+                                           1._rt/(dx[0]*dx[0]),
+                                         + 1._rt/(dx[1]*dx[1]),
+                                         + 1._rt/(dx[2]*dx[2])
+                                     ) ) * PhysConst::c );
+        return delta_t;
     }
 
     /**
