@@ -932,7 +932,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
 
         //This parameter is the number of different points to consider for the second
         //axis
-        if(!pp.query("tab_em_prob_how_many", t_int))
+        if(!pp.query("tab_em_frac_how_many", t_int))
             amrex::Abort("qed_qs.tab_em_frac_how_many should be provided!");
         ctrl.phot_em_params.frac_how_many = t_int;
         //====================
