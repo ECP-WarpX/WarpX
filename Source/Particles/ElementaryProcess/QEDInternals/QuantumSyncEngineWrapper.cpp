@@ -132,9 +132,9 @@ void QuantumSynchrotronEngine::compute_lookup_tables (
 {
 #ifdef WARPX_QED_TABLE_GEN
     m_dndt_table = QS_dndt_table{ctrl.dndt_params};
-    m_dndt_table.generate(false); //No progress bar is displayed
+    m_dndt_table.generate(true); //Progress bar is displayed
     m_phot_em_table = QS_phot_em_table{ctrl.phot_em_params};
-    m_phot_em_table.generate(false); //No progress bar is displayed
+    m_phot_em_table.generate(true); //Progress bar is displayed
     m_qs_minimum_chi_part = qs_minimum_chi_part;
 
     m_lookup_tables_initialized = true;

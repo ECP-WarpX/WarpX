@@ -135,9 +135,9 @@ void BreitWheelerEngine::compute_lookup_tables (
 {
 #ifdef WARPX_QED_TABLE_GEN
     m_dndt_table = BW_dndt_table{ctrl.dndt_params};
-    m_dndt_table.generate(false); //No progress bar is displayed
+    m_dndt_table.generate(true); //Progress bar is displayed
     m_pair_prod_table = BW_pair_prod_table{ctrl.pair_prod_params};
-    m_pair_prod_table.generate(false); //No progress bar is displayed
+    m_pair_prod_table.generate(true); //Progress bar is displayed
     m_bw_minimum_chi_phot = bw_minimum_chi_phot;
 
     m_lookup_tables_initialized = true;
