@@ -28,15 +28,15 @@ class GalileanAlgorithm : public SpectralBaseAlgorithm
 
         /**
          * \brief Virtual function for current correction in Fourier space
-         * (equation (10) of https://doi.org/10.1103/PhysRevE.94.053305).
+         * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).
          * This function overrides the virtual function \c CurrentCorrection in the
-         * base class \c SpectralBaseAlgorithm (qualifier \c override) and cannot be
-         * overridden by further derived classes (qualifier \c final).
+         * base class \c SpectralBaseAlgorithm and cannot be overridden by further
+         * derived classes.
          *
-         * \param[in,out] field_data all fields in Fourier space
-         * \param[in,out] current    three-dimensional array of unique pointers to MultiFab
-         *                           storing the three components of the current density
-         * \param[in]     rho        unique pointer to MultiFab storing the charge density
+         * \param[in,out] field_data All fields in Fourier space
+         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
+         *                           the three components of the current density
+         * \param[in]     rho        Unique pointer to \c MultiFab storing the charge density
          */
         virtual void CurrentCorrection (SpectralFieldData& field_data,
                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
