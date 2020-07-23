@@ -120,7 +120,7 @@ public:
      * @param[in,out] opt_depth optical depth of the particle.
      * @return a flag which is 1 if chi_part was out of table.
      */
-    AMREX_GPU_HOST_DEVICE
+    AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     int operator()(
         const amrex::Real ux, const amrex::Real uy, const amrex::Real uz,
@@ -179,7 +179,7 @@ public:
      * @param[out] g_ux,g_uy,g_uz gamma*v components of the generated photon (SI units)
      * @return a flag which is 1 if chi_photon was out of table
      */
-    AMREX_GPU_HOST_DEVICE
+    AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     bool operator()(
     amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
