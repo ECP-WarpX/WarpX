@@ -35,23 +35,15 @@ SpectralBinomialFilter::InitFilterArray (HankelTransform::RealVector const & kve
 
 }
 
-/* \brief Initialize the radial filter array */
+/* \brief Initialize the radial and longitudinal filter arrays */
 void
-SpectralBinomialFilter::InitFilterArrayR (RealKVector const & kr,
-                                          amrex::Real const dr,
-                                          int const npasses,
-                                          bool const compensation)
+SpectralBinomialFilter::InitFilterArray (RealKVector const & kr,
+                                         RealKVector const & kz,
+                                         amrex::RealVect const dx,
+                                         amrex::IntVect const filter_npass_each_dir,
+                                         bool const compensation)
 {
     // Note that this includes the kr values for all modes
-    InitFilterArray(kr, dr, npasses, compensation, filter_r);
-}
-
-/* \brief Initialize the longitudinal filter array */
-void
-SpectralBinomialFilter::InitFilterArrayZ (RealKVector const & kz,
-                                          amrex::Real const dz,
-                                          int const npasses,
-                                          bool const compensation)
-{
-    InitFilterArray(kz, dz, npasses, compensation, filter_z);
+    InitFilterArray(kr, dx[0], filter_npass_each_dir[0], compensation, filter_r);
+    InitFilterArray(kz, dx[1], filter_npass_each_dir[1], compensation, filter_z);
 }
