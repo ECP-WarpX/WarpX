@@ -20,10 +20,10 @@ import checksumAPI
 
 # This script checks if the optical depth of photons undergoing the
 # Breit Wheeler process behaves as expected. Four populations of photons
-# are initialized with different momenta in a background EM field. The decrease
-# of the optical depth (averaged for each population) is used to estimate the
-# Breit Wheeler cross section, which is then compared with the theoretical
-# formula. Relative discrepancy should be smaller than 3%
+# are initialized with different momenta in a background EM field.
+# The expected number of lost photons n_lost is computed for each case and is
+# compared with the simulation results. The maximum tolerated error is 3*sqrt(n_lost).
+# The script checks also that the optical depth distribution is still exponential.
 #
 # References:
 # 1) R. Duclous et al 2011 Plasma Phys. Control. Fusion 53 015009
@@ -34,7 +34,7 @@ import checksumAPI
 
 
 # Tolerance
-tol = 2.e-2
+tol = 1.e-2
 
 # EM fields
 E_f = np.array([-2433321316961438, 973328526784575, 1459992790176863])
@@ -74,27 +74,43 @@ def calc_chi_gamma(p, E, B):
     c = p/gamma_phot
     loc_field = gamma_phot * np.linalg.norm( E - np.dot(c,E)*c + np.cross(c,B))
     return loc_field/schwinger_field_norm
+    
+    gamma_phot = np.linalg.norm(p, axis=1)/mec  
+    u = p/(np.linalg.norm(p, axis=1)[:,None])
+    udotE = np.einsum('ij,ij->i',u,E)
+    Eperp = E - udotE[:,None]*u
+    ccrossB = c*np.cross(u,B)
+    loc_field = gamma_phot * np.linalg.norm( Eperp + ccrossB, axis=1) 
+    return loc_field/E_s
 
 #Auxiliary functions
-def X(chi_phot, chi_ele):
-    if (chi_phot > chi_ele and chi_ele != 0):
-        return np.power(chi_phot/(chi_ele*(chi_phot-chi_ele)), 2./3.)
-    else:
-        return 1.0e30
+@np.vectorize
+def BW_inner(x):
+    return integ.quad(lambda s: np.sqrt(s)*spe.kv(1./3., 2./3. * s**(3./2.)), x, np.inf)[0] 
 
-def T(chi_phot):
-    coeff = 1./(np.pi * np.sqrt(3.) * chi_phot * chi_phot)
-    inner = lambda x : integ.quad(lambda s: np.sqrt(s)*spe.kv(1./3., 2./3. * s**(3./2.)), x, np.inf)[0]
-    return integ.quad(lambda chi_ele:
-                      coeff*(inner(X(chi_phot, chi_ele)) -
-                      (2.0 - chi_phot*np.power(X(chi_phot, chi_ele), 3./2.))*spe.kv(2./3., 2./3. *X(chi_phot, chi_ele)**(3./2.)) )
-                      , 0, chi_phot)[0]
+def BW_X(chi_phot, chi_ele):
+    res = np.zeros(np.shape(chi_phot))
+    div = (chi_ele*(chi_phot-chi_ele))
+    div = np.where(np.logical_and(chi_phot > chi_ele, chi_ele != 0), div, 1.0);
+    res = np.where(np.logical_and(chi_phot > chi_ele, chi_ele != 0), np.power(chi_phot/div, 2./3.), np.inf)
+    return res
+
+def BW_F(chi_phot, chi_ele):
+    X = BW_X(chi_phot, chi_ele)
+    res = np.where(np.logical_or(chi_phot == chi_ele, chi_ele == 0), 0.0, 
+         BW_inner(X) - (2.0 - chi_phot* X**(3./2.))*spe.kv(2./3., 2./3. * X**(3./2.)) )
+    return res
+
+@np.vectorize
+def BW_T(chi_phot):
+    coeff = 1./(np.pi * np.sqrt(3.) * (chi_phot**2))
+    return coeff*integ.quad(lambda chi_ele: BW_F(chi_phot, chi_ele), 0, chi_phot)[0]
 #__________________
 
 # Breit-Wheeler total cross section
 def dNBW_dt(chi_phot, energy_phot):
     energy_phot = energy_phot/electron_mass/speed_of_light/speed_of_light
-    return ((electron_mass*(speed_of_light)**2)*fine_structure_constant/reduced_plank)*(chi_phot/energy_phot)*T(chi_phot)
+    return ((electron_mass*(speed_of_light)**2)*fine_structure_constant/reduced_plank)*(chi_phot/energy_phot)*BW_T(chi_phot)
 #__________________
 
 def check():
@@ -130,9 +146,8 @@ def check():
         exp_lost= initial_particle_number*(1.0 - np.exp(-dNBW_dt_theo*sim_time))
         lost =  initial_particle_number-np.size(opt_depth)
         discrepancy_lost = np.abs(exp_lost-lost)
-        print("lost fraction tol = " + str(tol))
-        print("lost fraction discrepancy = " + str(discrepancy_lost/exp_lost))
-        assert(discrepancy_lost/exp_lost < tol)
+        print("lost = {:d}, exp_lost = {:f}, discrepancy = {:f}, max_discrepancy = {:f}".format(lost, exp_lost, lost-exp_lost, 3.0*np.sqrt(exp_lost)) )
+        assert(np.abs(exp_lost-lost) < 3.0*np.sqrt(exp_lost))
         ###
 
     test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
