@@ -50,7 +50,7 @@ cd test_dir
 git clone --branch development https://github.com/AMReX-Codes/amrex.git
 # Use QED brach for QED tests
 if [ "${WARPX_CI_QED}" = "TRUE" ]; then
-    git clone --branch improved https://github.com/ECP-WarpX/picsar.git
+    git clone --branch improved https://github.com/lucafedeli88/picsar.git
 else
     git clone --branch development https://github.com/ECP-WarpX/picsar.git
 fi

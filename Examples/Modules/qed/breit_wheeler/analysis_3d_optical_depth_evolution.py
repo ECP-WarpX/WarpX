@@ -23,7 +23,7 @@ import checksumAPI
 # are initialized with different momenta in a background EM field. The decrease
 # of the optical depth (averaged for each population) is used to estimate the
 # Breit Wheeler cross section, which is then compared with the theoretical
-# formula. Relative discrepancy should be smaller than 2%
+# formula. Relative discrepancy should be smaller than 3%
 #
 # References:
 # 1) R. Duclous et al 2011 Plasma Phys. Control. Fusion 53 015009
@@ -34,7 +34,7 @@ import checksumAPI
 
 
 # Tolerance
-tol = 7.e-2
+tol = 2.e-2
 
 # EM fields
 E_f = np.array([-2433321316961438, 973328526784575, 1459992790176863])
@@ -63,7 +63,7 @@ p_begin = {
     "p3": np.array([0.0,0.0,10000.0])*mec,
     "p4": np.array([57735.02691896, 57735.02691896, 57735.02691896])*mec
 }
-initial_particle_number = 16384
+initial_particle_number = 65536
 #______________
 
 def calc_chi_gamma(p, E, B):
