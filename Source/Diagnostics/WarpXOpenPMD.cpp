@@ -398,7 +398,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                [](uint64_t const *p){ delete[] p; }
            );
            for (auto i=0; i<numParticleOnTile; i++) {
-               ids.get()[i] = WarpXUtilIO::localIDtoGlobal( aos[i].m_idata.id, aos[i].m_idata.cpu );
+               ids.get()[i] = WarpXUtilIO::localIDtoGlobal( aos[i].id(), aos[i].cpu() );
            }
            auto const scalar = openPMD::RecordComponent::SCALAR;
            currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
