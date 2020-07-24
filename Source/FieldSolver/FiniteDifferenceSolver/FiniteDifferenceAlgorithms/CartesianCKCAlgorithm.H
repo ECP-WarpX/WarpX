@@ -8,12 +8,15 @@
 #ifndef WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
 #define WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
 
+#include "Utils/WarpXConst.H"
+
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
 
 #include <algorithm>
 #include <array>
+
 
 /**
  * This struct contains only static functions to initialize the stencil coefficients
@@ -88,6 +91,20 @@ struct CartesianCKCAlgorithm {
         stencil_coefs_z[2] = betazx;
         stencil_coefs_z[3] = betazy;
         stencil_coefs_z[4] = gammaz*inv_dz;
+    }
+
+    /**
+     * Compute the maximum timestep, for which the scheme remains stable
+     * (Courant-Friedrichs-Levy limit) */
+    static amrex::Real ComputeMaxDt ( amrex::Real const * const dx ) {
+#if (defined WARPX_DIM_XZ)
+            // - In Cartesian 2D geometry: determined by the minimum cell size in all direction
+            amrex::Real const delta_t = std::min( dx[0], dx[1] )/PhysConst::c;
+#else
+            // - In Cartesian 3D geometry: determined by the minimum cell size in all direction
+            amrex::Real const delta_t = std::min( dx[0], std::min( dx[1], dx[2] ) ) / PhysConst::c;
+#endif
+        return delta_t;
     }
 
     /**

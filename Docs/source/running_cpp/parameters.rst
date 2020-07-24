@@ -1036,12 +1036,11 @@ Numerics and algorithms
     The conductivity, permittivity, and permeability of the computational medium, respectively.
     If ``algo.em_solver_medium`` is set to macroscopic, then these properties must be provided.
 
-* ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`integer`)
+* ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`1`, `2`, or `3` ; default: 1)
     The order of the shape factors for the macroparticles, for the 3 dimensions of space.
     Lower-order shape factors result in faster simulations, but more noisy results,
 
-    Note that the implementation in WarpX is more efficient when these 3 numbers are equal,
-    and when they are between 1 and 3.
+    Note that in the current implementation in WarpX these 3 numbers must be equal.
 
 * ``interpolation.galerkin_scheme`` (`0` or `1`)
     Whether to use a galerkin scheme when gathering fields to particles.
