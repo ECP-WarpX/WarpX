@@ -38,7 +38,8 @@ FieldReduced::FieldReduced (const std::string& rd_name, const std::vector<std::s
 
     // resize data array
     int data_size = 0;
-    if (m_fieldEnergy) {data_size += 3*nLevel;}
+    constexpr int field_components = 3;
+    if (m_fieldEnergy) {data_size += field_components*nLevel;}
     if (m_maxField)
     {
         m_offset_maxField = data_size;
