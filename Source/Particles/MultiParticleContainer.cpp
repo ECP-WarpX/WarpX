@@ -1068,16 +1068,10 @@ MultiParticleContainer::doQEDSchwinger ()
     const MultiFab & By = warpx.getBfield(level_0,1);
     const MultiFab & Bz = warpx.getBfield(level_0,2);
 
-    MFItInfo info;
-    if (TilingIfNotGPU()) {
-        info.EnableTiling();
-    }
 #ifdef _OPENMP
-    info.SetDynamic(WarpX::do_dynamic_scheduling);
-#pragma omp parallel
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-
-    for (MFIter mfi(Ex, info); mfi.isValid(); ++mfi )
+    for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
         // Make the box cell centered to avoid creating particles twice on the tile edges
         const Box& box = enclosedCells(mfi.nodaltilebox());
