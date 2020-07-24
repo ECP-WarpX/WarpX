@@ -32,7 +32,6 @@ WarpX::Evolve (int numsteps)
     WARPX_PROFILE("WarpX::Evolve()");
 
     Real cur_time = t_new[0];
-    static int last_plot_file_step = 0;
 
     if (do_compute_max_step_from_zmax) {
         computeMaxStepBoostAccelerator(geom[0]);
@@ -45,7 +44,6 @@ WarpX::Evolve (int numsteps)
         numsteps_max = std::min(istep[0]+numsteps, max_step);
     }
 
-    bool max_time_reached = false;
     Real walltime, walltime_start = amrex::second();
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
@@ -113,12 +111,16 @@ WarpX::Evolve (int numsteps)
             FillBoundaryB(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
             // E and B: enough guard cells to update Aux or call Field Gather in fp and cp
             // Need to update Aux on lower levels, to interpolate to higher levels.
+            if (fft_do_time_averaging)
+            {
+                FillBoundaryE_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+                FillBoundaryB_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+            }
 #ifndef WARPX_USE_PSATD
             FillBoundaryAux(guard_cells.ng_UpdateAux);
 #endif
             UpdateAuxilaryData();
         }
-
         if (do_subcycling == 0 || finest_level == 0) {
             OneStep_nosub(cur_time);
             // E : guard cells are up-to-date
@@ -162,6 +164,8 @@ WarpX::Evolve (int numsteps)
 
         cur_time += dt[0];
 
+        ShiftGalileanBoundary();
+
         if (do_back_transformed_diagnostics) {
             std::unique_ptr<MultiFab> cell_centered_data = nullptr;
             if (WarpX::do_back_transformed_fields) {
@@ -173,8 +177,6 @@ WarpX::Evolve (int numsteps)
         bool move_j = is_synchronized;
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
         // We might need to move j because we are going to make a plotfile.
-
-        ShiftGalileanBoundary();
 
         int num_moved = MoveWindow(move_j);
 
@@ -230,7 +232,6 @@ WarpX::Evolve (int numsteps)
         multi_diags->FilterComputePackFlush( step );
 
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
-            max_time_reached = true;
             break;
         }
 
@@ -267,7 +268,8 @@ WarpX::OneStep_nosub (Real cur_time)
 
     // Loop over species. For each ionizable species, create particles in
     // product species.
-    mypc->doFieldIonization();
+    doFieldIonization();
+
     mypc->doCoulombCollisions();
 #ifdef WARPX_QED
     mypc->doQEDSchwinger();
@@ -287,33 +289,32 @@ WarpX::OneStep_nosub (Real cur_time)
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
 #endif
 
+// TODO
+// Apply current correction in Fourier space: for domain decomposition with local
+// FFTs over guard cells, apply this before calling SyncCurrent
 #ifdef WARPX_USE_PSATD
-    // Apply current correction in Fourier space
-    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
-    if ( fft_periodic_single_box == false ) {
-        // For domain decomposition with local FFT over guard cells,
-        // apply this before `SyncCurrent`, i.e. before exchanging guard cells for J
-        if ( do_current_correction ) CurrentCorrection();
-    }
+    if ( !fft_periodic_single_box && current_correction )
+        amrex::Abort("\nCurrent correction does not guarantee charge conservation with local FFTs over guard cells:\n"
+                     "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
+    if ( !fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) )
+        amrex::Abort("\nVay current deposition does not guarantee charge conservation with local FFTs over guard cells:\n"
+                     "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
 #endif
 
 #ifdef WARPX_QED
-    //Do QED processes
-    mypc->doQedEvents();
+    doQEDEvents();
 #endif
 
     // Synchronize J and rho
     SyncCurrent();
     SyncRho();
 
+// Apply current correction in Fourier space: for periodic single-box global FFTs
+// without guard cells, apply this after calling SyncCurrent
 #ifdef WARPX_USE_PSATD
-    // Apply current correction in Fourier space
-    // (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010)
-    if ( fft_periodic_single_box == true ) {
-        // For periodic, single-box FFT (FFT without guard cells)
-        // apply this after `SyncCurrent`, i.e. after exchanging guard cells for J
-        if ( do_current_correction ) CurrentCorrection();
-    }
+    if ( fft_periodic_single_box && current_correction ) CurrentCorrection();
+    if ( fft_periodic_single_box && (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) )
+        VayDeposition();
 #endif
 
 
@@ -408,11 +409,10 @@ WarpX::OneStep_sub1 (Real curtime)
     // TODO: we could save some charge depositions
     // Loop over species. For each ionizable species, create particles in
     // product species.
-    mypc->doFieldIonization();
+    doFieldIonization();
 
 #ifdef WARPX_QED
-    //Do QED processes
-    mypc->doQedEvents();
+    doQEDEvents();
 #endif
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
@@ -550,6 +550,40 @@ WarpX::OneStep_sub1 (Real curtime)
 }
 
 void
+WarpX::doFieldIonization ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        doFieldIonization(lev);
+    }
+}
+
+void
+WarpX::doFieldIonization (int lev)
+{
+    mypc->doFieldIonization(lev,
+                            *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
+                            *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
+}
+
+#ifdef WARPX_QED
+void
+WarpX::doQEDEvents ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        doQEDEvents(lev);
+    }
+}
+
+void
+WarpX::doQEDEvents (int lev)
+{
+    mypc->doQedEvents(lev,
+                      *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
+                      *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
+}
+#endif
+
+void
 WarpX::PushParticlesandDepose (amrex::Real cur_time)
 {
     // Evolve particles to p^{n+1/2} and x^{n+1}
@@ -565,6 +599,8 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type)
     mypc->Evolve(lev,
                  *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                  *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2],
+                 *Efield_avg_aux[lev][0],*Efield_avg_aux[lev][1],*Efield_avg_aux[lev][2],
+                 *Bfield_avg_aux[lev][0],*Bfield_avg_aux[lev][1],*Bfield_avg_aux[lev][2],
                  *current_fp[lev][0],*current_fp[lev][1],*current_fp[lev][2],
                  current_buf[lev][0].get(), current_buf[lev][1].get(), current_buf[lev][2].get(),
                  rho_fp[lev].get(), charge_buf[lev].get(),
@@ -584,75 +620,6 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type)
         }
     }
 #endif
-}
-
-void
-WarpX::ComputeDt ()
-{
-    const Real* dx = geom[max_level].CellSize();
-    Real deltat = 0.;
-
-    if (maxwell_fdtd_solver_id == 0) {
-        // CFL time step Yee solver
-#ifdef WARPX_DIM_RZ
-#    ifdef WARPX_USE_PSATD
-        deltat = cfl*dx[1]/PhysConst::c;
-#    else
-        // In the rz case, the Courant limit has been evaluated
-        // semi-analytically by R. Lehe, and resulted in the following
-        // coefficients.
-        // NB : Here the coefficient for m=1 as compared to this document,
-        // as it was observed in practice that this coefficient was not
-        // high enough (The simulation became unstable).
-        Real multimode_coeffs[6] = { 0.2105, 1.0, 3.5234, 8.5104, 15.5059, 24.5037 };
-        Real multimode_alpha;
-        if (n_rz_azimuthal_modes < 7) {
-            // Use the table of the coefficients
-            multimode_alpha = multimode_coeffs[n_rz_azimuthal_modes-1];
-        } else {
-            // Use a realistic extrapolation
-            multimode_alpha = (n_rz_azimuthal_modes - 1)*(n_rz_azimuthal_modes - 1) - 0.4;
-        }
-        deltat  = cfl * 1./( std::sqrt((1+multimode_alpha)/(dx[0]*dx[0]) + 1./(dx[1]*dx[1])) * PhysConst::c );
-#    endif
-#else
-        deltat  = cfl * 1./( std::sqrt(AMREX_D_TERM(  1./(dx[0]*dx[0]),
-                                                      + 1./(dx[1]*dx[1]),
-                                                      + 1./(dx[2]*dx[2]))) * PhysConst::c );
-#endif
-    } else {
-        // CFL time step CKC solver
-#if (BL_SPACEDIM == 3)
-        const Real delta = std::min(dx[0],std::min(dx[1],dx[2]));
-#elif (BL_SPACEDIM == 2)
-        const Real delta = std::min(dx[0],dx[1]);
-#endif
-        deltat = cfl*delta/PhysConst::c;
-    }
-    dt.resize(0);
-    dt.resize(max_level+1,deltat);
-
-    if (do_subcycling) {
-        for (int lev = max_level-1; lev >= 0; --lev) {
-            dt[lev] = dt[lev+1] * refRatio(lev)[0];
-        }
-    }
-
-    if (do_electrostatic) {
-        dt[0] = const_dt;
-    }
-
-    for (int lev=0; lev <= max_level; lev++) {
-        const Real* dx_lev = geom[lev].CellSize();
-        Print()<<"Level "<<lev<<": dt = "<<dt[lev]
-               <<" ; dx = "<<dx_lev[0]
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-               <<" ; dz = "<<dx_lev[1]<<'\n';
-#elif (defined WARPX_DIM_3D)
-               <<" ; dy = "<<dx_lev[1]
-               <<" ; dz = "<<dx_lev[2]<<'\n';
-#endif
-    }
 }
 
 /* \brief computes max_step for wakefield simulation in boosted frame.
@@ -761,19 +728,28 @@ WarpX::applyMirrors(Real time){
     }
 }
 
+// Apply current correction in Fourier space
 #ifdef WARPX_USE_PSATD
 void
 WarpX::CurrentCorrection ()
 {
     for ( int lev = 0; lev <= finest_level; ++lev )
     {
-        // Apply correction on fine patch
         spectral_solver_fp[lev]->CurrentCorrection( current_fp[lev], rho_fp[lev] );
-        if ( spectral_solver_cp[lev] )
-        {
-            // Apply correction on coarse patch
-            spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
-        }
+        if ( spectral_solver_cp[lev] ) spectral_solver_cp[lev]->CurrentCorrection( current_cp[lev], rho_cp[lev] );
+    }
+}
+#endif
+
+// Compute current from Vay deposition in Fourier space
+#ifdef WARPX_USE_PSATD
+void
+WarpX::VayDeposition ()
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        spectral_solver_fp[lev]->VayDeposition(current_fp[lev]);
+        if (spectral_solver_cp[lev]) spectral_solver_cp[lev]->VayDeposition(current_cp[lev]);
     }
 }
 #endif

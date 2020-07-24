@@ -31,8 +31,8 @@ public:
     std::vector<std::string> m_data_string;
 
     /** stores information needed for MPI Gatherv */
-    amrex::Vector<long> m_data_string_recvcount; // array of size N_procs, how many message root recv from sender
-    amrex::Vector<long> m_data_string_disp;      // array of size N_procs, where to place data in IOProc
+    amrex::Vector<int> m_data_string_recvcount; // array of size N_procs, how many message root recv from sender
+    amrex::Vector<int> m_data_string_disp;      // array of size N_procs, where to place data in IOProc
 
     /** number of data fields we save for each box
      *  (cost, processor, level, i_low, j_low, k_low, gpu_ID [if GPU run]) */

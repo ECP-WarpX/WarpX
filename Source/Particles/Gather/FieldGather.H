@@ -16,7 +16,7 @@
 /**
  * \brief Field gather for a single particle
  *
- * /param xp, yp, zp                : Particle position coordinates
+ * \param xp, yp, zp                : Particle position coordinates
  * \param Exp, Eyp, Ezp             : Electric field on particles.
  * \param Bxp, Byp, Bzp             : Magnetic field on particles.
  * \param ex_arr ey_arr ez_arr      : Array4 of the electric field, either full array or tile.
@@ -56,6 +56,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      const amrex::Dim3& lo,
                      const long n_rz_azimuthal_modes)
 {
+    using namespace amrex;
+
     const amrex::Real dxi = 1.0/dx[0];
     const amrex::Real dzi = 1.0/dx[2];
 #if (AMREX_SPACEDIM == 3)
@@ -94,17 +96,19 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int j_cell;
     int j_node_v;
     int j_cell_v;
+    Compute_shape_factor< depos_order > const compute_shape_factor;
+    Compute_shape_factor< depos_order-lower_in_v > const compute_shape_factor_lower_in_v;
     if ((ey_type[0] == NODE) || (ez_type[0] == NODE) || (bx_type[0] == NODE)) {
-        j_node = compute_shape_factor<depos_order>(sx_node, x);
+        j_node = compute_shape_factor(sx_node, x);
     }
     if ((ey_type[0] == CELL) || (ez_type[0] == CELL) || (bx_type[0] == CELL)) {
-        j_cell = compute_shape_factor<depos_order>(sx_cell, x - 0.5);
+        j_cell = compute_shape_factor(sx_cell, x - 0.5_rt);
     }
     if ((ex_type[0] == NODE) || (by_type[0] == NODE) || (bz_type[0] == NODE)) {
-        j_node_v = compute_shape_factor<depos_order-lower_in_v>(sx_node_v, x);
+        j_node_v = compute_shape_factor_lower_in_v(sx_node_v, x);
     }
     if ((ex_type[0] == CELL) || (by_type[0] == CELL) || (bz_type[0] == CELL)) {
-        j_cell_v = compute_shape_factor<depos_order-lower_in_v>(sx_cell_v, x - 0.5);
+        j_cell_v = compute_shape_factor_lower_in_v(sx_cell_v, x - 0.5_rt);
     }
     const amrex::Real (&sx_ex)[depos_order + 1 - lower_in_v] = ((ex_type[0] == NODE) ? sx_node_v : sx_cell_v);
     const amrex::Real (&sx_ey)[depos_order + 1             ] = ((ey_type[0] == NODE) ? sx_node   : sx_cell  );
@@ -131,16 +135,16 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int k_node_v;
     int k_cell_v;
     if ((ex_type[1] == NODE) || (ez_type[1] == NODE) || (by_type[1] == NODE)) {
-        k_node = compute_shape_factor<depos_order>(sy_node, y);
+        k_node = compute_shape_factor(sy_node, y);
     }
     if ((ex_type[1] == CELL) || (ez_type[1] == CELL) || (by_type[1] == CELL)) {
-        k_cell = compute_shape_factor<depos_order>(sy_cell, y - 0.5);
+        k_cell = compute_shape_factor(sy_cell, y - 0.5_rt);
     }
     if ((ey_type[1] == NODE) || (bx_type[1] == NODE) || (bz_type[1] == NODE)) {
-        k_node_v = compute_shape_factor<depos_order-lower_in_v>(sy_node_v, y);
+        k_node_v = compute_shape_factor_lower_in_v(sy_node_v, y);
     }
     if ((ey_type[1] == CELL) || (bx_type[1] == CELL) || (bz_type[1] == CELL)) {
-        k_cell_v = compute_shape_factor<depos_order-lower_in_v>(sy_cell_v, y - 0.5);
+        k_cell_v = compute_shape_factor_lower_in_v(sy_cell_v, y - 0.5_rt);
     }
     const amrex::Real (&sy_ex)[depos_order + 1             ] = ((ex_type[1] == NODE) ? sy_node   : sy_cell  );
     const amrex::Real (&sy_ey)[depos_order + 1 - lower_in_v] = ((ey_type[1] == NODE) ? sy_node_v : sy_cell_v);
@@ -167,16 +171,16 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     int l_node_v;
     int l_cell_v;
     if ((ex_type[zdir] == NODE) || (ey_type[zdir] == NODE) || (bz_type[zdir] == NODE)) {
-        l_node = compute_shape_factor<depos_order>(sz_node, z);
+        l_node = compute_shape_factor(sz_node, z);
     }
     if ((ex_type[zdir] == CELL) || (ey_type[zdir] == CELL) || (bz_type[zdir] == CELL)) {
-        l_cell = compute_shape_factor<depos_order>(sz_cell, z - 0.5);
+        l_cell = compute_shape_factor(sz_cell, z - 0.5_rt);
     }
     if ((ez_type[zdir] == NODE) || (bx_type[zdir] == NODE) || (by_type[zdir] == NODE)) {
-        l_node_v = compute_shape_factor<depos_order-lower_in_v>(sz_node_v, z);
+        l_node_v = compute_shape_factor_lower_in_v(sz_node_v, z);
     }
     if ((ez_type[zdir] == CELL) || (bx_type[zdir] == CELL) || (by_type[zdir] == CELL)) {
-        l_cell_v = compute_shape_factor<depos_order-lower_in_v>(sz_cell_v, z - 0.5);
+        l_cell_v = compute_shape_factor_lower_in_v(sz_cell_v, z - 0.5_rt);
     }
     const amrex::Real (&sz_ex)[depos_order + 1             ] = ((ex_type[zdir] == NODE) ? sz_node   : sz_cell  );
     const amrex::Real (&sz_ey)[depos_order + 1             ] = ((ey_type[zdir] == NODE) ? sz_node   : sz_cell  );
@@ -428,6 +432,89 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
                 dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
         }
         );
+}
+
+/**
+ * \brief Field gather for a single particle
+ *
+ * /param xp, yp, zp                : Particle position coordinates
+ * \param Exp, Eyp, Ezp             : Electric field on particles.
+ * \param Bxp, Byp, Bzp             : Magnetic field on particles.
+ * \param ex_arr ey_arr ez_arr      : Array4 of the electric field, either full array or tile.
+ * \param bx_arr by_arr bz_arr      : Array4 of the magnetic field, either full array or tile.
+ * \param ex_type, ey_type, ez_type : IndexType of the electric field
+ * \param bx_type, by_type, bz_type : IndexType of the magnetic field
+ * \param dx                        : 3D cell spacing
+ * \param xyzmin                    : Physical lower bounds of domain in x, y, z.
+ * \param lo                        : Index lower bounds of domain.
+ * \param n_rz_azimuthal_modes      : Number of azimuthal modes when using RZ geometry
+ * \param nox                       : order of the particle shape function
+ * \param l_lower_order_in_v        : whether to use lower order in v
+ */
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void doGatherShapeN (const amrex::ParticleReal xp,
+                     const amrex::ParticleReal yp,
+                     const amrex::ParticleReal zp,
+                     amrex::ParticleReal& Exp,
+                     amrex::ParticleReal& Eyp,
+                     amrex::ParticleReal& Ezp,
+                     amrex::ParticleReal& Bxp,
+                     amrex::ParticleReal& Byp,
+                     amrex::ParticleReal& Bzp,
+                     amrex::Array4<amrex::Real const> const& ex_arr,
+                     amrex::Array4<amrex::Real const> const& ey_arr,
+                     amrex::Array4<amrex::Real const> const& ez_arr,
+                     amrex::Array4<amrex::Real const> const& bx_arr,
+                     amrex::Array4<amrex::Real const> const& by_arr,
+                     amrex::Array4<amrex::Real const> const& bz_arr,
+                     const amrex::IndexType ex_type,
+                     const amrex::IndexType ey_type,
+                     const amrex::IndexType ez_type,
+                     const amrex::IndexType bx_type,
+                     const amrex::IndexType by_type,
+                     const amrex::IndexType bz_type,
+                     const amrex::GpuArray<amrex::Real, 3>& dx_arr,
+                     const amrex::GpuArray<amrex::Real, 3>& xyzmin_arr,
+                     const amrex::Dim3& lo,
+                     const long n_rz_azimuthal_modes,
+                     const int nox,
+                     const int l_lower_order_in_v)
+{
+    if (l_lower_order_in_v) {
+        if (nox == 1) {
+            doGatherShapeN<1,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+        } else if (nox == 2) {
+            doGatherShapeN<2,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+        } else if (nox == 3) {
+            doGatherShapeN<3,1>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+        }
+    } else {
+        if (nox == 1) {
+            doGatherShapeN<1,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+        } else if (nox == 2) {
+            doGatherShapeN<2,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+        } else if (nox == 3) {
+            doGatherShapeN<3,0>(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes);
+        }
+    }
 }
 
 #endif // FIELDGATHER_H_

@@ -8,7 +8,8 @@
 #ifndef WARPX_DIAGNOSTICS_REDUCEDDIAGS_REDUCEDDIAGS_H_
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_REDUCEDDIAGS_H_
 
-#include "AMReX_REAL.H"
+#include <AMReX_REAL.H>
+
 #include <string>
 #include <vector>
 #include <fstream>

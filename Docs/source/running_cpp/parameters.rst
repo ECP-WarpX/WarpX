@@ -45,7 +45,7 @@ Overall simulation parameters
     printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
 
-* ``warpx.verbose`` (`0` or `1`)
+* ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
     Controls how much information is printed to the terminal, when running WarpX.
 
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
@@ -61,13 +61,19 @@ Overall simulation parameters
     one should not expect to obtain the same random numbers,
     even if a fixed ``warpx.random_seed`` is provided.
 
-* ``warpx.do_electrostatic`` (`0` or `1`; default is `0`)
+* ``warpx.do_electrostatic`` (``0`` or ``1``; default is ``0`` for false)
     Run WarpX in electrostatic mode. Instead of updating the fields
     at each iteration with the full Maxwell equations, the fields are
     instead recomputed at each iteration from the (relativistic) Poisson
     equation. There is no limitation on the timestep in this case, but
     electromagnetic effects (e.g. propagation of radiation, lasers, etc.)
     are not captured.
+
+* ``amrex.abort_on_out_of_gpu_memory``  (``0`` or ``1``; default is ``1`` for true)
+    When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
+    This will cause severe performance drops.
+    Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
+    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
 
 .. _running-cpp-parameters-box:
 
@@ -288,6 +294,13 @@ Particle initialization
     The mass of one `physical` particle of this species.
     If ``species_type`` is specified, the mass will be set to the physical value and ``mass`` is optional.
 
+* ``<species_name>.xmin,ymin,zmin`` (`float`) optional (default unlimited)
+    When ``<species_name>.xmin`` and ``<species_name>.xmax`` (see below) are set, they delimit the region within which particles are injected.
+    The same is applicable in the other directions.
+    If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
+
+* ``<species_name>.xmax,ymax,zmax`` (`float`) optional (default unlimited)
+
 * ``<species_name>.injection_style`` (`string`)
     Determines how the particles will be injected in the simulation.
     The options are:
@@ -324,7 +337,7 @@ Particle initialization
       ``<species_name>.z_shift`` (`double`) optional (default is no shift) when set this value will be added to the longitudinal, ``z``, position of the particles.
       The external file must include the species ``openPMD::Record``s labeled ``position`` and ``momentum`` (`double` arrays), with dimensionality and units set via ``openPMD::setUnitDimension`` and ``setUnitSI``.
       If the external file also contains ``openPMD::Records``s for ``mass`` and ``charge`` (constant `double` scalars) then the species will use these, unless overwritten in the input file (see ``<species_name>.mass``, ```<species_name>.charge`` or ```<species_name>.species_type``).
-      The ``external_file`` option is currently implemented for 2D and 3D geometries, with record components ``x``, ``z`` and ``y`` for 3D.
+      The ``external_file`` option is currently implemented for 2D, 3D and RZ geometries, with record components in the cartesian coordinates ``(x,y,z)`` for 3D and RZ, and ``(x,z)`` for 2D.
       For more information on the `openPMD format <https://github.com/openPMD>`__ and how to build WarpX with it, please visit :doc:`../building/openpmd`.
 
 * ``<species_name>.num_particles_per_cell_each_dim`` (`3 integers in 3D and RZ, 2 integers in 2D`)
@@ -837,9 +850,9 @@ Laser initialization
     Note that the current implementation of the parser for external E-field
     does not work with RZ and the code will abort with an error message.
 
-* ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `int`)
-    required when ``warpx.B_ext_grid_init_style="parse_B_ext_grid_function"``
-    and when ``warpx.E_ext_grid_init_style="parse_E_ext_grid_function"``, respectively.
+* ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `3 floats`)
+    required when ``warpx.E_ext_grid_init_style="constant"``
+    and when ``warpx.B_ext_grid_init_style="constant"``, respectively.
     External uniform and constant electrostatic and magnetostatic field added
     to the grid at initialization. Use with caution as these fields are used for
     the field solver. In particular, do not use any other boundary condition
@@ -942,16 +955,30 @@ Numerics and algorithms
     In 2D simulations, only the first two values are read.
 
 * ``algo.current_deposition`` (`string`, optional)
-    The algorithm for current deposition. Available options are:
+    This parameter selects the algorithm for the deposition of the current density.
+    Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
+    is ``esirkepov`` if WarpX is compiled with the FDTD solver (that is, with
+    ``USE_PSATD=FALSE``) and ``direct`` if WarpX is compiled with the standard or
+    Galilean PSATD solver (that is, with ``USE_PSATD=TRUE``).
 
-     - ``esirkepov``: the charge-conserving Esirkepov algorithm
-       (see `Esirkepov, Comp. Phys. Comm. (2001) <https://www.sciencedirect.com/science/article/pii/S0010465500002289>`__)
-     - ``direct``: simpler current deposition algorithm, described in
-       the section :doc:`../theory/picsar_theory`. Note that this algorithm is not strictly charge-conserving.
+    1. ``direct``
 
-    If ``algo.current_deposition`` is not specified, the default is
-    ``esirkepov`` (unless WarpX is compiled with ``USE_PSATD=TRUE``, in which
-    case the default is ``direct``).
+       The current density is deposited as described in the section :ref:`current_deposition`.
+       This deposition scheme does not conserve charge.
+
+    2. ``esirkepov``
+
+       The current density is deposited as described in
+       `(Esirkepov, CPC, 2001) <https://www.sciencedirect.com/science/article/pii/S0010465500002289>`_.
+       This deposition scheme guarantees charge conservation for shape factors of arbitrary order.
+
+    3. ``vay``
+
+       The current density is deposited as described in `(Vay et al, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_ (see section :ref:`current_deposition` for more details).
+       This option guarantees charge conservation only when used in combination
+       with ``psatd.periodic_single_box_fft=1``, that is, only for periodic single-box
+       simulations with global FFTs without guard cells. The implementation for domain
+       decomposition with local FFTs over guard cells is planned but not yet completed.
 
 * ``algo.charge_deposition`` (`string`, optional)
     The algorithm for the charge density deposition. Available options are:
@@ -1009,12 +1036,11 @@ Numerics and algorithms
     The conductivity, permittivity, and permeability of the computational medium, respectively.
     If ``algo.em_solver_medium`` is set to macroscopic, then these properties must be provided.
 
-* ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`integer`)
+* ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`1`, `2`, or `3` ; default: 1)
     The order of the shape factors for the macroparticles, for the 3 dimensions of space.
     Lower-order shape factors result in faster simulations, but more noisy results,
 
-    Note that the implementation in WarpX is more efficient when these 3 numbers are equal,
-    and when they are between 1 and 3.
+    Note that in the current implementation in WarpX these 3 numbers must be equal.
 
 * ``warpx.do_dive_cleaning`` (`0` or `1` ; default: 0)
     Whether to use modified Maxwell equations that progressively eliminate
@@ -1045,6 +1071,7 @@ Numerics and algorithms
 
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
+    If ``psatd.periodic_single_box_fft`` is used, these can be set to ``inf`` for infinite-order PSATD.
 
 * ``psatd.nx_guard`, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
     The number of guard cells to use with PSATD solver.
@@ -1066,10 +1093,52 @@ Numerics and algorithms
     See `this section of the FFTW documentation <http://www.fftw.org/fftw3_doc/Planner-Flags.html>`__
     for more information.
 
-* ``psatd.do_current_correction`` (`0` or `1`; default: `0`)
-    If true, the current correction defined by equation (19) of
-    `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_ is applied.
-    Only used when compiled and running with the PSATD solver.
+* ``psatd.current_correction`` (`0` or `1`; default: `0`)
+    If true, the current correction `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_
+
+    .. math::
+       \widetilde{\boldsymbol{J}}^{\,n+1/2}_{\mathrm{correct}} = \widetilde{\boldsymbol{J}}^{\,n+1/2}
+       -\bigg[\boldsymbol{k}\cdot\widetilde{\boldsymbol{J}}^{\,n+1/2}
+       -i\frac{\widetilde{\rho}^{n+1}-\widetilde{\rho}^{n}}{\Delta t}\bigg]
+       \frac{\boldsymbol{k}}{k^2}
+
+    is applied. This option guarantees charge conservation only when used in combination
+    with ``psatd.periodic_single_box_fft=1``, that is, only for periodic single-box
+    simulations with global FFTs without guard cells. The implementation for domain
+    decomposition with local FFTs over guard cells is planned but not yet completed.
+
+* ``psatd.update_with_rho`` (`0` or `1`; default: `0`)
+    If false, the update equation for the electric field reads
+
+    .. math::
+       \begin{split}
+       \widetilde{\boldsymbol{E}}^{\,n+1}= & \:
+       C\widetilde{\boldsymbol{E}}^{\,n}+i\frac{S}{c\,k}\,c^2\,\boldsymbol{k}
+       \times\widetilde{\boldsymbol{B}}^{\,n}-\frac{1}{\epsilon_0}\,\frac{S}{c\,k}\,
+       \,\widetilde{\boldsymbol{J}}^{\,n+1/2} \\
+       & +\frac{1-C}{k^2}\,(\boldsymbol{k}\cdot\widetilde{\boldsymbol{E}}^{\,n})\,\boldsymbol{k}
+       +\frac{1}{\epsilon_0}\,\frac{1}{k^2}\,\left(\frac{S}{c\,k}-\Delta t\right)\,
+       (\boldsymbol{k}\cdot\widetilde{\boldsymbol{J}}^{\,n+1/2})\,\boldsymbol{k}
+       \end{split}
+
+    where :math:`C=\cos(k\,c\,\Delta t)` and :math:`S=\sin(k\,c\,\Delta t)`, respectively.
+
+    If true, the update equation for the electric field reads instead
+
+    .. math::
+       \begin{split}
+       \widetilde{\boldsymbol{E}}^{\,n+1}= & \:
+       C\widetilde{\boldsymbol{E}}^{\,n}+i\frac{S}{c\,k}\,c^2\,\boldsymbol{k}
+       \times\widetilde{\boldsymbol{B}}^{\,n}-\frac{1}{\epsilon_0}\,\frac{S}{c\,k}
+       \,\widetilde{\boldsymbol{J}}^{\,n+1/2} \\
+       & -i\frac{1}{\epsilon_0}\,\frac{1}{k^2}\,\bigg[
+       \left(1-\frac{S}{c\,k}\frac{1}{\Delta t}\right)\widetilde{\rho}^{n+1}
+       -\left(C-\frac{S}{c\,k}\frac{1}{\Delta t}\right)\widetilde{\rho}^{n}\bigg]
+       \,\boldsymbol{k}
+       \end{split}
+
+    See `(Vay et al, JCP 243, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_
+    for more details about the derivation of these equations.
 
 * ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
     Defines the galilean velocity.
@@ -1079,6 +1148,9 @@ Numerics and algorithms
     in a Galilean frame in :doc:`../theory/boosted-frame`).
     It also requires the use of the `direct` current deposition option
     `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
+
+* ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
+    Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
 
 * ``warpx.override_sync_int`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
@@ -1252,7 +1324,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
     Reduce size of the field output by this ratio in each dimension.
     (This is done by averaging the field over 1 or 2 points along each direction, depending on the staggering).
-    ``plot_coarsening_ratio`` should be an integer divisor of ``blocking_factor``.
+    ``plot_coarsening_ratio`` should be an integer divisor of ``blocking_factor``, defined in the :ref:`parallelization <parallelization_warpx>` section.
 
 * ``<diag_name>.file_prefix`` (`string`) optional (default `diags/plotfiles/plt`)
     Root for output file names. Supports sub-directories.
@@ -1273,10 +1345,6 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     * ``w`` for the particle weight,
 
     * ``ux`` ``uy`` ``uz`` for the particle momentum,
-
-    * ``Ex`` ``Ey`` ``Ez`` for the electric field on particles,
-
-    * ``Bx`` ``By`` ``Bz`` for the magnetic field on particles.
 
     The particle positions are always included.
     Use ``<species>.variables = none`` to plot no particle data, except particle position.

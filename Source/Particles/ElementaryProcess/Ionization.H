@@ -10,38 +10,96 @@
 
 #include "Utils/WarpXConst.H"
 #include "Particles/WarpXParticleContainer.H"
+#include "Particles/Gather/GetExternalFields.H"
+#include "Particles/Gather/FieldGather.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 
 struct IonizationFilterFunc
 {
-    const amrex::Real* const AMREX_RESTRICT m_ionization_energies;
-    const amrex::Real* const AMREX_RESTRICT m_adk_prefactor;
-    const amrex::Real* const AMREX_RESTRICT m_adk_exp_prefactor;
-    const amrex::Real* const AMREX_RESTRICT m_adk_power;
+    const amrex::Real* AMREX_RESTRICT m_ionization_energies;
+    const amrex::Real* AMREX_RESTRICT m_adk_prefactor;
+    const amrex::Real* AMREX_RESTRICT m_adk_exp_prefactor;
+    const amrex::Real* AMREX_RESTRICT m_adk_power;
 
     int comp;
     int m_atomic_number;
+
+    GetParticlePosition m_get_position;
+    GetExternalEField m_get_externalE;
+    GetExternalBField m_get_externalB;
+
+    amrex::Array4<const amrex::Real> m_ex_arr;
+    amrex::Array4<const amrex::Real> m_ey_arr;
+    amrex::Array4<const amrex::Real> m_ez_arr;
+    amrex::Array4<const amrex::Real> m_bx_arr;
+    amrex::Array4<const amrex::Real> m_by_arr;
+    amrex::Array4<const amrex::Real> m_bz_arr;
+
+    amrex::IndexType m_ex_type;
+    amrex::IndexType m_ey_type;
+    amrex::IndexType m_ez_type;
+    amrex::IndexType m_bx_type;
+    amrex::IndexType m_by_type;
+    amrex::IndexType m_bz_type;
+
+    amrex::GpuArray<amrex::Real, 3> m_dx_arr;
+    amrex::GpuArray<amrex::Real, 3> m_xyzmin_arr;
+
+    int m_l_lower_order_in_v;
+    int m_nox;
+    int m_n_rz_azimuthal_modes;
+
+    amrex::Dim3 m_lo;
+
+    IonizationFilterFunc (const WarpXParIter& a_pti, int lev, int ngE,
+                          amrex::FArrayBox const& exfab,
+                          amrex::FArrayBox const& eyfab,
+                          amrex::FArrayBox const& ezfab,
+                          amrex::FArrayBox const& bxfab,
+                          amrex::FArrayBox const& byfab,
+                          amrex::FArrayBox const& bzfab,
+                          amrex::Array<amrex::Real,3> v_galilean,
+                          const amrex::Real* const AMREX_RESTRICT a_ionization_energies,
+                          const amrex::Real* const AMREX_RESTRICT a_adk_prefactor,
+                          const amrex::Real* const AMREX_RESTRICT a_adk_exp_prefactor,
+                          const amrex::Real* const AMREX_RESTRICT a_adk_power,
+                          int a_comp,
+                          int a_atomic_number,
+                          int a_offset = 0) noexcept;
 
     template <typename PData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator() (const PData& ptd, int i) const noexcept
     {
+        using namespace amrex::literals;
+
         const int ion_lev = ptd.m_runtime_idata[comp][i];
         if (ion_lev < m_atomic_number)
         {
             constexpr amrex::Real c = PhysConst::c;
             constexpr amrex::Real c2_inv = 1./c/c;
 
+            // gather E and B
+            amrex::ParticleReal xp, yp, zp;
+            m_get_position(i, xp, yp, zp);
+
+            amrex::ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
+            m_get_externalE(i, ex, ey, ez);
+
+            amrex::ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
+            m_get_externalB(i, bx, by, bz);
+
+            doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
+                           m_ex_arr, m_ey_arr, m_ez_arr, m_bx_arr, m_by_arr, m_bz_arr,
+                           m_ex_type, m_ey_type, m_ez_type, m_bx_type, m_by_type, m_bz_type,
+                           m_dx_arr, m_xyzmin_arr, m_lo, m_n_rz_azimuthal_modes,
+                           m_nox, m_l_lower_order_in_v);
+
             // Compute electric field amplitude in the particle's frame of
             // reference (particularly important when in boosted frame).
             amrex::ParticleReal ux = ptd.m_rdata[PIdx::ux][i];
             amrex::ParticleReal uy = ptd.m_rdata[PIdx::uy][i];
             amrex::ParticleReal uz = ptd.m_rdata[PIdx::uz][i];
-            amrex::ParticleReal ex = ptd.m_rdata[PIdx::Ex][i];
-            amrex::ParticleReal ey = ptd.m_rdata[PIdx::Ey][i];
-            amrex::ParticleReal ez = ptd.m_rdata[PIdx::Ez][i];
-            amrex::ParticleReal bx = ptd.m_rdata[PIdx::Bx][i];
-            amrex::ParticleReal by = ptd.m_rdata[PIdx::By][i];
-            amrex::ParticleReal bz = ptd.m_rdata[PIdx::Bz][i];
 
             amrex::Real ga = std::sqrt(1. + (ux*ux + uy*uy + uz*uz) * c2_inv);
             amrex::Real E = std::sqrt(

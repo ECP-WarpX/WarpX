@@ -8,8 +8,8 @@
 #ifndef WARPX_PROFILERWRAPPER_H_
 #define WARPX_PROFILERWRAPPER_H_
 
-#include "AMReX_BLProfiler.H"
-#include "AMReX_GpuDevice.H"
+#include <AMReX_BLProfiler.H>
+#include <AMReX_GpuDevice.H>
 
 AMREX_FORCE_INLINE
 void doDeviceSynchronize(int do_device_synchronize)
