@@ -460,10 +460,8 @@ SpectralFieldDataRZ::InitFilter (amrex::IntVect const & filter_npass_each_dir, b
     auto const & kz = k_space.getKzArray();
 
     for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
-        binomialfilter[mfi].InitFilterArrayR(multi_spectral_hankel_transformer[mfi].getKrArray(),
-                                             dx[0], filter_npass_each_dir[0], compensation);
-        binomialfilter[mfi].InitFilterArrayZ(kz[mfi],
-                                             dx[1], filter_npass_each_dir[1], compensation);
+        binomialfilter[mfi].InitFilterArray(multi_spectral_hankel_transformer[mfi].getKrArray(),
+                                            kz[mfi], dx, filter_npass_each_dir, compensation);
     }
 }
 
