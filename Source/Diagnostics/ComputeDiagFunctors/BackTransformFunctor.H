@@ -35,7 +35,7 @@ public:
     BackTransformFunctor( const amrex::MultiFab * const mf_src, const int lev,
                           const int ncomp, const amrex::IntVect crse_ratio= amrex::IntVect(1));
 
-    void operator()(amrex::MultiFab& mf_dst, int dcomp) const override {};
+    void operator()(amrex::MultiFab& mf_dst, int dcomp) const override {}
 private:
     /** pointer to source multifab (cell-centered multi-component multifab) */
     amrex::MultiFab const * const m_mf_src = nullptr;

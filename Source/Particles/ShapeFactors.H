@@ -23,7 +23,7 @@ struct Compute_shape_factor
 {
     template< typename T >
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    int operator()(T* const sx, T xint) const { return 0; };
+    int operator()(T* const sx, T xint) const { return 0; }
 };
 
 /**
@@ -41,7 +41,7 @@ struct Compute_shape_factor< 0 >
         const auto j = static_cast<int>(xmid + T(0.5));
         sx[0] = T(1.0);
         return j;
-    };
+    }
 };
 
 /**
@@ -61,7 +61,7 @@ struct Compute_shape_factor< 1 >
         sx[0] = T(1.0) - xint;
         sx[1] = xint;
         return j;
-    };
+    }
 };
 
 /**
@@ -83,7 +83,7 @@ struct Compute_shape_factor< 2 >
         sx[2] = T(0.5)*(T(0.5) + xint)*(T(0.5) + xint);
         // index of the leftmost cell where particle deposits
         return j-1;
-    };
+    }
 };
 
 /**
@@ -106,7 +106,7 @@ struct Compute_shape_factor< 3 >
         sx[3] = (T(1.0))/(T(6.0))*xint*xint*xint;
         // index of the leftmost cell where particle deposits
         return j-1;
-    };
+    }
 };
 
 /**
@@ -140,7 +140,7 @@ struct Compute_shifted_shape_factor< 1 >
         sx[1+i_shift] = T(1.0) - xint;
         sx[2+i_shift] = xint;
         return i;
-    };
+    }
 };
 
 /**
@@ -163,7 +163,7 @@ struct Compute_shifted_shape_factor< 2 >
         sx[3+i_shift] = T(0.5)*(T(0.5) + xint)*(T(0.5) + xint);
         // index of the leftmost cell where particle deposits
         return i - 1;
-    };
+    }
 };
 
 /**
@@ -187,7 +187,7 @@ struct Compute_shifted_shape_factor< 3 >
         sx[4+i_shift] = (T(1.0))/(T(6.0))*xint*xint*xint;
         // index of the leftmost cell where particle deposits
         return i - 1;
-    };
+    }
 };
 
 #endif // SHAPEFACTORS_H_
