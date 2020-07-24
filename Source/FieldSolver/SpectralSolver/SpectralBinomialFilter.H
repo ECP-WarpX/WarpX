@@ -24,6 +24,11 @@ class SpectralBinomialFilter
         using KFilterArray = amrex::Gpu::ManagedVector<amrex::Real>;
 
         SpectralBinomialFilter () {};
+        void InitFilterArray (RealKVector const & kvec,
+                              amrex::Real const dels,
+                              int const npasses,
+                              bool const compensation,
+                              KFilterArray & filter);
         void InitFilterArrayR (HankelTransform::RealVector const & kr,
                                amrex::Real const dr,
                                int const npasses,
