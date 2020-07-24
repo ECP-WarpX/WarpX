@@ -27,11 +27,11 @@ private:
     bool DoDump (int step, int i_buffer, bool force_flush=false) override;
     bool DoComputeAndPack (int step, bool force_flush=false) override;
     /** Initialize Data required to compute back-transformed diagnostics */
-    void DerivedInitData ();
+    void DerivedInitData () override;
     /** Initialize functors that store pointers to the fields requested by the user.
      * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
      */
-    void InitializeFieldFunctors (int lev);
+    void InitializeFieldFunctors (int lev) override;
     /** This function initialized and allocates particle buffers for all the snapshots.
      *  The particle containers required for this must be added to populate this function.
      */
@@ -40,7 +40,7 @@ private:
      *  the multi-level cell-centered multifab, m_mf_cc. This MultiFab extends
      *  over the entire domain and is coarsened using the user-defined crse_ratio
      */
-    void PrepareFieldDataForOutput ();
+    void PrepareFieldDataForOutput () override;
     /** Initialize buffer domain, buffer box and lab-frame parameters such as
      *  m_t_lab, and z-positions for the i^th snapshot, i_buffer, and level, lev.
      * \param[in] i_buffer i^th snapshot or buffer
@@ -64,7 +64,7 @@ private:
     /** Distance between the back-transformed snapshots in lab-frame
       * m_dz_snapshots_lab = m_dt_snapshots_lab/c
       */
-    amrex::Real m_dz_snapshots_lab;
+    amrex::Real m_dz_snapshots_lab = 0.0;
 
     /** Number of z-slices in each buffer of the snapshot */
     int m_buffer_size = 256;

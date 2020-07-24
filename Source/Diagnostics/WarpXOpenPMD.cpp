@@ -657,7 +657,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
             ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[1];
 #endif
             std::string currentSmoothingParameters = ss.str();
-            return std::move(currentSmoothingParameters);
+            return currentSmoothingParameters;
         }() );
   meshes.setAttribute("chargeCorrection", [](){
       if( WarpX::do_dive_cleaning ) return "hyperbolic"; // TODO or "spectral" or something? double-check
@@ -681,8 +681,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
         // Check if this field is a vector. If so, then extract the field name
         std::vector< std::string > const vector_fields = {"E", "B", "j"};
         std::vector< std::string > const field_components = detail::getFieldComponentLabels();
-        for( std::string const field : vector_fields ) {
-            for( std::string const component : field_components ) {
+        for( std::string const& field : vector_fields ) {
+            for( std::string const& component : field_components ) {
                 if( field.compare( varname_1st ) == 0 &&
                     component.compare( varname_2nd ) == 0 )
                 {
@@ -795,7 +795,8 @@ WarpXParticleCounter::GetParticleOffsetOfProcessor(const long& numParticles,
     amrex::ParallelGather::Gather (numParticles, result.data(), -1, amrex::ParallelDescriptor::Communicator());
 
     sum = 0;
-    for (int i=0; i<result.size(); i++) {
+    int const num_results = result.size();
+    for (int i=0; i<num_results; i++) {
         sum += result[i];
         if (i<m_MPIRank)
             offset += result[i];
