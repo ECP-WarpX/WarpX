@@ -1369,7 +1369,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
                 }
 #endif
                 // invalidate the particle
-                p.m_idata.id = -p.m_idata.id;
+                p.id() = -p.id();
             }
         }
     }
