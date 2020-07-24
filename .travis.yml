@@ -36,7 +36,7 @@ install:
         cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git
           -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF;
       fi
-    - if [ "${WARPX_CI_PSATD:-FALSE}" == "TRUE" ]; then
+    - if [ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]; then
         cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git
           -DBLAS_LIBRARY=generic -DUSE_OPENMP=OFF -DBLASPP_BUILD_TESTS=OFF;
         cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git
