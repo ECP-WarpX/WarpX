@@ -698,7 +698,7 @@ void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
     const std::vector<std::string> species_names = mypc.GetSpeciesNames();
 
     // Loop over BFD snapshots
-    for (auto const& lf_diags : m_LabFrameDiags_) {
+    for (auto& lf_diags : m_LabFrameDiags_) {
 
         Real zmin_lab = lf_diags->m_prob_domain_lab_.lo(AMREX_SPACEDIM-1);
         auto i_lab = static_cast<unsigned>(
@@ -794,7 +794,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
     amrex::Vector<WarpXParticleContainer::DiagnosticParticleData> tmp_particle_buffer;
 
     // Loop over snapshots
-    for (auto const& lf_diags : m_LabFrameDiags_) {
+    for (auto& lf_diags : m_LabFrameDiags_) {
         // Get updated z position of snapshot
         const Real old_z_boost = lf_diags->m_current_z_boost;
         lf_diags->updateCurrentZPositions(t_boost,
