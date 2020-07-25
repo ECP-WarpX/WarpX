@@ -1061,7 +1061,7 @@ Numerics and algorithms
     Whether to use a Galerkin scheme when gathering fields to particles.
     When set to `1`, the interpolation order for each field component is reduced by one along the direction of that component.
     For example, `E_z` is gathered using ``interpolation.nox``, ``interpolation.noy``, and ``interpolation.noz - 1``.
-    Defaults to `1` unless ``warpx.do_nodal = 1`` and ``algo.field_gathering = energy-conserving``.
+    Defaults to `1` unless ``warpx.do_nodal = 1`` and/or ``algo.field_gathering = energy-conserving``.
 
 * ``warpx.do_dive_cleaning`` (`0` or `1` ; default: 0)
     Whether to use modified Maxwell equations that progressively eliminate
