@@ -1403,7 +1403,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 {
     WARPX_PROFILE("PhysicalParticleContainer::PushP");
 
-    if (do_not_push) return;
+    if (do_not_push || do_not_gather) return;
 
     const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev,0));
 
