@@ -129,8 +129,15 @@ public:
         const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
         const amrex::Real dt, amrex::Real& opt_depth) const noexcept
     {
+        namespace pxr_m = picsar::multi_physics::math;
         namespace pxr_p = picsar::multi_physics::phys;
         namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
+
+        //Optical depth is not evolved for photons having less energy than what is
+        //required to generate a pair
+        const auto gamma_photon = std::sqrt(ux*ux + uy*uy + uz*uz);
+        if (gamma_photon < pxr_m::two<RealType>)
+            return 0;
 
         constexpr amrex::Real m_e = PhysConst::m_e;
         const auto energy = std::sqrt(ux*ux + uy*uy + uz*uz)*m_e*PhysConst::c;
@@ -176,6 +183,9 @@ public:
     /**
      * Generates pairs according to Breit Wheeler process.
      * It can be used on GPU.
+     * Warning: the energy of the photon must be > 2mec^2, but it is not checked
+     * in this method.
+     *
      * @param[in] ux,uy,uz gamma*v components of the photon (SI units)
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
