@@ -136,7 +136,7 @@ public:
         //Optical depth is not evolved for photons having less energy than what is
         //required to generate a pair
         const auto gamma_photon = std::sqrt(ux*ux + uy*uy + uz*uz);
-        if (gamma_photon < pxr_m::two<RealType>)
+        if (gamma_photon < pxr_m::two<amrex::Real>)
             return 0;
 
         constexpr amrex::Real m_e = PhysConst::m_e;
