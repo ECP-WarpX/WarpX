@@ -96,7 +96,6 @@ def BW_inner(x):
     return integ.quad(lambda s: np.sqrt(s)*spe.kv(1./3., 2./3. * s**(3./2.)), x, np.inf)[0]
 
 def BW_X(chi_phot, chi_ele):
-    res = np.zeros(np.shape(chi_phot))
     div = (chi_ele*(chi_phot-chi_ele))
     div = np.where(np.logical_and(chi_phot > chi_ele, chi_ele != 0), div, 1.0);
     res = np.where(np.logical_and(chi_phot > chi_ele, chi_ele != 0), np.power(chi_phot/div, 2./3.), np.inf)
@@ -137,8 +136,6 @@ def get_spec(ytdata, specname, is_photon):
     py = ytdata[specname,"particle_momentum_y"].v
 
     w = ytdata[specname,"particle_weighting"].v
-
-    opt = np.zeros(np.shape(px))
 
     if (is_photon):
         opt = ytdata[specname,"particle_optical_depth_BW"].v
@@ -283,7 +280,7 @@ def check():
         print("*************\n")
 
     test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
-    #checksumAPI.evaluate_checksum(test_name, filename_end)
+    checksumAPI.evaluate_checksum(test_name, filename_end)
 
 def main():
     check()
