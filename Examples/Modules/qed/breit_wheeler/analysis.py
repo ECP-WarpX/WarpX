@@ -15,9 +15,9 @@ import scipy.special as spe
 import scipy.integrate as integ
 import scipy.stats as st
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-#import checksumAPI
+import checksumAPI
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 # This script performs detailed checks of the Breit-Wheeler pair production process.
 # Four populations of photons are initialized with different momenta in different
@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 # Specifically the script checks that:
 #
 # - The expected number of generated pairs n_pairs is in agreement with theory
-#   (the maximum tolerated error is 5*sqrt(n_pairs), 
+#   (the maximum tolerated error is 5*sqrt(n_pairs),
 #   which means that the test should statistically fail less than once every 10^6 runs).
 # - The weight of the generated particles is equal to the weight of the photon
 # - Momenta of the residual photons are still equal to the original momentum
@@ -33,7 +33,7 @@ import matplotlib.pyplot as plt
 # - The total energy is conserved in each event
 # - The energy distribution of the generated particles is in agreement with theory
 # - The optical depths of the product species are correctly initialized (QED effects are
-#   enabled for product species too). 
+#   enabled for product species too).
 #
 # More details on the theoretical formulas used in this script can be found in
 # the Jupyter notebook picsar/src/multi_physics/QED_tests/validation/validation.ipynb
@@ -83,10 +83,10 @@ NNS = [128,128,128,128] #bins for energy distribution comparison.
 
 def calc_chi_gamma(p, E, B):
     pnorm = np.linalg.norm(p)
-    v = c*(p/pnorm)    
+    v = c*(p/pnorm)
     EpvvecB = E + np.cross(v,B)
-    vdotEoverc = np.dot(v,E)/c    
-    ff = np.sqrt(np.dot(EpvvecB,EpvvecB) - np.dot(vdotEoverc,vdotEoverc)) 
+    vdotEoverc = np.dot(v,E)/c
+    ff = np.sqrt(np.dot(EpvvecB,EpvvecB) - np.dot(vdotEoverc,vdotEoverc))
     gamma_phot = pnorm/mec
     return gamma_phot*ff/E_s
 
@@ -112,7 +112,7 @@ def BW_F(chi_phot, chi_ele):
 def BW_T(chi_phot):
     coeff = 1./(np.pi * np.sqrt(3.) * (chi_phot**2))
     return coeff*integ.quad(lambda chi_ele: BW_F(chi_phot, chi_ele), 0, chi_phot)[0]
-    
+
 def small_diff(vv, val):
     if(val > 0.0):
         return np.max(np.abs((vv - val)/val)) < tol
@@ -124,7 +124,7 @@ def small_diff(vv, val):
 def BW_dN_dt(chi_phot, gamma_phot):
     coeff_BW = fine_structure * me*c**2/hbar
     return coeff_BW*BW_T(chi_phot)*(chi_phot/gamma_phot)
-    
+
 def BW_d2N_dt_dchi(chi_phot, gamma_phot, chi_ele):
     coeff_BW = fine_structure * me*c**2/hbar
     return coeff_BW*BW_F(chi_phot, chi_ele)*(gamma_phot/gamma_phot)
@@ -135,15 +135,15 @@ def get_spec(ytdata, specname, is_photon):
     px = ytdata[specname,"particle_momentum_x"].v
     pz = ytdata[specname,"particle_momentum_z"].v
     py = ytdata[specname,"particle_momentum_y"].v
-    
+
     w = ytdata[specname,"particle_weighting"].v
-    
+
     opt = np.zeros(np.shape(px))
-    
+
     if (is_photon):
         opt = ytdata[specname,"particle_optical_depth_BW"].v
     else:
-        opt = ytdata[specname,"particle_optical_depth_QSR"].v       
+        opt = ytdata[specname,"particle_optical_depth_QSR"].v
 
     return {"px" : px, "py" : py, "pz" : pz, "w" : w, "opt" : opt}
 
@@ -161,7 +161,7 @@ def check_number_of_pairs(ytdataset, phot_name, ele_name, pos_name, chi_phot, ga
     assert( np.abs(n_ele-expected_pairs) < expected_pairs_tolerance)
     print("  [OK] generated pair number is within expectations")
     return n_lost
-    
+
 def check_weights(phot_data, ele_data, pos_data):
     assert(np.all(phot_data["w"] == phot_data["w"][0]))
     assert(np.all(ele_data["w"]  == phot_data["w"][0]))
@@ -173,7 +173,7 @@ def check_momenta(phot_data, ele_data, pos_data, p0, p_ele, p_pos):
     assert(small_diff(phot_data["py"], p0[1]))
     assert(small_diff(phot_data["pz"], p0[2]))
     print("  [OK] residual photons still have initial momentum")
-    
+
     pdir = p0/np.linalg.norm(p0)
     assert(small_diff(ele_data["px"]/p_ele, pdir[0]))
     assert(small_diff(ele_data["py"]/p_ele, pdir[1]))
@@ -182,26 +182,26 @@ def check_momenta(phot_data, ele_data, pos_data, p0, p_ele, p_pos):
     assert(small_diff(pos_data["py"]/p_pos, pdir[1]))
     assert(small_diff(pos_data["pz"]/p_pos, pdir[2]))
     print("  [OK] pairs move along the initial photon direction")
-    
+
 def check_energy(energy_phot, energy_ele, energy_pos):
     product_energy = energy_ele + energy_pos
     assert(small_diff(product_energy, energy_phot))
     print("  [OK] energy is conserved in each event")
-    
+
 def check_opt_depths(phot_data, ele_data, pos_data):
     data = (phot_data, ele_data, pos_data)
     for dd in data:
-        loc, scale = st.expon.fit(dd["opt"])    
+        loc, scale = st.expon.fit(dd["opt"])
         assert( np.abs(loc - 0) < tol_red )
         assert( np.abs(scale - 1) < tol_red )
     print("  [OK] optical depth distributions are still exponential")
-    
+
 def check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, NN, idx):
     h_energy_ele, ele_en = np.histogram(energy_ele/mec2, bins=NN, range=[1.0001,gamma_phot-1.0001])
     h_energy_pos, _ = np.histogram(energy_pos/mec2, bins=NN, range=[1.0001,gamma_phot-1.0001])
-    
+
     cchi_part = chi_phot*(ele_en - 1)/(gamma_phot - 2)
-    
+
     coeff= 20
     aux_chi = np.linspace(cchi_part[0],cchi_part[-1], NN*coeff)
     distrib = BW_d2N_dt_dchi(chi_phot, gamma_phot, aux_chi)
@@ -209,17 +209,17 @@ def check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, N
     distrib = n_lost*distrib/np.sum(distrib)
 
     # Visual comparison of distributions
-    en_coords = 0.5*(ele_en[1:]+ele_en[:-1])
-    plt.clf()
-    plt.xlabel("γ_particle")
-    plt.ylabel("N")
-    plt.title("χ_photon = {:f}".format(chi_phot))
-    plt.plot(en_coords, distrib,label="theory")        
-    plt.plot(en_coords, h_energy_ele,label="BW electrons")
-    plt.plot(en_coords, h_energy_pos,label="BW positrons")
-    plt.legend()
-    plt.savefig("case_{:d}".format(idx+1))
-        
+    #en_coords = 0.5*(ele_en[1:]+ele_en[:-1])
+    #plt.clf()
+    #plt.xlabel("γ_particle")
+    #plt.ylabel("N")
+    #plt.title("χ_photon = {:f}".format(chi_phot))
+    #plt.plot(en_coords, distrib,label="theory")
+    #plt.plot(en_coords, h_energy_ele,label="BW electrons")
+    #plt.plot(en_coords, h_energy_pos,label="BW positrons")
+    #plt.legend()
+    #plt.savefig("case_{:d}".format(idx+1))
+
     discr_ele = np.abs(h_energy_ele-distrib)
     discr_pos = np.abs(h_energy_pos-distrib)
     max_discr = 5.0 * np.sqrt(distrib)
@@ -241,23 +241,23 @@ def check():
         ele_name  = spec_names_ele[idx]
         pos_name  = spec_names_pos[idx]
         p0        = initial_momenta[idx]
-        
+
         p2_phot = p0[0]**2 + p0[1]**2 + p0[2]**2
         p_phot = np.sqrt(p2_phot)
         energy_phot = p_phot*c
         chi_phot = calc_chi_gamma(p0, E_f, B_f)
         gamma_phot = np.linalg.norm(p0)/mec
-        
+
         print("** Case {:d} **".format(idx+1))
         print("  initial momentum: ", p0)
         print("  quantum parameter: {:f}".format(chi_phot))
         print("  normalized photon energy: {:f}".format(gamma_phot))
         print("  timestep: {:f} fs".format(sim_time*1e15))
-        
+
         phot_data = get_spec(all_data_end, phot_name, is_photon=True)
         ele_data = get_spec(all_data_end, ele_name, is_photon=False)
         pos_data = get_spec(all_data_end, pos_name, is_photon=False)
-        
+
         p2_ele = ele_data["px"]**2 + ele_data["py"]**2 + ele_data["pz"]**2
         p_ele = np.sqrt(p2_ele)
         energy_ele = np.sqrt(1.0 + p2_ele/mec**2 )*mec2
@@ -269,15 +269,15 @@ def check():
                               phot_name, ele_name, pos_name,
                               chi_phot, gamma_phot, sim_time,
                               initial_particle_number)
-                              
+
         check_weights(phot_data, ele_data, pos_data)
-        
+
         check_momenta(phot_data, ele_data, pos_data, p0, p_ele, p_pos)
-        
+
         check_energy(energy_phot, energy_ele, energy_pos)
-        
+
         check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, NNS[idx], idx)
-        
+
         check_opt_depths(phot_data, ele_data, pos_data)
 
         print("*************\n")
