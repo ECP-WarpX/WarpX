@@ -113,7 +113,7 @@ def BW_T(chi_phot):
     return coeff*integ.quad(lambda chi_ele: BW_F(chi_phot, chi_ele), 0, chi_phot)[0]
 
 def small_diff(vv, val):
-    if(val > 0.0):
+    if(val != 0.0):
         return np.max(np.abs((vv - val)/val)) < tol
     else:
         return np.max(np.abs(vv)) < tol
