@@ -1019,14 +1019,16 @@ Numerics and algorithms
 
      If ``algo.particle_pusher`` is not specified, ``boris`` is the default.
 
-* ``algo.maxwell_fdtd_solver`` (`string`, optional)
-    The algorithm for the FDTD Maxwell field solver. Available options are:
+* ``algo.maxwell_solver`` (`string`, optional)
+    The algorithm for the Maxwell field solver.
+    Available options are:
 
      - ``yee``: Yee FDTD solver.
      - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
        coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
 
-     If ``algo.maxwell_fdtd_solver`` is not specified, ``yee`` is the default.
+     If ``algo.maxwell_solver`` is not specified, ``yee`` is the default.
+     Note: this option is currently ignored with PSATD.
 
 * ``algo.em_solver_medium`` (`string`, optional)
     The medium for evaluating the Maxwell solver. Available options are :

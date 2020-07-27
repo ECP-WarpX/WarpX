@@ -14,7 +14,7 @@ geometry.prob_hi     = 0.00015 0.00015 1.e-06
 #################################
 ############ NUMERICS ###########
 #################################
-algo.maxwell_fdtd_solver = ckc
+algo.maxwell_solver = ckc
 warpx.verbose = 1
 warpx.do_dive_cleaning = 0
 warpx.use_filter = 1
