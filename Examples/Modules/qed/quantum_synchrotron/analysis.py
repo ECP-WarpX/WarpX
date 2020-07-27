@@ -17,7 +17,7 @@ import scipy.stats as st
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 #import checksumAPI
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 # This script performs detailed checks of the Quantum Synchrotron photon emission process.
 # Two electron populations and two positron populations are initialized with different momenta in different
@@ -29,7 +29,6 @@ sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 #   which means that the test should statistically fail less than once every 10^6 runs).
 # - The weight of the generated particles is equal to the weight of the photon
 # - The generated particles are emitted in the right direction
-# - The total energy is conserved in each event
 # - The energy distribution of the generated particles is in agreement with theory
 # - The optical depths of the product species are correctly initialized (QED effects are
 #   enabled for product species too).
@@ -119,7 +118,7 @@ def IC_G(chi_ele):
     return integ.quad(lambda xi: IC_SXI(chi_ele, xi), 0, 1)[0]
 
 def small_diff(vv, val):
-    if(val > 0.0):
+    if(val != 0.0):
         return np.max(np.abs((vv - val)/val)) < tol
     else:
         return np.max(np.abs(vv)) < tol
@@ -128,7 +127,7 @@ def boris(pp, dt, charge_sign):
     econst = 0.5*qe*dt*charge_sign/me
     u = pp/(me)
     u += econst*E_f
-    inv_gamma = 1/np.sqrt(1 + np.dot(u,u)/c*2)
+    inv_gamma = 1/np.sqrt(1 + np.dot(u,u)/c**2)
     t = econst*B_f*inv_gamma
     s = 2*t/(1 + np.dot(t,t))
     u_p = u + np.cross(u,t)
@@ -170,76 +169,65 @@ def check_number_of_photons(ytdataset, part_name, phot_name, chi_part, gamma_par
     expected_photons = (1.-np.exp(-dNQS_dt_theo*dt))*particle_number
     expected_photons_tolerance = 5.0*np.sqrt(expected_photons)
     n_phot = ytdataset.particle_type_counts[phot_name]
-    print(chi_part, gamma_part, dt)
-    #assert( np.abs(n_phot-expected_photons) < expected_photons_tolerance)
-    print(n_phot, expected_photons_tolerance)
+    assert( np.abs(n_phot-expected_photons) < expected_photons_tolerance)
     print("  [OK] generated photons number is within expectations")
     return n_phot
 
-def check_weights(phot_data, ele_data, pos_data):
-    assert(np.all(phot_data["w"] == phot_data["w"][0]))
-    assert(np.all(ele_data["w"]  == phot_data["w"][0]))
-    assert(np.all(ele_data["w"]  == phot_data["w"][0]))
+def check_weights(part_data, phot_data):
+    assert(np.all(part_data["w"] == part_data["w"][0]))
+    assert(np.all(phot_data["w"]  == part_data["w"][0]))
     print("  [OK] particles weights are the expected ones")
 
-def check_momenta(phot_data, ele_data, pos_data, p0, p_ele, p_pos):
-    assert(small_diff(phot_data["px"], p0[0]))
-    assert(small_diff(phot_data["py"], p0[1]))
-    assert(small_diff(phot_data["pz"], p0[2]))
-    print("  [OK] residual photons still have initial momentum")
-
+def check_momenta(phot_data, p_phot, p0):
     pdir = p0/np.linalg.norm(p0)
-    assert(small_diff(ele_data["px"]/p_ele, pdir[0]))
-    assert(small_diff(ele_data["py"]/p_ele, pdir[1]))
-    assert(small_diff(ele_data["pz"]/p_ele, pdir[2]))
-    assert(small_diff(pos_data["px"]/p_pos, pdir[0]))
-    assert(small_diff(pos_data["py"]/p_pos, pdir[1]))
-    assert(small_diff(pos_data["pz"]/p_pos, pdir[2]))
-    print("  [OK] pairs move along the initial photon direction")
+    assert(small_diff(phot_data["px"]/p_phot, pdir[0]))
+    assert(small_diff(phot_data["py"]/p_phot, pdir[1]))
+    assert(small_diff(phot_data["pz"]/p_phot, pdir[2]))    
+    print("  [OK] photons move along the initial particle direction")   
 
-def check_energy(energy_phot, energy_ele, energy_pos):
-    product_energy = energy_ele + energy_pos
-    assert(small_diff(product_energy, energy_phot))
-    print("  [OK] energy is conserved in each event")
-
-def check_opt_depths(phot_data, ele_data, pos_data):
-    data = (phot_data, ele_data, pos_data)
+def check_opt_depths(part_data, phot_data):
+    data = (part_data, phot_data)
     for dd in data:
         loc, scale = st.expon.fit(dd["opt"])
         assert( np.abs(loc - 0) < tol_red )
         assert( np.abs(scale - 1) < tol_red )
     print("  [OK] optical depth distributions are still exponential")
 
-def check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, NN, idx):
-    h_energy_ele, ele_en = np.histogram(energy_ele/mec2, bins=NN, range=[1.0001,gamma_phot-1.0001])
-    h_energy_pos, _ = np.histogram(energy_pos/mec2, bins=NN, range=[1.0001,gamma_phot-1.0001])
-
-    cchi_part = chi_phot*(ele_en - 1)/(gamma_phot - 2)
+def check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NN, idx):
+    h_log_gamma_phot, c_gamma_phot = np.histogram(np.log10(gamma_phot), bins=np.logspace(np.log10(0.0001),np.log10(gamma_part),NN))
+    
+    '''  
+    cchi_phot = chi_part*(ele_en - 1)/(gamma_phot - 2)
 
     coeff= 20
     aux_chi = np.linspace(cchi_part[0],cchi_part[-1], NN*coeff)
     distrib = BW_d2N_dt_dchi(chi_phot, gamma_phot, aux_chi)
     distrib = np.sum(distrib.reshape(-1, coeff),1)
     distrib = n_lost*distrib/np.sum(distrib)
-
+''' 
     # Visual comparison of distributions
-    #en_coords = 0.5*(ele_en[1:]+ele_en[:-1])
-    #plt.clf()
-    #plt.xlabel("γ_particle")
-    #plt.ylabel("N")
-    #plt.title("χ_photon = {:f}".format(chi_phot))
-    #plt.plot(en_coords, distrib,label="theory")
-    #plt.plot(en_coords, h_energy_ele,label="BW electrons")
-    #plt.plot(en_coords, h_energy_pos,label="BW positrons")
-    #plt.legend()
-    #plt.savefig("case_{:d}".format(idx+1))
+    c_gamma_phot = 0.5*(c_gamma_phot[1:]+c_gamma_phot[:-1])
+    plt.clf()
+    plt.xlabel("γ_photon")
+    plt.ylabel("N")
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig.suptitle("χ_particle = {:f}".format(chi_part))
+    
+    #ax1.plot(c_gamma_phot, distrib,label="theory")
+    ax1.loglog(c_gamma_phot, h_log_gamma_phot,label="BW electrons")
+    
+    ax2.semilogy(c_gamma_phot, h_log_gamma_phot,label="BW electrons")   
 
+    plt.legend()
+    plt.savefig("case_{:d}".format(idx+1))
+    '''  
     discr_ele = np.abs(h_energy_ele-distrib)
     discr_pos = np.abs(h_energy_pos-distrib)
     max_discr = 5.0 * np.sqrt(distrib)
     assert(np.all(discr_ele < max_discr))
     assert(np.all(discr_pos < max_discr))
-    print("  [OK] energy distribution is within expectations")
+''' 
+    print("  [NO] energy distribution is within expectations")
 
 #__________________
 
@@ -253,45 +241,43 @@ def check():
     for idx in range(4):
         part_name = spec_names[idx]
         phot_name  = spec_names_phot[idx]
-        p0        = initial_momenta[idx]
-
-        p0 = boris(p0,sim_time*0.5,csign[idx])
-
-
+        t_pi        = initial_momenta[idx]
+        pm = boris(t_pi,-sim_time*0.5,csign[idx])
+        p0 = boris(pm,sim_time*1.0,csign[idx])
+        
         p2_part = p0[0]**2 + p0[1]**2 + p0[2]**2
         p_part = np.sqrt(p2_part)
         energy_part = np.sqrt(mec2**2 + p2_part*c**2)
-        chi_part = calc_chi_part(p0, E_f, B_f)
         gamma_part = energy_part/mec2
+        chi_part = calc_chi_part(p0, E_f, B_f)
 
         print("** Case {:d} **".format(idx+1))
-        print("  initial momentum: ", p0)
+        print("  initial momentum: ", t_pi)
         print("  quantum parameter: {:f}".format(chi_part))
         print("  normalized particle energy: {:f}".format(gamma_part))
         print("  timestep: {:f} fs".format(sim_time*1e15))
 
-        part_data = get_spec(all_data_end, part_name, is_photon=False)
+        part_data_final = get_spec(all_data_end, part_name, is_photon=False)
         phot_data = get_spec(all_data_end, phot_name, is_photon=True)
 
         p_phot = np.sqrt(phot_data["px"]**2 + phot_data["py"]**2 + phot_data["pz"]**2)
         energy_phot = p_phot*c
+        gamma_phot = energy_phot/mec
 
         n_phot = check_number_of_photons(data_set_end,
                               part_name, phot_name,
                               chi_part, gamma_part, sim_time,
                               initial_particle_number)
-                              
-        return
 
-        check_weights(phot_data, ele_data, pos_data)
+        check_weights(part_data_final, phot_data)       
 
-        check_momenta(phot_data, ele_data, pos_data, p0, p_ele, p_pos)
+        p_part_final = np.sqrt(part_data_final["px"]**2 + part_data_final["py"]**2 + part_data_final["pz"]**2 )
+	    
+        check_momenta(phot_data, p_phot, p0)
 
-        check_energy(energy_phot, energy_ele, energy_pos)
+        check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NNS[idx], idx)
 
-        check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, NNS[idx], idx)
-
-        check_opt_depths(phot_data, ele_data, pos_data)
+        check_opt_depths(part_data_final, phot_data)
 
         print("*************\n")
 
