@@ -33,7 +33,6 @@ algo.maxwell_solver = "ckc"
 
 # CFL
 warpx.cfl = .9999
-particles.nspecies = 4
 particles.species_names = driver beam plasma_e plasma_p
 particles.deposit_on_main_grid = plasma_e plasma_p
 

@@ -31,7 +31,6 @@ interpolation.noz = 3
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 3
 particles.species_names = plasma_e beam driver
 
 driver.charge = -q_e

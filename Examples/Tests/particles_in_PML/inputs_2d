@@ -29,7 +29,6 @@ warpx.cfl = 1.0
 warpx.use_filter = 1
 
 # Particle species
-particles.nspecies = 2
 particles.species_names = electron proton
 
 electron.charge = -q_e

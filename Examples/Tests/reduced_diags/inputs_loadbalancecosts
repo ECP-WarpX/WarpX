@@ -37,7 +37,6 @@ interpolation.noz = 1
 warpx.cfl = 0.99999
 
 # Particles
-particles.nspecies = 1
 particles.species_names = electrons
 
 electrons.charge = -q_e

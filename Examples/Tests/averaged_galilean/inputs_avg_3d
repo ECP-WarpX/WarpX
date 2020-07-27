@@ -33,7 +33,6 @@ interpolation.noz = 3
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 2
 particles.species_names = electrons ions
 
 warpx.do_nodal = 1
