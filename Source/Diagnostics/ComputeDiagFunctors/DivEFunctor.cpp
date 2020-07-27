@@ -18,11 +18,11 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     constexpr int ng = 1;
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     // For RZ spectral, all quantities are cell centered.
-    IntVect typ = IntVect::TheCellVector();
+    amrex::IntVect typ = amrex::IntVect::TheCellVector();
 #else
     // For staggered and nodal calculations, divE is computed on the nodes.
     // The temporary divE MultiFab is generated to comply with the location of divE.
-    IntVect typ = IntVect::TheNodeVector();
+    amrex::IntVect typ = amrex::IntVect::TheNodeVector();
 #endif
     const amrex::BoxArray& ba = amrex::convert(warpx.boxArray(m_lev),typ);
     amrex::MultiFab divE(ba, warpx.DistributionMap(m_lev), 2*warpx.n_rz_azimuthal_modes-1, ng);
