@@ -104,6 +104,8 @@ if ci_psatd:
     test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], True)
     # Remove PSATD single-precision, which is done in ci_single_precision
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT'], False)
+    # Remove PSATD RZ, which is done in ci_rz_or_nompi
+    test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
 
 if ci_python_main:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], True)
@@ -116,7 +118,6 @@ if ci_rz_or_nompi:
     block1 = select_tests(test_blocks, ['USE_RZ=TRUE'], True)
     block2 = select_tests(test_blocks, ['useMPI = 0'], True)
     test_blocks = block1 + block2
-    test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], False)
 
 if ci_qed:
     test_blocks = select_tests(test_blocks, ['QED=TRUE'], True)

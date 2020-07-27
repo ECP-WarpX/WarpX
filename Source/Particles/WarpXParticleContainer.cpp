@@ -862,10 +862,10 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
     // Tag particle if goes to higher level.
     // It will be split later in the loop
     if (pld.m_lev == lev+1
-        and p.m_idata.id != NoSplitParticleID
-        and p.m_idata.id >= 0)
+        and p.id() != NoSplitParticleID
+        and p.id() >= 0)
     {
-        p.m_idata.id = DoSplitParticleID;
+        p.id() = DoSplitParticleID;
     }
 
     if (pld.m_lev == lev-1){
