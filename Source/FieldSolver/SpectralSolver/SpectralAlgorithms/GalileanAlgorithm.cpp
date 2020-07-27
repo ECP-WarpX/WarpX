@@ -227,10 +227,11 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
             if (k_norm != 0.) {
 
                 // Auxiliary coefficients
-                const Real    k2    = k_norm * k_norm;
-                const Real    ck    = c * k_norm;
-                const Real    ckdt  = ck * dt;
-                const Complex T2aux = amrex::exp(I * ckdt); // limit of T2 for nu=1
+                const Real    k2   = k_norm * k_norm;
+                const Real    ck   = c * k_norm;
+                const Real    ckdt = ck * dt;
+                const Complex tmp1 = amrex::exp(  I * ckdt); // limit of T2 for nu =  1
+                const Complex tmp2 = amrex::exp(- I * ckdt); // limit of T2 for nu = -1
 
                 // See equation (12a)
                 C   (i,j,k) = std::cos(ckdt);
@@ -273,7 +274,7 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
                     X4(i,j,k) = I * kv * X1(i,j,k) - T2(i,j,k) * S_ck(i,j,k) / ep0;
                 }
 
-                // Limits for nu=0
+                // Limits for nu = 0
                 if (nu == 0.) {
 
                     // X1 multiplies i*(k \times J) in the update equation for B
@@ -295,33 +296,58 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
                     X4(i,j,k) = - S_ck(i,j,k) / ep0;
                 }
 
-                // Limits for nu=1
+                // Limits for nu = 1
                 if (nu == 1.) {
 
                     // X1 multiplies i*(k \times J) in the update equation for B
-                    X1(i,j,k) = (1._rt - T2aux*T2aux + 2._rt * I * ckdt) / (4._rt * ep0 * c2 * k2);
+                    X1(i,j,k) = (1._rt - tmp1 * tmp1 + 2._rt * I * ckdt) / (4._rt * ep0 * c2 * k2);
 
                     if (update_with_rho) {
                         // X2 multiplies rho_new in the update equation for E
                         // X3 multiplies rho_old in the update equation for E
-                        X2(i,j,k) = (3._rt - 4._rt * T2aux + T2aux * T2aux + 2._rt * I * ckdt)
-                            / (4._rt * ep0 * k2 * (1._rt - T2aux));
-                        X3(i,j,k) = (3._rt - 2._rt / T2aux - 2._rt * T2aux + T2aux * T2aux - 2._rt * I * ckdt)
-                            / (4._rt * ep0 * k2 * (T2aux - 1._rt));
+                        X2(i,j,k) = (- 3._rt + 4._rt * tmp1 - tmp1 * tmp1 - 2._rt * I * ckdt)
+                            / (4._rt * ep0 * k2 * (tmp1 - 1._rt));
+                        X3(i,j,k) = (3._rt - 2._rt / tmp1 - 2._rt * tmp1 + tmp1 * tmp1 - 2._rt * I * ckdt)
+                            / (4._rt * ep0 * k2 * (tmp1 - 1._rt));
                     } else {
                         // X2 multiplies (k \dot E) in the update equation for E
                         // X3 multiplies (k \dot J) in the update equation for E
-                        X2(i,j,k) = (1._rt - C(i,j,k)) * T2aux / k2;
-                        X3(i,j,k) = (2._rt * ckdt- I * T2aux * T2aux + 4._rt * I * T2aux - 3._rt * I)
+                        X2(i,j,k) = (1._rt - C(i,j,k)) * tmp1 / k2;
+                        X3(i,j,k) = (2._rt * ckdt - I * tmp1 * tmp1 + 4._rt * I * tmp1 - 3._rt * I)
                             / (4._rt * ep0 * ck * k2);
                     }
 
                     // Coefficient multiplying J in update equation for E
-                    X4(i,j,k) = I * (- 1._rt + T2aux * T2aux + 2._rt * I * ckdt) / (4._rt * ep0 * ck);
+                    X4(i,j,k) = (- I + I * tmp1 * tmp1 - 2._rt * ckdt) / (4._rt * ep0 * ck);
+                }
+
+                // Limits for nu = -1
+                if (nu == -1.) {
+
+                    // X1 multiplies i*(k \times J) in the update equation for B
+                    X1(i,j,k) = (1._rt - tmp2 * tmp2 - 2._rt * I * ckdt) / (4._rt * ep0 * c2 * k2);
+
+                    if (update_with_rho) {
+                        // X2 multiplies rho_new in the update equation for E
+                        // X3 multiplies rho_old in the update equation for E
+                        X2(i,j,k) = (- 4._rt + 3._rt * tmp1 + tmp2 - 2._rt * I * ckdt * tmp1)
+                            / (4._rt * ep0 * k2 * (tmp1 - 1._rt));
+                        X3(i,j,k) = (2._rt - tmp2 - 3._rt * tmp1 + 2._rt * tmp1 * tmp1 - 2._rt * I * ckdt * tmp1)
+                            / (4._rt * ep0 * k2 * (tmp1 - 1._rt));
+                    } else {
+                        // X2 multiplies (k \dot E) in the update equation for E
+                        // X3 multiplies (k \dot J) in the update equation for E
+                        X2(i,j,k) = (1._rt - C(i,j,k)) * tmp2 / k2;
+                        X3(i,j,k) = (2._rt * ckdt + I * tmp2 * tmp2 - 4._rt * I * tmp2 + 3._rt * I)
+                            / (4._rt * ep0 * ck * k2);
+                    }
+
+                    // Coefficient multiplying J in update equation for E
+                    X4(i,j,k) = (I - I * tmp2 * tmp2 - 2._rt * ckdt) / (4._rt * ep0 * ck);
                 }
             }
 
-            // Limits for k=0
+            // Limits for k = 0
             else {
 
                 // Limits of cos(c*k*dt) and sin(c*k*dt)/(c*k)
