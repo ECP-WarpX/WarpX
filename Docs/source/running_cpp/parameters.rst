@@ -717,13 +717,15 @@ Laser initialization
 
 *  ``<laser_name>.profile_duration`` (`float` ; in seconds)
 
-    The duration of the laser, defined as :math:`\tau` below:
+    The duration of the laser pulse, defined as :math:`\tau` below:
 
     - For the ``"gaussian"`` profile:
 
     .. math::
 
         E(\boldsymbol{x},t) \propto \exp\left( -\frac{(t-t_{peak})^2}{\tau^2} \right)
+        
+    Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)} \approx \mathrm{FWHM}_I / 1.17441`.
 
     - For the ``"harris"`` profile:
 
