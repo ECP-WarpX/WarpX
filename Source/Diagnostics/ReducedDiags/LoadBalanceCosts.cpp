@@ -46,7 +46,9 @@ void LoadBalanceCosts::ComputeDiags (int step)
     m_nBoxesMax = std::max(m_nBoxesMax, nBoxes);
 
     // resize and clear data array
-    const size_t dataSize = m_nDataFields*nBoxes;
+    const size_t dataSize =
+        static_cast<size_t>(m_nDataFields)*
+        static_cast<size_t>(nBoxes);
     m_data.resize(dataSize, 0.0);
     m_data.assign(dataSize, 0.0);
 

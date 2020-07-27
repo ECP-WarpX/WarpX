@@ -22,6 +22,7 @@ FlushFormatPlotfile::WriteToFile (
     const std::string prefix, bool plot_raw_fields,
     bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F) const
 {
+    WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
     const std::string& filename = amrex::Concatenate(prefix, iteration[0]);
     amrex::Print() << "  Writing plotfile " << filename << "\n";
@@ -274,14 +275,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         real_names.push_back("momentum_x");
         real_names.push_back("momentum_y");
         real_names.push_back("momentum_z");
-
-        real_names.push_back("Ex");
-        real_names.push_back("Ey");
-        real_names.push_back("Ez");
-
-        real_names.push_back("Bx");
-        real_names.push_back("By");
-        real_names.push_back("Bz");
 
 #ifdef WARPX_DIM_RZ
         real_names.push_back("theta");

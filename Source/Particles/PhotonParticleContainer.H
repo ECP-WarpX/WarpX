@@ -36,6 +36,12 @@ public:
                          const amrex::MultiFab& Bx,
                          const amrex::MultiFab& By,
                          const amrex::MultiFab& Bz,
+                         const amrex::MultiFab& Ex_avg,
+                         const amrex::MultiFab& Ey_avg,
+                         const amrex::MultiFab& Ez_avg,
+                         const amrex::MultiFab& Bx_avg,
+                         const amrex::MultiFab& By_avg,
+                         const amrex::MultiFab& Bz_avg,
                          amrex::MultiFab& jx,
                          amrex::MultiFab& jy,
                          amrex::MultiFab& jz,
@@ -55,7 +61,18 @@ public:
                          DtType a_dt_type=DtType::Full) override;
 
     virtual void PushPX(WarpXParIter& pti,
-                        amrex::Real dt, DtType a_dt_type=DtType::Full) override;
+                        amrex::FArrayBox const * exfab,
+                        amrex::FArrayBox const * eyfab,
+                        amrex::FArrayBox const * ezfab,
+                        amrex::FArrayBox const * bxfab,
+                        amrex::FArrayBox const * byfab,
+                        amrex::FArrayBox const * bzfab,
+                        const int ngE, const int /*e_is_nodal*/,
+                        const long offset,
+                        const long np_to_push,
+                        int lev, int gather_lev,
+                        amrex::Real dt, ScaleFields scaleFields,
+                        DtType a_dt_type) override;
 
     // Do nothing
     virtual void PushP (int lev,
@@ -65,7 +82,7 @@ public:
                         const amrex::MultiFab& Ez,
                         const amrex::MultiFab& Bx,
                         const amrex::MultiFab& By,
-                        const amrex::MultiFab& Bz) override {};
+                        const amrex::MultiFab& Bz) override {}
 
 
     // DepositCurrent should do nothing for photons
@@ -83,20 +100,7 @@ public:
                                 int thread_num,
                                 int lev,
                                 int depos_lev,
-                                amrex::Real dt) override {};
-
-#ifdef WARPX_QED
-    /**
-     * This function evolves the optical depth of the photons if QED effects
-     * are enabled.
-     * @param[in,out] pti particle iterator (optical depth will be modified)
-     * @param[in] dt temporal step
-     */
-    virtual void EvolveOpticalDepth(WarpXParIter& pti,
-        amrex::Real dt) override;
-
-#endif
-
+                                amrex::Real dt) override {}
 };
 
 #endif // #ifndef WARPX_PhotonParticleContainer_H_

@@ -26,7 +26,14 @@
 using namespace amrex;
 
 WarpXParIter::WarpXParIter (ContainerType& pc, int level)
-    : ParIter(pc, level, MFItInfo().SetDynamic(WarpX::do_dynamic_scheduling))
+    : amrex::ParIter<0,0,PIdx::nattribs>(pc, level,
+             MFItInfo().SetDynamic(WarpX::do_dynamic_scheduling))
+{
+}
+
+WarpXParIter::WarpXParIter (ContainerType& pc, int level, MFItInfo& info)
+    : amrex::ParIter<0,0,PIdx::nattribs>(pc, level,
+                   info.SetDynamic(WarpX::do_dynamic_scheduling))
 {
 }
 
@@ -34,9 +41,6 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     : ParticleContainer<0,0,PIdx::nattribs>(amr_core->GetParGDB())
     , species_id(ispecies)
 {
-    for (unsigned int i = PIdx::Ex; i <= PIdx::Bz; ++i) {
-        communicate_real_comp[i] = false; // Don't need to communicate E and B.
-    }
     SetParticleSize();
     ReadParameters();
 
@@ -45,12 +49,6 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
     particle_comps["ux"] = PIdx::ux;
     particle_comps["uy"] = PIdx::uy;
     particle_comps["uz"] = PIdx::uz;
-    particle_comps["Ex"] = PIdx::Ex;
-    particle_comps["Ey"] = PIdx::Ey;
-    particle_comps["Ez"] = PIdx::Ez;
-    particle_comps["Bx"] = PIdx::Bx;
-    particle_comps["By"] = PIdx::By;
-    particle_comps["Bz"] = PIdx::Bz;
 #ifdef WARPX_DIM_RZ
     particle_comps["theta"] = PIdx::theta;
 #endif
@@ -338,6 +336,26 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo, q,
                 WarpX::n_rz_azimuthal_modes);
         }
+    } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+        if        (WarpX::nox == 1){
+            doVayDepositionShapeN<1>(
+                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx, xyzmin, lo, q,
+                WarpX::n_rz_azimuthal_modes );
+        } else if (WarpX::nox == 2){
+            doVayDepositionShapeN<2>(
+                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx, xyzmin, lo, q,
+                WarpX::n_rz_azimuthal_modes );
+        } else if (WarpX::nox == 3){
+            doVayDepositionShapeN<3>(
+                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx, xyzmin, lo, q,
+                WarpX::n_rz_azimuthal_modes );
+        }
     } else {
         if        (WarpX::nox == 1){
             doDepositionShapeN<1>(
@@ -428,7 +446,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     tilebox.grow(ngRho);
     const Box tb = amrex::convert( tilebox, rho->ixType().toIntVect() );
 
-    const int nc = (rho->nComp() == 1 ? 1 : rho->nComp()/2);
+    const int nc = WarpX::ncomps;
 
 #ifdef AMREX_USE_GPU
     // No tiling on GPU: rho_fab points to the full rho array.
@@ -844,10 +862,10 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
     // Tag particle if goes to higher level.
     // It will be split later in the loop
     if (pld.m_lev == lev+1
-        and p.m_idata.id != NoSplitParticleID
-        and p.m_idata.id >= 0)
+        and p.id() != NoSplitParticleID
+        and p.id() >= 0)
     {
-        p.m_idata.id = DoSplitParticleID;
+        p.id() = DoSplitParticleID;
     }
 
     if (pld.m_lev == lev-1){

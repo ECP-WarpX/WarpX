@@ -51,6 +51,18 @@ class SpectralBaseAlgorithmRZ
                                    const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                    amrex::MultiFab& divE );
 
+        /**
+         * \brief Virtual function for Vay current deposition in Fourier space
+         * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).
+         * This virtual function is pure and must be defined in derived classes.
+         *
+         * \param[in,out] field_data All fields in Fourier space
+         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
+         *                           the three components of the current density
+         */
+        virtual void VayDeposition (SpectralFieldDataRZ& field_data,
+                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current) = 0;
+
     protected: // Meant to be used in the subclasses
 
         using SpectralRealCoefficients = amrex::FabArray< amrex::BaseFab <amrex::Real> >;

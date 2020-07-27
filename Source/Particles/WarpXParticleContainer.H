@@ -32,7 +32,7 @@ struct PIdx
 {
     enum { // Particle Attributes stored in amrex::ParticleContainer's struct of array
         w = 0,  // weight
-        ux, uy, uz, Ex, Ey, Ez, Bx, By, Bz,
+        ux, uy, uz,
 #ifdef WARPX_DIM_RZ
         theta, // RZ needs all three position components
 #endif
@@ -65,14 +65,8 @@ namespace ParticleStringNames
         {"ux",    PIdx::ux   },
         {"uy",    PIdx::uy   },
         {"uz",    PIdx::uz   },
-        {"Ex",    PIdx::Ex   },
-        {"Ey",    PIdx::Ey   },
-        {"Ez",    PIdx::Ez   },
-        {"Bx",    PIdx::Bx   },
-        {"By",    PIdx::By   },
-        {"Bz",    PIdx::Bz   }
 #ifdef WARPX_DIM_RZ
-        ,{"theta", PIdx::theta}
+        {"theta", PIdx::theta}
 #endif
     };
 }
@@ -84,6 +78,8 @@ public:
     using amrex::ParIter<0,0,PIdx::nattribs>::ParIter;
 
     WarpXParIter (ContainerType& pc, int level);
+
+    WarpXParIter (ContainerType& pc, int level, amrex::MFItInfo& info);
 
     const std::array<RealVector, PIdx::nattribs>& GetAttribs () const {
         return GetStructOfArrays().GetRealData();
@@ -128,9 +124,7 @@ class MultiParticleContainer;
  * push.
  *
  * Note: many functions are pure virtual (meaning they MUST be defined in
- * derived classes, e.g., Evolve) or empty function (meaning they
- * do not do anything, e.g., FieldGather, meant to be overriden by derived
- * function) or actual functions (e.g. CurrentDeposition).
+ * derived classes, e.g., Evolve) or actual functions (e.g. CurrentDeposition).
  */
 class WarpXParticleContainer
     : public amrex::ParticleContainer<0,0,PIdx::nattribs>
@@ -155,14 +149,6 @@ public:
 
     virtual void InitData () = 0;
 
-    virtual void FieldGatherES (const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                                const amrex::Vector<std::unique_ptr<amrex::FabArray<amrex::BaseFab<int> > > >& masks) {}
-
-    virtual void FieldGather (int lev,
-                              const amrex::MultiFab& Ex, const amrex::MultiFab& Ey,
-                              const amrex::MultiFab& Ez, const amrex::MultiFab& Bx,
-                              const amrex::MultiFab& By, const amrex::MultiFab& Bz) {}
-
     /**
      * Evolve is the central WarpXParticleContainer function that advances
      * particles for a time dt (typically one timestep). It is a pure virtual
@@ -171,6 +157,8 @@ public:
     virtual void Evolve (int lev,
                          const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                          const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
+                         const amrex::MultiFab& Ex_avg, const amrex::MultiFab& Ey_avg, const amrex::MultiFab& Ez_avg,
+                         const amrex::MultiFab& Bx_avg, const amrex::MultiFab& By_avg, const amrex::MultiFab& Bz_avg,
                          amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz,
                          amrex::MultiFab* cjx, amrex::MultiFab* cjy, amrex::MultiFab* cjz,
                          amrex::MultiFab* rho, amrex::MultiFab* crho,
@@ -268,7 +256,7 @@ public:
 
     virtual void WriteHeader (std::ostream& os) const;
 
-    virtual void ConvertUnits (ConvertDirection convert_dir){};
+    virtual void ConvertUnits (ConvertDirection convert_dir){}
 
     static void ReadParameters ();
 
@@ -314,17 +302,17 @@ public:
     //amrex::Real getMass () {return mass;}
     amrex::ParticleReal getMass () const {return mass;}
 
-    int DoFieldIonization() const { return do_field_ionization; };
+    int DoFieldIonization() const { return do_field_ionization; }
     int DoQED() const {
 #ifdef WARPX_QED
         return m_do_qed;
 #else
         return false;
 #endif
-    };
+    }
     //Species for which QED effects are relevant should override these methods
-    virtual bool has_quantum_sync() const {return false;};
-    virtual bool has_breit_wheeler() const {return false;};
+    virtual bool has_quantum_sync() const {return false;}
+    virtual bool has_breit_wheeler() const {return false;}
 
     // build filter functors
     bool m_do_random_filter  = false;
@@ -341,6 +329,8 @@ public:
     */
     template<PhysicalSpecies PhysSpec>
     bool AmIA () const noexcept {return (physical_species == PhysSpec);}
+
+    amrex::Array<amrex::Real,3> get_v_galilean () {return v_galilean;}
 
 protected:
     amrex::Array<amrex::Real,3> v_galilean = {{0}};

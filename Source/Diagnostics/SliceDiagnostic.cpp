@@ -8,7 +8,6 @@
 #include "SliceDiagnostic.H"
 #include <AMReX_MultiFabUtil.H>
 #include <AMReX_PlotFileUtil.H>
-#include <AMReX_FillPatchUtil_F.H>
 
 #include <WarpX.H>
 
@@ -389,9 +388,6 @@ InterpolateSliceValues(MultiFab& smf, IntVect interp_lo, RealBox slice_realbox,
     for (MFIter mfi(smf); mfi.isValid(); ++mfi)
     {
          const Box& bx = mfi.tilebox();
-         const auto IndType = smf.ixType();
-         const auto lo = amrex::lbound(bx);
-         const auto hi = amrex::ubound(bx);
          FArrayBox& fabox = smf[mfi];
 
          for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
