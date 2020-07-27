@@ -20,7 +20,7 @@ private:
     // can be defined and implemented in Diagnostics.H, such that,
     // the function call to flush out buffer data for
     // FullDiagnostics and BTDiagnostics is the same
-    void Flush (int i_buffer) override ;
+    void Flush (int i_buffer) override;
     /** whether to write output files at this time step
      *  The data is flushed when the buffer is full and/or
      *  when the simulation ends or when forced.
@@ -49,7 +49,7 @@ private:
     /** This function allocates and initializes particle buffers for all the snapshots.
      *  The particle containers required for this must be added to populate this function.
      */
-    void InitializeParticleBuffer () override {};
+    void InitializeParticleBuffer () override {}
     /** The cell-centered data for all fields, namely,
      *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho is computed and stored in
      *  the multi-level cell-centered multifab, m_mf_cc. This MultiFab extends

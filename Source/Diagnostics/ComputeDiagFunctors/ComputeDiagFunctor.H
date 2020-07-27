@@ -12,7 +12,7 @@ ComputeDiagFunctor
 {
 public:
     ComputeDiagFunctor( int ncomp, amrex::IntVect crse_ratio) :
-                        m_ncomp(ncomp), m_crse_ratio(crse_ratio) {};
+                        m_ncomp(ncomp), m_crse_ratio(crse_ratio) {}
     //** Virtual Destructor to handle clean destruction of derived classes */
     virtual ~ComputeDiagFunctor() = default;
     /** Compute a field and store the result in mf_dst
@@ -25,7 +25,7 @@ public:
     virtual void operator() (amrex::MultiFab& mf_dst, int dcomp, const int i_buffer = 0) const = 0;
     /** Number of component from the input multifab to write to the output
      * multifab */
-    int nComp () const { return m_ncomp; };
+    int nComp () const { return m_ncomp; }
 
     virtual void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
                                       amrex::Real current_z_boost,

@@ -85,13 +85,13 @@ protected:
     /** Initialize member variables and arrays specific to the diagnostics in the
      *  derived classes.(FullDiagnostics, BTDiagnostics)
      */
-    virtual void DerivedInitData () {};
+    virtual void DerivedInitData () {}
     /** This function initialized particle buffers (not implemented in diagnostics, yet) */
     virtual void InitializeParticleBuffer () = 0;
     /** Prepare data (either fill-boundary or cell-centered data for
         back-transform diagnostics) to be processed for diagnostics.
      */
-    virtual void PrepareFieldDataForOutput () {};
+    virtual void PrepareFieldDataForOutput () {}
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string m_diag_name;
     /** Prefix for output directories */

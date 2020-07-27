@@ -97,7 +97,7 @@ public:
         amrex::Real t,
         amrex::Real * AMREX_RESTRICT const amplitude) const = 0;
 
-    virtual ~ILaserProfile(){};
+    virtual ~ILaserProfile(){}
 };
 
 /**

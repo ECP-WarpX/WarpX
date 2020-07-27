@@ -63,7 +63,7 @@ struct CartesianYeeAlgorithm {
 
         amrex::Real const inv_dx = coefs_x[0];
         return inv_dx*( F(i+1,j,k,ncomp) - F(i,j,k,ncomp) );
-    };
+    }
 
     /**
      * Perform derivative along x on a nodal grid, from a cell-centered field `F`*/
@@ -75,7 +75,7 @@ struct CartesianYeeAlgorithm {
 
         amrex::Real const inv_dx = coefs_x[0];
         return inv_dx*( F(i,j,k,ncomp) - F(i-1,j,k,ncomp) );
-    };
+    }
 
     /**
      * Perform derivative along y on a cell-centered grid, from a nodal field `F`*/
@@ -92,7 +92,7 @@ struct CartesianYeeAlgorithm {
 #elif (defined WARPX_DIM_XZ)
         return 0._rt; // 2D Cartesian: derivative along y is 0
 #endif
-    };
+    }
 
     /**
      * Perform derivative along y on a nodal grid, from a cell-centered field `F`*/
@@ -109,7 +109,7 @@ struct CartesianYeeAlgorithm {
 #elif (defined WARPX_DIM_XZ)
         return 0._rt; // 2D Cartesian: derivative along y is 0
 #endif
-    };
+    }
 
     /**
      * Perform derivative along z on a cell-centered grid, from a nodal field `F`*/
@@ -126,7 +126,7 @@ struct CartesianYeeAlgorithm {
 #elif (defined WARPX_DIM_XZ)
         return inv_dz*( F(i,j+1,k,ncomp) - F(i,j,k,ncomp) );
 #endif
-    };
+    }
 
     /**
      * Perform derivative along z on a nodal grid, from a cell-centered field `F`*/
@@ -143,7 +143,7 @@ struct CartesianYeeAlgorithm {
 #elif (defined WARPX_DIM_XZ)
         return inv_dz*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
 #endif
-    };
+    }
 
 };
 

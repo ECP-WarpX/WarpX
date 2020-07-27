@@ -55,4 +55,4 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
     } else {
         amrex::Abort("Unknown algorithm");
     }
-};
+}

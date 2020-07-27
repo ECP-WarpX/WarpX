@@ -256,7 +256,7 @@ public:
 
     virtual void WriteHeader (std::ostream& os) const;
 
-    virtual void ConvertUnits (ConvertDirection convert_dir){};
+    virtual void ConvertUnits (ConvertDirection convert_dir){}
 
     static void ReadParameters ();
 
@@ -302,17 +302,17 @@ public:
     //amrex::Real getMass () {return mass;}
     amrex::ParticleReal getMass () const {return mass;}
 
-    int DoFieldIonization() const { return do_field_ionization; };
+    int DoFieldIonization() const { return do_field_ionization; }
     int DoQED() const {
 #ifdef WARPX_QED
         return m_do_qed;
 #else
         return false;
 #endif
-    };
+    }
     //Species for which QED effects are relevant should override these methods
-    virtual bool has_quantum_sync() const {return false;};
-    virtual bool has_breit_wheeler() const {return false;};
+    virtual bool has_quantum_sync() const {return false;}
+    virtual bool has_breit_wheeler() const {return false;}
 
     // build filter functors
     bool m_do_random_filter  = false;
