@@ -4,12 +4,14 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpX.H"
 #include "GalileanPsatdAlgorithmRZ.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <cmath>
 
-using amrex::operator""_rt;
+using namespace amrex::literals;
 
 
 /* \brief Initialize coefficients for the update equation */
@@ -265,7 +267,16 @@ GalileanPsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
                                              const std::unique_ptr<amrex::MultiFab>& rho )
 {
     // Profiling
-    /* WARPX_PROFILE( "PsatdAlgorithmRZ::CurrentCorrection" ); */
+    WARPX_PROFILE( "GalileanPsatdAlgorithmRZ::CurrentCorrection" );
+
+    using Idx = SpectralFieldIndex;
+
+    // Forward Fourier transform of J and rho
+    field_data.ForwardTransform( *current[0], Idx::Jx,
+                                 *current[1], Idx::Jy);
+    field_data.ForwardTransform( *current[2], Idx::Jz, 0);
+    field_data.ForwardTransform( *rho, Idx::rho_old, 0 );
+    field_data.ForwardTransform( *rho, Idx::rho_new, 1 );
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
@@ -313,8 +324,7 @@ GalileanPsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
             amrex::Real const kz = modified_kz_arr[j];
             amrex::Real const k_norm2 = kr*kr + kz*kz;
 
-            Complex const I = Complex{0._rt,1._rt};
-
+            constexpr Complex I = Complex{0._rt,1._rt};
 
             // Correct J
             if ( k_norm2 != 0 )
@@ -324,13 +334,17 @@ GalileanPsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
                 Complex const j_corr_coef = (kz == 0 ? 1._rt/dt : I*kz*vz*inv_1_T2);
                 Complex const F = - (j_corr_coef*(rho_new - rho_old*theta2) + I*kz*Jz + kr*(Jp - Jm))/k_norm2;
 
-
-                fields(i,j,k,Jp_m) += +0.5*kr*F;
-                fields(i,j,k,Jm_m) += -0.5*kr*F;
+                fields(i,j,k,Jp_m) += +0.5_rt*kr*F;
+                fields(i,j,k,Jm_m) += -0.5_rt*kr*F;
                 fields(i,j,k,Jz_m) += -I*kz*F;
             }
         });
     }
+
+    // Backward Fourier transform of J
+    field_data.BackwardTransform( *current[0], Idx::Jx,
+                                  *current[1], Idx::Jy);
+    field_data.BackwardTransform( *current[2], Idx::Jz, 0 );
 
 }
 
