@@ -1886,14 +1886,6 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
-#ifdef WARPX_QED
-    if (local_has_quantum_sync) {
-        evolve_opt(ux[ip], uy[ip], uz[ip],
-                   Exp, Eyp, Ezp,Bxp, Byp, Bzp,
-                   dt, p_optical_depth_QSR[ip]);
-    }
-#endif
-
         doParticlePush(getPosition, setPosition, copyAttribs, ip,
                        ux[ip+offset], uy[ip+offset], uz[ip+offset],
                        Exp, Eyp, Ezp, Bxp, Byp, Bzp,
@@ -1904,6 +1896,15 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                        t_chi_max,
 #endif
                        dt);
+
+#ifdef WARPX_QED
+    if (local_has_quantum_sync) {
+        evolve_opt(ux[ip], uy[ip], uz[ip],
+                   Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                   dt, p_optical_depth_QSR[ip]);
+    }
+#endif
+
     });
 }
 
