@@ -80,6 +80,7 @@ class SpectralSolverRZ
         {
             field_data.ApplyFilter(field_index1, field_index2, field_index3);
         };
+
         /**
           * \brief Public interface to call the member function ComputeSpectralDivE
           * of the base class SpectralBaseAlgorithmRZ from objects of class SpectralSolverRZ
