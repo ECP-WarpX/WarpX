@@ -15,6 +15,8 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "QEDInternals/QuantumSyncEngineWrapper.H"
 
+#include <limits>
+
 /** @file
  *
  * This file contains the implementation of the elementary process
@@ -184,6 +186,8 @@ private:
 /**
 * \brief Free function to call to remove immediately
 * low energy photons by setting their ID to -1.
+* Photons with extremely small energy are removed regardless of
+* the value of the energy_threshold
 *
 * @tparam PTile particle tile type
 * @param[in,out] ptile a particle tile
@@ -205,7 +209,9 @@ void cleanLowEnergyPhotons(
     const auto  p_uz = soa.GetRealData(PIdx::uz).data() + old_size;
 
     //The square of the energy threshold
-    const auto energy_threshold2 = energy_threshold*energy_threshold;
+    const auto energy_threshold2 = std::max(
+        energy_threshold*energy_threshold,
+        std::numeric_limits<amrex::ParticleReal>::min());
 
     amrex::ParallelFor(num_added, [=] AMREX_GPU_DEVICE (int ip) noexcept
     {
