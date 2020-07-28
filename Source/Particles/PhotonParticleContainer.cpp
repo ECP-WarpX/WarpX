@@ -155,6 +155,8 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     amrex::IndexType const by_type = byfab->box().ixType();
     amrex::IndexType const bz_type = bzfab->box().ixType();
 
+    const auto t_do_not_gather = do_not_gather;
+
     amrex::ParallelFor(
         np_to_push,
         [=] AMREX_GPU_DEVICE (long i) {
@@ -168,7 +170,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
             amrex::ParticleReal Bxp, Byp, Bzp;
             getExternalB(i, Bxp, Byp, Bzp);
 
-            if(!do_not_gather){
+            if(!t_do_not_gather){
                 // first gather E and B to the particle positions
                 doGatherShapeN(x, y, z, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
