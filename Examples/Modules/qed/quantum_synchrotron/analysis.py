@@ -194,40 +194,52 @@ def check_opt_depths(part_data, phot_data):
     print("  [OK] optical depth distributions are still exponential")
 
 def check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NN, idx):
-    h_log_gamma_phot, c_gamma_phot = np.histogram(np.log10(gamma_phot), bins=np.logspace(np.log10(0.0001),np.log10(gamma_part),NN))
-    
-    '''  
-    cchi_phot = chi_part*(ele_en - 1)/(gamma_phot - 2)
+    h_log_gamma_phot, c_gamma_phot = np.histogram(gamma_phot, bins=np.logspace(np.log10(gamma_part*1e-12),np.log10(gamma_part),NN))
+
+    cchi_phot = chi_part*(c_gamma_phot)/(gamma_part-1)
 
     coeff= 20
-    aux_chi = np.linspace(cchi_part[0],cchi_part[-1], NN*coeff)
-    distrib = BW_d2N_dt_dchi(chi_phot, gamma_phot, aux_chi)
+  
+    aux_chi = np.logspace(np.log10(cchi_phot[0]),np.log10(cchi_phot[-1]), NN*coeff)
+    distrib = QS_d2N_dt_dchi(chi_part, gamma_part, aux_chi)*aux_chi
     distrib = np.sum(distrib.reshape(-1, coeff),1)
-    distrib = n_lost*distrib/np.sum(distrib)
-''' 
+    distrib = n_phot*distrib/np.sum(distrib)
+    
+    c_gamma_phot = np.exp(0.5*(np.log(c_gamma_phot[1:])+np.log(c_gamma_phot[:-1])))
+    distrib = np.exp(0.5*(np.log(distrib[1:])+np.log(distrib[:-1])))
+
     # Visual comparison of distributions
-    c_gamma_phot = 0.5*(c_gamma_phot[1:]+c_gamma_phot[:-1])
     plt.clf()
-    plt.xlabel("γ_photon")
-    plt.ylabel("N")
+
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.suptitle("χ_particle = {:f}".format(chi_part))
     
-    #ax1.plot(c_gamma_phot, distrib,label="theory")
-    ax1.loglog(c_gamma_phot, h_log_gamma_phot,label="BW electrons")
+    ax1.plot(c_gamma_phot, distrib,label="theory")
+    ax1.loglog(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
+    ax1.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
+    ax1.set_ylim(1,1e5)
     
-    ax2.semilogy(c_gamma_phot, h_log_gamma_phot,label="BW electrons")   
+    ax2.plot(c_gamma_phot, distrib,label="theory")
+    ax2.semilogy(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
+    ax2.set_ylim(1,1e5)
+    ax2.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
+        
+    ax1.set_xlabel("γ_photon")
+    ax1.set_xlabel("N")
+    
+    ax2.set_xlabel("γ_photon")
+    ax2.set_xlabel("N")
 
     plt.legend()
     plt.savefig("case_{:d}".format(idx+1))
-    '''  
-    discr_ele = np.abs(h_energy_ele-distrib)
-    discr_pos = np.abs(h_energy_pos-distrib)
-    max_discr = 5.0 * np.sqrt(distrib)
-    assert(np.all(discr_ele < max_discr))
-    assert(np.all(discr_pos < max_discr))
-''' 
-    print("  [NO] energy distribution is within expectations")
+  
+    discr = np.abs(h_log_gamma_phot-distrib)
+
+    max_discr = np.where(np.sqrt(distrib)>1, np.sqrt(distrib), 1)*5.0
+    # do not check the last 3 points: the lookup table is too coarse-grained for that
+    assert(np.all( np.abs(discr[:-3]/distrib[:-3]) < max_discr[:-3] ))
+ 
+    print("  [OK] energy distribution is within expectations")
 
 #__________________
 
@@ -262,7 +274,7 @@ def check():
 
         p_phot = np.sqrt(phot_data["px"]**2 + phot_data["py"]**2 + phot_data["pz"]**2)
         energy_phot = p_phot*c
-        gamma_phot = energy_phot/mec
+        gamma_phot = energy_phot/mec2
 
         n_phot = check_number_of_photons(data_set_end,
                               part_name, phot_name,
