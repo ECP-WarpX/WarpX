@@ -1390,7 +1390,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``amrex.async_out_nfiles`` (`int`) optional (default `64`)
     The maximum number of files to write to when using asynchronous IO.
-    To use asynchronous IO with more than ``amrex.async_out_nfiles`` MPI ranks, WarpX
+    To use asynchronous IO with more than ``amrex.async_out_nfiles`` MPI ranks,
     WarpX must be compiled with the ``MPI_THREAD_MULTIPLE=TRUE`` flag.
     Please see :doc:`../visualization/visualization` for more information.
 
