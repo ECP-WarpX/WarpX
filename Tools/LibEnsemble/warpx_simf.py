@@ -88,9 +88,9 @@ def run_warpx(H, persis_info, sim_specs, libE_info):
     # Get output from a run and delete output files
     warpx_out = read_sim_output(task.workdir)
 
-    # Excluding results - NAN - from runs where beam was lost
+    # Excluding results - NaN - from runs where beam was lost
     if (warpx_out[0] != warpx_out[0]):
-        print(task.workdir, ' output led to NAN values')
+        print(task.workdir, ' output led to NaN values (beam was lost or run did not finish)')
 
     # Pass the sim output values to LibEnsemble.
     # When optimization is ON, 'f' is then passed to the generating function

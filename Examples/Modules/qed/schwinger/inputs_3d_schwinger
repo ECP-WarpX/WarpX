@@ -38,7 +38,6 @@ warpx.E_external_grid = 0. 0. 0.
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 2 # number of species
 particles.species_names =  ele_schwinger pos_schwinger
 
 ele_schwinger.species_type = "electron"

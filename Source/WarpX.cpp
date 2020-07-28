@@ -68,7 +68,7 @@ long WarpX::current_deposition_algo;
 long WarpX::charge_deposition_algo;
 long WarpX::field_gathering_algo;
 long WarpX::particle_pusher_algo;
-int WarpX::maxwell_fdtd_solver_id;
+int WarpX::maxwell_solver_id;
 long WarpX::load_balance_costs_update_algo;
 int WarpX::do_dive_cleaning = 0;
 int WarpX::em_solver_medium;
@@ -85,6 +85,9 @@ bool WarpX::use_fdtd_nci_corr = false;
 int  WarpX::l_lower_order_in_v = true;
 
 bool WarpX::use_filter        = false;
+bool WarpX::use_kspace_filter       = false;
+bool WarpX::use_filter_compensation = false;
+
 bool WarpX::serialize_ics     = false;
 bool WarpX::refine_plasma     = false;
 
@@ -443,6 +446,8 @@ WarpX::ReadParameters ()
         // Read filter and fill IntVect filter_npass_each_dir with
         // proper size for AMREX_SPACEDIM
         pp.query("use_filter", use_filter);
+        pp.query("use_kspace_filter", use_kspace_filter);
+        pp.query("use_filter_compensation", use_filter_compensation);
         Vector<int> parse_filter_npass_each_dir(AMREX_SPACEDIM,1);
         pp.queryarr("filter_npass_each_dir", parse_filter_npass_each_dir);
         filter_npass_each_dir[0] = parse_filter_npass_each_dir[0];
@@ -583,6 +588,7 @@ WarpX::ReadParameters ()
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox == noy and nox == noz ,
             "warpx.nox, noy and noz must be equal");
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox >= 1, "warpx.nox must >= 1");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox <= 3, "warpx.nox must <= 3");
     }
 
     {
@@ -590,7 +596,7 @@ WarpX::ReadParameters ()
         current_deposition_algo = GetAlgorithmInteger(pp, "current_deposition");
         charge_deposition_algo = GetAlgorithmInteger(pp, "charge_deposition");
         particle_pusher_algo = GetAlgorithmInteger(pp, "particle_pusher");
-        maxwell_fdtd_solver_id = GetAlgorithmInteger(pp, "maxwell_fdtd_solver");
+        maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
         field_gathering_algo = GetAlgorithmInteger(pp, "field_gathering");
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
             // Use same shape factors in all directions, for gathering
@@ -721,6 +727,29 @@ WarpX::BackwardCompatibility ()
         amrex::Abort("warpx.plot_crsepatch is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
     }
+
+    ParmParse ppalgo("algo");
+    int backward_mw_solver;
+    if (ppalgo.query("maxwell_fdtd_solver", backward_mw_solver)){
+        amrex::Abort("algo.maxwell_fdtd_solver is not supported anymore. "
+                     "Please use the renamed option algo.maxwell_solver");
+    }
+
+    ParmParse pparticles("particles");
+    int nspecies;
+    if (pparticles.query("nspecies", nspecies)){
+        amrex::Print()<<"particles.nspecies is ignored. Just use particles.species_names please.\n";
+    }
+    ParmParse pcol("collisions");
+    int ncollisions;
+    if (pcol.query("ncollisions", ncollisions)){
+        amrex::Print()<<"collisions.ncollisions is ignored. Just use particles.collision_names please.\n";
+    }
+    ParmParse plasers("lasers");
+    int nlasers;
+    if (plasers.query("nlasers", nlasers)){
+        amrex::Print()<<"lasers.nlasers is ignored. Just use lasers.names please.\n";
+    }
 }
 
 // This is a virtual function.
@@ -783,7 +812,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::nox,
         nox_fft, noy_fft, noz_fft,
         NCIGodfreyFilter::m_stencil_width,
-        maxwell_fdtd_solver_id,
+        maxwell_solver_id,
         maxLevel(),
         WarpX::v_galilean,
         safe_guard_cells);
@@ -947,6 +976,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     realspace_ba.grow(1, ngE[1]); // add guard cells only in z
     spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
         n_rz_azimuthal_modes, noz_fft, do_nodal, dx_vect, dt[lev], lev ) );
+    if (use_kspace_filter) {
+        spectral_solver_fp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
+    }
 #   else
     if ( fft_periodic_single_box == false ) {
         realspace_ba.grow(ngE); // add guard cells
@@ -958,7 +990,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   endif
 #endif
     m_fdtd_solver_fp[lev].reset(
-        new FiniteDifferenceSolver(maxwell_fdtd_solver_id, dx, do_nodal) );
+        new FiniteDifferenceSolver(maxwell_solver_id, dx, do_nodal) );
     //
     // The Aux patch (i.e., the full solution)
     //
@@ -1065,6 +1097,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         realspace_ba.grow(1, ngE[1]); // add guard cells only in z
         spectral_solver_cp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
             n_rz_azimuthal_modes, noz_fft, do_nodal, cdx_vect, dt[lev], lev ) );
+        if (use_kspace_filter) {
+            spectral_solver_cp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
+        }
 #   else
         realspace_ba.grow(ngE); // add guard cells
         spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
@@ -1073,7 +1108,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   endif
 #endif
         m_fdtd_solver_cp[lev].reset(
-            new FiniteDifferenceSolver( maxwell_fdtd_solver_id, cdx, do_nodal ) );
+            new FiniteDifferenceSolver( maxwell_solver_id, cdx, do_nodal ) );
     }
 
     //

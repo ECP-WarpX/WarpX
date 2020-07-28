@@ -82,7 +82,7 @@ public:
                         const amrex::MultiFab& Ez,
                         const amrex::MultiFab& Bx,
                         const amrex::MultiFab& By,
-                        const amrex::MultiFab& Bz) override {};
+                        const amrex::MultiFab& Bz) override {}
 
 
     // DepositCurrent should do nothing for photons
@@ -100,7 +100,7 @@ public:
                                 int thread_num,
                                 int lev,
                                 int depos_lev,
-                                amrex::Real dt) override {};
+                                amrex::Real dt) override {}
 };
 
 #endif // #ifndef WARPX_PhotonParticleContainer_H_

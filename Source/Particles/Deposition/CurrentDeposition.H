@@ -12,6 +12,7 @@
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpX_Complex.H"
 
+#include <AMReX.H>
 #include <AMReX_Array4.H>
 #include <AMReX_REAL.H>
 
@@ -53,6 +54,10 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
                         const amrex::Real q,
                         const long n_rz_azimuthal_modes)
 {
+#if !defined(WARPX_DIM_RZ)
+    amrex::ignore_unused(n_rz_azimuthal_modes);
+#endif
+
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
@@ -316,6 +321,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                                   const long n_rz_azimuthal_modes)
 {
     using namespace amrex;
+#if !defined(WARPX_DIM_RZ)
+    ignore_unused(n_rz_azimuthal_modes);
+#endif
 
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
@@ -626,6 +634,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 #endif
 
 #if !(defined WARPX_DIM_RZ)
+    amrex::ignore_unused(n_rz_azimuthal_modes);
 
     // If ion_lev is a null pointer, then do_ionization=0, else do_ionization=1
     const bool do_ionization = ion_lev;
@@ -667,11 +676,6 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
     amrex::Array4<amrex::Real> const& jy_arr = jy_fab.array();
     amrex::Array4<amrex::Real> const& jz_arr = jz_fab.array();
-
-    // D must have nodal index type in each direction
-    amrex::IntVect const jx_type = amrex::IntVect(1);
-    amrex::IntVect const jy_type = amrex::IntVect(1);
-    amrex::IntVect const jz_type = amrex::IntVect(1);
 
     // Loop over particles and deposit (Dx,Dy,Dz) into jx_fab, jy_fab and jz_fab
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip)

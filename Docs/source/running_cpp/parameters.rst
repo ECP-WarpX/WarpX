@@ -950,9 +950,20 @@ Numerics and algorithms
     them from the macroparticles. This uses a bilinear filter
     (see the sub-section **Filtering** in :doc:`../theory/theory`).
 
+* ``warpx.use_kspace_filter`` (`0` or `1`; default: `0`)
+    Whether to smooth the charge and currents on the mesh, after depositing
+    them from the macroparticles. This uses a bilinear filter, applying the
+    filter in k-space. It is only supported with the RZ spectral solver.
+    (see the sub-section **Filtering** in :doc:`../theory/theory`).
+
 * ``warpx.filter_npass_each_dir`` (`3 int`) optional (default `1 1 1`)
     Number of passes along each direction for the bilinear filter.
     In 2D simulations, only the first two values are read.
+
+* ``warpx.use_filter_compensation`` (`0` or `1`; default: `0`)
+    Whether to add compensation when applying k-space filtering.
+    This requires `warpx.use_kspace_filter=1` and is only supported
+    with the RZ spectral solver.
 
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.
@@ -1008,14 +1019,16 @@ Numerics and algorithms
 
      If ``algo.particle_pusher`` is not specified, ``boris`` is the default.
 
-* ``algo.maxwell_fdtd_solver`` (`string`, optional)
-    The algorithm for the FDTD Maxwell field solver. Available options are:
+* ``algo.maxwell_solver`` (`string`, optional)
+    The algorithm for the Maxwell field solver.
+    Available options are:
 
      - ``yee``: Yee FDTD solver.
      - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
        coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
 
-     If ``algo.maxwell_fdtd_solver`` is not specified, ``yee`` is the default.
+     If ``algo.maxwell_solver`` is not specified, ``yee`` is the default.
+     Note: this option is currently ignored with PSATD.
 
 * ``algo.em_solver_medium`` (`string`, optional)
     The medium for evaluating the Maxwell solver. Available options are :
@@ -1036,12 +1049,11 @@ Numerics and algorithms
     The conductivity, permittivity, and permeability of the computational medium, respectively.
     If ``algo.em_solver_medium`` is set to macroscopic, then these properties must be provided.
 
-* ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`integer`)
+* ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`1`, `2`, or `3` ; default: 1)
     The order of the shape factors for the macroparticles, for the 3 dimensions of space.
     Lower-order shape factors result in faster simulations, but more noisy results,
 
-    Note that the implementation in WarpX is more efficient when these 3 numbers are equal,
-    and when they are between 1 and 3.
+    Note that in the current implementation in WarpX these 3 numbers must be equal.
 
 * ``warpx.do_dive_cleaning`` (`0` or `1` ; default: 0)
     Whether to use modified Maxwell equations that progressively eliminate
