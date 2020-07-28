@@ -568,8 +568,12 @@ WarpX::ReadParameters ()
         if (do_nodal) stagger_mode = "nodal";
         if (stagger_mode == "nodal") do_nodal = true; // enforce consistency
 
-        // Use same shape factors in all directions, for gathering
-        if (do_nodal) galerkin_interpolation = false;
+        // Set default Galerkin interpolation according to stagger_mode
+        galerkin_interpolation = false;
+        if (stagger_mode == "yee") {
+          galerkin_interpolation = true; // for now, use only for Yee stagger.
+        }
+
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
