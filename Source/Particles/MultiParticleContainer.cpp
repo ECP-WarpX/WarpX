@@ -1257,6 +1257,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 
 void MultiParticleContainer::CheckQEDProductSpecies()
 {
+    auto const nspecies = species_names.size();
     for (int i=0; i<nspecies; i++){
         const auto& pc = allcontainers[i];
         if (pc->has_breit_wheeler()){
