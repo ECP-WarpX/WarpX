@@ -31,7 +31,6 @@ warpx.serialize_ics = 1
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 10 # number of species
 particles.species_names = p1 p2 p3 p4 qsp_1 qsp_2 qsp_3 qsp_4 dummy_ele dummy_pos
 particles.photon_species = qsp_1 qsp_2 qsp_3 qsp_4
 #################################
@@ -277,4 +276,3 @@ diag1.qsp_1.variables = ux uy uz w
 diag1.qsp_2.variables = ux uy uz w
 diag1.qsp_3.variables = ux uy uz w
 diag1.qsp_4.variables = ux uy uz w
-
