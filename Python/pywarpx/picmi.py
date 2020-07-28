@@ -65,8 +65,7 @@ class Species(picmistandard.PICMI_Species):
                     self.mass = element.mass*periodictable.constants.atomic_mass_constant
 
     def initialize_inputs(self, layout, initialize_self_fields=False):
-        self.species_number = pywarpx.particles.nspecies
-        pywarpx.particles.nspecies += 1
+        self.species_number = len(pywarpx.particles.species_names)
 
         if self.name is None:
             self.name = 'species{}'.format(self.species_number)
@@ -502,7 +501,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
 class GaussianLaser(picmistandard.PICMI_GaussianLaser):
     def initialize_inputs(self):
-        self.laser_number = pywarpx.lasers.nlasers + 1
+        self.laser_number = len(pywarpx.lasers.names) + 1
         if self.name is None:
             self.name = 'laser{}'.format(self.laser_number)
 
@@ -521,7 +520,7 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
 
 class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
     def initialize_inputs(self):
-        self.laser_number = pywarpx.lasers.nlasers + 1
+        self.laser_number = len(pywarpx.lasers.names) + 1
         if self.name is None:
             self.name = 'laser{}'.format(self.laser_number)
 
