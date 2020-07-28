@@ -351,6 +351,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
   currSpecies.setAttribute( "currentDeposition", [](){
       switch( WarpX::current_deposition_algo ) {
           case CurrentDepositionAlgo::Esirkepov : return "Esirkepov";
+          case CurrentDepositionAlgo::Vay : return "Vay";
           default: return "directMorseNielson";
       }
   }() );
@@ -397,7 +398,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                [](uint64_t const *p){ delete[] p; }
            );
            for (auto i=0; i<numParticleOnTile; i++) {
-               ids.get()[i] = WarpXUtilIO::localIDtoGlobal( aos[i].m_idata.id, aos[i].m_idata.cpu );
+               ids.get()[i] = WarpXUtilIO::localIDtoGlobal( aos[i].id(), aos[i].cpu() );
            }
            auto const scalar = openPMD::RecordComponent::SCALAR;
            currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
@@ -656,7 +657,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
             ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[1];
 #endif
             std::string currentSmoothingParameters = ss.str();
-            return std::move(currentSmoothingParameters);
+            return currentSmoothingParameters;
         }() );
   meshes.setAttribute("chargeCorrection", [](){
       if( WarpX::do_dive_cleaning ) return "hyperbolic"; // TODO or "spectral" or something? double-check
@@ -680,8 +681,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
         // Check if this field is a vector. If so, then extract the field name
         std::vector< std::string > const vector_fields = {"E", "B", "j"};
         std::vector< std::string > const field_components = detail::getFieldComponentLabels();
-        for( std::string const field : vector_fields ) {
-            for( std::string const component : field_components ) {
+        for( std::string const& field : vector_fields ) {
+            for( std::string const& component : field_components ) {
                 if( field.compare( varname_1st ) == 0 &&
                     component.compare( varname_2nd ) == 0 )
                 {
@@ -749,8 +750,8 @@ WarpXParticleCounter::WarpXParticleCounter(WarpXParticleContainer* pc)
       long numParticles = 0; // numParticles in this processor
 
       for (WarpXParIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
-    auto numParticleOnTile = pti.numParticles();
-    numParticles += numParticleOnTile;
+          auto numParticleOnTile = pti.numParticles();
+          numParticles += numParticleOnTile;
       }
 
       unsigned long long offset=0; // offset of this level
@@ -788,14 +789,19 @@ WarpXParticleCounter::GetParticleOffsetOfProcessor(const long& numParticles,
 
 
 {
-      std::vector<long> result(m_MPISize,  0);
-      amrex::ParallelGather::Gather (numParticles, result.data(), -1, amrex::ParallelDescriptor::Communicator());
+    offset = 0;
+#if defined(AMREX_USE_MPI)
+    std::vector<long> result(m_MPISize, 0);
+    amrex::ParallelGather::Gather (numParticles, result.data(), -1, amrex::ParallelDescriptor::Communicator());
 
-      sum = 0;
-      offset = 0;
-      for (int i=0;  i<result.size();  i++) {
-    sum +=  result[i];
-    if (i<m_MPIRank)
-      offset +=  result[i];
-      }
+    sum = 0;
+    int const num_results = result.size();
+    for (int i=0; i<num_results; i++) {
+        sum += result[i];
+        if (i<m_MPIRank)
+            offset += result[i];
+    }
+#else
+    sum = numParticles;
+#endif
 }

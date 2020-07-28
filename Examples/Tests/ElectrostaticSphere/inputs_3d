@@ -11,7 +11,6 @@ warpx.do_pml = 0
 warpx.const_dt = 1e-6
 warpx.do_electrostatic = 1
 
-particles.nspecies = 1
 particles.species_names = electron
 
 algo.field_gathering = momentum-conserving

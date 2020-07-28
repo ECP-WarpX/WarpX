@@ -7,8 +7,10 @@
 
 #include "ReducedDiags.H"
 #include "WarpX.H"
-#include "AMReX_ParmParse.H"
-#include "AMReX_Utility.H"
+
+#include <AMReX_ParmParse.H>
+#include <AMReX_Utility.H>
+
 #include <iomanip>
 
 using namespace amrex;

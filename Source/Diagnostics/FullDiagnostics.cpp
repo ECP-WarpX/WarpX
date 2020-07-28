@@ -37,9 +37,9 @@ FullDiagnostics::InitializeParticleBuffer ()
     // If not specified, dump all species
     if (m_species_names.size() == 0) m_species_names = mpc.GetSpeciesNames();
     // Initialize one ParticleDiag per species requested
-    for (int i=0; i<m_species_names.size(); i++){
-        const int idx = mpc.getSpeciesID(m_species_names[i]);
-        m_all_species.push_back(ParticleDiag(m_diag_name, m_species_names[i],
+    for (auto const& species : m_species_names){
+        const int idx = mpc.getSpeciesID(species);
+        m_all_species.push_back(ParticleDiag(m_diag_name, species,
                                              mpc.GetParticleContainerPtr(idx)));
     }
 }

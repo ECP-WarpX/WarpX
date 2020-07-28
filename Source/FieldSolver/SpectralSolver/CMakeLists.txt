@@ -23,6 +23,7 @@ if(WarpX_DIMS STREQUAL RZ)
         SpectralSolverRZ.cpp
         SpectralFieldDataRZ.cpp
         SpectralKSpaceRZ.cpp
+        SpectralBinomialFilter.cpp
     )
     add_subdirectory(SpectralHankelTransform)
 endif()

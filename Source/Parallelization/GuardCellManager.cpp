@@ -22,7 +22,7 @@ guardCellManager::Init(
     const int nox,
     const int nox_fft, const int noy_fft, const int noz_fft,
     const int nci_corr_stencil,
-    const int maxwell_fdtd_solver_id,
+    const int maxwell_solver_id,
     const int max_level,
     const amrex::Array<amrex::Real,3> v_galilean,
     const bool safe_guard_cells)
@@ -90,7 +90,7 @@ guardCellManager::Init(
     // after pushing particle.
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell
-    if (maxwell_fdtd_solver_id == 1) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
+    if (maxwell_solver_id == 1) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 
 #ifdef WARPX_USE_PSATD
@@ -102,9 +102,9 @@ guardCellManager::Init(
     // is determined *empirically* to be the order of the solver
     // for nodal, and half the order of the solver for staggered.
 
-    int ngFFt_x = do_nodal ? nox_fft : nox_fft/2.;
-    int ngFFt_y = do_nodal ? noy_fft : noy_fft/2.;
-    int ngFFt_z = do_nodal ? noz_fft : noz_fft/2.;
+    int ngFFt_x = do_nodal ? nox_fft : nox_fft/2;
+    int ngFFt_y = do_nodal ? noy_fft : noy_fft/2;
+    int ngFFt_z = do_nodal ? noz_fft : noz_fft/2;
 
     ParmParse pp("psatd");
     pp.query("nx_guard", ngFFt_x);
