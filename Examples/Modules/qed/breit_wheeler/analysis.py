@@ -194,14 +194,17 @@ def check_opt_depths(phot_data, ele_data, pos_data):
     print("  [OK] optical depth distributions are still exponential")
 
 def check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, NN, idx):
-    h_gamma_ele, c_gamma = np.histogram(energy_ele/mec2, bins=NN, range=[1.0001,gamma_phot-1.0001])
-    h_gamma_pos, _ = np.histogram(energy_pos/mec2, bins=NN, range=[1.0001,gamma_phot-1.0001])
+    gamma_min = 1.0001
+    gamma_max = gamma_phot-1.0001
+    h_gamma_ele, c_gamma = np.histogram(energy_ele/mec2, bins=NN, range=[gamma_min,gamma_max])
+    h_gamma_pos, _ = np.histogram(energy_pos/mec2, bins=NN, range=[gamma_min,gamma_max])
 
-    cchi_part = chi_phot*(c_gamma - 1)/(gamma_phot - 2)
+    cchi_part_min = chi_phot*(gamma_min - 1)/(gamma_phot - 2)
+    cchi_part_max = chi_phot*(gamma_max - 1)/(gamma_phot - 2)
 
     #Rudimentary integration over npoints for each bin
     npoints= 20
-    aux_chi = np.linspace(cchi_part[0],cchi_part[-1], NN*npoints)
+    aux_chi = np.linspace(cchi_part_min, cchi_part_max, NN*npoints)
     distrib = BW_d2N_dt_dchi(chi_phot, gamma_phot, aux_chi)
     distrib = np.sum(distrib.reshape(-1, npoints),1)
     distrib = n_lost*distrib/np.sum(distrib)
