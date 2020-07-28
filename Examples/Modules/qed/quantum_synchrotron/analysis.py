@@ -15,9 +15,9 @@ import scipy.special as spe
 import scipy.integrate as integ
 import scipy.stats as st
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-#import checksumAPI
+import checksumAPI
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 # This script performs detailed checks of the Quantum Synchrotron photon emission process.
 # Two electron populations and two positron populations are initialized with different momenta in different
@@ -81,7 +81,7 @@ NNS = [128,128,128,128] #bins for energy distribution comparison.
 
 def calc_chi_part(p, E, B):
     gamma_part = np.sqrt(1.0 + np.dot(p,p)/mec**2)
-    v = p/(gamma_part*me)    
+    v = p/(gamma_part*me)
     EpvvecB = E + np.cross(v,B)
     vdotEoverc = np.dot(v,E)/c
     ff = np.sqrt(np.dot(EpvvecB,EpvvecB) - np.dot(vdotEoverc,vdotEoverc))
@@ -91,7 +91,7 @@ def calc_chi_part(p, E, B):
 @np.vectorize
 def IC_inner_alternative(y):
     ff = lambda x : np.exp(-y*(1+(4*x**2)/3)*np.sqrt(1+x*x/3))*(9+36*x**2 + 16*x**4)/(3 + 4*x**2)/np.sqrt(1+(x**2)/3)
-    return integ.quad(ff, 0, np.inf)[0]/np.sqrt(3) 
+    return integ.quad(ff, 0, np.inf)[0]/np.sqrt(3)
 
 def IC_Y(chi_ele, xi):
     res = np.zeros(np.shape(chi_ele))
@@ -105,7 +105,7 @@ def IC_S(chi_ele, xi):
     coeff = np.sqrt(3)/2.0/np.pi
     first = IC_inner_alternative(Y)
     div = np.where(xi == 1, 1.0, 1.0/(1-xi)  )
-    res = np.where(np.logical_or(xi == 1, xi == 0), 0.0, 
+    res = np.where(np.logical_or(xi == 1, xi == 0), 0.0,
         coeff*xi*( first  + (xi**2 * spe.kv(2./3.,Y)*div )  ) )
     return res
 
@@ -122,7 +122,7 @@ def small_diff(vv, val):
         return np.max(np.abs((vv - val)/val)) < tol
     else:
         return np.max(np.abs(vv)) < tol
-        
+
 def boris(pp, dt, charge_sign):
     econst = 0.5*qe*dt*charge_sign/me
     u = pp/(me)
@@ -138,11 +138,11 @@ def boris(pp, dt, charge_sign):
 
 # Quantum Synchrotron total and differential cross sections
 def QS_dN_dt(chi_ele, gamma_ele):
-    coeff_IC = (2./3.) * fine_structure * me*c**2/hbar 
+    coeff_IC = (2./3.) * fine_structure * me*c**2/hbar
     return coeff_IC*IC_G(chi_ele)/gamma_ele
 
-def QS_d2N_dt_dchi(chi, gamma_ele, chi_phot):    
-    coeff_IC = (2./3.) * fine_structure * me*c**2/hbar 
+def QS_d2N_dt_dchi(chi, gamma_ele, chi_phot):
+    coeff_IC = (2./3.) * fine_structure * me*c**2/hbar
     return coeff_IC*IC_S(chi, chi_phot/chi)/chi_phot/gamma_ele
 #__________________
 
@@ -182,8 +182,8 @@ def check_momenta(phot_data, p_phot, p0):
     pdir = p0/np.linalg.norm(p0)
     assert(small_diff(phot_data["px"]/p_phot, pdir[0]))
     assert(small_diff(phot_data["py"]/p_phot, pdir[1]))
-    assert(small_diff(phot_data["pz"]/p_phot, pdir[2]))    
-    print("  [OK] photons move along the initial particle direction")   
+    assert(small_diff(phot_data["pz"]/p_phot, pdir[2]))
+    print("  [OK] photons move along the initial particle direction")
 
 def check_opt_depths(part_data, phot_data):
     data = (part_data, phot_data)
@@ -194,51 +194,54 @@ def check_opt_depths(part_data, phot_data):
     print("  [OK] optical depth distributions are still exponential")
 
 def check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NN, idx):
-    h_log_gamma_phot, c_gamma_phot = np.histogram(gamma_phot, bins=np.logspace(np.log10(gamma_part*1e-12),np.log10(gamma_part),NN))
+    gamma_phot_min = 1e-12*gamma_part
+    gamma_phot_max = gamma_part
+    h_log_gamma_phot, c_gamma_phot = np.histogram(gamma_phot, bins=np.logspace(np.log10(gamma_phot_min),np.log10(gamma_phot_max),NN+1))
 
-    cchi_phot = chi_part*(c_gamma_phot)/(gamma_part-1)
+    cchi_phot_min = chi_part*(gamma_phot_min)/(gamma_part-1)
+    cchi_phot_max = chi_part*(gamma_phot_max)/(gamma_part-1)
 
-    coeff= 20
-  
-    aux_chi = np.logspace(np.log10(cchi_phot[0]),np.log10(cchi_phot[-1]), NN*coeff)
+    #Rudimentary integration over npoints for each bin
+    npoints= 20
+    aux_chi = np.logspace(np.log10(cchi_phot_min),np.log10(cchi_phot_max), NN*npoints)
     distrib = QS_d2N_dt_dchi(chi_part, gamma_part, aux_chi)*aux_chi
-    distrib = np.sum(distrib.reshape(-1, coeff),1)
+    distrib = np.sum(distrib.reshape(-1, npoints),1)
     distrib = n_phot*distrib/np.sum(distrib)
-    
+
     c_gamma_phot = np.exp(0.5*(np.log(c_gamma_phot[1:])+np.log(c_gamma_phot[:-1])))
-    distrib = np.exp(0.5*(np.log(distrib[1:])+np.log(distrib[:-1])))
+    #distrib = np.exp(0.5*(np.log(distrib[1:])+np.log(distrib[:-1])))
 
     # Visual comparison of distributions
-    plt.clf()
+    #plt.clf()
 
-    fig, (ax1, ax2) = plt.subplots(1, 2)
-    fig.suptitle("χ_particle = {:f}".format(chi_part))
-    
-    ax1.plot(c_gamma_phot, distrib,label="theory")
-    ax1.loglog(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
-    ax1.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
-    ax1.set_ylim(1,1e5)
-    
-    ax2.plot(c_gamma_phot, distrib,label="theory")
-    ax2.semilogy(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
-    ax2.set_ylim(1,1e5)
-    ax2.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
-        
-    ax1.set_xlabel("γ_photon")
-    ax1.set_xlabel("N")
-    
-    ax2.set_xlabel("γ_photon")
-    ax2.set_xlabel("N")
+    #fig, (ax1, ax2) = plt.subplots(1, 2)
+    #fig.suptitle("χ_particle = {:f}".format(chi_part))
 
-    plt.legend()
-    plt.savefig("case_{:d}".format(idx+1))
-  
+    #ax1.plot(c_gamma_phot, distrib,label="theory")
+    #ax1.loglog(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
+    #ax1.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
+    #ax1.set_ylim(1,1e5)
+
+    #ax2.plot(c_gamma_phot, distrib,label="theory")
+    #ax2.semilogy(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
+    #ax2.set_ylim(1,1e5)
+    #ax2.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
+
+    #ax1.set_xlabel("γ_photon")
+    #ax1.set_xlabel("N")
+
+    #ax2.set_xlabel("γ_photon")
+    #ax2.set_xlabel("N")
+
+    #plt.legend()
+    #plt.savefig("case_{:d}".format(idx+1))
+
     discr = np.abs(h_log_gamma_phot-distrib)
 
     max_discr = np.where(np.sqrt(distrib)>1, np.sqrt(distrib), 1)*5.0
     # do not check the last 3 points: the lookup table is too coarse-grained for that
     assert(np.all( np.abs(discr[:-3]/distrib[:-3]) < max_discr[:-3] ))
- 
+
     print("  [OK] energy distribution is within expectations")
 
 #__________________
@@ -256,7 +259,7 @@ def check():
         t_pi        = initial_momenta[idx]
         pm = boris(t_pi,-sim_time*0.5,csign[idx])
         p0 = boris(pm,sim_time*1.0,csign[idx])
-        
+
         p2_part = p0[0]**2 + p0[1]**2 + p0[2]**2
         p_part = np.sqrt(p2_part)
         energy_part = np.sqrt(mec2**2 + p2_part*c**2)
@@ -281,10 +284,10 @@ def check():
                               chi_part, gamma_part, sim_time,
                               initial_particle_number)
 
-        check_weights(part_data_final, phot_data)       
+        check_weights(part_data_final, phot_data)
 
         p_part_final = np.sqrt(part_data_final["px"]**2 + part_data_final["py"]**2 + part_data_final["pz"]**2 )
-	    
+
         check_momenta(phot_data, p_phot, p0)
 
         check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NNS[idx], idx)
@@ -294,7 +297,7 @@ def check():
         print("*************\n")
 
     test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
-    #checksumAPI.evaluate_checksum(test_name, filename_end)
+    checksumAPI.evaluate_checksum(test_name, filename_end)
 
 def main():
     check()
