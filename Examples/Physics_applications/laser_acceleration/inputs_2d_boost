@@ -47,7 +47,6 @@ warpx.dt_snapshots_lab = 1.6678204759907604e-12
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 3
 particles.species_names = electrons ions beam
 particles.use_fdtd_nci_corr = 1
 particles.rigid_injected_species = beam
@@ -108,7 +107,6 @@ beam.focused = false
 #################################
 ############# LASER #############
 #################################
-lasers.nlasers      = 1
 lasers.names        = laser1
 laser1.profile      = Gaussian
 laser1.position     = 0. 0. -0.1e-6 # This point is on the laser plane

@@ -734,6 +734,22 @@ WarpX::BackwardCompatibility ()
         amrex::Abort("algo.maxwell_fdtd_solver is not supported anymore. "
                      "Please use the renamed option algo.maxwell_solver");
     }
+
+    ParmParse pparticles("particles");
+    int nspecies;
+    if (pparticles.query("nspecies", nspecies)){
+        amrex::Print()<<"particles.nspecies is ignored. Just use particles.species_names please.\n";
+    }
+    ParmParse pcol("collisions");
+    int ncollisions;
+    if (pcol.query("ncollisions", ncollisions)){
+        amrex::Print()<<"collisions.ncollisions is ignored. Just use particles.collision_names please.\n";
+    }
+    ParmParse plasers("lasers");
+    int nlasers;
+    if (plasers.query("nlasers", nlasers)){
+        amrex::Print()<<"lasers.nlasers is ignored. Just use lasers.names please.\n";
+    }
 }
 
 // This is a virtual function.
