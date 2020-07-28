@@ -30,7 +30,7 @@ import checksumAPI
 # - The weight of the generated particles is equal to the weight of the photon
 # - Momenta of the residual photons are still equal to the original momentum
 # - The generated particles are emitted in the right direction
-# - The total energy is conserved in each event
+# - Total energy is conserved in each event
 # - The energy distribution of the generated particles is in agreement with theory
 # - The optical depths of the product species are correctly initialized (QED effects are
 #   enabled for product species too).
@@ -194,31 +194,32 @@ def check_opt_depths(phot_data, ele_data, pos_data):
     print("  [OK] optical depth distributions are still exponential")
 
 def check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, NN, idx):
-    h_energy_ele, ele_en = np.histogram(energy_ele/mec2, bins=NN, range=[1.0001,gamma_phot-1.0001])
-    h_energy_pos, _ = np.histogram(energy_pos/mec2, bins=NN, range=[1.0001,gamma_phot-1.0001])
+    h_gamma_ele, c_gamma = np.histogram(energy_ele/mec2, bins=NN, range=[1.0001,gamma_phot-1.0001])
+    h_gamma_pos, _ = np.histogram(energy_pos/mec2, bins=NN, range=[1.0001,gamma_phot-1.0001])
 
-    cchi_part = chi_phot*(ele_en - 1)/(gamma_phot - 2)
+    cchi_part = chi_phot*(c_gamma - 1)/(gamma_phot - 2)
 
-    coeff= 20
-    aux_chi = np.linspace(cchi_part[0],cchi_part[-1], NN*coeff)
+    #Rudimentary integration over npoints for each bin
+    npoints= 20
+    aux_chi = np.linspace(cchi_part[0],cchi_part[-1], NN*npoints)
     distrib = BW_d2N_dt_dchi(chi_phot, gamma_phot, aux_chi)
-    distrib = np.sum(distrib.reshape(-1, coeff),1)
+    distrib = np.sum(distrib.reshape(-1, npoints),1)
     distrib = n_lost*distrib/np.sum(distrib)
 
     # Visual comparison of distributions
-    #en_coords = 0.5*(ele_en[1:]+ele_en[:-1])
+    #c_gamma_centered = 0.5*(c_gamma[1:]+c_gamma[:-1])
     #plt.clf()
     #plt.xlabel("γ_particle")
     #plt.ylabel("N")
     #plt.title("χ_photon = {:f}".format(chi_phot))
-    #plt.plot(en_coords, distrib,label="theory")
-    #plt.plot(en_coords, h_energy_ele,label="BW electrons")
-    #plt.plot(en_coords, h_energy_pos,label="BW positrons")
+    #plt.plot(c_gamma_centered, distrib,label="theory")
+    #plt.plot(c_gamma_centered, h_gamma_ele,label="BW electrons")
+    #plt.plot(c_gamma_centered, h_gamma_pos,label="BW positrons")
     #plt.legend()
     #plt.savefig("case_{:d}".format(idx+1))
 
-    discr_ele = np.abs(h_energy_ele-distrib)
-    discr_pos = np.abs(h_energy_pos-distrib)
+    discr_ele = np.abs(h_gamma_ele-distrib)
+    discr_pos = np.abs(h_gamma_pos-distrib)
     max_discr = 5.0 * np.sqrt(distrib)
     assert(np.all(discr_ele < max_discr))
     assert(np.all(discr_pos < max_discr))
