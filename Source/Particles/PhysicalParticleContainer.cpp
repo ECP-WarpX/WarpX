@@ -1485,8 +1485,8 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
                 getExternalB(ip, Bxp, Byp, Bzp);
 
-                // first gather E and B to the particle positions
                 if (!do_not_gather){
+                    // first gather E and B to the particle positions
                     doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
