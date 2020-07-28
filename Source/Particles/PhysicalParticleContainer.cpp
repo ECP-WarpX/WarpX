@@ -1403,7 +1403,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 {
     WARPX_PROFILE("PhysicalParticleContainer::PushP");
 
-    if (do_not_push || do_not_gather) return;
+    if (do_not_push) return;
 
     const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev,0));
 
@@ -1486,11 +1486,13 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 getExternalB(ip, Bxp, Byp, Bzp);
 
                 // first gather E and B to the particle positions
-                doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                               ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                               ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                               dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                               nox, l_lower_order_in_v);
+                if (!do_not_gather){
+                    doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                   ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                   ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                   dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                                   nox, l_lower_order_in_v);
+                }
 
                 if (do_crr) {
                     amrex::Real qp = q;
@@ -1760,8 +1762,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                      (gather_lev==(lev  )),
                                      "Gather buffers only work for lev-1");
     // If no particles, do not do anything
-    // If do_not_gather = 1 by user, do not do anything
-    if (np_to_push == 0 || do_not_gather) return;
+    if (np_to_push == 0) return;
 
     // Get cell size on gather_lev
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(gather_lev,0));
@@ -1861,12 +1862,14 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
         getExternalB(ip, Bxp, Byp, Bzp);
 
-        // first gather E and B to the particle positions
-        doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                       dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                       nox, l_lower_order_in_v);
+        if(!do_not_gather){
+            // first gather E and B to the particle positions
+            doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                           ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                           ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                           dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                           nox, l_lower_order_in_v);
+        }
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
