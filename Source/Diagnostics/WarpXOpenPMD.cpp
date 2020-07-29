@@ -71,7 +71,10 @@ namespace detail
 #if defined(WARPX_DIM_XZ)
         vs const axisLabels{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
-        vs const axisLabels{"r", "z"};
+        // if we are start to write individual modes
+        //vs const axisLabels{"r", "z"};
+        // if we just write reconstructed 2D fields at theta=0
+        vs const axisLabels{"x", "z"};
 #elif (AMREX_SPACEDIM==3)
         vs const axisLabels{"x", "y", "z"};
 #else
@@ -87,7 +90,10 @@ namespace detail
     {
         using vs = std::vector< std::string >;
 #if defined(WARPX_DIM_RZ)
-        vs const fieldComponents{"r", "z"};
+        // if we are start to write individual modes
+        //vs const fieldComponents{"r", "z"};
+        // if we just write reconstructed fields at theta=0
+        vs const fieldComponents{"x", "y", "z"};
 #else
         // note: 1D3V and 2D3V simulations still have 3 components for the fields
         vs const fieldComponents{"x", "y", "z"};
