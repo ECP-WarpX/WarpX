@@ -160,7 +160,7 @@ public:
     void SetParticleBoxArray (int lev, amrex::BoxArray& new_ba);
     void SetParticleDistributionMap (int lev, amrex::DistributionMapping& new_dm);
 
-    int nSpecies() const {return nspecies;}
+    int nSpecies() const {return species_names.size();}
 
     int nSpeciesBackTransformedDiagnostics() const {return nspecies_back_transformed_diagnostics;}
     int mapSpeciesBackTransformedDiagnostics(int i) const {return map_species_back_transformed_diagnostics[i];}
@@ -380,11 +380,6 @@ private:
     // MultiParticleContainer for 0<i<nspecies_back_transformed_diagnostics
     std::vector<int> map_species_back_transformed_diagnostics;
     int do_back_transformed_diagnostics = 0;
-
-    // runtime parameters
-    int nlasers = 0;
-    int nspecies = 1;   // physical particles only. nspecies+nlasers == allcontainers.size().
-    int ncollisions = 0;
 
     void MFItInfoCheckTiling(const WarpXParticleContainer& pc_src) const noexcept
     {

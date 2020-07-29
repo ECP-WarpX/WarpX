@@ -717,13 +717,15 @@ Laser initialization
 
 *  ``<laser_name>.profile_duration`` (`float` ; in seconds)
 
-    The duration of the laser, defined as :math:`\tau` below:
+    The duration of the laser pulse, defined as :math:`\tau` below:
 
     - For the ``"gaussian"`` profile:
 
     .. math::
 
         E(\boldsymbol{x},t) \propto \exp\left( -\frac{(t-t_{peak})^2}{\tau^2} \right)
+
+    Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.174`.
 
     - For the ``"harris"`` profile:
 
@@ -1019,14 +1021,16 @@ Numerics and algorithms
 
      If ``algo.particle_pusher`` is not specified, ``boris`` is the default.
 
-* ``algo.maxwell_fdtd_solver`` (`string`, optional)
-    The algorithm for the FDTD Maxwell field solver. Available options are:
+* ``algo.maxwell_solver`` (`string`, optional)
+    The algorithm for the Maxwell field solver.
+    Available options are:
 
      - ``yee``: Yee FDTD solver.
      - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
        coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
 
-     If ``algo.maxwell_fdtd_solver`` is not specified, ``yee`` is the default.
+     If ``algo.maxwell_solver`` is not specified, ``yee`` is the default.
+     Note: this option is currently ignored with PSATD.
 
 * ``algo.em_solver_medium`` (`string`, optional)
     The medium for evaluating the Maxwell solver. Available options are :
@@ -1380,6 +1384,17 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
     positions `x` greater than `0`, and those having velocity `uz` less than 10,
     will be dumped.
+
+* ``amrex.async_out`` (`0` or `1`) optional (default `0`)
+    Whether to use asynchronous IO when writing plotfiles. This only has an effect
+    when using the AMReX plotfile format. Please see :doc:`../visualization/visualization`
+    for more information.
+
+* ``amrex.async_out_nfiles`` (`int`) optional (default `64`)
+    The maximum number of files to write to when using asynchronous IO.
+    To use asynchronous IO with more than ``amrex.async_out_nfiles`` MPI ranks,
+    WarpX must be compiled with the ``MPI_THREAD_MULTIPLE=TRUE`` flag.
+    Please see :doc:`../visualization/visualization` for more information.
 
 Back-Transformed Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

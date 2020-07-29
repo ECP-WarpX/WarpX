@@ -68,7 +68,7 @@ long WarpX::current_deposition_algo;
 long WarpX::charge_deposition_algo;
 long WarpX::field_gathering_algo;
 long WarpX::particle_pusher_algo;
-int WarpX::maxwell_fdtd_solver_id;
+int WarpX::maxwell_solver_id;
 long WarpX::load_balance_costs_update_algo;
 int WarpX::do_dive_cleaning = 0;
 int WarpX::em_solver_medium;
@@ -596,7 +596,7 @@ WarpX::ReadParameters ()
         current_deposition_algo = GetAlgorithmInteger(pp, "current_deposition");
         charge_deposition_algo = GetAlgorithmInteger(pp, "charge_deposition");
         particle_pusher_algo = GetAlgorithmInteger(pp, "particle_pusher");
-        maxwell_fdtd_solver_id = GetAlgorithmInteger(pp, "maxwell_fdtd_solver");
+        maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
         field_gathering_algo = GetAlgorithmInteger(pp, "field_gathering");
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
             // Use same shape factors in all directions, for gathering
@@ -727,6 +727,29 @@ WarpX::BackwardCompatibility ()
         amrex::Abort("warpx.plot_crsepatch is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
     }
+
+    ParmParse ppalgo("algo");
+    int backward_mw_solver;
+    if (ppalgo.query("maxwell_fdtd_solver", backward_mw_solver)){
+        amrex::Abort("algo.maxwell_fdtd_solver is not supported anymore. "
+                     "Please use the renamed option algo.maxwell_solver");
+    }
+
+    ParmParse pparticles("particles");
+    int nspecies;
+    if (pparticles.query("nspecies", nspecies)){
+        amrex::Print()<<"particles.nspecies is ignored. Just use particles.species_names please.\n";
+    }
+    ParmParse pcol("collisions");
+    int ncollisions;
+    if (pcol.query("ncollisions", ncollisions)){
+        amrex::Print()<<"collisions.ncollisions is ignored. Just use particles.collision_names please.\n";
+    }
+    ParmParse plasers("lasers");
+    int nlasers;
+    if (plasers.query("nlasers", nlasers)){
+        amrex::Print()<<"lasers.nlasers is ignored. Just use lasers.names please.\n";
+    }
 }
 
 // This is a virtual function.
@@ -789,7 +812,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         WarpX::nox,
         nox_fft, noy_fft, noz_fft,
         NCIGodfreyFilter::m_stencil_width,
-        maxwell_fdtd_solver_id,
+        maxwell_solver_id,
         maxLevel(),
         WarpX::v_galilean,
         safe_guard_cells);
@@ -976,7 +999,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   endif
 #endif
     m_fdtd_solver_fp[lev].reset(
-        new FiniteDifferenceSolver(maxwell_fdtd_solver_id, dx, do_nodal) );
+        new FiniteDifferenceSolver(maxwell_solver_id, dx, do_nodal) );
     //
     // The Aux patch (i.e., the full solution)
     //
@@ -1094,7 +1117,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   endif
 #endif
         m_fdtd_solver_cp[lev].reset(
-            new FiniteDifferenceSolver( maxwell_fdtd_solver_id, cdx, do_nodal ) );
+            new FiniteDifferenceSolver( maxwell_solver_id, cdx, do_nodal ) );
     }
 
     //
