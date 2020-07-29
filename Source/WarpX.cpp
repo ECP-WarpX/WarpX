@@ -816,6 +816,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         do_subcycling,
         WarpX::use_fdtd_nci_corr,
         do_nodal,
+        is_nodal,
         do_moving_window,
         aux_is_nodal,
         moving_window_dir,
