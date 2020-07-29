@@ -94,7 +94,6 @@ def IC_inner_alternative(y):
     return integ.quad(ff, 0, np.inf)[0]/np.sqrt(3)
 
 def IC_Y(chi_ele, xi):
-    res = np.zeros(np.shape(chi_ele))
     div = (chi_ele*(1-xi))
     div = np.where(np.logical_and(xi < 1, chi_ele != 0), div, 1.0);
     res = (2/3)*np.where(np.logical_and(xi < 1, chi_ele != 0), xi/div, np.inf)
@@ -154,8 +153,6 @@ def get_spec(ytdata, specname, is_photon):
 
     w = ytdata[specname,"particle_weighting"].v
 
-    opt = np.zeros(np.shape(px))
-
     if (is_photon):
         opt = ytdata[specname,"particle_optical_depth_BW"].v
     else:
@@ -208,7 +205,7 @@ def check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NN, idx):
     distrib = np.sum(distrib.reshape(-1, npoints),1)
     distrib = n_phot*distrib/np.sum(distrib)
 
-    c_gamma_phot = np.exp(0.5*(np.log(c_gamma_phot[1:])+np.log(c_gamma_phot[:-1])))
+    #c_gamma_phot = np.exp(0.5*(np.log(c_gamma_phot[1:])+np.log(c_gamma_phot[:-1])))
     #distrib = np.exp(0.5*(np.log(distrib[1:])+np.log(distrib[:-1])))
 
     # Visual comparison of distributions
@@ -261,7 +258,6 @@ def check():
         p0 = boris(pm,sim_time*1.0,csign[idx])
 
         p2_part = p0[0]**2 + p0[1]**2 + p0[2]**2
-        p_part = np.sqrt(p2_part)
         energy_part = np.sqrt(mec2**2 + p2_part*c**2)
         gamma_part = energy_part/mec2
         chi_part = calc_chi_part(p0, E_f, B_f)
@@ -285,8 +281,6 @@ def check():
                               initial_particle_number)
 
         check_weights(part_data_final, phot_data)
-
-        p_part_final = np.sqrt(part_data_final["px"]**2 + part_data_final["py"]**2 + part_data_final["pz"]**2 )
 
         check_momenta(phot_data, p_phot, p0)
 
