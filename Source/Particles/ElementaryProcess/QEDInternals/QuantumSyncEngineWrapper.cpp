@@ -36,15 +36,15 @@ QuantumSynchrotronEvolveOpticalDepth QuantumSynchrotronEngine::build_evolve_func
 {
     AMREX_ALWAYS_ASSERT(m_lookup_tables_initialized);
 
-    return QuantumSynchrotronEvolveOpticalDepth(m_dndt_table.get_view());
+    return QuantumSynchrotronEvolveOpticalDepth(m_dndt_table.get_view(),
+        m_qs_minimum_chi_part);
 }
 
 QuantumSynchrotronPhotonEmission QuantumSynchrotronEngine::build_phot_em_functor ()
 {
     AMREX_ALWAYS_ASSERT(m_lookup_tables_initialized);
 
-    return QuantumSynchrotronPhotonEmission(m_phot_em_table.get_view(),
-        m_qs_minimum_chi_part);
+    return QuantumSynchrotronPhotonEmission(m_phot_em_table.get_view());
 
 }
 

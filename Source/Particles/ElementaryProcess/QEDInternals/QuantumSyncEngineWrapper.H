@@ -102,10 +102,8 @@ public:
     QuantumSynchrotronEvolveOpticalDepth(){}
 
     /**
-     * Constructor acquires pointers to control parameters and
-     * lookup tables data.
-     * lookup_table uses non-owning vectors under the hood. So no new data
-     * allocations should be triggered on GPU
+     * Constructor acquires a table view and the minimum quantum parameter
+     * to evolve the optical depth.
      */
     QuantumSynchrotronEvolveOpticalDepth(
         QS_dndt_table_view table_view,
@@ -114,6 +112,8 @@ public:
 
     /**
      * Evolves the optical depth. It can be used on GPU.
+     * If the  quantum parameter parameter of the particle is
+     * < qs_minimum_chi_part, the method returns immediately.
      * @param[in] ux,uy,uz gamma*v components of the lepton.
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
