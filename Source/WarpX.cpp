@@ -118,8 +118,9 @@ IntVect WarpX::filter_npass_each_dir(1);
 int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
-int WarpX::do_nodal = false;
 std::string WarpX::stagger_mode = "yee";
+int WarpX::do_nodal = false;
+amrex::IntVect WarpX::is_nodal;
 
 #ifdef AMREX_USE_GPU
 bool WarpX::do_device_synchronize_before_profile = true;
@@ -872,18 +873,20 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jy_nodal_flag = IntVect(1,1);
         jz_nodal_flag = IntVect(1,0);
         rho_nodal_flag = IntVect(1,1);
+        is_nodal = IntVect(0,0);
 
     } else if (stagger_mode == "nodal") {
-          Ex_nodal_flag  = IntVect::TheNodeVector();
-          Ey_nodal_flag  = IntVect::TheNodeVector();
-          Ez_nodal_flag  = IntVect::TheNodeVector();
-          Bx_nodal_flag  = IntVect::TheNodeVector();
-          By_nodal_flag  = IntVect::TheNodeVector();
-          Bz_nodal_flag  = IntVect::TheNodeVector();
-          jx_nodal_flag  = IntVect::TheNodeVector();
-          jy_nodal_flag  = IntVect::TheNodeVector();
-          jz_nodal_flag  = IntVect::TheNodeVector();
-          rho_nodal_flag = IntVect::TheNodeVector();
+        Ex_nodal_flag  = IntVect::TheNodeVector();
+        Ey_nodal_flag  = IntVect::TheNodeVector();
+        Ez_nodal_flag  = IntVect::TheNodeVector();
+        Bx_nodal_flag  = IntVect::TheNodeVector();
+        By_nodal_flag  = IntVect::TheNodeVector();
+        Bz_nodal_flag  = IntVect::TheNodeVector();
+        jx_nodal_flag  = IntVect::TheNodeVector();
+        jy_nodal_flag  = IntVect::TheNodeVector();
+        jz_nodal_flag  = IntVect::TheNodeVector();
+        rho_nodal_flag = IntVect::TheNodeVector();
+        is_nodal = IntVect(1,1);
 
     } else if (stagger_mode == "destagger_jz"){
         Ex_nodal_flag = IntVect(0,1);
@@ -896,6 +899,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jy_nodal_flag = IntVect(1,1);
         jz_nodal_flag = IntVect(1,1);
         rho_nodal_flag = IntVect(1,1); // might change
+        is_nodal = IntVect(0,0);
 
   } else if (stagger_mode == "nodal_in_z"){
         Ex_nodal_flag = IntVect(0,1);
@@ -908,6 +912,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jy_nodal_flag = IntVect(1,1);
         jz_nodal_flag = IntVect(1,1);
         rho_nodal_flag = IntVect(1,1); // might change
+        is_nodal = IntVect(0,1);
   } else{
     throw "Unrecognized stagger option";
   }
@@ -923,6 +928,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
       jy_nodal_flag = IntVect(1,0,1);
       jz_nodal_flag = IntVect(1,1,0);
       rho_nodal_flag = IntVect(1,1,1);
+      is_nodal = IntVect(0,0,0);
 
   } else if (stagger_mode == "nodal"){
       Ex_nodal_flag  = IntVect::TheNodeVector();
@@ -935,6 +941,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
       jy_nodal_flag  = IntVect::TheNodeVector();
       jz_nodal_flag  = IntVect::TheNodeVector();
       rho_nodal_flag = IntVect::TheNodeVector();
+      is_nodal = IntVect(1,1,1);
   } else if (stagger_mode == "destagger_jz"){
       Ex_nodal_flag = IntVect(0,1,1);
       Ey_nodal_flag = IntVect(1,0,1);
@@ -946,6 +953,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
       jy_nodal_flag = IntVect(1,0,1);
       jz_nodal_flag = IntVect(1,1,1);
       rho_nodal_flag = IntVect(1,1,0);
+      is_nodal = IntVect(0,0,0);
+
   } else if (stagger_mode == "nodal_in_z"){
       Ex_nodal_flag = IntVect(0,1,1);
       Ey_nodal_flag = IntVect(1,0,1);
@@ -957,6 +966,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
       jy_nodal_flag = IntVect(1,0,1);
       jz_nodal_flag = IntVect(1,1,1);
       rho_nodal_flag = IntVect(1,1,1); // TODO: Theory code suggests that (1,1,0) would be better when do_current_correction = 1.
+      is_nodal = IntVect(0,0,1);
 
   } else {
     throw "Unrecognized stagger option";

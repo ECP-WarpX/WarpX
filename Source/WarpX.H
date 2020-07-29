@@ -199,9 +199,10 @@ public:
     static int n_field_gather_buffer;       //! in number of cells from the edge (identical for each dimension)
     static int n_current_deposition_buffer; //! in number of cells from the edge (identical for each dimension)
 
-    // do nodal
-    static int do_nodal;
+    // staggering
     static std::string stagger_mode;
+    static int do_nodal;
+    static amrex::IntVect is_nodal;
 
     std::array<const amrex::MultiFab* const, 3>
     get_array_Bfield_aux  (const int lev) const {
