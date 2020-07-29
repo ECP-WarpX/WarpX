@@ -888,7 +888,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
           jz_nodal_flag  = IntVect::TheNodeVector();
           rho_nodal_flag = IntVect::TheNodeVector();
 
-    } else if (stagger_mode == "destagger_Jz"){
+    } else if (stagger_mode == "destagger_jz"){
         Ex_nodal_flag = IntVect(0,1);
         Ey_nodal_flag = IntVect(1,1);
         Ez_nodal_flag = IntVect(1,0);
@@ -938,7 +938,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
       jy_nodal_flag  = IntVect::TheNodeVector();
       jz_nodal_flag  = IntVect::TheNodeVector();
       rho_nodal_flag = IntVect::TheNodeVector();
-  } else if (stagger_mode == "destagger_Jz"){
+  } else if (stagger_mode == "destagger_jz"){
       Ex_nodal_flag = IntVect(0,1,1);
       Ey_nodal_flag = IntVect(1,0,1);
       Ez_nodal_flag = IntVect(1,1,0);
