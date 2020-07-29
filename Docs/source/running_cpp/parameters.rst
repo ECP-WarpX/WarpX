@@ -747,7 +747,7 @@ Laser initialization
     to automatically perform the conversion to the boosted frame.
 
 *  ``<laser_name>.phi0`` (`float`; in radians)
-    The Carrier Enveloppe Phase, i.e. the phase of the laser oscillation, at the
+    The Carrier Envelope Phase, i.e. the phase of the laser oscillation, at the
     position where the laser enveloppe is maximum (only used for the ``"gaussian"`` profile)
 
 * ``<laser_name>.stc_direction`` (`3 floats`) optional (default `1. 0. 0.`)
