@@ -898,7 +898,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jx_nodal_flag = IntVect(0,1);
         jy_nodal_flag = IntVect(1,1);
         jz_nodal_flag = IntVect(1,1);
-        rho_nodal_flag = IntVect(1,1); // might change
+        rho_nodal_flag = IntVect(1,1);
         is_nodal = IntVect(0,0);
 
   } else if (stagger_mode == "nodal_in_z"){
@@ -911,7 +911,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jx_nodal_flag = IntVect(0,1);
         jy_nodal_flag = IntVect(1,1);
         jz_nodal_flag = IntVect(1,1);
-        rho_nodal_flag = IntVect(1,1); // might change
+        rho_nodal_flag = IntVect(1,1);
         is_nodal = IntVect(0,1);
   } else{
     throw "Unrecognized stagger option";
@@ -967,7 +967,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
       jz_nodal_flag = IntVect(1,1,1);
       rho_nodal_flag = IntVect(1,1,1); // TODO: Theory code suggests that (1,1,0) would be better when do_current_correction = 1.
       is_nodal = IntVect(0,0,1);
-
+5
   } else {
     throw "Unrecognized stagger option";
   }
@@ -1320,8 +1320,8 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
-        "ComputeDivB not implemented with do_nodal."
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(stagger_mode == "yee",
+        "ComputeDivB implemented only for Yee stagger."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
@@ -1358,8 +1358,8 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx, int const ngrow)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
-        "ComputeDivB not implemented with do_nodal."
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(stagger_mode == "yee",
+        "ComputeDivB implemented only for Yee stagger."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
