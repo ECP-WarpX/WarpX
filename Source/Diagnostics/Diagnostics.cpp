@@ -87,6 +87,18 @@ Diagnostics::BaseReadParameters ()
 
     bool species_specified = pp.queryarr("species", m_species_names);
 
+    // TODO Back-transformed diagnostics
+    // Add strings "rho_<species_name>" to m_varnames: if <diag_name>.species
+    // is not specified, dump rho per each species
+    const MultiParticleContainer& mpc = warpx.GetPartContainer();
+    // If not specified, dump all species
+    if (m_species_names.size() == 0) m_species_names = mpc.GetSpeciesNames();
+    if (WarpXUtilStr::is_in(m_varnames, "rho")) {
+        for (int s = 0, ns = m_species_names.size(); s < ns; s++) {
+            m_varnames.push_back("rho_" + m_species_names[s]);
+        }
+    }
+
     bool checkpoint_compatibility = false;
     if (m_format == "checkpoint"){
        if ( varnames_specified == false &&
@@ -187,7 +199,8 @@ Diagnostics::ComputeAndPack ()
                 icomp_dst += m_all_field_functors[lev][icomp]->nComp();
             }
             // Check that the proper number of components of mf_avg were updated.
-            AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
+            // TODO This should be modified if rho is dumped per species
+            //AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
         }
     }
 }
