@@ -565,14 +565,11 @@ WarpX::ReadParameters ()
         // check staggering options:
         pp.query("do_nodal", do_nodal);
         pp.query("stagger_mode", stagger_mode);
-        if (do_nodal) stagger_mode = "nodal";
-        if (stagger_mode == "nodal") do_nodal = true; // enforce consistency
+        if (do_nodal) stagger_mode = "nodal"; // for backwards compatibility, if user sets do_nodal then it overrides.
+        do_nodal = (stagger_mode == "nodal"); // enforce consistency
 
         // Set default Galerkin interpolation according to stagger_mode
-        galerkin_interpolation = false;
-        if (stagger_mode == "yee") {
-          galerkin_interpolation = true; // for now, use only for Yee stagger.
-        }
+        galerkin_interpolation = (stagger_mode == "yee"); // for now, use by default only for Yee stagger.
 
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
