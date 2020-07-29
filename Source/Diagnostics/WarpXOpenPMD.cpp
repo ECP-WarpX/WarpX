@@ -100,7 +100,7 @@ namespace detail
      * @param record_name name of the openPMD record
      * @return map with base quantities and power scaling
      */
-    std::map< openPMD::UnitDimension, double >
+    inline std::map< openPMD::UnitDimension, double >
     getUnitDimension( std::string const & record_name )
     {
 
@@ -134,6 +134,39 @@ namespace detail
             {openPMD::UnitDimension::T, -2.}
         };
         else return {};
+    }
+
+    /** \brief For a given field that is to be written to an openPMD file,
+     * set the metadata that indicates the physical unit.
+     */
+    inline void
+    setOpenPMDUnit( openPMD::Mesh mesh, const std::string field_name )
+    {
+        if (field_name[0] == 'E'){  // Electric field
+            mesh.setUnitDimension({
+                                          {openPMD::UnitDimension::L,  1},
+                                          {openPMD::UnitDimension::M,  1},
+                                          {openPMD::UnitDimension::T, -3},
+                                          {openPMD::UnitDimension::I, -1},
+                                  });
+        } else if (field_name[0] == 'B'){ // Magnetic field
+            mesh.setUnitDimension({
+                                          {openPMD::UnitDimension::M,  1},
+                                          {openPMD::UnitDimension::I, -1},
+                                          {openPMD::UnitDimension::T, -2}
+                                  });
+        } else if (field_name[0] == 'j'){ // current
+            mesh.setUnitDimension({
+                                          {openPMD::UnitDimension::L, -2},
+                                          {openPMD::UnitDimension::I,  1},
+                                  });
+        } else if (field_name.substr(0,3) == "rho"){ // charge density
+            mesh.setUnitDimension({
+                                          {openPMD::UnitDimension::L, -3},
+                                          {openPMD::UnitDimension::I,  1},
+                                          {openPMD::UnitDimension::T,  1},
+                                  });
+        }
     }
 #endif // WARPX_USE_OPENPMD
 }
@@ -700,7 +733,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
     mesh.setGridSpacing( grid_spacing );
     mesh.setGridGlobalOffset( global_offset );
     mesh.setAttribute( "fieldSmoothing", "none" );
-    setOpenPMDUnit( mesh, field_name );
+    detail::setOpenPMDUnit( mesh, field_name );
 
     // Create a new mesh record component, and store the associated metadata
     auto mesh_comp = mesh[comp_name];
