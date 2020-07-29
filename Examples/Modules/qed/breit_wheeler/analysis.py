@@ -25,8 +25,7 @@ import checksumAPI
 # Specifically the script checks that:
 #
 # - The expected number of generated pairs n_pairs is in agreement with theory
-#   (the maximum tolerated error is 5*sqrt(n_pairs),
-#   which means that the test should statistically fail less than once every 10^6 runs).
+#   (the maximum tolerated error is 6*sqrt(n_pairs)
 # - The weight of the generated particles is equal to the weight of the photon
 # - Momenta of the residual photons are still equal to the original momentum
 # - The generated particles are emitted in the right direction
@@ -223,7 +222,7 @@ def check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, N
 
     discr_ele = np.abs(h_gamma_ele-distrib)
     discr_pos = np.abs(h_gamma_pos-distrib)
-    max_discr = 5.0 * np.sqrt(distrib)
+    max_discr = 6.0 * np.sqrt(distrib)
     assert(np.all(discr_ele < max_discr))
     assert(np.all(discr_pos < max_discr))
     print("  [OK] energy distribution is within expectations")
