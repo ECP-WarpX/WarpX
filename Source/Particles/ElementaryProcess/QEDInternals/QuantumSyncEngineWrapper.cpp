@@ -43,7 +43,8 @@ QuantumSynchrotronPhotonEmission QuantumSynchrotronEngine::build_phot_em_functor
 {
     AMREX_ALWAYS_ASSERT(m_lookup_tables_initialized);
 
-    return QuantumSynchrotronPhotonEmission(m_phot_em_table.get_view());
+    return QuantumSynchrotronPhotonEmission(m_phot_em_table.get_view(),
+        m_qs_minimum_chi_part);
 
 }
 

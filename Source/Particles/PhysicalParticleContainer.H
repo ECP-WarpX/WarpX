@@ -357,12 +357,9 @@ protected:
 
     // A smart pointer to an instance of a Quantum Synchrotron engine
     std::shared_ptr<QuantumSynchrotronEngine> m_shr_p_qs_engine;
-    amrex::Real m_qs_minimum_chi_part;
 
     // A smart pointer to an instance of a Breit Wheeler engine [photons only!]
     std::shared_ptr<BreitWheelerEngine> m_shr_p_bw_engine;
-    amrex::Real m_bw_minimum_chi_phot;
-
 #endif
 
 };

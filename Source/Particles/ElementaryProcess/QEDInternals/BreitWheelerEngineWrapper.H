@@ -109,8 +109,9 @@ public:
      * allocations should be triggered on GPU
      */
     BreitWheelerEvolveOpticalDepth(
-        BW_dndt_table_view table_view):
-        m_table_view{table_view}{};
+        BW_dndt_table_view table_view,
+        amrex::ParticleReal bw_minimum_chi_phot):
+        m_table_view{table_view}, m_bw_minimum_chi_phot{bw_minimum_chi_phot}{};
 
     /**
      * Evolves the optical depth. It can be used on GPU.
@@ -133,17 +134,19 @@ public:
         namespace pxr_p = picsar::multi_physics::phys;
         namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
 
-        //Optical depth is not evolved for photons having less energy than what is
-        //required to generate a pair
-        const auto gamma_photon = std::sqrt(ux*ux + uy*uy + uz*uz);
-        if (gamma_photon < pxr_m::two<amrex::Real>)
-            return 0;
-
         constexpr amrex::Real m_e = PhysConst::m_e;
         const auto energy = std::sqrt(ux*ux + uy*uy + uz*uz)*m_e*PhysConst::c;
 
         const auto chi_phot = QedUtils::chi_photon(
             m_e*ux, m_e*uy, m_e*uz, ex, ey, ez, bx, by, bz);
+
+        //Optical depth is not evolved for photons having less energy than what is
+        //required to generate a pair or a quantum parameter smaller than
+        //m_bw_minimum_chi_phot
+        const auto gamma_photon = std::sqrt(ux*ux + uy*uy + uz*uz);
+        if (gamma_photon < pxr_m::two<amrex::Real> ||
+            chi_phot < m_bw_minimum_chi_phot)
+            return 0;
 
         const auto is_out = pxr_bw::evolve_optical_depth<
             amrex::Real,
@@ -156,6 +159,7 @@ public:
 
 private:
     BW_dndt_table_view m_table_view;
+    amrex::ParticleReal m_bw_minimum_chi_phot;
 };
 
 /**

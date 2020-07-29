@@ -108,8 +108,9 @@ public:
      * allocations should be triggered on GPU
      */
     QuantumSynchrotronEvolveOpticalDepth(
-        QS_dndt_table_view table_view):
-        m_table_view{table_view}{};
+        QS_dndt_table_view table_view,
+        amrex::ParticleReal qs_minimum_chi_part):
+        m_table_view{table_view}, m_qs_minimum_chi_part{qs_minimum_chi_part}{};
 
     /**
      * Evolves the optical depth. It can be used on GPU.
@@ -140,6 +141,9 @@ public:
         const auto chi_part = QedUtils::chi_ele_pos(
             m_e*ux, m_e*uy, m_e*uz, ex, ey, ez, bx, by, bz);
 
+        if (chi_part < m_qs_minimum_chi_part)
+            return 0;
+
         const auto is_out = pxr_qs::evolve_optical_depth<
             amrex::Real,
             QS_dndt_table_view,
@@ -151,6 +155,7 @@ public:
 
 private:
     QS_dndt_table_view m_table_view;
+    amrex::ParticleReal m_qs_minimum_chi_part;
 };
 
 /**

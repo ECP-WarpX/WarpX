@@ -39,7 +39,8 @@ BreitWheelerEngine::build_evolve_functor () const
 {
     AMREX_ALWAYS_ASSERT(m_lookup_tables_initialized);
 
-    return BreitWheelerEvolveOpticalDepth(m_dndt_table.get_view());
+    return BreitWheelerEvolveOpticalDepth(m_dndt_table.get_view(),
+        m_bw_minimum_chi_phot);
 }
 
 BreitWheelerGeneratePairs
