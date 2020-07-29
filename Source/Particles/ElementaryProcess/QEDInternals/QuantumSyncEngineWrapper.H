@@ -97,15 +97,16 @@ class QuantumSynchrotronEvolveOpticalDepth
 public:
 
     /**
-     * Constructor
+     * Default constructor: it leaves the functor in a non-initialized state.
      */
-    QuantumSynchrotronEvolveOpticalDepth(){}
+    QuantumSynchrotronEvolveOpticalDepth (){}
 
     /**
-     * Constructor acquires a table view and the minimum quantum parameter
-     * to evolve the optical depth.
+     * Constructor to be used to initialize the functor.
+     * @param[in] table_view a view of a QS_dndt_table lookup table
+     * @param[in] qs_minimum_chi_part the minimum quantum parameter to evolve the optical depth
      */
-    QuantumSynchrotronEvolveOpticalDepth(
+    QuantumSynchrotronEvolveOpticalDepth (
         QS_dndt_table_view table_view,
         amrex::ParticleReal qs_minimum_chi_part):
         m_table_view{table_view}, m_qs_minimum_chi_part{qs_minimum_chi_part}{};
@@ -165,6 +166,12 @@ private:
 class QuantumSynchrotronPhotonEmission
 {
 public:
+
+    /**
+     * Default constructor: it leaves the functor in a non-initialized state.
+     */
+    QuantumSynchrotronPhotonEmission (){}
+
     /**
      * Constructor acquires pointers to control parameters and
      * lookup tables data.

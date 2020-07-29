@@ -97,16 +97,17 @@ class BreitWheelerEvolveOpticalDepth
 public:
 
     /**
-     * Constructor
+     * Default constructor: it leaves the functor in a non-initialized state.
      */
-    BreitWheelerEvolveOpticalDepth(){}
+    BreitWheelerEvolveOpticalDepth (){}
 
 
     /**
-     * Constructor acquires a table view and the minimum quantum parameter
-     * to evolve the optical depth.
+     * Constructor to be used to initialize the functor.
+     * @param[in] table_view a view of a BW_dndt_table lookup table
+     * @param[in] bw_minimum_chi_phot the minimum quantum parameter to evolve the optical depth
      */
-    BreitWheelerEvolveOpticalDepth(
+    BreitWheelerEvolveOpticalDepth (
         BW_dndt_table_view table_view,
         amrex::ParticleReal bw_minimum_chi_phot):
         m_table_view{table_view}, m_bw_minimum_chi_phot{bw_minimum_chi_phot}{};
@@ -173,9 +174,9 @@ class BreitWheelerGeneratePairs
 public:
 
     /**
-     * Constructor
+     * Default constructor: it leaves the functor in a non-initialized state.
      */
-    BreitWheelerGeneratePairs(){}
+    BreitWheelerGeneratePairs (){}
 
     /**
      * Constructor acquires pointers to control parameters and
