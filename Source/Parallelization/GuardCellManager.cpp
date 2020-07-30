@@ -15,7 +15,8 @@ void
 guardCellManager::Init(
     const bool do_subcycling,
     const bool do_fdtd_nci_corr,
-    const bool do_nodal,
+    const bool do_nodal
+    const amrex::IntVect is_nodal,
     const bool do_moving_window,
     const bool aux_is_nodal,
     const int moving_window_dir,
@@ -102,9 +103,14 @@ guardCellManager::Init(
     // is determined *empirically* to be the order of the solver
     // for nodal, and half the order of the solver for staggered.
 
-    int ngFFt_x = do_nodal ? nox_fft : nox_fft/2;
-    int ngFFt_y = do_nodal ? noy_fft : noy_fft/2;
-    int ngFFt_z = do_nodal ? noz_fft : noz_fft/2;
+    int ngFFt_x = is_nodal[0] ? nox_fft : nox_fft/2;
+    #if (AMREX_SPACEDIM==3)
+      int ngFFt_y = is_nodal[1] ? noy_fft : noy_fft/2;
+      int ngFFt_z = is_nodal[2] ? noz_fft : noz_fft/2;
+    #else
+      int ngFFt_y = is_nodal[0] ? noy_fft : noy_fft/2; // TODO: Figure out if this even needs to be defined in this case
+      int ngFFt_z = is_nodal[1] ? noz_fft : noz_fft/2; // Using xy instead of xz would make certain things a lot easier
+    #endif
 
     ParmParse pp("psatd");
     pp.query("nx_guard", ngFFt_x);

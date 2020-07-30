@@ -21,12 +21,12 @@ using namespace amrex;
 PsatdAlgorithm::PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                          const DistributionMapping& dm,
                          const int norder_x, const int norder_y,
-                         const int norder_z, const bool nodal, const Real dt,
+                         const int norder_z, amrex::IntVect is_nodal, const Real dt,
                          const bool update_with_rho)
     // Initialize members of base class
     : m_dt( dt ),
       m_update_with_rho( update_with_rho ),
-      SpectralBaseAlgorithm( spectral_kspace, dm, norder_x, norder_y, norder_z, nodal )
+      SpectralBaseAlgorithm( spectral_kspace, dm, norder_x, norder_y, norder_z, is_nodal )
 {
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
