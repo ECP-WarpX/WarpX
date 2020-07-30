@@ -565,6 +565,7 @@ WarpX::ReadParameters ()
 
         // check staggering options:
         pp.query("do_nodal", do_nodal);
+<<<<<<< HEAD
         pp.query("stagger_mode", stagger_mode);
         if (do_nodal) stagger_mode = "nodal"; // for backwards compatibility, if user sets do_nodal then it overrides.
         do_nodal = (stagger_mode == "nodal"); // enforce consistency
@@ -572,6 +573,10 @@ WarpX::ReadParameters ()
         // Set default Galerkin interpolation according to stagger_mode
         galerkin_interpolation = (stagger_mode == "yee"); // for now, use by default only for Yee stagger.
 
+=======
+        // Use same shape factors in all directions, for gathering
+        if (do_nodal) galerkin_interpolation = false;
+>>>>>>> 807cc1e022dc1a052e8e4971a6a4f781a7c94c86
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
