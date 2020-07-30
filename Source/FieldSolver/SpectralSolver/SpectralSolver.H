@@ -31,7 +31,7 @@ class SpectralSolver
         SpectralSolver( const amrex::BoxArray& realspace_ba,
                         const amrex::DistributionMapping& dm,
                         const int norder_x, const int norder_y,
-                        const int norder_z, const bool nodal,
+                        const int norder_z, const amrex::IntVect is_nodal,
                         const amrex::Array<amrex::Real,3>& v_galilean,
                         const amrex::RealVect dx, const amrex::Real dt,
                         const bool pml=false,

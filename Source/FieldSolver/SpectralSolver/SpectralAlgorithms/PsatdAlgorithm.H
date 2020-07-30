@@ -24,7 +24,7 @@ class PsatdAlgorithm : public SpectralBaseAlgorithm
         PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                          const amrex::DistributionMapping& dm,
                          const int norder_x, const int norder_y,
-                         const int norder_z, const bool nodal,
+                         const int norder_z, const amrex::IntVect is_nodal,
                          const amrex::Real dt,
                          const bool update_with_rho);
         // Redefine functions from base class
