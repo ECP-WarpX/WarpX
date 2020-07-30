@@ -370,7 +370,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
           const Geometry* geom, const Geometry* cgeom,
           int ncell, int delta, int ref_ratio,
 #ifdef WARPX_USE_PSATD
-          Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal, amrex::IntVect is_nodal,
+          Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal, amrex::IntVect is_nodal, // TODO: Remove do_nodal from argument list
 #endif
           int do_dive_cleaning, int do_moving_window,
           int /*pml_has_particles*/, int do_pml_in_domain,
@@ -567,7 +567,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 
         realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_cp.reset( new SpectralSolver( realspace_cba, cdm,
-            nox_fft, noy_fft, noz_fft, do_nodal, is_nodal, v_galilean_zero, cdx, dt, in_pml ) );
+            nox_fft, noy_fft, noz_fft, is_nodal, v_galilean_zero, cdx, dt, in_pml ) );
 #endif
     }
 }
