@@ -399,15 +399,11 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
            }
 
            //   reconstruct x and y from polar coordinates r, theta
-           amrex::ParticleReal const* theta = nullptr;
-           for (auto idx=0; idx<m_NumSoARealAttributes; idx++) {
-               auto ii = m_NumAoSRealAttributes + idx;
-               if (real_comp_names[ii] == "theta") {
-                   auto const& soa = pti.GetStructOfArrays();
-                   theta = soa.GetRealData(idx).data();
-               }
-           }
-           AMREX_ALWAYS_ASSERT_WITH_MESSAGE(theta != nullptr, "openPMD: theta not found.");
+           auto const& soa = pti.GetStructOfArrays();
+           amrex::ParticleReal const* theta = soa.GetRealData(PIdx::theta).dataPtr();
+           AMREX_ALWAYS_ASSERT_WITH_MESSAGE(theta != nullptr, "openPMD: invalid theta pointer.");
+           AMREX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
+                                            "openPMD: theta and tile size do not match");
            {
                std::shared_ptr< amrex::ParticleReal > x(
                        new amrex::ParticleReal[numParticleOnTile],
