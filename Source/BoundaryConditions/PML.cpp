@@ -497,7 +497,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     Array<Real,3> v_galilean_zero = {0,0,0};
     realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
     spectral_solver_fp.reset( new SpectralSolver( realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, is_nodal, v_galilean_zero, dx, dt, in_pml ) );
+        nox_fft, noy_fft, noz_fft, is_nodal, v_galilean_zero, dx, dt, in_pml ) );
 #endif
 
     if (cgeom)
