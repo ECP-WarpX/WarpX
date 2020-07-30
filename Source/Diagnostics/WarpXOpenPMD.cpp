@@ -51,17 +51,13 @@ namespace detail
 #if defined(WARPX_DIM_XZ)
         vs const positionComponents{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
-        // note: this will change when we back-transform
-        //       z,r,theta on the fly to cartesian coordinates
-        vs const positionComponents{"r", "z"};
-        // TODO: transform to x,y,z
         // note: although we internally store particle positions
         //       for AMReX in r,z and a theta attribute, we
         //       actually need them for algorithms (e.g. push)
         //       and I/O in Cartesian.
         //       Other attributes like momentum are consequently
         //       stored in x,y,z internally.
-        // vs const positionComponents{"x", "y", "z"};
+        vs const positionComponents{"x", "y", "z"};
 #elif (AMREX_SPACEDIM==3)
         vs const positionComponents{"x", "y", "z"};
 #else
@@ -390,6 +386,46 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
          {
            // Save positions
            auto const positionComponents = detail::getParticlePositionComponentLabels();
+#if defined(WARPX_DIM_RZ)
+           {
+              std::shared_ptr<amrex::ParticleReal> z(
+                      new amrex::ParticleReal[numParticleOnTile],
+                      [](amrex::ParticleReal const *p) { delete[] p; }
+              );
+              for (auto i = 0; i < numParticleOnTile; i++)
+                  z.get()[i] = aos[i].m_rdata.pos[1];  // {0: "r", 1: "z"}
+              std::string const positionComponent = "z";
+              currSpecies["position"]["z"].storeChunk(z, {offset}, {numParticleOnTile64});
+           }
+
+           //   reconstruct x and y from polar coordinates r, theta
+           amrex::ParticleReal const* theta = nullptr;
+           for (auto idx=0; idx<m_NumSoARealAttributes; idx++) {
+               auto ii = m_NumAoSRealAttributes + idx;
+               if (real_comp_names[ii] == "theta") {
+                   auto const& soa = pti.GetStructOfArrays();
+                   theta = soa.GetRealData(idx).data();
+               }
+           }
+           AMREX_ALWAYS_ASSERT_WITH_MESSAGE(theta != nullptr, "openPMD: theta not found.");
+           {
+               std::shared_ptr< amrex::ParticleReal > x(
+                       new amrex::ParticleReal[numParticleOnTile],
+                       [](amrex::ParticleReal const *p){ delete[] p; }
+               );
+               std::shared_ptr< amrex::ParticleReal > y(
+                       new amrex::ParticleReal[numParticleOnTile],
+                       [](amrex::ParticleReal const *p){ delete[] p; }
+               );
+               for (auto i=0; i<numParticleOnTile; i++) {
+                   auto const r = aos[i].m_rdata.pos[0];  // {0: "r", 1: "z"}
+                   x.get()[i] = r * std::cos(theta[i]);
+                   y.get()[i] = r * std::sin(theta[i]);
+               }
+               currSpecies["position"]["x"].storeChunk(x, {offset}, {numParticleOnTile64});
+               currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
+           }
+#else
            for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
                 std::shared_ptr< amrex::ParticleReal > curr(
                     new amrex::ParticleReal[numParticleOnTile],
@@ -401,6 +437,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                 std::string const positionComponent = positionComponents[currDim];
                 currSpecies["position"][positionComponent].storeChunk(curr, {offset}, {numParticleOnTile64});
            }
+#endif
 
            // save particle ID after converting it to a globally unique ID
            std::shared_ptr< uint64_t > ids(
@@ -412,7 +449,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
            }
            auto const scalar = openPMD::RecordComponent::SCALAR;
            currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
-        }
+         }
          //  save "extra" particle properties in AoS and SoA
          SaveRealProperty(pti,
              currSpecies,
