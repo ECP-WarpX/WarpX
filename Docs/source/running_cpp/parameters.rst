@@ -1057,6 +1057,13 @@ Numerics and algorithms
 
     Note that in the current implementation in WarpX these 3 numbers must be equal.
 
+* ``interpolation.galerkin_scheme`` (`0` or `1`)
+    Whether to use a Galerkin scheme when gathering fields to particles.
+    When set to `1`, the interpolation orders used for field-gathering are reduced for certain field components along certain directions.
+    For example, `E_z` is gathered using ``interpolation.nox``, ``interpolation.noy``, and ``interpolation.noz - 1``.
+    See equations 21-23 of (`Godfrey and Vay, 2013 <https://doi.org/10.1016/j.jcp.2013.04.006>`_) and associated references for details.
+    Defaults to `1` unless ``warpx.do_nodal = 1`` and/or ``algo.field_gathering = momentum-conserving``.
+
 * ``warpx.do_dive_cleaning`` (`0` or `1` ; default: 0)
     Whether to use modified Maxwell equations that progressively eliminate
     the error in :math:`div(E)-\rho`. This can be useful when using a current
