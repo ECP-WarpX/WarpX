@@ -52,8 +52,16 @@ namespace detail
         vs const positionComponents{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
         // note: this will change when we back-transform
-        //       z,r,theta on the fly to cartesian coordiantes
+        //       z,r,theta on the fly to cartesian coordinates
         vs const positionComponents{"r", "z"};
+        // TODO: transform to x,y,z
+        // note: although we internally store particle positions
+        //       for AMReX in r,z and a theta attribute, we
+        //       actually need them for algorithms (e.g. push)
+        //       and I/O in Cartesian.
+        //       Other attributes like momentum are consequently
+        //       stored in x,y,z internally.
+        // vs const positionComponents{"x", "y", "z"};
 #elif (AMREX_SPACEDIM==3)
         vs const positionComponents{"x", "y", "z"};
 #else
@@ -272,14 +280,6 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     real_names.push_back("momentum_y");
     real_names.push_back("momentum_z");
 
-    real_names.push_back("E_x");
-    real_names.push_back("E_y");
-    real_names.push_back("E_z");
-
-    real_names.push_back("B_x");
-    real_names.push_back("B_y");
-    real_names.push_back("B_z");
-
 #ifdef WARPX_DIM_RZ
     real_names.push_back("theta");
 #endif
@@ -320,7 +320,11 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                     const amrex::Vector<std::string>& real_comp_names,
                     const amrex::Vector<std::string>&  int_comp_names) const
 {
-  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
+  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
+  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(write_int_comp.size() == 0u,
+                                   "openPMD: Particle integer components not implemented!");
+  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(int_comp_names.size() == 0u,
+                                   "openPMD: Particle integer components not implemented!");
 
   WarpXParticleCounter counter(pc);
 
