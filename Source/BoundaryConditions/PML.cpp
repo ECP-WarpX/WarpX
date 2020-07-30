@@ -420,21 +420,16 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 #ifdef WARPX_USE_PSATD
     // Increase the number of guard cells, in order to fit the extent
     // of the stencil for the spectral solver
-    IntVect ngFFT;
-    int ngFFTx;
-    int ngFFTy;
-    int ngFFTz;
-
-    ngFFtx = is_nodal[0] ? nox_fft : nox_fft/2
+    int ngFFTx = is_nodal[0] ? nox_fft : nox_fft/2;
 #if (AMREX_SPACEDIM == 3)
-    ngFFty = is_nodal[1] ? noy_fft : noy_fft/2
-    ngFFtz = is_nodal[2] ? noz_fft : noz_fft/2
+    int ngFFTy = is_nodal[1] ? noy_fft : noy_fft/2;
+    int ngFFTz = is_nodal[2] ? noz_fft : noz_fft/2;
 #elif (AMREX_SPACEDIM == 2)
-    ngFFty = is_nodal[0] ? noy_fft : noy_fft/2 // I don't think this needs to be set at all, right?
-    ngFFtz = is_nodal[1] ? noz_fft : noz_fft/2
+    int ngFFTy = is_nodal[0] ? noy_fft : noy_fft/2; // I don't think this needs to be set at all, right?
+    int ngFFTz = is_nodal[1] ? noz_fft : noz_fft/2;
 #endif
 
-    ngFFT = IntVect(AMREX_D_DECL(ngFFTx, ngFFTy, ngFFTz))
+    IntVect ngFFT = IntVect(AMREX_D_DECL(ngFFTx, ngFFTy, ngFFTz))
 
 
     // Set the number of guard cells to the maximum of each field
