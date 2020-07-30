@@ -968,7 +968,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
       jz_nodal_flag = IntVect(1,1,1);
       rho_nodal_flag = IntVect(1,1,1); // TODO: Theory code suggests that (1,1,0) would be better when do_current_correction = 1.
       is_nodal = IntVect(0,0,1);
-5
+      
   } else {
     throw "Unrecognized stagger option";
   }
