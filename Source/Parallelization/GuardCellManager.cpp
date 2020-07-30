@@ -15,7 +15,7 @@ void
 guardCellManager::Init(
     const bool do_subcycling,
     const bool do_fdtd_nci_corr,
-    const bool do_nodal
+    const bool do_nodal,
     const amrex::IntVect is_nodal,
     const bool do_moving_window,
     const bool aux_is_nodal,
