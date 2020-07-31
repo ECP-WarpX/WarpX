@@ -118,7 +118,9 @@ IntVect WarpX::filter_npass_each_dir(1);
 int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
+std::string WarpX::stagger_mode = "yee";
 int WarpX::do_nodal = false;
+amrex::IntVect WarpX::is_nodal;
 
 #ifdef AMREX_USE_GPU
 bool WarpX::do_device_synchronize_before_profile = true;
@@ -561,9 +563,14 @@ WarpX::ReadParameters ()
 
         pp.query("do_dynamic_scheduling", do_dynamic_scheduling);
 
+        // check staggering options:
         pp.query("do_nodal", do_nodal);
-        // Use same shape factors in all directions, for gathering
-        if (do_nodal) galerkin_interpolation = false;
+        pp.query("stagger_mode", stagger_mode);
+        if (do_nodal) stagger_mode = "nodal"; // for backwards compatibility, if user sets do_nodal then it overrides.
+        do_nodal = (stagger_mode == "nodal"); // enforce consistency
+
+        // Set default Galerkin interpolation according to stagger_mode
+        galerkin_interpolation = (stagger_mode == "yee"); // for now, use by default only for Yee stagger.
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
@@ -808,6 +815,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         do_subcycling,
         WarpX::use_fdtd_nci_corr,
         do_nodal,
+        is_nodal,
         do_moving_window,
         aux_is_nodal,
         moving_window_dir,
@@ -854,30 +862,20 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     // Set nodal flags
 #if   (AMREX_SPACEDIM == 2)
     // AMReX convention: x = first dimension, y = missing dimension, z = second dimension
-    Ex_nodal_flag = IntVect(0,1);
-    Ey_nodal_flag = IntVect(1,1);
-    Ez_nodal_flag = IntVect(1,0);
-    Bx_nodal_flag = IntVect(1,0);
-    By_nodal_flag = IntVect(0,0);
-    Bz_nodal_flag = IntVect(0,1);
-    jx_nodal_flag = IntVect(0,1);
-    jy_nodal_flag = IntVect(1,1);
-    jz_nodal_flag = IntVect(1,0);
-#elif (AMREX_SPACEDIM == 3)
-    Ex_nodal_flag = IntVect(0,1,1);
-    Ey_nodal_flag = IntVect(1,0,1);
-    Ez_nodal_flag = IntVect(1,1,0);
-    Bx_nodal_flag = IntVect(1,0,0);
-    By_nodal_flag = IntVect(0,1,0);
-    Bz_nodal_flag = IntVect(0,0,1);
-    jx_nodal_flag = IntVect(0,1,1);
-    jy_nodal_flag = IntVect(1,0,1);
-    jz_nodal_flag = IntVect(1,1,0);
-#endif
-    rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
+    if (stagger_mode == "yee"){
+        Ex_nodal_flag = IntVect(0,1);
+        Ey_nodal_flag = IntVect(1,1);
+        Ez_nodal_flag = IntVect(1,0);
+        Bx_nodal_flag = IntVect(1,0);
+        By_nodal_flag = IntVect(0,0);
+        Bz_nodal_flag = IntVect(0,1);
+        jx_nodal_flag = IntVect(0,1);
+        jy_nodal_flag = IntVect(1,1);
+        jz_nodal_flag = IntVect(1,0);
+        rho_nodal_flag = IntVect(1,1);
+        is_nodal = IntVect(0,0);
 
-    // Overwrite nodal flags if necessary
-    if (do_nodal) {
+    } else if (stagger_mode == "nodal") {
         Ex_nodal_flag  = IntVect::TheNodeVector();
         Ey_nodal_flag  = IntVect::TheNodeVector();
         Ez_nodal_flag  = IntVect::TheNodeVector();
@@ -888,7 +886,93 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jy_nodal_flag  = IntVect::TheNodeVector();
         jz_nodal_flag  = IntVect::TheNodeVector();
         rho_nodal_flag = IntVect::TheNodeVector();
-    }
+        is_nodal = IntVect(1,1);
+
+    } else if (stagger_mode == "destagger_jz"){
+        Ex_nodal_flag = IntVect(0,1);
+        Ey_nodal_flag = IntVect(1,1);
+        Ez_nodal_flag = IntVect(1,0);
+        Bx_nodal_flag = IntVect(1,0);
+        By_nodal_flag = IntVect(0,0);
+        Bz_nodal_flag = IntVect(0,1);
+        jx_nodal_flag = IntVect(0,1);
+        jy_nodal_flag = IntVect(1,1);
+        jz_nodal_flag = IntVect(1,1);
+        rho_nodal_flag = IntVect(1,1);
+        is_nodal = IntVect(0,0);
+
+  } else if (stagger_mode == "nodal_in_z"){
+        Ex_nodal_flag = IntVect(0,1);
+        Ey_nodal_flag = IntVect(1,1);
+        Ez_nodal_flag = IntVect(1,1);
+        Bx_nodal_flag = IntVect(1,1);
+        By_nodal_flag = IntVect(0,1);
+        Bz_nodal_flag = IntVect(0,1);
+        jx_nodal_flag = IntVect(0,1);
+        jy_nodal_flag = IntVect(1,1);
+        jz_nodal_flag = IntVect(1,1);
+        rho_nodal_flag = IntVect(1,1);
+        is_nodal = IntVect(0,1);
+  } else{
+    throw "Unrecognized stagger option";
+  }
+#elif (AMREX_SPACEDIM == 3)
+  if (stagger_mode == "yee"){
+      Ex_nodal_flag = IntVect(0,1,1);
+      Ey_nodal_flag = IntVect(1,0,1);
+      Ez_nodal_flag = IntVect(1,1,0);
+      Bx_nodal_flag = IntVect(1,0,0);
+      By_nodal_flag = IntVect(0,1,0);
+      Bz_nodal_flag = IntVect(0,0,1);
+      jx_nodal_flag = IntVect(0,1,1);
+      jy_nodal_flag = IntVect(1,0,1);
+      jz_nodal_flag = IntVect(1,1,0);
+      rho_nodal_flag = IntVect(1,1,1);
+      is_nodal = IntVect(0,0,0);
+
+  } else if (stagger_mode == "nodal"){
+      Ex_nodal_flag  = IntVect::TheNodeVector();
+      Ey_nodal_flag  = IntVect::TheNodeVector();
+      Ez_nodal_flag  = IntVect::TheNodeVector();
+      Bx_nodal_flag  = IntVect::TheNodeVector();
+      By_nodal_flag  = IntVect::TheNodeVector();
+      Bz_nodal_flag  = IntVect::TheNodeVector();
+      jx_nodal_flag  = IntVect::TheNodeVector();
+      jy_nodal_flag  = IntVect::TheNodeVector();
+      jz_nodal_flag  = IntVect::TheNodeVector();
+      rho_nodal_flag = IntVect::TheNodeVector();
+      is_nodal = IntVect(1,1,1);
+  } else if (stagger_mode == "destagger_jz"){
+      Ex_nodal_flag = IntVect(0,1,1);
+      Ey_nodal_flag = IntVect(1,0,1);
+      Ez_nodal_flag = IntVect(1,1,0);
+      Bx_nodal_flag = IntVect(1,0,0);
+      By_nodal_flag = IntVect(0,1,0);
+      Bz_nodal_flag = IntVect(0,0,1);
+      jx_nodal_flag = IntVect(0,1,1);
+      jy_nodal_flag = IntVect(1,0,1);
+      jz_nodal_flag = IntVect(1,1,1);
+      rho_nodal_flag = IntVect(1,1,0);
+      is_nodal = IntVect(0,0,0);
+
+  } else if (stagger_mode == "nodal_in_z"){
+      Ex_nodal_flag = IntVect(0,1,1);
+      Ey_nodal_flag = IntVect(1,0,1);
+      Ez_nodal_flag = IntVect(1,1,1);
+      Bx_nodal_flag = IntVect(1,0,1);
+      By_nodal_flag = IntVect(0,1,1);
+      Bz_nodal_flag = IntVect(0,0,1);
+      jx_nodal_flag = IntVect(0,1,1);
+      jy_nodal_flag = IntVect(1,0,1);
+      jz_nodal_flag = IntVect(1,1,1);
+      rho_nodal_flag = IntVect(1,1,1); // TODO: Theory code suggests that (1,1,0) would be better when do_current_correction = 1.
+      is_nodal = IntVect(0,0,1);
+
+  } else {
+    throw "Unrecognized stagger option";
+  }
+#endif
+
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     // Force cell-centered IndexType in r and z
     Ex_nodal_flag  = IntVect::TheCellVector();
@@ -987,7 +1071,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     bool const pml=false;
     spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
+        nox_fft, noy_fft, noz_fft, is_nodal, v_galilean, dx_vect, dt[lev],
         pml, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
@@ -1105,7 +1189,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   else
         realspace_ba.grow(ngE); // add guard cells
         spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev],
+            nox_fft, noy_fft, noz_fft, is_nodal, v_galilean, cdx_vect, dt[lev],
             pml, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
@@ -1236,8 +1320,8 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
-        "ComputeDivB not implemented with do_nodal."
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(stagger_mode == "yee",
+        "ComputeDivB implemented only for Yee stagger."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
@@ -1274,8 +1358,8 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx, int const ngrow)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
-        "ComputeDivB not implemented with do_nodal."
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(stagger_mode == "yee",
+        "ComputeDivB implemented only for Yee stagger."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];

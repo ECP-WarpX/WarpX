@@ -19,10 +19,10 @@ PMLPsatdAlgorithm::PMLPsatdAlgorithm(
                          const SpectralKSpace& spectral_kspace,
                          const DistributionMapping& dm,
                          const int norder_x, const int norder_y,
-                         const int norder_z, const bool nodal, const Real dt)
+                         const int norder_z, const amrex::IntVect is_nodal, const Real dt)
      // Initialize members of base class
      : SpectralBaseAlgorithm( spectral_kspace, dm,
-                              norder_x, norder_y, norder_z, nodal )
+                              norder_x, norder_y, norder_z, is_nodal )
 {
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 

@@ -370,7 +370,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
           const Geometry* geom, const Geometry* cgeom,
           int ncell, int delta, int ref_ratio,
 #ifdef WARPX_USE_PSATD
-          Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
+          Real dt, int nox_fft, int noy_fft, int noz_fft, amrex::IntVect is_nodal,
 #endif
           int do_dive_cleaning, int do_moving_window,
           int /*pml_has_particles*/, int do_pml_in_domain,
@@ -420,12 +420,18 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 #ifdef WARPX_USE_PSATD
     // Increase the number of guard cells, in order to fit the extent
     // of the stencil for the spectral solver
-    IntVect ngFFT;
-    if (do_nodal) {
-        ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
-    } else {
-        ngFFT = IntVect(AMREX_D_DECL(nox_fft/2, noy_fft/2, noz_fft/2));
-    }
+    int ngFFTx = is_nodal[0] ? nox_fft : nox_fft/2;
+#if (AMREX_SPACEDIM == 3)
+    int ngFFTy = is_nodal[1] ? noy_fft : noy_fft/2;
+    int ngFFTz = is_nodal[2] ? noz_fft : noz_fft/2;
+#elif (AMREX_SPACEDIM == 2)
+    int ngFFTy = is_nodal[0] ? noy_fft : noy_fft/2; // I don't think this needs to be set at all, right?
+    int ngFFTz = is_nodal[1] ? noz_fft : noz_fft/2;
+#endif
+
+    IntVect ngFFT = IntVect(AMREX_D_DECL(ngFFTx, ngFFTy, ngFFTz));
+
+
     // Set the number of guard cells to the maximum of each field
     // (all fields should have the same number of guard cells)
     ngFFT = ngFFT.max(nge);
@@ -491,7 +497,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     Array<Real,3> v_galilean_zero = {0,0,0};
     realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
     spectral_solver_fp.reset( new SpectralSolver( realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, dx, dt, in_pml ) );
+        nox_fft, noy_fft, noz_fft, is_nodal, v_galilean_zero, dx, dt, in_pml ) );
 #endif
 
     if (cgeom)
@@ -561,7 +567,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 
         realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_cp.reset( new SpectralSolver( realspace_cba, cdm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, cdx, dt, in_pml ) );
+            nox_fft, noy_fft, noz_fft, is_nodal, v_galilean_zero, cdx, dt, in_pml ) );
 #endif
     }
 }
