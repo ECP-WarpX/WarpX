@@ -96,7 +96,13 @@ struct SetParticlePosition
     /** \brief Set the position of the particle at index `i + a_offset`
      *         to `x`, `y`, `z` */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (const int i, RType x, RType y, RType z) const noexcept
+    void operator() (const int i,
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
+        RType x, RType y, RType z
+#else
+        RType x, RType /*y*/, RType z
+#endif
+        ) const noexcept
     {
 #ifdef WARPX_DIM_RZ
         m_theta[i] = std::atan2(y, x);

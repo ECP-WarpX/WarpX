@@ -52,7 +52,7 @@ struct InjectorMomentumGaussian
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         return amrex::XDim3{amrex::RandomNormal(m_ux_m, m_ux_th),
                             amrex::RandomNormal(m_uy_m, m_uy_th),
@@ -61,7 +61,7 @@ struct InjectorMomentumGaussian
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         return amrex::XDim3{m_ux_m, m_uy_m, m_uz_m};
     }
@@ -85,7 +85,7 @@ struct InjectorMomentumBoltzmann
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         amrex::Real x1, x2, gamma;
         amrex::Real u[3];
@@ -127,7 +127,7 @@ struct InjectorMomentumBoltzmann
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         using namespace amrex;
         Real u[3];
@@ -157,7 +157,7 @@ struct InjectorMomentumJuttner
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         // Sobol method for sampling MJ Speeds,
         // from Zenitani 2015 (Phys. Plasmas 22, 042116).
