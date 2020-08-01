@@ -10,6 +10,7 @@
 
 #include "Particles/WarpXParticleContainer.H"
 
+#include <AMReX.H>
 #include <AMReX_REAL.H>
 
 #include <limits>

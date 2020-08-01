@@ -13,6 +13,8 @@
 #include "Particles/ShapeFactors.H"
 #include "Utils/WarpX_Complex.H"
 
+#include <AMReX.H>
+
 /**
  * \brief Field gather for a single particle
  *
@@ -57,6 +59,14 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      const long n_rz_azimuthal_modes)
 {
     using namespace amrex;
+
+#if defined(WARPX_DIM_XZ)
+    amrex::ignore_unused(yp);
+#endif
+
+#ifndef WARPX_DIM_RZ
+    amrex::ignore_unused(n_rz_azimuthal_modes);
+#endif
 
     const amrex::Real dxi = 1.0/dx[0];
     const amrex::Real dzi = 1.0/dx[2];
