@@ -147,6 +147,12 @@ Setting up the field mesh
 Distribution across MPI ranks and parallelization
 -------------------------------------------------
 
+* ``warpx.numprocs`` (`2 ints` for 2D, `3 ints` for 3D) optional (default `none`)
+    This optional parameter can be used to control the domain decomposition on the
+    coarsest level. The domain will be chopped into the exact number of pieces in each
+    dimension as specified by this parameter. If it's not specified, the domain
+    decomposition will be determined by the parameters that will be discussed below.  If
+    specified, the product of the numbers must be equal to the number of MPI processes.
 
 * ``amr.max_grid_size`` (`integer`) optional (default `128`)
     Maximum allowable size of each **subdomain**
