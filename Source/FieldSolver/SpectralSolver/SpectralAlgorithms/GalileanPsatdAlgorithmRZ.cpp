@@ -134,7 +134,7 @@ GalileanPsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
                         + X4*Jp + 0.5_rt*kr*(X2*rho_new - T2*X3*rho_old);
             fields(i,j,k,Em_m) = T2*C*Em_old
                         + T2*S_ck*(-c2*I*kr/2._rt*Bz_old - c2*kz*Bm_old)
-                        + X4*Jm - kr*(X2*rho_new - T2*X3*rho_old);
+                        + X4*Jm - 0.5_rt*kr*(X2*rho_new - T2*X3*rho_old);
             fields(i,j,k,Ez_m) = T2*C*Ez_old
                         + T2*S_ck*(c2*I*kr*Bp_old + c2*I*kr*Bm_old)
                         + X4*Jz - I*kz*(X2*rho_new - T2*X3*rho_old);
