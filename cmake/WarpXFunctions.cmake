@@ -157,7 +157,7 @@ function(set_warpx_binary_name)
     endif()
 
     if(WarpX_OPENPMD)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".OMP")
+        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".OPMD")
     endif()
 
     if(WarpX_PSATD)
