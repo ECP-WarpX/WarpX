@@ -131,7 +131,7 @@ GalileanPsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             // Update E (see WarpX online documentation: theory section)
             fields(i,j,k,Ep_m) = T2*C*Ep_old
                         + T2*S_ck*(-c2*I*kr/2._rt*Bz_old + c2*kz*Bp_old)
-                        + X4*Jp + kr*(X2*rho_new - T2*X3*rho_old);
+                        + X4*Jp + 0.5_rt*kr*(X2*rho_new - T2*X3*rho_old);
             fields(i,j,k,Em_m) = T2*C*Em_old
                         + T2*S_ck*(-c2*I*kr/2._rt*Bz_old - c2*kz*Bm_old)
                         + X4*Jm - kr*(X2*rho_new - T2*X3*rho_old);
