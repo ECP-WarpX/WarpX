@@ -14,7 +14,7 @@ private:
     /** Read relevant parameters for BTD */
     void ReadParameters ();
     /** Flush m_mf_output and particles to file. */
-    // Currently, a temporory customized output format for the buffer
+    // Currently, a temporary customized output format for the buffer
     // data is implemented and called in this function.
     // After implementing OpenPMD and plotfile formats, this function
     // can be defined and implemented in Diagnostics.H, such that,

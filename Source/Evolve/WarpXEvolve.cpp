@@ -205,11 +205,6 @@ WarpX::Evolve (int numsteps)
         }
 
 
-        // sync up time
-        for (int i = 0; i <= max_level; ++i) {
-            t_new[i] = cur_time;
-        }
-
         multi_diags->FilterComputePackFlush( step );
 
         if (sort_intervals.contains(step+1)) {
@@ -225,10 +220,10 @@ WarpX::Evolve (int numsteps)
                       << " s; This step = " << walltime_end_step-walltime_beg_step
                       << " s; Avg. per step = " << walltime/(step+1) << " s\n";
 
-        //// sync up time
-        //for (int i = 0; i <= max_level; ++i) {
-        //    t_new[i] = cur_time;
-        //}
+        // sync up time
+        for (int i = 0; i <= max_level; ++i) {
+            t_new[i] = cur_time;
+        }
 
         /// reduced diags
         if (reduced_diags->m_plot_rd != 0)
