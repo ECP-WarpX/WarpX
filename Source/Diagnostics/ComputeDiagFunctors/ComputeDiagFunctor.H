@@ -27,9 +27,9 @@ public:
      * multifab */
     int nComp () const { return m_ncomp; }
 
-    virtual void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
-                                      amrex::Real current_z_boost,
-                                      amrex::Box buffer_box, const int k_index_zlab) {};
+    virtual void PrepareFunctorData ( int /* i_buffer */, bool /* ZSliceInDomain */,
+                                      amrex::Real /* current_z_boost */,
+                                      amrex::Box /* buffer_box */, const int /* k_index_zlab */) {};
     virtual void InitData() {};
 private:
     /** Number of components of mf_dst that this functor updates. */
