@@ -98,9 +98,9 @@ extern "C"
         return WarpX::use_fdtd_nci_corr;
     }
 
-    int warpx_l_lower_order_in_v()
+    int warpx_galerkin_interpolation()
     {
-        return WarpX::l_lower_order_in_v;
+        return WarpX::galerkin_interpolation;
     }
 
     int warpx_nComps()

@@ -37,7 +37,6 @@ algo.field_gathering = energy-conserving
 
 # CFL
 warpx.cfl = 1.0
-particles.nspecies = 0
 
 # interpolation
 interpolation.nox = 1
@@ -48,7 +47,6 @@ interpolation.noz = 1
 warpx.do_moving_window = 0
 
 # Laser
-lasers.nlasers      = 1
 lasers.names        = laser1
 laser1.prob_lo      = -12.e-6  -5.e-6
 laser1.prob_hi      =  12.e-6   5.e-6

@@ -31,7 +31,6 @@ warpx.serialize_ics = 1
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 3 # number of species
 particles.species_names = photons ele_bw pos_bw
 particles.photon_species = photons
 #################################

@@ -14,6 +14,7 @@
 #ifdef WARPX_USE_OPENPMD
 #    include "FlushFormats/FlushFormatOpenPMD.H"
 #endif
+#include <AMReX.H>
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
 using namespace amrex::literals;
@@ -37,9 +38,9 @@ FullDiagnostics::InitializeParticleBuffer ()
     // If not specified, dump all species
     if (m_species_names.size() == 0) m_species_names = mpc.GetSpeciesNames();
     // Initialize one ParticleDiag per species requested
-    for (int i=0; i<m_species_names.size(); i++){
-        const int idx = mpc.getSpeciesID(m_species_names[i]);
-        m_all_species.push_back(ParticleDiag(m_diag_name, m_species_names[i],
+    for (auto const& species : m_species_names){
+        const int idx = mpc.getSpeciesID(species);
+        m_all_species.push_back(ParticleDiag(m_diag_name, species,
                                              mpc.GetParticleContainerPtr(idx)));
     }
 }
@@ -96,7 +97,7 @@ FullDiagnostics::FlushRaw () {}
 
 
 bool
-FullDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
+FullDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flush)
 {
     if (m_already_done) return false;
     if ( force_flush || (m_intervals.contains(step+1)) ){
@@ -214,6 +215,8 @@ FullDiagnostics::AddRZModesToDiags (int lev)
         ncomp_from_src += m_all_field_functors[lev][i]->nComp();
     }
     AMREX_ALWAYS_ASSERT( ncomp_from_src == m_varnames.size() );
+#else
+    amrex::ignore_unused(lev);
 #endif
 }
 
@@ -227,6 +230,9 @@ FullDiagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
         m_varnames.push_back( field + "_" + std::to_string(ic) + "_real" );
         m_varnames.push_back( field + "_" + std::to_string(ic) + "_imag" );
     }
+#else
+    amrex::ignore_unused(field);
+    amrex::ignore_unused(ncomp);
 #endif
 }
 

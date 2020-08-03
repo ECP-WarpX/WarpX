@@ -21,7 +21,6 @@ warpx.cfl = 1.0
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 1
 particles.species_names = electrons
 
 electrons.species_type = electron
