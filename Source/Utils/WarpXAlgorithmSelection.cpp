@@ -34,6 +34,7 @@ const std::map<std::string, int> particle_pusher_algo_to_int = {
 const std::map<std::string, int> current_deposition_algo_to_int = {
     {"esirkepov", CurrentDepositionAlgo::Esirkepov },
     {"direct",    CurrentDepositionAlgo::Direct },
+    {"vay",       CurrentDepositionAlgo::Vay },
 #ifdef WARPX_USE_PSATD
     {"default",   CurrentDepositionAlgo::Direct }
 #else
@@ -81,7 +82,7 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
 
     // Pick the right dictionary
     std::map<std::string, int> algo_to_int;
-    if (0 == std::strcmp(pp_search_key, "maxwell_fdtd_solver")) {
+    if (0 == std::strcmp(pp_search_key, "maxwell_solver")) {
         algo_to_int = maxwell_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "particle_pusher")) {
         algo_to_int = particle_pusher_algo_to_int;

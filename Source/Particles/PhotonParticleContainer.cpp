@@ -134,7 +134,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const Dim3 lo = lbound(box);
 
-    int l_lower_order_in_v = WarpX::l_lower_order_in_v;
+    bool galerkin_interpolation = WarpX::galerkin_interpolation;
     int nox = WarpX::nox;
     int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
@@ -155,6 +155,8 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     amrex::IndexType const by_type = byfab->box().ixType();
     amrex::IndexType const bz_type = bzfab->box().ixType();
 
+    const auto t_do_not_gather = do_not_gather;
+
     amrex::ParallelFor(
         np_to_push,
         [=] AMREX_GPU_DEVICE (long i) {
@@ -168,12 +170,14 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
             amrex::ParticleReal Bxp, Byp, Bzp;
             getExternalB(i, Bxp, Byp, Bzp);
 
-            // first gather E and B to the particle positions
-            doGatherShapeN(x, y, z, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                           ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                           ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                           dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                           nox, l_lower_order_in_v);
+            if(!t_do_not_gather){
+                // first gather E and B to the particle positions
+                doGatherShapeN(x, y, z, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                               ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                               ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                               dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                               nox, galerkin_interpolation);
+            }
 
 #ifdef WARPX_QED
             if (local_has_breit_wheeler) {
@@ -196,6 +200,8 @@ void
 PhotonParticleContainer::Evolve (int lev,
                                  const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                  const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                                 const MultiFab& Ex_avg, const MultiFab& Ey_avg, const MultiFab& Ez_avg,
+                                 const MultiFab& Bx_avg, const MultiFab& By_avg, const MultiFab& Bz_avg,
                                  MultiFab& jx, MultiFab& jy, MultiFab& jz,
                                  MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
                                  MultiFab* rho, MultiFab* crho,
@@ -209,6 +215,8 @@ PhotonParticleContainer::Evolve (int lev,
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,
                                        Bx, By, Bz,
+                                       Ex_avg, Ey_avg, Ez_avg,
+                                       Bx_avg, By_avg, Bz_avg,
                                        jx, jy, jz,
                                        cjx, cjy, cjz,
                                        rho, crho,

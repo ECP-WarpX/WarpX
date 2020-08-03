@@ -86,6 +86,8 @@ public:
     void Evolve (int lev,
                  const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                  const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
+                 const amrex::MultiFab& Ex_avg, const amrex::MultiFab& Ey_avg, const amrex::MultiFab& Ez_avg,
+                 const amrex::MultiFab& Bx_avg, const amrex::MultiFab& By_avg, const amrex::MultiFab& Bz_avg,
                  amrex::MultiFab& jx,  amrex::MultiFab& jy, amrex::MultiFab& jz,
                  amrex::MultiFab* cjx,  amrex::MultiFab* cjy, amrex::MultiFab* cjz,
                  amrex::MultiFab* rho, amrex::MultiFab* crho,
@@ -158,7 +160,7 @@ public:
     void SetParticleBoxArray (int lev, amrex::BoxArray& new_ba);
     void SetParticleDistributionMap (int lev, amrex::DistributionMapping& new_dm);
 
-    int nSpecies() const {return nspecies;}
+    int nSpecies() const {return species_names.size();}
 
     int nSpeciesBackTransformedDiagnostics() const {return nspecies_back_transformed_diagnostics;}
     int mapSpeciesBackTransformedDiagnostics(int i) const {return map_species_back_transformed_diagnostics[i];}
@@ -379,12 +381,7 @@ private:
     std::vector<int> map_species_back_transformed_diagnostics;
     int do_back_transformed_diagnostics = 0;
 
-    // runtime parameters
-    int nlasers = 0;
-    int nspecies = 1;   // physical particles only. nspecies+nlasers == allcontainers.size().
-    int ncollisions = 0;
-
-    void MFItInfoCheckTiling(const WarpXParticleContainer& pc_src) const noexcept
+    void MFItInfoCheckTiling(const WarpXParticleContainer& /*pc_src*/) const noexcept
     {
         return;
     }

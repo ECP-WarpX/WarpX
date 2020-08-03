@@ -45,7 +45,7 @@ Overall simulation parameters
     printed to standard output. Currently only works if the Lorentz boost and
     the moving window are along the z direction.
 
-* ``warpx.verbose`` (`0` or `1`)
+* ``warpx.verbose`` (``0`` or ``1``; default is ``1`` for true)
     Controls how much information is printed to the terminal, when running WarpX.
 
 * ``warpx.random_seed`` (`string` or `int` > 0) optional
@@ -61,13 +61,19 @@ Overall simulation parameters
     one should not expect to obtain the same random numbers,
     even if a fixed ``warpx.random_seed`` is provided.
 
-* ``warpx.do_electrostatic`` (`0` or `1`; default is `0`)
+* ``warpx.do_electrostatic`` (``0`` or ``1``; default is ``0`` for false)
     Run WarpX in electrostatic mode. Instead of updating the fields
     at each iteration with the full Maxwell equations, the fields are
     instead recomputed at each iteration from the (relativistic) Poisson
     equation. There is no limitation on the timestep in this case, but
     electromagnetic effects (e.g. propagation of radiation, lasers, etc.)
     are not captured.
+
+* ``amrex.abort_on_out_of_gpu_memory``  (``0`` or ``1``; default is ``1`` for true)
+    When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
+    This will cause severe performance drops.
+    Note that even with this set to ``1`` WarpX will not catch all out-of-memory events yet when operating close to maximum device memory.
+    `Please also see the documentation in AMReX <https://amrex-codes.github.io/amrex/docs_html/GPU.html#inputs-parameters>`_.
 
 .. _running-cpp-parameters-box:
 
@@ -711,13 +717,15 @@ Laser initialization
 
 *  ``<laser_name>.profile_duration`` (`float` ; in seconds)
 
-    The duration of the laser, defined as :math:`\tau` below:
+    The duration of the laser pulse, defined as :math:`\tau` below:
 
     - For the ``"gaussian"`` profile:
 
     .. math::
 
         E(\boldsymbol{x},t) \propto \exp\left( -\frac{(t-t_{peak})^2}{\tau^2} \right)
+
+    Note that :math:`\tau` relates to the full width at half maximum (FWHM) of *intensity*, which is closer to pulse length measurements in experiments, as :math:`\tau = \mathrm{FWHM}_I / \sqrt{2\ln(2)}` :math:`\approx \mathrm{FWHM}_I / 1.174`.
 
     - For the ``"harris"`` profile:
 
@@ -848,9 +856,9 @@ Laser initialization
     Note that the current implementation of the parser for external E-field
     does not work with RZ and the code will abort with an error message.
 
-* ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `int`)
-    required when ``warpx.B_ext_grid_init_style="parse_B_ext_grid_function"``
-    and when ``warpx.E_ext_grid_init_style="parse_E_ext_grid_function"``, respectively.
+* ``warpx.E_external_grid`` & ``warpx.B_external_grid`` (list of `3 floats`)
+    required when ``warpx.E_ext_grid_init_style="constant"``
+    and when ``warpx.B_ext_grid_init_style="constant"``, respectively.
     External uniform and constant electrostatic and magnetostatic field added
     to the grid at initialization. Use with caution as these fields are used for
     the field solver. In particular, do not use any other boundary condition
@@ -948,21 +956,46 @@ Numerics and algorithms
     them from the macroparticles. This uses a bilinear filter
     (see the sub-section **Filtering** in :doc:`../theory/theory`).
 
+* ``warpx.use_kspace_filter`` (`0` or `1`; default: `0`)
+    Whether to smooth the charge and currents on the mesh, after depositing
+    them from the macroparticles. This uses a bilinear filter, applying the
+    filter in k-space. It is only supported with the RZ spectral solver.
+    (see the sub-section **Filtering** in :doc:`../theory/theory`).
+
 * ``warpx.filter_npass_each_dir`` (`3 int`) optional (default `1 1 1`)
     Number of passes along each direction for the bilinear filter.
     In 2D simulations, only the first two values are read.
 
+* ``warpx.use_filter_compensation`` (`0` or `1`; default: `0`)
+    Whether to add compensation when applying k-space filtering.
+    This requires `warpx.use_kspace_filter=1` and is only supported
+    with the RZ spectral solver.
+
 * ``algo.current_deposition`` (`string`, optional)
-    The algorithm for current deposition. Available options are:
+    This parameter selects the algorithm for the deposition of the current density.
+    Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
+    is ``esirkepov`` if WarpX is compiled with the FDTD solver (that is, with
+    ``USE_PSATD=FALSE``) and ``direct`` if WarpX is compiled with the standard or
+    Galilean PSATD solver (that is, with ``USE_PSATD=TRUE``).
 
-     - ``esirkepov``: the charge-conserving Esirkepov algorithm
-       (see `Esirkepov, Comp. Phys. Comm. (2001) <https://www.sciencedirect.com/science/article/pii/S0010465500002289>`__)
-     - ``direct``: simpler current deposition algorithm, described in
-       the section :doc:`../theory/picsar_theory`. Note that this algorithm is not strictly charge-conserving.
+    1. ``direct``
 
-    If ``algo.current_deposition`` is not specified, the default is
-    ``esirkepov`` (unless WarpX is compiled with ``USE_PSATD=TRUE``, in which
-    case the default is ``direct``).
+       The current density is deposited as described in the section :ref:`current_deposition`.
+       This deposition scheme does not conserve charge.
+
+    2. ``esirkepov``
+
+       The current density is deposited as described in
+       `(Esirkepov, CPC, 2001) <https://www.sciencedirect.com/science/article/pii/S0010465500002289>`_.
+       This deposition scheme guarantees charge conservation for shape factors of arbitrary order.
+
+    3. ``vay``
+
+       The current density is deposited as described in `(Vay et al, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_ (see section :ref:`current_deposition` for more details).
+       This option guarantees charge conservation only when used in combination
+       with ``psatd.periodic_single_box_fft=1``, that is, only for periodic single-box
+       simulations with global FFTs without guard cells. The implementation for domain
+       decomposition with local FFTs over guard cells is planned but not yet completed.
 
 * ``algo.charge_deposition`` (`string`, optional)
     The algorithm for the charge density deposition. Available options are:
@@ -992,14 +1025,16 @@ Numerics and algorithms
 
      If ``algo.particle_pusher`` is not specified, ``boris`` is the default.
 
-* ``algo.maxwell_fdtd_solver`` (`string`, optional)
-    The algorithm for the FDTD Maxwell field solver. Available options are:
+* ``algo.maxwell_solver`` (`string`, optional)
+    The algorithm for the Maxwell field solver.
+    Available options are:
 
      - ``yee``: Yee FDTD solver.
      - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
        coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
 
-     If ``algo.maxwell_fdtd_solver`` is not specified, ``yee`` is the default.
+     If ``algo.maxwell_solver`` is not specified, ``yee`` is the default.
+     Note: this option is currently ignored with PSATD.
 
 * ``algo.em_solver_medium`` (`string`, optional)
     The medium for evaluating the Maxwell solver. Available options are :
@@ -1020,12 +1055,18 @@ Numerics and algorithms
     The conductivity, permittivity, and permeability of the computational medium, respectively.
     If ``algo.em_solver_medium`` is set to macroscopic, then these properties must be provided.
 
-* ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`integer`)
+* ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`1`, `2`, or `3` ; default: 1)
     The order of the shape factors for the macroparticles, for the 3 dimensions of space.
     Lower-order shape factors result in faster simulations, but more noisy results,
 
-    Note that the implementation in WarpX is more efficient when these 3 numbers are equal,
-    and when they are between 1 and 3.
+    Note that in the current implementation in WarpX these 3 numbers must be equal.
+
+* ``interpolation.galerkin_scheme`` (`0` or `1`)
+    Whether to use a Galerkin scheme when gathering fields to particles.
+    When set to `1`, the interpolation orders used for field-gathering are reduced for certain field components along certain directions.
+    For example, `E_z` is gathered using ``interpolation.nox``, ``interpolation.noy``, and ``interpolation.noz - 1``.
+    See equations 21-23 of (`Godfrey and Vay, 2013 <https://doi.org/10.1016/j.jcp.2013.04.006>`_) and associated references for details.
+    Defaults to `1` unless ``warpx.do_nodal = 1`` and/or ``algo.field_gathering = momentum-conserving``.
 
 * ``warpx.do_dive_cleaning`` (`0` or `1` ; default: 0)
     Whether to use modified Maxwell equations that progressively eliminate
@@ -1056,6 +1097,7 @@ Numerics and algorithms
 
 * ``psatd.nox``, ``psatd.noy``, ``pstad.noz`` (`integer`) optional (default `16` for all)
     The order of accuracy of the spatial derivatives, when using the code compiled with a PSATD solver.
+    If ``psatd.periodic_single_box_fft`` is used, these can be set to ``inf`` for infinite-order PSATD.
 
 * ``psatd.nx_guard`, ``psatd.ny_guard``, ``psatd.nz_guard`` (`integer`) optional
     The number of guard cells to use with PSATD solver.
@@ -1132,6 +1174,9 @@ Numerics and algorithms
     in a Galilean frame in :doc:`../theory/boosted-frame`).
     It also requires the use of the `direct` current deposition option
     `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
+
+* ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
+    Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
 
 * ``warpx.override_sync_int`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
@@ -1350,6 +1395,17 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
     positions `x` greater than `0`, and those having velocity `uz` less than 10,
     will be dumped.
+
+* ``amrex.async_out`` (`0` or `1`) optional (default `0`)
+    Whether to use asynchronous IO when writing plotfiles. This only has an effect
+    when using the AMReX plotfile format. Please see :doc:`../visualization/visualization`
+    for more information.
+
+* ``amrex.async_out_nfiles`` (`int`) optional (default `64`)
+    The maximum number of files to write to when using asynchronous IO.
+    To use asynchronous IO with more than ``amrex.async_out_nfiles`` MPI ranks,
+    WarpX must be compiled with the ``MPI_THREAD_MULTIPLE=TRUE`` flag.
+    Please see :doc:`../visualization/visualization` for more information.
 
 Back-Transformed Diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

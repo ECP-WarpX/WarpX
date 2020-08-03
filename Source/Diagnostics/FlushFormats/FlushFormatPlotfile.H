@@ -40,7 +40,7 @@ public:
     void WriteParticles(const std::string& filename,
                         const amrex::Vector<ParticleDiag>& particle_diags) const;
 
-    ~FlushFormatPlotfile() {};
+    ~FlushFormatPlotfile() {}
 };
 
 #endif // WARPX_FLUSHFORMATPLOTFILE_H_

@@ -10,7 +10,6 @@
 
 #include <cmath>
 
-
 using namespace amrex;
 using namespace Gpu;
 
@@ -179,49 +178,65 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
     // Initialize an empty ManagedVector in each box
     KVectorComponent modified_k_comp(spectralspace_ba, dm);
 
-    // Compute real-space stencil coefficients
-    Vector<Real> stencil_coef = getFonbergStencilCoefficients(n_order, nodal);
+    if (n_order == -1) { // Infinite-order case
+        for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
+            const ManagedVector<Real>& k = k_vec[i_dim][mfi];
+            ManagedVector<Real>& modified_k = modified_k_comp[mfi];
 
-    // Loop over boxes and allocate the corresponding ManagedVector
-    // for each box owned by the local MPI proc
-    for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
-        Real delta_x = dx[i_dim];
-        const ManagedVector<Real>& k = k_vec[i_dim][mfi];
-        ManagedVector<Real>& modified_k = modified_k_comp[mfi];
+            // Allocate modified_k to the same size as k
+            modified_k.resize( k.size() );
 
-        // Allocate modified_k to the same size as k
-        modified_k.resize( k.size() );
-
-        // Fill the modified k vector
-        for (int i=0; i<k.size(); i++ ){
-            modified_k[i] = 0;
-            for (int n=1; n<stencil_coef.size(); n++){
-                if (nodal){
-                    modified_k[i] += stencil_coef[n]* \
-                        std::sin( k[i]*n*delta_x )/( n*delta_x );
-                } else {
-                    modified_k[i] += stencil_coef[n]* \
-                        std::sin( k[i]*(n-0.5)*delta_x )/( (n-0.5)*delta_x );
-                }
+            // Fill the modified k vector
+            for (int i=0; i<k.size(); i++ ){
+                modified_k[i] = k[i]; // infinite-order case.
             }
         }
+    } else {
 
-        // By construction, at finite order and for a nodal grid,
-        // the *modified* k corresponding to the Nyquist frequency
-        // (i.e. highest *real* k) is 0. However, the above calculation
-        // based on stencil coefficients does not give 0 to machine precision.
-        // Therefore, we need to enforce the fact that the modified k be 0 here.
-        if (nodal){
-            if (i_dim == 0){
-                // Because of the real-to-complex FFTs, the first axis (idim=0)
-                // contains only the positive k, and the Nyquist frequency is
-                // the last element of the array.
-                modified_k[k.size()-1] = 0.0_rt;
-          }   else {
-                // The other axes contains both positive and negative k ;
-                // the Nyquist frequency is in the middle of the array.
-                modified_k[k.size()/2] = 0.0_rt;
-          }
+        // Compute real-space stencil coefficients
+        Vector<Real> stencil_coef = getFonbergStencilCoefficients(n_order, nodal);
+
+        // Loop over boxes and allocate the corresponding ManagedVector
+        // for each box owned by the local MPI proc
+        for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
+            Real delta_x = dx[i_dim];
+            const ManagedVector<Real>& k = k_vec[i_dim][mfi];
+            ManagedVector<Real>& modified_k = modified_k_comp[mfi];
+
+            // Allocate modified_k to the same size as k
+            modified_k.resize( k.size() );
+
+            // Fill the modified k vector
+            for (int i=0; i<k.size(); i++ ){
+                modified_k[i] = 0;
+                for (int n=1; n<stencil_coef.size(); n++){
+                    if (nodal){
+                        modified_k[i] += stencil_coef[n]* \
+                            std::sin( k[i]*n*delta_x )/( n*delta_x );
+                    } else {
+                        modified_k[i] += stencil_coef[n]* \
+                            std::sin( k[i]*(n-0.5)*delta_x )/( (n-0.5)*delta_x );
+                    }
+                }
+            }
+
+            // By construction, at finite order and for a nodal grid,
+            // the *modified* k corresponding to the Nyquist frequency
+            // (i.e. highest *real* k) is 0. However, the above calculation
+            // based on stencil coefficients does not give 0 to machine precision.
+            // Therefore, we need to enforce the fact that the modified k be 0 here.
+            if (nodal){
+                if (i_dim == 0){
+                    // Because of the real-to-complex FFTs, the first axis (idim=0)
+                    // contains only the positive k, and the Nyquist frequency is
+                    // the last element of the array.
+                    modified_k[k.size()-1] = 0.0_rt;
+              }   else {
+                    // The other axes contains both positive and negative k ;
+                    // the Nyquist frequency is in the middle of the array.
+                    modified_k[k.size()/2] = 0.0_rt;
+              }
+            }
         }
     }
     return modified_k_comp;
@@ -238,7 +253,7 @@ Vector<Real>
 getFonbergStencilCoefficients( const int n_order, const bool nodal )
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( n_order%2 == 0,
-                                      "n_order should be even.");
+                                     "n_order should be even.");
     const int m = n_order/2;
     Vector<Real> coefs;
     coefs.resize( m+1 );
@@ -250,21 +265,21 @@ getFonbergStencilCoefficients( const int n_order, const bool nodal )
 
     // Coefficients for nodal (a.k.a. centered) finite-difference
     if (nodal == true) {
-        coefs[0] = -2.; // First coefficient
-        for (int n=1; n<m+1; n++){ // Get the other coefficients by recurrence
-            coefs[n] = - (m+1-n)*1./(m+n)*coefs[n-1];
-        }
+       coefs[0] = -2.; // First coefficient
+       for (int n=1; n<m+1; n++){ // Get the other coefficients by recurrence
+           coefs[n] = - (m+1-n)*1./(m+n)*coefs[n-1];
+       }
     }
     // Coefficients for staggered finite-difference
     else {
-        Real prod = 1.;
-        for (int k=1; k<m+1; k++){
-            prod *= (m+k)*1./(4*k);
-        }
-        coefs[0] = 4*m*prod*prod; // First coefficient
-        for (int n=1; n<m+1; n++){ // Get the other coefficients by recurrence
-            coefs[n] = - ((2*n-3)*(m+1-n))*1./((2*n-1)*(m-1+n))*coefs[n-1];
-        }
+       Real prod = 1.;
+       for (int k=1; k<m+1; k++){
+           prod *= (m+k)*1./(4*k);
+       }
+       coefs[0] = 4*m*prod*prod; // First coefficient
+       for (int n=1; n<m+1; n++){ // Get the other coefficients by recurrence
+           coefs[n] = - ((2*n-3)*(m+1-n))*1./((2*n-1)*(m-1+n))*coefs[n-1];
+       }
     }
     return coefs;
 }

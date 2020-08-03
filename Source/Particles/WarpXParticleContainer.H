@@ -157,6 +157,8 @@ public:
     virtual void Evolve (int lev,
                          const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                          const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
+                         const amrex::MultiFab& Ex_avg, const amrex::MultiFab& Ey_avg, const amrex::MultiFab& Ez_avg,
+                         const amrex::MultiFab& Bx_avg, const amrex::MultiFab& By_avg, const amrex::MultiFab& Bz_avg,
                          amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz,
                          amrex::MultiFab* cjx, amrex::MultiFab* cjy, amrex::MultiFab* cjz,
                          amrex::MultiFab* rho, amrex::MultiFab* crho,
@@ -166,10 +168,10 @@ public:
 
     virtual void PostRestart () = 0;
 
-    virtual void GetParticleSlice(const int direction,     const amrex::Real z_old,
-                                  const amrex::Real z_new, const amrex::Real t_boost,
-                                  const amrex::Real t_lab, const amrex::Real dt,
-                                  DiagnosticParticles& diagnostic_particles) {}
+    virtual void GetParticleSlice(const int /*direction*/, const amrex::Real /*z_old*/,
+                                  const amrex::Real /*z_new*/, const amrex::Real /*t_boost*/,
+                                  const amrex::Real /*t_lab*/, const amrex::Real /*dt*/,
+                                  DiagnosticParticles& /*diagnostic_particles*/) {}
 
     void AllocData ();
 
@@ -231,9 +233,9 @@ public:
     // PhysicalParticleContainer: implemented.
     // LaserParticleContainer: implemented.
     // RigidInjectedParticleContainer: not implemented.
-    virtual void ContinuousInjection(const amrex::RealBox& injection_box) {}
+    virtual void ContinuousInjection(const amrex::RealBox& /*injection_box*/) {}
     // Update optional sub-class-specific injection location.
-    virtual void UpdateContinuousInjectionPosition(amrex::Real dt) {}
+    virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
 
     ///
     /// This returns the total charge for all the particles in this ParticleContainer.
@@ -254,7 +256,7 @@ public:
 
     virtual void WriteHeader (std::ostream& os) const;
 
-    virtual void ConvertUnits (ConvertDirection convert_dir){};
+    virtual void ConvertUnits (ConvertDirection /*convert_dir*/){}
 
     static void ReadParameters ();
 
@@ -300,17 +302,17 @@ public:
     //amrex::Real getMass () {return mass;}
     amrex::ParticleReal getMass () const {return mass;}
 
-    int DoFieldIonization() const { return do_field_ionization; };
+    int DoFieldIonization() const { return do_field_ionization; }
     int DoQED() const {
 #ifdef WARPX_QED
         return m_do_qed;
 #else
         return false;
 #endif
-    };
+    }
     //Species for which QED effects are relevant should override these methods
-    virtual bool has_quantum_sync() const {return false;};
-    virtual bool has_breit_wheeler() const {return false;};
+    virtual bool has_quantum_sync() const {return false;}
+    virtual bool has_breit_wheeler() const {return false;}
 
     // build filter functors
     bool m_do_random_filter  = false;

@@ -340,6 +340,8 @@ void
 RigidInjectedParticleContainer::Evolve (int lev,
                                         const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                         const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                                        const MultiFab& Ex_avg, const MultiFab& Ey_avg, const MultiFab& Ez_avg,
+                                        const MultiFab& Bx_avg, const MultiFab& By_avg, const MultiFab& Bz_avg,
                                         MultiFab& jx, MultiFab& jy, MultiFab& jz,
                                         MultiFab* cjx, MultiFab* cjy, MultiFab* cjz,
                                         MultiFab* rho, MultiFab* crho,
@@ -367,6 +369,8 @@ RigidInjectedParticleContainer::Evolve (int lev,
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,
                                        Bx, By, Bz,
+                                       Ex_avg, Ey_avg, Ez_avg,
+                                       Bx_avg, By_avg, Bz_avg,
                                        jx, jy, jz,
                                        cjx, cjy, cjz,
                                        rho, crho,
@@ -415,7 +419,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             const Dim3 lo = lbound(box);
 
-            int l_lower_order_in_v = WarpX::l_lower_order_in_v;
+            bool galerkin_interpolation = WarpX::galerkin_interpolation;
             int nox = WarpX::nox;
             int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
@@ -477,7 +481,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                               nox, l_lower_order_in_v);
+                               nox, galerkin_interpolation);
 
                 if (do_crr) {
                     amrex::Real qp = q;

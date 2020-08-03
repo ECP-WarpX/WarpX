@@ -36,7 +36,7 @@ public:
     void WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags, conduit::Node& a_bp_mesh) const;
 #endif
 
-    ~FlushFormatAscent() {};
+    ~FlushFormatAscent() {}
 };
 
 #endif // WARPX_FLUSHFORMATASCENT_H_

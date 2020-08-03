@@ -31,7 +31,7 @@ public:
      * \param noy_fft order of PSATD in y direction
      * \param noz_fft order of PSATD in z direction
      * \param nci_corr_stencil stencil of NCI corrector
-     * \param maxwell_fdtd_solver_id if of Maxwell solver
+     * \param maxwell_solver_id if of Maxwell solver
      * \param max_level max level of the simulation
      */
     void Init(
@@ -44,7 +44,7 @@ public:
         const int nox,
         const int nox_fft, const int noy_fft, const int noz_fft,
         const int nci_corr_stencil,
-        const int maxwell_fdtd_solver_id,
+        const int maxwell_solver_id,
         const int max_level,
         const amrex::Array<amrex::Real,3> v_galilean,
         const bool safe_guard_cells);

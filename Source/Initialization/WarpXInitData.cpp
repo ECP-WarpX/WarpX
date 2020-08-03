@@ -187,7 +187,7 @@ WarpX::InitNCICorrector ()
 
             // Initialize Godfrey filters
             // Same filter for fields Ex, Ey and Bz
-            const bool nodal_gather = (l_lower_order_in_v == 0);
+            const bool nodal_gather = !galerkin_interpolation;
             nci_godfrey_filter_exeybz[lev].reset( new NCIGodfreyFilter(godfrey_coeff_set::Ex_Ey_Bz, cdtodz, nodal_gather) );
             // Same filter for fields Bx, By and Ez
             nci_godfrey_filter_bxbyez[lev].reset( new NCIGodfreyFilter(godfrey_coeff_set::Bx_By_Ez, cdtodz, nodal_gather) );
@@ -247,6 +247,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (E_ext_grid_s == "constant")
         pp.getarr("E_external_grid", E_external_grid);
 
+    // initialize the averaged fields only if the averaged algorithm
+    // is activated ('psatd.do_time_averaging=1')
+    ParmParse ppsatd("psatd");
+    ppsatd.query("do_time_averaging", fft_do_time_averaging );
+
     for (int i = 0; i < 3; ++i) {
         current_fp[lev][i]->setVal(0.0);
         if (lev > 0)
@@ -254,16 +259,33 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
         if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
            Bfield_fp[lev][i]->setVal(B_external_grid[i]);
+           if (fft_do_time_averaging) {
+                Bfield_avg_fp[lev][i]->setVal(B_external_grid[i]);
+           }
+
            if (lev > 0) {
               Bfield_aux[lev][i]->setVal(B_external_grid[i]);
               Bfield_cp[lev][i]->setVal(B_external_grid[i]);
+              if (fft_do_time_averaging) {
+                  Bfield_avg_aux[lev][i]->setVal(B_external_grid[i]);
+                  Bfield_avg_cp[lev][i]->setVal(B_external_grid[i]);
+              }
            }
         }
         if (E_ext_grid_s == "constant" || E_ext_grid_s == "default") {
            Efield_fp[lev][i]->setVal(E_external_grid[i]);
+           if (fft_do_time_averaging) {
+               Efield_avg_fp[lev][i]->setVal(E_external_grid[i]);
+            }
+
            if (lev > 0) {
               Efield_aux[lev][i]->setVal(E_external_grid[i]);
               Efield_cp[lev][i]->setVal(E_external_grid[i]);
+              if (fft_do_time_averaging) {
+                  Efield_avg_aux[lev][i]->setVal(E_external_grid[i]);
+                  Efield_avg_cp[lev][i]->setVal(E_external_grid[i]);
+              }
+
            }
         }
     }

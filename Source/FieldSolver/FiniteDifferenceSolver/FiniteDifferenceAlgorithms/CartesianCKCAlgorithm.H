@@ -8,12 +8,15 @@
 #ifndef WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
 #define WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
 
+#include "Utils/WarpXConst.H"
+
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
 
 #include <algorithm>
 #include <array>
+
 
 /**
  * This struct contains only static functions to initialize the stencil coefficients
@@ -91,6 +94,20 @@ struct CartesianCKCAlgorithm {
     }
 
     /**
+     * Compute the maximum timestep, for which the scheme remains stable
+     * (Courant-Friedrichs-Levy limit) */
+    static amrex::Real ComputeMaxDt ( amrex::Real const * const dx ) {
+#if (defined WARPX_DIM_XZ)
+            // - In Cartesian 2D geometry: determined by the minimum cell size in all direction
+            amrex::Real const delta_t = std::min( dx[0], dx[1] )/PhysConst::c;
+#else
+            // - In Cartesian 3D geometry: determined by the minimum cell size in all direction
+            amrex::Real const delta_t = std::min( dx[0], std::min( dx[1], dx[2] ) ) / PhysConst::c;
+#endif
+        return delta_t;
+    }
+
+    /**
      * Perform derivative along x on a cell-centered grid, from a nodal field `F` */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDx (
@@ -121,7 +138,7 @@ struct CartesianCKCAlgorithm {
              + betaxz * (F(i+1,j+1,k  ,ncomp) - F(i  ,j+1,k  ,ncomp)
                       +  F(i+1,j-1,k  ,ncomp) - F(i  ,j-1,k  ,ncomp));
 #endif
-    };
+    }
 
     /**
      * Perform derivative along x on a nodal grid, from a cell-centered field `F` */
@@ -133,7 +150,7 @@ struct CartesianCKCAlgorithm {
 
         amrex::Real const inv_dx = coefs_x[0];
         return inv_dx*( F(i,j,k,ncomp) - F(i-1,j,k,ncomp) );
-    };
+    }
 
     /**
      * Perform derivative along y on a cell-centered grid, from a nodal field `F` */
@@ -161,7 +178,7 @@ struct CartesianCKCAlgorithm {
 #elif (defined WARPX_DIM_XZ)
             return 0._rt; // 2D Cartesian: derivative along y is 0
 #endif
-    };
+    }
 
     /**
      * Perform derivative along y on a nodal grid, from a cell-centered field `F` */
@@ -178,7 +195,7 @@ struct CartesianCKCAlgorithm {
 #elif (defined WARPX_DIM_XZ)
         return 0._rt; // 2D Cartesian: derivative along y is 0
 #endif
-    };
+    }
 
     /**
      * Perform derivative along z on a cell-centered grid, from a nodal field `F` */
@@ -210,7 +227,7 @@ struct CartesianCKCAlgorithm {
              + betazx * (F(i+1,j+1,k  ,ncomp) - F(i+1,j  ,k  ,ncomp)
                       +  F(i-1,j+1,k  ,ncomp) - F(i-1,j  ,k  ,ncomp));
 #endif
-    };
+    }
 
     /**
      * Perform derivative along z on a nodal grid, from a cell-centered field `F` */
@@ -226,7 +243,7 @@ struct CartesianCKCAlgorithm {
 #elif (defined WARPX_DIM_XZ)
         return inv_dz*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
 #endif
-    };
+    }
 
 };
 
