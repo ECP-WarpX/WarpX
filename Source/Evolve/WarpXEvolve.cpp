@@ -205,8 +205,6 @@ WarpX::Evolve (int numsteps)
         }
 
 
-        multi_diags->FilterComputePackFlush( step );
-
         if (sort_intervals.contains(step+1)) {
             amrex::Print() << "re-sorting particles \n";
             mypc->SortParticlesByBin(sort_bin_size);
@@ -231,7 +229,7 @@ WarpX::Evolve (int numsteps)
             reduced_diags->ComputeDiags(step);
             reduced_diags->WriteToFile(step);
         }
-        //multi_diags->FilterComputePackFlush( step );
+        multi_diags->FilterComputePackFlush( step );
 
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
             break;
