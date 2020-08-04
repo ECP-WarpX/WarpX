@@ -33,9 +33,9 @@ struct GetExternalField
     {
         if (m_type == Constant)
         {
-            field_x = m_field_value[0];
-            field_y = m_field_value[1];
-            field_z = m_field_value[2];
+            field_x += m_field_value[0];
+            field_y += m_field_value[1];
+            field_z += m_field_value[2];
         }
         else if (m_type == Parser)
         {
@@ -45,9 +45,9 @@ struct GetExternalField
 
             amrex::ParticleReal x, y, z;
             m_get_position(i, x, y, z);
-            field_x = (*m_xfield_partparser)(x, y, z, m_time);
-            field_y = (*m_yfield_partparser)(x, y, z, m_time);
-            field_z = (*m_zfield_partparser)(x, y, z, m_time);
+            field_x += (*m_xfield_partparser)(x, y, z, m_time);
+            field_y += (*m_yfield_partparser)(x, y, z, m_time);
+            field_z += (*m_zfield_partparser)(x, y, z, m_time);
         }
         else
         {
