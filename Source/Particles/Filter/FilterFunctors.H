@@ -26,7 +26,7 @@ struct RandomFilter
      * \param a_fraction fraction of particles to select
      */
     RandomFilter(bool a_is_active, amrex::Real a_fraction)
-        : m_is_active(a_is_active), m_fraction(a_fraction) {};
+        : m_is_active(a_is_active), m_fraction(a_fraction) {}
 
     /**
      * \brief draw random number, return 1 if number < m_fraction, 1 otherwise
@@ -55,7 +55,7 @@ struct UniformFilter
      * \param a_stride one particle every a_stride is written to file
      */
     UniformFilter(bool a_is_active, int a_stride)
-        : m_is_active(a_is_active), m_stride(a_stride) {};
+        : m_is_active(a_is_active), m_stride(a_stride) {}
 
     /**
      * \brief return 1 if stride divide particle_id, 0 otherwise
@@ -86,7 +86,7 @@ struct ParserFilter
         : m_is_active(a_is_active), m_function_partparser(a_filter_parser)
     {
         m_t = WarpX::GetInstance().gett_new(0);
-    };
+    }
 
     /**
      * \brief return 1 if the particle is selected by the parser

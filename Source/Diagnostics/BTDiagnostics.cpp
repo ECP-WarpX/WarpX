@@ -98,7 +98,6 @@ BTDiagnostics::ReadParameters ()
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
     bool snapshot_interval_is_specified = false;
-    amrex::Real m_dz_snapshots_lab = 0.0_rt;
     snapshot_interval_is_specified = pp.query("dt_snapshots_lab", m_dt_snapshots_lab);
     if ( pp.query("dz_snapshots_lab", m_dz_snapshots_lab) ) {
         m_dt_snapshots_lab = m_dz_snapshots_lab/PhysConst::c;

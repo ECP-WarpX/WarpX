@@ -21,7 +21,7 @@ geometry.prob_hi     =  1.   1.   1.
 algo.current_deposition = esirkepov
 algo.field_gathering = energy-conserving # or momentum-conserving
 warpx.use_filter = 1
-algo.maxwell_fdtd_solver = yee # or ckc
+algo.maxwell_solver = yee # or ckc
 
 # Interpolation
 # 1: Linear; 2: Quadratic; 3: Cubic.
@@ -33,7 +33,6 @@ interpolation.noz = 1
 warpx.cfl = 0.99999
 
 # Particles
-particles.nspecies = 3
 particles.species_names = electrons protons photons
 particles.photon_species = photons
 

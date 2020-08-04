@@ -29,7 +29,7 @@ extern "C" {
 
     bool warpx_use_fdtd_nci_corr();
 
-    int warpx_l_lower_order_in_v();
+    int warpx_galerkin_interpolation();
 
     int warpx_nComps();
 

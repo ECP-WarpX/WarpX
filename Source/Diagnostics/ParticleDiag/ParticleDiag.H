@@ -9,8 +9,8 @@ class ParticleDiag
 {
 public:
     ParticleDiag(std::string diag_name, std::string name, WarpXParticleContainer* pc);
-    WarpXParticleContainer* getParticleContainer() const { return m_pc; };
-    std::string getSpeciesName() const { return m_name; };
+    WarpXParticleContainer* getParticleContainer() const { return m_pc; }
+    std::string getSpeciesName() const { return m_name; }
     amrex::Vector<int> plot_flags;
 
     bool m_do_random_filter  = false;

@@ -32,7 +32,6 @@ warpx.serialize_ics = 1
 warpx.cfl = 1.0
 warpx.do_subcycling = 1
 
-particles.nspecies = 2
 particles.species_names = electrons ions
 particles.use_fdtd_nci_corr = 1
 
