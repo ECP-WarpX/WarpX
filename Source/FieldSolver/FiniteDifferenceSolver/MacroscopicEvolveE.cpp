@@ -189,7 +189,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag, 
                                            Ey_stag, macro_cr, i, j, k, scomp);
                 amrex::Real const mu = CoarsenIO::Interp( mu_arr, mu_stag,
-                                           Ex_stag, macro_cr, i, j, k, scomp);
+                                           Ey_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 //                amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt,
@@ -210,7 +210,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag, 
                                            Ez_stag, macro_cr, i, j, k, scomp);
                 amrex::Real const mu = CoarsenIO::Interp( mu_arr, mu_stag,
-                                           Ex_stag, macro_cr, i, j, k, scomp);
+                                           Ez_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
                // amrex::Real alpha = T_MacroAlgo::alpha( sigma_arr, eps_arr, dt,
