@@ -879,7 +879,7 @@ Laser initialization
      the first and second dimensions are `x` and `z`, respectively, and the
      value of the `By` component is set to zero.
      Note that the current implementation of the parser for B-field on particles
-     does not work with RZ and the code will abort with an error message.
+     is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
 
 *    ``particles.E_ext_particle_init_style`` (string) optional (default is "default")
      This parameter determines the type of initialization for the external
@@ -899,8 +899,8 @@ Laser initialization
      using ``my_constants``. For a two-dimensional simulation, similar to the B-field,
      it is assumed that the first and second dimensions are `x` and `z`, respectively,
      and the value of the `Ey` component is set to zero.
-     The current implementation of the parser for the E-field on particles does not work
-     with RZ and the code will abort with an error message.
+     The current implementation of the parser for B-field on particles
+     is applied in cartesian co-ordinates as a function of (x,y,z) even for RZ.
 
 * ``particles.E_external_particle`` & ``particles.B_external_particle`` (list of `float`) optional (default `0. 0. 0.`)
     Two separate parameters which add an externally applied uniform E-field or
