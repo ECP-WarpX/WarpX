@@ -415,7 +415,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     IntVect nge = IntVect(AMREX_D_DECL(2, 2, 2));
     IntVect ngb = IntVect(AMREX_D_DECL(2, 2, 2));
     int ngf_int = (do_moving_window) ? 2 : 0;
-    if (WarpX::maxwell_fdtd_solver_id == 1) ngf_int = std::max( ngf_int, 1 );
+    if (WarpX::maxwell_solver_id == 1) ngf_int = std::max( ngf_int, 1 );
     IntVect ngf = IntVect(AMREX_D_DECL(ngf_int, ngf_int, ngf_int));
 #ifdef WARPX_USE_PSATD
     // Increase the number of guard cells, in order to fit the extent

@@ -8,6 +8,7 @@
 #ifndef PML_CURRENT_H_
 #define PML_CURRENT_H_
 
+#include <AMReX.H>
 #include <AMReX_FArrayBox.H>
 
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
@@ -33,6 +34,10 @@ void push_ex_pml_current (int j, int k, int l,
     Ex(j,k,l,1) = Ex(j,k,l,1) - mu_c2_dt  * alpha_xz * jx(j,k,l);
 #else
     Ex(j,k,l,1) = Ex(j,k,l,1) - mu_c2_dt  * jx(j,k,l);
+    amrex::ignore_unused(sigjy);
+    amrex::ignore_unused(sigjz);
+    amrex::ignore_unused(ylo);
+    amrex::ignore_unused(zlo);
 #endif
 }
 
@@ -60,6 +65,10 @@ void push_ey_pml_current (int j, int k, int l,
 #else
     Ey(j,k,l,0) = Ey(j,k,l,0) - 0.5 * mu_c2_dt  * jy(j,k,l);
     Ey(j,k,l,1) = Ey(j,k,l,1) - 0.5 * mu_c2_dt  * jy(j,k,l);
+    amrex::ignore_unused(sigjx);
+    amrex::ignore_unused(sigjz);
+    amrex::ignore_unused(xlo);
+    amrex::ignore_unused(zlo);
 #endif
 }
 
@@ -86,6 +95,10 @@ void push_ez_pml_current (int j, int k, int l,
     Ez(j,k,l,1) = Ez(j,k,l,1) - mu_c2_dt  * alpha_zy * jz(j,k,l);
 #else
     Ez(j,k,l,0) = Ez(j,k,l,0) - mu_c2_dt  * jz(j,k,l);
+    amrex::ignore_unused(sigjx);
+    amrex::ignore_unused(sigjy);
+    amrex::ignore_unused(xlo);
+    amrex::ignore_unused(ylo);
 #endif
 }
 
@@ -101,6 +114,8 @@ void damp_jx_pml (int j, int k, int l,
     jx(j,k,l) = jx(j,k,l) * sigsjx[j-xlo] * sigjy[k-ylo] * sigjz[l-zlo];
 #else
     jx(j,k,l) = jx(j,k,l) * sigsjx[j-xlo] * sigjz[k-zlo];
+    amrex::ignore_unused(xlo);
+    amrex::ignore_unused(ylo);
 #endif
 }
 
@@ -116,6 +131,8 @@ void damp_jy_pml (int j, int k, int l,
     jy(j,k,l) = jy(j,k,l) * sigjx[j-xlo] * sigsjy[k-ylo] * sigjz[l-zlo];
 #else
     jy(j,k,l) = jy(j,k,l) * sigjx[j-xlo] * sigjz[k-zlo];
+    amrex::ignore_unused(sigsjy);
+    amrex::ignore_unused(ylo);
 #endif
 }
 
@@ -131,6 +148,8 @@ void damp_jz_pml (int j, int k, int l,
     jz(j,k,l) = jz(j,k,l) * sigjx[j-xlo] * sigjy[k-ylo] * sigsjz[l-zlo];
 #else
     jz(j,k,l) = jz(j,k,l) * sigjx[j-xlo] * sigsjz[k-zlo];
+    amrex::ignore_unused(sigjy);
+    amrex::ignore_unused(ylo);
 #endif
 }
 

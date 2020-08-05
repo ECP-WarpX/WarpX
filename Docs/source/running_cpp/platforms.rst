@@ -37,6 +37,28 @@ regime), the following set of parameters provided good performance:
 
 * **2 grids per MPI**, *i.e.*, 16 grids per KNL node.
 
+Running on Cori Haswell at NERSC
+--------------------------------
+
+The batch script below can be used to run a WarpX simulation on 1 `Haswell node <https://docs.nersc.gov/systems/cori/>`_ on the supercomputer Cori at NERSC.
+
+.. literalinclude:: ../../../Tools/BatchScripts/batch_cori_haswell.sh
+   :language: bash
+
+To run a simulation, copy the lines above to a file ``batch_cori_haswell.sh`` and
+run
+::
+
+  sbatch batch_cori_haswell.sh
+
+to submit the job.
+
+For a 3D simulation with a few (1-4) particles per cell using FDTD Maxwell
+solver on Cori Haswell for a well load-balanced problem (in our case laser
+wakefield acceleration simulation in a boosted frame in the quasi-linear
+regime), the following set of parameters provided good performance:
+
+* **4 MPI ranks per Haswell node** (2 MPI ranks per `Intel Xeon E5-2698 v3 <https://ark.intel.com/content/www/us/en/ark/products/81060/intel-xeon-processor-e5-2698-v3-40m-cache-2-30-ghz.html>`_), with ``OMP_NUM_THREADS=16`` (which uses `2x hyperthreading <https://docs.nersc.gov/jobs/affinity/>`_)
 
 .. _running-cpp-summit:
 
