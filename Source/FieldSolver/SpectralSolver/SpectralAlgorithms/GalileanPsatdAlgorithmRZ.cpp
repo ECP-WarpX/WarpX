@@ -331,7 +331,7 @@ GalileanPsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
             {
                 Complex const theta2 = amrex::exp(I*kz*vz*dt);
                 Complex const inv_1_T2 = 1._rt/(kz*vz == 0 ?  1._rt : 1._rt - theta2);
-                Complex const j_corr_coef = (kz == 0 ? 1._rt/dt : I*kz*vz*inv_1_T2);
+                Complex const j_corr_coef = (kz == 0 ? 1._rt/dt : -I*kz*vz*inv_1_T2);
                 Complex const F = - (j_corr_coef*(rho_new - rho_old*theta2) + I*kz*Jz + kr*(Jp - Jm))/k_norm2;
 
                 fields(i,j,k,Jp_m) += +0.5_rt*kr*F;
