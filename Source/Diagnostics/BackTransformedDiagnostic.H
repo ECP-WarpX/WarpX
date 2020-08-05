@@ -87,8 +87,8 @@ class LabFrameDiag {
     /// For the reduced diagnostic, the data is selectively copied if the
     /// extent of the z_lab multifab intersects with the user-defined sub-domain
     /// for the reduced diagnostic (i.e., a 1D, 2D, or 3D region of the domain).
-    virtual void AddDataToBuffer(amrex::MultiFab& tmp_slice_ptr, int i_lab,
-                 amrex::Gpu::ManagedDeviceVector<int> map_actual_fields_to_dump){}
+    virtual void AddDataToBuffer(amrex::MultiFab& /*tmp_slice_ptr*/, int /*i_lab*/,
+                 amrex::Gpu::ManagedDeviceVector<int> /*map_actual_fields_to_dump*/){}
 
     /// Back-transformed lab-frame particles is copied from
     /// tmp_particle_buffer to particles_buffer.
@@ -97,8 +97,8 @@ class LabFrameDiag {
     /// copied if their position in within the user-defined
     /// sub-domain +/- 1 cell size width for the reduced slice diagnostic.
     virtual void AddPartDataToParticleBuffer(
-                 amrex::Vector<WarpXParticleContainer::DiagnosticParticleData> tmp_particle_buffer,
-                 int nSpeciesBoostedFrame) {}
+                 amrex::Vector<WarpXParticleContainer::DiagnosticParticleData> /*tmp_particle_buffer*/,
+                 int /*nSpeciesBoostedFrame*/) {}
 };
 
 /** \brief
