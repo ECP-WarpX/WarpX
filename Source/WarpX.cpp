@@ -650,12 +650,21 @@ WarpX::ReadParameters ()
         }
 
         pp.query("current_correction", current_correction);
-        pp.query("update_with_rho", update_with_rho);
         pp.query("v_galilean", v_galilean);
         pp.query("do_time_averaging", fft_do_time_averaging);
 
       // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
+
+        if (v_galilean[0] == 0. && v_galilean[1] == 0. && v_galilean[2] == 0.) {
+            update_with_rho = false; // standard PSATD
+        }
+        else {
+            update_with_rho = true;  // Galilean PSATD
+        }
+
+        // Overwrite update_with_rho with value set in input file
+        pp.query("update_with_rho", update_with_rho);
     }
 #endif
 
