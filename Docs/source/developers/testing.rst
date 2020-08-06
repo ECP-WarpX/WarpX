@@ -63,7 +63,7 @@ There are three steps to follow to add a new automated test (illustrated here fo
    [pml_x_yee]
    buildDir = .
    inputFile = Examples/Tests/PML/inputs2d
-   runtime_params = warpx.do_dynamic_scheduling=0 algo.maxwell_fdtd_solver=yee
+   runtime_params = warpx.do_dynamic_scheduling=0 algo.maxwell_solver=yee
    dim = 2
    addToCompileString =
    restartTest = 0

@@ -19,7 +19,7 @@ public:
         bool plot_raw_fields_guards,
         bool plot_raw_rho, bool plot_raw_F) const = 0;
 
-     virtual ~FlushFormat() {};
+     virtual ~FlushFormat() {}
 };
 
 #endif // WARPX_FLUSHFORMAT_H_

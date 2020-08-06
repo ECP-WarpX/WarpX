@@ -21,7 +21,7 @@ class HankelTransform
 {
     public:
 
-        using RealVector = amrex::Gpu::ManagedDeviceVector<amrex::Real>;
+        using RealVector = amrex::Gpu::ManagedVector<amrex::Real>;
 
         // Constructor
         HankelTransform(const int hankel_order,

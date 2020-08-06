@@ -29,11 +29,10 @@ warpx.n_current_deposition_buffer = 0
 warpx.n_field_gather_buffer = 0
 
 # Algorithms
-algo.maxwell_fdtd_solver = "ckc"
+algo.maxwell_solver = "ckc"
 
 # CFL
 warpx.cfl = .9999
-particles.nspecies = 4
 particles.species_names = driver beam plasma_e plasma_p
 particles.deposit_on_main_grid = plasma_e plasma_p
 

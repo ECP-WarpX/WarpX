@@ -85,13 +85,13 @@ protected:
     /** Initialize member variables and arrays specific to the diagnostics in the
      *  derived classes.(FullDiagnostics, BTDiagnostics)
      */
-    virtual void DerivedInitData () {};
+    virtual void DerivedInitData () {}
     /** This function initialized particle buffers (not implemented in diagnostics, yet) */
     virtual void InitializeParticleBuffer () = 0;
     /** Prepare data (either fill-boundary or cell-centered data for
         back-transform diagnostics) to be processed for diagnostics.
      */
-    virtual void PrepareFieldDataForOutput () {};
+    virtual void PrepareFieldDataForOutput () {}
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string m_diag_name;
     /** Prefix for output directories */
@@ -130,7 +130,7 @@ protected:
      * cell-center for standard EB fields) as well as more involved operations
      * (back-transformed diagnostics, filtering, reconstructing cartesian
      * fields in cylindrical). */
-    amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor const> > > m_all_field_functors;
+    amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor > > > m_all_field_functors;
     /** Coarsening ratio such that, fields are averaged to the coarsened grid.
       * The ratio should render the grid to be coarsenable (as defined by AMReX). */
     amrex::IntVect m_crse_ratio = amrex::IntVect(1);

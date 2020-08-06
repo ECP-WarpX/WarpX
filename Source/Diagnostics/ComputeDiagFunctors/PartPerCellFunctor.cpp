@@ -14,7 +14,7 @@ PartPerCellFunctor::PartPerCellFunctor(const amrex::MultiFab* mf_src, const int 
 }
 
 void
-PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
+PartPerCellFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/) const
 {
     auto& warpx = WarpX::GetInstance();
     // Guard cell is set to 1 for generality. However, for a cell-centered

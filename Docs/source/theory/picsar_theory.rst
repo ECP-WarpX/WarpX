@@ -362,6 +362,9 @@ those implementations, including the expressions for the numerical
 dispersion and Courant condition are given
 in (Pukhov 1999; Vay et al. 2011; Cowan et al. 2013; Lehe et al. 2013).
 
+Current correction
+~~~~~~~~~~~~~~~~~~
+
 In the case of the pseudospectral solvers, the current deposition
 algorithm generally does not satisfy the discretized continuity equation
 in Fourier space :math:`\tilde{\rho}^{n+1}=\tilde{\rho}^{n}-i\Delta t\mathbf{k}\cdot\mathbf{\tilde{J}}^{n+1/2}`.
@@ -379,27 +382,76 @@ the continuity equation. The advantage of correcting the current rather than
 the electric field is that it is more local and thus more compatible with
 domain decomposition of the fields for parallel computation (Jean Luc Vay, Haber, and Godfrey 2013).
 
-Alternatively, an exact current deposition can be written for the pseudospectral solvers, following the geometrical interpretation of existing methods in real space (Morse and Nielson 1971; Villasenor and Buneman 1992; Esirkepov 2001), thereby averaging the currents of the paths following grid lines between positions :math:`(x^n,y^n)` and :math:`(x^{n+1},y^{n+1})`, which is given in 2D (extension to 3D follows readily) for :math:`k\neq0` by (Jean Luc Vay, Haber, and Godfrey 2013):
+Vay deposition
+~~~~~~~~~~~~~~
+
+Alternatively, an exact current deposition can be written for the pseudo-spectral solvers, following the geometrical interpretation of existing methods in real space (`Morse and Nielson, 1971 <https://doi.org/10.1063/1.1693518>`_; `Villasenor and Buneman, 1992 <https://doi.org/10.1016/0010-4655(92)90169-Y>`_; `Esirkepov, 2001 <https://doi.org/10.1016/S0010-4655(00)00228-9>`_).
+
+The Vay deposition scheme is the generalization of the Esirkepov deposition scheme for the spectral case with arbitrary-order stencils `(Vay et al, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_.
+The current density :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}` in Fourier space is computed as :math:`\widehat{\boldsymbol{J}}^{\,n+1/2} = i \, \widehat{\boldsymbol{D}} / \boldsymbol{k}` when :math:`\boldsymbol{k} \neq 0` and set to zero otherwise.
+The quantity :math:`\boldsymbol{D}` is deposited in real space by averaging the currents over all possible grid paths between the initial position :math:`\boldsymbol{x}^{\,n}` and the final position :math:`\boldsymbol{x}^{\,n+1}` and is defined as
+
+- 2D Cartesian geometry:
 
 .. math::
+   \begin{align}
+   D_x = & \: \sum_i \frac{1}{\Delta x \Delta z} \frac{q_i w_i}{2 \Delta t}
+   \bigg[
+   \Gamma(x_i^{n+1},z_i^{n+1}) - \Gamma(x_i^{n},z_i^{n+1})
+   + \Gamma(x_i^{n+1},z_i^{n}) - \Gamma(x_i^{n},z_i^{n})
+   \bigg]
+   \\[8pt]
+   D_y = & \: \sum_i \frac{v_i^y}{\Delta x \Delta z} \frac{q_i w_i}{4}
+   \bigg[
+   \Gamma(x_i^{n+1},z_i^{n+1}) + \Gamma(x_i^{n+1},z_i^{n})
+   + \Gamma(x_i^{n},z_i^{n+1}) + \Gamma(x_i^{n},z_i^{n})
+   \bigg]
+   \\[8pt]
+   D_z = & \: \sum_i \frac{1}{\Delta x \Delta z} \frac{q_i w_i}{2 \Delta t}
+   \bigg[
+   \Gamma(x_i^{n+1},z_i^{n+1}) - \Gamma(x_i^{n+1},z_i^{n})
+   + \Gamma(x_i^{n},z_i^{n+1}) - \Gamma(x_i^{n},z_i^{n})
+   \bigg]
+   \end{align}
 
-   \begin{aligned}
-   \mathbf{\tilde{J}}^{k\neq0}=\frac{i\mathbf{\tilde{D}}}{\mathbf{k}}\end{aligned}
-
-with
+- 3D Cartesian geometry:
 
 .. math::
+   \begin{align}
+   \begin{split}
+   D_x = & \: \sum_i \frac{1}{\Delta x\Delta y\Delta z} \frac{q_i w_i}{6\Delta t}
+   \bigg[
+   2 \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n+1}) - 2 \Gamma(x_i^{n},y_i^{n+1},z_i^{n+1}) \\[4pt]
+   & + \Gamma(x_i^{n+1},y_i^{n},z_i^{n+1}) - \Gamma(x_i^{n},y_i^{n},z_i^{n+1})
+   + \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n}) \\[4pt]
+   & - \Gamma(x_i^{n},y_i^{n+1},z_i^{n}) + 2 \Gamma(x_i^{n+1},y_i^{n},z_i^{n})
+   - 2 \Gamma(x_i^{n},y_i^{n},z_i^{n})
+   \bigg]
+   \end{split} \\[8pt]
+   \begin{split}
+   D_y = & \: \sum_i \frac{1}{\Delta x\Delta y\Delta z} \frac{q_i w_i}{6\Delta t}
+   \bigg[
+   2 \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n+1}) - 2 \Gamma(x_i^{n+1},y_i^{n},z_i^{n+1}) \\[4pt]
+   & + \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n}) - \Gamma(x_i^{n+1},y_i^{n},z_i^{n})
+   + \Gamma(x_i^{n},y_i^{n+1},z_i^{n+1}) \\[4pt]
+   & - \Gamma(x_i^{n},y_i^{n},z_i^{n+1}) + 2 \Gamma(x_i^{n},y_i^{n+1},z_i^{n})
+   - 2 \Gamma(x_i^{n},y_i^{n},z_i^{n})
+   \bigg]
+   \end{split} \\[8pt]
+   \begin{split}
+   D_z = & \: \sum_i \frac{1}{\Delta x\Delta y\Delta z} \frac{q_i w_i}{6\Delta t}
+   \bigg[
+   2 \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n+1}) - 2 \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n}) \\[4pt]
+   & + \Gamma(x_i^{n},y_i^{n+1},z_i^{n+1}) - \Gamma(x_i^{n},y_i^{n+1},z_i^{n})
+   + \Gamma(x_i^{n+1},y_i^{n},z_i^{n+1}) \\[4pt]
+   & - \Gamma(x_i^{n+1},y_i^{n},z_i^{n}) + 2 \Gamma(x_i^{n},y_i^{n},z_i^{n+1})
+   - 2 \Gamma(x_i^{n},y_i^{n},z_i^{n})
+   \bigg]
+   \end{split}
+   \end{align}
 
-   \begin{aligned}
-   D_x   =  \frac{1}{2\Delta t}\sum_i q_i
-     [\Gamma(x_i^{n+1},y_i^{n+1})-\Gamma(x_i^{n},y_i^{n+1}) \nonumber\\
-   +\Gamma(x_i^{n+1},y_i^{n})-\Gamma(x_i^{n},y_i^{n})],\\
-   D_y   =  \frac{1}{2\Delta t}\sum_i q_i
-     [\Gamma(x_i^{n+1},y_i^{n+1})-\Gamma(x_i^{n+1},y_i^{n}) \nonumber \\
-   +\Gamma(x_i^{n},y_i^{n+1})-\Gamma(x_i^{n},y_i^{n})],\end{aligned}
-
-where :math:`\Gamma` is the macro-particle form factor.
-The contributions for :math:`k=0` are integrated directly in real space (Jean Luc Vay, Haber, and Godfrey 2013).
+Here, :math:`w_i` represents the weight of the :math:`i`-th macro-particle and :math:`\Gamma` represents its shape factor.
+Note that in 2D Cartesian geometry, :math:`D_y` is effectively :math:`J_y` and does not require additional operations in Fourier space.
 
 Field gather
 ------------

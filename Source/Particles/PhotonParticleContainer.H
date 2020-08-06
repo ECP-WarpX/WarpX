@@ -75,32 +75,32 @@ public:
                         DtType a_dt_type) override;
 
     // Do nothing
-    virtual void PushP (int lev,
-                        amrex::Real dt,
-                        const amrex::MultiFab& Ex,
-                        const amrex::MultiFab& Ey,
-                        const amrex::MultiFab& Ez,
-                        const amrex::MultiFab& Bx,
-                        const amrex::MultiFab& By,
-                        const amrex::MultiFab& Bz) override {};
+    virtual void PushP (int /*lev*/,
+                        amrex::Real /*dt*/,
+                        const amrex::MultiFab& /*Ex*/,
+                        const amrex::MultiFab& /*Ey*/,
+                        const amrex::MultiFab& /*Ez*/,
+                        const amrex::MultiFab& /*Bx*/,
+                        const amrex::MultiFab& /*By*/,
+                        const amrex::MultiFab& /*Bz*/) override {}
 
 
     // DepositCurrent should do nothing for photons
-    virtual void DepositCurrent(WarpXParIter& pti,
-                                RealVector& wp,
-                                RealVector& uxp,
-                                RealVector& uyp,
-                                RealVector& uzp,
-                                const int * const ion_lev,
-                                amrex::MultiFab* jx,
-                                amrex::MultiFab* jy,
-                                amrex::MultiFab* jz,
-                                const long offset,
-                                const long np_to_depose,
-                                int thread_num,
-                                int lev,
-                                int depos_lev,
-                                amrex::Real dt) override {};
+    virtual void DepositCurrent(WarpXParIter& /*pti*/,
+                                RealVector& /*wp*/,
+                                RealVector& /*uxp*/,
+                                RealVector& /*uyp*/,
+                                RealVector& /*uzp*/,
+                                const int * const /*ion_lev*/,
+                                amrex::MultiFab* /*jx*/,
+                                amrex::MultiFab* /*jy*/,
+                                amrex::MultiFab* /*jz*/,
+                                const long /*offset*/,
+                                const long /*np_to_depose*/,
+                                int /*thread_num*/,
+                                int /*lev*/,
+                                int /*depos_lev*/,
+                                amrex::Real /*dt*/) override {}
 };
 
 #endif // #ifndef WARPX_PhotonParticleContainer_H_

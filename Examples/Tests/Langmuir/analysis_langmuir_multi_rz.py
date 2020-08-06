@@ -26,6 +26,8 @@ import checksumAPI
 # this will be the name of the plot file
 fn = sys.argv[1]
 
+test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+
 # Parameters (these parameters must match the parameters in `inputs.multi.rz.rt`)
 epsilon = 0.01
 n = 2.e24
@@ -97,7 +99,7 @@ plt.imshow( Ez_th )
 plt.colorbar()
 plt.title('Ez, last iteration\n(theory)')
 plt.tight_layout()
-plt.savefig('langmuir_multi_rz_analysis.png')
+plt.savefig(test_name+'_analysis.png')
 
 error_rel = overall_max_error
 tolerance_rel = 0.04
@@ -107,5 +109,4 @@ print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
 
-test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn)

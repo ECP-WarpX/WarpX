@@ -8,11 +8,15 @@
 #ifndef WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_NODAL_H_
 #define WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_NODAL_H_
 
+#include "Utils/WarpXConst.H"
+
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
 
 #include <array>
+#include <cmath>
+
 
 /**
  * This struct contains only static functions to initialize the stencil coefficients
@@ -38,6 +42,19 @@ struct CartesianNodalAlgorithm {
     }
 
     /**
+     * Compute the maximum timestep, for which the scheme remains stable
+     * (Courant-Friedrichs-Levy limit) */
+    static amrex::Real ComputeMaxDt ( amrex::Real const * const dx ) {
+        using namespace amrex::literals;
+        amrex::Real const delta_t  = 1._rt / ( std::sqrt( AMREX_D_TERM(
+                                           1._rt/(dx[0]*dx[0]),
+                                         + 1._rt/(dx[1]*dx[1]),
+                                         + 1._rt/(dx[2]*dx[2])
+                                     ) ) * PhysConst::c );
+        return delta_t;
+    }
+
+    /**
      * Perform derivative along x
      * (For a solver on a staggered grid, `UpwardDx` and `DownwardDx` take into
      * account the staggering; but for `CartesianNodalAlgorithm`, they are equivalent) */
@@ -50,7 +67,7 @@ struct CartesianNodalAlgorithm {
         using namespace amrex;
         Real const inv_dx = coefs_x[0];
         return 0.5_rt*inv_dx*( F(i+1,j,k,ncomp) - F(i-1,j,k,ncomp) );
-    };
+    }
 
     /**
      * Perform derivative along x
@@ -64,7 +81,7 @@ struct CartesianNodalAlgorithm {
 
         return UpwardDx( F, coefs_x, n_coefs_x, i, j, k ,ncomp);
         // For CartesianNodalAlgorithm, UpwardDx and DownwardDx are equivalent
-    };
+    }
 
     /**
      * Perform derivative along y
@@ -83,7 +100,7 @@ struct CartesianNodalAlgorithm {
 #elif (defined WARPX_DIM_XZ)
         return 0._rt; // 2D Cartesian: derivative along y is 0
 #endif
-    };
+    }
 
     /**
      * Perform derivative along y
@@ -97,7 +114,7 @@ struct CartesianNodalAlgorithm {
 
         return UpwardDy( F, coefs_y, n_coefs_y, i, j, k ,ncomp);
         // For CartesianNodalAlgorithm, UpwardDy and DownwardDy are equivalent
-    };
+    }
 
     /**
      * Perform derivative along z
@@ -116,7 +133,7 @@ struct CartesianNodalAlgorithm {
 #elif (defined WARPX_DIM_XZ)
         return 0.5_rt*inv_dz*( F(i,j+1,k,ncomp) - F(i,j-1,k,ncomp) );
 #endif
-    };
+    }
 
     /**
      * Perform derivative along z
@@ -130,7 +147,7 @@ struct CartesianNodalAlgorithm {
 
         return UpwardDz( F, coefs_z, n_coefs_z, i, j, k ,ncomp);
         // For CartesianNodalAlgorithm, UpwardDz and DownwardDz are equivalent
-    };
+    }
 
 };
 

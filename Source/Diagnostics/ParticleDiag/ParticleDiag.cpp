@@ -45,6 +45,7 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
 #ifdef WARPX_DIM_RZ
     // Always write out theta, whether or not it's requested,
     // to be consistent with always writing out r and z.
+    // TODO: openPMD does a reconstruction to Cartesian, so we can now skip force-writing this
     plot_flags[ParticleStringNames::to_index.at("theta")] = 1;
 #endif
 
