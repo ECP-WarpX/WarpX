@@ -1,6 +1,8 @@
 #include "FlushFormatAscent.H"
 #include "WarpX.H"
 
+#include <AMReX.H>
+
 using namespace amrex;
 
 void
@@ -39,6 +41,18 @@ FlushFormatAscent::WriteToFile (
     ascent.execute(actions);
     ascent.close();
 
+#else
+    amrex::ignore_unused(varnames);
+    amrex::ignore_unused(mf);
+    amrex::ignore_unused(geom);
+    amrex::ignore_unused(iteration);
+    amrex::ignore_unused(time);
+    amrex::ignore_unused(particle_diags);
+    amrex::ignore_unused(nlev);
+    amrex::ignore_unused(prefix);
+    amrex::ignore_unused(plot_raw_fields);
+    amrex::ignore_unused(plot_raw_fields_guards);
+    amrex::ignore_unused(plot_raw_F);
 #endif // AMREX_USE_ASCENT
 }
 

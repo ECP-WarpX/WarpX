@@ -114,7 +114,7 @@ void damp_jx_pml (int j, int k, int l,
     jx(j,k,l) = jx(j,k,l) * sigsjx[j-xlo] * sigjy[k-ylo] * sigjz[l-zlo];
 #else
     jx(j,k,l) = jx(j,k,l) * sigsjx[j-xlo] * sigjz[k-zlo];
-    amrex::ignore_unused(xlo);
+    amrex::ignore_unused(sigjy);
     amrex::ignore_unused(ylo);
 #endif
 }

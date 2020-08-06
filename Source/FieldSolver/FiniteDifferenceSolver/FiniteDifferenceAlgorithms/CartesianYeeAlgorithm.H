@@ -58,7 +58,7 @@ struct CartesianYeeAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDx (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_x, int const n_coefs_x,
+        amrex::Real const * const coefs_x, int const /*n_coefs_x*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const inv_dx = coefs_x[0];
@@ -70,7 +70,7 @@ struct CartesianYeeAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real DownwardDx (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_x, int const n_coefs_x,
+        amrex::Real const * const coefs_x, int const /*n_coefs_x*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const inv_dx = coefs_x[0];
@@ -90,7 +90,22 @@ struct CartesianYeeAlgorithm {
         Real const inv_dy = coefs_y[0];
         return inv_dy*( F(i,j+1,k,ncomp) - F(i,j,k,ncomp) );
 #elif (defined WARPX_DIM_XZ)
+        amrex::ignore_unused(F);
+        amrex::ignore_unused(coefs_y);
+        amrex::ignore_unused(n_coefs_y);
+        amrex::ignore_unused(i);
+        amrex::ignore_unused(j);
+        amrex::ignore_unused(k);
+        amrex::ignore_unused(ncomp);
         return 0._rt; // 2D Cartesian: derivative along y is 0
+#else
+        amrex::ignore_unused(F);
+        amrex::ignore_unused(coefs_y);
+        amrex::ignore_unused(n_coefs_y);
+        amrex::ignore_unused(i);
+        amrex::ignore_unused(j);
+        amrex::ignore_unused(k);
+        amrex::ignore_unused(ncomp);
 #endif
     }
 
@@ -107,7 +122,22 @@ struct CartesianYeeAlgorithm {
         Real const inv_dy = coefs_y[0];
         return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
 #elif (defined WARPX_DIM_XZ)
+        amrex::ignore_unused(F);
+        amrex::ignore_unused(coefs_y);
+        amrex::ignore_unused(n_coefs_y);
+        amrex::ignore_unused(i);
+        amrex::ignore_unused(j);
+        amrex::ignore_unused(k);
+        amrex::ignore_unused(ncomp);
         return 0._rt; // 2D Cartesian: derivative along y is 0
+#else
+        amrex::ignore_unused(F);
+        amrex::ignore_unused(coefs_y);
+        amrex::ignore_unused(n_coefs_y);
+        amrex::ignore_unused(i);
+        amrex::ignore_unused(j);
+        amrex::ignore_unused(k);
+        amrex::ignore_unused(ncomp);
 #endif
     }
 

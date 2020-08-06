@@ -30,7 +30,7 @@ wp_ast_eval (struct wp_node* node, amrex_real const* x)
     assert(0); // Recursive funciton is not support in DPC++
     return 0.;
 #else
-    amrex_real result;
+    amrex_real result = 0.0;
 
     switch (node->type)
     {
