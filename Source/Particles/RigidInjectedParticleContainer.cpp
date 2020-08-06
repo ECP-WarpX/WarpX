@@ -471,10 +471,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                 getPosition(ip, xp, yp, zp);
 
                 amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
-                getExternalE(ip, Exp, Eyp, Ezp);
-
                 amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
-                getExternalB(ip, Bxp, Byp, Bzp);
 
                 // first gather E and B to the particle positions
                 doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
@@ -482,6 +479,8 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
+                getExternalE(ip, Exp, Eyp, Ezp);
+                getExternalB(ip, Bxp, Byp, Bzp);
 
                 if (do_crr) {
                     amrex::Real qp = q;

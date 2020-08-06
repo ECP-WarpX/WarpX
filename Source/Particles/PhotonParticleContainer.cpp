@@ -164,11 +164,8 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
 
-            amrex::ParticleReal Exp, Eyp, Ezp;
-            getExternalE(i, Exp, Eyp, Ezp);
-
-            amrex::ParticleReal Bxp, Byp, Bzp;
-            getExternalB(i, Bxp, Byp, Bzp);
+            amrex::ParticleReal Exp=0, Eyp=0, Ezp=0;
+            amrex::ParticleReal Bxp=0, Byp=0, Bzp=0;
 
             if(!t_do_not_gather){
                 // first gather E and B to the particle positions
@@ -178,6 +175,8 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
             }
+            getExternalE(i, Exp, Eyp, Ezp);
+            getExternalB(i, Bxp, Byp, Bzp);
 
 #ifdef WARPX_QED
             if (local_has_breit_wheeler) {
