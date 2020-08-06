@@ -46,7 +46,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
         // Note : EvolveE is the same for CKC and Yee.
-        // In the templated Yee and CKC calls, the core operations for EvolveE is tihe same.
+        // In the templated Yee and CKC calls, the core operations for EvolveE is the same.
         if (WarpX::macroscopic_solver_algo == MacroscopicSolverAlgo::LaxWendroff) {
 
             MacroscopicEvolveECartesian <CartesianCKCAlgorithm, LaxWendroffAlgo>
