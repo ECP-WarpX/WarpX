@@ -13,13 +13,13 @@ public:
 private:
     /** Read relevant parameters for BTD */
     void ReadParameters ();
-    /** Flush m_mf_output and particles to file. */
-    // Currently, a temporary customized output format for the buffer
-    // data is implemented and called in this function.
-    // After implementing OpenPMD and plotfile formats, this function
-    // can be defined and implemented in Diagnostics.H, such that,
-    // the function call to flush out buffer data for
-    // FullDiagnostics and BTDiagnostics is the same
+    /** \brief Flush m_mf_output and particles to file.
+     * Currently, a temporary customized output format for the buffer
+     * data is implemented and called in this function.
+     * After implementing OpenPMD and plotfile formats, this function
+     * can be defined and implemented in Diagnostics.H, such that,
+     * the function call to flush out buffer data for
+     * FullDiagnostics and BTDiagnostics is the same */
     void Flush (int i_buffer) override;
     /** whether to write output files at this time step
      *  The data is flushed when the buffer is full and/or
@@ -36,7 +36,7 @@ private:
      * \param[in] step current time step, return true for any step >= 0
      * \param[in] force_flush if true, return true for any step
      */
-    bool DoComputeAndPack (int step, bool force_flush=false) override;
+    bool DoComputeAndPack (int step, bool force_flush=false) {return step>=0;} override;
     /** Initialize Data required to compute back-transformed diagnostics */
     void DerivedInitData () override;
     /** Initialize functors that store pointers to the fields requested by the user.
@@ -47,7 +47,8 @@ private:
      */
     void InitializeFieldFunctors (int lev) override;
     /** This function allocates and initializes particle buffers for all the snapshots.
-     *  The particle containers required for this must be added to populate this function.
+     * This is currently an empty function:
+     * The particle containers required for this must be added to populate this function.
      */
     void InitializeParticleBuffer () override {}
     /** The cell-centered data for all fields, namely,
