@@ -80,7 +80,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     auto& epsilon_mf = macroscopic_properties->getepsilon_mf();
     auto& mu_mf = macroscopic_properties->getmu_mf();
 
-    // Index type required for calling CoarsenIO::Interp to interpolate macroscopic 
+    // Index type required for calling CoarsenIO::Interp to interpolate macroscopic
     // properties from their respective staggering to the Ex, Ey, Ez locations
     int const* const AMREX_RESTRICT
               sigma_stag   = macroscopic_properties->sigma_IndexType.data();
@@ -97,7 +97,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     int const* const AMREX_RESTRICT
               macro_cr     = macroscopic_properties->macro_cr_ratio.data();
 
-    
+
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -142,7 +142,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
                                            Ex_stag, macro_cr, i, j, k, scomp);
                 // Interpolated permittivity, epsilon, to Ex position on the grid
-                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag, 
+                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
                                            Ex_stag, macro_cr, i, j, k, scomp);
                 // Interpolated permeability, mu, to Ex position on the grid
                 amrex::Real const mu = CoarsenIO::Interp( mu_arr, mu_stag,
@@ -159,7 +159,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
                                            Ey_stag, macro_cr, i, j, k, scomp);
-                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag, 
+                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
                                            Ey_stag, macro_cr, i, j, k, scomp);
                 amrex::Real const mu = CoarsenIO::Interp( mu_arr, mu_stag,
                                            Ey_stag, macro_cr, i, j, k, scomp);
@@ -175,7 +175,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
                                            Ez_stag, macro_cr, i, j, k, scomp);
-                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag, 
+                amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
                                            Ez_stag, macro_cr, i, j, k, scomp);
                 amrex::Real const mu = CoarsenIO::Interp( mu_arr, mu_stag,
                                            Ez_stag, macro_cr, i, j, k, scomp);

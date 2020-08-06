@@ -57,7 +57,7 @@ MacroscopicProperties::InitData ()
     int ng = 3;
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
-    m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng); 
+    m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
     // epsilon is cell-centered MultiFab
     m_eps_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
     // mu is cell-centered MultiFab
@@ -107,7 +107,7 @@ MacroscopicProperties::InitData ()
     IntVect Ex_stag = warpx.getEfield_fp(0,0).ixType().toIntVect();
     IntVect Ey_stag = warpx.getEfield_fp(0,1).ixType().toIntVect();
     IntVect Ez_stag = warpx.getEfield_fp(0,2).ixType().toIntVect();
-    
+
     for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         sigma_IndexType[idim]   = sigma_stag[idim];
         epsilon_IndexType[idim] = epsilon_stag[idim];
@@ -117,7 +117,7 @@ MacroscopicProperties::InitData ()
         Ez_IndexType[idim]      = Ez_stag[idim];
         macro_cr_ratio[idim]    = 1;
     }
-    
+
 
 }
 
@@ -133,7 +133,7 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
     IntVect grown_iv = iv + amrex::IntVect(macro_mf->nGrow());
     for ( MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells
-      
+
         const Box& tb = mfi.growntilebox(grown_iv);
         auto const& macro_fab =  macro_mf->array(mfi);
         amrex::ParallelFor (tb,

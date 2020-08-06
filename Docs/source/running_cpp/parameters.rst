@@ -1067,7 +1067,7 @@ Numerics and algorithms
      to initialize spatially varying material conductivity, permittivity,
      and permeability, respectively.
      Constants required in the mathematical expression can be set
-     using ``my_constants``. 
+     using ``my_constants``.
 
 * ``macroscopic.sigma``, ``macroscopic.epsilon``, ``macroscopic.mu`` (`double`)
     The conductivity, permittivity, and permeability of the computational medium, respectively.
