@@ -111,7 +111,11 @@ guardCellManager::Init(
     pp.query("ny_guard", ngFFt_y);
     pp.query("nz_guard", ngFFt_z);
 
-    IntVect ngFFT = IntVect(AMREX_D_DECL(ngFFt_x, ngFFt_y, ngFFt_z));
+#if   (AMREX_SPACEDIM == 3)
+    IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
+#elif (AMREX_SPACEDIM == 2)
+    IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+#endif
 
     for (int i_dim=0; i_dim<AMREX_SPACEDIM; i_dim++ ){
         int ng_required = ngFFT[i_dim];
