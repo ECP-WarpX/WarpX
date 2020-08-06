@@ -36,7 +36,7 @@ private:
      * \param[in] step current time step, return true for any step >= 0
      * \param[in] force_flush if true, return true for any step
      */
-    bool DoComputeAndPack (int step, bool force_flush=false) {return step>=0;} override;
+    bool DoComputeAndPack (int step, bool force_flush=false) override;
     /** Initialize Data required to compute back-transformed diagnostics */
     void DerivedInitData () override;
     /** Initialize functors that store pointers to the fields requested by the user.

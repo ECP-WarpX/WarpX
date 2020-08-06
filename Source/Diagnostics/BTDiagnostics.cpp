@@ -164,10 +164,7 @@ BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
 {
     // always set to true for BTDiagnostics since back-transform buffers are potentially
     // computed and packed every timstep, except at initialization when step == -1.
-    if (step>=0) {
-        return true;
-    }
-    return false;
+    return (step>=0);
 }
 
 void
