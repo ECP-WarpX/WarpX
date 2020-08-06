@@ -60,8 +60,7 @@ MacroscopicProperties::InitData ()
     m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng); 
     // epsilon is cell-centered MultiFab
     m_eps_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
-    // mu is nodal MultiFab
-    //m_mu_mf = std::make_unique<MultiFab>(amrex::convert(ba,amrex::IntVect::TheUnitVector()), dmap, 1, ng);
+    // mu is cell-centered MultiFab
     m_mu_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
     // Initialize sigma
     if (m_sigma_s == "constant") {
