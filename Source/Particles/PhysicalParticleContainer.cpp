@@ -1436,7 +1436,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const Dim3 lo = lbound(box);
 
-            int l_lower_order_in_v = WarpX::l_lower_order_in_v;
+            bool galerkin_interpolation = WarpX::galerkin_interpolation;
             int nox = WarpX::nox;
             int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
@@ -1482,10 +1482,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 getPosition(ip, xp, yp, zp);
 
                 amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
-                getExternalE(ip, Exp, Eyp, Ezp);
-
                 amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
-                getExternalB(ip, Bxp, Byp, Bzp);
 
                 if (!t_do_not_gather){
                     // first gather E and B to the particle positions
@@ -1493,8 +1490,12 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                    ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                                   nox, l_lower_order_in_v);
+                                   nox, galerkin_interpolation);
                 }
+                // Externally applied E-field in Cartesian co-ordinates
+                getExternalE(ip, Exp, Eyp, Ezp);
+                // Externally applied B-field in Cartesian co-ordinates
+                getExternalB(ip, Bxp, Byp, Bzp);
 
                 if (do_crr) {
                     amrex::Real qp = q;
@@ -1797,7 +1798,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     const Dim3 lo = lbound(box);
 
-    int l_lower_order_in_v = WarpX::l_lower_order_in_v;
+    bool galerkin_interpolation = WarpX::galerkin_interpolation;
     int nox = WarpX::nox;
     int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
@@ -1861,10 +1862,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         getPosition(ip, xp, yp, zp);
 
         amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
-        getExternalE(ip, Exp, Eyp, Ezp);
-
         amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
-        getExternalB(ip, Bxp, Byp, Bzp);
 
         if(!t_do_not_gather){
             // first gather E and B to the particle positions
@@ -1872,8 +1870,12 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                            ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                            ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                            dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                           nox, l_lower_order_in_v);
+                           nox, galerkin_interpolation);
         }
+        // Externally applied E-field in Cartesian co-ordinates
+        getExternalE(ip, Exp, Eyp, Ezp);
+        // Externally applied B-field in Cartesian co-ordinates
+        getExternalB(ip, Bxp, Byp, Bzp);
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 

@@ -82,7 +82,7 @@ long WarpX::noy = 1;
 long WarpX::noz = 1;
 
 bool WarpX::use_fdtd_nci_corr = false;
-int  WarpX::l_lower_order_in_v = true;
+bool WarpX::galerkin_interpolation = true;
 
 bool WarpX::use_filter        = false;
 bool WarpX::use_kspace_filter       = false;
@@ -563,7 +563,7 @@ WarpX::ReadParameters ()
 
         pp.query("do_nodal", do_nodal);
         // Use same shape factors in all directions, for gathering
-        if (do_nodal) l_lower_order_in_v = false;
+        if (do_nodal) galerkin_interpolation = false;
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
@@ -576,19 +576,8 @@ WarpX::ReadParameters ()
         // Force do_nodal=true (that is, not staggered) and
         // use same shape factors in all directions, for gathering
         do_nodal = true;
-        l_lower_order_in_v = false;
+        galerkin_interpolation = false;
 #endif
-    }
-
-    {
-        ParmParse pp("interpolation");
-        pp.query("nox", nox);
-        pp.query("noy", noy);
-        pp.query("noz", noz);
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox == noy and nox == noz ,
-            "warpx.nox, noy and noz must be equal");
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox >= 1, "warpx.nox must >= 1");
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox <= 3, "warpx.nox must <= 3");
     }
 
     {
@@ -600,7 +589,7 @@ WarpX::ReadParameters ()
         field_gathering_algo = GetAlgorithmInteger(pp, "field_gathering");
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
             // Use same shape factors in all directions, for gathering
-            l_lower_order_in_v = false;
+            galerkin_interpolation = false;
         }
         load_balance_costs_update_algo = GetAlgorithmInteger(pp, "load_balance_costs_update");
         em_solver_medium = GetAlgorithmInteger(pp, "em_solver_medium");
@@ -609,6 +598,19 @@ WarpX::ReadParameters ()
         }
         pp.query("costs_heuristic_cells_wt", costs_heuristic_cells_wt);
         pp.query("costs_heuristic_particles_wt", costs_heuristic_particles_wt);
+    }
+
+    {
+        ParmParse pp("interpolation");
+        pp.query("nox", nox);
+        pp.query("noy", noy);
+        pp.query("noz", noz);
+
+        pp.query("galerkin_scheme",galerkin_interpolation);
+
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox == noy and nox == noz ,
+            "warpx.nox, noy and noz must be equal");
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox >= 1, "warpx.nox must >= 1");
     }
 
 #ifdef WARPX_USE_PSATD
@@ -648,12 +650,21 @@ WarpX::ReadParameters ()
         }
 
         pp.query("current_correction", current_correction);
-        pp.query("update_with_rho", update_with_rho);
         pp.query("v_galilean", v_galilean);
         pp.query("do_time_averaging", fft_do_time_averaging);
 
       // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
+
+        if (v_galilean[0] == 0. && v_galilean[1] == 0. && v_galilean[2] == 0.) {
+            update_with_rho = false; // standard PSATD
+        }
+        else {
+            update_with_rho = true;  // Galilean PSATD
+        }
+
+        // Overwrite update_with_rho with value set in input file
+        pp.query("update_with_rho", update_with_rho);
     }
 #endif
 

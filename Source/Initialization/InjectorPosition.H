@@ -18,7 +18,7 @@ struct InjectorPositionRandom
 {
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getPositionUnitBox (int i_part, int ref_fac=1) const noexcept
+    getPositionUnitBox (int /*i_part*/, int /*ref_fac=1*/) const noexcept
     {
         return amrex::XDim3{amrex::Random(), amrex::Random(), amrex::Random()};
     }

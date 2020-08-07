@@ -64,7 +64,7 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
     const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, lev);
     m_xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
 
-    m_l_lower_order_in_v = WarpX::l_lower_order_in_v;
+    m_galerkin_interpolation = WarpX::galerkin_interpolation;
     m_nox = WarpX::nox;
     m_n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 

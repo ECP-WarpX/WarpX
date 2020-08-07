@@ -10,6 +10,7 @@
 
 #include "Particles/WarpXParticleContainer.H"
 
+#include <AMReX.H>
 #include <AMReX_REAL.H>
 
 #include <limits>
@@ -98,6 +99,9 @@ struct SetParticlePosition
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (const int i, RType x, RType y, RType z) const noexcept
     {
+#if defined(WARPX_DIM_XZ)
+        amrex::ignore_unused(y);
+#endif
 #ifdef WARPX_DIM_RZ
         m_theta[i] = std::atan2(y, x);
         m_structs[i].pos(0) = std::sqrt(x*x + y*y);

@@ -202,7 +202,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 void
 PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
                                      std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                     const std::unique_ptr<amrex::MultiFab>& rho )
+                                     const std::unique_ptr<amrex::MultiFab>& rho)
 {
     // Profiling
     WARPX_PROFILE( "PsatdAlgorithmRZ::CurrentCorrection" );
@@ -279,7 +279,6 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
     field_data.BackwardTransform( *current[0], Idx::Jx,
                                   *current[1], Idx::Jy);
     field_data.BackwardTransform( *current[2], Idx::Jz, 0 );
-
 }
 
 void
