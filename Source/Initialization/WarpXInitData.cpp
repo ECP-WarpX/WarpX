@@ -37,6 +37,9 @@ WarpX::PostProcessBaseGrids (BoxArray& ba0) const
         BoxList bl;
 #if (AMREX_SPACEDIM == 3)
         for (int k = 0; k < numprocs[2]; ++k) {
+            // The first extra[2] blocks get one extra cell with a total of
+            // sz[2]+1.  The rest get sz[2] cells.  The docomposition in y
+            // and x directions are similar.
             int klo = (k < extra[2]) ? k*(sz[2]+1) : (k*sz[2]+extra[2]);
             int khi = (k < extra[2]) ? klo+(sz[2]+1)-1 : klo+sz[2]-1;
             klo += domlo[2];
