@@ -312,7 +312,7 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
             diag_dom.setLo( idim, warpx.Geom(lev).ProbLo(idim) + warpx.Geom(lev).CellSize(idim)/2.0_rt +
                 ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim));
             diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) + warpx.Geom(lev).CellSize(idim)/2.0_rt +
-                ba.getCellCenteredBox( ba.size()-1 ).bigEnd(idim) * warpx.Geom(lev).CellSize(idim));            
+                ba.getCellCenteredBox( ba.size()-1 ).bigEnd(idim) * warpx.Geom(lev).CellSize(idim));
         }
     }
 
@@ -326,7 +326,7 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
     int ngrow = (m_format == "sensei") ? 1 : 0;
     // The zero is hard-coded since the number of output buffers = 1 for FullDiagnostics
-    m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow); 
+    m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow);
 
     // The extent of the domain covered by the diag multifab, m_mf_output
     amrex::Box domain = ba.minimalBox();
