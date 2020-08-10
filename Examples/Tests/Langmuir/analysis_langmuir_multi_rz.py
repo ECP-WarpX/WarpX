@@ -13,6 +13,7 @@
 # $$ E_r = -\partial_r \phi = \epsilon \,\frac{mc^2}{e}\frac{2\,r}{w_0^2} \exp\left(-\frac{r^2}{w_0^2}\right) \sin(k_0 z) \sin(\omega_p t)
 # $$ E_z = -\partial_z \phi = - \epsilon \,\frac{mc^2}{e} k_0 \exp\left(-\frac{r^2}{w_0^2}\right) \cos(k_0 z) \sin(\omega_p t)
 import sys
+import re
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -27,6 +28,9 @@ import checksumAPI
 fn = sys.argv[1]
 
 test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+
+# Parse test name and check if current correction (psatd.current_correction) is applied
+current_correction = True if re.search('current_correction', fn) else False
 
 # Parameters (these parameters must match the parameters in `inputs.multi.rz.rt`)
 epsilon = 0.01
@@ -102,11 +106,26 @@ plt.tight_layout()
 plt.savefig(test_name+'_analysis.png')
 
 error_rel = overall_max_error
-tolerance_rel = 0.04
+
+if current_correction:
+   tolerance_rel = 0.06
+else:
+   tolerance_rel = 0.04
 
 print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
+
+# Check charge conservation (relative L-infinity norm of error) with current correction
+if current_correction:
+    divE = data['divE'].to_ndarray()
+    rho  = data['rho' ].to_ndarray() / epsilon_0
+    error_rel = np.amax(np.abs(divE - rho)) / max(np.amax(divE), np.amax(rho))
+    tolerance = 1.e-9
+    print("Check charge conservation:")
+    print("error_rel = {}".format(error_rel))
+    print("tolerance = {}".format(tolerance))
+    assert( error_rel < tolerance )
 
 checksumAPI.evaluate_checksum(test_name, fn)
