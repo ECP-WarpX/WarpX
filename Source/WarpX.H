@@ -552,7 +552,8 @@ protected:
     //! Tagging cells for refinement
     virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
 
-    //! Use this function to override the Level 0 grids made by AMReX
+    //! Use this function to override the Level 0 grids made by AMReX.
+    //! This function is called in amrex::AmrCore::InitFromScratch.
     virtual void PostProcessBaseGrids (amrex::BoxArray& ba0) const final;
 
     //! Make a new level from scratch using provided BoxArray and
