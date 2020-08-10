@@ -16,9 +16,9 @@
 #endif
 #include <AMReX.H>
 #include <AMReX_Vector.H>
+#include <AMReX_Geometry.H>
 #include <AMReX_MultiFab.H>
 using namespace amrex::literals;
-
 
 FullDiagnostics::FullDiagnostics (int i, std::string name)
     : Diagnostics(i, name)
@@ -85,7 +85,7 @@ FullDiagnostics::Flush ( int i_buffer )
     // is supported for BackTransformed Diagnostics, in BTDiagnostics class.
     auto & warpx = WarpX::GetInstance();
     m_flush_format->WriteToFile(
-        m_varnames, m_mf_output[i_buffer], warpx.Geom(), warpx.getistep(),
+        m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         warpx.gett_new(0), m_all_species, nlev_output, m_file_prefix,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 
@@ -309,10 +309,10 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
         // Update the physical co-ordinates m_lo and m_hi using the final index values
         // from the coarsenable, cell-centered BoxArray, ba.
         for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            m_lo[idim] = warpx.Geom(lev).ProbLo(idim) + warpx.Geom(lev).CellSize(idim)/2.0_rt +
-                ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim);
-            m_hi[idim] = warpx.Geom(lev).ProbLo(idim) + warpx.Geom(lev).CellSize(idim)/2.0_rt +
-                ba.getCellCenteredBox( ba.size()-1 ).bigEnd(idim) * warpx.Geom(lev).CellSize(idim);
+            diag_dom.setLo( idim, warpx.Geom(lev).ProbLo(idim) + warpx.Geom(lev).CellSize(idim)/2.0_rt +
+                ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim));
+            diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) + warpx.Geom(lev).CellSize(idim)/2.0_rt +
+                ba.getCellCenteredBox( ba.size()-1 ).bigEnd(idim) * warpx.Geom(lev).CellSize(idim));            
         }
     }
 
@@ -326,7 +326,15 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
     int ngrow = (m_format == "sensei") ? 1 : 0;
     // The zero is hard-coded since the number of output buffers = 1 for FullDiagnostics
-    m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow);
+    m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow); 
+
+    // The extent of the domain covered by the diag multifab, m_mf_output
+    amrex::Box domain = ba.minimalBox();
+    //default non-periodic geometry for diags
+    amrex::Vector<int> diag_periodicity(AMREX_SPACEDIM,0);
+    m_geom_output[i_buffer][lev].define(domain, &diag_dom,
+                                        amrex::CoordSys::cartesian,
+                                        diag_periodicity.data());
 
 }
 
