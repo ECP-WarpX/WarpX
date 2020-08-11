@@ -371,6 +371,14 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
 };
 
 void
+AvgGalileanAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
+                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                         const std::unique_ptr<amrex::MultiFab>& rho)
+{
+    amrex::Abort("Current correction not implemented for averaged Galilean PSATD");
+}
+
+void
 AvgGalileanAlgorithm::VayDeposition (SpectralFieldData& field_data,
                                      std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
 {

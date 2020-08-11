@@ -144,9 +144,9 @@ public:
 #endif
 
 #ifdef WARPX_USE_PSATD
-    // If true (overwritten by the user in the input file), the update equation
-    // for E contains both J and rho (at times n and n+1) on the right hand side
-    bool update_with_rho = false;
+    // If true, the update equation for E contains both J and rho (at times n and n+1):
+    // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
+    bool update_with_rho;
 #endif
 
     // div E cleaning
