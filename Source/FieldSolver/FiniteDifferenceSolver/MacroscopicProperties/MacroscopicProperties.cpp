@@ -13,7 +13,7 @@ void
 MacroscopicProperties::ReadParameters ()
 {
     ParmParse pp("macroscopic");
-    // Since macroscopic maxwell solve is turned on, 
+    // Since macroscopic maxwell solve is turned on,
     // user-defined sigma, mu, and epsilon are queried.
     // The vacuum values are used as default for the macroscopic parameters
     // with a warning message to the user to indicate that no value was specified.
@@ -50,7 +50,7 @@ MacroscopicProperties::ReadParameters ()
     if (!epsilon_specified) {
         amrex::Print() << "WARNING: Material permittivity is not specified. Using default vacuum value of " << m_epsilon << " in the simulation\n";
     }
-  
+
     // initialization of epsilon (permittivity) with parser
     if (m_epsilon_s == "parse_epsilon_function") {
         Store_parserString(pp, "epsilon_function(x,y,z)", m_str_epsilon_function);
@@ -71,7 +71,7 @@ MacroscopicProperties::ReadParameters ()
     if (!mu_specified) {
         amrex::Print() << "WARNING: Material permittivity is not specified. Using default vacuum value of " << m_mu << " in the simulation\n";
     }
-  
+
     // initialization of mu (permeability) with parser
     if (m_mu_s == "parse_mu_function") {
         Store_parserString(pp, "mu_function(x,y,z)", m_str_mu_function);
