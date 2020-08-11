@@ -311,9 +311,6 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     else {
         amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
     }
-    //if (do_pml) {
-    //    amrex::Abort("Macroscopic EvolveE is not implemented for pml boundary condition, yet");
-    // Evolve E field in PML cells
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveEPML(

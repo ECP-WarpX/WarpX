@@ -2,16 +2,16 @@
 #define WARPX_MACROSCOPICPROPERTIES_H_
 
 
-#include <AMReX_REAL.H>
-#include <AMReX_Array4.H>
-#include <AMReX_Gpu.H>
-
-#include <AMReX_MultiFab.H>
-#include <algorithm>
-#include <array>
-
 #include "Parser/WarpXParser.H"
 #include "Parser/WarpXParserWrapper.H"
+//#include <AMReX_REAL.H>
+//#include <AMReX_Array4.H>
+//#include <AMReX_Gpu.H>
+
+#include <AMReX_MultiFab.H>
+//#include <algorithm>
+//#include <array>
+
 
 
 /**
@@ -89,8 +89,9 @@ private:
  * \brief
  * This struct contains only static functions to compute the co-efficients for the
  * Lax-Wendroff scheme of macroscopic Maxwells equations using
- * macroscopic properties, namely, conductivity (sigma), permittivity (epsilon),
- * and permeability (mu).
+ * macroscopic properties, namely, conductivity (sigma), permittivity (epsilon).
+ * Permeability of the material, mu, is used as (beta/mu) for the E-update
+ * defined in MacroscopicEvolveECartesian().
  */
 struct LaxWendroffAlgo {
 
@@ -120,8 +121,9 @@ struct LaxWendroffAlgo {
  * \brief
  * This struct contains only static functions to compute the co-efficients for the
  * BackwardEuler scheme of macroscopic Maxwells equations using
- * macroscopic properties, namely, conductivity (sigma), permittivity (epsilon),
- * and permeability (mu).
+ * macroscopic properties, namely, conductivity (sigma) and permittivity (epsilon).
+ * Permeability of the material, mu, is used as (beta/mu) for the E-update
+ * defined in MacroscopicEvolveECartesian().
  */
 struct BackwardEulerAlgo {
 
