@@ -328,7 +328,6 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     }
 }
 
-
 #ifdef WARPX_DIM_RZ
 // This scales the current by the inverse volume and wraps around the depostion at negative radius.
 // It is faster to apply this on the grid than to do it particle by particle.

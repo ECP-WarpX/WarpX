@@ -1036,7 +1036,7 @@ Numerics and algorithms
     The medium for evaluating the Maxwell solver. Available options are :
 
     - ``vacuum``: vacuum properties are used in the Maxwell solver.
-    - ``macroscopic``: macroscopic Maxwell equation is evaluated. If this option is selected, then the corresponding properties of the medium must be provided using ``macroscopic.sigma``, ``macroscopic.epsilon``, and ``macroscopic.mu`` if the initialization style is ``constant`` or ``macroscopic.sigma_function(x,y,z)``, ``macroscopic.epsilon_function(x,y,z)`` or ``macroscopic.epsilon_function(x,y,z)`` must be provided using the parser initialization style for spatially varying macroscopic properties.
+    - ``macroscopic``: macroscopic Maxwell equation is evaluated. If this option is selected, then the corresponding properties of the medium must be provided using ``macroscopic.sigma``, ``macroscopic.epsilon``, and ``macroscopic.mu`` for each case where the initialization style is ``constant``.  Otherwise if the initialization style uses the parser, ``macroscopic.sigma_function(x,y,z)``, ``macroscopic.epsilon_function(x,y,z)`` and/or ``macroscopic.mu_function(x,y,z)`` must be provided using the parser initialization style for spatially varying macroscopic properties.
 
     If ``algo.em_solver_medium`` is not specified, ``vacuum`` is the default.
 
