@@ -8,7 +8,6 @@
 #endif
 #include "Utils/WarpXConst.H"
 #include "Utils/CoarsenIO.H"
-#include "Utils/CoarsenMR.H"
 #include <AMReX_Gpu.H>
 #include <WarpX.H>
 

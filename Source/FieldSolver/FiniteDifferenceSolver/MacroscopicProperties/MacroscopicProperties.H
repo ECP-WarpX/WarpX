@@ -2,15 +2,8 @@
 #define WARPX_MACROSCOPICPROPERTIES_H_
 
 
-#include "Parser/WarpXParser.H"
 #include "Parser/WarpXParserWrapper.H"
-//#include <AMReX_REAL.H>
-//#include <AMReX_Array4.H>
-//#include <AMReX_Gpu.H>
-
 #include <AMReX_MultiFab.H>
-//#include <algorithm>
-//#include <array>
 
 
 
