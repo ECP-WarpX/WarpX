@@ -117,6 +117,15 @@ MacroscopicProperties::InitData ()
         Ez_IndexType[idim]      = Ez_stag[idim];
         macro_cr_ratio[idim]    = 1;
     }
+#if (AMREX_SPACEDIM==2)
+        sigma_IndexType[2]   = 0;
+        epsilon_IndexType[2] = 0;
+        mu_IndexType[2]      = 0;
+        Ex_IndexType[2]      = 0;
+        Ey_IndexType[2]      = 0;
+        Ez_IndexType[2]      = 0;
+        macro_cr_ratio[2]    = 1;
+#endif
 
 
 }
