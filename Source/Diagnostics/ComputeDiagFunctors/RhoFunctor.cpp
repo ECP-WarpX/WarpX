@@ -2,6 +2,10 @@
 #include "RhoFunctor.H"
 #include "Utils/CoarsenIO.H"
 
+#ifdef WARPX_DIM_RZ
+#include "FieldSolver/SpectralSolver/SpectralFieldData.H"
+#endif
+
 RhoFunctor::RhoFunctor ( const int lev, const amrex::IntVect crse_ratio,
                          bool convertRZmodes2cartesian, const int ncomp )
     : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev),
@@ -16,6 +20,20 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
 
     // Deposit charge density
     std::unique_ptr<amrex::MultiFab> rho = mypc.GetChargeDensity( m_lev );
+
+    if (WarpX::use_filter) {
+        warpx.ApplyFilterandSumBoundaryRho(m_lev, m_lev, *rho, 0, rho->nComp());
+    }
+
+#ifdef WARPX_DIM_RZ
+    using Idx = SpectralAvgFieldIndex;
+    if (WarpX::use_kspace_filter) {
+        auto & solver = warpx.get_spectral_solver_fp(m_lev);
+        solver.ForwardTransform(*rho, Idx::rho_new);
+        solver.ApplyFilter(Idx::rho_new);
+        solver.BackwardTransform(*rho, Idx::rho_new);
+    }
+#endif
 
 #ifdef WARPX_DIM_RZ
     if (m_convertRZmodes2cartesian) {

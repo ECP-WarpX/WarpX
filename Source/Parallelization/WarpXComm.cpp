@@ -868,17 +868,23 @@ void
 WarpX::ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp)
 {
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
-    const auto& period = Geom(glev).periodicity();
     auto& r = (patch_type == PatchType::fine) ? rho_fp[lev] : rho_cp[lev];
     if (r == nullptr) return;
+    ApplyFilterandSumBoundaryRho(lev, glev, *r, icomp, ncomp);
+}
+
+void
+WarpX::ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp)
+{
+    const auto& period = Geom(glev).periodicity();
     if (use_filter) {
-        IntVect ng = r->nGrowVect();
+        IntVect ng = rho.nGrowVect();
         ng += bilinear_filter.stencil_length_each_dir-1;
-        MultiFab rf(r->boxArray(), r->DistributionMap(), ncomp, ng);
-        bilinear_filter.ApplyStencil(rf, *r, icomp, 0, ncomp);
-        WarpXSumGuardCells(*r, rf, period, icomp, ncomp );
+        MultiFab rf(rho.boxArray(), rho.DistributionMap(), ncomp, ng);
+        bilinear_filter.ApplyStencil(rf, rho, icomp, 0, ncomp);
+        WarpXSumGuardCells(rho, rf, period, icomp, ncomp );
     } else {
-        WarpXSumGuardCells(*r, period, icomp, ncomp);
+        WarpXSumGuardCells(rho, period, icomp, ncomp);
     }
 }
 

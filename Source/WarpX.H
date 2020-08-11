@@ -520,6 +520,8 @@ public:
      */
     void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > >& costs);
 
+    void ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp);
+
 protected:
 
     /**
@@ -847,7 +849,18 @@ private:
         amrex::Vector<std::unique_ptr<SpectralSolver>> spectral_solver_fp;
         amrex::Vector<std::unique_ptr<SpectralSolver>> spectral_solver_cp;
 #   endif
+
+public:
+
+#   ifdef WARPX_DIM_RZ
+        SpectralSolverRZ&
+#   else
+        SpectralSolver& 
+#   endif
+            get_spectral_solver_fp (int lev) {return *spectral_solver_fp[lev];}
 #endif
+
+private:
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_cp;
 };
