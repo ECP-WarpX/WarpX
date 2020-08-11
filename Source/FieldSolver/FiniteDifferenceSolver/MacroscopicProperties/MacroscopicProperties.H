@@ -50,11 +50,11 @@ public:
 
 private:
      /** Conductivity, sigma, of the medium */
-     amrex::Real m_sigma;
+     amrex::Real m_sigma = 0.0;
      /** Permittivity, epsilon, of the medium */
-     amrex::Real m_epsilon;
+     amrex::Real m_epsilon = 8.8541878128e-12;
      /** Permeability, mu, of the medium */
-     amrex::Real m_mu;
+     amrex::Real m_mu = 1.25663706212e-06;
      /** Multifab for m_sigma */
      std::unique_ptr<amrex::MultiFab> m_sigma_mf;
      /** Multifab for m_epsilon */
@@ -62,11 +62,11 @@ private:
      /** Multifab for m_mu */
      std::unique_ptr<amrex::MultiFab> m_mu_mf;
      /** Stores initialization type for conductivity : constant or parser */
-     std::string m_sigma_s;
+     std::string m_sigma_s = "constant";
      /** Stores initialization type for permittivity : constant or parser */
-     std::string m_epsilon_s;
+     std::string m_epsilon_s = "constant";
      /** Stores initialization type for permeability : constant or parser */
-     std::string m_mu_s;
+     std::string m_mu_s = "constant";
 
      /** string for storing parser function */
      std::string m_str_sigma_function;

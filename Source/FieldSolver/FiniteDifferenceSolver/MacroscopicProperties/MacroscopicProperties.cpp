@@ -13,10 +13,24 @@ void
 MacroscopicProperties::ReadParameters ()
 {
     ParmParse pp("macroscopic");
-    // Since macroscopic maxwell solve is turned on, user must define sigma, mu, and epsilon //
-    pp.get("sigma_init_style", m_sigma_s);
-    // constant initialization
-    if (m_sigma_s == "constant") pp.get("sigma", m_sigma);
+    // Since macroscopic maxwell solve is turned on, 
+    // user-defined sigma, mu, and epsilon are queried.
+    // The vacuum values are used as default for the macroscopic parameters
+    // with a warning message to the user to indicate that no value was specified.
+
+    // Query input for material conductivity, sigma.
+    bool sigma_specified = false;
+    if (pp.query("sigma", m_sigma)) {
+        m_sigma_s = "constant";
+        sigma_specified = true;
+    }
+    if (pp.query("sigma_function(x,y,z)", m_str_sigma_function) ) {
+        m_sigma_s = "parse_sigma_function";
+        sigma_specified = true;
+    }
+    if (!sigma_specified) {
+        amrex::Print() << "WARNING: Material conductivity is not specified. Using default vacuum value of " << m_sigma << " in the simulation\n";
+    }
     // initialization of sigma (conductivity) with parser
     if (m_sigma_s == "parse_sigma_function") {
         Store_parserString(pp, "sigma_function(x,y,z)", m_str_sigma_function);
@@ -24,8 +38,19 @@ MacroscopicProperties::ReadParameters ()
                                  makeParser(m_str_sigma_function,{"x","y","z"}) ) );
     }
 
-    pp.get("epsilon_init_style", m_epsilon_s);
-    if (m_epsilon_s == "constant") pp.get("epsilon", m_epsilon);
+    bool epsilon_specified = false;
+    if (pp.query("epsilon", m_epsilon)) {
+        m_epsilon_s = "constant";
+        epsilon_specified = true;
+    }
+    if (pp.query("epsilon_function(x,y,z)", m_str_epsilon_function) ) {
+        m_epsilon_s = "parse_epsilon_function";
+        epsilon_specified = true;
+    }
+    if (!epsilon_specified) {
+        amrex::Print() << "WARNING: Material permittivity is not specified. Using default vacuum value of " << m_epsilon << " in the simulation\n";
+    }
+  
     // initialization of epsilon (permittivity) with parser
     if (m_epsilon_s == "parse_epsilon_function") {
         Store_parserString(pp, "epsilon_function(x,y,z)", m_str_epsilon_function);
@@ -33,8 +58,20 @@ MacroscopicProperties::ReadParameters ()
                                  makeParser(m_str_epsilon_function,{"x","y","z"}) ) );
     }
 
-    pp.get("mu_init_style", m_mu_s);
-    if (m_mu_s == "constant") pp.get("mu", m_mu);
+    // Query input for material permittivity, epsilon.
+    bool mu_specified = false;
+    if (pp.query("mu", m_mu)) {
+        m_mu_s = "constant";
+        mu_specified = true;
+    }
+    if (pp.query("mu_function(x,y,z)", m_str_mu_function) ) {
+        m_mu_s = "parse_mu_function";
+        mu_specified = true;
+    }
+    if (!mu_specified) {
+        amrex::Print() << "WARNING: Material permittivity is not specified. Using default vacuum value of " << m_mu << " in the simulation\n";
+    }
+  
     // initialization of mu (permeability) with parser
     if (m_mu_s == "parse_mu_function") {
         Store_parserString(pp, "mu_function(x,y,z)", m_str_mu_function);

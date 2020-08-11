@@ -1047,31 +1047,16 @@ Numerics and algorithms
     - ``laxwendroff`` is the semi-implicit, second order in time scheme for E-update.
     Comparing the two methods, Lax-Wendroff is more prone to developing oscillations and requires a smaller timestep for stability. On the other hand, Backward Euler is more robust but it is first-order accurate in time compared to the second-order Lax-Wendroff method.
 
-* ``macroscopic.sigma_init_style``, ``macroscopic.epsilon_init_style``, ``macroscopic.mu_init_style`` (`string`, required if ``algo.em_solver_medium=macroscopic``)
-     This parameter determines the type of initialization for the material
-     conductivity (sigma), permitivitty (epsilon), and permeability (mu) that is
-     used to update the electric field for macroscopic Maxwell's equations.
-     The string can be set to "constant" if the material respective material property is
-     constant throughout the simulation domain. If this parameter is set to "constant",
-     then a corresponding parameter, namely,
-     ``macroscopic.sigma``, ``macroscopic.epsilon``, ``macroscopic.mu`` must be
-     specified in the input file.
-     To parse a mathematical function for initializing conductivity, permittivity,
-     and/or permeability, set this init style parameter to ``parse_sigma_function``,
-     ``parse_epsilon_function``, and ``parse_mu_function``, respectively.
-     Setting this option to parse functions requires additional parameter for
-     initializing the macroparameters in the input file, namely,
-     ``macroscopic.sigma_function(x,y,z)``,
-     ``macroscopic.epsilon_function(x,y,z)``,
-     ``macroscopic.mu_function(x,y,z)``,
-     to initialize spatially varying material conductivity, permittivity,
-     and permeability, respectively.
-     Constants required in the mathematical expression can be set
-     using ``my_constants``.
+* ``macroscopic.sigma_function(x,y,z)``, ``macroscopic.epsilon_function(x,y,z)``, ``macroscopic.mu_function(x,y,z)`` (`string`)
+     To initialize spatially varying conducitivy, permittivity, and permeability, respectively,
+     using a mathematical function in the input. Constants required in the
+     mathematical expression can be set using ``my_constants``. These parameters are parsed
+     if ``algo.em_solver_medium=macroscopic``.
 
 * ``macroscopic.sigma``, ``macroscopic.epsilon``, ``macroscopic.mu`` (`double`)
-    The conductivity, permittivity, and permeability of the computational medium, respectively.
-    If ``algo.em_solver_medium`` is set to macroscopic, then these properties must be provided if the respective initialization type, ``macroscopic.sigma_init_style``, ``macroscopic.epsilon_init_style``, and ``macroscopic.mu_init_style`` are set to ``constant``.
+    To initialize a constant conductivity, permittivity, and permeability of the
+    computational medium, respectively. The default values are the corresponding values
+    in vacuum.
 
 * ``interpolation.nox``, ``interpolation.noy``, ``interpolation.noz`` (`1`, `2`, or `3` ; default: 1)
     The order of the shape factors for the macroparticles, for the 3 dimensions of space.
