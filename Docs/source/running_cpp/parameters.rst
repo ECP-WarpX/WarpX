@@ -410,8 +410,8 @@ Particle initialization
       temperature parameter ``<species_name>.theta`` as an input, where theta is kb*T/(m*c^2),
       kb is the Boltzmann constant, c is the speed of light, and m is the mass of the species.
       It also includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c.
-      The plasma will be initialized to move at drift velocity beta*c in the
-      ``<species_name>.drift_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
+      The plasma will be initialized to move at bulk velocity beta*c in the
+      ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
       between the sign and the character on input. A direction without a sign will be treated as
       positive. The MB distribution is initialized in the drifting frame by sampling three Gaussian
       distributions in each dimension using, the Box Mueller method, and then the distribution is
@@ -427,7 +427,7 @@ Particle initialization
       to kb*T/(m*c^2), where kb is the Boltzmann constant, and m is the mass of the species. It also
       includes the optional parameter ``<species_name>.beta`` where beta is equal to v/c. The plasma
       will be initialized to move at velocity beta*c in the
-      ``<species_name>.drift_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
+      ``<species_name>.bulk_vel_dir = (+/-) 'x', 'y', 'z'`` direction. Please leave no whitespace
       between the sign and the character on input. A direction without a sign will be treated as
       positive. The MJ distribution will be initialized in the moving frame using the Sobol method,
       and then the distribution will be transformed to the simulation frame using the flipping method.
