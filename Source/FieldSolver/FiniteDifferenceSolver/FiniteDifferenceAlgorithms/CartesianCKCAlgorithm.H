@@ -13,6 +13,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
+#include <AMReX.H>
 
 #include <algorithm>
 #include <array>
@@ -112,7 +113,7 @@ struct CartesianCKCAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDx (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_x, int const n_coefs_x,
+        amrex::Real const * const coefs_x, int const /*n_coefs_x*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const alphax = coefs_x[1];
@@ -145,7 +146,7 @@ struct CartesianCKCAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real DownwardDx (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_x, int const n_coefs_x,
+        amrex::Real const * const coefs_x, int const /*n_coefs_x*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const inv_dx = coefs_x[0];
@@ -232,7 +233,7 @@ struct CartesianCKCAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDz (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_z, int const n_coefs_z,
+        amrex::Real const * const coefs_z, int const /*n_coefs_z*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
@@ -264,7 +265,7 @@ struct CartesianCKCAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real DownwardDz (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_z, int const n_coefs_z,
+        amrex::Real const * const coefs_z, int const /*n_coefs_z*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const inv_dz = coefs_z[0];

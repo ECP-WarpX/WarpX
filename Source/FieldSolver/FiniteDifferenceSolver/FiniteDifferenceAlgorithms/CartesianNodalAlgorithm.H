@@ -61,7 +61,7 @@ struct CartesianNodalAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDx (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_x, int const n_coefs_x,
+        amrex::Real const * const coefs_x, int const /*n_coefs_x*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
@@ -90,7 +90,7 @@ struct CartesianNodalAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDy (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_y, int const n_coefs_y,
+        amrex::Real const * const coefs_y, int const /*n_coefs_y*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
@@ -123,7 +123,7 @@ struct CartesianNodalAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDz (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_z, int const n_coefs_z,
+        amrex::Real const * const coefs_z, int const /*n_coefs_z*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
