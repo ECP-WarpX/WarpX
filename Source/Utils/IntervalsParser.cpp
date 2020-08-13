@@ -73,7 +73,7 @@ IntervalsParser::IntervalsParser (const std::string& instr)
 
 bool IntervalsParser::contains (const int n) const
 {
-    for(int i=0; i<m_slices.size(); i++){
+    for(int i=0; i<static_cast<int>(m_slices.size()); i++){
         if (m_slices[i].contains(n)) return true;
     }
     return false;
@@ -82,7 +82,7 @@ bool IntervalsParser::contains (const int n) const
 int IntervalsParser::nextContains (const int n) const
 {
     int next = std::numeric_limits<int>::max();
-    for(int i=0; i<m_slices.size(); i++){
+    for(int i=0; i<static_cast<int>(m_slices.size()); i++){
         next = std::min(m_slices[i].nextContains(n),next);
     }
     return next;
@@ -91,7 +91,7 @@ int IntervalsParser::nextContains (const int n) const
 int IntervalsParser::previousContains (const int n) const
 {
     int previous = 0;
-    for(int i=0; i<m_slices.size(); i++){
+    for(int i=0; i<static_cast<int>(m_slices.size()); i++){
         previous = std::max(m_slices[i].previousContains(n),previous);
     }
     return previous;

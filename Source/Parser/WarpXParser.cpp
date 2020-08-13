@@ -100,7 +100,7 @@ WarpXParser::registerVariables (std::vector<std::string> const& names)
         const int tid = omp_get_thread_num();
         struct wp_parser* p = m_parser[tid];
         auto& v = m_variables[tid];
-        for (int j = 0; j < names.size(); ++j) {
+        for (int j = 0; j < static_cast<int>(names.size()); ++j) {
             wp_parser_regvar(p, names[j].c_str(), &(v[j]));
             m_varnames[tid].push_back(names[j]);
         }

@@ -29,7 +29,7 @@ CollisionType::CollisionType(
     m_CoulombLog = -1.0;
     pp.query("CoulombLog", m_CoulombLog);
 
-    for (int i=0; i<species_names.size(); i++)
+    for (int i=0; i<static_cast<int>(species_names.size()); i++)
     {
         if (species_names[i] == collision_species[0])
         { m_species1_index = i; }

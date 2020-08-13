@@ -994,10 +994,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if ( fft_periodic_single_box == false ) {
         realspace_ba.grow(ngE); // add guard cells
     }
-    bool const pml=false;
+    bool const pml_flag_false=false;
     spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
         nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
-        pml, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
+        pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
     m_fdtd_solver_fp[lev].reset(
@@ -1101,21 +1101,21 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         RealVect cdx_vect(cdx[0], cdx[2]);
 #   endif
         // Get the cell-centered box, with guard cells
-        BoxArray realspace_ba = cba;// Copy box
-        realspace_ba.enclosedCells(); // Make it cell-centered
+        BoxArray c_realspace_ba = cba;// Copy box
+        c_realspace_ba.enclosedCells(); // Make it cell-centered
         // Define spectral solver
 #   ifdef WARPX_DIM_RZ
-        realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-        spectral_solver_cp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
+        c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+        spectral_solver_cp[lev].reset( new SpectralSolverRZ( c_realspace_ba, dm,
             n_rz_azimuthal_modes, noz_fft, do_nodal, cdx_vect, dt[lev], lev ) );
         if (use_kspace_filter) {
             spectral_solver_cp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
         }
 #   else
-        realspace_ba.grow(ngE); // add guard cells
-        spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
+        c_realspace_ba.grow(ngE); // add guard cells
+        spectral_solver_cp[lev].reset( new SpectralSolver( c_realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev],
-            pml, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
+            pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
         m_fdtd_solver_cp[lev].reset(
@@ -1226,11 +1226,11 @@ WarpX::UpperCorner(const Box& bx, int lev)
 }
 
 std::array<Real,3>
-WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev)
+WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Array<amrex::Real,3>& vv_galilean, int lev)
 {
     amrex::Real cur_time = gett_new(lev);
     amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    amrex::Array<amrex::Real,3> galilean_shift = { vv_galilean[0]*time_shift, vv_galilean[1]*time_shift, vv_galilean[2]*time_shift };
     return WarpX::LowerCorner(bx, galilean_shift, lev);
 }
 

@@ -149,7 +149,7 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
             case ShiftType::TransformToCellCentered: sign = 1.;
         }
         const Complex I{0,1};
-        for (int i=0; i<k.size(); i++ ){
+        for (int i=0; i<static_cast<int>(k.size()); i++ ){
             shift[i] = exp( I*sign*k[i]*0.5_rt*dx[i_dim]);
         }
     }
@@ -187,7 +187,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             modified_k.resize( k.size() );
 
             // Fill the modified k vector
-            for (int i=0; i<k.size(); i++ ){
+            for (int i=0; i<static_cast<int>(k.size()); i++ ){
                 modified_k[i] = k[i]; // infinite-order case.
             }
         }
@@ -207,7 +207,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             modified_k.resize( k.size() );
 
             // Fill the modified k vector
-            for (int i=0; i<k.size(); i++ ){
+            for (int i=0; i<static_cast<int>(k.size()); i++ ){
                 modified_k[i] = 0;
                 for (int n=1; n<stencil_coef.size(); n++){
                     if (nodal){
