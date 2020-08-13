@@ -329,6 +329,22 @@ WarpX::ReadParameters ()
     {
         ParmParse pp("warpx");
 
+        std::vector<int> numprocs_in;
+        pp.queryarr("numprocs", numprocs_in);
+        if (not numprocs_in.empty()) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE
+                (numprocs_in.size() == AMREX_SPACEDIM,
+                 "warpx.numprocs, if specified, must have AMREX_SPACEDIM numbers");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE
+                (ParallelDescriptor::NProcs() == AMREX_D_TERM(numprocs_in[0],
+                                                             *numprocs_in[1],
+                                                             *numprocs_in[2]),
+                 "warpx.numprocs, if specified, its product must be equal to the number of processes");
+            for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+                numprocs[idim] = numprocs_in[idim];
+            }
+        }
+
         // set random seed
         std::string random_seed = "default";
         pp.query("random_seed", random_seed);
