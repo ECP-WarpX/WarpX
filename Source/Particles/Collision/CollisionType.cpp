@@ -162,6 +162,8 @@ void CollisionType::doCoulombCollisionsWithinTile
 #if defined WARPX_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0*ri+1.0)*dr*dr*dz;
+#else
+                    amrex::ignore_unused(nz);
 #endif
 
                     // Call the function in order to perform collisions
@@ -257,6 +259,8 @@ void CollisionType::doCoulombCollisionsWithinTile
 #if defined WARPX_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0*ri+1.0)*dr*dr*dz;
+#else
+                    amrex::ignore_unused(nz);
 #endif
 
                     // Call the function in order to perform collisions

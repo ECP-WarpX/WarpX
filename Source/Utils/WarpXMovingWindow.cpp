@@ -112,8 +112,8 @@ WarpX::MoveWindow (bool move_j)
         // Shift each component of vector fields (E, B, j)
         for (int dim = 0; dim < 3; ++dim) {
             // Fine grid
-            ParserWrapper<3> *Bfield_parser;
-            ParserWrapper<3> *Efield_parser;
+            ParserWrapper<3> *Bfield_parser = nullptr;
+            ParserWrapper<3> *Efield_parser = nullptr;
             bool use_Bparser = false;
             bool use_Eparser = false;
             if (B_ext_grid_s == "parse_b_ext_grid_function") {

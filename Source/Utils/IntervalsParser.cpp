@@ -62,7 +62,7 @@ IntervalsParser::IntervalsParser (const std::string& instr)
 {
     auto insplit = WarpXUtilStr::split<std::vector<std::string>>(instr, m_separator);
 
-    for(int i=0; i<insplit.size(); i++)
+    for(int i=0; i<static_cast<int>(insplit.size()); i++)
     {
         SliceParser temp_slice(insplit[i]);
         m_slices.push_back(temp_slice);
