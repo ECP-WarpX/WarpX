@@ -206,7 +206,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
             int ind_rank = i - m_nDataFields + 2; // index for the rank corresponding to current box
 
             // m_data --> rank --> hostname
-            ofs << m_sep << m_data_string[m_data[ind_rank]];
+            ofs << m_sep << m_data_string[(long unsigned int)(m_data[ind_rank])];
         }
     }
     // end loop over data size
