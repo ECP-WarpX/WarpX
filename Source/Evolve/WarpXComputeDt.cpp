@@ -43,15 +43,15 @@ WarpX::ComputeDt ()
 
 #   ifdef WARPX_DIM_RZ
     // - In RZ geometry
-    if (maxwell_fdtd_solver_id == MaxwellSolverAlgo::Yee) {
+    if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
         deltat = cfl * CylindricalYeeAlgorithm::ComputeMaxDt(dx,  n_rz_azimuthal_modes);
 #   else
     // - In Cartesian geometry
     if (do_nodal) {
         deltat = cfl * CartesianNodalAlgorithm::ComputeMaxDt( dx );
-    } else if (maxwell_fdtd_solver_id == MaxwellSolverAlgo::Yee) {
+    } else if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
         deltat = cfl * CartesianYeeAlgorithm::ComputeMaxDt( dx );
-    } else if (maxwell_fdtd_solver_id == MaxwellSolverAlgo::CKC) {
+    } else if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
         deltat = cfl * CartesianCKCAlgorithm::ComputeMaxDt( dx );
 #   endif
     } else {

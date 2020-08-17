@@ -1,6 +1,9 @@
 Visualizing the simulation results
 ==================================
 
+Output formats
+--------------
+
 WarpX can write data either in `plotfile` format (AMReX's native format), or
 in `openPMD format <https://www.openpmd.org/>`_ (a common data schema on top of
 HDF5 or ADIOS files for particle-in-cell codes).
@@ -10,6 +13,22 @@ HDF5 or ADIOS files for particle-in-cell codes).
     This is controlled by the parameters ``warpx.plot_int`` (AMReX) or the
     ``warpx.openpmd_int`` & ``warpx.openpmd_backend`` options in the section
     :doc:`../running_cpp/parameters`.
+
+Asynchronous IO
+---------------
+
+When using the AMReX `plotfile` format, users can set the ``amrex.async_out=1``
+option to perform the IO in a non-blocking fashion, meaning that the simulation
+will continue to run while an IO thread controls writing the data to disk.
+This can significantly reduce the overall time spent in IO. This is primarily intended for
+large runs on supercomputers such as Summit and Cori; depending on the MPI
+implentation you are using, you may not see a benefit on your workstation.
+
+When writing plotfiles, each rank will write to a separate file, up to some maximum number
+(by default, 64). This maximum can be adjusted using the ``amrex.async_out_nfiles`` inputs
+parameter. To use asynchronous IO with than ``amrex.async_out_nfiles`` MPI ranks, WarpX
+WarpX must be compiled with the ``MPI_THREAD_MULTIPLE=TRUE`` flag.
+Please see :doc:`../building/building` for building instructions.
 
 This section describes some of the tools available to visualize the data:
 

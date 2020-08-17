@@ -80,6 +80,24 @@ class SpectralSolverRZ
             algorithm->pushSpectralFields(field_data);
         };
 
+        /* \brief Initialize K space filtering arrays */
+        void InitFilter (amrex::IntVect const & filter_npass_each_dir,
+                         bool const compensation)
+        {
+            field_data.InitFilter(filter_npass_each_dir, compensation, k_space);
+        };
+
+        /* \brief Apply K space filtering for a scalar */
+        void ApplyFilter (int const field_index)
+        {
+            field_data.ApplyFilter(field_index);
+        };
+
+        /* \brief Apply K space filtering for a vector */
+        void ApplyFilter (int const field_index1, int const field_index2, int const field_index3)
+        {
+            field_data.ApplyFilter(field_index1, field_index2, field_index3);
+        };
         /**
           * \brief Public interface to call the member function ComputeSpectralDivE
           * of the base class SpectralBaseAlgorithmRZ from objects of class SpectralSolverRZ
@@ -120,6 +138,7 @@ class SpectralSolverRZ
 
     private:
 
+        SpectralKSpaceRZ k_space; // Save the instance to initialize filtering
         SpectralFieldDataRZ field_data; // Store field in spectral space
                                         // and perform the Fourier transforms
         std::unique_ptr<SpectralBaseAlgorithmRZ> algorithm;

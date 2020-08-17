@@ -586,7 +586,9 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     const auto& ba = m_gdb->ParticleBoxArray(lev);
     const auto& dm = m_gdb->DistributionMap(lev);
     BoxArray nba = ba;
+#if (!defined WARPX_DIM_RZ) || (!defined WARPX_USE_PSATD)
     nba.surroundingNodes();
+#endif
 
     const int ng = WarpX::nox;
 
@@ -862,10 +864,10 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
     // Tag particle if goes to higher level.
     // It will be split later in the loop
     if (pld.m_lev == lev+1
-        and p.m_idata.id != NoSplitParticleID
-        and p.m_idata.id >= 0)
+        and p.id() != NoSplitParticleID
+        and p.id() >= 0)
     {
-        p.m_idata.id = DoSplitParticleID;
+        p.id() = DoSplitParticleID;
     }
 
     if (pld.m_lev == lev-1){

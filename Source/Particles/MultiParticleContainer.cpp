@@ -33,6 +33,9 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
 
     ReadParameters();
 
+    auto const nspecies = species_names.size();
+    auto const nlasers = lasers_names.size();
+
     allcontainers.resize(nspecies + nlasers);
     for (int i = 0; i < nspecies; ++i) {
         if (species_types[i] == PCTypes::Physical) {
@@ -69,6 +72,7 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
     }
 
     // collision
+    auto const ncollisions = collision_names.size();
     allcollisions.resize(ncollisions);
     for (int i = 0; i < ncollisions; ++i) {
         allcollisions[i].reset
@@ -170,16 +174,11 @@ MultiParticleContainer::ReadParameters ()
         }
 
 
-
-
-        pp.query("nspecies", nspecies);
-        AMREX_ALWAYS_ASSERT(nspecies >= 0);
+        // particle species
+        pp.queryarr("species_names", species_names);
+        auto const nspecies = species_names.size();
 
         if (nspecies > 0) {
-            // Get species names
-            pp.getarr("species_names", species_names);
-            AMREX_ALWAYS_ASSERT(species_names.size() == nspecies);
-
             // Get species to deposit on main grid
             m_deposit_on_main_grid.resize(nspecies, false);
             std::vector<std::string> tmp;
@@ -242,27 +241,17 @@ MultiParticleContainer::ReadParameters ()
                 }
             }
 
-            // collision
+            // binary collisions
             ParmParse pc("collisions");
-            pc.query("ncollisions", ncollisions);
-            AMREX_ALWAYS_ASSERT(ncollisions >= 0);
-            if (ncollisions > 0) {
-                pc.getarr("collision_names", collision_names);
-                AMREX_ALWAYS_ASSERT(collision_names.size() == ncollisions);
-            }
+            pc.queryarr("collision_names", collision_names);
 
         }
 
         pp.query("use_fdtd_nci_corr", WarpX::use_fdtd_nci_corr);
-        pp.query("l_lower_order_in_v", WarpX::l_lower_order_in_v);
+        pp.query("galerkin_interpolation", WarpX::galerkin_interpolation);
 
         ParmParse ppl("lasers");
-        ppl.query("nlasers", nlasers);
-        AMREX_ALWAYS_ASSERT(nlasers >= 0);
-        if (nlasers > 0) {
-            ppl.getarr("names", lasers_names);
-            AMREX_ALWAYS_ASSERT(lasers_names.size() == nlasers);
-        }
+        ppl.queryarr("names", lasers_names);
 
 #ifdef WARPX_QED
         ParmParse ppw("warpx");
@@ -514,8 +503,7 @@ MultiParticleContainer
 void
 MultiParticleContainer::ContinuousInjection (const RealBox& injection_box) const
 {
-    for (int i=0; i<nspecies+nlasers; i++){
-        auto& pc = allcontainers[i];
+    for (auto& pc : allcontainers){
         if (pc->do_continuous_injection){
             pc->ContinuousInjection(injection_box);
         }
@@ -530,8 +518,7 @@ MultiParticleContainer::ContinuousInjection (const RealBox& injection_box) const
 void
 MultiParticleContainer::UpdateContinuousInjectionPosition (Real dt) const
 {
-    for (int i=0; i<nspecies+nlasers; i++){
-        auto& pc = allcontainers[i];
+    for (auto& pc : allcontainers){
         if (pc->do_continuous_injection){
             pc->UpdateContinuousInjectionPosition(dt);
         }
@@ -542,8 +529,7 @@ int
 MultiParticleContainer::doContinuousInjection () const
 {
     int warpx_do_continuous_injection = 0;
-    for (int i=0; i<nspecies+nlasers; i++){
-        auto& pc = allcontainers[i];
+    for (auto& pc : allcontainers){
         if (pc->do_continuous_injection){
             warpx_do_continuous_injection = 1;
         }
@@ -558,7 +544,7 @@ MultiParticleContainer::doContinuousInjection () const
 void
 MultiParticleContainer::mapSpeciesProduct ()
 {
-    for (int i=0; i<nspecies; i++){
+    for (int i=0; i<species_names.size(); i++){
         auto& pc = allcontainers[i];
         // If species pc has ionization on, find species with name
         // pc->ionization_product_name and store its ID into
@@ -606,7 +592,7 @@ MultiParticleContainer::getSpeciesID (std::string product_str) const
     int i_product;
     bool found = 0;
     // Loop over species
-    for (int i=0; i<nspecies; i++){
+    for (int i=0; i<species_names.size(); i++){
         // If species name matches, store its ID
         // into i_product
         if (species_names[i] == product_str){
@@ -680,10 +666,10 @@ MultiParticleContainer::doCoulombCollisions ()
 {
     WARPX_PROFILE("MPC::doCoulombCollisions");
 
-    for (int i = 0; i < ncollisions; ++i)
+    for( auto const& collision : allcollisions )
     {
-        auto& species1 = allcontainers[ allcollisions[i]->m_species1_index ];
-        auto& species2 = allcontainers[ allcollisions[i]->m_species2_index ];
+        auto& species1 = allcontainers[ collision->m_species1_index ];
+        auto& species2 = allcontainers[ collision->m_species2_index ];
 
         // Enable tiling
         MFItInfo info;
@@ -701,8 +687,8 @@ MultiParticleContainer::doCoulombCollisions ()
 
                 CollisionType::doCoulombCollisionsWithinTile
                     ( lev, mfi, species1, species2,
-                      allcollisions[i]->m_isSameSpecies,
-                      allcollisions[i]->m_CoulombLog );
+                      collision->m_isSameSpecies,
+                      collision->m_CoulombLog );
 
             }
         }
@@ -711,7 +697,7 @@ MultiParticleContainer::doCoulombCollisions ()
 
 void MultiParticleContainer::CheckIonizationProductSpecies()
 {
-    for (int i=0; i<nspecies; i++){
+    for (int i=0; i<species_names.size(); i++){
         if (allcontainers[i]->do_field_ionization){
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 i != allcontainers[i]->ionization_product,
@@ -1265,6 +1251,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 
 void MultiParticleContainer::CheckQEDProductSpecies()
 {
+    auto const nspecies = species_names.size();
     for (int i=0; i<nspecies; i++){
         const auto& pc = allcontainers[i];
         if (pc->has_breit_wheeler()){

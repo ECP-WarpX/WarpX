@@ -378,7 +378,7 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf, int const fie
 
     // Create a temporary to hold the inverse Hankel transform field.
     // This allows the final result to have a different shape than the transformed field.
-    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
+    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes-1, 0);
 
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf); mfi.isValid(); ++mfi){
@@ -389,9 +389,8 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf, int const fie
         // tempHTransformedSplit includes the imaginary component of mode 0.
         // field_mf does not.
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
-        amrex::FArrayBox field_comp(field_mf_copy[mfi], amrex::make_alias, i_comp*ncomp, ncomp);
-        multi_spectral_hankel_transformer[mfi].SpectralToPhysical_Scalar(realspace_bx, tempHTransformedSplit[mfi], field_comp);
-        field_mf[mfi].copy(field_comp, 0, i_comp*ncomp, ncomp);
+        multi_spectral_hankel_transformer[mfi].SpectralToPhysical_Scalar(realspace_bx, tempHTransformedSplit[mfi], field_mf_copy[mfi]);
+        field_mf[mfi].copy(field_mf_copy[mfi], 0, i_comp*ncomp, ncomp);
 
     }
 }
@@ -446,4 +445,81 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf_r, int const f
 
     }
 
+}
+
+/* \brief Initialize arrays used for filtering */
+void
+SpectralFieldDataRZ::InitFilter (amrex::IntVect const & filter_npass_each_dir, bool const compensation,
+                                 SpectralKSpaceRZ const & k_space)
+{
+    binomialfilter = BinomialFilter(multi_spectral_hankel_transformer.boxArray(),
+                                    multi_spectral_hankel_transformer.DistributionMap());
+
+    auto const & dx = k_space.getCellSize();
+    auto const & kz = k_space.getKzArray();
+
+    for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
+        binomialfilter[mfi].InitFilterArray(multi_spectral_hankel_transformer[mfi].getKrArray(),
+                                            kz[mfi], dx, filter_npass_each_dir, compensation);
+    }
+}
+
+/* \brief Apply K-space filtering on a scalar */
+void
+SpectralFieldDataRZ::ApplyFilter (int const field_index)
+{
+
+    for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
+        auto const & filter_r = binomialfilter[mfi].getFilterArrayR();
+        auto const & filter_z = binomialfilter[mfi].getFilterArrayZ();
+        auto const & filter_r_arr = filter_r.dataPtr();
+        auto const & filter_z_arr = filter_z.dataPtr();
+
+        amrex::Array4<Complex> const& fields_arr = fields[mfi].array();
+
+        int const modes = n_rz_azimuthal_modes;
+        constexpr int n_fields = SpectralFieldIndex::n_fields;
+
+        amrex::Box const& spectralspace_bx = fields[mfi].box();
+        int const nr = spectralspace_bx.length(0);
+
+        ParallelFor(spectralspace_bx, modes,
+        [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
+            int const ic = field_index + mode*n_fields;
+            int const ir = i + nr*mode;
+            fields_arr(i,j,k,ic) *= filter_r_arr[ir]*filter_z_arr[j];
+        });
+    }
+}
+
+/* \brief Apply K-space filtering on a vector */
+void
+SpectralFieldDataRZ::ApplyFilter (int const field_index1, int const field_index2, int const field_index3)
+{
+
+    for (amrex::MFIter mfi(binomialfilter); mfi.isValid(); ++mfi){
+        auto const & filter_r = binomialfilter[mfi].getFilterArrayR();
+        auto const & filter_z = binomialfilter[mfi].getFilterArrayZ();
+        auto const & filter_r_arr = filter_r.dataPtr();
+        auto const & filter_z_arr = filter_z.dataPtr();
+
+        amrex::Array4<Complex> const& fields_arr = fields[mfi].array();
+
+        int const modes = n_rz_azimuthal_modes;
+        constexpr int n_fields = SpectralFieldIndex::n_fields;
+
+        amrex::Box const& spectralspace_bx = fields[mfi].box();
+        int const nr = spectralspace_bx.length(0);
+
+        ParallelFor(spectralspace_bx, modes,
+        [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept {
+            int const ic1 = field_index1 + mode*n_fields;
+            int const ic2 = field_index2 + mode*n_fields;
+            int const ic3 = field_index3 + mode*n_fields;
+            int const ir = i + nr*mode;
+            fields_arr(i,j,k,ic1) *= filter_r_arr[ir]*filter_z_arr[j];
+            fields_arr(i,j,k,ic2) *= filter_r_arr[ir]*filter_z_arr[j];
+            fields_arr(i,j,k,ic3) *= filter_r_arr[ir]*filter_z_arr[j];
+        });
+    }
 }

@@ -21,7 +21,6 @@ warpx.cfl     = 1.e-8
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies      = 4
 particles.species_names = gaussian maxwell_boltzmann maxwell_juttner beam
 
 gaussian.charge                     = -q_e

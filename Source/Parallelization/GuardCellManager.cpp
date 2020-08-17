@@ -22,7 +22,7 @@ guardCellManager::Init(
     const int nox,
     const int nox_fft, const int noy_fft, const int noz_fft,
     const int nci_corr_stencil,
-    const int maxwell_fdtd_solver_id,
+    const int maxwell_solver_id,
     const int max_level,
     const amrex::Array<amrex::Real,3> v_galilean,
     const bool safe_guard_cells)
@@ -90,7 +90,7 @@ guardCellManager::Init(
     // after pushing particle.
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell
-    if (maxwell_fdtd_solver_id == 1) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
+    if (maxwell_solver_id == 1) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 
 #ifdef WARPX_USE_PSATD
@@ -111,7 +111,11 @@ guardCellManager::Init(
     pp.query("ny_guard", ngFFt_y);
     pp.query("nz_guard", ngFFt_z);
 
-    IntVect ngFFT = IntVect(AMREX_D_DECL(ngFFt_x, ngFFt_y, ngFFt_z));
+#if   (AMREX_SPACEDIM == 3)
+    IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
+#elif (AMREX_SPACEDIM == 2)
+    IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+#endif
 
     for (int i_dim=0; i_dim<AMREX_SPACEDIM; i_dim++ ){
         int ng_required = ngFFT[i_dim];

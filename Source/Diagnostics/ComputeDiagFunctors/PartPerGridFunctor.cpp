@@ -11,7 +11,7 @@ PartPerGridFunctor::PartPerGridFunctor(const amrex::MultiFab * const mf_src, con
 }
 
 void
-PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
+PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/) const
 {
     auto& warpx = WarpX::GetInstance();
     const amrex::Vector<long>& npart_in_grid = warpx.GetPartContainer().NumberOfParticlesInGrid(m_lev);

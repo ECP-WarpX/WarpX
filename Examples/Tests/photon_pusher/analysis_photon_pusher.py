@@ -128,7 +128,6 @@ def generate():
         f.write("algo.field_gathering = energy-conserving\n")
         f.write("warpx.cfl = 1.0\n")
 
-        f.write("\nparticles.nspecies = {}\n".format(len(spec_names)))
         f.write("particles.species_names = {}\n".format(' '.join(spec_names)))
         f.write("particles.photon_species = {}\n".format(' '.join(spec_names)))
 
