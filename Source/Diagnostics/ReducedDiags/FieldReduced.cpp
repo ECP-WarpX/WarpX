@@ -181,8 +181,8 @@ void FieldReduced::ComputeDiags (int step)
 
             // compute B squared
             Real const tmpBx = Bx.norm2(0,geom.periodicity());
-            Real const tmpBx = By.norm2(0,geom.periodicity());
-            Real const tmpBx = Bz.norm2(0,geom.periodicity());
+            Real const tmpBy = By.norm2(0,geom.periodicity());
+            Real const tmpBz = Bz.norm2(0,geom.periodicity());
             Real const Bs = tmpBx*tmpBx + tmpBy*tmpBy + tmpBz*tmpBz;
 
             constexpr int noutputs_fieldEnergy = 3; // total energy, E-field energy and B-field energy
