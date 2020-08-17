@@ -174,16 +174,16 @@ void FieldReduced::ComputeDiags (int step)
 #endif
 
             // compute E squared
-            Real tmpx = Ex.norm2(0,geom.periodicity());
-            Real tmpy = Ey.norm2(0,geom.periodicity());
-            Real tmpz = Ez.norm2(0,geom.periodicity());
-            Real Es = tmpx*tmpx + tmpy*tmpy + tmpz*tmpz;
+            Real const tmpEx = Ex.norm2(0,geom.periodicity());
+            Real const tmpEy = Ey.norm2(0,geom.periodicity());
+            Real const tmpEz = Ez.norm2(0,geom.periodicity());
+            Real const Es = tmpEx*tmpEx + tmpEy*tmpEy + tmpEz*tmpEz;
 
             // compute B squared
-            tmpx = Bx.norm2(0,geom.periodicity());
-            tmpy = By.norm2(0,geom.periodicity());
-            tmpz = Bz.norm2(0,geom.periodicity());
-            Real Bs = tmpx*tmpx + tmpy*tmpy + tmpz*tmpz;
+            Real const tmpBx = Bx.norm2(0,geom.periodicity());
+            Real const tmpBx = By.norm2(0,geom.periodicity());
+            Real const tmpBx = Bz.norm2(0,geom.periodicity());
+            Real const Bs = tmpBx*tmpBx + tmpBy*tmpBy + tmpBz*tmpBz;
 
             constexpr int noutputs_fieldEnergy = 3; // total energy, E-field energy and B-field energy
             constexpr int index_total = 0;
@@ -191,8 +191,8 @@ void FieldReduced::ComputeDiags (int step)
             constexpr int index_B = 2;
 
             // save data
-            m_data[lev*noutputs_fieldEnergy+index_E] = 0.5 * Es * PhysConst::ep0 * dV;
-            m_data[lev*noutputs_fieldEnergy+index_B] = 0.5 * Bs / PhysConst::mu0 * dV;
+            m_data[lev*noutputs_fieldEnergy+index_E] = 0.5_rt * Es * PhysConst::ep0 * dV;
+            m_data[lev*noutputs_fieldEnergy+index_B] = 0.5_rt * Bs / PhysConst::mu0 * dV;
             m_data[lev*noutputs_fieldEnergy+index_total] = m_data[lev*noutputs_fieldEnergy+index_E] +
                                                            m_data[lev*noutputs_fieldEnergy+index_B];
         }
