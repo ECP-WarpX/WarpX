@@ -943,6 +943,10 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     If this is not provided, or if a non-positive value is provided,
     a Coulomb logarithm will be computed automatically according to the algorithm.
 
+* ``<collision_name>.ndt`` (`float`) optional
+    Execute collision every # time steps.
+    The default value is 1.
+
 .. _running-cpp-parameters-numerics:
 
 Numerics and algorithms
