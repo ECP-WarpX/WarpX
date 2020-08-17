@@ -17,6 +17,7 @@ class CollisionType
 public:
     int  m_species1_index;
     int  m_species2_index;
+    int  m_ndt;
     bool m_isSameSpecies;
     amrex::Real m_CoulombLog;
 
@@ -38,7 +39,8 @@ public:
         int const lev, amrex::MFIter const& mfi,
         std::unique_ptr<WarpXParticleContainer>& species1,
         std::unique_ptr<WarpXParticleContainer>& species2,
-        bool const isSameSpecies, amrex::Real const CoulombLog );
+        bool const isSameSpecies, amrex::Real const CoulombLog,
+        int const ndt );
 
 };
 

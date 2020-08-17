@@ -270,7 +270,7 @@ WarpX::OneStep_nosub (Real cur_time)
     // product species.
     doFieldIonization();
 
-    mypc->doCoulombCollisions();
+    mypc->doCoulombCollisions( cur_time );
 #ifdef WARPX_QED
     mypc->doQEDSchwinger();
 #endif

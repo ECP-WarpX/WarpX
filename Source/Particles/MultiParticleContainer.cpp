@@ -662,12 +662,16 @@ MultiParticleContainer::doFieldIonization (int lev,
 }
 
 void
-MultiParticleContainer::doCoulombCollisions ()
+MultiParticleContainer::doCoulombCollisions ( Real cur_time )
 {
     WARPX_PROFILE("MPC::doCoulombCollisions");
 
     for( auto const& collision : allcollisions )
     {
+
+        const Real dt = WarpX::GetInstance().getdt(0);
+        if ( int(std::floor(cur_time/dt)) % collision->m_ndt != 0 ) continue;
+
         auto& species1 = allcontainers[ collision->m_species1_index ];
         auto& species2 = allcontainers[ collision->m_species2_index ];
 
@@ -688,7 +692,8 @@ MultiParticleContainer::doCoulombCollisions ()
                 CollisionType::doCoulombCollisionsWithinTile
                     ( lev, mfi, species1, species2,
                       collision->m_isSameSpecies,
-                      collision->m_CoulombLog );
+                      collision->m_CoulombLog,
+                      collision->m_ndt );
 
             }
         }
