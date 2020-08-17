@@ -212,6 +212,7 @@ Diagnostics::ComputeAndPack ()
 void
 Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
+    WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
     if ( DoComputeAndPack (step, force_flush) ) {
         ComputeAndPack();
 
