@@ -390,7 +390,7 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf, int const fie
         // field_mf does not.
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
         multi_spectral_hankel_transformer[mfi].SpectralToPhysical_Scalar(realspace_bx, tempHTransformedSplit[mfi], field_mf_copy[mfi]);
-        field_mf[mfi].copy(field_mf_copy[mfi], 0, i_comp*ncomp, ncomp);
+        field_mf[mfi].copy<amrex::RunOn::Device>(field_mf_copy[mfi], 0, i_comp*ncomp, ncomp);
 
     }
 }
