@@ -139,8 +139,9 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
 #if (defined WARPX_DIM_RZ)
                     Complex xy = xy0; // Throughout the following loop, xy takes the value e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
-                        amrex::Gpu::Atomic::Add( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode-1), sx[ix]*sz[iz]*wq*xy.real());
-                        amrex::Gpu::Atomic::Add( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode  ), sx[ix]*sz[iz]*wq*xy.imag());
+                        // The factor 2 on the weighting comes from the normalization of the modes
+                        amrex::Gpu::Atomic::Add( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode-1), 2._rt*sx[ix]*sz[iz]*wq*xy.real());
+                        amrex::Gpu::Atomic::Add( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode  ), 2._rt*sx[ix]*sz[iz]*wq*xy.imag());
                         xy = xy*xy0;
                     }
 #endif
