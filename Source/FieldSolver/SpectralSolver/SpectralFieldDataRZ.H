@@ -55,10 +55,9 @@ class SpectralFieldDataRZ
 
         void FABZForwardTransform(amrex::MFIter const & mfi,
                                   amrex::MultiFab const & tempHTransformedSplit,
-                                  int field_index, const bool is_nodal_z);
+                                  int field_index);
         void FABZBackwardTransform(amrex::MFIter const & mfi, const int field_index,
-                                   amrex::MultiFab & tempHTransformedSplit,
-                                   const bool is_nodal_z);
+                                   amrex::MultiFab & tempHTransformedSplit);
 
         void InitFilter (amrex::IntVect const & filter_npass_each_dir, bool const compensation,
                          SpectralKSpaceRZ const & k_space);
@@ -83,9 +82,6 @@ class SpectralFieldDataRZ
         SpectralField tempHTransformed; // contains Complexes
         SpectralField tmpSpectralField; // contains Complexes
         FFTplans forward_plan, backward_plan;
-        // Correcting "shift" factors when performing FFT from/to
-        // a cell-centered grid in real space, instead of a nodal grid
-        SpectralShiftFactor zshift_FFTfromCell, zshift_FFTtoCell;
         MultiSpectralHankelTransformer multi_spectral_hankel_transformer;
         BinomialFilter binomialfilter;
 
