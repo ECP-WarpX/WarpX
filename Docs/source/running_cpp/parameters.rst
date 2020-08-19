@@ -921,9 +921,6 @@ Collision initialization
 WarpX provides a relativistic elastic Monte Carlo binary collision model,
 following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
 
-* ``collisions.ncollisions`` (`int`) optional (default `0`)
-    Number of collision types.
-
 * ``collisions.collision_names`` (`strings`, separated by spaces)
     The name of each collision type. It must be provided if ``collisions.ncollisions`` is not zero.
     This is then used in the rest of the input deck;
