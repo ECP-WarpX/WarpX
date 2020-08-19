@@ -940,8 +940,15 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
 * ``<collision_name>.CoulombLog`` (`float`) optional
     A provided fixed Coulomb logarithm of the collision type
     ``<collision_name>``.
+    For example, a typical Coulomb logarithm has a form of
+    :math:`\ln(\lambda_D/R)`,
+    where :math:`\lambda_D` is the Debye length,
+    :math:`R\approx1.4A^{1/3}` is the effective Coulombic radius of the nucleus,
+    :math:`A` is the mass number.
     If this is not provided, or if a non-positive value is provided,
     a Coulomb logarithm will be computed automatically according to the algorithm.
+    a Coulomb logarithm will be computed automatically according to the algorithm in
+    `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
 
 .. _running-cpp-parameters-numerics:
 
