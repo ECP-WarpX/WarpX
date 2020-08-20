@@ -14,7 +14,7 @@
 
 struct wp_parser* wp_c_parser_new (char const* function_body);
 
-template <int Depth, std::enable_if_t<(Depth<WARPX_MAX_RECURSION_DEPTH), int> = 0>
+template <int Depth, std::enable_if_t<(Depth<WARPX_PARSER_DEPTH), int> = 0>
 AMREX_GPU_HOST_DEVICE
 #ifdef AMREX_USE_GPU
 AMREX_NO_INLINE
@@ -184,7 +184,7 @@ wp_ast_eval (struct wp_node* node, amrex::Real const* x)
     return result;
 }
 
-template <int Depth, std::enable_if_t<Depth == WARPX_MAX_RECURSION_DEPTH,int> = 0>
+template <int Depth, std::enable_if_t<Depth == WARPX_PARSER_DEPTH,int> = 0>
 AMREX_GPU_HOST_DEVICE
 #ifdef AMREX_USE_GPU
 AMREX_NO_INLINE
@@ -193,10 +193,10 @@ amrex::Real
 wp_ast_eval (struct wp_node* node, amrex::Real const* x)
 {
 #if AMREX_DEVICE_COMPILE
-    AMREX_DEVICE_PRINTF("wp_ast_eval: WARPX_MAX_RECURSION_DEPTH %d not big enough\n",
-                        WARPX_MAX_RECURSION_DEPTH);
+    AMREX_DEVICE_PRINTF("wp_ast_eval: WARPX_PARSER_DEPTH %d not big enough\n",
+                        WARPX_PARSER_DEPTH);
 #else
-    amrex::AllPrint() << "wp_ast_eval: WARPX_MAX_RECURSION_DEPTH" << WARPX_MAX_RECURSION_DEPTH
+    amrex::AllPrint() << "wp_ast_eval: WARPX_PARSER_DEPTH" << WARPX_PARSER_DEPTH
                       << "not big enough\n";
 #endif
     return 0.;

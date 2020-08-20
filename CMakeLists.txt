@@ -61,9 +61,9 @@ if(NOT WarpX_COMPUTE IN_LIST WarpX_COMPUTE_VALUES)
     message(FATAL_ERROR "WarpX_PRECISION (${WarpX_COMPUTE}) must be one of ${WarpX_COMPUTE_VALUES}")
 endif()
 
-set(WarpX_MAX_RECURSION_DEPTH 16 CACHE STRING
+set(WarpX_PARSER_DEPTH 16 CACHE STRING
     "Maximum parser depth for input file functions")
-mark_as_advanced(WarpX_MAX_RECURSION_DEPTH)
+mark_as_advanced(WarpX_PARSER_DEPTH)
 
 option(WarpX_amrex_internal                    "Download & build AMReX" ON)
 
@@ -227,7 +227,7 @@ if(WarpX_PSATD)
 endif()
 
 target_compile_definitions(WarpX PRIVATE
-    WARPX_MAX_RECURSION_DEPTH=${WarpX_MAX_RECURSION_DEPTH})
+    WARPX_PARSER_DEPTH=${WarpX_PARSER_DEPTH})
 
 
 # Warnings ####################################################################
