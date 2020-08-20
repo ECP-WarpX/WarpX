@@ -13,7 +13,7 @@
 #endif
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
-
+using namespace amrex::literals;
 
 Diagnostics::Diagnostics (int i, std::string name)
     : m_diag_name(name), m_diag_index(i)
@@ -72,6 +72,22 @@ Diagnostics::BaseReadParameters ()
     if (!hi_specified) {
        for (int idim =0; idim < AMREX_SPACEDIM; ++idim) {
             m_hi[idim] = warpx.Geom(0).ProbHi(idim);
+       }
+    }
+    // For a moving window simulation, the user-defined m_lo and m_hi must be converted.
+    if (warpx.do_moving_window) {
+#if (AMREX_SPACEDIM == 3)
+    amrex::Vector<int> dim_map {0, 1, 2};
+#else
+    amrex::Vector<int> dim_map {0, 2};
+#endif
+       if (warpx.boost_direction[ dim_map[warpx.moving_window_dir] ] == 1) {
+           // Convert user-defined lo and hi for diagnostics to account for boosted-frame
+           // simulations with moving window
+           amrex::Real convert_factor = 1._rt/(warpx.gamma_boost * (1._rt - warpx.beta_boost) );
+           // Assuming that the window travels with speed c
+           m_lo[warpx.moving_window_dir] *= convert_factor;
+           m_hi[warpx.moving_window_dir] *= convert_factor;
        }
     }
 
@@ -182,7 +198,7 @@ Diagnostics::ComputeAndPack ()
                 // Call all functors in m_all_field_functors[lev]. Each of them computes
                 // a diagnostics and writes in one or more components of the output
                 // multifab m_mf_output[lev].
-                m_all_field_functors[lev][icomp]->operator()(m_mf_output[i_buffer][lev], icomp_dst);
+                m_all_field_functors[lev][icomp]->operator()(m_mf_output[i_buffer][lev], icomp_dst, i_buffer);
                 // update the index of the next component to fill
                 icomp_dst += m_all_field_functors[lev][icomp]->nComp();
             }
@@ -196,6 +212,7 @@ Diagnostics::ComputeAndPack ()
 void
 Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
+    WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
     if ( DoComputeAndPack (step, force_flush) ) {
         ComputeAndPack();
 

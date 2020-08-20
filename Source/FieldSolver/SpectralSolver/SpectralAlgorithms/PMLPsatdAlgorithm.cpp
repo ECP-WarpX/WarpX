@@ -154,4 +154,20 @@ void PMLPsatdAlgorithm::InitializeSpectralCoefficients (
         });
     }
 };
+
+void
+PMLPsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
+                                      std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                      const std::unique_ptr<amrex::MultiFab>& rho)
+{
+    amrex::Abort("Current correction not implemented for PML PSATD");
+}
+
+void
+PMLPsatdAlgorithm::VayDeposition (SpectralFieldData& field_data,
+                                  std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+{
+    amrex::Abort("Vay deposition not implemented for PML PSATD");
+}
+
 #endif // WARPX_USE_PSATD

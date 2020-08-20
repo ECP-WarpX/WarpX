@@ -120,10 +120,10 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             // Update E (see WarpX online documentation: theory section)
             fields(i,j,k,Ep_m) = C*Ep_old
                         + S_ck*(-c2*I*kr/2._rt*Bz_old + c2*kz*Bp_old - inv_ep0*Jp)
-                        + kr*(X2*rho_new - X3*rho_old);
+                        + 0.5_rt*kr*(X2*rho_new - X3*rho_old);
             fields(i,j,k,Em_m) = C*Em_old
                         + S_ck*(-c2*I*kr/2._rt*Bz_old - c2*kz*Bm_old - inv_ep0*Jm)
-                        - kr*(X2*rho_new - X3*rho_old);
+                        - 0.5_rt*kr*(X2*rho_new - X3*rho_old);
             fields(i,j,k,Ez_m) = C*Ez_old
                         + S_ck*(c2*I*kr*Bp_old + c2*I*kr*Bm_old - inv_ep0*Jz)
                         - I*kz*(X2*rho_new - X3*rho_old);
@@ -200,7 +200,14 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 void
 PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
                                      std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                     const std::unique_ptr<amrex::MultiFab>& rho )
+                                     const std::unique_ptr<amrex::MultiFab>& rho)
 {
-    amrex::Abort("Current correction not implemented in RZ");
+    amrex::Abort("Current correction not implemented in RZ geometry");
+}
+
+void
+PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& field_data,
+                                 std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+{
+    amrex::Abort("Vay deposition not implemented in RZ geometry");
 }

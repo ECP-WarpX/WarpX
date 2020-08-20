@@ -146,7 +146,7 @@ compiler_name = {'intel': 'intel', 'gnu': 'gcc', 'pgi':'pgi'}
 module_Cname = {'cpu': 'haswell', 'knl': 'knl,quad,cache', 'gpu':''}
 csv_file = {'cori':'cori_knl.csv', 'summit':'summit.csv'}
 # cwd = os.getcwd() + '/'
-cwd = warpx_dir + 'Tools/performance_tests/'
+cwd = warpx_dir + 'Tools/PerformanceTests/'
 
 path_hdf5 = cwd
 if args.automated:

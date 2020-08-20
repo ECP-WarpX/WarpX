@@ -53,7 +53,8 @@ struct ParticlePusherAlgo {
 struct CurrentDepositionAlgo {
     enum {
          Esirkepov = 0,
-         Direct = 1
+         Direct = 1,
+         Vay = 2
     };
 };
 

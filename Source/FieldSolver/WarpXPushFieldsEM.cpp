@@ -70,6 +70,13 @@ namespace {
         solver.ForwardTransform(*current[2], Idx::Jz);
         solver.ForwardTransform(*rho, Idx::rho_old, 0);
         solver.ForwardTransform(*rho, Idx::rho_new, 1);
+#ifdef WARPX_DIM_RZ
+        if (WarpX::use_kspace_filter) {
+            solver.ApplyFilter(Idx::rho_old);
+            solver.ApplyFilter(Idx::rho_new);
+            solver.ApplyFilter(Idx::Jx, Idx::Jy, Idx::Jz);
+        }
+#endif
         // Advance fields in spectral space
         solver.pushSpectralFields();
         // Perform backward Fourier Transform
@@ -91,7 +98,7 @@ namespace {
         solver.BackwardTransform(*Bfield[2], Idx::Bz);
 
 #ifndef WARPX_DIM_RZ
-        if (solver.fft_do_time_averaging){
+        if (WarpX::fft_do_time_averaging){
             solver.BackwardTransform(*Efield_avg[0], Idx::Ex_avg);
             solver.BackwardTransform(*Efield_avg[1], Idx::Ey_avg);
             solver.BackwardTransform(*Efield_avg[2], Idx::Ez_avg);
@@ -348,6 +355,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         const Real rminz = xyzmin[0] + (tbz.type(0) == NODE ? 0. : 0.5*dx[0]);
         const Dim3 lo = lbound(tilebox);
         const int irmin = lo.x;
+
+        // For ishift, 1 means cell centered, 0 means node centered
         int const ishift_t = (rmint > rmin ? 1 : 0);
         int const ishift_z = (rminz > rmin ? 1 : 0);
 
@@ -385,13 +394,12 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             Jr_arr(i,j,0,0) /= (2.*MathConst::pi*r);
 
             for (int imode=1 ; imode < nmodes ; imode++) {
-                const Real ifact = ( (imode%2) == 0 ? +1. : -1.);
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
                 // Note that Jr(i==0) is at 1/2 dr.
                 if (rmin == 0. && 0 <= i && i < ngJ) {
-                    Jr_arr(i,j,0,2*imode-1) -= ifact*Jr_arr(-1-i,j,0,2*imode-1);
-                    Jr_arr(i,j,0,2*imode) -= ifact*Jr_arr(-1-i,j,0,2*imode);
+                    Jr_arr(i,j,0,2*imode-1) -= Jr_arr(-1-i,j,0,2*imode-1);
+                    Jr_arr(i,j,0,2*imode) -= Jr_arr(-1-i,j,0,2*imode);
                 }
                 // Apply the inverse volume scaling
                 // Since Jr is never node centered in r, no need for distinction
@@ -406,8 +414,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // to the cells above the axis.
             // If Jt is node centered, Jt[0] is located on the boundary.
             // If Jt is cell centered, Jt[0] is at 1/2 dr.
-            if (rmin == 0. && 0 < i && i <= ngJ-ishift_t) {
-                Jt_arr(i,j,0,0) += Jt_arr(-ishift_t-i,j,0,0);
+            if (rmin == 0. && 1-ishift_t <= i && i <= ngJ-ishift_t) {
+                Jt_arr(i,j,0,0) -= Jt_arr(-ishift_t-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
@@ -420,12 +428,11 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             }
 
             for (int imode=1 ; imode < nmodes ; imode++) {
-                const Real ifact = ( (imode%2) == 0 ? +1. : -1.);
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                if (rmin == 0. && 0 < i && i <= ngJ-ishift_t) {
-                    Jt_arr(i,j,0,2*imode-1) += ifact*Jt_arr(-ishift_t-i,j,0,2*imode-1);
-                    Jt_arr(i,j,0,2*imode) += ifact*Jt_arr(-ishift_t-i,j,0,2*imode);
+                if (rmin == 0. && 1-ishift_t <= i && i <= ngJ-ishift_t) {
+                    Jt_arr(i,j,0,2*imode-1) -= Jt_arr(-ishift_t-i,j,0,2*imode-1);
+                    Jt_arr(i,j,0,2*imode) -= Jt_arr(-ishift_t-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
@@ -445,8 +452,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // to the cells above the axis.
             // If Jz is node centered, Jt[0] is located on the boundary.
             // If Jz is cell centered, Jt[0] is at 1/2 dr.
-            if (rmin == 0. && 0 < i && i <= ngJ-ishift_z) {
-                Jz_arr(i,j,0,0) += Jz_arr(-ishift_z-i,j,0,0);
+            if (rmin == 0. && 1-ishift_z <= i && i <= ngJ-ishift_z) {
+                Jz_arr(i,j,0,0) -= Jz_arr(-ishift_z-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
@@ -459,12 +466,11 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             }
 
             for (int imode=1 ; imode < nmodes ; imode++) {
-                const Real ifact = ( (imode%2) == 0 ? +1. : -1.);
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
-                if (rmin == 0. && 0 < i && i <= ngJ-ishift_z) {
-                    Jz_arr(i,j,0,2*imode-1) += ifact*Jz_arr(-ishift_z-i,j,0,2*imode-1);
-                    Jz_arr(i,j,0,2*imode) += ifact*Jz_arr(-ishift_z-i,j,0,2*imode);
+                if (rmin == 0. && 1-ishift_z <= i && i <= ngJ-ishift_z) {
+                    Jz_arr(i,j,0,2*imode-1) -= Jz_arr(-ishift_z-i,j,0,2*imode-1);
+                    Jz_arr(i,j,0,2*imode) -= Jz_arr(-ishift_z-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
@@ -530,8 +536,8 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
             // Wrap the charge density deposited in the guard cells around
             // to the cells above the axis.
             // Rho is located on the boundary
-            if (rmin == 0. && 0 < i && i <= ngRho-ishift) {
-                Rho_arr(i,j,0,icomp) += Rho_arr(-ishift-i,j,0,icomp);
+            if (rmin == 0. && 1-ishift <= i && i <= ngRho-ishift) {
+                Rho_arr(i,j,0,icomp) -= Rho_arr(-ishift-i,j,0,icomp);
             }
 
             // Apply the inverse volume scaling

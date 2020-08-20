@@ -19,7 +19,6 @@ geometry.prob_hi     = 38.68 38.68
 #################################
 warpx.verbose = 1
 
-algo.maxwell_fdtd_solver = ckc
 algo.current_deposition = direct
 algo.particle_pusher = vay
 
@@ -32,7 +31,6 @@ interpolation.noz = 3
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 2
 particles.species_names = electrons ions
 
 warpx.do_nodal = 1

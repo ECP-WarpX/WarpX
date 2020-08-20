@@ -13,48 +13,90 @@ public:
 private:
     /** Read relevant parameters for BTD */
     void ReadParameters ();
-    /** Flush m_mf_output and particles to file. */
-    // Currently this is an empty function. When OpenPMD/Plotfile is supported
-    // this function can be moved to the base class Diagnostics.
-    void Flush (int i_buffer) override {} ;
+    /** \brief Flush m_mf_output and particles to file.
+     * Currently, a temporary customized output format for the buffer
+     * data is implemented and called in this function.
+     * After implementing OpenPMD and plotfile formats, this function
+     * can be defined and implemented in Diagnostics.H, such that,
+     * the function call to flush out buffer data for
+     * FullDiagnostics and BTDiagnostics is the same */
+    void Flush (int i_buffer) override;
     /** whether to write output files at this time step
      *  The data is flushed when the buffer is full and/or
-     *   when the simulation ends or when forced.
+     *  when the simulation ends or when forced.
      * \param[in] step current time step
      * \param[in] force_flush if true, return true for any step
      *  The return bool is used to determine when to write buffer data out
      */
     bool DoDump (int step, int i_buffer, bool force_flush=false) override;
+    /** whether to compute the back-transformed data and store buffer in this timestep
+     *  The field-data is back-transformed from boosted-frame to lab-frame
+     *  at every time step within the PIC loop. Back-transformation is not performed
+     *  at initialization.
+     * \param[in] step current time step, return true for any step >= 0
+     * \param[in] force_flush if true, return true for any step
+     */
     bool DoComputeAndPack (int step, bool force_flush=false) override;
     /** Initialize Data required to compute back-transformed diagnostics */
-    void DerivedInitData ();
+    void DerivedInitData () override;
     /** Initialize functors that store pointers to the fields requested by the user.
-     * \param[in] lev level on which the vector of unique_ptrs to field functors is initialized.
+     *  Additionally, the cell-center functors that stores pointers to all fields,
+     *  namely, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho is also initialized.
+     * \param[in] lev level on which the vector of unique_ptrs to field functors
+     *                is initialized.
      */
-    void InitializeFieldFunctors (int lev);
-    /** This function initialized and allocates particle buffers for all the snapshots.
-     *  The particle containers required for this must be added to populate this function.
+    void InitializeFieldFunctors (int lev) override;
+    /** This function allocates and initializes particle buffers for all the snapshots.
+     * This is currently an empty function:
+     * The particle containers required for this must be added to populate this function.
      */
-    void InitializeParticleBuffer () override {};
-    /** Compute the cell-centered data for all user-requested fields and store in
+    void InitializeParticleBuffer () override {}
+    /** The cell-centered data for all fields, namely,
+     *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho is computed and stored in
      *  the multi-level cell-centered multifab, m_mf_cc. This MultiFab extends
-     *  over the entire domain and is coarsened using the user-defined crse_ratio
+     *  over the entire domain and is coarsened using the user-defined crse_ratio.
+     *  For every lab-frame buffer, the data stored in this cell-centered MultiFab
+     *  is sliced, back-transformed, and stored in the output multifab, m_mf_output.
      */
-    void PrepareFieldDataForOutput ();
+    void PrepareFieldDataForOutput () override;
+
+    /** whether z-slice that corresponds to the buffer, i_buffer, is within the
+     *  boosted-domain and lab-frame domains at level, lev.
+     * \param[in] i_buffer index of the buffer for which the z-coordinates are checked
+     *            Return true if the z co-ordinates stored in
+     *            m_current_z_boost and m_current_z_lab for buffer, i_buffer,
+     *            are within the bounds of the boosted-frame and lab-frame domain.
+     */
+    bool GetZSliceInDomainFlag (const int i_buffer, const int lev);
+
     /** Initialize buffer domain, buffer box and lab-frame parameters such as
      *  m_t_lab, and z-positions for the i^th snapshot, i_buffer, and level, lev.
      * \param[in] i_buffer i^th snapshot or buffer
-     * \param[in] lev level
+     * \param[in] lev level for which the field buffer data is initialized.
      */
     void InitializeFieldBufferData ( int i_buffer , int lev) override;
-    /** Whether to compute back-tranformed values for field-data */
+    /** Whether to compute back-tranformed values for field-data.
+     *  default value is true.
+     */
     bool m_do_back_transformed_fields = true;
-    /** Whether to compute back-tranformed values for particle-data */
+    /** Whether to compute back-tranformed values for particle-data
+     *  default value is true.
+     */
     bool m_do_back_transformed_particles = true;
 
-    // boost parameters
+    /** m_gamma_boost, is a copy of warpx.gamma_boost
+     *  That is, the Lorentz factor of the boosted frame in which the simulation is run.
+     *  The direction for Lorentz transformation is assumed to be along
+     *  ``warpx.boost_direction``, which is the same as the moving window direction.
+     *  Currently, back-transformed diagnostics only works if the boost-direction and
+     *  moving window direction are along the z-direction in Cartesian co-ordinates.
+     */
     amrex::Real m_gamma_boost;
     amrex::Real m_beta_boost;
+    /** m_moving_window_dir is a copy of warpx.moving_window_dir
+     *  Currently, back-transformed diagnostics only works if moving window is
+     *  in z-direction for both 2D and 3D simulations in the Cartesian frame of reference.
+     */
     int m_moving_window_dir;
 
     /** Number of back-transformed snapshots in the lab-frame requested by the user */
@@ -64,77 +106,149 @@ private:
     /** Distance between the back-transformed snapshots in lab-frame
       * m_dz_snapshots_lab = m_dt_snapshots_lab/c
       */
-    amrex::Real m_dz_snapshots_lab;
+    amrex::Real m_dz_snapshots_lab = 0.0;
 
     /** Number of z-slices in each buffer of the snapshot */
     int m_buffer_size = 256;
     /** max grid size used to generate BoxArray to define output MultiFabs */
     int m_max_box_size = 256;
 
-    /**  Time in lab-frame of the back-transformed snapshot */
+    /** Vector of lab-frame time corresponding to each snapshot */
     amrex::Vector<amrex::Real> m_t_lab;
-    /**  Physical domain with lab-frame co-ordinates of the back-transformed snapshot */
+    /** Vector of lab-frame physical domain corresponding to the boosted-frame simulation
+     *  domain at lab-frame time corresponding to each snapshot*/
+    amrex::Vector<amrex::RealBox> m_prob_domain_lab;
+    /** Vector of user-defined physical region for diagnostics in lab-frame
+     *  for each back-transformed snapshot */
     amrex::Vector<amrex::RealBox> m_buffer_domain_lab;
-    /**  Number of cells in the lab-frame for all back-transformed snapshots */
+    /** Vector of number of cells in the lab-frame for each back-transformed snapshot */
     amrex::Vector<amrex::IntVect> m_buffer_ncells_lab;
-    /**  Box-dimension in boosted-frame index space for each back-transformed snapshot */
+    /** Vector of Box-dimension in boosted-frame index space
+     *  for each back-transformed snapshot */
     amrex::Vector<amrex::Box> m_buffer_box;
-    /**  Lab-frame z co-ordinate of the back-transformed snapshot at the current timestep */
+    /** Vector of lab-frame z co-ordinate of each back-transformed snapshot
+     *  at the current timestep */
     amrex::Vector<amrex::Real> m_current_z_lab;
-    /**  Boosted-frame z co-ordinate corresponding to the back-transformed
-         snapshot at the current timestep */
+    /** Vector of boosted-frame z co-ordinate corresponding to each back-transformed
+        snapshot at the current timestep */
     amrex::Vector<amrex::Real> m_current_z_boost;
-    /**  Number of back-transformed z-slices in the output buffer multifab */
+    /** Vector of counters tracking number of back-transformed z-slices filled
+     *  in the output buffer multifab, m_mf_output, for each snapshot.
+     *  When the buffer counter for a snapshot is equal to the maximum number
+     *  of buffers (m_buffer_size), i.e., when the buffer is full, the data
+     *  stored in the buffer multifab is flushed out and the counter is reset is zero.
+     */
     amrex::Vector<int> m_buffer_counter;
-    /** Multi-level cell-centered multifab with all field-data components
-        which will be sliced and transformed. The same multifab will be used
-        for all snapshots.
-      */
+    /** Multi-level cell-centered multifab with all field-data components, namely,
+     *  Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho.
+     *  This cell-centered data extending over the entire domain
+     *  will be used by all snapshots to obtain lab-frame data at the respective
+     *  z slice location.
+     */
     amrex::Vector<std::unique_ptr<amrex::MultiFab> > m_cell_centered_data;
+    /** Name of the output directories where the lab-frame data
+     *  is dumped out in a custom format.
+     *  This is a TMP variable, which may not be required after including
+     *  OpenPMD and plotfile formats.
+     */
     std::vector<std::string> m_file_name;
     /** Vector of pointers to compute cell-centered data, per level, per component
      *  using the coarsening-ratio provided by the user.
      */
     amrex::Vector< amrex::Vector <std::unique_ptr<ComputeDiagFunctor const> > > m_cell_center_functors;
 
-    /** Customized function to write back-transformed data */
+    /** Customized (temporary) function to flush out back-transformed data */
     void TMP_writeMetaData ();
-    /** Customized functions to write back-transformed data */
+    /** Customized (temporary) functions creating lab-frame directories
+     *  to flush out back-transformed data
+     * \param[in] i_buffer, index of the buffer data that is being flushed out
+     * \param[in] lev, level of the buffer data.
+     *  (Currently only single-level data is supported.)
+     */
     void TMP_createLabFrameDirectories (int i_buffer, int lev);
+    /** Customized (temporary) functions creating header files
+     *  to flush out back-transformed data for the ith buffer
+     * \param[in] i_buffer, ith buffer storing data for the ith snapshot
+     */
+    void TMP_writeLabFrameHeader (int i_buffer);
+    /** Customized (temporary) output format for flushing out lab-frame data stored in
+     *  the output buffer, m_mf_output.
+     * \param[in] i_buffer, ith buffer for which the lab-farme data is flushed out.
+     */
+    void TMP_FlushLabFrameData ( int i_buffer );
     /** Define the cell-centered multi-component MultiFab at level, lev.
+     *  This function is called when the buffer counter for a snapshot is zero,
+     *  or when the buffer is empty. Checked using `buffer_empty(i_buffer)`
      *  \param[in] lev level at which the cell-centered MultiFab is defined.
      */
     void DefineCellCenteredMultiFab(int lev);
-    /** Returns z-position in the boosted-frame
-      * \param[in] lab-frame time of the snapshot
-      * \param[in] boosted-frame time at level, lev
+    /** Define the cell-centered multi-component output buffer MultiFab for
+     *  snapshot, i_buffer, at level, lev.
+     *
+     * \param[in] i_buffer buffer-id of the back-transformed snapshot
+     * \param[in] lev, level at which the output buffer MultiFab is defined
+     */
+    void DefineFieldBufferMultiFab (const int i_buffer, const int lev);
+    /** Compute and return z-position in the boosted-frame at the current timestep
+      * \param[in] t_lab, lab-frame time of the snapshot
+      * \param[in] t_boost, boosted-frame time at level, lev
       */
     amrex::Real UpdateCurrentZBoostCoordinate(amrex::Real t_lab, amrex::Real t_boost)
     {
         amrex::Real current_z_boost = (t_lab / m_gamma_boost - t_boost) * PhysConst::c / m_beta_boost;
         return current_z_boost;
     }
-    /** Returns z-position in the lab-frame
-      * \param[in] lab-frame time of the snapshot
-      * \param[in] boosted-frame time at level, lev
+    /** Compute and return z-position in the lab-frame at the current timestep
+      * \param[in] t_lab, lab-frame time of the snapshot
+      * \param[in] t_boost, boosted-frame time at level, lev
       */
     amrex::Real UpdateCurrentZLabCoordinate(amrex::Real t_lab, amrex::Real t_boost)
     {
         amrex::Real current_z_lab = (t_lab - t_boost / m_gamma_boost ) * PhysConst::c / m_beta_boost;
         return current_z_lab;
     }
-    /** Returns cell-size of the grid in z-direction in the lab-frame at level, lev
-     *  \param[in] dt in boosted-frame at level, lev
-     *  \param[in] ref_ratio, refinement ratio at level, lev
-     */
+    /** Compute and return cell-size in z-dimension in the lab-frame at level, lev
+     *  \param[in] dt, timestep in boosted-frame at level, lev
+     *  \param[in] ref_ratio, refinement ratio in the z-direction at level, lev-1.
+     *             The ref-ratio in the z-direction for single-level diagnostics is 1.             */
     amrex::Real dz_lab (amrex::Real dt, amrex::Real ref_ratio);
+    /** Compute k-index corresponding to current lab-frame z co-ordinate (m_current_z_lab)
+     *  for the ith buffer, i_buffer, and at level, lev.
+     * \param[in] i_buffer, ith buffer
+     * \param[in] lev, level at which the lab-frame z-index is computed
+     */
+    int k_index_zlab (int i_buffer, int lev);
     /** whether field buffer is full
      * \param[in] i_buffer buffer id for which the buffer size is checked.
-     * returns bool = true is buffer is full
+     * returns bool = true is buffer is full, that is,
+               when buffer counter is equal to m_buffer_size
      */
     bool buffer_full (int i_buffer) {
         return ( m_buffer_counter[i_buffer] == m_buffer_size );
     }
+
+    /** whether field buffer is empty.
+     * \param[in] i_buffer buffer id for which the buffer size is checked.
+     * returns bool = true is buffer is empty i.e., when buffer counter is zero.
+     */
+    bool buffer_empty (int i_buffer) {
+        return ( m_buffer_counter[i_buffer] == 0) ;
+    }
+
+    /** Reset buffer counter to zero.
+     * \param[in] i_buffer, ith buffer for which the bounter is set to zero.
+     */
+    void ResetBufferCounter(int i_buffer) {
+        m_buffer_counter[i_buffer] = 0;
+    }
+    /** Vector of field-data stored in the cell-centered multifab, m_cell_centered_data.
+     *  All the fields are stored regardless of the specific fields to plot selected
+     *  by the user.
+     */
+    amrex::Vector< std::string > m_cellcenter_varnames = {"Ex", "Ey", "Ez",
+                                                          "Bx", "By", "Bz",
+                                                          "jx", "jy", "jz", "rho"};
+
 };
 
 #endif // WARPX_BTDIAGNOSTICS_H_

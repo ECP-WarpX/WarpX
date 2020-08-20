@@ -336,6 +336,26 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo, q,
                 WarpX::n_rz_azimuthal_modes);
         }
+    } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+        if        (WarpX::nox == 1){
+            doVayDepositionShapeN<1>(
+                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx, xyzmin, lo, q,
+                WarpX::n_rz_azimuthal_modes );
+        } else if (WarpX::nox == 2){
+            doVayDepositionShapeN<2>(
+                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx, xyzmin, lo, q,
+                WarpX::n_rz_azimuthal_modes );
+        } else if (WarpX::nox == 3){
+            doVayDepositionShapeN<3>(
+                GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
+                jx_fab, jy_fab, jz_fab, np_to_depose, dt, dx, xyzmin, lo, q,
+                WarpX::n_rz_azimuthal_modes );
+        }
     } else {
         if        (WarpX::nox == 1){
             doDepositionShapeN<1>(
@@ -566,7 +586,9 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     const auto& ba = m_gdb->ParticleBoxArray(lev);
     const auto& dm = m_gdb->DistributionMap(lev);
     BoxArray nba = ba;
+#if (!defined WARPX_DIM_RZ) || (!defined WARPX_USE_PSATD)
     nba.surroundingNodes();
+#endif
 
     const int ng = WarpX::nox;
 
@@ -842,10 +864,10 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
     // Tag particle if goes to higher level.
     // It will be split later in the loop
     if (pld.m_lev == lev+1
-        and p.m_idata.id != NoSplitParticleID
-        and p.m_idata.id >= 0)
+        and p.id() != NoSplitParticleID
+        and p.id() >= 0)
     {
-        p.m_idata.id = DoSplitParticleID;
+        p.id() = DoSplitParticleID;
     }
 
     if (pld.m_lev == lev-1){

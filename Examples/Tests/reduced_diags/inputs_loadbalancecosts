@@ -21,7 +21,7 @@ geometry.prob_hi     =  4.   4.   4.
 algo.current_deposition = esirkepov
 algo.field_gathering = energy-conserving # or momentum-conserving
 warpx.use_filter = 1
-algo.maxwell_fdtd_solver = yee # or ckc
+algo.maxwell_solver = yee # or ckc
 
 # Load balancing
 warpx.load_balance_int = 2
@@ -37,7 +37,6 @@ interpolation.noz = 1
 warpx.cfl = 0.99999
 
 # Particles
-particles.nspecies = 1
 particles.species_names = electrons
 
 electrons.charge = -q_e

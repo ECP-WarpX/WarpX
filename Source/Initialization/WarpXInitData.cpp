@@ -26,6 +26,43 @@
 using namespace amrex;
 
 void
+WarpX::PostProcessBaseGrids (BoxArray& ba0) const
+{
+    if (numprocs != 0) {
+        const Box& dom = Geom(0).Domain();
+        const IntVect& domlo = dom.smallEnd();
+        const IntVect& domlen = dom.size();
+        const IntVect sz = domlen / numprocs;
+        const IntVect extra = domlen - sz*numprocs;
+        BoxList bl;
+#if (AMREX_SPACEDIM == 3)
+        for (int k = 0; k < numprocs[2]; ++k) {
+            // The first extra[2] blocks get one extra cell with a total of
+            // sz[2]+1.  The rest get sz[2] cells.  The docomposition in y
+            // and x directions are similar.
+            int klo = (k < extra[2]) ? k*(sz[2]+1) : (k*sz[2]+extra[2]);
+            int khi = (k < extra[2]) ? klo+(sz[2]+1)-1 : klo+sz[2]-1;
+            klo += domlo[2];
+            khi += domlo[2];
+#endif
+            for (int j = 0; j < numprocs[1]; ++j) {
+                int jlo = (j < extra[1]) ? j*(sz[1]+1) : (j*sz[1]+extra[1]);
+                int jhi = (j < extra[1]) ? jlo+(sz[1]+1)-1 : jlo+sz[1]-1;
+                jlo += domlo[1];
+                jhi += domlo[1];
+                for (int i = 0; i < numprocs[0]; ++i) {
+                    int ilo = (i < extra[0]) ? i*(sz[0]+1) : (i*sz[0]+extra[0]);
+                    int ihi = (i < extra[0]) ? ilo+(sz[0]+1)-1 : ilo+sz[0]-1;
+                    ilo += domlo[0];
+                    ihi += domlo[0];
+                    bl.push_back(Box(IntVect(AMREX_D_DECL(ilo,jlo,klo)),
+                                     IntVect(AMREX_D_DECL(ihi,jhi,khi))));
+        AMREX_D_TERM(},},})
+        ba0 = BoxArray(std::move(bl));
+    }
+}
+
+void
 WarpX::InitData ()
 {
     WARPX_PROFILE("WarpX::InitData()");
@@ -187,7 +224,7 @@ WarpX::InitNCICorrector ()
 
             // Initialize Godfrey filters
             // Same filter for fields Ex, Ey and Bz
-            const bool nodal_gather = (l_lower_order_in_v == 0);
+            const bool nodal_gather = !galerkin_interpolation;
             nci_godfrey_filter_exeybz[lev].reset( new NCIGodfreyFilter(godfrey_coeff_set::Ex_Ey_Bz, cdtodz, nodal_gather) );
             // Same filter for fields Bx, By and Ez
             nci_godfrey_filter_bxbyez[lev].reset( new NCIGodfreyFilter(godfrey_coeff_set::Bx_By_Ez, cdtodz, nodal_gather) );

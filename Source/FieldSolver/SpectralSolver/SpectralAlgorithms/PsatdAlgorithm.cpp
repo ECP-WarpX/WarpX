@@ -220,9 +220,9 @@ void PsatdAlgorithm::InitializeSpectralCoefficients(const SpectralKSpace& spectr
 }
 
 void
-PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
+PsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                   const std::unique_ptr<amrex::MultiFab>& rho ) {
+                                   const std::unique_ptr<amrex::MultiFab>& rho) {
     // Profiling
     WARPX_PROFILE( "PsatdAlgorithm::CurrentCorrection" );
 
@@ -256,7 +256,6 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
         // Loop over indices within one box
         ParallelFor( bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
-            // Record old values of the fields to be updated
             using Idx = SpectralFieldIndex;
 
             // Shortcuts for the values of J and rho
@@ -296,5 +295,81 @@ PsatdAlgorithm::CurrentCorrection( SpectralFieldData& field_data,
     field_data.BackwardTransform( *current[0], Idx::Jx, 0 );
     field_data.BackwardTransform( *current[1], Idx::Jy, 0 );
     field_data.BackwardTransform( *current[2], Idx::Jz, 0 );
+}
+
+void
+PsatdAlgorithm::VayDeposition (SpectralFieldData& field_data,
+                               std::array<std::unique_ptr<amrex::MultiFab>,3>& current) {
+    // Profiling
+    WARPX_PROFILE("PsatdAlgorithm::VayDeposition");
+
+    using Idx = SpectralFieldIndex;
+
+    // Forward Fourier transform of D (temporarily stored in current):
+    // D is nodal and does not match the staggering of J, therefore we pass the
+    // actual staggering of D (IntVect(1)) to the ForwardTransform function
+    field_data.ForwardTransform(*current[0], Idx::Jx, 0, IntVect(1));
+    field_data.ForwardTransform(*current[1], Idx::Jy, 0, IntVect(1));
+    field_data.ForwardTransform(*current[2], Idx::Jz, 0, IntVect(1));
+
+    // Loop over boxes
+    for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi) {
+
+        const amrex::Box& bx = field_data.fields[mfi].box();
+
+        // Extract arrays for the fields to be updated
+        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+
+        // Extract pointers for the modified k vectors
+        const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
+#if (AMREX_SPACEDIM==3)
+        const amrex::Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
+#endif
+        const amrex::Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
+
+        // Loop over indices within one box
+        ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
+        {
+            using Idx = SpectralFieldIndex;
+
+            // Shortcuts for the values of D
+            const Complex Dx = fields(i,j,k,Idx::Jx);
+            const Complex Dy = fields(i,j,k,Idx::Jy);
+            const Complex Dz = fields(i,j,k,Idx::Jz);
+
+            // Imaginary unit
+            constexpr Complex I = Complex{0._rt, 1._rt};
+
+            // Modified k vector values
+            const amrex::Real kx_mod = modified_kx_arr[i];
+#if (AMREX_SPACEDIM==3)
+            const amrex::Real ky_mod = modified_ky_arr[j];
+            const amrex::Real kz_mod = modified_kz_arr[k];
+#else
+            constexpr amrex::Real ky_mod = 0._rt;
+            const     amrex::Real kz_mod = modified_kz_arr[j];
+#endif
+
+            // Compute Jx
+            if (kx_mod != 0._rt) fields(i,j,k,Idx::Jx) = I * Dx / kx_mod;
+            else                 fields(i,j,k,Idx::Jx) = 0._rt;
+
+#if (AMREX_SPACEDIM==3)
+            // Compute Jy
+            if (ky_mod != 0._rt) fields(i,j,k,Idx::Jy) = I * Dy / ky_mod;
+            else                 fields(i,j,k,Idx::Jy) = 0._rt;
+#endif
+
+            // Compute Jz
+            if (kz_mod != 0._rt) fields(i,j,k,Idx::Jz) = I * Dz / kz_mod;
+            else                 fields(i,j,k,Idx::Jz) = 0._rt;
+
+        });
+    }
+
+    // Backward Fourier transform of J
+    field_data.BackwardTransform(*current[0], Idx::Jx, 0);
+    field_data.BackwardTransform(*current[1], Idx::Jy, 0);
+    field_data.BackwardTransform(*current[2], Idx::Jz, 0);
 }
 #endif // WARPX_USE_PSATD
