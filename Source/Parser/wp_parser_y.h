@@ -231,9 +231,9 @@ wp_call_f2 (enum wp_f2_t type, T a, T b)
     case WP_NEQ:
         return (a != b) ? 1.0 : 0.0;
     case WP_AND:
-        return (a && b) ? 1.0 : 0.0;
+        return ((a != T(0)) && (b != T(0))) ? 1.0 : 0.0;
     case WP_OR:
-        return (a || b) ? 1.0 : 0.0;
+        return ((a != T(0)) || (b != T(0))) ? 1.0 : 0.0;
     case WP_HEAVISIDE:
         return (a < 0.0) ? 0.0 : ((a > 0.0) ? 1.0 : b);
     case WP_MIN:
