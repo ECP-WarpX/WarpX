@@ -310,7 +310,7 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
         for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             diag_dom.setLo( idim, warpx.Geom(lev).ProbLo(idim) +
                 ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim));
-            diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) + 
+            diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) +
                 (ba.getCellCenteredBox( ba.size()-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
         }
     }
@@ -327,7 +327,7 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     // The zero is hard-coded since the number of output buffers = 1 for FullDiagnostics
     m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow);
 
-    
+
     if (lev == 0) {
         // The extent of the domain covered by the diag multifab, m_mf_output
         //default non-periodic geometry for diags
