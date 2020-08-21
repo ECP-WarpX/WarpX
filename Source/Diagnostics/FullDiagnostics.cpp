@@ -253,7 +253,6 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
         ba.coarsenable(m_crse_ratio),
         "Invalid coarsening ratio for warpx boxArray. Must be an integer divisor of the blocking factor."
     );
-
     // Find if user-defined physical dimensions are different from the simulation domain.
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
          // To ensure that the diagnostic lo and hi are within the domain defined at level, lev.
@@ -309,10 +308,10 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
         // Update the physical co-ordinates m_lo and m_hi using the final index values
         // from the coarsenable, cell-centered BoxArray, ba.
         for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            diag_dom.setLo( idim, warpx.Geom(lev).ProbLo(idim) + warpx.Geom(lev).CellSize(idim)/2.0_rt +
+            diag_dom.setLo( idim, warpx.Geom(lev).ProbLo(idim) +
                 ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim));
-            diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) + warpx.Geom(lev).CellSize(idim)/2.0_rt +
-                ba.getCellCenteredBox( ba.size()-1 ).bigEnd(idim) * warpx.Geom(lev).CellSize(idim));
+            diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) + 
+                (ba.getCellCenteredBox( ba.size()-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
         }
     }
 
@@ -328,14 +327,22 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     // The zero is hard-coded since the number of output buffers = 1 for FullDiagnostics
     m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow);
 
-    // The extent of the domain covered by the diag multifab, m_mf_output
-    amrex::Box domain = ba.minimalBox();
-    //default non-periodic geometry for diags
-    amrex::Vector<int> diag_periodicity(AMREX_SPACEDIM,0);
-    m_geom_output[i_buffer][lev].define(domain, &diag_dom,
+    
+    if (lev == 0) {
+        // The extent of the domain covered by the diag multifab, m_mf_output
+        //default non-periodic geometry for diags
+        amrex::Vector<int> diag_periodicity(AMREX_SPACEDIM,0);
+        // Box covering the extent of the user-defined diagnostic domain
+        amrex::Box domain = ba.minimalBox();
+        // define geom object
+        m_geom_output[i_buffer][lev].define(domain, &diag_dom,
                                         amrex::CoordSys::cartesian,
                                         diag_periodicity.data());
-
+    } else if (lev > 0) {
+        // Take the geom object of previous level and refine it.
+        m_geom_output[i_buffer][lev] = amrex::refine(m_geom_output[i_buffer][lev-1],
+                                                     warpx.RefRatio(lev-1));
+    }
 }
 
 
