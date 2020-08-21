@@ -109,24 +109,24 @@ You can inspect and modify build options after running ``cmake ..`` with either
 
 or by providing arguments to the CMake call: ``cmake .. -D<OPTION_A>=<VALUE_A> -D<OPTION_B>=<VALUE_B>``
 
-============================= ============================================ =======================================================
-CMake Option                  Default & Values                             Description
-============================= ============================================ =======================================================
-``CMAKE_BUILD_TYPE``          **RelWithDebInfo**/Release/Debug             Type of build, symbols & optimizations
-``WarpX_ASCENT``              ON/**OFF**                                   Ascent in situ visualization
-``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/DPCPP                     On-node, accelerated computing backend
-``WarpX_DIMS``                **3**/2/RZ                                   Simulation dimensionality
-``WarpX_PARSER_DEPTH`       ` **16**                                       Maximum parser depth for input file functions
-``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)
-``WarpX_OPENPMD``             ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
-``WarpX_PRECISION``           **double**/single                            Floating point precision (single/double)
-``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
-``WarpX_QED``                 ON/**OFF**                                   PICSAR QED (requires Boost and PICSAR)
-``WarpX_amrex_repo``          ``https://github.com/AMReX-Codes/amrex.git`` Repository URI to pull and build AMReX from
-``WarpX_amrex_branch``        ``development``                              Repository branch for ``WarpX_amrex_repo``
-``WarpX_amrex_internal``      **ON**/OFF                                   Needs a pre-installed AMReX library if set to ``OFF``
-``WarpX_openpmd_internal``    **ON**/OFF                                   Needs a pre-installed openPMD library if set to ``OFF``
-============================= ============================================ =======================================================
+=========================== ============================================ =======================================================
+CMake Option                Default & Values                             Description
+=========================== ============================================ =======================================================
+``CMAKE_BUILD_TYPE``        **RelWithDebInfo**/Release/Debug             Type of build, symbols & optimizations
+``WarpX_ASCENT``            ON/**OFF**                                   Ascent in situ visualization
+``WarpX_COMPUTE``           NOACC/**OMP**/CUDA/DPCPP                     On-node, accelerated computing backend
+``WarpX_DIMS``              **3**/2/RZ                                   Simulation dimensionality
+``WarpX_PARSER_DEPTH``      **16**                                       Maximum parser depth for input file functions
+``WarpX_MPI``               **ON**/OFF                                   Multi-node support (message-passing)
+``WarpX_OPENPMD``           ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
+``WarpX_PRECISION``         **double**/single                            Floating point precision (single/double)
+``WarpX_PSATD``             ON/**OFF**                                   Spectral solver
+``WarpX_QED``               ON/**OFF**                                   PICSAR QED (requires Boost and PICSAR)
+``WarpX_amrex_repo``        ``https://github.com/AMReX-Codes/amrex.git`` Repository URI to pull and build AMReX from
+``WarpX_amrex_branch``      ``development``                              Repository branch for ``WarpX_amrex_repo``
+``WarpX_amrex_internal``    **ON**/OFF                                   Needs a pre-installed AMReX library if set to ``OFF``
+``WarpX_openpmd_internal``  **ON**/OFF                                   Needs a pre-installed openPMD library if set to ``OFF``
+=========================== ============================================ =======================================================
 
 For example, one can also build against a local AMReX git repo.
 Assuming AMReX' source is located in ``$HOME/src/amrex`` and changes are committed into a branch such as ``my-amrex-branch`` then pass to ``cmake`` the arguments: ``-DWarpX_amrex_repo=file://$HOME/src/amrex -DWarpX_amrex_branch=my-amrex-branch``.
