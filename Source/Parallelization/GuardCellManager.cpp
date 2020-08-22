@@ -112,14 +112,10 @@ guardCellManager::Init(
     pp.query("ny_guard", ngFFt_y);
     pp.query("nz_guard", ngFFt_z);
 
-#ifdef AMREX_SPACEDIM
-    #if (AMREX_SPACEDIM == 3)
+#if (AMREX_SPACEDIM == 3)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
-    #elif (AMREX_SPACEDIM == 2)
+#elif (AMREX_SPACEDIM == 2)
         IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
-    #endif
-#else
-    #error Error! AMReX SPACEDIM is not defined!
 #endif
 
     for (int i_dim=0; i_dim<AMREX_SPACEDIM; i_dim++ ){

@@ -21,30 +21,24 @@ NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdto
     m_cdtodz = cdtodz;
     m_nodal_gather = nodal_gather;
     // NCI Godfrey filter has fixed size, and is applied along z only.
-#ifdef AMREX_SPACEDIM
-#   if (AMREX_SPACEDIM == 3)
+#if (AMREX_SPACEDIM == 3)
     stencil_length_each_dir = {1,1,5};
     slen = {1,1,5};
-#   else
+#else
     stencil_length_each_dir = {1,5};
     slen = {1,5,1};
-#   endif
 #endif
 }
 
 void NCIGodfreyFilter::ComputeStencils(){
 
     // Sanity checks: filter length shoulz be 5 in z
-#ifdef AMREX_SPACEDIM
-#    if  AMREX_SPACEDIM == 3
+#if  (AMREX_SPACEDIM == 3)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         slen.z==5,"ERROR: NCI filter requires 5 points in z");
-#    else
+#else
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         slen.y==5,"ERROR: NCI filter requires 5 points in z");
-#    endif
-#else
-#    error AMReX SPACEDIM is not defined!
 #endif
     // Interpolate coefficients from the table, and store into prestencil.
     auto index = static_cast<int>(tab_length*m_cdtodz);
