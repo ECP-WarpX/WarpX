@@ -189,8 +189,10 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             modified_k.resize( k.size() );
 
             // Fill the modified k vector
-            for (int i=0; i<static_cast<int>(k.size()); i++ ){
+            int i = 0;
+            for (auto const& kv : k){
                 modified_k[i] = k[i]; // infinite-order case.
+                i++;
             }
         }
     } else {
@@ -209,7 +211,8 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             modified_k.resize( k.size() );
 
             // Fill the modified k vector
-            for (int i=0; i<static_cast<int>(k.size()); i++ ){
+            int i = 0;
+            for (auto const& kv : k){
                 modified_k[i] = 0;
                 for (int n=1; n<stencil_coef.size(); n++){
                     if (nodal){
@@ -220,6 +223,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                             std::sin( k[i]*(n-0.5)*delta_x )/( (n-0.5)*delta_x );
                     }
                 }
+                i++;
             }
 
             // By construction, at finite order and for a nodal grid,
