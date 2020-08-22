@@ -859,6 +859,70 @@ wp_ast_print (struct wp_node* node)
 }
 
 void
+wp_ast_depth (struct wp_node* node, int* n)
+{
+    int nl = 0;
+    int nr = 0;
+    switch (node->type)
+    {
+    case WP_NUMBER:
+        break;
+    case WP_SYMBOL:
+        break;
+    case WP_ADD:
+        wp_ast_depth(node->l, &nl);
+        wp_ast_depth(node->r, &nr);
+        break;
+    case WP_SUB:
+        wp_ast_depth(node->l, &nl);
+        wp_ast_depth(node->r, &nr);
+        break;
+    case WP_MUL:
+        wp_ast_depth(node->l, &nl);
+        wp_ast_depth(node->r, &nr);
+        break;
+    case WP_DIV:
+        wp_ast_depth(node->l, &nl);
+        wp_ast_depth(node->r, &nr);
+        break;
+    case WP_NEG:
+        wp_ast_depth(node->l, &nl);
+        break;
+    case WP_F1:
+        (*n)++;
+        wp_ast_depth(((struct wp_f1*)node)->l, &nl);
+        break;
+    case WP_F2:
+        (*n)++;
+        wp_ast_depth(((struct wp_f2*)node)->l, &nl);
+        wp_ast_depth(((struct wp_f2*)node)->r, &nr);
+        break;
+    case WP_ADD_VP:
+        break;
+    case WP_SUB_VP:
+        break;
+    case WP_MUL_VP:
+        break;
+    case WP_DIV_VP:
+        break;
+    case WP_NEG_P:
+        break;
+    case WP_ADD_PP:
+        break;
+    case WP_SUB_PP:
+        break;
+    case WP_MUL_PP:
+        break;
+    case WP_DIV_PP:
+        break;
+    default:
+        yyerror("wp_ast_depth: unknown node type %d\n", node->type);
+        exit(1);
+    }
+    *n += std::max(nl,nr) + 1;
+}
+
+void
 wp_ast_regvar (struct wp_node* node, char const* name, amrex_real* p)
 {
     switch (node->type)

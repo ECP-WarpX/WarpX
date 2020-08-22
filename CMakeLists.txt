@@ -61,7 +61,7 @@ if(NOT WarpX_COMPUTE IN_LIST WarpX_COMPUTE_VALUES)
     message(FATAL_ERROR "WarpX_PRECISION (${WarpX_COMPUTE}) must be one of ${WarpX_COMPUTE_VALUES}")
 endif()
 
-set(WarpX_PARSER_DEPTH 16 CACHE STRING
+set(WarpX_PARSER_DEPTH 24 CACHE STRING
     "Maximum parser depth for input file functions")
 mark_as_advanced(WarpX_PARSER_DEPTH)
 

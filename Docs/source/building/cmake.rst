@@ -116,7 +116,7 @@ CMake Option                Default & Values                             Descrip
 ``WarpX_ASCENT``            ON/**OFF**                                   Ascent in situ visualization
 ``WarpX_COMPUTE``           NOACC/**OMP**/CUDA/DPCPP                     On-node, accelerated computing backend
 ``WarpX_DIMS``              **3**/2/RZ                                   Simulation dimensionality
-``WarpX_PARSER_DEPTH``      **16**                                       Maximum parser depth for input file functions
+``WarpX_PARSER_DEPTH``      **24**                                       Maximum parser depth for input file functions
 ``WarpX_MPI``               **ON**/OFF                                   Multi-node support (message-passing)
 ``WarpX_OPENPMD``           ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
 ``WarpX_PRECISION``         **double**/single                            Floating point precision (single/double)

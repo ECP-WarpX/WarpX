@@ -163,6 +163,7 @@ void wp_parser_setconst (struct wp_parser* parser, char const* name, amrex_real 
 void wp_ast_optimize (struct wp_node* node);
 size_t wp_ast_size (struct wp_node* node);
 void wp_ast_print (struct wp_node* node);
+void wp_ast_depth (struct wp_node* node, int* n);
 void wp_ast_regvar (struct wp_node* node, char const* name, amrex_real* p);
 void wp_ast_regvar_gpu (struct wp_node* node, char const* name, int i);
 void wp_ast_setconst (struct wp_node* node, char const* name, amrex_real c);

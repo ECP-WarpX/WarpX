@@ -52,6 +52,8 @@ public:
 
     void print () const;
 
+    int depth () const;
+
     std::string const& expr () const;
 
     std::set<std::string> symbols () const;

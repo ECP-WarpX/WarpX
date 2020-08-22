@@ -75,6 +75,8 @@ private:
 template <int N>
 GpuParser<N>::GpuParser (WarpXParser const& wp)
 {
+    AMREX_ALWAYS_ASSERT(wp.depth() <= WARPX_PARSER_DEPTH);
+
 #ifdef AMREX_USE_GPU
 
     struct wp_parser* a_wp = wp.m_parser;
