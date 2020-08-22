@@ -138,9 +138,7 @@ guardCellManager::Init(
     }
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 #else
-    ignore_unused(nox_fft);
-    ignore_unused(noy_fft);
-    ignore_unused(noz_fft);
+    ignore_unused(nox_fft, noy_fft, noz_fft);
 #endif
 
     ng_Extra = IntVect(static_cast<int>(aux_is_nodal and !do_nodal));

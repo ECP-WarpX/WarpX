@@ -177,22 +177,12 @@ struct CartesianCKCAlgorithm {
                       +  F(i+1,j+1,k-1,ncomp) - F(i+1,j  ,k-1,ncomp)
                        +  F(i-1,j+1,k-1,ncomp) - F(i-1,j  ,k-1,ncomp));
 #elif (defined WARPX_DIM_XZ)
-        amrex::ignore_unused(F);
-        amrex::ignore_unused(coefs_y);
-        amrex::ignore_unused(n_coefs_y);
-        amrex::ignore_unused(i);
-        amrex::ignore_unused(j);
-        amrex::ignore_unused(k);
-        amrex::ignore_unused(ncomp);
+        amrex::ignore_unused(F, coefs_y, n_coefs_y,
+            i, j, k, ncomp);
         return 0._rt; // 2D Cartesian: derivative along y is 0
 #else
-        amrex::ignore_unused(F);
-        amrex::ignore_unused(coefs_y);
-        amrex::ignore_unused(n_coefs_y);
-        amrex::ignore_unused(i);
-        amrex::ignore_unused(j);
-        amrex::ignore_unused(k);
-        amrex::ignore_unused(ncomp);
+        amrex::ignore_unused(F, coefs_y, n_coefs_y,
+            i, j, k, ncomp);
 #endif
     }
 
@@ -209,22 +199,12 @@ struct CartesianCKCAlgorithm {
         Real const inv_dy = coefs_y[0];
         return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
 #elif (defined WARPX_DIM_XZ)
-        amrex::ignore_unused(F);
-        amrex::ignore_unused(coefs_y);
-        amrex::ignore_unused(n_coefs_y);
-        amrex::ignore_unused(i);
-        amrex::ignore_unused(j);
-        amrex::ignore_unused(k);
-        amrex::ignore_unused(ncomp);
+        amrex::ignore_unused(F, coefs_y, n_coefs_y,
+            i, j, k, ncomp);
         return 0._rt; // 2D Cartesian: derivative along y is 0
 #else
-        amrex::ignore_unused(F);
-        amrex::ignore_unused(coefs_y);
-        amrex::ignore_unused(n_coefs_y);
-        amrex::ignore_unused(i);
-        amrex::ignore_unused(j);
-        amrex::ignore_unused(k);
-        amrex::ignore_unused(ncomp);
+        amrex::ignore_unused(F, coefs_y, n_coefs_y,
+            i, j, k, ncomp);
 #endif
     }
 
