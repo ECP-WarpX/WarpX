@@ -1,6 +1,7 @@
 #ifndef WARPX_COMPUTEDIAGFUNCTOR_H_
 #define WARPX_COMPUTEDIAGFUNCTOR_H_
 
+#include <AMReX.H>
 #include <AMReX_MultiFab.H>
 
 /**
@@ -27,9 +28,14 @@ public:
      * multifab */
     int nComp () const { return m_ncomp; }
 
-    virtual void PrepareFunctorData ( int /* i_buffer */, bool /* ZSliceInDomain */,
-                                      amrex::Real /* current_z_boost */,
-                                      amrex::Box /* buffer_box */, const int /* k_index_zlab */) {}
+    virtual void PrepareFunctorData ( int i_buffer, bool ZSliceInDomain,
+                                      amrex::Real current_z_boost,
+                                      amrex::Box buffer_box, const int k_index_zlab) {
+                                          amrex::ignore_unused(i_buffer,
+                                              ZSliceInDomain,
+                                              current_z_boost, buffer_box,
+                                            k_index_zlab);
+                                      }
     virtual void InitData() {}
 private:
     /** Number of components of mf_dst that this functor updates. */
