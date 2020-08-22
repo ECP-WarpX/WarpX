@@ -149,8 +149,10 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
             case ShiftType::TransformToCellCentered: sign = 1.;
         }
         const Complex I{0,1};
-        for (int i=0; i<static_cast<int>(k.size()); i++ ){
-            shift[i] = exp( I*sign*k[i]*0.5_rt*dx[i_dim]);
+        int i = 0;
+        for (auto const& kv : k){
+            shift[i] = exp( I*sign*kv*0.5_rt*dx[i_dim]);
+            i++;
         }
     }
     return shift_factor;
