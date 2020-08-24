@@ -74,6 +74,12 @@ Diagnostics::BaseReadParameters ()
             m_hi[idim] = warpx.Geom(0).ProbHi(idim);
        }
     }
+    if (lo_specified || hi_specified) {
+        // set geometry filter for particle-diags to true and diag lo,hi is specified
+        for (int i = 0; i < m_all_species.size(); ++i) {
+            m_all_species[i].m_do_geom_filter = true;
+        }
+    }
     // For a moving window simulation, the user-defined m_lo and m_hi must be converted.
     if (warpx.do_moving_window) {
 #if (AMREX_SPACEDIM == 3)

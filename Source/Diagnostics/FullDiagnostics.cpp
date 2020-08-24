@@ -84,6 +84,7 @@ FullDiagnostics::Flush ( int i_buffer )
     // This function should be moved to Diagnostics when plotfiles/openpmd format
     // is supported for BackTransformed Diagnostics, in BTDiagnostics class.
     auto & warpx = WarpX::GetInstance();
+
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         warpx.gett_new(0), m_all_species, nlev_output, m_file_prefix,
@@ -247,7 +248,6 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     // Default BoxArray and DistributionMap for initializing the output MultiFab, m_mf_output.
     amrex::BoxArray ba = warpx.boxArray(lev);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
-
     // Check if warpx BoxArray is coarsenable.
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
         ba.coarsenable(m_crse_ratio),
@@ -335,13 +335,13 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
         // Box covering the extent of the user-defined diagnostic domain
         amrex::Box domain = ba.minimalBox();
         // define geom object
-        m_geom_output[i_buffer][lev].define(domain, &diag_dom,
-                                        amrex::CoordSys::cartesian,
-                                        diag_periodicity.data());
+        m_geom_output[i_buffer][lev].define( domain, &diag_dom,
+                                             amrex::CoordSys::cartesian,
+                                             diag_periodicity.data() );
     } else if (lev > 0) {
         // Take the geom object of previous level and refine it.
-        m_geom_output[i_buffer][lev] = amrex::refine(m_geom_output[i_buffer][lev-1],
-                                                     warpx.RefRatio(lev-1));
+        m_geom_output[i_buffer][lev] = amrex::refine( m_geom_output[i_buffer][lev-1],
+                                                      warpx.RefRatio(lev-1) );
     }
 }
 
@@ -415,4 +415,40 @@ FullDiagnostics::PrepareFieldDataForOutput ()
     warpx.FillBoundaryAux(warpx.getngUpdateAux());
 #endif
     warpx.UpdateAuxilaryData();
+
+    RedefineDiagGeomForMovingWindow();
+
+    for (int i = 0; i < m_all_species.size(); ++i) {
+        m_all_species[i].m_diag_domain = m_geom_output[0][0].ProbDomain();
+    }
+}
+
+void
+FullDiagnostics::RedefineDiagGeomForMovingWindow ()
+{
+    auto & warpx = WarpX::GetInstance();
+    if (warpx.do_moving_window) {
+        int moving_dir = warpx.moving_window_dir;
+        amrex::Real moving_window_x = warpx.getmoving_window_x();
+        const amrex::Real* current_lo = m_geom_output[0][0].ProbLo();
+        const amrex::Real* current_hi = m_geom_output[0][0].ProbHi();
+        const amrex::Real* geom_dx = m_geom_output[0][0].CellSize();
+        int num_shift_base = static_cast<int>((moving_window_x - current_lo[moving_dir])
+                                              / geom_dx[moving_dir]);
+        // update the problem domain. Note that this is done only for the base level 0
+        // because m_geom_output[0][lev] share the same static RealBox
+        amrex::Real new_lo[AMREX_SPACEDIM];
+        amrex::Real new_hi[AMREX_SPACEDIM];
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            new_lo[idim] = current_lo[idim];
+            new_hi[idim] = current_hi[idim];
+        }
+        new_lo[moving_dir] = current_lo[moving_dir] + num_shift_base*geom_dx[moving_dir];
+        new_hi[moving_dir] = current_hi[moving_dir] + num_shift_base*geom_dx[moving_dir];
+        for (int lev = 0; lev < nmax_lev; ++lev) {
+            m_geom_output[0][lev].ProbDomain( amrex::RealBox(new_lo, new_hi) );
+        }        
+    }
+    
+
 }

@@ -64,6 +64,7 @@ private:
     void InitializeParticleBuffer () override;
     /** Prepare field data to be used for diagnostics */
     void PrepareFieldDataForOutput () override;
+    void RedefineDiagGeomForMovingWindow ();
 
 };
 

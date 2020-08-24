@@ -116,4 +116,27 @@ public:
     amrex::Real m_t;
 };
 
+struct GeometryFilter
+{
+    GeometryFilter(bool a_is_active, amrex::RealBox a_domain)
+        : m_is_active(a_is_active), m_domain(a_domain) {}
+    /**
+     * \brief return 1 if the partcile is within the domain described by the RealBox
+     * \param p one particle
+     * \param rb RealBox
+     * \return whether or not the particle is selected
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    bool operator () (const SuperParticleType& p) const noexcept
+    {
+        if ( !m_is_active ) return 1;
+        return ! (AMREX_D_TERM( (p.pos(0) < m_domain.lo(0)) || (p.pos(0) > m_domain.hi(0) ),
+                            ||  (p.pos(1) < m_domain.lo(1)) || (p.pos(1) > m_domain.hi(1) ),
+                            ||  (p.pos(2) < m_domain.lo(2)) || (p.pos(2) > m_domain.hi(2) )));
+    }
+private:
+    const bool m_is_active; //! select all particles if false
+    const amrex::RealBox m_domain;
+};
+
 #endif // FILTERFUNCTORS_H
