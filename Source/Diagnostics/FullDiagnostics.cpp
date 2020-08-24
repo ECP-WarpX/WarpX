@@ -232,8 +232,7 @@ FullDiagnostics::AddRZModesToOutputNames (const std::string& field, int ncomp){
         m_varnames.push_back( field + "_" + std::to_string(ic) + "_imag" );
     }
 #else
-    amrex::ignore_unused(field);
-    amrex::ignore_unused(ncomp);
+    amrex::ignore_unused(field, ncomp);
 #endif
 }
 
