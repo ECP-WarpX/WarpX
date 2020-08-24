@@ -146,6 +146,18 @@ WarpXParser::print () const
 #endif
 }
 
+int
+WarpXParser::depth () const
+{
+    int n = 0;
+#ifdef _OPENMP
+    wp_ast_depth(m_parser[omp_get_thread_num()]->ast, &n);
+#else
+    wp_ast_depth(m_parser->ast, &n);
+#endif
+    return n;
+}
+
 std::string const&
 WarpXParser::expr () const
 {

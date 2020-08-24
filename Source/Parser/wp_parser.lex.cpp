@@ -960,7 +960,7 @@ YY_RULE_SETUP
 /* everything else */
 case 46:
 YY_RULE_SETUP
-{ yyerror("Unknow character %c\n", *yytext); }
+{ yyerror("Unknown character %c\n", *yytext); }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
