@@ -1,3 +1,10 @@
+"""
+Copyright 2020
+
+This file is part of WarpX.
+
+License: BSD-3-Clause-LBNL
+"""
 import config
 import json
 import os

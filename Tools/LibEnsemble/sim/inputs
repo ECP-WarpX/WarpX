@@ -7,24 +7,22 @@ amr.max_level = 0
 ######### BOX PARAMETERS ########
 #################################
 # warpx.zmax_plasma_to_compute_max_step = 0.33
-warpx.zmax_plasma_to_compute_max_step = -1.
-# max_step = 3150
+max_step = 100
 
-amr.n_cell = 32 2048 # 64 3072
+amr.n_cell = 256 256 2560
 
 amr.max_grid_size = 4096
 amr.blocking_factor = 16
 
 geometry.coord_sys   = 0
-geometry.is_periodic = 0 0
+geometry.is_periodic = 1 1 0
 # physical domain when running in the lab frame
-geometry.prob_lo = -0.00024190484157981564 -0.00016126989438654374
-geometry.prob_hi =  0.00024190484157981564  0.0
+geometry.prob_lo = -45.09e06 -45.09e-6 -51.61e-5
+geometry.prob_hi =  45.09e-6  45.09e-6 1.e-6
 
 #################################
 ############ NUMERICS ###########
 #################################
-warpx.verbose = 1
 algo.current_deposition = esirkepov
 algo.charge_deposition = standard
 #algo.field_gathering = standard
@@ -35,7 +33,7 @@ interpolation.nox = 3
 interpolation.noy = 3
 interpolation.noz = 3
 warpx.use_filter = 1
-warpx.filter_npass_each_dir = 1 4
+warpx.filter_npass_each_dir = 1 1
 warpx.cfl = .9999
 warpx.do_pml = 0
 warpx.do_dynamic_scheduling = 1
@@ -48,25 +46,23 @@ warpx.moving_window_v = 1.0 # in units of the speed of light
 #################################
 ####### BOOST PARAMETERS ########
 #################################
-warpx.gamma_boost = 30.0
-warpx.boost_direction = z
-warpx.do_back_transformed_diagnostics=0 # 1
-warpx.do_back_transformed_fields=0
-warpx.num_snapshots_lab=20
-warpx.dt_snapshots_lab=1.6678204759907604e-10
+# warpx.gamma_boost = 30.0
+# warpx.boost_direction = z
+# warpx.do_back_transformed_diagnostics=0 # 1
+# warpx.do_back_transformed_fields=0
+# warpx.num_snapshots_lab=20
+# warpx.dt_snapshots_lab=1.6678204759907604e-10
 
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 5
-particles.species_names = electrons ions electrons2 ions2 beam
+particles.nspecies = 4
+particles.species_names = He_e He_i N_e N_i
 
-particles.use_fdtd_nci_corr = 1
-particles.rigid_injected_species = beam
+particles.use_fdtd_nci_corr = 0
 
-electrons.charge = -q_e
-electrons.mass = m_e
-electrons.injection_style = NUniformPerCell
+He_e.species_type = electron
+.injection_style = NUniformPerCell
 electrons.num_particles_per_cell_each_dim = 1 1
 electrons.momentum_distribution_type = "gaussian"
 electrons.xmin = -150.e-6
@@ -195,31 +191,19 @@ warpx.mirror_z_npoints = 4 4
 #################################
 ############# LASER #############
 #################################
-lasers.nlasers = 2
-lasers.names = laser1 laser2
+lasers.nlasers = 1
+lasers.names = laser1
 
 laser1.profile = Gaussian
 laser1.position = 0. 0. -1.e-9  # This point is on the laser plane
 laser1.direction = 0. 0. 1.      # The plane normal direction
 laser1.polarization = 0. 1. 0.      # The main polarization vector
-laser1.e_max = 6.82274e12       # Maximum amplitude of the laser field (in V/m)
-laser1.profile_waist = 50.e-6       # The waist of the laser (in meters)
-laser1.profile_duration = 7.33841e-14   # The duration of the laser (in seconds)
+laser1.e_max = 12.762e12       # Maximum amplitude of the laser field (in V/m)
+laser1.profile_waist = 17.e-6       # The waist of the laser (in meters)
+laser1.profile_duration = 22.94e-15   # The duration of the laser (in seconds)
 laser1.profile_t_peak = 1.46764864e-13 # The time at which the laser reaches its peak (in seconds)
-laser1.profile_focal_distance = 0.00875  # Focal distance from the antenna (in meters)
+laser1.profile_focal_distance = 123.4e-6  # Focal distance from the antenna (in meters)
 laser1.wavelength = 0.8e-6         # The wavelength of the laser (in meters)
-
-laser2.profile = Gaussian
-laser2.position = 0. 0. 0.348499999  # This point is on the laser plane
-laser2.direction = 0. 0. 1.      # The plane normal direction
-laser2.polarization = 0. 1. 0.      # The main polarization vector
-laser2.e_max = 6.82274e12       # Maximum amplitude of the laser field (in V/m)
-laser2.profile_waist = 50.e-6       # The waist of the laser (in meters)
-laser2.profile_duration = 7.33841e-14   # The duration of the laser (in seconds)
-laser2.profile_t_peak = 1.1626176366295598e-09  # The time at which the laser reaches its peak (in seconds)
-laser2.profile_focal_distance = 0.00875  # Focal distance from the antenna (in meters)
-laser2.wavelength = 0.8e-6         # The wavelength of the laser (in meters)
-laser2.do_continuous_injection = 1 # Lasers are initialized outside of initial box
 
 diagnostics.diags_names = diag
 diag.file_prefix = diags/plotfiles/plt

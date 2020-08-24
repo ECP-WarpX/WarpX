@@ -84,6 +84,38 @@ namespace
         pos.z = lo_corner[1] + (iv[1]+r.z)*dx[1];
 #endif
 #endif
+
+    }        
+#if (AMREX_SPACEDIM == 3)
+    pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
+    pos.y = lo_corner[1] + (iv[1]+r.y)*dx[1];
+    pos.z = lo_corner[2] + (iv[2]+r.z)*dx[2];
+#else
+    pos.x = lo_corner[0] + (iv[0]+r.x)*dx[0];
+    pos.y = 0.0_rt;
+    pos.z = lo_corner[1] + (iv[1]+r.y)*dx[1];
+#endif
+
+    pos.x = lo_corner[Dir::x] + (iv[Dir::x]+r.x)*dx[Dir::x];
+    pos.y = lo_corner[Dir::y] + (iv[Dir::y]+r.y)*dx[Dir::y];
+    pos.z = lo_corner[Dir::z] + (iv[Dir::z]+r.z)*dx[Dir::z];
+        
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+        
         return pos;
     }
 }
