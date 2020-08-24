@@ -23,7 +23,7 @@ struct Compute_shape_factor
 {
     template< typename T >
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    int operator()(T* const sx, T xint) const { return 0; }
+    int operator()(T* const /*sx*/, T /*xint*/) const { return 0; }
 };
 
 /**

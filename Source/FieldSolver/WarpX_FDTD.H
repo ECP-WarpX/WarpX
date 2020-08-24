@@ -7,6 +7,7 @@
 #ifndef WARPX_FDTD_H_
 #define WARPX_FDTD_H_
 
+#include <AMReX.H>
 #include <AMReX_FArrayBox.H>
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -30,11 +31,13 @@ void warpx_computedivb(int i, int j, int k, int dcomp,
 #elif defined WARPX_DIM_XZ
     divB(i,j,0,dcomp) = (Bx(i+1,j  ,0) - Bx(i,j,0))*dxinv
                +        (Bz(i  ,j+1,0) - Bz(i,j,0))*dzinv;
+    amrex::ignore_unused(k, By, dyinv);
 #elif defined WARPX_DIM_RZ
     const amrex::Real ru = 1. + 0.5/(rmin*dxinv + i + 0.5);
     const amrex::Real rd = 1. - 0.5/(rmin*dxinv + i + 0.5);
     divB(i,j,0,dcomp) = (ru*Bx(i+1,j,0) - rd*Bx(i,j,0))*dxinv
                        + (Bz(i,j+1,0) - Bz(i,j,0))*dzinv;
+    amrex::ignore_unused(k, By, dyinv);
 #endif
 }
 
