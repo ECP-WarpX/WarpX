@@ -446,8 +446,8 @@ FullDiagnostics::RedefineDiagGeomForMovingWindow ()
         new_hi[moving_dir] = current_hi[moving_dir] + num_shift_base*geom_dx[moving_dir];
         for (int lev = 0; lev < nmax_lev; ++lev) {
             m_geom_output[0][lev].ProbDomain( amrex::RealBox(new_lo, new_hi) );
-        }        
+        }
     }
-    
+
 
 }
