@@ -16,7 +16,6 @@
 #endif
 #include <AMReX.H>
 #include <AMReX_Vector.H>
-#include <AMReX_Geometry.H>
 #include <AMReX_MultiFab.H>
 using namespace amrex::literals;
 
@@ -417,6 +416,7 @@ FullDiagnostics::PrepareFieldDataForOutput ()
 
     RedefineDiagGeomForMovingWindow();
 
+    // Update the RealBox used for the geometry filter in particle diags
     for (int i = 0; i < m_all_species.size(); ++i) {
         m_all_species[i].m_diag_domain = m_geom_output[0][0].ProbDomain();
     }

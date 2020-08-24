@@ -75,7 +75,8 @@ Diagnostics::BaseReadParameters ()
        }
     }
     if (lo_specified || hi_specified) {
-        // set geometry filter for particle-diags to true and diag lo,hi is specified
+        // set geometry filter for particle-diags to true when the diagnostic domain-extent
+        // is specified by the user
         for (int i = 0; i < m_all_species.size(); ++i) {
             m_all_species[i].m_do_geom_filter = true;
         }

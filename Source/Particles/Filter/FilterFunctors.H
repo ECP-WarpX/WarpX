@@ -116,15 +116,21 @@ public:
     amrex::Real m_t;
 };
 
+
+
+/**
+ * \brief Functor that returns 1 if the particle is inside a given axis-aligned region
+ *        defined by amrex::RealBox, 0 otherwise.
+ */
 struct GeometryFilter
 {
     GeometryFilter(bool a_is_active, amrex::RealBox a_domain)
         : m_is_active(a_is_active), m_domain(a_domain) {}
     /**
-     * \brief return 1 if the partcile is within the domain described by the RealBox
+     * \brief return 1 if the partcile is within the region described by the RealBox
      * \param p one particle
      * \param rb RealBox
-     * \return whether or not the particle is selected
+     * \return whether or not the particle is inside the region defined by m_domain
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     bool operator () (const SuperParticleType& p) const noexcept
@@ -135,7 +141,9 @@ struct GeometryFilter
                             ||  (p.pos(2) < m_domain.lo(2)) || (p.pos(2) > m_domain.hi(2) )));
     }
 private:
-    const bool m_is_active; //! select all particles if false
+    /** Whether this diagnostics is activated. Select all particles if false */
+    const bool m_is_active;
+    /** Physical extent of the axis-aligned region used for particle check */
     const amrex::RealBox m_domain;
 };
 
