@@ -176,6 +176,7 @@ struct CartesianCKCAlgorithm {
                       +  F(i-1,j+1,k+1,ncomp) - F(i-1,j  ,k+1,ncomp)
                       +  F(i+1,j+1,k-1,ncomp) - F(i+1,j  ,k-1,ncomp)
                        +  F(i-1,j+1,k-1,ncomp) - F(i-1,j  ,k-1,ncomp));
+        amrex::ignore_unused(n_coefs_y);
 #elif (defined WARPX_DIM_XZ)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
@@ -233,6 +234,7 @@ struct CartesianCKCAlgorithm {
                       +  F(i-1,j+1,k+1,ncomp) - F(i-1,j+1,k  ,ncomp)
                       +  F(i+1,j-1,k+1,ncomp) - F(i+1,j-1,k  ,ncomp)
                       +  F(i-1,j-1,k+1,ncomp) - F(i-1,j-1,k  ,ncomp));
+        amrex::ignore_unused(n_coefs_y);
 #elif (defined WARPX_DIM_XZ)
         return alphaz * (F(i  ,j+1,k  ,ncomp) - F(i  ,j  ,k  ,ncomp))
              + betazx * (F(i+1,j+1,k  ,ncomp) - F(i+1,j  ,k  ,ncomp)

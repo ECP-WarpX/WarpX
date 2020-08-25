@@ -143,7 +143,7 @@ wp_parser_dup (struct wp_parser* source)
 size_t
 wp_ast_size (struct wp_node* node)
 {
-    size_t result;
+    size_t result = 0;
 
     switch (node->type)
     {

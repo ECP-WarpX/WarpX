@@ -22,7 +22,7 @@ AMREX_NO_INLINE
 amrex::Real
 wp_ast_eval (struct wp_node* node, amrex::Real const* x)
 {
-    amrex::Real result;
+    amrex::Real result = 0.0;
 
     switch (node->type)
     {
@@ -190,7 +190,7 @@ AMREX_GPU_HOST_DEVICE
 AMREX_NO_INLINE
 #endif
 amrex::Real
-wp_ast_eval (struct wp_node* node, amrex::Real const* x)
+wp_ast_eval (struct wp_node* /*node*/, amrex::Real const* /*x*/)
 {
 #if AMREX_DEVICE_COMPILE
     AMREX_DEVICE_PRINTF("wp_ast_eval: WARPX_PARSER_DEPTH %d not big enough\n",
