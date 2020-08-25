@@ -199,7 +199,7 @@ wp_ast_size (struct wp_node* node)
 struct wp_node*
 wp_parser_ast_dup (struct wp_parser* my_parser, struct wp_node* node, int move)
 {
-    void* result;
+    void* result = nullptr;
 
     switch (node->type)
     {

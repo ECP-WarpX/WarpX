@@ -410,7 +410,6 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const FArrayBox& bzfab = Bz[pti];
 
             const auto getPosition = GetParticlePosition(pti);
-                  auto setPosition = SetParticlePosition(pti);
 
             const auto getExternalE = GetExternalEField(pti);
             const auto getExternalB = GetExternalBField(pti);

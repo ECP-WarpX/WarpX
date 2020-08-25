@@ -154,8 +154,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // Keep these double to avoid bug in single precision
             double sx_node[depos_order + 1];
             double sx_cell[depos_order + 1];
-            int j_node;
-            int j_cell;
+            int j_node = 0;
+            int j_cell = 0;
             Compute_shape_factor< depos_order > const compute_shape_factor;
             if (jx_type[0] == NODE || jy_type[0] == NODE || jz_type[0] == NODE) {
                 j_node = compute_shape_factor(sx_node, xmid);
@@ -184,8 +184,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             const double ymid = (yp - ymin)*dyi - dts2dy*vy;
             double sy_node[depos_order + 1];
             double sy_cell[depos_order + 1];
-            int k_node;
-            int k_cell;
+            int k_node = 0;
+            int k_cell = 0;
             if (jx_type[1] == NODE || jy_type[1] == NODE || jz_type[1] == NODE) {
                 k_node = compute_shape_factor(sy_node, ymid);
             }
@@ -211,8 +211,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             const double zmid = (zp - zmin)*dzi - dts2dz*vz;
             double sz_node[depos_order + 1];
             double sz_cell[depos_order + 1];
-            int l_node;
-            int l_cell;
+            int l_node = 0;
+            int l_cell = 0;
             if (jx_type[zdir] == NODE || jy_type[zdir] == NODE || jz_type[zdir] == NODE) {
                 l_node = compute_shape_factor(sz_node, zmid);
             }

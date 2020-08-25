@@ -24,6 +24,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX_Print.H>
+#include <AMReX.H>
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
@@ -441,6 +442,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
 #endif // WARPX_USE_OPENPMD
+
+    ignore_unused(q_tot, z_shift);
+
     return;
 }
 
@@ -1427,7 +1431,6 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const FArrayBox& bzfab = Bz[pti];
 
             const auto getPosition = GetParticlePosition(pti);
-                  auto setPosition = SetParticlePosition(pti);
 
             const auto getExternalE = GetExternalEField(pti);
             const auto getExternalB = GetExternalBField(pti);
