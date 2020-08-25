@@ -378,7 +378,7 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf, int const fie
 
     // Create a temporary to hold the inverse Hankel transform field.
     // This allows the final result to have a different shape than the transformed field.
-    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
+    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes-1, 0);
 
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf); mfi.isValid(); ++mfi){
@@ -389,9 +389,8 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf, int const fie
         // tempHTransformedSplit includes the imaginary component of mode 0.
         // field_mf does not.
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
-        amrex::FArrayBox field_comp(field_mf_copy[mfi], amrex::make_alias, i_comp*ncomp, ncomp);
-        multi_spectral_hankel_transformer[mfi].SpectralToPhysical_Scalar(realspace_bx, tempHTransformedSplit[mfi], field_comp);
-        field_mf[mfi].copy(field_comp, 0, i_comp*ncomp, ncomp);
+        multi_spectral_hankel_transformer[mfi].SpectralToPhysical_Scalar(realspace_bx, tempHTransformedSplit[mfi], field_mf_copy[mfi]);
+        field_mf[mfi].copy<amrex::RunOn::Device>(field_mf_copy[mfi], 0, i_comp*ncomp, ncomp);
 
     }
 }

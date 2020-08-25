@@ -34,7 +34,7 @@ struct RandomFilter
      * \return whether or not the particle is selected
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator () (const SuperParticleType& p) const noexcept
+    bool operator () (const SuperParticleType& /*p*/) const noexcept
     {
         if ( !m_is_active ) return 1;
         else if ( amrex::Random() < m_fraction ) return 1;
