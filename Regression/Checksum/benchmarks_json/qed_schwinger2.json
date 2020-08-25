@@ -3,7 +3,7 @@
     "particle_cpu": 1024.0,
     "particle_id": 1573888.0,
     "particle_momentum_x": 1.2538560192562119145907523613836e-09,
-    "particle_momentum_y": 7.98841234718825980904544944075-11,
+    "particle_momentum_y": 7.98841234718825980904544944075e-11,
     "particle_momentum_z": 2.802314703585414430187063861697-10,
     "particle_position_x": 0.0005120000000000001,
     "particle_position_y": 0.000512,
