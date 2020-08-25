@@ -94,11 +94,11 @@ MacroscopicProperties::InitData ()
     int ng = 3;
     // Define material property multifabs using ba and dmap from WarpX instance
     // sigma is cell-centered MultiFab
-    m_sigma_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+    m_sigma_mf = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()), dmap, 1, ng);
     // epsilon is cell-centered MultiFab
-    m_eps_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+    m_eps_mf = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()), dmap, 1, ng);
     // mu is cell-centered MultiFab
-    m_mu_mf = std::make_unique<MultiFab>(ba, dmap, 1, ng);
+    m_mu_mf = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()), dmap, 1, ng);
     // Initialize sigma
     if (m_sigma_s == "constant") {
 
@@ -176,7 +176,7 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
     const auto dx_lev = warpx.Geom(lev).CellSizeArray();
     const RealBox& real_box = warpx.Geom(lev).ProbDomain();
     IntVect iv = macro_mf->ixType().toIntVect();
-    IntVect grown_iv = iv + amrex::IntVect(macro_mf->nGrow());
+    IntVect grown_iv = iv ;
     for ( MFIter mfi(*macro_mf, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         // Initialize ghost cells in addition to valid cells
 

@@ -131,27 +131,28 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Box const& tex  = mfi.tilebox(Efield[0]->ixType().toIntVect());
         Box const& tey  = mfi.tilebox(Efield[1]->ixType().toIntVect());
         Box const& tez  = mfi.tilebox(Efield[2]->ixType().toIntVect());
-
         // starting component to interpolate macro properties to Ex, Ey, Ez locations
         const int scomp = 0;
         // Loop over the cells and update the fields
         amrex::ParallelFor(tex, tey, tez,
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                // Interpolate conductivity, sigma, to Ex position on the grid
+                //// Interpolate conductivity, sigma, to Ex position on the grid
                 amrex::Real const sigma_interp = CoarsenIO::Interp( sigma_arr, sigma_stag,
                                            Ex_stag, macro_cr, i, j, k, scomp);
                 // Interpolated permittivity, epsilon, to Ex position on the grid
                 amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
                                            Ex_stag, macro_cr, i, j, k, scomp);
-                // Interpolated permeability, mu, to Ex position on the grid
-                amrex::Real const mu = CoarsenIO::Interp( mu_arr, mu_stag,
-                                           Ex_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
-
-                Ex(i, j, k) = alpha * Ex(i, j, k) + (beta/mu)
-                     * ( - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
-                         + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k))
+                Ex(i, j, k) = alpha * Ex(i, j, k) + (beta/1.0)
+                     * ( - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k,0,
+#ifdef WARPX_DIM_3D
+                                              mu_arr(i,j,k), mu_arr(i,j,k-1))
+#elif WARPX_DIM_XZ
+                                              mu_arr(i,j,k), mu_arr(i,j-1,k))
+#endif
+                         + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k,0,
+                                              mu_arr(i,j,k), mu_arr(i,j-1,k)) )
                            - beta * jx(i, j, k);
             },
 
@@ -160,14 +161,18 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                                            Ey_stag, macro_cr, i, j, k, scomp);
                 amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
                                            Ey_stag, macro_cr, i, j, k, scomp);
-                amrex::Real const mu = CoarsenIO::Interp( mu_arr, mu_stag,
-                                           Ey_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
-                Ey(i, j, k) = alpha * Ey(i, j, k) + (beta/mu)
-                     * ( - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
-                         + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k))
+                Ey(i, j, k) = alpha * Ey(i, j, k) + (beta/1.0)
+                     * ( - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k,0,
+                                              mu_arr(i,j,k), mu_arr(i-1,j,k))
+                         + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k,0,
+#ifdef WARPX_DIM_3D
+                                              mu_arr(i,j,k), mu_arr(i,j,k-1)) )
+#elif WARPX_DIM_XZ
+                                              mu_arr(i,j,k), mu_arr(i,j-1,k)) )
+#endif
                            - beta * jy(i, j, k);
             },
 
@@ -176,14 +181,14 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                                            Ez_stag, macro_cr, i, j, k, scomp);
                 amrex::Real const epsilon_interp = CoarsenIO::Interp( eps_arr, epsilon_stag,
                                            Ez_stag, macro_cr, i, j, k, scomp);
-                amrex::Real const mu = CoarsenIO::Interp( mu_arr, mu_stag,
-                                           Ez_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
-                Ez(i, j, k) = alpha * Ez(i, j, k) + (beta/mu)
-                     * ( - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k)
-                         + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k))
+                Ez(i, j, k) = alpha * Ez(i, j, k) + (beta/1.0)
+                     * ( - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k,0,
+                                              mu_arr(i,j,k), mu_arr(i,j-1,k))
+                         + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k,0,
+                                              mu_arr(i,j,k), mu_arr(i-1,j,k)))
                              - beta * jz(i, j, k);
             }
 

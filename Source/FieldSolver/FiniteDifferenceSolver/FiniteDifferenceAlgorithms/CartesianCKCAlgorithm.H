@@ -147,10 +147,11 @@ struct CartesianCKCAlgorithm {
     static amrex::Real DownwardDx (
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_x, int const /*n_coefs_x*/,
-        int const i, int const j, int const k, int const ncomp=0 ) {
+        int const i, int const j, int const k, int const ncomp=0,
+        amrex::Real const mu_up =1.0, amrex::Real const mu_down = 1.0 ) {
 
         amrex::Real const inv_dx = coefs_x[0];
-        return inv_dx*( F(i,j,k,ncomp) - F(i-1,j,k,ncomp) );
+        return inv_dx*( F(i,j,k,ncomp)/mu_up - F(i-1,j,k,ncomp)/mu_down );
     }
 
     /**
@@ -192,12 +193,13 @@ struct CartesianCKCAlgorithm {
     static amrex::Real DownwardDy (
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_y, int const n_coefs_y,
-        int const i, int const j, int const k, int const ncomp=0 ) {
+        int const i, int const j, int const k, int const ncomp=0,
+        amrex::Real const mu_up =1.0, amrex::Real const mu_down = 1.0 ) {
 
         using namespace amrex;
 #if defined WARPX_DIM_3D
         Real const inv_dy = coefs_y[0];
-        return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
+        return inv_dy*( F(i,j,k,ncomp)/mu_up - F(i,j-1,k,ncomp)/mu_down );
 #elif (defined WARPX_DIM_XZ)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
@@ -246,13 +248,14 @@ struct CartesianCKCAlgorithm {
     static amrex::Real DownwardDz (
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_z, int const /*n_coefs_z*/,
-        int const i, int const j, int const k, int const ncomp=0 ) {
+        int const i, int const j, int const k, int const ncomp=0,
+        amrex::Real const mu_up =1.0, amrex::Real const mu_down = 1.0  ) {
 
         amrex::Real const inv_dz = coefs_z[0];
 #if defined WARPX_DIM_3D
-        return inv_dz*( F(i,j,k,ncomp) - F(i,j,k-1,ncomp) );
+        return inv_dz*( F(i,j,k,ncomp)/mu_up - F(i,j,k-1,ncomp)/mu_down );
 #elif (defined WARPX_DIM_XZ)
-        return inv_dz*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
+        return inv_dz*( F(i,j,k,ncomp)/mu_up - F(i,j-1,k,ncomp)/mu_down );
 #endif
     }
 
