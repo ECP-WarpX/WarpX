@@ -3,6 +3,7 @@
 
 
 #include "Parser/WarpXParserWrapper.H"
+#include "Utils/WarpXConst.H"
 #include <AMReX_MultiFab.H>
 
 
@@ -52,9 +53,9 @@ private:
      /** Conductivity, sigma, of the medium */
      amrex::Real m_sigma = 0.0;
      /** Permittivity, epsilon, of the medium */
-     amrex::Real m_epsilon = 8.8541878128e-12;
+     amrex::Real m_epsilon = PhysConst::ep0;
      /** Permeability, mu, of the medium */
-     amrex::Real m_mu = 1.25663706212e-06;
+     amrex::Real m_mu = PhysConst::mu0;
      /** Multifab for m_sigma */
      std::unique_ptr<amrex::MultiFab> m_sigma_mf;
      /** Multifab for m_epsilon */
