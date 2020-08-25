@@ -376,9 +376,9 @@ WarpX::ShiftGalileanBoundary ()
     Real time_shift = (cur_time - time_of_last_gal_shift);
 
 #if (AMREX_SPACEDIM == 3)
-        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]* time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+        galilean_shift = { v_galilean[0]* time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
 #elif (AMREX_SPACEDIM == 2)
-        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]* time_shift, std::numeric_limits<Real>::quiet_NaN(), v_galilean[2]*time_shift };
+        galilean_shift = { v_galilean[0]* time_shift, std::numeric_limits<Real>::quiet_NaN(), v_galilean[2]*time_shift };
 #endif
 
 #if (AMREX_SPACEDIM == 3)

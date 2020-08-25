@@ -414,8 +414,6 @@ FullDiagnostics::PrepareFieldDataForOutput ()
 #endif
     warpx.UpdateAuxilaryData();
 
-    RedefineDiagGeomForMovingWindow();
-
     // Update the RealBox used for the geometry filter in particle diags
     for (int i = 0; i < m_all_species.size(); ++i) {
         m_all_species[i].m_diag_domain = m_geom_output[0][0].ProbDomain();
@@ -423,27 +421,53 @@ FullDiagnostics::PrepareFieldDataForOutput ()
 }
 
 void
-FullDiagnostics::RedefineDiagGeomForMovingWindow ()
+FullDiagnostics::MovingWindowAndGalileanDomainShift ()
 {
     auto & warpx = WarpX::GetInstance();
+  
+    // Account for galilean shift
+    amrex::Real new_lo[AMREX_SPACEDIM];
+    amrex::Real new_hi[AMREX_SPACEDIM];
+    const amrex::Real* current_lo = m_geom_output[0][0].ProbLo();
+    const amrex::Real* current_hi = m_geom_output[0][0].ProbHi();
+
+#if (AMREX_SPACEDIM == 3 )
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        new_lo[idim] = current_lo[idim] + warpx.galilean_shift[idim];
+        new_hi[idim] = current_hi[idim] + warpx.galilean_shift[idim];
+    }
+#elif (AMREX_SPACEDIM == 2 )
+    {
+        new_lo[0] = current_lo[0] + warpx.galilean_shift[0];
+        new_hi[0] = current_hi[0] + warpx.galilean_shift[0];
+        new_lo[1] = current_lo[1] + warpx.galilean_shift[2];
+        new_hi[1] = current_hi[1] + warpx.galilean_shift[2];
+    }
+#endif
+    // Update RealBox of geometry with galilean-shifted boundary
+    for (int lev = 0; lev < nmax_lev; ++lev) {
+        m_geom_output[0][lev].ProbDomain( amrex::RealBox(new_lo, new_hi) );
+    }
+
+    // For Moving Window Shift
     if (warpx.do_moving_window) {
         int moving_dir = warpx.moving_window_dir;
         amrex::Real moving_window_x = warpx.getmoving_window_x();
-        const amrex::Real* current_lo = m_geom_output[0][0].ProbLo();
-        const amrex::Real* current_hi = m_geom_output[0][0].ProbHi();
+        // Get the updated lo and hi of the geom domain
+        const amrex::Real* cur_lo = m_geom_output[0][0].ProbLo();
+        const amrex::Real* cur_hi = m_geom_output[0][0].ProbHi();
         const amrex::Real* geom_dx = m_geom_output[0][0].CellSize();
-        int num_shift_base = static_cast<int>((moving_window_x - current_lo[moving_dir])
+        int num_shift_base = static_cast<int>((moving_window_x - cur_lo[moving_dir])
                                               / geom_dx[moving_dir]);
-        // update the problem domain. Note that this is done only for the base level 0
-        // because m_geom_output[0][lev] share the same static RealBox
-        amrex::Real new_lo[AMREX_SPACEDIM];
-        amrex::Real new_hi[AMREX_SPACEDIM];
+        // Update the diagnostic geom domain. Note that this is done only for the
+        // base level 0 because m_geom_output[0][lev] share the same static RealBox
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            new_lo[idim] = current_lo[idim];
-            new_hi[idim] = current_hi[idim];
+            new_lo[idim] = cur_lo[idim];
+            new_hi[idim] = cur_hi[idim];
         }
-        new_lo[moving_dir] = current_lo[moving_dir] + num_shift_base*geom_dx[moving_dir];
-        new_hi[moving_dir] = current_hi[moving_dir] + num_shift_base*geom_dx[moving_dir];
+        new_lo[moving_dir] = cur_lo[moving_dir] + num_shift_base*geom_dx[moving_dir];
+        new_hi[moving_dir] = cur_hi[moving_dir] + num_shift_base*geom_dx[moving_dir];
+        // Update RealBox of geometry with shifted domain geometry for moving-window
         for (int lev = 0; lev < nmax_lev; ++lev) {
             m_geom_output[0][lev].ProbDomain( amrex::RealBox(new_lo, new_hi) );
         }
