@@ -424,7 +424,7 @@ void
 FullDiagnostics::MovingWindowAndGalileanDomainShift ()
 {
     auto & warpx = WarpX::GetInstance();
-  
+
     // Account for galilean shift
     amrex::Real new_lo[AMREX_SPACEDIM];
     amrex::Real new_hi[AMREX_SPACEDIM];
