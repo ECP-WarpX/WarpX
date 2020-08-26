@@ -75,7 +75,7 @@ initial_particle_number = 1048576
 E_f = np.array([-2433321316961438., 973328526784575., 1459992790176863.])
 B_f = np.array([2857142.85714286, 4285714.28571428, 8571428.57142857])
 
-NNS = [128,128,128,128] #bins for energy distribution comparison.
+NNS = [100,100,100,100] #bins for energy distribution comparison.
 #______________
 
 def calc_chi_part(p, E, B):
@@ -205,7 +205,6 @@ def check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NN, idx):
     distrib = n_phot*distrib/np.sum(distrib)
 
     #c_gamma_phot = np.exp(0.5*(np.log(c_gamma_phot[1:])+np.log(c_gamma_phot[:-1])))
-    #distrib = np.exp(0.5*(np.log(distrib[1:])+np.log(distrib[:-1])))
 
     # Visual comparison of distributions
     #plt.clf()
@@ -235,8 +234,8 @@ def check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NN, idx):
     discr = np.abs(h_log_gamma_phot-distrib)
 
     max_discr = np.where(np.sqrt(distrib)>1, np.sqrt(distrib), 1)*6.0
-    # do not check the last 4 points: the lookup table is too coarse-grained for that
-    assert(np.all( np.abs(discr[:-4]/distrib[:-4]) < max_discr[:-4] ))
+    # do not check the last 6 points: the lookup table is too coarse-grained for that
+    assert(np.all( np.abs(discr[:-6]) < max_discr[:-6]  ))
 
     print("  [OK] energy distribution is within expectations")
 
