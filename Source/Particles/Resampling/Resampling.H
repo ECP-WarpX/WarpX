@@ -13,7 +13,7 @@ class WarpXParIter;
 
 struct ResamplingAlgorithm
 {
-    virtual void run(WarpXParIter& pti) {};
+    virtual void run(WarpXParIter& /*pti*/) {};
 };
 
 class Resampling

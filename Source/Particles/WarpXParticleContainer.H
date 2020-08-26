@@ -333,7 +333,7 @@ public:
 
     amrex::Array<amrex::Real,3> get_v_galilean () {return v_galilean;}
 
-    virtual void resample (Resampling& resampler, const int timestep) {}
+    virtual void resample (Resampling& /*resampler*/, const int /*timestep*/) {};
 
 protected:
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
