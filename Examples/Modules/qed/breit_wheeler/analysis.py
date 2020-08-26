@@ -47,7 +47,7 @@ import checksumAPI
 
 # Tolerances
 tol = 1.e-8
-tol_red = 1.e-2
+tol_red = 2.e-2
 
 # Physical constants (from CODATA 2018, see: https://physics.nist.gov/cuu/Constants/index.html )
 me = 9.1093837015e-31 #electron mass
