@@ -11,13 +11,13 @@
 
 #include <AMReX_Print.H>
 
+/**
+ * \brief This class will soon implement the leveling thinning algorithm, but for now it is just
+ * a dummy class that prints "Resampling." used to test the resampling structure.
+ */
 class LevelingThinning: public ResamplingAlgorithm {
 public:
-    void run(WarpXParIter& pti) override
-    {
-        amrex::Print() << "Resampling. \n";
-        amrex::ignore_unused(pti);
-    }
+    void run(WarpXParIter& /*pti*/) override {amrex::Print() << "Resampling. \n";}
 };
 
 

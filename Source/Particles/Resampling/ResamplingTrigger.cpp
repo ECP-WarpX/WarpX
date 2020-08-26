@@ -18,12 +18,12 @@ ResamplingTrigger::ResamplingTrigger ()
     pprt.query("max_avg_ppc", m_max_avg_ppc);
 }
 
-bool ResamplingTrigger::triggered (const int n, const amrex::Real global_numparts)
+bool ResamplingTrigger::triggered (const int timestep, const amrex::Real global_numparts)
 {
     if (!m_initialized) {initialize_global_numcells();};
 
     const amrex::Real avg_ppc = global_numparts/m_global_numcells;
-    return (m_resampling_intervals.contains(n) ||
+    return (m_resampling_intervals.contains(timestep) ||
             avg_ppc > m_max_avg_ppc);
 }
 

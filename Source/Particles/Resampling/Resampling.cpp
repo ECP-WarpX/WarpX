@@ -10,7 +10,7 @@
 Resampling::Resampling ()
 {
     amrex::ParmParse pp("resampling_algorithm");
-    std::string resampling_algorithm_string = "leveling_thinning";
+    std::string resampling_algorithm_string = "leveling_thinning"; // default resampling algorithm
     pp.query("type", resampling_algorithm_string);
 
     if (resampling_algorithm_string.compare("leveling_thinning") == 0)
@@ -21,9 +21,9 @@ Resampling::Resampling ()
     { amrex::Abort("Unknown resampling algorithm."); }
 }
 
-bool Resampling::triggered (const int n, const amrex::Real global_numparts)
+bool Resampling::triggered (const int timestep, const amrex::Real global_numparts)
 {
-    return m_resampling_trigger.triggered(n, global_numparts);
+    return m_resampling_trigger.triggered(timestep, global_numparts);
 }
 
 void Resampling::run (WarpXParIter& pti) const

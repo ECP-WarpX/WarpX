@@ -11,20 +11,49 @@
 
 #include <AMReX_ParmParse.H>
 
+/**
+ * \brief This class is used to determine if resampling should be done at a given timestep for
+ * a given species.
+ */
 class ResamplingTrigger
 {
 public:
 
+    /**
+     * \brief Constructor of the ResamplingTrigger class. Reads the resampling trigger parameters
+     * from the input file.
+     */
     ResamplingTrigger ();
 
-    bool triggered (const int n, const amrex::Real global_numparts);
+    /**
+     * \brief A method that returns true if resampling should be done for the considered species
+     * at the considered timestep. Specifically it returns true if the current timestep is included
+     * in the IntervalsParser m_resampling_intervals or if the average number of particles per cell
+     * of the considered species exceeds the threshold m_max_avg_ppc.
+     *
+     * @param[in] timestep the current timestep
+     * @param[in] global_numparts the total number of particles of the considered species
+     */
+    bool triggered (const int timestep, const amrex::Real global_numparts);
 
+    /**
+     * \brief A method that initializes the member m_global_numcells. It is only called once (the
+     * first time triggered() is called) and is needed because warpx.boxArray(lev) is not yet
+     * initialized when the constructor of this class is called.
+     */
     void initialize_global_numcells ();
 
 private:
+    // Intervals that define predetermined timesteps at which resampling is performed for all
+    // species.
     IntervalsParser m_resampling_intervals;
+
+    // Average number of particles per cell above which resampling is performed for a given species
     amrex::Real m_max_avg_ppc = std::numeric_limits<amrex::Real>::max();
+
+    //Total number of simulated cells, summed over all mesh refinement levels.
     amrex::Real m_global_numcells;
+
     bool m_initialized;
 };
 

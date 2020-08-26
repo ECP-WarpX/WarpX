@@ -280,7 +280,13 @@ public:
         amrex::FArrayBox const * & ezfab, amrex::FArrayBox const * & bxfab,
         amrex::FArrayBox const * & byfab, amrex::FArrayBox const * & bzfab);
 
-
+    /**
+    * \brief This function determines if resampling should be done for the current species and
+    * if so, actually performs the resampling.
+    *
+    * @param[in] resampler the Resampling object used for resampling.
+    * @param[in] timestep the current timestep.
+    */
     void resample (Resampling& resampler, const int timestep) override;
 
 #ifdef WARPX_QED

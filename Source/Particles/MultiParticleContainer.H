@@ -124,6 +124,11 @@ public:
 
     void doCoulombCollisions ();
 
+    /**
+    * \brief This function loops over all species and performs resampling if appropriate.
+    *
+    * @param[in] timestep the current timestep.
+    */
     void doResampling (const int timestep);
 
 #ifdef WARPX_QED
