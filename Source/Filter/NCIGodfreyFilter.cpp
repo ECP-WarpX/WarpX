@@ -33,14 +33,13 @@ NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdto
 void NCIGodfreyFilter::ComputeStencils(){
 
     // Sanity checks: filter length shoulz be 5 in z
+#if  (AMREX_SPACEDIM == 3)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-#if ( AMREX_SPACEDIM == 3 )
-        slen.z==5,
+        slen.z==5,"ERROR: NCI filter requires 5 points in z");
 #else
-        slen.y==5,
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        slen.y==5,"ERROR: NCI filter requires 5 points in z");
 #endif
-        "ERROR: NCI filter requires 5 points in z");
-
     // Interpolate coefficients from the table, and store into prestencil.
     auto index = static_cast<int>(tab_length*m_cdtodz);
     index = min(index, tab_length-2);

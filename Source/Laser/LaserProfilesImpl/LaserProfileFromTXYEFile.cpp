@@ -11,6 +11,7 @@
 
 #include <AMReX_Print.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX.H>
 
 #include <limits>
 #include <iostream>
@@ -254,7 +255,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
     //Indices of the first and last timestep to read
     auto i_first = max(0, t_begin);
     auto i_last = min(t_end-1, m_params.nt-1);
-    if(i_last-i_first+1 > m_params.E_data.size())
+    if(i_last-i_first+1 > static_cast<int>(m_params.E_data.size()))
         Abort("Data chunk to read from file is too large");
 
     if(ParallelDescriptor::IOProcessor()){
@@ -357,6 +358,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_uniform(
             p_E_data[idx(idx_t_right, idx_x_left)],
             p_E_data[idx(idx_t_right, idx_x_right)],
             t, Xp[i])*tmp_e_max;
+        amrex::ignore_unused(Yp);
 
 #elif (AMREX_SPACEDIM == 3)
         //Find indices and coordinates along y

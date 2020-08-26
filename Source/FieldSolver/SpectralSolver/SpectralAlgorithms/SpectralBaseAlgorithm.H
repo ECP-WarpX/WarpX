@@ -10,6 +10,7 @@
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 
+#include <AMReX.H>
 
 #if WARPX_USE_PSATD
 
@@ -29,7 +30,7 @@ class SpectralBaseAlgorithm
         // The destructor should also be a virtual function, so that
         // a pointer to subclass of `SpectraBaseAlgorithm` actually
         // calls the subclass's destructor.
-        virtual ~SpectralBaseAlgorithm() {};
+        virtual ~SpectralBaseAlgorithm() {}
 
         /**
          * \brief Virtual function for current correction in Fourier space
@@ -84,7 +85,11 @@ class SpectralBaseAlgorithm
 #else
             modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_z,nodal))
 #endif
-          {};
+          {
+#if (AMREX_SPACEDIM!=3)
+            amrex::ignore_unused(norder_y);
+#endif
+          }
 
         // Modified finite-order vectors
         KVectorComponent modified_kx_vec;

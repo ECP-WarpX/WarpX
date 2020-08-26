@@ -33,8 +33,8 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
 
     ReadParameters();
 
-    auto const nspecies = species_names.size();
-    auto const nlasers = lasers_names.size();
+    auto const nspecies = static_cast<int>(species_names.size());
+    auto const nlasers = static_cast<int>(lasers_names.size());
 
     allcontainers.resize(nspecies + nlasers);
     for (int i = 0; i < nspecies; ++i) {
