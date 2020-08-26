@@ -106,9 +106,6 @@ public:
     {
         using namespace amrex;
 
-        constexpr ParticleReal me = PhysConst::m_e;
-        constexpr ParticleReal one_over_me = 1._prt/me;
-
         // gather E and B
         amrex::ParticleReal xp, yp, zp;
         m_get_position(i_src, xp, yp, zp);

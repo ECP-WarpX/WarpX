@@ -58,6 +58,6 @@ namespace QedUtils{
                 px, py, pz, ex, ey, ez, bx, by, bz);
     }
     //_________
-};
+}
 
 #endif //WARPX_amrex_qed_chi_functions_h_
