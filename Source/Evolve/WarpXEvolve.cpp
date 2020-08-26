@@ -305,6 +305,8 @@ WarpX::OneStep_nosub (Real cur_time)
     doQEDEvents();
 #endif
 
+    mypc->doResampling(istep[0]+1);
+
     // Synchronize J and rho
     SyncCurrent();
     SyncRho();

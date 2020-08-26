@@ -14,6 +14,7 @@
 #include "Utils/WarpXConst.H"
 #include "SpeciesPhysicalProperties.H"
 #include "Evolve/WarpXDtType.H"
+#include "Particles/Resampling/Resampling.H"
 
 #ifdef WARPX_QED
 #    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
@@ -332,6 +333,8 @@ public:
 
     amrex::Array<amrex::Real,3> get_v_galilean () {return v_galilean;}
 
+    virtual void resample (Resampling& resampler, const int timestep) {}
+
 protected:
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
@@ -371,6 +374,8 @@ protected:
     amrex::Gpu::ManagedVector<amrex::Real> adk_prefactor;
     amrex::Gpu::ManagedVector<amrex::Real> adk_exp_prefactor;
     std::string physical_element;
+
+    int do_resampling = 0;
 
     int do_back_transformed_diagnostics = 1;
 

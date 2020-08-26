@@ -121,6 +121,8 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     pp.query("do_field_ionization", do_field_ionization);
 
+    pp.query("do_resampling", do_resampling);
+
     //check if Radiation Reaction is enabled and do consistency checks
     pp.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
     //if the species is not a lepton, do_classical_radiation_reaction
@@ -1976,6 +1978,25 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 particle_icomps["ionization_level"],
                                 ion_atomic_number);
 }
+
+void PhysicalParticleContainer::resample (Resampling& resampler, const int timestep)
+{
+    const amrex::Real global_numparts = TotalNumberOfParticles();
+
+    if (resampler.triggered(timestep, global_numparts))
+    {
+        auto & warpx = WarpX::GetInstance();
+        for (int lev = 0; lev <= warpx.maxLevel(); lev++)
+        {
+            for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+            {
+                resampler.run(pti);
+            }
+        }
+    }
+
+}
+
 
 #ifdef WARPX_QED
 

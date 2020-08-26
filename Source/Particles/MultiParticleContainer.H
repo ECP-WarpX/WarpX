@@ -124,6 +124,8 @@ public:
 
     void doCoulombCollisions ();
 
+    void doResampling (const int timestep);
+
 #ifdef WARPX_QED
     /** If Schwinger process is activated, this function is called at every
      * timestep in Evolve and is used to create Schwinger electron-positron pairs.
@@ -269,6 +271,8 @@ protected:
     std::vector<bool> m_gather_from_main_grid;
 
     std::vector<PCTypes> species_types;
+
+    Resampling m_resampler;
 
     template<typename ...Args>
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,

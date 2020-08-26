@@ -280,6 +280,9 @@ public:
         amrex::FArrayBox const * & ezfab, amrex::FArrayBox const * & bxfab,
         amrex::FArrayBox const * & byfab, amrex::FArrayBox const * & bzfab);
 
+
+    void resample (Resampling& resampler, const int timestep) override;
+
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H
     //containers for which QED processes could be relevant
