@@ -126,9 +126,9 @@
   "pos4": {
     "particle_cpu": 24210.0,
     "particle_id": 117782832604.0,
-    "particle_momentum_x": 3.819556681707568240452967084e-13,
-    "particle_momentum_y": 3.819556681707568240452967084e-13,
-    "particle_momentum_z": 3.819556681707568240452967084e-13,
+    "particle_momentum_x": 3.818509597254281014034338991e-13,
+    "particle_momentum_y": 3.818509597254281014034338991e-13,
+    "particle_momentum_z": 3.818509597254281014034338991e-13,
     "particle_optical_depth_QSR": 48600.7378774165772483684122562408447265625000,
     "particle_position_x": 0.012101709192233077,
     "particle_position_y": 0.012111250324900506,
