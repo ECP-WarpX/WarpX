@@ -222,7 +222,7 @@ def check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, N
 
     discr_ele = np.abs(h_gamma_ele-distrib)
     discr_pos = np.abs(h_gamma_pos-distrib)
-    max_discr = 6.0 * np.sqrt(distrib)
+    max_discr = 5.0 * np.sqrt(distrib)
     assert(np.all(discr_ele < max_discr))
     assert(np.all(discr_pos < max_discr))
     print("  [OK] energy distribution is within expectations")
