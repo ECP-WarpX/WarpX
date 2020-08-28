@@ -54,7 +54,7 @@ private:
     //Total number of simulated cells, summed over all mesh refinement levels.
     amrex::Real m_global_numcells;
 
-    bool m_initialized;
+    bool m_initialized = false;
 };
 
 #endif //WARPX_RESAMPLING_TRIGGER_H_

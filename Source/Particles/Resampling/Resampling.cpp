@@ -15,7 +15,7 @@ Resampling::Resampling ()
 
     if (resampling_algorithm_string.compare("leveling_thinning") == 0)
     {
-        m_resampling_algorithm.reset (new LevelingThinning );
+        m_resampling_algorithm = std::make_unique<LevelingThinning>();
     }
     else
     { amrex::Abort("Unknown resampling algorithm."); }
