@@ -679,7 +679,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #endif
 
         // Update NextID to include particles created in this function
-        int pid;
+        Long pid;
 #ifdef _OPENMP
 #pragma omp critical (add_plasma_nextid)
 #endif
@@ -687,7 +687,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        WarpXUtilMsg::AlwaysAssert(static_cast<int>(pid + max_new_particles) > 0,
+        WarpXUtilMsg::AlwaysAssert(static_cast<Long>(pid + max_new_particles) < LastParticleID,
                                    "ERROR: overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
