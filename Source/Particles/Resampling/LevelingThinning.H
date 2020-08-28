@@ -17,7 +17,7 @@
  */
 class LevelingThinning: public ResamplingAlgorithm {
 public:
-    void operator() (WarpXParIter& /*pti*/) override {amrex::Print() << "Resampling. \n";}
+    void operator() (WarpXParIter& /*pti*/) override final {amrex::Print() << "Resampling. \n";}
 };
 
 
