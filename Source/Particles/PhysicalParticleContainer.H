@@ -287,7 +287,7 @@ public:
     * @param[in] resampler the Resampling object used for resampling.
     * @param[in] timestep the current timestep.
     */
-    void resample (const Resampling& resampler, const int timestep) override;
+    void resample (const Resampling& resampler, const int timestep) override final;
 
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H

@@ -1985,8 +1985,7 @@ void PhysicalParticleContainer::resample (const Resampling& resampler, const int
 
     if (resampler.triggered(timestep, global_numparts))
     {
-        auto & warpx = WarpX::GetInstance();
-        for (int lev = 0; lev <= warpx.maxLevel(); lev++)
+        for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
             {
