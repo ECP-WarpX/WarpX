@@ -21,12 +21,12 @@ Resampling::Resampling ()
     { amrex::Abort("Unknown resampling algorithm."); }
 }
 
-bool Resampling::triggered (const int timestep, const amrex::Real global_numparts)
+bool Resampling::triggered (const int timestep, const amrex::Real global_numparts) const
 {
     return m_resampling_trigger.triggered(timestep, global_numparts);
 }
 
-void Resampling::run (WarpXParIter& pti) const
+void Resampling::operator() (WarpXParIter& pti) const
 {
-    m_resampling_algorithm->run(pti);
+    (*m_resampling_algorithm)(pti);
 }

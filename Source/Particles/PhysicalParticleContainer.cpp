@@ -1979,7 +1979,7 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 ion_atomic_number);
 }
 
-void PhysicalParticleContainer::resample (Resampling& resampler, const int timestep)
+void PhysicalParticleContainer::resample (const Resampling& resampler, const int timestep)
 {
     const amrex::Real global_numparts = TotalNumberOfParticles();
 
@@ -1990,7 +1990,7 @@ void PhysicalParticleContainer::resample (Resampling& resampler, const int times
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
             {
-                resampler.run(pti);
+                resampler(pti);
             }
         }
     }

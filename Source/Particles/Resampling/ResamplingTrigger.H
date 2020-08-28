@@ -34,14 +34,14 @@ public:
      * @param[in] timestep the current timestep
      * @param[in] global_numparts the total number of particles of the considered species
      */
-    bool triggered (const int timestep, const amrex::Real global_numparts);
+    bool triggered (const int timestep, const amrex::Real global_numparts) const;
 
     /**
      * \brief A method that initializes the member m_global_numcells. It is only called once (the
      * first time triggered() is called) and is needed because warpx.boxArray(lev) is not yet
      * initialized when the constructor of this class is called.
      */
-    void initialize_global_numcells ();
+    void initialize_global_numcells () const;
 
 private:
     // Intervals that define predetermined timesteps at which resampling is performed for all
@@ -52,9 +52,9 @@ private:
     amrex::Real m_max_avg_ppc = std::numeric_limits<amrex::Real>::max();
 
     //Total number of simulated cells, summed over all mesh refinement levels.
-    amrex::Real m_global_numcells;
+    mutable amrex::Real m_global_numcells = amrex::Real(0.0);
 
-    bool m_initialized = false;
+    mutable bool m_initialized = false;
 };
 
 #endif //WARPX_RESAMPLING_TRIGGER_H_

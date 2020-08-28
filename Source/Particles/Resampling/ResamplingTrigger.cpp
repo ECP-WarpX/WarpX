@@ -18,7 +18,7 @@ ResamplingTrigger::ResamplingTrigger ()
     pprt.query("max_avg_ppc", m_max_avg_ppc);
 }
 
-bool ResamplingTrigger::triggered (const int timestep, const amrex::Real global_numparts)
+bool ResamplingTrigger::triggered (const int timestep, const amrex::Real global_numparts) const
 {
     if (!m_initialized) {initialize_global_numcells();};
 
@@ -27,10 +27,8 @@ bool ResamplingTrigger::triggered (const int timestep, const amrex::Real global_
             avg_ppc > m_max_avg_ppc);
 }
 
-void ResamplingTrigger::initialize_global_numcells ()
+void ResamplingTrigger::initialize_global_numcells () const
 {
-    using namespace amrex::literals;
-    m_global_numcells = 0._rt;
     auto & warpx = WarpX::GetInstance();
     for (int lev = 0; lev <= warpx.maxLevel(); lev++)
     {

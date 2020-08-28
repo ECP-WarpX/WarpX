@@ -16,7 +16,15 @@ class WarpXParIter; // forward declaration
  */
 struct ResamplingAlgorithm
 {
-    virtual void run(WarpXParIter& /*pti*/) {};
+    /**
+     * \brief Virtual operator() of the abstract ResamplingAlgorithm class
+     */
+    virtual void operator() (WarpXParIter& /*pti*/) = 0;
+
+    /**
+     * \brief Virtual destructor of the abstract ResamplingAlgorithm class
+     */
+    virtual ~ResamplingAlgorithm () =  default;
 };
 
 /**
@@ -42,14 +50,14 @@ public:
      * @param[in] timestep the current timestep
      * @param[in] global_numparts the total number of particles of the considered species
      */
-    bool triggered (const int timestep, const amrex::Real global_numparts);
+    bool triggered (const int timestep, const amrex::Real global_numparts) const;
 
     /**
      * \brief A method that uses the ResamplingAlgorithm object to perform resampling.
      *
      * @param[in] pti WarpX particle iterator of the particles to resample.
      */
-    void run (WarpXParIter& pti) const;
+    void operator() (WarpXParIter& pti) const;
 
 private:
     ResamplingTrigger m_resampling_trigger;
