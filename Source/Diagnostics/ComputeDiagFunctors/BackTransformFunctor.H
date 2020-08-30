@@ -101,7 +101,7 @@ private:
      *  stored in the cell-centered MultiFab, m_mf_src.
      *  The cell-centered MultiFab stores Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, and rho.
      */
-    amrex::Gpu::ManagedDeviceVector<int> m_map_varnames;
+    amrex::Vector<int> m_map_varnames;
 };
 
 #endif

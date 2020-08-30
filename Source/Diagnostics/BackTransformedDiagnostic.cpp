@@ -1320,17 +1320,26 @@ LabFrameSlice(Real t_lab_in, Real t_boost, Real inv_gamma_boost_in,
 void
 LabFrameSnapShot::
 AddDataToBuffer( MultiFab& tmp, int k_lab,
-                 amrex::Gpu::ManagedDeviceVector<int> map_actual_fields_to_dump)
+                 amrex::Vector<int> const& map_actual_fields_to_dump)
 {
     const int ncomp_to_dump = map_actual_fields_to_dump.size();
     MultiFab& buf = *m_data_buffer_;
+#ifdef AMREX_USE_GPU
+    Gpu::DeviceVector<int> d_map_actual_fields_to_dump(ncomp_to_dump);
+    Gpu::copyAsync(Gpu::hostToDevice,
+                   map_actual_fields_to_dump.begin(), map_actual_fields_to_dump.end(),
+                   d_map_actual_fields_to_dump.begin());
+    Gpu::synchronize();
+    int const* field_map_ptr = d_map_actual_fields_to_dump.dataPtr();
+#else
+    int const* field_map_ptr = map_actual_fields_to_dump.dataPtr();
+#endif
     for (MFIter mfi(tmp, TilingIfNotGPU()); mfi.isValid(); ++mfi) {
          Array4<Real> tmp_arr = tmp[mfi].array();
          Array4<Real> buf_arr = buf[mfi].array();
          // For 3D runs, tmp is a 2D (x,y) multifab that contains only
          // slice to write to file
          const Box& bx = mfi.tilebox();
-         const auto field_map_ptr = map_actual_fields_to_dump.dataPtr();
          ParallelFor(bx, ncomp_to_dump,
              [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
              {
@@ -1349,10 +1358,20 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
 void
 LabFrameSlice::
 AddDataToBuffer( MultiFab& tmp, int k_lab,
-                 amrex::Gpu::ManagedDeviceVector<int> map_actual_fields_to_dump)
+                 amrex::Vector<int> const& map_actual_fields_to_dump)
 {
     const int ncomp_to_dump = map_actual_fields_to_dump.size();
     MultiFab& buf = *m_data_buffer_;
+#ifdef AMREX_USE_GPU
+    Gpu::DeviceVector<int> d_map_actual_fields_to_dump(ncomp_to_dump);
+    Gpu::copyAsync(Gpu::hostToDevice,
+                   map_actual_fields_to_dump.begin(), map_actual_fields_to_dump.end(),
+                   d_map_actual_fields_to_dump.begin());
+    Gpu::synchronize();
+    int const* field_map_ptr = d_map_actual_fields_to_dump.dataPtr();
+#else
+    int const* field_map_ptr = map_actual_fields_to_dump.dataPtr();
+#endif
     for (MFIter mfi(tmp, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
        Box& bx = m_buff_box_;
@@ -1361,7 +1380,6 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
        bx.setBig(AMREX_SPACEDIM-1,bx_bf.bigEnd(AMREX_SPACEDIM-1));
        Array4<Real> tmp_arr = tmp[mfi].array();
        Array4<Real> buf_arr = buf[mfi].array();
-       const auto field_map_ptr = map_actual_fields_to_dump.dataPtr();
        ParallelFor(bx, ncomp_to_dump,
            [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
            {
@@ -1380,7 +1398,7 @@ AddDataToBuffer( MultiFab& tmp, int k_lab,
 void
 LabFrameSnapShot::
 AddPartDataToParticleBuffer(
-    Vector<WarpXParticleContainer::DiagnosticParticleData> tmp_particle_buffer,
+    Vector<WarpXParticleContainer::DiagnosticParticleData> const& tmp_particle_buffer,
     int nspeciesBoostedFrame) {
     for (int isp = 0; isp < nspeciesBoostedFrame; ++isp) {
         auto np = tmp_particle_buffer[isp].GetRealData(DiagIdx::w).size();
@@ -1442,7 +1460,7 @@ AddPartDataToParticleBuffer(
 void
 LabFrameSlice::
 AddPartDataToParticleBuffer(
-    Vector<WarpXParticleContainer::DiagnosticParticleData> tmp_particle_buffer,
+    Vector<WarpXParticleContainer::DiagnosticParticleData> const& tmp_particle_buffer,
     int nSpeciesBackTransformedDiagnostics) {
 
 
@@ -1468,8 +1486,8 @@ AddPartDataToParticleBuffer(
 
         // temporary arrays to store copy_flag and copy_index
         // for particles that cross the reduced domain for diagnostics.
-        amrex::Gpu::ManagedDeviceVector<int> FlagForPartCopy(np);
-        amrex::Gpu::ManagedDeviceVector<int> IndexForPartCopy(np);
+        amrex::Gpu::DeviceVector<int> FlagForPartCopy(np);
+        amrex::Gpu::DeviceVector<int> IndexForPartCopy(np);
 
         int* const AMREX_RESTRICT Flag = FlagForPartCopy.dataPtr();
         int* const AMREX_RESTRICT IndexLocation = IndexForPartCopy.dataPtr();
@@ -1503,8 +1521,7 @@ AddPartDataToParticleBuffer(
         // Call exclusive scan to obtain location indices using
         // flag values. These location indices are used to copy data
         // from src to dst when the copy-flag is set to 1.
-        amrex::Gpu::exclusive_scan(Flag,Flag+np,IndexLocation);
-        const int copy_size = IndexLocation[np-1] + Flag[np-1];
+        const int copy_size = amrex::Scan::ExclusiveSum(np, Flag, IndexLocation);
         const int init_size = m_particles_buffer_[isp].GetRealData(DiagIdx::w).size();
         const int total_reducedDiag_size = copy_size + init_size;
 
