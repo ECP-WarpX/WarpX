@@ -27,9 +27,9 @@ struct CartesianNodalAlgorithm {
 
     static void InitializeStencilCoefficients (
         std::array<amrex::Real,3>& cell_size,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_x,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_y,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_z ) {
+        amrex::Vector<amrex::Real>& stencil_coefs_x,
+        amrex::Vector<amrex::Real>& stencil_coefs_y,
+        amrex::Vector<amrex::Real>& stencil_coefs_z ) {
 
         using namespace amrex;
 
