@@ -246,7 +246,7 @@ RigidInjectedParticleContainer::PushPX (WarpXParIter& pti,
     auto& uzp = attribs[PIdx::uz];
 
     // Save the position and momenta, making copies
-    Gpu::ManagedDeviceVector<ParticleReal> xp_save, yp_save, zp_save;
+    Gpu::DeviceVector<ParticleReal> xp_save, yp_save, zp_save;
     RealVector uxp_save, uyp_save, uzp_save;
 
     const auto GetPosition = GetParticlePosition(pti);
@@ -454,9 +454,12 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             }
 
             // Save the position and momenta, making copies
-            auto uxp_save = uxp;
-            auto uyp_save = uyp;
-            auto uzp_save = uzp;
+            amrex::Gpu::DeviceVector<ParticleReal> uxp_save(np);
+            amrex::Gpu::DeviceVector<ParticleReal> uyp_save(np);
+            amrex::Gpu::DeviceVector<ParticleReal> uzp_save(np);
+            ParticleReal* const AMREX_RESTRICT ux_save = uxp_save.dataPtr();
+            ParticleReal* const AMREX_RESTRICT uy_save = uyp_save.dataPtr();
+            ParticleReal* const AMREX_RESTRICT uz_save = uzp_save.dataPtr();
 
             // Loop over the particles and update their momentum
             const amrex::Real q = this->charge;
@@ -467,6 +470,10 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
             amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
             {
+                ux_save[ip] = uxpp[ip];
+                uy_save[ip] = uypp[ip];
+                uz_save[ip] = uzpp[ip];
+
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
@@ -514,9 +521,6 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             // Undo the push for particles not injected yet.
             // It is assumed that PushP will only be called on the first and last steps
             // and that no particles will cross zinject_plane.
-            const ParticleReal* const AMREX_RESTRICT ux_save = uxp_save.dataPtr();
-            const ParticleReal* const AMREX_RESTRICT uy_save = uyp_save.dataPtr();
-            const ParticleReal* const AMREX_RESTRICT uz_save = uzp_save.dataPtr();
             const ParticleReal zz = zinject_plane_levels[lev];
             amrex::ParallelFor( pti.numParticles(), [=] AMREX_GPU_DEVICE (long i)
             {
@@ -528,6 +532,8 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                     uzpp[i] = uz_save[i];
                 }
             });
+
+            amrex::Gpu::synchronize();
         }
     }
 }

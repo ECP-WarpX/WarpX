@@ -635,8 +635,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                           overlap_realbox.lo(2))};
 
         // count the number of particles that each cell in overlap_box could add
-        Gpu::DeviceVector<int> counts(overlap_box.numPts()+1, 0);
-        Gpu::DeviceVector<int> offset(overlap_box.numPts()+1, 0);
+        Gpu::DeviceVector<int> counts(overlap_box.numPts(), 0);
+        Gpu::DeviceVector<int> offset(overlap_box.numPts());
         auto pcounts = counts.data();
         int lrrfac = rrfac;
         int lrefine_injection = refine_injection;
@@ -665,16 +665,10 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 }
             }
         });
-        Gpu::exclusive_scan(counts.begin(), counts.end(), offset.begin());
 
         // Max number of new particles. All of them are created,
         // and invalid ones are then discarded
-        int max_new_particles;
-#ifdef AMREX_USE_GPU
-        Gpu::dtoh_memcpy(&max_new_particles, offset.dataPtr()+overlap_box.numPts(), sizeof(int));
-#else
-        std::memcpy(&max_new_particles, offset.dataPtr()+overlap_box.numPts(), sizeof(int));
-#endif
+        int max_new_particles = Scan::ExclusiveSum(counts.size(), counts.data(), offset.data());
 
         // Update NextID to include particles created in this function
         Long pid;
@@ -903,13 +897,13 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             }
         });
 
+        amrex::Gpu::synchronize();
+
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
-            amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
             amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
-        amrex::Gpu::synchronize();
     }
 
     // The function that calls this is responsible for redistributing particles.
@@ -1139,9 +1133,10 @@ PhysicalParticleContainer::Evolve (int lev,
                 }
             }
 
+            amrex::Gpu::synchronize();
+
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
-                amrex::Gpu::synchronize();
                 wt = amrex::second() - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
@@ -1241,7 +1236,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
     long np_split;
     if(split_type==0)
     {
-        np_split = pow(2, AMREX_SPACEDIM);
+        np_split = (AMREX_SPACEDIM == 3) ? 8 : 4;
     } else {
         np_split = 2*AMREX_SPACEDIM;
     }
@@ -1586,8 +1581,8 @@ PhysicalParticleContainer::GetParticleSlice (
             // from going out of scope after each iteration, while the kernels
             // may still need access to them.
             // Note that the destructor for WarpXParIter is synchronized.
-            amrex::Gpu::ManagedDeviceVector<int> FlagForPartCopy;
-            amrex::Gpu::ManagedDeviceVector<int> IndexForPartCopy;
+            amrex::Gpu::DeviceVector<int> FlagForPartCopy;
+            amrex::Gpu::DeviceVector<int> IndexForPartCopy;
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
             {
                 const Box& box = pti.validbox();
@@ -1645,9 +1640,7 @@ PhysicalParticleContainer::GetParticleSlice (
                 // exclusive scan to obtain location indices using flag values
                 // These location indices are used to copy data from
                 // src to dst when the copy-flag is set to 1.
-                amrex::Gpu::exclusive_scan(Flag,Flag+np,IndexLocation);
-
-                const int total_partdiag_size = IndexLocation[np-1] + Flag[np-1];
+                const int total_partdiag_size = amrex::Scan::ExclusiveSum(np,Flag,IndexLocation);
 
                 // allocate array size for diagnostic particle array
                 diagnostic_particles[lev][index].resize(total_partdiag_size);
@@ -1727,6 +1720,7 @@ PhysicalParticleContainer::GetParticleSlice (
                          diag_uzp[loc] = uzp;
                     }
                 });
+                Gpu::synchronize(); // because of FlagForPartCopy & IndexForPartCopy
             }
         }
     }
@@ -1923,10 +1917,10 @@ PhysicalParticleContainer::InitIonizationModule ()
     // Get atomic number and ionization energies from file
     int ion_element_id = ion_map_ids[physical_element];
     ion_atomic_number = ion_atomic_numbers[ion_element_id];
-    ionization_energies.resize(ion_atomic_number);
+    Vector<Real> h_ionization_energies(ion_atomic_number);
     int offset = ion_energy_offsets[ion_element_id];
     for(int i=0; i<ion_atomic_number; i++){
-        ionization_energies[i] = table_ionization_energies[i+offset];
+        h_ionization_energies[i] = table_ionization_energies[i+offset];
     }
     // Compute ADK prefactors (See Chen, JCP 236 (2013), equation (2))
     // For now, we assume l=0 and m=0.
@@ -1936,22 +1930,35 @@ PhysicalParticleContainer::InitIonizationModule ()
     Real Ea = PhysConst::m_e * PhysConst::c*PhysConst::c /PhysConst::q_e *
         std::pow(PhysConst::alpha,4)/PhysConst::r_e;
     Real UH = table_ionization_energies[0];
-    Real l_eff = std::sqrt(UH/ionization_energies[0]) - 1.;
+    Real l_eff = std::sqrt(UH/h_ionization_energies[0]) - 1.;
 
     const Real dt = WarpX::GetInstance().getdt(0);
 
+    ionization_energies.resize(ion_atomic_number);
     adk_power.resize(ion_atomic_number);
     adk_prefactor.resize(ion_atomic_number);
     adk_exp_prefactor.resize(ion_atomic_number);
-    for (int i=0; i<ion_atomic_number; ++i){
-        Real n_eff = (i+1) * std::sqrt(UH/ionization_energies[i]);
+
+    Gpu::copyAsync(Gpu::hostToDevice,
+                   h_ionization_energies.begin(), h_ionization_energies.end(),
+                   ionization_energies.begin());
+
+    Real const* AMREX_RESTRICT p_ionization_energies = ionization_energies.data();
+    Real * AMREX_RESTRICT p_adk_power = adk_power.data();
+    Real * AMREX_RESTRICT p_adk_prefactor = adk_prefactor.data();
+    Real * AMREX_RESTRICT p_adk_exp_prefactor = adk_exp_prefactor.data();
+    amrex::ParallelFor(ion_atomic_number, [=] AMREX_GPU_DEVICE (int i) noexcept
+    {
+        Real n_eff = (i+1) * std::sqrt(UH/p_ionization_energies[i]);
         Real C2 = std::pow(2,2*n_eff)/(n_eff*tgamma(n_eff+l_eff+1)*tgamma(n_eff-l_eff));
-        adk_power[i] = -(2*n_eff - 1);
-        Real Uion = ionization_energies[i];
-        adk_prefactor[i] = dt * wa * C2 * ( Uion/(2*UH) )
+        p_adk_power[i] = -(2*n_eff - 1);
+        Real Uion = p_ionization_energies[i];
+        p_adk_prefactor[i] = dt * wa * C2 * ( Uion/(2*UH) )
             * std::pow(2*std::pow((Uion/UH),3./2)*Ea,2*n_eff - 1);
-        adk_exp_prefactor[i] = -2./3 * std::pow( Uion/UH,3./2) * Ea;
-    }
+        p_adk_exp_prefactor[i] = -2./3 * std::pow( Uion/UH,3./2) * Ea;
+    });
+
+    Gpu::synchronize();
 }
 
 IonizationFilterFunc
