@@ -21,7 +21,6 @@ warpx.do_moving_window = 1
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0 # in units of the speed of light
 warpx.serialize_ics = 1
-particles.nspecies = 1
 particles.species_names = beam
 particles.rigid_injected_species = beam
 beam.charge = -q_e

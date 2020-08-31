@@ -1,15 +1,19 @@
 #include "DivEFunctor.H"
 #include "Utils/CoarsenIO.H"
 
+#include <AMReX.H>
+
 DivEFunctor::DivEFunctor(const std::array<const amrex::MultiFab* const, 3> arr_mf_src, const int lev,
                          const amrex::IntVect crse_ratio,
                          bool convertRZmodes2cartesian, const int ncomp)
     : ComputeDiagFunctor(ncomp, crse_ratio), m_arr_mf_src(arr_mf_src), m_lev(lev),
       m_convertRZmodes2cartesian(convertRZmodes2cartesian)
-{}
+{
+    amrex::ignore_unused(m_arr_mf_src);
+}
 
 void
-DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
+DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/) const
 {
     auto& warpx = WarpX::GetInstance();
     // Guard cell is set to 1 for generality. However, for a cell-centered
@@ -45,5 +49,6 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp) const
     // In cartesian geometry, coarsen and interpolate from simulation MultiFab, divE,
     // to output diagnostic MultiFab, mf_dst.
     CoarsenIO::Coarsen( mf_dst, divE, dcomp, 0, nComp(), 0, m_crse_ratio);
+    amrex::ignore_unused(m_convertRZmodes2cartesian);
 #endif
 }

@@ -12,11 +12,12 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 
+#include <AMReX.H>
+
 #include <limits>
 #include <cmath>
 #include <algorithm>
 #include <numeric>
-
 
 using namespace amrex;
 using namespace WarpXLaserProfiles;
@@ -234,6 +235,7 @@ LaserParticleContainer::InitData (int lev)
                  position[1] + (S_X*(Real(i)+0.5_rt))*u_X[1] + (S_Y*(Real(j)+0.5_rt))*u_Y[1],
                  position[2] + (S_X*(Real(i)+0.5_rt))*u_X[2] + (S_Y*(Real(j)+0.5_rt))*u_Y[2] };
 #else
+    amrex::ignore_unused(j);
 #   if (defined WARPX_DIM_RZ)
         return { position[0] + (S_X*(Real(i)+0.5_rt)),
                  0.0_rt,
@@ -568,7 +570,7 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
 }
 
 void
-LaserParticleContainer::PushP (int lev, Real dt,
+LaserParticleContainer::PushP (int /*lev*/, Real /*dt*/,
                                const MultiFab&, const MultiFab&, const MultiFab&,
                                const MultiFab&, const MultiFab&, const MultiFab&)
 {

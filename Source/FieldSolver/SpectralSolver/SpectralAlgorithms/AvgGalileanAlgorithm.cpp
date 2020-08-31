@@ -225,7 +225,7 @@ void AvgGalileanAlgorithm::InitializeSpectralCoefficients(
 
         });
     }
-};
+}
 
 /* Advance the E and B field in spectral space (stored in `f`)
  * over one time step */
@@ -368,11 +368,19 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
                           + A1*I*(kx*Jy     - ky*Jx)*inv_ep0;
                         });
     }
-};
+}
 
 void
-AvgGalileanAlgorithm::VayDeposition (SpectralFieldData& field_data,
-                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+AvgGalileanAlgorithm::CurrentCorrection (SpectralFieldData& /*field_data*/,
+                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/,
+                                         const std::unique_ptr<amrex::MultiFab>& /*rho*/)
+{
+    amrex::Abort("Current correction not implemented for averaged Galilean PSATD");
+}
+
+void
+AvgGalileanAlgorithm::VayDeposition (SpectralFieldData& /*field_data*/,
+                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {
     amrex::Abort("Vay deposition not implemented for averaged Galilean PSATD");
 }

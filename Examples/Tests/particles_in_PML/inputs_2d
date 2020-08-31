@@ -24,12 +24,11 @@ warpx.do_pml_j_damping = 1
 algo.current_deposition = esirkepov
 algo.charge_deposition = standard
 algo.particle_pusher = vay
-algo.maxwell_fdtd_solver = ckc
+algo.maxwell_solver = ckc
 warpx.cfl = 1.0
 warpx.use_filter = 1
 
 # Particle species
-particles.nspecies = 2
 particles.species_names = electron proton
 
 electron.charge = -q_e

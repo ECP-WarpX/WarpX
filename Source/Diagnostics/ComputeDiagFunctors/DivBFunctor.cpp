@@ -6,7 +6,7 @@ DivBFunctor::DivBFunctor(const std::array<const amrex::MultiFab* const, 3> arr_m
 {}
 
 void
-DivBFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
+DivBFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/) const
 {
     auto& warpx = WarpX::GetInstance();
     // Guard cell is set to 1 for generality. However, for a cell-centered

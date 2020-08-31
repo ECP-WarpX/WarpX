@@ -13,6 +13,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
+#include <AMReX.H>
 
 #include <array>
 #include <cmath>
@@ -61,7 +62,7 @@ struct CartesianNodalAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDx (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_x, int const n_coefs_x,
+        amrex::Real const * const coefs_x, int const /*n_coefs_x*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
@@ -90,7 +91,7 @@ struct CartesianNodalAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDy (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_y, int const n_coefs_y,
+        amrex::Real const * const coefs_y, int const /*n_coefs_y*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
@@ -98,6 +99,7 @@ struct CartesianNodalAlgorithm {
         Real const inv_dy = coefs_y[0];
         return 0.5_rt*inv_dy*( F(i,j+1,k,ncomp) - F(i,j-1,k,ncomp) );
 #elif (defined WARPX_DIM_XZ)
+        ignore_unused(i, j, k, coefs_y, ncomp, F);
         return 0._rt; // 2D Cartesian: derivative along y is 0
 #endif
     }
@@ -123,7 +125,7 @@ struct CartesianNodalAlgorithm {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDz (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_z, int const n_coefs_z,
+        amrex::Real const * const coefs_z, int const /*n_coefs_z*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;

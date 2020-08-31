@@ -52,7 +52,7 @@ struct InjectorMomentumGaussian
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         return amrex::XDim3{amrex::RandomNormal(m_ux_m, m_ux_th),
                             amrex::RandomNormal(m_uy_m, m_uy_th),
@@ -61,7 +61,7 @@ struct InjectorMomentumGaussian
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         return amrex::XDim3{m_ux_m, m_uy_m, m_uz_m};
     }
@@ -85,7 +85,7 @@ struct InjectorMomentumBoltzmann
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         amrex::Real x1, x2, gamma;
         amrex::Real u[3];
@@ -98,7 +98,7 @@ struct InjectorMomentumBoltzmann
         u[(dir+2)%3] = vave*std::sqrt(-std::log(x1)) *std::cos(2*M_PI*x2);
         u[dir] = vave*std::sqrt(-std::log(amrex::Random()))*
             std::sin(2*M_PI*amrex::Random());
-        gamma = std::pow(u[0],2)+std::pow(u[1],2)+std::pow(u[2],2);
+        gamma = u[0]*u[0]+u[1]*u[1]+u[2]*u[2];
         gamma = std::sqrt(1+gamma);
         // The following condition is equtaion 32 in Zenitani 2015
         // (Phys. Plasmas 22, 042116) , called the flipping method. It
@@ -119,7 +119,7 @@ struct InjectorMomentumBoltzmann
         // This Lorentz transform is equation 17 in Zenitani.
         // It transforms the integral d3u' -> d3u
         // where d3u' is the volume element for momentum in the boosted frame.
-        u[dir] = 1/std::sqrt(1-pow(beta,2))*(u[dir]+gamma*beta);
+        u[dir] = 1/std::sqrt(1-beta*beta)*(u[dir]+gamma*beta);
         // Note that if beta = 0 then the flipping method and Lorentz transform
         // have no effect on the u[dir] direction.
         return amrex::XDim3 {u[0],u[1],u[2]};
@@ -127,7 +127,7 @@ struct InjectorMomentumBoltzmann
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         using namespace amrex;
         Real u[3];
@@ -157,7 +157,7 @@ struct InjectorMomentumJuttner
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         // Sobol method for sampling MJ Speeds,
         // from Zenitani 2015 (Phys. Plasmas 22, 042116).
@@ -172,7 +172,7 @@ struct InjectorMomentumJuttner
         {
             u[dir] = -theta*
                 std::log(amrex::Random()*amrex::Random()*amrex::Random());
-            gamma = std::sqrt(1+std::pow(u[dir],2));
+            gamma = std::sqrt(1+u[dir]*u[dir]);
             x1 = theta*std::log(amrex::Random());
         }
         // The following code samples a random unit vector
@@ -205,7 +205,7 @@ struct InjectorMomentumJuttner
         // This Lorentz transform is equation 17 in Zenitani.
         // It transforms the integral d3u' -> d3u
         // where d3u' is the volume element for momentum in the boosted frame.
-        u[dir] = 1/std::sqrt(1-pow(beta,2))*(u[dir]+gamma*beta);
+        u[dir] = 1/std::sqrt(1-beta*beta)*(u[dir]+gamma*beta);
         // Note that if beta = 0 then the flipping method and Lorentz transform
         // have no effect on the u[dir] direction.
         return amrex::XDim3 {u[0],u[1],u[2]};
@@ -213,7 +213,7 @@ struct InjectorMomentumJuttner
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         using namespace amrex;
         Real u[3];

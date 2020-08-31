@@ -47,7 +47,6 @@ my_constants.w0 = 5.e-6
 # k0 is calculated so as to have 2 periods within the 40e-6 wide box.
 
 # Particles
-particles.nspecies = 2
 particles.species_names = electrons ions
 
 electrons.charge = -q_e

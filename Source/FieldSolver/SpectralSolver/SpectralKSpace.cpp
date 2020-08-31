@@ -149,8 +149,10 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
             case ShiftType::TransformToCellCentered: sign = 1.;
         }
         const Complex I{0,1};
-        for (int i=0; i<k.size(); i++ ){
-            shift[i] = exp( I*sign*k[i]*0.5_rt*dx[i_dim]);
+        int i = 0;
+        for (auto const& kv : k){
+            shift[i] = exp( I*sign*kv*0.5_rt*dx[i_dim]);
+            i++;
         }
     }
     return shift_factor;
@@ -187,8 +189,10 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             modified_k.resize( k.size() );
 
             // Fill the modified k vector
-            for (int i=0; i<k.size(); i++ ){
+            int i = 0;
+            for (auto const& kv : k){
                 modified_k[i] = k[i]; // infinite-order case.
+                i++;
             }
         }
     } else {
@@ -207,7 +211,8 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             modified_k.resize( k.size() );
 
             // Fill the modified k vector
-            for (int i=0; i<k.size(); i++ ){
+            int i = 0;
+            for (auto const& kv : k){
                 modified_k[i] = 0;
                 for (int n=1; n<stencil_coef.size(); n++){
                     if (nodal){
@@ -218,6 +223,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                             std::sin( k[i]*(n-0.5)*delta_x )/( (n-0.5)*delta_x );
                     }
                 }
+                i++;
             }
 
             // By construction, at finite order and for a nodal grid,

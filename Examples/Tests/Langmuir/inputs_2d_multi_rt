@@ -42,7 +42,6 @@ my_constants.k = 314159.2653589793
 # k is calculated so as to have 2 periods within the 40e-6 wide box.
 
 # Particles
-particles.nspecies = 2
 particles.species_names = electrons positrons
 
 electrons.charge = -q_e

@@ -14,10 +14,6 @@ CollisionType::CollisionType(
     std::string const collision_name)
 {
 
-#if defined WARPX_DIM_RZ
-    amrex::Abort("Collisions only work in Cartesian geometry for now.");
-#endif
-
     // read collision species
     std::vector<std::string> collision_species;
     amrex::ParmParse pp(collision_name);
@@ -29,7 +25,7 @@ CollisionType::CollisionType(
     m_CoulombLog = -1.0;
     pp.query("CoulombLog", m_CoulombLog);
 
-    for (int i=0; i<species_names.size(); i++)
+    for (int i=0; i<static_cast<int>(species_names.size()); i++)
     {
         if (species_names[i] == collision_species[0])
         { m_species1_index = i; }
@@ -133,8 +129,15 @@ void CollisionType::doCoulombCollisionsWithinTile
 
         const Real dt = WarpX::GetInstance().getdt(lev);
         Geometry const& geom = WarpX::GetInstance().Geom(lev);
-#if (AMREX_SPACEDIM == 2)
+        Box const& cbx = mfi.tilebox(IntVect::TheZeroVector()); //Cell-centered box
+        const auto lo = lbound(cbx);
+        const auto hi = ubound(cbx);
+        int nz = hi.y-lo.y+1;
+#if defined WARPX_DIM_XZ
         auto dV = geom.CellSize(0) * geom.CellSize(1);
+#elif defined WARPX_DIM_RZ
+        auto dr = geom.CellSize(0);
+        auto dz = geom.CellSize(1);
 #elif (AMREX_SPACEDIM == 3)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
@@ -155,6 +158,13 @@ void CollisionType::doCoulombCollisionsWithinTile
                     // shuffle
                     ShuffleFisherYates(
                         indices_1, cell_start_1, cell_half_1 );
+
+#if defined WARPX_DIM_RZ
+                    int ri = (i_cell - i_cell%nz) / nz;
+                    auto dV = MathConst::pi*(2.0*ri+1.0)*dr*dr*dz;
+#else
+                    amrex::ignore_unused(nz);
+#endif
 
                     // Call the function in order to perform collisions
                     ElasticCollisionPerez(
@@ -209,8 +219,15 @@ void CollisionType::doCoulombCollisionsWithinTile
 
         const Real dt = WarpX::GetInstance().getdt(lev);
         Geometry const& geom = WarpX::GetInstance().Geom(lev);
-#if (AMREX_SPACEDIM == 2)
+        Box const& cbx = mfi.tilebox(IntVect::TheZeroVector()); //Cell-centered box
+        const auto lo = lbound(cbx);
+        const auto hi = ubound(cbx);
+        int nz = hi.y-lo.y+1;
+#if defined WARPX_DIM_XZ
         auto dV = geom.CellSize(0) * geom.CellSize(1);
+#elif defined WARPX_DIM_RZ
+        auto dr = geom.CellSize(0);
+        auto dz = geom.CellSize(1);
 #elif (AMREX_SPACEDIM == 3)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
@@ -238,6 +255,13 @@ void CollisionType::doCoulombCollisionsWithinTile
                     // shuffle
                     ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1);
                     ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2);
+
+#if defined WARPX_DIM_RZ
+                    int ri = (i_cell - i_cell%nz) / nz;
+                    auto dV = MathConst::pi*(2.0*ri+1.0)*dr*dr*dz;
+#else
+                    amrex::ignore_unused(nz);
+#endif
 
                     // Call the function in order to perform collisions
                     ElasticCollisionPerez(

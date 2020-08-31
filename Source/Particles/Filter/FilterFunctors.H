@@ -34,7 +34,7 @@ struct RandomFilter
      * \return whether or not the particle is selected
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator () (const SuperParticleType& p) const noexcept
+    bool operator () (const SuperParticleType& /*p*/) const noexcept
     {
         if ( !m_is_active ) return 1;
         else if ( amrex::Random() < m_fraction ) return 1;
@@ -114,6 +114,37 @@ public:
     ParserWrapper<7> const * const m_function_partparser;
     /** Store physical time. */
     amrex::Real m_t;
+};
+
+
+
+/**
+ * \brief Functor that returns 1 if the particle is inside a given axis-aligned region
+ *        defined by amrex::RealBox, 0 otherwise.
+ */
+struct GeometryFilter
+{
+    GeometryFilter(bool a_is_active, amrex::RealBox a_domain)
+        : m_is_active(a_is_active), m_domain(a_domain) {}
+    /**
+     * \brief return 1 if the partcile is within the region described by the RealBox
+     * \param p one particle
+     * \param rb RealBox
+     * \return whether or not the particle is inside the region defined by m_domain
+     */
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    bool operator () (const SuperParticleType& p) const noexcept
+    {
+        if ( !m_is_active ) return 1;
+        return ! (AMREX_D_TERM( (p.pos(0) < m_domain.lo(0)) || (p.pos(0) > m_domain.hi(0) ),
+                            ||  (p.pos(1) < m_domain.lo(1)) || (p.pos(1) > m_domain.hi(1) ),
+                            ||  (p.pos(2) < m_domain.lo(2)) || (p.pos(2) > m_domain.hi(2) )));
+    }
+private:
+    /** Whether this diagnostics is activated. Select all particles if false */
+    const bool m_is_active;
+    /** Physical extent of the axis-aligned region used for particle check */
+    const amrex::RealBox m_domain;
 };
 
 #endif // FILTERFUNCTORS_H
