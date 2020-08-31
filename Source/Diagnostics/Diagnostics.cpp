@@ -145,6 +145,8 @@ Diagnostics::InitData ()
         for (int i = 0; i < m_all_species.size(); ++i) {
             m_all_species[i].m_do_geom_filter = true;
         }
+        // Disabling particle-io for reduced domain diagnostics by reducing
+        // the particle-diag vector to zero.
         // This is a temporary fix until particle_buffer is supported in diagnostics.
         m_all_species.clear();
         amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
