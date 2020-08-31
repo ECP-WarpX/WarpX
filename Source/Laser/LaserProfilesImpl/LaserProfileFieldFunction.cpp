@@ -38,7 +38,7 @@ WarpXLaserProfiles::FieldFunctionLaserProfile::init (
         amrex::Abort("Laser Profile: Unknown symbol "+s);
     }
 
-    m_gpu_parser.reset(new ParserWrapper<3>(m_parser));
+    m_gpu_parser = std::make_unique< ParserWrapper<3> >(m_parser);
 }
 
 void
