@@ -307,7 +307,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                            particle_diags[i].m_uniform_stride);
         ParserFilter const parser_filter(particle_diags[i].m_do_parser_filter,
                                          particle_diags[i].m_particle_filter_parser.get());
-
+        GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
+                                             particle_diags[i].m_diag_domain);
         // real_names contains a list of all particle attributes.
         // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
         pc->WritePlotFile(
@@ -316,7 +317,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             real_names, int_names,
             [=] AMREX_GPU_HOST_DEVICE (const SuperParticleType& p)
             {
-                return random_filter(p) * uniform_filter(p) * parser_filter(p);
+                return random_filter(p) * uniform_filter(p)
+                     * parser_filter(p) * geometry_filter(p);
             });
 
         // Convert momentum back to WarpX units

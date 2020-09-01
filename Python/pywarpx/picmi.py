@@ -270,7 +270,7 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
 class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
     def init(self, kw):
 
-        if len(x) > 1:
+        if len(self.x) > 1:
             raise Exception('Only a single particle can be loaded')
 
     def initialize_inputs(self, species_number, layout, species, density_scale):
