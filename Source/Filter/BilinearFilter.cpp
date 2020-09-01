@@ -49,6 +49,7 @@ namespace {
         old_s[0] *= 0.5; // because we will use it twice
         stencil.resize(old_s.size());
         Gpu::copyAsync(Gpu::hostToDevice,old_s.begin(),old_s.end(),stencil.begin());
+        amrex::Gpu::synchronize();
     }
 }
 
@@ -75,5 +76,4 @@ void BilinearFilter::ComputeStencils(){
 #if (AMREX_SPACEDIM == 2)
     slen.z = 1;
 #endif
-    amrex::Gpu::synchronize();
 }
