@@ -74,7 +74,7 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
     // collision
     auto const ncollisions = collision_names.size();
     allcollisions.resize(ncollisions);
-    for (int i = 0; i < ncollisions; ++i) {
+    for (int i = 0; i < static_cast<int>(ncollisions); ++i) {
         allcollisions[i].reset
             (new CollisionType(species_names, collision_names[i]));
     }
@@ -544,7 +544,7 @@ MultiParticleContainer::doContinuousInjection () const
 void
 MultiParticleContainer::mapSpeciesProduct ()
 {
-    for (int i=0; i<species_names.size(); i++){
+    for (int i=0; i < static_cast<int>(species_names.size()); i++){
         auto& pc = allcontainers[i];
         // If species pc has ionization on, find species with name
         // pc->ionization_product_name and store its ID into
@@ -589,10 +589,10 @@ MultiParticleContainer::mapSpeciesProduct ()
 int
 MultiParticleContainer::getSpeciesID (std::string product_str) const
 {
-    int i_product;
+    int i_product = 0;
     bool found = 0;
     // Loop over species
-    for (int i=0; i<species_names.size(); i++){
+    for (int i=0; i < static_cast<int>(species_names.size()); i++){
         // If species name matches, store its ID
         // into i_product
         if (species_names[i] == product_str){
@@ -709,7 +709,7 @@ void MultiParticleContainer::doResampling (const int timestep)
 
 void MultiParticleContainer::CheckIonizationProductSpecies()
 {
-    for (int i=0; i<species_names.size(); i++){
+    for (int i=0; i < static_cast<int>(species_names.size()); i++){
         if (allcontainers[i]->do_field_ionization){
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 i != allcontainers[i]->ionization_product,
