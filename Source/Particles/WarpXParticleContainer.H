@@ -250,7 +250,7 @@ public:
     void AddNParticles (int lev,
                         int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
                         const amrex::ParticleReal* vx, const amrex::ParticleReal* vy, const amrex::ParticleReal* vz,
-                        int nattr, const amrex::ParticleReal* attr, int uniqueparticles, int id=-1);
+                        int nattr, const amrex::ParticleReal* attr, int uniqueparticles, amrex::Long id=-1);
 
     virtual void ReadHeader (std::istream& is);
 
@@ -261,10 +261,6 @@ public:
     static void ReadParameters ();
 
     static void BackwardCompatibility ();
-
-    static int NextID () { return ParticleType::NextID(); }
-
-    void setNextID(int next_id) { ParticleType::NextID(next_id); }
 
     bool do_splitting = false;
     bool initialize_self_fields = false;

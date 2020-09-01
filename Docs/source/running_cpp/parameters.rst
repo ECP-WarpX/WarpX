@@ -1403,10 +1403,12 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Root for output file names. Supports sub-directories.
 
 * ``<diag_name>.diag_lo`` (list `float`, 1 per dimension) optional (default `-infinity -infinity -infinity`)
-    Lower corner of the output fields (if smaller than ``warpx.dom_lo``, then set to ``warpx.dom_lo``).
+    Lower corner of the output fields (if smaller than ``warpx.dom_lo``, then set to ``warpx.dom_lo``). Currently, when the ``diag_lo`` is different from ``warpx.dom_lo``, particle output is disabled.
 
 * ``<diag_name>.diag_hi`` (list `float`, 1 per dimension) optional (default `+infinity +infinity +infinity`)
-    Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``).
+    Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``). Currently, when the ``diag_hi`` is different from ``warpx.dom_hi``, particle output i
+s disabled.
+
 
 * ``<diag_name>.species`` (list of `string`, default all physical species in the simulation)
     Which species dumped in this diagnostics.

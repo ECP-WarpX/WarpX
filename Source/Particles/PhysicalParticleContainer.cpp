@@ -24,6 +24,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX_Print.H>
+#include <AMReX.H>
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
@@ -441,6 +442,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
 #endif // WARPX_USE_OPENPMD
+
+    ignore_unused(q_tot, z_shift);
+
     return;
 }
 
@@ -664,6 +668,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     pcounts[index] = num_ppc;
                 }
             }
+#if (AMREX_SPACEDIM != 3)
+            amrex::ignore_unused(k);
+#endif
         });
         Gpu::exclusive_scan(counts.begin(), counts.end(), offset.begin());
 
@@ -770,6 +777,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     continue;
                 }
 #else
+                amrex::ignore_unused(k);
                 if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
                     p.id() = -1;
                     continue;
@@ -1225,6 +1233,10 @@ PhysicalParticleContainer::applyNCIFilter (
     bzeli = filtered_Bz.elixir();
     nci_godfrey_filter_exeybz[lev]->ApplyStencil(filtered_Bz, Bz, filtered_Bz.box());
     bz_ptr = &filtered_Bz;
+#else
+    amrex::ignore_unused(eyeli, bxeli, bzeli,
+        filtered_Ey, filtered_Bx, filtered_Bz,
+        Ey, Bx, Bz, ey_ptr, bx_ptr, bz_ptr);
 #endif
 }
 
@@ -1427,7 +1439,6 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const FArrayBox& bzfab = Bz[pti];
 
             const auto getPosition = GetParticlePosition(pti);
-                  auto setPosition = SetParticlePosition(pti);
 
             const auto getExternalE = GetExternalEField(pti);
             const auto getExternalB = GetExternalBField(pti);

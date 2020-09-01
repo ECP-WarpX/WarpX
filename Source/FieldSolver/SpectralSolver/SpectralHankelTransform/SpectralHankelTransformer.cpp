@@ -49,6 +49,7 @@ SpectralHankelTransformer::ExtractKrArray ()
             kr_array[ii] = kr_m_array[ir];
         });
     }
+    amrex::Gpu::synchronize();
 }
 
 /* \brief Converts a scalar field from the physical to the spectral space for all modes */
