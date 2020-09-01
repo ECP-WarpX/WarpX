@@ -449,6 +449,8 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::internal_fill_amplitude_nonuniform
             amplitude[ip] = 0.0_rt;
             return;
         }
+#else
+        amrex::ignore_unused(Yp);
 #endif
 
         //Find indices along x

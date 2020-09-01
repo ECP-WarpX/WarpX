@@ -219,6 +219,9 @@ struct CartesianCKCAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
+
+        amrex::ignore_unused(n_coefs_z);
+
         Real const alphaz = coefs_z[1];
         Real const betazx = coefs_z[2];
 #if defined WARPX_DIM_3D

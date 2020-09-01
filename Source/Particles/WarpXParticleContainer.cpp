@@ -147,6 +147,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         p.pos(1) = y[i];
         p.pos(2) = z[i];
 #elif (AMREX_SPACEDIM == 2)
+        amrex::ignore_unused(y);
 #ifdef WARPX_DIM_RZ
         theta[i-ibegin] = std::atan2(y[i], x[i]);
         p.pos(0) = std::sqrt(x[i]*x[i] + y[i]*y[i]);
