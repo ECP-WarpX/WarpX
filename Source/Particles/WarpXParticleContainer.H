@@ -262,10 +262,6 @@ public:
 
     static void BackwardCompatibility ();
 
-    static int NextID () { return ParticleType::NextID(); }
-
-    void setNextID(int next_id) { ParticleType::NextID(next_id); }
-
     bool do_splitting = false;
     bool initialize_self_fields = false;
     amrex::Real self_fields_required_precision = 1.e-11;
