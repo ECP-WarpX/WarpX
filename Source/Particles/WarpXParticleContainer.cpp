@@ -19,6 +19,7 @@
 #include "Deposition/ChargeDeposition.H"
 
 #include <AMReX_AmrParGDB.H>
+#include <AMReX.H>
 
 #include <limits>
 
@@ -557,6 +558,8 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
         if (do_rz_volume_scaling) {
             WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
         }
+#else
+        ignore_unused(do_rz_volume_scaling);
 #endif
 
         // Exchange guard cells
@@ -861,6 +864,8 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
                                            const ParticleLocData& pld,
                                            const int lev)
 {
+    if (not do_splitting) return;
+
     // Tag particle if goes to higher level.
     // It will be split later in the loop
     if (pld.m_lev == lev+1

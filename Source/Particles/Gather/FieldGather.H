@@ -102,10 +102,10 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     amrex::Real sx_cell[depos_order + 1];
     amrex::Real sx_node_v[depos_order + 1 - lower_in_v];
     amrex::Real sx_cell_v[depos_order + 1 - lower_in_v];
-    int j_node;
-    int j_cell;
-    int j_node_v;
-    int j_cell_v;
+    int j_node = 0;
+    int j_cell = 0;
+    int j_node_v = 0;
+    int j_cell_v = 0;
     Compute_shape_factor< depos_order > const compute_shape_factor;
     Compute_shape_factor< depos_order-lower_in_v > const compute_shape_factor_lower_in_v;
     if ((ey_type[0] == NODE) || (ez_type[0] == NODE) || (bx_type[0] == NODE)) {
@@ -140,10 +140,10 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     amrex::Real sy_cell[depos_order + 1];
     amrex::Real sy_node_v[depos_order + 1 - lower_in_v];
     amrex::Real sy_cell_v[depos_order + 1 - lower_in_v];
-    int k_node;
-    int k_cell;
-    int k_node_v;
-    int k_cell_v;
+    int k_node = 0;
+    int k_cell = 0;
+    int k_node_v = 0;
+    int k_cell_v = 0;
     if ((ex_type[1] == NODE) || (ez_type[1] == NODE) || (by_type[1] == NODE)) {
         k_node = compute_shape_factor(sy_node, y);
     }
@@ -176,10 +176,10 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     amrex::Real sz_cell[depos_order + 1];
     amrex::Real sz_node_v[depos_order + 1 - lower_in_v];
     amrex::Real sz_cell_v[depos_order + 1 - lower_in_v];
-    int l_node;
-    int l_cell;
-    int l_node_v;
-    int l_cell_v;
+    int l_node = 0;
+    int l_cell = 0;
+    int l_node_v = 0;
+    int l_cell_v = 0;
     if ((ex_type[zdir] == NODE) || (ey_type[zdir] == NODE) || (bz_type[zdir] == NODE)) {
         l_node = compute_shape_factor(sz_node, z);
     }

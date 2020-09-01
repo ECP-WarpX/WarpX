@@ -24,6 +24,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX_Print.H>
+#include <AMReX.H>
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
@@ -441,6 +442,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
 #endif // WARPX_USE_OPENPMD
+
+    ignore_unused(q_tot, z_shift);
+
     return;
 }
 
@@ -677,7 +681,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #endif
 
         // Update NextID to include particles created in this function
-        int pid;
+        Long pid;
 #ifdef _OPENMP
 #pragma omp critical (add_plasma_nextid)
 #endif
@@ -685,7 +689,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        WarpXUtilMsg::AlwaysAssert(static_cast<int>(pid + max_new_particles) > 0,
+        WarpXUtilMsg::AlwaysAssert(static_cast<Long>(pid + max_new_particles) < LastParticleID,
                                    "ERROR: overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
@@ -707,7 +711,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
 
-        int* pi;
+        int* pi = nullptr;
         if (do_field_ionization) {
             pi = soa.GetIntData(particle_icomps["ionization_level"]).data() + old_size;
         }
@@ -1427,7 +1431,6 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const FArrayBox& bzfab = Bz[pti];
 
             const auto getPosition = GetParticlePosition(pti);
-                  auto setPosition = SetParticlePosition(pti);
 
             const auto getExternalE = GetExternalEField(pti);
             const auto getExternalB = GetExternalBField(pti);

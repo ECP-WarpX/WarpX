@@ -74,6 +74,13 @@ Diagnostics::BaseReadParameters ()
             m_hi[idim] = warpx.Geom(0).ProbHi(idim);
        }
     }
+    if (lo_specified || hi_specified) {
+        // set geometry filter for particle-diags to true when the diagnostic domain-extent
+        // is specified by the user
+        for (int i = 0; i < m_all_species.size(); ++i) {
+            m_all_species[i].m_do_geom_filter = true;
+        }
+    }
     // For a moving window simulation, the user-defined m_lo and m_hi must be converted.
     if (warpx.do_moving_window) {
 #if (AMREX_SPACEDIM == 3)
@@ -183,6 +190,12 @@ Diagnostics::InitBaseData ()
     for (int i = 0; i < m_num_buffers; ++i) {
         m_mf_output[i].resize( nmax_lev );
     }
+
+    // allocate vector of geometry objects corresponding to each output multifab.
+    m_geom_output.resize( m_num_buffers );
+    for (int i = 0; i < m_num_buffers; ++i) {
+        m_geom_output[i].resize( nmax_lev );
+    }
 }
 
 void
@@ -212,6 +225,10 @@ Diagnostics::ComputeAndPack ()
 void
 Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
+    WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
+
+    MovingWindowAndGalileanDomainShift ();
+
     if ( DoComputeAndPack (step, force_flush) ) {
         ComputeAndPack();
 

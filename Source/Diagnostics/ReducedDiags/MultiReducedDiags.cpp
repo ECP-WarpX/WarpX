@@ -36,7 +36,7 @@ MultiReducedDiags::MultiReducedDiags ()
     m_multi_rd.resize(m_rd_names.size());
 
     // loop over all reduced diags
-    for (int i_rd = 0; i_rd < m_rd_names.size(); ++i_rd)
+    for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
     {
 
         ParmParse pp_rd(m_rd_names[i_rd]);
@@ -87,7 +87,7 @@ MultiReducedDiags::MultiReducedDiags ()
 void MultiReducedDiags::ComputeDiags (int step)
 {
     // loop over all reduced diags
-    for (int i_rd = 0; i_rd < m_rd_names.size(); ++i_rd)
+    for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
     {
         m_multi_rd[i_rd] -> ComputeDiags(step);
     }
@@ -103,7 +103,7 @@ void MultiReducedDiags::WriteToFile (int step)
     if ( !ParallelDescriptor::IOProcessor() ) { return; }
 
     // loop over all reduced diags
-    for (int i_rd = 0; i_rd < m_rd_names.size(); ++i_rd)
+    for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
     {
 
         // Judge if the diags should be done
