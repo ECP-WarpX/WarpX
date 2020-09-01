@@ -8,6 +8,7 @@
 #ifndef WARPX_PML_KERNELS_H_
 #define WARPX_PML_KERNELS_H_
 
+#include <AMReX.H>
 #include <AMReX_FArrayBox.H>
 
 using namespace amrex;
@@ -24,6 +25,7 @@ void warpx_damp_pml_ex (int i, int j, int k, Array4<Real> const& Ex,
     Ex(i,j,k,1) *= sigma_fac_z[k-zlo];
 #else
     Ex(i,j,k,1) *= sigma_fac_z[j-zlo];
+    amrex::ignore_unused(sigma_fac_y, ylo);
 #endif
     Ex(i,j,k,2) *= sigma_star_fac_x[i-xlo];
 }
@@ -40,6 +42,7 @@ void warpx_damp_pml_ey (int i, int j, int k, Array4<Real> const& Ey,
     Ey(i,j,k,2) *= sigma_star_fac_y[j-ylo];
 #else
     Ey(i,j,k,0) *= sigma_fac_z[j-zlo];
+    amrex::ignore_unused(sigma_star_fac_y, ylo);
 #endif
     Ey(i,j,k,1) *= sigma_fac_x[i-xlo];
 }
@@ -57,6 +60,7 @@ void warpx_damp_pml_ez (int i, int j, int k, Array4<Real> const& Ez,
     Ez(i,j,k,2) *= sigma_star_fac_z[k-zlo];
 #else
     Ez(i,j,k,2) *= sigma_star_fac_z[j-zlo];
+    amrex::ignore_unused(sigma_fac_y, ylo);
 #endif
 }
 
@@ -72,6 +76,7 @@ void warpx_damp_pml_bx (int i, int j, int k, Array4<Real> const& Bx,
    Bx(i,j,k,1) *= sigma_star_fac_z[k-zlo];
 #else
    Bx(i,j,k,1) *= sigma_star_fac_z[j-zlo];
+   amrex::ignore_unused(sigma_star_fac_y, ylo);
 #endif
 }
 
@@ -98,6 +103,8 @@ void warpx_damp_pml_bz (int i, int j, int k, Array4<Real> const& Bz,
    Bz(i,j,k,0) *= sigma_star_fac_x[i-xlo];
 #if (AMREX_SPACEDIM == 3)
    Bz(i,j,k,1) *= sigma_star_fac_y[j-ylo];
+#else
+   amrex::ignore_unused(sigma_star_fac_y, ylo);
 #endif
 }
 
@@ -114,6 +121,7 @@ void warpx_damp_pml_F (int i, int j, int k, Array4<Real> const& F_fab,
    F_fab(i,j,k,2) *= sigma_fac_z[k-zlo];
 #else
    F_fab(i,j,k,2) *= sigma_fac_z[j-zlo];
+   amrex::ignore_unused(sigma_fac_y, ylo);
 #endif
 }
 

@@ -17,8 +17,8 @@
 // `KVectorComponent` and `SpectralShiftFactor` hold one 1D array
 // ("ManagedVector") for each box ("LayoutData"). The arrays are
 // only allocated if the corresponding box is owned by the local MPI rank.
-using KVectorComponent = amrex::LayoutData<
-                           amrex::Gpu::ManagedVector<amrex::Real> >;
+using RealKVector = amrex::Gpu::ManagedVector<amrex::Real>;
+using KVectorComponent = amrex::LayoutData< RealKVector >;
 using SpectralShiftFactor = amrex::LayoutData<
                            amrex::Gpu::ManagedVector<Complex> >;
 
@@ -39,7 +39,7 @@ class SpectralKSpace
 {
     public:
         amrex::BoxArray spectralspace_ba;
-        SpectralKSpace() : dx(amrex::RealVect::Zero) {};
+        SpectralKSpace() : dx(amrex::RealVect::Zero) {}
         SpectralKSpace( const amrex::BoxArray& realspace_ba,
                         const amrex::DistributionMapping& dm,
                         const amrex::RealVect realspace_dx );

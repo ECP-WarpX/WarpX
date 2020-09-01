@@ -69,6 +69,6 @@ EXP	([Ee][-+]?[0-9]+)
 "\n"    { return EOL; }
 
  /* everything else */
-.	{ yyerror("Unknow character %c\n", *yytext); }
+.	{ yyerror("Unknown character %c\n", *yytext); }
 
 %%

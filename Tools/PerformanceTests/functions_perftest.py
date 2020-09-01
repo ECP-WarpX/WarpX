@@ -191,7 +191,7 @@ def extract_dataframe(filename, n_steps):
     line_match_looptime = re.search('\nWarpX::Evolve().*', search_area)
     time_wo_initialization = float(line_match_looptime.group(0).split()[3])
     # New, might break something
-    line_match_WritePlotFile = re.search('\nWarpX::WritePlotFile().*', search_area)
+    line_match_WritePlotFile = re.search('\nDiagnostics::FilterComputePackFlush().*', search_area)
     if line_match_WritePlotFile is not None:
          time_WritePlotFile = float(line_match_WritePlotFile.group(0).split()[3])
     else:

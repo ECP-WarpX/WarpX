@@ -10,6 +10,7 @@
 #include "FieldSolver/SpectralSolver/SpectralKSpace.H"
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 
+#include <AMReX.H>
 
 #if WARPX_USE_PSATD
 
@@ -29,23 +30,33 @@ class SpectralBaseAlgorithm
         // The destructor should also be a virtual function, so that
         // a pointer to subclass of `SpectraBaseAlgorithm` actually
         // calls the subclass's destructor.
-        virtual ~SpectralBaseAlgorithm() {};
+        virtual ~SpectralBaseAlgorithm() {}
 
         /**
          * \brief Virtual function for current correction in Fourier space
-         * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010).
-         * This virtual function is not pure: it can be overridden in derived
-         * classes (e.g. PsatdAlgorithm, PMLPsatdAlgorithm), but a base-class
-         * implementation is provided (empty implementation in this case).
+         * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).
+         * This virtual function is pure and must be defined in derived classes.
          *
-         * \param[in,out] field_data all fields in Fourier space
-         * \param[in,out] current    three-dimensional array of unique pointers to MultiFab
-         *                           storing the three components of the current density
-         * \param[in]     rho        unique pointer to MultiFab storing the charge density
+         * \param[in,out] field_data All fields in Fourier space
+         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
+         *                           the three components of the current density
+         * \param[in]     rho        Unique pointer to \c MultiFab storing the charge density
          */
-        virtual void CurrentCorrection ( SpectralFieldData& field_data,
-                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                         const std::unique_ptr<amrex::MultiFab>& rho ) {};
+        virtual void CurrentCorrection (SpectralFieldData& field_data,
+                                        std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                        const std::unique_ptr<amrex::MultiFab>& rho) = 0;
+
+        /**
+         * \brief Virtual function for Vay current deposition in Fourier space
+         * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).
+         * This virtual function is pure and must be defined in derived classes.
+         *
+         * \param[in,out] field_data All fields in Fourier space
+         * \param[in,out] current    Array of unique pointers to \c MultiFab storing
+         *                           the three components of the current density
+         */
+        virtual void VayDeposition (SpectralFieldData& field_data,
+                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current) = 0;
 
         /**
          * \brief Compute spectral divergence of E
@@ -74,7 +85,11 @@ class SpectralBaseAlgorithm
 #else
             modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_z,nodal))
 #endif
-          {};
+          {
+#if (AMREX_SPACEDIM!=3)
+            amrex::ignore_unused(norder_y);
+#endif
+          }
 
         // Modified finite-order vectors
         KVectorComponent modified_kx_vec;

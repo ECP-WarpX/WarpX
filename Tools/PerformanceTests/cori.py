@@ -98,6 +98,8 @@ def get_batch_string(test_list, job_time_min, Cname, n_node):
     batch_string += '#SBATCH -q regular\n'
     batch_string += '#SBATCH -e error.txt\n'
     batch_string += '#SBATCH --account=m2852\n'
+    batch_string += 'module unload PrgEnv-gnu\n'
+    batch_string += 'module load PrgEnv-intel\n'
     return batch_string
 
 def get_run_string(current_test, architecture, n_node, count, bin_name, runtime_param_string):
@@ -163,6 +165,6 @@ def get_test_list(n_repeat):
                                        n_cell=[128, 256, 256],
                                        max_grid_size=64,
                                        blocking_factor=32,
-                                       n_step=0) )
+                                       n_step=1) )
     test_list = [copy.deepcopy(item) for item in test_list_unq for _ in range(n_repeat) ]
     return test_list

@@ -39,7 +39,6 @@ warpx.verbose = 1
 warpx.cfl = 1.0
 
 # particles
-particles.nspecies = 2
 particles.species_names = electron positron
 
 electron.charge = -q_e

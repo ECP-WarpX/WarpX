@@ -65,8 +65,7 @@ class Species(picmistandard.PICMI_Species):
                     self.mass = element.mass*periodictable.constants.atomic_mass_constant
 
     def initialize_inputs(self, layout, initialize_self_fields=False):
-        self.species_number = pywarpx.particles.nspecies
-        pywarpx.particles.nspecies += 1
+        self.species_number = len(pywarpx.particles.species_names)
 
         if self.name is None:
             self.name = 'species{}'.format(self.species_number)
@@ -271,7 +270,7 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
 class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
     def init(self, kw):
 
-        if len(x) > 1:
+        if len(self.x) > 1:
             raise Exception('Only a single particle can be loaded')
 
     def initialize_inputs(self, species_number, layout, species, density_scale):
@@ -304,8 +303,16 @@ class PseudoRandomLayout(picmistandard.PICMI_PseudoRandomLayout):
 
 
 class BinomialSmoother(picmistandard.PICMI_BinomialSmoother):
+    def init(self, kw):
+        self.use_spectral = kw.pop('warpx_kspace_filter', None)
+        self.use_spectral_compensation = kw.pop('warpx_kspace_filter_compensation', None)
+
     def initialize_inputs(self, solver):
-        pywarpx.warpx.use_filter = 1
+        if self.use_spectral:
+            pywarpx.warpx.use_kspace_filter = 1
+            pywarpx.warpx.use_filter_compensation = self.use_spectral_compensation
+        else:
+            pywarpx.warpx.use_filter = 1
         if self.n_pass is None:
             # If not specified, do at least one pass in each direction.
             self.n_pass = 1
@@ -451,9 +458,14 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         self.pml_ncell = kw.pop('warpx_pml_ncell', None)
 
         if self.method == 'PSATD':
-            self.periodic_single_box_fft = kw.pop('warpx_periodic_single_box_fft', None)
-            self.fftw_plan_measure = kw.pop('warpx_fftw_plan_measure', None)
-            self.current_correction = kw.pop('warpx_current_correction', None)
+            self.psatd_periodic_single_box_fft = kw.pop('warpx_periodic_single_box_fft', None)
+            self.psatd_fftw_plan_measure = kw.pop('warpx_fftw_plan_measure', None)
+            self.psatd_current_correction = kw.pop('warpx_current_correction', None)
+            self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
+            self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
+            self.psatd_nx_guard = kw.pop('warpx_psatd_nx_guard', None)
+            self.psatd_ny_guard = kw.pop('warpx_psatd_ny_guard', None)
+            self.psatd_nz_guard = kw.pop('warpx_psatd_nz_guard', None)
 
     def initialize_inputs(self):
 
@@ -464,9 +476,14 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.do_nodal = self.l_nodal
 
         if self.method == 'PSATD':
-            pywarpx.psatd.periodic_single_box_fft = self.periodic_single_box_fft
-            pywarpx.psatd.fftw_plan_measure = self.fftw_plan_measure
-            pywarpx.psatd.current_correction = self.current_correction
+            pywarpx.psatd.periodic_single_box_fft = self.psatd_periodic_single_box_fft
+            pywarpx.psatd.fftw_plan_measure = self.psatd_fftw_plan_measure
+            pywarpx.psatd.current_correction = self.psatd_current_correction
+            pywarpx.psatd.update_with_rho = self.psatd_update_with_rho
+            pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
+            pywarpx.psatd.nx_guard = self.psatd_nx_guard
+            pywarpx.psatd.ny_guard = self.psatd_ny_guard
+            pywarpx.psatd.nz_guard = self.psatd_nz_guard
 
             if self.stencil_order is not None:
                 pywarpx.psatd.nox = self.stencil_order[0]
@@ -478,7 +495,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         else:
             # --- Same method names are used, though mapped to lower case.
-            pywarpx.algo.maxwell_fdtd_solver = self.method
+            pywarpx.algo.maxwell_solver = self.method
 
         if self.cfl is not None:
             pywarpx.warpx.cfl = self.cfl
@@ -494,7 +511,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
 class GaussianLaser(picmistandard.PICMI_GaussianLaser):
     def initialize_inputs(self):
-        self.laser_number = pywarpx.lasers.nlasers + 1
+        self.laser_number = len(pywarpx.lasers.names) + 1
         if self.name is None:
             self.name = 'laser{}'.format(self.laser_number)
 
@@ -513,7 +530,7 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
 
 class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
     def initialize_inputs(self):
-        self.laser_number = pywarpx.lasers.nlasers + 1
+        self.laser_number = len(pywarpx.lasers.names) + 1
         if self.name is None:
             self.name = 'laser{}'.format(self.laser_number)
 

@@ -161,7 +161,7 @@ for NCI_CORR in 0 1; do
                                                        warpx.use_filter=$FILTER \
                                                        warpx.do_moving_window=$MOVING_WINDOW \
                                                        interpolation.nox=$NOX interpolation.noy=$NOX interpolation.noz=$NOX \
-                                                       algo.maxwell_fdtd_solver=$SOLVER \
+                                                       algo.maxwell_solver=$SOLVER \
                                                        amr.plot_file=$WHICH/plt \
                                                        warpx.do_pml=$PML \
                                                        amr.max_level=$MAXLEV \

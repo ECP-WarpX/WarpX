@@ -7,8 +7,10 @@
 
 #include "ReducedDiags.H"
 #include "WarpX.H"
-#include "AMReX_ParmParse.H"
-#include "AMReX_Utility.H"
+
+#include <AMReX_ParmParse.H>
+#include <AMReX_Utility.H>
+
 #include <iomanip>
 
 using namespace amrex;
@@ -75,7 +77,7 @@ void ReducedDiags::WriteToFile (int step) const
     ofs << WarpX::GetInstance().gett_new(0);
 
     // loop over data size and write
-    for (int i = 0; i < m_data.size(); ++i)
+    for (int i = 0; i < static_cast<int>(m_data.size()); ++i)
     {
         ofs << m_sep;
         ofs << m_data[i];

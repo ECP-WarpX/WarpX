@@ -24,7 +24,9 @@ import checksumAPI
 
 filename = sys.argv[1]
 
+# Parse test name
 averaged = True if re.search( 'averaged', filename ) else False
+current_correction = True if re.search( 'current_correction', filename ) else False
 
 ds = yt.load( filename )
 
@@ -36,6 +38,11 @@ if (averaged):
     # energyE_ref was calculated with Galilean PSATD method (v_galilean = (0,0,0.99498743710662))
     energyE_ref = 460315.9845556079
     tolerance_rel = 1e-4
+elif (current_correction):
+    # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.)):
+    # difference with respect to reference energy below due to absence of filter
+    energyE_ref = 1632431.0574508277
+    tolerance_rel = 1e-7;
 else:
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
     energyE_ref = 8218.678808709019
@@ -49,6 +56,17 @@ print("error_rel    : " + str(error_rel))
 print("tolerance_rel: " + str(tolerance_rel))
 
 assert( error_rel < tolerance_rel )
+
+# Check charge conservation (relative L-infinity norm of error) with current correction
+if current_correction:
+    rho  = ds.index.grids[0]['boxlib', 'rho' ].squeeze().v
+    divE = ds.index.grids[0]['boxlib', 'divE'].squeeze().v
+    error_rel = np.amax( np.abs( divE - rho/scc.epsilon_0 ) ) / np.amax( np.abs( rho/scc.epsilon_0 ) )
+    tolerance = 1e-9
+    print("Check charge conservation:")
+    print("error_rel = {}".format(error_rel))
+    print("tolerance = {}".format(tolerance))
+    assert( error_rel < tolerance )
 
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)

@@ -21,21 +21,22 @@ int main(int argc, char* argv[])
     using namespace amrex;
 
 #if defined(AMREX_USE_MPI)
-#   if defined(_OPENMP) && defined(WARPX_USE_PSATD)
-    int provided;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
-    AMREX_ALWAYS_ASSERT(provided >= MPI_THREAD_FUNNELED);
+#   ifdef AMREX_MPI_THREAD_MULTIPLE
+    int provided = -1;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+    AMREX_ALWAYS_ASSERT(provided >= MPI_THREAD_MULTIPLE);
 #   else
-    MPI_Init(&argc, &argv);
+#      if defined(_OPENMP) && defined(WARPX_USE_PSATD)
+       int provided = -1;
+       MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
+       AMREX_ALWAYS_ASSERT(provided >= MPI_THREAD_FUNNELED);
+#      else
+       MPI_Init(&argc, &argv);
+#      endif
 #   endif
 #endif
 
     warpx_amrex_init(argc, argv);
-
-    // in Debug mode, we need a larger stack limit than usual bc of the parser.
-#if defined(AMREX_USE_CUDA) && defined(AMREX_DEBUG)
-    AMREX_CUDA_SAFE_CALL(cudaDeviceSetLimit(cudaLimitStackSize, 20*1024));
-#endif
 
     ConvertLabParamsToBoost();
 

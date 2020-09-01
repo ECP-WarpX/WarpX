@@ -46,7 +46,9 @@ void LoadBalanceCosts::ComputeDiags (int step)
     m_nBoxesMax = std::max(m_nBoxesMax, nBoxes);
 
     // resize and clear data array
-    const size_t dataSize = m_nDataFields*nBoxes;
+    const size_t dataSize =
+        static_cast<size_t>(m_nDataFields)*
+        static_cast<size_t>(nBoxes);
     m_data.resize(dataSize, 0.0);
     m_data.assign(dataSize, 0.0);
 
@@ -195,7 +197,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
     ofs << WarpX::GetInstance().gett_new(0);
 
     // loop over data size and write
-    for (int i = 0; i < m_data.size(); ++i)
+    for (int i = 0; i < static_cast<int>(m_data.size()); ++i)
     {
         ofs << m_sep << m_data[i];
         if ((i - m_nDataFields + 1)%m_nDataFields == 0)
@@ -204,7 +206,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
             int ind_rank = i - m_nDataFields + 2; // index for the rank corresponding to current box
 
             // m_data --> rank --> hostname
-            ofs << m_sep << m_data_string[m_data[ind_rank]];
+            ofs << m_sep << m_data_string[static_cast<long unsigned int>(m_data[ind_rank])];
         }
     }
     // end loop over data size

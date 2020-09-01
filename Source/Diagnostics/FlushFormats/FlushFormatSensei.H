@@ -2,10 +2,10 @@
 #define WARPX_FLUSHFORMATSENSEI_H_
 
 #include "FlushFormat.H"
-#include "AMReX_AmrMesh.H"
 
+#include <AMReX_AmrMesh.H>
 #if defined(BL_USE_SENSEI_INSITU)
-#include "AMReX_AmrMeshInSituBridge.H"
+#  include <AMReX_AmrMeshInSituBridge.H>
 #else
 namespace amrex {
 using AmrMeshInSituBridge = void;
@@ -61,10 +61,10 @@ public:
     void WriteParticles(const amrex::Vector<ParticleDiag>& particle_diags) const;
 
 private:
-    amrex::AmrMesh * m_amr_mesh;
-    amrex::AmrMeshInSituBridge * m_insitu_bridge;
     std::string m_insitu_config;
-    int m_insitu_pin_mesh;
+    int m_insitu_pin_mesh = 0;
+    amrex::AmrMeshInSituBridge * m_insitu_bridge = nullptr;
+    amrex::AmrMesh * m_amr_mesh = nullptr;
 };
 
 #endif // WARPX_FLUSHFORMATSENSEI_H_

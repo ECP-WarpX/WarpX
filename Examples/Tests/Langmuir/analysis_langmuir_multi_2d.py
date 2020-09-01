@@ -32,6 +32,9 @@ fn = sys.argv[1]
 # Parse test name and check if current correction (psatd.current_correction=1) is applied
 current_correction = True if re.search( 'current_correction', fn ) else False
 
+# Parse test name and check if Vay current deposition (algo.current_deposition=vay) is used
+vay_deposition = True if re.search( 'Vay_deposition', fn ) else False
+
 # Parameters (these parameters must match the parameters in `inputs.multi.rt`)
 epsilon = 0.01
 n = 4.e24
@@ -103,14 +106,17 @@ print("tolerance_rel: " + str(tolerance_rel))
 assert( error_rel < tolerance_rel )
 
 # Check relative L-infinity spatial norm of rho/epsilon_0 - div(E) when
-# current correction (psatd.current_correction=1) is applied
-if current_correction:
+# current correction (psatd.do_current_correction=1) is applied or when
+# Vay current deposition (algo.current_deposition=vay) is used
+if current_correction or vay_deposition:
     rho  = data['rho' ].to_ndarray()
     divE = data['divE'].to_ndarray()
-    Linf_norm = np.amax( np.abs( rho/epsilon_0 - divE ) ) / np.amax( np.abs( rho/epsilon_0 ) )
-    print("error: " + str(Linf_norm))
-    print("tolerance: 1.e-9")
-    assert( Linf_norm < 1.e-9 )
+    error_rel = np.amax( np.abs( divE - rho/epsilon_0 ) ) / np.amax( np.abs( rho/epsilon_0 ) )
+    tolerance = 1.e-9
+    print("Check charge conservation:")
+    print("error_rel = {}".format(error_rel))
+    print("tolerance = {}".format(tolerance))
+    assert( error_rel < tolerance )
 
 test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn)
