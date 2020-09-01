@@ -1,3 +1,10 @@
+/* Copyright 2019-2020
+ *
+ * This file is part of WarpX.
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+
 #ifndef ANYFFT_H_
 #define ANYFFT_H_
 
