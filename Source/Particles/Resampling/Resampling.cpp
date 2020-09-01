@@ -26,7 +26,7 @@ bool Resampling::triggered (const int timestep, const amrex::Real global_numpart
     return m_resampling_trigger.triggered(timestep, global_numparts);
 }
 
-void Resampling::operator() (WarpXParIter& pti) const
+void Resampling::operator() (WarpXParIter& pti, const int lev) const
 {
-    (*m_resampling_algorithm)(pti);
+    (*m_resampling_algorithm)(pti, lev);
 }

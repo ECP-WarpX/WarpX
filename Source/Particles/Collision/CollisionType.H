@@ -12,6 +12,13 @@
 #include <AMReX_REAL.H>
 #include <AMReX_ParmParse.H>
 
+namespace findParticles {
+    amrex::DenseBins<WarpXParticleContainer::ParticleType>
+    findParticlesInEachCell( int const lev, amrex::MFIter const& mfi,
+                             WarpXParticleContainer::ParticleTileType const& ptile);
+}
+
+
 class CollisionType
 {
 public:

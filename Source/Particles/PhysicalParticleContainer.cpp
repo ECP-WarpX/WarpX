@@ -2000,7 +2000,7 @@ void PhysicalParticleContainer::resample (const Resampling& resampler, const int
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
             {
-                resampler(pti);
+                resampler(pti, lev);
             }
         }
     }

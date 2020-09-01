@@ -7,7 +7,7 @@
 #include "CollisionType.H"
 #include "ShuffleFisherYates.H"
 #include "ElasticCollisionPerez.H"
-#include <WarpX.H>
+#include "WarpX.H"
 
 CollisionType::CollisionType(
     const std::vector<std::string>& species_names,
@@ -47,7 +47,7 @@ using ParticleTileType = WarpXParticleContainer::ParticleTileType;
 using ParticleBins = DenseBins<ParticleType>;
 using index_type = ParticleBins::index_type;
 
-namespace {
+namespace findParticles {
 
     /* Find the particles and count the particles that are in each cell.
        Note that this does *not* rearrange particle arrays */
@@ -83,6 +83,8 @@ namespace {
     }
 
 }
+
+using namespace findParticles;
 
 /** Perform all binary collisions within a tile
  *
