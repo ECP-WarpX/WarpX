@@ -99,7 +99,7 @@ void
 WarpXParticleContainer::AddNParticles (int /*lev*/,
                                        int n, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z,
                                        const ParticleReal* vx, const ParticleReal* vy, const ParticleReal* vz,
-                                       int nattr, const ParticleReal* attr, int uniqueparticles, int id)
+                                       int nattr, const ParticleReal* attr, int uniqueparticles, Long id)
 {
     BL_ASSERT(nattr == 1); //! @fixme nattr is unused below: false sense of safety
     const ParticleReal* weight = attr;

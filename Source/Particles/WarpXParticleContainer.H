@@ -250,7 +250,7 @@ public:
     void AddNParticles (int lev,
                         int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
                         const amrex::ParticleReal* vx, const amrex::ParticleReal* vy, const amrex::ParticleReal* vz,
-                        int nattr, const amrex::ParticleReal* attr, int uniqueparticles, int id=-1);
+                        int nattr, const amrex::ParticleReal* attr, int uniqueparticles, Long id=-1);
 
     virtual void ReadHeader (std::istream& is);
 
