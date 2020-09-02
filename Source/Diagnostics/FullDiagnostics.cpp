@@ -372,7 +372,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 1), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "jz" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio);
-        } else if ( m_varnames[comp] == "rho" ){
+        } else if ( m_varnames[comp].find("rho") != std::string::npos ){
             if ( WarpX::do_back_transformed_diagnostics ) {
 #ifdef WARPX_USE_PSATD
                 // rho_new is stored in component 1 of rho_fp when using PSATD
