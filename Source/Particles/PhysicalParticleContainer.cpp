@@ -1993,14 +1993,16 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
 void PhysicalParticleContainer::resample (const Resampling& resampler, const int timestep)
 {
     const amrex::Real global_numparts = TotalNumberOfParticles();
+    amrex::Print() << "Number of electrons: " << global_numparts << "\n";
 
     if (resampler.triggered(timestep, global_numparts))
     {
+        amrex::Print() << "Resampling " << species_name << ".\n";
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
             {
-                resampler(pti, lev);
+                resampler(pti, lev, this);
             }
         }
     }

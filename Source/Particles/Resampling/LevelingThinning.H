@@ -19,10 +19,10 @@ public:
 
     ~LevelingThinning () override final;
 
-    void operator() (WarpXParIter& pti, const int lev) const override final;
+    void operator() (WarpXParIter& pti, const int lev, WarpXParticleContainer *pc) const override final;
 
 private:
-    amrex::Real m_target_ratio;
+    amrex::Real m_target_ratio = amrex::Real(1.5);
 };
 
 
