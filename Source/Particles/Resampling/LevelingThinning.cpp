@@ -15,32 +15,35 @@ LevelingThinning::LevelingThinning ()
 
     amrex::ParmParse pp("resampling_algorithm");
     pp.query("target_ratio", m_target_ratio);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( m_target_ratio > 0._rt,
+                                    "Resampling target ratio should be strictly greater than 0");
     if (m_target_ratio <= 1._rt)
     {
         amrex::Warning("WARNING: target ratio for leveling thinning is smaller or equal to one."
-                       " It is possible that resampling will not remove any particle");
+                       " It is possible that no particle will be removed during resampling");
     }
 }
 
-LevelingThinning::~LevelingThinning () {}
-
-void LevelingThinning::operator() (WarpXParIter& pti, const int lev, WarpXParticleContainer *pc) const
+void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
+                                   WarpXParticleContainer * const pc) const
 {
     using namespace amrex::literals;
 
     auto& ptile = pc->ParticlesAt(lev, pti);
+    auto& soa = ptile.GetStructOfArrays();
+    amrex::ParticleReal * const AMREX_RESTRICT w = soa.GetRealData(PIdx::w).data();
+    WarpXParticleContainer::ParticleType * const AMREX_RESTRICT
+                                 particle_ptr = ptile.GetArrayOfStructs()().data();
 
+    // Using this function means that we must loop over the cells in the ParallelFor. In the case
+    // of the leveling thinning algorithm, it would have possibly been more natural and more
+    // efficient to directly loop over the particles. Nevertheless, this structure with a loop over
+    // the cells is more general and can be readily used to implement almost any other resampling
+    // algorithm.
     auto bins = findParticles::findParticlesInEachCell(lev, pti, ptile);
 
     const int n_cells = bins.numBins();
-
-    auto& soa = ptile.GetStructOfArrays();
-
-    amrex::ParticleReal * const AMREX_RESTRICT w = soa.GetRealData(PIdx::w).data();
-
-    const auto particle_ptr = ptile.GetArrayOfStructs()().data();
-
-    auto indices = bins.permutationPtr();
+    const auto indices = bins.permutationPtr();
     const auto cell_offsets = bins.offsetsPtr();
 
     const amrex::Real target_ratio = m_target_ratio;
@@ -57,30 +60,33 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev, WarpXPartic
 
             amrex::Real average_weight = 0._rt;
 
+            // First loop over cell particles to compute average particle weight in the cell
             for (int i = cell_start; i < cell_stop; ++i)
             {
-                average_weight += w[indices[i]]/cell_numparts;
+                average_weight += w[indices[i]];
             }
+            average_weight /= cell_numparts;
 
             const amrex::Real level_weight = average_weight*target_ratio;
 
             amrex::Real random_number;
 
+            // Second loop over cell particles to perform the thinning
             for (int i = cell_start; i < cell_stop; ++i)
             {
+                // Particles with weight greater than level_weight are left unchanged
                 if (w[indices[i]] > level_weight) {continue;}
 
+                random_number = amrex::Random();
+                // Remove particle with probability 1 - particle_weight/level_weight
+                if (random_number > w[indices[i]]/level_weight)
+                {
+                    particle_ptr[indices[i]].id() = -1;
+                }
+                // Set particle weight to level weight otherwise
                 else
                 {
-                    random_number = amrex::Random();
-                    if (random_number > w[indices[i]]/level_weight)
-                    {
-                        particle_ptr[indices[i]].id() = -1;
-                    }
-                    else
-                    {
-                        w[indices[i]] = level_weight;
-                    }
+                    w[indices[i]] = level_weight;
                 }
             }
         }

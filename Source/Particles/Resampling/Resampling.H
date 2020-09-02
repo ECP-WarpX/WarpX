@@ -57,8 +57,10 @@ public:
      * \brief A method that uses the ResamplingAlgorithm object to perform resampling.
      *
      * @param[in] pti WarpX particle iterator of the particles to resample.
+     * @param[in] lev the index of the refinement level.
+     * @param[in] pc a pointer to the particle container.
      */
-    void operator() (WarpXParIter& pti, const int lev, WarpXParticleContainer *pc) const;
+    void operator() (WarpXParIter& pti, const int lev, WarpXParticleContainer * const pc) const;
 
 private:
     ResamplingTrigger m_resampling_trigger;
