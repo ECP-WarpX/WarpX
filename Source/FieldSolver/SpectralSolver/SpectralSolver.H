@@ -67,12 +67,12 @@ class SpectralSolver
         void ComputeSpectralDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                    amrex::MultiFab& divE ) {
             algorithm->ComputeSpectralDivE( field_data, Efield, divE );
-        };
+        }
 
         /**
          * \brief Public interface to call the virtual function \c CurrentCorrection,
          * defined in the base class SpectralBaseAlgorithm and possibly overridden
-         * by its derived classes (e.g. PsatdAlgorithm, PMLPsatdAlgorithm), from
+         * by its derived classes (e.g. PsatdAlgorithm, GalileanAlgorithm), from
          * objects of class SpectralSolver through the private unique pointer \c algorithm
          *
          * \param[in,out] current three-dimensional array of unique pointers to MultiFab
@@ -82,7 +82,7 @@ class SpectralSolver
         void CurrentCorrection ( std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                  const std::unique_ptr<amrex::MultiFab>& rho ) {
              algorithm->CurrentCorrection( field_data, current, rho );
-        };
+        }
 
         /**
          * \brief Public interface to call the virtual function \c VayDeposition,

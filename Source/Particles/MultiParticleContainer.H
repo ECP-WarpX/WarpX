@@ -124,6 +124,13 @@ public:
 
     void doCoulombCollisions ();
 
+    /**
+    * \brief This function loops over all species and performs resampling if appropriate.
+    *
+    * @param[in] timestep the current timestep.
+    */
+    void doResampling (const int timestep);
+
 #ifdef WARPX_QED
     /** If Schwinger process is activated, this function is called at every
      * timestep in Evolve and is used to create Schwinger electron-positron pairs.
@@ -160,7 +167,7 @@ public:
     void SetParticleBoxArray (int lev, amrex::BoxArray& new_ba);
     void SetParticleDistributionMap (int lev, amrex::DistributionMapping& new_dm);
 
-    int nSpecies() const {return nspecies;}
+    int nSpecies() const {return species_names.size();}
 
     int nSpeciesBackTransformedDiagnostics() const {return nspecies_back_transformed_diagnostics;}
     int mapSpeciesBackTransformedDiagnostics(int i) const {return map_species_back_transformed_diagnostics[i];}
@@ -269,6 +276,8 @@ protected:
     std::vector<bool> m_gather_from_main_grid;
 
     std::vector<PCTypes> species_types;
+
+    Resampling m_resampler;
 
     template<typename ...Args>
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,
@@ -381,12 +390,7 @@ private:
     std::vector<int> map_species_back_transformed_diagnostics;
     int do_back_transformed_diagnostics = 0;
 
-    // runtime parameters
-    int nlasers = 0;
-    int nspecies = 1;   // physical particles only. nspecies+nlasers == allcontainers.size().
-    int ncollisions = 0;
-
-    void MFItInfoCheckTiling(const WarpXParticleContainer& pc_src) const noexcept
+    void MFItInfoCheckTiling(const WarpXParticleContainer& /*pc_src*/) const noexcept
     {
         return;
     }

@@ -9,7 +9,7 @@ RhoFunctor::RhoFunctor ( const int lev, const amrex::IntVect crse_ratio,
 {}
 
 void
-RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp ) const
+RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/ ) const
 {
     auto& warpx = WarpX::GetInstance();
     auto& mypc  = warpx.GetPartContainer();
@@ -38,6 +38,6 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp ) const
 #else
     // In Cartesian geometry, coarsen and interpolate from temporary MultiFab rho
     // to output diagnostic MultiFab mf_dst
-    CoarsenIO::Coarsen( mf_dst, *rho, dcomp, 0, nComp(), 0, m_crse_ratio );
+    CoarsenIO::Coarsen( mf_dst, *rho, dcomp, 0, nComp(), mf_dst.nGrow(0), m_crse_ratio );
 #endif
 }

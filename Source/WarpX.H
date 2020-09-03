@@ -132,7 +132,7 @@ public:
     static long charge_deposition_algo;
     static long field_gathering_algo;
     static long particle_pusher_algo;
-    static int maxwell_fdtd_solver_id;
+    static int maxwell_solver_id;
     static long load_balance_costs_update_algo;
     static int em_solver_medium;
     static int macroscopic_solver_algo;
@@ -144,9 +144,9 @@ public:
 #endif
 
 #ifdef WARPX_USE_PSATD
-    // If true (overwritten by the user in the input file), the update equation
-    // for E contains both J and rho (at times n and n+1) on the right hand side
-    bool update_with_rho = false;
+    // If true, the update equation for E contains both J and rho (at times n and n+1):
+    // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
+    bool update_with_rho;
 #endif
 
     // div E cleaning
@@ -162,9 +162,11 @@ public:
     static long ncomps;
 
     static bool use_fdtd_nci_corr;
-    static int  l_lower_order_in_v;
+    static bool galerkin_interpolation;
 
     static bool use_filter;
+    static bool use_kspace_filter;
+    static bool use_filter_compensation;
     static bool serialize_ics;
 
     // Back transformation diagnostic
@@ -246,7 +248,7 @@ public:
     const amrex::MultiFab& getBfield_fp  (int lev, int direction) {return *Bfield_fp[lev][direction];}
     const amrex::MultiFab& getrho_fp (int lev) {return *rho_fp[lev];}
     const amrex::MultiFab& getF_fp (int lev) {return *F_fp[lev];}
-    bool DoPML () const {return do_pml;};
+    bool DoPML () const {return do_pml;}
 
     /** get low-high-low-high-... vector for each direction indicating if mother grid PMLs are enabled */
     std::vector<bool> getPMLdirections() const;
@@ -267,7 +269,7 @@ public:
 
     amrex::Real time_of_last_gal_shift  = 0;
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
-
+    amrex::Array<amrex::Real,3> galilean_shift = {{0}};
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
@@ -279,7 +281,9 @@ public:
 
     void applyMirrors(amrex::Real time);
 
+    /** Determine the timestep of the simulation. */
     void ComputeDt ();
+
     // Compute max_step automatically for simulations in a boosted frame.
     void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
     int  MoveWindow (bool move_j);
@@ -403,8 +407,8 @@ public:
     void SyncCurrent ();
     void SyncRho ();
 
-    amrex::Vector<int> getnsubsteps () const {return nsubsteps;};
-    int getnsubsteps (int lev) const {return nsubsteps[lev];};
+    amrex::Vector<int> getnsubsteps () const {return nsubsteps;}
+    int getnsubsteps (int lev) const {return nsubsteps[lev];}
     amrex::Vector<int> getistep () const {return istep;}
     int getistep (int lev) const {return istep[lev];}
     void setistep (int lev, int ii) {istep[lev] = ii;}
@@ -415,9 +419,9 @@ public:
     void sett_new (int lev, amrex::Real time) {t_new[lev] = time;}
     amrex::Vector<amrex::Real> getdt () const {return dt;}
     amrex::Real getdt (int lev) const {return dt[lev];}
-    amrex::Real getmoving_window_x() const {return moving_window_x;};
-    bool getis_synchronized() const {return is_synchronized;};
-    void setplot_rho (bool a_plot_rho) {plot_rho = a_plot_rho;};
+    amrex::Real getmoving_window_x() const {return moving_window_x;}
+    bool getis_synchronized() const {return is_synchronized;}
+    void setplot_rho (bool a_plot_rho) {plot_rho = a_plot_rho;}
 
     int maxStep () const {return max_step;}
     amrex::Real stopTime () const {return stop_time;}
@@ -469,10 +473,10 @@ public:
 
     void ComputeDivE(amrex::MultiFab& divE, const int lev);
 
-    const amrex::IntVect getngE() const { return guard_cells.ng_alloc_EB; };
-    const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; };
-    const amrex::IntVect getngExtra() const { return guard_cells.ng_Extra; };
-    const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; };
+    const amrex::IntVect getngE() const { return guard_cells.ng_alloc_EB; }
+    const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
+    const amrex::IntVect getngExtra() const { return guard_cells.ng_Extra; }
+    const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
 
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
@@ -548,6 +552,10 @@ protected:
     //! Tagging cells for refinement
     virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
 
+    //! Use this function to override the Level 0 grids made by AMReX.
+    //! This function is called in amrex::AmrCore::InitFromScratch.
+    virtual void PostProcessBaseGrids (amrex::BoxArray& ba0) const final;
+
     //! Make a new level from scratch using provided BoxArray and
     //! DistributionMapping.  Only used during initialization.  Called
     //! by AmrCoreInitFromScratch.
@@ -557,8 +565,8 @@ protected:
     //! Make a new level using provided BoxArray and
     //! DistributionMapping and fill with interpolated coarse level
     //! data.  Called by AmrCore::regrid.
-    virtual void MakeNewLevelFromCoarse (int lev, amrex::Real time, const amrex::BoxArray& ba,
-                                         const amrex::DistributionMapping& dm) final
+    virtual void MakeNewLevelFromCoarse (int /*lev*/, amrex::Real /*time*/, const amrex::BoxArray& /*ba*/,
+                                         const amrex::DistributionMapping& /*dm*/) final
         { amrex::Abort("MakeNewLevelFromCoarse: To be implemented"); }
 
     //! Remake an existing level using provided BoxArray and
@@ -827,6 +835,9 @@ private:
     int nox_fft = 16;
     int noy_fft = 16;
     int noz_fft = 16;
+
+    // Domain decomposition on Level 0
+    amrex::IntVect numprocs{0};
 
 #ifdef WARPX_USE_PSATD
 private:

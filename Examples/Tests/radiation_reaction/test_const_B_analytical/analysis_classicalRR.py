@@ -172,7 +172,6 @@ def generate():
         f.write("warpx.cfl = 1.0\n")
         f.write("warpx.serialize_ics = 1\n")
 
-        f.write("\nparticles.nspecies = {}\n".format(len(cases)))
         f.write("particles.species_names = ")
         for cc in cases:
             f.write(" {}".format(cc.name))

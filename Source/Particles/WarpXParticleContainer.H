@@ -14,6 +14,7 @@
 #include "Utils/WarpXConst.H"
 #include "SpeciesPhysicalProperties.H"
 #include "Evolve/WarpXDtType.H"
+#include "Particles/Resampling/Resampling.H"
 
 #ifdef WARPX_QED
 #    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
@@ -168,10 +169,10 @@ public:
 
     virtual void PostRestart () = 0;
 
-    virtual void GetParticleSlice(const int direction,     const amrex::Real z_old,
-                                  const amrex::Real z_new, const amrex::Real t_boost,
-                                  const amrex::Real t_lab, const amrex::Real dt,
-                                  DiagnosticParticles& diagnostic_particles) {}
+    virtual void GetParticleSlice(const int /*direction*/, const amrex::Real /*z_old*/,
+                                  const amrex::Real /*z_new*/, const amrex::Real /*t_boost*/,
+                                  const amrex::Real /*t_lab*/, const amrex::Real /*dt*/,
+                                  DiagnosticParticles& /*diagnostic_particles*/) {}
 
     void AllocData ();
 
@@ -233,9 +234,9 @@ public:
     // PhysicalParticleContainer: implemented.
     // LaserParticleContainer: implemented.
     // RigidInjectedParticleContainer: not implemented.
-    virtual void ContinuousInjection(const amrex::RealBox& injection_box) {}
+    virtual void ContinuousInjection(const amrex::RealBox& /*injection_box*/) {}
     // Update optional sub-class-specific injection location.
-    virtual void UpdateContinuousInjectionPosition(amrex::Real dt) {}
+    virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
 
     ///
     /// This returns the total charge for all the particles in this ParticleContainer.
@@ -250,21 +251,17 @@ public:
     void AddNParticles (int lev,
                         int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
                         const amrex::ParticleReal* vx, const amrex::ParticleReal* vy, const amrex::ParticleReal* vz,
-                        int nattr, const amrex::ParticleReal* attr, int uniqueparticles, int id=-1);
+                        int nattr, const amrex::ParticleReal* attr, int uniqueparticles, amrex::Long id=-1);
 
     virtual void ReadHeader (std::istream& is);
 
     virtual void WriteHeader (std::ostream& os) const;
 
-    virtual void ConvertUnits (ConvertDirection convert_dir){};
+    virtual void ConvertUnits (ConvertDirection /*convert_dir*/){}
 
     static void ReadParameters ();
 
     static void BackwardCompatibility ();
-
-    static int NextID () { return ParticleType::NextID(); }
-
-    void setNextID(int next_id) { ParticleType::NextID(next_id); }
 
     bool do_splitting = false;
     bool initialize_self_fields = false;
@@ -302,17 +299,17 @@ public:
     //amrex::Real getMass () {return mass;}
     amrex::ParticleReal getMass () const {return mass;}
 
-    int DoFieldIonization() const { return do_field_ionization; };
+    int DoFieldIonization() const { return do_field_ionization; }
     int DoQED() const {
 #ifdef WARPX_QED
         return m_do_qed;
 #else
         return false;
 #endif
-    };
+    }
     //Species for which QED effects are relevant should override these methods
-    virtual bool has_quantum_sync() const {return false;};
-    virtual bool has_breit_wheeler() const {return false;};
+    virtual bool has_quantum_sync() const {return false;}
+    virtual bool has_breit_wheeler() const {return false;}
 
     // build filter functors
     bool m_do_random_filter  = false;
@@ -331,6 +328,11 @@ public:
     bool AmIA () const noexcept {return (physical_species == PhysSpec);}
 
     amrex::Array<amrex::Real,3> get_v_galilean () {return v_galilean;}
+
+    /**
+     * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer.
+     */
+    virtual void resample (const Resampling& /*resampler*/, const int /*timestep*/) {};
 
 protected:
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
@@ -371,6 +373,8 @@ protected:
     amrex::Gpu::ManagedVector<amrex::Real> adk_prefactor;
     amrex::Gpu::ManagedVector<amrex::Real> adk_exp_prefactor;
     std::string physical_element;
+
+    int do_resampling = 0;
 
     int do_back_transformed_diagnostics = 1;
 

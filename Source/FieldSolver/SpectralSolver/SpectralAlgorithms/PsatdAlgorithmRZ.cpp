@@ -200,9 +200,9 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
 void
 PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
                                      std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
-                                     const std::unique_ptr<amrex::MultiFab>& rho )
+                                     const std::unique_ptr<amrex::MultiFab>& rho)
 {
-    amrex::Abort("Current correction not implemented in RZ");
+    amrex::Abort("Current correction not implemented in RZ geometry");
 }
 
 void

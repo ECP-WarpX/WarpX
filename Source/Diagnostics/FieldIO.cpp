@@ -18,42 +18,9 @@
 #   include <openPMD/openPMD.hpp>
 #endif
 
+#include <AMReX.H>
+
 using namespace amrex;
-
-#ifdef WARPX_USE_OPENPMD
-/** \brief For a given field that is to be written to an openPMD file,
- * set the metadata that indicates the physical unit.
- */
-void
-setOpenPMDUnit( openPMD::Mesh mesh, const std::string field_name )
-{
-    if (field_name[0] == 'E'){  // Electric field
-        mesh.setUnitDimension({
-            {openPMD::UnitDimension::L,  1},
-            {openPMD::UnitDimension::M,  1},
-            {openPMD::UnitDimension::T, -3},
-            {openPMD::UnitDimension::I, -1},
-        });
-    } else if (field_name[0] == 'B'){ // Magnetic field
-        mesh.setUnitDimension({
-            {openPMD::UnitDimension::M,  1},
-            {openPMD::UnitDimension::I, -1},
-            {openPMD::UnitDimension::T, -2}
-        });
-    } else if (field_name[0] == 'j'){ // current
-        mesh.setUnitDimension({
-            {openPMD::UnitDimension::L, -2},
-            {openPMD::UnitDimension::I,  1},
-        });
-    } else if (field_name.substr(0,3) == "rho"){ // charge density
-        mesh.setUnitDimension({
-            {openPMD::UnitDimension::L, -3},
-            {openPMD::UnitDimension::I,  1},
-            {openPMD::UnitDimension::T,  1},
-        });
-    }
-}
-
 
 /** \brief
  * Convert an IntVect to a std::vector<std::uint64_t>
@@ -102,8 +69,6 @@ getReversedVec( const Real* v )
 
   return u;
 }
-
-#endif // WARPX_USE_OPENPMD
 
 #ifdef WARPX_DIM_RZ
 void
@@ -197,6 +162,7 @@ AverageAndPackScalarField (MultiFab& mf_avg,
         scalar_total = new MultiFab(scalar_field, amrex::make_alias, 0, 1);
     }
 #else
+    amrex::ignore_unused(dm);
     const MultiFab *scalar_total = &scalar_field;
 #endif
 

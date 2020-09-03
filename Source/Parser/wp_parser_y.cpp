@@ -1,10 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <math.h>
 #include "wp_parser_y.h"
 #include "wp_parser.tab.h"
+#include <cstdarg>
 
 static struct wp_node* wp_root = NULL;
 
@@ -21,7 +17,7 @@ wp_defexpr (struct wp_node* body)
 struct wp_node*
 wp_newnumber (amrex_real d)
 {
-    struct wp_number* r = (struct wp_number*) malloc(sizeof(struct wp_number));
+    struct wp_number* r = (struct wp_number*) std::malloc(sizeof(struct wp_number));
     r->type = WP_NUMBER;
     r->value = d;
     return (struct wp_node*) r;
@@ -30,10 +26,10 @@ wp_newnumber (amrex_real d)
 struct wp_symbol*
 wp_makesymbol (char* name)
 {
-    struct wp_symbol* symbol = (struct wp_symbol*) malloc(sizeof(struct wp_symbol));
+    struct wp_symbol* symbol = (struct wp_symbol*) std::malloc(sizeof(struct wp_symbol));
     symbol->type = WP_SYMBOL;
     symbol->name = strdup(name);
-    symbol->ip.p = NULL;
+    symbol->ip.p = nullptr;
     return symbol;
 }
 
@@ -46,7 +42,7 @@ wp_newsymbol (struct wp_symbol* symbol)
 struct wp_node*
 wp_newnode (enum wp_node_t type, struct wp_node* l, struct wp_node* r)
 {
-    struct wp_node* tmp = (struct wp_node*) malloc(sizeof(struct wp_node));
+    struct wp_node* tmp = (struct wp_node*) std::malloc(sizeof(struct wp_node));
     tmp->type = type;
     tmp->l = l;
     tmp->r = r;
@@ -56,7 +52,7 @@ wp_newnode (enum wp_node_t type, struct wp_node* l, struct wp_node* r)
 struct wp_node*
 wp_newf1 (enum wp_f1_t ftype, struct wp_node* l)
 {
-    struct wp_f1* tmp = (struct wp_f1*) malloc(sizeof(struct wp_f1));
+    struct wp_f1* tmp = (struct wp_f1*) std::malloc(sizeof(struct wp_f1));
     tmp->type = WP_F1;
     tmp->l = l;
     tmp->ftype = ftype;
@@ -66,7 +62,7 @@ wp_newf1 (enum wp_f1_t ftype, struct wp_node* l)
 struct wp_node*
 wp_newf2 (enum wp_f2_t ftype, struct wp_node* l, struct wp_node* r)
 {
-    struct wp_f2* tmp = (struct wp_f2*) malloc(sizeof(struct wp_f2));
+    struct wp_f2* tmp = (struct wp_f2*) std::malloc(sizeof(struct wp_f2));
     tmp->type = WP_F2;
     tmp->l = l;
     tmp->r = r;
@@ -74,19 +70,13 @@ wp_newf2 (enum wp_f2_t ftype, struct wp_node* l, struct wp_node* r)
     return (struct wp_node*) tmp;
 }
 
-AMREX_GPU_HOST_DEVICE
 void
 yyerror (char const *s, ...)
 {
-    va_list vl;
+    std::va_list vl;
     va_start(vl, s);
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-    printf(s,"\n");
-    assert(0);
-#else
-    vfprintf(stderr, s, vl);
-    fprintf(stderr, "\n");
-#endif
+    std::vfprintf(stderr, s, vl);
+    std::fprintf(stderr, "\n");
     va_end(vl);
 }
 
@@ -95,17 +85,16 @@ yyerror (char const *s, ...)
 struct wp_parser*
 wp_parser_new (void)
 {
-    struct wp_parser* my_parser = (struct wp_parser*) malloc(sizeof(struct wp_parser));
+    struct wp_parser* my_parser = (struct wp_parser*) std::malloc(sizeof(struct wp_parser));
 
     my_parser->sz_mempool = wp_ast_size(wp_root);
-    my_parser->p_root = malloc(my_parser->sz_mempool);
+    my_parser->p_root = std::malloc(my_parser->sz_mempool);
     my_parser->p_free = my_parser->p_root;
 
     my_parser->ast = wp_parser_ast_dup(my_parser, wp_root,1); /* 1: free the source wp_root */
 
     if ((char*)my_parser->p_root + my_parser->sz_mempool != (char*)my_parser->p_free) {
-        yyerror("wp_parser_new: error in memory size");
-        exit(1);
+        amrex::Abort("wp_parser_new: error in memory size");
     }
 
     wp_ast_optimize(my_parser->ast);
@@ -116,8 +105,8 @@ wp_parser_new (void)
 void
 wp_parser_delete (struct wp_parser* parser)
 {
-    free(parser->p_root);
-    free(parser);
+    std::free(parser->p_root);
+    std::free(parser);
 }
 
 static size_t
@@ -141,9 +130,9 @@ wp_parser_allocate (struct wp_parser* my_parser, size_t N)
 struct wp_parser*
 wp_parser_dup (struct wp_parser* source)
 {
-    struct wp_parser* dest = (struct wp_parser*) malloc(sizeof(struct wp_parser));
+    struct wp_parser* dest = (struct wp_parser*) std::malloc(sizeof(struct wp_parser));
     dest->sz_mempool = source->sz_mempool;
-    dest->p_root = malloc(dest->sz_mempool);
+    dest->p_root = std::malloc(dest->sz_mempool);
     dest->p_free = dest->p_root;
 
     dest->ast = wp_parser_ast_dup(dest, source->ast, 0); /* 0: don't free the source */
@@ -151,76 +140,10 @@ wp_parser_dup (struct wp_parser* source)
     return dest;
 }
 
-AMREX_GPU_HOST_DEVICE
-amrex_real
-wp_call_f1 (enum wp_f1_t type, amrex_real a)
-{
-    switch (type) {
-    case WP_SQRT:        return sqrt(a);
-    case WP_EXP:         return exp(a);
-    case WP_LOG:         return log(a);
-    case WP_LOG10:       return log10(a);
-    case WP_SIN:         return sin(a);
-    case WP_COS:         return cos(a);
-    case WP_TAN:         return tan(a);
-    case WP_ASIN:        return asin(a);
-    case WP_ACOS:        return acos(a);
-    case WP_ATAN:        return atan(a);
-    case WP_SINH:        return sinh(a);
-    case WP_COSH:        return cosh(a);
-    case WP_TANH:        return tanh(a);
-    case WP_ABS:         return fabs(a);
-    case WP_POW_M3:      return 1.0/(a*a*a);
-    case WP_POW_M2:      return 1.0/(a*a);
-    case WP_POW_M1:      return 1.0/a;
-    case WP_POW_P1:      return a;
-    case WP_POW_P2:      return a*a;
-    case WP_POW_P3:      return a*a*a;
-    default:
-        yyerror("wp_call_f1: Unknow function %d", type);
-        return 0.0;
-    }
-}
-
-AMREX_GPU_HOST_DEVICE
-amrex_real
-wp_call_f2 (enum wp_f2_t type, amrex_real a, amrex_real b)
-{
-    switch (type) {
-    case WP_POW:
-        return pow(a,b);
-    case WP_GT:
-        return (a > b) ? 1.0 : 0.0;
-    case WP_LT:
-        return (a < b) ? 1.0 : 0.0;
-    case WP_GEQ:
-        return (a >= b) ? 1.0 : 0.0;
-    case WP_LEQ:
-        return (a <= b) ? 1.0 : 0.0;
-    case WP_EQ:
-        return (a == b) ? 1.0 : 0.0;
-    case WP_NEQ:
-        return (a != b) ? 1.0 : 0.0;
-    case WP_AND:
-        return (a && b) ? 1.0 : 0.0;
-    case WP_OR:
-        return (a || b) ? 1.0 : 0.0;
-    case WP_HEAVISIDE:
-        return (a < 0.0) ? 0.0 : ((a > 0.0) ? 1.0 : b);
-    case WP_MIN:
-        return (a < b) ? a : b;
-    case WP_MAX:
-        return (a > b) ? a : b;
-    default:
-        yyerror("wp_call_f2: Unknow function %d", type);
-        return 0.0;
-    }
-}
-
 size_t
 wp_ast_size (struct wp_node* node)
 {
-    size_t result;
+    size_t result = 0;
 
     switch (node->type)
     {
@@ -266,8 +189,8 @@ wp_ast_size (struct wp_node* node)
             + wp_ast_size(node->l);
         break;
     default:
-        yyerror("wp_ast_size: unknown node type %d\n", node->type);
-        exit(1);
+        amrex::AllPrint() << "wp_ast_size: unknown node type " <<node->type << "\n";
+        amrex::Abort();
     }
 
     return result;
@@ -276,7 +199,7 @@ wp_ast_size (struct wp_node* node)
 struct wp_node*
 wp_parser_ast_dup (struct wp_parser* my_parser, struct wp_node* node, int move)
 {
-    void* result;
+    void* result = nullptr;
 
     switch (node->type)
     {
@@ -336,18 +259,18 @@ wp_parser_ast_dup (struct wp_parser* my_parser, struct wp_node* node, int move)
         ((struct wp_node*)result)->l = wp_parser_ast_dup(my_parser, node->l, move);
         break;
     default:
-        yyerror("wp_ast_dup: unknown node type %d\n", node->type);
-        exit(1);
+        amrex::AllPrint() << "wp_ast_dup: unknown node type " << node->type << "\n";
+        amrex::Abort();
     }
     if (move) {
         /* Note that we only do this on the original AST.  We do not
          * need to call free for AST stored in wp_parser because the
-         * memory is not allocated with malloc directly.
+         * memory is not allocated with std::malloc directly.
          */
         if (node->type == WP_SYMBOL) {
-            free(((struct wp_symbol*)node)->name);
+            std::free(((struct wp_symbol*)node)->name);
         }
-        free((void*)node);
+        std::free((void*)node);
     }
     return (struct wp_node*)result;
 }
@@ -773,8 +696,8 @@ wp_ast_optimize (struct wp_node* node)
         }
         break;
     default:
-        yyerror("wp_ast_optimize: unknown node type %d\n", node->type);
-        exit(1);
+        amrex::AllPrint() << "wp_ast_optimize: unknown node type " << node->type << "\n";
+        amrex::Abort();
     }
 }
 
@@ -784,28 +707,28 @@ wp_ast_print_f1 (struct wp_f1* f1)
 {
     wp_ast_print(f1->l);
     switch (f1->ftype) {
-    case WP_SQRT:        printf("SQRT\n");        break;
-    case WP_EXP:         printf("EXP\n");         break;
-    case WP_LOG:         printf("LOG\n");         break;
-    case WP_LOG10:       printf("LOG10\n");       break;
-    case WP_SIN:         printf("SIN\n");         break;
-    case WP_COS:         printf("COS\n");         break;
-    case WP_TAN:         printf("TAN\n");         break;
-    case WP_ASIN:        printf("ASIN\n");        break;
-    case WP_ACOS:        printf("ACOS\n");        break;
-    case WP_ATAN:        printf("ATAN\n");        break;
-    case WP_SINH:        printf("SINH\n");        break;
-    case WP_COSH:        printf("COSH\n");        break;
-    case WP_TANH:        printf("TANH\n");        break;
-    case WP_ABS:         printf("ABS\n");         break;
-    case WP_POW_M3:      printf("POW(,-3)\n");    break;
-    case WP_POW_M2:      printf("POW(,-2)\n");    break;
-    case WP_POW_M1:      printf("POW(,-1)\n");    break;
-    case WP_POW_P1:      printf("POW(,1)\n");     break;
-    case WP_POW_P2:      printf("POW(,2)\n");     break;
-    case WP_POW_P3:      printf("POW(,3)\n");     break;
+    case WP_SQRT:        std::printf("SQRT\n");        break;
+    case WP_EXP:         std::printf("EXP\n");         break;
+    case WP_LOG:         std::printf("LOG\n");         break;
+    case WP_LOG10:       std::printf("LOG10\n");       break;
+    case WP_SIN:         std::printf("SIN\n");         break;
+    case WP_COS:         std::printf("COS\n");         break;
+    case WP_TAN:         std::printf("TAN\n");         break;
+    case WP_ASIN:        std::printf("ASIN\n");        break;
+    case WP_ACOS:        std::printf("ACOS\n");        break;
+    case WP_ATAN:        std::printf("ATAN\n");        break;
+    case WP_SINH:        std::printf("SINH\n");        break;
+    case WP_COSH:        std::printf("COSH\n");        break;
+    case WP_TANH:        std::printf("TANH\n");        break;
+    case WP_ABS:         std::printf("ABS\n");         break;
+    case WP_POW_M3:      std::printf("POW(,-3)\n");    break;
+    case WP_POW_M2:      std::printf("POW(,-2)\n");    break;
+    case WP_POW_M1:      std::printf("POW(,-1)\n");    break;
+    case WP_POW_P1:      std::printf("POW(,1)\n");     break;
+    case WP_POW_P2:      std::printf("POW(,2)\n");     break;
+    case WP_POW_P3:      std::printf("POW(,3)\n");     break;
     default:
-        yyerror("wp_ast+print_f1: Unknow function %d", f1->ftype);
+        amrex::AllPrint() << "wp_ast+print_f1: Unknow function " << f1->ftype << "\n";
     }
 }
 
@@ -817,43 +740,43 @@ wp_ast_print_f2 (struct wp_f2* f2)
     wp_ast_print(f2->r);
     switch (f2->ftype) {
     case WP_POW:
-        printf("POW\n");
+        std::printf("POW\n");
         break;
     case WP_GT:
-        printf("GT\n");
+        std::printf("GT\n");
         break;
     case WP_LT:
-        printf("LT\n");
+        std::printf("LT\n");
         break;
     case WP_GEQ:
-        printf("GEQ\n");
+        std::printf("GEQ\n");
         break;
     case WP_LEQ:
-        printf("LEQ\n");
+        std::printf("LEQ\n");
         break;
     case WP_EQ:
-        printf("EQ\n");
+        std::printf("EQ\n");
         break;
     case WP_NEQ:
-        printf("NEQ\n");
+        std::printf("NEQ\n");
         break;
     case WP_AND:
-        printf("AND\n");
+        std::printf("AND\n");
         break;
     case WP_OR:
-        printf("OR\n");
+        std::printf("OR\n");
         break;
     case WP_HEAVISIDE:
-        printf("HEAVISIDE\n");
+        std::printf("HEAVISIDE\n");
         break;
     case WP_MIN:
-        printf("MIN\n");
+        std::printf("MIN\n");
         break;
     case WP_MAX:
-        printf("MAX\n");
+        std::printf("MAX\n");
         break;
     default:
-        yyerror("wp_ast_print_f2: Unknow function %d", f2->ftype);
+        amrex::AllPrint() << "wp_ast_print_f2: Unknown function " << f2->ftype << "\n";
     }
 }
 
@@ -863,34 +786,34 @@ wp_ast_print (struct wp_node* node)
     switch (node->type)
     {
     case WP_NUMBER:
-        printf("NUMBER:  %.17g\n", ((struct wp_number*)node)->value);
+        std::printf("NUMBER:  %.17g\n", ((struct wp_number*)node)->value);
         break;
     case WP_SYMBOL:
-        printf("VARIABLE:  %s\n", ((struct wp_symbol*)node)->name);
+        std::printf("VARIABLE:  %s\n", ((struct wp_symbol*)node)->name);
         break;
     case WP_ADD:
         wp_ast_print(node->l);
         wp_ast_print(node->r);
-        printf("ADD\n");
+        std::printf("ADD\n");
         break;
     case WP_SUB:
         wp_ast_print(node->l);
         wp_ast_print(node->r);
-        printf("SUB\n");
+        std::printf("SUB\n");
         break;
     case WP_MUL:
         wp_ast_print(node->l);
         wp_ast_print(node->r);
-        printf("MUL\n");
+        std::printf("MUL\n");
         break;
     case WP_DIV:
         wp_ast_print(node->l);
         wp_ast_print(node->r);
-        printf("DIV\n");
+        std::printf("DIV\n");
         break;
     case WP_NEG:
         wp_ast_print(node->l);
-        printf("NEG\n");
+        std::printf("NEG\n");
         break;
     case WP_F1:
         wp_ast_print_f1((struct wp_f1*)node);
@@ -899,40 +822,104 @@ wp_ast_print (struct wp_node* node)
         wp_ast_print_f2((struct wp_f2*)node);
         break;
     case WP_ADD_VP:
-        printf("ADD:  %.17g  %s\n", node->lvp.v, ((struct wp_symbol*)(node->r))->name);
+        std::printf("ADD:  %.17g  %s\n", node->lvp.v, ((struct wp_symbol*)(node->r))->name);
         break;
     case WP_SUB_VP:
-        printf("SUM:  %.17g  %s\n", node->lvp.v, ((struct wp_symbol*)(node->r))->name);
+        std::printf("SUM:  %.17g  %s\n", node->lvp.v, ((struct wp_symbol*)(node->r))->name);
         break;
     case WP_MUL_VP:
-        printf("MUL:  %.17g  %s\n", node->lvp.v, ((struct wp_symbol*)(node->r))->name);
+        std::printf("MUL:  %.17g  %s\n", node->lvp.v, ((struct wp_symbol*)(node->r))->name);
         break;
     case WP_DIV_VP:
-        printf("DIV:  %.17g  %s\n", node->lvp.v, ((struct wp_symbol*)(node->r))->name);
+        std::printf("DIV:  %.17g  %s\n", node->lvp.v, ((struct wp_symbol*)(node->r))->name);
         break;
     case WP_NEG_P:
-        printf("NEG:  %s\n", ((struct wp_symbol*)(node->l))->name);
+        std::printf("NEG:  %s\n", ((struct wp_symbol*)(node->l))->name);
         break;
     case WP_ADD_PP:
-        printf("ADD:  %s  %s\n", ((struct wp_symbol*)(node->l))->name,
-                                 ((struct wp_symbol*)(node->r))->name);
+        std::printf("ADD:  %s  %s\n", ((struct wp_symbol*)(node->l))->name,
+                                      ((struct wp_symbol*)(node->r))->name);
         break;
     case WP_SUB_PP:
-        printf("SUB:  %s  %s\n", ((struct wp_symbol*)(node->l))->name,
-                                 ((struct wp_symbol*)(node->r))->name);
+        std::printf("SUB:  %s  %s\n", ((struct wp_symbol*)(node->l))->name,
+                                      ((struct wp_symbol*)(node->r))->name);
         break;
     case WP_MUL_PP:
-        printf("MUL:  %s  %s\n", ((struct wp_symbol*)(node->l))->name,
-                                 ((struct wp_symbol*)(node->r))->name);
+        std::printf("MUL:  %s  %s\n", ((struct wp_symbol*)(node->l))->name,
+                                      ((struct wp_symbol*)(node->r))->name);
         break;
     case WP_DIV_PP:
-        printf("DIV:  %s  %s\n", ((struct wp_symbol*)(node->l))->name,
-                                 ((struct wp_symbol*)(node->r))->name);
+        std::printf("DIV:  %s  %s\n", ((struct wp_symbol*)(node->l))->name,
+                                      ((struct wp_symbol*)(node->r))->name);
         break;
     default:
-        yyerror("wp_ast_print: unknown node type %d\n", node->type);
+        amrex::AllPrint() << "wp_ast_print: unknown node type " << node->type << "\n";
+        amrex::Abort();
+    }
+}
+
+void
+wp_ast_depth (struct wp_node* node, int* n)
+{
+    int nl = 0;
+    int nr = 0;
+    switch (node->type)
+    {
+    case WP_NUMBER:
+        break;
+    case WP_SYMBOL:
+        break;
+    case WP_ADD:
+        wp_ast_depth(node->l, &nl);
+        wp_ast_depth(node->r, &nr);
+        break;
+    case WP_SUB:
+        wp_ast_depth(node->l, &nl);
+        wp_ast_depth(node->r, &nr);
+        break;
+    case WP_MUL:
+        wp_ast_depth(node->l, &nl);
+        wp_ast_depth(node->r, &nr);
+        break;
+    case WP_DIV:
+        wp_ast_depth(node->l, &nl);
+        wp_ast_depth(node->r, &nr);
+        break;
+    case WP_NEG:
+        wp_ast_depth(node->l, &nl);
+        break;
+    case WP_F1:
+        (*n)++;
+        wp_ast_depth(((struct wp_f1*)node)->l, &nl);
+        break;
+    case WP_F2:
+        (*n)++;
+        wp_ast_depth(((struct wp_f2*)node)->l, &nl);
+        wp_ast_depth(((struct wp_f2*)node)->r, &nr);
+        break;
+    case WP_ADD_VP:
+        break;
+    case WP_SUB_VP:
+        break;
+    case WP_MUL_VP:
+        break;
+    case WP_DIV_VP:
+        break;
+    case WP_NEG_P:
+        break;
+    case WP_ADD_PP:
+        break;
+    case WP_SUB_PP:
+        break;
+    case WP_MUL_PP:
+        break;
+    case WP_DIV_PP:
+        break;
+    default:
+        yyerror("wp_ast_depth: unknown node type %d\n", node->type);
         exit(1);
     }
+    *n += std::max(nl,nr) + 1;
 }
 
 void
@@ -985,8 +972,8 @@ wp_ast_regvar (struct wp_node* node, char const* name, amrex_real* p)
         node->rip.p = ((struct wp_symbol*)(node->r))->ip.p;
         break;
     default:
-        yyerror("wp_ast_regvar: unknown node type %d\n", node->type);
-        exit(1);
+        amrex::AllPrint() << "wp_ast_regvar: unknown node type " << node->type << "\n";
+        amrex::Abort();
     }
 }
 
@@ -1040,8 +1027,8 @@ wp_ast_regvar_gpu (struct wp_node* node, char const* name, int i)
         node->rip.i = ((struct wp_symbol*)(node->r))->ip.i;
         break;
     default:
-        yyerror("wp_ast_regvar_gpu: unknown node type %d\n", node->type);
-        exit(1);
+        amrex::AllPrint() << "wp_ast_regvar_gpu: unknown node type " << node->type << "\n";
+        amrex::Abort();
     }
 }
 
@@ -1091,8 +1078,8 @@ void wp_ast_setconst (struct wp_node* node, char const* name, amrex_real c)
         wp_ast_setconst(node->r, name, c);
         break;
     default:
-        yyerror("wp_ast_setconst: unknown node type %d\n", node->type);
-        exit(1);
+        amrex::AllPrint() << "wp_ast_setconst: unknown node type " << node->type << "\n";
+        amrex::Abort();
     }
 }
 

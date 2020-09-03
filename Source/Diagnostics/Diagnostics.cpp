@@ -13,7 +13,7 @@
 #endif
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
-
+using namespace amrex::literals;
 
 Diagnostics::Diagnostics (int i, std::string name)
     : m_diag_name(name), m_diag_index(i)
@@ -74,6 +74,22 @@ Diagnostics::BaseReadParameters ()
             m_hi[idim] = warpx.Geom(0).ProbHi(idim);
        }
     }
+    // For a moving window simulation, the user-defined m_lo and m_hi must be converted.
+    if (warpx.do_moving_window) {
+#if (AMREX_SPACEDIM == 3)
+    amrex::Vector<int> dim_map {0, 1, 2};
+#else
+    amrex::Vector<int> dim_map {0, 2};
+#endif
+       if (warpx.boost_direction[ dim_map[warpx.moving_window_dir] ] == 1) {
+           // Convert user-defined lo and hi for diagnostics to account for boosted-frame
+           // simulations with moving window
+           amrex::Real convert_factor = 1._rt/(warpx.gamma_boost * (1._rt - warpx.beta_boost) );
+           // Assuming that the window travels with speed c
+           m_lo[warpx.moving_window_dir] *= convert_factor;
+           m_hi[warpx.moving_window_dir] *= convert_factor;
+       }
+    }
 
     // Initialize cr_ratio with default value of 1 for each dimension.
     amrex::Vector<int> cr_ratio(AMREX_SPACEDIM, 1);
@@ -121,6 +137,20 @@ Diagnostics::InitData ()
     // When particle buffers, m_particle_buffers are included, they will be initialized here
     InitializeParticleBuffer();
 
+    amrex::ParmParse pp(m_diag_name);
+    amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
+    if ( pp.queryarr("diag_lo", dummy_val) || pp.queryarr("diag_hi", dummy_val) ) {
+        // set geometry filter for particle-diags to true when the diagnostic domain-extent
+        // is specified by the user
+        for (int i = 0; i < m_all_species.size(); ++i) {
+            m_all_species[i].m_do_geom_filter = true;
+        }
+        // Disabling particle-io for reduced domain diagnostics by reducing
+        // the particle-diag vector to zero.
+        // This is a temporary fix until particle_buffer is supported in diagnostics.
+        m_all_species.clear();
+        amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
+    }
 }
 
 
@@ -167,6 +197,12 @@ Diagnostics::InitBaseData ()
     for (int i = 0; i < m_num_buffers; ++i) {
         m_mf_output[i].resize( nmax_lev );
     }
+
+    // allocate vector of geometry objects corresponding to each output multifab.
+    m_geom_output.resize( m_num_buffers );
+    for (int i = 0; i < m_num_buffers; ++i) {
+        m_geom_output[i].resize( nmax_lev );
+    }
 }
 
 void
@@ -182,7 +218,7 @@ Diagnostics::ComputeAndPack ()
                 // Call all functors in m_all_field_functors[lev]. Each of them computes
                 // a diagnostics and writes in one or more components of the output
                 // multifab m_mf_output[lev].
-                m_all_field_functors[lev][icomp]->operator()(m_mf_output[i_buffer][lev], icomp_dst);
+                m_all_field_functors[lev][icomp]->operator()(m_mf_output[i_buffer][lev], icomp_dst, i_buffer);
                 // update the index of the next component to fill
                 icomp_dst += m_all_field_functors[lev][icomp]->nComp();
             }
@@ -196,6 +232,10 @@ Diagnostics::ComputeAndPack ()
 void
 Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
+    WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
+
+    MovingWindowAndGalileanDomainShift ();
+
     if ( DoComputeAndPack (step, force_flush) ) {
         ComputeAndPack();
 

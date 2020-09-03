@@ -51,9 +51,13 @@ namespace detail
 #if defined(WARPX_DIM_XZ)
         vs const positionComponents{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
-        // note: this will change when we back-transform
-        //       z,r,theta on the fly to cartesian coordiantes
-        vs const positionComponents{"r", "z"};
+        // note: although we internally store particle positions
+        //       for AMReX in r,z and a theta attribute, we
+        //       actually need them for algorithms (e.g. push)
+        //       and I/O in Cartesian.
+        //       Other attributes like momentum are consequently
+        //       stored in x,y,z internally.
+        vs const positionComponents{"x", "y", "z"};
 #elif (AMREX_SPACEDIM==3)
         vs const positionComponents{"x", "y", "z"};
 #else
@@ -71,7 +75,10 @@ namespace detail
 #if defined(WARPX_DIM_XZ)
         vs const axisLabels{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
-        vs const axisLabels{"r", "z"};
+        // if we are start to write individual modes
+        //vs const axisLabels{"r", "z"};
+        // if we just write reconstructed 2D fields at theta=0
+        vs const axisLabels{"x", "z"};
 #elif (AMREX_SPACEDIM==3)
         vs const axisLabels{"x", "y", "z"};
 #else
@@ -87,7 +94,10 @@ namespace detail
     {
         using vs = std::vector< std::string >;
 #if defined(WARPX_DIM_RZ)
-        vs const fieldComponents{"r", "z"};
+        // if we are start to write individual modes
+        //vs const fieldComponents{"r", "z"};
+        // if we just write reconstructed fields at theta=0
+        vs const fieldComponents{"x", "y", "z"};
 #else
         // note: 1D3V and 2D3V simulations still have 3 components for the fields
         vs const fieldComponents{"x", "y", "z"};
@@ -100,7 +110,7 @@ namespace detail
      * @param record_name name of the openPMD record
      * @return map with base quantities and power scaling
      */
-    std::map< openPMD::UnitDimension, double >
+    inline std::map< openPMD::UnitDimension, double >
     getUnitDimension( std::string const & record_name )
     {
 
@@ -134,6 +144,39 @@ namespace detail
             {openPMD::UnitDimension::T, -2.}
         };
         else return {};
+    }
+
+    /** \brief For a given field that is to be written to an openPMD file,
+     * set the metadata that indicates the physical unit.
+     */
+    inline void
+    setOpenPMDUnit( openPMD::Mesh mesh, const std::string field_name )
+    {
+        if (field_name[0] == 'E'){  // Electric field
+            mesh.setUnitDimension({
+                                          {openPMD::UnitDimension::L,  1},
+                                          {openPMD::UnitDimension::M,  1},
+                                          {openPMD::UnitDimension::T, -3},
+                                          {openPMD::UnitDimension::I, -1},
+                                  });
+        } else if (field_name[0] == 'B'){ // Magnetic field
+            mesh.setUnitDimension({
+                                          {openPMD::UnitDimension::M,  1},
+                                          {openPMD::UnitDimension::I, -1},
+                                          {openPMD::UnitDimension::T, -2}
+                                  });
+        } else if (field_name[0] == 'j'){ // current
+            mesh.setUnitDimension({
+                                          {openPMD::UnitDimension::L, -2},
+                                          {openPMD::UnitDimension::I,  1},
+                                  });
+        } else if (field_name.substr(0,3) == "rho"){ // charge density
+            mesh.setUnitDimension({
+                                          {openPMD::UnitDimension::L, -3},
+                                          {openPMD::UnitDimension::I,  1},
+                                          {openPMD::UnitDimension::T,  1},
+                                  });
+        }
     }
 #endif // WARPX_USE_OPENPMD
 }
@@ -266,14 +309,6 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     real_names.push_back("momentum_y");
     real_names.push_back("momentum_z");
 
-    real_names.push_back("E_x");
-    real_names.push_back("E_y");
-    real_names.push_back("E_z");
-
-    real_names.push_back("B_x");
-    real_names.push_back("B_y");
-    real_names.push_back("B_z");
-
 #ifdef WARPX_DIM_RZ
     real_names.push_back("theta");
 #endif
@@ -314,7 +349,11 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                     const amrex::Vector<std::string>& real_comp_names,
                     const amrex::Vector<std::string>&  int_comp_names) const
 {
-  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
+  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
+  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(write_int_comp.size() == 0u,
+                                   "openPMD: Particle integer components not implemented!");
+  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(int_comp_names.size() == 0u,
+                                   "openPMD: Particle integer components not implemented!");
 
   WarpXParticleCounter counter(pc);
 
@@ -380,6 +419,42 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
          {
            // Save positions
            auto const positionComponents = detail::getParticlePositionComponentLabels();
+#if defined(WARPX_DIM_RZ)
+           {
+              std::shared_ptr<amrex::ParticleReal> z(
+                      new amrex::ParticleReal[numParticleOnTile],
+                      [](amrex::ParticleReal const *p) { delete[] p; }
+              );
+              for (auto i = 0; i < numParticleOnTile; i++)
+                  z.get()[i] = aos[i].m_rdata.pos[1];  // {0: "r", 1: "z"}
+              std::string const positionComponent = "z";
+              currSpecies["position"]["z"].storeChunk(z, {offset}, {numParticleOnTile64});
+           }
+
+           //   reconstruct x and y from polar coordinates r, theta
+           auto const& soa = pti.GetStructOfArrays();
+           amrex::ParticleReal const* theta = soa.GetRealData(PIdx::theta).dataPtr();
+           AMREX_ALWAYS_ASSERT_WITH_MESSAGE(theta != nullptr, "openPMD: invalid theta pointer.");
+           AMREX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
+                                            "openPMD: theta and tile size do not match");
+           {
+               std::shared_ptr< amrex::ParticleReal > x(
+                       new amrex::ParticleReal[numParticleOnTile],
+                       [](amrex::ParticleReal const *p){ delete[] p; }
+               );
+               std::shared_ptr< amrex::ParticleReal > y(
+                       new amrex::ParticleReal[numParticleOnTile],
+                       [](amrex::ParticleReal const *p){ delete[] p; }
+               );
+               for (auto i=0; i<numParticleOnTile; i++) {
+                   auto const r = aos[i].m_rdata.pos[0];  // {0: "r", 1: "z"}
+                   x.get()[i] = r * std::cos(theta[i]);
+                   y.get()[i] = r * std::sin(theta[i]);
+               }
+               currSpecies["position"]["x"].storeChunk(x, {offset}, {numParticleOnTile64});
+               currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
+           }
+#else
            for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
                 std::shared_ptr< amrex::ParticleReal > curr(
                     new amrex::ParticleReal[numParticleOnTile],
@@ -391,6 +466,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                 std::string const positionComponent = positionComponents[currDim];
                 currSpecies["position"][positionComponent].storeChunk(curr, {offset}, {numParticleOnTile64});
            }
+#endif
 
            // save particle ID after converting it to a globally unique ID
            std::shared_ptr< uint64_t > ids(
@@ -398,11 +474,11 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                [](uint64_t const *p){ delete[] p; }
            );
            for (auto i=0; i<numParticleOnTile; i++) {
-               ids.get()[i] = WarpXUtilIO::localIDtoGlobal( aos[i].m_idata.id, aos[i].m_idata.cpu );
+               ids.get()[i] = WarpXUtilIO::localIDtoGlobal( aos[i].id(), aos[i].cpu() );
            }
            auto const scalar = openPMD::RecordComponent::SCALAR;
            currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
-        }
+         }
          //  save "extra" particle properties in AoS and SoA
          SaveRealProperty(pti,
              currSpecies,
@@ -657,7 +733,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
             ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[1];
 #endif
             std::string currentSmoothingParameters = ss.str();
-            return std::move(currentSmoothingParameters);
+            return currentSmoothingParameters;
         }() );
   meshes.setAttribute("chargeCorrection", [](){
       if( WarpX::do_dive_cleaning ) return "hyperbolic"; // TODO or "spectral" or something? double-check
@@ -681,8 +757,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
         // Check if this field is a vector. If so, then extract the field name
         std::vector< std::string > const vector_fields = {"E", "B", "j"};
         std::vector< std::string > const field_components = detail::getFieldComponentLabels();
-        for( std::string const field : vector_fields ) {
-            for( std::string const component : field_components ) {
+        for( std::string const& field : vector_fields ) {
+            for( std::string const& component : field_components ) {
                 if( field.compare( varname_1st ) == 0 &&
                     component.compare( varname_2nd ) == 0 )
                 {
@@ -700,7 +776,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
     mesh.setGridSpacing( grid_spacing );
     mesh.setGridGlobalOffset( global_offset );
     mesh.setAttribute( "fieldSmoothing", "none" );
-    setOpenPMDUnit( mesh, field_name );
+    detail::setOpenPMDUnit( mesh, field_name );
 
     // Create a new mesh record component, and store the associated metadata
     auto mesh_comp = mesh[comp_name];
@@ -750,8 +826,8 @@ WarpXParticleCounter::WarpXParticleCounter(WarpXParticleContainer* pc)
       long numParticles = 0; // numParticles in this processor
 
       for (WarpXParIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
-    auto numParticleOnTile = pti.numParticles();
-    numParticles += numParticleOnTile;
+          auto numParticleOnTile = pti.numParticles();
+          numParticles += numParticleOnTile;
       }
 
       unsigned long long offset=0; // offset of this level
@@ -789,14 +865,19 @@ WarpXParticleCounter::GetParticleOffsetOfProcessor(const long& numParticles,
 
 
 {
-      std::vector<long> result(m_MPISize,  0);
-      amrex::ParallelGather::Gather (numParticles, result.data(), -1, amrex::ParallelDescriptor::Communicator());
+    offset = 0;
+#if defined(AMREX_USE_MPI)
+    std::vector<long> result(m_MPISize, 0);
+    amrex::ParallelGather::Gather (numParticles, result.data(), -1, amrex::ParallelDescriptor::Communicator());
 
-      sum = 0;
-      offset = 0;
-      for (int i=0;  i<result.size();  i++) {
-    sum +=  result[i];
-    if (i<m_MPIRank)
-      offset +=  result[i];
-      }
+    sum = 0;
+    int const num_results = result.size();
+    for (int i=0; i<num_results; i++) {
+        sum += result[i];
+        if (i<m_MPIRank)
+            offset += result[i];
+    }
+#else
+    sum = numParticles;
+#endif
 }

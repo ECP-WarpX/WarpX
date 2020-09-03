@@ -21,7 +21,7 @@
 #include <array>
 
 
-struct Sigma : amrex::Gpu::ManagedVector<amrex::Real>
+struct Sigma : amrex::Gpu::DeviceVector<amrex::Real>
 {
     int lo() const { return m_lo; }
     int hi() const { return m_hi; }
@@ -56,8 +56,8 @@ namespace amrex {
     public:
         FabFactory<SigmaBox> (const BoxArray& grid_ba, const Real* dx, int ncell, int delta)
             : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta) {}
-        virtual SigmaBox* create (const Box& box, int ncomps,
-                                  const FabInfo& info, int box_index) const final
+        virtual SigmaBox* create (const Box& box, int /*ncomps*/,
+                                  const FabInfo& /*info*/, int /*box_index*/) const final
             { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta); }
         virtual void destroy (SigmaBox* fab) const final {
             delete fab;

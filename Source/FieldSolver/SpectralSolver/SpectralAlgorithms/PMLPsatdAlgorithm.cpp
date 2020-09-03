@@ -103,7 +103,7 @@ PMLPsatdAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
             fields(i,j,k,Idx::Bzy) = C*fields(i,j,k,Idx::Bzy) + S_ck*I*ky*Ex_old;
         });
     }
-};
+}
 
 void PMLPsatdAlgorithm::InitializeSpectralCoefficients (
     const SpectralKSpace& spectral_kspace,
@@ -153,11 +153,19 @@ void PMLPsatdAlgorithm::InitializeSpectralCoefficients (
             }
         });
     }
-};
+}
 
 void
-PMLPsatdAlgorithm::VayDeposition (SpectralFieldData& field_data,
-                                  std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+PMLPsatdAlgorithm::CurrentCorrection (SpectralFieldData& /*field_data*/,
+                                      std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/,
+                                      const std::unique_ptr<amrex::MultiFab>& /*rho*/)
+{
+    amrex::Abort("Current correction not implemented for PML PSATD");
+}
+
+void
+PMLPsatdAlgorithm::VayDeposition (SpectralFieldData& /*field_data*/,
+                                  std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {
     amrex::Abort("Vay deposition not implemented for PML PSATD");
 }

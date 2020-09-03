@@ -55,14 +55,18 @@ jobs:
         echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
         sudo apt-get update
         sudo apt-get install -y intel-oneapi-icc intel-oneapi-ifort
-        source /opt/intel/inteloneapi/setvars.sh
+        set +e
+        source /opt/intel/oneapi/setvars.sh
+        set -e
         sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
         sudo chmod a+x /usr/local/bin/cmake-easyinstall
         export CEI_SUDO="sudo"
         CXX=$(which icpc) CC=$(which icc) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
     - name: build WarpX
       run: |
-        source /opt/intel/inteloneapi/setvars.sh
+        set +e
+        source /opt/intel/oneapi/setvars.sh
+        set -e
         export CXX=$(which icpc)
         export CC=$(which icc)
 
@@ -76,6 +80,9 @@ jobs:
         cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single
         make -j 2
 
+  # [!] very slow runtime work-around for beta08
+  #   https://github.com/intel/llvm/issues/2187
+  #   https://github.com/AMReX-Codes/amrex/pull/1243
   build_dpcc:
     name: oneAPI DPC++ SP [Linux]
     runs-on: ubuntu-latest
@@ -96,7 +103,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y intel-oneapi-dpcpp-compiler intel-oneapi-mkl
         set +e
-        source /opt/intel/inteloneapi/setvars.sh
+        source /opt/intel/oneapi/setvars.sh
         set -e
         git clone https://github.com/openPMD/openPMD-api.git
         mkdir openPMD-api/build
@@ -108,7 +115,7 @@ jobs:
       shell: bash
       run: |
         set +e
-        source /opt/intel/inteloneapi/setvars.sh
+        source /opt/intel/oneapi/setvars.sh
         set -e
         export CXX=$(which dpcpp)
         export CC=$(which clang)

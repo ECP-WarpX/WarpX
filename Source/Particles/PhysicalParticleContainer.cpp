@@ -24,6 +24,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX_Print.H>
+#include <AMReX.H>
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
@@ -120,6 +121,8 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);
 
     pp.query("do_field_ionization", do_field_ionization);
+
+    pp.query("do_resampling", do_resampling);
 
     //check if Radiation Reaction is enabled and do consistency checks
     pp.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
@@ -441,6 +444,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
 #endif // WARPX_USE_OPENPMD
+
+    ignore_unused(q_tot, z_shift);
+
     return;
 }
 
@@ -664,6 +670,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     pcounts[index] = num_ppc;
                 }
             }
+#if (AMREX_SPACEDIM != 3)
+            amrex::ignore_unused(k);
+#endif
         });
         Gpu::exclusive_scan(counts.begin(), counts.end(), offset.begin());
 
@@ -677,7 +686,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #endif
 
         // Update NextID to include particles created in this function
-        int pid;
+        Long pid;
 #ifdef _OPENMP
 #pragma omp critical (add_plasma_nextid)
 #endif
@@ -685,7 +694,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        WarpXUtilMsg::AlwaysAssert(static_cast<int>(pid + max_new_particles) > 0,
+        WarpXUtilMsg::AlwaysAssert(static_cast<Long>(pid + max_new_particles) < LastParticleID,
                                    "ERROR: overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
@@ -707,7 +716,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
 
-        int* pi;
+        int* pi = nullptr;
         if (do_field_ionization) {
             pi = soa.GetIntData(particle_icomps["ionization_level"]).data() + old_size;
         }
@@ -770,6 +779,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     continue;
                 }
 #else
+                amrex::ignore_unused(k);
                 if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
                     p.id() = -1;
                     continue;
@@ -1225,6 +1235,10 @@ PhysicalParticleContainer::applyNCIFilter (
     bzeli = filtered_Bz.elixir();
     nci_godfrey_filter_exeybz[lev]->ApplyStencil(filtered_Bz, Bz, filtered_Bz.box());
     bz_ptr = &filtered_Bz;
+#else
+    amrex::ignore_unused(eyeli, bxeli, bzeli,
+        filtered_Ey, filtered_Bx, filtered_Bz,
+        Ey, Bx, Bz, ey_ptr, bx_ptr, bz_ptr);
 #endif
 }
 
@@ -1369,7 +1383,7 @@ PhysicalParticleContainer::SplitParticles (int lev)
                 }
 #endif
                 // invalidate the particle
-                p.m_idata.id = -p.m_idata.id;
+                p.id() = -p.id();
             }
         }
     }
@@ -1427,7 +1441,6 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const FArrayBox& bzfab = Bz[pti];
 
             const auto getPosition = GetParticlePosition(pti);
-                  auto setPosition = SetParticlePosition(pti);
 
             const auto getExternalE = GetExternalEField(pti);
             const auto getExternalB = GetExternalBField(pti);
@@ -1436,7 +1449,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const Dim3 lo = lbound(box);
 
-            int l_lower_order_in_v = WarpX::l_lower_order_in_v;
+            bool galerkin_interpolation = WarpX::galerkin_interpolation;
             int nox = WarpX::nox;
             int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
@@ -1474,23 +1487,28 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const auto pusher_algo = WarpX::particle_pusher_algo;
             const auto do_crr = do_classical_radiation_reaction;
 
+            const auto t_do_not_gather = do_not_gather;
+
             amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
             {
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
 
                 amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
-                getExternalE(ip, Exp, Eyp, Ezp);
-
                 amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
-                getExternalB(ip, Bxp, Byp, Bzp);
 
-                // first gather E and B to the particle positions
-                doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                               ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                               ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                               dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                               nox, l_lower_order_in_v);
+                if (!t_do_not_gather){
+                    // first gather E and B to the particle positions
+                    doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                   ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                   ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                   dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                                   nox, galerkin_interpolation);
+                }
+                // Externally applied E-field in Cartesian co-ordinates
+                getExternalE(ip, Exp, Eyp, Ezp);
+                // Externally applied B-field in Cartesian co-ordinates
+                getExternalB(ip, Bxp, Byp, Bzp);
 
                 if (do_crr) {
                     amrex::Real qp = q;
@@ -1760,8 +1778,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                                      (gather_lev==(lev  )),
                                      "Gather buffers only work for lev-1");
     // If no particles, do not do anything
-    // If do_not_gather = 1 by user, do not do anything
-    if (np_to_push == 0 || do_not_gather) return;
+    if (np_to_push == 0) return;
 
     // Get cell size on gather_lev
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(gather_lev,0));
@@ -1794,7 +1811,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     const Dim3 lo = lbound(box);
 
-    int l_lower_order_in_v = WarpX::l_lower_order_in_v;
+    bool galerkin_interpolation = WarpX::galerkin_interpolation;
     int nox = WarpX::nox;
     int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
@@ -1850,27 +1867,32 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     }
 #endif
 
+    const auto t_do_not_gather = do_not_gather;
+
     amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
     {
         amrex::ParticleReal xp, yp, zp;
         getPosition(ip, xp, yp, zp);
 
         amrex::ParticleReal Exp = 0._rt, Eyp = 0._rt, Ezp = 0._rt;
-        getExternalE(ip, Exp, Eyp, Ezp);
-
         amrex::ParticleReal Bxp = 0._rt, Byp = 0._rt, Bzp = 0._rt;
-        getExternalB(ip, Bxp, Byp, Bzp);
 
-        // first gather E and B to the particle positions
-        doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                       dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
-                       nox, l_lower_order_in_v);
+        if(!t_do_not_gather){
+            // first gather E and B to the particle positions
+            doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                           ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                           ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                           dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
+                           nox, galerkin_interpolation);
+        }
+        // Externally applied E-field in Cartesian co-ordinates
+        getExternalE(ip, Exp, Eyp, Ezp);
+        // Externally applied B-field in Cartesian co-ordinates
+        getExternalB(ip, Bxp, Byp, Bzp);
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
-#ifdef WARPX_WED
+#ifdef WARPX_QED
     if (local_has_quantum_sync) {
         const ParticleReal px = m * ux[ip];
         const ParticleReal py = m * uy[ip];
@@ -1967,6 +1989,24 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 particle_icomps["ionization_level"],
                                 ion_atomic_number);
 }
+
+void PhysicalParticleContainer::resample (const Resampling& resampler, const int timestep)
+{
+    const amrex::Real global_numparts = TotalNumberOfParticles();
+
+    if (resampler.triggered(timestep, global_numparts))
+    {
+        for (int lev = 0; lev <= maxLevel(); lev++)
+        {
+            for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+            {
+                resampler(pti);
+            }
+        }
+    }
+
+}
+
 
 #ifdef WARPX_QED
 

@@ -204,6 +204,7 @@ WarpX::Evolve (int numsteps)
             }
         }
 
+
         if (sort_intervals.contains(step+1)) {
             amrex::Print() << "re-sorting particles \n";
             mypc->SortParticlesByBin(sort_bin_size);
@@ -228,7 +229,6 @@ WarpX::Evolve (int numsteps)
             reduced_diags->ComputeDiags(step);
             reduced_diags->WriteToFile(step);
         }
-
         multi_diags->FilterComputePackFlush( step );
 
         if (cur_time >= stop_time - 1.e-3*dt[0]) {
@@ -304,6 +304,10 @@ WarpX::OneStep_nosub (Real cur_time)
 #ifdef WARPX_QED
     doQEDEvents();
 #endif
+
+    // +1 is necessary here because value of step seen by user (first step is 1) is different than
+    // value of step in code (first step is 0)
+    mypc->doResampling(istep[0]+1);
 
     // Synchronize J and rho
     SyncCurrent();
@@ -414,6 +418,10 @@ WarpX::OneStep_sub1 (Real curtime)
 #ifdef WARPX_QED
     doQEDEvents();
 #endif
+
+    // +1 is necessary here because value of step seen by user (first step is 1) is different than
+    // value of step in code (first step is 0)
+    mypc->doResampling(istep[0]+1);
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
     const int fine_lev = 1;
@@ -620,75 +628,6 @@ WarpX::PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type)
         }
     }
 #endif
-}
-
-void
-WarpX::ComputeDt ()
-{
-    const Real* dx = geom[max_level].CellSize();
-    Real deltat = 0.;
-
-    if (maxwell_fdtd_solver_id == 0) {
-        // CFL time step Yee solver
-#ifdef WARPX_DIM_RZ
-#    ifdef WARPX_USE_PSATD
-        deltat = cfl*dx[1]/PhysConst::c;
-#    else
-        // In the rz case, the Courant limit has been evaluated
-        // semi-analytically by R. Lehe, and resulted in the following
-        // coefficients.
-        // NB : Here the coefficient for m=1 as compared to this document,
-        // as it was observed in practice that this coefficient was not
-        // high enough (The simulation became unstable).
-        Real multimode_coeffs[6] = { 0.2105, 1.0, 3.5234, 8.5104, 15.5059, 24.5037 };
-        Real multimode_alpha;
-        if (n_rz_azimuthal_modes < 7) {
-            // Use the table of the coefficients
-            multimode_alpha = multimode_coeffs[n_rz_azimuthal_modes-1];
-        } else {
-            // Use a realistic extrapolation
-            multimode_alpha = (n_rz_azimuthal_modes - 1)*(n_rz_azimuthal_modes - 1) - 0.4;
-        }
-        deltat  = cfl * 1./( std::sqrt((1+multimode_alpha)/(dx[0]*dx[0]) + 1./(dx[1]*dx[1])) * PhysConst::c );
-#    endif
-#else
-        deltat  = cfl * 1./( std::sqrt(AMREX_D_TERM(  1./(dx[0]*dx[0]),
-                                                      + 1./(dx[1]*dx[1]),
-                                                      + 1./(dx[2]*dx[2]))) * PhysConst::c );
-#endif
-    } else {
-        // CFL time step CKC solver
-#if (BL_SPACEDIM == 3)
-        const Real delta = std::min(dx[0],std::min(dx[1],dx[2]));
-#elif (BL_SPACEDIM == 2)
-        const Real delta = std::min(dx[0],dx[1]);
-#endif
-        deltat = cfl*delta/PhysConst::c;
-    }
-    dt.resize(0);
-    dt.resize(max_level+1,deltat);
-
-    if (do_subcycling) {
-        for (int lev = max_level-1; lev >= 0; --lev) {
-            dt[lev] = dt[lev+1] * refRatio(lev)[0];
-        }
-    }
-
-    if (do_electrostatic) {
-        dt[0] = const_dt;
-    }
-
-    for (int lev=0; lev <= max_level; lev++) {
-        const Real* dx_lev = geom[lev].CellSize();
-        Print()<<"Level "<<lev<<": dt = "<<dt[lev]
-               <<" ; dx = "<<dx_lev[0]
-#if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
-               <<" ; dz = "<<dx_lev[1]<<'\n';
-#elif (defined WARPX_DIM_3D)
-               <<" ; dy = "<<dx_lev[1]
-               <<" ; dz = "<<dx_lev[2]<<'\n';
-#endif
-    }
 }
 
 /* \brief computes max_step for wakefield simulation in boosted frame.

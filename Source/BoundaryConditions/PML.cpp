@@ -35,21 +35,25 @@ namespace
         int slo = sigma.m_lo;
         int sslo = sigma_star.m_lo;
 
-        for (int i = olo; i <= ohi+1; ++i)
+        const int N = ohi+1-olo+1;
+        Real* p_sigma = sigma.data();
+        Real* p_sigma_cumsum = sigma_cumsum.data();
+        Real* p_sigma_star = sigma_star.data();
+        Real* p_sigma_star_cumsum = sigma_star_cumsum.data();
+        amrex::ParallelFor(N, [=] AMREX_GPU_DEVICE (int i) noexcept
         {
+            i += olo;
             Real offset = static_cast<Real>(glo-i);
-            sigma[i-slo] = fac*(offset*offset);
+            p_sigma[i-slo] = fac*(offset*offset);
             // sigma_cumsum is the analytical integral of sigma function at same points than sigma
-            sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
-        }
-
-        for (int i = olo; i <= ohi; ++i)
-        {
-            Real offset = static_cast<Real>(glo-i) - 0.5;
-            sigma_star[i-sslo] = fac*(offset*offset);
-            // sigma_star_cumsum is the analytical integral of sigma function at same points than sigma_star
-            sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
-        }
+            p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
+            if (i <= ohi) {
+                offset = static_cast<Real>(glo-i) - 0.5;
+                p_sigma_star[i-sslo] = fac*(offset*offset);
+                // sigma_star_cumsum is the analytical integral of sigma function at same points than sigma_star
+                p_sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
+            }
+        });
     }
 
     static void FillHi (int idim, Sigma& sigma, Sigma& sigma_cumsum,
@@ -61,18 +65,24 @@ namespace
         int ohi = overlap.bigEnd(idim);
         int slo = sigma.m_lo;
         int sslo = sigma_star.m_lo;
-        for (int i = olo; i <= ohi+1; ++i)
+
+        const int N = ohi+1-olo+1;
+        Real* p_sigma = sigma.data();
+        Real* p_sigma_cumsum = sigma_cumsum.data();
+        Real* p_sigma_star = sigma_star.data();
+        Real* p_sigma_star_cumsum = sigma_star_cumsum.data();
+        amrex::ParallelFor(N, [=] AMREX_GPU_DEVICE (int i) noexcept
         {
+            i += olo;
             Real offset = static_cast<Real>(i-ghi-1);
-            sigma[i-slo] = fac*(offset*offset);
-            sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
-        }
-        for (int i = olo; i <= ohi; ++i)
-        {
-            Real offset = static_cast<Real>(i-ghi) - 0.5;
-            sigma_star[i-sslo] = fac*(offset*offset);
-            sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
-        }
+            p_sigma[i-slo] = fac*(offset*offset);
+            p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
+            if (i <= ohi) {
+                offset = static_cast<Real>(i-ghi) - 0.5;
+                p_sigma_star[i-sslo] = fac*(offset*offset);
+                p_sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
+            }
+        });
     }
 
     static void FillZero (int idim, Sigma& sigma, Sigma& sigma_cumsum,
@@ -83,10 +93,22 @@ namespace
         int ohi = overlap.bigEnd(idim);
         int slo = sigma.m_lo;
         int sslo = sigma_star.m_lo;
-        std::fill(sigma.begin()+(olo-slo), sigma.begin()+(ohi+2-slo), 0.0);
-        std::fill(sigma_cumsum.begin()+(olo-slo), sigma_cumsum.begin()+(ohi+2-slo), 0.0);
-        std::fill(sigma_star.begin()+(olo-sslo), sigma_star.begin()+(ohi+1-sslo), 0.0);
-        std::fill(sigma_star_cumsum.begin()+(olo-sslo), sigma_star_cumsum.begin()+(ohi+1-sslo), 0.0);
+
+        const int N = ohi+1-olo+1;
+        Real* p_sigma = sigma.data();
+        Real* p_sigma_cumsum = sigma_cumsum.data();
+        Real* p_sigma_star = sigma_star.data();
+        Real* p_sigma_star_cumsum = sigma_star_cumsum.data();
+        amrex::ParallelFor(N, [=] AMREX_GPU_DEVICE (int i) noexcept
+        {
+            i += olo;
+            p_sigma[i-slo] = Real(0.0);
+            p_sigma_cumsum[i-slo] = Real(0.0);
+            if (i <= ohi) {
+                p_sigma_star[i-sslo] = Real(0.0);
+                p_sigma_star_cumsum[i-sslo] = Real(0.0);
+            }
+        });
     }
 }
 
@@ -299,33 +321,67 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
             amrex::Abort("SigmaBox::SigmaBox(): direct_faces.size() > 1, Box gaps not wide enough?\n");
         }
     }
+
+    amrex::Gpu::synchronize();
 }
 
 
 void
-SigmaBox::ComputePMLFactorsB (const Real* dx, Real dt)
+SigmaBox::ComputePMLFactorsB (const Real* a_dx, Real dt)
 {
-    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
-    {
-        for (int i = 0, N = sigma_star[idim].size(); i < N; ++i)
-        {
-            sigma_star_fac[idim][i] = std::exp(-sigma_star[idim][i]*dt);
-            sigma_star_cumsum_fac[idim][i] = std::exp(-sigma_star_cumsum[idim][i]*dx[idim]);
-        }
+    GpuArray<Real*,AMREX_SPACEDIM> p_sigma_star_fac;
+    GpuArray<Real*,AMREX_SPACEDIM> p_sigma_star_cumsum_fac;
+    GpuArray<Real const*,AMREX_SPACEDIM> p_sigma_star;
+    GpuArray<Real const*,AMREX_SPACEDIM> p_sigma_star_cumsum;
+    GpuArray<int, AMREX_SPACEDIM> N;
+    GpuArray<Real, AMREX_SPACEDIM> dx;
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        p_sigma_star_fac[idim] = sigma_star_fac[idim].data();
+        p_sigma_star_cumsum_fac[idim] = sigma_star_cumsum_fac[idim].data();
+        p_sigma_star[idim] = sigma_star[idim].data();
+        p_sigma_star_cumsum[idim] = sigma_star_cumsum[idim].data();
+        N[idim] = sigma_star[idim].size();
+        dx[idim] = a_dx[idim];
     }
+    amrex::ParallelFor(amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+    [=] AMREX_GPU_DEVICE (int i) noexcept
+    {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (i < N[idim]) {
+                p_sigma_star_fac[idim][i] = std::exp(-p_sigma_star[idim][i]*dt);
+                p_sigma_star_cumsum_fac[idim][i] = std::exp(-p_sigma_star_cumsum[idim][i]*dx[idim]);
+            }
+        }
+    });
 }
 
 void
-SigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
+SigmaBox::ComputePMLFactorsE (const Real* a_dx, Real dt)
 {
-    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
-    {
-        for (int i = 0, N = sigma[idim].size(); i < N; ++i)
-        {
-            sigma_fac[idim][i] = std::exp(-sigma[idim][i]*dt);
-            sigma_cumsum_fac[idim][i] = std::exp(-sigma_cumsum[idim][i]*dx[idim]);
-        }
+    GpuArray<Real*,AMREX_SPACEDIM> p_sigma_fac;
+    GpuArray<Real*,AMREX_SPACEDIM> p_sigma_cumsum_fac;
+    GpuArray<Real const*,AMREX_SPACEDIM> p_sigma;
+    GpuArray<Real const*,AMREX_SPACEDIM> p_sigma_cumsum;
+    GpuArray<int, AMREX_SPACEDIM> N;
+    GpuArray<Real, AMREX_SPACEDIM> dx;
+    for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        p_sigma_fac[idim] = sigma_fac[idim].data();
+        p_sigma_cumsum_fac[idim] = sigma_cumsum_fac[idim].data();
+        p_sigma[idim] = sigma[idim].data();
+        p_sigma_cumsum[idim] = sigma_cumsum[idim].data();
+        N[idim] = sigma[idim].size();
+        dx[idim] = a_dx[idim];
     }
+    amrex::ParallelFor(amrex::max(AMREX_D_DECL(N[0],N[1],N[2])),
+    [=] AMREX_GPU_DEVICE (int i) noexcept
+    {
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (i < N[idim]) {
+                p_sigma_fac[idim][i] = std::exp(-p_sigma[idim][i]*dt);
+                p_sigma_cumsum_fac[idim][i] = std::exp(-p_sigma_cumsum[idim][i]*dx[idim]);
+            }
+        }
+    });
 }
 
 MultiSigmaBox::MultiSigmaBox (const BoxArray& ba, const DistributionMapping& dm,
@@ -415,7 +471,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     IntVect nge = IntVect(AMREX_D_DECL(2, 2, 2));
     IntVect ngb = IntVect(AMREX_D_DECL(2, 2, 2));
     int ngf_int = (do_moving_window) ? 2 : 0;
-    if (WarpX::maxwell_fdtd_solver_id == 1) ngf_int = std::max( ngf_int, 1 );
+    if (WarpX::maxwell_solver_id == 1) ngf_int = std::max( ngf_int, 1 );
     IntVect ngf = IntVect(AMREX_D_DECL(ngf_int, ngf_int, ngf_int));
 #ifdef WARPX_USE_PSATD
     // Increase the number of guard cells, in order to fit the extent
@@ -971,22 +1027,22 @@ PML::CheckPoint (const std::string& dir) const
 {
     if (pml_E_fp[0])
     {
-        VisMF::Write(*pml_E_fp[0], dir+"_Ex_fp");
-        VisMF::Write(*pml_E_fp[1], dir+"_Ey_fp");
-        VisMF::Write(*pml_E_fp[2], dir+"_Ez_fp");
-        VisMF::Write(*pml_B_fp[0], dir+"_Bx_fp");
-        VisMF::Write(*pml_B_fp[1], dir+"_By_fp");
-        VisMF::Write(*pml_B_fp[2], dir+"_Bz_fp");
+        VisMF::AsyncWrite(*pml_E_fp[0], dir+"_Ex_fp");
+        VisMF::AsyncWrite(*pml_E_fp[1], dir+"_Ey_fp");
+        VisMF::AsyncWrite(*pml_E_fp[2], dir+"_Ez_fp");
+        VisMF::AsyncWrite(*pml_B_fp[0], dir+"_Bx_fp");
+        VisMF::AsyncWrite(*pml_B_fp[1], dir+"_By_fp");
+        VisMF::AsyncWrite(*pml_B_fp[2], dir+"_Bz_fp");
     }
 
     if (pml_E_cp[0])
     {
-        VisMF::Write(*pml_E_cp[0], dir+"_Ex_cp");
-        VisMF::Write(*pml_E_cp[1], dir+"_Ey_cp");
-        VisMF::Write(*pml_E_cp[2], dir+"_Ez_cp");
-        VisMF::Write(*pml_B_cp[0], dir+"_Bx_cp");
-        VisMF::Write(*pml_B_cp[1], dir+"_By_cp");
-        VisMF::Write(*pml_B_cp[2], dir+"_Bz_cp");
+        VisMF::AsyncWrite(*pml_E_cp[0], dir+"_Ex_cp");
+        VisMF::AsyncWrite(*pml_E_cp[1], dir+"_Ey_cp");
+        VisMF::AsyncWrite(*pml_E_cp[2], dir+"_Ez_cp");
+        VisMF::AsyncWrite(*pml_B_cp[0], dir+"_Bx_cp");
+        VisMF::AsyncWrite(*pml_B_cp[1], dir+"_By_cp");
+        VisMF::AsyncWrite(*pml_B_cp[2], dir+"_Bz_cp");
     }
 }
 
