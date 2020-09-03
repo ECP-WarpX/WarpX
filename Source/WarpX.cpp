@@ -87,6 +87,7 @@ bool WarpX::galerkin_interpolation = true;
 bool WarpX::use_filter        = false;
 bool WarpX::use_kspace_filter       = false;
 bool WarpX::use_filter_compensation = false;
+bool WarpX::use_damp_in_z_guard = false;
 
 bool WarpX::serialize_ics     = false;
 bool WarpX::refine_plasma     = false;
@@ -471,6 +472,8 @@ WarpX::ReadParameters ()
 #if (AMREX_SPACEDIM == 3)
         filter_npass_each_dir[2] = parse_filter_npass_each_dir[2];
 #endif
+
+        pp.query("use_damp_in_z_guard", use_damp_in_z_guard);
 
         pp.query("num_mirrors", num_mirrors);
         if (num_mirrors>0){

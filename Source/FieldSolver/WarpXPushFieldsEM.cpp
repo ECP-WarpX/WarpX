@@ -135,6 +135,9 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */)
         PushPSATDSinglePatch( *spectral_solver_cp[lev],
              Efield_cp[lev], Bfield_cp[lev], Efield_avg_cp[lev], Bfield_avg_cp[lev], current_cp[lev], rho_cp[lev] );
     }
+    if (use_damp_in_z_guard) {
+        DampFieldsInGuards( Efield_fp[lev], Bfield_fp[lev] );
+    }
 }
 #endif
 
@@ -313,6 +316,89 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     }
     if (do_pml) {
         amrex::Abort("Macroscopic EvolveE is not implemented for pml boundary condition, yet");
+    }
+}
+
+void
+WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                          std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield) {
+
+    for ( amrex::MFIter mfi(*Efield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
+    {
+
+        amrex::Array4<amrex::Real> const& Ex_arr = Efield[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& Ey_arr = Efield[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& Ez_arr = Efield[2]->array(mfi);
+        amrex::Array4<amrex::Real> const& Bx_arr = Bfield[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& By_arr = Bfield[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& Bz_arr = Bfield[2]->array(mfi);
+
+        // Get the tilebox from Efield so that it includes the guard cells.
+        amrex::Box tilebox = (*Efield[0])[mfi].box();
+        int const nz_tile = tilebox.bigEnd(AMREX_SPACEDIM-1);
+
+        // Box for the whole simulation domain
+        amrex::Box const& domain = Geom(0).Domain();
+        int const nz_domain = domain.bigEnd(AMREX_SPACEDIM-1);
+
+        if (tilebox.smallEnd(AMREX_SPACEDIM-1) < 0) {
+
+            // Apply damping factor in guards cells below the lower end of the domain
+            int const nz_guard = -tilebox.smallEnd(AMREX_SPACEDIM-1);
+
+            // Set so the box only covers the lower half of the guard cells
+            tilebox.setBig(AMREX_SPACEDIM-1, -nz_guard/2-1);
+
+            amrex::ParallelFor(tilebox, Efield[0]->nComp(),
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+            {
+#if (AMREX_SPACEDIM == 3)
+                amrex::Real zcell = static_cast<amrex::Real>(k + nz_guard);
+#else
+                amrex::Real zcell = static_cast<amrex::Real>(j + nz_guard);
+#endif
+                amrex::Real phase = MathConst::pi*zcell/nz_guard;
+                amrex::Real damp_factor = std::pow(std::sin(phase), 2);
+
+                Ex_arr(i,j,k,icomp) *= damp_factor;
+                Ey_arr(i,j,k,icomp) *= damp_factor;
+                Ez_arr(i,j,k,icomp) *= damp_factor;
+                Bx_arr(i,j,k,icomp) *= damp_factor;
+                By_arr(i,j,k,icomp) *= damp_factor;
+                Bz_arr(i,j,k,icomp) *= damp_factor;
+
+            });
+
+        }
+        else if (nz_tile > nz_domain) {
+
+            // Apply damping factor in guards cells above the upper end of the domain
+            int nz_guard = nz_tile - nz_domain;
+
+            // Set so the box only covers the upper half of the guard cells
+            tilebox.setSmall(AMREX_SPACEDIM-1, nz_domain + nz_guard/2 + 1);
+
+            amrex::ParallelFor(tilebox, Efield[0]->nComp(),
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+            {
+#if (AMREX_SPACEDIM == 3)
+                amrex::Real zcell = static_cast<amrex::Real>(nz_tile - k);
+#else
+                amrex::Real zcell = static_cast<amrex::Real>(nz_tile - j);
+#endif
+                amrex::Real phase = MathConst::pi*zcell/nz_guard;
+                amrex::Real damp_factor = std::pow(std::sin(phase), 2);
+
+                Ex_arr(i,j,k,icomp) *= damp_factor;
+                Ey_arr(i,j,k,icomp) *= damp_factor;
+                Ez_arr(i,j,k,icomp) *= damp_factor;
+                Bx_arr(i,j,k,icomp) *= damp_factor;
+                By_arr(i,j,k,icomp) *= damp_factor;
+                Bz_arr(i,j,k,icomp) *= damp_factor;
+
+            });
+
+        }
     }
 }
 
