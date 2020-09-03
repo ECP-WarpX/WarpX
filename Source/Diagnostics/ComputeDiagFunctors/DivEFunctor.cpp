@@ -20,11 +20,16 @@ DivEFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_
     // output Multifab, mf_dst, the guard-cell data is not needed especially considering
     // the operations performend in the CoarsenAndInterpolate function.
     constexpr int ng = 1;
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+    // For RZ spectral, all quantities are cell centered.
+    amrex::IntVect typ = amrex::IntVect::TheCellVector();
+#else
     // For staggered and nodal calculations, divE is computed on the nodes.
     // The temporary divE MultiFab is generated to comply with the location of divE.
-    const amrex::BoxArray& ba = amrex::convert(warpx.boxArray(m_lev),
-                                amrex::IntVect::TheUnitVector());
-    amrex::MultiFab divE(ba, warpx.DistributionMap(m_lev), 2*warpx.n_rz_azimuthal_modes-1, ng);
+    amrex::IntVect typ = amrex::IntVect::TheNodeVector();
+#endif
+    const amrex::BoxArray& ba = amrex::convert(warpx.boxArray(m_lev),typ);
+    amrex::MultiFab divE(ba, warpx.DistributionMap(m_lev), 2*warpx.n_rz_azimuthal_modes-1, ng );
     warpx.ComputeDivE(divE, m_lev);
 
 #ifdef WARPX_DIM_RZ
