@@ -19,9 +19,9 @@ class SpectralBinomialFilter
 {
     public:
 
-        // `KFilterArray` holds a one 1D array ("ManagedVector") that
+        // `KFilterArray` holds a one 1D array ("DeviceVector") that
         // implements the filter.
-        using KFilterArray = amrex::Gpu::ManagedVector<amrex::Real>;
+        using KFilterArray = amrex::Gpu::DeviceVector<amrex::Real>;
 
         SpectralBinomialFilter () {};
         void InitFilterArray (RealKVector const & kvec,

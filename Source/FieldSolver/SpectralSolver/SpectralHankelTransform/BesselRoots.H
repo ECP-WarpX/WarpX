@@ -51,7 +51,7 @@ void SecantRootFinder(int n, int nitmx, amrex::Real tol, amrex::Real *zeroj, int
  *    abramowitz m. & stegun irene a.
  *    handbook of mathematical functions
  */
-void GetBesselRoots(int n, int nk, HankelTransform::RealVector& roots, amrex::Vector<int> &ier)  {
+void GetBesselRoots(int n, int nk, amrex::Vector<amrex::Real>& roots, amrex::Vector<int> &ier)  {
     amrex::Real zeroj;
     int ierror, ik, k;
 

@@ -16,10 +16,10 @@
 using namespace amrex;
 
 namespace {
-    void compute_stencil(Gpu::ManagedVector<Real> &stencil, int npass)
+    void compute_stencil(Gpu::DeviceVector<Real> &stencil, int npass)
     {
-        Gpu::ManagedVector<Real> old_s(1+npass,0.);
-        Gpu::ManagedVector<Real> new_s(1+npass,0.);
+        Vector<Real> old_s(1+npass,0.);
+        Vector<Real> new_s(1+npass,0.);
 
         old_s[0] = 1.;
         int jmax = 1;
@@ -46,8 +46,10 @@ namespace {
         }
         // we use old_s here to make sure the stencil
         // is corrent even when npass = 0
-        stencil = old_s;
-        stencil[0] *= 0.5; // because we will use it twice
+        old_s[0] *= 0.5; // because we will use it twice
+        stencil.resize(old_s.size());
+        Gpu::copyAsync(Gpu::hostToDevice,old_s.begin(),old_s.end(),stencil.begin());
+        amrex::Gpu::synchronize();
     }
 }
 

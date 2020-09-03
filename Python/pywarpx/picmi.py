@@ -270,7 +270,7 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
 class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
     def init(self, kw):
 
-        if len(x) > 1:
+        if len(self.x) > 1:
             raise Exception('Only a single particle can be loaded')
 
     def initialize_inputs(self, species_number, layout, species, density_scale):
@@ -458,9 +458,14 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         self.pml_ncell = kw.pop('warpx_pml_ncell', None)
 
         if self.method == 'PSATD':
-            self.periodic_single_box_fft = kw.pop('warpx_periodic_single_box_fft', None)
-            self.fftw_plan_measure = kw.pop('warpx_fftw_plan_measure', None)
-            self.current_correction = kw.pop('warpx_current_correction', None)
+            self.psatd_periodic_single_box_fft = kw.pop('warpx_periodic_single_box_fft', None)
+            self.psatd_fftw_plan_measure = kw.pop('warpx_fftw_plan_measure', None)
+            self.psatd_current_correction = kw.pop('warpx_current_correction', None)
+            self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
+            self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
+            self.psatd_nx_guard = kw.pop('warpx_psatd_nx_guard', None)
+            self.psatd_ny_guard = kw.pop('warpx_psatd_ny_guard', None)
+            self.psatd_nz_guard = kw.pop('warpx_psatd_nz_guard', None)
 
     def initialize_inputs(self):
 
@@ -471,9 +476,14 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
         pywarpx.warpx.do_nodal = self.l_nodal
 
         if self.method == 'PSATD':
-            pywarpx.psatd.periodic_single_box_fft = self.periodic_single_box_fft
-            pywarpx.psatd.fftw_plan_measure = self.fftw_plan_measure
-            pywarpx.psatd.current_correction = self.current_correction
+            pywarpx.psatd.periodic_single_box_fft = self.psatd_periodic_single_box_fft
+            pywarpx.psatd.fftw_plan_measure = self.psatd_fftw_plan_measure
+            pywarpx.psatd.current_correction = self.psatd_current_correction
+            pywarpx.psatd.update_with_rho = self.psatd_update_with_rho
+            pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
+            pywarpx.psatd.nx_guard = self.psatd_nx_guard
+            pywarpx.psatd.ny_guard = self.psatd_ny_guard
+            pywarpx.psatd.nz_guard = self.psatd_nz_guard
 
             if self.stencil_order is not None:
                 pywarpx.psatd.nox = self.stencil_order[0]

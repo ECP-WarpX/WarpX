@@ -24,6 +24,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 
 #include <AMReX_Print.H>
+#include <AMReX.H>
 
 #ifdef WARPX_USE_OPENPMD
 #   include <openPMD/openPMD.hpp>
@@ -120,6 +121,8 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);
 
     pp.query("do_field_ionization", do_field_ionization);
+
+    pp.query("do_resampling", do_resampling);
 
     //check if Radiation Reaction is enabled and do consistency checks
     pp.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
@@ -441,6 +444,9 @@ PhysicalParticleContainer::AddPlasmaFromFile(ParticleReal q_tot,
                   particle_ux.dataPtr(), particle_uy.dataPtr(), particle_uz.dataPtr(),
                   1, particle_w.dataPtr(),1);
 #endif // WARPX_USE_OPENPMD
+
+    ignore_unused(q_tot, z_shift);
+
     return;
 }
 
@@ -664,6 +670,9 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     pcounts[index] = num_ppc;
                 }
             }
+#if (AMREX_SPACEDIM != 3)
+            amrex::ignore_unused(k);
+#endif
         });
         Gpu::exclusive_scan(counts.begin(), counts.end(), offset.begin());
 
@@ -677,7 +686,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 #endif
 
         // Update NextID to include particles created in this function
-        int pid;
+        Long pid;
 #ifdef _OPENMP
 #pragma omp critical (add_plasma_nextid)
 #endif
@@ -685,7 +694,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pid = ParticleType::NextID();
             ParticleType::NextID(pid+max_new_particles);
         }
-        WarpXUtilMsg::AlwaysAssert(static_cast<int>(pid + max_new_particles) > 0,
+        WarpXUtilMsg::AlwaysAssert(static_cast<Long>(pid + max_new_particles) < LastParticleID,
                                    "ERROR: overflow on particle id numbers");
 
         const int cpuid = ParallelDescriptor::MyProc();
@@ -707,7 +716,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pa[ia] = soa.GetRealData(ia).data() + old_size;
         }
 
-        int* pi;
+        int* pi = nullptr;
         if (do_field_ionization) {
             pi = soa.GetIntData(particle_icomps["ionization_level"]).data() + old_size;
         }
@@ -770,6 +779,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     continue;
                 }
 #else
+                amrex::ignore_unused(k);
                 if (!tile_realbox.contains(XDim3{pos.x,pos.z,0.0_rt})) {
                     p.id() = -1;
                     continue;
@@ -1225,6 +1235,10 @@ PhysicalParticleContainer::applyNCIFilter (
     bzeli = filtered_Bz.elixir();
     nci_godfrey_filter_exeybz[lev]->ApplyStencil(filtered_Bz, Bz, filtered_Bz.box());
     bz_ptr = &filtered_Bz;
+#else
+    amrex::ignore_unused(eyeli, bxeli, bzeli,
+        filtered_Ey, filtered_Bx, filtered_Bz,
+        Ey, Bx, Bz, ey_ptr, bx_ptr, bz_ptr);
 #endif
 }
 
@@ -1427,7 +1441,6 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const FArrayBox& bzfab = Bz[pti];
 
             const auto getPosition = GetParticlePosition(pti);
-                  auto setPosition = SetParticlePosition(pti);
 
             const auto getExternalE = GetExternalEField(pti);
             const auto getExternalB = GetExternalBField(pti);
@@ -1976,6 +1989,24 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 particle_icomps["ionization_level"],
                                 ion_atomic_number);
 }
+
+void PhysicalParticleContainer::resample (const Resampling& resampler, const int timestep)
+{
+    const amrex::Real global_numparts = TotalNumberOfParticles();
+
+    if (resampler.triggered(timestep, global_numparts))
+    {
+        for (int lev = 0; lev <= maxLevel(); lev++)
+        {
+            for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+            {
+                resampler(pti);
+            }
+        }
+    }
+
+}
+
 
 #ifdef WARPX_QED
 

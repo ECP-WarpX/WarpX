@@ -33,14 +33,13 @@ NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdto
 void NCIGodfreyFilter::ComputeStencils(){
 
     // Sanity checks: filter length shoulz be 5 in z
+#if  (AMREX_SPACEDIM == 3)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-#if ( AMREX_SPACEDIM == 3 )
-        slen.z==5,
+        slen.z==5,"ERROR: NCI filter requires 5 points in z");
 #else
-        slen.y==5,
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        slen.y==5,"ERROR: NCI filter requires 5 points in z");
 #endif
-        "ERROR: NCI filter requires 5 points in z");
-
     // Interpolate coefficients from the table, and store into prestencil.
     auto index = static_cast<int>(tab_length*m_cdtodz);
     index = min(index, tab_length-2);
@@ -83,28 +82,41 @@ void NCIGodfreyFilter::ComputeStencils(){
         }
     }
     // Compute stencil_z
-    stencil_z.resize( 5 );
-    stencil_z[0] =  (256 + 128*prestencil[0] + 96*prestencil[1] + 80*prestencil[2] + 70*prestencil[3]) / 256;
-    stencil_z[1] = -(       64*prestencil[0] + 64*prestencil[1] + 60*prestencil[2] + 56*prestencil[3]) / 256;
-    stencil_z[2] =  (                          16*prestencil[1] + 24*prestencil[2] + 28*prestencil[3]) / 256;
-    stencil_z[3] = -(                                              4*prestencil[2] +  8*prestencil[3]) / 256;
-    stencil_z[4] =  (                                                                 1*prestencil[3]) / 256;
+    Vector<Real> h_stencil_z(5);
+    h_stencil_z[0] =  (256 + 128*prestencil[0] + 96*prestencil[1] + 80*prestencil[2] + 70*prestencil[3]) / 256;
+    h_stencil_z[1] = -(       64*prestencil[0] + 64*prestencil[1] + 60*prestencil[2] + 56*prestencil[3]) / 256;
+    h_stencil_z[2] =  (                          16*prestencil[1] + 24*prestencil[2] + 28*prestencil[3]) / 256;
+    h_stencil_z[3] = -(                                              4*prestencil[2] +  8*prestencil[3]) / 256;
+    h_stencil_z[4] =  (                                                                 1*prestencil[3]) / 256;
 
-    // Compute stencil_x and stencil_y (no filter in these directions,
+    // Compute h_stencil_x and h_stencil_y (no filter in these directions,
     // so only 1 coeff, equal to 1)
-    stencil_x.resize(1);
-    stencil_x[0] = 1.;
+    Vector<Real> h_stencil_x(1);
+    h_stencil_x[0] = 1.;
 #if (AMREX_SPACEDIM == 3)
-    stencil_y.resize(1);
-    stencil_y[0] = 1.;
+    Vector<Real> h_stencil_y(1);
+    h_stencil_y[0] = 1.;
 #endif
 
     // Due to the way Filter::DoFilter() is written,
     // coefficient 0 has to be /2
-    stencil_x[0] /= 2.;
+    h_stencil_x[0] /= 2.;
 #if (AMREX_SPACEDIM == 3)
-    stencil_y[0] /= 2.;
+    h_stencil_y[0] /= 2.;
 #endif
-    stencil_z[0] /= 2.;
+    h_stencil_z[0] /= 2.;
 
+    stencil_x.resize(h_stencil_x.size());
+#if (AMREX_SPACEDIM == 3)
+    stencil_y.resize(h_stencil_y.size());
+#endif
+    stencil_z.resize(h_stencil_z.size());
+
+    Gpu::copyAsync(Gpu::hostToDevice,h_stencil_x.begin(),h_stencil_x.end(),stencil_x.begin());
+#if (AMREX_SPACEDIM == 3)
+    Gpu::copyAsync(Gpu::hostToDevice,h_stencil_y.begin(),h_stencil_y.end(),stencil_y.begin());
+#endif
+    Gpu::copyAsync(Gpu::hostToDevice,h_stencil_z.begin(),h_stencil_z.end(),stencil_z.begin());
+
+    Gpu::synchronize();
 }

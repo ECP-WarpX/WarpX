@@ -305,6 +305,10 @@ WarpX::OneStep_nosub (Real cur_time)
     doQEDEvents();
 #endif
 
+    // +1 is necessary here because value of step seen by user (first step is 1) is different than
+    // value of step in code (first step is 0)
+    mypc->doResampling(istep[0]+1);
+
     // Synchronize J and rho
     SyncCurrent();
     SyncRho();
@@ -414,6 +418,10 @@ WarpX::OneStep_sub1 (Real curtime)
 #ifdef WARPX_QED
     doQEDEvents();
 #endif
+
+    // +1 is necessary here because value of step seen by user (first step is 1) is different than
+    // value of step in code (first step is 0)
+    mypc->doResampling(istep[0]+1);
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
     const int fine_lev = 1;

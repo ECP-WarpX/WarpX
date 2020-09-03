@@ -921,27 +921,28 @@ Collision initialization
 WarpX provides a relativistic elastic Monte Carlo binary collision model,
 following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
 
-* ``collisions.ncollisions`` (`int`) optional (default `0`)
-    Number of collision types.
-
 * ``collisions.collision_names`` (`strings`, separated by spaces)
-    The name of each collision type. It must be provided if ``collisions.ncollisions`` is not zero.
+    The name of each collision type.
     This is then used in the rest of the input deck;
     in this documentation we use ``<collision_name>`` as a placeholder.
-    The number of strings provided should match the number of collision types,
-    i.e. ``collisions.ncollisions``.
 
 * ``<collision_name>.species`` (`strings`, two species names separated by spaces)
     The names of two species, between which the collision will be considered.
-    It must be provided if ``collisions.ncollisions`` is not zero, and
-    the number of provided ``<collision_name>.species`` should match
-    the number of collision types, i.e. ``collisions.ncollisions``.
+    The number of provided ``<collision_name>.species`` should match
+    the number of collision names, i.e. ``collisions.collision_names``.
 
 * ``<collision_name>.CoulombLog`` (`float`) optional
     A provided fixed Coulomb logarithm of the collision type
     ``<collision_name>``.
+    For example, a typical Coulomb logarithm has a form of
+    :math:`\ln(\lambda_D/R)`,
+    where :math:`\lambda_D` is the Debye length,
+    :math:`R\approx1.4A^{1/3}` is the effective Coulombic radius of the nucleus,
+    :math:`A` is the mass number.
     If this is not provided, or if a non-positive value is provided,
     a Coulomb logarithm will be computed automatically according to the algorithm.
+    a Coulomb logarithm will be computed automatically according to the algorithm in
+    `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
 
 .. _running-cpp-parameters-numerics:
 
@@ -1402,10 +1403,12 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Root for output file names. Supports sub-directories.
 
 * ``<diag_name>.diag_lo`` (list `float`, 1 per dimension) optional (default `-infinity -infinity -infinity`)
-    Lower corner of the output fields (if smaller than ``warpx.dom_lo``, then set to ``warpx.dom_lo``).
+    Lower corner of the output fields (if smaller than ``warpx.dom_lo``, then set to ``warpx.dom_lo``). Currently, when the ``diag_lo`` is different from ``warpx.dom_lo``, particle output is disabled.
 
 * ``<diag_name>.diag_hi`` (list `float`, 1 per dimension) optional (default `+infinity +infinity +infinity`)
-    Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``).
+    Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``). Currently, when the ``diag_hi`` is different from ``warpx.dom_hi``, particle output i
+s disabled.
+
 
 * ``<diag_name>.species`` (list of `string`, default all physical species in the simulation)
     Which species dumped in this diagnostics.
