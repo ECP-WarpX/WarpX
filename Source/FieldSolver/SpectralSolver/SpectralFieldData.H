@@ -77,10 +77,10 @@ class SpectralFieldData
          *                             the guard cells of the destination MultiFab
          *                             will be filled in addition to its valid cells
          */
-        void BackwardTransform ( amrex::MultiFab& mf,
-                                 const int field_index,
-                                 const int i_comp,
-                                 const bool fill_guard_cells=false );
+        void BackwardTransform (amrex::MultiFab& mf,
+                                const int field_index,
+                                const int i_comp,
+                                const bool fill_guard_cells = false);
 
         // `fields` stores fields in spectral space, as multicomponent FabArray
         SpectralField fields;
