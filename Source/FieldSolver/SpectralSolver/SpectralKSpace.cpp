@@ -156,9 +156,10 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
             case ShiftType::TransformToCellCentered: sign = 1.;
         }
         const Complex I{0,1};
+        const auto t_dx_idim = dx[i_dim];
         amrex::ParallelFor(N, [=] AMREX_GPU_DEVICE (int i) noexcept
         {
-            pshift[i] = amrex::exp( I*sign*pk[i]*0.5_rt*dx[i_dim]);
+            pshift[i] = amrex::exp( I*sign*pk[i]*0.5_rt*t_dx_idim);
         });
     }
     return shift_factor;
