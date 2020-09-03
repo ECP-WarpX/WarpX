@@ -1,6 +1,10 @@
 #ifndef WARPX_INTERVALSPARSER_H_
 #define WARPX_INTERVALSPARSER_H_
 
+#include <string>
+#include <limits>
+#include <vector>
+
 /**
  * \brief This class is a parser for slices of the form i:j:k where i, j and k are integers
  * representing respectively the starting point, the stopping point and the period.
