@@ -48,7 +48,7 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
 
     const amrex::Real target_ratio = m_target_ratio;
 
-        // Loop over cells
+    // Loop over cells
     amrex::ParallelFor( n_cells,
         [=] AMREX_GPU_DEVICE (int i_cell) noexcept
         {
@@ -58,6 +58,9 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
             const auto cell_stop  = cell_offsets[i_cell+1];
             const int cell_numparts = cell_stop - cell_start;
 
+            // do nothing for cells without particles
+            if (cell_numparts == 0)
+                return;
             amrex::Real average_weight = 0._rt;
 
             // First loop over cell particles to compute average particle weight in the cell
@@ -69,7 +72,6 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
 
             const amrex::Real level_weight = average_weight*target_ratio;
 
-            amrex::Real random_number;
 
             // Second loop over cell particles to perform the thinning
             for (int i = cell_start; i < cell_stop; ++i)
@@ -77,7 +79,7 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
                 // Particles with weight greater than level_weight are left unchanged
                 if (w[indices[i]] > level_weight) {continue;}
 
-                random_number = amrex::Random();
+                amrex::Real const random_number = amrex::Random();
                 // Remove particle with probability 1 - particle_weight/level_weight
                 if (random_number > w[indices[i]]/level_weight)
                 {
