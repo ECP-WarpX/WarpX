@@ -131,6 +131,8 @@ Diagnostics::BaseReadParameters ()
                 }
             }
         }
+        // Clear content of variables before moving to the next species
+        variables.clear();
     }
     // Allocate array of species indices that dump rho per species
     m_rho_per_species_index.resize(ns_dump_rho);
@@ -148,6 +150,8 @@ Diagnostics::BaseReadParameters ()
                 }
             }
         }
+        // Clear content of variables before moving to the next species
+        variables.clear();
     }
 
     bool checkpoint_compatibility = false;
