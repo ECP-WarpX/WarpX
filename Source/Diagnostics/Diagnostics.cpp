@@ -103,13 +103,50 @@ Diagnostics::BaseReadParameters ()
 
     bool species_specified = pp.queryarr("species", m_species_names);
 
-    // Add strings "rho_<species_name>" to m_varnames: if <diag_name>.species
-    // is not specified, dump rho per each species
+    // Prepare to dump rho per species
+    amrex::Vector<std::string> variables;
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
+    // If diag.species is not provided, loop over all species to check whether
+    // rho per species is requested
     if (m_species_names.size() == 0) m_species_names = mpc.GetSpeciesNames();
-    if (WarpXUtilStr::is_in(m_varnames, "rho")) {
-        for (int s = 0, ns = m_species_names.size(); s < ns; s++) {
-            m_varnames.push_back("rho_" + m_species_names[s]);
+    // ns: total number of species
+    // ns_dump_rho: number of species that dump rho per species
+    const int ns = int(m_species_names.size());
+    int ns_dump_rho = 0;
+    // is: species index to loop over all species
+    // is_dump_rho: species index to loop over species that dump rho per species
+    int is;
+    int is_dump_rho;
+    // Loop over all species
+    for (is = 0; is < ns; is++) {
+        // Parse input argument <diag_name>.<species_name>.variables
+        amrex::ParmParse pp_sp(m_diag_name + "." + m_species_names[is]);
+        if (pp_sp.queryarr("variables", variables)) {
+            for (const auto& var : variables) {
+                if (var == "rho") {
+                    // Add strings "rho_<species_name>" to m_varnames
+                    m_varnames.push_back("rho_" + m_species_names[is]);
+                    // Count number of species that dump rho per species
+                    ns_dump_rho++;
+                }
+            }
+        }
+    }
+    // Allocate array of species indices that dump rho per species
+    m_rho_per_species_index.resize(ns_dump_rho);
+    is_dump_rho = 0;
+    // Loop over all species
+    for (is = 0; is < ns; is++) {
+        // Parse input argument <diag_name>.<species_name>.variables
+        amrex::ParmParse pp_sp(m_diag_name + "." + m_species_names[is]);
+        if (pp_sp.queryarr("variables", variables)) {
+            for (const auto& var : variables) {
+                if (var == "rho") {
+                    // Fill array of species indices that dump rho per species
+                    m_rho_per_species_index[is_dump_rho] = is;
+                    is_dump_rho++;
+                }
+            }
         }
     }
 
