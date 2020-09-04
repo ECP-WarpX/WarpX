@@ -303,16 +303,10 @@ SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf, int con
     // Create a copy of the input multifab since the shape of field_mf
     // might not be what is needed in transform.
     // For example, with m_periodic_single_box, field_mf will have guard cells but
-    // the transformed array does not. This is the only time the copy is needed actually.
+    // the transformed array does not.
     // Note that the copy will not include the imaginary part of mode 0 as
     // PhysicalToSpectral_Scalar expects.
-    amrex::IntVect guards;
-    if (m_periodic_single_box) {
-        guards = amrex::IntVect::TheZeroVector();
-    } else {
-        guards = field_mf.nGrowVect();
-    }
-    amrex::MultiFab field_mf_copy(field_mf.boxArray(), field_mf.DistributionMap(), ncomp, guards);
+    amrex::MultiFab field_mf_copy(tempHTransformed.boxArray(), field_mf.DistributionMap(), ncomp, 0);
 
     // This will hold the Hankel transformed data, with the real and imaginary parts split.
     // A full multifab is created so that each GPU stream has its own temp space.
@@ -348,14 +342,8 @@ SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf_r, int c
     // Create copies of the input multifabs. The copies will include the imaginary part of mode 0.
     // Also note that the Hankel transform will overwrite the copies.
     // Full multifabs are created for the temps so that each GPU stream has its own temp space.
-    amrex::IntVect guards;
-    if (m_periodic_single_box) {
-        guards = amrex::IntVect::TheZeroVector();
-    } else {
-        guards = field_mf_r.nGrowVect();
-    }
-    amrex::MultiFab field_mf_r_copy(field_mf_r.boxArray(), field_mf_r.DistributionMap(), 2*n_rz_azimuthal_modes, guards);
-    amrex::MultiFab field_mf_t_copy(field_mf_t.boxArray(), field_mf_t.DistributionMap(), 2*n_rz_azimuthal_modes, guards);
+    amrex::MultiFab field_mf_r_copy(tempHTransformed.boxArray(), field_mf_r.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
+    amrex::MultiFab field_mf_t_copy(tempHTransformed.boxArray(), field_mf_t.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
 
     amrex::MultiFab tempHTransformedSplit_p(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
     amrex::MultiFab tempHTransformedSplit_m(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
