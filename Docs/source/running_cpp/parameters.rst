@@ -1414,13 +1414,16 @@ s disabled.
     Which species dumped in this diagnostics.
 
 * ``<diag_name>.<species_name>.variables`` (list of `strings` separated by spaces, optional)
-    List of particle quantities to write to output file.
-    By defaults, all quantities are written to file. Choices are
+    List of particle quantities or species-specific field quantities to write to output file.
+    Choices are
 
     * ``w`` for the particle weight,
 
     * ``ux`` ``uy`` ``uz`` for the particle momentum,
 
+    * ``rho`` to dump the charge density of the particles belonging to species ``<species_name>``.
+
+    By defaults, all quantities are written to output file, except the charge density.
     The particle positions are always included.
     Use ``<species>.variables = none`` to plot no particle data, except particle position.
 
