@@ -16,16 +16,17 @@ RhoFunctor::RhoFunctor (const int lev,
 void
 RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/ ) const
 {
+    auto& warpx = WarpX::GetInstance();
     std::unique_ptr<amrex::MultiFab> rho;
 
     // Dump total rho
     if (m_species_index == -1) {
-        auto& mypc = WarpX::GetInstance().GetPartContainer();
+        auto& mypc = warpx.GetPartContainer();
         rho = mypc.GetChargeDensity(m_lev);
     }
     // Dump rho per species
     else {
-        auto& mypc = WarpX::GetInstance().GetPartContainer().GetParticleContainer(m_species_index);
+        auto& mypc = warpx.GetPartContainer().GetParticleContainer(m_species_index);
         rho = mypc.GetChargeDensity(m_lev);
     }
 
