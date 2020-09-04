@@ -18,12 +18,12 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
 {
     std::unique_ptr<amrex::MultiFab> rho;
 
-    // Total rho
+    // Dump total rho
     if (m_species_index == -1) {
         auto& mypc = WarpX::GetInstance().GetPartContainer();
         rho = mypc.GetChargeDensity(m_lev);
     }
-    // Rho per species
+    // Dump rho per species
     else {
         auto& mypc = WarpX::GetInstance().GetPartContainer().GetParticleContainer(m_species_index);
         rho = mypc.GetChargeDensity(m_lev);
