@@ -99,6 +99,10 @@ class LabFrameDiag {
     virtual void AddPartDataToParticleBuffer(
                  amrex::Vector<WarpXParticleContainer::DiagnosticParticleData> const& /*tmp_particle_buffer*/,
                  int /*nSpeciesBoostedFrame*/) {}
+
+    // The destructor should also be a virtual function, so that
+    // a pointer to subclass of `LabFrameDiag` actually calls the subclass's destructor.
+    virtual ~LabFrameDiag() {}
 };
 
 /** \brief
