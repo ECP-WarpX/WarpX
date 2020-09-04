@@ -18,7 +18,7 @@ const int tab_length = 101;
 // Table of coefficient for Ex, Ey and Bz for Galerkin gather.
 // Each line stands for one value of c*dt/dz, between 0 and 1.
 // We typically interpolate between two lines.
-const amrex::Real table_nci_godfrey_galerkin_Ex_Ey_Bz[tab_length][tab_width]{
+const amrex::Real table_nci_godfrey_galerkin_Ex_Ey_Bz[tab_length][tab_width]{{
     -2.47536,2.04288,-0.598163,0.0314711,
     -2.47536,2.04288,-0.598163,0.0314711,
     -2.47545,2.04309,-0.598307,0.0315029,
@@ -120,12 +120,12 @@ const amrex::Real table_nci_godfrey_galerkin_Ex_Ey_Bz[tab_length][tab_width]{
     -2.97239,3.15953,-1.39055,0.203448,
     -2.97991,3.17632,-1.40234,0.205964,
     -2.98769,3.19374,-1.41463,0.208607
-};
+}};
 
 // Table of coefficient for Bx, By and Ez for Galerkin gather.
 // Each line stands for one value of c*dt/dz, between 0 and 1.
 // We typically interpolate between two lines.
-const amrex::Real table_nci_godfrey_galerkin_Bx_By_Ez[tab_length][tab_width]{
+const amrex::Real table_nci_godfrey_galerkin_Bx_By_Ez[tab_length][tab_width]{{
     -2.80862,2.80104,-1.14615,0.154077,
     -2.80862,2.80104,-1.14615,0.154077,
     -2.80851,2.80078,-1.14595,0.154027,
@@ -227,13 +227,13 @@ const amrex::Real table_nci_godfrey_galerkin_Bx_By_Ez[tab_length][tab_width]{
     -2.66546,2.46764,-0.897118,0.0954599,
     -2.65985,2.45489,-0.887903,0.0934011,
     -2.65437,2.44244,-0.878945,0.0914107
-};
+}};
 
 // Table of coefficient for Ex, Ey and Bz for momentum-conserving gather
 // (from node-centered fields).
 // Each line stands for one value of c*dt/dz, between 0 and 1.
 // We typically interpolate between two lines.
-const amrex::Real table_nci_godfrey_momentum_Ex_Ey_Bz[tab_length][tab_width]{
+const amrex::Real table_nci_godfrey_momentum_Ex_Ey_Bz[tab_length][tab_width]{{
     -2.98767,3.19368,-1.41458,0.208594,
     -2.98767,3.19368,-1.41458,0.208594,
     -2.9876,3.19351,-1.41444,0.208555,
@@ -335,13 +335,13 @@ const amrex::Real table_nci_godfrey_momentum_Ex_Ey_Bz[tab_length][tab_width]{
     -3.28039,3.93914,-2.03529,0.376536,
     -3.2888,3.96065,-2.05328,0.381432,
     -3.2888,3.96065,-2.05328,0.381432
-};
+}};
 
 // Table of coefficient for Bx, By and Ez for momentum-conserving gather
 // (from node-centered fields).
 // Each line stands for one value of c*dt/dz, between 0 and 1.
 // We typically interpolate between two lines.
-const amrex::Real table_nci_godfrey_momentum_Bx_By_Ez[tab_length][tab_width]{
+const amrex::Real table_nci_godfrey_momentum_Bx_By_Ez[tab_length][tab_width]{{
     -2.65428,2.44224,-0.878796,0.0913764,
     -2.65428,2.44224,-0.878796,0.0913764,
     -2.65401,2.44163,-0.878347,0.0912737,
@@ -443,6 +443,6 @@ const amrex::Real table_nci_godfrey_momentum_Bx_By_Ez[tab_length][tab_width]{
     -2.30679,1.70363,-0.396865,0.00137709,
     -2.30207,1.69438,-0.391629,0.000683629,
     -2.30207,1.69438,-0.391629,0.000683629
-};
+}};
 
 #endif // #ifndef WARPX_GODFREY_COEFF_TABLE_H_
