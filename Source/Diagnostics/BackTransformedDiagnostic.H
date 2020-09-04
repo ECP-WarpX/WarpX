@@ -102,7 +102,7 @@ class LabFrameDiag {
 
     // The destructor should also be a virtual function, so that
     // a pointer to subclass of `LabFrameDiag` actually calls the subclass's destructor.
-    virtual ~LabFrameDiag() {}
+    virtual ~LabFrameDiag() = default;
 };
 
 /** \brief
