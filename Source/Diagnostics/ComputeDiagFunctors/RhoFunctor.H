@@ -21,9 +21,13 @@ public:
      * \param[in] convertRZmodes2cartesian if true, all RZ modes are averaged into one component
      * \param[in] ncomp optional number of component of source MultiFab mf_src
      *                  to be cell-centered in output MultiFab mf_dst
+     * TODO \param[in] species_index
      */
-    RhoFunctor ( const int lev, const amrex::IntVect crse_ratio,
-                 bool convertRZmodes2cartesian=true, const int ncomp=1 );
+    RhoFunctor (const int lev,
+                const amrex::IntVect crse_ratio,
+                const int species_index = -1,
+                bool convertRZmodes2cartesian = true,
+                const int ncomp = 1);
 
     /**
      * \brief Compute rho directly into mf_dst
@@ -37,6 +41,9 @@ private:
 
     // Level on which source MultiFab mf_src is defined in RZ geometry
     int const m_lev;
+
+    // Species index to dump rho per species
+    const int m_species_index;
 
     // Whether to average all modes into one component in RZ geometry
     bool m_convertRZmodes2cartesian;

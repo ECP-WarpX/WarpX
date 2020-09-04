@@ -103,11 +103,9 @@ Diagnostics::BaseReadParameters ()
 
     bool species_specified = pp.queryarr("species", m_species_names);
 
-    // TODO Back-transformed diagnostics
     // Add strings "rho_<species_name>" to m_varnames: if <diag_name>.species
     // is not specified, dump rho per each species
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
-    // If not specified, dump all species
     if (m_species_names.size() == 0) m_species_names = mpc.GetSpeciesNames();
     if (WarpXUtilStr::is_in(m_varnames, "rho")) {
         for (int s = 0, ns = m_species_names.size(); s < ns; s++) {

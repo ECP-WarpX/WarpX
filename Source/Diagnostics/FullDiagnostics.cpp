@@ -351,6 +351,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
     // Clear any pre-existing vector to release stored data.
     m_all_field_functors[lev].clear();
 
+    // Species index
+    int i_species = 0;
+
     m_all_field_functors[lev].resize( m_varnames.size() );
     // Fill vector of functors for all components except individual cylindrical modes.
     for (int comp=0, n=m_all_field_functors[lev].size(); comp<n; comp++){
@@ -372,7 +375,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 1), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "jz" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_current_fp(lev, 2), lev, m_crse_ratio);
-        } else if ( m_varnames[comp].find("rho") != std::string::npos ){
+        } else if ( m_varnames[comp] == "rho" ){
             if ( WarpX::do_back_transformed_diagnostics ) {
 #ifdef WARPX_USE_PSATD
                 // rho_new is stored in component 1 of rho_fp when using PSATD
@@ -385,6 +388,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             else {
                 m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
             }
+        } else if ( m_varnames[comp].find("rho_") != std::string::npos ){
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, i_species);
+            i_species++;
         } else if ( m_varnames[comp] == "F" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_cell" ){
