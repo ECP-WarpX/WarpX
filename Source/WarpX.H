@@ -269,7 +269,7 @@ public:
 
     amrex::Real time_of_last_gal_shift  = 0;
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
-
+    amrex::Array<amrex::Real,3> galilean_shift = {{0}};
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
@@ -554,6 +554,10 @@ protected:
     //! Tagging cells for refinement
     virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
 
+    //! Use this function to override the Level 0 grids made by AMReX.
+    //! This function is called in amrex::AmrCore::InitFromScratch.
+    virtual void PostProcessBaseGrids (amrex::BoxArray& ba0) const final;
+
     //! Make a new level from scratch using provided BoxArray and
     //! DistributionMapping.  Only used during initialization.  Called
     //! by AmrCoreInitFromScratch.
@@ -833,6 +837,9 @@ private:
     int nox_fft = 16;
     int noy_fft = 16;
     int noz_fft = 16;
+
+    // Domain decomposition on Level 0
+    amrex::IntVect numprocs{0};
 
 #ifdef WARPX_USE_PSATD
 private:

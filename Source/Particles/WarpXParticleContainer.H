@@ -14,6 +14,7 @@
 #include "Utils/WarpXConst.H"
 #include "SpeciesPhysicalProperties.H"
 #include "Evolve/WarpXDtType.H"
+#include "Particles/Resampling/Resampling.H"
 
 #ifdef WARPX_QED
 #    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
@@ -250,7 +251,7 @@ public:
     void AddNParticles (int lev,
                         int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
                         const amrex::ParticleReal* vx, const amrex::ParticleReal* vy, const amrex::ParticleReal* vz,
-                        int nattr, const amrex::ParticleReal* attr, int uniqueparticles, int id=-1);
+                        int nattr, const amrex::ParticleReal* attr, int uniqueparticles, amrex::Long id=-1);
 
     virtual void ReadHeader (std::istream& is);
 
@@ -261,10 +262,6 @@ public:
     static void ReadParameters ();
 
     static void BackwardCompatibility ();
-
-    static int NextID () { return ParticleType::NextID(); }
-
-    void setNextID(int next_id) { ParticleType::NextID(next_id); }
 
     bool do_splitting = false;
     bool initialize_self_fields = false;
@@ -332,6 +329,11 @@ public:
 
     amrex::Array<amrex::Real,3> get_v_galilean () {return v_galilean;}
 
+    /**
+     * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer.
+     */
+    virtual void resample (const Resampling& /*resampler*/, const int /*timestep*/) {};
+
 protected:
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
@@ -371,6 +373,8 @@ protected:
     amrex::Gpu::ManagedVector<amrex::Real> adk_prefactor;
     amrex::Gpu::ManagedVector<amrex::Real> adk_exp_prefactor;
     std::string physical_element;
+
+    int do_resampling = 0;
 
     int do_back_transformed_diagnostics = 1;
 

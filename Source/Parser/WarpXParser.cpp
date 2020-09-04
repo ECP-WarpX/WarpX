@@ -100,7 +100,7 @@ WarpXParser::registerVariables (std::vector<std::string> const& names)
         const int tid = omp_get_thread_num();
         struct wp_parser* p = m_parser[tid];
         auto& v = m_variables[tid];
-        for (int j = 0; j < names.size(); ++j) {
+        for (int j = 0; j < static_cast<int>(names.size()); ++j) {
             wp_parser_regvar(p, names[j].c_str(), &(v[j]));
             m_varnames[tid].push_back(names[j]);
         }
@@ -144,6 +144,18 @@ WarpXParser::print () const
 #else
     wp_ast_print(m_parser->ast);
 #endif
+}
+
+int
+WarpXParser::depth () const
+{
+    int n = 0;
+#ifdef _OPENMP
+    wp_ast_depth(m_parser[omp_get_thread_num()]->ast, &n);
+#else
+    wp_ast_depth(m_parser->ast, &n);
+#endif
+    return n;
 }
 
 std::string const&
