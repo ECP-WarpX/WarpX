@@ -332,7 +332,7 @@ public:
     /**
      * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer.
      */
-    virtual void resample (const Resampling& /*resampler*/, const int /*timestep*/) {};
+    virtual void resample (const Resampling& /*resampler*/, const int /*timestep*/) {}
 
 protected:
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
