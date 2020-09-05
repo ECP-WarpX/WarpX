@@ -862,7 +862,7 @@ public:
 #   ifdef WARPX_DIM_RZ
         SpectralSolverRZ&
 #   else
-        SpectralSolver& 
+        SpectralSolver&
 #   endif
             get_spectral_solver_fp (int lev) {return *spectral_solver_fp[lev];}
 #endif
