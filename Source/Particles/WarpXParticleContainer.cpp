@@ -630,9 +630,14 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     const auto& ba = m_gdb->ParticleBoxArray(lev);
     const auto& dm = m_gdb->DistributionMap(lev);
     BoxArray nba = ba;
-#if (!defined WARPX_DIM_RZ) || (!defined WARPX_USE_PSATD)
-    nba.surroundingNodes();
+
+    bool is_PSATD_RZ = false;
+#ifdef WARPX_DIM_RZ
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        is_PSATD_RZ = true;
 #endif
+    if( !is_PSATD_RZ )
+        nba.surroundingNodes();
 
     // Number of guard cells for local deposition of rho
     WarpX& warpx = WarpX::GetInstance();

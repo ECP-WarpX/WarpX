@@ -56,7 +56,7 @@ void FiniteDifferenceSolver::EvolveEPML (
             Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles );
 
     } else {
-        amrex::Abort("Unknown algorithm");
+        amrex::Abort("EvolveEPML: Unknown algorithm");
     }
 #endif
 }
