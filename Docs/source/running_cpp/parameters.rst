@@ -1078,9 +1078,8 @@ Numerics and algorithms
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.
     Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
-    is ``esirkepov`` if WarpX is compiled with the FDTD solver (that is, with
-    ``USE_PSATD=FALSE``) and ``direct`` if WarpX is compiled with the standard or
-    Galilean PSATD solver (that is, with ``USE_PSATD=TRUE``).
+    is ``esirkepov`` for FDTD maxwell solvers and ``direct`` for standard or
+    Galilean PSATD solver (that is, with ``algo.maxwell_solver = psatd``).
 
     1. ``direct``
 
@@ -1136,9 +1135,9 @@ Numerics and algorithms
      - ``yee``: Yee FDTD solver.
      - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
        coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
+     - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-pic-mwsolve-psatd>`)
 
      If ``algo.maxwell_solver`` is not specified, ``yee`` is the default.
-     Note: this option is currently ignored with PSATD.
 
 * ``algo.em_solver_medium`` (`string`, optional)
     The medium for evaluating the Maxwell solver. Available options are :
