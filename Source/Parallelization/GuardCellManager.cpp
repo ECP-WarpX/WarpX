@@ -6,6 +6,8 @@
  */
 #include "GuardCellManager.H"
 #include "Filter/NCIGodfreyFilter.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+
 #include <AMReX_Print.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX.H>
@@ -91,7 +93,7 @@ guardCellManager::Init(
     // after pushing particle.
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell
-    if (maxwell_solver_id == 1) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
+    if (maxwell_solver_id == MaxwellSolverAlgo::CKC) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 
 #ifdef WARPX_USE_PSATD
