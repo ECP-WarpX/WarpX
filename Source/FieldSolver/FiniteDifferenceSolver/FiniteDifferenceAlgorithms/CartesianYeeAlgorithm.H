@@ -9,6 +9,7 @@
 #define WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_YEE_H_
 
 #include "Utils/WarpXConst.H"
+#include "FieldAccessorFunctors.H"
 
 #include <AMReX.H>
 #include <AMReX_REAL.H>
@@ -68,15 +69,15 @@ struct CartesianYeeAlgorithm {
 
     /**
      * Perform derivative along x on a nodal grid, from a cell-centered field `F`*/
+    template< typename T_Field>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real DownwardDx (
-        amrex::Array4<amrex::Real> const& F,
+        T_Field const& F,
         amrex::Real const * const coefs_x, int const /*n_coefs_x*/,
-        int const i, int const j, int const k, int const ncomp=0,
-        amrex::Real const mu_up =1.0, amrex::Real const mu_down = 1.0  ) {
+        int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const inv_dx = coefs_x[0];
-        return inv_dx*( F(i,j,k,ncomp)/mu_up - F(i-1,j,k,ncomp)/mu_down );
+        return inv_dx*( F(i,j,k,ncomp) - F(i-1,j,k,ncomp) );
     }
 
     /**
@@ -103,17 +104,17 @@ struct CartesianYeeAlgorithm {
 
     /**
      * Perform derivative along y on a nodal grid, from a cell-centered field `F`*/
+    template< typename T_Field>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real DownwardDy (
-        amrex::Array4<amrex::Real> const& F,
+        T_Field const& F,
         amrex::Real const * const coefs_y, int const n_coefs_y,
-        int const i, int const j, int const k, int const ncomp=0,
-        amrex::Real const mu_up =1.0, amrex::Real const mu_down = 1.0  ) {
+        int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
 #if defined WARPX_DIM_3D
         Real const inv_dy = coefs_y[0];
-        return inv_dy*( F(i,j,k,ncomp)/mu_up - F(i,j-1,k,ncomp)/mu_down );
+        return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
 #elif (defined WARPX_DIM_XZ)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
@@ -143,19 +144,19 @@ struct CartesianYeeAlgorithm {
 
     /**
      * Perform derivative along z on a nodal grid, from a cell-centered field `F`*/
+    template< typename T_Field>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real DownwardDz (
-        amrex::Array4<amrex::Real> const& F,
+        T_Field const& F,
         amrex::Real const * const coefs_z, int const /*n_coefs_z*/,
-        int const i, int const j, int const k, int const ncomp=0,
-        amrex::Real const mu_up =1.0, amrex::Real const mu_down = 1.0  ) {
+        int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
         Real const inv_dz = coefs_z[0];
 #if defined WARPX_DIM_3D
-        return inv_dz*( F(i,j,k,ncomp)/mu_up - F(i,j,k-1,ncomp)/mu_down );
+        return inv_dz*( F(i,j,k,ncomp) - F(i,j,k-1,ncomp) );
 #elif (defined WARPX_DIM_XZ)
-        return inv_dz*( F(i,j,k,ncomp)/mu_up - F(i,j-1,k,ncomp)/mu_down );
+        return inv_dz*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
 #endif
     }
 

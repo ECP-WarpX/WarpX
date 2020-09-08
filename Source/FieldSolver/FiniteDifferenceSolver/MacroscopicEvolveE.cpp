@@ -5,6 +5,7 @@
 #else
 #   include "FiniteDifferenceAlgorithms/CartesianYeeAlgorithm.H"
 #   include "FiniteDifferenceAlgorithms/CartesianCKCAlgorithm.H"
+#   include "FiniteDifferenceAlgorithms/FieldAccessorFunctors.H"
 #endif
 #include "Utils/WarpXConst.H"
 #include "Utils/CoarsenIO.H"
@@ -127,6 +128,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
         int const n_coefs_z = m_stencil_coefs_z.size();
 
+        FieldAccessorMacroscopic const Bx_raw(Bx, mu_arr);
+        FieldAccessorMacroscopic const By_raw(By, mu_arr);
+        FieldAccessorMacroscopic const Bz_raw(Bz, mu_arr);
+
         // Extract tileboxes for which to loop
         Box const& tex  = mfi.tilebox(Efield[0]->ixType().toIntVect());
         Box const& tey  = mfi.tilebox(Efield[1]->ixType().toIntVect());
@@ -145,15 +150,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
                 Ex(i, j, k) = alpha * Ex(i, j, k) + (beta/1.0)
-                     * ( - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k,0,
-#ifdef WARPX_DIM_3D
-                                              mu_arr(i,j,k), mu_arr(i,j,k-1))
-#elif WARPX_DIM_XZ
-                                              mu_arr(i,j,k), mu_arr(i,j-1,k))
-#endif
-                         + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k,0,
-                                              mu_arr(i,j,k), mu_arr(i,j-1,k)) )
-                           - beta * jx(i, j, k);
+                     * ( - T_Algo::DownwardDz(By_raw, coefs_z, n_coefs_z, i, j, k,0)
+                         + T_Algo::DownwardDy(Bz_raw, coefs_y, n_coefs_y, i, j, k,0)
+                       ) - beta * jx(i, j, k);
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -165,15 +164,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
                 Ey(i, j, k) = alpha * Ey(i, j, k) + (beta/1.0)
-                     * ( - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k,0,
-                                              mu_arr(i,j,k), mu_arr(i-1,j,k))
-                         + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k,0,
-#ifdef WARPX_DIM_3D
-                                              mu_arr(i,j,k), mu_arr(i,j,k-1)) )
-#elif WARPX_DIM_XZ
-                                              mu_arr(i,j,k), mu_arr(i,j-1,k)) )
-#endif
-                           - beta * jy(i, j, k);
+                     * ( - T_Algo::DownwardDx(Bz_raw, coefs_x, n_coefs_x, i, j, k,0)
+                         + T_Algo::DownwardDz(Bx_raw, coefs_z, n_coefs_z, i, j, k,0)
+                       ) - beta * jy(i, j, k);
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -185,13 +178,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
                 Ez(i, j, k) = alpha * Ez(i, j, k) + (beta/1.0)
-                     * ( - T_Algo::DownwardDy(Bx, coefs_y, n_coefs_y, i, j, k,0,
-                                              mu_arr(i,j,k), mu_arr(i,j-1,k))
-                         + T_Algo::DownwardDx(By, coefs_x, n_coefs_x, i, j, k,0,
-                                              mu_arr(i,j,k), mu_arr(i-1,j,k)))
-                             - beta * jz(i, j, k);
+                     * ( - T_Algo::DownwardDy(Bx_raw, coefs_y, n_coefs_y, i, j, k,0)
+                         + T_Algo::DownwardDx(By_raw, coefs_x, n_coefs_x, i, j, k,0)
+                       ) - beta * jz(i, j, k);
             }
-
         );
     }
 }
