@@ -92,6 +92,8 @@ protected:
         back-transform diagnostics) to be processed for diagnostics.
      */
     virtual void PrepareFieldDataForOutput () {}
+    /** Shift the diag-domain boundary for moving window and galilean simulations */
+    virtual void MovingWindowAndGalileanDomainShift () {}
     /** Name of diagnostics: runtime parameter given in the input file. */
     std::string m_diag_name;
     /** Prefix for output directories */
@@ -116,6 +118,14 @@ protected:
      *  The second vector is loops over the total number of levels.
      */
     amrex::Vector< amrex::Vector< amrex::MultiFab > >  m_mf_output;
+
+    /** Geometry that defines the domain attributes corresponding to output multifab.
+     *  Specifically, the user-defined physical co-ordinates for the diagnostics
+     *  is used to construct the geometry information for each MultiFab at
+     *  the respective levels. This geometry will be used to write out
+     *  plotfile data using the WriteToFile() function
+     */
+    amrex::Vector< amrex::Vector <amrex::Geometry> > m_geom_output;
     // a particle buffer here?
     int nlev; /**< number of levels to output */
     int nmax_lev; /**< max_level to allocate output multifab and vector of field functors. */

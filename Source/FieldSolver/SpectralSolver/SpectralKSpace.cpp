@@ -75,17 +75,18 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
                                const int i_dim,
                                const bool only_positive_k ) const
 {
-    // Initialize an empty ManagedVector in each box
+    // Initialize an empty DeviceVector in each box
     KVectorComponent k_comp(spectralspace_ba, dm);
-    // Loop over boxes and allocate the corresponding ManagedVector
+    // Loop over boxes and allocate the corresponding DeviceVector
     // for each box owned by the local MPI proc
     for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
         Box bx = spectralspace_ba[mfi];
-        ManagedVector<Real>& k = k_comp[mfi];
+        DeviceVector<Real>& k = k_comp[mfi];
 
         // Allocate k to the right size
         int N = bx.length( i_dim );
         k.resize( N );
+        Real* pk = k.data();
 
         // Fill the k vector
         IntVect fft_size = realspace_ba[mfi].length();
@@ -97,21 +98,24 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
         if (only_positive_k){
             // Fill the full axis with positive k values
             // (typically: first axis, in a real-to-complex FFT)
-            for (int i=0; i<N; i++ ){
-                k[i] = i*dk;
-            }
+            amrex::ParallelFor(N, [=] AMREX_GPU_DEVICE (int i) noexcept
+            {
+                pk[i] = i*dk;
+            });
         } else {
             const int mid_point = (N+1)/2;
-            // Fill positive values of k
-            // (FFT conventions: first half is positive)
-            for (int i=0; i<mid_point; i++ ){
-                k[i] = i*dk;
-            }
-            // Fill negative values of k
-            // (FFT conventions: second half is negative)
-            for (int i=mid_point; i<N; i++){
-                k[i] = (i-N)*dk;
-            }
+            amrex::ParallelFor(N, [=] AMREX_GPU_DEVICE (int i) noexcept
+            {
+                if (i < mid_point) {
+                    // Fill positive values of k
+                    // (FFT conventions: first half is positive)
+                    pk[i] = i*dk;
+                } else {
+                    // Fill negative values of k
+                    // (FFT conventions: second half is negative)
+                    pk[i] = (i-N)*dk;
+                }
+            });
         }
     }
     return k_comp;
@@ -131,16 +135,19 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
                                         const int i_dim,
                                         const int shift_type ) const
 {
-    // Initialize an empty ManagedVector in each box
+    // Initialize an empty DeviceVector in each box
     SpectralShiftFactor shift_factor( spectralspace_ba, dm );
-    // Loop over boxes and allocate the corresponding ManagedVector
+   // Loop over boxes and allocate the corresponding DeviceVector
     // for each box owned by the local MPI proc
     for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
-        const ManagedVector<Real>& k = k_vec[i_dim][mfi];
-        ManagedVector<Complex>& shift = shift_factor[mfi];
+        const DeviceVector<Real>& k = k_vec[i_dim][mfi];
+        DeviceVector<Complex>& shift = shift_factor[mfi];
 
         // Allocate shift coefficients
-        shift.resize( k.size() );
+        const int N = k.size();
+        shift.resize(N);
+        Real const* pk = k.data();
+        Complex* pshift = shift.data();
 
         // Fill the shift coefficients
         Real sign = 0;
@@ -149,9 +156,11 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
             case ShiftType::TransformToCellCentered: sign = 1.;
         }
         const Complex I{0,1};
-        for (int i=0; i<k.size(); i++ ){
-            shift[i] = exp( I*sign*k[i]*0.5_rt*dx[i_dim]);
-        }
+        const auto t_dx_idim = dx[i_dim];
+        amrex::ParallelFor(N, [=] AMREX_GPU_DEVICE (int i) noexcept
+        {
+            pshift[i] = amrex::exp( I*sign*pk[i]*0.5_rt*t_dx_idim);
+        });
     }
     return shift_factor;
 }
@@ -175,68 +184,81 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                                        const int n_order,
                                        const bool nodal ) const
 {
-    // Initialize an empty ManagedVector in each box
+    // Initialize an empty DeviceVector in each box
     KVectorComponent modified_k_comp(spectralspace_ba, dm);
 
     if (n_order == -1) { // Infinite-order case
         for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
-            const ManagedVector<Real>& k = k_vec[i_dim][mfi];
-            ManagedVector<Real>& modified_k = modified_k_comp[mfi];
+            const DeviceVector<Real>& k = k_vec[i_dim][mfi];
+            DeviceVector<Real>& modified_k = modified_k_comp[mfi];
 
             // Allocate modified_k to the same size as k
+            const int N = k.size();
             modified_k.resize( k.size() );
 
             // Fill the modified k vector
-            for (int i=0; i<k.size(); i++ ){
-                modified_k[i] = k[i]; // infinite-order case.
-            }
+            Gpu::copyAsync(Gpu::deviceToDevice, k.begin(), k.end(), modified_k.begin());
         }
     } else {
 
         // Compute real-space stencil coefficients
-        Vector<Real> stencil_coef = getFonbergStencilCoefficients(n_order, nodal);
+        Vector<Real> h_stencil_coef = getFonbergStencilCoefficients(n_order, nodal);
+        DeviceVector<Real> d_stencil_coef(h_stencil_coef.size());
+        Gpu::copyAsync(Gpu::hostToDevice, h_stencil_coef.begin(), h_stencil_coef.end(),
+                       d_stencil_coef.begin());
+        Gpu::synchronize();
+        const int nstencil = d_stencil_coef.size();
+        Real const* p_stencil_coef = d_stencil_coef.data();
 
-        // Loop over boxes and allocate the corresponding ManagedVector
+        // Loop over boxes and allocate the corresponding DeviceVector
         // for each box owned by the local MPI proc
         for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
             Real delta_x = dx[i_dim];
-            const ManagedVector<Real>& k = k_vec[i_dim][mfi];
-            ManagedVector<Real>& modified_k = modified_k_comp[mfi];
+            const DeviceVector<Real>& k = k_vec[i_dim][mfi];
+            DeviceVector<Real>& modified_k = modified_k_comp[mfi];
 
             // Allocate modified_k to the same size as k
-            modified_k.resize( k.size() );
+            const int N = k.size();
+            modified_k.resize(N);
+            Real const* p_k = k.data();
+            Real * p_modified_k = modified_k.data();
 
             // Fill the modified k vector
-            for (int i=0; i<k.size(); i++ ){
-                modified_k[i] = 0;
-                for (int n=1; n<stencil_coef.size(); n++){
+            amrex::ParallelFor(N, [=] AMREX_GPU_DEVICE (int i) noexcept
+            {
+                p_modified_k[i] = 0;
+                for (int n=1; n<nstencil; n++){
                     if (nodal){
-                        modified_k[i] += stencil_coef[n]* \
-                            std::sin( k[i]*n*delta_x )/( n*delta_x );
+                        p_modified_k[i] += p_stencil_coef[n]*
+                            std::sin( p_k[i]*n*delta_x )/( n*delta_x );
                     } else {
-                        modified_k[i] += stencil_coef[n]* \
-                            std::sin( k[i]*(n-0.5)*delta_x )/( (n-0.5)*delta_x );
+                        p_modified_k[i] += p_stencil_coef[n]* \
+                            std::sin( p_k[i]*(n-0.5)*delta_x )/( (n-0.5)*delta_x );
                     }
                 }
-            }
 
-            // By construction, at finite order and for a nodal grid,
-            // the *modified* k corresponding to the Nyquist frequency
-            // (i.e. highest *real* k) is 0. However, the above calculation
-            // based on stencil coefficients does not give 0 to machine precision.
-            // Therefore, we need to enforce the fact that the modified k be 0 here.
-            if (nodal){
-                if (i_dim == 0){
-                    // Because of the real-to-complex FFTs, the first axis (idim=0)
-                    // contains only the positive k, and the Nyquist frequency is
-                    // the last element of the array.
-                    modified_k[k.size()-1] = 0.0_rt;
-              }   else {
-                    // The other axes contains both positive and negative k ;
-                    // the Nyquist frequency is in the middle of the array.
-                    modified_k[k.size()/2] = 0.0_rt;
-              }
-            }
+                // By construction, at finite order and for a nodal grid,
+                // the *modified* k corresponding to the Nyquist frequency
+                // (i.e. highest *real* k) is 0. However, the above calculation
+                // based on stencil coefficients does not give 0 to machine precision.
+                // Therefore, we need to enforce the fact that the modified k be 0 here.
+                if (nodal){
+                    if (i_dim == 0){
+                        // Because of the real-to-complex FFTs, the first axis (idim=0)
+                        // contains only the positive k, and the Nyquist frequency is
+                        // the last element of the array.
+                        if (i == N-1) {
+                            p_modified_k[i] = 0.0_rt;
+                        }
+                    } else {
+                        // The other axes contains both positive and negative k ;
+                        // the Nyquist frequency is in the middle of the array.
+                        if (i == N/2) {
+                            p_modified_k[i] = 0.0_rt;
+                        }
+                    }
+                }
+            });
         }
     }
     return modified_k_comp;

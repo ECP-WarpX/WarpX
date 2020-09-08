@@ -269,7 +269,7 @@ public:
 
     amrex::Real time_of_last_gal_shift  = 0;
     amrex::Array<amrex::Real,3> v_galilean = {{0}};
-
+    amrex::Array<amrex::Real,3> galilean_shift = {{0}};
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;

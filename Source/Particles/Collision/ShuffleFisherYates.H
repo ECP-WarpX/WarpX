@@ -21,7 +21,7 @@ void ShuffleFisherYates (T_index *array, T_index const is, T_index const ie)
 {
     int     j;
     T_index buf;
-    for (int i = ie-1; i >= is+1; --i)
+    for (int i = ie-1; i >= static_cast<int>(is+1); --i)
     {
         // get random number j: is <= j <= i
         j = amrex::Random_int(i-is+1) + is;

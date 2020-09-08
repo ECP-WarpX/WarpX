@@ -12,6 +12,7 @@
 
 #include <AMReX_REAL.H>
 #include <AMReX_FArrayBox.H>
+#include <AMReX.H>
 
 
 /** \brief Push the particle's positions over one timestep,
@@ -31,6 +32,8 @@ void UpdatePosition(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::Parti
     x += ux * inv_gamma * dt;
 #if (AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ) // RZ pushes particles in 3D
     y += uy * inv_gamma * dt;
+#else
+    amrex::ignore_unused(y);
 #endif
     z += uz * inv_gamma * dt;
 }

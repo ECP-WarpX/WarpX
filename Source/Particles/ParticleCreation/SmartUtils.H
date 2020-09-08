@@ -39,7 +39,7 @@ SmartCopyTag getSmartCopyTag (const NameMap& src, const NameMap& dst) noexcept;
 template <typename PTile>
 void setNewParticleIDs (PTile& ptile, int old_size, int num_added)
 {
-    int pid;
+    amrex::Long pid;
 #ifdef _OPENMP
 #pragma omp critical (ionization_nextid)
 #endif

@@ -37,7 +37,7 @@ public:
 protected:
     // Stencil along each direction.
     // in 2D, stencil_y is not initialized.
-    amrex::Gpu::ManagedVector<amrex::Real> stencil_x, stencil_y, stencil_z;
+    amrex::Gpu::DeviceVector<amrex::Real> stencil_x, stencil_y, stencil_z;
     // Length of each stencil.
     // In 2D, slen = {length(stencil_x), length(stencil_z), 1}
     amrex::Dim3 slen;

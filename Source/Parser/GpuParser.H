@@ -37,10 +37,10 @@ public:
         amrex::GpuArray<amrex::Real,N> l_var{var...};
 #if AMREX_DEVICE_COMPILE
 // WarpX compiled for GPU, function compiled for __device__
-        return wp_ast_eval(m_gpu_parser.ast, l_var.data());
+        return wp_ast_eval<0>(m_gpu_parser.ast, l_var.data());
 #else
 // WarpX compiled for GPU, function compiled for __host__
-        return wp_ast_eval(m_cpu_parser->ast, nullptr);
+        return wp_ast_eval<0>(m_cpu_parser->ast, nullptr);
 #endif
 
 #else
@@ -51,7 +51,7 @@ public:
         int tid = 0;
 #endif
         m_var[tid] = amrex::GpuArray<amrex::Real,N>{var...};
-        return wp_ast_eval(m_parser[tid]->ast, nullptr);
+        return wp_ast_eval<0>(m_parser[tid]->ast, nullptr);
 #endif
     }
 
@@ -75,6 +75,8 @@ private:
 template <int N>
 GpuParser<N>::GpuParser (WarpXParser const& wp)
 {
+    AMREX_ALWAYS_ASSERT(wp.depth() <= WARPX_PARSER_DEPTH);
+
 #ifdef AMREX_USE_GPU
 
     struct wp_parser* a_wp = wp.m_parser;

@@ -19,6 +19,7 @@
 #include "Deposition/ChargeDeposition.H"
 
 #include <AMReX_AmrParGDB.H>
+#include <AMReX.H>
 
 #include <limits>
 
@@ -98,7 +99,7 @@ void
 WarpXParticleContainer::AddNParticles (int /*lev*/,
                                        int n, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z,
                                        const ParticleReal* vx, const ParticleReal* vy, const ParticleReal* vz,
-                                       int nattr, const ParticleReal* attr, int uniqueparticles, int id)
+                                       int nattr, const ParticleReal* attr, int uniqueparticles, amrex::Long id)
 {
     BL_ASSERT(nattr == 1); //! @fixme nattr is unused below: false sense of safety
     const ParticleReal* weight = attr;
@@ -146,6 +147,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         p.pos(1) = y[i];
         p.pos(2) = z[i];
 #elif (AMREX_SPACEDIM == 2)
+        amrex::ignore_unused(y);
 #ifdef WARPX_DIM_RZ
         theta[i-ibegin] = std::atan2(y[i], x[i]);
         p.pos(0) = std::sqrt(x[i]*x[i] + y[i]*y[i]);
@@ -557,6 +559,8 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
         if (do_rz_volume_scaling) {
             WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho[lev].get(), lev);
         }
+#else
+        ignore_unused(do_rz_volume_scaling);
 #endif
 
         // Exchange guard cells
@@ -861,6 +865,8 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
                                            const ParticleLocData& pld,
                                            const int lev)
 {
+    if (not do_splitting) return;
+
     // Tag particle if goes to higher level.
     // It will be split later in the loop
     if (pld.m_lev == lev+1

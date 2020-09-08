@@ -18,6 +18,8 @@
 #   include <openPMD/openPMD.hpp>
 #endif
 
+#include <AMReX.H>
+
 using namespace amrex;
 
 /** \brief
@@ -160,6 +162,7 @@ AverageAndPackScalarField (MultiFab& mf_avg,
         scalar_total = new MultiFab(scalar_field, amrex::make_alias, 0, 1);
     }
 #else
+    amrex::ignore_unused(dm);
     const MultiFab *scalar_total = &scalar_field;
 #endif
 

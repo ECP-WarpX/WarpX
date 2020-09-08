@@ -12,11 +12,12 @@
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 
+#include <AMReX.H>
+
 #include <limits>
 #include <cmath>
 #include <algorithm>
 #include <numeric>
-
 
 using namespace amrex;
 using namespace WarpXLaserProfiles;
@@ -234,6 +235,7 @@ LaserParticleContainer::InitData (int lev)
                  position[1] + (S_X*(Real(i)+0.5_rt))*u_X[1] + (S_Y*(Real(j)+0.5_rt))*u_Y[1],
                  position[2] + (S_X*(Real(i)+0.5_rt))*u_X[2] + (S_Y*(Real(j)+0.5_rt))*u_Y[2] };
 #else
+    amrex::ignore_unused(j);
 #   if (defined WARPX_DIM_RZ)
         return { position[0] + (S_X*(Real(i)+0.5_rt)),
                  0.0_rt,
@@ -421,7 +423,7 @@ LaserParticleContainer::Evolve (int lev,
         int const thread_num = 0;
 #endif
 
-        Gpu::ManagedDeviceVector<Real> plane_Xp, plane_Yp, amplitude_E;
+        Gpu::DeviceVector<Real> plane_Xp, plane_Yp, amplitude_E;
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
@@ -506,9 +508,11 @@ LaserParticleContainer::Evolve (int lev,
                 }
             }
 
+            // This is necessary because of plane_Xp, plane_Yp and amplitude_E
+            amrex::Gpu::synchronize();
+
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
-                amrex::Gpu::synchronize();
                 wt = amrex::second() - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
@@ -568,7 +572,7 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
 }
 
 void
-LaserParticleContainer::PushP (int lev, Real dt,
+LaserParticleContainer::PushP (int /*lev*/, Real /*dt*/,
                                const MultiFab&, const MultiFab&, const MultiFab&,
                                const MultiFab&, const MultiFab&, const MultiFab&)
 {

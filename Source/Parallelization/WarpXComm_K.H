@@ -8,6 +8,7 @@
 #define WARPX_COMM_K_H_
 
 #include <AMReX_FArrayBox.H>
+#include <AMReX.H>
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_bfield_x (int j, int k, int l,
@@ -384,6 +385,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
 {
 #if (AMREX_SPACEDIM == 2)
     Bxa(j,k,0) = 0.5*(Bxf(j,k-1,0) + Bxf(j,k,0));
+    amrex::ignore_unused(l);
 #else
     Bxa(j,k,l) = 0.25*(Bxf(j,k-1,l-1) + Bxf(j,k,l-1) + Bxf(j,k-1,l) + Bxf(j,k,l));
 #endif
@@ -396,6 +398,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
 {
 #if (AMREX_SPACEDIM == 2)
     Bya(j,k,0) = 0.25*(Byf(j,k,0) + Byf(j-1,k,0) + Byf(j,k-1,0) + Byf(j-1,k-1,0));
+    amrex::ignore_unused(l);
 #else
     Bya(j,k,l) = 0.25*(Byf(j-1,k,l-1) + Byf(j,k,l-1) + Byf(j-1,k,l) + Byf(j,k,l));
 #endif
@@ -408,6 +411,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
 {
 #if (AMREX_SPACEDIM == 2)
     Bza(j,k,0) = 0.5*(Bzf(j-1,k,0) + Bzf(j,k,0));
+    amrex::ignore_unused(l);
 #else
     Bza(j,k,l) = 0.25*(Bzf(j-1,k-1,l) + Bzf(j,k-1,l) + Bzf(j-1,k,l) + Bzf(j,k,l));
 #endif
@@ -632,6 +636,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
 {
 #if (AMREX_SPACEDIM == 2)
     Eya(j,k,0) = Eyf(j,k,0);
+    amrex::ignore_unused(l);
 #else
     Eya(j,k,l) = 0.5*(Eyf(j,k-1,l) + Eyf(j,k,l));
 #endif
@@ -644,6 +649,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
 {
 #if (AMREX_SPACEDIM == 2)
     Eza(j,k,0) = 0.5*(Ezf(j,k-1,0) + Ezf(j,k,0));
+    amrex::ignore_unused(l);
 #else
     Eza(j,k,l) = 0.5*(Ezf(j,k,l-1) + Ezf(j,k,l));
 #endif

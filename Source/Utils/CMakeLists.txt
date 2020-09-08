@@ -4,6 +4,7 @@ target_sources(WarpX
     CoarsenMR.cpp
     Interpolate.cpp
     IntervalsParser.cpp
+    RelativeCellPosition.cpp
     WarpXAlgorithmSelection.cpp
     WarpXMovingWindow.cpp
     WarpXTagging.cpp

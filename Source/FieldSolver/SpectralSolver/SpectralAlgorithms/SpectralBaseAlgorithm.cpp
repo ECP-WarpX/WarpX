@@ -66,4 +66,4 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
 
     // Backward Fourier transform
     field_data.BackwardTransform( divE, Idx::divE, 0 );
-};
+}
