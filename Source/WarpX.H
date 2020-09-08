@@ -344,7 +344,7 @@ public:
 
     /**
      * \brief Private function for spectral solver
-     * Applies a damping factor in the guards cells the extend
+     * Applies a damping factor in the guards cells that extend
      * beyond the extent of the domain, reducing fluctuations that
      * can appear in parallel simulations. This will be called
      * when use_damp_in_z_guard is true.
