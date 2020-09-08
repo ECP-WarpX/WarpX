@@ -26,7 +26,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     // Call this in case filtering is turned on
     warpx.ApplyFilterandSumBoundaryRho(m_lev, m_lev, *rho, 0, rho->nComp());
 
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     using Idx = SpectralAvgFieldIndex;
     if (WarpX::use_kspace_filter) {
         auto & solver = warpx.get_spectral_solver_fp(m_lev);
