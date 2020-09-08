@@ -323,6 +323,8 @@ void
 WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                           std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield) {
 
+    constexpr int zdir = (AMREX_SPACEDIM - 1);
+
     for ( amrex::MFIter mfi(*Efield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
 
@@ -335,19 +337,19 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
 
         // Get the tilebox from Efield so that it includes the guard cells.
         amrex::Box tilebox = (*Efield[0])[mfi].box();
-        int const nz_tile = tilebox.bigEnd(AMREX_SPACEDIM-1);
+        int const nz_tile = tilebox.bigEnd(zdir);
 
         // Box for the whole simulation domain
         amrex::Box const& domain = Geom(0).Domain();
-        int const nz_domain = domain.bigEnd(AMREX_SPACEDIM-1);
+        int const nz_domain = domain.bigEnd(zdir);
 
-        if (tilebox.smallEnd(AMREX_SPACEDIM-1) < 0) {
+        if (tilebox.smallEnd(zdir) < 0) {
 
             // Apply damping factor in guards cells below the lower end of the domain
-            int const nz_guard = -tilebox.smallEnd(AMREX_SPACEDIM-1);
+            int const nz_guard = -tilebox.smallEnd(zdir);
 
             // Set so the box only covers the lower half of the guard cells
-            tilebox.setBig(AMREX_SPACEDIM-1, -nz_guard/2-1);
+            tilebox.setBig(zdir, -nz_guard/2-1);
 
             amrex::ParallelFor(tilebox, Efield[0]->nComp(),
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
@@ -376,7 +378,7 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
             int nz_guard = nz_tile - nz_domain;
 
             // Set so the box only covers the upper half of the guard cells
-            tilebox.setSmall(AMREX_SPACEDIM-1, nz_domain + nz_guard/2 + 1);
+            tilebox.setSmall(zdir, nz_domain + nz_guard/2 + 1);
 
             amrex::ParallelFor(tilebox, Efield[0]->nComp(),
             [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
