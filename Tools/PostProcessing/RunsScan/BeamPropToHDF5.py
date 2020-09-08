@@ -130,7 +130,8 @@ def emittance_from_coord(x, ux, uy, w,y=[0]):
         return emit_x
 
 # Function to compute beam emittance
-def my_emittance(x, z, px, py, pz, w=None, kind='norm', sliced=False, nslices=20, beam_length=None, y=[0]):
+def my_emittance(x, z, px, py, pz, w=None, kind='norm', sliced=False,
+                nslices=20, beam_length=None, y=[0]):
     if w is None:
         w = np.ones_like(x)
     if sliced == False:
@@ -252,12 +253,12 @@ def read_sim(sim):
             beam_div  [count] = np.std(ux/uz)
             if (if3d == 1):
                 beam_widthy_center[count] = np.std(y[cent_slice])
-                lEMIT_X, lEMIT_Y, lW_slice, lGAMMA = my_emittance(x, z, ux, uy, uz,
-                                                              sliced=True, nslices=nslices, y=y)
+                lEMIT_X, lEMIT_Y, lW_slice, lGAMMA = my_emittance(x, z, ux,
+                                uy, uz, sliced=True, nslices=nslices, y=y)
                 EMITY[count,:] = lEMIT_Y
             else:
-                lEMIT_X, lW_slice, lGAMMA = my_emittance(x, z, ux, uy, uz,
-                                                         sliced=True, nslices=nslices)
+                lEMIT_X, lW_slice, lGAMMA = my_emittance(x, z, ux,
+                                uy, uz, sliced=True, nslices=nslices)
             EMITX[count,:] = lEMIT_X
             W_slice[count,:] = lW_slice
             emittancex [count] = np.average(lEMIT_X, weights=lW_slice)
@@ -282,9 +283,12 @@ def read_sim(sim):
             emittancey[emittancey==0.] = np.nan
             emittancepy[emittancepy==0.] = np.nan
     if (if3d == 1):
-        results = (zz, TotQ, TotP, Emean, Estd, emittancepx, emittancepy, emittancex, emittancey, beam_widthx, beam_widthy, beam_widthux, beam_widthuy)
+        results = (zz, TotQ, TotP, Emean, Estd, emittancepx, emittancepy,
+                emittancex, emittancey, beam_widthx, beam_widthy, beam_widthux,
+                beam_widthuy)
     else:
-        results = (zz, TotQ, TotP, Emean, Estd, emittancepx, emittancex, beam_widthx, beam_widthux)
+        results = (zz, TotQ, TotP, Emean, Estd, emittancepx, emittancex,
+                beam_widthx, beam_widthux)
     return results
 
 d_z      = {}
@@ -303,10 +307,13 @@ d_bwduy   = {}
 
 for sim in sim_list:
     results = read_sim(sim)
-    if (if3d == 1):
-         zz, TotQ, TotP, Emean, Estd, emittancepx, emittancepy, emittancex, emittancey, beam_widthx, beam_widthy, beam_widthux, beam_widthuy = results
+    if (len(results) == 13): #same as if3d == 1, but without issue in github
+         zz, TotQ, TotP, Emean, Estd, emittancepx, emittancepy, emittancex,
+          emittancey, beam_widthx, beam_widthy, beam_widthux,
+          beam_widthuy = results
     else:
-        zz, TotQ, TotP, Emean, Estd, emittancepx, emittancex, beam_widthx, beam_widthux = results
+        zz, TotQ, TotP, Emean, Estd, emittancepx, emittancex, beam_widthx,
+         beam_widthux = results
     d_z     [sim] = zz
     d_totq  [sim] = TotQ*scc.e*1e9 # to be in nC
     d_totp  [sim] = TotP
@@ -323,12 +330,16 @@ for sim in sim_list:
         d_bwduy  [sim] = beam_widthuy
 
 # Properties as they will be stored into the HDF5 file
-a_list=['z','totq','totp','emean','estd', 'emitpx', 'emitx', 'xsig','uxsig','emitpy','emity','ysig','uysig']
-l_list=['z','Total charge in '+str(d_rms)+' RMS','Total particles in box','Mean energy',
-        'Relative energy spread','Projected $\epsilon$ in x','Average slice $\epsilon$ in x',
+a_list=['z','totq','totp','emean','estd', 'emitpx', 'emitx', 'xsig','uxsig',
+        'emitpy','emity','ysig','uysig']
+l_list=['z','Total charge in '+str(d_rms)+' RMS','Total particles in box',
+        'Mean energy',
+        'Relative energy spread','Projected $\epsilon$ in x',
+        'Average slice $\epsilon$ in x',
         'Beam width in x','Beam width in ux','Projected $\epsilon$ in y',
         'Average slice $\epsilon$ in y','Beam width in y','Beam width in uy']
-u_list=['m','nC','# macro-particles','GeV','%','$\mu$m','$\mu$m','$\mu$m','m/s','$\mu$m','$\mu$m','$\mu$m','m/s']
+u_list=['m','nC','# macro-particles','GeV','%','$\mu$m','$\mu$m','$\mu$m','m/s',
+        '$\mu$m','$\mu$m','$\mu$m','m/s']
 
 d_att={}
 for sim in sim_list:

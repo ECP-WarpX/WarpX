@@ -243,6 +243,7 @@ def plot_all_props(ind,fname):
     ax0=plt.subplot(3,3,1)
     p_subplot_inset(ind,d_z,d_emean,
                     'Propagation direction [m]','Mean energy [GeV]',ax0)
+    plt.legend(loc='lower right',bbox_to_anchor=(0.65,0.65))
     ax1=plt.subplot(3,3,2)
     p_subplot_inset(ind,d_z,d_emitx, 'Propagation direction [m]',
                     '<slice $\epsilon$ in x> (um)', ax1)
