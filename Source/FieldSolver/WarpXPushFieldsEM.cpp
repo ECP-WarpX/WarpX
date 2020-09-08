@@ -135,7 +135,7 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */)
         PushPSATDSinglePatch( *spectral_solver_cp[lev],
              Efield_cp[lev], Bfield_cp[lev], Efield_avg_cp[lev], Bfield_avg_cp[lev], current_cp[lev], rho_cp[lev] );
     }
-    if (use_damp_in_z_guard) {
+    if (use_damp_fields_in_z_guard) {
         DampFieldsInGuards( Efield_fp[lev], Bfield_fp[lev] );
     }
 }
