@@ -8,7 +8,7 @@
 ### 3 Sep 2020
 ###
 ### You can run it with the command:
-### python EndPropPlots.py <Path read_raw_data> <Path scan> <Paths lab data>
+### python EndPropPlots.py <Dimensions> <Path scan> <Paths lab data>
 ###
 
 # Import statements
@@ -27,24 +27,27 @@ print('*', sys.argv[0], 'started running *\n')
 if len(sys.argv) < 3:
     print('ABORT:')
     print(' Missing command line input parameters:\n'
+          ' <number of dimensions of simulation>'
           ' <path to folder containing scan>\n'
           ' <path to folder containing beam lab frame data>\n')
     exit
 else:
-    if sys.argv[1][-1] != '/':
-        path_scan = sys.argv[1] + '/'
+    if sys.argv[1] == '3':
+        if3d = 1
     else:
-        path_scan = sys.argv[1]
+        if3d = 0
+    if sys.argv[2][-1] != '/':
+        path_scan = sys.argv[2] + '/'
+    else:
+        path_scan = sys.argv[2]
     print('Going into ', path_scan, 'directory')
-    sim_list = sys.argv[2:]
+    sim_list = sys.argv[3:]
     nsims=len(sim_list)
 
 # Input subfolder where .h5 files are stored
 path_hdf5 = 'Beam-properties'
 # Output folder where plots are stored
 dir_output = 'ConvScan-Plots'
-# If the run is in 2D geometry
-if2d = 0
 # Beam STD width in m
 beam_w = 6e-7
 # Laser wavelength in m
@@ -131,7 +134,7 @@ for sim in sim_list:
     d_emitx [sim] = d_data['emitx']['data']
     d_bwdx  [sim] = d_data['xsig']['data']
     d_bwdux [sim] = d_data['uxsig']['data']
-    if (if2d == 0):
+    if (if3d == 1):
         d_emitpy[sim] = d_data['emitpy']['data']
         d_emity [sim] = d_data['emity']['data']
         d_bwdy  [sim] = d_data['ysig']['data']

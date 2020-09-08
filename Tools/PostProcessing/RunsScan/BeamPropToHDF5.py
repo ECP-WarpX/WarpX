@@ -24,12 +24,12 @@ print('*', sys.argv[0], 'started running *\n')
 if len(sys.argv) < 4:
     print('ABORT:')
     print(' Missing command line input parameters:\n'
-          ' <path to folder containing WarpX read_raw_data python script>'
+          ' <number of dimensions of simulation>'
           ' <path to folder containing scan>\n'
           ' <path to folder containing beam lab frame data>\n')
     exit
 else:
-    if sys.argv[1] == '3'
+    if sys.argv[1] == '3':
         if3d = 1
     else:
         if3d = 0
