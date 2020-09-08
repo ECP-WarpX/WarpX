@@ -123,6 +123,12 @@ Plotfiles and snapshots
     The diagnostics results are analysed and stored in snapshots at each time step and so it is best to make sure that the run does not end before filling the final snapshot.
 
 
+    .. note::
+
+       You may find example python scripts (in `Tools <>_`) that do the analysis for convergence scans of the WarpX multi stage plasma wakefield acceleration configuration simulations.
+       The results include plots of the boosted frame electrons (beam and plasma stages) distributions and of the accelerated beam properties in the laboratory frame as it evolves in time and at the end of the simulation.
+
+
 Maximum grid size and blocking factor
 -------------------------------------
 
