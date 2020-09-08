@@ -59,7 +59,7 @@ struct FieldAccessorMacroscopic
      * \return           m_field/m_paramter at (i,j,k,ncomp)
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    amrex::Real operator() (int const i, int const j, 
+    amrex::Real operator() (int const i, int const j,
                             int const k, int const ncomp) const noexcept
     {
         return ( m_field(i, j, k, ncomp)  /  m_parameter(i, j, k, 0) ) ;
