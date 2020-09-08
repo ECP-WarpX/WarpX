@@ -40,8 +40,8 @@ else:
     print('Using default location /lab_frame_data/snapshots/snapshot?????')
     sim_list = sys.argv[3:]
     nsims=len(sim_list)
- 
- 
+
+
 # Output subfolder where .h5 file is stored
 dir_hdf5 = 'Beam-properties'
 # If the run is in 2D geometry
@@ -232,14 +232,14 @@ def read_sim(sim):
         ux = get_particle_field(snapshot, species, 'ux')/scc.c
         uy = get_particle_field(snapshot, species, 'uy')/scc.c
         uz = get_particle_field(snapshot, species, 'uz')/scc.c
-        
+
         TotP      [count] = w.shape[0]
         # Removing electrons that are no longer in the beam (>d_rms RMS radius)
         if (if2d == 0):
             w,x,y,z,ux,uy,uz = rem_part(w,x,z,ux,uy,uz,y=y)
         else:
             w,x,z,ux,uy,uz = rem_part(w,x,z,ux,uy,uz)
-        
+
         Ep = .511*(uz-1.)
         zz        [count] = np.mean(z)
         TotQ      [count] = np.sum(w)
@@ -255,7 +255,7 @@ def read_sim(sim):
             beam_div  [count] = np.std(ux/uz)
             if (if2d == 0):
                 beam_widthy_center[count] = np.std(y[cent_slice])
-                lEMIT_X, lEMIT_Y, lW_slice, lGAMMA = my_emittance(x, z, ux, uy, uz, 
+                lEMIT_X, lEMIT_Y, lW_slice, lGAMMA = my_emittance(x, z, ux, uy, uz,
                                                               sliced=True, nslices=nslices, y=y)
                 EMITY[count,:] = lEMIT_Y
             else:

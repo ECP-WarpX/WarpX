@@ -86,14 +86,14 @@ if os.path.isdir(new_dir) == False:
 
 def read_sim_hdf5(sim):
 
-    path_file = (path_scan + sim + '/lab_frame_data/' + path_hdf5 
+    path_file = (path_scan + sim + '/lab_frame_data/' + path_hdf5
                   + '/' + path_hdf5 + '-' + sim + '.hdf5')
     print('Now downloading data from: ', path_file)
-    
+
     fin=h5py.File(path_file,'r')
     datasets=list(fin.keys())
     print(datasets)
-    
+
     d_data={}
     for ds in datasets:
         d_data[ds]={}
@@ -101,9 +101,9 @@ def read_sim_hdf5(sim):
         d_data[ds]['label'] = fin[ds].attrs['label']
         d_data[ds]['range'] = fin[ds].attrs['range']
         d_data[ds]['data']=fin[ds].value
-    
+
     fin.close()
-    
+
     return d_data
 
 d_z      = {}
@@ -166,10 +166,10 @@ def p_par_evol(fname):
 #     ax4.set_ylabel('Emittance in y (um)')
 #     ax5=plt.subplot(2,3,6)
 #     ax5.set_ylabel('Charge [pC]') #(R < 3RMS)
-    
+
     xins=ppl
     xinsl='Points per laser wavelength'
-    
+
     arr_fdtd = np.asarray([i for i in range(nsims) if 'FDTD' in sim_list[i]])
     c_fdtd = '#1f77b4'
     s_fdtd = 'o'
@@ -178,7 +178,7 @@ def p_par_evol(fname):
     c_psatd = '#ff7f0e'
     s_psatd = 'P'
     size_psatd = 250
-    
+
     x=np.asarray([xins[sim] for sim in sim_list])
     y0=np.asarray([d_emean[sim][-1] for sim in sim_list])
     y1=np.asarray([d_estd[sim][-1] for sim in sim_list])
@@ -186,7 +186,7 @@ def p_par_evol(fname):
 #     y3=np.asarray([d_emitx[sim][-1] for sim in sim_list])
 #     y4=np.asarray([d_emity[sim][-1] for sim in sim_list])
 #     y5=np.asarray([d_totq[sim][-1] for sim in sim_list])
-    
+
     ax0.plot(x[arr_fdtd[:]],y0[arr_fdtd[:]],color=c_fdtd)
     ax0.plot(x[arr_psatd[:]],y0[arr_psatd[:]],color=c_psatd)
     ax1.plot(x[arr_fdtd[:]],y1[arr_fdtd[:]],color=c_fdtd)
@@ -199,7 +199,7 @@ def p_par_evol(fname):
 #     ax4.plot(x[arr_psatd[:]],y4[arr_psatd[:]],color=c_psatd)
 #     ax5.plot(x[arr_fdtd[:]],y5[arr_fdtd[:]],color=c_fdtd)
 #     ax5.plot(x[arr_psatd[:]],y5[arr_psatd[:]],color=c_psatd)
-    
+
     ax0.scatter(x[arr_fdtd[:]], y0[arr_fdtd[:]], c=c_fdtd,s=size_fdtd,marker=s_fdtd)
     ax0.scatter(x[arr_psatd[:]], y0[arr_psatd[:]], c=c_psatd,s=size_psatd,marker=s_psatd)
     ax1.scatter(x[arr_fdtd[:]], y1[arr_fdtd[:]], c=c_fdtd,s=size_fdtd,marker=s_fdtd)
@@ -212,23 +212,23 @@ def p_par_evol(fname):
 #     ax4.scatter(x[arr_psatd[:]], y4[arr_psatd[:]], c=c_psatd,s=size_psatd,marker=s_psatd)
 #     ax5.scatter(x[arr_fdtd[:]], y5[arr_fdtd[:]], c=c_fdtd,s=size_fdtd,marker=s_fdtd)
 #     ax5.scatter(x[arr_psatd[:]], y5[arr_psatd[:]], c=c_psatd,s=size_psatd,marker=s_psatd)
-    
+
     ax0.set_xlabel('Points per laser wavelength')
     ax1.set_xlabel('Points per laser wavelength')
     ax2.set_xlabel('Points per laser wavelength')
 
     leg=ax2.legend(loc='lower left',bbox_to_anchor=(0.0,0.55))
-        
+
     plt.subplots_adjust(hspace=0.3,wspace=0.4)
 
     plt.savefig(new_dir+'/'+fname+'-all.pdf', bbox_inches='tight')
     plt.savefig(new_dir+'/'+fname+'-all.png', bbox_inches='tight')
     print('Saving file ',new_dir+'/'+fname+'-all.pdf')
-    
+
     plt.close()
-    
+
     return 0
 
 p_par_evol('all_end_scan')
 
-exit 
+exit

@@ -173,7 +173,7 @@ zeros = [0 for x in taxis]
 f_plasma1=np.asarray([0,1.0,1.0,0,0,0,0,0,0,0,0,0])
 f_plasma2=np.asarray([0,0,0,0,0,1.0,1.0,0,0,0,0,0])
 f_plasma3=np.asarray([0,0,0,0,0,0,0,0,0,1.0,1.0,0])
-zlens= [taxis[3]+0.02, taxis[7]+0.02] 
+zlens= [taxis[3]+0.02, taxis[7]+0.02]
 print(zlens)
 print(taxis)
 
@@ -238,7 +238,7 @@ def plot_en_res(ind,fname):
 
 def plot_all_props(ind,fname):
     plot=plt.figure(figsize=(24,18))
-    
+
     ax0=plt.subplot(3,3,1)
     p_subplot_inset(ind,d_z,d_emean,
                     'Propagation direction [m]','Mean energy [GeV]',ax0)
