@@ -8,7 +8,7 @@
 ### 3 Sep 2020
 ###
 ### You can run it with the command:
-### python BeamPropToHDF5.py <Path read_raw_data> <Path scan> <Paths lab data>
+### python BeamPropToHDF5.py <Dimensions> <Path scan> <Paths lab data>
 ###
 
 
@@ -29,9 +29,8 @@ if len(sys.argv) < 4:
           ' <path to folder containing beam lab frame data>\n')
     exit
 else:
-    #'/ccs/home/ligiada/WarpX/Tools/PostProcessing'
-    sys.path.insert(0, sys.argv[1])
-    import read_raw_data
+    # If the run is in 2D geometry
+    if2d = int(sys.argv[1])
     if sys.argv[2][-1] != '/':
         path_scan = sys.argv[2] + '/'
     else:
@@ -44,8 +43,6 @@ else:
 
 # Output subfolder where .h5 file is stored
 dir_hdf5 = 'Beam-properties'
-# If the run is in 2D geometry
-if2d = 0
 
 # Name of WarpX output species
 species = 'beam'
@@ -163,7 +160,6 @@ def my_emittance(x, z, px, py, pz, w=None, kind='norm', sliced=False, nslices=20
         zavg = np.average(z, weights=w)
         z = z - zavg
         if beam_length is None:
-            std  = np.std(z)
             zmin = np.amin(z)
             zmax = np.amax(z)
             bins = np.linspace(zmin, zmax, nslices)
@@ -223,7 +219,6 @@ def read_sim(sim):
     W_slice    =  np.zeros((nfiles, nslices-1))
     for count, iteration in enumerate(iteration_list):
         snapshot = path_sim + '/lab_frame_data/snapshots/' + 'snapshot' + str(iteration).zfill(5)
-        header = path_sim + '/lab_frame_data/Header'
         w = get_particle_field(snapshot, species, 'w')
         x = get_particle_field(snapshot, species, 'x')
         if (if2d == 0):

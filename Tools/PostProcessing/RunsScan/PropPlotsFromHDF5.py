@@ -13,15 +13,13 @@
 
 
 # Import statements
-import os, glob, sys
+import os, sys
 import numpy as np
 import matplotlib
 if os.environ.get('DISPLAY','') == '':
     print('no display found. Using non-interactive Agg backend')
     matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import scipy.constants as scc
 import math
 import h5py
 
@@ -206,13 +204,13 @@ def p_subplot_inset(ind,x,y,xl,yl,ax):
 
 
 def plot_en_res(ind,fname):
-    plot=plt.figure(figsize=(24,6))
+    plt.figure(figsize=(24,6))
 
     ax0=plt.subplot(1,3,1)
     p_subplot_inset(ind,d_z,d_emean,
                     'Propagation direction [m]','Mean energy [GeV]',ax0)
     plt.ylim(0,22)
-    leg=plt.legend(loc='lower right',bbox_to_anchor=(0.65,0.65))
+    plt.legend(loc='lower right',bbox_to_anchor=(0.65,0.65))
     ax1=plt.subplot(1,3,2)
     p_subplot_inset(ind,d_z,d_estd,
                     'Propagation direction [m]','Energy spread [%]', ax1)
@@ -237,7 +235,7 @@ def plot_en_res(ind,fname):
 
 
 def plot_all_props(ind,fname):
-    plot=plt.figure(figsize=(24,18))
+    plt.figure(figsize=(24,18))
 
     ax0=plt.subplot(3,3,1)
     p_subplot_inset(ind,d_z,d_emean,
