@@ -54,9 +54,6 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
 };
 
 
-/* \brief Transform the component `i_comp` of MultiFab `field_mf`
- *  to spectral space, and store the corresponding result internally
- *  (in the spectral field specified by `field_index`) */
 void
 SpectralSolverRZ::ForwardTransform (amrex::MultiFab const & field_mf,
                                     int const field_index,
@@ -65,9 +62,6 @@ SpectralSolverRZ::ForwardTransform (amrex::MultiFab const & field_mf,
     field_data.ForwardTransform(field_mf, field_index, i_comp);
 };
 
-/* \brief Transform the two MultiFabs `field_mf1` and `field_mf2`
- *  to spectral space, and store the corresponding results internally
- *  (in the spectral field specified by `field_index1` and `field_index2`) */
 void
 SpectralSolverRZ::ForwardTransform (amrex::MultiFab const & field_mf1, int const field_index1,
                                     amrex::MultiFab const & field_mf2, int const field_index2) {
