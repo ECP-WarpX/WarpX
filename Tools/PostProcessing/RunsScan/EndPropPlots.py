@@ -12,15 +12,13 @@
 ###
 
 # Import statements
-import os, glob, sys
+import os, sys
 import numpy as np
 import matplotlib
 if os.environ.get('DISPLAY','') == '':
     print('no display found. Using non-interactive Agg backend')
     matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-import scipy.constants as scc
 import math
 import h5py
 
@@ -152,7 +150,7 @@ plt.rc('legend', fontsize=STAND_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=STAND_SIZE)   # fontsize of the figure title
 
 def p_par_evol(fname):
-    plot=plt.figure(figsize=(24,6)) #12))
+    plt.figure(figsize=(24,6)) #12))
 
     ax0=plt.subplot(1,3,1)
     ax0.set_ylabel('Mean energy (GeV)')
@@ -167,9 +165,6 @@ def p_par_evol(fname):
 #     ax5=plt.subplot(2,3,6)
 #     ax5.set_ylabel('Charge [pC]') #(R < 3RMS)
 
-    xins=ppl
-    xinsl='Points per laser wavelength'
-
     arr_fdtd = np.asarray([i for i in range(nsims) if 'FDTD' in sim_list[i]])
     c_fdtd = '#1f77b4'
     s_fdtd = 'o'
@@ -179,7 +174,7 @@ def p_par_evol(fname):
     s_psatd = 'P'
     size_psatd = 250
 
-    x=np.asarray([xins[sim] for sim in sim_list])
+    x=np.asarray([ppl[sim] for sim in sim_list])
     y0=np.asarray([d_emean[sim][-1] for sim in sim_list])
     y1=np.asarray([d_estd[sim][-1] for sim in sim_list])
     y2=np.asarray([ppw[sim] for sim in sim_list])
@@ -217,7 +212,7 @@ def p_par_evol(fname):
     ax1.set_xlabel('Points per laser wavelength')
     ax2.set_xlabel('Points per laser wavelength')
 
-    leg=ax2.legend(loc='lower left',bbox_to_anchor=(0.0,0.55))
+    ax2.legend(loc='lower left',bbox_to_anchor=(0.0,0.55))
 
     plt.subplots_adjust(hspace=0.3,wspace=0.4)
 
