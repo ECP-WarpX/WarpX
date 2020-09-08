@@ -63,7 +63,7 @@ plot = {}
 lplots={}
 for f in f_names:
 # Double check this address and the number of ? needed
-     plot[f]=glob.glob(path+f+'/diags/diag?????')
+    plot[f]=glob.glob(path+f+'/diags/diag?????')
 #    plot[f]=glob.glob(path+f+'/diags/plotfiles/plt?????')
     plot[f].sort()
     lplots[f]=len(plot[f])
