@@ -225,7 +225,7 @@ def plot_data_2(f,plist,fdir):
     fig=plt.figure(figsize=(20, 7))
     ax1=fig.add_subplot(1,2,1)
     plot_content(fig,ax1,f,plot[f][plist[0]])
-    ax1.set_ylabel('Transverse direction (x) [µm]')
+    ax1.set_ylabel('Transverse direction (x) [um]')
     plt.text(0.6, 80.0, 'a)',fontsize=STAND_SIZE, bbox=dict(facecolor='white', edgecolor='none', alpha=0.8))
     
     ax2=fig.add_subplot(1,2,2)
