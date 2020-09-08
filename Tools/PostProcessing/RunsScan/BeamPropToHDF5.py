@@ -308,12 +308,12 @@ d_bwduy   = {}
 for sim in sim_list:
     results = read_sim(sim)
     if (len(results) == 13): #same as if3d == 1, but without issue in github
-         zz, TotQ, TotP, Emean, Estd, emittancepx, emittancepy, emittancex,
+         (zz, TotQ, TotP, Emean, Estd, emittancepx, emittancepy, emittancex,
           emittancey, beam_widthx, beam_widthy, beam_widthux,
-          beam_widthuy = results
+          beam_widthuy) = results
     else:
-        zz, TotQ, TotP, Emean, Estd, emittancepx, emittancex, beam_widthx,
-         beam_widthux = results
+        (zz, TotQ, TotP, Emean, Estd, emittancepx, emittancex, beam_widthx,
+         beam_widthux) = results
     d_z     [sim] = zz
     d_totq  [sim] = TotQ*scc.e*1e9 # to be in nC
     d_totp  [sim] = TotP
