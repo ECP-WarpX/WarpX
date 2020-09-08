@@ -25,7 +25,7 @@ Optional dependencies include:
 - `OpenMP 3.1+ <https://www.openmp.org>`_: for threaded CPU execution (currently not fully accelerated)
 - `FFTW3 <http://www.fftw.org>`_: for spectral solver (PSATD) support
 - `Boost 1.66.0+ <https://www.boost.org/>`_: for QED support
-- `openPMD-api 0.11.1+ <https://github.com/openPMD/openPMD-api>`_: we automatically download and compile a copy of openPMD-api for openPMD I/O support
+- `openPMD-api 0.12.0+ <https://github.com/openPMD/openPMD-api>`_: we automatically download and compile a copy of openPMD-api for openPMD I/O support
 
   - see `optional I/O backends <https://github.com/openPMD/openPMD-api#dependencies>`_
 - `CCache <https://ccache.dev>`_: to speed up rebuilds (needs 3.7.9+ for CUDA)
@@ -39,11 +39,12 @@ macOS/Linux:
 
    spack env create warpx-dev
    spack env activate warpx-dev
+   spack add adios2
    spack add ccache
    spack add cmake
    spack add fftw
+   spack add hdf5
    spack add mpi
-   spack add openpmd-api
    spack add pkgconfig  # for fftw
    # optional:
    # spack add cuda
@@ -56,13 +57,14 @@ or macOS/Linux:
 .. code-block:: bash
 
    brew update
+   brew install adios2
    brew install ccache
    brew install cmake
    brew install fftw
+   brew install hdf5-mpi
    brew install libomp
    brew install pkg-config  # for fftw
    brew install open-mpi
-   brew install openpmd-api
 
 Now, ``cmake --version`` should be at version 3.14.0 or newer.
 
