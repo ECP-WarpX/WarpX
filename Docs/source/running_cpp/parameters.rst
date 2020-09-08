@@ -974,6 +974,14 @@ Numerics and algorithms
     This requires `warpx.use_kspace_filter=1` and is only supported
     with the RZ spectral solver.
 
+* ``warpx.use_damp_fields_in_z_guard`` (`0` or `1`; default: `0`)
+    Whether to apply a damping factor to the E and B fields in the guard cells
+    along z that extend beyond the edge of the domain. The damping profile is
+    a sine squared and is applied to the fields on the outer half of the guards.
+    This damping is useful for damping high frequency numerical artifacts that
+    occur when there is parallel decomposition along z with non-periodic boundary
+    conditions. It currently only works with the RZ spectral solver.
+
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.
     Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
