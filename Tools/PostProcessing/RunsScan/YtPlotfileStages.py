@@ -8,22 +8,19 @@
 ### 3 Sep 2020
 ###
 ### You can run it with the command:
-### python YtPlotfileStages.py <Path scan> <Path diags>
+### python YtPlotfileStages.py <Dimensions> <Path scan> <Path diags>
 ###
 
 
 # Import statements
 import os, glob, sys
-import numpy as np
 import matplotlib
 if os.environ.get('DISPLAY','') == '':
     print('no display found. Using non-interactive Agg backend')
     matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import scipy.constants as scc
 import math
-import h5py
 import yt ; yt.funcs.mylog.setLevel(50)
 
 
@@ -32,20 +29,23 @@ print('*', sys.argv[0], 'started running *\n')
 if len(sys.argv) < 3:
     print('ABORT:')
     print(' Missing command line input parameters:\n'
+          ' <number of dimensions of simulation>\n'
           ' <path to folder containing scan>\n'
           ' <path to folder containing beam lab frame data>\n')
     exit
 else:
-    if sys.argv[1][-1] != '/':
-        path = sys.argv[1] + '/'
+    if sys.argv[1] == '3':
+        if3d = 1
     else:
-        path = sys.argv[1]
+        if3d = 0
+    if sys.argv[2][-1] != '/':
+        path = sys.argv[2] + '/'
+    else:
+        path = sys.argv[2]
     print('Going into ', path, 'directory')
-    f_names = sys.argv[2:]
+    f_names = sys.argv[3:]
     lnames=len(f_names)
 
-# If the run is in 2D geometry
-if2d = 0
 # Species list to plot
 species_name = ['beam','electrons','electrons2','electrons3']
 spc_colors=['r','g','y','k']
@@ -128,11 +128,11 @@ def read_data(idir,ploti):
                                             dims=ds.domain_dimensions)
     ad = ds.all_data()
 
-    if if2d==0:
+    if if3d == 1:
         dx_o2=25.0
         print("Slicing in y around ",dx_o2)
 
-    if if2d==0:
+    if if3d == 1:
         extent[f][p]=([ds.domain_left_edge[2]*zfac,
                        ds.domain_right_edge[2]*zfac,
                        ds.domain_left_edge[0]*yfac,
@@ -146,7 +146,7 @@ def read_data(idir,ploti):
     for sn in species_name:
         if sn in [i[0] for i in ds.field_list]:
             species[f][p].append(sn)
-            if if2d==0:
+            if if3d == 1:
                 yp0=ad[sn, 'particle_position_y'].v*yfac
                 xp0=ad[sn, 'particle_position_x'].v*xfac
                 if sn != 'beam':
@@ -172,12 +172,12 @@ def read_data(idir,ploti):
 
     hasgrid=0
     del ds, ad, all_data_level_0
-    return hasgrid, if2d, species
+    return hasgrid, species
 
 for idir in range(lnames):
     print(f_names[idir])
     for ploti in range(lplots[f_names[idir]]):
-        hasgrid, if2d, species=read_data(idir,ploti)
+        hasgrid, species=read_data(idir,ploti)
 
 def new_dir(npd):
     # Creating output folder
@@ -189,14 +189,13 @@ def new_dir(npd):
 def z_lens(f, p):
     zl = [0.34*100, 0.69*100]
     gb = 60
-    bb = math.sqrt(1.-1./gb**2)
+#    bb = math.sqrt(1.-1./gb**2)
     time = extent[f][p][1].v
     zl_boosted = [(zl[i])/gb - time for i in range(2)]
     #[(zl[i]/gb-corner)/(scc.c*(1.+bb))*scc.c for i in range(2)]
     return zl_boosted
 
 def plot_content(fig,ax,f,p,ifcb=1):
-    zod=1
 
     for isn in range(len(species_name)):
         sn=species_name[isn]

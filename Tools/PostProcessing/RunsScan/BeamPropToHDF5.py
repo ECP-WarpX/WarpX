@@ -24,7 +24,7 @@ print('*', sys.argv[0], 'started running *\n')
 if len(sys.argv) < 4:
     print('ABORT:')
     print(' Missing command line input parameters:\n'
-          ' <number of dimensions of simulation>'
+          ' <number of dimensions of simulation>\n'
           ' <path to folder containing scan>\n'
           ' <path to folder containing beam lab frame data>\n')
     exit
