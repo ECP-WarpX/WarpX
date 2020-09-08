@@ -28,9 +28,9 @@ struct CartesianYeeAlgorithm {
 
     static void InitializeStencilCoefficients (
         std::array<amrex::Real,3>& cell_size,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_x,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_y,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_z ) {
+        amrex::Vector<amrex::Real>& stencil_coefs_x,
+        amrex::Vector<amrex::Real>& stencil_coefs_y,
+        amrex::Vector<amrex::Real>& stencil_coefs_z ) {
 
         using namespace amrex;
         // Store the inverse cell size along each direction in the coefficients
@@ -92,6 +92,7 @@ struct CartesianYeeAlgorithm {
 #if defined WARPX_DIM_3D
         Real const inv_dy = coefs_y[0];
         return inv_dy*( F(i,j+1,k,ncomp) - F(i,j,k,ncomp) );
+        amrex::ignore_unused(n_coefs_y);
 #elif (defined WARPX_DIM_XZ)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);
@@ -115,6 +116,7 @@ struct CartesianYeeAlgorithm {
 #if defined WARPX_DIM_3D
         Real const inv_dy = coefs_y[0];
         return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
+        amrex::ignore_unused(n_coefs_y);
 #elif (defined WARPX_DIM_XZ)
         amrex::ignore_unused(F, coefs_y, n_coefs_y,
             i, j, k, ncomp);

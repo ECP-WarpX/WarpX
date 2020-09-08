@@ -11,6 +11,8 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 
+#include <AMReX.H>
+
 /* \brief Charge Deposition for thread thread_num
  * /param GetPosition : A functor for returning the particle position.
  * \param wp           : Pointer to array of particle weights.
@@ -160,6 +162,10 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
 #endif
         }
         );
+
+#ifndef WARPX_DIM_RZ
+        amrex::ignore_unused(n_rz_azimuthal_modes);
+#endif
 }
 
 #endif // CHARGEDEPOSITION_H_

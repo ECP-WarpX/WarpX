@@ -21,7 +21,7 @@
 #include <array>
 
 
-struct Sigma : amrex::Gpu::ManagedVector<amrex::Real>
+struct Sigma : amrex::Gpu::DeviceVector<amrex::Real>
 {
     int lo() const { return m_lo; }
     int hi() const { return m_hi; }

@@ -61,6 +61,16 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
         const int k_lab = m_k_index_zlab[i_buffer];
         const int ncomp_dst = mf_dst.nComp();
         amrex::MultiFab& tmp = *tmp_slice_ptr;
+#ifdef AMREX_USE_GPU
+        Gpu::DeviceVector<int> d_map_varnames(m_map_varnames.size());
+        Gpu::copyAsync(Gpu::hostToDevice,
+                       m_map_varnames.begin(), m_map_varnames.end(),
+                       d_map_varnames.begin());
+        Gpu::synchronize();
+        int const* field_map_ptr = d_map_varnames.dataPtr();
+#else
+        int const* field_map_ptr = m_map_varnames.dataPtr();
+#endif
         for (amrex::MFIter mfi(tmp, TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
             // Box spanning the user-defined index-space for diagnostic, mf_dst
@@ -73,7 +83,6 @@ BackTransformFunctor::operator ()(amrex::MultiFab& mf_dst, int /*dcomp*/, const 
             bx.setBig( moving_window_dir, tbx.bigEnd( moving_window_dir ) );
             amrex::Array4<amrex::Real> src_arr = tmp[mfi].array();
             amrex::Array4<amrex::Real> dst_arr = mf_dst[mfi].array();
-            const auto field_map_ptr = m_map_varnames.dataPtr();
             amrex::ParallelFor( bx, ncomp_dst,
                 [=] AMREX_GPU_DEVICE(int i, int j, int k, int n)
                 {

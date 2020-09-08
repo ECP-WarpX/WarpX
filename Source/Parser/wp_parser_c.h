@@ -2,11 +2,14 @@
 #define WP_PARSER_C_H_
 
 #include "wp_parser_y.h"
+
 #include <AMReX_GpuQualifiers.H>
 #include <AMReX_GpuPrint.H>
 #include <AMReX_Extension.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Print.H>
+#include <AMReX.H>
+
 #include <cassert>
 #include <set>
 #include <string>
@@ -22,7 +25,7 @@ AMREX_NO_INLINE
 amrex::Real
 wp_ast_eval (struct wp_node* node, amrex::Real const* x)
 {
-    amrex::Real result;
+    amrex::Real result = 0.0;
 
     switch (node->type)
     {
@@ -199,6 +202,7 @@ wp_ast_eval (struct wp_node* node, amrex::Real const* x)
     amrex::AllPrint() << "wp_ast_eval: WARPX_PARSER_DEPTH" << WARPX_PARSER_DEPTH
                       << "not big enough\n";
 #endif
+    amrex::ignore_unused(node, x);
     return 0.;
 }
 

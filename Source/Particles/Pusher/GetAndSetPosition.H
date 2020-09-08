@@ -27,9 +27,9 @@ struct GetParticlePosition
     using PType = WarpXParticleContainer::ParticleType;
     using RType = amrex::ParticleReal;
 
-    const PType* AMREX_RESTRICT m_structs;
+    const PType* AMREX_RESTRICT m_structs = nullptr;
 #if (defined WARPX_DIM_RZ)
-    const RType* m_theta;
+    const RType* m_theta = nullptr;
 #elif (AMREX_SPACEDIM == 2)
     static constexpr RType m_snan = std::numeric_limits<RType>::quiet_NaN();
 #endif
