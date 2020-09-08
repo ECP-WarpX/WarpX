@@ -29,8 +29,10 @@ if len(sys.argv) < 4:
           ' <path to folder containing beam lab frame data>\n')
     exit
 else:
-    # If the run is in 2D geometry
-    if2d = int(sys.argv[1])
+    if sys.argv[1] == '3'
+        if3d = 1
+    else:
+        if3d = 0
     if sys.argv[2][-1] != '/':
         path_scan = sys.argv[2] + '/'
     else:
@@ -72,7 +74,7 @@ def w_ave( a, weights ):
 # Function to select the particles
 def rem_part(w,x,z,ux,uy,uz,y=[0]):
     if not np.any(w):
-        if (if2d == 0):
+        if (if3d == 1):
             return w,x,y,z,ux,uy,uz
         else:
             return w,x,z,ux,uy,uz
@@ -84,7 +86,7 @@ def rem_part(w,x,z,ux,uy,uz,y=[0]):
         zsq = w_ave( (z - zm) ** 2, w )
         indx=np.array([i for i in range(npart) if ((x[i]-xm)**2<d_rms**2*xsq)])
         indz=np.array([i for i in range(npart) if ((z[i]-zm)**2<d_rms**2*zsq)])
-        if (if2d == 0):
+        if (if3d == 1):
             ym = w_ave( y, w )
             ysq = w_ave( (y - ym) ** 2, w )
             indy=np.array([i for i in range(npart) if ((y[i]-ym)**2<d_rms**2*ysq)])
@@ -99,7 +101,7 @@ def rem_part(w,x,z,ux,uy,uz,y=[0]):
             ux=ux[indexes[:]]
             uy=uy[indexes[:]]
             uz=uz[indexes[:]]
-            if (if2d == 0):
+            if (if3d == 1):
                 y=y[indexes[:]]
                 return w,x,y,z,ux,uy,uz
             else:
@@ -111,7 +113,7 @@ def rem_part(w,x,z,ux,uy,uz,y=[0]):
 def emittance_from_coord(x, ux, uy, w,y=[0]):
     xm = w_ave( x, w )
     xsq = w_ave( (x-xm) ** 2, w )
-    if (if2d == 0):
+    if (if3d == 1):
         ym = w_ave( y, w )
         ysq = w_ave( (y-ym) ** 2, w )
     uxm = w_ave( ux, w )
@@ -120,7 +122,7 @@ def emittance_from_coord(x, ux, uy, w,y=[0]):
     uysq = w_ave( (uy-uym) ** 2, w )
     xux = w_ave( (x-xm) * (ux-uxm), w )
     emit_x = ( abs(xsq * uxsq - xux ** 2) )**.5
-    if (if2d == 0):
+    if (if3d == 1):
         yuy = w_ave( (y-ym) * (uy-uym), w )
         emit_y = ( abs(ysq * uysq - yuy ** 2) )**.5
         return emit_x, emit_y
@@ -134,7 +136,7 @@ def my_emittance(x, z, px, py, pz, w=None, kind='norm', sliced=False, nslices=20
     if sliced == False:
         xm = np.average( x, weights=w )
         xsq = np.average( (x-xm) ** 2, weights=w )
-        if (if2d == 0):
+        if (if3d == 1):
             ym = np.average( y, weights=w )
             ysq = np.average( (y-ym) ** 2, weights=w )
         if kind == 'norm':
@@ -150,7 +152,7 @@ def my_emittance(x, z, px, py, pz, w=None, kind='norm', sliced=False, nslices=20
         xux    = np.average( (x-xm) * (ux-uxm), weights=w )
         gamma = np.average(np.sqrt( 1 + px**2 + py**2 + pz**2 ), weights=w)
         emit_x = np.sqrt( abs(xsq * uxsq - xux ** 2) )
-        if (if2d == 0):
+        if (if3d == 1):
             yuy    = np.average( (y-ym) * (uy-uym), weights=w )
             emit_y = np.sqrt( abs(ysq * uysq - yuy ** 2) )
             return emit_x, emit_y, gamma
@@ -167,7 +169,7 @@ def my_emittance(x, z, px, py, pz, w=None, kind='norm', sliced=False, nslices=20
             bins = np.linspace(-beam_length/2, beam_length/2, nslices)
         #print()
         EMIT_X = np.zeros(len(bins[:-1]))
-        if (if2d == 0):
+        if (if3d == 1):
             EMIT_Y = np.zeros(len(bins[:-1]))
         GAMMA = np.zeros(len(bins[:-1]))
         W_slice = np.zeros(len(bins[:-1]))
@@ -177,7 +179,7 @@ def my_emittance(x, z, px, py, pz, w=None, kind='norm', sliced=False, nslices=20
             select = ( np.abs(z-binsmean)<=binswidth )
             W_slice[count] = np.sum(w[select])
             if W_slice[count]>0:
-                if (if2d == 0):
+                if (if3d == 1):
                     EMIT_X[count], EMIT_Y[count],GAMMA[count] = my_emittance(x[select], z[select],
                                                                 px[select], py[select], pz[select],
                                                                 w[select], kind=kind, y=y[select])
@@ -185,7 +187,7 @@ def my_emittance(x, z, px, py, pz, w=None, kind='norm', sliced=False, nslices=20
                     EMIT_X[count], GAMMA[count] = my_emittance(x[select], z[select],
                                                                 px[select], py[select], pz[select],
                                                                 w[select], kind=kind)
-        if if2d==0:
+        if (if3d == 1):
             return EMIT_X, EMIT_Y, W_slice, GAMMA
         else:
             return EMIT_X, W_slice, GAMMA
@@ -221,7 +223,7 @@ def read_sim(sim):
         snapshot = path_sim + '/lab_frame_data/snapshots/' + 'snapshot' + str(iteration).zfill(5)
         w = get_particle_field(snapshot, species, 'w')
         x = get_particle_field(snapshot, species, 'x')
-        if (if2d == 0):
+        if (if3d == 1):
             y = get_particle_field(snapshot, species, 'y')
         z = get_particle_field(snapshot, species, 'z')
         ux = get_particle_field(snapshot, species, 'ux')/scc.c
@@ -230,7 +232,7 @@ def read_sim(sim):
 
         TotP      [count] = w.shape[0]
         # Removing electrons that are no longer in the beam (>d_rms RMS radius)
-        if (if2d == 0):
+        if (if3d == 1):
             w,x,y,z,ux,uy,uz = rem_part(w,x,z,ux,uy,uz,y=y)
         else:
             w,x,z,ux,uy,uz = rem_part(w,x,z,ux,uy,uz)
@@ -242,13 +244,13 @@ def read_sim(sim):
         Estd      [count] = np.std(Ep)
         beam_widthx[count] = np.std(x)
         beam_widthux[count] = np.std(ux)
-        if (if2d == 0):
+        if (if3d == 1):
             beam_widthy[count] = np.std(y)
             beam_widthuy[count] = np.std(uy)
         if TotQ[count]!=0.0:
             cent_slice = np.abs(z-np.average(z,weights=w))<np.std(z)/30.
             beam_div  [count] = np.std(ux/uz)
-            if (if2d == 0):
+            if (if3d == 1):
                 beam_widthy_center[count] = np.std(y[cent_slice])
                 lEMIT_X, lEMIT_Y, lW_slice, lGAMMA = my_emittance(x, z, ux, uy, uz,
                                                               sliced=True, nslices=nslices, y=y)
@@ -259,7 +261,7 @@ def read_sim(sim):
             EMITX[count,:] = lEMIT_X
             W_slice[count,:] = lW_slice
             emittancex [count] = np.average(lEMIT_X, weights=lW_slice)
-            if (if2d == 0):
+            if (if3d == 1):
                 emittancepx[count]= emittance_from_coord(x, ux, uy, w, y)[0]
                 emittancey [count] = np.average(lEMIT_Y, weights=lW_slice)
                 emittancepy[count]= emittance_from_coord(x, ux, uy, w, y)[1]
@@ -273,13 +275,13 @@ def read_sim(sim):
         emittancex[emittancex==0.] = np.nan
         emittancepx[emittancepx==0.] = np.nan
         beam_div[beam_div==0.] = np.nan
-        if (if2d == 0):
+        if (if3d == 1):
             beam_widthy[beam_widthy==0.] = np.nan
             beam_widthuy[beam_widthuy==0.] = np.nan
             EMITY[EMITY==0.] = np.nan
             emittancey[emittancey==0.] = np.nan
             emittancepy[emittancepy==0.] = np.nan
-    if (if2d == 0):
+    if (if3d == 1):
         return zz, TotQ, TotP, Emean, Estd, emittancepx, emittancepy, emittancex, emittancey, beam_widthx, beam_widthy, beam_widthux, beam_widthuy
     else:
         return zz, TotQ, TotP, Emean, Estd, emittancepx, emittancex, beam_widthx, beam_widthux
@@ -299,7 +301,7 @@ d_bwdux   = {}
 d_bwduy   = {}
 
 for sim in sim_list:
-    if (if2d == 0):
+    if (if3d == 1):
         zz, TotQ, TotP, Emean, Estd, emittancepx, emittancepy, emittancex, emittancey, beam_widthx, beam_widthy, beam_widthux, beam_widthuy = read_sim(sim)
     else:
         zz, TotQ, TotP, Emean, Estd, emittancepx, emittancex, beam_widthx, beam_widthux = read_sim(sim)
@@ -312,7 +314,7 @@ for sim in sim_list:
     d_emitx [sim] = emittancex*1.e6 # to be in um
     d_bwdx  [sim] = beam_widthx*1.e6 # to be in um
     d_bwdux  [sim] = beam_widthux
-    if (if2d == 0):
+    if (if3d == 1):
         d_emitpy[sim] = emittancepy*1.e6 # to be in um
         d_emity [sim] = emittancey*1.e6 # to be in um
         d_bwdy  [sim] = beam_widthy*1.e6 # to be in um
@@ -342,7 +344,7 @@ for sim in sim_list:
     d_att[sim][a_list[6]]['data']=d_emitx[sim]
     d_att[sim][a_list[7]]['data']=d_bwdx[sim]
     d_att[sim][a_list[8]]['data']=d_bwdux[sim]
-    if (if2d == 0):
+    if (if3d == 1):
         d_att[sim][a_list[9]]['data']=d_emitpy[sim]
         d_att[sim][a_list[10]]['data']=d_emity[sim]
         d_att[sim][a_list[11]]['data']=d_bwdy[sim]
@@ -377,7 +379,7 @@ def save_hdf5(fn,att,fatt):
 
 
 for isims in range(nsims):
-    if (if2d == 0):
+    if (if3d == 1):
         print(save_hdf5(fhdf5_list[isims],a_list,d_att[sim_list[isims]]))
     else:
         print(save_hdf5(fhdf5_list[isims],a_list[:-4],d_att[sim_list[isims]]))
