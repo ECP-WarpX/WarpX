@@ -8,7 +8,7 @@
 ### 3 Sep 2020
 ###
 ### You can run it with the command:
-### python PropPlotsFromHDF5.py <Path scan> <Paths lab data>
+### python PropPlotsFromHDF5.py <Dimensions> <Path scan> <Paths lab data>
 ###
 
 
@@ -98,7 +98,7 @@ for isim in range(nsims):
     f_markers[sim_list[isim]] = fmarkers[isim]
     if isim == 0:
         lbl[sim_list[isim]] = 'PSATD'
-    elif isim == 4:
+    elif isim == 1:
         lbl[sim_list[isim]] = 'FDTD'
     else:
         lbl[sim_list[isim]] = None
