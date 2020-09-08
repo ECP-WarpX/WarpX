@@ -41,7 +41,7 @@ class SpectralSolverRZ
                                int const i_comp=0 ) {
             BL_PROFILE("SpectralSolverRZ::ForwardTransform");
             field_data.ForwardTransform(field_mf, field_index, i_comp);
-        };
+        }
 
         /* \brief Transform the two MultiFabs `field_mf1` and `field_mf2`
          *  to spectral space, and store the corresponding results internally
@@ -51,7 +51,7 @@ class SpectralSolverRZ
             BL_PROFILE("SpectralSolverRZ::ForwardTransform");
             field_data.ForwardTransform(field_mf1, field_index1,
                                         field_mf2, field_index2);
-        };
+        }
 
         /* \brief Transform spectral field specified by `field_index` back to
          * real space, and store it in the component `i_comp` of `field_mf` */
@@ -60,7 +60,7 @@ class SpectralSolverRZ
                                 int const i_comp=0) {
             BL_PROFILE("SpectralSolverRZ::BackwardTransform");
             field_data.BackwardTransform(field_mf, field_index, i_comp);
-        };
+        }
 
         /* \brief Transform spectral fields specified by `field_index1` and `field_index2`
          * back to real space, and store it in `field_mf1` and `field_mf2`*/
@@ -69,7 +69,7 @@ class SpectralSolverRZ
             BL_PROFILE("SpectralSolverRZ::BackwardTransform");
             field_data.BackwardTransform(field_mf1, field_index1,
                                          field_mf2, field_index2);
-        };
+        }
 
         /* \brief Update the fields in spectral space, over one timestep */
         void pushSpectralFields () {
@@ -78,26 +78,26 @@ class SpectralSolverRZ
             // on the sub-class of `SpectralBaseAlgorithm` that was
             // initialized in the constructor of `SpectralSolverRZ`
             algorithm->pushSpectralFields(field_data);
-        };
+        }
 
         /* \brief Initialize K space filtering arrays */
         void InitFilter (amrex::IntVect const & filter_npass_each_dir,
                          bool const compensation)
         {
             field_data.InitFilter(filter_npass_each_dir, compensation, k_space);
-        };
+        }
 
         /* \brief Apply K space filtering for a scalar */
         void ApplyFilter (int const field_index)
         {
             field_data.ApplyFilter(field_index);
-        };
+        }
 
         /* \brief Apply K space filtering for a vector */
         void ApplyFilter (int const field_index1, int const field_index2, int const field_index3)
         {
             field_data.ApplyFilter(field_index1, field_index2, field_index3);
-        };
+        }
         /**
           * \brief Public interface to call the member function ComputeSpectralDivE
           * of the base class SpectralBaseAlgorithmRZ from objects of class SpectralSolverRZ
@@ -105,7 +105,7 @@ class SpectralSolverRZ
         void ComputeSpectralDivE ( const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                    amrex::MultiFab& divE ) {
             algorithm->ComputeSpectralDivE( field_data, Efield, divE );
-        };
+        }
 
         /**
          * \brief Public interface to call the virtual function \c CurrentCorrection,
@@ -120,7 +120,7 @@ class SpectralSolverRZ
         void CurrentCorrection ( std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                  const std::unique_ptr<amrex::MultiFab>& rho ) {
              algorithm->CurrentCorrection( field_data, current, rho );
-        };
+        }
 
         /**
          * \brief Public interface to call the virtual function \c VayDeposition,
