@@ -76,8 +76,6 @@ SpectralSolverRZ::ForwardTransform (amrex::MultiFab const & field_mf1, int const
                                 field_mf2, field_index2);
 };
 
-/* \brief Transform spectral field specified by `field_index` back to
- * real space, and store it in the component `i_comp` of `field_mf` */
 void
 SpectralSolverRZ::BackwardTransform (amrex::MultiFab& field_mf,
                                      int const field_index,
@@ -86,8 +84,6 @@ SpectralSolverRZ::BackwardTransform (amrex::MultiFab& field_mf,
     field_data.BackwardTransform(field_mf, field_index, i_comp);
 };
 
-/* \brief Transform spectral fields specified by `field_index1` and `field_index2`
- * back to real space, and store it in `field_mf1` and `field_mf2`*/
 void
 SpectralSolverRZ::BackwardTransform (amrex::MultiFab& field_mf1, int const field_index1,
                                      amrex::MultiFab& field_mf2, int const field_index2) {
@@ -96,7 +92,6 @@ SpectralSolverRZ::BackwardTransform (amrex::MultiFab& field_mf1, int const field
                                  field_mf2, field_index2);
 };
 
-/* \brief Update the fields in spectral space, over one timestep */
 void
 SpectralSolverRZ::pushSpectralFields () {
     WARPX_PROFILE("SpectralSolverRZ::pushSpectralFields");
@@ -106,41 +101,18 @@ SpectralSolverRZ::pushSpectralFields () {
     algorithm->pushSpectralFields(field_data);
 };
 
-/**
-  * \brief Public interface to call the member function ComputeSpectralDivE
-  * of the base class SpectralBaseAlgorithmRZ from objects of class SpectralSolverRZ
-  */
 void
 SpectralSolverRZ::ComputeSpectralDivE (const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                        amrex::MultiFab& divE) {
     algorithm->ComputeSpectralDivE(field_data, Efield, divE);
 };
 
-/**
- * \brief Public interface to call the virtual function \c CurrentCorrection,
- * defined in the base class SpectralBaseAlgorithmRZ and possibly overridden
- * by its derived classes (e.g. PsatdAlgorithmRZ), from
- * objects of class SpectralSolverRZ through the private unique pointer \c algorithm
- *
- * \param[in,out] current two-dimensional array of unique pointers to MultiFab
- *                        storing the three components of the current density
- * \param[in]     rho     unique pointer to MultiFab storing the charge density
- */
 void
 SpectralSolverRZ::CurrentCorrection (std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                       const std::unique_ptr<amrex::MultiFab>& rho) {
      algorithm->CurrentCorrection(field_data, current, rho);
 };
 
-/**
- * \brief Public interface to call the virtual function \c VayDeposition,
- * declared in the base class SpectralBaseAlgorithmRZ and defined in its
- * derived classes, from objects of class SpectralSolverRZ through the private
- * unique pointer \c algorithm.
- *
- * \param[in,out] current Array of unique pointers to \c MultiFab storing
- *                        the three components of the current density
- */
 void
 SpectralSolverRZ::VayDeposition (std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
 {
