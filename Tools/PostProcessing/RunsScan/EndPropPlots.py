@@ -7,7 +7,9 @@
 ### L.D.Amorim @ LBNL
 ### 3 Sep 2020
 ###
-
+### You can run it with the command:
+### python EndPropPlots.py <Path read_raw_data> <Path scan> <Paths lab data>
+###
 
 # Import statements
 import os, glob, sys

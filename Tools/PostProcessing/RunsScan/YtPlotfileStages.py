@@ -8,7 +8,7 @@
 ### 3 Sep 2020
 ###
 ### You can run it with the command:
-### python PropPlotsFromHDF5.py <Path scan> <Path diags>
+### python YtPlotfileStages.py <Path scan> <Path diags>
 ###
 
 
