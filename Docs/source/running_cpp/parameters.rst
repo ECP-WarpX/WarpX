@@ -1337,7 +1337,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
     * ``plotfile`` for native AMReX format.
 
-    * ``checkpoint`` for a checkpoint file, only wirks with ``<diag_name>.diag_type = Full``.
+    * ``checkpoint`` for a checkpoint file, only works with ``<diag_name>.diag_type = Full``.
 
     * ``openpmd`` for OpenPMD format `openPMD <https://www.openPMD.org>`_.
       Requires to build WarpX with ``USE_OPENPMD=TRUE`` (see :ref:`instructions <building-openpmd>`).

@@ -6,6 +6,7 @@
  */
 #include "WarpXOpenPMD.H"
 #include "FieldIO.H"  // for getReversedVec
+#include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
 
@@ -67,11 +68,16 @@ namespace detail
     }
 
     /** Return the axis (index) names of a mesh
+     *
+     * This will be returned in C order. This is inverse of the Fortran order
+     * of the index labels for the AMReX FArrayBox.
      */
     inline std::vector< std::string >
     getFieldAxisLabels()
     {
         using vs = std::vector< std::string >;
+
+        // Fortran order of the index labels for the AMReX FArrayBox
 #if defined(WARPX_DIM_XZ)
         vs const axisLabels{"x", "z"};
 #elif defined(WARPX_DIM_RZ)
@@ -84,7 +90,9 @@ namespace detail
 #else
 #   error Unknown WarpX dimensionality.
 #endif
-        return axisLabels;
+
+        // revert to C order (fastest varying index last)
+        return {axisLabels.rbegin(), axisLabels.rend()};
     }
 
     /** Return the component names of a mesh
@@ -240,12 +248,12 @@ void WarpXOpenPMDPlot::SetStep(int ts, const std::string& filePrefix)
   }
 
     m_CurrentStep =  ts;
-    Init(openPMD::AccessType::CREATE, filePrefix);
+    Init(openPMD::Access::CREATE, filePrefix);
 
 }
 
 void
-WarpXOpenPMDPlot::Init(openPMD::AccessType accessType, const std::string& filePrefix)
+WarpXOpenPMDPlot::Init(openPMD::Access access, const std::string& filePrefix)
 {
     // either for the next ts file,
     // or init a single file for all ts
@@ -260,7 +268,7 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType, const std::string& filePr
     {
 #if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
-            filename, accessType,
+            filename, access,
             amrex::ParallelDescriptor::Communicator()
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
@@ -271,7 +279,7 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType, const std::string& filePr
     }
     else
     {
-        m_Series = std::make_unique<openPMD::Series>(filename, accessType);
+        m_Series = std::make_unique<openPMD::Series>(filename, access);
         m_MPISize = 1;
         m_MPIRank = 1;
     }
@@ -771,7 +779,11 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
 
     // Setup the mesh record accordingly
     auto mesh = meshes[field_name];
-    mesh.setDataOrder( openPMD::Mesh::DataOrder::F ); // MultiFab: Fortran order of indices and axes
+    //   MultiFab: Fortran order of indices and axes;
+    //   we invert (only) meta-data arrays to assign labels and offsets in the
+    //   order: slowest to fastest varying index when accessing the mesh
+    //   contiguously (as 1D flattened logical memory)
+    mesh.setDataOrder( openPMD::Mesh::DataOrder::C );
     mesh.setAxisLabels( axis_labels );
     mesh.setGridSpacing( grid_spacing );
     mesh.setGridGlobalOffset( global_offset );
@@ -781,8 +793,10 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
     // Create a new mesh record component, and store the associated metadata
     auto mesh_comp = mesh[comp_name];
     mesh_comp.resetDataset( dataset );
-    // Cell-centered data: position is at 0.5 of a cell size.
-    mesh_comp.setPosition( std::vector<double>{AMREX_D_DECL(0.5, 0.5, 0.5)} );
+
+    auto relative_cell_pos = utils::getRelativeCellPosition( mf );       // AMReX Fortran index order
+    std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() );  // now in C order
+    mesh_comp.setPosition( relative_cell_pos );
 
     // Loop through the multifab, and store each box as a chunk,
     // in the openPMD file.
