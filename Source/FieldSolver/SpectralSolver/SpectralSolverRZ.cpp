@@ -60,7 +60,7 @@ SpectralSolverRZ::ForwardTransform (amrex::MultiFab const & field_mf,
                                     int const i_comp) {
     WARPX_PROFILE("SpectralSolverRZ::ForwardTransform");
     field_data.ForwardTransform(field_mf, field_index, i_comp);
-};
+}
 
 void
 SpectralSolverRZ::ForwardTransform (amrex::MultiFab const & field_mf1, int const field_index1,
@@ -68,7 +68,7 @@ SpectralSolverRZ::ForwardTransform (amrex::MultiFab const & field_mf1, int const
     WARPX_PROFILE("SpectralSolverRZ::ForwardTransform");
     field_data.ForwardTransform(field_mf1, field_index1,
                                 field_mf2, field_index2);
-};
+}
 
 void
 SpectralSolverRZ::BackwardTransform (amrex::MultiFab& field_mf,
@@ -76,7 +76,7 @@ SpectralSolverRZ::BackwardTransform (amrex::MultiFab& field_mf,
                                      int const i_comp) {
     WARPX_PROFILE("SpectralSolverRZ::BackwardTransform");
     field_data.BackwardTransform(field_mf, field_index, i_comp);
-};
+}
 
 void
 SpectralSolverRZ::BackwardTransform (amrex::MultiFab& field_mf1, int const field_index1,
@@ -84,7 +84,7 @@ SpectralSolverRZ::BackwardTransform (amrex::MultiFab& field_mf1, int const field
     WARPX_PROFILE("SpectralSolverRZ::BackwardTransform");
     field_data.BackwardTransform(field_mf1, field_index1,
                                  field_mf2, field_index2);
-};
+}
 
 void
 SpectralSolverRZ::pushSpectralFields () {
@@ -93,19 +93,19 @@ SpectralSolverRZ::pushSpectralFields () {
     // on the sub-class of `SpectralBaseAlgorithm` that was
     // initialized in the constructor of `SpectralSolverRZ`
     algorithm->pushSpectralFields(field_data);
-};
+}
 
 void
 SpectralSolverRZ::ComputeSpectralDivE (const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
                                        amrex::MultiFab& divE) {
     algorithm->ComputeSpectralDivE(field_data, Efield, divE);
-};
+}
 
 void
 SpectralSolverRZ::CurrentCorrection (std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                       const std::unique_ptr<amrex::MultiFab>& rho) {
      algorithm->CurrentCorrection(field_data, current, rho);
-};
+}
 
 void
 SpectralSolverRZ::VayDeposition (std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
