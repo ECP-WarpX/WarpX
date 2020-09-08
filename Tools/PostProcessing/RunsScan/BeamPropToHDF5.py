@@ -282,9 +282,10 @@ def read_sim(sim):
             emittancey[emittancey==0.] = np.nan
             emittancepy[emittancepy==0.] = np.nan
     if (if3d == 1):
-        return zz, TotQ, TotP, Emean, Estd, emittancepx, emittancepy, emittancex, emittancey, beam_widthx, beam_widthy, beam_widthux, beam_widthuy
+        results = (zz, TotQ, TotP, Emean, Estd, emittancepx, emittancepy, emittancex, emittancey, beam_widthx, beam_widthy, beam_widthux, beam_widthuy)
     else:
-        return zz, TotQ, TotP, Emean, Estd, emittancepx, emittancex, beam_widthx, beam_widthux
+        results = (zz, TotQ, TotP, Emean, Estd, emittancepx, emittancex, beam_widthx, beam_widthux)
+    return results
 
 d_z      = {}
 d_totq   = {}
@@ -301,10 +302,11 @@ d_bwdux   = {}
 d_bwduy   = {}
 
 for sim in sim_list:
+    results = read_sim(sim)
     if (if3d == 1):
-        zz, TotQ, TotP, Emean, Estd, emittancepx, emittancepy, emittancex, emittancey, beam_widthx, beam_widthy, beam_widthux, beam_widthuy = read_sim(sim)
+         zz, TotQ, TotP, Emean, Estd, emittancepx, emittancepy, emittancex, emittancey, beam_widthx, beam_widthy, beam_widthux, beam_widthuy = results
     else:
-        zz, TotQ, TotP, Emean, Estd, emittancepx, emittancex, beam_widthx, beam_widthux = read_sim(sim)
+        zz, TotQ, TotP, Emean, Estd, emittancepx, emittancex, beam_widthx, beam_widthux = results
     d_z     [sim] = zz
     d_totq  [sim] = TotQ*scc.e*1e9 # to be in nC
     d_totp  [sim] = TotP

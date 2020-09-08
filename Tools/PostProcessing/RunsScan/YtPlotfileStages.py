@@ -20,7 +20,6 @@ if os.environ.get('DISPLAY','') == '':
     matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import scipy.constants as scc
-import math
 import yt ; yt.funcs.mylog.setLevel(50)
 
 
@@ -63,14 +62,16 @@ for spci in range(len(species_name)):
 plot = {}
 lplots={}
 for f in f_names:
-#     plot[f]=glob.glob(path+f+'/diags/diag??????')
-    plot[f]=glob.glob(path+f+'/diags/plotfiles/plt?????')
+# Double check this address and the number of ? needed
+     plot[f]=glob.glob(path+f+'/diags/diag?????')
+#    plot[f]=glob.glob(path+f+'/diags/plotfiles/plt?????')
     plot[f].sort()
     lplots[f]=len(plot[f])
     print(f,lplots[f])
     if lplots[f]>1:
         for j in range(lplots[f]):
-            plot[f][j]=plot[f][j][-10:]
+            plot[f][j]=plot[f][j][-9:]
+#            plot[f][j]=plot[f][j][-8:]
         plot[f].remove(plot[f][0])
         plot[f].remove(plot[f][0])
         for i in range(5):
