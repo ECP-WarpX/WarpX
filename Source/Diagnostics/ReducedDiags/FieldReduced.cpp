@@ -217,54 +217,69 @@ void FieldReduced::ComputeDiags (int step)
             m_data[m_offset_maxField+lev*noutputs_maxField+index_By] = By.norm0();
             m_data[m_offset_maxField+lev*noutputs_maxField+index_Bz] = Bz.norm0();
 
-            // Create temporary MultiFAB to be filled with |E| and |B| squared
-            // Note that allocating a full MultiFAB is probably not optimal for memory usage
-            const int ncomp = 1;
-            const int ngrow = 0;  // no ghost cells for temporary MultiFAB
-            MultiFab mftemp(amrex::convert(Ex.boxArray(), IntVect{AMREX_D_DECL(0,0,0)}),
-                                                Ex.DistributionMap(), ncomp, ngrow);
-            // Temporary MultiFab is cell-centered so that it can be filled for any staggering
-            // (possibly with the sum of components which do not have the same staggering).
+            // Reduction operation to compute the maximum value of Ex**2+Ey**2+Ez**2
+            // Note that the reduction is possibly made with the sum of components
+            // which do not have the same staggering.
+            ReduceOps<ReduceOpMax> reduceE_op;
+            ReduceData<Real> reduceE_data(reduceE_op);
+            using ReduceTuple = typename decltype(reduceE_data)::Type;
 
-            // MFIter loop to fill temporary MultiFAB with |E| squared.
-#ifdef _OPENMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
-#endif
-            for ( MFIter mfi(mftemp, TilingIfNotGPU()); mfi.isValid(); ++mfi )
-            {
-                const Box& box = mfi.tilebox();
-
-                const auto& arrEx = Ex[mfi].array();
-                const auto& arrEy = Ey[mfi].array();
-                const auto& arrEz = Ez[mfi].array();
-                auto arrtemp = mftemp[mfi].array();
-
-                amrex::ParallelFor(box,  [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                arrtemp(i,j,k) = arrEx(i,j,k)*arrEx(i,j,k) + arrEy(i,j,k)*arrEy(i,j,k)
-                                + arrEz(i,j,k)*arrEz(i,j,k);
-            });
-            }
-            m_data[m_offset_maxField+lev*noutputs_maxField+index_absE] = std::sqrt(mftemp.max(0));
-
-            // MFIter loop to fill temporary MultiFAB with |B| squared.
  #ifdef _OPENMP
  #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
  #endif
-            for ( MFIter mfi(mftemp, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+            for ( MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
             {
-                const Box& box = mfi.tilebox();
+                // Make the box cell centered to avoid including ghost cells in the calculation
+                const Box& box = enclosedCells(mfi.nodaltilebox());
+                const auto& arrEx = Ex[mfi].array();
+                const auto& arrEy = Ey[mfi].array();
+                const auto& arrEz = Ez[mfi].array();
 
+                reduceE_op.eval(box, reduceE_data,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
+                {
+                    return arrEx(i,j,k)*arrEx(i,j,k) + arrEy(i,j,k)*arrEy(i,j,k)
+                                + arrEz(i,j,k)*arrEz(i,j,k);
+                });
+            }
+
+            Real hv_E = amrex::get<0>(reduceE_data.value()); // highest value of |E|**2
+            // MPI reduce
+            ParallelDescriptor::ReduceRealMax(hv_E);
+
+            m_data[m_offset_maxField+lev*noutputs_maxField+index_absE] = std::sqrt(hv_E);
+
+            // Reduction operation to compute the maximum value of Bx**2+By**2+Bz**2
+            // Note that the reduction is possibly made with the sum of components
+            // which do not have the same staggering.
+            ReduceOps<ReduceOpMax> reduceB_op;
+            ReduceData<Real> reduceB_data(reduceB_op);
+            using ReduceTuple = typename decltype(reduceB_data)::Type;
+
+ #ifdef _OPENMP
+ #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+ #endif
+            for ( MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+            {
+                // Make the box cell centered to avoid including ghost cells in the calculation
+                const Box& box = enclosedCells(mfi.nodaltilebox());
                 const auto& arrBx = Bx[mfi].array();
                 const auto& arrBy = By[mfi].array();
                 const auto& arrBz = Bz[mfi].array();
-                auto arrtemp = mftemp[mfi].array();
 
-                amrex::ParallelFor(box,  [=] AMREX_GPU_DEVICE (int i, int j, int k){
-                arrtemp(i,j,k) = arrBx(i,j,k)*arrBx(i,j,k) + arrBy(i,j,k)*arrBy(i,j,k)
+                reduceB_op.eval(box, reduceB_data,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
+                {
+                    return arrBx(i,j,k)*arrBx(i,j,k) + arrBy(i,j,k)*arrBy(i,j,k)
                                 + arrBz(i,j,k)*arrBz(i,j,k);
-            });
+                });
             }
-            m_data[m_offset_maxField+lev*noutputs_maxField+index_absB] = std::sqrt(mftemp.max(0));
+
+            Real hv_B = amrex::get<0>(reduceB_data.value()); // highest value of |B|**2
+            // MPI reduce
+            ParallelDescriptor::ReduceRealMax(hv_B);
+
+            m_data[m_offset_maxField+lev*noutputs_maxField+index_absB] = std::sqrt(hv_B);
         }
 
     }
