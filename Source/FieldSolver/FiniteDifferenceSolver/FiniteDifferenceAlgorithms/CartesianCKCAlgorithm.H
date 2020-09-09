@@ -9,7 +9,6 @@
 #define WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
 
 #include "Utils/WarpXConst.H"
-#include "FieldAccessorFunctors.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
