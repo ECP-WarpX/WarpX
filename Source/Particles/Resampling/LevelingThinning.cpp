@@ -5,7 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "LevelingThinning.H"
-#include "Particles/Collision/CollisionType.H"
+#include "Utils/ParticleUtils.H"
 
 #include <AMReX_Particles.H>
 
@@ -40,7 +40,7 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
     // efficient to directly loop over the particles. Nevertheless, this structure with a loop over
     // the cells is more general and can be readily used to implement almost any other resampling
     // algorithm.
-    auto bins = findParticles::findParticlesInEachCell(lev, pti, ptile);
+    auto bins = ParticleUtils::findParticlesInEachCell(lev, pti, ptile);
 
     const int n_cells = bins.numBins();
     const auto indices = bins.permutationPtr();
