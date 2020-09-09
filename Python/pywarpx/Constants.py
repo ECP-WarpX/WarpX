@@ -16,7 +16,7 @@ class Constants(Bucket):
     def __setattr__(self, name, value):
         # Make sure that any constants redefined have a consistent value
         if name in self.argvattrs:
-            assert self.argvattrs[name] == value, Exception('An consistent values given for user defined constants')
+            assert self.argvattrs[name] == value, Exception('Inconsistent values given for user defined constants')
         Bucket.__setattr__(self, name, value)
 
 my_constants = Constants()
