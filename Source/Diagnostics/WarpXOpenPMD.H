@@ -110,7 +110,7 @@ public:
 
 
 private:
-  void Init(openPMD::AccessType accessType, const std::string& filePrefix);
+  void Init(openPMD::Access access, const std::string& filePrefix);
 
   /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
   *

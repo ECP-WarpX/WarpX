@@ -12,7 +12,7 @@
  */
 struct ScaleFields
 {
-    amrex::Real m_do_scale;
+    bool m_do_scale;
     amrex::Real m_dt;
     amrex::Real m_z_plane_previous;
     amrex::Real m_vz_ave_boosted;

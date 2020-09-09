@@ -27,9 +27,9 @@ struct CartesianCKCAlgorithm {
 
     static void InitializeStencilCoefficients (
         std::array<amrex::Real,3>& cell_size,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_x,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_y,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_z ) {
+        amrex::Vector<amrex::Real>& stencil_coefs_x,
+        amrex::Vector<amrex::Real>& stencil_coefs_y,
+        amrex::Vector<amrex::Real>& stencil_coefs_z ) {
 
         using namespace amrex;
 
@@ -219,6 +219,9 @@ struct CartesianCKCAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
+
+        amrex::ignore_unused(n_coefs_z);
+
         Real const alphaz = coefs_z[1];
         Real const betazx = coefs_z[2];
 #if defined WARPX_DIM_3D

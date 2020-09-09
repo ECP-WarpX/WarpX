@@ -99,7 +99,7 @@ void
 WarpXParticleContainer::AddNParticles (int /*lev*/,
                                        int n, const ParticleReal* x, const ParticleReal* y, const ParticleReal* z,
                                        const ParticleReal* vx, const ParticleReal* vy, const ParticleReal* vz,
-                                       int nattr, const ParticleReal* attr, int uniqueparticles, int id)
+                                       int nattr, const ParticleReal* attr, int uniqueparticles, amrex::Long id)
 {
     BL_ASSERT(nattr == 1); //! @fixme nattr is unused below: false sense of safety
     const ParticleReal* weight = attr;
@@ -147,6 +147,7 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         p.pos(1) = y[i];
         p.pos(2) = z[i];
 #elif (AMREX_SPACEDIM == 2)
+        amrex::ignore_unused(y);
 #ifdef WARPX_DIM_RZ
         theta[i-ibegin] = std::atan2(y[i], x[i]);
         p.pos(0) = std::sqrt(x[i]*x[i] + y[i]*y[i]);

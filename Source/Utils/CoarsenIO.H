@@ -28,9 +28,9 @@ namespace CoarsenIO{
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     Real Interp ( Array4<Real const> const& arr_src,
-                  int const* const AMREX_RESTRICT sf,
-                  int const* const AMREX_RESTRICT sc,
-                  int const* const AMREX_RESTRICT cr,
+                  GpuArray<int,3> const& sf,
+                  GpuArray<int,3> const& sc,
+                  GpuArray<int,3> const& cr,
                   const int i,
                   const int j,
                   const int k,

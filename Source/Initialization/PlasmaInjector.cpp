@@ -268,7 +268,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 #ifdef WARPX_USE_OPENPMD
         if (ParallelDescriptor::IOProcessor()) {
             m_openpmd_input_series = std::make_unique<openPMD::Series>(
-                str_injection_file, openPMD::AccessType::READ_ONLY);
+                str_injection_file, openPMD::Access::READ_ONLY);
 
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 m_openpmd_input_series->iterations.size() == 1u,
