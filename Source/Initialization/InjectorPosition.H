@@ -66,12 +66,8 @@ private:
 // - InjectorPositionRandom : to generate random distribution;
 // - InjectorPositionRegular: to generate regular distribution.
 // The choice is made at runtime, depending in the constructor called.
-// This mimics virtual functions, except the struct is stored in managed memory
-// and member functions are made __host__ __device__ to run on CPU and GPU.
-// This struct inherits from amrex::Gpu::Managed to provide new and delete
-// operators in managed memory when running on GPU. Nothing special on CPU.
+// This mimics virtual functions.
 struct InjectorPosition
-    : public amrex::Gpu::Managed
 {
     // This constructor stores a InjectorPositionRandom in union object.
     InjectorPosition (InjectorPositionRandom* t,
