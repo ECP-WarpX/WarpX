@@ -4,35 +4,6 @@
 
 /**
  * \brief Functor that returns the value stored in Array4, m_field, at (i,j,k,ncomp).
- */
-struct FieldAccessorRaw
-{
-    /** Constructor
-     * \param a_field Array4 of the field
-     */
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    FieldAccessorRaw (amrex::Array4<amrex::Real const> const a_field) : m_field(a_field) {}
-
-    /**
-     * \brief return field value at (i,j,k,ncomp)
-     * \param[in] i      index along x of the Array4, m_field.
-     * \param[in] j      index along y of the Array4, m_field.
-     * \param[in] k      index along z of the Array4, m_field.
-     * \param[in] ncomp  index along fourth component of the Array4, containing field-data
-                         to be returned.
-     *
-     * \return           raw ncomp value at (i,j,k) of Array4, m_field.
-     */
-    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    amrex::Real operator() (int const i, int const j,
-                            int const k, int const ncomp) const noexcept
-    {
-        return m_field(i, j, k, ncomp);
-    }
-private:
-    /** Array4 of the source field to be returned by the operator() */
-    amrex::Array4<amrex::Real const> const m_field;
-};
 
 
 
