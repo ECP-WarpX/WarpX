@@ -6,6 +6,7 @@
  */
 #include "WarpXOpenPMD.H"
 #include "FieldIO.H"  // for getReversedVec
+#include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
 
@@ -247,12 +248,12 @@ void WarpXOpenPMDPlot::SetStep(int ts, const std::string& filePrefix)
   }
 
     m_CurrentStep =  ts;
-    Init(openPMD::AccessType::CREATE, filePrefix);
+    Init(openPMD::Access::CREATE, filePrefix);
 
 }
 
 void
-WarpXOpenPMDPlot::Init(openPMD::AccessType accessType, const std::string& filePrefix)
+WarpXOpenPMDPlot::Init(openPMD::Access access, const std::string& filePrefix)
 {
     // either for the next ts file,
     // or init a single file for all ts
@@ -267,7 +268,7 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType, const std::string& filePr
     {
 #if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
-            filename, accessType,
+            filename, access,
             amrex::ParallelDescriptor::Communicator()
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
@@ -278,7 +279,7 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType, const std::string& filePr
     }
     else
     {
-        m_Series = std::make_unique<openPMD::Series>(filename, accessType);
+        m_Series = std::make_unique<openPMD::Series>(filename, access);
         m_MPISize = 1;
         m_MPIRank = 1;
     }
@@ -792,9 +793,10 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
     // Create a new mesh record component, and store the associated metadata
     auto mesh_comp = mesh[comp_name];
     mesh_comp.resetDataset( dataset );
-    // Cell-centered data: position is at 0.5 of a cell size.
-    // TODO: honor nodal/cell centered data per component; reverse order to axisLabel order
-    mesh_comp.setPosition( std::vector<double>{AMREX_D_DECL(0.5, 0.5, 0.5)} );
+
+    auto relative_cell_pos = utils::getRelativeCellPosition( mf );       // AMReX Fortran index order
+    std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() );  // now in C order
+    mesh_comp.setPosition( relative_cell_pos );
 
     // Loop through the multifab, and store each box as a chunk,
     // in the openPMD file.
