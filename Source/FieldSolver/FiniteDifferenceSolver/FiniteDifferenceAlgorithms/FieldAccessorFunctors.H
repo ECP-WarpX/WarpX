@@ -1,12 +1,6 @@
 #ifndef WARPX_FIELD_ACCESSOR_FUNCTORS_H
 #define WARPX_FIELD_ACCESSOR_FUNCTORS_H
 #include "WarpX.H"
-
-/**
- * \brief Functor that returns the value stored in Array4, m_field, at (i,j,k,ncomp).
-
-
-
 /**
  * \brief Functor that returns the division of the source m_field Array4 value
           by macroparameter, m_parameter value at the respective (i,j,k,ncomp).

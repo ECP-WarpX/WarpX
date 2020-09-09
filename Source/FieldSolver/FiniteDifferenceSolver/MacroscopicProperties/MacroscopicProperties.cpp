@@ -130,14 +130,6 @@ MacroscopicProperties::InitData ()
     }
 
 
-    sigma_IndexType.resize( 3 );
-    epsilon_IndexType.resize( 3 );
-    mu_IndexType.resize( 3 );
-    Ex_IndexType.resize( 3 );
-    Ey_IndexType.resize( 3 );
-    Ez_IndexType.resize( 3 );
-    macro_cr_ratio.resize( 3 );
-
     IntVect sigma_stag = m_sigma_mf->ixType().toIntVect();
     IntVect epsilon_stag = m_eps_mf->ixType().toIntVect();
     IntVect mu_stag = m_mu_mf->ixType().toIntVect();

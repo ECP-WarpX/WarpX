@@ -82,20 +82,13 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
 
     // Index type required for calling CoarsenIO::Interp to interpolate macroscopic
     // properties from their respective staggering to the Ex, Ey, Ez locations
-    int const* const AMREX_RESTRICT
-              sigma_stag   = macroscopic_properties->sigma_IndexType.data();
-    int const* const AMREX_RESTRICT
-              epsilon_stag = macroscopic_properties->epsilon_IndexType.data();
-    int const* const AMREX_RESTRICT
-              mu_stag      = macroscopic_properties->mu_IndexType.data();
-    int const* const AMREX_RESTRICT
-              Ex_stag      = macroscopic_properties->Ex_IndexType.data();
-    int const* const AMREX_RESTRICT
-              Ey_stag      = macroscopic_properties->Ey_IndexType.data();
-    int const* const AMREX_RESTRICT
-              Ez_stag      = macroscopic_properties->Ez_IndexType.data();
-    int const* const AMREX_RESTRICT
-              macro_cr     = macroscopic_properties->macro_cr_ratio.data();
+    amrex::GpuArray<int, 3> const& sigma_stag = macroscopic_properties->sigma_IndexType;
+    amrex::GpuArray<int, 3> const& epsilon_stag = macroscopic_properties->epsilon_IndexType;
+    amrex::GpuArray<int, 3> const& mu_stag = macroscopic_properties->mu_IndexType;
+    amrex::GpuArray<int, 3> const& Ex_stag = macroscopic_properties->Ex_IndexType;
+    amrex::GpuArray<int, 3> const& Ey_stag = macroscopic_properties->Ey_IndexType;
+    amrex::GpuArray<int, 3> const& Ez_stag = macroscopic_properties->Ez_IndexType;
+    amrex::GpuArray<int, 3> const& macro_cr     = macroscopic_properties->macro_cr_ratio;
 
 
     // Loop through the grids, and over the tiles within each grid
@@ -149,10 +142,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                                            Ex_stag, macro_cr, i, j, k, scomp);
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
-                Ex(i, j, k) = alpha * Ex(i, j, k) + (beta/1.0)
-                     * ( - T_Algo::DownwardDz(Hy, coefs_z, n_coefs_z, i, j, k,0)
-                         + T_Algo::DownwardDy(Hz, coefs_y, n_coefs_y, i, j, k,0)
-                       ) - beta * jx(i, j, k);
+                Ex(i, j, k) = alpha * Ex(i, j, k)
+                            + beta * ( - T_Algo::DownwardDz(Hy, coefs_z, n_coefs_z, i, j, k,0)
+                                       + T_Algo::DownwardDy(Hz, coefs_y, n_coefs_y, i, j, k,0)
+                                     ) - beta * jx(i, j, k);
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -163,10 +156,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
-                Ey(i, j, k) = alpha * Ey(i, j, k) + (beta/1.0)
-                     * ( - T_Algo::DownwardDx(Hz, coefs_x, n_coefs_x, i, j, k,0)
-                         + T_Algo::DownwardDz(Hx, coefs_z, n_coefs_z, i, j, k,0)
-                       ) - beta * jy(i, j, k);
+                Ey(i, j, k) = alpha * Ey(i, j, k)
+                            + beta * ( - T_Algo::DownwardDx(Hz, coefs_x, n_coefs_x, i, j, k,0)
+                                       + T_Algo::DownwardDz(Hx, coefs_z, n_coefs_z, i, j, k,0)
+                                     ) - beta * jy(i, j, k);
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -177,10 +170,10 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
-                Ez(i, j, k) = alpha * Ez(i, j, k) + (beta/1.0)
-                     * ( - T_Algo::DownwardDy(Hx, coefs_y, n_coefs_y, i, j, k,0)
-                         + T_Algo::DownwardDx(Hy, coefs_x, n_coefs_x, i, j, k,0)
-                       ) - beta * jz(i, j, k);
+                Ez(i, j, k) = alpha * Ez(i, j, k)
+                            + beta * ( - T_Algo::DownwardDy(Hx, coefs_y, n_coefs_y, i, j, k,0)
+                                       + T_Algo::DownwardDx(Hy, coefs_x, n_coefs_x, i, j, k,0)
+                                     ) - beta * jz(i, j, k);
             }
         );
     }

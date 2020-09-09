@@ -35,19 +35,19 @@ public:
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
                                   ParserWrapper<3> *macro_parser, int lev);
      /** Gpu Vector with index type of the conductivity multifab */
-     amrex::Gpu::ManagedVector<int> sigma_IndexType;
+     amrex::GpuArray<int, 3> sigma_IndexType;
      /** Gpu Vector with index type of the permittivity multifab */
-     amrex::Gpu::ManagedVector<int> epsilon_IndexType;
+     amrex::GpuArray<int, 3> epsilon_IndexType;
      /** Gpu Vector with index type of the permeability multifab */
-     amrex::Gpu::ManagedVector<int> mu_IndexType;
+     amrex::GpuArray<int, 3> mu_IndexType;
      /** Gpu Vector with index type of the Ex multifab */
-     amrex::Gpu::ManagedVector<int> Ex_IndexType;
+     amrex::GpuArray<int, 3> Ex_IndexType;
      /** Gpu Vector with index type of the Ey multifab */
-     amrex::Gpu::ManagedVector<int> Ey_IndexType;
+     amrex::GpuArray<int, 3> Ey_IndexType;
      /** Gpu Vector with index type of the Ez multifab */
-     amrex::Gpu::ManagedVector<int> Ez_IndexType;
+     amrex::GpuArray<int, 3> Ez_IndexType;
      /** Gpu Vector with index type of coarsening ratio with default value (1,1,1) */
-     amrex::Gpu::ManagedVector<int> macro_cr_ratio;
+     amrex::GpuArray<int, 3> macro_cr_ratio;
 
 private:
      /** Conductivity, sigma, of the medium */
