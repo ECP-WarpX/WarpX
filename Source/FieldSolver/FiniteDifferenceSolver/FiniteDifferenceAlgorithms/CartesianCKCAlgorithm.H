@@ -148,11 +148,10 @@ struct CartesianCKCAlgorithm {
     static amrex::Real DownwardDx (
         T_Field const& F,
         amrex::Real const * const coefs_x, int const /*n_coefs_x*/,
-        int const i, int const j, int const k, int const ncomp=0,
-        amrex::Real const mu_up =1.0, amrex::Real const mu_down = 1.0 ) {
+        int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const inv_dx = coefs_x[0];
-        return inv_dx*( F(i,j,k,ncomp)/mu_up - F(i-1,j,k,ncomp)/mu_down );
+        return inv_dx*( F(i,j,k,ncomp) - F(i-1,j,k,ncomp) );
     }
 
     /**
@@ -196,8 +195,7 @@ struct CartesianCKCAlgorithm {
     static amrex::Real DownwardDy (
         T_Field const& F,
         amrex::Real const * const coefs_y, int const n_coefs_y,
-        int const i, int const j, int const k, int const ncomp=0,
-        amrex::Real const mu_up =1.0, amrex::Real const mu_down = 1.0 ) {
+        int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
 #if defined WARPX_DIM_3D
