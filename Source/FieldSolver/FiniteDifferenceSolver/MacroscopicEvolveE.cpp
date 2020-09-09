@@ -128,9 +128,9 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
         Real const * const AMREX_RESTRICT coefs_z = m_stencil_coefs_z.dataPtr();
         int const n_coefs_z = m_stencil_coefs_z.size();
 
-        FieldAccessorMacroscopic const Bx_raw(Bx, mu_arr);
-        FieldAccessorMacroscopic const By_raw(By, mu_arr);
-        FieldAccessorMacroscopic const Bz_raw(Bz, mu_arr);
+        FieldAccessorMacroscopic const Hx(Bx, mu_arr);
+        FieldAccessorMacroscopic const Hy(By, mu_arr);
+        FieldAccessorMacroscopic const Hz(Bz, mu_arr);
 
         // Extract tileboxes for which to loop
         Box const& tex  = mfi.tilebox(Efield[0]->ixType().toIntVect());
@@ -150,8 +150,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 amrex::Real alpha = T_MacroAlgo::alpha( sigma_interp, epsilon_interp, dt);
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
                 Ex(i, j, k) = alpha * Ex(i, j, k) + (beta/1.0)
-                     * ( - T_Algo::DownwardDz(By_raw, coefs_z, n_coefs_z, i, j, k,0)
-                         + T_Algo::DownwardDy(Bz_raw, coefs_y, n_coefs_y, i, j, k,0)
+                     * ( - T_Algo::DownwardDz(Hy, coefs_z, n_coefs_z, i, j, k,0)
+                         + T_Algo::DownwardDy(Hz, coefs_y, n_coefs_y, i, j, k,0)
                        ) - beta * jx(i, j, k);
             },
 
@@ -164,8 +164,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
                 Ey(i, j, k) = alpha * Ey(i, j, k) + (beta/1.0)
-                     * ( - T_Algo::DownwardDx(Bz_raw, coefs_x, n_coefs_x, i, j, k,0)
-                         + T_Algo::DownwardDz(Bx_raw, coefs_z, n_coefs_z, i, j, k,0)
+                     * ( - T_Algo::DownwardDx(Hz, coefs_x, n_coefs_x, i, j, k,0)
+                         + T_Algo::DownwardDz(Hx, coefs_z, n_coefs_z, i, j, k,0)
                        ) - beta * jy(i, j, k);
             },
 
@@ -178,8 +178,8 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
                 amrex::Real beta = T_MacroAlgo::beta( sigma_interp, epsilon_interp, dt);
 
                 Ez(i, j, k) = alpha * Ez(i, j, k) + (beta/1.0)
-                     * ( - T_Algo::DownwardDy(Bx_raw, coefs_y, n_coefs_y, i, j, k,0)
-                         + T_Algo::DownwardDx(By_raw, coefs_x, n_coefs_x, i, j, k,0)
+                     * ( - T_Algo::DownwardDy(Hx, coefs_y, n_coefs_y, i, j, k,0)
+                         + T_Algo::DownwardDx(Hy, coefs_x, n_coefs_x, i, j, k,0)
                        ) - beta * jz(i, j, k);
             }
         );
