@@ -1246,8 +1246,8 @@ WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Array<amrex::Real,3>
 {
     amrex::Real cur_time = gett_new(lev);
     amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = { vv_galilean[0]*time_shift, vv_galilean[1]*time_shift, vv_galilean[2]*time_shift };
-    return WarpX::LowerCorner(bx, galilean_shift, lev);
+    amrex::Array<amrex::Real,3> t_galilean_shift = { vv_galilean[0]*time_shift, vv_galilean[1]*time_shift, vv_galilean[2]*time_shift };
+    return WarpX::LowerCorner(bx, t_galilean_shift, lev);
 }
 
 IntVect
