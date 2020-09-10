@@ -93,6 +93,10 @@ WarpX::InitData ()
 
     BuildBufferMasks();
 
+    if (WarpX::em_solver_medium==1) {
+        m_macroscopic_properties->InitData();
+    }
+
     InitDiagnostics();
 
     if (ParallelDescriptor::IOProcessor()) {
@@ -341,7 +345,6 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     str_By_ext_grid_function);
        Store_parserString(pp, "Bz_external_grid_function(x,y,z)",
                                                     str_Bz_ext_grid_function);
-
        Bxfield_parser.reset(new ParserWrapper<3>(
                                 makeParser(str_Bx_ext_grid_function,{"x","y","z"})));
        Byfield_parser.reset(new ParserWrapper<3>(
