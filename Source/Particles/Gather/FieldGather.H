@@ -18,19 +18,22 @@
 /**
  * \brief Field gather for a single particle
  *
- * \param xp, yp, zp                : Particle position coordinates
- * \param Exp, Eyp, Ezp             : Electric field on particles.
- * \param Bxp, Byp, Bzp             : Magnetic field on particles.
- * \param ex_arr ey_arr ez_arr      : Array4 of the electric field, either full array or tile.
- * \param bx_arr by_arr bz_arr      : Array4 of the magnetic field, either full array or tile.
- * \param ex_type, ey_type, ez_type : IndexType of the electric field
- * \param bx_type, by_type, bz_type : IndexType of the magnetic field
- * \param dx                        : 3D cell spacing
- * \param xyzmin                    : Physical lower bounds of domain in x, y, z.
- * \param lo                        : Index lower bounds of domain.
- * \param n_rz_azimuthal_modes      : Number of azimuthal modes when using RZ geometry
+ * \tparam depos_order              Particle shape order
+ * \tparam galerkin_interpolation   Lower the order of the particle shape by
+ *                                  this value (0/1) for the parallel field component
+ * \param xp, yp, zp                Particle position coordinates
+ * \param Exp, Eyp, Ezp             Electric field on particles.
+ * \param Bxp, Byp, Bzp             Magnetic field on particles.
+ * \param ex_arr ey_arr ez_arr      Array4 of the electric field, either full array or tile.
+ * \param bx_arr by_arr bz_arr      Array4 of the magnetic field, either full array or tile.
+ * \param ex_type, ey_type, ez_type IndexType of the electric field
+ * \param bx_type, by_type, bz_type IndexType of the magnetic field
+ * \param dx                        3D cell spacing
+ * \param xyzmin                    Physical lower bounds of domain in x, y, z.
+ * \param lo                        Index lower bounds of domain.
+ * \param n_rz_azimuthal_modes       Number of azimuthal modes when using RZ geometry
  */
-template <int depos_order, int lower_in_v>
+template <int depos_order, int galerkin_interpolation>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void doGatherShapeN (const amrex::ParticleReal xp,
                      const amrex::ParticleReal yp,
@@ -100,14 +103,14 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // arrays will be needed.
     amrex::Real sx_node[depos_order + 1];
     amrex::Real sx_cell[depos_order + 1];
-    amrex::Real sx_node_v[depos_order + 1 - lower_in_v];
-    amrex::Real sx_cell_v[depos_order + 1 - lower_in_v];
+    amrex::Real sx_node_galerkin[depos_order + 1 - galerkin_interpolation];
+    amrex::Real sx_cell_galerkin[depos_order + 1 - galerkin_interpolation];
     int j_node = 0;
     int j_cell = 0;
     int j_node_v = 0;
     int j_cell_v = 0;
     Compute_shape_factor< depos_order > const compute_shape_factor;
-    Compute_shape_factor< depos_order-lower_in_v > const compute_shape_factor_lower_in_v;
+    Compute_shape_factor<depos_order - galerkin_interpolation > const compute_shape_factor_galerkin;
     if ((ey_type[0] == NODE) || (ez_type[0] == NODE) || (bx_type[0] == NODE)) {
         j_node = compute_shape_factor(sx_node, x);
     }
@@ -115,17 +118,17 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         j_cell = compute_shape_factor(sx_cell, x - 0.5_rt);
     }
     if ((ex_type[0] == NODE) || (by_type[0] == NODE) || (bz_type[0] == NODE)) {
-        j_node_v = compute_shape_factor_lower_in_v(sx_node_v, x);
+        j_node_v = compute_shape_factor_galerkin(sx_node_galerkin, x);
     }
     if ((ex_type[0] == CELL) || (by_type[0] == CELL) || (bz_type[0] == CELL)) {
-        j_cell_v = compute_shape_factor_lower_in_v(sx_cell_v, x - 0.5_rt);
+        j_cell_v = compute_shape_factor_galerkin(sx_cell_galerkin, x - 0.5_rt);
     }
-    const amrex::Real (&sx_ex)[depos_order + 1 - lower_in_v] = ((ex_type[0] == NODE) ? sx_node_v : sx_cell_v);
+    const amrex::Real (&sx_ex)[depos_order + 1 - galerkin_interpolation] = ((ex_type[0] == NODE) ? sx_node_galerkin : sx_cell_galerkin);
     const amrex::Real (&sx_ey)[depos_order + 1             ] = ((ey_type[0] == NODE) ? sx_node   : sx_cell  );
     const amrex::Real (&sx_ez)[depos_order + 1             ] = ((ez_type[0] == NODE) ? sx_node   : sx_cell  );
     const amrex::Real (&sx_bx)[depos_order + 1             ] = ((bx_type[0] == NODE) ? sx_node   : sx_cell  );
-    const amrex::Real (&sx_by)[depos_order + 1 - lower_in_v] = ((by_type[0] == NODE) ? sx_node_v : sx_cell_v);
-    const amrex::Real (&sx_bz)[depos_order + 1 - lower_in_v] = ((bz_type[0] == NODE) ? sx_node_v : sx_cell_v);
+    const amrex::Real (&sx_by)[depos_order + 1 - galerkin_interpolation] = ((by_type[0] == NODE) ? sx_node_galerkin : sx_cell_galerkin);
+    const amrex::Real (&sx_bz)[depos_order + 1 - galerkin_interpolation] = ((bz_type[0] == NODE) ? sx_node_galerkin : sx_cell_galerkin);
     int const j_ex = ((ex_type[0] == NODE) ? j_node_v : j_cell_v);
     int const j_ey = ((ey_type[0] == NODE) ? j_node   : j_cell  );
     int const j_ez = ((ez_type[0] == NODE) ? j_node   : j_cell  );
@@ -138,8 +141,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     const amrex::Real y = (yp-ymin)*dyi;
     amrex::Real sy_node[depos_order + 1];
     amrex::Real sy_cell[depos_order + 1];
-    amrex::Real sy_node_v[depos_order + 1 - lower_in_v];
-    amrex::Real sy_cell_v[depos_order + 1 - lower_in_v];
+    amrex::Real sy_node_v[depos_order + 1 - galerkin_interpolation];
+    amrex::Real sy_cell_v[depos_order + 1 - galerkin_interpolation];
     int k_node = 0;
     int k_cell = 0;
     int k_node_v = 0;
@@ -151,17 +154,17 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         k_cell = compute_shape_factor(sy_cell, y - 0.5_rt);
     }
     if ((ey_type[1] == NODE) || (bx_type[1] == NODE) || (bz_type[1] == NODE)) {
-        k_node_v = compute_shape_factor_lower_in_v(sy_node_v, y);
+        k_node_v = compute_shape_factor_galerkin(sy_node_v, y);
     }
     if ((ey_type[1] == CELL) || (bx_type[1] == CELL) || (bz_type[1] == CELL)) {
-        k_cell_v = compute_shape_factor_lower_in_v(sy_cell_v, y - 0.5_rt);
+        k_cell_v = compute_shape_factor_galerkin(sy_cell_v, y - 0.5_rt);
     }
     const amrex::Real (&sy_ex)[depos_order + 1             ] = ((ex_type[1] == NODE) ? sy_node   : sy_cell  );
-    const amrex::Real (&sy_ey)[depos_order + 1 - lower_in_v] = ((ey_type[1] == NODE) ? sy_node_v : sy_cell_v);
+    const amrex::Real (&sy_ey)[depos_order + 1 - galerkin_interpolation] = ((ey_type[1] == NODE) ? sy_node_v : sy_cell_v);
     const amrex::Real (&sy_ez)[depos_order + 1             ] = ((ez_type[1] == NODE) ? sy_node   : sy_cell  );
-    const amrex::Real (&sy_bx)[depos_order + 1 - lower_in_v] = ((bx_type[1] == NODE) ? sy_node_v : sy_cell_v);
+    const amrex::Real (&sy_bx)[depos_order + 1 - galerkin_interpolation] = ((bx_type[1] == NODE) ? sy_node_v : sy_cell_v);
     const amrex::Real (&sy_by)[depos_order + 1             ] = ((by_type[1] == NODE) ? sy_node   : sy_cell  );
-    const amrex::Real (&sy_bz)[depos_order + 1 - lower_in_v] = ((bz_type[1] == NODE) ? sy_node_v : sy_cell_v);
+    const amrex::Real (&sy_bz)[depos_order + 1 - galerkin_interpolation] = ((bz_type[1] == NODE) ? sy_node_v : sy_cell_v);
     int const k_ex = ((ex_type[1] == NODE) ? k_node   : k_cell  );
     int const k_ey = ((ey_type[1] == NODE) ? k_node_v : k_cell_v);
     int const k_ez = ((ez_type[1] == NODE) ? k_node   : k_cell  );
@@ -174,8 +177,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     const amrex::Real z = (zp-zmin)*dzi;
     amrex::Real sz_node[depos_order + 1];
     amrex::Real sz_cell[depos_order + 1];
-    amrex::Real sz_node_v[depos_order + 1 - lower_in_v];
-    amrex::Real sz_cell_v[depos_order + 1 - lower_in_v];
+    amrex::Real sz_node_v[depos_order + 1 - galerkin_interpolation];
+    amrex::Real sz_cell_v[depos_order + 1 - galerkin_interpolation];
     int l_node = 0;
     int l_cell = 0;
     int l_node_v = 0;
@@ -187,16 +190,16 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         l_cell = compute_shape_factor(sz_cell, z - 0.5_rt);
     }
     if ((ez_type[zdir] == NODE) || (bx_type[zdir] == NODE) || (by_type[zdir] == NODE)) {
-        l_node_v = compute_shape_factor_lower_in_v(sz_node_v, z);
+        l_node_v = compute_shape_factor_galerkin(sz_node_v, z);
     }
     if ((ez_type[zdir] == CELL) || (bx_type[zdir] == CELL) || (by_type[zdir] == CELL)) {
-        l_cell_v = compute_shape_factor_lower_in_v(sz_cell_v, z - 0.5_rt);
+        l_cell_v = compute_shape_factor_galerkin(sz_cell_v, z - 0.5_rt);
     }
     const amrex::Real (&sz_ex)[depos_order + 1             ] = ((ex_type[zdir] == NODE) ? sz_node   : sz_cell  );
     const amrex::Real (&sz_ey)[depos_order + 1             ] = ((ey_type[zdir] == NODE) ? sz_node   : sz_cell  );
-    const amrex::Real (&sz_ez)[depos_order + 1 - lower_in_v] = ((ez_type[zdir] == NODE) ? sz_node_v : sz_cell_v);
-    const amrex::Real (&sz_bx)[depos_order + 1 - lower_in_v] = ((bx_type[zdir] == NODE) ? sz_node_v : sz_cell_v);
-    const amrex::Real (&sz_by)[depos_order + 1 - lower_in_v] = ((by_type[zdir] == NODE) ? sz_node_v : sz_cell_v);
+    const amrex::Real (&sz_ez)[depos_order + 1 - galerkin_interpolation] = ((ez_type[zdir] == NODE) ? sz_node_v : sz_cell_v);
+    const amrex::Real (&sz_bx)[depos_order + 1 - galerkin_interpolation] = ((bx_type[zdir] == NODE) ? sz_node_v : sz_cell_v);
+    const amrex::Real (&sz_by)[depos_order + 1 - galerkin_interpolation] = ((by_type[zdir] == NODE) ? sz_node_v : sz_cell_v);
     const amrex::Real (&sz_bz)[depos_order + 1             ] = ((bz_type[zdir] == NODE) ? sz_node   : sz_cell  );
     int const l_ex = ((ex_type[zdir] == NODE) ? l_node   : l_cell  );
     int const l_ey = ((ey_type[zdir] == NODE) ? l_node   : l_cell  );
@@ -209,7 +212,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // Each field is gathered in a separate block of
     // AMREX_SPACEDIM nested loops because the deposition
     // order can differ for each component of each field
-    // when lower_in_v is set to 1
+    // when galerkin_interpolation is set to 1
 #if (AMREX_SPACEDIM == 2)
     // Gather field on particle Eyp from field on grid ey_arr
     for (int iz=0; iz<=depos_order; iz++){
@@ -221,7 +224,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // Gather field on particle Exp from field on grid ex_arr
     // Gather field on particle Bzp from field on grid bz_arr
     for (int iz=0; iz<=depos_order; iz++){
-        for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+        for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
             Exp += sx_ex[ix]*sz_ex[iz]*
                 ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 0);
             Bzp += sx_bz[ix]*sz_bz[iz]*
@@ -230,7 +233,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     }
     // Gather field on particle Ezp from field on grid ez_arr
     // Gather field on particle Bxp from field on grid bx_arr
-    for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+    for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
         for (int ix=0; ix<=depos_order; ix++){
             Ezp += sx_ez[ix]*sz_ez[iz]*
                 ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 0);
@@ -239,8 +242,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         }
     }
     // Gather field on particle Byp from field on grid by_arr
-    for (int iz=0; iz<=depos_order-lower_in_v; iz++){
-        for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+    for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
+        for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
             Byp += sx_by[ix]*sz_by[iz]*
                 by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 0);
         }
@@ -273,7 +276,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         // Gather field on particle Exp from field on grid ex_arr
         // Gather field on particle Bzp from field on grid bz_arr
         for (int iz=0; iz<=depos_order; iz++){
-            for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+            for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
                 const amrex::Real dEx = (+ ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 2*imode-1)*xy.real()
                                          - ex_arr(lo.x+j_ex+ix, lo.y+l_ex+iz, 0, 2*imode)*xy.imag());
                 Exp += sx_ex[ix]*sz_ex[iz]*dEx;
@@ -284,7 +287,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         }
         // Gather field on particle Ezp from field on grid ez_arr
         // Gather field on particle Bxp from field on grid bx_arr
-        for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+        for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
             for (int ix=0; ix<=depos_order; ix++){
                 const amrex::Real dEz = (+ ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 2*imode-1)*xy.real()
                                          - ez_arr(lo.x+j_ez+ix, lo.y+l_ez+iz, 0, 2*imode)*xy.imag());
@@ -295,8 +298,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
             }
         }
         // Gather field on particle Byp from field on grid by_arr
-        for (int iz=0; iz<=depos_order-lower_in_v; iz++){
-            for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+        for (int iz=0; iz<=depos_order-galerkin_interpolation; iz++){
+            for (int ix=0; ix<=depos_order-galerkin_interpolation; ix++){
                 const amrex::Real dBy = (+ by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 2*imode-1)*xy.real()
                                          - by_arr(lo.x+j_by+ix, lo.y+l_by+iz, 0, 2*imode)*xy.imag());
                 Byp += sx_by[ix]*sz_by[iz]*dBy;
@@ -318,7 +321,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // Gather field on particle Exp from field on grid ex_arr
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<=depos_order; iy++){
-            for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+            for (int ix=0; ix<= depos_order - galerkin_interpolation; ix++){
                 Exp += sx_ex[ix]*sy_ex[iy]*sz_ex[iz]*
                     ex_arr(lo.x+j_ex+ix, lo.y+k_ex+iy, lo.z+l_ex+iz);
             }
@@ -326,7 +329,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     }
     // Gather field on particle Eyp from field on grid ey_arr
     for (int iz=0; iz<=depos_order; iz++){
-        for (int iy=0; iy<=depos_order-lower_in_v; iy++){
+        for (int iy=0; iy<= depos_order - galerkin_interpolation; iy++){
             for (int ix=0; ix<=depos_order; ix++){
                 Eyp += sx_ey[ix]*sy_ey[iy]*sz_ey[iz]*
                     ey_arr(lo.x+j_ey+ix, lo.y+k_ey+iy, lo.z+l_ey+iz);
@@ -334,7 +337,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
         }
     }
     // Gather field on particle Ezp from field on grid ez_arr
-    for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+    for (int iz=0; iz<= depos_order - galerkin_interpolation; iz++){
         for (int iy=0; iy<=depos_order; iy++){
             for (int ix=0; ix<=depos_order; ix++){
                 Ezp += sx_ez[ix]*sy_ez[iy]*sz_ez[iz]*
@@ -344,25 +347,25 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     }
     // Gather field on particle Bzp from field on grid bz_arr
     for (int iz=0; iz<=depos_order; iz++){
-        for (int iy=0; iy<=depos_order-lower_in_v; iy++){
-            for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+        for (int iy=0; iy<= depos_order - galerkin_interpolation; iy++){
+            for (int ix=0; ix<= depos_order - galerkin_interpolation; ix++){
                 Bzp += sx_bz[ix]*sy_bz[iy]*sz_bz[iz]*
                     bz_arr(lo.x+j_bz+ix, lo.y+k_bz+iy, lo.z+l_bz+iz);
             }
         }
     }
     // Gather field on particle Byp from field on grid by_arr
-    for (int iz=0; iz<=depos_order-lower_in_v; iz++){
+    for (int iz=0; iz<= depos_order - galerkin_interpolation; iz++){
         for (int iy=0; iy<=depos_order; iy++){
-            for (int ix=0; ix<=depos_order-lower_in_v; ix++){
+            for (int ix=0; ix<= depos_order - galerkin_interpolation; ix++){
                 Byp += sx_by[ix]*sy_by[iy]*sz_by[iz]*
                     by_arr(lo.x+j_by+ix, lo.y+k_by+iy, lo.z+l_by+iz);
             }
         }
     }
     // Gather field on particle Bxp from field on grid bx_arr
-    for (int iz=0; iz<=depos_order-lower_in_v; iz++){
-        for (int iy=0; iy<=depos_order-lower_in_v; iy++){
+    for (int iz=0; iz<= depos_order - galerkin_interpolation; iz++){
+        for (int iy=0; iy<= depos_order - galerkin_interpolation; iy++){
             for (int ix=0; ix<=depos_order; ix++){
                 Bxp += sx_bx[ix]*sy_bx[iy]*sz_bx[iz]*
                     bx_arr(lo.x+j_bx+ix, lo.y+k_bx+iy, lo.z+l_bx+iz);
