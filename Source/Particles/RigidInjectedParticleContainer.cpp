@@ -440,9 +440,6 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             amrex::IndexType const bz_type = bzfab.box().ixType();
 
             auto& attribs = pti.GetAttribs();
-            auto& uxp = attribs[PIdx::ux];
-            auto& uyp = attribs[PIdx::uy];
-            auto& uzp = attribs[PIdx::uz];
             amrex::ParticleReal* const AMREX_RESTRICT uxpp = attribs[PIdx::ux].dataPtr();
             amrex::ParticleReal* const AMREX_RESTRICT uypp = attribs[PIdx::uy].dataPtr();
             amrex::ParticleReal* const AMREX_RESTRICT uzpp = attribs[PIdx::uz].dataPtr();
