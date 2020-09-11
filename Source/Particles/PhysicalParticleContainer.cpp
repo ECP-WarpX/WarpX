@@ -1501,7 +1501,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 }
                 // Externally applied E and B fields
                 getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                              WarpX::gamma_boost, WarpX::beta_boost);
+                              WarpX::gamma_boost, WarpX::beta_boost, WarpX::boost_direction);
 
                 if (do_crr) {
                     amrex::Real qp = q;
@@ -1878,7 +1878,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         }
         // Externally applied E and B fields
         getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                      WarpX::gamma_boost, WarpX::beta_boost);
+                      WarpX::gamma_boost, WarpX::beta_boost, WarpX::boost_direction);
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
@@ -1985,7 +1985,7 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
 
     return IonizationFilterFunc(pti, lev, ngE, Ex, Ey, Ez, Bx, By, Bz,
                                 WarpX::gamma_boost, WarpX::beta_boost,
-                                v_galilean,
+                                WarpX::boost_direction, v_galilean,
                                 ionization_energies.dataPtr(),
                                 adk_prefactor.dataPtr(),
                                 adk_exp_prefactor.dataPtr(),

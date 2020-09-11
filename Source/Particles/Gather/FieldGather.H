@@ -398,6 +398,7 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
                     amrex::ParticleReal * const Byp, amrex::ParticleReal * const Bzp,
                     const amrex::Real gamma_boost,
                     const amrex::Real beta_boost,
+                    const amrex::Vector<int> boost_direction,
                     amrex::FArrayBox const * const exfab,
                     amrex::FArrayBox const * const eyfab,
                     amrex::FArrayBox const * const ezfab,
@@ -437,7 +438,7 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
             amrex::ParticleReal xp, yp, zp;
             getPosition(ip, xp, yp, zp);
             getExternalEB(ip, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip],
-                          gamma_boost, beta_boost);
+                          gamma_boost, beta_boost, boost_direction);
 
             doGatherShapeN<depos_order, lower_in_v>(
                 xp, yp, zp, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip],

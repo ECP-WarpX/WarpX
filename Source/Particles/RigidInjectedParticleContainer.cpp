@@ -485,7 +485,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
                 getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                              WarpX::gamma_boost, WarpX::beta_boost);
+                              WarpX::gamma_boost, WarpX::beta_boost, WarpX::boost_direction);
 
                 if (do_crr) {
                     amrex::Real qp = q;

@@ -20,6 +20,7 @@ PairGenerationTransformFunc (BreitWheelerGeneratePairs const generate_functor,
                              amrex::FArrayBox const& bzfab,
                              const amrex::Real gamma_boost,
                              const amrex::Real beta_boost,
+                             const amrex::Vector<int> boost_direction,
                              amrex::Array<amrex::Real,3> v_galilean,
                              int a_offset)
 : m_generate_functor(generate_functor)
@@ -29,6 +30,7 @@ PairGenerationTransformFunc (BreitWheelerGeneratePairs const generate_functor,
 
     m_gamma_boost = gamma_boost;
     m_beta_boost = beta_boost;
+    m_boost_direction = boost_direction;
 
     m_ex_arr = exfab.array();
     m_ey_arr = eyfab.array();

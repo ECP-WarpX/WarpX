@@ -1184,6 +1184,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
                                                          Bx[pti], By[pti], Bz[pti],
                                                          WarpX::gamma_boost,
                                                          WarpX::beta_boost,
+                                                         WarpX::boost_direction,
                                                          pc_source->get_v_galilean());
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);
@@ -1250,6 +1251,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                   Bx[pti], By[pti], Bz[pti],
                   WarpX::gamma_boost,
                   WarpX::beta_boost,
+                  WarpX::boost_direction,
                   pc_source->get_v_galilean());
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);

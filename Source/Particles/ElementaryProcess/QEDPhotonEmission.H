@@ -96,6 +96,7 @@ public:
         amrex::FArrayBox const& bzfab,
         const amrex::Real gamma_boost,
         const amrex::Real beta_boost,
+        const amrex::Vector<int> boost_direction,
         amrex::Array<amrex::Real,3> v_galilean,
         int a_offset = 0);
 
@@ -128,7 +129,8 @@ public:
 
         amrex::ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
         amrex::ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
-        m_get_external_EB(i_src, ex, ey, ez, bx, by, bz, m_gamma_boost, m_beta_boost);
+        m_get_external_EB(i_src, ex, ey, ez, bx, by, bz,
+                          m_gamma_boost, m_beta_boost, m_boost_direction);
 
         doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
                        m_ex_arr, m_ey_arr, m_ez_arr, m_bx_arr, m_by_arr, m_bz_arr,
@@ -182,6 +184,7 @@ private:
 
     amrex::Real m_gamma_boost;
     amrex::Real m_beta_boost;
+    amrex::Vector<int> m_boost_direction;
 
     amrex::Array4<const amrex::Real> m_ex_arr;
     amrex::Array4<const amrex::Real> m_ey_arr;

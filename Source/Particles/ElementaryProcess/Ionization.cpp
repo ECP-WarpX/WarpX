@@ -18,6 +18,7 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
                                             amrex::FArrayBox const& bzfab,
                                             const amrex::Real gamma_boost,
                                             const amrex::Real beta_boost,
+                                            const amrex::Vector<int> boost_direction,
                                             amrex::Array<amrex::Real,3> v_galilean,
                                             const amrex::Real* const AMREX_RESTRICT a_ionization_energies,
                                             const amrex::Real* const AMREX_RESTRICT a_adk_prefactor,
@@ -39,6 +40,7 @@ IonizationFilterFunc::IonizationFilterFunc (const WarpXParIter& a_pti, int lev, 
 
     m_gamma_boost = gamma_boost;
     m_beta_boost = beta_boost;
+    m_boost_direction = boost_direction;
 
     m_ex_arr = exfab.array();
     m_ey_arr = eyfab.array();
