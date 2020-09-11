@@ -1437,8 +1437,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const auto getPosition = GetParticlePosition(pti);
 
-            const auto getExternalE = GetExternalEField(pti);
-            const auto getExternalB = GetExternalBField(pti);
+            const auto getExternalEB = GetExternalEBField(pti);
 
             const auto& xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box,v_galilean,lev);
 
@@ -1500,10 +1499,8 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                                    dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                    nox, galerkin_interpolation);
                 }
-                // Externally applied E-field in Cartesian co-ordinates
-                getExternalE(ip, Exp, Eyp, Ezp);
-                // Externally applied B-field in Cartesian co-ordinates
-                getExternalB(ip, Bxp, Byp, Bzp);
+                // Externally applied E and B fields
+                getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
                 if (do_crr) {
                     amrex::Real qp = q;
@@ -1793,8 +1790,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     const auto getPosition = GetParticlePosition(pti, offset);
           auto setPosition = SetParticlePosition(pti, offset);
 
-    const auto getExternalE = GetExternalEField(pti, offset);
-    const auto getExternalB = GetExternalBField(pti, offset);
+    const auto getExternalEB = GetExternalEBField(pti, offset);
 
     // Lower corner of tile box physical domain (take into account Galilean shift)
     Real cur_time = WarpX::GetInstance().gett_new(lev);
@@ -1879,10 +1875,8 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                            dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                            nox, galerkin_interpolation);
         }
-        // Externally applied E-field in Cartesian co-ordinates
-        getExternalE(ip, Exp, Eyp, Ezp);
-        // Externally applied B-field in Cartesian co-ordinates
-        getExternalB(ip, Bxp, Byp, Bzp);
+        // Externally applied E and B fields
+        getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 

@@ -10,44 +10,79 @@
 
 enum ExternalFieldInitType { Constant, Parser };
 
-/** \brief Base class for functors that assign external
- *         field values (E or B) to particles.
-*/
+/** \brief Base class for functors that assign the external E and B fields
+ *         to a particle inside a ParallelFor kernel
+ */
 struct GetExternalField
 {
-    ExternalFieldInitType m_type;
+    ExternalFieldInitType m_E_type;
+    ExternalFieldInitType m_B_type;
 
-    amrex::GpuArray<amrex::ParticleReal, 3> m_field_value;
+    amrex::GpuArray<amrex::ParticleReal, 3> m_E_field_value;
+    amrex::GpuArray<amrex::ParticleReal, 3> m_B_field_value;
 
-    ParserWrapper<4>* m_xfield_partparser = nullptr;
-    ParserWrapper<4>* m_yfield_partparser = nullptr;
-    ParserWrapper<4>* m_zfield_partparser = nullptr;
+    ParserWrapper<4>* m_Ex_field_partparser = nullptr;
+    ParserWrapper<4>* m_Ey_field_partparser = nullptr;
+    ParserWrapper<4>* m_Ez_field_partparser = nullptr;
+
+    ParserWrapper<4>* m_Bx_field_partparser = nullptr;
+    ParserWrapper<4>* m_By_field_partparser = nullptr;
+    ParserWrapper<4>* m_Bz_field_partparser = nullptr;
+
     GetParticlePosition m_get_position;
     amrex::Real m_time;
 
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator () (long i,
-                      amrex::ParticleReal& field_x,
-                      amrex::ParticleReal& field_y,
-                      amrex::ParticleReal& field_z) const noexcept
+                      amrex::ParticleReal& field_Ex,
+                      amrex::ParticleReal& field_Ey,
+                      amrex::ParticleReal& field_Ez,
+                      amrex::ParticleReal& field_Bx,
+                      amrex::ParticleReal& field_By,
+                      amrex::ParticleReal& field_Bz) const noexcept
     {
-        if (m_type == Constant)
+        // E field
+        if (m_E_type == Constant)
         {
-            field_x += m_field_value[0];
-            field_y += m_field_value[1];
-            field_z += m_field_value[2];
+            field_Ex += m_E_field_value[0];
+            field_Ey += m_E_field_value[1];
+            field_Ez += m_E_field_value[2];
         }
-        else if (m_type == Parser)
+        else if (m_E_type == Parser)
         {
-            AMREX_ASSERT(m_xfield_partparser != nullptr);
-            AMREX_ASSERT(m_yfield_partparser != nullptr);
-            AMREX_ASSERT(m_zfield_partparser != nullptr);
+            AMREX_ASSERT(m_Ex_field_partparser != nullptr);
+            AMREX_ASSERT(m_Ey_field_partparser != nullptr);
+            AMREX_ASSERT(m_Ez_field_partparser != nullptr);
 
             amrex::ParticleReal x, y, z;
             m_get_position(i, x, y, z);
-            field_x += (*m_xfield_partparser)(x, y, z, m_time);
-            field_y += (*m_yfield_partparser)(x, y, z, m_time);
-            field_z += (*m_zfield_partparser)(x, y, z, m_time);
+            field_Ex += (*m_Ex_field_partparser)(x, y, z, m_time);
+            field_Ey += (*m_Ey_field_partparser)(x, y, z, m_time);
+            field_Ez += (*m_Ez_field_partparser)(x, y, z, m_time);
+        }
+        else
+        {
+            amrex::Abort("ExternalFieldInitType not known!!! \n");
+        }
+
+        // B field
+        if (m_B_type == Constant)
+        {
+            field_Bx += m_B_field_value[0];
+            field_By += m_B_field_value[1];
+            field_Bz += m_B_field_value[2];
+        }
+        else if (m_B_type == Parser)
+        {
+            AMREX_ASSERT(m_Bx_field_partparser != nullptr);
+            AMREX_ASSERT(m_By_field_partparser != nullptr);
+            AMREX_ASSERT(m_Bz_field_partparser != nullptr);
+
+            amrex::ParticleReal x, y, z;
+            m_get_position(i, x, y, z);
+            field_Bx += (*m_Bx_field_partparser)(x, y, z, m_time);
+            field_By += (*m_By_field_partparser)(x, y, z, m_time);
+            field_Bz += (*m_Bz_field_partparser)(x, y, z, m_time);
         }
         else
         {
@@ -56,24 +91,14 @@ struct GetExternalField
     }
 };
 
-/** \brief Functor that can be used to assign the external
- *         E field to a particle inside a ParallelFor kernel
-*/
-struct GetExternalEField : GetExternalField
+/** \brief Functor that can be used to assign the external E and B fields
+ *         to a particle inside a ParallelFor kernel
+ */
+struct GetExternalEBField : GetExternalField
 {
-    GetExternalEField () = default;
+    GetExternalEBField () = default;
 
-    GetExternalEField (const WarpXParIter& a_pti, int a_offset = 0) noexcept;
-};
-
-/** \brief Functor that can be used to assign the external
- *         B field to a particle inside a ParallelFor kernel
-*/
-struct GetExternalBField : GetExternalField
-{
-    GetExternalBField () = default;
-
-    GetExternalBField (const WarpXParIter& a_pti, int a_offset = 0) noexcept;
+    GetExternalEBField (const WarpXParIter& a_pti, int a_offset = 0) noexcept;
 };
 
 #endif

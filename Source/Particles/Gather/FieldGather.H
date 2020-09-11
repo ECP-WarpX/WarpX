@@ -379,8 +379,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
  * \brief Field gather for particles
  *
  * /param getPosition          : A functor for returning the particle position.
- * /param getExternalEField    : A functor for assigning the external E field.
- * /param getExternalBField    : A functor for assigning the external B field.
+ * /param getExternalEBField   : A functor for assigning the external E and B fields.
  * \param Exp, Eyp, Ezp        : Pointer to array of electric field on particles.
  * \param Bxp, Byp, Bzp        : Pointer to array of magnetic field on particles.
  * \param exfab eyfab ezfab    : Array4 of the electric field, either full array or tile.
@@ -393,7 +392,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
  */
 template <int depos_order, int lower_in_v>
 void doGatherShapeN(const GetParticlePosition& getPosition,
-                    const GetExternalEField& getExternalE, const GetExternalBField& getExternalB,
+                    const GetExternalEBField& getExternalEB,
                     amrex::ParticleReal * const Exp, amrex::ParticleReal * const Eyp,
                     amrex::ParticleReal * const Ezp, amrex::ParticleReal * const Bxp,
                     amrex::ParticleReal * const Byp, amrex::ParticleReal * const Bzp,
@@ -435,8 +434,7 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
 
             amrex::ParticleReal xp, yp, zp;
             getPosition(ip, xp, yp, zp);
-            getExternalE(ip, Exp[ip], Eyp[ip], Ezp[ip]);
-            getExternalB(ip, Bxp[ip], Byp[ip], Bzp[ip]);
+            getExternalEB(ip, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip]);
 
             doGatherShapeN<depos_order, lower_in_v>(
                 xp, yp, zp, Exp[ip], Eyp[ip], Ezp[ip], Bxp[ip], Byp[ip], Bzp[ip],

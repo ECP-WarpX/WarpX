@@ -119,10 +119,8 @@ public:
         m_get_position(i_src, xp, yp, zp);
 
         amrex::ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
-        m_get_externalE(i_src, ex, ey, ez);
-
         amrex::ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
-        m_get_externalB(i_src, bx, by, bz);
+        m_get_external_EB(i_src, ex, ey, ez, bx, by, bz);
 
         doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
                        m_ex_arr, m_ey_arr, m_ez_arr, m_bx_arr, m_by_arr, m_bz_arr,
@@ -175,8 +173,7 @@ private:
     m_generate_functor; /*!< A copy of the functor to generate pairs. It contains only pointers to the lookup tables.*/
 
     GetParticlePosition m_get_position;
-    GetExternalEField m_get_externalE;
-    GetExternalBField m_get_externalB;
+    GetExternalEBField m_get_external_EB;
 
     amrex::Array4<const amrex::Real> m_ex_arr;
     amrex::Array4<const amrex::Real> m_ey_arr;
