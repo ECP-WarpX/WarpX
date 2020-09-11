@@ -40,7 +40,8 @@ struct GetExternalField
                       amrex::ParticleReal& field_Bx,
                       amrex::ParticleReal& field_By,
                       amrex::ParticleReal& field_Bz,
-                      amrex::Real gamma_boost) const noexcept
+                      amrex::Real gamma_boost,
+                      amrex::Real beta_boost) const noexcept
     {
         // Lab frame
         if (gamma_boost == 1.)

@@ -174,7 +174,8 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
             }
-            getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp, WarpX::gamma_boost);
+            getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                          WarpX::gamma_boost, WarpX::beta_boost);
 
 #ifdef WARPX_QED
             if (local_has_breit_wheeler) {
