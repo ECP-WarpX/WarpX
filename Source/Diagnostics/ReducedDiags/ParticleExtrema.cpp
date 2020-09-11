@@ -34,9 +34,6 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
     // get MultiParticleContainer class object
     auto & mypc = warpx.GetPartContainer();
 
-    // get number of species (int)
-    auto nSpecies = mypc.nSpecies();
-
     // resize data array
     m_data.resize(16,0.0);
 
@@ -53,37 +50,39 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
                 std::ofstream::out | std::ofstream::app);
             // write header row
             ofs << "#";
-            ofs << "[1]xmin()";
+            ofs << "[1]step()";
+            ofs << "[2]time(s)";
+            ofs << "[3]xmin()";
             ofs << m_sep;
-            ofs << "[2]xmax()";
+            ofs << "[4]xmax()";
             ofs << m_sep;
-            ofs << "[3]ymin()";
+            ofs << "[5]ymin()";
             ofs << m_sep;
-            ofs << "[4]ymax()";
+            ofs << "[6]ymax()";
             ofs << m_sep;
-            ofs << "[5]zmin()";
+            ofs << "[7]zmin()";
             ofs << m_sep;
-            ofs << "[6]zmax()";
+            ofs << "[8]zmax()";
             ofs << m_sep;
-            ofs << "[7]pxmin()";
+            ofs << "[9]pxmin()";
             ofs << m_sep;
-            ofs << "[8]pxmax()";
+            ofs << "[10]pxmax()";
             ofs << m_sep;
-            ofs << "[9]pymin()";
+            ofs << "[11]pymin()";
             ofs << m_sep;
-            ofs << "[10]pymax()";
+            ofs << "[12]pymax()";
             ofs << m_sep;
-            ofs << "[11]pzmin()";
+            ofs << "[13]pzmin()";
             ofs << m_sep;
-            ofs << "[12]pzmax()";
+            ofs << "[14]pzmax()";
             ofs << m_sep;
-            ofs << "[13]gmin()";
+            ofs << "[15]gmin()";
             ofs << m_sep;
-            ofs << "[14]gmax()";
+            ofs << "[16]gmax()";
             ofs << m_sep;
-            ofs << "[15]wmin()";
+            ofs << "[17]wmin()";
             ofs << m_sep;
-            ofs << "[16]wmax()";
+            ofs << "[18]wmax()";
             ofs << std::endl;
             // close file
             ofs.close();
