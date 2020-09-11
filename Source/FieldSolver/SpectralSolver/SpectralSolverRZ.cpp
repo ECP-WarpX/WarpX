@@ -7,6 +7,8 @@
 #include "SpectralKSpaceRZ.H"
 #include "SpectralSolverRZ.H"
 #include "SpectralAlgorithms/PsatdAlgorithmRZ.H"
+#include "WarpX.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 /* \brief Initialize the spectral Maxwell solver
  *
@@ -50,3 +52,63 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
                                      n_rz_azimuthal_modes, lev);
 
 };
+
+
+void
+SpectralSolverRZ::ForwardTransform (amrex::MultiFab const & field_mf,
+                                    int const field_index,
+                                    int const i_comp) {
+    WARPX_PROFILE("SpectralSolverRZ::ForwardTransform");
+    field_data.ForwardTransform(field_mf, field_index, i_comp);
+}
+
+void
+SpectralSolverRZ::ForwardTransform (amrex::MultiFab const & field_mf1, int const field_index1,
+                                    amrex::MultiFab const & field_mf2, int const field_index2) {
+    WARPX_PROFILE("SpectralSolverRZ::ForwardTransform");
+    field_data.ForwardTransform(field_mf1, field_index1,
+                                field_mf2, field_index2);
+}
+
+void
+SpectralSolverRZ::BackwardTransform (amrex::MultiFab& field_mf,
+                                     int const field_index,
+                                     int const i_comp) {
+    WARPX_PROFILE("SpectralSolverRZ::BackwardTransform");
+    field_data.BackwardTransform(field_mf, field_index, i_comp);
+}
+
+void
+SpectralSolverRZ::BackwardTransform (amrex::MultiFab& field_mf1, int const field_index1,
+                                     amrex::MultiFab& field_mf2, int const field_index2) {
+    WARPX_PROFILE("SpectralSolverRZ::BackwardTransform");
+    field_data.BackwardTransform(field_mf1, field_index1,
+                                 field_mf2, field_index2);
+}
+
+void
+SpectralSolverRZ::pushSpectralFields () {
+    WARPX_PROFILE("SpectralSolverRZ::pushSpectralFields");
+    // Virtual function: the actual function used here depends
+    // on the sub-class of `SpectralBaseAlgorithm` that was
+    // initialized in the constructor of `SpectralSolverRZ`
+    algorithm->pushSpectralFields(field_data);
+}
+
+void
+SpectralSolverRZ::ComputeSpectralDivE (const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                                       amrex::MultiFab& divE) {
+    algorithm->ComputeSpectralDivE(field_data, Efield, divE);
+}
+
+void
+SpectralSolverRZ::CurrentCorrection (std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
+                                      const std::unique_ptr<amrex::MultiFab>& rho) {
+     algorithm->CurrentCorrection(field_data, current, rho);
+}
+
+void
+SpectralSolverRZ::VayDeposition (std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+{
+  algorithm->VayDeposition(field_data, current);
+}
