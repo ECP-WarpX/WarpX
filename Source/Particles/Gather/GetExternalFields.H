@@ -39,54 +39,64 @@ struct GetExternalField
                       amrex::ParticleReal& field_Ez,
                       amrex::ParticleReal& field_Bx,
                       amrex::ParticleReal& field_By,
-                      amrex::ParticleReal& field_Bz) const noexcept
+                      amrex::ParticleReal& field_Bz,
+                      amrex::Real gamma_boost) const noexcept
     {
-        // E field
-        if (m_E_type == Constant)
+        // Lab frame
+        if (gamma_boost == 1.)
         {
-            field_Ex += m_E_field_value[0];
-            field_Ey += m_E_field_value[1];
-            field_Ez += m_E_field_value[2];
-        }
-        else if (m_E_type == Parser)
-        {
-            AMREX_ASSERT(m_Ex_field_partparser != nullptr);
-            AMREX_ASSERT(m_Ey_field_partparser != nullptr);
-            AMREX_ASSERT(m_Ez_field_partparser != nullptr);
+            // E field
+            if (m_E_type == Constant)
+            {
+                field_Ex += m_E_field_value[0];
+                field_Ey += m_E_field_value[1];
+                field_Ez += m_E_field_value[2];
+            }
+            else if (m_E_type == Parser)
+            {
+                AMREX_ASSERT(m_Ex_field_partparser != nullptr);
+                AMREX_ASSERT(m_Ey_field_partparser != nullptr);
+                AMREX_ASSERT(m_Ez_field_partparser != nullptr);
 
-            amrex::ParticleReal x, y, z;
-            m_get_position(i, x, y, z);
-            field_Ex += (*m_Ex_field_partparser)(x, y, z, m_time);
-            field_Ey += (*m_Ey_field_partparser)(x, y, z, m_time);
-            field_Ez += (*m_Ez_field_partparser)(x, y, z, m_time);
-        }
-        else
-        {
-            amrex::Abort("ExternalFieldInitType not known!!! \n");
+                amrex::ParticleReal x, y, z;
+                m_get_position(i, x, y, z);
+                field_Ex += (*m_Ex_field_partparser)(x, y, z, m_time);
+                field_Ey += (*m_Ey_field_partparser)(x, y, z, m_time);
+                field_Ez += (*m_Ez_field_partparser)(x, y, z, m_time);
+            }
+            else
+            {
+                amrex::Abort("ExternalFieldInitType not known!!! \n");
+            }
+
+            // B field
+            if (m_B_type == Constant)
+            {
+                field_Bx += m_B_field_value[0];
+                field_By += m_B_field_value[1];
+                field_Bz += m_B_field_value[2];
+            }
+            else if (m_B_type == Parser)
+            {
+                AMREX_ASSERT(m_Bx_field_partparser != nullptr);
+                AMREX_ASSERT(m_By_field_partparser != nullptr);
+                AMREX_ASSERT(m_Bz_field_partparser != nullptr);
+
+                amrex::ParticleReal x, y, z;
+                m_get_position(i, x, y, z);
+                field_Bx += (*m_Bx_field_partparser)(x, y, z, m_time);
+                field_By += (*m_By_field_partparser)(x, y, z, m_time);
+                field_Bz += (*m_Bz_field_partparser)(x, y, z, m_time);
+            }
+            else
+            {
+                amrex::Abort("ExternalFieldInitType not known!!! \n");
+            }
         }
 
-        // B field
-        if (m_B_type == Constant)
+        // Boosted frame
+        else if (gamma_boost > 1.)
         {
-            field_Bx += m_B_field_value[0];
-            field_By += m_B_field_value[1];
-            field_Bz += m_B_field_value[2];
-        }
-        else if (m_B_type == Parser)
-        {
-            AMREX_ASSERT(m_Bx_field_partparser != nullptr);
-            AMREX_ASSERT(m_By_field_partparser != nullptr);
-            AMREX_ASSERT(m_Bz_field_partparser != nullptr);
-
-            amrex::ParticleReal x, y, z;
-            m_get_position(i, x, y, z);
-            field_Bx += (*m_Bx_field_partparser)(x, y, z, m_time);
-            field_By += (*m_By_field_partparser)(x, y, z, m_time);
-            field_Bz += (*m_Bz_field_partparser)(x, y, z, m_time);
-        }
-        else
-        {
-            amrex::Abort("ExternalFieldInitType not known!!! \n");
         }
     }
 };
