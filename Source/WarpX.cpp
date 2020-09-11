@@ -473,8 +473,6 @@ WarpX::ReadParameters ()
         filter_npass_each_dir[2] = parse_filter_npass_each_dir[2];
 #endif
 
-        pp.query("use_damp_fields_in_z_guard", use_damp_fields_in_z_guard);
-
         pp.query("num_mirrors", num_mirrors);
         if (num_mirrors>0){
             mirror_z.resize(num_mirrors);
@@ -637,6 +635,8 @@ WarpX::ReadParameters ()
         ParmParse pp("psatd");
         pp.query("periodic_single_box_fft", fft_periodic_single_box);
         pp.query("fftw_plan_measure", fftw_plan_measure);
+        pp.query("use_damp_fields_in_z_guard", use_damp_fields_in_z_guard);
+
         std::string nox_str;
         std::string noy_str;
         std::string noz_str;

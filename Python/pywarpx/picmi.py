@@ -463,6 +463,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             self.psatd_current_correction = kw.pop('warpx_current_correction', None)
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
+            self.psatd_use_damp_fields_in_z_guard = kw.pop('warpx_use_damp_fields_in_z_guard', None)
             self.psatd_nx_guard = kw.pop('warpx_psatd_nx_guard', None)
             self.psatd_ny_guard = kw.pop('warpx_psatd_ny_guard', None)
             self.psatd_nz_guard = kw.pop('warpx_psatd_nz_guard', None)
@@ -481,6 +482,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             pywarpx.psatd.current_correction = self.psatd_current_correction
             pywarpx.psatd.update_with_rho = self.psatd_update_with_rho
             pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
+            pywarpx.psatd.use_damp_fields_in_z_guard = self.psatd_use_damp_fields_in_z_guard
             pywarpx.psatd.nx_guard = self.psatd_nx_guard
             pywarpx.psatd.ny_guard = self.psatd_ny_guard
             pywarpx.psatd.nz_guard = self.psatd_nz_guard
