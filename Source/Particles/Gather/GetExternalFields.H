@@ -55,9 +55,9 @@ struct GetExternalField
         // E field in the lab frame
         if (m_E_type == Constant)
         {
-            field_Ex += m_E_field_value[0];
-            field_Ey += m_E_field_value[1];
-            field_Ez += m_E_field_value[2];
+            field_Exl = m_E_field_value[0];
+            field_Eyl = m_E_field_value[1];
+            field_Ezl = m_E_field_value[2];
         }
         else if (m_E_type == Parser)
         {
@@ -87,9 +87,9 @@ struct GetExternalField
             zl = zb + ((gamma_boost - 1.) * boost_proj +
                  gamma_boost * m_time * beta_boost * c) * boost_direction[2];
 
-            field_Ex += (*m_Ex_field_partparser)(xl, yl, zl, tl);
-            field_Ey += (*m_Ey_field_partparser)(xl, yl, zl, tl);
-            field_Ez += (*m_Ez_field_partparser)(xl, yl, zl, tl);
+            field_Exl = (*m_Ex_field_partparser)(xl, yl, zl, tl);
+            field_Eyl = (*m_Ey_field_partparser)(xl, yl, zl, tl);
+            field_Ezl = (*m_Ez_field_partparser)(xl, yl, zl, tl);
         }
         else
         {
@@ -99,9 +99,9 @@ struct GetExternalField
         // B field in the lab frame
         if (m_B_type == Constant)
         {
-            field_Bx += m_B_field_value[0];
-            field_By += m_B_field_value[1];
-            field_Bz += m_B_field_value[2];
+            field_Bxl = m_B_field_value[0];
+            field_Byl = m_B_field_value[1];
+            field_Bzl = m_B_field_value[2];
         }
         else if (m_B_type == Parser)
         {
@@ -131,9 +131,9 @@ struct GetExternalField
             zl = zb + ((gamma_boost - 1.) * boost_proj +
                  gamma_boost * m_time * beta_boost * c) * boost_direction[2];
 
-            field_Bx += (*m_Bx_field_partparser)(xl, yl, zl, tl);
-            field_By += (*m_By_field_partparser)(xl, yl, zl, tl);
-            field_Bz += (*m_Bz_field_partparser)(xl, yl, zl, tl);
+            field_Bxl = (*m_Bx_field_partparser)(xl, yl, zl, tl);
+            field_Byl = (*m_By_field_partparser)(xl, yl, zl, tl);
+            field_Bzl = (*m_Bz_field_partparser)(xl, yl, zl, tl);
         }
         else
         {
@@ -145,37 +145,37 @@ struct GetExternalField
                                               beta_boost * c * boost_direction[1],
                                               beta_boost * c * boost_direction[2]};
 
-        const amrex::Vector<amrex::Real> v_cross_E = {v[1] * field_Ez - v[2] * field_Ey,
-                                                      v[2] * field_Ex - v[0] * field_Ez,
-                                                      v[0] * field_Ey - v[1] * field_Ex};
+        const amrex::Vector<amrex::Real> v_cross_E = {v[1] * field_Ezl - v[2] * field_Eyl,
+                                                      v[2] * field_Exl - v[0] * field_Ezl,
+                                                      v[0] * field_Eyl - v[1] * field_Exl};
 
-        const amrex::Vector<amrex::Real> v_cross_B = {v[1] * field_Bz - v[2] * field_By,
-                                                      v[2] * field_Bx - v[0] * field_Bz,
-                                                      v[0] * field_By - v[1] * field_Bx};
+        const amrex::Vector<amrex::Real> v_cross_B = {v[1] * field_Bzl - v[2] * field_Byl,
+                                                      v[2] * field_Bxl - v[0] * field_Bzl,
+                                                      v[0] * field_Byl - v[1] * field_Bxl};
 
-        const amrex::Real boost_dot_E = boost_direction[0] * field_Ex +
-                                        boost_direction[1] * field_Ey +
-                                        boost_direction[2] * field_Ez;
+        const amrex::Real boost_dot_E = boost_direction[0] * field_Exl +
+                                        boost_direction[1] * field_Eyl +
+                                        boost_direction[2] * field_Ezl;
 
-        const amrex::Real boost_dot_B = boost_direction[0] * field_Bx +
-                                        boost_direction[1] * field_By +
-                                        boost_direction[2] * field_Bz;
+        const amrex::Real boost_dot_B = boost_direction[0] * field_Bxl +
+                                        boost_direction[1] * field_Byl +
+                                        boost_direction[2] * field_Bzl;
 
         // E field in the boosted frame
-        field_Ex = gamma_boost * (field_Ex + v_cross_B[0]) - (gamma_boost - 1.) *
-                   boost_dot_E * boost_direction[0];
-        field_Ey = gamma_boost * (field_Ey + v_cross_B[1]) - (gamma_boost - 1.) *
-                   boost_dot_E * boost_direction[1];
-        field_Ez = gamma_boost * (field_Ez + v_cross_B[2]) - (gamma_boost - 1.) *
-                   boost_dot_E * boost_direction[2];
+        field_Ex += gamma_boost * (field_Exl + v_cross_B[0]) - (gamma_boost - 1.) *
+                    boost_dot_E * boost_direction[0];
+        field_Ey += gamma_boost * (field_Eyl + v_cross_B[1]) - (gamma_boost - 1.) *
+                    boost_dot_E * boost_direction[1];
+        field_Ez += gamma_boost * (field_Ezl + v_cross_B[2]) - (gamma_boost - 1.) *
+                    boost_dot_E * boost_direction[2];
 
         // B field in the boosted frame
-        field_Bx = gamma_boost * (field_Bx - v_cross_E[0] / c2) - (gamma_boost - 1.) *
-                   boost_dot_B * boost_direction[0];
-        field_By = gamma_boost * (field_By - v_cross_E[1] / c2) - (gamma_boost - 1.) *
-                   boost_dot_B * boost_direction[1];
-        field_Bz = gamma_boost * (field_Bz - v_cross_E[2] / c2) - (gamma_boost - 1.) *
-                   boost_dot_B * boost_direction[2];
+        field_Bx += gamma_boost * (field_Bxl - v_cross_E[0] / c2) - (gamma_boost - 1.) *
+                    boost_dot_B * boost_direction[0];
+        field_By += gamma_boost * (field_Byl - v_cross_E[1] / c2) - (gamma_boost - 1.) *
+                    boost_dot_B * boost_direction[1];
+        field_Bz += gamma_boost * (field_Bzl - v_cross_E[2] / c2) - (gamma_boost - 1.) *
+                    boost_dot_B * boost_direction[2];
     }
 };
 

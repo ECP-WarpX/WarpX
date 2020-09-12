@@ -7,14 +7,14 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
     auto& mypc  = warpx.GetPartContainer();
 
     // E field
-    if (mypc.m_E_ext_particle_s=="constant" || mypc.m_E_ext_particle_s=="default")
+    if (mypc.m_E_ext_particle_s == "constant" || mypc.m_E_ext_particle_s == "default")
     {
         m_E_type = Constant;
         m_E_field_value[0] = mypc.m_E_external_particle[0];
         m_E_field_value[1] = mypc.m_E_external_particle[1];
         m_E_field_value[2] = mypc.m_E_external_particle[2];
     }
-    else if (mypc.m_E_ext_particle_s=="parse_e_ext_particle_function")
+    else if (mypc.m_E_ext_particle_s == "parse_e_ext_particle_function")
     {
         m_E_type = Parser;
         m_time = warpx.gett_new(a_pti.GetLevel());
@@ -25,14 +25,14 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
     }
 
     // B field
-    if (mypc.m_B_ext_particle_s=="constant" || mypc.m_B_ext_particle_s=="default")
+    if (mypc.m_B_ext_particle_s == "constant" || mypc.m_B_ext_particle_s == "default")
     {
         m_B_type = Constant;
         m_B_field_value[0] = mypc.m_B_external_particle[0];
         m_B_field_value[1] = mypc.m_B_external_particle[1];
         m_B_field_value[2] = mypc.m_B_external_particle[2];
     }
-    else if (mypc.m_B_ext_particle_s=="parse_b_ext_particle_function")
+    else if (mypc.m_B_ext_particle_s == "parse_b_ext_particle_function")
     {
         m_B_type = Parser;
         m_time = warpx.gett_new(a_pti.GetLevel());
