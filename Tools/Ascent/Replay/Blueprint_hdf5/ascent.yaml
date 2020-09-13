@@ -1,0 +1,8 @@
+- 
+  action: "add_extracts"
+  extracts:
+    e1:
+      type: "relay"
+      params:
+        path: "./test"
+        protocol: "blueprint/mesh/hdf5"
