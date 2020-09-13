@@ -466,6 +466,12 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             const auto pusher_algo = WarpX::particle_pusher_algo;
             const auto do_crr = do_classical_radiation_reaction;
 
+            const amrex::Real gamma_boost = WarpX::gamma_boost;
+            const amrex::Real beta_boost = WarpX::beta_boost;
+            const amrex::GpuArray<int, 3> boost_direction = {WarpX::boost_direction[0],
+                                                             WarpX::boost_direction[1],
+                                                             WarpX::boost_direction[2]};
+
             amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
             {
                 ux_save[ip] = uxpp[ip];
@@ -485,7 +491,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
                 getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                              WarpX::gamma_boost, WarpX::beta_boost, WarpX::boost_direction);
+                              gamma_boost, beta_boost, boost_direction);
 
                 if (do_crr) {
                     amrex::Real qp = q;

@@ -43,7 +43,7 @@ struct GetExternalField
                       amrex::ParticleReal& field_Bz,
                       const amrex::Real gamma_boost,
                       const amrex::Real beta_boost,
-                      const amrex::Vector<int> boost_direction) const noexcept
+                      const amrex::GpuArray<int, 3> boost_direction) const noexcept
     {
         const amrex::Real c = PhysConst::c;
         const amrex::Real c2 = PhysConst::c * PhysConst::c;

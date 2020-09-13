@@ -1483,6 +1483,12 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const auto t_do_not_gather = do_not_gather;
 
+            const amrex::Real gamma_boost = WarpX::gamma_boost;
+            const amrex::Real beta_boost = WarpX::beta_boost;
+            amrex::GpuArray<int, 3> const boost_direction = {WarpX::boost_direction[0],
+                                                             WarpX::boost_direction[1],
+                                                             WarpX::boost_direction[2]};
+
             amrex::ParallelFor( np, [=] AMREX_GPU_DEVICE (long ip)
             {
                 amrex::ParticleReal xp, yp, zp;
@@ -1501,7 +1507,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                 }
                 // Externally applied E and B fields
                 getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                              WarpX::gamma_boost, WarpX::beta_boost, WarpX::boost_direction);
+                              gamma_boost, beta_boost, boost_direction);
 
                 if (do_crr) {
                     amrex::Real qp = q;
@@ -1860,6 +1866,12 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto t_do_not_gather = do_not_gather;
 
+    const amrex::Real gamma_boost = WarpX::gamma_boost;
+    const amrex::Real beta_boost = WarpX::beta_boost;
+    amrex::GpuArray<int, 3> const boost_direction = {WarpX::boost_direction[0],
+                                                     WarpX::boost_direction[1],
+                                                     WarpX::boost_direction[2]};
+
     amrex::ParallelFor( np_to_push, [=] AMREX_GPU_DEVICE (long ip)
     {
         amrex::ParticleReal xp, yp, zp;
@@ -1878,7 +1890,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         }
         // Externally applied E and B fields
         getExternalEB(ip, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                      WarpX::gamma_boost, WarpX::beta_boost, WarpX::boost_direction);
+                      gamma_boost, beta_boost, boost_direction);
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
@@ -1983,9 +1995,13 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
 {
     WARPX_PROFILE("PPC::getIonizationFunc");
 
+    const amrex::GpuArray<int, 3> boost_direction = {WarpX::boost_direction[0],
+                                                     WarpX::boost_direction[1],
+                                                     WarpX::boost_direction[2]};
+
     return IonizationFilterFunc(pti, lev, ngE, Ex, Ey, Ez, Bx, By, Bz,
                                 WarpX::gamma_boost, WarpX::beta_boost,
-                                WarpX::boost_direction, v_galilean,
+                                boost_direction, v_galilean,
                                 ionization_energies.dataPtr(),
                                 adk_prefactor.dataPtr(),
                                 adk_exp_prefactor.dataPtr(),

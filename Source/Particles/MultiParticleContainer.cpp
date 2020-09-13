@@ -1173,6 +1173,9 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
 
         auto info = getMFItInfo(*pc_source, *pc_product_ele, *pc_product_pos);
 
+        const amrex::GpuArray<int, 3> boost_direction = {WarpX::boost_direction[0],
+                                                         WarpX::boost_direction[1],
+                                                         WarpX::boost_direction[2]};
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -1184,7 +1187,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
                                                          Bx[pti], By[pti], Bz[pti],
                                                          WarpX::gamma_boost,
                                                          WarpX::beta_boost,
-                                                         WarpX::boost_direction,
+                                                         boost_direction,
                                                          pc_source->get_v_galilean());
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);
@@ -1237,6 +1240,9 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 
         auto info = getMFItInfo(*pc_source, *pc_product_phot);
 
+        const amrex::GpuArray<int, 3> boost_direction = {WarpX::boost_direction[0],
+                                                         WarpX::boost_direction[1],
+                                                         WarpX::boost_direction[2]};
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -1251,7 +1257,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                   Bx[pti], By[pti], Bz[pti],
                   WarpX::gamma_boost,
                   WarpX::beta_boost,
-                  WarpX::boost_direction,
+                  boost_direction,
                   pc_source->get_v_galilean());
 
             auto& src_tile = pc_source->ParticlesAt(lev, pti);

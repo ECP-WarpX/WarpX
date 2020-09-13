@@ -29,7 +29,7 @@ struct IonizationFilterFunc
 
     amrex::Real m_gamma_boost;
     amrex::Real m_beta_boost;
-    amrex::Vector<int> m_boost_direction;
+    amrex::GpuArray<int, 3> m_boost_direction;
 
     amrex::Array4<const amrex::Real> m_ex_arr;
     amrex::Array4<const amrex::Real> m_ey_arr;
@@ -63,7 +63,7 @@ struct IonizationFilterFunc
                           amrex::FArrayBox const& bzfab,
                           const amrex::Real gamma_boost,
                           const amrex::Real beta_boost,
-                          const amrex::Vector<int> boost_direction,
+                          const amrex::GpuArray<int, 3> boost_direction,
                           amrex::Array<amrex::Real,3> v_galilean,
                           const amrex::Real* const AMREX_RESTRICT a_ionization_energies,
                           const amrex::Real* const AMREX_RESTRICT a_adk_prefactor,

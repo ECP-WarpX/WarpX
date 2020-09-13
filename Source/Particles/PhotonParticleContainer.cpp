@@ -156,6 +156,12 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto t_do_not_gather = do_not_gather;
 
+    const amrex::Real gamma_boost = WarpX::gamma_boost;
+    const amrex::Real beta_boost = WarpX::beta_boost;
+    const amrex::GpuArray<int, 3> boost_direction = {WarpX::boost_direction[0],
+                                                     WarpX::boost_direction[1],
+                                                     WarpX::boost_direction[2]};
+
     amrex::ParallelFor(
         np_to_push,
         [=] AMREX_GPU_DEVICE (long i) {
@@ -175,7 +181,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
                                nox, galerkin_interpolation);
             }
             getExternalEB(i, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                          WarpX::gamma_boost, WarpX::beta_boost, WarpX::boost_direction);
+                          gamma_boost, beta_boost, boost_direction);
 
 #ifdef WARPX_QED
             if (local_has_breit_wheeler) {
