@@ -343,5 +343,5 @@ Replay will loop over these files in the order in which they appear in the file.
 The following is an image from replay on test.cycle_000400.root with above ascent_action.yaml
 
 
-.. figure:: LWFA_400.png
+.. figure:: WarpX_LWFA_400.png
    :alt: picture
