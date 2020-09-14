@@ -23,7 +23,6 @@ using namespace amrex;
 ParticleExtrema::ParticleExtrema (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-
     // read species name
     ParmParse pp(rd_name);
     pp.get("species",m_species_name);
@@ -34,61 +33,87 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
     // get MultiParticleContainer class object
     auto & mypc = warpx.GetPartContainer();
 
-    // resize data array
-    m_data.resize(16,0.0);
+    // get number of species (int)
+    auto nSpecies = mypc.nSpecies();
 
     // get species names (std::vector<std::string>)
     auto species_names = mypc.GetSpeciesNames();
 
-    if (ParallelDescriptor::IOProcessor())
+    // loop over species
+    for (int i_s = 0; i_s < nSpecies; ++i_s)
     {
-        if ( m_IsNotRestart )
+        // only chosen species does
+        if (species_names[i_s] != m_species_name) { continue; }
+
+        // get WarpXParticleContainer class object
+        auto & myspc = mypc.GetParticleContainer(i_s);
+
+        if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
         {
-            // open file
-            std::ofstream ofs;
-            ofs.open(m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app);
-            // write header row
-            ofs << "#";
-            ofs << "[1]step()";
-            ofs << "[2]time(s)";
-            ofs << "[3]xmin()";
-            ofs << m_sep;
-            ofs << "[4]xmax()";
-            ofs << m_sep;
-            ofs << "[5]ymin()";
-            ofs << m_sep;
-            ofs << "[6]ymax()";
-            ofs << m_sep;
-            ofs << "[7]zmin()";
-            ofs << m_sep;
-            ofs << "[8]zmax()";
-            ofs << m_sep;
-            ofs << "[9]pxmin()";
-            ofs << m_sep;
-            ofs << "[10]pxmax()";
-            ofs << m_sep;
-            ofs << "[11]pymin()";
-            ofs << m_sep;
-            ofs << "[12]pymax()";
-            ofs << m_sep;
-            ofs << "[13]pzmin()";
-            ofs << m_sep;
-            ofs << "[14]pzmax()";
-            ofs << m_sep;
-            ofs << "[15]gmin()";
-            ofs << m_sep;
-            ofs << "[16]gmax()";
-            ofs << m_sep;
-            ofs << "[17]wmin()";
-            ofs << m_sep;
-            ofs << "[18]wmax()";
-            ofs << std::endl;
-            // close file
-            ofs.close();
+            // resize data array for QED species
+            m_data.resize(18,0.0);
+        } else
+        {
+            // resize data array for regular species
+            m_data.resize(16,0.0);
+        }
+
+        if (ParallelDescriptor::IOProcessor())
+        {
+            if ( m_IsNotRestart )
+            {
+                // open file
+                std::ofstream ofs;
+                ofs.open(m_path + m_rd_name + "." + m_extension,
+                    std::ofstream::out | std::ofstream::app);
+                // write header row
+                ofs << "#";
+                ofs << "[1]step()";
+                ofs << "[2]time(s)";
+                ofs << "[3]xmin()";
+                ofs << m_sep;
+                ofs << "[4]xmax()";
+                ofs << m_sep;
+                ofs << "[5]ymin()";
+                ofs << m_sep;
+                ofs << "[6]ymax()";
+                ofs << m_sep;
+                ofs << "[7]zmin()";
+                ofs << m_sep;
+                ofs << "[8]zmax()";
+                ofs << m_sep;
+                ofs << "[9]pxmin()";
+                ofs << m_sep;
+                ofs << "[10]pxmax()";
+                ofs << m_sep;
+                ofs << "[11]pymin()";
+                ofs << m_sep;
+                ofs << "[12]pymax()";
+                ofs << m_sep;
+                ofs << "[13]pzmin()";
+                ofs << m_sep;
+                ofs << "[14]pzmax()";
+                ofs << m_sep;
+                ofs << "[15]gmin()";
+                ofs << m_sep;
+                ofs << "[16]gmax()";
+                ofs << m_sep;
+                ofs << "[17]wmin()";
+                ofs << m_sep;
+                ofs << "[18]wmax()";
+                if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
+                {
+                    ofs << m_sep;
+                    ofs << "[19]chimin()";
+                    ofs << m_sep;
+                    ofs << "[20]chimax()";
+                }
+                ofs << std::endl;
+                // close file
+                ofs.close();
+            }
         }
     }
-
 }
 // end constructor
 
