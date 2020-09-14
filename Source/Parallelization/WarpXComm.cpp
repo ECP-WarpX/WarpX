@@ -57,7 +57,7 @@ WarpX::ExchangeWithPmlF (int lev)
 void
 WarpX::UpdateAuxilaryData ()
 {
-    WARPX_PROFILE("UpdateAuxilaryData()");
+    WARPX_PROFILE("WarpX::UpdateAuxilaryData()");
 
     if (Bfield_aux[0][0]->ixType() == Bfield_fp[0][0]->ixType()) {
         UpdateAuxilaryDataSameType();
@@ -673,7 +673,7 @@ WarpX::FillBoundaryAux (int lev, IntVect ng)
 void
 WarpX::SyncCurrent ()
 {
-    WARPX_PROFILE("SyncCurrent()");
+    WARPX_PROFILE("WarpX::SyncCurrent()");
 
     // Restrict fine patch current onto the coarse patch, before
     // summing the guard cells of the fine patch
@@ -708,7 +708,7 @@ WarpX::SyncCurrent ()
 void
 WarpX::SyncRho ()
 {
-    WARPX_PROFILE("SyncRho()");
+    WARPX_PROFILE("WarpX::SyncRho()");
 
     if (!rho_fp[0]) return;
     const int ncomp = rho_fp[0]->nComp();
