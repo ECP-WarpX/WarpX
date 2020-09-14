@@ -116,7 +116,7 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
 void
 PhysicalParticleContainer::ConvertUnits(ConvertDirection convert_direction)
 {
-    WARPX_PROFILE("PPC::ConvertUnits()");
+    WARPX_PROFILE("PhysicalParticleContainer::ConvertUnits()");
 
     // Compute conversion factor
     auto factor = 1_rt;

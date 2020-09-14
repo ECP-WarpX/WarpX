@@ -249,8 +249,8 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     Real q = this->charge;
 
-    WARPX_PROFILE_VAR_NS("PPC::Evolve::Accumulate", blp_accumulate);
-    WARPX_PROFILE_VAR_NS("PPC::CurrentDeposition", blp_deposit);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::CurrentDeposition", blp_deposit);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Accumulate", blp_accumulate);
 
     // Get tile box where current is deposited.
     // The tile box is different when depositing in the buffers (depos_lev<lev)
@@ -449,8 +449,8 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     const Real q = this->charge;
 
-    WARPX_PROFILE_VAR_NS("PPC::ChargeDeposition", blp_ppc_chd);
-    WARPX_PROFILE_VAR_NS("PPC::Evolve::Accumulate", blp_accumulate);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::ChargeDeposition", blp_ppc_chd);
+    WARPX_PROFILE_VAR_NS("WarpXParticleContainer::DepositCharge::Accumulate", blp_accumulate);
 
     // Get tile box where charge is deposited.
     // The tile box is different when depositing in the buffers (depos_lev<lev)
@@ -806,7 +806,7 @@ WarpXParticleContainer::PushX (amrex::Real dt)
 void
 WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 {
-    WARPX_PROFILE("WPC::PushX()");
+    WARPX_PROFILE("WarpXParticleContainer::PushX()");
 
     if (do_not_push) return;
 
