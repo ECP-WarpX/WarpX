@@ -201,21 +201,23 @@ To use replay, you first need Conduit Blueprint HDF5 files which could be extrac
 
 inputs_3d is LWFA input deck. The data size is 256X256X1024 and the simulation will run for 5000 cycles. WarpX will call ascent every 200 cyces. submit the following job submit script will extract 25 Buleprint HDF5:
 
-#!/bin/bash
+.. code-block:: bash
 
-#BSUB -P aph114
-#BSUB -W 00:29
-#BSUB -nnodes 2
-#BSUB -alloc_flags smt4
-#BSUB -J WarpX
-#BSUB -o WarpXo.%J
-#BSUB -e WarpXe.%J
+   #!/bin/bash
 
-module load gcc
-module load cuda
+   #BSUB -P aph114
+   #BSUB -W 00:29
+   #BSUB -nnodes 2
+   #BSUB -alloc_flags smt4
+   #BSUB -J WarpX
+   #BSUB -o WarpXo.%J
+   #BSUB -e WarpXe.%J
 
-export OMP_NUM_THREADS=1
-jsrun -r 6 -a 1 -g 1 -c 7 -l GPU-CPU -d packed -b rs --smpiargs="-gpu" ./warpx inputs_3d
+   module load gcc
+   module load cuda
+
+   export OMP_NUM_THREADS=1
+   jsrun -r 6 -a 1 -g 1 -c 7 -l GPU-CPU -d packed -b rs --smpiargs="-gpu" ./warpx inputs_3d
 
 2. example Actions
 -------------------------
