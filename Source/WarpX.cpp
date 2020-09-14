@@ -370,9 +370,9 @@ WarpX::ReadParameters ()
         pp.query("do_subcycling", do_subcycling);
         pp.query("use_hybrid_QED", use_hybrid_QED);
         pp.query("safe_guard_cells", safe_guard_cells);
-        std::string override_sync_int_string = "1";
-        pp.query("override_sync_int", override_sync_int_string);
-        override_sync_intervals = IntervalsParser(override_sync_int_string);
+        std::vector<std::string> override_sync_int_string_vec = {"1"};
+        pp.queryarr("override_sync_int", override_sync_int_string_vec);
+        override_sync_intervals = IntervalsParser(override_sync_int_string_vec);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
                                          "Subcycling method 1 only works for 2 levels.");
@@ -489,12 +489,12 @@ WarpX::ReadParameters ()
         pp.query("n_field_gather_buffer", n_field_gather_buffer);
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
 #ifdef AMREX_USE_GPU
-        std::string sort_int_string = "4";
+        std::vector<std::string>sort_int_string_vec = {"4"};
 #else
-        std::string sort_int_string = "-1";
+        std::vector<std::string> sort_int_string_vec = {"-1"};
 #endif
-        pp.query("sort_int", sort_int_string);
-        sort_intervals = IntervalsParser(sort_int_string);
+        pp.queryarr("sort_int", sort_int_string_vec);
+        sort_intervals = IntervalsParser(sort_int_string_vec);
 
         Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
         bool sort_bin_size_is_specified = pp.queryarr("sort_bin_size", vect_sort_bin_size);
@@ -569,9 +569,9 @@ WarpX::ReadParameters ()
             fine_tag_hi = RealVect{hi};
         }
 
-        std::string load_balance_int_string = "0";
-        pp.query("load_balance_int", load_balance_int_string);
-        load_balance_intervals = IntervalsParser(load_balance_int_string);
+        std::vector<std::string> load_balance_int_string_vec = {"0"};
+        pp.queryarr("load_balance_int", load_balance_int_string_vec);
+        load_balance_intervals = IntervalsParser(load_balance_int_string_vec);
         pp.query("load_balance_with_sfc", load_balance_with_sfc);
         pp.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
         pp.query("load_balance_efficiency_ratio_threshold", load_balance_efficiency_ratio_threshold);

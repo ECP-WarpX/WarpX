@@ -392,11 +392,8 @@ LaserParticleContainer::Evolve (int lev,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
                                 Real t, Real dt, DtType /*a_dt_type*/)
 {
-    WARPX_PROFILE("Laser::Evolve()");
-    WARPX_PROFILE_VAR_NS("Laser::Evolve::Copy", blp_copy);
-    WARPX_PROFILE_VAR_NS("Laser::ParticlePush", blp_pp);
-    WARPX_PROFILE_VAR_NS("Laser::CurrentDepo", blp_cd);
-    WARPX_PROFILE_VAR_NS("Laser::Evolve::Accumulate", blp_accumulate);
+    WARPX_PROFILE("LaserParticleContainer::Evolve()");
+    WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
 
     Real t_lab = t;
     if (WarpX::gamma_boost > 1) {
