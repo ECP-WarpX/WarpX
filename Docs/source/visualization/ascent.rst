@@ -182,7 +182,7 @@ Replay
 
 `Replay <https://ascent.readthedocs.io/en/latest/Utilities.html#getting-data-for-replay>`_ is a utility that allows the user to ‘replay’ Conduit Blueprint HDF5 files saved by Ascent or exported by VisIt (starting in version 3.0 beta) back into Ascent. Replay enables the user or developer to pick specific time steps and load them into Ascent 
 
-We'll guide you through the procedure of how to use Replay through a WarpX LWFA example
+We'll guide you through the procedure of how to use Replay through a WarpX LWFA example: warpx/tools/Ascent/Replay
 
 1. Get Blueprint Files
 -------------------------
@@ -323,16 +323,23 @@ The options for replay are:
 
 Example launches:
 
-srun -n 8 ./replay_mpi --root=test.cycle_000060.root --actions=my_actions.json
-srun -n 8 ./replay_mpi --cycles=cycles_list.txt --actions=my_actions.json
+.. code-block:: bash
+
+srun -n 8 ./replay_mpi --root=test.cycle_002000.root --actions=ascent_action.yaml
+srun -n 8 ./replay_mpi --cycles=warpx_list.txt --actions=ascent_action.yaml
 
 The cycles files list is a text file containing one root file per line:
 
-cat cycles_list.txt
-test.cycle_000060.root
-test.cycle_000080.root
+.. code-block:: bash
+
+cat warpx_list.txt
+test.cycle_000200.root
+test.cycle_000400.root
 test.cycle_001000.root
 test.cycle_002000.root
 
 Replay will loop over these files in the order in which they appear in the file.
+
+The following is an image from replay on test.cycle_000400.root with above ascent_action.yaml
+
 
