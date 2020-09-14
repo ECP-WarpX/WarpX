@@ -477,6 +477,8 @@ public:
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
     const amrex::IntVect getngExtra() const { return guard_cells.ng_Extra; }
     const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
+    const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
+    const amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
 
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);

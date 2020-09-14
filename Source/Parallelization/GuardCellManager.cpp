@@ -90,6 +90,11 @@ guardCellManager::Init(
 #endif
 
     ng_alloc_Rho = ng_alloc_J+1; //One extra ghost cell, so that it's safe to deposit charge density
+
+    // Number of guard cells for local deposition of J and rho
+    ng_depos_J   = ng_alloc_J;
+    ng_depos_rho = ng_alloc_Rho;
+
     // after pushing particle.
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell
