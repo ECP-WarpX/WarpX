@@ -524,7 +524,7 @@ PhysicalParticleContainer::AddParticles (int lev)
 void
 PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 {
-    WARPX_PROFILE("PhysicalParticleContainer::AddPlasma");
+    WARPX_PROFILE("PhysicalParticleContainer::AddPlasma()");
 
     // If no part_realbox is provided, initialize particles in the whole domain
     const Geometry& geom = Geom(lev);
@@ -933,8 +933,8 @@ PhysicalParticleContainer::Evolve (int lev,
                                    Real /*t*/, Real dt, DtType a_dt_type)
 {
 
-    WARPX_PROFILE("PPC::Evolve()");
-    WARPX_PROFILE_VAR_NS("PPC::GatherAndPush", blp_fg);
+    WARPX_PROFILE("PhysicalParticleContainer::Evolve()");
+    WARPX_PROFILE_VAR_NS("PhysicalParticleContainer::Evolve::GatherAndPush", blp_fg);
 
     BL_ASSERT(OnSameGrids(lev,jx));
 
@@ -1410,7 +1410,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
                                   const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                   const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz)
 {
-    WARPX_PROFILE("PhysicalParticleContainer::PushP");
+    WARPX_PROFILE("PhysicalParticleContainer::PushP()");
 
     if (do_not_push) return;
 
@@ -1548,7 +1548,7 @@ PhysicalParticleContainer::GetParticleSlice (
     const Real t_lab, const Real dt,
     DiagnosticParticles& diagnostic_particles)
 {
-    WARPX_PROFILE("PhysicalParticleContainer::GetParticleSlice");
+    WARPX_PROFILE("PhysicalParticleContainer::GetParticleSlice()");
 
     // Assume that the boost in the positive z direction.
 #if (AMREX_SPACEDIM == 2)
@@ -1993,7 +1993,7 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                               const amrex::FArrayBox& By,
                                               const amrex::FArrayBox& Bz)
 {
-    WARPX_PROFILE("PPC::getIonizationFunc");
+    WARPX_PROFILE("PhysicalParticleContainer::getIonizationFunc()");
 
     const amrex::GpuArray<int, 3> boost_direction = {WarpX::boost_direction[0],
                                                      WarpX::boost_direction[1],
@@ -2058,14 +2058,14 @@ set_quantum_sync_engine_ptr (std::shared_ptr<QuantumSynchrotronEngine> ptr)
 PhotonEmissionFilterFunc
 PhysicalParticleContainer::getPhotonEmissionFilterFunc ()
 {
-    WARPX_PROFILE("PPC::getPhotonEmissionFunc");
+    WARPX_PROFILE("PhysicalParticleContainer::getPhotonEmissionFunc()");
     return PhotonEmissionFilterFunc{particle_runtime_comps["optical_depth_QSR"]};
 }
 
 PairGenerationFilterFunc
 PhysicalParticleContainer::getPairGenerationFilterFunc ()
 {
-    WARPX_PROFILE("PPC::getPairGenerationFunc");
+    WARPX_PROFILE("PhysicalParticleContainer::getPairGenerationFunc()");
     return PairGenerationFilterFunc{particle_runtime_comps["optical_depth_BW"]};
 }
 
