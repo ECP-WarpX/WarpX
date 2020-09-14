@@ -307,4 +307,32 @@ Images of Ex contour with particles could be obtained by replaying on the follow
                 azimuth: 20
                 elevation: 30
                 zoom: 2.5
+                
+There are Ascent Actions Examples `Ascent Actions Examples <https://ascent.readthedocs.io/en/latest/Actions/Examples.html#yaml-examples>`_ for you to play.                
                                                                                                                                        
+3. Run Replay
+-------------------------
+
+Replay executables are created in the utilities/replay directory of the Ascent instaation. There are two version of replay: mpi version replay_mpi and serial version replay_ser. What you use depends on the data set. Here we use replay_mpi as example.
+
+The options for replay are:
+
+--root: specifies Blueprint root file to load
+--cycles: specifies a text file containing a list of Blueprint root files to load
+--actions: specifies the name of the actions file to use (default: ascent_actions.json)
+
+Example launches:
+
+srun -n 8 ./replay_mpi --root=test.cycle_000060.root --actions=my_actions.json
+srun -n 8 ./replay_mpi --cycles=cycles_list.txt --actions=my_actions.json
+
+The cycles files list is a text file containing one root file per line:
+
+cat cycles_list.txt
+test.cycle_000060.root
+test.cycle_000080.root
+test.cycle_001000.root
+test.cycle_002000.root
+
+Replay will loop over these files in the order in which they appear in the file.
+
