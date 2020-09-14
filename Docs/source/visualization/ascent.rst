@@ -176,3 +176,134 @@ When the trigger condition is meet, ``cycle() == 300``, the actions in :code:`tr
               db_name: "cinema_out"
 
 You can view the Cinema Database result by opening :code:`cinema_databases/cinema_out/index.html`.
+
+Replay
+-------------------------
+
+`Replay <https://ascent.readthedocs.io/en/latest/Utilities.html#getting-data-for-replay>`_ is a utility that allows the user to ‘replay’ Conduit Blueprint HDF5 files saved by Ascent or exported by VisIt (starting in version 3.0 beta) back into Ascent. Replay enables the user or developer to pick specific time steps and load them into Ascent 
+
+We'll guide you through the procedure of how to use Replay through a WarpX LWFA example
+
+1. Get Blueprint Files
+-------------------------
+To use replay, you first need Conduit Blueprint HDF5 files which could be extracted by replay. The following ascent actions file can be used to extract Conduit Blueprint HDF5 files.
+
+.. code-block:: json
+
+    -
+      action: action: "add_extracts"
+      extracts:
+        e1:
+          type: "relay"
+          params:
+            path: "my_output_file_name"
+            protocol: "blueprint/mesh/hdf5"
+
+inputs_3d is LWFA input deck. The data size is 256X256X1024 and the simulation will run for 5000 cycles. WarpX will call ascent every 200 cyces. submit the following job submit script will extract 25 Buleprint HDF5:
+
+#!/bin/bash
+
+#BSUB -P aph114
+#BSUB -W 00:29
+#BSUB -nnodes 2
+#BSUB -alloc_flags smt4
+#BSUB -J WarpX
+#BSUB -o WarpXo.%J
+#BSUB -e WarpXe.%J
+
+module load gcc
+module load cuda
+
+export OMP_NUM_THREADS=1
+jsrun -r 6 -a 1 -g 1 -c 7 -l GPU-CPU -d packed -b rs --smpiargs="-gpu" ./warpx inputs_3d
+
+2. example Actions
+-------------------------
+
+Images of Ex contour with particles could be obtained by replaying on the follow action:
+
+.. code-block:: json
+
+-
+ck:: json
+
+: "add_pipelines"
+  pipelines:
+    clipped_volume:
+      f0:
+        type: "contour"
+        params:
+          field: "Ex"
+          levels: 16
+      f1:
+        type: "clip"
+        params:
+          topology: topo # name of the amr mesh
+          multi_plane:
+            point1:
+              x: 0.0
+              y: 0.0
+              z: 0.0
+            normal1:
+              x: 0.0
+              y: -1.0
+              z: 0.0
+            point2:
+              x: 0.0
+              y: 0.0
+              z: 0.0
+            normal2:
+              x: -0.7
+              y: -0.7
+              z: 0.0
+    sampled_particles:
+      f1:
+        type: histsampling
+        params:
+          field: particle_electrons_uz
+          bins: 64
+          sample_rate: 0.90
+      f2:
+        type: "clip"
+        params:
+          topology: particle_electrons # particle data
+          multi_plane:
+            point1:
+              x: 0.0
+              y: 0.0
+              z: 0.0
+            normal1:
+              x: 0.0
+              y: -1.0
+              z: 0.0
+            point2:
+              x: 0.0
+              y: 0.0
+              z: 0.0
+            normal2:
+              x: -0.7
+              y: -0.7
+              z: 0.0
+-
+  action: "add_scenes"
+  scenes:
+    s1:
+      plots:
+        p0:
+          type: "pseudocolor"
+          field: "particle_electrons_uz"
+          pipeline: "sampled_particles"
+        p1:
+          type: "pseudocolor"
+          field: "Ex"
+          pipeline: "clipped_volume"
+      renders:
+        image1:
+          bg_color: [1.0, 1.0, 1.0]
+          fg_color: [0.0, 0.0, 0.0]
+          image_prefix: "tests_%06d"
+          camera:
+            azimuth: 20
+            elevation: 30
+            zoom: 2.5
+
