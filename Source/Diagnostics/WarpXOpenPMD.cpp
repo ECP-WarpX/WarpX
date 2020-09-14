@@ -469,7 +469,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                     [](amrex::ParticleReal const *p){ delete[] p; }
                 );
                 for (auto i=0; i<numParticleOnTile; i++) {
-                     curr.get()[i] = aos[i].m_rdata.pos[currDim];
+                     curr.get()[i] = aos[i].pos(currDim);
                 }
                 std::string const positionComponent = positionComponents[currDim];
                 currSpecies["position"][positionComponent].storeChunk(curr, {offset}, {numParticleOnTile64});
@@ -582,7 +582,7 @@ WarpXOpenPMDPlot::SaveRealProperty(WarpXParIter& pti,
           );
 
           for( auto kk=0; kk<numParticleOnTile; kk++ )
-               d.get()[kk] = aos[kk].m_rdata.arr[AMREX_SPACEDIM+idx];
+               d.get()[kk] = aos[kk].rdata(idx);
 
           currRecordComp.storeChunk(d,
                {offset}, {numParticleOnTile64});
