@@ -78,7 +78,7 @@ CoarsenIO::Coarsen ( MultiFab& mf_dst,
                      const int ngrow,
                      const IntVect crse_ratio )
 {
-    BL_PROFILE( "CoarsenIO::Coarsen" );
+    BL_PROFILE("CoarsenIO::Coarsen()");
 
     // Convert BoxArray of source MultiFab to staggering of destination MultiFab and coarsen it
     BoxArray ba_tmp = amrex::convert( mf_src.boxArray(), mf_dst.ixType().toIntVect() );
