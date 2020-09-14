@@ -1485,7 +1485,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const amrex::Real gamma_boost = WarpX::gamma_boost;
             const amrex::Real beta_boost = WarpX::beta_boost;
-            amrex::GpuArray<int, 3> const boost_direction = {WarpX::boost_direction[0],
+            const amrex::GpuArray<int, 3> boost_direction = {WarpX::boost_direction[0],
                                                              WarpX::boost_direction[1],
                                                              WarpX::boost_direction[2]};
 
@@ -1868,7 +1868,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     const amrex::Real gamma_boost = WarpX::gamma_boost;
     const amrex::Real beta_boost = WarpX::beta_boost;
-    amrex::GpuArray<int, 3> const boost_direction = {WarpX::boost_direction[0],
+    const amrex::GpuArray<int, 3> boost_direction = {WarpX::boost_direction[0],
                                                      WarpX::boost_direction[1],
                                                      WarpX::boost_direction[2]};
 
