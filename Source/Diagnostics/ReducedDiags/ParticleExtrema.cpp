@@ -298,6 +298,13 @@ void ParticleExtrema::ComputeDiags (int step)
         { return p.rdata(PIdx::w); });
         ParallelDescriptor::ReduceRealMax(wmax);
 
+        // compute chimin and chimax
+        Real chimin = 0.0_rt;
+        Real chimax = 0.0_rt;
+        if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
+        {
+        }
+
         m_data[0]  = xmin;
         m_data[1]  = xmax;
         m_data[2]  = ymin;
@@ -314,6 +321,11 @@ void ParticleExtrema::ComputeDiags (int step)
         m_data[13] = gmax;
         m_data[14] = wmin;
         m_data[15] = wmax;
+        if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
+        {
+            m_data[16] = chimin;
+            m_data[17] = chimax;
+        }
 
     }
     // end loop over species
