@@ -228,30 +228,81 @@ Images of Ex contour with particles could be obtained by replaying on the follow
       action: "add_pipelines"
       pipelines:
         clipped_volume:
-        p1:
-          f1:
+          f0:
             type: "contour"
             params:
-               field: "jy"
-               iso_values: [ 1000000000000.0, -1000000000000.0]
+              field: "Ex"
+              levels: 16
+          f1:
+            type: "clip"
+            params:
+              topology: topo # name of the amr mesh
+              multi_plane:
+                point1:
+                  x: 0.0
+                  y: 0.0
+                  z: 0.0
+                normal1:
+                  x: 0.0
+                  y: -1.0
+                  z: 0.0
+                point2:
+                  x: 0.0
+                  y: 0.0
+                  z: 0.0
+                normal2:
+                  x: -0.7
+                  y: -0.7
+                  z: 0.0
+        sampled_particles:
+          f1:
+            type: histsampling
+            params:
+              field: particle_electrons_uz
+              bins: 64
+              sample_rate: 0.90
+          f2:
+            type: "clip"
+            params:
+              topology: particle_electrons # particle data
+              multi_plane:
+                point1:
+                  x: 0.0
+                  y: 0.0
+                  z: 0.0
+                normal1:
+                  x: 0.0
+                  y: -1.0
+                  z: 0.0
+                point2:
+                  x: 0.0
+                  y: 0.0
+                  z: 0.0
+                normal2:
+                  x: -0.7
+                  y: -0.7
+                  z: 0.0
+
     -
       action: "add_scenes"
       scenes:
         scene1:
           plots:
-            plot1:
+            p0:
               type: "pseudocolor"
-              pipeline: "p1"
-              field: "jy"
-            plot2:
+              field: "particle_electrons_uz"
+              pipeline: "sampled_particles"
+            p1:
               type: "pseudocolor"
-              field: "particle_electrons_w"
-              points:
-                radius: 0.0000001
+              field: "Ex"
+              pipeline: "clipped_volume"
           renders:
-            r1:
-              type: "cinema"
-              phi: 10
-              theta: 10
-              db_name: "cinema_out"
-
+            image1:
+              bg_color: [1.0, 1.0, 1.0]
+              fg_color: [0.0, 0.0, 0.0]
+              image_prefix: "test%06d"
+              camera:
+                azimuth: 20
+                elevation: 30
+                zoom: 2.5
+                                                                                                                                       
