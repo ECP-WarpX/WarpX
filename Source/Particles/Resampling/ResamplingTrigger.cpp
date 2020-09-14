@@ -11,9 +11,9 @@ ResamplingTrigger::ResamplingTrigger ()
 {
     amrex::ParmParse pprt("resampling_trigger");
 
-    std::string resampling_trigger_int_string = "0";
-    pprt.query("intervals", resampling_trigger_int_string);
-    m_resampling_intervals = IntervalsParser(resampling_trigger_int_string);
+    std::vector<std::string> resampling_trigger_int_string_vec = {"0"};
+    pprt.queryarr("intervals", resampling_trigger_int_string_vec);
+    m_resampling_intervals = IntervalsParser(resampling_trigger_int_string_vec);
 
     pprt.query("max_avg_ppc", m_max_avg_ppc);
 }
