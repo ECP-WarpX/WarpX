@@ -63,6 +63,11 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     m_up_laser_profile = laser_profiles_dictionary.at(laser_type_s)();
     //__________
 
+#ifdef WARPX_DIM_XZ
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(nvec[1] == amrex::Real(0),
+        "Laser propagation direction must be 0 along y in 2D");
+#endif
+
     // Plane normal
     Real s = 1.0_rt / std::sqrt(nvec[0]*nvec[0] + nvec[1]*nvec[1] + nvec[2]*nvec[2]);
     nvec = { nvec[0]*s, nvec[1]*s, nvec[2]*s };
@@ -392,11 +397,8 @@ LaserParticleContainer::Evolve (int lev,
                                 const MultiFab*, const MultiFab*, const MultiFab*,
                                 Real t, Real dt, DtType /*a_dt_type*/)
 {
-    WARPX_PROFILE("Laser::Evolve()");
-    WARPX_PROFILE_VAR_NS("Laser::Evolve::Copy", blp_copy);
-    WARPX_PROFILE_VAR_NS("Laser::ParticlePush", blp_pp);
-    WARPX_PROFILE_VAR_NS("Laser::CurrentDepo", blp_cd);
-    WARPX_PROFILE_VAR_NS("Laser::Evolve::Accumulate", blp_accumulate);
+    WARPX_PROFILE("LaserParticleContainer::Evolve()");
+    WARPX_PROFILE_VAR_NS("LaserParticleContainer::Evolve::ParticlePush", blp_pp);
 
     Real t_lab = t;
     if (WarpX::gamma_boost > 1) {
@@ -569,6 +571,14 @@ LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
     // the amplitude of the field) are given in the lab-frame.
     // Therefore, the mobility needs to be modified by a factor WarpX::gamma_boost.
     mobility = mobility/WarpX::gamma_boost;
+
+    // If mobility is too high (caused by a small wavelength compared to the grid size),
+    // calculated antenna particle velocities may exceed c, which can cause a segfault.
+    constexpr Real warning_tol = 0.1_rt;
+    if (wavelength < std::min(Sx,Sy)*warning_tol){
+        amrex::Warning("WARNING: laser wavelength seems to be much smaller than the grid size."
+                       " This may cause a segmentation fault");
+    }
 }
 
 void

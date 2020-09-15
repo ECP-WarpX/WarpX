@@ -9,15 +9,32 @@
 
 #include "Resampling.H"
 
-#include <AMReX_Print.H>
-
 /**
- * \brief This class will soon implement the leveling thinning algorithm, but for now it is just
- * a dummy class that prints "Resampling." used to test the resampling structure.
+ * \brief This class implements the leveling thinning algorithm as defined in Muraviev, A., et al.
+ * arXiv:2006.08593 (2020).
+ * The main steps of the algorithm are the following: for every cell we calculate a level weight,
+ * defined by the average weight of the species particles in that cell multiplied by the target
+ * ratio. Then, particles with a weight lower than the level weight are either removed, with a
+ * probability 1 - particle_weight/level_weight, or have their weight set to the level weight.
  */
 class LevelingThinning: public ResamplingAlgorithm {
 public:
-    void operator() (WarpXParIter& /*pti*/) override final {amrex::Print() << "Resampling. \n";}
+    /**
+     * \brief Constructor of the LevelingThinning class
+     */
+    LevelingThinning ();
+
+    /**
+     * \brief A method that performs leveling thinning for the considered species.
+     *
+     * @param[in] pti WarpX particle iterator of the particles to resample.
+     * @param[in] lev the index of the refinement level.
+     * @param[in] pc a pointer to the particle container.
+     */
+    void operator() (WarpXParIter& pti, const int lev, WarpXParticleContainer * const pc) const override final;
+
+private:
+    amrex::Real m_target_ratio = amrex::Real(1.5);
 };
 
 

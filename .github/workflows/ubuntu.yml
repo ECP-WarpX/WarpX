@@ -83,6 +83,8 @@ jobs:
   # [!] very slow runtime work-around for beta08
   #   https://github.com/intel/llvm/issues/2187
   #   https://github.com/AMReX-Codes/amrex/pull/1243
+  # quick-fix for beta09: activate beta08 compiler
+  # bug report: 04801443 on https://supporttickets.intel.com
   build_dpcc:
     name: oneAPI DPC++ SP [Linux]
     runs-on: ubuntu-latest
@@ -104,6 +106,7 @@ jobs:
         sudo apt-get install -y intel-oneapi-dpcpp-compiler intel-oneapi-mkl
         set +e
         source /opt/intel/oneapi/setvars.sh
+        source /opt/intel/oneapi/compiler/2021.1-beta08/env/vars.sh
         set -e
         git clone https://github.com/openPMD/openPMD-api.git
         mkdir openPMD-api/build
@@ -116,6 +119,7 @@ jobs:
       run: |
         set +e
         source /opt/intel/oneapi/setvars.sh
+        source /opt/intel/oneapi/compiler/2021.1-beta08/env/vars.sh
         set -e
         export CXX=$(which dpcpp)
         export CC=$(which clang)
