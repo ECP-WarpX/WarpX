@@ -486,10 +486,13 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
             if self.stencil_order is not None:
                 pywarpx.psatd.nox = self.stencil_order[0]
-                pywarpx.psatd.noy = self.stencil_order[1]
-                pywarpx.psatd.noz = self.stencil_order[2]
+                if self.grid.number_of_dimensions == 3:
+                    pywarpx.psatd.noy = self.stencil_order[1]
+                pywarpx.psatd.noz = self.stencil_order[-1]
 
             if self.galilean_velocity is not None:
+                if self.grid.number_of_dimensions == 2:
+                    self.galilean_velocity = [self.galilean_velocity[0], 0., self.galilean_velocity[1]]
                 pywarpx.psatd.v_galilean = np.array(self.galilean_velocity)/constants.c
 
         else:
