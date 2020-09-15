@@ -2003,11 +2003,12 @@ void PhysicalParticleContainer::resample (const Resampling& resampler, const int
 
     if (resampler.triggered(timestep, global_numparts))
     {
+        amrex::Print() << "Resampling " << species_name << ".\n";
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
             {
-                resampler(pti);
+                resampler(pti, lev, this);
             }
         }
     }

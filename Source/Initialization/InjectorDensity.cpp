@@ -11,7 +11,7 @@
 
 using namespace amrex;
 
-InjectorDensity::~InjectorDensity ()
+void InjectorDensity::clear ()
 {
     switch (type)
     {
@@ -42,11 +42,10 @@ InjectorDensityPredefined::InjectorDensityPredefined (
     ParmParse pp(a_species_name);
 
     std::vector<amrex::Real> v;
-    // Read parameters for the predefined plasma profile,
-    // and store them in managed memory
+    // Read parameters for the predefined plasma profile.
     pp.getarr("predefined_profile_params", v);
-    p = static_cast<amrex::Real*>
-        (amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real)*v.size()));
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
+                                     "Too many parameters for InjectorDensityPredefined");
     for (int i = 0; i < static_cast<int>(v.size()); ++i) {
         p[i] = v[i];
     }
@@ -64,8 +63,7 @@ InjectorDensityPredefined::InjectorDensityPredefined (
 }
 
 // Note that we are not allowed to have non-trivial destructor.
-// So we rely on clear() to free memory.
+// So we rely on clear() to free memory if needed.
 void InjectorDensityPredefined::clear ()
 {
-    amrex::The_Managed_Arena()->free(p);
 }
