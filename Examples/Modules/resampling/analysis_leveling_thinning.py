@@ -31,7 +31,7 @@ relative_tol = 1.e-13 # tolerance for machine precision errors
 
 
 #### Tests for first species ####
-# Particles are present in all simulation cells and have a uniform weight distribution
+# Particles are present in all simulation cells and all have the same weight
 
 ppc = 400.
 numparts_init = numcells*ppc
@@ -109,7 +109,7 @@ print("tolerance: " + str(5*std_variance_initial_weight))
 level_weight = w[0]
 assert(np.abs(level_weight - mean_initial_weight*t_r) < level_weight*relative_tol)
 
-# Check that the number of particles at the level weight is the same as predicted from analytical
+# Check that the number of particles at the level weight is the same as predicted from analytic
 # calculations
 numparts_leveled = np.argmax(w > level_weight) # This returns the first index for which
 # w > level_weight, which thus corresponds to the number of particles at the level weight
@@ -126,13 +126,13 @@ std_numparts_leveled = np.sqrt(expected_numparts_leveled - numparts_init/np.sqrt
 print("difference between expected and actual number of leveled particles (2nd species): " + str(error))
 print("tolerance: " + str(5*std_numparts_leveled))
 
-numparts_untouched = w.shape[0] - numparts_leveled
-numparts_untouched_anticipated = w0.shape[0] - np.argmax(w0 > level_weight)
+numparts_unaffected = w.shape[0] - numparts_leveled
+numparts_unaffected_anticipated = w0.shape[0] - np.argmax(w0 > level_weight)
 # Check that number of particles with weight higher than level weight is the same before and after
 # resampling
-assert(numparts_untouched == numparts_untouched_anticipated)
+assert(numparts_unaffected == numparts_unaffected_anticipated)
 # Check that particles with weight higher than level weight are unaffected by resampling.
-assert(np.all(w[-numparts_untouched:] == w0[-numparts_untouched:]))
+assert(np.all(w[-numparts_unaffected:] == w0[-numparts_unaffected:]))
 
 test_name = fn_final[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, fn_final)
