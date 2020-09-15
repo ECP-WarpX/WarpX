@@ -11,7 +11,7 @@
 
 using namespace amrex;
 
-InjectorMomentum::~InjectorMomentum ()
+void InjectorMomentum::clear ()
 {
     switch (type)
     {
