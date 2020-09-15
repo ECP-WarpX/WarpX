@@ -1,0 +1,51 @@
+max_step = 8
+amr.n_cell =  16 16
+amr.blocking_factor = 16
+geometry.is_periodic = 1   1
+geometry.prob_lo     = 0.  0.
+geometry.prob_hi     = 16. 16.
+amr.max_level = 0
+
+warpx.do_pml = 0
+
+particles.species_names = resampled_part1 resampled_part2
+
+my_constants.pi = 3.141592653589793
+
+resampled_part1.species_type = electron
+resampled_part1.injection_style = NRandomPerCell
+resampled_part1.num_particles_per_cell = 400
+resampled_part1.profile = constant
+resampled_part1.density = 1.
+resampled_part1.momentum_distribution_type = constant
+resampled_part1.do_not_deposit = 1
+resampled_part1.do_not_gather = 1
+resampled_part1.do_not_push = 1
+resampled_part1.do_resampling = 1
+
+resampled_part2.species_type = electron
+resampled_part2.injection_style = NRandomPerCell
+resampled_part2.num_particles_per_cell = 100000
+resampled_part2.zmin = 0.
+resampled_part2.zmax = 1.
+resampled_part2.xmin = 0.
+resampled_part2.xmax = 1.
+resampled_part2.profile = parse_density_function
+resampled_part2.density_function(x,y,z) = 2.*sqrt(2.)+sqrt(-log(x))*cos(2*pi*z)
+resampled_part2.momentum_distribution_type = constant
+resampled_part2.do_not_deposit = 1
+resampled_part2.do_not_gather = 1
+resampled_part2.do_not_push = 1
+resampled_part2.do_resampling = 1
+
+resampling_trigger.intervals = "100 :120:3, 7:7:7"
+resampling_trigger.max_avg_ppc = 395
+resampling_algorithm.type = leveling_thinning
+resampling_algorithm.target_ratio = 1.3 
+
+# Diagnostics
+diagnostics.diags_names = diag1
+diag1.period = 8
+diag1.diag_type = Full
+diag1.resampled_part1.variables = w
+diag1.resampled_part2.variables = w
