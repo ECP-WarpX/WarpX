@@ -10,6 +10,7 @@
 #include "ResamplingTrigger.H"
 
 class WarpXParIter; // forward declaration
+class WarpXParticleContainer; // forward declaration
 
 /**
  * \brief An empty base class from which specific resampling algorithms are derived.
@@ -19,7 +20,7 @@ struct ResamplingAlgorithm
     /**
      * \brief Virtual operator() of the abstract ResamplingAlgorithm class
      */
-    virtual void operator() (WarpXParIter& /*pti*/) = 0;
+    virtual void operator() (WarpXParIter& /*pti*/, const int /*lev*/, WarpXParticleContainer */*pc*/) const = 0;
 
     /**
      * \brief Virtual destructor of the abstract ResamplingAlgorithm class
@@ -56,8 +57,10 @@ public:
      * \brief A method that uses the ResamplingAlgorithm object to perform resampling.
      *
      * @param[in] pti WarpX particle iterator of the particles to resample.
+     * @param[in] lev the index of the refinement level.
+     * @param[in] pc a pointer to the particle container.
      */
-    void operator() (WarpXParIter& pti) const;
+    void operator() (WarpXParIter& pti, const int lev, WarpXParticleContainer * const pc) const;
 
 private:
     ResamplingTrigger m_resampling_trigger;
