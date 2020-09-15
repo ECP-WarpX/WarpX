@@ -123,7 +123,7 @@ CMake Option                Default & Values                             Descrip
 ``WarpX_OPENPMD``           ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
 ``WarpX_PRECISION``         **double**/single                            Floating point precision (single/double)
 ``WarpX_PSATD``             ON/**OFF**                                   Spectral solver
-``WarpX_QED``               ON/**OFF**                                   PICSAR QED (requires Boost and PICSAR)
+``WarpX_QED_TABLE_GEN``     ON/**OFF**                                   Support for QED tables generation (requires Boost)
 ``WarpX_amrex_repo``        ``https://github.com/AMReX-Codes/amrex.git`` Repository URI to pull and build AMReX from
 ``WarpX_amrex_branch``      ``development``                              Repository branch for ``WarpX_amrex_repo``
 ``WarpX_amrex_internal``    **ON**/OFF                                   Needs a pre-installed AMReX library if set to ``OFF``

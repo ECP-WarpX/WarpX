@@ -37,7 +37,7 @@ option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
-option(WarpX_QED           "PICSAR QED (requires Boost and PICSAR)"     OFF)
+option(WarpX_QED_TABLE_GEN "QED table generation (requires Boost)"      OFF)
 # TODO: python, sensei, legacy hdf5?
 
 set(WarpX_DIMS_VALUES 2 3 RZ)
@@ -155,6 +155,7 @@ set_target_properties(WarpX PROPERTIES
 
 # link dependencies
 target_link_libraries(WarpX PUBLIC WarpX::thirdparty::AMReX)
+target_link_libraries(WarpX PUBLIC pxrmp_qed)
 
 if(WarpX_PSATD)
     if(ENABLE_CUDA)
@@ -179,10 +180,8 @@ if(WarpX_OPENPMD)
     target_link_libraries(WarpX PUBLIC openPMD::openPMD)
 endif()
 
-if(WarpX_QED)
-    target_compile_definitions(WarpX PUBLIC WARPX_QED)
+if(WarpX_QED_TABLE_GEN)
     # FIXME WARPX_QED_TABLE_GEN
-    target_link_libraries(WarpX PUBLIC pxrmp_qed)
 endif()
 
 # AMReX helper function: propagate CUDA specific target & source properties
@@ -215,11 +214,9 @@ if(WarpX_OPENPMD)
     target_compile_definitions(WarpX PRIVATE WARPX_USE_OPENPMD)
 endif()
 
-if(WarpX_QED)
-    target_compile_definitions(WarpX PRIVATE WARPX_QED)
-    if(WarpX_QED_TABLE_GEN)
-        target_compile_definitions(WarpX PRIVATE WarpX_QED_TABLE_GEN)
-    endif()
+
+if(WarpX_QED_TABLE_GEN)
+    target_compile_definitions(WarpX PRIVATE WarpX_QED_TABLE_GEN)
 endif()
 
 if(WarpX_PSATD)
