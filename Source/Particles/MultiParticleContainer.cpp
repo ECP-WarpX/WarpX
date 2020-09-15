@@ -442,7 +442,7 @@ MultiParticleContainer
                    Vector<WarpXParticleContainer::DiagnosticParticleData>& parts) const
 {
 
-    WARPX_PROFILE("MultiParticleContainer::GetLabFrameData");
+    WARPX_PROFILE("MultiParticleContainer::GetLabFrameData()");
 
     // Loop over particle species
     for (int i = 0; i < nspecies_back_transformed_diagnostics; ++i){
@@ -619,7 +619,7 @@ MultiParticleContainer::doFieldIonization (int lev,
                                            const MultiFab& By,
                                            const MultiFab& Bz)
 {
-    WARPX_PROFILE("MPC::doFieldIonization");
+    WARPX_PROFILE("MultiParticleContainer::doFieldIonization()");
 
     // Loop over all species.
     // Ionized particles in pc_source create particles in pc_product
@@ -664,7 +664,7 @@ MultiParticleContainer::doFieldIonization (int lev,
 void
 MultiParticleContainer::doCoulombCollisions ( Real cur_time )
 {
-    WARPX_PROFILE("MPC::doCoulombCollisions");
+    WARPX_PROFILE("MultiParticleContainer::doCoulombCollisions()");
 
     for( auto const& collision : allcollisions )
     {
@@ -702,10 +702,11 @@ MultiParticleContainer::doCoulombCollisions ( Real cur_time )
 
 void MultiParticleContainer::doResampling (const int timestep)
 {
-    WARPX_PROFILE("MPC::doResampling");
+    WARPX_PROFILE("MultiParticleContainer::doResampling()");
 
     for (auto& pc : allcontainers)
     {
+        // do_resampling can only be true for PhysicalParticleContainers
         if (!pc->do_resampling){ continue; }
 
         pc->resample(m_resampler, timestep);
@@ -1023,7 +1024,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 void
 MultiParticleContainer::doQEDSchwinger ()
 {
-    WARPX_PROFILE("MPC::doQEDSchwinger");
+    WARPX_PROFILE("MultiParticleContainer::doQEDSchwinger()");
 
     if (!m_do_qed_schwinger) {return;}
 
@@ -1133,7 +1134,7 @@ void MultiParticleContainer::doQedEvents (int lev,
                                           const MultiFab& By,
                                           const MultiFab& Bz)
 {
-    WARPX_PROFILE("MPC::doQedEvents");
+    WARPX_PROFILE("MultiParticleContainer::doQedEvents()");
 
     doQedBreitWheeler(lev, Ex, Ey, Ez, Bx, By, Bz);
     doQedQuantumSync(lev, Ex, Ey, Ez, Bx, By, Bz);
@@ -1147,7 +1148,7 @@ void MultiParticleContainer::doQedBreitWheeler (int lev,
                                                 const MultiFab& By,
                                                 const MultiFab& Bz)
 {
-    WARPX_PROFILE("MPC::doQedBreitWheeler");
+    WARPX_PROFILE("MultiParticleContainer::doQedBreitWheeler()");
 
     // Loop over all species.
     // Photons undergoing Breit Wheeler process create electrons
@@ -1214,7 +1215,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
                                                const MultiFab& By,
                                                const MultiFab& Bz)
 {
-    WARPX_PROFILE("MPC::doQedEvents::doQedQuantumSync");
+    WARPX_PROFILE("MultiParticleContainer::doQedQuantumSync()");
 
     // Loop over all species.
     // Electrons or positrons undergoing Quantum photon emission process

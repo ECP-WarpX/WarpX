@@ -82,7 +82,7 @@ struct ParserFilter
     /** constructor
      * \param a_is_active whether the test is active
      */
-    ParserFilter(bool a_is_active, ParserWrapper<7>* a_filter_parser)
+    ParserFilter(bool a_is_active, HostDeviceParser<7> const& a_filter_parser)
         : m_is_active(a_is_active), m_function_partparser(a_filter_parser)
     {
         m_t = WarpX::GetInstance().gett_new(0);
@@ -103,7 +103,7 @@ struct ParserFilter
         amrex::Real const ux = p.rdata(PIdx::ux)/PhysConst::c;
         amrex::Real const uy = p.rdata(PIdx::uy)/PhysConst::c;
         amrex::Real const uz = p.rdata(PIdx::uz)/PhysConst::c;
-        if ( (*m_function_partparser)(m_t,x,y,z,ux,uy,uz) > 0.5 ) return 1;
+        if ( m_function_partparser(m_t,x,y,z,ux,uy,uz) > 0.5 ) return 1;
         else return 0;
     }
 private:
@@ -111,7 +111,7 @@ private:
     const bool m_is_active;
 public:
     /** Parser function with 7 input variables, t,x,y,z,ux,uy,uz */
-    ParserWrapper<7> const * const m_function_partparser;
+    HostDeviceParser<7> const m_function_partparser;
     /** Store physical time. */
     amrex::Real m_t;
 };
