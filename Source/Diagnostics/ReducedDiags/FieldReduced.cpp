@@ -7,6 +7,7 @@
 
 #include "FieldReduced.H"
 #include "WarpX.H"
+#include "Utils/CoarsenIO.H"
 
 using namespace amrex;
 
@@ -217,13 +218,34 @@ void FieldReduced::ComputeDiags (int step)
             m_data[m_offset_maxField+lev*noutputs_maxField+index_By] = By.norm0();
             m_data[m_offset_maxField+lev*noutputs_maxField+index_Bz] = Bz.norm0();
 
-            // Reduction operation to compute the maximum value of Ex**2+Ey**2+Ez**2
-            // Note that the reduction is possibly made with the sum of components
-            // which do not have the same staggering.
+            // General preparation of interpolation and reduction to compute the maximum value of
+            // |E| and |B|
+            const GpuArray<int,3> cellCenteredtype{AMREX_D_DECL(0,0,0)};
+            const GpuArray<int,3> reduction_coarsening_ratio{AMREX_D_DECL(1,1,1)};
+            constexpr int reduction_comp = 0;
+
+            // Prepare reduction for maximum value of |E|
             ReduceOps<ReduceOpMax> reduceE_op;
             ReduceData<Real> reduceE_data(reduceE_op);
             using ReduceTuple = typename decltype(reduceE_data)::Type;
 
+            // Prepare interpolation of E field components to cell center
+            GpuArray<int,3> Extype;
+            GpuArray<int,3> Eytype;
+            GpuArray<int,3> Eztype;
+            for (int i = 0; i < AMREX_SPACEDIM; ++i){
+                Extype[i] = Ex.ixType()[i];
+                Eytype[i] = Ey.ixType()[i];
+                Eztype[i] = Ez.ixType()[i];
+            }
+#if   (AMREX_SPACEDIM == 2)
+            Extype[2] = 0;
+            Eytype[2] = 0;
+            Eztype[2] = 0;
+#endif
+
+            // MFIter loop to interpolate E field components to cell center and get maximum value
+            // of |E|
  #ifdef _OPENMP
  #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
  #endif
@@ -238,8 +260,13 @@ void FieldReduced::ComputeDiags (int step)
                 reduceE_op.eval(box, reduceE_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
                 {
-                    return arrEx(i,j,k)*arrEx(i,j,k) + arrEy(i,j,k)*arrEy(i,j,k)
-                                + arrEz(i,j,k)*arrEz(i,j,k);
+                    const Real Ex_interp = CoarsenIO::Interp(arrEx, Extype, cellCenteredtype,
+                                            reduction_coarsening_ratio, i, j, k, reduction_comp);
+                    const Real Ey_interp = CoarsenIO::Interp(arrEy, Eytype, cellCenteredtype,
+                                            reduction_coarsening_ratio, i, j, k, reduction_comp);
+                    const Real Ez_interp = CoarsenIO::Interp(arrEz, Eztype, cellCenteredtype,
+                                            reduction_coarsening_ratio, i, j, k, reduction_comp);
+                    return Ex_interp*Ex_interp + Ey_interp*Ey_interp + Ez_interp*Ez_interp;
                 });
             }
 
@@ -249,13 +276,28 @@ void FieldReduced::ComputeDiags (int step)
 
             m_data[m_offset_maxField+lev*noutputs_maxField+index_absE] = std::sqrt(hv_E);
 
-            // Reduction operation to compute the maximum value of Bx**2+By**2+Bz**2
-            // Note that the reduction is possibly made with the sum of components
-            // which do not have the same staggering.
+            // Prepare reduction for maximum value of |B|
             ReduceOps<ReduceOpMax> reduceB_op;
             ReduceData<Real> reduceB_data(reduceB_op);
             using ReduceTuple = typename decltype(reduceB_data)::Type;
 
+            // Prepare interpolation of B field components to cell center
+            GpuArray<int,3> Bxtype;
+            GpuArray<int,3> Bytype;
+            GpuArray<int,3> Bztype;
+            for (int i = 0; i < AMREX_SPACEDIM; ++i){
+                Bxtype[i] = Bx.ixType()[i];
+                Bytype[i] = By.ixType()[i];
+                Bztype[i] = Bz.ixType()[i];
+            }
+#if   (AMREX_SPACEDIM == 2)
+            Bxtype[2] = 0;
+            Bytype[2] = 0;
+            Bztype[2] = 0;
+#endif
+
+            // MFIter loop to interpolate B field components to cell center and get maximum value
+            // of |B|
  #ifdef _OPENMP
  #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
  #endif
@@ -270,8 +312,13 @@ void FieldReduced::ComputeDiags (int step)
                 reduceB_op.eval(box, reduceB_data,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) -> ReduceTuple
                 {
-                    return arrBx(i,j,k)*arrBx(i,j,k) + arrBy(i,j,k)*arrBy(i,j,k)
-                                + arrBz(i,j,k)*arrBz(i,j,k);
+                    const Real Bx_interp = CoarsenIO::Interp(arrBx, Bxtype, cellCenteredtype,
+                                            reduction_coarsening_ratio, i, j, k, reduction_comp);
+                    const Real By_interp = CoarsenIO::Interp(arrBy, Bytype, cellCenteredtype,
+                                            reduction_coarsening_ratio, i, j, k, reduction_comp);
+                    const Real Bz_interp = CoarsenIO::Interp(arrBz, Bztype, cellCenteredtype,
+                                            reduction_coarsening_ratio, i, j, k, reduction_comp);
+                    return Bx_interp*Bx_interp + By_interp*By_interp + Bz_interp*Bz_interp;
                 });
             }
 

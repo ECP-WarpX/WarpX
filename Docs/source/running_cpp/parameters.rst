@@ -1600,9 +1600,6 @@ Reduced Diagnostics
         * ``MaxField``
             This type computes the maximum value of each component of the electric and magnetic fields
             and of the norm of the electric and magnetic field vectors.
-            Note that, if the fields are staggered, the values for the vector norms might be slightly
-            inaccurate because they are obtained by summing field components defined at different
-            positions in the grid.
             Measuring maximum fields in a plasma might be very noisy in PIC, use this instead
             for analysis of scenarios such as an electromagnetic wave propagating in vacuum.
 

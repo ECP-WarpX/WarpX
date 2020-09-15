@@ -59,21 +59,18 @@ EPyt = EPyt + np.sum( (np.sqrt(px**2+py**2+pz**2)*scc.c)*w )
 
 # Use raw field plotfiles to compare with maximum field reduced diag
 ad_raw = read_raw_data.read_data(fn)
-# We trim the last nodal cells in the raw output to directly compare with reduced diag output
-Ex_raw = ad_raw[0]['Ex_aux'][:,:-1,:-1]
-Ey_raw = ad_raw[0]['Ey_aux'][:-1,:,:-1]
-Ez_raw = ad_raw[0]['Ez_aux'][:-1,:-1,:]
-Bx_raw = ad_raw[0]['Bx_aux'][:-1,:,:]
-By_raw = ad_raw[0]['By_aux'][:,:-1,:]
-Bz_raw = ad_raw[0]['Bz_aux'][:,:,:-1]
+Ex_raw = ad_raw[0]['Ex_aux']
+Ey_raw = ad_raw[0]['Ey_aux']
+Ez_raw = ad_raw[0]['Ez_aux']
+Bx_raw = ad_raw[0]['Bx_aux']
+By_raw = ad_raw[0]['By_aux']
+Bz_raw = ad_raw[0]['Bz_aux']
 max_Ex = np.amax(np.abs(Ex_raw))
 max_Ey = np.amax(np.abs(Ey_raw))
 max_Ez = np.amax(np.abs(Ez_raw))
-max_E = np.sqrt(np.amax(Ex_raw**2+Ey_raw**2+Ez_raw**2))
 max_Bx = np.amax(np.abs(Bx_raw))
 max_By = np.amax(np.abs(By_raw))
 max_Bz = np.amax(np.abs(Bz_raw))
-max_B = np.sqrt(np.amax(Bx_raw**2+By_raw**2+Bz_raw**2))
 
 ad = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 Ex = ad['Ex'].to_ndarray()
@@ -82,6 +79,10 @@ Ez = ad['Ez'].to_ndarray()
 Bx = ad['Bx'].to_ndarray()
 By = ad['By'].to_ndarray()
 Bz = ad['Bz'].to_ndarray()
+# Maximum value of |E| and |B| are obtained after interpolation so we do not use raw fields for
+# these
+max_E = np.sqrt(np.amax(Ex**2+Ey**2+Ez**2))
+max_B = np.sqrt(np.amax(Bx**2+By**2+Bz**2))
 Es = np.sum(Ex**2)+np.sum(Ey**2)+np.sum(Ez**2)
 Bs = np.sum(Bx**2)+np.sum(By**2)+np.sum(Bz**2)
 N  = np.array( ds.domain_width / ds.domain_dimensions )
