@@ -6,6 +6,9 @@
 #
 # License: BSD-3-Clause-LBNL
 
+## In this test, we check that leveling thinning works as expected on two simple cases. Each case
+## corresponds to a different particle species.
+
 import yt
 import numpy as np
 import sys
@@ -28,6 +31,7 @@ relative_tol = 1.e-13 # tolerance for machine precision errors
 
 
 #### Tests for first species ####
+# Particles are present in all simulation cells and have a uniform weight distribution
 
 ppc = 400.
 numparts_init = numcells*ppc
@@ -63,6 +67,9 @@ assert(np.amax(np.abs(w-final_weight)) < relative_tol*final_weight )
 
 
 #### Tests for second species ####
+# Particles are only present in a single cell and have a gaussian weight distribution
+# Using a single cell makes the analysis easier because leveling thinning is done separately in
+# each cell
 
 ppc = 100000.
 numparts_init = ppc

@@ -36,8 +36,9 @@ resampled_part2.zmax = 1.
 resampled_part2.xmin = 0.
 resampled_part2.xmax = 1.
 resampled_part2.profile = parse_density_function
-# Box-Muller transform to get a Gaussian weight distribution with std sigma = 1/sqrt(2) and mean
-# 4 sigma.
+# Trick to get a Gaussian weight distribution is to do a Box-Muller transform using the position
+# within the cell as the two random variables. Here, we have a distribution with standard deviation
+# sigma = 1/sqrt(2) and mean 4*sigma.
 resampled_part2.density_function(x,y,z) = 2.*sqrt(2.)+sqrt(-log(x))*cos(2*pi*z)
 resampled_part2.momentum_distribution_type = constant
 resampled_part2.do_not_deposit = 1
