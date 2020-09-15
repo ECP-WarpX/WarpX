@@ -330,7 +330,10 @@ public:
     amrex::Array<amrex::Real,3> get_v_galilean () {return v_galilean;}
 
     /**
-     * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer.
+     * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer only.
+     * Empty body is here because making the method purely virtual would mean that we need to
+     * override the method for every derived class. Note that in practice this function is never
+     * called because resample() is only called for PhysicalParticleContainers.
      */
     virtual void resample (const Resampling& /*resampler*/, const int /*timestep*/) {}
 
