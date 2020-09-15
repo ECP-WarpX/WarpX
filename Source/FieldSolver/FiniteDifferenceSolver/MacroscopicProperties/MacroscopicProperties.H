@@ -33,7 +33,7 @@ public:
       *  with user-defined functions(x,y,z).
       */
      void InitializeMacroMultiFabUsingParser (amrex::MultiFab *macro_mf,
-                                  ParserWrapper<3> *macro_parser, int lev);
+                                  HostDeviceParser<3> const& macro_parser, int lev);
      /** Gpu Vector with index type of the conductivity multifab */
      amrex::GpuArray<int, 3> sigma_IndexType;
      /** Gpu Vector with index type of the permittivity multifab */

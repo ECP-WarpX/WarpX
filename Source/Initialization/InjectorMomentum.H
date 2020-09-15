@@ -293,12 +293,8 @@ struct InjectorMomentumParser
 // - InjectorMomentumRadialExpansion: to generate radial expansion;
 // - InjectorMomentumParser         : to generate momentum from parser;
 // The choice is made at runtime, depending in the constructor called.
-// This mimics virtual functions, except the struct is stored in managed memory
-// and member functions are made __host__ __device__ to run on CPU and GPU.
-// This struct inherits from amrex::Gpu::Managed to provide new and delete
-// operators in managed memory when running on GPU. Nothing special on CPU.
+// This mimics virtual functions.
 struct InjectorMomentum
-    : public amrex::Gpu::Managed
 {
     // This constructor stores a InjectorMomentumConstant in union object.
     InjectorMomentum (InjectorMomentumConstant* t,
@@ -358,7 +354,7 @@ struct InjectorMomentum
     void operator= (InjectorMomentum const&) = delete;
     void operator= (InjectorMomentum &&) = delete;
 
-    ~InjectorMomentum ();
+    void clear ();
 
     // call getMomentum from the object stored in the union
     // (the union is called Object, and the instance is called object).
@@ -490,6 +486,17 @@ private:
         InjectorMomentumParser   parser;
     };
     Object object;
+};
+
+// In order for InjectorMomentum to be trivially copyable, its destructor
+// must be trivial.  So we have to rely on a custom deleter for unique_ptr.
+struct InjectorMomentumDeleter {
+    void operator () (InjectorMomentum* p) const {
+        if (p) {
+            p->clear();
+            delete p;
+        }
+    }
 };
 
 #endif

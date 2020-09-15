@@ -19,9 +19,9 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
         m_E_type = Parser;
         m_time = warpx.gett_new(a_pti.GetLevel());
         m_get_position = GetParticlePosition(a_pti, a_offset);
-        m_Ex_field_partparser = mypc.m_Ex_particle_parser.get();
-        m_Ey_field_partparser = mypc.m_Ey_particle_parser.get();
-        m_Ez_field_partparser = mypc.m_Ez_particle_parser.get();
+        m_Ex_field_partparser = getParser(mypc.m_Ex_particle_parser);
+        m_Ey_field_partparser = getParser(mypc.m_Ey_particle_parser);
+        m_Ez_field_partparser = getParser(mypc.m_Ez_particle_parser);
     }
 
     // B field
@@ -37,8 +37,8 @@ GetExternalEBField::GetExternalEBField (const WarpXParIter& a_pti, int a_offset)
         m_B_type = Parser;
         m_time = warpx.gett_new(a_pti.GetLevel());
         m_get_position = GetParticlePosition(a_pti, a_offset);
-        m_Bx_field_partparser = mypc.m_Bx_particle_parser.get();
-        m_By_field_partparser = mypc.m_By_particle_parser.get();
-        m_Bz_field_partparser = mypc.m_Bz_particle_parser.get();
+        m_Bx_field_partparser = getParser(mypc.m_Bx_particle_parser);
+        m_By_field_partparser = getParser(mypc.m_By_particle_parser);
+        m_Bz_field_partparser = getParser(mypc.m_Bz_particle_parser);
     }
 }

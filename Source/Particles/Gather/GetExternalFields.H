@@ -24,13 +24,13 @@ struct GetExternalField
     amrex::GpuArray<amrex::ParticleReal, 3> m_E_field_value;
     amrex::GpuArray<amrex::ParticleReal, 3> m_B_field_value;
 
-    ParserWrapper<4>* m_Ex_field_partparser = nullptr;
-    ParserWrapper<4>* m_Ey_field_partparser = nullptr;
-    ParserWrapper<4>* m_Ez_field_partparser = nullptr;
+    HostDeviceParser<4> m_Ex_field_partparser;
+    HostDeviceParser<4> m_Ey_field_partparser;
+    HostDeviceParser<4> m_Ez_field_partparser;
 
-    ParserWrapper<4>* m_Bx_field_partparser = nullptr;
-    ParserWrapper<4>* m_By_field_partparser = nullptr;
-    ParserWrapper<4>* m_Bz_field_partparser = nullptr;
+    HostDeviceParser<4> m_Bx_field_partparser;
+    HostDeviceParser<4> m_By_field_partparser;
+    HostDeviceParser<4> m_Bz_field_partparser;
 
     GetParticlePosition m_get_position;
     amrex::Real m_time;
@@ -63,10 +63,6 @@ struct GetExternalField
         }
         else if (m_E_type == Parser)
         {
-            AMREX_ASSERT(m_Ex_field_partparser != nullptr);
-            AMREX_ASSERT(m_Ey_field_partparser != nullptr);
-            AMREX_ASSERT(m_Ez_field_partparser != nullptr);
-
             // Space coordinates in the boosted frame
             amrex::ParticleReal xb, yb, zb;
             m_get_position(ip, xb, yb, zb);
@@ -89,9 +85,9 @@ struct GetExternalField
             zl = zb + ((gamma_boost - 1.) * boost_proj +
                  gamma_boost * m_time * beta_boost * c) * boost_direction[2];
 
-            field_Exl = (*m_Ex_field_partparser)(xl, yl, zl, tl);
-            field_Eyl = (*m_Ey_field_partparser)(xl, yl, zl, tl);
-            field_Ezl = (*m_Ez_field_partparser)(xl, yl, zl, tl);
+            field_Exl = m_Ex_field_partparser(xl, yl, zl, tl);
+            field_Eyl = m_Ey_field_partparser(xl, yl, zl, tl);
+            field_Ezl = m_Ez_field_partparser(xl, yl, zl, tl);
         }
         else
         {
@@ -107,10 +103,6 @@ struct GetExternalField
         }
         else if (m_B_type == Parser)
         {
-            AMREX_ASSERT(m_Bx_field_partparser != nullptr);
-            AMREX_ASSERT(m_By_field_partparser != nullptr);
-            AMREX_ASSERT(m_Bz_field_partparser != nullptr);
-
             // Space coordinates in the boosted frame
             amrex::ParticleReal xb, yb, zb;
             m_get_position(ip, xb, yb, zb);
@@ -133,9 +125,9 @@ struct GetExternalField
             zl = zb + ((gamma_boost - 1.) * boost_proj +
                  gamma_boost * m_time * beta_boost * c) * boost_direction[2];
 
-            field_Bxl = (*m_Bx_field_partparser)(xl, yl, zl, tl);
-            field_Byl = (*m_By_field_partparser)(xl, yl, zl, tl);
-            field_Bzl = (*m_Bz_field_partparser)(xl, yl, zl, tl);
+            field_Bxl = m_Bx_field_partparser(xl, yl, zl, tl);
+            field_Byl = m_By_field_partparser(xl, yl, zl, tl);
+            field_Bzl = m_Bz_field_partparser(xl, yl, zl, tl);
         }
         else
         {

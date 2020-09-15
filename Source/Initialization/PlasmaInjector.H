@@ -41,6 +41,8 @@ public:
 
     PlasmaInjector (int ispecies, const std::string& name);
 
+    ~PlasmaInjector ();
+
     // bool: whether the point (x, y, z) is inside the plasma region
     bool insideBounds (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept;
 
@@ -58,7 +60,7 @@ public:
     amrex::Real getMass () {return mass;}
     PhysicalSpecies getPhysicalSpecies() const {return physical_species;}
 
-    bool doInjection () const noexcept { return inj_pos != NULL;}
+    bool doInjection () const noexcept { return h_inj_pos != nullptr;}
 
     bool add_single_particle = false;
     amrex::Vector<amrex::ParticleReal> single_particle_pos;
@@ -114,9 +116,14 @@ protected:
     int species_id;
     std::string species_name;
 
-    std::unique_ptr<InjectorPosition> inj_pos;
-    std::unique_ptr<InjectorDensity > inj_rho;
-    std::unique_ptr<InjectorMomentum> inj_mom;
+    std::unique_ptr<InjectorPosition> h_inj_pos;
+    InjectorPosition* d_inj_pos = nullptr;
+
+    std::unique_ptr<InjectorDensity,InjectorDensityDeleter> h_inj_rho;
+    InjectorDensity* d_inj_rho = nullptr;
+
+    std::unique_ptr<InjectorMomentum,InjectorMomentumDeleter> h_inj_mom;
+    InjectorMomentum* d_inj_mom = nullptr;
 
     void parseDensity (amrex::ParmParse& pp);
     void parseMomentum (amrex::ParmParse& pp);
