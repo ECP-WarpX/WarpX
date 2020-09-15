@@ -306,7 +306,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                            particle_diags[i].m_uniform_stride);
         ParserFilter const parser_filter(particle_diags[i].m_do_parser_filter,
-                                         particle_diags[i].m_particle_filter_parser.get());
+                                         getParser(particle_diags[i].m_particle_filter_parser));
         GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                              particle_diags[i].m_diag_domain);
         // real_names contains a list of all particle attributes.

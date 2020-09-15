@@ -106,7 +106,7 @@ MacroscopicProperties::InitData ()
 
     } else if (m_sigma_s == "parse_sigma_function") {
 
-        InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), m_sigma_parser.get(), lev);
+        InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), getParser(m_sigma_parser), lev);
     }
     // Initialize epsilon
     if (m_epsilon_s == "constant") {
@@ -115,7 +115,7 @@ MacroscopicProperties::InitData ()
 
     } else if (m_epsilon_s == "parse_epsilon_function") {
 
-        InitializeMacroMultiFabUsingParser(m_eps_mf.get(), m_epsilon_parser.get(), lev);
+        InitializeMacroMultiFabUsingParser(m_eps_mf.get(), getParser(m_epsilon_parser), lev);
 
     }
     // Initialize mu
@@ -125,7 +125,7 @@ MacroscopicProperties::InitData ()
 
     } else if (m_mu_s == "parse_mu_function") {
 
-        InitializeMacroMultiFabUsingParser(m_mu_mf.get(), m_mu_parser.get(), lev);
+        InitializeMacroMultiFabUsingParser(m_mu_mf.get(), getParser(m_mu_parser), lev);
 
     }
 
@@ -161,7 +161,7 @@ MacroscopicProperties::InitData ()
 
 void
 MacroscopicProperties::InitializeMacroMultiFabUsingParser (
-                       MultiFab *macro_mf, ParserWrapper<3> *macro_parser,
+                       MultiFab *macro_mf, HostDeviceParser<3> const& macro_parser,
                        int lev)
 {
     auto& warpx = WarpX::GetInstance();
@@ -187,7 +187,7 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
                 Real z = k * dx_lev[2] + real_box.lo(2) + fac_z;
 
                 // initialize the macroparameter
-                macro_fab(i,j,k) = (*macro_parser)(x,y,z);
+                macro_fab(i,j,k) = macro_parser(x,y,z);
         });
 
     }

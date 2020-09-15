@@ -19,9 +19,9 @@ struct GetExternalField
 
     amrex::GpuArray<amrex::ParticleReal, 3> m_field_value;
 
-    ParserWrapper<4>* m_xfield_partparser = nullptr;
-    ParserWrapper<4>* m_yfield_partparser = nullptr;
-    ParserWrapper<4>* m_zfield_partparser = nullptr;
+    HostDeviceParser<4> m_xfield_partparser;
+    HostDeviceParser<4> m_yfield_partparser;
+    HostDeviceParser<4> m_zfield_partparser;
     GetParticlePosition m_get_position;
     amrex::Real m_time;
 
@@ -39,15 +39,11 @@ struct GetExternalField
         }
         else if (m_type == Parser)
         {
-            AMREX_ASSERT(m_xfield_partparser != nullptr);
-            AMREX_ASSERT(m_yfield_partparser != nullptr);
-            AMREX_ASSERT(m_zfield_partparser != nullptr);
-
             amrex::ParticleReal x, y, z;
             m_get_position(i, x, y, z);
-            field_x += (*m_xfield_partparser)(x, y, z, m_time);
-            field_y += (*m_yfield_partparser)(x, y, z, m_time);
-            field_z += (*m_zfield_partparser)(x, y, z, m_time);
+            field_x += m_xfield_partparser(x, y, z, m_time);
+            field_y += m_yfield_partparser(x, y, z, m_time);
+            field_z += m_zfield_partparser(x, y, z, m_time);
         }
         else
         {
