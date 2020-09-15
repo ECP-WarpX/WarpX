@@ -9,6 +9,8 @@
 
 #include <limits>
 
+using namespace amrex::literals;
+
 enum ExternalFieldInitType { Constant, Parser };
 
 /** \brief Base class for functors that assign the external E and B fields
@@ -49,8 +51,8 @@ struct GetExternalField
         const amrex::Real c2 = PhysConst::c * PhysConst::c;
 
         // E and B fields in the lab frame
-        amrex::ParticleReal field_Exl, field_Eyl, field_Ezl;
-        amrex::ParticleReal field_Bxl, field_Byl, field_Bzl;
+        amrex::ParticleReal field_Exl = 0.0_rt, field_Eyl = 0.0_rt, field_Ezl = 0.0_rt;
+        amrex::ParticleReal field_Bxl = 0.0_rt, field_Byl = 0.0_rt, field_Bzl = 0.0_rt;
 
         // E field in the lab frame
         if (m_E_type == Constant)
