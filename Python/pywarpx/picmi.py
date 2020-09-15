@@ -463,9 +463,6 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
             self.psatd_use_damp_fields_in_z_guard = kw.pop('warpx_use_damp_fields_in_z_guard', None)
-            self.psatd_nx_guard = kw.pop('warpx_psatd_nx_guard', None)
-            self.psatd_ny_guard = kw.pop('warpx_psatd_ny_guard', None)
-            self.psatd_nz_guard = kw.pop('warpx_psatd_nz_guard', None)
 
     def initialize_inputs(self):
 
@@ -482,9 +479,11 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             pywarpx.psatd.update_with_rho = self.psatd_update_with_rho
             pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
             pywarpx.psatd.use_damp_fields_in_z_guard = self.psatd_use_damp_fields_in_z_guard
-            pywarpx.psatd.nx_guard = self.psatd_nx_guard
-            pywarpx.psatd.ny_guard = self.psatd_ny_guard
-            pywarpx.psatd.nz_guard = self.psatd_nz_guard
+
+            if self.grid.guard_cells is not None:
+                pywarpx.psatd.nx_guard = self.grid.guard_cells[0]
+                pywarpx.psatd.ny_guard = self.grid.guard_cells[1]
+                pywarpx.psatd.nz_guard = self.grid.guard_cells[2]
 
             if self.stencil_order is not None:
                 pywarpx.psatd.nox = self.stencil_order[0]
