@@ -125,7 +125,7 @@ Plotfiles and snapshots
 
     .. note::
 
-       You may find example python scripts (in `Tools <>_`) that do the analysis for convergence scans of the WarpX multi stage plasma wakefield acceleration configuration simulations.
+       You may find example python scripts (in `Tools <Tools/PostProcessing/RunsScan/>_`) that do the analysis for convergence scans of the WarpX multi stage plasma wakefield acceleration configuration simulations.
        The results include plots of the boosted frame electrons (beam and plasma stages) distributions and of the accelerated beam properties in the laboratory frame as it evolves in time and at the end of the simulation.
 
 
