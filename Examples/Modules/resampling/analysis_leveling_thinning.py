@@ -13,8 +13,8 @@ import yt
 import numpy as np
 import sys
 from scipy.special import erf
-##sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-##import checksumAPI
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 fn_final = sys.argv[1]
 fn0 = fn_final[:-4] + '0000'
@@ -134,5 +134,5 @@ assert(numparts_untouched == numparts_untouched_anticipated)
 # Check that particles with weight higher than level weight are unaffected by resampling.
 assert(np.all(w[-numparts_untouched:] == w0[-numparts_untouched:]))
 
-#test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
-#checksumAPI.evaluate_checksum(test_name, filename)
+test_name = fn_final[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, fn_final)
