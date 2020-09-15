@@ -55,9 +55,9 @@ FullDiagnostics::ReadParameters ()
         m_format == "checkpoint" || m_format == "ascent" ||
         m_format == "sensei",
         "<diag>.format must be plotfile or openpmd or checkpoint or ascent or sensei");
-    std::string period_string = "0";
-    pp.query("period", period_string);
-    m_intervals = IntervalsParser(period_string);
+    std::vector<std::string> period_string_vec = {"0"};
+    pp.queryarr("period", period_string_vec);
+    m_intervals = IntervalsParser(period_string_vec);
     bool raw_specified = pp.query("plot_raw_fields", m_plot_raw_fields);
     raw_specified += pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
 

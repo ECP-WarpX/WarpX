@@ -224,7 +224,7 @@ PsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
                                    std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                    const std::unique_ptr<amrex::MultiFab>& rho) {
     // Profiling
-    WARPX_PROFILE( "PsatdAlgorithm::CurrentCorrection" );
+    WARPX_PROFILE("PsatdAlgorithm::CurrentCorrection()");
 
     using Idx = SpectralFieldIndex;
 
@@ -301,7 +301,7 @@ void
 PsatdAlgorithm::VayDeposition (SpectralFieldData& field_data,
                                std::array<std::unique_ptr<amrex::MultiFab>,3>& current) {
     // Profiling
-    WARPX_PROFILE("PsatdAlgorithm::VayDeposition");
+    WARPX_PROFILE("PsatdAlgorithm::VayDeposition()");
 
     using Idx = SpectralFieldIndex;
 
