@@ -7,7 +7,6 @@
       "particle_momentum_z": 0.0,
       "particle_position_x": 0.0,
       "particle_position_y": 0.0,
-      "particle_theta": 0.0,
       "particle_weight": 0.0
     },
     "resampled_part2": {
@@ -18,7 +17,6 @@
       "particle_momentum_z": 0.0,
       "particle_position_x": 0.0,
       "particle_position_y": 0.0,
-      "particle_theta": 0.0,
       "particle_weight": 0.0
     },
     "lev=0": {
