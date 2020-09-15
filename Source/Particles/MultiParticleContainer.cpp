@@ -13,11 +13,9 @@
 #include "SpeciesPhysicalProperties.H"
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
-#ifdef WARPX_QED
-    #include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
-    #include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
-    #include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
-#endif
+#include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
+#include "Particles/ElementaryProcess/QEDSchwingerProcess.H"
+#include "Particles/ParticleCreation/FilterCreateTransformFromFAB.H"
 
 #include <AMReX_Vector.H>
 
@@ -253,7 +251,6 @@ MultiParticleContainer::ReadParameters ()
         ParmParse ppl("lasers");
         ppl.queryarr("names", lasers_names);
 
-#ifdef WARPX_QED
         ParmParse ppw("warpx");
         ppw.query("do_qed_schwinger", m_do_qed_schwinger);
 
@@ -267,7 +264,6 @@ MultiParticleContainer::ReadParameters ()
             ppq.query("threshold_poisson_gaussian",
                       m_qed_schwinger_threshold_poisson_gaussian);
         }
-#endif
         initialized = true;
     }
 }
@@ -294,10 +290,8 @@ MultiParticleContainer::InitData ()
 
     CheckIonizationProductSpecies();
 
-#ifdef WARPX_QED
     CheckQEDProductSpecies();
     InitQED();
-#endif
 
 }
 
@@ -554,7 +548,6 @@ MultiParticleContainer::mapSpeciesProduct ()
             pc->ionization_product = i_product;
         }
 
-#ifdef WARPX_QED
         if (pc->has_breit_wheeler()){
             const int i_product_ele = getSpeciesID(
                 pc->m_qed_breit_wheeler_ele_product_name);
@@ -570,18 +563,14 @@ MultiParticleContainer::mapSpeciesProduct ()
                 pc->m_qed_quantum_sync_phot_product_name);
             pc->m_qed_quantum_sync_phot_product = i_product_phot;
         }
-#endif
-
     }
 
-#ifdef WARPX_QED
     if (m_do_qed_schwinger) {
     m_qed_schwinger_ele_product =
         getSpeciesID(m_qed_schwinger_ele_product_name);
     m_qed_schwinger_pos_product =
         getSpeciesID(m_qed_schwinger_pos_product_name);
     }
-#endif
 }
 
 /* \brief Given a species name, return its ID.
@@ -719,7 +708,6 @@ void MultiParticleContainer::CheckIonizationProductSpecies()
     }
 }
 
-#ifdef WARPX_QED
 void MultiParticleContainer::InitQED ()
 {
     m_shr_p_qs_engine = std::make_shared<QuantumSynchrotronEngine>();
@@ -1344,5 +1332,3 @@ void MultiParticleContainer::CheckQEDProductSpecies()
     }
 
 }
-
-#endif

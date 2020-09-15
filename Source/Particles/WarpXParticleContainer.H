@@ -16,10 +16,8 @@
 #include "Evolve/WarpXDtType.H"
 #include "Particles/Resampling/Resampling.H"
 
-#ifdef WARPX_QED
-#    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
-#    include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
-#endif
+#include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#include "ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
 
 #include <AMReX_Particles.H>
 #include <AMReX_AmrCore.H>
@@ -301,11 +299,7 @@ public:
 
     int DoFieldIonization() const { return do_field_ionization; }
     int DoQED() const {
-#ifdef WARPX_QED
         return m_do_qed;
-#else
-        return false;
-#endif
     }
     //Species for which QED effects are relevant should override these methods
     virtual bool has_quantum_sync() const {return false;}
@@ -381,7 +375,6 @@ protected:
 
     int do_back_transformed_diagnostics = 1;
 
-#ifdef WARPX_QED
     bool m_do_qed = false;
 
     //Species can receive a shared pointer to a QED engine (species for
@@ -398,7 +391,6 @@ protected:
     int m_qed_quantum_sync_phot_product;
     std::string m_qed_quantum_sync_phot_product_name;
 
-#endif
     amrex::Vector<amrex::FArrayBox> local_rho;
     amrex::Vector<amrex::FArrayBox> local_jx;
     amrex::Vector<amrex::FArrayBox> local_jy;

@@ -33,7 +33,6 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
 {
     ParmParse pp(species_name);
 
-#ifdef WARPX_QED
         //IF m_do_qed is enabled, find out if Breit Wheeler process is enabled
         if(m_do_qed)
             pp.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
@@ -52,8 +51,6 @@ PhotonParticleContainer::PhotonParticleContainer (AmrCore* amr_core, int ispecie
         test_quantum_sync == 0,
         "ERROR: do_qed_quantum_sync can be 1 for species NOT listed in particles.photon_species only!");
         //_________________________________________________________
-#endif
-
 }
 
 void PhotonParticleContainer::InitData()
@@ -101,7 +98,6 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT uy = attribs[PIdx::uy].dataPtr();
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
-#ifdef WARPX_QED
     AMREX_ASSERT(has_breit_wheeler());
 
     BreitWheelerEvolveOpticalDepth evolve_opt;
@@ -113,7 +109,6 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     }
 
     const auto me = PhysConst::m_e;
-#endif
 
     auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data);
     int do_copy = (WarpX::do_back_transformed_diagnostics &&
@@ -157,38 +152,50 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto t_do_not_gather = do_not_gather;
 
-    amrex::ParallelFor(
+    if (local_has_breit_wheeler) {
+        amrex::ParallelFor(
         np_to_push,
         [=] AMREX_GPU_DEVICE (long i) {
             if (do_copy) copyAttribs(i);
             ParticleReal x, y, z;
             GetPosition(i, x, y, z);
 
-            amrex::ParticleReal Exp=0, Eyp=0, Ezp=0;
-            amrex::ParticleReal Bxp=0, Byp=0, Bzp=0;
+                amrex::ParticleReal Exp=0, Eyp=0, Ezp=0;
+                amrex::ParticleReal Bxp=0, Byp=0, Bzp=0;
 
-            if(!t_do_not_gather){
+                if(!t_do_not_gather){
                 // first gather E and B to the particle positions
                 doGatherShapeN(x, y, z, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                                ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                                ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
                                dx_arr, xyzmin_arr, lo, n_rz_azimuthal_modes,
                                nox, galerkin_interpolation);
-            }
-            getExternalE(i, Exp, Eyp, Ezp);
-            getExternalB(i, Bxp, Byp, Bzp);
+                }
+                getExternalE(i, Exp, Eyp, Ezp);
+                getExternalB(i, Bxp, Byp, Bzp);
 
-#ifdef WARPX_QED
-            if (local_has_breit_wheeler) {
                 evolve_opt(ux[i], uy[i], uz[i], Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                     dt, p_optical_depth_BW[i]);
-            }
-#endif
 
             UpdatePositionPhoton( x, y, z, ux[i], uy[i], uz[i], dt );
             SetPosition(i, x, y, z);
         }
-    );
+        );
+    }
+    else{
+        amrex::ParallelFor(
+        np_to_push,
+        [=] AMREX_GPU_DEVICE (long i) {
+            if (do_copy) copyAttribs(i);
+            ParticleReal x, y, z;
+            GetPosition(i, x, y, z);
+            UpdatePositionPhoton( x, y, z, ux[i], uy[i], uz[i], dt );
+            SetPosition(i, x, y, z);
+        }
+        );
+    }
+
+
 }
 
 void

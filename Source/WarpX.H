@@ -370,14 +370,12 @@ public:
      */
     void doFieldIonization (int lev);
 
-#ifdef WARPX_QED
     /** Run the QED module on all species */
     void doQEDEvents ();
     /** Run the QED module on all species at level lev
      * \param lev level
      */
     void doQEDEvents (int lev);
-#endif
 
     void PushParticlesandDepose (int lev, amrex::Real cur_time, DtType a_dt_type=DtType::Full);
     void PushParticlesandDepose (         amrex::Real cur_time);

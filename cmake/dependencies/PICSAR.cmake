@@ -39,17 +39,15 @@ function(find_picsar)
     endif()
 endfunction()
 
-if(WarpX_QED)
-    option(WarpX_picsar_internal   "Download & build PICSAR" ON)
-    set(WarpX_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
-        CACHE STRING
-        "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
-    set(WarpX_picsar_branch "development"
-        CACHE STRING
-        "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
+option(WarpX_picsar_internal   "Download & build PICSAR" ON)
+set(WarpX_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
+CACHE STRING
+    "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
+set(WarpX_picsar_branch "improved"
+    CACHE STRING
+    "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
 
-    cmake_dependent_option(WarpX_QED_TABLE_GEN "generate QED lookup tables (requires boost)"
-        ON "WarpX_QED" OFF)
+cmake_dependent_option(WarpX_QED_TABLE_GEN "generate QED lookup tables (requires boost)"
+    ON "WarpX_QED" OFF)
 
-    find_picsar()
-endif()
+find_picsar()
