@@ -635,7 +635,6 @@ WarpX::ReadParameters ()
         ParmParse pp("psatd");
         pp.query("periodic_single_box_fft", fft_periodic_single_box);
         pp.query("fftw_plan_measure", fftw_plan_measure);
-        pp.query("use_damp_fields_in_z_guard", use_damp_fields_in_z_guard);
 
         std::string nox_str;
         std::string noy_str;
@@ -684,6 +683,14 @@ WarpX::ReadParameters ()
 
         // Overwrite update_with_rho with value set in input file
         pp.query("update_with_rho", update_with_rho);
+
+#   ifdef WARPX_DIM_RZ
+        if (!Geom(0).isPeriodic(1)) {
+            use_damp_fields_in_z_guard = true;
+        }
+        pp.query("use_damp_fields_in_z_guard", use_damp_fields_in_z_guard);
+#   endif
+
     }
 #endif
 
