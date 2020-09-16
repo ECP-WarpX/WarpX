@@ -165,9 +165,9 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     // Parse galilean velocity
     ParmParse ppsatd("psatd");
-    ppsatd.query("v_galilean", v_galilean);
+    ppsatd.query("v_galilean", m_v_galilean);
     // Scale the velocity by the speed of light
-    for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
+    for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
     // build filter functors
     m_do_random_filter  = pp.query("random_fraction", m_random_fraction);
@@ -1800,7 +1800,10 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     Real cur_time = WarpX::GetInstance().gett_new(lev);
     const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
     Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    amrex::Array<amrex::Real,3> galilean_shift ={
+        m_v_galilean[0]*time_shift,
+        m_v_galilean[1]*time_shift,
+        m_v_galilean[2]*time_shift };
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, gather_lev);
 
     const Dim3 lo = lbound(box);
