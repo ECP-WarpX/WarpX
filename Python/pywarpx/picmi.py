@@ -479,15 +479,19 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
             if self.grid.guard_cells is not None:
                 pywarpx.psatd.nx_guard = self.grid.guard_cells[0]
-                pywarpx.psatd.ny_guard = self.grid.guard_cells[1]
-                pywarpx.psatd.nz_guard = self.grid.guard_cells[2]
+                if self.grid.number_of_dimensions == 3:
+                    pywarpx.psatd.ny_guard = self.grid.guard_cells[1]
+                pywarpx.psatd.nz_guard = self.grid.guard_cells[-1]
 
             if self.stencil_order is not None:
                 pywarpx.psatd.nox = self.stencil_order[0]
-                pywarpx.psatd.noy = self.stencil_order[1]
-                pywarpx.psatd.noz = self.stencil_order[2]
+                if self.grid.number_of_dimensions == 3:
+                    pywarpx.psatd.noy = self.stencil_order[1]
+                pywarpx.psatd.noz = self.stencil_order[-1]
 
             if self.galilean_velocity is not None:
+                if self.grid.number_of_dimensions == 2:
+                    self.galilean_velocity = [self.galilean_velocity[0], 0., self.galilean_velocity[1]]
                 pywarpx.psatd.v_galilean = np.array(self.galilean_velocity)/constants.c
 
         else:
