@@ -180,7 +180,7 @@ You can view the Cinema Database result by opening :code:`cinema_databases/cinem
 Replay
 -------------------------
 
-`Replay <https://ascent.readthedocs.io/en/latest/Utilities.html#getting-data-for-replay>`_ is a utility that allows the user to ‘replay’ Conduit Blueprint HDF5 files saved by Ascent or exported by VisIt (starting in version 3.0 beta) back into Ascent. Replay enables the user or developer to pick specific time steps and load them into Ascent 
+`Replay <https://ascent.readthedocs.io/en/latest/Utilities.html#getting-data-for-replay>`_ is a utility that allows the user to ‘replay’ Conduit Blueprint HDF5 files saved by Ascent or exported by VisIt (starting in version 3.0 beta) back into Ascent. Replay enables the user or developer to pick specific time steps and load them into Ascent
 
 We'll guide you through the procedure of how to use Replay through a WarpX LWFA example: warpx/tools/Ascent/Replay
 
@@ -307,9 +307,9 @@ Images of Ex contour with particles could be obtained by replaying on the follow
                 azimuth: 20
                 elevation: 30
                 zoom: 2.5
-                
-There are Ascent Actions Examples `Ascent Actions Examples <https://ascent.readthedocs.io/en/latest/Actions/Examples.html#yaml-examples>`_ for you to play.                
-                                                                                                                                       
+
+There are Ascent Actions Examples `Ascent Actions Examples <https://ascent.readthedocs.io/en/latest/Actions/Examples.html#yaml-examples>`_ for you to play.
+
 3. Run Replay
 -------------------------
 
