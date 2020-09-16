@@ -84,7 +84,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     // properties from their respective staggering to the Ex, Ey, Ez locations
     amrex::GpuArray<int, 3> const& sigma_stag = macroscopic_properties->sigma_IndexType;
     amrex::GpuArray<int, 3> const& epsilon_stag = macroscopic_properties->epsilon_IndexType;
-    //amrex::GpuArray<int, 3> const& mu_stag = macroscopic_properties->mu_IndexType;
     amrex::GpuArray<int, 3> const& Ex_stag = macroscopic_properties->Ex_IndexType;
     amrex::GpuArray<int, 3> const& Ey_stag = macroscopic_properties->Ey_IndexType;
     amrex::GpuArray<int, 3> const& Ez_stag = macroscopic_properties->Ez_IndexType;
