@@ -1440,7 +1440,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const auto getExternalE = GetExternalEField(pti);
             const auto getExternalB = GetExternalBField(pti);
 
-            const auto& xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box,v_galilean,lev);
+            const auto& xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box,m_v_galilean,lev);
 
             const Dim3 lo = lbound(box);
 
@@ -1991,7 +1991,7 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
     WARPX_PROFILE("PhysicalParticleContainer::getIonizationFunc()");
 
     return IonizationFilterFunc(pti, lev, ngE, Ex, Ey, Ez, Bx, By, Bz,
-                                v_galilean,
+                                m_v_galilean,
                                 ionization_energies.dataPtr(),
                                 adk_prefactor.dataPtr(),
                                 adk_exp_prefactor.dataPtr(),
