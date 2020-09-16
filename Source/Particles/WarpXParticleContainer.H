@@ -263,6 +263,13 @@ public:
 
     static void BackwardCompatibility ();
 
+    /** \brief Apply BC. For now, just discard particles outside the domain, regardless
+     *  of the whole simulation BC.
+     *
+     * \param[in] do_absorbing_bc whether to absorb particles exiting the domain
+     */
+    void ApplyBoundaryConditions (bool do_absorbing_bc);
+
     bool do_splitting = false;
     bool initialize_self_fields = false;
     amrex::Real self_fields_required_precision = 1.e-11;

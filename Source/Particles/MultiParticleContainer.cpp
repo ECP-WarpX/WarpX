@@ -250,6 +250,8 @@ MultiParticleContainer::ReadParameters ()
         pp.query("use_fdtd_nci_corr", WarpX::use_fdtd_nci_corr);
         pp.query("galerkin_interpolation", WarpX::galerkin_interpolation);
 
+        pp.query("absorbing_bc", m_absorbing_bc);
+
         ParmParse ppl("lasers");
         ppl.queryarr("names", lasers_names);
 
@@ -382,6 +384,14 @@ MultiParticleContainer::RedistributeLocal (const int num_ghost)
 {
     for (auto& pc : allcontainers) {
         pc->Redistribute(0, 0, 0, num_ghost);
+    }
+}
+
+void
+MultiParticleContainer::ApplyBoundaryConditions ()
+{
+    for (auto& pc : allcontainers) {
+        pc->ApplyBoundaryConditions(m_absorbing_bc);
     }
 }
 
