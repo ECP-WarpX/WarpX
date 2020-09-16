@@ -884,11 +884,11 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
 void
 WarpXParticleContainer::ApplyBoundaryConditions (bool do_absorbing_bc){
     WARPX_PROFILE("WarpXParticleContainer::ApplyBoundaryConditions()");
-    for (int lev = 0; lev <= finestLevel(); ++lev) {
+    for (int lev = 0; lev <= finestLevel(); ++lev)
+    {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             auto GetPosition = GetParticlePosition(pti);
-            // Loop over the particles and update their position
             const Real xmin = Geom(lev).ProbLo(0);
             const Real xmax = Geom(lev).ProbHi(0);
 #ifdef WARPX_DIM_3D
@@ -901,6 +901,7 @@ WarpXParticleContainer::ApplyBoundaryConditions (bool do_absorbing_bc){
             ParticleTileType& ptile = ParticlesAt(lev, pti);
             ParticleType * const pp = ptile.GetArrayOfStructs()().data();
 
+            // Loop over particles and apply BC to each particle
             amrex::ParallelFor(
                 pti.numParticles(),
                 [=] AMREX_GPU_DEVICE (long i) {
