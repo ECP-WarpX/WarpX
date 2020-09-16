@@ -8,7 +8,9 @@
 #include "ParticleExtrema.H"
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
+#if (defined WARPX_QED)
 #include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
+#endif
 
 #include <AMReX_REAL.H>
 #include <AMReX_ParticleReduce.H>
@@ -299,6 +301,7 @@ void ParticleExtrema::ComputeDiags (int step)
         { return p.rdata(PIdx::w); });
         ParallelDescriptor::ReduceRealMax(wmax);
 
+#if (defined WARPX_QED)
         // compute chimin and chimax
         Real chimin = 0.0_rt;
         Real chimax = 0.0_rt;
@@ -357,6 +360,7 @@ void ParticleExtrema::ComputeDiags (int step)
             });
             ParallelDescriptor::ReduceRealMin(chimin);
         }
+#endif
 
         m_data[0]  = xmin;
         m_data[1]  = xmax;
@@ -374,11 +378,13 @@ void ParticleExtrema::ComputeDiags (int step)
         m_data[13] = gmax;
         m_data[14] = wmin;
         m_data[15] = wmax;
+#if (defined WARPX_QED)
         if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
         {
             m_data[16] = chimin;
             m_data[17] = chimax;
         }
+#endif
 
     }
     // end loop over species
