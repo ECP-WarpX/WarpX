@@ -55,7 +55,7 @@ We use the following modules and environments on the system.
    # optional: for openPMD support
    module load cmake
    module load hdf5/1.10.4
-   module load adios2/2.5.0
+   module load adios2/2.6.0
    export PKG_CONFIG_PATH=$HOME/sw/openPMD-api-install/lib64/pkgconfig:$PKG_CONFIG_PATH
    export CMAKE_PREFIX_PATH=$HOME/sw/openPMD-api-install:$CMAKE_PREFIX_PATH
 
