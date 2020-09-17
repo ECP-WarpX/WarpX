@@ -138,7 +138,8 @@ public:
         namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
 
         constexpr amrex::Real m_e = PhysConst::m_e;
-        const auto energy = std::sqrt(ux*ux + uy*uy + uz*uz)*m_e*PhysConst::c;
+        const auto u_norm = std::sqrt(ux*ux + uy*uy + uz*uz);
+        const auto energy = u_norm*m_e*PhysConst::c;
 
         const auto chi_phot = QedUtils::chi_photon(
             m_e*ux, m_e*uy, m_e*uz, ex, ey, ez, bx, by, bz);
@@ -146,7 +147,7 @@ public:
         //Optical depth is not evolved for photons having less energy than what is
         //required to generate a pair or a quantum parameter smaller than
         //m_bw_minimum_chi_phot
-        const auto gamma_photon = std::sqrt(ux*ux + uy*uy + uz*uz);
+        const auto gamma_photon = u_norm/PhysConst::c;
         if (gamma_photon < pxr_m::two<amrex::Real> ||
             chi_phot < m_bw_minimum_chi_phot)
             return 0;
