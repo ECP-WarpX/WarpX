@@ -241,7 +241,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
     // Extract deposition order (same order along all directions)
     // and check that particles shape fits within the guard cells
-    const int shape_extent = static_cast<int>(WarpX::nox / 2);
+    const int shape_extent = static_cast<int>(WarpX::nox / 2 + 1);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, ng_J - shape_extent) == 0,
         "Particles shape does not fit within guard cells used for local current deposition");
@@ -437,7 +437,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
     // Extract deposition order (same order along all directions)
     // and check that particles shape fits within the guard cells
-    const int shape_extent = static_cast<int>(WarpX::nox / 2);
+    const int shape_extent = static_cast<int>(WarpX::nox / 2 + 1);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, ng_rho - shape_extent) == 0,
         "Particles shape does not fit within guard cells used for local charge deposition");
