@@ -183,8 +183,10 @@ public:
      * lookup tables data.
      * lookup_table uses non-owning vectors under the hood. So no new data
      * allocations should be triggered on GPU
+     *
+     * @param[in] table_view a BW_pair_prod_table_view
      */
-    BreitWheelerGeneratePairs (BW_pair_prod_table_view table_view):
+    BreitWheelerGeneratePairs (const BW_pair_prod_table_view table_view):
         m_table_view{table_view}{};
 
     /**
@@ -290,6 +292,7 @@ public:
 
     /**
      * Export lookup tables data into a raw binary Vector
+     *
      * @return the data in binary format. The Vector is empty if tables were
      * not previously initialized.
      */
@@ -297,12 +300,13 @@ public:
 
     /**
      * Init lookup tables from raw binary data.
+     *
      * @param[in] raw_data a vector of char
      * @return true if it succeeds, false if it cannot parse raw_data
      */
     bool init_lookup_tables_from_raw_data (
         const std::vector<char>& raw_data,
-        amrex::Real bw_minimum_chi_phot);
+        const amrex::Real bw_minimum_chi_phot);
 
     /**
      * Init lookup tables using built-in (low resolution) tables
@@ -311,13 +315,16 @@ public:
 
     /**
      * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
+     *
      * @param[in] ctrl control params to generate the tables
+     * @param[in] bw_minimum_chi_phot minimum chi parameter to evolve the optical depth of a photon
      */
     void compute_lookup_tables (PicsarBreitWheelerCtrl ctrl,
         amrex::Real bw_minimum_chi_phot);
 
     /**
      * gets default values for the control parameters
+     *
      * @return default control params to generate the tables
      */
     PicsarBreitWheelerCtrl get_default_ctrl() const;
