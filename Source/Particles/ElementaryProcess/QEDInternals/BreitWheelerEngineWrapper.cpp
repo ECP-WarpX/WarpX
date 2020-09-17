@@ -102,10 +102,10 @@ vector<char> BreitWheelerEngine::export_lookup_tables_data () const
     const auto data_dndt = m_dndt_table.serialize();
     const auto data_pair_prod = m_pair_prod_table.serialize();
 
-    const uint64_t size_fist = data_dndt.size();
+    const uint64_t size_first = data_dndt.size();
 
     vector<char> res{};
-    pxr_sr::put_in(size_fist, res);
+    pxr_sr::put_in(size_first, res);
     for (const auto& tmp : data_dndt)
         pxr_sr::put_in(tmp, res);
     for (const auto& tmp : data_pair_prod)
