@@ -104,6 +104,7 @@ public:
 
     /**
      * Constructor to be used to initialize the functor.
+     *
      * @param[in] table_view a view of a BW_dndt_table lookup table
      * @param[in] bw_minimum_chi_phot the minimum quantum parameter to evolve the optical depth
      */
@@ -118,6 +119,7 @@ public:
      * < bw_minimum_chi_phot, the method returns immediately.
      * The method returns also if the energy of the photon is insufficient
      * to generate a pair.
+     *
      * @param[in] ux,uy,uz gamma*v components of the photon.
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
@@ -206,9 +208,9 @@ public:
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     int operator()(
-    amrex::Real ux, amrex::Real uy, amrex::Real uz,
-    amrex::Real ex, amrex::Real ey, amrex::Real ez,
-    amrex::Real bx, amrex::Real by, amrex::Real bz,
+    const amrex::Real ux, const amrex::Real uy, const amrex::Real uz,
+    const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
+    const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
     amrex::Real& e_ux, amrex::Real& e_uy, amrex::Real& e_uz,
     amrex::Real& p_ux, amrex::Real& p_uy, amrex::Real& p_uz) const noexcept
     {
@@ -303,6 +305,7 @@ public:
      * Init lookup tables from raw binary data.
      *
      * @param[in] raw_data a vector of char
+     * @param[in] bw_minimum_chi_phot minimum chi parameter to evolve the optical depth of a photon
      * @return true if it succeeds, false if it cannot parse raw_data
      */
     bool init_lookup_tables_from_raw_data (
@@ -311,8 +314,10 @@ public:
 
     /**
      * Init lookup tables using built-in (low resolution) tables
+     *
+     * @param[in] bw_minimum_chi_phot minimum chi parameter to evolve the optical depth of a photon
      */
-    void init_builtin_tables(amrex::Real bw_minimum_chi_phot);
+    void init_builtin_tables(const amrex::Real bw_minimum_chi_phot);
 
     /**
      * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
@@ -320,8 +325,8 @@ public:
      * @param[in] ctrl control params to generate the tables
      * @param[in] bw_minimum_chi_phot minimum chi parameter to evolve the optical depth of a photon
      */
-    void compute_lookup_tables (PicsarBreitWheelerCtrl ctrl,
-        amrex::Real bw_minimum_chi_phot);
+    void compute_lookup_tables (const PicsarBreitWheelerCtrl ctrl,
+        const amrex::Real bw_minimum_chi_phot);
 
     /**
      * gets default values for the control parameters

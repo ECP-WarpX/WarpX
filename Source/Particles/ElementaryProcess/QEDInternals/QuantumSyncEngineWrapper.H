@@ -103,6 +103,7 @@ public:
 
     /**
      * Constructor to be used to initialize the functor.
+     *
      * @param[in] table_view a view of a QS_dndt_table lookup table
      * @param[in] qs_minimum_chi_part the minimum quantum parameter to evolve the optical depth
      */
@@ -115,6 +116,7 @@ public:
      * Evolves the optical depth. It can be used on GPU.
      * If the  quantum parameter parameter of the particle is
      * < qs_minimum_chi_part, the method returns immediately.
+     *
      * @param[in] ux,uy,uz gamma*v components of the lepton.
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
@@ -177,14 +179,17 @@ public:
      * lookup tables data.
      * lookup_table uses non-owning vectors under the hood. So no new data
      * allocations should be triggered on GPU
+     *
+     * @param[in] table_view a view of a QS_phot_em_table lookup table
      */
     QuantumSynchrotronPhotonEmission (
-        QS_phot_em_table_view table_view):
+        const QS_phot_em_table_view table_view):
         m_table_view{table_view}{};
 
     /**
      * Generates photons according to Quantum Synchrotron process.
      * It can be used on GPU.
+     *
      * @param[in,out] ux,uy,uz gamma*v components of the lepton. They are modified (SI units)
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
@@ -195,8 +200,8 @@ public:
     AMREX_FORCE_INLINE
     bool operator()(
     amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
-    amrex::Real ex, amrex::Real ey, amrex::Real ez,
-    amrex::Real bx, amrex::Real by, amrex::Real bz,
+    const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
+    const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
     amrex::Real& g_ux, amrex::Real& g_uy, amrex::Real& g_uz) const noexcept
     {
         using namespace amrex;
@@ -280,6 +285,7 @@ public:
 
     /**
      * Export lookup tables data into a raw binary Vector
+     *
      * @return the data in binary format. The Vector is empty if tables were
      * not previously initialized.
      */
@@ -287,26 +293,33 @@ public:
 
     /**
      * Init lookup tables from raw binary data.
+     *
      * @param[in] raw_data a vector of char
+     * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
      * @return true if it succeeds, false if it cannot parse raw_data
      */
     bool init_lookup_tables_from_raw_data (const std::vector<char>& raw_data,
-        amrex::Real qs_minimum_chi_part);
+        const amrex::Real qs_minimum_chi_part);
 
     /**
      * Init lookup tables using built-in (low resolution) tables
+     *
+     * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
      */
-    void init_builtin_tables(amrex::Real qs_minimum_chi_part);
+    void init_builtin_tables(const amrex::Real qs_minimum_chi_part);
 
     /**
      * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
+     *
      * @param[in] ctrl control params to generate the tables
+     * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
      */
     void compute_lookup_tables (PicsarQuantumSyncCtrl ctrl,
-        amrex::Real qs_minimum_chi_part);
+        const amrex::Real qs_minimum_chi_part);
 
     /**
      * gets default values for the control parameters
+     *
      * @return default control params to generate the tables
      */
     PicsarQuantumSyncCtrl get_default_ctrl() const;
