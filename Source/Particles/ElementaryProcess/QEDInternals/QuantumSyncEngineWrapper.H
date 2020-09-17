@@ -107,8 +107,8 @@ public:
      * @param[in] qs_minimum_chi_part the minimum quantum parameter to evolve the optical depth
      */
     QuantumSynchrotronEvolveOpticalDepth (
-        QS_dndt_table_view table_view,
-        amrex::ParticleReal qs_minimum_chi_part):
+        const QS_dndt_table_view table_view,
+        const amrex::ParticleReal qs_minimum_chi_part):
         m_table_view{table_view}, m_qs_minimum_chi_part{qs_minimum_chi_part}{};
 
     /**

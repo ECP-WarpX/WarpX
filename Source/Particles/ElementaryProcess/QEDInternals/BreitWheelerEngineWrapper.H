@@ -108,8 +108,8 @@ public:
      * @param[in] bw_minimum_chi_phot the minimum quantum parameter to evolve the optical depth
      */
     BreitWheelerEvolveOpticalDepth (
-        BW_dndt_table_view table_view,
-        amrex::ParticleReal bw_minimum_chi_phot):
+        const BW_dndt_table_view table_view,
+        const amrex::ParticleReal bw_minimum_chi_phot):
         m_table_view{table_view}, m_bw_minimum_chi_phot{bw_minimum_chi_phot}{};
 
     /**
