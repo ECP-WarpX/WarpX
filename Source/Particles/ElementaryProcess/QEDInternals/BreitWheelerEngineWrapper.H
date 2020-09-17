@@ -30,7 +30,7 @@ using BW_dndt_table =
     picsar::multi_physics::phys::breit_wheeler::
     dndt_lookup_table<
     amrex::Real,
-    amrex::Gpu::ManagedVector<amrex::Real>>;
+    amrex::Gpu::DeviceVector<amrex::Real>>;
 
 using BW_dndt_table_view = BW_dndt_table::view_type;
 
@@ -42,7 +42,7 @@ using BW_pair_prod_table =
     picsar::multi_physics::phys::breit_wheeler::
     pair_prod_lookup_table<
     amrex::Real,
-    amrex::Gpu::ManagedVector<amrex::Real>>;
+    amrex::Gpu::DeviceVector<amrex::Real>>;
 
 using BW_pair_prod_table_view = BW_pair_prod_table::view_type;
 

@@ -76,6 +76,8 @@ QuantumSynchrotronEngine::init_lookup_tables_from_raw_data (
 
     m_qs_minimum_chi_part = qs_minimum_chi_part;
 
+    amrex::Gpu::synchronize();
+
     m_lookup_tables_initialized = true;
 
     return true;
@@ -138,6 +140,8 @@ void QuantumSynchrotronEngine::compute_lookup_tables (
     m_phot_em_table.generate(true); //Progress bar is displayed
     m_qs_minimum_chi_part = qs_minimum_chi_part;
 
+    amrex::Gpu::synchronize();
+
     m_lookup_tables_initialized = true;
 #else
     amrex::Abort("WarpX was not compiled with table generation support!");
@@ -152,7 +156,7 @@ void QuantumSynchrotronEngine::init_builtin_dndt_table()
     dndt_params.chi_part_how_many = 64;
 
 
-    const auto vals = amrex::Gpu::ManagedVector<amrex::Real>{
+    const auto vals = amrex::Gpu::DeviceVector<amrex::Real>{
         -6.13623e+00_rt, -5.94268e+00_rt, -5.74917e+00_rt, -5.55571e+00_rt,
         -5.36231e+00_rt, -5.16898e+00_rt, -4.97575e+00_rt, -4.78262e+00_rt,
         -4.58961e+00_rt, -4.39677e+00_rt, -4.20410e+00_rt, -4.01166e+00_rt,
@@ -170,6 +174,8 @@ void QuantumSynchrotronEngine::init_builtin_dndt_table()
         3.37396e+00_rt, 3.50752e+00_rt, 3.64060e+00_rt, 3.77324e+00_rt,
         3.90549e+00_rt, 4.03740e+00_rt, 4.16899e+00_rt, 4.30031e+00_rt};
     m_dndt_table = QS_dndt_table{dndt_params, vals};
+
+    amrex::Gpu::synchronize();
 }
 
 
@@ -183,7 +189,7 @@ void QuantumSynchrotronEngine::init_builtin_phot_em_table()
     phot_em_params.frac_how_many = 64;
 
 
-const auto vals = amrex::Gpu::ManagedVector<amrex::Real>{
+const auto vals = amrex::Gpu::DeviceVector<amrex::Real>{
 -6.83368e+00_rt, -6.68749e+00_rt, -6.54129e+00_rt, -6.39510e+00_rt,
 -6.24890e+00_rt, -6.10271e+00_rt, -5.95651e+00_rt, -5.81031e+00_rt,
 -5.66412e+00_rt, -5.51792e+00_rt, -5.37173e+00_rt, -5.22554e+00_rt,
@@ -1210,6 +1216,8 @@ const auto vals = amrex::Gpu::ManagedVector<amrex::Real>{
 -4.05101e-01_rt, -2.79009e-01_rt, -1.56354e-01_rt, 0.00000e+00_rt};
 
     m_phot_em_table = QS_phot_em_table{phot_em_params, vals};
+
+    amrex::Gpu::synchronize();
 }
 
 //============================================
