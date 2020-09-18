@@ -914,12 +914,10 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
 
         //Maximum chi for the table. If a lepton has chi > tab_em_chi_max,
         //chi is considered as it were equal to tab_em_chi_max
-        if(!pp.query("tab_em_chi_max", ctrl.phot_em_params.chi_part_max))
-            amrex::Abort("qed_qs.tab_em_chi_max should be provided!");
+        pp.get("tab_em_chi_max", ctrl.phot_em_params.chi_part_max);
 
         //How many points should be used for chi in the table
-        if(!pp.query("tab_em_chi_how_many", t_int))
-            amrex::Abort("qed_qs.tab_em_chi_how_many should be provided!");
+        pp.get("tab_em_chi_how_many", t_int);
         ctrl.phot_em_params.chi_part_how_many = t_int;
 
         //The other axis of the table is the ratio between the quantum
@@ -1008,19 +1006,16 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 
         //Maximum chi for the table. If a photon has chi > chi_phot_tpair_max
         //chi is considered as it were equal to chi_phot_tpair_max
-        if(!pp.query("tab_pair_chi_max", ctrl.pair_prod_params.chi_phot_max))
-            amrex::Abort("qed_bw.tab_pair_chi_max should be provided!");
+        pp.get("tab_pair_chi_max", ctrl.pair_prod_params.chi_phot_max);
 
         //How many points should be used for chi in the table
-        if(!pp.query("tab_pair_chi_how_many", t_int))
-            amrex::Abort("qed_bw.tab_pair_chi_how_many should be provided!");
+        pp.get("tab_pair_chi_how_many", t_int);
         ctrl.pair_prod_params.chi_phot_how_many = t_int;
 
         //The other axis of the table is the fraction of the initial energy
         //'taken away' by the most energetic particle of the pair.
         //This parameter is the number of different fractions to consider
-        if(!pp.query("tab_pair_frac_how_many", t_int))
-            amrex::Abort("qed_bw.tab_pair_frac_how_many should be provided!");
+        pp.get("tab_pair_frac_how_many", t_int);
         ctrl.pair_prod_params.frac_how_many = t_int;
         //====================
 
