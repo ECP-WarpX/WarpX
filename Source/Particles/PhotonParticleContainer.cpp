@@ -102,8 +102,6 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
 #ifdef WARPX_QED
-    AMREX_ASSERT(has_breit_wheeler());
-
     BreitWheelerEvolveOpticalDepth evolve_opt;
     amrex::Real* AMREX_RESTRICT p_optical_depth_BW = nullptr;
     const bool local_has_breit_wheeler = has_breit_wheeler();
