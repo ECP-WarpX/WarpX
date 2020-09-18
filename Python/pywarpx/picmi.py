@@ -64,7 +64,10 @@ class Species(picmistandard.PICMI_Species):
                 if self.mass is None:
                     self.mass = element.mass*periodictable.constants.atomic_mass_constant
 
-    def initialize_inputs(self, layout, initialize_self_fields=False):
+    def initialize_inputs(self, layout,
+                          initialize_self_fields = False,
+                          injection_plane_position = None,
+                          injection_plane_normal_vector = None):
         self.species_number = len(pywarpx.particles.species_names)
 
         if self.name is None:
@@ -81,6 +84,14 @@ class Species(picmistandard.PICMI_Species):
 
         if self.initial_distribution is not None:
             self.initial_distribution.initialize_inputs(self.species_number, layout, self.species, self.density_scale)
+
+        if injection_plane_position is not None:
+            if injection_plane_normal_vector is not None:
+                assert injection_plane_normal_vector[0] == 0. and injection_plane_normal_vector[1] == 0.,\
+                    Exception('Rigid injection can only be done along z')
+            pywarpx.particles.rigid_injected_species.append(self.name)
+            self.species.rigid_advance = 1
+            self.species.zinject_plane = injection_plane_position
 
         for interaction in self.interactions:
             assert interaction[0] == 'ionization'
@@ -676,7 +687,10 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.solver.initialize_inputs()
 
         for i in range(len(self.species)):
-            self.species[i].initialize_inputs(self.layouts[i], self.initialize_self_fields[i])
+            self.species[i].initialize_inputs(self.layouts[i],
+                                              self.initialize_self_fields[i],
+                                              self.injection_plane_positions[i],
+                                              self.injection_plane_normal_vectors[i])
 
         for i in range(len(self.lasers)):
             self.lasers[i].initialize_inputs()
