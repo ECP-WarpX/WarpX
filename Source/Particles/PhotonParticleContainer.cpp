@@ -206,8 +206,7 @@ PhotonParticleContainer::Evolve (int lev,
                                  Real t, Real dt, DtType /*a_dt_type*/)
 {
     // This does gather, push and depose.
-    // Push and depose have been re-written for photon,
-    // so they do not do anything.
+    // Push and depose have been re-written for photons
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,
                                        Bx, By, Bz,
