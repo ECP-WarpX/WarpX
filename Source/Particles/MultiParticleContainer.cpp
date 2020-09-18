@@ -889,7 +889,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
         //which appears in the evolution of the optical depth
 
         //Minimun chi for the table. If a lepton has chi < tab_dndt_chi_min,
-        //chi is considered as it were equal to tab_dndt_chi_min
+        //chi is considered as if it were equal to tab_dndt_chi_min
         if(!pp.query("tab_dndt_chi_min", ctrl.dndt_params.chi_part_min))
             amrex::Abort("qed_qs.tab_dndt_chi_min should be provided!");
 
