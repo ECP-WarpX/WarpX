@@ -188,7 +188,7 @@ VisIt 3.0+ also supports those files.
 `Replay <https://ascent.readthedocs.io/en/latest/Utilities.html#getting-data-for-replay>`_ is a utility that allows the user to "replay" a simulation from aforementioned files and rendering them with Ascent.
 Replay enables the user or developer to pick specific time steps and load them for Ascent visualization, without running the simulation again.
 
-We'll guide you through the procedure of how to use Replay through a WarpX LWFA example: warpx/tools/Ascent/Replay
+We'll guide you through the procedure of how to use Replay through a WarpX LWFA example: `Tools/Ascent/Replay/`
 
 1. Get Blueprint Files
 -------------------------
