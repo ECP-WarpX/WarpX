@@ -116,8 +116,7 @@ def do_analysis(Ex,Ey,Ez,Bx,By,Bz):
         error = np.abs(np.sum(ele_data)-expected_total_physical_pairs_created)
         print("difference between expected and actual number of pairs created: " + str(error))
         print("tolerance: " + str(5*std_total_physical_pairs_created))
-        assert(error<5*std_total_physical_pairs_created or
-            error/expected_total_physical_pairs_created < np.sqrt(np.finfo(float).eps))
+        assert(error<5*std_total_physical_pairs_created)
 
 do_analysis(Ex_test, Ey_test, Ez_test, Bx_test, By_test, Bz_test)
 
