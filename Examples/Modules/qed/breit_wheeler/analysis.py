@@ -25,7 +25,7 @@ import checksumAPI
 # Specifically the script checks that:
 #
 # - The expected number of generated pairs n_pairs is in agreement with theory
-#   (the maximum tolerated error is 6*sqrt(n_pairs)
+#   (the maximum tolerated error is 5*sqrt(n_pairs)
 # - The weight of the generated particles is equal to the weight of the photon
 # - Momenta of the residual photons are still equal to the original momentum
 # - The generated particles are emitted in the right direction
