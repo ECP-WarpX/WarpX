@@ -817,8 +817,8 @@ void MultiParticleContainer::InitBreitWheeler ()
     std::string lookup_table_mode;
     ParmParse pp("qed_bw");
 
-    // bw_minimum_chi_phot is the minium chi parameter to be
-    // considered for Pair production. If a photon has chi < chi_min,
+    // bw_minimum_chi_phot is the minimum chi parameter to be
+    // considered for pair production. If a photon has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real bw_minimum_chi_part;
     if(!pp.query("chi_min", bw_minimum_chi_part))
