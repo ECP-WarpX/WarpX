@@ -230,7 +230,7 @@ WarpX will call ascent every 200 cycles. submit the following job submit script 
 2. example Actions
 -------------------------
 
-Images of Ex contour with particles could be obtained by replaying on the follow action:
+A visualization of the electric field component `Ex` with a contour plot and with added particles can be obtained by replaying with the following Ascent Action:
 
 .. code-block:: json
 
