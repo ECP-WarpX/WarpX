@@ -1019,8 +1019,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
         //The other axis of the table is the fraction of the initial energy
         //'taken away' by the most energetic particle of the pair.
         //This parameter is the number of different fractions to consider
-        if(!pp.query("tab_pair_frac_how_many", t_int))
-            amrex::Abort("qed_bw.tab_pair_frac_how_many should be provided!");
+        pp.get("tab_pair_frac_how_many", t_int);
         ctrl.pair_prod_params.frac_how_many = t_int;
         //====================
 
