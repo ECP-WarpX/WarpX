@@ -316,7 +316,7 @@ A visualization of the electric field component `Ex` with a contour plot and wit
                 elevation: 30
                 zoom: 2.5
 
-There are Ascent Actions Examples `Ascent Actions Examples <https://ascent.readthedocs.io/en/latest/Actions/Examples.html#yaml-examples>`_ for you to play.
+There are more `Ascent Actions examples available <https://ascent.readthedocs.io/en/latest/Actions/Examples.html#yaml-examples>`_ for you to play.
 
 3. Run Replay
 -------------------------
