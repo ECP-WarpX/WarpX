@@ -190,7 +190,7 @@ WarpX::Evolve (int numsteps)
             // only move by one or two cells per time step
             if (max_level == 0) {
                 int num_redistribute_ghost = num_moved;
-                if ((v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)) {
+                if ((m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)) {
                     // Galilean algorithm ; particles can move by up to 2 cells
                     num_redistribute_ghost += 2;
                 } else {
