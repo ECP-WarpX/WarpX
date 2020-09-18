@@ -55,7 +55,7 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
             // The particles that are in the cell `i_cell` are
             // given by the `indices[cell_start:cell_stop]`
             const auto cell_start = cell_offsets[i_cell];
-            const auto cell_stop  = cell_offsets[i_cell+1];
+            const auto cell_stop  = static_cast<int>(cell_offsets[i_cell+1]);
             const int cell_numparts = cell_stop - cell_start;
 
             // do nothing for cells without particles

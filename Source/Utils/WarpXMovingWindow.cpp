@@ -376,22 +376,28 @@ WarpX::ShiftGalileanBoundary ()
     Real time_shift = (cur_time - time_of_last_gal_shift);
 
 #if (AMREX_SPACEDIM == 3)
-        galilean_shift = { v_galilean[0]* time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+        m_galilean_shift = {
+            m_v_galilean[0]* time_shift,
+            m_v_galilean[1]*time_shift,
+            m_v_galilean[2]*time_shift };
 #elif (AMREX_SPACEDIM == 2)
-        galilean_shift = { v_galilean[0]* time_shift, std::numeric_limits<Real>::quiet_NaN(), v_galilean[2]*time_shift };
+        m_galilean_shift = {
+            m_v_galilean[0]* time_shift,
+            std::numeric_limits<Real>::quiet_NaN(),
+            m_v_galilean[2]*time_shift };
 #endif
 
 #if (AMREX_SPACEDIM == 3)
         for (int i=0; i<AMREX_SPACEDIM; i++) {
-            new_lo[i] = current_lo[i] + galilean_shift[i];
-            new_hi[i] = current_hi[i] + galilean_shift[i];
+            new_lo[i] = current_lo[i] + m_galilean_shift[i];
+            new_hi[i] = current_hi[i] + m_galilean_shift[i];
         }
 #elif (AMREX_SPACEDIM == 2)
     {
-        new_lo[0] = current_lo[0] + galilean_shift[0];
-        new_hi[0] = current_hi[0] + galilean_shift[0];
-        new_lo[1] = current_lo[1] + galilean_shift[2];
-        new_hi[1] = current_hi[1] + galilean_shift[2];
+        new_lo[0] = current_lo[0] + m_galilean_shift[0];
+        new_hi[0] = current_hi[0] + m_galilean_shift[0];
+        new_lo[1] = current_lo[1] + m_galilean_shift[2];
+        new_hi[1] = current_hi[1] + m_galilean_shift[2];
       }
     #endif
     time_of_last_gal_shift = cur_time;
