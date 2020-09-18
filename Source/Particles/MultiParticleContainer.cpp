@@ -1008,8 +1008,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 
         //Maximum chi for the table. If a photon has chi > chi_phot_tpair_max
         //chi is considered as it were equal to chi_phot_tpair_max
-        if(!pp.query("tab_pair_chi_max", ctrl.pair_prod_params.chi_phot_max))
-            amrex::Abort("qed_bw.tab_pair_chi_max should be provided!");
+        pp.get("tab_pair_chi_max", ctrl.pair_prod_params.chi_phot_max);
 
         //How many points should be used for chi in the table
         pp.get("tab_pair_chi_how_many", t_int);
