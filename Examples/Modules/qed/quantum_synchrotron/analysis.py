@@ -189,7 +189,8 @@ def check_opt_depths(part_data, phot_data):
         assert( np.abs(scale - 1) < tol_red )
     print("  [OK] optical depth distributions are still exponential")
 
-def check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NN, idx):
+def check_energy_distrib(gamma_phot, chi_part,
+        gamma_part, n_phot, NN, idx, do_plot=False):
     gamma_phot_min = 1e-12*gamma_part
     gamma_phot_max = gamma_part
     h_log_gamma_phot, c_gamma_phot = np.histogram(gamma_phot, bins=np.logspace(np.log10(gamma_phot_min),np.log10(gamma_phot_max),NN+1))
@@ -204,32 +205,27 @@ def check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NN, idx):
     distrib = np.sum(distrib.reshape(-1, npoints),1)
     distrib = n_phot*distrib/np.sum(distrib)
 
-    #c_gamma_phot = np.exp(0.5*(np.log(c_gamma_phot[1:])+np.log(c_gamma_phot[:-1])))
+    if do_plot :
+        # Visual comparison of distributions
+        c_gamma_phot = np.exp(0.5*(np.log(c_gamma_phot[1:])+np.log(c_gamma_phot[:-1])))
+        plt.clf()
 
-    # Visual comparison of distributions
-    #plt.clf()
-
-    #fig, (ax1, ax2) = plt.subplots(1, 2)
-    #fig.suptitle("χ_particle = {:f}".format(chi_part))
-
-    #ax1.plot(c_gamma_phot, distrib,label="theory")
-    #ax1.loglog(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
-    #ax1.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
-    #ax1.set_ylim(1,1e5)
-
-    #ax2.plot(c_gamma_phot, distrib,label="theory")
-    #ax2.semilogy(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
-    #ax2.set_ylim(1,1e5)
-    #ax2.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
-
-    #ax1.set_xlabel("γ_photon")
-    #ax1.set_xlabel("N")
-
-    #ax2.set_xlabel("γ_photon")
-    #ax2.set_xlabel("N")
-
-    #plt.legend()
-    #plt.savefig("case_{:d}".format(idx+1))
+        fig, (ax1, ax2) = plt.subplots(1, 2)
+        fig.suptitle("χ_particle = {:f}".format(chi_part))
+        ax1.plot(c_gamma_phot, distrib,label="theory")
+        ax1.loglog(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
+        ax1.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
+        ax1.set_ylim(1,1e5)
+        ax2.plot(c_gamma_phot, distrib,label="theory")
+        ax2.semilogy(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
+        ax2.set_ylim(1,1e5)
+        ax2.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
+        ax1.set_xlabel("γ_photon")
+        ax1.set_xlabel("N")
+        ax2.set_xlabel("γ_photon")
+        ax2.set_xlabel("N")
+        plt.legend()
+        plt.savefig("case_{:d}".format(idx+1))
 
     discr = np.abs(h_log_gamma_phot-distrib)
 

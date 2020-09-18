@@ -17,7 +17,7 @@ import scipy.stats as st
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 # This script performs detailed checks of the Breit-Wheeler pair production process.
 # Four populations of photons are initialized with different momenta in different
@@ -192,7 +192,8 @@ def check_opt_depths(phot_data, ele_data, pos_data):
         assert( np.abs(scale - 1) < tol_red )
     print("  [OK] optical depth distributions are still exponential")
 
-def check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, NN, idx):
+def check_energy_distrib(energy_ele, energy_pos, gamma_phot,
+        chi_phot, n_lost, NN, idx, do_plot=False):
     gamma_min = 1.0001
     gamma_max = gamma_phot-1.0001
     h_gamma_ele, c_gamma = np.histogram(energy_ele/mec2, bins=NN, range=[gamma_min,gamma_max])
@@ -208,17 +209,18 @@ def check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, N
     distrib = np.sum(distrib.reshape(-1, npoints),1)
     distrib = n_lost*distrib/np.sum(distrib)
 
-    # Visual comparison of distributions
-    #c_gamma_centered = 0.5*(c_gamma[1:]+c_gamma[:-1])
-    #plt.clf()
-    #plt.xlabel("γ_particle")
-    #plt.ylabel("N")
-    #plt.title("χ_photon = {:f}".format(chi_phot))
-    #plt.plot(c_gamma_centered, distrib,label="theory")
-    #plt.plot(c_gamma_centered, h_gamma_ele,label="BW electrons")
-    #plt.plot(c_gamma_centered, h_gamma_pos,label="BW positrons")
-    #plt.legend()
-    #plt.savefig("case_{:d}".format(idx+1))
+    if do_plot :
+        # Visual comparison of distributions
+        c_gamma_centered = 0.5*(c_gamma[1:]+c_gamma[:-1])
+        plt.clf()
+        plt.xlabel("γ_particle")
+        plt.ylabel("N")
+        plt.title("χ_photon = {:f}".format(chi_phot))
+        plt.plot(c_gamma_centered, distrib,label="theory")
+        plt.plot(c_gamma_centered, h_gamma_ele,label="BW electrons")
+        plt.plot(c_gamma_centered, h_gamma_pos,label="BW positrons")
+        plt.legend()
+        plt.savefig("case_{:d}".format(idx+1))
 
     discr_ele = np.abs(h_gamma_ele-distrib)
     discr_pos = np.abs(h_gamma_pos-distrib)
