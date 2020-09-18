@@ -229,7 +229,7 @@ def check_energy_distrib(gamma_phot, chi_part,
 
     discr = np.abs(h_log_gamma_phot-distrib)
 
-    max_discr = np.where(np.sqrt(distrib)>1, np.sqrt(distrib), 1)*5.0
+    max_discr = np.sqrt(distrib)*5.0
     # do not check the last 6 points: the lookup table is too coarse-grained for that
     assert(np.all( discr[:-6] < max_discr[:-6]  ))
 
