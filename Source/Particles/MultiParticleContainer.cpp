@@ -876,8 +876,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
     // considered for Synchrotron emission. If a lepton has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real qs_minimum_chi_part;
-    if(!pp.query("chi_min", qs_minimum_chi_part))
-        amrex::Abort("qed_qs.chi_min should be provided!");
+    pp.get("chi_min", qs_minimum_chi_part);
 
     if(ParallelDescriptor::IOProcessor()){
         PicsarQuantumSyncCtrl ctrl;
@@ -890,18 +889,16 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
         //which appears in the evolution of the optical depth
 
         //Minimun chi for the table. If a lepton has chi < tab_dndt_chi_min,
-        //chi is considered as it were equal to tab_dndt_chi_min
+        //chi is considered as if it were equal to tab_dndt_chi_min
         if(!pp.query("tab_dndt_chi_min", ctrl.dndt_params.chi_part_min))
             amrex::Abort("qed_qs.tab_dndt_chi_min should be provided!");
 
         //Maximum chi for the table. If a lepton has chi > tab_dndt_chi_max,
-        //chi is considered as it were equal to tab_dndt_chi_max
-        if(!pp.query("tab_dndt_chi_max", ctrl.dndt_params.chi_part_max))
-            amrex::Abort("qed_qs.tab_dndt_chi_max should be provided!");
+        //chi is considered as if it were equal to tab_dndt_chi_max
+        pp.get("tab_dndt_chi_max", ctrl.dndt_params.chi_part_max);
 
         //How many points should be used for chi in the table
-        if(!pp.query("tab_dndt_how_many", t_int))
-            amrex::Abort("qed_qs.tab_dndt_how_many should be provided!");
+        pp.get("tab_dndt_how_many", t_int);
         ctrl.dndt_params.chi_part_how_many = t_int;
         //------
 
@@ -911,7 +908,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
         //photons.
 
         //Minimun chi for the table. If a lepton has chi < tab_em_chi_min,
-        //chi is considered as it were equal to tab_em_chi_min
+        //chi is considered as if it were equal to tab_em_chi_min
         if(!pp.query("tab_em_chi_min", ctrl.phot_em_params.chi_part_min))
             amrex::Abort("qed_qs.tab_em_chi_min should be provided!");
 
