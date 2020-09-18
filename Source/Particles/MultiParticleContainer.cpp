@@ -999,7 +999,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
         //which is used to extract the properties of the generated
         //particles.
 
-        //Minimun chi for the table. If a photon has chi < chi_phot_tpair_min
+        //Minimun chi for the table. If a photon has chi < tab_pair_chi_min
         //chi is considered as it were equal to chi_phot_tpair_min
         if(!pp.query("tab_pair_chi_min", ctrl.pair_prod_params.chi_phot_min))
             amrex::Abort("qed_bw.tab_pair_chi_min should be provided!");
