@@ -179,9 +179,14 @@ You can view the Cinema Database result by opening :code:`cinema_databases/cinem
 
 
 Replay
--------------------------
+------
 
-`Replay <https://ascent.readthedocs.io/en/latest/Utilities.html#getting-data-for-replay>`_ is a utility that allows the user to ‘replay’ Conduit Blueprint HDF5 files saved by Ascent or exported by VisIt (starting in version 3.0 beta) back into Ascent. Replay enables the user or developer to pick specific time steps and load them into Ascent
+With Ascent/Conduit, one can store the intermediate data files before the rendering step is applied to custom files.
+These so-called *Conduit Blueprint HDF5 files can be *replayed*, i.e. rendered without running the simulation again.
+VisIt 3.0+ also supports those files.
+
+`Replay <https://ascent.readthedocs.io/en/latest/Utilities.html#getting-data-for-replay>`_ is a utility that allows the user to "replay" a simulation from aforementioned files and rendering them with Ascent.
+Replay enables the user or developer to pick specific time steps and load them for Ascent visualization, without running the simulation again.
 
 We'll guide you through the procedure of how to use Replay through a WarpX LWFA example: warpx/tools/Ascent/Replay
 
@@ -347,4 +352,3 @@ The following is an image from replay on test.cycle_000400.root with above ascen
 
 .. figure:: WarpX_LWFA_400.png
    :alt: picture
-
