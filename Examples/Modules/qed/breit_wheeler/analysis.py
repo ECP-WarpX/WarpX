@@ -161,7 +161,7 @@ def check_number_of_pairs(ytdataset, phot_name, ele_name, pos_name, chi_phot, ga
 def check_weights(phot_data, ele_data, pos_data):
     assert(np.all(phot_data["w"] == phot_data["w"][0]))
     assert(np.all(ele_data["w"]  == phot_data["w"][0]))
-    assert(np.all(ele_data["w"]  == phot_data["w"][0]))
+    assert(np.all(pos_data["w"]  == phot_data["w"][0]))
     print("  [OK] particles weights are the expected ones")
 
 def check_momenta(phot_data, ele_data, pos_data, p0, p_ele, p_pos):
