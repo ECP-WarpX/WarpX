@@ -913,7 +913,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
             amrex::Abort("qed_qs.tab_em_chi_min should be provided!");
 
         //Maximum chi for the table. If a lepton has chi > tab_em_chi_max,
-        //chi is considered as it were equal to tab_em_chi_max
+        //chi is considered as if it were equal to tab_em_chi_max
         pp.get("tab_em_chi_max", ctrl.phot_em_params.chi_part_max);
 
         //How many points should be used for chi in the table
