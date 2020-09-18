@@ -305,6 +305,9 @@ void ParticleExtrema::ComputeDiags (int step)
         // compute chimin and chimax
         Real chimin = 0.0_rt;
         Real chimax = 0.0_rt;
+        GetExternalEField get_externalE;
+        GetExternalBField get_externalB;
+
         if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
         {
             chimin = ReduceMin( myspc,
@@ -321,6 +324,7 @@ void ParticleExtrema::ComputeDiags (int step)
                 ParticleReal yp = p.pos(1);
 #endif
                 ParticleReal zp = p.pos(index_z);
+
                 ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
                 ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
 
@@ -338,6 +342,9 @@ void ParticleExtrema::ComputeDiags (int step)
                 int n_rz_azimuthal_modes;
                 int nox;
                 bool galerkin_interpolation;
+
+                get_externalE(i, ex, ey, ez);
+                get_externalB(i, bx, by, bz);
 
                 // gather E and B
                 doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
@@ -375,6 +382,7 @@ void ParticleExtrema::ComputeDiags (int step)
                 ParticleReal yp = p.pos(1);
 #endif
                 ParticleReal zp = p.pos(index_z);
+
                 ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
                 ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
 
@@ -392,6 +400,9 @@ void ParticleExtrema::ComputeDiags (int step)
                 int n_rz_azimuthal_modes;
                 int nox;
                 bool galerkin_interpolation;
+
+                get_externalE(i, ex, ey, ez);
+                get_externalB(i, bx, by, bz);
 
                 // gather E and B
                 doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
