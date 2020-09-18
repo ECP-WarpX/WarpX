@@ -197,10 +197,24 @@ def my_emittance(x, z, px, py, pz, w=None, kind='norm', sliced=False,
 def read_sim(sim):
     print('Now downloading data from: ', sim)
     path_sim = path_scan + sim + '/'
+
+    # Determine the format of the data
     file_list = glob.glob(path_sim + '/lab_frame_data/snapshots/snapshot?????')
-    file_list.sort()
-    nfiles = len(file_list)#-1
-    iteration_list = range(nfiles)
+    if len(file_list) != 0:
+        format = 'warpx'
+        file_list.sort()
+        nfiles = len(file_list)#-1
+        iteration_list = range(nfiles)
+    elif os.path.exists( os.path.join( path_sim, 'lab_diags' ) ):
+        format = 'openpmd'
+        from openpmd_viewer import OpenPMDTimeSeries
+        ts = OpenPMDTimeSeries( os.path.join( path_sim, 'lab_diags/hdf5' ) )
+        iteration_list = ts.iterations
+        nfiles = len(iteration_list)
+    else:
+        raise RuntimeError("Unknown file format")
+
+    # Allocate data arrays
     zz         = np.zeros(nfiles)
     TotP       = np.zeros(nfiles)
     TotQ       = np.zeros(nfiles)
@@ -221,15 +235,25 @@ def read_sim(sim):
     EMITY      =  np.zeros((nfiles, nslices-1))
     W_slice    =  np.zeros((nfiles, nslices-1))
     for count, iteration in enumerate(iteration_list):
-        snapshot = path_sim + '/lab_frame_data/snapshots/' + 'snapshot' + str(iteration).zfill(5)
-        w = get_particle_field(snapshot, species, 'w')
-        x = get_particle_field(snapshot, species, 'x')
-        if (if3d == 1):
-            y = get_particle_field(snapshot, species, 'y')
-        z = get_particle_field(snapshot, species, 'z')
-        ux = get_particle_field(snapshot, species, 'ux')/scc.c
-        uy = get_particle_field(snapshot, species, 'uy')/scc.c
-        uz = get_particle_field(snapshot, species, 'uz')/scc.c
+        if format == 'warpx':
+            snapshot = path_sim + '/lab_frame_data/snapshots/' + 'snapshot' + str(iteration).zfill(5)
+            w = get_particle_field(snapshot, species, 'w')
+            x = get_particle_field(snapshot, species, 'x')
+            if (if3d == 1):
+                y = get_particle_field(snapshot, species, 'y')
+            z = get_particle_field(snapshot, species, 'z')
+            ux = get_particle_field(snapshot, species, 'ux')/scc.c
+            uy = get_particle_field(snapshot, species, 'uy')/scc.c
+            uz = get_particle_field(snapshot, species, 'uz')/scc.c
+        else:
+            if (if3d == 1):
+                w, x, y, z, ux, uy, uz = ts.get_particle(
+                    ['w', 'x', 'y', 'z', 'ux', 'uy', 'uz'],
+                    iteration=iteration, species=species )
+            else:
+                w, x, z, ux, uy, uz = ts.get_particle(
+                    ['w', 'x', 'z', 'ux', 'uy', 'uz'],
+                    iteration=iteration, species=species )
 
         TotP      [count] = w.shape[0]
         # Removing electrons that are no longer in the beam (>d_rms RMS radius)
@@ -370,7 +394,7 @@ def new_files(pd,dh5):
         new_sub_dir=pd+isims+'/lab_frame_data/'+dh5
         if os.path.isdir(new_sub_dir) == False:
             print('Created directory: ', new_sub_dir)
-            os.mkdir(new_sub_dir)
+            os.makedirs(new_sub_dir)
         newf_name.append(new_sub_dir+'/'+dh5+'-'+isims+'.hdf5')
         print(newf_name[-1])
     return newf_name
