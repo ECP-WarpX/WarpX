@@ -235,7 +235,7 @@ def check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NN, idx):
 
     max_discr = np.where(np.sqrt(distrib)>1, np.sqrt(distrib), 1)*5.0
     # do not check the last 6 points: the lookup table is too coarse-grained for that
-    assert(np.all( np.abs(discr[:-6]) < max_discr[:-6]  ))
+    assert(np.all( discr[:-6] < max_discr[:-6]  ))
 
     print("  [OK] energy distribution is within expectations")
 
