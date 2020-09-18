@@ -25,7 +25,7 @@ import checksumAPI
 # Specifically the script checks that:
 #
 # - The expected number of generated photons n_phot is in agreement with theory
-#   (the maximum tolerated error is 6*sqrt(n_phot)
+#   (the maximum tolerated error is 5*sqrt(n_phot)
 # - The weight of the generated particles is equal to the weight of the photon
 # - The generated particles are emitted in the right direction
 # - The energy distribution of the generated particles is in agreement with theory
