@@ -9,8 +9,10 @@
 #endif
 #include "Utils/WarpXConst.H"
 #include "Utils/CoarsenIO.H"
-#include <AMReX_Gpu.H>
 #include <WarpX.H>
+#include <AMReX.H>
+#include <AMReX_Gpu.H>
+
 
 using namespace amrex;
 
@@ -23,6 +25,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
+    amrex::ignore_unused(Efield, Bfield, Jfield, dt, macroscopic_properties);
     amrex::Abort("currently macro E-push does not work for RZ");
 #else
     if (m_do_nodal) {

@@ -630,6 +630,9 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
                             const long n_rz_azimuthal_modes)
 {
 #if (defined WARPX_DIM_RZ)
+    amrex::ignore_unused(GetPosition,
+        wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab,
+        np_to_depose, dt, dx, xyzmin, lo, q, n_rz_azimuthal_modes);
     amrex::Abort("Vay deposition not implemented in RZ geometry");
 #endif
 
