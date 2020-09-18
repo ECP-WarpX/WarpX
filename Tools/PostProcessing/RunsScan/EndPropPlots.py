@@ -4,8 +4,7 @@
 ### Python script to get the beam properties from
 ### .h5 files of a scan and make comparison plots
 ###
-### L.D.Amorim @ LBNL
-### 3 Sep 2020
+### License: BSD-3-Clause-LBNL
 ###
 ### You can run it with the command:
 ### python EndPropPlots.py <Dimensions> <Path scan> <Paths lab data>

@@ -4,8 +4,7 @@
 ### Python script to evaluate lab frame particle data
 ### and save the beam (RMS) properties in an .h5 file
 ###
-### L.D.Amorim @ LBNL
-### 3 Sep 2020
+### License: BSD-3-Clause-LBNL
 ###
 ### You can run it with the command:
 ### python BeamPropToHDF5.py <Dimensions> <Path scan> <Paths lab data>

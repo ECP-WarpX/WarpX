@@ -4,8 +4,7 @@
 ### Python script to plot particles transitioning between
 ### 3 different plasma stages - used for milestone report
 ###
-### L.D.Amorim @ LBNL
-### 3 Sep 2020
+### License: BSD-3-Clause-LBNL
 ###
 ### You can run it with the command:
 ### python YtPlotfileStages.py <Dimensions> <Path scan> <Path diags>
