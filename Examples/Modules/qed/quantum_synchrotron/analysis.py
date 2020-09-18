@@ -17,7 +17,7 @@ import scipy.stats as st
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 # This script performs detailed checks of the Quantum Synchrotron photon emission process.
 # Two electron populations and two positron populations are initialized with different momenta in different
