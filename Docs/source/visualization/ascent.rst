@@ -190,8 +190,8 @@ Replay enables the user or developer to pick specific time steps and load them f
 
 We'll guide you through the procedure of how to use Replay through a WarpX LWFA example: `Tools/Ascent/Replay/`
 
-1. Get Blueprint Files
--------------------------
+Get Blueprint Files
+^^^^^^^^^^^^^^^^^^^
 To use replay, you first need Conduit Blueprint HDF5 files which could be extracted by replay. The following ascent actions file can be used to extract Conduit Blueprint HDF5 files.
 
 .. code-block:: json
