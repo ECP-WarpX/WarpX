@@ -322,7 +322,10 @@ Run Replay
 ^^^^^^^^^^
 
 
-Replay executables are created in the utilities/replay directory of the Ascent instaation. There are two version of replay: mpi version replay_mpi and serial version replay_ser. What you use depends on the data set. Here we use replay_mpi as example.
+For Ascent Replay, two command line tools are provided in the utilities/replay directory of the Ascent installation.
+There are two version of replay: the MPI-parallel version ``replay_mpi`` and a serial version, ``replay_ser``.
+Use an MPI-parallel replay with data sets created with MPI-parallel builds of WarpX.
+Here we use ``replay_mpi`` as an example.
 
 The options for replay are:
 
