@@ -872,7 +872,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
     if(table_name.empty())
         amrex::Abort("qed_qs.save_table_in should be provided!");
 
-    // qs_minimum_chi_part is the minium chi parameter to be
+    // qs_minimum_chi_part is the minimum chi parameter to be
     // considered for Synchrotron emission. If a lepton has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real qs_minimum_chi_part;
