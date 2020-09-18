@@ -318,8 +318,8 @@ A visualization of the electric field component `Ex` with a contour plot and wit
 
 There are more `Ascent Actions examples available <https://ascent.readthedocs.io/en/latest/Actions/Examples.html#yaml-examples>`_ for you to play.
 
-3. Run Replay
--------------------------
+Run Replay
+^^^^^^^^^^
 
 
 Replay executables are created in the utilities/replay directory of the Ascent instaation. There are two version of replay: mpi version replay_mpi and serial version replay_ser. What you use depends on the data set. Here we use replay_mpi as example.
