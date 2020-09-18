@@ -1012,8 +1012,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
             amrex::Abort("qed_bw.tab_pair_chi_max should be provided!");
 
         //How many points should be used for chi in the table
-        if(!pp.query("tab_pair_chi_how_many", t_int))
-            amrex::Abort("qed_bw.tab_pair_chi_how_many should be provided!");
+        pp.get("tab_pair_chi_how_many", t_int);
         ctrl.pair_prod_params.chi_phot_how_many = t_int;
 
         //The other axis of the table is the fraction of the initial energy
