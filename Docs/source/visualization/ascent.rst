@@ -227,8 +227,8 @@ WarpX will call ascent every 200 cycles. submit the following job submit script 
    export OMP_NUM_THREADS=1
    jsrun -r 6 -a 1 -g 1 -c 7 -l GPU-CPU -d packed -b rs --smpiargs="-gpu" ./warpx inputs_3d
 
-2. example Actions
--------------------------
+Example Actions
+^^^^^^^^^^^^^^^
 
 A visualization of the electric field component `Ex` with a contour plot and with added particles can be obtained by replaying with the following Ascent Action:
 
