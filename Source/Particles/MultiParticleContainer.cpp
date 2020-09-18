@@ -908,7 +908,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
         //photons.
 
         //Minimun chi for the table. If a lepton has chi < tab_em_chi_min,
-        //chi is considered as it were equal to tab_em_chi_min
+        //chi is considered as if it were equal to tab_em_chi_min
         if(!pp.query("tab_em_chi_min", ctrl.phot_em_params.chi_part_min))
             amrex::Abort("qed_qs.tab_em_chi_min should be provided!");
 
