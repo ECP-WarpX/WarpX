@@ -176,9 +176,9 @@ void BreitWheelerEngine::init_builtin_dndt_table()
         -2.50493e+00_rt, -2.54261e+00_rt, -2.58143e+00_rt, -2.62127e+00_rt,
         -2.66201e+00_rt, -2.70357e+00_rt, -2.74585e+00_rt, -2.78877e+00_rt};
 
-    m_dndt_table = BW_dndt_table{dndt_params, vals};
-
     amrex::Gpu::synchronize();
+
+    m_dndt_table = BW_dndt_table{dndt_params, vals};
 }
 
 void BreitWheelerEngine::init_builtin_pair_prod_table()
@@ -1215,8 +1215,8 @@ void BreitWheelerEngine::init_builtin_pair_prod_table()
         4.66816e-01_rt, 4.71596e-01_rt, 4.76358e-01_rt, 4.81105e-01_rt,
         4.85839e-01_rt, 4.90564e-01_rt, 4.95284e-01_rt, 5.00000e-01_rt};
 
-    m_pair_prod_table = BW_pair_prod_table{pair_prod_params, vals};
-
     amrex::Gpu::synchronize();
+
+    m_pair_prod_table = BW_pair_prod_table{pair_prod_params, vals};
 }
 //============================================

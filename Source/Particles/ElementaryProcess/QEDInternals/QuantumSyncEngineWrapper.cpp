@@ -173,9 +173,10 @@ void QuantumSynchrotronEngine::init_builtin_dndt_table()
         2.83379e+00_rt, 2.96984e+00_rt, 3.10518e+00_rt, 3.23987e+00_rt,
         3.37396e+00_rt, 3.50752e+00_rt, 3.64060e+00_rt, 3.77324e+00_rt,
         3.90549e+00_rt, 4.03740e+00_rt, 4.16899e+00_rt, 4.30031e+00_rt};
-    m_dndt_table = QS_dndt_table{dndt_params, vals};
 
     amrex::Gpu::synchronize();
+
+    m_dndt_table = QS_dndt_table{dndt_params, vals};
 }
 
 
@@ -1215,9 +1216,9 @@ const auto vals = amrex::Gpu::DeviceVector<amrex::Real>{
 -9.54333e-01_rt, -8.12547e-01_rt, -6.73013e-01_rt, -5.36770e-01_rt,
 -4.05101e-01_rt, -2.79009e-01_rt, -1.56354e-01_rt, 0.00000e+00_rt};
 
-    m_phot_em_table = QS_phot_em_table{phot_em_params, vals};
-
     amrex::Gpu::synchronize();
+
+    m_phot_em_table = QS_phot_em_table{phot_em_params, vals};
 }
 
 //============================================
