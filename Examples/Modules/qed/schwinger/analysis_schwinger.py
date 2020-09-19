@@ -111,8 +111,6 @@ def do_analysis(Ex,Ey,Ez,Bx,By,Bz):
         # dumped in the same order.
         assert(np.array_equal(np.sort(ele_data),np.sort(pos_data)))
         # 5 sigma test that has an intrisic probability to fail of 1 over ~2 millions
-        # the test succeds also if the error is extremely small (i.e. less than
-        # the square root of the machine epsilon)
         error = np.abs(np.sum(ele_data)-expected_total_physical_pairs_created)
         print("difference between expected and actual number of pairs created: " + str(error))
         print("tolerance: " + str(5*std_total_physical_pairs_created))
