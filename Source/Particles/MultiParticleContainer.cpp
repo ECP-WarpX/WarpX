@@ -977,8 +977,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 
         //Minimun chi for the table. If a photon has chi < tab_dndt_chi_min,
         //an analytical approximation is used.
-        if(!pp.query("tab_dndt_chi_min", ctrl.dndt_params.chi_phot_min))
-            amrex::Abort("qed_bw.tab_dndt_chi_min should be provided!");
+        pp.get("tab_dndt_chi_min", ctrl.dndt_params.chi_phot_min);
 
         //Maximum chi for the table. If a photon has chi > chi_phot_tdndt_min,
         //an analytical approximation is used.
