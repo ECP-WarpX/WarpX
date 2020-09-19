@@ -180,7 +180,11 @@ def check_momenta(phot_data, ele_data, pos_data, p0, p_ele, p_pos):
     print("  [OK] pairs move along the initial photon direction")
 
 def check_energy(energy_phot, energy_ele, energy_pos):
-    product_energy = energy_ele + energy_pos
+    # Sorting the arrays is required because electrons and positrons are not
+    # necessarily dumped in the same order.
+    s_energy_ele = np.sort(s_energy_ele)
+    is_energy_pos = np.sort(s_energy_pos)[::-1]
+    product_energy = s_energy_ele + is_energy_pos
     assert(small_diff(product_energy, energy_phot))
     print("  [OK] energy is conserved in each event")
 
