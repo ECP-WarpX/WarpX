@@ -999,7 +999,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
         //chi is considered as it were equal to chi_phot_tpair_min
         pp.get("tab_pair_chi_min", ctrl.pair_prod_params.chi_phot_min);
 
-        //Maximum chi for the table. If a photon has chi > chi_phot_tpair_max
+        //Maximum chi for the table. If a photon has chi > tab_pair_chi_max
         //chi is considered as it were equal to chi_phot_tpair_max
         pp.get("tab_pair_chi_max", ctrl.pair_prod_params.chi_phot_max);
 
