@@ -923,13 +923,11 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
         //The other axis of the table is the ratio between the quantum
         //parameter of the emitted photon and the quantum parameter of the
         //lepton. This parameter is the minimum ratio to consider for the table.
-        if(!pp.query("tab_em_frac_min", ctrl.phot_em_params.frac_min))
-            amrex::Abort("qed_qs.tab_em_frac_min should be provided!");
+        pp.get("tab_em_frac_min", ctrl.phot_em_params.frac_min);
 
         //This parameter is the number of different points to consider for the second
         //axis
-        if(!pp.query("tab_em_frac_how_many", t_int))
-            amrex::Abort("qed_qs.tab_em_frac_how_many should be provided!");
+        pp.get("tab_em_frac_how_many", t_int);
         ctrl.phot_em_params.frac_how_many = t_int;
         //====================
 
