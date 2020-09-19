@@ -166,7 +166,7 @@ Diagnostics::InitBaseData ()
     nmax_lev = warpx.maxLevel() + 1;
     m_all_field_functors.resize( nmax_lev );
 
-    // For restart, move the m_lo and m_hi of the diag consistent with the 
+    // For restart, move the m_lo and m_hi of the diag consistent with the
     // current moving_window location
     if (warpx.do_moving_window) {
         int moving_dir = warpx.moving_window_dir;
