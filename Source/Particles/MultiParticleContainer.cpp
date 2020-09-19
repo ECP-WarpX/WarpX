@@ -880,7 +880,6 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
 
     if(ParallelDescriptor::IOProcessor()){
         PicsarQuantumSyncCtrl ctrl;
-        int t_int;
 
         //==Table parameters==
 
@@ -890,16 +889,14 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
 
         //Minimun chi for the table. If a lepton has chi < tab_dndt_chi_min,
         //chi is considered as if it were equal to tab_dndt_chi_min
-        if(!pp.query("tab_dndt_chi_min", ctrl.dndt_params.chi_part_min))
-            amrex::Abort("qed_qs.tab_dndt_chi_min should be provided!");
+        pp.get("tab_dndt_chi_min", ctrl.dndt_params.chi_part_min);
 
         //Maximum chi for the table. If a lepton has chi > tab_dndt_chi_max,
         //chi is considered as if it were equal to tab_dndt_chi_max
         pp.get("tab_dndt_chi_max", ctrl.dndt_params.chi_part_max);
 
         //How many points should be used for chi in the table
-        pp.get("tab_dndt_how_many", t_int);
-        ctrl.dndt_params.chi_part_how_many = t_int;
+        pp.get("tab_dndt_how_many", ctrl.dndt_params.chi_part_how_many);
         //------
 
         //--- sub-table 2 (2D)
@@ -909,16 +906,14 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
 
         //Minimun chi for the table. If a lepton has chi < tab_em_chi_min,
         //chi is considered as if it were equal to tab_em_chi_min
-        if(!pp.query("tab_em_chi_min", ctrl.phot_em_params.chi_part_min))
-            amrex::Abort("qed_qs.tab_em_chi_min should be provided!");
+        pp.get("tab_em_chi_min", ctrl.phot_em_params.chi_part_min);
 
         //Maximum chi for the table. If a lepton has chi > tab_em_chi_max,
         //chi is considered as if it were equal to tab_em_chi_max
         pp.get("tab_em_chi_max", ctrl.phot_em_params.chi_part_max);
 
         //How many points should be used for chi in the table
-        pp.get("tab_em_chi_how_many", t_int);
-        ctrl.phot_em_params.chi_part_how_many = t_int;
+        pp.get("tab_em_chi_how_many", ctrl.phot_em_params.chi_part_how_many);
 
         //The other axis of the table is the ratio between the quantum
         //parameter of the emitted photon and the quantum parameter of the
@@ -927,8 +922,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
 
         //This parameter is the number of different points to consider for the second
         //axis
-        pp.get("tab_em_frac_how_many", t_int);
-        ctrl.phot_em_params.frac_how_many = t_int;
+        pp.get("tab_em_frac_how_many", ctrl.phot_em_params.frac_how_many);
         //====================
 
         m_shr_p_qs_engine->compute_lookup_tables(ctrl, qs_minimum_chi_part);
@@ -967,7 +961,6 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 
     if(ParallelDescriptor::IOProcessor()){
         PicsarBreitWheelerCtrl ctrl;
-        int t_int;
 
         //==Table parameters==
 
@@ -981,13 +974,10 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 
         //Maximum chi for the table. If a photon has chi > tab_dndt_chi_max,
         //an analytical approximation is used.
-        if(!pp.query("tab_dndt_chi_max", ctrl.dndt_params.chi_phot_max))
-            amrex::Abort("qed_bw.tab_dndt_chi_max should be provided!");
+        pp.get("tab_dndt_chi_max", ctrl.dndt_params.chi_phot_max);
 
         //How many points should be used for chi in the table
-        if(!pp.query("tab_dndt_how_many", t_int))
-            amrex::Abort("qed_bw.tab_dndt_how_many should be provided!");
-        ctrl.dndt_params.chi_phot_how_many = t_int;
+        pp.get("tab_dndt_how_many", ctrl.dndt_params.chi_phot_how_many);
         //------
 
         //--- sub-table 2 (2D)
@@ -1004,14 +994,12 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
         pp.get("tab_pair_chi_max", ctrl.pair_prod_params.chi_phot_max);
 
         //How many points should be used for chi in the table
-        pp.get("tab_pair_chi_how_many", t_int);
-        ctrl.pair_prod_params.chi_phot_how_many = t_int;
+        pp.get("tab_pair_chi_how_many", ctrl.pair_prod_params.chi_phot_how_many);
 
         //The other axis of the table is the fraction of the initial energy
         //'taken away' by the most energetic particle of the pair.
         //This parameter is the number of different fractions to consider
-        pp.get("tab_pair_frac_how_many", t_int);
-        ctrl.pair_prod_params.frac_how_many = t_int;
+        pp.get("tab_pair_frac_how_many", ctrl.pair_prod_params.frac_how_many);
         //====================
 
         m_shr_p_bw_engine->compute_lookup_tables(ctrl, bw_minimum_chi_part);

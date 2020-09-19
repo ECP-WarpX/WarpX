@@ -148,10 +148,11 @@ public:
     }
 
 private:
-    const int m_opt_depth_runtime_comp = 0;  /*!< Index of the optical depth component of source species*/
-
     const QuantumSynchrotronGetOpticalDepth
         m_opt_depth_functor;  /*!< A copy of the functor to initialize the optical depth of the source species. */
+
+    const int m_opt_depth_runtime_comp = 0;  /*!< Index of the optical depth component of source species*/
+
     const QuantumSynchrotronPhotonEmission
         m_emission_functor;  /*!< A copy of the functor to generate photons. It contains only pointers to the lookup tables.*/
 
