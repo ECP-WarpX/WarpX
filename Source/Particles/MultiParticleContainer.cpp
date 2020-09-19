@@ -963,8 +963,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
     // considered for pair production. If a photon has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real bw_minimum_chi_part;
-    if(!pp.query("chi_min", bw_minimum_chi_part))
-        amrex::Abort("qed_bw.chi_min should be provided!");
+    pp.get("chi_min", bw_minimum_chi_part);
 
     if(ParallelDescriptor::IOProcessor()){
         PicsarBreitWheelerCtrl ctrl;
