@@ -234,7 +234,7 @@ def check_energy_distrib(gamma_phot, chi_part,
     max_discr = np.sqrt(distrib)*5.0
     # Use a higer tolerance for the last 8 points (this is due limitations
     # of the builtin table)
-    max_discr[-8:] *= 1.5
+    max_discr[-8:] *= 2.0
     assert(np.all( discr < max_discr ))
 
     print("  [OK] energy distribution is within expectations")
