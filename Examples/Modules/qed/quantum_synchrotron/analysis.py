@@ -24,8 +24,10 @@ import matplotlib.pyplot as plt
 # directions in a background EM field (with non-zero components along each direction).
 # Specifically the script checks that:
 #
-# - The expected number of generated photons n_phot is in agreement with theory
-#   (the maximum tolerated error is 5*sqrt(n_phot)
+# - The expected number of generated photons n_phot is in agreement with theory.
+#   The maximum tolerated error is 5*sqrt(n_phot), except for the last 8 points,
+#   for which a higher tolerance is used (this is due to the fact that the resolution
+#   of the builtin table quite limited).
 # - The weight of the generated particles is equal to the weight of the photon
 # - The generated particles are emitted in the right direction
 # - The energy distribution of the generated particles is in agreement with theory
@@ -230,8 +232,10 @@ def check_energy_distrib(gamma_phot, chi_part,
     discr = np.abs(h_log_gamma_phot-distrib)
 
     max_discr = np.sqrt(distrib)*5.0
-    # do not check the last 6 points: the lookup table is too coarse-grained for that
-    assert(np.all( discr[:-6] < max_discr[:-6]  ))
+    # Use a higer tolerance for the last 8 points (this is due limitations
+    # of the builtin table)
+    max_discr[-8:] *= 1.5
+    assert(np.all( discr < max_discr ))
 
     print("  [OK] energy distribution is within expectations")
 
