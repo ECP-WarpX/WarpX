@@ -232,7 +232,7 @@ def check_energy_distrib(gamma_phot, chi_part,
     discr = np.abs(h_log_gamma_phot-distrib)
 
     max_discr = np.sqrt(distrib)*5.0
-    # Use a higer tolerance for the last 8 points (this is due limitations
+    # Use a higer tolerance for the last 8 points (this is due to limitations
     # of the builtin table)
     max_discr[-8:] *= 2.0
     assert(np.all( discr < max_discr ))
