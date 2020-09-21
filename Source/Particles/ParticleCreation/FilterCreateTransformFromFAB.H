@@ -97,8 +97,10 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
             const IntVect iv = box.atOffset(i);
             const int j = iv[0];
             const int k = iv[1];
-    // Currently all particles are created on nodes. This makes it useless
-    // to use N>1 (for now).
+            const int l = iv[2];
+    
+            // Currently all particles are created on nodes. This makes it useless
+            // to use N>1 (for now).
             const Real x = xlo_global + j*dx;
             const int l = iv[2];
             const Real y = ylo_global + k*dy;
