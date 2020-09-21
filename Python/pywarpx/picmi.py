@@ -542,6 +542,8 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
         self.laser.beta = self.beta
         self.laser.phi2 = self.phi2
 
+        if self.fill_in:
+            self.laser.do_continuous_injection = 1
 
 class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
     def initialize_inputs(self):
@@ -557,9 +559,11 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
         self.laser.polarization = self.polarization_direction  # The main polarization vector
         self.laser.__setattr__('field_function(X,Y,t)', self.field_expression)
 
+        if self.fill_in:
+            self.laser.do_continuous_injection = 1
+
         for k,v in self.user_defined_kw.items():
             setattr(pywarpx.my_constants, k, v)
-
 
 class LaserAntenna(picmistandard.PICMI_LaserAntenna):
     def initialize_inputs(self, laser):
