@@ -69,7 +69,7 @@ void doParticlePush(const GetParticlePosition& GetPosition,
     if (do_crr) {
 #ifdef WARPX_QED
         if (do_sync) {
-            auto chi = QedUtils::chi_lepton(m*ux, m*uy, m*uz,
+            auto chi = QedUtils::chi_ele_pos(m*ux, m*uy, m*uz,
                                             Ex, Ey, Ez,
                                             Bx, By, Bz);
             if (chi < t_chi_max) {
