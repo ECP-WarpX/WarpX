@@ -102,9 +102,9 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
             // Currently all particles are created on nodes. This makes it useless
             // to use N>1 (for now).
             const Real x = xlo_global + j*dx;
-            const int l = iv[2];
             const Real y = ylo_global + k*dy;
             const Real z = zlo_global + l*dz;
+
             for (int n = 0; n < N; ++n)
             {
                 create1(dst1_data, N*p_offsets[i] + dst1_index + n, x, y, z);
