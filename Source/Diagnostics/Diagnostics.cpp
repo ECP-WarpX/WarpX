@@ -166,6 +166,14 @@ Diagnostics::InitBaseData ()
     nmax_lev = warpx.maxLevel() + 1;
     m_all_field_functors.resize( nmax_lev );
 
+    // For restart, move the m_lo and m_hi of the diag consistent with the
+    // current moving_window location
+    if (warpx.do_moving_window) {
+        int moving_dir = warpx.moving_window_dir;
+        int shift_num_base = static_cast<int>((warpx.getmoving_window_x() - m_lo[moving_dir]) / warpx.Geom(0).CellSize(moving_dir) );
+        m_lo[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
+        m_hi[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
+    }
     // Construct Flush class.
     if        (m_format == "plotfile"){
         m_flush_format = new FlushFormatPlotfile;
