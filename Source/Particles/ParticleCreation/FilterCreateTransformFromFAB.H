@@ -89,6 +89,7 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     // For loop over all cells in the box. If mask is true in the given cell,
     // we create the particles in the cell and apply a transform function to the
     // created particles.
+#if (AMREX_SPACEDIM == 3)
     AMREX_HOST_DEVICE_FOR_1D( ncells, i,
     {
         if (mask[i])
@@ -99,15 +100,9 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     // Currently all particles are created on nodes. This makes it useless
     // to use N>1 (for now).
             const Real x = xlo_global + j*dx;
-#if (AMREX_SPACEDIM == 3)
             const int l = iv[2];
             const Real y = ylo_global + k*dy;
             const Real z = zlo_global + l*dz;
-#else
-            const int l = 0;
-            const int y = 0;
-            const Real z = ylo_global + k*dy;
-#endif
             for (int n = 0; n < N; ++n)
             {
                 create1(dst1_data, N*p_offsets[i] + dst1_index + n, x, y, z);
@@ -117,6 +112,32 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
                     N*p_offsets[i] + dst2_index, N, arrNumPartCreation(j,k,l));
         }
     });
+#else
+    AMREX_HOST_DEVICE_FOR_1D( ncells, i,
+    {
+        if (mask[i])
+        {
+            const IntVect iv = box.atOffset(i);
+            const int j = iv[0];
+            const int k = iv[1];
+    // Currently all particles are created on nodes. This makes it useless
+    // to use N>1 (for now).
+            const Real x = xlo_global + j*dx;
+            const int l = 0;
+            const int y = 0;
+            const Real z = ylo_global + k*dy;
+
+            for (int n = 0; n < N; ++n)
+            {
+                create1(dst1_data, N*p_offsets[i] + dst1_index + n, x, y, z);
+                create2(dst2_data, N*p_offsets[i] + dst2_index + n, x, y, z);
+            }
+            transform(dst1_data, dst2_data, N*p_offsets[i] + dst1_index,
+                    N*p_offsets[i] + dst2_index, N, arrNumPartCreation(j,k,l));
+        }
+    });
+#endif
+
 
     Gpu::streamSynchronize();
     return num_added;
