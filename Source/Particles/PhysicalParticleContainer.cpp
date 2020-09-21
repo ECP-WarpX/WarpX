@@ -717,8 +717,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
 #ifdef WARPX_QED
         //Pointer to the optical depth component
-        amrex::Real* p_optical_depth_QSR;
-        amrex::Real* p_optical_depth_BW;
+        amrex::Real* p_optical_depth_QSR = nullptr;
+        amrex::Real* p_optical_depth_BW  = nullptr;
 
         // If a QED effect is enabled, the corresponding optical depth
         // has to be initialized
@@ -1853,7 +1853,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #ifdef WARPX_QED
     const auto do_sync = m_do_qed_quantum_sync;
     amrex::Real t_chi_max = 0.0;
-    if (do_sync) t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
+    if (do_sync) t_chi_max = m_shr_p_qs_engine->get_minimum_chi_part();
 
     QuantumSynchrotronEvolveOpticalDepth evolve_opt;
     amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR = nullptr;
@@ -1889,19 +1889,6 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
-#ifdef WARPX_QED
-    if (local_has_quantum_sync) {
-        const ParticleReal px = m * ux[ip];
-        const ParticleReal py = m * uy[ip];
-        const ParticleReal pz = m * uz[ip];
-
-        bool has_event_happened = evolve_opt(px, py, pz,
-                                             Exp, Eyp, Ezp,
-                                             Bxp, Byp, Bzp,
-                                             dt, p_optical_depth_QSR[ip]);
-    }
-#endif
-
         doParticlePush(getPosition, setPosition, copyAttribs, ip,
                        ux[ip+offset], uy[ip+offset], uz[ip+offset],
                        Exp, Eyp, Ezp, Bxp, Byp, Bzp,
@@ -1912,6 +1899,15 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                        t_chi_max,
 #endif
                        dt);
+
+#ifdef WARPX_QED
+    if (local_has_quantum_sync) {
+        evolve_opt(ux[ip], uy[ip], uz[ip],
+                   Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                   dt, p_optical_depth_QSR[ip]);
+    }
+#endif
+
     });
 }
 
