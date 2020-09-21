@@ -188,7 +188,7 @@ void MaxField::ComputeDiags (int step)
         // MPI reduce
         ParallelDescriptor::ReduceRealMax(hv_E);
 
-        m_data[m_offset_maxField+lev*noutputs_maxField+index_absE] = std::sqrt(hv_E);
+        m_data[lev*noutputs+index_absE] = std::sqrt(hv_E);
 
         // Prepare reduction for maximum value of |B|
         ReduceOps<ReduceOpMax> reduceB_op;
@@ -217,8 +217,8 @@ void MaxField::ComputeDiags (int step)
 #endif
         for ( MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            const Box& box = mfi.tilebox();
-
+            // Make the box cell centered to avoid including ghost cells in the calculation
+            const Box& box = enclosedCells(mfi.nodaltilebox());
             const auto& arrBx = Bx[mfi].array();
             const auto& arrBy = By[mfi].array();
             const auto& arrBz = Bz[mfi].array();
@@ -240,7 +240,7 @@ void MaxField::ComputeDiags (int step)
         // MPI reduce
         ParallelDescriptor::ReduceRealMax(hv_B);
 
-        m_data[m_offset_maxField+lev*noutputs_maxField+index_absB] = std::sqrt(hv_B);
+        m_data[lev*noutputs+index_absB] = std::sqrt(hv_B);
     }
     // end loop over refinement levels
 

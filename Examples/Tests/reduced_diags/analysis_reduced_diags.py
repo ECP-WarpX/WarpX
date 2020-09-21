@@ -119,7 +119,7 @@ print('tolerance of particle energy:', 1.0e-8)
 print('maximum difference of maximum electric field:', max_diffEmax)
 print('tolerance of maximum electric field difference:', 1.0e-9)
 print('maximum difference of maximum magnetic field:', max_diffBmax)
-print('tolerance of maximum electric field difference:', 1.0e-18)
+print('tolerance of maximum magnetic field difference:', 1.0e-18)
 
 assert(abs(EFyt-EF) < 1.0e-3)
 assert(abs(EPyt-EP) < 1.0e-8)
