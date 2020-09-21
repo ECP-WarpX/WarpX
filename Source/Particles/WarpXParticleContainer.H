@@ -327,7 +327,7 @@ public:
     template<PhysicalSpecies PhysSpec>
     bool AmIA () const noexcept {return (physical_species == PhysSpec);}
 
-    amrex::Array<amrex::Real,3> get_v_galilean () {return v_galilean;}
+    amrex::Array<amrex::Real,3> get_v_galilean () {return m_v_galilean;}
 
     /**
      * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer only.
@@ -338,7 +338,7 @@ public:
     virtual void resample (const Resampling& /*resampler*/, const int /*timestep*/) {}
 
 protected:
-    amrex::Array<amrex::Real,3> v_galilean = {{0}};
+    amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
     std::map<std::string, int> particle_runtime_comps;
