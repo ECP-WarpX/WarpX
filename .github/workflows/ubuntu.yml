@@ -80,12 +80,10 @@ jobs:
         cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single
         make -j 2
 
-  # [!] very slow runtime work-around for beta08
+  # [!] disabled until beta09 is fully rolled out on oneAPI apt repos
   #   https://github.com/intel/llvm/issues/2187
-  #   https://github.com/AMReX-Codes/amrex/pull/1243
-  # quick-fix for beta09: activate beta08 compiler
-  # bug report: 04801443 on https://supporttickets.intel.com
   build_dpcc:
+    if: false
     name: oneAPI DPC++ SP [Linux]
     runs-on: ubuntu-latest
     steps:
