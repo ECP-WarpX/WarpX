@@ -1249,7 +1249,7 @@ Numerics and algorithms
  * ``warpx.quantum_xi`` ('float'; default: 1.3050122.e-52)
      Overwrites the actual quantum parameter used in Maxwell's QED equations. Assigning a
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
-     Note that this option will only have an effect if the warpx.use_Hybrid_QED flag is also triggered.
+     Note that this option will only have an effect if the ``warpx.use_Hybrid_QED`` flag is also triggered.
 
  * ``warpx.do_device_synchronize_before_profile`` (`bool`) optional (default `1`)
     When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
@@ -1738,7 +1738,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
-      (version >= 1.67) and to compile with QED_TABLE_GEN=TRUE. All
+      (version >= 1.67) and to compile with ``QED_TABLE_GEN=TRUE``. All
       the following parameters must be specified (table 1 is used to evolve the optical depth
       of the photons, while table 2 is used for pair generation):
 
@@ -1774,7 +1774,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
-      (version >= 1.67) and to compile with QED_TABLE_GEN=TRUE. All
+      (version >= 1.67) and to compile with ``QED_TABLE_GEN=TRUE``. All
       the following parameters must be specified (table 1 is used to evolve the optical depth
       of the particles, while table 2 is used for photon emission):
 
@@ -1816,7 +1816,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
 * ``warpx.do_qed_schwinger`` (`bool`) optional (default `0`)
     If this is 1, Schwinger electron-positron pairs can be generated in vacuum in the cells where the EM field is high enough.
-    Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR`` on the branch ``QED``.
+    Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR``.
     If ``warpx.do_qed_schwinger = 1``, Schwinger product species must be specified with
     ``qed_schwinger.ele_product_species`` and ``qed_schwinger.pos_product_species``.
     **Note: implementation of this feature is in progress.**
