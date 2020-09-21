@@ -1069,8 +1069,8 @@ MultiParticleContainer::doQEDSchwinger ()
 #ifdef _OPENMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
-    {
+     for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+     {
         // Make the box cell centered to avoid creating particles twice on the tile edges
         const Box& box = enclosedCells(mfi.nodaltilebox());
 
