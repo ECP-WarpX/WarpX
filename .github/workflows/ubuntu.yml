@@ -81,7 +81,9 @@ jobs:
         cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single
         make -j 2
 
+  # temporarily disabled due to an MKL problem
   build_dpcc:
+    if: false
     name: oneAPI DPC++ SP [Linux]
     runs-on: ubuntu-latest
     steps:
