@@ -601,7 +601,7 @@ Particle initialization
     The algorithm used for resampling. Currently there is only one option, which is already set by
     default:
 
-    * ``leveling_thinning`` This algorithm is defined in Muraviev et al., arXiv:2006.08593 (2020).
+    * ``leveling_thinning`` This algorithm is defined in `Muraviev et al., arXiv:2006.08593 (2020) <https://arxiv.org/abs/2006.08593>`_.
       The main parameter for this algorithm can be set with ``resampling_algorithm.target_ratio``.
       It **roughly** corresponds to the ratio between the number of particles before and after
       resampling. The default value for this parameter is 1.5.
