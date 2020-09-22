@@ -277,8 +277,6 @@ protected:
 
     std::vector<PCTypes> species_types;
 
-    Resampling m_resampler;
-
     template<typename ...Args>
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,
                                  Args const&... pc_dsts) const noexcept

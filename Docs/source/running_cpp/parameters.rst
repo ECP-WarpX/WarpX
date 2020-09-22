@@ -597,22 +597,22 @@ Particle initialization
     or with QED effects). At least one resampling trigger (see below) must be specified to actually
     perform resampling.
 
-* ``resampling_algorithm.type`` (`string`) optional (default `leveling_thinning`)
+* ``<species>.resampling_algorithm`` (`string`) optional (default `leveling_thinning`)
     The algorithm used for resampling. Currently there is only one option, which is already set by
     default:
 
     * ``leveling_thinning`` This algorithm is defined in `Muraviev et al., arXiv:2006.08593 (2020) <https://arxiv.org/abs/2006.08593>`_.
-      The main parameter for this algorithm can be set with ``resampling_algorithm.target_ratio``.
+      The main parameter for this algorithm can be set with ``<species>.resampling_algorithm_target_ratio``.
       It **roughly** corresponds to the ratio between the number of particles before and after
       resampling. The default value for this parameter is 1.5.
 
-* ``resampling_trigger.intervals`` (`string`) optional (default `0`)
+* ``<species>.resampling_trigger_intervals`` (`string`) optional (default `0`)
     Using the `Intervals parser`_ syntax, this string defines timesteps at which resampling is
-    performed for all species that have ``do_resampling = 1``.
+    performed.
 
-* ``resampling_trigger.max_avg_ppc`` (`float`) optional (default `infinity`)
-    Resampling is performed **for a single species** everytime the number of macroparticles per
-    cell for that species averaged over the whole simulation domain exceeds this parameter.
+* ``<species>.resampling_trigger_max_avg_ppc`` (`float`) optional (default `infinity`)
+    Resampling is performed everytime the number of macroparticles per cell of the species
+    averaged over the whole simulation domain exceeds this parameter.
 
 .. _running-cpp-parameters-laser:
 

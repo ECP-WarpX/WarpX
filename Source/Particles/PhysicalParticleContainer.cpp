@@ -123,6 +123,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_field_ionization", do_field_ionization);
 
     pp.query("do_resampling", do_resampling);
+    if (do_resampling) m_resampler = Resampling(species_name);
 
     //check if Radiation Reaction is enabled and do consistency checks
     pp.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
@@ -1996,18 +1997,18 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 ion_atomic_number);
 }
 
-void PhysicalParticleContainer::resample (const Resampling& resampler, const int timestep)
+void PhysicalParticleContainer::resample (const int timestep)
 {
     const amrex::Real global_numparts = TotalNumberOfParticles();
 
-    if (resampler.triggered(timestep, global_numparts))
+    if (m_resampler.triggered(timestep, global_numparts))
     {
         amrex::Print() << "Resampling " << species_name << ".\n";
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
             {
-                resampler(pti, lev, this);
+                m_resampler(pti, lev, this);
             }
         }
     }

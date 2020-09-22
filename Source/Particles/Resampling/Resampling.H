@@ -39,10 +39,17 @@ class Resampling
 public:
 
     /**
+     * \brief Default constructor of the Resampling class.
+     */
+    Resampling () = default;
+
+    /**
      * \brief Constructor of the Resampling class. Reads the chosen resampling algorithm from the
      * input file.
+     *
+     * @param[in] species_name the name of the resampled species
      */
-    Resampling ();
+    Resampling (const std::string species_name);
 
     /**
      * \brief A method that returns true if resampling should be done for the considered species

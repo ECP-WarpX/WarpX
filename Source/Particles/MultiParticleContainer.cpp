@@ -704,7 +704,7 @@ void MultiParticleContainer::doResampling (const int timestep)
         // do_resampling can only be true for PhysicalParticleContainers
         if (!pc->do_resampling){ continue; }
 
-        pc->resample(m_resampler, timestep);
+        pc->resample(timestep);
     }
 }
 

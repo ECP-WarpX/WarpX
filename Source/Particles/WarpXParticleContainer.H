@@ -335,7 +335,7 @@ public:
      * override the method for every derived class. Note that in practice this function is never
      * called because resample() is only called for PhysicalParticleContainers.
      */
-    virtual void resample (const Resampling& /*resampler*/, const int /*timestep*/) {}
+    virtual void resample (const int /*timestep*/) {}
 
 protected:
     amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
