@@ -79,10 +79,18 @@ Installing openPMD-api from source
 You can also build openPMD-api from source, e.g. to build against the module environment of a supercomputer cluster.
 
 First, load the according modules of the cluster to support the openPMD-api dependencies.
-You can find the `required and optional dependencies here <https://github.com/openPMD/openPMD-api#dependencies_`.
+You can find the `required and optional dependencies here <https://github.com/openPMD/openPMD-api#dependencies>`__.
 
 You usually just need a C++ compiler, CMake, and one or more file backend libraries, such as HDF5 and/or ADIOS2.
-See for example `our installation guidelines for Cori :ref`<building-cori-openPMD>`.
+See for example :ref:`our installation guidelines for Cori <building-cori-openPMD>`.
+
+If optional dependencies are installed in non-system paths, one needs to `hint their installation location <https://hsf-training.github.io/hsf-training-cmake-webpage/09-findingpackages/index.html>`_ with an environment variable during the build phase:
+
+.. code-block:: bash
+
+   # optional: only if you manually installed HDF5 and/or ADIOS2 in custom directories
+   export HDF5_ROOT=$HOME/path_to_installed_software/hdf5-1.12.0/
+   export ADIOS2_ROOT=$HOME/path_to_installed_software/adios2-2.6.0/
 
 Then, in the ``$HOME/warpx_directory/``, download and build openPMD-api:
 
