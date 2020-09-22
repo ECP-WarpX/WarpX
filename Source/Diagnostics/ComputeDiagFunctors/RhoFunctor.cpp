@@ -19,13 +19,14 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     auto& mypc  = warpx.GetPartContainer();
 
     // Deposit charge density
-    std::unique_ptr<amrex::MultiFab> rho = mypc.GetChargeDensity( m_lev );
+    // Call this with local=true since the parallel transfers will be handled
+    // by ApplyFilterandSumBoundaryRho
+    std::unique_ptr<amrex::MultiFab> rho = mypc.GetChargeDensity( m_lev, true );
 
-    if (WarpX::use_filter) {
-        warpx.ApplyFilterandSumBoundaryRho(m_lev, m_lev, *rho, 0, rho->nComp());
-    }
+    // Call this in case filtering is turned on
+    warpx.ApplyFilterandSumBoundaryRho(m_lev, m_lev, *rho, 0, rho->nComp());
 
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
     using Idx = SpectralAvgFieldIndex;
     if (WarpX::use_kspace_filter) {
         auto & solver = warpx.get_spectral_solver_fp(m_lev);
