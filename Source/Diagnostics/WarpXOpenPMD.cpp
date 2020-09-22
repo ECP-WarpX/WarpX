@@ -235,7 +235,7 @@ void WarpXOpenPMDPlot::GetFileName(std::string& filename)
 }
 
 
-void WarpXOpenPMDPlot::SetStep(int ts, const std::string& filePrefix)
+void WarpXOpenPMDPlot::SetStep (int ts, const std::string& filePrefix)
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
 
@@ -252,8 +252,14 @@ void WarpXOpenPMDPlot::SetStep(int ts, const std::string& filePrefix)
 
 }
 
+void WarpXOpenPMDPlot::CloseStep ()
+{
+    if (m_Series)
+        m_Series->iterations[m_CurrentStep].close();
+}
+
 void
-WarpXOpenPMDPlot::Init(openPMD::Access access, const std::string& filePrefix)
+WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix)
 {
     // either for the next ts file,
     // or init a single file for all ts
