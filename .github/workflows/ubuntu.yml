@@ -81,9 +81,7 @@ jobs:
         cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single
         make -j 2
 
-  # temporarily disabled due to an MKL problem
   build_dpcc:
-    if: false
     name: oneAPI DPC++ SP [Linux]
     runs-on: ubuntu-latest
     steps:
@@ -101,7 +99,7 @@ jobs:
         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
         echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
         sudo apt-get update
-        sudo apt-get install -y intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl
+        sudo apt-get install -y intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl-devel
         set +e
         source /opt/intel/oneapi/setvars.sh
         source /opt/intel/oneapi/compiler/2021.1-beta08/env/vars.sh
