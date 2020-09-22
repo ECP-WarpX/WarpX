@@ -11,6 +11,8 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 
+#include <AMReX.H>
+
 /* \brief Charge Deposition for thread thread_num
  * /param GetPosition : A functor for returning the particle position.
  * \param wp           : Pointer to array of particle weights.
@@ -100,7 +102,7 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
             // Compute shape factor along x
             // i: leftmost grid point that the particle touches
             amrex::Real sx[depos_order + 1];
-            int i;
+            int i = 0;
             Compute_shape_factor< depos_order > const compute_shape_factor;
             if (rho_type[0] == NODE) {
                 i = compute_shape_factor(sx, x);
@@ -112,7 +114,7 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
             // y direction
             const amrex::Real y = (yp - ymin)*dyi;
             amrex::Real sy[depos_order + 1];
-            int j;
+            int j = 0;
             if (rho_type[1] == NODE) {
                 j = compute_shape_factor(sy, y);
             } else if (rho_type[1] == CELL) {
@@ -122,7 +124,7 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
             // z direction
             const amrex::Real z = (zp - zmin)*dzi;
             amrex::Real sz[depos_order + 1];
-            int k;
+            int k = 0;
             if (rho_type[zdir] == NODE) {
                 k = compute_shape_factor(sz, z);
             } else if (rho_type[zdir] == CELL) {
@@ -160,6 +162,10 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
 #endif
         }
         );
+
+#ifndef WARPX_DIM_RZ
+        amrex::ignore_unused(n_rz_azimuthal_modes);
+#endif
 }
 
 #endif // CHARGEDEPOSITION_H_

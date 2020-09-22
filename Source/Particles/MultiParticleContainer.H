@@ -124,6 +124,13 @@ public:
 
     void doCoulombCollisions ();
 
+    /**
+    * \brief This function loops over all species and performs resampling if appropriate.
+    *
+    * @param[in] timestep the current timestep.
+    */
+    void doResampling (const int timestep);
+
 #ifdef WARPX_QED
     /** If Schwinger process is activated, this function is called at every
      * timestep in Evolve and is used to create Schwinger electron-positron pairs.
@@ -270,6 +277,8 @@ protected:
 
     std::vector<PCTypes> species_types;
 
+    Resampling m_resampler;
+
     template<typename ...Args>
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,
                                  Args const&... pc_dsts) const noexcept
@@ -307,9 +316,13 @@ protected:
     int m_nspecies_breit_wheeler = 0;
     //________
 
+    static constexpr auto m_default_quantum_sync_photon_creation_energy_threshold =
+        static_cast<amrex::ParticleReal>(
+        2.0 * PhysConst::m_e * PhysConst::c * PhysConst::c );  /*!< Default value of the energy threshold for photon creation in Quantum Synchrotron process.*/
+
+
     amrex::ParticleReal m_quantum_sync_photon_creation_energy_threshold =
-      static_cast<amrex::ParticleReal>(
-        2.0 * PhysConst::m_e * PhysConst::c * PhysConst::c );  /*!< Energy threshold for photon creation in Quantum Synchrotron process.*/
+        m_default_quantum_sync_photon_creation_energy_threshold; /*!< Energy threshold for photon creation in Quantum Synchrotron process.*/
 
     /**
      * Returns the number of species having Quantum Synchrotron process enabled

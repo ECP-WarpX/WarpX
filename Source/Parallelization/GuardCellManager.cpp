@@ -6,8 +6,11 @@
  */
 #include "GuardCellManager.H"
 #include "Filter/NCIGodfreyFilter.H"
+#include "Utils/WarpXAlgorithmSelection.H"
+
 #include <AMReX_Print.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX.H>
 
 using namespace amrex;
 
@@ -90,7 +93,7 @@ guardCellManager::Init(
     // after pushing particle.
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell
-    if (maxwell_solver_id == 1) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
+    if (maxwell_solver_id == MaxwellSolverAlgo::CKC) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 
 #ifdef WARPX_USE_PSATD
@@ -111,10 +114,10 @@ guardCellManager::Init(
     pp.query("ny_guard", ngFFt_y);
     pp.query("nz_guard", ngFFt_z);
 
-#if   (AMREX_SPACEDIM == 3)
-    IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
+#if (AMREX_SPACEDIM == 3)
+        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
 #elif (AMREX_SPACEDIM == 2)
-    IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
+        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
 #endif
 
     for (int i_dim=0; i_dim<AMREX_SPACEDIM; i_dim++ ){
@@ -132,6 +135,8 @@ guardCellManager::Init(
         ng_alloc_F_int = ng_required;
     }
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
+#else
+    ignore_unused(nox_fft, noy_fft, noz_fft);
 #endif
 
     ng_Extra = IntVect(static_cast<int>(aux_is_nodal and !do_nodal));

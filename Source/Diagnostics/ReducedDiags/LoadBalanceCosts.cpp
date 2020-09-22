@@ -197,7 +197,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
     ofs << WarpX::GetInstance().gett_new(0);
 
     // loop over data size and write
-    for (int i = 0; i < m_data.size(); ++i)
+    for (int i = 0; i < static_cast<int>(m_data.size()); ++i)
     {
         ofs << m_sep << m_data[i];
         if ((i - m_nDataFields + 1)%m_nDataFields == 0)

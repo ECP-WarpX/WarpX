@@ -26,7 +26,7 @@ T_R ComputeTemperature (
     T_R vz = T_R(0.0);    T_R vs = T_R(0.0);
     T_R gm = T_R(0.0);    T_R us = T_R(0.0);
 
-    for (int i = Is; i < Ie; ++i)
+    for (int i = Is; i < static_cast<int>(Ie); ++i)
     {
         us = ( ux[ I[i] ] * ux[ I[i] ] +
                uy[ I[i] ] * uy[ I[i] ] +

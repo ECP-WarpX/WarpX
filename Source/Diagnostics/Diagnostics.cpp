@@ -137,6 +137,20 @@ Diagnostics::InitData ()
     // When particle buffers, m_particle_buffers are included, they will be initialized here
     InitializeParticleBuffer();
 
+    amrex::ParmParse pp(m_diag_name);
+    amrex::Vector <amrex::Real> dummy_val(AMREX_SPACEDIM);
+    if ( pp.queryarr("diag_lo", dummy_val) || pp.queryarr("diag_hi", dummy_val) ) {
+        // set geometry filter for particle-diags to true when the diagnostic domain-extent
+        // is specified by the user
+        for (int i = 0; i < m_all_species.size(); ++i) {
+            m_all_species[i].m_do_geom_filter = true;
+        }
+        // Disabling particle-io for reduced domain diagnostics by reducing
+        // the particle-diag vector to zero.
+        // This is a temporary fix until particle_buffer is supported in diagnostics.
+        m_all_species.clear();
+        amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
+    }
 }
 
 
@@ -152,6 +166,14 @@ Diagnostics::InitBaseData ()
     nmax_lev = warpx.maxLevel() + 1;
     m_all_field_functors.resize( nmax_lev );
 
+    // For restart, move the m_lo and m_hi of the diag consistent with the
+    // current moving_window location
+    if (warpx.do_moving_window) {
+        int moving_dir = warpx.moving_window_dir;
+        int shift_num_base = static_cast<int>((warpx.getmoving_window_x() - m_lo[moving_dir]) / warpx.Geom(0).CellSize(moving_dir) );
+        m_lo[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
+        m_hi[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
+    }
     // Construct Flush class.
     if        (m_format == "plotfile"){
         m_flush_format = new FlushFormatPlotfile;
@@ -183,6 +205,12 @@ Diagnostics::InitBaseData ()
     for (int i = 0; i < m_num_buffers; ++i) {
         m_mf_output[i].resize( nmax_lev );
     }
+
+    // allocate vector of geometry objects corresponding to each output multifab.
+    m_geom_output.resize( m_num_buffers );
+    for (int i = 0; i < m_num_buffers; ++i) {
+        m_geom_output[i].resize( nmax_lev );
+    }
 }
 
 void
@@ -213,6 +241,9 @@ void
 Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
     WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
+
+    MovingWindowAndGalileanDomainShift ();
+
     if ( DoComputeAndPack (step, force_flush) ) {
         ComputeAndPack();
 

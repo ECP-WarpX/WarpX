@@ -20,19 +20,21 @@ SpectralBinomialFilter::InitFilterArray (HankelTransform::RealVector const & kve
                                          bool const compensation,
                                          KFilterArray & filter)
 {
+    const int N = kvec.size();
+    filter.resize(N);
+    amrex::Real* p_filter = filter.data();
+    amrex::Real const* p_kvec = kvec.data();
 
-    filter.resize(kvec.size());
-
-    for (int i=0 ; i < kvec.size() ; i++) {
-        amrex::Real const ss = std::sin(0.5_rt*kvec[i]*dels);
+    amrex::ParallelFor(N, [=] AMREX_GPU_DEVICE (int i) noexcept
+    {
+        amrex::Real const ss = std::sin(0.5_rt*p_kvec[i]*dels);
         amrex::Real const ss2 = ss*ss;
         amrex::Real filt = std::pow(1._rt - ss2, npasses);
         if (compensation) {
             filt *= (1._rt + npasses*ss2);
         }
-        filter[i] = filt;
-    }
-
+        p_filter[i] = filt;
+    });
 }
 
 /* \brief Initialize the radial and longitudinal filter arrays */

@@ -369,9 +369,9 @@ WarpX::ReadParameters ()
         pp.query("do_subcycling", do_subcycling);
         pp.query("use_hybrid_QED", use_hybrid_QED);
         pp.query("safe_guard_cells", safe_guard_cells);
-        std::string override_sync_int_string = "1";
-        pp.query("override_sync_int", override_sync_int_string);
-        override_sync_intervals = IntervalsParser(override_sync_int_string);
+        std::vector<std::string> override_sync_int_string_vec = {"1"};
+        pp.queryarr("override_sync_int", override_sync_int_string_vec);
+        override_sync_intervals = IntervalsParser(override_sync_int_string_vec);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
                                          "Subcycling method 1 only works for 2 levels.");
@@ -488,12 +488,12 @@ WarpX::ReadParameters ()
         pp.query("n_field_gather_buffer", n_field_gather_buffer);
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
 #ifdef AMREX_USE_GPU
-        std::string sort_int_string = "4";
+        std::vector<std::string>sort_int_string_vec = {"4"};
 #else
-        std::string sort_int_string = "-1";
+        std::vector<std::string> sort_int_string_vec = {"-1"};
 #endif
-        pp.query("sort_int", sort_int_string);
-        sort_intervals = IntervalsParser(sort_int_string);
+        pp.queryarr("sort_int", sort_int_string_vec);
+        sort_intervals = IntervalsParser(sort_int_string_vec);
 
         Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
         bool sort_bin_size_is_specified = pp.queryarr("sort_bin_size", vect_sort_bin_size);
@@ -568,9 +568,9 @@ WarpX::ReadParameters ()
             fine_tag_hi = RealVect{hi};
         }
 
-        std::string load_balance_int_string = "0";
-        pp.query("load_balance_int", load_balance_int_string);
-        load_balance_intervals = IntervalsParser(load_balance_int_string);
+        std::vector<std::string> load_balance_int_string_vec = {"0"};
+        pp.queryarr("load_balance_int", load_balance_int_string_vec);
+        load_balance_intervals = IntervalsParser(load_balance_int_string_vec);
         pp.query("load_balance_with_sfc", load_balance_with_sfc);
         pp.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
         pp.query("load_balance_efficiency_ratio_threshold", load_balance_efficiency_ratio_threshold);
@@ -666,13 +666,13 @@ WarpX::ReadParameters ()
         }
 
         pp.query("current_correction", current_correction);
-        pp.query("v_galilean", v_galilean);
+        pp.query("v_galilean", m_v_galilean);
         pp.query("do_time_averaging", fft_do_time_averaging);
 
       // Scale the velocity by the speed of light
-        for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
+        for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
-        if (v_galilean[0] == 0. && v_galilean[1] == 0. && v_galilean[2] == 0.) {
+        if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0.) {
             update_with_rho = false; // standard PSATD
         }
         else {
@@ -841,7 +841,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         NCIGodfreyFilter::m_stencil_width,
         maxwell_solver_id,
         maxLevel(),
-        WarpX::v_galilean,
+        WarpX::m_v_galilean,
         safe_guard_cells);
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
@@ -1011,7 +1011,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     bool const pml=false;
     spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
-        n_rz_azimuthal_modes, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev], lev, pml, fft_periodic_single_box ) );
+        n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev], lev, pml, fft_periodic_single_box ) );
     if (use_kspace_filter) {
         spectral_solver_fp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
     }
@@ -1019,10 +1019,10 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if ( fft_periodic_single_box == false ) {
         realspace_ba.grow(ngE); // add guard cells
     }
-    bool const pml=false;
+    bool const pml_flag_false=false;
     spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
-        pml, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
+        nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev],
+        pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
     m_fdtd_solver_fp[lev].reset(
@@ -1126,21 +1126,21 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         RealVect cdx_vect(cdx[0], cdx[2]);
 #   endif
         // Get the cell-centered box, with guard cells
-        BoxArray realspace_ba = cba;// Copy box
-        realspace_ba.enclosedCells(); // Make it cell-centered
+        BoxArray c_realspace_ba = cba;// Copy box
+        c_realspace_ba.enclosedCells(); // Make it cell-centered
         // Define spectral solver
 #   ifdef WARPX_DIM_RZ
-        realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-        spectral_solver_cp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
-            n_rz_azimuthal_modes, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev], lev ) );
+        c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+        spectral_solver_cp[lev].reset( new SpectralSolverRZ( c_realspace_ba, dm,
+            n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev], lev ) );
         if (use_kspace_filter) {
             spectral_solver_cp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
         }
 #   else
-        realspace_ba.grow(ngE); // add guard cells
-        spectral_solver_cp[lev].reset( new SpectralSolver( realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev],
-            pml, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
+        c_realspace_ba.grow(ngE); // add guard cells
+        spectral_solver_cp[lev].reset( new SpectralSolver( c_realspace_ba, dm,
+            nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev],
+            pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
         m_fdtd_solver_cp[lev].reset(

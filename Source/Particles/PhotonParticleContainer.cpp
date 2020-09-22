@@ -102,8 +102,6 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     ParticleReal* const AMREX_RESTRICT uz = attribs[PIdx::uz].dataPtr();
 
 #ifdef WARPX_QED
-    AMREX_ASSERT(has_breit_wheeler());
-
     BreitWheelerEvolveOpticalDepth evolve_opt;
     amrex::Real* AMREX_RESTRICT p_optical_depth_BW = nullptr;
     const bool local_has_breit_wheeler = has_breit_wheeler();
@@ -129,7 +127,10 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     amrex::Real cur_time = WarpX::GetInstance().gett_new(lev);
     const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
     amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    amrex::Array<amrex::Real,3> galilean_shift = {
+        m_v_galilean[0]*time_shift,
+        m_v_galilean[1]*time_shift,
+        m_v_galilean[2]*time_shift };
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, gather_lev);
 
     const Dim3 lo = lbound(box);
@@ -180,12 +181,8 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
 #ifdef WARPX_QED
             if (local_has_breit_wheeler) {
-                const ParticleReal px = me * ux[i];
-                const ParticleReal py = me * uy[i];
-                const ParticleReal pz = me * uz[i];
-
-                bool has_event_happened = evolve_opt(px, py, pz, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                                     dt, p_optical_depth_BW[i]);
+                evolve_opt(ux[i], uy[i], uz[i], Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                    dt, p_optical_depth_BW[i]);
             }
 #endif
 
@@ -209,8 +206,7 @@ PhotonParticleContainer::Evolve (int lev,
                                  Real t, Real dt, DtType /*a_dt_type*/)
 {
     // This does gather, push and depose.
-    // Push and depose have been re-written for photon,
-    // so they do not do anything.
+    // Push and depose have been re-written for photons
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,
                                        Bx, By, Bz,

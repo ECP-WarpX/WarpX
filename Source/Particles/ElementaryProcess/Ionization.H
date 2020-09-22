@@ -129,7 +129,7 @@ struct IonizationTransformFunc
 {
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (DstData& dst, SrcData& src, int i_src, int i_dst) const noexcept
+    void operator() (DstData& /*dst*/, SrcData& src, int i_src, int /*i_dst*/) const noexcept
     {
         src.m_runtime_idata[0][i_src] += 1;
     }

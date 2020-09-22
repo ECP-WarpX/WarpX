@@ -7,7 +7,8 @@
 #include "CollisionType.H"
 #include "ShuffleFisherYates.H"
 #include "ElasticCollisionPerez.H"
-#include <WarpX.H>
+#include "Utils/ParticleUtils.H"
+#include "WarpX.H"
 
 CollisionType::CollisionType(
     const std::vector<std::string>& species_names,
@@ -25,7 +26,7 @@ CollisionType::CollisionType(
     m_CoulombLog = -1.0;
     pp.query("CoulombLog", m_CoulombLog);
 
-    for (int i=0; i<species_names.size(); i++)
+    for (int i=0; i<static_cast<int>(species_names.size()); i++)
     {
         if (species_names[i] == collision_species[0])
         { m_species1_index = i; }
@@ -47,42 +48,7 @@ using ParticleTileType = WarpXParticleContainer::ParticleTileType;
 using ParticleBins = DenseBins<ParticleType>;
 using index_type = ParticleBins::index_type;
 
-namespace {
-
-    /* Find the particles and count the particles that are in each cell.
-       Note that this does *not* rearrange particle arrays */
-    ParticleBins
-    findParticlesInEachCell( int const lev, MFIter const& mfi,
-                             ParticleTileType const& ptile) {
-
-        // Extract particle structures for this tile
-        int const np = ptile.numParticles();
-        ParticleType const* particle_ptr = ptile.GetArrayOfStructs()().data();
-
-        // Extract box properties
-        Geometry const& geom = WarpX::GetInstance().Geom(lev);
-        Box const& cbx = mfi.tilebox(IntVect::TheZeroVector()); //Cell-centered box
-        const auto lo = lbound(cbx);
-        const auto dxi = geom.InvCellSizeArray();
-        const auto plo = geom.ProbLoArray();
-
-        // Find particles that are in each cell;
-        // results are stored in the object `bins`.
-        ParticleBins bins;
-        bins.build(np, particle_ptr, cbx,
-            // Pass lambda function that returns the cell index
-            [=] AMREX_GPU_HOST_DEVICE (const ParticleType& p) noexcept -> IntVect
-            {
-                return IntVect(AMREX_D_DECL(
-                                   static_cast<int>((p.pos(0)-plo[0])*dxi[0] - lo.x),
-                                   static_cast<int>((p.pos(1)-plo[1])*dxi[1] - lo.y),
-                                   static_cast<int>((p.pos(2)-plo[2])*dxi[2] - lo.z)));
-            });
-
-        return bins;
-    }
-
-}
+using namespace ParticleUtils;
 
 /** Perform all binary collisions within a tile
  *
@@ -162,6 +128,8 @@ void CollisionType::doCoulombCollisionsWithinTile
 #if defined WARPX_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0*ri+1.0)*dr*dr*dz;
+#else
+                    amrex::ignore_unused(nz);
 #endif
 
                     // Call the function in order to perform collisions
@@ -257,6 +225,8 @@ void CollisionType::doCoulombCollisionsWithinTile
 #if defined WARPX_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
                     auto dV = MathConst::pi*(2.0*ri+1.0)*dr*dr*dz;
+#else
+                    amrex::ignore_unused(nz);
 #endif
 
                     // Call the function in order to perform collisions

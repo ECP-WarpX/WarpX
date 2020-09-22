@@ -1,5 +1,13 @@
 #! /usr/bin/env python3
 
+"""
+ Copyright 2020
+
+ This file is part of WarpX.
+
+ License: BSD-3-Clause-LBNL
+ """
+
 from checksum import Checksum
 from benchmark import Benchmark
 import argparse

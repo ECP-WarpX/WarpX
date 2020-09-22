@@ -98,7 +98,7 @@ struct InjectorMomentumBoltzmann
         u[(dir+2)%3] = vave*std::sqrt(-std::log(x1)) *std::cos(2*M_PI*x2);
         u[dir] = vave*std::sqrt(-std::log(amrex::Random()))*
             std::sin(2*M_PI*amrex::Random());
-        gamma = std::pow(u[0],2)+std::pow(u[1],2)+std::pow(u[2],2);
+        gamma = u[0]*u[0]+u[1]*u[1]+u[2]*u[2];
         gamma = std::sqrt(1+gamma);
         // The following condition is equtaion 32 in Zenitani 2015
         // (Phys. Plasmas 22, 042116) , called the flipping method. It
@@ -119,7 +119,7 @@ struct InjectorMomentumBoltzmann
         // This Lorentz transform is equation 17 in Zenitani.
         // It transforms the integral d3u' -> d3u
         // where d3u' is the volume element for momentum in the boosted frame.
-        u[dir] = 1/std::sqrt(1-pow(beta,2))*(u[dir]+gamma*beta);
+        u[dir] = 1/std::sqrt(1-beta*beta)*(u[dir]+gamma*beta);
         // Note that if beta = 0 then the flipping method and Lorentz transform
         // have no effect on the u[dir] direction.
         return amrex::XDim3 {u[0],u[1],u[2]};
@@ -172,7 +172,7 @@ struct InjectorMomentumJuttner
         {
             u[dir] = -theta*
                 std::log(amrex::Random()*amrex::Random()*amrex::Random());
-            gamma = std::sqrt(1+std::pow(u[dir],2));
+            gamma = std::sqrt(1+u[dir]*u[dir]);
             x1 = theta*std::log(amrex::Random());
         }
         // The following code samples a random unit vector
@@ -205,7 +205,7 @@ struct InjectorMomentumJuttner
         // This Lorentz transform is equation 17 in Zenitani.
         // It transforms the integral d3u' -> d3u
         // where d3u' is the volume element for momentum in the boosted frame.
-        u[dir] = 1/std::sqrt(1-pow(beta,2))*(u[dir]+gamma*beta);
+        u[dir] = 1/std::sqrt(1-beta*beta)*(u[dir]+gamma*beta);
         // Note that if beta = 0 then the flipping method and Lorentz transform
         // have no effect on the u[dir] direction.
         return amrex::XDim3 {u[0],u[1],u[2]};
@@ -293,12 +293,8 @@ struct InjectorMomentumParser
 // - InjectorMomentumRadialExpansion: to generate radial expansion;
 // - InjectorMomentumParser         : to generate momentum from parser;
 // The choice is made at runtime, depending in the constructor called.
-// This mimics virtual functions, except the struct is stored in managed memory
-// and member functions are made __host__ __device__ to run on CPU and GPU.
-// This struct inherits from amrex::Gpu::Managed to provide new and delete
-// operators in managed memory when running on GPU. Nothing special on CPU.
+// This mimics virtual functions.
 struct InjectorMomentum
-    : public amrex::Gpu::Managed
 {
     // This constructor stores a InjectorMomentumConstant in union object.
     InjectorMomentum (InjectorMomentumConstant* t,
@@ -358,7 +354,7 @@ struct InjectorMomentum
     void operator= (InjectorMomentum const&) = delete;
     void operator= (InjectorMomentum &&) = delete;
 
-    ~InjectorMomentum ();
+    void clear ();
 
     // call getMomentum from the object stored in the union
     // (the union is called Object, and the instance is called object).
@@ -490,6 +486,17 @@ private:
         InjectorMomentumParser   parser;
     };
     Object object;
+};
+
+// In order for InjectorMomentum to be trivially copyable, its destructor
+// must be trivial.  So we have to rely on a custom deleter for unique_ptr.
+struct InjectorMomentumDeleter {
+    void operator () (InjectorMomentum* p) const {
+        if (p) {
+            p->clear();
+            delete p;
+        }
+    }
 };
 
 #endif

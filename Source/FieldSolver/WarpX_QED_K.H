@@ -10,6 +10,7 @@
 
 #include "Utils/WarpXConst.H"
 #include <AMReX_FArrayBox.H>
+#include <AMReX.H>
 
 #include <cmath>
 
@@ -345,6 +346,7 @@ const amrex::Real dyi = 1./dy;
 
     Ez(j,k,0) = Ez(j,k,0) + 0.5_rt*dt*dEz;
 
+    amrex::ignore_unused(l, dy);
 #endif
 
 }

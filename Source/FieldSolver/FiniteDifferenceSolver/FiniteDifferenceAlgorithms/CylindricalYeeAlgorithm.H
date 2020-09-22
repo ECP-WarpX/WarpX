@@ -13,6 +13,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
+#include <AMReX.H>
 
 #include <array>
 #include <cmath>
@@ -26,8 +27,8 @@ struct CylindricalYeeAlgorithm {
 
     static void InitializeStencilCoefficients (
         std::array<amrex::Real,3>& cell_size,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_r,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_z ) {
+        amrex::Vector<amrex::Real>& stencil_coefs_r,
+        amrex::Vector<amrex::Real>& stencil_coefs_z ) {
 
         using namespace amrex;
         // Store the inverse cell size along each direction in the coefficients
@@ -76,6 +77,8 @@ struct CylindricalYeeAlgorithm {
         int const i, int const j, int const k, int const comp ) {
 
         using namespace amrex;
+        ignore_unused(n_coefs_r);
+
         Real const inv_dr = coefs_r[0];
         return 1._rt/r * inv_dr*( (r+0.5_rt*dr)*F(i+1,j,k,comp) - (r-0.5_rt*dr)*F(i,j,k,comp) );
     };
@@ -92,6 +95,8 @@ struct CylindricalYeeAlgorithm {
         int const i, int const j, int const k, int const comp ) {
 
         using namespace amrex;
+        ignore_unused(n_coefs_r);
+
         Real const inv_dr = coefs_r[0];
         return 1._rt/r * inv_dr*( (r+0.5_rt*dr)*F(i,j,k,comp) - (r-0.5_rt*dr)*F(i-1,j,k,comp) );
     };
@@ -105,6 +110,8 @@ struct CylindricalYeeAlgorithm {
         int const i, int const j, int const k, int const comp ) {
 
         using namespace amrex;
+        ignore_unused(n_coefs_r);
+
         Real const inv_dr = coefs_r[0];
         return inv_dr*( F(i+1,j,k,comp) - F(i,j,k,comp) );
     };
@@ -118,6 +125,8 @@ struct CylindricalYeeAlgorithm {
         int const i, int const j, int const k, int const comp ) {
 
         using namespace amrex;
+        ignore_unused(n_coefs_r);
+
         Real const inv_dr = coefs_r[0];
         return inv_dr*( F(i,j,k,comp) - F(i-1,j,k,comp) );
     };
@@ -130,6 +139,8 @@ struct CylindricalYeeAlgorithm {
         amrex::Real const * const coefs_z, int const n_coefs_z,
         int const i, int const j, int const k, int const comp ) {
 
+        amrex::ignore_unused(n_coefs_z);
+
         amrex::Real const inv_dz = coefs_z[0];
         return inv_dz*( F(i,j+1,k,comp) - F(i,j,k,comp) );
     };
@@ -141,6 +152,8 @@ struct CylindricalYeeAlgorithm {
         amrex::Array4<amrex::Real> const& F,
         amrex::Real const * const coefs_z, int const n_coefs_z,
         int const i, int const j, int const k, int const comp ) {
+
+        amrex::ignore_unused(n_coefs_z);
 
         amrex::Real const inv_dz = coefs_z[0];
         return inv_dz*( F(i,j,k,comp) - F(i,j-1,k,comp) );

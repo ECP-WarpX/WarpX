@@ -12,7 +12,7 @@
 
 #include <AMReX_FArrayBox.H>
 #include <AMReX_REAL.H>
-
+#include <AMReX.H>
 
 /**
  * \brief Push the position of a photon particle over one timestep,
@@ -31,6 +31,8 @@ void UpdatePositionPhoton(
     x += ux * c_over_umod * dt;
 #if (defined WARPX_DIM_3D) || (defined WARPX_DIM_RZ) // RZ pushes particles in 3D
     y += uy * c_over_umod * dt;
+#else
+    amrex::ignore_unused(y);
 #endif
     z += uz * c_over_umod * dt;
 }

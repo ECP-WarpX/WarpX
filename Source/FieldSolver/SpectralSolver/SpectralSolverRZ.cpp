@@ -69,8 +69,7 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
  *  to spectral space, and store the corresponding result internally
  *  (in the spectral field specified by `field_index`) */
 void
-SpectralSolverRZ::ForwardTransform (amrex::MultiFab const & field_mf,
-                                    int const field_index,
+SpectralSolverRZ::ForwardTransform (amrex::MultiFab const & field_mf, int const field_index,
                                     int const i_comp) {
     WARPX_PROFILE("SpectralSolverRZ::ForwardTransform");
     field_data.ForwardTransform(field_mf, field_index, i_comp);
@@ -90,8 +89,7 @@ SpectralSolverRZ::ForwardTransform (amrex::MultiFab const & field_mf1, int const
 /* \brief Transform spectral field specified by `field_index` back to
  * real space, and store it in the component `i_comp` of `field_mf` */
 void
-SpectralSolverRZ::BackwardTransform (amrex::MultiFab& field_mf,
-                                     int const field_index,
+SpectralSolverRZ::BackwardTransform (amrex::MultiFab& field_mf, int const field_index,
                                      int const i_comp) {
     WARPX_PROFILE("SpectralSolverRZ::BackwardTransform");
     field_data.BackwardTransform(field_mf, field_index, i_comp);
@@ -143,3 +141,8 @@ SpectralSolverRZ::CurrentCorrection (std::array<std::unique_ptr<amrex::MultiFab>
      algorithm->CurrentCorrection(field_data, current, rho);
 };
 
+void
+SpectralSolverRZ::VayDeposition (std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+{
+  algorithm->VayDeposition(field_data, current);
+}

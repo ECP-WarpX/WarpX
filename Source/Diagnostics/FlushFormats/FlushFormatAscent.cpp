@@ -1,6 +1,8 @@
 #include "FlushFormatAscent.H"
 #include "WarpX.H"
 
+#include <AMReX.H>
+
 using namespace amrex;
 
 void
@@ -11,7 +13,7 @@ FlushFormatAscent::WriteToFile (
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, bool plot_raw_fields,
-    bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F) const
+    bool plot_raw_fields_guards, bool /*plot_raw_rho*/, bool plot_raw_F) const
 {
 #ifdef AMREX_USE_ASCENT
 
@@ -39,6 +41,10 @@ FlushFormatAscent::WriteToFile (
     ascent.execute(actions);
     ascent.close();
 
+#else
+    amrex::ignore_unused(varnames, mf, geom, iteration, time,
+        particle_diags, nlev, prefix, plot_raw_fields,
+        plot_raw_fields_guards, plot_raw_F);
 #endif // AMREX_USE_ASCENT
 }
 

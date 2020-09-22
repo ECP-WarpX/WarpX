@@ -1,6 +1,10 @@
 #ifndef WARPX_INTERVALSPARSER_H_
 #define WARPX_INTERVALSPARSER_H_
 
+#include <string>
+#include <limits>
+#include <vector>
+
 /**
  * \brief This class is a parser for slices of the form i:j:k where i, j and k are integers
  * representing respectively the starting point, the stopping point and the period.
@@ -86,10 +90,11 @@ public:
     /**
     * \brief Constructor of the IntervalsParser class.
     *
-    * @param[in] instr an input string of the form "x,y,z,...". This will call the constructor of
-    * SliceParser using x, y and z as input arguments.
+    * @param[in] instr_vec an input vector string, which when concatenated is of the form
+    * "x,y,z,...". This will call the constructor of SliceParser using x, y and z as input
+    * arguments.
     */
-    IntervalsParser (const std::string& instr);
+    IntervalsParser (const std::vector<std::string>& instr_vec);
 
     /**
     * \brief A method that returns true if the input integer is contained in any of the slices

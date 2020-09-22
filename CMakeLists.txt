@@ -61,6 +61,13 @@ if(NOT WarpX_COMPUTE IN_LIST WarpX_COMPUTE_VALUES)
     message(FATAL_ERROR "WarpX_PRECISION (${WarpX_COMPUTE}) must be one of ${WarpX_COMPUTE_VALUES}")
 endif()
 
+option(WarpX_MPI_THREAD_MULTIPLE "MPI thread-multiple support, i.e. for async_io" ON)
+mark_as_advanced(WarpX_MPI_THREAD_MULTIPLE)
+
+set(WarpX_PARSER_DEPTH 24 CACHE STRING
+    "Maximum parser depth for input file functions")
+mark_as_advanced(WarpX_PARSER_DEPTH)
+
 option(WarpX_amrex_internal                    "Download & build AMReX" ON)
 
 # change the default build type to RelWithDebInfo (or Release) instead of Debug
@@ -221,6 +228,9 @@ endif()
 if(WarpX_PSATD)
     target_compile_definitions(WarpX PRIVATE WARPX_USE_PSATD)
 endif()
+
+target_compile_definitions(WarpX PRIVATE
+    WARPX_PARSER_DEPTH=${WarpX_PARSER_DEPTH})
 
 
 # Warnings ####################################################################

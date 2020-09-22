@@ -1,9 +1,2 @@
 CEXE_sources += BreitWheelerEngineWrapper.cpp
 CEXE_sources += QuantumSyncEngineWrapper.cpp
-
-#Table generation is enabled only if QED_TABLE_GEN is
-#set to true
-ifeq ($(QED_TABLE_GEN),TRUE)
-    CEXE_sources += BreitWheelerEngineTableBuilder.cpp
-    CEXE_sources += QuantumSyncEngineTableBuilder.cpp
-endif
