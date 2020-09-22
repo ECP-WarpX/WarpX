@@ -391,7 +391,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         // Rescale current in r-z mode since the inverse volume factor was not
         // included in the current deposition.
         amrex::ParallelFor(tbr, tbt, tbz,
-        [=] AMREX_GPU_DEVICE (int i, int j, int k)
+        [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
@@ -420,7 +420,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 Jr_arr(i,j,0,2*imode) /= (2.*MathConst::pi*r);
             }
         },
-        [=] AMREX_GPU_DEVICE (int i, int j, int k)
+        [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
@@ -458,7 +458,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 }
             }
         },
-        [=] AMREX_GPU_DEVICE (int i, int j, int k)
+        [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
@@ -543,7 +543,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         // Note that the loop is also over ncomps, which takes care of the RZ modes,
         // as well as the old and new rho.
         amrex::ParallelFor(tb, Rho->nComp(),
-        [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+        [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/, int icomp)
         {
             // Wrap the charge density deposited in the guard cells around
             // to the cells above the axis.

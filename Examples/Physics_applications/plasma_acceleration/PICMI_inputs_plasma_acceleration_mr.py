@@ -33,7 +33,7 @@ grid.add_refined_region(level = 1,
                         hi = [25e-6, 25e-6, 200.e-6])
 
 solver = picmi.ElectromagneticSolver(grid=grid, cfl=1,
-                                     warpx_do_pml = 1,
+                                     warpx_do_pml = True,
                                      warpx_pml_ncell = 10)
 
 beam_distribution = picmi.UniformDistribution(density = 1.e23,
