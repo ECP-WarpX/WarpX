@@ -1738,7 +1738,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
-      (version >= 1.67) and to compile with ``QED_TABLE_GEN=TRUE``. All
+      (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All
       the following parameters must be specified (table 1 is used to evolve the optical depth
       of the photons, while table 2 is used for pair generation):
 
@@ -1774,7 +1774,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
-      (version >= 1.67) and to compile with ``QED_TABLE_GEN=TRUE``. All
+      (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All
       the following parameters must be specified (table 1 is used to evolve the optical depth
       of the particles, while table 2 is used for photon emission):
 
