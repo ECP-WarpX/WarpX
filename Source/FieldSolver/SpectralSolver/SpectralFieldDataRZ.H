@@ -39,7 +39,7 @@ class SpectralFieldDataRZ
                             const amrex::DistributionMapping& dm,
                             const int n_field_required,
                             const int n_modes,
-                            const int lev, const bool periodic_single_box);
+                            const int lev);
         SpectralFieldDataRZ() = default; // Default constructor
         SpectralFieldDataRZ& operator=(SpectralFieldDataRZ&& field_data) = default;
         ~SpectralFieldDataRZ();
@@ -89,9 +89,6 @@ class SpectralFieldDataRZ
         SpectralShiftFactor zshift_FFTfromCell, zshift_FFTtoCell;
         MultiSpectralHankelTransformer multi_spectral_hankel_transformer;
         BinomialFilter binomialfilter;
-
-        bool m_periodic_single_box;
-
 };
 
 #endif // WARPX_SPECTRAL_FIELD_DATA_RZ_H_

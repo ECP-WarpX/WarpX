@@ -24,9 +24,8 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (amrex::BoxArray const & realspace_ba,
                                           amrex::DistributionMapping const & dm,
                                           int const n_field_required,
                                           int const n_modes,
-                                          int const lev, const bool periodic_single_box)
-    : n_rz_azimuthal_modes(n_modes),
-      m_periodic_single_box(periodic_single_box)
+                                          int const lev)
+    : n_rz_azimuthal_modes(n_modes)
 {
     amrex::BoxArray const & spectralspace_ba = k_space.spectralspace_ba;
 
@@ -302,7 +301,7 @@ SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf, int con
 
     // Create a copy of the input multifab since the shape of field_mf
     // might not be what is needed in transform.
-    // For example, with m_periodic_single_box, field_mf will have guard cells but
+    // For example, with fft_periodic_single_box, field_mf will have guard cells but
     // the transformed array does not.
     // Note that the copy will not include the imaginary part of mode 0 as
     // PhysicalToSpectral_Scalar expects.
@@ -419,14 +418,8 @@ SpectralFieldDataRZ::BackwardTransform (amrex::MultiFab& field_mf_r, int const f
     amrex::MultiFab tempHTransformedSplit_m(tempHTransformed.boxArray(), tempHTransformed.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
 
     // Create copies of the input multifabs. The copies will include the imaginary part of mode 0.
-    amrex::IntVect guards;
-    if (m_periodic_single_box) {
-        guards = amrex::IntVect::TheZeroVector();
-    } else {
-        guards = field_mf_r.nGrowVect();
-    }
-    amrex::MultiFab field_mf_r_copy(field_mf_r.boxArray(), field_mf_r.DistributionMap(), 2*n_rz_azimuthal_modes, guards);
-    amrex::MultiFab field_mf_t_copy(field_mf_t.boxArray(), field_mf_t.DistributionMap(), 2*n_rz_azimuthal_modes, guards);
+    amrex::MultiFab field_mf_r_copy(tempHTransformed.boxArray(), field_mf_r.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
+    amrex::MultiFab field_mf_t_copy(tempHTransformed.boxArray(), field_mf_t.DistributionMap(), 2*n_rz_azimuthal_modes, 0);
 
     // Loop over boxes.
     for (amrex::MFIter mfi(field_mf_r); mfi.isValid(); ++mfi){

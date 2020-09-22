@@ -1011,8 +1011,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     bool const pml=false;
     spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
-        n_rz_azimuthal_modes, noz_fft, do_nodal, dx_vect, dt[lev], lev,
-        pml, fft_periodic_single_box ) );
+        n_rz_azimuthal_modes, noz_fft, do_nodal, dx_vect, dt[lev], lev ) );
     if (use_kspace_filter) {
         spectral_solver_fp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
     }
