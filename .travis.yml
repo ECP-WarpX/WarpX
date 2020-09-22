@@ -41,9 +41,9 @@ install:
       fi
     - if [ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]; then
         cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git
-          -DBLAS_LIBRARY=generic -DUSE_OPENMP=OFF -DBLASPP_BUILD_TESTS=OFF;
+          -Duse_openmp=OFF -Dbuild_tests=OFF;
         cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git
-          -DUSE_OPENMP=off -DLAPACKPP_BUILD_TESTS=OFF;
+          -DBUILD_LAPACKPP_TESTS=OFF;
       fi
 
 script:

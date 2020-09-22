@@ -15,10 +15,7 @@
 
 #include "QedWrapperCommons.H"
 
-//#define PXRMP_CORE_ONLY allows importing only the 'core functions' of the
-//QED library.
-#define PXRMP_CORE_ONLY
-#include <chi_functions.hpp>
+#include <physics/chi_functions.hpp>
 
 namespace QedUtils{
     /**
@@ -32,14 +29,13 @@ namespace QedUtils{
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     amrex::Real chi_photon(
-        amrex::Real px, amrex::Real py, amrex::Real pz,
-        amrex::Real ex, amrex::Real ey, amrex::Real ez,
-        amrex::Real bx, amrex::Real by, amrex::Real bz)
+        const amrex::Real px, const amrex::Real py, const amrex::Real pz,
+        const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
+        const amrex::Real bx, const amrex::Real by, const amrex::Real bz)
     {
-        //laser wavelength is unused if SI units are set
-        const amrex::Real dummy_lambda = 1.0;
-        return picsar::multi_physics::chi_photon(
-            px, py, pz, ex, ey, ez, bx, by, bz, dummy_lambda);
+        namespace pxr_p = picsar::multi_physics::phys;
+        return pxr_p::chi_photon<amrex::Real, pxr_p::unit_system::SI>(
+            px, py, pz, ex, ey, ez, bx, by, bz);
     }
 
     /**
@@ -52,17 +48,16 @@ namespace QedUtils{
     */
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
-    amrex::Real chi_lepton(
-        amrex::Real px, amrex::Real py, amrex::Real pz,
-        amrex::Real ex, amrex::Real ey, amrex::Real ez,
-        amrex::Real bx, amrex::Real by, amrex::Real bz)
+    amrex::Real chi_ele_pos(
+        const amrex::Real px, const amrex::Real py, const amrex::Real pz,
+        const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
+        const amrex::Real bx, const amrex::Real by, const amrex::Real bz)
     {
-        //laser wavelength is unused if SI units are set
-        const amrex::Real dummy_lambda = 1.0;
-        return picsar::multi_physics::chi_lepton(
-            px, py, pz, ex, ey, ez, bx, by, bz, dummy_lambda);
+            namespace pxr_p = picsar::multi_physics::phys;
+            return pxr_p::chi_ele_pos<amrex::Real, pxr_p::unit_system::SI>(
+                px, py, pz, ex, ey, ez, bx, by, bz);
     }
     //_________
-};
+}
 
 #endif //WARPX_amrex_qed_chi_functions_h_

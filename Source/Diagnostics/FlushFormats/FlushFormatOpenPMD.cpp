@@ -46,6 +46,9 @@ FlushFormatOpenPMD::WriteToFile (
 
     // particles: all (reside only on locally finest level)
     m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags);
+
+    // signal that no further updates will be written to this iteration
+    m_OpenPMDPlotWriter->CloseStep();
 }
 
 FlushFormatOpenPMD::~FlushFormatOpenPMD (){

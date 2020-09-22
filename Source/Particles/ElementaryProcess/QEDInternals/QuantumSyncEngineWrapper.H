@@ -8,39 +8,49 @@
 #define WARPX_quantum_sync_engine_wrapper_h_
 
 #include "QedWrapperCommons.H"
-#include "QuantumSyncEngineInnards.H"
+#include "QedChiFunctions.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Vector.H>
 #include <AMReX_Gpu.H>
 
-//#define PXRMP_CORE_ONLY allows importing only the 'core functions' of the
-//Quantum Synchrotron engine of the QED PICSAR library.
-#define PXRMP_CORE_ONLY
-#include <quantum_sync_engine.hpp>
-
-//Lookup table building function is in a dedicated (optional) class to
-//avoid including heavy dependencies if they are not needed.
-#ifdef WARPX_QED_TABLE_GEN
-#    include "QuantumSyncEngineTableBuilder.H"
-#endif
+#include <physics/quantum_sync/quantum_sync_engine_tables.hpp>
+#include <physics/quantum_sync/quantum_sync_engine_core.hpp>
 
 #include <string>
+#include <vector>
 
-//Some handy aliases
+// Aliases =============================
+using QS_dndt_table_params =
+    picsar::multi_physics::phys::quantum_sync::
+    dndt_lookup_table_params<amrex::Real>;
 
-// The engine has two templated arguments: the numerical type
-// and a random number generator. However, random numbers are not
-// used to generate the lookup tables and the static member
-// functions which are called in the functors do not use
-// random numbers as well. Therefore, an empty "DummyStruct"
-// can be passed as a template parameter.
-using PicsarQuantumSynchrotronEngine = picsar::multi_physics::
-    quantum_synchrotron_engine<amrex::Real, QedUtils::DummyStruct>;
+using QS_dndt_table =
+    picsar::multi_physics::phys::quantum_sync::
+    dndt_lookup_table<
+    amrex::Real,
+    amrex::Gpu::DeviceVector<amrex::Real>>;
 
-using PicsarQuantumSynchrotronCtrl =
-    picsar::multi_physics::quantum_synchrotron_engine_ctrl<amrex::Real>;
-//__________
+using QS_dndt_table_view = QS_dndt_table::view_type;
+
+using QS_phot_em_table_params =
+    picsar::multi_physics::phys::quantum_sync::
+    photon_emission_lookup_table_params<amrex::Real>;
+
+using QS_phot_em_table =
+    picsar::multi_physics::phys::quantum_sync::
+    photon_emission_lookup_table<
+    amrex::Real,
+    amrex::Gpu::DeviceVector<amrex::Real>>;
+
+using QS_phot_em_table_view = QS_phot_em_table::view_type;
+
+struct PicsarQuantumSyncCtrl
+{
+    QS_dndt_table_params dndt_params;
+    QS_phot_em_table_params phot_em_params;
+};
 
 // Functors ==================================
 
@@ -70,9 +80,10 @@ public:
     AMREX_FORCE_INLINE
     amrex::Real operator() () const noexcept
     {
+        namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
+
         //A random number in [0,1) should be provided as an argument.
-        return PicsarQuantumSynchrotronEngine::
-            internal_get_optical_depth(amrex::Random());
+        return pxr_qs::get_optical_depth(amrex::Random());
     }
 };
 //____________________________________________
@@ -85,154 +96,158 @@ class QuantumSynchrotronEvolveOpticalDepth
 {
 public:
 
-    QuantumSynchrotronEvolveOpticalDepth () = default;
+    /**
+     * Default constructor: it leaves the functor in a non-initialized state.
+     */
+    QuantumSynchrotronEvolveOpticalDepth (){}
 
     /**
-     * Constructor acquires pointers to control parameters and
-     * lookup tables data.
-     * lookup_table uses non-owning vectors under the hood. So no new data
-     * allocations should be triggered on GPU
+     * Constructor to be used to initialize the functor.
+     *
+     * @param[in] table_view a view of a QS_dndt_table lookup table
+     * @param[in] qs_minimum_chi_part the minimum quantum parameter to evolve the optical depth
      */
-    QuantumSynchrotronEvolveOpticalDepth(
-        QuantumSynchrotronEngineInnards& r_innards):
-        m_ctrl{r_innards.ctrl},
-        m_KKfunc_size{r_innards.KKfunc_coords.size()},
-        m_p_KKfunc_coords{r_innards.KKfunc_coords.dataPtr()},
-        m_p_KKfunc_data{r_innards.KKfunc_data.dataPtr()}
-        {};
+    QuantumSynchrotronEvolveOpticalDepth (
+        const QS_dndt_table_view table_view,
+        const amrex::ParticleReal qs_minimum_chi_part):
+        m_table_view{table_view}, m_qs_minimum_chi_part{qs_minimum_chi_part}{};
 
     /**
      * Evolves the optical depth. It can be used on GPU.
-     * @param[in] px,py,pz momentum components of the lepton (SI units)
+     * If the  quantum parameter parameter of the particle is
+     * < qs_minimum_chi_part, the method returns immediately.
+     *
+     * @param[in] ux,uy,uz gamma*v components of the lepton.
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
      * @param[in] dt timestep (SI units)
-     * @param[in,out] opt_depth optical depth of the lepton. It is modified by the method.
-     * @return a flag which is 1 if optical depth becomes negative (i.e. a photon has to be generated).
+     * @param[in,out] opt_depth optical depth of the particle.
+     * @return a flag which is 1 if chi_part was out of table.
      */
-    AMREX_GPU_HOST_DEVICE
+    AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     int operator()(
-        amrex::Real px, amrex::Real py, amrex::Real pz,
-        amrex::Real ex, amrex::Real ey, amrex::Real ez,
-        amrex::Real bx, amrex::Real by, amrex::Real bz,
-        amrex::Real dt, amrex::Real& opt_depth) const noexcept
+        const amrex::Real ux, const amrex::Real uy, const amrex::Real uz,
+        const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
+        const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
+        const amrex::Real dt, amrex::Real& opt_depth) const noexcept
     {
-        bool has_event_happened{false};
+        using namespace amrex::literals;
+        namespace pxr_p = picsar::multi_physics::phys;
+        namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
 
-        //the library provides the time (< dt) at which the event occurs, but this
-        //feature won't be used in WarpX for now.
-        amrex::Real unused_event_time{0.0};
+        constexpr amrex::Real m_e = PhysConst::m_e;
+        constexpr amrex::Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
+        const amrex::Real gamma = std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)*inv_c2);
+        const auto energy = gamma*m_e*PhysConst::c*PhysConst::c;
 
-        PicsarQuantumSynchrotronEngine::
-        internal_evolve_opt_depth_and_determine_event(
-            px, py, pz,
-            ex, ey, ez,
-            bx, by, bz,
-            dt, opt_depth,
-            has_event_happened, unused_event_time,
-            m_dummy_lambda,
-            picsar::multi_physics::lookup_1d<amrex::Real>{
-                m_KKfunc_size,
-                m_p_KKfunc_coords,
-                m_p_KKfunc_data},
-            m_ctrl);
+        const auto chi_part = QedUtils::chi_ele_pos(
+            m_e*ux, m_e*uy, m_e*uz, ex, ey, ez, bx, by, bz);
 
-        return has_event_happened;
+        if (chi_part < m_qs_minimum_chi_part)
+            return 0;
+
+        const auto is_out = pxr_qs::evolve_optical_depth<
+            amrex::Real,
+            QS_dndt_table_view,
+            pxr_p::unit_system::SI>(
+                energy, chi_part, dt, opt_depth, m_table_view);
+
+        return is_out;
     }
 
 private:
-    //laser wavelength is not used with SI units
-    amrex::Real m_dummy_lambda{1.0};
-
-    PicsarQuantumSynchrotronCtrl m_ctrl;
-
-    //lookup table data
-    size_t m_KKfunc_size;
-    amrex::Real* m_p_KKfunc_coords;
-    amrex::Real* m_p_KKfunc_data;
+    QS_dndt_table_view m_table_view;
+    amrex::ParticleReal m_qs_minimum_chi_part;
 };
 
 /**
  * Functor to generate a photon via the Quantum Synchrotron process
  * and to update momentum accordingly
  */
-class QuantumSynchrotronGeneratePhotonAndUpdateMomentum
+class QuantumSynchrotronPhotonEmission
 {
 public:
+
+    /**
+     * Default constructor: it leaves the functor in a non-initialized state.
+     */
+    QuantumSynchrotronPhotonEmission (){}
+
     /**
      * Constructor acquires pointers to control parameters and
      * lookup tables data.
      * lookup_table uses non-owning vectors under the hood. So no new data
      * allocations should be triggered on GPU
+     *
+     * @param[in] table_view a view of a QS_phot_em_table lookup table
      */
-    QuantumSynchrotronGeneratePhotonAndUpdateMomentum(
-        QuantumSynchrotronEngineInnards& r_innards):
-        m_ctrl{r_innards.ctrl},
-        m_cum_distrib_coords_1_size{r_innards.cum_distrib_coords_1.size()},
-        m_cum_distrib_coords_2_size{r_innards.cum_distrib_coords_2.size()},
-        m_p_distrib_coords_1{r_innards.cum_distrib_coords_1.data()},
-        m_p_distrib_coords_2{r_innards.cum_distrib_coords_2.data()},
-        m_p_cum_distrib_data{r_innards.cum_distrib_data.data()}
-        {};
+    QuantumSynchrotronPhotonEmission (
+        const QS_phot_em_table_view table_view):
+        m_table_view{table_view}{};
 
     /**
-     * Generates sampling (template parameter) photons according to Quantum Synchrotron process.
+     * Generates photons according to Quantum Synchrotron process.
      * It can be used on GPU.
-     * @param[in,out] px,py,pz momentum components of the lepton. They are modified (SI units)
+     *
+     * @param[in,out] ux,uy,uz gamma*v components of the lepton. They are modified (SI units)
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
-     * @param[in] weight of the lepton (code units)
-     * @param[out] g_px,g_py,g_pz momenta of generated photons. Each array should have size=sampling  (SI units)
-     * @param[out] g_weight weight of the generated photons. Array should have size=sampling (code units)
+     * @param[out] g_ux,g_uy,g_uz gamma*v components of the generated photon (SI units)
+     * @return a flag which is 1 if chi_photon was out of table
      */
-    template <size_t sampling>
-    AMREX_GPU_HOST_DEVICE
+    AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
-    void operator()(
-    amrex::Real* px, amrex::Real* py, amrex::Real* pz,
-    amrex::Real ex, amrex::Real ey, amrex::Real ez,
-    amrex::Real bx, amrex::Real by, amrex::Real bz,
-    amrex::Real weight,
-    amrex::Real* g_px, amrex::Real* g_py, amrex::Real* g_pz,
-    amrex::Real* g_weight) const noexcept
+    bool operator()(
+    amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
+    const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
+    const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
+    amrex::Real& g_ux, amrex::Real& g_uy, amrex::Real& g_uz) const noexcept
     {
-        //[sampling] random numbers are needed
-        amrex::GpuArray<amrex::Real, sampling>
-            rand_zero_one_minus_epsi;
-        for(auto& el : rand_zero_one_minus_epsi) el = amrex::Random();
+        using namespace amrex;
+        namespace pxr_m = picsar::multi_physics::math;
+        namespace pxr_p = picsar::multi_physics::phys;
+        namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
 
-        PicsarQuantumSynchrotronEngine::
-        internal_generate_photons_and_update_momentum(
-            *px, *py, *pz,
-            ex, ey, ez,
-            bx, by, bz,
-            weight, sampling,
-            g_px, g_py, g_pz,
-            g_weight,
-            m_dummy_lambda,
-            picsar::multi_physics::lookup_2d<amrex::Real>{
-                m_cum_distrib_coords_1_size,
-                m_p_distrib_coords_1,
-                m_cum_distrib_coords_2_size,
-                m_p_distrib_coords_2,
-                m_p_cum_distrib_data},
-            m_ctrl,
-            rand_zero_one_minus_epsi.data());
+        const auto rand_zero_one_minus_epsi = amrex::Random();
+
+        constexpr ParticleReal me = PhysConst::m_e;
+        constexpr ParticleReal one_over_me = 1._prt/me;
+
+        // Particle momentum is stored as gamma * velocity.
+        // Convert to m * gamma * velocity
+        auto px = ux*me;
+        auto py = uy*me;
+        auto pz = uz*me;
+
+        const auto chi_particle = QedUtils::chi_ele_pos(
+            px, py, pz, ex, ey, ez, bx, by, bz);
+
+        auto momentum_particle = pxr_m::vec3<amrex::Real>{px, py, pz};
+        auto momentum_photon = pxr_m::vec3<amrex::Real>();
+
+        const auto is_out = pxr_qs::generate_photon_update_momentum<
+            amrex::Real,
+            QS_phot_em_table_view,
+            pxr_p::unit_system::SI>(
+                chi_particle, momentum_particle,
+                rand_zero_one_minus_epsi,
+                m_table_view,
+                momentum_photon);
+
+        ux = momentum_particle[0]*one_over_me;
+        uy = momentum_particle[1]*one_over_me;
+        uz = momentum_particle[2]*one_over_me;
+        g_ux = momentum_photon[0]*one_over_me;
+        g_uy = momentum_photon[1]*one_over_me;
+        g_uz = momentum_photon[2]*one_over_me;
+
+        return is_out;
     }
 
 private:
-    //laser wavelenght is not used with SI units
-    const amrex::Real m_dummy_lambda{1.0};
+    QS_phot_em_table_view m_table_view;
 
-    const PicsarQuantumSynchrotronCtrl m_ctrl;
-
-    //lookup table data
-    size_t m_cum_distrib_coords_1_size;
-    size_t m_cum_distrib_coords_2_size;
-    amrex::Real* m_p_distrib_coords_1;
-    amrex::Real* m_p_distrib_coords_2;
-    amrex::Real* m_p_cum_distrib_data;
 };
 
 // Factory class =============================
@@ -261,7 +276,7 @@ public:
     /**
      * Builds the functor to generate photons
      */
-    QuantumSynchrotronGeneratePhotonAndUpdateMomentum build_phot_em_functor ();
+    QuantumSynchrotronPhotonEmission build_phot_em_functor ();
 
     /**
      * Checks if the optical tables are properly initialized
@@ -269,53 +284,60 @@ public:
     bool are_lookup_tables_initialized () const;
 
     /**
-     * Init lookup tables from raw binary data.
-     * @param[in] raw_data a Vector of char
-     * @return true if it succeeds, false if it cannot parse raw_data
-     */
-    bool init_lookup_tables_from_raw_data (const amrex::Vector<char>& raw_data);
-
-    /**
-     * Init lookup tables using built-in dummy tables
-     * for test purposes.
-     */
-    void init_dummy_tables();
-
-    /**
      * Export lookup tables data into a raw binary Vector
+     *
      * @return the data in binary format. The Vector is empty if tables were
      * not previously initialized.
      */
-    amrex::Vector<char> export_lookup_tables_data () const;
+    std::vector<char> export_lookup_tables_data () const;
+
+    /**
+     * Init lookup tables from raw binary data.
+     *
+     * @param[in] raw_data a vector of char
+     * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
+     * @return true if it succeeds, false if it cannot parse raw_data
+     */
+    bool init_lookup_tables_from_raw_data (const std::vector<char>& raw_data,
+        const amrex::Real qs_minimum_chi_part);
+
+    /**
+     * Init lookup tables using built-in (low resolution) tables
+     *
+     * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
+     */
+    void init_builtin_tables(const amrex::Real qs_minimum_chi_part);
 
     /**
      * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
+     *
      * @param[in] ctrl control params to generate the tables
+     * @param[in] qs_minimum_chi_part minimum chi parameter to evolve the optical depth of a particle.
      */
-    void compute_lookup_tables (PicsarQuantumSynchrotronCtrl ctrl);
+    void compute_lookup_tables (PicsarQuantumSyncCtrl ctrl,
+        const amrex::Real qs_minimum_chi_part);
 
     /**
-     * gets default (reasonable) values for the control parameters
+     * gets default values for the control parameters
+     *
      * @return default control params to generate the tables
      */
-    PicsarQuantumSynchrotronCtrl get_default_ctrl() const;
+    PicsarQuantumSyncCtrl get_default_ctrl() const;
 
-    /**
-     * returns a constant reference to the control parameters
-     * @return const reference to control parameters
-     */
-    const PicsarQuantumSynchrotronCtrl& get_ref_ctrl() const;
+    amrex::Real get_minimum_chi_part() const;
 
 private:
     bool m_lookup_tables_initialized = false;
 
-    QuantumSynchrotronEngineInnards m_innards;
+    //Variables to store the minimum chi parameters to enable
+    //Quantum Synchrotron process
+    amrex::Real m_qs_minimum_chi_part;
 
-//Table builing is available only if the libray is compiled with QED_TABLE_GEN=TRUE
-#ifdef WARPX_QED_TABLE_GEN
-    QuantumSynchrotronEngineTableBuilder m_table_builder;
-#endif
+    QS_dndt_table m_dndt_table;
+    QS_phot_em_table m_phot_em_table;
 
+    void init_builtin_dndt_table();
+    void init_builtin_phot_em_table();
 };
 
 //============================================
