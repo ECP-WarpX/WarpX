@@ -89,7 +89,9 @@ guardCellManager::Init(
     ng_alloc_J = IntVect(ngJx,ngJz);
 #endif
 
-    ng_alloc_Rho = ng_alloc_J+1; //One extra ghost cell, so that it's safe to deposit charge density
+    // One extra ghost cell, so that it's safe to deposit J and rho on local stencils
+    ng_alloc_J   = ng_alloc_J+1;
+    ng_alloc_Rho = ng_alloc_J+1;
 
     // Number of guard cells for local deposition of J and rho
     ng_depos_J   = ng_alloc_J;
