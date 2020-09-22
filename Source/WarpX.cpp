@@ -369,9 +369,9 @@ WarpX::ReadParameters ()
         pp.query("do_subcycling", do_subcycling);
         pp.query("use_hybrid_QED", use_hybrid_QED);
         pp.query("safe_guard_cells", safe_guard_cells);
-        std::string override_sync_int_string = "1";
-        pp.query("override_sync_int", override_sync_int_string);
-        override_sync_intervals = IntervalsParser(override_sync_int_string);
+        std::vector<std::string> override_sync_int_string_vec = {"1"};
+        pp.queryarr("override_sync_int", override_sync_int_string_vec);
+        override_sync_intervals = IntervalsParser(override_sync_int_string_vec);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
                                          "Subcycling method 1 only works for 2 levels.");
@@ -488,12 +488,12 @@ WarpX::ReadParameters ()
         pp.query("n_field_gather_buffer", n_field_gather_buffer);
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
 #ifdef AMREX_USE_GPU
-        std::string sort_int_string = "4";
+        std::vector<std::string>sort_int_string_vec = {"4"};
 #else
-        std::string sort_int_string = "-1";
+        std::vector<std::string> sort_int_string_vec = {"-1"};
 #endif
-        pp.query("sort_int", sort_int_string);
-        sort_intervals = IntervalsParser(sort_int_string);
+        pp.queryarr("sort_int", sort_int_string_vec);
+        sort_intervals = IntervalsParser(sort_int_string_vec);
 
         Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
         bool sort_bin_size_is_specified = pp.queryarr("sort_bin_size", vect_sort_bin_size);
@@ -568,9 +568,9 @@ WarpX::ReadParameters ()
             fine_tag_hi = RealVect{hi};
         }
 
-        std::string load_balance_int_string = "0";
-        pp.query("load_balance_int", load_balance_int_string);
-        load_balance_intervals = IntervalsParser(load_balance_int_string);
+        std::vector<std::string> load_balance_int_string_vec = {"0"};
+        pp.queryarr("load_balance_int", load_balance_int_string_vec);
+        load_balance_intervals = IntervalsParser(load_balance_int_string_vec);
         pp.query("load_balance_with_sfc", load_balance_with_sfc);
         pp.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
         pp.query("load_balance_efficiency_ratio_threshold", load_balance_efficiency_ratio_threshold);
@@ -666,13 +666,13 @@ WarpX::ReadParameters ()
         }
 
         pp.query("current_correction", current_correction);
-        pp.query("v_galilean", v_galilean);
+        pp.query("v_galilean", m_v_galilean);
         pp.query("do_time_averaging", fft_do_time_averaging);
 
       // Scale the velocity by the speed of light
-        for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
+        for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
-        if (v_galilean[0] == 0. && v_galilean[1] == 0. && v_galilean[2] == 0.) {
+        if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0.) {
             update_with_rho = false; // standard PSATD
         }
         else {
@@ -841,7 +841,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         NCIGodfreyFilter::m_stencil_width,
         maxwell_solver_id,
         maxLevel(),
-        WarpX::v_galilean,
+        WarpX::m_v_galilean,
         safe_guard_cells);
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
@@ -1012,7 +1012,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     bool const pml_flag_false=false;
     spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
+        nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev],
         pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
@@ -1130,7 +1130,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   else
         c_realspace_ba.grow(ngE); // add guard cells
         spectral_solver_cp[lev].reset( new SpectralSolver( c_realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev],
+            nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev],
             pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
@@ -1242,11 +1242,11 @@ WarpX::UpperCorner(const Box& bx, int lev)
 }
 
 std::array<Real,3>
-WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Array<amrex::Real,3>& vv_galilean, int lev)
+WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev)
 {
     amrex::Real cur_time = gett_new(lev);
     amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = { vv_galilean[0]*time_shift, vv_galilean[1]*time_shift, vv_galilean[2]*time_shift };
+    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
     return WarpX::LowerCorner(bx, galilean_shift, lev);
 }
 

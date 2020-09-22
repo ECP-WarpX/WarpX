@@ -66,7 +66,7 @@ CoarsenMR::Coarsen ( MultiFab& mf_dst,
                      const MultiFab& mf_src,
                      const IntVect crse_ratio )
 {
-    BL_PROFILE( "CoarsenMR::Coarsen" );
+    BL_PROFILE("CoarsenMR::Coarsen()");
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_src.ixType() == mf_dst.ixType(),
         "source MultiFab and destination MultiFab have different IndexType" );

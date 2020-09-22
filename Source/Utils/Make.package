@@ -6,5 +6,8 @@ CEXE_sources += CoarsenIO.cpp
 CEXE_sources += CoarsenMR.cpp
 CEXE_sources += Interpolate.cpp
 CEXE_sources += IntervalsParser.cpp
+CEXE_sources += MPIInitHelpers.cpp
+CEXE_sources += RelativeCellPosition.cpp
+CEXE_sources += ParticleUtils.cpp
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Utils

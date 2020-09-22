@@ -4,7 +4,7 @@ function(find_openpmd)
         include(FetchContent)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
-        # see https://openpmd-api.readthedocs.io/en/0.11.1-alpha/dev/buildoptions.html
+        # see https://openpmd-api.readthedocs.io/en/0.12.0-alpha/dev/buildoptions.html
         set(openPMD_USE_MPI    ${WarpX_MPI}  CACHE INTERNAL "")
         set(openPMD_USE_PYTHON OFF           CACHE INTERNAL "")
         set(BUILD_CLI_TOOLS    OFF           CACHE INTERNAL "")  # FIXME
@@ -52,7 +52,7 @@ function(find_openpmd)
         else()
             set(COMPONENT_WMPI NOMPI)
         endif()
-        find_package(openPMD 0.11.1 CONFIG REQUIRED COMPONENTS ${COMPONENT_WMPI})
+        find_package(openPMD 0.12.0 CONFIG REQUIRED COMPONENTS ${COMPONENT_WMPI})
         message(STATUS "openPMD-api: Found version '${openPMD_VERSION}'")
     endif()
 endfunction()

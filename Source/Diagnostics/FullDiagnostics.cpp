@@ -55,9 +55,9 @@ FullDiagnostics::ReadParameters ()
         m_format == "checkpoint" || m_format == "ascent" ||
         m_format == "sensei",
         "<diag>.format must be plotfile or openpmd or checkpoint or ascent or sensei");
-    std::string period_string = "0";
-    pp.query("period", period_string);
-    m_intervals = IntervalsParser(period_string);
+    std::vector<std::string> period_string_vec = {"0"};
+    pp.queryarr("period", period_string_vec);
+    m_intervals = IntervalsParser(period_string_vec);
     bool raw_specified = pp.query("plot_raw_fields", m_plot_raw_fields);
     raw_specified += pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
 
@@ -433,15 +433,15 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift ()
 
 #if (AMREX_SPACEDIM == 3 )
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        new_lo[idim] = current_lo[idim] + warpx.galilean_shift[idim];
-        new_hi[idim] = current_hi[idim] + warpx.galilean_shift[idim];
+        new_lo[idim] = current_lo[idim] + warpx.m_galilean_shift[idim];
+        new_hi[idim] = current_hi[idim] + warpx.m_galilean_shift[idim];
     }
 #elif (AMREX_SPACEDIM == 2 )
     {
-        new_lo[0] = current_lo[0] + warpx.galilean_shift[0];
-        new_hi[0] = current_hi[0] + warpx.galilean_shift[0];
-        new_lo[1] = current_lo[1] + warpx.galilean_shift[2];
-        new_hi[1] = current_hi[1] + warpx.galilean_shift[2];
+        new_lo[0] = current_lo[0] + warpx.m_galilean_shift[0];
+        new_hi[0] = current_hi[0] + warpx.m_galilean_shift[0];
+        new_lo[1] = current_lo[1] + warpx.m_galilean_shift[2];
+        new_hi[1] = current_hi[1] + warpx.m_galilean_shift[2];
     }
 #endif
     // Update RealBox of geometry with galilean-shifted boundary

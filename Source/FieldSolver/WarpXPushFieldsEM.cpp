@@ -311,8 +311,20 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     else {
         amrex::Abort("Macroscopic EvolveE is not implemented for lev > 0, yet.");
     }
-    if (do_pml) {
-        amrex::Abort("Macroscopic EvolveE is not implemented for pml boundary condition, yet");
+    if (do_pml && pml[lev]->ok()) {
+        if (patch_type == PatchType::fine) {
+            m_fdtd_solver_fp[lev]->EvolveEPML(
+                pml[lev]->GetE_fp(), pml[lev]->GetB_fp(),
+                pml[lev]->Getj_fp(), pml[lev]->GetF_fp(),
+                pml[lev]->GetMultiSigmaBox_fp(),
+                a_dt, pml_has_particles );
+        } else {
+            m_fdtd_solver_cp[lev]->EvolveEPML(
+                pml[lev]->GetE_cp(), pml[lev]->GetB_cp(),
+                pml[lev]->Getj_cp(), pml[lev]->GetF_cp(),
+                pml[lev]->GetMultiSigmaBox_cp(),
+                a_dt, pml_has_particles );
+        }
     }
 }
 
@@ -379,7 +391,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         // Rescale current in r-z mode since the inverse volume factor was not
         // included in the current deposition.
         amrex::ParallelFor(tbr, tbt, tbz,
-        [=] AMREX_GPU_DEVICE (int i, int j, int k)
+        [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
@@ -408,7 +420,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 Jr_arr(i,j,0,2*imode) /= (2.*MathConst::pi*r);
             }
         },
-        [=] AMREX_GPU_DEVICE (int i, int j, int k)
+        [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
@@ -446,7 +458,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 }
             }
         },
-        [=] AMREX_GPU_DEVICE (int i, int j, int k)
+        [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
@@ -531,7 +543,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         // Note that the loop is also over ncomps, which takes care of the RZ modes,
         // as well as the old and new rho.
         amrex::ParallelFor(tb, Rho->nComp(),
-        [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+        [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/, int icomp)
         {
             // Wrap the charge density deposited in the guard cells around
             // to the cells above the axis.

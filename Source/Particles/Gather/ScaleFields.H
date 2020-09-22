@@ -12,7 +12,7 @@
  */
 struct ScaleFields
 {
-    amrex::Real m_do_scale;
+    bool m_do_scale;
     amrex::Real m_dt;
     amrex::Real m_z_plane_previous;
     amrex::Real m_vz_ave_boosted;
@@ -41,7 +41,7 @@ struct ScaleFields
     {
         using namespace amrex::literals;
 
-        if (not m_do_scale) return;
+        if (m_do_scale != 0.0_rt) return;
 
         // Scale the fields of particles about to cross the injection plane.
         // This only approximates what should be happening. The particles
