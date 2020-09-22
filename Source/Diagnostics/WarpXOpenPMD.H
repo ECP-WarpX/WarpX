@@ -89,16 +89,22 @@ public:
    * @param filetype file backend, e.g. "bp" or "h5"
    * @param fieldPMLdirections PML field solver, @see WarpX::getPMLdirections()
    */
-  WarpXOpenPMDPlot(bool oneFilePerTS, std::string filetype, std::vector<bool> fieldPMLdirections);
+  WarpXOpenPMDPlot (bool oneFilePerTS, std::string filetype, std::vector<bool> fieldPMLdirections);
 
-  ~WarpXOpenPMDPlot();
+  ~WarpXOpenPMDPlot ();
 
   /** Set Iteration Step for the series
    *
    * @note If an iteration has been written, then it will give a warning
    *
    */
-  void SetStep(int ts, const std::string& filePrefix);
+  void SetStep (int ts, const std::string& filePrefix);
+
+  /** Close the step
+   *
+   * Signal that no further updates will be written for the step.
+   */
+  void CloseStep ();
 
   void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags);
 
@@ -110,7 +116,7 @@ public:
 
 
 private:
-  void Init(openPMD::AccessType accessType, const std::string& filePrefix);
+  void Init(openPMD::Access access, const std::string& filePrefix);
 
   /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
   *

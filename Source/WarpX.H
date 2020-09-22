@@ -94,7 +94,7 @@ public:
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, amrex::IntVect ng_extra,
                          amrex::Real external_field=0.0, bool useparser = false,
-                         ParserWrapper<3> *field_parser=nullptr);
+                         HostDeviceParser<3> const& field_parser={});
 
     static void GotoNextLine (std::istream& is);
 
@@ -268,8 +268,8 @@ public:
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_bxbyez;
 
     amrex::Real time_of_last_gal_shift  = 0;
-    amrex::Array<amrex::Real,3> v_galilean = {{0}};
-    amrex::Array<amrex::Real,3> galilean_shift = {{0}};
+    amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
+    amrex::Array<amrex::Real,3> m_galilean_shift = {{0}};
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
@@ -290,7 +290,7 @@ public:
 
     /**
      * \brief
-     * This function shifts the boundary of the grid by 'v_galilean*dt'.
+     * This function shifts the boundary of the grid by 'm_v_galilean*dt'.
      * In doding so, only positions attributes are changed while fields remain unchanged.
      */
     void ShiftGalileanBoundary ();
@@ -510,8 +510,8 @@ public:
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
-         ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
-         ParserWrapper<3> *zfield_parser, const int lev);
+         HostDeviceParser<3> const& xfield_parser, HostDeviceParser<3> const& yfield_parser,
+         HostDeviceParser<3> const& zfield_parser, const int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`

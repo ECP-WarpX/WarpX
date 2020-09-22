@@ -19,15 +19,13 @@
 struct InjectorDensityCustom
 {
     InjectorDensityCustom (std::string const& species_name)
-        : p(nullptr)
     {
-        // Read parameters for custom density profile from file, and
-        // store them in managed memory.
+        // Read parameters for custom density profile from file
         amrex::ParmParse pp(species_name);
         std::vector<amrex::Real> v;
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(v.size() <= 6,
+                                         "Too many parameters for InjectorDensityCustom");
         pp.getarr("custom_profile_params", v);
-        p = static_cast<amrex::Real*>
-            (amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real)*v.size()));
         for (int i = 0; i < static_cast<int>(v.size()); ++i) {
             p[i] = v[i];
         }
@@ -43,13 +41,11 @@ struct InjectorDensityCustom
     }
 
     // Note that we are not allowed to have non-trivial destructor.
-    // So we rely on clear() to free memory.
-    void clear () {
-        amrex::The_Managed_Arena()->free(p);
-    }
+    // So we rely on clear() to free memory if needed.
+    void clear () {}
 
 private:
-    amrex::Real* p;
+    amrex::GpuArray<amrex::Real,6> p;
 };
 
 #endif

@@ -8,6 +8,7 @@
  */
 #include "WarpX.H"
 #include "Initialization/WarpXAMReXInit.H"
+#include "Utils/MPIInitHelpers.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
@@ -20,23 +21,11 @@ int main(int argc, char* argv[])
 {
     using namespace amrex;
 
-#if defined(AMREX_USE_MPI)
-#   ifdef AMREX_MPI_THREAD_MULTIPLE
-    int provided = -1;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-    AMREX_ALWAYS_ASSERT(provided >= MPI_THREAD_MULTIPLE);
-#   else
-#      if defined(_OPENMP) && defined(WARPX_USE_PSATD)
-       int provided = -1;
-       MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
-       AMREX_ALWAYS_ASSERT(provided >= MPI_THREAD_FUNNELED);
-#      else
-       MPI_Init(&argc, &argv);
-#      endif
-#   endif
-#endif
+    auto mpi_thread_levels = utils::warpx_mpi_init(argc, argv);
 
     warpx_amrex_init(argc, argv);
+
+    utils::warpx_check_mpi_thread_level(mpi_thread_levels);
 
     ConvertLabParamsToBoost();
 
@@ -57,15 +46,15 @@ int main(int argc, char* argv[])
 
         ParallelDescriptor::ReduceRealMax(end_total, ParallelDescriptor::IOProcessorNumber());
         if (warpx.Verbose()) {
-            amrex::Print() << "Total Time                     : " << end_total << '\n';
-            amrex::Print() << "WarpX Version: " << WarpX::Version() << '\n';
-            amrex::Print() << "PICSAR Version: " << WarpX::PicsarVersion() << '\n';
+            Print() << "Total Time                     : " << end_total << '\n';
+            Print() << "WarpX Version: " << WarpX::Version() << '\n';
+            Print() << "PICSAR Version: " << WarpX::PicsarVersion() << '\n';
         }
     }
 
     WARPX_PROFILE_VAR_STOP(pmain);
 
-    amrex::Finalize();
+    Finalize();
 #if defined(AMREX_USE_MPI)
     MPI_Finalize();
 #endif

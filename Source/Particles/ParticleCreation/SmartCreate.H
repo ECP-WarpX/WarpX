@@ -13,6 +13,7 @@
 #include <AMReX_AmrCore.H>
 #include <AMReX_GpuContainers.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX.H>
 
 /**
  * \brief This is a functor for performing a "smart create" that works
@@ -50,6 +51,7 @@ struct SmartCreate
         prt.m_aos[i_prt].pos(2) = z;
 #elif (AMREX_SPACEDIM == 2)
         prt.m_aos[i_prt].pos(1) = z;
+        amrex::ignore_unused(y);
 #endif
 
         prt.m_aos[i_prt].cpu() = cpu;

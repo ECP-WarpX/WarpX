@@ -6,6 +6,7 @@
  */
 #include "WarpXOpenPMD.H"
 #include "FieldIO.H"  // for getReversedVec
+#include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
 
@@ -234,7 +235,7 @@ void WarpXOpenPMDPlot::GetFileName(std::string& filename)
 }
 
 
-void WarpXOpenPMDPlot::SetStep(int ts, const std::string& filePrefix)
+void WarpXOpenPMDPlot::SetStep (int ts, const std::string& filePrefix)
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
 
@@ -247,12 +248,18 @@ void WarpXOpenPMDPlot::SetStep(int ts, const std::string& filePrefix)
   }
 
     m_CurrentStep =  ts;
-    Init(openPMD::AccessType::CREATE, filePrefix);
+    Init(openPMD::Access::CREATE, filePrefix);
 
 }
 
+void WarpXOpenPMDPlot::CloseStep ()
+{
+    if (m_Series)
+        m_Series->iterations[m_CurrentStep].close();
+}
+
 void
-WarpXOpenPMDPlot::Init(openPMD::AccessType accessType, const std::string& filePrefix)
+WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix)
 {
     // either for the next ts file,
     // or init a single file for all ts
@@ -267,7 +274,7 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType, const std::string& filePr
     {
 #if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
-            filename, accessType,
+            filename, access,
             amrex::ParallelDescriptor::Communicator()
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
@@ -278,7 +285,7 @@ WarpXOpenPMDPlot::Init(openPMD::AccessType accessType, const std::string& filePr
     }
     else
     {
-        m_Series = std::make_unique<openPMD::Series>(filename, accessType);
+        m_Series = std::make_unique<openPMD::Series>(filename, access);
         m_MPISize = 1;
         m_MPIRank = 1;
     }
@@ -433,7 +440,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                       [](amrex::ParticleReal const *p) { delete[] p; }
               );
               for (auto i = 0; i < numParticleOnTile; i++)
-                  z.get()[i] = aos[i].m_rdata.pos[1];  // {0: "r", 1: "z"}
+                  z.get()[i] = aos[i].pos(1);  // {0: "r", 1: "z"}
               std::string const positionComponent = "z";
               currSpecies["position"]["z"].storeChunk(z, {offset}, {numParticleOnTile64});
            }
@@ -454,7 +461,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                        [](amrex::ParticleReal const *p){ delete[] p; }
                );
                for (auto i=0; i<numParticleOnTile; i++) {
-                   auto const r = aos[i].m_rdata.pos[0];  // {0: "r", 1: "z"}
+                   auto const r = aos[i].pos(0);  // {0: "r", 1: "z"}
                    x.get()[i] = r * std::cos(theta[i]);
                    y.get()[i] = r * std::sin(theta[i]);
                }
@@ -468,7 +475,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                     [](amrex::ParticleReal const *p){ delete[] p; }
                 );
                 for (auto i=0; i<numParticleOnTile; i++) {
-                     curr.get()[i] = aos[i].m_rdata.pos[currDim];
+                     curr.get()[i] = aos[i].pos(currDim);
                 }
                 std::string const positionComponent = positionComponents[currDim];
                 currSpecies["position"][positionComponent].storeChunk(curr, {offset}, {numParticleOnTile64});
@@ -581,7 +588,7 @@ WarpXOpenPMDPlot::SaveRealProperty(WarpXParIter& pti,
           );
 
           for( auto kk=0; kk<numParticleOnTile; kk++ )
-               d.get()[kk] = aos[kk].m_rdata.arr[AMREX_SPACEDIM+idx];
+               d.get()[kk] = aos[kk].rdata(idx);
 
           currRecordComp.storeChunk(d,
                {offset}, {numParticleOnTile64});
@@ -792,9 +799,10 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
     // Create a new mesh record component, and store the associated metadata
     auto mesh_comp = mesh[comp_name];
     mesh_comp.resetDataset( dataset );
-    // Cell-centered data: position is at 0.5 of a cell size.
-    // TODO: honor nodal/cell centered data per component; reverse order to axisLabel order
-    mesh_comp.setPosition( std::vector<double>{AMREX_D_DECL(0.5, 0.5, 0.5)} );
+
+    auto relative_cell_pos = utils::getRelativeCellPosition( mf );       // AMReX Fortran index order
+    std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() );  // now in C order
+    mesh_comp.setPosition( relative_cell_pos );
 
     // Loop through the multifab, and store each box as a chunk,
     // in the openPMD file.

@@ -327,15 +327,18 @@ public:
     template<PhysicalSpecies PhysSpec>
     bool AmIA () const noexcept {return (physical_species == PhysSpec);}
 
-    amrex::Array<amrex::Real,3> get_v_galilean () {return v_galilean;}
+    amrex::Array<amrex::Real,3> get_v_galilean () {return m_v_galilean;}
 
     /**
-     * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer.
+     * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer only.
+     * Empty body is here because making the method purely virtual would mean that we need to
+     * override the method for every derived class. Note that in practice this function is never
+     * called because resample() is only called for PhysicalParticleContainers.
      */
     virtual void resample (const Resampling& /*resampler*/, const int /*timestep*/) {}
 
 protected:
-    amrex::Array<amrex::Real,3> v_galilean = {{0}};
+    amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
     std::map<std::string, int> particle_runtime_comps;
@@ -368,10 +371,10 @@ protected:
     std::string ionization_product_name;
     int ion_atomic_number;
     int ionization_initial_level = 0;
-    amrex::Gpu::ManagedVector<amrex::Real> ionization_energies;
-    amrex::Gpu::ManagedVector<amrex::Real> adk_power;
-    amrex::Gpu::ManagedVector<amrex::Real> adk_prefactor;
-    amrex::Gpu::ManagedVector<amrex::Real> adk_exp_prefactor;
+    amrex::Gpu::DeviceVector<amrex::Real> ionization_energies;
+    amrex::Gpu::DeviceVector<amrex::Real> adk_power;
+    amrex::Gpu::DeviceVector<amrex::Real> adk_prefactor;
+    amrex::Gpu::DeviceVector<amrex::Real> adk_exp_prefactor;
     std::string physical_element;
 
     int do_resampling = 0;
@@ -402,9 +405,9 @@ protected:
     amrex::Vector<amrex::FArrayBox> local_jz;
 
 public:
-    using DataContainer = amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>;
     using PairIndex = std::pair<int, int>;
-    using TmpParticleTile = std::array<DataContainer, TmpIdx::nattribs>;
+    using TmpParticleTile = std::array<amrex::Gpu::DeviceVector<amrex::ParticleReal>,
+                                       TmpIdx::nattribs>;
     using TmpParticles = amrex::Vector<std::map<PairIndex, TmpParticleTile> >;
 
 protected:

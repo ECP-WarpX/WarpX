@@ -137,7 +137,7 @@ void FiniteDifferenceSolver::ComputeDivECylindrical (
         // Loop over the cells and update the fields
         amrex::ParallelFor(tdive,
 
-            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
                 Real const r = rmin + i*dr; // r on a nodal grid (F is nodal in r)
                 if (r != 0) { // Off-axis, regular equations
                     divE(i, j, 0, 0) =
