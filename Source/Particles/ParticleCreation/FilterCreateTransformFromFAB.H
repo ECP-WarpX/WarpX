@@ -8,6 +8,9 @@
 #ifndef FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 #define FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 
+#include <AMReX_REAL.H>
+#include <AMReX_TypeTraits.H>
+
 /**
  * \brief Apply a filter on a list of FABs, then create and apply a transform
  * operation to the particles depending on the output of the filter.
@@ -86,10 +89,11 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     const auto dst1_data = dst1.getParticleTileData();
     const auto dst2_data = dst2.getParticleTileData();
 
+    constexpr int spacedim = AMREX_SPACEDIM;
+
     // For loop over all cells in the box. If mask is true in the given cell,
     // we create the particles in the cell and apply a transform function to the
     // created particles.
-#if (AMREX_SPACEDIM == 3)
     AMREX_HOST_DEVICE_FOR_1D( ncells, i,
     {
         if (mask[i])
@@ -114,33 +118,6 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
                     N*p_offsets[i] + dst2_index, N, arrNumPartCreation(j,k,l));
         }
     });
-#else
-    AMREX_HOST_DEVICE_FOR_1D( ncells, i,
-    {
-        if (mask[i])
-        {
-            const IntVect iv = box.atOffset(i);
-            const int j = iv[0];
-            const int k = iv[1];
-            const int l = 0;
-
-            // Currently all particles are created on nodes. This makes it useless
-            // to use N>1 (for now).
-            const Real x = xlo_global + j*dx;
-            const Real y = Real(0.);
-            const Real z = ylo_global + k*dy;
-
-            for (int n = 0; n < N; ++n)
-            {
-                create1(dst1_data, N*p_offsets[i] + dst1_index + n, x, y, z);
-                create2(dst2_data, N*p_offsets[i] + dst2_index + n, x, y, z);
-            }
-            transform(dst1_data, dst2_data, N*p_offsets[i] + dst1_index,
-                    N*p_offsets[i] + dst2_index, N, arrNumPartCreation(j,k,l));
-        }
-    });
-#endif
-
 
     Gpu::streamSynchronize();
     return num_added;
