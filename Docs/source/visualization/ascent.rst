@@ -182,14 +182,17 @@ Replay
 ------
 
 With Ascent/Conduit, one can store the intermediate data files before the rendering step is applied to custom files.
-These so-called *Conduit Blueprint HDF5* files can be 'replayed, i.e. rendered without running the simulation again. VisIt 3.0+ also supports generation those files.
+These so-called *Conduit Blueprint HDF5* files can be 'replayed, i.e. rendered without running the simulation again. 
+VisIt 3.0+ also supports generation those files.
 
+`Replay <https://ascent.readthedocs.io/en/latest/Utilities.html#getting-data-for-replay>`_ is a utility that allows the user to "replay" a simulation from aforementioned files and rendering them with Ascent.
+Replay enables the user or developer to pick specific time steps and load them for Ascent visualization, without running the simulation again.
 
-We'll guide you through the `Replay <https://ascent.readthedocs.io/en/latest/Utilities.html#getting-data-for-replay>`_ procedure. 
+We will guide you through the `replay' procedure. 
 
 Get Blueprint Files
 ^^^^^^^^^^^^^^^^^^^
-To use replay, you first need Conduit Blueprint HDF5 files which could be extracted by replay. The following ascent actions file can be used to extract Conduit Blueprint HDF5 files.
+To use replay, you first need *Conduit Blueprint HDF5* files which could be extracted by replay. The following ascent actions file can be used to extract *Conduit Blueprint HDF5* files.
 
 .. code-block:: json
 
@@ -201,28 +204,6 @@ To use replay, you first need Conduit Blueprint HDF5 files which could be extrac
           params:
             path: "my_output_file_name"
             protocol: "blueprint/mesh/hdf5"
-
-`inputs_3d` is LWFA inputs file.
-The data size is 256x256x1024 and the simulation will run for 5000 cycles.
-WarpX will call ascent every 200 cycles. submit the following job submit script will extract 25 Blueprint HDF5:
-
-.. code-block:: bash
-
-   #!/bin/bash
-
-   #BSUB -P aph114
-   #BSUB -W 00:29
-   #BSUB -nnodes 2
-   #BSUB -alloc_flags smt4
-   #BSUB -J WarpX
-   #BSUB -o WarpXo.%J
-   #BSUB -e WarpXe.%J
-
-   module load gcc
-   module load cuda
-
-   export OMP_NUM_THREADS=1
-   jsrun -r 6 -a 1 -g 1 -c 7 -l GPU-CPU -d packed -b rs --smpiargs="-gpu" ./warpx inputs_3d
 
 Example Actions
 ^^^^^^^^^^^^^^^
