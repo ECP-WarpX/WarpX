@@ -76,7 +76,7 @@ EP.type = ParticleEnergy
 EP.frequency = 200
 EF.type = FieldEnergy
 EF.frequency = 200
-MF.type = MaxField
+MF.type = FieldMaximum
 MF.frequency = 200
 
 # Diagnostics

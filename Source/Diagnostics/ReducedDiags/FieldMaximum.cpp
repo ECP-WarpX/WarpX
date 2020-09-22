@@ -5,21 +5,21 @@
  * License: BSD-3-Clause-LBNL
  */
 
-#include "MaxField.H"
+#include "FieldMaximum.H"
 #include "WarpX.H"
 #include "Utils/CoarsenIO.H"
 
 using namespace amrex;
 
 // constructor
-MaxField::MaxField (std::string rd_name)
+FieldMaximum::FieldMaximum (std::string rd_name)
 : ReducedDiags{rd_name}
 {
 
     // RZ coordinate is not working
 #if (defined WARPX_DIM_RZ)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-        "MaxField reduced diagnostics does not work for RZ coordinate.");
+        "FieldMaximum reduced diagnostics does not work for RZ coordinate.");
 #endif
 
     // read number of levels
@@ -90,7 +90,7 @@ MaxField::MaxField (std::string rd_name)
 // end constructor
 
 // function that computes maximum field values
-void MaxField::ComputeDiags (int step)
+void FieldMaximum::ComputeDiags (int step)
 {
     // Judge if the diags should be done
     if ( (step+1) % m_freq != 0 ) { return; }
@@ -249,4 +249,4 @@ void MaxField::ComputeDiags (int step)
      *   max(Bx),max(By),max(Bz),max(|B|)] */
 
 }
-// end void MaxField::ComputeDiags
+// end void FieldMaximum::ComputeDiags

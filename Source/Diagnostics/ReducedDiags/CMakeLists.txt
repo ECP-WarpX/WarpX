@@ -7,5 +7,5 @@ target_sources(WarpX
     ParticleEnergy.cpp
     ParticleHistogram.cpp
     ReducedDiags.cpp
-    MaxField.cpp
+    FieldMaximum.cpp
 )

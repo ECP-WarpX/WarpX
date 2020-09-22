@@ -10,7 +10,7 @@
 #include "BeamRelevant.H"
 #include "ParticleEnergy.H"
 #include "FieldEnergy.H"
-#include "MaxField.H"
+#include "FieldMaximum.H"
 #include "MultiReducedDiags.H"
 
 #include <AMReX_ParmParse.H>
@@ -55,10 +55,10 @@ MultiReducedDiags::MultiReducedDiags ()
             m_multi_rd[i_rd].reset
                 ( new FieldEnergy(m_rd_names[i_rd]));
         }
-        else if (rd_type.compare("MaxField") == 0)
+        else if (rd_type.compare("FieldMaximum") == 0)
         {
             m_multi_rd[i_rd].reset
-                ( new MaxField(m_rd_names[i_rd]));
+                ( new FieldMaximum(m_rd_names[i_rd]));
         }
         else if (rd_type.compare("BeamRelevant") == 0)
         {

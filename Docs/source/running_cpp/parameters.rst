@@ -1589,7 +1589,7 @@ Reduced Diagnostics
         :math:`E` field energy,
         :math:`B` field energy, at mesh refinement levels from 0 to :math:`n`.
 
-    * ``MaxField``
+    * ``FieldMaximum``
         This type computes the maximum value of each component of the electric and magnetic fields
         and of the norm of the electric and magnetic field vectors.
         Measuring maximum fields in a plasma might be very noisy in PIC, use this instead
