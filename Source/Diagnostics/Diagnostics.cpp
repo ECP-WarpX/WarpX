@@ -106,7 +106,7 @@ Diagnostics::BaseReadParameters ()
     bool species_specified = pp.queryarr("species", m_species_names);
 
     // Prepare to dump rho per species
-    amrex::Vector<std::string> variables;
+    amrex::Vector<std::string> species_variables; // variables selection per species
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     // If diag.species is not provided, loop over all species to check whether
     // rho per species is requested
@@ -123,8 +123,8 @@ Diagnostics::BaseReadParameters ()
     for (is = 0; is < ns; is++) {
         // Parse input argument <diag_name>.<species_name>.variables
         amrex::ParmParse pp_sp(m_diag_name + "." + m_species_names[is]);
-        if (pp_sp.queryarr("variables", variables)) {
-            for (const auto& var : variables) {
+        if (pp_sp.queryarr("variables", species_variables)) {
+            for (const auto& var : species_variables) {
                 if (var == "rho") {
                     // Add strings "rho_<species_name>" to m_varnames
                     m_varnames.push_back("rho_" + m_species_names[is]);
@@ -133,8 +133,8 @@ Diagnostics::BaseReadParameters ()
                 }
             }
         }
-        // Clear content of variables before moving to the next species
-        variables.clear();
+        // Clear content of species_variables before moving to the next species
+        species_variables.clear();
     }
     // Allocate array of species indices that dump rho per species
     m_rho_per_species_index.resize(ns_dump_rho);
@@ -143,8 +143,8 @@ Diagnostics::BaseReadParameters ()
     for (is = 0; is < ns; is++) {
         // Parse input argument <diag_name>.<species_name>.variables
         amrex::ParmParse pp_sp(m_diag_name + "." + m_species_names[is]);
-        if (pp_sp.queryarr("variables", variables)) {
-            for (const auto& var : variables) {
+        if (pp_sp.queryarr("variables", species_variables)) {
+            for (const auto& var : species_variables) {
                 if (var == "rho") {
                     // Fill array of species indices that dump rho per species
                     m_rho_per_species_index[is_dump_rho] = is;
@@ -152,8 +152,8 @@ Diagnostics::BaseReadParameters ()
                 }
             }
         }
-        // Clear content of variables before moving to the next species
-        variables.clear();
+        // Clear content of species_variables before moving to the next species
+        species_variables.clear();
     }
 
     bool checkpoint_compatibility = false;
