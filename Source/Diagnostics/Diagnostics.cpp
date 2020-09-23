@@ -144,7 +144,7 @@ Diagnostics::BaseReadParameters ()
             for (const auto& var : species_variables) {
                 if (var == "rho") {
                     // Fill array of species indices that dump rho per species
-                    m_rho_per_species_index[is_dump_rho] = is;
+                    m_rho_per_species_index.at(is_dump_rho) = is;
                     is_dump_rho++;
                 }
             }
