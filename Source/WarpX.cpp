@@ -87,6 +87,7 @@ bool WarpX::galerkin_interpolation = true;
 bool WarpX::use_filter        = false;
 bool WarpX::use_kspace_filter       = false;
 bool WarpX::use_filter_compensation = false;
+bool WarpX::use_damp_fields_in_z_guard = false;
 
 bool WarpX::serialize_ics     = false;
 bool WarpX::refine_plasma     = false;
@@ -634,6 +635,7 @@ WarpX::ReadParameters ()
         ParmParse pp("psatd");
         pp.query("periodic_single_box_fft", fft_periodic_single_box);
         pp.query("fftw_plan_measure", fftw_plan_measure);
+
         std::string nox_str;
         std::string noy_str;
         std::string noz_str;
@@ -681,6 +683,14 @@ WarpX::ReadParameters ()
 
         // Overwrite update_with_rho with value set in input file
         pp.query("update_with_rho", update_with_rho);
+
+#   ifdef WARPX_DIM_RZ
+        if (!Geom(0).isPeriodic(1)) {
+            use_damp_fields_in_z_guard = true;
+        }
+        pp.query("use_damp_fields_in_z_guard", use_damp_fields_in_z_guard);
+#   endif
+
     }
 #endif
 
@@ -992,14 +1002,17 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   endif
     // Check whether the option periodic, single box is valid here
     if (fft_periodic_single_box) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
 #   ifdef WARPX_DIM_RZ
-                                          geom[0].isPeriodic(1)
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            geom[0].isPeriodic(1)          // domain is periodic in z
+            && ba.size() == 1 && lev == 0, // domain is decomposed in a single box
+            "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box");
 #   else
-                                          geom[0].isAllPeriodic()
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            geom[0].isAllPeriodic()        // domain is periodic in all directions
+            && ba.size() == 1 && lev == 0, // domain is decomposed in a single box
+            "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box");
 #   endif
-                                          && ba.size()==1 && lev==0,
-        "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box.");
     }
     // Get the cell-centered box
     BoxArray realspace_ba = ba;  // Copy box
@@ -1009,9 +1022,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if ( fft_periodic_single_box == false ) {
         realspace_ba.grow(1, ngE[1]); // add guard cells only in z
     }
-    bool const pml=false;
     spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
-        n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev], lev, pml, fft_periodic_single_box ) );
+        n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev], lev ) );
     if (use_kspace_filter) {
         spectral_solver_fp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
     }

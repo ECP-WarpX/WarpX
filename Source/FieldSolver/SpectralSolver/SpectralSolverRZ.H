@@ -25,15 +25,13 @@ class SpectralSolverRZ
         // underlying classes `SpectralFieldData` and `PsatdAlgorithm`
 
         // Constructor
-        SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
-                         amrex::DistributionMapping const & dm,
-                         int const n_rz_azimuthal_modes,
-                         int const norder_z, bool const nodal,
-                         const amrex::Array<amrex::Real,3>& v_galilean,
-                         amrex::RealVect const dx, amrex::Real const dt,
-                         int const lev,
-                         bool const pml=false,
-                         bool const periodic_single_box=false);
+        SpectralSolverRZ (amrex::BoxArray const & realspace_ba,
+                          amrex::DistributionMapping const & dm,
+                          int const n_rz_azimuthal_modes,
+                          int const norder_z, bool const nodal,
+                          const amrex::Array<amrex::Real,3>& v_galilean,
+                          amrex::RealVect const dx, amrex::Real const dt,
+                          int const lev);
 
         /* \brief Transform the component `i_comp` of MultiFab `field_mf`
          *  to spectral space, and store the corresponding result internally
