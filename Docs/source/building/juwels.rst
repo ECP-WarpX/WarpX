@@ -25,7 +25,7 @@ Use the following commands to download the WarpX source code and switch to the c
    cd ~/src
 
    git clone https://github.com/ECP-WarpX/WarpX.git warpx
-   git clone --branch QED https://github.com/ECP-WarpX/picsar.git
+   git clone --branch development https://github.com/ECP-WarpX/picsar.git
    git clone --branch development https://github.com/AMReX-Codes/amrex.git
 
 We use the following modules and environments on the system.
