@@ -110,7 +110,7 @@ Diagnostics::BaseReadParameters ()
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     // If diag.species is not provided, loop over all species to check whether
     // rho per species is requested
-    if (m_species_names.size() == 0) m_species_names = mpc.GetSpeciesNames();
+    if (m_species_names.size() == 0u) m_species_names = mpc.GetSpeciesNames();
     // ns: total number of species
     // ns_dump_rho: number of species that dump rho per species
     const int ns = int(m_species_names.size());
