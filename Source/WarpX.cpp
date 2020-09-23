@@ -87,6 +87,7 @@ bool WarpX::galerkin_interpolation = true;
 bool WarpX::use_filter        = false;
 bool WarpX::use_kspace_filter       = false;
 bool WarpX::use_filter_compensation = false;
+bool WarpX::use_damp_fields_in_z_guard = false;
 
 bool WarpX::serialize_ics     = false;
 bool WarpX::refine_plasma     = false;
@@ -634,6 +635,7 @@ WarpX::ReadParameters ()
         ParmParse pp("psatd");
         pp.query("periodic_single_box_fft", fft_periodic_single_box);
         pp.query("fftw_plan_measure", fftw_plan_measure);
+
         std::string nox_str;
         std::string noy_str;
         std::string noz_str;
@@ -666,13 +668,13 @@ WarpX::ReadParameters ()
         }
 
         pp.query("current_correction", current_correction);
-        pp.query("v_galilean", v_galilean);
+        pp.query("v_galilean", m_v_galilean);
         pp.query("do_time_averaging", fft_do_time_averaging);
 
       // Scale the velocity by the speed of light
-        for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
+        for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
-        if (v_galilean[0] == 0. && v_galilean[1] == 0. && v_galilean[2] == 0.) {
+        if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0.) {
             update_with_rho = false; // standard PSATD
         }
         else {
@@ -681,6 +683,14 @@ WarpX::ReadParameters ()
 
         // Overwrite update_with_rho with value set in input file
         pp.query("update_with_rho", update_with_rho);
+
+#   ifdef WARPX_DIM_RZ
+        if (!Geom(0).isPeriodic(1)) {
+            use_damp_fields_in_z_guard = true;
+        }
+        pp.query("use_damp_fields_in_z_guard", use_damp_fields_in_z_guard);
+#   endif
+
     }
 #endif
 
@@ -841,7 +851,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         NCIGodfreyFilter::m_stencil_width,
         maxwell_solver_id,
         maxLevel(),
-        WarpX::v_galilean,
+        WarpX::m_v_galilean,
         safe_guard_cells);
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
@@ -1012,7 +1022,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     bool const pml_flag_false=false;
     spectral_solver_fp[lev].reset( new SpectralSolver( realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, dx_vect, dt[lev],
+        nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev],
         pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
@@ -1130,7 +1140,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   else
         c_realspace_ba.grow(ngE); // add guard cells
         spectral_solver_cp[lev].reset( new SpectralSolver( c_realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean, cdx_vect, dt[lev],
+            nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev],
             pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging ) );
 #   endif
 #endif
@@ -1242,11 +1252,11 @@ WarpX::UpperCorner(const Box& bx, int lev)
 }
 
 std::array<Real,3>
-WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Array<amrex::Real,3>& vv_galilean, int lev)
+WarpX::LowerCornerWithGalilean (const Box& bx, const amrex::Array<amrex::Real,3>& v_galilean, int lev)
 {
     amrex::Real cur_time = gett_new(lev);
     amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = { vv_galilean[0]*time_shift, vv_galilean[1]*time_shift, vv_galilean[2]*time_shift };
+    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
     return WarpX::LowerCorner(bx, galilean_shift, lev);
 }
 

@@ -562,36 +562,36 @@ Particle initialization
 * ``<species>.do_qed`` (`int`) optional (default `0`)
     If `<species>.do_qed = 0` all the QED effects are disabled for this species.
     If `<species>.do_qed = 1` QED effects can be enabled for this species (see below).
-    **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.do_qed_quantum_sync`` (`int`) optional (default `0`)
     It only works if `<species>.do_qed = 1`. Enables Quantum synchrotron emission for this species.
     Quantum synchrotron lookup table should be either generated or loaded from disk to enable
     this process (see "Lookup tables for QED modules" section below).
     `<species>` must be either an electron or a positron species.
-    **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.do_qed_breit_wheeler`` (`int`) optional (default `0`)
     It only works if `<species>.do_qed = 1`. Enables non-linear Breit-Wheeler process for this species.
     Breit-Wheeler lookup table should be either generated or loaded from disk to enable
     this process (see "Lookup tables for QED modules" section below).
     `<species>` must be a photon species.
-    **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.qed_quantum_sync_phot_product_species`` (`string`)
     If an electron or a positron species has the Quantum synchrotron process, a photon product species must be specified
     (the name of an existing photon species must be provided)
-    **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.qed_breit_wheeler_ele_product_species`` (`string`)
     If a photon species has the Breit-Wheeler process, an electron product species must be specified
     (the name of an existing electron species must be provided)
-    **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.qed_breit_wheeler_pos_product_species`` (`string`)
     If a photon species has the Breit-Wheeler process, a positron product species must be specified
     (the name of an existing positron species must be provided).
-    **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+    **This feature requires to compile with QED=TRUE**
 
 .. _running-cpp-parameters-laser:
 
@@ -978,6 +978,17 @@ Numerics and algorithms
     This requires `warpx.use_kspace_filter=1` and is only supported
     with the RZ spectral solver.
 
+* ``warpx.use_damp_fields_in_z_guard`` (`0` or `1`)
+    When using the RZ spectrol solver, specifies whether to apply a
+    damping factor to the E and B fields in the guard cells
+    along z that extend beyond the edge of the domain.
+    When the boundary conditions along z are not periodic, this defaults to
+    true, otherwise false. The damping profile is
+    a sine squared and is applied to the fields on the outer half of the guards.
+    This damping is useful for damping high frequency numerical artifacts that
+    occur when there is parallel decomposition along z with non-periodic boundary
+    conditions.
+
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.
     Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
@@ -1253,7 +1264,7 @@ Numerics and algorithms
  * ``warpx.quantum_xi`` ('float'; default: 1.3050122.e-52)
      Overwrites the actual quantum parameter used in Maxwell's QED equations. Assigning a
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
-     Note that this option will only have an effect if the warpx.use_Hybrid_QED flag is also triggered.
+     Note that this option will only have an effect if the ``warpx.use_Hybrid_QED`` flag is also triggered.
 
  * ``warpx.do_device_synchronize_before_profile`` (`bool`) optional (default `1`)
     When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
@@ -1729,23 +1740,22 @@ Reduced Diagnostics
     The separator between row values in the output file.
     The default separator is a whitespace.
 
-Lookup tables and other settings for QED modules (implementation in progress)
+Lookup tables and other settings for QED modules
 -----------------------------------------------------------------------------
 
 Lookup tables store pre-computed values for functions used by the QED modules.
-**Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+**This feature requires to compile with QED=TRUE (and also with QED_TABLE_GEN=TRUE for table generation) **
 
 * ``qed_bw.lookup_table_mode`` (`string`)
     There are three options to prepare the lookup table required by the Breit-Wheeler module:
 
-    * ``dummy_builtin``:  a built-in table is used (Warning: the quality of the table is very low,
-      so this option has to be used only for test purposes).
+    * ``builtin``:  a built-in table is used (Warning: the table gives reasonable results but its resolution
+    is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
-      (version >= 1.67) and to compile with QED_TABLE_GEN=TRUE. All
-      the following parameters must be specified:
-
-        * ``qed_bw.chi_min`` (`float`): minimum chi parameter to be considered by the engine
+      (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All
+      the following parameters must be specified (table 1 is used to evolve the optical depth
+      of the photons, while table 2 is used for pair generation):
 
         * ``qed_bw.tab_dndt_chi_min`` (`float`): minimum chi parameter for lookup table 1 (
           used for the evolution of the optical depth of the photons)
@@ -1762,8 +1772,8 @@ Lookup tables store pre-computed values for functions used by the QED modules.
         * ``qed_bw.tab_pair_chi_how_many`` (`int`): number of points to be used for chi axis in lookup table 2
 
         * ``qed_bw.tab_pair_frac_how_many`` (`int`): number of points to be used for the second axis in lookup table 2
-          (the second axis is the ratio between the energy of the less energetic particle of the pair and the
-          energy of the photon).
+          (the second axis is the ratio between the quantum parameter of the less energetic particle of the pair and the
+          quantum parameter of the photon).
 
         * ``qed_bw.save_table_in`` (`string`): where to save the lookup table
 
@@ -1775,14 +1785,13 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 * ``qed_qs.lookup_table_mode`` (`string`)
     There are three options to prepare the lookup table required by the Quantum Synchrotron module:
 
-    * ``dummy_builtin``:  a built-in table is used (Warning: the quality of the table is very low,
-      so this option has to be used only for test purposes).
+    * ``builtin``: a built-in table is used (Warning: the table gives reasonable results but its resolution
+    is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
-      (version >= 1.67) and to compile with QED_TABLE_GEN=TRUE. All
-      the following parameters must be specified:
-
-        * ``qed_qs.chi_min`` (`float`): minimum chi parameter to be considered by the engine
+      (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All
+      the following parameters must be specified (table 1 is used to evolve the optical depth
+      of the particles, while table 2 is used for photon emission):
 
         * ``qed_qs.tab_dndt_chi_min`` (`float`): minimum chi parameter for lookup table 1 (
           used for the evolution of the optical depth of electrons and positrons)
@@ -1798,8 +1807,11 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
         * ``qed_qs.tab_em_chi_how_many`` (`int`): number of points to be used for chi axis in lookup table 2
 
-        * ``qed_qs.tab_em_prob_how_many`` (`int`): number of points to be used for the second axis in lookup table 2
-          (the second axis is a cumulative probability).
+        * ``qed_qs.tab_em_frac_how_many`` (`int`): number of points to be used for the second axis in lookup table 2
+          (the second axis is the ratio between the quantum parameter of the photon and the
+          quantum parameter of the charged particle).
+
+        * ``qed_qs.tab_em_frac_min`` (`float`): minimum value to be considered for the second axis of lookup table 2
 
         * ``qed_bw.save_table_in`` (`string`): where to save the lookup table
 
@@ -1808,12 +1820,18 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
         * ``qed_qs.load_table_from`` (`string`): name of the lookup table file to read from.
 
-* ``qed_qs.photon_creation_energy_threshold`` (`float`) optional (default `2*me*c^2`)
-    Energy threshold for photon particle creation in SI units.
+* ``qed_bw.chi_min`` (`float`): minimum chi parameter to be considered by the Breit-Wheeler engine
+    (suggested value : 0.01)
+
+* ``qed_qs.chi_min`` (`float`): minimum chi parameter to be considered by the Quantum Synchrotron engine
+    (suggested value : 0.001)
+
+* ``qed_qs.photon_creation_energy_threshold`` (`float`) optional (default `2`)
+    Energy threshold for photon particle creation in `*me*c^2` units.
 
 * ``warpx.do_qed_schwinger`` (`bool`) optional (default `0`)
     If this is 1, Schwinger electron-positron pairs can be generated in vacuum in the cells where the EM field is high enough.
-    Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR`` on the branch ``QED``.
+    Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR``.
     If ``warpx.do_qed_schwinger = 1``, Schwinger product species must be specified with
     ``qed_schwinger.ele_product_species`` and ``qed_schwinger.pos_product_species``.
     **Note: implementation of this feature is in progress.**

@@ -135,6 +135,9 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */)
         PushPSATDSinglePatch( *spectral_solver_cp[lev],
              Efield_cp[lev], Bfield_cp[lev], Efield_avg_cp[lev], Bfield_avg_cp[lev], current_cp[lev], rho_cp[lev] );
     }
+    if (use_damp_fields_in_z_guard) {
+        DampFieldsInGuards( Efield_fp[lev], Bfield_fp[lev] );
+    }
 }
 #endif
 
@@ -328,6 +331,91 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt) {
     }
 }
 
+void
+WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                          std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield) {
+
+    constexpr int zdir = (AMREX_SPACEDIM - 1);
+
+    for ( amrex::MFIter mfi(*Efield[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi )
+    {
+
+        amrex::Array4<amrex::Real> const& Ex_arr = Efield[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& Ey_arr = Efield[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& Ez_arr = Efield[2]->array(mfi);
+        amrex::Array4<amrex::Real> const& Bx_arr = Bfield[0]->array(mfi);
+        amrex::Array4<amrex::Real> const& By_arr = Bfield[1]->array(mfi);
+        amrex::Array4<amrex::Real> const& Bz_arr = Bfield[2]->array(mfi);
+
+        // Get the tilebox from Efield so that it includes the guard cells.
+        amrex::Box tilebox = (*Efield[0])[mfi].box();
+        int const nz_tile = tilebox.bigEnd(zdir);
+
+        // Box for the whole simulation domain
+        amrex::Box const& domain = Geom(0).Domain();
+        int const nz_domain = domain.bigEnd(zdir);
+
+        if (tilebox.smallEnd(zdir) < 0) {
+
+            // Apply damping factor in guards cells below the lower end of the domain
+            int const nz_guard = -tilebox.smallEnd(zdir);
+
+            // Set so the box only covers the lower half of the guard cells
+            tilebox.setBig(zdir, -nz_guard/2-1);
+
+            amrex::ParallelFor(tilebox, Efield[0]->nComp(),
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+            {
+#if (AMREX_SPACEDIM == 3)
+                amrex::Real zcell = static_cast<amrex::Real>(k + nz_guard);
+#else
+                amrex::Real zcell = static_cast<amrex::Real>(j + nz_guard);
+#endif
+                amrex::Real phase = MathConst::pi*zcell/nz_guard;
+                amrex::Real damp_factor = std::pow(std::sin(phase), 2);
+
+                Ex_arr(i,j,k,icomp) *= damp_factor;
+                Ey_arr(i,j,k,icomp) *= damp_factor;
+                Ez_arr(i,j,k,icomp) *= damp_factor;
+                Bx_arr(i,j,k,icomp) *= damp_factor;
+                By_arr(i,j,k,icomp) *= damp_factor;
+                Bz_arr(i,j,k,icomp) *= damp_factor;
+
+            });
+
+        }
+        else if (nz_tile > nz_domain) {
+
+            // Apply damping factor in guards cells above the upper end of the domain
+            int nz_guard = nz_tile - nz_domain;
+
+            // Set so the box only covers the upper half of the guard cells
+            tilebox.setSmall(zdir, nz_domain + nz_guard/2 + 1);
+
+            amrex::ParallelFor(tilebox, Efield[0]->nComp(),
+            [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+            {
+#if (AMREX_SPACEDIM == 3)
+                amrex::Real zcell = static_cast<amrex::Real>(nz_tile - k);
+#else
+                amrex::Real zcell = static_cast<amrex::Real>(nz_tile - j);
+#endif
+                amrex::Real phase = MathConst::pi*zcell/nz_guard;
+                amrex::Real damp_factor = std::pow(std::sin(phase), 2);
+
+                Ex_arr(i,j,k,icomp) *= damp_factor;
+                Ey_arr(i,j,k,icomp) *= damp_factor;
+                Ez_arr(i,j,k,icomp) *= damp_factor;
+                Bx_arr(i,j,k,icomp) *= damp_factor;
+                By_arr(i,j,k,icomp) *= damp_factor;
+                Bz_arr(i,j,k,icomp) *= damp_factor;
+
+            });
+
+        }
+    }
+}
+
 #ifdef WARPX_DIM_RZ
 // This scales the current by the inverse volume and wraps around the depostion at negative radius.
 // It is faster to apply this on the grid than to do it particle by particle.
@@ -391,7 +479,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         // Rescale current in r-z mode since the inverse volume factor was not
         // included in the current deposition.
         amrex::ParallelFor(tbr, tbt, tbz,
-        [=] AMREX_GPU_DEVICE (int i, int j, int k)
+        [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
@@ -420,7 +508,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 Jr_arr(i,j,0,2*imode) /= (2.*MathConst::pi*r);
             }
         },
-        [=] AMREX_GPU_DEVICE (int i, int j, int k)
+        [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
@@ -458,7 +546,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 }
             }
         },
-        [=] AMREX_GPU_DEVICE (int i, int j, int k)
+        [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
         {
             // Wrap the current density deposited in the guard cells around
             // to the cells above the axis.
@@ -543,7 +631,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         // Note that the loop is also over ncomps, which takes care of the RZ modes,
         // as well as the old and new rho.
         amrex::ParallelFor(tb, Rho->nComp(),
-        [=] AMREX_GPU_DEVICE (int i, int j, int k, int icomp)
+        [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/, int icomp)
         {
             // Wrap the charge density deposited in the guard cells around
             // to the cells above the axis.

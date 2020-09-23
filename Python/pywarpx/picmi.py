@@ -64,7 +64,10 @@ class Species(picmistandard.PICMI_Species):
                 if self.mass is None:
                     self.mass = element.mass*periodictable.constants.atomic_mass_constant
 
-    def initialize_inputs(self, layout, initialize_self_fields=False):
+    def initialize_inputs(self, layout,
+                          initialize_self_fields = False,
+                          injection_plane_position = None,
+                          injection_plane_normal_vector = None):
         self.species_number = len(pywarpx.particles.species_names)
 
         if self.name is None:
@@ -81,6 +84,14 @@ class Species(picmistandard.PICMI_Species):
 
         if self.initial_distribution is not None:
             self.initial_distribution.initialize_inputs(self.species_number, layout, self.species, self.density_scale)
+
+        if injection_plane_position is not None:
+            if injection_plane_normal_vector is not None:
+                assert injection_plane_normal_vector[0] == 0. and injection_plane_normal_vector[1] == 0.,\
+                    Exception('Rigid injection can only be done along z')
+            pywarpx.particles.rigid_injected_species.append(self.name)
+            self.species.rigid_advance = 1
+            self.species.zinject_plane = injection_plane_position
 
         for interaction in self.interactions:
             assert interaction[0] == 'ionization'
@@ -462,6 +473,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             self.psatd_current_correction = kw.pop('warpx_current_correction', None)
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
+            self.psatd_use_damp_fields_in_z_guard = kw.pop('warpx_use_damp_fields_in_z_guard', None)
 
     def initialize_inputs(self):
 
@@ -477,6 +489,8 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             pywarpx.psatd.current_correction = self.psatd_current_correction
             pywarpx.psatd.update_with_rho = self.psatd_update_with_rho
             pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
+            pywarpx.psatd.use_damp_fields_in_z_guard = self.psatd_use_damp_fields_in_z_guard
+
             if self.grid.guard_cells is not None:
                 pywarpx.psatd.nx_guard = self.grid.guard_cells[0]
                 if self.grid.number_of_dimensions == 3:
@@ -676,7 +690,10 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.solver.initialize_inputs()
 
         for i in range(len(self.species)):
-            self.species[i].initialize_inputs(self.layouts[i], self.initialize_self_fields[i])
+            self.species[i].initialize_inputs(self.layouts[i],
+                                              self.initialize_self_fields[i],
+                                              self.injection_plane_positions[i],
+                                              self.injection_plane_normal_vectors[i])
 
         for i in range(len(self.lasers)):
             self.lasers[i].initialize_inputs()

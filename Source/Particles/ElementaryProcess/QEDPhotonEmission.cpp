@@ -12,7 +12,7 @@
 PhotonEmissionTransformFunc::
 PhotonEmissionTransformFunc (QuantumSynchrotronGetOpticalDepth opt_depth_functor,
                              int const opt_depth_runtime_comp,
-                             QuantumSynchrotronGeneratePhotonAndUpdateMomentum const emission_functor,
+                             QuantumSynchrotronPhotonEmission const emission_functor,
                              const WarpXParIter& a_pti, int lev, int ngE,
                              amrex::FArrayBox const& exfab,
                              amrex::FArrayBox const& eyfab,
