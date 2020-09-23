@@ -278,8 +278,9 @@ Particle initialization
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
 
 * ``particles.boundary_conditions`` (`string`) optional (default `none`)
-    Boundary conditions applied to particles.
-    When set to ``none``, the boundary conditions applied to particles is determined by ``geometry.is_periodic``.
+    Boundary conditions applied to particles. Options are:
+    * ``none``: the boundary conditions applied to particles is determined by ``geometry.is_periodic``.
+    * ``absorbing``: particles exiting the simulation domain are discarded.
 
 * ``particles.rigid_injected_species`` (`strings`, separated by spaces)
     List of species injected using the rigid injection method. The rigid injection
