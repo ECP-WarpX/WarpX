@@ -6,6 +6,7 @@
  */
 #include "WarpXOpenPMD.H"
 #include "FieldIO.H"  // for getReversedVec
+#include "Particles/Filter/FilterFunctors.H"
 #include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
@@ -337,16 +338,17 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 
     // Convert momentum to SI
     pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
+
     // real_names contains a list of all real particle attributes.
     // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
-
     {
       DumpToFile(pc,
          particle_diags[i].getSpeciesName(),
          m_CurrentStep,
          particle_diags[i].plot_flags,
          int_flags,
-         real_names, int_names);
+         real_names, int_names,
+         particle_diags[i]);
     }
 
     // Convert momentum back to WarpX units
@@ -361,7 +363,8 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                     const amrex::Vector<int>& write_real_comp,
                     const amrex::Vector<int>& write_int_comp,
                     const amrex::Vector<std::string>& real_comp_names,
-                    const amrex::Vector<std::string>&  int_comp_names) const
+                    const amrex::Vector<std::string>&  int_comp_names,
+                    const ParticleDiag& particle_diag) const
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(write_int_comp.size() == 0u,
@@ -369,7 +372,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(int_comp_names.size() == 0u,
                                    "openPMD: Particle integer components not implemented!");
 
-  WarpXParticleCounter counter(pc);
+  WarpXParticleCounter counter(pc, particle_diag);
 
   openPMD::Iteration currIteration = m_Series->iterations[iteration];
   openPMD::ParticleSpecies currSpecies = currIteration.particles[name];
@@ -425,6 +428,10 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
       for (WarpXParIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
          auto const numParticleOnTile = pti.numParticles();
          uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
+         // after filtering:
+         amrex::Long numParticleOnTileSelected = counter.m_particles_selected[currentLevel][pti.GetPairIndex()];
+         uint64_t const numParticleOnTileSelected64 = static_cast<uint64_t>( numParticleOnTileSelected );
+
 
          // get position and particle ID from aos
          // note: this implementation iterates the AoS 4x...
@@ -436,13 +443,20 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
 #if defined(WARPX_DIM_RZ)
            {
               std::shared_ptr<amrex::ParticleReal> z(
-                      new amrex::ParticleReal[numParticleOnTile],
+                      new amrex::ParticleReal[numParticleOnTileSelected64],
                       [](amrex::ParticleReal const *p) { delete[] p; }
               );
+              int i_filtered = 0;
               for (auto i = 0; i < numParticleOnTile; i++)
-                  z.get()[i] = aos[i].pos(1);  // {0: "r", 1: "z"}
+              {
+                  if (counter.m_particle_io_flags[currentLevel][pti.GetPairIndex()][i])
+                  {
+                    z.get()[i_filtered] = aos[i].pos(1);  // {0: "r", 1: "z"}
+                    i_filtered++;
+                  }
+              }
               std::string const positionComponent = "z";
-              currSpecies["position"]["z"].storeChunk(z, {offset}, {numParticleOnTile64});
+              currSpecies["position"]["z"].storeChunk(z, {offset}, {numParticleOnTileSelected64});
            }
 
            //   reconstruct x and y from polar coordinates r, theta
@@ -453,60 +467,75 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                                             "openPMD: theta and tile size do not match");
            {
                std::shared_ptr< amrex::ParticleReal > x(
-                       new amrex::ParticleReal[numParticleOnTile],
+                       new amrex::ParticleReal[numParticleOnTileSelected64],
                        [](amrex::ParticleReal const *p){ delete[] p; }
                );
                std::shared_ptr< amrex::ParticleReal > y(
-                       new amrex::ParticleReal[numParticleOnTile],
+                       new amrex::ParticleReal[numParticleOnTileSelected64],
                        [](amrex::ParticleReal const *p){ delete[] p; }
                );
+               int i_filtered = 0;
                for (auto i=0; i<numParticleOnTile; i++) {
-                   auto const r = aos[i].pos(0);  // {0: "r", 1: "z"}
-                   x.get()[i] = r * std::cos(theta[i]);
-                   y.get()[i] = r * std::sin(theta[i]);
+                   if (counter.m_particle_io_flags[currentLevel][pti.GetPairIndex()][i])
+                   {
+                       auto const r = aos[i].pos(0);  // {0: "r", 1: "z"}
+                       x.get()[i_filtered] = r * std::cos(theta[i]);
+                       y.get()[i_filtered] = r * std::sin(theta[i]);
+                       i_filtered++;
+                   }
                }
-               currSpecies["position"]["x"].storeChunk(x, {offset}, {numParticleOnTile64});
-               currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTile64});
+               currSpecies["position"]["x"].storeChunk(x, {offset}, {numParticleOnTileSelected64});
+               currSpecies["position"]["y"].storeChunk(y, {offset}, {numParticleOnTileSelected64});
            }
 #else
            for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
                 std::shared_ptr< amrex::ParticleReal > curr(
-                    new amrex::ParticleReal[numParticleOnTile],
+                    new amrex::ParticleReal[numParticleOnTileSelected64],
                     [](amrex::ParticleReal const *p){ delete[] p; }
                 );
+                int i_filtered = 0;
                 for (auto i=0; i<numParticleOnTile; i++) {
-                     curr.get()[i] = aos[i].pos(currDim);
+                    if (counter.m_particle_io_flags[currentLevel][pti.GetPairIndex()][i]) {
+                        curr.get()[i] = aos[i].pos(currDim);
+                        i_filtered++;
+                    }
                 }
                 std::string const positionComponent = positionComponents[currDim];
-                currSpecies["position"][positionComponent].storeChunk(curr, {offset}, {numParticleOnTile64});
+                currSpecies["position"][positionComponent].storeChunk(curr, {offset}, {numParticleOnTileSelected64});
            }
 #endif
 
            // save particle ID after converting it to a globally unique ID
            std::shared_ptr< uint64_t > ids(
-               new uint64_t[numParticleOnTile],
+               new uint64_t[numParticleOnTileSelected64],
                [](uint64_t const *p){ delete[] p; }
            );
+           int i_filtered = 0;
            for (auto i=0; i<numParticleOnTile; i++) {
-               ids.get()[i] = WarpXUtilIO::localIDtoGlobal( aos[i].id(), aos[i].cpu() );
+               if (counter.m_particle_io_flags[currentLevel][pti.GetPairIndex()][i]) {
+                   ids.get()[i_filtered] = WarpXUtilIO::localIDtoGlobal(aos[i].id(), aos[i].cpu());
+                   i_filtered++;
+               }
            }
            auto const scalar = openPMD::RecordComponent::SCALAR;
-           currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
+           currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTileSelected64});
          }
          //  save "extra" particle properties in AoS and SoA
          SaveRealProperty(pti,
              currSpecies,
              offset,
-             write_real_comp, real_comp_names);
+             write_real_comp, real_comp_names,
+             numParticleOnTileSelected,
+             counter.m_particle_io_flags[currentLevel][pti.GetPairIndex()]);
 
-         offset += numParticleOnTile64;
+         offset += numParticleOnTileSelected64;
       }
     }
     m_Series->flush();
 }
 
 void
-WarpXOpenPMDPlot::SetupRealProperties(openPMD::ParticleSpecies& currSpecies,
+WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
                       const amrex::Vector<int>& write_real_comp,
                       const amrex::Vector<std::string>& real_comp_names,
                       unsigned long long np) const
@@ -553,11 +582,13 @@ WarpXOpenPMDPlot::SetupRealProperties(openPMD::ParticleSpecies& currSpecies,
 }
 
 void
-WarpXOpenPMDPlot::SaveRealProperty(WarpXParIter& pti,
+WarpXOpenPMDPlot::SaveRealProperty (WarpXParIter& pti,
                        openPMD::ParticleSpecies& currSpecies,
                        unsigned long long const offset,
                        amrex::Vector<int> const& write_real_comp,
-                       amrex::Vector<std::string> const& real_comp_names) const
+                       amrex::Vector<std::string> const& real_comp_names,
+                       int const numParticleOnTileSelected,
+                       amrex::Gpu::DeviceVector<int> const & particle_tile_mask) const
 
 {
   int numOutputReal = 0;
@@ -569,6 +600,8 @@ WarpXOpenPMDPlot::SaveRealProperty(WarpXParIter& pti,
 
   auto const numParticleOnTile = pti.numParticles();
   uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
+  uint64_t const numParticleOnTileSelected64 = static_cast<uint64_t>( numParticleOnTileSelected );
+
   auto const& aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
   auto const& soa = pti.GetStructOfArrays();
 
@@ -583,15 +616,20 @@ WarpXOpenPMDPlot::SaveRealProperty(WarpXParIter& pti,
           auto currRecordComp = currRecord[component_name];
 
           std::shared_ptr< amrex::ParticleReal > d(
-              new amrex::ParticleReal[numParticleOnTile],
+              new amrex::ParticleReal[numParticleOnTileSelected],
               [](amrex::ParticleReal const *p){ delete[] p; }
           );
 
-          for( auto kk=0; kk<numParticleOnTile; kk++ )
-               d.get()[kk] = aos[kk].rdata(idx);
+          int kk_filter = 0;
+          for( auto kk=0; kk<numParticleOnTile; kk++ ) {
+              if (particle_tile_mask[kk]) {
+                  d.get()[kk_filter] = aos[kk].rdata(idx);
+                  kk_filter++;
+              }
+          }
 
           currRecordComp.storeChunk(d,
-               {offset}, {numParticleOnTile64});
+               {offset}, {numParticleOnTileSelected64});
       }
     }
   }
@@ -606,8 +644,21 @@ WarpXOpenPMDPlot::SaveRealProperty(WarpXParIter& pti,
           auto& currRecord = currSpecies[record_name];
           auto& currRecordComp = currRecord[component_name];
 
-          currRecordComp.storeChunk(openPMD::shareRaw(soa.GetRealData(idx)),
-              {offset}, {numParticleOnTile64});
+          std::shared_ptr< amrex::ParticleReal > d(
+                  new amrex::ParticleReal[numParticleOnTileSelected],
+                  [](amrex::ParticleReal const *p){ delete[] p; }
+          );
+
+          int kk_filter = 0;
+          for( auto kk=0; kk<numParticleOnTile; kk++ ) {
+              if (particle_tile_mask[kk]) {
+                  d.get()[kk_filter] = soa.GetRealData(idx)[kk];
+                  kk_filter++;
+              }
+          }
+
+          currRecordComp.storeChunk(d,
+              {offset}, {numParticleOnTileSelected64});
       }
     }
   }
@@ -616,7 +667,7 @@ WarpXOpenPMDPlot::SaveRealProperty(WarpXParIter& pti,
 
 
 void
-WarpXOpenPMDPlot::SetupPos(WarpXParticleContainer* pc,
+WarpXOpenPMDPlot::SetupPos (WarpXParticleContainer* pc,
     openPMD::ParticleSpecies& currSpecies,
     const unsigned long long& np) const
 {
@@ -832,7 +883,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
 //
 //
 //
-WarpXParticleCounter::WarpXParticleCounter(WarpXParticleContainer* pc)
+WarpXParticleCounter::WarpXParticleCounter (WarpXParticleContainer* pc, const ParticleDiag& particle_diag)
 {
   m_MPISize = amrex::ParallelDescriptor::NProcs();
   m_MPIRank = amrex::ParallelDescriptor::MyProc();
@@ -841,29 +892,79 @@ WarpXParticleCounter::WarpXParticleCounter(WarpXParticleContainer* pc)
   m_ParticleOffsetAtRank.resize(pc->finestLevel()+1);
   m_ParticleSizeAtRank.resize(pc->finestLevel()+1);
 
-  for (auto currentLevel = 0; currentLevel <= pc->finestLevel(); currentLevel++)
+    // particle filters
+    RandomFilter const random_filter(particle_diag.m_do_random_filter,
+                                     particle_diag.m_random_fraction);
+    UniformFilter const uniform_filter(particle_diag.m_do_uniform_filter,
+                                       particle_diag.m_uniform_stride);
+    ParserFilter const parser_filter(particle_diag.m_do_parser_filter,
+                                     getParser(particle_diag.m_particle_filter_parser));
+    GeometryFilter const geometry_filter(particle_diag.m_do_geom_filter,
+                                         particle_diag.m_diag_domain);
+
+    auto const f = [=] AMREX_GPU_HOST_DEVICE (const SuperParticleType& p)
     {
-      long numParticles = 0; // numParticles in this processor
+        return random_filter(p) * uniform_filter(p)
+               * parser_filter(p) * geometry_filter(p);
+    };
 
-      for (WarpXParIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
-          auto numParticleOnTile = pti.numParticles();
-          numParticles += numParticleOnTile;
-      }
+    // evaluate f for every particle to determine which ones to output
+    m_particle_io_flags.clear();
+    m_particle_io_flags.resize( pc->GetParticles().size() );
+    for (int lev = 0; lev < pc->GetParticles().size(); lev++)
+    {
+        const auto& pmap = pc->GetParticles(lev);
+        for (const auto& kv : pmap)
+        {
+            const auto ptd = kv.second.getConstParticleTileData();
+            const auto np = kv.second.numParticles();
+            m_particle_io_flags[lev][kv.first].resize(np, 0);
+            auto pflags = m_particle_io_flags[lev][kv.first].data();
+            AMREX_HOST_DEVICE_FOR_1D( np, k,
+            {
+                const auto p = ptd.getSuperParticle(k);
+                pflags[k] = f(p);
+            });
+        }
+    }
 
-      unsigned long long offset=0; // offset of this level
-      unsigned long long sum=0; // numParticles in this level (sum from all processors)
+    amrex::Gpu::Device::synchronize();
 
-      GetParticleOffsetOfProcessor(numParticles, offset,  sum);
+    m_particles_selected.clear();
+    m_particles_selected.resize( pc->GetParticles().size() );
 
-      m_ParticleCounterByLevel[currentLevel] = sum;
-      m_ParticleOffsetAtRank[currentLevel] = offset;
-      m_ParticleSizeAtRank[currentLevel] = numParticles;
+    for (int currentLevel = 0; currentLevel < pc->GetParticles().size(); currentLevel++)
+    {
+        amrex::Long numParticles = 0; // filter-selected particles in this processor
 
-      // adjust offset, it should be numbered after particles from previous levels
-      for (auto lv=0; lv<currentLevel; lv++)
-    m_ParticleOffsetAtRank[currentLevel] += m_ParticleCounterByLevel[lv];
+        const auto& pmap = pc->GetParticles(currentLevel);
+        for (const auto& kv : pmap)
+        {
+            const auto& pflags = m_particle_io_flags[currentLevel][kv.first];
+            for (int k = 0; k < kv.second.numParticles(); ++k)
+            {
+                if (pflags[k])
+                {
+                    numParticles++;
+                    m_particles_selected[currentLevel][kv.first]++;
+                }
+            }
+        }
 
-      m_Total += sum;
+        unsigned long long offset = 0; // offset of this level
+        unsigned long long sum = 0; // numParticles in this level (sum from all processors)
+
+        GetParticleOffsetOfProcessor(numParticles, offset,  sum);
+
+        m_ParticleCounterByLevel[currentLevel] = sum;
+        m_ParticleOffsetAtRank[currentLevel] = offset;
+        m_ParticleSizeAtRank[currentLevel] = numParticles;
+
+        // adjust offset, it should be numbered after particles from previous levels
+        for (auto lv=0; lv<currentLevel; lv++)
+            m_ParticleOffsetAtRank[currentLevel] += m_ParticleCounterByLevel[lv];
+
+        m_Total += sum;
     }
 }
 
@@ -879,7 +980,7 @@ WarpXParticleCounter::WarpXParticleCounter(WarpXParticleContainer* pc)
 //     sum of all particles in the comm
 //
 void
-WarpXParticleCounter::GetParticleOffsetOfProcessor(const long& numParticles,
+WarpXParticleCounter::GetParticleOffsetOfProcessor (const long& numParticles,
                            unsigned long long& offset,
                            unsigned long long& sum)  const
 

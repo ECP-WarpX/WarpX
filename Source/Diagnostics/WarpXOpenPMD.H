@@ -50,11 +50,28 @@ private:
 class WarpXParticleCounter
 {
 public:
-  WarpXParticleCounter(WarpXParticleContainer* pc);
+  WarpXParticleCounter(WarpXParticleContainer* pc, const ParticleDiag& particle_diag);
   unsigned long GetTotalNumParticles() {return m_Total;}
 
   std::vector<unsigned long long> m_ParticleOffsetAtRank;
   std::vector<unsigned long long> m_ParticleSizeAtRank;
+
+  //! evaluate f for every particle to determine which ones to output
+  amrex::Vector<                          // level
+    std::map<
+        std::pair<int, int>,              // (grid id, tile id)
+        amrex::Gpu::DeviceVector<int>     // boolean mask per particle
+    >
+  > m_particle_io_flags;
+
+  //! particles in m_particle_io_flags that are selected for output (per level and tile)
+  amrex::Vector<
+    std::map<
+        std::pair<int, int>,              // (grid id, tile id)
+        amrex::Long                       // selected particles per tile
+    >
+  > m_particles_selected;
+
 private:
   /** get the offset in the overall particle id collection
   *
@@ -147,12 +164,16 @@ private:
    * @param[in] offset offset to start saving  the particle iterator contents
    * @param[in] write_real_comp The real attribute ids, from WarpX
    * @param[in] real_comp_names The real attribute names, from WarpX
+   * @param[in] numParticleOnTileSelected The number of particles after filtering on the tile
+   * @param[in] particle_tile_mask A boolean mask for each particle in the tile
    */
-  void SaveRealProperty(WarpXParIter& pti, //int, int,
+  void SaveRealProperty (WarpXParIter& pti, // (grid id, tile id),
             openPMD::ParticleSpecies& currSpecies,
             unsigned long long offset,
             const amrex::Vector<int>& write_real_comp,
-            const amrex::Vector<std::string>& real_comp_names) const;
+            const amrex::Vector<std::string>& real_comp_names,
+            int const numParticleOnTileSelected,
+            amrex::Gpu::DeviceVector<int> const & particle_tile_mask) const;
 
   /** This function saves the plot file
    *
@@ -163,14 +184,16 @@ private:
    * @param[in] real_comp_names The real attribute names, from WarpX
    * @param[in] write_int_comp The int attribute ids, from WarpX
    * @param[in] int_comp_names The int attribute names, from WarpX
+   * @param[in] particle_diag collected filter functions for the particle diagnostics
    */
-  void DumpToFile(WarpXParticleContainer* pc,
+  void DumpToFile (WarpXParticleContainer* pc,
             const std::string& name,
             int iteration,
             const amrex::Vector<int>& write_real_comp,
             const amrex::Vector<int>& write_int_comp,
             const amrex::Vector<std::string>& real_comp_names,
-            const amrex::Vector<std::string>&  int_comp_names) const;
+            const amrex::Vector<std::string>&  int_comp_names,
+            const ParticleDiag& particle_diag) const;
 
   // no need for ts in the name, openPMD  handles it
     void GetFileName(std::string& filename);
