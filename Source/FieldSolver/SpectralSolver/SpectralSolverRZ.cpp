@@ -23,7 +23,6 @@
  * \param dt       Time step
  * \param pml      Whether the boxes in which the solver is applied are PML boxes
  *                 PML is not supported.
-
  */
 SpectralSolverRZ::SpectralSolverRZ (amrex::BoxArray const & realspace_ba,
                                     amrex::DistributionMapping const & dm,
