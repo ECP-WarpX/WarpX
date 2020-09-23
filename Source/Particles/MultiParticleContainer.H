@@ -284,7 +284,7 @@ protected:
     Resampling m_resampler;
 
     /** Whether to absorb particles exiting the domain */
-    bool m_absorbing_bc = false;
+    ParticleBC m_boundary_conditions = ParticleBC::none;
 
     template<typename ...Args>
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,

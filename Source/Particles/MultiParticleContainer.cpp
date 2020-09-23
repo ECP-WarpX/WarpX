@@ -250,7 +250,15 @@ MultiParticleContainer::ReadParameters ()
         pp.query("use_fdtd_nci_corr", WarpX::use_fdtd_nci_corr);
         pp.query("galerkin_interpolation", WarpX::galerkin_interpolation);
 
-        pp.query("absorbing_bc", m_absorbing_bc);
+        std::string boundary_conditions = "none";
+        pp.query("boundary_conditions", boundary_conditions);
+        if        (boundary_conditions == "none"){
+            m_boundary_conditions = ParticleBC::none;
+        } else if (boundary_conditions == "absorbing"){
+            m_boundary_conditions = ParticleBC::absorbing;
+        } else {
+            amrex::Abort("unknown particle BC type");
+        }
 
         ParmParse ppl("lasers");
         ppl.queryarr("names", lasers_names);
@@ -391,7 +399,7 @@ void
 MultiParticleContainer::ApplyBoundaryConditions ()
 {
     for (auto& pc : allcontainers) {
-        pc->ApplyBoundaryConditions(m_absorbing_bc);
+        pc->ApplyBoundaryConditions(m_boundary_conditions);
     }
 }
 

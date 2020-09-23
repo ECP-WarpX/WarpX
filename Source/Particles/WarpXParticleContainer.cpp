@@ -882,7 +882,7 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
 }
 
 void
-WarpXParticleContainer::ApplyBoundaryConditions (bool do_absorbing_bc){
+WarpXParticleContainer::ApplyBoundaryConditions (ParticleBC boundary_conditions){
     WARPX_PROFILE("WarpXParticleContainer::ApplyBoundaryConditions()");
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {
@@ -910,11 +910,11 @@ WarpXParticleContainer::ApplyBoundaryConditions (bool do_absorbing_bc){
                     GetPosition(i, x, y, z);
 #ifdef WARPX_DIM_3D
                     if (x < xmin || x > xmax || y < ymin || y > ymax || z < zmin || z > zmax){
-                        if (do_absorbing_bc) p.id() = -1;
+                        if (boundary_conditions == ParticleBC::absorbing) p.id() = -1;
                     }
 #else
                     if (x < xmin || x > xmax || z < zmin || z > zmax){
-                        if (do_absorbing_bc) p.id() = -1;
+                        if (boundary_conditions == ParticleBC::absorbing) p.id() = -1;
                     }
 #endif
                 }

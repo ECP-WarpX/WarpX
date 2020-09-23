@@ -26,6 +26,7 @@
 
 #include <memory>
 
+enum struct ParticleBC { none=0, absorbing };
 
 enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
 
@@ -263,12 +264,12 @@ public:
 
     static void BackwardCompatibility ();
 
-    /** \brief Apply BC. For now, just discard particles outside the domain, regardless
-     *  of the whole simulation BC.
+    /** \brief Apply particle BC.
      *
-     * \param[in] do_absorbing_bc whether to absorb particles exiting the domain
+     * \param[in] boundary_conditions Type of boundary conditions. For now, only absorbing or none
+     * are supported
      */
-    void ApplyBoundaryConditions (bool do_absorbing_bc);
+    void ApplyBoundaryConditions (ParticleBC boundary_conditions);
 
     bool do_splitting = false;
     bool initialize_self_fields = false;

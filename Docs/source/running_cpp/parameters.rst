@@ -277,8 +277,9 @@ Particle initialization
 * ``particles.use_fdtd_nci_corr`` (`0` or `1`) optional (default `0`)
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
 
-* ``particles.absorbing_bc`` (`0` or `1`) optional (default `0`)
-    Whether to use absorbing boundary conditions for particles, regardless of the boundary conditions for the fields.
+* ``particles.boundary_conditions`` (`string`) optional (default `none`)
+    Boundary conditions applied to particles.
+    When set to ``none``, the boundary conditions applied to particles is determined by ``geometry.is_periodic``.
 
 * ``particles.rigid_injected_species`` (`strings`, separated by spaces)
     List of species injected using the rigid injection method. The rigid injection
