@@ -24,16 +24,14 @@
  * \param pml      Whether the boxes in which the solver is applied are PML boxes
  *                 PML is not supported.
  */
-SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
-                                   amrex::DistributionMapping const & dm,
-                                   int const n_rz_azimuthal_modes,
-                                   int const norder_z, bool const nodal,
-                                   amrex::RealVect const dx, amrex::Real const dt,
-                                   int const lev,
-                                   bool const pml )
+SpectralSolverRZ::SpectralSolverRZ (amrex::BoxArray const & realspace_ba,
+                                    amrex::DistributionMapping const & dm,
+                                    int const n_rz_azimuthal_modes,
+                                    int const norder_z, bool const nodal,
+                                    amrex::RealVect const dx, amrex::Real const dt,
+                                    int const lev)
     : k_space(realspace_ba, dm, dx)
 {
-
     // Initialize all structures using the same distribution mapping dm
 
     // - The k space object contains info about the size of
@@ -50,8 +48,7 @@ SpectralSolverRZ::SpectralSolverRZ(amrex::BoxArray const & realspace_ba,
     field_data = SpectralFieldDataRZ(realspace_ba, k_space, dm,
                                      algorithm->getRequiredNumberOfFields(),
                                      n_rz_azimuthal_modes, lev);
-
-};
+}
 
 
 void
