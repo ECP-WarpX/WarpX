@@ -40,15 +40,15 @@ warpx.use_filter = 1          # bilinear current/charge filter
 #################################
 # Performance Tuning
 #
-amr.max_grid_size = 128
-amr.blocking_factor = 32
+amr.max_grid_size = 64
+amr.blocking_factor = 64
 warpx.do_dynamic_scheduling = 0
 
 # load balancing
-warpx.load_balance_int = 100
-#warpx.load_balance_with_sfc = 0
+warpx.load_balance_int = 10
+warpx.load_balance_with_sfc = 0
 #warpx.load_balance_efficiency_ratio_threshold = 1.1
-#algo.load_balance_costs_update = Timers
+algo.load_balance_costs_update = Heuristic
 #algo.costs_heuristic_particles_wt = 0.9
 #algo.costs_heuristic_cells_wt = 0.1
 
