@@ -105,10 +105,18 @@ Diagnostics::BaseReadParameters ()
 
     bool species_specified = pp.queryarr("species", m_species_names);
 
-    // Prepare to dump rho per species
-    amrex::Vector<std::string> species_variables; // variables selection per species
+    // Prepare to dump rho per species:
+    // - add the string "rho_<species_names>" to m_varnames if "rho" is listed in
+    //   <diag_name>.<species_name>.variables in the input file
+    // - while looping over all species, count the number ns_dump_rho of species
+    //   that request to dump rho per species
+    // - allocate and fill the array m_rho_per_species_index, which contains the
+    //   indices of the species that request to dump rho per species; the indices
+    //   will be then passed to the constructor of RhoFunctor and used in
+    //   RhoFunctor::operator() to get the correct particle container for the given species
+    amrex::Vector<std::string> species_variables;
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
-    // If diag.species is not provided, loop over all species to check whether
+    // If <diag_name>.species is not provided, loop over all species to check whether
     // rho per species is requested
     if (m_species_names.size() == 0u) m_species_names = mpc.GetSpeciesNames();
     // ns_dump_rho: number of species that dump rho per species
@@ -120,7 +128,7 @@ Diagnostics::BaseReadParameters ()
         if (pp_sp.queryarr("variables", species_variables)) {
             for (const auto& var : species_variables) {
                 if (var == "rho") {
-                    // Add strings "rho_<species_name>" to m_varnames
+                    // Add string "rho_<species_name>" to m_varnames
                     m_varnames.push_back("rho_" + species_name);
                     // Count number of species that dump rho per species
                     ns_dump_rho++;
