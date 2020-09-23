@@ -13,6 +13,8 @@
 #endif
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
+#include <AMReX_Vector.H>
+#include <string>
 using namespace amrex::literals;
 
 Diagnostics::Diagnostics (int i, std::string name)
