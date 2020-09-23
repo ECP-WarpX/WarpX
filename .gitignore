@@ -4,6 +4,7 @@ Python/pywarpx/libwarpx*.so
 d/
 f/
 o/
+build/
 tmp_build_dir/
 test_dir
 test_dir/
@@ -33,6 +34,14 @@ Python/pywarpx.egg-info/
 Docs/doxyhtml/
 Docs/doxyxml/
 Docs/source/_static/
+
+####################
+# Package Managers #
+####################
+# anonymous Spack environments
+# https://spack.readthedocs.io/en/latest/environments.html#anonymous-environments
+.spack-env/
+spack.lock
 
 #######
 # IDE #
