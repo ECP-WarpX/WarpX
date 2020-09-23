@@ -111,23 +111,17 @@ Diagnostics::BaseReadParameters ()
     // If diag.species is not provided, loop over all species to check whether
     // rho per species is requested
     if (m_species_names.size() == 0u) m_species_names = mpc.GetSpeciesNames();
-    // ns: total number of species
     // ns_dump_rho: number of species that dump rho per species
-    const int ns = int(m_species_names.size());
     int ns_dump_rho = 0;
-    // is: species index to loop over all species
-    // is_dump_rho: species index to loop over species that dump rho per species
-    int is;
-    int is_dump_rho;
     // Loop over all species
-    for (is = 0; is < ns; is++) {
+    for (const auto& species_name : m_species_names) {
         // Parse input argument <diag_name>.<species_name>.variables
-        amrex::ParmParse pp_sp(m_diag_name + "." + m_species_names[is]);
+        amrex::ParmParse pp_sp(m_diag_name + "." + species_name);
         if (pp_sp.queryarr("variables", species_variables)) {
             for (const auto& var : species_variables) {
                 if (var == "rho") {
                     // Add strings "rho_<species_name>" to m_varnames
-                    m_varnames.push_back("rho_" + m_species_names[is]);
+                    m_varnames.push_back("rho_" + species_name);
                     // Count number of species that dump rho per species
                     ns_dump_rho++;
                 }
@@ -138,9 +132,12 @@ Diagnostics::BaseReadParameters ()
     }
     // Allocate array of species indices that dump rho per species
     m_rho_per_species_index.resize(ns_dump_rho);
-    is_dump_rho = 0;
+    // ns: total number of species
+    const int ns = int(m_species_names.size());
+    // is_dump_rho: species index to loop over species that dump rho per species
+    int is_dump_rho = 0;
     // Loop over all species
-    for (is = 0; is < ns; is++) {
+    for (int is = 0; is < ns; is++) {
         // Parse input argument <diag_name>.<species_name>.variables
         amrex::ParmParse pp_sp(m_diag_name + "." + m_species_names[is]);
         if (pp_sp.queryarr("variables", species_variables)) {
