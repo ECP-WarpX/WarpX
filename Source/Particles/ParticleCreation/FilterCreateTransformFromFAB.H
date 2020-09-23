@@ -67,6 +67,9 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
 #if (AMREX_SPACEDIM == 3)
     const Real zlo_global = geom.ProbLo(2);
     const Real dz         = geom.CellSize(2);
+#else
+    const Real zlo_global = 0.0;
+    const Real dz         = 0.0;
 #endif
 
     const auto arrNumPartCreation = src_FAB->array();
