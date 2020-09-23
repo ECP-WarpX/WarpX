@@ -91,7 +91,7 @@ FlushFormatCheckpoint::WriteToFile (
 
         if (warpx.DoPML() && warpx.GetPML(lev)) {
             warpx.GetPML(lev)->CheckPoint(
-                amrex::MultiFabFileFullPrefix(lev, checkpointname, level_prefix, "pml"));
+                amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "pml"));
         }
     }
 
