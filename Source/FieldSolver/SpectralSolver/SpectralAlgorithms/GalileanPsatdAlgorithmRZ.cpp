@@ -44,7 +44,7 @@ GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spe
 /* Advance the E and B field in spectral space (stored in `f`)
  * over one time step */
 void
-GalileanPsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
+GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
 {
 
     if (not coefficients_initialized) {

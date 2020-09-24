@@ -16,23 +16,22 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
 {
 
     public:
-        GalileanPsatdAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
-                                 amrex::DistributionMapping const & dm,
-                                 int const n_rz_azimuthal_modes, int const norder_z,
-                                 bool const nodal,
-                                 const amrex::Array<amrex::Real,3>& v_galilean,
-                                 amrex::Real const dt_step);
+        GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
+                                  amrex::DistributionMapping const & dm,
+                                  int const n_rz_azimuthal_modes, int const norder_z,
+                                  bool const nodal,
+                                  const amrex::Array<amrex::Real,3>& v_galilean,
+                                  amrex::Real const dt_step);
         // Redefine functions from base class
-        virtual void pushSpectralFields(SpectralFieldDataRZ & f) override final;
-        virtual int getRequiredNumberOfFields() const override final {
+        virtual void pushSpectralFields (SpectralFieldDataRZ & f) override final;
+        virtual int getRequiredNumberOfFields () const override final {
             return SpectralFieldIndex::n_fields;
         }
 
-        void InitializeSpectralCoefficients(SpectralFieldDataRZ const & f);
+        void InitializeSpectralCoefficients (SpectralFieldDataRZ const & f);
 
         /**
          * \brief Virtual function for current correction in Fourier space
-         * (equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010).
          * This function overrides the virtual function \c CurrentCorrection in the
          * base class \c SpectralBaseAlgorithmRZ (qualifier \c override) and cannot be
          * overridden by further derived classes (qualifier \c final).
@@ -48,7 +47,6 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
 
         /**
          * \brief Virtual function for Vay current deposition in Fourier space
-         * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).
          * This function overrides the virtual function \c VayDeposition in the
          * base class \c SpectralBaseAlgorithmRZ and cannot be overridden by further
          * derived classes.
