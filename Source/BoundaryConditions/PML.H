@@ -31,7 +31,7 @@ struct Sigma : amrex::Gpu::DeviceVector<amrex::Real>
 struct SigmaBox
 {
     SigmaBox (const amrex::Box& box, const amrex::BoxArray& grids,
-              const amrex::Real* dx, int ncell, int delta);
+              const amrex::Real* dx, int ncell, int delta, const bool do_nodal);
 
     void ComputePMLFactorsB (const amrex::Real* dx, amrex::Real dt);
     void ComputePMLFactorsE (const amrex::Real* dx, amrex::Real dt);
@@ -78,7 +78,8 @@ class MultiSigmaBox
 {
 public:
     MultiSigmaBox(const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                  const amrex::BoxArray& grid_ba, const amrex::Real* dx, int ncell, int delta);
+                  const amrex::BoxArray& grid_ba, const amrex::Real* dx, int ncell, int delta,
+                  const bool do_nodal);
     void ComputePMLFactorsB (const amrex::Real* dx, amrex::Real dt);
     void ComputePMLFactorsE (const amrex::Real* dx, amrex::Real dt);
 private:

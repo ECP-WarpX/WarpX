@@ -113,7 +113,8 @@ namespace
     }
 }
 
-SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int ncell, int delta)
+SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int ncell, int delta,
+                    const bool do_nodal)
 {
     BL_ASSERT(box.cellCentered());
 
@@ -121,33 +122,35 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
     const int*     lo = box.loVect();
     const int*     hi = box.hiVect();
 
+    const int one_if_nodal = do_nodal ? 1 : 0;
+
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
         sigma                [idim].resize(sz[idim]+1);
         sigma_cumsum         [idim].resize(sz[idim]+1);
-        sigma_star           [idim].resize(sz[idim]);
-        sigma_star_cumsum    [idim].resize(sz[idim]);
+        sigma_star           [idim].resize(sz[idim]+one_if_nodal);
+        sigma_star_cumsum    [idim].resize(sz[idim]+one_if_nodal);
         sigma_fac            [idim].resize(sz[idim]+1);
         sigma_cumsum_fac     [idim].resize(sz[idim]+1);
-        sigma_star_fac       [idim].resize(sz[idim]);
-        sigma_star_cumsum_fac[idim].resize(sz[idim]);
+        sigma_star_fac       [idim].resize(sz[idim]+one_if_nodal);
+        sigma_star_cumsum_fac[idim].resize(sz[idim]+one_if_nodal);
 
         sigma                [idim].m_lo = lo[idim];
         sigma                [idim].m_hi = hi[idim]+1;
         sigma_cumsum         [idim].m_lo = lo[idim];
         sigma_cumsum         [idim].m_hi = hi[idim]+1;
         sigma_star           [idim].m_lo = lo[idim];
-        sigma_star           [idim].m_hi = hi[idim];
+        sigma_star           [idim].m_hi = hi[idim]+one_if_nodal;
         sigma_star_cumsum    [idim].m_lo = lo[idim];
-        sigma_star_cumsum    [idim].m_hi = hi[idim];
+        sigma_star_cumsum    [idim].m_hi = hi[idim]+one_if_nodal;
         sigma_fac            [idim].m_lo = lo[idim];
         sigma_fac            [idim].m_hi = hi[idim]+1;
         sigma_cumsum_fac     [idim].m_lo = lo[idim];
         sigma_cumsum_fac     [idim].m_hi = hi[idim]+1;
         sigma_star_fac       [idim].m_lo = lo[idim];
-        sigma_star_fac       [idim].m_hi = hi[idim];
+        sigma_star_fac       [idim].m_hi = hi[idim]+one_if_nodal;
         sigma_star_cumsum_fac[idim].m_lo = lo[idim];
-        sigma_star_cumsum_fac[idim].m_hi = hi[idim];
+        sigma_star_cumsum_fac[idim].m_hi = hi[idim]+one_if_nodal;
     }
 
     Array<Real,AMREX_SPACEDIM> fac;
@@ -386,9 +389,10 @@ SigmaBox::ComputePMLFactorsE (const Real* a_dx, Real dt)
 }
 
 MultiSigmaBox::MultiSigmaBox (const BoxArray& ba, const DistributionMapping& dm,
-                              const BoxArray& grid_ba, const Real* dx, int ncell, int delta)
+                              const BoxArray& grid_ba, const Real* dx, int ncell, int delta,
+                              const bool do_nodal)
     : FabArray<SigmaBox>(ba,dm,1,0,MFInfo(),
-                         FabFactory<SigmaBox>(grid_ba,dx,ncell,delta))
+                         FabFactory<SigmaBox>(grid_ba,dx,ncell,delta, do_nodal))
 {}
 
 void
@@ -531,10 +535,12 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     }
 
     if (do_pml_in_domain){
-        sigba_fp.reset(new MultiSigmaBox(ba, dm, grid_ba_reduced, geom->CellSize(), ncell, delta));
+        sigba_fp.reset(new MultiSigmaBox(ba, dm, grid_ba_reduced, geom->CellSize(), ncell, delta,
+                                         do_nodal));
     }
     else {
-        sigba_fp.reset(new MultiSigmaBox(ba, dm, grid_ba, geom->CellSize(), ncell, delta));
+        sigba_fp.reset(new MultiSigmaBox(ba, dm, grid_ba, geom->CellSize(), ncell, delta,
+                                         do_nodal));
     }
 
 
@@ -605,9 +611,11 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         pml_j_cp[2]->setVal(0.0);
 
         if (do_pml_in_domain){
-            sigba_cp.reset(new MultiSigmaBox(cba, cdm, grid_cba_reduced, cgeom->CellSize(), ncell, delta));
+            sigba_cp.reset(new MultiSigmaBox(cba, cdm, grid_cba_reduced, cgeom->CellSize(), ncell,
+                                             delta, do_nodal));
         } else {
-            sigba_cp.reset(new MultiSigmaBox(cba, cdm, grid_cba, cgeom->CellSize(), ncell, delta));
+            sigba_cp.reset(new MultiSigmaBox(cba, cdm, grid_cba, cgeom->CellSize(), ncell, delta,
+                                             do_nodal));
         }
 
 #ifdef WARPX_USE_PSATD
