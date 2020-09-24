@@ -22,11 +22,10 @@ GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spe
                                                     const amrex::Array<amrex::Real,3>& v_galilean,
                                                     amrex::Real const dt)
      // Initialize members of base class
-     : SpectralBaseAlgorithmRZ(spectral_kspace, dm,
-                               norder_z, nodal),
-       m_dt(dt)
+     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, norder_z, nodal),
+       m_dt(dt),
+       m_v_galilean(v_galilean)
 {
-    m_v_galilean = v_galilean;
 
     // Allocate the arrays of coefficients
     amrex::BoxArray const & ba = spectral_kspace.spectralspace_ba;
