@@ -239,13 +239,6 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     WarpX& warpx = WarpX::GetInstance();
     const int ng_J = warpx.get_ng_depos_J().max();
 
-    // Extract deposition order (same order along all directions)
-    // and check that particles shape fits within the guard cells
-    const int shape_extent = static_cast<int>(WarpX::nox / 2 + 1);
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        amrex::numParticlesOutOfRange(pti, ng_J - shape_extent) == 0,
-        "Particles shape does not fit within guard cells used for local current deposition");
-
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     Real q = this->charge;
 
