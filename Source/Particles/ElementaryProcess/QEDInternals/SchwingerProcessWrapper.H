@@ -53,7 +53,7 @@ getSchwingerProductionNumber (const amrex::Real dV, const amrex::Real dt,
         return amrex::RandomPoisson(expectedPairNumber, engine);
     } else {
         const auto numpairs =
-            amrex::RandomNormal(expectedPairNumber,std::sqrt(expectedPairNumber));
+            amrex::RandomNormal(expectedPairNumber, std::sqrt(expectedPairNumber), engine);
         return numpairs > 0._rt ? numpairs : 0._rt;
     }
 }
