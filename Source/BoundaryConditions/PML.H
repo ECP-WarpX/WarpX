@@ -31,7 +31,11 @@ struct Sigma : amrex::Gpu::DeviceVector<amrex::Real>
 struct SigmaBox
 {
     SigmaBox (const amrex::Box& box, const amrex::BoxArray& grids,
-              const amrex::Real* dx, int ncell, int delta, const bool do_nodal);
+              const amrex::Real* dx, int ncell, int delta
+#ifdef WARPX_USE_PSATD
+              ,const bool do_nodal
+#endif
+             );
 
     void ComputePMLFactorsB (const amrex::Real* dx, amrex::Real dt);
     void ComputePMLFactorsE (const amrex::Real* dx, amrex::Real dt);
@@ -54,12 +58,23 @@ namespace amrex {
     class FabFactory<SigmaBox>
     {
     public:
-        FabFactory<SigmaBox> (const BoxArray& grid_ba, const Real* dx, int ncell, int delta,
-                              const bool do_nodal)
-            : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta), m_do_nodal(do_nodal) {}
+        FabFactory<SigmaBox> (const BoxArray& grid_ba, const Real* dx, int ncell, int delta
+#ifdef WARPX_USE_PSATD
+                              , const bool do_nodal
+#endif
+                              )
+            : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta)
+#ifdef WARPX_USE_PSATD
+            , m_do_nodal(do_nodal)
+#endif
+            {}
         virtual SigmaBox* create (const Box& box, int /*ncomps*/,
                                   const FabInfo& /*info*/, int /*box_index*/) const final
-            { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta, m_do_nodal); }
+            { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta
+#ifdef WARPX_USE_PSATD
+            , m_do_nodal
+#endif
+            ); }
         virtual void destroy (SigmaBox* fab) const final {
             delete fab;
         }
@@ -71,7 +86,9 @@ namespace amrex {
         const Real* m_dx;
         int m_ncell;
         int m_delta;
+#ifdef WARPX_USE_PSATD
         bool m_do_nodal;
+#endif
     };
 }
 
@@ -80,8 +97,11 @@ class MultiSigmaBox
 {
 public:
     MultiSigmaBox(const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
-                  const amrex::BoxArray& grid_ba, const amrex::Real* dx, int ncell, int delta,
-                  const bool do_nodal);
+                  const amrex::BoxArray& grid_ba, const amrex::Real* dx, int ncell, int delta
+#ifdef WARPX_USE_PSATD
+                  ,const bool do_nodal
+#endif
+                  );
     void ComputePMLFactorsB (const amrex::Real* dx, amrex::Real dt);
     void ComputePMLFactorsE (const amrex::Real* dx, amrex::Real dt);
 private:

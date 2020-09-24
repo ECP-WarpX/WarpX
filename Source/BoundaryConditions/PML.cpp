@@ -113,8 +113,11 @@ namespace
     }
 }
 
-SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int ncell, int delta,
-                    const bool do_nodal)
+SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int ncell, int delta
+#ifdef WARPX_USE_PSATD
+                    ,const bool do_nodal
+#endif
+                   )
 {
     BL_ASSERT(box.cellCentered());
 
@@ -122,7 +125,10 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
     const int*     lo = box.loVect();
     const int*     hi = box.hiVect();
 
-    const int one_if_nodal = do_nodal ? 1 : 0;
+    int one_if_nodal = 0;
+#ifdef WARPX_USE_PSATD
+    one_if_nodal = do_nodal ? 1 : 0;
+#endif
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim)
     {
@@ -389,10 +395,17 @@ SigmaBox::ComputePMLFactorsE (const Real* a_dx, Real dt)
 }
 
 MultiSigmaBox::MultiSigmaBox (const BoxArray& ba, const DistributionMapping& dm,
-                              const BoxArray& grid_ba, const Real* dx, int ncell, int delta,
-                              const bool do_nodal)
+                              const BoxArray& grid_ba, const Real* dx, int ncell, int delta
+#ifdef WARPX_USE_PSATD
+                              ,const bool do_nodal
+#endif
+                              )
     : FabArray<SigmaBox>(ba,dm,1,0,MFInfo(),
-                         FabFactory<SigmaBox>(grid_ba,dx,ncell,delta, do_nodal))
+                         FabFactory<SigmaBox>(grid_ba,dx,ncell,delta
+#ifdef WARPX_USE_PSATD
+                         ,do_nodal
+#endif
+                         ))
 {}
 
 void
@@ -535,12 +548,18 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     }
 
     if (do_pml_in_domain){
-        sigba_fp.reset(new MultiSigmaBox(ba, dm, grid_ba_reduced, geom->CellSize(), ncell, delta,
-                                         do_nodal));
+        sigba_fp.reset(new MultiSigmaBox(ba, dm, grid_ba_reduced, geom->CellSize(), ncell, delta
+#ifdef WARPX_USE_PSATD
+                                         ,do_nodal
+#endif
+                                         ));
     }
     else {
-        sigba_fp.reset(new MultiSigmaBox(ba, dm, grid_ba, geom->CellSize(), ncell, delta,
-                                         do_nodal));
+        sigba_fp.reset(new MultiSigmaBox(ba, dm, grid_ba, geom->CellSize(), ncell, delta
+#ifdef WARPX_USE_PSATD
+                                         ,do_nodal
+#endif
+                                         ));
     }
 
 
@@ -611,11 +630,17 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         pml_j_cp[2]->setVal(0.0);
 
         if (do_pml_in_domain){
-            sigba_cp.reset(new MultiSigmaBox(cba, cdm, grid_cba_reduced, cgeom->CellSize(), ncell,
-                                             delta, do_nodal));
+            sigba_cp.reset(new MultiSigmaBox(cba, cdm, grid_cba_reduced, cgeom->CellSize(), ncell, delta
+#ifdef WARPX_USE_PSATD
+                                             ,do_nodal
+#endif
+                                            ));
         } else {
-            sigba_cp.reset(new MultiSigmaBox(cba, cdm, grid_cba, cgeom->CellSize(), ncell, delta,
-                                             do_nodal));
+            sigba_cp.reset(new MultiSigmaBox(cba, cdm, grid_cba, cgeom->CellSize(), ncell, delta
+#ifdef WARPX_USE_PSATD
+                                             ,do_nodal
+#endif
+                                            ));
         }
 
 #ifdef WARPX_USE_PSATD
