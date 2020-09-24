@@ -58,6 +58,11 @@ We use the following modules and environments on the system.
    module load ums-aph114
    module load openpmd-api/0.12.0
 
+   # optional: for PSATD in RZ geometry support
+   #   note: needs the ums modules above
+   module load blaspp
+   module load lapackpp
+
    # optional: Ascent in situ support
    #   note: build WarpX with CMake
    export Alpine=/gpfs/alpine/world-shared/csc340/software/ascent/0.5.3-pre/summit/cuda/gnu
