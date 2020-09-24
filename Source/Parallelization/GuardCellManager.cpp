@@ -89,9 +89,11 @@ guardCellManager::Init(
     ng_alloc_J = IntVect(ngJx,ngJz);
 #endif
 
-    // One extra ghost cell so that it is safe to deposit J and rho on local stencils
+    // Rho is needed both at the beginning and at the end of the PIC iteration.
+    // Hence we add one extra guard cell for the allocation of the MultiFab that
+    // contains rho, in order to account for the change in the particle positions
+    // within a time step
     ng_alloc_Rho = ng_alloc_J+1;
-    ng_alloc_J   = ng_alloc_J+1;
 
     // Number of guard cells for local deposition of J and rho
     ng_depos_J   = ng_alloc_J;
