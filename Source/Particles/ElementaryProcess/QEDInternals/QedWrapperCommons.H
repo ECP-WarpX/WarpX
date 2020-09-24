@@ -8,35 +8,31 @@
 #define WARPX_amrex_qed_wrapper_commons_h_
 
 /**
- * This header contains some common #define directives and a
- * 'dummy' class used by the QED library wrappers and related
+ * This header contains some common #define directives
+ * used by the QED library wrappers and related
  * components.
  */
 
 #include <AMReX_AmrCore.H>
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_Extension.H>
 
 /**
  * PICSAR uses PXRMP_GPU to decorate methods which should be
  * compiled for GPU. The user has to set it to the right value
  * (AMREX_GPU_DEVICE in this case).
- * PXRMP_WITH_SI_UNITS sets the library to use International
- * System units.
  */
 #define PXRMP_GPU AMREX_GPU_HOST_DEVICE
-#define PXRMP_WITH_SI_UNITS
 //_________________________
 
 /**
- * A namespace called 'QedUtils' is used to encapsulate
- * free functions (defined elsewhere) and an
- * empty datastructure (DummyStruct), which is re-used by several
- * components.
+ * PICSAR uses internally some specifiers analogous to
+ * AMREX_RESTRICT and AMREX_FORCE_INLINE. These definitions
+ * set the aformentioned specifiers to AMREX_RESTRICT and
+ * AMREX_FORCE_INLINE.
  */
-namespace QedUtils{
-    struct DummyStruct{};
-};
+#define PXRMP_RESTRICT AMREX_RESTRICT
+#define PXRMP_FORCE_INLINE AMREX_FORCE_INLINE
 //_________________________
-
 
 #endif //WARPX_amrex_qed_wrapper_commons_h_

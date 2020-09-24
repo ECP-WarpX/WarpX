@@ -19,6 +19,7 @@
 #include "BoundaryConditions/PMLComponent.H"
 #include "Utils/WarpXConst.H"
 #include <AMReX_Gpu.H>
+#include <AMReX.H>
 
 using namespace amrex;
 
@@ -36,6 +37,7 @@ void FiniteDifferenceSolver::EvolveEPML (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
+    amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
     if (m_do_nodal) {
