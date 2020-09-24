@@ -142,10 +142,6 @@ public:
     void doQEDSchwinger ();
 #endif
 
-    void Checkpoint (const std::string& dir) const;
-
-    void WritePlotFile (const std::string& dir) const;
-
     void Restart (const std::string& dir);
 
     void PostRestart ();
