@@ -10,11 +10,11 @@ stop_time = 0.2e-12            # [s]
 #stop_time = 1.0e-12           # [s]
 
 # quick tests at ultra-low res. (CI)
-#amr.n_cell = 352 480
+#amr.n_cell = 384 512
 
 # proper resolution for 10 n_c excl. acc. length
 # (>=1x V100)
-amr.n_cell = 2720 3680
+amr.n_cell = 2688 3712
 
 # proper resolution for 30 n_c (dx<=3.33nm) incl. acc. length
 # (>=6x V100)
@@ -119,9 +119,6 @@ my_constants.L    = 0.05e-6      # [1/m] scale length (>0)
 my_constants.Lcut = 2.0e-6       # [1/m] hard cutoff from surface
 #   core: flat foil, cylinder or sphere
 my_constants.r0 = 2.5e-6        # [m] radius or half-thickness
-my_constants.x0 = 0.0           # [m]
-my_constants.y0 = 0.0           # [m]
-my_constants.z0 = 0.0           # [m]
 
 # [target 1] flat foil (thickness = 2*r0)
 #electrons.density_function(x,y,z) = "nc*n0*(
@@ -175,10 +172,14 @@ diagnostics.diags_names = diag1 openPMDh5
 diag1.period = 100
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+diag1.electrons.variables = w ux uy uz rho
+diag1.hydrogen.variables = w ux uy uz rho
 
 openPMDh5.period = 100
 openPMDh5.diag_type = Full
 openPMDh5.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
+openPMDh5.electrons.variables = w ux uy uz rho
+openPMDh5.hydrogen.variables = w ux uy uz rho
 openPMDh5.format = openpmd
 openPMDh5.openpmd_backend = h5
 
