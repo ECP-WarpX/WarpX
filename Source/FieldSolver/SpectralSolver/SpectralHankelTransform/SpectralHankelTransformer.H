@@ -20,48 +20,45 @@
 
 class SpectralHankelTransformer
 {
-
     public:
 
-        SpectralHankelTransformer() {};
+        SpectralHankelTransformer () {};
 
-        SpectralHankelTransformer(const int nr,
-                                  const int n_rz_azimuthal_modes,
-                                  const amrex::Real rmax);
+        SpectralHankelTransformer (const int nr,
+                                   const int n_rz_azimuthal_modes,
+                                   const amrex::Real rmax);
 
         void
-        ExtractKrArray();
+        ExtractKrArray ();
 
         // Returns an array that holds the kr for all of the modes
-        HankelTransform::RealVector const & getKrArray() const {return m_kr;}
+        HankelTransform::RealVector const & getKrArray () const {return m_kr;}
 
         // Converts a scalar field from the physical to the spectral space
         void
-        PhysicalToSpectral_Scalar(amrex::Box const & box,
-                                  amrex::FArrayBox const & F_physical,
-                                  amrex::FArrayBox       & G_spectral);
+        PhysicalToSpectral_Scalar (amrex::FArrayBox const & F_physical,
+                                   amrex::FArrayBox       & G_spectral);
 
         // Converts a vector field from the physical to the spectral space
         void
-        PhysicalToSpectral_Vector(amrex::Box const & box,
-                                  amrex::FArrayBox & F_r_physical,
-                                  amrex::FArrayBox & F_t_physical,
-                                  amrex::FArrayBox & G_p_spectral,
-                                  amrex::FArrayBox & G_m_spectral);
+        PhysicalToSpectral_Vector (amrex::Box const & box,
+                                   amrex::FArrayBox & F_r_physical,
+                                   amrex::FArrayBox & F_t_physical,
+                                   amrex::FArrayBox & G_p_spectral,
+                                   amrex::FArrayBox & G_m_spectral);
 
         // Converts a scalar field from the spectral to the physical space
         void
-        SpectralToPhysical_Scalar(amrex::Box const & box,
-                                  amrex::FArrayBox const & G_spectral,
-                                  amrex::FArrayBox       & F_physical);
+        SpectralToPhysical_Scalar (amrex::FArrayBox const & G_spectral,
+                                   amrex::FArrayBox       & F_physical);
 
         // Converts a vector field from the spectral to the physical space
         void
-        SpectralToPhysical_Vector(amrex::Box const & box,
-                                  amrex::FArrayBox const & G_p_spectral,
-                                  amrex::FArrayBox const & G_m_spectral,
-                                  amrex::FArrayBox       & F_r_physical,
-                                  amrex::FArrayBox       & F_t_physical);
+        SpectralToPhysical_Vector (amrex::Box const & box,
+                                   amrex::FArrayBox const & G_p_spectral,
+                                   amrex::FArrayBox const & G_m_spectral,
+                                   amrex::FArrayBox       & F_r_physical,
+                                   amrex::FArrayBox       & F_t_physical);
 
     private:
 
@@ -72,7 +69,6 @@ class SpectralHankelTransformer
         amrex::Vector< std::unique_ptr<HankelTransform> > dht0;
         amrex::Vector< std::unique_ptr<HankelTransform> > dhtm;
         amrex::Vector< std::unique_ptr<HankelTransform> > dhtp;
-
 };
 
 #endif

@@ -172,9 +172,6 @@ WarpX::WarpX ()
     t_old.resize(nlevs_max, std::numeric_limits<Real>::lowest());
     dt.resize(nlevs_max, std::numeric_limits<Real>::max());
 
-    // Diagnostics
-    multi_diags = std::unique_ptr<MultiDiagnostics> (new MultiDiagnostics());
-
     // Particle Container
     mypc = std::unique_ptr<MultiParticleContainer> (new MultiParticleContainer(this));
     warpx_do_continuous_injection = mypc->doContinuousInjection();
@@ -188,6 +185,9 @@ WarpX::WarpX ()
         }
     }
     do_back_transformed_particles = mypc->doBackTransformedDiagnostics();
+
+    // Diagnostics
+    multi_diags = std::unique_ptr<MultiDiagnostics> (new MultiDiagnostics());
 
     /** create object for reduced diagnostics */
     reduced_diags = new MultiReducedDiags();
@@ -1002,15 +1002,26 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   endif
     // Check whether the option periodic, single box is valid here
     if (fft_periodic_single_box) {
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( geom[0].isAllPeriodic() && ba.size()==1 && lev==0,
-        "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box.");
+#   ifdef WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            geom[0].isPeriodic(1)          // domain is periodic in z
+            && ba.size() == 1 && lev == 0, // domain is decomposed in a single box
+            "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box");
+#   else
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            geom[0].isAllPeriodic()        // domain is periodic in all directions
+            && ba.size() == 1 && lev == 0, // domain is decomposed in a single box
+            "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box");
+#   endif
     }
     // Get the cell-centered box
     BoxArray realspace_ba = ba;  // Copy box
     realspace_ba.enclosedCells(); // Make it cell-centered
     // Define spectral solver
 #   ifdef WARPX_DIM_RZ
-    realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+    if ( fft_periodic_single_box == false ) {
+        realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+    }
     spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
         n_rz_azimuthal_modes, noz_fft, do_nodal, dx_vect, dt[lev], lev ) );
     if (use_kspace_filter) {

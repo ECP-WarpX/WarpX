@@ -277,6 +277,11 @@ Particle initialization
 * ``particles.use_fdtd_nci_corr`` (`0` or `1`) optional (default `0`)
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
 
+* ``particles.boundary_conditions`` (`string`) optional (default `none`)
+    Boundary conditions applied to particles. Options are:
+    * ``none``: the boundary conditions applied to particles is determined by ``geometry.is_periodic``.
+    * ``absorbing``: particles exiting the simulation domain are discarded.
+
 * ``particles.rigid_injected_species`` (`strings`, separated by spaces)
     List of species injected using the rigid injection method. The rigid injection
     method is useful when injecting a relativistic particle beam, in boosted-frame
@@ -1457,13 +1462,16 @@ s disabled.
     Which species dumped in this diagnostics.
 
 * ``<diag_name>.<species_name>.variables`` (list of `strings` separated by spaces, optional)
-    List of particle quantities to write to output file.
-    By defaults, all quantities are written to file. Choices are
+    List of particle quantities or species-specific field quantities to write to output file.
+    Choices are
 
     * ``w`` for the particle weight,
 
     * ``ux`` ``uy`` ``uz`` for the particle momentum,
 
+    * ``rho`` to dump the charge density of the particles belonging to species ``<species_name>``.
+
+    By defaults, all quantities are written to output file, except the charge density.
     The particle positions are always included.
     Use ``<species>.variables = none`` to plot no particle data, except particle position.
 

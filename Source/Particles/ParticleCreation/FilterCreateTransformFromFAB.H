@@ -8,6 +8,9 @@
 #ifndef FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 #define FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 
+#include <AMReX_REAL.H>
+#include <AMReX_TypeTraits.H>
+
 /**
  * \brief Apply a filter on a list of FABs, then create and apply a transform
  * operation to the particles depending on the output of the filter.
@@ -64,6 +67,9 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
 #if (AMREX_SPACEDIM == 3)
     const Real zlo_global = geom.ProbLo(2);
     const Real dz         = geom.CellSize(2);
+#else
+    const Real zlo_global = 0.0;
+    const Real dz         = 0.0;
 #endif
 
     const auto arrNumPartCreation = src_FAB->array();
@@ -86,6 +92,8 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     const auto dst1_data = dst1.getParticleTileData();
     const auto dst2_data = dst2.getParticleTileData();
 
+    constexpr int spacedim = AMREX_SPACEDIM;
+
     // For loop over all cells in the box. If mask is true in the given cell,
     // we create the particles in the cell and apply a transform function to the
     // created particles.
@@ -96,18 +104,14 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
             const IntVect iv = box.atOffset(i);
             const int j = iv[0];
             const int k = iv[1];
-    // Currently all particles are created on nodes. This makes it useless
-    // to use N>1 (for now).
+            const int l = (spacedim == 3) ? iv[2] : 0;
+
+            // Currently all particles are created on nodes. This makes it useless
+            // to use N>1 (for now).
             const Real x = xlo_global + j*dx;
-#if (AMREX_SPACEDIM == 3)
-            const int l = iv[2];
-            const Real y = ylo_global + k*dy;
+            const Real y = (spacedim == 3) ? ylo_global + k*dy : 0.0_rt;
             const Real z = zlo_global + l*dz;
-#else
-            const int l = 0;
-            const int y = 0;
-            const Real z = ylo_global + k*dy;
-#endif
+
             for (int n = 0; n < N; ++n)
             {
                 create1(dst1_data, N*p_offsets[i] + dst1_index + n, x, y, z);
