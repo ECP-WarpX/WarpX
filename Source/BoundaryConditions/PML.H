@@ -54,11 +54,12 @@ namespace amrex {
     class FabFactory<SigmaBox>
     {
     public:
-        FabFactory<SigmaBox> (const BoxArray& grid_ba, const Real* dx, int ncell, int delta)
-            : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta) {}
+        FabFactory<SigmaBox> (const BoxArray& grid_ba, const Real* dx, int ncell, int delta,
+                              const bool do_nodal)
+            : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta), m_do_nodal(do_nodal) {}
         virtual SigmaBox* create (const Box& box, int /*ncomps*/,
                                   const FabInfo& /*info*/, int /*box_index*/) const final
-            { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta); }
+            { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta, m_do_nodal); }
         virtual void destroy (SigmaBox* fab) const final {
             delete fab;
         }
@@ -70,6 +71,7 @@ namespace amrex {
         const Real* m_dx;
         int m_ncell;
         int m_delta;
+        bool m_do_nodal;
     };
 }
 
