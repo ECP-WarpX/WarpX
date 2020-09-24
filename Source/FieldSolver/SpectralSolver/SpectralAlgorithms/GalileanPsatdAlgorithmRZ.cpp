@@ -200,7 +200,7 @@ void GalileanPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldData
             amrex::Real const k_norm = std::sqrt(kr*kr + kz*kz);
 
             // Calculate coefficients
-            if (k_norm != 0){
+            if (k_norm != 0._rt){
 
                 C(i,j,k,mode) = std::cos(c*k_norm*dt);
                 S_ck(i,j,k,mode) = std::sin(c*k_norm*dt)/(c*k_norm);
@@ -215,7 +215,7 @@ void GalileanPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldData
 
                 Theta2(i,j,k,mode) = theta*theta;
 
-                if ( (nu != 1.) && (nu != 0) ) {
+                if ( (nu != 1._rt) && (nu != 0._rt) ) {
 
                     // Note: the coefficients X1, X2, X do not correspond
                     // exactly to the original Galilean paper, but the
@@ -234,14 +234,14 @@ void GalileanPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldData
                                      /(theta_star-theta)/(ep0*k_norm*k_norm);
                     X4(i,j,k,mode) = I*kv*X1(i,j,k,mode) - theta*theta*S_ck(i,j,k,mode)/ep0;
 
-                } else if (nu == 0.) {
+                } else if (nu == 0._rt) {
 
                     X1(i,j,k,mode) = (1._rt - C(i,j,k,mode))/(ep0 * c*c * k_norm*k_norm);
                     X2(i,j,k,mode) = (1._rt - S_ck(i,j,k,mode)/dt)/(ep0 * k_norm*k_norm);
                     X3(i,j,k,mode) = (C(i,j,k,mode) - S_ck(i,j,k,mode)/dt)/(ep0 * k_norm*k_norm);
                     X4(i,j,k,mode) = -S_ck(i,j,k,mode)/ep0;
 
-                } else if ( nu == 1.) {
+                } else if ( nu == 1._rt) {
                     X1(i,j,k,mode) = (1._rt - e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*c*c*ep0*k_norm*k_norm);
                     X2(i,j,k,mode) = (3._rt - 4._rt*e_theta + e_theta*e_theta + 2._rt*I*c*k_norm*dt) / (4._rt*ep0*k_norm*k_norm*(1._rt - e_theta));
                     X3(i,j,k,mode) = (3._rt - 2._rt/e_theta - 2._rt*e_theta + e_theta*e_theta - 2._rt*I*c*k_norm*dt) / (4._rt*ep0*(e_theta - 1._rt)*k_norm*k_norm);
@@ -327,11 +327,11 @@ GalileanPsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
             constexpr Complex I = Complex{0._rt,1._rt};
 
             // Correct J
-            if ( k_norm2 != 0 )
+            if ( k_norm2 != 0._rt )
             {
                 Complex const theta2 = amrex::exp(I*kz*vz*dt);
-                Complex const inv_1_T2 = 1._rt/(kz*vz == 0 ?  1._rt : 1._rt - theta2);
-                Complex const j_corr_coef = (kz == 0 ? 1._rt/dt : -I*kz*vz*inv_1_T2);
+                Complex const inv_1_T2 = 1._rt/(kz*vz == 0._rt ?  1._rt : 1._rt - theta2);
+                Complex const j_corr_coef = (kz == 0._rt ? 1._rt/dt : -I*kz*vz*inv_1_T2);
                 Complex const F = - (j_corr_coef*(rho_new - rho_old*theta2) + I*kz*Jz + kr*(Jp - Jm))/k_norm2;
 
                 fields(i,j,k,Jp_m) += +0.5_rt*kr*F;
