@@ -47,11 +47,10 @@ private:
 
 //
 //
-class WarpXParticleCounter
+struct WarpXParticleCounter
 {
-public:
-  WarpXParticleCounter(WarpXParticleContainer* pc, const ParticleDiag& particle_diag);
-  unsigned long GetTotalNumParticles() {return m_Total;}
+  WarpXParticleCounter (WarpXParticleContainer* pc, const ParticleDiag& particle_diag);
+  unsigned long GetTotalNumParticles () { return m_Total; }
 
   std::vector<unsigned long long> m_ParticleOffsetAtRank;
   std::vector<unsigned long long> m_ParticleSizeAtRank;
@@ -72,7 +71,7 @@ public:
     >
   > m_particles_selected;
 
-private:
+// private:
   /** get the offset in the overall particle id collection
   *
   * @param[out] numParticles particles on this processor  / amrex fab
