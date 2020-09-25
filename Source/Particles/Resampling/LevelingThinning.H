@@ -43,6 +43,7 @@ public:
 
 private:
     amrex::Real m_target_ratio = amrex::Real(1.5);
+    int m_min_ppc = 1;
 };
 
 
