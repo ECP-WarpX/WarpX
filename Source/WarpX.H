@@ -201,7 +201,7 @@ public:
     static int n_current_deposition_buffer; //! in number of cells from the edge (identical for each dimension)
 
     // do nodal
-    static int do_cell_centered;
+    static bool do_cell_centered;
 
     std::array<const amrex::MultiFab* const, 3>
     get_array_Bfield_aux  (const int lev) const {
