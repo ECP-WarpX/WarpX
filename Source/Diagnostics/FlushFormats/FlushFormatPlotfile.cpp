@@ -315,10 +315,11 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             dir, particle_diags[i].getSpeciesName(),
             particle_diags[i].plot_flags, int_flags,
             real_names, int_names,
-            [=] AMREX_GPU_HOST_DEVICE (const SuperParticleType& p)
+            [=] AMREX_GPU_HOST_DEVICE (const SuperParticleType& p,
+                                       const amrex::RandomEngine& engine)
             {
-                return random_filter(p) * uniform_filter(p)
-                     * parser_filter(p) * geometry_filter(p);
+                return random_filter(p,engine) * uniform_filter(p,engine)
+                     * parser_filter(p,engine) * geometry_filter(p,engine);
             });
 
         // Convert momentum back to WarpX units

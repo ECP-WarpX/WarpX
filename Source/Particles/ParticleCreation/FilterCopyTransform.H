@@ -59,14 +59,8 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index* mask, Ind
     if (np == 0) return 0;
 
     Gpu::DeviceVector<Index> offsets(np);
-    Gpu::exclusive_scan(mask, mask+np, offsets.begin());
-
-    Index last_mask, last_offset;
-    Gpu::copyAsync(Gpu::deviceToHost, mask+np-1, mask + np, &last_mask);
-    Gpu::copyAsync(Gpu::deviceToHost, offsets.data()+np-1, offsets.data()+np, &last_offset);
-
-    Gpu::streamSynchronize();
-    const Index num_added = N * (last_mask + last_offset);
+    auto total = amrex::Scan::ExclusiveSum(np, mask, offsets.data());
+    const Index num_added = N * total;
     dst.resize(std::max(dst_index + num_added, dst.numParticles()));
 
     const auto p_offsets = offsets.dataPtr();
@@ -74,17 +68,19 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index* mask, Ind
     const auto src_data = src.getParticleTileData();
     const auto dst_data = dst.getParticleTileData();
 
-    AMREX_HOST_DEVICE_FOR_1D( np, i,
+    amrex::ParallelForRNG(np,
+    [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept
     {
         if (mask[i])
         {
-            for (int j = 0; j < N; ++j)
-                copy(dst_data, src_data, i, N*p_offsets[i] + dst_index + j);
+            for (int j = 0; j < N; ++j) {
+                copy(dst_data, src_data, i, N*p_offsets[i] + dst_index + j, engine);
+            }
             transform(dst_data, src_data, i, N*p_offsets[i] + dst_index);
         }
-    })
+    });
 
-    Gpu::streamSynchronize();
+    Gpu::synchronize();
     return num_added;
 }
 
@@ -140,10 +136,11 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index dst_index,
     auto p_mask = mask.dataPtr();
     const auto src_data = src.getParticleTileData();
 
-    AMREX_HOST_DEVICE_FOR_1D(np, i,
+    amrex::ParallelForRNG(np,
+    [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept
     {
-        p_mask[i] = filter(src_data, i);
-    })
+        p_mask[i] = filter(src_data, i, engine);
+    });
 
     return filterCopyTransformParticles<N>(dst, src, mask.dataPtr(), dst_index,
                                                       std::forward<CopyFunc>(copy),
@@ -205,14 +202,8 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src, 
     if (np == 0) return 0;
 
     Gpu::DeviceVector<Index> offsets(np);
-    Gpu::exclusive_scan(mask, mask+np, offsets.begin());
-
-    Index last_mask, last_offset;
-    Gpu::copyAsync(Gpu::deviceToHost, mask+np-1, mask + np, &last_mask);
-    Gpu::copyAsync(Gpu::deviceToHost, offsets.data()+np-1, offsets.data()+np, &last_offset);
-
-    Gpu::streamSynchronize();
-    const Index num_added = N*(last_mask + last_offset);
+    auto total = amrex::Scan::ExclusiveSum(np, mask, offsets.data());
+    const Index num_added = N * total;
     dst1.resize(std::max(dst1_index + num_added, dst1.numParticles()));
     dst2.resize(std::max(dst2_index + num_added, dst2.numParticles()));
 
@@ -222,22 +213,23 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src, 
     const auto dst1_data = dst1.getParticleTileData();
     const auto dst2_data = dst2.getParticleTileData();
 
-    AMREX_HOST_DEVICE_FOR_1D( np, i,
+    amrex::ParallelForRNG(np,
+    [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept
     {
         if (mask[i])
         {
             for (int j = 0; j < N; ++j)
             {
-                copy1(dst1_data, src_data, i, N*p_offsets[i] + dst1_index + j);
-                copy2(dst2_data, src_data, i, N*p_offsets[i] + dst2_index + j);
+                copy1(dst1_data, src_data, i, N*p_offsets[i] + dst1_index + j, engine);
+                copy2(dst2_data, src_data, i, N*p_offsets[i] + dst2_index + j, engine);
             }
             transform(dst1_data, dst2_data, src_data, i,
                       N*p_offsets[i] + dst1_index,
                       N*p_offsets[i] + dst2_index);
         }
-    })
+    });
 
-    Gpu::streamSynchronize();
+    Gpu::synchronize();
     return num_added;
 }
 
@@ -300,10 +292,11 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src,
     auto p_mask = mask.dataPtr();
     const auto src_data = src.getParticleTileData();
 
-    AMREX_HOST_DEVICE_FOR_1D(np, i,
+    amrex::ParallelForRNG(np,
+    [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine)
     {
-        p_mask[i] = filter(src_data, i);
-    })
+        p_mask[i] = filter(src_data, i, engine);
+    });
 
     return filterCopyTransformParticles<N>(dst1, dst2, src, mask.dataPtr(),
                                         dst1_index, dst2_index,
