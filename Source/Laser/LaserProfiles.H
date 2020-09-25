@@ -33,6 +33,7 @@ struct CommonLaserParameters
     amrex::Real wavelength; //! central wavelength
     amrex::Real e_max;  //! maximum electric field at peak
     amrex::Vector<amrex::Real> p_X;// ! Polarization
+    amrex::Vector<amrex::Real> p_Y;// ! Second polarization axis
     amrex::Vector<amrex::Real> nvec; //! Normal of the plane of the antenna
 };
 
@@ -87,7 +88,8 @@ public:
      * @param[in] Xp X coordinate of the particles of the antenna
      * @param[in] Yp Y coordinate of the particles of the antenna
      * @param[in] t time (seconds)
-     * @param[out] amplitude of the electric field (V/m)
+     * @param[out] amplitude_X of the electric field (V/m) (X component)
+     * @param[out] amplitude_X of the electric field (V/m) (Y component)
      */
     virtual void
     fill_amplitude (
@@ -95,7 +97,8 @@ public:
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const = 0;
+        amrex::Real * AMREX_RESTRICT const amplitude_X,
+        amrex::Real * AMREX_RESTRICT const amplitude_Y) const = 0;
 
     virtual ~ILaserProfile(){}
 };
@@ -123,7 +126,8 @@ public:
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT const amplitude_X,
+        amrex::Real * AMREX_RESTRICT const amplitude_Y) const override final;
 
 private:
     struct {
@@ -165,7 +169,8 @@ public:
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT const amplitude_X,
+        amrex::Real * AMREX_RESTRICT const amplitude_Y) const override final;
 
 private:
     struct {
@@ -200,7 +205,8 @@ public:
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT const amplitude_X,
+        amrex::Real * AMREX_RESTRICT const amplitude_Y) const override final;
 
 private:
     struct{
@@ -245,7 +251,8 @@ public:
     * \param Xp: pointer to first component of positions of laser particles
     * \param Yp: pointer to second component of positions of laser particles
     * \param t: Current physical time
-    * \param amplitude: pointer to array of field amplitude.
+    * \param amplitude_X: pointer to array of field amplitude (X component)
+    * \param amplitude_Y: pointer to array of field amplitude (Y component)
     */
     void
     fill_amplitude (
@@ -253,7 +260,8 @@ public:
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const override final;
+        amrex::Real * AMREX_RESTRICT const amplitude_X,
+        amrex::Real * AMREX_RESTRICT const amplitude_Y) const override final;
 
     /** \brief Function to fill the amplitude in case of a uniform grid.
     * This function cannot be private due to restrictions related to
@@ -264,7 +272,8 @@ public:
     * \param Xp: pointer to first component of positions of laser particles
     * \param Yp: pointer to second component of positions of laser particles
     * \param t: Current physical time
-    * \param amplitude: pointer to array of field amplitude.
+    * \param amplitude_X: pointer to array of field amplitude (X component)
+    * \param amplitude_Y: pointer to array of field amplitude (Y component)
     */
     void internal_fill_amplitude_uniform(
         const int idx_t_left,
@@ -272,7 +281,8 @@ public:
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const;
+        amrex::Real * AMREX_RESTRICT const amplitude_X,
+        amrex::Real * AMREX_RESTRICT const amplitude_Y) const;
 
     /** \brief Function to fill the amplitude in case of a non-uniform grid.
     * This function cannot be private due to restrictions related to
@@ -283,7 +293,8 @@ public:
     * \param Xp: pointer to first component of positions of laser particles
     * \param Yp: pointer to second component of positions of laser particles
     * \param t: Current physical time
-    * \param amplitude: pointer to array of field amplitude.
+    * \param amplitude_X: pointer to array of field amplitude (X component)
+    * \param amplitude_Y: pointer to array of field amplitude (Y component)
     */
     void internal_fill_amplitude_nonuniform(
         const int idx_t_left,
@@ -291,7 +302,8 @@ public:
         amrex::Real const * AMREX_RESTRICT const Xp,
         amrex::Real const * AMREX_RESTRICT const Yp,
         amrex::Real t,
-        amrex::Real * AMREX_RESTRICT const amplitude) const;
+        amrex::Real * AMREX_RESTRICT const amplitude_X,
+        amrex::Real * AMREX_RESTRICT const amplitude_Y) const;
 
 private:
     /** \brief parse a field file in the binary 'txye' format (whose details are given below).

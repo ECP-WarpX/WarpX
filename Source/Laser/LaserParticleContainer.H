@@ -68,7 +68,8 @@ public:
                                 amrex::ParticleReal * AMREX_RESTRICT const puyp,
                                 amrex::ParticleReal * AMREX_RESTRICT const puzp,
                                 amrex::ParticleReal const * AMREX_RESTRICT const pwp,
-                                amrex::Real const * AMREX_RESTRICT const amplitude,
+                                amrex::Real const * AMREX_RESTRICT const amplitude_X,
+                                amrex::Real const * AMREX_RESTRICT const amplitude_Y,
                                 const amrex::Real dt);
 
 protected:

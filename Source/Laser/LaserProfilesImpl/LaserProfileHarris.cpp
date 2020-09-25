@@ -35,12 +35,16 @@ WarpXLaserProfiles::HarrisLaserProfile::init (
  * \param Xp: pointer to first component of positions of laser particles
  * \param Yp: pointer to second component of positions of laser particles
  * \param t: Current physical time
- * \param amplitude: pointer to array of field amplitude.
+ * \param amplitude: pointer to array of field amplitude (x component)
+ * \param amplitude: pointer to array of field amplitude (y component)
  */
 void
 WarpXLaserProfiles::HarrisLaserProfile::fill_amplitude (
-    const int np, Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
-    Real t, Real * AMREX_RESTRICT const amplitude) const
+    const int np,
+    Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
+    Real t,
+    Real * AMREX_RESTRICT const amplitude_X,
+    Real * AMREX_RESTRICT const amplitude_Y) const
 {
     // This function uses the Harris function as the temporal profile of the pulse
     const Real omega0 =
@@ -77,8 +81,9 @@ WarpXLaserProfiles::HarrisLaserProfile::fill_amplitude (
             const Real arg_osc = omega0*t - omega0/PhysConst::c*
                 (Xp[i]*Xp[i] + Yp[i]*Yp[i]) * inv_Rz / 2._rt;
             const Real oscillations = std::cos(arg_osc);
-            amplitude[i] = tmp_e_max * time_envelope *
+            amplitude_X[i] = tmp_e_max * time_envelope *
                 space_envelope * oscillations;
+            amplitude_Y[i] = 0.0_rt;
         }
         );
 }

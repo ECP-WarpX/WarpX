@@ -9,6 +9,7 @@
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpX_Complex.H"
+#include "Utils/WarpXMathUtils.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 
@@ -21,14 +22,7 @@
 
 using namespace amrex;
 using namespace WarpXLaserProfiles;
-
-namespace
-{
-    Vector<Real> CrossProduct (const Vector<Real>& a, const Vector<Real>& b)
-    {
-        return { a[1]*b[2]-a[2]*b[1],  a[2]*b[0]-a[0]*b[2],  a[0]*b[1]-a[1]*b[0] };
-    }
-}
+using namespace utils;
 
 LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies, const std::string& name)
     : WarpXParticleContainer(amr_core, ispecies),
@@ -160,6 +154,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     common_params.wavelength = m_wavelength;
     common_params.e_max = m_e_max;
     common_params.p_X = m_p_X;
+    common_params.p_Y = m_p_Y;
     common_params.nvec = m_nvec;
     m_up_laser_profile->init(pp, ParmParse{"my_constants"}, common_params);
 }
@@ -438,7 +433,7 @@ LaserParticleContainer::Evolve (int lev,
         int const thread_num = 0;
 #endif
 
-        Gpu::DeviceVector<Real> plane_Xp, plane_Yp, amplitude_E;
+        Gpu::DeviceVector<Real> plane_Xp, plane_Yp, amplitude_E_X, amplitude_E_Y;
 
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
@@ -461,7 +456,8 @@ LaserParticleContainer::Evolve (int lev,
 
             plane_Xp.resize(np);
             plane_Yp.resize(np);
-            amplitude_E.resize(np);
+            amplitude_E_X.resize(np);
+            amplitude_E_Y.resize(np);
 
             if (rho) {
                 int* AMREX_RESTRICT ion_lev = nullptr;
@@ -486,12 +482,12 @@ LaserParticleContainer::Evolve (int lev,
             // at the position of the emission plane
             m_up_laser_profile->fill_amplitude(
                 np, plane_Xp.dataPtr(), plane_Yp.dataPtr(),
-                t_lab, amplitude_E.dataPtr());
+                t_lab, amplitude_E_X.dataPtr(), amplitude_E_Y.dataPtr());
 
             // Calculate the corresponding momentum and position for the particles
             update_laser_particle(pti, np, uxp.dataPtr(), uyp.dataPtr(),
                                   uzp.dataPtr(), wp.dataPtr(),
-                                  amplitude_E.dataPtr(), dt);
+                                  amplitude_E_X.dataPtr(), amplitude_E_Y.dataPtr(), dt);
             WARPX_PROFILE_VAR_STOP(blp_pp);
 
             //
@@ -659,7 +655,8 @@ LaserParticleContainer::calculate_laser_plane_coordinates (const WarpXParIter& p
  * \param np: number of laser particles
  * \param puxp, puyp, puzp: pointers to arrays of particle momenta.
  * \param pwp: pointer to array of particle weights.
- * \param amplitude: Electric field amplitude at the position of each particle.
+ * \param amplitude_x: Electric field amplitude at the position of each particle (X component)
+ * \param amplitude_y: Electric field amplitude at the position of each particle (Y component)
  * \param dt: time step.
  */
 void
@@ -669,7 +666,8 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
                                                ParticleReal * AMREX_RESTRICT const puyp,
                                                ParticleReal * AMREX_RESTRICT const puzp,
                                                ParticleReal const * AMREX_RESTRICT const pwp,
-                                               Real const * AMREX_RESTRICT const amplitude,
+                                               Real const * AMREX_RESTRICT const amplitude_X,
+                                               Real const * AMREX_RESTRICT const amplitude_Y,
                                                const Real dt)
 {
     const auto GetPosition = GetParticlePosition(pti);
@@ -678,6 +676,9 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
     Real tmp_p_X_0 = m_p_X[0];
     Real tmp_p_X_1 = m_p_X[1];
     Real tmp_p_X_2 = m_p_X[2];
+    Real tmp_p_Y_0 = m_p_Y[0];
+    Real tmp_p_Y_1 = m_p_Y[1];
+    Real tmp_p_Y_2 = m_p_Y[2];
     Real tmp_nvec_0 = m_nvec[0];
     Real tmp_nvec_1 = m_nvec[1];
     Real tmp_nvec_2 = m_nvec[2];
@@ -686,19 +687,27 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
     Real tmp_mobility = m_mobility;
     Real gamma_boost = WarpX::gamma_boost;
     Real beta_boost = WarpX::beta_boost;
+
     amrex::ParallelFor(
         np,
         [=] AMREX_GPU_DEVICE (int i) {
             // Calculate the velocity according to the amplitude of E
             const Real sign_charge = (pwp[i]>0) ? 1 : -1;
-            const Real v_over_c = sign_charge * tmp_mobility * amplitude[i];
+
+            const auto& amp_X = amplitude_X[i];
+            const auto& amp_Y = amplitude_Y[i];
+            const auto amplitude = std::sqrt(amp_X*amp_X + amp_Y*amp_Y);
+
+            const Real v_over_c = sign_charge * tmp_mobility * amplitude;
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(amrex::Math::abs(v_over_c) < amrex::Real(1.),
                             "Error: calculated laser particle velocity greater than c."
                             "Make sure the laser wavelength and amplitude are accurately set.");
-            // The velocity is along the laser polarization p_X
-            Real vx = PhysConst::c * v_over_c * tmp_p_X_0;
-            Real vy = PhysConst::c * v_over_c * tmp_p_X_1;
-            Real vz = PhysConst::c * v_over_c * tmp_p_X_2;
+            // The velocity is along (p_X*amp_X, p_Y*amp_Y)/amplitude
+            const auto cX = amp_X/amplitude;
+            const auto cY = amp_Y/amplitude;
+            Real vx = PhysConst::c * v_over_c * (tmp_p_X_0*cX + tmp_p_Y_0*cY);
+            Real vy = PhysConst::c * v_over_c * (tmp_p_X_1*cX + tmp_p_Y_1*cY);
+            Real vz = PhysConst::c * v_over_c * (tmp_p_X_2*cX + tmp_p_Y_2*cY);
             // When running in the boosted-frame, their is additional velocity along nvec
             if (gamma_boost > 1.){
                 vx -= PhysConst::c * beta_boost * tmp_nvec_0;

@@ -73,12 +73,15 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
  * \param Xp: pointer to first component of positions of laser particles
  * \param Yp: pointer to second component of positions of laser particles
  * \param t: Current physical time
- * \param amplitude: pointer to array of field amplitude.
+ * \param amplitude: pointer to array of field amplitude (x component)
+ * \param amplitude: pointer to array of field amplitude (y component)
  */
 void
 WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
-    const int np, Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
-    Real t, Real * AMREX_RESTRICT const amplitude) const
+    const int np,
+    Real const * AMREX_RESTRICT const Xp, Real const * AMREX_RESTRICT const Yp,
+    Real t,
+    Real * AMREX_RESTRICT const amplitude_X, Real * AMREX_RESTRICT const amplitude_Y) const
 {
     Complex I(0,1);
     // Calculate a few factors which are independent of the macroparticle
@@ -134,7 +137,8 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
             // Exp argument for transverse envelope
             const Complex exp_argument = - ( Xp[i]*Xp[i] + Yp[i]*Yp[i] ) * inv_complex_waist_2;
             // stcfactor + transverse envelope
-            amplitude[i] = ( stcfactor * amrex::exp( exp_argument ) ).real();
+            amplitude_X[i] = ( stcfactor * amrex::exp( exp_argument ) ).real();
+            amplitude_Y[i] = 0.0_rt;
         }
         );
 }
