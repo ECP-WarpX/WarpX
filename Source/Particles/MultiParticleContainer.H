@@ -277,8 +277,6 @@ protected:
 
     std::vector<PCTypes> species_types;
 
-    Resampling m_resampler;
-
     /** Whether to absorb particles exiting the domain */
     ParticleBC m_boundary_conditions = ParticleBC::none;
 

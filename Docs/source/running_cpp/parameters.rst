@@ -594,6 +594,31 @@ Particle initialization
     (the name of an existing positron species must be provided).
     **This feature requires to compile with QED=TRUE**
 
+* ``<species>.do_resampling`` (`0` or `1`) optional (default `0`)
+    If `1` resampling is performed for this species. This means that the number of macroparticles
+    will be reduced at specific timesteps while preserving the distribution function as much as
+    possible (in particular the weight of the remaining particles will be increased on average).
+    This can be useful in situations with continuous creation of particles (e.g. with ionization
+    or with QED effects). At least one resampling trigger (see below) must be specified to actually
+    perform resampling.
+
+* ``<species>.resampling_algorithm`` (`string`) optional (default `leveling_thinning`)
+    The algorithm used for resampling. Currently there is only one option, which is already set by
+    default:
+
+    * ``leveling_thinning`` This algorithm is defined in `Muraviev et al., arXiv:2006.08593 (2020) <https://arxiv.org/abs/2006.08593>`_.
+      The main parameter for this algorithm can be set with ``<species>.resampling_algorithm_target_ratio``.
+      It **roughly** corresponds to the ratio between the number of particles before and after
+      resampling. The default value for this parameter is 1.5.
+
+* ``<species>.resampling_trigger_intervals`` (`string`) optional (default `0`)
+    Using the `Intervals parser`_ syntax, this string defines timesteps at which resampling is
+    performed.
+
+* ``<species>.resampling_trigger_max_avg_ppc`` (`float`) optional (default `infinity`)
+    Resampling is performed everytime the number of macroparticles per cell of the species
+    averaged over the whole simulation domain exceeds this parameter.
+
 .. _running-cpp-parameters-laser:
 
 Laser initialization

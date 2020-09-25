@@ -9,12 +9,12 @@
 
 #include <AMReX_Particles.H>
 
-LevelingThinning::LevelingThinning ()
+LevelingThinning::LevelingThinning (const std::string species_name)
 {
     using namespace amrex::literals;
 
-    amrex::ParmParse pp("resampling_algorithm");
-    pp.query("target_ratio", m_target_ratio);
+    amrex::ParmParse pp(species_name);
+    pp.query("resampling_algorithm_target_ratio", m_target_ratio);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( m_target_ratio > 0._rt,
                                     "Resampling target ratio should be strictly greater than 0");
     if (m_target_ratio <= 1._rt)
