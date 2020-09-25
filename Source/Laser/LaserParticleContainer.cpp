@@ -69,7 +69,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     //__________
 
 #ifdef WARPX_DIM_XZ
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(nvec[1] == amrex::Real(0),
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_nvec[1] == amrex::Real(0),
         "Laser propagation direction must be 0 along y in 2D");
 #endif
 
