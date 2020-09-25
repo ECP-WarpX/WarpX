@@ -37,4 +37,7 @@ export WARPX_NTHREADS_PER_NODE=$(( ${WARPX_HYPERTHREAD_LEVEL} * ${CORI_NCORES_PE
 export OMP_NUM_THREADS=$(( ${WARPX_NTHREADS_PER_NODE} / ${WARPX_NMPI_PER_NODE} ))
 export WARPX_THREAD_COUNT=$(( ${CORI_NHYPERTHREADS_MAX} / ${WARPX_NMPI_PER_NODE} ))
 
+# for async_io support: (optional)
+export MPICH_MAX_THREAD_SAFETY=multiple
+
 srun --cpu_bind=cores -n $(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} )) -c ${WARPX_THREAD_COUNT} <path/to/executable> <input file>
