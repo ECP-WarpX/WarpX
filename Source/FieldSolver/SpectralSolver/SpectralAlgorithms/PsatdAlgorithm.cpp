@@ -305,10 +305,17 @@ PsatdAlgorithm::VayDeposition (SpectralFieldData& field_data,
 
     // Forward Fourier transform of D (temporarily stored in current):
     // D is nodal and does not match the staggering of J, therefore we pass the
-    // actual staggering of D (IntVect(1)) to the ForwardTransform function
-    field_data.ForwardTransform(*current[0], Idx::Jx, 0, IntVect(1));
-    field_data.ForwardTransform(*current[1], Idx::Jy, 0, IntVect(1));
-    field_data.ForwardTransform(*current[2], Idx::Jz, 0, IntVect(1));
+    // actual staggering of D (IntVect(1)) to the function ForwardTransform,
+    // unless all quantities are cell-centered (WarpX::do_cell_centered = true)
+    if (WarpX::do_cell_centered) {
+        field_data.ForwardTransform(*current[0], Idx::Jx, 0);
+        field_data.ForwardTransform(*current[1], Idx::Jy, 0);
+        field_data.ForwardTransform(*current[2], Idx::Jz, 0);
+    } else {
+        field_data.ForwardTransform(*current[0], Idx::Jx, 0, IntVect(1));
+        field_data.ForwardTransform(*current[1], Idx::Jy, 0, IntVect(1));
+        field_data.ForwardTransform(*current[2], Idx::Jz, 0, IntVect(1));
+    }
 
     // Loop over boxes
     for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi) {
