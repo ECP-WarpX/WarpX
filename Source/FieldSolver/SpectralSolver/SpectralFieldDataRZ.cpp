@@ -301,7 +301,7 @@ SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf, int con
 
     // Create a copy of the input multifab since the shape of field_mf
     // might not be what is needed in transform.
-    // For example, with fft_periodic_single_box, field_mf will have guard cells but
+    // For example, with periodic_single_box_fft, field_mf will have guard cells but
     // the transformed array does not.
     // Note that the copy will not include the imaginary part of mode 0 as
     // PhysicalToSpectral_Scalar expects.

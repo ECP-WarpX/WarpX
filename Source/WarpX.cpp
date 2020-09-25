@@ -1023,7 +1023,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         realspace_ba.grow(1, ngE[1]); // add guard cells only in z
     }
     spectral_solver_fp[lev].reset( new SpectralSolverRZ( realspace_ba, dm,
-        n_rz_azimuthal_modes, noz_fft, do_nodal, dx_vect, dt[lev], lev ) );
+        n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev], lev ) );
     if (use_kspace_filter) {
         spectral_solver_fp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
     }
@@ -1144,7 +1144,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   ifdef WARPX_DIM_RZ
         c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
         spectral_solver_cp[lev].reset( new SpectralSolverRZ( c_realspace_ba, dm,
-            n_rz_azimuthal_modes, noz_fft, do_nodal, cdx_vect, dt[lev], lev ) );
+            n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev], lev ) );
         if (use_kspace_filter) {
             spectral_solver_cp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
         }
