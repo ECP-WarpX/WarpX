@@ -319,8 +319,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip)
         {
             const SuperParticleType& p = src.getSuperParticle(ip);
-            return random_filter(p) * uniform_filter(p)
-                * parser_filter(p) * geometry_filter(p);
+            return random_filter(p, engine) * uniform_filter(p, engine)
+                * parser_filter(p, engine) * geometry_filter(p, engine);
         }, true);
 
         // real_names contains a list of all particle attributes.
