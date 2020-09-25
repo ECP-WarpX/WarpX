@@ -630,9 +630,9 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     const auto& ba = m_gdb->ParticleBoxArray(lev);
     const auto& dm = m_gdb->DistributionMap(lev);
     BoxArray nba = ba;
-#if (!defined WARPX_DIM_RZ) || (!defined WARPX_USE_PSATD)
-    nba.surroundingNodes();
-#endif
+    if (! WarpX::do_cell_centered) {
+        nba.surroundingNodes();
+    }
 
     // Number of guard cells for local deposition of rho
     WarpX& warpx = WarpX::GetInstance();
