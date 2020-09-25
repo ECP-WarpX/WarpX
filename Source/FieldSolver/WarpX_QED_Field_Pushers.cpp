@@ -32,7 +32,7 @@ WarpX::Hybrid_QED_Push (amrex::Vector<amrex::Real> a_dt)
     if (WarpX::do_cell_centered == 0) {
         Print()<<"The do_cell_centered flag is tripped.\n";
         try{
-            throw "Error: The Hybrid QED method is currently only compatible with the nodal scheme.\n";
+            throw "Error: The Hybrid QED method is currently only compatible with the fully cell-centered scheme.\n";
         }
         catch (const char* msg) {
             std::cerr << msg << std::endl;
