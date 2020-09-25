@@ -119,7 +119,7 @@ IntVect WarpX::filter_npass_each_dir(1);
 int WarpX::n_field_gather_buffer = -1;
 int WarpX::n_current_deposition_buffer = -1;
 
-int WarpX::do_nodal = false;
+int WarpX::do_cell_centered = false;
 
 #ifdef AMREX_USE_GPU
 bool WarpX::do_device_synchronize_before_profile = true;
@@ -578,9 +578,9 @@ WarpX::ReadParameters ()
 
         pp.query("do_dynamic_scheduling", do_dynamic_scheduling);
 
-        pp.query("do_nodal", do_nodal);
+        pp.query("do_cell_centered", do_cell_centered);
         // Use same shape factors in all directions, for gathering
-        if (do_nodal) galerkin_interpolation = false;
+        if (do_cell_centered) galerkin_interpolation = false;
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
@@ -590,9 +590,9 @@ WarpX::ReadParameters ()
                    "The problem must not be periodic in the radial direction");
 #endif
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-        // Force do_nodal=true (that is, not staggered) and
+        // Force do_cell_centered=true (that is, not staggered) and
         // use same shape factors in all directions, for gathering
-        do_nodal = true;
+        do_cell_centered = true;
         galerkin_interpolation = false;
 #endif
     }
@@ -849,7 +849,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
     guard_cells.Init(
         do_subcycling,
         WarpX::use_fdtd_nci_corr,
-        do_nodal,
+        do_cell_centered,
         do_moving_window,
         aux_is_nodal,
         moving_window_dir,
@@ -919,7 +919,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
 
     // Overwrite nodal flags if necessary
-    if (do_nodal) {
+    if (do_cell_centered) {
         Ex_nodal_flag  = IntVect::TheNodeVector();
         Ey_nodal_flag  = IntVect::TheNodeVector();
         Ez_nodal_flag  = IntVect::TheNodeVector();
@@ -1032,7 +1032,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         realspace_ba.grow(1, ngE[1]); // add guard cells only in z
     }
     spectral_solver_fp[lev] = std::make_unique<SpectralSolverRZ>( realspace_ba, dm,
-        n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev], lev );
+        n_rz_azimuthal_modes, noz_fft, do_cell_centered, m_v_galilean, dx_vect, dt[lev], lev );
     if (use_kspace_filter) {
         spectral_solver_fp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
     }
@@ -1042,16 +1042,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     bool const pml_flag_false=false;
     spectral_solver_fp[lev] = std::make_unique<SpectralSolver>( realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev],
+        nox_fft, noy_fft, noz_fft, do_cell_centered, m_v_galilean, dx_vect, dt[lev],
         pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
 #   endif
 #endif
     m_fdtd_solver_fp[lev] = std::make_unique<FiniteDifferenceSolver>(
-        maxwell_solver_id, dx, do_nodal);
+        maxwell_solver_id, dx, do_cell_centered);
     //
     // The Aux patch (i.e., the full solution)
     //
-    if (aux_is_nodal and !do_nodal)
+    if (aux_is_nodal and !do_cell_centered)
     {
         // Create aux multifabs on Nodal Box Array
         BoxArray const nba = amrex::convert(ba,IntVect::TheNodeVector());
@@ -1153,19 +1153,19 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   ifdef WARPX_DIM_RZ
         c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
         spectral_solver_cp[lev] = std::make_unique<SpectralSolverRZ>( c_realspace_ba, dm,
-            n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev], lev );
+            n_rz_azimuthal_modes, noz_fft, do_cell_centered, m_v_galilean, cdx_vect, dt[lev], lev );
         if (use_kspace_filter) {
             spectral_solver_cp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
         }
 #   else
         c_realspace_ba.grow(ngE); // add guard cells
         spectral_solver_cp[lev] = std::make_unique<SpectralSolver>( c_realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev],
+            nox_fft, noy_fft, noz_fft, do_cell_centered, m_v_galilean, cdx_vect, dt[lev],
             pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
 #   endif
 #endif
         m_fdtd_solver_cp[lev] = std::make_unique<FiniteDifferenceSolver>(
-            maxwell_solver_id, cdx, do_nodal);
+            maxwell_solver_id, cdx, do_cell_centered);
     }
 
     //
@@ -1291,8 +1291,8 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
-        "ComputeDivB not implemented with do_nodal."
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_cell_centered,
+        "ComputeDivB not implemented with do_cell_centered."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
@@ -1329,8 +1329,8 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
                     const std::array<const amrex::MultiFab* const, 3>& B,
                     const std::array<amrex::Real,3>& dx, int const ngrow)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_nodal,
-        "ComputeDivB not implemented with do_nodal."
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(!do_cell_centered,
+        "ComputeDivB not implemented with do_cell_centered."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 
     Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];

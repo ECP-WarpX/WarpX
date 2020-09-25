@@ -19,7 +19,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         PsatdAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
                          amrex::DistributionMapping const & dm,
                          int const n_rz_azimuthal_modes, int const norder_z,
-                         bool const nodal, amrex::Real const dt_step);
+                         bool const do_cell_centered, amrex::Real const dt_step);
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldDataRZ & f) override final;
         virtual int getRequiredNumberOfFields() const override final {

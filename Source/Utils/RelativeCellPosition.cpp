@@ -18,7 +18,7 @@ utils::getRelativeCellPosition(amrex::MultiFab const& mf)
 
     // amrex::CellIndex::CELL means: 0.5 from lower corner for that index/direction
     // amrex::CellIndex::NODE means: at corner for that index/direction
-    // WarpX::do_nodal means: all indices/directions on CellIndex::NODE
+    // WarpX::do_cell_centered means: all indices/directions on CellIndex::CELL
     for (int d = 0; d < AMREX_SPACEDIM; d++)
     {
         if (idx_type.cellCentered(d))

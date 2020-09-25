@@ -28,7 +28,7 @@ class SpectralSolverRZ
         SpectralSolverRZ (amrex::BoxArray const & realspace_ba,
                           amrex::DistributionMapping const & dm,
                           int const n_rz_azimuthal_modes,
-                          int const norder_z, bool const nodal,
+                          int const norder_z, bool const do_cell_centered,
                           const amrex::Array<amrex::Real,3>& v_galilean,
                           amrex::RealVect const dx, amrex::Real const dt,
                           int const lev);

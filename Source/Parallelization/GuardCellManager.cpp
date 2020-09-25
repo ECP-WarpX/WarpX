@@ -18,7 +18,7 @@ void
 guardCellManager::Init(
     const bool do_subcycling,
     const bool do_fdtd_nci_corr,
-    const bool do_nodal,
+    const bool do_cell_centered,
     const bool do_moving_window,
     const bool aux_is_nodal,
     const int moving_window_dir,
@@ -114,9 +114,9 @@ guardCellManager::Init(
     // is determined *empirically* to be the order of the solver
     // for nodal, and half the order of the solver for staggered.
 
-    int ngFFt_x = do_nodal ? nox_fft : nox_fft/2;
-    int ngFFt_y = do_nodal ? noy_fft : noy_fft/2;
-    int ngFFt_z = do_nodal ? noz_fft : noz_fft/2;
+    int ngFFt_x = do_cell_centered ? nox_fft : nox_fft/2;
+    int ngFFt_y = do_cell_centered ? noy_fft : noy_fft/2;
+    int ngFFt_z = do_cell_centered ? noz_fft : noz_fft/2;
 
     ParmParse pp("psatd");
     pp.query("nx_guard", ngFFt_x);
@@ -148,7 +148,7 @@ guardCellManager::Init(
     ignore_unused(nox_fft, noy_fft, noz_fft);
 #endif
 
-    ng_Extra = IntVect(static_cast<int>(aux_is_nodal and !do_nodal));
+    ng_Extra = IntVect(static_cast<int>(aux_is_nodal and !do_cell_centered));
 
     // Compute number of cells required for Field Solver
 #ifdef WARPX_USE_PSATD

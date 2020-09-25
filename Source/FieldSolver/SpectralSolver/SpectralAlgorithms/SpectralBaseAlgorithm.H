@@ -76,14 +76,14 @@ class SpectralBaseAlgorithm
         SpectralBaseAlgorithm(const SpectralKSpace& spectral_kspace,
                               const amrex::DistributionMapping& dm,
                               const int norder_x, const int norder_y,
-                              const int norder_z, const bool nodal)
+                              const int norder_z, const bool do_cell_centered)
           // Compute and assign the modified k vectors
-          : modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,nodal)),
+          : modified_kx_vec(spectral_kspace.getModifiedKComponent(dm,0,norder_x,do_cell_centered)),
 #if (AMREX_SPACEDIM==3)
-            modified_ky_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_y,nodal)),
-            modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,2,norder_z,nodal))
+            modified_ky_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_y,do_cell_centered)),
+            modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,2,norder_z,do_cell_centered))
 #else
-            modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_z,nodal))
+            modified_kz_vec(spectral_kspace.getModifiedKComponent(dm,1,norder_z,do_cell_centered))
 #endif
           {
 #if (AMREX_SPACEDIM!=3)

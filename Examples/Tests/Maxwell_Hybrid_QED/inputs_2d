@@ -10,7 +10,7 @@ geometry.is_periodic = 1  1  1
 geometry.prob_lo     =  -32.e-6 -512.e-6
 geometry.prob_hi     =  32.e-6 512.e-6
 amr.max_level = 0
-warpx.do_nodal = 1
+warpx.do_cell_centered = 1
 warpx.quantum_xi = 1.e-23
 
 #################################

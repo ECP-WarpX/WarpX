@@ -47,7 +47,7 @@ WarpX::ComputeDt ()
         deltat = cfl * CylindricalYeeAlgorithm::ComputeMaxDt(dx,  n_rz_azimuthal_modes);
 #   else
     // - In Cartesian geometry
-    if (do_nodal) {
+    if (do_cell_centered) {
         deltat = cfl * CartesianNodalAlgorithm::ComputeMaxDt( dx );
     } else if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
         deltat = cfl * CartesianYeeAlgorithm::ComputeMaxDt( dx );

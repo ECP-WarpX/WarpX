@@ -20,7 +20,7 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
         PMLPsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                          const amrex::DistributionMapping& dm,
                          const int norder_x, const int norder_y,
-                         const int norder_z, const bool nodal,
+                         const int norder_z, const bool do_cell_centered,
                          const amrex::Real dt);
 
         void InitializeSpectralCoefficients(

@@ -28,7 +28,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
     amrex::ignore_unused(Efield, Bfield, Jfield, dt, macroscopic_properties);
     amrex::Abort("currently macro E-push does not work for RZ");
 #else
-    if (m_do_nodal) {
+    if (m_do_cell_centered) {
         amrex::Abort(" macro E-push does not work for nodal ");
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {

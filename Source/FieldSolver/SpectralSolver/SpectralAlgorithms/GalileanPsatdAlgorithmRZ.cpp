@@ -18,11 +18,11 @@ using namespace amrex::literals;
 GalileanPsatdAlgorithmRZ::GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                                     amrex::DistributionMapping const & dm,
                                                     int const n_rz_azimuthal_modes, int const norder_z,
-                                                    bool const nodal,
+                                                    bool const do_cell_centered,
                                                     const amrex::Array<amrex::Real,3>& v_galilean,
                                                     amrex::Real const dt)
      // Initialize members of base class
-     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, norder_z, nodal),
+     : SpectralBaseAlgorithmRZ(spectral_kspace, dm, norder_z, do_cell_centered),
        m_dt(dt),
        m_v_galilean(v_galilean)
 {

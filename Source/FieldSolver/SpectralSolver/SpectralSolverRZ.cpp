@@ -19,7 +19,8 @@
  *
  * \param n_rz_azimuthal_modes Number of azimuthal modes
  * \param norder_z Order of accuracy of the spatial derivatives along z
- * \param nodal    Whether the solver is applied to a nodal or staggered grid
+ * \param do_cell_centered Whether the solver is applied to a fully cell-centered
+ *                         or staggered grid
  * \param dx       Cell size along each dimension
  * \param dt       Time step
  * \param pml      Whether the boxes in which the solver is applied are PML boxes
@@ -28,7 +29,7 @@
 SpectralSolverRZ::SpectralSolverRZ (amrex::BoxArray const & realspace_ba,
                                     amrex::DistributionMapping const & dm,
                                     int const n_rz_azimuthal_modes,
-                                    int const norder_z, bool const nodal,
+                                    int const norder_z, bool const do_cell_centered,
                                     const amrex::Array<amrex::Real,3>& v_galilean,
                                     amrex::RealVect const dx, amrex::Real const dt,
                                     int const lev)
@@ -46,11 +47,11 @@ SpectralSolverRZ::SpectralSolverRZ (amrex::BoxArray const & realspace_ba,
     if (v_galilean[2] == 0) {
          // v_galilean is 0: use standard PSATD algorithm
         algorithm = std::make_unique<PsatdAlgorithmRZ>(
-            k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, dt);
+            k_space, dm, n_rz_azimuthal_modes, norder_z, do_cell_centered, dt);
     } else {
         // Otherwise: use the Galilean algorithm
         algorithm = std::make_unique<GalileanPsatdAlgorithmRZ>(
-            k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, v_galilean, dt);
+            k_space, dm, n_rz_azimuthal_modes, norder_z, do_cell_centered, v_galilean, dt);
     }
 
     // - Initialize arrays for fields in spectral space + FFT plans

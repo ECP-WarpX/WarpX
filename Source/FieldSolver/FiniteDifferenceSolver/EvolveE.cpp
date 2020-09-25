@@ -38,7 +38,7 @@ void FiniteDifferenceSolver::EvolveE (
         EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, dt );
 
 #else
-    if (m_do_nodal) {
+    if (m_do_cell_centered) {
 
         EvolveECartesian <CartesianNodalAlgorithm> ( Efield, Bfield, Jfield, Ffield, dt );
 

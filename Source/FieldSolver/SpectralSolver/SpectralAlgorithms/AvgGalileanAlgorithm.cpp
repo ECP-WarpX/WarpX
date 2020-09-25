@@ -8,12 +8,12 @@ using namespace amrex;
 AvgGalileanAlgorithm::AvgGalileanAlgorithm(const SpectralKSpace& spectral_kspace,
                          const DistributionMapping& dm,
                          const int norder_x, const int norder_y,
-                         const int norder_z, const bool nodal,
+                         const int norder_z, const bool do_cell_centered,
                          const amrex::Array<amrex::Real,3>& v_galilean,
                          const Real dt)
      // Initialize members of base class
      : SpectralBaseAlgorithm( spectral_kspace, dm,
-                              norder_x, norder_y, norder_z, nodal )
+                              norder_x, norder_y, norder_z, do_cell_centered )
 {
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 

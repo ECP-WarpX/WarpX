@@ -175,14 +175,14 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
  *
  * \param n_order Order of accuracy of the stencil, in discretizing
  *                a spatial derivative
- * \param nodal Whether the stencil is to be applied to a nodal or
-                staggered set of fields
+ * \param do_cell_centered Whether the stencil is to be applied to a fully cell-centered
+ *                         or staggered set of fields
  */
 KVectorComponent
 SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                                        const int i_dim,
                                        const int n_order,
-                                       const bool nodal ) const
+                                       const bool do_cell_centered ) const
 {
     // Initialize an empty DeviceVector in each box
     KVectorComponent modified_k_comp(spectralspace_ba, dm);
@@ -202,7 +202,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
     } else {
 
         // Compute real-space stencil coefficients
-        Vector<Real> h_stencil_coef = getFornbergStencilCoefficients(n_order, nodal);
+        Vector<Real> h_stencil_coef = getFornbergStencilCoefficients(n_order, do_cell_centered);
         DeviceVector<Real> d_stencil_coef(h_stencil_coef.size());
         Gpu::copyAsync(Gpu::hostToDevice, h_stencil_coef.begin(), h_stencil_coef.end(),
                        d_stencil_coef.begin());
@@ -228,7 +228,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             {
                 p_modified_k[i] = 0;
                 for (int n=0; n<nstencil; n++){
-                    if (nodal){
+                    if (do_cell_centered){
                         p_modified_k[i] += p_stencil_coef[n]*
                             std::sin( p_k[i]*(n+1)*delta_x )/( (n+1)*delta_x );
                     } else {
@@ -242,7 +242,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
                 // (i.e. highest *real* k) is 0. However, the above calculation
                 // based on stencil coefficients does not give 0 to machine precision.
                 // Therefore, we need to enforce the fact that the modified k be 0 here.
-                if (nodal){
+                if (do_cell_centered){
                     if (i_dim == 0){
                         // Because of the real-to-complex FFTs, the first axis (idim=0)
                         // contains only the positive k, and the Nyquist frequency is
@@ -265,7 +265,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
 }
 
 Vector<Real>
-getFornbergStencilCoefficients(const int n_order, const bool nodal)
+getFornbergStencilCoefficients(const int n_order, const bool do_cell_centered)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
 
@@ -278,7 +278,7 @@ getFornbergStencilCoefficients(const int n_order, const bool nodal)
     // to calculate the coefficients by recurrence.
 
     // Coefficients for nodal (that is, centered) finite-difference approximation
-    if (nodal == true) {
+    if (do_cell_centered == true) {
        // First coefficient
        coefs[0] = m * 2. / (m+1);
        // Other coefficients by recurrence

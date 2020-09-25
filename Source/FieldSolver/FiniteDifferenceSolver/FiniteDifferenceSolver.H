@@ -29,12 +29,12 @@ class FiniteDifferenceSolver
          *
          * \param fdtd_algo Identifies the chosen algorithm, as defined in WarpXAlgorithmSelection.H
          * \param cell_size Cell size along each dimension, for the chosen refinement level
-         * \param do_nodal  Whether the solver is applied to a nodal or staggered grid
+         * \param do_cell_centered  Whether the solver is applied to a fully cell-centered grid
          */
         FiniteDifferenceSolver (
             int const fdtd_algo,
             std::array<amrex::Real,3> cell_size,
-            bool const do_nodal );
+            bool const do_cell_centered );
 
         void EvolveB ( std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
                        std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
@@ -91,7 +91,7 @@ class FiniteDifferenceSolver
     private:
 
         int m_fdtd_algo;
-        bool m_do_nodal;
+        bool m_do_cell_centered;
 
 #ifdef WARPX_DIM_RZ
         amrex::Real m_dr, m_rmin;

@@ -20,11 +20,11 @@
 FiniteDifferenceSolver::FiniteDifferenceSolver (
     int const fdtd_algo,
     std::array<amrex::Real,3> cell_size,
-    bool do_nodal ) {
+    bool do_cell_centered ) {
 
     // Register the type of finite-difference algorithm
     m_fdtd_algo = fdtd_algo;
-    m_do_nodal = do_nodal;
+    m_do_cell_centered = do_cell_centered;
 
     // Calculate coefficients of finite-difference stencil
 #ifdef WARPX_DIM_RZ
@@ -51,7 +51,7 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
 #else
     amrex::Vector<amrex::Real> stencil_coefs_x, stencil_coefs_y, stencil_coefs_z;
 
-    if (do_nodal) {
+    if (do_cell_centered) {
 
         CartesianNodalAlgorithm::InitializeStencilCoefficients( cell_size,
             stencil_coefs_x, stencil_coefs_y, stencil_coefs_z );

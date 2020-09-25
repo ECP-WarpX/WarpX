@@ -22,7 +22,7 @@ public:
      *
      * \param do_subcycling bool, whether to use subcycling
      * \param do_fdtd_nci_corr bool, whether to use Godfrey NCI corrector
-     * \param do_nodal bool, whether the field solver is nodal
+     * \param do_cell_centered bool, whether the grid is fully cell-centered
      * \param do_moving_window bool, whether to use moving window
      * \param aux_is_nodal bool, true if the aux grid is nodal
      * \param moving_window_dir direction of moving window
@@ -37,7 +37,7 @@ public:
     void Init(
         const bool do_subcycling,
         const bool do_fdtd_nci_corr,
-        const bool do_nodal,
+        const bool do_cell_centered,
         const bool do_moving_window,
         const bool aux_is_nodal,
         const int moving_window_dir,

@@ -12,12 +12,12 @@ using namespace amrex;
 GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
                          const DistributionMapping& dm,
                          const int norder_x, const int norder_y,
-                         const int norder_z, const bool nodal,
+                         const int norder_z, const bool do_cell_centered,
                          const Array<Real, 3>& v_galilean,
                          const Real dt,
                          const bool update_with_rho)
      // Initialize members of base class
-     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
+     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, do_cell_centered),
        m_v_galilean(v_galilean),
        m_dt(dt),
        m_update_with_rho(update_with_rho)

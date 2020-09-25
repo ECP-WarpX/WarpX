@@ -19,7 +19,7 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         GalileanPsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                   amrex::DistributionMapping const & dm,
                                   int const n_rz_azimuthal_modes, int const norder_z,
-                                  bool const nodal,
+                                  bool const do_cell_centered,
                                   const amrex::Array<amrex::Real,3>& v_galilean,
                                   amrex::Real const dt_step);
         // Redefine functions from base class

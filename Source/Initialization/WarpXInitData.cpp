@@ -172,7 +172,7 @@ WarpX::InitPML ()
         pml[0] = std::make_unique<PML>(boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, 0,
 #ifdef WARPX_USE_PSATD
-                             dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
+                             dt[0], nox_fft, noy_fft, noz_fft, do_cell_centered,
 #endif
                              do_dive_cleaning, do_moving_window,
                              pml_has_particles, do_pml_in_domain,
@@ -190,7 +190,7 @@ WarpX::InitPML ()
                                    &Geom(lev), &Geom(lev-1),
                                    pml_ncell, pml_delta, refRatio(lev-1)[0],
 #ifdef WARPX_USE_PSATD
-                                   dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
+                                   dt[lev], nox_fft, noy_fft, noz_fft, do_cell_centered,
 #endif
                                    do_dive_cleaning, do_moving_window,
                                    pml_has_particles, do_pml_in_domain,

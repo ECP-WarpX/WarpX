@@ -69,9 +69,9 @@ class SpectralBaseAlgorithmRZ
         // Constructor
         SpectralBaseAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
                                 amrex::DistributionMapping const & dm,
-                                int const norder_z, bool const nodal)
+                                int const norder_z, bool const do_cell_centered)
           // Compute and assign the modified k vectors
-          : modified_kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, nodal))
+          : modified_kz_vec(spectral_kspace.getModifiedKComponent(dm, 1, norder_z, do_cell_centered))
           {};
 
         // Modified finite-order vectors

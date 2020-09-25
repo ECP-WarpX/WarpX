@@ -49,7 +49,7 @@ class SpectralKSpace
             const int i_dim, const bool only_positive_k ) const;
         KVectorComponent getModifiedKComponent(
             const amrex::DistributionMapping& dm, const int i_dim,
-            const int n_order, const bool nodal ) const;
+            const int n_order, const bool do_cell_centered ) const;
         SpectralShiftFactor getSpectralShiftFactor(
             const amrex::DistributionMapping& dm, const int i_dim,
             const int shift_type ) const;
@@ -71,6 +71,6 @@ class SpectralKSpace
  *                    on a nodal grid or a staggered grid
  */
 amrex::Vector<amrex::Real>
-getFornbergStencilCoefficients(const int n_order, const bool nodal);
+getFornbergStencilCoefficients(const int n_order, const bool do_cell_centered);
 
 #endif

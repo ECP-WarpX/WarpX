@@ -40,7 +40,7 @@ void FiniteDifferenceSolver::EvolveEPML (
     amrex::ignore_unused(Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles);
     amrex::Abort("PML are not implemented in cylindrical geometry.");
 #else
-    if (m_do_nodal) {
+    if (m_do_cell_centered) {
 
         EvolveEPMLCartesian <CartesianNodalAlgorithm> (
             Efield, Bfield, Jfield, Ffield, sigba, dt, pml_has_particles );

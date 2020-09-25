@@ -35,7 +35,7 @@ void FiniteDifferenceSolver::ComputeDivE (
         ComputeDivECylindrical <CylindricalYeeAlgorithm> ( Efield, divEfield );
 
 #else
-    if (m_do_nodal) {
+    if (m_do_cell_centered) {
 
         ComputeDivECartesian <CartesianNodalAlgorithm> ( Efield, divEfield );
 
