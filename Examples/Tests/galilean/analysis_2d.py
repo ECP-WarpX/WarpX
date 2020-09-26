@@ -38,7 +38,7 @@ Ez= ds.index.grids[0]['boxlib', 'Ez'].squeeze().v
 if (averaged):
     # energyE_ref was calculated with Galilean PSATD method (v_galilean = (0,0,0.99498743710662))
     energyE_ref = 26913.546573259937
-    tolerance_rel = 1e-5
+    tolerance_rel = 1e-6
 elif (not dims_RZ and not current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
     energyE_ref = 38362.88743899688
