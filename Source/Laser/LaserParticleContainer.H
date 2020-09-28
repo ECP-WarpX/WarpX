@@ -81,6 +81,7 @@ private:
     amrex::Vector<amrex::Real> m_position; //! Coordinates of one of the point of the antenna
     amrex::Vector<amrex::Real> m_nvec; //! Normal of the plane of the antenna
     amrex::Vector<amrex::Real> m_p_X;// ! Polarization
+    amrex::Real m_ellipticity = 0.0; // ! Ellipticity
 
     long                      m_pusher_algo = -1;
     amrex::Real               m_e_max       = std::numeric_limits<amrex::Real>::quiet_NaN();

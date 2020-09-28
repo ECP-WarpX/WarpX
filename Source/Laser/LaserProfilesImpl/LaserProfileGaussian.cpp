@@ -61,6 +61,13 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
     m_params.theta_stc = 0.;
 #endif
 
+    //Ellipticity
+    const auto& ell = m_common_params.ellipticity;
+    m_params.dephasing = (ell < 0._rt)?(-MathConst::pi*0.5_rt):(MathConst::pi*0.5_rt);
+    const auto ell2 = ell*ell;
+    m_params.pol_amp_x_coeff = 1.0_rt/std::sqrt(1.0_rt + ell2);
+    m_params.pol_amp_y_coeff = ell/std::sqrt(1.0_rt + ell2);
+    //___________
 }
 
 /* \brief compute field amplitude for a Gaussian laser, at particles' position
@@ -123,7 +130,14 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     auto const tmp_zeta = m_params.zeta;
     auto const tmp_theta_stc = m_params.theta_stc;
     auto const tmp_profile_focal_distance = m_params.focal_distance;
+
+    auto const tmp_pol_amp_x_coeff = m_params.pol_amp_x_coeff;
+    auto const tmp_pol_amp_y_coeff = m_params.pol_amp_y_coeff;
+
+    const Complex deph_factor = amrex::exp<Real>(m_params.dephasing);
+
     // Loop through the macroparticle to calculate the proper amplitude
+
     amrex::ParallelFor(
         np,
         [=] AMREX_GPU_DEVICE (int i) {
@@ -137,8 +151,9 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
             // Exp argument for transverse envelope
             const Complex exp_argument = - ( Xp[i]*Xp[i] + Yp[i]*Yp[i] ) * inv_complex_waist_2;
             // stcfactor + transverse envelope
-            amplitude_X[i] = ( stcfactor * amrex::exp( exp_argument ) ).real();
-            amplitude_Y[i] = 0.0_rt;
+            const auto amp = stcfactor * amrex::exp( exp_argument );
+            amplitude_X[i] = tmp_pol_amp_x_coeff*amp.real();
+            amplitude_Y[i] = tmp_pol_amp_y_coeff*(amp*deph_factor).real();
         }
         );
 }

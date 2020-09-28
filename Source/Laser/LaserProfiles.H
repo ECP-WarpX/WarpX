@@ -35,6 +35,7 @@ struct CommonLaserParameters
     amrex::Vector<amrex::Real> p_X;// ! Polarization
     amrex::Vector<amrex::Real> p_Y;// ! Second polarization axis
     amrex::Vector<amrex::Real> nvec; //! Normal of the plane of the antenna
+    amrex::Real ellipticity; //! Ellipticity of the beam (-1,+1: circular polarization, 0: linear polarization)
 };
 
 
@@ -141,6 +142,10 @@ private:
 
         amrex::Vector<amrex::Real> stc_direction; //! Direction of the spatio-temporal couplings
         amrex::Real theta_stc; //! Angle between polarization (p_X) and direction of spatiotemporal coupling (stc_direction)
+
+        amrex::Real dephasing = 0.0;
+        amrex::Real pol_amp_x_coeff = 0.0;
+        amrex::Real pol_amp_y_coeff = 0.0;
     } m_params;
 
     CommonLaserParameters m_common_params;

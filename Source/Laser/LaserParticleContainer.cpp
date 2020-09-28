@@ -50,6 +50,8 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     pp.query("do_continuous_injection", do_continuous_injection);
     pp.query("min_particles_per_mode", m_min_particles_per_mode);
 
+    pp.query("ellipticity", m_ellipticity);
+
     if (m_e_max == amrex::Real(0.)){
         amrex::Print() << m_laser_name << " with zero amplitude disabled.\n";
         return; // Disable laser if amplitude is 0
@@ -156,6 +158,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     common_params.p_X = m_p_X;
     common_params.p_Y = m_p_Y;
     common_params.nvec = m_nvec;
+    common_params.ellipticity = m_ellipticity;
     m_up_laser_profile->init(pp, ParmParse{"my_constants"}, common_params);
 }
 
