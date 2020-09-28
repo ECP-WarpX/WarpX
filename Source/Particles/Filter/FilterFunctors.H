@@ -34,10 +34,10 @@ struct RandomFilter
      * \return whether or not the particle is selected
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator () (const SuperParticleType& /*p*/) const noexcept
+    bool operator () (const SuperParticleType& /*p*/, const amrex::RandomEngine& engine) const noexcept
     {
         if ( !m_is_active ) return 1;
-        else if ( amrex::Random() < m_fraction ) return 1;
+        else if ( amrex::Random(engine) < m_fraction ) return 1;
         else return 0;
     }
 private:
@@ -63,7 +63,7 @@ struct UniformFilter
      * \return whether or not the particle is selected
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator () (const SuperParticleType& p) const noexcept
+    bool operator () (const SuperParticleType& p, const amrex::RandomEngine&) const noexcept
     {
         if ( !m_is_active ) return 1;
         else if ( p.id()%m_stride == 0 ) return 1;
@@ -94,7 +94,7 @@ struct ParserFilter
      * \return whether or not the particle is selected
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator () (const SuperParticleType& p) const noexcept
+    bool operator () (const SuperParticleType& p, const amrex::RandomEngine&) const noexcept
     {
         if ( !m_is_active ) return 1;
         amrex::Real const x  = p.pos(0);
@@ -133,7 +133,7 @@ struct GeometryFilter
      * \return whether or not the particle is inside the region defined by m_domain
      */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator () (const SuperParticleType& p) const noexcept
+    bool operator () (const SuperParticleType& p, const amrex::RandomEngine&) const noexcept
     {
         if ( !m_is_active ) return 1;
         return ! (AMREX_D_TERM( (p.pos(0) < m_domain.lo(0)) || (p.pos(0) > m_domain.hi(0) ),

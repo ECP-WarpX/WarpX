@@ -12,7 +12,7 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_Array.H>
 #include <AMReX_TypeTraits.H>
-
+#include <AMReX.H>
 
 // When compiled for CPU, wrap WarpXParser and enable threading.
 // When compiled for GPU, store one copy of the parser in
@@ -155,6 +155,7 @@ void GpuParser<N>::init_gpu_parser (WarpXParser const& wp)
 
     wp_parser_delete(cpu_tmp);
 #endif
+    amrex::ignore_unused(wp);
 }
 
 template <int N>

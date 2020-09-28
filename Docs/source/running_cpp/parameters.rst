@@ -277,6 +277,11 @@ Particle initialization
 * ``particles.use_fdtd_nci_corr`` (`0` or `1`) optional (default `0`)
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
 
+* ``particles.boundary_conditions`` (`string`) optional (default `none`)
+    Boundary conditions applied to particles. Options are:
+    * ``none``: the boundary conditions applied to particles is determined by ``geometry.is_periodic``.
+    * ``absorbing``: particles exiting the simulation domain are discarded.
+
 * ``particles.rigid_injected_species`` (`strings`, separated by spaces)
     List of species injected using the rigid injection method. The rigid injection
     method is useful when injecting a relativistic particle beam, in boosted-frame
@@ -588,6 +593,31 @@ Particle initialization
     If a photon species has the Breit-Wheeler process, a positron product species must be specified
     (the name of an existing positron species must be provided).
     **This feature requires to compile with QED=TRUE**
+
+* ``<species>.do_resampling`` (`0` or `1`) optional (default `0`)
+    If `1` resampling is performed for this species. This means that the number of macroparticles
+    will be reduced at specific timesteps while preserving the distribution function as much as
+    possible (in particular the weight of the remaining particles will be increased on average).
+    This can be useful in situations with continuous creation of particles (e.g. with ionization
+    or with QED effects). At least one resampling trigger (see below) must be specified to actually
+    perform resampling.
+
+* ``<species>.resampling_algorithm`` (`string`) optional (default `leveling_thinning`)
+    The algorithm used for resampling. Currently there is only one option, which is already set by
+    default:
+
+    * ``leveling_thinning`` This algorithm is defined in `Muraviev et al., arXiv:2006.08593 (2020) <https://arxiv.org/abs/2006.08593>`_.
+      The main parameter for this algorithm can be set with ``<species>.resampling_algorithm_target_ratio``.
+      It **roughly** corresponds to the ratio between the number of particles before and after
+      resampling. The default value for this parameter is 1.5.
+
+* ``<species>.resampling_trigger_intervals`` (`string`) optional (default `0`)
+    Using the `Intervals parser`_ syntax, this string defines timesteps at which resampling is
+    performed.
+
+* ``<species>.resampling_trigger_max_avg_ppc`` (`float`) optional (default `infinity`)
+    Resampling is performed everytime the number of macroparticles per cell of the species
+    averaged over the whole simulation domain exceeds this parameter.
 
 .. _running-cpp-parameters-laser:
 
@@ -974,6 +1004,17 @@ Numerics and algorithms
     This requires `warpx.use_kspace_filter=1` and is only supported
     with the RZ spectral solver.
 
+* ``warpx.use_damp_fields_in_z_guard`` (`0` or `1`)
+    When using the RZ spectrol solver, specifies whether to apply a
+    damping factor to the E and B fields in the guard cells
+    along z that extend beyond the edge of the domain.
+    When the boundary conditions along z are not periodic, this defaults to
+    true, otherwise false. The damping profile is
+    a sine squared and is applied to the fields on the outer half of the guards.
+    This damping is useful for damping high frequency numerical artifacts that
+    occur when there is parallel decomposition along z with non-periodic boundary
+    conditions.
+
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.
     Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
@@ -1249,7 +1290,7 @@ Numerics and algorithms
  * ``warpx.quantum_xi`` ('float'; default: 1.3050122.e-52)
      Overwrites the actual quantum parameter used in Maxwell's QED equations. Assigning a
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
-     Note that this option will only have an effect if the warpx.use_Hybrid_QED flag is also triggered.
+     Note that this option will only have an effect if the ``warpx.use_Hybrid_QED`` flag is also triggered.
 
  * ``warpx.do_device_synchronize_before_profile`` (`bool`) optional (default `1`)
     When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
@@ -1421,13 +1462,16 @@ s disabled.
     Which species dumped in this diagnostics.
 
 * ``<diag_name>.<species_name>.variables`` (list of `strings` separated by spaces, optional)
-    List of particle quantities to write to output file.
-    By defaults, all quantities are written to file. Choices are
+    List of particle quantities or species-specific field quantities to write to output file.
+    Choices are
 
     * ``w`` for the particle weight,
 
     * ``ux`` ``uy`` ``uz`` for the particle momentum,
 
+    * ``rho`` to dump the charge density of the particles belonging to species ``<species_name>``.
+
+    By defaults, all quantities are written to output file, except the charge density.
     The particle positions are always included.
     Use ``<species>.variables = none`` to plot no particle data, except particle position.
 
@@ -1589,6 +1633,23 @@ Reduced Diagnostics
         :math:`E` field energy,
         :math:`B` field energy, at mesh refinement levels from 0 to :math:`n`.
 
+    * ``FieldMaximum``
+        This type computes the maximum value of each component of the electric and magnetic fields
+        and of the norm of the electric and magnetic field vectors.
+        Measuring maximum fields in a plasma might be very noisy in PIC, use this instead
+        for analysis of scenarios such as an electromagnetic wave propagating in vacuum.
+
+        The output columns are
+        the maximum value of the :math:`E_x` field,
+        the maximum value of the :math:`E_y` field,
+        the maximum value of the :math:`E_z` field,
+        the maximum value of the norm :math:`|E|` of the electric field,
+        the maximum value of the :math:`B_x` field,
+        the maximum value of the :math:`B_y` field,
+        the maximum value of the :math:`B_z` field and
+        the maximum value of the norm :math:`|B|` of the magnetic field,
+        at mesh refinement levels from  0 to :math:`n`.
+
     * ``BeamRelevant``
         This type computes properties of a particle beam relevant for particle accelerators,
         like position, momentum, emittance, etc.
@@ -1738,7 +1799,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
-      (version >= 1.67) and to compile with QED_TABLE_GEN=TRUE. All
+      (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All
       the following parameters must be specified (table 1 is used to evolve the optical depth
       of the photons, while table 2 is used for pair generation):
 
@@ -1774,7 +1835,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
-      (version >= 1.67) and to compile with QED_TABLE_GEN=TRUE. All
+      (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All
       the following parameters must be specified (table 1 is used to evolve the optical depth
       of the particles, while table 2 is used for photon emission):
 
@@ -1816,7 +1877,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
 * ``warpx.do_qed_schwinger`` (`bool`) optional (default `0`)
     If this is 1, Schwinger electron-positron pairs can be generated in vacuum in the cells where the EM field is high enough.
-    Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR`` on the branch ``QED``.
+    Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR``.
     If ``warpx.do_qed_schwinger = 1``, Schwinger product species must be specified with
     ``qed_schwinger.ele_product_species`` and ``qed_schwinger.pos_product_species``.
     **Note: implementation of this feature is in progress.**

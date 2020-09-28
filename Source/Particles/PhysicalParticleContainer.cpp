@@ -123,6 +123,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_field_ionization", do_field_ionization);
 
     pp.query("do_resampling", do_resampling);
+    if (do_resampling) m_resampler = Resampling(species_name);
 
     //check if Radiation Reaction is enabled and do consistency checks
     pp.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
@@ -752,7 +753,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         // The invalid ones are given negative ID and are deleted during the
         // next redistribute.
         const auto poffset = offset.data();
-        amrex::For(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+        amrex::ParallelForRNG(overlap_box,
+        [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
             const auto index = overlap_box.index(iv);
@@ -764,7 +766,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 p.cpu() = cpuid;
 
                 const XDim3 r =
-                    inj_pos->getPositionUnitBox(i_part, lrrfac);
+                    inj_pos->getPositionUnitBox(i_part, lrrfac, engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
 #if (AMREX_SPACEDIM == 3)
@@ -792,7 +794,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 if (nmodes == 1) {
                     // With only 1 mode, the angle doesn't matter so
                     // choose it randomly.
-                    theta = 2._rt*MathConst::pi*amrex::Random();
+                    theta = 2._rt*MathConst::pi*amrex::Random(engine);
                 } else {
                     theta = 2._rt*MathConst::pi*r.y;
                 }
@@ -816,7 +818,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                         continue;
                     }
 
-                    u = inj_mom->getMomentum(pos.x, pos.y, z0);
+                    u = inj_mom->getMomentum(pos.x, pos.y, z0, engine);
                     dens = inj_rho->getDensity(pos.x, pos.y, z0);
 
                     // Remove particle if density below threshold
@@ -848,7 +850,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     dens = amrex::min(dens, density_max);
 
                     // get the full momentum, including thermal motion
-                    u = inj_mom->getMomentum(pos.x, pos.y, 0._rt);
+                    u = inj_mom->getMomentum(pos.x, pos.y, 0._rt, engine);
                     const Real gamma_lab = std::sqrt( 1._rt+(u.x*u.x+u.y*u.y+u.z*u.z) );
                     const Real betaz_lab = u.z/(gamma_lab);
 
@@ -868,7 +870,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 }
 
                 if(loc_has_breit_wheeler){
-                    p_optical_depth_BW[ip] = breit_wheeler_get_opt();
+                    p_optical_depth_BW[ip] = breit_wheeler_get_opt(engine);
                 }
 #endif
 
@@ -1996,18 +1998,18 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 ion_atomic_number);
 }
 
-void PhysicalParticleContainer::resample (const Resampling& resampler, const int timestep)
+void PhysicalParticleContainer::resample (const int timestep)
 {
     const amrex::Real global_numparts = TotalNumberOfParticles();
 
-    if (resampler.triggered(timestep, global_numparts))
+    if (m_resampler.triggered(timestep, global_numparts))
     {
         amrex::Print() << "Resampling " << species_name << ".\n";
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
             {
-                resampler(pti, lev, this);
+                m_resampler(pti, lev, this);
             }
         }
     }

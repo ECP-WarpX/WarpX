@@ -12,5 +12,6 @@ if(WarpX_DIMS STREQUAL RZ)
       PRIVATE
         SpectralBaseAlgorithmRZ.cpp
         PsatdAlgorithmRZ.cpp
+        GalileanPsatdAlgorithmRZ.cpp
     )
 endif()

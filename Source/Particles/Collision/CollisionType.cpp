@@ -109,8 +109,8 @@ void CollisionType::doCoulombCollisionsWithinTile
 #endif
 
         // Loop over cells
-        amrex::ParallelFor( n_cells,
-            [=] AMREX_GPU_DEVICE (int i_cell) noexcept
+        amrex::ParallelForRNG( n_cells,
+            [=] AMREX_GPU_DEVICE (int i_cell, amrex::RandomEngine const& engine) noexcept
             {
                 // The particles from species1 that are in the cell `i_cell` are
                 // given by the `indices_1[cell_start_1:cell_stop_1]`
@@ -123,7 +123,7 @@ void CollisionType::doCoulombCollisionsWithinTile
                 {
                     // shuffle
                     ShuffleFisherYates(
-                        indices_1, cell_start_1, cell_half_1 );
+                        indices_1, cell_start_1, cell_half_1, engine );
 
 #if defined WARPX_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
@@ -139,7 +139,8 @@ void CollisionType::doCoulombCollisionsWithinTile
                         indices_1, indices_1,
                         ux_1, uy_1, uz_1, ux_1, uy_1, uz_1, w_1, w_1,
                         q1, q1, m1, m1, Real(-1.0), Real(-1.0),
-                        dt, CoulombLog, dV );
+                        dt, CoulombLog, dV,
+                        engine);
                 }
             }
         );
@@ -199,8 +200,8 @@ void CollisionType::doCoulombCollisionsWithinTile
 #endif
 
         // Loop over cells
-        amrex::ParallelFor( n_cells,
-            [=] AMREX_GPU_DEVICE (int i_cell) noexcept
+        amrex::ParallelForRNG( n_cells,
+            [=] AMREX_GPU_DEVICE (int i_cell, amrex::RandomEngine const& engine) noexcept
             {
                 // The particles from species1 that are in the cell `i_cell` are
                 // given by the `indices_1[cell_start_1:cell_stop_1]`
@@ -219,8 +220,8 @@ void CollisionType::doCoulombCollisionsWithinTile
                      cell_stop_2 - cell_start_2 >= 1 )
                 {
                     // shuffle
-                    ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1);
-                    ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2);
+                    ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
+                    ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
 
 #if defined WARPX_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
@@ -235,7 +236,8 @@ void CollisionType::doCoulombCollisionsWithinTile
                         indices_1, indices_2,
                         ux_1, uy_1, uz_1, ux_2, uy_2, uz_2, w_1, w_2,
                         q1, q2, m1, m2, Real(-1.0), Real(-1.0),
-                        dt, CoulombLog, dV );
+                        dt, CoulombLog, dV,
+                        engine);
                 }
             }
         );

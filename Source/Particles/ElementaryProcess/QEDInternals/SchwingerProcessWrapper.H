@@ -38,7 +38,8 @@ amrex::Real
 getSchwingerProductionNumber (const amrex::Real dV, const amrex::Real dt,
               const amrex::Real Ex, const amrex::Real Ey, const amrex::Real Ez,
               const amrex::Real Bx, const amrex::Real By, const amrex::Real Bz,
-              const amrex::Real PoissonToGaussianThreshold)
+              const amrex::Real PoissonToGaussianThreshold,
+              amrex::RandomEngine const& engine)
 {
     using namespace amrex;
     namespace pxr_p = picsar::multi_physics::phys;
@@ -49,10 +50,10 @@ getSchwingerProductionNumber (const amrex::Real dV, const amrex::Real dt,
             Ex, Ey, Ez, Bx, By, Bz, dV, dt);
 
     if (expectedPairNumber <= PoissonToGaussianThreshold) {
-        return amrex::RandomPoisson(expectedPairNumber);
+        return amrex::RandomPoisson(expectedPairNumber, engine);
     } else {
         const auto numpairs =
-            amrex::RandomNormal(expectedPairNumber,sqrt(expectedPairNumber));
+            amrex::RandomNormal(expectedPairNumber, std::sqrt(expectedPairNumber), engine);
         return numpairs > 0._rt ? numpairs : 0._rt;
     }
 }

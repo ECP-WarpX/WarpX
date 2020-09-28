@@ -78,12 +78,12 @@ public:
      */
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
-    amrex::Real operator() () const noexcept
+    amrex::Real operator() (amrex::RandomEngine const& engine) const noexcept
     {
         namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
 
         //A random number in [0,1) should be provided as an argument.
-        return pxr_bw::get_optical_depth(amrex::Random());
+        return pxr_bw::get_optical_depth(amrex::Random(engine));
     }
 };
 //____________________________________________

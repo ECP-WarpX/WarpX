@@ -6,9 +6,14 @@
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #endif
 
-RhoFunctor::RhoFunctor ( const int lev, const amrex::IntVect crse_ratio,
-                         bool convertRZmodes2cartesian, const int ncomp )
-    : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev),
+RhoFunctor::RhoFunctor (const int lev,
+                        const amrex::IntVect crse_ratio,
+                        const int species_index,
+                        bool convertRZmodes2cartesian,
+                        const int ncomp)
+    : ComputeDiagFunctor(ncomp, crse_ratio),
+      m_lev(lev),
+      m_species_index(species_index),
       m_convertRZmodes2cartesian(convertRZmodes2cartesian)
 {}
 
@@ -16,12 +21,22 @@ void
 RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/ ) const
 {
     auto& warpx = WarpX::GetInstance();
-    auto& mypc  = warpx.GetPartContainer();
+    std::unique_ptr<amrex::MultiFab> rho;
 
     // Deposit charge density
     // Call this with local=true since the parallel transfers will be handled
     // by ApplyFilterandSumBoundaryRho
-    std::unique_ptr<amrex::MultiFab> rho = mypc.GetChargeDensity( m_lev, true );
+
+    // Dump total rho
+    if (m_species_index == -1) {
+        auto& mypc = warpx.GetPartContainer();
+        rho = mypc.GetChargeDensity(m_lev, true);
+    }
+    // Dump rho per species
+    else {
+        auto& mypc = warpx.GetPartContainer().GetParticleContainer(m_species_index);
+        rho = mypc.GetChargeDensity(m_lev, true);
+    }
 
     // Call this in case filtering is turned on
     warpx.ApplyFilterandSumBoundaryRho(m_lev, m_lev, *rho, 0, rho->nComp());
@@ -35,6 +50,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
         solver.BackwardTransform(*rho, Idx::rho_new);
     }
 #endif
+
 
 #ifdef WARPX_DIM_RZ
     if (m_convertRZmodes2cartesian) {

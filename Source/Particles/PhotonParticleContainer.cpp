@@ -109,8 +109,6 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
         evolve_opt = m_shr_p_bw_engine->build_evolve_functor();
         p_optical_depth_BW = pti.GetAttribs(particle_comps["optical_depth_BW"]).dataPtr();
     }
-
-    const auto me = PhysConst::m_e;
 #endif
 
     auto copyAttribs = CopyParticleAttribs(pti, tmp_particle_data);
