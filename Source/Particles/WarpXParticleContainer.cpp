@@ -239,6 +239,18 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     WarpX& warpx = WarpX::GetInstance();
     const int ng_J = warpx.get_ng_depos_J().max();
 
+    // Extract deposition order (same order along all directions) and check that
+    // particles shape fits within the guard cells.
+    // NOTE: In specific situations where the staggering of J and the current
+    // deposition algorithm are not trivial, this check might be too relaxed
+    // and we might include a particle that should deposit part of its current
+    // in a neighboring box. However, this should catch particles traveling many
+    // cells away, for example with algorithms that allow for large time steps.
+    const int shape_extent = static_cast<int>(WarpX::nox / 2);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::numParticlesOutOfRange(pti, ng_J - shape_extent) == 0,
+        "Particles shape does not fit within guard cells used for local current deposition");
+
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     Real q = this->charge;
 
@@ -431,8 +443,11 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     WarpX& warpx = WarpX::GetInstance();
     const int ng_rho = warpx.get_ng_depos_rho().max();
 
-    // Extract deposition order (same order along all directions)
-    // and check that particles shape fits within the guard cells
+    // Extract deposition order (same order along all directions) and check that
+    // particles shape fits within the guard cells.
+    // NOTE: In specific situations where the staggering of rho and the charge
+    // deposition algorithm are not trivial, this check might be too strict and
+    // we might need to relax it, as currently done for the current deposition.
     const int shape_extent = static_cast<int>(WarpX::nox / 2 + 1);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, ng_rho - shape_extent) == 0,
