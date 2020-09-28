@@ -110,8 +110,9 @@ my_constants.n0    = 30.0      # [n_c]
 #   [material 2] liquid crystal
 #my_constants.n0    = 192
 #   [material 3] PMMA
-#my_constants.n0    = 400
+#my_constants.n0    = 230
 #   [material 4] Copper (ion density: 8.49e28/m^3; times ionization level)
+#my_constants.n0    = 1400
 
 # profiles
 #   pre-plasma
