@@ -2,11 +2,15 @@ AMREX_HOME ?= ../../../amrex
 PICSAR_HOME ?= ../../../picsar
 OPENBC_HOME ?= ../../../openbc_poisson
 
-CXXSTD        = c++14
 USE_MPI       = TRUE
 USE_PARTICLES = TRUE
 USE_RPATH     = TRUE
 BL_NO_FORT    = TRUE
+ifeq ($(USE_DPCPP),TRUE)
+  CXXSTD        = c++17
+else
+  CXXSTD        = c++14
+endif
 
 # required for AMReX async I/O
 MPI_THREAD_MULTIPLE = TRUE

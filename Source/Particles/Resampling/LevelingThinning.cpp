@@ -9,12 +9,12 @@
 
 #include <AMReX_Particles.H>
 
-LevelingThinning::LevelingThinning ()
+LevelingThinning::LevelingThinning (const std::string species_name)
 {
     using namespace amrex::literals;
 
-    amrex::ParmParse pp("resampling_algorithm");
-    pp.query("target_ratio", m_target_ratio);
+    amrex::ParmParse pp(species_name);
+    pp.query("resampling_algorithm_target_ratio", m_target_ratio);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( m_target_ratio > 0._rt,
                                     "Resampling target ratio should be strictly greater than 0");
     if (m_target_ratio <= 1._rt)
@@ -49,8 +49,8 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
     const amrex::Real target_ratio = m_target_ratio;
 
     // Loop over cells
-    amrex::ParallelFor( n_cells,
-        [=] AMREX_GPU_DEVICE (int i_cell) noexcept
+    amrex::ParallelForRNG( n_cells,
+        [=] AMREX_GPU_DEVICE (int i_cell, amrex::RandomEngine const& engine) noexcept
         {
             // The particles that are in the cell `i_cell` are
             // given by the `indices[cell_start:cell_stop]`
@@ -79,7 +79,7 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
                 // Particles with weight greater than level_weight are left unchanged
                 if (w[indices[i]] > level_weight) {continue;}
 
-                amrex::Real const random_number = amrex::Random();
+                amrex::Real const random_number = amrex::Random(engine);
                 // Remove particle with probability 1 - particle_weight/level_weight
                 if (random_number > w[indices[i]]/level_weight)
                 {

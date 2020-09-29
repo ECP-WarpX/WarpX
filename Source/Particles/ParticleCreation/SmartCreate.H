@@ -39,6 +39,7 @@ struct SmartCreate
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (
         PartData& prt, const int i_prt,
+        amrex::RandomEngine const& engine,
         const amrex::Real x = 0.0,
         const amrex::Real y = 0.0,
         const amrex::Real z = 0.0,
@@ -59,9 +60,9 @@ struct SmartCreate
 
          // initialize the real components
          for (int j = 0; j < PartData::NAR; ++j)
-             prt.m_rdata[j][i_prt] = initializeRealValue(m_policy_real[j]);
+             prt.m_rdata[j][i_prt] = initializeRealValue(m_policy_real[j], engine);
          for (int j = 0; j < prt.m_num_runtime_real; ++j)
-             prt.m_runtime_rdata[j][i_prt] = initializeRealValue(m_policy_real[j+PartData::NAR]);
+             prt.m_runtime_rdata[j][i_prt] = initializeRealValue(m_policy_real[j+PartData::NAR], engine);
 
          // initialize the int components
          for (int j = 0; j < PartData::NAI; ++j)

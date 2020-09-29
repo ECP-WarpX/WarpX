@@ -8,6 +8,9 @@
 #ifndef FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 #define FILTER_CREATE_TRANSFORM_FROM_FAB_H_
 
+#include <AMReX_REAL.H>
+#include <AMReX_TypeTraits.H>
+
 /**
  * \brief Apply a filter on a list of FABs, then create and apply a transform
  * operation to the particles depending on the output of the filter.
@@ -64,20 +67,15 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
 #if (AMREX_SPACEDIM == 3)
     const Real zlo_global = geom.ProbLo(2);
     const Real dz         = geom.CellSize(2);
+#else
+    const Real zlo_global = 0.0;
+    const Real dz         = 0.0;
 #endif
 
     const auto arrNumPartCreation = src_FAB->array();
     Gpu::DeviceVector<Index> offsets(ncells);
-    Gpu::exclusive_scan(mask, mask+ncells, offsets.begin());
-
-    Index last_mask, last_offset;
-    Gpu::copyAsync(Gpu::deviceToHost, mask+ncells-1, mask + ncells, &last_mask);
-    Gpu::copyAsync(Gpu::deviceToHost, offsets.data()+ncells-1,
-                                      offsets.data()+ncells, &last_offset);
-
-    Gpu::streamSynchronize();
-
-    const Index num_added = N*(last_mask + last_offset);
+    auto total = amrex::Scan::ExclusiveSum(ncells, mask, offsets.data());
+    const Index num_added = N*total;
     dst1.resize(std::max(dst1_index + num_added, dst1.numParticles()));
     dst2.resize(std::max(dst2_index + num_added, dst2.numParticles()));
 
@@ -86,39 +84,38 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     const auto dst1_data = dst1.getParticleTileData();
     const auto dst2_data = dst2.getParticleTileData();
 
+    constexpr int spacedim = AMREX_SPACEDIM;
+
     // For loop over all cells in the box. If mask is true in the given cell,
     // we create the particles in the cell and apply a transform function to the
     // created particles.
-    AMREX_HOST_DEVICE_FOR_1D( ncells, i,
+    amrex::ParallelForRNG(ncells,
+    [=] AMREX_GPU_DEVICE (int i, amrex::RandomEngine const& engine) noexcept
     {
         if (mask[i])
         {
             const IntVect iv = box.atOffset(i);
             const int j = iv[0];
             const int k = iv[1];
-    // Currently all particles are created on nodes. This makes it useless
-    // to use N>1 (for now).
+            const int l = (spacedim == 3) ? iv[2] : 0;
+
+            // Currently all particles are created on nodes. This makes it useless
+            // to use N>1 (for now).
             const Real x = xlo_global + j*dx;
-#if (AMREX_SPACEDIM == 3)
-            const int l = iv[2];
-            const Real y = ylo_global + k*dy;
+            const Real y = (spacedim == 3) ? ylo_global + k*dy : 0.0_rt;
             const Real z = zlo_global + l*dz;
-#else
-            const int l = 0;
-            const int y = 0;
-            const Real z = ylo_global + k*dy;
-#endif
+
             for (int n = 0; n < N; ++n)
             {
-                create1(dst1_data, N*p_offsets[i] + dst1_index + n, x, y, z);
-                create2(dst2_data, N*p_offsets[i] + dst2_index + n, x, y, z);
+                create1(dst1_data, N*p_offsets[i] + dst1_index + n, engine, x, y, z);
+                create2(dst2_data, N*p_offsets[i] + dst2_index + n, engine, x, y, z);
             }
             transform(dst1_data, dst2_data, N*p_offsets[i] + dst1_index,
                     N*p_offsets[i] + dst2_index, N, arrNumPartCreation(j,k,l));
         }
     });
 
-    Gpu::streamSynchronize();
+    Gpu::synchronize();
     return num_added;
 }
 
@@ -181,8 +178,9 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     // for loop over all cells in the box. We apply the filter function to each cell
     // and store the result in arrNumPartCreation. If the result is strictly greater than
     // 0, the mask is set to true at the given cell position.
-    amrex::ParallelFor(box,  [=] AMREX_GPU_DEVICE (int i, int j, int k){
-        arrNumPartCreation(i,j,k) = filter(src_FABs,i,j,k);
+    amrex::ParallelForRNG(box,
+    [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine){
+        arrNumPartCreation(i,j,k) = filter(src_FABs,i,j,k,engine);
         const IntVect iv(AMREX_D_DECL(i,j,k));
         const auto mask_position = box.index(iv);
         p_mask[mask_position] = (arrNumPartCreation(i,j,k) > 0);

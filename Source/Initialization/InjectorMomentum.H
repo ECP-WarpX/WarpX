@@ -23,7 +23,8 @@ struct InjectorMomentumConstant
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real, amrex::Real, amrex::Real) const noexcept
+    getMomentum (amrex::Real, amrex::Real, amrex::Real,
+                 amrex::RandomEngine const&) const noexcept
     {
         return amrex::XDim3{m_ux,m_uy,m_uz};
     }
@@ -52,11 +53,12 @@ struct InjectorMomentumGaussian
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
+                 amrex::RandomEngine const& engine) const noexcept
     {
-        return amrex::XDim3{amrex::RandomNormal(m_ux_m, m_ux_th),
-                            amrex::RandomNormal(m_uy_m, m_uy_th),
-                            amrex::RandomNormal(m_uz_m, m_uz_th)};
+        return amrex::XDim3{amrex::RandomNormal(m_ux_m, m_ux_th, engine),
+                            amrex::RandomNormal(m_uy_m, m_uy_th, engine),
+                            amrex::RandomNormal(m_uz_m, m_uz_th, engine)};
     }
 
     AMREX_GPU_HOST_DEVICE
@@ -85,19 +87,20 @@ struct InjectorMomentumBoltzmann
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
+                 amrex::RandomEngine const& engine) const noexcept
     {
         amrex::Real x1, x2, gamma;
         amrex::Real u[3];
-        x1 = amrex::Random();
-        x2 = amrex::Random();
+        x1 = amrex::Random(engine);
+        x2 = amrex::Random(engine);
         // Each value of sqrt(-log(x1))*sin(2*pi*x2) is a sample from a Gaussian
         // distribution with sigma = average velocity / c
         // using the Box-Mueller Method.
         u[(dir+1)%3] = vave*std::sqrt(-std::log(x1)) *std::sin(2*M_PI*x2);
         u[(dir+2)%3] = vave*std::sqrt(-std::log(x1)) *std::cos(2*M_PI*x2);
-        u[dir] = vave*std::sqrt(-std::log(amrex::Random()))*
-            std::sin(2*M_PI*amrex::Random());
+        u[dir] = vave*std::sqrt(-std::log(amrex::Random(engine)))*
+            std::sin(2*M_PI*amrex::Random(engine));
         gamma = u[0]*u[0]+u[1]*u[1]+u[2]*u[2];
         gamma = std::sqrt(1+gamma);
         // The following condition is equtaion 32 in Zenitani 2015
@@ -111,7 +114,7 @@ struct InjectorMomentumBoltzmann
         // initialize the particle positions and densities in the frame moving
         // at speed beta, and then perform a Lorentz transform on the positions
         // and MB sampled velocities to the simulation frame.
-        x1 = amrex::Random();
+        x1 = amrex::Random(engine);
         if(-beta*u[dir]/gamma > x1)
         {
           u[dir] = -u[dir];
@@ -157,7 +160,8 @@ struct InjectorMomentumJuttner
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
+                 amrex::RandomEngine const& engine) const noexcept
     {
         // Sobol method for sampling MJ Speeds,
         // from Zenitani 2015 (Phys. Plasmas 22, 042116).
@@ -171,21 +175,21 @@ struct InjectorMomentumJuttner
         while(u[dir]-gamma <= x1)
         {
             u[dir] = -theta*
-                std::log(amrex::Random()*amrex::Random()*amrex::Random());
+                std::log(amrex::Random(engine)*amrex::Random(engine)*amrex::Random(engine));
             gamma = std::sqrt(1+u[dir]*u[dir]);
-            x1 = theta*std::log(amrex::Random());
+            x1 = theta*std::log(amrex::Random(engine));
         }
         // The following code samples a random unit vector
         // and multiplies the result by speed u[dir].
-        x1 = amrex::Random();
-        x2 = amrex::Random();
+        x1 = amrex::Random(engine);
+        x2 = amrex::Random(engine);
         // Direction dir is an input parameter that sets the boost direction:
         // 'x' -> d = 0, 'y' -> d = 1, 'z' -> d = 2.
         u[(dir+1)%3] = 2*u[dir]*std::sqrt(x1*(1-x1))*std::sin(2*M_PI*x2);
         u[(dir+2)%3] = 2*u[dir]*std::sqrt(x1*(1-x1))*std::cos(2*M_PI*x2);
         // The value of dir is the boost direction to be transformed.
         u[dir] = u[dir]*(2*x1-1);
-        x1 = amrex::Random();
+        x1 = amrex::Random(engine);
         // The following condition is equtaion 32 in Zenitani, called
         // The flipping method. It transforms the intergral: d3x' -> d3x
         // where d3x' is the volume element for positions in the boosted frame.
@@ -243,7 +247,8 @@ struct InjectorMomentumRadialExpansion
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
+                 amrex::RandomEngine const&) const noexcept
     {
         return {x*u_over_r, y*u_over_r, z*u_over_r};
     }
@@ -270,7 +275,8 @@ struct InjectorMomentumParser
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
+                 amrex::RandomEngine const&) const noexcept
     {
         return amrex::XDim3{m_ux_parser(x,y,z),m_uy_parser(x,y,z),m_uz_parser(x,y,z)};
     }
@@ -360,37 +366,38 @@ struct InjectorMomentum
     // (the union is called Object, and the instance is called object).
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
+                 amrex::RandomEngine const& engine) const noexcept
     {
         switch (type)
         {
         case Type::parser:
         {
-            return object.parser.getMomentum(x,y,z);
+            return object.parser.getMomentum(x,y,z,engine);
         }
         case Type::gaussian:
         {
-            return object.gaussian.getMomentum(x,y,z);
+            return object.gaussian.getMomentum(x,y,z,engine);
         }
         case Type::boltzmann:
         {
-            return object.boltzmann.getMomentum(x,y,z);
+            return object.boltzmann.getMomentum(x,y,z,engine);
         }
         case Type::juttner:
         {
-            return object.juttner.getMomentum(x,y,z);
+            return object.juttner.getMomentum(x,y,z,engine);
         }
         case Type::constant:
         {
-            return object.constant.getMomentum(x,y,z);
+            return object.constant.getMomentum(x,y,z,engine);
         }
         case Type::radial_expansion:
         {
-            return object.radial_expansion.getMomentum(x,y,z);
+            return object.radial_expansion.getMomentum(x,y,z,engine);
         }
         case Type::custom:
         {
-            return object.custom.getMomentum(x,y,z);
+            return object.custom.getMomentum(x,y,z,engine);
         }
         default:
         {
