@@ -73,7 +73,7 @@ public:
 
 protected:
 
-    std::string laser_name;
+    std::string m_laser_name;
 
 private:
     // runtime paramters

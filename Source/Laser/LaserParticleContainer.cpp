@@ -32,13 +32,13 @@ namespace
 
 LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies, const std::string& name)
     : WarpXParticleContainer(amr_core, ispecies),
-      laser_name(name)
+      m_laser_name{name}
 {
     charge = 1.0;
     mass = std::numeric_limits<Real>::max();
     do_back_transformed_diagnostics = 0;
 
-    ParmParse pp(laser_name);
+    ParmParse pp(m_laser_name);
 
     // Parse the type of laser profile and set the corresponding flag `profile`
     std::string laser_type_s;
@@ -57,7 +57,7 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     pp.query("min_particles_per_mode", m_min_particles_per_mode);
 
     if (m_e_max == amrex::Real(0.)){
-        amrex::Print() << laser_name << " with zero amplitude disabled.\n";
+        amrex::Print() << m_laser_name << " with zero amplitude disabled.\n";
         return; // Disable laser if amplitude is 0
     }
 
