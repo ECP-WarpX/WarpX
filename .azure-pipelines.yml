@@ -28,6 +28,7 @@ strategy:
 
 steps:
 - script: |
+    cat /proc/cpuinfo | grep "model name" | sort -u
     sudo apt-get update
     sudo apt-get install -y ccache gcc gfortran g++ openmpi-bin libopenmpi-dev \
       libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev pkg-config make \
