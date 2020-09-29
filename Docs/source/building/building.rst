@@ -106,3 +106,4 @@ Building for specific platforms
    summit
    juwels
    lassen
+   quartz

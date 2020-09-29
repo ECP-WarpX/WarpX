@@ -168,3 +168,24 @@ regime), the following set of parameters provided good performance:
 
 * **Two `128x128x128` grids per GPU**, or **one `128x128x256` grid per GPU**.
 
+
+Running on Quartz at LLNL
+-------------------------
+
+.. _running-cpp-quartz-CPUs:
+
+Intel Xeon E5-2695 v4 CPUs
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The batch script below can be used to run a WarpX simulation on 2 nodes on the supercomputer Quartz at LLNL.
+Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<input file>`` could be ``plasma_mirror_inputs``.
+
+.. literalinclude:: ../../../Tools/BatchScripts/batch_quartz.sh
+   :language: bash
+
+To run a simulation, copy the lines above to a file ``batch_quartz.sh`` and run
+::
+
+  sbatch batch_quartz.sh
+
+to submit the job.
