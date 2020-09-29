@@ -6,6 +6,8 @@ USE_MPI       = TRUE
 USE_PARTICLES = TRUE
 USE_RPATH     = TRUE
 BL_NO_FORT    = TRUE
+USE_LINEAR_SOLVERS = FALSE
+
 ifeq ($(USE_DPCPP),TRUE)
   CXXSTD        = c++17
 else
