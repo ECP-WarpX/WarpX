@@ -715,8 +715,6 @@ MultiParticleContainer::doCoulombCollisions ()
 
 void MultiParticleContainer::doResampling (const int timestep)
 {
-    WARPX_PROFILE("MultiParticleContainer::doResampling()");
-
     for (auto& pc : allcontainers)
     {
         // do_resampling can only be true for PhysicalParticleContainers
