@@ -51,7 +51,9 @@ ReducedDiags::ReducedDiags (std::string rd_name)
     }
 
     // read reduced diags frequency
-    pp.query("frequency", m_freq);
+    std::vector<std::string> intervals_string_vec = {"1"};
+    pp.queryarr("frequency", intervals_string_vec);
+    m_intervals = IntervalsParser(intervals_string_vec);
 
     // read separator
     pp.query("separator", m_sep);

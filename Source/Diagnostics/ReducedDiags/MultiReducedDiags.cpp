@@ -108,7 +108,7 @@ void MultiReducedDiags::WriteToFile (int step)
     for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
     {
         // Judge if the diags should be done
-        if ( (step+1) % m_multi_rd[i_rd]->m_freq != 0 ) { continue; }
+        if (!m_multi_rd[i_rd]->m_intervals.contains(step+1)) { continue; }
 
         // call the write to file function
         m_multi_rd[i_rd]->WriteToFile(step);

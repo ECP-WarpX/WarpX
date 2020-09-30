@@ -93,7 +93,7 @@ FieldMaximum::FieldMaximum (std::string rd_name)
 void FieldMaximum::ComputeDiags (int step)
 {
     // Judge if the diags should be done
-    if ( (step+1) % m_freq != 0 ) { return; }
+    if (!m_intervals.contains(step+1)) { return; }
 
     // get WarpX class object
     auto & warpx = WarpX::GetInstance();
