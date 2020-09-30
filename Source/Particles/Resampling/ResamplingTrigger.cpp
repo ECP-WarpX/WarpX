@@ -7,15 +7,15 @@
 #include "ResamplingTrigger.H"
 #include "WarpX.H"
 
-ResamplingTrigger::ResamplingTrigger ()
+ResamplingTrigger::ResamplingTrigger (const std::string species_name)
 {
-    amrex::ParmParse pprt("resampling_trigger");
+    amrex::ParmParse pprt(species_name);
 
     std::vector<std::string> resampling_trigger_int_string_vec = {"0"};
-    pprt.queryarr("intervals", resampling_trigger_int_string_vec);
+    pprt.queryarr("resampling_trigger_intervals", resampling_trigger_int_string_vec);
     m_resampling_intervals = IntervalsParser(resampling_trigger_int_string_vec);
 
-    pprt.query("max_avg_ppc", m_max_avg_ppc);
+    pprt.query("resampling_trigger_max_avg_ppc", m_max_avg_ppc);
 }
 
 bool ResamplingTrigger::triggered (const int timestep, const amrex::Real global_numparts) const

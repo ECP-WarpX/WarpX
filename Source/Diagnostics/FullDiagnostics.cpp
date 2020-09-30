@@ -351,6 +351,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
     // Clear any pre-existing vector to release stored data.
     m_all_field_functors[lev].clear();
 
+    // Species index to loop over species that dump rho per species
+    int is_dump_rho = 0;
+
     m_all_field_functors[lev].resize( m_varnames.size() );
     // Fill vector of functors for all components except individual cylindrical modes.
     for (int comp=0, n=m_all_field_functors[lev].size(); comp<n; comp++){
@@ -383,8 +386,13 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
 #endif
             }
             else {
+                // Initialize rho functor to dump total rho
                 m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
             }
+        } else if ( m_varnames[comp].find("rho_") != std::string::npos ){
+            // Initialize rho functor to dump rho per species
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, m_rho_per_species_index[is_dump_rho]);
+            is_dump_rho++;
         } else if ( m_varnames[comp] == "F" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_cell" ){
@@ -433,15 +441,15 @@ FullDiagnostics::MovingWindowAndGalileanDomainShift ()
 
 #if (AMREX_SPACEDIM == 3 )
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        new_lo[idim] = current_lo[idim] + warpx.galilean_shift[idim];
-        new_hi[idim] = current_hi[idim] + warpx.galilean_shift[idim];
+        new_lo[idim] = current_lo[idim] + warpx.m_galilean_shift[idim];
+        new_hi[idim] = current_hi[idim] + warpx.m_galilean_shift[idim];
     }
 #elif (AMREX_SPACEDIM == 2 )
     {
-        new_lo[0] = current_lo[0] + warpx.galilean_shift[0];
-        new_hi[0] = current_hi[0] + warpx.galilean_shift[0];
-        new_lo[1] = current_lo[1] + warpx.galilean_shift[2];
-        new_hi[1] = current_hi[1] + warpx.galilean_shift[2];
+        new_lo[0] = current_lo[0] + warpx.m_galilean_shift[0];
+        new_hi[0] = current_hi[0] + warpx.m_galilean_shift[0];
+        new_lo[1] = current_lo[1] + warpx.m_galilean_shift[2];
+        new_hi[1] = current_hi[1] + warpx.m_galilean_shift[2];
     }
 #endif
     // Update RealBox of geometry with galilean-shifted boundary

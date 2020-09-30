@@ -8,39 +8,49 @@
 #define WARPX_breit_wheeler_engine_wrapper_h_
 
 #include "QedWrapperCommons.H"
-#include "BreitWheelerEngineInnards.H"
+#include "QedChiFunctions.H"
+#include "Utils/WarpXConst.H"
 
 #include <AMReX_Array.H>
 #include <AMReX_Vector.H>
 #include <AMReX_Gpu.H>
 
-//#define PXRMP_CORE_ONLY allows importing only the 'core functions' of the
-//Breit Wheeler engine of the QED PICSAR library.
-#define PXRMP_CORE_ONLY
-#include <breit_wheeler_engine.hpp>
-
-//Lookup table building function is in a dedicated (optional) class to
-//avoid including heavy dependencies if they are not needed.
-#ifdef WARPX_QED_TABLE_GEN
-#    include "BreitWheelerEngineTableBuilder.H"
-#endif
+#include <physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
+#include <physics/breit_wheeler/breit_wheeler_engine_core.hpp>
 
 #include <string>
+#include <vector>
 
-//Some handy aliases
+// Aliases =============================
+using BW_dndt_table_params =
+    picsar::multi_physics::phys::breit_wheeler::
+    dndt_lookup_table_params<amrex::Real>;
 
-// The engine has two templated arguments: the numerical type
-// and a random number generator. However, random numbers are not
-// used to generate the lookup tables and the static member
-// functions which are called in the functors do not use
-// random numbers as well. Therefore, an empty "DummyStruct"
-// can be passed as a template parameter.
-using PicsarBreitWheelerEngine = picsar::multi_physics::
-    breit_wheeler_engine<amrex::Real, QedUtils::DummyStruct>;
+using BW_dndt_table =
+    picsar::multi_physics::phys::breit_wheeler::
+    dndt_lookup_table<
+    amrex::Real,
+    amrex::Gpu::DeviceVector<amrex::Real>>;
 
-using PicsarBreitWheelerCtrl =
-    picsar::multi_physics::breit_wheeler_engine_ctrl<amrex::Real>;
-//__________
+using BW_dndt_table_view = BW_dndt_table::view_type;
+
+using BW_pair_prod_table_params =
+    picsar::multi_physics::phys::breit_wheeler::
+    pair_prod_lookup_table_params<amrex::Real>;
+
+using BW_pair_prod_table =
+    picsar::multi_physics::phys::breit_wheeler::
+    pair_prod_lookup_table<
+    amrex::Real,
+    amrex::Gpu::DeviceVector<amrex::Real>>;
+
+using BW_pair_prod_table_view = BW_pair_prod_table::view_type;
+
+struct PicsarBreitWheelerCtrl
+{
+    BW_dndt_table_params dndt_params;
+    BW_pair_prod_table_params pair_prod_params;
+};
 
 // Functors ==================================
 
@@ -68,11 +78,12 @@ public:
      */
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
-    amrex::Real operator() () const noexcept
+    amrex::Real operator() (amrex::RandomEngine const& engine) const noexcept
     {
+        namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
+
         //A random number in [0,1) should be provided as an argument.
-        return PicsarBreitWheelerEngine::
-            internal_get_optical_depth(amrex::Random());
+        return pxr_bw::get_optical_depth(amrex::Random(engine));
     }
 };
 //____________________________________________
@@ -85,71 +96,76 @@ class BreitWheelerEvolveOpticalDepth
 {
 public:
 
-    BreitWheelerEvolveOpticalDepth () = default;
+    /**
+     * Default constructor: it leaves the functor in a non-initialized state.
+     */
+    BreitWheelerEvolveOpticalDepth (){}
+
 
     /**
-     * Constructor acquires a reference to control parameters and
-     * lookup tables data.
-     * lookup_table uses non-owning vectors under the hood. So no new data
-     * allocations should be triggered on GPU
+     * Constructor to be used to initialize the functor.
+     *
+     * @param[in] table_view a view of a BW_dndt_table lookup table
+     * @param[in] bw_minimum_chi_phot the minimum quantum parameter to evolve the optical depth
      */
-    BreitWheelerEvolveOpticalDepth(BreitWheelerEngineInnards& r_innards):
-        m_ctrl{r_innards.ctrl},
-        m_TTfunc_size{r_innards.TTfunc_coords.size()},
-        m_p_TTfunc_coords{r_innards.TTfunc_coords.dataPtr()},
-        m_p_TTfunc_data{r_innards.TTfunc_data.dataPtr()}
-        {};
+    BreitWheelerEvolveOpticalDepth (
+        const BW_dndt_table_view table_view,
+        const amrex::ParticleReal bw_minimum_chi_phot):
+        m_table_view{table_view}, m_bw_minimum_chi_phot{bw_minimum_chi_phot}{};
 
     /**
      * Evolves the optical depth. It can be used on GPU.
-     * @param[in] px,py,pz momentum components of the photon (SI units)
+     * If the  quantum parameter parameter of the photon is
+     * < bw_minimum_chi_phot, the method returns immediately.
+     * The method returns also if the energy of the photon is insufficient
+     * to generate a pair.
+     *
+     * @param[in] ux,uy,uz gamma*v components of the photon.
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
      * @param[in] dt timestep (SI units)
-     * @param[in,out] opt_depth optical depth of the photon. It is modified by the method.
-     * @return a flag which is 1 if optical depth becomes negative (i.e. a pair has to be generated).
+     * @param[in,out] opt_depth optical depth of the photon.
+     * @return a flag which is 1 if chi_phot was out of table
      */
-    AMREX_GPU_HOST_DEVICE
+    AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     int operator()(
-    amrex::Real px, amrex::Real py, amrex::Real pz,
-    amrex::Real ex, amrex::Real ey, amrex::Real ez,
-    amrex::Real bx, amrex::Real by, amrex::Real bz,
-    amrex::Real dt, amrex::Real& opt_depth) const noexcept
+        const amrex::Real ux, const amrex::Real uy, const amrex::Real uz,
+        const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
+        const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
+        const amrex::Real dt, amrex::Real& opt_depth) const noexcept
     {
-        bool has_event_happened{false};
+        namespace pxr_m = picsar::multi_physics::math;
+        namespace pxr_p = picsar::multi_physics::phys;
+        namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
 
-        //the library provides the time (< dt) at which the event occurs, but this
-        //feature won't be used in WarpX for now.
-        amrex::Real unused_event_time{0.0};
+        constexpr amrex::Real m_e = PhysConst::m_e;
+        const auto u_norm = std::sqrt(ux*ux + uy*uy + uz*uz);
+        const auto energy = u_norm*m_e*PhysConst::c;
 
-        PicsarBreitWheelerEngine::
-        internal_evolve_opt_depth_and_determine_event(
-            px, py, pz,
-            ex, ey, ez,
-            bx, by, bz,
-            dt, opt_depth,
-            has_event_happened, unused_event_time,
-            m_dummy_lambda,
-            picsar::multi_physics::lookup_1d<amrex::Real>{
-                m_TTfunc_size,
-                m_p_TTfunc_coords,
-                m_p_TTfunc_data},
-            m_ctrl);
+        const auto chi_phot = QedUtils::chi_photon(
+            m_e*ux, m_e*uy, m_e*uz, ex, ey, ez, bx, by, bz);
 
-        return has_event_happened;
+        //Optical depth is not evolved for photons having less energy than what is
+        //required to generate a pair or a quantum parameter smaller than
+        //m_bw_minimum_chi_phot
+        const auto gamma_photon = u_norm/PhysConst::c;
+        if (gamma_photon < pxr_m::two<amrex::Real> ||
+            chi_phot < m_bw_minimum_chi_phot)
+            return 0;
+
+        const auto is_out = pxr_bw::evolve_optical_depth<
+            amrex::Real,
+            BW_dndt_table_view,
+            pxr_p::unit_system::SI>(
+                energy, chi_phot, dt, opt_depth, m_table_view);
+
+        return is_out;
     }
 
 private:
-    //laser wavelength is not used with SI units
-    amrex::Real m_dummy_lambda{1.0};
-
-    PicsarBreitWheelerCtrl m_ctrl;
-
-    //lookup table data
-    size_t m_TTfunc_size;
-    amrex::Real* m_p_TTfunc_coords;
-    amrex::Real* m_p_TTfunc_data;
+    BW_dndt_table_view m_table_view;
+    amrex::ParticleReal m_bw_minimum_chi_phot;
 };
 
 /**
@@ -159,85 +175,89 @@ private:
 class BreitWheelerGeneratePairs
 {
 public:
+
+    /**
+     * Default constructor: it leaves the functor in a non-initialized state.
+     */
+    BreitWheelerGeneratePairs (){}
+
     /**
      * Constructor acquires pointers to control parameters and
      * lookup tables data.
      * lookup_table uses non-owning vectors under the hood. So no new data
      * allocations should be triggered on GPU
+     *
+     * @param[in] table_view a BW_pair_prod_table_view
      */
-    BreitWheelerGeneratePairs(
-        BreitWheelerEngineInnards& r_innards):
-        m_ctrl{r_innards.ctrl},
-        m_cum_distrib_coords_1_size{r_innards.cum_distrib_coords_1.size()},
-        m_cum_distrib_coords_2_size{r_innards.cum_distrib_coords_2.size()},
-        m_p_distrib_coords_1{r_innards.cum_distrib_coords_1.data()},
-        m_p_distrib_coords_2{r_innards.cum_distrib_coords_2.data()},
-        m_p_cum_distrib_data{r_innards.cum_distrib_data.data()
-        }{};
+    BreitWheelerGeneratePairs (const BW_pair_prod_table_view table_view):
+        m_table_view{table_view}{};
 
     /**
-     * Generates sampling (template parameter) pairs according to Breit Wheeler process.
+     * Generates pairs according to Breit Wheeler process.
      * It can be used on GPU.
-     * @param[in] px,py,pz momentum components of the photon (SI units)
+     * Warning: the energy of the photon must be > 2mec^2, but it is not checked
+     * in this method.
+     *
+     * @param[in] ux,uy,uz gamma*v components of the photon (SI units)
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
-     * @param[in] weight of the photon (code units)
-     * @param[out] e_px,e_py,e_pz momenta of generated electrons. Each array should have size=sampling (SI units)
-     * @param[out] p_px,p_py,p_pz momenta of generated positrons. Each array should have size=sampling (SI units)
-     * @param[out] e_weight,p_weight weight of the generated particles Each array should have size=sampling (code units).
+     * @param[out] e_ux,e_uy,e_uz gamma*v components of generated electron (SI units)
+     * @param[out] p_ux,p_uy,p_uz gamma*v components of generated positron (SI units)
+     * @return a flag which is 1 if chi_photon was out of table
      */
-    template <size_t sampling>
-    AMREX_GPU_HOST_DEVICE
+    AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
-    void operator()(
-    amrex::Real px, amrex::Real py, amrex::Real pz,
-    amrex::Real ex, amrex::Real ey, amrex::Real ez,
-    amrex::Real bx, amrex::Real by, amrex::Real bz,
-    amrex::Real weight,
-    amrex::Real* e_px, amrex::Real* e_py, amrex::Real* e_pz,
-    amrex::Real* p_px, amrex::Real* p_py, amrex::Real* p_pz,
-    amrex::Real* e_weight, amrex::Real* p_weight) const noexcept
+    int operator()(
+    const amrex::Real ux, const amrex::Real uy, const amrex::Real uz,
+    const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
+    const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
+    amrex::Real& e_ux, amrex::Real& e_uy, amrex::Real& e_uz,
+    amrex::Real& p_ux, amrex::Real& p_uy, amrex::Real& p_uz) const noexcept
     {
-        //[sampling] random numbers are needed
-        picsar::multi_physics::picsar_array<amrex::Real, sampling>
-            rand_zero_one_minus_epsi;
-        for(auto& el : rand_zero_one_minus_epsi) el = amrex::Random();
+        using namespace amrex;
+        namespace pxr_m = picsar::multi_physics::math;
+        namespace pxr_p = picsar::multi_physics::phys;
+        namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
 
-        const auto p_rand = rand_zero_one_minus_epsi.data();
+        const auto rand_zero_one_minus_epsi = amrex::Random();
 
-        PicsarBreitWheelerEngine::
-        internal_generate_breit_wheeler_pairs(
-            px, py, pz,
-            ex, ey, ez,
-            bx, by, bz,
-            weight, sampling,
-            e_px, e_py, e_pz,
-            p_px, p_py, p_pz,
-            e_weight, p_weight,
-            m_dummy_lambda,
-            picsar::multi_physics::lookup_2d<amrex::Real>{
-                m_cum_distrib_coords_1_size,
-                m_p_distrib_coords_1,
-                m_cum_distrib_coords_2_size,
-                m_p_distrib_coords_2,
-                m_p_cum_distrib_data
-            },
-            m_ctrl,
-            p_rand);
+        constexpr ParticleReal me = PhysConst::m_e;
+        constexpr ParticleReal one_over_me = 1._prt/me;
+
+        // Particle momentum is stored as gamma * velocity.
+        // Convert to m * gamma * velocity
+        auto px = ux*me;
+        auto py = uy*me;
+        auto pz = uz*me;
+
+        const auto chi_photon = QedUtils::chi_photon(
+            px, py, pz, ex, ey, ez, bx, by, bz);
+
+        const auto momentum_photon = pxr_m::vec3<amrex::Real>{px, py, pz};
+        auto momentum_ele = pxr_m::vec3<amrex::Real>();
+        auto momentum_pos = pxr_m::vec3<amrex::Real>();
+
+        const auto is_out = pxr_bw::generate_breit_wheeler_pairs<
+            amrex::Real,
+            BW_pair_prod_table_view,
+            pxr_p::unit_system::SI>(
+                chi_photon, momentum_photon,
+                rand_zero_one_minus_epsi,
+                m_table_view,
+                momentum_ele, momentum_pos);
+
+        e_ux = momentum_ele[0]*one_over_me;
+        e_uy = momentum_ele[1]*one_over_me;
+        e_uz = momentum_ele[2]*one_over_me;
+        p_ux = momentum_pos[0]*one_over_me;
+        p_uy = momentum_pos[1]*one_over_me;
+        p_uz = momentum_pos[2]*one_over_me;
+
+        return is_out;
     }
 
 private:
-    //laser wavelenght is not used with SI units
-    const amrex::Real m_dummy_lambda{1.0};
-
-    const PicsarBreitWheelerCtrl m_ctrl;
-
-    //lookup table data
-    size_t m_cum_distrib_coords_1_size;
-    size_t m_cum_distrib_coords_2_size;
-    amrex::Real* m_p_distrib_coords_1;
-    amrex::Real* m_p_distrib_coords_2;
-    amrex::Real* m_p_cum_distrib_data;
+    BW_pair_prod_table_view m_table_view;
 };
 
 // Factory class =============================
@@ -256,17 +276,17 @@ public:
     /**
      * Builds the functor to initialize the optical depth
      */
-    BreitWheelerGetOpticalDepth build_optical_depth_functor ();
+    BreitWheelerGetOpticalDepth build_optical_depth_functor () const;
 
     /**
      * Builds the functor to evolve the optical depth
      */
-    BreitWheelerEvolveOpticalDepth build_evolve_functor ();
+    BreitWheelerEvolveOpticalDepth build_evolve_functor () const;
 
     /**
      * Builds the functor to generate the pairs
      */
-    BreitWheelerGeneratePairs build_pair_functor ();
+    BreitWheelerGeneratePairs build_pair_functor () const;
 
     /**
      * Checks if the optical tables are properly initialized
@@ -274,52 +294,62 @@ public:
     bool are_lookup_tables_initialized () const;
 
     /**
-     * Init lookup tables from raw binary data.
-     * @param[in] raw_data a Vector of char
-     * @return true if it succeeds, false if it cannot parse raw_data
-     */
-    bool init_lookup_tables_from_raw_data (const amrex::Vector<char>& raw_data);
-
-    /**
-     * Init lookup tables using built-in dummy tables
-     * for test purposes.
-     */
-    void init_dummy_tables();
-
-    /**
      * Export lookup tables data into a raw binary Vector
+     *
      * @return the data in binary format. The Vector is empty if tables were
      * not previously initialized.
      */
-    amrex::Vector<char> export_lookup_tables_data () const;
+    std::vector<char> export_lookup_tables_data () const;
+
+    /**
+     * Init lookup tables from raw binary data.
+     *
+     * @param[in] raw_data a vector of char
+     * @param[in] bw_minimum_chi_phot minimum chi parameter to evolve the optical depth of a photon
+     * @return true if it succeeds, false if it cannot parse raw_data
+     */
+    bool init_lookup_tables_from_raw_data (
+        const std::vector<char>& raw_data,
+        const amrex::Real bw_minimum_chi_phot);
+
+    /**
+     * Init lookup tables using built-in (low resolution) tables
+     *
+     * @param[in] bw_minimum_chi_phot minimum chi parameter to evolve the optical depth of a photon
+     */
+    void init_builtin_tables(const amrex::Real bw_minimum_chi_phot);
 
     /**
      * Computes the lookup tables. It does nothing unless WarpX is compiled with QED_TABLE_GEN=TRUE
+     *
      * @param[in] ctrl control params to generate the tables
+     * @param[in] bw_minimum_chi_phot minimum chi parameter to evolve the optical depth of a photon
      */
-    void compute_lookup_tables (PicsarBreitWheelerCtrl ctrl);
+    void compute_lookup_tables (const PicsarBreitWheelerCtrl ctrl,
+        const amrex::Real bw_minimum_chi_phot);
 
     /**
-     * gets default (reasonable) values for the control parameters
+     * gets default values for the control parameters
+     *
      * @return default control params to generate the tables
      */
     PicsarBreitWheelerCtrl get_default_ctrl() const;
 
-    /**
-     * returns a constant reference to the control parameters
-     * @return const reference to control parameters
-     */
-    const PicsarBreitWheelerCtrl& get_ref_ctrl() const;
+    amrex::Real get_minimum_chi_phot() const;
 
 private:
     bool m_lookup_tables_initialized = false;
 
-    BreitWheelerEngineInnards m_innards;
+    //Variables to store the minimum chi parameters to enable
+    //Quantum Synchrotron process
+    amrex::Real m_bw_minimum_chi_phot;
 
-//Table builing is available only if WarpX is compiled with QED_TABLE_GEN=TRUE
-#ifdef WARPX_QED_TABLE_GEN
-    BreitWheelerEngineTableBuilder m_table_builder;
-#endif
+    BW_dndt_table m_dndt_table;
+    BW_pair_prod_table m_pair_prod_table;
+
+    void init_builtin_dndt_table();
+    void init_builtin_pair_prod_table();
+
 
 };
 

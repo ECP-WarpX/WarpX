@@ -123,6 +123,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_field_ionization", do_field_ionization);
 
     pp.query("do_resampling", do_resampling);
+    if (do_resampling) m_resampler = Resampling(species_name);
 
     //check if Radiation Reaction is enabled and do consistency checks
     pp.query("do_classical_radiation_reaction", do_classical_radiation_reaction);
@@ -165,9 +166,9 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     // Parse galilean velocity
     ParmParse ppsatd("psatd");
-    ppsatd.query("v_galilean", v_galilean);
+    ppsatd.query("v_galilean", m_v_galilean);
     // Scale the velocity by the speed of light
-    for (int i=0; i<3; i++) v_galilean[i] *= PhysConst::c;
+    for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
     // build filter functors
     m_do_random_filter  = pp.query("random_fraction", m_random_fraction);
@@ -717,8 +718,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
 #ifdef WARPX_QED
         //Pointer to the optical depth component
-        amrex::Real* p_optical_depth_QSR;
-        amrex::Real* p_optical_depth_BW;
+        amrex::Real* p_optical_depth_QSR = nullptr;
+        amrex::Real* p_optical_depth_BW  = nullptr;
 
         // If a QED effect is enabled, the corresponding optical depth
         // has to be initialized
@@ -752,7 +753,8 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
         // The invalid ones are given negative ID and are deleted during the
         // next redistribute.
         const auto poffset = offset.data();
-        amrex::For(overlap_box, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+        amrex::ParallelForRNG(overlap_box,
+        [=] AMREX_GPU_DEVICE (int i, int j, int k, amrex::RandomEngine const& engine) noexcept
         {
             IntVect iv = IntVect(AMREX_D_DECL(i, j, k));
             const auto index = overlap_box.index(iv);
@@ -764,7 +766,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 p.cpu() = cpuid;
 
                 const XDim3 r =
-                    inj_pos->getPositionUnitBox(i_part, lrrfac);
+                    inj_pos->getPositionUnitBox(i_part, lrrfac, engine);
                 auto pos = getCellCoords(overlap_corner, dx, r, iv);
 
 #if (AMREX_SPACEDIM == 3)
@@ -792,7 +794,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 if (nmodes == 1) {
                     // With only 1 mode, the angle doesn't matter so
                     // choose it randomly.
-                    theta = 2._rt*MathConst::pi*amrex::Random();
+                    theta = 2._rt*MathConst::pi*amrex::Random(engine);
                 } else {
                     theta = 2._rt*MathConst::pi*r.y;
                 }
@@ -816,7 +818,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                         continue;
                     }
 
-                    u = inj_mom->getMomentum(pos.x, pos.y, z0);
+                    u = inj_mom->getMomentum(pos.x, pos.y, z0, engine);
                     dens = inj_rho->getDensity(pos.x, pos.y, z0);
 
                     // Remove particle if density below threshold
@@ -848,7 +850,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     dens = amrex::min(dens, density_max);
 
                     // get the full momentum, including thermal motion
-                    u = inj_mom->getMomentum(pos.x, pos.y, 0._rt);
+                    u = inj_mom->getMomentum(pos.x, pos.y, 0._rt, engine);
                     const Real gamma_lab = std::sqrt( 1._rt+(u.x*u.x+u.y*u.y+u.z*u.z) );
                     const Real betaz_lab = u.z/(gamma_lab);
 
@@ -868,7 +870,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 }
 
                 if(loc_has_breit_wheeler){
-                    p_optical_depth_BW[ip] = breit_wheeler_get_opt();
+                    p_optical_depth_BW[ip] = breit_wheeler_get_opt(engine);
                 }
 #endif
 
@@ -1440,7 +1442,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
             const auto getExternalE = GetExternalEField(pti);
             const auto getExternalB = GetExternalBField(pti);
 
-            const auto& xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box,v_galilean,lev);
+            const auto& xyzmin = WarpX::GetInstance().LowerCornerWithGalilean(box,m_v_galilean,lev);
 
             const Dim3 lo = lbound(box);
 
@@ -1800,7 +1802,10 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
     Real cur_time = WarpX::GetInstance().gett_new(lev);
     const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
     Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    amrex::Array<amrex::Real,3> galilean_shift ={
+        m_v_galilean[0]*time_shift,
+        m_v_galilean[1]*time_shift,
+        m_v_galilean[2]*time_shift };
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, gather_lev);
 
     const Dim3 lo = lbound(box);
@@ -1850,7 +1855,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #ifdef WARPX_QED
     const auto do_sync = m_do_qed_quantum_sync;
     amrex::Real t_chi_max = 0.0;
-    if (do_sync) t_chi_max = m_shr_p_qs_engine->get_ref_ctrl().chi_part_min;
+    if (do_sync) t_chi_max = m_shr_p_qs_engine->get_minimum_chi_part();
 
     QuantumSynchrotronEvolveOpticalDepth evolve_opt;
     amrex::ParticleReal* AMREX_RESTRICT p_optical_depth_QSR = nullptr;
@@ -1886,19 +1891,6 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
         scaleFields(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp);
 
-#ifdef WARPX_QED
-    if (local_has_quantum_sync) {
-        const ParticleReal px = m * ux[ip];
-        const ParticleReal py = m * uy[ip];
-        const ParticleReal pz = m * uz[ip];
-
-        bool has_event_happened = evolve_opt(px, py, pz,
-                                             Exp, Eyp, Ezp,
-                                             Bxp, Byp, Bzp,
-                                             dt, p_optical_depth_QSR[ip]);
-    }
-#endif
-
         doParticlePush(getPosition, setPosition, copyAttribs, ip,
                        ux[ip+offset], uy[ip+offset], uz[ip+offset],
                        Exp, Eyp, Ezp, Bxp, Byp, Bzp,
@@ -1909,6 +1901,15 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                        t_chi_max,
 #endif
                        dt);
+
+#ifdef WARPX_QED
+    if (local_has_quantum_sync) {
+        evolve_opt(ux[ip], uy[ip], uz[ip],
+                   Exp, Eyp, Ezp,Bxp, Byp, Bzp,
+                   dt, p_optical_depth_QSR[ip]);
+    }
+#endif
+
     });
 }
 
@@ -1988,7 +1989,7 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
     WARPX_PROFILE("PhysicalParticleContainer::getIonizationFunc()");
 
     return IonizationFilterFunc(pti, lev, ngE, Ex, Ey, Ez, Bx, By, Bz,
-                                v_galilean,
+                                m_v_galilean,
                                 ionization_energies.dataPtr(),
                                 adk_prefactor.dataPtr(),
                                 adk_exp_prefactor.dataPtr(),
@@ -1997,18 +1998,18 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
                                 ion_atomic_number);
 }
 
-void PhysicalParticleContainer::resample (const Resampling& resampler, const int timestep)
+void PhysicalParticleContainer::resample (const int timestep)
 {
     const amrex::Real global_numparts = TotalNumberOfParticles();
 
-    if (resampler.triggered(timestep, global_numparts))
+    if (m_resampler.triggered(timestep, global_numparts))
     {
         amrex::Print() << "Resampling " << species_name << ".\n";
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
             {
-                resampler(pti, lev, this);
+                m_resampler(pti, lev, this);
             }
         }
     }

@@ -1,0 +1,33 @@
+{
+  "electrons": {
+    "particle_cpu": 0.0,
+    "particle_id": 1815005440.0,
+    "particle_momentum_x": 1.2741450985804339e-20,
+    "particle_momentum_y": 1.2747912182450875e-20,
+    "particle_momentum_z": 2.788652064780249e-20,
+    "particle_position_x": 0.5290000916698099,
+    "particle_position_y": 0.5888,
+    "particle_theta": 92606.42261144849,
+    "particle_weight": 81147583679.15044
+  },
+  "ions": {
+    "particle_cpu": 0.0,
+    "particle_id": 5475928320.0,
+    "particle_momentum_x": 9.468760984312313e-22,
+    "particle_momentum_y": 9.505742271609918e-22,
+    "particle_momentum_z": 1.9177141146735318e-21,
+    "particle_position_x": 0.5290000096367489,
+    "particle_position_y": 0.5888,
+    "particle_theta": 92621.92887164818,
+    "particle_weight": 81147583679.15044
+  },
+  "lev=0": {
+    "By": 3.3876510906847885,
+    "Ex": 462288551669.3938,
+    "Ez": 654508949022.0504,
+    "divE": 4.0082894251404314e+17,
+    "jx": 893199738249705.1,
+    "jz": 1241183345696335.2,
+    "rho": 3549014.737825297
+  }
+}

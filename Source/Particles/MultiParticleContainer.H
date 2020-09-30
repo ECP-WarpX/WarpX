@@ -142,10 +142,6 @@ public:
     void doQEDSchwinger ();
 #endif
 
-    void Checkpoint (const std::string& dir) const;
-
-    void WritePlotFile (const std::string& dir) const;
-
     void Restart (const std::string& dir);
 
     void PostRestart ();
@@ -159,6 +155,10 @@ public:
     void Redistribute ();
 
     void RedistributeLocal (const int num_ghost);
+
+    /** Apply BC. For now, just discard particles outside the domain, regardless
+     *  of the whole simulation BC. */
+    void ApplyBoundaryConditions ();
 
     amrex::Vector<long> NumberOfParticlesInGrid(int lev) const;
 
@@ -277,7 +277,8 @@ protected:
 
     std::vector<PCTypes> species_types;
 
-    Resampling m_resampler;
+    /** Whether to absorb particles exiting the domain */
+    ParticleBC m_boundary_conditions = ParticleBC::none;
 
     template<typename ...Args>
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,
@@ -316,9 +317,13 @@ protected:
     int m_nspecies_breit_wheeler = 0;
     //________
 
+    static constexpr auto m_default_quantum_sync_photon_creation_energy_threshold =
+        static_cast<amrex::ParticleReal>(
+        2.0 * PhysConst::m_e * PhysConst::c * PhysConst::c );  /*!< Default value of the energy threshold for photon creation in Quantum Synchrotron process.*/
+
+
     amrex::ParticleReal m_quantum_sync_photon_creation_energy_threshold =
-      static_cast<amrex::ParticleReal>(
-        2.0 * PhysConst::m_e * PhysConst::c * PhysConst::c );  /*!< Energy threshold for photon creation in Quantum Synchrotron process.*/
+        m_default_quantum_sync_photon_creation_energy_threshold; /*!< Energy threshold for photon creation in Quantum Synchrotron process.*/
 
     /**
      * Returns the number of species having Quantum Synchrotron process enabled

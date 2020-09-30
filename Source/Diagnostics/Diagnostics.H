@@ -150,6 +150,8 @@ protected:
     amrex::Vector< amrex::Real> m_hi;
     /** Number of output buffers. The value is set to 1 for all FullDiagnostics */
     int m_num_buffers;
+    /** Array of species indices that dump rho per species */
+    amrex::Vector<int> m_rho_per_species_index;
 };
 
 #endif // WARPX_DIAGNOSTICS_H_

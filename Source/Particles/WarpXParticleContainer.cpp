@@ -304,14 +304,17 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     Real cur_time = warpx_instance.gett_new(lev);
     const auto& time_of_last_gal_shift = warpx_instance.time_of_last_gal_shift;
     Real time_shift = (cur_time + 0.5*dt - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]* time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    amrex::Array<amrex::Real,3> galilean_shift = {
+        m_v_galilean[0]* time_shift,
+        m_v_galilean[1]*time_shift,
+        m_v_galilean[2]*time_shift };
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
 
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if (WarpX::do_nodal==1) {
           amrex::Abort("The Esirkepov algorithm cannot be used with a nodal grid.");
         }
-        if ( (v_galilean[0]!=0) or (v_galilean[1]!=0) or (v_galilean[2]!=0)){
+        if ( (m_v_galilean[0]!=0) or (m_v_galilean[1]!=0) or (m_v_galilean[2]!=0)){
             amrex::Abort("The Esirkepov algorithm cannot be used with the Galilean algorithm.");
         }
     }
@@ -479,9 +482,15 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
     amrex::Array<amrex::Real,3> galilean_shift;
     if (icomp==0){
-        galilean_shift = { v_galilean[0]*time_shift_rho_old, v_galilean[1]*time_shift_rho_old, v_galilean[2]*time_shift_rho_old };
+        galilean_shift = {
+            m_v_galilean[0]*time_shift_rho_old,
+            m_v_galilean[1]*time_shift_rho_old,
+            m_v_galilean[2]*time_shift_rho_old };
     } else{
-        galilean_shift = { v_galilean[0]*time_shift_rho_new, v_galilean[1]*time_shift_rho_new, v_galilean[2]*time_shift_rho_new };
+        galilean_shift = {
+            m_v_galilean[0]*time_shift_rho_new,
+            m_v_galilean[1]*time_shift_rho_new,
+            m_v_galilean[2]*time_shift_rho_new };
     }
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(tilebox, galilean_shift, depos_lev);
 
@@ -878,5 +887,47 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
     if (pld.m_lev == lev-1){
         // For the moment, do not do anything if particles goes
         // to lower level.
+    }
+}
+
+void
+WarpXParticleContainer::ApplyBoundaryConditions (ParticleBC boundary_conditions){
+    WARPX_PROFILE("WarpXParticleContainer::ApplyBoundaryConditions()");
+    for (int lev = 0; lev <= finestLevel(); ++lev)
+    {
+        for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
+        {
+            auto GetPosition = GetParticlePosition(pti);
+            const Real xmin = Geom(lev).ProbLo(0);
+            const Real xmax = Geom(lev).ProbHi(0);
+#ifdef WARPX_DIM_3D
+            const Real ymin = Geom(lev).ProbLo(1);
+            const Real ymax = Geom(lev).ProbHi(1);
+#endif
+            const Real zmin = Geom(lev).ProbLo(AMREX_SPACEDIM-1);
+            const Real zmax = Geom(lev).ProbHi(AMREX_SPACEDIM-1);
+
+            ParticleTileType& ptile = ParticlesAt(lev, pti);
+            ParticleType * const pp = ptile.GetArrayOfStructs()().data();
+
+            // Loop over particles and apply BC to each particle
+            amrex::ParallelFor(
+                pti.numParticles(),
+                [=] AMREX_GPU_DEVICE (long i) {
+                    ParticleType& p = pp[i];
+                    ParticleReal x, y, z;
+                    GetPosition(i, x, y, z);
+#ifdef WARPX_DIM_3D
+                    if (x < xmin || x > xmax || y < ymin || y > ymax || z < zmin || z > zmax){
+                        if (boundary_conditions == ParticleBC::absorbing) p.id() = -1;
+                    }
+#else
+                    if (x < xmin || x > xmax || z < zmin || z > zmax){
+                        if (boundary_conditions == ParticleBC::absorbing) p.id() = -1;
+                    }
+#endif
+                }
+            );
+        }
     }
 }

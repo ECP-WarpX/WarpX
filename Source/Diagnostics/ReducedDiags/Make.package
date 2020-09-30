@@ -5,5 +5,6 @@ CEXE_sources += FieldEnergy.cpp
 CEXE_sources += BeamRelevant.cpp
 CEXE_sources += LoadBalanceCosts.cpp
 CEXE_sources += ParticleHistogram.cpp
+CEXE_sources += FieldMaximum.cpp
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/Diagnostics/ReducedDiags
