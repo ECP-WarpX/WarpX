@@ -19,10 +19,18 @@
  */
 class LevelingThinning: public ResamplingAlgorithm {
 public:
+
+    /**
+     * \brief Default constructor of the LevelingThinning class.
+     */
+    LevelingThinning () = default;
+
     /**
      * \brief Constructor of the LevelingThinning class
+     *
+     * @param[in] species_name the name of the resampled species
      */
-    LevelingThinning ();
+    LevelingThinning (const std::string species_name);
 
     /**
      * \brief A method that performs leveling thinning for the considered species.
@@ -35,6 +43,7 @@ public:
 
 private:
     amrex::Real m_target_ratio = amrex::Real(1.5);
+    int m_min_ppc = 1;
 };
 
 

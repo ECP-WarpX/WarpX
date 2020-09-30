@@ -565,7 +565,7 @@ void PlasmaInjector::parseMomentum (ParmParse& pp)
 
 XDim3 PlasmaInjector::getMomentum (Real x, Real y, Real z) const noexcept
 {
-    return h_inj_mom->getMomentum(x, y, z); // gamma*beta
+    return h_inj_mom->getMomentum(x, y, z, amrex::RandomEngine{}); // gamma*beta
 }
 
 bool PlasmaInjector::insideBounds (Real x, Real y, Real z) const noexcept

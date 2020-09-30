@@ -277,6 +277,11 @@ Particle initialization
 * ``particles.use_fdtd_nci_corr`` (`0` or `1`) optional (default `0`)
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
 
+* ``particles.boundary_conditions`` (`string`) optional (default `none`)
+    Boundary conditions applied to particles. Options are:
+    * ``none``: the boundary conditions applied to particles is determined by ``geometry.is_periodic``.
+    * ``absorbing``: particles exiting the simulation domain are discarded.
+
 * ``particles.rigid_injected_species`` (`strings`, separated by spaces)
     List of species injected using the rigid injection method. The rigid injection
     method is useful when injecting a relativistic particle beam, in boosted-frame
@@ -558,36 +563,67 @@ Particle initialization
 * ``<species>.do_qed`` (`int`) optional (default `0`)
     If `<species>.do_qed = 0` all the QED effects are disabled for this species.
     If `<species>.do_qed = 1` QED effects can be enabled for this species (see below).
-    **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.do_qed_quantum_sync`` (`int`) optional (default `0`)
     It only works if `<species>.do_qed = 1`. Enables Quantum synchrotron emission for this species.
     Quantum synchrotron lookup table should be either generated or loaded from disk to enable
     this process (see "Lookup tables for QED modules" section below).
     `<species>` must be either an electron or a positron species.
-    **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.do_qed_breit_wheeler`` (`int`) optional (default `0`)
     It only works if `<species>.do_qed = 1`. Enables non-linear Breit-Wheeler process for this species.
     Breit-Wheeler lookup table should be either generated or loaded from disk to enable
     this process (see "Lookup tables for QED modules" section below).
     `<species>` must be a photon species.
-    **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.qed_quantum_sync_phot_product_species`` (`string`)
     If an electron or a positron species has the Quantum synchrotron process, a photon product species must be specified
     (the name of an existing photon species must be provided)
-    **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.qed_breit_wheeler_ele_product_species`` (`string`)
     If a photon species has the Breit-Wheeler process, an electron product species must be specified
     (the name of an existing electron species must be provided)
-    **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.qed_breit_wheeler_pos_product_species`` (`string`)
     If a photon species has the Breit-Wheeler process, a positron product species must be specified
     (the name of an existing positron species must be provided).
-    **Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+    **This feature requires to compile with QED=TRUE**
+
+* ``<species>.do_resampling`` (`0` or `1`) optional (default `0`)
+    If `1` resampling is performed for this species. This means that the number of macroparticles
+    will be reduced at specific timesteps while preserving the distribution function as much as
+    possible (in particular the weight of the remaining particles will be increased on average).
+    This can be useful in situations with continuous creation of particles (e.g. with ionization
+    or with QED effects). At least one resampling trigger (see below) must be specified to actually
+    perform resampling.
+
+* ``<species>.resampling_algorithm`` (`string`) optional (default `leveling_thinning`)
+    The algorithm used for resampling. Currently there is only one option, which is already set by
+    default:
+
+    * ``leveling_thinning`` This algorithm is defined in `Muraviev et al., arXiv:2006.08593 (2020) <https://arxiv.org/abs/2006.08593>`_.
+      It has two parameters:
+
+        * ``<species>.resampling_algorithm_target_ratio`` (`float`) optional (default `1.5`)
+            This **roughly** corresponds to the ratio between the number of particles before and
+            after resampling.
+
+        * ``<species>.resampling_algorithm_min_ppc`` (`int`) optional (default `1`)
+            Resampling is not performed in cells with a number of macroparticles strictly smaller
+            than this parameter.
+
+* ``<species>.resampling_trigger_intervals`` (`string`) optional (default `0`)
+    Using the `Intervals parser`_ syntax, this string defines timesteps at which resampling is
+    performed.
+
+* ``<species>.resampling_trigger_max_avg_ppc`` (`float`) optional (default `infinity`)
+    Resampling is performed everytime the number of macroparticles per cell of the species
+    averaged over the whole simulation domain exceeds this parameter.
 
 .. _running-cpp-parameters-laser:
 
@@ -974,6 +1010,17 @@ Numerics and algorithms
     This requires `warpx.use_kspace_filter=1` and is only supported
     with the RZ spectral solver.
 
+* ``warpx.use_damp_fields_in_z_guard`` (`0` or `1`)
+    When using the RZ spectrol solver, specifies whether to apply a
+    damping factor to the E and B fields in the guard cells
+    along z that extend beyond the edge of the domain.
+    When the boundary conditions along z are not periodic, this defaults to
+    true, otherwise false. The damping profile is
+    a sine squared and is applied to the fields on the outer half of the guards.
+    This damping is useful for damping high frequency numerical artifacts that
+    occur when there is parallel decomposition along z with non-periodic boundary
+    conditions.
+
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.
     Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
@@ -1249,7 +1296,7 @@ Numerics and algorithms
  * ``warpx.quantum_xi`` ('float'; default: 1.3050122.e-52)
      Overwrites the actual quantum parameter used in Maxwell's QED equations. Assigning a
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
-     Note that this option will only have an effect if the warpx.use_Hybrid_QED flag is also triggered.
+     Note that this option will only have an effect if the ``warpx.use_Hybrid_QED`` flag is also triggered.
 
  * ``warpx.do_device_synchronize_before_profile`` (`bool`) optional (default `1`)
     When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
@@ -1421,13 +1468,16 @@ s disabled.
     Which species dumped in this diagnostics.
 
 * ``<diag_name>.<species_name>.variables`` (list of `strings` separated by spaces, optional)
-    List of particle quantities to write to output file.
-    By defaults, all quantities are written to file. Choices are
+    List of particle quantities or species-specific field quantities to write to output file.
+    Choices are
 
     * ``w`` for the particle weight,
 
     * ``ux`` ``uy`` ``uz`` for the particle momentum,
 
+    * ``rho`` to dump the charge density of the particles belonging to species ``<species_name>``.
+
+    By defaults, all quantities are written to output file, except the charge density.
     The particle positions are always included.
     Use ``<species>.variables = none`` to plot no particle data, except particle position.
 
@@ -1589,6 +1639,23 @@ Reduced Diagnostics
         :math:`E` field energy,
         :math:`B` field energy, at mesh refinement levels from 0 to :math:`n`.
 
+    * ``FieldMaximum``
+        This type computes the maximum value of each component of the electric and magnetic fields
+        and of the norm of the electric and magnetic field vectors.
+        Measuring maximum fields in a plasma might be very noisy in PIC, use this instead
+        for analysis of scenarios such as an electromagnetic wave propagating in vacuum.
+
+        The output columns are
+        the maximum value of the :math:`E_x` field,
+        the maximum value of the :math:`E_y` field,
+        the maximum value of the :math:`E_z` field,
+        the maximum value of the norm :math:`|E|` of the electric field,
+        the maximum value of the :math:`B_x` field,
+        the maximum value of the :math:`B_y` field,
+        the maximum value of the :math:`B_z` field and
+        the maximum value of the norm :math:`|B|` of the magnetic field,
+        at mesh refinement levels from  0 to :math:`n`.
+
     * ``BeamRelevant``
         This type computes properties of a particle beam relevant for particle accelerators,
         like position, momentum, emittance, etc.
@@ -1712,8 +1779,9 @@ Reduced Diagnostics
         using the histogram reduced diagnostics
         are given in ``Examples/Tests/initial_distribution/``.
 
-* ``<reduced_diags_name>.frequency`` (`int`)
-    The output frequency (every # time steps).
+* ``<reduced_diags_name>.frequency`` (`string`) optional (default ``1``)
+    Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
+    diagnostics are written to file.
 
 * ``<reduced_diags_name>.path`` (`string`) optional (default `./diags/reducedfiles/`)
     The path that the output file will be stored.
@@ -1725,23 +1793,22 @@ Reduced Diagnostics
     The separator between row values in the output file.
     The default separator is a whitespace.
 
-Lookup tables and other settings for QED modules (implementation in progress)
+Lookup tables and other settings for QED modules
 -----------------------------------------------------------------------------
 
 Lookup tables store pre-computed values for functions used by the QED modules.
-**Implementation of this feature is in progress. It requires `picsar` on the `QED` branch and to compile with QED=TRUE**
+**This feature requires to compile with QED=TRUE (and also with QED_TABLE_GEN=TRUE for table generation) **
 
 * ``qed_bw.lookup_table_mode`` (`string`)
     There are three options to prepare the lookup table required by the Breit-Wheeler module:
 
-    * ``dummy_builtin``:  a built-in table is used (Warning: the quality of the table is very low,
-      so this option has to be used only for test purposes).
+    * ``builtin``:  a built-in table is used (Warning: the table gives reasonable results but its resolution
+    is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
-      (version >= 1.67) and to compile with QED_TABLE_GEN=TRUE. All
-      the following parameters must be specified:
-
-        * ``qed_bw.chi_min`` (`float`): minimum chi parameter to be considered by the engine
+      (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All
+      the following parameters must be specified (table 1 is used to evolve the optical depth
+      of the photons, while table 2 is used for pair generation):
 
         * ``qed_bw.tab_dndt_chi_min`` (`float`): minimum chi parameter for lookup table 1 (
           used for the evolution of the optical depth of the photons)
@@ -1758,8 +1825,8 @@ Lookup tables store pre-computed values for functions used by the QED modules.
         * ``qed_bw.tab_pair_chi_how_many`` (`int`): number of points to be used for chi axis in lookup table 2
 
         * ``qed_bw.tab_pair_frac_how_many`` (`int`): number of points to be used for the second axis in lookup table 2
-          (the second axis is the ratio between the energy of the less energetic particle of the pair and the
-          energy of the photon).
+          (the second axis is the ratio between the quantum parameter of the less energetic particle of the pair and the
+          quantum parameter of the photon).
 
         * ``qed_bw.save_table_in`` (`string`): where to save the lookup table
 
@@ -1771,14 +1838,13 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 * ``qed_qs.lookup_table_mode`` (`string`)
     There are three options to prepare the lookup table required by the Quantum Synchrotron module:
 
-    * ``dummy_builtin``:  a built-in table is used (Warning: the quality of the table is very low,
-      so this option has to be used only for test purposes).
+    * ``builtin``: a built-in table is used (Warning: the table gives reasonable results but its resolution
+    is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
-      (version >= 1.67) and to compile with QED_TABLE_GEN=TRUE. All
-      the following parameters must be specified:
-
-        * ``qed_qs.chi_min`` (`float`): minimum chi parameter to be considered by the engine
+      (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All
+      the following parameters must be specified (table 1 is used to evolve the optical depth
+      of the particles, while table 2 is used for photon emission):
 
         * ``qed_qs.tab_dndt_chi_min`` (`float`): minimum chi parameter for lookup table 1 (
           used for the evolution of the optical depth of electrons and positrons)
@@ -1794,8 +1860,11 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
         * ``qed_qs.tab_em_chi_how_many`` (`int`): number of points to be used for chi axis in lookup table 2
 
-        * ``qed_qs.tab_em_prob_how_many`` (`int`): number of points to be used for the second axis in lookup table 2
-          (the second axis is a cumulative probability).
+        * ``qed_qs.tab_em_frac_how_many`` (`int`): number of points to be used for the second axis in lookup table 2
+          (the second axis is the ratio between the quantum parameter of the photon and the
+          quantum parameter of the charged particle).
+
+        * ``qed_qs.tab_em_frac_min`` (`float`): minimum value to be considered for the second axis of lookup table 2
 
         * ``qed_bw.save_table_in`` (`string`): where to save the lookup table
 
@@ -1804,12 +1873,18 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 
         * ``qed_qs.load_table_from`` (`string`): name of the lookup table file to read from.
 
-* ``qed_qs.photon_creation_energy_threshold`` (`float`) optional (default `2*me*c^2`)
-    Energy threshold for photon particle creation in SI units.
+* ``qed_bw.chi_min`` (`float`): minimum chi parameter to be considered by the Breit-Wheeler engine
+    (suggested value : 0.01)
+
+* ``qed_qs.chi_min`` (`float`): minimum chi parameter to be considered by the Quantum Synchrotron engine
+    (suggested value : 0.001)
+
+* ``qed_qs.photon_creation_energy_threshold`` (`float`) optional (default `2`)
+    Energy threshold for photon particle creation in `*me*c^2` units.
 
 * ``warpx.do_qed_schwinger`` (`bool`) optional (default `0`)
     If this is 1, Schwinger electron-positron pairs can be generated in vacuum in the cells where the EM field is high enough.
-    Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR`` on the branch ``QED``.
+    Activating the Schwinger process requires the code to be compiled with ``QED=TRUE`` and ``PICSAR``.
     If ``warpx.do_qed_schwinger = 1``, Schwinger product species must be specified with
     ``qed_schwinger.ele_product_species`` and ``qed_schwinger.pos_product_species``.
     **Note: implementation of this feature is in progress.**

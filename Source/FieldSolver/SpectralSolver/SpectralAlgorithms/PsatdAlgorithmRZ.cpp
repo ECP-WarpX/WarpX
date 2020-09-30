@@ -4,8 +4,10 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpX.H"
 #include "PsatdAlgorithmRZ.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXProfilerWrapper.H"
 
 #include <cmath>
 
@@ -16,20 +18,20 @@ using amrex::operator""_rt;
 PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                     amrex::DistributionMapping const & dm,
                                     int const n_rz_azimuthal_modes, int const norder_z,
-                                    bool const nodal, amrex::Real const dt_step)
+                                    bool const nodal, amrex::Real const dt)
      // Initialize members of base class
      : SpectralBaseAlgorithmRZ(spectral_kspace, dm,
                                norder_z, nodal),
-       dt(dt_step)
+       m_dt(dt)
 {
 
     // Allocate the arrays of coefficients
     amrex::BoxArray const & ba = spectral_kspace.spectralspace_ba;
-    C_coef = SpectralCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
-    S_ck_coef = SpectralCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
-    X1_coef = SpectralCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
-    X2_coef = SpectralCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
-    X3_coef = SpectralCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
+    C_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
+    S_ck_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
+    X1_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
+    X2_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
+    X3_coef = SpectralRealCoefficients(ba, dm, n_rz_azimuthal_modes, 0);
 
     coefficients_initialized = false;
 }
@@ -164,7 +166,7 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
         auto const & kr_modes = f.getKrArray(mfi);
         amrex::Real const* kr_arr = kr_modes.dataPtr();
         int const nr = bx.length(0);
-        amrex::Real const dt_temp = dt;
+        amrex::Real const dt = m_dt;
 
         // Loop over indices within one box
         int const modes = f.n_rz_azimuthal_modes;
@@ -181,17 +183,17 @@ void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const
             constexpr amrex::Real c = PhysConst::c;
             constexpr amrex::Real ep0 = PhysConst::ep0;
             if (k_norm != 0){
-                C(i,j,k,mode) = std::cos(c*k_norm*dt_temp);
-                S_ck(i,j,k,mode) = std::sin(c*k_norm*dt_temp)/(c*k_norm);
+                C(i,j,k,mode) = std::cos(c*k_norm*dt);
+                S_ck(i,j,k,mode) = std::sin(c*k_norm*dt)/(c*k_norm);
                 X1(i,j,k,mode) = (1._rt - C(i,j,k,mode))/(ep0 * c*c * k_norm*k_norm);
-                X2(i,j,k,mode) = (1._rt - S_ck(i,j,k,mode)/dt_temp)/(ep0 * k_norm*k_norm);
-                X3(i,j,k,mode) = (C(i,j,k,mode) - S_ck(i,j,k,mode)/dt_temp)/(ep0 * k_norm*k_norm);
+                X2(i,j,k,mode) = (1._rt - S_ck(i,j,k,mode)/dt)/(ep0 * k_norm*k_norm);
+                X3(i,j,k,mode) = (C(i,j,k,mode) - S_ck(i,j,k,mode)/dt)/(ep0 * k_norm*k_norm);
             } else { // Handle k_norm = 0, by using the analytical limit
                 C(i,j,k,mode) = 1._rt;
-                S_ck(i,j,k,mode) = dt_temp;
-                X1(i,j,k,mode) = 0.5_rt * dt_temp*dt_temp / ep0;
-                X2(i,j,k,mode) = c*c * dt_temp*dt_temp / (6._rt*ep0);
-                X3(i,j,k,mode) = - c*c * dt_temp*dt_temp / (3._rt*ep0);
+                S_ck(i,j,k,mode) = dt;
+                X1(i,j,k,mode) = 0.5_rt * dt*dt / ep0;
+                X2(i,j,k,mode) = c*c * dt*dt / (6._rt*ep0);
+                X3(i,j,k,mode) = - c*c * dt*dt / (3._rt*ep0);
             }
         });
      }
@@ -202,7 +204,81 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
                                      std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
                                      const std::unique_ptr<amrex::MultiFab>& rho)
 {
-    amrex::Abort("Current correction not implemented in RZ geometry");
+    // Profiling
+    WARPX_PROFILE( "PsatdAlgorithmRZ::CurrentCorrection" );
+
+    using Idx = SpectralFieldIndex;
+
+    // Forward Fourier transform of J and rho
+    field_data.ForwardTransform( *current[0], Idx::Jx,
+                                 *current[1], Idx::Jy);
+    field_data.ForwardTransform( *current[2], Idx::Jz, 0);
+    field_data.ForwardTransform( *rho, Idx::rho_old, 0 );
+    field_data.ForwardTransform( *rho, Idx::rho_new, 1 );
+
+    // Loop over boxes
+    for (amrex::MFIter mfi(field_data.fields); mfi.isValid(); ++mfi){
+
+        amrex::Box const & bx = field_data.fields[mfi].box();
+
+        // Extract arrays for the fields to be updated
+        amrex::Array4<Complex> fields = field_data.fields[mfi].array();
+
+        // Extract pointers for the k vectors
+        auto const & kr_modes = field_data.getKrArray(mfi);
+        amrex::Real const* kr_arr = kr_modes.dataPtr();
+        amrex::Real const* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
+        int const nr = bx.length(0);
+
+        // Local copy of member variables before GPU loop
+        amrex::Real const dt = m_dt;
+
+        // Loop over indices within one box
+        int const modes = field_data.n_rz_azimuthal_modes;
+        ParallelFor(bx, modes,
+        [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
+        {
+
+            // All of the fields of each mode are grouped together
+            using Idx = SpectralFieldIndex;
+            auto const Jp_m = Idx::Jx + Idx::n_fields*mode;
+            auto const Jm_m = Idx::Jy + Idx::n_fields*mode;
+            auto const Jz_m = Idx::Jz + Idx::n_fields*mode;
+            auto const rho_old_m = Idx::rho_old + Idx::n_fields*mode;
+            auto const rho_new_m = Idx::rho_new + Idx::n_fields*mode;
+
+            // Shortcuts for the values of J and rho
+            Complex const Jp = fields(i,j,k,Jp_m);
+            Complex const Jm = fields(i,j,k,Jm_m);
+            Complex const Jz = fields(i,j,k,Jz_m);
+            Complex const rho_old = fields(i,j,k,rho_old_m);
+            Complex const rho_new = fields(i,j,k,rho_new_m);
+
+            // k vector values, and coefficients
+            // The k values for each mode are grouped together
+            int const ir = i + nr*mode;
+            amrex::Real const kr = kr_arr[ir];
+            amrex::Real const kz = modified_kz_arr[j];
+            amrex::Real const k_norm2 = kr*kr + kz*kz;
+
+            constexpr Complex I = Complex{0._rt,1._rt};
+
+            // Correct J
+            if ( k_norm2 != 0._rt )
+            {
+                Complex const F = - ((rho_new - rho_old)/dt + I*kz*Jz + kr*(Jp - Jm))/k_norm2;
+
+                fields(i,j,k,Jp_m) += +0.5_rt*kr*F;
+                fields(i,j,k,Jm_m) += -0.5_rt*kr*F;
+                fields(i,j,k,Jz_m) += -I*kz*F;
+            }
+        });
+    }
+
+    // Backward Fourier transform of J
+    field_data.BackwardTransform( *current[0], Idx::Jx,
+                                  *current[1], Idx::Jy);
+    field_data.BackwardTransform( *current[2], Idx::Jz, 0 );
 }
 
 void
