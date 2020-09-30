@@ -228,13 +228,29 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE((depos_lev==(lev-1)) ||
                                      (depos_lev==(lev  )),
                                      "Deposition buffers only work for lev-1");
+
     // If no particles, do not do anything
     if (np_to_depose == 0) return;
 
     // If user decides not to deposit
     if (do_not_deposit) return;
 
-    const long ngJ = jx->nGrow();
+    // Number of guard cells for local deposition of J
+    WarpX& warpx = WarpX::GetInstance();
+    const int ng_J = warpx.get_ng_depos_J().max();
+
+    // Extract deposition order (same order along all directions) and check that
+    // particles shape fits within the guard cells.
+    // NOTE: In specific situations where the staggering of J and the current
+    // deposition algorithm are not trivial, this check might be too relaxed
+    // and we might include a particle that should deposit part of its current
+    // in a neighboring box. However, this should catch particles traveling many
+    // cells away, for example with algorithms that allow for large time steps.
+    const int shape_extent = static_cast<int>(WarpX::nox / 2);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::numParticlesOutOfRange(pti, ng_J - shape_extent) == 0,
+        "Particles shape does not fit within guard cells used for local current deposition");
+
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     Real q = this->charge;
 
@@ -256,11 +272,11 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     Box tbx = convert( tilebox, jx->ixType().toIntVect() );
     Box tby = convert( tilebox, jy->ixType().toIntVect() );
     Box tbz = convert( tilebox, jz->ixType().toIntVect() );
-    tilebox.grow(ngJ);
+
+    tilebox.grow(ng_J);
 
 #ifdef AMREX_USE_GPU
-    // No tiling on GPU: jx_ptr points to the full
-    // jx array (same for jy_ptr and jz_ptr).
+    // GPU, no tiling: j<xyz>_arr point to the full j<xyz> arrays
     auto & jx_fab = jx->get(pti);
     auto & jy_fab = jy->get(pti);
     auto & jz_fab = jz->get(pti);
@@ -268,12 +284,11 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     Array4<Real> const& jy_arr = jy->array(pti);
     Array4<Real> const& jz_arr = jz->array(pti);
 #else
-    // Tiling is on: jx_ptr points to local_jx[thread_num]
-    // (same for jy_ptr and jz_ptr)
-    tbx.grow(ngJ);
-    tby.grow(ngJ);
-    tbz.grow(ngJ);
+    tbx.grow(ng_J);
+    tby.grow(ng_J);
+    tbz.grow(ng_J);
 
+    // CPU, tiling: j<xyz>_arr point to the local_j<xyz>[thread_num] arrays
     local_jx[thread_num].resize(tbx, jx->nComp());
     local_jy[thread_num].resize(tby, jy->nComp());
     local_jz[thread_num].resize(tbz, jz->nComp());
@@ -290,9 +305,6 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     Array4<Real> const& jy_arr = local_jy[thread_num].array();
     Array4<Real> const& jz_arr = local_jz[thread_num].array();
 #endif
-    // GPU, no tiling: deposit directly in jx
-    // CPU, tiling: deposit into local_jx
-    // (same for jx and jz)
 
     const auto GetPosition = GetParticlePosition(pti, offset);
 
@@ -300,9 +312,8 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     // Note that this includes guard cells since it is after tilebox.ngrow
     const Dim3 lo = lbound(tilebox);
     // Take into account Galilean shift
-    auto& warpx_instance = WarpX::GetInstance();
-    Real cur_time = warpx_instance.gett_new(lev);
-    const auto& time_of_last_gal_shift = warpx_instance.time_of_last_gal_shift;
+    Real cur_time = warpx.gett_new(lev);
+    const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
     Real time_shift = (cur_time + 0.5*dt - time_of_last_gal_shift);
     amrex::Array<amrex::Real,3> galilean_shift = {
         m_v_galilean[0]* time_shift,
@@ -384,9 +395,8 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     WARPX_PROFILE_VAR_STOP(blp_deposit);
 
 #ifndef AMREX_USE_GPU
+    // CPU, tiling: atomicAdd local_j<xyz> into j<xyz>
     WARPX_PROFILE_VAR_START(blp_accumulate);
-    // CPU, tiling: atomicAdd local_jx into jx
-    // (same for jx and jz)
     (*jx)[pti].atomicAdd(local_jx[thread_num], tbx, tbx, 0, 0, jx->nComp());
     (*jy)[pti].atomicAdd(local_jy[thread_num], tby, tby, 0, 0, jy->nComp());
     (*jz)[pti].atomicAdd(local_jz[thread_num], tbz, tbz, 0, 0, jz->nComp());
@@ -429,7 +439,20 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     // If user decides not to deposit
     if (do_not_deposit) return;
 
-    const long ngRho = rho->nGrow();
+    // Number of guard cells for local deposition of rho
+    WarpX& warpx = WarpX::GetInstance();
+    const int ng_rho = warpx.get_ng_depos_rho().max();
+
+    // Extract deposition order (same order along all directions) and check that
+    // particles shape fits within the guard cells.
+    // NOTE: In specific situations where the staggering of rho and the charge
+    // deposition algorithm are not trivial, this check might be too strict and
+    // we might need to relax it, as currently done for the current deposition.
+    const int shape_extent = static_cast<int>(WarpX::nox / 2 + 1);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::numParticlesOutOfRange(pti, ng_rho - shape_extent) == 0,
+        "Particles shape does not fit within guard cells used for local charge deposition");
+
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     const Real q = this->charge;
 
@@ -447,18 +470,21 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         tilebox = amrex::coarsen(pti.tilebox(),ref_ratio);
     }
 
-    tilebox.grow(ngRho);
-    const Box tb = amrex::convert( tilebox, rho->ixType().toIntVect() );
+    // Staggered tile box
+    Box tb = amrex::convert( tilebox, rho->ixType().toIntVect() );
+
+    tilebox.grow(ng_rho);
 
     const int nc = WarpX::ncomps;
 
 #ifdef AMREX_USE_GPU
-    // No tiling on GPU: rho_fab points to the full rho array.
+    // GPU, no tiling: rho_fab points to the full rho array
     MultiFab rhoi(*rho, amrex::make_alias, icomp*nc, nc);
     auto & rho_fab = rhoi.get(pti);
 #else
-    // Tiling is on: rho_fab points to local_rho[thread_num]
+    tb.grow(ng_rho);
 
+    // CPU, tiling: rho_fab points to local_rho[thread_num]
     local_rho[thread_num].resize(tb, nc);
 
     // local_rho[thread_num] is set to zero
@@ -466,17 +492,14 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
     auto & rho_fab = local_rho[thread_num];
 #endif
-    // GPU, no tiling: deposit directly in rho
-    // CPU, tiling: deposit into local_rho
 
     const auto GetPosition = GetParticlePosition(pti, offset);
 
     // Lower corner of tile box physical domain
     // Note that this includes guard cells since it is after tilebox.ngrow
-    const auto& warpx_instance = WarpX::GetInstance();
-    Real cur_time = warpx_instance.gett_new(lev);
-    Real dt = warpx_instance.getdt(lev);
-    const auto& time_of_last_gal_shift = warpx_instance.time_of_last_gal_shift;
+    Real cur_time = warpx.gett_new(lev);
+    Real dt = warpx.getdt(lev);
+    const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
     // Take into account Galilean shift
     Real time_shift_rho_old = (cur_time - time_of_last_gal_shift);
     Real time_shift_rho_new = (cur_time + dt - time_of_last_gal_shift);
@@ -514,10 +537,9 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     WARPX_PROFILE_VAR_STOP(blp_ppc_chd);
 
 #ifndef AMREX_USE_GPU
+    // CPU, tiling: atomicAdd local_rho into rho
     WARPX_PROFILE_VAR_START(blp_accumulate);
-
     (*rho)[pti].atomicAdd(local_rho[thread_num], tb, tb, 0, icomp*nc, nc);
-
     WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
 }
@@ -602,9 +624,11 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     nba.surroundingNodes();
 #endif
 
-    const int ng = WarpX::nox;
+    // Number of guard cells for local deposition of rho
+    WarpX& warpx = WarpX::GetInstance();
+    const int ng_rho = warpx.get_ng_depos_rho().max();
 
-    auto rho = std::unique_ptr<MultiFab>(new MultiFab(nba,dm,WarpX::ncomps,ng));
+    auto rho = std::unique_ptr<MultiFab>(new MultiFab(nba,dm,WarpX::ncomps,ng_rho));
     rho->setVal(0.0);
 
 #ifdef _OPENMP
