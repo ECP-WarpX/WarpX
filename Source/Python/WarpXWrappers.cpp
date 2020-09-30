@@ -258,29 +258,29 @@ extern "C"
         return getMultiFabLoVects(mf, return_size, ngrow); \
     }
 
-    WARPX_GET_FIELD(warpx_getEfield, WarpX::GetInstance().getEfield);
-    WARPX_GET_FIELD(warpx_getEfieldCP, WarpX::GetInstance().getEfield_cp);
-    WARPX_GET_FIELD(warpx_getEfieldFP, WarpX::GetInstance().getEfield_fp);
+    WARPX_GET_FIELD(warpx_getEfield, WarpX::GetInstance().getEfield)
+    WARPX_GET_FIELD(warpx_getEfieldCP, WarpX::GetInstance().getEfield_cp)
+    WARPX_GET_FIELD(warpx_getEfieldFP, WarpX::GetInstance().getEfield_fp)
 
-    WARPX_GET_FIELD(warpx_getBfield, WarpX::GetInstance().getBfield);
-    WARPX_GET_FIELD(warpx_getBfieldCP, WarpX::GetInstance().getBfield_cp);
-    WARPX_GET_FIELD(warpx_getBfieldFP, WarpX::GetInstance().getBfield_fp);
+    WARPX_GET_FIELD(warpx_getBfield, WarpX::GetInstance().getBfield)
+    WARPX_GET_FIELD(warpx_getBfieldCP, WarpX::GetInstance().getBfield_cp)
+    WARPX_GET_FIELD(warpx_getBfieldFP, WarpX::GetInstance().getBfield_fp)
 
-    WARPX_GET_FIELD(warpx_getCurrentDensity, WarpX::GetInstance().getcurrent);
-    WARPX_GET_FIELD(warpx_getCurrentDensityCP, WarpX::GetInstance().getcurrent_cp);
-    WARPX_GET_FIELD(warpx_getCurrentDensityFP, WarpX::GetInstance().getcurrent_fp);
+    WARPX_GET_FIELD(warpx_getCurrentDensity, WarpX::GetInstance().getcurrent)
+    WARPX_GET_FIELD(warpx_getCurrentDensityCP, WarpX::GetInstance().getcurrent_cp)
+    WARPX_GET_FIELD(warpx_getCurrentDensityFP, WarpX::GetInstance().getcurrent_fp)
 
-    WARPX_GET_LOVECTS(warpx_getEfieldLoVects, WarpX::GetInstance().getEfield);
-    WARPX_GET_LOVECTS(warpx_getEfieldCPLoVects, WarpX::GetInstance().getEfield_cp);
-    WARPX_GET_LOVECTS(warpx_getEfieldFPLoVects, WarpX::GetInstance().getEfield_fp);
+    WARPX_GET_LOVECTS(warpx_getEfieldLoVects, WarpX::GetInstance().getEfield)
+    WARPX_GET_LOVECTS(warpx_getEfieldCPLoVects, WarpX::GetInstance().getEfield_cp)
+    WARPX_GET_LOVECTS(warpx_getEfieldFPLoVects, WarpX::GetInstance().getEfield_fp)
 
-    WARPX_GET_LOVECTS(warpx_getBfieldLoVects, WarpX::GetInstance().getBfield);
-    WARPX_GET_LOVECTS(warpx_getBfieldCPLoVects, WarpX::GetInstance().getBfield_cp);
-    WARPX_GET_LOVECTS(warpx_getBfieldFPLoVects, WarpX::GetInstance().getBfield_fp);
+    WARPX_GET_LOVECTS(warpx_getBfieldLoVects, WarpX::GetInstance().getBfield)
+    WARPX_GET_LOVECTS(warpx_getBfieldCPLoVects, WarpX::GetInstance().getBfield_cp)
+    WARPX_GET_LOVECTS(warpx_getBfieldFPLoVects, WarpX::GetInstance().getBfield_fp)
 
-    WARPX_GET_LOVECTS(warpx_getCurrentDensityLoVects, WarpX::GetInstance().getcurrent);
-    WARPX_GET_LOVECTS(warpx_getCurrentDensityCPLoVects, WarpX::GetInstance().getcurrent_cp);
-    WARPX_GET_LOVECTS(warpx_getCurrentDensityFPLoVects, WarpX::GetInstance().getcurrent_fp);
+    WARPX_GET_LOVECTS(warpx_getCurrentDensityLoVects, WarpX::GetInstance().getcurrent)
+    WARPX_GET_LOVECTS(warpx_getCurrentDensityCPLoVects, WarpX::GetInstance().getcurrent_cp)
+    WARPX_GET_LOVECTS(warpx_getCurrentDensityFPLoVects, WarpX::GetInstance().getcurrent_fp)
 
     int* warpx_getEx_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getEfield(0,0) );}
     int* warpx_getEy_nodal_flag()  {return getFieldNodalFlagData( WarpX::GetInstance().getEfield(0,1) );}
@@ -307,11 +307,11 @@ extern "C"
         return getMultiFabLoVects(mf, return_size, ngrow); \
     }
 
-    WARPX_GET_SCALAR(warpx_getChargeDensityCP, WarpX::GetInstance().getrho_cp);
-    WARPX_GET_SCALAR(warpx_getChargeDensityFP, WarpX::GetInstance().getrho_fp);
+    WARPX_GET_SCALAR(warpx_getChargeDensityCP, WarpX::GetInstance().getrho_cp)
+    WARPX_GET_SCALAR(warpx_getChargeDensityFP, WarpX::GetInstance().getrho_fp)
 
-    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityCPLoVects, WarpX::GetInstance().getrho_cp);
-    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityFPLoVects, WarpX::GetInstance().getrho_fp);
+    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityCPLoVects, WarpX::GetInstance().getrho_cp)
+    WARPX_GET_LOVECTS_SCALAR(warpx_getChargeDensityFPLoVects, WarpX::GetInstance().getrho_fp)
 
 #define WARPX_GET_FIELD_PML(FIELD, GETTER) \
     amrex::Real** FIELD(int lev, int direction, \
@@ -337,18 +337,18 @@ extern "C"
         } \
     }
 
-    WARPX_GET_FIELD_PML(warpx_getEfieldCP_PML, GetE_cp);
-    WARPX_GET_FIELD_PML(warpx_getEfieldFP_PML, GetE_fp);
-    WARPX_GET_FIELD_PML(warpx_getBfieldCP_PML, GetB_cp);
-    WARPX_GET_FIELD_PML(warpx_getBfieldFP_PML, GetB_fp);
-    WARPX_GET_FIELD_PML(warpx_getCurrentDensityCP_PML, Getj_cp);
-    WARPX_GET_FIELD_PML(warpx_getCurrentDensityFP_PML, Getj_fp);
-    WARPX_GET_LOVECTS_PML(warpx_getEfieldCPLoVects_PML, GetE_cp);
-    WARPX_GET_LOVECTS_PML(warpx_getEfieldFPLoVects_PML, GetE_fp);
-    WARPX_GET_LOVECTS_PML(warpx_getBfieldCPLoVects_PML, GetB_cp);
-    WARPX_GET_LOVECTS_PML(warpx_getBfieldFPLoVects_PML, GetB_fp);
-    WARPX_GET_LOVECTS_PML(warpx_getCurrentDensityCPLoVects_PML, Getj_cp);
-    WARPX_GET_LOVECTS_PML(warpx_getCurrentDensityFPLoVects_PML, Getj_fp);
+    WARPX_GET_FIELD_PML(warpx_getEfieldCP_PML, GetE_cp)
+    WARPX_GET_FIELD_PML(warpx_getEfieldFP_PML, GetE_fp)
+    WARPX_GET_FIELD_PML(warpx_getBfieldCP_PML, GetB_cp)
+    WARPX_GET_FIELD_PML(warpx_getBfieldFP_PML, GetB_fp)
+    WARPX_GET_FIELD_PML(warpx_getCurrentDensityCP_PML, Getj_cp)
+    WARPX_GET_FIELD_PML(warpx_getCurrentDensityFP_PML, Getj_fp)
+    WARPX_GET_LOVECTS_PML(warpx_getEfieldCPLoVects_PML, GetE_cp)
+    WARPX_GET_LOVECTS_PML(warpx_getEfieldFPLoVects_PML, GetE_fp)
+    WARPX_GET_LOVECTS_PML(warpx_getBfieldCPLoVects_PML, GetB_cp)
+    WARPX_GET_LOVECTS_PML(warpx_getBfieldFPLoVects_PML, GetB_fp)
+    WARPX_GET_LOVECTS_PML(warpx_getCurrentDensityCPLoVects_PML, Getj_cp)
+    WARPX_GET_LOVECTS_PML(warpx_getCurrentDensityFPLoVects_PML, Getj_fp)
 
     amrex::ParticleReal** warpx_getParticleStructs(int speciesnumber, int lev,
                                       int* num_tiles, int** particles_per_tile) {
