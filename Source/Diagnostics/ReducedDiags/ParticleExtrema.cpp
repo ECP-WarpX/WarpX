@@ -407,8 +407,8 @@ void ParticleExtrema::ComputeDiags (int step)
 #if (defined WARPX_QED)
         if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
         {
-            m_data[16] = chimin;
-            m_data[17] = chimax;
+            m_data[16] = chimin_f;
+            m_data[17] = chimax_f;
         }
 #endif
 
