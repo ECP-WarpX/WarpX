@@ -48,7 +48,7 @@ public:
     */
     template <typename PData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator() (const PData& ptd, int const i) const noexcept
+    bool operator() (const PData& ptd, int const i, amrex::RandomEngine const&) const noexcept
     {
         using namespace amrex;
 

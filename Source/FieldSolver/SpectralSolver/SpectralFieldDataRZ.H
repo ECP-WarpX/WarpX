@@ -44,12 +44,12 @@ class SpectralFieldDataRZ
         SpectralFieldDataRZ& operator=(SpectralFieldDataRZ&& field_data) = default;
         ~SpectralFieldDataRZ ();
 
-        void ForwardTransform (const amrex::MultiFab& mf,
-                               const int field_index, const int i_comp);
+        void ForwardTransform (const amrex::MultiFab& mf, const int field_index,
+                               const int i_comp);
         void ForwardTransform (const amrex::MultiFab& mf_r, const int field_index_r,
                                const amrex::MultiFab& mf_t, const int field_index_t);
-        void BackwardTransform (amrex::MultiFab& mf,
-                                const int field_index, const int i_comp);
+        void BackwardTransform (amrex::MultiFab& mf, const int field_index,
+                                const int i_comp);
         void BackwardTransform (amrex::MultiFab& mf_r, const int field_index_r,
                                 amrex::MultiFab& mf_t, const int field_index_t);
 
@@ -89,6 +89,7 @@ class SpectralFieldDataRZ
         SpectralShiftFactor zshift_FFTfromCell, zshift_FFTtoCell;
         MultiSpectralHankelTransformer multi_spectral_hankel_transformer;
         BinomialFilter binomialfilter;
+
 };
 
 #endif // WARPX_SPECTRAL_FIELD_DATA_RZ_H_

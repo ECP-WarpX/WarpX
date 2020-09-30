@@ -142,10 +142,6 @@ public:
     void doQEDSchwinger ();
 #endif
 
-    void Checkpoint (const std::string& dir) const;
-
-    void WritePlotFile (const std::string& dir) const;
-
     void Restart (const std::string& dir);
 
     void PostRestart ();
@@ -280,8 +276,6 @@ protected:
     std::vector<bool> m_gather_from_main_grid;
 
     std::vector<PCTypes> species_types;
-
-    Resampling m_resampler;
 
     /** Whether to absorb particles exiting the domain */
     ParticleBC m_boundary_conditions = ParticleBC::none;

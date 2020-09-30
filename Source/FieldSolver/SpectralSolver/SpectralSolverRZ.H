@@ -29,15 +29,14 @@ class SpectralSolverRZ
                           amrex::DistributionMapping const & dm,
                           int const n_rz_azimuthal_modes,
                           int const norder_z, bool const nodal,
+                          const amrex::Array<amrex::Real,3>& v_galilean,
                           amrex::RealVect const dx, amrex::Real const dt,
                           int const lev);
 
         /* \brief Transform the component `i_comp` of MultiFab `field_mf`
          *  to spectral space, and store the corresponding result internally
          *  (in the spectral field specified by `field_index`) */
-
-        void ForwardTransform (amrex::MultiFab const & field_mf,
-                               int const field_index,
+        void ForwardTransform (amrex::MultiFab const & field_mf, int const field_index,
                                int const i_comp=0);
 
         /* \brief Transform the two MultiFabs `field_mf1` and `field_mf2`
@@ -48,8 +47,7 @@ class SpectralSolverRZ
 
         /* \brief Transform spectral field specified by `field_index` back to
          * real space, and store it in the component `i_comp` of `field_mf` */
-        void BackwardTransform (amrex::MultiFab& field_mf,
-                                int const field_index,
+        void BackwardTransform (amrex::MultiFab& field_mf, int const field_index,
                                 int const i_comp=0);
 
         /* \brief Transform spectral fields specified by `field_index1` and `field_index2`
@@ -78,6 +76,7 @@ class SpectralSolverRZ
         {
             field_data.ApplyFilter(field_index1, field_index2, field_index3);
         }
+
         /**
           * \brief Public interface to call the member function ComputeSpectralDivE
           * of the base class SpectralBaseAlgorithmRZ from objects of class SpectralSolverRZ

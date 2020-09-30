@@ -29,7 +29,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
 
     // judge if the diags should be done
     // costs is initialized only if we're doing load balance
-    if ( ((step+1) % m_freq != 0) ||
+    if (!m_intervals.contains(step+1) ||
           !warpx.get_load_balance_intervals().isActivated() ) { return; }
 
     // get number of boxes over all levels
@@ -224,7 +224,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
     if (!ParallelDescriptor::IOProcessor()) return;
 
     // final step is a special case, fill jagged array with NaN
-    if (step == (warpx.maxStep() - (warpx.maxStep()%m_freq) - 1 ))
+    if (m_intervals.nextContains(step+1) > warpx.maxStep())
     {
         // open tmp file to copy data
         std::string fileTmpName = m_path + m_rd_name + ".tmp." + m_extension;
