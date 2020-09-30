@@ -1150,7 +1150,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         }
 #   else
         c_realspace_ba.grow(ngE); // add guard cells
-        spectral_solver_cp[lev]. std::make_unique<SpectralSolver>( c_realspace_ba, dm,
+        spectral_solver_cp[lev] = std::make_unique<SpectralSolver>( c_realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev],
             pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
 #   endif
