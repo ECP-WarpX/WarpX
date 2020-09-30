@@ -70,7 +70,7 @@ macro(find_amrex)
         set(ENABLE_PARTICLES ON CACHE INTERNAL "")
         set(ENABLE_TINY_PROFILE ON CACHE BOOL "")
 
-        # ENABLE_SENSEI_IN_SITU
+        # ENABLE_SENSEI
         # we'll need this for Python bindings
         #set(ENABLE_PIC ON CACHE INTERNAL "")
 
@@ -128,7 +128,7 @@ macro(find_amrex)
         mark_as_advanced(ENABLE_MPI_THREAD_MULTIPLE)
         mark_as_advanced(ENABLE_OMP)
         mark_as_advanced(ENABLE_PIC)
-        mark_as_advanced(ENABLE_SENSEI_INSITU)
+        mark_as_advanced(ENABLE_SENSEI)
         mark_as_advanced(ENABLE_TINY_PROFILE)
         mark_as_advanced(TP_PROFILE)
         mark_as_advanced(USE_XSDK_DEFAULTS)
