@@ -125,10 +125,13 @@ void ParticleExtrema::ComputeDiags (int step)
 {
 
     // Judge if the diags should be done
-    if ( (step+1) % m_freq != 0 ) { return; }
+    if (!m_intervals.contains(step+1)) { return; }
 
     // get MultiParticleContainer class object
     auto & mypc = WarpX::GetInstance().GetPartContainer();
+
+    // get number of level (int)
+    auto level_number = WarpX::GetInstance().finestLevel();
 
     // get number of species (int)
     auto nSpecies = mypc.nSpecies();
@@ -303,128 +306,85 @@ void ParticleExtrema::ComputeDiags (int step)
 
 #if (defined WARPX_QED)
         // compute chimin and chimax
-        Real chimin = 0.0_rt;
-        Real chimax = 0.0_rt;
+        Real chimin_f = 0.0_rt;
+        Real chimax_f = 0.0_rt;
         GetExternalEField get_externalE;
         GetExternalBField get_externalB;
 
         if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
         {
-            chimin = ReduceMin( myspc,
-            [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+
+            // declare chi arrays
+            std::vector<amrex::Real> chimin, chimax;
+            chimin.resize(level_number+1,0.0_rt);
+            chimax.resize(level_number+1,0.0_rt);
+
+            // loop over refinement levels
+            for (int lev = 0; lev <= level_number; ++lev)
             {
-#if (defined WARPX_DIM_RZ)
-                ParticleReal xp = p.pos(0)*std::cos(p.rdata(PIdx::theta));
-                ParticleReal yp = p.pos(0)*std::sin(p.rdata(PIdx::theta));
-#elif (defined WARPX_DIM_XZ)
-                ParticleReal xp = p.pos(0);
-                ParticleReal yp = 0.0_rt;
-#else
-                ParticleReal xp = p.pos(0);
-                ParticleReal yp = p.pos(1);
-#endif
-                ParticleReal zp = p.pos(index_z);
-
-                ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
-                ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
-
-                Array4<const amrex::Real> ex_arr;
-                Array4<const amrex::Real> ey_arr;
-                Array4<const amrex::Real> ez_arr;
-                Array4<const amrex::Real> bx_arr;
-                Array4<const amrex::Real> by_arr;
-                Array4<const amrex::Real> bz_arr;
-                IndexType ex_type, ey_type, ez_type;
-                IndexType bx_type, by_type, bz_type;
-                GpuArray<amrex::Real, 3> dx_arr, xyzmin_arr;
-                Dim3 lo;
-
-                int n_rz_azimuthal_modes;
-                int nox;
-                bool galerkin_interpolation;
-
-                get_externalE(i, ex, ey, ez);
-                get_externalB(i, bx, by, bz);
-
-                // gather E and B
-                doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
-                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                    ex_type, ey_type, ez_type,
-                    bx_type, by_type, bz_type,
-                    dx_arr, xyzmin_arr, lo,
-                    n_rz_azimuthal_modes, nox, galerkin_interpolation);
-
-                // compute chi
-                Real px = p.rdata(PIdx::ux)*m;
-                Real py = p.rdata(PIdx::uy)*m;
-                Real pz = p.rdata(PIdx::uz)*m;
-                Real chi = 0.0_rt;
-                if ( myspc.AmIA<PhysicalSpecies::photon>() )
-                { chi = chi_photon(px, py, pz, ex, ey, ez, bx, by, bz); }
-                else
-                { chi = chi_lepton(px, py, pz, ex, ey, ez, bx, by, bz); }
-
-                return chi;
-            });
-            ParallelDescriptor::ReduceRealMin(chimin);
-
-            chimax = ReduceMax( myspc,
-            [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-            {
-#if (defined WARPX_DIM_RZ)
-                ParticleReal xp = p.pos(0)*std::cos(p.rdata(PIdx::theta));
-                ParticleReal yp = p.pos(0)*std::sin(p.rdata(PIdx::theta));
-#elif (defined WARPX_DIM_XZ)
-                ParticleReal xp = p.pos(0);
-                ParticleReal yp = 0.0_rt;
-#else
-                ParticleReal xp = p.pos(0);
-                ParticleReal yp = p.pos(1);
-#endif
-                ParticleReal zp = p.pos(index_z);
-
-                ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
-                ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
-
-                Array4<const amrex::Real> ex_arr;
-                Array4<const amrex::Real> ey_arr;
-                Array4<const amrex::Real> ez_arr;
-                Array4<const amrex::Real> bx_arr;
-                Array4<const amrex::Real> by_arr;
-                Array4<const amrex::Real> bz_arr;
-                IndexType ex_type, ey_type, ez_type;
-                IndexType bx_type, by_type, bz_type;
-                GpuArray<amrex::Real, 3> dx_arr, xyzmin_arr;
-                Dim3 lo;
-
-                int n_rz_azimuthal_modes;
-                int nox;
-                bool galerkin_interpolation;
-
-                get_externalE(i, ex, ey, ez);
-                get_externalB(i, bx, by, bz);
-
-                // gather E and B
-                doGatherShapeN(xp, yp, zp, ex, ey, ez, bx, by, bz,
-                    ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                    ex_type, ey_type, ez_type,
-                    bx_type, by_type, bz_type,
-                    dx_arr, xyzmin_arr, lo,
-                    n_rz_azimuthal_modes, nox, galerkin_interpolation);
-
-                // compute chi
-                Real px = p.rdata(PIdx::ux)*m;
-                Real py = p.rdata(PIdx::uy)*m;
-                Real pz = p.rdata(PIdx::uz)*m;
-                Real chi = 0.0_rt;
-                if ( myspc.AmIA<PhysicalSpecies::photon>() )
-                { chi = chi_photon(px, py, pz, ex, ey, ez, bx, by, bz); }
-                else
-                { chi = chi_lepton(px, py, pz, ex, ey, ez, bx, by, bz); }
-
-                return chi;
-            });
-            ParallelDescriptor::ReduceRealMax(chimax);
+                // Loop over boxes
+                for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
+                {
+                    // declare position arrays
+                    Gpu::ManagedDeviceVector<ParticleReal> x, y, z;
+                    // get particle arrays
+                    pti.GetPosition(x, y, z);
+                    auto & w  = pti.GetAttribs(PIdx::w);
+                    auto & ux = pti.GetAttribs(PIdx::ux);
+                    auto & uy = pti.GetAttribs(PIdx::uy);
+                    auto & uz = pti.GetAttribs(PIdx::uz);
+                    // declare external fields
+                    int offset = 0;
+                    const auto getExternalE = GetExternalEField(pti, offset);
+                    const auto getExternalB = GetExternalBField(pti, offset);
+                    // declare reduce_op
+                    ReduceOps<ReduceOpMin, ReduceOpMax> reduce_op;
+                    ReduceData<Real, Real> reduce_data(reduce_op);
+                    using ReduceTuple = typename decltype(reduce_data)::Type;
+                    reduce_op.eval(ux.size(), reduce_data,
+                    [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
+                    {
+                        // get external fields
+                        ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
+                        ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
+                        getExternalE(i, ex, ey, ez);
+                        getExternalB(i, bx, by, bz);
+                        // gather E and B
+                        Array4<const amrex::Real> ex_arr, ey_arr, ez_arr;
+                        Array4<const amrex::Real> bx_arr, by_arr, bz_arr;
+                        IndexType ex_type, ey_type, ez_type;
+                        IndexType bx_type, by_type, bz_type;
+                        GpuArray<amrex::Real, 3> dx_arr, xyzmin_arr;
+                        Dim3 lo;
+                        int n_rz_azimuthal_modes;
+                        int nox;
+                        bool galerkin_interpolation;
+                        doGatherShapeN(x[i], y[i], z[i],
+                            ex, ey, ez, bx, by, bz,
+                            ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                            ex_type, ey_type, ez_type,
+                            bx_type, by_type, bz_type,
+                            dx_arr, xyzmin_arr, lo,
+                            n_rz_azimuthal_modes, nox, galerkin_interpolation);
+                        // compute chi
+                        Real chi = 0.0_rt;
+                        if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
+                            chi = chi_photon(ux[i]*m, uy[i]*m, uz[i]*m,
+                                             ex, ey, ez, bx, by, bz);
+                        } else {
+                            chi = chi_lepton(ux[i]*m, uy[i]*m, uz[i]*m,
+                                             ex, ey, ez, bx, by, bz);
+                        }
+                        return {chi,chi};
+                    });
+                    chimin[lev] = get<0>(reduce_data.value());
+                    chimax[lev] = get<1>(reduce_data.value());
+                }
+                chimin_f = std::min_element(chimin.begin(), chimin.end());
+                chimax_f = std::max_element(chimax.begin(), chimax.end());
+            }
+            ParallelDescriptor::ReduceRealMin(chimin_f);
+            ParallelDescriptor::ReduceRealMax(chimax_f);
         }
 #endif
 
