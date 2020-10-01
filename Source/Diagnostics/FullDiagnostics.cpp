@@ -349,11 +349,12 @@ void
 FullDiagnostics::InitializeFieldFunctors (int lev)
 {
     auto & warpx = WarpX::GetInstance();
+
     // Clear any pre-existing vector to release stored data.
     m_all_field_functors[lev].clear();
 
     // Species index to loop over species that dump rho per species
-    int is_dump_rho = 0;
+    int i = 0;
 
     m_all_field_functors[lev].resize( m_varnames.size() );
     // Fill vector of functors for all components except individual cylindrical modes.
@@ -392,8 +393,8 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             }
         } else if ( m_varnames[comp].find("rho_") != std::string::npos ){
             // Initialize rho functor to dump rho per species
-            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, m_rho_per_species_index[is_dump_rho]);
-            is_dump_rho++;
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, m_rho_per_species_index[i]);
+            i++;
         } else if ( m_varnames[comp] == "F" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_cell" ){
