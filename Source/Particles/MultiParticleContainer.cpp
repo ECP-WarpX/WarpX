@@ -246,8 +246,9 @@ MultiParticleContainer::ReadParameters ()
             pc.queryarr("collision_names", collision_names);
 
         }
-
+#ifndef WARPX_DIM_RZ
         pp.query("use_fdtd_nci_corr", WarpX::use_fdtd_nci_corr);
+#endif
         pp.query("galerkin_interpolation", WarpX::galerkin_interpolation);
 
         std::string boundary_conditions = "none";

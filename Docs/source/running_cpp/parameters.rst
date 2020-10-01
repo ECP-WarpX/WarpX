@@ -276,6 +276,7 @@ Particle initialization
 
 * ``particles.use_fdtd_nci_corr`` (`0` or `1`) optional (default `0`)
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
+    Not currently available in the RZ configuration.
 
 * ``particles.boundary_conditions`` (`string`) optional (default `none`)
     Boundary conditions applied to particles. Options are:
