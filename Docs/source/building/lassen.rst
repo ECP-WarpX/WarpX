@@ -13,7 +13,7 @@ If you are new to this system, please see the following resources:
 * `Production directories <https://hpc.llnl.gov/hardware/file-systems>`_:
 
   * ``/p/gpfs1/$(whoami)``: personal directory on the parallel filesystem
-  * Note that the ``$HOME`` directory and the ``/usr/workspace/$(whoami)`` space are NFS mounted and are suitable for production quality data generation.
+  * Note that the ``$HOME`` directory and the ``/usr/workspace/$(whoami)`` space are NFS mounted and *not* suitable for production quality data generation.
 
 
 Installation
