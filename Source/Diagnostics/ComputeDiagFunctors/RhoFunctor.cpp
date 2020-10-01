@@ -38,7 +38,8 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
         rho = mypc.GetChargeDensity(m_lev, true);
     }
 
-    // Call this in case filtering is turned on
+    // Handle the parallel transfers of guard cells and
+    // apply the filtering if requested.
     warpx.ApplyFilterandSumBoundaryRho(m_lev, m_lev, *rho, 0, rho->nComp());
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
