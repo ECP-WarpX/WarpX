@@ -53,9 +53,11 @@ resampled_part2.do_not_push = 1
 resampled_part2.do_resampling = 1
 resampled_part2.resampling_algorithm = leveling_thinning
 resampled_part2.resampling_algorithm_target_ratio = 1.3
-# This should trigger resampling at timestep 7 only in this case. The rest is here to test the
+# This should prevent actual resampling at timestep 7
+resampled_part2.resampling_algorithm_min_ppc = 80000
+# This should trigger resampling at timestep 6 and 7 in this case. The rest is here to test the
 # intervals parser syntax.
-resampled_part2.resampling_trigger_intervals = 100 :120:3, 7:7:7
+resampled_part2.resampling_trigger_intervals = 100 :120:3, 6:6:6 , 7
 # This should not trigger resampling: this species only has ~391 ppc on average.
 resampled_part2.resampling_trigger_max_avg_ppc = 395
 

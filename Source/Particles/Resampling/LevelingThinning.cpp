@@ -22,6 +22,10 @@ LevelingThinning::LevelingThinning (const std::string species_name)
         amrex::Warning("WARNING: target ratio for leveling thinning is smaller or equal to one."
                        " It is possible that no particle will be removed during resampling");
     }
+
+    pp.query("resampling_algorithm_min_ppc", m_min_ppc);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_min_ppc >= 1,
+                                     "Resampling min_ppc should be greater than or equal to 1");
 }
 
 void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
@@ -47,6 +51,7 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
     const auto cell_offsets = bins.offsetsPtr();
 
     const amrex::Real target_ratio = m_target_ratio;
+    const int min_ppc = m_min_ppc;
 
     // Loop over cells
     amrex::ParallelForRNG( n_cells,
@@ -58,8 +63,9 @@ void LevelingThinning::operator() (WarpXParIter& pti, const int lev,
             const auto cell_stop  = static_cast<int>(cell_offsets[i_cell+1]);
             const int cell_numparts = cell_stop - cell_start;
 
-            // do nothing for cells without particles
-            if (cell_numparts == 0)
+            // do nothing for cells with less particles than min_ppc
+            // (this intentionally includes skipping empty cells, too)
+            if (cell_numparts < min_ppc)
                 return;
             amrex::Real average_weight = 0._rt;
 

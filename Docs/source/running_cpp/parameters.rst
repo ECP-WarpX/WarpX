@@ -607,9 +607,15 @@ Particle initialization
     default:
 
     * ``leveling_thinning`` This algorithm is defined in `Muraviev et al., arXiv:2006.08593 (2020) <https://arxiv.org/abs/2006.08593>`_.
-      The main parameter for this algorithm can be set with ``<species>.resampling_algorithm_target_ratio``.
-      It **roughly** corresponds to the ratio between the number of particles before and after
-      resampling. The default value for this parameter is 1.5.
+      It has two parameters:
+
+        * ``<species>.resampling_algorithm_target_ratio`` (`float`) optional (default `1.5`)
+            This **roughly** corresponds to the ratio between the number of particles before and
+            after resampling.
+
+        * ``<species>.resampling_algorithm_min_ppc`` (`int`) optional (default `1`)
+            Resampling is not performed in cells with a number of macroparticles strictly smaller
+            than this parameter.
 
 * ``<species>.resampling_trigger_intervals`` (`string`) optional (default `0`)
     Using the `Intervals parser`_ syntax, this string defines timesteps at which resampling is
@@ -1773,8 +1779,9 @@ Reduced Diagnostics
         using the histogram reduced diagnostics
         are given in ``Examples/Tests/initial_distribution/``.
 
-* ``<reduced_diags_name>.frequency`` (`int`)
-    The output frequency (every # time steps).
+* ``<reduced_diags_name>.frequency`` (`string`) optional (default ``1``)
+    Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
+    diagnostics are written to file.
 
 * ``<reduced_diags_name>.path`` (`string`) optional (default `./diags/reducedfiles/`)
     The path that the output file will be stored.
