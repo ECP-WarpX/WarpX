@@ -47,11 +47,12 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     const int num_levels = max_level + 1;
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
     Vector<std::unique_ptr<MultiFab> > phi(num_levels);
-    const int ng = WarpX::nox;
+    // Use number of guard cells used for local deposition of rho
+    const int ng = guard_cells.ng_depos_rho.max();
     for (int lev = 0; lev <= max_level; lev++) {
         BoxArray nba = boxArray(lev);
         nba.surroundingNodes();
-        rho[lev].reset(new MultiFab(nba, dmap[lev], 1, ng)); // Make ng big enough/use rho from sim
+        rho[lev].reset(new MultiFab(nba, dmap[lev], 1, ng));
         phi[lev].reset(new MultiFab(nba, dmap[lev], 1, 1));
         phi[lev]->setVal(0.);
     }
