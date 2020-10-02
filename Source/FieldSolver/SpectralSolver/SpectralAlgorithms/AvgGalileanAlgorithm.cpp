@@ -249,10 +249,8 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
         Array4<const Complex> Theta2_arr = Theta2_coef[mfi].array();
         Array4<const Complex> Psi1_arr = Psi1_coef[mfi].array();
         Array4<const Complex> Psi2_arr = Psi2_coef[mfi].array();
-        Array4<const Complex> Psi3_arr = Psi3_coef[mfi].array();
 
         Array4<const Complex> A1_arr = A1_coef[mfi].array();
-        Array4<const Complex> A2_arr = A2_coef[mfi].array();
         Array4<const Complex> Rhonew_arr = Rhonew_coef[mfi].array();
         Array4<const Complex> Rhoold_arr = Rhoold_coef[mfi].array();
         Array4<const Complex> Jcoef_arr =Jcoef_coef[mfi].array();
@@ -284,12 +282,6 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
             const Complex rho_old = fields(i,j,k,Idx::rho_old);
             const Complex rho_new = fields(i,j,k,Idx::rho_new);
 
-            const Complex Ex_avg = fields(i,j,k,Idx::Ex_avg);
-            const Complex Ey_avg= fields(i,j,k,Idx::Ey_avg);
-            const Complex Ez_avg = fields(i,j,k,Idx::Ez_avg);
-            const Complex Bx_avg = fields(i,j,k,Idx::Bx_avg);
-            const Complex By_avg = fields(i,j,k,Idx::By_avg);
-            const Complex Bz_avg = fields(i,j,k,Idx::Bz_avg);
             // k vector values, and coefficients
             const Real kx = modified_kx_arr[i];
 
@@ -315,13 +307,10 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
 
             const Complex Psi1 = Psi1_arr(i,j,k);
             const Complex Psi2 = Psi2_arr(i,j,k);
-            const Complex Psi3 = Psi3_arr(i,j,k);
             const Complex A1 = A1_arr(i,j,k);
-            const Complex A2 = A2_arr(i,j,k);
             const Complex CRhoold= Rhoold_arr(i,j,k);
             const Complex CRhonew= Rhonew_arr(i,j,k);
             const Complex Jcoef = Jcoef_arr(i,j,k);
-
 
             //Update E (see the original Galilean article)
             fields(i,j,k,Idx::Ex) = T2*C*Ex_old
@@ -333,6 +322,7 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
             fields(i,j,k,Idx::Ez) = T2*C*Ez_old
                         + T2*S_ck*c2*I*(kx*By_old - ky*Bx_old)
                         + X4*Jz - I*(X2*rho_new - T2*X3*rho_old)*kz;
+
             // Update B (see the original Galilean article)
             // Note: here X1 is T2*x1/(ep0*c*c*k_norm*k_norm), where
             // x1 has the same definition as in the original paper
@@ -346,7 +336,7 @@ AvgGalileanAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
                         - T2*S_ck*I*(kx*Ey_old - ky*Ex_old)
                         +      X1*I*(kx*Jy     - ky*Jx);
 
-//Update the averaged E,B fields in time on the interval [(n-1/2)dx, (n+1/2)dx]
+            //Update the averaged E,B fields in time on the interval [(n-1/2)dx, (n+1/2)dx]
             fields(i,j,k,Idx::Ex_avg) = Psi1*Ex_old
                           - Psi2*c2*I*(ky*Bz_old - kz*By_old)
                           + Jcoef*Jx + ( CRhonew * rho_new +  CRhoold*rho_old )*kx;

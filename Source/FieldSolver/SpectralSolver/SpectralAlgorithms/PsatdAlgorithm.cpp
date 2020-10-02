@@ -24,9 +24,9 @@ PsatdAlgorithm::PsatdAlgorithm(const SpectralKSpace& spectral_kspace,
                          const int norder_z, const bool nodal, const Real dt,
                          const bool update_with_rho)
     // Initialize members of base class
-    : m_dt( dt ),
-      m_update_with_rho( update_with_rho ),
-      SpectralBaseAlgorithm( spectral_kspace, dm, norder_x, norder_y, norder_z, nodal )
+    : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
+      m_dt(dt),
+      m_update_with_rho(update_with_rho)
 {
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -144,7 +144,7 @@ PsatdAlgorithm::pushSpectralFields(SpectralFieldData& f) const{
             fields(i,j,k,Idx::Bz) = C*Bz_old - S_ck*I*(kx*Ey_old-ky*Ex_old) + X1*I*(kx*Jy-ky*Jx);
         } );
     }
-};
+}
 
 /**
  * \brief Initialize coefficients for update equations
@@ -256,8 +256,6 @@ PsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
         // Loop over indices within one box
         ParallelFor( bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
-            using Idx = SpectralFieldIndex;
-
             // Shortcuts for the values of J and rho
             const Complex Jx = fields(i,j,k,Idx::Jx);
             const Complex Jy = fields(i,j,k,Idx::Jy);
@@ -330,11 +328,11 @@ PsatdAlgorithm::VayDeposition (SpectralFieldData& field_data,
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
-            using Idx = SpectralFieldIndex;
-
             // Shortcuts for the values of D
             const Complex Dx = fields(i,j,k,Idx::Jx);
+#if (AMREX_SPACEDIM==3)
             const Complex Dy = fields(i,j,k,Idx::Jy);
+#endif
             const Complex Dz = fields(i,j,k,Idx::Jz);
 
             // Imaginary unit
@@ -346,8 +344,7 @@ PsatdAlgorithm::VayDeposition (SpectralFieldData& field_data,
             const amrex::Real ky_mod = modified_ky_arr[j];
             const amrex::Real kz_mod = modified_kz_arr[k];
 #else
-            constexpr amrex::Real ky_mod = 0._rt;
-            const     amrex::Real kz_mod = modified_kz_arr[j];
+            const amrex::Real kz_mod = modified_kz_arr[j];
 #endif
 
             // Compute Jx
