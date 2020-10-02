@@ -2,6 +2,8 @@
 #include "RhoFunctor.H"
 #include "Utils/CoarsenIO.H"
 
+#include <AMReX.H>
+
 RhoFunctor::RhoFunctor (const int lev,
                         const amrex::IntVect crse_ratio,
                         const int species_index,
@@ -52,5 +54,6 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     // In Cartesian geometry, coarsen and interpolate from temporary MultiFab rho
     // to output diagnostic MultiFab mf_dst
     CoarsenIO::Coarsen( mf_dst, *rho, dcomp, 0, nComp(), mf_dst.nGrow(0), m_crse_ratio );
+    amrex::ignore_unused(m_convertRZmodes2cartesian);
 #endif
 }
