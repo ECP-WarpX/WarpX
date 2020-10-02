@@ -120,7 +120,7 @@ Diagnostics::BaseReadParameters ()
     // Loop over all fields stored in m_varnames
     for (const auto& var : m_varnames) {
         // Check if m_varnames contains a string of the form rho_<species_name>
-        if (var.find("rho_") != std::string::npos) {
+        if (var.rfind("rho_", 0) == 0) {
             // Extract species name from the string rho_<species_name>
             species = var.substr(var.find("rho_") + 4);
             // Boolean used to check if species name was misspelled
@@ -137,9 +137,10 @@ Diagnostics::BaseReadParameters ()
                 }
             }
             // If species name was misspelled, abort with error message
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ! species_name_is_wrong,
-                "Input error: string rho_<species_name> provided by the user does not match any species");
+            if (species_name_is_wrong) {
+                amrex::Abort("Input error: string " + var + " in " + m_diag_name +
+                             ".fields_to_plot does not match any species");
+            }
         }
     }
 

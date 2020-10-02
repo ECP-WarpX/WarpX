@@ -391,7 +391,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
                 // Initialize rho functor to dump total rho
                 m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
             }
-        } else if ( m_varnames[comp].find("rho_") != std::string::npos ){
+        } else if ( m_varnames[comp].rfind("rho_", 0) == 0 ){
             // Initialize rho functor to dump rho per species
             m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, m_rho_per_species_index[i]);
             i++;
