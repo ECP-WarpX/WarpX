@@ -404,6 +404,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
         } else if ( m_varnames[comp] == "divE" ){
             m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio);
         }
+        else {
+            amrex::Abort("Error: " + m_varnames[comp] + " is not a known field output type");
+        }
     }
     AddRZModesToDiags( lev );
 }
