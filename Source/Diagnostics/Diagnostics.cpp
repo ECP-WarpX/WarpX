@@ -108,11 +108,12 @@ Diagnostics::BaseReadParameters ()
        }
     }
 
-    bool species_specified = pp.queryarr("species", m_species_names);
+    // Names of species to write to output
+    bool species_specified = pp.queryarr("species", m_output_species_names);
 
-    // Get names of all species in the simulation, independently of the subset
-    // of species requested in <diag_name>.species and stored in m_species_names
-    const std::vector<std::string> species_names = warpx.GetPartContainer().GetSpeciesNames();
+    // Names of all species in the simulation
+    m_all_species_names = warpx.GetPartContainer().GetSpeciesNames();
+
     // Auxiliary variables
     std::string species;
     bool species_name_is_wrong;
@@ -125,10 +126,10 @@ Diagnostics::BaseReadParameters ()
             // Boolean used to check if species name was misspelled
             species_name_is_wrong = true;
             // Loop over all species
-            for (int i = 0, n = int(species_names.size()); i < n; i++) {
+            for (int i = 0, n = int(m_all_species_names.size()); i < n; i++) {
                 // Check if species name extracted from the string rho_<species_name>
                 // matches any of the species in the simulation
-                if (species == species_names[i]) {
+                if (species == m_all_species_names[i]) {
                     // Store species index: will be used in RhoFunctor to dump
                     // rho for this species
                     m_rho_per_species_index.push_back(i);

@@ -35,9 +35,9 @@ FullDiagnostics::InitializeParticleBuffer ()
 
     const MultiParticleContainer& mpc = warpx.GetPartContainer();
     // If not specified, dump all species
-    if (m_species_names.size() == 0) m_species_names = mpc.GetSpeciesNames();
+    if (m_output_species_names.size() == 0) m_output_species_names = mpc.GetSpeciesNames();
     // Initialize one ParticleDiag per species requested
-    for (auto const& species : m_species_names){
+    for (auto const& species : m_output_species_names){
         const int idx = mpc.getSpeciesID(species);
         m_all_species.push_back(ParticleDiag(m_diag_name, species,
                                              mpc.GetParticleContainerPtr(idx)));
