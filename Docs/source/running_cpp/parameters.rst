@@ -981,6 +981,10 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     a Coulomb logarithm will be computed automatically according to the algorithm in
     `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
 
+* ``<collision_name>.ndt`` (`int`) optional
+    Execute collision every # time steps.
+    The default value is 1.
+
 .. _running-cpp-parameters-numerics:
 
 Numerics and algorithms

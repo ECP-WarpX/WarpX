@@ -122,7 +122,7 @@ public:
                             const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                             const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
 
-    void doCoulombCollisions ();
+    void doCoulombCollisions (amrex::Real cur_time);
 
     /**
     * \brief This function loops over all species and performs resampling if appropriate.
