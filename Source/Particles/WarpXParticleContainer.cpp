@@ -17,6 +17,7 @@
 #include "Pusher/UpdatePosition.H"
 #include "Deposition/CurrentDeposition.H"
 #include "Deposition/ChargeDeposition.H"
+#include "Parallelization/WarpXCommUtil.H"
 
 #include <AMReX_AmrParGDB.H>
 #include <AMReX.H>
@@ -613,7 +614,10 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
         int const refinement_ratio = 2;
 
         CoarsenMR::Coarsen( coarsened_fine_data, *rho[lev+1], IntVect(refinement_ratio) );
-        rho[lev]->ParallelAdd( coarsened_fine_data, m_gdb->Geom(lev).periodicity() );
+        WarpXCommUtil::ParallelAdd(*rho[lev], coarsened_fine_data, 0, 0, rho[lev]->nComp(),
+                                   amrex::IntVect::TheZeroVector(),
+                                   amrex::IntVect::TheZeroVector(),
+                                   m_gdb->Geom(lev).periodicity());
     }
 }
 

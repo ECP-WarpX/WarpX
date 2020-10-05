@@ -11,6 +11,7 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
+#include "Parallelization/WarpXCommUtil.H"
 
 #include <AMReX_Print.H>
 #include <AMReX_VisMF.H>
@@ -889,7 +890,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
     if (do_pml_in_domain){
         // Valid cells of the PML and of the regular grid overlap
         // Copy from valid cells of the PML to valid cells of the regular grid
-        reg.ParallelCopy(totpmlmf, 0, 0, 1, IntVect(0), IntVect(0), period);
+        WarpXCommUtil::ParallelCopy(reg, totpmlmf, 0, 0, 1, IntVect(0), IntVect(0), period);
     } else {
         // Valid cells of the PML only overlap with guard cells of regular grid
         // (and outermost valid cell of the regular grid, for nodal direction)
@@ -897,7 +898,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         // but avoid updating the outermost valid cell
         if (ngr.max() > 0) {
             MultiFab::Copy(tmpregmf, reg, 0, 0, 1, ngr);
-            tmpregmf.ParallelCopy(totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
+            WarpXCommUtil::ParallelCopy(tmpregmf, totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -930,9 +931,9 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         // Where valid cells of tmpregmf overlap with PML valid cells,
         // copy the PML (this is order to avoid overwriting PML valid cells,
         // in the next `ParallelCopy`)
-        tmpregmf.ParallelCopy(pml,0, 0, ncp, IntVect(0), IntVect(0), period);
+        WarpXCommUtil::ParallelCopy(tmpregmf, pml,0, 0, ncp, IntVect(0), IntVect(0), period);
     }
-    pml.ParallelCopy(tmpregmf, 0, 0, ncp, IntVect(0), ngp, period);
+    WarpXCommUtil::ParallelCopy(pml, tmpregmf, 0, 0, ncp, IntVect(0), ngp, period);
 }
 
 
@@ -942,7 +943,7 @@ PML::CopyToPML (MultiFab& pml, MultiFab& reg, const Geometry& geom)
   const IntVect& ngp = pml.nGrowVect();
   const auto& period = geom.periodicity();
 
-  pml.ParallelCopy(reg, 0, 0, 1, IntVect(0), ngp, period);
+  WarpXCommUtil::ParallelCopy(pml, reg, 0, 0, 1, IntVect(0), ngp, period);
 }
 
 void
@@ -967,13 +968,13 @@ PML::FillBoundaryE (PatchType patch_type)
     {
         const auto& period = m_geom->periodicity();
         Vector<MultiFab*> mf{pml_E_fp[0].get(),pml_E_fp[1].get(),pml_E_fp[2].get()};
-        amrex::FillBoundary(mf, period);
+        WarpXCommUtil::FillBoundary(mf, period);
     }
     else if (patch_type == PatchType::coarse && pml_E_cp[0] && pml_E_cp[0]->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
         Vector<MultiFab*> mf{pml_E_cp[0].get(),pml_E_cp[1].get(),pml_E_cp[2].get()};
-        amrex::FillBoundary(mf, period);
+        WarpXCommUtil::FillBoundary(mf, period);
     }
 }
 
@@ -991,13 +992,13 @@ PML::FillBoundaryB (PatchType patch_type)
     {
         const auto& period = m_geom->periodicity();
         Vector<MultiFab*> mf{pml_B_fp[0].get(),pml_B_fp[1].get(),pml_B_fp[2].get()};
-        amrex::FillBoundary(mf, period);
+        WarpXCommUtil::FillBoundary(mf, period);
     }
     else if (patch_type == PatchType::coarse && pml_B_cp[0])
     {
         const auto& period = m_cgeom->periodicity();
         Vector<MultiFab*> mf{pml_B_cp[0].get(),pml_B_cp[1].get(),pml_B_cp[2].get()};
-        amrex::FillBoundary(mf, period);
+        WarpXCommUtil::FillBoundary(mf, period);
     }
 }
 
@@ -1014,12 +1015,12 @@ PML::FillBoundaryF (PatchType patch_type)
     if (patch_type == PatchType::fine && pml_F_fp && pml_F_fp->nGrowVect().max() > 0)
     {
         const auto& period = m_geom->periodicity();
-        pml_F_fp->FillBoundary(period);
+        WarpXCommUtil::FillBoundary(*pml_F_fp, period);
     }
     else if (patch_type == PatchType::coarse && pml_F_cp && pml_F_cp->nGrowVect().max() > 0)
     {
         const auto& period = m_cgeom->periodicity();
-        pml_F_cp->FillBoundary(period);
+        WarpXCommUtil::FillBoundary(*pml_F_cp, period);
     }
 }
 

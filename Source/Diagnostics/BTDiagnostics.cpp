@@ -1,6 +1,7 @@
 #include "BTDiagnostics.H"
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
+#include "Parallelization/WarpXCommUtil.H"
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ComputeDiagFunctors/CellCenterFunctor.H"
 #include "ComputeDiagFunctors/BackTransformFunctor.H"
@@ -403,7 +404,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         AMREX_ALWAYS_ASSERT( icomp_dst == m_cellcenter_varnames.size() );
         // fill boundary call is required to average_down (flatten) data to
         // the coarsest level.
-        m_cell_centered_data[lev]->FillBoundary(warpx.Geom(lev).periodicity() );
+        WarpXCommUtil::FillBoundary(*m_cell_centered_data[lev], warpx.Geom(lev).periodicity());
     }
     // Flattening out MF over levels
 

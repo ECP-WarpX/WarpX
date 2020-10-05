@@ -11,6 +11,7 @@
 #include "FieldIO.H"
 #include "SliceDiagnostic.H"
 #include "Utils/CoarsenIO.H"
+#include "Parallelization/WarpXCommUtil.H"
 
 #ifdef WARPX_USE_OPENPMD
 #   include "Diagnostics/WarpXOpenPMD.H"
@@ -267,7 +268,7 @@ WarpX::GetCellCenteredData() {
         const std::unique_ptr<MultiFab>& charge_density = mypc->GetChargeDensity(lev);
         AverageAndPackScalarField( *cc[lev], *charge_density, dmap[lev], dcomp, ng );
 
-        cc[lev]->FillBoundary(geom[lev].periodicity());
+        WarpXCommUtil::FillBoundary(*cc[lev], geom[lev].periodicity());
     }
 
     for (int lev = finest_level; lev > 0; --lev)
