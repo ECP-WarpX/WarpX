@@ -8,6 +8,7 @@
  */
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
 #include "Utils/WarpX_Complex.H"
 #include "Utils/WarpXMathUtils.H"
 #include "Particles/MultiParticleContainer.H"
@@ -52,10 +53,14 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
 
     pp.query("ellipticity", m_ellipticity);
 
-    if (m_e_max == amrex::Real(0.)){
+    if (m_e_max == 0.0_rt){
         amrex::Print() << m_laser_name << " with zero amplitude disabled.\n";
         return; // Disable laser if amplitude is 0
     }
+
+    WarpXUtilMsg::AlwaysAssert(
+        m_ellipticity >= -1.0_rt && m_ellipticity <= 1.0_rt,
+        "ellipticity must be in the range [-1,1]");
 
     //Select laser profile
     if(laser_profiles_dictionary.count(laser_type_s) == 0){
