@@ -147,7 +147,7 @@ void FieldMaximum::ComputeDiags (int step)
 
         using ReduceTuple = typename decltype(reduceEx_data)::Type;
 
-        // Prepare interpolation of E field components to cell center
+        // Prepare interpolation of field components to cell center
         GpuArray<int,3> Extype;
         GpuArray<int,3> Eytype;
         GpuArray<int,3> Eztype;
