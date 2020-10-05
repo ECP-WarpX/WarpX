@@ -1435,9 +1435,10 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Fields written to output.
     Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``F`` ``part_per_grid`` ``part_per_proc`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species.
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
+    Note that the fields are averaged on the cell centers before they are written to file.
 
 * ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
-    By default, the fields written in the plot files are averaged on the nodes.
+    By default, the fields written in the plot files are averaged on the cell centers.
     When ```warpx.plot_raw_fields`` is `1`, then the raw (i.e. unaveraged)
     fields are also saved in the output files.
     Only works with ``<diag_name>.format = plotfile``.
@@ -1660,6 +1661,9 @@ Reduced Diagnostics
         the maximum value of the :math:`B_z` field and
         the maximum value of the norm :math:`|B|` of the magnetic field,
         at mesh refinement levels from  0 to :math:`n`.
+
+        Note that the fields are averaged on the cell centers before their maximum values are
+        computed.
 
     * ``ParticleNumber``
         This type computes the total number of macroparticles in the simulation (for each species
