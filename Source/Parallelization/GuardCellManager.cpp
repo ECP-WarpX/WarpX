@@ -89,7 +89,16 @@ guardCellManager::Init(
     ng_alloc_J = IntVect(ngJx,ngJz);
 #endif
 
-    ng_alloc_Rho = ng_alloc_J+1; //One extra ghost cell, so that it's safe to deposit charge density
+    // Rho is needed both at the beginning and at the end of the PIC iteration.
+    // Hence we add one extra guard cell for the allocation of the MultiFab that
+    // contains rho, in order to account for the change in the particle positions
+    // within a time step
+    ng_alloc_Rho = ng_alloc_J+1;
+
+    // Number of guard cells for local deposition of J and rho
+    ng_depos_J   = ng_alloc_J;
+    ng_depos_rho = ng_alloc_Rho;
+
     // after pushing particle.
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell

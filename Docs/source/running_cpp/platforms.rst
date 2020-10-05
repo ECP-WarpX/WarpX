@@ -131,3 +131,61 @@ parameters provided good performance:
 
 * **Sixteen `64x64x64` grids per MPI rank** (with default tiling in WarpX, this
   results in ~49 tiles per OpenMP thread)
+
+.. _running-cpp-lassen:
+
+Running on Lassen at LLNL
+-------------------------
+
+.. _running-cpp-lassen-V100-GPUs:
+
+V100 GPUs
+^^^^^^^^^
+
+The batch script below can be used to run a WarpX simulation on 2 nodes on the supercomputer Lassen at LLNL.
+Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<input file>`` could be ``plasma_mirror_inputs``.
+Note that the only option so far is to run with one MPI rank per GPU.
+
+.. literalinclude:: ../../../Tools/BatchScripts/batch_lassen.sh
+   :language: bash
+
+To run a simulation, copy the lines above to a file ``batch_lassen.sh`` and run
+::
+
+  bsub batch_lassen.sh
+
+to submit the job.
+
+For a 3D simulation with a few (1-4) particles per cell using FDTD Maxwell
+solver on V100 GPUs for a well load-balanced problem (in our case laser
+wakefield acceleration simulation in a boosted frame in the quasi-linear
+regime), the following set of parameters provided good performance:
+
+* ``amr.max_grid_size=256`` and ``amr.blocking_factor=128``.
+
+* **One MPI rank per GPU** (e.g., 4 MPI ranks for the 4 GPUs on each Lassen
+  node)
+
+* **Two `128x128x128` grids per GPU**, or **one `128x128x256` grid per GPU**.
+
+
+Running on Quartz at LLNL
+-------------------------
+
+.. _running-cpp-quartz-CPUs:
+
+Intel Xeon E5-2695 v4 CPUs
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The batch script below can be used to run a WarpX simulation on 2 nodes on the supercomputer Quartz at LLNL.
+Replace descriptions between chevrons ``<>`` by relevant values, for instance ``<input file>`` could be ``plasma_mirror_inputs``.
+
+.. literalinclude:: ../../../Tools/BatchScripts/batch_quartz.sh
+   :language: bash
+
+To run a simulation, copy the lines above to a file ``batch_quartz.sh`` and run
+::
+
+  sbatch batch_quartz.sh
+
+to submit the job.

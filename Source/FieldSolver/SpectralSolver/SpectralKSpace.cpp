@@ -194,7 +194,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
 
             // Allocate modified_k to the same size as k
             const int N = k.size();
-            modified_k.resize( k.size() );
+            modified_k.resize(N);
 
             // Fill the modified k vector
             Gpu::copyAsync(Gpu::deviceToDevice, k.begin(), k.end(), modified_k.begin());

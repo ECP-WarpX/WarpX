@@ -276,6 +276,7 @@ Particle initialization
 
 * ``particles.use_fdtd_nci_corr`` (`0` or `1`) optional (default `0`)
     Whether to activate the FDTD Numerical Cherenkov Instability corrector.
+    Not currently available in the RZ configuration.
 
 * ``particles.boundary_conditions`` (`string`) optional (default `none`)
     Boundary conditions applied to particles. Options are:
@@ -979,6 +980,10 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     a Coulomb logarithm will be computed automatically according to the algorithm.
     a Coulomb logarithm will be computed automatically according to the algorithm in
     `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
+
+* ``<collision_name>.ndt`` (`int`) optional
+    Execute collision every # time steps.
+    The default value is 1.
 
 .. _running-cpp-parameters-numerics:
 
@@ -1779,8 +1784,9 @@ Reduced Diagnostics
         using the histogram reduced diagnostics
         are given in ``Examples/Tests/initial_distribution/``.
 
-* ``<reduced_diags_name>.frequency`` (`int`)
-    The output frequency (every # time steps).
+* ``<reduced_diags_name>.frequency`` (`string`) optional (default ``1``)
+    Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
+    diagnostics are written to file.
 
 * ``<reduced_diags_name>.path`` (`string`) optional (default `./diags/reducedfiles/`)
     The path that the output file will be stored.

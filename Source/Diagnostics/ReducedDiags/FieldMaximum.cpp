@@ -93,7 +93,7 @@ FieldMaximum::FieldMaximum (std::string rd_name)
 void FieldMaximum::ComputeDiags (int step)
 {
     // Judge if the diags should be done
-    if ( (step+1) % m_freq != 0 ) { return; }
+    if (!m_intervals.contains(step+1)) { return; }
 
     // get WarpX class object
     auto & warpx = WarpX::GetInstance();
@@ -135,8 +135,8 @@ void FieldMaximum::ComputeDiags (int step)
 
         // General preparation of interpolation and reduction to compute the maximum value of
         // |E| and |B|
-        const GpuArray<int,3> cellCenteredtype{AMREX_D_DECL(0,0,0)};
-        const GpuArray<int,3> reduction_coarsening_ratio{AMREX_D_DECL(1,1,1)};
+        const GpuArray<int,3> cellCenteredtype{0,0,0};
+        const GpuArray<int,3> reduction_coarsening_ratio{1,1,1};
         constexpr int reduction_comp = 0;
 
         // Prepare reduction for maximum value of |E|

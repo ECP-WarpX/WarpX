@@ -41,6 +41,10 @@ namespace {
         std::array<std::unique_ptr<amrex::MultiFab>,3>& current,
         std::unique_ptr<amrex::MultiFab>& rho ) {
 
+#ifdef WARPX_DIM_RZ
+        amrex::ignore_unused(Efield_avg, Bfield_avg);
+#endif
+
         using Idx = SpectralAvgFieldIndex;
 
         // Perform forward Fourier transform

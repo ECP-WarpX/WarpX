@@ -36,8 +36,7 @@ SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
         Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the k vectors
-        auto const & kr = field_data.getKrArray(mfi);
-        Real const * kr_arr = kr.dataPtr();
+        Real const * kr_arr = field_data.getKrArray(mfi).dataPtr();
         Real const * modified_kz_arr = modified_kz_vec[mfi].dataPtr();
 
         int const nr = bx.length(0);
@@ -46,7 +45,7 @@ SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
 
         // Loop over indices within one box
         ParallelFor(bx, modes,
-        [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
+        [=] AMREX_GPU_DEVICE(int i, int j, int /*k*/, int mode) noexcept
         {
             int const ic1 = Idx::Ex + mode*n_fields;
             int const ic2 = Idx::Ey + mode*n_fields;
@@ -71,4 +70,4 @@ SpectralBaseAlgorithmRZ::ComputeSpectralDivE (
 
     // Backward Fourier transform
     field_data.BackwardTransform( divE, Idx::divE, 0 );
-};
+}
