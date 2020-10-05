@@ -133,6 +133,7 @@ void SecantRootFinder(int n, int nitmx, amrex::Real tol, amrex::Real *zeroj, int
     c[1] = 0.999_rt;
     *ier = 0;
 
+    p = *zeroj;
     for (int ntry=0 ; ntry <= 1 ; ntry++) {
         p0 = c[ntry]*(*zeroj);
 
