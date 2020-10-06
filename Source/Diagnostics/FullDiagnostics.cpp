@@ -39,8 +39,7 @@ FullDiagnostics::InitializeParticleBuffer ()
     // Initialize one ParticleDiag per species requested
     for (auto const& species : m_output_species_names){
         const int idx = mpc.getSpeciesID(species);
-        m_all_species.push_back(ParticleDiag(m_diag_name, species,
-                                             mpc.GetParticleContainerPtr(idx)));
+        m_output_species.push_back(ParticleDiag(m_diag_name, species, mpc.GetParticleContainerPtr(idx)));
     }
 }
 
@@ -87,7 +86,7 @@ FullDiagnostics::Flush ( int i_buffer )
 
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        warpx.gett_new(0), m_all_species, nlev_output, m_file_prefix,
+        warpx.gett_new(0), m_output_species, nlev_output, m_file_prefix,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 
     FlushRaw();
@@ -428,8 +427,8 @@ FullDiagnostics::PrepareFieldDataForOutput ()
     warpx.UpdateAuxilaryData();
 
     // Update the RealBox used for the geometry filter in particle diags
-    for (int i = 0; i < m_all_species.size(); ++i) {
-        m_all_species[i].m_diag_domain = m_geom_output[0][0].ProbDomain();
+    for (int i = 0; i < m_output_species.size(); ++i) {
+        m_output_species[i].m_diag_domain = m_geom_output[0][0].ProbDomain();
     }
 }
 

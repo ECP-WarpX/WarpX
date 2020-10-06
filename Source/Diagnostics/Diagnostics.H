@@ -136,7 +136,7 @@ protected:
     /** Names of all species in the simulation */
     std::vector< std::string > m_all_species_names;
     /** Each element of this vector handles output for 1 species */
-    amrex::Vector< ParticleDiag > m_all_species;
+    amrex::Vector< ParticleDiag > m_output_species;
     /** Vector of (pointers to) functors to compute output fields, per level,
      * per component. This allows for simple operations (averaging to
      * cell-center for standard EB fields) as well as more involved operations
