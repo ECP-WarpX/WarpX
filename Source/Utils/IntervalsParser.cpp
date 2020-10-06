@@ -61,7 +61,7 @@ int SliceParser::getStop () const {return m_stop;}
 IntervalsParser::IntervalsParser (const std::vector<std::string>& instr_vec)
 {
     std::string inconcatenated;
-    for (const auto instr_element : instr_vec) inconcatenated +=instr_element;
+    for (const auto& instr_element : instr_vec) inconcatenated +=instr_element;
 
     auto insplit = WarpXUtilStr::split<std::vector<std::string>>(inconcatenated, m_separator);
 

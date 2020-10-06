@@ -60,6 +60,7 @@ FullDiagnostics::ReadParameters ()
     m_intervals = IntervalsParser(period_string_vec);
     bool raw_specified = pp.query("plot_raw_fields", m_plot_raw_fields);
     raw_specified += pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
+    raw_specified += pp.query("plot_raw_rho", m_plot_raw_rho);
 
 #ifdef WARPX_DIM_RZ
     pp.query("dump_rz_modes", m_dump_rz_modes);
@@ -403,6 +404,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<DivBFunctor>(warpx.get_array_Bfield_aux(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "divE" ){
             m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio);
+        }
+        else {
+            amrex::Abort("Error: " + m_varnames[comp] + " is not a known field output type");
         }
     }
     AddRZModesToDiags( lev );
