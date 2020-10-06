@@ -1656,6 +1656,15 @@ Reduced Diagnostics
         the maximum value of the norm :math:`|B|` of the magnetic field,
         at mesh refinement levels from  0 to :math:`n`.
 
+    * ``ParticleNumber``
+        This type computes the total number of macroparticles in the simulation (for each species
+        and summed over all species). It can be useful in particular for simulations with creation
+        (ionization, QED processes) or removal (resampling) of particles.
+
+        The output columns are
+        total number of macroparticles summed over all species and
+        total number of macroparticles of each species.
+
     * ``BeamRelevant``
         This type computes properties of a particle beam relevant for particle accelerators,
         like position, momentum, emittance, etc.

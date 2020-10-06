@@ -107,7 +107,7 @@ void ParticleEnergy::ComputeDiags (int step)
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
-        // Use amex::ReduceSum to compute the sum of energies of all particles
+        // Use amrex::ReduceSum to compute the sum of energies of all particles
         // held by the current MPI rank, for this species. This involves a loop over all
         // boxes held by this MPI rank.
         Real Etot = 0.0_rt;
