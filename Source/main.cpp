@@ -16,6 +16,9 @@
 #include <AMReX_BLProfiler.H>
 #include <AMReX_ParallelDescriptor.H>
 
+#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
+#include <rocfft.h>
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -26,6 +29,10 @@ int main(int argc, char* argv[])
     warpx_amrex_init(argc, argv);
 
     utils::warpx_check_mpi_thread_level(mpi_thread_levels);
+
+#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
+    rocfft_setup();
+#endif
 
     ConvertLabParamsToBoost();
 
@@ -53,6 +60,10 @@ int main(int argc, char* argv[])
     }
 
     WARPX_PROFILE_VAR_STOP(pmain);
+
+#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
+    rocfft_cleanup();
+#endif
 
     Finalize();
 #if defined(AMREX_USE_MPI)

@@ -167,7 +167,15 @@ endif
 ifeq ($(USE_PSATD),TRUE)
   USERSuffix := $(USERSuffix).PSATD
   DEFINES += -DWARPX_USE_PSATD
-  ifeq ($(USE_CUDA),FALSE) # Running on CPU
+  ifeq ($(USE_CUDA),TRUE)
+    # Use cuFFT
+    libraries += -lcufft
+  else ifeq ($(USE_HIP),TRUE)
+    # Use rocFFT.  ROC_PATH is defined in amrex
+    INCLUDE_LOCATIONS += $(ROC_PATH)/rocfft/include
+    LIBRARY_LOCATIONS += $(ROC_PATH)/rocfft/lib
+    libraries += -lrocfft
+  else # Running on CPU
      # Use FFTW
      ifeq ($(PRECISION),FLOAT)
           libraries += -lfftw3f_mpi -lfftw3f -lfftw3f_threads
@@ -180,9 +188,6 @@ ifeq ($(USE_PSATD),TRUE)
        INCLUDE_LOCATIONS += $(FFTW_HOME)/include
        LIBRARY_LOCATIONS += $(FFTW_HOME)/lib
      endif
-  else
-    # Use cuFFT
-    libraries += -lcufft
   endif
   ifeq ($(USE_RZ),TRUE)
     # Use blas and lapack
