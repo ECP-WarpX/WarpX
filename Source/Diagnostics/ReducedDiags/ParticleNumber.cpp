@@ -42,13 +42,13 @@ ParticleNumber::ParticleNumber (std::string rd_name)
             ofs << m_sep;
             ofs << "[2]time(s)";
             ofs << m_sep;
-            ofs << "[3]total";
+            ofs << "[3]total()";
             constexpr int shift_first_species = 4; // Column number of first species in output file
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
                 ofs << "[" + std::to_string(shift_first_species+i) + "]";
-                ofs << species_names[i];
+                ofs << species_names[i]+"()";
             }
             ofs << std::endl;
             // close file
