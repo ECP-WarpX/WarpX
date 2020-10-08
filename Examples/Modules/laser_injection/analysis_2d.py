@@ -151,9 +151,6 @@ def check():
     filename_end = sys.argv[1]
     ds = yt.load(filename_end)
 
-    sim_time = ds.current_time.to_value()
-    all_data_end = ds.all_data()
-
     x = np.linspace(
         ds.domain_left_edge[0].v,
         ds.domain_right_edge[0].v,
