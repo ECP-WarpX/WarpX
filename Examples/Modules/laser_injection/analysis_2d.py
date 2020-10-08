@@ -26,7 +26,7 @@ import numpy as np
 from scipy.signal import hilbert
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
-#import checksumAPI
+import checksumAPI
 
 # Maximum acceptable error for this test
 relative_error_threshold = 0.05
@@ -173,9 +173,6 @@ def check():
     # Read laser field in PIC simulation, and compute envelope
     all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 
-    extent = [ds.domain_left_edge[ds.dimensionality-1], ds.domain_right_edge[ds.dimensionality-1],
-          ds.domain_left_edge[0], ds.domain_right_edge[0] ]
-
     b_vector = np.cross(dir_vector, pol_vector)
 
     components = ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]
@@ -193,7 +190,7 @@ def check():
         check_component(all_data_level_0, comp, field_fact*env_theory, coeff, X, Z,dx, dz)
 
     test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
-    #checksumAPI.evaluate_checksum(test_name, filename_end)
+    checksumAPI.evaluate_checksum(test_name, filename_end)
 
 def main():
     check()
