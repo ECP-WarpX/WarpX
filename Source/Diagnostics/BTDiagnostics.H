@@ -11,6 +11,14 @@ public:
     BTDiagnostics (int i, std::string name);
 
 private:
+    /** Whether to plot raw (i.e., NOT cell-centered) fields */
+    bool m_plot_raw_fields = false;
+    /** Whether to plot guard cells of raw fields */
+    bool m_plot_raw_fields_guards = false;
+    /** Whether to plot charge density rho in raw fields */
+    bool m_plot_raw_rho = false;
+    /** Whether to plot F (charge conservation error) in raw fields */
+    bool m_plot_raw_F = false;
     /** Read relevant parameters for BTD */
     void ReadParameters ();
     /** \brief Flush m_mf_output and particles to file.

@@ -68,7 +68,6 @@ void BTDiagnostics::DerivedInitData ()
         DefineCellCenteredMultiFab(lev);
     }
 
-
 }
 
 void
@@ -207,7 +206,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     // As time-progresses, the z-dimension indices will be modified based on
     // current_z_lab
     amrex::IntVect lo(0);
-    amrex::IntVect hi(-1);
+    amrex::IntVect hi(1);
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
         // lo index with same cell-size as simulation at level, lev.
         const int lo_index = static_cast<int>( floor(
@@ -232,6 +231,18 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     }
     amrex::Box diag_box( lo, hi );
     m_buffer_box[i_buffer] = diag_box;
+
+    // Define box array
+    amrex::BoxArray diag_ba(diag_box);
+    diag_ba.maxSize( warpx.maxGridSize( lev ) );
+    // Update the physical co-ordinates m_lo and m_hi using the final index values
+    // from the coarsenable, cell-centered BoxArray, ba.
+    for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        diag_dom.setLo( idim, warpx.Geom(lev).ProbLo(idim) +
+            diag_ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim));
+        diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) +
+            (diag_ba.getCellCenteredBox( diag_ba.size()-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
+    }
 
     // Define buffer_domain in lab-frame for the i^th snapshot.
     // Replace z-dimension with lab-frame co-ordinates.
@@ -478,7 +489,6 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         const int k_lab = k_index_zlab (i_buffer, lev);
         m_buffer_box[i_buffer].setSmall( m_moving_window_dir, k_lab - m_buffer_size + 1);
         m_buffer_box[i_buffer].setBig( m_moving_window_dir, k_lab);
-
         amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
         buffer_ba.maxSize(m_max_box_size);
 
@@ -489,6 +499,25 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         int ngrow = 0;
         m_mf_output[i_buffer][lev] = amrex::MultiFab ( buffer_ba, buffer_dmap,
                                                   m_varnames.size(), ngrow ) ;
+
+        //// Define the geometry object at level, lev, for the ith buffer.
+        if (lev == 0) {
+            // The extent of the physical domain covered by the ith buffer mf, m_mf_output
+            // Default non-periodic geometry for diags
+            amrex::Vector<int> BTdiag_periodicity(AMREX_SPACEDIM, 0);
+            // Box covering the extent of the user-defined diag in the back-transformed frame
+            amrex::Box domain = buffer_ba.minimalBox();
+            // define the geometry object for the ith buffer using Physical co-oridnates
+            // of m_buffer_domain_lab[i_buffer].
+            m_geom_output[i_buffer][lev].define( domain, &m_buffer_domain_lab[i_buffer],
+                                                 amrex::CoordSys::cartesian,
+                                                 BTdiag_periodicity.data() );
+        } else if (lev > 0 ) {
+            // Refine the geometry object defined at the previous level, lev-1
+            auto & warpx = WarpX::GetInstance();
+            m_geom_output[i_buffer][lev] = amrex::refine( m_geom_output[i_buffer][lev-1],
+                                                          warpx.RefRatio(lev-1) );
+        }
     }
 }
 
@@ -562,6 +591,13 @@ BTDiagnostics::TMP_writeLabFrameHeader (int i_buffer)
 void
 BTDiagnostics::Flush (int i_buffer)
 {
+    auto & warpx = WarpX::GetInstance();
+    std::string tmp_file_name = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_buffer,5);
+    m_flush_format->WriteToFile(
+        m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
+        warpx.gett_new(0), m_all_species, nlev_output, tmp_file_name,
+        m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
+
     TMP_FlushLabFrameData (i_buffer);
     // Reset the buffer counter to zero after flushing out data stored in the buffer.
     ResetBufferCounter(i_buffer);
