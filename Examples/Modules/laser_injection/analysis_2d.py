@@ -9,7 +9,7 @@
 
 # This file is part of the WarpX automated test suite. Its purpose is to test the
 # injection of a Gaussian laser pulse from an antenna in a 2D simulation.
-# In order to avoid priviledged directions, the laser is injected at
+# In order to avoid privileged directions, the laser is injected at
 # ~ 27° with respect to the x axis. Moreover the polarization axis is neither
 # parallel nor perpendicular to the xz plane. Finally moving window along the
 # x axis is enabled.
