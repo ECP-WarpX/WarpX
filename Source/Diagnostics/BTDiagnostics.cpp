@@ -264,6 +264,18 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
             (diag_ba.getCellCenteredBox( diag_ba.size()-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
     }
 
+    // Define box array
+    amrex::BoxArray diag_ba(diag_box);
+    diag_ba.maxSize( warpx.maxGridSize( lev ) );
+    // Update the physical co-ordinates m_lo and m_hi using the final index values
+    // from the coarsenable, cell-centered BoxArray, ba.
+    for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+        diag_dom.setLo( idim, warpx.Geom(lev).ProbLo(idim) +
+            diag_ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim));
+        diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) +
+            (diag_ba.getCellCenteredBox( diag_ba.size()-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
+    }
+
     // Define buffer_domain in lab-frame for the i^th snapshot.
     // Replace z-dimension with lab-frame co-ordinates.
     amrex::Real zmin_buffer_lab = diag_dom.lo(m_moving_window_dir)
