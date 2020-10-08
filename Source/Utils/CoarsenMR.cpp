@@ -14,38 +14,33 @@ CoarsenMR::Loop ( MultiFab& mf_dst,
     const IntVect stag_dst = mf_dst.boxArray().ixType().toIntVect();
 
     // Auxiliary integer arrays (always 3D)
-    Gpu::ManagedVector<int> sf_gpuarr, sc_gpuarr, cr_gpuarr;
-    sf_gpuarr.resize( 3 ); // staggering of source fine MultiFab
-    sc_gpuarr.resize( 3 ); // staggering of destination coarse MultiFab
-    cr_gpuarr.resize( 3 ); // coarsening ratio
+    GpuArray<int,3> sf; // staggering of source fine MultiFab
+    GpuArray<int,3> sc; // staggering of destination coarse MultiFab
+    GpuArray<int,3> cr; // coarsening ratio
 
-    sf_gpuarr[0] = stag_src[0];
-    sf_gpuarr[1] = stag_src[1];
+    sf[0] = stag_src[0];
+    sf[1] = stag_src[1];
 #if   (AMREX_SPACEDIM == 2)
-    sf_gpuarr[2] = 0;
+    sf[2] = 0;
 #elif (AMREX_SPACEDIM == 3)
-    sf_gpuarr[2] = stag_src[2];
+    sf[2] = stag_src[2];
 #endif
 
-    sc_gpuarr[0] = stag_dst[0];
-    sc_gpuarr[1] = stag_dst[1];
+    sc[0] = stag_dst[0];
+    sc[1] = stag_dst[1];
 #if   (AMREX_SPACEDIM == 2)
-    sc_gpuarr[2] = 0;
+    sc[2] = 0;
 #elif (AMREX_SPACEDIM == 3)
-    sc_gpuarr[2] = stag_dst[2];
+    sc[2] = stag_dst[2];
 #endif
 
-    cr_gpuarr[0] = crse_ratio[0];
-    cr_gpuarr[1] = crse_ratio[1];
+    cr[0] = crse_ratio[0];
+    cr[1] = crse_ratio[1];
 #if   (AMREX_SPACEDIM == 2)
-    cr_gpuarr[2] = 1;
+    cr[2] = 1;
 #elif (AMREX_SPACEDIM == 3)
-    cr_gpuarr[2] = crse_ratio[2];
+    cr[2] = crse_ratio[2];
 #endif
-
-    int const* const AMREX_RESTRICT sf = sf_gpuarr.data();
-    int const* const AMREX_RESTRICT sc = sc_gpuarr.data();
-    int const* const AMREX_RESTRICT cr = cr_gpuarr.data();
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -71,7 +66,7 @@ CoarsenMR::Coarsen ( MultiFab& mf_dst,
                      const MultiFab& mf_src,
                      const IntVect crse_ratio )
 {
-    BL_PROFILE( "CoarsenMR::Coarsen" );
+    BL_PROFILE("CoarsenMR::Coarsen()");
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( mf_src.ixType() == mf_dst.ixType(),
         "source MultiFab and destination MultiFab have different IndexType" );

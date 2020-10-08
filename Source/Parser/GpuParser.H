@@ -12,18 +12,24 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_Array.H>
 #include <AMReX_TypeTraits.H>
-
+#include <AMReX.H>
 
 // When compiled for CPU, wrap WarpXParser and enable threading.
 // When compiled for GPU, store one copy of the parser in
-// CUDA managed memory for __device__ code, and one copy of the parser
-// in CUDA managed memory for __host__ code. This way, the parser can be
+// device memory for __device__ code, and one copy of the parser
+// in host memory for __host__ code. This way, the parser can be
 // efficiently called from both host and device.
 template <int N>
 class GpuParser
 {
 public:
     GpuParser (WarpXParser const& wp);
+
+    GpuParser (GpuParser<N> const&) = delete;
+    GpuParser (GpuParser<N> &&) = delete;
+    void operator= (GpuParser<N> const&) = delete;
+    void operator= (GpuParser<N> &&) = delete;
+
     void clear ();
 
     template <typename... Ts>
@@ -37,10 +43,10 @@ public:
         amrex::GpuArray<amrex::Real,N> l_var{var...};
 #if AMREX_DEVICE_COMPILE
 // WarpX compiled for GPU, function compiled for __device__
-        return wp_ast_eval(m_gpu_parser.ast, l_var.data());
+        return wp_ast_eval<0>(m_gpu_parser_ast, l_var.data());
 #else
 // WarpX compiled for GPU, function compiled for __host__
-        return wp_ast_eval(m_cpu_parser->ast, nullptr);
+        return wp_ast_eval<0>(m_cpu_parser->ast, nullptr);
 #endif
 
 #else
@@ -51,16 +57,17 @@ public:
         int tid = 0;
 #endif
         m_var[tid] = amrex::GpuArray<amrex::Real,N>{var...};
-        return wp_ast_eval(m_parser[tid]->ast, nullptr);
+        return wp_ast_eval<0>(m_parser[tid]->ast, nullptr);
 #endif
     }
 
+    void init_gpu_parser (WarpXParser const& wp); // public for CUDA
 
-private:
+protected:
 
 #ifdef AMREX_USE_GPU
     // Copy of the parser running on __device__
-    struct wp_parser m_gpu_parser;
+    struct wp_node* m_gpu_parser_ast;
     // Copy of the parser running on __host__
     struct wp_parser* m_cpu_parser;
     mutable amrex::GpuArray<amrex::Real,N> m_var;
@@ -75,26 +82,20 @@ private:
 template <int N>
 GpuParser<N>::GpuParser (WarpXParser const& wp)
 {
+    AMREX_ALWAYS_ASSERT(wp.depth() <= WARPX_PARSER_DEPTH);
+
 #ifdef AMREX_USE_GPU
 
     struct wp_parser* a_wp = wp.m_parser;
-    // Initialize GPU parser: allocate memory in CUDA managed memory,
-    // copy all data needed on GPU to m_gpu_parser
-    m_gpu_parser.sz_mempool = wp_ast_size(a_wp->ast);
-    m_gpu_parser.p_root = (struct wp_node*)
-        amrex::The_Managed_Arena()->alloc(m_gpu_parser.sz_mempool);
-    m_gpu_parser.p_free = m_gpu_parser.p_root;
-    // 0: don't free the source
-    m_gpu_parser.ast = wp_parser_ast_dup(&m_gpu_parser, a_wp->ast, 0);
-    for (int i = 0; i < N; ++i) {
-        wp_parser_regvar_gpu(&m_gpu_parser, wp.m_varnames[i].c_str(), i);
-    }
 
     // Initialize CPU parser:
     m_cpu_parser = wp_parser_dup(a_wp);
     for (int i = 0; i < N; ++i) {
         wp_parser_regvar(m_cpu_parser, wp.m_varnames[i].c_str(), &m_var[i]);
     }
+
+    // Initialize GPU parser
+    init_gpu_parser(wp);
 
 #else // not defined AMREX_USE_GPU
 
@@ -125,13 +126,44 @@ GpuParser<N>::GpuParser (WarpXParser const& wp)
 #endif // AMREX_USE_GPU
 }
 
+template <int N>
+void GpuParser<N>::init_gpu_parser (WarpXParser const& wp)
+{
+#ifdef AMREX_USE_GPU
+
+    // We create a temporary Parser on CPU for memcpy.  We cannot use
+    // m_cpu_parser for this because the variables in m_cpu_parser are
+    // registered for CPU use.
+    struct wp_parser* cpu_tmp = wp_parser_dup(m_cpu_parser);
+    for (int i = 0; i < N; ++i) {
+        wp_parser_regvar_gpu(cpu_tmp, wp.m_varnames[i].c_str(), i);
+    }
+
+    m_gpu_parser_ast = (struct wp_node*)
+        amrex::The_Arena()->alloc(cpu_tmp->sz_mempool);
+    amrex::Gpu::htod_memcpy_async(m_gpu_parser_ast, cpu_tmp->ast, cpu_tmp->sz_mempool);
+
+    auto dp = m_gpu_parser_ast;
+    char* droot = (char*)dp;
+    char* croot = (char*)(cpu_tmp->ast);
+    amrex::single_task([=] AMREX_GPU_DEVICE () noexcept
+    {
+        wp_ast_update_device_ptr<0>(dp, droot, croot);
+    });
+
+    amrex::Gpu::synchronize();
+
+    wp_parser_delete(cpu_tmp);
+#endif
+    amrex::ignore_unused(wp);
+}
 
 template <int N>
 void
 GpuParser<N>::clear ()
 {
 #ifdef AMREX_USE_GPU
-    amrex::The_Managed_Arena()->free(m_gpu_parser.ast);
+    amrex::The_Arena()->free(m_gpu_parser_ast);
     wp_parser_delete(m_cpu_parser);
 #else
     for (int tid = 0; tid < nthreads; ++tid)

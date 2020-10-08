@@ -75,14 +75,6 @@ WarpXParticleContainer::WriteHeader (std::ostream& os) const
 }
 
 void
-MultiParticleContainer::Checkpoint (const std::string& dir) const
-{
-    for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
-        allcontainers[i]->Checkpoint(dir, species_names[i]);
-    }
-}
-
-void
 MultiParticleContainer::Restart (const std::string& dir)
 {
     for (unsigned i = 0, n = species_names.size(); i < n; ++i) {
@@ -116,7 +108,7 @@ MultiParticleContainer::WriteHeader (std::ostream& os) const
 void
 PhysicalParticleContainer::ConvertUnits(ConvertDirection convert_direction)
 {
-    WARPX_PROFILE("PPC::ConvertUnits()");
+    WARPX_PROFILE("PhysicalParticleContainer::ConvertUnits()");
 
     // Compute conversion factor
     auto factor = 1_rt;

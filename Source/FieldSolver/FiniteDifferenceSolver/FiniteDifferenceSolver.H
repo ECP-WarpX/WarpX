@@ -96,12 +96,12 @@ class FiniteDifferenceSolver
 #ifdef WARPX_DIM_RZ
         amrex::Real m_dr, m_rmin;
         amrex::Real m_nmodes;
-        amrex::Gpu::ManagedVector<amrex::Real> m_stencil_coefs_r;
-        amrex::Gpu::ManagedVector<amrex::Real> m_stencil_coefs_z;
+        amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_r;
+        amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_z;
 #else
-        amrex::Gpu::ManagedVector<amrex::Real> m_stencil_coefs_x;
-        amrex::Gpu::ManagedVector<amrex::Real> m_stencil_coefs_y;
-        amrex::Gpu::ManagedVector<amrex::Real> m_stencil_coefs_z;
+        amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_x;
+        amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_y;
+        amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_z;
 #endif
 
     public:
@@ -164,7 +164,7 @@ class FiniteDifferenceSolver
             const std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
             amrex::MultiFab& divE );
 
-        template< typename T_Algo >
+        template< typename T_Algo, typename T_MacroAlgo >
         void MacroscopicEvolveECartesian (
             std::array< std::unique_ptr< amrex::MultiFab>, 3>& Efield,
             std::array< std::unique_ptr< amrex::MultiFab>, 3> const &Bfield,

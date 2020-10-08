@@ -15,6 +15,8 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "QEDInternals/QuantumSyncEngineWrapper.H"
 
+#include <limits>
+
 /** @file
  *
  * This file contains the implementation of the elementary process
@@ -48,7 +50,7 @@ public:
     */
     template <typename PData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator() (const PData& ptd, int const i) const noexcept
+    bool operator() (const PData& ptd, int const i, amrex::RandomEngine const&) const noexcept
     {
         using namespace amrex;
 
@@ -86,7 +88,7 @@ public:
     PhotonEmissionTransformFunc (
         QuantumSynchrotronGetOpticalDepth opt_depth_functor,
         int const opt_depth_runtime_comp,
-        QuantumSynchrotronGeneratePhotonAndUpdateMomentum const emission_functor,
+        QuantumSynchrotronPhotonEmission const emission_functor,
         const WarpXParIter& a_pti, int lev, int ngE,
         amrex::FArrayBox const& exfab,
         amrex::FArrayBox const& eyfab,
@@ -112,14 +114,6 @@ public:
     {
         using namespace amrex;
 
-        constexpr ParticleReal me = PhysConst::m_e;
-        constexpr ParticleReal one_over_me = 1._prt/me;
-
-        const ParticleReal w = src.m_rdata[PIdx::w][i_src];
-        const ParticleReal ux = src.m_rdata[PIdx::ux][i_src];
-        const ParticleReal uy = src.m_rdata[PIdx::uy][i_src];
-        const ParticleReal uz = src.m_rdata[PIdx::uz][i_src];
-
         // gather E and B
         amrex::ParticleReal xp, yp, zp;
         m_get_position(i_src, xp, yp, zp);
@@ -136,34 +130,17 @@ public:
                        m_dx_arr, m_xyzmin_arr, m_lo, m_n_rz_azimuthal_modes,
                        m_nox, m_galerkin_interpolation);
 
-        // Particle momentum is stored as gamma * velocity.
-        // Convert to m * gamma * velocity before applying the emission functor.
-        auto px = ux*me;
-        auto py = uy*me;
-        auto pz = uz*me;
-
-        auto g_w = 0.0_rt;
-        auto g_px = 0.0_rt;
-        auto g_py = 0.0_rt;
-        auto g_pz = 0.0_rt;
-
-        m_emission_functor.operator()<1>(
-            &px, &py, &pz,
+        auto& ux = src.m_rdata[PIdx::ux][i_src];
+        auto& uy = src.m_rdata[PIdx::uy][i_src];
+        auto& uz = src.m_rdata[PIdx::uz][i_src];
+        auto& g_ux = dst.m_rdata[PIdx::ux][i_dst];
+        auto& g_uy = dst.m_rdata[PIdx::uy][i_dst];
+        auto& g_uz = dst.m_rdata[PIdx::uz][i_dst];
+        m_emission_functor(
+            ux, uy, uz,
             ex, ey, ez,
             bx, by, bz,
-            w,
-            &g_px, &g_py, &g_pz,
-            &g_w);
-
-        // Then convert back to WarpX convention.
-        src.m_rdata[PIdx::ux][i_src] = px*one_over_me;
-        src.m_rdata[PIdx::uy][i_src] = py*one_over_me;
-        src.m_rdata[PIdx::uz][i_src] = pz*one_over_me;
-
-        dst.m_rdata[PIdx::w][i_dst] = g_w;
-        dst.m_rdata[PIdx::ux][i_dst] = g_px*one_over_me;
-        dst.m_rdata[PIdx::uy][i_dst] = g_py*one_over_me;
-        dst.m_rdata[PIdx::uz][i_dst] = g_pz*one_over_me;
+            g_ux, g_uy, g_uz);
 
         //Initialize the optical depth component of the source species.
         src.m_runtime_rdata[m_opt_depth_runtime_comp][i_src] =
@@ -173,9 +150,11 @@ public:
 private:
     const QuantumSynchrotronGetOpticalDepth
         m_opt_depth_functor;  /*!< A copy of the functor to initialize the optical depth of the source species. */
-    const QuantumSynchrotronGeneratePhotonAndUpdateMomentum
-        m_emission_functor;  /*!< A copy of the functor to generate photons. It contains only pointers to the lookup tables.*/
+
     const int m_opt_depth_runtime_comp = 0;  /*!< Index of the optical depth component of source species*/
+
+    const QuantumSynchrotronPhotonEmission
+        m_emission_functor;  /*!< A copy of the functor to generate photons. It contains only pointers to the lookup tables.*/
 
     GetParticlePosition m_get_position;
     GetExternalEField m_get_externalE;
@@ -209,6 +188,8 @@ private:
 /**
 * \brief Free function to call to remove immediately
 * low energy photons by setting their ID to -1.
+* Photons with extremely small energy are removed regardless of
+* the value of the energy_threshold
 *
 * @tparam PTile particle tile type
 * @param[in,out] ptile a particle tile
@@ -230,7 +211,9 @@ void cleanLowEnergyPhotons(
     const auto  p_uz = soa.GetRealData(PIdx::uz).data() + old_size;
 
     //The square of the energy threshold
-    const auto energy_threshold2 = energy_threshold*energy_threshold;
+    const auto energy_threshold2 = std::max(
+        energy_threshold*energy_threshold,
+        std::numeric_limits<amrex::ParticleReal>::min());
 
     amrex::ParallelFor(num_added, [=] AMREX_GPU_DEVICE (int ip) noexcept
     {

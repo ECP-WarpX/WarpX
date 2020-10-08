@@ -45,16 +45,17 @@ struct SmartCopy
 
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (DstData& dst, const SrcData& src, int i_src, int i_dst) const noexcept
+    void operator() (DstData& dst, const SrcData& src, int i_src, int i_dst,
+                     amrex::RandomEngine const& engine) const noexcept
     {
         // the particle struct is always copied over
         dst.m_aos[i_dst] = src.m_aos[i_src];
 
         // initialize the real components
         for (int j = 0; j < DstData::NAR; ++j)
-            dst.m_rdata[j][i_dst] = initializeRealValue(m_policy_real[j]);
+            dst.m_rdata[j][i_dst] = initializeRealValue(m_policy_real[j], engine);
         for (int j = 0; j < dst.m_num_runtime_real; ++j)
-            dst.m_runtime_rdata[j][i_dst] = initializeRealValue(m_policy_real[j+DstData::NAR]);
+            dst.m_runtime_rdata[j][i_dst] = initializeRealValue(m_policy_real[j+DstData::NAR], engine);
 
         // initialize the int components
         for (int j = 0; j < DstData::NAI; ++j)

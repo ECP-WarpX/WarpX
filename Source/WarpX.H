@@ -94,7 +94,7 @@ public:
     static void shiftMF (amrex::MultiFab& mf, const amrex::Geometry& geom,
                          int num_shift, int dir, amrex::IntVect ng_extra,
                          amrex::Real external_field=0.0, bool useparser = false,
-                         ParserWrapper<3> *field_parser=nullptr);
+                         HostDeviceParser<3> const& field_parser={});
 
     static void GotoNextLine (std::istream& is);
 
@@ -167,6 +167,7 @@ public:
     static bool use_filter;
     static bool use_kspace_filter;
     static bool use_filter_compensation;
+    static bool use_damp_fields_in_z_guard;
     static bool serialize_ics;
 
     // Back transformation diagnostic
@@ -268,8 +269,8 @@ public:
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_bxbyez;
 
     amrex::Real time_of_last_gal_shift  = 0;
-    amrex::Array<amrex::Real,3> v_galilean = {{0}};
-
+    amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
+    amrex::Array<amrex::Real,3> m_galilean_shift = {{0}};
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
@@ -290,7 +291,7 @@ public:
 
     /**
      * \brief
-     * This function shifts the boundary of the grid by 'v_galilean*dt'.
+     * This function shifts the boundary of the grid by 'm_v_galilean*dt'.
      * In doding so, only positions attributes are changed while fields remain unchanged.
      */
     void ShiftGalileanBoundary ();
@@ -340,6 +341,16 @@ public:
     /** \brief returns the load balance interval
      */
     IntervalsParser get_load_balance_intervals () const {return load_balance_intervals;}
+
+    /**
+     * \brief Private function for spectral solver
+     * Applies a damping factor in the guards cells that extend
+     * beyond the extent of the domain, reducing fluctuations that
+     * can appear in parallel simulations. This will be called
+     * when use_damp_fields_in_z_guard is true.
+     */
+    void DampFieldsInGuards (std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                             std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
 
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
@@ -477,6 +488,8 @@ public:
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
     const amrex::IntVect getngExtra() const { return guard_cells.ng_Extra; }
     const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
+    const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
+    const amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
 
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
@@ -510,8 +523,8 @@ public:
      */
     void InitializeExternalFieldsOnGridUsingParser (
          amrex::MultiFab *mfx, amrex::MultiFab *mfy, amrex::MultiFab *mfz,
-         ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
-         ParserWrapper<3> *zfield_parser, const int lev);
+         HostDeviceParser<3> const& xfield_parser, HostDeviceParser<3> const& yfield_parser,
+         HostDeviceParser<3> const& zfield_parser, const int lev);
 
     /** \brief adds particle and cell contributions in cells to compute heuristic
      * cost in each box on each level, and records in `costs`
@@ -551,6 +564,10 @@ protected:
 
     //! Tagging cells for refinement
     virtual void ErrorEst (int lev, amrex::TagBoxArray& tags, amrex::Real time, int /*ngrow*/) final;
+
+    //! Use this function to override the Level 0 grids made by AMReX.
+    //! This function is called in amrex::AmrCore::InitFromScratch.
+    virtual void PostProcessBaseGrids (amrex::BoxArray& ba0) const final;
 
     //! Make a new level from scratch using provided BoxArray and
     //! DistributionMapping.  Only used during initialization.  Called
@@ -831,6 +848,9 @@ private:
     int nox_fft = 16;
     int noy_fft = 16;
     int noz_fft = 16;
+
+    // Domain decomposition on Level 0
+    amrex::IntVect numprocs{0};
 
 #ifdef WARPX_USE_PSATD
 private:

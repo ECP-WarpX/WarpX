@@ -18,9 +18,10 @@ struct InjectorPositionRandom
 {
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getPositionUnitBox (int /*i_part*/, int /*ref_fac=1*/) const noexcept
+    getPositionUnitBox (int /*i_part*/, int /*ref_fac*/,
+                        amrex::RandomEngine const& engine) const noexcept
     {
-        return amrex::XDim3{amrex::Random(), amrex::Random(), amrex::Random()};
+        return amrex::XDim3{amrex::Random(engine), amrex::Random(engine), amrex::Random(engine)};
     }
 };
 
@@ -36,7 +37,8 @@ struct InjectorPositionRegular
     // is a_ppc*(ref_fac**AMREX_SPACEDIM).
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getPositionUnitBox (int const i_part, int const ref_fac=1) const noexcept
+    getPositionUnitBox (int const i_part, int const ref_fac,
+                        amrex::RandomEngine const&) const noexcept
     {
         using namespace amrex;
 
@@ -66,12 +68,8 @@ private:
 // - InjectorPositionRandom : to generate random distribution;
 // - InjectorPositionRegular: to generate regular distribution.
 // The choice is made at runtime, depending in the constructor called.
-// This mimics virtual functions, except the struct is stored in managed memory
-// and member functions are made __host__ __device__ to run on CPU and GPU.
-// This struct inherits from amrex::Gpu::Managed to provide new and delete
-// operators in managed memory when running on GPU. Nothing special on CPU.
+// This mimics virtual functions.
 struct InjectorPosition
-    : public amrex::Gpu::Managed
 {
     // This constructor stores a InjectorPositionRandom in union object.
     InjectorPosition (InjectorPositionRandom* t,
@@ -109,17 +107,18 @@ struct InjectorPosition
     // (the union is called Object, and the instance is called object).
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getPositionUnitBox (int const i_part, int const ref_fac=1) const noexcept
+    getPositionUnitBox (int const i_part, int const ref_fac,
+                        amrex::RandomEngine const& engine) const noexcept
     {
         switch (type)
         {
         case Type::regular:
         {
-            return object.regular.getPositionUnitBox(i_part, ref_fac);
+            return object.regular.getPositionUnitBox(i_part, ref_fac, engine);
         }
         default:
         {
-            return object.random.getPositionUnitBox(i_part, ref_fac);
+            return object.random.getPositionUnitBox(i_part, ref_fac, engine);
         }
         };
     }

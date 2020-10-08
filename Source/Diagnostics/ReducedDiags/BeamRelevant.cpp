@@ -23,18 +23,12 @@ BeamRelevant::BeamRelevant (std::string rd_name)
 : ReducedDiags{rd_name}
 {
 
-#if (defined WARPX_DIM_RZ)
-    // RZ coordinate is not working
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-        "BeamRelevant reduced diagnostics does not work for RZ coordinate.");
-#endif
-
     // read beam name
     ParmParse pp(rd_name);
     pp.get("species",m_beam_name);
 
     // resize data array
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
     //  0, 1, 2: mean x,y,z
     //  3, 4, 5: mean px,py,pz
     //        6: gamma
@@ -44,7 +38,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
     // 14,15,16: emittance x,y,z
     //       17: charge
     m_data.resize(18,0.0);
-#elif (AMREX_SPACEDIM == 2)
+#elif (defined WARPX_DIM_XZ)
     //     0, 1: mean x,z
     //  2, 3, 4: mean px,py,pz
     //        5: gamma
@@ -65,7 +59,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
             ofs.open(m_path + m_rd_name + "." + m_extension,
                 std::ofstream::out | std::ofstream::app);
             // write header row
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
             ofs << "#";
             ofs << "[1]step()";           ofs << m_sep;
             ofs << "[2]time(s)";          ofs << m_sep;
@@ -87,7 +81,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
             ofs << "[18]emittance_y(m)";  ofs << m_sep;
             ofs << "[19]emittance_z(m)";  ofs << m_sep;
             ofs << "[20]charge(C)";       ofs << std::endl;
-#elif (AMREX_SPACEDIM == 2)
+#elif (defined WARPX_DIM_XZ)
             ofs << "#";
             ofs << "[1]step()";           ofs << m_sep;
             ofs << "[2]time(s)";          ofs << m_sep;
@@ -120,7 +114,7 @@ void BeamRelevant::ComputeDiags (int step)
 {
 
     // Judge if the diags should be done
-    if ( (step+1) % m_freq != 0 ) { return; }
+    if (!m_intervals.contains(step+1)) { return; }
 
     // get MultiParticleContainer class object
     auto & mypc = WarpX::GetInstance().GetPartContainer();
@@ -135,9 +129,9 @@ void BeamRelevant::ComputeDiags (int step)
     Real constexpr inv_c2 = 1.0 / (PhysConst::c * PhysConst::c);
 
     // If 2D-XZ, p.pos(1) is z, rather than p.pos(2).
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
     int const index_z = 2;
-#elif (AMREX_SPACEDIM == 2)
+#elif (defined WARPX_DIM_XZ || defined WARPX_DIM_RZ)
     int const index_z = 1;
 #endif
 
@@ -167,20 +161,34 @@ void BeamRelevant::ComputeDiags (int step)
 
         if (w_sum < std::numeric_limits<Real>::min() )
         {
-            for (int i = 0; i < m_data.size(); ++i) { m_data[i] = 0.0; }
+            for (int i = 0; i < static_cast<int>(m_data.size()); ++i){
+                m_data[i] = 0.0;
+            }
             return;
         }
 
+#if (defined WARPX_DIM_RZ)
+        // x mean
+        Real x_mean = ReduceSum( myspc,
+        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+        { return p.pos(0)*std::cos(p.rdata(PIdx::theta)) * p.rdata(PIdx::w); });
+#else
         // x mean
         Real x_mean = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         { return p.pos(0) * p.rdata(PIdx::w); });
+#endif
 
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
         // y mean
         Real y_mean = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         { return p.pos(1) * p.rdata(PIdx::w); });
+#elif (defined WARPX_DIM_RZ)
+        // y mean
+        Real y_mean = ReduceSum( myspc,
+        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+        { return p.pos(0)*std::sin(p.rdata(PIdx::theta)) * p.rdata(PIdx::w); });
 #endif
 
         // z mean
@@ -216,7 +224,7 @@ void BeamRelevant::ComputeDiags (int step)
 
         // reduced sum over mpi ranks
         ParallelDescriptor::ReduceRealSum(x_mean);  x_mean  /= w_sum;
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
         ParallelDescriptor::ReduceRealSum(y_mean);  y_mean  /= w_sum;
 #endif
         ParallelDescriptor::ReduceRealSum(z_mean);  z_mean  /= w_sum;
@@ -225,6 +233,16 @@ void BeamRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum(uz_mean); uz_mean /= w_sum;
         ParallelDescriptor::ReduceRealSum(gm_mean); gm_mean /= w_sum;
 
+#if (defined WARPX_DIM_RZ)
+        // x mean square
+        Real x_ms = ReduceSum( myspc,
+        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+        {
+            Real const x = p.pos(0)*std::cos(p.rdata(PIdx::theta));
+            Real const a = (x-x_mean) * (x-x_mean);
+            return a * p.rdata(PIdx::w);
+        });
+#else
         // x mean square
         Real x_ms = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
@@ -232,13 +250,23 @@ void BeamRelevant::ComputeDiags (int step)
             Real const a = (p.pos(0)-x_mean) * (p.pos(0)-x_mean);
             return a * p.rdata(PIdx::w);
         });
+#endif
 
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
         // y mean square
         Real y_ms = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         {
             Real const a = (p.pos(1)-y_mean) * (p.pos(1)-y_mean);
+            return a * p.rdata(PIdx::w);
+        });
+#elif (defined WARPX_DIM_RZ)
+        // y mean square
+        Real y_ms = ReduceSum( myspc,
+        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+        {
+            Real const y = p.pos(0)*std::sin(p.rdata(PIdx::theta));
+            Real const a = (y-y_mean) * (y-y_mean);
             return a * p.rdata(PIdx::w);
         });
 #endif
@@ -291,6 +319,16 @@ void BeamRelevant::ComputeDiags (int step)
             return a * p.rdata(PIdx::w);
         });
 
+#if (defined WARPX_DIM_RZ)
+        // x times ux
+        Real xux = ReduceSum( myspc,
+        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+        {
+            Real const x = p.pos(0)*std::cos(p.rdata(PIdx::theta));
+            Real const a = (x-x_mean) * (p.rdata(PIdx::ux)-ux_mean);
+            return a * p.rdata(PIdx::w);
+        });
+#else
         // x times ux
         Real xux = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
@@ -298,13 +336,23 @@ void BeamRelevant::ComputeDiags (int step)
             Real const a = (p.pos(0)-x_mean) * (p.rdata(PIdx::ux)-ux_mean);
             return a * p.rdata(PIdx::w);
         });
+#endif
 
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D)
         // y times uy
         Real yuy = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         {
             Real const a = (p.pos(1)-y_mean) * (p.rdata(PIdx::uy)-uy_mean);
+            return a * p.rdata(PIdx::w);
+        });
+#elif (defined WARPX_DIM_RZ)
+        // y times uy
+        Real yuy = ReduceSum( myspc,
+        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+        {
+            Real const y = p.pos(0)*std::sin(p.rdata(PIdx::theta));
+            Real const a = (y-y_mean) * (p.rdata(PIdx::uy)-uy_mean);
             return a * p.rdata(PIdx::w);
         });
 #endif
@@ -329,7 +377,7 @@ void BeamRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum
             ( x_ms, ParallelDescriptor::IOProcessorNumber());
         x_ms /= w_sum;
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
         ParallelDescriptor::ReduceRealSum
             ( y_ms, ParallelDescriptor::IOProcessorNumber());
         y_ms /= w_sum;
@@ -352,7 +400,7 @@ void BeamRelevant::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealSum
             (   xux, ParallelDescriptor::IOProcessorNumber());
         xux /= w_sum;
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
         ParallelDescriptor::ReduceRealSum
             (   yuy, ParallelDescriptor::IOProcessorNumber());
         yuy /= w_sum;
@@ -364,7 +412,7 @@ void BeamRelevant::ComputeDiags (int step)
             ( charge, ParallelDescriptor::IOProcessorNumber());
 
         // save data
-#if (AMREX_SPACEDIM == 3)
+#if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
         m_data[0]  = x_mean;
         m_data[1]  = y_mean;
         m_data[2]  = z_mean;
@@ -383,7 +431,7 @@ void BeamRelevant::ComputeDiags (int step)
         m_data[15] = std::sqrt(y_ms*uy_ms-yuy*yuy) / PhysConst::c;
         m_data[16] = std::sqrt(z_ms*uz_ms-zuz*zuz) / PhysConst::c;
         m_data[17] = charge;
-#elif (AMREX_SPACEDIM == 2)
+#elif (defined WARPX_DIM_XZ)
         m_data[0]  = x_mean;
         m_data[1]  = z_mean;
         m_data[2]  = ux_mean * m;

@@ -8,6 +8,7 @@
  */
 #include "WarpX.H"
 #include "Initialization/WarpXAMReXInit.H"
+#include "Utils/MPIInitHelpers.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
@@ -15,32 +16,22 @@
 #include <AMReX_BLProfiler.H>
 #include <AMReX_ParallelDescriptor.H>
 
+#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
+#include <rocfft.h>
+#endif
 
 int main(int argc, char* argv[])
 {
     using namespace amrex;
 
-#if defined(AMREX_USE_MPI)
-#   ifdef AMREX_MPI_THREAD_MULTIPLE
-    int provided = -1;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-    AMREX_ALWAYS_ASSERT(provided >= MPI_THREAD_MULTIPLE);
-#   else
-#      if defined(_OPENMP) && defined(WARPX_USE_PSATD)
-       int provided = -1;
-       MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
-       AMREX_ALWAYS_ASSERT(provided >= MPI_THREAD_FUNNELED);
-#      else
-       MPI_Init(&argc, &argv);
-#      endif
-#   endif
-#endif
+    auto mpi_thread_levels = utils::warpx_mpi_init(argc, argv);
 
     warpx_amrex_init(argc, argv);
 
-    // in Debug mode, we need a larger stack limit than usual bc of the parser.
-#if defined(AMREX_USE_CUDA) && defined(AMREX_DEBUG)
-    AMREX_CUDA_SAFE_CALL(cudaDeviceSetLimit(cudaLimitStackSize, 20*1024));
+    utils::warpx_check_mpi_thread_level(mpi_thread_levels);
+
+#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
+    rocfft_setup();
 #endif
 
     ConvertLabParamsToBoost();
@@ -62,15 +53,19 @@ int main(int argc, char* argv[])
 
         ParallelDescriptor::ReduceRealMax(end_total, ParallelDescriptor::IOProcessorNumber());
         if (warpx.Verbose()) {
-            amrex::Print() << "Total Time                     : " << end_total << '\n';
-            amrex::Print() << "WarpX Version: " << WarpX::Version() << '\n';
-            amrex::Print() << "PICSAR Version: " << WarpX::PicsarVersion() << '\n';
+            Print() << "Total Time                     : " << end_total << '\n';
+            Print() << "WarpX Version: " << WarpX::Version() << '\n';
+            Print() << "PICSAR Version: " << WarpX::PicsarVersion() << '\n';
         }
     }
 
     WARPX_PROFILE_VAR_STOP(pmain);
 
-    amrex::Finalize();
+#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
+    rocfft_cleanup();
+#endif
+
+    Finalize();
 #if defined(AMREX_USE_MPI)
     MPI_Finalize();
 #endif

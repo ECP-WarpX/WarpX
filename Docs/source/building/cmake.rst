@@ -8,6 +8,13 @@ Until we have transitioned our documentation and functionality completely, pleas
 
 Progress status: `see on GitHub <https://github.com/ECP-WarpX/WarpX/projects/10>`_
 
+Introduction to CMake
+=====================
+
+If you are new to CMake, `this short tutorial <https://hsf-training.github.io/hsf-training-cmake-webpage/>`_ from the HEP Software foundation is the perfect place to get started with it.
+
+If you just want to use CMake to build the project, jump into sections *1. Introduction*, *2. Building with CMake* and *9. Finding Packages*.
+
 Dependencies
 ============
 
@@ -25,7 +32,7 @@ Optional dependencies include:
 - `OpenMP 3.1+ <https://www.openmp.org>`_: for threaded CPU execution (currently not fully accelerated)
 - `FFTW3 <http://www.fftw.org>`_: for spectral solver (PSATD) support
 - `Boost 1.66.0+ <https://www.boost.org/>`_: for QED support
-- `openPMD-api 0.11.1+ <https://github.com/openPMD/openPMD-api>`_: we automatically download and compile a copy of openPMD-api for openPMD I/O support
+- `openPMD-api 0.12.0+ <https://github.com/openPMD/openPMD-api>`_: we automatically download and compile a copy of openPMD-api for openPMD I/O support
 
   - see `optional I/O backends <https://github.com/openPMD/openPMD-api#dependencies>`_
 - `CCache <https://ccache.dev>`_: to speed up rebuilds (needs 3.7.9+ for CUDA)
@@ -39,11 +46,12 @@ macOS/Linux:
 
    spack env create warpx-dev
    spack env activate warpx-dev
+   spack add adios2
    spack add ccache
    spack add cmake
    spack add fftw
+   spack add hdf5
    spack add mpi
-   spack add openpmd-api
    spack add pkgconfig  # for fftw
    # optional:
    # spack add cuda
@@ -56,13 +64,14 @@ or macOS/Linux:
 .. code-block:: bash
 
    brew update
+   brew install adios2
    brew install ccache
    brew install cmake
    brew install fftw
+   brew install hdf5-mpi
    brew install libomp
    brew install pkg-config  # for fftw
    brew install open-mpi
-   brew install openpmd-api
 
 Now, ``cmake --version`` should be at version 3.14.0 or newer.
 
@@ -109,23 +118,25 @@ You can inspect and modify build options after running ``cmake ..`` with either
 
 or by providing arguments to the CMake call: ``cmake .. -D<OPTION_A>=<VALUE_A> -D<OPTION_B>=<VALUE_B>``
 
-=========================== ============================================ =======================================================
-CMake Option                Default & Values                             Description
-=========================== ============================================ =======================================================
-``CMAKE_BUILD_TYPE``        **RelWithDebInfo**/Release/Debug             Type of build, symbols & optimizations
-``WarpX_ASCENT``            ON/**OFF**                                   Ascent in situ visualization
-``WarpX_COMPUTE``           NOACC/**OMP**/CUDA/DPCPP                     On-node, accelerated computing backend
-``WarpX_DIMS``              **3**/2/RZ                                   Simulation dimensionality
-``WarpX_MPI``               **ON**/OFF                                   Multi-node support (message-passing)
-``WarpX_OPENPMD``           ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
-``WarpX_PRECISION``         **double**/single                            Floating point precision (single/double)
-``WarpX_PSATD``             ON/**OFF**                                   Spectral solver
-``WarpX_QED``               ON/**OFF**                                   PICSAR QED (requires Boost and PICSAR)
-``WarpX_amrex_repo``        ``https://github.com/AMReX-Codes/amrex.git`` Repository URI to pull and build AMReX from
-``WarpX_amrex_branch``      ``development``                              Repository branch for ``WarpX_amrex_repo``
-``WarpX_amrex_internal``    **ON**/OFF                                   Needs a pre-installed AMReX library if set to ``OFF``
-``WarpX_openpmd_internal``  **ON**/OFF                                   Needs a pre-installed openPMD library if set to ``OFF``
-=========================== ============================================ =======================================================
+============================= ============================================ =======================================================
+CMake Option                  Default & Values                             Description
+============================= ============================================ =======================================================
+``CMAKE_BUILD_TYPE``          **RelWithDebInfo**/Release/Debug             Type of build, symbols & optimizations
+``WarpX_ASCENT``              ON/**OFF**                                   Ascent in situ visualization
+``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/DPCPP                     On-node, accelerated computing backend
+``WarpX_DIMS``                **3**/2/RZ                                   Simulation dimensionality
+``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)
+``WarpX_MPI_THREAD_MULTIPLE`` **ON**/OFF                                   MPI thread-multiple support, i.e. for ``async_io``
+``WarpX_OPENPMD``             ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
+``WarpX_PARSER_DEPTH``        **24**                                       Maximum parser depth for input file functions
+``WarpX_PRECISION``           **double**/single                            Floating point precision (single/double)
+``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
+``WarpX_QED``                 ON/**OFF**                                   PICSAR QED (requires Boost and PICSAR)
+``WarpX_amrex_repo``          ``https://github.com/AMReX-Codes/amrex.git`` Repository URI to pull and build AMReX from
+``WarpX_amrex_branch``        ``development``                              Repository branch for ``WarpX_amrex_repo``
+``WarpX_amrex_internal``      **ON**/OFF                                   Needs a pre-installed AMReX library if set to ``OFF``
+``WarpX_openpmd_internal``    **ON**/OFF                                   Needs a pre-installed openPMD library if set to ``OFF``
+============================= ============================================ =======================================================
 
 For example, one can also build against a local AMReX git repo.
 Assuming AMReX' source is located in ``$HOME/src/amrex`` and changes are committed into a branch such as ``my-amrex-branch`` then pass to ``cmake`` the arguments: ``-DWarpX_amrex_repo=file://$HOME/src/amrex -DWarpX_amrex_branch=my-amrex-branch``.

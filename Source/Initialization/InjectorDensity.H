@@ -80,7 +80,7 @@ struct InjectorDensityPredefined
             double n0        = p[5];
             double n;
             double kp = PhysConst::q_e/PhysConst::c
-                *amrex::Math::sqrt( n0/(PhysConst::m_e*PhysConst::ep0) );
+                *std::sqrt( n0/(PhysConst::m_e*PhysConst::ep0) );
 
             // Longitudinal profile, normalized to 1
             if        ((z-z_start)>=0               and
@@ -108,7 +108,7 @@ struct InjectorDensityPredefined
 private:
     enum struct Profile { null, parabolic_channel };
     Profile profile;
-    amrex::Real* p;
+    amrex::GpuArray<amrex::Real,6> p;
 };
 
 // Base struct for density injector.
@@ -119,12 +119,8 @@ private:
 // - InjectorDensityCustom    : to generate density from custom profile;
 // - InjectorDensityPredefined: to generate density from predefined profile;
 // The choice is made at runtime, depending in the constructor called.
-// This mimics virtual functions, except the struct is stored in managed memory
-// and member functions are made __host__ __device__ to run on CPU and GPU.
-// This struct inherits from amrex::Gpu::Managed to provide new and delete
-// operators in managed memory when running on GPU. Nothing special on CPU.
+// This mimics virtual functions.
 struct InjectorDensity
-    : public amrex::Gpu::Managed
 {
     // This constructor stores a InjectorDensityConstant in union object.
     InjectorDensity (InjectorDensityConstant* t, amrex::Real a_rho)
@@ -157,7 +153,7 @@ struct InjectorDensity
     void operator= (InjectorDensity const&) = delete;
     void operator= (InjectorDensity &&) = delete;
 
-    ~InjectorDensity ();
+    void clear ();
 
     // call getDensity from the object stored in the union
     // (the union is called Object, and the instance is called object).
@@ -212,6 +208,17 @@ private:
         InjectorDensityPredefined predefined;
     };
     Object object;
+};
+
+// In order for InjectorDensity to be trivially copyable, its destructor
+// must be trivial.  So we have to rely on a custom deleter for unique_ptr.
+struct InjectorDensityDeleter {
+    void operator () (InjectorDensity* p) const {
+        if (p) {
+            p->clear();
+            delete p;
+        }
+    }
 };
 
 #endif

@@ -280,6 +280,15 @@ public:
         amrex::FArrayBox const * & ezfab, amrex::FArrayBox const * & bxfab,
         amrex::FArrayBox const * & byfab, amrex::FArrayBox const * & bzfab);
 
+    /**
+    * \brief This function determines if resampling should be done for the current species, and
+    * if so, performs the resampling.
+    *
+    * @param[in] resampler the Resampling object used for resampling.
+    * @param[in] timestep the current timestep.
+    */
+    void resample (const int timestep) override final;
+
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H
     //containers for which QED processes could be relevant
@@ -329,6 +338,8 @@ protected:
     bool boost_adjust_transverse_positions = false;
     bool do_backward_propagation = false;
 
+    Resampling m_resampler;
+
     // Inject particles during the whole simulation
     void ContinuousInjection (const amrex::RealBox& injection_box) override;
 
@@ -351,7 +362,6 @@ protected:
 
     // A smart pointer to an instance of a Breit Wheeler engine [photons only!]
     std::shared_ptr<BreitWheelerEngine> m_shr_p_bw_engine;
-
 #endif
 
 };

@@ -2,35 +2,117 @@
 #define WP_PARSER_C_H_
 
 #include "wp_parser_y.h"
+
 #include <AMReX_GpuQualifiers.H>
+#include <AMReX_GpuPrint.H>
 #include <AMReX_Extension.H>
 #include <AMReX_REAL.H>
+#include <AMReX_Print.H>
+#include <AMReX.H>
+
 #include <cassert>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-    struct wp_parser* wp_c_parser_new (char const* function_body);
-
-#ifdef __cplusplus
-}
-#endif
-
-#ifdef __cplusplus
-
 #include <set>
 #include <string>
+#include <type_traits>
 
-AMREX_GPU_HOST_DEVICE
-inline amrex_real
-wp_ast_eval (struct wp_node* node, amrex_real const* x)
+struct wp_parser* wp_c_parser_new (char const* function_body);
+
+#ifdef AMREX_USE_GPU
+
+template <int Depth, std::enable_if_t<(Depth<WARPX_PARSER_DEPTH), int> = 0>
+AMREX_GPU_DEVICE AMREX_NO_INLINE
+void wp_ast_update_device_ptr (struct wp_node* node, char* droot, char* hroot)
 {
-#if defined(__SYCL_DEVICE_ONLY__)
-    assert(0); // Recursive funciton is not support in DPC++
-    return 0.;
-#else
-    amrex_real result;
+    switch (node->type)
+    {
+    case WP_NUMBER:
+        break;
+    case WP_SYMBOL:
+    {
+        auto p = (struct wp_symbol*)node;
+        p->name = droot + (p->name - hroot);
+        break;
+    }
+    case WP_ADD:
+    case WP_SUB:
+    case WP_MUL:
+    case WP_DIV:
+    {
+        node->l = (wp_node*)(droot + ((char*)node->l - hroot));
+        node->r = (wp_node*)(droot + ((char*)node->r - hroot));
+        wp_ast_update_device_ptr<Depth+1>(node->l, droot, hroot);
+        wp_ast_update_device_ptr<Depth+1>(node->r, droot, hroot);
+        break;
+    }
+    case WP_NEG:
+    {
+        node->l = (wp_node*)(droot + ((char*)node->l - hroot));
+        wp_ast_update_device_ptr<Depth+1>(node->l, droot, hroot);
+        break;
+    }
+    case WP_F1:
+    {
+        auto p = (struct wp_f1*)node;
+        p->l = (wp_node*)(droot + ((char*)p->l - hroot));
+        wp_ast_update_device_ptr<Depth+1>(p->l, droot, hroot);
+        break;
+    }
+    case WP_F2:
+    {
+        auto p = (struct wp_f2*)node;
+        p->l = (wp_node*)(droot + ((char*)p->l - hroot));
+        p->r = (wp_node*)(droot + ((char*)p->r - hroot));
+        wp_ast_update_device_ptr<Depth+1>(p->l, droot, hroot);
+        wp_ast_update_device_ptr<Depth+1>(p->r, droot, hroot);
+        break;
+    }
+    case WP_ADD_VP:
+    case WP_ADD_PP:
+    case WP_SUB_VP:
+    case WP_SUB_PP:
+    case WP_MUL_VP:
+    case WP_MUL_PP:
+    case WP_DIV_VP:
+    case WP_DIV_PP:
+    case WP_NEG_P:
+    {
+        // No need to update node->l and node->r that contain a string for
+        // variable name because we don't need them for device code.
+        break;
+    }
+    default:
+    {
+#if AMREX_DEVICE_COMPILE
+        AMREX_DEVICE_PRINTF("wp_ast_update_device_ptr: unknown node type %d\n",
+                            static_cast<int>(node->type));
+        amrex::Abort();
+#endif
+    }
+    }
+}
+
+template <int Depth, std::enable_if_t<Depth == WARPX_PARSER_DEPTH,int> = 0>
+AMREX_GPU_DEVICE AMREX_NO_INLINE
+void wp_ast_update_device_ptr (struct wp_node*, char*, char*)
+{
+#if AMREX_DEVICE_COMPILE
+    AMREX_DEVICE_PRINTF("wp_ast_update_device_ptr: WARPX_PARSER_DEPTH %d not big enough\n",
+                        WARPX_PARSER_DEPTH);
+    amrex::Abort();
+#endif
+}
+
+#endif
+
+template <int Depth, std::enable_if_t<(Depth<WARPX_PARSER_DEPTH), int> = 0>
+AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_GPU
+AMREX_NO_INLINE
+#endif
+amrex::Real
+wp_ast_eval (struct wp_node* node, amrex::Real const* x)
+{
+    amrex::Real result = 0.0;
 
     switch (node->type)
     {
@@ -41,7 +123,7 @@ wp_ast_eval (struct wp_node* node, amrex_real const* x)
     }
     case WP_SYMBOL:
     {
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#if AMREX_DEVICE_COMPILE
         int i =((struct wp_symbol*)node)->ip.i;
         result = x[i];
 #else
@@ -51,45 +133,45 @@ wp_ast_eval (struct wp_node* node, amrex_real const* x)
     }
     case WP_ADD:
     {
-        result = wp_ast_eval(node->l,x) + wp_ast_eval(node->r,x);
+        result = wp_ast_eval<Depth+1>(node->l,x) + wp_ast_eval<Depth+1>(node->r,x);
         break;
     }
     case WP_SUB:
     {
-        result = wp_ast_eval(node->l,x) - wp_ast_eval(node->r,x);
+        result = wp_ast_eval<Depth+1>(node->l,x) - wp_ast_eval<Depth+1>(node->r,x);
         break;
     }
     case WP_MUL:
     {
-        result = wp_ast_eval(node->l,x) * wp_ast_eval(node->r,x);
+        result = wp_ast_eval<Depth+1>(node->l,x) * wp_ast_eval<Depth+1>(node->r,x);
         break;
     }
     case WP_DIV:
     {
-        result = wp_ast_eval(node->l,x) / wp_ast_eval(node->r,x);
+        result = wp_ast_eval<Depth+1>(node->l,x) / wp_ast_eval<Depth+1>(node->r,x);
         break;
     }
     case WP_NEG:
     {
-        result = -wp_ast_eval(node->l,x);
+        result = -wp_ast_eval<Depth+1>(node->l,x);
         break;
     }
     case WP_F1:
     {
         result = wp_call_f1(((struct wp_f1*)node)->ftype,
-                wp_ast_eval(((struct wp_f1*)node)->l,x));
+                wp_ast_eval<Depth+1>(((struct wp_f1*)node)->l,x));
         break;
     }
     case WP_F2:
     {
         result = wp_call_f2(((struct wp_f2*)node)->ftype,
-                wp_ast_eval(((struct wp_f2*)node)->l,x),
-                wp_ast_eval(((struct wp_f2*)node)->r,x));
+                wp_ast_eval<Depth+1>(((struct wp_f2*)node)->l,x),
+                wp_ast_eval<Depth+1>(((struct wp_f2*)node)->r,x));
         break;
     }
     case WP_ADD_VP:
     {
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#if AMREX_DEVICE_COMPILE
         int i = node->rip.i;
         result = node->lvp.v + x[i];
 #else
@@ -99,7 +181,7 @@ wp_ast_eval (struct wp_node* node, amrex_real const* x)
     }
     case WP_ADD_PP:
     {
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#if AMREX_DEVICE_COMPILE
         int i = node->lvp.ip.i;
         int j = node->rip.i;
         result = x[i] + x[j];
@@ -110,7 +192,7 @@ wp_ast_eval (struct wp_node* node, amrex_real const* x)
     }
     case WP_SUB_VP:
     {
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#if AMREX_DEVICE_COMPILE
         int i = node->rip.i;
         result = node->lvp.v - x[i];
 #else
@@ -120,7 +202,7 @@ wp_ast_eval (struct wp_node* node, amrex_real const* x)
     }
     case WP_SUB_PP:
     {
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#if AMREX_DEVICE_COMPILE
         int i = node->lvp.ip.i;
         int j = node->rip.i;
         result = x[i] - x[j];
@@ -131,7 +213,7 @@ wp_ast_eval (struct wp_node* node, amrex_real const* x)
     }
     case WP_MUL_VP:
     {
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#if AMREX_DEVICE_COMPILE
         int i = node->rip.i;
         result = node->lvp.v * x[i];
 #else
@@ -141,7 +223,7 @@ wp_ast_eval (struct wp_node* node, amrex_real const* x)
     }
     case WP_MUL_PP:
     {
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#if AMREX_DEVICE_COMPILE
         int i = node->lvp.ip.i;
         int j = node->rip.i;
         result = x[i] * x[j];
@@ -152,7 +234,7 @@ wp_ast_eval (struct wp_node* node, amrex_real const* x)
     }
     case WP_DIV_VP:
     {
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#if AMREX_DEVICE_COMPILE
         int i = node->rip.i;
         result = node->lvp.v / x[i];
 #else
@@ -162,7 +244,7 @@ wp_ast_eval (struct wp_node* node, amrex_real const* x)
     }
     case WP_DIV_PP:
     {
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#if AMREX_DEVICE_COMPILE
         int i = node->lvp.ip.i;
         int j = node->rip.i;
         result = x[i] / x[j];
@@ -173,7 +255,7 @@ wp_ast_eval (struct wp_node* node, amrex_real const* x)
     }
     case WP_NEG_P:
     {
-#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+#if AMREX_DEVICE_COMPILE
         int i = node->rip.i;
         result = -x[i];
 #else
@@ -182,11 +264,35 @@ wp_ast_eval (struct wp_node* node, amrex_real const* x)
         break;
     }
     default:
-        yyerror("wp_ast_eval: unknown node type %d\n", node->type);
+    {
+#if AMREX_DEVICE_COMPILE
+        AMREX_DEVICE_PRINTF("wp_ast_eval: unknown node type %d\n", node->type);
+#else
+        amrex::AllPrint() << "wp_ast_eval: unknown node type " << node->type << "\n";
+#endif
+    }
     }
 
     return result;
+}
+
+template <int Depth, std::enable_if_t<Depth == WARPX_PARSER_DEPTH,int> = 0>
+AMREX_GPU_HOST_DEVICE
+#ifdef AMREX_USE_GPU
+AMREX_NO_INLINE
 #endif
+amrex::Real
+wp_ast_eval (struct wp_node* node, amrex::Real const* x)
+{
+#if AMREX_DEVICE_COMPILE
+    AMREX_DEVICE_PRINTF("wp_ast_eval: WARPX_PARSER_DEPTH %d not big enough\n",
+                        WARPX_PARSER_DEPTH);
+#else
+    amrex::AllPrint() << "wp_ast_eval: WARPX_PARSER_DEPTH" << WARPX_PARSER_DEPTH
+                      << "not big enough\n";
+#endif
+    amrex::ignore_unused(node, x);
+    return 0.;
 }
 
 inline
@@ -229,10 +335,8 @@ wp_ast_get_symbols (struct wp_node* node, std::set<std::string>& symbols)
         wp_ast_get_symbols(node->r, symbols);
         break;
     default:
-        yyerror("wp_ast_get_symbols: unknown node type %d\n", node->type);
+        amrex::AllPrint() << "wp_ast_get_symbols: unknown node type " << node->type << "\n";
     }
 }
-
-#endif
 
 #endif

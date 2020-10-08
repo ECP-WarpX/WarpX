@@ -160,7 +160,7 @@ BTDiagnostics::DoDump (int step, int i_buffer, bool force_flush)
 
 
 bool
-BTDiagnostics::DoComputeAndPack (int step, bool force_flush)
+BTDiagnostics::DoComputeAndPack (int step, bool /*force_flush*/)
 {
     // always set to true for BTDiagnostics since back-transform buffers are potentially
     // computed and packed every timstep, except at initialization when step == -1.
@@ -286,7 +286,6 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     int Ny_lab = std::max( 0, num_ycells_lab );
     m_buffer_ncells_lab[i_buffer] = {Nx_lab, Ny_lab, Nz_lab};
 #else
-    int Ny_lab = 0;
     m_buffer_ncells_lab[i_buffer] = {Nx_lab, Nz_lab};
 #endif
     // Call funtion to create directories for customized output format
@@ -421,8 +420,6 @@ BTDiagnostics::PrepareFieldDataForOutput ()
         {
             for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer )
             {
-                // Current z-boost is stored as old z-boost position before updating
-                const amrex::Real old_z_boost = m_current_z_boost[i_buffer];
                 // Update z-boost and z-lab positions
                 m_current_z_boost[i_buffer] = UpdateCurrentZBoostCoordinate(m_t_lab[i_buffer],
                                                                       warpx.gett_new(lev) );
@@ -472,7 +469,6 @@ BTDiagnostics::k_index_zlab (int i_buffer, int lev)
 void
 BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
 {
-    auto & warpx = WarpX::GetInstance();
     if ( m_do_back_transformed_fields ) {
 
         const int k_lab = k_index_zlab (i_buffer, lev);

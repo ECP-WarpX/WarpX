@@ -1,0 +1,61 @@
+# -*- mode: yaml -*-
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  WARPX_CI_CCACHE: 'TRUE'
+  WARPX_CI_OPENPMD: 'TRUE'
+  FFTW_HOME: '/usr/'
+  BLASPP_HOME: '/usr/local/'
+  LAPACKPP_HOME: '/usr/local/'
+  OMP_NUM_THREADS: 1
+
+strategy:
+  matrix:
+    cartesian:
+      WARPX_CI_REGULAR_CARTESIAN: 'TRUE'
+    psatd:
+      WARPX_CI_PSATD: 'TRUE'
+    python:
+      WARPX_CI_PYTHON_MAIN: 'TRUE'
+    single_precision:
+      WARPX_CI_SINGLE_PRECISION: 'TRUE'
+    rz_or_nompi:
+      WARPX_CI_RZ_OR_NOMPI: 'TRUE'
+    qed:
+      WARPX_CI_QED: 'TRUE'
+
+steps:
+- script: |
+    cat /proc/cpuinfo | grep "model name" | sort -u
+    sudo apt-get update
+    sudo apt-get install -y ccache gcc gfortran g++ openmpi-bin libopenmpi-dev \
+      libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev pkg-config make \
+      python3 python3-pip python3-setuptools libblas-dev liblapack-dev
+    sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 2
+    sudo update-alternatives --set python /usr/bin/python3
+    python -m pip install --upgrade pip
+    python -m pip install --upgrade wheel
+    python -m pip install --upgrade cmake matplotlib==3.2.2 mpi4py numpy scipy yt
+    export CEI_CMAKE="$HOME/.local/bin/cmake"
+    export CEI_SUDO="sudo"
+    sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
+    sudo chmod a+x /usr/local/bin/cmake-easyinstall
+    if [ "${WARPX_CI_OPENPMD:-FALSE}" == "TRUE" ]; then
+      cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git \
+        -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
+    fi
+    if [ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]; then
+      cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git \
+        -Duse_openmp=OFF -Dbuild_tests=OFF
+      cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git \
+        -DBUILD_LAPACKPP_TESTS=OFF
+    fi
+  displayName: 'Install dependencies'
+
+- script: |
+      export WARPX_TEST_COMMIT=$BUILD_SOURCEVERSION
+      ./run_test.sh
+  timeoutInMinutes: 360
+  displayName: 'Build & test'

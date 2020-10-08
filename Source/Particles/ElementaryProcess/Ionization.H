@@ -69,7 +69,7 @@ struct IonizationFilterFunc
 
     template <typename PData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator() (const PData& ptd, int i) const noexcept
+    bool operator() (const PData& ptd, int i, amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex::literals;
 
@@ -115,7 +115,7 @@ struct IonizationFilterFunc
                 std::exp( m_adk_exp_prefactor[ion_lev]/E );
             amrex::Real p = 1. - std::exp( - w_dtau );
 
-            amrex::Real random_draw = amrex::Random();
+            amrex::Real random_draw = amrex::Random(engine);
             if (random_draw < p)
             {
                 return true;
@@ -129,7 +129,7 @@ struct IonizationTransformFunc
 {
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (DstData& dst, SrcData& src, int i_src, int i_dst) const noexcept
+    void operator() (DstData& /*dst*/, SrcData& src, int i_src, int /*i_dst*/) const noexcept
     {
         src.m_runtime_idata[0][i_src] += 1;
     }

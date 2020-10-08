@@ -11,6 +11,8 @@
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/ShapeFactors.H"
 
+#include <AMReX.H>
+
 /* \brief Charge Deposition for thread thread_num
  * /param GetPosition : A functor for returning the particle position.
  * \param wp           : Pointer to array of particle weights.
@@ -99,8 +101,8 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
 
             // Compute shape factor along x
             // i: leftmost grid point that the particle touches
-            amrex::Real sx[depos_order + 1];
-            int i;
+            amrex::Real sx[depos_order + 1] = {0._rt};
+            int i = 0;
             Compute_shape_factor< depos_order > const compute_shape_factor;
             if (rho_type[0] == NODE) {
                 i = compute_shape_factor(sx, x);
@@ -111,8 +113,8 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
 #if (defined WARPX_DIM_3D)
             // y direction
             const amrex::Real y = (yp - ymin)*dyi;
-            amrex::Real sy[depos_order + 1];
-            int j;
+            amrex::Real sy[depos_order + 1] = {0._rt};
+            int j = 0;
             if (rho_type[1] == NODE) {
                 j = compute_shape_factor(sy, y);
             } else if (rho_type[1] == CELL) {
@@ -121,8 +123,8 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
 #endif
             // z direction
             const amrex::Real z = (zp - zmin)*dzi;
-            amrex::Real sz[depos_order + 1];
-            int k;
+            amrex::Real sz[depos_order + 1] = {0._rt};
+            int k = 0;
             if (rho_type[zdir] == NODE) {
                 k = compute_shape_factor(sz, z);
             } else if (rho_type[zdir] == CELL) {
@@ -139,8 +141,9 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
 #if (defined WARPX_DIM_RZ)
                     Complex xy = xy0; // Throughout the following loop, xy takes the value e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
-                        amrex::Gpu::Atomic::Add( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode-1), sx[ix]*sz[iz]*wq*xy.real());
-                        amrex::Gpu::Atomic::Add( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode  ), sx[ix]*sz[iz]*wq*xy.imag());
+                        // The factor 2 on the weighting comes from the normalization of the modes
+                        amrex::Gpu::Atomic::Add( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode-1), 2._rt*sx[ix]*sz[iz]*wq*xy.real());
+                        amrex::Gpu::Atomic::Add( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode  ), 2._rt*sx[ix]*sz[iz]*wq*xy.imag());
                         xy = xy*xy0;
                     }
 #endif
@@ -159,6 +162,10 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
 #endif
         }
         );
+
+#ifndef WARPX_DIM_RZ
+        amrex::ignore_unused(n_rz_azimuthal_modes);
+#endif
 }
 
 #endif // CHARGEDEPOSITION_H_

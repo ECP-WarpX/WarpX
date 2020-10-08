@@ -35,8 +35,9 @@ FieldEnergy::FieldEnergy (std::string rd_name)
     pp.query("max_level", nLevel);
     nLevel += 1;
 
+    constexpr int noutputs = 3; // total energy, E-field energy and B-field energy
     // resize data array
-    m_data.resize(3*nLevel,0.0);
+    m_data.resize(noutputs*nLevel,0.0);
 
     if (ParallelDescriptor::IOProcessor())
     {
@@ -51,16 +52,19 @@ FieldEnergy::FieldEnergy (std::string rd_name)
             ofs << "[1]step()";
             ofs << m_sep;
             ofs << "[2]time(s)";
+            constexpr int shift_total = 3;
+            constexpr int shift_E = 4;
+            constexpr int shift_B = 5;
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(3+3*lev) + "]";
+                ofs << "[" + std::to_string(shift_total+noutputs*lev) + "]";
                 ofs << "total_lev"+std::to_string(lev)+"(J)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(4+3*lev) + "]";
+                ofs << "[" + std::to_string(shift_E+noutputs*lev) + "]";
                 ofs << "E_lev"+std::to_string(lev)+"(J)";
                 ofs << m_sep;
-                ofs << "[" + std::to_string(5+3*lev) + "]";
+                ofs << "[" + std::to_string(shift_B+noutputs*lev) + "]";
                 ofs << "B_lev"+std::to_string(lev)+"(J)";
             }
             ofs << std::endl;
@@ -77,13 +81,13 @@ void FieldEnergy::ComputeDiags (int step)
 {
 
     // Judge if the diags should be done
-    if ( (step+1) % m_freq != 0 ) { return; }
+    if (!m_intervals.contains(step+1)) { return; }
 
     // get WarpX class object
     auto & warpx = WarpX::GetInstance();
 
     // get number of level
-    auto nLevel = warpx.finestLevel() + 1;
+    const auto nLevel = warpx.finestLevel() + 1;
 
     // loop over refinement levels
     for (int lev = 0; lev < nLevel; ++lev)
@@ -99,7 +103,6 @@ void FieldEnergy::ComputeDiags (int step)
 
         // get cell size
         Geometry const & geom = warpx.Geom(lev);
-        auto domain_box = geom.Domain();
 #if (AMREX_SPACEDIM == 2)
         auto dV = geom.CellSize(0) * geom.CellSize(1);
 #elif (AMREX_SPACEDIM == 3)
@@ -107,21 +110,27 @@ void FieldEnergy::ComputeDiags (int step)
 #endif
 
         // compute E squared
-        Real tmpx = Ex.norm2(0,geom.periodicity());
-        Real tmpy = Ey.norm2(0,geom.periodicity());
-        Real tmpz = Ez.norm2(0,geom.periodicity());
-        Real Es = tmpx*tmpx + tmpy*tmpy + tmpz*tmpz;
+        Real const tmpEx = Ex.norm2(0,geom.periodicity());
+        Real const tmpEy = Ey.norm2(0,geom.periodicity());
+        Real const tmpEz = Ez.norm2(0,geom.periodicity());
+        Real const Es = tmpEx*tmpEx + tmpEy*tmpEy + tmpEz*tmpEz;
 
         // compute B squared
-        tmpx = Bx.norm2(0,geom.periodicity());
-        tmpy = By.norm2(0,geom.periodicity());
-        tmpz = Bz.norm2(0,geom.periodicity());
-        Real Bs = tmpx*tmpx + tmpy*tmpy + tmpz*tmpz;
+        Real const tmpBx = Bx.norm2(0,geom.periodicity());
+        Real const tmpBy = By.norm2(0,geom.periodicity());
+        Real const tmpBz = Bz.norm2(0,geom.periodicity());
+        Real const Bs = tmpBx*tmpBx + tmpBy*tmpBy + tmpBz*tmpBz;
+
+        constexpr int noutputs = 3; // total energy, E-field energy and B-field energy
+        constexpr int index_total = 0;
+        constexpr int index_E = 1;
+        constexpr int index_B = 2;
 
         // save data
-        m_data[lev*3+1] = 0.5 * Es * PhysConst::ep0 * dV;
-        m_data[lev*3+2] = 0.5 * Bs / PhysConst::mu0 * dV;
-        m_data[lev*3+0] = m_data[lev*3+1] + m_data[lev*3+2];
+        m_data[lev*noutputs+index_E] = 0.5_rt * Es * PhysConst::ep0 * dV;
+        m_data[lev*noutputs+index_B] = 0.5_rt * Bs / PhysConst::mu0 * dV;
+        m_data[lev*noutputs+index_total] = m_data[lev*noutputs+index_E] +
+                                           m_data[lev*noutputs+index_B];
 
     }
     // end loop over refinement levels

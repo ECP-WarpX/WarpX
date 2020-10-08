@@ -58,8 +58,8 @@ WarpX::LoadBalance ()
         // As specified in the above calls to makeSFC and makeKnapSack, the new
         // distribution mapping is NOT communicated to all ranks; the loadbalanced
         // dm is up-to-date only on root, and we can decide whether to broadcast
-        if (load_balance_efficiency_ratio_threshold > 0.0
-            & ParallelDescriptor::MyProc() == ParallelDescriptor::IOProcessorNumber())
+        if ((load_balance_efficiency_ratio_threshold > 0.0)
+            && (ParallelDescriptor::MyProc() == ParallelDescriptor::IOProcessorNumber()))
         {
             doLoadBalance = (proposedEfficiency > load_balance_efficiency_ratio_threshold*currentEfficiency);
         }

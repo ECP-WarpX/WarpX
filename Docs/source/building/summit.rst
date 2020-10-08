@@ -29,7 +29,7 @@ Use the following commands to download the WarpX source code and switch to the c
    cd ~/src
 
    git clone https://github.com/ECP-WarpX/WarpX.git warpx
-   git clone --branch QED https://github.com/ECP-WarpX/picsar.git
+   git clone --branch development https://github.com/ECP-WarpX/picsar.git
    git clone --branch development https://github.com/AMReX-Codes/amrex.git
 
 We use the following modules and environments on the system.
@@ -40,6 +40,7 @@ We use the following modules and environments on the system.
    export proj=<yourProject>
 
    # required dependencies
+   module load cmake
    module load gcc/6.4.0
    module load cuda
 
@@ -53,11 +54,14 @@ We use the following modules and environments on the system.
    module load boost/1.66.0
 
    # optional: for openPMD support
-   module load cmake
-   module load hdf5/1.10.4
-   module load adios2/2.5.0
-   export PKG_CONFIG_PATH=$HOME/sw/openPMD-api-install/lib64/pkgconfig:$PKG_CONFIG_PATH
-   export CMAKE_PREFIX_PATH=$HOME/sw/openPMD-api-install:$CMAKE_PREFIX_PATH
+   module load ums
+   module load ums-aph114
+   module load openpmd-api/0.12.0
+
+   # optional: for PSATD in RZ geometry support
+   #   note: needs the ums modules above
+   module load blaspp
+   module load lapackpp
 
    # optional: Ascent in situ support
    #   note: build WarpX with CMake
@@ -99,7 +103,7 @@ We recommend to store the above lines in a file, such as ``$HOME/warpx.profile``
 
    source $HOME/warpx.profile
 
-Optionally, download and build openPMD-api for I/O:
+Optionally, download and build openPMD-api for I/O (only needed if you did not load our module above):
 
 .. code-block:: bash
 

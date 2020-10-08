@@ -31,6 +31,9 @@ export OMP_PROC_BIND=spread
 export OMP_PLACES=threads
 export OMP_NUM_THREADS=16
 
+# for async_io support: (optional)
+export MPICH_MAX_THREAD_SAFETY=multiple
+
 EXE="<path/to/executable>"
 
 srun --cpu_bind=cores -n $(( ${SLURM_JOB_NUM_NODES} * ${WARPX_NMPI_PER_NODE} )) ${EXE} <input file>

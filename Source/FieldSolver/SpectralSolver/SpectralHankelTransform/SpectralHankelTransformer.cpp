@@ -49,12 +49,12 @@ SpectralHankelTransformer::ExtractKrArray ()
             kr_array[ii] = kr_m_array[ir];
         });
     }
+    amrex::Gpu::synchronize();
 }
 
 /* \brief Converts a scalar field from the physical to the spectral space for all modes */
 void
-SpectralHankelTransformer::PhysicalToSpectral_Scalar (amrex::Box const & box,
-                                                      amrex::FArrayBox const & F_physical,
+SpectralHankelTransformer::PhysicalToSpectral_Scalar (amrex::FArrayBox const & F_physical,
                                                       amrex::FArrayBox       & G_spectral)
 {
     // The Hankel transform is purely real, so the real and imaginary parts of
@@ -126,8 +126,7 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
 
 /* \brief Converts a scalar field from the spectral to the physical space for all modes */
 void
-SpectralHankelTransformer::SpectralToPhysical_Scalar (amrex::Box const & box,
-                                                      amrex::FArrayBox const & G_spectral,
+SpectralHankelTransformer::SpectralToPhysical_Scalar (amrex::FArrayBox const & G_spectral,
                                                       amrex::FArrayBox       & F_physical)
 {
     // The Hankel inverse transform is purely real, so the real and imaginary parts of

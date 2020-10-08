@@ -2,11 +2,18 @@ AMREX_HOME ?= ../../../amrex
 PICSAR_HOME ?= ../../../picsar
 OPENBC_HOME ?= ../../../openbc_poisson
 
-CXXSTD        = c++14
 USE_MPI       = TRUE
 USE_PARTICLES = TRUE
 USE_RPATH     = TRUE
 BL_NO_FORT    = TRUE
+ifeq ($(USE_DPCPP),TRUE)
+  CXXSTD        = c++17
+else
+  CXXSTD        = c++14
+endif
+
+# required for AMReX async I/O
+MPI_THREAD_MULTIPLE = TRUE
 
 ifeq ($(USE_GPU),TRUE)
   USE_OMP  = FALSE
@@ -123,6 +130,12 @@ DEFINES += -DPICSAR_GIT_VERSION=\"$(PICSAR_GIT_VERSION)\"
 DEFINES += -DPICSAR_NO_ASSUMED_ALIGNMENT
 DEFINES += -DWARPX
 
+ifdef PARSER_DEPTH
+  DEFINES += -DWARPX_PARSER_DEPTH=$(PARSER_DEPTH)
+else
+  DEFINES += -DWARPX_PARSER_DEPTH=24
+endif
+
 ifeq ($(USE_OPENBC_POISSON),TRUE)
   include $(OPENBC_HOME)/Make.package
   DEFINES += -DFFT_FFTW -DMPIPARALLEL -DUSE_OPENBC_POISSON
@@ -130,7 +143,7 @@ endif
 
 ifeq ($(USE_OPENPMD), TRUE)
    # try pkg-config query
-   ifeq (0, $(shell pkg-config "openPMD >= 0.11.0"; echo $$?))
+   ifeq (0, $(shell pkg-config "openPMD >= 0.12.0"; echo $$?))
        CXXFLAGS += $(shell pkg-config --cflags openPMD)
        LIBRARY_LOCATIONS += $(shell pkg-config --variable=libdir openPMD)
        libraries += $(shell pkg-config --libs-only-l openPMD)
@@ -154,7 +167,15 @@ endif
 ifeq ($(USE_PSATD),TRUE)
   USERSuffix := $(USERSuffix).PSATD
   DEFINES += -DWARPX_USE_PSATD
-  ifeq ($(USE_CUDA),FALSE) # Running on CPU
+  ifeq ($(USE_CUDA),TRUE)
+    # Use cuFFT
+    libraries += -lcufft
+  else ifeq ($(USE_HIP),TRUE)
+    # Use rocFFT.  ROC_PATH is defined in amrex
+    INCLUDE_LOCATIONS += $(ROC_PATH)/rocfft/include
+    LIBRARY_LOCATIONS += $(ROC_PATH)/rocfft/lib
+    libraries += -lrocfft
+  else # Running on CPU
      # Use FFTW
      ifeq ($(PRECISION),FLOAT)
           libraries += -lfftw3f_mpi -lfftw3f -lfftw3f_threads
@@ -167,9 +188,6 @@ ifeq ($(USE_PSATD),TRUE)
        INCLUDE_LOCATIONS += $(FFTW_HOME)/include
        LIBRARY_LOCATIONS += $(FFTW_HOME)/lib
      endif
-  else
-    # Use cuFFT
-    libraries += -lcufft
   endif
   ifeq ($(USE_RZ),TRUE)
     # Use blas and lapack

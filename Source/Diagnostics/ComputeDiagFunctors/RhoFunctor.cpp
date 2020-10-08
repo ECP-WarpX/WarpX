@@ -2,9 +2,16 @@
 #include "RhoFunctor.H"
 #include "Utils/CoarsenIO.H"
 
-RhoFunctor::RhoFunctor ( const int lev, const amrex::IntVect crse_ratio,
-                         bool convertRZmodes2cartesian, const int ncomp )
-    : ComputeDiagFunctor(ncomp, crse_ratio), m_lev(lev),
+#include <AMReX.H>
+
+RhoFunctor::RhoFunctor (const int lev,
+                        const amrex::IntVect crse_ratio,
+                        const int species_index,
+                        bool convertRZmodes2cartesian,
+                        const int ncomp)
+    : ComputeDiagFunctor(ncomp, crse_ratio),
+      m_lev(lev),
+      m_species_index(species_index),
       m_convertRZmodes2cartesian(convertRZmodes2cartesian)
 {}
 
@@ -12,10 +19,18 @@ void
 RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/ ) const
 {
     auto& warpx = WarpX::GetInstance();
-    auto& mypc  = warpx.GetPartContainer();
+    std::unique_ptr<amrex::MultiFab> rho;
 
-    // Deposit charge density
-    std::unique_ptr<amrex::MultiFab> rho = mypc.GetChargeDensity( m_lev );
+    // Dump total rho
+    if (m_species_index == -1) {
+        auto& mypc = warpx.GetPartContainer();
+        rho = mypc.GetChargeDensity(m_lev);
+    }
+    // Dump rho per species
+    else {
+        auto& mypc = warpx.GetPartContainer().GetParticleContainer(m_species_index);
+        rho = mypc.GetChargeDensity(m_lev);
+    }
 
 #ifdef WARPX_DIM_RZ
     if (m_convertRZmodes2cartesian) {
@@ -39,5 +54,6 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     // In Cartesian geometry, coarsen and interpolate from temporary MultiFab rho
     // to output diagnostic MultiFab mf_dst
     CoarsenIO::Coarsen( mf_dst, *rho, dcomp, 0, nComp(), mf_dst.nGrow(0), m_crse_ratio );
+    amrex::ignore_unused(m_convertRZmodes2cartesian);
 #endif
 }

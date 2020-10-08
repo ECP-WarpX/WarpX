@@ -7,16 +7,13 @@
 #include "CollisionType.H"
 #include "ShuffleFisherYates.H"
 #include "ElasticCollisionPerez.H"
-#include <WarpX.H>
+#include "Utils/ParticleUtils.H"
+#include "WarpX.H"
 
 CollisionType::CollisionType(
     const std::vector<std::string>& species_names,
     std::string const collision_name)
 {
-
-#if defined WARPX_DIM_RZ
-    amrex::Abort("Collisions only work in Cartesian geometry for now.");
-#endif
 
     // read collision species
     std::vector<std::string> collision_species;
@@ -29,7 +26,11 @@ CollisionType::CollisionType(
     m_CoulombLog = -1.0;
     pp.query("CoulombLog", m_CoulombLog);
 
-    for (int i=0; i<species_names.size(); i++)
+    // number of time steps between collisions
+    m_ndt = 1;
+    pp.query("ndt", m_ndt);
+
+    for (int i=0; i<static_cast<int>(species_names.size()); i++)
     {
         if (species_names[i] == collision_species[0])
         { m_species1_index = i; }
@@ -51,42 +52,7 @@ using ParticleTileType = WarpXParticleContainer::ParticleTileType;
 using ParticleBins = DenseBins<ParticleType>;
 using index_type = ParticleBins::index_type;
 
-namespace {
-
-    /* Find the particles and count the particles that are in each cell.
-       Note that this does *not* rearrange particle arrays */
-    ParticleBins
-    findParticlesInEachCell( int const lev, MFIter const& mfi,
-                             ParticleTileType const& ptile) {
-
-        // Extract particle structures for this tile
-        int const np = ptile.numParticles();
-        ParticleType const* particle_ptr = ptile.GetArrayOfStructs()().data();
-
-        // Extract box properties
-        Geometry const& geom = WarpX::GetInstance().Geom(lev);
-        Box const& cbx = mfi.tilebox(IntVect::TheZeroVector()); //Cell-centered box
-        const auto lo = lbound(cbx);
-        const auto dxi = geom.InvCellSizeArray();
-        const auto plo = geom.ProbLoArray();
-
-        // Find particles that are in each cell;
-        // results are stored in the object `bins`.
-        ParticleBins bins;
-        bins.build(np, particle_ptr, cbx,
-            // Pass lambda function that returns the cell index
-            [=] AMREX_GPU_HOST_DEVICE (const ParticleType& p) noexcept -> IntVect
-            {
-                return IntVect(AMREX_D_DECL(
-                                   static_cast<int>((p.pos(0)-plo[0])*dxi[0] - lo.x),
-                                   static_cast<int>((p.pos(1)-plo[1])*dxi[1] - lo.y),
-                                   static_cast<int>((p.pos(2)-plo[2])*dxi[2] - lo.z)));
-            });
-
-        return bins;
-    }
-
-}
+using namespace ParticleUtils;
 
 /** Perform all binary collisions within a tile
  *
@@ -95,13 +61,14 @@ namespace {
  * @param species1/2 pointer to species container
  * @param isSameSpecies true if collision is between same species
  * @param CoulombLog user input Coulomb logrithm
+ * @param ndt user input number of time stpes between collisions
  *
  */
 void CollisionType::doCoulombCollisionsWithinTile
     ( int const lev, MFIter const& mfi,
     std::unique_ptr<WarpXParticleContainer>& species_1,
     std::unique_ptr<WarpXParticleContainer>& species_2,
-    bool const isSameSpecies, Real const CoulombLog )
+    bool const isSameSpecies, Real const CoulombLog, int const ndt )
 {
 
     if ( isSameSpecies ) // species_1 == species_2
@@ -133,15 +100,22 @@ void CollisionType::doCoulombCollisionsWithinTile
 
         const Real dt = WarpX::GetInstance().getdt(lev);
         Geometry const& geom = WarpX::GetInstance().Geom(lev);
-#if (AMREX_SPACEDIM == 2)
+        Box const& cbx = mfi.tilebox(IntVect::TheZeroVector()); //Cell-centered box
+        const auto lo = lbound(cbx);
+        const auto hi = ubound(cbx);
+        int nz = hi.y-lo.y+1;
+#if defined WARPX_DIM_XZ
         auto dV = geom.CellSize(0) * geom.CellSize(1);
+#elif defined WARPX_DIM_RZ
+        auto dr = geom.CellSize(0);
+        auto dz = geom.CellSize(1);
 #elif (AMREX_SPACEDIM == 3)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
         // Loop over cells
-        amrex::ParallelFor( n_cells,
-            [=] AMREX_GPU_DEVICE (int i_cell) noexcept
+        amrex::ParallelForRNG( n_cells,
+            [=] AMREX_GPU_DEVICE (int i_cell, amrex::RandomEngine const& engine) noexcept
             {
                 // The particles from species1 that are in the cell `i_cell` are
                 // given by the `indices_1[cell_start_1:cell_stop_1]`
@@ -154,7 +128,14 @@ void CollisionType::doCoulombCollisionsWithinTile
                 {
                     // shuffle
                     ShuffleFisherYates(
-                        indices_1, cell_start_1, cell_half_1 );
+                        indices_1, cell_start_1, cell_half_1, engine );
+
+#if defined WARPX_DIM_RZ
+                    int ri = (i_cell - i_cell%nz) / nz;
+                    auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
+#else
+                    amrex::ignore_unused(nz);
+#endif
 
                     // Call the function in order to perform collisions
                     ElasticCollisionPerez(
@@ -163,7 +144,7 @@ void CollisionType::doCoulombCollisionsWithinTile
                         indices_1, indices_1,
                         ux_1, uy_1, uz_1, ux_1, uy_1, uz_1, w_1, w_1,
                         q1, q1, m1, m1, Real(-1.0), Real(-1.0),
-                        dt, CoulombLog, dV );
+                        dt*ndt, CoulombLog, dV, engine );
                 }
             }
         );
@@ -209,15 +190,22 @@ void CollisionType::doCoulombCollisionsWithinTile
 
         const Real dt = WarpX::GetInstance().getdt(lev);
         Geometry const& geom = WarpX::GetInstance().Geom(lev);
-#if (AMREX_SPACEDIM == 2)
+        Box const& cbx = mfi.tilebox(IntVect::TheZeroVector()); //Cell-centered box
+        const auto lo = lbound(cbx);
+        const auto hi = ubound(cbx);
+        int nz = hi.y-lo.y+1;
+#if defined WARPX_DIM_XZ
         auto dV = geom.CellSize(0) * geom.CellSize(1);
+#elif defined WARPX_DIM_RZ
+        auto dr = geom.CellSize(0);
+        auto dz = geom.CellSize(1);
 #elif (AMREX_SPACEDIM == 3)
         auto dV = geom.CellSize(0) * geom.CellSize(1) * geom.CellSize(2);
 #endif
 
         // Loop over cells
-        amrex::ParallelFor( n_cells,
-            [=] AMREX_GPU_DEVICE (int i_cell) noexcept
+        amrex::ParallelForRNG( n_cells,
+            [=] AMREX_GPU_DEVICE (int i_cell, amrex::RandomEngine const& engine) noexcept
             {
                 // The particles from species1 that are in the cell `i_cell` are
                 // given by the `indices_1[cell_start_1:cell_stop_1]`
@@ -236,8 +224,15 @@ void CollisionType::doCoulombCollisionsWithinTile
                      cell_stop_2 - cell_start_2 >= 1 )
                 {
                     // shuffle
-                    ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1);
-                    ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2);
+                    ShuffleFisherYates(indices_1, cell_start_1, cell_stop_1, engine);
+                    ShuffleFisherYates(indices_2, cell_start_2, cell_stop_2, engine);
+
+#if defined WARPX_DIM_RZ
+                    int ri = (i_cell - i_cell%nz) / nz;
+                    auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
+#else
+                    amrex::ignore_unused(nz);
+#endif
 
                     // Call the function in order to perform collisions
                     ElasticCollisionPerez(
@@ -245,7 +240,7 @@ void CollisionType::doCoulombCollisionsWithinTile
                         indices_1, indices_2,
                         ux_1, uy_1, uz_1, ux_2, uy_2, uz_2, w_1, w_2,
                         q1, q2, m1, m2, Real(-1.0), Real(-1.0),
-                        dt, CoulombLog, dV );
+                        dt*ndt, CoulombLog, dV, engine );
                 }
             }
         );
