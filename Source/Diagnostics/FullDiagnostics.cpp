@@ -64,6 +64,8 @@ FullDiagnostics::ReadParameters ()
 
 #ifdef WARPX_DIM_RZ
     pp.query("dump_rz_modes", m_dump_rz_modes);
+#else
+    amrex::ignore_unused(m_dump_rz_modes);
 #endif
 
     if (m_format == "checkpoint"){
