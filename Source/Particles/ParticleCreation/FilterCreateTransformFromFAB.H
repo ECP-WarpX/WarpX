@@ -103,7 +103,7 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
             // to use N>1 (for now).
             const Real x = xlo_global + j*dx;
             const Real y = (spacedim == 3) ? ylo_global + k*dy : 0.0_rt;
-            const Real z = zlo_global + l*dz;
+            const Real z = (spacedim == 3) ? zlo_global + l*dz : ylo_global + k*dy;
 
             for (int n = 0; n < N; ++n)
             {
