@@ -105,6 +105,7 @@ Diagnostics::BaseReadParameters ()
 
     bool species_specified = pp.queryarr("species", m_species_names);
 
+
     // Prepare to dump rho per species:
     // - add the string "rho_<species_names>" to m_varnames if "rho" is listed in
     //   <diag_name>.<species_name>.variables in the input file
@@ -140,6 +141,7 @@ Diagnostics::BaseReadParameters ()
     }
     // Allocate array of species indices that dump rho per species
     m_rho_per_species_index.resize(ns_dump_rho);
+
     // ns: total number of species
     const int ns = int(m_species_names.size());
     // is_dump_rho: species index to loop over species that dump rho per species
@@ -160,6 +162,8 @@ Diagnostics::BaseReadParameters ()
         // Clear content of species_variables before moving to the next species
         species_variables.clear();
     }
+
+
 
     bool checkpoint_compatibility = false;
     if (m_format == "checkpoint"){
@@ -208,6 +212,18 @@ Diagnostics::InitData ()
         // This is a temporary fix until particle_buffer is supported in diagnostics.
         m_all_species.clear();
         amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
+    }
+
+    // default for writing species output is 1
+    int write_species = 1;
+    pp.query("write_species", write_species);
+    if (write_species == 0) {
+        if (m_format == "checkpoint"){
+            amrex::Abort("For checkpoint format, write_species flag must be 1.");
+	}
+	// if user-defined value for write_species == 0, then clear species vector
+        m_species_names.clear();
+	m_all_species.clear();
     }
 }
 
