@@ -246,9 +246,22 @@ MultiParticleContainer::ReadParameters ()
             pc.queryarr("collision_names", collision_names);
 
         }
-
         pp.query("use_fdtd_nci_corr", WarpX::use_fdtd_nci_corr);
+#ifdef WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::use_fdtd_nci_corr==0,
+                            "ERROR: use_fdtd_nci_corr is not supported in RZ");
+#endif
         pp.query("galerkin_interpolation", WarpX::galerkin_interpolation);
+
+        std::string boundary_conditions = "none";
+        pp.query("boundary_conditions", boundary_conditions);
+        if        (boundary_conditions == "none"){
+            m_boundary_conditions = ParticleBC::none;
+        } else if (boundary_conditions == "absorbing"){
+            m_boundary_conditions = ParticleBC::absorbing;
+        } else {
+            amrex::Abort("unknown particle BC type");
+        }
 
         ParmParse ppl("lasers");
         ppl.queryarr("names", lasers_names);
@@ -382,6 +395,14 @@ MultiParticleContainer::RedistributeLocal (const int num_ghost)
 {
     for (auto& pc : allcontainers) {
         pc->Redistribute(0, 0, 0, num_ghost);
+    }
+}
+
+void
+MultiParticleContainer::ApplyBoundaryConditions ()
+{
+    for (auto& pc : allcontainers) {
+        pc->ApplyBoundaryConditions(m_boundary_conditions);
     }
 }
 
@@ -662,12 +683,16 @@ MultiParticleContainer::doFieldIonization (int lev,
 }
 
 void
-MultiParticleContainer::doCoulombCollisions ()
+MultiParticleContainer::doCoulombCollisions ( Real cur_time )
 {
     WARPX_PROFILE("MultiParticleContainer::doCoulombCollisions()");
 
     for( auto const& collision : allcollisions )
     {
+
+        const Real dt = WarpX::GetInstance().getdt(0);
+        if ( int(std::floor(cur_time/dt)) % collision->m_ndt != 0 ) continue;
+
         auto& species1 = allcontainers[ collision->m_species1_index ];
         auto& species2 = allcontainers[ collision->m_species2_index ];
 
@@ -688,7 +713,8 @@ MultiParticleContainer::doCoulombCollisions ()
                 CollisionType::doCoulombCollisionsWithinTile
                     ( lev, mfi, species1, species2,
                       collision->m_isSameSpecies,
-                      collision->m_CoulombLog );
+                      collision->m_CoulombLog,
+                      collision->m_ndt );
 
             }
         }
@@ -697,14 +723,12 @@ MultiParticleContainer::doCoulombCollisions ()
 
 void MultiParticleContainer::doResampling (const int timestep)
 {
-    WARPX_PROFILE("MultiParticleContainer::doResampling()");
-
     for (auto& pc : allcontainers)
     {
         // do_resampling can only be true for PhysicalParticleContainers
         if (!pc->do_resampling){ continue; }
 
-        pc->resample(m_resampler, timestep);
+        pc->resample(timestep);
     }
 }
 
@@ -1070,17 +1094,11 @@ MultiParticleContainer::doQEDSchwinger ()
     const MultiFab & By = warpx.getBfield(level_0,1);
     const MultiFab & Bz = warpx.getBfield(level_0,2);
 
-    MFItInfo info;
-    if (TilingIfNotGPU()) {
-        info.EnableTiling();
-    }
 #ifdef _OPENMP
-    info.SetDynamic(WarpX::do_dynamic_scheduling);
-#pragma omp parallel
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-
-    for (MFIter mfi(Ex, info); mfi.isValid(); ++mfi )
-    {
+     for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+     {
         // Make the box cell centered to avoid creating particles twice on the tile edges
         const Box& box = enclosedCells(mfi.nodaltilebox());
 

@@ -31,8 +31,9 @@ struct SchwingerFilterFunc
      */
     template <typename FABs>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    amrex::Real operator() (const FABs& src_FABs, const int i,
-                                        const int j, const int k) const noexcept
+    amrex::Real operator() (const FABs& src_FABs,
+                            const int i, const int j, const int k,
+                            amrex::RandomEngine const& engine) const noexcept
     {
         const auto& arrEx = src_FABs[0];
         const auto& arrEy = src_FABs[1];
@@ -44,7 +45,7 @@ struct SchwingerFilterFunc
         return getSchwingerProductionNumber( m_dV, m_dt,
                     arrEx(i,j,k),arrEy(i,j,k),arrEz(i,j,k),
                     arrBx(i,j,k),arrBy(i,j,k),arrBz(i,j,k),
-                    m_threshold_poisson_gaussian);
+                    m_threshold_poisson_gaussian,engine);
     }
 };
 

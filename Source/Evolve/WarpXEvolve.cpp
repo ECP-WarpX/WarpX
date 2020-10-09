@@ -180,6 +180,8 @@ WarpX::Evolve (int numsteps)
 
         int num_moved = MoveWindow(move_j);
 
+        mypc->ApplyBoundaryConditions();
+
         // Electrostatic solver: particles can move by an arbitrary number of cells
         if( do_electrostatic )
         {
@@ -270,7 +272,7 @@ WarpX::OneStep_nosub (Real cur_time)
     // product species.
     doFieldIonization();
 
-    mypc->doCoulombCollisions();
+    mypc->doCoulombCollisions( cur_time );
 #ifdef WARPX_QED
     mypc->doQEDSchwinger();
 #endif

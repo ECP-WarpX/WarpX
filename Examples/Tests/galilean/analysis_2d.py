@@ -27,6 +27,7 @@ filename = sys.argv[1]
 # Parse test name
 averaged = True if re.search( 'averaged', filename ) else False
 current_correction = True if re.search( 'current_correction', filename ) else False
+dims_RZ  = True if re.search('rz', filename) else False
 
 ds = yt.load( filename )
 
@@ -38,15 +39,24 @@ if (averaged):
     # energyE_ref was calculated with Galilean PSATD method (v_galilean = (0,0,0.99498743710662))
     energyE_ref = 26913.546573259937
     tolerance_rel = 1e-5
-elif (current_correction):
-    # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.)):
-    # difference with respect to reference energy below due to absence of filter
-    energyE_ref = 745973.5742103161
-    tolerance_rel = 1e-8;
-else:
+elif (not dims_RZ and not current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
     energyE_ref = 38362.88743899688
-    tolerance_rel = 1e-8;
+    tolerance_rel = 1e-8
+elif (not dims_RZ and current_correction):
+    # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.)):
+    # difference with respect to reference energy above due to absence of real-space filter
+    energyE_ref = 745973.5742103161
+    tolerance_rel = 1e-8
+elif (dims_RZ and not current_correction):
+    # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
+    energyE_ref = 178013.54481470847
+    tolerance_rel = 1e-8
+elif (dims_RZ and current_correction):
+    # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
+    # difference with respect to reference energy above due to absence of k-space filter
+    energyE_ref = 10955626.277865639
+    tolerance_rel = 1e-8
 
 energyE = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
 
@@ -59,9 +69,9 @@ assert( error_rel < tolerance_rel )
 
 # Check charge conservation (relative L-infinity norm of error) with current correction
 if current_correction:
-    rho  = ds.index.grids[0]['boxlib', 'rho' ].squeeze().v
     divE = ds.index.grids[0]['boxlib', 'divE'].squeeze().v
-    error_rel = np.amax( np.abs( divE - rho/scc.epsilon_0 ) ) / np.amax( np.abs( rho/scc.epsilon_0 ) )
+    rho  = ds.index.grids[0]['boxlib', 'rho' ].squeeze().v / scc.epsilon_0
+    error_rel = np.amax(np.abs(divE - rho)) / max(np.amax(divE), np.amax(rho))
     tolerance = 1e-9
     print("Check charge conservation:")
     print("error_rel = {}".format(error_rel))

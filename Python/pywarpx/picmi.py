@@ -473,6 +473,7 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             self.psatd_current_correction = kw.pop('warpx_current_correction', None)
             self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
             self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
+            self.psatd_use_damp_fields_in_z_guard = kw.pop('warpx_use_damp_fields_in_z_guard', None)
 
     def initialize_inputs(self):
 
@@ -488,6 +489,8 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
             pywarpx.psatd.current_correction = self.psatd_current_correction
             pywarpx.psatd.update_with_rho = self.psatd_update_with_rho
             pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
+            pywarpx.psatd.use_damp_fields_in_z_guard = self.psatd_use_damp_fields_in_z_guard
+
             if self.grid.guard_cells is not None:
                 pywarpx.psatd.nx_guard = self.grid.guard_cells[0]
                 if self.grid.number_of_dimensions == 3:
@@ -538,7 +541,9 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
         self.laser.zeta = self.zeta
         self.laser.beta = self.beta
         self.laser.phi2 = self.phi2
+        self.laser.phi0 = self.phi0
 
+        self.laser.do_continuous_injection = self.fill_in
 
 class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
     def init(self, kw):
@@ -555,6 +560,7 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
         self.laser.wavelength = self.wavelength  # The wavelength of the laser (in meters)
         self.laser.e_max = self.Emax  # Maximum amplitude of the laser field (in V/m)
         self.laser.polarization = self.polarization_direction  # The main polarization vector
+        self.laser.do_continuous_injection = self.fill_in
 
         if self.mangle_dict is None:
             # Only do this once so that the same variables are used in this distribution
@@ -562,7 +568,6 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
             self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
         expression = pywarpx.my_constants.mangle_expression(self.field_expression, self.mangle_dict)
         self.laser.__setattr__('field_function(X,Y,t)', expression)
-
 
 class LaserAntenna(picmistandard.PICMI_LaserAntenna):
     def initialize_inputs(self, laser):

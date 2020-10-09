@@ -1,0 +1,26 @@
+# This is a Spack environment file.
+#
+# This environment can be used to install all dependencies to build the manual
+# locally.
+#
+# Activating and installing this environment will provide all dependencies
+# that are needed for full-feature development.
+#   https://spack.readthedocs.io/en/latest/environments.html#anonymous-environments
+#
+# Inside WarpX' Docs/ directory:
+#   spack env activate -d .
+#   spack install  # only needed the first time
+#   make clean
+#   make html
+#
+spack:
+  specs:
+  # note: the spec "doxygen+graphviz" causes an environment issue for me
+  - doxygen
+  - graphviz
+  - python
+  - py-sphinx
+  - py-breathe
+  - py-recommonmark
+  - py-pygments
+  - py-sphinx-rtd-theme

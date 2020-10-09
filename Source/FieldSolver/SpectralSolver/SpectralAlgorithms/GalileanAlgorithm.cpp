@@ -17,10 +17,10 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
                          const Real dt,
                          const bool update_with_rho)
      // Initialize members of base class
-     : m_v_galilean(v_galilean),
+     : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
+       m_v_galilean(v_galilean),
        m_dt(dt),
-       m_update_with_rho(update_with_rho),
-       SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal)
+       m_update_with_rho(update_with_rho)
 {
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
@@ -34,7 +34,7 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
     Theta2_coef = SpectralComplexCoefficients(ba, dm, 1, 0);
 
     InitializeSpectralCoefficients(spectral_kspace, dm, dt);
-};
+}
 
 /* Advance the E and B field in spectral space (stored in `f`) over one time step */
 void
@@ -152,7 +152,7 @@ GalileanAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             fields(i,j,k,Idx::Bz) = T2*C*Bz_old - T2*S_ck*I*(kx*Ey_old - ky*Ex_old) + X1*I*(kx*Jy - ky*Jx);
         });
     }
-};
+}
 
 void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& spectral_kspace,
                                                         const amrex::DistributionMapping& dm,
@@ -421,9 +421,6 @@ GalileanAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
-            // Record old values of the fields to be updated
-            using Idx = SpectralFieldIndex;
-
             // Shortcuts for the values of J and rho
             const Complex Jx = fields(i,j,k,Idx::Jx);
             const Complex Jy = fields(i,j,k,Idx::Jy);
@@ -476,8 +473,8 @@ GalileanAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
 }
 
 void
-GalileanAlgorithm::VayDeposition (SpectralFieldData& field_data,
-                                  std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+GalileanAlgorithm::VayDeposition (SpectralFieldData& /*field_data*/,
+                                  std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {
     amrex::Abort("Vay deposition not implemented for Galilean PSATD");
 }

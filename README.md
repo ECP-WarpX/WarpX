@@ -1,6 +1,6 @@
 # WarpX
 
-[![Code Status development](https://img.shields.io/travis/ECP-WarpX/WarpX/development.svg?label=development)](https://travis-ci.com/ECP-WarpX/WarpX/branches)
+[![Code Status development](https://dev.azure.com/ECP-WarpX/WarpX/_apis/build/status/ECP-WarpX.WarpX?branchName=development)](https://dev.azure.com/ECP-WarpX/WarpX/_build/latest?definitionId=1&branchName=development)
 [![Documentation Status](https://readthedocs.org/projects/warpx/badge/?version=latest)](https://warpx.readthedocs.io/en/latest/?badge=latest)
 [![GitHub commits since last release](https://img.shields.io/github/commits-since/ECP-WarpX/WarpX/latest/development.svg)](https://github.com/ECP-WarpX/WarpX/compare/development)
 [![Language](https://img.shields.io/badge/language-C%2B%2B14-orange.svg)](https://isocpp.org/)

@@ -101,7 +101,7 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
 
             // Compute shape factor along x
             // i: leftmost grid point that the particle touches
-            amrex::Real sx[depos_order + 1];
+            amrex::Real sx[depos_order + 1] = {0._rt};
             int i = 0;
             Compute_shape_factor< depos_order > const compute_shape_factor;
             if (rho_type[0] == NODE) {
@@ -113,7 +113,7 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
 #if (defined WARPX_DIM_3D)
             // y direction
             const amrex::Real y = (yp - ymin)*dyi;
-            amrex::Real sy[depos_order + 1];
+            amrex::Real sy[depos_order + 1] = {0._rt};
             int j = 0;
             if (rho_type[1] == NODE) {
                 j = compute_shape_factor(sy, y);
@@ -123,7 +123,7 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
 #endif
             // z direction
             const amrex::Real z = (zp - zmin)*dzi;
-            amrex::Real sz[depos_order + 1];
+            amrex::Real sz[depos_order + 1] = {0._rt};
             int k = 0;
             if (rho_type[zdir] == NODE) {
                 k = compute_shape_factor(sz, z);

@@ -60,9 +60,12 @@ FullDiagnostics::ReadParameters ()
     m_intervals = IntervalsParser(period_string_vec);
     bool raw_specified = pp.query("plot_raw_fields", m_plot_raw_fields);
     raw_specified += pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
+    raw_specified += pp.query("plot_raw_rho", m_plot_raw_rho);
 
 #ifdef WARPX_DIM_RZ
     pp.query("dump_rz_modes", m_dump_rz_modes);
+#else
+    amrex::ignore_unused(m_dump_rz_modes);
 #endif
 
     if (m_format == "checkpoint"){
@@ -351,6 +354,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
     // Clear any pre-existing vector to release stored data.
     m_all_field_functors[lev].clear();
 
+    // Species index to loop over species that dump rho per species
+    int is_dump_rho = 0;
+
     m_all_field_functors[lev].resize( m_varnames.size() );
     // Fill vector of functors for all components except individual cylindrical modes.
     for (int comp=0, n=m_all_field_functors[lev].size(); comp<n; comp++){
@@ -383,8 +389,13 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
 #endif
             }
             else {
+                // Initialize rho functor to dump total rho
                 m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio);
             }
+        } else if ( m_varnames[comp].find("rho_") != std::string::npos ){
+            // Initialize rho functor to dump rho per species
+            m_all_field_functors[lev][comp] = std::make_unique<RhoFunctor>(lev, m_crse_ratio, m_rho_per_species_index[is_dump_rho]);
+            is_dump_rho++;
         } else if ( m_varnames[comp] == "F" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_cell" ){
@@ -395,6 +406,9 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<DivBFunctor>(warpx.get_array_Bfield_aux(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "divE" ){
             m_all_field_functors[lev][comp] = std::make_unique<DivEFunctor>(warpx.get_array_Efield_aux(lev), lev, m_crse_ratio);
+        }
+        else {
+            amrex::Abort("Error: " + m_varnames[comp] + " is not a known field output type");
         }
     }
     AddRZModesToDiags( lev );

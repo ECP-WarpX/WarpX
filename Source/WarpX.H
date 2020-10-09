@@ -167,6 +167,7 @@ public:
     static bool use_filter;
     static bool use_kspace_filter;
     static bool use_filter_compensation;
+    static bool use_damp_fields_in_z_guard;
     static bool serialize_ics;
 
     // Back transformation diagnostic
@@ -341,6 +342,16 @@ public:
      */
     IntervalsParser get_load_balance_intervals () const {return load_balance_intervals;}
 
+    /**
+     * \brief Private function for spectral solver
+     * Applies a damping factor in the guards cells that extend
+     * beyond the extent of the domain, reducing fluctuations that
+     * can appear in parallel simulations. This will be called
+     * when use_damp_fields_in_z_guard is true.
+     */
+    void DampFieldsInGuards (std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield,
+                             std::array<std::unique_ptr<amrex::MultiFab>,3>& Bfield);
+
 #ifdef WARPX_DIM_RZ
     void ApplyInverseVolumeScalingToCurrentDensity(amrex::MultiFab* Jx,
                                                    amrex::MultiFab* Jy,
@@ -477,6 +488,8 @@ public:
     const amrex::IntVect getngF() const { return guard_cells.ng_alloc_F; }
     const amrex::IntVect getngExtra() const { return guard_cells.ng_Extra; }
     const amrex::IntVect getngUpdateAux() const { return guard_cells.ng_UpdateAux; }
+    const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
+    const amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
 
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
