@@ -1469,7 +1469,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 s disabled.
 
 * ``<diag_name>.write_species`` (`0` or `1`) optional (default `1`)
-   Whether to write species output or not. For checkpoint format, always set this parameter to 1. 
+   Whether to write species output or not. For checkpoint format, always set this parameter to 1.
 
 * ``<diag_name>.species`` (list of `string`, default all physical species in the simulation)
     Which species dumped in this diagnostics.
