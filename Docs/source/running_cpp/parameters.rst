@@ -1381,6 +1381,9 @@ Note that some parameter (those that do not start with a ``<diag_name>.`` prefix
 This should be changed in the future.
 In-situ capabilities can be used by turning on Sensei or Ascent (provided they are installed) through the output format, see below.
 
+* ``diagnostics.enable`` (`0` or `1`, optional, default `1`)
+    Whether to enable or disable diagnostics. This flag Will over-ride all other diagnostics input parameters.
+
 * ``diagnostics.diags_names`` (list of `string` optional, default `empty`)
     Name of each diagnostics.
     example: ``diagnostics.diags_names = diag1 my_second_diag``.
