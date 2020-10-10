@@ -222,7 +222,7 @@ Diagnostics::InitData ()
             amrex::Abort("For checkpoint format, write_species flag must be 1.");
     }
     // if user-defined value for write_species == 0, then clear species vector
-        m_species_names.clear();
+    m_species_names.clear();
     m_all_species.clear();
     }
 }
