@@ -192,6 +192,18 @@ Diagnostics::InitData ()
         m_output_species.clear();
         amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
     }
+
+    // default for writing species output is 1
+    int write_species = 1;
+    pp.query("write_species", write_species);
+    if (write_species == 0) {
+        if (m_format == "checkpoint"){
+            amrex::Abort("For checkpoint format, write_species flag must be 1.");
+        }
+        // if user-defined value for write_species == 0, then clear species vector
+        m_output_species.clear();
+        m_output_species_names.clear();
+    }
 }
 
 
