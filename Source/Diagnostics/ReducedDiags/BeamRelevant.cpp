@@ -55,9 +55,8 @@ BeamRelevant::BeamRelevant (std::string rd_name)
         if ( m_IsNotRestart )
         {
             // open file
-            std::ofstream ofs;
-            ofs.open(m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app);
+            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
+                std::ofstream::out | std::ofstream::app};
             // write header row
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
             ofs << "#";
