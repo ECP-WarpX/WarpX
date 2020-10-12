@@ -438,7 +438,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
            {
                //for std::make_shared<T[]> we should wait C++20
                //in the meanwhile, a unique_ptr can be converted in a shared_ptr
-               std::shared_ptr<amrex::ParticleReal> z =
+               std::shared_ptr<amrex::ParticleReal[]> z =
                 std::make_unique<amrex::ParticleReal[]>(numParticleOnTile);
 
               for (auto i = 0; i < numParticleOnTile; i++)
@@ -454,10 +454,10 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(int(soa.GetRealData(PIdx::theta).size()) == numParticleOnTile,
                                             "openPMD: theta and tile size do not match");
            {
-               std::shared_ptr<amrex::ParticleReal> x =
+               std::shared_ptr<amrex::ParticleReal[]> x =
                 std::make_unique<amrex::ParticleReal[]>(numParticleOnTile);
 
-                std::shared_ptr<amrex::ParticleReal> y =
+                std::shared_ptr<amrex::ParticleReal[]> y =
                  std::make_unique<amrex::ParticleReal[]>(numParticleOnTile);
 
                for (auto i=0; i<numParticleOnTile; i++) {
@@ -470,7 +470,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
            }
 #else
            for (auto currDim = 0; currDim < AMREX_SPACEDIM; currDim++) {
-                std::shared_ptr<amrex::ParticleReal> curr =
+                std::shared_ptr<amrex::ParticleReal[]> curr =
                     std::make_unique<amrex::ParticleReal[]>(numParticleOnTile);
 
                 for (auto i=0; i<numParticleOnTile; i++) {
@@ -482,7 +482,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
 #endif
 
            // save particle ID after converting it to a globally unique ID
-           std::shared_ptr< uint64_t > ids =
+           std::shared_ptr<uint64_t[]> ids =
             std::make_unique<uint64_t[]>(numParticleOnTile);
 
            for (auto i=0; i<numParticleOnTile; i++) {
@@ -580,7 +580,7 @@ WarpXOpenPMDPlot::SaveRealProperty(WarpXParIter& pti,
           auto currRecord = currSpecies[record_name];
           auto currRecordComp = currRecord[component_name];
 
-          std::shared_ptr< amrex::ParticleReal > d =
+          std::shared_ptr<amrex::ParticleReal[]> d =
             std::make_unique<amrex::ParticleReal[]>(numParticleOnTile);
 
           for( auto kk=0; kk<numParticleOnTile; kk++ )
