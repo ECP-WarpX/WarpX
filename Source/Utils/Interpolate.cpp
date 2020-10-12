@@ -13,7 +13,7 @@ namespace Interpolate
     {
         // Prepare the structure that will contain the returned fields
         std::unique_ptr<MultiFab> interpolated_F;
-        interpolated_F.reset( new MultiFab(F_fp.boxArray(), dm, 1, ngrow) );
+        interpolated_F = std::make_unique<MultiFab>(F_fp.boxArray(), dm, 1, ngrow);
         interpolated_F->setVal(0.);
 
         // Loop through the boxes and interpolate the values from the _cp data
@@ -61,9 +61,9 @@ namespace Interpolate
 
         // Prepare the structure that will contain the returned fields
         std::array<std::unique_ptr<MultiFab>, 3> interpolated_F;
-        interpolated_F[0].reset( new MultiFab(Fx_fp->boxArray(), dm, 1, ngrow) );
-        interpolated_F[1].reset( new MultiFab(Fy_fp->boxArray(), dm, 1, ngrow) );
-        interpolated_F[2].reset( new MultiFab(Fz_fp->boxArray(), dm, 1, ngrow) );
+        interpolated_F[0] = std::make_unique<MultiFab>(Fx_fp->boxArray(), dm, 1, ngrow);
+        interpolated_F[1] = std::make_unique<MultiFab>(Fy_fp->boxArray(), dm, 1, ngrow);
+        interpolated_F[2] = std::make_unique<MultiFab>(Fz_fp->boxArray(), dm, 1, ngrow);
 
         IntVect fx_type = interpolated_F[0]->ixType().toIntVect();
         IntVect fy_type = interpolated_F[1]->ixType().toIntVect();

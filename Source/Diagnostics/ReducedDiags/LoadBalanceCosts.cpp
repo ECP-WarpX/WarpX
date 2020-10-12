@@ -9,6 +9,7 @@
 #include "LoadBalanceCosts.H"
 #include "Utils/WarpXUtil.H"
 
+#include <memory>
 
 using namespace amrex;
 
@@ -58,7 +59,7 @@ void LoadBalanceCosts::ComputeDiags (int step)
     costs.resize(nLevels);
     for (int lev = 0; lev < nLevels; ++lev)
     {
-        costs[lev].reset(new amrex::LayoutData<Real>(*warpx.getCosts(lev)));
+        costs[lev] = std::make_unique<LayoutData<Real>>(*warpx.getCosts(lev));
     }
 
     if (warpx.load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Heuristic)

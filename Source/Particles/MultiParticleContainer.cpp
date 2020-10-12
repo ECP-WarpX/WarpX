@@ -39,23 +39,23 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
     allcontainers.resize(nspecies + nlasers);
     for (int i = 0; i < nspecies; ++i) {
         if (species_types[i] == PCTypes::Physical) {
-            allcontainers[i].reset(new PhysicalParticleContainer(amr_core, i, species_names[i]));
+            allcontainers[i] = std::make_unique<PhysicalParticleContainer>(amr_core, i, species_names[i]);
         }
         else if (species_types[i] == PCTypes::RigidInjected) {
-            allcontainers[i].reset(new RigidInjectedParticleContainer(amr_core, i, species_names[i]));
+            allcontainers[i] = std::make_unique<RigidInjectedParticleContainer>(amr_core, i, species_names[i]);
         }
         else if (species_types[i] == PCTypes::Photon) {
-            allcontainers[i].reset(new PhotonParticleContainer(amr_core, i, species_names[i]));
+            allcontainers[i] = std::make_unique<PhotonParticleContainer>(amr_core, i, species_names[i]);
         }
         allcontainers[i]->m_deposit_on_main_grid = m_deposit_on_main_grid[i];
         allcontainers[i]->m_gather_from_main_grid = m_gather_from_main_grid[i];
     }
 
     for (int i = nspecies; i < nspecies+nlasers; ++i) {
-        allcontainers[i].reset(new LaserParticleContainer(amr_core, i, lasers_names[i-nspecies]));
+        allcontainers[i] = std::make_unique<LaserParticleContainer>(amr_core, i, lasers_names[i-nspecies]);
     }
 
-    pc_tmp.reset(new PhysicalParticleContainer(amr_core));
+    pc_tmp = std::make_unique<PhysicalParticleContainer>(amr_core);
 
     // Compute the number of species for which lab-frame data is dumped
     // nspecies_lab_frame_diags, and map their ID to MultiParticleContainer
@@ -75,8 +75,8 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
     auto const ncollisions = collision_names.size();
     allcollisions.resize(ncollisions);
     for (int i = 0; i < static_cast<int>(ncollisions); ++i) {
-        allcollisions[i].reset
-            (new CollisionType(species_names, collision_names[i]));
+        allcollisions[i] =
+            std::make_unique<CollisionType>(species_names, collision_names[i]);
     }
 
 }
@@ -139,12 +139,12 @@ MultiParticleContainer::ReadParameters ()
                                       str_Bz_ext_particle_function);
 
            // Parser for B_external on the particle
-           m_Bx_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Bx_ext_particle_function,{"x","y","z","t"})));
-           m_By_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_By_ext_particle_function,{"x","y","z","t"})));
-           m_Bz_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Bz_ext_particle_function,{"x","y","z","t"})));
+           m_Bx_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Bx_ext_particle_function,{"x","y","z","t"}));
+           m_By_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_By_ext_particle_function,{"x","y","z","t"}));
+           m_Bz_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Bz_ext_particle_function,{"x","y","z","t"}));
 
         }
 
@@ -164,12 +164,12 @@ MultiParticleContainer::ReadParameters ()
            Store_parserString(pp, "Ez_external_particle_function(x,y,z,t)",
                                       str_Ez_ext_particle_function);
            // Parser for E_external on the particle
-           m_Ex_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Ex_ext_particle_function,{"x","y","z","t"})));
-           m_Ey_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Ey_ext_particle_function,{"x","y","z","t"})));
-           m_Ez_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Ez_ext_particle_function,{"x","y","z","t"})));
+           m_Ex_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Ex_ext_particle_function,{"x","y","z","t"}));
+           m_Ey_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Ey_ext_particle_function,{"x","y","z","t"}));
+           m_Ez_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Ez_ext_particle_function,{"x","y","z","t"}));
 
         }
 

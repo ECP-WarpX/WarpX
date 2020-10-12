@@ -12,9 +12,9 @@ MultiDiagnostics::MultiDiagnostics ()
     alldiags.resize( ndiags );
     for (int i=0; i<ndiags; i++){
         if ( diags_types[i] == DiagTypes::Full ){
-            alldiags[i].reset( new FullDiagnostics(i, diags_names[i]) );
+            alldiags[i] = std::make_unique<FullDiagnostics>(i, diags_names[i]);
         } else if ( diags_types[i] == DiagTypes::BackTransformed ){
-            alldiags[i].reset( new BTDiagnostics(i, diags_names[i]) );
+            alldiags[i] = std::make_unique<BTDiagnostics>(i, diags_names[i]);
         } else {
             amrex::Abort("Unknown diagnostic type");
         }

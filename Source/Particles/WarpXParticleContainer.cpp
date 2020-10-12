@@ -632,7 +632,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     WarpX& warpx = WarpX::GetInstance();
     const int ng_rho = warpx.get_ng_depos_rho().max();
 
-    auto rho = std::unique_ptr<MultiFab>(new MultiFab(nba,dm,WarpX::ncomps,ng_rho));
+    auto rho = std::make_unique<MultiFab>(nba,dm,WarpX::ncomps,ng_rho);
     rho->setVal(0.0);
 
 #ifdef _OPENMP
