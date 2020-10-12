@@ -16,26 +16,25 @@ ParticleNumber::ParticleNumber (std::string rd_name)
     auto & warpx = WarpX::GetInstance();
 
     // get MultiParticleContainer class object
-    auto & mypc = warpx.GetPartContainer();
+    const auto & mypc = warpx.GetPartContainer();
 
     // get number of species (int)
-    auto nSpecies = mypc.nSpecies();
+    const auto nSpecies = mypc.nSpecies();
 
     // resize data array to nSpecies+1
     // (number of particles of each species + total number of particles)
     m_data.resize(nSpecies+1, amrex::Real(0.));
 
     // get species names (std::vector<std::string>)
-    auto species_names = mypc.GetSpeciesNames();
+    const auto species_names = mypc.GetSpeciesNames();
 
     if (amrex::ParallelDescriptor::IOProcessor())
     {
         if ( m_IsNotRestart )
         {
             // open file
-            std::ofstream ofs;
-            ofs.open(m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app);
+            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
+                std::ofstream::out | std::ofstream::app};
             // write header row
             ofs << "#";
             ofs << "[1]step()";
@@ -70,7 +69,7 @@ void ParticleNumber::ComputeDiags (int step)
     auto & mypc = WarpX::GetInstance().GetPartContainer();
 
     // get number of species (int)
-    auto nSpecies = mypc.nSpecies();
+    const auto nSpecies = mypc.nSpecies();
 
     // Index of total number of particles (all species) in m_data
     constexpr int idx_total = 0;
@@ -84,7 +83,7 @@ void ParticleNumber::ComputeDiags (int step)
     for (int i_s = 0; i_s < nSpecies; ++i_s)
     {
         // get WarpXParticleContainer class object
-        auto & myspc = mypc.GetParticleContainer(i_s);
+        const auto & myspc = mypc.GetParticleContainer(i_s);
 
         // Save result for this species
         m_data[idx_first_species + i_s] = myspc.TotalNumberOfParticles();
