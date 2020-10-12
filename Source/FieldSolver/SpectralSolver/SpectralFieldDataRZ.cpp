@@ -53,8 +53,8 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (amrex::BoxArray const & realspace_ba,
 
     // Allocate and initialize the FFT plans and Hankel transformer.
     forward_plan = FFTplans(spectralspace_ba, dm);
-#ifndef AMREX_USE_GPU
-    // The backward plan is not needed with GPU since it would be the same
+#ifndef AMREX_USE_CUDA
+    // The backward plan is not needed with CUDA since it would be the same
     // as the forward plan anyway.
     backward_plan = FFTplans(spectralspace_ba, dm);
 #endif
@@ -64,7 +64,7 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (amrex::BoxArray const & realspace_ba,
     // for each box owned by the local MPI proc.
     for (amrex::MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi){
         amrex::IntVect grid_size = realspace_ba[mfi].length();
-#ifdef AMREX_USE_GPU
+#if defined(AMREX_USE_CUDA)
         // Create cuFFT plan.
         // This is alway complex to complex.
         // This plan is for one azimuthal mode only.
@@ -77,13 +77,64 @@ SpectralFieldDataRZ::SpectralFieldDataRZ (amrex::BoxArray const & realspace_ba,
         int ostride = grid_size[0];
         int odist = 1;
         int batch = grid_size[0]; // number of ffts
+#  ifdef AMREX_USE_FLOAT
+        auto cufft_type = CUFFT_C2C;
+#  else
+        auto cufft_type = CUFFT_Z2Z;
+#  endif
         result = cufftPlanMany(&forward_plan[mfi], 1, fft_length, inembed, istride, idist,
-                               onembed, ostride, odist, CUFFT_Z2Z, batch);
+                               onembed, ostride, odist, cufft_type, batch);
         if (result != CUFFT_SUCCESS) {
-           amrex::Print() << " cufftPlanMany failed! \n";
+           amrex::AllPrint() << " cufftPlanMany failed! \n";
         }
         // The backward plane is the same as the forward since the direction is passed when executed.
+#elif defined(AMREX_USE_HIP)
+        const std::size_t fft_length[] = {static_cast<std::size_t>(grid_size[1])};
+        const std::size_t stride[] = {static_cast<std::size_t>(grid_size[0])};
+        rocfft_plan_description description;
+        rocfft_status result;
+        result = rocfft_plan_description_create(&description);
+        result = rocfft_plan_description_set_data_layout(description,
+                                                         rocfft_array_type_complex_interleaved,
+                                                         rocfft_array_type_complex_interleaved,
+                                                         nullptr, nullptr,
+                                                         1, stride, 1,
+                                                         1, stride, 1);
 
+        result = rocfft_plan_create(&(forward_plan[mfi]),
+                                    rocfft_placement_notinplace,
+                                    rocfft_transform_type_complex_forward,
+#ifdef AMREX_USE_FLOAT
+                                    rocfft_precision_single,
+#else
+                                    rocfft_precision_double,
+#endif
+                                    1, fft_length,
+                                    grid_size[0], // number of transforms
+                                    description);
+        if (result != rocfft_status_success) {
+            amrex::AllPrint() << " rocfft_plan_create failed! \n";
+        }
+
+        result = rocfft_plan_create(&(backward_plan[mfi]),
+                                    rocfft_placement_notinplace,
+                                    rocfft_transform_type_complex_inverse,
+#ifdef AMREX_USE_FLOAT
+                                    rocfft_precision_single,
+#else
+                                    rocfft_precision_double,
+#endif
+                                    1, fft_length,
+                                    grid_size[0], // number of transforms
+                                    description);
+        if (result != rocfft_status_success) {
+            amrex::AllPrint() << " rocfft_plan_create failed! \n";
+        }
+
+        result = rocfft_plan_description_destroy(description);
+        if (result != rocfft_status_success) {
+            amrex::AllPrint() << " rocfft_plan_description_destroy failed! \n";
+        }
 #else
         // Create FFTW plans.
         fftw_iodim dims[1];
@@ -129,10 +180,13 @@ SpectralFieldDataRZ::~SpectralFieldDataRZ()
 {
     if (fields.size() > 0){
         for (amrex::MFIter mfi(fields); mfi.isValid(); ++mfi){
-#ifdef AMREX_USE_GPU
+#if defined(AMREX_USE_CUDA)
             // Destroy cuFFT plans.
             cufftDestroy(forward_plan[mfi]);
             // cufftDestroy(backward_plan[mfi]); // This was never allocated.
+#elif defined(AMREX_USE_HIP)
+            rocfft_plan_destroy(forward_plan[mfi]);
+            rocfft_plan_destroy(backward_plan[mfi]);
 #else
             // Destroy FFTW plans.
             fftw_destroy_plan(forward_plan[mfi]);
@@ -168,7 +222,7 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
     });
 
     // Perform Fourier transform from `tempHTransformed` to `tmpSpectralField`.
-#ifdef AMREX_USE_GPU
+#if defined(AMREX_USE_CUDA)
     // Perform Fast Fourier Transform on GPU using cuFFT.
     // Make sure that this is done on the same
     // GPU stream as the above copy.
@@ -176,14 +230,39 @@ SpectralFieldDataRZ::FABZForwardTransform (amrex::MFIter const & mfi, amrex::Box
     cudaStream_t stream = amrex::Gpu::Device::cudaStream();
     cufftSetStream(forward_plan[mfi], stream);
     for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
+#  ifdef AMREX_USE_FLOAT
+        result = cufftExecC2C(forward_plan[mfi],
+#  else
         result = cufftExecZ2Z(forward_plan[mfi],
-                              reinterpret_cast<cuDoubleComplex*>(tempHTransformed[mfi].dataPtr(mode)), // cuDoubleComplex *in
-                              reinterpret_cast<cuDoubleComplex*>(tmpSpectralField[mfi].dataPtr(mode)), // cuDoubleComplex *out
+#  endif
+                              reinterpret_cast<AnyFFT::Complex*>(tempHTransformed[mfi].dataPtr(mode)), // Complex *in
+                              reinterpret_cast<AnyFFT::Complex*>(tmpSpectralField[mfi].dataPtr(mode)), // Complex *out
                               CUFFT_FORWARD);
         if (result != CUFFT_SUCCESS) {
-           amrex::Print() << " forward transform using cufftExecZ2Z failed ! \n";
+            amrex::AllPrint() << " forward transform using cufftExecZ2Z failed ! \n";
         }
     }
+#elif defined(AMREX_USE_HIP)
+    rocfft_execution_info execinfo = NULL;
+    rocfft_status result = rocfft_execution_info_create(&execinfo);
+    std::size_t buffersize = 0;
+    result = rocfft_plan_get_work_buffer_size(forward_plan[mfi], &buffersize);
+    void* buffer = amrex::The_Arena()->alloc(buffersize);
+    result = rocfft_execution_info_set_work_buffer(execinfo, buffer, buffersize);
+    result = rocfft_execution_info_set_stream(execinfo, amrex::Gpu::gpuStream());
+
+    for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
+        void* in_array[] = {(void*)(tempHTransformed[mfi].dataPtr(mode))};
+        void* out_array[] = {(void*)(tmpSpectralField[mfi].dataPtr(mode))};
+        result = rocfft_execute(forward_plan[mfi], in_array, out_array, execinfo);
+        if (result != rocfft_status_success) {
+            amrex::AllPrint() << " forward transform using rocfft_execute failed ! \n";
+        }
+    }
+
+    amrex::Gpu::streamSynchronize();
+    amrex::The_Arena()->free(buffer);
+    result = rocfft_execution_info_destroy(execinfo);
 #else
     fftw_execute(forward_plan[mfi]);
 #endif
@@ -252,7 +331,7 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
     });
 
     // Perform Fourier transform from `tmpSpectralField` to `tempHTransformed`.
-#ifdef AMREX_USE_GPU
+#if defined(AMREX_USE_CUDA)
     // Perform Fast Fourier Transform on GPU using cuFFT.
     // Make sure that this is done on the same
     // GPU stream as the above copy.
@@ -260,14 +339,39 @@ SpectralFieldDataRZ::FABZBackwardTransform (amrex::MFIter const & mfi, amrex::Bo
     cudaStream_t stream = amrex::Gpu::Device::cudaStream();
     cufftSetStream(forward_plan[mfi], stream);
     for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
+#  ifdef AMREX_USE_FLOAT
+        result = cufftExecC2C(forward_plan[mfi],
+#  else
         result = cufftExecZ2Z(forward_plan[mfi],
-                              reinterpret_cast<cuDoubleComplex*>(tmpSpectralField[mfi].dataPtr(mode)), // cuDoubleComplex *in
-                              reinterpret_cast<cuDoubleComplex*>(tempHTransformed[mfi].dataPtr(mode)), // cuDoubleComplex *out
+#  endif
+                              reinterpret_cast<AnyFFT::Complex*>(tmpSpectralField[mfi].dataPtr(mode)), // Complex *in
+                              reinterpret_cast<AnyFFT::Complex*>(tempHTransformed[mfi].dataPtr(mode)), // Complex *out
                               CUFFT_INVERSE);
         if (result != CUFFT_SUCCESS) {
-           amrex::Print() << " backwardtransform using cufftExecZ2Z failed ! \n";
+            amrex::AllPrint() << " backwardtransform using cufftExecZ2Z failed ! \n";
         }
     }
+#elif defined(AMREX_USE_HIP)
+    rocfft_execution_info execinfo = NULL;
+    rocfft_status result = rocfft_execution_info_create(&execinfo);
+    std::size_t buffersize = 0;
+    result = rocfft_plan_get_work_buffer_size(forward_plan[mfi], &buffersize);
+    void* buffer = amrex::The_Arena()->alloc(buffersize);
+    result = rocfft_execution_info_set_work_buffer(execinfo, buffer, buffersize);
+    result = rocfft_execution_info_set_stream(execinfo, amrex::Gpu::gpuStream());
+
+    for (int mode=0 ; mode < n_rz_azimuthal_modes ; mode++) {
+        void* in_array[] = {(void*)(tmpSpectralField[mfi].dataPtr(mode))};
+        void* out_array[] = {(void*)(tempHTransformed[mfi].dataPtr(mode))};
+        result = rocfft_execute(backward_plan[mfi], in_array, out_array, execinfo);
+        if (result != rocfft_status_success) {
+            amrex::AllPrint() << " forward transform using rocfft_execute failed ! \n";
+        }
+    }
+
+    amrex::Gpu::streamSynchronize();
+    amrex::The_Arena()->free(buffer);
+    result = rocfft_execution_info_destroy(execinfo);
 #else
     fftw_execute(backward_plan[mfi]);
 #endif
