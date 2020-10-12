@@ -144,8 +144,6 @@ Diagnostics::BaseReadParameters ()
         }
     }
 
-
-
     bool checkpoint_compatibility = false;
     if (m_format == "checkpoint"){
        if ( varnames_specified == false &&
