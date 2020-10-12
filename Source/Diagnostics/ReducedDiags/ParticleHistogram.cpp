@@ -65,7 +65,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     }
 
     // get MultiParticleContainer class object
-    auto & mypc = WarpX::GetInstance().GetPartContainer();
+    const auto & mypc = WarpX::GetInstance().GetPartContainer();
     // get species names (std::vector<std::string>)
     auto const species_names = mypc.GetSpeciesNames();
     // select species
@@ -127,7 +127,7 @@ void ParticleHistogram::ComputeDiags (int step)
     auto const t = warpx.gett_new(0);
 
     // get MultiParticleContainer class object
-    auto & mypc = warpx.GetPartContainer();
+    const auto & mypc = warpx.GetPartContainer();
 
     // get WarpXParticleContainer class object
     auto const & myspc = mypc.GetParticleContainer(m_selected_species_id);
