@@ -129,9 +129,9 @@ AverageAndPackVectorField( MultiFab& mf_avg,
         ConstructTotalRZVectorField(vector_total, vector_field);
     } else {
         // Create aliases of the MultiFabs
-        vector_total[0] = std::make_unique<MultiFab>(MultiFab(*vector_field[0], amrex::make_alias, 0, 1);
-        vector_total[1] = std::make_unique<MultiFab>(MultiFab(*vector_field[1], amrex::make_alias, 0, 1);
-        vector_total[2] = std::make_unique<MultiFab>(MultiFab(*vector_field[2], amrex::make_alias, 0, 1);
+        vector_total[0] = std::make_unique<MultiFab>(*vector_field[0], amrex::make_alias, 0, 1);
+        vector_total[1] = std::make_unique<MultiFab>(*vector_field[1], amrex::make_alias, 0, 1);
+        vector_total[2] = std::make_unique<MultiFab>(*vector_field[2], amrex::make_alias, 0, 1);
     }
 #else
     const std::array<std::unique_ptr<MultiFab>,3> &vector_total = vector_field;
