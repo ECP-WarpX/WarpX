@@ -100,7 +100,6 @@ jobs:
         sudo apt-get install -y intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl-devel
         set +e
         source /opt/intel/oneapi/setvars.sh
-        source /opt/intel/oneapi/compiler/2021.1-beta08/env/vars.sh
         set -e
         git clone https://github.com/openPMD/openPMD-api.git
         mkdir openPMD-api/build
@@ -113,7 +112,6 @@ jobs:
       run: |
         set +e
         source /opt/intel/oneapi/setvars.sh
-        source /opt/intel/oneapi/compiler/2021.1-beta08/env/vars.sh
         set -e
         export CXX=$(which dpcpp)
         export CC=$(which clang)
