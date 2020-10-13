@@ -11,6 +11,8 @@
 #   include <physics/quantum_sync/quantum_sync_engine_tables_generator.hpp>
 #endif
 
+#include <AMReX.H>
+
 #include <utility>
 #include <vector>
 #include <cstdint>
@@ -144,6 +146,7 @@ void QuantumSynchrotronEngine::compute_lookup_tables (
 
     m_lookup_tables_initialized = true;
 #else
+    amrex::ignore_unused(ctrl, qs_minimum_chi_part);
     amrex::Abort("WarpX was not compiled with table generation support!");
 #endif
 }
