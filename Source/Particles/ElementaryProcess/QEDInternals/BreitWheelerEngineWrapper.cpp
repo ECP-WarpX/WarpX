@@ -13,6 +13,8 @@
 #   include <physics/breit_wheeler/breit_wheeler_engine_tables_generator.hpp>
 #endif
 
+#include <AMReX.H>
+
 #include <utility>
 #include <vector>
 #include <cstdint>
@@ -147,6 +149,7 @@ void BreitWheelerEngine::compute_lookup_tables (
 
     m_lookup_tables_initialized = true;
 #else
+    amrex::ignore_unused(ctrl, bw_minimum_chi_phot);
     amrex::Abort("WarpX was not compiled with table generation support!");
 #endif
 }
