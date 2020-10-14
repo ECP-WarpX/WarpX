@@ -73,7 +73,7 @@ long WarpX::load_balance_costs_update_algo;
 int WarpX::do_dive_cleaning = 0;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
-int WarpX::do_single_precision_comms=0;
+int WarpX::do_single_precision_comms=1;
 
 long WarpX::n_rz_azimuthal_modes = 1;
 long WarpX::ncomps = 1;
@@ -484,6 +484,7 @@ WarpX::ReadParameters ()
             pp.getarr("mirror_z_npoints", mirror_z_npoints, 0, num_mirrors);
         }
 
+        pp.query("do_single_precision_comms", do_single_precision_comms);
         pp.query("serialize_ics", serialize_ics);
         pp.query("refine_plasma", refine_plasma);
         pp.query("do_dive_cleaning", do_dive_cleaning);
