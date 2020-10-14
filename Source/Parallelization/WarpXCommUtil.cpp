@@ -58,7 +58,7 @@ void FillBoundary (amrex::MultiFab& mf, const amrex::Periodicity& period)
         amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
                                                             mf.DistributionMap(),
                                                             mf.nComp(),
-                                                            mf.nGrow());
+                                                            mf.nGrowVect());
 
         mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
 
@@ -81,7 +81,7 @@ void FillBoundary (amrex::MultiFab&          mf,
         amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
                                                             mf.DistributionMap(),
                                                             mf.nComp(),
-                                                            mf.nGrow());
+                                                            mf.nGrowVect());
 
         mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
 
@@ -113,7 +113,7 @@ void OverrideSync (amrex::MultiFab&          mf,
         amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
                                                                  mf.DistributionMap(),
                                                                  mf.nComp(),
-                                                                 mf.nGrow());
+                                                                 mf.nGrowVect());
 
         mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
 
