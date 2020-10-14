@@ -15,7 +15,7 @@ function(find_picsar)
 
         if(NOT fetchedpicsar_POPULATED)
             FetchContent_Populate(fetchedpicsar)
-            add_subdirectory(${fetchedpicsar_SOURCE_DIR}/src/multi_physics ${fetchedpicsar_BINARY_DIR})
+            add_subdirectory(${fetchedpicsar_SOURCE_DIR}/src/multi_physics/QED ${fetchedpicsar_BINARY_DIR})
         endif()
 
         # advanced fetch options

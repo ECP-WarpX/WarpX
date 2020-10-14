@@ -3,7 +3,7 @@ target_sources(WarpX
     Ionization.cpp
 )
 
-if(WarpX_HAVE_QED)
+if(WarpX_QED)
     target_sources(WarpX
       PRIVATE
         QEDPairGeneration.cpp

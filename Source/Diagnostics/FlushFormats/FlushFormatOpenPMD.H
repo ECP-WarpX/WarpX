@@ -22,7 +22,7 @@ public:
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double time,
-        const amrex::Vector<ParticleDiag>& particle_diags, int nlev, const std::string prefix,
+        const amrex::Vector<ParticleDiag>& particle_diags, int /*nlev*/, const std::string prefix,
         bool plot_raw_fields,
         bool plot_raw_fields_guards,
         bool plot_raw_rho, bool plot_raw_F) const override final;

@@ -235,7 +235,7 @@ void WarpXOpenPMDPlot::GetFileName(std::string& filename)
 }
 
 
-void WarpXOpenPMDPlot::SetStep(int ts, const std::string& filePrefix)
+void WarpXOpenPMDPlot::SetStep (int ts, const std::string& filePrefix)
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
 
@@ -252,8 +252,14 @@ void WarpXOpenPMDPlot::SetStep(int ts, const std::string& filePrefix)
 
 }
 
+void WarpXOpenPMDPlot::CloseStep ()
+{
+    if (m_Series)
+        m_Series->iterations[m_CurrentStep].close();
+}
+
 void
-WarpXOpenPMDPlot::Init(openPMD::Access access, const std::string& filePrefix)
+WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix)
 {
     // either for the next ts file,
     // or init a single file for all ts
@@ -434,7 +440,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                       [](amrex::ParticleReal const *p) { delete[] p; }
               );
               for (auto i = 0; i < numParticleOnTile; i++)
-                  z.get()[i] = aos[i].m_rdata.pos[1];  // {0: "r", 1: "z"}
+                  z.get()[i] = aos[i].pos(1);  // {0: "r", 1: "z"}
               std::string const positionComponent = "z";
               currSpecies["position"]["z"].storeChunk(z, {offset}, {numParticleOnTile64});
            }
@@ -455,7 +461,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                        [](amrex::ParticleReal const *p){ delete[] p; }
                );
                for (auto i=0; i<numParticleOnTile; i++) {
-                   auto const r = aos[i].m_rdata.pos[0];  // {0: "r", 1: "z"}
+                   auto const r = aos[i].pos(0);  // {0: "r", 1: "z"}
                    x.get()[i] = r * std::cos(theta[i]);
                    y.get()[i] = r * std::sin(theta[i]);
                }

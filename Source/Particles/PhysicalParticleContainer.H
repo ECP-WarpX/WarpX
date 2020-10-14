@@ -285,7 +285,7 @@ public:
     * @param[in] resampler the Resampling object used for resampling.
     * @param[in] timestep the current timestep.
     */
-    void resample (const Resampling& resampler, const int timestep) override final;
+    void resample (const int timestep) override final;
 
     //Functions decleared in WarpXParticleContainer.H
     //containers for which QED processes could be relevant
@@ -333,6 +333,8 @@ protected:
     // particle and the time of the boosted frame.
     bool boost_adjust_transverse_positions = false;
     bool do_backward_propagation = false;
+
+    Resampling m_resampler;
 
     // Inject particles during the whole simulation
     void ContinuousInjection (const amrex::RealBox& injection_box) override;

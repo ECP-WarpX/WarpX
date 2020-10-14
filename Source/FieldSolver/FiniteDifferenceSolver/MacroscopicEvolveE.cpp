@@ -9,8 +9,10 @@
 #endif
 #include "Utils/WarpXConst.H"
 #include "Utils/CoarsenIO.H"
-#include <AMReX_Gpu.H>
 #include <WarpX.H>
+#include <AMReX.H>
+#include <AMReX_Gpu.H>
+
 
 using namespace amrex;
 
@@ -23,6 +25,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
+    amrex::ignore_unused(Efield, Bfield, Jfield, dt, macroscopic_properties);
     amrex::Abort("currently macro E-push does not work for RZ");
 #else
     if (m_do_nodal) {
@@ -84,7 +87,6 @@ void FiniteDifferenceSolver::MacroscopicEvolveECartesian (
     // properties from their respective staggering to the Ex, Ey, Ez locations
     amrex::GpuArray<int, 3> const& sigma_stag = macroscopic_properties->sigma_IndexType;
     amrex::GpuArray<int, 3> const& epsilon_stag = macroscopic_properties->epsilon_IndexType;
-    amrex::GpuArray<int, 3> const& mu_stag = macroscopic_properties->mu_IndexType;
     amrex::GpuArray<int, 3> const& Ex_stag = macroscopic_properties->Ex_IndexType;
     amrex::GpuArray<int, 3> const& Ey_stag = macroscopic_properties->Ey_IndexType;
     amrex::GpuArray<int, 3> const& Ez_stag = macroscopic_properties->Ez_IndexType;

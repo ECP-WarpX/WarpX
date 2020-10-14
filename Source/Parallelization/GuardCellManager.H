@@ -76,6 +76,10 @@ public:
     // An extra guard cell is needed on the fine grid to do the interpolation
     // for E and B.
     amrex::IntVect ng_Extra = amrex::IntVect::TheZeroVector();
+
+    // Number of guard cells for local deposition of J and rho
+    amrex::IntVect ng_depos_J   = amrex::IntVect::TheZeroVector();
+    amrex::IntVect ng_depos_rho = amrex::IntVect::TheZeroVector();
 };
 
 #endif // GUARDCELLMANAGER_H_

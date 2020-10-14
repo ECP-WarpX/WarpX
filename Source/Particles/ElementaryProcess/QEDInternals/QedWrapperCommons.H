@@ -27,9 +27,9 @@
 
 /**
  * PICSAR uses internally some specifiers analogous to
- * AMREX_RESTRICT and AMREX_RESTRICT. These definitions
+ * AMREX_RESTRICT and AMREX_FORCE_INLINE. These definitions
  * set the aformentioned specifiers to AMREX_RESTRICT and
- * AMREX_RESTRICT.
+ * AMREX_FORCE_INLINE.
  */
 #define PXRMP_RESTRICT AMREX_RESTRICT
 #define PXRMP_FORCE_INLINE AMREX_FORCE_INLINE

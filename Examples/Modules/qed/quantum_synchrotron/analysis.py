@@ -17,15 +17,17 @@ import scipy.stats as st
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 # This script performs detailed checks of the Quantum Synchrotron photon emission process.
 # Two electron populations and two positron populations are initialized with different momenta in different
 # directions in a background EM field (with non-zero components along each direction).
 # Specifically the script checks that:
 #
-# - The expected number of generated photons n_phot is in agreement with theory
-#   (the maximum tolerated error is 6*sqrt(n_phot)
+# - The expected number of generated photons n_phot is in agreement with theory.
+#   The maximum tolerated error is 5*sqrt(n_phot), except for the last 8 points,
+#   for which a higher tolerance is used (this is due to the fact that the resolution
+#   of the builtin table is quite limited).
 # - The weight of the generated particles is equal to the weight of the photon
 # - The generated particles are emitted in the right direction
 # - The energy distribution of the generated particles is in agreement with theory
@@ -189,7 +191,8 @@ def check_opt_depths(part_data, phot_data):
         assert( np.abs(scale - 1) < tol_red )
     print("  [OK] optical depth distributions are still exponential")
 
-def check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NN, idx):
+def check_energy_distrib(gamma_phot, chi_part,
+        gamma_part, n_phot, NN, idx, do_plot=False):
     gamma_phot_min = 1e-12*gamma_part
     gamma_phot_max = gamma_part
     h_log_gamma_phot, c_gamma_phot = np.histogram(gamma_phot, bins=np.logspace(np.log10(gamma_phot_min),np.log10(gamma_phot_max),NN+1))
@@ -204,38 +207,35 @@ def check_energy_distrib(gamma_phot, chi_part, gamma_part, n_phot, NN, idx):
     distrib = np.sum(distrib.reshape(-1, npoints),1)
     distrib = n_phot*distrib/np.sum(distrib)
 
-    #c_gamma_phot = np.exp(0.5*(np.log(c_gamma_phot[1:])+np.log(c_gamma_phot[:-1])))
+    if do_plot :
+        # Visual comparison of distributions
+        c_gamma_phot = np.exp(0.5*(np.log(c_gamma_phot[1:])+np.log(c_gamma_phot[:-1])))
+        plt.clf()
 
-    # Visual comparison of distributions
-    #plt.clf()
-
-    #fig, (ax1, ax2) = plt.subplots(1, 2)
-    #fig.suptitle("χ_particle = {:f}".format(chi_part))
-
-    #ax1.plot(c_gamma_phot, distrib,label="theory")
-    #ax1.loglog(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
-    #ax1.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
-    #ax1.set_ylim(1,1e5)
-
-    #ax2.plot(c_gamma_phot, distrib,label="theory")
-    #ax2.semilogy(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
-    #ax2.set_ylim(1,1e5)
-    #ax2.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
-
-    #ax1.set_xlabel("γ_photon")
-    #ax1.set_xlabel("N")
-
-    #ax2.set_xlabel("γ_photon")
-    #ax2.set_xlabel("N")
-
-    #plt.legend()
-    #plt.savefig("case_{:d}".format(idx+1))
+        fig, (ax1, ax2) = plt.subplots(1, 2)
+        fig.suptitle("χ_particle = {:f}".format(chi_part))
+        ax1.plot(c_gamma_phot, distrib,label="theory")
+        ax1.loglog(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
+        ax1.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
+        ax1.set_ylim(1,1e5)
+        ax2.plot(c_gamma_phot, distrib,label="theory")
+        ax2.semilogy(c_gamma_phot, h_log_gamma_phot,label="QSR photons")
+        ax2.set_ylim(1,1e5)
+        ax2.set_xlim(1e-12*(gamma_part-1),gamma_part-1)
+        ax1.set_xlabel("γ_photon")
+        ax1.set_xlabel("N")
+        ax2.set_xlabel("γ_photon")
+        ax2.set_xlabel("N")
+        plt.legend()
+        plt.savefig("case_{:d}".format(idx+1))
 
     discr = np.abs(h_log_gamma_phot-distrib)
 
-    max_discr = np.where(np.sqrt(distrib)>1, np.sqrt(distrib), 1)*5.0
-    # do not check the last 6 points: the lookup table is too coarse-grained for that
-    assert(np.all( np.abs(discr[:-6]) < max_discr[:-6]  ))
+    max_discr = np.sqrt(distrib)*5.0
+    # Use a higer tolerance for the last 8 points (this is due to limitations
+    # of the builtin table)
+    max_discr[-8:] *= 2.0
+    assert(np.all( discr < max_discr ))
 
     print("  [OK] energy distribution is within expectations")
 

@@ -54,6 +54,7 @@ options are:
     * ``USE_GPU=TRUE`` or ``FALSE``: Whether to compile for Nvidia GPUs (requires CUDA).
     * ``USE_OPENPMD=TRUE`` or ``FALSE``: Whether to support openPMD for I/O (requires openPMD-api).
     * ``MPI_THREAD_MULTIPLE=TRUE`` or ``FALSE``: Whether to initialize MPI with thread multiple support. Required to use asynchronous IO with more than ``amrex.async_out_nfiles`` (by default, 64) MPI tasks. Please see :doc:`../visualization/visualization` for more information.
+    * ``PRECISION=FLOAT USE_SINGLE_PRECISION_PARTICLES=TRUE``: Switch from default double precision to single precision (experimental).
 
 For a description of these different options, see the `corresponding page <https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html>`__ in the AMReX documentation.
 
@@ -104,3 +105,5 @@ Building for specific platforms
    cori
    summit
    juwels
+   lassen
+   quartz

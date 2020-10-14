@@ -23,7 +23,7 @@ struct InjectorMomentumCustom
     // Return momentum at given position (illustration: momentum=0).
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real, amrex::Real, amrex::Real) const noexcept
+    getMomentum (amrex::Real, amrex::Real, amrex::Real, amrex::RandomEngine const&) const noexcept
     {
         return {0., 0., 0.};
     }

@@ -13,6 +13,8 @@
 #endif
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
+#include <AMReX_Vector.H>
+#include <string>
 using namespace amrex::literals;
 
 Diagnostics::Diagnostics (int i, std::string name)
@@ -29,26 +31,31 @@ bool
 Diagnostics::BaseReadParameters ()
 {
     auto & warpx = WarpX::GetInstance();
-    // Read list of fields requested by the user.
+
     amrex::ParmParse pp(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp.query("file_prefix", m_file_prefix);
     pp.query("format", m_format);
+
+    // Query list of grid fields to write to output
     bool varnames_specified = pp.queryarr("fields_to_plot", m_varnames);
     if (!varnames_specified){
         m_varnames = {"Ex", "Ey", "Ez", "Bx", "By", "Bz", "jx", "jy", "jz"};
     }
+
     // If user requests rho with back-transformed diagnostics, we set plot_rho=true
     // and compute rho at each iteration
     if (WarpXUtilStr::is_in(m_varnames, "rho") && WarpX::do_back_transformed_diagnostics) {
         warpx.setplot_rho(true);
     }
+
     // Sanity check if user requests to plot F
     if (WarpXUtilStr::is_in(m_varnames, "F")){
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             warpx.do_dive_cleaning,
             "plot F only works if warpx.do_dive_cleaning = 1");
     }
+
     // If user requests to plot proc_number for a serial run,
     // delete proc_number from fields_to_plot
     if (amrex::ParallelDescriptor::NProcs() == 1){
@@ -101,7 +108,41 @@ Diagnostics::BaseReadParameters ()
        }
     }
 
-    bool species_specified = pp.queryarr("species", m_species_names);
+    // Names of species to write to output
+    bool species_specified = pp.queryarr("species", m_output_species_names);
+
+    // Names of all species in the simulation
+    m_all_species_names = warpx.GetPartContainer().GetSpeciesNames();
+
+    // Auxiliary variables
+    std::string species;
+    bool species_name_is_wrong;
+    // Loop over all fields stored in m_varnames
+    for (const auto& var : m_varnames) {
+        // Check if m_varnames contains a string of the form rho_<species_name>
+        if (var.rfind("rho_", 0) == 0) {
+            // Extract species name from the string rho_<species_name>
+            species = var.substr(var.find("rho_") + 4);
+            // Boolean used to check if species name was misspelled
+            species_name_is_wrong = true;
+            // Loop over all species
+            for (int i = 0, n = int(m_all_species_names.size()); i < n; i++) {
+                // Check if species name extracted from the string rho_<species_name>
+                // matches any of the species in the simulation
+                if (species == m_all_species_names[i]) {
+                    // Store species index: will be used in RhoFunctor to dump
+                    // rho for this species
+                    m_rho_per_species_index.push_back(i);
+                    species_name_is_wrong = false;
+                }
+            }
+            // If species name was misspelled, abort with error message
+            if (species_name_is_wrong) {
+                amrex::Abort("Input error: string " + var + " in " + m_diag_name +
+                             ".fields_to_plot does not match any species");
+            }
+        }
+    }
 
     bool checkpoint_compatibility = false;
     if (m_format == "checkpoint"){
@@ -142,14 +183,26 @@ Diagnostics::InitData ()
     if ( pp.queryarr("diag_lo", dummy_val) || pp.queryarr("diag_hi", dummy_val) ) {
         // set geometry filter for particle-diags to true when the diagnostic domain-extent
         // is specified by the user
-        for (int i = 0; i < m_all_species.size(); ++i) {
-            m_all_species[i].m_do_geom_filter = true;
+        for (int i = 0; i < m_output_species.size(); ++i) {
+            m_output_species[i].m_do_geom_filter = true;
         }
         // Disabling particle-io for reduced domain diagnostics by reducing
         // the particle-diag vector to zero.
         // This is a temporary fix until particle_buffer is supported in diagnostics.
-        m_all_species.clear();
+        m_output_species.clear();
         amrex::Print() << " WARNING: For full diagnostics on a reduced domain, particle io is not supported, yet! Therefore, particle-io is disabled for this diag " << m_diag_name << "\n";
+    }
+
+    // default for writing species output is 1
+    int write_species = 1;
+    pp.query("write_species", write_species);
+    if (write_species == 0) {
+        if (m_format == "checkpoint"){
+            amrex::Abort("For checkpoint format, write_species flag must be 1.");
+        }
+        // if user-defined value for write_species == 0, then clear species vector
+        m_output_species.clear();
+        m_output_species_names.clear();
     }
 }
 
@@ -166,6 +219,14 @@ Diagnostics::InitBaseData ()
     nmax_lev = warpx.maxLevel() + 1;
     m_all_field_functors.resize( nmax_lev );
 
+    // For restart, move the m_lo and m_hi of the diag consistent with the
+    // current moving_window location
+    if (warpx.do_moving_window) {
+        int moving_dir = warpx.moving_window_dir;
+        int shift_num_base = static_cast<int>((warpx.getmoving_window_x() - m_lo[moving_dir]) / warpx.Geom(0).CellSize(moving_dir) );
+        m_lo[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
+        m_hi[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
+    }
     // Construct Flush class.
     if        (m_format == "plotfile"){
         m_flush_format = new FlushFormatPlotfile;

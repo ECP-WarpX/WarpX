@@ -11,6 +11,8 @@
 #   include <physics/quantum_sync/quantum_sync_engine_tables_generator.hpp>
 #endif
 
+#include <AMReX.H>
+
 #include <utility>
 #include <vector>
 #include <cstdint>
@@ -76,6 +78,8 @@ QuantumSynchrotronEngine::init_lookup_tables_from_raw_data (
 
     m_qs_minimum_chi_part = qs_minimum_chi_part;
 
+    amrex::Gpu::synchronize();
+
     m_lookup_tables_initialized = true;
 
     return true;
@@ -99,10 +103,10 @@ vector<char> QuantumSynchrotronEngine::export_lookup_tables_data () const
     const auto data_dndt = m_dndt_table.serialize();
     const auto data_phot_em = m_phot_em_table.serialize();
 
-    const uint64_t size_fist = data_dndt.size();
+    const uint64_t size_first = data_dndt.size();
 
     vector<char> res{};
-    pxr_sr::put_in(size_fist, res);
+    pxr_sr::put_in(size_first, res);
     for (const auto& tmp : data_dndt)
         pxr_sr::put_in(tmp, res);
     for (const auto& tmp : data_phot_em)
@@ -138,8 +142,11 @@ void QuantumSynchrotronEngine::compute_lookup_tables (
     m_phot_em_table.generate(true); //Progress bar is displayed
     m_qs_minimum_chi_part = qs_minimum_chi_part;
 
+    amrex::Gpu::synchronize();
+
     m_lookup_tables_initialized = true;
 #else
+    amrex::ignore_unused(ctrl, qs_minimum_chi_part);
     amrex::Abort("WarpX was not compiled with table generation support!");
 #endif
 }
@@ -152,7 +159,7 @@ void QuantumSynchrotronEngine::init_builtin_dndt_table()
     dndt_params.chi_part_how_many = 64;
 
 
-    const auto vals = amrex::Gpu::ManagedVector<amrex::Real>{
+    const auto vals = amrex::Gpu::DeviceVector<amrex::Real>{
         -6.13623e+00_rt, -5.94268e+00_rt, -5.74917e+00_rt, -5.55571e+00_rt,
         -5.36231e+00_rt, -5.16898e+00_rt, -4.97575e+00_rt, -4.78262e+00_rt,
         -4.58961e+00_rt, -4.39677e+00_rt, -4.20410e+00_rt, -4.01166e+00_rt,
@@ -169,6 +176,9 @@ void QuantumSynchrotronEngine::init_builtin_dndt_table()
         2.83379e+00_rt, 2.96984e+00_rt, 3.10518e+00_rt, 3.23987e+00_rt,
         3.37396e+00_rt, 3.50752e+00_rt, 3.64060e+00_rt, 3.77324e+00_rt,
         3.90549e+00_rt, 4.03740e+00_rt, 4.16899e+00_rt, 4.30031e+00_rt};
+
+    amrex::Gpu::synchronize();
+
     m_dndt_table = QS_dndt_table{dndt_params, vals};
 }
 
@@ -183,7 +193,7 @@ void QuantumSynchrotronEngine::init_builtin_phot_em_table()
     phot_em_params.frac_how_many = 64;
 
 
-const auto vals = amrex::Gpu::ManagedVector<amrex::Real>{
+const auto vals = amrex::Gpu::DeviceVector<amrex::Real>{
 -6.83368e+00_rt, -6.68749e+00_rt, -6.54129e+00_rt, -6.39510e+00_rt,
 -6.24890e+00_rt, -6.10271e+00_rt, -5.95651e+00_rt, -5.81031e+00_rt,
 -5.66412e+00_rt, -5.51792e+00_rt, -5.37173e+00_rt, -5.22554e+00_rt,
@@ -1208,6 +1218,8 @@ const auto vals = amrex::Gpu::ManagedVector<amrex::Real>{
 -1.53224e+00_rt, -1.38687e+00_rt, -1.24192e+00_rt, -1.09763e+00_rt,
 -9.54333e-01_rt, -8.12547e-01_rt, -6.73013e-01_rt, -5.36770e-01_rt,
 -4.05101e-01_rt, -2.79009e-01_rt, -1.56354e-01_rt, 0.00000e+00_rt};
+
+    amrex::Gpu::synchronize();
 
     m_phot_em_table = QS_phot_em_table{phot_em_params, vals};
 }

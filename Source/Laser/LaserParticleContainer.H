@@ -73,35 +73,35 @@ public:
 
 protected:
 
-    std::string laser_name;
+    std::string m_laser_name;
 
 private:
     // runtime paramters
-    amrex::Vector<amrex::Real> position; //! Coordinates of one of the point of the antenna
-    amrex::Vector<amrex::Real> nvec; //! Normal of the plane of the antenna
-    amrex::Vector<amrex::Real> p_X;// ! Polarization
+    amrex::Vector<amrex::Real> m_position; //! Coordinates of one of the point of the antenna
+    amrex::Vector<amrex::Real> m_nvec; //! Normal of the plane of the antenna
+    amrex::Vector<amrex::Real> m_p_X;// ! Polarization
 
-    long                      pusher_algo = -1;
-    amrex::Real               e_max       = std::numeric_limits<amrex::Real>::quiet_NaN();
-    amrex::Real               wavelength  = std::numeric_limits<amrex::Real>::quiet_NaN();
+    long                      m_pusher_algo = -1;
+    amrex::Real               m_e_max       = std::numeric_limits<amrex::Real>::quiet_NaN();
+    amrex::Real               m_wavelength  = std::numeric_limits<amrex::Real>::quiet_NaN();
 
-    amrex::Real               Z0_lab = 0; // Position of the antenna in the lab frame
+    amrex::Real               m_Z0_lab = 0; // Position of the antenna in the lab frame
 
-    long min_particles_per_mode = 4;
+    long m_min_particles_per_mode = 4;
 
     // computed using runtime parameters
-    amrex::Vector<amrex::Real> p_Y;
-    amrex::Vector<amrex::Real> u_X;
-    amrex::Vector<amrex::Real> u_Y;
-    amrex::Real weight   = std::numeric_limits<amrex::Real>::quiet_NaN();
-    amrex::Real mobility = std::numeric_limits<amrex::Real>::quiet_NaN();
+    amrex::Vector<amrex::Real> m_p_Y;
+    amrex::Vector<amrex::Real> m_u_X;
+    amrex::Vector<amrex::Real> m_u_Y;
+    amrex::Real m_weight   = std::numeric_limits<amrex::Real>::quiet_NaN();
+    amrex::Real m_mobility = std::numeric_limits<amrex::Real>::quiet_NaN();
 
 
     // laser particle domain
-    amrex::RealBox laser_injection_box;
+    amrex::RealBox m_laser_injection_box;
     // Theoretical position of the antenna. Used if do_continuous_injection=1.
     // Track the position of the antenna until it enters the simulation domain.
-    amrex::Vector<amrex::Real> updated_position;
+    amrex::Vector<amrex::Real> m_updated_position;
 
     void ComputeSpacing (int lev, amrex::Real& Sx, amrex::Real& Sy) const;
     void ComputeWeightMobility (amrex::Real Sx, amrex::Real Sy);

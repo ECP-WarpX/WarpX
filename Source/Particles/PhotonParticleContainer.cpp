@@ -124,7 +124,10 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
     amrex::Real cur_time = WarpX::GetInstance().gett_new(lev);
     const auto& time_of_last_gal_shift = WarpX::GetInstance().time_of_last_gal_shift;
     amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
-    amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+    amrex::Array<amrex::Real,3> galilean_shift = {
+        m_v_galilean[0]*time_shift,
+        m_v_galilean[1]*time_shift,
+        m_v_galilean[2]*time_shift };
     const std::array<Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, gather_lev);
 
     const Dim3 lo = lbound(box);
@@ -212,8 +215,7 @@ PhotonParticleContainer::Evolve (int lev,
                                  Real t, Real dt, DtType /*a_dt_type*/)
 {
     // This does gather, push and depose.
-    // Push and depose have been re-written for photon,
-    // so they do not do anything.
+    // Push and depose have been re-written for photons
     PhysicalParticleContainer::Evolve (lev,
                                        Ex, Ey, Ez,
                                        Bx, By, Bz,

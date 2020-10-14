@@ -24,6 +24,7 @@
 
 #include <memory>
 
+enum struct ParticleBC { none=0, absorbing };
 
 enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
 
@@ -261,6 +262,13 @@ public:
 
     static void BackwardCompatibility ();
 
+    /** \brief Apply particle BC.
+     *
+     * \param[in] boundary_conditions Type of boundary conditions. For now, only absorbing or none
+     * are supported
+     */
+    void ApplyBoundaryConditions (ParticleBC boundary_conditions);
+
     bool do_splitting = false;
     bool initialize_self_fields = false;
     amrex::Real self_fields_required_precision = 1.e-11;
@@ -321,7 +329,7 @@ public:
     template<PhysicalSpecies PhysSpec>
     bool AmIA () const noexcept {return (physical_species == PhysSpec);}
 
-    amrex::Array<amrex::Real,3> get_v_galilean () {return v_galilean;}
+    amrex::Array<amrex::Real,3> get_v_galilean () {return m_v_galilean;}
 
     /**
      * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer only.
@@ -329,10 +337,10 @@ public:
      * override the method for every derived class. Note that in practice this function is never
      * called because resample() is only called for PhysicalParticleContainers.
      */
-    virtual void resample (const Resampling& /*resampler*/, const int /*timestep*/) {}
+    virtual void resample (const int /*timestep*/) {}
 
 protected:
-    amrex::Array<amrex::Real,3> v_galilean = {{0}};
+    amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
     std::map<std::string, int> particle_runtime_comps;

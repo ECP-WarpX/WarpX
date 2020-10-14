@@ -17,7 +17,7 @@ import scipy.stats as st
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 # This script performs detailed checks of the Breit-Wheeler pair production process.
 # Four populations of photons are initialized with different momenta in different
@@ -25,7 +25,7 @@ import checksumAPI
 # Specifically the script checks that:
 #
 # - The expected number of generated pairs n_pairs is in agreement with theory
-#   (the maximum tolerated error is 6*sqrt(n_pairs)
+#   (the maximum tolerated error is 5*sqrt(n_pairs)
 # - The weight of the generated particles is equal to the weight of the photon
 # - Momenta of the residual photons are still equal to the original momentum
 # - The generated particles are emitted in the right direction
@@ -161,7 +161,7 @@ def check_number_of_pairs(ytdataset, phot_name, ele_name, pos_name, chi_phot, ga
 def check_weights(phot_data, ele_data, pos_data):
     assert(np.all(phot_data["w"] == phot_data["w"][0]))
     assert(np.all(ele_data["w"]  == phot_data["w"][0]))
-    assert(np.all(ele_data["w"]  == phot_data["w"][0]))
+    assert(np.all(pos_data["w"]  == phot_data["w"][0]))
     print("  [OK] particles weights are the expected ones")
 
 def check_momenta(phot_data, ele_data, pos_data, p0, p_ele, p_pos):
@@ -180,7 +180,11 @@ def check_momenta(phot_data, ele_data, pos_data, p0, p_ele, p_pos):
     print("  [OK] pairs move along the initial photon direction")
 
 def check_energy(energy_phot, energy_ele, energy_pos):
-    product_energy = energy_ele + energy_pos
+    # Sorting the arrays is required because electrons and positrons are not
+    # necessarily dumped in the same order.
+    s_energy_ele = np.sort(energy_ele)
+    is_energy_pos = np.sort(energy_pos)[::-1]
+    product_energy = s_energy_ele + is_energy_pos
     assert(small_diff(product_energy, energy_phot))
     print("  [OK] energy is conserved in each event")
 
@@ -192,7 +196,8 @@ def check_opt_depths(phot_data, ele_data, pos_data):
         assert( np.abs(scale - 1) < tol_red )
     print("  [OK] optical depth distributions are still exponential")
 
-def check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, NN, idx):
+def check_energy_distrib(energy_ele, energy_pos, gamma_phot,
+        chi_phot, n_lost, NN, idx, do_plot=False):
     gamma_min = 1.0001
     gamma_max = gamma_phot-1.0001
     h_gamma_ele, c_gamma = np.histogram(energy_ele/mec2, bins=NN, range=[gamma_min,gamma_max])
@@ -208,17 +213,18 @@ def check_energy_distrib(energy_ele, energy_pos, gamma_phot, chi_phot, n_lost, N
     distrib = np.sum(distrib.reshape(-1, npoints),1)
     distrib = n_lost*distrib/np.sum(distrib)
 
-    # Visual comparison of distributions
-    #c_gamma_centered = 0.5*(c_gamma[1:]+c_gamma[:-1])
-    #plt.clf()
-    #plt.xlabel("γ_particle")
-    #plt.ylabel("N")
-    #plt.title("χ_photon = {:f}".format(chi_phot))
-    #plt.plot(c_gamma_centered, distrib,label="theory")
-    #plt.plot(c_gamma_centered, h_gamma_ele,label="BW electrons")
-    #plt.plot(c_gamma_centered, h_gamma_pos,label="BW positrons")
-    #plt.legend()
-    #plt.savefig("case_{:d}".format(idx+1))
+    if do_plot :
+        # Visual comparison of distributions
+        c_gamma_centered = 0.5*(c_gamma[1:]+c_gamma[:-1])
+        plt.clf()
+        plt.xlabel("γ_particle")
+        plt.ylabel("N")
+        plt.title("χ_photon = {:f}".format(chi_phot))
+        plt.plot(c_gamma_centered, distrib,label="theory")
+        plt.plot(c_gamma_centered, h_gamma_ele,label="BW electrons")
+        plt.plot(c_gamma_centered, h_gamma_pos,label="BW positrons")
+        plt.legend()
+        plt.savefig("case_{:d}".format(idx+1))
 
     discr_ele = np.abs(h_gamma_ele-distrib)
     discr_pos = np.abs(h_gamma_pos-distrib)

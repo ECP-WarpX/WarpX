@@ -50,7 +50,7 @@ public:
     */
     template <typename PData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    bool operator() (const PData& ptd, int const i) const noexcept
+    bool operator() (const PData& ptd, int const i, amrex::RandomEngine const&) const noexcept
     {
         using namespace amrex;
 
@@ -152,6 +152,9 @@ private:
 
     const QuantumSynchrotronGetOpticalDepth
         m_opt_depth_functor;  /*!< A copy of the functor to initialize the optical depth of the source species. */
+
+    const int m_opt_depth_runtime_comp = 0;  /*!< Index of the optical depth component of source species*/
+
     const QuantumSynchrotronPhotonEmission
         m_emission_functor;  /*!< A copy of the functor to generate photons. It contains only pointers to the lookup tables.*/
 
