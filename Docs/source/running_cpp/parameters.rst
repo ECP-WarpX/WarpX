@@ -1462,7 +1462,10 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
     Reduce size of the field output by this ratio in each dimension.
     (This is done by averaging the field over 1 or 2 points along each direction, depending on the staggering).
-    ``plot_coarsening_ratio`` should be an integer divisor of ``blocking_factor``, defined in the :ref:`parallelization <parallelization_warpx>` section.
+    If ``blocking_factor`` and ``max_grid_size`` are used for the domain decomposition, as detailed in
+    the :ref:`parallelization <parallelization_warpx>` section, ``coarsening_ratio`` should be an integer
+    divisor of ``blocking_factor``. If ``warpx.numprocs`` is used instead, the total number of cells in a given
+    dimension must be a multiple of the coarsening_ratio multiplied by numprocs in that dimension.
 
 * ``<diag_name>.file_prefix`` (`string`) optional (default `diags/plotfiles/plt`)
     Root for output file names. Supports sub-directories.

@@ -491,6 +491,8 @@ public:
     const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
     const amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
 
+    const amrex::IntVect get_numprocs() const {return numprocs;}
+
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
