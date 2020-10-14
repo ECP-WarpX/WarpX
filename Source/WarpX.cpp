@@ -73,7 +73,7 @@ long WarpX::load_balance_costs_update_algo;
 int WarpX::do_dive_cleaning = 0;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
-int WarpX::do_single_precision_comms=1;
+int WarpX::do_single_precision_comms=0;
 
 long WarpX::n_rz_azimuthal_modes = 1;
 long WarpX::ncomps = 1;

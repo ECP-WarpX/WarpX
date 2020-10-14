@@ -10,7 +10,7 @@
 namespace WarpXCommUtil
 {
 
-    using comm_float_type = amrex::Real;
+    using comm_float_type = float;
 
 template <class FAB1, class FAB2>
 void

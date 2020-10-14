@@ -30,7 +30,7 @@ void ParallelCopy (amrex::MultiFab&            dst,
         dst_tmp.ParallelCopy(src_tmp, src_comp, dst_comp, num_comp,
                              src_nghost, dst_nghost, period, op);
 
-        mixedCopy(dst, dst_tmp, 0, 0, dst.nComp(), dst.nGrowVect());
+        mixedCopy(dst, dst_tmp, 0, 0, dst.nComp(), dst_nghost);
     }
     else
     {
