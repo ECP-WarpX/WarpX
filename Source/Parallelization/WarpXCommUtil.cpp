@@ -12,19 +12,20 @@ void ParallelCopy (amrex::MultiFab&            dst,
                    const amrex::Periodicity&   period,
                    amrex::FabArrayBase::CpOp   op)
 {
-    //    if (WarpX::do_single_precision_comms)
-    if (false)
+    if (WarpX::do_single_precision_comms)
     {
         amrex::FabArray<amrex::BaseFab<comm_float_type> > src_tmp(src.boxArray(),
                                                                   src.DistributionMap(),
                                                                   src.nComp(),
-                                                                  src.nGrow());
+                                                                  src.nGrowVect());
         mixedCopy(src_tmp, src, 0, 0, src.nComp(), src.nGrowVect());
 
         amrex::FabArray<amrex::BaseFab<comm_float_type> > dst_tmp(dst.boxArray(),
                                                                   dst.DistributionMap(),
                                                                   dst.nComp(),
-                                                                  dst.nGrow());
+                                                                  dst.nGrowVect());
+
+        mixedCopy(dst_tmp, dst, 0, 0, dst.nComp(), dst.nGrowVect());
 
         dst_tmp.ParallelCopy(src_tmp, src_comp, dst_comp, num_comp,
                              src_nghost, dst_nghost, period, op);
