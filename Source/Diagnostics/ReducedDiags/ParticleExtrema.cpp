@@ -160,7 +160,11 @@ void ParticleExtrema::ComputeDiags (int step)
         auto & myspc = mypc.GetParticleContainer(i_s);
 
         // get mass (Real)
-        auto m = myspc.getMass();
+        if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
+            auto m = PhysConst::m_e;
+        } else {
+            auto m = myspc.getMass();
+        }
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
@@ -368,7 +372,6 @@ void ParticleExtrema::ComputeDiags (int step)
                             n_rz_azimuthal_modes, nox, galerkin_interpolation);
                         // compute chi
                         Real chi = 0.0_rt;
-                        m = PhysConst::m_e;
                         if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
                             chi = chi_photon(ux[i]*m, uy[i]*m, uz[i]*m,
                                              ex, ey, ez, bx, by, bz);
