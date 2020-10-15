@@ -178,7 +178,7 @@ WarpX::Evolve (int numsteps)
         // If is_synchronized we need to shift j too so that next step we can evolve E by dt/2.
         // We might need to move j because we are going to make a plotfile.
 
-        int num_moved = MoveWindow(move_j);
+        int num_moved = MoveWindow(step, move_j);
 
         mypc->ApplyBoundaryConditions();
 
@@ -421,9 +421,10 @@ WarpX::OneStep_sub1 (Real curtime)
     doQEDEvents();
 #endif
 
-    // +1 is necessary here because value of step seen by user (first step is 1) is different than
-    // value of step in code (first step is 0)
-    mypc->doResampling(istep[0]+1);
+    // +1 is necessary here, because the value of step seen by the user (first step is 1) is different than
+    // the value of step in the code (first step is 0)
+    auto const step = istep[0]+1;
+    mypc->doResampling(step);
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(finest_level == 1, "Must have exactly two levels");
     const int fine_lev = 1;
@@ -544,7 +545,7 @@ WarpX::OneStep_sub1 (Real curtime)
     EvolveF(coarse_lev, PatchType::fine, 0.5*dt[coarse_lev], DtType::SecondHalf);
 
     if (do_pml) {
-        if (do_moving_window){
+        if (moving_window_active(step)){
             // Exchance guard cells of PMLs only (0 cells are exchanged for the
             // regular B field MultiFab). This is required as B and F have just been
             // evolved.

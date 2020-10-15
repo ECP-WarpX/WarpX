@@ -287,7 +287,7 @@ public:
 
     // Compute max_step automatically for simulations in a boosted frame.
     void computeMaxStepBoostAccelerator(const amrex::Geometry& geom);
-    int  MoveWindow (bool move_j);
+    int  MoveWindow (int step, bool move_j);
 
     /**
      * \brief
@@ -462,7 +462,14 @@ public:
     static const amrex::iMultiFab* GatherBufferMasks (int lev);
 
     static int do_electrostatic;
-    static int do_moving_window;
+    static int do_moving_window; // boolean
+    static int end_moving_window_step; // the last step to move window
+    /** Returns true if the moving window is active for the provided step
+     *
+     * @param step time step
+     * @return true if active, else false
+     */
+    static int moving_window_active(int const step) { return step < end_moving_window_step; }
     static int moving_window_dir;
     static amrex::Real moving_window_v;
     static bool fft_do_time_averaging;

@@ -107,6 +107,17 @@ Setting up the field mesh
     This patch is rectangular, and thus its extent is given here by the coordinates
     of the lower corner (``warpx.fine_tag_lo``) and upper corner (``warpx.fine_tag_hi``).
 
+* ``warpx.do_moving_window`` (``0`` or ``1``; default is ``0`` for true)
+    Change the simulation geometry with a co-moving window geometry over time.
+    The speed of the co-moving window is the speed of light.
+
+* ``warpx.end_moving_window_step`` (positive integer; default is ``-1`` for false)
+    Stop the co-moving window after this step.
+
+* ``warpx.moving_window_dir`` (``x``, ``y``, or ``z``)
+    Direction of the moving window.
+    Required if ``warpx.do_moving_window`` is enabled.
+
 * ``warpx.n_current_deposition_buffer`` (`integer`)
     When using mesh refinement: the particles that are located inside
     a refinement patch, but within ``n_current_deposition_buffer`` cells of

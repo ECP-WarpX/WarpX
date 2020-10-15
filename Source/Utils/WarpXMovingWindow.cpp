@@ -35,9 +35,9 @@ WarpX::UpdatePlasmaInjectionPosition (Real a_dt)
 }
 
 int
-WarpX::MoveWindow (bool move_j)
+WarpX::MoveWindow (int step, bool move_j)
 {
-    if (do_moving_window == 0) return 0;
+    if (moving_window_active(step) == false) return 0;
 
     IntVect ng_extra = guard_cells.ng_Extra;
     IntVect ng_zero  = IntVect::TheZeroVector();
