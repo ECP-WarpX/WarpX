@@ -469,7 +469,7 @@ public:
      * @param step time step
      * @return true if active, else false
      */
-    static int moving_window_active(int const step) { return step < end_moving_window_step; }
+    static int moving_window_active(int const step) { return (step < end_moving_window_step) || (end_moving_window_step < 0); }
     static int moving_window_dir;
     static amrex::Real moving_window_v;
     static bool fft_do_time_averaging;
