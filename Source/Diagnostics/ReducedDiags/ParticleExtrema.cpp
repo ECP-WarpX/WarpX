@@ -282,7 +282,11 @@ void ParticleExtrema::ComputeDiags (int step)
             Real uy = p.rdata(PIdx::uy);
             Real uz = p.rdata(PIdx::uz);
             Real us = ux*ux + uy*uy + uz*uz;
-            return std::sqrt(1.0 + us*inv_c2);
+            if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
+                return std::sqrt(us*inv_c2);
+            } else {
+                return std::sqrt(1.0 + us*inv_c2);
+            }
         });
         ParallelDescriptor::ReduceRealMin(gmin);
 
@@ -294,7 +298,11 @@ void ParticleExtrema::ComputeDiags (int step)
             Real uy = p.rdata(PIdx::uy);
             Real uz = p.rdata(PIdx::uz);
             Real us = ux*ux + uy*uy + uz*uz;
-            return std::sqrt(1.0 + us*inv_c2);
+            if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
+                return std::sqrt(us*inv_c2);
+            } else {
+                return std::sqrt(1.0 + us*inv_c2);
+            }
         });
         ParallelDescriptor::ReduceRealMax(gmax);
 
