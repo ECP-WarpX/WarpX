@@ -162,10 +162,9 @@ void ParticleExtrema::ComputeDiags (int step)
         auto & myspc = mypc.GetParticleContainer(i_s);
 
         // get mass (Real)
+        auto m = myspc.getMass();
         if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
-            auto m = PhysConst::m_e;
-        } else {
-            auto m = myspc.getMass();
+            m = PhysConst::m_e;
         }
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
@@ -275,35 +274,53 @@ void ParticleExtrema::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealMax(uzmax);
 
         // gmin
-        Real gmin = ReduceMin( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real ux = p.rdata(PIdx::ux);
-            Real uy = p.rdata(PIdx::uy);
-            Real uz = p.rdata(PIdx::uz);
-            Real us = ux*ux + uy*uy + uz*uz;
-            if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
+        Real gmin = 0.0_rt;
+        if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
+            gmin = ReduceMin( myspc,
+            [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+            {
+                Real ux = p.rdata(PIdx::ux);
+                Real uy = p.rdata(PIdx::uy);
+                Real uz = p.rdata(PIdx::uz);
+                Real us = ux*ux + uy*uy + uz*uz;
                 return std::sqrt(us*inv_c2);
-            } else {
+            });
+        } else {
+            gmin = ReduceMin( myspc,
+            [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+            {
+                Real ux = p.rdata(PIdx::ux);
+                Real uy = p.rdata(PIdx::uy);
+                Real uz = p.rdata(PIdx::uz);
+                Real us = ux*ux + uy*uy + uz*uz;
                 return std::sqrt(1.0 + us*inv_c2);
-            }
-        });
+            });
+        }
         ParallelDescriptor::ReduceRealMin(gmin);
 
         // gmax
-        Real gmax = ReduceMax( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            Real ux = p.rdata(PIdx::ux);
-            Real uy = p.rdata(PIdx::uy);
-            Real uz = p.rdata(PIdx::uz);
-            Real us = ux*ux + uy*uy + uz*uz;
-            if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
+        Real gmax = 0.0_rt;
+        if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
+            gmax = ReduceMax( myspc,
+            [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+            {
+                Real ux = p.rdata(PIdx::ux);
+                Real uy = p.rdata(PIdx::uy);
+                Real uz = p.rdata(PIdx::uz);
+                Real us = ux*ux + uy*uy + uz*uz;
                 return std::sqrt(us*inv_c2);
-            } else {
+            });
+        } else {
+            gmax = ReduceMax( myspc,
+            [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+            {
+                Real ux = p.rdata(PIdx::ux);
+                Real uy = p.rdata(PIdx::uy);
+                Real uz = p.rdata(PIdx::uz);
+                Real us = ux*ux + uy*uy + uz*uz;
                 return std::sqrt(1.0 + us*inv_c2);
-            }
-        });
+            });
+        }
         ParallelDescriptor::ReduceRealMax(gmax);
 
         // wmin
