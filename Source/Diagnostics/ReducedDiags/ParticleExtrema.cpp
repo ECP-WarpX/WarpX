@@ -73,29 +73,29 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
                 ofs << "#";
                 ofs << "[1]step()";
                 ofs << "[2]time(s)";
-                ofs << "[3]xmin()";
+                ofs << "[3]xmin(m)";
                 ofs << m_sep;
-                ofs << "[4]xmax()";
+                ofs << "[4]xmax(m)";
                 ofs << m_sep;
-                ofs << "[5]ymin()";
+                ofs << "[5]ymin(m)";
                 ofs << m_sep;
-                ofs << "[6]ymax()";
+                ofs << "[6]ymax(m)";
                 ofs << m_sep;
-                ofs << "[7]zmin()";
+                ofs << "[7]zmin(m)";
                 ofs << m_sep;
-                ofs << "[8]zmax()";
+                ofs << "[8]zmax(m)";
                 ofs << m_sep;
-                ofs << "[9]pxmin()";
+                ofs << "[9]pxmin(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[10]pxmax()";
+                ofs << "[10]pxmax(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[11]pymin()";
+                ofs << "[11]pymin(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[12]pymax()";
+                ofs << "[12]pymax(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[13]pzmin()";
+                ofs << "[13]pzmin(kg*m/s)";
                 ofs << m_sep;
-                ofs << "[14]pzmax()";
+                ofs << "[14]pzmax(kg*m/s)";
                 ofs << m_sep;
                 ofs << "[15]gmin()";
                 ofs << m_sep;
@@ -368,6 +368,7 @@ void ParticleExtrema::ComputeDiags (int step)
                             n_rz_azimuthal_modes, nox, galerkin_interpolation);
                         // compute chi
                         Real chi = 0.0_rt;
+                        m = PhysConst::m_e;
                         if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
                             chi = chi_photon(ux[i]*m, uy[i]*m, uz[i]*m,
                                              ex, ey, ez, bx, by, bz);
