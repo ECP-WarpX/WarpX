@@ -37,10 +37,10 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
     auto & mypc = warpx.GetPartContainer();
 
     // get number of species (int)
-    auto nSpecies = mypc.nSpecies();
+    const auto nSpecies = mypc.nSpecies();
 
     // get species names (std::vector<std::string>)
-    auto species_names = mypc.GetSpeciesNames();
+    const auto species_names = mypc.GetSpeciesNames();
 
     // loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)
@@ -54,11 +54,13 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
         if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
         {
             // resize data array for QED species
-            m_data.resize(18,0.0);
+            const int num_quantities = 18;
+            m_data.resize(num_quantities,0.0);
         } else
         {
             // resize data array for regular species
-            m_data.resize(16,0.0);
+            const int num_quantities = 16;
+            m_data.resize(num_quantities,0.0);
         }
 
         if (ParallelDescriptor::IOProcessor())
@@ -131,13 +133,13 @@ void ParticleExtrema::ComputeDiags (int step)
     auto & mypc = WarpX::GetInstance().GetPartContainer();
 
     // get number of level (int)
-    auto level_number = WarpX::GetInstance().finestLevel();
+    const auto level_number = WarpX::GetInstance().finestLevel();
 
     // get number of species (int)
-    auto nSpecies = mypc.nSpecies();
+    const auto nSpecies = mypc.nSpecies();
 
     // get species names (std::vector<std::string>)
-    auto species_names = mypc.GetSpeciesNames();
+    const auto species_names = mypc.GetSpeciesNames();
 
     // inverse of speed of light squared
     Real constexpr inv_c2 = 1.0 / (PhysConst::c * PhysConst::c);
@@ -338,7 +340,7 @@ void ParticleExtrema::ComputeDiags (int step)
                     auto & uy = pti.GetAttribs(PIdx::uy);
                     auto & uz = pti.GetAttribs(PIdx::uz);
                     // declare external fields
-                    int offset = 0;
+                    const int offset = 0;
                     const auto getExternalE = GetExternalEField(pti, offset);
                     const auto getExternalB = GetExternalBField(pti, offset);
                     // declare reduce_op
