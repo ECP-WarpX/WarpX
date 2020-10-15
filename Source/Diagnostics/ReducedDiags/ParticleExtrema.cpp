@@ -74,7 +74,9 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
                 // write header row
                 ofs << "#";
                 ofs << "[1]step()";
+                ofs << m_sep;
                 ofs << "[2]time(s)";
+                ofs << m_sep;
                 ofs << "[3]xmin(m)";
                 ofs << m_sep;
                 ofs << "[4]xmax(m)";
