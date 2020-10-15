@@ -2000,8 +2000,20 @@ PhysicalParticleContainer::getIonizationFunc (const WarpXParIter& pti,
 
 void PhysicalParticleContainer::resample (const int timestep)
 {
-    const amrex::Real global_numparts = TotalNumberOfParticles();
+    // In heavily load imbalanced simulations, MPI processes with few particles will spend most of
+    // the time at the MPI synchronization in TotalNumberOfParticles(). Having two profiler entries
+    // here is thus useful to avoid confusing time spent waiting for other processes with time
+    // spent doing actual resampling.
+    WARPX_PROFILE_VAR_NS("MultiParticleContainer::doResampling::MPI_synchronization",
+                         blp_resample_synchronization);
+    WARPX_PROFILE_VAR_NS("MultiParticleContainer::doResampling::ActualResampling",
+                         blp_resample_actual);
 
+    WARPX_PROFILE_VAR_START(blp_resample_synchronization);
+    const amrex::Real global_numparts = TotalNumberOfParticles();
+    WARPX_PROFILE_VAR_STOP(blp_resample_synchronization);
+
+    WARPX_PROFILE_VAR_START(blp_resample_actual);
     if (m_resampler.triggered(timestep, global_numparts))
     {
         amrex::Print() << "Resampling " << species_name << ".\n";
@@ -2013,6 +2025,7 @@ void PhysicalParticleContainer::resample (const int timestep)
             }
         }
     }
+    WARPX_PROFILE_VAR_STOP(blp_resample_actual);
 
 }
 

@@ -20,7 +20,6 @@ jobs:
         sudo wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
         sudo apt-key add 7fa2af80.pub
         echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
-        echo "deb https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64 /" | sudo tee /etc/apt/sources.list.d/nvidia-ml.list
         sudo apt-get update
         sudo apt-get install -y cuda-command-line-tools-11-0 cuda-compiler-11-0 cuda-cupti-dev-11-0 cuda-minimal-build-11-0 cuda-nvml-dev-11-0 cuda-nvtx-11-0 libcurand-dev-11-0
         sudo ln -s cuda-11.0 /usr/local/cuda
@@ -40,7 +39,6 @@ jobs:
 
 # Ref.: https://github.com/rscohn2/oneapi-ci
 # intel-basekit intel-hpckit are too large in size
-# note: unclear how the ICC compiler package is named in beta09, this pulls beta08
   build_icc:
     name: oneAPI ICC SP&DP [Linux]
     runs-on: ubuntu-latest
@@ -55,7 +53,7 @@ jobs:
         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
         echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
         sudo apt-get update
-        sudo apt-get install -y intel-oneapi-icc intel-oneapi-ifort
+        sudo apt-get install -y intel-oneapi-dpcpp-cpp-compiler-pro
         set +e
         source /opt/intel/oneapi/setvars.sh
         set -e

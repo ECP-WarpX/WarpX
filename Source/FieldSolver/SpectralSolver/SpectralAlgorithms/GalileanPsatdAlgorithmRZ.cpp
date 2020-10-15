@@ -117,7 +117,6 @@ GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
             amrex::Real const kz = modified_kz_arr[j];
 
             constexpr amrex::Real c2 = PhysConst::c*PhysConst::c;
-            constexpr amrex::Real inv_ep0 = 1._rt/PhysConst::ep0;
             Complex const I = Complex{0._rt,1._rt};
             amrex::Real const C = C_arr(i,j,k,mode);
             amrex::Real const S_ck = S_ck_arr(i,j,k,mode);
@@ -151,7 +150,7 @@ GalileanPsatdAlgorithmRZ::pushSpectralFields (SpectralFieldDataRZ & f)
                         + X1*I*(kr*Jp + kr*Jm);
         });
     }
-};
+}
 
 void GalileanPsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
 {
@@ -300,9 +299,7 @@ GalileanPsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
         ParallelFor(bx, modes,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
-
             // All of the fields of each mode are grouped together
-            using Idx = SpectralFieldIndex;
             auto const Jp_m = Idx::Jx + Idx::n_fields*mode;
             auto const Jm_m = Idx::Jy + Idx::n_fields*mode;
             auto const Jz_m = Idx::Jz + Idx::n_fields*mode;
@@ -348,8 +345,8 @@ GalileanPsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
 }
 
 void
-GalileanPsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& field_data,
-                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+GalileanPsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/,
+                                         std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {
     amrex::Abort("Vay deposition not implemented in RZ geometry");
 }

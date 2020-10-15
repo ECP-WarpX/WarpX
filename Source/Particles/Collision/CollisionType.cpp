@@ -26,6 +26,10 @@ CollisionType::CollisionType(
     m_CoulombLog = -1.0;
     pp.query("CoulombLog", m_CoulombLog);
 
+    // number of time steps between collisions
+    m_ndt = 1;
+    pp.query("ndt", m_ndt);
+
     for (int i=0; i<static_cast<int>(species_names.size()); i++)
     {
         if (species_names[i] == collision_species[0])
@@ -57,13 +61,14 @@ using namespace ParticleUtils;
  * @param species1/2 pointer to species container
  * @param isSameSpecies true if collision is between same species
  * @param CoulombLog user input Coulomb logrithm
+ * @param ndt user input number of time stpes between collisions
  *
  */
 void CollisionType::doCoulombCollisionsWithinTile
     ( int const lev, MFIter const& mfi,
     std::unique_ptr<WarpXParticleContainer>& species_1,
     std::unique_ptr<WarpXParticleContainer>& species_2,
-    bool const isSameSpecies, Real const CoulombLog )
+    bool const isSameSpecies, Real const CoulombLog, int const ndt )
 {
 
     if ( isSameSpecies ) // species_1 == species_2
@@ -127,7 +132,7 @@ void CollisionType::doCoulombCollisionsWithinTile
 
 #if defined WARPX_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
-                    auto dV = MathConst::pi*(2.0*ri+1.0)*dr*dr*dz;
+                    auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
 #else
                     amrex::ignore_unused(nz);
 #endif
@@ -139,8 +144,7 @@ void CollisionType::doCoulombCollisionsWithinTile
                         indices_1, indices_1,
                         ux_1, uy_1, uz_1, ux_1, uy_1, uz_1, w_1, w_1,
                         q1, q1, m1, m1, Real(-1.0), Real(-1.0),
-                        dt, CoulombLog, dV,
-                        engine);
+                        dt*ndt, CoulombLog, dV, engine );
                 }
             }
         );
@@ -225,7 +229,7 @@ void CollisionType::doCoulombCollisionsWithinTile
 
 #if defined WARPX_DIM_RZ
                     int ri = (i_cell - i_cell%nz) / nz;
-                    auto dV = MathConst::pi*(2.0*ri+1.0)*dr*dr*dz;
+                    auto dV = MathConst::pi*(2.0_rt*ri+1.0_rt)*dr*dr*dz;
 #else
                     amrex::ignore_unused(nz);
 #endif
@@ -236,8 +240,7 @@ void CollisionType::doCoulombCollisionsWithinTile
                         indices_1, indices_2,
                         ux_1, uy_1, uz_1, ux_2, uy_2, uz_2, w_1, w_2,
                         q1, q2, m1, m2, Real(-1.0), Real(-1.0),
-                        dt, CoulombLog, dV,
-                        engine);
+                        dt*ndt, CoulombLog, dV, engine );
                 }
             }
         );

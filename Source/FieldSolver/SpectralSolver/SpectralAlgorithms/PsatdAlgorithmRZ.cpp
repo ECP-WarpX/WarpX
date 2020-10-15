@@ -141,7 +141,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
                         + X1*I*(kr*Jp + kr*Jm);
         });
     }
-};
+}
 
 void PsatdAlgorithmRZ::InitializeSpectralCoefficients (SpectralFieldDataRZ const & f)
 {
@@ -238,9 +238,7 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
         ParallelFor(bx, modes,
         [=] AMREX_GPU_DEVICE(int i, int j, int k, int mode) noexcept
         {
-
             // All of the fields of each mode are grouped together
-            using Idx = SpectralFieldIndex;
             auto const Jp_m = Idx::Jx + Idx::n_fields*mode;
             auto const Jm_m = Idx::Jy + Idx::n_fields*mode;
             auto const Jz_m = Idx::Jz + Idx::n_fields*mode;
@@ -282,8 +280,8 @@ PsatdAlgorithmRZ::CurrentCorrection (SpectralFieldDataRZ& field_data,
 }
 
 void
-PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& field_data,
-                                 std::array<std::unique_ptr<amrex::MultiFab>,3>& current)
+PsatdAlgorithmRZ::VayDeposition (SpectralFieldDataRZ& /*field_data*/,
+                                 std::array<std::unique_ptr<amrex::MultiFab>,3>& /*current*/)
 {
     amrex::Abort("Vay deposition not implemented in RZ geometry");
 }

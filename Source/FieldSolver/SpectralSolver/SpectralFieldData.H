@@ -83,16 +83,6 @@ class SpectralFieldData
         SpectralShiftFactor yshift_FFTfromCell, yshift_FFTtoCell;
 #endif
 
-#ifdef AMREX_USE_GPU
-        /** \brief This method converts a cufftResult
-        * into the corresponding string
-        *
-        * @param[in] err a cufftResult
-        * @return an std::string
-        */
-        std::string cufftErrorToString (const cufftResult& err);
-#endif
-
         bool m_periodic_single_box;
 };
 

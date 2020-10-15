@@ -249,12 +249,12 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
                     Complex xy = xy0; // Note that xy is equal to e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                         // The factor 2 on the weighting comes from the normalization of the modes
-                        amrex::Gpu::Atomic::Add( &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode-1), 2.*sx_jx[ix]*sz_jx[iz]*wqx*xy.real());
-                        amrex::Gpu::Atomic::Add( &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode  ), 2.*sx_jx[ix]*sz_jx[iz]*wqx*xy.imag());
-                        amrex::Gpu::Atomic::Add( &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode-1), 2.*sx_jy[ix]*sz_jy[iz]*wqy*xy.real());
-                        amrex::Gpu::Atomic::Add( &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode  ), 2.*sx_jy[ix]*sz_jy[iz]*wqy*xy.imag());
-                        amrex::Gpu::Atomic::Add( &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode-1), 2.*sx_jz[ix]*sz_jz[iz]*wqz*xy.real());
-                        amrex::Gpu::Atomic::Add( &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode  ), 2.*sx_jz[ix]*sz_jz[iz]*wqz*xy.imag());
+                        amrex::Gpu::Atomic::Add( &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode-1), 2._rt*sx_jx[ix]*sz_jx[iz]*wqx*xy.real());
+                        amrex::Gpu::Atomic::Add( &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode  ), 2._rt*sx_jx[ix]*sz_jx[iz]*wqx*xy.imag());
+                        amrex::Gpu::Atomic::Add( &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode-1), 2._rt*sx_jy[ix]*sz_jy[iz]*wqy*xy.real());
+                        amrex::Gpu::Atomic::Add( &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode  ), 2._rt*sx_jy[ix]*sz_jy[iz]*wqy*xy.imag());
+                        amrex::Gpu::Atomic::Add( &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode-1), 2._rt*sx_jz[ix]*sz_jz[iz]*wqz*xy.real());
+                        amrex::Gpu::Atomic::Add( &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode  ), 2._rt*sx_jz[ix]*sz_jz[iz]*wqz*xy.imag());
                         xy = xy*xy0;
                     }
 #endif
@@ -552,8 +552,9 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                         // The factor 2 comes from the normalization of the modes
                         // The minus sign comes from the different convention with respect to Davidson et al.
-                        const Complex djt_cmplx = -2._rt * I*(i_new-1 + i + xmin*dxi)*wq*invdtdx/(amrex::Real)imode*
-                                                  (sx_new[i]*sz_new[k]*(xy_new - xy_mid) + sx_old[i]*sz_old[k]*(xy_mid - xy_old));
+                        const Complex djt_cmplx = -2._rt * I*(i_new-1 + i + xmin*dxi)*wq*invdtdx/(amrex::Real)imode
+                                                  *(Complex(sx_new[i]*sz_new[k], 0.)*(xy_new - xy_mid)
+                                                  + Complex(sx_old[i]*sz_old[k], 0.)*(xy_mid - xy_old));
                         amrex::Gpu::Atomic::Add( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 2*imode-1), djt_cmplx.real());
                         amrex::Gpu::Atomic::Add( &Jy_arr(lo.x+i_new-1+i, lo.y+k_new-1+k, 0, 2*imode), djt_cmplx.imag());
                         xy_new = xy_new*xy_new0;

@@ -246,8 +246,11 @@ MultiParticleContainer::ReadParameters ()
             pc.queryarr("collision_names", collision_names);
 
         }
-
         pp.query("use_fdtd_nci_corr", WarpX::use_fdtd_nci_corr);
+#ifdef WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::use_fdtd_nci_corr==0,
+                            "ERROR: use_fdtd_nci_corr is not supported in RZ");
+#endif
         pp.query("galerkin_interpolation", WarpX::galerkin_interpolation);
 
         std::string boundary_conditions = "none";
@@ -680,12 +683,16 @@ MultiParticleContainer::doFieldIonization (int lev,
 }
 
 void
-MultiParticleContainer::doCoulombCollisions ()
+MultiParticleContainer::doCoulombCollisions ( Real cur_time )
 {
     WARPX_PROFILE("MultiParticleContainer::doCoulombCollisions()");
 
     for( auto const& collision : allcollisions )
     {
+
+        const Real dt = WarpX::GetInstance().getdt(0);
+        if ( int(std::floor(cur_time/dt)) % collision->m_ndt != 0 ) continue;
+
         auto& species1 = allcontainers[ collision->m_species1_index ];
         auto& species2 = allcontainers[ collision->m_species2_index ];
 
@@ -706,7 +713,8 @@ MultiParticleContainer::doCoulombCollisions ()
                 CollisionType::doCoulombCollisionsWithinTile
                     ( lev, mfi, species1, species2,
                       collision->m_isSameSpecies,
-                      collision->m_CoulombLog );
+                      collision->m_CoulombLog,
+                      collision->m_ndt );
 
             }
         }
@@ -715,8 +723,6 @@ MultiParticleContainer::doCoulombCollisions ()
 
 void MultiParticleContainer::doResampling (const int timestep)
 {
-    WARPX_PROFILE("MultiParticleContainer::doResampling()");
-
     for (auto& pc : allcontainers)
     {
         // do_resampling can only be true for PhysicalParticleContainers
@@ -1286,7 +1292,7 @@ void MultiParticleContainer::doQedQuantumSync (int lev,
 
 void MultiParticleContainer::CheckQEDProductSpecies()
 {
-    auto const nspecies = species_names.size();
+    auto const nspecies = static_cast<int>(species_names.size());
     for (int i=0; i<nspecies; i++){
         const auto& pc = allcontainers[i];
         if (pc->has_breit_wheeler()){
