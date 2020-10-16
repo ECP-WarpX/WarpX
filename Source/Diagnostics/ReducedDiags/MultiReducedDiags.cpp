@@ -78,8 +78,8 @@ MultiReducedDiags::MultiReducedDiags ()
         }
         else if (rd_type.compare("ParticleNumber") == 0)
         {
-            m_multi_rd[i_rd].reset
-                ( new ParticleNumber(m_rd_names[i_rd]));
+            m_multi_rd[i_rd]=
+                std::make_unique<ParticleNumber>(m_rd_names[i_rd]);
         }
         else
         { Abort("No matching reduced diagnostics type found."); }
