@@ -696,7 +696,7 @@ void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::NoFabHeader_v1);
 
-    auto & mypc = WarpX::GetInstance().GetPartContainer();
+    const auto & mypc = WarpX::GetInstance().GetPartContainer();
     const std::vector<std::string> species_names = mypc.GetSpeciesNames();
 
     // Loop over BFD snapshots
@@ -1187,7 +1187,7 @@ createLabFrameDirectories() {
     ParallelDescriptor::Barrier();
 
     if (WarpX::do_back_transformed_particles){
-        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const auto & mypc = WarpX::GetInstance().GetPartContainer();
         const std::vector<std::string> species_names = mypc.GetSpeciesNames();
         // Loop over species to be dumped to BFD
         for (int j = 0; j < mypc.nSpeciesBackTransformedDiagnostics(); ++j)
@@ -1216,7 +1216,7 @@ createLabFrameDirectories() {
                 CreateDirectoryFailed(fullpath);
         }
 
-        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const auto & mypc = WarpX::GetInstance().GetPartContainer();
         const std::vector<std::string> species_names = mypc.GetSpeciesNames();
 
         const std::string particles_prefix = "particle";

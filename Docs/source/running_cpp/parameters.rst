@@ -1381,6 +1381,9 @@ Note that some parameter (those that do not start with a ``<diag_name>.`` prefix
 This should be changed in the future.
 In-situ capabilities can be used by turning on Sensei or Ascent (provided they are installed) through the output format, see below.
 
+* ``diagnostics.enable`` (`0` or `1`, optional, default `1`)
+    Whether to enable or disable diagnostics. This flag overwrites all other diagnostics input parameters.
+
 * ``diagnostics.diags_names`` (list of `string` optional, default `empty`)
     Name of each diagnostics.
     example: ``diagnostics.diags_names = diag1 my_second_diag``.
@@ -1471,6 +1474,8 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``). Currently, when the ``diag_hi`` is different from ``warpx.dom_hi``, particle output i
 s disabled.
 
+* ``<diag_name>.write_species`` (`0` or `1`) optional (default `1`)
+   Whether to write species output or not. For checkpoint format, always set this parameter to 1.
 
 * ``<diag_name>.species`` (list of `string`, default all physical species in the simulation)
     Which species dumped in this diagnostics.
@@ -1655,6 +1660,15 @@ Reduced Diagnostics
         the maximum value of the :math:`B_z` field and
         the maximum value of the norm :math:`|B|` of the magnetic field,
         at mesh refinement levels from  0 to :math:`n`.
+
+    * ``ParticleNumber``
+        This type computes the total number of macroparticles in the simulation (for each species
+        and summed over all species). It can be useful in particular for simulations with creation
+        (ionization, QED processes) or removal (resampling) of particles.
+
+        The output columns are
+        total number of macroparticles summed over all species and
+        total number of macroparticles of each species.
 
     * ``BeamRelevant``
         This type computes properties of a particle beam relevant for particle accelerators,

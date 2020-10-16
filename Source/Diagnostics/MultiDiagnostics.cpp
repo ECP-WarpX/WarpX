@@ -43,9 +43,13 @@ MultiDiagnostics::ReadParameters ()
 {
     ParmParse pp("diagnostics");
 
-    pp.queryarr("diags_names", diags_names);
-    ndiags = diags_names.size();
-    Print()<<"ndiags "<<ndiags<<'\n';
+    int enable_diags = 1;
+    pp.query("enable", enable_diags);
+    if (enable_diags == 1) {
+        pp.queryarr("diags_names", diags_names);
+        ndiags = diags_names.size();
+        Print()<<"ndiags "<<ndiags<<'\n';
+    }
 
     diags_types.resize( ndiags );
     for (int i=0; i<ndiags; i++){
