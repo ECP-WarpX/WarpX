@@ -37,11 +37,23 @@ void ParallelCopy (amrex::MultiFab&            dst,
                              src_nghost, dst_nghost, period, op);
 
         mixedCopy(dst, dst_tmp, 0, 0, dst.nComp(), dst_nghost);
-        amrex::MultiFab::Copy(dst, orig_dst, 0, 0, dst.nComp(), 0);
+        if (WarpX::do_single_precision_mesh) {
+            amrex::MultiFab::Copy(dst, orig_dst, 0, 0, dst.nComp(), 0);
+        }
     }
     else
     {
         dst.ParallelCopy(src, src_comp, dst_comp, num_comp, src_nghost, dst_nghost, period, op);
+
+        if (WarpX::do_single_precision_mesh) {
+            amrex::FabArray<amrex::BaseFab<comm_float_type> > dst_tmp(dst.boxArray(),
+                                                                      dst.DistributionMap(),
+                                                                      dst.nComp(),
+                                                                      dst.nGrowVect());
+
+            mixedCopy(dst_tmp, dst, 0, 0, dst.nComp(), dst.nGrowVect());
+            mixedCopy(dst, dst_tmp, 0, 0, dst.nComp(), dst.nGrowVect());
+        }
     }
 }
 
@@ -77,11 +89,23 @@ void FillBoundary (amrex::MultiFab& mf, const amrex::Periodicity& period)
         mf_tmp.FillBoundary(period);
 
         mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
-        amrex::MultiFab::Copy(mf, orig, 0, 0, mf.nComp(), 0);
+        if (WarpX::do_single_precision_mesh) {
+            amrex::MultiFab::Copy(mf, orig, 0, 0, mf.nComp(), 0);
+        }
     }
     else
     {
         mf.FillBoundary(period);
+
+        if (WarpX::do_single_precision_mesh) {
+            amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
+                                                                     mf.DistributionMap(),
+                                                                     mf.nComp(),
+                                                                     mf.nGrowVect());
+
+            mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
+            mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
+        }
     }
 }
 
@@ -106,11 +130,23 @@ void FillBoundary (amrex::MultiFab&          mf,
         mf_tmp.FillBoundary(ng, period);
 
         mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
-        amrex::MultiFab::Copy(mf, orig, 0, 0, mf.nComp(), 0);
+        if (WarpX::do_single_precision_mesh) {
+            amrex::MultiFab::Copy(mf, orig, 0, 0, mf.nComp(), 0);
+        }
     }
     else
     {
         mf.FillBoundary(ng, period);
+
+        if (WarpX::do_single_precision_mesh) {
+            amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
+                                                                     mf.DistributionMap(),
+                                                                     mf.nComp(),
+                                                                     mf.nGrowVect());
+
+            mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
+            mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
+        }
     }
 }
 
@@ -143,11 +179,23 @@ void OverrideSync (amrex::MultiFab&          mf,
         amrex::OverrideSync(mf_tmp, *msk, period);
 
         mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
-        amrex::MultiFab::Copy(mf, orig, 0, 0, mf.nComp(), 0);
+        if (WarpX::do_single_precision_mesh) {
+            amrex::MultiFab::Copy(mf, orig, 0, 0, mf.nComp(), 0);
+        }
     }
     else
     {
         mf.OverrideSync(period);
+
+        if (WarpX::do_single_precision_mesh) {
+            amrex::FabArray<amrex::BaseFab<comm_float_type> > mf_tmp(mf.boxArray(),
+                                                                     mf.DistributionMap(),
+                                                                     mf.nComp(),
+                                                                     mf.nGrowVect());
+
+            mixedCopy(mf_tmp, mf, 0, 0, mf.nComp(), mf.nGrowVect());
+            mixedCopy(mf, mf_tmp, 0, 0, mf.nComp(), mf.nGrowVect());
+        }
     }
 }
 

@@ -74,6 +74,7 @@ int WarpX::do_dive_cleaning = 0;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 int WarpX::do_single_precision_comms=0;
+int WarpX::do_single_precision_mesh=0;
 
 long WarpX::n_rz_azimuthal_modes = 1;
 long WarpX::ncomps = 1;
@@ -485,6 +486,7 @@ WarpX::ReadParameters ()
         }
 
         pp.query("do_single_precision_comms", do_single_precision_comms);
+        pp.query("do_single_precision_mesh", do_single_precision_mesh);
         pp.query("serialize_ics", serialize_ics);
         pp.query("refine_plasma", refine_plasma);
         pp.query("do_dive_cleaning", do_dive_cleaning);
