@@ -11,6 +11,7 @@
 #include "ParticleEnergy.H"
 #include "FieldEnergy.H"
 #include "FieldMaximum.H"
+#include "ParticleNumber.H"
 #include "MultiReducedDiags.H"
 
 #include <AMReX_ParmParse.H>
@@ -75,6 +76,11 @@ MultiReducedDiags::MultiReducedDiags ()
             m_multi_rd[i_rd].reset
                 ( new ParticleHistogram(m_rd_names[i_rd]));
         }
+        else if (rd_type.compare("ParticleNumber") == 0)
+        {
+            m_multi_rd[i_rd].reset
+                ( new ParticleNumber(m_rd_names[i_rd]));
+        }
         else
         { Abort("No matching reduced diagnostics type found."); }
         // end if match diags
@@ -97,7 +103,7 @@ void MultiReducedDiags::ComputeDiags (int step)
 }
 // end void MultiReducedDiags::ComputeDiags
 
-// funciton to write data
+// function to write data
 void MultiReducedDiags::WriteToFile (int step)
 {
 

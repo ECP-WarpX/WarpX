@@ -8,4 +8,5 @@ target_sources(WarpX
     ParticleHistogram.cpp
     ReducedDiags.cpp
     FieldMaximum.cpp
+    ParticleNumber.cpp
 )

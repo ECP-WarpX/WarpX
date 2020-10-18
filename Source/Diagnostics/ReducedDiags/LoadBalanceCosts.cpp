@@ -183,9 +183,8 @@ void LoadBalanceCosts::ComputeDiags (int step)
 void LoadBalanceCosts::WriteToFile (int step) const
 {
     // open file
-    std::ofstream ofs;
-    ofs.open(m_path + m_rd_name + "." + m_extension,
-            std::ofstream::out | std::ofstream::app);
+    std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
+            std::ofstream::out | std::ofstream::app};
 
     // write step
     ofs << step+1 << m_sep;
