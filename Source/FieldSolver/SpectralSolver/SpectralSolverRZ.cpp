@@ -45,12 +45,12 @@ SpectralSolverRZ::SpectralSolverRZ (amrex::BoxArray const & realspace_ba,
     //   PML is not supported.
     if (v_galilean[2] == 0) {
          // v_galilean is 0: use standard PSATD algorithm
-        algorithm = std::unique_ptr<PsatdAlgorithmRZ>(
-            new PsatdAlgorithmRZ(k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, dt));
+        algorithm = std::make_unique<PsatdAlgorithmRZ>(
+            k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, dt);
     } else {
         // Otherwise: use the Galilean algorithm
-        algorithm = std::unique_ptr<GalileanPsatdAlgorithmRZ>(
-            new GalileanPsatdAlgorithmRZ(k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, v_galilean, dt));
+        algorithm = std::make_unique<GalileanPsatdAlgorithmRZ>(
+            k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, v_galilean, dt);
     }
 
     // - Initialize arrays for fields in spectral space + FFT plans

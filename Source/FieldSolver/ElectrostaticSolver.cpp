@@ -11,6 +11,8 @@
 
 #include <WarpX.H>
 
+#include <memory>
+
 using namespace amrex;
 
 void
@@ -52,8 +54,8 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     for (int lev = 0; lev <= max_level; lev++) {
         BoxArray nba = boxArray(lev);
         nba.surroundingNodes();
-        rho[lev].reset(new MultiFab(nba, dmap[lev], 1, ng));
-        phi[lev].reset(new MultiFab(nba, dmap[lev], 1, 1));
+        rho[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, ng);
+        phi[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, 1);
         phi[lev]->setVal(0.);
     }
 
