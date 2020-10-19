@@ -132,10 +132,6 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
         if density_scale is not None:
             species.q_tot *= density_scale
 
-        # --- These need to be defined even though they are not used
-        species.profile = "constant"
-        species.density = 1
-
         # --- The PICMI standard doesn't yet have a way of specifying these values.
         # --- They should default to the size of the domain. They are not typically
         # --- necessary though since any particles outside the domain are rejected.
@@ -292,11 +288,6 @@ class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
         species.single_particle_weight = self.weight
         if density_scale is not None:
             species.single_particle_weight *= density_scale
-
-        # --- These need to be defined even though they are not used
-        species.profile = "constant"
-        species.density = 1
-        species.momentum_distribution_type = 'constant'
 
 
 class ParticleDistributionPlanarInjector(picmistandard.PICMI_ParticleDistributionPlanarInjector):
