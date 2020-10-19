@@ -3,6 +3,8 @@
 
 #include "WarpX.H"
 
+#include<memory>
+
 namespace Interpolate
 {
     using namespace amrex;

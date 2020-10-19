@@ -8,9 +8,12 @@
 #include "ParticleHistogram.H"
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
+
 #include <AMReX_REAL.H>
 #include <AMReX_ParticleReduce.H>
+
 #include <limits>
+#include <memory>
 
 using namespace amrex;
 
@@ -44,8 +47,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     std::string function_string = "";
     Store_parserString(pp,"histogram_function(t,x,y,z,ux,uy,uz)",
                        function_string);
-    m_parser.reset(new ParserWrapper<m_nvars>(
-        makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
+    m_parser = std::make_unique<ParserWrapper<m_nvars>>(
+        makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
 
     // read normalization type
     std::string norm_string = "default";

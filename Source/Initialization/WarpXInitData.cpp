@@ -22,6 +22,7 @@
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 
+#include <memory>
 
 using namespace amrex;
 
@@ -127,7 +128,8 @@ WarpX::InitDiagnostics () {
         // Find the positions of the lab-frame box that corresponds to the boosted-frame box at t=0
         Real zmin_lab = current_lo[moving_window_dir]/( (1.+beta_boost)*gamma_boost );
         Real zmax_lab = current_hi[moving_window_dir]/( (1.+beta_boost)*gamma_boost );
-        myBFD.reset(new BackTransformedDiagnostic(zmin_lab,
+        myBFD = std::make_unique<BackTransformedDiagnostic>(
+                                               zmin_lab,
                                                zmax_lab,
                                                moving_window_v, dt_snapshots_lab,
                                                num_snapshots_lab,
@@ -136,7 +138,7 @@ WarpX::InitDiagnostics () {
                                                gamma_boost, t_new[0], dt_boost,
                                                moving_window_dir, geom[0],
                                                slice_realbox,
-                                               particle_slice_width_lab));
+                                               particle_slice_width_lab);
     }
 }
 
@@ -167,14 +169,14 @@ WarpX::InitPML ()
 #ifdef WARPX_DIM_RZ
         do_pml_Lo_corrected[0] = 0; // no PML at r=0, in cylindrical geometry
 #endif
-        pml[0].reset(new PML(boxArray(0), DistributionMap(0), &Geom(0), nullptr,
+        pml[0] = std::make_unique<PML>(boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, 0,
 #ifdef WARPX_USE_PSATD
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
 #endif
                              do_dive_cleaning, do_moving_window,
                              pml_has_particles, do_pml_in_domain,
-                             do_pml_Lo_corrected, do_pml_Hi));
+                             do_pml_Lo_corrected, do_pml_Hi);
         for (int lev = 1; lev <= finest_level; ++lev)
         {
             amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
@@ -184,7 +186,7 @@ WarpX::InitPML ()
                 do_pml_Lo_MR[0] = 0;
             }
 #endif
-            pml[lev].reset(new PML(boxArray(lev), DistributionMap(lev),
+            pml[lev] = std::make_unique<PML>(boxArray(lev), DistributionMap(lev),
                                    &Geom(lev), &Geom(lev-1),
                                    pml_ncell, pml_delta, refRatio(lev-1)[0],
 #ifdef WARPX_USE_PSATD
@@ -192,7 +194,7 @@ WarpX::InitPML ()
 #endif
                                    do_dive_cleaning, do_moving_window,
                                    pml_has_particles, do_pml_in_domain,
-                                   do_pml_Lo_MR, amrex::IntVect::TheUnitVector()));
+                                   do_pml_Lo_MR, amrex::IntVect::TheUnitVector());
         }
     }
 }
@@ -229,9 +231,11 @@ WarpX::InitNCICorrector ()
             // Initialize Godfrey filters
             // Same filter for fields Ex, Ey and Bz
             const bool nodal_gather = !galerkin_interpolation;
-            nci_godfrey_filter_exeybz[lev].reset( new NCIGodfreyFilter(godfrey_coeff_set::Ex_Ey_Bz, cdtodz, nodal_gather) );
+            nci_godfrey_filter_exeybz[lev] = std::make_unique<NCIGodfreyFilter>(
+                godfrey_coeff_set::Ex_Ey_Bz, cdtodz, nodal_gather);
             // Same filter for fields Bx, By and Ez
-            nci_godfrey_filter_bxbyez[lev].reset( new NCIGodfreyFilter(godfrey_coeff_set::Bx_By_Ez, cdtodz, nodal_gather) );
+            nci_godfrey_filter_bxbyez[lev] = std::make_unique<NCIGodfreyFilter>(
+                godfrey_coeff_set::Bx_By_Ez, cdtodz, nodal_gather);
             // Compute Godfrey filters stencils
             nci_godfrey_filter_exeybz[lev]->ComputeStencils();
             nci_godfrey_filter_bxbyez[lev]->ComputeStencils();
@@ -345,12 +349,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     str_By_ext_grid_function);
        Store_parserString(pp, "Bz_external_grid_function(x,y,z)",
                                                     str_Bz_ext_grid_function);
-       Bxfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Bx_ext_grid_function,{"x","y","z"})));
-       Byfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_By_ext_grid_function,{"x","y","z"})));
-       Bzfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Bz_ext_grid_function,{"x","y","z"})));
+       Bxfield_parser = std::make_unique<ParserWrapper<3>>(
+                                makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
+       Byfield_parser = std::make_unique<ParserWrapper<3>>(
+                                makeParser(str_By_ext_grid_function,{"x","y","z"}));
+       Bzfield_parser = std::make_unique<ParserWrapper<3>>(
+                                makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
 
        // Initialize Bfield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Bfield_fp[lev][0].get(),
@@ -394,12 +398,12 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        Store_parserString(pp, "Ez_external_grid_function(x,y,z)",
                                                     str_Ez_ext_grid_function);
 
-       Exfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Ex_ext_grid_function,{"x","y","z"})));
-       Eyfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Ey_ext_grid_function,{"x","y","z"})));
-       Ezfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Ez_ext_grid_function,{"x","y","z"})));
+       Exfield_parser = std::make_unique<ParserWrapper<3>>(
+                                makeParser(str_Ex_ext_grid_function,{"x","y","z"}));
+       Eyfield_parser = std::make_unique<ParserWrapper<3>>(
+                                makeParser(str_Ey_ext_grid_function,{"x","y","z"}));
+       Ezfield_parser = std::make_unique<ParserWrapper<3>>(
+                                makeParser(str_Ez_ext_grid_function,{"x","y","z"}));
 
        // Initialize Efield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Efield_fp[lev][0].get(),
