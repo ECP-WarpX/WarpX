@@ -42,7 +42,7 @@ Ascent looks for the :code:`ascent_actions.yaml` file in the current working dir
 For example, the following :code:`ascent_actions.yaml` file extracts an isosurface of the field ``Ex`` for ``15`` levels and saves the resulting images to :code:`levels_<nnnn>.png`.
 `Ascent Actions <https://ascent.readthedocs.io/en/latest/Actions/index.html>`_ provides an overview over all available analysis and visualization actions.
 
-.. code-block:: json
+.. code-block:: yaml
 
     -
       action: "add_pipelines"
@@ -66,7 +66,7 @@ For example, the following :code:`ascent_actions.yaml` file extracts an isosurfa
 
 Here is another :code:`ascent_actions.yaml` example that renders isosurfaces and particles:
 
-.. code-block:: json
+.. code-block:: yaml
 
     -
       action: "add_pipelines"
@@ -101,7 +101,7 @@ Here is another :code:`ascent_actions.yaml` example that renders isosurfaces and
 
 Finally, here is a more complex :code:`ascent_actions.yaml` example that creates the same images as the prior example, but adds a trigger that creates a Cinema Database at cycle ``300``:
 
-.. code-block:: json
+.. code-block:: yaml
 
     -
       action: "add_triggers"
@@ -143,7 +143,7 @@ Finally, here is a more complex :code:`ascent_actions.yaml` example that creates
 
 When the trigger condition is meet, ``cycle() == 300``, the actions in :code:`trigger.yaml` are also executed:
 
-.. code-block:: json
+.. code-block:: yaml
 
     -
       action: "add_pipelines"
@@ -182,19 +182,21 @@ Replay
 ------
 
 With Ascent/Conduit, one can store the intermediate data files before the rendering step is applied to custom files.
-These so-called *Conduit Blueprint HDF5* files can be 'replayed, i.e. rendered without running the simulation again. 
-VisIt 3.0+ also supports generation those files.
+These so-called *Conduit Blueprint HDF5* files can be "replayed", i.e. rendered without running the simulation again.
+VisIt 3.0+ also supports those files.
 
-`Replay <https://ascent.readthedocs.io/en/latest/Utilities.html#getting-data-for-replay>`_ is a utility that allows the user to "replay" a simulation from aforementioned files and rendering them with Ascent.
+`Replay <https://ascent.readthedocs.io/en/latest/Utilities.html#getting-data-for-replay>`_ is a utility that allows the user to replay a simulation from aforementioned files and rendering them with Ascent.
 Replay enables the user or developer to pick specific time steps and load them for Ascent visualization, without running the simulation again.
 
-We will guide you through the `replay' procedure. 
+We will guide you through the replay procedure.
+
 
 Get Blueprint Files
 ^^^^^^^^^^^^^^^^^^^
-To use replay, you first need *Conduit Blueprint HDF5* files which could be extracted by replay. The following ascent actions file can be used to extract *Conduit Blueprint HDF5* files.
+To use replay, you first need *Conduit Blueprint HDF5* files.
+The following block can be used in an ascent action to extract *Conduit Blueprint HDF5* files from a simulation run.
 
-.. code-block:: json
+.. code-block:: yaml
 
     -
       action: action: "add_extracts"
@@ -202,103 +204,32 @@ To use replay, you first need *Conduit Blueprint HDF5* files which could be extr
         e1:
           type: "relay"
           params:
-            path: "my_output_file_name"
+            path: "conduit_blueprint"
             protocol: "blueprint/mesh/hdf5"
 
-Example Actions
-^^^^^^^^^^^^^^^
+The output in the WarpX run directory will look as in the following listing.
+The ``.root`` file is a metadata file and the corresponding directory contains the conduit blueprint data in an internal format that is based on HDF5.
 
-A visualization of the electric field component `Ex` with a contour plot and with added particles can be obtained by replaying with the following Ascent Action:
+.. code-block:: bash
 
-.. code-block:: json
+   conduit_blueprint.cycle_000000/
+   conduit_blueprint.cycle_000000.root
+   conduit_blueprint.cycle_000050/
+   conduit_blueprint.cycle_000050.root
+   conduit_blueprint.cycle_000100/
+   conduit_blueprint.cycle_000100.root
 
-    -
-      action: "add_pipelines"
-      pipelines:
-        clipped_volume:
-          f0:
-            type: "contour"
-            params:
-              field: "Ex"
-              levels: 16
-          f1:
-            type: "clip"
-            params:
-              topology: topo # name of the amr mesh
-              multi_plane:
-                point1:
-                  x: 0.0
-                  y: 0.0
-                  z: 0.0
-                normal1:
-                  x: 0.0
-                  y: -1.0
-                  z: 0.0
-                point2:
-                  x: 0.0
-                  y: 0.0
-                  z: 0.0
-                normal2:
-                  x: -0.7
-                  y: -0.7
-                  z: 0.0
-        sampled_particles:
-          f1:
-            type: histsampling
-            params:
-              field: particle_electrons_uz
-              bins: 64
-              sample_rate: 0.90
-          f2:
-            type: "clip"
-            params:
-              topology: particle_electrons # particle data
-              multi_plane:
-                point1:
-                  x: 0.0
-                  y: 0.0
-                  z: 0.0
-                normal1:
-                  x: 0.0
-                  y: -1.0
-                  z: 0.0
-                point2:
-                  x: 0.0
-                  y: 0.0
-                  z: 0.0
-                normal2:
-                  x: -0.7
-                  y: -0.7
-                  z: 0.0
+In order to select a few time steps after the fact, a so-called *cycles file* can be created.
+A cycles file is a simple text file that lists one root file per line, e.g.:
 
-    -
-      action: "add_scenes"
-      scenes:
-        scene1:
-          plots:
-            p0:
-              type: "pseudocolor"
-              field: "particle_electrons_uz"
-              pipeline: "sampled_particles"
-            p1:
-              type: "pseudocolor"
-              field: "Ex"
-              pipeline: "clipped_volume"
-          renders:
-            image1:
-              bg_color: [1.0, 1.0, 1.0]
-              fg_color: [0.0, 0.0, 0.0]
-              image_prefix: "test%06d"
-              camera:
-                azimuth: 20
-                elevation: 30
-                zoom: 2.5
+.. code-block:: bash
 
-There are more `Ascent Actions examples available <https://ascent.readthedocs.io/en/latest/Actions/Examples.html#yaml-examples>`_ for you to play.
+  conduit_blueprint.cycle_000100.root
+  conduit_blueprint.cycle_000050.root
+
 
 Run Replay
 ^^^^^^^^^^
-
 
 For Ascent Replay, two command line tools are provided in the utilities/replay directory of the Ascent installation.
 There are two version of replay: the MPI-parallel version ``replay_mpi`` and a serial version, ``replay_ser``.
@@ -307,26 +238,58 @@ Here we use ``replay_mpi`` as an example.
 
 The options for replay are:
 
---root: specifies Blueprint root file to load
---cycles: specifies a text file containing a list of Blueprint root files to load
---actions: specifies the name of the actions file to use (default: ascent_actions.json)
+* ``--root``: specifies Blueprint root file to load
+* ``--cycles``: specifies a text file containing a list of Blueprint root files to load
+* ``--actions``: specifies the name of the actions file to use (default: ``ascent_actions.yaml``)
 
-Example launches:
+Instead of starting a simulation that generates data for Ascent, we now execute ``replay_ser``/``replay_mpi``.
+Replay will loop over the files listed in ``cycles`` in the order in which they appear in the cycles file.
 
-.. code-block:: bash
-
-  srun -n 8 ./replay_mpi --root=XXX.root --actions=ascent_action.yaml
-  srun -n 8 ./replay_mpi --cycles=warpx_list.txt --actions=ascent_action.yaml
-
-The cycles files list is a text file containing one root file per line:
+For example, for a small data example that fits on a single computer:
 
 .. code-block:: bash
 
-  cat warpx_list.txt
-  ...
-  XXX.root
-  YYY.root
-  ZZZ.root
-  ...
+  ./replay_ser --root=conduit_blueprint.cycle_000400.root --actions=ascent_actions.yaml
 
-Replay will loop over these files in the order in which they appear in the file.
+Will replay the data of WarpX step 400 ("cycle" 400).
+A whole set of steps can be replayed with the above mentioned *cycles file*:
+
+.. code-block:: bash
+
+  ./replay_ser --cycles=warpx_list.txt --actions=ascent_actions.yaml
+
+For larger examples, e.g. on a cluster with *Slurm* batch system, a parallel launch could look like this:
+
+.. code-block:: bash
+
+  # one step
+  srun -n 8 ./replay_mpi --root=conduit_blueprint.cycle_000400.root --actions=ascent_actions.yaml
+  # multiple steps
+  srun -n 8 ./replay_mpi --cycles=warpx_list.txt --actions=ascent_actions.yaml
+
+
+Example Actions
+^^^^^^^^^^^^^^^
+
+A visualization of the electric field component :math:`E_x` (variable: ``Ex``) with a contour plot and with added particles can be obtained with the following Ascent Action.
+This action can be used both in replay as well as in situ runs.
+
+.. literalinclude:: examples/Physics_applications/laser_acceleration/ascent_actions.yaml
+   :language: yaml
+
+There are more `Ascent Actions examples available <https://ascent.readthedocs.io/en/latest/Actions/Examples.html#yaml-examples>`_ for you to play.
+
+
+Workflow
+^^^^^^^^
+
+.. note::
+
+   This section is in-progress.
+   It will describe how to quickly create and iterate on ``ascent_actions.yaml`` files before running at scale.
+
+   TODOs: finalize acceptance testing; update 3D LWFA example; share Jupyter notebook file
+
+.. code-block:: bash
+
+   docker run -v$PWD:/home/user/ascent/install-debug/examples/ascentutorial/ascent_intro/notebooks/replay -p 8000:8000 -p 8888:8888 -p 9000:9000 -p 10000:10000 -t -i alpinedav/ascent-jupyter:latest
