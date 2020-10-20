@@ -131,10 +131,12 @@ protected:
     int nmax_lev; /**< max_level to allocate output multifab and vector of field functors. */
     /** Number of levels to be output*/
     int nlev_output;
-    /** Name of species to write to file */
-    std::vector< std::string > m_species_names;
+    /** Names of species to write to output */
+    std::vector< std::string > m_output_species_names;
+    /** Names of all species in the simulation */
+    std::vector< std::string > m_all_species_names;
     /** Each element of this vector handles output for 1 species */
-    amrex::Vector< ParticleDiag > m_all_species;
+    amrex::Vector< ParticleDiag > m_output_species;
     /** Vector of (pointers to) functors to compute output fields, per level,
      * per component. This allows for simple operations (averaging to
      * cell-center for standard EB fields) as well as more involved operations

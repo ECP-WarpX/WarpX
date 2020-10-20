@@ -202,7 +202,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
     } else {
 
         // Compute real-space stencil coefficients
-        Vector<Real> h_stencil_coef = getFonbergStencilCoefficients(n_order, nodal);
+        Vector<Real> h_stencil_coef = getFornbergStencilCoefficients(n_order, nodal);
         DeviceVector<Real> d_stencil_coef(h_stencil_coef.size());
         Gpu::copyAsync(Gpu::hostToDevice, h_stencil_coef.begin(), h_stencil_coef.end(),
                        d_stencil_coef.begin());
@@ -227,13 +227,13 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
             amrex::ParallelFor(N, [=] AMREX_GPU_DEVICE (int i) noexcept
             {
                 p_modified_k[i] = 0;
-                for (int n=1; n<nstencil; n++){
+                for (int n=0; n<nstencil; n++){
                     if (nodal){
                         p_modified_k[i] += p_stencil_coef[n]*
-                            std::sin( p_k[i]*n*delta_x )/( n*delta_x );
+                            std::sin( p_k[i]*(n+1)*delta_x )/( (n+1)*delta_x );
                     } else {
                         p_modified_k[i] += p_stencil_coef[n]* \
-                            std::sin( p_k[i]*(n-0.5)*delta_x )/( (n-0.5)*delta_x );
+                            std::sin( p_k[i]*(n+0.5)*delta_x )/( (n+0.5)*delta_x );
                     }
                 }
 
@@ -264,43 +264,39 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
     return modified_k_comp;
 }
 
-/* Returns an array of coefficients, corresponding to the weight
- * of each point in a finite-difference approximation (to order `n_order`)
- * of a derivative.
- *
- * `nodal` indicates whether this finite-difference approximation is
- * taken on a nodal grid or a staggered grid.
- */
 Vector<Real>
-getFonbergStencilCoefficients( const int n_order, const bool nodal )
+getFornbergStencilCoefficients(const int n_order, const bool nodal)
 {
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( n_order%2 == 0,
-                                     "n_order should be even.");
-    const int m = n_order/2;
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_order % 2 == 0, "n_order must be even");
+
+    const int m = n_order / 2;
     Vector<Real> coefs;
-    coefs.resize( m+1 );
+    coefs.resize(m);
 
-    // Note: there are closed-form formula for these coefficients,
-    // but they result in an overflow when evaluated numerically.
-    // One way to avoid the overflow is to calculate the coefficients
-    // by recurrence.
+    // There are closed-form formula for these coefficients, but they result in
+    // an overflow when evaluated numerically. One way to avoid the overflow is
+    // to calculate the coefficients by recurrence.
 
-    // Coefficients for nodal (a.k.a. centered) finite-difference
+    // Coefficients for nodal (that is, centered) finite-difference approximation
     if (nodal == true) {
-       coefs[0] = -2.; // First coefficient
-       for (int n=1; n<m+1; n++){ // Get the other coefficients by recurrence
-           coefs[n] = - (m+1-n)*1./(m+n)*coefs[n-1];
+       // First coefficient
+       coefs[0] = m * 2. / (m+1);
+       // Other coefficients by recurrence
+       for (int n = 1; n < m; n++) {
+           coefs[n] = - (m-n) * 1. / (m+n+1) * coefs[n-1];
        }
     }
-    // Coefficients for staggered finite-difference
+    // Coefficients for staggered finite-difference approximation
     else {
        Real prod = 1.;
-       for (int k=1; k<m+1; k++){
-           prod *= (m+k)*1./(4*k);
+       for (int k = 1; k < m+1; k++) {
+           prod *= (m + k) / (4. * k);
        }
-       coefs[0] = 4*m*prod*prod; // First coefficient
-       for (int n=1; n<m+1; n++){ // Get the other coefficients by recurrence
-           coefs[n] = - ((2*n-3)*(m+1-n))*1./((2*n-1)*(m-1+n))*coefs[n-1];
+       // First coefficient
+       coefs[0] = 4 * m * prod * prod;
+       // Other coefficients by recurrence
+       for (int n = 1; n < m; n++) {
+           coefs[n] = - ((2*n-1) * (m-n)) * 1. / ((2*n+1) * (m+n)) * coefs[n-1];
        }
     }
     return coefs;

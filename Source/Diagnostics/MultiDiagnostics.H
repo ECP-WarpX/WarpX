@@ -4,6 +4,8 @@
 #include "FullDiagnostics.H"
 #include "BTDiagnostics.H"
 
+#include <memory>
+
 /** All types of diagnostics. */
 enum struct DiagTypes {Full, BackTransformed};
 

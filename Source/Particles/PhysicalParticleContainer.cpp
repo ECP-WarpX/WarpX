@@ -96,7 +96,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 {
     BackwardCompatibility();
 
-    plasma_injector.reset(new PlasmaInjector(species_id, species_name));
+    plasma_injector = std::make_unique<PlasmaInjector>(species_id, species_name);
     physical_species = plasma_injector->getPhysicalSpecies();
     charge = plasma_injector->getCharge();
     mass = plasma_injector->getMass();
@@ -179,8 +179,8 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         std::string function_string = "";
         Store_parserString(pp,"plot_filter_function(t,x,y,z,ux,uy,uz)",
                            function_string);
-        m_particle_filter_parser.reset(new ParserWrapper<7>(
-            makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
+        m_particle_filter_parser = std::make_unique<ParserWrapper<7>>(
+            makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
     }
 
 }
@@ -188,7 +188,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
     : WarpXParticleContainer(amr_core, 0)
 {
-    plasma_injector.reset(new PlasmaInjector());
+    plasma_injector = std::make_unique<PlasmaInjector>();
 }
 
 void
