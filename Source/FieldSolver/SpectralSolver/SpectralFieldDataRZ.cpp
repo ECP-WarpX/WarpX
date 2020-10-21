@@ -423,6 +423,11 @@ SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf, int con
         // field_mf does not.
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
 
+        if ( !(field_mf[mfi].box().contains(field_mf_copy[mfi].box())) ) {
+            // If field_mf[mfi] is smaller than field_mf_copy[mfi], then fill field_mf_copy[mfi] with
+            // zeros so that all of it is initialized.
+            field_mf_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, ncomp);
+            }
         field_mf_copy[mfi].copy<amrex::RunOn::Device>(field_mf[mfi], i_comp*ncomp, 0, ncomp);
         multi_spectral_hankel_transformer[mfi].PhysicalToSpectral_Scalar(field_mf_copy[mfi], tempHTransformedSplit[mfi]);
 
@@ -456,6 +461,12 @@ SpectralFieldDataRZ::ForwardTransform (amrex::MultiFab const & field_mf_r, int c
 
         amrex::Box const& realspace_bx = tempHTransformed[mfi].box();
 
+        if ( !(field_mf_r[mfi].box().contains(field_mf_r_copy[mfi].box())) ) {
+            // If field_mf_r[mfi] is smaller than field_mf_r_copy[mfi], then fill field_mf_r_copy[mfi] with
+            // zeros so that all of it is initialized.
+            field_mf_r_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, 2*n_rz_azimuthal_modes);
+            field_mf_t_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 0, 2*n_rz_azimuthal_modes);
+            }
         field_mf_r_copy[mfi].copy<amrex::RunOn::Device>(field_mf_r[mfi], 0, 0, 1); // Real part of mode 0
         field_mf_t_copy[mfi].copy<amrex::RunOn::Device>(field_mf_t[mfi], 0, 0, 1); // Real part of mode 0
         field_mf_r_copy[mfi].setVal<amrex::RunOn::Device>(0._rt, realspace_bx, 1, 1); // Imaginary part of mode 0

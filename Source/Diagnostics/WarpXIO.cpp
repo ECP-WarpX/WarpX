@@ -24,6 +24,7 @@
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 
+#include <memory>
 
 using namespace amrex;
 
@@ -251,7 +252,7 @@ WarpX::GetCellCenteredData() {
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        cc[lev].reset( new MultiFab(grids[lev], dmap[lev], nc, ng) );
+        cc[lev] = std::make_unique<MultiFab>(grids[lev], dmap[lev], nc, ng );
 
         int dcomp = 0;
         // first the electric field

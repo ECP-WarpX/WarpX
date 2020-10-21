@@ -44,8 +44,7 @@ ReducedDiags::ReducedDiags (std::string rd_name)
         // replace / create output file
         if ( m_IsNotRestart ) // not a restart
         {
-            std::ofstream ofs;
-            ofs.open(m_path+m_rd_name+"."+m_extension, std::ios::trunc);
+            std::ofstream ofs{m_path+m_rd_name+"."+m_extension, std::ios::trunc};
             ofs.close();
         }
     }
@@ -66,9 +65,8 @@ void ReducedDiags::WriteToFile (int step) const
 {
 
     // open file
-    std::ofstream ofs;
-    ofs.open(m_path + m_rd_name + "." + m_extension,
-        std::ofstream::out | std::ofstream::app);
+    std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
+        std::ofstream::out | std::ofstream::app};
 
     // write step
     ofs << step+1;

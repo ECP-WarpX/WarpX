@@ -24,7 +24,7 @@ public:
      *  @param[in] rd_name reduced diags names */
     ParticleEnergy(std::string rd_name);
 
-    /** This funciton computes the particle relativistic
+    /** This function computes the particle relativistic
      *  kinetic energy (EP).
      *  \param [in] step current time step
      *  EP = sqrt( p^2 c^2 + m^2 c^4 ) - m c^2,

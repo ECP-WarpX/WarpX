@@ -9,4 +9,5 @@ target_sources(WarpX
     ReducedDiags.cpp
     FieldMaximum.cpp
     ParticleExtrema.cpp
+    ParticleNumber.cpp
 )

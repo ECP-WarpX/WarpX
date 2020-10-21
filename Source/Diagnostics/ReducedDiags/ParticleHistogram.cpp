@@ -8,9 +8,12 @@
 #include "ParticleHistogram.H"
 #include "WarpX.H"
 #include "Utils/WarpXUtil.H"
+
 #include <AMReX_REAL.H>
 #include <AMReX_ParticleReduce.H>
+
 #include <limits>
+#include <memory>
 
 using namespace amrex;
 
@@ -44,8 +47,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     std::string function_string = "";
     Store_parserString(pp,"histogram_function(t,x,y,z,ux,uy,uz)",
                        function_string);
-    m_parser.reset(new ParserWrapper<m_nvars>(
-        makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
+    m_parser = std::make_unique<ParserWrapper<m_nvars>>(
+        makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
 
     // read normalization type
     std::string norm_string = "default";
@@ -65,7 +68,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
     }
 
     // get MultiParticleContainer class object
-    auto & mypc = WarpX::GetInstance().GetPartContainer();
+    const auto & mypc = WarpX::GetInstance().GetPartContainer();
     // get species names (std::vector<std::string>)
     auto const species_names = mypc.GetSpeciesNames();
     // select species
@@ -88,9 +91,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
         if ( m_IsNotRestart )
         {
             // open file
-            std::ofstream ofs;
-            ofs.open(m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app);
+            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
+                std::ofstream::out | std::ofstream::app};
             // write header row
             ofs << "#";
             ofs << "[1]step()";
@@ -127,7 +129,7 @@ void ParticleHistogram::ComputeDiags (int step)
     auto const t = warpx.gett_new(0);
 
     // get MultiParticleContainer class object
-    auto & mypc = warpx.GetPartContainer();
+    const auto & mypc = warpx.GetPartContainer();
 
     // get WarpXParticleContainer class object
     auto const & myspc = mypc.GetParticleContainer(m_selected_species_id);

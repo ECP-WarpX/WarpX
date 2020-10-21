@@ -12,6 +12,7 @@
 #include "ParticleExtrema.H"
 #include "FieldEnergy.H"
 #include "FieldMaximum.H"
+#include "ParticleNumber.H"
 #include "MultiReducedDiags.H"
 
 #include <AMReX_ParmParse.H>
@@ -48,33 +49,38 @@ MultiReducedDiags::MultiReducedDiags ()
         // match diags
         if (rd_type.compare("ParticleEnergy") == 0)
         {
-            m_multi_rd[i_rd].reset
-                ( new ParticleEnergy(m_rd_names[i_rd]));
+            m_multi_rd[i_rd] =
+                std::make_unique<ParticleEnergy>(m_rd_names[i_rd]);
         }
         else if (rd_type.compare("FieldEnergy") == 0)
         {
-            m_multi_rd[i_rd].reset
-                ( new FieldEnergy(m_rd_names[i_rd]));
+            m_multi_rd[i_rd] =
+                std::make_unique<FieldEnergy>(m_rd_names[i_rd]);
         }
         else if (rd_type.compare("FieldMaximum") == 0)
         {
-            m_multi_rd[i_rd].reset
-                ( new FieldMaximum(m_rd_names[i_rd]));
+            m_multi_rd[i_rd] =
+                std::make_unique<FieldMaximum>(m_rd_names[i_rd]);
         }
         else if (rd_type.compare("BeamRelevant") == 0)
         {
-            m_multi_rd[i_rd].reset
-                ( new BeamRelevant(m_rd_names[i_rd]));
+            m_multi_rd[i_rd] =
+                std::make_unique<BeamRelevant>(m_rd_names[i_rd]);
         }
         else if (rd_type.compare("LoadBalanceCosts") == 0)
         {
-            m_multi_rd[i_rd].reset
-                ( new LoadBalanceCosts(m_rd_names[i_rd]));
+            m_multi_rd[i_rd] =
+                std::make_unique<LoadBalanceCosts>(m_rd_names[i_rd]);
         }
         else if (rd_type.compare("ParticleHistogram") == 0)
         {
-            m_multi_rd[i_rd].reset
-                ( new ParticleHistogram(m_rd_names[i_rd]));
+            m_multi_rd[i_rd] =
+                std::make_unique<ParticleHistogram>(m_rd_names[i_rd]);
+        }
+        else if (rd_type.compare("ParticleNumber") == 0)
+        {
+            m_multi_rd[i_rd]=
+                std::make_unique<ParticleNumber>(m_rd_names[i_rd]);
         }
         else if (rd_type.compare("ParticleExtrema") == 0)
         {
@@ -103,7 +109,7 @@ void MultiReducedDiags::ComputeDiags (int step)
 }
 // end void MultiReducedDiags::ComputeDiags
 
-// funciton to write data
+// function to write data
 void MultiReducedDiags::WriteToFile (int step)
 {
 

@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <cstdlib>
 
+#include <memory>
+
 using namespace amrex;
 
 void
@@ -114,12 +116,13 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             Array<std::unique_ptr<MultiFab>,3> Btmp;
             if (Bfield_cax[lev][0]) {
                 for (int i = 0; i < 3; ++i) {
-                    Btmp[i].reset(new MultiFab(*Bfield_cax[lev][i], amrex::make_alias, 0, 1));
+                    Btmp[i] = std::make_unique<MultiFab>(
+                        *Bfield_cax[lev][i], amrex::make_alias, 0, 1);
                 }
             } else {
                 IntVect ngtmp = Bfield_aux[lev-1][0]->nGrowVect();
                 for (int i = 0; i < 3; ++i) {
-                    Btmp[i].reset(new MultiFab(cnba, dm, 1, ngtmp));
+                    Btmp[i] = std::make_unique<MultiFab>(cnba, dm, 1, ngtmp);
                 }
             }
             // ParallelCopy from coarse level
@@ -162,12 +165,14 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             Array<std::unique_ptr<MultiFab>,3> Etmp;
             if (Efield_cax[lev][0]) {
                 for (int i = 0; i < 3; ++i) {
-                    Etmp[i].reset(new MultiFab(*Efield_cax[lev][i], amrex::make_alias, 0, 1));
+                    Etmp[i] = std::make_unique<MultiFab>(
+                        *Efield_cax[lev][i], amrex::make_alias, 0, 1);
                 }
             } else {
                 IntVect ngtmp = Efield_aux[lev-1][0]->nGrowVect();
                 for (int i = 0; i < 3; ++i) {
-                    Etmp[i].reset(new MultiFab(cnba, dm, 1, ngtmp));
+                    Etmp[i] = std::make_unique<MultiFab>(
+                        cnba, dm, 1, ngtmp);
                 }
             }
             // ParallelCopy from coarse level
