@@ -6,9 +6,13 @@
 #include "ComputeDiagFunctors/BackTransformFunctor.H"
 #include "ComputeDiagFunctors/RhoFunctor.H"
 #include "Utils/CoarsenIO.H"
+
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_VisMF.H>
+
+#include <memory>
+
 using namespace amrex::literals;
 
 BTDiagnostics::BTDiagnostics (int i, std::string name)
@@ -303,8 +307,8 @@ BTDiagnostics::DefineCellCenteredMultiFab(int lev)
     ba.coarsen(m_crse_ratio);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     int ngrow = 1;
-    m_cell_centered_data[lev].reset( new amrex::MultiFab(ba, dmap,
-                                     m_cellcenter_varnames.size(), ngrow) );
+    m_cell_centered_data[lev] = std::make_unique<amrex::MultiFab>(ba, dmap,
+                                     m_cellcenter_varnames.size(), ngrow);
 
 }
 

@@ -2,6 +2,8 @@
 #include <AMReX_ParmParse.H>
 #include "WarpX.H"
 
+#include <memory>
+
 using namespace amrex;
 
 MacroscopicProperties::MacroscopicProperties ()
@@ -34,8 +36,8 @@ MacroscopicProperties::ReadParameters ()
     // initialization of sigma (conductivity) with parser
     if (m_sigma_s == "parse_sigma_function") {
         Store_parserString(pp, "sigma_function(x,y,z)", m_str_sigma_function);
-        m_sigma_parser.reset(new ParserWrapper<3>(
-                                 makeParser(m_str_sigma_function,{"x","y","z"}) ) );
+        m_sigma_parser = std::make_unique<ParserWrapper<3>>(
+                                 makeParser(m_str_sigma_function,{"x","y","z"}));
     }
 
     bool epsilon_specified = false;
@@ -54,8 +56,8 @@ MacroscopicProperties::ReadParameters ()
     // initialization of epsilon (permittivity) with parser
     if (m_epsilon_s == "parse_epsilon_function") {
         Store_parserString(pp, "epsilon_function(x,y,z)", m_str_epsilon_function);
-        m_epsilon_parser.reset(new ParserWrapper<3>(
-                                 makeParser(m_str_epsilon_function,{"x","y","z"}) ) );
+        m_epsilon_parser = std::make_unique<ParserWrapper<3>>(
+                                 makeParser(m_str_epsilon_function,{"x","y","z"}));
     }
 
     // Query input for material permittivity, epsilon.
@@ -75,8 +77,8 @@ MacroscopicProperties::ReadParameters ()
     // initialization of mu (permeability) with parser
     if (m_mu_s == "parse_mu_function") {
         Store_parserString(pp, "mu_function(x,y,z)", m_str_mu_function);
-        m_mu_parser.reset(new ParserWrapper<3>(
-                                 makeParser(m_str_mu_function,{"x","y","z"}) ) );
+        m_mu_parser = std::make_unique<ParserWrapper<3>>(
+                                 makeParser(m_str_mu_function,{"x","y","z"}));
     }
 
 }
@@ -194,4 +196,3 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
 
 
 }
-

@@ -12,6 +12,8 @@
 #include "SliceDiagnostic.H"
 #include "WarpX.H"
 
+#include <memory>
+
 using namespace amrex;
 
 #ifdef WARPX_USE_HDF5
@@ -595,11 +597,11 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
         prob_domain_lab.setLo(AMREX_SPACEDIM-1, zmin_lab + v_window_lab * t_lab);
         prob_domain_lab.setHi(AMREX_SPACEDIM-1, zmax_lab + v_window_lab * t_lab);
         Box diag_box = geom.Domain();
-        m_LabFrameDiags_[i].reset(new LabFrameSnapShot(t_lab, t_boost,
+        m_LabFrameDiags_[i] = std::make_unique<LabFrameSnapShot>(t_lab, t_boost,
                                 m_inv_gamma_boost_, m_inv_beta_boost_, m_dz_lab_,
                                 prob_domain_lab, prob_ncells_lab,
                                 m_ncomp_to_dump, m_mesh_field_names, prob_domain_lab,
-                                diag_box, i));
+                                diag_box, i);
     }
 
 
@@ -675,11 +677,11 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
                                          v_window_lab * t_slice_lab );
 
         // construct labframeslice
-        m_LabFrameDiags_[i+N_snapshots].reset(new LabFrameSlice(t_slice_lab, t_boost,
+        m_LabFrameDiags_[i+N_snapshots] = std::make_unique<LabFrameSlice>(t_slice_lab, t_boost,
                                 m_inv_gamma_boost_, m_inv_beta_boost_, m_dz_lab_,
                                 prob_domain_lab, slice_ncells_lab,
                                 m_ncomp_to_dump, m_mesh_field_names, slice_dom_lab,
-                                slicediag_box, i, m_particle_slice_width_lab_));
+                                slicediag_box, i, m_particle_slice_width_lab_);
     }
     // sort diags based on their respective t_lab
     std::stable_sort(m_LabFrameDiags_.begin(), m_LabFrameDiags_.end(), compare_tlab_uptr);
@@ -694,7 +696,7 @@ void BackTransformedDiagnostic::Flush(const Geometry& /*geom*/)
     VisMF::Header::Version current_version = VisMF::GetHeaderVersion();
     VisMF::SetHeaderVersion(amrex::VisMF::Header::NoFabHeader_v1);
 
-    auto & mypc = WarpX::GetInstance().GetPartContainer();
+    const auto & mypc = WarpX::GetInstance().GetPartContainer();
     const std::vector<std::string> species_names = mypc.GetSpeciesNames();
 
     // Loop over BFD snapshots
@@ -826,8 +828,8 @@ writeLabFrameData(const MultiFab* cell_centered_data,
                 BoxArray buff_ba(lf_diags->m_buff_box_);
                 buff_ba.maxSize(m_max_box_size_);
                 DistributionMapping buff_dm(buff_ba);
-                lf_diags->m_data_buffer_.reset( new MultiFab(buff_ba,
-                                                buff_dm, m_ncomp_to_dump, 0) );
+                lf_diags->m_data_buffer_ = std::make_unique<MultiFab>(buff_ba,
+                                                buff_dm, m_ncomp_to_dump, 0);
             }
             // ... reset particle buffer particles_buffer_[i]
             if (WarpX::do_back_transformed_particles)
@@ -843,8 +845,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
             if (lf_diags->m_t_lab != prev_t_lab ) {
                if (slice)
                {
-                 slice.reset(new MultiFab);
-                 slice.reset(nullptr);
+                 slice = nullptr;
                }
                slice = amrex::get_slice_data(m_boost_direction_,
                                              lf_diags->m_current_z_boost,
@@ -867,9 +868,9 @@ writeLabFrameData(const MultiFab* cell_centered_data,
              // Make it a BoxArray slice_ba
              BoxArray slice_ba(slice_box);
              slice_ba.maxSize(m_max_box_size_);
-             tmp_slice_ptr = std::unique_ptr<MultiFab>(new MultiFab(slice_ba,
+             tmp_slice_ptr = std::make_unique<MultiFab>(slice_ba,
                              lf_diags->m_data_buffer_->DistributionMap(),
-                             ncomp, 0));
+                             ncomp, 0);
 
              // slice is re-used if the t_lab of a diag is equal to
              // that of the previous diag.
@@ -880,8 +881,7 @@ writeLabFrameData(const MultiFab* cell_centered_data,
              tmp_slice_ptr->copy(*slice, 0, 0, ncomp);
              lf_diags->AddDataToBuffer(*tmp_slice_ptr, i_lab,
                                                map_actual_fields_to_dump);
-             tmp_slice_ptr.reset(new MultiFab);
-             tmp_slice_ptr.reset(nullptr);
+             tmp_slice_ptr = nullptr;
         }
 
         if (WarpX::do_back_transformed_particles) {
@@ -1187,7 +1187,7 @@ createLabFrameDirectories() {
     ParallelDescriptor::Barrier();
 
     if (WarpX::do_back_transformed_particles){
-        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const auto & mypc = WarpX::GetInstance().GetPartContainer();
         const std::vector<std::string> species_names = mypc.GetSpeciesNames();
         // Loop over species to be dumped to BFD
         for (int j = 0; j < mypc.nSpeciesBackTransformedDiagnostics(); ++j)
@@ -1216,7 +1216,7 @@ createLabFrameDirectories() {
                 CreateDirectoryFailed(fullpath);
         }
 
-        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const auto & mypc = WarpX::GetInstance().GetPartContainer();
         const std::vector<std::string> species_names = mypc.GetSpeciesNames();
 
         const std::string particles_prefix = "particle";

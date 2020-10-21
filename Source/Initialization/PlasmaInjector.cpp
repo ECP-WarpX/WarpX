@@ -20,6 +20,7 @@
 #include <functional>
 #include <sstream>
 #include <string>
+#include <memory>
 
 
 using namespace amrex;
@@ -230,8 +231,9 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             "(Please visit PR#765 for more information.)");
 #endif
         // Construct InjectorPosition with InjectorPositionRandom.
-        h_inj_pos.reset(new InjectorPosition((InjectorPositionRandom*)nullptr,
-                                             xmin, xmax, ymin, ymax, zmin, zmax));
+        h_inj_pos = std::make_unique<InjectorPosition>(
+            (InjectorPositionRandom*)nullptr,
+            xmin, xmax, ymin, ymax, zmin, zmax);
         parseDensity(pp);
         parseMomentum(pp);
     } else if (part_pos_s == "nuniformpercell") {
@@ -250,11 +252,12 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
             "n_rz_azimuthal_modes (Please visit PR#765 for more information.)");
 #endif
         // Construct InjectorPosition from InjectorPositionRegular.
-        h_inj_pos.reset(new InjectorPosition((InjectorPositionRegular*)nullptr,
-                                             xmin, xmax, ymin, ymax, zmin, zmax,
-                                             Dim3{num_particles_per_cell_each_dim[0],
-                                                  num_particles_per_cell_each_dim[1],
-                                                  num_particles_per_cell_each_dim[2]}));
+        h_inj_pos = std::make_unique<InjectorPosition>(
+            (InjectorPositionRegular*)nullptr,
+            xmin, xmax, ymin, ymax, zmin, zmax,
+            Dim3{num_particles_per_cell_each_dim[0],
+                num_particles_per_cell_each_dim[1],
+                num_particles_per_cell_each_dim[2]});
         num_particles_per_cell = num_particles_per_cell_each_dim[0] *
                                  num_particles_per_cell_each_dim[1] *
                                  num_particles_per_cell_each_dim[2];

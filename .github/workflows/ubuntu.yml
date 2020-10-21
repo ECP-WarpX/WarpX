@@ -39,7 +39,6 @@ jobs:
 
 # Ref.: https://github.com/rscohn2/oneapi-ci
 # intel-basekit intel-hpckit are too large in size
-# note: unclear how the ICC compiler package is named in beta09, this pulls beta08
   build_icc:
     name: oneAPI ICC SP&DP [Linux]
     runs-on: ubuntu-latest
@@ -54,7 +53,7 @@ jobs:
         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
         echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
         sudo apt-get update
-        sudo apt-get install -y intel-oneapi-icc intel-oneapi-ifort
+        sudo apt-get install -y intel-oneapi-dpcpp-cpp-compiler-pro
         set +e
         source /opt/intel/oneapi/setvars.sh
         set -e
@@ -101,7 +100,6 @@ jobs:
         sudo apt-get install -y intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl-devel
         set +e
         source /opt/intel/oneapi/setvars.sh
-        source /opt/intel/oneapi/compiler/2021.1-beta08/env/vars.sh
         set -e
         git clone https://github.com/openPMD/openPMD-api.git
         mkdir openPMD-api/build
@@ -114,11 +112,30 @@ jobs:
       run: |
         set +e
         source /opt/intel/oneapi/setvars.sh
-        source /opt/intel/oneapi/compiler/2021.1-beta08/env/vars.sh
         set -e
         export CXX=$(which dpcpp)
         export CC=$(which clang)
 
         mkdir build_sp && cd build_sp
         cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=DPCPP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single
+        make -j 2
+
+  build_hip:
+    name: HIP SP [Linux]
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: install dependencies
+      shell: bash
+      run: .github/workflows/dependencies/hip.sh
+    - name: build WarpX
+      shell: bash
+      run: |
+        source /etc/profile.d/rocm.sh
+        hipcc --version
+        export CXX=$(which hipcc)
+        export CC=$(which hipcc)
+
+        mkdir build_sp && cd build_sp
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=ON -DWarpX_COMPUTE=HIP -DAMD_ARCH=gfx900 -DWarpX_OPENPMD=ON -DWarpX_PRECISION=single
         make -j 2

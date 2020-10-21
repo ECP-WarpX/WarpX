@@ -51,7 +51,7 @@ public:
      *  @param[in] rd_name reduced diags names */
     LoadBalanceCosts(std::string rd_name);
 
-    /** This funciton updates the costs, given the current distribution mapping,
+    /** This function updates the costs, given the current distribution mapping,
      *  according to the number of particles and cells on the box  */
     virtual void ComputeDiags(int step) override final;
 

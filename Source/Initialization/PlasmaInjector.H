@@ -26,6 +26,7 @@
 #endif
 
 #include <array>
+#include <memory>
 
 ///
 /// The PlasmaInjector class parses and stores information about the plasma

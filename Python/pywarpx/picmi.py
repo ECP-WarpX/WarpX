@@ -214,6 +214,9 @@ class UniformDistribution(picmistandard.PICMI_UniformDistribution):
 
 
 class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
+    def init(self, kw):
+        self.mangle_dict = None
+
     def initialize_inputs(self, species_number, layout, species, density_scale):
 
         if isinstance(layout, GriddedLayout):
@@ -234,14 +237,17 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
         species.zmin = self.lower_bound[2]
         species.zmax = self.upper_bound[2]
 
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+        expression = pywarpx.my_constants.mangle_expression(self.density_expression, self.mangle_dict)
+
         species.profile = "parse_density_function"
         if density_scale is None:
-            species.__setattr__('density_function(x,y,z)', self.density_expression)
+            species.__setattr__('density_function(x,y,z)', expression)
         else:
-            species.__setattr__('density_function(x,y,z)', "{}*({})".format(density_scale, self.density_expression))
-
-        for k,v in self.user_defined_kw.items():
-            setattr(pywarpx.my_constants, k, v)
+            species.__setattr__('density_function(x,y,z)', "{}*({})".format(density_scale, expression))
 
         # --- Note that WarpX takes gamma*beta as input
         if np.any(np.not_equal(self.momentum_expressions, None)):
@@ -265,18 +271,12 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
             species.do_continuous_injection = 1
 
     def setup_parse_momentum_functions(self, species):
-        if self.momentum_expressions[0] is not None:
-            species.__setattr__('momentum_function_ux(x,y,z)', '({0})/{1}'.format(self.momentum_expressions[0], constants.c))
-        else:
-            species.__setattr__('momentum_function_ux(x,y,z)', '({0})/{1}'.format(self.directed_velocity[0], constants.c))
-        if self.momentum_expressions[1] is not None:
-            species.__setattr__('momentum_function_uy(x,y,z)', '({0})/{1}'.format(self.momentum_expressions[1], constants.c))
-        else:
-            species.__setattr__('momentum_function_uy(x,y,z)', '({0})/{1}'.format(self.directed_velocity[1], constants.c))
-        if self.momentum_expressions[2] is not None:
-            species.__setattr__('momentum_function_uz(x,y,z)', '({0})/{1}'.format(self.momentum_expressions[2], constants.c))
-        else:
-            species.__setattr__('momentum_function_uz(x,y,z)', '({0})/{1}'.format(self.directed_velocity[2], constants.c))
+        for sdir, idir in zip(['x', 'y', 'z'], [0, 1, 2]):
+            if self.momentum_expressions[idir] is not None:
+                expression = pywarpx.my_constants.mangle_expression(self.momentum_expressions[idir], self.mangle_dict)
+            else:
+                expression = f'{self.directed_velocity[idir]}'
+            species.__setattr__(f'momentum_function_u{sdir}(x,y,z)', f'({expression})/{constants.c}')
 
 class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
     def init(self, kw):
@@ -541,10 +541,14 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
         self.laser.zeta = self.zeta
         self.laser.beta = self.beta
         self.laser.phi2 = self.phi2
+        self.laser.phi0 = self.phi0
 
         self.laser.do_continuous_injection = self.fill_in
 
 class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
+    def init(self, kw):
+        self.mangle_dict = None
+
     def initialize_inputs(self):
         self.laser_number = len(pywarpx.lasers.names) + 1
         if self.name is None:
@@ -556,12 +560,14 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
         self.laser.wavelength = self.wavelength  # The wavelength of the laser (in meters)
         self.laser.e_max = self.Emax  # Maximum amplitude of the laser field (in V/m)
         self.laser.polarization = self.polarization_direction  # The main polarization vector
-        self.laser.__setattr__('field_function(X,Y,t)', self.field_expression)
-
         self.laser.do_continuous_injection = self.fill_in
 
-        for k,v in self.user_defined_kw.items():
-            setattr(pywarpx.my_constants, k, v)
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+        expression = pywarpx.my_constants.mangle_expression(self.field_expression, self.mangle_dict)
+        self.laser.__setattr__('field_function(X,Y,t)', expression)
 
 class LaserAntenna(picmistandard.PICMI_LaserAntenna):
     def initialize_inputs(self, laser):
@@ -590,26 +596,32 @@ class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField):
 
 
 class AnalyticAppliedField(picmistandard.PICMI_AnalyticAppliedField):
+    def init(self, kw):
+        self.mangle_dict = None
+
     def initialize_inputs(self):
         # Note that lower and upper_bound are not used by WarpX
-        for k,v in self.user_defined_kw.items():
-            setattr(pywarpx.my_constants, k, v)
+
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
         if (self.Ex_expression is not None or
             self.Ey_expression is not None or
             self.Ez_expression is not None):
             pywarpx.particles.E_ext_particle_init_style = 'parse_e_ext_particle_function'
-            pywarpx.particles.__setattr__('Ex_external_particle_function(x,y,z,t)', self.Ex_expression)
-            pywarpx.particles.__setattr__('Ey_external_particle_function(x,y,z,t)', self.Ey_expression)
-            pywarpx.particles.__setattr__('Ez_external_particle_function(x,y,z,t)', self.Ez_expression)
+            for sdir, expression in zip(['x', 'y', 'z'], [self.Ex_expression, self.Ey_expression, self.Ez_expression]):
+                expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
+                pywarpx.particles.__setattr__(f'E{sdir}_external_particle_function(x,y,z,t)', expression)
 
         if (self.Bx_expression is not None or
             self.By_expression is not None or
             self.Bz_expression is not None):
             pywarpx.particles.B_ext_particle_init_style = 'parse_b_ext_particle_function'
-            pywarpx.particles.__setattr__('Bx_external_particle_function(x,y,z,t)', self.Bx_expression)
-            pywarpx.particles.__setattr__('By_external_particle_function(x,y,z,t)', self.By_expression)
-            pywarpx.particles.__setattr__('Bz_external_particle_function(x,y,z,t)', self.Bz_expression)
+            for sdir, expression in zip(['x', 'y', 'z'], [self.Bx_expression, self.By_expression, self.Bz_expression]):
+                expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
+                pywarpx.particles.__setattr__(f'B{sdir}_external_particle_function(x,y,z,t)', expression)
 
 
 class Mirror(picmistandard.PICMI_Mirror):
@@ -851,6 +863,17 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.uniform_stride = kw.pop('warpx_uniform_stride', None)
         self.plot_filter_function = kw.pop('warpx_plot_filter_function', None)
 
+        self.user_defined_kw = {}
+        if self.plot_filter_function is not None:
+            # This allows variables to be used in the plot_filter_function, but
+            # in order not to break other codes, the variables must begin with "warpx_"
+            for k in list(kw.keys()):
+                if k.startswith('warpx_') and re.search(r'\b%s\b'%k, self.plot_filter_function):
+                    self.user_defined_kw[k] = kw[k]
+                    del kw[k]
+
+        self.mangle_dict = None
+
     def initialize_inputs(self):
 
         name = getattr(self, 'name', None)
@@ -902,12 +925,18 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         else:
             species_list = [species]
 
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
         for specie in species_list:
             diag = pywarpx.Bucket.Bucket(self.name + '.' + specie.name,
                                          variables = variables,
                                          random_fraction = self.random_fraction,
                                          uniform_stride = self.uniform_stride)
-            diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', self.plot_filter_function)
+            expression = pywarpx.my_constants.mangle_expression(self.plot_filter_function, self.mangle_dict)
+            diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
             self.diagnostic._species_dict[specie.name] = diag
 
 # ----------------------------

@@ -172,15 +172,15 @@ diagnostics.diags_names = diag1 openPMDh5
 
 diag1.period = 100
 diag1.diag_type = Full
-diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-diag1.electrons.variables = w ux uy uz rho
-diag1.hydrogen.variables = w ux uy uz rho
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydrogen
+diag1.electrons.variables = w ux uy uz
+diag1.hydrogen.variables = w ux uy uz
 
 openPMDh5.period = 100
 openPMDh5.diag_type = Full
-openPMDh5.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho
-openPMDh5.electrons.variables = w ux uy uz rho
-openPMDh5.hydrogen.variables = w ux uy uz rho
+openPMDh5.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydrogen
+openPMDh5.electrons.variables = w ux uy uz
+openPMDh5.hydrogen.variables = w ux uy uz
 openPMDh5.format = openpmd
 openPMDh5.openpmd_backend = h5
 

@@ -31,6 +31,7 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
     ppl.query("zeta", m_params.zeta);
     ppl.query("beta", m_params.beta);
     ppl.query("phi2", m_params.phi2);
+    ppl.query("phi0", m_params.phi0);
 
     m_params.stc_direction = m_common_params.p_X;
     ppl.queryarr("stc_direction", m_params.stc_direction);
@@ -84,7 +85,7 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     // Calculate a few factors which are independent of the macroparticle
     const Real k0 = 2.*MathConst::pi/m_common_params.wavelength;
     const Real inv_tau2 = 1._rt /(m_params.duration * m_params.duration);
-    const Real oscillation_phase = k0 * PhysConst::c * ( t - m_params.t_peak );
+    const Real oscillation_phase = k0 * PhysConst::c * ( t - m_params.t_peak ) + m_params.phi0;
     // The coefficients below contain info about Gouy phase,
     // laser diffraction, and phase front curvature
     const Complex diffract_factor =
