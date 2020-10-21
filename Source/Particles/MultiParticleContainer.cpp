@@ -360,18 +360,41 @@ MultiParticleContainer::PushP (int lev, Real dt,
 }
 
 std::unique_ptr<MultiFab>
+MultiParticleContainer::GetZeroChargeDensity (const int lev)
+{
+    WarpX& warpx = WarpX::GetInstance();
+
+    BoxArray ba = warpx.boxArray(lev);
+    DistributionMapping dmap = warpx.DistributionMap(lev);
+    const int ng_rho = warpx.get_ng_depos_rho().max();
+
+    auto zero_rho = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheNodeVector()),
+                                               dmap,WarpX::ncomps,ng_rho);
+    zero_rho->setVal(amrex::Real(0.0));
+    return zero_rho;
+}
+
+std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local)
 {
-    std::unique_ptr<MultiFab> rho = allcontainers[0]->GetChargeDensity(lev, true);
-    for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
-        std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
-        MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrow());
+    if (allcontainers.size() == 0)
+    {
+        std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
+        return rho;
     }
-    if (!local) {
-        const Geometry& gm = allcontainers[0]->Geom(lev);
-        rho->SumBoundary(gm.periodicity());
+    else
+    {
+        std::unique_ptr<MultiFab> rho = allcontainers[0]->GetChargeDensity(lev, true);
+        for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
+            std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
+            MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrow());
+        }
+        if (!local) {
+            const Geometry& gm = allcontainers[0]->Geom(lev);
+            rho->SumBoundary(gm.periodicity());
+        }
+        return rho;
     }
-    return rho;
 }
 
 void
@@ -407,18 +430,35 @@ MultiParticleContainer::ApplyBoundaryConditions ()
 }
 
 Vector<long>
+MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
+{
+    WarpX& warpx = WarpX::GetInstance();
+    const int num_boxes = warpx.boxArray(lev).size();
+    const Vector<Long> r(num_boxes, 0);
+    return r;
+}
+
+Vector<long>
 MultiParticleContainer::NumberOfParticlesInGrid (int lev) const
 {
-    const bool only_valid=true, only_local=true;
-    Vector<long> r = allcontainers[0]->NumberOfParticlesInGrid(lev,only_valid,only_local);
-    for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
-        const auto& ri = allcontainers[i]->NumberOfParticlesInGrid(lev,only_valid,only_local);
-        for (unsigned j=0, m=ri.size(); j<m; ++j) {
-            r[j] += ri[j];
-        }
+    if (allcontainers.size() == 0)
+    {
+        const Vector<long> r = GetZeroParticlesInGrid(lev);
+        return r;
     }
-    ParallelDescriptor::ReduceLongSum(r.data(),r.size());
-    return r;
+    else
+    {
+        const bool only_valid=true, only_local=true;
+        Vector<long> r = allcontainers[0]->NumberOfParticlesInGrid(lev,only_valid,only_local);
+        for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
+            const auto& ri = allcontainers[i]->NumberOfParticlesInGrid(lev,only_valid,only_local);
+            for (unsigned j=0, m=ri.size(); j<m; ++j) {
+                r[j] += ri[j];
+            }
+        }
+        ParallelDescriptor::ReduceLongSum(r.data(),r.size());
+        return r;
+    }
 }
 
 void
