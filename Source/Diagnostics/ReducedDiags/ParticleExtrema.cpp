@@ -165,7 +165,8 @@ void ParticleExtrema::ComputeDiags (int step)
 
         // get mass (Real)
         auto m = myspc.getMass();
-        if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
+        auto is_photon = myspc.AmIA<PhysicalSpecies::photon>();
+        if ( is_photon ) {
             m = PhysConst::m_e;
         }
 
@@ -277,7 +278,7 @@ void ParticleExtrema::ComputeDiags (int step)
 
         // gmin
         Real gmin = 0.0_rt;
-        if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
+        if ( is_photon ) {
             gmin = ReduceMin( myspc,
             [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
             {
@@ -302,7 +303,7 @@ void ParticleExtrema::ComputeDiags (int step)
 
         // gmax
         Real gmax = 0.0_rt;
-        if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
+        if ( is_photon ) {
             gmax = ReduceMax( myspc,
             [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
             {
@@ -348,7 +349,7 @@ void ParticleExtrema::ComputeDiags (int step)
         {
 
             // declare chi arrays
-            std::vector<amrex::Real> chimin, chimax;
+            std::vector<Real> chimin, chimax;
             chimin.resize(level_number+1,0.0_rt);
             chimax.resize(level_number+1,0.0_rt);
 
@@ -358,11 +359,8 @@ void ParticleExtrema::ComputeDiags (int step)
                 // Loop over boxes
                 for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
                 {
-                    // declare position arrays
-                    Gpu::ManagedDeviceVector<ParticleReal> x, y, z;
+                    const auto GetPosition = GetParticlePosition(pti);
                     // get particle arrays
-                    pti.GetPosition(x, y, z);
-                    auto & w  = pti.GetAttribs(PIdx::w);
                     auto & ux = pti.GetAttribs(PIdx::ux);
                     auto & uy = pti.GetAttribs(PIdx::uy);
                     auto & uz = pti.GetAttribs(PIdx::uz);
@@ -378,6 +376,8 @@ void ParticleExtrema::ComputeDiags (int step)
                     [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                     {
                         // get external fields
+                        ParticleReal xp, yp, zp;
+                        GetPosition(i, xp, yp, zp);
                         ParticleReal ex = 0._rt, ey = 0._rt, ez = 0._rt;
                         ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
                         getExternalE(i, ex, ey, ez);
@@ -392,7 +392,7 @@ void ParticleExtrema::ComputeDiags (int step)
                         int n_rz_azimuthal_modes;
                         int nox;
                         bool galerkin_interpolation;
-                        doGatherShapeN(x[i], y[i], z[i],
+                        doGatherShapeN(xp, yp, zp,
                             ex, ey, ez, bx, by, bz,
                             ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
                             ex_type, ey_type, ez_type,
@@ -401,11 +401,11 @@ void ParticleExtrema::ComputeDiags (int step)
                             n_rz_azimuthal_modes, nox, galerkin_interpolation);
                         // compute chi
                         Real chi = 0.0_rt;
-                        if ( myspc.AmIA<PhysicalSpecies::photon>() ) {
-                            chi = chi_photon(ux[i]*m, uy[i]*m, uz[i]*m,
+                        if ( is_photon ) {
+                            chi = QedUtils::chi_photon(ux[i]*m, uy[i]*m, uz[i]*m,
                                              ex, ey, ez, bx, by, bz);
                         } else {
-                            chi = chi_lepton(ux[i]*m, uy[i]*m, uz[i]*m,
+                            chi = QedUtils::chi_ele_pos(ux[i]*m, uy[i]*m, uz[i]*m,
                                              ex, ey, ez, bx, by, bz);
                         }
                         return {chi,chi};
@@ -413,8 +413,8 @@ void ParticleExtrema::ComputeDiags (int step)
                     chimin[lev] = get<0>(reduce_data.value());
                     chimax[lev] = get<1>(reduce_data.value());
                 }
-                chimin_f = std::min_element(chimin.begin(), chimin.end());
-                chimax_f = std::max_element(chimax.begin(), chimax.end());
+                chimin_f = *std::min_element(chimin.begin(), chimin.end());
+                chimax_f = *std::max_element(chimax.begin(), chimax.end());
             }
             ParallelDescriptor::ReduceRealMin(chimin_f);
             ParallelDescriptor::ReduceRealMax(chimax_f);
