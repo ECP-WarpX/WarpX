@@ -162,7 +162,7 @@ def check(filename):
         ds.domain_right_edge[1].v,
         ds.domain_dimensions[1])
 
-    dz = (ds.domain_right_edge[1].v-ds.domain_left_edge[1].v)/ds.domain_dimensions[1]
+    dz = (ds.domain_right_edge[1].v-ds.domain_left_edge[1].v)/(ds.domain_dimensions[1]-1)
 
     X, Z = np.meshgrid(x, z, indexing='ij')
 
