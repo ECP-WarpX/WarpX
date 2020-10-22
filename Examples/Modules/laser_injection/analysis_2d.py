@@ -109,7 +109,7 @@ def check_component(data, component, t_env_theory, coeff, X,Z,dx,dz):
     plt.tight_layout()
     plt.savefig("plt_" + component + ".png", bbox_inches='tight')
 
-    if( np.abs(coeff) < small_num):
+    if(np.abs(coeff) < small_num):
         is_field_zero = np.sum(np.abs(env)) < small_num
         print("[OK] This field component is ~ 0.0")
         assert(is_field_zero)
