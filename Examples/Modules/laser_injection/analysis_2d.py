@@ -147,7 +147,7 @@ def check_component(data, component, t_env_theory, coeff, X,Z,dx,dz):
 
     print("******\n")
 
-def check(filename):
+def check_laser(filename):
     ds = yt.load(filename)
 
     x = np.linspace(
