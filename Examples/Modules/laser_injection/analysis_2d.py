@@ -58,9 +58,6 @@ rot_angle = np.arctan(dir_vector[2]/dir_vector[0])
 pol_vector = np.array([1.0,1.0,-2.0])
 pol_vector /= np.linalg.norm(pol_vector)
 
-# Simulation parameter
-steps=220
-
 # Calculates the envelope of a Gaussian beam
 def gauss_env(T,XX,ZZ):
     '''Function to compute the theory for the envelope
