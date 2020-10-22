@@ -187,7 +187,7 @@ def check():
     field_facts = [1, 1, 1, 1/c, 1/c, 1/c]
 
     for comp, coeff, field_fact in zip(components, coeffs, field_facts):
-        check_component(all_data_level_0, comp, field_fact*env_theory, coeff, X, Z,dx, dz)
+        check_component(all_data_level_0, comp, field_fact*env_theory, coeff, X, Z, dx, dz)
 
     test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename_end)
