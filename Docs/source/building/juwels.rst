@@ -3,6 +3,10 @@
 Juwels (JSC)
 ============
 
+.. note::
+
+   There's currently a bug when building WarpX on Juwels! In order to compile on Juwels, please contact the WarpX developer team.
+
 The `Juwels supercomputer <https://www.fz-juelich.de/ias/jsc/EN/Expertise/Supercomputers/JUWELS/JUWELS_node.html>`_ is located at JSC.
 
 See `this page <https://apps.fz-juelich.de/jsc/hps/juwels/quickintro.html>`_ for a quick introduction.
