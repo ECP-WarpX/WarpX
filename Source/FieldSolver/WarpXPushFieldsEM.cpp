@@ -73,10 +73,9 @@ namespace {
 #endif
         solver.ForwardTransform(*current[2], Idx::Jz);
 
-        if (rho)
-        {
-        solver.ForwardTransform(*rho, Idx::rho_old, 0);
-        solver.ForwardTransform(*rho, Idx::rho_new, 1);
+        if (rho) {
+            solver.ForwardTransform(*rho, Idx::rho_old, 0);
+            solver.ForwardTransform(*rho, Idx::rho_new, 1);
         }
 #ifdef WARPX_DIM_RZ
         if (WarpX::use_kspace_filter) {
