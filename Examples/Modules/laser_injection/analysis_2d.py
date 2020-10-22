@@ -155,7 +155,7 @@ def check(filename):
         ds.domain_right_edge[0].v,
         ds.domain_dimensions[0])
 
-    dx = (ds.domain_right_edge[0].v-ds.domain_left_edge[0].v)/ds.domain_dimensions[0]
+    dx = (ds.domain_right_edge[0].v-ds.domain_left_edge[0].v)/(ds.domain_dimensions[0]-1)
 
     z = np.linspace(
         ds.domain_left_edge[1].v,
