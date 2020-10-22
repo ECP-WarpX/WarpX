@@ -147,9 +147,8 @@ def check_component(data, component, t_env_theory, coeff, X,Z,dx,dz):
 
     print("******\n")
 
-def check():
-    filename_end = sys.argv[1]
-    ds = yt.load(filename_end)
+def check(filename):
+    ds = yt.load(filename)
 
     x = np.linspace(
         ds.domain_left_edge[0].v,
@@ -189,11 +188,13 @@ def check():
     for comp, coeff, field_fact in zip(components, coeffs, field_facts):
         check_component(all_data_level_0, comp, field_fact*env_theory, coeff, X, Z,dx, dz)
 
+def main():
+    filename_end = sys.argv[1]
+
+    check_laser(filename_end)
+
     test_name = filename_end[:-9] # Could also be os.path.split(os.getcwd())[1]
     checksumAPI.evaluate_checksum(test_name, filename_end)
-
-def main():
-    check()
 
 if __name__ == "__main__":
     main()
