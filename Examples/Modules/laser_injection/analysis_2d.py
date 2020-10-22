@@ -63,12 +63,12 @@ def gauss_env(T,XX,ZZ):
     '''Function to compute the theory for the envelope
     '''
 
-    X =  np.cos(rot_angle)*(XX-x_c) + np.sin(rot_angle)*ZZ
-    Z = -np.sin(rot_angle)*(XX-x_c) + np.cos(rot_angle)*ZZ
+    Z =  np.cos(rot_angle)*(XX-x_c) + np.sin(rot_angle)*ZZ
+    X = -np.sin(rot_angle)*(XX-x_c) + np.cos(rot_angle)*ZZ
 
     inv_tau2 = 1./tt/tt
     inv_w_2 = 1.0/(w0*w0)
-    exp_arg = - (Z*Z)*inv_w_2 - inv_tau2 / c/c * (X-T*c)*(X-T*c)
+    exp_arg = - (X*X)*inv_w_2 - inv_tau2 / c/c * (Z-T*c)*(Z-T*c)
     return E_max * np.real(np.exp(exp_arg))
 
 # Checks envelope and central frequency for a given laser component
