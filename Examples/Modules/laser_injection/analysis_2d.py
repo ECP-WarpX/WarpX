@@ -111,7 +111,10 @@ def check_component(data, component, t_env_theory, coeff, X,Z,dx,dz):
 
     if(np.abs(coeff) < small_num):
         is_field_zero = np.sum(np.abs(env)) < small_num
-        print("[OK] This field component is ~ 0.0")
+        if is_field_zero :
+            print("[OK] Field component expected to be 0 is ~ 0")
+        else :
+            print("[FAIL] Field component expected to be 0 is NOT ~ 0")
         assert(is_field_zero)
         print("******\n")
         return
