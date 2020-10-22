@@ -170,7 +170,7 @@ def check(filename):
     env_theory = gauss_env(+t_c-ds.current_time.to_value(),X,Z)+gauss_env(-t_c+ds.current_time.to_value(),X,Z)
 
     # Read laser field in PIC simulation, and compute envelope
-    all_data_level_0 = ds.covering_grid(level=0,left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
+    all_data_level_0 = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 
     b_vector = np.cross(dir_vector, pol_vector)
 
@@ -186,7 +186,7 @@ def check(filename):
     field_facts = [1, 1, 1, 1/c, 1/c, 1/c]
 
     for comp, coeff, field_fact in zip(components, coeffs, field_facts):
-        check_component(all_data_level_0, comp, field_fact*env_theory, coeff, X, Z,dx, dz)
+        check_component(all_data_level_0, comp, field_fact*env_theory, coeff, X, Z, dx, dz)
 
 def main():
     filename_end = sys.argv[1]
