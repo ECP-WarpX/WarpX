@@ -112,6 +112,14 @@ public:
                 const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                 const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
 
+    /**
+    * \brief This returns a MultiFAB filled with zeros. It is used to return the charge density
+    * when there is no particle species.
+    *
+    * @param[in] lev the index of the refinement level.
+    */
+    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(const int lev);
+
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
     /// to it. The charge density is accumulated over all the particles in the MultiParticleContainer
@@ -159,6 +167,15 @@ public:
     /** Apply BC. For now, just discard particles outside the domain, regardless
      *  of the whole simulation BC. */
     void ApplyBoundaryConditions ();
+
+    /**
+    * \brief This returns a vector filled with zeros whose size is the number of boxes in the
+    * simulation boxarray. It is used to return the number of particles in each grid when there is
+    * no particle species.
+    *
+    * @param[in] lev the index of the refinement level.
+    */
+    amrex::Vector<long> GetZeroParticlesInGrid(const int lev) const;
 
     amrex::Vector<long> NumberOfParticlesInGrid(int lev) const;
 

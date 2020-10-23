@@ -12,7 +12,7 @@ in this directory.
    mv plt00010 to plt00010.nolb
 
 4) amrvis3d plt00010.lb plt00010.nolb
-   set the field to "part_per_proc"
+   set the field to "part_per_cell"
 
 You should see the effect of load balancing based of the number of particles.
 
