@@ -414,7 +414,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
     Bxa(j,k,l) = res;
 #else
     amrex::Real res = 0.;
-    for (int nz = 1; nz < noz/2+1; nz++) {
+    for     (int nz = 1; nz < noz/2+1; nz++) {
         for (int ny = 1; ny < noy/2+1; ny++) {
             res += 0.25 * stencil_coef_y[ny-1] * stencil_coef_z[nz-1] *
                    (Bxf(j, k + ny - 1, l + nz - 1) + Bxf(j, k - ny, l + nz - 1)
@@ -454,7 +454,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
 {
 #if (AMREX_SPACEDIM == 2)
     amrex::Real res = 0.;
-    for (int nz = 1; nz < noz/2+1; nz++) {
+    for     (int nz = 1; nz < noz/2+1; nz++) {
         for (int nx = 1; nx < nox/2+1; nx++) {
             res += 0.25 * stencil_coef_x[nx-1] * stencil_coef_z[nz-1] *
                    (Byf(j + nx - 1, k + nz - 1, l) + Byf(j - nx, k + nz - 1, l)
@@ -464,11 +464,11 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
     Bya(j,k,l) = res;
 #else
     amrex::Real res = 0.;
-    for (int nz = 1; nz < noz/2+1; nz++) {
+    for     (int nz = 1; nz < noz/2+1; nz++) {
         for (int nx = 1; nx < nox/2+1; nx++) {
             res += 0.25 * stencil_coef_x[nx-1] * stencil_coef_z[nz-1] *
                    (Byf(j + nx - 1, k, l + nz - 1) + Byf(j - nx, k, l + nz - 1)
-                  + Byf(j + nx - 1, k, l - nz    ) + Byf(j - nx, k, l - nz ));
+                  + Byf(j + nx - 1, k, l - nz    ) + Byf(j - nx, k, l - nz    ));
         }
     }
     Bya(j,k,l) = res;
@@ -512,7 +512,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
     Bza(j,k,l) = res;
 #else
     amrex::Real res = 0.;
-    for (int ny = 1; ny < noy/2+1; ny++) {
+    for     (int ny = 1; ny < noy/2+1; ny++) {
         for (int nx = 1; nx < nox/2+1; nx++) {
             res += 0.25 * stencil_coef_x[nx-1] * stencil_coef_y[ny-1] *
                    (Bzf(j + nx - 1, k + ny - 1, l) + Bzf(j - nx, k + ny - 1, l)
