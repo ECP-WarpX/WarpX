@@ -1465,7 +1465,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     If ``blocking_factor`` and ``max_grid_size`` are used for the domain decomposition, as detailed in
     the :ref:`parallelization <parallelization_warpx>` section, ``coarsening_ratio`` should be an integer
     divisor of ``blocking_factor``. If ``warpx.numprocs`` is used instead, the total number of cells in a given
-    dimension must be a multiple of the coarsening_ratio multiplied by numprocs in that dimension.
+    dimension must be a multiple of the ``coarsening_ratio`` multiplied by ``numprocs`` in that dimension.
 
 * ``<diag_name>.file_prefix`` (`string`) optional (default `diags/plotfiles/plt`)
     Root for output file names. Supports sub-directories.

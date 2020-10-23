@@ -491,6 +491,13 @@ public:
     const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
     const amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
 
+    /** Coarsest-level Domain Decomposition
+     *
+     * If specified, the domain will be chopped into the exact number
+     * of pieces in each dimension as specified by this parameter.
+     *
+     * @return the number of MPI processes per dimension if specified, otherwise a 0-vector
+     */
     const amrex::IntVect get_numprocs() const {return numprocs;}
 
     void ComputeSpaceChargeField (bool const reset_fields);
