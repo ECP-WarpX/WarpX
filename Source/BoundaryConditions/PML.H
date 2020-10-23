@@ -49,29 +49,36 @@ struct SigmaBox
 
 };
 
-namespace amrex {
-    template<>
-    class FabFactory<SigmaBox>
-    {
-    public:
-        FabFactory<SigmaBox> (const BoxArray& grid_ba, const Real* dx, int ncell, int delta)
-            : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta) {}
-        virtual SigmaBox* create (const Box& box, int /*ncomps*/,
-                                  const FabInfo& /*info*/, int /*box_index*/) const final
-            { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta); }
-        virtual void destroy (SigmaBox* fab) const final {
-            delete fab;
-        }
-        virtual FabFactory<SigmaBox>* clone () const {
-            return new FabFactory<SigmaBox>(*this);
-        }
-    private:
-        const BoxArray& m_grids;
-        const Real* m_dx;
-        int m_ncell;
-        int m_delta;
-    };
-}
+class SigmaBoxFactory
+    : public amrex::FabFactory<SigmaBox>
+{
+public:
+    SigmaBoxFactory (const amrex::BoxArray& grid_ba, const amrex::Real* dx, int ncell, int delta)
+        : m_grids(grid_ba), m_dx(dx), m_ncell(ncell), m_delta(delta) {}
+    virtual ~SigmaBoxFactory () = default;
+
+    SigmaBoxFactory (const SigmaBoxFactory&) = default;
+    SigmaBoxFactory (SigmaBoxFactory&&) noexcept = default;
+
+    SigmaBoxFactory () = delete;
+    SigmaBoxFactory& operator= (const SigmaBoxFactory&) = delete;
+    SigmaBoxFactory& operator= (SigmaBoxFactory&&) = delete;
+
+    virtual SigmaBox* create (const amrex::Box& box, int /*ncomps*/,
+                              const amrex::FabInfo& /*info*/, int /*box_index*/) const final
+        { return new SigmaBox(box, m_grids, m_dx, m_ncell, m_delta); }
+    virtual void destroy (SigmaBox* fab) const final {
+        delete fab;
+    }
+    virtual SigmaBoxFactory* clone () const final {
+        return new SigmaBoxFactory(*this);
+    }
+private:
+    const amrex::BoxArray& m_grids;
+    const amrex::Real* m_dx;
+    int m_ncell;
+    int m_delta;
+};
 
 class MultiSigmaBox
     : public amrex::FabArray<SigmaBox>
