@@ -73,6 +73,7 @@ WarpX::UpdateAuxilaryData ()
 void
 WarpX::UpdateAuxilaryDataStagToNodal ()
 {
+#ifdef WARPX_USE_PSATD
     const int fg_nox = WarpX::field_gathering_nox;
     const int fg_noy = WarpX::field_gathering_noy;
     const int fg_noz = WarpX::field_gathering_noz;
@@ -106,6 +107,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                           d_stencil_coef_z.begin());
     amrex::Gpu::synchronize();
     amrex::Real const* p_stencil_coef_z = d_stencil_coef_z.data();
+#endif
 
     // For level 0, we only need to do the average.
 #ifdef _OPENMP
@@ -131,12 +133,23 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         amrex::ParallelFor(bx,
         [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
         {
+// FDTD variant
+#ifndef WARPX_USE_PSATD
+            warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp);
+            warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp);
+            warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp);
+            warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp);
+            warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp);
+            warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp);
+// PSATD variant
+#else
             warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp, fg_noy, fg_noz, p_stencil_coef_y, p_stencil_coef_z);
             warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp, fg_nox, fg_noz, p_stencil_coef_x, p_stencil_coef_z);
             warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp, fg_nox, fg_noy, p_stencil_coef_x, p_stencil_coef_y);
             warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp, fg_nox, p_stencil_coef_x);
             warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp, fg_noy, p_stencil_coef_y);
             warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp, fg_noz, p_stencil_coef_z);
+#endif
         });
     }
 
