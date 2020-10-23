@@ -130,11 +130,14 @@ Optionally, download and install :ref:`libEnsemble <libensemble>` for dynamic en
    python3 -m pip install --upgrade mpi4py --no-binary mpi4py
    python3 -m pip install --upgrade -r $HOME/src/warpx/Tools/LibEnsemble/requirements.txt
 
-Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile:
+Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following commands to compile with :ref:`_building-cmake`:
 
 .. code-block:: bash
 
-   make -j 16 COMP=gcc USE_GPU=TRUE USE_OPENPMD=TRUE
+   mkdir -p build
+   cd build
+   cmake .. -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA -DCMAKE_CUDA_ARCHITECTURES=70 -DCUDA_ARCH=7.0
+   make -j 10
 
 The other :ref:`general compile-time options <building-source>` apply as usual.
 
