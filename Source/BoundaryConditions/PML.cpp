@@ -49,7 +49,7 @@ namespace
             p_sigma[i-slo] = fac*(offset*offset);
             // sigma_cumsum is the analytical integral of sigma function at same points than sigma
             p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
-            if (i <= ohi) {
+            if (i <= ohi+1) {
                 offset = static_cast<Real>(glo-i) - 0.5;
                 p_sigma_star[i-sslo] = fac*(offset*offset);
                 // sigma_star_cumsum is the analytical integral of sigma function at same points than sigma_star
@@ -79,7 +79,7 @@ namespace
             Real offset = static_cast<Real>(i-ghi-1);
             p_sigma[i-slo] = fac*(offset*offset);
             p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
-            if (i <= ohi) {
+            if (i <= ohi+1) {
                 offset = static_cast<Real>(i-ghi) - 0.5;
                 p_sigma_star[i-sslo] = fac*(offset*offset);
                 p_sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
@@ -106,7 +106,7 @@ namespace
             i += olo;
             p_sigma[i-slo] = Real(0.0);
             p_sigma_cumsum[i-slo] = Real(0.0);
-            if (i <= ohi) {
+            if (i <= ohi+1) {
                 p_sigma_star[i-sslo] = Real(0.0);
                 p_sigma_star_cumsum[i-sslo] = Real(0.0);
             }
