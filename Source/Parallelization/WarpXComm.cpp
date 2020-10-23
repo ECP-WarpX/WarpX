@@ -10,6 +10,9 @@
 #include "WarpX.H"
 #include "WarpXSumGuardCells.H"
 #include "Utils/CoarsenMR.H"
+#ifdef WARPX_USE_PSATD
+#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#endif
 
 #include <algorithm>
 #include <cstdlib>

@@ -316,7 +316,7 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
                     } else {
                         // X2 multiplies (k \dot E) in the update equation for E
                         // X3 multiplies (k \dot J) in the update equation for E
-                        X2(i,j,k) = c2 * (1._rt - C(i,j,k)) / (om2);
+                        X2(i,j,k) = c2 * (1._rt - C(i,j,k)) / om2;
                         X3(i,j,k) = c2 * (S_ck(i,j,k) / dt - 1._rt) * dt / (ep0 * om2);
                     }
 
