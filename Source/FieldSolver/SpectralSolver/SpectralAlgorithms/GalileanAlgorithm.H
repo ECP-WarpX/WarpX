@@ -59,6 +59,12 @@ class GalileanAlgorithm : public SpectralBaseAlgorithm
     private:
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients Theta2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
+        // Centered modified finite-order k vectors
+        KVectorComponent modified_kx_vec_centered;
+#if (AMREX_SPACEDIM==3)
+        KVectorComponent modified_ky_vec_centered;
+#endif
+        KVectorComponent modified_kz_vec_centered;
         amrex::Array<amrex::Real,3> m_v_galilean;
         amrex::Real m_dt;
         bool m_update_with_rho;
