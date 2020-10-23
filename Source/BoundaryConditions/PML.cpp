@@ -389,7 +389,7 @@ SigmaBox::ComputePMLFactorsE (const Real* a_dx, Real dt)
 MultiSigmaBox::MultiSigmaBox (const BoxArray& ba, const DistributionMapping& dm,
                               const BoxArray& grid_ba, const Real* dx, int ncell, int delta)
     : FabArray<SigmaBox>(ba,dm,1,0,MFInfo(),
-                         FabFactory<SigmaBox>(grid_ba,dx,ncell,delta))
+                         SigmaBoxFactory(grid_ba,dx,ncell,delta))
 {}
 
 void
