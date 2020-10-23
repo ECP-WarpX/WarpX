@@ -381,39 +381,125 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_bfield_x (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Bxa,
-                               amrex::Array4<amrex::Real const> const& Bxf)
+                               amrex::Array4<amrex::Real const> const& Bxf,
+                               const int noy,
+                               const int noz,
+                               amrex::Real const* stencil_coef_y,
+                               amrex::Real const* stencil_coef_z)
 {
+// FDTD variant
+#ifndef WARPX_USE_PSATD
 #if (AMREX_SPACEDIM == 2)
     Bxa(j,k,0) = 0.5*(Bxf(j,k-1,0) + Bxf(j,k,0));
     amrex::ignore_unused(l);
 #else
     Bxa(j,k,l) = 0.25*(Bxf(j,k-1,l-1) + Bxf(j,k,l-1) + Bxf(j,k-1,l) + Bxf(j,k,l));
 #endif
+// PSATD variant
+#else
+#if (AMREX_SPACEDIM == 2)
+    amrex::ignore_unused(noy);
+    amrex::ignore_unused(stencil_coef_y);
+    amrex::Real res = 0.;
+    for (int nz = 1; nz < noz/2+1; nz++) {
+        res += 0.5 * stencil_coef_z[nz-1] * (Bxf(j, k + nz - 1, l) + Bxf(j, k - nz, l));
+    }
+    Bxa(j,k,l) = res;
+#else
+    amrex::Real res = 0.;
+    for (int nz = 1; nz < noz/2+1; nz++) {
+        for (int ny = 1; ny < noy/2+1; ny++) {
+            res += 0.25 * stencil_coef_y[ny-1] * stencil_coef_z[nz-1] *
+                   (Bxf(j, k + ny - 1, l + nz - 1) + Bxf(j, k - ny, l + nz - 1)
+                  + Bxf(j, k + ny - 1, l - nz    ) + Bxf(j, k - ny, l - nz    ));
+        }
+    }
+    Bxa(j,k,l) = res;
+#endif
+#endif
 }
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_bfield_y (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Bya,
-                               amrex::Array4<amrex::Real const> const& Byf)
+                               amrex::Array4<amrex::Real const> const& Byf,
+                               const int nox,
+                               const int noz,
+                               amrex::Real const* stencil_coef_x,
+                               amrex::Real const* stencil_coef_z)
 {
+// FDTD variant
+#ifndef WARPX_USE_PSATD
 #if (AMREX_SPACEDIM == 2)
     Bya(j,k,0) = 0.25*(Byf(j,k,0) + Byf(j-1,k,0) + Byf(j,k-1,0) + Byf(j-1,k-1,0));
     amrex::ignore_unused(l);
 #else
     Bya(j,k,l) = 0.25*(Byf(j-1,k,l-1) + Byf(j,k,l-1) + Byf(j-1,k,l) + Byf(j,k,l));
 #endif
+// PSATD variant
+#else
+#if (AMREX_SPACEDIM == 2)
+    amrex::Real res = 0.;
+    for (int nz = 1; nz < noz/2+1; nz++) {
+        for (int nx = 1; nx < nox/2+1; nx++) {
+            res += 0.25 * stencil_coef_x[nx-1] * stencil_coef_z[nz-1] *
+                   (Byf(j + nx - 1, k + nz - 1, l) + Byf(j - nx, k + nz - 1, l)
+                  + Byf(j + nx - 1, k - nz    , l) + Byf(j - nx, k - nz    , l));
+        }
+    }
+    Bya(j,k,l) = res;
+#else
+    amrex::Real res = 0.;
+    for (int nz = 1; nz < noz/2+1; nz++) {
+        for (int nx = 1; nx < nox/2+1; nx++) {
+            res += 0.25 * stencil_coef_x[nx-1] * stencil_coef_z[nz-1] *
+                   (Byf(j + nx - 1, k, l + nz - 1) + Byf(j - nx, k, l + nz - 1)
+                  + Byf(j + nx - 1, k, l - nz    ) + Byf(j - nx, k, l - nz ));
+        }
+    }
+    Bya(j,k,l) = res;
+#endif
+#endif
 }
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_bfield_z (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Bza,
-                               amrex::Array4<amrex::Real const> const& Bzf)
+                               amrex::Array4<amrex::Real const> const& Bzf,
+                               const int nox,
+                               const int noy,
+                               amrex::Real const* stencil_coef_x,
+                               amrex::Real const* stencil_coef_y)
 {
+// FDTD variant
+#ifndef WARPX_USE_PSATD
 #if (AMREX_SPACEDIM == 2)
     Bza(j,k,0) = 0.5*(Bzf(j-1,k,0) + Bzf(j,k,0));
     amrex::ignore_unused(l);
 #else
     Bza(j,k,l) = 0.25*(Bzf(j-1,k-1,l) + Bzf(j,k-1,l) + Bzf(j-1,k,l) + Bzf(j,k,l));
+#endif
+// PSATD variant
+#else
+#if (AMREX_SPACEDIM == 2)
+    amrex::ignore_unused(noy);
+    amrex::ignore_unused(stencil_coef_y);
+    amrex::Real res = 0.;
+    for (int nx = 1; nx < nox/2+1; nx++) {
+        res += 0.5 * stencil_coef_x[nx-1] * (Bzf(j + nx - 1, k, l) + Bzf(j - nx, k, l));
+    }
+    Bza(j,k,l) = res;
+#else
+    amrex::Real res = 0.;
+    for (int ny = 1; ny < noy/2+1; ny++) {
+        for (int nx = 1; nx < nox/2+1; nx++) {
+            res += 0.25 * stencil_coef_x[nx-1] * stencil_coef_y[ny-1] *
+                   (Bzf(j + nx - 1, k + ny - 1, l) + Bzf(j - nx, k + ny - 1, l)
+                  + Bzf(j + nx - 1, k - ny    , l) + Bzf(j - nx, k - ny    , l));
+        }
+    }
+    Bza(j,k,l) = res;
+#endif
 #endif
 }
 
@@ -624,34 +710,84 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_efield_x (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Exa,
-                               amrex::Array4<amrex::Real const> const& Exf)
+                               amrex::Array4<amrex::Real const> const& Exf,
+                               const int nox,
+                               amrex::Real const* stencil_coef_x)
 {
+// FDTD variant
+#ifndef WARPX_USE_PSATD
     Exa(j,k,l) = 0.5*(Exf(j-1,k,l) + Exf(j,k,l));
+// PSATD variant
+#else
+    amrex::Real res = 0.;
+    for (int nx = 1; nx < nox/2+1; nx++) {
+        res += 0.5 * stencil_coef_x[nx-1] * (Exf(j + nx - 1, k, l) + Exf(j - nx, k, l));
+    }
+    Exa(j,k,l) = res;
+#endif
 }
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_efield_y (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Eya,
-                               amrex::Array4<amrex::Real const> const& Eyf)
+                               amrex::Array4<amrex::Real const> const& Eyf,
+                               const int noy,
+                               amrex::Real const* stencil_coef_y)
 {
+// FDTD variant
+#ifndef WARPX_USE_PSATD
 #if (AMREX_SPACEDIM == 2)
     Eya(j,k,0) = Eyf(j,k,0);
     amrex::ignore_unused(l);
 #else
     Eya(j,k,l) = 0.5*(Eyf(j,k-1,l) + Eyf(j,k,l));
 #endif
+// PSATD variant
+#else
+#if (AMREX_SPACEDIM == 2)
+    amrex::ignore_unused(noy);
+    amrex::ignore_unused(stencil_coef_y);
+    Eya(j,k,l) = Eyf(j,k,l);
+#else
+    amrex::Real res = 0.;
+    for (int ny = 1; ny < noy/2+1; ny++) {
+        res += 0.5 * stencil_coef_y[ny-1] * (Eyf(j, k + ny - 1, l) + Eyf(j, k - ny, l));
+    }
+    Eya(j,k,l) = res;
+#endif
+#endif
 }
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_efield_z (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Eza,
-                               amrex::Array4<amrex::Real const> const& Ezf)
+                               amrex::Array4<amrex::Real const> const& Ezf,
+                               const int noz,
+                               amrex::Real const* stencil_coef_z)
 {
+// FDTD variant
+#ifndef WARPX_USE_PSATD
 #if (AMREX_SPACEDIM == 2)
     Eza(j,k,0) = 0.5*(Ezf(j,k-1,0) + Ezf(j,k,0));
     amrex::ignore_unused(l);
 #else
     Eza(j,k,l) = 0.5*(Ezf(j,k,l-1) + Ezf(j,k,l));
+#endif
+// PSATD variant
+#else
+#if (AMREX_SPACEDIM == 2)
+    amrex::Real res = 0.;
+    for (int nz = 1; nz < noz/2+1; nz++) {
+        res += 0.5 * stencil_coef_z[nz-1] * (Ezf(j, k + nz - 1, l) + Ezf(j, k - nz, l));
+    }
+    Eza(j,k,l) = res;
+#else
+    amrex::Real res = 0.;
+    for (int nz = 1; nz < noz/2+1; nz++) {
+        res += 0.5 * stencil_coef_z[nz-1] * (Ezf(j, k, l + nz - 1) + Ezf(j, k, l - nz));
+    }
+    Eza(j,k,l) = res;
+#endif
 #endif
 }
 

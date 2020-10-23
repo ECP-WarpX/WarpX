@@ -157,6 +157,12 @@ public:
     static long noy;
     static long noz;
 
+    // For momentum-conserving field gathering, order of interpolation from the
+    // staggered positions to the grid nodes
+    static int field_gathering_nox;
+    static int field_gathering_noy;
+    static int field_gathering_noz;
+
     // Number of modes for the RZ multimode version
     static long n_rz_azimuthal_modes;
     static long ncomps;

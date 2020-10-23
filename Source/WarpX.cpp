@@ -81,6 +81,12 @@ long WarpX::nox = 1;
 long WarpX::noy = 1;
 long WarpX::noz = 1;
 
+// For momentum-conserving field gathering, order of interpolation from the
+// staggered positions to the grid nodes
+int WarpX::field_gathering_nox = 2;
+int WarpX::field_gathering_noy = 2;
+int WarpX::field_gathering_noz = 2;
+
 bool WarpX::use_fdtd_nci_corr = false;
 bool WarpX::galerkin_interpolation = true;
 
@@ -639,6 +645,14 @@ WarpX::ReadParameters ()
         pp.query("nox", nox);
         pp.query("noy", noy);
         pp.query("noz", noz);
+
+        // For momentum-conserving field gathering, read from input the order of
+        // interpolation from the staggered positions to the grid nodes
+        if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
+            pp.query("field_gathering_nox", field_gathering_nox);
+            pp.query("field_gathering_noy", field_gathering_noy);
+            pp.query("field_gathering_noz", field_gathering_noz);
+        }
 
         pp.query("galerkin_scheme",galerkin_interpolation);
 
