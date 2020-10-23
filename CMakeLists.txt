@@ -14,6 +14,15 @@ if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 
+# CMake policies ##############################################################
+#
+# CMake 3.18+: CMAKE_CUDA_ARCHITECTURES
+# https://cmake.org/cmake/help/latest/policy/CMP0104.html
+if(POLICY CMP0104)
+    cmake_policy(SET CMP0104 OLD)
+endif()
+
+
 # CCache Support ##############################################################
 #
 # this is an optional tool that stores compiled object files; allows fast
