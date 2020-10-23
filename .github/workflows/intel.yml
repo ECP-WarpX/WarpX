@@ -58,6 +58,7 @@ jobs:
   build_icpx:
     name: oneAPI ICX SP
     runs-on: ubuntu-20.04
+    env: {CXXFLAGS: "-Werror -Wno-error=pass-failed"}
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
@@ -97,6 +98,7 @@ jobs:
   build_dpcc:
     name: oneAPI DPC++ SP
     runs-on: ubuntu-20.04
+    env: {CXXFLAGS: "-Werror"}
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies

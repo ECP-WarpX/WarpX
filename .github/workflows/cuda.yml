@@ -10,6 +10,7 @@ jobs:
   build_nvcc:
     name: NVCC 11.0.2 SP
     runs-on: ubuntu-18.04
+    env: {CXXFLAGS: "-Werror"}
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
