@@ -18,7 +18,6 @@
 #include <fstream>
 #include <cstdint>
 #include <algorithm>
-#include <array>
 
 using namespace amrex;
 
