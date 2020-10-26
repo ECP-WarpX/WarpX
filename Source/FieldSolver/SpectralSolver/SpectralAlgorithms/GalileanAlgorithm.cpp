@@ -501,11 +501,14 @@ GalileanAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
         amrex::Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the k vectors
-        const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* const modified_kx_arr   = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* const modified_kx_arr_c = modified_kx_vec_centered[mfi].dataPtr();
 #if (AMREX_SPACEDIM==3)
-        const amrex::Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* const modified_ky_arr   = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* const modified_ky_arr_c = modified_ky_vec_centered[mfi].dataPtr();
 #endif
-        const amrex::Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* const modified_kz_arr   = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* const modified_kz_arr_c = modified_kz_vec_centered[mfi].dataPtr();
 
         // Local copy of member variables before GPU loop
         const amrex::Real dt = m_dt;
@@ -526,13 +529,18 @@ GalileanAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
             const Complex rho_new = fields(i,j,k,Idx::rho_new);
 
             // k vector values, and coefficients
-            const amrex::Real kx = modified_kx_arr[i];
+            const amrex::Real kx   = modified_kx_arr[i];
+            const amrex::Real kx_c = modified_kx_arr_c[i];
 #if (AMREX_SPACEDIM==3)
-            const amrex::Real ky = modified_ky_arr[j];
-            const amrex::Real kz = modified_kz_arr[k];
+            const amrex::Real ky   = modified_ky_arr[j];
+            const amrex::Real kz   = modified_kz_arr[k];
+            const amrex::Real ky_c = modified_ky_arr_c[j];
+            const amrex::Real kz_c = modified_kz_arr_c[k];
 #else
-            constexpr amrex::Real ky = 0._rt;
-            const amrex::Real kz = modified_kz_arr[j];
+            constexpr amrex::Real ky   = 0._rt;
+            const     amrex::Real kz   = modified_kz_arr[j];
+            constexpr amrex::Real ky_c = 0._rt;
+            const     amrex::Real kz_c = modified_kz_arr_c[j];
 #endif
             constexpr Complex I = Complex{0._rt,1._rt};
 
@@ -542,7 +550,7 @@ GalileanAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
             if (k_norm != 0._rt)
             {
                 const Complex k_dot_J = kx * Jx + ky * Jy + kz * Jz;
-                const amrex::Real k_dot_vg = kx * vgx + ky * vgy + kz * vgz;
+                const amrex::Real k_dot_vg = kx_c * vgx + ky_c * vgy + kz_c * vgz;
 
                 if ( k_dot_vg != 0._rt ) {
 
