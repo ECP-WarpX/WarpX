@@ -134,9 +134,12 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
 .. code-block:: bash
 
-   make -j 16 COMP=gcc USE_GPU=TRUE USE_OPENPMD=TRUE
+   mkdir -p build
+   cd build
+   cmake .. -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA -DCMAKE_CUDA_ARCHITECTURES=70 -DCUDA_ARCH=7.0
+   make -j 10
 
-The other :ref:`general compile-time options <building-source>` apply as usual.
+The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
 
 Running
