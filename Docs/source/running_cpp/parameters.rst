@@ -1214,7 +1214,7 @@ Numerics and algorithms
     This option guarantees charge conservation only when used in combination with ``psatd.periodic_single_box_fft=1``, namely for periodic single-box simulations with global FFTs without guard cells.
     The implementation for domain decomposition with local FFTs over guard cells is planned but not yet completed.
 
-* ``psatd.update_with_rho`` (`0` or `1`; default: `0`)
+* ``psatd.update_with_rho`` (`0` or `1`)
     If true, the update equation for the electric field is expressed in terms of both the current density and the charge density, namely :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}`, :math:`\widehat\rho^{n}`, and :math:`\widehat\rho^{n+1}`.
     If false, instead, the update equation for the electric field is expressed in terms of the current density :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}` only.
     If charge is expected to be conserved (by setting, for example, ``psatd.current_correction=1``), then the two formulations are expected to be equivalent.
@@ -1280,6 +1280,11 @@ Numerics and algorithms
        \end{split}
 
     The coefficients :math:`C`, :math:`S`, :math:`\theta`, :math:`\nu`, :math:`\chi_1`, :math:`\chi_2`, and :math:`\chi_3` are defined in (`Lehe et al, PRE 94, 2016 <https://doi.org/10.1103/PhysRevE.94.053305>`_).
+
+    The default value for ``psatd.update_with_rho`` is ``1`` if ``psatd.v_galilean`` is non-zero or
+    in RZ geometry and ``0`` otherwise.
+
+    Note that ``psatd.update_with_rho=0`` is not supported in RZ geometry.
 
 * ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
     Defines the galilean velocity.
