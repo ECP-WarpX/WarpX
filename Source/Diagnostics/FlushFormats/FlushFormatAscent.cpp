@@ -16,7 +16,6 @@ FlushFormatAscent::WriteToFile (
     bool plot_raw_fields_guards, bool /*plot_raw_rho*/, bool plot_raw_F) const
 {
 #ifdef AMREX_USE_ASCENT
-
     auto & warpx = WarpX::GetInstance();
 
     // wrap mesh data
@@ -43,9 +42,10 @@ FlushFormatAscent::WriteToFile (
 
 #else
     amrex::ignore_unused(varnames, mf, geom, iteration, time,
-        particle_diags, nlev, prefix, plot_raw_fields,
-        plot_raw_fields_guards, plot_raw_F);
+        particle_diags, nlev);
 #endif // AMREX_USE_ASCENT
+    amrex::ignore_unused(prefix, plot_raw_fields, plot_raw_fields_guards,
+        plot_raw_F);
 }
 
 #ifdef AMREX_USE_ASCENT
