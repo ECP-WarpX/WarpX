@@ -3,6 +3,14 @@
 Juwels (JSC)
 ============
 
+.. note::
+
+   There's currently a bug when building WarpX on Juwels! WarpX does not compile on the latest version of the development branches of WarpX and AMReX.
+   Below are the latest working commits. Please, checkout to those commits before compiling.
+   If you need more recent features, select the specific commits with `git cherry-pick <commit hash>`
+   * WarpX: a548b14e8108ab22294f85516c4e9ea8b1462703
+   * AMReX: 21269eff092d0a03aff9269b1200c0e408fde90e
+
 The `Juwels supercomputer <https://www.fz-juelich.de/ias/jsc/EN/Expertise/Supercomputers/JUWELS/JUWELS_node.html>`_ is located at JSC.
 
 See `this page <https://apps.fz-juelich.de/jsc/hps/juwels/quickintro.html>`_ for a quick introduction.

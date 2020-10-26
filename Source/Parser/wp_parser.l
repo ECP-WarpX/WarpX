@@ -4,6 +4,8 @@
 #include "wp_parser.tab.h"
 %}
 
+%option nounput
+
  /* Tokens NUMBER, SYMBOL, F1, POW, F2, etc. are defined in wp_parser.y. */
  /* Types WP_SQRT, WP_SQRT, etc. are defined in wp_parser_y.h. */
 

@@ -249,10 +249,19 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     amrex::BoxArray ba = warpx.boxArray(lev);
     amrex::DistributionMapping dmap = warpx.DistributionMap(lev);
     // Check if warpx BoxArray is coarsenable.
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
-        ba.coarsenable(m_crse_ratio),
-        "Invalid coarsening ratio for warpx boxArray. Must be an integer divisor of the blocking factor."
-    );
+    if (warpx.get_numprocs() == 0)
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
+            ba.coarsenable(m_crse_ratio), "Invalid coarsening ratio for field diagnostics."
+            "Must be an integer divisor of the blocking factor.");
+    }
+    else
+    {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE (
+            ba.coarsenable(m_crse_ratio), "Invalid coarsening ratio for field diagnostics."
+            "The total number of cells must be a multiple of the coarsening ratio multiplied by numprocs.");
+    }
+
     // Find if user-defined physical dimensions are different from the simulation domain.
     for (int idim=0; idim < AMREX_SPACEDIM; ++idim) {
          // To ensure that the diagnostic lo and hi are within the domain defined at level, lev.
@@ -266,9 +275,13 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
              use_warpxba = false;
 
         // User-defined value for coarsening should be an integer divisor of
-        // blocking factor at level, lev.
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( blockingFactor[idim] % m_crse_ratio[idim]==0,
-                       " coarsening ratio must be integer divisor of blocking factor");
+        // blocking factor at level, lev. This assert is not relevant and thus
+        // removed if warpx.numprocs is used for the domain decomposition.
+        if (warpx.get_numprocs() == 0)
+        {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( blockingFactor[idim] % m_crse_ratio[idim]==0,
+                           " coarsening ratio must be integer divisor of blocking factor");
+        }
     }
 
     if (use_warpxba == false) {

@@ -12,6 +12,7 @@
 #include <AMReX_BLProfiler.H>
 
 #include <memory>
+#include <cstddef>
 
 using namespace amrex;
 
@@ -77,7 +78,7 @@ WarpX::LoadBalance ()
                 pmap = newdm.ProcessorMap();
             } else
             {
-                pmap.resize(nboxes);
+                pmap.resize(static_cast<std::size_t>(nboxes));
             }
             ParallelDescriptor::Bcast(&pmap[0], pmap.size(), ParallelDescriptor::IOProcessorNumber());
 
