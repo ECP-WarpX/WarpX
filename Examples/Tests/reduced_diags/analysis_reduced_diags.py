@@ -25,7 +25,6 @@ import sys
 import yt
 import numpy as np
 import scipy.constants as scc
-import read_raw_data
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
@@ -62,21 +61,6 @@ EPyt = EPyt + np.sum( (np.sqrt(px**2+py**2+pz**2)*scc.c)*w )
 num_photon = w.shape[0]
 num_total = num_electron + num_proton + num_photon
 
-# Use raw field plotfiles to compare with maximum field reduced diag
-ad_raw = read_raw_data.read_data(fn)
-Ex_raw = ad_raw[0]['Ex_aux']
-Ey_raw = ad_raw[0]['Ey_aux']
-Ez_raw = ad_raw[0]['Ez_aux']
-Bx_raw = ad_raw[0]['Bx_aux']
-By_raw = ad_raw[0]['By_aux']
-Bz_raw = ad_raw[0]['Bz_aux']
-max_Ex = np.amax(np.abs(Ex_raw))
-max_Ey = np.amax(np.abs(Ey_raw))
-max_Ez = np.amax(np.abs(Ez_raw))
-max_Bx = np.amax(np.abs(Bx_raw))
-max_By = np.amax(np.abs(By_raw))
-max_Bz = np.amax(np.abs(Bz_raw))
-
 ad = ds.covering_grid(level=0, left_edge=ds.domain_left_edge, dims=ds.domain_dimensions)
 Ex = ad['Ex'].to_ndarray()
 Ey = ad['Ey'].to_ndarray()
@@ -84,15 +68,19 @@ Ez = ad['Ez'].to_ndarray()
 Bx = ad['Bx'].to_ndarray()
 By = ad['By'].to_ndarray()
 Bz = ad['Bz'].to_ndarray()
-# Maximum value of |E| and |B| are obtained after interpolation so we do not use raw fields for
-# these
-max_E = np.sqrt(np.amax(Ex**2+Ey**2+Ez**2))
-max_B = np.sqrt(np.amax(Bx**2+By**2+Bz**2))
 Es = np.sum(Ex**2)+np.sum(Ey**2)+np.sum(Ez**2)
 Bs = np.sum(Bx**2)+np.sum(By**2)+np.sum(Bz**2)
 N  = np.array( ds.domain_width / ds.domain_dimensions )
 dV = N[0]*N[1]*N[2]
 EFyt = 0.5*Es*scc.epsilon_0*dV + 0.5*Bs/scc.mu_0*dV
+max_Ex = np.amax(np.abs(Ex))
+max_Ey = np.amax(np.abs(Ey))
+max_Ez = np.amax(np.abs(Ez))
+max_Bx = np.amax(np.abs(Bx))
+max_By = np.amax(np.abs(By))
+max_Bz = np.amax(np.abs(Bz))
+max_E = np.sqrt(np.amax(Ex**2+Ey**2+Ez**2))
+max_B = np.sqrt(np.amax(Bx**2+By**2+Bz**2))
 
 # PART2: get results from reduced diagnostics
 
