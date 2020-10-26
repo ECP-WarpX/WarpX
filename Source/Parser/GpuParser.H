@@ -40,12 +40,13 @@ public:
     operator() (Ts... var) const noexcept
     {
 #ifdef AMREX_USE_GPU
-        amrex::GpuArray<amrex::Real,N> l_var{var...};
 #if AMREX_DEVICE_COMPILE
 // WarpX compiled for GPU, function compiled for __device__
+        amrex::GpuArray<amrex::Real,N> l_var{var...};
         return wp_ast_eval<0>(m_gpu_parser_ast, l_var.data());
 #else
 // WarpX compiled for GPU, function compiled for __host__
+        amrex::ignore_unused(var...);
         return wp_ast_eval<0>(m_cpu_parser->ast, nullptr);
 #endif
 
