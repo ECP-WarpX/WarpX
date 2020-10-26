@@ -376,6 +376,11 @@ Particle initialization
     precision within a reasonable time ; in that case, users can set a
     relaxed precision requirement through ``self_fields_required_precision``.
 
+* ``<species_name>.self_fields_max_iters`` (`integer`, default: 200)
+    Maximum number of iterations used for MLMG solver for initial space-charge
+    fields calculation. In case if MLMG converges but fails to reach the desired
+    ``self_fields_required_precision``, this parameter may be increased.
+
 * ``<species_name>.profile`` (`string`)
     Density profile for this species. The options are:
 
