@@ -109,6 +109,7 @@ void Filter::DoFilter (const Box& tbx,
 #endif
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
     Dim3 slen_local = slen;
+#if (AMREX_SPACEDIM == 3)
     AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
@@ -116,12 +117,7 @@ void Filter::DoFilter (const Box& tbx,
         for         (int iz=0; iz < slen_local.z; ++iz){
             for     (int iy=0; iy < slen_local.y; ++iy){
                 for (int ix=0; ix < slen_local.x; ++ix){
-#if (AMREX_SPACEDIM == 3)
                     Real sss = sx[ix]*sy[iy]*sz[iz];
-#else
-                    Real sss = sx[ix]*sz[iy];
-#endif
-#if (AMREX_SPACEDIM == 3)
                     d += sss*( tmp(i-ix,j-iy,k-iz,scomp+n)
                               +tmp(i+ix,j-iy,k-iz,scomp+n)
                               +tmp(i-ix,j+iy,k-iz,scomp+n)
@@ -130,18 +126,32 @@ void Filter::DoFilter (const Box& tbx,
                               +tmp(i+ix,j-iy,k+iz,scomp+n)
                               +tmp(i-ix,j+iy,k+iz,scomp+n)
                               +tmp(i+ix,j+iy,k+iz,scomp+n));
-#else
-                    d += sss*( tmp(i-ix,j-iy,k,scomp+n)
-                              +tmp(i+ix,j-iy,k,scomp+n)
-                              +tmp(i-ix,j+iy,k,scomp+n)
-                              +tmp(i+ix,j+iy,k,scomp+n));
-#endif
                 }
             }
         }
 
         dst(i,j,k,dcomp+n) = d;
     });
+#else
+    AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
+    {
+        Real d = 0.0;
+
+        for         (int iz=0; iz < slen_local.z; ++iz){
+            for     (int iy=0; iy < slen_local.y; ++iy){
+                for (int ix=0; ix < slen_local.x; ++ix){
+                    Real sss = sx[ix]*sz[iy];
+                    d += sss*( tmp(i-ix,j-iy,k,scomp+n)
+                              +tmp(i+ix,j-iy,k,scomp+n)
+                              +tmp(i-ix,j+iy,k,scomp+n)
+                              +tmp(i+ix,j+iy,k,scomp+n));
+                }
+            }
+        }
+
+        dst(i,j,k,dcomp+n) = d;
+    });
+#endif
 }
 
 #else

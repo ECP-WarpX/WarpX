@@ -125,7 +125,7 @@ extern "C"
     }
 #endif
 
-    void amrex_finalize (int finalize_mpi)
+    void amrex_finalize (int /*finalize_mpi*/)
     {
         amrex::Finalize();
     }
