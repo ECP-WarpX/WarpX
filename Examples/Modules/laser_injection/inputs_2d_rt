@@ -1,8 +1,8 @@
 # Maximum number of time steps
-max_step = 100
+max_step = 220
 
 # number of grid points
-amr.n_cell =  240 64
+amr.n_cell =  480 352
 
 # Maximum allowable size of each subdomain in the problem domain;
 #    this is used to decompose the domain for parallel calculations.
@@ -14,8 +14,8 @@ amr.max_level = 0
 # Geometry
 geometry.coord_sys   = 0                     # 0: Cartesian
 geometry.is_periodic = 0           1         # Is periodic?
-geometry.prob_lo     = -12.e-6    -20.e-6    # physical domain
-geometry.prob_hi     =  12.e-6     20.e-6
+geometry.prob_lo     = -20.e-6    -15.e-6    # physical domain
+geometry.prob_hi     =  20.e-6     15.e-6
 
 warpx.serialize_ics = 1
 
@@ -31,19 +31,21 @@ warpx.cfl = 1.0
 # Laser
 lasers.names        = laser1
 laser1.profile      = Gaussian
-laser1.position     = 9.e-6  0.  0.  # This point is on the laser plane
-laser1.direction    = 1.     0.  0.  # The plane normal direction
-laser1.polarization = 0.     1.  0.  # The main polarization vector
-laser1.e_max        = 4.e12          # Maximum amplitude of the laser field (in V/m)
-laser1.wavelength   = 0.8e-6         # The wavelength of the laser (in meters)
-laser1.profile_waist = 5.e-6       # The waist of the laser (in meters)
-laser1.profile_duration = 15.e-15  # The duration of the laser (in seconds)
-laser1.profile_t_peak = 30.e-15    # The time at which the laser reaches its peak (in seconds)
-laser1.profile_focal_distance = 100.e-6  # Focal distance from the antenna (in meters)
+laser1.position     = 10.e-6  0.e-6  0.e-6 # This point is on the laser plane
+laser1.direction    = 2.  0.  1.           # The plane normal direction
+laser1.polarization = 1. 1.  -2.           # The main polarization vector
+laser1.e_max        = 4.e12                # Maximum amplitude of the laser field (in V/m)
+laser1.wavelength   = 1.0e-6               # The wavelength of the laser (in meters)
+laser1.profile_waist = 5.e-6               # The waist of the laser (in meters)
+laser1.profile_duration = 10.e-15          # The duration of the laser (in seconds)
+laser1.profile_t_peak = 20.e-15            # The time at which the laser reaches its peak (in seconds)
+laser1.profile_focal_distance = 13.109e-6  # Focal distance from the antenna (in meters)
+                                           #     With this focal distance the laser is at focus
+                                           #     at the end of the simulation.
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 10000
+diag1.period = 220
 diag1.diag_type = Full
 
 warpx.do_pml = 0

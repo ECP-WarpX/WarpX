@@ -75,7 +75,7 @@ FullDiagnostics::ReadParameters ()
             "to file for a restart");
     }
     // Number of buffers = 1 for FullDiagnostics.
-    // It is used to allocate the number of output multu-level MultiFab, m_mf_output
+    // It is used to allocate the number of output multi-level MultiFab, m_mf_output
     m_num_buffers = 1;
 }
 
@@ -336,7 +336,7 @@ FullDiagnostics::InitializeFieldBufferData (int i_buffer, int lev ) {
     // is different from the lo and hi physical co-ordinates of the simulation domain.
     if (use_warpxba == false) dmap = amrex::DistributionMapping{ba};
     // Allocate output MultiFab for diagnostics. The data will be stored at cell-centers.
-    int ngrow = (m_format == "sensei") ? 1 : 0;
+    int ngrow = (m_format == "sensei" || m_format == "ascent") ? 1 : 0;
     // The zero is hard-coded since the number of output buffers = 1 for FullDiagnostics
     m_mf_output[i_buffer][lev] = amrex::MultiFab(ba, dmap, m_varnames.size(), ngrow);
 
