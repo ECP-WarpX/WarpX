@@ -70,7 +70,7 @@ public:
      * does not require control parameters or lookup tables.
      */
     QuantumSynchrotronGetOpticalDepth ()
-    {};
+    {}
 
     /**
      * () operator is just a thin wrapper around a very simple function to
@@ -110,7 +110,7 @@ public:
     QuantumSynchrotronEvolveOpticalDepth (
         const QS_dndt_table_view table_view,
         const amrex::ParticleReal qs_minimum_chi_part):
-        m_table_view{table_view}, m_qs_minimum_chi_part{qs_minimum_chi_part}{};
+        m_table_view{table_view}, m_qs_minimum_chi_part{qs_minimum_chi_part}{}
 
     /**
      * Evolves the optical depth. It can be used on GPU.
@@ -184,7 +184,7 @@ public:
      */
     QuantumSynchrotronPhotonEmission (
         const QS_phot_em_table_view table_view):
-        m_table_view{table_view}{};
+        m_table_view{table_view}{}
 
     /**
      * Generates photons according to Quantum Synchrotron process.
