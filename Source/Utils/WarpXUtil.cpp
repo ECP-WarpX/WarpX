@@ -190,7 +190,6 @@ void Store_parserString(amrex::ParmParse& pp, std::string query_string,
     f.clear();
 }
 
-
 WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames)
 {
     WarpXParser parser(parse_function);
@@ -211,6 +210,25 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
         amrex::Abort("makeParser::Unknown symbol "+s);
     }
     return parser;
+}
+
+int
+smartQuery (amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
+{
+    std::string tmp_str;
+    int is_specified = a_pp.query(str, tmp_str);
+    if (is_specified)
+    {
+        std::string str_val;
+        Store_parserString(a_pp, str, str_val);
+
+        std::unique_ptr<ParserWrapper<1>> local_parser =
+            std::make_unique<ParserWrapper<1>>(makeParser(str_val,{"DONOTUSETHATSTRING"}));
+        HostDeviceParser<1> const& loc = getParser(local_parser);
+        val = loc(0.);
+    }
+
+    return is_specified;
 }
 
 /**
