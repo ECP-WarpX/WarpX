@@ -222,10 +222,10 @@ smartQuery (amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
         std::string str_val;
         Store_parserString(a_pp, str, str_val);
 
-        std::unique_ptr<ParserWrapper<1>> local_parser =
+        std::unique_ptr<ParserWrapper<1>> local_parser_ptr =
             std::make_unique<ParserWrapper<1>>(makeParser(str_val,{"DONOTUSETHATSTRING"}));
-        HostDeviceParser<1> const& loc = getParser(local_parser);
-        val = loc(0.);
+        HostDeviceParser<1> const& local_parser = getParser(local_parser_ptr);
+        val = local_parser(0.);
     }
 
     return is_specified;
