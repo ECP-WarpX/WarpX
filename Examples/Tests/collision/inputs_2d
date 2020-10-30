@@ -62,5 +62,5 @@ collision3.CoulombLog = 15.9
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 10
+diag1.intervals = 10
 diag1.diag_type = Full

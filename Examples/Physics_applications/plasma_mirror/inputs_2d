@@ -27,7 +27,7 @@ my_constants.zp2   = 24.e-6
 my_constants.zc2   = 24.05545177444479562e-6
 warpx.cfl = 1.0
 warpx.do_dynamic_scheduling = 0
-warpx.load_balance_int = 66
+warpx.load_balance_intervals = 66
 warpx.use_filter = 1
 
 #################################
@@ -76,5 +76,5 @@ laser1.profile_focal_distance = 15.e-6  # Focal distance from the antenna (in me
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 10
+diag1.intervals = 10
 diag1.diag_type = Full

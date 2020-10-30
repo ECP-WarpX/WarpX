@@ -27,6 +27,6 @@ electron.density_function(x,y,z) = "(x*x + y*y + z*z < R0*R0)*n0"
 electron.momentum_distribution_type = constant
 
 diagnostics.diags_names = diag1
-diag1.period = 30
+diag1.intervals = 30
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez rho

@@ -23,6 +23,7 @@ FullDiagnostics::FullDiagnostics (int i, std::string name)
     : Diagnostics(i, name)
 {
     ReadParameters();
+    BackwardCompatibility();
 }
 
 void
@@ -54,9 +55,9 @@ FullDiagnostics::ReadParameters ()
         m_format == "checkpoint" || m_format == "ascent" ||
         m_format == "sensei",
         "<diag>.format must be plotfile or openpmd or checkpoint or ascent or sensei");
-    std::vector<std::string> period_string_vec = {"0"};
-    pp.queryarr("period", period_string_vec);
-    m_intervals = IntervalsParser(period_string_vec);
+    std::vector<std::string> intervals_string_vec = {"0"};
+    pp.queryarr("intervals", intervals_string_vec);
+    m_intervals = IntervalsParser(intervals_string_vec);
     bool raw_specified = pp.query("plot_raw_fields", m_plot_raw_fields);
     raw_specified += pp.query("plot_raw_fields_guards", m_plot_raw_fields_guards);
     raw_specified += pp.query("plot_raw_rho", m_plot_raw_rho);
@@ -77,6 +78,17 @@ FullDiagnostics::ReadParameters ()
     // Number of buffers = 1 for FullDiagnostics.
     // It is used to allocate the number of output multi-level MultiFab, m_mf_output
     m_num_buffers = 1;
+}
+
+void
+FullDiagnostics::BackwardCompatibility ()
+{
+    amrex::ParmParse pp(m_diag_name);
+    std::vector<std::string> backward_strings;
+    if (pp.queryarr("period", backward_strings)){
+        amrex::Abort("<diag_name>.period is no longer a valid option. "
+                     "Please use the renamed option <diag_name>.intervals instead.");
+    }
 }
 
 void

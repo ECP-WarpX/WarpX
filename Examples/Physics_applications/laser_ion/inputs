@@ -45,7 +45,7 @@ amr.blocking_factor = 64
 warpx.do_dynamic_scheduling = 0
 
 # load balancing
-warpx.load_balance_int = 10
+warpx.load_balance_intervals = 10
 warpx.load_balance_with_sfc = 0
 #warpx.load_balance_efficiency_ratio_threshold = 1.1
 algo.load_balance_costs_update = Heuristic
@@ -53,7 +53,7 @@ algo.load_balance_costs_update = Heuristic
 #algo.costs_heuristic_cells_wt = 0.1
 
 # particle bin-sorting on GPU (ideal defaults not investigated in 2D)
-#warpx.sort_int = 4
+#warpx.sort_intervals = 4
 #warpx.sort_bin_size = 4 4 4
 
 
@@ -170,13 +170,13 @@ laser1.profile_focal_distance = 4.0e-6  # focal distance from the antenna [m]
 #
 diagnostics.diags_names = diag1 openPMDh5
 
-diag1.period = 100
+diag1.intervals = 100
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydrogen
 diag1.electrons.variables = w ux uy uz
 diag1.hydrogen.variables = w ux uy uz
 
-openPMDh5.period = 100
+openPMDh5.intervals = 100
 openPMDh5.diag_type = Full
 openPMDh5.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydrogen
 openPMDh5.electrons.variables = w ux uy uz

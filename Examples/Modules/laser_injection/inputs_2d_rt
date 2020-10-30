@@ -45,7 +45,7 @@ laser1.profile_focal_distance = 13.109e-6  # Focal distance from the antenna (in
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 220
+diag1.intervals = 220
 diag1.diag_type = Full
 
 warpx.do_pml = 0
