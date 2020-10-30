@@ -173,7 +173,7 @@ WarpX::WarpX ()
     dt.resize(nlevs_max, std::numeric_limits<Real>::max());
 
     // Particle Container
-    mypc = std::unique_ptr<MultiParticleContainer> (new MultiParticleContainer(this));
+    mypc = std::make_unique<MultiParticleContainer>(this);
     warpx_do_continuous_injection = mypc->doContinuousInjection();
     if (warpx_do_continuous_injection){
         if (moving_window_v >= 0){
@@ -187,7 +187,7 @@ WarpX::WarpX ()
     do_back_transformed_particles = mypc->doBackTransformedDiagnostics();
 
     // Diagnostics
-    multi_diags = std::unique_ptr<MultiDiagnostics> (new MultiDiagnostics());
+    multi_diags = std::make_unique<MultiDiagnostics>();
 
     /** create object for reduced diagnostics */
     reduced_diags = new MultiReducedDiags();
@@ -229,7 +229,7 @@ WarpX::WarpX ()
 
     if (em_solver_medium == MediumForEM::Macroscopic) {
         // create object for macroscopic solver
-        m_macroscopic_properties = std::unique_ptr<MacroscopicProperties> (new MacroscopicProperties());
+        m_macroscopic_properties = std::make_unique<MacroscopicProperties>();
     }
 
 
@@ -674,17 +674,24 @@ WarpX::ReadParameters ()
       // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
+#   ifdef WARPX_DIM_RZ
+        update_with_rho = true;  // Must be true for RZ PSATD
+#   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0.) {
             update_with_rho = false; // standard PSATD
         }
         else {
             update_with_rho = true;  // Galilean PSATD
         }
+#   endif
 
         // Overwrite update_with_rho with value set in input file
         pp.query("update_with_rho", update_with_rho);
 
 #   ifdef WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
+        "psatd.update_with_rho must be equal to 1 in RZ geometry");
+
         if (!Geom(0).isPeriodic(1)) {
             use_damp_fields_in_z_guard = true;
         }
@@ -973,9 +980,15 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE);
     Efield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE);
 
-    if (do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics))
+#ifdef WARPX_USE_PSATD
+    const bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)
+                                || update_with_rho || current_correction;
+#else
+    const bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics);
+#endif
+    if (deposit_charge)
     {
-        rho_fp[lev].reset(new MultiFab(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho));
+        rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho);
     }
 
     if (do_subcycling == 1 && lev == 0)
@@ -987,13 +1000,9 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_dive_cleaning)
     {
-        F_fp[lev].reset  (new MultiFab(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max()));
+        F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max());
     }
 #ifdef WARPX_USE_PSATD
-    else
-    {
-        rho_fp[lev].reset(new MultiFab(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho));
-    }
     // Allocate and initialize the spectral solver
 #   if (AMREX_SPACEDIM == 3)
     RealVect dx_vect(dx[0], dx[1], dx[2]);
@@ -1057,11 +1066,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     else if (lev == 0)
     {
         for (int idir = 0; idir < 3; ++idir) {
-            Efield_aux[lev][idir].reset(new MultiFab(*Efield_fp[lev][idir], amrex::make_alias, 0, ncomps));
-            Bfield_aux[lev][idir].reset(new MultiFab(*Bfield_fp[lev][idir], amrex::make_alias, 0, ncomps));
+            Efield_aux[lev][idir] = std::make_unique<MultiFab>(*Efield_fp[lev][idir], amrex::make_alias, 0, ncomps);
+            Bfield_aux[lev][idir] = std::make_unique<MultiFab>(*Bfield_fp[lev][idir], amrex::make_alias, 0, ncomps);
 
-            Efield_avg_aux[lev][idir].reset(new MultiFab(*Efield_avg_fp[lev][idir], amrex::make_alias, 0, ncomps));
-            Bfield_avg_aux[lev][idir].reset(new MultiFab(*Bfield_avg_fp[lev][idir], amrex::make_alias, 0, ncomps));
+            Efield_avg_aux[lev][idir] = std::make_unique<MultiFab>(*Efield_avg_fp[lev][idir], amrex::make_alias, 0, ncomps);
+            Bfield_avg_aux[lev][idir] = std::make_unique<MultiFab>(*Bfield_avg_fp[lev][idir], amrex::make_alias, 0, ncomps);
         }
     }
     else
@@ -1120,16 +1129,16 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         current_cp[lev][2] = std::make_unique<MultiFab>(amrex::convert(cba,jz_nodal_flag),dm,ncomps,ngJ);
 
         if (do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)) {
-            rho_cp[lev].reset(new MultiFab(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho));
+            rho_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho);
         }
         if (do_dive_cleaning)
         {
-            F_cp[lev].reset  (new MultiFab(amrex::convert(cba,IntVect::TheUnitVector()),dm,ncomps, ngF.max()));
+            F_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,IntVect::TheUnitVector()),dm,ncomps, ngF.max());
         }
 #ifdef WARPX_USE_PSATD
         else
         {
-            rho_cp[lev].reset(new MultiFab(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho));
+            rho_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho);
         }
         // Allocate and initialize the spectral solver
 #   if (AMREX_SPACEDIM == 3)
@@ -1155,8 +1164,8 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
 #   endif
 #endif
-        m_fdtd_solver_cp[lev].reset(
-            new FiniteDifferenceSolver( maxwell_solver_id, cdx, do_nodal ) );
+        m_fdtd_solver_cp[lev] = std::make_unique<FiniteDifferenceSolver>(
+            maxwell_solver_id, cdx, do_nodal);
     }
 
     //
@@ -1209,7 +1218,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (load_balance_intervals.isActivated())
     {
-        costs[lev].reset(new amrex::LayoutData<Real>(ba, dm));
+        costs[lev] = std::make_unique<LayoutData<Real>>(ba, dm);
     }
 }
 

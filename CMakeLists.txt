@@ -14,6 +14,15 @@ if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 
+# CMake policies ##############################################################
+#
+# CMake 3.18+: CMAKE_CUDA_ARCHITECTURES
+# https://cmake.org/cmake/help/latest/policy/CMP0104.html
+if(POLICY CMP0104)
+    cmake_policy(SET CMP0104 OLD)
+endif()
+
+
 # CCache Support ##############################################################
 #
 # this is an optional tool that stores compiled object files; allows fast
@@ -54,8 +63,8 @@ if(NOT WarpX_PRECISION IN_LIST WarpX_PRECISION_VALUES)
     message(FATAL_ERROR "WarpX_PRECISION (${WarpX_PRECISION}) must be one of ${WarpX_PRECISION_VALUES}")
 endif()
 
-set(WarpX_COMPUTE_VALUES NOACC OMP CUDA DPCPP) # HIP
-set(WarpX_COMPUTE OMP CACHE STRING "On-node, accelerated computing backend (NOACC/OMP/CUDA/DPCPP)")
+set(WarpX_COMPUTE_VALUES NOACC OMP CUDA DPCPP HIP)
+set(WarpX_COMPUTE OMP CACHE STRING "On-node, accelerated computing backend (NOACC/OMP/CUDA/DPCPP/HIP)")
 set_property(CACHE WarpX_COMPUTE PROPERTY STRINGS ${WarpX_COMPUTE_VALUES})
 if(NOT WarpX_COMPUTE IN_LIST WarpX_COMPUTE_VALUES)
     message(FATAL_ERROR "WarpX_PRECISION (${WarpX_COMPUTE}) must be one of ${WarpX_COMPUTE_VALUES}")

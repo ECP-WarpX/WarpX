@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <algorithm>
 
-
 using namespace amrex;
 
 void
@@ -123,17 +122,15 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
         //Uniform grid flag
         char flag;
         inp.read(&flag, 1);
-        if(!inp) Abort("Failed to read sizes from txye file");
+        if(!inp) Abort("Failed to read grid type from txye file");
         m_params.is_grid_uniform=flag;
 
         //Grid points along t, x and y
-        auto const three_uint32_size = sizeof(uint32_t)*3;
-        char buf[three_uint32_size];
-        inp.read(buf, three_uint32_size);
+        inp.read(reinterpret_cast<char*>(&m_params.nt), sizeof(uint32_t));
+        inp.read(reinterpret_cast<char*>(&m_params.nx), sizeof(uint32_t));
+        inp.read(reinterpret_cast<char*>(&m_params.ny), sizeof(uint32_t));
         if(!inp) Abort("Failed to read sizes from txye file");
-        m_params.nt = reinterpret_cast<uint32_t*>(buf)[0];
-        m_params.nx = reinterpret_cast<uint32_t*>(buf)[1];
-        m_params.ny = reinterpret_cast<uint32_t*>(buf)[2];
+
         if(m_params.nt <= 1) Abort("nt in txye file must be >=2");
         if(m_params.nx <= 1) Abort("nx in txye file must be >=2");
 #if (AMREX_SPACEDIM == 3)
@@ -143,48 +140,45 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::parse_txye_file(std::string txye_f
 #endif
 
         //Coordinates
-        Vector<double> buf_t, buf_x, buf_y;
+        Vector<double> dbuf_t, dbuf_x, dbuf_y;
         if(m_params.is_grid_uniform){
-            buf_t.resize(2);
-            buf_x.resize(2);
+            dbuf_t.resize(2);
+            dbuf_x.resize(2);
 #if (AMREX_SPACEDIM == 3)
-            buf_y.resize(2);
+            dbuf_y.resize(2);
 #elif(AMREX_SPACEDIM == 2)
-            buf_y.resize(1);
+            dbuf_y.resize(1);
 #endif
         }
         else{
-            buf_t.resize(m_params.nt);
-            buf_x.resize(m_params.nx);
-            buf_y.resize(m_params.ny);
+            dbuf_t.resize(m_params.nt);
+            dbuf_x.resize(m_params.nx);
+            dbuf_y.resize(m_params.ny);
         }
-        inp.read(reinterpret_cast<char*>(buf_t.dataPtr()),
-            buf_t.size()*sizeof(double));
-        if(!inp)
-            Abort("Failed to read coords from txye file");
-        if (!std::is_sorted(buf_t.begin(), buf_t.end()))
+
+        inp.read(reinterpret_cast<char*>(dbuf_t.dataPtr()),
+            dbuf_t.size()*sizeof(double));
+        inp.read(reinterpret_cast<char*>(dbuf_x.dataPtr()),
+            dbuf_x.size()*sizeof(double));
+        inp.read(reinterpret_cast<char*>(dbuf_y.dataPtr()),
+            dbuf_y.size()*sizeof(double));
+        if(!inp) Abort("Failed to read coords from txye file");
+
+        m_params.t_coords.resize(dbuf_t.size());
+        m_params.h_x_coords.resize(dbuf_x.size());
+        m_params.h_y_coords.resize(dbuf_y.size());
+
+        if (!std::is_sorted(dbuf_t.begin(), dbuf_t.end()) ||
+            !std::is_sorted(dbuf_x.begin(), dbuf_x.end()) ||
+            !std::is_sorted(dbuf_y.begin(), dbuf_y.end()))
             Abort("Coordinates are not sorted  in txye file");
-        inp.read(reinterpret_cast<char*>(buf_x.dataPtr()),
-            buf_x.size()*sizeof(double));
-        if(!inp)
-            Abort("Failed to read coords from txye file");
-        if (!std::is_sorted(buf_x.begin(), buf_x.end()))
-            Abort("Coordinates are not sorted  in txye file");
-        inp.read(reinterpret_cast<char*>(buf_y.dataPtr()),
-            buf_y.size()*sizeof(double));
-        if(!inp)
-            Abort("Failed to read coords from txye file");
-        if (!std::is_sorted(buf_y.begin(), buf_y.end()))
-            Abort("Coordinates are not sorted in txye file");
-        m_params.t_coords.resize(buf_t.size());
-        m_params.h_x_coords.resize(buf_x.size());
-        m_params.h_y_coords.resize(buf_y.size());
+
         // Convert from double to amrex::Real
-        std::transform(buf_t.begin(), buf_t.end(), m_params.t_coords.begin(),
+        std::transform(dbuf_t.begin(), dbuf_t.end(), m_params.t_coords.begin(),
             [](auto x) {return static_cast<amrex::Real>(x);} );
-        std::transform(buf_x.begin(), buf_x.end(), m_params.h_x_coords.begin(),
+        std::transform(dbuf_x.begin(), dbuf_x.end(), m_params.h_x_coords.begin(),
             [](auto x) {return static_cast<amrex::Real>(x);} );
-        std::transform(buf_y.begin(), buf_y.end(), m_params.h_y_coords.begin(),
+        std::transform(dbuf_y.begin(), dbuf_y.end(), m_params.h_y_coords.begin(),
             [](auto x) {return static_cast<amrex::Real>(x);} );
     }
 

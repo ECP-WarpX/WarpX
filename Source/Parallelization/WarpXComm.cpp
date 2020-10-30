@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <cstdlib>
 
+#include <memory>
+
 using namespace amrex;
 
 void
@@ -114,12 +116,13 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             Array<std::unique_ptr<MultiFab>,3> Btmp;
             if (Bfield_cax[lev][0]) {
                 for (int i = 0; i < 3; ++i) {
-                    Btmp[i].reset(new MultiFab(*Bfield_cax[lev][i], amrex::make_alias, 0, 1));
+                    Btmp[i] = std::make_unique<MultiFab>(
+                        *Bfield_cax[lev][i], amrex::make_alias, 0, 1);
                 }
             } else {
                 IntVect ngtmp = Bfield_aux[lev-1][0]->nGrowVect();
                 for (int i = 0; i < 3; ++i) {
-                    Btmp[i].reset(new MultiFab(cnba, dm, 1, ngtmp));
+                    Btmp[i] = std::make_unique<MultiFab>(cnba, dm, 1, ngtmp);
                 }
             }
             // ParallelCopy from coarse level
@@ -162,12 +165,14 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             Array<std::unique_ptr<MultiFab>,3> Etmp;
             if (Efield_cax[lev][0]) {
                 for (int i = 0; i < 3; ++i) {
-                    Etmp[i].reset(new MultiFab(*Efield_cax[lev][i], amrex::make_alias, 0, 1));
+                    Etmp[i] = std::make_unique<MultiFab>(
+                        *Efield_cax[lev][i], amrex::make_alias, 0, 1);
                 }
             } else {
                 IntVect ngtmp = Efield_aux[lev-1][0]->nGrowVect();
                 for (int i = 0; i < 3; ++i) {
-                    Etmp[i].reset(new MultiFab(cnba, dm, 1, ngtmp));
+                    Etmp[i] = std::make_unique<MultiFab>(
+                        cnba, dm, 1, ngtmp);
                 }
             }
             // ParallelCopy from coarse level
@@ -868,17 +873,23 @@ void
 WarpX::ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp)
 {
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
-    const auto& period = Geom(glev).periodicity();
     auto& r = (patch_type == PatchType::fine) ? rho_fp[lev] : rho_cp[lev];
     if (r == nullptr) return;
+    ApplyFilterandSumBoundaryRho(lev, glev, *r, icomp, ncomp);
+}
+
+void
+WarpX::ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp)
+{
+    const auto& period = Geom(glev).periodicity();
     if (use_filter) {
-        IntVect ng = r->nGrowVect();
+        IntVect ng = rho.nGrowVect();
         ng += bilinear_filter.stencil_length_each_dir-1;
-        MultiFab rf(r->boxArray(), r->DistributionMap(), ncomp, ng);
-        bilinear_filter.ApplyStencil(rf, *r, icomp, 0, ncomp);
-        WarpXSumGuardCells(*r, rf, period, icomp, ncomp );
+        MultiFab rf(rho.boxArray(), rho.DistributionMap(), ncomp, ng);
+        bilinear_filter.ApplyStencil(rf, rho, icomp, 0, ncomp);
+        WarpXSumGuardCells(rho, rf, period, icomp, ncomp );
     } else {
-        WarpXSumGuardCells(*r, period, icomp, ncomp);
+        WarpXSumGuardCells(rho, period, icomp, ncomp);
     }
 }
 

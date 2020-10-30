@@ -89,7 +89,7 @@ extern "C"
 
     int warpx_nSpecies()
     {
-        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const auto & mypc = WarpX::GetInstance().GetPartContainer();
         return mypc.nSpecies();
     }
 
@@ -125,7 +125,7 @@ extern "C"
     }
 #endif
 
-    void amrex_finalize (int finalize_mpi)
+    void amrex_finalize (int /*finalize_mpi*/)
     {
         amrex::Finalize();
     }
@@ -239,8 +239,8 @@ extern "C"
     }
 
     long warpx_getNumParticles(int speciesnumber) {
-        auto & mypc = WarpX::GetInstance().GetPartContainer();
-        auto & myspc = mypc.GetParticleContainer(speciesnumber);
+        const auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const auto & myspc = mypc.GetParticleContainer(speciesnumber);
         return myspc.TotalNumberOfParticles();
     }
 
@@ -352,7 +352,7 @@ extern "C"
 
     amrex::ParticleReal** warpx_getParticleStructs(int speciesnumber, int lev,
                                       int* num_tiles, int** particles_per_tile) {
-        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const auto & mypc = WarpX::GetInstance().GetPartContainer();
         auto & myspc = mypc.GetParticleContainer(speciesnumber);
 
         int i = 0;
@@ -374,7 +374,7 @@ extern "C"
 
     amrex::ParticleReal** warpx_getParticleArrays(int speciesnumber, int comp, int lev,
                                      int* num_tiles, int** particles_per_tile) {
-        auto & mypc = WarpX::GetInstance().GetPartContainer();
+        const auto & mypc = WarpX::GetInstance().GetPartContainer();
         auto & myspc = mypc.GetParticleContainer(speciesnumber);
 
         int i = 0;

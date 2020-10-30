@@ -376,6 +376,11 @@ Particle initialization
     precision within a reasonable time ; in that case, users can set a
     relaxed precision requirement through ``self_fields_required_precision``.
 
+* ``<species_name>.self_fields_max_iters`` (`integer`, default: 200)
+    Maximum number of iterations used for MLMG solver for initial space-charge
+    fields calculation. In case if MLMG converges but fails to reach the desired
+    ``self_fields_required_precision``, this parameter may be increased.
+
 * ``<species_name>.profile`` (`string`)
     Density profile for this species. The options are:
 
@@ -1209,7 +1214,7 @@ Numerics and algorithms
     This option guarantees charge conservation only when used in combination with ``psatd.periodic_single_box_fft=1``, namely for periodic single-box simulations with global FFTs without guard cells.
     The implementation for domain decomposition with local FFTs over guard cells is planned but not yet completed.
 
-* ``psatd.update_with_rho`` (`0` or `1`; default: `0`)
+* ``psatd.update_with_rho`` (`0` or `1`)
     If true, the update equation for the electric field is expressed in terms of both the current density and the charge density, namely :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}`, :math:`\widehat\rho^{n}`, and :math:`\widehat\rho^{n+1}`.
     If false, instead, the update equation for the electric field is expressed in terms of the current density :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}` only.
     If charge is expected to be conserved (by setting, for example, ``psatd.current_correction=1``), then the two formulations are expected to be equivalent.
@@ -1275,6 +1280,11 @@ Numerics and algorithms
        \end{split}
 
     The coefficients :math:`C`, :math:`S`, :math:`\theta`, :math:`\nu`, :math:`\chi_1`, :math:`\chi_2`, and :math:`\chi_3` are defined in (`Lehe et al, PRE 94, 2016 <https://doi.org/10.1103/PhysRevE.94.053305>`_).
+
+    The default value for ``psatd.update_with_rho`` is ``1`` if ``psatd.v_galilean`` is non-zero or
+    in RZ geometry and ``0`` otherwise.
+
+    Note that ``psatd.update_with_rho=0`` is not supported in RZ geometry.
 
 * ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
     Defines the galilean velocity.
@@ -1433,11 +1443,12 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
-    Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``F`` ``part_per_grid`` ``part_per_proc`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species.
+    Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species.
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
+    Note that the fields are averaged on the cell centers before they are written to file.
 
 * ``<diag_name>.plot_raw_fields`` (`0` or `1`) optional (default `0`)
-    By default, the fields written in the plot files are averaged on the nodes.
+    By default, the fields written in the plot files are averaged on the cell centers.
     When ```warpx.plot_raw_fields`` is `1`, then the raw (i.e. unaveraged)
     fields are also saved in the output files.
     Only works with ``<diag_name>.format = plotfile``.
@@ -1462,7 +1473,10 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 * ``<diag_name>.coarsening_ratio`` (list of `int`) optional (default `1 1 1`)
     Reduce size of the field output by this ratio in each dimension.
     (This is done by averaging the field over 1 or 2 points along each direction, depending on the staggering).
-    ``plot_coarsening_ratio`` should be an integer divisor of ``blocking_factor``, defined in the :ref:`parallelization <parallelization_warpx>` section.
+    If ``blocking_factor`` and ``max_grid_size`` are used for the domain decomposition, as detailed in
+    the :ref:`parallelization <parallelization_warpx>` section, ``coarsening_ratio`` should be an integer
+    divisor of ``blocking_factor``. If ``warpx.numprocs`` is used instead, the total number of cells in a given
+    dimension must be a multiple of the ``coarsening_ratio`` multiplied by ``numprocs`` in that dimension.
 
 * ``<diag_name>.file_prefix`` (`string`) optional (default `diags/plotfiles/plt`)
     Root for output file names. Supports sub-directories.
@@ -1660,6 +1674,18 @@ Reduced Diagnostics
         the maximum value of the :math:`B_z` field and
         the maximum value of the norm :math:`|B|` of the magnetic field,
         at mesh refinement levels from  0 to :math:`n`.
+
+        Note that the fields are averaged on the cell centers before their maximum values are
+        computed.
+
+    * ``ParticleNumber``
+        This type computes the total number of macroparticles in the simulation (for each species
+        and summed over all species). It can be useful in particular for simulations with creation
+        (ionization, QED processes) or removal (resampling) of particles.
+
+        The output columns are
+        total number of macroparticles summed over all species and
+        total number of macroparticles of each species.
 
     * ``BeamRelevant``
         This type computes properties of a particle beam relevant for particle accelerators,

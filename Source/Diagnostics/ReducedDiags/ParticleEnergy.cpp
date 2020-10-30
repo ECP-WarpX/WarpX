@@ -27,25 +27,24 @@ ParticleEnergy::ParticleEnergy (std::string rd_name)
     auto & warpx = WarpX::GetInstance();
 
     // get MultiParticleContainer class object
-    auto & mypc = warpx.GetPartContainer();
+    const auto & mypc = warpx.GetPartContainer();
 
     // get number of species (int)
-    auto nSpecies = mypc.nSpecies();
+    const auto nSpecies = mypc.nSpecies();
 
     // resize data array
     m_data.resize(2*nSpecies+2,0.0);
 
     // get species names (std::vector<std::string>)
-    auto species_names = mypc.GetSpeciesNames();
+    const auto species_names = mypc.GetSpeciesNames();
 
     if (ParallelDescriptor::IOProcessor())
     {
         if ( m_IsNotRestart )
         {
             // open file
-            std::ofstream ofs;
-            ofs.open(m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app);
+            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
+                std::ofstream::out | std::ofstream::app};
             // write header row
             ofs << "#";
             ofs << "[1]step()";
@@ -85,13 +84,13 @@ void ParticleEnergy::ComputeDiags (int step)
     if (!m_intervals.contains(step+1)) { return; }
 
     // get MultiParticleContainer class object
-    auto & mypc = WarpX::GetInstance().GetPartContainer();
+    const auto & mypc = WarpX::GetInstance().GetPartContainer();
 
     // get number of species (int)
-    auto nSpecies = mypc.nSpecies();
+    const auto nSpecies = mypc.nSpecies();
 
     // get species names (std::vector<std::string>)
-    auto species_names = mypc.GetSpeciesNames();
+    const auto species_names = mypc.GetSpeciesNames();
 
     // speed of light squared
     auto c2 = PhysConst::c * PhysConst::c;
@@ -100,14 +99,14 @@ void ParticleEnergy::ComputeDiags (int step)
     for (int i_s = 0; i_s < nSpecies; ++i_s)
     {
         // get WarpXParticleContainer class object
-        auto & myspc = mypc.GetParticleContainer(i_s);
+        const auto & myspc = mypc.GetParticleContainer(i_s);
 
         // get mass (Real)
         auto m = myspc.getMass();
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
-        // Use amex::ReduceSum to compute the sum of energies of all particles
+        // Use amrex::ReduceSum to compute the sum of energies of all particles
         // held by the current MPI rank, for this species. This involves a loop over all
         // boxes held by this MPI rank.
         Real Etot = 0.0_rt;

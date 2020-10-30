@@ -37,23 +37,23 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
     allcontainers.resize(nspecies + nlasers);
     for (int i = 0; i < nspecies; ++i) {
         if (species_types[i] == PCTypes::Physical) {
-            allcontainers[i].reset(new PhysicalParticleContainer(amr_core, i, species_names[i]));
+            allcontainers[i] = std::make_unique<PhysicalParticleContainer>(amr_core, i, species_names[i]);
         }
         else if (species_types[i] == PCTypes::RigidInjected) {
-            allcontainers[i].reset(new RigidInjectedParticleContainer(amr_core, i, species_names[i]));
+            allcontainers[i] = std::make_unique<RigidInjectedParticleContainer>(amr_core, i, species_names[i]);
         }
         else if (species_types[i] == PCTypes::Photon) {
-            allcontainers[i].reset(new PhotonParticleContainer(amr_core, i, species_names[i]));
+            allcontainers[i] = std::make_unique<PhotonParticleContainer>(amr_core, i, species_names[i]);
         }
         allcontainers[i]->m_deposit_on_main_grid = m_deposit_on_main_grid[i];
         allcontainers[i]->m_gather_from_main_grid = m_gather_from_main_grid[i];
     }
 
     for (int i = nspecies; i < nspecies+nlasers; ++i) {
-        allcontainers[i].reset(new LaserParticleContainer(amr_core, i, lasers_names[i-nspecies]));
+        allcontainers[i] = std::make_unique<LaserParticleContainer>(amr_core, i, lasers_names[i-nspecies]);
     }
 
-    pc_tmp.reset(new PhysicalParticleContainer(amr_core));
+    pc_tmp = std::make_unique<PhysicalParticleContainer>(amr_core);
 
     // Compute the number of species for which lab-frame data is dumped
     // nspecies_lab_frame_diags, and map their ID to MultiParticleContainer
@@ -73,8 +73,8 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
     auto const ncollisions = collision_names.size();
     allcollisions.resize(ncollisions);
     for (int i = 0; i < static_cast<int>(ncollisions); ++i) {
-        allcollisions[i].reset
-            (new CollisionType(species_names, collision_names[i]));
+        allcollisions[i] =
+            std::make_unique<CollisionType>(species_names, collision_names[i]);
     }
 
 }
@@ -137,12 +137,12 @@ MultiParticleContainer::ReadParameters ()
                                       str_Bz_ext_particle_function);
 
            // Parser for B_external on the particle
-           m_Bx_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Bx_ext_particle_function,{"x","y","z","t"})));
-           m_By_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_By_ext_particle_function,{"x","y","z","t"})));
-           m_Bz_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Bz_ext_particle_function,{"x","y","z","t"})));
+           m_Bx_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Bx_ext_particle_function,{"x","y","z","t"}));
+           m_By_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_By_ext_particle_function,{"x","y","z","t"}));
+           m_Bz_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Bz_ext_particle_function,{"x","y","z","t"}));
 
         }
 
@@ -162,12 +162,12 @@ MultiParticleContainer::ReadParameters ()
            Store_parserString(pp, "Ez_external_particle_function(x,y,z,t)",
                                       str_Ez_ext_particle_function);
            // Parser for E_external on the particle
-           m_Ex_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Ex_ext_particle_function,{"x","y","z","t"})));
-           m_Ey_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Ey_ext_particle_function,{"x","y","z","t"})));
-           m_Ez_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Ez_ext_particle_function,{"x","y","z","t"})));
+           m_Ex_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Ex_ext_particle_function,{"x","y","z","t"}));
+           m_Ey_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Ey_ext_particle_function,{"x","y","z","t"}));
+           m_Ez_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Ez_ext_particle_function,{"x","y","z","t"}));
 
         }
 
@@ -354,18 +354,41 @@ MultiParticleContainer::PushP (int lev, Real dt,
 }
 
 std::unique_ptr<MultiFab>
+MultiParticleContainer::GetZeroChargeDensity (const int lev)
+{
+    WarpX& warpx = WarpX::GetInstance();
+
+    BoxArray ba = warpx.boxArray(lev);
+    DistributionMapping dmap = warpx.DistributionMap(lev);
+    const int ng_rho = warpx.get_ng_depos_rho().max();
+
+    auto zero_rho = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheNodeVector()),
+                                               dmap,WarpX::ncomps,ng_rho);
+    zero_rho->setVal(amrex::Real(0.0));
+    return zero_rho;
+}
+
+std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local)
 {
-    std::unique_ptr<MultiFab> rho = allcontainers[0]->GetChargeDensity(lev, true);
-    for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
-        std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
-        MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrow());
+    if (allcontainers.size() == 0)
+    {
+        std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
+        return rho;
     }
-    if (!local) {
-        const Geometry& gm = allcontainers[0]->Geom(lev);
-        rho->SumBoundary(gm.periodicity());
+    else
+    {
+        std::unique_ptr<MultiFab> rho = allcontainers[0]->GetChargeDensity(lev, true);
+        for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
+            std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
+            MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrow());
+        }
+        if (!local) {
+            const Geometry& gm = allcontainers[0]->Geom(lev);
+            rho->SumBoundary(gm.periodicity());
+        }
+        return rho;
     }
-    return rho;
 }
 
 void
@@ -401,18 +424,35 @@ MultiParticleContainer::ApplyBoundaryConditions ()
 }
 
 Vector<long>
+MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
+{
+    WarpX& warpx = WarpX::GetInstance();
+    const int num_boxes = warpx.boxArray(lev).size();
+    const Vector<Long> r(num_boxes, 0);
+    return r;
+}
+
+Vector<long>
 MultiParticleContainer::NumberOfParticlesInGrid (int lev) const
 {
-    const bool only_valid=true, only_local=true;
-    Vector<long> r = allcontainers[0]->NumberOfParticlesInGrid(lev,only_valid,only_local);
-    for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
-        const auto& ri = allcontainers[i]->NumberOfParticlesInGrid(lev,only_valid,only_local);
-        for (unsigned j=0, m=ri.size(); j<m; ++j) {
-            r[j] += ri[j];
-        }
+    if (allcontainers.size() == 0)
+    {
+        const Vector<long> r = GetZeroParticlesInGrid(lev);
+        return r;
     }
-    ParallelDescriptor::ReduceLongSum(r.data(),r.size());
-    return r;
+    else
+    {
+        const bool only_valid=true, only_local=true;
+        Vector<long> r = allcontainers[0]->NumberOfParticlesInGrid(lev,only_valid,only_local);
+        for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
+            const auto& ri = allcontainers[i]->NumberOfParticlesInGrid(lev,only_valid,only_local);
+            for (unsigned j=0, m=ri.size(); j<m; ++j) {
+                r[j] += ri[j];
+            }
+        }
+        ParallelDescriptor::ReduceLongSum(r.data(),r.size());
+        return r;
+    }
 }
 
 void

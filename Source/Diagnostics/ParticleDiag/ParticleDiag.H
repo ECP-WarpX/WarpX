@@ -5,6 +5,8 @@
 #include "Utils/WarpXUtil.H"
 #include "Particles/WarpXParticleContainer.H"
 
+#include <memory>
+
 class ParticleDiag
 {
 public:

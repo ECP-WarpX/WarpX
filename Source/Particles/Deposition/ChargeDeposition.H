@@ -135,15 +135,15 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
-                    amrex::Gpu::Atomic::Add(
+                    amrex::Gpu::Atomic::AddNoRet(
                         &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 0),
                         sx[ix]*sz[iz]*wq);
 #if (defined WARPX_DIM_RZ)
                     Complex xy = xy0; // Throughout the following loop, xy takes the value e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                         // The factor 2 on the weighting comes from the normalization of the modes
-                        amrex::Gpu::Atomic::Add( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode-1), 2._rt*sx[ix]*sz[iz]*wq*xy.real());
-                        amrex::Gpu::Atomic::Add( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode  ), 2._rt*sx[ix]*sz[iz]*wq*xy.imag());
+                        amrex::Gpu::Atomic::AddNoRet( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode-1), 2._rt*sx[ix]*sz[iz]*wq*xy.real());
+                        amrex::Gpu::Atomic::AddNoRet( &rho_arr(lo.x+i+ix, lo.y+k+iz, 0, 2*imode  ), 2._rt*sx[ix]*sz[iz]*wq*xy.imag());
                         xy = xy*xy0;
                     }
 #endif
@@ -153,7 +153,7 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
             for (int iz=0; iz<=depos_order; iz++){
                 for (int iy=0; iy<=depos_order; iy++){
                     for (int ix=0; ix<=depos_order; ix++){
-                        amrex::Gpu::Atomic::Add(
+                        amrex::Gpu::Atomic::AddNoRet(
                             &rho_arr(lo.x+i+ix, lo.y+j+iy, lo.z+k+iz),
                             sx[ix]*sy[iy]*sz[iz]*wq);
                     }
