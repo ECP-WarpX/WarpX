@@ -271,7 +271,10 @@ Diagnostics::ComputeAndPack ()
 {
     // prepare the field-data necessary to compute output data
     PrepareFieldDataForOutput();
-    // compute the necessary fields and stiore result in m_mf_output.
+
+    auto & warpx = WarpX::GetInstance();
+
+    // compute the necessary fields and store result in m_mf_output.
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         for(int lev=0; lev<nlev_output; lev++){
             int icomp_dst = 0;
@@ -285,6 +288,11 @@ Diagnostics::ComputeAndPack ()
             }
             // Check that the proper number of components of mf_avg were updated.
             AMREX_ALWAYS_ASSERT( icomp_dst == m_varnames.size() );
+
+            // needed for contour plots of rho, i.e. ascent/sensei
+            if (m_format == "sensei" || m_format == "ascent") {
+                m_mf_output[i_buffer][lev].FillBoundary(warpx.Geom(lev).periodicity());
+            }
         }
     }
 }
@@ -302,7 +310,7 @@ Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 
         for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
             if ( !DoDump (step, i_buffer, force_flush) ) continue;
-                Flush(i_buffer);
+            Flush(i_buffer);
         }
 
     }
