@@ -145,7 +145,6 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         "Radiation reaction can be enabled only if Boris pusher is used");
     //_____________________________
 
-#ifdef WARPX_QED
     pp.query("do_qed", m_do_qed);
     if(m_do_qed){
         //If do_qed is enabled, find out if Quantum Synchrotron process is enabled
@@ -161,9 +160,6 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         pp.get("qed_quantum_sync_phot_product_species",
             m_qed_quantum_sync_phot_product_name);
     }
-
-
-#endif
 
     // Parse galilean velocity
     ParmParse ppsatd("psatd");
@@ -717,7 +713,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             pi = soa.GetIntData(particle_icomps["ionization_level"]).data() + old_size;
         }
 
-#ifdef WARPX_QED
         //Pointer to the optical depth component
         amrex::Real* p_optical_depth_QSR = nullptr;
         amrex::Real* p_optical_depth_BW  = nullptr;
@@ -744,7 +739,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
             breit_wheeler_get_opt =
                 m_shr_p_bw_engine->build_optical_depth_functor();
         }
-#endif
 
         bool loc_do_field_ionization = do_field_ionization;
         int loc_ionization_initial_level = ionization_initial_level;
@@ -865,7 +859,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                     pi[ip] = loc_ionization_initial_level;
                 }
 
-#ifdef WARPX_QED
                 if(loc_has_quantum_sync){
                     p_optical_depth_QSR[ip] = quantum_sync_get_opt();
                 }
@@ -873,7 +866,6 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
                 if(loc_has_breit_wheeler){
                     p_optical_depth_BW[ip] = breit_wheeler_get_opt(engine);
                 }
-#endif
 
                 u.x *= PhysConst::c;
                 u.y *= PhysConst::c;
@@ -1853,7 +1845,6 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 
     const auto pusher_algo = WarpX::particle_pusher_algo;
     const auto do_crr = do_classical_radiation_reaction;
-#ifdef WARPX_QED
     const auto do_sync = m_do_qed_quantum_sync;
     amrex::Real t_chi_max = 0.0;
     if (do_sync) t_chi_max = m_shr_p_qs_engine->get_minimum_chi_part();
@@ -1865,7 +1856,6 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
         evolve_opt = m_shr_p_qs_engine->build_evolve_functor();
         p_optical_depth_QSR = pti.GetAttribs(particle_comps["optical_depth_QSR"]).dataPtr();
     }
-#endif
 
     const auto t_do_not_gather = do_not_gather;
 
@@ -1897,19 +1887,15 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
                        Exp, Eyp, Ezp, Bxp, Byp, Bzp,
                        ion_lev ? ion_lev[ip] : 0,
                        m, q, pusher_algo, do_crr, do_copy,
-#ifdef WARPX_QED
                        do_sync,
                        t_chi_max,
-#endif
                        dt);
 
-#ifdef WARPX_QED
     if (local_has_quantum_sync) {
         evolve_opt(ux[ip], uy[ip], uz[ip],
                    Exp, Eyp, Ezp,Bxp, Byp, Bzp,
                    dt, p_optical_depth_QSR[ip]);
     }
-#endif
 
     });
 }
@@ -2030,10 +2016,6 @@ void PhysicalParticleContainer::resample (const int timestep)
 
 }
 
-
-#ifdef WARPX_QED
-
-
 bool PhysicalParticleContainer::has_quantum_sync () const
 {
     return m_do_qed_quantum_sync;
@@ -2071,5 +2053,3 @@ PhysicalParticleContainer::getPairGenerationFilterFunc ()
     WARPX_PROFILE("PhysicalParticleContainer::getPairGenerationFunc()");
     return PairGenerationFilterFunc{particle_runtime_comps["optical_depth_BW"]};
 }
-
-#endif

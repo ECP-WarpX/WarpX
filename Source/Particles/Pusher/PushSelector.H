@@ -59,15 +59,12 @@ void doParticlePush(const GetParticlePosition& GetPosition,
                     const int pusher_algo,
                     const int do_crr,
                     const int do_copy,
-#ifdef WARPX_QED
                     const int do_sync,
                     const amrex::Real t_chi_max,
-#endif
                     const amrex::Real dt)
 {
     if (do_copy) copyAttribs(i);
     if (do_crr) {
-#ifdef WARPX_QED
         if (do_sync) {
             auto chi = QedUtils::chi_ele_pos(m*ux, m*uy, m*uz,
                                             Ex, Ey, Ez,
@@ -95,17 +92,6 @@ void doParticlePush(const GetParticlePosition& GetPosition,
             UpdatePosition(x, y, z, ux, uy, uz, dt );
             SetPosition(i, x, y, z);
         }
-#else
-        amrex::Real qp = q;
-        if (ion_lev) { qp *= ion_lev; }
-        UpdateMomentumBorisWithRadiationReaction(ux, uy, uz,
-                                                 Ex, Ey, Ez, Bx,
-                                                 By, Bz, qp, m, dt);
-        amrex::ParticleReal x, y, z;
-        GetPosition(i, x, y, z);
-        UpdatePosition(x, y, z, ux, uy, uz, dt );
-        SetPosition(i, x, y, z);
-#endif
     } else if (pusher_algo == ParticlePusherAlgo::Boris) {
         amrex::Real qp = q;
         if (ion_lev) { qp *= ion_lev; }

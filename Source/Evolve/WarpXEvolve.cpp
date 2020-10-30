@@ -273,9 +273,9 @@ WarpX::OneStep_nosub (Real cur_time)
     doFieldIonization();
 
     mypc->doCoulombCollisions( cur_time );
-#ifdef WARPX_QED
+
     mypc->doQEDSchwinger();
-#endif
+
     // Push particle from x^{n} to x^{n+1}
     //               from p^{n-1/2} to p^{n+1/2}
     // Deposit current j^{n+1/2}
@@ -303,9 +303,7 @@ WarpX::OneStep_nosub (Real cur_time)
                      "set psatd.periodic_single_box_fft=1 too, in order to guarantee charge conservation");
 #endif
 
-#ifdef WARPX_QED
     doQEDEvents();
-#endif
 
     // +1 is necessary here because value of step seen by user (first step is 1) is different than
     // value of step in code (first step is 0)
@@ -417,9 +415,7 @@ WarpX::OneStep_sub1 (Real curtime)
     // product species.
     doFieldIonization();
 
-#ifdef WARPX_QED
     doQEDEvents();
-#endif
 
     // +1 is necessary here because value of step seen by user (first step is 1) is different than
     // value of step in code (first step is 0)
@@ -575,7 +571,6 @@ WarpX::doFieldIonization (int lev)
                             *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
 }
 
-#ifdef WARPX_QED
 void
 WarpX::doQEDEvents ()
 {
@@ -591,7 +586,6 @@ WarpX::doQEDEvents (int lev)
                       *Efield_aux[lev][0],*Efield_aux[lev][1],*Efield_aux[lev][2],
                       *Bfield_aux[lev][0],*Bfield_aux[lev][1],*Bfield_aux[lev][2]);
 }
-#endif
 
 void
 WarpX::PushParticlesandDepose (amrex::Real cur_time)

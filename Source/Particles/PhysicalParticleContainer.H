@@ -16,14 +16,12 @@
 #include "Particles/ElementaryProcess/Ionization.H"
 #include "Particles/Gather/ScaleFields.H"
 
-#ifdef WARPX_QED
-#    include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
-#    include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
-#    include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
+#include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
+#include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper.H"
+#include "Particles/ElementaryProcess/QEDInternals/QedChiFunctions.H"
 
-#    include "Particles/ElementaryProcess/QEDPairGeneration.H"
-#    include "Particles/ElementaryProcess/QEDPhotonEmission.H"
-#endif
+#include "Particles/ElementaryProcess/QEDPairGeneration.H"
+#include "Particles/ElementaryProcess/QEDPhotonEmission.H"
 
 #include <AMReX_IArrayBox.H>
 
@@ -289,7 +287,6 @@ public:
     */
     void resample (const int timestep) override final;
 
-#ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H
     //containers for which QED processes could be relevant
     //are expected to override these functions
@@ -326,7 +323,6 @@ public:
     PhotonEmissionFilterFunc getPhotonEmissionFilterFunc ();
 
     PairGenerationFilterFunc getPairGenerationFilterFunc ();
-#endif
 
 protected:
     std::string species_name;
@@ -350,7 +346,6 @@ protected:
     //radiation reaction
     bool do_classical_radiation_reaction = false;
 
-#ifdef WARPX_QED
     // A flag to enable quantum_synchrotron process for leptons
     bool m_do_qed_quantum_sync = false;
 
@@ -362,7 +357,6 @@ protected:
 
     // A smart pointer to an instance of a Breit Wheeler engine [photons only!]
     std::shared_ptr<BreitWheelerEngine> m_shr_p_bw_engine;
-#endif
 
 };
 
