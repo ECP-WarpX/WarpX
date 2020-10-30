@@ -21,11 +21,12 @@ class constants:
     # --- Put the constants in their own namespace
     # --- Values from WarpXConst.H
     c = 299792458.
-    ep0 = 8.854187817e-12
-    mu0 = 1.2566370614359173e-06
-    q_e = 1.602176462e-19
-    m_e = 9.10938291e-31
-    m_p = 1.6726231e-27
+    ep0 = 8.8541878128e-12
+    mu0 = 1.25663706212e-06
+    q_e = 1.602176634e-19
+    m_e = 9.1093837015e-31
+    m_p = 1.67262192369e-27
+    hbar = 1.054571817e-34
 
 
 class Species(picmistandard.PICMI_Species):
