@@ -46,7 +46,12 @@ class Species(picmistandard.PICMI_Species):
             if self.mass is None: self.mass = 'm_p'
         else:
             if self.charge is None and self.charge_state is not None:
-                self.charge = self.charge_state*constants.q_e
+                if self.charge_state == +1.:
+                    self.charge = 'q_e'
+                elif self.charge_state == -1.:
+                    self.charge = '-q_e'
+                else:
+                    self.charge = self.charge_state*constants.q_e
             # Match a string of the format '#nXx', with the '#n' optional isotope number.
             m = re.match('(?P<iso>#[\d+])*(?P<sym>[A-Za-z]+)', self.particle_type)
             if m is not None:
