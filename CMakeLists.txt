@@ -123,6 +123,11 @@ if(WarpX_PSATD)
     endif()
 endif()
 
+# QED: support for table generation
+if(WarpX_QED_TABLE_GEN)
+    find_package(Boost REQUIRED)
+endif()
+
 
 # Targets #####################################################################
 #
@@ -193,7 +198,8 @@ if(WarpX_OPENPMD)
 endif()
 
 if(WarpX_QED_TABLE_GEN)
-    # FIXME WARPX_QED_TABLE_GEN
+    target_compile_definitions(WarpX PUBLIC WARPX_QED_TABLE_GEN)
+    #target_link_libraries(WarpX PUBLIC boost)
 endif()
 
 # AMReX helper function: propagate CUDA specific target & source properties
@@ -228,7 +234,7 @@ endif()
 
 
 if(WarpX_QED_TABLE_GEN)
-    target_compile_definitions(WarpX PRIVATE WarpX_QED_TABLE_GEN)
+    target_compile_definitions(WarpX PRIVATE WARPX_QED_TABLE_GEN)
 endif()
 
 if(WarpX_PSATD)
