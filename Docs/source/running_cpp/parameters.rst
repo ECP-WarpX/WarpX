@@ -308,6 +308,7 @@ Particle initialization
 
 * ``<species_name>.xmin,ymin,zmin`` (`float`) optional (default unlimited)
     When ``<species_name>.xmin`` and ``<species_name>.xmax`` (see below) are set, they delimit the region within which particles are injected.
+    The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side, so expressions like ``<species_name>.xmin = "2.+1."`` and/or using user-defined constants are accepted.
     The same is applicable in the other directions.
     If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
 
@@ -395,13 +396,12 @@ Particle initialization
       user-defined constant, see above. WARNING: where ``density_function(x,y,z)`` is close to zero, particles will still be injected between ``xmin`` and ``xmax`` etc., with a null weight. This is undesirable because it results in useless computing. To avoid this, see option ``density_min`` below.
 
 * ``<species_name>.density_min`` (`float`) optional (default `0.`)
-    Minimum plasma density. No particle is injected where the density is below
-    this value.
+    Minimum plasma density. No particle is injected where the density is below this value.
+    The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side, so expressions like ``<species_name>.density_min = "2.+1."`` and/or using user-defined constants are accepted.
 
 * ``<species_name>.density_max`` (`float`) optional (default `infinity`)
-    Maximum plasma density. The density at each point is the minimum between
-    the value given in the profile, and `density_max`.
-
+    Maximum plasma density. The density at each point is the minimum between the value given in the profile, and `density_max`.
+    The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted.
 * ``<species_name>.radially_weighted`` (`bool`) optional (default `true`)
     Whether particle's weight is varied with their radius. This only applies to cylindrical geometry.
     The only valid value is true.
