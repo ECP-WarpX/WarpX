@@ -120,15 +120,15 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     }
 #   endif
 
-    smartQuery(pp, "xmin", xmin);
-    smartQuery(pp, "ymin", ymin);
-    smartQuery(pp, "zmin", zmin);
-    smartQuery(pp, "xmax", xmax);
-    smartQuery(pp, "ymax", ymax);
-    smartQuery(pp, "zmax", zmax);
+    queryWithParser(pp, "xmin", xmin);
+    queryWithParser(pp, "ymin", ymin);
+    queryWithParser(pp, "zmin", zmin);
+    queryWithParser(pp, "xmax", xmax);
+    queryWithParser(pp, "ymax", ymax);
+    queryWithParser(pp, "zmax", zmax);
 
-    smartQuery(pp, "density_min", density_min);
-    smartQuery(pp, "density_max", density_max);
+    queryWithParser(pp, "density_min", density_min);
+    queryWithParser(pp, "density_max", density_max);
 
     std::string physical_species_s;
     bool species_is_specified = pp.query("species_type", physical_species_s);

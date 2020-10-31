@@ -161,7 +161,19 @@ T trilinear_interp(T x0, T x1,T y0, T y1, T z0, T z1,
 */
 WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames);
 
-int smartQuery (amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
+/**
+ * \brief Similar to amrex::ParmParse::query, but also supports math expressions for the value.
+ *
+ * amrex::ParmParse::query reads a name and a value from the input file. This function does the
+ * same, and applies the WarpXParser to the value, so the user has the choice to specify a value or
+ * a math expression (including user-defined constants).
+ * Only works for amrex::Real numbers, one would need another version for integers etc.
+ *
+ * \param[in] a_pp amrex::ParmParse object
+ * \param[in] str name of the parameter to read
+ * \param[out] val where the value queried and parsed is stored
+ */
+int queryWithParser (amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
 
 namespace WarpXUtilMsg{
 
