@@ -176,7 +176,7 @@ PhotonParticleContainer::PushPX (WarpXParIter& pti,
 
 
                 evolve_opt(ux[i], uy[i], uz[i], Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                    dt, p_optical_depth_BW[i])
+                    dt, p_optical_depth_BW[i]);
 
             UpdatePositionPhoton( x, y, z, ux[i], uy[i], uz[i], dt );
             SetPosition(i, x, y, z);
