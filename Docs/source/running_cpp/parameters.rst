@@ -569,36 +569,30 @@ Particle initialization
 * ``<species>.do_qed`` (`int`) optional (default `0`)
     If `<species>.do_qed = 0` all the QED effects are disabled for this species.
     If `<species>.do_qed = 1` QED effects can be enabled for this species (see below).
-    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.do_qed_quantum_sync`` (`int`) optional (default `0`)
     It only works if `<species>.do_qed = 1`. Enables Quantum synchrotron emission for this species.
     Quantum synchrotron lookup table should be either generated or loaded from disk to enable
     this process (see "Lookup tables for QED modules" section below).
     `<species>` must be either an electron or a positron species.
-    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.do_qed_breit_wheeler`` (`int`) optional (default `0`)
     It only works if `<species>.do_qed = 1`. Enables non-linear Breit-Wheeler process for this species.
     Breit-Wheeler lookup table should be either generated or loaded from disk to enable
     this process (see "Lookup tables for QED modules" section below).
     `<species>` must be a photon species.
-    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.qed_quantum_sync_phot_product_species`` (`string`)
     If an electron or a positron species has the Quantum synchrotron process, a photon product species must be specified
     (the name of an existing photon species must be provided)
-    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.qed_breit_wheeler_ele_product_species`` (`string`)
     If a photon species has the Breit-Wheeler process, an electron product species must be specified
     (the name of an existing electron species must be provided)
-    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.qed_breit_wheeler_pos_product_species`` (`string`)
     If a photon species has the Breit-Wheeler process, a positron product species must be specified
     (the name of an existing positron species must be provided).
-    **This feature requires to compile with QED=TRUE**
 
 * ``<species>.do_resampling`` (`0` or `1`) optional (default `0`)
     If `1` resampling is performed for this species. This means that the number of macroparticles
@@ -1828,7 +1822,6 @@ Lookup tables and other settings for QED modules
 -----------------------------------------------------------------------------
 
 Lookup tables store pre-computed values for functions used by the QED modules.
-**This feature requires to compile with QED_TABLE_GEN=TRUE for table generation support **
 
 * ``qed_bw.lookup_table_mode`` (`string`)
     There are three options to prepare the lookup table required by the Breit-Wheeler module:
@@ -1840,6 +1833,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
       (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All
       the following parameters must be specified (table 1 is used to evolve the optical depth
       of the photons, while table 2 is used for pair generation):
+      **Table generation support requires to compile with QED_TABLE_GEN=TRUE**
 
         * ``qed_bw.tab_dndt_chi_min`` (`float`): minimum chi parameter for lookup table 1 (
           used for the evolution of the optical depth of the photons)
@@ -1876,6 +1870,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
       (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All
       the following parameters must be specified (table 1 is used to evolve the optical depth
       of the particles, while table 2 is used for photon emission):
+      **Table generation support requires to compile with QED_TABLE_GEN=TRUE**
 
         * ``qed_qs.tab_dndt_chi_min`` (`float`): minimum chi parameter for lookup table 1 (
           used for the evolution of the optical depth of electrons and positrons)
