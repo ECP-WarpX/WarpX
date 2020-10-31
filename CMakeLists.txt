@@ -199,7 +199,6 @@ endif()
 
 if(WarpX_QED_TABLE_GEN)
     target_compile_definitions(WarpX PUBLIC WARPX_QED_TABLE_GEN)
-    #target_link_libraries(WarpX PUBLIC boost)
 endif()
 
 # AMReX helper function: propagate CUDA specific target & source properties

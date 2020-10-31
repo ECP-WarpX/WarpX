@@ -1,13 +1,9 @@
 target_sources(WarpX
   PRIVATE
     Ionization.cpp
+    QEDPairGeneration.cpp
+    QEDPhotonEmission.cpp
 )
 
-if(WarpX_QED)
-    target_sources(WarpX
-      PRIVATE
-        QEDPairGeneration.cpp
-        QEDPhotonEmission.cpp
-    )
-    add_subdirectory(QEDInternals)
-endif()
+add_subdirectory(QEDInternals)
+

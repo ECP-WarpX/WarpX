@@ -15,7 +15,7 @@ function(find_picsar)
 
         if(NOT fetchedpicsar_POPULATED)
             FetchContent_Populate(fetchedpicsar)
-            add_subdirectory(${fetchedpicsar_SOURCE_DIR}/src/multi_physics/QED ${fetchedpicsar_BINARY_DIR})
+            add_subdirectory(${fetchedpicsar_SOURCE_DIR}/src/multi_physics ${fetchedpicsar_BINARY_DIR})
         endif()
 
         # advanced fetch options
@@ -40,14 +40,11 @@ function(find_picsar)
 endfunction()
 
 option(WarpX_picsar_internal   "Download & build PICSAR" ON)
-set(WarpX_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
+set(WarpX_picsar_repo "https://github.com/lucafedeli88/picsar.git"
 CACHE STRING
     "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
-set(WarpX_picsar_branch "improved"
+set(WarpX_picsar_branch "improve_makefile"
     CACHE STRING
     "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
-
-cmake_dependent_option(WarpX_QED_TABLE_GEN "generate QED lookup tables (requires boost)"
-    ON "WarpX_QED" OFF)
 
 find_picsar()
