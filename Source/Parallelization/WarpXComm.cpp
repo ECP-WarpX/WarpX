@@ -11,8 +11,6 @@
 #include "WarpXSumGuardCells.H"
 #include "Utils/CoarsenMR.H"
 
-#include <AMReX.H>
-
 #include <algorithm>
 #include <cstdlib>
 #include <memory>
