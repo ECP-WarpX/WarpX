@@ -867,7 +867,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
 #ifdef WARPX_QED
                 if(loc_has_quantum_sync){
-                    p_optical_depth_QSR[ip] = quantum_sync_get_opt();
+                    p_optical_depth_QSR[ip] = quantum_sync_get_opt(engine);
                 }
 
                 if(loc_has_breit_wheeler){
