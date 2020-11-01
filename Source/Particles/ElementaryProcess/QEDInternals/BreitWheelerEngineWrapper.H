@@ -70,7 +70,7 @@ public:
      * does not require control parameters or lookup tables.
      */
     BreitWheelerGetOpticalDepth ()
-    {};
+    {}
 
     /**
      * () operator is just a thin wrapper around a very simple function to
@@ -111,7 +111,7 @@ public:
     BreitWheelerEvolveOpticalDepth (
         const BW_dndt_table_view table_view,
         const amrex::ParticleReal bw_minimum_chi_phot):
-        m_table_view{table_view}, m_bw_minimum_chi_phot{bw_minimum_chi_phot}{};
+        m_table_view{table_view}, m_bw_minimum_chi_phot{bw_minimum_chi_phot}{}
 
     /**
      * Evolves the optical depth. It can be used on GPU.
@@ -190,7 +190,7 @@ public:
      * @param[in] table_view a BW_pair_prod_table_view
      */
     BreitWheelerGeneratePairs (const BW_pair_prod_table_view table_view):
-        m_table_view{table_view}{};
+        m_table_view{table_view}{}
 
     /**
      * Generates pairs according to Breit Wheeler process.
