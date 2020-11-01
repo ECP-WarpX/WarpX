@@ -11,9 +11,10 @@
 #include "WarpXSumGuardCells.H"
 #include "Utils/CoarsenMR.H"
 
+#include <AMReX.H>
+
 #include <algorithm>
 #include <cstdlib>
-
 #include <memory>
 
 using namespace amrex;
@@ -879,7 +880,7 @@ WarpX::ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, i
 }
 
 void
-WarpX::ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp)
+WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab& rho, int icomp, int ncomp)
 {
     const auto& period = Geom(glev).periodicity();
     if (use_filter) {
