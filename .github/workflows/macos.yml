@@ -29,5 +29,5 @@ jobs:
         cd ..
 
         mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE
         make -j 2

@@ -136,7 +136,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
    mkdir -p build
    cd build
-   cmake .. -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA -DCMAKE_CUDA_ARCHITECTURES=70 -DCUDA_ARCH=7.0
+   cmake .. -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA -DCMAKE_CUDA_ARCHITECTURES=70 -DAMReX_CUDA_ARCH=7.0
    make -j 10
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
