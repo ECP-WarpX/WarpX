@@ -47,6 +47,7 @@ public:
         const int maxwell_solver_id,
         const int max_level,
         const amrex::Array<amrex::Real,3> v_galilean,
+        const amrex::Array<amrex::Real,3> v_comoving,
         const bool safe_guard_cells);
 
     // Guard cells allocated for MultiFabs E and B

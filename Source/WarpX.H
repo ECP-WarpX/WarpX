@@ -280,6 +280,8 @@ public:
     amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
     amrex::Array<amrex::Real,3> m_galilean_shift = {{0}};
 
+    amrex::Array<amrex::Real,3> m_v_comoving = {{0.}};
+
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
     amrex::Vector<amrex::Real> mirror_z_width;

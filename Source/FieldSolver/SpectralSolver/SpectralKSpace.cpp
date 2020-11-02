@@ -23,7 +23,8 @@ using namespace Gpu;
 SpectralKSpace::SpectralKSpace( const BoxArray& realspace_ba,
                                 const DistributionMapping& dm,
                                 const RealVect realspace_dx )
-    : dx(realspace_dx)  // Store the cell size as member `dx`
+    : m_realspace_ba(realspace_ba),
+      dx(realspace_dx)  // Store the cell size as member `dx`
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         realspace_ba.ixType()==IndexType::TheCellType(),

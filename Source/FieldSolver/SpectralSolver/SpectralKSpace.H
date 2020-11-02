@@ -39,6 +39,7 @@ class SpectralKSpace
 {
     public:
         amrex::BoxArray spectralspace_ba;
+        amrex::BoxArray m_realspace_ba;
         SpectralKSpace() : dx(amrex::RealVect::Zero) {}
         SpectralKSpace( const amrex::BoxArray& realspace_ba,
                         const amrex::DistributionMapping& dm,

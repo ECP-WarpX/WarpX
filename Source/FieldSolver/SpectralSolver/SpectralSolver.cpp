@@ -10,6 +10,7 @@
 #include "SpectralAlgorithms/GalileanAlgorithm.H"
 #include "SpectralAlgorithms/AvgGalileanAlgorithm.H"
 #include "SpectralAlgorithms/PMLPsatdAlgorithm.H"
+#include "SpectralAlgorithms/ComovingPsatdAlgorithm.H"
 #include "WarpX.H"
 #include "Utils/WarpXProfilerWrapper.H"
 #include "Utils/WarpXUtil.H"
@@ -39,6 +40,7 @@ SpectralSolver::SpectralSolver(
                 const int norder_x, const int norder_y,
                 const int norder_z, const bool nodal,
                 const amrex::Array<amrex::Real,3>& v_galilean,
+                const amrex::Array<amrex::Real,3>& v_comoving,
                 const amrex::RealVect dx, const amrex::Real dt,
                 const bool pml, const bool periodic_single_box,
                 const bool update_with_rho,
@@ -64,10 +66,14 @@ SpectralSolver::SpectralSolver(
                 k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt);
         }
         else {
-            if ((v_galilean[0]==0) && (v_galilean[1]==0) && (v_galilean[2]==0)){
-                // v_galilean is 0: use standard PSATD algorithm
-                algorithm = std::make_unique<PsatdAlgorithm>(
-                   k_space, dm, norder_x, norder_y, norder_z, nodal, dt, update_with_rho);
+            if (v_galilean[0] == 0. && v_galilean[1] == 0. && v_galilean[2] == 0.) {
+                if (v_comoving[0] == 0. && v_comoving[1] == 0. && v_comoving[2] == 0.) {
+                    algorithm = std::make_unique<PsatdAlgorithm>(
+                       k_space, dm, norder_x, norder_y, norder_z, nodal, dt, update_with_rho);
+                } else {
+                    algorithm = std::make_unique<ComovingPsatdAlgorithm>(
+                        k_space, dm, norder_x, norder_y, norder_z, nodal, v_comoving, dt, update_with_rho);
+                }
             }
             else {
                 algorithm = std::make_unique<GalileanAlgorithm>(

@@ -700,10 +700,12 @@ WarpX::ReadParameters ()
 
         pp.query("current_correction", current_correction);
         pp.query("v_galilean", m_v_galilean);
+        pp.query("v_comoving", m_v_comoving);
         pp.query("do_time_averaging", fft_do_time_averaging);
 
       // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
+        for (int i=0; i<3; i++) m_v_comoving[i] *= PhysConst::c;
 
 #   ifdef WARPX_DIM_RZ
         update_with_rho = true;  // Must be true for RZ PSATD
@@ -895,6 +897,7 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         maxwell_solver_id,
         maxLevel(),
         WarpX::m_v_galilean,
+        WarpX::m_v_comoving,
         safe_guard_cells);
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
@@ -1086,7 +1089,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     }
     bool const pml_flag_false=false;
     spectral_solver_fp[lev] = std::make_unique<SpectralSolver>( realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev],
+        nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, dx_vect, dt[lev],
         pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
 #   endif
 #endif
@@ -1204,7 +1207,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   else
         c_realspace_ba.grow(ngE); // add guard cells
         spectral_solver_cp[lev] = std::make_unique<SpectralSolver>( c_realspace_ba, dm,
-            nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev],
+            nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, cdx_vect, dt[lev],
             pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
 #   endif
 #endif
