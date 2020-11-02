@@ -45,18 +45,16 @@ elif (not dims_RZ and not current_correction):
     tolerance_rel = 1e-8
 elif (not dims_RZ and current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.)):
-    # difference with respect to reference energy above due to absence of real-space filter
-    energyE_ref = 745973.5742103161
-    tolerance_rel = 1e-8
+    energyE_ref = 33331.13857367177
+    tolerance_rel = 2e-8
 elif (dims_RZ and not current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
     energyE_ref = 178013.54481470847
     tolerance_rel = 1e-8
 elif (dims_RZ and current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
-    # difference with respect to reference energy above due to absence of k-space filter
-    energyE_ref = 10955626.277865639
-    tolerance_rel = 1e-8
+    energyE_ref = 455119.0695414118
+    tolerance_rel = 1e-9
 
 energyE = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
 

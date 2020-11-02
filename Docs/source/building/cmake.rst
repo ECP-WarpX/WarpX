@@ -23,7 +23,7 @@ Please see installation instructions below.
 
 - a mature `C++14 <https://en.wikipedia.org/wiki/C%2B%2B14>`_ compiler: e.g. GCC 5, Clang 3.6 or newer
 - `CMake 3.14.0+ <https://cmake.org>`_
-- `AMReX (development) <https://amrex-codes.github.io>`_: we automatically download and compile a copy of AMReX
+- `AMReX <https://amrex-codes.github.io>`_: we automatically download and compile a copy of AMReX
 
 Optional dependencies include:
 
