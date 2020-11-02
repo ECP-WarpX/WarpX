@@ -203,6 +203,7 @@ public:
      * @param[in] bx,by,bz magnetic field components (SI units)
      * @param[out] e_ux,e_uy,e_uz gamma*v components of generated electron (SI units)
      * @param[out] p_ux,p_uy,p_uz gamma*v components of generated positron (SI units)
+     * @param[in] engine random number generator engine
      * @return a flag which is 1 if chi_photon was out of table
      */
     AMREX_GPU_DEVICE
@@ -212,14 +213,15 @@ public:
     const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
     const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
     amrex::Real& e_ux, amrex::Real& e_uy, amrex::Real& e_uz,
-    amrex::Real& p_ux, amrex::Real& p_uy, amrex::Real& p_uz) const noexcept
+    amrex::Real& p_ux, amrex::Real& p_uy, amrex::Real& p_uz,
+    amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
         namespace pxr_m = picsar::multi_physics::math;
         namespace pxr_p = picsar::multi_physics::phys;
         namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
 
-        const auto rand_zero_one_minus_epsi = amrex::Random();
+        const auto rand_zero_one_minus_epsi = amrex::Random(engine);
 
         constexpr ParticleReal me = PhysConst::m_e;
         constexpr ParticleReal one_over_me = 1._prt/me;
