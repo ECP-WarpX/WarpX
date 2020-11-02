@@ -456,7 +456,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         }
     }
     const BoxArray grid_ba_reduced = BoxArray(grid_ba.boxList().intersect(domain0));
-    
+
     const BoxArray& ba = (do_pml_in_domain)?
           MakeBoxArray(*geom, grid_ba_reduced, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
           MakeBoxArray(*geom, grid_ba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
