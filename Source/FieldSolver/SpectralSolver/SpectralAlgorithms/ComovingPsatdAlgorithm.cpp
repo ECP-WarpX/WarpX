@@ -236,8 +236,8 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
                 const Real om2_c = om_c * om_c;
                 const Complex tmp1 = amrex::exp(  I * om * dt);
                 const Complex tmp2 = amrex::exp(- I * om * dt);
-                const Complex tmp1_sqrt = amrex::exp(  I * om * dt * 0.5);
-                const Complex tmp2_sqrt = amrex::exp(- I * om * dt * 0.5);
+                const Complex tmp1_sqrt = amrex::exp(  I * om * dt * 0.5_rt);
+                const Complex tmp2_sqrt = amrex::exp(- I * om * dt * 0.5_rt);
 
                 C   (i,j,k) = std::cos(om * dt);
                 S_ck(i,j,k) = std::sin(om * dt) / om;
@@ -492,7 +492,7 @@ ComovingPsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
 
                 if ( k_dot_vg != 0._rt ) {
 
-                    const Complex theta = amrex::exp(I * k_dot_vg * dt * 0.5);
+                    const Complex theta = amrex::exp(I * k_dot_vg * dt * 0.5_rt);
                     const Complex den = 1._rt - theta * theta;
 
                     fields(i,j,k,Idx::Jx) = Jx - (k_dot_J - k_dot_vg * theta * (rho_new - rho_old) / den) * kx / (k_norm * k_norm);
