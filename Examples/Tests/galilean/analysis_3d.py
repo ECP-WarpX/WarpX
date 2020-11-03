@@ -41,7 +41,7 @@ if (averaged):
 elif (current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.)):
     energyE_ref = 75333.81851879464
-    tolerance_rel = 5e-8;
+    tolerance_rel = 6e-8;
 else:
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
     energyE_ref = 8218.678808709019
