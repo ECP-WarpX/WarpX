@@ -131,7 +131,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_PARSER_DEPTH``        **24**                                       Maximum parser depth for input file functions
 ``WarpX_PRECISION``           **double**/single                            Floating point precision (single/double)
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
-``WarpX_QED_TABLE_GEN``       ON/**OFF**                         Support for QED tables generation (requires Boost and PICSAR)
+``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   Support for QED tables generation (requires Boost and PICSAR)
 ``WarpX_amrex_repo``          ``https://github.com/AMReX-Codes/amrex.git`` Repository URI to pull and build AMReX from
 ``WarpX_amrex_branch``        ``development``                              Repository branch for ``WarpX_amrex_repo``
 ``WarpX_amrex_internal``      **ON**/OFF                                   Needs a pre-installed AMReX library if set to ``OFF``
