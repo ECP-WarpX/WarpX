@@ -19,7 +19,7 @@ plasma_x_velocity = 0.1*constants.c
 
 # --- Number of time steps
 max_steps = 40
-diagnostic_interval = 10
+diagnostic_intervals = "::10"
 
 # --- Grid
 nx = 64
@@ -62,13 +62,13 @@ solver = picmi.ElectromagneticSolver(grid=grid, cfl=1.)
 
 field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     grid = grid,
-                                    intervals = diagnostic_interval,
+                                    warpx_intervals = diagnostic_intervals,
                                     data_list = ['Ex', 'Jx'],
                                     write_dir = '.',
                                     warpx_file_prefix = 'Python_Langmuir_2d_plt')
 
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
-                                      intervals = diagnostic_interval,
+                                      warpx_intervals = diagnostic_intervals,
                                       species = [electrons],
                                       data_list = ['weighting', 'ux'])
 

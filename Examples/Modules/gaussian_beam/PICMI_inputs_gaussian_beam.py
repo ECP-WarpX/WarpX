@@ -45,13 +45,13 @@ protons = picmi.Species(particle_type='proton', name='protons', initial_distribu
 
 field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     grid = grid,
-                                    intervals = 10,
+                                    warpx_intervals = 10,
                                     data_list = ['E', 'B', 'J', 'part_per_cell'],
                                     write_dir = '.',
                                     warpx_file_prefix = 'Python_gaussian_beam_plt')
 
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
-                                      intervals = 10,
+                                      warpx_intervals = 10,
                                       species = [electrons, protons],
                                       data_list = ['weighting', 'momentum'])
 

@@ -758,6 +758,7 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
+        self.intervals = kw.pop('warpx_intervals', None)
 
     def initialize_inputs(self):
 
@@ -853,6 +854,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.random_fraction = kw.pop('warpx_random_fraction', None)
         self.uniform_stride = kw.pop('warpx_uniform_stride', None)
         self.plot_filter_function = kw.pop('warpx_plot_filter_function', None)
+        self.intervals = kw.pop('warpx_intervals', None)
 
         self.user_defined_kw = {}
         if self.plot_filter_function is not None:
