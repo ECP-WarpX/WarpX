@@ -172,7 +172,7 @@ set_target_properties(WarpX PROPERTIES
 
 # link dependencies
 target_link_libraries(WarpX PUBLIC WarpX::thirdparty::AMReX)
-target_link_libraries(WarpX PUBLIC pxrmp_qed)
+target_link_libraries(WarpX PUBLIC pxrmp_qed::pxrmp_qed)
 
 if(WarpX_PSATD)
     if(ENABLE_CUDA)
