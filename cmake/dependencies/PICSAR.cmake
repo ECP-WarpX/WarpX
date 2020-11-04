@@ -4,8 +4,6 @@ function(find_picsar)
         include(FetchContent)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
-        # FIXME no option to control WarpX_QED_TABLE_GEN / Boost trigger yet
-
         FetchContent_Declare(fetchedpicsar
             GIT_REPOSITORY ${WarpX_picsar_repo}
             GIT_TAG        ${WarpX_picsar_branch}

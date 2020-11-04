@@ -123,11 +123,6 @@ if(WarpX_PSATD)
     endif()
 endif()
 
-# QED: support for table generation
-if(WarpX_QED_TABLE_GEN)
-    find_package(Boost REQUIRED)
-endif()
-
 
 # Targets #####################################################################
 #
