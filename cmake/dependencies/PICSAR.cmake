@@ -22,19 +22,19 @@ function(find_picsar)
         # If table generation is enabled, enable or disable 
         # openMP support depending on WarpX_COMPUTE
         if(WarpX_QED_TABLE_GEN)        
-            set(PXRMP_QED_TABLEGEN ON CACHE INTERNAL "")
+            set(PXRMP_QED_TABLEGEN ON CACHE BOOL "")
             if(WarpX_COMPUTE STREQUAL OMP)        
-                set(PXRMP_QED_OMP ON CACHE INTERNAL "")
+                set(PXRMP_QED_OMP ON CACHE BOOL "")
             else()
-                set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
+                set(PXRMP_QED_OMP OFF CACHE BOOL "")
             endif()
         else()
-            set(PXRMP_QED_TABLEGEN OFF CACHE INTERNAL "")
-            set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
+            set(PXRMP_QED_TABLEGEN OFF CACHE BOOL "")
+            set(PXRMP_QED_OMP OFF CACHE BOOL "")
         endif()
         
         # Always disable tests
-        set (PXRMP_QED_TEST OFF CACHE INTERNAL "")
+        set (PXRMP_QED_TEST OFF CACHE BOOL "")
      
         # advanced fetch options
         mark_as_advanced(FETCHCONTENT_BASE_DIR)
