@@ -22,19 +22,19 @@ function(find_picsar)
         # If table generation is enabled, enable or disable 
         # openMP support depending on WarpX_COMPUTE
         if(WarpX_QED_TABLE_GEN)        
-            set(PXRMP_QED_TABLEGEN ON CACHE BOOL "")
+            set(PXRMP_QED_TABLEGEN ON CACHE INTERNAL "")
             if(WarpX_COMPUTE STREQUAL OMP)        
-                set(PXRMP_QED_OMP ON CACHE BOOL "")
+                set(PXRMP_QED_OMP ON CACHE INTERNAL "")
             else()
-                set(PXRMP_QED_OMP OFF CACHE BOOL "")
+                set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
             endif()
         else()
-            set(PXRMP_QED_TABLEGEN OFF CACHE BOOL "")
-            set(PXRMP_QED_OMP OFF CACHE BOOL "")
+            set(PXRMP_QED_TABLEGEN OFF CACHE INTERNAL "")
+            set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
         endif()
         
         # Always disable tests
-        set (PXRMP_QED_TEST OFF CACHE BOOL "")
+        set (PXRMP_QED_TEST OFF CACHE INTERNAL "")
      
         # advanced fetch options
         mark_as_advanced(FETCHCONTENT_BASE_DIR)
@@ -47,6 +47,9 @@ function(find_picsar)
         # PICSAR options not relevant to WarpX users
         mark_as_advanced(DIM)
         mark_as_advanced(USE_XSDK_DEFAULTS)
+        mark_as_advanced(PXRMP_QED_TABLEGEN)
+        mark_as_advanced(PXRMP_QED_OMP)
+        mark_as_advanced(PXRMP_QED_TEST)
 
         message(STATUS "PICSAR: Using INTERNAL version '${PICSAR_VERSION}'")
     else()
