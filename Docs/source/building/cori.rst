@@ -12,7 +12,7 @@ you need to type the following command when compiling:
 
 .. note::
 
-   In order to compile the code with RZ or with a spectral solver, type
+   In order to compile the code with a spectral solver, type
 
    ::
 
