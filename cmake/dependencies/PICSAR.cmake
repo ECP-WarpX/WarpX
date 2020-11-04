@@ -17,7 +17,25 @@ function(find_picsar)
             FetchContent_Populate(fetchedpicsar)
             add_subdirectory(${fetchedpicsar_SOURCE_DIR}/src/multi_physics ${fetchedpicsar_BINARY_DIR})
         endif()
-
+        
+        # Enable or disable QED lookup tables generation
+        # If table generation is enabled, enable or disable 
+        # openMP support depending on WarpX_COMPUTE
+        if(WarpX_QED_TABLE_GEN)        
+            set(PXRMP_QED_TABLEGEN ON CACHE INTERNAL "")
+            if(WarpX_COMPUTE STREQUAL OMP)        
+                set(PXRMP_QED_OMP ON CACHE INTERNAL "")
+            else()
+                set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
+            endif()
+        else()
+            set(PXRMP_QED_TABLEGEN OFF CACHE INTERNAL "")
+            set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
+        endif()
+        
+        # Always disable tests
+        set (PXRMP_QED_TEST OFF CACHE INTERNAL "")
+     
         # advanced fetch options
         mark_as_advanced(FETCHCONTENT_BASE_DIR)
         mark_as_advanced(FETCHCONTENT_FULLY_DISCONNECTED)
