@@ -12,11 +12,6 @@ function(find_picsar)
             BUILD_IN_SOURCE 0
         )
         FetchContent_GetProperties(fetchedpicsar)
-
-        if(NOT fetchedpicsar_POPULATED)
-            FetchContent_Populate(fetchedpicsar)
-            add_subdirectory(${fetchedpicsar_SOURCE_DIR}/src/multi_physics ${fetchedpicsar_BINARY_DIR})
-        endif()
         
         # Enable or disable QED lookup tables generation
         # If table generation is enabled, enable or disable 
@@ -35,6 +30,11 @@ function(find_picsar)
         
         # Always disable tests
         set (PXRMP_QED_TEST OFF CACHE INTERNAL "")
+
+        if(NOT fetchedpicsar_POPULATED)
+            FetchContent_Populate(fetchedpicsar)
+            add_subdirectory(${fetchedpicsar_SOURCE_DIR}/src/multi_physics ${fetchedpicsar_BINARY_DIR})
+        endif()
      
         # advanced fetch options
         mark_as_advanced(FETCHCONTENT_BASE_DIR)
