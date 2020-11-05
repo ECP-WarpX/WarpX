@@ -2,7 +2,7 @@
 #include "RhoFunctor.H"
 #include "Utils/CoarsenIO.H"
 
-#ifdef WARPX_DIM_RZ
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
 #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #endif
 
