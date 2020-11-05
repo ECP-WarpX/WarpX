@@ -3,13 +3,6 @@ function(find_picsar)
         message(STATUS "Downloading PICSAR ...")
         include(FetchContent)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-
-        FetchContent_Declare(fetchedpicsar
-            GIT_REPOSITORY ${WarpX_picsar_repo}
-            GIT_TAG        ${WarpX_picsar_branch}
-            BUILD_IN_SOURCE 0
-        )
-        FetchContent_GetProperties(fetchedpicsar)
         
         # Enable or disable QED lookup tables generation
         # If table generation is enabled, enable or disable 
@@ -28,6 +21,13 @@ function(find_picsar)
         
         # Always disable tests
         set (PXRMP_QED_TEST OFF CACHE INTERNAL "")
+        
+        FetchContent_Declare(fetchedpicsar
+            GIT_REPOSITORY ${WarpX_picsar_repo}
+            GIT_TAG        ${WarpX_picsar_branch}
+            BUILD_IN_SOURCE 0
+        )
+        FetchContent_GetProperties(fetchedpicsar)
 
         if(NOT fetchedpicsar_POPULATED)
             FetchContent_Populate(fetchedpicsar)
