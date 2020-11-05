@@ -18,10 +18,57 @@ FlushFormatAscent::WriteToFile (
 #ifdef AMREX_USE_ASCENT
     auto & warpx = WarpX::GetInstance();
 
+    amrex::Real convert_factor = 1._rt/(warpx.gamma_boost * (1._rt - warpx.beta_boost) );
+
+    // hack mesh labels to make box square
+    auto geom_hack = geom;
+    for (int i = 0; i < geom_hack.size(); ++i) {
+        Real new_lo[AMREX_SPACEDIM];
+        Real new_hi[AMREX_SPACEDIM];
+        const Real* current_lo = geom_hack[i].ProbLo();
+        const Real* current_hi = geom_hack[i].ProbHi();
+
+        new_lo[0] = current_lo[0];// / convert_factor;
+        new_lo[1] = current_lo[1];// / convert_factor;
+        new_lo[2] = current_lo[2] / convert_factor;
+        new_hi[0] = current_hi[0];// / convert_factor;
+        new_hi[1] = current_hi[1];// / convert_factor;
+        new_hi[2] = current_hi[2] / convert_factor;
+
+        geom_hack[i].ProbDomain(RealBox(new_lo, new_hi));
+
+        std::cout << "buffer_i = " << i << std::endl;
+        std::cout << "    domain.lo = "
+            << geom[i].ProbLo()[0] << " " << geom_hack[i].ProbLo()[1] << " " << geom_hack[i].ProbLo()[2]
+            << std::endl;
+        std::cout << "    domain.hi = "
+            << geom[i].ProbHi()[0] << " " << geom_hack[i].ProbHi()[1] << " " << geom_hack[i].ProbHi()[2]
+            << std::endl;
+    }
+
     // wrap mesh data
     conduit::Node bp_mesh;
     amrex::MultiLevelToBlueprint(
-        nlev, amrex::GetVecOfConstPtrs(mf), varnames, geom, time, iteration, warpx.refRatio(), bp_mesh);
+        nlev, amrex::GetVecOfConstPtrs(mf), varnames, geom_hack, time, iteration, warpx.refRatio(), bp_mesh);
+
+    // hack particle positions to make box square
+    for (unsigned k = 0, n = particle_diags.size(); k < n; ++k) {
+        WarpXParticleContainer* pc = particle_diags[k].getParticleContainer();
+        for (auto lev = 0; lev <= pc->finestLevel(); lev++)
+        {
+            for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti)
+            {
+                auto const numParticleOnTile = pti.numParticles();
+                auto& aos = pti.GetArrayOfStructs();
+                for (auto i = 0; i < numParticleOnTile; i++)
+                {
+                    //aos[i].pos(0) /= convert_factor;
+                    //aos[i].pos(1) /= convert_factor;
+                    aos[i].pos(2) /= convert_factor;
+                }
+            }
+        }
+    }
 
     WriteParticles(particle_diags, bp_mesh);
 
@@ -39,6 +86,25 @@ FlushFormatAscent::WriteToFile (
     conduit::Node actions;
     ascent.execute(actions);
     ascent.close();
+
+    // revert particle position hack
+    for (unsigned k = 0, n = particle_diags.size(); k < n; ++k) {
+        WarpXParticleContainer* pc = particle_diags[k].getParticleContainer();
+        for (auto lev = 0; lev <= pc->finestLevel(); lev++)
+        {
+            for (WarpXParIter pti(*pc, lev); pti.isValid(); ++pti)
+            {
+                auto const numParticleOnTile = pti.numParticles();
+                auto& aos = pti.GetArrayOfStructs();
+                for (auto i = 0; i < numParticleOnTile; i++)
+                {
+                    //aos[i].pos(0) *= convert_factor;
+                    //aos[i].pos(1) *= convert_factor;
+                    aos[i].pos(2) *= convert_factor;
+                }
+            }
+        }
+    }
 
 #else
     amrex::ignore_unused(varnames, mf, geom, iteration, time,
