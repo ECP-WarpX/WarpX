@@ -1679,13 +1679,16 @@ Reduced Diagnostics
         computed.
 
     * ``ParticleNumber``
-        This type computes the total number of macroparticles in the simulation (for each species
-        and summed over all species). It can be useful in particular for simulations with creation
-        (ionization, QED processes) or removal (resampling) of particles.
+        This type computes the total number of macroparticles and of physical particles (i.e. the
+        sum of their weights) in the whole simulation domain (for each species and summed over all
+        species). It can be useful in particular for simulations with creation (ionization, QED
+        processes) or removal (resampling) of particles.
 
         The output columns are
-        total number of macroparticles summed over all species and
-        total number of macroparticles of each species.
+        total number of macroparticles summed over all species,
+        total number of macroparticles of each species,
+        sum of the particles' weight summed over all species,
+        sum of the particles' weight of each species.
 
     * ``BeamRelevant``
         This type computes properties of a particle beam relevant for particle accelerators,
