@@ -105,6 +105,10 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     amrex::Real sx_cell[depos_order + 1];
     amrex::Real sx_node_galerkin[depos_order + 1 - galerkin_interpolation];
     amrex::Real sx_cell_galerkin[depos_order + 1 - galerkin_interpolation];
+
+    for (auto& el : sx_node_galerkin) el = 0.0_rt;
+    for (auto& el : sx_cell_galerkin) el = 0.0_rt;
+
     int j_node = 0;
     int j_cell = 0;
     int j_node_v = 0;
