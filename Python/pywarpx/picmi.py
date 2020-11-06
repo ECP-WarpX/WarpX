@@ -43,7 +43,7 @@ class Species(picmistandard.PICMI_Species):
             if self.mass is None: self.mass = 'm_p'
         elif self.particle_type == 'anti-proton':
             if self.charge is None: self.charge = '-q_e'
-            if self.mass is None: self.mass = 'm_p'
+            if self.mass is None: self.mass = 'm_o'
         else:
             if self.charge is None and self.charge_state is not None:
                 if self.charge_state == +1.:

@@ -51,8 +51,8 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     pp.getarr("polarization", m_p_X);
 
     pp.query("pusher_algo", m_pusher_algo);
-    pp.get("wavelength", m_wavelength);
-    pp.get("e_max", m_e_max);
+    getWithParser(pp, "wavelength", m_wavelength);
+    getWithParser(pp, "e_max", m_e_max);
     pp.query("do_continuous_injection", do_continuous_injection);
     pp.query("min_particles_per_mode", m_min_particles_per_mode);
 

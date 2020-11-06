@@ -317,7 +317,7 @@ WarpX::ReadParameters ()
     {
         ParmParse pp;// Traditionally, max_step and stop_time do not have prefix.
         pp.query("max_step", max_step);
-        pp.query("stop_time", stop_time);
+        queryWithParser(pp, "stop_time", stop_time);
         pp.query("authors", authors);
     }
 
@@ -364,7 +364,7 @@ WarpX::ReadParameters ()
             }
         }
 
-        pp.query("cfl", cfl);
+        queryWithParser(pp, "cfl", cfl);
         pp.query("verbose", verbose);
         pp.query("regrid_int", regrid_int);
         pp.query("do_subcycling", do_subcycling);
@@ -384,7 +384,7 @@ WarpX::ReadParameters ()
         // pp.query returns 1 if argument zmax_plasma_to_compute_max_step is
         // specified by the user, 0 otherwise.
         do_compute_max_step_from_zmax =
-            pp.query("zmax_plasma_to_compute_max_step",
+            queryWithParser(pp, "zmax_plasma_to_compute_max_step",
                       zmax_plasma_to_compute_max_step);
 
         pp.query("do_moving_window", do_moving_window);
@@ -435,8 +435,8 @@ WarpX::ReadParameters ()
             // Read either dz_snapshots_lab or dt_snapshots_lab
             bool snapshot_interval_is_specified = 0;
             Real dz_snapshots_lab = 0;
-            snapshot_interval_is_specified += pp.query("dt_snapshots_lab", dt_snapshots_lab);
-            if ( pp.query("dz_snapshots_lab", dz_snapshots_lab) ){
+            snapshot_interval_is_specified += queryWithParser(pp, "dt_snapshots_lab", dt_snapshots_lab);
+            if ( queryWithParser(pp, "dz_snapshots_lab", dz_snapshots_lab) ){
                 dt_snapshots_lab = dz_snapshots_lab/PhysConst::c;
                 snapshot_interval_is_specified = 1;
             }
@@ -508,8 +508,9 @@ WarpX::ReadParameters ()
                 sort_bin_size[i] = vect_sort_bin_size[i];
         }
 
-        double quantum_xi;
-        int quantum_xi_is_specified = pp.query("quantum_xi", quantum_xi);
+        amrex::Real quantum_xi_tmp;
+        int quantum_xi_is_specified = queryWithParser(pp, "quantum_xi", quantum_xi_tmp);
+        double quantum_xi = quantum_xi_tmp;
         if (quantum_xi_is_specified)
             quantum_xi_c2 = quantum_xi * PhysConst::c * PhysConst::c;
 
