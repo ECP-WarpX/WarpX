@@ -56,7 +56,7 @@ We use the following modules and environments on the system.
    export GPUS_PER_NODE=4
 
    # optimize CUDA compilation for V100 (CMake hint)
-   export AMReX_CUDA_ARCH=7.0
+   export AMREX_CUDA_ARCH=7.0
 
 Note that for now WarpX must rely on OpenMPI instead of the recommended MPI implementation on this platform MVAPICH2.
 
