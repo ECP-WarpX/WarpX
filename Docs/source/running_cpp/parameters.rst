@@ -254,13 +254,17 @@ user-defined constant and ``x`` and ``y`` are variables. The names are case sens
 ``(x>0)`` is `1` where `x>0` and `0` where `x<=0`. It allows the user to
 define functions by intervals. User-defined constants can be used in parsed
 functions only (i.e., ``density_function(x,y,z)`` and ``field_function(X,Y,t)``,
-see below). User-defined constants can contain only letter, numbers and character _.
+see below). User-defined constants can contain only letters, numbers and the character ``_``.
 The name of each constant has to begin with a letter. The following names are used
-by WarpX, and cannot be used as user-defined constants: `x`, `y`, `z`, `X`, `Y`, `t`.
+by WarpX, and cannot be used as user-defined constants: ``x``, ``y``, ``z``, ``X``, ``Y``, ``t``.
 For example, parameters ``a0`` and ``z_plateau`` can be specified with:
 
 * ``my_constants.a0 = 3.0``
 * ``my_constants.z_plateau = 150.e-6``
+
+The parser reads mathematical functions into an `abstract syntax tree (AST) <https://en.wikipedia.org/wiki/Abstract_syntax_tree>`_, which supports a maximum depth (see :ref:`build options <building-cmake>`_).
+Additional terms in a function can create a level of depth in the AST, e.g. ``a+b+c+d`` is parsed in groups of ``[+ a [+ b [+ c [+ d]]]]`` (depth: 4).
+A trick to reduce this depth for the parser, e.g. when reaching the limit, is to group expliclity, e.g. via ``(a+b)+(c+d)``, which is parsed in groups of ``[+ [+ a b] [+ c d]]`` (depth: 2).
 
 .. _running-cpp-parameters-particle:
 
