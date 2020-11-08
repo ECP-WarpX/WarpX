@@ -90,7 +90,7 @@ We use the following modules and environments on the system.
    shopt -s direxpand
 
    # optimize CUDA compilation for V100
-   export AMReX_CUDA_ARCH=7.0
+   export AMREX_CUDA_ARCH=7.0
 
    # compiler environment hints
    export CC=$(which gcc)
