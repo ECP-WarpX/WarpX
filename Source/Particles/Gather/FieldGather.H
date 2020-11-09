@@ -103,11 +103,8 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     // arrays will be needed.
     amrex::Real sx_node[depos_order + 1];
     amrex::Real sx_cell[depos_order + 1];
-    amrex::Real sx_node_galerkin[depos_order + 1 - galerkin_interpolation];
-    amrex::Real sx_cell_galerkin[depos_order + 1 - galerkin_interpolation];
-
-    for (auto& el : sx_node_galerkin) el = 0.0_rt;
-    for (auto& el : sx_cell_galerkin) el = 0.0_rt;
+    amrex::Real sx_node_galerkin[depos_order + 1 - galerkin_interpolation] = {0._rt};
+    amrex::Real sx_cell_galerkin[depos_order + 1 - galerkin_interpolation] = {0._rt};
 
     int j_node = 0;
     int j_cell = 0;
