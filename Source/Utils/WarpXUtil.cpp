@@ -190,7 +190,6 @@ void Store_parserString(amrex::ParmParse& pp, std::string query_string,
     f.clear();
 }
 
-
 WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames)
 {
     WarpXParser parser(parse_function);
@@ -211,6 +210,25 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
         amrex::Abort("makeParser::Unknown symbol "+s);
     }
     return parser;
+}
+
+int
+queryWithParser (amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
+{
+    // call amrex::ParmParse::query, check if the user specified str.
+    std::string tmp_str;
+    int is_specified = a_pp.query(str, tmp_str);
+    if (is_specified)
+    {
+        // If so, create a parser object and apply it to the value provided by the user.
+        std::string str_val;
+        Store_parserString(a_pp, str, str_val);
+
+        auto parser = makeParser(str_val, {});
+        val = parser.eval();
+    }
+    // return the same output as amrex::ParmParse::query
+    return is_specified;
 }
 
 /**

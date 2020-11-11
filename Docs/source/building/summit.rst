@@ -29,8 +29,8 @@ Use the following commands to download the WarpX source code and switch to the c
    cd ~/src
 
    git clone https://github.com/ECP-WarpX/WarpX.git warpx
-   git clone --branch development https://github.com/ECP-WarpX/picsar.git
-   git clone --branch development https://github.com/AMReX-Codes/amrex.git
+   git clone https://github.com/ECP-WarpX/picsar.git
+   git clone https://github.com/AMReX-Codes/amrex.git
 
 We use the following modules and environments on the system.
 
@@ -89,6 +89,9 @@ We use the following modules and environments on the system.
    # fix system defaults: do not escape $ with a \ on tab completion
    shopt -s direxpand
 
+   # optimize CUDA compilation for V100
+   export AMREX_CUDA_ARCH=7.0
+
    # compiler environment hints
    export CC=$(which gcc)
    export CXX=$(which g++)
@@ -136,7 +139,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
    mkdir -p build
    cd build
-   cmake .. -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA -DCMAKE_CUDA_ARCHITECTURES=70 -DCUDA_ARCH=7.0
+   cmake .. -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
    make -j 10
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.

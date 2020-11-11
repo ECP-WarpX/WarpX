@@ -107,6 +107,7 @@ Finally, compile WarpX:
 .. code-block:: bash
 
    cd ../WarpX
+   # Note that one some systems, /lib might need to be replaced with /lib64.
    export PKG_CONFIG_PATH=$HOME/warpx_directory/openPMD-install/lib/pkgconfig:$PKG_CONFIG_PATH
    export CMAKE_PREFIX_PATH=$HOME/warpx_directory/openPMD-install:$CMAKE_PREFIX_PATH
 
