@@ -84,8 +84,8 @@ MultiReducedDiags::MultiReducedDiags ()
         }
         else if (rd_type.compare("ParticleExtrema") == 0)
         {
-            m_multi_rd[i_rd].reset
-                ( new ParticleExtrema(m_rd_names[i_rd]));
+            m_multi_rd[i_rd]=
+                std::make_unique<ParticleExtrema>(m_rd_names[i_rd]);
         }
         else
         { Abort("No matching reduced diagnostics type found."); }

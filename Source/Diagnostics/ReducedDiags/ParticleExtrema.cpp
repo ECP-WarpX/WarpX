@@ -105,9 +105,15 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
                 ofs << m_sep;
                 ofs << "[16]gmax()";
                 ofs << m_sep;
+#if (defined WARPX_DIM_3D)
                 ofs << "[17]wmin()";
                 ofs << m_sep;
                 ofs << "[18]wmax()";
+#else
+                ofs << "[17]wmin(1/m)";
+                ofs << m_sep;
+                ofs << "[18]wmax(1/m)";
+#endif
                 if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
                 {
                     ofs << m_sep;

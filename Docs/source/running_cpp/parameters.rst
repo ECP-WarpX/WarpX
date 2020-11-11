@@ -1817,6 +1817,21 @@ Reduced Diagnostics
         using the histogram reduced diagnostics
         are given in ``Examples/Tests/initial_distribution/``.
 
+    * ``ParticleExtrema``
+        This type computes the minimum and maxmium values of
+        particle position, momentum, gamma, weight,
+        and the :math:`\chi` parameter for QED species.
+
+        ``<reduced_diags_name>.species`` must be provided,
+        such that the diagnostics are done for this species only.
+
+        The output columns are
+        minimum and maximum position :math:`x`, :math:`y`, :math:`z`;
+        minimum and maximum momentum :math:`p_x`, :math:`p_y`, :math:`p_z`;
+        minimum and maximum gamma :math:`\gamma`;
+        minimum and maximum weight :math:`w`;
+        minimum and maximum :math:`\chi`.
+
 * ``<reduced_diags_name>.frequency`` (`string`) optional (default ``1``)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
     diagnostics are written to file.

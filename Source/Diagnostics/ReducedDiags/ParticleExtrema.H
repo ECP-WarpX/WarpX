@@ -28,7 +28,7 @@ public:
 
     /** This funciton computes the particle extrema
      */
-    virtual void ComputeDiags(int step) override final;
+    void ComputeDiags(int step) override final;
 
 };
 
