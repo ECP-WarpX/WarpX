@@ -224,7 +224,7 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
                 C   (i,j,k) = std::cos(om * dt);
                 S_ck(i,j,k) = std::sin(om * dt) / om;
 
-                const Real    nu = kv / om_c;
+                const Real    nu = - kv / om_c;
                 const Complex theta      = amrex::exp(  I * nu * om_c * dt * 0.5_rt);
                 const Complex theta_star = amrex::exp(- I * nu * om_c * dt * 0.5_rt);
 
@@ -268,23 +268,6 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
                 if (nu == om/om_c) {
 
                     // X1 multiplies i*(k \times J) in the update equation for B
-                    X1(i,j,k) = tmp2_sqrt * (1._rt - tmp1 * tmp1 + 2._rt * I * om * dt) / (4._rt * ep0 * om2);
-
-                    // X2 multiplies rho_new in the update equation for E
-                    // X3 multiplies rho_old in the update equation for E
-                    X2(i,j,k) = c2 * (- 3._rt + 4._rt * tmp1 - tmp1 * tmp1 - 2._rt * I * om * dt)
-                        / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
-                    X3(i,j,k) = c2 * (3._rt - 2._rt * tmp2 - 2._rt * tmp1 + tmp1 * tmp1 - 2._rt * I * om * dt)
-                        / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
-
-                    // Coefficient multiplying J in update equation for E
-                    X4(i,j,k) = tmp2_sqrt * (- I + I * tmp1 * tmp1 - 2._rt * om * dt) / (4._rt * ep0 * om);
-                }
-
-                // Limits for nu = -omega/omega_c
-                if (nu == -om/om_c) {
-
-                    // X1 multiplies i*(k \times J) in the update equation for B
                     X1(i,j,k) = tmp1_sqrt * (1._rt - tmp2 * tmp2 - 2._rt * I * om * dt) / (4._rt * ep0 * om2);
 
                     // X2 multiplies rho_new in the update equation for E
@@ -296,6 +279,23 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
 
                     // Coefficient multiplying J in update equation for E
                     X4(i,j,k) = tmp1_sqrt * (I - I * tmp2 * tmp2 - 2._rt * om * dt) / (4._rt * ep0 * om);
+                }
+
+                // Limits for nu = -omega/omega_c
+                if (nu == -om/om_c) {
+
+                    // X1 multiplies i*(k \times J) in the update equation for B
+                    X1(i,j,k) = tmp2_sqrt * (1._rt - tmp1 * tmp1 + 2._rt * I * om * dt) / (4._rt * ep0 * om2);
+
+                    // X2 multiplies rho_new in the update equation for E
+                    // X3 multiplies rho_old in the update equation for E
+                    X2(i,j,k) = c2 * (- 3._rt + 4._rt * tmp1 - tmp1 * tmp1 - 2._rt * I * om * dt)
+                        / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
+                    X3(i,j,k) = c2 * (3._rt - 2._rt * tmp2 - 2._rt * tmp1 + tmp1 * tmp1 - 2._rt * I * om * dt)
+                        / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
+
+                    // Coefficient multiplying J in update equation for E
+                    X4(i,j,k) = tmp2_sqrt * (- I + I * tmp1 * tmp1 - 2._rt * om * dt) / (4._rt * ep0 * om);
                 }
             }
 
@@ -327,7 +327,7 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
 
                 const Real om_c  = c * knorm_c;
                 const Real om2_c = om_c * om_c;
-                const Real nu = kv / om_c;
+                const Real nu = - kv / om_c;
                 const Complex theta      = amrex::exp(I * nu * om_c * dt * 0.5_rt);
                 const Complex theta_star = amrex::exp(- I * nu * om_c * dt * 0.5_rt);
 
@@ -413,9 +413,9 @@ ComovingPsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
         const amrex::Real dt = m_dt;
 
         // Comoving velocity
-        const amrex::Real vgx = m_v_comoving[0];
-        const amrex::Real vgy = m_v_comoving[1];
-        const amrex::Real vgz = m_v_comoving[2];
+        const amrex::Real vx = m_v_comoving[0];
+        const amrex::Real vy = m_v_comoving[1];
+        const amrex::Real vz = m_v_comoving[2];
 
         // Loop over indices within one box
         ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
@@ -449,16 +449,16 @@ ComovingPsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
             if (k_norm != 0._rt)
             {
                 const Complex k_dot_J = kx * Jx + ky * Jy + kz * Jz;
-                const amrex::Real k_dot_vg = kx_c * vgx + ky_c * vgy + kz_c * vgz;
+                const amrex::Real kv = kx_c * vx + ky_c * vy + kz_c * vz;
 
-                if ( k_dot_vg != 0._rt ) {
+                if ( kv != 0._rt ) {
 
-                    const Complex theta = amrex::exp(I * k_dot_vg * dt * 0.5_rt);
+                    const Complex theta = amrex::exp(- I * kv * dt * 0.5_rt);
                     const Complex den = 1._rt - theta * theta;
 
-                    fields(i,j,k,Idx::Jx) = Jx - (k_dot_J - k_dot_vg * theta * (rho_new - rho_old) / den) * kx / (k_norm * k_norm);
-                    fields(i,j,k,Idx::Jy) = Jy - (k_dot_J - k_dot_vg * theta * (rho_new - rho_old) / den) * ky / (k_norm * k_norm);
-                    fields(i,j,k,Idx::Jz) = Jz - (k_dot_J - k_dot_vg * theta * (rho_new - rho_old) / den) * kz / (k_norm * k_norm);
+                    fields(i,j,k,Idx::Jx) = Jx - (k_dot_J + kv * theta * (rho_new - rho_old) / den) * kx / (k_norm * k_norm);
+                    fields(i,j,k,Idx::Jy) = Jy - (k_dot_J + kv * theta * (rho_new - rho_old) / den) * ky / (k_norm * k_norm);
+                    fields(i,j,k,Idx::Jz) = Jz - (k_dot_J + kv * theta * (rho_new - rho_old) / den) * kz / (k_norm * k_norm);
 
                 } else {
 
