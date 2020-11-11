@@ -18,15 +18,11 @@ ComovingPsatdAlgorithm::ComovingPsatdAlgorithm(const SpectralKSpace& spectral_ks
                                                const bool update_with_rho)
      // Initialize members of base class
      : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
-       //kx_vec(spectral_kspace.getKComponent(dm,spectral_kspace.m_realspace_ba,0,false)),
        kx_vec(spectral_kspace.getModifiedKComponent(dm,0,-1,false)),
 #if (AMREX_SPACEDIM==3)
-       //ky_vec(spectral_kspace.getKComponent(dm,spectral_kspace.m_realspace_ba,1,false)),
-       //kz_vec(spectral_kspace.getKComponent(dm,spectral_kspace.m_realspace_ba,2,false)),
        ky_vec(spectral_kspace.getModifiedKComponent(dm,1,-1,false)),
        kz_vec(spectral_kspace.getModifiedKComponent(dm,2,-1,false)),
 #else
-       //kz_vec(spectral_kspace.getKComponent(dm,spectral_kspace.m_realspace_ba,1,false)),
        kz_vec(spectral_kspace.getModifiedKComponent(dm,1,-1,false)),
 #endif
        m_v_comoving(v_comoving),
@@ -51,8 +47,6 @@ ComovingPsatdAlgorithm::ComovingPsatdAlgorithm(const SpectralKSpace& spectral_ks
 void
 ComovingPsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
 {
-    const bool update_with_rho = m_update_with_rho;
-
     // Loop over boxes
     for (MFIter mfi(f.fields); mfi.isValid(); ++mfi){
 
@@ -120,30 +114,20 @@ ComovingPsatdAlgorithm::pushSpectralFields (SpectralFieldData& f) const
             // The equations in the following are the update equations for B and E
 
             // Update E
-            if (update_with_rho) {
+            fields(i,j,k,Idx::Ex) = C*Ex_old + S_ck*c2*I*(ky*Bz_old - kz*By_old)
+                        + X4*Jx - I*(X2*rho_new - X3*rho_old)*kx;
 
-                // Ex
-                fields(i,j,k,Idx::Ex) = C*Ex_old
-                            + S_ck*c2*I*(ky*Bz_old - kz*By_old)
-                            + X4*Jx - I*(X2*rho_new - X3*rho_old)*kx;
-                // Ey
-                fields(i,j,k,Idx::Ey) = C*Ey_old
-                            + S_ck*c2*I*(kz*Bx_old - kx*Bz_old)
-                            + X4*Jy - I*(X2*rho_new - X3*rho_old)*ky;
-                // Ez
-                fields(i,j,k,Idx::Ez) = C*Ez_old
-                            + S_ck*c2*I*(kx*By_old - ky*Bx_old)
-                            + X4*Jz - I*(X2*rho_new - X3*rho_old)*kz;
-            } else {
-                // TODO Update E without rho
-            }
+            fields(i,j,k,Idx::Ey) = C*Ey_old + S_ck*c2*I*(kz*Bx_old - kx*Bz_old)
+                        + X4*Jy - I*(X2*rho_new - X3*rho_old)*ky;
+
+            fields(i,j,k,Idx::Ez) = C*Ez_old + S_ck*c2*I*(kx*By_old - ky*Bx_old)
+                        + X4*Jz - I*(X2*rho_new - X3*rho_old)*kz;
 
             // Update B
-            // Bx
             fields(i,j,k,Idx::Bx) = C*Bx_old - S_ck*I*(ky*Ez_old - kz*Ey_old) + X1*I*(ky*Jz - kz*Jy);
-            // By
+
             fields(i,j,k,Idx::By) = C*By_old - S_ck*I*(kz*Ex_old - kx*Ez_old) + X1*I*(kz*Jx - kx*Jz);
-            // Bz
+
             fields(i,j,k,Idx::Bz) = C*Bz_old - S_ck*I*(kx*Ey_old - ky*Ex_old) + X1*I*(kx*Jy - ky*Jx);
         });
     }
@@ -153,8 +137,6 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
                                                              const amrex::DistributionMapping& dm,
                                                              const amrex::Real dt)
 {
-    const bool update_with_rho = m_update_with_rho;
-
     const BoxArray& ba = spectral_kspace.spectralspace_ba;
 
     // Loop over boxes and allocate the corresponding coefficients for each box
@@ -256,15 +238,12 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
                     // X1 multiplies i*(k \times J) in the update equation for B
                     X1(i,j,k) = x1 / (ep0 * om2_c);
 
-                    if (update_with_rho) {
-                        // X2 multiplies rho_new in the update equation for E
-                        // X3 multiplies rho_old in the update equation for E
-                        X2(i,j,k) = c2 * (x1 * om2 - theta * (1._rt - C(i,j,k)) * om2_c)
-                            / (theta_star - theta) / (ep0 * om2_c * om2);
-                        X3(i,j,k) = c2 * (x1 * om2 - theta_star * (1._rt - C(i,j,k)) * om2_c)
-                            / (theta_star - theta) / (ep0 * om2_c * om2);
-                    } else {
-                    }
+                    // X2 multiplies rho_new in the update equation for E
+                    // X3 multiplies rho_old in the update equation for E
+                    X2(i,j,k) = c2 * (x1 * om2 - theta * (1._rt - C(i,j,k)) * om2_c)
+                        / (theta_star - theta) / (ep0 * om2_c * om2);
+                    X3(i,j,k) = c2 * (x1 * om2 - theta_star * (1._rt - C(i,j,k)) * om2_c)
+                        / (theta_star - theta) / (ep0 * om2_c * om2);
 
                     // X4 multiplies J in the update equation for E
                     X4(i,j,k) = I * nu * om_c * X1(i,j,k) - theta * S_ck(i,j,k) / ep0;
@@ -276,13 +255,10 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
                     // X1 multiplies i*(k \times J) in the update equation for B
                     X1(i,j,k) = (1._rt - C(i,j,k)) / (ep0 * om2);
 
-                    if (update_with_rho) {
-                        // X2 multiplies rho_new in the update equation for E
-                        // X3 multiplies rho_old in the update equation for E
-                        X2(i,j,k) = c2 * (1._rt - S_ck(i,j,k) / dt) / (ep0 * om2);
-                        X3(i,j,k) = c2 * (C(i,j,k) - S_ck(i,j,k) / dt) / (ep0 * om2);
-                    } else {
-                    }
+                    // X2 multiplies rho_new in the update equation for E
+                    // X3 multiplies rho_old in the update equation for E
+                    X2(i,j,k) = c2 * (1._rt - S_ck(i,j,k) / dt) / (ep0 * om2);
+                    X3(i,j,k) = c2 * (C(i,j,k) - S_ck(i,j,k) / dt) / (ep0 * om2);
 
                     // Coefficient multiplying J in update equation for E
                     X4(i,j,k) = - S_ck(i,j,k) / ep0;
@@ -294,15 +270,12 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
                     // X1 multiplies i*(k \times J) in the update equation for B
                     X1(i,j,k) = tmp2_sqrt * (1._rt - tmp1 * tmp1 + 2._rt * I * om * dt) / (4._rt * ep0 * om2);
 
-                    if (update_with_rho) {
-                        // X2 multiplies rho_new in the update equation for E
-                        // X3 multiplies rho_old in the update equation for E
-                        X2(i,j,k) = c2 * (- 3._rt + 4._rt * tmp1 - tmp1 * tmp1 - 2._rt * I * om * dt)
-                            / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
-                        X3(i,j,k) = c2 * (3._rt - 2._rt * tmp2 - 2._rt * tmp1 + tmp1 * tmp1 - 2._rt * I * om * dt)
-                            / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
-                    } else {
-                    }
+                    // X2 multiplies rho_new in the update equation for E
+                    // X3 multiplies rho_old in the update equation for E
+                    X2(i,j,k) = c2 * (- 3._rt + 4._rt * tmp1 - tmp1 * tmp1 - 2._rt * I * om * dt)
+                        / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
+                    X3(i,j,k) = c2 * (3._rt - 2._rt * tmp2 - 2._rt * tmp1 + tmp1 * tmp1 - 2._rt * I * om * dt)
+                        / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
 
                     // Coefficient multiplying J in update equation for E
                     X4(i,j,k) = tmp2_sqrt * (- I + I * tmp1 * tmp1 - 2._rt * om * dt) / (4._rt * ep0 * om);
@@ -314,15 +287,12 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
                     // X1 multiplies i*(k \times J) in the update equation for B
                     X1(i,j,k) = tmp1_sqrt * (1._rt - tmp2 * tmp2 - 2._rt * I * om * dt) / (4._rt * ep0 * om2);
 
-                    if (update_with_rho) {
-                        // X2 multiplies rho_new in the update equation for E
-                        // X3 multiplies rho_old in the update equation for E
-                        X2(i,j,k) = c2 * (- 4._rt + 3._rt * tmp1 + tmp2 - 2._rt * I * om * dt * tmp1)
-                            / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
-                        X3(i,j,k) = c2 * (2._rt - tmp2 - 3._rt * tmp1 + 2._rt * tmp1 * tmp1 - 2._rt * I * om * dt * tmp1)
-                            / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
-                    } else {
-                    }
+                    // X2 multiplies rho_new in the update equation for E
+                    // X3 multiplies rho_old in the update equation for E
+                    X2(i,j,k) = c2 * (- 4._rt + 3._rt * tmp1 + tmp2 - 2._rt * I * om * dt * tmp1)
+                        / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
+                    X3(i,j,k) = c2 * (2._rt - tmp2 - 3._rt * tmp1 + 2._rt * tmp1 * tmp1 - 2._rt * I * om * dt * tmp1)
+                        / (4._rt * ep0 * om2 * (tmp1 - 1._rt));
 
                     // Coefficient multiplying J in update equation for E
                     X4(i,j,k) = tmp1_sqrt * (I - I * tmp2 * tmp2 - 2._rt * om * dt) / (4._rt * ep0 * om);
@@ -342,13 +312,10 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
                 // X1 multiplies i*(k \times J) in the update equation for B
                 X1(i,j,k) = (1._rt - C(i,j,k)) / (ep0 * om2);
 
-                if (update_with_rho) {
-                    // X2 multiplies rho_new in the update equation for E
-                    // X3 multiplies rho_old in the update equation for E
-                    X2(i,j,k) = c2 * (1._rt - S_ck(i,j,k) / dt) / (ep0 * om2);
-                    X3(i,j,k) = c2 * (C(i,j,k) - S_ck(i,j,k) / dt) / (ep0 * om2);
-                } else {
-                }
+                // X2 multiplies rho_new in the update equation for E
+                // X3 multiplies rho_old in the update equation for E
+                X2(i,j,k) = c2 * (1._rt - S_ck(i,j,k) / dt) / (ep0 * om2);
+                X3(i,j,k) = c2 * (C(i,j,k) - S_ck(i,j,k) / dt) / (ep0 * om2);
 
                 // Coefficient multiplying J in update equation for E
                 X4(i,j,k) = - S_ck(i,j,k) / ep0;
@@ -372,17 +339,14 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
                 X1(i,j,k) = (-theta_star + theta - I * nu * om_c * dt * theta)
                     / (ep0 * nu * nu * om2_c);
 
-                if (update_with_rho) {
-                    // X2 multiplies rho_new in the update equation for E
-                    // X3 multiplies rho_old in the update equation for E
-                    X2(i,j,k) = c2 * (1._rt - T2(i,j,k) + I * nu * om_c * dt * T2(i,j,k)
-                        + 0.5_rt * nu * nu * om2_c * dt * dt * T2(i,j,k))
-                        / (ep0 * nu * nu * om2_c * (T2(i,j,k) - 1._rt));
-                    X3(i,j,k) = c2 * (1._rt - T2(i,j,k) + I * nu * om_c * dt * T2(i,j,k)
-                        + 0.5_rt * nu * nu * om2_c * dt * dt)
-                        / (ep0 * nu * nu * om2_c * (T2(i,j,k) - 1._rt));
-                } else {
-                }
+                // X2 multiplies rho_new in the update equation for E
+                // X3 multiplies rho_old in the update equation for E
+                X2(i,j,k) = c2 * (1._rt - T2(i,j,k) + I * nu * om_c * dt * T2(i,j,k)
+                    + 0.5_rt * nu * nu * om2_c * dt * dt * T2(i,j,k))
+                    / (ep0 * nu * nu * om2_c * (T2(i,j,k) - 1._rt));
+                X3(i,j,k) = c2 * (1._rt - T2(i,j,k) + I * nu * om_c * dt * T2(i,j,k)
+                    + 0.5_rt * nu * nu * om2_c * dt * dt)
+                    / (ep0 * nu * nu * om2_c * (T2(i,j,k) - 1._rt));
 
                 // Coefficient multiplying J in update equation for E
                 X4(i,j,k) = I * (theta - theta_star) / (ep0 * nu * om_c);
@@ -398,13 +362,10 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
                 // X1 multiplies i*(k \times J) in the update equation for B
                 X1(i,j,k) = dt2 / (2._rt * ep0);
 
-                if (update_with_rho) {
-                    // X2 multiplies rho_new in the update equation for E
-                    // X3 multiplies rho_old in the update equation for E
-                    X2(i,j,k) = c2 * dt2 / (6._rt * ep0);
-                    X3(i,j,k) = - c2 * dt2 / (3._rt * ep0);
-                } else {
-                }
+                // X2 multiplies rho_new in the update equation for E
+                // X3 multiplies rho_old in the update equation for E
+                X2(i,j,k) = c2 * dt2 / (6._rt * ep0);
+                X3(i,j,k) = - c2 * dt2 / (3._rt * ep0);
 
                 // Coefficient multiplying J in update equation for E
                 X4(i,j,k) = -dt / ep0;
