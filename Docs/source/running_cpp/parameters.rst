@@ -1832,6 +1832,11 @@ Reduced Diagnostics
         minimum and maximum weight :math:`w`;
         minimum and maximum :math:`\chi`.
 
+        Note that when the QED parameter :math:`\chi` is computed,
+        field gather is carried out at every output,
+        so the time of the diagnostic may be long
+        depending on the simulation size.
+
 * ``<reduced_diags_name>.frequency`` (`string`) optional (default ``1``)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
     diagnostics are written to file.
