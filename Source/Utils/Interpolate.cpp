@@ -74,9 +74,9 @@ namespace Interpolate
 #endif
         for (MFIter mfi(*interpolated_F[0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
-            Box const& boxx = mfi.growntilebox(fx_type);
-            Box const& boxy = mfi.growntilebox(fy_type);
-            Box const& boxz = mfi.growntilebox(fz_type);
+            Box const& boxx = mfi.tilebox(fx_type);
+            Box const& boxy = mfi.tilebox(fy_type);
+            Box const& boxz = mfi.tilebox(fz_type);
 
             Array4<Real      > const& fx = interpolated_F[0]->array(mfi);
             Array4<Real      > const& fy = interpolated_F[1]->array(mfi);
