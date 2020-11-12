@@ -67,29 +67,27 @@ FlushFormatAscent::WriteParticles(const amrex::Vector<ParticleDiag>& particle_di
 
         // get names of real comps
         std::map<std::string, int> real_comps_map = pc->getParticleComps();
-        std::map<std::string, int>::const_iterator r_itr = real_comps_map.begin();
 
-        // TODO: Looking at other code paths, I am not sure compile time
-        //  QED field is included in getParticleComps()?
-        while (r_itr != real_comps_map.end())
+        // WarpXParticleContainer compile-time extra AoS attributes (Real): 0
+        // WarpXParticleContainer compile-time extra AoS attributes (int): 0
+
+        // WarpXParticleContainer compile-time extra SoA attributes (Real): PIdx::nattribs
+        // not an efficient search, but N is small...
+        for(int i = 0; i < PIdx::nattribs; ++i)
         {
-            // get next real particle name
-            std::string varname = r_itr->first;
+            auto rvn_it = real_comps_map.begin();
+            for (; rvn_it != real_comps_map.end(); ++rvn_it)
+                if (rvn_it->second == i)
+                    break;
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                rvn_it != real_comps_map.end(),
+                "Ascent: SoA real attribute not found");
+            std::string varname = rvn_it->first;
             particle_varnames.push_back(prefix + "_" + varname);
-            r_itr++;
         }
+        // WarpXParticleContainer compile-time extra SoA attributes (int): 0
 
-        // get names of int comps
-        std::map<std::string, int> int_comps_map = pc->getParticleiComps();
-        std::map<std::string, int>::const_iterator i_itr = int_comps_map.begin();
-
-        while (i_itr != int_comps_map.end())
-        {
-            // get next real particle name
-            std::string varname = i_itr->first;
-            particle_int_varnames.push_back(prefix + "_" + varname);
-            i_itr++;
-        }
+        // WarpXParticleContainer "runtime" SoA attributes (Real), e.g QED: to do
 
         // wrap pc for current species into a blueprint topology
         amrex::ParticleContainerToBlueprint(*pc,
