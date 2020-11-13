@@ -126,12 +126,14 @@ endif()
 
 # Targets #####################################################################
 #
-# executable
-add_executable(WarpX)
-add_executable(WarpX::WarpX ALIAS WarpX)
+# library & executable
+add_library(WarpX STATIC)
+add_library(WarpX::WarpX ALIAS WarpX)
+add_executable(WarpXapp)
+add_executable(WarpX::WarpXapp ALIAS WarpXapp)
 
 # own headers
-target_include_directories(WarpX PRIVATE
+target_include_directories(WarpX PUBLIC
     $<BUILD_INTERFACE:${WarpX_SOURCE_DIR}/Source>
 )
 
@@ -140,11 +142,9 @@ include(AMReXBuildInfo)
 generate_buildinfo(WarpX "${WarpX_SOURCE_DIR}")
 
 # add sources
-target_sources(WarpX
-  PRIVATE
-    Source/main.cpp
-    Source/WarpX.cpp
-)
+target_sources(WarpX PRIVATE Source/WarpX.cpp)
+target_sources(WarpXapp PRIVATE Source/main.cpp)
+
 add_subdirectory(Source/BoundaryConditions)
 add_subdirectory(Source/Diagnostics)
 add_subdirectory(Source/Evolve)
@@ -160,7 +160,8 @@ add_subdirectory(Source/Utils)
 
 # C++ properties: at least a C++14 capable compiler is needed
 target_compile_features(WarpX PUBLIC cxx_std_14)
-set_target_properties(WarpX PROPERTIES
+target_compile_features(WarpXapp PUBLIC cxx_std_14)
+set_target_properties(WarpX WarpXapp PROPERTIES
     CXX_EXTENSIONS OFF
     CXX_STANDARD_REQUIRED ON
 )
@@ -200,14 +201,19 @@ endif()
 # AMReX helper function: propagate CUDA specific target & source properties
 if(AMReX_CUDA)
     setup_target_for_cuda_compilation(WarpX)
+    setup_target_for_cuda_compilation(WarpXapp)
     if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.17)
         target_compile_features(WarpX PUBLIC cuda_std_14)
-        set_target_properties(WarpX PROPERTIES
+        target_compile_features(WarpXapp PUBLIC cuda_std_14)
+        set_target_properties(WarpX WarpXapp PROPERTIES
             CUDA_EXTENSIONS OFF
             CUDA_STANDARD_REQUIRED ON
         )
     endif()
 endif()
+
+# the executable application depends on the library
+target_link_libraries(WarpXapp PUBLIC WarpX)
 
 # fancy binary name for build variants
 set_warpx_binary_name()
@@ -216,29 +222,29 @@ set_warpx_binary_name()
 # Defines #####################################################################
 #
 if(WarpX_DIMS STREQUAL 3)
-    target_compile_definitions(WarpX PRIVATE WARPX_DIM_3D)
+    target_compile_definitions(WarpX PUBLIC WARPX_DIM_3D)
 elseif(WarpX_DIMS STREQUAL 2)
-    target_compile_definitions(WarpX PRIVATE WARPX_DIM_XZ)
+    target_compile_definitions(WarpX PUBLIC WARPX_DIM_XZ)
 elseif(WarpX_DIMS STREQUAL RZ)
-    target_compile_definitions(WarpX PRIVATE WARPX_DIM_RZ)
+    target_compile_definitions(WarpX PUBLIC WARPX_DIM_RZ)
 endif()
 
 if(WarpX_OPENPMD)
-    target_compile_definitions(WarpX PRIVATE WARPX_USE_OPENPMD)
+    target_compile_definitions(WarpX PUBLIC WARPX_USE_OPENPMD)
 endif()
 
 if(WarpX_QED)
-    target_compile_definitions(WarpX PRIVATE WARPX_QED)
+    target_compile_definitions(WarpX PUBLIC WARPX_QED)
     if(WarpX_QED_TABLE_GEN)
-        target_compile_definitions(WarpX PRIVATE WarpX_QED_TABLE_GEN)
+        target_compile_definitions(WarpX PUBLIC WarpX_QED_TABLE_GEN)
     endif()
 endif()
 
 if(WarpX_PSATD)
-    target_compile_definitions(WarpX PRIVATE WARPX_USE_PSATD)
+    target_compile_definitions(WarpX PUBLIC WARPX_USE_PSATD)
 endif()
 
-target_compile_definitions(WarpX PRIVATE
+target_compile_definitions(WarpX PUBLIC
     WARPX_PARSER_DEPTH=${WarpX_PARSER_DEPTH})
 
 
@@ -262,7 +268,7 @@ set_cxx_warnings()
 # Installs ####################################################################
 #
 # headers, libraries and executables
-set(WarpX_INSTALL_TARGET_NAMES WarpX)
+set(WarpX_INSTALL_TARGET_NAMES WarpXapp) # future (with headers) libWarpX: WarpX
 
 install(TARGETS ${WarpX_INSTALL_TARGET_NAMES}
     EXPORT WarpXTargets

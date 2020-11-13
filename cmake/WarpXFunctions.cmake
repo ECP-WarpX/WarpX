@@ -129,53 +129,53 @@ endfunction()
 # warpx symlink to it. Only sets options relevant for users (see summary).
 #
 function(set_warpx_binary_name)
-    set_target_properties(WarpX PROPERTIES OUTPUT_NAME "warpx")
+    set_target_properties(WarpXapp PROPERTIES OUTPUT_NAME "warpx")
     if(WarpX_DIMS STREQUAL 3)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".3d")
+        set_property(TARGET WarpXapp APPEND_STRING PROPERTY OUTPUT_NAME ".3d")
     elseif(WarpX_DIMS STREQUAL 2)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".2d")
+        set_property(TARGET WarpXapp APPEND_STRING PROPERTY OUTPUT_NAME ".2d")
     elseif(WarpX_DIMS STREQUAL RZ)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".RZ")
+        set_property(TARGET WarpXapp APPEND_STRING PROPERTY OUTPUT_NAME ".RZ")
     endif()
 
     if(WarpX_MPI)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".MPI")
+        set_property(TARGET WarpXapp APPEND_STRING PROPERTY OUTPUT_NAME ".MPI")
     else()
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".NOMPI")
+        set_property(TARGET WarpXapp APPEND_STRING PROPERTY OUTPUT_NAME ".NOMPI")
     endif()
 
-    set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".${WarpX_COMPUTE}")
+    set_property(TARGET WarpXapp APPEND_STRING PROPERTY OUTPUT_NAME ".${WarpX_COMPUTE}")
 
     if(WarpX_PRECISION STREQUAL "DOUBLE")
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".DP")
+        set_property(TARGET WarpXapp APPEND_STRING PROPERTY OUTPUT_NAME ".DP")
     else()
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".SP")
+        set_property(TARGET WarpXapp APPEND_STRING PROPERTY OUTPUT_NAME ".SP")
     endif()
 
     if(WarpX_ASCENT)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".ASCENT")
+        set_property(TARGET WarpXapp APPEND_STRING PROPERTY OUTPUT_NAME ".ASCENT")
     endif()
 
     if(WarpX_OPENPMD)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".OPMD")
+        set_property(TARGET WarpXapp APPEND_STRING PROPERTY OUTPUT_NAME ".OPMD")
     endif()
 
     if(WarpX_PSATD)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".PSATD")
+        set_property(TARGET WarpXapp APPEND_STRING PROPERTY OUTPUT_NAME ".PSATD")
     endif()
 
     if(WarpX_QED)
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".QED")
+        set_property(TARGET WarpXapp APPEND_STRING PROPERTY OUTPUT_NAME ".QED")
     endif()
 
     if(CMAKE_BUILD_TYPE MATCHES "Debug")
-        set_property(TARGET WarpX APPEND_STRING PROPERTY OUTPUT_NAME ".DEBUG")
+        set_property(TARGET WarpXapp APPEND_STRING PROPERTY OUTPUT_NAME ".DEBUG")
     endif()
 
     # alias to the latest build, because using the full name is often confusing
-    add_custom_command(TARGET WarpX POST_BUILD
+    add_custom_command(TARGET WarpXapp POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink
-            $<TARGET_FILE:WarpX>
+            $<TARGET_FILE:WarpXapp>
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/warpx
     )
 endfunction()
