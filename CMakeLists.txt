@@ -155,7 +155,7 @@ add_subdirectory(Source/Laser)
 add_subdirectory(Source/Parallelization)
 add_subdirectory(Source/Parser)
 add_subdirectory(Source/Particles)
-#add_subdirectory(Source/Python)
+add_subdirectory(Source/Python)
 add_subdirectory(Source/Utils)
 
 # C++ properties: at least a C++14 capable compiler is needed
