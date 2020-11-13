@@ -316,7 +316,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
         using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
         tmp.copyParticles(*pc,
-        [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip)
+                          [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
         {
             const SuperParticleType& p = src.getSuperParticle(ip);
             return random_filter(p, engine) * uniform_filter(p, engine)
