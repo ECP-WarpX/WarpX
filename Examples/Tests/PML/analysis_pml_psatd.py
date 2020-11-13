@@ -7,7 +7,6 @@
 #
 # License: BSD-3-Clause-LBNL
 
-
 import sys
 import yt ; yt.funcs.mylog.setLevel(0)
 import numpy as np
@@ -20,7 +19,7 @@ filename = sys.argv[1]
 ############################
 ### INITIAL LASER ENERGY ###
 ############################
-energy_start = 9.1301289517e-08
+energy_start = 7.297301362346945e-08 # electromagnetic energy at iteration 50
 
 ##########################
 ### FINAL LASER ENERGY ###
@@ -35,24 +34,17 @@ Ey = all_data_level_0['boxlib', 'Ey'].v.squeeze()
 Ez = all_data_level_0['boxlib', 'Ez'].v.squeeze()
 rho = all_data_level_0['boxlib','rho'].v.squeeze()
 divE = all_data_level_0['boxlib','divE'].v.squeeze()
-energyE = np.sum(scc.epsilon_0/2*(Ex**2+Ey**2+Ez**2))
-energyB = np.sum(1./scc.mu_0/2*(Bx**2+By**2+Bz**2))
+energyE = np.sum(0.5 * scc.epsilon_0 * (Ex**2 + Ey**2 + Ez**2))
+energyB = np.sum(0.5 / scc.mu_0 * (Bx**2 + By**2 + Bz**2))
 energy_end = energyE + energyB
 
-Reflectivity = energy_end/energy_start
-Reflectivity_theory = 1.3806831258153887e-06
+reflectivity     = energy_end / energy_start
+reflectivity_max = 1e-06
 
-error_rel = abs(Reflectivity-Reflectivity_theory) / Reflectivity_theory
-tolerance_rel = 5./100
+print("reflectivity     = " + str(reflectivity))
+print("reflectivity_max = " + str(reflectivity_max))
 
-print("error_rel    : " + str(error_rel))
-print("tolerance_rel: " + str(tolerance_rel))
-
-assert( error_rel < tolerance_rel )
-
-# Check relative L-infinity spatial norm of rho/epsilon_0 - div(E)
-Linf_norm = np.amax( np.abs( rho/scc.epsilon_0 - divE ) ) / np.amax( np.abs( rho/scc.epsilon_0 ) )
-assert( Linf_norm < 2.e-2 )
+assert(reflectivity < reflectivity_max)
 
 test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
 checksumAPI.evaluate_checksum(test_name, filename)
