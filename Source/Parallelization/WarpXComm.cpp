@@ -129,9 +129,12 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         Array4<Real const> const& ey_fp = Efield_fp[0][1]->const_array(mfi);
         Array4<Real const> const& ez_fp = Efield_fp[0][2]->const_array(mfi);
 
-        const Box& bx = mfi.fabbox();
-        amrex::ParallelFor(bx,
-        [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+        Box bx = mfi.validbox();
+        // TODO It seems like it is necessary to loop over the valid box grown
+        // with 2 guard cells. Should this number of guard cells be expressed
+        // in terms of the parameters defined in the guardCellManager class?
+        bx.grow(2);
+        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
         {
 // FDTD variant
 #ifndef WARPX_USE_PSATD

@@ -335,21 +335,36 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
                 S_ck(i,j,k) = dt;
                 T2(i,j,k) = theta * theta;
 
-                // X1 multiplies i*(k \times J) in the update equation for B
-                X1(i,j,k) = (-theta_star + theta - I * nu * om_c * dt * theta)
-                    / (ep0 * nu * nu * om2_c);
+                if (nu != 0.) {
+                    // X1 multiplies i*(k \times J) in the update equation for B
+                    X1(i,j,k) = (-theta_star + theta - I * nu * om_c * dt * theta)
+                        / (ep0 * nu * nu * om2_c);
 
-                // X2 multiplies rho_new in the update equation for E
-                // X3 multiplies rho_old in the update equation for E
-                X2(i,j,k) = c2 * (1._rt - T2(i,j,k) + I * nu * om_c * dt * T2(i,j,k)
-                    + 0.5_rt * nu * nu * om2_c * dt * dt * T2(i,j,k))
-                    / (ep0 * nu * nu * om2_c * (T2(i,j,k) - 1._rt));
-                X3(i,j,k) = c2 * (1._rt - T2(i,j,k) + I * nu * om_c * dt * T2(i,j,k)
-                    + 0.5_rt * nu * nu * om2_c * dt * dt)
-                    / (ep0 * nu * nu * om2_c * (T2(i,j,k) - 1._rt));
+                    // X2 multiplies rho_new in the update equation for E
+                    // X3 multiplies rho_old in the update equation for E
+                    X2(i,j,k) = c2 * (1._rt - T2(i,j,k) + I * nu * om_c * dt * T2(i,j,k)
+                        + 0.5_rt * nu * nu * om2_c * dt * dt * T2(i,j,k))
+                        / (ep0 * nu * nu * om2_c * (T2(i,j,k) - 1._rt));
+                    X3(i,j,k) = c2 * (1._rt - T2(i,j,k) + I * nu * om_c * dt * T2(i,j,k)
+                        + 0.5_rt * nu * nu * om2_c * dt * dt)
+                        / (ep0 * nu * nu * om2_c * (T2(i,j,k) - 1._rt));
 
-                // Coefficient multiplying J in update equation for E
-                X4(i,j,k) = I * (theta - theta_star) / (ep0 * nu * om_c);
+                    // Coefficient multiplying J in update equation for E
+                    X4(i,j,k) = I * (theta - theta_star) / (ep0 * nu * om_c);
+                }
+
+                else {
+                    // X1 multiplies i*(k \times J) in the update equation for B
+                    X1(i,j,k) = dt2 / (2._rt * ep0);
+
+                    // X2 multiplies rho_new in the update equation for E
+                    // X3 multiplies rho_old in the update equation for E
+                    X2(i,j,k) = c2 * dt2 / (6._rt * ep0);
+                    X3(i,j,k) = - c2 * dt2 / (3._rt * ep0);
+
+                    // Coefficient multiplying J in update equation for E
+                    X4(i,j,k) = -dt / ep0;
+                }
             }
 
             // Limits for omega = 0 and omega_c = 0
