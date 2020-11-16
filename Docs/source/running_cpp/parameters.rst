@@ -254,13 +254,17 @@ user-defined constant and ``x`` and ``y`` are variables. The names are case sens
 ``(x>0)`` is `1` where `x>0` and `0` where `x<=0`. It allows the user to
 define functions by intervals. User-defined constants can be used in parsed
 functions only (i.e., ``density_function(x,y,z)`` and ``field_function(X,Y,t)``,
-see below). User-defined constants can contain only letter, numbers and character _.
+see below). User-defined constants can contain only letters, numbers and the character ``_``.
 The name of each constant has to begin with a letter. The following names are used
-by WarpX, and cannot be used as user-defined constants: `x`, `y`, `z`, `X`, `Y`, `t`.
+by WarpX, and cannot be used as user-defined constants: ``x``, ``y``, ``z``, ``X``, ``Y``, ``t``.
 For example, parameters ``a0`` and ``z_plateau`` can be specified with:
 
 * ``my_constants.a0 = 3.0``
 * ``my_constants.z_plateau = 150.e-6``
+
+The parser reads mathematical functions into an `abstract syntax tree (AST) <https://en.wikipedia.org/wiki/Abstract_syntax_tree>`_, which supports a maximum depth (see :ref:`build options <building-cmake>`_).
+Additional terms in a function can create a level of depth in the AST, e.g. ``a+b+c+d`` is parsed in groups of ``[+ a [+ b [+ c [+ d]]]]`` (depth: 4).
+A trick to reduce this depth for the parser, e.g. when reaching the limit, is to group expliclity, e.g. via ``(a+b)+(c+d)``, which is parsed in groups of ``[+ [+ a b] [+ c d]]`` (depth: 2).
 
 .. _running-cpp-parameters-particle:
 
@@ -308,6 +312,7 @@ Particle initialization
 
 * ``<species_name>.xmin,ymin,zmin`` (`float`) optional (default unlimited)
     When ``<species_name>.xmin`` and ``<species_name>.xmax`` (see below) are set, they delimit the region within which particles are injected.
+    The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side, so expressions like ``<species_name>.xmin = "2.+1."`` and/or using user-defined constants are accepted.
     The same is applicable in the other directions.
     If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
 
@@ -395,13 +400,12 @@ Particle initialization
       user-defined constant, see above. WARNING: where ``density_function(x,y,z)`` is close to zero, particles will still be injected between ``xmin`` and ``xmax`` etc., with a null weight. This is undesirable because it results in useless computing. To avoid this, see option ``density_min`` below.
 
 * ``<species_name>.density_min`` (`float`) optional (default `0.`)
-    Minimum plasma density. No particle is injected where the density is below
-    this value.
+    Minimum plasma density. No particle is injected where the density is below this value.
+    The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side, so expressions like ``<species_name>.density_min = "2.+1."`` and/or using user-defined constants are accepted.
 
 * ``<species_name>.density_max`` (`float`) optional (default `infinity`)
-    Maximum plasma density. The density at each point is the minimum between
-    the value given in the profile, and `density_max`.
-
+    Maximum plasma density. The density at each point is the minimum between the value given in the profile, and `density_max`.
+    The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted.
 * ``<species_name>.radially_weighted`` (`bool`) optional (default `true`)
     Whether particle's weight is varied with their radius. This only applies to cylindrical geometry.
     The only valid value is true.
@@ -1679,13 +1683,16 @@ Reduced Diagnostics
         computed.
 
     * ``ParticleNumber``
-        This type computes the total number of macroparticles in the simulation (for each species
-        and summed over all species). It can be useful in particular for simulations with creation
-        (ionization, QED processes) or removal (resampling) of particles.
+        This type computes the total number of macroparticles and of physical particles (i.e. the
+        sum of their weights) in the whole simulation domain (for each species and summed over all
+        species). It can be useful in particular for simulations with creation (ionization, QED
+        processes) or removal (resampling) of particles.
 
         The output columns are
-        total number of macroparticles summed over all species and
-        total number of macroparticles of each species.
+        total number of macroparticles summed over all species,
+        total number of macroparticles of each species,
+        sum of the particles' weight summed over all species,
+        sum of the particles' weight of each species.
 
     * ``BeamRelevant``
         This type computes properties of a particle beam relevant for particle accelerators,

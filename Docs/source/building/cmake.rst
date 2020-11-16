@@ -129,7 +129,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_MPI_THREAD_MULTIPLE`` **ON**/OFF                                   MPI thread-multiple support, i.e. for ``async_io``
 ``WarpX_OPENPMD``             ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
 ``WarpX_PARSER_DEPTH``        **24**                                       Maximum parser depth for input file functions
-``WarpX_PRECISION``           **double**/single                            Floating point precision (single/double)
+``WarpX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WarpX_QED``                 ON/**OFF**                                   PICSAR QED (requires Boost and PICSAR)
 ``WarpX_amrex_repo``          ``https://github.com/AMReX-Codes/amrex.git`` Repository URI to pull and build AMReX from

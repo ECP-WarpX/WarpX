@@ -13,11 +13,9 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#ifdef WARPX_USE_PY
-#   include "Python/WarpX_py.H"
-#endif
+#include "Python/WarpX_py.H"
 #ifdef WARPX_USE_PSATD
-#include "FieldSolver/SpectralSolver/SpectralSolver.H"
+#   include "FieldSolver/SpectralSolver/SpectralSolver.H"
 #endif
 
 #include <cmath>
@@ -53,9 +51,8 @@ WarpX::Evolve (int numsteps)
 
         // Start loop on time steps
         amrex::Print() << "\nSTEP " << step+1 << " starts ...\n";
-#ifdef WARPX_USE_PY
+
         if (warpx_py_beforestep) warpx_py_beforestep();
-#endif
 
         amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(0);
         if (cost) {
@@ -139,9 +136,8 @@ WarpX::Evolve (int numsteps)
             // B : guard cells are NOT up-to-date
         }
 
-#ifdef WARPX_USE_PY
         if (warpx_py_beforeEsolve) warpx_py_beforeEsolve();
-#endif
+
         if (cur_time + dt[0] >= stop_time - 1.e-3*dt[0] || step == numsteps_max-1) {
             // At the end of last step, push p by 0.5*dt to synchronize
             UpdateAuxilaryData();
@@ -154,9 +150,8 @@ WarpX::Evolve (int numsteps)
             }
             is_synchronized = true;
         }
-#ifdef WARPX_USE_PY
+
         if (warpx_py_afterEsolve) warpx_py_afterEsolve();
-#endif
 
         for (int lev = 0; lev <= max_level; ++lev) {
             ++istep[lev];
@@ -237,9 +232,8 @@ WarpX::Evolve (int numsteps)
             break;
         }
 
-#ifdef WARPX_USE_PY
         if (warpx_py_afterstep) warpx_py_afterstep();
-#endif
+
         // End loop on time steps
     }
 
@@ -280,16 +274,12 @@ WarpX::OneStep_nosub (Real cur_time)
     //               from p^{n-1/2} to p^{n+1/2}
     // Deposit current j^{n+1/2}
     // Deposit charge density rho^{n}
-#ifdef WARPX_USE_PY
     if (warpx_py_particleinjection) warpx_py_particleinjection();
     if (warpx_py_particlescraper) warpx_py_particlescraper();
     if (warpx_py_beforedeposition) warpx_py_beforedeposition();
-#endif
     PushParticlesandDepose(cur_time);
 
-#ifdef WARPX_USE_PY
     if (warpx_py_afterdeposition) warpx_py_afterdeposition();
-#endif
 
 // TODO
 // Apply current correction in Fourier space: for domain decomposition with local

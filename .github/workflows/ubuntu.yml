@@ -34,7 +34,7 @@ jobs:
         which nvcc || echo "nvcc not in PATH!"
 
         mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_COMPUTE=CUDA -DCUDA_ARCH=6.0 -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single -DCUDA_ERROR_CAPTURE_THIS=ON
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_COMPUTE=CUDA -DAMReX_CUDA_ARCH=6.0 -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE -DCUDA_ERROR_CAPTURE_THIS=ON
         make -j 2
 
 # Ref.: https://github.com/rscohn2/oneapi-ci
@@ -76,7 +76,7 @@ jobs:
         cd ..
 
         mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE
         make -j 2
 
   build_dpcc:
@@ -117,7 +117,7 @@ jobs:
         export CC=$(which clang)
 
         mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=DPCPP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=single
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=DPCPP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE
         make -j 2
 
   build_hip:
@@ -137,5 +137,5 @@ jobs:
         export CC=$(which hipcc)
 
         mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=ON -DWarpX_COMPUTE=HIP -DAMD_ARCH=gfx900 -DWarpX_OPENPMD=ON -DWarpX_PRECISION=single
+        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=ON -DWarpX_COMPUTE=HIP -DAMReX_AMD_ARCH=gfx900 -DWarpX_OPENPMD=ON -DWarpX_PRECISION=SINGLE
         make -j 2

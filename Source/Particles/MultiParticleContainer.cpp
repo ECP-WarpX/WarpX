@@ -1127,6 +1127,9 @@ MultiParticleContainer::doQEDSchwinger ()
     auto& pc_product_pos =
             allcontainers[m_qed_schwinger_pos_product];
 
+    pc_product_ele->defineAllParticleTiles();
+    pc_product_pos->defineAllParticleTiles();
+
     const MultiFab & Ex = warpx.getEfield(level_0,0);
     const MultiFab & Ey = warpx.getEfield(level_0,1);
     const MultiFab & Ez = warpx.getEfield(level_0,2);
@@ -1151,9 +1154,6 @@ MultiParticleContainer::doQEDSchwinger ()
 
         const Array4<const amrex::Real> array_EMFAB [] = {arrEx,arrEy,arrEz,
                                            arrBx,arrBy,arrBz};
-
-        pc_product_ele->defineAllParticleTiles();
-        pc_product_pos->defineAllParticleTiles();
 
         auto& dst_ele_tile = pc_product_ele->ParticlesAt(level_0, mfi);
         auto& dst_pos_tile = pc_product_pos->ParticlesAt(level_0, mfi);
