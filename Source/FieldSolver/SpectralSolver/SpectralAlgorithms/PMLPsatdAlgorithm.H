@@ -65,11 +65,8 @@ class PMLPsatdAlgorithm : public SpectralBaseAlgorithm
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:
-        SpectralRealCoefficients C_coef  , S_ck_coef, C1_coef , C2_coef , C3_coef ,
-                                 C4_coef , C5_coef  , C6_coef , C7_coef , C8_coef ,
-                                 C9_coef , C10_coef , C11_coef, C12_coef, C13_coef,
-                                 C14_coef, C15_coef , C16_coef, C17_coef, C18_coef,
-                                 C19_coef, C20_coef , C21_coef, C22_coef;
+        SpectralRealCoefficients C_coef, S_ck_coef, inv_k2_coef;
+        amrex::Real m_dt;
 };
 
 #endif // WARPX_USE_PSATD
