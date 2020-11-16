@@ -85,4 +85,3 @@ NP.frequency = 200
 diagnostics.diags_names = diag1
 diag1.period = 200
 diag1.diag_type = Full
-diag1.plot_raw_fields = 1

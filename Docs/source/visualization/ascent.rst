@@ -199,7 +199,7 @@ The following block can be used in an ascent action to extract *Conduit Blueprin
 .. code-block:: yaml
 
     -
-      action: action: "add_extracts"
+      action: "add_extracts"
       extracts:
         e1:
           type: "relay"
@@ -286,10 +286,30 @@ Workflow
 .. note::
 
    This section is in-progress.
-   It will describe how to quickly create and iterate on ``ascent_actions.yaml`` files before running at scale.
+   TODOs: finalize acceptance testing; update 3D LWFA example
 
-   TODOs: finalize acceptance testing; update 3D LWFA example; share Jupyter notebook file
+In the preparation of simulations, it is generally useful to run small, under-resolved versions of the planned simulation layout first.
+Ascent replay is helpful in the setup of an in situ visualization pipeline during this process.
+In the following, a Jupyter-based workflow is shown that can be used to quickly iterate on the design of a ``ascent_actions.yaml`` file, repeatedly rendering the same (small) data.
+
+First, run a small simulation, e.g. on a local computer, and create conduit blueprint files (see above).
+Second, copy the Jupyter Notebook file :download:`ascent_replay_warpx.ipynb <../../../Tools/Ascent/ascent_replay_warpx.ipynb>` into the simulation output directory.
+Third, download and start a Docker container with a prepared Jupyter installation and Ascent Python bindings from the simulation output directory:
 
 .. code-block:: bash
 
-   docker run -v$PWD:/home/user/ascent/install-debug/examples/ascentutorial/ascent_intro/notebooks/replay -p 8000:8000 -p 8888:8888 -p 9000:9000 -p 10000:10000 -t -i alpinedav/ascent-jupyter:latest
+   docker pull alpinedav/ascent-jupyter:latest
+   docker run -v$PWD:/home/user/ascent/install-debug/examples/ascent/tutorial/ascent_intro/notebooks/replay -p 8000:8000 -p 8888:8888 -p 9000:9000 -p 10000:10000 -t -i alpinedav/ascent-jupyter:latest
+
+Now, access Jupyter Lab via: http://localhost:8888/lab (password: ``learn``).
+
+Inside the Jupyter Lab is a ``replay/`` directory, which mounts the outer working directory.
+You can now open ``ascent_replay_warpx.ipynb`` and execute all cells.
+The last two cells are the replay action that can be quickly iterated: change ``replay_actions.yaml`` cell and execute both.
+
+.. note::
+
+   * Keep an eye on the terminal, if a replay action is erroneous it will show up on the terminal that started the docker container.
+     (TODO: We might want to catch that inside python and print it in Jupyter instead.)
+   * If you remove a "key" from the replay action, you might see an error in the ``AscentViewer``.
+     Restart and execute all cells in that case.

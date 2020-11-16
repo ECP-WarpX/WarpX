@@ -33,8 +33,8 @@ Use the following commands to download the WarpX source code and switch to the c
    cd ~/src
 
    git clone https://github.com/ECP-WarpX/WarpX.git warpx
-   git clone --branch development https://github.com/ECP-WarpX/picsar.git
-   git clone --branch development https://github.com/AMReX-Codes/amrex.git
+   git clone https://github.com/ECP-WarpX/picsar.git
+   git clone https://github.com/AMReX-Codes/amrex.git
 
 We use the following modules and environments on the system.
 
@@ -54,6 +54,9 @@ We use the following modules and environments on the system.
    # but there is no such file for JSC yet.
    export GPUS_PER_SOCKET=2
    export GPUS_PER_NODE=4
+
+   # optimize CUDA compilation for V100 (CMake hint)
+   export AMREX_CUDA_ARCH=7.0
 
 Note that for now WarpX must rely on OpenMPI instead of the recommended MPI implementation on this platform MVAPICH2.
 

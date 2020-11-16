@@ -76,7 +76,7 @@ Index filterCopyTransformParticles (DstTile& dst, SrcTile& src, Index* mask, Ind
             for (int j = 0; j < N; ++j) {
                 copy(dst_data, src_data, i, N*p_offsets[i] + dst_index + j, engine);
             }
-            transform(dst_data, src_data, i, N*p_offsets[i] + dst_index);
+            transform(dst_data, src_data, i, N*p_offsets[i] + dst_index, engine);
         }
     });
 
@@ -225,7 +225,8 @@ Index filterCopyTransformParticles (DstTile& dst1, DstTile& dst2, SrcTile& src, 
             }
             transform(dst1_data, dst2_data, src_data, i,
                       N*p_offsets[i] + dst1_index,
-                      N*p_offsets[i] + dst2_index);
+                      N*p_offsets[i] + dst2_index,
+                      engine);
         }
     });
 

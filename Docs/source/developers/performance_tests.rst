@@ -25,7 +25,7 @@ Here is an example setup for Summit:
    cd $AUTOMATED_PERF_TESTS
    git clone https://github.com/ECP-WarpX/WarpX.git warpx
    git clone https://github.com/ECP-WarpX/picsar.git
-   git clone --branch development https://github.com/AMReX-Codes/amrex.git
+   git clone https://github.com/AMReX-Codes/amrex.git
    git clone https://github.com/ECP-WarpX/perf_logs.git
 
 Then, in ``$AUTOMATED_PERF_TESTS``, create a file ``run_automated_performance_tests_512.sh`` with the following content:

@@ -11,9 +11,6 @@
 #include "BoundaryConditions/WarpX_PML_kernels.H"
 #include "BoundaryConditions/PML_current.H"
 #include "WarpX_FDTD.H"
-#ifdef WARPX_USE_PY
-#   include "Python/WarpX_py.H"
-#endif
 
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -72,8 +69,11 @@ namespace {
         solver.ForwardTransform(*current[1], Idx::Jy);
 #endif
         solver.ForwardTransform(*current[2], Idx::Jz);
-        solver.ForwardTransform(*rho, Idx::rho_old, 0);
-        solver.ForwardTransform(*rho, Idx::rho_new, 1);
+
+        if (rho) {
+            solver.ForwardTransform(*rho, Idx::rho_old, 0);
+            solver.ForwardTransform(*rho, Idx::rho_new, 1);
+        }
 #ifdef WARPX_DIM_RZ
         if (WarpX::use_kspace_filter) {
             solver.ApplyFilter(Idx::rho_old);

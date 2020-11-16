@@ -674,17 +674,24 @@ WarpX::ReadParameters ()
       // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
+#   ifdef WARPX_DIM_RZ
+        update_with_rho = true;  // Must be true for RZ PSATD
+#   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0.) {
             update_with_rho = false; // standard PSATD
         }
         else {
             update_with_rho = true;  // Galilean PSATD
         }
+#   endif
 
         // Overwrite update_with_rho with value set in input file
         pp.query("update_with_rho", update_with_rho);
 
 #   ifdef WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
+        "psatd.update_with_rho must be equal to 1 in RZ geometry");
+
         if (!Geom(0).isPeriodic(1)) {
             use_damp_fields_in_z_guard = true;
         }
@@ -973,7 +980,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE);
     Efield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE);
 
-    if (do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics))
+#ifdef WARPX_USE_PSATD
+    const bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)
+                                || update_with_rho || current_correction;
+#else
+    const bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics);
+#endif
+    if (deposit_charge)
     {
         rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho);
     }
@@ -990,10 +1003,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max());
     }
 #ifdef WARPX_USE_PSATD
-    else
-    {
-        rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho);
-    }
     // Allocate and initialize the spectral solver
 #   if (AMREX_SPACEDIM == 3)
     RealVect dx_vect(dx[0], dx[1], dx[2]);
