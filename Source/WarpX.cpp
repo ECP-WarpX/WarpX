@@ -776,6 +776,10 @@ WarpX::BackwardCompatibility ()
         amrex::Abort("warpx.plot_crsepatch is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
     }
+    if (ppw.query("use_kspace_filter", backward_int)){
+        amrex::Abort("warpx.use_kspace_filter is not supported anymore. "
+                     "Please use the flag use_filter, see documentation.");
+    }
 
     ParmParse ppalgo("algo");
     int backward_mw_solver;
