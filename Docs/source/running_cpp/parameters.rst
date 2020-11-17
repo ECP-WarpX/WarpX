@@ -1012,21 +1012,15 @@ Numerics and algorithms
     Whether to smooth the charge and currents on the mesh, after depositing
     them from the macroparticles. This uses a bilinear filter
     (see the sub-section **Filtering** in :doc:`../theory/theory`).
-
-* ``warpx.use_kspace_filter`` (`0` or `1`; default: `0`)
-    Whether to smooth the charge and currents on the mesh, after depositing
-    them from the macroparticles. This uses a bilinear filter, applying the
-    filter in k-space. It is only supported with the RZ spectral solver.
-    (see the sub-section **Filtering** in :doc:`../theory/theory`).
+    When using the RZ spectral solver, the filtering is done in k-space.
 
 * ``warpx.filter_npass_each_dir`` (`3 int`) optional (default `1 1 1`)
     Number of passes along each direction for the bilinear filter.
     In 2D simulations, only the first two values are read.
 
 * ``warpx.use_filter_compensation`` (`0` or `1`; default: `0`)
-    Whether to add compensation when applying k-space filtering.
-    This requires `warpx.use_kspace_filter=1` and is only supported
-    with the RZ spectral solver.
+    Whether to add compensation when applying filtering.
+    This is only supported with the RZ spectral solver.
 
 * ``warpx.use_damp_fields_in_z_guard`` (`0` or `1`)
     When using the RZ spectrol solver, specifies whether to apply a

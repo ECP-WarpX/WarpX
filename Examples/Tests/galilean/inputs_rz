@@ -34,7 +34,7 @@ interpolation.noz = 3
 particles.species_names = electrons ions
 
 warpx.do_nodal = 1
-warpx.use_kspace_filter = 1
+warpx.use_filter = 1
 warpx.do_pml = 0
 
 psatd.nox = 16

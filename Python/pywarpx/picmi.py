@@ -313,13 +313,8 @@ class PseudoRandomLayout(picmistandard.PICMI_PseudoRandomLayout):
 class BinomialSmoother(picmistandard.PICMI_BinomialSmoother):
 
     def initialize_inputs(self, solver):
-        use_spectral = solver.method == 'PSATD' and isinstance(solver.grid, picmistandard.PICMI_CylindricalGrid)
-        if use_spectral:
-            pywarpx.warpx.use_kspace_filter = 1
-            if self.compensation is not None:
-                pywarpx.warpx.use_filter_compensation = self.compensation[0] and self.compensation[1]
-        else:
-            pywarpx.warpx.use_filter = 1
+        pywarpx.warpx.use_filter = 1
+        pywarpx.warpx.use_filter_compensation = np.all(self.compensation)
         if self.n_pass is None:
             # If not specified, do at least one pass in each direction.
             self.n_pass = 1
