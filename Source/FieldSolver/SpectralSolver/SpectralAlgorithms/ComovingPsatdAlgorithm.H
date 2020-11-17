@@ -4,24 +4,39 @@
 #include "SpectralBaseAlgorithm.H"
 
 #if WARPX_USE_PSATD
-/* \brief Class that updates the field in spectral space
- * and stores the coefficients of the corresponding update equation.
+
+/* \brief Class that updates the field in spectral space and stores the coefficients
+ * of the corresponding update equation, according to the comoving spectral scheme.
  */
 class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
 {
     public:
+
+        /**
+         * \brief Class constructor
+         */
         ComovingPsatdAlgorithm (const SpectralKSpace& spectral_kspace,
                                 const amrex::DistributionMapping& dm,
-                                const int norder_x, const int norder_y,
-                                const int norder_z, const bool nodal,
+                                const int norder_x,
+                                const int norder_y,
+                                const int norder_z,
+                                const bool nodal,
                                 const amrex::Array<amrex::Real,3>& v_comoving,
                                 const amrex::Real dt,
                                 const bool update_with_rho);
-        // Redefine update equation from base class
+
+        /**
+         * \brief Override the update equations in Fourier space
+         */
         virtual void pushSpectralFields (SpectralFieldData& f) const override final;
-        virtual int getRequiredNumberOfFields () const override final {
+
+        virtual int getRequiredNumberOfFields () const override final
+        {
             return SpectralFieldIndex::n_fields;
         };
+
+        /* \brief Initialize the coefficients needed in the update equations
+         */
         void InitializeSpectralCoefficients (const SpectralKSpace& spectral_kspace,
                                              const amrex::DistributionMapping& dm,
                                              const amrex::Real dt);
@@ -55,17 +70,23 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:
+
+        // Real and complex spectral coefficients
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients Theta2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
+
         // k vectors
         KVectorComponent kx_vec;
 #if (AMREX_SPACEDIM==3)
         KVectorComponent ky_vec;
 #endif
         KVectorComponent kz_vec;
+
+        // Additional member variables
         amrex::Array<amrex::Real,3> m_v_comoving;
         amrex::Real m_dt;
         bool m_update_with_rho;
 };
+
 #endif // WARPX_USE_PSATD
 #endif // WARPX_COMOVING_PSATD_ALGORITHM_H_
