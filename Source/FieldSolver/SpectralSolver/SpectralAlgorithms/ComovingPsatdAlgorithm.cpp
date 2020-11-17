@@ -1,9 +1,6 @@
 #include "ComovingPsatdAlgorithm.H"
 #include "Utils/WarpXConst.H"
 
-#include <cmath>
-
-
 #if WARPX_USE_PSATD
 
 using namespace amrex;
