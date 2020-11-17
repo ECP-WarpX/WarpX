@@ -176,7 +176,7 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
         // Loop over indices within one box
         amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
-            // Calculate norm of vector
+            // Calculate norm of finite-order k vector
             const amrex::Real knorm_mod = std::sqrt(
                 std::pow(kx_mod[i], 2) +
 #if (AMREX_SPACEDIM==3)
@@ -185,7 +185,7 @@ void ComovingPsatdAlgorithm::InitializeSpectralCoefficients (const SpectralKSpac
 #else
                 std::pow(kz_mod[j], 2));
 #endif
-            // Calculate norm of vector
+            // Calculate norm of infinite-order k vector
             const amrex::Real knorm = std::sqrt(
                 std::pow(kx[i], 2) +
 #if (AMREX_SPACEDIM==3)
@@ -417,13 +417,13 @@ ComovingPsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
         amrex::Array4<Complex> fields = field_data.fields[mfi].array();
 
         // Extract pointers for the k vectors
-        const amrex::Real* const modified_kx_arr   = modified_kx_vec[mfi].dataPtr();
+        const amrex::Real* const modified_kx_arr = modified_kx_vec[mfi].dataPtr();
         const amrex::Real* const kx_arr = kx_vec[mfi].dataPtr();
 #if (AMREX_SPACEDIM==3)
-        const amrex::Real* const modified_ky_arr   = modified_ky_vec[mfi].dataPtr();
+        const amrex::Real* const modified_ky_arr = modified_ky_vec[mfi].dataPtr();
         const amrex::Real* const ky_arr = ky_vec[mfi].dataPtr();
 #endif
-        const amrex::Real* const modified_kz_arr   = modified_kz_vec[mfi].dataPtr();
+        const amrex::Real* const modified_kz_arr = modified_kz_vec[mfi].dataPtr();
         const amrex::Real* const kz_arr = kz_vec[mfi].dataPtr();
 
         // Local copy of member variables before GPU loop
@@ -445,43 +445,43 @@ ComovingPsatdAlgorithm::CurrentCorrection (SpectralFieldData& field_data,
             const Complex rho_new = fields(i,j,k,Idx::rho_new);
 
             // k vector values, and coefficients
-            const amrex::Real kx_mod   = modified_kx_arr[i];
+            const amrex::Real kx_mod = modified_kx_arr[i];
             const amrex::Real kx = kx_arr[i];
 #if (AMREX_SPACEDIM==3)
-            const amrex::Real ky_mod   = modified_ky_arr[j];
-            const amrex::Real kz_mod   = modified_kz_arr[k];
+            const amrex::Real ky_mod = modified_ky_arr[j];
+            const amrex::Real kz_mod = modified_kz_arr[k];
             const amrex::Real ky = ky_arr[j];
             const amrex::Real kz = kz_arr[k];
 #else
-            constexpr amrex::Real ky_mod   = 0._rt;
-            const     amrex::Real kz_mod   = modified_kz_arr[j];
+            constexpr amrex::Real ky_mod = 0._rt;
+            const     amrex::Real kz_mod = modified_kz_arr[j];
             constexpr amrex::Real ky = 0._rt;
             const     amrex::Real kz = kz_arr[j];
 #endif
             constexpr Complex I = Complex{0._rt,1._rt};
 
-            const amrex::Real k_norm = std::sqrt(kx_mod * kx_mod + ky_mod * ky_mod + kz_mod * kz_mod);
+            const amrex::Real knorm_mod = std::sqrt(kx_mod * kx_mod + ky_mod * ky_mod + kz_mod * kz_mod);
 
             // Correct J
-            if (k_norm != 0._rt)
+            if (knorm_mod != 0._rt)
             {
-                const Complex k_dot_J = kx_mod * Jx + ky_mod * Jy + kz_mod * Jz;
-                const amrex::Real kv = kx * vx + ky * vy + kz * vz;
+                const Complex kmod_dot_J = kx_mod * Jx + ky_mod * Jy + kz_mod * Jz;
+                const amrex::Real k_dot_v = kx * vx + ky * vy + kz * vz;
 
-                if ( kv != 0._rt ) {
+                if ( k_dot_v != 0._rt ) {
 
-                    const Complex theta = amrex::exp(- I * kv * dt * 0.5_rt);
+                    const Complex theta = amrex::exp(- I * k_dot_v * dt * 0.5_rt);
                     const Complex den = 1._rt - theta * theta;
 
-                    fields(i,j,k,Idx::Jx) = Jx - (k_dot_J + kv * theta * (rho_new - rho_old) / den) * kx_mod / (k_norm * k_norm);
-                    fields(i,j,k,Idx::Jy) = Jy - (k_dot_J + kv * theta * (rho_new - rho_old) / den) * ky_mod / (k_norm * k_norm);
-                    fields(i,j,k,Idx::Jz) = Jz - (k_dot_J + kv * theta * (rho_new - rho_old) / den) * kz_mod / (k_norm * k_norm);
+                    fields(i,j,k,Idx::Jx) = Jx - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kx_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx::Jy) = Jy - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * ky_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx::Jz) = Jz - (kmod_dot_J + k_dot_v * theta * (rho_new - rho_old) / den) * kz_mod / (knorm_mod * knorm_mod);
 
                 } else {
 
-                    fields(i,j,k,Idx::Jx) = Jx - (k_dot_J - I * (rho_new - rho_old) / dt) * kx_mod / (k_norm * k_norm);
-                    fields(i,j,k,Idx::Jy) = Jy - (k_dot_J - I * (rho_new - rho_old) / dt) * ky_mod / (k_norm * k_norm);
-                    fields(i,j,k,Idx::Jz) = Jz - (k_dot_J - I * (rho_new - rho_old) / dt) * kz_mod / (k_norm * k_norm);
+                    fields(i,j,k,Idx::Jx) = Jx - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kx_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx::Jy) = Jy - (kmod_dot_J - I * (rho_new - rho_old) / dt) * ky_mod / (knorm_mod * knorm_mod);
+                    fields(i,j,k,Idx::Jz) = Jz - (kmod_dot_J - I * (rho_new - rho_old) / dt) * kz_mod / (knorm_mod * knorm_mod);
                 }
             }
         });
