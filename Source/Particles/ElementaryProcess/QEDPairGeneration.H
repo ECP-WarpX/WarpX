@@ -98,11 +98,13 @@ public:
     * @param[in] i_src particle index of the source species
     * @param[in] i_dst1 particle index of target species 1
     * @param[in] i_dst2 particle index of target species 2
+    * @param[in] engine random number generator engine
     */
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (DstData& dst1, DstData& dst2, SrcData& src,
-        int const i_src, int const i_dst1, int const i_dst2) const noexcept
+        int const i_src, int const i_dst1, int const i_dst2,
+        amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
 
@@ -139,7 +141,8 @@ public:
             ex, ey, ez,
             bx, by, bz,
             e_ux, e_uy, e_uz,
-            p_ux, p_uy, p_uz);
+            p_ux, p_uy, p_uz,
+            engine);
 
         src.m_aos[i_src].id() = -1; //destroy photon after pair generation
     }

@@ -96,7 +96,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 {
     BackwardCompatibility();
 
-    plasma_injector.reset(new PlasmaInjector(species_id, species_name));
+    plasma_injector = std::make_unique<PlasmaInjector>(species_id, species_name);
     physical_species = plasma_injector->getPhysicalSpecies();
     charge = plasma_injector->getCharge();
     mass = plasma_injector->getMass();
@@ -116,6 +116,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     pp.query("do_continuous_injection", do_continuous_injection);
     pp.query("initialize_self_fields", initialize_self_fields);
     pp.query("self_fields_required_precision", self_fields_required_precision);
+    pp.query("self_fields_max_iters", self_fields_max_iters);
     // Whether to plot back-transformed (lab-frame) diagnostics
     // for this species.
     pp.query("do_back_transformed_diagnostics", do_back_transformed_diagnostics);
@@ -179,8 +180,8 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         std::string function_string = "";
         Store_parserString(pp,"plot_filter_function(t,x,y,z,ux,uy,uz)",
                            function_string);
-        m_particle_filter_parser.reset(new ParserWrapper<7>(
-            makeParser(function_string,{"t","x","y","z","ux","uy","uz"})));
+        m_particle_filter_parser = std::make_unique<ParserWrapper<7>>(
+            makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
     }
 
 }
@@ -188,7 +189,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core)
     : WarpXParticleContainer(amr_core, 0)
 {
-    plasma_injector.reset(new PlasmaInjector());
+    plasma_injector = std::make_unique<PlasmaInjector>();
 }
 
 void
@@ -866,7 +867,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
 #ifdef WARPX_QED
                 if(loc_has_quantum_sync){
-                    p_optical_depth_QSR[ip] = quantum_sync_get_opt();
+                    p_optical_depth_QSR[ip] = quantum_sync_get_opt(engine);
                 }
 
                 if(loc_has_breit_wheeler){

@@ -21,7 +21,7 @@ single directory (e.g. ``warpx_directory``):
     cd warpx_directory
     git clone https://github.com/ECP-WarpX/WarpX.git
     git clone https://github.com/ECP-WarpX/picsar.git
-    git clone --branch development https://github.com/AMReX-Codes/amrex.git
+    git clone https://github.com/AMReX-Codes/amrex.git
 
 Basic compilation
 -----------------

@@ -23,7 +23,7 @@ Please see installation instructions below.
 
 - a mature `C++14 <https://en.wikipedia.org/wiki/C%2B%2B14>`_ compiler: e.g. GCC 5, Clang 3.6 or newer
 - `CMake 3.14.0+ <https://cmake.org>`_
-- `AMReX (development) <https://amrex-codes.github.io>`_: we automatically download and compile a copy of AMReX
+- `AMReX <https://amrex-codes.github.io>`_: we automatically download and compile a copy of AMReX
 
 Optional dependencies include:
 
@@ -123,13 +123,13 @@ CMake Option                  Default & Values                             Descr
 ============================= ============================================ =======================================================
 ``CMAKE_BUILD_TYPE``          **RelWithDebInfo**/Release/Debug             Type of build, symbols & optimizations
 ``WarpX_ASCENT``              ON/**OFF**                                   Ascent in situ visualization
-``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/DPCPP                     On-node, accelerated computing backend
+``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/DPCPP/HIP                 On-node, accelerated computing backend
 ``WarpX_DIMS``                **3**/2/RZ                                   Simulation dimensionality
 ``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)
 ``WarpX_MPI_THREAD_MULTIPLE`` **ON**/OFF                                   MPI thread-multiple support, i.e. for ``async_io``
 ``WarpX_OPENPMD``             ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
 ``WarpX_PARSER_DEPTH``        **24**                                       Maximum parser depth for input file functions
-``WarpX_PRECISION``           **double**/single                            Floating point precision (single/double)
+``WarpX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WarpX_QED``                 ON/**OFF**                                   PICSAR QED (requires Boost and PICSAR)
 ``WarpX_amrex_repo``          ``https://github.com/AMReX-Codes/amrex.git`` Repository URI to pull and build AMReX from

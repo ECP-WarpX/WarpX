@@ -272,14 +272,17 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
         tilebox = amrex::coarsen(pti.tilebox(),ref_ratio);
     }
 
+#ifndef AMREX_USE_GPU
     // Staggered tile boxes (different in each direction)
     Box tbx = convert( tilebox, jx->ixType().toIntVect() );
     Box tby = convert( tilebox, jy->ixType().toIntVect() );
     Box tbz = convert( tilebox, jz->ixType().toIntVect() );
+#endif
 
     tilebox.grow(ng_J);
 
 #ifdef AMREX_USE_GPU
+    amrex::ignore_unused(thread_num);
     // GPU, no tiling: j<xyz>_arr point to the full j<xyz> arrays
     auto & jx_fab = jx->get(pti);
     auto & jy_fab = jy->get(pti);
@@ -474,14 +477,17 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         tilebox = amrex::coarsen(pti.tilebox(),ref_ratio);
     }
 
+#ifndef AMREX_USE_GPU
     // Staggered tile box
     Box tb = amrex::convert( tilebox, rho->ixType().toIntVect() );
+#endif
 
     tilebox.grow(ng_rho);
 
     const int nc = WarpX::ncomps;
 
 #ifdef AMREX_USE_GPU
+    amrex::ignore_unused(thread_num);
     // GPU, no tiling: rho_fab points to the full rho array
     MultiFab rhoi(*rho, amrex::make_alias, icomp*nc, nc);
     auto & rho_fab = rhoi.get(pti);
@@ -632,7 +638,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     WarpX& warpx = WarpX::GetInstance();
     const int ng_rho = warpx.get_ng_depos_rho().max();
 
-    auto rho = std::unique_ptr<MultiFab>(new MultiFab(nba,dm,WarpX::ncomps,ng_rho));
+    auto rho = std::make_unique<MultiFab>(nba,dm,WarpX::ncomps,ng_rho);
     rho->setVal(0.0);
 
 #ifdef _OPENMP

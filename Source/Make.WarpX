@@ -50,7 +50,6 @@ endif
   XTRA_FFLAGS   += -fPIC
   XTRA_F90FLAGS += -fPIC
   USERSuffix := .Lib
-  DEFINES += -DWARPX_USE_PY
 endif
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs

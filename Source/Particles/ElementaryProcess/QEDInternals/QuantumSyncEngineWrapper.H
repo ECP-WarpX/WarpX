@@ -70,7 +70,7 @@ public:
      * does not require control parameters or lookup tables.
      */
     QuantumSynchrotronGetOpticalDepth ()
-    {};
+    {}
 
     /**
      * () operator is just a thin wrapper around a very simple function to
@@ -78,12 +78,12 @@ public:
      */
     AMREX_GPU_HOST_DEVICE
     AMREX_FORCE_INLINE
-    amrex::Real operator() () const noexcept
+    amrex::Real operator() (amrex::RandomEngine const& engine) const noexcept
     {
         namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
 
         //A random number in [0,1) should be provided as an argument.
-        return pxr_qs::get_optical_depth(amrex::Random());
+        return pxr_qs::get_optical_depth(amrex::Random(engine));
     }
 };
 //____________________________________________
@@ -110,7 +110,7 @@ public:
     QuantumSynchrotronEvolveOpticalDepth (
         const QS_dndt_table_view table_view,
         const amrex::ParticleReal qs_minimum_chi_part):
-        m_table_view{table_view}, m_qs_minimum_chi_part{qs_minimum_chi_part}{};
+        m_table_view{table_view}, m_qs_minimum_chi_part{qs_minimum_chi_part}{}
 
     /**
      * Evolves the optical depth. It can be used on GPU.
@@ -184,7 +184,7 @@ public:
      */
     QuantumSynchrotronPhotonEmission (
         const QS_phot_em_table_view table_view):
-        m_table_view{table_view}{};
+        m_table_view{table_view}{}
 
     /**
      * Generates photons according to Quantum Synchrotron process.
@@ -194,6 +194,7 @@ public:
      * @param[in] ex,ey,ez electric field components (SI units)
      * @param[in] bx,by,bz magnetic field components (SI units)
      * @param[out] g_ux,g_uy,g_uz gamma*v components of the generated photon (SI units)
+     * @param[in] engine random number generator engine
      * @return a flag which is 1 if chi_photon was out of table
      */
     AMREX_GPU_DEVICE
@@ -202,14 +203,15 @@ public:
     amrex::Real& ux, amrex::Real& uy, amrex::Real& uz,
     const amrex::Real ex, const amrex::Real ey, const amrex::Real ez,
     const amrex::Real bx, const amrex::Real by, const amrex::Real bz,
-    amrex::Real& g_ux, amrex::Real& g_uy, amrex::Real& g_uz) const noexcept
+    amrex::Real& g_ux, amrex::Real& g_uy, amrex::Real& g_uz,
+    amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
         namespace pxr_m = picsar::multi_physics::math;
         namespace pxr_p = picsar::multi_physics::phys;
         namespace pxr_qs = picsar::multi_physics::phys::quantum_sync;
 
-        const auto rand_zero_one_minus_epsi = amrex::Random();
+        const auto rand_zero_one_minus_epsi = amrex::Random(engine);
 
         constexpr ParticleReal me = PhysConst::m_e;
         constexpr ParticleReal one_over_me = 1._prt/me;

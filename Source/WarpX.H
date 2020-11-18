@@ -491,12 +491,22 @@ public:
     const amrex::IntVect get_ng_depos_J() const {return guard_cells.ng_depos_J;}
     const amrex::IntVect get_ng_depos_rho() const {return guard_cells.ng_depos_rho;}
 
+    /** Coarsest-level Domain Decomposition
+     *
+     * If specified, the domain will be chopped into the exact number
+     * of pieces in each dimension as specified by this parameter.
+     *
+     * @return the number of MPI processes per dimension if specified, otherwise a 0-vector
+     */
+    const amrex::IntVect get_numprocs() const {return numprocs;}
+
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
     void computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
-                     amrex::Real const required_precision=1.e-11 ) const;
+                     amrex::Real const required_precision=1.e-11,
+                     const int max_iters=200) const;
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<amrex::Real, 3> const beta = {{0,0,0}} ) const;
@@ -532,6 +542,8 @@ public:
      * to correct number of boxes and boxes per level
      */
     void ComputeCostsHeuristic (amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > >& costs);
+
+    void ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp);
 
 protected:
 
@@ -867,7 +879,18 @@ private:
         amrex::Vector<std::unique_ptr<SpectralSolver>> spectral_solver_fp;
         amrex::Vector<std::unique_ptr<SpectralSolver>> spectral_solver_cp;
 #   endif
+
+public:
+
+#   ifdef WARPX_DIM_RZ
+        SpectralSolverRZ&
+#   else
+        SpectralSolver&
+#   endif
+            get_spectral_solver_fp (int lev) {return *spectral_solver_fp[lev];}
 #endif
+
+private:
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_fp;
     amrex::Vector<std::unique_ptr<FiniteDifferenceSolver>> m_fdtd_solver_cp;
 };

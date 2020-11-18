@@ -274,6 +274,7 @@ public:
     bool do_splitting = false;
     bool initialize_self_fields = false;
     amrex::Real self_fields_required_precision = 1.e-11;
+    int self_fields_max_iters = 200;
 
     // split along diagonals (0) or axes (1)
     int split_type = 0;
@@ -395,9 +396,9 @@ protected:
     //Species can receive a shared pointer to a QED engine (species for
     //which this is relevant should override these functions)
     virtual void
-    set_breit_wheeler_engine_ptr(std::shared_ptr<BreitWheelerEngine>){};
+    set_breit_wheeler_engine_ptr(std::shared_ptr<BreitWheelerEngine>){}
     virtual void
-    set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){};
+    set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){}
 
     int m_qed_breit_wheeler_ele_product;
     std::string m_qed_breit_wheeler_ele_product_name;

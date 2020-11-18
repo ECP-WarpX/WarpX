@@ -21,9 +21,9 @@ ParticleNumber::ParticleNumber (std::string rd_name)
     // get number of species (int)
     const auto nSpecies = mypc.nSpecies();
 
-    // resize data array to nSpecies+1
-    // (number of particles of each species + total number of particles)
-    m_data.resize(nSpecies+1, amrex::Real(0.));
+    // resize data array to 2*(nSpecies+1) (each species + sum over all species
+    // for both number of macroparticles and of physical particles)
+    m_data.resize(2*(nSpecies+1), amrex::Real(0.));
 
     // get species names (std::vector<std::string>)
     const auto species_names = mypc.GetSpeciesNames();
@@ -41,13 +41,27 @@ ParticleNumber::ParticleNumber (std::string rd_name)
             ofs << m_sep;
             ofs << "[2]time(s)";
             ofs << m_sep;
-            ofs << "[3]total()";
-            constexpr int shift_first_species = 4; // Column number of first species in output file
+            ofs << "[3]total macroparticles()";
+            // Column number of first species macroparticle number
+            constexpr int shift_first_species_macroparticles = 4;
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" + std::to_string(shift_first_species+i) + "]";
-                ofs << species_names[i]+"()";
+                ofs << "[" + std::to_string(shift_first_species_macroparticles+i) + "]";
+                ofs << species_names[i]+" macroparticles()";
+            }
+            // Column number of total weight (summed over all species)
+            const int shift_total_sum_weight = shift_first_species_macroparticles + nSpecies;
+            ofs << m_sep;
+            ofs << "[" + std::to_string(shift_total_sum_weight) + "]";
+            ofs << "total weight()";
+            // Column number of first species weight
+            const int shift_first_species_sum_weight = shift_total_sum_weight + 1;
+            for (int i = 0; i < nSpecies; ++i)
+            {
+                ofs << m_sep;
+                ofs << "[" + std::to_string(shift_first_species_sum_weight+i) + "]";
+                ofs << species_names[i]+" weight()";
             }
             ofs << std::endl;
             // close file
@@ -58,7 +72,7 @@ ParticleNumber::ParticleNumber (std::string rd_name)
 }
 // end constructor
 
-// function that computes total number of macroparticles
+// function that computes total number of macroparticles and physical particles
 void ParticleNumber::ComputeDiags (int step)
 {
 
@@ -71,13 +85,18 @@ void ParticleNumber::ComputeDiags (int step)
     // get number of species (int)
     const auto nSpecies = mypc.nSpecies();
 
-    // Index of total number of particles (all species) in m_data
-    constexpr int idx_total = 0;
-    // Index of first species in m_data
-    constexpr int idx_first_species = 1;
+    // Index of total number of macroparticles (all species) in m_data
+    constexpr int idx_total_macroparticles = 0;
+    // Index of first species macroparticle number in m_data
+    constexpr int idx_first_species_macroparticles = 1;
+    // Index of total weight (all species) in m_data
+    const int idx_total_sum_weight = idx_first_species_macroparticles + nSpecies;
+    // Index of first species weight in m_data
+    const int idx_first_species_sum_weight = idx_total_sum_weight + 1;
 
-    // Initialize total number of particles (all species) to 0
-    m_data[idx_total] = amrex::Real(0.);
+    // Initialize total number of macroparticles and total weight (all species) to 0
+    m_data[idx_total_macroparticles] = amrex::Real(0.);
+    m_data[idx_total_sum_weight] = amrex::Real(0.);
 
     // loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)
@@ -85,10 +104,29 @@ void ParticleNumber::ComputeDiags (int step)
         // get WarpXParticleContainer class object
         const auto & myspc = mypc.GetParticleContainer(i_s);
 
-        // Save result for this species
-        m_data[idx_first_species + i_s] = myspc.TotalNumberOfParticles();
-        // Increase total number of particles (all species)
-        m_data[idx_total] += m_data[idx_first_species + i_s];
+        // Save total number of macroparticles for this species
+        m_data[idx_first_species_macroparticles + i_s] = myspc.TotalNumberOfParticles();
+
+        using PType = typename WarpXParticleContainer::SuperParticleType;
+
+        // Reduction to compute sum of weights for this species
+        auto Wtot = ReduceSum( myspc,
+        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> amrex::Real
+        {
+            return p.rdata(PIdx::w);
+        });
+
+        // MPI reduction
+        amrex::ParallelDescriptor::ReduceRealSum
+            (Wtot, amrex::ParallelDescriptor::IOProcessorNumber());
+
+        // Save sum of particles weight for this species
+        m_data[idx_first_species_sum_weight + i_s] = Wtot;
+
+
+        // Increase total number of macroparticles and total weight (all species)
+        m_data[idx_total_macroparticles] += m_data[idx_first_species_macroparticles + i_s];
+        m_data[idx_total_sum_weight] += m_data[idx_first_species_sum_weight + i_s];
     }
     // end loop over species
 
@@ -96,7 +134,11 @@ void ParticleNumber::ComputeDiags (int step)
      *  [total number of macroparticles (all species),
      *   total number of macroparticles (species 1),
      *   ...,
-     *   total number of macroparticles (species n)] */
+     *   total number of macroparticles (species n)
+     *   sum of particles weight (all species),
+     *   sum of particles weight (species 1),
+     *   ...,
+     *   sum of particles weight (species n)] */
 
 }
 // end void ParticleNumber::ComputeDiags

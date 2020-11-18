@@ -251,7 +251,7 @@ First, log into cori and clone the git repo's.
    mkdir warpx
    cd warpx/
    git clone https://github.com/ECP-WarpX/WarpX.git WarpX-libsim
-   git clone --branch development https://github.com/AMReX-Codes/amrex
+   git clone https://github.com/AMReX-Codes/amrex
    git clone https://github.com/ECP-WarpX/picsar.git
    cd WarpX-libsim
    vim GNUmakefile

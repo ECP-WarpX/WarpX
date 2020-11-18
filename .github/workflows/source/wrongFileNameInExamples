@@ -17,6 +17,7 @@ do
     if [[ ${file:0:6 } != inputs       ]] &&
        [[ ${file:0:12} != PICMI_inputs ]] &&
        [[ ${file:0:8 } != analysis     ]] &&
+       [[ ${file:  -4} != yaml         ]] &&
        [[ ${file:0:6 } != README       ]]
     then
         files+=($file)
@@ -32,6 +33,7 @@ then
     echo " - inputs       : for WarpX input files"
     echo " - PICMI_inputs : for PICMI-compliant input scripts"
     echo " - analysis     : for scripts testing the accuracy of a test"
+    echo " - *.yaml       : for third-party input, e.g. Ascent in situ visualization"
     echo " - README       : for readme files"
     echo ""
     echo "Please rename the file(s) to comply, or move to another folder"

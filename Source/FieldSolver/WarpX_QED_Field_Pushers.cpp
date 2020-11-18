@@ -11,10 +11,6 @@
 #include "BoundaryConditions/PML_current.H"
 #include "WarpX_FDTD.H"
 
-#ifdef WARPX_USE_PY
-#   include "Python/WarpX_py.H"
-#endif
-
 #ifdef BL_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif

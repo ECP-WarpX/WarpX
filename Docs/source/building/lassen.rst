@@ -58,6 +58,9 @@ We use the following modules and environments on the system.
    # fix system defaults: do not escape $ with a \ on tab completion
    shopt -s direxpand
 
+   # optimize CUDA compilation for V100
+   export AMREX_CUDA_ARCH=7.0
+
    # compiler environment hints
    export CC=$(which gcc)
    export CXX=$(which g++)
