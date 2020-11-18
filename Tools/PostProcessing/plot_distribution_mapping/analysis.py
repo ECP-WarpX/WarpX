@@ -105,7 +105,7 @@ class SimData:
 
         for key in self.keys:
             row = key//reduced_diags_interval
-            costs = data[row, 0::n_data_fields]
+            costs = data[row, 0::n_data_fields].astype(float)
             ranks = data[row, 1::n_data_fields].astype(int)
             icoords = i.astype(int)//i_blocking_factor
             jcoords = j.astype(int)//j_blocking_factor
@@ -115,8 +115,9 @@ class SimData:
             shape = (kmax+1, jmax+1, imax+1)[:2+is_3D]
             coords = [coord[:2+is_3D] for coord in zip(kcoords, jcoords, icoords)]
 
-            cost_arr = np.full(shape, -1)
+            cost_arr = np.full(shape, 0.0)
             rank_arr = np.full(shape, -1)
+            print('costs are',costs)
             for nc, cost in enumerate(costs):
                 coord = coords[nc]
                 cost_arr[coord] += cost
