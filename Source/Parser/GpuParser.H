@@ -52,7 +52,7 @@ public:
 
 #else
 // WarpX compiled for CPU
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         int tid = omp_get_thread_num();
 #else
         int tid = 0;
@@ -100,28 +100,28 @@ GpuParser<N>::GpuParser (WarpXParser const& wp)
 
 #else // not defined AMREX_USE_GPU
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
     nthreads = omp_get_max_threads();
-#else // _OPENMP
+#else // AMREX_USE_OMP
     nthreads = 1;
-#endif // _OPENMP
+#endif // AMREX_USE_OMP
 
     m_parser = ::new struct wp_parser*[nthreads];
     m_var = ::new amrex::GpuArray<amrex::Real,N>[nthreads];
 
     for (int tid = 0; tid < nthreads; ++tid)
     {
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         m_parser[tid] = wp_parser_dup(wp.m_parser[tid]);
         for (int i = 0; i < N; ++i) {
             wp_parser_regvar(m_parser[tid], wp.m_varnames[tid][i].c_str(), &(m_var[tid][i]));
         }
-#else // _OPENMP
+#else // AMREX_USE_OMP
         m_parser[tid] = wp_parser_dup(wp.m_parser);
         for (int i = 0; i < N; ++i) {
             wp_parser_regvar(m_parser[tid], wp.m_varnames[i].c_str(), &(m_var[tid][i]));
         }
-#endif // _OPENMP
+#endif // AMREX_USE_OMP
     }
 
 #endif // AMREX_USE_GPU

@@ -33,7 +33,7 @@ namespace
         auto data =
             static_cast<amrex::Real**>(malloc((*num_boxes) * sizeof(amrex::Real*)));
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
         for ( amrex::MFIter mfi(mf, false); mfi.isValid(); ++mfi ) {

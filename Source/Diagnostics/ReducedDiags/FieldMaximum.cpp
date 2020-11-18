@@ -171,7 +171,7 @@ void FieldMaximum::ComputeDiags (int step)
 #endif
 
         // MFIter loop to interpolate fields to cell center and get maximum values
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for ( MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )

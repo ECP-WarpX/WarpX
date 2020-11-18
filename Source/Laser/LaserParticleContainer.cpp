@@ -429,11 +429,11 @@ LaserParticleContainer::Evolve (int lev,
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         int const thread_num = omp_get_thread_num();
 #else
         int const thread_num = 0;

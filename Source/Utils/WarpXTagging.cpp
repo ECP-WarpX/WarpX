@@ -19,7 +19,7 @@ WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
     const Real* problo = Geom(lev).ProbLo();
     const Real* dx = Geom(lev).CellSize();
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     for (MFIter mfi(tags); mfi.isValid(); ++mfi)

@@ -78,7 +78,7 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
         jobInfoFile << PrettyLine;
 
         jobInfoFile << "number of MPI processes: " << ParallelDescriptor::NProcs() << "\n";
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         jobInfoFile << "number of threads:       " << omp_get_max_threads() << "\n";
 #endif
 

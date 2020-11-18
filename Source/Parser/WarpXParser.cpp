@@ -23,7 +23,7 @@ WarpXParser::define (std::string const& func_body)
                        m_expression.end());
     std::string f = m_expression + "\n";
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 
     int nthreads = omp_get_max_threads();
     m_variables.resize(nthreads);
@@ -56,7 +56,7 @@ WarpXParser::clear ()
     m_expression.clear();
     m_varnames.clear();
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 
     if (!m_parser.empty())
     {
@@ -80,7 +80,7 @@ void
 WarpXParser::registerVariable (std::string const& name, amrex::Real& var)
 {
     // We assume this is called inside OMP parallel region
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
     wp_parser_regvar(m_parser[omp_get_thread_num()], name.c_str(), &var);
     m_varnames[omp_get_thread_num()].push_back(name);
 #else
@@ -92,7 +92,7 @@ WarpXParser::registerVariable (std::string const& name, amrex::Real& var)
 void
 WarpXParser::registerVariables (std::vector<std::string> const& names)
 {
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 
 // This must be called outside OpenMP parallel region.
 #pragma omp parallel
@@ -119,7 +119,7 @@ WarpXParser::registerVariables (std::vector<std::string> const& names)
 void
 WarpXParser::setConstant (std::string const& name, amrex::Real c)
 {
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 
     bool in_parallel = omp_in_parallel();
     // We don't know if this is inside OMP parallel region or not
@@ -138,7 +138,7 @@ WarpXParser::setConstant (std::string const& name, amrex::Real c)
 void
 WarpXParser::print () const
 {
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp critical(warpx_parser_pint)
     wp_ast_print(m_parser[omp_get_thread_num()]->ast);
 #else
@@ -150,7 +150,7 @@ int
 WarpXParser::depth () const
 {
     int n = 0;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
     wp_ast_depth(m_parser[omp_get_thread_num()]->ast, &n);
 #else
     wp_ast_depth(m_parser->ast, &n);
@@ -168,7 +168,7 @@ std::set<std::string>
 WarpXParser::symbols () const
 {
     std::set<std::string> results;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
     wp_ast_get_symbols(m_parser[omp_get_thread_num()]->ast, results);
 #else
     wp_ast_get_symbols(m_parser->ast, results);

@@ -125,7 +125,7 @@ PhysicalParticleContainer::ConvertUnits(ConvertDirection convert_direction)
 
     const int nLevels = finestLevel();
     for (int lev=0; lev<=nLevels; lev++){
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
