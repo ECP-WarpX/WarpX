@@ -3,6 +3,11 @@
 Juwels (JSC)
 ============
 
+.. note::
+
+   For the moment, WarpX doesn't run on Juwels with MPI_THREAD_MULTIPLE.
+   Please compile with this compilation flag: ``MPI_THREAD_MULTIPLE=FALSE``.
+
 The `Juwels supercomputer <https://www.fz-juelich.de/ias/jsc/EN/Expertise/Supercomputers/JUWELS/JUWELS_node.html>`_ is located at JSC.
 
 See `this page <https://apps.fz-juelich.de/jsc/hps/juwels/quickintro.html>`_ for a quick introduction.
@@ -76,3 +81,28 @@ An example submission script reads
    :language: bash
 
 See :doc:`../visualization/yt` for more information on how to visualize the simulation results.
+
+Using openPMD
+-------------
+
+In order to compile for openPMD output and HDF5 format, please use (in addition to modules above)
+
+.. code-block:: bash
+
+   module load HDF5
+
+and use CMake for the compilation: in the WarpX repo
+
+.. code-block:: bash
+
+   rm -rf build # clean previous build
+   mkdir build
+   cd build
+   cmake .. -DWarpX_COMPUTE=CUDA -DWarpX_MPI_THREAD_MULTIPLE=OFF -DWarpX_OPENPMD=ON
+   make -j 16
+
+This will take a while. The executable will be generated in ``<WarpX repo>/build/bin/``.
+
+.. note::
+  
+   Currently, you need to add ``OMPI_MCA_io=romio321 `` at the beginning of your ``srun`` command to use HDF5 output.
