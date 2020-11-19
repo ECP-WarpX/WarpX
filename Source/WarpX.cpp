@@ -646,6 +646,7 @@ WarpX::ReadParameters ()
         pp.query("noy", noy);
         pp.query("noz", noz);
 
+#ifdef WARPX_USE_PSATD
         // For momentum-conserving field gathering, read from input the order of
         // interpolation from the staggered positions to the grid nodes
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
@@ -653,6 +654,13 @@ WarpX::ReadParameters ()
             pp.query("field_gathering_noy", field_gathering_noy);
             pp.query("field_gathering_noz", field_gathering_noz);
         }
+
+        if (maxLevel() > 0) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                field_gathering_nox == 2 && field_gathering_noy == 2 && field_gathering_noz == 2,
+                "High-order interpolation (order > 2) is not implemented with mesh refinement");
+        }
+#endif
 
         pp.query("galerkin_scheme",galerkin_interpolation);
 
@@ -703,9 +711,16 @@ WarpX::ReadParameters ()
         pp.query("v_comoving", m_v_comoving);
         pp.query("do_time_averaging", fft_do_time_averaging);
 
-      // Scale the velocity by the speed of light
+        // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
         for (int i=0; i<3; i++) m_v_comoving[i] *= PhysConst::c;
+
+        // The comoving PSATD algorithm is not implemented nor tested with Esirkepov current deposition
+        if (current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
+            if (m_v_comoving[0] != 0. || m_v_comoving[1] != 0. || m_v_comoving[2] != 0.) {
+                amrex::Abort("Esirkepov current deposition cannot be used with the comoving PSATD algorithm");
+            }
+        }
 
 #   ifdef WARPX_DIM_RZ
         update_with_rho = true;  // Must be true for RZ PSATD

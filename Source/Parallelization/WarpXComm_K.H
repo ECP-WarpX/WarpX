@@ -378,7 +378,9 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
     Bza(j,k,l) = bg + (bf-bc);
 }
 
-// FDTD variant
+// With the FDTD Maxwell solver, this is the linear interpolation function used to
+// interpolate the Bx field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
 #ifndef WARPX_USE_PSATD
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_bfield_x (int j, int k, int l,
@@ -393,7 +395,9 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
 #endif
 }
 
-// PSATD variant
+// With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
+// interpolate the Bx field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
 #else
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_bfield_x (int j, int k, int l,
@@ -426,7 +430,9 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
 }
 #endif
 
-// FDTD variant
+// With the FDTD Maxwell solver, this is the linear interpolation function used to
+// interpolate the By field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
 #ifndef WARPX_USE_PSATD
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_bfield_y (int j, int k, int l,
@@ -441,7 +447,9 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
 #endif
 }
 
-// PSATD variant
+// With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
+// interpolate the By field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
 #else
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_bfield_y (int j, int k, int l,
@@ -476,7 +484,9 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
 }
 #endif
 
-// FDTD variant
+// With the FDTD Maxwell solver, this is the linear interpolation function used to
+// interpolate the Bz field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
 #ifndef WARPX_USE_PSATD
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_bfield_z (int j, int k, int l,
@@ -491,7 +501,9 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
 #endif
 }
 
-// PSATD variant
+// With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
+// interpolate the Bz field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
 #else
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_bfield_z (int j, int k, int l,
@@ -728,7 +740,9 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
     Eza(j,k,l) = eg + (ef-ec);
 }
 
-// FDTD variant
+// With the FDTD Maxwell solver, this is the linear interpolation function used to
+// interpolate the Ex field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
 #ifndef WARPX_USE_PSATD
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_efield_x (int j, int k, int l,
@@ -738,7 +752,9 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
     Exa(j,k,l) = 0.5*(Exf(j-1,k,l) + Exf(j,k,l));
 }
 
-// PSATD variant
+// With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
+// interpolate the Ex field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
 #else
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_efield_x (int j, int k, int l,
@@ -755,7 +771,9 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
 }
 #endif
 
-// FDTD variant
+// With the FDTD Maxwell solver, this is the linear interpolation function used to
+// interpolate the Ey field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
 #ifndef WARPX_USE_PSATD
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_efield_y (int j, int k, int l,
@@ -770,7 +788,9 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
 #endif
 }
 
-// PSATD variant
+// With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
+// interpolate the Ey field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
 #else
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_efield_y (int j, int k, int l,
@@ -793,7 +813,9 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
 }
 #endif
 
-// FDTD variant
+// With the FDTD Maxwell solver, this is the linear interpolation function used to
+// interpolate the Ez field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
 #ifndef WARPX_USE_PSATD
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_efield_z (int j, int k, int l,
@@ -808,7 +830,9 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
 #endif
 }
 
-// PSATD variant
+// With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
+// interpolate the Ez field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
 #else
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_efield_z (int j, int k, int l,

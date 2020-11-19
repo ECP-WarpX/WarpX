@@ -14,6 +14,8 @@ ComovingPsatdAlgorithm::ComovingPsatdAlgorithm (const SpectralKSpace& spectral_k
                                                 const bool update_with_rho)
      // Members initialization
      : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
+       // Initialize the infinite-order k vectors (the argument n_order = -1 selects
+       // the infinite order option, the argument nodal = false is then irrelevant)
        kx_vec(spectral_kspace.getModifiedKComponent(dm, 0, -1, false)),
 #if (AMREX_SPACEDIM==3)
        ky_vec(spectral_kspace.getModifiedKComponent(dm, 1, -1, false)),

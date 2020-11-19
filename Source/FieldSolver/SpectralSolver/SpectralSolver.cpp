@@ -66,18 +66,20 @@ SpectralSolver::SpectralSolver(
                 k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt);
         }
         else {
-            if (v_galilean[0] == 0. && v_galilean[1] == 0. && v_galilean[2] == 0.) {
-                if (v_comoving[0] == 0. && v_comoving[1] == 0. && v_comoving[2] == 0.) {
-                    algorithm = std::make_unique<PsatdAlgorithm>(
-                       k_space, dm, norder_x, norder_y, norder_z, nodal, dt, update_with_rho);
-                } else {
-                    algorithm = std::make_unique<ComovingPsatdAlgorithm>(
-                        k_space, dm, norder_x, norder_y, norder_z, nodal, v_comoving, dt, update_with_rho);
-                }
-            }
-            else {
+            // Galilean PSATD algorithm
+            if (v_galilean[0] != 0. || v_galilean[1] != 0. || v_galilean[2] != 0.) {
                 algorithm = std::make_unique<GalileanAlgorithm>(
                     k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt, update_with_rho);
+            }
+            // Comoving PSATD algorithm
+            else if (v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0.) {
+                algorithm = std::make_unique<ComovingPsatdAlgorithm>(
+                    k_space, dm, norder_x, norder_y, norder_z, nodal, v_comoving, dt, update_with_rho);
+            }
+            // Standard PSATD algorithm
+            else {
+                algorithm = std::make_unique<PsatdAlgorithm>(
+                    k_space, dm, norder_x, norder_y, norder_z, nodal, dt, update_with_rho);
             }
         }
     }

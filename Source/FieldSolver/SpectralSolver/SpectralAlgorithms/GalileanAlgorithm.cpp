@@ -18,6 +18,9 @@ GalileanAlgorithm::GalileanAlgorithm(const SpectralKSpace& spectral_kspace,
                          const bool update_with_rho)
      // Initialize members of base class
      : SpectralBaseAlgorithm(spectral_kspace, dm, norder_x, norder_y, norder_z, nodal),
+       // Initialize the centered finite-order modified k vectors: these are computed
+       // always with the assumption of centered grids (argument nodal = true),
+       // for both nodal and staggered simulations
        modified_kx_vec_centered(spectral_kspace.getModifiedKComponent(dm,0,norder_x,true)),
 #if (AMREX_SPACEDIM==3)
        modified_ky_vec_centered(spectral_kspace.getModifiedKComponent(dm,1,norder_y,true)),
@@ -232,7 +235,9 @@ void GalileanAlgorithm::InitializeSpectralCoefficients (const SpectralKSpace& sp
             const Real dt3 = dt * dt2;
             Complex X2_old, X3_old;
 
-            // Calculate dot product of k vector with Galilean velocity
+            // Calculate dot product of k vector with Galilean velocity:
+            // this has to be computed always with the centered finite-order modified k
+            // vectors, in order to work correctly for both nodal and staggered simulations
             const Real kv = kx_c[i]*vx +
 #if (AMREX_SPACEDIM==3)
                 ky_c[j]*vy + kz_c[k]*vz;
