@@ -53,8 +53,7 @@ class SimData:
         data_fields = defaultdict(dict)
         self.data_fields, self.keys = data_fields, list(prange)
 
-        file = directory + 'reducedfiles/LBC.txt'
-        data = np.genfromtxt(file)
+        data = np.genfromtxt(directory)
         steps = data[:,0].astype(int)
 
         times = data[:,1]
@@ -63,7 +62,7 @@ class SimData:
 
         # Compute the number of datafields saved per box
         n_data_fields = 0
-        with open(file) as f:
+        with open(directory) as f:
             h = f.readlines()[0]
             unique_headers=[''.join([l for l in w if not l.isdigit()])
                             for w in h.split()][2::]
@@ -117,7 +116,6 @@ class SimData:
 
             cost_arr = np.full(shape, 0.0)
             rank_arr = np.full(shape, -1)
-            print('costs are',costs)
             for nc, cost in enumerate(costs):
                 coord = coords[nc]
                 cost_arr[coord] += cost
