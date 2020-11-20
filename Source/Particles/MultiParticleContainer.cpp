@@ -277,8 +277,13 @@ MultiParticleContainer::ReadParameters ()
 #if (AMREX_SPACEDIM == 2)
             ppq.get("y_size",m_qed_schwinger_y_size);
 #endif
-            ppq.query("threshold_poisson_gaussian",
-                      m_qed_schwinger_threshold_poisson_gaussian);
+            ppq.query("threshold_poisson_gaussian", m_qed_schwinger_threshold_poisson_gaussian);
+            ppq.query("xmin", m_qed_schwinger_xmin);
+            ppq.query("xmax", m_qed_schwinger_xmax);
+            ppq.query("ymin", m_qed_schwinger_ymin);
+            ppq.query("ymax", m_qed_schwinger_ymax);
+            ppq.query("zmin", m_qed_schwinger_zmin);
+            ppq.query("zmax", m_qed_schwinger_zmax);
         }
 #endif
         initialized = true;
@@ -1099,7 +1104,7 @@ MultiParticleContainer::doQEDSchwinger ()
           "ERROR: Schwinger process only implemented for warpx.do_nodal = 1"
                                  "or algo.field_gathering = momentum-conserving");
 
-    const int level_0 = 0;
+    constexpr int level_0 = 0;
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.maxLevel() == level_0,
         "ERROR: Schwinger process not implemented with mesh refinement");
@@ -1143,7 +1148,15 @@ MultiParticleContainer::doQEDSchwinger ()
      for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
      {
         // Make the box cell centered to avoid creating particles twice on the tile edges
-        const Box& box = enclosedCells(mfi.nodaltilebox());
+        amrex::Box box = enclosedCells(mfi.nodaltilebox());
+
+        // Get the box representing global Schwinger boundaries
+        const amrex::Box global_schwinger_box = ComputeSchwingerGlobalBox();
+
+        // If Schwinger process is not activated anywhere in the current box, we move to the next
+        // one. Otherwise we use the intersection of current box with global Schwinger box.
+        if (!box.intersects(global_schwinger_box)) {continue;}
+        box &= global_schwinger_box;
 
         const auto& arrEx = Ex[mfi].array();
         const auto& arrEy = Ey[mfi].array();
@@ -1182,6 +1195,69 @@ MultiParticleContainer::doQEDSchwinger ()
         setNewParticleIDs(dst_pos_tile, np_pos_dst, num_added);
 
     }
+}
+
+amrex::Box
+MultiParticleContainer::ComputeSchwingerGlobalBox () const
+{
+    auto & warpx = WarpX::GetInstance();
+    constexpr int level_0 = 0;
+    amrex::Geometry const & geom = warpx.Geom(level_0);
+
+#if (AMREX_SPACEDIM == 3)
+    const amrex::Array<amrex::Real,3> schwinger_min{m_qed_schwinger_xmin,
+                                                    m_qed_schwinger_ymin,
+                                                    m_qed_schwinger_zmin};
+    const amrex::Array<amrex::Real,3> schwinger_max{m_qed_schwinger_xmax,
+                                                    m_qed_schwinger_ymax,
+                                                    m_qed_schwinger_zmax};
+#else
+    const amrex::Array<amrex::Real,2> schwinger_min{m_qed_schwinger_xmin,
+                                                    m_qed_schwinger_zmin};
+    const amrex::Array<amrex::Real,2> schwinger_max{m_qed_schwinger_xmax,
+                                                    m_qed_schwinger_zmax};
+#endif
+
+    // Box inside which Schwinger is activated
+    amrex::Box schwinger_global_box;
+
+    for (int dir=0; dir<AMREX_SPACEDIM; dir++)
+    {
+        // Dealing with these corner cases should ensure that we don't overflow on the integers
+        if (schwinger_min[dir] < geom.ProbLo(dir))
+        {
+            schwinger_global_box.setSmall(dir, std::numeric_limits<int>::lowest());
+        }
+        else if (schwinger_min[dir] > geom.ProbHi(dir))
+        {
+            schwinger_global_box.setSmall(dir, std::numeric_limits<int>::max());
+        }
+        else
+        {
+            // Schwinger pairs are currently created on the lower nodes of a cell. Using ceil here
+            // excludes all cells whose lower node is strictly lower than schwinger_min[dir].
+            schwinger_global_box.setSmall(dir, static_cast<int>(std::ceil(
+                               (schwinger_min[dir] - geom.ProbLo(dir)) / geom.CellSize(dir))));
+        }
+
+        if (schwinger_max[dir] < geom.ProbLo(dir))
+        {
+            schwinger_global_box.setBig(dir, std::numeric_limits<int>::lowest());
+        }
+        else if (schwinger_max[dir] > geom.ProbHi(dir))
+        {
+            schwinger_global_box.setBig(dir, std::numeric_limits<int>::max());
+        }
+        else
+        {
+            // Schwinger pairs are currently created on the lower nodes of a cell. Using floor here
+            // excludes all cells whose lower node is strictly higher than schwinger_max[dir].
+            schwinger_global_box.setBig(dir, static_cast<int>(std::floor(
+                               (schwinger_max[dir] - geom.ProbLo(dir)) / geom.CellSize(dir))));
+        }
+    }
+
+    return schwinger_global_box;
 }
 
 void MultiParticleContainer::doQedEvents (int lev,
