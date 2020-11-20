@@ -104,5 +104,5 @@ and use CMake for the compilation: in the WarpX repo
 This will take a while. The executable will be generated in ``<WarpX repo>/build/bin/``.
 
 .. note::
-  
+
    Currently, you need to add ``OMPI_MCA_io=romio321 `` at the beginning of your ``srun`` command to use HDF5 output.
