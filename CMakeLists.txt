@@ -240,10 +240,12 @@ endif()
 
 target_compile_definitions(WarpX PRIVATE
     WARPX_PARSER_DEPTH=${WarpX_PARSER_DEPTH})
-    
-# <cmath> M_PI et al.
+
+# <cmath>: M_PI
+# <unistd.h>: parser
 if(WIN32)
     target_compile_definitions(WarpX PRIVATE _USE_MATH_DEFINES)
+    target_compile_definitions(WarpX PRIVATE YY_NO_UNISTD_H)
 endif()
 
 
