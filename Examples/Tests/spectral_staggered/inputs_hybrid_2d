@@ -38,8 +38,6 @@ warpx.verbose = 1
 interpolation.field_gathering_nox = 8
 interpolation.field_gathering_noz = 8
 
-psatd.v_comoving = 0. 0. -0.9970370305242862
-
 particles.species_names = electrons ions beam
 particles.use_fdtd_nci_corr = 0
 particles.rigid_injected_species = beam
