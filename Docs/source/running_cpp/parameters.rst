@@ -812,19 +812,19 @@ Laser initialization
 
 * ``<laser_name>.stc_direction`` (`3 floats`) optional (default `1. 0. 0.`)
     Direction of laser spatio-temporal couplings.
-    See definition in Akturk et al., Opt Express, vol 12, no 19 (2014).
+    See definition in Akturk et al., Opt Express, vol 12, no 19 (2004).
 
 * ``<laser_name>.zeta`` (`float`; in meters.seconds) optional (default `0.`)
     Spatial chirp at focus in direction ``<laser_name>.stc_direction``. See definition in
-    Akturk et al., Opt Express, vol 12, no 19 (2014).
+    Akturk et al., Opt Express, vol 12, no 19 (2004).
 
 * ``<laser_name>.beta`` (`float`; in seconds) optional (default `0.`)
     Angular dispersion (or angular chirp) at focus in direction ``<laser_name>.stc_direction``.
-    See definition in Akturk et al., Opt Express, vol 12, no 19 (2014).
+    See definition in Akturk et al., Opt Express, vol 12, no 19 (2004).
 
 * ``<laser_name>.phi2`` (`float`; in seconds**2) optional (default `0.`)
     Temporal chirp at focus.
-    See definition in Akturk et al., Opt Express, vol 12, no 19 (2014).
+    See definition in Akturk et al., Opt Express, vol 12, no 19 (2004).
 
 * ``<laser_name>.do_continuous_injection`` (`0` or `1`) optional (default `0`).
     Whether or not to use continuous injection.
