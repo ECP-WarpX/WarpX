@@ -5,11 +5,8 @@ Juwels (JSC)
 
 .. note::
 
-   There's currently a bug when building WarpX on Juwels! WarpX does not compile on the latest version of the development branches of WarpX and AMReX.
-   Below are the latest working commits. Please, checkout to those commits before compiling.
-   If you need more recent features, select the specific commits with `git cherry-pick <commit hash>`
-   * WarpX: a548b14e8108ab22294f85516c4e9ea8b1462703
-   * AMReX: 21269eff092d0a03aff9269b1200c0e408fde90e
+   For the moment, WarpX doesn't run on Juwels with MPI_THREAD_MULTIPLE.
+   Please compile with this compilation flag: ``MPI_THREAD_MULTIPLE=FALSE``.
 
 The `Juwels supercomputer <https://www.fz-juelich.de/ias/jsc/EN/Expertise/Supercomputers/JUWELS/JUWELS_node.html>`_ is located at JSC.
 
@@ -47,8 +44,9 @@ We use the following modules and environments on the system.
    module load GCC
    module load OpenMPI
    module load CUDA
+   module load Python
 
-   # JEWELS' job scheduler may not map ranks to GPUs,
+   # JUWELS' job scheduler may not map ranks to GPUs,
    # so we give a hint to AMReX about the node layout.
    # This is usually done in Make.<supercomputing center> files in AMReX
    # but there is no such file for JSC yet.
@@ -83,3 +81,28 @@ An example submission script reads
    :language: bash
 
 See :doc:`../visualization/yt` for more information on how to visualize the simulation results.
+
+Using openPMD
+-------------
+
+In order to compile for openPMD output and HDF5 format, please use (in addition to modules above)
+
+.. code-block:: bash
+
+   module load HDF5
+
+and use CMake for the compilation: in the WarpX repo
+
+.. code-block:: bash
+
+   rm -rf build # clean previous build
+   mkdir build
+   cd build
+   cmake .. -DWarpX_COMPUTE=CUDA -DWarpX_MPI_THREAD_MULTIPLE=OFF -DWarpX_OPENPMD=ON
+   make -j 16
+
+This will take a while. The executable will be generated in ``<WarpX repo>/build/bin/``.
+
+.. note::
+
+   Currently, you need to add ``OMPI_MCA_io=romio321 `` at the beginning of your ``srun`` command to use HDF5 output.
