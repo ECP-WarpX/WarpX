@@ -77,12 +77,14 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 {
     ParmParse pp(species_name);
 
+#ifdef AMREX_USE_GPU
     static_assert(std::is_trivially_copyable<InjectorPosition>::value,
                   "InjectorPosition must be trivially copyable");
     static_assert(std::is_trivially_copyable<InjectorDensity>::value,
                   "InjectorDensity must be trivially copyable");
     static_assert(std::is_trivially_copyable<InjectorMomentum>::value,
                   "InjectorMomentum must be trivially copyable");
+#endif
 
     pp.query("radially_weighted", radially_weighted);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
