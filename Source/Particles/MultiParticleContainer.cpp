@@ -429,7 +429,7 @@ MultiParticleContainer::ApplyBoundaryConditions ()
     }
 }
 
-Vector<long>
+Vector<Long>
 MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
 {
     WarpX& warpx = WarpX::GetInstance();
@@ -438,18 +438,18 @@ MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
     return r;
 }
 
-Vector<long>
+Vector<Long>
 MultiParticleContainer::NumberOfParticlesInGrid (int lev) const
 {
     if (allcontainers.size() == 0)
     {
-        const Vector<long> r = GetZeroParticlesInGrid(lev);
+        const Vector<Long> r = GetZeroParticlesInGrid(lev);
         return r;
     }
     else
     {
         const bool only_valid=true, only_local=true;
-        Vector<long> r = allcontainers[0]->NumberOfParticlesInGrid(lev,only_valid,only_local);
+        Vector<Long> r = allcontainers[0]->NumberOfParticlesInGrid(lev,only_valid,only_local);
         for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
             const auto& ri = allcontainers[i]->NumberOfParticlesInGrid(lev,only_valid,only_local);
             for (unsigned j=0, m=ri.size(); j<m; ++j) {
