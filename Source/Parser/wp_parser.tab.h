@@ -71,7 +71,6 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 19 "wp_parser.y"
 
     struct wp_node* n;
     amrex_real d;
@@ -79,7 +78,6 @@ union YYSTYPE
     enum wp_f1_t f1;
     enum wp_f2_t f2;
 
-#line 83 "wp_parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

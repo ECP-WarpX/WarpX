@@ -463,7 +463,6 @@ WarpX::ReadParameters ()
         // Read filter and fill IntVect filter_npass_each_dir with
         // proper size for AMREX_SPACEDIM
         pp.query("use_filter", use_filter);
-        pp.query("use_kspace_filter", use_kspace_filter);
         pp.query("use_filter_compensation", use_filter_compensation);
         Vector<int> parse_filter_npass_each_dir(AMREX_SPACEDIM,1);
         pp.queryarr("filter_npass_each_dir", parse_filter_npass_each_dir);
@@ -471,6 +470,12 @@ WarpX::ReadParameters ()
         filter_npass_each_dir[1] = parse_filter_npass_each_dir[1];
 #if (AMREX_SPACEDIM == 3)
         filter_npass_each_dir[2] = parse_filter_npass_each_dir[2];
+#endif
+
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+        // With RZ spectral, only use k-space filtering
+        use_kspace_filter = use_filter;
+        use_filter = false;
 #endif
 
         pp.query("num_mirrors", num_mirrors);
@@ -674,17 +679,24 @@ WarpX::ReadParameters ()
       // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
+#   ifdef WARPX_DIM_RZ
+        update_with_rho = true;  // Must be true for RZ PSATD
+#   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0.) {
             update_with_rho = false; // standard PSATD
         }
         else {
             update_with_rho = true;  // Galilean PSATD
         }
+#   endif
 
         // Overwrite update_with_rho with value set in input file
         pp.query("update_with_rho", update_with_rho);
 
 #   ifdef WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
+        "psatd.update_with_rho must be equal to 1 in RZ geometry");
+
         if (!Geom(0).isPeriodic(1)) {
             use_damp_fields_in_z_guard = true;
         }
@@ -763,6 +775,10 @@ WarpX::BackwardCompatibility ()
     if (ppw.query("plot_crsepatch", backward_int)){
         amrex::Abort("warpx.plot_crsepatch is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
+    }
+    if (ppw.query("use_kspace_filter", backward_int)){
+        amrex::Abort("warpx.use_kspace_filter is not supported anymore. "
+                     "Please use the flag use_filter, see documentation.");
     }
 
     ParmParse ppalgo("algo");
@@ -973,7 +989,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE);
     Efield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE);
 
-    if (do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics))
+#ifdef WARPX_USE_PSATD
+    const bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)
+                                || update_with_rho || current_correction;
+#else
+    const bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics);
+#endif
+    if (deposit_charge)
     {
         rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho);
     }
@@ -990,10 +1012,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max());
     }
 #ifdef WARPX_USE_PSATD
-    else
-    {
-        rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho);
-    }
     // Allocate and initialize the spectral solver
 #   if (AMREX_SPACEDIM == 3)
     RealVect dx_vect(dx[0], dx[1], dx[2]);

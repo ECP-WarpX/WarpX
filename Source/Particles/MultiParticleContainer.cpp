@@ -360,18 +360,41 @@ MultiParticleContainer::PushP (int lev, Real dt,
 }
 
 std::unique_ptr<MultiFab>
+MultiParticleContainer::GetZeroChargeDensity (const int lev)
+{
+    WarpX& warpx = WarpX::GetInstance();
+
+    BoxArray ba = warpx.boxArray(lev);
+    DistributionMapping dmap = warpx.DistributionMap(lev);
+    const int ng_rho = warpx.get_ng_depos_rho().max();
+
+    auto zero_rho = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheNodeVector()),
+                                               dmap,WarpX::ncomps,ng_rho);
+    zero_rho->setVal(amrex::Real(0.0));
+    return zero_rho;
+}
+
+std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local)
 {
-    std::unique_ptr<MultiFab> rho = allcontainers[0]->GetChargeDensity(lev, true);
-    for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
-        std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
-        MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrow());
+    if (allcontainers.size() == 0)
+    {
+        std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
+        return rho;
     }
-    if (!local) {
-        const Geometry& gm = allcontainers[0]->Geom(lev);
-        rho->SumBoundary(gm.periodicity());
+    else
+    {
+        std::unique_ptr<MultiFab> rho = allcontainers[0]->GetChargeDensity(lev, true);
+        for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
+            std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
+            MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrow());
+        }
+        if (!local) {
+            const Geometry& gm = allcontainers[0]->Geom(lev);
+            rho->SumBoundary(gm.periodicity());
+        }
+        return rho;
     }
-    return rho;
 }
 
 void
@@ -406,19 +429,36 @@ MultiParticleContainer::ApplyBoundaryConditions ()
     }
 }
 
-Vector<long>
+Vector<Long>
+MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
+{
+    WarpX& warpx = WarpX::GetInstance();
+    const int num_boxes = warpx.boxArray(lev).size();
+    const Vector<Long> r(num_boxes, 0);
+    return r;
+}
+
+Vector<Long>
 MultiParticleContainer::NumberOfParticlesInGrid (int lev) const
 {
-    const bool only_valid=true, only_local=true;
-    Vector<long> r = allcontainers[0]->NumberOfParticlesInGrid(lev,only_valid,only_local);
-    for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
-        const auto& ri = allcontainers[i]->NumberOfParticlesInGrid(lev,only_valid,only_local);
-        for (unsigned j=0, m=ri.size(); j<m; ++j) {
-            r[j] += ri[j];
-        }
+    if (allcontainers.size() == 0)
+    {
+        const Vector<Long> r = GetZeroParticlesInGrid(lev);
+        return r;
     }
-    ParallelDescriptor::ReduceLongSum(r.data(),r.size());
-    return r;
+    else
+    {
+        const bool only_valid=true, only_local=true;
+        Vector<Long> r = allcontainers[0]->NumberOfParticlesInGrid(lev,only_valid,only_local);
+        for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
+            const auto& ri = allcontainers[i]->NumberOfParticlesInGrid(lev,only_valid,only_local);
+            for (unsigned j=0, m=ri.size(); j<m; ++j) {
+                r[j] += ri[j];
+            }
+        }
+        ParallelDescriptor::ReduceLongSum(r.data(),r.size());
+        return r;
+    }
 }
 
 void
@@ -1087,6 +1127,9 @@ MultiParticleContainer::doQEDSchwinger ()
     auto& pc_product_pos =
             allcontainers[m_qed_schwinger_pos_product];
 
+    pc_product_ele->defineAllParticleTiles();
+    pc_product_pos->defineAllParticleTiles();
+
     const MultiFab & Ex = warpx.getEfield(level_0,0);
     const MultiFab & Ey = warpx.getEfield(level_0,1);
     const MultiFab & Ez = warpx.getEfield(level_0,2);
@@ -1111,9 +1154,6 @@ MultiParticleContainer::doQEDSchwinger ()
 
         const Array4<const amrex::Real> array_EMFAB [] = {arrEx,arrEy,arrEz,
                                            arrBx,arrBy,arrBz};
-
-        pc_product_ele->defineAllParticleTiles();
-        pc_product_pos->defineAllParticleTiles();
 
         auto& dst_ele_tile = pc_product_ele->ParticlesAt(level_0, mfi);
         auto& dst_pos_tile = pc_product_pos->ParticlesAt(level_0, mfi);

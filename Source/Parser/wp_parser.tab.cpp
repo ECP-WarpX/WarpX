@@ -66,7 +66,6 @@
 
 
 /* First part of user prologue.  */
-#line 2 "wp_parser.y"
 
     #include <stdio.h>
     #include <stdlib.h>
@@ -74,7 +73,6 @@
     #include "wp_parser_y.h"
     int yylex (void);
 
-#line 78 "wp_parser.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -144,7 +142,6 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 19 "wp_parser.y"
 
     struct wp_node* n;
     amrex_real d;
@@ -152,7 +149,6 @@ union YYSTYPE
     enum wp_f1_t f1;
     enum wp_f2_t f2;
 
-#line 156 "wp_parser.tab.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -1372,135 +1368,92 @@ yyreduce:
   switch (yyn)
     {
   case 3:
-#line 68 "wp_parser.y"
                 {
     wp_defexpr((yyvsp[-1].n));
   }
-#line 1380 "wp_parser.tab.c"
     break;
 
   case 4:
-#line 77 "wp_parser.y"
                              { (yyval.n) = wp_newnumber((yyvsp[0].d)); }
-#line 1386 "wp_parser.tab.c"
     break;
 
   case 5:
-#line 78 "wp_parser.y"
                              { (yyval.n) = wp_newsymbol((yyvsp[0].s)); }
-#line 1392 "wp_parser.tab.c"
     break;
 
   case 6:
-#line 79 "wp_parser.y"
                              { (yyval.n) = wp_newnode(WP_ADD, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1398 "wp_parser.tab.c"
     break;
 
   case 7:
-#line 80 "wp_parser.y"
                              { (yyval.n) = wp_newnode(WP_SUB, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1404 "wp_parser.tab.c"
     break;
 
   case 8:
-#line 81 "wp_parser.y"
                              { (yyval.n) = wp_newnode(WP_MUL, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1410 "wp_parser.tab.c"
     break;
 
   case 9:
-#line 82 "wp_parser.y"
                              { (yyval.n) = wp_newnode(WP_DIV, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1416 "wp_parser.tab.c"
     break;
 
   case 10:
-#line 83 "wp_parser.y"
                              { (yyval.n) = (yyvsp[-1].n); }
-#line 1422 "wp_parser.tab.c"
     break;
 
   case 11:
-#line 84 "wp_parser.y"
                              { (yyval.n) = wp_newf2(WP_LT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1428 "wp_parser.tab.c"
     break;
 
   case 12:
-#line 85 "wp_parser.y"
                              { (yyval.n) = wp_newf2(WP_GT, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1434 "wp_parser.tab.c"
     break;
 
   case 13:
-#line 86 "wp_parser.y"
                              { (yyval.n) = wp_newf2(WP_LEQ, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1440 "wp_parser.tab.c"
     break;
 
   case 14:
-#line 87 "wp_parser.y"
                              { (yyval.n) = wp_newf2(WP_GEQ, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1446 "wp_parser.tab.c"
     break;
 
   case 15:
-#line 88 "wp_parser.y"
                              { (yyval.n) = wp_newf2(WP_EQ, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1452 "wp_parser.tab.c"
     break;
 
   case 16:
-#line 89 "wp_parser.y"
                              { (yyval.n) = wp_newf2(WP_NEQ, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1458 "wp_parser.tab.c"
     break;
 
   case 17:
-#line 90 "wp_parser.y"
                              { (yyval.n) = wp_newf2(WP_AND, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1464 "wp_parser.tab.c"
     break;
 
   case 18:
-#line 91 "wp_parser.y"
                              { (yyval.n) = wp_newf2(WP_OR, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1470 "wp_parser.tab.c"
     break;
 
   case 19:
-#line 92 "wp_parser.y"
                              { (yyval.n) = wp_newnode(WP_NEG, (yyvsp[0].n), NULL); }
-#line 1476 "wp_parser.tab.c"
     break;
 
   case 20:
-#line 93 "wp_parser.y"
                              { (yyval.n) = (yyvsp[0].n); }
-#line 1482 "wp_parser.tab.c"
     break;
 
   case 21:
-#line 94 "wp_parser.y"
                              { (yyval.n) = wp_newf2(WP_POW, (yyvsp[-2].n), (yyvsp[0].n)); }
-#line 1488 "wp_parser.tab.c"
     break;
 
   case 22:
-#line 95 "wp_parser.y"
                              { (yyval.n) = wp_newf1((yyvsp[-3].f1), (yyvsp[-1].n)); }
-#line 1494 "wp_parser.tab.c"
     break;
 
   case 23:
-#line 96 "wp_parser.y"
                              { (yyval.n) = wp_newf2((yyvsp[-5].f2), (yyvsp[-3].n), (yyvsp[-1].n)); }
-#line 1500 "wp_parser.tab.c"
     break;
 
 
-#line 1504 "wp_parser.tab.c"
 
       default: break;
     }
@@ -1732,5 +1685,4 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 99 "wp_parser.y"
 

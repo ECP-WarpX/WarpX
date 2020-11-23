@@ -40,9 +40,8 @@ if (averaged):
     tolerance_rel = 1e-4
 elif (current_correction):
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.)):
-    # difference with respect to reference energy below due to absence of filter
-    energyE_ref = 1632431.0574508277
-    tolerance_rel = 1e-7;
+    energyE_ref = 75333.81851879464
+    tolerance_rel = 5e-8;
 else:
     # energyE_ref was calculated with standard PSATD method (v_galilean = (0.,0.,0.))
     energyE_ref = 8218.678808709019

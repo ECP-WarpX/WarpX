@@ -1,6 +1,3 @@
-#line 2 "wp_parser.lex.cpp"
-
-#line 4 "wp_parser.lex.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -521,16 +518,11 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "wp_parser.l"
-#line 3 "wp_parser.l"
 #include "wp_parser_y.h"
 #include "wp_parser.tab.h"
-#line 529 "wp_parser.lex.cpp"
-#line 10 "wp_parser.l"
  /* Tokens NUMBER, SYMBOL, F1, POW, F2, etc. are defined in wp_parser.y. */
  /* Types WP_SQRT, WP_SQRT, etc. are defined in wp_parser_y.h. */
  /* Used leater to define NUMBER */
-#line 534 "wp_parser.lex.cpp"
 
 #define INITIAL 0
 
@@ -745,10 +737,6 @@ YY_DECL
 		}
 
 	{
-#line 16 "wp_parser.l"
-
-
-#line 752 "wp_parser.lex.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -781,16 +769,12 @@ yy_match:
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 157 );
+		while ( yy_current_state != 103 );
+		yy_cp = (yy_last_accepting_cpos);
+		yy_current_state = (yy_last_accepting_state);
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
-		if ( yy_act == 0 )
-			{ /* have to back up */
-			yy_cp = (yy_last_accepting_cpos);
-			yy_current_state = (yy_last_accepting_state);
-			yy_act = yy_accept[yy_current_state];
-			}
 
 		YY_DO_BEFORE_ACTION;
 
@@ -806,216 +790,168 @@ do_action:	/* This label is used only to access EOF actions. */
 			goto yy_find_action;
 
 case 1:
-#line 19 "wp_parser.l"
 case 2:
-#line 20 "wp_parser.l"
 case 3:
-#line 21 "wp_parser.l"
 case 4:
-#line 22 "wp_parser.l"
 case 5:
-#line 23 "wp_parser.l"
 case 6:
-#line 24 "wp_parser.l"
 case 7:
-#line 25 "wp_parser.l"
 case 8:
-#line 26 "wp_parser.l"
 case 9:
-#line 27 "wp_parser.l"
 case 10:
-#line 28 "wp_parser.l"
 case 11:
 YY_RULE_SETUP
-#line 28 "wp_parser.l"
 { return yytext[0]; } /* simply pass through */
 	YY_BREAK
 /* yylval is union type defined in wp_parser.tab.h that is generated
   * by bison with wp_parser.y */
 case 12:
 YY_RULE_SETUP
-#line 33 "wp_parser.l"
 { yylval.f1 = WP_SQRT;      return F1; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 34 "wp_parser.l"
 { yylval.f1 = WP_EXP;       return F1; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 35 "wp_parser.l"
 { yylval.f1 = WP_LOG;       return F1; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 36 "wp_parser.l"
 { yylval.f1 = WP_LOG10;     return F1; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 37 "wp_parser.l"
 { yylval.f1 = WP_SIN;       return F1; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 38 "wp_parser.l"
 { yylval.f1 = WP_COS;       return F1; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 39 "wp_parser.l"
 { yylval.f1 = WP_TAN;       return F1; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 40 "wp_parser.l"
 { yylval.f1 = WP_ASIN;      return F1; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 41 "wp_parser.l"
 { yylval.f1 = WP_ACOS;      return F1; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 42 "wp_parser.l"
 { yylval.f1 = WP_ATAN;      return F1; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 43 "wp_parser.l"
 { yylval.f1 = WP_SINH;      return F1; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 44 "wp_parser.l"
 { yylval.f1 = WP_COSH;      return F1; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 45 "wp_parser.l"
 { yylval.f1 = WP_TANH;      return F1; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 46 "wp_parser.l"
 { yylval.f1 = WP_ABS;       return F1; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 47 "wp_parser.l"
 { yylval.f1 = WP_ABS;       return F1; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 48 "wp_parser.l"
 { yylval.f2 = WP_POW;       return POW;}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 49 "wp_parser.l"
 { yylval.f2 = WP_POW;       return POW;}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 50 "wp_parser.l"
 { yylval.f2 = WP_GEQ;       return GEQ;}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 51 "wp_parser.l"
 { yylval.f2 = WP_LEQ;       return LEQ;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 52 "wp_parser.l"
 { yylval.f2 = WP_EQ;        return EQ;}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 53 "wp_parser.l"
 { yylval.f2 = WP_NEQ;       return NEQ;}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 54 "wp_parser.l"
 { yylval.f2 = WP_AND;       return AND;}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 55 "wp_parser.l"
 { yylval.f2 = WP_OR;        return OR;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 56 "wp_parser.l"
 { yylval.f2 = WP_POW;       return F2; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 57 "wp_parser.l"
 { yylval.f2 = WP_HEAVISIDE; return F2; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 58 "wp_parser.l"
 { yylval.f2 = WP_MIN;       return F2; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 59 "wp_parser.l"
 { yylval.f2 = WP_MAX;       return F2; }
 	YY_BREAK
 /* We use SYMBOL to hold variables and constants */
 case 39:
 YY_RULE_SETUP
-#line 62 "wp_parser.l"
 { yylval.s = wp_makesymbol(yytext); return SYMBOL; }
 	YY_BREAK
 /* Number */
 case 40:
-#line 66 "wp_parser.l"
 case 41:
 YY_RULE_SETUP
-#line 66 "wp_parser.l"
 { yylval.d = atof(yytext);   return NUMBER; }
 	YY_BREAK
 /* Special characters */
 case 42:
 YY_RULE_SETUP
-#line 69 "wp_parser.l"
 
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 70 "wp_parser.l"
 /* ignore white space */
 	YY_BREAK
 case 44:
 /* rule 44 can match eol */
 YY_RULE_SETUP
-#line 71 "wp_parser.l"
 /* ignore line continuation */
 	YY_BREAK
 case 45:
 /* rule 45 can match eol */
 YY_RULE_SETUP
-#line 72 "wp_parser.l"
 { return EOL; }
 	YY_BREAK
 /* everything else */
 case 46:
 YY_RULE_SETUP
-#line 75 "wp_parser.l"
 { yyerror("Unknown character %c\n", *yytext); }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 77 "wp_parser.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1019 "wp_parser.lex.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1082,7 +1018,8 @@ case YY_STATE_EOF(INITIAL):
 
 			else
 				{
-				yy_cp = (yy_c_buf_p);
+				yy_cp = (yy_last_accepting_cpos);
+				yy_current_state = (yy_last_accepting_state);
 				goto yy_find_action;
 				}
 			}
@@ -1560,7 +1497,7 @@ static void yy_load_buffer_state  (void)
         b->yy_bs_column = 0;
     }
 
-        b->yy_is_interactive = file ? (isatty( fileno(file) ) > 0) : 0;
+        b->yy_is_interactive = 0;
     
 	errno = oerrno;
 }
@@ -1982,7 +1919,4 @@ void yyfree (void * ptr )
 }
 
 #define YYTABLES_NAME "yytables"
-
-#line 77 "wp_parser.l"
-
 

@@ -16,8 +16,7 @@ FlushFormatSensei::FlushFormatSensei (amrex::AmrMesh *amr_mesh,
     m_amr_mesh(amr_mesh)
 {
 #ifndef BL_USE_SENSEI_INSITU
-    (void)amr_mesh;
-    (void)diag_name;
+    amrex::ignore_unused(m_insitu_pin_mesh, m_insitu_bridge, m_amr_mesh, diag_name);
 #else
     amrex::ParmParse pp(diag_name);
 

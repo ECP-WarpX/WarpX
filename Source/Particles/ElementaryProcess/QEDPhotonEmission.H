@@ -107,10 +107,12 @@ public:
     * @param[in, out] src source species (either electrons or positrons)
     * @param[in] i_src particle index of the source species
     * @param[in] i_dst particle index of target species
+    * @param[in] engine random number generator engine
     */
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (DstData& dst, SrcData& src, int i_src, int i_dst) const noexcept
+    void operator() (DstData& dst, SrcData& src, int i_src, int i_dst,
+        amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
 
@@ -140,11 +142,12 @@ public:
             ux, uy, uz,
             ex, ey, ez,
             bx, by, bz,
-            g_ux, g_uy, g_uz);
+            g_ux, g_uy, g_uz,
+            engine);
 
         //Initialize the optical depth component of the source species.
         src.m_runtime_rdata[m_opt_depth_runtime_comp][i_src] =
-            m_opt_depth_functor();
+            m_opt_depth_functor(engine);
     }
 
 private:

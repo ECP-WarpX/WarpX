@@ -77,12 +77,14 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
 {
     ParmParse pp(species_name);
 
+#ifdef AMREX_USE_GPU
     static_assert(std::is_trivially_copyable<InjectorPosition>::value,
                   "InjectorPosition must be trivially copyable");
     static_assert(std::is_trivially_copyable<InjectorDensity>::value,
                   "InjectorDensity must be trivially copyable");
     static_assert(std::is_trivially_copyable<InjectorMomentum>::value,
                   "InjectorMomentum must be trivially copyable");
+#endif
 
     pp.query("radially_weighted", radially_weighted);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(radially_weighted, "ERROR: Only radially_weighted=true is supported");
@@ -120,15 +122,15 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
     }
 #   endif
 
-    pp.query("xmin", xmin);
-    pp.query("ymin", ymin);
-    pp.query("zmin", zmin);
-    pp.query("xmax", xmax);
-    pp.query("ymax", ymax);
-    pp.query("zmax", zmax);
+    queryWithParser(pp, "xmin", xmin);
+    queryWithParser(pp, "ymin", ymin);
+    queryWithParser(pp, "zmin", zmin);
+    queryWithParser(pp, "xmax", xmax);
+    queryWithParser(pp, "ymax", ymax);
+    queryWithParser(pp, "zmax", zmax);
 
-    pp.query("density_min", density_min);
-    pp.query("density_max", density_max);
+    queryWithParser(pp, "density_min", density_min);
+    queryWithParser(pp, "density_max", density_max);
 
     std::string physical_species_s;
     bool species_is_specified = pp.query("species_type", physical_species_s);

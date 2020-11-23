@@ -272,14 +272,17 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
         tilebox = amrex::coarsen(pti.tilebox(),ref_ratio);
     }
 
+#ifndef AMREX_USE_GPU
     // Staggered tile boxes (different in each direction)
     Box tbx = convert( tilebox, jx->ixType().toIntVect() );
     Box tby = convert( tilebox, jy->ixType().toIntVect() );
     Box tbz = convert( tilebox, jz->ixType().toIntVect() );
+#endif
 
     tilebox.grow(ng_J);
 
 #ifdef AMREX_USE_GPU
+    amrex::ignore_unused(thread_num);
     // GPU, no tiling: j<xyz>_arr point to the full j<xyz> arrays
     auto & jx_fab = jx->get(pti);
     auto & jy_fab = jy->get(pti);
@@ -474,14 +477,17 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         tilebox = amrex::coarsen(pti.tilebox(),ref_ratio);
     }
 
+#ifndef AMREX_USE_GPU
     // Staggered tile box
     Box tb = amrex::convert( tilebox, rho->ixType().toIntVect() );
+#endif
 
     tilebox.grow(ng_rho);
 
     const int nc = WarpX::ncomps;
 
 #ifdef AMREX_USE_GPU
+    amrex::ignore_unused(thread_num);
     // GPU, no tiling: rho_fab points to the full rho array
     MultiFab rhoi(*rho, amrex::make_alias, icomp*nc, nc);
     auto & rho_fab = rhoi.get(pti);
@@ -704,7 +710,7 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
     amrex::Real vy_total = 0.0;
     amrex::Real vz_total = 0.0;
 
-    long np_total = 0;
+    amrex::Long np_total = 0;
 
     amrex::Real inv_clight_sq = 1.0/PhysConst::c/PhysConst::c;
 
