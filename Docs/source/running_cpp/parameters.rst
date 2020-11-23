@@ -7,7 +7,9 @@ Input parameters
 
    This section is currently in development.
 
-
+.. note::
+   The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist in a single real number, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
+    
 .. _running-cpp-parameters-overall:
 
 Overall simulation parameters
@@ -244,17 +246,28 @@ Math parser and user-defined constants
 --------------------------------------
 
 WarpX provides a math parser that reads expressions in the input file.
-It can be used to define the plasma density profile, the plasma momentum
-distribution or the laser field (see below `Particle initialization` and
-`Laser initialization`).
+It can be used in all input parameters that consist in one real number.
 
-The parser reads python-style expressions between double quotes, for instance
-``"a0*x**2 * (1-y*1.e2) * (x>0)"`` is a valid expression where ``a0`` is a
-user-defined constant and ``x`` and ``y`` are variables. The names are case sensitive. The factor
-``(x>0)`` is `1` where `x>0` and `0` where `x<=0`. It allows the user to
-define functions by intervals. User-defined constants can be used in parsed
-functions only (i.e., ``density_function(x,y,z)`` and ``field_function(X,Y,t)``,
-see below). User-defined constants can contain only letters, numbers and the character ``_``.
+WarpX constants
+###############
+
+WarpX provides a few pre-defined constants, that can be used for any parameter that consists in one real number.
+
+======== ===================
+q_e      elementary charge
+m_e      electron mass
+m_p      proton mass
+epsilon0 vacuum permittivity
+clight   speed of light
+pi       math constant pi
+======== ===================
+
+User-defined constants
+######################
+
+Users can define their own constants in the input file. 
+These constants can be used for any parameter that consists in one real number.
+User-defined constants can contain only letters, numbers and the character ``_``.
 The name of each constant has to begin with a letter. The following names are used
 by WarpX, and cannot be used as user-defined constants: ``x``, ``y``, ``z``, ``X``, ``Y``, ``t``.
 For example, parameters ``a0`` and ``z_plateau`` can be specified with:
@@ -262,6 +275,16 @@ For example, parameters ``a0`` and ``z_plateau`` can be specified with:
 * ``my_constants.a0 = 3.0``
 * ``my_constants.z_plateau = 150.e-6``
 
+Coordinates
+###########
+
+Besides, for profiles that depend on spatial coordinates (the plasma momentum distribution or the laser field, see below `Particle initialization` and `Laser initialization`), the parser will interpret some variables as spatial coordinates. These are specified in the input parameter, i.e., ``density_function(x,y,z)`` and ``field_function(X,Y,t)``.
+
+The parser reads python-style expressions between double quotes, for instance
+``"a0*x**2 * (1-y*1.e2) * (x>0)"`` is a valid expression where ``a0`` is a
+user-defined constant (see below) and ``x`` and ``y`` are spatial coordinates. The names are case sensitive. The factor
+``(x>0)`` is `1` where `x>0` and `0` where `x<=0`. It allows the user to
+define functions by intervals.
 The parser reads mathematical functions into an `abstract syntax tree (AST) <https://en.wikipedia.org/wiki/Abstract_syntax_tree>`_, which supports a maximum depth (see :ref:`build options <building-cmake>`_).
 Additional terms in a function can create a level of depth in the AST, e.g. ``a+b+c+d`` is parsed in groups of ``[+ a [+ b [+ c [+ d]]]]`` (depth: 4).
 A trick to reduce this depth for the parser, e.g. when reaching the limit, is to group expliclity, e.g. via ``(a+b)+(c+d)``, which is parsed in groups of ``[+ [+ a b] [+ c d]]`` (depth: 2).
@@ -312,7 +335,6 @@ Particle initialization
 
 * ``<species_name>.xmin,ymin,zmin`` (`float`) optional (default unlimited)
     When ``<species_name>.xmin`` and ``<species_name>.xmax`` (see below) are set, they delimit the region within which particles are injected.
-    The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side, so expressions like ``<species_name>.xmin = "2.+1."`` and/or using user-defined constants are accepted.
     The same is applicable in the other directions.
     If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
 
@@ -401,11 +423,10 @@ Particle initialization
 
 * ``<species_name>.density_min`` (`float`) optional (default `0.`)
     Minimum plasma density. No particle is injected where the density is below this value.
-    The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side, so expressions like ``<species_name>.density_min = "2.+1."`` and/or using user-defined constants are accepted.
 
 * ``<species_name>.density_max`` (`float`) optional (default `infinity`)
     Maximum plasma density. The density at each point is the minimum between the value given in the profile, and `density_max`.
-    The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted.
+
 * ``<species_name>.radially_weighted`` (`bool`) optional (default `true`)
     Whether particle's weight is varied with their radius. This only applies to cylindrical geometry.
     The only valid value is true.
