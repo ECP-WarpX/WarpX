@@ -4,7 +4,24 @@ function(find_picsar)
         include(FetchContent)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
-        # FIXME no option to control WarpX_QED_TABLE_GEN / Boost trigger yet
+        # Enable or disable QED lookup tables generation
+
+        # If table generation is enabled, enable or disable
+        # openMP support depending on WarpX_COMPUTE
+        if(WarpX_QED_TABLE_GEN)
+            set(PXRMP_QED_TABLEGEN ON CACHE INTERNAL "")
+            if(WarpX_COMPUTE STREQUAL OMP)
+                set(PXRMP_QED_OMP ON CACHE INTERNAL "")
+            else()
+                set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
+            endif()
+        else()
+            set(PXRMP_QED_TABLEGEN OFF CACHE INTERNAL "")
+            set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
+        endif()
+
+        # Always disable tests
+        set (PXRMP_QED_TEST OFF CACHE INTERNAL "")
 
         FetchContent_Declare(fetchedpicsar
             GIT_REPOSITORY ${WarpX_picsar_repo}
@@ -15,7 +32,7 @@ function(find_picsar)
 
         if(NOT fetchedpicsar_POPULATED)
             FetchContent_Populate(fetchedpicsar)
-            add_subdirectory(${fetchedpicsar_SOURCE_DIR}/src/multi_physics/QED ${fetchedpicsar_BINARY_DIR})
+            add_subdirectory(${fetchedpicsar_SOURCE_DIR}/src/multi_physics ${fetchedpicsar_BINARY_DIR})
         endif()
 
         # advanced fetch options
@@ -29,6 +46,9 @@ function(find_picsar)
         # PICSAR options not relevant to WarpX users
         mark_as_advanced(DIM)
         mark_as_advanced(USE_XSDK_DEFAULTS)
+        mark_as_advanced(PXRMP_QED_TABLEGEN)
+        mark_as_advanced(PXRMP_QED_OMP)
+        mark_as_advanced(PXRMP_QED_TEST)
 
         message(STATUS "PICSAR: Using INTERNAL version '${PICSAR_VERSION}'")
     else()
@@ -41,10 +61,10 @@ endfunction()
 
 if(WarpX_QED)
     option(WarpX_picsar_internal   "Download & build PICSAR" ON)
-    set(WarpX_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
+    set(WarpX_picsar_repo "WarpX_picsar_repo "https://github.com/lucafedeli88/picsar.git"
         CACHE STRING
         "Repository URI to pull and build PICSAR from if(WarpX_picsar_internal)")
-    set(WarpX_picsar_branch "development"
+    set(WarpX_picsar_branch "improve_makefile"
         CACHE STRING
         "Repository branch for WarpX_picsar_repo if(WarpX_picsar_internal)")
 
