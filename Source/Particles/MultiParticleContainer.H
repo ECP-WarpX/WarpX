@@ -175,9 +175,9 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    amrex::Vector<long> GetZeroParticlesInGrid(const int lev) const;
+    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(const int lev) const;
 
-    amrex::Vector<long> NumberOfParticlesInGrid(int lev) const;
+    amrex::Vector<amrex::Long> NumberOfParticlesInGrid(int lev) const;
 
     void Increment (amrex::MultiFab& mf, int lev);
 

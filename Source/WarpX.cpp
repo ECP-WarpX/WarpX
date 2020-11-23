@@ -463,7 +463,6 @@ WarpX::ReadParameters ()
         // Read filter and fill IntVect filter_npass_each_dir with
         // proper size for AMREX_SPACEDIM
         pp.query("use_filter", use_filter);
-        pp.query("use_kspace_filter", use_kspace_filter);
         pp.query("use_filter_compensation", use_filter_compensation);
         Vector<int> parse_filter_npass_each_dir(AMREX_SPACEDIM,1);
         pp.queryarr("filter_npass_each_dir", parse_filter_npass_each_dir);
@@ -471,6 +470,12 @@ WarpX::ReadParameters ()
         filter_npass_each_dir[1] = parse_filter_npass_each_dir[1];
 #if (AMREX_SPACEDIM == 3)
         filter_npass_each_dir[2] = parse_filter_npass_each_dir[2];
+#endif
+
+#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+        // With RZ spectral, only use k-space filtering
+        use_kspace_filter = use_filter;
+        use_filter = false;
 #endif
 
         pp.query("num_mirrors", num_mirrors);
@@ -782,6 +787,10 @@ WarpX::BackwardCompatibility ()
     if (ppw.queryarr("sort_int", backward_strings)){
         amrex::Abort("warpx.sort_int is no longer a valid option. "
                      "Please use the renamed option warpx.sort_intervals instead.");
+    }
+    if (ppw.query("use_kspace_filter", backward_int)){
+        amrex::Abort("warpx.use_kspace_filter is not supported anymore. "
+                     "Please use the flag use_filter, see documentation.");
     }
 
     ParmParse ppalgo("algo");
