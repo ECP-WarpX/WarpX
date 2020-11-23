@@ -266,6 +266,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
+        amrex::ParticleContainer<0, 0, PIdx::nattribs> tmp(pc->GetParGDB());
         Vector<std::string> real_names;
         Vector<std::string> int_names;
         Vector<int> int_flags;
@@ -287,14 +288,17 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             // integer attribs, and it is automatically dumped to plotfiles
             // when ionization is on.
             int_flags.resize(1, 1);
+            tmp.AddIntComp(false);
         }
 
 #ifdef WARPX_QED
         if( pc->has_breit_wheeler() ) {
             real_names.push_back("optical_depth_BW");
+            tmp.AddRealComp(false);
         }
         if( pc->has_quantum_sync() ) {
             real_names.push_back("optical_depth_QSR");
+            tmp.AddRealComp(false);
         }
 #endif
 
@@ -309,18 +313,22 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                          getParser(particle_diags[i].m_particle_filter_parser));
         GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                              particle_diags[i].m_diag_domain);
+
+        using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+        tmp.copyParticles(*pc,
+                          [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+        {
+            const SuperParticleType& p = src.getSuperParticle(ip);
+            return random_filter(p, engine) * uniform_filter(p, engine)
+                * parser_filter(p, engine) * geometry_filter(p, engine);
+        }, true);
+
         // real_names contains a list of all particle attributes.
         // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
-        pc->WritePlotFile(
+        tmp.WritePlotFile(
             dir, particle_diags[i].getSpeciesName(),
             particle_diags[i].plot_flags, int_flags,
-            real_names, int_names,
-            [=] AMREX_GPU_HOST_DEVICE (const SuperParticleType& p,
-                                       const amrex::RandomEngine& engine)
-            {
-                return random_filter(p,engine) * uniform_filter(p,engine)
-                     * parser_filter(p,engine) * geometry_filter(p,engine);
-            });
+            real_names, int_names);
 
         // Convert momentum back to WarpX units
         pc->ConvertUnits(ConvertDirection::SI_to_WarpX);

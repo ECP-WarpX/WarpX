@@ -15,6 +15,9 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_Dim3.H>
 
+#include <cmath>
+
+
 // struct whose getMomentum returns constant momentum.
 struct InjectorMomentumConstant
 {

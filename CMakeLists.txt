@@ -155,7 +155,7 @@ add_subdirectory(Source/Laser)
 add_subdirectory(Source/Parallelization)
 add_subdirectory(Source/Parser)
 add_subdirectory(Source/Particles)
-#add_subdirectory(Source/Python)
+add_subdirectory(Source/Python)
 add_subdirectory(Source/Utils)
 
 # C++ properties: at least a C++14 capable compiler is needed
@@ -240,6 +240,13 @@ endif()
 
 target_compile_definitions(WarpX PRIVATE
     WARPX_PARSER_DEPTH=${WarpX_PARSER_DEPTH})
+
+# <cmath>: M_PI
+# <unistd.h>: parser
+if(WIN32)
+    target_compile_definitions(WarpX PRIVATE _USE_MATH_DEFINES)
+    target_compile_definitions(WarpX PRIVATE YY_NO_UNISTD_H)
+endif()
 
 
 # Warnings ####################################################################

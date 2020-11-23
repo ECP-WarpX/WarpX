@@ -1,4 +1,5 @@
 %option noyywrap nodefault
+%option never-interactive
 %{
 #include "wp_parser_y.h"
 #include "wp_parser.tab.h"

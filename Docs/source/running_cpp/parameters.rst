@@ -812,19 +812,19 @@ Laser initialization
 
 * ``<laser_name>.stc_direction`` (`3 floats`) optional (default `1. 0. 0.`)
     Direction of laser spatio-temporal couplings.
-    See definition in Akturk et al., Opt Express, vol 12, no 19 (2014).
+    See definition in Akturk et al., Opt Express, vol 12, no 19 (2004).
 
 * ``<laser_name>.zeta`` (`float`; in meters.seconds) optional (default `0.`)
     Spatial chirp at focus in direction ``<laser_name>.stc_direction``. See definition in
-    Akturk et al., Opt Express, vol 12, no 19 (2014).
+    Akturk et al., Opt Express, vol 12, no 19 (2004).
 
 * ``<laser_name>.beta`` (`float`; in seconds) optional (default `0.`)
     Angular dispersion (or angular chirp) at focus in direction ``<laser_name>.stc_direction``.
-    See definition in Akturk et al., Opt Express, vol 12, no 19 (2014).
+    See definition in Akturk et al., Opt Express, vol 12, no 19 (2004).
 
 * ``<laser_name>.phi2`` (`float`; in seconds**2) optional (default `0.`)
     Temporal chirp at focus.
-    See definition in Akturk et al., Opt Express, vol 12, no 19 (2014).
+    See definition in Akturk et al., Opt Express, vol 12, no 19 (2004).
 
 * ``<laser_name>.do_continuous_injection`` (`0` or `1`) optional (default `0`).
     Whether or not to use continuous injection.
@@ -1012,21 +1012,15 @@ Numerics and algorithms
     Whether to smooth the charge and currents on the mesh, after depositing
     them from the macroparticles. This uses a bilinear filter
     (see the sub-section **Filtering** in :doc:`../theory/theory`).
-
-* ``warpx.use_kspace_filter`` (`0` or `1`; default: `0`)
-    Whether to smooth the charge and currents on the mesh, after depositing
-    them from the macroparticles. This uses a bilinear filter, applying the
-    filter in k-space. It is only supported with the RZ spectral solver.
-    (see the sub-section **Filtering** in :doc:`../theory/theory`).
+    When using the RZ spectral solver, the filtering is done in k-space.
 
 * ``warpx.filter_npass_each_dir`` (`3 int`) optional (default `1 1 1`)
     Number of passes along each direction for the bilinear filter.
     In 2D simulations, only the first two values are read.
 
 * ``warpx.use_filter_compensation`` (`0` or `1`; default: `0`)
-    Whether to add compensation when applying k-space filtering.
-    This requires `warpx.use_kspace_filter=1` and is only supported
-    with the RZ spectral solver.
+    Whether to add compensation when applying filtering.
+    This is only supported with the RZ spectral solver.
 
 * ``warpx.use_damp_fields_in_z_guard`` (`0` or `1`)
     When using the RZ spectrol solver, specifies whether to apply a

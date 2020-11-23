@@ -65,7 +65,7 @@ We use the following modules and environments on the system.
 
    # optional: Ascent in situ support
    #   note: build WarpX with CMake
-   export Alpine=/gpfs/alpine/world-shared/csc340/software/ascent/0.5.3-pre/summit/cuda/gnu
+   export Alpine=/gpfs/alpine/csc340/world-shared/software/ascent/2020-11-07/summit/cuda/gnu
    export Ascent_DIR=$Alpine/ascent-install
    export Conduit_DIR=$Alpine/conduit-install
 

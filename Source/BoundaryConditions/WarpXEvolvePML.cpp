@@ -8,9 +8,6 @@
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX_PML_kernels.H"
-#ifdef WARPX_USE_PY
-#   include "Python/WarpX_py.H"
-#endif
 
 #include "PML_current.H"
 

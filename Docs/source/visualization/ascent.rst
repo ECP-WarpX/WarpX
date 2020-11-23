@@ -199,7 +199,7 @@ The following block can be used in an ascent action to extract *Conduit Blueprin
 .. code-block:: yaml
 
     -
-      action: action: "add_extracts"
+      action: "add_extracts"
       extracts:
         e1:
           type: "relay"
