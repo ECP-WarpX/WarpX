@@ -53,7 +53,7 @@ class _MultiFABWrapper(object):
             lovects = self.get_lovects(self.level, self.include_ghosts)
         else:
             lovects = self.get_lovects(self.level, self.direction, self.include_ghosts)
-        self.nghosts = -lovects.min()
+        self.nghosts = -lovects.min(axis=1)
         return lovects
 
     def _gethivects(self):
@@ -97,7 +97,7 @@ class _MultiFABWrapper(object):
 
         # --- Get the total number of cells along the direction
         hivects = self._gethivects()
-        nn = hivects[idir,:].max() - self.nghosts + self.overlaps[idir]
+        nn = hivects[idir,:].max() - self.nghosts[idir] + self.overlaps[idir]
         if npes > 1:
             nn = comm_world.allreduce(nn, op=mpi.MAX)
 
@@ -164,9 +164,9 @@ class _MultiFABWrapper(object):
         else:
             ic = None
 
-        nx = hivects[0,:].max() - self.nghosts
-        ny = hivects[1,:].max() - self.nghosts
-        nz = hivects[2,:].max() - self.nghosts
+        nx = hivects[0,:].max() - self.nghosts[0]
+        ny = hivects[1,:].max() - self.nghosts[1]
+        nz = hivects[2,:].max() - self.nghosts[2]
 
         if npes > 1:
             nx = comm_world.allreduce(nx, op=mpi.MAX)
@@ -174,20 +174,20 @@ class _MultiFABWrapper(object):
             nz = comm_world.allreduce(nz, op=mpi.MAX)
 
         if isinstance(ix, slice):
-            ixstart = max(ix.start or -self.nghosts, -self.nghosts)
-            ixstop = min(ix.stop or nx + 1 + self.nghosts, nx + self.overlaps[0] + self.nghosts)
+            ixstart = max(ix.start or -self.nghosts[0], -self.nghosts[0])
+            ixstop = min(ix.stop or nx + 1 + self.nghosts[0], nx + self.overlaps[0] + self.nghosts[0])
         else:
             ixstart = ix
             ixstop = ix + 1
         if isinstance(iy, slice):
-            iystart = max(iy.start or -self.nghosts, -self.nghosts)
-            iystop = min(iy.stop or ny + 1 + self.nghosts, ny + self.overlaps[1] + self.nghosts)
+            iystart = max(iy.start or -self.nghosts[1], -self.nghosts[1])
+            iystop = min(iy.stop or ny + 1 + self.nghosts[1], ny + self.overlaps[1] + self.nghosts[1])
         else:
             iystart = iy
             iystop = iy + 1
         if isinstance(iz, slice):
-            izstart = max(iz.start or -self.nghosts, -self.nghosts)
-            izstop = min(iz.stop or nz + 1 + self.nghosts, nz + self.overlaps[2] + self.nghosts)
+            izstart = max(iz.start or -self.nghosts[2], -self.nghosts[2])
+            izstop = min(iz.stop or nz + 1 + self.nghosts[2], nz + self.overlaps[2] + self.nghosts[2])
         else:
             izstart = iz
             izstop = iz + 1
@@ -270,22 +270,22 @@ class _MultiFABWrapper(object):
         else:
             ic = None
 
-        nx = hivects[0,:].max() - self.nghosts
-        nz = hivects[1,:].max() - self.nghosts
+        nx = hivects[0,:].max() - self.nghosts[0]
+        nz = hivects[1,:].max() - self.nghosts[1]
 
         if npes > 1:
             nx = comm_world.allreduce(nx, op=mpi.MAX)
             nz = comm_world.allreduce(nz, op=mpi.MAX)
 
         if isinstance(ix, slice):
-            ixstart = max(ix.start or -self.nghosts, -self.nghosts)
-            ixstop = min(ix.stop or nx + 1 + self.nghosts, nx + self.overlaps[0] + self.nghosts)
+            ixstart = max(ix.start or -self.nghosts[0], -self.nghosts[0])
+            ixstop = min(ix.stop or nx + 1 + self.nghosts[0], nx + self.overlaps[0] + self.nghosts[0])
         else:
             ixstart = ix
             ixstop = ix + 1
         if isinstance(iz, slice):
-            izstart = max(iz.start or -self.nghosts, -self.nghosts)
-            izstop = min(iz.stop or nz + 1 + self.nghosts, nz + self.overlaps[1] + self.nghosts)
+            izstart = max(iz.start or -self.nghosts[1], -self.nghosts[1])
+            izstop = min(iz.stop or nz + 1 + self.nghosts[1], nz + self.overlaps[1] + self.nghosts[1])
         else:
             izstart = iz
             izstop = iz + 1
@@ -377,9 +377,9 @@ class _MultiFABWrapper(object):
         else:
             ic = None
 
-        nx = hivects[0,:].max() - self.nghosts
-        ny = hivects[1,:].max() - self.nghosts
-        nz = hivects[2,:].max() - self.nghosts
+        nx = hivects[0,:].max() - self.nghosts[0]
+        ny = hivects[1,:].max() - self.nghosts[1]
+        nz = hivects[2,:].max() - self.nghosts[2]
 
         # --- Add extra dimensions so that the input has the same number of
         # --- dimensions as array.
@@ -392,20 +392,20 @@ class _MultiFABWrapper(object):
             value3d.shape = sss
 
         if isinstance(ix, slice):
-            ixstart = max(ix.start or -self.nghosts, -self.nghosts)
-            ixstop = min(ix.stop or nx + 1 + self.nghosts, nx + self.overlaps[0] + self.nghosts)
+            ixstart = max(ix.start or -self.nghosts[0], -self.nghosts[0])
+            ixstop = min(ix.stop or nx + 1 + self.nghosts[0], nx + self.overlaps[0] + self.nghosts[0])
         else:
             ixstart = ix
             ixstop = ix + 1
         if isinstance(iy, slice):
-            iystart = max(iy.start or -self.nghosts, -self.nghosts)
-            iystop = min(iy.stop or ny + 1 + self.nghosts, ny + self.overlaps[1] + self.nghosts)
+            iystart = max(iy.start or -self.nghosts[1], -self.nghosts[1])
+            iystop = min(iy.stop or ny + 1 + self.nghosts[1], ny + self.overlaps[1] + self.nghosts[1])
         else:
             iystart = iy
             iystop = iy + 1
         if isinstance(iz, slice):
-            izstart = max(iz.start or -self.nghosts, -self.nghosts)
-            izstop = min(iz.stop or nz + 1 + self.nghosts, nz + self.overlaps[2] + self.nghosts)
+            izstart = max(iz.start or -self.nghosts[2], -self.nghosts[2])
+            izstop = min(iz.stop or nz + 1 + self.nghosts[2], nz + self.overlaps[2] + self.nghosts[2])
         else:
             izstart = iz
             izstop = iz + 1
@@ -459,8 +459,8 @@ class _MultiFABWrapper(object):
         else:
             ic = None
 
-        nx = hivects[0,:].max() - self.nghosts
-        nz = hivects[2,:].max() - self.nghosts
+        nx = hivects[0,:].max() - self.nghosts[0]
+        nz = hivects[2,:].max() - self.nghosts[1]
 
         # --- Add extra dimensions so that the input has the same number of
         # --- dimensions as array.
@@ -472,14 +472,14 @@ class _MultiFABWrapper(object):
             value3d.shape = sss
 
         if isinstance(ix, slice):
-            ixstart = max(ix.start or -self.nghosts, -self.nghosts)
-            ixstop = min(ix.stop or nx + 1 + self.nghosts, nx + self.overlaps[0] + self.nghosts)
+            ixstart = max(ix.start or -self.nghosts[0], -self.nghosts[0])
+            ixstop = min(ix.stop or nx + 1 + self.nghosts[0], nx + self.overlaps[0] + self.nghosts[0])
         else:
             ixstart = ix
             ixstop = ix + 1
         if isinstance(iz, slice):
-            izstart = max(iz.start or -self.nghosts, -self.nghosts)
-            izstop = min(iz.stop or nz + 1 + self.nghosts, nz + self.overlaps[2] + self.nghosts)
+            izstart = max(iz.start or -self.nghosts[1], -self.nghosts[1])
+            izstop = min(iz.stop or nz + 1 + self.nghosts[1], nz + self.overlaps[2] + self.nghosts[1])
         else:
             izstart = iz
             izstop = iz + 1
