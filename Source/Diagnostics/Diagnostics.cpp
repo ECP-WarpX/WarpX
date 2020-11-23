@@ -315,17 +315,17 @@ Diagnostics::ComputeAndPack ()
 
 
 void
-Diagnostics::FilterComputePackFlush (int step, bool force_flush)
+Diagnostics::FilterComputePackFlush (int step, bool last_timestep)
 {
     WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
 
     MovingWindowAndGalileanDomainShift ();
 
-    if ( DoComputeAndPack (step, force_flush) ) {
+    if ( DoComputeAndPack (step, last_timestep) ) {
         ComputeAndPack();
 
         for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
-            if ( !DoDump (step, i_buffer, force_flush) ) continue;
+            if ( !DoDump (step, i_buffer, last_timestep) ) continue;
             Flush(i_buffer);
         }
 

@@ -21,7 +21,7 @@ public:
     /** \brief Loop over diags in alldiags and call their InitDiags */
     void InitData ();
     /** \brief Called at each iteration. Compute diags and flush. */
-    void FilterComputePackFlush (int step, bool force_flush=false);
+    void FilterComputePackFlush (int step, bool last_timestep=false);
     /** \brief Loop over diags in all diags and call their InitializeFieldFunctors.
                Called when a new partitioning is generated at level, lev.
       * \param[in] lev level at this the field functors are initialized.

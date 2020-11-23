@@ -61,10 +61,10 @@ MultiDiagnostics::ReadParameters ()
 }
 
 void
-MultiDiagnostics::FilterComputePackFlush (int step, bool force_flush)
+MultiDiagnostics::FilterComputePackFlush (int step, bool last_timestep)
 {
     for (auto& diag : alldiags){
-        diag->FilterComputePackFlush (step, force_flush);
+        diag->FilterComputePackFlush (step, last_timestep);
     }
 }
 

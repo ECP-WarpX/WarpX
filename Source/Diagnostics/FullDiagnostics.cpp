@@ -111,10 +111,11 @@ FullDiagnostics::FlushRaw () {}
 
 
 bool
-FullDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flush)
+FullDiagnostics::DoDump (int step, int /*i_buffer*/, bool last_timestep)
 {
     if (m_already_done) return false;
-    if ( force_flush || (m_intervals.contains(step+1)) ){
+    const bool force_dump_last_timestep = last_timestep && m_dump_last_timestep;
+    if ( force_dump_last_timestep || (m_intervals.contains(step+1)) ){
         m_already_done = true;
         return true;
     }
@@ -122,11 +123,12 @@ FullDiagnostics::DoDump (int step, int /*i_buffer*/, bool force_flush)
 }
 
 bool
-FullDiagnostics::DoComputeAndPack (int step, bool force_flush)
+FullDiagnostics::DoComputeAndPack (int step, bool last_timestep)
 {
     // Data must be computed and packed for full diagnostics
     // whenever the data needs to be flushed.
-    if (force_flush || m_intervals.contains(step+1) ){
+    const bool force_dump_last_timestep = last_timestep && m_dump_last_timestep;
+    if (force_dump_last_timestep || m_intervals.contains(step+1) ){
         return true;
     }
     return false;

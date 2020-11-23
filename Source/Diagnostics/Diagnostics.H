@@ -4,7 +4,6 @@
 #include "FlushFormats/FlushFormat.H"
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
 #include "ParticleDiag/ParticleDiag.H"
-#include "Utils/IntervalsParser.H"
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
 
@@ -54,25 +53,25 @@ public:
     virtual void InitializeFieldFunctors (int lev) = 0;
     /** whether to compute and pack data in output buffers at this time step
      * \param[in] step current time step
-     * \param[in] force_flush if true, return true for any step
+     * \param[in] last_timestep whether it is the last timestep in the simulation
      * \return bool, whether to compute and pack data
      */
-    virtual bool DoComputeAndPack(int step, bool force_flush=false) = 0;
+    virtual bool DoComputeAndPack(int step, bool last_timestep=false) = 0;
     /** whether to flush at this time step
      * \param[in] step current time step
-     * \param[in] force_flush if true, return true for any step
+     * \param[in] last_timestep whether it is the last timestep in the simulation
      * \return bool, whether to flush
      */
-    virtual bool DoDump (int step, int i_buffer, bool force_flush=false) = 0;
+    virtual bool DoDump (int step, int i_buffer, bool last_timestep=false) = 0;
     /** Start a new iteration, i.e., dump has not been done yet. */
     void NewIteration () {m_already_done = false;}
     /** Perform necessary operations with user-defined diagnostic parameters
      *  to filter (coarsen, slice), compute (cell-center, back-transform),
      *  and flush the output data stored in buffers, m_mf_output.
      * \param[in] step current timestep
-     * \param[in] force_flush used to force-fully write data stored in buffers.
+     * \param[in] last_timestep used to force-fully write data stored in buffers.
      */
-    void FilterComputePackFlush (int step, bool force_flush=false);
+    void FilterComputePackFlush (int step, bool last_timestep=false);
 
 protected:
     /** Read Parameters of the base Diagnostics class */
