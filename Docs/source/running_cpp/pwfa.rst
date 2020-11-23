@@ -17,7 +17,7 @@ plasma_e n = 1x10^23 m^-3; w = 70 μm; lr = 8 mm; L = 200 mm
 plasma_p n = 1x10^23 m^-3; w = 70 μm; lr = 8 mm; L = 200 mm
 ======== ============================================================
 
-Where :math:`\gamma` is the beam relativisitc Lorentz factor, N is the number of particles, and σx, σy, σz are the beam widths (root-mean-squares of particle positions) in the transverse (x,y) and longitudinal directions.
+Where :math:`\gamma` is the beam relativistic Lorentz factor, N is the number of particles, and σx, σy, σz are the beam widths (root-mean-squares of particle positions) in the transverse (x,y) and longitudinal directions.
 
 The plasma, of total lenght L, has a density profile that consists of a lr long linear up-ramp, ranging from 0 to peak value n, is uniform within a transverse width of w and after the up-ramp.
 

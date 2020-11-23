@@ -49,6 +49,13 @@ Diagnostics::BaseReadParameters ()
         warpx.setplot_rho(true);
     }
 
+    // Sanity check if user requests to plot phi
+    if (WarpXUtilStr::is_in(m_varnames, "phi")){
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            warpx.do_electrostatic==ElectrostaticSolverAlgo::LabFrame,
+            "plot phi only works if do_electrostatic = labframe");
+    }
+
     // Sanity check if user requests to plot F
     if (WarpXUtilStr::is_in(m_varnames, "F")){
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(

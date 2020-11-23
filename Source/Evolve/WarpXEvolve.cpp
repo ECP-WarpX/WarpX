@@ -178,7 +178,7 @@ WarpX::Evolve (int numsteps)
         mypc->ApplyBoundaryConditions();
 
         // Electrostatic solver: particles can move by an arbitrary number of cells
-        if( do_electrostatic )
+        if( do_electrostatic != ElectrostaticSolverAlgo::None )
         {
             mypc->Redistribute();
         } else
@@ -252,7 +252,7 @@ void
 WarpX::OneStep_nosub (Real cur_time)
 {
 
-    if (do_electrostatic) {
+    if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
         // Electrostatic solver:
         // For each species: deposit charge and add the associated space-charge
         // E and B field to the grid ; this is done at the beginning of the PIC
@@ -322,7 +322,7 @@ WarpX::OneStep_nosub (Real cur_time)
     if (do_pml && pml_has_particles) CopyJPML();
     if (do_pml && do_pml_j_damping) DampJPML();
 
-    if (!do_electrostatic) {
+    if( do_electrostatic == ElectrostaticSolverAlgo::None ) {
     // Electromagnetic solver:
     // Push E and B from {n} to {n+1}
     // (And update guard cells immediately afterwards)
@@ -397,7 +397,7 @@ WarpX::OneStep_nosub (Real cur_time)
 void
 WarpX::OneStep_sub1 (Real curtime)
 {
-    if( do_electrostatic )
+    if( do_electrostatic != ElectrostaticSolverAlgo::None )
     {
         amrex::Abort("Electrostatic solver cannot be used with sub-cycling.");
     }

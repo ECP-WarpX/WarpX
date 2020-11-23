@@ -42,6 +42,14 @@ struct MaxwellSolverAlgo {
     };
 };
 
+struct ElectrostaticSolverAlgo {
+    enum {
+        None = 0,
+        Relativistic = 1,
+        LabFrame = 2
+    };
+};
+
 struct ParticlePusherAlgo {
     enum {
         Boris = 0,
