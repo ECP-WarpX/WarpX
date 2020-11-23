@@ -710,7 +710,7 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
     amrex::Real vy_total = 0.0;
     amrex::Real vz_total = 0.0;
 
-    long np_total = 0;
+    amrex::Long np_total = 0;
 
     amrex::Real inv_clight_sq = 1.0/PhysConst::c/PhysConst::c;
 

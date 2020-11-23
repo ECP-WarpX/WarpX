@@ -1,0 +1,14 @@
+name: windows
+
+on: [push, pull_request]
+
+jobs:
+  build_win_msvc:
+    name: MSVC C++17 w/o MPI
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build & Install
+      run: |
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_COMPUTE=NOACC -DWarpX_OPENPMD=ON -DWarpX_MPI=OFF
+        cmake --build build --config Debug --parallel 2
