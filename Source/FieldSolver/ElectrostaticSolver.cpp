@@ -28,18 +28,19 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         }
     }
 
-    // Loop over the species and add their space-charge contribution to E and B
-    for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
-        WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        if (species.initialize_self_fields ||
-            (do_electrostatic == ElectrostaticSolverAlgo::Relativistic)) {
-            AddSpaceChargeField(species);
+    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+        AddSpaceChargeFieldLabFrame();
+    } else {
+        // Loop over the species and add their space-charge contribution to E and B
+        for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
+            WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
+            if (species.initialize_self_fields ||
+                (do_electrostatic == ElectrostaticSolverAlgo::Relativistic)) {
+                AddSpaceChargeField(species);
+            }
         }
     }
 
-    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
-        AddSpaceChargeFieldLabFrame();
-    }
 }
 
 void
