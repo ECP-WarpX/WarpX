@@ -280,8 +280,10 @@ MultiParticleContainer::ReadParameters ()
             ppq.query("threshold_poisson_gaussian", m_qed_schwinger_threshold_poisson_gaussian);
             ppq.query("xmin", m_qed_schwinger_xmin);
             ppq.query("xmax", m_qed_schwinger_xmax);
+#if (AMREX_SPACEDIM == 3)
             ppq.query("ymin", m_qed_schwinger_ymin);
             ppq.query("ymax", m_qed_schwinger_ymax);
+#endif
             ppq.query("zmin", m_qed_schwinger_zmin);
             ppq.query("zmax", m_qed_schwinger_zmax);
         }
