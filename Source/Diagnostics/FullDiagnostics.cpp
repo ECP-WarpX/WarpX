@@ -436,10 +436,8 @@ FullDiagnostics::PrepareFieldDataForOutput ()
     auto & warpx = WarpX::GetInstance();
     warpx.FillBoundaryE(warpx.getngE(), warpx.getngExtra());
     warpx.FillBoundaryB(warpx.getngE(), warpx.getngExtra());
-#ifndef WARPX_USE_PSATD
-    warpx.FillBoundaryAux(warpx.getngUpdateAux());
-#endif
     warpx.UpdateAuxilaryData();
+    warpx.FillBoundaryAux(warpx.getngUpdateAux());
 
     // Update the RealBox used for the geometry filter in particle diags
     for (int i = 0; i < m_output_species.size(); ++i) {

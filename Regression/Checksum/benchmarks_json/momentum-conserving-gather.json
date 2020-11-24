@@ -44,9 +44,9 @@
   "plasma_e": {
     "particle_cpu": 3600.0,
     "particle_id": 6546600.0,
-    "particle_momentum_x": 1.513031320030241e-19,
-    "particle_momentum_y": 7.700274017007927e-24,
-    "particle_momentum_z": 1.7302395904705498e-19,
+    "particle_momentum_x": 1.513031314612992e-19,
+    "particle_momentum_y": 7.700274073846612e-24,
+    "particle_momentum_z": 1.7302395932501682e-19,
     "particle_position_x": 0.1336825415948561,
     "particle_position_y": 0.10348762049276918,
     "particle_weight": 823974609374999.9
