@@ -262,6 +262,8 @@ clight   speed of light
 pi       math constant pi
 ======== ===================
 
+See ``Source/Utils/WarpXConst.H`` for the values.
+
 User-defined constants
 ######################
 
