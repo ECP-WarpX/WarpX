@@ -9,7 +9,7 @@ Input parameters
 
 .. note::
    The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist in a single real number, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
-    
+
 .. _running-cpp-parameters-overall:
 
 Overall simulation parameters
@@ -265,7 +265,7 @@ pi       math constant pi
 User-defined constants
 ######################
 
-Users can define their own constants in the input file. 
+Users can define their own constants in the input file.
 These constants can be used for any parameter that consists in one real number.
 User-defined constants can contain only letters, numbers and the character ``_``.
 The name of each constant has to begin with a letter. The following names are used
