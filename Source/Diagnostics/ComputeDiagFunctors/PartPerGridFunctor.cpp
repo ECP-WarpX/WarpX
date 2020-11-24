@@ -14,7 +14,7 @@ void
 PartPerGridFunctor::operator()(amrex::MultiFab& mf_dst, const int dcomp, const int /*i_buffer*/) const
 {
     auto& warpx = WarpX::GetInstance();
-    const amrex::Vector<long>& npart_in_grid = warpx.GetPartContainer().NumberOfParticlesInGrid(m_lev);
+    const amrex::Vector<amrex::Long>& npart_in_grid = warpx.GetPartContainer().NumberOfParticlesInGrid(m_lev);
     // Guard cell is set to 1 for generality. However, for a cell-centered
     // output Multifab, mf_dst, the guard-cell data is not needed especially considering
     // the operations performend in the CoarsenAndInterpolate function.
