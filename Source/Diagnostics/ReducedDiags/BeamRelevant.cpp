@@ -37,7 +37,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
     //       13: rms gamma
     // 14,15,16: emittance x,y,z
     //       17: charge
-    m_data.resize(18,0.0);
+    m_data.resize(18, amrex::Real(0.0));
 #elif (defined WARPX_DIM_XZ)
     //     0, 1: mean x,z
     //  2, 3, 4: mean px,py,pz
@@ -47,7 +47,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
     //       11: rms gamma
     //    12,13: emittance x,z
     //       14: charge
-    m_data.resize(15,0.0);
+    m_data.resize(15, amrex::Real(0.0));
 #endif
 
     if (ParallelDescriptor::IOProcessor())
@@ -125,7 +125,7 @@ void BeamRelevant::ComputeDiags (int step)
     auto const species_names = mypc.GetSpeciesNames();
 
     // inverse of speed of light squared
-    Real constexpr inv_c2 = 1.0 / (PhysConst::c * PhysConst::c);
+    Real constexpr inv_c2 = amrex::Real(1.0) / (PhysConst::c * PhysConst::c);
 
     // If 2D-XZ, p.pos(1) is z, rather than p.pos(2).
 #if (defined WARPX_DIM_3D)
@@ -161,7 +161,7 @@ void BeamRelevant::ComputeDiags (int step)
         if (w_sum < std::numeric_limits<Real>::min() )
         {
             for (int i = 0; i < static_cast<int>(m_data.size()); ++i){
-                m_data[i] = 0.0;
+                m_data[i] = amrex::Real(0.0);
             }
             return;
         }

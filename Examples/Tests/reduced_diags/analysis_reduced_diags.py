@@ -8,8 +8,8 @@
 
 # This script tests the reduced diagnostics.
 # The setup is a uniform plasma with electrons, protons and photons.
-# Particle energy, field energy and maximum field values will be
-# outputed using the reduced diagnostics.
+# Particle energy, field energy, maximum field, maximum rho and
+# particle number values will be outputed using the reduced diagnostics.
 # And they will be compared with the data in the plotfiles.
 
 # Tolerance: 1.0e-8 for particle energy, 1.0e-3 for field energy,
@@ -73,6 +73,9 @@ Ez = ad['Ez'].to_ndarray()
 Bx = ad['Bx'].to_ndarray()
 By = ad['By'].to_ndarray()
 Bz = ad['Bz'].to_ndarray()
+rho = ad['rho'].to_ndarray()
+rho_electrons = ad['rho_electrons'].to_ndarray()
+rho_protons = ad['rho_protons'].to_ndarray()
 Es = np.sum(Ex**2)+np.sum(Ey**2)+np.sum(Ez**2)
 Bs = np.sum(Bx**2)+np.sum(By**2)+np.sum(Bz**2)
 N  = np.array( ds.domain_width / ds.domain_dimensions )
@@ -86,12 +89,17 @@ max_By = np.amax(np.abs(By))
 max_Bz = np.amax(np.abs(Bz))
 max_E = np.sqrt(np.amax(Ex**2+Ey**2+Ez**2))
 max_B = np.sqrt(np.amax(Bx**2+By**2+Bz**2))
+max_rho = np.amax(rho)
+min_rho = np.amin(rho)
+max_rho_electrons = np.amax(np.abs(rho_electrons))
+max_rho_protons = np.amax(np.abs(rho_protons))
 
 # PART2: get results from reduced diagnostics
 
 EFdata = np.genfromtxt("./diags/reducedfiles/EF.txt")
 EPdata = np.genfromtxt("./diags/reducedfiles/EP.txt")
 MFdata = np.genfromtxt("./diags/reducedfiles/MF.txt")
+MRdata = np.genfromtxt("./diags/reducedfiles/MR.txt")
 NPdata = np.genfromtxt("./diags/reducedfiles/NP.txt")
 EF = EFdata[1][2]
 EP = EPdata[1][2]
@@ -103,6 +111,10 @@ max_Bxdata = MFdata[1][6]
 max_Bydata = MFdata[1][7]
 max_Bzdata = MFdata[1][8]
 max_Bdata  = MFdata[1][9]
+max_rho_data = MRdata[1][2]
+min_rho_data = MRdata[1][3]
+max_rho_electrons_data = MRdata[1][4]
+max_rho_protons_data = MRdata[1][5]
 num_total_data = NPdata[1][2]
 num_electron_data = NPdata[1][3]
 num_proton_data = NPdata[1][4]
@@ -118,8 +130,11 @@ max_diffEmax = max(abs(max_Exdata-max_Ex),abs(max_Eydata-max_Ey),
                    abs(max_Ezdata-max_Ez),abs(max_Edata-max_E))
 max_diffBmax = max(abs(max_Bxdata-max_Bx),abs(max_Bydata-max_By),
                    abs(max_Bzdata-max_Bz),abs(max_Bdata-max_B))
+max_diffrhomax = max(abs(max_rho_data-max_rho),abs(min_rho_data-min_rho),
+                     abs(max_rho_electrons_data-max_rho_electrons),
+                     abs(max_rho_protons_data-max_rho_protons))
 max_diff_number = max(abs(num_total_data-num_total),abs(num_electron_data-num_electron),
-                   abs(num_proton_data-num_proton),abs(num_photon_data-num_photon))
+                      abs(num_proton_data-num_proton),abs(num_photon_data-num_photon))
 max_diff_sum_weight = max(abs(sum_weight_total_data-sum_weight_total),
                           abs(sum_weight_electron_data-sum_weight_electron),
                           abs(sum_weight_proton_data-sum_weight_proton),
@@ -133,6 +148,8 @@ print('maximum difference of maximum electric field:', max_diffEmax)
 print('tolerance of maximum electric field difference:', 1.0e-9)
 print('maximum difference of maximum magnetic field:', max_diffBmax)
 print('tolerance of maximum magnetic field difference:', 1.0e-18)
+print('maximum difference of maximum charge density:', max_diffrhomax)
+print('tolerance of maximum charge density difference:', 1.0e-18)
 print('maximum difference of particle weight sum:', max_diff_sum_weight)
 print('tolerance of particle weight sum:', 0.5)
 
@@ -140,6 +157,7 @@ assert(abs(EFyt-EF) < 1.0e-3)
 assert(abs(EPyt-EP) < 1.0e-8)
 assert(max_diffEmax < 1.0e-9)
 assert(max_diffBmax < 1.0e-18)
+assert(max_diffrhomax < 1.0e-18)
 assert(max_diff_number < 0.5)
 assert(max_diff_sum_weight < 0.5)
 

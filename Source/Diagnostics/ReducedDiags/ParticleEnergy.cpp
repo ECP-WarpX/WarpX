@@ -33,7 +33,7 @@ ParticleEnergy::ParticleEnergy (std::string rd_name)
     const auto nSpecies = mypc.nSpecies();
 
     // resize data array
-    m_data.resize(2*nSpecies+2,0.0);
+    m_data.resize(2*nSpecies+2, amrex::Real(0.0));
 
     // get species names (std::vector<std::string>)
     const auto species_names = mypc.GetSpeciesNames();

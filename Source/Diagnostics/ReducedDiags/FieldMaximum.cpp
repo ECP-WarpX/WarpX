@@ -30,7 +30,7 @@ FieldMaximum::FieldMaximum (std::string rd_name)
 
     constexpr int noutputs = 8; // total energy, E-field energy and B-field energy
     // resize data array
-    m_data.resize(noutputs*nLevel,0.0); // max of Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
+    m_data.resize(noutputs*nLevel, amrex::Real(0.0)); // max of Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
 
     if (ParallelDescriptor::IOProcessor())
     {
