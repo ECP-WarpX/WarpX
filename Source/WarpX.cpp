@@ -1304,7 +1304,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
         "ComputeDivB not implemented with do_nodal."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 
-    Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
+    Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
 
 #ifdef WARPX_DIM_RZ
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
@@ -1342,7 +1342,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
         "ComputeDivB not implemented with do_nodal."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 
-    Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
+    Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
 
 #ifdef WARPX_DIM_RZ
     const Real rmin = GetInstance().Geom(0).ProbLo(0);

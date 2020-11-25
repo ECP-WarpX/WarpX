@@ -505,7 +505,7 @@ public:
     void computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
-                     amrex::Real const required_precision=1.e-11,
+                     amrex::Real const required_precision=static_cast<amrex::Real>(1.e-11),
                      const int max_iters=200) const;
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
@@ -771,7 +771,7 @@ private:
     amrex::Vector<int> injected_plasma_species;
 
     int n_buffer = 4;
-    amrex::Real const_dt = 0.5e-11;
+    amrex::Real const_dt = static_cast<amrex::Real>(0.5e-11);
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
@@ -790,25 +790,25 @@ private:
      * load balance via the 'knapsack' strategy; e.g., if there are 4 boxes per rank,
      * `load_balance_knapsack_factor=2` limits the maximum number of boxes that can
      * be assigned to a rank to 8. */
-    amrex::Real load_balance_knapsack_factor = 1.24;
+    amrex::Real load_balance_knapsack_factor = static_cast<amrex::Real>(1.24);
     /** Threshold value that controls whether to adopt the proposed distribution
      * mapping during load balancing.  The new distribution mapping is adopted
      * if the ratio of proposed distribution mapping efficiency to current
      * distribution mapping efficiency is larger than the threshold; 'efficiency'
      * here means the average cost per MPI rank.  */
-    amrex::Real load_balance_efficiency_ratio_threshold = 1.1;
+    amrex::Real load_balance_efficiency_ratio_threshold = static_cast<amrex::Real>(1.1);
     /** Weight factor for cells in `Heuristic` costs update.
      * Default values on GPU are determined from single-GPU tests on Summit.
      * The problem setup for these tests is an empty (i.e. no particles) domain
      * of size 256 by 256 by 256 cells, from which the average time per iteration
      * per cell is computed. */
-    amrex::Real costs_heuristic_cells_wt = -1;
+    amrex::Real costs_heuristic_cells_wt = static_cast<amrex::Real>(-1);
     /** Weight factor for particles in `Heuristic` costs update.
      * Default values on GPU are determined from single-GPU tests on Summit.
      * The problem setup for these tests is a high-ppc (27 particles per cell)
      * uniform plasma on a domain of size 128 by 128 by 128, from which the approximate
      * time per iteration per particle is computed. */
-    amrex::Real costs_heuristic_particles_wt = -1;
+    amrex::Real costs_heuristic_particles_wt = static_cast<amrex::Real>(-1);
 
     // Determines timesteps for override sync
     IntervalsParser override_sync_intervals;
@@ -823,7 +823,7 @@ private:
 
     int regrid_int = -1;
 
-    amrex::Real cfl = 0.7;
+    amrex::Real cfl = static_cast<amrex::Real>(0.7);
 
     std::string restart_chkfile;
 
