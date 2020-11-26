@@ -9,6 +9,8 @@
 #include "Diagnostics/ComputeDiagFunctors/RhoFunctor.H"
 #include "WarpX.H"
 
+using namespace amrex::literals;
+
 // constructor
 RhoMaximum::RhoMaximum (std::string rd_name)
 : ReducedDiags{rd_name}
@@ -68,15 +70,14 @@ RhoMaximum::RhoMaximum (std::string rd_name)
 
     // Min and max of total rho + max of |rho| for each species
     const int noutputs_per_level = 2+n_charged_species;
-    m_data.resize(nLevel*noutputs_per_level, amrex::Real(0.0));
+    m_data.resize(static_cast<std::size_t>(nLevel*noutputs_per_level), 0.0_rt);
 
     if (amrex::ParallelDescriptor::IOProcessor())
     {
         if ( m_IsNotRestart )
         {
             // open file
-            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app};
+            std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
             ofs << "#";
             ofs << "[1]step()";
@@ -116,7 +117,7 @@ void RhoMaximum::ComputeDiags (int step)
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
-    // get WarpX class object
+    // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
     // get number of levels

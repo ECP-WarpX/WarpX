@@ -23,7 +23,7 @@ using namespace amrex;
 ParticleEnergy::ParticleEnergy (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-    // get WarpX class object
+    // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
     // get MultiParticleContainer class object
@@ -43,8 +43,7 @@ ParticleEnergy::ParticleEnergy (std::string rd_name)
         if ( m_IsNotRestart )
         {
             // open file
-            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app};
+            std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
             ofs << "#";
             ofs << "[1]step()";

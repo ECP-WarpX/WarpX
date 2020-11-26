@@ -8,11 +8,13 @@
 #include "ParticleNumber.H"
 #include "WarpX.H"
 
+using namespace amrex::literals;
+
 // constructor
 ParticleNumber::ParticleNumber (std::string rd_name)
 : ReducedDiags{rd_name}
 {
-    // get WarpX class object
+    // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
     // get MultiParticleContainer class object
@@ -23,7 +25,7 @@ ParticleNumber::ParticleNumber (std::string rd_name)
 
     // resize data array to 2*(nSpecies+1) (each species + sum over all species
     // for both number of macroparticles and of physical particles)
-    m_data.resize(2*(nSpecies+1), amrex::Real(0.));
+    m_data.resize(2*(nSpecies+1), 0.0_rt);
 
     // get species names (std::vector<std::string>)
     const auto species_names = mypc.GetSpeciesNames();
@@ -33,8 +35,7 @@ ParticleNumber::ParticleNumber (std::string rd_name)
         if ( m_IsNotRestart )
         {
             // open file
-            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app};
+            std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
             ofs << "#";
             ofs << "[1]step()";
@@ -95,8 +96,8 @@ void ParticleNumber::ComputeDiags (int step)
     const int idx_first_species_sum_weight = idx_total_sum_weight + 1;
 
     // Initialize total number of macroparticles and total weight (all species) to 0
-    m_data[idx_total_macroparticles] = amrex::Real(0.);
-    m_data[idx_total_sum_weight] = amrex::Real(0.);
+    m_data[idx_total_macroparticles] = 0.0_rt;
+    m_data[idx_total_sum_weight] = 0.0_rt;
 
     // loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)

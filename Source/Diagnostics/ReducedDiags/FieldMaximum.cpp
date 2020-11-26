@@ -37,8 +37,7 @@ FieldMaximum::FieldMaximum (std::string rd_name)
         if ( m_IsNotRestart )
         {
             // open file
-            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app};
+            std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
             ofs << "#";
             ofs << "[1]step()";
@@ -94,7 +93,7 @@ void FieldMaximum::ComputeDiags (int step)
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
-    // get WarpX class object
+    // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
     // get number of level

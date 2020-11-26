@@ -23,7 +23,7 @@ LoadBalanceCosts::LoadBalanceCosts (std::string rd_name)
 // function that gathers costs
 void LoadBalanceCosts::ComputeDiags (int step)
 {
-    // get WarpX class object
+    // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
 
     const amrex::LayoutData<amrex::Real>* cost = warpx.getCosts(0);
@@ -218,7 +218,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
     ofs.close();
 
 
-    // get WarpX class object
+    // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
 
     if (!ParallelDescriptor::IOProcessor()) return;

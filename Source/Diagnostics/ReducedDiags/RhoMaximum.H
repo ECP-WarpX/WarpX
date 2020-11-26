@@ -20,7 +20,7 @@ class RhoMaximum : public ReducedDiags
 public:
 
     /** constructor
-     *  @param[in] rd_name reduced diags names 
+     *  @param[in] rd_name reduced diags names
      */
     RhoMaximum(std::string rd_name);
 
