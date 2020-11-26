@@ -37,7 +37,7 @@ FieldEnergy::FieldEnergy (std::string rd_name)
 
     constexpr int noutputs = 3; // total energy, E-field energy and B-field energy
     // resize data array
-    m_data.resize(noutputs*nLevel, amrex::Real(0.0));
+    m_data.resize(noutputs*nLevel, 0.0_rt);
 
     if (ParallelDescriptor::IOProcessor())
     {

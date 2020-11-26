@@ -12,7 +12,7 @@
 #include "Diagnostics/ComputeDiagFunctors/ComputeDiagFunctor.H"
 
 /**
- *  This class mainly contains a function that computes the extremas of the total charge density
+ *  This class mainly contains a function that computes the extrema of the total charge density
  *  and of the charge density of each charged species.
  */
 class RhoMaximum : public ReducedDiags
@@ -20,7 +20,8 @@ class RhoMaximum : public ReducedDiags
 public:
 
     /** constructor
-     *  @param[in] rd_name reduced diags names */
+     *  @param[in] rd_name reduced diags names 
+     */
     RhoMaximum(std::string rd_name);
 
     /** This function computes the maximum and minimum values of rho (summed over all species) and

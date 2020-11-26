@@ -1735,7 +1735,7 @@ Reduced Diagnostics
     * ``RhoMaximum``
         This type computes the maximum and minimum values of the total charge density as well as
         the maximum absolute value of the charge density of each charged species.
-        Please be aware that measuring maximum charge densities might be very noisy in PIC.
+        Please be aware that measuring maximum charge densities might be very noisy in PIC simulations.
 
         The output columns are
         the maximum value of the :math:`rho` field,

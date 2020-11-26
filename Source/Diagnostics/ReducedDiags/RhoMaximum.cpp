@@ -51,7 +51,7 @@ RhoMaximum::RhoMaximum (std::string rd_name)
     for (int i = 0; i < nSpecies; ++i)
     {
         // Only charged species are relevant for this diag
-        if (mypc.GetParticleContainer(i).getCharge() != amrex::Real(0.))
+        if (mypc.GetParticleContainer(i).getCharge() != 0.0_rt)
         {
             indices_charged_species.push_back(i);
             n_charged_species += 1;
