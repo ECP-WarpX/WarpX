@@ -8,7 +8,6 @@
 
 from benchmark import Benchmark
 import yt
-import re
 import sys
 import numpy as np
 
