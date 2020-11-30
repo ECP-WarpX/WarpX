@@ -24,6 +24,13 @@ const std::map<std::string, int> maxwell_solver_algo_to_int = {
     {"default", MaxwellSolverAlgo::Yee }
 };
 
+const std::map<std::string, int> electrostatic_solver_algo_to_int = {
+    {"none", ElectrostaticSolverAlgo::None },
+    {"relativistic", ElectrostaticSolverAlgo::Relativistic},
+    {"labframe", ElectrostaticSolverAlgo::LabFrame},
+    {"default", ElectrostaticSolverAlgo::None }
+};
+
 const std::map<std::string, int> particle_pusher_algo_to_int = {
     {"boris",   ParticlePusherAlgo::Boris },
     {"vay",     ParticlePusherAlgo::Vay },
@@ -84,6 +91,8 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
     std::map<std::string, int> algo_to_int;
     if (0 == std::strcmp(pp_search_key, "maxwell_solver")) {
         algo_to_int = maxwell_solver_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "do_electrostatic")) {
+        algo_to_int = electrostatic_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "particle_pusher")) {
         algo_to_int = particle_pusher_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "current_deposition")) {

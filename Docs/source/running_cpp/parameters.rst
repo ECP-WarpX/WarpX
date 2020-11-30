@@ -61,13 +61,35 @@ Overall simulation parameters
     one should not expect to obtain the same random numbers,
     even if a fixed ``warpx.random_seed`` is provided.
 
-* ``warpx.do_electrostatic`` (``0`` or ``1``; default is ``0`` for false)
-    Run WarpX in electrostatic mode. Instead of updating the fields
-    at each iteration with the full Maxwell equations, the fields are
-    instead recomputed at each iteration from the (relativistic) Poisson
-    equation. There is no limitation on the timestep in this case, but
+* ``warpx.do_electrostatic`` (`string`) optional (default `none`)
+    Specifies the electrostatic mode. When turned on, instead of updating
+    the fields at each iteration with the full Maxwell equations, the fields
+    are recomputed at each iteration from the Poisson equation.
+    There is no limitation on the timestep in this case, but
     electromagnetic effects (e.g. propagation of radiation, lasers, etc.)
-    are not captured.
+    are not captured. There are two options:
+
+    * ``labframe``: Poisson's equation is solved in the lab frame with
+      the charge density of all species combined. There will only be E
+      fields.
+
+    * ``relativistic``: Poisson's equation is solved for each species
+      seperately taking into account their averaged velocities. The field
+      is mapped to the simulation frame and will produce both E and B
+      fields.
+
+* ``self_fields_required_precision`` (`float`, default: 1.e-11)
+    The relative precision with which the electrostatic space-charge fields should
+    be calculated. More specifically, the space-charge fields are
+    computed with an iterative Multi-Level Multi-Grid (MLMG) solver.
+    This solver can fail to reach the default precision within a reasonable
+    This only applies when warpx.do_electrostatic = labframe.
+
+* ``self_fields_max_iters`` (`integer`, default: 200)
+    Maximum number of iterations used for MLMG solver for space-charge
+    fields calculation. In case if MLMG converges but fails to reach the desired
+    ``self_fields_required_precision``, this parameter may be increased.
+    This only applies when warpx.do_electrostatic = labframe.
 
 * ``amrex.abort_on_out_of_gpu_memory``  (``0`` or ``1``; default is ``1`` for true)
     When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
@@ -1441,7 +1463,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
-    Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species.
+    Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe.
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
     Note that the fields are averaged on the cell centers before they are written to file.
 
