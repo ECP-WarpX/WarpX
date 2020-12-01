@@ -101,7 +101,7 @@ struct InjectorDensityPredefined
         }
         default:
             amrex::Abort("InjectorDensityPredefined: how did we get here?");
-            return static_cast<amrex::Real>(0.0);
+            return amrex::Real(0.0);
         }
     }
 
