@@ -823,7 +823,7 @@ private:
 
     int regrid_int = -1;
 
-    amrex::Real cfl = static_cast<amrex::Real>(0.7);
+    amrex::Real cfl = amrex::Real(0.7);
 
     std::string restart_chkfile;
 
