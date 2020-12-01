@@ -59,7 +59,7 @@ amrex::ParticleReal initializeRealValue (const InitializationPolicy policy, amre
         case InitializationPolicy::Zero : return 0.0;
         case InitializationPolicy::One  : return 1.0;
         case InitializationPolicy::RandomExp : {
-            return -log(amrex::Random(engine));
+            return -std::log(amrex::Random(engine));
         }
         default : {
             amrex::Abort("Initialization Policy not recognized");
