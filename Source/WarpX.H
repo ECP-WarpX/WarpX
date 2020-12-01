@@ -808,7 +808,7 @@ private:
      * The problem setup for these tests is a high-ppc (27 particles per cell)
      * uniform plasma on a domain of size 128 by 128 by 128, from which the approximate
      * time per iteration per particle is computed. */
-    amrex::Real costs_heuristic_particles_wt = static_cast<amrex::Real>(-1);
+    amrex::Real costs_heuristic_particles_wt = amrex::Real(-1);
 
     // Determines timesteps for override sync
     IntervalsParser override_sync_intervals;
