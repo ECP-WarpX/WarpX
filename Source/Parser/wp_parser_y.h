@@ -236,7 +236,7 @@ wp_call_f2 (enum wp_f2_t type, T a, T b)
     case WP_OR:
         return ((a != T(0)) || (b != T(0))) ? 1.0 : 0.0;
     case WP_HEAVISIDE:
-        return static_cast<amrex::Real>((a < 0.0) ? 0.0 : ((a > 0.0) ? 1.0 : b));
+        return (a < 0.0) ? amrex::Real(0.0) : ((a > 0.0) ? amrex::Real(1.0) : b);
     case WP_MIN:
         return (a < b) ? a : b;
     case WP_MAX:
