@@ -274,7 +274,7 @@ public:
     bool do_splitting = false;
     bool initialize_self_fields = false;
     amrex::Real self_fields_required_precision =
-        static_cast<amrex::Real>(1.e-11);
+        amrex::Real(1.e-11);
     int self_fields_max_iters = 200;
 
     // split along diagonals (0) or axes (1)
