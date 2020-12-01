@@ -790,7 +790,7 @@ private:
      * load balance via the 'knapsack' strategy; e.g., if there are 4 boxes per rank,
      * `load_balance_knapsack_factor=2` limits the maximum number of boxes that can
      * be assigned to a rank to 8. */
-    amrex::Real load_balance_knapsack_factor = static_cast<amrex::Real>(1.24);
+    amrex::Real load_balance_knapsack_factor = amrex::Real(1.24);
     /** Threshold value that controls whether to adopt the proposed distribution
      * mapping during load balancing.  The new distribution mapping is adopted
      * if the ratio of proposed distribution mapping efficiency to current
