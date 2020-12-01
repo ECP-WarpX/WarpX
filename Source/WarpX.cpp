@@ -510,9 +510,10 @@ WarpX::ReadParameters ()
 
         amrex::Real quantum_xi_tmp;
         int quantum_xi_is_specified = queryWithParser(pp, "quantum_xi", quantum_xi_tmp);
-        double quantum_xi = quantum_xi_tmp;
-        if (quantum_xi_is_specified)
+        if (quantum_xi_is_specified) {
+            double const quantum_xi = quantum_xi_tmp;
             quantum_xi_c2 = quantum_xi * PhysConst::c * PhysConst::c;
+        }
 
         pp.query("do_pml", do_pml);
         pp.query("pml_ncell", pml_ncell);
