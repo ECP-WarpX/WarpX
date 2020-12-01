@@ -85,7 +85,7 @@ struct InjectorMomentumBoltzmann
     // boost velocity/c beta,
     // and boost direction dir respectively.
     InjectorMomentumBoltzmann(amrex::Real t, amrex::Real b, int d) noexcept
-        : dir(d), beta(b), vave(std::sqrt(2*t))
+        : dir(d), beta(b), vave(std::sqrt(amrex::Real(2.)*t))
         {}
 
     AMREX_GPU_HOST_DEVICE
