@@ -796,7 +796,7 @@ private:
      * if the ratio of proposed distribution mapping efficiency to current
      * distribution mapping efficiency is larger than the threshold; 'efficiency'
      * here means the average cost per MPI rank.  */
-    amrex::Real load_balance_efficiency_ratio_threshold = static_cast<amrex::Real>(1.1);
+    amrex::Real load_balance_efficiency_ratio_threshold = amrex::Real(1.1);
     /** Weight factor for cells in `Heuristic` costs update.
      * Default values on GPU are determined from single-GPU tests on Summit.
      * The problem setup for these tests is an empty (i.e. no particles) domain
