@@ -411,6 +411,8 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             i++;
         } else if ( m_varnames[comp] == "F" ){
             m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_F_fp(lev), lev, m_crse_ratio);
+        } else if ( m_varnames[comp] == "phi" ){
+            m_all_field_functors[lev][comp] = std::make_unique<CellCenterFunctor>(warpx.get_pointer_phi_fp(lev), lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_cell" ){
             m_all_field_functors[lev][comp] = std::make_unique<PartPerCellFunctor>(nullptr, lev, m_crse_ratio);
         } else if ( m_varnames[comp] == "part_per_grid" ){
@@ -436,10 +438,8 @@ FullDiagnostics::PrepareFieldDataForOutput ()
     auto & warpx = WarpX::GetInstance();
     warpx.FillBoundaryE(warpx.getngE(), warpx.getngExtra());
     warpx.FillBoundaryB(warpx.getngE(), warpx.getngExtra());
-#ifndef WARPX_USE_PSATD
-    warpx.FillBoundaryAux(warpx.getngUpdateAux());
-#endif
     warpx.UpdateAuxilaryData();
+    warpx.FillBoundaryAux(warpx.getngUpdateAux());
 
     // Update the RealBox used for the geometry filter in particle diags
     for (int i = 0; i < m_output_species.size(); ++i) {

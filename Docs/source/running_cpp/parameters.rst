@@ -61,13 +61,35 @@ Overall simulation parameters
     one should not expect to obtain the same random numbers,
     even if a fixed ``warpx.random_seed`` is provided.
 
-* ``warpx.do_electrostatic`` (``0`` or ``1``; default is ``0`` for false)
-    Run WarpX in electrostatic mode. Instead of updating the fields
-    at each iteration with the full Maxwell equations, the fields are
-    instead recomputed at each iteration from the (relativistic) Poisson
-    equation. There is no limitation on the timestep in this case, but
+* ``warpx.do_electrostatic`` (`string`) optional (default `none`)
+    Specifies the electrostatic mode. When turned on, instead of updating
+    the fields at each iteration with the full Maxwell equations, the fields
+    are recomputed at each iteration from the Poisson equation.
+    There is no limitation on the timestep in this case, but
     electromagnetic effects (e.g. propagation of radiation, lasers, etc.)
-    are not captured.
+    are not captured. There are two options:
+
+    * ``labframe``: Poisson's equation is solved in the lab frame with
+      the charge density of all species combined. There will only be E
+      fields.
+
+    * ``relativistic``: Poisson's equation is solved for each species
+      seperately taking into account their averaged velocities. The field
+      is mapped to the simulation frame and will produce both E and B
+      fields.
+
+* ``self_fields_required_precision`` (`float`, default: 1.e-11)
+    The relative precision with which the electrostatic space-charge fields should
+    be calculated. More specifically, the space-charge fields are
+    computed with an iterative Multi-Level Multi-Grid (MLMG) solver.
+    This solver can fail to reach the default precision within a reasonable
+    This only applies when warpx.do_electrostatic = labframe.
+
+* ``self_fields_max_iters`` (`integer`, default: 200)
+    Maximum number of iterations used for MLMG solver for space-charge
+    fields calculation. In case if MLMG converges but fails to reach the desired
+    ``self_fields_required_precision``, this parameter may be increased.
+    This only applies when warpx.do_electrostatic = labframe.
 
 * ``amrex.abort_on_out_of_gpu_memory``  (``0`` or ``1``; default is ``1`` for true)
     When running on GPUs, memory that does not fit on the device will be automatically swapped to host memory when this option is set to ``0``.
@@ -310,13 +332,11 @@ Particle initialization
     The mass of one `physical` particle of this species.
     If ``species_type`` is specified, the mass will be set to the physical value and ``mass`` is optional.
 
-* ``<species_name>.xmin,ymin,zmin`` (`float`) optional (default unlimited)
-    When ``<species_name>.xmin`` and ``<species_name>.xmax`` (see below) are set, they delimit the region within which particles are injected.
+* ``<species_name>.xmin,ymin,zmin`` and ``<species_name>.xmax,ymax,zmax`` (`float`) optional (default unlimited)
+    When ``<species_name>.xmin`` and ``<species_name>.xmax`` are set, they delimit the region within which particles are injected.
     The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side, so expressions like ``<species_name>.xmin = "2.+1."`` and/or using user-defined constants are accepted.
     The same is applicable in the other directions.
     If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
-
-* ``<species_name>.xmax,ymax,zmax`` (`float`) optional (default unlimited)
 
 * ``<species_name>.injection_style`` (`string`)
     Determines how the particles will be injected in the simulation.
@@ -812,19 +832,19 @@ Laser initialization
 
 * ``<laser_name>.stc_direction`` (`3 floats`) optional (default `1. 0. 0.`)
     Direction of laser spatio-temporal couplings.
-    See definition in Akturk et al., Opt Express, vol 12, no 19 (2014).
+    See definition in Akturk et al., Opt Express, vol 12, no 19 (2004).
 
 * ``<laser_name>.zeta`` (`float`; in meters.seconds) optional (default `0.`)
     Spatial chirp at focus in direction ``<laser_name>.stc_direction``. See definition in
-    Akturk et al., Opt Express, vol 12, no 19 (2014).
+    Akturk et al., Opt Express, vol 12, no 19 (2004).
 
 * ``<laser_name>.beta`` (`float`; in seconds) optional (default `0.`)
     Angular dispersion (or angular chirp) at focus in direction ``<laser_name>.stc_direction``.
-    See definition in Akturk et al., Opt Express, vol 12, no 19 (2014).
+    See definition in Akturk et al., Opt Express, vol 12, no 19 (2004).
 
 * ``<laser_name>.phi2`` (`float`; in seconds**2) optional (default `0.`)
     Temporal chirp at focus.
-    See definition in Akturk et al., Opt Express, vol 12, no 19 (2014).
+    See definition in Akturk et al., Opt Express, vol 12, no 19 (2004).
 
 * ``<laser_name>.do_continuous_injection`` (`0` or `1`) optional (default `0`).
     Whether or not to use continuous injection.
@@ -1012,21 +1032,15 @@ Numerics and algorithms
     Whether to smooth the charge and currents on the mesh, after depositing
     them from the macroparticles. This uses a bilinear filter
     (see the sub-section **Filtering** in :doc:`../theory/theory`).
-
-* ``warpx.use_kspace_filter`` (`0` or `1`; default: `0`)
-    Whether to smooth the charge and currents on the mesh, after depositing
-    them from the macroparticles. This uses a bilinear filter, applying the
-    filter in k-space. It is only supported with the RZ spectral solver.
-    (see the sub-section **Filtering** in :doc:`../theory/theory`).
+    When using the RZ spectral solver, the filtering is done in k-space.
 
 * ``warpx.filter_npass_each_dir`` (`3 int`) optional (default `1 1 1`)
     Number of passes along each direction for the bilinear filter.
     In 2D simulations, only the first two values are read.
 
 * ``warpx.use_filter_compensation`` (`0` or `1`; default: `0`)
-    Whether to add compensation when applying k-space filtering.
-    This requires `warpx.use_kspace_filter=1` and is only supported
-    with the RZ spectral solver.
+    Whether to add compensation when applying filtering.
+    This is only supported with the RZ spectral solver.
 
 * ``warpx.use_damp_fields_in_z_guard`` (`0` or `1`)
     When using the RZ spectrol solver, specifies whether to apply a
@@ -1447,7 +1461,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
 
 * ``<diag_name>.fields_to_plot`` (list of `strings`, optional)
     Fields written to output.
-    Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species.
+    Possible values: ``Ex`` ``Ey`` ``Ez`` ``Bx`` ``By`` ``Bz`` ``jx`` ``jy`` ``jz`` ``part_per_cell`` ``rho`` ``phi`` ``F`` ``part_per_grid`` ``divE`` ``divB`` and ``rho_<species_name>``, where ``<species_name>`` must match the name of one of the available particle species. Note that ``phi`` will only be written out when do_electrostatic==labframe.
     Default is ``<diag_name>.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz``.
     Note that the fields are averaged on the cell centers before they are written to file.
 
@@ -1817,6 +1831,26 @@ Reduced Diagnostics
         using the histogram reduced diagnostics
         are given in ``Examples/Tests/initial_distribution/``.
 
+    * ``ParticleExtrema``
+        This type computes the minimum and maxmium values of
+        particle position, momentum, gamma, weight,
+        and the :math:`\chi` parameter for QED species.
+
+        ``<reduced_diags_name>.species`` must be provided,
+        such that the diagnostics are done for this species only.
+
+        The output columns are
+        minimum and maximum position :math:`x`, :math:`y`, :math:`z`;
+        minimum and maximum momentum :math:`p_x`, :math:`p_y`, :math:`p_z`;
+        minimum and maximum gamma :math:`\gamma`;
+        minimum and maximum weight :math:`w`;
+        minimum and maximum :math:`\chi`.
+
+        Note that when the QED parameter :math:`\chi` is computed,
+        field gather is carried out at every output,
+        so the time of the diagnostic may be long
+        depending on the simulation size.
+
 * ``<reduced_diags_name>.frequency`` (`string`) optional (default ``1``)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
     diagnostics are written to file.
@@ -1941,6 +1975,11 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     It is used to convert the pair production rate per unit volume into an actual number of created particles.
     This value should correspond to the typical transverse extent for which the EM field has a very high value
     (e.g. the beam waist for a focused laser beam).
+
+* ``qed_schwinger.xmin,ymin,zmin`` and ``qed_schwinger.xmax,ymax,zmax`` (`float`) optional (default unlimited)
+    When ``qed_schwinger.xmin`` and ``qed_schwinger.xmax`` are set, they delimit the region within
+    which Schwinger pairs can be created.
+    The same is applicable in the other directions.
 
 * ``qed_schwinger.threshold_poisson_gaussian`` (`integer`) optional (default `25`)
     If the expected number of physical pairs created in a cell at a given timestep is smaller than this threshold,

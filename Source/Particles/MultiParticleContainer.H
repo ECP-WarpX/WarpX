@@ -148,6 +148,12 @@ public:
      * particles.
      */
     void doQEDSchwinger ();
+
+    /** This function computes the box outside which Schwinger process is disabled. The box is
+     * defined by m_qed_schwinger_xmin/xmax/ymin/ymax/zmin/zmax and the warpx level 0 geometry
+     * object (to make the link between Real and int quatities).
+     */
+    amrex::Box ComputeSchwingerGlobalBox () const;
 #endif
 
     void Restart (const std::string& dir);
@@ -175,9 +181,9 @@ public:
     *
     * @param[in] lev the index of the refinement level.
     */
-    amrex::Vector<long> GetZeroParticlesInGrid(const int lev) const;
+    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(const int lev) const;
 
-    amrex::Vector<long> NumberOfParticlesInGrid(int lev) const;
+    amrex::Vector<amrex::Long> NumberOfParticlesInGrid(int lev) const;
 
     void Increment (amrex::MultiFab& mf, int lev);
 
@@ -391,6 +397,15 @@ protected:
      * a Poisson distribution for the pair production rate calculations
      */
     int m_qed_schwinger_threshold_poisson_gaussian = 25;
+    /** The 6 following variables are spatial boundaries beyond which Schwinger process is
+     *  deactivated
+     */
+    amrex::Real m_qed_schwinger_xmin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_qed_schwinger_xmax = std::numeric_limits<amrex::Real>::max();
+    amrex::Real m_qed_schwinger_ymin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_qed_schwinger_ymax = std::numeric_limits<amrex::Real>::max();
+    amrex::Real m_qed_schwinger_zmin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_qed_schwinger_zmax = std::numeric_limits<amrex::Real>::max();
 
 #endif
 

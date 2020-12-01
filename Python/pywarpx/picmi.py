@@ -21,11 +21,12 @@ class constants:
     # --- Put the constants in their own namespace
     # --- Values from WarpXConst.H
     c = 299792458.
-    ep0 = 8.854187817e-12
-    mu0 = 1.2566370614359173e-06
-    q_e = 1.602176462e-19
-    m_e = 9.10938291e-31
-    m_p = 1.6726231e-27
+    ep0 = 8.8541878128e-12
+    mu0 = 1.25663706212e-06
+    q_e = 1.602176634e-19
+    m_e = 9.1093837015e-31
+    m_p = 1.67262192369e-27
+    hbar = 1.054571817e-34
 
 
 class Species(picmistandard.PICMI_Species):
@@ -45,7 +46,12 @@ class Species(picmistandard.PICMI_Species):
             if self.mass is None: self.mass = 'm_p'
         else:
             if self.charge is None and self.charge_state is not None:
-                self.charge = self.charge_state*constants.q_e
+                if self.charge_state == +1.:
+                    self.charge = 'q_e'
+                elif self.charge_state == -1.:
+                    self.charge = '-q_e'
+                else:
+                    self.charge = self.charge_state*constants.q_e
             # Match a string of the format '#nXx', with the '#n' optional isotope number.
             m = re.match('(?P<iso>#[\d+])*(?P<sym>[A-Za-z]+)', self.particle_type)
             if m is not None:
@@ -64,6 +70,8 @@ class Species(picmistandard.PICMI_Species):
                 if self.mass is None:
                     self.mass = element.mass*periodictable.constants.atomic_mass_constant
 
+        self.boost_adjust_transverse_positions = kw.pop('warpx_boost_adjust_transverse_positions', None)
+
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
                           injection_plane_position = None,
@@ -79,7 +87,8 @@ class Species(picmistandard.PICMI_Species):
                                              mass = self.mass,
                                              charge = self.charge,
                                              injection_style = 'python',
-                                             initialize_self_fields = int(initialize_self_fields))
+                                             initialize_self_fields = int(initialize_self_fields),
+                                             boost_adjust_transverse_positions = self.boost_adjust_transverse_positions)
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
@@ -307,13 +316,8 @@ class PseudoRandomLayout(picmistandard.PICMI_PseudoRandomLayout):
 class BinomialSmoother(picmistandard.PICMI_BinomialSmoother):
 
     def initialize_inputs(self, solver):
-        use_spectral = solver.method == 'PSATD' and isinstance(solver.grid, picmistandard.PICMI_CylindricalGrid)
-        if use_spectral:
-            pywarpx.warpx.use_kspace_filter = 1
-            if self.compensation is not None:
-                pywarpx.warpx.use_filter_compensation = self.compensation[0] and self.compensation[1]
-        else:
-            pywarpx.warpx.use_filter = 1
+        pywarpx.warpx.use_filter = 1
+        pywarpx.warpx.use_filter_compensation = bool(np.all(self.compensation))
         if self.n_pass is None:
             # If not specified, do at least one pass in each direction.
             self.n_pass = 1

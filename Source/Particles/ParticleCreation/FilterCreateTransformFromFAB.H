@@ -58,19 +58,14 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
     const int level_0 = 0;
     Geometry const & geom = warpx.Geom(level_0);
 
-    // Note that we use here x and y for the 2 directions in 2D, which is not consistent with
-    // the rest of the code (x and z are usually chosen)
+    constexpr int spacedim = AMREX_SPACEDIM;
+
     const Real xlo_global = geom.ProbLo(0);
-    const Real ylo_global = geom.ProbLo(1);
     const Real dx         = geom.CellSize(0);
-    const Real dy         = geom.CellSize(1);
-#if (AMREX_SPACEDIM == 3)
-    const Real zlo_global = geom.ProbLo(2);
-    const Real dz         = geom.CellSize(2);
-#else
-    const Real zlo_global = 0.0;
-    const Real dz         = 0.0;
-#endif
+    const Real ylo_global = (spacedim == 3) ? geom.ProbLo(1) : amrex::Real(0.);
+    const Real dy         = (spacedim == 3) ? geom.CellSize(1) : amrex::Real(0.);
+    const Real zlo_global = (spacedim == 3) ? geom.ProbLo(2) : geom.ProbLo(1);
+    const Real dz         = (spacedim == 3) ? geom.CellSize(2) : geom.CellSize(1);
 
     const auto arrNumPartCreation = src_FAB->array();
     Gpu::DeviceVector<Index> offsets(ncells);
@@ -83,8 +78,6 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
 
     const auto dst1_data = dst1.getParticleTileData();
     const auto dst2_data = dst2.getParticleTileData();
-
-    constexpr int spacedim = AMREX_SPACEDIM;
 
     // For loop over all cells in the box. If mask is true in the given cell,
     // we create the particles in the cell and apply a transform function to the
@@ -102,8 +95,8 @@ Index filterCreateTransformFromFAB (DstTile& dst1, DstTile& dst2, const amrex::B
             // Currently all particles are created on nodes. This makes it useless
             // to use N>1 (for now).
             const Real x = xlo_global + j*dx;
-            const Real y = (spacedim == 3) ? ylo_global + k*dy : 0.0_rt;
-            const Real z = (spacedim == 3) ? zlo_global + l*dz : ylo_global + k*dy;
+            const Real y = ylo_global + k*dy;
+            const Real z = (spacedim == 3) ? zlo_global + l*dz : zlo_global + k*dz;
 
             for (int n = 0; n < N; ++n)
             {

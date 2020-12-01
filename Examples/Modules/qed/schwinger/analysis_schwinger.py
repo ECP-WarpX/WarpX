@@ -53,6 +53,7 @@ elif test_number == '2':
     Bx_test = 1679288857.0516706
     By_test = 525665014.1557486
     Bz_test = 1836353079.9561853
+    dV = dV/2. # Schwinger is only activated in part of the simulation domain
 elif test_number == '3':
     # Third Schwinger test with intermediate electric field such that average created pair per cell
     # is 1. A Poisson distribution is used to obtain the weights of the particles.
@@ -63,6 +64,7 @@ elif test_number == '4':
     # case.
     Ez_test = 2.5e+20
     By_test = 833910140000.
+    dV = dV*(3./4.)**2. # Schwinger is only activated in part of the simulation domain
 else:
     assert(False)
 
