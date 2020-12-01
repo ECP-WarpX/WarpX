@@ -771,7 +771,7 @@ private:
     amrex::Vector<int> injected_plasma_species;
 
     int n_buffer = 4;
-    amrex::Real const_dt = static_cast<amrex::Real>(0.5e-11);
+    amrex::Real const_dt = amrex::Real(0.5e-11);
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
