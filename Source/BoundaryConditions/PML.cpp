@@ -546,10 +546,11 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     const RealVect dx{AMREX_D_DECL(geom->CellSize(0), geom->CellSize(1), geom->CellSize(2))};
     // Get the cell-centered box, with guard cells
     BoxArray realspace_ba = ba;  // Copy box
-    Array<Real,3> v_galilean_zero = {0,0,0};
+    Array<Real,3> v_galilean_zero = {0., 0., 0.};
+    Array<Real,3> v_comoving_zero = {0., 0., 0.};
     realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
     spectral_solver_fp = std::make_unique<SpectralSolver>(realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, dx, dt, in_pml );
+        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, dx, dt, in_pml );
 #endif
 
     if (cgeom)
@@ -619,7 +620,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 
         realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_cp = std::make_unique<SpectralSolver>(realspace_cba, cdm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, cdx, dt, in_pml );
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, cdx, dt, in_pml );
 #endif
     }
 }
