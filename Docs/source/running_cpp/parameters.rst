@@ -307,7 +307,7 @@ Besides, for profiles that depend on spatial coordinates (the plasma momentum di
 The parser reads python-style expressions between double quotes, for instance
 ``"a0*x**2 * (1-y*1.e2) * (x>0)"`` is a valid expression where ``a0`` is a
 user-defined constant (see below) and ``x`` and ``y`` are spatial coordinates. The names are case sensitive. The factor
-``(x>0)`` is `1` where `x>0` and `0` where `x<=0`. It allows the user to
+``(x>0)`` is ``1`` where ``x>0`` and ``0`` where ``x<=0``. It allows the user to
 define functions by intervals.
 The parser reads mathematical functions into an `abstract syntax tree (AST) <https://en.wikipedia.org/wiki/Abstract_syntax_tree>`_, which supports a maximum depth (see :ref:`build options <building-cmake>`_).
 Additional terms in a function can create a level of depth in the AST, e.g. ``a+b+c+d`` is parsed in groups of ``[+ a [+ b [+ c [+ d]]]]`` (depth: 4).
