@@ -1135,15 +1135,15 @@ def get_mesh_charge_density_fp(level, include_ghosts=True):
     return _get_mesh_field_list(libwarpx.warpx_getChargeDensityFP, level, None, include_ghosts)
 
 
-def _get_mesh_array_lovects(level, direction, include_ghosts=True, getarrayfunc=None):
+def _get_mesh_array_lovects(level, direction, include_ghosts=True, getlovectsfunc=None):
     assert(0 <= level and level <= libwarpx.warpx_finestLevel())
 
     size = ctypes.c_int(0)
     ngrowvect = _LP_c_int()
     if direction is None:
-        data = getarrayfunc(level, ctypes.byref(size), ctypes.byref(ngrowvect))
+        data = getlovectsfunc(level, ctypes.byref(size), ctypes.byref(ngrowvect))
     else:
-        data = getarrayfunc(level, direction, ctypes.byref(size), ctypes.byref(ngrowvect))
+        data = getlovectsfunc(level, direction, ctypes.byref(size), ctypes.byref(ngrowvect))
 
     lovects_ref = np.ctypeslib.as_array(data, (size.value, dim))
 
@@ -1151,13 +1151,18 @@ def _get_mesh_array_lovects(level, direction, include_ghosts=True, getarrayfunc=
     # --- Also, take the transpose to give shape (dims, number of grids)
     lovects = lovects_ref.copy().T
 
-    if not include_ghosts:
+    ng = []
+    if include_ghosts:
         for d in range(dim):
+            ng.append(ngrowvect[d])
+    else:
+        for d in range(dim):
+            ng.append(0)
             lovects[d,:] += ngrowvect[d]
 
     del lovects_ref
     _libc.free(data)
-    return lovects
+    return lovects, ng
 
 
 def get_mesh_electric_field_lovects(level, direction, include_ghosts=True):
