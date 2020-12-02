@@ -31,5 +31,7 @@ jobs:
               -DCMAKE_VERBOSE_MAKEFILE=ON   ^
               -DWarpX_COMPUTE=OMP           ^
               -DWarpX_OPENPMD=ON            ^
-              -DWarpX_MPI=OFF
+              -DWarpX_MPI=OFF               ^
+              -DWarpX_openpmd_repo=https://github.com/ax3l/openPMD-api.git ^
+              -DWarpX_openpmd_branch=fix-winClangCl
         cmake --build build --config Release --parallel 2
