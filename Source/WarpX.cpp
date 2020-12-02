@@ -58,11 +58,11 @@ Real WarpX::moving_window_v = std::numeric_limits<amrex::Real>::max();
 bool WarpX::fft_do_time_averaging = false;
 
 Real WarpX::quantum_xi_c2 = PhysConst::xi_c2;
-Real WarpX::gamma_boost = 1.;
-Real WarpX::beta_boost = 0.;
+Real WarpX::gamma_boost = 1._rt;
+Real WarpX::beta_boost = 0._rt;
 Vector<int> WarpX::boost_direction = {0,0,0};
 int WarpX::do_compute_max_step_from_zmax = 0;
-Real WarpX::zmax_plasma_to_compute_max_step = 0.;
+Real WarpX::zmax_plasma_to_compute_max_step = 0._rt;
 
 long WarpX::current_deposition_algo;
 long WarpX::charge_deposition_algo;
@@ -106,12 +106,12 @@ bool WarpX::do_back_transformed_particles = true;
 
 int  WarpX::num_slice_snapshots_lab = 0;
 Real WarpX::dt_slice_snapshots_lab;
-Real WarpX::particle_slice_width_lab = 0.0;
+Real WarpX::particle_slice_width_lab = 0.0_rt;
 
 bool WarpX::do_dynamic_scheduling = true;
 
 int WarpX::do_electrostatic;
-Real WarpX::self_fields_required_precision = 1.e-11;
+Real WarpX::self_fields_required_precision = 1.e-11_rt;
 int WarpX::self_fields_max_iters = 200;
 
 int WarpX::do_subcycling = 0;
@@ -248,38 +248,38 @@ WarpX::WarpX ()
         switch (WarpX::nox)
         {
             case 1:
-                costs_heuristic_cells_wt = 0.575;
-                costs_heuristic_particles_wt = 0.425;
+                costs_heuristic_cells_wt = 0.575_rt;
+                costs_heuristic_particles_wt = 0.425_rt;
                 break;
             case 2:
-                costs_heuristic_cells_wt = 0.405;
-                costs_heuristic_particles_wt = 0.595;
+                costs_heuristic_cells_wt = 0.405_rt;
+                costs_heuristic_particles_wt = 0.595_rt;
                 break;
             case 3:
-                costs_heuristic_cells_wt = 0.250;
-                costs_heuristic_particles_wt = 0.750;
+                costs_heuristic_cells_wt = 0.250_rt;
+                costs_heuristic_particles_wt = 0.750_rt;
                 break;
         }
 #else // FDTD
         switch (WarpX::nox)
         {
             case 1:
-                costs_heuristic_cells_wt = 0.401;
-                costs_heuristic_particles_wt = 0.599;
+                costs_heuristic_cells_wt = 0.401_rt;
+                costs_heuristic_particles_wt = 0.599_rt;
                 break;
             case 2:
-                costs_heuristic_cells_wt = 0.268;
-                costs_heuristic_particles_wt = 0.732;
+                costs_heuristic_cells_wt = 0.268_rt;
+                costs_heuristic_particles_wt = 0.732_rt;
                 break;
             case 3:
-                costs_heuristic_cells_wt = 0.145;
-                costs_heuristic_particles_wt = 0.855;
+                costs_heuristic_cells_wt = 0.145_rt;
+                costs_heuristic_particles_wt = 0.855_rt;
                 break;
         }
 #endif // WARPX_USE_PSATD
 #else // CPU
-        costs_heuristic_cells_wt = 0.1;
-        costs_heuristic_particles_wt = 0.9;
+        costs_heuristic_cells_wt = 0.1_rt;
+        costs_heuristic_particles_wt = 0.9_rt;
 #endif // AMREX_USE_GPU
     }
 
@@ -524,7 +524,7 @@ WarpX::ReadParameters ()
         int quantum_xi_is_specified = queryWithParser(pp, "quantum_xi", quantum_xi_tmp);
         if (quantum_xi_is_specified) {
             double const quantum_xi = quantum_xi_tmp;
-            quantum_xi_c2 = quantum_xi * PhysConst::c * PhysConst::c;
+            quantum_xi_c2 = static_cast<amrex::Real>(quantum_xi * PhysConst::c * PhysConst::c);
         }
 
         pp.query("do_pml", do_pml);

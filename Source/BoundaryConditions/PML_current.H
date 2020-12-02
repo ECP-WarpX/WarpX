@@ -60,8 +60,8 @@ void push_ey_pml_current (int j, int k, int l,
     Ey(j,k,l,0) = Ey(j,k,l,0) - mu_c2_dt  * alpha_yx * jy(j,k,l);
     Ey(j,k,l,1) = Ey(j,k,l,1) - mu_c2_dt  * alpha_yz * jy(j,k,l);
 #else
-    Ey(j,k,l,0) = Ey(j,k,l,0) - 0.5 * mu_c2_dt  * jy(j,k,l);
-    Ey(j,k,l,1) = Ey(j,k,l,1) - 0.5 * mu_c2_dt  * jy(j,k,l);
+    Ey(j,k,l,0) = Ey(j,k,l,0) - amrex::Real(0.5) * mu_c2_dt  * jy(j,k,l);
+    Ey(j,k,l,1) = Ey(j,k,l,1) - amrex::Real(0.5) * mu_c2_dt  * jy(j,k,l);
     amrex::ignore_unused(sigjx, sigjz, xlo, zlo);
 #endif
 }
