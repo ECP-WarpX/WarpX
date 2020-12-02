@@ -110,7 +110,10 @@ Real WarpX::particle_slice_width_lab = 0.0;
 
 bool WarpX::do_dynamic_scheduling = true;
 
-int WarpX::do_electrostatic = 0;
+int WarpX::do_electrostatic;
+Real WarpX::self_fields_required_precision = 1.e-11;
+int WarpX::self_fields_max_iters = 200;
+
 int WarpX::do_subcycling = 0;
 bool WarpX::safe_guard_cells = 0;
 
@@ -200,6 +203,7 @@ WarpX::WarpX ()
 
     F_fp.resize(nlevs_max);
     rho_fp.resize(nlevs_max);
+    phi_fp.resize(nlevs_max);
     current_fp.resize(nlevs_max);
     Efield_fp.resize(nlevs_max);
     Bfield_fp.resize(nlevs_max);
@@ -456,7 +460,15 @@ WarpX::ReadParameters ()
                    "The boosted frame diagnostic currently only works if the moving window is in the z direction.");
         }
 
-        pp.query("do_electrostatic", do_electrostatic);
+        do_electrostatic = GetAlgorithmInteger(pp, "do_electrostatic");
+
+        if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+            pp.query("self_fields_required_precision", self_fields_required_precision);
+            pp.query("self_fields_max_iters", self_fields_max_iters);
+            // Note that with the relativistic version, these parameters would be
+            // input for each species.
+        }
+
         pp.query("n_buffer", n_buffer);
         pp.query("const_dt", const_dt);
 
@@ -844,6 +856,7 @@ WarpX::ClearLevel (int lev)
 
     F_fp  [lev].reset();
     rho_fp[lev].reset();
+    phi_fp[lev].reset();
     F_cp  [lev].reset();
     rho_cp[lev].reset();
 
@@ -902,6 +915,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     IntVect Bx_nodal_flag, By_nodal_flag, Bz_nodal_flag;
     IntVect jx_nodal_flag, jy_nodal_flag, jz_nodal_flag;
     IntVect rho_nodal_flag;
+    IntVect phi_nodal_flag;
 
     // Set nodal flags
 #if   (AMREX_SPACEDIM == 2)
@@ -927,6 +941,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     jz_nodal_flag = IntVect(1,1,0);
 #endif
     rho_nodal_flag = IntVect( AMREX_D_DECL(1,1,1) );
+    phi_nodal_flag = IntVect::TheNodeVector();
 
     // Overwrite nodal flags if necessary
     if (do_nodal) {
@@ -999,6 +1014,12 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (deposit_charge)
     {
         rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho);
+    }
+
+    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame)
+    {
+        IntVect ngPhi = IntVect( AMREX_D_DECL(1,1,1) );
+        phi_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,phi_nodal_flag),dm,ncomps,ngPhi);
     }
 
     if (do_subcycling == 1 && lev == 0)
@@ -1305,7 +1326,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
         "ComputeDivB not implemented with do_nodal."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 
-    Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
+    Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
 
 #ifdef WARPX_DIM_RZ
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
@@ -1343,7 +1364,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
         "ComputeDivB not implemented with do_nodal."
         "Shouldn't be too hard to make it general with class FiniteDifferenceSolver");
 
-    Real dxinv = 1./dx[0], dyinv = 1./dx[1], dzinv = 1./dx[2];
+    Real dxinv = 1._rt/dx[0], dyinv = 1._rt/dx[1], dzinv = 1._rt/dx[2];
 
 #ifdef WARPX_DIM_RZ
     const Real rmin = GetInstance().Geom(0).ProbLo(0);

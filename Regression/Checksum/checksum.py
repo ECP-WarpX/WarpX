@@ -8,7 +8,6 @@
 
 from benchmark import Benchmark
 import yt
-import re
 import sys
 import numpy as np
 
@@ -58,27 +57,18 @@ class Checksum:
 
         # Compute checksum for field quantities
         if do_fields:
-            # Boolean variable parsed from test name needed for workaround below
-            galilean = True if re.search('galilean', self.test_name) else False
             for lev in range(ds.max_level+1):
                 data_lev = {}
                 lev_grids = [grid for grid in ds.index.grids
                              if grid.Level == lev]
-                if not (galilean):
-                    # Warning: For now, we assume all levels are rectangular
-                    LeftEdge = np.min(
-                        np.array([grid.LeftEdge.v for grid in lev_grids]), axis=0)
-                    all_data_level = ds.covering_grid(
-                        level=lev, left_edge=LeftEdge, dims=ds.domain_dimensions)
-                    for field in grid_fields:
-                        Q = all_data_level[field].v.squeeze()
-                        data_lev[field[1]] = np.sum(np.abs(Q))
-                # Workaround for Galilean tests: the standard procedure above
-                # does not seem to read 2D fields data correctly
-                elif (galilean):
-                    for field in grid_fields:
-                        Q = ds.index.grids[lev][field].v.squeeze()
-                        data_lev[field[1]] = np.sum(np.abs(Q))
+                # Warning: For now, we assume all levels are rectangular
+                LeftEdge = np.min(
+                    np.array([grid.LeftEdge.v for grid in lev_grids]), axis=0)
+                all_data_level = ds.covering_grid(
+                    level=lev, left_edge=LeftEdge, dims=ds.domain_dimensions)
+                for field in grid_fields:
+                    Q = all_data_level[field].v.squeeze()
+                    data_lev[field[1]] = np.sum(np.abs(Q))
                 data['lev=' + str(lev)] = data_lev
 
         # Compute checksum for particle quantities

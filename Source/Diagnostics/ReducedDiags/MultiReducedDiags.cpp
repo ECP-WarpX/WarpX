@@ -9,6 +9,7 @@
 #include "ParticleHistogram.H"
 #include "BeamRelevant.H"
 #include "ParticleEnergy.H"
+#include "ParticleExtrema.H"
 #include "FieldEnergy.H"
 #include "FieldMaximum.H"
 #include "ParticleNumber.H"
@@ -80,6 +81,11 @@ MultiReducedDiags::MultiReducedDiags ()
         {
             m_multi_rd[i_rd]=
                 std::make_unique<ParticleNumber>(m_rd_names[i_rd]);
+        }
+        else if (rd_type.compare("ParticleExtrema") == 0)
+        {
+            m_multi_rd[i_rd]=
+                std::make_unique<ParticleExtrema>(m_rd_names[i_rd]);
         }
         else
         { Abort("No matching reduced diagnostics type found."); }
