@@ -33,9 +33,11 @@ jobs:
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
         which nvcc || echo "nvcc not in PATH!"
 
-        mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_COMPUTE=CUDA -DAMReX_CUDA_ARCH=6.0 -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE -DCUDA_ERROR_CAPTURE_THIS=ON
-        make -j 2
+        cmake -S . -B build_sp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_COMPUTE=CUDA -DAMReX_CUDA_ARCH=6.0 -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE -DCUDA_ERROR_CAPTURE_THIS=ON
+        cmake --build build_sp -j 2
+
+        python3 -m pip install --upgrade pip setuptools wheel
+        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
 
 # Ref.: https://github.com/rscohn2/oneapi-ci
 # intel-basekit intel-hpckit are too large in size
@@ -69,15 +71,14 @@ jobs:
         export CXX=$(which icpc)
         export CC=$(which icc)
 
-        mkdir build_dp && cd build_dp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF
-        make -j 2
+        cmake -S . -B build_dp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF
+        cmake --build build_dp -j 2
 
-        cd ..
+        cmake -S . -B build_sp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE
+        cmake --build build_sp -j 2
 
-        mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE
-        make -j 2
+        python3 -m pip install --upgrade pip setuptools wheel
+        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
 
   build_dpcc:
     name: oneAPI DPC++ SP [Linux]
@@ -91,8 +92,8 @@ jobs:
         export DEBIAN_FRONTEND=noninteractive
         sudo apt-get -qqq update
         sudo apt-get install -y wget build-essential pkg-config ca-certificates gnupg
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade cmake
+        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade cmake
         sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
         echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
@@ -116,9 +117,11 @@ jobs:
         export CXX=$(which dpcpp)
         export CC=$(which clang)
 
-        mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=DPCPP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE
-        make -j 2
+        cmake -S . -B build_sp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=DPCPP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE
+        cmake --build build_sp -j 2
+
+        python3 -m pip install --upgrade setuptools wheel
+        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
 
   build_hip:
     name: HIP SP [Linux]
@@ -136,6 +139,7 @@ jobs:
         export CXX=$(which hipcc)
         export CC=$(which hipcc)
 
-        mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=ON -DWarpX_COMPUTE=HIP -DAMReX_AMD_ARCH=gfx900 -DWarpX_OPENPMD=ON -DWarpX_PRECISION=SINGLE
-        make -j 2
+        cmake -S . -B build_sp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=ON -DWarpX_COMPUTE=HIP -DAMReX_AMD_ARCH=gfx900 -DWarpX_OPENPMD=ON -DWarpX_PRECISION=SINGLE
+        cmake --build build_sp -j 2
+
+        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
