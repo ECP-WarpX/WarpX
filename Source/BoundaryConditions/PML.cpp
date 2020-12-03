@@ -460,7 +460,6 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     const BoxArray& ba = (do_pml_in_domain)?
           MakeBoxArray(*geom, grid_ba_reduced, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
           MakeBoxArray(*geom, grid_ba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-
     if (ba.size() == 0) {
         m_ok = false;
         return;
@@ -567,7 +566,8 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         BoxArray grid_cba = grid_ba;
         grid_cba.coarsen(ref_ratio);
 
-        amrex::Box domain1 = cgeom->Domain();
+        // assuming that the bounding box around grid_cba is a single patch, and not disjoint patches.
+        amrex::Box domain1 = grid_cba.minimalBox();
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             if ( ! cgeom->isPeriodic(idim)) {
                 if (do_pml_Lo[idim]){
@@ -582,14 +582,12 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
                 }
             }
         }
-
         const BoxArray grid_cba_reduced = BoxArray(grid_cba.boxList().intersect(domain1));
 
         // Assuming that refinement ratio is equal in all dimensions
         const BoxArray& cba = (do_pml_in_domain) ?
             MakeBoxArray(*cgeom, grid_cba_reduced, ncell/ref_ratio[0], do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
             MakeBoxArray(*cgeom, grid_cba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-
         DistributionMapping cdm{cba};
 
         pml_E_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
