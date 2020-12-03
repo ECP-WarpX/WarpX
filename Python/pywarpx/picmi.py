@@ -514,8 +514,17 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
-    def initialize_inputs(self):
+    def init(self, kw):
         pass
+
+    def initialize_inputs(self):
+
+        self.grid.initialize_inputs()
+
+        pywarpx.warpx.do_electrostatic = 'labframe'
+
+        pywarpx.warpx.self_fields_required_precision = self.required_precision
+        pywarpx.warpx.self_fields_max_iters = self.maximum_iterations
 
 
 class GaussianLaser(picmistandard.PICMI_GaussianLaser):
@@ -659,7 +668,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         pywarpx.warpx.verbose = self.verbose
         if self.time_step_size is not None:
-            pywarpx.warpx.const_dt = self.timestep
+            pywarpx.warpx.const_dt = self.time_step_size
 
         if self.gamma_boost is not None:
             pywarpx.warpx.gamma_boost = self.gamma_boost
@@ -801,10 +810,13 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
                 fields_to_plot.add('jx')
                 fields_to_plot.add('jy')
                 fields_to_plot.add('jz')
-            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'F', 'proc_number', 'part_per_cell']:
+            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
                 fields_to_plot.add(dataname)
             elif dataname in ['Jx', 'Jy', 'Jz']:
                 fields_to_plot.add(dataname.lower())
+            elif dataname.startswith('rho_'):
+                # Adds rho_species diagnostic
+                fields_to_plot.add(dataname)
             elif dataname == 'dive':
                 fields_to_plot.add('divE')
             elif dataname == 'divb':
