@@ -442,7 +442,10 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     // In order to implement this, a reduced domain is created here (decreased by ncells in all direction)
     // and passed to `MakeBoxArray`, which surrounds it by PML boxes
     // (thus creating the PML boxes at the right position, where they overlap with the original domain)
-    Box domain0 = geom->Domain();
+    // minimalBox provides the bounding box around grid_ba for level, lev.
+    // Note that this is okay to build pml inside domain for a single patch, or joint patches
+    // with same [min,max]. But it does not support multiple disjoint refinement patches.
+    Box domain0 = grid_ba.minimalBox();
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         if ( ! geom->isPeriodic(idim)) {
             if (do_pml_Lo[idim]){
