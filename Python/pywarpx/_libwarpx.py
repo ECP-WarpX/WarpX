@@ -59,10 +59,18 @@ else:
 
 _libc = ctypes.CDLL(_find_library('c'))
 
+# macOS/Linux use .so, Windows uses .pyd
+# https://docs.python.org/3/faq/windows.html#is-a-pyd-file-the-same-as-a-dll
+if os.name == 'nt':
+    mod_ext = "pyd"
+else:
+    mod_ext = "so"
+libname = "libwarpx{0}.{1}".format(geometry_dim, mod_ext)
+
 try:
-    libwarpx = ctypes.CDLL(os.path.join(_get_package_root(), "libwarpx%s.so"%geometry_dim))
+    libwarpx = ctypes.CDLL(os.path.join(_get_package_root(), libname))
 except OSError:
-    raise Exception('libwarpx%s.so was not installed. It can be installed by running "make" in the Python directory of WarpX'%geometry_dim)
+    raise Exception('"%s" was not installed. It can be installed by running "make" in the Python directory of WarpX' % libname)
 
 # WarpX can be compiled using either double or float
 libwarpx.warpx_Real_size.restype = ctypes.c_int
