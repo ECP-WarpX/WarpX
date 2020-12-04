@@ -112,7 +112,7 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     // and the amplitude of the laser
 #if ((AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ))
     prefactor = prefactor / diffract_factor;
-#elif (AMREX_SPACEDIM == 2 )
+#elif (AMREX_SPACEDIM == 2)
     prefactor = prefactor / amrex::sqrt(diffract_factor);
 #endif
 
