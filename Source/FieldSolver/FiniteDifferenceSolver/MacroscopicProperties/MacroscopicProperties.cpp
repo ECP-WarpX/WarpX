@@ -181,13 +181,16 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
                 // Shift x, y, z position based on index type
                 Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
                 Real x = i * dx_lev[0] + real_box.lo(0) + fac_x;
-
+#if (AMREX_SPACEDIM==2)
+                amrex::Real y = 0._rt;
+                Real fac_z = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
+                Real z = j * dx_lev[1] + real_box.lo(1) + fac_z;
+#else
                 Real fac_y = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
                 Real y = j * dx_lev[1] + real_box.lo(1) + fac_y;
-
                 Real fac_z = (1._rt - iv[2]) * dx_lev[2] * 0.5_rt;
                 Real z = k * dx_lev[2] + real_box.lo(2) + fac_z;
-
+#endif
                 // initialize the macroparameter
                 macro_fab(i,j,k) = macro_parser(x,y,z);
         });
