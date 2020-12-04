@@ -566,7 +566,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         BoxArray grid_cba = grid_ba;
         grid_cba.coarsen(ref_ratio);
 
-        // assuming that the bounding box around grid_cba is a single patch, and not disjoint patches.
+        // assuming that the bounding box around grid_cba is a single patch, and not disjoint patches, similar to fine patch.
         amrex::Box domain1 = grid_cba.minimalBox();
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             if ( ! cgeom->isPeriodic(idim)) {
