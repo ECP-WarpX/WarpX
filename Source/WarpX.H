@@ -157,6 +157,12 @@ public:
     static long noy;
     static long noz;
 
+    // For momentum-conserving field gathering, order of interpolation from the
+    // staggered positions to the grid nodes
+    static int field_gathering_nox;
+    static int field_gathering_noy;
+    static int field_gathering_noz;
+
     // Number of modes for the RZ multimode version
     static long n_rz_azimuthal_modes;
     static long ncomps;
@@ -273,6 +279,8 @@ public:
     amrex::Real time_of_last_gal_shift  = 0;
     amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
     amrex::Array<amrex::Real,3> m_galilean_shift = {{0}};
+
+    amrex::Array<amrex::Real,3> m_v_comoving = {{0.}};
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
