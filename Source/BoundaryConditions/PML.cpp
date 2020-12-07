@@ -48,12 +48,12 @@ namespace
             Real offset = static_cast<Real>(glo-i);
             p_sigma[i-slo] = fac*(offset*offset);
             // sigma_cumsum is the analytical integral of sigma function at same points than sigma
-            p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
+            p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3._rt)/PhysConst::c;
             if (i <= ohi+1) {
-                offset = static_cast<Real>(glo-i) - 0.5;
+                offset = static_cast<Real>(glo-i) - 0.5_rt;
                 p_sigma_star[i-sslo] = fac*(offset*offset);
                 // sigma_star_cumsum is the analytical integral of sigma function at same points than sigma_star
-                p_sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
+                p_sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3._rt)/PhysConst::c;
             }
         });
     }
@@ -78,11 +78,11 @@ namespace
             i += olo;
             Real offset = static_cast<Real>(i-ghi-1);
             p_sigma[i-slo] = fac*(offset*offset);
-            p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
+            p_sigma_cumsum[i-slo] = (fac*(offset*offset*offset)/3._rt)/PhysConst::c;
             if (i <= ohi+1) {
-                offset = static_cast<Real>(i-ghi) - 0.5;
+                offset = static_cast<Real>(i-ghi) - 0.5_rt;
                 p_sigma_star[i-sslo] = fac*(offset*offset);
-                p_sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3.)/PhysConst::c;
+                p_sigma_star_cumsum[i-sslo] = (fac*(offset*offset*offset)/3._rt)/PhysConst::c;
             }
         });
     }
@@ -153,7 +153,7 @@ SigmaBox::SigmaBox (const Box& box, const BoxArray& grids, const Real* dx, int n
 
     Array<Real,AMREX_SPACEDIM> fac;
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        fac[idim] = 4.0*PhysConst::c/(dx[idim]*static_cast<Real>(delta*delta));
+        fac[idim] = 4.0_rt*PhysConst::c/(dx[idim]*static_cast<Real>(delta*delta));
     }
 
     const std::vector<std::pair<int,Box> >& isects = grids.intersections(box, false, ncell);
@@ -442,7 +442,10 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     // In order to implement this, a reduced domain is created here (decreased by ncells in all direction)
     // and passed to `MakeBoxArray`, which surrounds it by PML boxes
     // (thus creating the PML boxes at the right position, where they overlap with the original domain)
-    Box domain0 = geom->Domain();
+    // minimalBox provides the bounding box around grid_ba for level, lev.
+    // Note that this is okay to build pml inside domain for a single patch, or joint patches
+    // with same [min,max]. But it does not support multiple disjoint refinement patches.
+    Box domain0 = grid_ba.minimalBox();
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         if ( ! geom->isPeriodic(idim)) {
             if (do_pml_Lo[idim]){
@@ -546,10 +549,11 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     const RealVect dx{AMREX_D_DECL(geom->CellSize(0), geom->CellSize(1), geom->CellSize(2))};
     // Get the cell-centered box, with guard cells
     BoxArray realspace_ba = ba;  // Copy box
-    Array<Real,3> v_galilean_zero = {0,0,0};
+    Array<Real,3> v_galilean_zero = {0., 0., 0.};
+    Array<Real,3> v_comoving_zero = {0., 0., 0.};
     realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
     spectral_solver_fp = std::make_unique<SpectralSolver>(realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, dx, dt, in_pml );
+        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, dx, dt, in_pml );
 #endif
 
     if (cgeom)
@@ -619,7 +623,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 
         realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
         spectral_solver_cp = std::make_unique<SpectralSolver>(realspace_cba, cdm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, cdx, dt, in_pml );
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, cdx, dt, in_pml );
 #endif
     }
 }

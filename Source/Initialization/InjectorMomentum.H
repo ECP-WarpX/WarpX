@@ -85,7 +85,7 @@ struct InjectorMomentumBoltzmann
     // boost velocity/c beta,
     // and boost direction dir respectively.
     InjectorMomentumBoltzmann(amrex::Real t, amrex::Real b, int d) noexcept
-        : dir(d), beta(b), vave(std::sqrt(2.*t))
+        : dir(d), beta(b), vave(std::sqrt(amrex::Real(2.)*t))
         {}
 
     AMREX_GPU_HOST_DEVICE
@@ -100,10 +100,10 @@ struct InjectorMomentumBoltzmann
         // Each value of sqrt(-log(x1))*sin(2*pi*x2) is a sample from a Gaussian
         // distribution with sigma = average velocity / c
         // using the Box-Mueller Method.
-        u[(dir+1)%3] = vave*std::sqrt(-std::log(x1)) *std::sin(2*M_PI*x2);
-        u[(dir+2)%3] = vave*std::sqrt(-std::log(x1)) *std::cos(2*M_PI*x2);
+        u[(dir+1)%3] = vave*std::sqrt(-std::log(x1)) *std::sin(2*MathConst::pi*x2);
+        u[(dir+2)%3] = vave*std::sqrt(-std::log(x1)) *std::cos(2*MathConst::pi*x2);
         u[dir] = vave*std::sqrt(-std::log(amrex::Random(engine)))*
-            std::sin(2*M_PI*amrex::Random(engine));
+            std::sin(2*MathConst::pi*amrex::Random(engine));
         gamma = u[0]*u[0]+u[1]*u[1]+u[2]*u[2];
         gamma = std::sqrt(1+gamma);
         // The following condition is equtaion 32 in Zenitani 2015
@@ -138,7 +138,7 @@ struct InjectorMomentumBoltzmann
         using namespace amrex;
         Real u[3];
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
-        const Real gamma = 1./sqrt(1+beta*beta);
+        const Real gamma = static_cast<amrex::Real>(1./sqrt(1+beta*beta));
         u[dir] = gamma*beta;
         return XDim3 {u[0],u[1],u[2]};
     }
@@ -170,9 +170,9 @@ struct InjectorMomentumJuttner
         // from Zenitani 2015 (Phys. Plasmas 22, 042116).
         amrex::Real x1, x2, gamma;
         amrex::Real u [3];
-        x1 = 0.;
-        gamma = 0.;
-        u[dir] = 0.;
+        x1 = static_cast<amrex::Real>(0.);
+        gamma = static_cast<amrex::Real>(0.);
+        u[dir] = static_cast<amrex::Real>(0.);
         // This condition is equation 10 in Zenitani,
         // though x1 is defined differently.
         while(u[dir]-gamma <= x1)
@@ -188,8 +188,8 @@ struct InjectorMomentumJuttner
         x2 = amrex::Random(engine);
         // Direction dir is an input parameter that sets the boost direction:
         // 'x' -> d = 0, 'y' -> d = 1, 'z' -> d = 2.
-        u[(dir+1)%3] = 2*u[dir]*std::sqrt(x1*(1-x1))*std::sin(2*M_PI*x2);
-        u[(dir+2)%3] = 2*u[dir]*std::sqrt(x1*(1-x1))*std::cos(2*M_PI*x2);
+        u[(dir+1)%3] = 2*u[dir]*std::sqrt(x1*(1-x1))*std::sin(2*MathConst::pi*x2);
+        u[(dir+2)%3] = 2*u[dir]*std::sqrt(x1*(1-x1))*std::cos(2*MathConst::pi*x2);
         // The value of dir is the boost direction to be transformed.
         u[dir] = u[dir]*(2*x1-1);
         x1 = amrex::Random(engine);
@@ -225,7 +225,7 @@ struct InjectorMomentumJuttner
         using namespace amrex;
         Real u[3];
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
-        const Real gamma = 1./sqrt(1+beta*beta);
+        const Real gamma = static_cast<Real>(1./sqrt(1.+beta*beta));
         u[dir] = gamma*beta;
         return XDim3 {u[0],u[1],u[2]};
     }

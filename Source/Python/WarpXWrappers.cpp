@@ -19,12 +19,15 @@
 
 namespace
 {
-    amrex::Real** getMultiFabPointers(const amrex::MultiFab& mf, int *num_boxes, int *ncomps, int *ngrow, int **shapes)
+    amrex::Real** getMultiFabPointers(const amrex::MultiFab& mf, int *num_boxes, int *ncomps, int **ngrowvect, int **shapes)
     {
         *ncomps = mf.nComp();
-        *ngrow = mf.nGrow();
         *num_boxes = mf.local_size();
         int shapesize = AMREX_SPACEDIM;
+        *ngrowvect = static_cast<int*>(malloc(sizeof(int)*shapesize));
+        for (int j = 0; j < AMREX_SPACEDIM; ++j) {
+            (*ngrowvect)[j] = mf.nGrow(j);
+        }
         if (mf.nComp() > 1) shapesize += 1;
         *shapes = static_cast<int*>(malloc(sizeof(int)*shapesize * (*num_boxes)));
         auto data =
@@ -43,9 +46,13 @@ namespace
         }
         return data;
     }
-    int* getMultiFabLoVects(const amrex::MultiFab& mf, int *num_boxes, int *ngrow)
+    int* getMultiFabLoVects(const amrex::MultiFab& mf, int *num_boxes, int **ngrowvect)
     {
-        *ngrow = mf.nGrow();
+        int shapesize = AMREX_SPACEDIM;
+        *ngrowvect = static_cast<int*>(malloc(sizeof(int)*shapesize));
+        for (int j = 0; j < AMREX_SPACEDIM; ++j) {
+            (*ngrowvect)[j] = mf.nGrow(j);
+        }
         *num_boxes = mf.local_size();
         int *loVects = (int*) malloc((*num_boxes)*AMREX_SPACEDIM * sizeof(int));
 
@@ -246,16 +253,16 @@ extern "C"
 
 #define WARPX_GET_FIELD(FIELD, GETTER) \
     amrex::Real** FIELD(int lev, int direction, \
-                        int *return_size, int *ncomps, int *ngrow, int **shapes) { \
+                        int *return_size, int *ncomps, int **ngrowvect, int **shapes) { \
         auto & mf = GETTER(lev, direction); \
-        return getMultiFabPointers(mf, return_size, ncomps, ngrow, shapes); \
+        return getMultiFabPointers(mf, return_size, ncomps, ngrowvect, shapes); \
     }
 
 #define WARPX_GET_LOVECTS(FIELD, GETTER) \
     int* FIELD(int lev, int direction, \
-               int *return_size, int *ngrow) { \
+               int *return_size, int **ngrowvect) { \
         auto & mf = GETTER(lev, direction); \
-        return getMultiFabLoVects(mf, return_size, ngrow); \
+        return getMultiFabLoVects(mf, return_size, ngrowvect); \
     }
 
     WARPX_GET_FIELD(warpx_getEfield, WarpX::GetInstance().getEfield)
@@ -295,16 +302,16 @@ extern "C"
 
 #define WARPX_GET_SCALAR(SCALAR, GETTER) \
     amrex::Real** SCALAR(int lev, \
-                         int *return_size, int *ncomps, int *ngrow, int **shapes) { \
+                         int *return_size, int *ncomps, int **ngrowvect, int **shapes) { \
         auto & mf = GETTER(lev); \
-        return getMultiFabPointers(mf, return_size, ncomps, ngrow, shapes); \
+        return getMultiFabPointers(mf, return_size, ncomps, ngrowvect, shapes); \
     }
 
 #define WARPX_GET_LOVECTS_SCALAR(SCALAR, GETTER) \
     int* SCALAR(int lev, \
-                int *return_size, int *ngrow) { \
+                int *return_size, int **ngrowvect) { \
         auto & mf = GETTER(lev); \
-        return getMultiFabLoVects(mf, return_size, ngrow); \
+        return getMultiFabLoVects(mf, return_size, ngrowvect); \
     }
 
     WARPX_GET_SCALAR(warpx_getChargeDensityCP, WarpX::GetInstance().getrho_cp)
@@ -315,11 +322,11 @@ extern "C"
 
 #define WARPX_GET_FIELD_PML(FIELD, GETTER) \
     amrex::Real** FIELD(int lev, int direction, \
-                        int *return_size, int *ncomps, int *ngrow, int **shapes) { \
+                        int *return_size, int *ncomps, int **ngrowvect, int **shapes) { \
         auto * pml = WarpX::GetInstance().GetPML(lev); \
         if (pml) { \
             auto & mf = *(pml->GETTER()[direction]); \
-            return getMultiFabPointers(mf, return_size, ncomps, ngrow, shapes); \
+            return getMultiFabPointers(mf, return_size, ncomps, ngrowvect, shapes); \
         } else { \
             return nullptr; \
         } \
@@ -327,11 +334,11 @@ extern "C"
 
 #define WARPX_GET_LOVECTS_PML(FIELD, GETTER) \
     int* FIELD(int lev, int direction, \
-               int *return_size, int *ngrow) { \
+               int *return_size, int **ngrowvect) { \
         auto * pml = WarpX::GetInstance().GetPML(lev); \
         if (pml) { \
             auto & mf = *(pml->GETTER()[direction]); \
-            return getMultiFabLoVects(mf, return_size, ngrow); \
+            return getMultiFabLoVects(mf, return_size, ngrowvect); \
         } else { \
             return nullptr; \
         } \

@@ -7,6 +7,8 @@ Input parameters
 
    This section is currently in development.
 
+.. note::
+   The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side of all input parameters that consist in a single real number, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted. See below for more detail.
 
 .. _running-cpp-parameters-overall:
 
@@ -266,17 +268,30 @@ Math parser and user-defined constants
 --------------------------------------
 
 WarpX provides a math parser that reads expressions in the input file.
-It can be used to define the plasma density profile, the plasma momentum
-distribution or the laser field (see below `Particle initialization` and
-`Laser initialization`).
+It can be used in all input parameters that consist in one real number.
 
-The parser reads python-style expressions between double quotes, for instance
-``"a0*x**2 * (1-y*1.e2) * (x>0)"`` is a valid expression where ``a0`` is a
-user-defined constant and ``x`` and ``y`` are variables. The names are case sensitive. The factor
-``(x>0)`` is `1` where `x>0` and `0` where `x<=0`. It allows the user to
-define functions by intervals. User-defined constants can be used in parsed
-functions only (i.e., ``density_function(x,y,z)`` and ``field_function(X,Y,t)``,
-see below). User-defined constants can contain only letters, numbers and the character ``_``.
+WarpX constants
+###############
+
+WarpX provides a few pre-defined constants, that can be used for any parameter that consists in one real number.
+
+======== ===================
+q_e      elementary charge
+m_e      electron mass
+m_p      proton mass
+epsilon0 vacuum permittivity
+clight   speed of light
+pi       math constant pi
+======== ===================
+
+See ``Source/Utils/WarpXConst.H`` for the values.
+
+User-defined constants
+######################
+
+Users can define their own constants in the input file.
+These constants can be used for any parameter that consists in one real number.
+User-defined constants can contain only letters, numbers and the character ``_``.
 The name of each constant has to begin with a letter. The following names are used
 by WarpX, and cannot be used as user-defined constants: ``x``, ``y``, ``z``, ``X``, ``Y``, ``t``.
 For example, parameters ``a0`` and ``z_plateau`` can be specified with:
@@ -284,6 +299,16 @@ For example, parameters ``a0`` and ``z_plateau`` can be specified with:
 * ``my_constants.a0 = 3.0``
 * ``my_constants.z_plateau = 150.e-6``
 
+Coordinates
+###########
+
+Besides, for profiles that depend on spatial coordinates (the plasma momentum distribution or the laser field, see below `Particle initialization` and `Laser initialization`), the parser will interpret some variables as spatial coordinates. These are specified in the input parameter, i.e., ``density_function(x,y,z)`` and ``field_function(X,Y,t)``.
+
+The parser reads python-style expressions between double quotes, for instance
+``"a0*x**2 * (1-y*1.e2) * (x>0)"`` is a valid expression where ``a0`` is a
+user-defined constant (see below) and ``x`` and ``y`` are spatial coordinates. The names are case sensitive. The factor
+``(x>0)`` is ``1`` where ``x>0`` and ``0`` where ``x<=0``. It allows the user to
+define functions by intervals.
 The parser reads mathematical functions into an `abstract syntax tree (AST) <https://en.wikipedia.org/wiki/Abstract_syntax_tree>`_, which supports a maximum depth (see :ref:`build options <building-cmake>`_).
 Additional terms in a function can create a level of depth in the AST, e.g. ``a+b+c+d`` is parsed in groups of ``[+ a [+ b [+ c [+ d]]]]`` (depth: 4).
 A trick to reduce this depth for the parser, e.g. when reaching the limit, is to group expliclity, e.g. via ``(a+b)+(c+d)``, which is parsed in groups of ``[+ [+ a b] [+ c d]]`` (depth: 2).
@@ -332,13 +357,9 @@ Particle initialization
     The mass of one `physical` particle of this species.
     If ``species_type`` is specified, the mass will be set to the physical value and ``mass`` is optional.
 
-* ``<species_name>.xmin,ymin,zmin`` (`float`) optional (default unlimited)
-    When ``<species_name>.xmin`` and ``<species_name>.xmax`` (see below) are set, they delimit the region within which particles are injected.
-    The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side, so expressions like ``<species_name>.xmin = "2.+1."`` and/or using user-defined constants are accepted.
-    The same is applicable in the other directions.
+* ``<species_name>.xmin,ymin,zmin`` and ``<species_name>.xmax,ymax,zmax`` (`float`) optional (default unlimited)
+    When ``<species_name>.xmin`` and ``<species_name>.xmax`` are set, they delimit the region within which particles are injected.
     If periodic boundary conditions are used in direction ``i``, then the default (i.e. if the range is not specified) range will be the simulation box, ``[geometry.prob_hi[i], geometry.prob_lo[i]]``.
-
-* ``<species_name>.xmax,ymax,zmax`` (`float`) optional (default unlimited)
 
 * ``<species_name>.injection_style`` (`string`)
     Determines how the particles will be injected in the simulation.
@@ -423,11 +444,10 @@ Particle initialization
 
 * ``<species_name>.density_min`` (`float`) optional (default `0.`)
     Minimum plasma density. No particle is injected where the density is below this value.
-    The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side, so expressions like ``<species_name>.density_min = "2.+1."`` and/or using user-defined constants are accepted.
 
 * ``<species_name>.density_max`` (`float`) optional (default `infinity`)
     Maximum plasma density. The density at each point is the minimum between the value given in the profile, and `density_max`.
-    The WarpXParser (see :ref:`running-cpp-parameters-parser`) is used for the right-hand-side, so expressions like ``<species_name>.density_max = "2.+1."`` and/or using user-defined constants are accepted.
+
 * ``<species_name>.radially_weighted`` (`bool`) optional (default `true`)
     Whether particle's weight is varied with their radius. This only applies to cylindrical geometry.
     The only valid value is true.
@@ -1159,6 +1179,9 @@ Numerics and algorithms
     See equations 21-23 of (`Godfrey and Vay, 2013 <https://doi.org/10.1016/j.jcp.2013.04.006>`_) and associated references for details.
     Defaults to `1` unless ``warpx.do_nodal = 1`` and/or ``algo.field_gathering = momentum-conserving``.
 
+* ``interpolation.field_gathering_nox``, ``interpolation.field_gathering_noy``, ``interpolation.field_gathering_noz`` (default: ``2`` in all directions)
+    The order of the interpolation used with staggered grids (``warpx.do_nodal = 0``) and momentum-conserving field gathering (``algo.field_gathering = momentum-conserving``) to interpolate the electric and magnetic fields from the cell centers to the cell nodes, before gathering the fields from the cell nodes to the particle positions. High-order interpolation (order 8 in each direction, at least) is necessary to ensure stability in typical LWFA boosted-frame simulations using the Galilean PSATD or comoving PSATD schemes. This arbitrary-order interpolation is used only when the PSATD solver is used for Maxwell's equations. With the FDTD solver, basic linear interpolation is used instead.
+
 * ``warpx.do_dive_cleaning`` (`0` or `1` ; default: 0)
     Whether to use modified Maxwell equations that progressively eliminate
     the error in :math:`div(E)-\rho`. This can be useful when using a current
@@ -1314,6 +1337,10 @@ Numerics and algorithms
     in a Galilean frame in :doc:`../theory/boosted-frame`).
     It also requires the use of the `direct` current deposition option
     `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
+
+* ``psatd.v_comoving`` (3 floating-point values, in units of the speed of light; default ``0. 0. 0.``)
+    Defines the comoving velocity in the comoving PSATD scheme.
+    A non-zero comoving velocity selects the comoving PSATD algorithm, which suppresses the numerical Cherenkov instability (NCI) in boosted-frame simulations, under certain assumptions. This option requires that WarpX is compiled with ``USE_PSATD = TRUE``. It also requires the use of direct current deposition (``algo.current_deposition = direct``) and has not been neither implemented nor tested with other current deposition schemes.
 
 * ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
     Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
@@ -1833,6 +1860,26 @@ Reduced Diagnostics
         using the histogram reduced diagnostics
         are given in ``Examples/Tests/initial_distribution/``.
 
+    * ``ParticleExtrema``
+        This type computes the minimum and maxmium values of
+        particle position, momentum, gamma, weight,
+        and the :math:`\chi` parameter for QED species.
+
+        ``<reduced_diags_name>.species`` must be provided,
+        such that the diagnostics are done for this species only.
+
+        The output columns are
+        minimum and maximum position :math:`x`, :math:`y`, :math:`z`;
+        minimum and maximum momentum :math:`p_x`, :math:`p_y`, :math:`p_z`;
+        minimum and maximum gamma :math:`\gamma`;
+        minimum and maximum weight :math:`w`;
+        minimum and maximum :math:`\chi`.
+
+        Note that when the QED parameter :math:`\chi` is computed,
+        field gather is carried out at every output,
+        so the time of the diagnostic may be long
+        depending on the simulation size.
+
 * ``<reduced_diags_name>.intervals`` (`string`) optional (default ``1``)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
     diagnostics are written to file.
@@ -1957,6 +2004,11 @@ Lookup tables store pre-computed values for functions used by the QED modules.
     It is used to convert the pair production rate per unit volume into an actual number of created particles.
     This value should correspond to the typical transverse extent for which the EM field has a very high value
     (e.g. the beam waist for a focused laser beam).
+
+* ``qed_schwinger.xmin,ymin,zmin`` and ``qed_schwinger.xmax,ymax,zmax`` (`float`) optional (default unlimited)
+    When ``qed_schwinger.xmin`` and ``qed_schwinger.xmax`` are set, they delimit the region within
+    which Schwinger pairs can be created.
+    The same is applicable in the other directions.
 
 * ``qed_schwinger.threshold_poisson_gaussian`` (`integer`) optional (default `25`)
     If the expected number of physical pairs created in a cell at a given timestep is smaller than this threshold,

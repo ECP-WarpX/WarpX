@@ -109,8 +109,8 @@ BTDiagnostics::ReadParameters ()
 
     // Read either dz_snapshots_lab or dt_snapshots_lab
     bool snapshot_interval_is_specified = false;
-    snapshot_interval_is_specified = pp.query("dt_snapshots_lab", m_dt_snapshots_lab);
-    if ( pp.query("dz_snapshots_lab", m_dz_snapshots_lab) ) {
+    snapshot_interval_is_specified = queryWithParser(pp, "dt_snapshots_lab", m_dt_snapshots_lab);
+    if ( queryWithParser(pp, "dz_snapshots_lab", m_dz_snapshots_lab) ) {
         m_dt_snapshots_lab = m_dz_snapshots_lab/PhysConst::c;
         snapshot_interval_is_specified = true;
     }

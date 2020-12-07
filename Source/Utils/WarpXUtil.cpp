@@ -21,7 +21,7 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
                                 Vector<int>& boost_direction)
 {
     ParmParse pp("warpx");
-    pp.query("gamma_boost", gamma_boost);
+    queryWithParser(pp, "gamma_boost", gamma_boost);
     if( gamma_boost > 1. ) {
         beta_boost = std::sqrt(1.-1./pow(gamma_boost,2));
         std::string s;
@@ -178,7 +178,7 @@ namespace WarpXUtilIO{
     }
 }
 
-void Store_parserString(amrex::ParmParse& pp, std::string query_string,
+void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
                         std::string& stored_string)
 {
     std::vector<std::string> f;
@@ -200,10 +200,28 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
     for (auto it = symbols.begin(); it != symbols.end(); ) {
         Real v;
         if (pp.query(it->c_str(), v)) {
-           parser.setConstant(*it, v);
-           it = symbols.erase(it);
+            parser.setConstant(*it, v);
+            it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "q_e") == 0) {
+            parser.setConstant(*it, PhysConst::q_e);
+            it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "m_e") == 0) {
+            parser.setConstant(*it, PhysConst::m_e);
+            it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "m_p") == 0) {
+            parser.setConstant(*it, PhysConst::m_p);
+            it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "epsilon0") == 0) {
+            parser.setConstant(*it, PhysConst::ep0);
+            it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "clight") == 0) {
+            parser.setConstant(*it, PhysConst::c);
+            it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "pi") == 0) {
+            parser.setConstant(*it, MathConst::pi);
+            it = symbols.erase(it);
         } else {
-           ++it;
+            ++it;
         }
     }
     for (auto const& s : symbols) {
@@ -213,7 +231,7 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
 }
 
 int
-queryWithParser (amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
+queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
 {
     // call amrex::ParmParse::query, check if the user specified str.
     std::string tmp_str;
@@ -229,6 +247,17 @@ queryWithParser (amrex::ParmParse& a_pp, char const * const str, amrex::Real& va
     }
     // return the same output as amrex::ParmParse::query
     return is_specified;
+}
+
+void
+getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
+{
+    // If so, create a parser object and apply it to the value provided by the user.
+    std::string str_val;
+    Store_parserString(a_pp, str, str_val);
+
+    auto parser = makeParser(str_val, {});
+    val = parser.eval();
 }
 
 /**
@@ -345,4 +374,3 @@ namespace WarpXUtilStr
     }
 
 }
-
