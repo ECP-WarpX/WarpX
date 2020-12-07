@@ -62,13 +62,13 @@ solver = picmi.ElectromagneticSolver(grid=grid, cfl=1.)
 
 field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     grid = grid,
-                                    warpx_intervals = diagnostic_intervals,
+                                    period = diagnostic_intervals,
                                     data_list = ['Ex', 'Jx'],
                                     write_dir = '.',
                                     warpx_file_prefix = 'Python_Langmuir_2d_plt')
 
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
-                                      warpx_intervals = diagnostic_intervals,
+                                      period = diagnostic_intervals,
                                       species = [electrons],
                                       data_list = ['weighting', 'ux'])
 

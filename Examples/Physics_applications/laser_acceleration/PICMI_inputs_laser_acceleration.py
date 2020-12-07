@@ -103,13 +103,13 @@ solver = picmi.ElectromagneticSolver(grid=grid, method='CKC', cfl=1.)
 diag_field_list = ["rho", "E", "B", "J"]
 field_diag1 = picmi.FieldDiagnostic(name = 'diag1',
                                     grid = grid,
-                                    warpx_intervals = 10,
+                                    period = 10,
                                     write_dir = '.',
                                     warpx_file_prefix = 'Python_LaserAccelerationMR_plt',
                                     data_list = diag_field_list)
 
 part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
-                                      warpx_intervals = 10,
+                                      period = 10,
                                       species = [electrons])
 
 ##########################

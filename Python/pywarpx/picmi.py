@@ -759,7 +759,6 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
         self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
-        self.intervals = kw.pop('warpx_intervals', None)
 
     def initialize_inputs(self):
 
@@ -778,7 +777,7 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
         self.diagnostic.dump_rz_modes = self.dump_rz_modes
-        self.diagnostic.intervals = self.intervals
+        self.diagnostic.intervals = self.period
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
         if self.number_of_cells is not None:
@@ -855,7 +854,6 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.random_fraction = kw.pop('warpx_random_fraction', None)
         self.uniform_stride = kw.pop('warpx_uniform_stride', None)
         self.plot_filter_function = kw.pop('warpx_plot_filter_function', None)
-        self.intervals = kw.pop('warpx_intervals', None)
 
         self.user_defined_kw = {}
         if self.plot_filter_function is not None:
@@ -884,7 +882,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
-        self.diagnostic.intervals = self.intervals
+        self.diagnostic.intervals = self.period
 
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()
