@@ -64,7 +64,7 @@ SpectralSolver::SpectralSolver(
             algorithm = std::make_unique<ComovingPsatdAlgorithm>(
                 k_space, dm, norder_x, norder_y, norder_z, nodal, v_comoving, dt, update_with_rho);
         }
-        // Galilean PSATD algorithm
+        // PSATD algorithms: standard, Galilean, or averaged Galilean
         else {
             algorithm = std::make_unique<PsatdAlgorithm>(
                 k_space, dm, norder_x, norder_y, norder_z, nodal, v_galilean, dt, update_with_rho, fft_do_time_averaging);

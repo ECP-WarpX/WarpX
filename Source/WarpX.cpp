@@ -820,6 +820,23 @@ WarpX::ReadParameters ()
             }
         }
 
+        if (current_deposition_algo == CurrentDepositionAlgo::Vay) {
+            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.) {
+                amrex::Abort("Vay current deposition not implemented for Galilean algorithms");
+            }
+        }
+
+        if (current_correction) {
+            if (m_v_galilean[0] != 0. || m_v_galilean[1] != 0. || m_v_galilean[2] != 0.) {
+                if (fft_do_time_averaging) {
+                    amrex::Abort("Current correction not implemented for averaged Galilean algorithm");
+                }
+            }
+        }
+
+#   ifdef WARPX_DIM_RZ
+        update_with_rho = true;  // Must be true for RZ PSATD
+#   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0. &&
             m_v_comoving[0] == 0. && m_v_comoving[1] == 0. && m_v_comoving[2] == 0.) {
             update_with_rho = false; // standard PSATD
