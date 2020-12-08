@@ -121,9 +121,7 @@ jobs:
           -DWarpX_COMPUTE=DPCPP        \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
-          -DWarpX_PRECISION=SINGLE     \
-          -DWarpX_amrex_repo=https://github.com/ax3l/amrex.git \
-          -DWarpX_amrex_branch=topic-dpcppCmakeMPI
+          -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
 
         python3 -m pip install --upgrade pip
