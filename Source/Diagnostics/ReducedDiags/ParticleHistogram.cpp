@@ -39,8 +39,8 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
 
     // read bin parameters
     pp.get("bin_number",m_bin_num);
-    pp.get("bin_max",   m_bin_max);
-    pp.get("bin_min",   m_bin_min);
+    getWithParser(pp, "bin_max",   m_bin_max);
+    getWithParser(pp, "bin_min",   m_bin_min);
     m_bin_size = (m_bin_max - m_bin_min) / m_bin_num;
 
     // read histogram function
