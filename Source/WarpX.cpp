@@ -454,7 +454,7 @@ WarpX::ReadParameters ()
                 snapshot_interval_is_specified,
                 "When using back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab.");
 
-            pp.get("gamma_boost", gamma_boost);
+            getWithParser(pp, "gamma_boost", gamma_boost);
 
             pp.query("do_back_transformed_fields", do_back_transformed_fields);
 
@@ -469,7 +469,7 @@ WarpX::ReadParameters ()
         do_electrostatic = GetAlgorithmInteger(pp, "do_electrostatic");
 
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
-            pp.query("self_fields_required_precision", self_fields_required_precision);
+            queryWithParser(pp, "self_fields_required_precision", self_fields_required_precision);
             pp.query("self_fields_max_iters", self_fields_max_iters);
             // Note that with the relativistic version, these parameters would be
             // input for each species.
@@ -599,7 +599,8 @@ WarpX::ReadParameters ()
         load_balance_intervals = IntervalsParser(load_balance_int_string_vec);
         pp.query("load_balance_with_sfc", load_balance_with_sfc);
         pp.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
-        pp.query("load_balance_efficiency_ratio_threshold", load_balance_efficiency_ratio_threshold);
+        queryWithParser(pp, "load_balance_efficiency_ratio_threshold",
+                             load_balance_efficiency_ratio_threshold);
 
         pp.query("do_dynamic_scheduling", do_dynamic_scheduling);
 
@@ -638,8 +639,8 @@ WarpX::ReadParameters ()
         if (em_solver_medium == MediumForEM::Macroscopic ) {
             macroscopic_solver_algo = GetAlgorithmInteger(pp,"macroscopic_sigma_method");
         }
-        pp.query("costs_heuristic_cells_wt", costs_heuristic_cells_wt);
-        pp.query("costs_heuristic_particles_wt", costs_heuristic_particles_wt);
+        queryWithParser(pp, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
+        queryWithParser(pp, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
     }
 
     {
@@ -787,8 +788,8 @@ WarpX::ReadParameters ()
                  "gamma_boost must be > 1 to use the boost frame diagnostic");
           pp.query("num_slice_snapshots_lab", num_slice_snapshots_lab);
           if (num_slice_snapshots_lab > 0) {
-             pp.get("dt_slice_snapshots_lab", dt_slice_snapshots_lab );
-             pp.get("particle_slice_width_lab",particle_slice_width_lab);
+             getWithParser(pp, "dt_slice_snapshots_lab", dt_slice_snapshots_lab );
+             getWithParser(pp, "particle_slice_width_lab",particle_slice_width_lab);
           }
        }
 

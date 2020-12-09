@@ -1,6 +1,8 @@
 #include "MacroscopicProperties.H"
-#include <AMReX_ParmParse.H>
 #include "WarpX.H"
+#include "Utils/WarpXUtil.H"
+
+#include <AMReX_ParmParse.H>
 
 #include <memory>
 
@@ -22,7 +24,7 @@ MacroscopicProperties::ReadParameters ()
 
     // Query input for material conductivity, sigma.
     bool sigma_specified = false;
-    if (pp.query("sigma", m_sigma)) {
+    if (queryWithParser(pp, "sigma", m_sigma)) {
         m_sigma_s = "constant";
         sigma_specified = true;
     }
@@ -41,7 +43,7 @@ MacroscopicProperties::ReadParameters ()
     }
 
     bool epsilon_specified = false;
-    if (pp.query("epsilon", m_epsilon)) {
+    if (queryWithParser(pp, "epsilon", m_epsilon)) {
         m_epsilon_s = "constant";
         epsilon_specified = true;
     }
@@ -62,7 +64,7 @@ MacroscopicProperties::ReadParameters ()
 
     // Query input for material permittivity, epsilon.
     bool mu_specified = false;
-    if (pp.query("mu", m_mu)) {
+    if (queryWithParser(pp, "mu", m_mu)) {
         m_mu_s = "constant";
         mu_specified = true;
     }

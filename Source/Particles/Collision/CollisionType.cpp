@@ -8,6 +8,7 @@
 #include "ShuffleFisherYates.H"
 #include "ElasticCollisionPerez.H"
 #include "Utils/ParticleUtils.H"
+#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
 CollisionType::CollisionType(
@@ -24,7 +25,7 @@ CollisionType::CollisionType(
 
     // default Coulomb log, if < 0, will be computed automatically
     m_CoulombLog = -1.0;
-    pp.query("CoulombLog", m_CoulombLog);
+    queryWithParser(pp, "CoulombLog", m_CoulombLog);
 
     // number of time steps between collisions
     m_ndt = 1;
