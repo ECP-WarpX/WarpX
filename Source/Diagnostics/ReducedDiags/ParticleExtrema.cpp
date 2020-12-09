@@ -140,9 +140,6 @@ void ParticleExtrema::ComputeDiags (int step)
     // get MultiParticleContainer class object
     auto & mypc = WarpX::GetInstance().GetPartContainer();
 
-    // get number of level (int)
-    const auto level_number = WarpX::GetInstance().finestLevel();
-
     // get number of species (int)
     const auto nSpecies = mypc.nSpecies();
 
@@ -345,6 +342,9 @@ void ParticleExtrema::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealMax(wmax);
 
 #if (defined WARPX_QED)
+        // get number of level (int)
+        const auto level_number = WarpX::GetInstance().finestLevel();
+
         // compute chimin and chimax
         Real chimin_f = 0.0_rt;
         Real chimax_f = 0.0_rt;
