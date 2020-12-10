@@ -130,6 +130,11 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
     // Redistribute() will move them to proper places.
     auto& particle_tile = DefineAndReturnParticleTile(0, 0, 0);
 
+    using PinnedTile = ParticleTile<NStructReal, NStructInt, NArrayReal, NArrayInt,
+                                    amrex::PinnedArenaAllocator>;
+    PinnedTile pinned_tile;
+    pinned_tile.define(NumRuntimeRealComps(), NumRuntimeIntComps());
+
     std::size_t np = iend-ibegin;
 
 #ifdef WARPX_DIM_RZ
@@ -165,15 +170,15 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
             DefineAndReturnParticleTile(0, 0, 0);
         }
 
-        particle_tile.push_back(p);
+        pinned_tile.push_back(p);
     }
 
     if (np > 0)
     {
-        particle_tile.push_back_real(PIdx::w , weight + ibegin, weight + iend);
-        particle_tile.push_back_real(PIdx::ux,     vx + ibegin,     vx + iend);
-        particle_tile.push_back_real(PIdx::uy,     vy + ibegin,     vy + iend);
-        particle_tile.push_back_real(PIdx::uz,     vz + ibegin,     vz + iend);
+        pinned_tile.push_back_real(PIdx::w , weight + ibegin, weight + iend);
+        pinned_tile.push_back_real(PIdx::ux,     vx + ibegin,     vx + iend);
+        pinned_tile.push_back_real(PIdx::uy,     vy + ibegin,     vy + iend);
+        pinned_tile.push_back_real(PIdx::uz,     vz + ibegin,     vz + iend);
 
         if ( (NumRuntimeRealComps()>0) || (NumRuntimeIntComps()>0) ){
             DefineAndReturnParticleTile(0, 0, 0);
@@ -183,20 +188,23 @@ WarpXParticleContainer::AddNParticles (int /*lev*/,
         {
 #ifdef WARPX_DIM_RZ
             if (comp == PIdx::theta) {
-                particle_tile.push_back_real(comp, theta.data(), theta.data() + np);
+                pinned_tile.push_back_real(comp, theta.data(), theta.data() + np);
             }
             else {
-                particle_tile.push_back_real(comp, np, 0.0);
+                pinned_tile.push_back_real(comp, np, 0.0);
             }
 #else
-            particle_tile.push_back_real(comp, np, 0.0);
+            pinned_tile.push_back_real(comp, np, 0.0);
 #endif
         }
 
         for (int i = PIdx::nattribs; i < NumRealComps(); ++i)
         {
-            particle_tile.push_back_real(i, 0.0);
+            pinned_tile.push_back_real(i, 0.0);
         }
+
+        particle_tile.resize(pinned_tile.numParticles());
+        amrex::copyParticles(particle_tile, pinned_tile);
     }
 
     Redistribute();
