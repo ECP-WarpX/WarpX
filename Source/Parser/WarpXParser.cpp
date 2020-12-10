@@ -108,7 +108,7 @@ WarpXParser::registerVariables (std::vector<std::string> const& names)
 
 #else
 
-    for (int j = 0; j < names.size(); ++j) {
+    for (auto j = 0u; j < names.size(); ++j) {
         wp_parser_regvar(m_parser, names[j].c_str(), &(m_variables[j]));
         m_varnames.push_back(names[j]);
     }
