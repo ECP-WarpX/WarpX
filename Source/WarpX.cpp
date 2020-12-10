@@ -690,7 +690,7 @@ WarpX::ReadParameters ()
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox == noy and nox == noz ,
             "warpx.nox, noy and noz must be equal");
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox >= 1, "warpx.nox must >= 1");
-        
+
         if (maxLevel() > 0 and nox>1 and do_pml_j_damping==1) {
             amrex::Warning("WARNING: for nox>1, some numerical artifact will be present"
                            " at coarse-fine interface. nox=1 recommended to avoid this issue");
