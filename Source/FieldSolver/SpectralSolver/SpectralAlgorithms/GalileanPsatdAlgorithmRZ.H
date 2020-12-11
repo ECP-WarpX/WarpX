@@ -63,8 +63,8 @@ class GalileanPsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         bool coefficients_initialized;
         // Note that dt and v_galilean are saved to use in InitializeSpectralCoefficients
         amrex::Real const m_dt;
-        bool m_update_with_rho;
         amrex::Array<amrex::Real,3> m_v_galilean;
+        bool m_update_with_rho;
 
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients Theta2_coef, T_rho_coef, X1_coef, X2_coef, X3_coef, X4_coef;
