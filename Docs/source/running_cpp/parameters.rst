@@ -318,9 +318,6 @@ A trick to reduce this depth for the parser, e.g. when reaching the limit, is to
 Particle initialization
 -----------------------
 
-* ``particles.nspecies`` (`int`)
-    The number of species that will be used in the simulation.
-
 * ``particles.species_names`` (`strings`, separated by spaces)
     The name of each species. This is then used in the rest of the input deck ;
     in this documentation we use `<species_name>` as a placeholder.
@@ -682,10 +679,7 @@ Particle initialization
 Laser initialization
 --------------------
 
-* ``lasers.nlasers`` (`int`) optional (default `0`)
-    Number of lasers pulses.
-
-* ``lasers.names`` (list of `string`. Must contain ``lasers.nlasers`` elements)
+* ``lasers.names`` (list of `string`)
     Name of each laser. This is then used in the rest of the input deck ;
     in this documentation we use `<laser_name>` as a placeholder. The parameters below
     must be provided for each laser pulse.
