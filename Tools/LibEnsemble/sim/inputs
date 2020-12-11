@@ -58,7 +58,6 @@ warpx.dt_snapshots_lab=1.6678204759907604e-10
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 5
 particles.species_names = electrons ions electrons2 ions2 beam
 
 particles.use_fdtd_nci_corr = 1
@@ -195,7 +194,6 @@ warpx.mirror_z_npoints = 4 4
 #################################
 ############# LASER #############
 #################################
-lasers.nlasers = 2
 lasers.names = laser1 laser2
 
 laser1.profile = Gaussian
