@@ -39,14 +39,14 @@ print( "max_Efield = %s" %max_Efield )
 # the same amplitude in 2d and 3d
 if ds.dimensionality == 2:
     if ds.max_level == 0:
-    	tolerance_abs = 0.0003
+        tolerance_abs = 0.0003
     elif ds.max_level == 1:
-    	tolerance_abs = 0.0006
+        tolerance_abs = 0.0006
 elif ds.dimensionality == 3:
     if ds.max_level == 0:
-    	tolerance_abs = 10
+        tolerance_abs = 10
     elif ds.max_level == 1:
-    	tolerance_abs = 110
+        tolerance_abs = 110
 else:
     raise ValueError("Unknown dimensionality")
 
