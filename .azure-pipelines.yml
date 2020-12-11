@@ -1,7 +1,7 @@
 # -*- mode: yaml -*-
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'ubuntu-18.04'
 
 variables:
   WARPX_CI_CCACHE: 'TRUE'

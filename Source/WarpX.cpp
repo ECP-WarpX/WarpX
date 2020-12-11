@@ -250,39 +250,39 @@ WarpX::WarpX ()
         && WarpX::load_balance_costs_update_algo==LoadBalanceCostsUpdateAlgo::Heuristic)
     {
 #ifdef AMREX_USE_GPU
-#ifdef WARPX_USE_PSATD
-        switch (WarpX::nox)
-        {
-            case 1:
-                costs_heuristic_cells_wt = 0.575;
-                costs_heuristic_particles_wt = 0.425;
-                break;
-            case 2:
-                costs_heuristic_cells_wt = 0.405;
-                costs_heuristic_particles_wt = 0.595;
-                break;
-            case 3:
-                costs_heuristic_cells_wt = 0.250;
-                costs_heuristic_particles_wt = 0.750;
-                break;
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            switch (WarpX::nox)
+            {
+                case 1:
+                    costs_heuristic_cells_wt = 0.575;
+                    costs_heuristic_particles_wt = 0.425;
+                    break;
+                case 2:
+                    costs_heuristic_cells_wt = 0.405;
+                    costs_heuristic_particles_wt = 0.595;
+                    break;
+                case 3:
+                    costs_heuristic_cells_wt = 0.250;
+                    costs_heuristic_particles_wt = 0.750;
+                    break;
+            }
+        } else { // FDTD
+            switch (WarpX::nox)
+            {
+                case 1:
+                    costs_heuristic_cells_wt = 0.401;
+                    costs_heuristic_particles_wt = 0.599;
+                    break;
+                case 2:
+                    costs_heuristic_cells_wt = 0.268;
+                    costs_heuristic_particles_wt = 0.732;
+                    break;
+                case 3:
+                    costs_heuristic_cells_wt = 0.145;
+                    costs_heuristic_particles_wt = 0.855;
+                    break;
+            }
         }
-#else // FDTD
-        switch (WarpX::nox)
-        {
-            case 1:
-                costs_heuristic_cells_wt = 0.401;
-                costs_heuristic_particles_wt = 0.599;
-                break;
-            case 2:
-                costs_heuristic_cells_wt = 0.268;
-                costs_heuristic_particles_wt = 0.732;
-                break;
-            case 3:
-                costs_heuristic_cells_wt = 0.145;
-                costs_heuristic_particles_wt = 0.855;
-                break;
-        }
-#endif // WARPX_USE_PSATD
 #else // CPU
         costs_heuristic_cells_wt = 0.1;
         costs_heuristic_particles_wt = 0.9;
@@ -291,11 +291,15 @@ WarpX::WarpX ()
 
     // Allocate field solver objects
 #ifdef WARPX_USE_PSATD
-    spectral_solver_fp.resize(nlevs_max);
-    spectral_solver_cp.resize(nlevs_max);
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        spectral_solver_fp.resize(nlevs_max);
+        spectral_solver_cp.resize(nlevs_max);
+    }
 #endif
-    m_fdtd_solver_fp.resize(nlevs_max);
-    m_fdtd_solver_cp.resize(nlevs_max);
+    if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD) {
+        m_fdtd_solver_fp.resize(nlevs_max);
+        m_fdtd_solver_cp.resize(nlevs_max);
+    }
 
     // NCI Godfrey filters can have different stencils
     // at different levels (the stencil depends on c*dt/dz)
@@ -305,10 +309,10 @@ WarpX::WarpX ()
     // Sanity checks. Must be done after calling the MultiParticleContainer
     // constructor, as it reads additional parameters
     // (e.g., use_fdtd_nci_corr)
-#ifdef WARPX_USE_PSATD
-    AMREX_ALWAYS_ASSERT(use_fdtd_nci_corr == 0);
-    AMREX_ALWAYS_ASSERT(do_subcycling == 0);
-#endif
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        AMREX_ALWAYS_ASSERT(use_fdtd_nci_corr == 0);
+        AMREX_ALWAYS_ASSERT(do_subcycling == 0);
+    }
 }
 
 WarpX::~WarpX ()
@@ -454,7 +458,7 @@ WarpX::ReadParameters ()
                 snapshot_interval_is_specified,
                 "When using back-transformed diagnostics, user should specify either dz_snapshots_lab or dt_snapshots_lab.");
 
-            pp.get("gamma_boost", gamma_boost);
+            getWithParser(pp, "gamma_boost", gamma_boost);
 
             pp.query("do_back_transformed_fields", do_back_transformed_fields);
 
@@ -469,7 +473,7 @@ WarpX::ReadParameters ()
         do_electrostatic = GetAlgorithmInteger(pp, "do_electrostatic");
 
         if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
-            pp.query("self_fields_required_precision", self_fields_required_precision);
+            queryWithParser(pp, "self_fields_required_precision", self_fields_required_precision);
             pp.query("self_fields_max_iters", self_fields_max_iters);
             // Note that with the relativistic version, these parameters would be
             // input for each species.
@@ -599,7 +603,8 @@ WarpX::ReadParameters ()
         load_balance_intervals = IntervalsParser(load_balance_int_string_vec);
         pp.query("load_balance_with_sfc", load_balance_with_sfc);
         pp.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
-        pp.query("load_balance_efficiency_ratio_threshold", load_balance_efficiency_ratio_threshold);
+        queryWithParser(pp, "load_balance_efficiency_ratio_threshold",
+                             load_balance_efficiency_ratio_threshold);
 
         pp.query("do_dynamic_scheduling", do_dynamic_scheduling);
 
@@ -609,25 +614,42 @@ WarpX::ReadParameters ()
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
-
-#if defined WARPX_DIM_RZ
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
-                   "The problem must not be periodic in the radial direction");
-#endif
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-        // Force do_nodal=true (that is, not staggered) and
-        // use same shape factors in all directions, for gathering
-        do_nodal = true;
-        galerkin_interpolation = false;
-#endif
     }
 
     {
         ParmParse pp("algo");
+        maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
+#ifdef WARPX_DIM_RZ
+        if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
+                "algo.maxwell_solver = ckc is not (yet) available for RZ geometry");
+        }
+#endif
+#ifndef WARPX_USE_PSATD
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
+                                              "algo.maxwell_solver = psatd is not supported because WarpX was built without spectral solvers");
+        }
+#endif
+
+#ifdef WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(Geom(0).isPeriodic(0) == 0,
+            "The problem must not be periodic in the radial direction");
+
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            // Force do_nodal=true (that is, not staggered) and
+            // use same shape factors in all directions, for gathering
+            do_nodal = true;
+            galerkin_interpolation = false;
+        }
+#endif
+
+        // note: current_deposition must be set after maxwell_solver is already determined,
+        //       because its default depends on the solver selection
         current_deposition_algo = GetAlgorithmInteger(pp, "current_deposition");
         charge_deposition_algo = GetAlgorithmInteger(pp, "charge_deposition");
         particle_pusher_algo = GetAlgorithmInteger(pp, "particle_pusher");
-        maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
+
         field_gathering_algo = GetAlgorithmInteger(pp, "field_gathering");
         if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
             // Use same shape factors in all directions, for gathering
@@ -638,10 +660,9 @@ WarpX::ReadParameters ()
         if (em_solver_medium == MediumForEM::Macroscopic ) {
             macroscopic_solver_algo = GetAlgorithmInteger(pp,"macroscopic_sigma_method");
         }
-        pp.query("costs_heuristic_cells_wt", costs_heuristic_cells_wt);
-        pp.query("costs_heuristic_particles_wt", costs_heuristic_particles_wt);
+        queryWithParser(pp, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
+        queryWithParser(pp, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
     }
-
     {
         ParmParse pp("interpolation");
         pp.query("nox", nox);
@@ -671,7 +692,7 @@ WarpX::ReadParameters ()
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( nox >= 1, "warpx.nox must >= 1");
     }
 
-#ifdef WARPX_USE_PSATD
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
         ParmParse pp("psatd");
         pp.query("periodic_single_box_fft", fft_periodic_single_box);
@@ -748,7 +769,6 @@ WarpX::ReadParameters ()
 #   endif
 
     }
-#endif
 
     // for slice generation //
     {
@@ -780,8 +800,8 @@ WarpX::ReadParameters ()
                  "gamma_boost must be > 1 to use the boost frame diagnostic");
           pp.query("num_slice_snapshots_lab", num_slice_snapshots_lab);
           if (num_slice_snapshots_lab > 0) {
-             pp.get("dt_slice_snapshots_lab", dt_slice_snapshots_lab );
-             pp.get("particle_slice_width_lab",particle_slice_width_lab);
+             getWithParser(pp, "dt_slice_snapshots_lab", dt_slice_snapshots_lab );
+             getWithParser(pp, "particle_slice_width_lab",particle_slice_width_lab);
           }
        }
 
@@ -988,21 +1008,21 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         jz_nodal_flag  = IntVect::TheNodeVector();
         rho_nodal_flag = IntVect::TheNodeVector();
     }
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-    // Force cell-centered IndexType in r and z
-    Ex_nodal_flag  = IntVect::TheCellVector();
-    Ey_nodal_flag  = IntVect::TheCellVector();
-    Ez_nodal_flag  = IntVect::TheCellVector();
-    Bx_nodal_flag  = IntVect::TheCellVector();
-    By_nodal_flag  = IntVect::TheCellVector();
-    Bz_nodal_flag  = IntVect::TheCellVector();
-    jx_nodal_flag  = IntVect::TheCellVector();
-    jy_nodal_flag  = IntVect::TheCellVector();
-    jz_nodal_flag  = IntVect::TheCellVector();
-    rho_nodal_flag = IntVect::TheCellVector();
-#endif
+#ifdef WARPX_DIM_RZ
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        // Force cell-centered IndexType in r and z
+        Ex_nodal_flag  = IntVect::TheCellVector();
+        Ey_nodal_flag  = IntVect::TheCellVector();
+        Ez_nodal_flag  = IntVect::TheCellVector();
+        Bx_nodal_flag  = IntVect::TheCellVector();
+        By_nodal_flag  = IntVect::TheCellVector();
+        Bz_nodal_flag  = IntVect::TheCellVector();
+        jx_nodal_flag  = IntVect::TheCellVector();
+        jy_nodal_flag  = IntVect::TheCellVector();
+        jz_nodal_flag  = IntVect::TheCellVector();
+        rho_nodal_flag = IntVect::TheCellVector();
+    }
 
-#if defined WARPX_DIM_RZ
     // With RZ multimode, there is a real and imaginary component
     // for each mode, except mode 0 which is purely real
     // Component 0 is mode 0.
@@ -1065,40 +1085,49 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max());
     }
-#ifdef WARPX_USE_PSATD
-    // Allocate and initialize the spectral solver
+    bool const pml_flag_false = false;
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+    {
+        // Allocate and initialize the spectral solver
+#ifndef WARPX_USE_PSATD
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
+            "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
+#else
+        if (!do_dive_cleaning)
+            rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho);
+
 #   if (AMREX_SPACEDIM == 3)
-    RealVect dx_vect(dx[0], dx[1], dx[2]);
+        RealVect dx_vect(dx[0], dx[1], dx[2]);
 #   elif (AMREX_SPACEDIM == 2)
-    RealVect dx_vect(dx[0], dx[2]);
+        RealVect dx_vect(dx[0], dx[2]);
 #   endif
-    // Check whether the option periodic, single box is valid here
-    if (fft_periodic_single_box) {
+        // Check whether the option periodic, single box is valid here
+        if (fft_periodic_single_box) {
 #   ifdef WARPX_DIM_RZ
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            geom[0].isPeriodic(1)          // domain is periodic in z
-            && ba.size() == 1 && lev == 0, // domain is decomposed in a single box
-            "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                geom[0].isPeriodic(1)          // domain is periodic in z
+                && ba.size() == 1 && lev == 0, // domain is decomposed in a single box
+                "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box");
 #   else
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-            geom[0].isAllPeriodic()        // domain is periodic in all directions
-            && ba.size() == 1 && lev == 0, // domain is decomposed in a single box
-            "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box");
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                geom[0].isAllPeriodic()        // domain is periodic in all directions
+                && ba.size() == 1 && lev == 0, // domain is decomposed in a single box
+                "The option `psatd.periodic_single_box_fft` can only be used for a periodic domain, decomposed in a single box");
 #   endif
-    }
-    // Get the cell-centered box
-    BoxArray realspace_ba = ba;  // Copy box
-    realspace_ba.enclosedCells(); // Make it cell-centered
-    // Define spectral solver
+        }
+        // Get the cell-centered box
+        BoxArray realspace_ba = ba;  // Copy box
+        realspace_ba.enclosedCells(); // Make it cell-centered
+        // Define spectral solver
 #   ifdef WARPX_DIM_RZ
-    if ( fft_periodic_single_box == false ) {
-        realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-    }
-    spectral_solver_fp[lev] = std::make_unique<SpectralSolverRZ>( realspace_ba, dm,
-        n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev], lev, update_with_rho );
-    if (use_kspace_filter) {
-        spectral_solver_fp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
-    }
+        if ( fft_periodic_single_box == false ) {
+            realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+        }
+        spectral_solver_fp[lev] = std::make_unique<SpectralSolverRZ>( realspace_ba, dm,
+            n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev], lev, update_with_rho );
+        if (use_kspace_filter) {
+            spectral_solver_fp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
+        }
 #   else
     if ( fft_periodic_single_box == false ) {
         realspace_ba.grow(ngE); // add guard cells
@@ -1109,8 +1138,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
 #   endif
 #endif
-    m_fdtd_solver_fp[lev] = std::make_unique<FiniteDifferenceSolver>(
-        maxwell_solver_id, dx, do_nodal);
+    } // MaxwellSolverAlgo::PSATD
+    else {
+        m_fdtd_solver_fp[lev] = std::make_unique<FiniteDifferenceSolver>(maxwell_solver_id, dx, do_nodal);
+    }
+
     //
     // The Aux patch (i.e., the full solution)
     //
@@ -1198,28 +1230,32 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         {
             F_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,IntVect::TheUnitVector()),dm,ncomps, ngF.max());
         }
-#ifdef WARPX_USE_PSATD
-        else
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
         {
-            rho_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho);
-        }
-        // Allocate and initialize the spectral solver
+            // Allocate and initialize the spectral solver
+#ifndef WARPX_USE_PSATD
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
+                "WarpX::AllocLevelMFs: PSATD solver requires WarpX build with spectral solver support.");
+#else
+            if (!do_dive_cleaning)
+                rho_cp[lev] = std::make_unique<MultiFab>( amrex::convert(cba,rho_nodal_flag),dm,2*ncomps,ngRho );
+
 #   if (AMREX_SPACEDIM == 3)
-        RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
+            RealVect cdx_vect(cdx[0], cdx[1], cdx[2]);
 #   elif (AMREX_SPACEDIM == 2)
-        RealVect cdx_vect(cdx[0], cdx[2]);
+            RealVect cdx_vect(cdx[0], cdx[2]);
 #   endif
-        // Get the cell-centered box, with guard cells
-        BoxArray c_realspace_ba = cba;// Copy box
-        c_realspace_ba.enclosedCells(); // Make it cell-centered
-        // Define spectral solver
+            // Get the cell-centered box, with guard cells
+            BoxArray c_realspace_ba = cba;// Copy box
+            c_realspace_ba.enclosedCells(); // Make it cell-centered
+            // Define spectral solver
 #   ifdef WARPX_DIM_RZ
-        c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
-        spectral_solver_cp[lev] = std::make_unique<SpectralSolverRZ>( c_realspace_ba, dm,
-            n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev], lev, update_with_rho );
-        if (use_kspace_filter) {
-            spectral_solver_cp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
-        }
+            c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
+            spectral_solver_cp[lev] = std::make_unique<SpectralSolverRZ>( c_realspace_ba, dm,
+                n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev], lev, update_with_rho );
+            if (use_kspace_filter) {
+                spectral_solver_cp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
+            }
 #   else
         c_realspace_ba.grow(ngE); // add guard cells
         spectral_solver_cp[lev] = std::make_unique<SpectralSolver>( c_realspace_ba, dm,
@@ -1227,8 +1263,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
 #   endif
 #endif
-        m_fdtd_solver_cp[lev] = std::make_unique<FiniteDifferenceSolver>(
-            maxwell_solver_id, cdx, do_nodal);
+        } // MaxwellSolverAlgo::PSATD
+        else {
+            m_fdtd_solver_cp[lev] = std::make_unique<FiniteDifferenceSolver>(maxwell_solver_id, cdx,
+                                                                             do_nodal);
+        }
     }
 
     //
@@ -1428,11 +1467,15 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
 void
 WarpX::ComputeDivE(amrex::MultiFab& divE, const int lev)
 {
+    if ( WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD ) {
 #ifdef WARPX_USE_PSATD
-    spectral_solver_fp[lev]->ComputeSpectralDivE( Efield_aux[lev], divE );
+        spectral_solver_fp[lev]->ComputeSpectralDivE( Efield_aux[lev], divE );
 #else
-    m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
+        amrex::Abort("ComputeDivE: PSATD requested but not compiled");
 #endif
+    } else {
+        m_fdtd_solver_fp[lev]->ComputeDivE( Efield_aux[lev], divE );
+    }
 }
 
 PML*

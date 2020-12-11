@@ -23,42 +23,37 @@ WarpX::ComputeDt ()
     const amrex::Real* dx = geom[max_level].CellSize();
     amrex::Real deltat = 0.;
 
-#if WARPX_USE_PSATD
-    // Computation of dt for spectral algorithm
-
-#   if (defined WARPX_DIM_RZ)
-    // - In RZ geometry: dz/c
-    deltat = cfl * dx[1]/PhysConst::c;
-#   elif (defined WARPX_DIM_XZ)
-    // - In Cartesian 2D geometry: determined by the minimum cell size in all direction
-    deltat = cfl * std::min( dx[0], dx[1] )/PhysConst::c;
-#   else
-    // - In Cartesian 3D geometry: determined by the minimum cell size in all direction
-    deltat = cfl * std::min( dx[0], std::min( dx[1], dx[2] ) )/PhysConst::c;
-#   endif
-
-
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        // Computation of dt for spectral algorithm
+#if (defined WARPX_DIM_RZ)
+        // - In RZ geometry: dz/c
+        deltat = cfl * dx[1]/PhysConst::c;
+#elif (defined WARPX_DIM_XZ)
+        // - In Cartesian 2D geometry: determined by the minimum cell size in all direction
+        deltat = cfl * std::min( dx[0], dx[1] )/PhysConst::c;
 #else
-    // Computation of dt for FDTD algorithm
-
-#   ifdef WARPX_DIM_RZ
-    // - In RZ geometry
-    if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
-        deltat = cfl * CylindricalYeeAlgorithm::ComputeMaxDt(dx,  n_rz_azimuthal_modes);
-#   else
-    // - In Cartesian geometry
-    if (do_nodal) {
-        deltat = cfl * CartesianNodalAlgorithm::ComputeMaxDt( dx );
-    } else if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
-        deltat = cfl * CartesianYeeAlgorithm::ComputeMaxDt( dx );
-    } else if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
-        deltat = cfl * CartesianCKCAlgorithm::ComputeMaxDt( dx );
-#   endif
-    } else {
-        amrex::Abort("Unknown algorithm");
-    }
-
+        // - In Cartesian 3D geometry: determined by the minimum cell size in all direction
+        deltat = cfl * std::min(dx[0], std::min(dx[1], dx[2])) / PhysConst::c;
 #endif
+    } else {
+        // Computation of dt for FDTD algorithm
+#ifdef WARPX_DIM_RZ
+        // - In RZ geometry
+        if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
+            deltat = cfl * CylindricalYeeAlgorithm::ComputeMaxDt(dx,  n_rz_azimuthal_modes);
+#else
+        // - In Cartesian geometry
+        if (do_nodal) {
+            deltat = cfl * CartesianNodalAlgorithm::ComputeMaxDt(dx);
+        } else if (maxwell_solver_id == MaxwellSolverAlgo::Yee) {
+            deltat = cfl * CartesianYeeAlgorithm::ComputeMaxDt(dx);
+        } else if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
+            deltat = cfl * CartesianCKCAlgorithm::ComputeMaxDt(dx);
+#endif
+        } else {
+            amrex::Abort("ComputeDt: Unknown algorithm");
+        }
+    }
 
     dt.resize(0);
     dt.resize(max_level+1,deltat);

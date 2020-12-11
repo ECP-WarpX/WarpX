@@ -5,9 +5,10 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpXUtil.H"
-#include "WarpXConst.H"
 #include "WarpX.H"
+#include "WarpXAlgorithmSelection.H"
+#include "WarpXConst.H"
+#include "WarpXUtil.H"
 
 #include <AMReX_ParmParse.H>
 
@@ -270,7 +271,17 @@ getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real
  */
 void CheckGriddingForRZSpectral ()
 {
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
+#ifndef WARPX_DIM_RZ
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+        "CheckGriddingForRZSpectral: WarpX was not built with RZ geometry.");
+#endif
+
+    ParmParse pp("algo");
+    int maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
+
+    // only check for PSATD in RZ
+    if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+        return;
 
     int max_level;
     Vector<int> n_cell(AMREX_SPACEDIM, -1);
@@ -336,8 +347,6 @@ void CheckGriddingForRZSpectral ()
         mg[0] /= 2;
     }
     pp_amr.addarr("max_grid_size_y", mg);
-
-#endif
 }
 
 namespace WarpXUtilMsg{

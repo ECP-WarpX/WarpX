@@ -171,9 +171,8 @@ WarpX::InitPML ()
 #endif
         pml[0] = std::make_unique<PML>(boxArray(0), DistributionMap(0), &Geom(0), nullptr,
                              pml_ncell, pml_delta, 0,
-#ifdef WARPX_USE_PSATD
+                             // PSATD
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
-#endif
                              do_dive_cleaning, do_moving_window,
                              pml_has_particles, do_pml_in_domain,
                              do_pml_Lo_corrected, do_pml_Hi);
@@ -189,9 +188,8 @@ WarpX::InitPML ()
             pml[lev] = std::make_unique<PML>(boxArray(lev), DistributionMap(lev),
                                    &Geom(lev), &Geom(lev-1),
                                    pml_ncell, pml_delta, refRatio(lev-1)[0],
-#ifdef WARPX_USE_PSATD
+                                   // PSATD
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
-#endif
                                    do_dive_cleaning, do_moving_window,
                                    pml_has_particles, do_pml_in_domain,
                                    do_pml_Lo_MR, amrex::IntVect::TheUnitVector());
@@ -254,9 +252,9 @@ WarpX::InitFilter (){
 void
 WarpX::PostRestart ()
 {
-#ifdef WARPX_USE_PSATD
-    amrex::Abort("WarpX::PostRestart: TODO for PSATD");
-#endif
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        amrex::Abort("WarpX::PostRestart: TODO for PSATD");
+    }
     mypc->PostRestart();
 }
 
