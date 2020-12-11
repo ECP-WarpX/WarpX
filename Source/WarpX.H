@@ -137,17 +137,13 @@ public:
     static int em_solver_medium;
     static int macroscopic_solver_algo;
 
-#ifdef WARPX_USE_PSATD
-    // If true (overwritten by the user in the input file), the current correction
+    // PSATD: If true (overwritten by the user in the input file), the current correction
     // defined in equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010 is applied
     bool current_correction = false;
-#endif
 
-#ifdef WARPX_USE_PSATD
-    // If true, the update equation for E contains both J and rho (at times n and n+1):
+    // PSATD: If true, the update equation for E contains both J and rho (at times n and n+1):
     // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
-    bool update_with_rho;
-#endif
+    bool update_with_rho = false;
 
     // div E cleaning
     static int do_dive_cleaning;
@@ -881,14 +877,14 @@ private:
     // Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
 
-#ifdef WARPX_USE_PSATD
 private:
-    void EvolvePSATD (int numsteps);
+    // void EvolvePSATD (int numsteps);
     void PushPSATD (amrex::Real dt);
     void PushPSATD (int lev, amrex::Real dt);
 
-    int fftw_plan_measure = 1;
+    int fftw_plan_measure = 1; // used with PSATD
 
+#ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_fp;
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_cp;

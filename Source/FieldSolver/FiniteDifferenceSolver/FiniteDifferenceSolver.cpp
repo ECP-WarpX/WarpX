@@ -26,6 +26,10 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
     m_fdtd_algo = fdtd_algo;
     m_do_nodal = do_nodal;
 
+    // return if not FDTD
+    if (fdtd_algo == MaxwellSolverAlgo::PSATD)
+        return;
+
     // Calculate coefficients of finite-difference stencil
 #ifdef WARPX_DIM_RZ
     m_dr = cell_size[0];
@@ -46,7 +50,7 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
                               m_stencil_coefs_z.begin());
         amrex::Gpu::synchronize();
     } else {
-        amrex::Abort("Unknown algorithm");
+        amrex::Abort("FiniteDifferenceSolver: Unknown algorithm");
     }
 #else
     amrex::Vector<amrex::Real> stencil_coefs_x, stencil_coefs_y, stencil_coefs_z;
@@ -67,7 +71,7 @@ FiniteDifferenceSolver::FiniteDifferenceSolver (
             stencil_coefs_x, stencil_coefs_y, stencil_coefs_z );
 
     } else {
-        amrex::Abort("Unknown algorithm");
+        amrex::Abort("FiniteDifferenceSolver: Unknown algorithm");
     }
 
     m_stencil_coefs_x.resize(stencil_coefs_x.size());

@@ -719,15 +719,12 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
 
   auto meshes = series_iteration.meshes;
   meshes.setAttribute( "fieldSolver", [](){
-#ifdef WARPX_USE_PSATD
-      return "PSATD";
-#else
-      switch( WarpX::particle_pusher_algo ) {
+      switch( WarpX::maxwell_solver_id ) {
           case MaxwellSolverAlgo::Yee : return "Yee";
           case MaxwellSolverAlgo::CKC : return "CK";
+          case MaxwellSolverAlgo::PSATD : return "PSATD";
           default: return "other";
       }
-#endif
   }() );
   meshes.setAttribute( "fieldBoundary", fieldBoundary );
   meshes.setAttribute( "particleBoundary", particleBoundary );
