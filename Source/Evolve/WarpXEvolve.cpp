@@ -327,56 +327,56 @@ WarpX::OneStep_nosub (Real cur_time)
     if (do_pml && do_pml_j_damping) DampJPML();
 
     if( do_electrostatic == ElectrostaticSolverAlgo::None ) {
-    // Electromagnetic solver:
-    // Push E and B from {n} to {n+1}
-    // (And update guard cells immediately afterwards)
-    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        if (use_hybrid_QED)
-        {
-            WarpX::Hybrid_QED_Push(dt);
+        // Electromagnetic solver:
+        // Push E and B from {n} to {n+1}
+        // (And update guard cells immediately afterwards)
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            if (use_hybrid_QED)
+            {
+                WarpX::Hybrid_QED_Push(dt);
+                FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+            }
+            PushPSATD(dt[0]);
             FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-        }
-        PushPSATD(dt[0]);
-        FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-        FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-
-        if (use_hybrid_QED)
-        {
-            WarpX::Hybrid_QED_Push(dt);
-            FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-        }
-        if (do_pml) DampPML();
-    } else {
-        EvolveF(0.5 * dt[0], DtType::FirstHalf);
-        FillBoundaryF(guard_cells.ng_FieldSolverF);
-        EvolveB(0.5 * dt[0]); // We now have B^{n+1/2}
-
-        FillBoundaryB(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
-        if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
-            // vacuum medium
-            EvolveE(dt[0]); // We now have E^{n+1}
-        } else if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
-            // macroscopic medium
-            MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
-        } else {
-            amrex::Abort(" Medium for EM is unknown \n");
-        }
-
-        FillBoundaryE(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
-        EvolveF(0.5 * dt[0], DtType::SecondHalf);
-        EvolveB(0.5 * dt[0]); // We now have B^{n+1}
-        if (do_pml) {
-            FillBoundaryF(guard_cells.ng_alloc_F);
-            DampPML();
-            FillBoundaryE(guard_cells.ng_MovingWindow, IntVect::TheZeroVector());
-            FillBoundaryF(guard_cells.ng_MovingWindow);
-            FillBoundaryB(guard_cells.ng_MovingWindow, IntVect::TheZeroVector());
-        }
-        // E and B are up-to-date in the domain, but all guard cells are
-        // outdated.
-        if (safe_guard_cells)
             FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-    } // !PSATD
+
+            if (use_hybrid_QED)
+            {
+                WarpX::Hybrid_QED_Push(dt);
+                FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+            }
+            if (do_pml) DampPML();
+        } else {
+            EvolveF(0.5 * dt[0], DtType::FirstHalf);
+            FillBoundaryF(guard_cells.ng_FieldSolverF);
+            EvolveB(0.5 * dt[0]); // We now have B^{n+1/2}
+
+            FillBoundaryB(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
+            if (WarpX::em_solver_medium == MediumForEM::Vacuum) {
+                // vacuum medium
+                EvolveE(dt[0]); // We now have E^{n+1}
+            } else if (WarpX::em_solver_medium == MediumForEM::Macroscopic) {
+                // macroscopic medium
+                MacroscopicEvolveE(dt[0]); // We now have E^{n+1}
+            } else {
+                amrex::Abort(" Medium for EM is unknown \n");
+            }
+
+            FillBoundaryE(guard_cells.ng_FieldSolver, IntVect::TheZeroVector());
+            EvolveF(0.5 * dt[0], DtType::SecondHalf);
+            EvolveB(0.5 * dt[0]); // We now have B^{n+1}
+            if (do_pml) {
+                FillBoundaryF(guard_cells.ng_alloc_F);
+                DampPML();
+                FillBoundaryE(guard_cells.ng_MovingWindow, IntVect::TheZeroVector());
+                FillBoundaryF(guard_cells.ng_MovingWindow);
+                FillBoundaryB(guard_cells.ng_MovingWindow, IntVect::TheZeroVector());
+            }
+            // E and B are up-to-date in the domain, but all guard cells are
+            // outdated.
+            if (safe_guard_cells)
+                FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+        } // !PSATD
     } // !do_electrostatic
 }
 
