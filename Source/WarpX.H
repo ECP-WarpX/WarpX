@@ -160,8 +160,8 @@ public:
     static int field_gathering_noz;
 
     // Number of modes for the RZ multimode version
-    static long n_rz_azimuthal_modes;
-    static long ncomps;
+    static int n_rz_azimuthal_modes;
+    static int ncomps;
 
     static bool use_fdtd_nci_corr;
     static bool galerkin_interpolation;
