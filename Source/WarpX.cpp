@@ -74,8 +74,8 @@ int WarpX::do_dive_cleaning = 0;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 
-long WarpX::n_rz_azimuthal_modes = 1;
-long WarpX::ncomps = 1;
+int WarpX::n_rz_azimuthal_modes = 1;
+int WarpX::ncomps = 1;
 
 long WarpX::nox = 1;
 long WarpX::noy = 1;

@@ -477,7 +477,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         int const ishift_t = (rmint > rmin ? 1 : 0);
         int const ishift_z = (rminz > rmin ? 1 : 0);
 
-        const long nmodes = n_rz_azimuthal_modes;
+        const int nmodes = n_rz_azimuthal_modes;
 
         // Grow the tileboxes to include the guard cells, except for the
         // guard cells at negative radius.

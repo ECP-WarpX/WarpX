@@ -95,7 +95,7 @@ class FiniteDifferenceSolver
 
 #ifdef WARPX_DIM_RZ
         amrex::Real m_dr, m_rmin;
-        amrex::Real m_nmodes;
+        int m_nmodes;
         amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_r;
         amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_z;
 #else
