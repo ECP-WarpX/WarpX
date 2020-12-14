@@ -426,8 +426,7 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
 
 PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
           const Geometry* geom, const Geometry* cgeom,
-          int ncell, int delta, int ref_ratio,
-          // PSATD
+          int ncell, int delta, amrex::IntVect ref_ratio,
           Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
           int do_dive_cleaning, int do_moving_window,
           int /*pml_has_particles*/, int do_pml_in_domain,
@@ -461,7 +460,6 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     const BoxArray& ba = (do_pml_in_domain)?
           MakeBoxArray(*geom, grid_ba_reduced, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
           MakeBoxArray(*geom, grid_ba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-
     if (ba.size() == 0) {
         m_ok = false;
         return;
@@ -567,12 +565,29 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 
         BoxArray grid_cba = grid_ba;
         grid_cba.coarsen(ref_ratio);
-        const BoxArray grid_cba_reduced = BoxArray(grid_cba.boxList().intersect(domain0));
 
+        // assuming that the bounding box around grid_cba is a single patch, and not disjoint patches, similar to fine patch.
+        amrex::Box domain1 = grid_cba.minimalBox();
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if ( ! cgeom->isPeriodic(idim)) {
+                if (do_pml_Lo[idim]){
+                    // ncell is divided by refinement ratio to ensure that the
+                    // physical width of the PML region is equal is fine and coarse patch
+                    domain1.growLo(idim, -ncell/ref_ratio[idim]);
+                }
+                if (do_pml_Hi[idim]){
+                    // ncell is divided by refinement ratio to ensure that the
+                    // physical width of the PML region is equal is fine and coarse patch
+                    domain1.growHi(idim, -ncell/ref_ratio[idim]);
+                }
+            }
+        }
+        const BoxArray grid_cba_reduced = BoxArray(grid_cba.boxList().intersect(domain1));
+
+        // Assuming that refinement ratio is equal in all dimensions
         const BoxArray& cba = (do_pml_in_domain) ?
-            MakeBoxArray(*cgeom, grid_cba_reduced, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
+            MakeBoxArray(*cgeom, grid_cba_reduced, ncell/ref_ratio[0], do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
             MakeBoxArray(*cgeom, grid_cba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-
         DistributionMapping cdm{cba};
 
         pml_E_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
@@ -612,7 +627,8 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         pml_j_cp[2]->setVal(0.0);
 
         if (do_pml_in_domain){
-            sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba_reduced, cgeom->CellSize(), ncell, delta);
+            // Note - assuming that the refinement ratio is equal in all dimensions
+            sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba_reduced, cgeom->CellSize(), ncell/ref_ratio[0], delta/ref_ratio[0]);
         } else {
             sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba, cgeom->CellSize(), ncell, delta);
         }
