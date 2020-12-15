@@ -210,8 +210,6 @@ Diagnostics::InitData ()
         m_output_species.clear();
         m_output_species_names.clear();
     }
-    // temporarily disabling species output
-    m_all_species.clear();
 }
 
 
