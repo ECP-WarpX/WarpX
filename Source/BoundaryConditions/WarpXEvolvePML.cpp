@@ -51,6 +51,17 @@ WarpX::DampPML (int lev, PatchType patch_type)
         const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp()
                                                               : pml[lev]->GetMultiSigmaBox_cp();
 
+        amrex::GpuArray<int, AMREX_SPACEDIM> Ex_stag;
+        amrex::GpuArray<int, AMREX_SPACEDIM> Ey_stag;
+        amrex::GpuArray<int, AMREX_SPACEDIM> Ez_stag;
+
+        for (int i = 0; i < AMREX_SPACEDIM; i++)
+        {
+            Ex_stag[i] = pml_E[0]->ixType().toIntVect()[i];
+            Ey_stag[i] = pml_E[1]->ixType().toIntVect()[i];
+            Ez_stag[i] = pml_E[2]->ixType().toIntVect()[i];
+        }
+
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -96,16 +107,16 @@ WarpX::DampPML (int lev, PatchType patch_type)
 
             amrex::ParallelFor(tex, tey, tez,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_damp_pml_ex(i,j,k,pml_Exfab,sigma_fac_y,sigma_fac_z,
-                                  sigma_star_fac_x,x_lo,y_lo,z_lo);
+                warpx_damp_pml_ex(i, j, k, pml_Exfab, Ex_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+                                  sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_damp_pml_ey(i,j,k,pml_Eyfab,sigma_fac_z,sigma_fac_x,
-                                  sigma_star_fac_y,x_lo,y_lo,z_lo);
+                warpx_damp_pml_ey(i, j, k, pml_Eyfab, Ey_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+                                  sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                warpx_damp_pml_ez(i,j,k,pml_Ezfab,sigma_fac_x,sigma_fac_y,
-                                  sigma_star_fac_z,x_lo,y_lo,z_lo);
+                warpx_damp_pml_ez(i, j, k, pml_Ezfab, Ez_stag, sigma_fac_x, sigma_fac_y, sigma_fac_z,
+                                  sigma_star_fac_x, sigma_star_fac_y, sigma_star_fac_z, x_lo, y_lo, z_lo);
             });
 
             amrex::ParallelFor(tbx, tby, tbz,
