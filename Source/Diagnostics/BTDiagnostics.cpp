@@ -261,8 +261,8 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     // Initialize buffer counter and z-positions of the  i^th snapshot in
     // boosted-frame and lab-frame
     m_buffer_counter[i_buffer] = 0;
-    m_current_z_lab[i_buffer] = 0.0_rt;
-    m_current_z_boost[i_buffer] = 0.0_rt;
+    m_current_z_lab[i_buffer] = 0._rt;
+    m_current_z_boost[i_buffer] = 0._rt;
     // Now Update Current Z Positions
     m_current_z_boost[i_buffer] = UpdateCurrentZBoostCoordinate(m_t_lab[i_buffer],
                                                               warpx.gett_new(lev) );
@@ -440,6 +440,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                                                                       warpx.gett_new(lev) );
                 m_current_z_lab[i_buffer] = UpdateCurrentZLabCoordinate(m_t_lab[i_buffer],
                                                                       warpx.gett_new(lev) );
+                // Check if the zslice is in domain
                 bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
                 // Initialize and define field buffer multifab if buffer is empty
                 if (ZSliceInDomain) {
@@ -487,11 +488,10 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
     if ( m_do_back_transformed_fields ) {
 
         const int k_lab = k_index_zlab (i_buffer, lev);
-        m_buffer_box[i_buffer].setSmall( m_moving_window_dir, k_lab - m_buffer_size + 1);
+        m_buffer_box[i_buffer].setSmall( m_moving_window_dir, k_lab - m_buffer_ncells_lab[i_buffer][m_moving_window_dir]);
         m_buffer_box[i_buffer].setBig( m_moving_window_dir, k_lab);
         amrex::BoxArray buffer_ba( m_buffer_box[i_buffer] );
         buffer_ba.maxSize(m_max_box_size);
-
         // Generate a new distribution map for the back-transformed buffer multifab
         amrex::DistributionMapping buffer_dmap(buffer_ba);
         // Number of guard cells for the output buffer is zero.
@@ -500,7 +500,7 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         m_mf_output[i_buffer][lev] = amrex::MultiFab ( buffer_ba, buffer_dmap,
                                                   m_varnames.size(), ngrow ) ;
 
-        //// Define the geometry object at level, lev, for the ith buffer.
+        // Define the geometry object at level, lev, for the ith buffer.
         if (lev == 0) {
             // The extent of the physical domain covered by the ith buffer mf, m_mf_output
             // Default non-periodic geometry for diags
@@ -529,7 +529,6 @@ BTDiagnostics::GetZSliceInDomainFlag (const int i_buffer, const int lev)
 
     amrex::Real buffer_zmin_lab = m_buffer_domain_lab[i_buffer].lo( m_moving_window_dir );
     amrex::Real buffer_zmax_lab = m_buffer_domain_lab[i_buffer].hi( m_moving_window_dir );
-
     if ( ( m_current_z_boost[i_buffer] < boost_domain.lo(m_moving_window_dir) ) or
          ( m_current_z_boost[i_buffer] > boost_domain.hi(m_moving_window_dir) ) or
          ( m_current_z_lab[i_buffer] < buffer_zmin_lab ) or
