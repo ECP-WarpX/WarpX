@@ -148,7 +148,7 @@ PlasmaInjector::PlasmaInjector (int ispecies, const std::string& name)
         for (auto& x : single_particle_vel) {
             x *= PhysConst::c;
         }
-        pp.get("single_particle_weight", single_particle_weight);
+        getWithParser(pp, "single_particle_weight", single_particle_weight);
         add_single_particle = true;
         return;
     } else if (part_pos_s == "gaussian_beam") {
@@ -361,7 +361,7 @@ void PlasmaInjector::parseDensity (ParmParse& pp)
     std::transform(rho_prof_s.begin(), rho_prof_s.end(),
                    rho_prof_s.begin(), ::tolower);
     if (rho_prof_s == "constant") {
-        pp.get("density", density);
+        getWithParser(pp, "density", density);
         // Construct InjectorDensity with InjectorDensityConstant.
         h_inj_rho.reset(new InjectorDensity((InjectorDensityConstant*)nullptr, density));
     } else if (rho_prof_s == "custom") {

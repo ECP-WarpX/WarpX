@@ -1,34 +1,48 @@
-#ifndef WARPX_GALILEAN_ALGORITHM_H_
-#define WARPX_GALILEAN_ALGORITHM_H_
+#ifndef WARPX_COMOVING_PSATD_ALGORITHM_H_
+#define WARPX_COMOVING_PSATD_ALGORITHM_H_
 
 #include "SpectralBaseAlgorithm.H"
 
 #if WARPX_USE_PSATD
-/* \brief Class that updates the field in spectral space
- * and stores the coefficients of the corresponding update equation.
+
+/* \brief Class that updates the field in spectral space and stores the coefficients
+ * of the corresponding update equation, according to the comoving spectral scheme.
  */
-class GalileanAlgorithm : public SpectralBaseAlgorithm
+class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
 {
     public:
-        GalileanAlgorithm (const SpectralKSpace& spectral_kspace,
-                           const amrex::DistributionMapping& dm,
-                           const int norder_x, const int norder_y,
-                           const int norder_z, const bool nodal,
-                           const amrex::Array<amrex::Real,3>& v_galilean,
-                           const amrex::Real dt,
-                           const bool update_with_rho);
-        // Redefine update equation from base class
+
+        /**
+         * \brief Class constructor
+         */
+        ComovingPsatdAlgorithm (const SpectralKSpace& spectral_kspace,
+                                const amrex::DistributionMapping& dm,
+                                const int norder_x,
+                                const int norder_y,
+                                const int norder_z,
+                                const bool nodal,
+                                const amrex::Array<amrex::Real,3>& v_comoving,
+                                const amrex::Real dt,
+                                const bool update_with_rho);
+
+        /**
+         * \brief Override the update equations in Fourier space
+         */
         virtual void pushSpectralFields (SpectralFieldData& f) const override final;
-        virtual int getRequiredNumberOfFields () const override final {
+
+        virtual int getRequiredNumberOfFields () const override final
+        {
             return SpectralFieldIndex::n_fields;
         };
+
+        /* \brief Initialize the coefficients needed in the update equations
+         */
         void InitializeSpectralCoefficients (const SpectralKSpace& spectral_kspace,
                                              const amrex::DistributionMapping& dm,
                                              const amrex::Real dt);
 
         /**
-         * \brief Virtual function for current correction in Fourier space
-         * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).
+         * \brief Virtual function for current correction in Fourier space.
          * This function overrides the virtual function \c CurrentCorrection in the
          * base class \c SpectralBaseAlgorithm and cannot be overridden by further
          * derived classes.
@@ -43,8 +57,7 @@ class GalileanAlgorithm : public SpectralBaseAlgorithm
                                         const std::unique_ptr<amrex::MultiFab>& rho) override final;
 
         /**
-         * \brief Virtual function for Vay current deposition in Fourier space
-         * (<a href="https://doi.org/10.1016/j.jcp.2013.03.010"> Vay et al, 2013</a>).
+         * \brief Virtual function for Vay current deposition in Fourier space.
          * This function overrides the virtual function \c VayDeposition in the
          * base class \c SpectralBaseAlgorithm and cannot be overridden by further
          * derived classes.
@@ -57,17 +70,23 @@ class GalileanAlgorithm : public SpectralBaseAlgorithm
                                     std::array<std::unique_ptr<amrex::MultiFab>,3>& current) override final;
 
     private:
+
+        // Real and complex spectral coefficients
         SpectralRealCoefficients C_coef, S_ck_coef;
         SpectralComplexCoefficients Theta2_coef, X1_coef, X2_coef, X3_coef, X4_coef;
-        // Centered modified finite-order k vectors
-        KVectorComponent modified_kx_vec_centered;
+
+        // k vectors
+        KVectorComponent kx_vec;
 #if (AMREX_SPACEDIM==3)
-        KVectorComponent modified_ky_vec_centered;
+        KVectorComponent ky_vec;
 #endif
-        KVectorComponent modified_kz_vec_centered;
-        amrex::Array<amrex::Real,3> m_v_galilean;
+        KVectorComponent kz_vec;
+
+        // Additional member variables
+        amrex::Array<amrex::Real,3> m_v_comoving;
         amrex::Real m_dt;
         bool m_update_with_rho;
 };
+
 #endif // WARPX_USE_PSATD
-#endif // WARPX_GALILEAN_ALGORITHM_H_
+#endif // WARPX_COMOVING_PSATD_ALGORITHM_H_

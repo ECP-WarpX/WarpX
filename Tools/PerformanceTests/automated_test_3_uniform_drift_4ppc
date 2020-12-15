@@ -26,7 +26,6 @@ warpx.do_pml = 0
 # CFL
 warpx.cfl = 1.0
 
-particles.nspecies = 2
 particles.species_names = electrons ions
 
 electrons.charge = -q_e

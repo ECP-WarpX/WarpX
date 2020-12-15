@@ -48,7 +48,7 @@ void FiniteDifferenceSolver::EvolveB (
 
 #endif
     } else {
-        amrex::Abort("Unknown algorithm");
+        amrex::Abort("EvolveB: Unknown algorithm");
     }
 
 }

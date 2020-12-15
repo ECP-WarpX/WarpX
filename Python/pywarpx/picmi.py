@@ -503,9 +503,8 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
                     self.galilean_velocity = [self.galilean_velocity[0], 0., self.galilean_velocity[1]]
                 pywarpx.psatd.v_galilean = np.array(self.galilean_velocity)/constants.c
 
-        else:
-            # --- Same method names are used, though mapped to lower case.
-            pywarpx.algo.maxwell_solver = self.method
+        # --- Same method names are used, though mapped to lower case.
+        pywarpx.algo.maxwell_solver = self.method
 
         if self.cfl is not None:
             pywarpx.warpx.cfl = self.cfl

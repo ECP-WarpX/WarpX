@@ -11,7 +11,6 @@
 #include <cmath>
 
 using namespace amrex;
-using namespace Gpu;
 
 /* \brief Initialize k space object.
  *
@@ -81,7 +80,7 @@ SpectralKSpace::getKComponent( const DistributionMapping& dm,
     // for each box owned by the local MPI proc
     for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
         Box bx = spectralspace_ba[mfi];
-        DeviceVector<Real>& k = k_comp[mfi];
+        Gpu::DeviceVector<Real>& k = k_comp[mfi];
 
         // Allocate k to the right size
         int N = bx.length( i_dim );
@@ -140,8 +139,8 @@ SpectralKSpace::getSpectralShiftFactor( const DistributionMapping& dm,
    // Loop over boxes and allocate the corresponding DeviceVector
     // for each box owned by the local MPI proc
     for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
-        const DeviceVector<Real>& k = k_vec[i_dim][mfi];
-        DeviceVector<Complex>& shift = shift_factor[mfi];
+        const Gpu::DeviceVector<Real>& k = k_vec[i_dim][mfi];
+        Gpu::DeviceVector<Complex>& shift = shift_factor[mfi];
 
         // Allocate shift coefficients
         const int N = k.size();
@@ -189,8 +188,8 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
 
     if (n_order == -1) { // Infinite-order case
         for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
-            const DeviceVector<Real>& k = k_vec[i_dim][mfi];
-            DeviceVector<Real>& modified_k = modified_k_comp[mfi];
+            const Gpu::DeviceVector<Real>& k = k_vec[i_dim][mfi];
+            Gpu::DeviceVector<Real>& modified_k = modified_k_comp[mfi];
 
             // Allocate modified_k to the same size as k
             const int N = k.size();
@@ -203,7 +202,7 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
 
         // Compute real-space stencil coefficients
         Vector<Real> h_stencil_coef = getFornbergStencilCoefficients(n_order, nodal);
-        DeviceVector<Real> d_stencil_coef(h_stencil_coef.size());
+        Gpu::DeviceVector<Real> d_stencil_coef(h_stencil_coef.size());
         Gpu::copyAsync(Gpu::hostToDevice, h_stencil_coef.begin(), h_stencil_coef.end(),
                        d_stencil_coef.begin());
         Gpu::synchronize();
@@ -214,8 +213,8 @@ SpectralKSpace::getModifiedKComponent( const DistributionMapping& dm,
         // for each box owned by the local MPI proc
         for ( MFIter mfi(spectralspace_ba, dm); mfi.isValid(); ++mfi ){
             Real delta_x = dx[i_dim];
-            const DeviceVector<Real>& k = k_vec[i_dim][mfi];
-            DeviceVector<Real>& modified_k = modified_k_comp[mfi];
+            const Gpu::DeviceVector<Real>& k = k_vec[i_dim][mfi];
+            Gpu::DeviceVector<Real>& modified_k = modified_k_comp[mfi];
 
             // Allocate modified_k to the same size as k
             const int N = k.size();

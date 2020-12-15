@@ -114,10 +114,15 @@ namespace {
 #endif
     }
 }
+#endif
 
 void
 WarpX::PushPSATD (amrex::Real a_dt)
 {
+#ifndef WARPX_USE_PSATD
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                                     "PushFieldsEM: PSATD solver selected but not built.");
+#else
     for (int lev = 0; lev <= finest_level; ++lev) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(dt[lev] == a_dt, "dt must be consistent");
         PushPSATD(lev, a_dt);
@@ -127,11 +132,19 @@ WarpX::PushPSATD (amrex::Real a_dt)
             pml[lev]->PushPSATD();
         }
     }
+#endif
 }
 
 void
-WarpX::PushPSATD (int lev, amrex::Real /* dt */)
-{
+WarpX::PushPSATD (int lev, amrex::Real /* dt */) {
+#ifndef WARPX_USE_PSATD
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                                     "PushFieldsEM: PSATD solver selected but not built.");
+#else
+    if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                                         "WarpX::PushPSATD: only supported for PSATD solver.");
+    }
     // Update the fields on the fine and coarse patch
     PushPSATDSinglePatch( *spectral_solver_fp[lev],
         Efield_fp[lev], Bfield_fp[lev], Efield_avg_fp[lev], Bfield_avg_fp[lev], current_fp[lev], rho_fp[lev] );
@@ -142,8 +155,8 @@ WarpX::PushPSATD (int lev, amrex::Real /* dt */)
     if (use_damp_fields_in_z_guard) {
         DampFieldsInGuards( Efield_fp[lev], Bfield_fp[lev] );
     }
-}
 #endif
+}
 
 void
 WarpX::EvolveB (amrex::Real a_dt)
@@ -464,7 +477,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
         int const ishift_t = (rmint > rmin ? 1 : 0);
         int const ishift_z = (rminz > rmin ? 1 : 0);
 
-        const long nmodes = n_rz_azimuthal_modes;
+        const int nmodes = n_rz_azimuthal_modes;
 
         // Grow the tileboxes to include the guard cells, except for the
         // guard cells at negative radius.

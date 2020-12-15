@@ -37,7 +37,7 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
                               const std::array<amrex::Real, 3> xyzmin,
                               const amrex::Dim3 lo,
                               const amrex::Real q,
-                              const long n_rz_azimuthal_modes)
+                              const int n_rz_azimuthal_modes)
 {
     using namespace amrex;
 

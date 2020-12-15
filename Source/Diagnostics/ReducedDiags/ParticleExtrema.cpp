@@ -140,9 +140,6 @@ void ParticleExtrema::ComputeDiags (int step)
     // get MultiParticleContainer class object
     auto & mypc = WarpX::GetInstance().GetPartContainer();
 
-    // get number of level (int)
-    const auto level_number = WarpX::GetInstance().finestLevel();
-
     // get number of species (int)
     const auto nSpecies = mypc.nSpecies();
 
@@ -345,6 +342,9 @@ void ParticleExtrema::ComputeDiags (int step)
         ParallelDescriptor::ReduceRealMax(wmax);
 
 #if (defined WARPX_QED)
+        // get number of level (int)
+        const auto level_number = WarpX::GetInstance().finestLevel();
+
         // compute chimin and chimax
         Real chimin_f = 0.0_rt;
         Real chimax_f = 0.0_rt;
@@ -359,26 +359,68 @@ void ParticleExtrema::ComputeDiags (int step)
             chimin.resize(level_number+1,0.0_rt);
             chimax.resize(level_number+1,0.0_rt);
 
+            // define variables in preparation for field gathering
+            auto & warpx = WarpX::GetInstance();
+            const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
+            const int nox = WarpX::nox;
+            const bool galerkin_interpolation = WarpX::galerkin_interpolation;
+            const amrex::IntVect ngE = warpx.getngE();
+            const amrex::Array<amrex::Real,3> v_galilean = myspc.get_v_galilean();
+            const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
+
             // loop over refinement levels
             for (int lev = 0; lev <= level_number; ++lev)
             {
+                // define variables in preparation for field gathering
+                const amrex::Real cur_time = WarpX::GetInstance().gett_new(lev);
+                const amrex::Real time_shift = (cur_time - time_of_last_gal_shift);
+                const amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]*time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+                const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev, 0));
+                const GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
+                const MultiFab & Ex = warpx.getEfield(lev,0);
+                const MultiFab & Ey = warpx.getEfield(lev,1);
+                const MultiFab & Ez = warpx.getEfield(lev,2);
+                const MultiFab & Bx = warpx.getBfield(lev,0);
+                const MultiFab & By = warpx.getBfield(lev,1);
+                const MultiFab & Bz = warpx.getBfield(lev,2);
+
                 // Loop over boxes
                 for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
                 {
                     const auto GetPosition = GetParticlePosition(pti);
                     // get particle arrays
-                    auto & ux = pti.GetAttribs(PIdx::ux);
-                    auto & uy = pti.GetAttribs(PIdx::uy);
-                    auto & uz = pti.GetAttribs(PIdx::uz);
+                    amrex::ParticleReal* const AMREX_RESTRICT ux = pti.GetAttribs()[PIdx::ux].dataPtr();
+                    amrex::ParticleReal* const AMREX_RESTRICT uy = pti.GetAttribs()[PIdx::uy].dataPtr();
+                    amrex::ParticleReal* const AMREX_RESTRICT uz = pti.GetAttribs()[PIdx::uz].dataPtr();
                     // declare external fields
                     const int offset = 0;
                     const auto getExternalE = GetExternalEField(pti, offset);
                     const auto getExternalB = GetExternalBField(pti, offset);
+
+                    // define variables in preparation for field gathering
+                    amrex::Box box = pti.tilebox();
+                    box.grow(ngE);
+                    const Dim3 lo = amrex::lbound(box);
+                    const std::array<amrex::Real, 3>& xyzmin = WarpX::LowerCorner(box, galilean_shift, lev);
+                    const GpuArray<amrex::Real, 3> xyzmin_arr = {xyzmin[0], xyzmin[1], xyzmin[2]};
+                    const auto& ex_arr = Ex[pti].array();
+                    const auto& ey_arr = Ey[pti].array();
+                    const auto& ez_arr = Ez[pti].array();
+                    const auto& bx_arr = Bx[pti].array();
+                    const auto& by_arr = By[pti].array();
+                    const auto& bz_arr = Bz[pti].array();
+                    const IndexType ex_type = Ex[pti].box().ixType();
+                    const IndexType ey_type = Ey[pti].box().ixType();
+                    const IndexType ez_type = Ez[pti].box().ixType();
+                    const IndexType bx_type = Bx[pti].box().ixType();
+                    const IndexType by_type = By[pti].box().ixType();
+                    const IndexType bz_type = Bz[pti].box().ixType();
+
                     // declare reduce_op
                     ReduceOps<ReduceOpMin, ReduceOpMax> reduce_op;
                     ReduceData<Real, Real> reduce_data(reduce_op);
                     using ReduceTuple = typename decltype(reduce_data)::Type;
-                    reduce_op.eval(ux.size(), reduce_data,
+                    reduce_op.eval(pti.numParticles(), reduce_data,
                     [=] AMREX_GPU_DEVICE (int i) -> ReduceTuple
                     {
                         // get external fields
@@ -388,16 +430,8 @@ void ParticleExtrema::ComputeDiags (int step)
                         ParticleReal bx = 0._rt, by = 0._rt, bz = 0._rt;
                         getExternalE(i, ex, ey, ez);
                         getExternalB(i, bx, by, bz);
+
                         // gather E and B
-                        Array4<const amrex::Real> ex_arr, ey_arr, ez_arr;
-                        Array4<const amrex::Real> bx_arr, by_arr, bz_arr;
-                        IndexType ex_type, ey_type, ez_type;
-                        IndexType bx_type, by_type, bz_type;
-                        GpuArray<amrex::Real, 3> dx_arr, xyzmin_arr;
-                        Dim3 lo;
-                        int n_rz_azimuthal_modes;
-                        int nox;
-                        bool galerkin_interpolation;
                         doGatherShapeN(xp, yp, zp,
                             ex, ey, ez, bx, by, bz,
                             ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,

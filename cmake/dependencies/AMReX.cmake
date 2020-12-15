@@ -72,8 +72,10 @@ macro(find_amrex)
         set(AMReX_TINY_PROFILE ON CACHE BOOL "")
 
         # AMReX_SENSEI
-        # we'll need this for Python bindings
-        #set(AMReX_PIC ON CACHE INTERNAL "")
+        # shared libs, i.e. for Python bindings, need relocatable code
+        if(WarpX_LIB)
+            set(AMReX_PIC ON CACHE INTERNAL "")
+        endif()
 
         if(WarpX_DIMS STREQUAL RZ)
             set(AMReX_SPACEDIM 2 CACHE INTERNAL "")
@@ -147,9 +149,14 @@ macro(find_amrex)
         else()
             set(COMPONENT_DIM ${WarpX_DIMS}D)
         endif()
+        if(WarpX_LIB)
+            set(COMPONENT_PIC PIC)
+        else()
+            set(COMPONENT_PIC)
+        endif()
         set(COMPONENT_PRECISION ${WarpX_PRECISION} P${WarpX_PRECISION})
 
-        find_package(AMReX 20.11 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} PARTICLES ${COMPONENT_PRECISION} TINYP LSOLVERS)
+        find_package(AMReX 20.11 CONFIG REQUIRED COMPONENTS ${COMPONENT_ASCENT} ${COMPONENT_DIM} PARTICLES ${COMPONENT_PIC} ${COMPONENT_PRECISION} TINYP LSOLVERS)
         message(STATUS "AMReX: Found version '${AMReX_VERSION}'")
     endif()
 endmacro()

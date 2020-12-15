@@ -8,6 +8,8 @@
 #ifndef ANYFFT_H_
 #define ANYFFT_H_
 
+#include <AMReX_Config.H>
+
 #if defined(AMREX_USE_CUDA)
 #  include <cufft.h>
 #elif defined(AMREX_USE_HIP)
