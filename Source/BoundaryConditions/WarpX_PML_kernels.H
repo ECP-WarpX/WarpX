@@ -27,7 +27,7 @@ void warpx_damp_pml_ex (int i, int j, int k, Array4<Real> const& Ex,
 {
 #if (AMREX_SPACEDIM == 2)
 
-    amrex::ignore_unused(sigma_fac_y, ylo);
+    amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
     // sx = 0 means that Ex is staggered in x, while sx = 1 means that Ex is nodal in x (same for z)
     const int sx = Ex_stag[0];
@@ -91,7 +91,7 @@ void warpx_damp_pml_ey (int i, int j, int k, Array4<Real> const& Ey,
 {
 #if (AMREX_SPACEDIM == 2)
 
-    amrex::ignore_unused(sigma_star_fac_y, ylo);
+    amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
     // sx = 0 means that Ey is staggered in x, while sx = 1 means that Ey is nodal in x (same for z)
     const int sx = Ey_stag[0];
@@ -155,7 +155,7 @@ void warpx_damp_pml_ez (int i, int j, int k, Array4<Real> const& Ez,
 {
 #if (AMREX_SPACEDIM == 2)
 
-    amrex::ignore_unused(sigma_fac_y, ylo);
+    amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
     // sx = 0 means that Ez is staggered in x, while sx = 1 means that Ez is nodal in x (same for z)
     const int sx = Ez_stag[0];
@@ -217,7 +217,7 @@ void warpx_damp_pml_bx (int i, int j, int k, Array4<Real> const& Bx,
 {
 #if (AMREX_SPACEDIM == 2)
 
-   amrex::ignore_unused(sigma_star_fac_y, ylo);
+   amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
     // sz = 0 means that Bx is staggered in z, while sz = 1 means that Bx is nodal in z
     const int sz = Bx_stag[1];
@@ -315,7 +315,7 @@ void warpx_damp_pml_bz (int i, int j, int k, Array4<Real> const& Bz,
 {
 #if (AMREX_SPACEDIM == 2)
 
-   amrex::ignore_unused(sigma_star_fac_y, ylo);
+   amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
     // sx = 0 means that Bz is staggered in x, while sx = 1 means that Bz is nodal in x
     const int sx = Bz_stag[0];
@@ -363,7 +363,7 @@ void warpx_damp_pml_F (int i, int j, int k, Array4<Real> const& F_fab,
 {
 #if (AMREX_SPACEDIM == 2)
 
-   amrex::ignore_unused(sigma_fac_y, ylo);
+   amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
 
     // sx = 0 means that F is staggered in x, while sx = 1 means that F is nodal in x (same for z)
     const int sx = F_stag[0];
