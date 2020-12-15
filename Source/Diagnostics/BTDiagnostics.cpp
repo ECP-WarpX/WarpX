@@ -594,7 +594,7 @@ BTDiagnostics::Flush (int i_buffer)
     std::string tmp_file_name = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_buffer,5);
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        warpx.gett_new(0), m_all_species, nlev_output, tmp_file_name,
+        warpx.gett_new(0), m_output_species, nlev_output, tmp_file_name,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 
     TMP_FlushLabFrameData (i_buffer);
