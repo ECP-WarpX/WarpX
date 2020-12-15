@@ -90,7 +90,7 @@ WarpX::InitFromCheckpoint ()
             std::istringstream lis(line);
             int i = 0;
             while (lis >> word) {
-                t_new[i++] = std::stod(word);
+                t_new[i++] = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -99,7 +99,7 @@ WarpX::InitFromCheckpoint ()
             std::istringstream lis(line);
             int i = 0;
             while (lis >> word) {
-                t_old[i++] = std::stod(word);
+                t_old[i++] = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -108,7 +108,7 @@ WarpX::InitFromCheckpoint ()
             std::istringstream lis(line);
             int i = 0;
             while (lis >> word) {
-                dt[i++] = std::stod(word);
+                dt[i++] = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -124,7 +124,7 @@ WarpX::InitFromCheckpoint ()
             std::istringstream lis(line);
             int i = 0;
             while (lis >> word) {
-                prob_lo[i++] = std::stod(word);
+                prob_lo[i++] = static_cast<Real>(std::stod(word));
             }
         }
 
@@ -134,7 +134,7 @@ WarpX::InitFromCheckpoint ()
             std::istringstream lis(line);
             int i = 0;
             while (lis >> word) {
-                prob_hi[i++] = std::stod(word);
+                prob_hi[i++] = static_cast<Real>(std::stod(word));
             }
         }
 
