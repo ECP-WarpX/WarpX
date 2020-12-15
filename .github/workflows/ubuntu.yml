@@ -118,7 +118,7 @@ jobs:
           -DCMAKE_CXX_COMPILER_VERSION=12.0              \
           -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
-          -DWarpX_COMPUTE=DPCPP        \
+          -DWarpX_COMPUTE=SYCL         \
           -DWarpX_OPENPMD=ON           \
           -DWarpX_openpmd_internal=OFF \
           -DWarpX_PRECISION=SINGLE
