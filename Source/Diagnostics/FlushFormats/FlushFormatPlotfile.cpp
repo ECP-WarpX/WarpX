@@ -49,7 +49,7 @@ FlushFormatPlotfile::WriteToFile (
 
     WriteJobInfo(filename);
 
-    WriteWarpXHeader(filename, particle_diags);
+    WriteWarpXHeader(filename, particle_diags, geom);
 
     VisMF::SetHeaderVersion(current_version);
 }
@@ -179,7 +179,8 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
 void
 FlushFormatPlotfile::WriteWarpXHeader(
     const std::string& name,
-    const amrex::Vector<ParticleDiag>& particle_diags) const
+    const amrex::Vector<ParticleDiag>& particle_diags,
+    amrex::Vector<amrex::Geometry>& geom) const
 {
     auto & warpx = WarpX::GetInstance();
     if (ParallelDescriptor::IOProcessor())
@@ -232,11 +233,11 @@ FlushFormatPlotfile::WriteWarpXHeader(
 
         // Geometry
         for (int i = 0; i < AMREX_SPACEDIM; ++i) {
-            HeaderFile << warpx.Geom(0).ProbLo(i) << ' ';
+            HeaderFile << geom[0].ProbLo(i) << ' ';
         }
         HeaderFile << '\n';
         for (int i = 0; i < AMREX_SPACEDIM; ++i) {
-            HeaderFile << warpx.Geom(0).ProbHi(i) << ' ';
+            HeaderFile << geom[0].ProbHi(i) << ' ';
         }
         HeaderFile << '\n';
 
