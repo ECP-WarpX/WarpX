@@ -495,12 +495,25 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         ngf = ngFFT;
     }
 
-    pml_E_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, 3, nge );
-    pml_E_fp[1] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, 3, nge );
-    pml_E_fp[2] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, 3, nge );
+    if (do_dive_cleaning)
+    {
+        pml_E_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
+            WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, 3, nge );
+        pml_E_fp[1] = std::make_unique<MultiFab>(amrex::convert( ba,
+            WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, 3, nge );
+        pml_E_fp[2] = std::make_unique<MultiFab>(amrex::convert( ba,
+            WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, 3, nge );
+    }
+    else // diagonal field components (xx,yy,zz) not needed when do_dive_cleaning = false
+    {
+        pml_E_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
+            WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, 2, nge );
+        pml_E_fp[1] = std::make_unique<MultiFab>(amrex::convert( ba,
+            WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, 2, nge );
+        pml_E_fp[2] = std::make_unique<MultiFab>(amrex::convert( ba,
+            WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, 2, nge );
+    }
+
     pml_B_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getBfield_fp(0,0).ixType().toIntVect() ), dm, 2, ngb );
     pml_B_fp[1] = std::make_unique<MultiFab>(amrex::convert( ba,
@@ -590,12 +603,25 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
             MakeBoxArray(*cgeom, grid_cba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
         DistributionMapping cdm{cba};
 
-        pml_E_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
-            WarpX::GetInstance().getEfield_cp(1,0).ixType().toIntVect() ), cdm, 3, nge );
-        pml_E_cp[1] = std::make_unique<MultiFab>(amrex::convert( cba,
-            WarpX::GetInstance().getEfield_cp(1,1).ixType().toIntVect() ), cdm, 3, nge );
-        pml_E_cp[2] = std::make_unique<MultiFab>(amrex::convert( cba,
-            WarpX::GetInstance().getEfield_cp(1,2).ixType().toIntVect() ), cdm, 3, nge );
+        if (do_dive_cleaning)
+        {
+            pml_E_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
+                WarpX::GetInstance().getEfield_cp(1,0).ixType().toIntVect() ), cdm, 3, nge );
+            pml_E_cp[1] = std::make_unique<MultiFab>(amrex::convert( cba,
+                WarpX::GetInstance().getEfield_cp(1,1).ixType().toIntVect() ), cdm, 3, nge );
+            pml_E_cp[2] = std::make_unique<MultiFab>(amrex::convert( cba,
+                WarpX::GetInstance().getEfield_cp(1,2).ixType().toIntVect() ), cdm, 3, nge );
+        }
+        else // diagonal field components (xx,yy,zz) not needed when do_dive_cleaning = false
+        {
+            pml_E_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
+                WarpX::GetInstance().getEfield_cp(1,0).ixType().toIntVect() ), cdm, 2, nge );
+            pml_E_cp[1] = std::make_unique<MultiFab>(amrex::convert( cba,
+                WarpX::GetInstance().getEfield_cp(1,1).ixType().toIntVect() ), cdm, 2, nge );
+            pml_E_cp[2] = std::make_unique<MultiFab>(amrex::convert( cba,
+                WarpX::GetInstance().getEfield_cp(1,2).ixType().toIntVect() ), cdm, 2, nge );
+        }
+
         pml_B_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
             WarpX::GetInstance().getBfield_cp(1,0).ixType().toIntVect() ), cdm, 2, ngb );
         pml_B_cp[1] = std::make_unique<MultiFab>(amrex::convert( cba,
