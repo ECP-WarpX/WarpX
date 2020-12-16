@@ -89,21 +89,6 @@ jobs:
       shell: bash
       run: |
         .github/workflows/dependencies/dpcpp.sh
-        set +e
-        source /opt/intel/oneapi/setvars.sh
-        set -e
-        git clone https://github.com/openPMD/openPMD-api.git
-        CXX=$(which dpcpp) CC=$(which clang) cmake   \
-          -S openPMD-api -B build_openPMD            \
-          -DCMAKE_CXX_COMPILER_ID="Clang"            \
-          -DCMAKE_CXX_COMPILER_VERSION=12.0          \
-          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17" \
-          -DCMAKE_VERBOSE_MAKEFILE=ON                \
-          -DopenPMD_USE_PYTHON=OFF                   \
-          -DBUILD_TESTING=OFF                        \
-          -DBUILD_EXAMPLES=OFF
-        cmake --build build_openPMD -j 2
-        sudo cmake --build build_openPMD --target install
     - name: build WarpX
       shell: bash
       run: |
@@ -119,8 +104,8 @@ jobs:
           -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
           -DWarpX_COMPUTE=SYCL         \
+          -DWarpX_MPI=OFF              \
           -DWarpX_OPENPMD=ON           \
-          -DWarpX_openpmd_internal=OFF \
           -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
 
