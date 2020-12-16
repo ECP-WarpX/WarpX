@@ -1097,7 +1097,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max());
     }
+#ifdef WARPX_USE_PSATD
+#   ifndef WARPX_DIM_RZ
     bool const pml_flag_false = false;
+#   endif
+#endif
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
         // Allocate and initialize the spectral solver
@@ -1144,7 +1148,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if ( fft_periodic_single_box == false ) {
             realspace_ba.grow(ngE); // add guard cells
         }
-        bool const pml_flag_false = false;
         spectral_solver_fp[lev] = std::make_unique<SpectralSolver>( realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, dx_vect, dt[lev],
             pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
