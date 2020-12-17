@@ -309,8 +309,7 @@ WarpX::UpdateAuxilaryDataSameType ()
             MultiFab::Subtract(dBy, *Bfield_cp[lev][1], 0, 0, Bfield_cp[lev][1]->nComp(), ng);
             MultiFab::Subtract(dBz, *Bfield_cp[lev][2], 0, 0, Bfield_cp[lev][2]->nComp(), ng);
 
-            const int refinement_ratio = refRatio(lev-1)[0];
-            AMREX_ALWAYS_ASSERT(refinement_ratio == 2);
+            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -330,15 +329,15 @@ WarpX::UpdateAuxilaryDataSameType ()
                 amrex::ParallelFor(Box(bx_aux), Box(by_aux), Box(bz_aux),
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_bfield_x(j,k,l, bx_aux, bx_fp, bx_c);
+                    warpx_interp_bfield_x(j,k,l, bx_aux, bx_fp, bx_c, refinement_ratio);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_bfield_y(j,k,l, by_aux, by_fp, by_c);
+                    warpx_interp_bfield_y(j,k,l, by_aux, by_fp, by_c, refinement_ratio);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_bfield_z(j,k,l, bz_aux, bz_fp, bz_c);
+                    warpx_interp_bfield_z(j,k,l, bz_aux, bz_fp, bz_c, refinement_ratio);
                 });
             }
         }
@@ -364,6 +363,8 @@ WarpX::UpdateAuxilaryDataSameType ()
             MultiFab::Subtract(dEy, *Efield_cp[lev][1], 0, 0, Efield_cp[lev][1]->nComp(), ng);
             MultiFab::Subtract(dEz, *Efield_cp[lev][2], 0, 0, Efield_cp[lev][2]->nComp(), ng);
 
+            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
+
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -382,15 +383,15 @@ WarpX::UpdateAuxilaryDataSameType ()
                 amrex::ParallelFor(Box(ex_aux), Box(ey_aux), Box(ez_aux),
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_efield_x(j,k,l, ex_aux, ex_fp, ex_c);
+                    warpx_interp_efield_x(j,k,l, ex_aux, ex_fp, ex_c, refinement_ratio);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_efield_y(j,k,l, ey_aux, ey_fp, ey_c);
+                    warpx_interp_efield_y(j,k,l, ey_aux, ey_fp, ey_c, refinement_ratio);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_efield_z(j,k,l, ez_aux, ez_fp, ez_c);
+                    warpx_interp_efield_z(j,k,l, ez_aux, ez_fp, ez_c, refinement_ratio);
                 });
             }
         }

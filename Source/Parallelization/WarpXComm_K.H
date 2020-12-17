@@ -14,13 +14,14 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_bfield_x (int j, int k, int l,
                             amrex::Array4<amrex::Real      > const& Bxa,
                             amrex::Array4<amrex::Real const> const& Bxf,
-                            amrex::Array4<amrex::Real const> const& Bxc)
+                            amrex::Array4<amrex::Real const> const& Bxc,
+                            const amrex::IntVect& refinement_ratio)
 {
     using namespace amrex;
 
-    int const lg = amrex::coarsen(l,2);
-    int const kg = amrex::coarsen(k,2);
-    int const jg = amrex::coarsen(j,2);
+    int const lg = amrex::coarsen(l, refinement_ratio[0]);
+    int const kg = amrex::coarsen(k, refinement_ratio[0]);
+    int const jg = amrex::coarsen(j, refinement_ratio[0]);
 
     Real const wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     Real const owx = 1.0_rt - wx;
@@ -31,13 +32,14 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_bfield_y (int j, int k, int l,
                             amrex::Array4<amrex::Real      > const& Bya,
                             amrex::Array4<amrex::Real const> const& Byf,
-                            amrex::Array4<amrex::Real const> const& Byc)
+                            amrex::Array4<amrex::Real const> const& Byc,
+                            const amrex::IntVect& refinement_ratio)
 {
     using namespace amrex;
 
-    int const lg = amrex::coarsen(l,2);
-    int const kg = amrex::coarsen(k,2);
-    int const jg = amrex::coarsen(j,2);
+    int const lg = amrex::coarsen(l, refinement_ratio[0]);
+    int const kg = amrex::coarsen(k, refinement_ratio[0]);
+    int const jg = amrex::coarsen(j, refinement_ratio[0]);
 
     // Note that for 2d, l=0, because the amrex convention is used here.
 
@@ -54,13 +56,14 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_bfield_z (int j, int k, int l,
                             amrex::Array4<amrex::Real      > const& Bza,
                             amrex::Array4<amrex::Real const> const& Bzf,
-                            amrex::Array4<amrex::Real const> const& Bzc)
+                            amrex::Array4<amrex::Real const> const& Bzc,
+                            const amrex::IntVect& refinement_ratio)
 {
     using namespace amrex;
 
-    int const lg = amrex::coarsen(l,2);
-    int const kg = amrex::coarsen(k,2);
-    int const jg = amrex::coarsen(j,2);
+    int const lg = amrex::coarsen(l, refinement_ratio[0]);
+    int const kg = amrex::coarsen(k, refinement_ratio[0]);
+    int const jg = amrex::coarsen(j, refinement_ratio[0]);
 
     // Note that for 2d, l=0, because the amrex convention is used here.
 
@@ -79,13 +82,14 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_efield_x (int j, int k, int l,
                             amrex::Array4<amrex::Real      > const& Exa,
                             amrex::Array4<amrex::Real const> const& Exf,
-                            amrex::Array4<amrex::Real const> const& Exc)
+                            amrex::Array4<amrex::Real const> const& Exc,
+                            const amrex::IntVect& refinement_ratio)
 {
     using namespace amrex;
 
-    int const lg = amrex::coarsen(l,2);
-    int const kg = amrex::coarsen(k,2);
-    int const jg = amrex::coarsen(j,2);
+    int const lg = amrex::coarsen(l, refinement_ratio[0]);
+    int const kg = amrex::coarsen(k, refinement_ratio[0]);
+    int const jg = amrex::coarsen(j, refinement_ratio[0]);
 
     Real const wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
     Real const owy = 1.0_rt - wy;
@@ -107,13 +111,14 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_efield_y (int j, int k, int l,
                             amrex::Array4<amrex::Real      > const& Eya,
                             amrex::Array4<amrex::Real const> const& Eyf,
-                            amrex::Array4<amrex::Real const> const& Eyc)
+                            amrex::Array4<amrex::Real const> const& Eyc,
+                            const amrex::IntVect& refinement_ratio)
 {
     using namespace amrex;
 
-    int const lg = amrex::coarsen(l,2);
-    int const kg = amrex::coarsen(k,2);
-    int const jg = amrex::coarsen(j,2);
+    int const lg = amrex::coarsen(l, refinement_ratio[0]);
+    int const kg = amrex::coarsen(k, refinement_ratio[0]);
+    int const jg = amrex::coarsen(j, refinement_ratio[0]);
 
     Real const wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     Real const owx = 1.0_rt - wx;
@@ -141,13 +146,14 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_efield_z (int j, int k, int l,
                             amrex::Array4<amrex::Real      > const& Eza,
                             amrex::Array4<amrex::Real const> const& Ezf,
-                            amrex::Array4<amrex::Real const> const& Ezc)
+                            amrex::Array4<amrex::Real const> const& Ezc,
+                            const amrex::IntVect& refinement_ratio)
 {
     using namespace amrex;
 
-    int const lg = amrex::coarsen(l,2);
-    int const kg = amrex::coarsen(k,2);
-    int const jg = amrex::coarsen(j,2);
+    int const lg = amrex::coarsen(l, refinement_ratio[0]);
+    int const kg = amrex::coarsen(k, refinement_ratio[0]);
+    int const jg = amrex::coarsen(j, refinement_ratio[0]);
 
     Real const wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
     Real const owx = 1.0_rt - wx;
