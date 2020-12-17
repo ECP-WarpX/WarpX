@@ -11,6 +11,8 @@
 #include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 
+using namespace amrex::literals;
+
 PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_name)
     : CollisionBase(collision_name)
 {
@@ -21,7 +23,7 @@ PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_
     amrex::ParmParse pp(collision_name);
 
     // default Coulomb log, if < 0, will be computed automatically
-    m_CoulombLog = -1.0;
+    m_CoulombLog = -1.0_rt;
     queryWithParser(pp, "CoulombLog", m_CoulombLog);
 
     // number of time steps between collisions
