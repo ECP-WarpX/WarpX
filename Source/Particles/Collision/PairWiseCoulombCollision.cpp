@@ -26,10 +26,6 @@ PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_
     m_CoulombLog = -1.0_rt;
     queryWithParser(pp, "CoulombLog", m_CoulombLog);
 
-    // number of time steps between collisions
-    m_ndt = 1;
-    pp.query("ndt", m_ndt);
-
     if (m_species_names[0] == m_species_names[1])
         m_isSameSpecies = true;
     else
