@@ -67,11 +67,11 @@ void warpx_interp_bfield_z (int j, int k, int l,
 #if (AMREX_SPACEDIM == 3)
     Real const wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
     Real const owz = 1.0_rt - wz;
-    Bza(j,k,l) = owz * Bzc(jg,kg,lg) + owz * Bzc(jg,kg,lg+1) + Bzf(j,k,l);
+    Bza(j,k,l) = owz * Bzc(jg,kg,lg) + wz * Bzc(jg,kg,lg+1) + Bzf(j,k,l);
 #else
     Real const wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
     Real const owy = 1.0_rt - wy;
-    Bza(j,k,l) = owy * Bzc(jg,kg,lg) + owy * Bzc(jg,kg+1,lg) + Bzf(j,k,l);
+    Bza(j,k,l) = owy * Bzc(jg,kg,lg) + wy * Bzc(jg,kg+1,lg) + Bzf(j,k,l);
 #endif
 }
 
