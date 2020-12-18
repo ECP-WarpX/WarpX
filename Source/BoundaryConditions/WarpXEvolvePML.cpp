@@ -51,33 +51,17 @@ WarpX::DampPML (int lev, PatchType patch_type)
         const auto& sigba = (patch_type == PatchType::fine) ? pml[lev]->GetMultiSigmaBox_fp()
                                                               : pml[lev]->GetMultiSigmaBox_cp();
 
-        amrex::GpuArray<int, AMREX_SPACEDIM> Ex_stag;
-        amrex::GpuArray<int, AMREX_SPACEDIM> Ey_stag;
-        amrex::GpuArray<int, AMREX_SPACEDIM> Ez_stag;
+        const amrex::IntVect Ex_stag = pml_E[0]->ixType().toIntVect();
+        const amrex::IntVect Ey_stag = pml_E[1]->ixType().toIntVect();
+        const amrex::IntVect Ez_stag = pml_E[2]->ixType().toIntVect();
 
-        amrex::GpuArray<int, AMREX_SPACEDIM> Bx_stag;
-        amrex::GpuArray<int, AMREX_SPACEDIM> By_stag;
-        amrex::GpuArray<int, AMREX_SPACEDIM> Bz_stag;
+        const amrex::IntVect Bx_stag = pml_B[0]->ixType().toIntVect();
+        const amrex::IntVect By_stag = pml_B[1]->ixType().toIntVect();
+        const amrex::IntVect Bz_stag = pml_B[2]->ixType().toIntVect();
 
-        for (int i = 0; i < AMREX_SPACEDIM; i++)
-        {
-            Ex_stag[i] = pml_E[0]->ixType().toIntVect()[i];
-            Ey_stag[i] = pml_E[1]->ixType().toIntVect()[i];
-            Ez_stag[i] = pml_E[2]->ixType().toIntVect()[i];
-
-            Bx_stag[i] = pml_B[0]->ixType().toIntVect()[i];
-            By_stag[i] = pml_B[1]->ixType().toIntVect()[i];
-            Bz_stag[i] = pml_B[2]->ixType().toIntVect()[i];
-        }
-
-        amrex::GpuArray<int, AMREX_SPACEDIM> F_stag;
-
-        if (pml_F)
-        {
-            for (int i = 0; i < AMREX_SPACEDIM; i++)
-            {
-                F_stag[i] = pml_F->ixType().toIntVect()[i];
-            }
+        amrex::IntVect F_stag;
+        if (pml_F) {
+            F_stag = pml_F->ixType().toIntVect();
         }
 
 #ifdef _OPENMP
