@@ -1298,6 +1298,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_aux[lev][0] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[x]"));
         Efield_aux[lev][1] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[y]"));
         Efield_aux[lev][2] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[z]"));
+
+        Efield_avg_aux[lev][0] = std::make_unique<MultiFab>(nba, dm, ncomps, ngE);
+        Efield_avg_aux[lev][1] = std::make_unique<MultiFab>(nba, dm, ncomps, ngE);
+        Efield_avg_aux[lev][2] = std::make_unique<MultiFab>(nba, dm, ncomps, ngE);
+
+        Bfield_avg_aux[lev][0] = std::make_unique<MultiFab>(nba, dm, ncomps, ngE);
+        Bfield_avg_aux[lev][1] = std::make_unique<MultiFab>(nba, dm, ncomps, ngE);
+        Bfield_avg_aux[lev][2] = std::make_unique<MultiFab>(nba, dm, ncomps, ngE);
     }
     else if (lev == 0)
     {
