@@ -20,7 +20,7 @@ geometry.prob_hi     = 9.67 9.67 19.34
 #################################
 warpx.verbose = 1
 
-algo.maxwell_solver = ckc
+algo.maxwell_solver = psatd
 algo.current_deposition = direct
 algo.particle_pusher = vay
 

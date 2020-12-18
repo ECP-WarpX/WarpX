@@ -38,7 +38,16 @@ struct MacroscopicSolverAlgo {
 struct MaxwellSolverAlgo {
     enum {
         Yee = 0,
-        CKC = 1
+        CKC = 1,
+        PSATD = 2
+    };
+};
+
+struct ElectrostaticSolverAlgo {
+    enum {
+        None = 0,
+        Relativistic = 1,
+        LabFrame = 2
     };
 };
 

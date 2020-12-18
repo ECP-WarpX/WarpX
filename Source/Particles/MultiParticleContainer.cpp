@@ -275,10 +275,17 @@ MultiParticleContainer::ReadParameters ()
             ppq.get("ele_product_species", m_qed_schwinger_ele_product_name);
             ppq.get("pos_product_species", m_qed_schwinger_pos_product_name);
 #if (AMREX_SPACEDIM == 2)
-            ppq.get("y_size",m_qed_schwinger_y_size);
+            getWithParser(ppq, "y_size",m_qed_schwinger_y_size);
 #endif
-            ppq.query("threshold_poisson_gaussian",
-                      m_qed_schwinger_threshold_poisson_gaussian);
+            ppq.query("threshold_poisson_gaussian", m_qed_schwinger_threshold_poisson_gaussian);
+            queryWithParser(ppq, "xmin", m_qed_schwinger_xmin);
+            queryWithParser(ppq, "xmax", m_qed_schwinger_xmax);
+#if (AMREX_SPACEDIM == 3)
+            queryWithParser(ppq, "ymin", m_qed_schwinger_ymin);
+            queryWithParser(ppq, "ymax", m_qed_schwinger_ymax);
+#endif
+            queryWithParser(ppq, "zmin", m_qed_schwinger_zmin);
+            queryWithParser(ppq, "zmax", m_qed_schwinger_zmax);
         }
 #endif
         initialized = true;
@@ -821,7 +828,7 @@ void MultiParticleContainer::InitQuantumSync ()
     //If specified, use a user-defined energy threshold for photon creaction
     ParticleReal temp;
     constexpr auto mec2 = PhysConst::c * PhysConst::c * PhysConst::m_e;
-    if(pp.query("photon_creation_energy_threshold", temp)){
+    if(queryWithParser(pp, "photon_creation_energy_threshold", temp)){
         temp *= mec2;
         m_quantum_sync_photon_creation_energy_threshold = temp;
     }
@@ -834,7 +841,7 @@ void MultiParticleContainer::InitQuantumSync ()
     // considered for Synchrotron emission. If a lepton has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real qs_minimum_chi_part;
-    pp.get("chi_min", qs_minimum_chi_part);
+    getWithParser(pp, "chi_min", qs_minimum_chi_part);
 
 
     pp.query("lookup_table_mode", lookup_table_mode);
@@ -885,7 +892,7 @@ void MultiParticleContainer::InitBreitWheeler ()
     // considered for pair production. If a photon has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real bw_minimum_chi_part;
-    if(!pp.query("chi_min", bw_minimum_chi_part))
+    if(!queryWithParser(pp, "chi_min", bw_minimum_chi_part))
         amrex::Abort("qed_bw.chi_min should be provided!");
 
     pp.query("lookup_table_mode", lookup_table_mode);
@@ -940,7 +947,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
     // considered for Synchrotron emission. If a lepton has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real qs_minimum_chi_part;
-    pp.get("chi_min", qs_minimum_chi_part);
+    getWithParser(pp, "chi_min", qs_minimum_chi_part);
 
     if(ParallelDescriptor::IOProcessor()){
         PicsarQuantumSyncCtrl ctrl;
@@ -953,11 +960,11 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
 
         //Minimun chi for the table. If a lepton has chi < tab_dndt_chi_min,
         //chi is considered as if it were equal to tab_dndt_chi_min
-        pp.get("tab_dndt_chi_min", ctrl.dndt_params.chi_part_min);
+        getWithParser(pp, "tab_dndt_chi_min", ctrl.dndt_params.chi_part_min);
 
         //Maximum chi for the table. If a lepton has chi > tab_dndt_chi_max,
         //chi is considered as if it were equal to tab_dndt_chi_max
-        pp.get("tab_dndt_chi_max", ctrl.dndt_params.chi_part_max);
+        getWithParser(pp, "tab_dndt_chi_max", ctrl.dndt_params.chi_part_max);
 
         //How many points should be used for chi in the table
         pp.get("tab_dndt_how_many", ctrl.dndt_params.chi_part_how_many);
@@ -970,11 +977,11 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
 
         //Minimun chi for the table. If a lepton has chi < tab_em_chi_min,
         //chi is considered as if it were equal to tab_em_chi_min
-        pp.get("tab_em_chi_min", ctrl.phot_em_params.chi_part_min);
+        getWithParser(pp, "tab_em_chi_min", ctrl.phot_em_params.chi_part_min);
 
         //Maximum chi for the table. If a lepton has chi > tab_em_chi_max,
         //chi is considered as if it were equal to tab_em_chi_max
-        pp.get("tab_em_chi_max", ctrl.phot_em_params.chi_part_max);
+        getWithParser(pp, "tab_em_chi_max", ctrl.phot_em_params.chi_part_max);
 
         //How many points should be used for chi in the table
         pp.get("tab_em_chi_how_many", ctrl.phot_em_params.chi_part_how_many);
@@ -982,7 +989,7 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
         //The other axis of the table is the ratio between the quantum
         //parameter of the emitted photon and the quantum parameter of the
         //lepton. This parameter is the minimum ratio to consider for the table.
-        pp.get("tab_em_frac_min", ctrl.phot_em_params.frac_min);
+        getWithParser(pp, "tab_em_frac_min", ctrl.phot_em_params.frac_min);
 
         //This parameter is the number of different points to consider for the second
         //axis
@@ -1021,7 +1028,7 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
     // considered for pair production. If a photon has chi < chi_min,
     // the optical depth is not evolved and photon generation is ignored
     amrex::Real bw_minimum_chi_part;
-    pp.get("chi_min", bw_minimum_chi_part);
+    getWithParser(pp, "chi_min", bw_minimum_chi_part);
 
     if(ParallelDescriptor::IOProcessor()){
         PicsarBreitWheelerCtrl ctrl;
@@ -1034,11 +1041,11 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 
         //Minimun chi for the table. If a photon has chi < tab_dndt_chi_min,
         //an analytical approximation is used.
-        pp.get("tab_dndt_chi_min", ctrl.dndt_params.chi_phot_min);
+        getWithParser(pp, "tab_dndt_chi_min", ctrl.dndt_params.chi_phot_min);
 
         //Maximum chi for the table. If a photon has chi > tab_dndt_chi_max,
         //an analytical approximation is used.
-        pp.get("tab_dndt_chi_max", ctrl.dndt_params.chi_phot_max);
+        getWithParser(pp, "tab_dndt_chi_max", ctrl.dndt_params.chi_phot_max);
 
         //How many points should be used for chi in the table
         pp.get("tab_dndt_how_many", ctrl.dndt_params.chi_phot_how_many);
@@ -1051,11 +1058,11 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
 
         //Minimun chi for the table. If a photon has chi < tab_pair_chi_min
         //chi is considered as it were equal to chi_phot_tpair_min
-        pp.get("tab_pair_chi_min", ctrl.pair_prod_params.chi_phot_min);
+        getWithParser(pp, "tab_pair_chi_min", ctrl.pair_prod_params.chi_phot_min);
 
         //Maximum chi for the table. If a photon has chi > tab_pair_chi_max
         //chi is considered as it were equal to chi_phot_tpair_max
-        pp.get("tab_pair_chi_max", ctrl.pair_prod_params.chi_phot_max);
+        getWithParser(pp, "tab_pair_chi_max", ctrl.pair_prod_params.chi_phot_max);
 
         //How many points should be used for chi in the table
         pp.get("tab_pair_chi_how_many", ctrl.pair_prod_params.chi_phot_how_many);
@@ -1099,7 +1106,7 @@ MultiParticleContainer::doQEDSchwinger ()
           "ERROR: Schwinger process only implemented for warpx.do_nodal = 1"
                                  "or algo.field_gathering = momentum-conserving");
 
-    const int level_0 = 0;
+    constexpr int level_0 = 0;
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.maxLevel() == level_0,
         "ERROR: Schwinger process not implemented with mesh refinement");
@@ -1143,7 +1150,15 @@ MultiParticleContainer::doQEDSchwinger ()
      for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
      {
         // Make the box cell centered to avoid creating particles twice on the tile edges
-        const Box& box = enclosedCells(mfi.nodaltilebox());
+        amrex::Box box = enclosedCells(mfi.nodaltilebox());
+
+        // Get the box representing global Schwinger boundaries
+        const amrex::Box global_schwinger_box = ComputeSchwingerGlobalBox();
+
+        // If Schwinger process is not activated anywhere in the current box, we move to the next
+        // one. Otherwise we use the intersection of current box with global Schwinger box.
+        if (!box.intersects(global_schwinger_box)) {continue;}
+        box &= global_schwinger_box;
 
         const auto& arrEx = Ex[mfi].array();
         const auto& arrEy = Ey[mfi].array();
@@ -1182,6 +1197,69 @@ MultiParticleContainer::doQEDSchwinger ()
         setNewParticleIDs(dst_pos_tile, np_pos_dst, num_added);
 
     }
+}
+
+amrex::Box
+MultiParticleContainer::ComputeSchwingerGlobalBox () const
+{
+    auto & warpx = WarpX::GetInstance();
+    constexpr int level_0 = 0;
+    amrex::Geometry const & geom = warpx.Geom(level_0);
+
+#if (AMREX_SPACEDIM == 3)
+    const amrex::Array<amrex::Real,3> schwinger_min{m_qed_schwinger_xmin,
+                                                    m_qed_schwinger_ymin,
+                                                    m_qed_schwinger_zmin};
+    const amrex::Array<amrex::Real,3> schwinger_max{m_qed_schwinger_xmax,
+                                                    m_qed_schwinger_ymax,
+                                                    m_qed_schwinger_zmax};
+#else
+    const amrex::Array<amrex::Real,2> schwinger_min{m_qed_schwinger_xmin,
+                                                    m_qed_schwinger_zmin};
+    const amrex::Array<amrex::Real,2> schwinger_max{m_qed_schwinger_xmax,
+                                                    m_qed_schwinger_zmax};
+#endif
+
+    // Box inside which Schwinger is activated
+    amrex::Box schwinger_global_box;
+
+    for (int dir=0; dir<AMREX_SPACEDIM; dir++)
+    {
+        // Dealing with these corner cases should ensure that we don't overflow on the integers
+        if (schwinger_min[dir] < geom.ProbLo(dir))
+        {
+            schwinger_global_box.setSmall(dir, std::numeric_limits<int>::lowest());
+        }
+        else if (schwinger_min[dir] > geom.ProbHi(dir))
+        {
+            schwinger_global_box.setSmall(dir, std::numeric_limits<int>::max());
+        }
+        else
+        {
+            // Schwinger pairs are currently created on the lower nodes of a cell. Using ceil here
+            // excludes all cells whose lower node is strictly lower than schwinger_min[dir].
+            schwinger_global_box.setSmall(dir, static_cast<int>(std::ceil(
+                               (schwinger_min[dir] - geom.ProbLo(dir)) / geom.CellSize(dir))));
+        }
+
+        if (schwinger_max[dir] < geom.ProbLo(dir))
+        {
+            schwinger_global_box.setBig(dir, std::numeric_limits<int>::lowest());
+        }
+        else if (schwinger_max[dir] > geom.ProbHi(dir))
+        {
+            schwinger_global_box.setBig(dir, std::numeric_limits<int>::max());
+        }
+        else
+        {
+            // Schwinger pairs are currently created on the lower nodes of a cell. Using floor here
+            // excludes all cells whose lower node is strictly higher than schwinger_max[dir].
+            schwinger_global_box.setBig(dir, static_cast<int>(std::floor(
+                               (schwinger_max[dir] - geom.ProbLo(dir)) / geom.CellSize(dir))));
+        }
+    }
+
+    return schwinger_global_box;
 }
 
 void MultiParticleContainer::doQedEvents (int lev,

@@ -137,17 +137,13 @@ public:
     static int em_solver_medium;
     static int macroscopic_solver_algo;
 
-#ifdef WARPX_USE_PSATD
-    // If true (overwritten by the user in the input file), the current correction
+    // PSATD: If true (overwritten by the user in the input file), the current correction
     // defined in equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010 is applied
     bool current_correction = false;
-#endif
 
-#ifdef WARPX_USE_PSATD
-    // If true, the update equation for E contains both J and rho (at times n and n+1):
+    // PSATD: If true, the update equation for E contains both J and rho (at times n and n+1):
     // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
-    bool update_with_rho;
-#endif
+    bool update_with_rho = false;
 
     // div E cleaning
     static int do_dive_cleaning;
@@ -157,9 +153,15 @@ public:
     static long noy;
     static long noz;
 
+    // For momentum-conserving field gathering, order of interpolation from the
+    // staggered positions to the grid nodes
+    static int field_gathering_nox;
+    static int field_gathering_noy;
+    static int field_gathering_noz;
+
     // Number of modes for the RZ multimode version
-    static long n_rz_azimuthal_modes;
-    static long ncomps;
+    static int n_rz_azimuthal_modes;
+    static int ncomps;
 
     static bool use_fdtd_nci_corr;
     static bool galerkin_interpolation;
@@ -228,6 +230,7 @@ public:
     amrex::MultiFab * get_pointer_current_fp  (int lev, int direction) const { return current_fp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_rho_fp  (int lev) const { return rho_fp[lev].get(); }
     amrex::MultiFab * get_pointer_F_fp  (int lev) const { return F_fp[lev].get(); }
+    amrex::MultiFab * get_pointer_phi_fp  (int lev) const { return phi_fp[lev].get(); }
 
     amrex::MultiFab * get_pointer_Efield_cp  (int lev, int direction) const { return Efield_cp[lev][direction].get(); }
     amrex::MultiFab * get_pointer_Bfield_cp  (int lev, int direction) const { return Bfield_cp[lev][direction].get(); }
@@ -248,6 +251,7 @@ public:
     const amrex::MultiFab& getEfield_fp  (int lev, int direction) {return *Efield_fp[lev][direction];}
     const amrex::MultiFab& getBfield_fp  (int lev, int direction) {return *Bfield_fp[lev][direction];}
     const amrex::MultiFab& getrho_fp (int lev) {return *rho_fp[lev];}
+    const amrex::MultiFab& getphi_fp (int lev) {return *phi_fp[lev];}
     const amrex::MultiFab& getF_fp (int lev) {return *F_fp[lev];}
     bool DoPML () const {return do_pml;}
 
@@ -271,6 +275,8 @@ public:
     amrex::Real time_of_last_gal_shift  = 0;
     amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
     amrex::Array<amrex::Real,3> m_galilean_shift = {{0}};
+
+    amrex::Array<amrex::Real,3> m_v_comoving = {{0.}};
 
     static int num_mirrors;
     amrex::Vector<amrex::Real> mirror_z;
@@ -462,6 +468,11 @@ public:
     static const amrex::iMultiFab* GatherBufferMasks (int lev);
 
     static int do_electrostatic;
+
+    // Parameters for lab frame electrostatic
+    static amrex::Real self_fields_required_precision;
+    static int self_fields_max_iters;
+
     static int do_moving_window;
     static int moving_window_dir;
     static amrex::Real moving_window_v;
@@ -502,10 +513,11 @@ public:
 
     void ComputeSpaceChargeField (bool const reset_fields);
     void AddSpaceChargeField (WarpXParticleContainer& pc);
+    void AddSpaceChargeFieldLabFrame ();
     void computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                      amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                      std::array<amrex::Real, 3> const beta = {{0,0,0}},
-                     amrex::Real const required_precision=1.e-11,
+                     amrex::Real const required_precision=amrex::Real(1.e-11),
                      const int max_iters=200) const;
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
@@ -724,6 +736,7 @@ private:
     // Fine patch
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > F_fp;
     amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > rho_fp;
+    amrex::Vector<            std::unique_ptr<amrex::MultiFab>      > phi_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > current_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Efield_fp;
     amrex::Vector<std::array< std::unique_ptr<amrex::MultiFab>, 3 > > Bfield_fp;
@@ -771,7 +784,7 @@ private:
     amrex::Vector<int> injected_plasma_species;
 
     int n_buffer = 4;
-    amrex::Real const_dt = 0.5e-11;
+    amrex::Real const_dt = amrex::Real(0.5e-11);
 
     // Macroscopic properties
     std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
@@ -790,25 +803,25 @@ private:
      * load balance via the 'knapsack' strategy; e.g., if there are 4 boxes per rank,
      * `load_balance_knapsack_factor=2` limits the maximum number of boxes that can
      * be assigned to a rank to 8. */
-    amrex::Real load_balance_knapsack_factor = 1.24;
+    amrex::Real load_balance_knapsack_factor = amrex::Real(1.24);
     /** Threshold value that controls whether to adopt the proposed distribution
      * mapping during load balancing.  The new distribution mapping is adopted
      * if the ratio of proposed distribution mapping efficiency to current
      * distribution mapping efficiency is larger than the threshold; 'efficiency'
      * here means the average cost per MPI rank.  */
-    amrex::Real load_balance_efficiency_ratio_threshold = 1.1;
+    amrex::Real load_balance_efficiency_ratio_threshold = amrex::Real(1.1);
     /** Weight factor for cells in `Heuristic` costs update.
      * Default values on GPU are determined from single-GPU tests on Summit.
      * The problem setup for these tests is an empty (i.e. no particles) domain
      * of size 256 by 256 by 256 cells, from which the average time per iteration
      * per cell is computed. */
-    amrex::Real costs_heuristic_cells_wt = -1;
+    amrex::Real costs_heuristic_cells_wt = amrex::Real(-1);
     /** Weight factor for particles in `Heuristic` costs update.
      * Default values on GPU are determined from single-GPU tests on Summit.
      * The problem setup for these tests is a high-ppc (27 particles per cell)
      * uniform plasma on a domain of size 128 by 128 by 128, from which the approximate
      * time per iteration per particle is computed. */
-    amrex::Real costs_heuristic_particles_wt = -1;
+    amrex::Real costs_heuristic_particles_wt = amrex::Real(-1);
 
     // Determines timesteps for override sync
     IntervalsParser override_sync_intervals;
@@ -823,7 +836,7 @@ private:
 
     int regrid_int = -1;
 
-    amrex::Real cfl = 0.7;
+    amrex::Real cfl = amrex::Real(0.7);
 
     std::string restart_chkfile;
 
@@ -864,14 +877,14 @@ private:
     // Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
 
-#ifdef WARPX_USE_PSATD
 private:
-    void EvolvePSATD (int numsteps);
+    // void EvolvePSATD (int numsteps);
     void PushPSATD (amrex::Real dt);
     void PushPSATD (int lev, amrex::Real dt);
 
-    int fftw_plan_measure = 1;
+    int fftw_plan_measure = 1; // used with PSATD
 
+#ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_fp;
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_cp;

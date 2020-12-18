@@ -59,7 +59,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      const amrex::GpuArray<amrex::Real, 3>& dx,
                      const amrex::GpuArray<amrex::Real, 3>& xyzmin,
                      const amrex::Dim3& lo,
-                     const long n_rz_azimuthal_modes)
+                     const int n_rz_azimuthal_modes)
 {
     using namespace amrex;
 
@@ -71,10 +71,10 @@ void doGatherShapeN (const amrex::ParticleReal xp,
     amrex::ignore_unused(n_rz_azimuthal_modes);
 #endif
 
-    const amrex::Real dxi = 1.0/dx[0];
-    const amrex::Real dzi = 1.0/dx[2];
+    const amrex::Real dxi = 1.0_rt/dx[0];
+    const amrex::Real dzi = 1.0_rt/dx[2];
 #if (AMREX_SPACEDIM == 3)
-    const amrex::Real dyi = 1.0/dx[1];
+    const amrex::Real dyi = 1.0_rt/dx[1];
 #endif
 
     const amrex::Real xmin = xyzmin[0];
@@ -408,7 +408,7 @@ void doGatherShapeN(const GetParticlePosition& getPosition,
                     const std::array<amrex::Real, 3>& dx,
                     const std::array<amrex::Real, 3> xyzmin,
                     const amrex::Dim3 lo,
-                    const long n_rz_azimuthal_modes)
+                    const int n_rz_azimuthal_modes)
 {
 
     amrex::GpuArray<amrex::Real, 3> dx_arr = {dx[0], dx[1], dx[2]};
@@ -490,7 +490,7 @@ void doGatherShapeN (const amrex::ParticleReal xp,
                      const amrex::GpuArray<amrex::Real, 3>& dx_arr,
                      const amrex::GpuArray<amrex::Real, 3>& xyzmin_arr,
                      const amrex::Dim3& lo,
-                     const long n_rz_azimuthal_modes,
+                     const int n_rz_azimuthal_modes,
                      const int nox,
                      const bool galerkin_interpolation)
 {

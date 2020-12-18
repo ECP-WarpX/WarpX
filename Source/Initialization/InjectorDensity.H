@@ -97,11 +97,11 @@ struct InjectorDensityPredefined
             }
             // Multiply by transverse profile, and physical density
             n *= n0*(1.+4.*(x*x+y*y)/(kp*kp*rc*rc*rc*rc));
-            return n;
+            return static_cast<amrex::Real>(n);
         }
         default:
             amrex::Abort("InjectorDensityPredefined: how did we get here?");
-            return 0.0;
+            return amrex::Real(0.0);
         }
     }
 

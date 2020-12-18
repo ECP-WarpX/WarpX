@@ -49,7 +49,7 @@ void FiniteDifferenceSolver::ComputeDivE (
 
 #endif
     } else {
-        amrex::Abort("Unknown algorithm");
+        amrex::Abort("ComputeDivE: Unknown algorithm");
     }
 
 }

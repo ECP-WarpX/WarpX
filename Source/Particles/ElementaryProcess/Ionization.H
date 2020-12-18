@@ -77,7 +77,7 @@ struct IonizationFilterFunc
         if (ion_lev < m_atomic_number)
         {
             constexpr amrex::Real c = PhysConst::c;
-            constexpr amrex::Real c2_inv = 1./c/c;
+            constexpr amrex::Real c2_inv = amrex::Real(1.)/c/c;
 
             // gather E and B
             amrex::ParticleReal xp, yp, zp;

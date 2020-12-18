@@ -6,6 +6,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
+#include "WarpX.H"
 #include "WarpXAlgorithmSelection.H"
 
 #include <algorithm>
@@ -18,10 +19,16 @@
 
 const std::map<std::string, int> maxwell_solver_algo_to_int = {
     {"yee",     MaxwellSolverAlgo::Yee },
-#ifndef WARPX_DIM_RZ // Not available in RZ
     {"ckc",     MaxwellSolverAlgo::CKC },
-#endif
+    {"psatd",   MaxwellSolverAlgo::PSATD },
     {"default", MaxwellSolverAlgo::Yee }
+};
+
+const std::map<std::string, int> electrostatic_solver_algo_to_int = {
+    {"none", ElectrostaticSolverAlgo::None },
+    {"relativistic", ElectrostaticSolverAlgo::Relativistic},
+    {"labframe", ElectrostaticSolverAlgo::LabFrame},
+    {"default", ElectrostaticSolverAlgo::None }
 };
 
 const std::map<std::string, int> particle_pusher_algo_to_int = {
@@ -35,11 +42,7 @@ const std::map<std::string, int> current_deposition_algo_to_int = {
     {"esirkepov", CurrentDepositionAlgo::Esirkepov },
     {"direct",    CurrentDepositionAlgo::Direct },
     {"vay",       CurrentDepositionAlgo::Vay },
-#ifdef WARPX_USE_PSATD
-    {"default",   CurrentDepositionAlgo::Direct }
-#else
-    {"default",   CurrentDepositionAlgo::Esirkepov }
-#endif
+    {"default",   CurrentDepositionAlgo::Esirkepov } // NOTE: overwritten for PSATD below
 };
 
 const std::map<std::string, int> charge_deposition_algo_to_int = {
@@ -84,10 +87,14 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
     std::map<std::string, int> algo_to_int;
     if (0 == std::strcmp(pp_search_key, "maxwell_solver")) {
         algo_to_int = maxwell_solver_algo_to_int;
+    } else if (0 == std::strcmp(pp_search_key, "do_electrostatic")) {
+        algo_to_int = electrostatic_solver_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "particle_pusher")) {
         algo_to_int = particle_pusher_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "current_deposition")) {
         algo_to_int = current_deposition_algo_to_int;
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+            algo_to_int["default"] = CurrentDepositionAlgo::Direct;
     } else if (0 == std::strcmp(pp_search_key, "charge_deposition")) {
         algo_to_int = charge_deposition_algo_to_int;
     } else if (0 == std::strcmp(pp_search_key, "field_gathering")) {

@@ -378,6 +378,10 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
     Bza(j,k,l) = bg + (bf-bc);
 }
 
+// With the FDTD Maxwell solver, this is the linear interpolation function used to
+// interpolate the Bx field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
+#ifndef WARPX_USE_PSATD
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_bfield_x (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Bxa,
@@ -391,6 +395,45 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
 #endif
 }
 
+// With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
+// interpolate the Bx field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
+#else
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+void warpx_interp_nd_bfield_x (int j, int k, int l,
+                               amrex::Array4<amrex::Real> const& Bxa,
+                               amrex::Array4<amrex::Real const> const& Bxf,
+                               const int noy,
+                               const int noz,
+                               amrex::Real const* stencil_coef_y,
+                               amrex::Real const* stencil_coef_z)
+{
+#if (AMREX_SPACEDIM == 2)
+    amrex::ignore_unused(noy);
+    amrex::ignore_unused(stencil_coef_y);
+    amrex::Real res = 0.;
+    for (int nz = 1; nz < noz/2+1; nz++) {
+        res += 0.5 * stencil_coef_z[nz-1] * (Bxf(j, k + nz - 1, l) + Bxf(j, k - nz, l));
+    }
+    Bxa(j,k,l) = res;
+#else
+    amrex::Real res = 0.;
+    for     (int nz = 1; nz < noz/2+1; nz++) {
+        for (int ny = 1; ny < noy/2+1; ny++) {
+            res += 0.25 * stencil_coef_y[ny-1] * stencil_coef_z[nz-1] *
+                   (Bxf(j, k + ny - 1, l + nz - 1) + Bxf(j, k - ny, l + nz - 1)
+                  + Bxf(j, k + ny - 1, l - nz    ) + Bxf(j, k - ny, l - nz    ));
+        }
+    }
+    Bxa(j,k,l) = res;
+#endif
+}
+#endif
+
+// With the FDTD Maxwell solver, this is the linear interpolation function used to
+// interpolate the By field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
+#ifndef WARPX_USE_PSATD
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_bfield_y (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Bya,
@@ -404,6 +447,47 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
 #endif
 }
 
+// With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
+// interpolate the By field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
+#else
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+void warpx_interp_nd_bfield_y (int j, int k, int l,
+                               amrex::Array4<amrex::Real> const& Bya,
+                               amrex::Array4<amrex::Real const> const& Byf,
+                               const int nox,
+                               const int noz,
+                               amrex::Real const* stencil_coef_x,
+                               amrex::Real const* stencil_coef_z)
+{
+#if (AMREX_SPACEDIM == 2)
+    amrex::Real res = 0.;
+    for     (int nz = 1; nz < noz/2+1; nz++) {
+        for (int nx = 1; nx < nox/2+1; nx++) {
+            res += 0.25 * stencil_coef_x[nx-1] * stencil_coef_z[nz-1] *
+                   (Byf(j + nx - 1, k + nz - 1, l) + Byf(j - nx, k + nz - 1, l)
+                  + Byf(j + nx - 1, k - nz    , l) + Byf(j - nx, k - nz    , l));
+        }
+    }
+    Bya(j,k,l) = res;
+#else
+    amrex::Real res = 0.;
+    for     (int nz = 1; nz < noz/2+1; nz++) {
+        for (int nx = 1; nx < nox/2+1; nx++) {
+            res += 0.25 * stencil_coef_x[nx-1] * stencil_coef_z[nz-1] *
+                   (Byf(j + nx - 1, k, l + nz - 1) + Byf(j - nx, k, l + nz - 1)
+                  + Byf(j + nx - 1, k, l - nz    ) + Byf(j - nx, k, l - nz    ));
+        }
+    }
+    Bya(j,k,l) = res;
+#endif
+}
+#endif
+
+// With the FDTD Maxwell solver, this is the linear interpolation function used to
+// interpolate the Bz field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
+#ifndef WARPX_USE_PSATD
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_bfield_z (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Bza,
@@ -416,6 +500,41 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
     Bza(j,k,l) = 0.25*(Bzf(j-1,k-1,l) + Bzf(j,k-1,l) + Bzf(j-1,k,l) + Bzf(j,k,l));
 #endif
 }
+
+// With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
+// interpolate the Bz field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
+#else
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+void warpx_interp_nd_bfield_z (int j, int k, int l,
+                               amrex::Array4<amrex::Real> const& Bza,
+                               amrex::Array4<amrex::Real const> const& Bzf,
+                               const int nox,
+                               const int noy,
+                               amrex::Real const* stencil_coef_x,
+                               amrex::Real const* stencil_coef_y)
+{
+#if (AMREX_SPACEDIM == 2)
+    amrex::ignore_unused(noy);
+    amrex::ignore_unused(stencil_coef_y);
+    amrex::Real res = 0.;
+    for (int nx = 1; nx < nox/2+1; nx++) {
+        res += 0.5 * stencil_coef_x[nx-1] * (Bzf(j + nx - 1, k, l) + Bzf(j - nx, k, l));
+    }
+    Bza(j,k,l) = res;
+#else
+    amrex::Real res = 0.;
+    for     (int ny = 1; ny < noy/2+1; ny++) {
+        for (int nx = 1; nx < nox/2+1; nx++) {
+            res += 0.25 * stencil_coef_x[nx-1] * stencil_coef_y[ny-1] *
+                   (Bzf(j + nx - 1, k + ny - 1, l) + Bzf(j - nx, k + ny - 1, l)
+                  + Bzf(j + nx - 1, k - ny    , l) + Bzf(j - nx, k - ny    , l));
+        }
+    }
+    Bza(j,k,l) = res;
+#endif
+}
+#endif
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_efield_x (int j, int k, int l,
@@ -621,6 +740,10 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
     Eza(j,k,l) = eg + (ef-ec);
 }
 
+// With the FDTD Maxwell solver, this is the linear interpolation function used to
+// interpolate the Ex field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
+#ifndef WARPX_USE_PSATD
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_efield_x (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Exa,
@@ -629,6 +752,29 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
     Exa(j,k,l) = 0.5*(Exf(j-1,k,l) + Exf(j,k,l));
 }
 
+// With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
+// interpolate the Ex field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
+#else
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+void warpx_interp_nd_efield_x (int j, int k, int l,
+                               amrex::Array4<amrex::Real> const& Exa,
+                               amrex::Array4<amrex::Real const> const& Exf,
+                               const int nox,
+                               amrex::Real const* stencil_coef_x)
+{
+    amrex::Real res = 0.;
+    for (int nx = 1; nx < nox/2+1; nx++) {
+        res += 0.5 * stencil_coef_x[nx-1] * (Exf(j + nx - 1, k, l) + Exf(j - nx, k, l));
+    }
+    Exa(j,k,l) = res;
+}
+#endif
+
+// With the FDTD Maxwell solver, this is the linear interpolation function used to
+// interpolate the Ey field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
+#ifndef WARPX_USE_PSATD
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_efield_y (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Eya,
@@ -642,6 +788,35 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
 #endif
 }
 
+// With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
+// interpolate the Ey field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
+#else
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+void warpx_interp_nd_efield_y (int j, int k, int l,
+                               amrex::Array4<amrex::Real> const& Eya,
+                               amrex::Array4<amrex::Real const> const& Eyf,
+                               const int noy,
+                               amrex::Real const* stencil_coef_y)
+{
+#if (AMREX_SPACEDIM == 2)
+    amrex::ignore_unused(noy);
+    amrex::ignore_unused(stencil_coef_y);
+    Eya(j,k,l) = Eyf(j,k,l);
+#else
+    amrex::Real res = 0.;
+    for (int ny = 1; ny < noy/2+1; ny++) {
+        res += 0.5 * stencil_coef_y[ny-1] * (Eyf(j, k + ny - 1, l) + Eyf(j, k - ny, l));
+    }
+    Eya(j,k,l) = res;
+#endif
+}
+#endif
+
+// With the FDTD Maxwell solver, this is the linear interpolation function used to
+// interpolate the Ez field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
+#ifndef WARPX_USE_PSATD
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp_nd_efield_z (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Eza,
@@ -654,5 +829,32 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
     Eza(j,k,l) = 0.5*(Ezf(j,k,l-1) + Ezf(j,k,l));
 #endif
 }
+
+// With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
+// interpolate the Ez field from a staggered grid to a nodal grid, before gathering
+// the field from the nodes to the particle positions (momentum-conserving gathering)
+#else
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+void warpx_interp_nd_efield_z (int j, int k, int l,
+                               amrex::Array4<amrex::Real> const& Eza,
+                               amrex::Array4<amrex::Real const> const& Ezf,
+                               const int noz,
+                               amrex::Real const* stencil_coef_z)
+{
+#if (AMREX_SPACEDIM == 2)
+    amrex::Real res = 0.;
+    for (int nz = 1; nz < noz/2+1; nz++) {
+        res += 0.5 * stencil_coef_z[nz-1] * (Ezf(j, k + nz - 1, l) + Ezf(j, k - nz, l));
+    }
+    Eza(j,k,l) = res;
+#else
+    amrex::Real res = 0.;
+    for (int nz = 1; nz < noz/2+1; nz++) {
+        res += 0.5 * stencil_coef_z[nz-1] * (Ezf(j, k, l + nz - 1) + Ezf(j, k, l - nz));
+    }
+    Eza(j,k,l) = res;
+#endif
+}
+#endif
 
 #endif

@@ -70,6 +70,8 @@ class Species(picmistandard.PICMI_Species):
                 if self.mass is None:
                     self.mass = element.mass*periodictable.constants.atomic_mass_constant
 
+        self.boost_adjust_transverse_positions = kw.pop('warpx_boost_adjust_transverse_positions', None)
+
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
                           injection_plane_position = None,
@@ -85,7 +87,8 @@ class Species(picmistandard.PICMI_Species):
                                              mass = self.mass,
                                              charge = self.charge,
                                              injection_style = 'python',
-                                             initialize_self_fields = int(initialize_self_fields))
+                                             initialize_self_fields = int(initialize_self_fields),
+                                             boost_adjust_transverse_positions = self.boost_adjust_transverse_positions)
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
@@ -314,7 +317,7 @@ class BinomialSmoother(picmistandard.PICMI_BinomialSmoother):
 
     def initialize_inputs(self, solver):
         pywarpx.warpx.use_filter = 1
-        pywarpx.warpx.use_filter_compensation = np.all(self.compensation)
+        pywarpx.warpx.use_filter_compensation = bool(np.all(self.compensation))
         if self.n_pass is None:
             # If not specified, do at least one pass in each direction.
             self.n_pass = 1
@@ -500,9 +503,8 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
                     self.galilean_velocity = [self.galilean_velocity[0], 0., self.galilean_velocity[1]]
                 pywarpx.psatd.v_galilean = np.array(self.galilean_velocity)/constants.c
 
-        else:
-            # --- Same method names are used, though mapped to lower case.
-            pywarpx.algo.maxwell_solver = self.method
+        # --- Same method names are used, though mapped to lower case.
+        pywarpx.algo.maxwell_solver = self.method
 
         if self.cfl is not None:
             pywarpx.warpx.cfl = self.cfl

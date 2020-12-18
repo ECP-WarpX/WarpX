@@ -42,7 +42,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin,
  * \param query_string ParmParse.query will look for this string
  * \param stored_string variable in which the string to parse is stored
  */
-void Store_parserString(amrex::ParmParse &pp, std::string query_string,
+void Store_parserString(const amrex::ParmParse &pp, std::string query_string,
                         std::string& stored_string);
 
 namespace WarpXUtilIO{
@@ -173,7 +173,21 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
  * \param[in] str name of the parameter to read
  * \param[out] val where the value queried and parsed is stored
  */
-int queryWithParser (amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
+
+/**
+ * \brief Similar to amrex::ParmParse::get, but also supports math expressions for the value.
+ *
+ * amrex::ParmParse::get reads a name and a value from the input file. This function does the
+ * same, and applies the WarpXParser to the value, so the user has the choice to specify a value or
+ * a math expression (including user-defined constants).
+ * Only works for amrex::Real numbers, one would need another version for integers etc.
+ *
+ * \param[in] a_pp amrex::ParmParse object
+ * \param[in] str name of the parameter to read
+ * \param[out] val where the value queried and parsed is stored
+ */
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
 
 namespace WarpXUtilMsg{
 

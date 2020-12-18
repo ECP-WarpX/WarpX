@@ -191,9 +191,9 @@ wp_call_f1 (enum wp_f1_t type, T a)
     case WP_COSH:        return std::cosh(a);
     case WP_TANH:        return std::tanh(a);
     case WP_ABS:         return amrex::Math::abs(a);
-    case WP_POW_M3:      return 1.0/(a*a*a);
-    case WP_POW_M2:      return 1.0/(a*a);
-    case WP_POW_M1:      return 1.0/a;
+    case WP_POW_M3:      return amrex::Real(1.0)/(a*a*a);
+    case WP_POW_M2:      return amrex::Real(1.0)/(a*a);
+    case WP_POW_M1:      return amrex::Real(1.0)/a;
     case WP_POW_P1:      return a;
     case WP_POW_P2:      return a*a;
     case WP_POW_P3:      return a*a*a;
@@ -236,7 +236,7 @@ wp_call_f2 (enum wp_f2_t type, T a, T b)
     case WP_OR:
         return ((a != T(0)) || (b != T(0))) ? 1.0 : 0.0;
     case WP_HEAVISIDE:
-        return (a < 0.0) ? 0.0 : ((a > 0.0) ? 1.0 : b);
+        return (a < 0.0) ? amrex::Real(0.0) : ((a > 0.0) ? amrex::Real(1.0) : b);
     case WP_MIN:
         return (a < b) ? a : b;
     case WP_MAX:

@@ -8,6 +8,7 @@
 #ifndef WARPX_PML_KERNELS_H_
 #define WARPX_PML_KERNELS_H_
 
+#include "BoundaryConditions/PMLComponent.H"
 #include <AMReX.H>
 #include <AMReX_FArrayBox.H>
 
@@ -21,13 +22,13 @@ void warpx_damp_pml_ex (int i, int j, int k, Array4<Real> const& Ex,
                         int xlo,int ylo, int zlo)
 {
 #if (AMREX_SPACEDIM == 3)
-    Ex(i,j,k,0) *= sigma_fac_y[j-ylo];
-    Ex(i,j,k,1) *= sigma_fac_z[k-zlo];
+    Ex(i,j,k,PMLComp::xy) *= sigma_fac_y[j-ylo];
+    Ex(i,j,k,PMLComp::xz) *= sigma_fac_z[k-zlo];
 #else
-    Ex(i,j,k,1) *= sigma_fac_z[j-zlo];
+    Ex(i,j,k,PMLComp::xz) *= sigma_fac_z[j-zlo];
     amrex::ignore_unused(sigma_fac_y, ylo);
 #endif
-    Ex(i,j,k,2) *= sigma_star_fac_x[i-xlo];
+    Ex(i,j,k,PMLComp::xx) *= sigma_star_fac_x[i-xlo];
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -38,13 +39,13 @@ void warpx_damp_pml_ey (int i, int j, int k, Array4<Real> const& Ey,
                         int xlo,int ylo, int zlo)
 {
 #if (AMREX_SPACEDIM == 3)
-    Ey(i,j,k,0) *= sigma_fac_z[k-zlo];
-    Ey(i,j,k,2) *= sigma_star_fac_y[j-ylo];
+    Ey(i,j,k,PMLComp::yz) *= sigma_fac_z[k-zlo];
+    Ey(i,j,k,PMLComp::yy) *= sigma_star_fac_y[j-ylo];
 #else
-    Ey(i,j,k,0) *= sigma_fac_z[j-zlo];
+    Ey(i,j,k,PMLComp::yz) *= sigma_fac_z[j-zlo];
     amrex::ignore_unused(sigma_star_fac_y, ylo);
 #endif
-    Ey(i,j,k,1) *= sigma_fac_x[i-xlo];
+    Ey(i,j,k,PMLComp::yx) *= sigma_fac_x[i-xlo];
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -54,12 +55,12 @@ void warpx_damp_pml_ez (int i, int j, int k, Array4<Real> const& Ez,
                         const Real* const sigma_star_fac_z,
                         int xlo,int ylo, int zlo)
 {
-    Ez(i,j,k,0) *= sigma_fac_x[i-xlo];
+    Ez(i,j,k,PMLComp::zx) *= sigma_fac_x[i-xlo];
 #if (AMREX_SPACEDIM == 3)
-    Ez(i,j,k,1) *= sigma_fac_y[j-ylo];
-    Ez(i,j,k,2) *= sigma_star_fac_z[k-zlo];
+    Ez(i,j,k,PMLComp::zy) *= sigma_fac_y[j-ylo];
+    Ez(i,j,k,PMLComp::zz) *= sigma_star_fac_z[k-zlo];
 #else
-    Ez(i,j,k,2) *= sigma_star_fac_z[j-zlo];
+    Ez(i,j,k,PMLComp::zz) *= sigma_star_fac_z[j-zlo];
     amrex::ignore_unused(sigma_fac_y, ylo);
 #endif
 }
@@ -72,10 +73,10 @@ void warpx_damp_pml_bx (int i, int j, int k, Array4<Real> const& Bx,
                         int ylo, int zlo)
 {
 #if (AMREX_SPACEDIM == 3)
-   Bx(i,j,k,0) *= sigma_star_fac_y[j-ylo];
-   Bx(i,j,k,1) *= sigma_star_fac_z[k-zlo];
+   Bx(i,j,k,PMLComp::xy) *= sigma_star_fac_y[j-ylo];
+   Bx(i,j,k,PMLComp::xz) *= sigma_star_fac_z[k-zlo];
 #else
-   Bx(i,j,k,1) *= sigma_star_fac_z[j-zlo];
+   Bx(i,j,k,PMLComp::xz) *= sigma_star_fac_z[j-zlo];
    amrex::ignore_unused(sigma_star_fac_y, ylo);
 #endif
 }
@@ -87,11 +88,11 @@ void warpx_damp_pml_by (int i, int j, int k, Array4<Real> const& By,
                         int zlo, int xlo)
 {
 #if (AMREX_SPACEDIM == 3)
-   By(i,j,k,0) *= sigma_star_fac_z[k-zlo];
+   By(i,j,k,PMLComp::yz) *= sigma_star_fac_z[k-zlo];
 #else
-   By(i,j,k,0) *= sigma_star_fac_z[j-zlo];
+   By(i,j,k,PMLComp::yz) *= sigma_star_fac_z[j-zlo];
 #endif
-   By(i,j,k,1) *= sigma_star_fac_x[i-xlo];
+   By(i,j,k,PMLComp::yx) *= sigma_star_fac_x[i-xlo];
 }
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -100,9 +101,9 @@ void warpx_damp_pml_bz (int i, int j, int k, Array4<Real> const& Bz,
                         const Real* const sigma_star_fac_y,
                         int xlo, int ylo)
 {
-   Bz(i,j,k,0) *= sigma_star_fac_x[i-xlo];
+   Bz(i,j,k,PMLComp::zx) *= sigma_star_fac_x[i-xlo];
 #if (AMREX_SPACEDIM == 3)
-   Bz(i,j,k,1) *= sigma_star_fac_y[j-ylo];
+   Bz(i,j,k,PMLComp::zy) *= sigma_star_fac_y[j-ylo];
 #else
    amrex::ignore_unused(sigma_star_fac_y, ylo);
 #endif
@@ -115,12 +116,12 @@ void warpx_damp_pml_F (int i, int j, int k, Array4<Real> const& F_fab,
                       const Real* const sigma_fac_z,
                       int xlo, int ylo, int zlo)
 {
-   F_fab(i,j,k,0) *= sigma_fac_x[i-xlo];
+   F_fab(i,j,k,PMLComp::x) *= sigma_fac_x[i-xlo];
 #if (AMREX_SPACEDIM == 3)
-   F_fab(i,j,k,1) *= sigma_fac_y[j-ylo];
-   F_fab(i,j,k,2) *= sigma_fac_z[k-zlo];
+   F_fab(i,j,k,PMLComp::y) *= sigma_fac_y[j-ylo];
+   F_fab(i,j,k,PMLComp::z) *= sigma_fac_z[k-zlo];
 #else
-   F_fab(i,j,k,2) *= sigma_fac_z[j-zlo];
+   F_fab(i,j,k,PMLComp::z) *= sigma_fac_z[j-zlo];
    amrex::ignore_unused(sigma_fac_y, ylo);
 #endif
 }

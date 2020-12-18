@@ -10,6 +10,9 @@
 #include "WarpX.H"
 #include "WarpXSumGuardCells.H"
 #include "Utils/CoarsenMR.H"
+#ifdef WARPX_USE_PSATD
+#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#endif
 
 #include <algorithm>
 #include <cstdlib>
@@ -70,6 +73,42 @@ WarpX::UpdateAuxilaryData ()
 void
 WarpX::UpdateAuxilaryDataStagToNodal ()
 {
+#ifdef WARPX_USE_PSATD
+    const int fg_nox = WarpX::field_gathering_nox;
+    const int fg_noy = WarpX::field_gathering_noy;
+    const int fg_noz = WarpX::field_gathering_noz;
+
+    // Compute real-space stencil coefficients along x
+    amrex::Vector<Real> h_stencil_coef_x = getFornbergStencilCoefficients(fg_nox, false);
+    amrex::Gpu::DeviceVector<Real> d_stencil_coef_x(h_stencil_coef_x.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                          h_stencil_coef_x.begin(),
+                          h_stencil_coef_x.end(),
+                          d_stencil_coef_x.begin());
+    amrex::Gpu::synchronize();
+    amrex::Real const* p_stencil_coef_x = d_stencil_coef_x.data();
+
+    // Compute real-space stencil coefficients along y
+    amrex::Vector<Real> h_stencil_coef_y = getFornbergStencilCoefficients(fg_noy, false);
+    amrex::Gpu::DeviceVector<Real> d_stencil_coef_y(h_stencil_coef_y.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                          h_stencil_coef_y.begin(),
+                          h_stencil_coef_y.end(),
+                          d_stencil_coef_y.begin());
+    amrex::Gpu::synchronize();
+    amrex::Real const* p_stencil_coef_y = d_stencil_coef_y.data();
+
+    // Compute real-space stencil coefficients along z
+    amrex::Vector<Real> h_stencil_coef_z = getFornbergStencilCoefficients(fg_noz, false);
+    amrex::Gpu::DeviceVector<Real> d_stencil_coef_z(h_stencil_coef_z.size());
+    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                          h_stencil_coef_z.begin(),
+                          h_stencil_coef_z.end(),
+                          d_stencil_coef_z.begin());
+    amrex::Gpu::synchronize();
+    amrex::Real const* p_stencil_coef_z = d_stencil_coef_z.data();
+#endif
+
     // For level 0, we only need to do the average.
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -90,19 +129,34 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         Array4<Real const> const& ey_fp = Efield_fp[0][1]->const_array(mfi);
         Array4<Real const> const& ez_fp = Efield_fp[0][2]->const_array(mfi);
 
-        const Box& bx = mfi.fabbox();
-        amrex::ParallelFor(bx,
-        [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+        Box bx = mfi.validbox();
+        // TODO It seems like it is necessary to loop over the valid box grown
+        // with 2 guard cells. Should this number of guard cells be expressed
+        // in terms of the parameters defined in the guardCellManager class?
+        bx.grow(2);
+        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
         {
+// FDTD variant
+#ifndef WARPX_USE_PSATD
             warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp);
             warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp);
             warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp);
             warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp);
             warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp);
             warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp);
+// PSATD variant
+#else
+            warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp, fg_noy, fg_noz, p_stencil_coef_y, p_stencil_coef_z);
+            warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp, fg_nox, fg_noz, p_stencil_coef_x, p_stencil_coef_z);
+            warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp, fg_nox, fg_noy, p_stencil_coef_x, p_stencil_coef_y);
+            warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp, fg_nox, p_stencil_coef_x);
+            warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp, fg_noy, p_stencil_coef_y);
+            warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp, fg_noz, p_stencil_coef_z);
+#endif
         });
     }
 
+    // NOTE: high-order interpolation is not implemented for mesh refinement
     for (int lev = 1; lev <= finest_level; ++lev)
     {
         BoxArray const& nba = Bfield_aux[lev][0]->boxArray();
