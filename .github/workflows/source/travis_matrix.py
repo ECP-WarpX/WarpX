@@ -23,4 +23,4 @@ print(list(set(matrix_elements) - set(all_tests)))
 print("Tests in initial list but not in the matrix:")
 print(list(set(all_tests) - set(matrix_elements)))
 
-assert( matrix_elements == all_tests )
+assert( set(matrix_elements) == set(all_tests) )

@@ -8,6 +8,7 @@ jobs:
   variables:
     WARPX_CI_CCACHE: 'TRUE'
     WARPX_CI_OPENPMD: 'TRUE'
+    WARPX_CI_PSATD: 'TRUE'
     FFTW_HOME: '/usr/'
     BLASPP_HOME: '/usr/local/'
     LAPACKPP_HOME: '/usr/local/'
@@ -19,8 +20,6 @@ jobs:
         WARPX_CI_REGULAR_CARTESIAN_2D: 'TRUE'
       cartesian3d:
         WARPX_CI_REGULAR_CARTESIAN_3D: 'TRUE'
-      psatd:
-        WARPX_CI_PSATD: 'TRUE'
       python:
         WARPX_CI_PYTHON_MAIN: 'TRUE'
       single_precision:
@@ -53,12 +52,10 @@ jobs:
         cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git@0.13.2 \
           -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_CLI_TOOLS=OFF
       fi
-      if [ "${WARPX_CI_RZ_OR_NOMPI:-FALSE}" == "TRUE" ]; then
-        cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git \
-          -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
-        cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git \
-          -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
-      fi
+      cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/blaspp.git \
+        -Duse_openmp=OFF -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
+      cmake-easyinstall --prefix=/usr/local git+https://bitbucket.org/icl/lapackpp.git \
+        -Duse_cmake_find_lapack=ON -Dbuild_tests=OFF -DCMAKE_VERBOSE_MAKEFILE=ON
     displayName: 'Install dependencies'
 
   - script: |
