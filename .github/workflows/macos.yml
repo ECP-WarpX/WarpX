@@ -11,8 +11,8 @@ jobs:
     - name: install dependencies
       run: |
         set +e
+        rm -rf /usr/local/bin/2to3
         brew update
-        brew install cmake
         brew install fftw
         brew install libomp
         brew install open-mpi
