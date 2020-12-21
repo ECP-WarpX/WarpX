@@ -36,7 +36,7 @@ FlushFormatCheckpoint::WriteToFile (
     // const int nlevels = finestLevel()+1;
     amrex::PreBuildDirectorHierarchy(checkpointname, default_level_prefix, nlev, true);
 
-    WriteWarpXHeader(checkpointname, particle_diags);
+    WriteWarpXHeader(checkpointname, particle_diags, true);
 
     WriteJobInfo(checkpointname);
 

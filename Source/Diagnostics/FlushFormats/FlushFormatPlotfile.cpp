@@ -178,7 +178,7 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
 void
 FlushFormatPlotfile::WriteWarpXHeader(
     const std::string& name,
-    const amrex::Vector<ParticleDiag>& particle_diags) const
+    const amrex::Vector<ParticleDiag>& particle_diags, bool checkpointformat) const
 {
     auto & warpx = WarpX::GetInstance();
     if (ParallelDescriptor::IOProcessor())
@@ -226,6 +226,11 @@ FlushFormatPlotfile::WriteWarpXHeader(
         HeaderFile << "\n";
 
         HeaderFile << warpx.getmoving_window_x() << "\n";
+
+        // writing current injection position only for checkpoint format
+        if (checkpointformat) {
+            HeaderFile << warpx.getcurrent_injection_position() << "\n";
+        }
 
         HeaderFile << warpx.getis_synchronized() << "\n";
 

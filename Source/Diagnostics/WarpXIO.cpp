@@ -115,6 +115,9 @@ WarpX::InitFromCheckpoint ()
         is >> moving_window_x;
         GotoNextLine(is);
 
+        is >> current_injection_position;
+        GotoNextLine(is);
+
         is >> is_synchronized;
         GotoNextLine(is);
 
