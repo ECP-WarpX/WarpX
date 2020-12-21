@@ -503,6 +503,9 @@ FlushFormatPlotfile::WriteAllRawFields(
                 WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
             }
         }
+        if (warpx.get_pointer_phi_fp(lev) != nullptr) {
+            WriteRawMF(warpx.getphi_fp(lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
+        }
 
         // Coarse path
         if (lev > 0) {
