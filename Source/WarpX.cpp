@@ -342,6 +342,11 @@ WarpX::ReadParameters ()
     }
 
     {
+        ParmParse pp("algo");
+        maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
+    }
+
+    {
         ParmParse pp("warpx");
 
         std::vector<int> numprocs_in;
@@ -494,10 +499,12 @@ WarpX::ReadParameters ()
         filter_npass_each_dir[2] = parse_filter_npass_each_dir[2];
 #endif
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-        // With RZ spectral, only use k-space filtering
-        use_kspace_filter = use_filter;
-        use_filter = false;
+#ifdef WARPX_DIM_RZ
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            // With RZ spectral, only use k-space filtering
+            use_kspace_filter = use_filter;
+            use_filter = false;
+        }
 #endif
 
         pp.query("num_mirrors", num_mirrors);
@@ -618,7 +625,6 @@ WarpX::ReadParameters ()
 
     {
         ParmParse pp("algo");
-        maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
 #ifdef WARPX_DIM_RZ
         if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
@@ -670,18 +676,20 @@ WarpX::ReadParameters ()
         pp.query("noz", noz);
 
 #ifdef WARPX_USE_PSATD
-        // For momentum-conserving field gathering, read from input the order of
-        // interpolation from the staggered positions to the grid nodes
-        if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
-            pp.query("field_gathering_nox", field_gathering_nox);
-            pp.query("field_gathering_noy", field_gathering_noy);
-            pp.query("field_gathering_noz", field_gathering_noz);
-        }
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            // For momentum-conserving field gathering, read from input the order of
+            // interpolation from the staggered positions to the grid nodes
+            if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
+                pp.query("field_gathering_nox", field_gathering_nox);
+                pp.query("field_gathering_noy", field_gathering_noy);
+                pp.query("field_gathering_noz", field_gathering_noz);
+            }
 
-        if (maxLevel() > 0) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                field_gathering_nox == 2 && field_gathering_noy == 2 && field_gathering_noz == 2,
-                "High-order interpolation (order > 2) is not implemented with mesh refinement");
+            if (maxLevel() > 0) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    field_gathering_nox == 2 && field_gathering_noy == 2 && field_gathering_noz == 2,
+                    "High-order interpolation (order > 2) is not implemented with mesh refinement");
+            }
         }
 #endif
 
@@ -1069,12 +1077,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE);
     Efield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE);
 
-#ifdef WARPX_USE_PSATD
-    const bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)
-                                || update_with_rho || current_correction;
-#else
-    const bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics);
-#endif
+    bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics);
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)
+                         || update_with_rho || current_correction;
+    }
     if (deposit_charge)
     {
         rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho);
@@ -1097,11 +1104,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max());
     }
-#ifdef WARPX_USE_PSATD
-#   ifndef WARPX_DIM_RZ
-    bool const pml_flag_false = false;
-#   endif
-#endif
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
         // Allocate and initialize the spectral solver
@@ -1148,6 +1150,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         if ( fft_periodic_single_box == false ) {
             realspace_ba.grow(ngE); // add guard cells
         }
+        bool const pml_flag_false = false;
         spectral_solver_fp[lev] = std::make_unique<SpectralSolver>( realspace_ba, dm,
             nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, dx_vect, dt[lev],
             pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
@@ -1273,6 +1276,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             }
 #   else
             c_realspace_ba.grow(ngE); // add guard cells
+            bool const pml_flag_false = false;
             spectral_solver_cp[lev] = std::make_unique<SpectralSolver>( c_realspace_ba, dm,
                 nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, cdx_vect, dt[lev],
                 pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
