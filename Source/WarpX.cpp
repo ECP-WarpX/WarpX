@@ -342,6 +342,11 @@ WarpX::ReadParameters ()
     }
 
     {
+        ParmParse pp("algo");
+        maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
+    }
+
+    {
         ParmParse pp("warpx");
 
         std::vector<int> numprocs_in;
@@ -620,7 +625,6 @@ WarpX::ReadParameters ()
 
     {
         ParmParse pp("algo");
-        maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
 #ifdef WARPX_DIM_RZ
         if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
