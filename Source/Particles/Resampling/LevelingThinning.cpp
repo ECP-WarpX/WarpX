@@ -6,6 +6,7 @@
  */
 #include "LevelingThinning.H"
 #include "Utils/ParticleUtils.H"
+#include "Utils/WarpXUtil.H"
 
 #include <AMReX_Particles.H>
 
@@ -14,7 +15,7 @@ LevelingThinning::LevelingThinning (const std::string species_name)
     using namespace amrex::literals;
 
     amrex::ParmParse pp(species_name);
-    pp.query("resampling_algorithm_target_ratio", m_target_ratio);
+    queryWithParser(pp, "resampling_algorithm_target_ratio", m_target_ratio);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE( m_target_ratio > 0._rt,
                                     "Resampling target ratio should be strictly greater than 0");
     if (m_target_ratio <= 1._rt)

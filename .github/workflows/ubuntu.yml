@@ -14,23 +14,13 @@ jobs:
     - uses: actions/checkout@v2
     - name: install dependencies
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo apt-get -qqq update
-        sudo apt-get install -y build-essential ca-certificates cmake gnupg libopenmpi-dev openmpi-bin pkg-config wget
-        sudo wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
-        sudo apt-key add 7fa2af80.pub
-        echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64 /" | sudo tee /etc/apt/sources.list.d/cuda.list
-        sudo apt-get update
-        sudo apt-get install -y cuda-command-line-tools-11-0 cuda-compiler-11-0 cuda-cupti-dev-11-0 cuda-minimal-build-11-0 cuda-nvml-dev-11-0 cuda-nvtx-11-0 libcurand-dev-11-0
-        sudo ln -s cuda-11.0 /usr/local/cuda
-        sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
-        sudo chmod a+x /usr/local/bin/cmake-easyinstall
+        .github/workflows/dependencies/nvcc11.sh
         export CEI_SUDO="sudo"
         cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
     - name: build WarpX
       run: |
         export PATH=/usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
-        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:${LD_LIBRARY_PATH}
+        export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
         which nvcc || echo "nvcc not in PATH!"
 
         cmake -S . -B build_sp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_COMPUTE=CUDA -DAMReX_CUDA_ARCH=6.0 -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE -DCUDA_ERROR_CAPTURE_THIS=ON
@@ -55,7 +45,7 @@ jobs:
         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
         echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
         sudo apt-get update
-        sudo apt-get install -y intel-oneapi-dpcpp-cpp-compiler-pro
+        sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
         set +e
         source /opt/intel/oneapi/setvars.sh
         set -e
@@ -80,37 +70,15 @@ jobs:
         python3 -m pip install --upgrade pip setuptools wheel
         PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
 
-# disabled since Intel patched a new CMake Compiler ID in with incomplete support
-# for dpcpp
   build_dpcc:
-    if: false
     name: oneAPI DPC++ SP [Linux]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
       shell: bash
       run: |
-        set -ex
-        export DEBIAN_FRONTEND=noninteractive
-        sudo apt-get -qqq update
-        sudo apt-get install -y wget build-essential pkg-config ca-certificates gnupg
-        python3 -m pip install --upgrade pip
-        python3 -m pip install --upgrade cmake
-        sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-        echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
-        sudo apt-get update
-        sudo apt-get install -y intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl-devel
-        set +e
-        source /opt/intel/oneapi/setvars.sh
-        set -e
-        git clone https://github.com/openPMD/openPMD-api.git
-        mkdir openPMD-api/build
-        cd openPMD-api/build
-        CXX=$(which dpcpp) CC=$(which clang) cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF
-        make -j 2
-        sudo make install
+        .github/workflows/dependencies/dpcpp.sh
     - name: build WarpX
       shell: bash
       run: |
@@ -120,11 +88,23 @@ jobs:
         export CXX=$(which dpcpp)
         export CC=$(which clang)
 
-        cmake -S . -B build_sp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_COMPUTE=DPCPP -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE
+        cmake -S . -B build_sp         \
+          -DCMAKE_CXX_COMPILER_ID="Clang"                \
+          -DCMAKE_CXX_COMPILER_VERSION=12.0              \
+          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_COMPUTE=SYCL         \
+          -DWarpX_MPI=OFF              \
+          -DWarpX_OPENPMD=ON           \
+          -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
 
+        python3 -m pip install --upgrade pip
         python3 -m pip install --upgrade setuptools wheel
         PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
+     # note: setting the CXX compiler ID is a work-around for
+     # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
+     # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
 
   build_hip:
     name: HIP SP [Linux]

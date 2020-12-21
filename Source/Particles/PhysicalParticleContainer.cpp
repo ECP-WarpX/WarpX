@@ -115,7 +115,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     pp.query("do_continuous_injection", do_continuous_injection);
     pp.query("initialize_self_fields", initialize_self_fields);
-    pp.query("self_fields_required_precision", self_fields_required_precision);
+    queryWithParser(pp, "self_fields_required_precision", self_fields_required_precision);
     pp.query("self_fields_max_iters", self_fields_max_iters);
     // Whether to plot back-transformed (lab-frame) diagnostics
     // for this species.
@@ -172,7 +172,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
     // build filter functors
-    m_do_random_filter  = pp.query("random_fraction", m_random_fraction);
+    m_do_random_filter  = queryWithParser(pp, "random_fraction", m_random_fraction);
     m_do_uniform_filter = pp.query("uniform_stride",  m_uniform_stride);
     std::string buf;
     m_do_parser_filter  = pp.query("plot_filter_function(t,x,y,z,ux,uy,uz)", buf);
@@ -578,7 +578,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     Real density_max = plasma_injector->density_max;
 
 #ifdef WARPX_DIM_RZ
-    const long nmodes = WarpX::n_rz_azimuthal_modes;
+    const int nmodes = WarpX::n_rz_azimuthal_modes;
     bool radially_weighted = plasma_injector->radially_weighted;
 #endif
 

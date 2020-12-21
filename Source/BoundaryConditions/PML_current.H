@@ -8,6 +8,7 @@
 #ifndef PML_CURRENT_H_
 #define PML_CURRENT_H_
 
+#include "BoundaryConditions/PMLComponent.H"
 #include <AMReX.H>
 #include <AMReX_FArrayBox.H>
 
@@ -30,10 +31,10 @@ void push_ex_pml_current (int j, int k, int l,
         alpha_xy = sigjy[k-ylo]/(sigjy[k-ylo]+sigjz[l-zlo]);
         alpha_xz = sigjz[l-zlo]/(sigjy[k-ylo]+sigjz[l-zlo]);
     }
-    Ex(j,k,l,0) = Ex(j,k,l,0) - mu_c2_dt  * alpha_xy * jx(j,k,l);
-    Ex(j,k,l,1) = Ex(j,k,l,1) - mu_c2_dt  * alpha_xz * jx(j,k,l);
+    Ex(j,k,l,PMLComp::xy) = Ex(j,k,l,PMLComp::xy) - mu_c2_dt  * alpha_xy * jx(j,k,l);
+    Ex(j,k,l,PMLComp::xz) = Ex(j,k,l,PMLComp::xz) - mu_c2_dt  * alpha_xz * jx(j,k,l);
 #else
-    Ex(j,k,l,1) = Ex(j,k,l,1) - mu_c2_dt  * jx(j,k,l);
+    Ex(j,k,l,PMLComp::xz) = Ex(j,k,l,PMLComp::xz) - mu_c2_dt  * jx(j,k,l);
     amrex::ignore_unused(sigjy, sigjz, ylo, zlo);
 #endif
 }
@@ -57,11 +58,11 @@ void push_ey_pml_current (int j, int k, int l,
         alpha_yx = sigjx[j-xlo]/(sigjx[j-xlo]+sigjz[l-zlo]);
         alpha_yz = sigjz[l-zlo]/(sigjx[j-xlo]+sigjz[l-zlo]);
     }
-    Ey(j,k,l,0) = Ey(j,k,l,0) - mu_c2_dt  * alpha_yx * jy(j,k,l);
-    Ey(j,k,l,1) = Ey(j,k,l,1) - mu_c2_dt  * alpha_yz * jy(j,k,l);
+    Ey(j,k,l,PMLComp::yz) = Ey(j,k,l,PMLComp::yz) - mu_c2_dt  * alpha_yz * jy(j,k,l);
+    Ey(j,k,l,PMLComp::yx) = Ey(j,k,l,PMLComp::yx) - mu_c2_dt  * alpha_yx * jy(j,k,l);
 #else
-    Ey(j,k,l,0) = Ey(j,k,l,0) - 0.5 * mu_c2_dt  * jy(j,k,l);
-    Ey(j,k,l,1) = Ey(j,k,l,1) - 0.5 * mu_c2_dt  * jy(j,k,l);
+    Ey(j,k,l,PMLComp::yz) = Ey(j,k,l,PMLComp::yz) - amrex::Real(0.5) * mu_c2_dt  * jy(j,k,l);
+    Ey(j,k,l,PMLComp::yx) = Ey(j,k,l,PMLComp::yx) - amrex::Real(0.5) * mu_c2_dt  * jy(j,k,l);
     amrex::ignore_unused(sigjx, sigjz, xlo, zlo);
 #endif
 }
@@ -85,10 +86,10 @@ void push_ez_pml_current (int j, int k, int l,
         alpha_zx = sigjx[j-xlo]/(sigjx[j-xlo]+sigjy[k-ylo]);
         alpha_zy = sigjy[k-ylo]/(sigjx[j-xlo]+sigjy[k-ylo]);
     }
-    Ez(j,k,l,0) = Ez(j,k,l,0) - mu_c2_dt  * alpha_zx * jz(j,k,l);
-    Ez(j,k,l,1) = Ez(j,k,l,1) - mu_c2_dt  * alpha_zy * jz(j,k,l);
+    Ez(j,k,l,PMLComp::zx) = Ez(j,k,l,PMLComp::zx) - mu_c2_dt  * alpha_zx * jz(j,k,l);
+    Ez(j,k,l,PMLComp::zy) = Ez(j,k,l,PMLComp::zy) - mu_c2_dt  * alpha_zy * jz(j,k,l);
 #else
-    Ez(j,k,l,0) = Ez(j,k,l,0) - mu_c2_dt  * jz(j,k,l);
+    Ez(j,k,l,PMLComp::zx) = Ez(j,k,l,PMLComp::zx) - mu_c2_dt  * jz(j,k,l);
     amrex::ignore_unused(sigjx, sigjy, xlo, ylo);
 #endif
 }

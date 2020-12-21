@@ -426,10 +426,8 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
 
 PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
           const Geometry* geom, const Geometry* cgeom,
-          int ncell, int delta, int ref_ratio,
-#ifdef WARPX_USE_PSATD
+          int ncell, int delta, amrex::IntVect ref_ratio,
           Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
-#endif
           int do_dive_cleaning, int do_moving_window,
           int /*pml_has_particles*/, int do_pml_in_domain,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
@@ -462,7 +460,6 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     const BoxArray& ba = (do_pml_in_domain)?
           MakeBoxArray(*geom, grid_ba_reduced, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
           MakeBoxArray(*geom, grid_ba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-
     if (ba.size() == 0) {
         m_ok = false;
         return;
@@ -478,24 +475,25 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     int ngf_int = (do_moving_window) ? 2 : 0;
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::CKC) ngf_int = std::max( ngf_int, 1 );
     IntVect ngf = IntVect(AMREX_D_DECL(ngf_int, ngf_int, ngf_int));
-#ifdef WARPX_USE_PSATD
-    // Increase the number of guard cells, in order to fit the extent
-    // of the stencil for the spectral solver
-    IntVect ngFFT;
-    if (do_nodal) {
-        ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
-    } else {
-        ngFFT = IntVect(AMREX_D_DECL(nox_fft/2, noy_fft/2, noz_fft/2));
+
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        // Increase the number of guard cells, in order to fit the extent
+        // of the stencil for the spectral solver
+        IntVect ngFFT;
+        if (do_nodal) {
+            ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
+        } else {
+            ngFFT = IntVect(AMREX_D_DECL(nox_fft / 2, noy_fft / 2, noz_fft / 2));
+        }
+        // Set the number of guard cells to the maximum of each field
+        // (all fields should have the same number of guard cells)
+        ngFFT = ngFFT.max(nge);
+        ngFFT = ngFFT.max(ngb);
+        ngFFT = ngFFT.max(ngf);
+        nge = ngFFT;
+        ngb = ngFFT;
+        ngf = ngFFT;
     }
-    // Set the number of guard cells to the maximum of each field
-    // (all fields should have the same number of guard cells)
-    ngFFT = ngFFT.max(nge);
-    ngFFT = ngFFT.max(ngb);
-    ngFFT = ngFFT.max(ngf);
-    nge = ngFFT;
-    ngb = ngFFT;
-    ngf = ngFFT;
-#endif
 
     pml_E_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, 3, nge );
@@ -541,36 +539,55 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         sigba_fp = std::make_unique<MultiSigmaBox>(ba, dm, grid_ba, geom->CellSize(), ncell, delta);
     }
 
-
-#ifdef WARPX_USE_PSATD
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE( do_pml_in_domain==false,
-        "PSATD solver cannot be used with `do_pml_in_domain`.");
-    const bool in_pml = true; // Tells spectral solver to use split-PML equations
-    const RealVect dx{AMREX_D_DECL(geom->CellSize(0), geom->CellSize(1), geom->CellSize(2))};
-    // Get the cell-centered box, with guard cells
-    BoxArray realspace_ba = ba;  // Copy box
-    Array<Real,3> v_galilean_zero = {0., 0., 0.};
-    Array<Real,3> v_comoving_zero = {0., 0., 0.};
-    realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
-    spectral_solver_fp = std::make_unique<SpectralSolver>(realspace_ba, dm,
-        nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, dx, dt, in_pml );
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+#ifndef WARPX_USE_PSATD
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                                         "PML: PSATD solver selected but not built.");
+#else
+        const bool in_pml = true; // Tells spectral solver to use split-PML equations
+        const RealVect dx{AMREX_D_DECL(geom->CellSize(0), geom->CellSize(1), geom->CellSize(2))};
+        // Get the cell-centered box, with guard cells
+        BoxArray realspace_ba = ba;  // Copy box
+        Array<Real,3> const v_galilean_zero = {0., 0., 0.};
+        Array<Real,3> const v_comoving_zero = {0., 0., 0.};
+        realspace_ba.enclosedCells().grow(nge); // cell-centered + guard cells
+        spectral_solver_fp = std::make_unique<SpectralSolver>(realspace_ba, dm,
+            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, dx, dt, in_pml );
 #endif
+    }
 
     if (cgeom)
     {
-#ifndef WARPX_USE_PSATD
-        nge = IntVect(AMREX_D_DECL(1, 1, 1));
-        ngb = IntVect(AMREX_D_DECL(1, 1, 1));
-#endif
+        if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD) {
+            nge = IntVect(AMREX_D_DECL(1, 1, 1));
+            ngb = IntVect(AMREX_D_DECL(1, 1, 1));
+        }
 
         BoxArray grid_cba = grid_ba;
         grid_cba.coarsen(ref_ratio);
-        const BoxArray grid_cba_reduced = BoxArray(grid_cba.boxList().intersect(domain0));
 
+        // assuming that the bounding box around grid_cba is a single patch, and not disjoint patches, similar to fine patch.
+        amrex::Box domain1 = grid_cba.minimalBox();
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if ( ! cgeom->isPeriodic(idim)) {
+                if (do_pml_Lo[idim]){
+                    // ncell is divided by refinement ratio to ensure that the
+                    // physical width of the PML region is equal is fine and coarse patch
+                    domain1.growLo(idim, -ncell/ref_ratio[idim]);
+                }
+                if (do_pml_Hi[idim]){
+                    // ncell is divided by refinement ratio to ensure that the
+                    // physical width of the PML region is equal is fine and coarse patch
+                    domain1.growHi(idim, -ncell/ref_ratio[idim]);
+                }
+            }
+        }
+        const BoxArray grid_cba_reduced = BoxArray(grid_cba.boxList().intersect(domain1));
+
+        // Assuming that refinement ratio is equal in all dimensions
         const BoxArray& cba = (do_pml_in_domain) ?
-            MakeBoxArray(*cgeom, grid_cba_reduced, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
+            MakeBoxArray(*cgeom, grid_cba_reduced, ncell/ref_ratio[0], do_pml_in_domain, do_pml_Lo, do_pml_Hi) :
             MakeBoxArray(*cgeom, grid_cba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-
         DistributionMapping cdm{cba};
 
         pml_E_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
@@ -610,21 +627,29 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         pml_j_cp[2]->setVal(0.0);
 
         if (do_pml_in_domain){
-            sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba_reduced, cgeom->CellSize(), ncell, delta);
+            // Note - assuming that the refinement ratio is equal in all dimensions
+            sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba_reduced, cgeom->CellSize(), ncell/ref_ratio[0], delta/ref_ratio[0]);
         } else {
             sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, grid_cba, cgeom->CellSize(), ncell, delta);
         }
 
-#ifdef WARPX_USE_PSATD
-        const RealVect cdx{AMREX_D_DECL(cgeom->CellSize(0), cgeom->CellSize(1), cgeom->CellSize(2))};
-        // Get the cell-centered box, with guard cells
-        BoxArray realspace_cba = cba;  // Copy box
-        // const bool in_pml = true; // Tells spectral solver to use split-PML equations
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+#ifndef WARPX_USE_PSATD
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+                                             "PML: PSATD solver selected but not built.");
+#else
+            const RealVect cdx{AMREX_D_DECL(cgeom->CellSize(0), cgeom->CellSize(1), cgeom->CellSize(2))};
+            // Get the cell-centered box, with guard cells
+            BoxArray realspace_cba = cba;  // Copy box
+            Array<Real,3> const v_galilean_zero = {0., 0., 0.};
+            Array<Real,3> const v_comoving_zero = {0., 0., 0.};
+            const bool in_pml = true; // Tells spectral solver to use split-PML equations
 
-        realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
-        spectral_solver_cp = std::make_unique<SpectralSolver>(realspace_cba, cdm,
-            nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, cdx, dt, in_pml );
+            realspace_cba.enclosedCells().grow(nge); // cell-centered + guard cells
+            spectral_solver_cp = std::make_unique<SpectralSolver>(realspace_cba, cdm,
+                nox_fft, noy_fft, noz_fft, do_nodal, v_galilean_zero, v_comoving_zero, cdx, dt, in_pml );
 #endif
+        }
     }
 }
 

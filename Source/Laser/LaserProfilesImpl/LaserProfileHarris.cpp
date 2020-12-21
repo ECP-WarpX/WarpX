@@ -7,6 +7,7 @@
 #include "Laser/LaserProfiles.H"
 #include "Utils/WarpX_Complex.H"
 #include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
 
 
 using namespace amrex;
@@ -18,9 +19,9 @@ WarpXLaserProfiles::HarrisLaserProfile::init (
     CommonLaserParameters params)
 {
     // Parse the properties of the Harris profile
-    ppl.get("profile_waist", m_params.waist);
-    ppl.get("profile_duration", m_params.duration);
-    ppl.get("profile_focal_distance", m_params.focal_distance);
+    getWithParser(ppl, "profile_waist", m_params.waist);
+    getWithParser(ppl, "profile_duration", m_params.duration);
+    getWithParser(ppl, "profile_focal_distance", m_params.focal_distance);
     //Copy common params
     m_common_params = params;
 }

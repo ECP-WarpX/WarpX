@@ -9,6 +9,7 @@ geometry.is_periodic = 0 0
 geometry.prob_lo = -90.e-6 -70.e-6
 geometry.prob_hi =  90.e-6   0.e-6
 
+algo.maxwell_solver = psatd
 algo.current_deposition = direct
 algo.charge_deposition = standard
 algo.field_gathering = momentum-conserving

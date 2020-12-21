@@ -36,11 +36,13 @@ int main(int argc, char* argv[])
 
     ConvertLabParamsToBoost();
 
+#ifdef WARPX_DIM_RZ
     CheckGriddingForRZSpectral();
+#endif
 
     WARPX_PROFILE_VAR("main()", pmain);
 
-    const Real strt_total = amrex::second();
+    const auto strt_total = static_cast<Real>(amrex::second());
 
     {
         WarpX warpx;
@@ -49,7 +51,7 @@ int main(int argc, char* argv[])
 
         warpx.Evolve();
 
-        Real end_total = amrex::second() - strt_total;
+        auto end_total = static_cast<Real>(amrex::second()) - strt_total;
 
         ParallelDescriptor::ReduceRealMax(end_total, ParallelDescriptor::IOProcessorNumber());
         if (warpx.Verbose()) {

@@ -318,9 +318,6 @@ A trick to reduce this depth for the parser, e.g. when reaching the limit, is to
 Particle initialization
 -----------------------
 
-* ``particles.nspecies`` (`int`)
-    The number of species that will be used in the simulation.
-
 * ``particles.species_names`` (`strings`, separated by spaces)
     The name of each species. This is then used in the rest of the input deck ;
     in this documentation we use `<species_name>` as a placeholder.
@@ -682,10 +679,7 @@ Particle initialization
 Laser initialization
 --------------------
 
-* ``lasers.nlasers`` (`int`) optional (default `0`)
-    Number of lasers pulses.
-
-* ``lasers.names`` (list of `string`. Must contain ``lasers.nlasers`` elements)
+* ``lasers.names`` (list of `string`)
     Name of each laser. This is then used in the rest of the input deck ;
     in this documentation we use `<laser_name>` as a placeholder. The parameters below
     must be provided for each laser pulse.
@@ -1078,9 +1072,8 @@ Numerics and algorithms
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.
     Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
-    is ``esirkepov`` if WarpX is compiled with the FDTD solver (that is, with
-    ``USE_PSATD=FALSE``) and ``direct`` if WarpX is compiled with the standard or
-    Galilean PSATD solver (that is, with ``USE_PSATD=TRUE``).
+    is ``esirkepov`` for FDTD maxwell solvers and ``direct`` for standard or
+    Galilean PSATD solver (that is, with ``algo.maxwell_solver = psatd``).
 
     1. ``direct``
 
@@ -1136,9 +1129,9 @@ Numerics and algorithms
      - ``yee``: Yee FDTD solver.
      - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
        coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
+     - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-pic-mwsolve-psatd>`)
 
      If ``algo.maxwell_solver`` is not specified, ``yee`` is the default.
-     Note: this option is currently ignored with PSATD.
 
 * ``algo.em_solver_medium`` (`string`, optional)
     The medium for evaluating the Maxwell solver. Available options are :
