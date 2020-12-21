@@ -21,6 +21,11 @@ public:
 
     virtual void doCollisions (amrex::Real /*cur_time*/, MultiParticleContainer* /*mypc*/ ){}
 
+    CollisionBase(CollisionBase const &) = delete;
+    CollisionBase(CollisionBase &&) = delete;
+    CollisionBase & operator=(CollisionBase const &) = delete;
+    
+    virtual ~CollisionBase() = default;
 protected:
 
     amrex::Vector<std::string> m_species_names;
