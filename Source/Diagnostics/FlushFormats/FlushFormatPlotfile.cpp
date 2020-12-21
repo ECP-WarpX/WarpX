@@ -246,6 +246,8 @@ FlushFormatPlotfile::WriteWarpXHeader(
         }
 
         WriteHeaderParticle(HeaderFile, particle_diags);
+
+        HeaderFile << warpx.getcurrent_injection_position() << "\n";
     }
 }
 

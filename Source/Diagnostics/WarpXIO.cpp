@@ -151,6 +151,8 @@ WarpX::InitFromCheckpoint ()
         }
 
         mypc->ReadHeader(is);
+        is >> current_injection_position;
+        GotoNextLine(is);
     }
 
     const int nlevs = finestLevel()+1;
