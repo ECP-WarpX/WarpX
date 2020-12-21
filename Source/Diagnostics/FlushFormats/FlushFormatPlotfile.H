@@ -26,7 +26,7 @@ public:
     /** Write general info of the run into the plotfile */
     void WriteJobInfo(const std::string& dir) const;
     /** Write WarpX-specific plotfile header */
-    void WriteWarpXHeader(const std::string& name, const amrex::Vector<ParticleDiag>& particle_diags, bool checkpointformat=false) const;
+    void WriteWarpXHeader(const std::string& name, const amrex::Vector<ParticleDiag>& particle_diags) const;
     void WriteAllRawFields (const bool plot_raw_fields, const int nlevels,
                             const std::string& plotfilename,
                             const bool plot_raw_fields_guards,
