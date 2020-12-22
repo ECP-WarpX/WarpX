@@ -65,461 +65,118 @@ void warpx_interp (int j, int k, int l,
 }
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void warpx_interp_nd_bfield_x (int j, int k, int l,
-                               amrex::Array4<amrex::Real> const& Bxa,
-                               amrex::Array4<amrex::Real const> const& Bxf,
-                               amrex::Array4<amrex::Real const> const& Bxc,
-                               amrex::Array4<amrex::Real const> const& Bxg)
+void warpx_interp (int j, int k, int l,
+                   amrex::Array4<amrex::Real      > const& arr_aux,
+                   amrex::Array4<amrex::Real const> const& arr_fine,
+                   amrex::Array4<amrex::Real const> const& arr_coarse,
+                   amrex::Array4<amrex::Real const> const& arr_tmp,
+                   const amrex::IntVect& arr_fine_stag,
+                   const amrex::IntVect& arr_coarse_stag,
+                   const amrex::IntVect& rr)
 {
     using namespace amrex;
 
-    // Pad Bxf with zeros beyond ghost cells for out-of-bound accesses
-    const auto Bxf_zeropad = [Bxf] (const int jj, const int kk, const int ll) noexcept
-    {
-        return Bxf.contains(jj,kk,ll) ? Bxf(jj,kk,ll) : 0.0_rt;
-    };
-
-    int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
-
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
-
-#if (AMREX_SPACEDIM == 2)
-
-    // interp from coarse nodal to fine nodal
-    Real bg = owx * owy * Bxg(jg  ,kg  ,0)
-        +     owx *  wy * Bxg(jg  ,kg+1,0)
-        +      wx * owy * Bxg(jg+1,kg  ,0)
-        +      wx *  wy * Bxg(jg+1,kg+1,0);
-
-    // interp from coarse staggered to fine nodal
-    wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
-    Real bc = owx * owy * Bxc(jg  ,kg  ,0)
-        +     owx *  wy * Bxc(jg  ,kg-1,0)
-        +      wx * owy * Bxc(jg+1,kg  ,0)
-        +      wx *  wy * Bxc(jg+1,kg-1,0);
-
-    // interp from fine staggered to fine nodal
-    Real bf = 0.5_rt*(Bxf_zeropad(j,k-1,0) + Bxf_zeropad(j,k,0));
-
-#else
-
-    int lg = amrex::coarsen(l,2);
-    Real wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
-    Real owz = 1.0_rt-wz;
-
-    // interp from coarse nodal to fine nodal
-    Real bg = owx * owy * owz * Bxg(jg  ,kg  ,lg  )
-        +      wx * owy * owz * Bxg(jg+1,kg  ,lg  )
-        +     owx *  wy * owz * Bxg(jg  ,kg+1,lg  )
-        +      wx *  wy * owz * Bxg(jg+1,kg+1,lg  )
-        +     owx * owy *  wz * Bxg(jg  ,kg  ,lg+1)
-        +      wx * owy *  wz * Bxg(jg+1,kg  ,lg+1)
-        +     owx *  wy *  wz * Bxg(jg  ,kg+1,lg+1)
-        +      wx *  wy *  wz * Bxg(jg+1,kg+1,lg+1);
-
-    // interp from coarse staggered to fine nodal
-    wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
-    wz = 0.5_rt-wz;  owz = 1.0_rt-wz;
-    Real bc = owx * owy * owz * Bxc(jg  ,kg  ,lg  )
-        +      wx * owy * owz * Bxc(jg+1,kg  ,lg  )
-        +     owx *  wy * owz * Bxc(jg  ,kg-1,lg  )
-        +      wx *  wy * owz * Bxc(jg+1,kg-1,lg  )
-        +     owx * owy *  wz * Bxc(jg  ,kg  ,lg-1)
-        +      wx * owy *  wz * Bxc(jg+1,kg  ,lg-1)
-        +     owx *  wy *  wz * Bxc(jg  ,kg-1,lg-1)
-        +      wx *  wy *  wz * Bxc(jg+1,kg-1,lg-1);
-
-    // interp from fine stagged to fine nodal
-    Real bf = 0.25_rt*(Bxf_zeropad(j,k-1,l-1) + Bxf_zeropad(j,k,l-1) + Bxf_zeropad(j,k-1,l) + Bxf_zeropad(j,k,l));
-#endif
-
-    Bxa(j,k,l) = bg + (bf-bc);
-}
-
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void warpx_interp_nd_bfield_y (int j, int k, int l,
-                               amrex::Array4<amrex::Real> const& Bya,
-                               amrex::Array4<amrex::Real const> const& Byf,
-                               amrex::Array4<amrex::Real const> const& Byc,
-                               amrex::Array4<amrex::Real const> const& Byg)
-{
-    using namespace amrex;
-
-    // Pad Byf with zeros beyond ghost cells for out-of-bound accesses
-    const auto Byf_zeropad = [Byf] (const int jj, const int kk, const int ll) noexcept
-    {
-        return Byf.contains(jj,kk,ll) ? Byf(jj,kk,ll) : 0.0_rt;
-    };
-
-    int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
-
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
-
-#if (AMREX_SPACEDIM == 2)
-
-    // interp from coarse nodal to fine nodal
-    Real bg = owx * owy * Byg(jg  ,kg  ,0)
-        +     owx *  wy * Byg(jg  ,kg+1,0)
-        +      wx * owy * Byg(jg+1,kg  ,0)
-        +      wx *  wy * Byg(jg+1,kg+1,0);
-
-    // interp from coarse stagged (cell-centered for By) to fine nodal
-    wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
-    wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
-    Real bc = owx * owy * Byc(jg  ,kg  ,0)
-        +     owx *  wy * Byc(jg  ,kg-1,0)
-        +      wx * owy * Byc(jg-1,kg  ,0)
-        +      wx *  wy * Byc(jg-1,kg-1,0);
-
-    // interp form fine stagger (cell-centered for By) to fine nodal
-    Real bf = 0.25_rt*(Byf_zeropad(j,k,0) + Byf_zeropad(j-1,k,0) + Byf_zeropad(j,k-1,0) + Byf_zeropad(j-1,k-1,0));
-
-#else
-
-    int lg = amrex::coarsen(l,2);
-    Real wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
-    Real owz = 1.0_rt-wz;
-
-    // interp from coarse nodal to fine nodal
-    Real bg = owx * owy * owz * Byg(jg  ,kg  ,lg  )
-        +      wx * owy * owz * Byg(jg+1,kg  ,lg  )
-        +     owx *  wy * owz * Byg(jg  ,kg+1,lg  )
-        +      wx *  wy * owz * Byg(jg+1,kg+1,lg  )
-        +     owx * owy *  wz * Byg(jg  ,kg  ,lg+1)
-        +      wx * owy *  wz * Byg(jg+1,kg  ,lg+1)
-        +     owx *  wy *  wz * Byg(jg  ,kg+1,lg+1)
-        +      wx *  wy *  wz * Byg(jg+1,kg+1,lg+1);
-
-    // interp from coarse staggered to fine nodal
-    wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
-    wz = 0.5_rt-wz;  owz = 1.0_rt-wz;
-    Real bc = owx * owy * owz * Byc(jg  ,kg  ,lg  )
-        +      wx * owy * owz * Byc(jg-1,kg  ,lg  )
-        +     owx *  wy * owz * Byc(jg  ,kg+1,lg  )
-        +      wx *  wy * owz * Byc(jg-1,kg+1,lg  )
-        +     owx * owy *  wz * Byc(jg  ,kg  ,lg-1)
-        +      wx * owy *  wz * Byc(jg-1,kg  ,lg-1)
-        +     owx *  wy *  wz * Byc(jg  ,kg+1,lg-1)
-        +      wx *  wy *  wz * Byc(jg-1,kg+1,lg-1);
-
-    // interp from fine stagged to fine nodal
-    Real bf = 0.25_rt*(Byf_zeropad(j-1,k,l-1) + Byf_zeropad(j,k,l-1) + Byf_zeropad(j-1,k,l) + Byf_zeropad(j,k,l));
-
-#endif
-
-    Bya(j,k,l) = bg + (bf-bc);
-}
-
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void warpx_interp_nd_bfield_z (int j, int k, int l,
-                               amrex::Array4<amrex::Real> const& Bza,
-                               amrex::Array4<amrex::Real const> const& Bzf,
-                               amrex::Array4<amrex::Real const> const& Bzc,
-                               amrex::Array4<amrex::Real const> const& Bzg)
-{
-    using namespace amrex;
-
-    // Pad Bzf with zeros beyond ghost cells for out-of-bound accesses
-    const auto Bzf_zeropad = [Bzf] (const int jj, const int kk, const int ll) noexcept
-    {
-        return Bzf.contains(jj,kk,ll) ? Bzf(jj,kk,ll) : 0.0_rt;
-    };
-
-    int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
-
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
-
-#if (AMREX_SPACEDIM == 2)
-
-    // interp from coarse nodal to fine nodal
-    Real bg = owx * owy * Bzg(jg  ,kg  ,0)
-        +     owx *  wy * Bzg(jg  ,kg+1,0)
-        +      wx * owy * Bzg(jg+1,kg  ,0)
-        +      wx *  wy * Bzg(jg+1,kg+1,0);
-
-    // interp from coarse staggered to fine nodal
-    wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
-    Real bc = owx * owy * Bzc(jg  ,kg  ,0)
-        +     owx *  wy * Bzc(jg  ,kg+1,0)
-        +      wx * owy * Bzc(jg-1,kg  ,0)
-        +      wx *  wy * Bzc(jg-1,kg+1,0);
-
-    // interp from fine staggered to fine nodal
-    Real bf = 0.5_rt*(Bzf_zeropad(j-1,k,0) + Bzf_zeropad(j,k,0));
-
-#else
-
-    int lg = amrex::coarsen(l,2);
-    Real wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
-    Real owz = 1.0_rt-wz;
-
-    // interp from coarse nodal to fine nodal
-    Real bg = owx * owy * owz * Bzg(jg  ,kg  ,lg  )
-        +      wx * owy * owz * Bzg(jg+1,kg  ,lg  )
-        +     owx *  wy * owz * Bzg(jg  ,kg+1,lg  )
-        +      wx *  wy * owz * Bzg(jg+1,kg+1,lg  )
-        +     owx * owy *  wz * Bzg(jg  ,kg  ,lg+1)
-        +      wx * owy *  wz * Bzg(jg+1,kg  ,lg+1)
-        +     owx *  wy *  wz * Bzg(jg  ,kg+1,lg+1)
-        +      wx *  wy *  wz * Bzg(jg+1,kg+1,lg+1);
-
-    // interp from coarse staggered to fine nodal
-    wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
-    wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
-    Real bc = owx * owy * owz * Bzc(jg  ,kg  ,lg  )
-        +      wx * owy * owz * Bzc(jg-1,kg  ,lg  )
-        +     owx *  wy * owz * Bzc(jg  ,kg-1,lg  )
-        +      wx *  wy * owz * Bzc(jg-1,kg-1,lg  )
-        +     owx * owy *  wz * Bzc(jg  ,kg  ,lg+1)
-        +      wx * owy *  wz * Bzc(jg-1,kg  ,lg+1)
-        +     owx *  wy *  wz * Bzc(jg  ,kg-1,lg+1)
-        +      wx *  wy *  wz * Bzc(jg-1,kg-1,lg+1);
-
-    // interp from fine stagged to fine nodal
-    Real bf = 0.25_rt*(Bzf_zeropad(j-1,k-1,l) + Bzf_zeropad(j,k-1,l) + Bzf_zeropad(j-1,k,l) + Bzf_zeropad(j,k,l));
-
-#endif
-
-    Bza(j,k,l) = bg + (bf-bc);
-}
-
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void warpx_interp_nd_efield_x (int j, int k, int l,
-                               amrex::Array4<amrex::Real> const& Exa,
-                               amrex::Array4<amrex::Real const> const& Exf,
-                               amrex::Array4<amrex::Real const> const& Exc,
-                               amrex::Array4<amrex::Real const> const& Exg)
-{
-    using namespace amrex;
-
-    // Pad Exf with zeros beyond ghost cells for out-of-bound accesses
-    const auto Exf_zeropad = [Exf] (const int jj, const int kk, const int ll) noexcept
-    {
-        return Exf.contains(jj,kk,ll) ? Exf(jj,kk,ll) : 0.0_rt;
-    };
-
-    int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
-
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
-
-#if (AMREX_SPACEDIM == 2)
-
-    // interp from coarse nodal to fine nodal
-    Real eg = owx * owy * Exg(jg  ,kg  ,0)
-        +     owx *  wy * Exg(jg  ,kg+1,0)
-        +      wx * owy * Exg(jg+1,kg  ,0)
-        +      wx *  wy * Exg(jg+1,kg+1,0);
-
-    // interp from coarse staggered to fine nodal
-    wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
-    Real ec = owx * owy * Exc(jg  ,kg  ,0)
-        +     owx *  wy * Exc(jg  ,kg+1,0)
-        +      wx * owy * Exc(jg-1,kg  ,0)
-        +      wx *  wy * Exc(jg-1,kg+1,0);
-
-    // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Exf_zeropad(j-1,k,0) + Exf_zeropad(j,k,0));
-
-#else
-
-    int lg = amrex::coarsen(l,2);
-    Real wz = (l == lg*2) ? 0.0 : 0.5;
-    Real owz = 1.0_rt-wz;
-
-    // interp from coarse nodal to fine nodal
-    Real eg = owx * owy * owz * Exg(jg  ,kg  ,lg  )
-        +      wx * owy * owz * Exg(jg+1,kg  ,lg  )
-        +     owx *  wy * owz * Exg(jg  ,kg+1,lg  )
-        +      wx *  wy * owz * Exg(jg+1,kg+1,lg  )
-        +     owx * owy *  wz * Exg(jg  ,kg  ,lg+1)
-        +      wx * owy *  wz * Exg(jg+1,kg  ,lg+1)
-        +     owx *  wy *  wz * Exg(jg  ,kg+1,lg+1)
-        +      wx *  wy *  wz * Exg(jg+1,kg+1,lg+1);
-
-    // interp from coarse staggered to fine nodal
-    wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
-    Real ec = owx * owy * owz * Exc(jg  ,kg  ,lg  )
-        +      wx * owy * owz * Exc(jg-1,kg  ,lg  )
-        +     owx *  wy * owz * Exc(jg  ,kg+1,lg  )
-        +      wx *  wy * owz * Exc(jg-1,kg+1,lg  )
-        +     owx * owy *  wz * Exc(jg  ,kg  ,lg+1)
-        +      wx * owy *  wz * Exc(jg-1,kg  ,lg+1)
-        +     owx *  wy *  wz * Exc(jg  ,kg+1,lg+1)
-        +      wx *  wy *  wz * Exc(jg-1,kg+1,lg+1);
-
-    // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Exf_zeropad(j-1,k,l) + Exf_zeropad(j,k,l));
-
-#endif
-
-    Exa(j,k,l) = eg + (ef-ec);
-}
-
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void warpx_interp_nd_efield_y (int j, int k, int l,
-                               amrex::Array4<amrex::Real> const& Eya,
-                               amrex::Array4<amrex::Real const> const& Eyf,
-                               amrex::Array4<amrex::Real const> const& Eyc,
-                               amrex::Array4<amrex::Real const> const& Eyg)
-{
-    using namespace amrex;
-
-    // Pad Eyf with zeros beyond ghost cells for out-of-bound accesses
-    const auto Eyf_zeropad = [Eyf] (const int jj, const int kk, const int ll) noexcept
-    {
-        return Eyf.contains(jj,kk,ll) ? Eyf(jj,kk,ll) : 0.0_rt;
-    };
-
-    int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
-
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
-
-#if (AMREX_SPACEDIM == 2)
-
-    // interp from coarse nodal to fine nodal
-    Real eg = owx * owy * Eyg(jg  ,kg  ,0)
-        +     owx *  wy * Eyg(jg  ,kg+1,0)
-        +      wx * owy * Eyg(jg+1,kg  ,0)
-        +      wx *  wy * Eyg(jg+1,kg+1,0);
-
-    // interp from coarse staggered to fine nodal (Eyc is actually nodal)
-    Real ec = owx * owy * Eyc(jg  ,kg  ,0)
-        +     owx *  wy * Eyc(jg  ,kg+1,0)
-        +      wx * owy * Eyc(jg+1,kg  ,0)
-        +      wx *  wy * Eyc(jg+1,kg+1,0);
-
-    // interp from fine staggered to fine nodal
-    Real ef = Eyf_zeropad(j,k,0);
-
-#else
-
-    int lg = amrex::coarsen(l,2);
-    Real wz = (l == lg*2) ? 0.0 : 0.5;
-    Real owz = 1.0_rt-wz;
-
-    // interp from coarse nodal to fine nodal
-    Real eg = owx * owy * owz * Eyg(jg  ,kg  ,lg  )
-        +      wx * owy * owz * Eyg(jg+1,kg  ,lg  )
-        +     owx *  wy * owz * Eyg(jg  ,kg+1,lg  )
-        +      wx *  wy * owz * Eyg(jg+1,kg+1,lg  )
-        +     owx * owy *  wz * Eyg(jg  ,kg  ,lg+1)
-        +      wx * owy *  wz * Eyg(jg+1,kg  ,lg+1)
-        +     owx *  wy *  wz * Eyg(jg  ,kg+1,lg+1)
-        +      wx *  wy *  wz * Eyg(jg+1,kg+1,lg+1);
-
-    // interp from coarse staggered to fine nodal
-    wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
-    Real ec = owx * owy * owz * Eyc(jg  ,kg  ,lg  )
-        +      wx * owy * owz * Eyc(jg+1,kg  ,lg  )
-        +     owx *  wy * owz * Eyc(jg  ,kg-1,lg  )
-        +      wx *  wy * owz * Eyc(jg+1,kg-1,lg  )
-        +     owx * owy *  wz * Eyc(jg  ,kg  ,lg+1)
-        +      wx * owy *  wz * Eyc(jg+1,kg  ,lg+1)
-        +     owx *  wy *  wz * Eyc(jg  ,kg-1,lg+1)
-        +      wx *  wy *  wz * Eyc(jg+1,kg-1,lg+1);
-
-    // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Eyf_zeropad(j,k-1,l) + Eyf_zeropad(j,k,l));
-
-#endif
-
-    Eya(j,k,l) = eg + (ef-ec);
-}
-
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void warpx_interp_nd_efield_z (int j, int k, int l,
-                               amrex::Array4<amrex::Real> const& Eza,
-                               amrex::Array4<amrex::Real const> const& Ezf,
-                               amrex::Array4<amrex::Real const> const& Ezc,
-                               amrex::Array4<amrex::Real const> const& Ezg)
-{
-    using namespace amrex;
-
-    // Pad Ezf with zeros beyond ghost cells for out-of-bound accesses
-    const auto Ezf_zeropad = [Ezf] (const int jj, const int kk, const int ll) noexcept
-    {
-        return Ezf.contains(jj,kk,ll) ? Ezf(jj,kk,ll) : 0.0_rt;
-    };
-
-    int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
-    Real owx = 1.0_rt-wx;
-
-    int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
-    Real owy = 1.0_rt-wy;
-
-#if (AMREX_SPACEDIM == 2)
-
-    // interp from coarse nodal to fine nodal
-    Real eg = owx * owy * Ezg(jg  ,kg  ,0)
-        +     owx *  wy * Ezg(jg  ,kg+1,0)
-        +      wx * owy * Ezg(jg+1,kg  ,0)
-        +      wx *  wy * Ezg(jg+1,kg+1,0);
-
-    // interp from coarse stagged to fine nodal
-    wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
-    Real ec = owx * owy * Ezc(jg  ,kg  ,0)
-        +     owx *  wy * Ezc(jg  ,kg-1,0)
-        +      wx * owy * Ezc(jg+1,kg  ,0)
-        +      wx *  wy * Ezc(jg+1,kg-1,0);
-
-    // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Ezf_zeropad(j,k-1,0) + Ezf_zeropad(j,k,0));
-
-#else
-
-    int lg = amrex::coarsen(l,2);
-    Real wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
-    Real owz = 1.0_rt-wz;
-
-    // interp from coarse nodal to fine nodal
-    Real eg = owx * owy * owz * Ezg(jg  ,kg  ,lg  )
-        +      wx * owy * owz * Ezg(jg+1,kg  ,lg  )
-        +     owx *  wy * owz * Ezg(jg  ,kg+1,lg  )
-        +      wx *  wy * owz * Ezg(jg+1,kg+1,lg  )
-        +     owx * owy *  wz * Ezg(jg  ,kg  ,lg+1)
-        +      wx * owy *  wz * Ezg(jg+1,kg  ,lg+1)
-        +     owx *  wy *  wz * Ezg(jg  ,kg+1,lg+1)
-        +      wx *  wy *  wz * Ezg(jg+1,kg+1,lg+1);
-
-    // interp from coarse staggered to fine nodal
-    wz = 0.5_rt-wz;  owz = 1.0_rt-wz;
-    Real ec = owx * owy * owz * Ezc(jg  ,kg  ,lg  )
-        +      wx * owy * owz * Ezc(jg+1,kg  ,lg  )
-        +     owx *  wy * owz * Ezc(jg  ,kg+1,lg  )
-        +      wx *  wy * owz * Ezc(jg+1,kg+1,lg  )
-        +     owx * owy *  wz * Ezc(jg  ,kg  ,lg-1)
-        +      wx * owy *  wz * Ezc(jg+1,kg  ,lg-1)
-        +     owx *  wy *  wz * Ezc(jg  ,kg+1,lg-1)
-        +      wx *  wy *  wz * Ezc(jg+1,kg+1,lg-1);
-
-    // interp from fine staggered to fine nodal
-    Real ef = 0.5_rt*(Ezf_zeropad(j,k,l-1) + Ezf_zeropad(j,k,l));
-
-#endif
-
-    Eza(j,k,l) = eg + (ef-ec);
+    // NOTE Indices (j,k,l) in the following refer to (x,z,-) in 2D and (x,y,z) in 3D
+
+    // Refinement ratio
+    const int rj = rr[0];
+    const int rk = rr[1];
+    const int rl = (AMREX_SPACEDIM == 2) ? 1 : rr[2];
+
+    // Staggering of fine array (0: cell-centered; 1: nodal)
+    const int sj_fp = arr_fine_stag[0];
+    const int sk_fp = arr_fine_stag[1];
+    const int sl_fp = (AMREX_SPACEDIM == 2) ? 0 : arr_fine_stag[2];
+
+    // Staggering of coarse array (0: cell-centered; 1: nodal)
+    const int sj_cp = arr_coarse_stag[0];
+    const int sk_cp = arr_coarse_stag[1];
+    const int sl_cp = (AMREX_SPACEDIM == 2) ? 0 : arr_coarse_stag[2];
+
+    // Number of points used for interpolation from coarse grid to fine grid
+    int nj;
+    int nk;
+    int nl;
+
+    int jc = amrex::coarsen(j, rj);
+    int kc = amrex::coarsen(k, rk);
+    int lc = amrex::coarsen(l, rl);
+
+    amrex::Real tmp = 0.0_rt;
+    amrex::Real fine = 0.0_rt;
+    amrex::Real coarse = 0.0_rt;
+
+    amrex::Real wj;
+    amrex::Real wk;
+    amrex::Real wl;
+
+    // 1) Interpolation from coarse nodal to fine nodal
+
+    nj = 2;
+    nk = 2;
+    nl = (AMREX_SPACEDIM == 2) ? 1 : 2;
+
+    for         (int jj = 0; jj < nj; jj++) {
+        for     (int kk = 0; kk < nk; kk++) {
+            for (int ll = 0; ll < nl; ll++) {
+                wj = (rj - amrex::Math::abs(j - (jc + jj) * rj)) / static_cast<amrex::Real>(rj);
+                wk = (rk - amrex::Math::abs(k - (kc + kk) * rk)) / static_cast<amrex::Real>(rk);
+                wl = (AMREX_SPACEDIM == 2) ? 1.0_rt : (rl - amrex::Math::abs(l - (lc + ll) * rl))
+                                                      / static_cast<amrex::Real>(rl);
+                tmp += wj * wk * wl * arr_tmp(jc+jj,kc+kk,lc+ll);
+            }
+        }
+    }
+
+    // 2) Interpolation from coarse staggered to fine nodal
+
+    nj = 2;
+    nk = 2;
+    nl = (AMREX_SPACEDIM == 2) ? 1 : 2;
+
+    const int jn = (sj_cp == 1) ? j : j - rj / 2;
+    const int kn = (sk_cp == 1) ? k : k - rk / 2;
+    const int ln = (sl_cp == 1) ? l : l - rl / 2;
+
+    jc = amrex::coarsen(jn, rj);
+    kc = amrex::coarsen(kn, rk);
+    lc = amrex::coarsen(ln, rl);
+
+    for         (int jj = 0; jj < nj; jj++) {
+        for     (int kk = 0; kk < nk; kk++) {
+            for (int ll = 0; ll < nl; ll++) {
+                wj = (rj - amrex::Math::abs(jn - (jc + jj) * rj)) / static_cast<amrex::Real>(rj);
+                wk = (rk - amrex::Math::abs(kn - (kc + kk) * rk)) / static_cast<amrex::Real>(rk);
+                wl = (AMREX_SPACEDIM == 2) ? 1.0_rt : (rl - amrex::Math::abs(ln - (lc + ll) * rl))
+                                                      / static_cast<amrex::Real>(rl);
+                coarse += wj * wk * wl * arr_coarse(jc+jj,kc+kk,lc+ll);
+            }
+        }
+    }
+
+    // 3) Interpolation from fine staggered to fine nodal
+
+    nj = (sj_fp == 0) ? 2 : 1;
+    nk = (sk_fp == 0) ? 2 : 1;
+    nl = (sl_fp == 0 && AMREX_SPACEDIM == 3) ? 2 : 1;
+
+    const int jm = (sj_fp == 0) ? j-1 : j;
+    const int km = (sk_fp == 0) ? k-1 : k;
+    const int lm = (sl_fp == 0 && AMREX_SPACEDIM == 3) ? l-1 : l;
+
+    for         (int jj = 0; jj < nj; jj++) {
+        for     (int kk = 0; kk < nk; kk++) {
+            for (int ll = 0; ll < nl; ll++) {
+                wj = 1.0_rt / static_cast<amrex::Real>(nj);
+                wk = 1.0_rt / static_cast<amrex::Real>(nk);
+                wl = 1.0_rt / static_cast<amrex::Real>(nl);
+                fine += wj * wk * wl * arr_fine(jm+jj,km+kk,lm+ll);
+            }
+        }
+    }
+
+    // Final result
+    arr_aux(j,k,l) = tmp + (fine - coarse);
 }
 
 /**
