@@ -259,6 +259,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     // in a neighboring box. However, this should catch particles traveling many
     // cells away, for example with algorithms that allow for large time steps.
     const int shape_extent = static_cast<int>(WarpX::nox / 2);
+    if
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, ng_J - shape_extent) == 0,
         "Particles shape does not fit within guard cells used for local current deposition");
@@ -280,15 +281,6 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
         tilebox = amrex::coarsen(pti.tilebox(),ref_ratio);
     }
 
-#ifndef AMREX_USE_GPU
-    // Staggered tile boxes (different in each direction)
-    Box tbx = convert( tilebox, jx->ixType().toIntVect() );
-    Box tby = convert( tilebox, jy->ixType().toIntVect() );
-    Box tbz = convert( tilebox, jz->ixType().toIntVect() );
-#endif
-
-    tilebox.grow(ng_J);
-
 #ifdef AMREX_USE_GPU
     amrex::ignore_unused(thread_num);
     // GPU, no tiling: j<xyz>_arr point to the full j<xyz> arrays
@@ -299,6 +291,11 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     Array4<Real> const& jy_arr = jy->array(pti);
     Array4<Real> const& jz_arr = jz->array(pti);
 #else
+    // Staggered tile boxes (different in each direction)
+    Box tbx = convert( tilebox, jx->ixType().toIntVect() );
+    Box tby = convert( tilebox, jy->ixType().toIntVect() );
+    Box tbz = convert( tilebox, jz->ixType().toIntVect() );
+    // Grow the tile boxes so that they can accomodate the particle shape
     tbx.grow(ng_J);
     tby.grow(ng_J);
     tbz.grow(ng_J);
@@ -324,7 +321,6 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     const auto GetPosition = GetParticlePosition(pti, offset);
 
     // Lower corner of tile box physical domain
-    // Note that this includes guard cells since it is after tilebox.ngrow
     const Dim3 lo = lbound(tilebox);
     // Take into account Galilean shift
     Real cur_time = warpx.gett_new(lev);
