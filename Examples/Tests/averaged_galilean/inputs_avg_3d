@@ -59,6 +59,7 @@ electrons.zmax =   19.34
 electrons.ux_th = 0.0001
 electrons.uy_th = 0.0001
 electrons.uz_th = 0.0001
+electrons.psatd_time_averaging = 1
 
 ions.charge = q_e
 ions.mass = m_p
@@ -77,6 +78,7 @@ ions.zmax = 19.34
 ions.ux_th = 0.0001
 ions.uy_th = 0.0001
 ions.uz_th = 0.0001
+ions.psatd_time_averaging = 1
 
 # Diagnostics
 diagnostics.diags_names = diag1

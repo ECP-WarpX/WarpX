@@ -745,7 +745,21 @@ WarpX::ReadParameters ()
         pp.query("current_correction", current_correction);
         pp.query("v_galilean", m_v_galilean);
         pp.query("v_comoving", m_v_comoving);
-        pp.query("do_time_averaging", fft_do_time_averaging);
+        // Check if PSATD time averaging should be used
+        {
+            // Loop through particle species
+            std::vector<std::string> species_names;
+            ParmParse p_species_names("particles");
+            p_species_names.queryarr("species_names", species_names);
+            for (auto const& name : species_names) {
+                // By default fft_do_time_averaging is false
+                // if any particle species has psatd_time_averaging=1
+                // then fft_do_time_averaging becomes true and the loop stops
+                ParmParse p_species(name);
+                p_species.query("psatd_time_averaging", fft_do_time_averaging);
+                if (fft_do_time_averaging) break;
+            }
+        }
 
         // Scale the velocity by the speed of light
         for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;

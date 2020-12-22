@@ -105,6 +105,7 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
     pp.query("boost_adjust_transverse_positions", boost_adjust_transverse_positions);
     pp.query("do_backward_propagation", do_backward_propagation);
+    pp.query("psatd_time_averaging", m_psatd_time_averaging);
 
     // Initialize splitting
     pp.query("do_splitting", do_splitting);
@@ -994,12 +995,12 @@ PhysicalParticleContainer::Evolve (int lev,
             const long np = pti.numParticles();
 
             // Data on the grid
-            FArrayBox const* exfab = WarpX::fft_do_time_averaging ? &(Ex_avg[pti]) : &(Ex[pti]);
-            FArrayBox const* eyfab = WarpX::fft_do_time_averaging ? &(Ey_avg[pti]) : &(Ey[pti]);
-            FArrayBox const* ezfab = WarpX::fft_do_time_averaging ? &(Ez_avg[pti]) : &(Ez[pti]);
-            FArrayBox const* bxfab = WarpX::fft_do_time_averaging ? &(Bx_avg[pti]) : &(Bx[pti]);
-            FArrayBox const* byfab = WarpX::fft_do_time_averaging ? &(By_avg[pti]) : &(By[pti]);
-            FArrayBox const* bzfab = WarpX::fft_do_time_averaging ? &(Bz_avg[pti]) : &(Bz[pti]);
+            FArrayBox const* exfab = m_psatd_time_averaging ? &(Ex_avg[pti]) : &(Ex[pti]);
+            FArrayBox const* eyfab = m_psatd_time_averaging ? &(Ey_avg[pti]) : &(Ey[pti]);
+            FArrayBox const* ezfab = m_psatd_time_averaging ? &(Ez_avg[pti]) : &(Ez[pti]);
+            FArrayBox const* bxfab = m_psatd_time_averaging ? &(Bx_avg[pti]) : &(Bx[pti]);
+            FArrayBox const* byfab = m_psatd_time_averaging ? &(By_avg[pti]) : &(By[pti]);
+            FArrayBox const* bzfab = m_psatd_time_averaging ? &(Bz_avg[pti]) : &(Bz[pti]);
 
             Elixir exeli, eyeli, ezeli, bxeli, byeli, bzeli;
 

@@ -366,6 +366,8 @@ protected:
     //! instead of gathering fields from the finest patch level, gather from the coarsest
     bool m_gather_from_main_grid = false;
 
+    bool m_psatd_time_averaging = false;
+
     int do_not_push = 0;
     int do_not_deposit = 0;
     int do_not_gather = 0;
