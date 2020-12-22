@@ -259,7 +259,6 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     // in a neighboring box. However, this should catch particles traveling many
     // cells away, for example with algorithms that allow for large time steps.
     const int shape_extent = static_cast<int>(WarpX::nox / 2);
-    if
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, ng_J - shape_extent) == 0,
         "Particles shape does not fit within guard cells used for local current deposition");
@@ -295,7 +294,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     Box tbx = convert( tilebox, jx->ixType().toIntVect() );
     Box tby = convert( tilebox, jy->ixType().toIntVect() );
     Box tbz = convert( tilebox, jz->ixType().toIntVect() );
-    // Grow the tile boxes so that they can accomodate the particle shape
+    // Grow the tile boxes so that they can contain the particle shape
     tbx.grow(ng_J);
     tby.grow(ng_J);
     tbz.grow(ng_J);
@@ -481,13 +480,6 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
         tilebox = amrex::coarsen(pti.tilebox(),ref_ratio);
     }
 
-#ifndef AMREX_USE_GPU
-    // Staggered tile box
-    Box tb = amrex::convert( tilebox, rho->ixType().toIntVect() );
-#endif
-
-    tilebox.grow(ng_rho);
-
     const int nc = WarpX::ncomps;
 
 #ifdef AMREX_USE_GPU
@@ -496,6 +488,9 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     MultiFab rhoi(*rho, amrex::make_alias, icomp*nc, nc);
     auto & rho_fab = rhoi.get(pti);
 #else
+    // Staggered tile box
+    Box tb = amrex::convert( tilebox, rho->ixType().toIntVect() );
+    // Grow the tile boxes so that they can contain the particle shape
     tb.grow(ng_rho);
 
     // CPU, tiling: rho_fab points to local_rho[thread_num]
@@ -510,7 +505,6 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     const auto GetPosition = GetParticlePosition(pti, offset);
 
     // Lower corner of tile box physical domain
-    // Note that this includes guard cells since it is after tilebox.ngrow
     Real cur_time = warpx.gett_new(lev);
     Real dt = warpx.getdt(lev);
     const auto& time_of_last_gal_shift = warpx.time_of_last_gal_shift;
