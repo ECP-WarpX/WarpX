@@ -31,6 +31,7 @@ sudo apt-get install -y          \
     cuda-minimal-build-11-0      \
     cuda-nvml-dev-11-0           \
     cuda-nvtx-11-0               \
+    libcufft-dev-11-0            \
     libcurand-dev-11-0
 sudo ln -s cuda-11.0 /usr/local/cuda
 
