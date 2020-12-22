@@ -23,7 +23,8 @@ void warpx_damp_pml_ex (int i, int j, int k, Array4<Real> const& Ex,
                         const Real* const sigma_star_fac_x,
                         const Real* const sigma_star_fac_y,
                         const Real* const sigma_star_fac_z,
-                        int xlo, int ylo, int zlo)
+                        int xlo, int ylo, int zlo,
+                        const bool dive_cleaning)
 {
 #if (AMREX_SPACEDIM == 2)
 
@@ -33,11 +34,14 @@ void warpx_damp_pml_ex (int i, int j, int k, Array4<Real> const& Ex,
     const int sx = Ex_stag[0];
     const int sz = Ex_stag[1];
 
-    // Exx
-    if (sx == 0) {
-        Ex(i,j,k,PMLComp::xx) *= sigma_star_fac_x[i-xlo];
-    } else {
-        Ex(i,j,k,PMLComp::xx) *= sigma_fac_x[i-xlo];
+    if (dive_cleaning)
+    {
+        // Exx
+        if (sx == 0) {
+            Ex(i,j,k,PMLComp::xx) *= sigma_star_fac_x[i-xlo];
+        } else {
+            Ex(i,j,k,PMLComp::xx) *= sigma_fac_x[i-xlo];
+        }
     }
 
     // Exz
@@ -54,11 +58,14 @@ void warpx_damp_pml_ex (int i, int j, int k, Array4<Real> const& Ex,
     const int sy = Ex_stag[1];
     const int sz = Ex_stag[2];
 
-    // Exx
-    if (sx == 0) {
-        Ex(i,j,k,PMLComp::xx) *= sigma_star_fac_x[i-xlo];
-    } else {
-        Ex(i,j,k,PMLComp::xx) *= sigma_fac_x[i-xlo];
+    if (dive_cleaning)
+    {
+        // Exx
+        if (sx == 0) {
+            Ex(i,j,k,PMLComp::xx) *= sigma_star_fac_x[i-xlo];
+        } else {
+            Ex(i,j,k,PMLComp::xx) *= sigma_fac_x[i-xlo];
+        }
     }
 
     // Exy
@@ -87,11 +94,12 @@ void warpx_damp_pml_ey (int i, int j, int k, Array4<Real> const& Ey,
                         const Real* const sigma_star_fac_x,
                         const Real* const sigma_star_fac_y,
                         const Real* const sigma_star_fac_z,
-                        int xlo, int ylo, int zlo)
+                        int xlo, int ylo, int zlo,
+                        const bool dive_cleaning)
 {
 #if (AMREX_SPACEDIM == 2)
 
-    amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo);
+    amrex::ignore_unused(sigma_fac_y, sigma_star_fac_y, ylo, dive_cleaning);
 
     // sx = 0 means that Ey is staggered in x, while sx = 1 means that Ey is nodal in x (same for z)
     const int sx = Ey_stag[0];
@@ -125,11 +133,14 @@ void warpx_damp_pml_ey (int i, int j, int k, Array4<Real> const& Ey,
         Ey(i,j,k,PMLComp::yx) *= sigma_fac_x[i-xlo];
     }
 
-    // Eyy
-    if (sy == 0) {
-        Ey(i,j,k,PMLComp::yy) *= sigma_star_fac_y[j-ylo];
-    } else {
-        Ey(i,j,k,PMLComp::yy) *= sigma_fac_y[j-ylo];
+    if (dive_cleaning)
+    {
+        // Eyy
+        if (sy == 0) {
+            Ey(i,j,k,PMLComp::yy) *= sigma_star_fac_y[j-ylo];
+        } else {
+            Ey(i,j,k,PMLComp::yy) *= sigma_fac_y[j-ylo];
+        }
     }
 
     // Eyz
@@ -151,7 +162,8 @@ void warpx_damp_pml_ez (int i, int j, int k, Array4<Real> const& Ez,
                         const Real* const sigma_star_fac_x,
                         const Real* const sigma_star_fac_y,
                         const Real* const sigma_star_fac_z,
-                        int xlo, int ylo, int zlo)
+                        int xlo, int ylo, int zlo,
+                        const bool dive_cleaning)
 {
 #if (AMREX_SPACEDIM == 2)
 
@@ -168,11 +180,14 @@ void warpx_damp_pml_ez (int i, int j, int k, Array4<Real> const& Ez,
         Ez(i,j,k,PMLComp::zx) *= sigma_fac_x[i-xlo];
     }
 
-    // Ezz
-    if (sz == 0) {
-        Ez(i,j,k,PMLComp::zz) *= sigma_star_fac_z[j-zlo];
-    } else {
-        Ez(i,j,k,PMLComp::zz) *= sigma_fac_z[j-zlo];
+    if (dive_cleaning)
+    {
+        // Ezz
+        if (sz == 0) {
+            Ez(i,j,k,PMLComp::zz) *= sigma_star_fac_z[j-zlo];
+        } else {
+            Ez(i,j,k,PMLComp::zz) *= sigma_fac_z[j-zlo];
+        }
     }
 
 #elif (AMREX_SPACEDIM == 3)
@@ -196,11 +211,14 @@ void warpx_damp_pml_ez (int i, int j, int k, Array4<Real> const& Ez,
         Ez(i,j,k,PMLComp::zy) *= sigma_fac_y[j-ylo];
     }
 
-    // Ezz
-    if (sz == 0) {
-        Ez(i,j,k,PMLComp::zz) *= sigma_star_fac_z[k-zlo];
-    } else {
-        Ez(i,j,k,PMLComp::zz) *= sigma_fac_z[k-zlo];
+    if (dive_cleaning)
+    {
+        // Ezz
+        if (sz == 0) {
+            Ez(i,j,k,PMLComp::zz) *= sigma_star_fac_z[k-zlo];
+        } else {
+            Ez(i,j,k,PMLComp::zz) *= sigma_fac_z[k-zlo];
+        }
     }
 
 #endif
