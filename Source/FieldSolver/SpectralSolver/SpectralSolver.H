@@ -28,7 +28,7 @@ class SpectralSolver
         // underlying classes `SpectralFieldData` and `PsatdAlgorithm`
 
         // Constructor
-        SpectralSolver( const amrex::BoxArray& realspace_ba,
+        SpectralSolver (const amrex::BoxArray& realspace_ba,
                         const amrex::DistributionMapping& dm,
                         const int norder_x, const int norder_y,
                         const int norder_z, const bool nodal,
@@ -38,7 +38,9 @@ class SpectralSolver
                         const bool pml=false,
                         const bool periodic_single_box=false,
                         const bool update_with_rho=false,
-                        const bool fft_do_time_averaging=false);
+                        const bool fft_do_time_averaging=false,
+                        const bool dive_cleaning = false,
+                        const bool divb_cleaning = false);
 
         /**
          * \brief Transform the component `i_comp` of MultiFab `mf`

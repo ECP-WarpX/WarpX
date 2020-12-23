@@ -102,7 +102,7 @@ public:
          const amrex::Geometry* geom, const amrex::Geometry* cgeom,
          int ncell, int delta, amrex::IntVect ref_ratio,
          amrex::Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
-         int do_dive_cleaning, int do_moving_window,
+         const bool do_dive_cleaning, const bool do_divb_cleaning, int do_moving_window,
          int pml_has_particles, int do_pml_in_domain,
          const amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
          const amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
@@ -116,8 +116,13 @@ public:
     std::array<amrex::MultiFab*,3> GetB_cp ();
     std::array<amrex::MultiFab*,3> Getj_cp ();
 
+    // Used when WarpX::do_dive_cleaning = true
     amrex::MultiFab* GetF_fp ();
     amrex::MultiFab* GetF_cp ();
+
+    // Used when WarpX::do_divb_cleaning = true
+    amrex::MultiFab* GetG_fp ();
+    amrex::MultiFab* GetG_cp ();
 
     const MultiSigmaBox& GetMultiSigmaBox_fp () const
         { return *sigba_fp; }
@@ -165,6 +170,9 @@ public:
 private:
     bool m_ok;
 
+    bool m_dive_cleaning;
+    bool m_divb_cleaning;
+
     const amrex::Geometry* m_geom;
     const amrex::Geometry* m_cgeom;
 
@@ -176,8 +184,13 @@ private:
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_B_cp;
     std::array<std::unique_ptr<amrex::MultiFab>,3> pml_j_cp;
 
+    // Used when WarpX::do_dive_cleaning = true
     std::unique_ptr<amrex::MultiFab> pml_F_fp;
     std::unique_ptr<amrex::MultiFab> pml_F_cp;
+
+    // Used when WarpX::do_divb_cleaning = true
+    std::unique_ptr<amrex::MultiFab> pml_G_fp;
+    std::unique_ptr<amrex::MultiFab> pml_G_cp;
 
     std::unique_ptr<MultiSigmaBox> sigba_fp;
     std::unique_ptr<MultiSigmaBox> sigba_cp;
@@ -197,9 +210,11 @@ private:
 };
 
 #ifdef WARPX_USE_PSATD
-void PushPMLPSATDSinglePatch( SpectralSolver& solver,
+void PushPMLPSATDSinglePatch(SpectralSolver& solver,
     std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_E,
-    std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_B );
+    std::array<std::unique_ptr<amrex::MultiFab>,3>& pml_B,
+    std::unique_ptr<amrex::MultiFab>& pml_F,
+    std::unique_ptr<amrex::MultiFab>& pml_G);
 #endif
 
 #endif
