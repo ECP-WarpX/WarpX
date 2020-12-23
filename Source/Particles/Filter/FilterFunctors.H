@@ -17,6 +17,13 @@
 using SuperParticleType = typename WarpXParticleContainer::SuperParticleType;
 
 /**
+ *  \brief Used to keep track of what inputs units a filter function should expect.
+ *         "WarpX units" means the momentum is "gamma*v"
+ *         "SI" means the momentum is mass*gamma*v.
+ */
+enum struct InputUnits{WarpX, SI};
+
+/**
  * \brief Functor that returns 0 or 1 depending on a random draw per particle
  */
 struct RandomFilter
@@ -86,6 +93,7 @@ struct ParserFilter
         : m_is_active(a_is_active), m_function_partparser(a_filter_parser)
     {
         m_t = WarpX::GetInstance().gett_new(0);
+        m_units = InputUnits::WarpX;
     }
 
     /**
@@ -100,9 +108,15 @@ struct ParserFilter
         amrex::Real const x  = p.pos(0);
         amrex::Real const y  = p.pos(1);
         amrex::Real const z  = p.pos(2);
-        amrex::Real const ux = p.rdata(PIdx::ux)/PhysConst::c;
-        amrex::Real const uy = p.rdata(PIdx::uy)/PhysConst::c;
-        amrex::Real const uz = p.rdata(PIdx::uz)/PhysConst::c;
+        amrex::Real ux = p.rdata(PIdx::ux);
+        amrex::Real uy = p.rdata(PIdx::uy);
+        amrex::Real uz = p.rdata(PIdx::uz);
+        if (m_units == InputUnits::WarpX)
+        {
+            ux /= PhysConst::c;
+            uy /= PhysConst::c;
+            uz /= PhysConst::c;
+        }
         if ( m_function_partparser(m_t,x,y,z,ux,uy,uz) > 0.5 ) return 1;
         else return 0;
     }
@@ -114,6 +128,8 @@ public:
     HostDeviceParser<7> const m_function_partparser;
     /** Store physical time. */
     amrex::Real m_t;
+    /** keep track of momentum units particles will come in with **/
+    InputUnits m_units;
 };
 
 
