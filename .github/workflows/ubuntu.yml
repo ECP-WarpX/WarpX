@@ -23,7 +23,15 @@ jobs:
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
         which nvcc || echo "nvcc not in PATH!"
 
-        cmake -S . -B build_sp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_COMPUTE=CUDA -DAMReX_CUDA_ARCH=6.0 -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE -DCUDA_ERROR_CAPTURE_THIS=ON
+        cmake -S . -B build_sp         \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_COMPUTE=CUDA         \
+          -DAMReX_CUDA_ARCH=6.0        \
+          -DWarpX_OPENPMD=ON           \
+          -DWarpX_openpmd_internal=OFF \
+          -DWarpX_PRECISION=SINGLE     \
+          -DWarpX_PSATD=ON             \
+          -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
         cmake --build build_sp -j 2
 
         python3 -m pip install --upgrade pip setuptools wheel
