@@ -1,3 +1,5 @@
+Original WarpX Only:
+
 WarpX Copyright (c) 2018, The Regents of the University of California, through Lawrence Berkeley National Laboratory, and Lawrence Livermore National Security, LLC, for the operation of Lawrence Livermore National Laboratory (subject to receipt of any required approvals from the U.S. Dept. of Energy). All rights reserved.
 
 
