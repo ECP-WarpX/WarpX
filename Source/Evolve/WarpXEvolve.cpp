@@ -42,6 +42,8 @@ WarpX::Evolve (int numsteps)
         numsteps_max = std::min(istep[0]+numsteps, max_step);
     }
 
+    bool early_params_checked = false; // check typos in inputs after step 1
+
     Real walltime, walltime_start = amrex::second();
     for (int step = istep[0]; step < numsteps_max && cur_time < stop_time; ++step)
     {
@@ -235,6 +237,13 @@ WarpX::Evolve (int numsteps)
         }
 
         if (warpx_py_afterstep) warpx_py_afterstep();
+
+        // inputs: unused parameters (e.g. typos) check after step 1 has finished
+        if (!early_params_checked) {
+            amrex::Print() << "\n"; // better: conditional \n based on return value
+            amrex::ParmParse().QueryUnusedInputs();
+            early_params_checked = true;
+        }
 
         // End loop on time steps
     }
