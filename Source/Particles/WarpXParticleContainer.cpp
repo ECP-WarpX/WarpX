@@ -249,28 +249,64 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
     // Number of guard cells for local deposition of J
     WarpX& warpx = WarpX::GetInstance();
-    const int ng_J = warpx.get_ng_depos_J().max();
 
-    // Extract deposition order (same order along all directions) and check that
-    // particles shape fits within the guard cells.
-    // NOTE: In specific situations where the staggering of J and the current
-    // deposition algorithm are not trivial, this check might be too relaxed
-    // and we might include a particle that should deposit part of its current
-    // in a neighboring box. However, this should catch particles traveling many
-    // cells away, for example with algorithms that allow for large time steps.
-    const int shape_extent = static_cast<int>(WarpX::nox / 2);
+    const amrex::IntVect& ng_J = warpx.get_ng_depos_J();
+
+    // Extract deposition order and check that particles shape fits within the guard cells.
+    // NOTE: In specific situations where the staggering of J and the current deposition algorithm
+    // are not trivial, this check might be too relaxed and we might include a particle that should
+    // deposit part of its current in a neighboring box. However, this should catch particles
+    // traveling many cells away, for example with algorithms that allow for large time steps.
+
+    // Along x
+    int shape_extent = static_cast<int>(WarpX::nox / 2);
 #ifndef AMREX_USE_GPU
     // On CPU: Particles deposit on tile arrays,
     // which have a small number of guard cells ng_J
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        amrex::numParticlesOutOfRange(pti, ng_J - shape_extent) == 0,
-        "Particles shape does not fit within tile used for local current deposition");
+        amrex::numParticlesOutOfRange(pti, ng_J[0] - shape_extent) == 0,
+        "Particles shape along x does not fit within tile used for local current deposition");
 #else
     // On GPU: Particles deposit directly on the J arrays,
     // which usually have a larger number of guard cells
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        amrex::numParticlesOutOfRange(pti, jx->nGrowVect().min() - shape_extent) == 0,
-        "Particles shape does not fit within guard cells used for current deposition");
+        amrex::numParticlesOutOfRange(pti, jx->nGrowVect()[0] - shape_extent) == 0,
+        "Particles shape along x does not fit within guard cells used for current deposition");
+#endif
+
+    // Along y
+#if (AMREX_SPACEDIM == 3)
+    shape_extent = static_cast<int>(WarpX::noy / 2);
+#ifndef AMREX_USE_GPU
+    // On CPU: Particles deposit on tile arrays,
+    // which have a small number of guard cells ng_J
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::numParticlesOutOfRange(pti, ng_J[1] - shape_extent) == 0,
+        "Particles shape along y does not fit within tile used for local current deposition");
+#else
+    // On GPU: Particles deposit directly on the J arrays,
+    // which usually have a larger number of guard cells
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::numParticlesOutOfRange(pti, jx->nGrowVect()[1] - shape_extent) == 0,
+        "Particles shape along y does not fit within guard cells used for current deposition");
+#endif
+#endif
+
+    // Along z
+    shape_extent = static_cast<int>(WarpX::noz / 2);
+    const int zdir = AMREX_SPACEDIM - 1;
+#ifndef AMREX_USE_GPU
+    // On CPU: Particles deposit on tile arrays,
+    // which have a small number of guard cells ng_J
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::numParticlesOutOfRange(pti, ng_J[zdir] - shape_extent) == 0,
+        "Particles shape along z does not fit within tile used for local current deposition");
+#else
+    // On GPU: Particles deposit directly on the J arrays,
+    // which usually have a larger number of guard cells
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::numParticlesOutOfRange(pti, jx->nGrowVect()[zdir] - shape_extent) == 0,
+        "Particles shape along z does not fit within guard cells used for current deposition");
 #endif
 
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
@@ -466,26 +502,62 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
     // Number of guard cells for local deposition of rho
     WarpX& warpx = WarpX::GetInstance();
-    const int ng_rho = warpx.get_ng_depos_rho().max();
+    const amrex::IntVect& ng_rho = warpx.get_ng_depos_rho();
 
-    // Extract deposition order (same order along all directions) and check that
-    // particles shape fits within the guard cells.
-    // NOTE: In specific situations where the staggering of rho and the charge
-    // deposition algorithm are not trivial, this check might be too strict and
-    // we might need to relax it, as currently done for the current deposition.
-    const int shape_extent = static_cast<int>(WarpX::nox / 2 + 1);
+    // Extract deposition order and check that particles shape fits within the guard cells.
+    // NOTE: In specific situations where the staggering of rho and the charge deposition algorithm
+    // are not trivial, this check might be too strict and we might need to relax it, as currently
+    // done for the current deposition.
+
+    // Along x
+    int shape_extent = static_cast<int>(WarpX::nox / 2 + 1);
 #ifndef AMREX_USE_GPU
     // On CPU: Particles deposit on tile arrays,
     // which have a small number of guard cells
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        amrex::numParticlesOutOfRange(pti, ng_rho - shape_extent) == 0,
-        "Particles shape does not fit within tile used for local charge deposition");
+        amrex::numParticlesOutOfRange(pti, ng_rho[0] - shape_extent) == 0,
+        "Particles shape along x does not fit within tile used for local charge deposition");
 #else
     // On GPU: Particles deposit directly on the rho arrays,
     // which usually have a larger number of guard cells
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        amrex::numParticlesOutOfRange(pti, rho->nGrowVect().min() - shape_extent) == 0,
-        "Particles shape does not fit within guard cells used for charge deposition");
+        amrex::numParticlesOutOfRange(pti, rho->nGrowVect()[0] - shape_extent) == 0,
+        "Particles shape along x does not fit within guard cells used for charge deposition");
+#endif
+
+    // Along y
+#if (AMREX_SPACEDIM == 3)
+    shape_extent = static_cast<int>(WarpX::noy / 2 + 1);
+#ifndef AMREX_USE_GPU
+    // On CPU: Particles deposit on tile arrays,
+    // which have a small number of guard cells
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::numParticlesOutOfRange(pti, ng_rho[1] - shape_extent) == 0,
+        "Particles shape along y does not fit within guard cells used for local charge deposition");
+#else
+    // On GPU: Particles deposit directly on the rho arrays,
+    // which usually have a larger number of guard cells
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::numParticlesOutOfRange(pti, rho->nGrowVect()[1] - shape_extent) == 0,
+        "Particles shape along y does not fit within guard cells used for charge deposition");
+#endif
+#endif
+
+    // Along z
+    shape_extent = static_cast<int>(WarpX::noz / 2 + 1);
+    const int zdir = AMREX_SPACEDIM - 1;
+#ifndef AMREX_USE_GPU
+    // On CPU: Particles deposit on tile arrays,
+    // which have a small number of guard cells
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::numParticlesOutOfRange(pti, ng_rho[zdir] - shape_extent) == 0,
+        "Particles shape along z does not fit within guard cells used for local charge deposition");
+#else
+    // On GPU: Particles deposit directly on the rho arrays,
+    // which usually have a larger number of guard cells
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::numParticlesOutOfRange(pti, ng_rho[zdir] - shape_extent) == 0,
+        "Particles shape along z does not fit within guard cells used for local charge deposition");
 #endif
 
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
