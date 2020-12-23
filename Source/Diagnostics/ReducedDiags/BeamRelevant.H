@@ -25,7 +25,7 @@ public:
     /// name of beam species
     std::string m_beam_name;
 
-    /** This funciton computes beam relevant quantites.
+    /** This function computes beam relevant quantites.
      *  \param [in] step current time step
      */
     virtual void ComputeDiags(int step) override final;

@@ -10,6 +10,8 @@
 
    \linenumbers
 
+.. _theory-pic:
+
 The electromagnetic Particle-In-Cell method
 ===========================================
 
@@ -49,6 +51,8 @@ on the grid from the particles’ positions and velocities, while the
 electric and magnetic field components are interpolated from the grid
 to the particles’ positions for the velocity update.
 
+.. _theory-pic-push:
+
 Particle push
 -------------
 
@@ -63,6 +67,8 @@ equations of motion is given by
 
 In order to close the system, :math:`\bar{\mathbf{v}}^{i}` must be
 expressed as a function of the other quantities. The two implementations that have become the most popular are presented below.
+
+.. _theory-pic-push-boris:
 
 Boris relativistic velocity rotation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -93,6 +99,8 @@ where :math:`\mathbf{t}=\left(q\Delta t/2m\right)\mathbf{B}^{i}/\bar{\gamma}^{i}
 :math:`\bar{\gamma}^{i}` can be calculated as :math:`\bar{\gamma}^{i}=\sqrt{1+(\mathbf{u}^-/c)^2}`.
 
 The Boris implementation is second-order accurate, time-reversible and fast. Its implementation is very widespread and used in the vast majority of PIC codes.
+
+.. _theory-pic-push-vay:
 
 Vay Lorentz-invariant formulation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -125,6 +133,8 @@ charged particle beams, where the accurate account of the cancellation
 of the self-generated electric and magnetic fields is essential, as
 shown in (Vay 2008).
 
+.. _theory-pic-mwsolve:
+
 Field solve
 -----------
 
@@ -138,6 +148,8 @@ to non-standard finite-differences as well as the pseudo-spectral
 analytical time-domain (PSATD) and pseudo-spectral time-domain (PSTD)
 algorithms. Extension to multiresolution (or mesh refinement) PIC
 is described in, e.g. (Vay et al. 2012; Vay, Adam, and Heron 2004).
+
+.. _theory-pic-mwsolve-fdtd:
 
 Finite-Difference Time-Domain (FDTD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -178,6 +190,8 @@ between nodes and the magnetic field components are located in the
 center of the cell faces. Knowing the current densities at half-integer steps,
 the electric field components are updated alternately with the magnetic
 field components at integer and half-integer steps respectively.
+
+.. _theory-pic-mwsolve-nsfdtd:
 
 Non-Standard Finite-Difference Time-Domain (NSFDTD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -235,6 +249,8 @@ wavelength at (or very near) such a timestep. It is also shown in
 the same paper that removing the Nyquist component in all the source
 terms using a bilinear filter (see description of the filter below)
 suppresses this instability.
+
+.. _theory-pic-mwsolve-psatd:
 
 Pseudo Spectral Analytical Time Domain (PSATD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -362,6 +378,9 @@ those implementations, including the expressions for the numerical
 dispersion and Courant condition are given
 in (Pukhov 1999; Vay et al. 2011; Cowan et al. 2013; Lehe et al. 2013).
 
+Current correction
+~~~~~~~~~~~~~~~~~~
+
 In the case of the pseudospectral solvers, the current deposition
 algorithm generally does not satisfy the discretized continuity equation
 in Fourier space :math:`\tilde{\rho}^{n+1}=\tilde{\rho}^{n}-i\Delta t\mathbf{k}\cdot\mathbf{\tilde{J}}^{n+1/2}`.
@@ -379,27 +398,76 @@ the continuity equation. The advantage of correcting the current rather than
 the electric field is that it is more local and thus more compatible with
 domain decomposition of the fields for parallel computation (Jean Luc Vay, Haber, and Godfrey 2013).
 
-Alternatively, an exact current deposition can be written for the pseudospectral solvers, following the geometrical interpretation of existing methods in real space (Morse and Nielson 1971; Villasenor and Buneman 1992; Esirkepov 2001), thereby averaging the currents of the paths following grid lines between positions :math:`(x^n,y^n)` and :math:`(x^{n+1},y^{n+1})`, which is given in 2D (extension to 3D follows readily) for :math:`k\neq0` by (Jean Luc Vay, Haber, and Godfrey 2013):
+Vay deposition
+~~~~~~~~~~~~~~
+
+Alternatively, an exact current deposition can be written for the pseudo-spectral solvers, following the geometrical interpretation of existing methods in real space (`Morse and Nielson, 1971 <https://doi.org/10.1063/1.1693518>`_; `Villasenor and Buneman, 1992 <https://doi.org/10.1016/0010-4655(92)90169-Y>`_; `Esirkepov, 2001 <https://doi.org/10.1016/S0010-4655(00)00228-9>`_).
+
+The Vay deposition scheme is the generalization of the Esirkepov deposition scheme for the spectral case with arbitrary-order stencils `(Vay et al, 2013) <https://doi.org/10.1016/j.jcp.2013.03.010>`_.
+The current density :math:`\widehat{\boldsymbol{J}}^{\,n+1/2}` in Fourier space is computed as :math:`\widehat{\boldsymbol{J}}^{\,n+1/2} = i \, \widehat{\boldsymbol{D}} / \boldsymbol{k}` when :math:`\boldsymbol{k} \neq 0` and set to zero otherwise.
+The quantity :math:`\boldsymbol{D}` is deposited in real space by averaging the currents over all possible grid paths between the initial position :math:`\boldsymbol{x}^{\,n}` and the final position :math:`\boldsymbol{x}^{\,n+1}` and is defined as
+
+- 2D Cartesian geometry:
 
 .. math::
+   \begin{align}
+   D_x = & \: \sum_i \frac{1}{\Delta x \Delta z} \frac{q_i w_i}{2 \Delta t}
+   \bigg[
+   \Gamma(x_i^{n+1},z_i^{n+1}) - \Gamma(x_i^{n},z_i^{n+1})
+   + \Gamma(x_i^{n+1},z_i^{n}) - \Gamma(x_i^{n},z_i^{n})
+   \bigg]
+   \\[8pt]
+   D_y = & \: \sum_i \frac{v_i^y}{\Delta x \Delta z} \frac{q_i w_i}{4}
+   \bigg[
+   \Gamma(x_i^{n+1},z_i^{n+1}) + \Gamma(x_i^{n+1},z_i^{n})
+   + \Gamma(x_i^{n},z_i^{n+1}) + \Gamma(x_i^{n},z_i^{n})
+   \bigg]
+   \\[8pt]
+   D_z = & \: \sum_i \frac{1}{\Delta x \Delta z} \frac{q_i w_i}{2 \Delta t}
+   \bigg[
+   \Gamma(x_i^{n+1},z_i^{n+1}) - \Gamma(x_i^{n+1},z_i^{n})
+   + \Gamma(x_i^{n},z_i^{n+1}) - \Gamma(x_i^{n},z_i^{n})
+   \bigg]
+   \end{align}
 
-   \begin{aligned}
-   \mathbf{\tilde{J}}^{k\neq0}=\frac{i\mathbf{\tilde{D}}}{\mathbf{k}}\end{aligned}
-
-with
+- 3D Cartesian geometry:
 
 .. math::
+   \begin{align}
+   \begin{split}
+   D_x = & \: \sum_i \frac{1}{\Delta x\Delta y\Delta z} \frac{q_i w_i}{6\Delta t}
+   \bigg[
+   2 \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n+1}) - 2 \Gamma(x_i^{n},y_i^{n+1},z_i^{n+1}) \\[4pt]
+   & + \Gamma(x_i^{n+1},y_i^{n},z_i^{n+1}) - \Gamma(x_i^{n},y_i^{n},z_i^{n+1})
+   + \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n}) \\[4pt]
+   & - \Gamma(x_i^{n},y_i^{n+1},z_i^{n}) + 2 \Gamma(x_i^{n+1},y_i^{n},z_i^{n})
+   - 2 \Gamma(x_i^{n},y_i^{n},z_i^{n})
+   \bigg]
+   \end{split} \\[8pt]
+   \begin{split}
+   D_y = & \: \sum_i \frac{1}{\Delta x\Delta y\Delta z} \frac{q_i w_i}{6\Delta t}
+   \bigg[
+   2 \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n+1}) - 2 \Gamma(x_i^{n+1},y_i^{n},z_i^{n+1}) \\[4pt]
+   & + \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n}) - \Gamma(x_i^{n+1},y_i^{n},z_i^{n})
+   + \Gamma(x_i^{n},y_i^{n+1},z_i^{n+1}) \\[4pt]
+   & - \Gamma(x_i^{n},y_i^{n},z_i^{n+1}) + 2 \Gamma(x_i^{n},y_i^{n+1},z_i^{n})
+   - 2 \Gamma(x_i^{n},y_i^{n},z_i^{n})
+   \bigg]
+   \end{split} \\[8pt]
+   \begin{split}
+   D_z = & \: \sum_i \frac{1}{\Delta x\Delta y\Delta z} \frac{q_i w_i}{6\Delta t}
+   \bigg[
+   2 \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n+1}) - 2 \Gamma(x_i^{n+1},y_i^{n+1},z_i^{n}) \\[4pt]
+   & + \Gamma(x_i^{n},y_i^{n+1},z_i^{n+1}) - \Gamma(x_i^{n},y_i^{n+1},z_i^{n})
+   + \Gamma(x_i^{n+1},y_i^{n},z_i^{n+1}) \\[4pt]
+   & - \Gamma(x_i^{n+1},y_i^{n},z_i^{n}) + 2 \Gamma(x_i^{n},y_i^{n},z_i^{n+1})
+   - 2 \Gamma(x_i^{n},y_i^{n},z_i^{n})
+   \bigg]
+   \end{split}
+   \end{align}
 
-   \begin{aligned}
-   D_x   =  \frac{1}{2\Delta t}\sum_i q_i
-     [\Gamma(x_i^{n+1},y_i^{n+1})-\Gamma(x_i^{n},y_i^{n+1}) \nonumber\\
-   +\Gamma(x_i^{n+1},y_i^{n})-\Gamma(x_i^{n},y_i^{n})],\\
-   D_y   =  \frac{1}{2\Delta t}\sum_i q_i
-     [\Gamma(x_i^{n+1},y_i^{n+1})-\Gamma(x_i^{n+1},y_i^{n}) \nonumber \\
-   +\Gamma(x_i^{n},y_i^{n+1})-\Gamma(x_i^{n},y_i^{n})],\end{aligned}
-
-where :math:`\Gamma` is the macro-particle form factor.
-The contributions for :math:`k=0` are integrated directly in real space (Jean Luc Vay, Haber, and Godfrey 2013).
+Here, :math:`w_i` represents the weight of the :math:`i`-th macro-particle and :math:`\Gamma` represents its shape factor.
+Note that in 2D Cartesian geometry, :math:`D_y` is effectively :math:`J_y` and does not require additional operations in Fourier space.
 
 Field gather
 ------------

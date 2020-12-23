@@ -43,7 +43,6 @@ my_constants.k       = 314159.2653589793
 # k is calculated so as to have 2 periods within the 40e-6 wide box.
 
 # Particles
-particles.nspecies = 2
 particles.species_names = electrons positrons
 
 electrons.charge = -q_e
@@ -88,4 +87,4 @@ diag1.period = 40
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell rho
 diag1.electrons.variables = w ux
-diag1.positrons.variables = Ey
+diag1.positrons.variables = uz

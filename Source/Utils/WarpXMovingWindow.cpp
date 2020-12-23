@@ -112,24 +112,28 @@ WarpX::MoveWindow (bool move_j)
         // Shift each component of vector fields (E, B, j)
         for (int dim = 0; dim < 3; ++dim) {
             // Fine grid
-            ParserWrapper<3> *Bfield_parser;
-            ParserWrapper<3> *Efield_parser;
+            HostDeviceParser<3> Bfield_parser;
+            HostDeviceParser<3> Efield_parser;
             bool use_Bparser = false;
             bool use_Eparser = false;
             if (B_ext_grid_s == "parse_b_ext_grid_function") {
                 use_Bparser = true;
-                if (dim == 0) Bfield_parser = Bxfield_parser.get();
-                if (dim == 1) Bfield_parser = Byfield_parser.get();
-                if (dim == 2) Bfield_parser = Bzfield_parser.get();
+                if (dim == 0) Bfield_parser = getParser(Bxfield_parser);
+                if (dim == 1) Bfield_parser = getParser(Byfield_parser);
+                if (dim == 2) Bfield_parser = getParser(Bzfield_parser);
             }
             if (E_ext_grid_s == "parse_e_ext_grid_function") {
                 use_Eparser = true;
-                if (dim == 0) Efield_parser = Exfield_parser.get();
-                if (dim == 1) Efield_parser = Eyfield_parser.get();
-                if (dim == 2) Efield_parser = Ezfield_parser.get();
+                if (dim == 0) Efield_parser = getParser(Exfield_parser);
+                if (dim == 1) Efield_parser = getParser(Eyfield_parser);
+                if (dim == 2) Efield_parser = getParser(Ezfield_parser);
             }
             shiftMF(*Bfield_fp[lev][dim], geom[lev], num_shift, dir, ng_extra, B_external_grid[dim], use_Bparser, Bfield_parser);
             shiftMF(*Efield_fp[lev][dim], geom[lev], num_shift, dir, ng_extra, E_external_grid[dim], use_Eparser, Efield_parser);
+            if (fft_do_time_averaging) {
+                shiftMF(*Bfield_avg_fp[lev][dim], geom[lev], num_shift, dir, ng_extra, B_external_grid[dim], use_Bparser, Bfield_parser);
+                shiftMF(*Efield_avg_fp[lev][dim], geom[lev], num_shift, dir, ng_extra, E_external_grid[dim], use_Eparser, Efield_parser);
+            }
             if (move_j) {
                 shiftMF(*current_fp[lev][dim], geom[lev], num_shift, dir, ng_zero);
             }
@@ -146,6 +150,12 @@ WarpX::MoveWindow (bool move_j)
                 shiftMF(*Efield_cp[lev][dim], geom[lev-1], num_shift_crse, dir, ng_zero, E_external_grid[dim], use_Eparser, Efield_parser);
                 shiftMF(*Bfield_aux[lev][dim], geom[lev], num_shift, dir, ng_zero);
                 shiftMF(*Efield_aux[lev][dim], geom[lev], num_shift, dir, ng_zero);
+                if (fft_do_time_averaging) {
+                    shiftMF(*Bfield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, ng_zero, B_external_grid[dim], use_Bparser, Bfield_parser);
+                    shiftMF(*Efield_avg_cp[lev][dim], geom[lev-1], num_shift_crse, dir, ng_zero, E_external_grid[dim], use_Eparser, Efield_parser);
+                    shiftMF(*Bfield_avg_aux[lev][dim], geom[lev], num_shift, dir, ng_zero);
+                    shiftMF(*Efield_avg_aux[lev][dim], geom[lev], num_shift, dir, ng_zero);
+                }
                 if (move_j) {
                     shiftMF(*current_cp[lev][dim], geom[lev-1], num_shift_crse, dir, ng_zero);
                 }
@@ -234,7 +244,7 @@ WarpX::MoveWindow (bool move_j)
 void
 WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
                 IntVect ng_extra, amrex::Real external_field, bool useparser,
-                ParserWrapper<3> *field_parser)
+                HostDeviceParser<3> const& field_parser)
 {
     WARPX_PROFILE("WarpX::shiftMF()");
     const BoxArray& ba = mf.boxArray();
@@ -310,7 +320,7 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
                 AMREX_PARALLEL_FOR_4D ( outbox, nc, i, j, k, n,
                 {
                     srcfab(i,j,k,n) = external_field;
-                });
+                })
             } else if (useparser == true) {
                 // index type of the src mf
                 auto const& mf_IndexType = (tmpmf).ixType();
@@ -335,7 +345,7 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
                       Real fac_z = (1.0 - mf_type[2]) * dx[2]*0.5;
                       Real z = k*dx[2] + real_box.lo(2) + fac_z;
 #endif
-                      srcfab(i,j,k,n) = (*field_parser)(x,y,z);
+                      srcfab(i,j,k,n) = field_parser(x,y,z);
                 });
             }
 
@@ -350,7 +360,7 @@ WarpX::shiftMF (MultiFab& mf, const Geometry& geom, int num_shift, int dir,
         AMREX_PARALLEL_FOR_4D ( dstBox, nc, i, j, k, n,
         {
             dstfab(i,j,k,n) = srcfab(i+shift.x,j+shift.y,k+shift.z,n);
-        });
+        })
     }
 }
 
@@ -366,22 +376,28 @@ WarpX::ShiftGalileanBoundary ()
     Real time_shift = (cur_time - time_of_last_gal_shift);
 
 #if (AMREX_SPACEDIM == 3)
-        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]* time_shift, v_galilean[1]*time_shift, v_galilean[2]*time_shift };
+        m_galilean_shift = {
+            m_v_galilean[0]* time_shift,
+            m_v_galilean[1]*time_shift,
+            m_v_galilean[2]*time_shift };
 #elif (AMREX_SPACEDIM == 2)
-        amrex::Array<amrex::Real,3> galilean_shift = { v_galilean[0]* time_shift, std::numeric_limits<Real>::quiet_NaN(), v_galilean[2]*time_shift };
+        m_galilean_shift = {
+            m_v_galilean[0]* time_shift,
+            std::numeric_limits<Real>::quiet_NaN(),
+            m_v_galilean[2]*time_shift };
 #endif
 
 #if (AMREX_SPACEDIM == 3)
         for (int i=0; i<AMREX_SPACEDIM; i++) {
-            new_lo[i] = current_lo[i] + galilean_shift[i];
-            new_hi[i] = current_hi[i] + galilean_shift[i];
+            new_lo[i] = current_lo[i] + m_galilean_shift[i];
+            new_hi[i] = current_hi[i] + m_galilean_shift[i];
         }
 #elif (AMREX_SPACEDIM == 2)
     {
-        new_lo[0] = current_lo[0] + galilean_shift[0];
-        new_hi[0] = current_hi[0] + galilean_shift[0];
-        new_lo[1] = current_lo[1] + galilean_shift[2];
-        new_hi[1] = current_hi[1] + galilean_shift[2];
+        new_lo[0] = current_lo[0] + m_galilean_shift[0];
+        new_hi[0] = current_hi[0] + m_galilean_shift[0];
+        new_lo[1] = current_lo[1] + m_galilean_shift[2];
+        new_hi[1] = current_hi[1] + m_galilean_shift[2];
       }
     #endif
     time_of_last_gal_shift = cur_time;

@@ -59,10 +59,18 @@ else:
 
 _libc = ctypes.CDLL(_find_library('c'))
 
+# macOS/Linux use .so, Windows uses .pyd
+# https://docs.python.org/3/faq/windows.html#is-a-pyd-file-the-same-as-a-dll
+if os.name == 'nt':
+    mod_ext = "pyd"
+else:
+    mod_ext = "so"
+libname = "libwarpx{0}.{1}".format(geometry_dim, mod_ext)
+
 try:
-    libwarpx = ctypes.CDLL(os.path.join(_get_package_root(), "libwarpx%s.so"%geometry_dim))
+    libwarpx = ctypes.CDLL(os.path.join(_get_package_root(), libname))
 except OSError:
-    raise Exception('libwarpx%s.so was not installed. It can be installed by running "make" in the Python directory of WarpX'%geometry_dim)
+    raise Exception('"%s" was not installed. It can be installed by running "make" in the Python directory of WarpX' % libname)
 
 # WarpX can be compiled using either double or float
 libwarpx.warpx_Real_size.restype = ctypes.c_int
@@ -248,6 +256,8 @@ def initialize(argv=None):
         argv = sys.argv
     amrex_init(argv)
     libwarpx.warpx_ConvertLabParamsToBoost()
+    if geometry_dim == 'rz':
+        libwarpx.warpx_CheckGriddingForRZSpectral()
     libwarpx.warpx_init()
 
 
@@ -531,7 +541,10 @@ def get_particle_z(species_number, level=0):
 
     '''
     structs = get_particle_structs(species_number, level)
-    return [struct['z'] for struct in structs]
+    if geometry_dim == '3d':
+        return [struct['z'] for struct in structs]
+    elif geometry_dim == 'rz' or geometry_dim == '2d':
+        return [struct['y'] for struct in structs]
 
 
 def get_particle_id(species_number, level=0):
@@ -600,72 +613,6 @@ def get_particle_uz(species_number, level=0):
     return get_particle_arrays(species_number, 3, level)
 
 
-def get_particle_Ex(species_number, level=0):
-    '''
-
-    Return a list of numpy arrays containing the particle
-    x electric field on each tile.
-
-    '''
-
-    return get_particle_arrays(species_number, 4, level)
-
-
-def get_particle_Ey(species_number, level=0):
-    '''
-
-    Return a list of numpy arrays containing the particle
-    y electric field on each tile.
-
-    '''
-
-    return get_particle_arrays(species_number, 5, level)
-
-
-def get_particle_Ez(species_number, level=0):
-    '''
-
-    Return a list of numpy arrays containing the particle
-    z electric field on each tile.
-
-    '''
-
-    return get_particle_arrays(species_number, 6, level)
-
-
-def get_particle_Bx(species_number, level=0):
-    '''
-
-    Return a list of numpy arrays containing the particle
-    x magnetic field on each tile.
-
-    '''
-
-    return get_particle_arrays(species_number, 7, level)
-
-
-def get_particle_By(species_number, level=0):
-    '''
-
-    Return a list of numpy arrays containing the particle
-    y magnetic field on each tile.
-
-    '''
-
-    return get_particle_arrays(species_number, 8, level)
-
-
-def get_particle_Bz(species_number, level=0):
-    '''
-
-    Return a list of numpy arrays containing the particle
-    z magnetic field on each tile.
-
-    '''
-
-    return get_particle_arrays(species_number, 9, level)
-
-
 def get_particle_theta(species_number, level=0):
     '''
 
@@ -675,7 +622,7 @@ def get_particle_theta(species_number, level=0):
     '''
 
     if geometry_dim == 'rz':
-        return get_particle_arrays(species_number, 10, level)
+        return get_particle_arrays(species_number, 4, level)
     elif geometry_dim == '3d':
         return [np.arctan2(struct['y'], struct['x']) for struct in structs]
     elif geometry_dim == '2d':
@@ -689,16 +636,16 @@ def _get_mesh_field_list(warpx_func, level, direction, include_ghosts):
     shapes = _LP_c_int()
     size = ctypes.c_int(0)
     ncomps = ctypes.c_int(0)
-    ngrow = ctypes.c_int(0)
+    ngrowvect = _LP_c_int()
     if direction is None:
         data = warpx_func(level,
                           ctypes.byref(size), ctypes.byref(ncomps),
-                          ctypes.byref(ngrow), ctypes.byref(shapes))
+                          ctypes.byref(ngrowvect), ctypes.byref(shapes))
     else:
         data = warpx_func(level, direction,
                           ctypes.byref(size), ctypes.byref(ncomps),
-                          ctypes.byref(ngrow), ctypes.byref(shapes))
-    ng = ngrow.value
+                          ctypes.byref(ngrowvect), ctypes.byref(shapes))
+    ngvect = [ngrowvect[i] for i in range(dim)]
     grid_data = []
     shapesize = dim
     if ncomps.value > 1:
@@ -715,7 +662,7 @@ def _get_mesh_field_list(warpx_func, level, direction, include_ghosts):
         if include_ghosts:
             grid_data.append(arr)
         else:
-            grid_data.append(arr[tuple([slice(ng, -ng) for _ in range(dim)])])
+            grid_data.append(arr[tuple([slice(ngvect[d], -ngvect[d]) for d in range(dim)])])
 
     _libc.free(shapes)
     _libc.free(data)
@@ -1196,15 +1143,15 @@ def get_mesh_charge_density_fp(level, include_ghosts=True):
     return _get_mesh_field_list(libwarpx.warpx_getChargeDensityFP, level, None, include_ghosts)
 
 
-def _get_mesh_array_lovects(level, direction, include_ghosts=True, getarrayfunc=None):
+def _get_mesh_array_lovects(level, direction, include_ghosts=True, getlovectsfunc=None):
     assert(0 <= level and level <= libwarpx.warpx_finestLevel())
 
     size = ctypes.c_int(0)
-    ngrow = ctypes.c_int(0)
+    ngrowvect = _LP_c_int()
     if direction is None:
-        data = getarrayfunc(level, ctypes.byref(size), ctypes.byref(ngrow))
+        data = getlovectsfunc(level, ctypes.byref(size), ctypes.byref(ngrowvect))
     else:
-        data = getarrayfunc(level, direction, ctypes.byref(size), ctypes.byref(ngrow))
+        data = getlovectsfunc(level, direction, ctypes.byref(size), ctypes.byref(ngrowvect))
 
     lovects_ref = np.ctypeslib.as_array(data, (size.value, dim))
 
@@ -1212,12 +1159,18 @@ def _get_mesh_array_lovects(level, direction, include_ghosts=True, getarrayfunc=
     # --- Also, take the transpose to give shape (dims, number of grids)
     lovects = lovects_ref.copy().T
 
-    if not include_ghosts:
-        lovects += ngrow.value
+    ng = []
+    if include_ghosts:
+        for d in range(dim):
+            ng.append(ngrowvect[d])
+    else:
+        for d in range(dim):
+            ng.append(0)
+            lovects[d,:] += ngrowvect[d]
 
     del lovects_ref
     _libc.free(data)
-    return lovects
+    return lovects, ng
 
 
 def get_mesh_electric_field_lovects(level, direction, include_ghosts=True):

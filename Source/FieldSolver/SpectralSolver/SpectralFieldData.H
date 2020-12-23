@@ -10,6 +10,8 @@
 
 #include "Utils/WarpX_Complex.H"
 #include "SpectralKSpace.H"
+#include "AnyFFT.H"
+
 #include <AMReX_MultiFab.H>
 
 #include <string>
@@ -25,7 +27,13 @@ struct SpectralFieldIndex {
   enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, n_fields, divE=3 };
 };
 
-/** Index for the PML fields, when stored in spectral space */
+/* Index for the regular fields + averaged fields, when stored in spectral space */
+struct SpectralAvgFieldIndex {
+  enum { Ex=0, Ey, Ez, Bx, By, Bz, Jx, Jy, Jz, rho_old, rho_new, Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg,n_fields };
+  // n_fields is automatically the total number of fields
+};
+
+/* Index for the PML fields, when stored in spectral space */
 struct SpectralPMLIndex {
   enum { Exy=0, Exz, Eyx, Eyz, Ezx, Ezy,
            Bxy, Bxz, Byx, Byz, Bzx, Bzy, n_fields };
@@ -38,19 +46,6 @@ struct SpectralPMLIndex {
 class SpectralFieldData
 {
 
-    // Define the FFTplans type, which holds one fft plan per box
-    // (plans are only initialized for the boxes that are owned by
-    // the local MPI rank)
-#ifdef AMREX_USE_GPU
-    using FFTplans = amrex::LayoutData<cufftHandle>;
-#else
-#  ifdef AMREX_USE_FLOAT
-    using FFTplans = amrex::LayoutData<fftwf_plan>;
-#  else
-    using FFTplans = amrex::LayoutData<fftw_plan>;
-#  endif
-#endif
-
     public:
         SpectralFieldData( const amrex::BoxArray& realspace_ba,
                            const SpectralKSpace& k_space,
@@ -60,10 +55,17 @@ class SpectralFieldData
         SpectralFieldData() = default; // Default constructor
         SpectralFieldData& operator=(SpectralFieldData&& field_data) = default;
         ~SpectralFieldData();
-        void ForwardTransform( const amrex::MultiFab& mf,
-                               const int field_index, const int i_comp);
-        void BackwardTransform( amrex::MultiFab& mf,
-                               const int field_index, const int i_comp);
+
+        void ForwardTransform (const amrex::MultiFab& mf, const int field_index,
+                               const int i_comp, const amrex::IntVect& stag);
+        AMREX_FORCE_INLINE
+        void ForwardTransform (const amrex::MultiFab& mf, const int field_index, const int i_comp)
+        {
+            ForwardTransform(mf, field_index, i_comp, mf.ixType().toIntVect());
+        }
+
+        void BackwardTransform (amrex::MultiFab& mf, const int field_index, const int i_comp);
+
         // `fields` stores fields in spectral space, as multicomponent FabArray
         SpectralField fields;
 
@@ -72,23 +74,13 @@ class SpectralFieldData
         // right before/after the Fourier transform
         SpectralField tmpSpectralField; // contains Complexs
         amrex::MultiFab tmpRealField; // contains Reals
-        FFTplans forward_plan, backward_plan;
+        AnyFFT::FFTplans forward_plan, backward_plan;
         // Correcting "shift" factors when performing FFT from/to
         // a cell-centered grid in real space, instead of a nodal grid
         SpectralShiftFactor xshift_FFTfromCell, xshift_FFTtoCell,
                             zshift_FFTfromCell, zshift_FFTtoCell;
 #if (AMREX_SPACEDIM==3)
         SpectralShiftFactor yshift_FFTfromCell, yshift_FFTtoCell;
-#endif
-
-#ifdef AMREX_USE_GPU
-        /** \brief This method converts a cufftResult
-        * into the corresponding string
-        *
-        * @param[in] err a cufftResult
-        * @return an std::string
-        */
-        std::string cufftErrorToString (const cufftResult& err);
 #endif
 
         bool m_periodic_single_box;

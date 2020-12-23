@@ -8,9 +8,10 @@
 #include "SliceDiagnostic.H"
 #include <AMReX_MultiFabUtil.H>
 #include <AMReX_PlotFileUtil.H>
-#include <AMReX_FillPatchUtil_F.H>
 
 #include <WarpX.H>
+
+#include <memory>
 
 using namespace amrex;
 
@@ -114,8 +115,8 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
     Vector<DistributionMapping> sdmap(1);
     sdmap[0] = DistributionMapping{sba[0]};
 
-    smf.reset(new MultiFab(amrex::convert(sba[0],SliceType), sdmap[0],
-                           ncomp, nghost));
+    smf = std::make_unique<MultiFab>(amrex::convert(sba[0],SliceType), sdmap[0],
+                           ncomp, nghost);
 
     // Copy data from domain to slice that has same cell size as that of //
     // the domain mf. src and dst have the same number of ghost cells    //
@@ -138,8 +139,8 @@ CreateSlice( const MultiFab& mf, const Vector<Geometry> &dom_geom,
 
        AMREX_ALWAYS_ASSERT(crse_ba[0].size() == sba[0].size());
 
-       cs_mf.reset( new MultiFab(amrex::convert(crse_ba[0],SliceType),
-                    sdmap[0], ncomp,nghost));
+       cs_mf = std::make_unique<MultiFab>(amrex::convert(crse_ba[0],SliceType),
+                    sdmap[0], ncomp,nghost);
 
        MultiFab& mfSrc = *smf;
        MultiFab& mfDst = *cs_mf;
@@ -389,9 +390,6 @@ InterpolateSliceValues(MultiFab& smf, IntVect interp_lo, RealBox slice_realbox,
     for (MFIter mfi(smf); mfi.isValid(); ++mfi)
     {
          const Box& bx = mfi.tilebox();
-         const auto IndType = smf.ixType();
-         const auto lo = amrex::lbound(bx);
-         const auto hi = amrex::ubound(bx);
          FArrayBox& fabox = smf[mfi];
 
          for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
@@ -484,10 +482,3 @@ InterpolateLo(const Box& bx, FArrayBox &fabox, IntVect slice_lo,
     }
 
 }
-
-
-
-
-
-
-

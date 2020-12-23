@@ -21,7 +21,7 @@ geometry.prob_hi     =  1.   1.   1.
 algo.current_deposition = esirkepov
 algo.field_gathering = energy-conserving # or momentum-conserving
 warpx.use_filter = 1
-algo.maxwell_fdtd_solver = yee # or ckc
+algo.maxwell_solver = yee # or ckc
 
 # Interpolation
 # 1: Linear; 2: Quadratic; 3: Cubic.
@@ -33,7 +33,6 @@ interpolation.noz = 1
 warpx.cfl = 0.99999
 
 # Particles
-particles.nspecies = 3
 particles.species_names = electrons protons photons
 particles.photon_species = photons
 
@@ -72,11 +71,15 @@ photons.uz_th = 0.2
 #################################
 ###### REDUCED DIAGS ############
 #################################
-warpx.reduced_diags_names = EP EF
+warpx.reduced_diags_names = EP NP EF MF
 EP.type = ParticleEnergy
 EP.frequency = 200
 EF.type = FieldEnergy
 EF.frequency = 200
+MF.type = FieldMaximum
+MF.frequency = 200
+NP.type = ParticleNumber
+NP.frequency = 200
 
 # Diagnostics
 diagnostics.diags_names = diag1

@@ -1,11 +1,19 @@
 CEXE_sources += SpectralSolver.cpp
 CEXE_sources += SpectralFieldData.cpp
 CEXE_sources += SpectralKSpace.cpp
+ifeq ($(USE_CUDA),TRUE)
+  CEXE_sources += WrapCuFFT.cpp
+else ifeq ($(USE_HIP),TRUE)
+  CEXE_sources += WrapRocFFT.cpp
+else
+  CEXE_sources += WrapFFTW.cpp
+endif
 
 ifeq ($(USE_RZ),TRUE)
   CEXE_sources += SpectralSolverRZ.cpp
   CEXE_sources += SpectralFieldDataRZ.cpp
   CEXE_sources += SpectralKSpaceRZ.cpp
+  CEXE_sources += SpectralBinomialFilter.cpp
   include $(WARPX_HOME)/Source/FieldSolver/SpectralSolver/SpectralHankelTransform/Make.package
 endif
 

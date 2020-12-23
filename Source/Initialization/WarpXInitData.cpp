@@ -22,8 +22,46 @@
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 
+#include <memory>
 
 using namespace amrex;
+
+void
+WarpX::PostProcessBaseGrids (BoxArray& ba0) const
+{
+    if (numprocs != 0) {
+        const Box& dom = Geom(0).Domain();
+        const IntVect& domlo = dom.smallEnd();
+        const IntVect& domlen = dom.size();
+        const IntVect sz = domlen / numprocs;
+        const IntVect extra = domlen - sz*numprocs;
+        BoxList bl;
+#if (AMREX_SPACEDIM == 3)
+        for (int k = 0; k < numprocs[2]; ++k) {
+            // The first extra[2] blocks get one extra cell with a total of
+            // sz[2]+1.  The rest get sz[2] cells.  The docomposition in y
+            // and x directions are similar.
+            int klo = (k < extra[2]) ? k*(sz[2]+1) : (k*sz[2]+extra[2]);
+            int khi = (k < extra[2]) ? klo+(sz[2]+1)-1 : klo+sz[2]-1;
+            klo += domlo[2];
+            khi += domlo[2];
+#endif
+            for (int j = 0; j < numprocs[1]; ++j) {
+                int jlo = (j < extra[1]) ? j*(sz[1]+1) : (j*sz[1]+extra[1]);
+                int jhi = (j < extra[1]) ? jlo+(sz[1]+1)-1 : jlo+sz[1]-1;
+                jlo += domlo[1];
+                jhi += domlo[1];
+                for (int i = 0; i < numprocs[0]; ++i) {
+                    int ilo = (i < extra[0]) ? i*(sz[0]+1) : (i*sz[0]+extra[0]);
+                    int ihi = (i < extra[0]) ? ilo+(sz[0]+1)-1 : ilo+sz[0]-1;
+                    ilo += domlo[0];
+                    ihi += domlo[0];
+                    bl.push_back(Box(IntVect(AMREX_D_DECL(ilo,jlo,klo)),
+                                     IntVect(AMREX_D_DECL(ihi,jhi,khi))));
+        AMREX_D_TERM(},},})
+        ba0 = BoxArray(std::move(bl));
+    }
+}
 
 void
 WarpX::InitData ()
@@ -56,6 +94,10 @@ WarpX::InitData ()
 
     BuildBufferMasks();
 
+    if (WarpX::em_solver_medium==1) {
+        m_macroscopic_properties->InitData();
+    }
+
     InitDiagnostics();
 
     if (ParallelDescriptor::IOProcessor()) {
@@ -63,28 +105,9 @@ WarpX::InitData ()
         printGridSummary(std::cout, 0, finestLevel());
     }
 
-#ifdef BL_USE_SENSEI_INSITU
-    insitu_bridge = new amrex::AmrMeshInSituBridge;
-    insitu_bridge->setEnabled(insitu_int > 0 ? 1 : 0);
-    insitu_bridge->setConfig(insitu_config);
-    insitu_bridge->setPinMesh(insitu_pin_mesh);
-    if (insitu_bridge->initialize())
-    {
-        amrex::ErrorStream()
-            << "WarpX::InitData : Failed to initialize the in situ bridge."
-            << std::endl;
-
-        amrex::Abort();
-    }
-    insitu_bridge->setFrequency(1);
-#endif
-
     if (restart_chkfile.empty())
     {
-        multi_diags->FilterComputePackFlush( 0, true );
-
-        if ((insitu_int > 0) && (insitu_start == 0))
-            UpdateInSitu();
+        multi_diags->FilterComputePackFlush( -1, true );
 
         // Write reduced diagnostics before the first iteration.
         if (reduced_diags->m_plot_rd != 0)
@@ -105,7 +128,8 @@ WarpX::InitDiagnostics () {
         // Find the positions of the lab-frame box that corresponds to the boosted-frame box at t=0
         Real zmin_lab = current_lo[moving_window_dir]/( (1.+beta_boost)*gamma_boost );
         Real zmax_lab = current_hi[moving_window_dir]/( (1.+beta_boost)*gamma_boost );
-        myBFD.reset(new BackTransformedDiagnostic(zmin_lab,
+        myBFD = std::make_unique<BackTransformedDiagnostic>(
+                                               zmin_lab,
                                                zmax_lab,
                                                moving_window_v, dt_snapshots_lab,
                                                num_snapshots_lab,
@@ -114,7 +138,7 @@ WarpX::InitDiagnostics () {
                                                gamma_boost, t_new[0], dt_boost,
                                                moving_window_dir, geom[0],
                                                slice_realbox,
-                                               particle_slice_width_lab));
+                                               particle_slice_width_lab);
     }
 }
 
@@ -145,14 +169,12 @@ WarpX::InitPML ()
 #ifdef WARPX_DIM_RZ
         do_pml_Lo_corrected[0] = 0; // no PML at r=0, in cylindrical geometry
 #endif
-        pml[0].reset(new PML(boxArray(0), DistributionMap(0), &Geom(0), nullptr,
-                             pml_ncell, pml_delta, 0,
-#ifdef WARPX_USE_PSATD
+        pml[0] = std::make_unique<PML>(boxArray(0), DistributionMap(0), &Geom(0), nullptr,
+                             pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
                              dt[0], nox_fft, noy_fft, noz_fft, do_nodal,
-#endif
                              do_dive_cleaning, do_moving_window,
                              pml_has_particles, do_pml_in_domain,
-                             do_pml_Lo_corrected, do_pml_Hi));
+                             do_pml_Lo_corrected, do_pml_Hi);
         for (int lev = 1; lev <= finest_level; ++lev)
         {
             amrex::IntVect do_pml_Lo_MR = amrex::IntVect::TheUnitVector();
@@ -162,15 +184,13 @@ WarpX::InitPML ()
                 do_pml_Lo_MR[0] = 0;
             }
 #endif
-            pml[lev].reset(new PML(boxArray(lev), DistributionMap(lev),
+            pml[lev] = std::make_unique<PML>(boxArray(lev), DistributionMap(lev),
                                    &Geom(lev), &Geom(lev-1),
-                                   pml_ncell, pml_delta, refRatio(lev-1)[0],
-#ifdef WARPX_USE_PSATD
+                                   pml_ncell, pml_delta, refRatio(lev-1),
                                    dt[lev], nox_fft, noy_fft, noz_fft, do_nodal,
-#endif
                                    do_dive_cleaning, do_moving_window,
                                    pml_has_particles, do_pml_in_domain,
-                                   do_pml_Lo_MR, amrex::IntVect::TheUnitVector()));
+                                   do_pml_Lo_MR, amrex::IntVect::TheUnitVector());
         }
     }
 }
@@ -206,10 +226,12 @@ WarpX::InitNCICorrector ()
 
             // Initialize Godfrey filters
             // Same filter for fields Ex, Ey and Bz
-            const bool nodal_gather = (l_lower_order_in_v == 0);
-            nci_godfrey_filter_exeybz[lev].reset( new NCIGodfreyFilter(godfrey_coeff_set::Ex_Ey_Bz, cdtodz, nodal_gather) );
+            const bool nodal_gather = !galerkin_interpolation;
+            nci_godfrey_filter_exeybz[lev] = std::make_unique<NCIGodfreyFilter>(
+                godfrey_coeff_set::Ex_Ey_Bz, cdtodz, nodal_gather);
             // Same filter for fields Bx, By and Ez
-            nci_godfrey_filter_bxbyez[lev].reset( new NCIGodfreyFilter(godfrey_coeff_set::Bx_By_Ez, cdtodz, nodal_gather) );
+            nci_godfrey_filter_bxbyez[lev] = std::make_unique<NCIGodfreyFilter>(
+                godfrey_coeff_set::Bx_By_Ez, cdtodz, nodal_gather);
             // Compute Godfrey filters stencils
             nci_godfrey_filter_exeybz[lev]->ComputeStencils();
             nci_godfrey_filter_bxbyez[lev]->ComputeStencils();
@@ -228,9 +250,9 @@ WarpX::InitFilter (){
 void
 WarpX::PostRestart ()
 {
-#ifdef WARPX_USE_PSATD
-    amrex::Abort("WarpX::PostRestart: TODO for PSATD");
-#endif
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        amrex::Abort("WarpX::PostRestart: TODO for PSATD");
+    }
     mypc->PostRestart();
 }
 
@@ -266,6 +288,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (E_ext_grid_s == "constant")
         pp.getarr("E_external_grid", E_external_grid);
 
+    // initialize the averaged fields only if the averaged algorithm
+    // is activated ('psatd.do_time_averaging=1')
+    ParmParse ppsatd("psatd");
+    ppsatd.query("do_time_averaging", fft_do_time_averaging );
+
     for (int i = 0; i < 3; ++i) {
         current_fp[lev][i]->setVal(0.0);
         if (lev > 0)
@@ -273,16 +300,33 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 
         if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
            Bfield_fp[lev][i]->setVal(B_external_grid[i]);
+           if (fft_do_time_averaging) {
+                Bfield_avg_fp[lev][i]->setVal(B_external_grid[i]);
+           }
+
            if (lev > 0) {
               Bfield_aux[lev][i]->setVal(B_external_grid[i]);
               Bfield_cp[lev][i]->setVal(B_external_grid[i]);
+              if (fft_do_time_averaging) {
+                  Bfield_avg_aux[lev][i]->setVal(B_external_grid[i]);
+                  Bfield_avg_cp[lev][i]->setVal(B_external_grid[i]);
+              }
            }
         }
         if (E_ext_grid_s == "constant" || E_ext_grid_s == "default") {
            Efield_fp[lev][i]->setVal(E_external_grid[i]);
+           if (fft_do_time_averaging) {
+               Efield_avg_fp[lev][i]->setVal(E_external_grid[i]);
+            }
+
            if (lev > 0) {
               Efield_aux[lev][i]->setVal(E_external_grid[i]);
               Efield_cp[lev][i]->setVal(E_external_grid[i]);
+              if (fft_do_time_averaging) {
+                  Efield_avg_aux[lev][i]->setVal(E_external_grid[i]);
+                  Efield_avg_cp[lev][i]->setVal(E_external_grid[i]);
+              }
+
            }
         }
     }
@@ -301,46 +345,36 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                                                     str_By_ext_grid_function);
        Store_parserString(pp, "Bz_external_grid_function(x,y,z)",
                                                     str_Bz_ext_grid_function);
-
-       Bxfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Bx_ext_grid_function,{"x","y","z"})));
-       Byfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_By_ext_grid_function,{"x","y","z"})));
-       Bzfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Bz_ext_grid_function,{"x","y","z"})));
+       Bxfield_parser = std::make_unique<ParserWrapper<3>>(
+                                makeParser(str_Bx_ext_grid_function,{"x","y","z"}));
+       Byfield_parser = std::make_unique<ParserWrapper<3>>(
+                                makeParser(str_By_ext_grid_function,{"x","y","z"}));
+       Bzfield_parser = std::make_unique<ParserWrapper<3>>(
+                                makeParser(str_Bz_ext_grid_function,{"x","y","z"}));
 
        // Initialize Bfield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Bfield_fp[lev][0].get(),
                                                  Bfield_fp[lev][1].get(),
                                                  Bfield_fp[lev][2].get(),
-                                                 Bxfield_parser.get(),
-                                                 Byfield_parser.get(),
-                                                 Bzfield_parser.get(),
-                                                 Bfield_fp[lev][0]->ixType().toIntVect(),
-                                                 Bfield_fp[lev][1]->ixType().toIntVect(),
-                                                 Bfield_fp[lev][2]->ixType().toIntVect(),
+                                                 getParser(Bxfield_parser),
+                                                 getParser(Byfield_parser),
+                                                 getParser(Bzfield_parser),
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Bfield_aux[lev][0].get(),
                                                     Bfield_aux[lev][1].get(),
                                                     Bfield_aux[lev][2].get(),
-                                                    Bxfield_parser.get(),
-                                                    Byfield_parser.get(),
-                                                    Bzfield_parser.get(),
-                                                    Bfield_aux[lev][0]->ixType().toIntVect(),
-                                                    Bfield_aux[lev][1]->ixType().toIntVect(),
-                                                    Bfield_aux[lev][2]->ixType().toIntVect(),
+                                                    getParser(Bxfield_parser),
+                                                    getParser(Byfield_parser),
+                                                    getParser(Bzfield_parser),
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Bfield_cp[lev][0].get(),
                                                     Bfield_cp[lev][1].get(),
                                                     Bfield_cp[lev][2].get(),
-                                                    Bxfield_parser.get(),
-                                                    Byfield_parser.get(),
-                                                    Bzfield_parser.get(),
-                                                    Bfield_cp[lev][0]->ixType().toIntVect(),
-                                                    Bfield_cp[lev][1]->ixType().toIntVect(),
-                                                    Bfield_cp[lev][2]->ixType().toIntVect(),
+                                                    getParser(Bxfield_parser),
+                                                    getParser(Byfield_parser),
+                                                    getParser(Bzfield_parser),
                                                     lev);
        }
     }
@@ -360,45 +394,36 @@ WarpX::InitLevelData (int lev, Real /*time*/)
        Store_parserString(pp, "Ez_external_grid_function(x,y,z)",
                                                     str_Ez_ext_grid_function);
 
-       Exfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Ex_ext_grid_function,{"x","y","z"})));
-       Eyfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Ey_ext_grid_function,{"x","y","z"})));
-       Ezfield_parser.reset(new ParserWrapper<3>(
-                                makeParser(str_Ez_ext_grid_function,{"x","y","z"})));
+       Exfield_parser = std::make_unique<ParserWrapper<3>>(
+                                makeParser(str_Ex_ext_grid_function,{"x","y","z"}));
+       Eyfield_parser = std::make_unique<ParserWrapper<3>>(
+                                makeParser(str_Ey_ext_grid_function,{"x","y","z"}));
+       Ezfield_parser = std::make_unique<ParserWrapper<3>>(
+                                makeParser(str_Ez_ext_grid_function,{"x","y","z"}));
 
        // Initialize Efield_fp with external function
        InitializeExternalFieldsOnGridUsingParser(Efield_fp[lev][0].get(),
                                                  Efield_fp[lev][1].get(),
                                                  Efield_fp[lev][2].get(),
-                                                 Exfield_parser.get(),
-                                                 Eyfield_parser.get(),
-                                                 Ezfield_parser.get(),
-                                                 Efield_fp[lev][0]->ixType().toIntVect(),
-                                                 Efield_fp[lev][1]->ixType().toIntVect(),
-                                                 Efield_fp[lev][2]->ixType().toIntVect(),
+                                                 getParser(Exfield_parser),
+                                                 getParser(Eyfield_parser),
+                                                 getParser(Ezfield_parser),
                                                  lev);
        if (lev > 0) {
           InitializeExternalFieldsOnGridUsingParser(Efield_aux[lev][0].get(),
                                                     Efield_aux[lev][1].get(),
                                                     Efield_aux[lev][2].get(),
-                                                    Exfield_parser.get(),
-                                                    Eyfield_parser.get(),
-                                                    Ezfield_parser.get(),
-                                                    Efield_aux[lev][0]->ixType().toIntVect(),
-                                                    Efield_aux[lev][1]->ixType().toIntVect(),
-                                                    Efield_aux[lev][2]->ixType().toIntVect(),
+                                                    getParser(Exfield_parser),
+                                                    getParser(Eyfield_parser),
+                                                    getParser(Ezfield_parser),
                                                     lev);
 
           InitializeExternalFieldsOnGridUsingParser(Efield_cp[lev][0].get(),
                                                     Efield_cp[lev][1].get(),
                                                     Efield_cp[lev][2].get(),
-                                                    Exfield_parser.get(),
-                                                    Eyfield_parser.get(),
-                                                    Ezfield_parser.get(),
-                                                    Efield_cp[lev][0]->ixType().toIntVect(),
-                                                    Efield_cp[lev][1]->ixType().toIntVect(),
-                                                    Efield_cp[lev][2]->ixType().toIntVect(),
+                                                    getParser(Exfield_parser),
+                                                    getParser(Eyfield_parser),
+                                                    getParser(Ezfield_parser),
                                                     lev);
        }
     }
@@ -429,92 +454,76 @@ WarpX::InitLevelData (int lev, Real /*time*/)
 void
 WarpX::InitializeExternalFieldsOnGridUsingParser (
        MultiFab *mfx, MultiFab *mfy, MultiFab *mfz,
-       ParserWrapper<3> *xfield_parser, ParserWrapper<3> *yfield_parser,
-       ParserWrapper<3> *zfield_parser, IntVect x_nodal_flag,
-       IntVect y_nodal_flag, IntVect z_nodal_flag,
-       const int lev)
+       HostDeviceParser<3> const& xfield_parser, HostDeviceParser<3> const& yfield_parser,
+       HostDeviceParser<3> const& zfield_parser, const int lev)
 {
 
     const auto dx_lev = geom[lev].CellSizeArray();
     const RealBox& real_box = geom[lev].ProbDomain();
+    amrex::IntVect x_nodal_flag = mfx->ixType().toIntVect();
+    amrex::IntVect y_nodal_flag = mfy->ixType().toIntVect();
+    amrex::IntVect z_nodal_flag = mfz->ixType().toIntVect();
     for ( MFIter mfi(*mfx, TilingIfNotGPU()); mfi.isValid(); ++mfi)
     {
-       const Box& tbx = convert(mfi.growntilebox(),x_nodal_flag);
-       const Box& tby = convert(mfi.growntilebox(),y_nodal_flag);
-       const Box& tbz = convert(mfi.growntilebox(),z_nodal_flag);
+       const amrex::Box& tbx = mfi.tilebox( x_nodal_flag, mfx->nGrowVect() );
+       const amrex::Box& tby = mfi.tilebox( y_nodal_flag, mfy->nGrowVect() );
+       const amrex::Box& tbz = mfi.tilebox( z_nodal_flag, mfz->nGrowVect() );
 
        auto const& mfxfab = mfx->array(mfi);
        auto const& mfyfab = mfy->array(mfi);
        auto const& mfzfab = mfz->array(mfi);
 
-       auto const& mfx_IndexType = (*mfx).ixType();
-       auto const& mfy_IndexType = (*mfy).ixType();
-       auto const& mfz_IndexType = (*mfz).ixType();
-
-       // Initialize IntVect based on the index type of multiFab
-       // 0 if cell-centered, 1 if node-centered.
-       IntVect mfx_type(AMREX_D_DECL(0,0,0));
-       IntVect mfy_type(AMREX_D_DECL(0,0,0));
-       IntVect mfz_type(AMREX_D_DECL(0,0,0));
-
-       for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-           mfx_type[idim] = mfx_IndexType.nodeCentered(idim);
-           mfy_type[idim] = mfy_IndexType.nodeCentered(idim);
-           mfz_type[idim] = mfz_IndexType.nodeCentered(idim);
-       }
-
        amrex::ParallelFor (tbx, tby, tbz,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 // Shift required in the x-, y-, or z- position
                 // depending on the index type of the multifab
-                Real fac_x = (1.0 - mfx_type[0]) * dx_lev[0]*0.5;
-                Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real fac_x = (1._rt - x_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
-                Real y = 0.0;
-                Real fac_z = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
-                Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
 #else
-                Real fac_y = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
-                Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                Real fac_z = (1.0 - mfx_type[2]) * dx_lev[2]*0.5;
-                Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+                amrex::Real fac_y = (1._rt - x_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                amrex::Real fac_z = (1._rt - x_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
+                amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the x-component of the field.
-                mfxfab(i,j,k) = (*xfield_parser)(x,y,z);
+                mfxfab(i,j,k) = xfield_parser(x,y,z);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Real fac_x = (1.0 - mfy_type[0]) * dx_lev[0]*0.5;
-                Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real fac_x = (1._rt - y_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
-                Real y = 0.0;
-                Real fac_z = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
-                Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
 #elif (AMREX_SPACEDIM==3)
-                Real fac_y = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
-                Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                Real fac_z = (1.0 - mfx_type[2]) * dx_lev[2]*0.5;
-                Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+                amrex::Real fac_y = (1._rt - y_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                amrex::Real fac_z = (1._rt - y_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
+                amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the y-component of the field.
-                mfyfab(i,j,k)  = (*yfield_parser)(x,y,z);
+                mfyfab(i,j,k)  = yfield_parser(x,y,z);
             },
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
-                Real fac_x = (1.0 - mfz_type[0]) * dx_lev[0]*0.5;
-                Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
+                amrex::Real fac_x = (1._rt - z_nodal_flag[0]) * dx_lev[0] * 0.5_rt;
+                amrex::Real x = i*dx_lev[0] + real_box.lo(0) + fac_x;
 #if (AMREX_SPACEDIM==2)
-                Real y = 0.0;
-                Real fac_z = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
-                Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
+                amrex::Real y = 0._rt;
+                amrex::Real fac_z = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real z = j*dx_lev[1] + real_box.lo(1) + fac_z;
 #elif (AMREX_SPACEDIM==3)
-                Real fac_y = (1.0 - mfx_type[1]) * dx_lev[1]*0.5;
-                Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
-                Real fac_z = (1.0 - mfz_type[2]) * dx_lev[2]*0.5;
-                Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
+                amrex::Real fac_y = (1._rt - z_nodal_flag[1]) * dx_lev[1] * 0.5_rt;
+                amrex::Real y = j*dx_lev[1] + real_box.lo(1) + fac_y;
+                amrex::Real fac_z = (1._rt - z_nodal_flag[2]) * dx_lev[2] * 0.5_rt;
+                amrex::Real z = k*dx_lev[2] + real_box.lo(2) + fac_z;
 #endif
                 // Initialize the z-component of the field.
-                mfzfab(i,j,k) = (*zfield_parser)(x,y,z);
+                mfzfab(i,j,k) = zfield_parser(x,y,z);
             }
         );
     }
-
 }

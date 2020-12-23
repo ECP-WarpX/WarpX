@@ -14,6 +14,7 @@
 #include <AMReX_Vector.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParmParse.H>
+#include <AMReX_Utility.H>
 
 #include <cstdint>
 #include <string>
@@ -23,6 +24,11 @@ void ReadBoostedFrameParameters(amrex::Real& gamma_boost, amrex::Real& beta_boos
                                 amrex::Vector<int>& boost_direction);
 
 void ConvertLabParamsToBoost();
+
+/**
+ * \brief Ensures that the blocks are setup correctly for the RZ spectral solver
+ */
+void CheckGriddingForRZSpectral();
 
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin,
                amrex::Real zmax);
@@ -36,7 +42,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin,
  * \param query_string ParmParse.query will look for this string
  * \param stored_string variable in which the string to parse is stored
  */
-void Store_parserString(amrex::ParmParse &pp, std::string query_string,
+void Store_parserString(const amrex::ParmParse &pp, std::string query_string,
                         std::string& stored_string);
 
 namespace WarpXUtilIO{
@@ -154,6 +160,34 @@ T trilinear_interp(T x0, T x1,T y0, T y1, T z0, T z1,
 * \param parse_function String to read to initialize the parser.
 */
 WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames);
+
+/**
+ * \brief Similar to amrex::ParmParse::query, but also supports math expressions for the value.
+ *
+ * amrex::ParmParse::query reads a name and a value from the input file. This function does the
+ * same, and applies the WarpXParser to the value, so the user has the choice to specify a value or
+ * a math expression (including user-defined constants).
+ * Only works for amrex::Real numbers, one would need another version for integers etc.
+ *
+ * \param[in] a_pp amrex::ParmParse object
+ * \param[in] str name of the parameter to read
+ * \param[out] val where the value queried and parsed is stored
+ */
+int queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
+
+/**
+ * \brief Similar to amrex::ParmParse::get, but also supports math expressions for the value.
+ *
+ * amrex::ParmParse::get reads a name and a value from the input file. This function does the
+ * same, and applies the WarpXParser to the value, so the user has the choice to specify a value or
+ * a math expression (including user-defined constants).
+ * Only works for amrex::Real numbers, one would need another version for integers etc.
+ *
+ * \param[in] a_pp amrex::ParmParse object
+ * \param[in] str name of the parameter to read
+ * \param[out] val where the value queried and parsed is stored
+ */
+void getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val);
 
 namespace WarpXUtilMsg{
 

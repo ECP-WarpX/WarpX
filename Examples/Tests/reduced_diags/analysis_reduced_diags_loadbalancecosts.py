@@ -19,6 +19,8 @@
 
 import numpy as np
 import sys
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 # Command line argument
 fn = sys.argv[1]
@@ -65,3 +67,6 @@ print('load balance efficiency (after load balance): ', efficiency_after)
 
 # The load balanced case is expcted to be more efficient then non-load balanced case
 assert(efficiency_before < efficiency_after)
+
+test_name = fn[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, fn)

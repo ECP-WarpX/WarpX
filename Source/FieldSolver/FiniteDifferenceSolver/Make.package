@@ -3,5 +3,11 @@ CEXE_sources += EvolveB.cpp
 CEXE_sources += EvolveE.cpp
 CEXE_sources += EvolveF.cpp
 CEXE_sources += ComputeDivE.cpp
+CEXE_sources += MacroscopicEvolveE.cpp
+CEXE_sources += EvolveBPML.cpp
+CEXE_sources += EvolveEPML.cpp
+CEXE_sources += EvolveFPML.cpp
+
+include $(WARPX_HOME)/Source/FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/Make.package
 
 VPATH_LOCATIONS   += $(WARPX_HOME)/Source/FieldSolver/FiniteDifferenceSolver

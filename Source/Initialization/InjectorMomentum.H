@@ -15,6 +15,9 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_Dim3.H>
 
+#include <cmath>
+
+
 // struct whose getMomentum returns constant momentum.
 struct InjectorMomentumConstant
 {
@@ -23,7 +26,8 @@ struct InjectorMomentumConstant
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real, amrex::Real, amrex::Real) const noexcept
+    getMomentum (amrex::Real, amrex::Real, amrex::Real,
+                 amrex::RandomEngine const&) const noexcept
     {
         return amrex::XDim3{m_ux,m_uy,m_uz};
     }
@@ -52,16 +56,17 @@ struct InjectorMomentumGaussian
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
+                 amrex::RandomEngine const& engine) const noexcept
     {
-        return amrex::XDim3{amrex::RandomNormal(m_ux_m, m_ux_th),
-                            amrex::RandomNormal(m_uy_m, m_uy_th),
-                            amrex::RandomNormal(m_uz_m, m_uz_th)};
+        return amrex::XDim3{amrex::RandomNormal(m_ux_m, m_ux_th, engine),
+                            amrex::RandomNormal(m_uy_m, m_uy_th, engine),
+                            amrex::RandomNormal(m_uz_m, m_uz_th, engine)};
     }
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         return amrex::XDim3{m_ux_m, m_uy_m, m_uz_m};
     }
@@ -80,25 +85,26 @@ struct InjectorMomentumBoltzmann
     // boost velocity/c beta,
     // and boost direction dir respectively.
     InjectorMomentumBoltzmann(amrex::Real t, amrex::Real b, int d) noexcept
-        : dir(d), beta(b), vave(std::sqrt(2.*t))
+        : dir(d), beta(b), vave(std::sqrt(amrex::Real(2.)*t))
         {}
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
+                 amrex::RandomEngine const& engine) const noexcept
     {
         amrex::Real x1, x2, gamma;
         amrex::Real u[3];
-        x1 = amrex::Random();
-        x2 = amrex::Random();
+        x1 = amrex::Random(engine);
+        x2 = amrex::Random(engine);
         // Each value of sqrt(-log(x1))*sin(2*pi*x2) is a sample from a Gaussian
         // distribution with sigma = average velocity / c
         // using the Box-Mueller Method.
-        u[(dir+1)%3] = vave*std::sqrt(-std::log(x1)) *std::sin(2*M_PI*x2);
-        u[(dir+2)%3] = vave*std::sqrt(-std::log(x1)) *std::cos(2*M_PI*x2);
-        u[dir] = vave*std::sqrt(-std::log(amrex::Random()))*
-            std::sin(2*M_PI*amrex::Random());
-        gamma = std::pow(u[0],2)+std::pow(u[1],2)+std::pow(u[2],2);
+        u[(dir+1)%3] = vave*std::sqrt(-std::log(x1)) *std::sin(2*MathConst::pi*x2);
+        u[(dir+2)%3] = vave*std::sqrt(-std::log(x1)) *std::cos(2*MathConst::pi*x2);
+        u[dir] = vave*std::sqrt(-std::log(amrex::Random(engine)))*
+            std::sin(2*MathConst::pi*amrex::Random(engine));
+        gamma = u[0]*u[0]+u[1]*u[1]+u[2]*u[2];
         gamma = std::sqrt(1+gamma);
         // The following condition is equtaion 32 in Zenitani 2015
         // (Phys. Plasmas 22, 042116) , called the flipping method. It
@@ -111,7 +117,7 @@ struct InjectorMomentumBoltzmann
         // initialize the particle positions and densities in the frame moving
         // at speed beta, and then perform a Lorentz transform on the positions
         // and MB sampled velocities to the simulation frame.
-        x1 = amrex::Random();
+        x1 = amrex::Random(engine);
         if(-beta*u[dir]/gamma > x1)
         {
           u[dir] = -u[dir];
@@ -119,7 +125,7 @@ struct InjectorMomentumBoltzmann
         // This Lorentz transform is equation 17 in Zenitani.
         // It transforms the integral d3u' -> d3u
         // where d3u' is the volume element for momentum in the boosted frame.
-        u[dir] = 1/std::sqrt(1-pow(beta,2))*(u[dir]+gamma*beta);
+        u[dir] = 1/std::sqrt(1-beta*beta)*(u[dir]+gamma*beta);
         // Note that if beta = 0 then the flipping method and Lorentz transform
         // have no effect on the u[dir] direction.
         return amrex::XDim3 {u[0],u[1],u[2]};
@@ -127,12 +133,12 @@ struct InjectorMomentumBoltzmann
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         using namespace amrex;
         Real u[3];
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
-        const Real gamma = 1./sqrt(1+beta*beta);
+        const Real gamma = static_cast<amrex::Real>(1./sqrt(1+beta*beta));
         u[dir] = gamma*beta;
         return XDim3 {u[0],u[1],u[2]};
     }
@@ -157,35 +163,36 @@ struct InjectorMomentumJuttner
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/,
+                 amrex::RandomEngine const& engine) const noexcept
     {
         // Sobol method for sampling MJ Speeds,
         // from Zenitani 2015 (Phys. Plasmas 22, 042116).
         amrex::Real x1, x2, gamma;
         amrex::Real u [3];
-        x1 = 0.;
-        gamma = 0.;
-        u[dir] = 0.;
+        x1 = static_cast<amrex::Real>(0.);
+        gamma = static_cast<amrex::Real>(0.);
+        u[dir] = static_cast<amrex::Real>(0.);
         // This condition is equation 10 in Zenitani,
         // though x1 is defined differently.
         while(u[dir]-gamma <= x1)
         {
             u[dir] = -theta*
-                std::log(amrex::Random()*amrex::Random()*amrex::Random());
-            gamma = std::sqrt(1+std::pow(u[dir],2));
-            x1 = theta*std::log(amrex::Random());
+                std::log(amrex::Random(engine)*amrex::Random(engine)*amrex::Random(engine));
+            gamma = std::sqrt(1+u[dir]*u[dir]);
+            x1 = theta*std::log(amrex::Random(engine));
         }
         // The following code samples a random unit vector
         // and multiplies the result by speed u[dir].
-        x1 = amrex::Random();
-        x2 = amrex::Random();
+        x1 = amrex::Random(engine);
+        x2 = amrex::Random(engine);
         // Direction dir is an input parameter that sets the boost direction:
         // 'x' -> d = 0, 'y' -> d = 1, 'z' -> d = 2.
-        u[(dir+1)%3] = 2*u[dir]*std::sqrt(x1*(1-x1))*std::sin(2*M_PI*x2);
-        u[(dir+2)%3] = 2*u[dir]*std::sqrt(x1*(1-x1))*std::cos(2*M_PI*x2);
+        u[(dir+1)%3] = 2*u[dir]*std::sqrt(x1*(1-x1))*std::sin(2*MathConst::pi*x2);
+        u[(dir+2)%3] = 2*u[dir]*std::sqrt(x1*(1-x1))*std::cos(2*MathConst::pi*x2);
         // The value of dir is the boost direction to be transformed.
         u[dir] = u[dir]*(2*x1-1);
-        x1 = amrex::Random();
+        x1 = amrex::Random(engine);
         // The following condition is equtaion 32 in Zenitani, called
         // The flipping method. It transforms the intergral: d3x' -> d3x
         // where d3x' is the volume element for positions in the boosted frame.
@@ -205,7 +212,7 @@ struct InjectorMomentumJuttner
         // This Lorentz transform is equation 17 in Zenitani.
         // It transforms the integral d3u' -> d3u
         // where d3u' is the volume element for momentum in the boosted frame.
-        u[dir] = 1/std::sqrt(1-pow(beta,2))*(u[dir]+gamma*beta);
+        u[dir] = 1/std::sqrt(1-beta*beta)*(u[dir]+gamma*beta);
         // Note that if beta = 0 then the flipping method and Lorentz transform
         // have no effect on the u[dir] direction.
         return amrex::XDim3 {u[0],u[1],u[2]};
@@ -213,12 +220,12 @@ struct InjectorMomentumJuttner
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getBulkMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getBulkMomentum (amrex::Real /*x*/, amrex::Real /*y*/, amrex::Real /*z*/) const noexcept
     {
         using namespace amrex;
         Real u[3];
         for (int idim = 0; idim < 3; ++idim) u[idim] = 0.0_rt;
-        const Real gamma = 1./sqrt(1+beta*beta);
+        const Real gamma = static_cast<Real>(1./sqrt(1.+beta*beta));
         u[dir] = gamma*beta;
         return XDim3 {u[0],u[1],u[2]};
     }
@@ -243,7 +250,8 @@ struct InjectorMomentumRadialExpansion
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
+                 amrex::RandomEngine const&) const noexcept
     {
         return {x*u_over_r, y*u_over_r, z*u_over_r};
     }
@@ -270,7 +278,8 @@ struct InjectorMomentumParser
 
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
+                 amrex::RandomEngine const&) const noexcept
     {
         return amrex::XDim3{m_ux_parser(x,y,z),m_uy_parser(x,y,z),m_uz_parser(x,y,z)};
     }
@@ -293,12 +302,8 @@ struct InjectorMomentumParser
 // - InjectorMomentumRadialExpansion: to generate radial expansion;
 // - InjectorMomentumParser         : to generate momentum from parser;
 // The choice is made at runtime, depending in the constructor called.
-// This mimics virtual functions, except the struct is stored in managed memory
-// and member functions are made __host__ __device__ to run on CPU and GPU.
-// This struct inherits from amrex::Gpu::Managed to provide new and delete
-// operators in managed memory when running on GPU. Nothing special on CPU.
+// This mimics virtual functions.
 struct InjectorMomentum
-    : public amrex::Gpu::Managed
 {
     // This constructor stores a InjectorMomentumConstant in union object.
     InjectorMomentum (InjectorMomentumConstant* t,
@@ -358,43 +363,44 @@ struct InjectorMomentum
     void operator= (InjectorMomentum const&) = delete;
     void operator= (InjectorMomentum &&) = delete;
 
-    ~InjectorMomentum ();
+    void clear ();
 
     // call getMomentum from the object stored in the union
     // (the union is called Object, and the instance is called object).
     AMREX_GPU_HOST_DEVICE
     amrex::XDim3
-    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z) const noexcept
+    getMomentum (amrex::Real x, amrex::Real y, amrex::Real z,
+                 amrex::RandomEngine const& engine) const noexcept
     {
         switch (type)
         {
         case Type::parser:
         {
-            return object.parser.getMomentum(x,y,z);
+            return object.parser.getMomentum(x,y,z,engine);
         }
         case Type::gaussian:
         {
-            return object.gaussian.getMomentum(x,y,z);
+            return object.gaussian.getMomentum(x,y,z,engine);
         }
         case Type::boltzmann:
         {
-            return object.boltzmann.getMomentum(x,y,z);
+            return object.boltzmann.getMomentum(x,y,z,engine);
         }
         case Type::juttner:
         {
-            return object.juttner.getMomentum(x,y,z);
+            return object.juttner.getMomentum(x,y,z,engine);
         }
         case Type::constant:
         {
-            return object.constant.getMomentum(x,y,z);
+            return object.constant.getMomentum(x,y,z,engine);
         }
         case Type::radial_expansion:
         {
-            return object.radial_expansion.getMomentum(x,y,z);
+            return object.radial_expansion.getMomentum(x,y,z,engine);
         }
         case Type::custom:
         {
-            return object.custom.getMomentum(x,y,z);
+            return object.custom.getMomentum(x,y,z,engine);
         }
         default:
         {
@@ -490,6 +496,17 @@ private:
         InjectorMomentumParser   parser;
     };
     Object object;
+};
+
+// In order for InjectorMomentum to be trivially copyable, its destructor
+// must be trivial.  So we have to rely on a custom deleter for unique_ptr.
+struct InjectorMomentumDeleter {
+    void operator () (InjectorMomentum* p) const {
+        if (p) {
+            p->clear();
+            delete p;
+        }
+    }
 };
 
 #endif

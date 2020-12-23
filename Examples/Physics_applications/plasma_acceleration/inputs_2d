@@ -16,7 +16,7 @@ warpx.fine_tag_hi    =   12.e-6 -100.e-6
 #################################
 ############ NUMERICS ###########
 #################################
-algo.maxwell_fdtd_solver = ckc
+algo.maxwell_solver = ckc
 warpx.use_filter = 1
 warpx.do_pml = 1
 warpx.pml_ncell = 10
@@ -31,7 +31,6 @@ interpolation.noz = 3
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 3
 particles.species_names = plasma_e beam driver
 
 driver.charge = -q_e

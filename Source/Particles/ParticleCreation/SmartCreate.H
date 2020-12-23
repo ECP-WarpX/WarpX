@@ -13,6 +13,7 @@
 #include <AMReX_AmrCore.H>
 #include <AMReX_GpuContainers.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX.H>
 
 /**
  * \brief This is a functor for performing a "smart create" that works
@@ -32,12 +33,13 @@ struct SmartCreate
 {
     const InitializationPolicy* m_policy_real;
     const InitializationPolicy* m_policy_int;
-    const int m_weight_index;
+    const int m_weight_index = 0;
 
     template <typename PartData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (
         PartData& prt, const int i_prt,
+        amrex::RandomEngine const& engine,
         const amrex::Real x = 0.0,
         const amrex::Real y = 0.0,
         const amrex::Real z = 0.0,
@@ -50,6 +52,7 @@ struct SmartCreate
         prt.m_aos[i_prt].pos(2) = z;
 #elif (AMREX_SPACEDIM == 2)
         prt.m_aos[i_prt].pos(1) = z;
+        amrex::ignore_unused(y);
 #endif
 
         prt.m_aos[i_prt].cpu() = cpu;
@@ -57,9 +60,9 @@ struct SmartCreate
 
          // initialize the real components
          for (int j = 0; j < PartData::NAR; ++j)
-             prt.m_rdata[j][i_prt] = initializeRealValue(m_policy_real[j]);
+             prt.m_rdata[j][i_prt] = initializeRealValue(m_policy_real[j], engine);
          for (int j = 0; j < prt.m_num_runtime_real; ++j)
-             prt.m_runtime_rdata[j][i_prt] = initializeRealValue(m_policy_real[j+PartData::NAR]);
+             prt.m_runtime_rdata[j][i_prt] = initializeRealValue(m_policy_real[j+PartData::NAR], engine);
 
          // initialize the int components
          for (int j = 0; j < PartData::NAI; ++j)

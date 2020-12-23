@@ -6,13 +6,16 @@
  */
 #include "GuardCellManager.H"
 #include "Filter/NCIGodfreyFilter.H"
-#include <AMReX_Print.H>
+#include "Utils/WarpXAlgorithmSelection.H"
+
 #include <AMReX_ParmParse.H>
+#include <AMReX.H>
+
 
 using namespace amrex;
 
 void
-guardCellManager::Init(
+guardCellManager::Init (
     const bool do_subcycling,
     const bool do_fdtd_nci_corr,
     const bool do_nodal,
@@ -22,9 +25,10 @@ guardCellManager::Init(
     const int nox,
     const int nox_fft, const int noy_fft, const int noz_fft,
     const int nci_corr_stencil,
-    const int maxwell_fdtd_solver_id,
+    const int maxwell_solver_id,
     const int max_level,
     const amrex::Array<amrex::Real,3> v_galilean,
+    const amrex::Array<amrex::Real,3> v_comoving,
     const bool safe_guard_cells)
 {
     // When using subcycling, the particles on the fine level perform two pushes
@@ -34,10 +38,9 @@ guardCellManager::Init(
     int ngy_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
     int ngz_tmp = (max_level > 0 && do_subcycling == 1) ? nox+1 : nox;
 
-    if ((v_galilean[0]!=0) or
-        (v_galilean[1]!=0) or
-        (v_galilean[2]!=0)){
-      // Add one guard cell in the case of the galilean algorithm
+    // Add one guard cell in the case of the Galilean or comoving algorithms
+    if (v_galilean[0] != 0. || v_galilean[1] != 0. || v_galilean[2] != 0. ||
+        v_comoving[0] != 0. || v_comoving[1] != 0. || v_comoving[2] != 0. ) {
       ngx_tmp += 1;
       ngy_tmp += 1;
       ngz_tmp += 1;
@@ -86,60 +89,73 @@ guardCellManager::Init(
     ng_alloc_J = IntVect(ngJx,ngJz);
 #endif
 
-    ng_alloc_Rho = ng_alloc_J+1; //One extra ghost cell, so that it's safe to deposit charge density
+    // Rho is needed both at the beginning and at the end of the PIC iteration.
+    // Hence we add one extra guard cell for the allocation of the MultiFab that
+    // contains rho, in order to account for the change in the particle positions
+    // within a time step
+    ng_alloc_Rho = ng_alloc_J+1;
+
+    // Number of guard cells for local deposition of J and rho
+    ng_depos_J   = ng_alloc_J;
+    ng_depos_rho = ng_alloc_Rho;
+
     // after pushing particle.
     int ng_alloc_F_int = (do_moving_window) ? 2 : 0;
     // CKC solver requires one additional guard cell
-    if (maxwell_fdtd_solver_id == 1) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
+    if (maxwell_solver_id == MaxwellSolverAlgo::CKC) ng_alloc_F_int = std::max( ng_alloc_F_int, 1 );
     ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
 
-#ifdef WARPX_USE_PSATD
-    // All boxes should have the same number of guard cells
-    // (to avoid temporary parallel copies)
-    // Thus take the max of the required number of guards for each field
-    // Also: the number of guard cell should be enough to contain
-    // the stencil of the FFT solver. Here, this number (`ngFFT`)
-    // is determined *empirically* to be the order of the solver
-    // for nodal, and half the order of the solver for staggered.
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        // All boxes should have the same number of guard cells
+        // (to avoid temporary parallel copies)
+        // Thus take the max of the required number of guards for each field
+        // Also: the number of guard cell should be enough to contain
+        // the stencil of the FFT solver. Here, this number (`ngFFT`)
+        // is determined *empirically* to be the order of the solver
+        // for nodal, and half the order of the solver for staggered.
 
-    int ngFFt_x = do_nodal ? nox_fft : nox_fft/2.;
-    int ngFFt_y = do_nodal ? noy_fft : noy_fft/2.;
-    int ngFFt_z = do_nodal ? noz_fft : noz_fft/2.;
+        int ngFFt_x = do_nodal ? nox_fft : nox_fft / 2;
+        int ngFFt_y = do_nodal ? noy_fft : noy_fft / 2;
+        int ngFFt_z = do_nodal ? noz_fft : noz_fft / 2;
 
-    ParmParse pp("psatd");
-    pp.query("nx_guard", ngFFt_x);
-    pp.query("ny_guard", ngFFt_y);
-    pp.query("nz_guard", ngFFt_z);
+        ParmParse pp("psatd");
+        pp.query("nx_guard", ngFFt_x);
+        pp.query("ny_guard", ngFFt_y);
+        pp.query("nz_guard", ngFFt_z);
 
-    IntVect ngFFT = IntVect(AMREX_D_DECL(ngFFt_x, ngFFt_y, ngFFt_z));
-
-    for (int i_dim=0; i_dim<AMREX_SPACEDIM; i_dim++ ){
-        int ng_required = ngFFT[i_dim];
-        // Get the max
-        ng_required = std::max( ng_required, ng_alloc_EB[i_dim] );
-        ng_required = std::max( ng_required, ng_alloc_J[i_dim] );
-        ng_required = std::max( ng_required, ng_alloc_Rho[i_dim] );
-        ng_required = std::max( ng_required, ng_alloc_F[i_dim] );
-        // Set the guard cells to this max
-        ng_alloc_EB[i_dim] = ng_required;
-        ng_alloc_J[i_dim] = ng_required;
-        ng_alloc_F[i_dim] = ng_required;
-        ng_alloc_Rho[i_dim] = ng_required;
-        ng_alloc_F_int = ng_required;
-    }
-    ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
+#if (AMREX_SPACEDIM == 3)
+        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_y, ngFFt_z);
+#elif (AMREX_SPACEDIM == 2)
+        IntVect ngFFT = IntVect(ngFFt_x, ngFFt_z);
 #endif
+
+        for (int i_dim = 0; i_dim < AMREX_SPACEDIM; i_dim++) {
+            int ng_required = ngFFT[i_dim];
+            // Get the max
+            ng_required = std::max(ng_required, ng_alloc_EB[i_dim]);
+            ng_required = std::max(ng_required, ng_alloc_J[i_dim]);
+            ng_required = std::max(ng_required, ng_alloc_Rho[i_dim]);
+            ng_required = std::max(ng_required, ng_alloc_F[i_dim]);
+            // Set the guard cells to this max
+            ng_alloc_EB[i_dim] = ng_required;
+            ng_alloc_J[i_dim] = ng_required;
+            ng_alloc_F[i_dim] = ng_required;
+            ng_alloc_Rho[i_dim] = ng_required;
+            ng_alloc_F_int = ng_required;
+        }
+        ng_alloc_F = IntVect(AMREX_D_DECL(ng_alloc_F_int, ng_alloc_F_int, ng_alloc_F_int));
+    }
 
     ng_Extra = IntVect(static_cast<int>(aux_is_nodal and !do_nodal));
 
     // Compute number of cells required for Field Solver
-#ifdef WARPX_USE_PSATD
-    ng_FieldSolver = ng_alloc_EB;
-    ng_FieldSolverF = ng_alloc_EB;
-#else
-    ng_FieldSolver = IntVect(AMREX_D_DECL(1,1,1));
-    ng_FieldSolverF = IntVect(AMREX_D_DECL(1,1,1));
-#endif
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        ng_FieldSolver = ng_alloc_EB;
+        ng_FieldSolverF = ng_alloc_EB;
+    } else {
+        ng_FieldSolver = IntVect(AMREX_D_DECL(1, 1, 1));
+        ng_FieldSolverF = IntVect(AMREX_D_DECL(1, 1, 1));
+    }
 
     if (safe_guard_cells){
         // Run in safe mode: exchange all allocated guard cells at each

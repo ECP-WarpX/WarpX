@@ -45,14 +45,15 @@ ln -s ${tmp_dir} test_dir
 
 # Switch to the test directory
 cd test_dir
+echo "cd $PWD"
 
 # Clone PICSAR and AMReX
 git clone --branch development https://github.com/AMReX-Codes/amrex.git
 # Use QED brach for QED tests
 if [ "${WARPX_CI_QED}" = "TRUE" ]; then
-    git clone --branch QED https://bitbucket.org/berkeleylab/picsar.git
+    git clone --branch development https://github.com/ECP-WarpX/picsar.git
 else
-    git clone --branch master https://bitbucket.org/berkeleylab/picsar.git
+    git clone --branch development https://github.com/ECP-WarpX/picsar.git
 fi
 
 # Clone the AMReX regression test utility
@@ -61,15 +62,18 @@ git clone https://github.com/ECP-WarpX/regression_testing.git
 # Prepare regression tests
 mkdir -p rt-WarpX/WarpX-benchmarks
 cd warpx/Regression
+echo "cd $PWD"
 python prepare_file_travis.py
 cp travis-tests.ini ../../rt-WarpX
+cp -r Checksum ../../regression_testing/
 
 # Run tests
 cd ../../regression_testing/
+echo "cd $PWD"
 # run only tests specified in variable tests_arg (single test or multiple tests)
 if [[ ! -z "${tests_arg}" ]]; then
-python regtest.py ../rt-WarpX/travis-tests.ini --no_update all --source_git_hash=${WARPX_TEST_COMMIT} "${tests_run}"
+  python regtest.py ../rt-WarpX/travis-tests.ini --no_update all --source_git_hash=${WARPX_TEST_COMMIT} "${tests_run}"
 # run all tests (variables tests_arg and tests_run are empty)
 else
-python regtest.py ../rt-WarpX/travis-tests.ini --no_update all --source_git_hash=${WARPX_TEST_COMMIT}
+  python regtest.py ../rt-WarpX/travis-tests.ini --no_update all --source_git_hash=${WARPX_TEST_COMMIT}
 fi

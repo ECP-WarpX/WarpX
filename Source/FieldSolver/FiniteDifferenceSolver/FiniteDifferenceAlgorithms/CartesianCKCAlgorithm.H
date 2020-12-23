@@ -8,12 +8,16 @@
 #ifndef WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
 #define WARPX_FINITE_DIFFERENCE_ALGORITHM_CARTESIAN_CKC_H_
 
+#include "Utils/WarpXConst.H"
+
 #include <AMReX_REAL.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Gpu.H>
+#include <AMReX.H>
 
 #include <algorithm>
 #include <array>
+
 
 /**
  * This struct contains only static functions to initialize the stencil coefficients
@@ -23,9 +27,9 @@ struct CartesianCKCAlgorithm {
 
     static void InitializeStencilCoefficients (
         std::array<amrex::Real,3>& cell_size,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_x,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_y,
-        amrex::Gpu::ManagedVector<amrex::Real>& stencil_coefs_z ) {
+        amrex::Vector<amrex::Real>& stencil_coefs_x,
+        amrex::Vector<amrex::Real>& stencil_coefs_y,
+        amrex::Vector<amrex::Real>& stencil_coefs_z ) {
 
         using namespace amrex;
 
@@ -91,11 +95,25 @@ struct CartesianCKCAlgorithm {
     }
 
     /**
+     * Compute the maximum timestep, for which the scheme remains stable
+     * (Courant-Friedrichs-Levy limit) */
+    static amrex::Real ComputeMaxDt ( amrex::Real const * const dx ) {
+#if (defined WARPX_DIM_XZ)
+            // - In Cartesian 2D geometry: determined by the minimum cell size in all direction
+            amrex::Real const delta_t = std::min( dx[0], dx[1] )/PhysConst::c;
+#else
+            // - In Cartesian 3D geometry: determined by the minimum cell size in all direction
+            amrex::Real const delta_t = std::min( dx[0], std::min( dx[1], dx[2] ) ) / PhysConst::c;
+#endif
+        return delta_t;
+    }
+
+    /**
      * Perform derivative along x on a cell-centered grid, from a nodal field `F` */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real UpwardDx (
         amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_x, int const n_coefs_x,
+        amrex::Real const * const coefs_x, int const /*n_coefs_x*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const alphax = coefs_x[1];
@@ -121,19 +139,20 @@ struct CartesianCKCAlgorithm {
              + betaxz * (F(i+1,j+1,k  ,ncomp) - F(i  ,j+1,k  ,ncomp)
                       +  F(i+1,j-1,k  ,ncomp) - F(i  ,j-1,k  ,ncomp));
 #endif
-    };
+    }
 
     /**
      * Perform derivative along x on a nodal grid, from a cell-centered field `F` */
+    template< typename T_Field>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real DownwardDx (
-        amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_x, int const n_coefs_x,
+        T_Field const& F,
+        amrex::Real const * const coefs_x, int const /*n_coefs_x*/,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         amrex::Real const inv_dx = coefs_x[0];
         return inv_dx*( F(i,j,k,ncomp) - F(i-1,j,k,ncomp) );
-    };
+    }
 
     /**
      * Perform derivative along y on a cell-centered grid, from a nodal field `F` */
@@ -158,27 +177,40 @@ struct CartesianCKCAlgorithm {
                       +  F(i-1,j+1,k+1,ncomp) - F(i-1,j  ,k+1,ncomp)
                       +  F(i+1,j+1,k-1,ncomp) - F(i+1,j  ,k-1,ncomp)
                        +  F(i-1,j+1,k-1,ncomp) - F(i-1,j  ,k-1,ncomp));
+        amrex::ignore_unused(n_coefs_y);
 #elif (defined WARPX_DIM_XZ)
-            return 0._rt; // 2D Cartesian: derivative along y is 0
+        amrex::ignore_unused(F, coefs_y, n_coefs_y,
+            i, j, k, ncomp);
+        return 0._rt; // 2D Cartesian: derivative along y is 0
+#else
+        amrex::ignore_unused(F, coefs_y, n_coefs_y,
+            i, j, k, ncomp);
 #endif
-    };
+    }
 
     /**
      * Perform derivative along y on a nodal grid, from a cell-centered field `F` */
+    template< typename T_Field>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real DownwardDy (
-        amrex::Array4<amrex::Real> const& F,
+        T_Field const& F,
         amrex::Real const * const coefs_y, int const n_coefs_y,
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
 #if defined WARPX_DIM_3D
-        Real const inv_dy = coefs_y[0];
+        amrex::Real const inv_dy = coefs_y[0];
         return inv_dy*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
+        amrex::ignore_unused(n_coefs_y);
 #elif (defined WARPX_DIM_XZ)
+        amrex::ignore_unused(F, coefs_y, n_coefs_y,
+            i, j, k, ncomp);
         return 0._rt; // 2D Cartesian: derivative along y is 0
+#else
+        amrex::ignore_unused(F, coefs_y, n_coefs_y,
+            i, j, k, ncomp);
 #endif
-    };
+    }
 
     /**
      * Perform derivative along z on a cell-centered grid, from a nodal field `F` */
@@ -189,6 +221,9 @@ struct CartesianCKCAlgorithm {
         int const i, int const j, int const k, int const ncomp=0 ) {
 
         using namespace amrex;
+
+        amrex::ignore_unused(n_coefs_z);
+
         Real const alphaz = coefs_z[1];
         Real const betazx = coefs_z[2];
 #if defined WARPX_DIM_3D
@@ -205,20 +240,22 @@ struct CartesianCKCAlgorithm {
                       +  F(i-1,j+1,k+1,ncomp) - F(i-1,j+1,k  ,ncomp)
                       +  F(i+1,j-1,k+1,ncomp) - F(i+1,j-1,k  ,ncomp)
                       +  F(i-1,j-1,k+1,ncomp) - F(i-1,j-1,k  ,ncomp));
+        amrex::ignore_unused(n_coefs_z);
 #elif (defined WARPX_DIM_XZ)
         return alphaz * (F(i  ,j+1,k  ,ncomp) - F(i  ,j  ,k  ,ncomp))
              + betazx * (F(i+1,j+1,k  ,ncomp) - F(i+1,j  ,k  ,ncomp)
                       +  F(i-1,j+1,k  ,ncomp) - F(i-1,j  ,k  ,ncomp));
 #endif
-    };
+    }
 
     /**
      * Perform derivative along z on a nodal grid, from a cell-centered field `F` */
+    template< typename T_Field>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static amrex::Real DownwardDz (
-        amrex::Array4<amrex::Real> const& F,
-        amrex::Real const * const coefs_z, int const n_coefs_z,
-        int const i, int const j, int const k, int const ncomp=0 ) {
+        T_Field const& F,
+        amrex::Real const * const coefs_z, int const /*n_coefs_z*/,
+        int const i, int const j, int const k, int const ncomp=0) {
 
         amrex::Real const inv_dz = coefs_z[0];
 #if defined WARPX_DIM_3D
@@ -226,7 +263,7 @@ struct CartesianCKCAlgorithm {
 #elif (defined WARPX_DIM_XZ)
         return inv_dz*( F(i,j,k,ncomp) - F(i,j-1,k,ncomp) );
 #endif
-    };
+    }
 
 };
 

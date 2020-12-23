@@ -12,6 +12,7 @@
 
 #include <AMReX_REAL.H>
 #include <AMReX_FArrayBox.H>
+#include <AMReX.H>
 
 
 /** \brief Push the particle's positions over one timestep,
@@ -21,15 +22,18 @@ void UpdatePosition(amrex::ParticleReal& x, amrex::ParticleReal& y, amrex::Parti
                     const amrex::ParticleReal ux, const amrex::ParticleReal uy, const amrex::ParticleReal uz,
                     const amrex::Real dt )
 {
+    using namespace amrex::literals;
 
-    constexpr amrex::Real inv_c2 = 1./(PhysConst::c*PhysConst::c);
+    constexpr amrex::Real inv_c2 = 1._rt/(PhysConst::c*PhysConst::c);
 
     // Compute inverse Lorentz factor
-    const amrex::Real inv_gamma = 1./std::sqrt(1. + (ux*ux + uy*uy + uz*uz)*inv_c2);
+    const amrex::Real inv_gamma = 1._rt/std::sqrt(1._rt + (ux*ux + uy*uy + uz*uz)*inv_c2);
     // Update positions over one time step
     x += ux * inv_gamma * dt;
 #if (AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ) // RZ pushes particles in 3D
     y += uy * inv_gamma * dt;
+#else
+    amrex::ignore_unused(y);
 #endif
     z += uz * inv_gamma * dt;
 }

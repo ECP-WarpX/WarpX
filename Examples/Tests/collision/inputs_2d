@@ -22,7 +22,6 @@ warpx.cfl = 1.0
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 2
 particles.species_names = electron ion
 
 electron.charge = -q_e
@@ -53,7 +52,6 @@ ion.do_not_deposit = 1
 #################################
 ############ COLLISION ##########
 #################################
-collisions.ncollisions = 3
 collisions.collision_names = collision1 collision2 collision3
 collision1.species = electron ion
 collision2.species = electron electron

@@ -72,7 +72,7 @@ if [ $DO_GIT_CLONE == true ]; then
     # Clone all three repos
     rm -rf WarpX picsar amrex
     git clone https://github.com/ECP-WarpX/WarpX.git
-    git clone https://bitbucket.org/berkeleylab/picsar.git
+    git clone https://github.com/ECP-WarpX/picsar.git
     git clone --branch development https://github.com/AMReX-Codes/amrex.git
 fi
 
@@ -161,7 +161,7 @@ for NCI_CORR in 0 1; do
                                                        warpx.use_filter=$FILTER \
                                                        warpx.do_moving_window=$MOVING_WINDOW \
                                                        interpolation.nox=$NOX interpolation.noy=$NOX interpolation.noz=$NOX \
-                                                       algo.maxwell_fdtd_solver=$SOLVER \
+                                                       algo.maxwell_solver=$SOLVER \
                                                        amr.plot_file=$WHICH/plt \
                                                        warpx.do_pml=$PML \
                                                        amr.max_level=$MAXLEV \

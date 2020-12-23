@@ -21,11 +21,12 @@ class constants:
     # --- Put the constants in their own namespace
     # --- Values from WarpXConst.H
     c = 299792458.
-    ep0 = 8.854187817e-12
-    mu0 = 1.2566370614359173e-06
-    q_e = 1.602176462e-19
-    m_e = 9.10938291e-31
-    m_p = 1.6726231e-27
+    ep0 = 8.8541878128e-12
+    mu0 = 1.25663706212e-06
+    q_e = 1.602176634e-19
+    m_e = 9.1093837015e-31
+    m_p = 1.67262192369e-27
+    hbar = 1.054571817e-34
 
 
 class Species(picmistandard.PICMI_Species):
@@ -45,7 +46,12 @@ class Species(picmistandard.PICMI_Species):
             if self.mass is None: self.mass = 'm_p'
         else:
             if self.charge is None and self.charge_state is not None:
-                self.charge = self.charge_state*constants.q_e
+                if self.charge_state == +1.:
+                    self.charge = 'q_e'
+                elif self.charge_state == -1.:
+                    self.charge = '-q_e'
+                else:
+                    self.charge = self.charge_state*constants.q_e
             # Match a string of the format '#nXx', with the '#n' optional isotope number.
             m = re.match('(?P<iso>#[\d+])*(?P<sym>[A-Za-z]+)', self.particle_type)
             if m is not None:
@@ -64,9 +70,13 @@ class Species(picmistandard.PICMI_Species):
                 if self.mass is None:
                     self.mass = element.mass*periodictable.constants.atomic_mass_constant
 
-    def initialize_inputs(self, layout, initialize_self_fields=False):
-        self.species_number = pywarpx.particles.nspecies
-        pywarpx.particles.nspecies += 1
+        self.boost_adjust_transverse_positions = kw.pop('warpx_boost_adjust_transverse_positions', None)
+
+    def initialize_inputs(self, layout,
+                          initialize_self_fields = False,
+                          injection_plane_position = None,
+                          injection_plane_normal_vector = None):
+        self.species_number = len(pywarpx.particles.species_names)
 
         if self.name is None:
             self.name = 'species{}'.format(self.species_number)
@@ -78,11 +88,19 @@ class Species(picmistandard.PICMI_Species):
                                              charge = self.charge,
                                              injection_style = 'python',
                                              initialize_self_fields = int(initialize_self_fields),
-                                             plot_vars = set())
+                                             boost_adjust_transverse_positions = self.boost_adjust_transverse_positions)
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
             self.initial_distribution.initialize_inputs(self.species_number, layout, self.species, self.density_scale)
+
+        if injection_plane_position is not None:
+            if injection_plane_normal_vector is not None:
+                assert injection_plane_normal_vector[0] == 0. and injection_plane_normal_vector[1] == 0.,\
+                    Exception('Rigid injection can only be done along z')
+            pywarpx.particles.rigid_injected_species.append(self.name)
+            self.species.rigid_advance = 1
+            self.species.zinject_plane = injection_plane_position
 
         for interaction in self.interactions:
             assert interaction[0] == 'ionization'
@@ -122,10 +140,6 @@ class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
         species.q_tot = self.n_physical_particles*charge
         if density_scale is not None:
             species.q_tot *= density_scale
-
-        # --- These need to be defined even though they are not used
-        species.profile = "constant"
-        species.density = 1
 
         # --- The PICMI standard doesn't yet have a way of specifying these values.
         # --- They should default to the size of the domain. They are not typically
@@ -205,6 +219,9 @@ class UniformDistribution(picmistandard.PICMI_UniformDistribution):
 
 
 class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
+    def init(self, kw):
+        self.mangle_dict = None
+
     def initialize_inputs(self, species_number, layout, species, density_scale):
 
         if isinstance(layout, GriddedLayout):
@@ -225,14 +242,17 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
         species.zmin = self.lower_bound[2]
         species.zmax = self.upper_bound[2]
 
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+        expression = pywarpx.my_constants.mangle_expression(self.density_expression, self.mangle_dict)
+
         species.profile = "parse_density_function"
         if density_scale is None:
-            species.__setattr__('density_function(x,y,z)', self.density_expression)
+            species.__setattr__('density_function(x,y,z)', expression)
         else:
-            species.__setattr__('density_function(x,y,z)', "{}*({})".format(density_scale, self.density_expression))
-
-        for k,v in self.user_defined_kw.items():
-            setattr(pywarpx.my_constants, k, v)
+            species.__setattr__('density_function(x,y,z)', "{}*({})".format(density_scale, expression))
 
         # --- Note that WarpX takes gamma*beta as input
         if np.any(np.not_equal(self.momentum_expressions, None)):
@@ -256,23 +276,17 @@ class AnalyticDistribution(picmistandard.PICMI_AnalyticDistribution):
             species.do_continuous_injection = 1
 
     def setup_parse_momentum_functions(self, species):
-        if self.momentum_expressions[0] is not None:
-            species.__setattr__('momentum_function_ux(x,y,z)', '({0})/{1}'.format(self.momentum_expressions[0], constants.c))
-        else:
-            species.__setattr__('momentum_function_ux(x,y,z)', '({0})/{1}'.format(self.directed_velocity[0], constants.c))
-        if self.momentum_expressions[1] is not None:
-            species.__setattr__('momentum_function_uy(x,y,z)', '({0})/{1}'.format(self.momentum_expressions[1], constants.c))
-        else:
-            species.__setattr__('momentum_function_uy(x,y,z)', '({0})/{1}'.format(self.directed_velocity[1], constants.c))
-        if self.momentum_expressions[2] is not None:
-            species.__setattr__('momentum_function_uz(x,y,z)', '({0})/{1}'.format(self.momentum_expressions[2], constants.c))
-        else:
-            species.__setattr__('momentum_function_uz(x,y,z)', '({0})/{1}'.format(self.directed_velocity[2], constants.c))
+        for sdir, idir in zip(['x', 'y', 'z'], [0, 1, 2]):
+            if self.momentum_expressions[idir] is not None:
+                expression = pywarpx.my_constants.mangle_expression(self.momentum_expressions[idir], self.mangle_dict)
+            else:
+                expression = f'{self.directed_velocity[idir]}'
+            species.__setattr__(f'momentum_function_u{sdir}(x,y,z)', f'({expression})/{constants.c}')
 
 class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
     def init(self, kw):
 
-        if len(x) > 1:
+        if len(self.x) > 1:
             raise Exception('Only a single particle can be loaded')
 
     def initialize_inputs(self, species_number, layout, species, density_scale):
@@ -283,11 +297,6 @@ class ParticleListDistribution(picmistandard.PICMI_ParticleListDistribution):
         species.single_particle_weight = self.weight
         if density_scale is not None:
             species.single_particle_weight *= density_scale
-
-        # --- These need to be defined even though they are not used
-        species.profile = "constant"
-        species.density = 1
-        species.momentum_distribution_type = 'constant'
 
 
 class ParticleDistributionPlanarInjector(picmistandard.PICMI_ParticleDistributionPlanarInjector):
@@ -305,8 +314,10 @@ class PseudoRandomLayout(picmistandard.PICMI_PseudoRandomLayout):
 
 
 class BinomialSmoother(picmistandard.PICMI_BinomialSmoother):
+
     def initialize_inputs(self, solver):
         pywarpx.warpx.use_filter = 1
+        pywarpx.warpx.use_filter_compensation = bool(np.all(self.compensation))
         if self.n_pass is None:
             # If not specified, do at least one pass in each direction.
             self.n_pass = 1
@@ -389,7 +400,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid):
                 pywarpx.warpx.moving_window_dir = 'x'
                 pywarpx.warpx.moving_window_v = self.moving_window_velocity[0]/constants.c  # in units of the speed of light
             if self.moving_window_velocity[1] != 0.:
-                pywarpx.warpx.moving_window_dir = 'y'
+                pywarpx.warpx.moving_window_dir = 'z'
                 pywarpx.warpx.moving_window_v = self.moving_window_velocity[1]/constants.c  # in units of the speed of light
 
         if self.refined_regions:
@@ -446,10 +457,18 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid):
 
 class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
     def init(self, kw):
-        assert self.method is None or self.method in ['Yee', 'CKC'], Exception("Only 'Yee' and 'CKC' FDTD are supported")
+        assert self.method is None or self.method in ['Yee', 'CKC', 'PSATD'], Exception("Only 'Yee', 'CKC', and 'PSATD' are supported")
 
         self.do_pml = kw.pop('warpx_do_pml', None)
         self.pml_ncell = kw.pop('warpx_pml_ncell', None)
+
+        if self.method == 'PSATD':
+            self.psatd_periodic_single_box_fft = kw.pop('warpx_periodic_single_box_fft', None)
+            self.psatd_fftw_plan_measure = kw.pop('warpx_fftw_plan_measure', None)
+            self.psatd_current_correction = kw.pop('warpx_current_correction', None)
+            self.psatd_update_with_rho = kw.pop('warpx_psatd_update_with_rho', None)
+            self.psatd_do_time_averaging = kw.pop('warpx_psatd_do_time_averaging', None)
+            self.psatd_use_damp_fields_in_z_guard = kw.pop('warpx_use_damp_fields_in_z_guard', None)
 
     def initialize_inputs(self):
 
@@ -457,9 +476,35 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
         pywarpx.warpx.do_pml = self.do_pml
         pywarpx.warpx.pml_ncell = self.pml_ncell
+        pywarpx.warpx.do_nodal = self.l_nodal
+
+        if self.method == 'PSATD':
+            pywarpx.psatd.periodic_single_box_fft = self.psatd_periodic_single_box_fft
+            pywarpx.psatd.fftw_plan_measure = self.psatd_fftw_plan_measure
+            pywarpx.psatd.current_correction = self.psatd_current_correction
+            pywarpx.psatd.update_with_rho = self.psatd_update_with_rho
+            pywarpx.psatd.do_time_averaging = self.psatd_do_time_averaging
+            pywarpx.psatd.use_damp_fields_in_z_guard = self.psatd_use_damp_fields_in_z_guard
+
+            if self.grid.guard_cells is not None:
+                pywarpx.psatd.nx_guard = self.grid.guard_cells[0]
+                if self.grid.number_of_dimensions == 3:
+                    pywarpx.psatd.ny_guard = self.grid.guard_cells[1]
+                pywarpx.psatd.nz_guard = self.grid.guard_cells[-1]
+
+            if self.stencil_order is not None:
+                pywarpx.psatd.nox = self.stencil_order[0]
+                if self.grid.number_of_dimensions == 3:
+                    pywarpx.psatd.noy = self.stencil_order[1]
+                pywarpx.psatd.noz = self.stencil_order[-1]
+
+            if self.galilean_velocity is not None:
+                if self.grid.number_of_dimensions == 2:
+                    self.galilean_velocity = [self.galilean_velocity[0], 0., self.galilean_velocity[1]]
+                pywarpx.psatd.v_galilean = np.array(self.galilean_velocity)/constants.c
 
         # --- Same method names are used, though mapped to lower case.
-        pywarpx.algo.maxwell_fdtd_solver = self.method
+        pywarpx.algo.maxwell_solver = self.method
 
         if self.cfl is not None:
             pywarpx.warpx.cfl = self.cfl
@@ -475,7 +520,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
 
 class GaussianLaser(picmistandard.PICMI_GaussianLaser):
     def initialize_inputs(self):
-        self.laser_number = pywarpx.lasers.nlasers + 1
+        self.laser_number = len(pywarpx.lasers.names) + 1
         if self.name is None:
             self.name = 'laser{}'.format(self.laser_number)
 
@@ -490,11 +535,16 @@ class GaussianLaser(picmistandard.PICMI_GaussianLaser):
         self.laser.zeta = self.zeta
         self.laser.beta = self.beta
         self.laser.phi2 = self.phi2
+        self.laser.phi0 = self.phi0
 
+        self.laser.do_continuous_injection = self.fill_in
 
 class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
+    def init(self, kw):
+        self.mangle_dict = None
+
     def initialize_inputs(self):
-        self.laser_number = pywarpx.lasers.nlasers + 1
+        self.laser_number = len(pywarpx.lasers.names) + 1
         if self.name is None:
             self.name = 'laser{}'.format(self.laser_number)
 
@@ -504,11 +554,14 @@ class AnalyticLaser(picmistandard.PICMI_AnalyticLaser):
         self.laser.wavelength = self.wavelength  # The wavelength of the laser (in meters)
         self.laser.e_max = self.Emax  # Maximum amplitude of the laser field (in V/m)
         self.laser.polarization = self.polarization_direction  # The main polarization vector
-        self.laser.__setattr__('field_function(X,Y,t)', self.field_expression)
+        self.laser.do_continuous_injection = self.fill_in
 
-        for k,v in self.user_defined_kw.items():
-            setattr(pywarpx.my_constants, k, v)
-
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+        expression = pywarpx.my_constants.mangle_expression(self.field_expression, self.mangle_dict)
+        self.laser.__setattr__('field_function(X,Y,t)', expression)
 
 class LaserAntenna(picmistandard.PICMI_LaserAntenna):
     def initialize_inputs(self, laser):
@@ -517,6 +570,68 @@ class LaserAntenna(picmistandard.PICMI_LaserAntenna):
         if isinstance(laser, GaussianLaser):
             laser.laser.profile_focal_distance = laser.focal_position[2] - self.position[2]  # Focal distance from the antenna (in meters)
             laser.laser.profile_t_peak = (self.position[2] - laser.centroid_position[2])/constants.c  # The time at which the laser reaches its peak (in seconds)
+
+
+class ConstantAppliedField(picmistandard.PICMI_ConstantAppliedField):
+    def initialize_inputs(self):
+        # Note that lower and upper_bound are not used by WarpX
+
+        if (self.Ex is not None or
+            self.Ey is not None or
+            self.Ez is not None):
+            pywarpx.particles.E_ext_particle_init_style = 'constant'
+            pywarpx.particles.E_external_particle = [self.Ex or 0., self.Ey or 0., self.Ez or 0.]
+
+        if (self.Bx is not None or
+            self.By is not None or
+            self.Bz is not None):
+            pywarpx.particles.B_ext_particle_init_style = 'constant'
+            pywarpx.particles.B_external_particle = [self.Bx or 0., self.By or 0., self.Bz or 0.]
+
+
+class AnalyticAppliedField(picmistandard.PICMI_AnalyticAppliedField):
+    def init(self, kw):
+        self.mangle_dict = None
+
+    def initialize_inputs(self):
+        # Note that lower and upper_bound are not used by WarpX
+
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
+        if (self.Ex_expression is not None or
+            self.Ey_expression is not None or
+            self.Ez_expression is not None):
+            pywarpx.particles.E_ext_particle_init_style = 'parse_e_ext_particle_function'
+            for sdir, expression in zip(['x', 'y', 'z'], [self.Ex_expression, self.Ey_expression, self.Ez_expression]):
+                expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
+                pywarpx.particles.__setattr__(f'E{sdir}_external_particle_function(x,y,z,t)', expression)
+
+        if (self.Bx_expression is not None or
+            self.By_expression is not None or
+            self.Bz_expression is not None):
+            pywarpx.particles.B_ext_particle_init_style = 'parse_b_ext_particle_function'
+            for sdir, expression in zip(['x', 'y', 'z'], [self.Bx_expression, self.By_expression, self.Bz_expression]):
+                expression = pywarpx.my_constants.mangle_expression(expression, self.mangle_dict)
+                pywarpx.particles.__setattr__(f'B{sdir}_external_particle_function(x,y,z,t)', expression)
+
+
+class Mirror(picmistandard.PICMI_Mirror):
+    def initialize_inputs(self):
+        try:
+            pywarpx.warpx.num_mirrors
+        except AttributeError:
+            pywarpx.warpx.num_mirrors = 0
+            pywarpx.warpx.mirror_z = []
+            pywarpx.warpx.mirror_z_width = []
+            pywarpx.warpx.mirror_z_npoints = []
+
+        pywarpx.warpx.num_mirrors += 1
+        pywarpx.warpx.mirror_z.append(self.z_front_location)
+        pywarpx.warpx.mirror_z_width.append(self.depth)
+        pywarpx.warpx.mirror_z_npoints.append(self.number_of_cells)
 
 
 class Simulation(picmistandard.PICMI_Simulation):
@@ -531,6 +646,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
         self.load_balance_int = kw.pop('warpx_load_balance_int', None)
         self.load_balance_with_sfc = kw.pop('warpx_load_balance_with_sfc', None)
+        self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
 
         self.inputs_initialized = False
         self.warpx_initialized = False
@@ -547,7 +663,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         if self.gamma_boost is not None:
             pywarpx.warpx.gamma_boost = self.gamma_boost
-            pywarpx.warpx.boost_direction = None
+            pywarpx.warpx.boost_direction = 'z'
 
         pywarpx.algo.current_deposition = self.current_deposition_algo
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
@@ -560,6 +676,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
         pywarpx.warpx.load_balance_int = self.load_balance_int
         pywarpx.warpx.load_balance_with_sfc = self.load_balance_with_sfc
+
+        pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 
         particle_shape = self.particle_shape
         for s in self.species:
@@ -580,11 +698,17 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.solver.initialize_inputs()
 
         for i in range(len(self.species)):
-            self.species[i].initialize_inputs(self.layouts[i], self.initialize_self_fields[i])
+            self.species[i].initialize_inputs(self.layouts[i],
+                                              self.initialize_self_fields[i],
+                                              self.injection_plane_positions[i],
+                                              self.injection_plane_normal_vectors[i])
 
         for i in range(len(self.lasers)):
             self.lasers[i].initialize_inputs()
             self.laser_injection_methods[i].initialize_inputs(self.lasers[i])
+
+        for applied_field in self.applied_fields:
+            applied_field.initialize_inputs()
 
         for diagnostic in self.diagnostics:
             diagnostic.initialize_inputs()
@@ -636,49 +760,55 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.format = kw.pop('warpx_format', 'plotfile')
         self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
         self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.dump_rz_modes = kw.pop('warpx_dump_rz_modes', None)
 
     def initialize_inputs(self):
-        self.diagnostics_number = len(pywarpx.Diagnostics.diagnostics_list) + 1
 
-        # --- This a placeholder until the name attribute is added to the picmi standard
         name = getattr(self, 'name', None)
         if name is None:
-            self.name = 'diag{}'.format(self.diagnostics_number)
+            diagnostics_number = len(pywarpx.diagnostics._diagnostics_dict) + 1
+            self.name = 'diag{}'.format(diagnostics_number)
 
-        self.diagnostic = pywarpx.Bucket.Bucket(self.name)
-        pywarpx.diagnostics.diags_names.append(self.name)
-        pywarpx.Diagnostics.diagnostics_list.append(self.diagnostic)
+        try:
+            self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
+        except KeyError:
+            self.diagnostic = pywarpx.Diagnostics.Diagnostic(self.name, _species_dict={})
+            pywarpx.diagnostics._diagnostics_dict[self.name] = self.diagnostic
 
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.dump_rz_modes = self.dump_rz_modes
         self.diagnostic.period = self.period
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
-        self.diagnostic.coarsening_ratio = (np.array(self.grid.number_of_cells)/np.array(self.number_of_cells)).astype(int)
-        self.diagnostic.fields_to_plot = set()
+        if self.number_of_cells is not None:
+            self.diagnostic.coarsening_ratio = (np.array(self.grid.number_of_cells)/np.array(self.number_of_cells)).astype(int)
+
+        # --- Use a set to ensure that fields don't get repeated.
+        fields_to_plot = set()
 
         for dataname in self.data_list:
             if dataname == 'E':
-                self.diagnostic.fields_to_plot.add('Ex')
-                self.diagnostic.fields_to_plot.add('Ey')
-                self.diagnostic.fields_to_plot.add('Ez')
+                fields_to_plot.add('Ex')
+                fields_to_plot.add('Ey')
+                fields_to_plot.add('Ez')
             elif dataname == 'B':
-                self.diagnostic.fields_to_plot.add('Bx')
-                self.diagnostic.fields_to_plot.add('By')
-                self.diagnostic.fields_to_plot.add('Bz')
+                fields_to_plot.add('Bx')
+                fields_to_plot.add('By')
+                fields_to_plot.add('Bz')
             elif dataname == 'J':
-                self.diagnostic.fields_to_plot.add('jx')
-                self.diagnostic.fields_to_plot.add('jy')
-                self.diagnostic.fields_to_plot.add('jz')
+                fields_to_plot.add('jx')
+                fields_to_plot.add('jy')
+                fields_to_plot.add('jz')
             elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'F', 'proc_number', 'part_per_cell']:
-                self.diagnostic.fields_to_plot.add(dataname)
+                fields_to_plot.add(dataname)
             elif dataname in ['Jx', 'Jy', 'Jz']:
-                self.diagnostic.fields_to_plot.add(dataname.lower())
+                fields_to_plot.add(dataname.lower())
             elif dataname == 'dive':
-                self.diagnostic.fields_to_plot.add('divE')
+                fields_to_plot.add('divE')
             elif dataname == 'divb':
-                self.diagnostic.fields_to_plot.add('divB')
+                fields_to_plot.add('divB')
             elif dataname == 'raw_fields':
                 self.plot_raw_fields = 1
             elif dataname == 'raw_fields_guards':
@@ -687,6 +817,12 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
                 self.plot_finepatch = 1
             elif dataname == 'crsepatch':
                 self.plot_crsepatch = 1
+
+        # --- Convert the set to a sorted list so that the order
+        # --- is the same on all processors.
+        fields_to_plot = list(fields_to_plot)
+        fields_to_plot.sort()
+        self.diagnostic.fields_to_plot = fields_to_plot
 
         self.diagnostic.plot_raw_fields = self.plot_raw_fields
         self.diagnostic.plot_raw_fields_guards = self.plot_raw_fields_guards
@@ -712,37 +848,90 @@ class ElectrostaticFieldDiagnostic(_WarpX_FieldDiagnostic, picmistandard.PICMI_E
 
 
 class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
+    def init(self, kw):
+
+        self.format = kw.pop('warpx_format', 'plotfile')
+        self.openpmd_backend = kw.pop('warpx_openpmd_backend', None)
+        self.file_prefix = kw.pop('warpx_file_prefix', None)
+        self.random_fraction = kw.pop('warpx_random_fraction', None)
+        self.uniform_stride = kw.pop('warpx_uniform_stride', None)
+        self.plot_filter_function = kw.pop('warpx_plot_filter_function', None)
+
+        self.user_defined_kw = {}
+        if self.plot_filter_function is not None:
+            # This allows variables to be used in the plot_filter_function, but
+            # in order not to break other codes, the variables must begin with "warpx_"
+            for k in list(kw.keys()):
+                if k.startswith('warpx_') and re.search(r'\b%s\b'%k, self.plot_filter_function):
+                    self.user_defined_kw[k] = kw[k]
+                    del kw[k]
+
+        self.mangle_dict = None
+
     def initialize_inputs(self):
 
-        plot_vars = set()
+        name = getattr(self, 'name', None)
+        if name is None:
+            diagnostics_number = len(pywarpx.diagnostics._diagnostics_dict) + 1
+            self.name = 'diag{}'.format(diagnostics_number)
+
+        try:
+            self.diagnostic = pywarpx.diagnostics._diagnostics_dict[self.name]
+        except KeyError:
+            self.diagnostic = pywarpx.Diagnostics.Diagnostic(self.name, _species_dict={})
+            pywarpx.diagnostics._diagnostics_dict[self.name] = self.diagnostic
+
+        self.diagnostic.diag_type = 'Full'
+        self.diagnostic.format = self.format
+        self.diagnostic.openpmd_backend = self.openpmd_backend
+        self.diagnostic.period = self.period
+
+        # --- Use a set to ensure that fields don't get repeated.
+        variables = set()
+
         for dataname in self.data_list:
             if dataname == 'position':
                 # --- The positions are alway written out anyway
                 pass
             elif dataname == 'momentum':
-                plot_vars.add('ux')
-                plot_vars.add('uy')
-                plot_vars.add('uz')
+                variables.add('ux')
+                variables.add('uy')
+                variables.add('uz')
             elif dataname == 'weighting':
-                plot_vars.add('w')
+                variables.add('w')
             elif dataname == 'fields':
-                plot_vars.add('Ex')
-                plot_vars.add('Ey')
-                plot_vars.add('Ez')
-                plot_vars.add('Bx')
-                plot_vars.add('By')
-                plot_vars.add('Bz')
+                variables.add('Ex')
+                variables.add('Ey')
+                variables.add('Ez')
+                variables.add('Bx')
+                variables.add('By')
+                variables.add('Bz')
             elif dataname in ['ux', 'uy', 'uz', 'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
-                plot_vars.add(dataname)
+                variables.add(dataname)
 
-        if plot_vars:
-            species = self.species
-            if not np.iterable(species):
-                species = [species]
-            for specie in species:
-                for var in plot_vars:
-                    specie.species.plot_vars.add(var)
+        # --- Convert the set to a sorted list so that the order
+        # --- is the same on all processors.
+        variables = list(variables)
+        variables.sort()
 
+        if np.iterable(self.species):
+            species_list = self.species
+        else:
+            species_list = [species]
+
+        if self.mangle_dict is None:
+            # Only do this once so that the same variables are used in this distribution
+            # is used multiple times
+            self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
+        for specie in species_list:
+            diag = pywarpx.Bucket.Bucket(self.name + '.' + specie.name,
+                                         variables = variables,
+                                         random_fraction = self.random_fraction,
+                                         uniform_stride = self.uniform_stride)
+            expression = pywarpx.my_constants.mangle_expression(self.plot_filter_function, self.mangle_dict)
+            diag.__setattr__('plot_filter_function(t,x,y,z,ux,uy,uz)', expression)
+            self.diagnostic._species_dict[specie.name] = diag
 
 # ----------------------------
 # Lab frame diagnostics

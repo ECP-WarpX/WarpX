@@ -1,4 +1,5 @@
 import re
+import scipy.constants as scc
 
 """
 This file is part of the suite of scripts to use LibEnsemble on top of WarpX
@@ -46,6 +47,14 @@ def write_sim_input(input_file, x_values):
     beg_stage_2 = end_stage_1 + gap_12
     end_stage_2 = beg_stage_2 + ramp_up_2 + plateau_2 + ramp_down_2
 
+    # Updating mirrors position
+    mirror_z_1 = end_stage_1 + 1.0e-3
+    mirror_z_2 = end_stage_2 + 1.0e-3
+
+    # Updating laser 2 configuration
+    z_antenna_2 = beg_stage_2 - 1.0e-9 #with value used for stage 1
+    z_t_peak_2 = z_antenna_2 / scc.c + 2 * 7.33841e-14 # using pulse duration
+
     # End simulation when beam has just escaped the last stage
     gamma_b = 30.
     zmax_stop_run = end_stage_2 - 55.e-6 * gamma_b**2 * 2.
@@ -92,6 +101,15 @@ def write_sim_input(input_file, x_values):
     output_text = _set_value(
         output_text, 'warpx.zmax_plasma_to_compute_max_step = ',
         str(zmax_stop_run))
+    # Set mirrors position
+    output_text = _set_value(
+        output_text, 'warpx.mirror_z = ', str(mirror_z_1)+' '+str(mirror_z_2))
+    # Set laser2 position
+    output_text = _set_value(
+        output_text, 'laser2.position = ', '0. 0. '+ str(z_antenna_2))
+    # Set laser2 time until peak field is reached
+    output_text = _set_value(
+        output_text, 'laser2.profile_t_peak = ', str(z_t_peak_2))
 
 # Write new input file
     fout = open(input_file, 'w')

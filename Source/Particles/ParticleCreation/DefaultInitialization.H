@@ -8,8 +8,8 @@
 #ifndef DEFAULTINITIALIZATION_H_
 #define DEFAULTINITIALIZATION_H_
 
-#include "AMReX_REAL.H"
-#include "AMReX_GpuContainers.H"
+#include <AMReX_REAL.H>
+#include <AMReX_GpuContainers.H>
 
 #include <map>
 #include <string>
@@ -41,12 +41,6 @@ static std::map<std::string, InitializationPolicy> initialization_policies = {
     {"ux",    InitializationPolicy::Zero },
     {"uy",    InitializationPolicy::Zero },
     {"uz",    InitializationPolicy::Zero },
-    {"Ex",    InitializationPolicy::Zero },
-    {"Ey",    InitializationPolicy::Zero },
-    {"Ez",    InitializationPolicy::Zero },
-    {"Bx",    InitializationPolicy::Zero },
-    {"By",    InitializationPolicy::Zero },
-    {"Bz",    InitializationPolicy::Zero },
 #ifdef WARPX_DIM_RZ
     {"theta", InitializationPolicy::Zero},
 #endif
@@ -59,13 +53,13 @@ static std::map<std::string, InitializationPolicy> initialization_policies = {
 };
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-amrex::ParticleReal initializeRealValue (const InitializationPolicy policy) noexcept
+amrex::ParticleReal initializeRealValue (const InitializationPolicy policy, amrex::RandomEngine const& engine) noexcept
 {
     switch (policy) {
         case InitializationPolicy::Zero : return 0.0;
         case InitializationPolicy::One  : return 1.0;
         case InitializationPolicy::RandomExp : {
-            return -log(amrex::Random());
+            return -std::log(amrex::Random(engine));
         }
         default : {
             amrex::Abort("Initialization Policy not recognized");

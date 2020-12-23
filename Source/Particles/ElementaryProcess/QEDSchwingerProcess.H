@@ -17,7 +17,8 @@
 struct SchwingerFilterFunc
 {
     const int m_threshold_poisson_gaussian;
-    const amrex::Real m_dVdt;
+    const amrex::Real m_dV;
+    const amrex::Real m_dt;
 
     /** Get the number of created pairs in a given cell at a given timestep.
      *
@@ -30,8 +31,9 @@ struct SchwingerFilterFunc
      */
     template <typename FABs>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    amrex::Real operator() (const FABs& src_FABs, const int i,
-                                        const int j, const int k) const noexcept
+    amrex::Real operator() (const FABs& src_FABs,
+                            const int i, const int j, const int k,
+                            amrex::RandomEngine const& engine) const noexcept
     {
         const auto& arrEx = src_FABs[0];
         const auto& arrEy = src_FABs[1];
@@ -40,10 +42,10 @@ struct SchwingerFilterFunc
         const auto& arrBy = src_FABs[4];
         const auto& arrBz = src_FABs[5];
 
-        return getSchwingerProductionNumber( m_dVdt,
+        return getSchwingerProductionNumber( m_dV, m_dt,
                     arrEx(i,j,k),arrEy(i,j,k),arrEz(i,j,k),
                     arrBx(i,j,k),arrBy(i,j,k),arrBz(i,j,k),
-                    m_threshold_poisson_gaussian);
+                    m_threshold_poisson_gaussian,engine);
     }
 };
 

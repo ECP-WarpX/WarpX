@@ -31,7 +31,6 @@ warpx.moving_window_v = 1.0 # units of speed of light
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 2 # number of species
 particles.species_names = electrons beam
 
 electrons.species_type = electron
@@ -66,7 +65,6 @@ beam.uz_th = 50.
 #################################
 ############ PLASMA #############
 #################################
-lasers.nlasers      = 1
 lasers.names        = laser1
 laser1.profile      = Gaussian
 laser1.position     = 0. 0. 9.e-6        # This point is on the laser plane
@@ -83,3 +81,4 @@ laser1.wavelength = 0.8e-6               # The wavelength of the laser (in m)
 diagnostics.diags_names = diag1
 diag1.period = 200
 diag1.diag_type = Full
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho

@@ -9,10 +9,15 @@
 #include "ParticleHistogram.H"
 #include "BeamRelevant.H"
 #include "ParticleEnergy.H"
+#include "ParticleExtrema.H"
 #include "FieldEnergy.H"
+#include "FieldMaximum.H"
+#include "ParticleNumber.H"
 #include "MultiReducedDiags.H"
-#include "AMReX_ParmParse.H"
-#include "AMReX_ParallelDescriptor.H"
+
+#include <AMReX_ParmParse.H>
+#include <AMReX_ParallelDescriptor.H>
+
 #include <fstream>
 
 using namespace amrex;
@@ -32,7 +37,7 @@ MultiReducedDiags::MultiReducedDiags ()
     m_multi_rd.resize(m_rd_names.size());
 
     // loop over all reduced diags
-    for (int i_rd = 0; i_rd < m_rd_names.size(); ++i_rd)
+    for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
     {
 
         ParmParse pp_rd(m_rd_names[i_rd]);
@@ -44,28 +49,43 @@ MultiReducedDiags::MultiReducedDiags ()
         // match diags
         if (rd_type.compare("ParticleEnergy") == 0)
         {
-            m_multi_rd[i_rd].reset
-                ( new ParticleEnergy(m_rd_names[i_rd]));
+            m_multi_rd[i_rd] =
+                std::make_unique<ParticleEnergy>(m_rd_names[i_rd]);
         }
         else if (rd_type.compare("FieldEnergy") == 0)
         {
-            m_multi_rd[i_rd].reset
-                ( new FieldEnergy(m_rd_names[i_rd]));
+            m_multi_rd[i_rd] =
+                std::make_unique<FieldEnergy>(m_rd_names[i_rd]);
+        }
+        else if (rd_type.compare("FieldMaximum") == 0)
+        {
+            m_multi_rd[i_rd] =
+                std::make_unique<FieldMaximum>(m_rd_names[i_rd]);
         }
         else if (rd_type.compare("BeamRelevant") == 0)
         {
-            m_multi_rd[i_rd].reset
-                ( new BeamRelevant(m_rd_names[i_rd]));
+            m_multi_rd[i_rd] =
+                std::make_unique<BeamRelevant>(m_rd_names[i_rd]);
         }
         else if (rd_type.compare("LoadBalanceCosts") == 0)
         {
-            m_multi_rd[i_rd].reset
-                ( new LoadBalanceCosts(m_rd_names[i_rd]));
+            m_multi_rd[i_rd] =
+                std::make_unique<LoadBalanceCosts>(m_rd_names[i_rd]);
         }
         else if (rd_type.compare("ParticleHistogram") == 0)
         {
-            m_multi_rd[i_rd].reset
-                ( new ParticleHistogram(m_rd_names[i_rd]));
+            m_multi_rd[i_rd] =
+                std::make_unique<ParticleHistogram>(m_rd_names[i_rd]);
+        }
+        else if (rd_type.compare("ParticleNumber") == 0)
+        {
+            m_multi_rd[i_rd]=
+                std::make_unique<ParticleNumber>(m_rd_names[i_rd]);
+        }
+        else if (rd_type.compare("ParticleExtrema") == 0)
+        {
+            m_multi_rd[i_rd]=
+                std::make_unique<ParticleExtrema>(m_rd_names[i_rd]);
         }
         else
         { Abort("No matching reduced diagnostics type found."); }
@@ -81,7 +101,7 @@ MultiReducedDiags::MultiReducedDiags ()
 void MultiReducedDiags::ComputeDiags (int step)
 {
     // loop over all reduced diags
-    for (int i_rd = 0; i_rd < m_rd_names.size(); ++i_rd)
+    for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
     {
         m_multi_rd[i_rd] -> ComputeDiags(step);
     }
@@ -89,7 +109,7 @@ void MultiReducedDiags::ComputeDiags (int step)
 }
 // end void MultiReducedDiags::ComputeDiags
 
-// funciton to write data
+// function to write data
 void MultiReducedDiags::WriteToFile (int step)
 {
 
@@ -97,11 +117,10 @@ void MultiReducedDiags::WriteToFile (int step)
     if ( !ParallelDescriptor::IOProcessor() ) { return; }
 
     // loop over all reduced diags
-    for (int i_rd = 0; i_rd < m_rd_names.size(); ++i_rd)
+    for (int i_rd = 0; i_rd < static_cast<int>(m_rd_names.size()); ++i_rd)
     {
-
         // Judge if the diags should be done
-        if ( (step+1) % m_multi_rd[i_rd]->m_freq != 0 ) { continue; }
+        if (!m_multi_rd[i_rd]->m_intervals.contains(step+1)) { continue; }
 
         // call the write to file function
         m_multi_rd[i_rd]->WriteToFile(step);

@@ -24,7 +24,7 @@
 #include <limits>
 #include <algorithm>
 #include <string>
-
+#include <vector>
 
 using namespace amrex;
 
@@ -33,26 +33,29 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
 
     ReadParameters();
 
+    auto const nspecies = static_cast<int>(species_names.size());
+    auto const nlasers = static_cast<int>(lasers_names.size());
+
     allcontainers.resize(nspecies + nlasers);
     for (int i = 0; i < nspecies; ++i) {
         if (species_types[i] == PCTypes::Physical) {
-            allcontainers[i].reset(new PhysicalParticleContainer(amr_core, i, species_names[i]));
+            allcontainers[i] = std::make_unique<PhysicalParticleContainer>(amr_core, i, species_names[i]);
         }
         else if (species_types[i] == PCTypes::RigidInjected) {
-            allcontainers[i].reset(new RigidInjectedParticleContainer(amr_core, i, species_names[i]));
+            allcontainers[i] = std::make_unique<RigidInjectedParticleContainer>(amr_core, i, species_names[i]);
         }
         else if (species_types[i] == PCTypes::Photon) {
-            allcontainers[i].reset(new PhotonParticleContainer(amr_core, i, species_names[i]));
+            allcontainers[i] = std::make_unique<PhotonParticleContainer>(amr_core, i, species_names[i]);
         }
         allcontainers[i]->m_deposit_on_main_grid = m_deposit_on_main_grid[i];
         allcontainers[i]->m_gather_from_main_grid = m_gather_from_main_grid[i];
     }
 
     for (int i = nspecies; i < nspecies+nlasers; ++i) {
-        allcontainers[i].reset(new LaserParticleContainer(amr_core, i, lasers_names[i-nspecies]));
+        allcontainers[i] = std::make_unique<LaserParticleContainer>(amr_core, i, lasers_names[i-nspecies]);
     }
 
-    pc_tmp.reset(new PhysicalParticleContainer(amr_core));
+    pc_tmp = std::make_unique<PhysicalParticleContainer>(amr_core);
 
     // Compute the number of species for which lab-frame data is dumped
     // nspecies_lab_frame_diags, and map their ID to MultiParticleContainer
@@ -69,10 +72,11 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
     }
 
     // collision
+    auto const ncollisions = collision_names.size();
     allcollisions.resize(ncollisions);
-    for (int i = 0; i < ncollisions; ++i) {
-        allcollisions[i].reset
-            (new CollisionType(species_names, collision_names[i]));
+    for (int i = 0; i < static_cast<int>(ncollisions); ++i) {
+        allcollisions[i] =
+            std::make_unique<CollisionType>(species_names, collision_names[i]);
     }
 
 }
@@ -135,12 +139,12 @@ MultiParticleContainer::ReadParameters ()
                                       str_Bz_ext_particle_function);
 
            // Parser for B_external on the particle
-           m_Bx_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Bx_ext_particle_function,{"x","y","z","t"})));
-           m_By_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_By_ext_particle_function,{"x","y","z","t"})));
-           m_Bz_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Bz_ext_particle_function,{"x","y","z","t"})));
+           m_Bx_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Bx_ext_particle_function,{"x","y","z","t"}));
+           m_By_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_By_ext_particle_function,{"x","y","z","t"}));
+           m_Bz_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Bz_ext_particle_function,{"x","y","z","t"}));
 
         }
 
@@ -160,26 +164,21 @@ MultiParticleContainer::ReadParameters ()
            Store_parserString(pp, "Ez_external_particle_function(x,y,z,t)",
                                       str_Ez_ext_particle_function);
            // Parser for E_external on the particle
-           m_Ex_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Ex_ext_particle_function,{"x","y","z","t"})));
-           m_Ey_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Ey_ext_particle_function,{"x","y","z","t"})));
-           m_Ez_particle_parser.reset(new ParserWrapper<4>(
-                                    makeParser(str_Ez_ext_particle_function,{"x","y","z","t"})));
+           m_Ex_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Ex_ext_particle_function,{"x","y","z","t"}));
+           m_Ey_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Ey_ext_particle_function,{"x","y","z","t"}));
+           m_Ez_particle_parser = std::make_unique<ParserWrapper<4>>(
+                                    makeParser(str_Ez_ext_particle_function,{"x","y","z","t"}));
 
         }
 
 
-
-
-        pp.query("nspecies", nspecies);
-        AMREX_ALWAYS_ASSERT(nspecies >= 0);
+        // particle species
+        pp.queryarr("species_names", species_names);
+        auto const nspecies = species_names.size();
 
         if (nspecies > 0) {
-            // Get species names
-            pp.getarr("species_names", species_names);
-            AMREX_ALWAYS_ASSERT(species_names.size() == nspecies);
-
             // Get species to deposit on main grid
             m_deposit_on_main_grid.resize(nspecies, false);
             std::vector<std::string> tmp;
@@ -242,27 +241,30 @@ MultiParticleContainer::ReadParameters ()
                 }
             }
 
-            // collision
+            // binary collisions
             ParmParse pc("collisions");
-            pc.query("ncollisions", ncollisions);
-            AMREX_ALWAYS_ASSERT(ncollisions >= 0);
-            if (ncollisions > 0) {
-                pc.getarr("collision_names", collision_names);
-                AMREX_ALWAYS_ASSERT(collision_names.size() == ncollisions);
-            }
+            pc.queryarr("collision_names", collision_names);
 
         }
-
         pp.query("use_fdtd_nci_corr", WarpX::use_fdtd_nci_corr);
-        pp.query("l_lower_order_in_v", WarpX::l_lower_order_in_v);
+#ifdef WARPX_DIM_RZ
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(WarpX::use_fdtd_nci_corr==0,
+                            "ERROR: use_fdtd_nci_corr is not supported in RZ");
+#endif
+        pp.query("galerkin_interpolation", WarpX::galerkin_interpolation);
+
+        std::string boundary_conditions = "none";
+        pp.query("boundary_conditions", boundary_conditions);
+        if        (boundary_conditions == "none"){
+            m_boundary_conditions = ParticleBC::none;
+        } else if (boundary_conditions == "absorbing"){
+            m_boundary_conditions = ParticleBC::absorbing;
+        } else {
+            amrex::Abort("unknown particle BC type");
+        }
 
         ParmParse ppl("lasers");
-        ppl.query("nlasers", nlasers);
-        AMREX_ALWAYS_ASSERT(nlasers >= 0);
-        if (nlasers > 0) {
-            ppl.getarr("names", lasers_names);
-            AMREX_ALWAYS_ASSERT(lasers_names.size() == nlasers);
-        }
+        ppl.queryarr("names", lasers_names);
 
 #ifdef WARPX_QED
         ParmParse ppw("warpx");
@@ -273,10 +275,17 @@ MultiParticleContainer::ReadParameters ()
             ppq.get("ele_product_species", m_qed_schwinger_ele_product_name);
             ppq.get("pos_product_species", m_qed_schwinger_pos_product_name);
 #if (AMREX_SPACEDIM == 2)
-            ppq.get("y_size",m_qed_schwinger_y_size);
+            getWithParser(ppq, "y_size",m_qed_schwinger_y_size);
 #endif
-            ppq.query("threshold_poisson_gaussian",
-                      m_qed_schwinger_threshold_poisson_gaussian);
+            ppq.query("threshold_poisson_gaussian", m_qed_schwinger_threshold_poisson_gaussian);
+            queryWithParser(ppq, "xmin", m_qed_schwinger_xmin);
+            queryWithParser(ppq, "xmax", m_qed_schwinger_xmax);
+#if (AMREX_SPACEDIM == 3)
+            queryWithParser(ppq, "ymin", m_qed_schwinger_ymin);
+            queryWithParser(ppq, "ymax", m_qed_schwinger_ymax);
+#endif
+            queryWithParser(ppq, "zmin", m_qed_schwinger_zmin);
+            queryWithParser(ppq, "zmax", m_qed_schwinger_zmax);
         }
 #endif
         initialized = true;
@@ -313,20 +322,11 @@ MultiParticleContainer::InitData ()
 }
 
 void
-MultiParticleContainer::FieldGather (int lev,
-                                     const MultiFab& Ex, const MultiFab& Ey,
-                                     const MultiFab& Ez, const MultiFab& Bx,
-                                     const MultiFab& By, const MultiFab& Bz)
-{
-    for (auto& pc : allcontainers) {
-        pc->FieldGather(lev, Ex, Ey, Ez, Bx, By, Bz);
-    }
-}
-
-void
 MultiParticleContainer::Evolve (int lev,
                                 const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                 const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
+                                const MultiFab& Ex_avg, const MultiFab& Ey_avg, const MultiFab& Ez_avg,
+                                const MultiFab& Bx_avg, const MultiFab& By_avg, const MultiFab& Bz_avg,
                                 MultiFab& jx, MultiFab& jy, MultiFab& jz,
                                 MultiFab* cjx,  MultiFab* cjy, MultiFab* cjz,
                                 MultiFab* rho, MultiFab* crho,
@@ -343,7 +343,7 @@ MultiParticleContainer::Evolve (int lev,
     if (rho) rho->setVal(0.0);
     if (crho) crho->setVal(0.0);
     for (auto& pc : allcontainers) {
-        pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, jx, jy, jz, cjx, cjy, cjz,
+        pc->Evolve(lev, Ex, Ey, Ez, Bx, By, Bz, Ex_avg, Ey_avg, Ez_avg, Bx_avg, By_avg, Bz_avg, jx, jy, jz, cjx, cjy, cjz,
                    rho, crho, cEx, cEy, cEz, cBx, cBy, cBz, t, dt, a_dt_type);
     }
 }
@@ -367,18 +367,41 @@ MultiParticleContainer::PushP (int lev, Real dt,
 }
 
 std::unique_ptr<MultiFab>
+MultiParticleContainer::GetZeroChargeDensity (const int lev)
+{
+    WarpX& warpx = WarpX::GetInstance();
+
+    BoxArray ba = warpx.boxArray(lev);
+    DistributionMapping dmap = warpx.DistributionMap(lev);
+    const int ng_rho = warpx.get_ng_depos_rho().max();
+
+    auto zero_rho = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheNodeVector()),
+                                               dmap,WarpX::ncomps,ng_rho);
+    zero_rho->setVal(amrex::Real(0.0));
+    return zero_rho;
+}
+
+std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local)
 {
-    std::unique_ptr<MultiFab> rho = allcontainers[0]->GetChargeDensity(lev, true);
-    for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
-        std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
-        MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrow());
+    if (allcontainers.size() == 0)
+    {
+        std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
+        return rho;
     }
-    if (!local) {
-        const Geometry& gm = allcontainers[0]->Geom(lev);
-        rho->SumBoundary(gm.periodicity());
+    else
+    {
+        std::unique_ptr<MultiFab> rho = allcontainers[0]->GetChargeDensity(lev, true);
+        for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
+            std::unique_ptr<MultiFab> rhoi = allcontainers[i]->GetChargeDensity(lev, true);
+            MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrow());
+        }
+        if (!local) {
+            const Geometry& gm = allcontainers[0]->Geom(lev);
+            rho->SumBoundary(gm.periodicity());
+        }
+        return rho;
     }
-    return rho;
 }
 
 void
@@ -405,19 +428,44 @@ MultiParticleContainer::RedistributeLocal (const int num_ghost)
     }
 }
 
-Vector<long>
+void
+MultiParticleContainer::ApplyBoundaryConditions ()
+{
+    for (auto& pc : allcontainers) {
+        pc->ApplyBoundaryConditions(m_boundary_conditions);
+    }
+}
+
+Vector<Long>
+MultiParticleContainer::GetZeroParticlesInGrid (const int lev) const
+{
+    WarpX& warpx = WarpX::GetInstance();
+    const int num_boxes = warpx.boxArray(lev).size();
+    const Vector<Long> r(num_boxes, 0);
+    return r;
+}
+
+Vector<Long>
 MultiParticleContainer::NumberOfParticlesInGrid (int lev) const
 {
-    const bool only_valid=true, only_local=true;
-    Vector<long> r = allcontainers[0]->NumberOfParticlesInGrid(lev,only_valid,only_local);
-    for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
-        const auto& ri = allcontainers[i]->NumberOfParticlesInGrid(lev,only_valid,only_local);
-        for (unsigned j=0, m=ri.size(); j<m; ++j) {
-            r[j] += ri[j];
-        }
+    if (allcontainers.size() == 0)
+    {
+        const Vector<Long> r = GetZeroParticlesInGrid(lev);
+        return r;
     }
-    ParallelDescriptor::ReduceLongSum(r.data(),r.size());
-    return r;
+    else
+    {
+        const bool only_valid=true, only_local=true;
+        Vector<Long> r = allcontainers[0]->NumberOfParticlesInGrid(lev,only_valid,only_local);
+        for (unsigned i = 1, n = allcontainers.size(); i < n; ++i) {
+            const auto& ri = allcontainers[i]->NumberOfParticlesInGrid(lev,only_valid,only_local);
+            for (unsigned j=0, m=ri.size(); j<m; ++j) {
+                r[j] += ri[j];
+            }
+        }
+        ParallelDescriptor::ReduceLongSum(r.data(),r.size());
+        return r;
+    }
 }
 
 void
@@ -462,7 +510,7 @@ MultiParticleContainer
                    Vector<WarpXParticleContainer::DiagnosticParticleData>& parts) const
 {
 
-    WARPX_PROFILE("MultiParticleContainer::GetLabFrameData");
+    WARPX_PROFILE("MultiParticleContainer::GetLabFrameData()");
 
     // Loop over particle species
     for (int i = 0; i < nspecies_back_transformed_diagnostics; ++i){
@@ -523,8 +571,7 @@ MultiParticleContainer
 void
 MultiParticleContainer::ContinuousInjection (const RealBox& injection_box) const
 {
-    for (int i=0; i<nspecies+nlasers; i++){
-        auto& pc = allcontainers[i];
+    for (auto& pc : allcontainers){
         if (pc->do_continuous_injection){
             pc->ContinuousInjection(injection_box);
         }
@@ -539,8 +586,7 @@ MultiParticleContainer::ContinuousInjection (const RealBox& injection_box) const
 void
 MultiParticleContainer::UpdateContinuousInjectionPosition (Real dt) const
 {
-    for (int i=0; i<nspecies+nlasers; i++){
-        auto& pc = allcontainers[i];
+    for (auto& pc : allcontainers){
         if (pc->do_continuous_injection){
             pc->UpdateContinuousInjectionPosition(dt);
         }
@@ -551,8 +597,7 @@ int
 MultiParticleContainer::doContinuousInjection () const
 {
     int warpx_do_continuous_injection = 0;
-    for (int i=0; i<nspecies+nlasers; i++){
-        auto& pc = allcontainers[i];
+    for (auto& pc : allcontainers){
         if (pc->do_continuous_injection){
             warpx_do_continuous_injection = 1;
         }
@@ -567,7 +612,7 @@ MultiParticleContainer::doContinuousInjection () const
 void
 MultiParticleContainer::mapSpeciesProduct ()
 {
-    for (int i=0; i<nspecies; i++){
+    for (int i=0; i < static_cast<int>(species_names.size()); i++){
         auto& pc = allcontainers[i];
         // If species pc has ionization on, find species with name
         // pc->ionization_product_name and store its ID into
@@ -612,10 +657,10 @@ MultiParticleContainer::mapSpeciesProduct ()
 int
 MultiParticleContainer::getSpeciesID (std::string product_str) const
 {
-    int i_product;
+    int i_product = 0;
     bool found = 0;
     // Loop over species
-    for (int i=0; i<nspecies; i++){
+    for (int i=0; i < static_cast<int>(species_names.size()); i++){
         // If species name matches, store its ID
         // into i_product
         if (species_names[i] == product_str){
@@ -634,9 +679,15 @@ MultiParticleContainer::getSpeciesID (std::string product_str) const
 }
 
 void
-MultiParticleContainer::doFieldIonization ()
+MultiParticleContainer::doFieldIonization (int lev,
+                                           const MultiFab& Ex,
+                                           const MultiFab& Ey,
+                                           const MultiFab& Ez,
+                                           const MultiFab& Bx,
+                                           const MultiFab& By,
+                                           const MultiFab& Bz)
 {
-    WARPX_PROFILE("MPC::doFieldIonization");
+    WARPX_PROFILE("MultiParticleContainer::doFieldIonization()");
 
     // Loop over all species.
     // Ionized particles in pc_source create particles in pc_product
@@ -649,44 +700,48 @@ MultiParticleContainer::doFieldIonization ()
         SmartCopyFactory copy_factory(*pc_source, *pc_product);
         auto phys_pc_ptr = static_cast<PhysicalParticleContainer*>(pc_source.get());
 
-        auto Filter    = phys_pc_ptr->getIonizationFunc();
         auto Copy      = copy_factory.getSmartCopy();
         auto Transform = IonizationTransformFunc();
 
         pc_source ->defineAllParticleTiles();
         pc_product->defineAllParticleTiles();
 
-        for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
-        {
-            const auto info = getMFItInfo(*pc_source, *pc_product);
+        auto info = getMFItInfo(*pc_source, *pc_product);
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-            for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
-            {
-                auto& src_tile = pc_source ->ParticlesAt(lev, mfi);
-                auto& dst_tile = pc_product->ParticlesAt(lev, mfi);
+        for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
+        {
+            auto& src_tile = pc_source ->ParticlesAt(lev, pti);
+            auto& dst_tile = pc_product->ParticlesAt(lev, pti);
 
-                const auto np_dst = dst_tile.numParticles();
-                const auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
-                                                                 Filter, Copy, Transform);
+            auto Filter = phys_pc_ptr->getIonizationFunc(pti, lev, Ex.nGrow(),
+                                                         Ex[pti], Ey[pti], Ez[pti],
+                                                         Bx[pti], By[pti], Bz[pti]);
 
-                setNewParticleIDs(dst_tile, np_dst, num_added);
-            }
+            const auto np_dst = dst_tile.numParticles();
+            const auto num_added = filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
+                                                                   Filter, Copy, Transform);
+
+            setNewParticleIDs(dst_tile, np_dst, num_added);
         }
     }
 }
 
 void
-MultiParticleContainer::doCoulombCollisions ()
+MultiParticleContainer::doCoulombCollisions ( Real cur_time )
 {
-    WARPX_PROFILE("MPC::doCoulombCollisions");
+    WARPX_PROFILE("MultiParticleContainer::doCoulombCollisions()");
 
-    for (int i = 0; i < ncollisions; ++i)
+    for( auto const& collision : allcollisions )
     {
-        auto& species1 = allcontainers[ allcollisions[i]->m_species1_index ];
-        auto& species2 = allcontainers[ allcollisions[i]->m_species2_index ];
+
+        const Real dt = WarpX::GetInstance().getdt(0);
+        if ( int(std::floor(cur_time/dt)) % collision->m_ndt != 0 ) continue;
+
+        auto& species1 = allcontainers[ collision->m_species1_index ];
+        auto& species2 = allcontainers[ collision->m_species2_index ];
 
         // Enable tiling
         MFItInfo info;
@@ -704,17 +759,29 @@ MultiParticleContainer::doCoulombCollisions ()
 
                 CollisionType::doCoulombCollisionsWithinTile
                     ( lev, mfi, species1, species2,
-                      allcollisions[i]->m_isSameSpecies,
-                      allcollisions[i]->m_CoulombLog );
+                      collision->m_isSameSpecies,
+                      collision->m_CoulombLog,
+                      collision->m_ndt );
 
             }
         }
     }
 }
 
+void MultiParticleContainer::doResampling (const int timestep)
+{
+    for (auto& pc : allcontainers)
+    {
+        // do_resampling can only be true for PhysicalParticleContainers
+        if (!pc->do_resampling){ continue; }
+
+        pc->resample(timestep);
+    }
+}
+
 void MultiParticleContainer::CheckIonizationProductSpecies()
 {
-    for (int i=0; i<nspecies; i++){
+    for (int i=0; i < static_cast<int>(species_names.size()); i++){
         if (allcontainers[i]->do_field_ionization){
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
                 i != allcontainers[i]->ionization_product,
@@ -760,13 +827,22 @@ void MultiParticleContainer::InitQuantumSync ()
 
     //If specified, use a user-defined energy threshold for photon creaction
     ParticleReal temp;
-    if(pp.query("photon_creation_energy_threshold", temp)){
+    constexpr auto mec2 = PhysConst::c * PhysConst::c * PhysConst::m_e;
+    if(queryWithParser(pp, "photon_creation_energy_threshold", temp)){
+        temp *= mec2;
         m_quantum_sync_photon_creation_energy_threshold = temp;
     }
     else{
         amrex::Print() << "Using default value (2*me*c^2)" <<
             " for photon energy creaction threshold \n" ;
     }
+
+    // qs_minimum_chi_part is the minimum chi parameter to be
+    // considered for Synchrotron emission. If a lepton has chi < chi_min,
+    // the optical depth is not evolved and photon generation is ignored
+    amrex::Real qs_minimum_chi_part;
+    getWithParser(pp, "chi_min", qs_minimum_chi_part);
+
 
     pp.query("lookup_table_mode", lookup_table_mode);
     if(lookup_table_mode.empty()){
@@ -791,11 +867,12 @@ void MultiParticleContainer::InitQuantumSync ()
         Vector<char> table_data;
         ParallelDescriptor::ReadAndBcastFile(load_table_name, table_data);
         ParallelDescriptor::Barrier();
-        m_shr_p_qs_engine->init_lookup_tables_from_raw_data(table_data);
+        m_shr_p_qs_engine->init_lookup_tables_from_raw_data(table_data,
+            qs_minimum_chi_part);
     }
-    else if(lookup_table_mode == "dummy_builtin"){
-        amrex::Print() << "Built-in Quantum Synchrotron dummy table will be used. \n" ;
-        m_shr_p_qs_engine->init_dummy_tables();
+    else if(lookup_table_mode == "builtin"){
+        amrex::Print() << "Built-in Quantum Synchrotron table will be used. \n" ;
+        m_shr_p_qs_engine->init_builtin_tables(qs_minimum_chi_part);
     }
     else{
         amrex::Abort("Unknown Quantum Synchrotron table mode");
@@ -810,6 +887,14 @@ void MultiParticleContainer::InitBreitWheeler ()
 {
     std::string lookup_table_mode;
     ParmParse pp("qed_bw");
+
+    // bw_minimum_chi_phot is the minimum chi parameter to be
+    // considered for pair production. If a photon has chi < chi_min,
+    // the optical depth is not evolved and photon generation is ignored
+    amrex::Real bw_minimum_chi_part;
+    if(!queryWithParser(pp, "chi_min", bw_minimum_chi_part))
+        amrex::Abort("qed_bw.chi_min should be provided!");
+
     pp.query("lookup_table_mode", lookup_table_mode);
     if(lookup_table_mode.empty()){
         amrex::Abort("Breit Wheeler table mode should be provided");
@@ -833,11 +918,12 @@ void MultiParticleContainer::InitBreitWheeler ()
         Vector<char> table_data;
         ParallelDescriptor::ReadAndBcastFile(load_table_name, table_data);
         ParallelDescriptor::Barrier();
-        m_shr_p_bw_engine->init_lookup_tables_from_raw_data(table_data);
+        m_shr_p_bw_engine->init_lookup_tables_from_raw_data(
+            table_data, bw_minimum_chi_part);
     }
-    else if(lookup_table_mode == "dummy_builtin"){
-        amrex::Print() << "Built-in Breit Wheeler dummy table will be used. \n" ;
-        m_shr_p_bw_engine->init_dummy_tables();
+    else if(lookup_table_mode == "builtin"){
+        amrex::Print() << "Built-in Breit Wheeler table will be used. \n" ;
+        m_shr_p_bw_engine->init_builtin_tables(bw_minimum_chi_part);
     }
     else{
         amrex::Abort("Unknown Breit Wheeler table mode");
@@ -857,15 +943,14 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
     if(table_name.empty())
         amrex::Abort("qed_qs.save_table_in should be provided!");
 
-    if(ParallelDescriptor::IOProcessor()){
-        PicsarQuantumSynchrotronCtrl ctrl;
-        int t_int;
+    // qs_minimum_chi_part is the minimum chi parameter to be
+    // considered for Synchrotron emission. If a lepton has chi < chi_min,
+    // the optical depth is not evolved and photon generation is ignored
+    amrex::Real qs_minimum_chi_part;
+    getWithParser(pp, "chi_min", qs_minimum_chi_part);
 
-        // Engine paramenter: chi_part_min is the minium chi parameter to be
-        // considered by the engine. If a lepton has chi < chi_part_min,
-        // the optical depth is not evolved and photon generation is ignored
-        if(!pp.query("chi_min", ctrl.chi_part_min))
-            amrex::Abort("qed_qs.chi_min should be provided!");
+    if(ParallelDescriptor::IOProcessor()){
+        PicsarQuantumSyncCtrl ctrl;
 
         //==Table parameters==
 
@@ -873,20 +958,16 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
         //These parameters are used to pre-compute a function
         //which appears in the evolution of the optical depth
 
-        //Minimun chi for the table. If a lepton has chi < chi_part_tdndt_min,
-        //chi is considered as it were equal to chi_part_tdndt_min
-        if(!pp.query("tab_dndt_chi_min", ctrl.chi_part_tdndt_min))
-            amrex::Abort("qed_qs.tab_dndt_chi_min should be provided!");
+        //Minimun chi for the table. If a lepton has chi < tab_dndt_chi_min,
+        //chi is considered as if it were equal to tab_dndt_chi_min
+        getWithParser(pp, "tab_dndt_chi_min", ctrl.dndt_params.chi_part_min);
 
-        //Maximum chi for the table. If a lepton has chi > chi_part_tdndt_max,
-        //chi is considered as it were equal to chi_part_tdndt_max
-        if(!pp.query("tab_dndt_chi_max", ctrl.chi_part_tdndt_max))
-            amrex::Abort("qed_qs.tab_dndt_chi_max should be provided!");
+        //Maximum chi for the table. If a lepton has chi > tab_dndt_chi_max,
+        //chi is considered as if it were equal to tab_dndt_chi_max
+        getWithParser(pp, "tab_dndt_chi_max", ctrl.dndt_params.chi_part_max);
 
         //How many points should be used for chi in the table
-        if(!pp.query("tab_dndt_how_many", t_int))
-            amrex::Abort("qed_qs.tab_dndt_how_many should be provided!");
-        ctrl.chi_part_tdndt_how_many = t_int;
+        pp.get("tab_dndt_how_many", ctrl.dndt_params.chi_part_how_many);
         //------
 
         //--- sub-table 2 (2D)
@@ -894,32 +975,31 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
         //which is used to extract the properties of the generated
         //photons.
 
-        //Minimun chi for the table. If a lepton has chi < chi_part_tem_min,
-        //chi is considered as it were equal to chi_part_tem_min
-        if(!pp.query("tab_em_chi_min", ctrl.chi_part_tem_min))
-            amrex::Abort("qed_qs.tab_em_chi_min should be provided!");
+        //Minimun chi for the table. If a lepton has chi < tab_em_chi_min,
+        //chi is considered as if it were equal to tab_em_chi_min
+        getWithParser(pp, "tab_em_chi_min", ctrl.phot_em_params.chi_part_min);
 
-        //Maximum chi for the table. If a lepton has chi > chi_part_tem_max,
-        //chi is considered as it were equal to chi_part_tem_max
-        if(!pp.query("tab_em_chi_max", ctrl.chi_part_tem_max))
-            amrex::Abort("qed_qs.tab_em_chi_max should be provided!");
+        //Maximum chi for the table. If a lepton has chi > tab_em_chi_max,
+        //chi is considered as if it were equal to tab_em_chi_max
+        getWithParser(pp, "tab_em_chi_max", ctrl.phot_em_params.chi_part_max);
 
         //How many points should be used for chi in the table
-        if(!pp.query("tab_em_chi_how_many", t_int))
-            amrex::Abort("qed_qs.tab_em_chi_how_many should be provided!");
-        ctrl.chi_part_tem_how_many = t_int;
+        pp.get("tab_em_chi_how_many", ctrl.phot_em_params.chi_part_how_many);
 
-        //The other axis of the table is a cumulative probability distribution
-        //(corresponding to different energies of the generated particles)
-        //This parameter is the number of different points to consider
-        if(!pp.query("tab_em_prob_how_many", t_int))
-            amrex::Abort("qed_qs.tab_em_prob_how_many should be provided!");
-        ctrl.prob_tem_how_many = t_int;
+        //The other axis of the table is the ratio between the quantum
+        //parameter of the emitted photon and the quantum parameter of the
+        //lepton. This parameter is the minimum ratio to consider for the table.
+        getWithParser(pp, "tab_em_frac_min", ctrl.phot_em_params.frac_min);
+
+        //This parameter is the number of different points to consider for the second
+        //axis
+        pp.get("tab_em_frac_how_many", ctrl.phot_em_params.frac_how_many);
         //====================
 
-        m_shr_p_qs_engine->compute_lookup_tables(ctrl);
+        m_shr_p_qs_engine->compute_lookup_tables(ctrl, qs_minimum_chi_part);
+        const auto data = m_shr_p_qs_engine->export_lookup_tables_data();
         WarpXUtilIO::WriteBinaryDataOnFile(table_name,
-            m_shr_p_qs_engine->export_lookup_tables_data());
+            Vector<char>{data.begin(), data.end()});
     }
 
     ParallelDescriptor::Barrier();
@@ -930,7 +1010,8 @@ MultiParticleContainer::QuantumSyncGenerateTable ()
     //No need to initialize from raw data for the processor that
     //has just generated the table
     if(!ParallelDescriptor::IOProcessor()){
-        m_shr_p_qs_engine->init_lookup_tables_from_raw_data(table_data);
+        m_shr_p_qs_engine->init_lookup_tables_from_raw_data(
+            table_data, qs_minimum_chi_part);
     }
 }
 
@@ -943,15 +1024,14 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
     if(table_name.empty())
         amrex::Abort("qed_bw.save_table_in should be provided!");
 
+    // bw_minimum_chi_phot is the minimum chi parameter to be
+    // considered for pair production. If a photon has chi < chi_min,
+    // the optical depth is not evolved and photon generation is ignored
+    amrex::Real bw_minimum_chi_part;
+    getWithParser(pp, "chi_min", bw_minimum_chi_part);
+
     if(ParallelDescriptor::IOProcessor()){
         PicsarBreitWheelerCtrl ctrl;
-        int t_int;
-
-        // Engine paramenter: chi_phot_min is the minium chi parameter to be
-        // considered by the engine. If a photon has chi < chi_phot_min,
-        // the optical depth is not evolved and pair generation is ignored
-        if(!pp.query("chi_min", ctrl.chi_phot_min))
-            amrex::Abort("qed_bw.chi_min should be provided!");
 
         //==Table parameters==
 
@@ -959,20 +1039,16 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
         //These parameters are used to pre-compute a function
         //which appears in the evolution of the optical depth
 
-        //Minimun chi for the table. If a photon has chi < chi_phot_tdndt_min,
+        //Minimun chi for the table. If a photon has chi < tab_dndt_chi_min,
         //an analytical approximation is used.
-        if(!pp.query("tab_dndt_chi_min", ctrl.chi_phot_tdndt_min))
-            amrex::Abort("qed_bw.tab_dndt_chi_min should be provided!");
+        getWithParser(pp, "tab_dndt_chi_min", ctrl.dndt_params.chi_phot_min);
 
-        //Maximum chi for the table. If a photon has chi > chi_phot_tdndt_min,
+        //Maximum chi for the table. If a photon has chi > tab_dndt_chi_max,
         //an analytical approximation is used.
-        if(!pp.query("tab_dndt_chi_max", ctrl.chi_phot_tdndt_max))
-            amrex::Abort("qed_bw.tab_dndt_chi_max should be provided!");
+        getWithParser(pp, "tab_dndt_chi_max", ctrl.dndt_params.chi_phot_max);
 
         //How many points should be used for chi in the table
-        if(!pp.query("tab_dndt_how_many", t_int))
-            amrex::Abort("qed_bw.tab_dndt_how_many should be provided!");
-        ctrl.chi_phot_tdndt_how_many = t_int;
+        pp.get("tab_dndt_how_many", ctrl.dndt_params.chi_phot_how_many);
         //------
 
         //--- sub-table 2 (2D)
@@ -980,32 +1056,27 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
         //which is used to extract the properties of the generated
         //particles.
 
-        //Minimun chi for the table. If a photon has chi < chi_phot_tpair_min
+        //Minimun chi for the table. If a photon has chi < tab_pair_chi_min
         //chi is considered as it were equal to chi_phot_tpair_min
-        if(!pp.query("tab_pair_chi_min", ctrl.chi_phot_tpair_min))
-            amrex::Abort("qed_bw.tab_pair_chi_min should be provided!");
+        getWithParser(pp, "tab_pair_chi_min", ctrl.pair_prod_params.chi_phot_min);
 
-        //Maximum chi for the table. If a photon has chi > chi_phot_tpair_max
+        //Maximum chi for the table. If a photon has chi > tab_pair_chi_max
         //chi is considered as it were equal to chi_phot_tpair_max
-        if(!pp.query("tab_pair_chi_max", ctrl.chi_phot_tpair_max))
-            amrex::Abort("qed_bw.tab_pair_chi_max should be provided!");
+        getWithParser(pp, "tab_pair_chi_max", ctrl.pair_prod_params.chi_phot_max);
 
         //How many points should be used for chi in the table
-        if(!pp.query("tab_pair_chi_how_many", t_int))
-            amrex::Abort("qed_bw.tab_pair_chi_how_many should be provided!");
-        ctrl.chi_phot_tpair_how_many = t_int;
+        pp.get("tab_pair_chi_how_many", ctrl.pair_prod_params.chi_phot_how_many);
 
         //The other axis of the table is the fraction of the initial energy
         //'taken away' by the most energetic particle of the pair.
         //This parameter is the number of different fractions to consider
-        if(!pp.query("tab_pair_frac_how_many", t_int))
-            amrex::Abort("qed_bw.tab_pair_frac_how_many should be provided!");
-        ctrl.chi_frac_tpair_how_many = t_int;
+        pp.get("tab_pair_frac_how_many", ctrl.pair_prod_params.frac_how_many);
         //====================
 
-        m_shr_p_bw_engine->compute_lookup_tables(ctrl);
+        m_shr_p_bw_engine->compute_lookup_tables(ctrl, bw_minimum_chi_part);
+        const auto data = m_shr_p_bw_engine->export_lookup_tables_data();
         WarpXUtilIO::WriteBinaryDataOnFile(table_name,
-            m_shr_p_bw_engine->export_lookup_tables_data());
+            Vector<char>{data.begin(), data.end()});
     }
 
     ParallelDescriptor::Barrier();
@@ -1016,14 +1087,15 @@ MultiParticleContainer::BreitWheelerGenerateTable ()
     //No need to initialize from raw data for the processor that
     //has just generated the table
     if(!ParallelDescriptor::IOProcessor()){
-        m_shr_p_bw_engine->init_lookup_tables_from_raw_data(table_data);
+        m_shr_p_bw_engine->init_lookup_tables_from_raw_data(
+            table_data, bw_minimum_chi_part);
     }
 }
 
 void
 MultiParticleContainer::doQEDSchwinger ()
 {
-    WARPX_PROFILE("MPC::doQEDSchwinger");
+    WARPX_PROFILE("MultiParticleContainer::doQEDSchwinger()");
 
     if (!m_do_qed_schwinger) {return;}
 
@@ -1034,7 +1106,7 @@ MultiParticleContainer::doQEDSchwinger ()
           "ERROR: Schwinger process only implemented for warpx.do_nodal = 1"
                                  "or algo.field_gathering = momentum-conserving");
 
-    const int level_0 = 0;
+    constexpr int level_0 = 0;
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.maxLevel() == level_0,
         "ERROR: Schwinger process not implemented with mesh refinement");
@@ -1043,26 +1115,27 @@ MultiParticleContainer::doQEDSchwinger ()
     amrex::Abort("Schwinger process not implemented in rz geometry");
 #endif
 
-#ifdef AMREX_USE_FLOAT
-    amrex::Abort("Schwinger process not implemented in single precision");
-#endif
-
-// Get cell volume multiplied by temporal step. In 2D the transverse size is
+// Get cell volume. In 2D the transverse size is
 // chosen by the user in the input file.
     amrex::Geometry const & geom = warpx.Geom(level_0);
-    auto domain_box = geom.Domain();
 #if (AMREX_SPACEDIM == 2)
-    const auto dVdt = geom.CellSize(0) * geom.CellSize(1)
-        * m_qed_schwinger_y_size * warpx.getdt(level_0);
+    const auto dV = geom.CellSize(0) * geom.CellSize(1)
+        * m_qed_schwinger_y_size;
 #elif (AMREX_SPACEDIM == 3)
-    const auto dVdt = geom.CellSize(0) * geom.CellSize(1)
-        * geom.CellSize(2) * warpx.getdt(level_0);
+    const auto dV = geom.CellSize(0) * geom.CellSize(1)
+        * geom.CellSize(2);
 #endif
+
+   // Get the temporal step
+   const auto dt =  warpx.getdt(level_0);
 
     auto& pc_product_ele =
             allcontainers[m_qed_schwinger_ele_product];
     auto& pc_product_pos =
             allcontainers[m_qed_schwinger_pos_product];
+
+    pc_product_ele->defineAllParticleTiles();
+    pc_product_pos->defineAllParticleTiles();
 
     const MultiFab & Ex = warpx.getEfield(level_0,0);
     const MultiFab & Ey = warpx.getEfield(level_0,1);
@@ -1071,19 +1144,21 @@ MultiParticleContainer::doQEDSchwinger ()
     const MultiFab & By = warpx.getBfield(level_0,1);
     const MultiFab & Bz = warpx.getBfield(level_0,2);
 
-    MFItInfo info;
-    if (TilingIfNotGPU()) {
-        info.EnableTiling();
-    }
 #ifdef _OPENMP
-    info.SetDynamic(WarpX::do_dynamic_scheduling);
-#pragma omp parallel
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-
-    for (MFIter mfi(Ex, info); mfi.isValid(); ++mfi )
-    {
+     for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
+     {
         // Make the box cell centered to avoid creating particles twice on the tile edges
-        const Box& box = enclosedCells(mfi.nodaltilebox());
+        amrex::Box box = enclosedCells(mfi.nodaltilebox());
+
+        // Get the box representing global Schwinger boundaries
+        const amrex::Box global_schwinger_box = ComputeSchwingerGlobalBox();
+
+        // If Schwinger process is not activated anywhere in the current box, we move to the next
+        // one. Otherwise we use the intersection of current box with global Schwinger box.
+        if (!box.intersects(global_schwinger_box)) {continue;}
+        box &= global_schwinger_box;
 
         const auto& arrEx = Ex[mfi].array();
         const auto& arrEy = Ey[mfi].array();
@@ -1095,9 +1170,6 @@ MultiParticleContainer::doQEDSchwinger ()
         const Array4<const amrex::Real> array_EMFAB [] = {arrEx,arrEy,arrEz,
                                            arrBx,arrBy,arrBz};
 
-        pc_product_ele->defineAllParticleTiles();
-        pc_product_pos->defineAllParticleTiles();
-
         auto& dst_ele_tile = pc_product_ele->ParticlesAt(level_0, mfi);
         auto& dst_pos_tile = pc_product_pos->ParticlesAt(level_0, mfi);
 
@@ -1105,7 +1177,8 @@ MultiParticleContainer::doQEDSchwinger ()
         const auto np_pos_dst = dst_pos_tile.numParticles();
 
         const auto Filter  = SchwingerFilterFunc{
-                              m_qed_schwinger_threshold_poisson_gaussian,dVdt};
+                              m_qed_schwinger_threshold_poisson_gaussian,
+                              dV, dt};
 
         const SmartCreateFactory create_factory_ele(*pc_product_ele);
         const SmartCreateFactory create_factory_pos(*pc_product_pos);
@@ -1126,17 +1199,92 @@ MultiParticleContainer::doQEDSchwinger ()
     }
 }
 
-void MultiParticleContainer::doQedEvents()
+amrex::Box
+MultiParticleContainer::ComputeSchwingerGlobalBox () const
 {
-    WARPX_PROFILE("MPC::doQedEvents");
+    auto & warpx = WarpX::GetInstance();
+    constexpr int level_0 = 0;
+    amrex::Geometry const & geom = warpx.Geom(level_0);
 
-    doQedBreitWheeler();
-    doQedQuantumSync();
+#if (AMREX_SPACEDIM == 3)
+    const amrex::Array<amrex::Real,3> schwinger_min{m_qed_schwinger_xmin,
+                                                    m_qed_schwinger_ymin,
+                                                    m_qed_schwinger_zmin};
+    const amrex::Array<amrex::Real,3> schwinger_max{m_qed_schwinger_xmax,
+                                                    m_qed_schwinger_ymax,
+                                                    m_qed_schwinger_zmax};
+#else
+    const amrex::Array<amrex::Real,2> schwinger_min{m_qed_schwinger_xmin,
+                                                    m_qed_schwinger_zmin};
+    const amrex::Array<amrex::Real,2> schwinger_max{m_qed_schwinger_xmax,
+                                                    m_qed_schwinger_zmax};
+#endif
+
+    // Box inside which Schwinger is activated
+    amrex::Box schwinger_global_box;
+
+    for (int dir=0; dir<AMREX_SPACEDIM; dir++)
+    {
+        // Dealing with these corner cases should ensure that we don't overflow on the integers
+        if (schwinger_min[dir] < geom.ProbLo(dir))
+        {
+            schwinger_global_box.setSmall(dir, std::numeric_limits<int>::lowest());
+        }
+        else if (schwinger_min[dir] > geom.ProbHi(dir))
+        {
+            schwinger_global_box.setSmall(dir, std::numeric_limits<int>::max());
+        }
+        else
+        {
+            // Schwinger pairs are currently created on the lower nodes of a cell. Using ceil here
+            // excludes all cells whose lower node is strictly lower than schwinger_min[dir].
+            schwinger_global_box.setSmall(dir, static_cast<int>(std::ceil(
+                               (schwinger_min[dir] - geom.ProbLo(dir)) / geom.CellSize(dir))));
+        }
+
+        if (schwinger_max[dir] < geom.ProbLo(dir))
+        {
+            schwinger_global_box.setBig(dir, std::numeric_limits<int>::lowest());
+        }
+        else if (schwinger_max[dir] > geom.ProbHi(dir))
+        {
+            schwinger_global_box.setBig(dir, std::numeric_limits<int>::max());
+        }
+        else
+        {
+            // Schwinger pairs are currently created on the lower nodes of a cell. Using floor here
+            // excludes all cells whose lower node is strictly higher than schwinger_max[dir].
+            schwinger_global_box.setBig(dir, static_cast<int>(std::floor(
+                               (schwinger_max[dir] - geom.ProbLo(dir)) / geom.CellSize(dir))));
+        }
+    }
+
+    return schwinger_global_box;
 }
 
-void MultiParticleContainer::doQedBreitWheeler()
+void MultiParticleContainer::doQedEvents (int lev,
+                                          const MultiFab& Ex,
+                                          const MultiFab& Ey,
+                                          const MultiFab& Ez,
+                                          const MultiFab& Bx,
+                                          const MultiFab& By,
+                                          const MultiFab& Bz)
 {
-    WARPX_PROFILE("MPC::doQedBreitWheeler");
+    WARPX_PROFILE("MultiParticleContainer::doQedEvents()");
+
+    doQedBreitWheeler(lev, Ex, Ey, Ez, Bx, By, Bz);
+    doQedQuantumSync(lev, Ex, Ey, Ez, Bx, By, Bz);
+}
+
+void MultiParticleContainer::doQedBreitWheeler (int lev,
+                                                const MultiFab& Ex,
+                                                const MultiFab& Ey,
+                                                const MultiFab& Ez,
+                                                const MultiFab& Bx,
+                                                const MultiFab& By,
+                                                const MultiFab& Bz)
+{
+    WARPX_PROFILE("MultiParticleContainer::doQedBreitWheeler()");
 
     // Loop over all species.
     // Photons undergoing Breit Wheeler process create electrons
@@ -1160,42 +1308,50 @@ void MultiParticleContainer::doQedBreitWheeler()
         const auto CopyPos = copy_factory_pos.getSmartCopy();
 
         const auto pair_gen_functor = m_shr_p_bw_engine->build_pair_functor();
-        auto Transform = PairGenerationTransformFunc(pair_gen_functor);
 
         pc_source ->defineAllParticleTiles();
         pc_product_pos->defineAllParticleTiles();
         pc_product_ele->defineAllParticleTiles();
 
-        for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
-        {
-            const auto info = getMFItInfo(*pc_source, *pc_product_ele, *pc_product_pos);
+        auto info = getMFItInfo(*pc_source, *pc_product_ele, *pc_product_pos);
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-            for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
-            {
-                auto& src_tile = pc_source->ParticlesAt(lev, mfi);
-                auto& dst_ele_tile = pc_product_ele->ParticlesAt(lev, mfi);
-                auto& dst_pos_tile = pc_product_pos->ParticlesAt(lev, mfi);
+        for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
+        {
+            auto Transform = PairGenerationTransformFunc(pair_gen_functor,
+                                                         pti, lev, Ex.nGrow(),
+                                                         Ex[pti], Ey[pti], Ez[pti],
+                                                         Bx[pti], By[pti], Bz[pti],
+                                                         pc_source->get_v_galilean());
 
-                const auto np_dst_ele = dst_ele_tile.numParticles();
-                const auto np_dst_pos = dst_pos_tile.numParticles();
-                const auto num_added = filterCopyTransformParticles<1>(
-                    dst_ele_tile, dst_pos_tile,
-                    src_tile, np_dst_ele, np_dst_pos,
-                    Filter, CopyEle, CopyPos, Transform);
+            auto& src_tile = pc_source->ParticlesAt(lev, pti);
+            auto& dst_ele_tile = pc_product_ele->ParticlesAt(lev, pti);
+            auto& dst_pos_tile = pc_product_pos->ParticlesAt(lev, pti);
 
-                setNewParticleIDs(dst_ele_tile, np_dst_ele, num_added);
-                setNewParticleIDs(dst_pos_tile, np_dst_pos, num_added);
-            }
+            const auto np_dst_ele = dst_ele_tile.numParticles();
+            const auto np_dst_pos = dst_pos_tile.numParticles();
+            const auto num_added = filterCopyTransformParticles<1>(
+                                                      dst_ele_tile, dst_pos_tile,
+                                                      src_tile, np_dst_ele, np_dst_pos,
+                                                      Filter, CopyEle, CopyPos, Transform);
+
+            setNewParticleIDs(dst_ele_tile, np_dst_ele, num_added);
+            setNewParticleIDs(dst_pos_tile, np_dst_pos, num_added);
         }
-   }
+    }
 }
 
-void MultiParticleContainer::doQedQuantumSync()
+void MultiParticleContainer::doQedQuantumSync (int lev,
+                                               const MultiFab& Ex,
+                                               const MultiFab& Ey,
+                                               const MultiFab& Ez,
+                                               const MultiFab& Bx,
+                                               const MultiFab& By,
+                                               const MultiFab& Bz)
 {
-    WARPX_PROFILE("MPC::doQedEvents::doQedQuantumSync");
+    WARPX_PROFILE("MultiParticleContainer::doQedQuantumSync()");
 
     // Loop over all species.
     // Electrons or positrons undergoing Quantum photon emission process
@@ -1204,7 +1360,7 @@ void MultiParticleContainer::doQedQuantumSync()
     for (auto& pc_source : allcontainers){
         if(!pc_source->has_quantum_sync()){ continue; }
 
-                // Get product species
+        // Get product species
         auto& pc_product_phot =
             allcontainers[pc_source->m_qed_quantum_sync_phot_product];
 
@@ -1215,46 +1371,46 @@ void MultiParticleContainer::doQedQuantumSync()
         const auto Filter   = phys_pc_ptr->getPhotonEmissionFilterFunc();
         const auto CopyPhot = copy_factory_phot.getSmartCopy();
 
-        auto Transform = PhotonEmissionTransformFunc(
-            m_shr_p_qs_engine->build_optical_depth_functor(),
-            pc_source->particle_runtime_comps["optical_depth_QSR"],
-             m_shr_p_qs_engine->build_phot_em_functor());
-
         pc_source ->defineAllParticleTiles();
         pc_product_phot->defineAllParticleTiles();
 
-        for (int lev = 0; lev <= pc_source->finestLevel(); ++lev)
-        {
-            const auto info = getMFItInfo(*pc_source, *pc_product_phot);
+        auto info = getMFItInfo(*pc_source, *pc_product_phot);
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
-            for (MFIter mfi = pc_source->MakeMFIter(lev, info); mfi.isValid(); ++mfi)
-            {
-                auto& src_tile = pc_source->ParticlesAt(lev, mfi);
-                auto& dst_tile = pc_product_phot->ParticlesAt(lev, mfi);
+        for (WarpXParIter pti(*pc_source, lev, info); pti.isValid(); ++pti)
+        {
+            auto Transform = PhotonEmissionTransformFunc(
+                  m_shr_p_qs_engine->build_optical_depth_functor(),
+                  pc_source->particle_runtime_comps["optical_depth_QSR"],
+                  m_shr_p_qs_engine->build_phot_em_functor(),
+                  pti, lev, Ex.nGrow(),
+                  Ex[pti], Ey[pti], Ez[pti],
+                  Bx[pti], By[pti], Bz[pti],
+                  pc_source->get_v_galilean());
 
-                const auto np_dst = dst_tile.numParticles();
+            auto& src_tile = pc_source->ParticlesAt(lev, pti);
+            auto& dst_tile = pc_product_phot->ParticlesAt(lev, pti);
 
-                const auto num_added =
-                    filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
-                        Filter, CopyPhot, Transform);
+            const auto np_dst = dst_tile.numParticles();
 
-                setNewParticleIDs(dst_tile, np_dst, num_added);
+            const auto num_added =
+                filterCopyTransformParticles<1>(dst_tile, src_tile, np_dst,
+                                                Filter, CopyPhot, Transform);
 
-                cleanLowEnergyPhotons(
-                    dst_tile, np_dst, num_added,
-                    m_quantum_sync_photon_creation_energy_threshold);
+            setNewParticleIDs(dst_tile, np_dst, num_added);
 
-            }
+            cleanLowEnergyPhotons(
+                                  dst_tile, np_dst, num_added,
+                                  m_quantum_sync_photon_creation_energy_threshold);
         }
     }
-
 }
 
 void MultiParticleContainer::CheckQEDProductSpecies()
 {
+    auto const nspecies = static_cast<int>(species_names.size());
     for (int i=0; i<nspecies; i++){
         const auto& pc = allcontainers[i];
         if (pc->has_breit_wheeler()){

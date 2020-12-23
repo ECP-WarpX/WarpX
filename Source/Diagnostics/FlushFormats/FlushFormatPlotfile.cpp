@@ -9,19 +9,20 @@ using namespace amrex;
 
 namespace
 {
-    const std::string level_prefix {"Level_"};
+    const std::string default_level_prefix {"Level_"};
 }
 
 void
 FlushFormatPlotfile::WriteToFile (
     const amrex::Vector<std::string> varnames,
-    const amrex::Vector<const amrex::MultiFab*> mf,
+    const amrex::Vector<amrex::MultiFab>& mf,
     amrex::Vector<amrex::Geometry>& geom,
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
     const std::string prefix, bool plot_raw_fields,
     bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F) const
 {
+    WARPX_PROFILE("FlushFormatPlotfile::WriteToFile()");
     auto & warpx = WarpX::GetInstance();
     const std::string& filename = amrex::Concatenate(prefix, iteration[0]);
     amrex::Print() << "  Writing plotfile " << filename << "\n";
@@ -31,7 +32,7 @@ FlushFormatPlotfile::WriteToFile (
     VisMF::SetHeaderVersion(amrex::VisMF::Header::Version_v1);
     if (plot_raw_fields) rfs.emplace_back("raw_fields");
     amrex::WriteMultiLevelPlotfile(filename, nlev,
-                                   mf,
+                                   amrex::GetVecOfConstPtrs(mf),
                                    varnames, geom,
                                    time, iteration, warpx.refRatio(),
                                    "HyperCLaw-V1.1",
@@ -245,6 +246,8 @@ FlushFormatPlotfile::WriteWarpXHeader(
         }
 
         WriteHeaderParticle(HeaderFile, particle_diags);
+
+        HeaderFile << warpx.getcurrent_injection_position() << "\n";
     }
 }
 
@@ -265,6 +268,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
+        amrex::ParticleContainer<0, 0, PIdx::nattribs> tmp(pc->GetParGDB());
         Vector<std::string> real_names;
         Vector<std::string> int_names;
         Vector<int> int_flags;
@@ -274,14 +278,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         real_names.push_back("momentum_x");
         real_names.push_back("momentum_y");
         real_names.push_back("momentum_z");
-
-        real_names.push_back("Ex");
-        real_names.push_back("Ey");
-        real_names.push_back("Ez");
-
-        real_names.push_back("Bx");
-        real_names.push_back("By");
-        real_names.push_back("Bz");
 
 #ifdef WARPX_DIM_RZ
         real_names.push_back("theta");
@@ -294,14 +290,17 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             // integer attribs, and it is automatically dumped to plotfiles
             // when ionization is on.
             int_flags.resize(1, 1);
+            tmp.AddIntComp(false);
         }
 
 #ifdef WARPX_QED
         if( pc->has_breit_wheeler() ) {
             real_names.push_back("optical_depth_BW");
+            tmp.AddRealComp(false);
         }
         if( pc->has_quantum_sync() ) {
             real_names.push_back("optical_depth_QSR");
+            tmp.AddRealComp(false);
         }
 #endif
 
@@ -313,18 +312,25 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                            particle_diags[i].m_uniform_stride);
         ParserFilter const parser_filter(particle_diags[i].m_do_parser_filter,
-                                         particle_diags[i].m_particle_filter_parser.get());
+                                         getParser(particle_diags[i].m_particle_filter_parser));
+        GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
+                                             particle_diags[i].m_diag_domain);
+
+        using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+        tmp.copyParticles(*pc,
+                          [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+        {
+            const SuperParticleType& p = src.getSuperParticle(ip);
+            return random_filter(p, engine) * uniform_filter(p, engine)
+                * parser_filter(p, engine) * geometry_filter(p, engine);
+        }, true);
 
         // real_names contains a list of all particle attributes.
         // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
-        pc->WritePlotFile(
+        tmp.WritePlotFile(
             dir, particle_diags[i].getSpeciesName(),
             particle_diags[i].plot_flags, int_flags,
-            real_names, int_names,
-            [=] AMREX_GPU_HOST_DEVICE (const SuperParticleType& p)
-            {
-                return random_filter(p) * uniform_filter(p) * parser_filter(p);
-            });
+            real_names, int_names);
 
         // Convert momentum back to WarpX units
         pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
@@ -465,54 +471,79 @@ FlushFormatPlotfile::WriteAllRawFields(
 
         // Auxiliary patch
 
-        WriteRawMF( warpx.getEfield(lev, 0), dm, raw_pltname, level_prefix, "Ex_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getEfield(lev, 1), dm, raw_pltname, level_prefix, "Ey_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getEfield(lev, 2), dm, raw_pltname, level_prefix, "Ez_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getBfield(lev, 0), dm, raw_pltname, level_prefix, "Bx_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getBfield(lev, 1), dm, raw_pltname, level_prefix, "By_aux", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getBfield(lev, 2), dm, raw_pltname, level_prefix, "Bz_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getEfield(lev, 0), dm, raw_pltname, default_level_prefix, "Ex_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getEfield(lev, 1), dm, raw_pltname, default_level_prefix, "Ey_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getEfield(lev, 2), dm, raw_pltname, default_level_prefix, "Ez_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getBfield(lev, 0), dm, raw_pltname, default_level_prefix, "Bx_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getBfield(lev, 1), dm, raw_pltname, default_level_prefix, "By_aux", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getBfield(lev, 2), dm, raw_pltname, default_level_prefix, "Bz_aux", lev, plot_raw_fields_guards);
 
         // fine patch
-        WriteRawMF( warpx.getEfield_fp(lev, 0), dm, raw_pltname, level_prefix, "Ex_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getEfield_fp(lev, 1), dm, raw_pltname, level_prefix, "Ey_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getEfield_fp(lev, 2), dm, raw_pltname, level_prefix, "Ez_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getcurrent_fp(lev, 0), dm, raw_pltname, level_prefix, "jx_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getcurrent_fp(lev, 1), dm, raw_pltname, level_prefix, "jy_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getcurrent_fp(lev, 2), dm, raw_pltname, level_prefix, "jz_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getBfield_fp(lev, 0), dm, raw_pltname, level_prefix, "Bx_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getBfield_fp(lev, 1), dm, raw_pltname, level_prefix, "By_fp", lev, plot_raw_fields_guards);
-        WriteRawMF( warpx.getBfield_fp(lev, 2), dm, raw_pltname, level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
-        if (plot_raw_F) WriteRawMF( warpx.getF_fp(lev), dm, raw_pltname, level_prefix, "F_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getEfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "Ex_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getEfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "Ey_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getEfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "Ez_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getcurrent_fp(lev, 0), dm, raw_pltname, default_level_prefix, "jx_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getcurrent_fp(lev, 1), dm, raw_pltname, default_level_prefix, "jy_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getcurrent_fp(lev, 2), dm, raw_pltname, default_level_prefix, "jz_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getBfield_fp(lev, 0), dm, raw_pltname, default_level_prefix, "Bx_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getBfield_fp(lev, 1), dm, raw_pltname, default_level_prefix, "By_fp", lev, plot_raw_fields_guards);
+        WriteRawMF( warpx.getBfield_fp(lev, 2), dm, raw_pltname, default_level_prefix, "Bz_fp", lev, plot_raw_fields_guards);
+        if (plot_raw_F) {
+            if (warpx.get_pointer_F_fp(lev) == nullptr) {
+                amrex::Warning("The user requested to write raw F data, but F_fp was not allocated");
+            } else {
+                WriteRawMF(warpx.getF_fp(lev), dm, raw_pltname, default_level_prefix, "F_fp", lev, plot_raw_fields_guards);
+            }
+        }
         if (plot_raw_rho) {
-            // Use the component 1 of `rho_fp`, i.e. rho_new for time synchronization
-            // If nComp > 1, this is the upper half of the list of components.
-            MultiFab rho_new(warpx.getF_fp(lev), amrex::make_alias, warpx.getF_fp(lev).nComp()/2, warpx.getF_fp(lev).nComp()/2);
-            WriteRawMF( rho_new, dm, raw_pltname, level_prefix, "rho_fp", lev, plot_raw_fields_guards);
+            if (warpx.get_pointer_rho_fp(lev) == nullptr) {
+                amrex::Warning("The user requested to write raw rho data, but rho_fp was not allocated");
+            } else {
+                // Use the component 1 of `rho_fp`, i.e. rho_new for time synchronization
+                // If nComp > 1, this is the upper half of the list of components.
+                MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, warpx.getrho_fp(lev).nComp()/2, warpx.getrho_fp(lev).nComp()/2);
+                WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
+            }
+        }
+        if (warpx.get_pointer_phi_fp(lev) != nullptr) {
+            WriteRawMF(warpx.getphi_fp(lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
         }
 
         // Coarse path
-        if (lev > 0){
+        if (lev > 0) {
             WriteCoarseVector( "E",
                                warpx.get_pointer_Efield_cp(lev, 0), warpx.get_pointer_Efield_cp(lev, 1), warpx.get_pointer_Efield_cp(lev, 2),
                                warpx.get_pointer_Efield_fp(lev, 0), warpx.get_pointer_Efield_fp(lev, 1), warpx.get_pointer_Efield_fp(lev, 2),
-                               dm, raw_pltname, level_prefix, lev, plot_raw_fields_guards);
+                               dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             WriteCoarseVector( "B",
                                warpx.get_pointer_Bfield_cp(lev, 0), warpx.get_pointer_Bfield_cp(lev, 1), warpx.get_pointer_Bfield_cp(lev, 2),
                                warpx.get_pointer_Bfield_fp(lev, 0), warpx.get_pointer_Bfield_fp(lev, 1), warpx.get_pointer_Bfield_fp(lev, 2),
-                               dm, raw_pltname, level_prefix, lev, plot_raw_fields_guards);
+                               dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
             WriteCoarseVector( "j",
                                warpx.get_pointer_current_cp(lev, 0), warpx.get_pointer_current_cp(lev, 1), warpx.get_pointer_current_cp(lev, 2),
                                warpx.get_pointer_current_fp(lev, 0), warpx.get_pointer_current_fp(lev, 1), warpx.get_pointer_current_fp(lev, 2),
-                               dm, raw_pltname, level_prefix, lev, plot_raw_fields_guards);
+                               dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards);
+            if (plot_raw_F) {
+                if (warpx.get_pointer_F_fp(lev) == nullptr) {
+                    amrex::Warning("The user requested to write raw F data, but F_fp was not allocated");
+                } else if (warpx.get_pointer_F_cp(lev) == nullptr) {
+                    amrex::Warning("The user requested to write raw F data, but F_cp was not allocated");
+                } else {
+                    WriteCoarseScalar("F", warpx.get_pointer_F_cp(lev), warpx.get_pointer_F_fp(lev),
+                        dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 0);
+                }
+            }
+            if (plot_raw_rho) {
+                if (warpx.get_pointer_rho_fp(lev) == nullptr) {
+                    amrex::Warning("The user requested to write raw rho data, but rho_fp was not allocated");
+                } else if (warpx.get_pointer_rho_cp(lev) == nullptr) {
+                    amrex::Warning("The user requested to write raw rho data, but rho_cp was not allocated");
+                } else {
+                    // Use the component 1 of `rho_cp`, i.e. rho_new for time synchronization
+                    WriteCoarseScalar("rho", warpx.get_pointer_rho_cp(lev), warpx.get_pointer_rho_fp(lev),
+                        dm, raw_pltname, default_level_prefix, lev, plot_raw_fields_guards, 1);
+                }
+            }
         }
-        if (plot_raw_F) WriteCoarseScalar(
-            "F", warpx.get_pointer_F_cp(lev), warpx.get_pointer_F_fp(lev),
-            dm, raw_pltname, level_prefix, lev,
-            plot_raw_fields_guards, 0);
-        if (plot_raw_rho) WriteCoarseScalar(
-            "rho", warpx.get_pointer_rho_cp(lev), warpx.get_pointer_rho_fp(lev),
-            dm, raw_pltname, level_prefix, lev,
-            plot_raw_fields_guards, 1);
-        // Use the component 1 of `rho_cp`, i.e. rho_new for time synchronization
     }
 }

@@ -33,6 +33,8 @@
 import numpy as np
 import sys
 import yt
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 #Input filename
 inputname = "inputs"
@@ -146,6 +148,9 @@ def check():
 
         assert( error_rel < tolerance_rel )
 
+    test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+    checksumAPI.evaluate_checksum(test_name, filename)
+
 def generate():
 
     with open(inputname,'w') as f:
@@ -167,7 +172,6 @@ def generate():
         f.write("warpx.cfl = 1.0\n")
         f.write("warpx.serialize_ics = 1\n")
 
-        f.write("\nparticles.nspecies = {}\n".format(len(cases)))
         f.write("particles.species_names = ")
         for cc in cases:
             f.write(" {}".format(cc.name))

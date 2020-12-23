@@ -2,6 +2,7 @@
 #define WARPX_COARSEN_IO_H_
 
 #include "WarpX.H"
+#include <AMReX_Math.H>
 
 namespace CoarsenIO{
 
@@ -27,9 +28,9 @@ namespace CoarsenIO{
     AMREX_GPU_DEVICE
     AMREX_FORCE_INLINE
     Real Interp ( Array4<Real const> const& arr_src,
-                  int const* const AMREX_RESTRICT sf,
-                  int const* const AMREX_RESTRICT sc,
-                  int const* const AMREX_RESTRICT cr,
+                  GpuArray<int,3> const& sf,
+                  GpuArray<int,3> const& sc,
+                  GpuArray<int,3> const& cr,
                   const int i,
                   const int j,
                   const int k,
@@ -43,7 +44,7 @@ namespace CoarsenIO{
 
         // Compute number of points
         for ( int l = 0; l < 3; ++l ) {
-            if ( cr[l] == 1 ) np[l] = 1+abs(sf[l]-sc[l]); // no coarsening
+            if ( cr[l] == 1 ) np[l] = 1+amrex::Math::abs(sf[l]-sc[l]); // no coarsening
             else              np[l] = 2-sf[l];
         }
 
@@ -79,7 +80,7 @@ namespace CoarsenIO{
             }
         }
         return c;
-    };
+    }
 
     /**
      * \brief Loops over the boxes of the coarsened MultiFab \c mf_dst and fills

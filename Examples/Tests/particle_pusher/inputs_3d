@@ -25,7 +25,6 @@ algo.particle_pusher = "higuera"
 warpx.cfl = 1.0
 
 # particles
-particles.nspecies = 1
 particles.species_names = positron
 positron.charge = 1.0
 positron.mass = 1.0

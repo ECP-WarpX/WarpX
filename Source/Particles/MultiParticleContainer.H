@@ -79,15 +79,6 @@ public:
     void InitData ();
 
     ///
-    /// Performs the field gather operation using the input fields E and B, for all the species
-    /// in the MultiParticleContainer. This is the electromagnetic version of the field gather.
-    ///
-    void FieldGather (int lev,
-                      const amrex::MultiFab& Ex, const amrex::MultiFab& Ey,
-                      const amrex::MultiFab& Ez, const amrex::MultiFab& Bx,
-                      const amrex::MultiFab& By, const amrex::MultiFab& Bz);
-
-    ///
     /// This evolves all the particles by one PIC time step, including current deposition, the
     /// field solve, and pushing the particles, for all the species in the MultiParticleContainer.
     /// This is the electromagnetic version.
@@ -95,6 +86,8 @@ public:
     void Evolve (int lev,
                  const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                  const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
+                 const amrex::MultiFab& Ex_avg, const amrex::MultiFab& Ey_avg, const amrex::MultiFab& Ez_avg,
+                 const amrex::MultiFab& Bx_avg, const amrex::MultiFab& By_avg, const amrex::MultiFab& Bz_avg,
                  amrex::MultiFab& jx,  amrex::MultiFab& jy, amrex::MultiFab& jz,
                  amrex::MultiFab* cjx,  amrex::MultiFab* cjy, amrex::MultiFab* cjz,
                  amrex::MultiFab* rho, amrex::MultiFab* crho,
@@ -119,15 +112,32 @@ public:
                 const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                 const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
 
+    /**
+    * \brief This returns a MultiFAB filled with zeros. It is used to return the charge density
+    * when there is no particle species.
+    *
+    * @param[in] lev the index of the refinement level.
+    */
+    std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(const int lev);
+
     ///
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
     /// to it. The charge density is accumulated over all the particles in the MultiParticleContainer
     ///
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
 
-    void doFieldIonization ();
+    void doFieldIonization (int lev,
+                            const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
+                            const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
 
-    void doCoulombCollisions ();
+    void doCoulombCollisions (amrex::Real cur_time);
+
+    /**
+    * \brief This function loops over all species and performs resampling if appropriate.
+    *
+    * @param[in] timestep the current timestep.
+    */
+    void doResampling (const int timestep);
 
 #ifdef WARPX_QED
     /** If Schwinger process is activated, this function is called at every
@@ -138,11 +148,13 @@ public:
      * particles.
      */
     void doQEDSchwinger ();
+
+    /** This function computes the box outside which Schwinger process is disabled. The box is
+     * defined by m_qed_schwinger_xmin/xmax/ymin/ymax/zmin/zmax and the warpx level 0 geometry
+     * object (to make the link between Real and int quatities).
+     */
+    amrex::Box ComputeSchwingerGlobalBox () const;
 #endif
-
-    void Checkpoint (const std::string& dir) const;
-
-    void WritePlotFile (const std::string& dir) const;
 
     void Restart (const std::string& dir);
 
@@ -158,14 +170,27 @@ public:
 
     void RedistributeLocal (const int num_ghost);
 
-    amrex::Vector<long> NumberOfParticlesInGrid(int lev) const;
+    /** Apply BC. For now, just discard particles outside the domain, regardless
+     *  of the whole simulation BC. */
+    void ApplyBoundaryConditions ();
+
+    /**
+    * \brief This returns a vector filled with zeros whose size is the number of boxes in the
+    * simulation boxarray. It is used to return the number of particles in each grid when there is
+    * no particle species.
+    *
+    * @param[in] lev the index of the refinement level.
+    */
+    amrex::Vector<amrex::Long> GetZeroParticlesInGrid(const int lev) const;
+
+    amrex::Vector<amrex::Long> NumberOfParticlesInGrid(int lev) const;
 
     void Increment (amrex::MultiFab& mf, int lev);
 
     void SetParticleBoxArray (int lev, amrex::BoxArray& new_ba);
     void SetParticleDistributionMap (int lev, amrex::DistributionMapping& new_dm);
 
-    int nSpecies() const {return nspecies;}
+    int nSpecies() const {return species_names.size();}
 
     int nSpeciesBackTransformedDiagnostics() const {return nspecies_back_transformed_diagnostics;}
     int mapSpeciesBackTransformedDiagnostics(int i) const {return map_species_back_transformed_diagnostics[i];}
@@ -219,7 +244,13 @@ public:
     /**
     * \brief Performs QED events (Breit-Wheeler process and photon emission)
     */
-    void doQedEvents();
+    void doQedEvents (int lev,
+                      const amrex::MultiFab& Ex,
+                      const amrex::MultiFab& Ey,
+                      const amrex::MultiFab& Ez,
+                      const amrex::MultiFab& Bx,
+                      const amrex::MultiFab& By,
+                      const amrex::MultiFab& Bz);
 #endif
 
     int getSpeciesID (std::string product_str) const;
@@ -230,12 +261,24 @@ protected:
     /**
     * \brief Performs Breit-Wheeler process for the species for which it is enabled
     */
-    void doQedBreitWheeler();
+    void doQedBreitWheeler (int lev,
+                            const amrex::MultiFab& Ex,
+                            const amrex::MultiFab& Ey,
+                            const amrex::MultiFab& Ez,
+                            const amrex::MultiFab& Bx,
+                            const amrex::MultiFab& By,
+                            const amrex::MultiFab& Bz);
 
     /**
     * \brief Performs QED photon emission for the species for which it is enabled
     */
-    void doQedQuantumSync();
+    void doQedQuantumSync (int lev,
+                           const amrex::MultiFab& Ex,
+                           const amrex::MultiFab& Ey,
+                           const amrex::MultiFab& Ez,
+                           const amrex::MultiFab& Bx,
+                           const amrex::MultiFab& By,
+                           const amrex::MultiFab& Bz);
 #endif
 
     // Particle container types
@@ -256,6 +299,9 @@ protected:
     std::vector<bool> m_gather_from_main_grid;
 
     std::vector<PCTypes> species_types;
+
+    /** Whether to absorb particles exiting the domain */
+    ParticleBC m_boundary_conditions = ParticleBC::none;
 
     template<typename ...Args>
     amrex::MFItInfo getMFItInfo (const WarpXParticleContainer& pc_src,
@@ -294,9 +340,13 @@ protected:
     int m_nspecies_breit_wheeler = 0;
     //________
 
+    static constexpr auto m_default_quantum_sync_photon_creation_energy_threshold =
+        static_cast<amrex::ParticleReal>(
+        2.0 * PhysConst::m_e * PhysConst::c * PhysConst::c );  /*!< Default value of the energy threshold for photon creation in Quantum Synchrotron process.*/
+
+
     amrex::ParticleReal m_quantum_sync_photon_creation_energy_threshold =
-      static_cast<amrex::ParticleReal>(
-        2.0 * PhysConst::m_e * PhysConst::c * PhysConst::c );  /*!< Energy threshold for photon creation in Quantum Synchrotron process.*/
+        m_default_quantum_sync_photon_creation_energy_threshold; /*!< Energy threshold for photon creation in Quantum Synchrotron process.*/
 
     /**
      * Returns the number of species having Quantum Synchrotron process enabled
@@ -347,6 +397,15 @@ protected:
      * a Poisson distribution for the pair production rate calculations
      */
     int m_qed_schwinger_threshold_poisson_gaussian = 25;
+    /** The 6 following variables are spatial boundaries beyond which Schwinger process is
+     *  deactivated
+     */
+    amrex::Real m_qed_schwinger_xmin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_qed_schwinger_xmax = std::numeric_limits<amrex::Real>::max();
+    amrex::Real m_qed_schwinger_ymin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_qed_schwinger_ymax = std::numeric_limits<amrex::Real>::max();
+    amrex::Real m_qed_schwinger_zmin = std::numeric_limits<amrex::Real>::lowest();
+    amrex::Real m_qed_schwinger_zmax = std::numeric_limits<amrex::Real>::max();
 
 #endif
 
@@ -368,12 +427,7 @@ private:
     std::vector<int> map_species_back_transformed_diagnostics;
     int do_back_transformed_diagnostics = 0;
 
-    // runtime parameters
-    int nlasers = 0;
-    int nspecies = 1;   // physical particles only. nspecies+nlasers == allcontainers.size().
-    int ncollisions = 0;
-
-    void MFItInfoCheckTiling(const WarpXParticleContainer& pc_src) const noexcept
+    void MFItInfoCheckTiling(const WarpXParticleContainer& /*pc_src*/) const noexcept
     {
         return;
     }

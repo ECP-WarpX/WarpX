@@ -8,11 +8,10 @@ geometry.prob_lo     = -5.e-6   0.e-6
 geometry.prob_hi     =  5.e-6  20.e-6
 amr.max_level = 0
 
-algo.maxwell_fdtd_solver = ckc
+algo.maxwell_solver = ckc
 warpx.do_pml = 1
 warpx.cfl = .999
 
-particles.nspecies = 2
 particles.species_names = electrons ions
 
 ions.mass = 2.3428415e-26
@@ -39,7 +38,6 @@ electrons.profile = constant
 electrons.density = 2.
 electrons.momentum_distribution_type = constant
 
-lasers.nlasers      = 1
 lasers.names        = laser1
 laser1.profile      = Gaussian
 laser1.position     = 0. 0. 3.e-6

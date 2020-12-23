@@ -31,18 +31,28 @@ package and setting ``USE_PSATD=TRUE``.
 
            export FFTW_HOME=/usr/
 
-      - Download and build the blaspp and lapackpp packages. These can be obtained from bitbucket using mercurial.
+      - Download and build the blaspp and lapackpp packages. These can be obtained from bitbucket.
         ::
 
-           hg clone https://bitbucket.org/icl/blaspp
-           hg clone https://bitbucket.org/icl/lapackpp
+           git clone https://bitbucket.org/icl/blaspp.git
+           git clone https://bitbucket.org/icl/lapackpp.git
+
+        The two packages can be built in multiple ways. A recommended method is to follow the cmake instructions
+        provided in the INSTALL.md that comes with the packages. They can also be installed using spack.
 
       - Set the environment variables BLASPP_HOME and LAPACKPP_HOME to the locations where
-        the packages were downloaded and built. For example, using bash:
+        the packages libraries were installed. For example, using bash:
         ::
 
-           export BLASPP_HOME=/location/of/packages/blaspp
-           export LAPACKPP_HOME=/location/of/packages/lapackpp
+           export BLASPP_HOME=/location/of/installation/blaspp
+           export LAPACKPP_HOME=/location/of/installation/lapackpp
+
+      - In some case, the blas and lapack libraries need to be specified.
+        If needed, this can be done by setting the BLAS_LIB and LAPACK_LIB
+        environment variables appropriately. For example, using bash:
+        ::
+
+           export BLAS_LIB=-lblas
 
       - Set ``USE_PSATD=TRUE`` when compiling:
         ::

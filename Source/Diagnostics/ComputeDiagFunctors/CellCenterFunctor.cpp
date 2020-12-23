@@ -1,7 +1,7 @@
 #include "CellCenterFunctor.H"
 #include "Utils/CoarsenIO.H"
 
-using namespace amrex;
+#include <AMReX.H>
 
 CellCenterFunctor::CellCenterFunctor(amrex::MultiFab const * mf_src, int lev,
                                      amrex::IntVect crse_ratio,
@@ -11,7 +11,7 @@ CellCenterFunctor::CellCenterFunctor(amrex::MultiFab const * mf_src, int lev,
 {}
 
 void
-CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
+CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/) const
 {
 #ifdef WARPX_DIM_RZ
     if (m_convertRZmodes2cartesian) {
@@ -21,12 +21,12 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
             nComp()==1,
             "The RZ averaging over modes must write into 1 single component");
         auto& warpx = WarpX::GetInstance();
-        MultiFab mf_dst_stag(m_mf_src->boxArray(), warpx.DistributionMap(m_lev), 1, m_mf_src->nGrowVect());
+        amrex::MultiFab mf_dst_stag(m_mf_src->boxArray(), warpx.DistributionMap(m_lev), 1, m_mf_src->nGrowVect());
         // Mode 0
-        MultiFab::Copy(mf_dst_stag, *m_mf_src, 0, 0, 1, m_mf_src->nGrowVect());
+        amrex::MultiFab::Copy(mf_dst_stag, *m_mf_src, 0, 0, 1, m_mf_src->nGrowVect());
         for (int ic=1 ; ic < m_mf_src->nComp() ; ic += 2) {
             // All modes > 0
-            MultiFab::Add(mf_dst_stag, *m_mf_src, ic, 0, 1, m_mf_src->nGrowVect());
+            amrex::MultiFab::Add(mf_dst_stag, *m_mf_src, ic, 0, 1, m_mf_src->nGrowVect());
         }
         CoarsenIO::Coarsen( mf_dst, mf_dst_stag, dcomp, 0, nComp(), 0,  m_crse_ratio);
     } else {
@@ -35,6 +35,7 @@ CellCenterFunctor::operator()(amrex::MultiFab& mf_dst, int dcomp) const
 #else
     // In cartesian geometry, coarsen and interpolate from simulation MultiFab, m_mf_src,
     // to output diagnostic MultiFab, mf_dst.
-    CoarsenIO::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), 0, m_crse_ratio);
+    CoarsenIO::Coarsen( mf_dst, *m_mf_src, dcomp, 0, nComp(), mf_dst.nGrow(0), m_crse_ratio);
+    amrex::ignore_unused(m_lev, m_convertRZmodes2cartesian);
 #endif
 }

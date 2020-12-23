@@ -43,7 +43,6 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
         ParallelFor(bx,
         [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
         {
-            using Idx = SpectralFieldIndex;
             // Shortcuts for the components of E
             const Complex Ex = fields(i,j,k,Idx::Ex);
             const Complex Ey = fields(i,j,k,Idx::Ey);
@@ -66,4 +65,4 @@ SpectralBaseAlgorithm::ComputeSpectralDivE (
 
     // Backward Fourier transform
     field_data.BackwardTransform( divE, Idx::divE, 0 );
-};
+}

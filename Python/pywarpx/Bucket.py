@@ -15,13 +15,23 @@ class Bucket(object):
     def __init__(self, instancename, **defaults):
         self._localsetattr('instancename', instancename)
         self._localsetattr('argvattrs', {})
-        self.argvattrs.update(defaults)
+        for name, value in defaults.items():
+            self.add_new_attr(name, value)
 
     def _localsetattr(self, name, value):
         object.__setattr__(self, name, value)
 
+    def add_new_attr(self, name, value):
+        """Names starting with "_" are make instance attributes.
+        Otherwise the attribute is added to the args list.
+        """
+        if name.startswith('_'):
+            self._localsetattr(name, value)
+        else:
+            self.argvattrs[name] = value
+
     def __setattr__(self, name, value):
-        self.argvattrs[name] = value
+        self.add_new_attr(name, value)
 
     def __getattr__(self, name):
         try:
@@ -50,6 +60,8 @@ class Bucket(object):
                 # --- For lists, tuples, and arrays make a space delimited string of the values.
                 # --- The lambda is needed in case this is a list of strings.
                 rhs = ' '.join(map(lambda s : repr(s).strip("'\""), value))
+            elif isinstance(value, bool):
+                rhs = 1 if value else 0
             else:
                 rhs = value
             attrstring = '{0}.{1} = {2}'.format(self.instancename, attr, repr(rhs).strip("'\""))

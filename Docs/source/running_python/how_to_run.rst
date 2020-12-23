@@ -13,6 +13,8 @@ In either mode, if using a `virtual environment <https://docs.python.org/3/tutor
 Example input files can be found in the section :doc:`examples`.
 The examples support running in both modes by commenting and uncommenting the appropriate lines.
 
+WarpX requires Python version 3.6 or newer.
+
 
 Using Python input as a preprocessor
 ------------------------------------

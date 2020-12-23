@@ -24,14 +24,12 @@ warpx.verbose = 1
 
 warpx.cfl = 1.0
 warpx.do_pml = 1
-particles.nspecies = 0
 
 warpx.do_moving_window = 0
 # warpx.moving_window_dir = z
 # warpx.moving_window_v = 1.0 # in units of the speed of light
 
 # Laser
-lasers.nlasers      = 1
 lasers.names        = laser1
 laser1.profile      = Gaussian
 laser1.position     = 0. 0. 0.e-6 # This point is on the laser plane

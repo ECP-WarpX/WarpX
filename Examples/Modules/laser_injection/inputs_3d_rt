@@ -29,7 +29,6 @@ warpx.do_pml = 0
 warpx.cfl = 1.0
 
 # Laser
-lasers.nlasers      = 1
 lasers.names        = laser1
 laser1.profile      = Gaussian
 laser1.position     = 0. 0. 9.e-6 # This point is on the laser plane
@@ -52,6 +51,3 @@ diag1.fields_to_plot = jx jy jz Ex Ey Ez Bx Bz
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
 warpx.moving_window_v = 1.0 # in units of the speed of light
-
-# Remove species
-particles.nspecies = 0

@@ -15,7 +15,7 @@
 
 using namespace amrex;
 
-#ifdef AMREX_USE_CUDA
+#ifdef AMREX_USE_GPU
 
 /* \brief Apply stencil on MultiFab (GPU version, 2D/3D).
  * \param dstmf Destination MultiFab
@@ -27,7 +27,7 @@ using namespace amrex;
 void
 Filter::ApplyStencil (MultiFab& dstmf, const MultiFab& srcmf, int scomp, int dcomp, int ncomp)
 {
-    WARPX_PROFILE("BilinearFilter::ApplyStencil(MultiFab)");
+    WARPX_PROFILE("Filter::ApplyStencil(MultiFab)");
     ncomp = std::min(ncomp, srcmf.nComp());
 
     for (MFIter mfi(dstmf); mfi.isValid(); ++mfi)
@@ -70,7 +70,7 @@ void
 Filter::ApplyStencil (FArrayBox& dstfab, const FArrayBox& srcfab,
                       const Box& tbx, int scomp, int dcomp, int ncomp)
 {
-    WARPX_PROFILE("BilinearFilter::ApplyStencil(FArrayBox)");
+    WARPX_PROFILE("Filter::ApplyStencil(FArrayBox)");
     ncomp = std::min(ncomp, srcfab.nComp());
     const auto& src = srcfab.array();
     const auto& dst = dstfab.array();
@@ -109,6 +109,7 @@ void Filter::DoFilter (const Box& tbx,
 #endif
     amrex::Real const* AMREX_RESTRICT sz = stencil_z.data();
     Dim3 slen_local = slen;
+#if (AMREX_SPACEDIM == 3)
     AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
     {
         Real d = 0.0;
@@ -116,12 +117,7 @@ void Filter::DoFilter (const Box& tbx,
         for         (int iz=0; iz < slen_local.z; ++iz){
             for     (int iy=0; iy < slen_local.y; ++iy){
                 for (int ix=0; ix < slen_local.x; ++ix){
-#if (AMREX_SPACEDIM == 3)
                     Real sss = sx[ix]*sy[iy]*sz[iz];
-#else
-                    Real sss = sx[ix]*sz[iy];
-#endif
-#if (AMREX_SPACEDIM == 3)
                     d += sss*( tmp(i-ix,j-iy,k-iz,scomp+n)
                               +tmp(i+ix,j-iy,k-iz,scomp+n)
                               +tmp(i-ix,j+iy,k-iz,scomp+n)
@@ -130,18 +126,32 @@ void Filter::DoFilter (const Box& tbx,
                               +tmp(i+ix,j-iy,k+iz,scomp+n)
                               +tmp(i-ix,j+iy,k+iz,scomp+n)
                               +tmp(i+ix,j+iy,k+iz,scomp+n));
-#else
-                    d += sss*( tmp(i-ix,j-iy,k,scomp+n)
-                              +tmp(i+ix,j-iy,k,scomp+n)
-                              +tmp(i-ix,j+iy,k,scomp+n)
-                              +tmp(i+ix,j+iy,k,scomp+n));
-#endif
                 }
             }
         }
 
         dst(i,j,k,dcomp+n) = d;
     });
+#else
+    AMREX_PARALLEL_FOR_4D ( tbx, ncomp, i, j, k, n,
+    {
+        Real d = 0.0;
+
+        for         (int iz=0; iz < slen_local.z; ++iz){
+            for     (int iy=0; iy < slen_local.y; ++iy){
+                for (int ix=0; ix < slen_local.x; ++ix){
+                    Real sss = sx[ix]*sz[iy];
+                    d += sss*( tmp(i-ix,j-iy,k,scomp+n)
+                              +tmp(i+ix,j-iy,k,scomp+n)
+                              +tmp(i-ix,j+iy,k,scomp+n)
+                              +tmp(i+ix,j+iy,k,scomp+n));
+                }
+            }
+        }
+
+        dst(i,j,k,dcomp+n) = d;
+    });
+#endif
 }
 
 #else
@@ -156,7 +166,7 @@ void Filter::DoFilter (const Box& tbx,
 void
 Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, int scomp, int dcomp, int ncomp)
 {
-    WARPX_PROFILE("BilinearFilter::ApplyStencil()");
+    WARPX_PROFILE("Filter::ApplyStencil(MultiFab)");
     ncomp = std::min(ncomp, srcmf.nComp());
 #ifdef _OPENMP
 #pragma omp parallel
@@ -192,7 +202,7 @@ void
 Filter::ApplyStencil (amrex::FArrayBox& dstfab, const amrex::FArrayBox& srcfab,
                       const amrex::Box& tbx, int scomp, int dcomp, int ncomp)
 {
-    WARPX_PROFILE("BilinearFilter::ApplyStencil(FArrayBox)");
+    WARPX_PROFILE("Filter::ApplyStencil(FArrayBox)");
     ncomp = std::min(ncomp, srcfab.nComp());
     FArrayBox tmpfab;
     const Box& gbx = amrex::grow(tbx,stencil_length_each_dir-1);

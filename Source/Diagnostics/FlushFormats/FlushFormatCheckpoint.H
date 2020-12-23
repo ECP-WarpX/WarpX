@@ -8,7 +8,7 @@ class FlushFormatCheckpoint final : public FlushFormatPlotfile
     /** Flush fields and particles to plotfile */
     virtual void WriteToFile (
         const amrex::Vector<std::string> varnames,
-        const amrex::Vector<const amrex::MultiFab*> mf,
+        const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double time,
         const amrex::Vector<ParticleDiag>& particle_diags, int nlev, const std::string prefix,

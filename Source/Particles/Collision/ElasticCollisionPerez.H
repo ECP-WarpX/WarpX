@@ -46,7 +46,8 @@ void ElasticCollisionPerez (
     T_R const  q1, T_R const  q2,
     T_R const  m1, T_R const  m2,
     T_R const  T1, T_R const  T2,
-    T_R const  dt, T_R const   L, T_R const dV)
+    T_R const  dt, T_R const   L, T_R const dV,
+    amrex::RandomEngine const& engine)
 {
 
     int NI1 = I1e - I1s;
@@ -69,16 +70,16 @@ void ElasticCollisionPerez (
     T_R n1  = T_R(0.0);
     T_R n2  = T_R(0.0);
     T_R n12 = T_R(0.0);
-    for (int i1=I1s; i1<I1e; ++i1) { n1 += w1[ I1[i1] ]; }
-    for (int i2=I2s; i2<I2e; ++i2) { n2 += w2[ I2[i2] ]; }
+    for (int i1=I1s; i1<static_cast<int>(I1e); ++i1) { n1 += w1[ I1[i1] ]; }
+    for (int i2=I2s; i2<static_cast<int>(I2e); ++i2) { n2 += w2[ I2[i2] ]; }
     n1 = n1 / dV; n2 = n2 / dV;
     {
       int i1 = I1s; int i2 = I2s;
       for (int k = 0; k < amrex::max(NI1,NI2); ++k)
       {
         n12 += amrex::min( w1[ I1[i1] ], w2[ I2[i2] ] );
-        ++i1; if ( i1 == I1e ) { i1 = I1s; }
-        ++i2; if ( i2 == I2e ) { i2 = I2s; }
+        ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
+        ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
       }
       n12 = n12 / dV;
     }
@@ -101,9 +102,10 @@ void ElasticCollisionPerez (
               u2x[ I2[i2] ], u2y[ I2[i2] ], u2z[ I2[i2] ],
               n1, n2, n12,
               q1, m1, w1[ I1[i1] ], q2, m2, w2[ I2[i2] ],
-              dt, L, lmdD);
-          ++i1; if ( i1 == I1e ) { i1 = I1s; }
-          ++i2; if ( i2 == I2e ) { i2 = I2s; }
+              dt, L, lmdD,
+              engine);
+          ++i1; if ( i1 == static_cast<int>(I1e) ) { i1 = I1s; }
+          ++i2; if ( i2 == static_cast<int>(I2e) ) { i2 = I2s; }
       }
     }
 

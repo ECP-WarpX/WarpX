@@ -58,11 +58,14 @@ int SliceParser::getStart () const {return m_start;}
 
 int SliceParser::getStop () const {return m_stop;}
 
-IntervalsParser::IntervalsParser (const std::string& instr)
+IntervalsParser::IntervalsParser (const std::vector<std::string>& instr_vec)
 {
-    auto insplit = WarpXUtilStr::split<std::vector<std::string>>(instr, m_separator);
+    std::string inconcatenated;
+    for (const auto& instr_element : instr_vec) inconcatenated +=instr_element;
 
-    for(int i=0; i<insplit.size(); i++)
+    auto insplit = WarpXUtilStr::split<std::vector<std::string>>(inconcatenated, m_separator);
+
+    for(int i=0; i<static_cast<int>(insplit.size()); i++)
     {
         SliceParser temp_slice(insplit[i]);
         m_slices.push_back(temp_slice);
@@ -73,7 +76,7 @@ IntervalsParser::IntervalsParser (const std::string& instr)
 
 bool IntervalsParser::contains (const int n) const
 {
-    for(int i=0; i<m_slices.size(); i++){
+    for(int i=0; i<static_cast<int>(m_slices.size()); i++){
         if (m_slices[i].contains(n)) return true;
     }
     return false;
@@ -82,7 +85,7 @@ bool IntervalsParser::contains (const int n) const
 int IntervalsParser::nextContains (const int n) const
 {
     int next = std::numeric_limits<int>::max();
-    for(int i=0; i<m_slices.size(); i++){
+    for(int i=0; i<static_cast<int>(m_slices.size()); i++){
         next = std::min(m_slices[i].nextContains(n),next);
     }
     return next;
@@ -91,7 +94,7 @@ int IntervalsParser::nextContains (const int n) const
 int IntervalsParser::previousContains (const int n) const
 {
     int previous = 0;
-    for(int i=0; i<m_slices.size(); i++){
+    for(int i=0; i<static_cast<int>(m_slices.size()); i++){
         previous = std::max(m_slices[i].previousContains(n),previous);
     }
     return previous;

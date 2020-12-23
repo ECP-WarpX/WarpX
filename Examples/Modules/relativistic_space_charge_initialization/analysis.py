@@ -19,6 +19,8 @@ import yt
 import numpy as np
 import scipy.constants as scc
 yt.funcs.mylog.setLevel(0)
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 # Parameters from the Simulation
 Qtot = -1.e-20
@@ -68,7 +70,7 @@ plt.title('By: Theory')
 plt.imshow(make_2d(Ex_th/scc.c))
 plt.colorbar()
 plt.subplot(224)
-plt.title('Bz: Simulation')
+plt.title('By: Simulation')
 plt.imshow(make_2d(By_array))
 plt.colorbar()
 
@@ -81,3 +83,6 @@ def check(E, E_th, label):
     assert np.allclose( E, E_th, atol=0.1*E_th.max() )
 
 check( Ex_array, Ex_th, 'Ex' )
+
+test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename, do_particles=False)

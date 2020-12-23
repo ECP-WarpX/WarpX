@@ -49,7 +49,7 @@ void FiniteDifferenceSolver::ComputeDivE (
 
 #endif
     } else {
-        amrex::Abort("Unknown algorithm");
+        amrex::Abort("ComputeDivE: Unknown algorithm");
     }
 
 }
@@ -137,7 +137,7 @@ void FiniteDifferenceSolver::ComputeDivECylindrical (
         // Loop over the cells and update the fields
         amrex::ParallelFor(tdive,
 
-            [=] AMREX_GPU_DEVICE (int i, int j, int k){
+            [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/){
                 Real const r = rmin + i*dr; // r on a nodal grid (F is nodal in r)
                 if (r != 0) { // Off-axis, regular equations
                     divE(i, j, 0, 0) =
@@ -149,7 +149,7 @@ void FiniteDifferenceSolver::ComputeDivECylindrical (
                             + m * Et( i, j, 0, 2*m )/r
                             + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 2*m-1); // Real part
                         divE(i, j, 0, 2*m  ) =
-                              T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m-1)
+                              T_Algo::DownwardDrr_over_r(Er, r, dr, coefs_r, n_coefs_r, i, j, 0, 2*m)
                             - m * Et( i, j, 0, 2*m-1 )/r
                             + T_Algo::DownwardDz(Ez, coefs_z, n_coefs_z, i, j, 0, 2*m  ); // Imaginary part
                     }

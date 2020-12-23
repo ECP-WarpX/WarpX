@@ -24,6 +24,8 @@
 
 import sys
 import yt
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
 
 tolerance = 0.001
 
@@ -35,3 +37,6 @@ x  = ad['particle_position_x'].to_ndarray()
 print('error = ', abs(x))
 print('tolerance = ', tolerance)
 assert(abs(x) < tolerance)
+
+test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)

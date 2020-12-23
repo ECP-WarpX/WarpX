@@ -1,6 +1,9 @@
 Visualizing the simulation results
 ==================================
 
+Output formats
+--------------
+
 WarpX can write data either in `plotfile` format (AMReX's native format), or
 in `openPMD format <https://www.openpmd.org/>`_ (a common data schema on top of
 HDF5 or ADIOS files for particle-in-cell codes).
@@ -10,6 +13,22 @@ HDF5 or ADIOS files for particle-in-cell codes).
     This is controlled by the parameters ``warpx.plot_int`` (AMReX) or the
     ``warpx.openpmd_int`` & ``warpx.openpmd_backend`` options in the section
     :doc:`../running_cpp/parameters`.
+
+Asynchronous IO
+---------------
+
+When using the AMReX `plotfile` format, users can set the ``amrex.async_out=1``
+option to perform the IO in a non-blocking fashion, meaning that the simulation
+will continue to run while an IO thread controls writing the data to disk.
+This can significantly reduce the overall time spent in IO. This is primarily intended for
+large runs on supercomputers such as Summit and Cori; depending on the MPI
+implentation you are using, you may not see a benefit on your workstation.
+
+When writing plotfiles, each rank will write to a separate file, up to some maximum number
+(by default, 64). This maximum can be adjusted using the ``amrex.async_out_nfiles`` inputs
+parameter. To use asynchronous IO with than ``amrex.async_out_nfiles`` MPI ranks, WarpX
+WarpX must be compiled with the ``MPI_THREAD_MULTIPLE=TRUE`` flag.
+Please see :doc:`../building/building` for building instructions.
 
 This section describes some of the tools available to visualize the data:
 
@@ -43,3 +62,22 @@ analysis script :download:`video_yt.py<../../../Tools/PostProcessing/video_yt.py
 as a parallel analysis script
 :download:`video_yt.py<../../../Tools/PostProcessing/yt3d_mpi.py>` used to make a similar
 rendering for a beam-driven wakefield simulation, running parallel.
+
+Warning: currently, quantities in the output file for iteration ``n`` are not all defined at the same physical time due to the staggering in time in WarpX.
+The table below provides the physical time at which each quantity in the output file is written, in units of time step, for time step n.
+"E part" means the electric field at each particle position.
+
+======== ===== =====
+quantity staggering
+-------- -----------
+         FDTD  PSATD
+======== ===== =====
+E        n     n
+B        n     n
+j        n-1/2 n-1/2
+rho      n     n
+position n     n
+momentum n-1/2 n-1/2
+E part   n     n
+B part   n     n
+======== ===== =====

@@ -14,6 +14,7 @@
 #include "Utils/WarpXConst.H"
 #include "SpeciesPhysicalProperties.H"
 #include "Evolve/WarpXDtType.H"
+#include "Particles/Resampling/Resampling.H"
 
 #ifdef WARPX_QED
 #    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
@@ -25,6 +26,7 @@
 
 #include <memory>
 
+enum struct ParticleBC { none=0, absorbing };
 
 enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
 
@@ -32,7 +34,7 @@ struct PIdx
 {
     enum { // Particle Attributes stored in amrex::ParticleContainer's struct of array
         w = 0,  // weight
-        ux, uy, uz, Ex, Ey, Ez, Bx, By, Bz,
+        ux, uy, uz,
 #ifdef WARPX_DIM_RZ
         theta, // RZ needs all three position components
 #endif
@@ -65,14 +67,8 @@ namespace ParticleStringNames
         {"ux",    PIdx::ux   },
         {"uy",    PIdx::uy   },
         {"uz",    PIdx::uz   },
-        {"Ex",    PIdx::Ex   },
-        {"Ey",    PIdx::Ey   },
-        {"Ez",    PIdx::Ez   },
-        {"Bx",    PIdx::Bx   },
-        {"By",    PIdx::By   },
-        {"Bz",    PIdx::Bz   }
 #ifdef WARPX_DIM_RZ
-        ,{"theta", PIdx::theta}
+        {"theta", PIdx::theta}
 #endif
     };
 }
@@ -84,6 +80,8 @@ public:
     using amrex::ParIter<0,0,PIdx::nattribs>::ParIter;
 
     WarpXParIter (ContainerType& pc, int level);
+
+    WarpXParIter (ContainerType& pc, int level, amrex::MFItInfo& info);
 
     const std::array<RealVector, PIdx::nattribs>& GetAttribs () const {
         return GetStructOfArrays().GetRealData();
@@ -128,9 +126,7 @@ class MultiParticleContainer;
  * push.
  *
  * Note: many functions are pure virtual (meaning they MUST be defined in
- * derived classes, e.g., Evolve) or empty function (meaning they
- * do not do anything, e.g., FieldGather, meant to be overriden by derived
- * function) or actual functions (e.g. CurrentDeposition).
+ * derived classes, e.g., Evolve) or actual functions (e.g. CurrentDeposition).
  */
 class WarpXParticleContainer
     : public amrex::ParticleContainer<0,0,PIdx::nattribs>
@@ -155,14 +151,6 @@ public:
 
     virtual void InitData () = 0;
 
-    virtual void FieldGatherES (const amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
-                                const amrex::Vector<std::unique_ptr<amrex::FabArray<amrex::BaseFab<int> > > >& masks) {}
-
-    virtual void FieldGather (int lev,
-                              const amrex::MultiFab& Ex, const amrex::MultiFab& Ey,
-                              const amrex::MultiFab& Ez, const amrex::MultiFab& Bx,
-                              const amrex::MultiFab& By, const amrex::MultiFab& Bz) {}
-
     /**
      * Evolve is the central WarpXParticleContainer function that advances
      * particles for a time dt (typically one timestep). It is a pure virtual
@@ -171,6 +159,8 @@ public:
     virtual void Evolve (int lev,
                          const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                          const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
+                         const amrex::MultiFab& Ex_avg, const amrex::MultiFab& Ey_avg, const amrex::MultiFab& Ez_avg,
+                         const amrex::MultiFab& Bx_avg, const amrex::MultiFab& By_avg, const amrex::MultiFab& Bz_avg,
                          amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz,
                          amrex::MultiFab* cjx, amrex::MultiFab* cjy, amrex::MultiFab* cjz,
                          amrex::MultiFab* rho, amrex::MultiFab* crho,
@@ -180,10 +170,10 @@ public:
 
     virtual void PostRestart () = 0;
 
-    virtual void GetParticleSlice(const int direction,     const amrex::Real z_old,
-                                  const amrex::Real z_new, const amrex::Real t_boost,
-                                  const amrex::Real t_lab, const amrex::Real dt,
-                                  DiagnosticParticles& diagnostic_particles) {}
+    virtual void GetParticleSlice(const int /*direction*/, const amrex::Real /*z_old*/,
+                                  const amrex::Real /*z_new*/, const amrex::Real /*t_boost*/,
+                                  const amrex::Real /*t_lab*/, const amrex::Real /*dt*/,
+                                  DiagnosticParticles& /*diagnostic_particles*/) {}
 
     void AllocData ();
 
@@ -245,9 +235,9 @@ public:
     // PhysicalParticleContainer: implemented.
     // LaserParticleContainer: implemented.
     // RigidInjectedParticleContainer: not implemented.
-    virtual void ContinuousInjection(const amrex::RealBox& injection_box) {}
+    virtual void ContinuousInjection(const amrex::RealBox& /*injection_box*/) {}
     // Update optional sub-class-specific injection location.
-    virtual void UpdateContinuousInjectionPosition(amrex::Real dt) {}
+    virtual void UpdateContinuousInjectionPosition(amrex::Real /*dt*/) {}
 
     ///
     /// This returns the total charge for all the particles in this ParticleContainer.
@@ -262,23 +252,30 @@ public:
     void AddNParticles (int lev,
                         int n, const amrex::ParticleReal* x, const amrex::ParticleReal* y, const amrex::ParticleReal* z,
                         const amrex::ParticleReal* vx, const amrex::ParticleReal* vy, const amrex::ParticleReal* vz,
-                        int nattr, const amrex::ParticleReal* attr, int uniqueparticles, int id=-1);
+                        int nattr, const amrex::ParticleReal* attr, int uniqueparticles, amrex::Long id=-1);
 
     virtual void ReadHeader (std::istream& is);
 
     virtual void WriteHeader (std::ostream& os) const;
 
-    virtual void ConvertUnits (ConvertDirection convert_dir){};
+    virtual void ConvertUnits (ConvertDirection /*convert_dir*/){}
 
     static void ReadParameters ();
 
-    static int NextID () { return ParticleType::NextID(); }
+    static void BackwardCompatibility ();
 
-    void setNextID(int next_id) { ParticleType::NextID(next_id); }
+    /** \brief Apply particle BC.
+     *
+     * \param[in] boundary_conditions Type of boundary conditions. For now, only absorbing or none
+     * are supported
+     */
+    void ApplyBoundaryConditions (ParticleBC boundary_conditions);
 
     bool do_splitting = false;
     bool initialize_self_fields = false;
-    amrex::Real self_fields_required_precision = 1.e-11;
+    amrex::Real self_fields_required_precision =
+        amrex::Real(1.e-11);
+    int self_fields_max_iters = 200;
 
     // split along diagonals (0) or axes (1)
     int split_type = 0;
@@ -312,17 +309,17 @@ public:
     //amrex::Real getMass () {return mass;}
     amrex::ParticleReal getMass () const {return mass;}
 
-    int DoFieldIonization() const { return do_field_ionization; };
+    int DoFieldIonization() const { return do_field_ionization; }
     int DoQED() const {
 #ifdef WARPX_QED
         return m_do_qed;
 #else
         return false;
 #endif
-    };
+    }
     //Species for which QED effects are relevant should override these methods
-    virtual bool has_quantum_sync() const {return false;};
-    virtual bool has_breit_wheeler() const {return false;};
+    virtual bool has_quantum_sync() const {return false;}
+    virtual bool has_breit_wheeler() const {return false;}
 
     // build filter functors
     bool m_do_random_filter  = false;
@@ -340,8 +337,18 @@ public:
     template<PhysicalSpecies PhysSpec>
     bool AmIA () const noexcept {return (physical_species == PhysSpec);}
 
+    amrex::Array<amrex::Real,3> get_v_galilean () {return m_v_galilean;}
+
+    /**
+     * \brief Virtual method to resample the species. Overriden by PhysicalParticleContainer only.
+     * Empty body is here because making the method purely virtual would mean that we need to
+     * override the method for every derived class. Note that in practice this function is never
+     * called because resample() is only called for PhysicalParticleContainers.
+     */
+    virtual void resample (const int /*timestep*/) {}
+
 protected:
-    amrex::Array<amrex::Real,3> v_galilean = {{0}};
+    amrex::Array<amrex::Real,3> m_v_galilean = {{0}};
     std::map<std::string, int> particle_comps;
     std::map<std::string, int> particle_icomps;
     std::map<std::string, int> particle_runtime_comps;
@@ -374,11 +381,13 @@ protected:
     std::string ionization_product_name;
     int ion_atomic_number;
     int ionization_initial_level = 0;
-    amrex::Gpu::ManagedVector<amrex::Real> ionization_energies;
-    amrex::Gpu::ManagedVector<amrex::Real> adk_power;
-    amrex::Gpu::ManagedVector<amrex::Real> adk_prefactor;
-    amrex::Gpu::ManagedVector<amrex::Real> adk_exp_prefactor;
+    amrex::Gpu::DeviceVector<amrex::Real> ionization_energies;
+    amrex::Gpu::DeviceVector<amrex::Real> adk_power;
+    amrex::Gpu::DeviceVector<amrex::Real> adk_prefactor;
+    amrex::Gpu::DeviceVector<amrex::Real> adk_exp_prefactor;
     std::string physical_element;
+
+    int do_resampling = 0;
 
     int do_back_transformed_diagnostics = 1;
 
@@ -388,9 +397,9 @@ protected:
     //Species can receive a shared pointer to a QED engine (species for
     //which this is relevant should override these functions)
     virtual void
-    set_breit_wheeler_engine_ptr(std::shared_ptr<BreitWheelerEngine>){};
+    set_breit_wheeler_engine_ptr(std::shared_ptr<BreitWheelerEngine>){}
     virtual void
-    set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){};
+    set_quantum_sync_engine_ptr(std::shared_ptr<QuantumSynchrotronEngine>){}
 
     int m_qed_breit_wheeler_ele_product;
     std::string m_qed_breit_wheeler_ele_product_name;
@@ -405,10 +414,14 @@ protected:
     amrex::Vector<amrex::FArrayBox> local_jy;
     amrex::Vector<amrex::FArrayBox> local_jz;
 
-    using DataContainer = amrex::Gpu::ManagedDeviceVector<amrex::ParticleReal>;
+public:
     using PairIndex = std::pair<int, int>;
+    using TmpParticleTile = std::array<amrex::Gpu::DeviceVector<amrex::ParticleReal>,
+                                       TmpIdx::nattribs>;
+    using TmpParticles = amrex::Vector<std::map<PairIndex, TmpParticleTile> >;
 
-    amrex::Vector<std::map<PairIndex, std::array<DataContainer, TmpIdx::nattribs> > > tmp_particle_data;
+protected:
+    TmpParticles tmp_particle_data;
 
     /**
      * When using runtime components, AMReX requires to touch all tiles

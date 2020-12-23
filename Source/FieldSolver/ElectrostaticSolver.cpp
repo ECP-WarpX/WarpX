@@ -11,6 +11,8 @@
 
 #include <WarpX.H>
 
+#include <memory>
+
 using namespace amrex;
 
 void
@@ -26,13 +28,19 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
         }
     }
 
-    // Loop over the species and add their space-charge contribution to E and B
-    for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
-        WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
-        if (species.initialize_self_fields || do_electrostatic) {
-            AddSpaceChargeField(species);
+    if (do_electrostatic == ElectrostaticSolverAlgo::LabFrame) {
+        AddSpaceChargeFieldLabFrame();
+    } else {
+        // Loop over the species and add their space-charge contribution to E and B
+        for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
+            WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
+            if (species.initialize_self_fields ||
+                (do_electrostatic == ElectrostaticSolverAlgo::Relativistic)) {
+                AddSpaceChargeField(species);
+            }
         }
     }
+
 }
 
 void
@@ -47,12 +55,13 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     const int num_levels = max_level + 1;
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
     Vector<std::unique_ptr<MultiFab> > phi(num_levels);
-    const int ng = WarpX::nox;
+    // Use number of guard cells used for local deposition of rho
+    const int ng = guard_cells.ng_depos_rho.max();
     for (int lev = 0; lev <= max_level; lev++) {
         BoxArray nba = boxArray(lev);
         nba.surroundingNodes();
-        rho[lev].reset(new MultiFab(nba, dmap[lev], 1, ng)); // Make ng big enough/use rho from sim
-        phi[lev].reset(new MultiFab(nba, dmap[lev], 1, 1));
+        rho[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, ng);
+        phi[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, 1);
         phi[lev]->setVal(0.);
     }
 
@@ -68,11 +77,58 @@ WarpX::AddSpaceChargeField (WarpXParticleContainer& pc)
     for (Real& beta_comp : beta) beta_comp /= PhysConst::c; // Normalize
 
     // Compute the potential phi, by solving the Poisson equation
-    computePhi( rho, phi, beta, pc.self_fields_required_precision );
+    computePhi( rho, phi, beta, pc.self_fields_required_precision, pc.self_fields_max_iters );
 
     // Compute the corresponding electric and magnetic field, from the potential phi
     computeE( Efield_fp, phi, beta );
     computeB( Bfield_fp, phi, beta );
+
+}
+
+void
+WarpX::AddSpaceChargeFieldLabFrame ()
+{
+
+#ifdef WARPX_DIM_RZ
+    amrex::Abort("The calculation of space-charge field has not yet been implemented in RZ geometry.");
+#endif
+
+    // Allocate fields for charge
+    // Also, zero out the phi data
+    const int num_levels = max_level + 1;
+    Vector<std::unique_ptr<MultiFab> > rho(num_levels);
+    // Use number of guard cells used for local deposition of rho
+    const int ng = guard_cells.ng_depos_rho.max();
+    for (int lev = 0; lev <= max_level; lev++) {
+        BoxArray nba = boxArray(lev);
+        nba.surroundingNodes();
+        rho[lev] = std::make_unique<MultiFab>(nba, dmap[lev], 1, ng);
+        rho[lev]->setVal(0.);
+        phi_fp[lev]->setVal(0.);
+    }
+
+    // Deposit particle charge density (source of Poisson solver)
+    for (int ispecies=0; ispecies<mypc->nSpecies(); ispecies++){
+        WarpXParticleContainer& species = mypc->GetParticleContainer(ispecies);
+        bool const local = true;
+        bool const reset = false;
+        bool const do_rz_volume_scaling = false;
+        species.DepositCharge(rho, local, reset, do_rz_volume_scaling);
+    }
+    for (int lev = 0; lev <= max_level; lev++) {
+        ApplyFilterandSumBoundaryRho (lev, lev, *rho[lev], 0, 1);
+    }
+
+    // beta is zero in lab frame
+    // Todo: use simpler finite difference form with beta=0
+    std::array<Real, 3> beta = {0._rt};
+
+    // Compute the potential phi, by solving the Poisson equation
+    computePhi( rho, phi_fp, beta, self_fields_required_precision, self_fields_max_iters );
+
+    // Compute the corresponding electric and magnetic field, from the potential phi
+    computeE( Efield_fp, phi_fp, beta );
+    computeB( Bfield_fp, phi_fp, beta );
 
 }
 
@@ -93,7 +149,8 @@ void
 WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
                    amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<Real, 3> const beta,
-                   Real const required_precision) const
+                   Real const required_precision,
+                   int const max_iters) const
 {
     // Define the boundary conditions
     Array<LinOpBCType,AMREX_SPACEDIM> lobc, hibc;
@@ -124,6 +181,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     // Solve the Poisson equation
     MLMG mlmg(linop);
     mlmg.setVerbose(2);
+    mlmg.setMaxIter(max_iters);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
 
     // Normalize by the correct physical constant

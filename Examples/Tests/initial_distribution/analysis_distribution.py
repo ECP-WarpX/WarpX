@@ -19,7 +19,7 @@ import scipy.special as scs
 from read_raw_data import read_reduced_diags_histogram, read_reduced_diags
 
 # print tolerance
-tolerance = 0.01
+tolerance = 0.02
 print('Tolerance:', tolerance)
 
 #===============================

@@ -7,38 +7,42 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "WarpX.H"
+#include "Initialization/WarpXAMReXInit.H"
+#include "Utils/MPIInitHelpers.H"
 #include "Utils/WarpXUtil.H"
 #include "Utils/WarpXProfilerWrapper.H"
 
 #include <AMReX.H>
-#include <AMReX_ParmParse.H>
 #include <AMReX_BLProfiler.H>
 #include <AMReX_ParallelDescriptor.H>
 
-#include <iostream>
-
+#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
+#include <rocfft.h>
+#endif
 
 int main(int argc, char* argv[])
 {
     using namespace amrex;
 
-#if defined(AMREX_USE_MPI)
-#   if defined(_OPENMP) && defined(WARPX_USE_PSATD)
-    int provided;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
-    AMREX_ALWAYS_ASSERT(provided >= MPI_THREAD_FUNNELED);
-#   else
-    MPI_Init(&argc, &argv);
-#   endif
-#endif
+    auto mpi_thread_levels = utils::warpx_mpi_init(argc, argv);
 
-    amrex::Initialize(argc,argv);
+    warpx_amrex_init(argc, argv);
+
+    utils::warpx_check_mpi_thread_level(mpi_thread_levels);
+
+#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
+    rocfft_setup();
+#endif
 
     ConvertLabParamsToBoost();
 
+#ifdef WARPX_DIM_RZ
+    CheckGriddingForRZSpectral();
+#endif
+
     WARPX_PROFILE_VAR("main()", pmain);
 
-    const Real strt_total = amrex::second();
+    const auto strt_total = static_cast<Real>(amrex::second());
 
     {
         WarpX warpx;
@@ -47,19 +51,23 @@ int main(int argc, char* argv[])
 
         warpx.Evolve();
 
-        Real end_total = amrex::second() - strt_total;
+        auto end_total = static_cast<Real>(amrex::second()) - strt_total;
 
         ParallelDescriptor::ReduceRealMax(end_total, ParallelDescriptor::IOProcessorNumber());
         if (warpx.Verbose()) {
-            amrex::Print() << "Total Time                     : " << end_total << '\n';
-            amrex::Print() << "WarpX Version: " << WarpX::Version() << '\n';
-            amrex::Print() << "PICSAR Version: " << WarpX::PicsarVersion() << '\n';
+            Print() << "Total Time                     : " << end_total << '\n';
+            Print() << "WarpX Version: " << WarpX::Version() << '\n';
+            Print() << "PICSAR Version: " << WarpX::PicsarVersion() << '\n';
         }
     }
 
     WARPX_PROFILE_VAR_STOP(pmain);
 
-    amrex::Finalize();
+#if defined(AMREX_USE_HIP) && defined(WARPX_USE_PSATD)
+    rocfft_cleanup();
+#endif
+
+    Finalize();
 #if defined(AMREX_USE_MPI)
     MPI_Finalize();
 #endif

@@ -2,10 +2,18 @@ AMREX_HOME ?= ../../../amrex
 PICSAR_HOME ?= ../../../picsar
 OPENBC_HOME ?= ../../../openbc_poisson
 
-CXXSTD        = c++14
 USE_MPI       = TRUE
 USE_PARTICLES = TRUE
 USE_RPATH     = TRUE
+BL_NO_FORT    = TRUE
+ifeq ($(USE_DPCPP),TRUE)
+  CXXSTD        = c++17
+else
+  CXXSTD        = c++14
+endif
+
+# required for AMReX async I/O
+MPI_THREAD_MULTIPLE = TRUE
 
 ifeq ($(USE_GPU),TRUE)
   USE_OMP  = FALSE
@@ -21,9 +29,9 @@ ifeq ($(USE_RZ),TRUE)
 endif
 
 ifeq ($(USE_ASCENT_INSITU),TRUE)
-  ASCENT_HOME ?= NOT_SET
-  ifneq ($(ASCENT_HOME),NOT_SET)
-    include $(ASCENT_HOME)/share/ascent/ascent_config.mk
+  ASCENT_DIR ?= NOT_SET
+  ifneq ($(ASCENT_DIR),NOT_SET)
+    include $(ASCENT_DIR)/share/ascent/ascent_config.mk
   endif
   USE_CONDUIT = TRUE
   USE_ASCENT = TRUE
@@ -42,7 +50,6 @@ endif
   XTRA_FFLAGS   += -fPIC
   XTRA_F90FLAGS += -fPIC
   USERSuffix := .Lib
-  DEFINES += -DWARPX_USE_PY
 endif
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
@@ -122,6 +129,12 @@ DEFINES += -DPICSAR_GIT_VERSION=\"$(PICSAR_GIT_VERSION)\"
 DEFINES += -DPICSAR_NO_ASSUMED_ALIGNMENT
 DEFINES += -DWARPX
 
+ifdef PARSER_DEPTH
+  DEFINES += -DWARPX_PARSER_DEPTH=$(PARSER_DEPTH)
+else
+  DEFINES += -DWARPX_PARSER_DEPTH=24
+endif
+
 ifeq ($(USE_OPENBC_POISSON),TRUE)
   include $(OPENBC_HOME)/Make.package
   DEFINES += -DFFT_FFTW -DMPIPARALLEL -DUSE_OPENBC_POISSON
@@ -129,7 +142,7 @@ endif
 
 ifeq ($(USE_OPENPMD), TRUE)
    # try pkg-config query
-   ifeq (0, $(shell pkg-config "openPMD >= 0.11.0"; echo $$?))
+   ifeq (0, $(shell pkg-config "openPMD >= 0.12.0"; echo $$?))
        CXXFLAGS += $(shell pkg-config --cflags openPMD)
        LIBRARY_LOCATIONS += $(shell pkg-config --variable=libdir openPMD)
        libraries += $(shell pkg-config --libs-only-l openPMD)
@@ -153,7 +166,15 @@ endif
 ifeq ($(USE_PSATD),TRUE)
   USERSuffix := $(USERSuffix).PSATD
   DEFINES += -DWARPX_USE_PSATD
-  ifeq ($(USE_CUDA),FALSE) # Running on CPU
+  ifeq ($(USE_CUDA),TRUE)
+    # Use cuFFT
+    libraries += -lcufft
+  else ifeq ($(USE_HIP),TRUE)
+    # Use rocFFT.  ROC_PATH is defined in amrex
+    INCLUDE_LOCATIONS += $(ROC_PATH)/rocfft/include
+    LIBRARY_LOCATIONS += $(ROC_PATH)/rocfft/lib
+    libraries += -lrocfft
+  else # Running on CPU
      # Use FFTW
      ifeq ($(PRECISION),FLOAT)
           libraries += -lfftw3f_mpi -lfftw3f -lfftw3f_threads
@@ -166,9 +187,6 @@ ifeq ($(USE_PSATD),TRUE)
        INCLUDE_LOCATIONS += $(FFTW_HOME)/include
        LIBRARY_LOCATIONS += $(FFTW_HOME)/lib
      endif
-  else
-    # Use cuFFT
-    libraries += -lcufft
   endif
   ifeq ($(USE_RZ),TRUE)
     # Use blas and lapack
@@ -176,7 +194,7 @@ ifeq ($(USE_PSATD),TRUE)
     INCLUDE_LOCATIONS += $(BLASPP_HOME)/include
     LIBRARY_LOCATIONS += $(LAPACKPP_HOME)/lib
     LIBRARY_LOCATIONS += $(BLASPP_HOME)/lib
-    libraries += -llapackpp -lblaspp
+    libraries += -llapackpp -lblaspp $(BLAS_LIB) $(LAPACK_LIB)
   endif
 endif
 
@@ -185,14 +203,7 @@ ifeq ($(USE_RZ),TRUE)
 endif
 
 ifeq ($(USE_HDF5),TRUE)
-    HDF5_HOME ?= NOT_SET
-    ifneq ($(HDF5_HOME),NOT_SET)
-        VPATH_LOCATIONS += $(HDF5_HOME)/include
-        INCLUDE_LOCATIONS += $(HDF5_HOME)/include
-        LIBRARY_LOCATIONS += $(HDF5_HOME)/lib
-    endif
     DEFINES += -DWARPX_USE_HDF5
-    libraries += -lhdf5 -lz
 endif
 
 # job_info support

@@ -1,8 +1,8 @@
 # WarpX
 
-[![Code Status master](https://img.shields.io/travis/ECP-WarpX/WarpX/master.svg?label=master)](https://travis-ci.com/ECP-WarpX/WarpX/branches)
+[![Code Status development](https://dev.azure.com/ECP-WarpX/WarpX/_apis/build/status/ECP-WarpX.WarpX?branchName=development)](https://dev.azure.com/ECP-WarpX/WarpX/_build/latest?definitionId=1&branchName=development)
 [![Documentation Status](https://readthedocs.org/projects/warpx/badge/?version=latest)](https://warpx.readthedocs.io/en/latest/?badge=latest)
-[![GitHub commits since last release](https://img.shields.io/github/commits-since/ECP-WarpX/WarpX/latest/master.svg)](https://github.com/ECP-WarpX/WarpX/compare/master)
+[![GitHub commits since last release](https://img.shields.io/github/commits-since/ECP-WarpX/WarpX/latest/development.svg)](https://github.com/ECP-WarpX/WarpX/compare/development)
 [![Language](https://img.shields.io/badge/language-C%2B%2B14-orange.svg)](https://isocpp.org/)
 [![Development Status](https://img.shields.io/badge/development%20status-alpha-orange.svg)]()  
 [![Gitter](https://badges.gitter.im/ECP-WarpX/community.svg)](https://gitter.im/ECP-WarpX/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
@@ -10,8 +10,6 @@
 [![DOI](https://img.shields.io/badge/DOI-10.1016/j.nima.2018.01.035-blue.svg)](https://doi.org/10.1016/j.nima.2018.01.035)
 
 ## Overview
-
-**Warning: This is an alpha release of WarpX. The code is still in active development. Robustness and performance may fluctuate at this stage. The input and output formats may evolve.**
 
 WarpX is an advanced electromagnetic Particle-In-Cell code.
 It supports many features including Perfectly-Matched Layers (PML), mesh refinement, and the boosted-frame technique.

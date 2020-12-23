@@ -5,6 +5,9 @@ OPENBC_HOME ?= ../openbc_poisson
 DEBUG = FALSE
 #DEBUG	= TRUE
 
+WARN_ALL = TRUE
+#WARN_ERROR=TRUE
+
 #DIM     = 2
 DIM = 3
 

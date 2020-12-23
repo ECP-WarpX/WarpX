@@ -6,7 +6,7 @@
 
 from .Bucket import Bucket
 
-particles = Bucket('particles', nspecies=0, species_names=[])
+particles = Bucket('particles', species_names=[], rigid_injected_species=[])
 particles_list = []
 
 electrons = Bucket('electrons')

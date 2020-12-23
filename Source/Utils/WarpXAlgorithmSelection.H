@@ -11,10 +11,43 @@
 #include <AMReX_ParmParse.H>
 #include <string>
 
+/**
+  * \brief struct to determine the computational medium, i.e., vacuum or material/macroscopic
+           default is vacuum.
+  */
+struct MediumForEM {
+    enum {
+        Vacuum = 0,
+        Macroscopic = 1
+    };
+};
+
+/**
+  * \brief struct to select algorithm for macroscopic Maxwell solver
+           LaxWendroff (semi-implicit) represents sigma*E = sigma*0.5*(E^(n) + E^(n+1))
+           Backward Euler (fully-implicit) represents sigma*E = sigma*E^(n+1)
+           default is Backward Euler as it is more robust.
+  */
+struct MacroscopicSolverAlgo {
+    enum {
+        BackwardEuler = 0,
+        LaxWendroff = 1
+    };
+};
+
 struct MaxwellSolverAlgo {
     enum {
         Yee = 0,
-        CKC = 1
+        CKC = 1,
+        PSATD = 2
+    };
+};
+
+struct ElectrostaticSolverAlgo {
+    enum {
+        None = 0,
+        Relativistic = 1,
+        LabFrame = 2
     };
 };
 
@@ -29,7 +62,8 @@ struct ParticlePusherAlgo {
 struct CurrentDepositionAlgo {
     enum {
          Esirkepov = 0,
-         Direct = 1
+         Direct = 1,
+         Vay = 2
     };
 };
 

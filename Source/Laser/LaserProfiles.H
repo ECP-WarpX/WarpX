@@ -7,7 +7,7 @@
 #ifndef WARPX_LaserProfiles_H_
 #define WARPX_LaserProfiles_H_
 
-#include "Parser/WarpXParser.H"
+#include "Parser/WarpXParserWrapper.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_ParmParse.H>
@@ -97,7 +97,7 @@ public:
         amrex::Real t,
         amrex::Real * AMREX_RESTRICT const amplitude) const = 0;
 
-    virtual ~ILaserProfile(){};
+    virtual ~ILaserProfile(){}
 };
 
 /**
@@ -134,6 +134,7 @@ private:
         amrex::Real zeta           = 0;
         amrex::Real beta           = 0;
         amrex::Real phi2           = 0;
+        amrex::Real phi0           = 0;
 
         amrex::Vector<amrex::Real> stc_direction; //! Direction of the spatio-temporal couplings
         amrex::Real theta_stc; //! Angle between polarization (p_X) and direction of spatiotemporal coupling (stc_direction)
@@ -207,7 +208,8 @@ private:
         std::string field_function;
     } m_params;
 
-     WarpXParser m_parser;
+    WarpXParser m_parser;
+    std::unique_ptr<ParserWrapper<3> > m_gpu_parser;
 };
 
 /**
@@ -342,15 +344,17 @@ private:
         /** Vector of temporal coordinates. For a non-uniform grid, it contains
          * all values of time. For a uniform grid, it contains only the start and stop
          * times and intermediate times are obtained with nt */
-        amrex::Gpu::ManagedVector<amrex::Real> t_coords;
+        amrex::Vector<amrex::Real> t_coords;
         /** Vector or x coordinates. For a non-uniform grid, it contains all values
          * of space dimension x. For a uniform grid, it contains only the min and max
          * x coordinates, and intermediate positions are obtained with nx */
-        amrex::Gpu::ManagedVector<amrex::Real> x_coords;
+        amrex::Vector<amrex::Real> h_x_coords;
+        amrex::Gpu::DeviceVector<amrex::Real> d_x_coords;
         /** Vector or y coordinates. For a non-uniform grid, it contains all values
          * of space dimension y. For a uniform grid, it contains only the min and max
          * y coordinates, and intermediate positions are obtained with ny */
-        amrex::Gpu::ManagedVector<amrex::Real> y_coords;
+        amrex::Vector<amrex::Real> h_y_coords;
+        amrex::Gpu::DeviceVector<amrex::Real> d_y_coords;
         /** Size of the timestep range to load */
         int time_chunk_size;
         /** Index of the first timestep in memory */
@@ -358,7 +362,7 @@ private:
         /** Index of the last timestep in memory */
         int last_time_index;
         /** Field data */
-        amrex::Gpu::ManagedVector<amrex::Real> E_data;
+        amrex::Gpu::DeviceVector<amrex::Real> E_data;
     } m_params;
 
     CommonLaserParameters m_common_params;

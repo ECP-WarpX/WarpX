@@ -1,0 +1,101 @@
+{
+  "lev=0": {
+    "Ex": 1.3099432828042958e-12
+  },
+  "p1": {
+    "particle_cpu": 524288.0,
+    "particle_id": 274878431232.0,
+    "particle_momentum_x": 9.7758873858556601265577378e-15,
+    "particle_momentum_y": 6.7491814272393665591042944e-15,
+    "particle_momentum_z": 1.71477994554173681559450222e-14,
+    "particle_optical_depth_QSR": 1049804.4301339467056095600128173828125000000000,
+    "particle_position_x": 0.13107199999999988,
+    "particle_position_y": 0.13107199999999986,
+    "particle_position_z": 0.13107200000000002,
+    "particle_weight": 1.2499999999999974e-18
+  },
+  "p2": {
+    "particle_cpu": 524288.0,
+    "particle_id": 824634245120.0,
+    "particle_momentum_x": 5.285246447726641013282976e-16,
+    "particle_momentum_y": 2.03260776355233874905821628e-14,
+    "particle_momentum_z": 7.1931656971580576683125466e-15,
+    "particle_optical_depth_QSR": 1047187.1483892769319936633110046386718750000000,
+    "particle_position_x": 0.13107199999999986,
+    "particle_position_y": 0.13107199999999994,
+    "particle_position_z": 0.131072,
+    "particle_weight": 1.2499999999999974e-18
+  },
+  "p3": {
+    "particle_cpu": 524288.0,
+    "particle_id": 1374390059008.0,
+    "particle_momentum_x": 3.47722762807363544779370064e-14,
+    "particle_momentum_y": 1.92479435301000680850724330e-14,
+    "particle_momentum_z": 2.715836966953134431892876796e-13,
+    "particle_optical_depth_QSR": 1047538.3340144035173580050468444824218750000000,
+    "particle_position_x": 0.13107199999999974,
+    "particle_position_y": 0.13107200000000008,
+    "particle_position_z": 0.13107199999999994,
+    "particle_weight": 1.2499999999999974e-18
+  },
+  "p4": {
+    "particle_cpu": 524288.0,
+    "particle_id": 1924145872896.0,
+    "particle_momentum_x": 1.5384447264927685411396454024e-12,
+    "particle_momentum_y": 1.5550384450950911129388361328e-12,
+    "particle_momentum_z": 1.5717828196787002757557403112e-12,
+    "particle_optical_depth_QSR": 1047538.7244381272466853260993957519531250000000,
+    "particle_position_x": 0.1310719999999999,
+    "particle_position_y": 0.1310720000000001,
+    "particle_position_z": 0.13107200000000005,
+    "particle_weight": 1.2499999999999974e-18
+  },
+  "qsp_1": {
+    "particle_cpu": 139805.0,
+    "particle_id": 606005192579.0,
+    "particle_momentum_x": 1.48199792997207174737118e-17,
+    "particle_momentum_y": 5.8972276571918738543742e-18,
+    "particle_momentum_z": 1.99276981360354362974353e-17,
+    "particle_optical_depth_BW": 279468.6734266423736698925495147705078125000000,
+    "particle_position_x": 0.0349323837710382584242907455518434289843,
+    "particle_position_y": 0.0349456659958360602025173591300699627027,
+    "particle_position_z": 0.0349613596100997389704012618949491297826,
+    "particle_weight": 3.333568572998047452078e-19
+  },
+  "qsp_2": {
+    "particle_cpu": 131684.0,
+    "particle_id": 607246582470.0,
+    "particle_momentum_x": 3.5707458764937662296484e-18,
+    "particle_momentum_y": 1.221476476409600044639063e-16,
+    "particle_momentum_z": 1.91987389872474352190967e-17,
+    "particle_optical_depth_BW": 263591.0839790093596093356609344482421875000000,
+    "particle_position_x": 0.032904736176992049889733493728272151202,
+    "particle_position_y": 0.0330043572259953385539255066305486252531,
+    "particle_position_z": 0.0329819361187009690850047149979218374938,
+    "particle_weight": 3.143310546875000280363e-19
+  },
+  "qsp_3": {
+    "particle_cpu": 300729.0,
+    "particle_id": 1513976629339.0,
+    "particle_momentum_x": 1.7928128884821719703095933e-15,
+    "particle_momentum_y": 9.340408950640840272122927e-16,
+    "particle_momentum_z": 2.83530122341059918144489386e-14,
+    "particle_optical_depth_BW": 600650.3304399864282459020614624023437500000000,
+    "particle_position_x": 0.0750897563442807225442265917081385850906,
+    "particle_position_y": 0.0751763824300837740777225803867622744292,
+    "particle_position_z": 0.0751542666431599948317909820616478100419,
+    "particle_weight": 7.164263725280753934436e-19
+  },
+  "qsp_4": {
+    "particle_cpu": 143505.0,
+    "particle_id": 785173536704.0,
+    "particle_momentum_x": 9.77033632739354423654078982e-14,
+    "particle_momentum_y": 9.82087398113350840453304285e-14,
+    "particle_momentum_z": 9.87240415385684092180580877e-14,
+    "particle_optical_depth_BW": 286503.0337664368562400341033935546875000000000,
+    "particle_position_x": 0.0357990571419779662898363881140539888293,
+    "particle_position_y": 0.0358748468909192846920674924149352591485,
+    "particle_position_z": 0.0358245955166236890176989504652738105506,
+    "particle_weight": 3.414738178253174363875e-19
+  }
+}

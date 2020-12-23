@@ -14,7 +14,7 @@ geometry.prob_hi     =  125.e-6    1.e-6
 #################################
 ############ NUMERICS ###########
 #################################
-algo.maxwell_fdtd_solver = ckc
+algo.maxwell_solver = ckc
 warpx.verbose = 1
 warpx.use_filter = 1
 warpx.do_pml = 1
@@ -42,7 +42,6 @@ warpx.dt_snapshots_lab = 3.335640951981521e-11
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 4
 particles.species_names = driver plasma_e plasma_p beam
 particles.use_fdtd_nci_corr = 1
 particles.rigid_injected_species = driver beam

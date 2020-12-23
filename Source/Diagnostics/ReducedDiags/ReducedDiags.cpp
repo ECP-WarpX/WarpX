@@ -7,8 +7,10 @@
 
 #include "ReducedDiags.H"
 #include "WarpX.H"
-#include "AMReX_ParmParse.H"
-#include "AMReX_Utility.H"
+
+#include <AMReX_ParmParse.H>
+#include <AMReX_Utility.H>
+
 #include <iomanip>
 
 using namespace amrex;
@@ -27,26 +29,30 @@ ReducedDiags::ReducedDiags (std::string rd_name)
     // read extension
     pp.query("extension", m_extension);
 
-    // creater folder
-    if (!UtilCreateDirectory(m_path, 0755))
-    { CreateDirectoryFailed(m_path); }
-
     // check if it is a restart run
     std::string restart_chkfile = "";
     ParmParse pp_amr("amr");
     pp_amr.query("restart", restart_chkfile);
     m_IsNotRestart = restart_chkfile.empty();
 
-    // replace / create output file
-    if ( m_IsNotRestart ) // not a restart
+    if (ParallelDescriptor::IOProcessor())
     {
-        std::ofstream ofs;
-        ofs.open(m_path+m_rd_name+"."+m_extension, std::ios::trunc);
-        ofs.close();
+        // create folder
+        if (!UtilCreateDirectory(m_path, 0755))
+        { CreateDirectoryFailed(m_path); }
+
+        // replace / create output file
+        if ( m_IsNotRestart ) // not a restart
+        {
+            std::ofstream ofs{m_path+m_rd_name+"."+m_extension, std::ios::trunc};
+            ofs.close();
+        }
     }
 
     // read reduced diags frequency
-    pp.query("frequency", m_freq);
+    std::vector<std::string> intervals_string_vec = {"1"};
+    pp.queryarr("frequency", intervals_string_vec);
+    m_intervals = IntervalsParser(intervals_string_vec);
 
     // read separator
     pp.query("separator", m_sep);
@@ -59,9 +65,8 @@ void ReducedDiags::WriteToFile (int step) const
 {
 
     // open file
-    std::ofstream ofs;
-    ofs.open(m_path + m_rd_name + "." + m_extension,
-        std::ofstream::out | std::ofstream::app);
+    std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
+        std::ofstream::out | std::ofstream::app};
 
     // write step
     ofs << step+1;
@@ -75,7 +80,7 @@ void ReducedDiags::WriteToFile (int step) const
     ofs << WarpX::GetInstance().gett_new(0);
 
     // loop over data size and write
-    for (int i = 0; i < m_data.size(); ++i)
+    for (int i = 0; i < static_cast<int>(m_data.size()); ++i)
     {
         ofs << m_sep;
         ofs << m_data[i];

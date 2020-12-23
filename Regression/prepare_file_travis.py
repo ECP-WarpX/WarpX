@@ -22,6 +22,7 @@ ci_single_precision = os.environ.get('WARPX_CI_SINGLE_PRECISION') == 'TRUE'
 ci_rz_or_nompi = os.environ.get('WARPX_CI_RZ_OR_NOMPI') == 'TRUE'
 ci_qed = os.environ.get('WARPX_CI_QED') == 'TRUE'
 ci_openpmd = os.environ.get('WARPX_CI_OPENPMD') == 'TRUE'
+ci_ccache = os.environ.get('WARPX_CI_CCACHE') == 'TRUE'
 
 # Find the directory in which the tests should be run
 current_dir = os.getcwd()
@@ -50,6 +51,11 @@ print('Compiling for %s' %arch)
 if ci_openpmd:
     text = re.sub('addToCompileString =',
                   'addToCompileString = USE_OPENPMD=TRUE ', text)
+
+# Ccache
+if ci_ccache:
+    text = re.sub('addToCompileString =',
+                  'addToCompileString = USE_CCACHE=TRUE ', text)
 
 # Add runtime option: crash for unused variables
 text = re.sub('runtime_params =',
@@ -104,6 +110,8 @@ if ci_psatd:
     test_blocks = select_tests(test_blocks, ['USE_PSATD=TRUE'], True)
     # Remove PSATD single-precision, which is done in ci_single_precision
     test_blocks = select_tests(test_blocks, ['PRECISION=FLOAT'], False)
+    # Remove PSATD RZ, which is done in ci_rz_or_nompi
+    test_blocks = select_tests(test_blocks, ['USE_RZ=TRUE'], False)
 
 if ci_python_main:
     test_blocks = select_tests(test_blocks, ['PYTHON_MAIN=TRUE'], True)

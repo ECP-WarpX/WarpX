@@ -22,7 +22,7 @@ algo.current_deposition = esirkepov
 algo.charge_deposition = standard
 algo.field_gathering = energy-conserving
 algo.particle_pusher = vay
-algo.maxwell_fdtd_solver = ckc
+algo.maxwell_solver = ckc
 interpolation.nox = 3
 interpolation.noy = 3
 interpolation.noz = 3
@@ -47,7 +47,6 @@ warpx.dt_snapshots_lab = 1.6678204759907604e-12
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 3
 particles.species_names = electrons ions beam
 particles.use_fdtd_nci_corr = 1
 particles.rigid_injected_species = beam
@@ -108,7 +107,6 @@ beam.focused = false
 #################################
 ############# LASER #############
 #################################
-lasers.nlasers      = 1
 lasers.names        = laser1
 laser1.profile      = Gaussian
 laser1.position     = 0. 0. -0.1e-6 # This point is on the laser plane
@@ -125,3 +123,4 @@ laser1.wavelength = 0.81e-6         # The wavelength of the laser (in meters)
 diagnostics.diags_names = diag1
 diag1.period = 100
 diag1.diag_type = Full
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho

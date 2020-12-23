@@ -13,7 +13,7 @@ warpx.zmax_plasma_to_compute_max_step = -1.
 amr.n_cell = 32 2048 # 64 3072
 
 amr.max_grid_size = 4096
-amr.blocking_factor = 32
+amr.blocking_factor = 16
 
 geometry.coord_sys   = 0
 geometry.is_periodic = 0 0
@@ -30,7 +30,7 @@ algo.charge_deposition = standard
 #algo.field_gathering = standard
 algo.field_gathering = momentum-conserving
 algo.particle_pusher = vay
-algo.maxwell_fdtd_solver = ckc
+algo.maxwell_solver = ckc
 interpolation.nox = 3
 interpolation.noy = 3
 interpolation.noz = 3
@@ -58,7 +58,6 @@ warpx.dt_snapshots_lab=1.6678204759907604e-10
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 5
 particles.species_names = electrons ions electrons2 ions2 beam
 
 particles.use_fdtd_nci_corr = 1
@@ -148,7 +147,7 @@ beam.z_cut = 2.
 beam.x_m = 0.
 beam.y_m = 0.
 beam.z_m = -98.e-6
-beam.npart = 10000
+beam.npart = 100000
 beam.q_tot = -0.9e-12
 beam.momentum_distribution_type = "gaussian"
 beam.ux_m = 0.
@@ -195,25 +194,24 @@ warpx.mirror_z_npoints = 4 4
 #################################
 ############# LASER #############
 #################################
-lasers.nlasers     = 2
-lasers.names        = laser1 laser2
+lasers.names = laser1 laser2
 
-laser1.profile      = Gaussian
-laser1.position     = 0. 0. -1.e-9  # This point is on the laser plane
-laser1.direction    = 0. 0. 1.      # The plane normal direction
+laser1.profile = Gaussian
+laser1.position = 0. 0. -1.e-9  # This point is on the laser plane
+laser1.direction = 0. 0. 1.      # The plane normal direction
 laser1.polarization = 0. 1. 0.      # The main polarization vector
-laser1.e_max        = 6.82274e12       # Maximum amplitude of the laser field (in V/m)
+laser1.e_max = 6.82274e12       # Maximum amplitude of the laser field (in V/m)
 laser1.profile_waist = 50.e-6       # The waist of the laser (in meters)
 laser1.profile_duration = 7.33841e-14   # The duration of the laser (in seconds)
 laser1.profile_t_peak = 1.46764864e-13 # The time at which the laser reaches its peak (in seconds)
 laser1.profile_focal_distance = 0.00875  # Focal distance from the antenna (in meters)
 laser1.wavelength = 0.8e-6         # The wavelength of the laser (in meters)
 
-laser2.profile      = Gaussian
-laser2.position     = 0. 0. 0.348499999  # This point is on the laser plane
-laser2.direction    = 0. 0. 1.      # The plane normal direction
+laser2.profile = Gaussian
+laser2.position = 0. 0. 0.348499999  # This point is on the laser plane
+laser2.direction = 0. 0. 1.      # The plane normal direction
 laser2.polarization = 0. 1. 0.      # The main polarization vector
-laser2.e_max        = 6.82274e12       # Maximum amplitude of the laser field (in V/m)
+laser2.e_max = 6.82274e12       # Maximum amplitude of the laser field (in V/m)
 laser2.profile_waist = 50.e-6       # The waist of the laser (in meters)
 laser2.profile_duration = 7.33841e-14   # The duration of the laser (in seconds)
 laser2.profile_t_peak = 1.1626176366295598e-09  # The time at which the laser reaches its peak (in seconds)

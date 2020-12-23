@@ -15,7 +15,7 @@ public:
     /** Flush fields and particles to plotfile */
     virtual void WriteToFile (
         const amrex::Vector<std::string> varnames,
-        const amrex::Vector<const amrex::MultiFab*> mf,
+        const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double time,
         const amrex::Vector<ParticleDiag>& particle_diags, int nlev, const std::string prefix,
@@ -40,7 +40,7 @@ public:
     void WriteParticles(const std::string& filename,
                         const amrex::Vector<ParticleDiag>& particle_diags) const;
 
-    ~FlushFormatPlotfile() {};
+    ~FlushFormatPlotfile() {}
 };
 
 #endif // WARPX_FLUSHFORMATPLOTFILE_H_

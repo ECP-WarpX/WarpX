@@ -5,9 +5,10 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "WarpXUtil.H"
-#include "WarpXConst.H"
 #include "WarpX.H"
+#include "WarpXAlgorithmSelection.H"
+#include "WarpXConst.H"
+#include "WarpXUtil.H"
 
 #include <AMReX_ParmParse.H>
 
@@ -21,7 +22,7 @@ void ReadBoostedFrameParameters(Real& gamma_boost, Real& beta_boost,
                                 Vector<int>& boost_direction)
 {
     ParmParse pp("warpx");
-    pp.query("gamma_boost", gamma_boost);
+    queryWithParser(pp, "gamma_boost", gamma_boost);
     if( gamma_boost > 1. ) {
         beta_boost = std::sqrt(1.-1./pow(gamma_boost,2));
         std::string s;
@@ -127,7 +128,7 @@ void ConvertLabParamsToBoost()
  * zmin and zmax.
  */
 void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax){
-    WARPX_PROFILE("WarpX::NullifyMF()");
+    WARPX_PROFILE("WarpXUtil::NullifyMF()");
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -161,7 +162,7 @@ void NullifyMF(amrex::MultiFab& mf, int lev, amrex::Real zmin, amrex::Real zmax)
 #endif
                     if ( (z_gridpoint >= zmin) && (z_gridpoint < zmax) ) {
                         arr(i,j,k) = 0.;
-                    };
+                    }
                 }
             );
         }
@@ -178,7 +179,7 @@ namespace WarpXUtilIO{
     }
 }
 
-void Store_parserString(amrex::ParmParse& pp, std::string query_string,
+void Store_parserString(const amrex::ParmParse& pp, std::string query_string,
                         std::string& stored_string)
 {
     std::vector<std::string> f;
@@ -190,7 +191,6 @@ void Store_parserString(amrex::ParmParse& pp, std::string query_string,
     f.clear();
 }
 
-
 WarpXParser makeParser (std::string const& parse_function, std::vector<std::string> const& varnames)
 {
     WarpXParser parser(parse_function);
@@ -201,16 +201,152 @@ WarpXParser makeParser (std::string const& parse_function, std::vector<std::stri
     for (auto it = symbols.begin(); it != symbols.end(); ) {
         Real v;
         if (pp.query(it->c_str(), v)) {
-           parser.setConstant(*it, v);
-           it = symbols.erase(it);
+            parser.setConstant(*it, v);
+            it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "q_e") == 0) {
+            parser.setConstant(*it, PhysConst::q_e);
+            it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "m_e") == 0) {
+            parser.setConstant(*it, PhysConst::m_e);
+            it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "m_p") == 0) {
+            parser.setConstant(*it, PhysConst::m_p);
+            it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "epsilon0") == 0) {
+            parser.setConstant(*it, PhysConst::ep0);
+            it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "clight") == 0) {
+            parser.setConstant(*it, PhysConst::c);
+            it = symbols.erase(it);
+        } else if (std::strcmp(it->c_str(), "pi") == 0) {
+            parser.setConstant(*it, MathConst::pi);
+            it = symbols.erase(it);
         } else {
-           ++it;
+            ++it;
         }
     }
     for (auto const& s : symbols) {
         amrex::Abort("makeParser::Unknown symbol "+s);
     }
     return parser;
+}
+
+int
+queryWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
+{
+    // call amrex::ParmParse::query, check if the user specified str.
+    std::string tmp_str;
+    int is_specified = a_pp.query(str, tmp_str);
+    if (is_specified)
+    {
+        // If so, create a parser object and apply it to the value provided by the user.
+        std::string str_val;
+        Store_parserString(a_pp, str, str_val);
+
+        auto parser = makeParser(str_val, {});
+        val = parser.eval();
+    }
+    // return the same output as amrex::ParmParse::query
+    return is_specified;
+}
+
+void
+getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real& val)
+{
+    // If so, create a parser object and apply it to the value provided by the user.
+    std::string str_val;
+    Store_parserString(a_pp, str, str_val);
+
+    auto parser = makeParser(str_val, {});
+    val = parser.eval();
+}
+
+/**
+ * \brief Ensures that the blocks are setup correctly for the RZ spectral solver
+ * When using the RZ spectral solver, the Hankel transform cannot be
+ * divided among multiple blocks. Each block must extend over the
+ * entire radial extent.
+ * The grid can be divided up along z, but the number of blocks
+ * must be >= the number of processors.
+ */
+void CheckGriddingForRZSpectral ()
+{
+#ifndef WARPX_DIM_RZ
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
+        "CheckGriddingForRZSpectral: WarpX was not built with RZ geometry.");
+#endif
+
+    ParmParse pp("algo");
+    int maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
+
+    // only check for PSATD in RZ
+    if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+        return;
+
+    int max_level;
+    Vector<int> n_cell(AMREX_SPACEDIM, -1);
+
+    ParmParse pp_amr("amr");
+
+    pp_amr.get("max_level",max_level);
+    pp_amr.getarr("n_cell",n_cell,0,AMREX_SPACEDIM);
+
+    Vector<int> blocking_factor_x(max_level+1);
+    Vector<int> max_grid_size_x(max_level+1);
+
+    // Set the radial block size to be equal to the radial grid size.
+    blocking_factor_x[0] = n_cell[0];
+    max_grid_size_x[0] = n_cell[0];
+
+    for (int lev=1 ; lev <= max_level ; lev++) {
+        // For this to be correct, this needs to read in any user specified refinement ratios.
+        // But since that is messy and unlikely to be needed anytime soon, the ratio is
+        // fixed to 2 which will be the most likely value.
+        blocking_factor_x[lev] = blocking_factor_x[lev-1]*2; // refRatio(lev-1);
+        max_grid_size_x[lev] = max_grid_size_x[lev-1]*2; // refRatio(lev-1);
+    }
+
+    // Note that any user input values for these parameters are discarded.
+    pp_amr.addarr("blocking_factor_x", blocking_factor_x);
+    pp_amr.addarr("max_grid_size_x", max_grid_size_x);
+
+    // Adjust the longitudinal block sizes, making sure that there are
+    // more blocks than processors.
+    // The factor of 8 is there to make some room for higher order
+    // shape factors and filtering.
+    int nprocs = ParallelDescriptor::NProcs();
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(n_cell[1] >= 8*nprocs,
+                                     "With RZ spectral, there must be at least eight z-cells per processor so that there can be at least one block per processor.");
+
+    // Get the longitudinal blocking factor in case it was set by the user.
+    // If not set, use the default value of 8.
+    Vector<int> bf;
+    pp_amr.queryarr("blocking_factor",bf);
+    pp_amr.queryarr("blocking_factor_y",bf);
+    bf.resize(std::max(static_cast<int>(bf.size()),1),8);
+
+    // Modify the default or any user input, making sure that the blocking factor
+    // is small enough so that there will be at least as many blocks as there are
+    // processors. Because of the ASSERT above, bf will never be less than 8.
+    while (n_cell[1] < nprocs*bf[0]) {
+        bf[0] /= 2;
+    }
+    pp_amr.addarr("blocking_factor_y", bf);
+
+    // Get the longitudinal max grid size in case it was set by the user.
+    // If not set, use the default value of 128.
+    Vector<int> mg;
+    pp_amr.queryarr("max_grid_size",mg);
+    pp_amr.queryarr("max_grid_size_y",mg);
+    mg.resize(std::max(static_cast<int>(mg.size()),1),128);
+
+    // Modify the default or any user input, making sure that the max grid size
+    // (of the coarsest level) is small enough so that there will be at least
+    // as many blocks as there are processors.
+    while (n_cell[1] < nprocs*mg[0]) {
+        mg[0] /= 2;
+    }
+    pp_amr.addarr("max_grid_size_y", mg);
 }
 
 namespace WarpXUtilMsg{
@@ -247,4 +383,3 @@ namespace WarpXUtilStr
     }
 
 }
-

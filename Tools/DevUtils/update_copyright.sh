@@ -33,7 +33,7 @@ for i in $(find . \
                 -not -path "./tmp_build_dir/*" \
                 -not -path "*/inputs*" \
                 -not -path "*/PICMI_inputs*" \
-                -not -path "./Tools/performance_tests/performance_log.txt" \
+                -not -path "./Tools/PerformanceTests/performance_log.txt" \
                 -type f | \
                grep -P "${pattern}")
 do

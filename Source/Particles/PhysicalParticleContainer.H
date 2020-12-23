@@ -14,6 +14,7 @@
 #include "WarpXParticleContainer.H"
 #include "Filter/NCIGodfreyFilter.H"
 #include "Particles/ElementaryProcess/Ionization.H"
+#include "Particles/Gather/ScaleFields.H"
 
 #ifdef WARPX_QED
 #    include "Particles/ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
@@ -53,55 +54,15 @@ public:
 
     PhysicalParticleContainer (amrex::AmrCore* amr_core);
 
+    /** This function queries deprecated input parameters and abort
+     *  the run if one of them is specified. */
+    void BackwardCompatibility ();
+
     virtual ~PhysicalParticleContainer () {}
 
     virtual void InitData () override;
 
     void InitIonizationModule ();
-
-    /**
-     * \brief Apply external E and B fields on the particles. The E and B
-     * fields could be defined as a constant or using a parser for reading
-     * in a mathematical expression. The default value for the E- and B-fields
-     * is (0.0,0.0,0.0).
-     *
-     * \param[in,out] Exp-Bzp pointer to fields on particles modified based
-     *                  on external E and B
-     * \param[in] xp,yp,zp arrays of particle positions required to compute
-     *                  mathematical expression for the external fields
-     *                  using parser.
-     */
-    void AssignExternalFieldOnParticles ( WarpXParIter& pti,
-                                          RealVector& Exp, RealVector& Eyp,
-                                          RealVector& Ezp, RealVector& Bxp,
-                                          RealVector& Byp, RealVector& Bzp, int lev);
-
-    virtual void FieldGather (int lev,
-                              const amrex::MultiFab& Ex,
-                              const amrex::MultiFab& Ey,
-                              const amrex::MultiFab& Ez,
-                              const amrex::MultiFab& Bx,
-                              const amrex::MultiFab& By,
-                              const amrex::MultiFab& Bz) final;
-
-    void FieldGather (WarpXParIter& pti,
-                      RealVector& Exp,
-                      RealVector& Eyp,
-                      RealVector& Ezp,
-                      RealVector& Bxp,
-                      RealVector& Byp,
-                      RealVector& Bzp,
-                      amrex::FArrayBox const * exfab,
-                      amrex::FArrayBox const * eyfab,
-                      amrex::FArrayBox const * ezfab,
-                      amrex::FArrayBox const * bxfab,
-                      amrex::FArrayBox const * byfab,
-                      amrex::FArrayBox const * bzfab,
-                      const int ngE, const int e_is_nodal,
-                      const long offset,
-                      const long np_to_gather,
-                      int lev,
-                      int depos_lev);
 
     /**
      * \brief Evolve is the central function PhysicalParticleContainer that
@@ -143,6 +104,12 @@ public:
                          const amrex::MultiFab& Bx,
                          const amrex::MultiFab& By,
                          const amrex::MultiFab& Bz,
+                         const amrex::MultiFab& Ex_avg,
+                         const amrex::MultiFab& Ey_avg,
+                         const amrex::MultiFab& Ez_avg,
+                         const amrex::MultiFab& Bx_avg,
+                         const amrex::MultiFab& By_avg,
+                         const amrex::MultiFab& Bz_avg,
                          amrex::MultiFab& jx,
                          amrex::MultiFab& jy,
                          amrex::MultiFab& jz,
@@ -161,7 +128,19 @@ public:
                          amrex::Real dt,
                          DtType a_dt_type=DtType::Full) override;
 
-    virtual void PushPX (WarpXParIter& pti, amrex::Real dt, DtType a_dt_type=DtType::Full);
+    virtual void PushPX (WarpXParIter& pti,
+                         amrex::FArrayBox const * exfab,
+                         amrex::FArrayBox const * eyfab,
+                         amrex::FArrayBox const * ezfab,
+                         amrex::FArrayBox const * bxfab,
+                         amrex::FArrayBox const * byfab,
+                         amrex::FArrayBox const * bzfab,
+                         const int ngE, const int /*e_is_nodal*/,
+                         const long offset,
+                         const long np_to_push,
+                         int lev, int gather_lev,
+                         amrex::Real dt, ScaleFields scaleFields,
+                         DtType a_dt_type=DtType::Full);
 
     virtual void PushP (int lev, amrex::Real dt,
                         const amrex::MultiFab& Ex,
@@ -184,17 +163,33 @@ public:
                         RealVector& uzp,
                         RealVector& wp );
 
-    void copy_attribs (WarpXParIter& pti);
-
     virtual void PostRestart () final {}
 
     void SplitParticles (int lev);
 
-    IonizationFilterFunc getIonizationFunc ();
+    IonizationFilterFunc getIonizationFunc (const WarpXParIter& pti,
+                                            int lev,
+                                            int ngE,
+                                            const amrex::FArrayBox& Ex,
+                                            const amrex::FArrayBox& Ey,
+                                            const amrex::FArrayBox& Ez,
+                                            const amrex::FArrayBox& Bx,
+                                            const amrex::FArrayBox& By,
+                                            const amrex::FArrayBox& Bz);
 
     // Inject particles in Box 'part_box'
     virtual void AddParticles (int lev);
 
+    /**
+     * Create new macroparticles for this species, with a fixed
+     * number of particles per cell (in the cells of `part_realbox`).
+     * The new particles are only created inside the intersection of `part_realbox`
+     * with the local grid for the current proc.
+     * @param[in] lev the index of the refinement level
+     * @param[in] part_realbox the box in which new particles should be created
+     * (this box should correspond to an integer number of cells in each direction,
+     * but its boundaries need not be aligned with the actual cells of the simulation)
+    */
     void AddPlasma (int lev, amrex::RealBox part_realbox = amrex::RealBox());
 
     void MapParticletoBoostedFrame (amrex::Real& x, amrex::Real& y, amrex::Real& z, std::array<amrex::Real, 3>& u);
@@ -206,10 +201,11 @@ public:
         const amrex::Real q_tot, long npart, const int do_symmetrize);
 
     /** Load a particle beam from an external file
-     *
      * @param[in] q_tot total charge of the particle species to be initialized
+     * @param[in] z_shift optional shift to the z position of particles (useful for boosted frame runs)
      */
-    void AddPlasmaFromFile (amrex::ParticleReal q_tot);
+    void AddPlasmaFromFile (amrex::ParticleReal q_tot,
+                            amrex::ParticleReal z_shift);
 
     void CheckAndAddParticle (
         amrex::Real x, amrex::Real y, amrex::Real z,
@@ -284,6 +280,15 @@ public:
         amrex::FArrayBox const * & ezfab, amrex::FArrayBox const * & bxfab,
         amrex::FArrayBox const * & byfab, amrex::FArrayBox const * & bzfab);
 
+    /**
+    * \brief This function determines if resampling should be done for the current species, and
+    * if so, performs the resampling.
+    *
+    * @param[in] resampler the Resampling object used for resampling.
+    * @param[in] timestep the current timestep.
+    */
+    void resample (const int timestep) override final;
+
 #ifdef WARPX_QED
     //Functions decleared in WarpXParticleContainer.H
     //containers for which QED processes could be relevant
@@ -318,15 +323,6 @@ public:
         (std::shared_ptr<QuantumSynchrotronEngine> ptr) override;
     //__________
 
-    /**
-     * This function evolves the optical depth of the particles if QED effects
-     * are enabled.
-     * @param[in,out] pti particle iterator (optical depth will be modified)
-     * @param[in] dt temporal step
-     */
-    virtual void EvolveOpticalDepth (WarpXParIter& pti,
-        amrex::Real dt);
-
     PhotonEmissionFilterFunc getPhotonEmissionFilterFunc ();
 
     PairGenerationFilterFunc getPairGenerationFilterFunc ();
@@ -341,6 +337,8 @@ protected:
     // particle and the time of the boosted frame.
     bool boost_adjust_transverse_positions = false;
     bool do_backward_propagation = false;
+
+    Resampling m_resampler;
 
     // Inject particles during the whole simulation
     void ContinuousInjection (const amrex::RealBox& injection_box) override;
@@ -364,7 +362,6 @@ protected:
 
     // A smart pointer to an instance of a Breit Wheeler engine [photons only!]
     std::shared_ptr<BreitWheelerEngine> m_shr_p_bw_engine;
-
 #endif
 
 };

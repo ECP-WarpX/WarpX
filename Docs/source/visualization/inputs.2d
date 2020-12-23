@@ -9,7 +9,6 @@ amr.blocking_factor = 32
 amr.max_level = 0
 amr.plot_file = "plotfiles/plt"
 amr.plot_int = 0
-warpx.plot_rho = 1
 insitu.int = 2
 insitu.start = 0
 insitu.config = ez2d.xml
@@ -27,7 +26,7 @@ algo.current_deposition = 0
 algo.charge_deposition = 0
 algo.field_gathering = 0
 algo.particle_pusher = 0
-algo.maxwell_fdtd_solver = ckc
+algo.maxwell_solver = ckc
 warpx.use_filter = 1
 warpx.do_pml = 1
 warpx.pml_ncell = 10
@@ -42,7 +41,6 @@ interpolation.noz = 3
 #################################
 ############ PLASMA #############
 #################################
-particles.nspecies = 3
 particles.species_names = plasma_e beam driver
 particles.use_fdtd_nci_corr = 1
 

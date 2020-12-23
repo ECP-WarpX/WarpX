@@ -10,9 +10,13 @@
 #include "WarpX.H"
 #include "WarpXSumGuardCells.H"
 #include "Utils/CoarsenMR.H"
+#ifdef WARPX_USE_PSATD
+#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#endif
 
 #include <algorithm>
 #include <cstdlib>
+#include <memory>
 
 using namespace amrex;
 
@@ -57,7 +61,7 @@ WarpX::ExchangeWithPmlF (int lev)
 void
 WarpX::UpdateAuxilaryData ()
 {
-    WARPX_PROFILE("UpdateAuxilaryData()");
+    WARPX_PROFILE("WarpX::UpdateAuxilaryData()");
 
     if (Bfield_aux[0][0]->ixType() == Bfield_fp[0][0]->ixType()) {
         UpdateAuxilaryDataSameType();
@@ -69,6 +73,49 @@ WarpX::UpdateAuxilaryData ()
 void
 WarpX::UpdateAuxilaryDataStagToNodal ()
 {
+#ifndef WARPX_USE_PSATD
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
+            "WarpX::UpdateAuxilaryDataStagToNodal: PSATD solver requires "
+            "WarpX build with spectral solver support.");
+    }
+#else
+    amrex::Gpu::DeviceVector<Real> d_stencil_coef_x;
+    amrex::Gpu::DeviceVector<Real> d_stencil_coef_y;
+    amrex::Gpu::DeviceVector<Real> d_stencil_coef_z;
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        const int fg_nox = WarpX::field_gathering_nox;
+        const int fg_noy = WarpX::field_gathering_noy;
+        const int fg_noz = WarpX::field_gathering_noz;
+
+        // Compute real-space stencil coefficients along x
+        amrex::Vector<Real> h_stencil_coef_x = getFornbergStencilCoefficients(fg_nox, false);
+        d_stencil_coef_x.resize(h_stencil_coef_x.size());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                              h_stencil_coef_x.begin(),
+                              h_stencil_coef_x.end(),
+                              d_stencil_coef_x.begin());
+
+        // Compute real-space stencil coefficients along y
+        amrex::Vector<Real> h_stencil_coef_y = getFornbergStencilCoefficients(fg_noy, false);
+        d_stencil_coef_y.resize(h_stencil_coef_y.size());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                              h_stencil_coef_y.begin(),
+                              h_stencil_coef_y.end(),
+                              d_stencil_coef_y.begin());
+
+        // Compute real-space stencil coefficients along z
+        amrex::Vector<Real> h_stencil_coef_z = getFornbergStencilCoefficients(fg_noz, false);
+        d_stencil_coef_z.resize(h_stencil_coef_z.size());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                              h_stencil_coef_z.begin(),
+                              h_stencil_coef_z.end(),
+                              d_stencil_coef_z.begin());
+
+        amrex::Gpu::synchronize();
+    }
+#endif
+
     // For level 0, we only need to do the average.
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -89,19 +136,44 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         Array4<Real const> const& ey_fp = Efield_fp[0][1]->const_array(mfi);
         Array4<Real const> const& ez_fp = Efield_fp[0][2]->const_array(mfi);
 
-        const Box& bx = mfi.fabbox();
-        amrex::ParallelFor(bx,
-        [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-        {
-            warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp);
-            warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp);
-            warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp);
-            warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp);
-            warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp);
-            warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp);
-        });
+        Box bx = mfi.validbox();
+        // TODO It seems like it is necessary to loop over the valid box grown
+        // with 2 guard cells. Should this number of guard cells be expressed
+        // in terms of the parameters defined in the guardCellManager class?
+        bx.grow(2);
+
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+#ifdef WARPX_USE_PSATD
+            const int fg_nox = WarpX::field_gathering_nox;
+            const int fg_noy = WarpX::field_gathering_noy;
+            const int fg_noz = WarpX::field_gathering_noz;
+            amrex::Real const * r_stencil_coef_x = d_stencil_coef_x.data();
+            amrex::Real const * r_stencil_coef_y = d_stencil_coef_y.data();
+            amrex::Real const * r_stencil_coef_z = d_stencil_coef_z.data();
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+            {
+                warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp, fg_noy, fg_noz, r_stencil_coef_y, r_stencil_coef_z);
+                warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp, fg_nox, fg_noz, r_stencil_coef_x, r_stencil_coef_z);
+                warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp, fg_nox, fg_noy, r_stencil_coef_x, r_stencil_coef_y);
+                warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp, fg_nox, r_stencil_coef_x);
+                warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp, fg_noy, r_stencil_coef_y);
+                warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp, fg_noz, r_stencil_coef_z);
+            });
+#endif
+        } else { // FDTD
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+            {
+                warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp);
+                warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp);
+                warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp);
+                warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp);
+                warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp);
+                warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp);
+            });
+        }
     }
 
+    // NOTE: high-order interpolation is not implemented for mesh refinement
     for (int lev = 1; lev <= finest_level; ++lev)
     {
         BoxArray const& nba = Bfield_aux[lev][0]->boxArray();
@@ -114,12 +186,13 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             Array<std::unique_ptr<MultiFab>,3> Btmp;
             if (Bfield_cax[lev][0]) {
                 for (int i = 0; i < 3; ++i) {
-                    Btmp[i].reset(new MultiFab(*Bfield_cax[lev][i], amrex::make_alias, 0, 1));
+                    Btmp[i] = std::make_unique<MultiFab>(
+                        *Bfield_cax[lev][i], amrex::make_alias, 0, 1);
                 }
             } else {
                 IntVect ngtmp = Bfield_aux[lev-1][0]->nGrowVect();
                 for (int i = 0; i < 3; ++i) {
-                    Btmp[i].reset(new MultiFab(cnba, dm, 1, ngtmp));
+                    Btmp[i] = std::make_unique<MultiFab>(cnba, dm, 1, ngtmp);
                 }
             }
             // ParallelCopy from coarse level
@@ -162,12 +235,14 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             Array<std::unique_ptr<MultiFab>,3> Etmp;
             if (Efield_cax[lev][0]) {
                 for (int i = 0; i < 3; ++i) {
-                    Etmp[i].reset(new MultiFab(*Efield_cax[lev][i], amrex::make_alias, 0, 1));
+                    Etmp[i] = std::make_unique<MultiFab>(
+                        *Efield_cax[lev][i], amrex::make_alias, 0, 1);
                 }
             } else {
                 IntVect ngtmp = Efield_aux[lev-1][0]->nGrowVect();
                 for (int i = 0; i < 3; ++i) {
-                    Etmp[i].reset(new MultiFab(cnba, dm, 1, ngtmp));
+                    Etmp[i] = std::make_unique<MultiFab>(
+                        cnba, dm, 1, ngtmp);
                 }
             }
             // ParallelCopy from coarse level
@@ -237,8 +312,11 @@ WarpX::UpdateAuxilaryDataSameType ()
             MultiFab::Subtract(dBy, *Bfield_cp[lev][1], 0, 0, Bfield_cp[lev][1]->nComp(), ng);
             MultiFab::Subtract(dBz, *Bfield_cp[lev][2], 0, 0, Bfield_cp[lev][2]->nComp(), ng);
 
-            const int refinement_ratio = refRatio(lev-1)[0];
-            AMREX_ALWAYS_ASSERT(refinement_ratio == 2);
+            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
+
+            const amrex::IntVect& Bx_stag = Bfield_aux[lev-1][0]->ixType().toIntVect();
+            const amrex::IntVect& By_stag = Bfield_aux[lev-1][1]->ixType().toIntVect();
+            const amrex::IntVect& Bz_stag = Bfield_aux[lev-1][2]->ixType().toIntVect();
 
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -258,15 +336,15 @@ WarpX::UpdateAuxilaryDataSameType ()
                 amrex::ParallelFor(Box(bx_aux), Box(by_aux), Box(bz_aux),
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_bfield_x(j,k,l, bx_aux, bx_fp, bx_c);
+                    warpx_interp(j, k, l, bx_aux, bx_fp, bx_c, Bx_stag, refinement_ratio);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_bfield_y(j,k,l, by_aux, by_fp, by_c);
+                    warpx_interp(j, k, l, by_aux, by_fp, by_c, By_stag, refinement_ratio);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_bfield_z(j,k,l, bz_aux, bz_fp, bz_c);
+                    warpx_interp(j, k, l, bz_aux, bz_fp, bz_c, Bz_stag, refinement_ratio);
                 });
             }
         }
@@ -292,6 +370,12 @@ WarpX::UpdateAuxilaryDataSameType ()
             MultiFab::Subtract(dEy, *Efield_cp[lev][1], 0, 0, Efield_cp[lev][1]->nComp(), ng);
             MultiFab::Subtract(dEz, *Efield_cp[lev][2], 0, 0, Efield_cp[lev][2]->nComp(), ng);
 
+            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
+
+            const amrex::IntVect& Ex_stag = Efield_aux[lev-1][0]->ixType().toIntVect();
+            const amrex::IntVect& Ey_stag = Efield_aux[lev-1][1]->ixType().toIntVect();
+            const amrex::IntVect& Ez_stag = Efield_aux[lev-1][2]->ixType().toIntVect();
+
 #ifdef _OPENMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -310,15 +394,15 @@ WarpX::UpdateAuxilaryDataSameType ()
                 amrex::ParallelFor(Box(ex_aux), Box(ey_aux), Box(ez_aux),
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_efield_x(j,k,l, ex_aux, ex_fp, ex_c);
+                    warpx_interp(j, k, l, ex_aux, ex_fp, ex_c, Ex_stag, refinement_ratio);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_efield_y(j,k,l, ey_aux, ey_fp, ey_c);
+                    warpx_interp(j, k, l, ey_aux, ey_fp, ey_c, Ey_stag, refinement_ratio);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_efield_z(j,k,l, ez_aux, ez_fp, ez_c);
+                    warpx_interp(j, k, l, ez_aux, ez_fp, ez_c, Ez_stag, refinement_ratio);
                 });
             }
         }
@@ -351,6 +435,25 @@ WarpX::FillBoundaryF (IntVect ng)
         FillBoundaryF(lev, ng);
     }
 }
+
+void
+WarpX::FillBoundaryB_avg (IntVect ng, IntVect ng_extra_fine)
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        FillBoundaryB_avg(lev, ng, ng_extra_fine);
+    }
+}
+
+void
+WarpX::FillBoundaryE_avg (IntVect ng, IntVect ng_extra_fine)
+{
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        FillBoundaryE_avg(lev, ng, ng_extra_fine);
+    }
+}
+
 
 void
 WarpX::FillBoundaryE(int lev, IntVect ng, IntVect ng_extra_fine)
@@ -475,6 +578,112 @@ WarpX::FillBoundaryB (int lev, PatchType patch_type, IntVect ng)
 }
 
 void
+WarpX::FillBoundaryE_avg(int lev, IntVect ng, IntVect ng_extra_fine)
+{
+    FillBoundaryE_avg(lev, PatchType::fine, ng+ng_extra_fine);
+    if (lev > 0) FillBoundaryE_avg(lev, PatchType::coarse, ng);
+}
+
+void
+WarpX::FillBoundaryE_avg (int lev, PatchType patch_type, IntVect ng)
+{
+    if (patch_type == PatchType::fine)
+    {
+        if (do_pml && pml[lev]->ok())
+         {
+            amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
+         }
+
+        const auto& period = Geom(lev).periodicity();
+        if ( safe_guard_cells ){
+            Vector<MultiFab*> mf{Efield_avg_fp[lev][0].get(),Efield_avg_fp[lev][1].get(),Efield_avg_fp[lev][2].get()};
+            amrex::FillBoundary(mf, period);
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Efield_avg_fp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryE_avg, requested more guard cells than allocated");
+            Efield_avg_fp[lev][0]->FillBoundary(ng, period);
+            Efield_avg_fp[lev][1]->FillBoundary(ng, period);
+            Efield_avg_fp[lev][2]->FillBoundary(ng, period);
+        }
+    }
+    else if (patch_type == PatchType::coarse)
+    {
+        if (do_pml && pml[lev]->ok())
+         {
+            amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
+         }
+
+        const auto& cperiod = Geom(lev-1).periodicity();
+        if ( safe_guard_cells ) {
+            Vector<MultiFab*> mf{Efield_avg_cp[lev][0].get(),Efield_avg_cp[lev][1].get(),Efield_avg_cp[lev][2].get()};
+            amrex::FillBoundary(mf, cperiod);
+
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Efield_avg_cp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryE, requested more guard cells than allocated");
+            Efield_avg_cp[lev][0]->FillBoundary(ng, cperiod);
+            Efield_avg_cp[lev][1]->FillBoundary(ng, cperiod);
+            Efield_avg_cp[lev][2]->FillBoundary(ng, cperiod);
+        }
+    }
+}
+
+
+void
+WarpX::FillBoundaryB_avg (int lev, IntVect ng, IntVect ng_extra_fine)
+{
+    FillBoundaryB_avg(lev, PatchType::fine, ng + ng_extra_fine);
+    if (lev > 0) FillBoundaryB_avg(lev, PatchType::coarse, ng);
+}
+
+void
+WarpX::FillBoundaryB_avg (int lev, PatchType patch_type, IntVect ng)
+{
+    if (patch_type == PatchType::fine)
+    {
+        if (do_pml && pml[lev]->ok())
+          {
+            amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
+          }
+        const auto& period = Geom(lev).periodicity();
+        if ( safe_guard_cells ) {
+            Vector<MultiFab*> mf{Bfield_avg_fp[lev][0].get(),Bfield_avg_fp[lev][1].get(),Bfield_avg_fp[lev][2].get()};
+            amrex::FillBoundary(mf, period);
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Bfield_fp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryB, requested more guard cells than allocated");
+            Bfield_avg_fp[lev][0]->FillBoundary(ng, period);
+            Bfield_avg_fp[lev][1]->FillBoundary(ng, period);
+            Bfield_avg_fp[lev][2]->FillBoundary(ng, period);
+        }
+    }
+    else if (patch_type == PatchType::coarse)
+    {
+        if (do_pml && pml[lev]->ok())
+          {
+            amrex::Abort("Averaged Galilean PSATD with PML is not yet implemented");
+          }
+
+        const auto& cperiod = Geom(lev-1).periodicity();
+        if ( safe_guard_cells ){
+            Vector<MultiFab*> mf{Bfield_avg_cp[lev][0].get(),Bfield_avg_cp[lev][1].get(),Bfield_avg_cp[lev][2].get()};
+            amrex::FillBoundary(mf, cperiod);
+        } else {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ng <= Bfield_avg_cp[lev][0]->nGrowVect(),
+                "Error: in FillBoundaryB_avg, requested more guard cells than allocated");
+            Bfield_avg_cp[lev][0]->FillBoundary(ng, cperiod);
+            Bfield_avg_cp[lev][1]->FillBoundary(ng, cperiod);
+            Bfield_avg_cp[lev][2]->FillBoundary(ng, cperiod);
+        }
+    }
+}
+
+
+void
 WarpX::FillBoundaryF (int lev, IntVect ng)
 {
     FillBoundaryF(lev, PatchType::fine, ng);
@@ -548,7 +757,7 @@ WarpX::FillBoundaryAux (int lev, IntVect ng)
 void
 WarpX::SyncCurrent ()
 {
-    WARPX_PROFILE("SyncCurrent()");
+    WARPX_PROFILE("WarpX::SyncCurrent()");
 
     // Restrict fine patch current onto the coarse patch, before
     // summing the guard cells of the fine patch
@@ -583,7 +792,7 @@ WarpX::SyncCurrent ()
 void
 WarpX::SyncRho ()
 {
-    WARPX_PROFILE("SyncRho()");
+    WARPX_PROFILE("WarpX::SyncRho()");
 
     if (!rho_fp[0]) return;
     const int ncomp = rho_fp[0]->nComp();
@@ -743,17 +952,23 @@ void
 WarpX::ApplyFilterandSumBoundaryRho (int lev, PatchType patch_type, int icomp, int ncomp)
 {
     const int glev = (patch_type == PatchType::fine) ? lev : lev-1;
-    const auto& period = Geom(glev).periodicity();
     auto& r = (patch_type == PatchType::fine) ? rho_fp[lev] : rho_cp[lev];
     if (r == nullptr) return;
+    ApplyFilterandSumBoundaryRho(lev, glev, *r, icomp, ncomp);
+}
+
+void
+WarpX::ApplyFilterandSumBoundaryRho (int /*lev*/, int glev, amrex::MultiFab& rho, int icomp, int ncomp)
+{
+    const auto& period = Geom(glev).periodicity();
     if (use_filter) {
-        IntVect ng = r->nGrowVect();
+        IntVect ng = rho.nGrowVect();
         ng += bilinear_filter.stencil_length_each_dir-1;
-        MultiFab rf(r->boxArray(), r->DistributionMap(), ncomp, ng);
-        bilinear_filter.ApplyStencil(rf, *r, icomp, 0, ncomp);
-        WarpXSumGuardCells(*r, rf, period, icomp, ncomp );
+        MultiFab rf(rho.boxArray(), rho.DistributionMap(), ncomp, ng);
+        bilinear_filter.ApplyStencil(rf, rho, icomp, 0, ncomp);
+        WarpXSumGuardCells(rho, rf, period, icomp, ncomp );
     } else {
-        WarpXSumGuardCells(*r, period, icomp, ncomp);
+        WarpXSumGuardCells(rho, period, icomp, ncomp);
     }
 }
 

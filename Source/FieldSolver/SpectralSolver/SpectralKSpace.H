@@ -15,12 +15,12 @@
 
 
 // `KVectorComponent` and `SpectralShiftFactor` hold one 1D array
-// ("ManagedVector") for each box ("LayoutData"). The arrays are
+// ("DeviceVector") for each box ("LayoutData"). The arrays are
 // only allocated if the corresponding box is owned by the local MPI rank.
-using KVectorComponent = amrex::LayoutData<
-                           amrex::Gpu::ManagedVector<amrex::Real> >;
+using RealKVector = amrex::Gpu::DeviceVector<amrex::Real>;
+using KVectorComponent = amrex::LayoutData< RealKVector >;
 using SpectralShiftFactor = amrex::LayoutData<
-                           amrex::Gpu::ManagedVector<Complex> >;
+                           amrex::Gpu::DeviceVector<Complex> >;
 
 // Indicate the type of correction "shift" factor to apply
 // when the FFT is performed from/to a cell-centered grid in real space.
@@ -39,7 +39,7 @@ class SpectralKSpace
 {
     public:
         amrex::BoxArray spectralspace_ba;
-        SpectralKSpace() : dx(amrex::RealVect::Zero) {};
+        SpectralKSpace() : dx(amrex::RealVect::Zero) {}
         SpectralKSpace( const amrex::BoxArray& realspace_ba,
                         const amrex::DistributionMapping& dm,
                         const amrex::RealVect realspace_dx );
@@ -61,7 +61,16 @@ class SpectralKSpace
         amrex::RealVect dx;
 };
 
+/**
+ * \brief Returns an array of coefficients (Fornberg coefficients), corresponding
+ * to the weight of each point in a finite-difference approximation of a derivative
+ * (up to order \c n_order).
+ *
+ * \param[in] n_order order of the finite-difference approximation
+ * \param[in] nodal   whether the finite-difference approximation is computed
+ *                    on a nodal grid or a staggered grid
+ */
 amrex::Vector<amrex::Real>
-getFonbergStencilCoefficients( const int n_order, const bool nodal );
+getFornbergStencilCoefficients(const int n_order, const bool nodal);
 
 #endif

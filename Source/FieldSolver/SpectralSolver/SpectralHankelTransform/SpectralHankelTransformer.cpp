@@ -7,6 +7,8 @@
 #include "Utils/WarpXConst.H"
 #include "SpectralHankelTransformer.H"
 
+#include <memory>
+
 SpectralHankelTransformer::SpectralHankelTransformer (int const nr,
                                                       int const n_rz_azimuthal_modes,
                                                       amrex::Real const rmax)
@@ -18,9 +20,9 @@ SpectralHankelTransformer::SpectralHankelTransformer (int const nr,
     dhtm.resize(m_n_rz_azimuthal_modes);
 
     for (int mode=0 ; mode < m_n_rz_azimuthal_modes ; mode++) {
-        dht0[mode].reset( new HankelTransform(mode  , mode, m_nr, rmax) );
-        dhtp[mode].reset( new HankelTransform(mode+1, mode, m_nr, rmax) );
-        dhtm[mode].reset( new HankelTransform(mode-1, mode, m_nr, rmax) );
+        dht0[mode] = std::make_unique<HankelTransform>(mode  , mode, m_nr, rmax);
+        dhtp[mode] = std::make_unique<HankelTransform>(mode+1, mode, m_nr, rmax);
+        dhtm[mode] = std::make_unique<HankelTransform>(mode-1, mode, m_nr, rmax);
     }
 
     ExtractKrArray();
@@ -49,12 +51,12 @@ SpectralHankelTransformer::ExtractKrArray ()
             kr_array[ii] = kr_m_array[ir];
         });
     }
+    amrex::Gpu::synchronize();
 }
 
 /* \brief Converts a scalar field from the physical to the spectral space for all modes */
 void
-SpectralHankelTransformer::PhysicalToSpectral_Scalar (amrex::Box const & box,
-                                                      amrex::FArrayBox const & F_physical,
+SpectralHankelTransformer::PhysicalToSpectral_Scalar (amrex::FArrayBox const & F_physical,
                                                       amrex::FArrayBox       & G_spectral)
 {
     // The Hankel transform is purely real, so the real and imaginary parts of
@@ -126,8 +128,7 @@ SpectralHankelTransformer::PhysicalToSpectral_Vector (amrex::Box const & box,
 
 /* \brief Converts a scalar field from the spectral to the physical space for all modes */
 void
-SpectralHankelTransformer::SpectralToPhysical_Scalar (amrex::Box const & box,
-                                                      amrex::FArrayBox const & G_spectral,
+SpectralHankelTransformer::SpectralToPhysical_Scalar (amrex::FArrayBox const & G_spectral,
                                                       amrex::FArrayBox       & F_physical)
 {
     // The Hankel inverse transform is purely real, so the real and imaginary parts of

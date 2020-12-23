@@ -104,7 +104,7 @@ class fillBufferFlag
                 m_prob_lo[idim] = geom.ProbLo(idim);
                 m_inv_cell_size[idim] = geom.InvCellSize(idim);
             }
-        };
+        }
 
 
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -117,7 +117,7 @@ class fillBufferFlag
             // Find the value of the buffer flag in this cell and
             // store it at the corresponding particle position in the array `inexflag`
             m_inexflag_ptr[i] = m_buffer_mask(iv);
-        };
+        }
 
     private:
         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_prob_lo;
@@ -164,7 +164,7 @@ class fillBufferFlagRemainingParticles
                 m_prob_lo[idim] = geom.ProbLo(idim);
                 m_inv_cell_size[idim] = geom.InvCellSize(idim);
             }
-        };
+        }
 
 
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -177,7 +177,7 @@ class fillBufferFlagRemainingParticles
             // Find the value of the buffer flag in this cell and
             // store it at the corresponding particle position in the array `inexflag`
             m_inexflag_ptr[m_indices_ptr[i+m_start_index]] = m_buffer_mask(iv);
-        };
+        }
 
     private:
         amrex::GpuArray<amrex::Real,AMREX_SPACEDIM> m_prob_lo;
@@ -209,12 +209,12 @@ class copyAndReorder
             m_src_ptr = src.dataPtr();
             m_dst_ptr = dst.dataPtr();
             m_indices_ptr = indices.dataPtr();
-        };
+        }
 
         AMREX_GPU_DEVICE AMREX_FORCE_INLINE
         void operator()( const long ip ) const {
             m_dst_ptr[ip] = m_src_ptr[ m_indices_ptr[ip] ];
-        };
+        }
 
     private:
         T const* m_src_ptr;
