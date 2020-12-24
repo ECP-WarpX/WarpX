@@ -152,13 +152,18 @@ public:
     void ExchangeF (amrex::MultiFab* F_fp, amrex::MultiFab* F_cp, int do_pml_in_domain);
     void ExchangeF (PatchType patch_type, amrex::MultiFab* Fp, int do_pml_in_domain);
 
+    void ExchangeG (amrex::MultiFab* G_fp, amrex::MultiFab* G_cp, int do_pml_in_domain);
+    void ExchangeG (PatchType patch_type, amrex::MultiFab* Gp, int do_pml_in_domain);
+
     void FillBoundary ();
     void FillBoundaryE ();
     void FillBoundaryB ();
     void FillBoundaryF ();
+    void FillBoundaryG ();
     void FillBoundaryE (PatchType patch_type);
     void FillBoundaryB (PatchType patch_type);
     void FillBoundaryF (PatchType patch_type);
+    void FillBoundaryG (PatchType patch_type);
 
     bool ok () const { return m_ok; }
 

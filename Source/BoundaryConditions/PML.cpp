@@ -932,7 +932,6 @@ PML::CopyJtoPMLs (const std::array<amrex::MultiFab*,3>& j_fp,
     CopyJtoPMLs(PatchType::coarse, j_cp);
 }
 
-
 void
 PML::ExchangeF (amrex::MultiFab* F_fp, amrex::MultiFab* F_cp, int do_pml_in_domain)
 {
@@ -950,6 +949,22 @@ PML::ExchangeF (PatchType patch_type, amrex::MultiFab* Fp, int do_pml_in_domain)
     }
 }
 
+void
+PML::ExchangeG (amrex::MultiFab* G_fp, amrex::MultiFab* G_cp, int do_pml_in_domain)
+{
+    ExchangeG(PatchType::fine, G_fp, do_pml_in_domain);
+    ExchangeG(PatchType::coarse, G_cp, do_pml_in_domain);
+}
+
+void
+PML::ExchangeG (PatchType patch_type, amrex::MultiFab* Gp, int do_pml_in_domain)
+{
+    if (patch_type == PatchType::fine && pml_G_fp && Gp) {
+        Exchange(*pml_G_fp, *Gp, *m_geom, do_pml_in_domain);
+    } else if (patch_type == PatchType::coarse && pml_G_cp && Gp) {
+        Exchange(*pml_G_cp, *Gp, *m_cgeom, do_pml_in_domain);
+    }
+}
 
 void
 PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
@@ -1038,6 +1053,7 @@ PML::FillBoundary ()
     FillBoundaryE();
     FillBoundaryB();
     FillBoundaryF();
+    FillBoundaryG();
 }
 
 void
@@ -1107,6 +1123,28 @@ PML::FillBoundaryF (PatchType patch_type)
     {
         const auto& period = m_cgeom->periodicity();
         pml_F_cp->FillBoundary(period);
+    }
+}
+
+void
+PML::FillBoundaryG ()
+{
+    FillBoundaryG(PatchType::fine);
+    FillBoundaryG(PatchType::coarse);
+}
+
+void
+PML::FillBoundaryG (PatchType patch_type)
+{
+    if (patch_type == PatchType::fine && pml_G_fp && pml_G_fp->nGrowVect().max() > 0)
+    {
+        const auto& period = m_geom->periodicity();
+        pml_G_fp->FillBoundary(period);
+    }
+    else if (patch_type == PatchType::coarse && pml_G_cp && pml_G_cp->nGrowVect().max() > 0)
+    {
+        const auto& period = m_cgeom->periodicity();
+        pml_G_cp->FillBoundary(period);
     }
 }
 
