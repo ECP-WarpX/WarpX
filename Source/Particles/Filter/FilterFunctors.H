@@ -89,11 +89,12 @@ struct ParserFilter
     /** constructor
      * \param a_is_active whether the test is active
      */
-    ParserFilter(bool a_is_active, HostDeviceParser<7> const& a_filter_parser)
-        : m_is_active(a_is_active), m_function_partparser(a_filter_parser)
+    ParserFilter(bool a_is_active, HostDeviceParser<7> const& a_filter_parser,
+                 amrex::Real a_mass, InputUnits a_units)
+        : m_is_active(a_is_active), m_function_partparser(a_filter_parser),
+          m_mass(a_mass), m_units(a_units)
     {
         m_t = WarpX::GetInstance().gett_new(0);
-        m_units = InputUnits::WarpX;
     }
 
     /**
@@ -108,14 +109,14 @@ struct ParserFilter
         amrex::Real const x  = p.pos(0);
         amrex::Real const y  = p.pos(1);
         amrex::Real const z  = p.pos(2);
-        amrex::Real ux = p.rdata(PIdx::ux);
-        amrex::Real uy = p.rdata(PIdx::uy);
-        amrex::Real uz = p.rdata(PIdx::uz);
-        if (m_units == InputUnits::WarpX)
+        amrex::Real ux = p.rdata(PIdx::ux)/PhysConst::c;
+        amrex::Real uy = p.rdata(PIdx::uy)/PhysConst::c;
+        amrex::Real uz = p.rdata(PIdx::uz)/PhysConst::c;
+        if (m_units == InputUnits::SI)
         {
-            ux /= PhysConst::c;
-            uy /= PhysConst::c;
-            uz /= PhysConst::c;
+            ux /= m_mass;
+            uy /= m_mass;
+            uz /= m_mass;
         }
         if ( m_function_partparser(m_t,x,y,z,ux,uy,uz) > 0.5 ) return 1;
         else return 0;
@@ -128,6 +129,8 @@ public:
     HostDeviceParser<7> const m_function_partparser;
     /** Store physical time. */
     amrex::Real m_t;
+    /** The mass of the particle species. */
+    amrex::Real m_mass;
     /** keep track of momentum units particles will come in with **/
     InputUnits m_units;
 };
