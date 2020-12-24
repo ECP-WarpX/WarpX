@@ -17,13 +17,6 @@
 using SuperParticleType = typename WarpXParticleContainer::SuperParticleType;
 
 /**
- *  \brief Used to keep track of what inputs units a filter function should expect.
- *         "WarpX units" means the momentum is "gamma*v"
- *         "SI" means the momentum is mass*gamma*v.
- */
-enum struct InputUnits{WarpX, SI};
-
-/**
  * \brief Functor that returns 0 or 1 depending on a random draw per particle
  */
 struct RandomFilter
@@ -109,9 +102,9 @@ struct ParserFilter
         amrex::Real const x  = p.pos(0);
         amrex::Real const y  = p.pos(1);
         amrex::Real const z  = p.pos(2);
-        amrex::Real ux = p.rdata(PIdx::ux)/PhysConst::c;
-        amrex::Real uy = p.rdata(PIdx::uy)/PhysConst::c;
-        amrex::Real uz = p.rdata(PIdx::uz)/PhysConst::c;
+        amrex::Real const ux = p.rdata(PIdx::ux)/PhysConst::c;
+        amrex::Real const uy = p.rdata(PIdx::uy)/PhysConst::c;
+        amrex::Real const uz = p.rdata(PIdx::uz)/PhysConst::c;
         if (m_units == InputUnits::SI)
         {
             ux /= m_mass;
