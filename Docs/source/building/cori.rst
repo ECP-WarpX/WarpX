@@ -103,7 +103,7 @@ First, load the appropriate modules:
 
    module swap craype-haswell craype-mic-knl
    module swap PrgEnv-intel PrgEnv-gnu
-   module load cmake/3.14.4
+   module load cmake/3.18.2
    module load cray-hdf5-parallel
    module load adios2/2.5.0
 
