@@ -1,4 +1,7 @@
 target_sources(WarpX
   PRIVATE
-    CollisionType.cpp
+    CollisionHandler.cpp
+    CollisionBase.cpp
+    PairWiseCoulombCollision.cpp
 )
+
