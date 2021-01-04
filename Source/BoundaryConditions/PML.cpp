@@ -429,11 +429,11 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
           const Geometry* geom, const Geometry* cgeom,
           int ncell, int delta, amrex::IntVect ref_ratio,
           Real dt, int nox_fft, int noy_fft, int noz_fft, bool do_nodal,
-          const bool do_dive_cleaning, const bool do_divb_cleaning, int do_moving_window,
-          int /*pml_has_particles*/, int do_pml_in_domain,
+          int do_moving_window, int /*pml_has_particles*/, int do_pml_in_domain,
+          const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
-    : m_dive_cleaning(do_dive_cleaning),
-      m_divb_cleaning(do_divb_cleaning),
+    : m_dive_cleaning(do_pml_dive_cleaning),
+      m_divb_cleaning(do_pml_divb_cleaning),
       m_geom(geom),
       m_cgeom(cgeom)
 {
@@ -1231,7 +1231,7 @@ PushPMLPSATDSinglePatch (
     solver.ForwardTransform(*pml_B[2], SpIdx::Bzx, PMLComp::zx);
     solver.ForwardTransform(*pml_B[2], SpIdx::Bzy, PMLComp::zy);
 
-    // WarpX::do_dive_cleaning = true
+    // WarpX::do_pml_dive_cleaning = true
     if (pml_F)
     {
         solver.ForwardTransform(*pml_E[0], SpIdx::Exx, PMLComp::xx);
@@ -1242,7 +1242,7 @@ PushPMLPSATDSinglePatch (
         solver.ForwardTransform(*pml_F, SpIdx::Fz, PMLComp::z);
     }
 
-    // WarpX::do_divb_cleaning = true
+    // WarpX::do_pml_divb_cleaning = true
     if (pml_G)
     {
         solver.ForwardTransform(*pml_B[0], SpIdx::Bxx, PMLComp::xx);
@@ -1270,7 +1270,7 @@ PushPMLPSATDSinglePatch (
     solver.BackwardTransform(*pml_B[2], SpIdx::Bzx, PMLComp::zx);
     solver.BackwardTransform(*pml_B[2], SpIdx::Bzy, PMLComp::zy);
 
-    // WarpX::do_dive_cleaning = true
+    // WarpX::do_pml_dive_cleaning = true
     if (pml_F)
     {
         // TODO Which fields need to be transformed back to real space?
@@ -1282,7 +1282,7 @@ PushPMLPSATDSinglePatch (
         solver.BackwardTransform(*pml_F, SpIdx::Fz, PMLComp::z);
     }
 
-    // WarpX::do_divb_cleaning = true
+    // WarpX::do_pml_divb_cleaning = true
     if (pml_G)
     {
         // TODO Which fields need to be transformed back to real space?

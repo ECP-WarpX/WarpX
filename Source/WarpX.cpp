@@ -74,7 +74,6 @@ long WarpX::particle_pusher_algo;
 int WarpX::maxwell_solver_id;
 long WarpX::load_balance_costs_update_algo;
 bool WarpX::do_dive_cleaning = 0;
-bool WarpX::do_divb_cleaning = 0;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 
@@ -214,7 +213,6 @@ WarpX::WarpX ()
     Bfield_avg_aux.resize(nlevs_max);
 
     F_fp.resize(nlevs_max);
-    G_fp.resize(nlevs_max);
     rho_fp.resize(nlevs_max);
     phi_fp.resize(nlevs_max);
     current_fp.resize(nlevs_max);
@@ -226,7 +224,6 @@ WarpX::WarpX ()
     current_store.resize(nlevs_max);
 
     F_cp.resize(nlevs_max);
-    G_cp.resize(nlevs_max);
     rho_cp.resize(nlevs_max);
     current_cp.resize(nlevs_max);
     Efield_cp.resize(nlevs_max);
@@ -530,7 +527,6 @@ WarpX::ReadParameters ()
         pp.query("serialize_ics", serialize_ics);
         pp.query("refine_plasma", refine_plasma);
         pp.query("do_dive_cleaning", do_dive_cleaning);
-        pp.query("do_divb_cleaning", do_divb_cleaning);
         pp.query("n_field_gather_buffer", n_field_gather_buffer);
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
 #ifdef AMREX_USE_GPU
@@ -561,6 +557,18 @@ WarpX::ReadParameters ()
         pp.query("pml_has_particles", pml_has_particles);
         pp.query("do_pml_j_damping", do_pml_j_damping);
         pp.query("do_pml_in_domain", do_pml_in_domain);
+
+        // If WarpX::do_dive_cleaning = true, set also WarpX::do_pml_dive_cleaning = true
+        // (possibly overwritten by users in the input file, see query below)
+        if (do_dive_cleaning)
+        {
+            do_pml_dive_cleaning = true;
+        }
+
+        // Query input parameters to use div(E) and/or div(B) cleaning in PMLs
+        pp.query("do_pml_dive_cleaning", do_pml_dive_cleaning);
+        pp.query("do_pml_divb_cleaning", do_pml_divb_cleaning);
+
 #ifdef WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( do_pml==0,
             "PML are not implemented in RZ geometry ; please set `warpx.do_pml=0`");
@@ -995,11 +1003,9 @@ WarpX::ClearLevel (int lev)
     gather_buffer_masks[lev].reset();
 
     F_fp  [lev].reset();
-    G_fp  [lev].reset();
     rho_fp[lev].reset();
     phi_fp[lev].reset();
     F_cp  [lev].reset();
-    G_cp  [lev].reset();
     rho_cp[lev].reset();
 
     costs[lev].reset();
@@ -1190,13 +1196,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_dive_cleaning)
     {
-        F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheUnitVector()), dm, ncomps, ngF.max());
-    }
-
-    if (do_divb_cleaning)
-    {
-        // TODO Shall we define a separate guard cells parameter ngG?
-        G_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba, IntVect::TheZeroVector()), dm, ncomps, ngF.max());
+        F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max());
     }
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
@@ -1342,13 +1342,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
         if (do_dive_cleaning)
         {
-            F_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba, IntVect::TheUnitVector()), dm, ncomps, ngF.max());
-        }
-
-        if (do_dive_cleaning)
-        {
-            // TODO Shall we define a separate guard cells parameter ngG?
-            G_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba, IntVect::TheZeroVector()), dm, ncomps, ngF.max());
+            F_cp[lev] = std::make_unique<MultiFab>(amrex::convert(cba,IntVect::TheUnitVector()),dm,ncomps, ngF.max());
         }
 
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)

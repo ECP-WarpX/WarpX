@@ -43,8 +43,8 @@ WarpX::DampPML (int lev, PatchType patch_type)
 
     WARPX_PROFILE("WarpX::DampPML()");
 
-    const bool dive_cleaning = WarpX::do_dive_cleaning;
-    const bool divb_cleaning = WarpX::do_divb_cleaning;
+    const bool dive_cleaning = WarpX::do_pml_dive_cleaning;
+    const bool divb_cleaning = WarpX::do_pml_divb_cleaning;
 
     if (pml[lev]->ok())
     {
