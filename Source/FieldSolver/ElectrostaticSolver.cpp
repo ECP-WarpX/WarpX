@@ -40,6 +40,10 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
             }
         }
     }
+    // Transfer fields from 'fp' array to 'aux' array.
+    // This is needed when using momentum conservation
+    // since they are different arrays in that case.
+    UpdateAuxilaryData();
 
 }
 
