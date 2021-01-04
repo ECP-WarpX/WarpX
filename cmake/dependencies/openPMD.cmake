@@ -62,7 +62,7 @@ if(WarpX_OPENPMD)
     set(WarpX_openpmd_repo "https://github.com/openPMD/openPMD-api.git"
         CACHE STRING
         "Repository URI to pull and build openPMD-api from if(WarpX_openpmd_internal)")
-    set(WarpX_openpmd_branch "dev"
+    set(WarpX_openpmd_branch "0.13.0"
         CACHE STRING
         "Repository branch for WarpX_openpmd_repo if(WarpX_openpmd_internal)")
 
