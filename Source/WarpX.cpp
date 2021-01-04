@@ -558,6 +558,14 @@ WarpX::ReadParameters ()
         pp.query("do_pml_j_damping", do_pml_j_damping);
         pp.query("do_pml_in_domain", do_pml_in_domain);
 
+        // div(E) cleaning not implemented for PSATD solver
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                do_dive_cleaning == false,
+                "warpx.do_dive_cleaning = 1 not implemented for PSATD solver");
+        }
+
         // If WarpX::do_dive_cleaning = true, set also WarpX::do_pml_dive_cleaning = true
         // (possibly overwritten by users in the input file, see query below)
         if (do_dive_cleaning)
@@ -565,9 +573,26 @@ WarpX::ReadParameters ()
             do_pml_dive_cleaning = true;
         }
 
-        // Query input parameters to use div(E) and/or div(B) cleaning in PMLs
+        // Query input parameters to use div(E) and div(B) cleaning in PMLs
         pp.query("do_pml_dive_cleaning", do_pml_dive_cleaning);
         pp.query("do_pml_divb_cleaning", do_pml_divb_cleaning);
+
+        // div(B) cleaning in PMLs not implemented for FDTD solver
+        if (maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+        {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                do_pml_divb_cleaning == false,
+                "warpx.do_pml_divb_cleaning = 1 not implemented for FDTD solver");
+        }
+
+        // Divergence cleaning in PMLs for PSATD solver implemented only
+        // for both div(E) and div(B) cleaning
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                do_pml_dive_cleaning == do_pml_divb_cleaning,
+                "Not implemented: warpx.do_pml_dive_cleaning and warpx.do_pml_divb_cleaning must be equal");
+        }
 
 #ifdef WARPX_DIM_RZ
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE( do_pml==0,
