@@ -213,6 +213,17 @@ WarpX::Evolve (int numsteps)
             mypc->SortParticlesByBin(sort_bin_size);
         }
 
+        if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
+            // Electrostatic solver:
+            // For each species: deposit charge and add the associated space-charge
+            // E and B field to the grid ; this is done at the end of the PIC
+            // loop (i.e. immediately after a `Redistribute` and before particle
+            // positions are next pushed) so that the particles do not deposit out of bounds
+            // and so that the fields are at the correct time in the output.
+            bool const reset_fields = true;
+            ComputeSpaceChargeField( reset_fields );
+        }
+
         amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
                       << " DT = " << dt[0] << "\n";
         Real walltime_end_step = amrex::second();
@@ -257,16 +268,6 @@ WarpX::Evolve (int numsteps)
 void
 WarpX::OneStep_nosub (Real cur_time)
 {
-
-    if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
-        // Electrostatic solver:
-        // For each species: deposit charge and add the associated space-charge
-        // E and B field to the grid ; this is done at the beginning of the PIC
-        // loop (i.e. immediately after a `Redistribute` and before particle
-        // positions are pushed) so that the particles do not deposit out of bound
-        bool const reset_fields = true;
-        ComputeSpaceChargeField( reset_fields );
-    }
 
     // Loop over species. For each ionizable species, create particles in
     // product species.
