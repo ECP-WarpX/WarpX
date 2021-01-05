@@ -12,6 +12,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 
+#include <AMReX.H>
 #include <AMReX_Print.H>
 #include <AMReX_VisMF.H>
 
@@ -545,6 +546,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
+        amrex::ignore_unused(dt);
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                                          "PML: PSATD solver selected but not built.");
 #else
@@ -642,6 +644,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
+            amrex::ignore_unused(dt);
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                                              "PML: PSATD solver selected but not built.");
 #else
