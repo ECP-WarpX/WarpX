@@ -44,6 +44,7 @@ WarpX::ComputeSpaceChargeField (bool const reset_fields)
     // This is needed when using momentum conservation
     // since they are different arrays in that case.
     UpdateAuxilaryData();
+    FillBoundaryAux(guard_cells.ng_UpdateAux);
 
 }
 
