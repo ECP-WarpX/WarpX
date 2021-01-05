@@ -27,7 +27,6 @@ yt.funcs.mylog.setLevel(0)
 filename = sys.argv[1]
 ds = yt.load( filename )
 t_max = ds.current_time.item()  # time of simulation
-dt = 1.e-6
 
 # Constants and initial conditions
 xmin = ymin = zmin = -0.5  #Box dimensions
@@ -47,12 +46,12 @@ q_tot = -1e-15  #Total charge of sphere in C
 # The solution r(t) solves the ODE: r''(t) = a/(r(t)**2) with initial conditions
 # r(0) = r_0, r'(0) = 0, and a = q_e*q_tot/(4*pi*eps_0*m_e)
 #
-# The E was calculated at the start of the last time step (hence the t_max - dt in func)
+# The E was calculated at the end of the last time step
 v_exact = lambda r: np.sqrt((q_e*q_tot)/(2*pi*m_e*eps_0)*(1/r_0-1/r))
 t_exact = lambda r: np.sqrt(r_0**3*2*pi*m_e*eps_0/(q_e*q_tot)) \
     * (np.sqrt(r/r_0-1)*np.sqrt(r/r_0) \
        + np.log(np.sqrt(r/r_0-1)+np.sqrt(r/r_0)))
-func = lambda rho: t_exact(rho) - (t_max - dt)  #Objective function to find r(t_max)
+func = lambda rho: t_exact(rho) - t_max  #Objective function to find r(t_max)
 r_end = fsolve(func,r_0)[0]  #Numerically solve for r(t_max)
 E_exact = lambda r: np.sign(r)*(q_tot/(4*pi*eps_0*r**2)*(abs(r)>=r_end) \
     + q_tot*abs(r)/(4*pi*eps_0*r_end**3)*(abs(r)<r_end))
