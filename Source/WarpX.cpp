@@ -844,6 +844,7 @@ WarpX::ReadParameters ()
         else {
             update_with_rho = true;  // Galilean PSATD or comoving PSATD
         }
+#   endif
 
         // Overwrite update_with_rho with value set in input file
         pp.query("update_with_rho", update_with_rho);
@@ -1299,13 +1300,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         Efield_aux[lev][1] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[y]"));
         Efield_aux[lev][2] = std::make_unique<MultiFab>(nba,dm,ncomps,ngE,tag("Efield_aux[z]"));
 
-        Efield_avg_aux[lev][0] = std::make_unique<MultiFab>(nba, dm, ncomps, ngE);
-        Efield_avg_aux[lev][1] = std::make_unique<MultiFab>(nba, dm, ncomps, ngE);
-        Efield_avg_aux[lev][2] = std::make_unique<MultiFab>(nba, dm, ncomps, ngE);
+        Efield_avg_aux[lev][0] = std::make_unique<MultiFab>(*Efield_aux[lev][0], amrex::make_alias, 0, ncomps);
+        Efield_avg_aux[lev][1] = std::make_unique<MultiFab>(*Efield_aux[lev][1], amrex::make_alias, 0, ncomps);
+        Efield_avg_aux[lev][2] = std::make_unique<MultiFab>(*Efield_aux[lev][2], amrex::make_alias, 0, ncomps);
 
-        Bfield_avg_aux[lev][0] = std::make_unique<MultiFab>(nba, dm, ncomps, ngE);
-        Bfield_avg_aux[lev][1] = std::make_unique<MultiFab>(nba, dm, ncomps, ngE);
-        Bfield_avg_aux[lev][2] = std::make_unique<MultiFab>(nba, dm, ncomps, ngE);
+        Bfield_avg_aux[lev][0] = std::make_unique<MultiFab>(*Bfield_aux[lev][0], amrex::make_alias, 0, ncomps);
+        Bfield_avg_aux[lev][1] = std::make_unique<MultiFab>(*Bfield_aux[lev][1], amrex::make_alias, 0, ncomps);
+        Bfield_avg_aux[lev][2] = std::make_unique<MultiFab>(*Bfield_aux[lev][2], amrex::make_alias, 0, ncomps);
     }
     else if (lev == 0)
     {
