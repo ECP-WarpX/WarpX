@@ -114,13 +114,13 @@ jobs:
         cmake -S . -B build_dp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF \
           -DCMAKE_CXX_COMPILER_ID="Clang"                \
           -DCMAKE_CXX_COMPILER_VERSION=12.0              \
-          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
+          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"
         cmake --build build_dp -j 2
 
         cmake -S . -B build_sp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE \
           -DCMAKE_CXX_COMPILER_ID="Clang"                \
           -DCMAKE_CXX_COMPILER_VERSION=12.0              \
-          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
+          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"
         cmake --build build_sp -j 2
 
         python3 -m pip install --upgrade pip setuptools wheel
