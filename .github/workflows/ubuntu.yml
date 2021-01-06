@@ -100,6 +100,7 @@ jobs:
           -DCMAKE_C_COMPILER_ID="Clang"                  \
           -DCMAKE_C_COMPILER_VERSION=12.0                \
           -DCMAKE_CXX_COMPILER_ID="Clang"                \
+          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="11"     \
           -DCMAKE_CXX_COMPILER_VERSION=12.0              \
           -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
           -DCMAKE_VERBOSE_MAKEFILE=ON  \
