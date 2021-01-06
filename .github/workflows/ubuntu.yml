@@ -78,32 +78,17 @@ jobs:
         python3 -m pip install --upgrade pip setuptools wheel
         PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
 
-  build_icx:
-    name: oneAPI ICX SP&DP [Linux]
-    runs-on: ubuntu-latest
+  build_icpx:
+    name: oneAPI ICX SP [Linux]
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
+      shell: bash
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo apt-get -qqq update
-        sudo apt-get install -y wget build-essential pkg-config cmake ca-certificates gnupg
-        sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-        echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
-        sudo apt-get update
-        sudo apt-get install -y intel-oneapi-dpcpp-cpp-2021.1.2 intel-oneapi-compiler-shared-runtime-2021.1.2 build-essential cmake intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl-devel
-        set +e
-        source /opt/intel/oneapi/setvars.sh
-        set -e
-        sudo curl -L -o /usr/local/bin/cmake-easyinstall https://git.io/JvLxY
-        sudo chmod a+x /usr/local/bin/cmake-easyinstall
-        export CEI_SUDO="sudo"
-        CXX=$(which icpx) CC=$(which icx) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF \
-          -DCMAKE_CXX_COMPILER_ID="Clang"                \
-          -DCMAKE_CXX_COMPILER_VERSION=12.0              \
-          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"
+        .github/workflows/dependencies/dpcpp.sh
     - name: build WarpX
+      shell: bash
       run: |
         set +e
         source /opt/intel/oneapi/setvars.sh
@@ -111,20 +96,23 @@ jobs:
         export CXX=$(which icpx)
         export CC=$(which icx)
 
-        cmake -S . -B build_dp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF \
+        cmake -S . -B build_sp         \
           -DCMAKE_CXX_COMPILER_ID="Clang"                \
           -DCMAKE_CXX_COMPILER_VERSION=12.0              \
-          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"
-        cmake --build build_dp -j 2
-
-        cmake -S . -B build_sp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_MPI=OFF -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE \
-          -DCMAKE_CXX_COMPILER_ID="Clang"                \
-          -DCMAKE_CXX_COMPILER_VERSION=12.0              \
-          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"
+          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_COMPUTE=SYCL         \
+          -DWarpX_MPI=OFF              \
+          -DWarpX_OPENPMD=ON           \
+          -DWarpX_PRECISION=SINGLE
         cmake --build build_sp -j 2
 
-        python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade setuptools wheel
         PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
+     # note: setting the CXX compiler ID is a work-around for
+     # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
+     # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
 
   build_dpcc:
     name: oneAPI DPC++ SP [Linux]
