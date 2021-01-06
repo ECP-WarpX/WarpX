@@ -311,9 +311,9 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                                          particle_diags[i].m_random_fraction);
         UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                            particle_diags[i].m_uniform_stride);
-        ParserFilter const parser_filter(particle_diags[i].m_do_parser_filter,
-                                         getParser(particle_diags[i].m_particle_filter_parser),
-                                         pc->getMass(), InputUnits::SI);
+        ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
+                                   getParser(particle_diags[i].m_particle_filter_parser));
+        parser_filter.m_units = InputUnits::SI;
         GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                              particle_diags[i].m_diag_domain);
 
