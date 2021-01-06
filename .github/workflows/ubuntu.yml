@@ -92,7 +92,7 @@ jobs:
         sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
         echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
         sudo apt-get update
-        sudo apt-get install -y intel-oneapi-dpcpp-cpp-2021.1.2 intel-oneapi-compiler-shared-runtime-2021.1.2
+        sudo apt-get install -y intel-oneapi-dpcpp-cpp-2021.1.2 intel-oneapi-compiler-shared-runtime-2021.1.2 build-essential cmake intel-oneapi-dpcpp-cpp-compiler intel-oneapi-mkl-devel
         set +e
         source /opt/intel/oneapi/setvars.sh
         set -e
