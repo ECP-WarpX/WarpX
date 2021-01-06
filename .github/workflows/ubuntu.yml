@@ -102,7 +102,7 @@ jobs:
         CXX=$(which icpx) CC=$(which icx) cmake-easyinstall --prefix=/usr/local git+https://github.com/openPMD/openPMD-api.git -DopenPMD_USE_PYTHON=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF \
           -DCMAKE_CXX_COMPILER_ID="Clang"                \
           -DCMAKE_CXX_COMPILER_VERSION=12.0              \
-          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"     \
+          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="17"
     - name: build WarpX
       run: |
         set +e
