@@ -4,27 +4,27 @@
 #
 # License: BSD-3-Clause-LBNL
 
+# docs:
+#   https://help.semmle.com/lgtm-enterprise/user/help/lgtm.yml-configuration-file.html#example-of-complete-lgtmyml-file
+
 extraction:
   cpp:
     prepare:
       packages:
-        #- libhdf5-mpich-dev
-        - mpich
-        - libmpich-dev
+        - cmake
+        - openmpi-bin
+        - libopenmpi-dev
+        - libhdf5-openmpi-dev
+        - libadios-openmpi-dev
     after_prepare:
-      - mkdir -p third-party
-      - wget https://github.com/AMReX-Codes/amrex/archive/development.zip
-      - unzip development.zip
-      - mv amrex-development third-party/amrex
-      - rm development.zip
-      - wget https://github.com/ECP-WarpX/picsar/archive/development.zip
-      - unzip development.zip
-      - mv picsar-development third-party/picsar
-      - rm development.zip
+      - python -m pip install --upgrade pip
+      - python -m pip install --upgrade wheel
+      - python -m pip install --upgrade cmake
+      - export CMAKE="$HOME/.local/bin/cmake"
     configure:
       command:
-      - echo "Yeah"
+        - $CMAKE -S . -B build -DWarpX_OPENPMD=ON
     index:
       build_command:
-        - make -j 2 AMREX_HOME=./third-party/amrex PICSAR_HOME=./third-party/picsar
+        - $CMAKE --build build -j 2
 
