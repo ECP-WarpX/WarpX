@@ -87,6 +87,9 @@ class Species(picmistandard.PICMI_Species):
 
         pywarpx.particles.species_names.append(self.name)
 
+        if initialize_self_fields is None:
+            initialize_self_fields = False
+
         self.species = pywarpx.Bucket.Bucket(self.name,
                                              mass = self.mass,
                                              charge = self.charge,
