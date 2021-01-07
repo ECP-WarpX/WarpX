@@ -68,7 +68,7 @@ def Ez( z, r, epsilon, k0, w0, wp, t) :
 
 # Read the file
 ds = yt.load(fn)
-t0 = ds.current_time.to_ndarray().mean()
+t0 = ds.current_time.to_value()
 data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
                         dims=ds.domain_dimensions)
 
