@@ -1331,10 +1331,9 @@ Numerics and algorithms
 
     The coefficients :math:`C`, :math:`S`, :math:`\theta`, :math:`\nu`, :math:`\chi_1`, :math:`\chi_2`, and :math:`\chi_3` are defined in (`Lehe et al, PRE 94, 2016 <https://doi.org/10.1103/PhysRevE.94.053305>`_).
 
-    The default value for ``psatd.update_with_rho`` is ``1`` if ``psatd.v_galilean`` is non-zero or
-    in RZ geometry and ``0`` otherwise.
+    The default value for ``psatd.update_with_rho`` is ``1`` if ``psatd.v_galilean`` is non-zero and ``0`` otherwise.
 
-    Note that ``psatd.update_with_rho=0`` is not supported in RZ geometry.
+    Note that the update with and without rho is also supported in RZ geometry.
 
 * ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
     Defines the galilean velocity.
