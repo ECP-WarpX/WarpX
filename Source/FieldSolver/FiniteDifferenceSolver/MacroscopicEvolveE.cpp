@@ -63,7 +63,7 @@ void FiniteDifferenceSolver::MacroscopicEvolveE (
         }
 
     } else {
-        amrex::Abort("Unknown algorithm");
+        amrex::Abort("MacroscopicEvolveE: Unknown algorithm");
     }
 #endif
 

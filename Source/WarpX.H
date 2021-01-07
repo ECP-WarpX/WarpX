@@ -137,17 +137,13 @@ public:
     static int em_solver_medium;
     static int macroscopic_solver_algo;
 
-#ifdef WARPX_USE_PSATD
-    // If true (overwritten by the user in the input file), the current correction
+    // PSATD: If true (overwritten by the user in the input file), the current correction
     // defined in equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010 is applied
     bool current_correction = false;
-#endif
 
-#ifdef WARPX_USE_PSATD
-    // If true, the update equation for E contains both J and rho (at times n and n+1):
+    // PSATD: If true, the update equation for E contains both J and rho (at times n and n+1):
     // default is false for standard PSATD and true for Galilean PSATD (set in WarpX.cpp)
-    bool update_with_rho;
-#endif
+    bool update_with_rho = false;
 
     // div E cleaning
     static int do_dive_cleaning;
@@ -164,8 +160,8 @@ public:
     static int field_gathering_noz;
 
     // Number of modes for the RZ multimode version
-    static long n_rz_azimuthal_modes;
-    static long ncomps;
+    static int n_rz_azimuthal_modes;
+    static int ncomps;
 
     static bool use_fdtd_nci_corr;
     static bool galerkin_interpolation;
@@ -441,6 +437,7 @@ public:
     amrex::Vector<amrex::Real> getdt () const {return dt;}
     amrex::Real getdt (int lev) const {return dt[lev];}
     amrex::Real getmoving_window_x() const {return moving_window_x;}
+    amrex::Real getcurrent_injection_position () const {return current_injection_position;}
     bool getis_synchronized() const {return is_synchronized;}
     void setplot_rho (bool a_plot_rho) {plot_rho = a_plot_rho;}
 
@@ -881,14 +878,14 @@ private:
     // Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
 
-#ifdef WARPX_USE_PSATD
 private:
-    void EvolvePSATD (int numsteps);
+    // void EvolvePSATD (int numsteps);
     void PushPSATD (amrex::Real dt);
     void PushPSATD (int lev, amrex::Real dt);
 
-    int fftw_plan_measure = 1;
+    int fftw_plan_measure = 1; // used with PSATD
 
+#ifdef WARPX_USE_PSATD
 #   ifdef WARPX_DIM_RZ
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_fp;
         amrex::Vector<std::unique_ptr<SpectralSolverRZ>> spectral_solver_cp;

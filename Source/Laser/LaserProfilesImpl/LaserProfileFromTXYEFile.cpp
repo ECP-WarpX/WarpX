@@ -271,7 +271,7 @@ WarpXLaserProfiles::FromTXYEFileLaserProfile::read_data_t_chuck(int t_begin, int
             m_params.h_x_coords.size()*sizeof(double) +
             m_params.h_y_coords.size()*sizeof(double) +
             sizeof(double)*t_begin*m_params.nx*m_params.ny;
-        inp.ignore(skip_amount);
+        inp.seekg(skip_amount);
         if(!inp) Abort("Failed to read field data from txye file");
         const int read_size = (i_last - i_first + 1)*
             m_params.nx*m_params.ny;

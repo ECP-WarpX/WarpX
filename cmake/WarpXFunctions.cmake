@@ -4,7 +4,7 @@ macro(set_ccache)
     find_program(CCACHE_PROGRAM ccache)
     if(CCACHE_PROGRAM)
         set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-        if(AMReX_CUDA)
+        if(WarpX_COMPUTE STREQUAL CUDA)
             set(CMAKE_CUDA_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
         endif()
     endif()
@@ -83,7 +83,8 @@ endmacro()
 # Note: this is a bit legacy and one should use CMake TOOLCHAINS instead.
 #
 macro(set_cxx_warnings)
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    # On Windows, Clang -Wall aliases -Weverything; default is /W3
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND NOT WIN32)
         # list(APPEND CMAKE_CXX_FLAGS "-fsanitize=address") # address, memory, undefined
         # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
         # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address")

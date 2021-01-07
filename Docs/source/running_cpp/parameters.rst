@@ -107,10 +107,24 @@ Setting up the field mesh
 * ``amr.n_cell`` (`2 integers in 2D`, `3 integers in 3D`)
     The number of grid points along each direction (on the **coarsest level**)
 
-* ``amr.max_level`` (`integer`)
+* ``amr.max_level`` (`integer`, default: ``0``)
     When using mesh refinement, the number of refinement levels that will be used.
 
     Use 0 in order to disable mesh refinement.
+    Note: currently, ``0`` and ``1`` are supported.
+
+* ``amr.ref_ratio`` (`integer` per refined level, default: ``2``)
+    When using mesh refinement, this is the refinement ratio per level.
+    With this option, all directions are fined by the same ratio.
+
+    Note: in development; currently, ``2`` is supported.
+
+* ``amr.ref_ratio_vect`` (3 `integer`s for x,y,z per refined level)
+    When using mesh refinement, this can be used to set the refinement ratio per direction and level, relative to the previous level.
+
+    Example: for three levels, a value of ``2 2 4 8 8 16`` refines the first level by 2-fold in x and y and 4-fold in z compared to the coarsest level (level 0/mother grid); compared to the first level, the second level is refined 8-fold in x and y and 16-fold in z.
+
+    Note: in development; currently allowed value: ``2 2 2``.
 
 * ``geometry.is_periodic`` (`2 integers in 2D`, `3 integers in 3D`)
     Whether the boundary conditions are periodic, in each direction.
@@ -317,9 +331,6 @@ A trick to reduce this depth for the parser, e.g. when reaching the limit, is to
 
 Particle initialization
 -----------------------
-
-* ``particles.nspecies`` (`int`)
-    The number of species that will be used in the simulation.
 
 * ``particles.species_names`` (`strings`, separated by spaces)
     The name of each species. This is then used in the rest of the input deck ;
@@ -682,10 +693,7 @@ Particle initialization
 Laser initialization
 --------------------
 
-* ``lasers.nlasers`` (`int`) optional (default `0`)
-    Number of lasers pulses.
-
-* ``lasers.names`` (list of `string`. Must contain ``lasers.nlasers`` elements)
+* ``lasers.names`` (list of `string`)
     Name of each laser. This is then used in the rest of the input deck ;
     in this documentation we use `<laser_name>` as a placeholder. The parameters below
     must be provided for each laser pulse.
@@ -1078,9 +1086,8 @@ Numerics and algorithms
 * ``algo.current_deposition`` (`string`, optional)
     This parameter selects the algorithm for the deposition of the current density.
     Available options are: ``direct``, ``esirkepov``, and ``vay``. The default choice
-    is ``esirkepov`` if WarpX is compiled with the FDTD solver (that is, with
-    ``USE_PSATD=FALSE``) and ``direct`` if WarpX is compiled with the standard or
-    Galilean PSATD solver (that is, with ``USE_PSATD=TRUE``).
+    is ``esirkepov`` for FDTD maxwell solvers and ``direct`` for standard or
+    Galilean PSATD solver (that is, with ``algo.maxwell_solver = psatd``).
 
     1. ``direct``
 
@@ -1136,9 +1143,9 @@ Numerics and algorithms
      - ``yee``: Yee FDTD solver.
      - ``ckc``: (not available in ``RZ`` geometry) Cole-Karkkainen solver with Cowan
        coefficients (see `Cowan, PRSTAB 16 (2013) <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.041303>`__)
+     - ``psatd``: Pseudo-spectral solver (see :ref:`theory <theory-pic-mwsolve-psatd>`)
 
      If ``algo.maxwell_solver`` is not specified, ``yee`` is the default.
-     Note: this option is currently ignored with PSATD.
 
 * ``algo.em_solver_medium`` (`string`, optional)
     The medium for evaluating the Maxwell solver. Available options are :

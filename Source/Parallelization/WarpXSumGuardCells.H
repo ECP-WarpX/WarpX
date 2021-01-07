@@ -16,22 +16,23 @@
  * This is typically called for the sources of the Maxwell equations (J/rho)
  * after deposition from the macroparticles.
  *
- *  - When WarpX is compiled with a finite-difference scheme: this only
+ *  - When WarpX is used with a finite-difference scheme: this only
  *    updates the *valid* cells of `mf`
- *  - When WarpX is compiled with a spectral scheme (WARPX_USE_PSATD): this
+ *  - When WarpX is used with a spectral scheme (PSATD): this
  *    updates both the *valid* cells and *guard* cells. (This is because a
  *    spectral solver requires the value of the sources over a large stencil.)
  */
 inline void
 WarpXSumGuardCells(amrex::MultiFab& mf, const amrex::Periodicity& period,
-                   const int icomp=0, const int ncomp=1){
-#ifdef WARPX_USE_PSATD
-   // Update both valid cells and guard cells
-   const amrex::IntVect n_updated_guards = mf.nGrowVect();
-#else
-   // Update only the valid cells
-   const amrex::IntVect n_updated_guards = amrex::IntVect::TheZeroVector();
-#endif
+                   const int icomp=0, const int ncomp=1)
+{
+    amrex::IntVect n_updated_guards;
+
+    // Update both valid cells and guard cells
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        n_updated_guards = mf.nGrowVect();
+    else  // Update only the valid cells
+        n_updated_guards = amrex::IntVect::TheZeroVector();
     mf.SumBoundary(icomp, ncomp, n_updated_guards, period);
 }
 
@@ -41,9 +42,9 @@ WarpXSumGuardCells(amrex::MultiFab& mf, const amrex::Periodicity& period,
  * This is typically called for the sources of the Maxwell equations (J/rho)
  * after deposition from the macroparticles + filtering.
  *
- *  - When WarpX is compiled with a finite-difference scheme: this only
+ *  - When WarpX is used with a finite-difference scheme: this only
  *    updates the *valid* cells of `dst`
- *  - When WarpX is compiled with a spectral scheme (WARPX_USE_PSATD): this
+ *  - When WarpX is used with a spectral scheme (PSATD): this
  *    updates both the *valid* cells and *guard* cells. (This is because a
  *    spectral solver requires the value of the sources over a large stencil.)
  *
@@ -53,14 +54,16 @@ WarpXSumGuardCells(amrex::MultiFab& mf, const amrex::Periodicity& period,
 inline void
 WarpXSumGuardCells(amrex::MultiFab& dst, amrex::MultiFab& src,
                    const amrex::Periodicity& period,
-                   const int icomp=0, const int ncomp=1){
-#ifdef WARPX_USE_PSATD
+                   const int icomp=0, const int ncomp=1)
+{
+    amrex::IntVect n_updated_guards;
+
     // Update both valid cells and guard cells
-    const amrex::IntVect n_updated_guards = dst.nGrowVect();
-#else
-    // Update only the valid cells
-    const amrex::IntVect n_updated_guards = amrex::IntVect::TheZeroVector();
-#endif
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
+        n_updated_guards = dst.nGrowVect();
+    else  // Update only the valid cells
+        n_updated_guards = amrex::IntVect::TheZeroVector();
+
     src.SumBoundary(0, ncomp, n_updated_guards, period);
     amrex::Copy( dst, src, 0, icomp, ncomp, n_updated_guards );
 }

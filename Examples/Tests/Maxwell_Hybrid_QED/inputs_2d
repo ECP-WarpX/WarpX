@@ -16,6 +16,7 @@ warpx.quantum_xi = 1.e-23
 #################################
 ############ NUMERICS ###########
 #################################
+algo.maxwell_solver = psatd
 warpx.verbose = 0
 warpx.use_filter = 1
 warpx.cfl = 1.

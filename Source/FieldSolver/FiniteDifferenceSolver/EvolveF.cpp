@@ -52,7 +52,7 @@ void FiniteDifferenceSolver::EvolveF (
 
 #endif
     } else {
-        amrex::Abort("Unknown algorithm");
+        amrex::Abort("EvolveF: Unknown algorithm");
     }
 
 }

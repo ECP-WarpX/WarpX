@@ -75,7 +75,8 @@ class FiniteDifferenceSolver
 
         void EvolveBPML ( std::array< amrex::MultiFab*, 3 > Bfield,
                       std::array< amrex::MultiFab*, 3 > const Efield,
-                      amrex::Real const dt );
+                      amrex::Real const dt,
+                      const bool dive_cleaning);
 
        void EvolveEPML ( std::array< amrex::MultiFab*, 3 > Efield,
                       std::array< amrex::MultiFab*, 3 > const Bfield,
@@ -95,7 +96,7 @@ class FiniteDifferenceSolver
 
 #ifdef WARPX_DIM_RZ
         amrex::Real m_dr, m_rmin;
-        amrex::Real m_nmodes;
+        int m_nmodes;
         amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_r;
         amrex::Gpu::DeviceVector<amrex::Real> m_stencil_coefs_z;
 #else
@@ -176,7 +177,8 @@ class FiniteDifferenceSolver
         void EvolveBPMLCartesian (
             std::array< amrex::MultiFab*, 3 > Bfield,
             std::array< amrex::MultiFab*, 3 > const Efield,
-            amrex::Real const dt );
+            amrex::Real const dt,
+            const bool dive_cleaning);
 
         template< typename T_Algo >
         void EvolveEPMLCartesian (
