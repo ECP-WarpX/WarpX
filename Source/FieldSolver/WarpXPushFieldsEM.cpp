@@ -16,6 +16,7 @@
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 
+#include <AMReX.H>
 #include <AMReX_Math.H>
 #include <limits>
 
@@ -120,6 +121,7 @@ void
 WarpX::PushPSATD (amrex::Real a_dt)
 {
 #ifndef WARPX_USE_PSATD
+    amrex::ignore_unused(a_dt);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                                      "PushFieldsEM: PSATD solver selected but not built.");
 #else
@@ -138,6 +140,7 @@ WarpX::PushPSATD (amrex::Real a_dt)
 void
 WarpX::PushPSATD (int lev, amrex::Real /* dt */) {
 #ifndef WARPX_USE_PSATD
+    amrex::ignore_unused(lev);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                                      "PushFieldsEM: PSATD solver selected but not built.");
 #else
