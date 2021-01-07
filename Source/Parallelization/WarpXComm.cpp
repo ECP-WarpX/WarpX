@@ -147,14 +147,17 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             const int fg_nox = WarpX::field_gathering_nox;
             const int fg_noy = WarpX::field_gathering_noy;
             const int fg_noz = WarpX::field_gathering_noz;
+            amrex::Real const * r_stencil_coef_x = d_stencil_coef_x.data();
+            amrex::Real const * r_stencil_coef_y = d_stencil_coef_y.data();
+            amrex::Real const * r_stencil_coef_z = d_stencil_coef_z.data();
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp, fg_noy, fg_noz, d_stencil_coef_y.data(), d_stencil_coef_z.data());
-                warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp, fg_nox, fg_noz, d_stencil_coef_x.data(), d_stencil_coef_z.data());
-                warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp, fg_nox, fg_noy, d_stencil_coef_x.data(), d_stencil_coef_y.data());
-                warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp, fg_nox, d_stencil_coef_x.data());
-                warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp, fg_noy, d_stencil_coef_y.data());
-                warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp, fg_noz, d_stencil_coef_z.data());
+                warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp, fg_noy, fg_noz, r_stencil_coef_y, r_stencil_coef_z);
+                warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp, fg_nox, fg_noz, r_stencil_coef_x, r_stencil_coef_z);
+                warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp, fg_nox, fg_noy, r_stencil_coef_x, r_stencil_coef_y);
+                warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp, fg_nox, r_stencil_coef_x);
+                warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp, fg_noy, r_stencil_coef_y);
+                warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp, fg_noz, r_stencil_coef_z);
             });
 #endif
         } else { // FDTD

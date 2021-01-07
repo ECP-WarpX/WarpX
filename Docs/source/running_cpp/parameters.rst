@@ -107,10 +107,24 @@ Setting up the field mesh
 * ``amr.n_cell`` (`2 integers in 2D`, `3 integers in 3D`)
     The number of grid points along each direction (on the **coarsest level**)
 
-* ``amr.max_level`` (`integer`)
+* ``amr.max_level`` (`integer`, default: ``0``)
     When using mesh refinement, the number of refinement levels that will be used.
 
     Use 0 in order to disable mesh refinement.
+    Note: currently, ``0`` and ``1`` are supported.
+
+* ``amr.ref_ratio`` (`integer` per refined level, default: ``2``)
+    When using mesh refinement, this is the refinement ratio per level.
+    With this option, all directions are fined by the same ratio.
+
+    Note: in development; currently, ``2`` is supported.
+
+* ``amr.ref_ratio_vect`` (3 `integer`s for x,y,z per refined level)
+    When using mesh refinement, this can be used to set the refinement ratio per direction and level, relative to the previous level.
+
+    Example: for three levels, a value of ``2 2 4 8 8 16`` refines the first level by 2-fold in x and y and 4-fold in z compared to the coarsest level (level 0/mother grid); compared to the first level, the second level is refined 8-fold in x and y and 16-fold in z.
+
+    Note: in development; currently allowed value: ``2 2 2``.
 
 * ``geometry.is_periodic`` (`2 integers in 2D`, `3 integers in 3D`)
     Whether the boundary conditions are periodic, in each direction.
@@ -1317,10 +1331,9 @@ Numerics and algorithms
 
     The coefficients :math:`C`, :math:`S`, :math:`\theta`, :math:`\nu`, :math:`\chi_1`, :math:`\chi_2`, and :math:`\chi_3` are defined in (`Lehe et al, PRE 94, 2016 <https://doi.org/10.1103/PhysRevE.94.053305>`_).
 
-    The default value for ``psatd.update_with_rho`` is ``1`` if ``psatd.v_galilean`` is non-zero or
-    in RZ geometry and ``0`` otherwise.
+    The default value for ``psatd.update_with_rho`` is ``1`` if ``psatd.v_galilean`` is non-zero and ``0`` otherwise.
 
-    Note that ``psatd.update_with_rho=0`` is not supported in RZ geometry.
+    Note that the update with and without rho is also supported in RZ geometry.
 
 * ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
     Defines the galilean velocity.

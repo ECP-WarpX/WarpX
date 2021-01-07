@@ -22,7 +22,7 @@ WarpX depends on the following popular third party software.
 Please see installation instructions below.
 
 - a mature `C++14 <https://en.wikipedia.org/wiki/C%2B%2B14>`_ compiler: e.g. GCC 5, Clang 3.6 or newer
-- `CMake 3.14.0+ <https://cmake.org>`_
+- `CMake 3.15.0+ <https://cmake.org>`_
 - `AMReX <https://amrex-codes.github.io>`_: we automatically download and compile a copy of AMReX
 
 Optional dependencies include:
