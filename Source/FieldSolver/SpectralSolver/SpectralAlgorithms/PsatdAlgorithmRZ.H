@@ -19,7 +19,8 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         PsatdAlgorithmRZ(SpectralKSpaceRZ const & spectral_kspace,
                          amrex::DistributionMapping const & dm,
                          int const n_rz_azimuthal_modes, int const norder_z,
-                         bool const nodal, amrex::Real const dt_step);
+                         bool const nodal, amrex::Real const dt_step,
+                         bool const update_with_rho);
         // Redefine functions from base class
         virtual void pushSpectralFields(SpectralFieldDataRZ & f) override final;
         virtual int getRequiredNumberOfFields() const override final {
@@ -62,6 +63,7 @@ class PsatdAlgorithmRZ : public SpectralBaseAlgorithmRZ
         bool coefficients_initialized;
         // Note that dt is saved to use in InitializeSpectralCoefficients
         amrex::Real m_dt;
+        bool m_update_with_rho;
         SpectralRealCoefficients C_coef, S_ck_coef, X1_coef, X2_coef, X3_coef;
 };
 

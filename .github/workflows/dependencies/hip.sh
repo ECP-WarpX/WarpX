@@ -5,11 +5,6 @@
 # License: BSD-3-Clause-LBNL
 # Authors: Axel Huebl
 
-# search recursive inside a folder if a file contains tabs
-#
-# @result 0 if no files are found, else 1
-#
-
 set -eu -o pipefail
 
 # Ref.: https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html#ubuntu

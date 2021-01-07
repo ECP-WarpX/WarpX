@@ -26,7 +26,8 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveBPML (
     std::array< amrex::MultiFab*, 3 > Bfield,
     std::array< amrex::MultiFab*, 3 > const Efield,
-    amrex::Real const dt ) {
+    amrex::Real const dt,
+    const bool dive_cleaning) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
@@ -36,15 +37,15 @@ void FiniteDifferenceSolver::EvolveBPML (
 #else
     if (m_do_nodal) {
 
-        EvolveBPMLCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, dt );
+        EvolveBPMLCartesian <CartesianNodalAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        EvolveBPMLCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, dt );
+        EvolveBPMLCartesian <CartesianYeeAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveBPMLCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, dt );
+        EvolveBPMLCartesian <CartesianCKCAlgorithm> (Bfield, Efield, dt, dive_cleaning);
 
     } else {
         amrex::Abort("EvolveBPML: Unknown algorithm");
@@ -59,7 +60,8 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBPMLCartesian (
     std::array< amrex::MultiFab*, 3 > Bfield,
     std::array< amrex::MultiFab*, 3 > const Efield,
-    amrex::Real const dt ) {
+    amrex::Real const dt,
+    const bool dive_cleaning) {
 
     // Loop through the grids, and over the tiles within each grid
 #ifdef _OPENMP
@@ -92,36 +94,66 @@ void FiniteDifferenceSolver::EvolveBPMLCartesian (
         amrex::ParallelFor(tbx, tby, tbz,
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+                amrex::Real UpwardDz_Ey_yy = 0._rt;
+                amrex::Real UpwardDy_Ez_zz = 0._rt;
+                if (dive_cleaning)
+                {
+                    UpwardDz_Ey_yy = T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k, PMLComp::yy);
+                    UpwardDy_Ez_zz = T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k, PMLComp::zz);
+                }
+
                 Bx(i, j, k, PMLComp::xz) += dt * (
                     T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k, PMLComp::yx)
-                  + T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k, PMLComp::yy)
-                  + T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k, PMLComp::yz) );
+                  + T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k, PMLComp::yz)
+                  + UpwardDz_Ey_yy);
+
                 Bx(i, j, k, PMLComp::xy) -= dt * (
                     T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k, PMLComp::zx)
                   + T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k, PMLComp::zy)
-                  + T_Algo::UpwardDy(Ez, coefs_y, n_coefs_y, i, j, k, PMLComp::zz) );
+                  + UpwardDy_Ez_zz);
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+                amrex::Real UpwardDx_Ez_zz = 0._rt;
+                amrex::Real UpwardDz_Ex_xx = 0._rt;
+                if (dive_cleaning)
+                {
+                    UpwardDx_Ez_zz = T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k, PMLComp::zz);
+                    UpwardDz_Ex_xx = T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k, PMLComp::xx);
+                }
+
                 By(i, j, k, PMLComp::yx) += dt * (
                     T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k, PMLComp::zx)
                   + T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k, PMLComp::zy)
-                  + T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k, PMLComp::zz) );
+                  + UpwardDx_Ez_zz);
+
                 By(i, j, k, PMLComp::yz) -= dt * (
-                    T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k, PMLComp::xx)
+                    UpwardDz_Ex_xx
                   + T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k, PMLComp::xy)
-                  + T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k, PMLComp::xz) );
+                  + T_Algo::UpwardDz(Ex, coefs_z, n_coefs_z, i, j, k, PMLComp::xz));
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
+
+                amrex::Real UpwardDy_Ex_xx = 0._rt;
+                amrex::Real UpwardDx_Ey_yy = 0._rt;
+                if (dive_cleaning)
+                {
+                    UpwardDy_Ex_xx = T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k, PMLComp::xx);
+                    UpwardDx_Ey_yy = T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k, PMLComp::yy);
+                }
+
                 Bz(i, j, k, PMLComp::zy) += dt * (
-                    T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k, PMLComp::xx)
+                    UpwardDy_Ex_xx
                   + T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k, PMLComp::xy)
                   + T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k, PMLComp::xz) );
+
                 Bz(i, j, k, PMLComp::zx) -= dt * (
                     T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k, PMLComp::yx)
-                  + T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k, PMLComp::yy)
-                  + T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k, PMLComp::yz) );
+                  + T_Algo::UpwardDx(Ey, coefs_x, n_coefs_x, i, j, k, PMLComp::yz)
+                  + UpwardDx_Ey_yy);
             }
 
         );

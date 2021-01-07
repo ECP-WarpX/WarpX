@@ -11,7 +11,6 @@
  */
 #include "MultiParticleContainer.H"
 #include "SpeciesPhysicalProperties.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
 #ifdef WARPX_QED
     #include "Particles/ElementaryProcess/QEDInternals/SchwingerProcessWrapper.H"
@@ -71,13 +70,8 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
         }
     }
 
-    // collision
-    auto const ncollisions = collision_names.size();
-    allcollisions.resize(ncollisions);
-    for (int i = 0; i < static_cast<int>(ncollisions); ++i) {
-        allcollisions[i] =
-            std::make_unique<CollisionType>(species_names, collision_names[i]);
-    }
+    // Setup particle collisions
+    collisionhandler = std::make_unique<CollisionHandler>();
 
 }
 
@@ -240,10 +234,6 @@ MultiParticleContainer::ReadParameters ()
                     species_types[i] = PCTypes::Photon;
                 }
             }
-
-            // binary collisions
-            ParmParse pc("collisions");
-            pc.queryarr("collision_names", collision_names);
 
         }
         pp.query("use_fdtd_nci_corr", WarpX::use_fdtd_nci_corr);
@@ -730,42 +720,10 @@ MultiParticleContainer::doFieldIonization (int lev,
 }
 
 void
-MultiParticleContainer::doCoulombCollisions ( Real cur_time )
+MultiParticleContainer::doCollisions ( Real cur_time )
 {
-    WARPX_PROFILE("MultiParticleContainer::doCoulombCollisions()");
-
-    for( auto const& collision : allcollisions )
-    {
-
-        const Real dt = WarpX::GetInstance().getdt(0);
-        if ( int(std::floor(cur_time/dt)) % collision->m_ndt != 0 ) continue;
-
-        auto& species1 = allcontainers[ collision->m_species1_index ];
-        auto& species2 = allcontainers[ collision->m_species2_index ];
-
-        // Enable tiling
-        MFItInfo info;
-        if (Gpu::notInLaunchRegion()) info.EnableTiling(species1->tile_size);
-
-        // Loop over refinement levels
-        for (int lev = 0; lev <= species1->finestLevel(); ++lev){
-
-            // Loop over all grids/tiles at this level
-#ifdef _OPENMP
-            info.SetDynamic(true);
-#pragma omp parallel if (Gpu::notInLaunchRegion())
-#endif
-            for (MFIter mfi = species1->MakeMFIter(lev, info); mfi.isValid(); ++mfi){
-
-                CollisionType::doCoulombCollisionsWithinTile
-                    ( lev, mfi, species1, species2,
-                      collision->m_isSameSpecies,
-                      collision->m_CoulombLog,
-                      collision->m_ndt );
-
-            }
-        }
-    }
+    WARPX_PROFILE("MultiParticleContainer::doCollisions()");
+    collisionhandler->doCollisions(cur_time, this);
 }
 
 void MultiParticleContainer::doResampling (const int timestep)
