@@ -304,6 +304,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         }
 #endif
 
+        pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
+
         RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                          particle_diags[i].m_random_fraction);
         UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
@@ -324,15 +326,14 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
                 * parser_filter(p, engine) * geometry_filter(p, engine);
         }, true);
 
-        // Convert momentum to SI
-        tmp.ConvertUnits(ConvertDirection::WarpX_to_SI);
-
         // real_names contains a list of all particle attributes.
         // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
         tmp.WritePlotFile(
             dir, particle_diags[i].getSpeciesName(),
             particle_diags[i].plot_flags, int_flags,
             real_names, int_names);
+
+        pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
     }
 }
 
