@@ -1,22 +1,24 @@
-Simple example of Langmuir oscillations in a uniform plasma.
+# Examples of Langmuir oscillations in a uniform plasma in 3-D, 2-D, and RZ
 
-To see an example of how to use the level 0 dynamic load balancing, follow the following steps
-in this directory.
+In each case, a uniform plasma is setup with a sinusoidal perturbation in the
+electron momentum along each axis. The plasma is followed for a short period
+of time, long enough so that E fields develop. The resulting fields can be
+compared to the analytic solutions.
 
-1) Build an MPI-enabled executable.
+# Input files (for C++ version)
 
-2) Run with 4 processes using inputs.lb
-   mv plt00010 to plt00010.lb
+    inputs_2d_multi_rt
+    inputs_2d_multi_rz_rt
+    inputs_3d_multi_rt
 
-3) Run with 4 processes using inputs.nolb
-   mv plt00010 to plt00010.nolb
+# Input files (for Python version)
 
-4) amrvis3d plt00010.lb plt00010.nolb
-   set the field to "part_per_cell"
+    PICMI_inputs_langmuir2d.py
+    PICMI_inputs_langmuir_rz_multimode_analyze.py
 
-You should see the effect of load balancing based of the number of particles.
+# The analysis scripts to check the results
 
-In the nolb case, there are 4484 particles per process on two of the processes, and 644 on the other two.
-
-In the   lb case, there are 2916, 2852, 2244, and 2244 particles per process.
+    analysis_langmuir_multi.py
+    analysis_langmuir_multi_2d.py
+    analysis_langmuir_multi_rz.py
 
