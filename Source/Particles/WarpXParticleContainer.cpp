@@ -484,7 +484,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     // On GPU: Particles deposit directly on the rho arrays,
     // which usually have a larger number of guard cells
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        amrex::numParticlesOutOfRange(pti, rho->nGrow().min() - shape_extent) == 0,
+        amrex::numParticlesOutOfRange(pti, rho->nGrowVect().min() - shape_extent) == 0,
         "Particles shape does not fit within guard cells used for charge deposition");
 #endif
 
