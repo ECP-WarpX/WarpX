@@ -533,7 +533,7 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     // which have a small number of guard cells
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, ng_rho[1] - shape_extent) == 0,
-        "Particles shape along y does not fit within guard cells used for local charge deposition");
+        "Particles shape along y does not fit within tile used for local charge deposition");
 #else
     // On GPU: Particles deposit directly on the rho arrays,
     // which usually have a larger number of guard cells
@@ -551,13 +551,13 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     // which have a small number of guard cells
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
         amrex::numParticlesOutOfRange(pti, ng_rho[zdir] - shape_extent) == 0,
-        "Particles shape along z does not fit within guard cells used for local charge deposition");
+        "Particles shape along z does not fit within tile used for local charge deposition");
 #else
     // On GPU: Particles deposit directly on the rho arrays,
     // which usually have a larger number of guard cells
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        amrex::numParticlesOutOfRange(pti, ng_rho[zdir] - shape_extent) == 0,
-        "Particles shape along z does not fit within guard cells used for local charge deposition");
+        amrex::numParticlesOutOfRange(pti, rho->nGrowVect()[zdir] - shape_extent) == 0,
+        "Particles shape along z does not fit within guard cells used for charge deposition");
 #endif
 
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
