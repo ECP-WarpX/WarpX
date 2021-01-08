@@ -5,7 +5,7 @@
  * License: BSD-3-Clause-LBNL
  */
 #include <AMReX_AmrCore.H>
-#include <AMREX_REAL.H>
+#include <AMReX_REAL.H>
 
 #ifndef WARPX_GODFREY_COEFF_TABLE_H_
 #define WARPX_GODFREY_COEFF_TABLE_H_
