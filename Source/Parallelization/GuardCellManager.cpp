@@ -92,7 +92,11 @@ guardCellManager::Init (
     ng_alloc_J = IntVect(ngJx,ngJz);
 #endif
 
-    ng_alloc_Rho = ng_alloc_J;
+    // TODO Adding one cell for rho should not be necessary, given that the number of guard cells
+    // now takes into account the time step (see code block below). However, this does seem to be
+    // necessary in order to avoid some remaining instances of out-of-bound array access in
+    // simulations with large time steps (revealed by building WarpX with BOUND_CHECK = TRUE).
+    ng_alloc_Rho = ng_alloc_J+1;
 
     // Electromagnetic simulations: account for change in particle positions within half a time step
     // for current deposition and within one time step for charge deposition (since rho is needed
