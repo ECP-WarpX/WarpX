@@ -34,7 +34,7 @@ FlushFormatPlotfile::WriteToFile (
     amrex::WriteMultiLevelPlotfile(filename, nlev,
                                    amrex::GetVecOfConstPtrs(mf),
                                    varnames, geom,
-                                   time, iteration, warpx.refRatio(),
+                                   static_cast<Real>(time), iteration, warpx.refRatio(),
                                    "HyperCLaw-V1.1",
                                    "Level_",
                                    "Cell",

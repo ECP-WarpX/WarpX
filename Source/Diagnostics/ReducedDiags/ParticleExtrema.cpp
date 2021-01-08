@@ -147,7 +147,7 @@ void ParticleExtrema::ComputeDiags (int step)
     const auto species_names = mypc.GetSpeciesNames();
 
     // inverse of speed of light squared
-    Real constexpr inv_c2 = 1.0 / (PhysConst::c * PhysConst::c);
+    Real constexpr inv_c2 = 1.0_rt / (PhysConst::c * PhysConst::c);
 
     // If 2D-XZ, p.pos(1) is z, rather than p.pos(2).
 #if (defined WARPX_DIM_3D)
@@ -299,7 +299,7 @@ void ParticleExtrema::ComputeDiags (int step)
                 Real uy = p.rdata(PIdx::uy);
                 Real uz = p.rdata(PIdx::uz);
                 Real us = ux*ux + uy*uy + uz*uz;
-                return std::sqrt(1.0 + us*inv_c2);
+                return std::sqrt(1.0_rt + us*inv_c2);
             });
         }
         ParallelDescriptor::ReduceRealMin(gmin);
@@ -324,7 +324,7 @@ void ParticleExtrema::ComputeDiags (int step)
                 Real uy = p.rdata(PIdx::uy);
                 Real uz = p.rdata(PIdx::uz);
                 Real us = ux*ux + uy*uy + uz*uz;
-                return std::sqrt(1.0 + us*inv_c2);
+                return std::sqrt(1.0_rt + us*inv_c2);
             });
         }
         ParallelDescriptor::ReduceRealMax(gmax);
