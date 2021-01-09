@@ -547,7 +547,7 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
                         WarpX::do_back_transformed_particles);
 
     m_inv_gamma_boost_ = 1.0_rt / m_gamma_boost_;
-    m_beta_boost_ = std::sqrt(1.0_rt - m_inv_gamma_boost_*m_inv_gamma_boost_;
+    m_beta_boost_ = std::sqrt(1.0_rt - m_inv_gamma_boost_*m_inv_gamma_boost_);
     m_inv_beta_boost_ = 1.0_rt / m_beta_boost_;
 
     m_dz_lab_ = PhysConst::c * m_dt_boost_ * m_inv_beta_boost_ * m_inv_gamma_boost_;
