@@ -8,7 +8,7 @@
 #include "Utils/NCIGodfreyTables.H"
 #include "WarpX.H"
 
-#include <AMReX_REAL>
+#include <AMReX_REAL.H>
 
 #ifdef _OPENMP
 #   include <omp.h>

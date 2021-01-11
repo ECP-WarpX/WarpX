@@ -8,7 +8,7 @@
 #include "BilinearFilter.H"
 #include "WarpX.H"
 
-#inclucde <AMReX_REAL>
+#include <AMReX_REAL.H>
 
 #ifdef _OPENMP
 #   include <omp.h>
