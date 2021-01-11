@@ -4,7 +4,7 @@
     #include <stdlib.h>
     #include <math.h>
     #include "wp_parser_y.h"
-    int yylex (void);
+    int wxparserlex (void);
 %}
 
 /* We do not need to make this reentrant safe, because we use flex and
@@ -12,6 +12,7 @@
    thread safe.
 */
 /*%define api.pure full */
+%define api.prefix {wxparser}
 
 /* This is the type returned by functions wp_new* declared in
    wp_parser_y.h.  See also bison rules at the end of this file.
