@@ -12,6 +12,7 @@
 #include "ParticleExtrema.H"
 #include "FieldEnergy.H"
 #include "FieldMaximum.H"
+#include "RhoMaximum.H"
 #include "ParticleNumber.H"
 #include "MultiReducedDiags.H"
 
@@ -61,6 +62,11 @@ MultiReducedDiags::MultiReducedDiags ()
         {
             m_multi_rd[i_rd] =
                 std::make_unique<FieldMaximum>(m_rd_names[i_rd]);
+        }
+        else if (rd_type.compare("RhoMaximum") == 0)
+        {
+            m_multi_rd[i_rd] =
+                std::make_unique<RhoMaximum>(m_rd_names[i_rd]);
         }
         else if (rd_type.compare("BeamRelevant") == 0)
         {

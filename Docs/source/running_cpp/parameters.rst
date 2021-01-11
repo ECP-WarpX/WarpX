@@ -1731,6 +1731,19 @@ Reduced Diagnostics
         Note that the fields are averaged on the cell centers before their maximum values are
         computed.
 
+    * ``RhoMaximum``
+        This type computes the maximum and minimum values of the total charge density as well as
+        the maximum absolute value of the charge density of each charged species.
+        Please be aware that measuring maximum charge densities might be very noisy in PIC simulations.
+
+        The output columns are
+        the maximum value of the :math:`rho` field,
+        the minimum value of the :math:`rho` field,
+        the maximum value of the absolute :math:`|rho|` field of each charged species.
+
+        Note that the charge densities are averaged on the cell centers before their maximum values
+        are computed.
+
     * ``ParticleNumber``
         This type computes the total number of macroparticles and of physical particles (i.e. the
         sum of their weights) in the whole simulation domain (for each species and summed over all

@@ -71,13 +71,15 @@ photons.uz_th = 0.2
 #################################
 ###### REDUCED DIAGS ############
 #################################
-warpx.reduced_diags_names = EP NP EF MF
+warpx.reduced_diags_names = EP NP EF MF MR
 EP.type = ParticleEnergy
 EP.frequency = 200
 EF.type = FieldEnergy
 EF.frequency = 200
 MF.type = FieldMaximum
 MF.frequency = 200
+MR.type = RhoMaximum
+MR.frequency = 200
 NP.type = ParticleNumber
 NP.frequency = 200
 
@@ -85,3 +87,4 @@ NP.frequency = 200
 diagnostics.diags_names = diag1
 diag1.period = 200
 diag1.diag_type = Full
+diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_protons

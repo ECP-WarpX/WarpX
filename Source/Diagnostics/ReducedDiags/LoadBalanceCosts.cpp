@@ -23,7 +23,7 @@ LoadBalanceCosts::LoadBalanceCosts (std::string rd_name)
 // function that gathers costs
 void LoadBalanceCosts::ComputeDiags (int step)
 {
-    // get WarpX class object
+    // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
 
     const amrex::LayoutData<amrex::Real>* cost = warpx.getCosts(0);
@@ -50,8 +50,8 @@ void LoadBalanceCosts::ComputeDiags (int step)
     const size_t dataSize =
         static_cast<size_t>(m_nDataFields)*
         static_cast<size_t>(nBoxes);
-    m_data.resize(dataSize, 0.0);
-    m_data.assign(dataSize, 0.0);
+    m_data.resize(dataSize, 0.0_rt);
+    m_data.assign(dataSize, 0.0_rt);
 
     // read in WarpX costs to local copy; compute if using `Heuristic` update
     amrex::Vector<std::unique_ptr<amrex::LayoutData<amrex::Real> > > costs;
@@ -218,7 +218,7 @@ void LoadBalanceCosts::WriteToFile (int step) const
     ofs.close();
 
 
-    // get WarpX class object
+    // get a reference to WarpX instance
     auto& warpx = WarpX::GetInstance();
 
     if (!ParallelDescriptor::IOProcessor()) return;

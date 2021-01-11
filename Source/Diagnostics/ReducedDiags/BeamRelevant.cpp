@@ -37,7 +37,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
     //       13: rms gamma
     // 14,15,16: emittance x,y,z
     //       17: charge
-    m_data.resize(18,0.0);
+    m_data.resize(18, 0.0_rt);
 #elif (defined WARPX_DIM_XZ)
     //     0, 1: mean x,z
     //  2, 3, 4: mean px,py,pz
@@ -47,7 +47,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
     //       11: rms gamma
     //    12,13: emittance x,z
     //       14: charge
-    m_data.resize(15,0.0);
+    m_data.resize(15, 0.0_rt);
 #endif
 
     if (ParallelDescriptor::IOProcessor())
@@ -55,8 +55,7 @@ BeamRelevant::BeamRelevant (std::string rd_name)
         if ( m_IsNotRestart )
         {
             // open file
-            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app};
+            std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
 #if (defined WARPX_DIM_3D || defined WARPX_DIM_RZ)
             ofs << "#";
@@ -161,7 +160,7 @@ void BeamRelevant::ComputeDiags (int step)
         if (w_sum < std::numeric_limits<Real>::min() )
         {
             for (int i = 0; i < static_cast<int>(m_data.size()); ++i){
-                m_data[i] = 0.0;
+                m_data[i] = 0.0_rt;
             }
             return;
         }
