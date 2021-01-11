@@ -285,6 +285,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Bxa,
                                amrex::Array4<amrex::Real const> const& Bxf)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
     Bxa(j,k,0) = 0.5:rt*(Bxf(j,k-1,0) + Bxf(j,k,0));
     amrex::ignore_unused(l);
@@ -305,6 +306,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
                                amrex::Real const* stencil_coef_y,
                                amrex::Real const* stencil_coef_z)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
     amrex::ignore_unused(noy);
     amrex::ignore_unused(stencil_coef_y);
@@ -334,6 +336,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Bya,
                                amrex::Array4<amrex::Real const> const& Byf)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
     Bya(j,k,0) = 0.25_rt*(Byf(j,k,0) + Byf(j-1,k,0) + Byf(j,k-1,0) + Byf(j-1,k-1,0));
     amrex::ignore_unused(l);
@@ -354,6 +357,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
                                amrex::Real const* stencil_coef_x,
                                amrex::Real const* stencil_coef_z)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
     amrex::Real res = 0.;
     for     (int nz = 1; nz < noz/2+1; nz++) {
@@ -385,6 +389,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Bza,
                                amrex::Array4<amrex::Real const> const& Bzf)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
     Bza(j,k,0) = 0.5_rt*(Bzf(j-1,k,0) + Bzf(j,k,0));
     amrex::ignore_unused(l);
@@ -405,6 +410,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
                                amrex::Real const* stencil_coef_x,
                                amrex::Real const* stencil_coef_y)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
     amrex::ignore_unused(noy);
     amrex::ignore_unused(stencil_coef_y);
