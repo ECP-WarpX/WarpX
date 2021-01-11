@@ -391,8 +391,9 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
 #else
                 amrex::Real zcell = static_cast<amrex::Real>(j + nz_guard);
 #endif
-                amrex::Real phase = MathConst::pi*zcell/nz_guard;
-                amrex::Real damp_factor = std::pow(std::sin(phase), 2);
+                const amrex::Real phase = MathConst::pi*zcell/nz_guard;
+                const amrex::Real sin_phase = std::sin(phase);
+                const amrex::Real damp_factor = sin_phase*sin_phase;
 
                 Ex_arr(i,j,k,icomp) *= damp_factor;
                 Ey_arr(i,j,k,icomp) *= damp_factor;
@@ -420,8 +421,9 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
 #else
                 amrex::Real zcell = static_cast<amrex::Real>(nz_tile - j);
 #endif
-                amrex::Real phase = MathConst::pi*zcell/nz_guard;
-                amrex::Real damp_factor = std::pow(std::sin(phase), 2);
+                const amrex::Real phase = MathConst::pi*zcell/nz_guard;
+                const amrex::Real sin_phase = std::sin(phase);
+                const amrex::Real damp_factor = sin_phase*sin_phase;
 
                 Ex_arr(i,j,k,icomp) *= damp_factor;
                 Ey_arr(i,j,k,icomp) *= damp_factor;
