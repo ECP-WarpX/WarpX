@@ -31,7 +31,8 @@ SpectralSolverRZ::SpectralSolverRZ (amrex::BoxArray const & realspace_ba,
                                     int const norder_z, bool const nodal,
                                     const amrex::Array<amrex::Real,3>& v_galilean,
                                     amrex::RealVect const dx, amrex::Real const dt,
-                                    int const lev)
+                                    int const lev,
+                                    bool const update_with_rho)
     : k_space(realspace_ba, dm, dx)
 {
     // Initialize all structures using the same distribution mapping dm
@@ -46,11 +47,11 @@ SpectralSolverRZ::SpectralSolverRZ (amrex::BoxArray const & realspace_ba,
     if (v_galilean[2] == 0) {
          // v_galilean is 0: use standard PSATD algorithm
         algorithm = std::make_unique<PsatdAlgorithmRZ>(
-            k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, dt);
+            k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, dt, update_with_rho);
     } else {
         // Otherwise: use the Galilean algorithm
         algorithm = std::make_unique<GalileanPsatdAlgorithmRZ>(
-            k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, v_galilean, dt);
+            k_space, dm, n_rz_azimuthal_modes, norder_z, nodal, v_galilean, dt, update_with_rho);
     }
 
     // - Initialize arrays for fields in spectral space + FFT plans
