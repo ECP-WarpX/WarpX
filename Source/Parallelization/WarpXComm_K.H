@@ -287,7 +287,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
 {
     using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
-    Bxa(j,k,0) = 0.5:rt*(Bxf(j,k-1,0) + Bxf(j,k,0));
+    Bxa(j,k,0) = 0.5_rt*(Bxf(j,k-1,0) + Bxf(j,k,0));
     amrex::ignore_unused(l);
 #else
     Bxa(j,k,l) = 0.25_rt*(Bxf(j,k-1,l-1) + Bxf(j,k,l-1) + Bxf(j,k-1,l) + Bxf(j,k,l));
