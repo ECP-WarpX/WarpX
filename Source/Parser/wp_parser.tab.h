@@ -34,20 +34,28 @@
 /* Undocumented macros, especially those whose name start with YY_,
    are private implementation details.  Do not rely on them.  */
 
-#ifndef YY_YY_WP_PARSER_TAB_H_INCLUDED
-# define YY_YY_WP_PARSER_TAB_H_INCLUDED
+#ifndef YY_WXPARSER_WP_PARSER_TAB_H_INCLUDED
+# define YY_WXPARSER_WP_PARSER_TAB_H_INCLUDED
 /* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
+#ifndef WXPARSERDEBUG
+# if defined YYDEBUG
 #if YYDEBUG
-extern int yydebug;
+#   define WXPARSERDEBUG 1
+#  else
+#   define WXPARSERDEBUG 0
+#  endif
+# else /* ! defined YYDEBUG */
+#  define WXPARSERDEBUG 0
+# endif /* ! defined YYDEBUG */
+#endif  /* ! defined WXPARSERDEBUG */
+#if WXPARSERDEBUG
+extern int wxparserdebug;
 #endif
 
 /* Token type.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
+#ifndef WXPARSERTOKENTYPE
+# define WXPARSERTOKENTYPE
+  enum wxparsertokentype
   {
     NODE = 258,
     NUMBER = 259,
@@ -68,8 +76,8 @@ extern int yydebug;
 #endif
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-union YYSTYPE
+#if ! defined WXPARSERSTYPE && ! defined WXPARSERSTYPE_IS_DECLARED
+union WXPARSERSTYPE
 {
 
     struct wp_node* n;
@@ -80,14 +88,14 @@ union YYSTYPE
 
 
 };
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+typedef union WXPARSERSTYPE WXPARSERSTYPE;
+# define WXPARSERSTYPE_IS_TRIVIAL 1
+# define WXPARSERSTYPE_IS_DECLARED 1
 #endif
 
 
-extern YYSTYPE yylval;
+extern WXPARSERSTYPE wxparserlval;
 
-int yyparse (void);
+int wxparserparse (void);
 
-#endif /* !YY_YY_WP_PARSER_TAB_H_INCLUDED  */
+#endif /* !YY_WXPARSER_WP_PARSER_TAB_H_INCLUDED  */

@@ -1060,128 +1060,128 @@ case 9:
 case 10:
 case 11:
 YY_RULE_SETUP
-{ return yytext[0]; } /* simply pass through */
+{ return wxparsertext[0]; } /* simply pass through */
 	YY_BREAK
-/* yylval is union type defined in wp_parser.tab.h that is generated
+/* wxparserlval is union type defined in wp_parser.tab.h that is generated
   * by bison with wp_parser.y */
 case 12:
 YY_RULE_SETUP
-{ yylval.f1 = WP_SQRT;      return F1; }
+{ wxparserlval.f1 = WP_SQRT;      return F1; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-{ yylval.f1 = WP_EXP;       return F1; }
+{ wxparserlval.f1 = WP_EXP;       return F1; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-{ yylval.f1 = WP_LOG;       return F1; }
+{ wxparserlval.f1 = WP_LOG;       return F1; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-{ yylval.f1 = WP_LOG10;     return F1; }
+{ wxparserlval.f1 = WP_LOG10;     return F1; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-{ yylval.f1 = WP_SIN;       return F1; }
+{ wxparserlval.f1 = WP_SIN;       return F1; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-{ yylval.f1 = WP_COS;       return F1; }
+{ wxparserlval.f1 = WP_COS;       return F1; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-{ yylval.f1 = WP_TAN;       return F1; }
+{ wxparserlval.f1 = WP_TAN;       return F1; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-{ yylval.f1 = WP_ASIN;      return F1; }
+{ wxparserlval.f1 = WP_ASIN;      return F1; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-{ yylval.f1 = WP_ACOS;      return F1; }
+{ wxparserlval.f1 = WP_ACOS;      return F1; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-{ yylval.f1 = WP_ATAN;      return F1; }
+{ wxparserlval.f1 = WP_ATAN;      return F1; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-{ yylval.f1 = WP_SINH;      return F1; }
+{ wxparserlval.f1 = WP_SINH;      return F1; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-{ yylval.f1 = WP_COSH;      return F1; }
+{ wxparserlval.f1 = WP_COSH;      return F1; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-{ yylval.f1 = WP_TANH;      return F1; }
+{ wxparserlval.f1 = WP_TANH;      return F1; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-{ yylval.f1 = WP_ABS;       return F1; }
+{ wxparserlval.f1 = WP_ABS;       return F1; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-{ yylval.f1 = WP_ABS;       return F1; }
+{ wxparserlval.f1 = WP_ABS;       return F1; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-{ yylval.f2 = WP_POW;       return POW;}
+{ wxparserlval.f2 = WP_POW;       return POW;}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-{ yylval.f2 = WP_POW;       return POW;}
+{ wxparserlval.f2 = WP_POW;       return POW;}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-{ yylval.f2 = WP_GEQ;       return GEQ;}
+{ wxparserlval.f2 = WP_GEQ;       return GEQ;}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-{ yylval.f2 = WP_LEQ;       return LEQ;}
+{ wxparserlval.f2 = WP_LEQ;       return LEQ;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-{ yylval.f2 = WP_EQ;        return EQ;}
+{ wxparserlval.f2 = WP_EQ;        return EQ;}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-{ yylval.f2 = WP_NEQ;       return NEQ;}
+{ wxparserlval.f2 = WP_NEQ;       return NEQ;}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-{ yylval.f2 = WP_AND;       return AND;}
+{ wxparserlval.f2 = WP_AND;       return AND;}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-{ yylval.f2 = WP_OR;        return OR;}
+{ wxparserlval.f2 = WP_OR;        return OR;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-{ yylval.f2 = WP_POW;       return F2; }
+{ wxparserlval.f2 = WP_POW;       return F2; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-{ yylval.f2 = WP_HEAVISIDE; return F2; }
+{ wxparserlval.f2 = WP_HEAVISIDE; return F2; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-{ yylval.f2 = WP_MIN;       return F2; }
+{ wxparserlval.f2 = WP_MIN;       return F2; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-{ yylval.f2 = WP_MAX;       return F2; }
+{ wxparserlval.f2 = WP_MAX;       return F2; }
 	YY_BREAK
 /* We use SYMBOL to hold variables and constants */
 case 39:
 YY_RULE_SETUP
-{ yylval.s = wp_makesymbol(yytext); return SYMBOL; }
+{ wxparserlval.s = wp_makesymbol(wxparsertext); return SYMBOL; }
 	YY_BREAK
 /* Number */
 case 40:
 case 41:
 YY_RULE_SETUP
-{ yylval.d = atof(yytext);   return NUMBER; }
+{ wxparserlval.d = atof(wxparsertext);   return NUMBER; }
 	YY_BREAK
 /* Special characters */
 case 42:
@@ -1205,7 +1205,7 @@ YY_RULE_SETUP
 /* everything else */
 case 46:
 YY_RULE_SETUP
-{ yyerror("Unknown character %c\n", *yytext); }
+{ wxparsererror("Unknown character %c\n", *wxparsertext); }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
