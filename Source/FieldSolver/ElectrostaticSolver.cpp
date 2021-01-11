@@ -8,7 +8,7 @@
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_MLMG.H>
 #include <AMReX_MLNodeTensorLaplacian.H>
-#include <AMReX_REAL>
+#include <AMReX_REAL.H>
 
 #include <WarpX.H>
 
