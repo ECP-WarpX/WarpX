@@ -74,12 +74,12 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
     using namespace amrex;
 
     int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0 : 0.5;
-    Real owx = 1.0-wx;
+    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    Real owx = 1.0_rt-wx;
 
     int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0 : 0.5;
-    Real owy = 1.0-wy;
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
 
 #if (AMREX_SPACEDIM == 2)
 
@@ -90,20 +90,20 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
         +      wx *  wy * Bxg(jg+1,kg+1,0);
 
     // interp from coarse staggered to fine nodal
-    wy = 0.5-wy;  owy = 1.0-wy;
+    wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
     Real bc = owx * owy * Bxc(jg  ,kg  ,0)
         +     owx *  wy * Bxc(jg  ,kg-1,0)
         +      wx * owy * Bxc(jg+1,kg  ,0)
         +      wx *  wy * Bxc(jg+1,kg-1,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = 0.5*(Bxf(j,k-1,0) + Bxf(j,k,0));
+    Real bf = 0.5_rt*(Bxf(j,k-1,0) + Bxf(j,k,0));
 
 #else
 
     int lg = amrex::coarsen(l,2);
-    Real wz = (l == lg*2) ? 0.0 : 0.5;
-    Real owz = 1.0-wz;
+    Real wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
+    Real owz = 1.0_rt-wz;
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * owy * owz * Bxg(jg  ,kg  ,lg  )
@@ -116,8 +116,8 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
         +      wx *  wy *  wz * Bxg(jg+1,kg+1,lg+1);
 
     // interp from coarse staggered to fine nodal
-    wy = 0.5-wy;  owy = 1.0-wy;
-    wz = 0.5-wz;  owz = 1.0-wz;
+    wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
+    wz = 0.5_rt-wz;  owz = 1.0_rt-wz;
     Real bc = owx * owy * owz * Bxc(jg  ,kg  ,lg  )
         +      wx * owy * owz * Bxc(jg+1,kg  ,lg  )
         +     owx *  wy * owz * Bxc(jg  ,kg-1,lg  )
@@ -144,12 +144,12 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
     using namespace amrex;
 
     int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0 : 0.5;
-    Real owx = 1.0-wx;
+    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    Real owx = 1.0_rt-wx;
 
     int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0 : 0.5;
-    Real owy = 1.0-wy;
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
 
 #if (AMREX_SPACEDIM == 2)
 
@@ -160,21 +160,21 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
         +      wx *  wy * Byg(jg+1,kg+1,0);
 
     // interp from coarse stagged (cell-centered for By) to fine nodal
-    wx = 0.5-wx;  owx = 1.0-wx;
-    wy = 0.5-wy;  owy = 1.0-wy;
+    wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
+    wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
     Real bc = owx * owy * Byc(jg  ,kg  ,0)
         +     owx *  wy * Byc(jg  ,kg-1,0)
         +      wx * owy * Byc(jg-1,kg  ,0)
         +      wx *  wy * Byc(jg-1,kg-1,0);
 
     // interp form fine stagger (cell-centered for By) to fine nodal
-    Real bf = 0.25*(Byf(j,k,0) + Byf(j-1,k,0) + Byf(j,k-1,0) + Byf(j-1,k-1,0));
+    Real bf = 0.25_rt*(Byf(j,k,0) + Byf(j-1,k,0) + Byf(j,k-1,0) + Byf(j-1,k-1,0));
 
 #else
 
     int lg = amrex::coarsen(l,2);
-    Real wz = (l == lg*2) ? 0.0 : 0.5;
-    Real owz = 1.0-wz;
+    Real wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
+    Real owz = 1.0_rt-wz;
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * owy * owz * Byg(jg  ,kg  ,lg  )
@@ -187,8 +187,8 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
         +      wx *  wy *  wz * Byg(jg+1,kg+1,lg+1);
 
     // interp from coarse staggered to fine nodal
-    wx = 0.5-wx;  owx = 1.0-wx;
-    wz = 0.5-wz;  owz = 1.0-wz;
+    wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
+    wz = 0.5_rt-wz;  owz = 1.0_rt-wz;
     Real bc = owx * owy * owz * Byc(jg  ,kg  ,lg  )
         +      wx * owy * owz * Byc(jg-1,kg  ,lg  )
         +     owx *  wy * owz * Byc(jg  ,kg+1,lg  )
@@ -199,7 +199,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
         +      wx *  wy *  wz * Byc(jg-1,kg+1,lg-1);
 
     // interp from fine stagged to fine nodal
-    Real bf = 0.25*(Byf(j-1,k,l-1) + Byf(j,k,l-1) + Byf(j-1,k,l) + Byf(j,k,l));
+    Real bf = 0.25_rt*(Byf(j-1,k,l-1) + Byf(j,k,l-1) + Byf(j-1,k,l) + Byf(j,k,l));
 
 #endif
 
@@ -216,12 +216,12 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
     using namespace amrex;
 
     int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0 : 0.5;
-    Real owx = 1.0-wx;
+    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    Real owx = 1.0_rt-wx;
 
     int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0 : 0.5;
-    Real owy = 1.0-wy;
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
 
 #if (AMREX_SPACEDIM == 2)
 
@@ -232,20 +232,20 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
         +      wx *  wy * Bzg(jg+1,kg+1,0);
 
     // interp from coarse staggered to fine nodal
-    wx = 0.5-wx;  owx = 1.0-wx;
+    wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
     Real bc = owx * owy * Bzc(jg  ,kg  ,0)
         +     owx *  wy * Bzc(jg  ,kg+1,0)
         +      wx * owy * Bzc(jg-1,kg  ,0)
         +      wx *  wy * Bzc(jg-1,kg+1,0);
 
     // interp from fine staggered to fine nodal
-    Real bf = 0.5*(Bzf(j-1,k,0) + Bzf(j,k,0));
+    Real bf = 0.5_rt*(Bzf(j-1,k,0) + Bzf(j,k,0));
 
 #else
 
     int lg = amrex::coarsen(l,2);
-    Real wz = (l == lg*2) ? 0.0 : 0.5;
-    Real owz = 1.0-wz;
+    Real wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
+    Real owz = 1.0_rt-wz;
 
     // interp from coarse nodal to fine nodal
     Real bg = owx * owy * owz * Bzg(jg  ,kg  ,lg  )
@@ -258,8 +258,8 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
         +      wx *  wy *  wz * Bzg(jg+1,kg+1,lg+1);
 
     // interp from coarse staggered to fine nodal
-    wx = 0.5-wx;  owx = 1.0-wx;
-    wy = 0.5-wy;  owy = 1.0-wy;
+    wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
+    wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
     Real bc = owx * owy * owz * Bzc(jg  ,kg  ,lg  )
         +      wx * owy * owz * Bzc(jg-1,kg  ,lg  )
         +     owx *  wy * owz * Bzc(jg  ,kg-1,lg  )
@@ -270,7 +270,7 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
         +      wx *  wy *  wz * Bzc(jg-1,kg-1,lg+1);
 
     // interp from fine stagged to fine nodal
-    Real bf = 0.25*(Bzf(j-1,k-1,l) + Bzf(j,k-1,l) + Bzf(j-1,k,l) + Bzf(j,k,l));
+    Real bf = 0.25_rt*(Bzf(j-1,k-1,l) + Bzf(j,k-1,l) + Bzf(j-1,k,l) + Bzf(j,k,l));
 
 #endif
 
@@ -285,11 +285,12 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Bxa,
                                amrex::Array4<amrex::Real const> const& Bxf)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
-    Bxa(j,k,0) = 0.5*(Bxf(j,k-1,0) + Bxf(j,k,0));
+    Bxa(j,k,0) = 0.5_rt*(Bxf(j,k-1,0) + Bxf(j,k,0));
     amrex::ignore_unused(l);
 #else
-    Bxa(j,k,l) = 0.25*(Bxf(j,k-1,l-1) + Bxf(j,k,l-1) + Bxf(j,k-1,l) + Bxf(j,k,l));
+    Bxa(j,k,l) = 0.25_rt*(Bxf(j,k-1,l-1) + Bxf(j,k,l-1) + Bxf(j,k-1,l) + Bxf(j,k,l));
 #endif
 }
 
@@ -305,19 +306,20 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
                                amrex::Real const* stencil_coef_y,
                                amrex::Real const* stencil_coef_z)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
     amrex::ignore_unused(noy);
     amrex::ignore_unused(stencil_coef_y);
     amrex::Real res = 0.;
     for (int nz = 1; nz < noz/2+1; nz++) {
-        res += 0.5 * stencil_coef_z[nz-1] * (Bxf(j, k + nz - 1, l) + Bxf(j, k - nz, l));
+        res += 0.5_rt * stencil_coef_z[nz-1] * (Bxf(j, k + nz - 1, l) + Bxf(j, k - nz, l));
     }
     Bxa(j,k,l) = res;
 #else
     amrex::Real res = 0.;
     for     (int nz = 1; nz < noz/2+1; nz++) {
         for (int ny = 1; ny < noy/2+1; ny++) {
-            res += 0.25 * stencil_coef_y[ny-1] * stencil_coef_z[nz-1] *
+            res += 0.25_rt * stencil_coef_y[ny-1] * stencil_coef_z[nz-1] *
                    (Bxf(j, k + ny - 1, l + nz - 1) + Bxf(j, k - ny, l + nz - 1)
                   + Bxf(j, k + ny - 1, l - nz    ) + Bxf(j, k - ny, l - nz    ));
         }
@@ -334,11 +336,12 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Bya,
                                amrex::Array4<amrex::Real const> const& Byf)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
-    Bya(j,k,0) = 0.25*(Byf(j,k,0) + Byf(j-1,k,0) + Byf(j,k-1,0) + Byf(j-1,k-1,0));
+    Bya(j,k,0) = 0.25_rt*(Byf(j,k,0) + Byf(j-1,k,0) + Byf(j,k-1,0) + Byf(j-1,k-1,0));
     amrex::ignore_unused(l);
 #else
-    Bya(j,k,l) = 0.25*(Byf(j-1,k,l-1) + Byf(j,k,l-1) + Byf(j-1,k,l) + Byf(j,k,l));
+    Bya(j,k,l) = 0.25_rt*(Byf(j-1,k,l-1) + Byf(j,k,l-1) + Byf(j-1,k,l) + Byf(j,k,l));
 #endif
 }
 
@@ -354,11 +357,12 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
                                amrex::Real const* stencil_coef_x,
                                amrex::Real const* stencil_coef_z)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
     amrex::Real res = 0.;
     for     (int nz = 1; nz < noz/2+1; nz++) {
         for (int nx = 1; nx < nox/2+1; nx++) {
-            res += 0.25 * stencil_coef_x[nx-1] * stencil_coef_z[nz-1] *
+            res += 0.25_rt * stencil_coef_x[nx-1] * stencil_coef_z[nz-1] *
                    (Byf(j + nx - 1, k + nz - 1, l) + Byf(j - nx, k + nz - 1, l)
                   + Byf(j + nx - 1, k - nz    , l) + Byf(j - nx, k - nz    , l));
         }
@@ -368,7 +372,7 @@ void warpx_interp_nd_bfield_y (int j, int k, int l,
     amrex::Real res = 0.;
     for     (int nz = 1; nz < noz/2+1; nz++) {
         for (int nx = 1; nx < nox/2+1; nx++) {
-            res += 0.25 * stencil_coef_x[nx-1] * stencil_coef_z[nz-1] *
+            res += 0.25_rt * stencil_coef_x[nx-1] * stencil_coef_z[nz-1] *
                    (Byf(j + nx - 1, k, l + nz - 1) + Byf(j - nx, k, l + nz - 1)
                   + Byf(j + nx - 1, k, l - nz    ) + Byf(j - nx, k, l - nz    ));
         }
@@ -385,11 +389,12 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Bza,
                                amrex::Array4<amrex::Real const> const& Bzf)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
-    Bza(j,k,0) = 0.5*(Bzf(j-1,k,0) + Bzf(j,k,0));
+    Bza(j,k,0) = 0.5_rt*(Bzf(j-1,k,0) + Bzf(j,k,0));
     amrex::ignore_unused(l);
 #else
-    Bza(j,k,l) = 0.25*(Bzf(j-1,k-1,l) + Bzf(j,k-1,l) + Bzf(j-1,k,l) + Bzf(j,k,l));
+    Bza(j,k,l) = 0.25_rt*(Bzf(j-1,k-1,l) + Bzf(j,k-1,l) + Bzf(j-1,k,l) + Bzf(j,k,l));
 #endif
 }
 
@@ -405,19 +410,20 @@ void warpx_interp_nd_bfield_z (int j, int k, int l,
                                amrex::Real const* stencil_coef_x,
                                amrex::Real const* stencil_coef_y)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
     amrex::ignore_unused(noy);
     amrex::ignore_unused(stencil_coef_y);
     amrex::Real res = 0.;
     for (int nx = 1; nx < nox/2+1; nx++) {
-        res += 0.5 * stencil_coef_x[nx-1] * (Bzf(j + nx - 1, k, l) + Bzf(j - nx, k, l));
+        res += 0.5_rt * stencil_coef_x[nx-1] * (Bzf(j + nx - 1, k, l) + Bzf(j - nx, k, l));
     }
     Bza(j,k,l) = res;
 #else
     amrex::Real res = 0.;
     for     (int ny = 1; ny < noy/2+1; ny++) {
         for (int nx = 1; nx < nox/2+1; nx++) {
-            res += 0.25 * stencil_coef_x[nx-1] * stencil_coef_y[ny-1] *
+            res += 0.25_rt * stencil_coef_x[nx-1] * stencil_coef_y[ny-1] *
                    (Bzf(j + nx - 1, k + ny - 1, l) + Bzf(j - nx, k + ny - 1, l)
                   + Bzf(j + nx - 1, k - ny    , l) + Bzf(j - nx, k - ny    , l));
         }
@@ -436,12 +442,12 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
     using namespace amrex;
 
     int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0 : 0.5;
-    Real owx = 1.0-wx;
+    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    Real owx = 1.0_rt-wx;
 
     int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0 : 0.5;
-    Real owy = 1.0-wy;
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
 
 #if (AMREX_SPACEDIM == 2)
 
@@ -452,20 +458,20 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
         +      wx *  wy * Exg(jg+1,kg+1,0);
 
     // interp from coarse staggered to fine nodal
-    wx = 0.5-wx;  owx = 1.0-wx;
+    wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
     Real ec = owx * owy * Exc(jg  ,kg  ,0)
         +     owx *  wy * Exc(jg  ,kg+1,0)
         +      wx * owy * Exc(jg-1,kg  ,0)
         +      wx *  wy * Exc(jg-1,kg+1,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5*(Exf(j-1,k,0) + Exf(j,k,0));
+    Real ef = 0.5_rt*(Exf(j-1,k,0) + Exf(j,k,0));
 
 #else
 
     int lg = amrex::coarsen(l,2);
     Real wz = (l == lg*2) ? 0.0 : 0.5;
-    Real owz = 1.0-wz;
+    Real owz = 1.0_rt-wz;
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * owy * owz * Exg(jg  ,kg  ,lg  )
@@ -478,7 +484,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
         +      wx *  wy *  wz * Exg(jg+1,kg+1,lg+1);
 
     // interp from coarse staggered to fine nodal
-    wx = 0.5-wx;  owx = 1.0-wx;
+    wx = 0.5_rt-wx;  owx = 1.0_rt-wx;
     Real ec = owx * owy * owz * Exc(jg  ,kg  ,lg  )
         +      wx * owy * owz * Exc(jg-1,kg  ,lg  )
         +     owx *  wy * owz * Exc(jg  ,kg+1,lg  )
@@ -489,7 +495,7 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
         +      wx *  wy *  wz * Exc(jg-1,kg+1,lg+1);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5*(Exf(j-1,k,l) + Exf(j,k,l));
+    Real ef = 0.5_rt*(Exf(j-1,k,l) + Exf(j,k,l));
 
 #endif
 
@@ -506,12 +512,12 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
     using namespace amrex;
 
     int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0 : 0.5;
-    Real owx = 1.0-wx;
+    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    Real owx = 1.0_rt-wx;
 
     int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0 : 0.5;
-    Real owy = 1.0-wy;
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
 
 #if (AMREX_SPACEDIM == 2)
 
@@ -520,7 +526,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
         +     owx *  wy * (Eyg(jg  ,kg+1,0) + Eyc(jg  ,kg+1,0))
         +      wx * owy * (Eyg(jg+1,kg  ,0) + Eyc(jg+1,kg  ,0))
         +      wx *  wy * (Eyg(jg+1,kg+1,0) + Eyc(jg+1,kg+1,0));
-    Real ec = 0.0;
+    Real ec = 0.0_rt;
 
     // interp from fine staggered to fine nodal
     Real ef = Eyf(j,k,0);
@@ -529,7 +535,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
 
     int lg = amrex::coarsen(l,2);
     Real wz = (l == lg*2) ? 0.0 : 0.5;
-    Real owz = 1.0-wz;
+    Real owz = 1.0_rt-wz;
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * owy * owz * Eyg(jg  ,kg  ,lg  )
@@ -542,7 +548,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
         +      wx *  wy *  wz * Eyg(jg+1,kg+1,lg+1);
 
     // interp from coarse staggered to fine nodal
-    wy = 0.5-wy;  owy = 1.0-wy;
+    wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
     Real ec = owx * owy * owz * Eyc(jg  ,kg  ,lg  )
         +      wx * owy * owz * Eyc(jg+1,kg  ,lg  )
         +     owx *  wy * owz * Eyc(jg  ,kg-1,lg  )
@@ -553,7 +559,7 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
         +      wx *  wy *  wz * Eyc(jg+1,kg-1,lg+1);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5*(Eyf(j,k-1,l) + Eyf(j,k,l));
+    Real ef = 0.5_rt*(Eyf(j,k-1,l) + Eyf(j,k,l));
 
 #endif
 
@@ -570,12 +576,12 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
     using namespace amrex;
 
     int jg = amrex::coarsen(j,2);
-    Real wx = (j == jg*2) ? 0.0 : 0.5;
-    Real owx = 1.0-wx;
+    Real wx = (j == jg*2) ? 0.0_rt : 0.5_rt;
+    Real owx = 1.0_rt-wx;
 
     int kg = amrex::coarsen(k,2);
-    Real wy = (k == kg*2) ? 0.0 : 0.5;
-    Real owy = 1.0-wy;
+    Real wy = (k == kg*2) ? 0.0_rt : 0.5_rt;
+    Real owy = 1.0_rt-wy;
 
 #if (AMREX_SPACEDIM == 2)
 
@@ -586,20 +592,20 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
         +      wx *  wy * Ezg(jg+1,kg+1,0);
 
     // interp from coarse stagged to fine nodal
-    wy = 0.5-wy;  owy = 1.0-wy;
+    wy = 0.5_rt-wy;  owy = 1.0_rt-wy;
     Real ec = owx * owy * Ezc(jg  ,kg  ,0)
         +     owx *  wy * Ezc(jg  ,kg-1,0)
         +      wx * owy * Ezc(jg+1,kg  ,0)
         +      wx *  wy * Ezc(jg+1,kg-1,0);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5*(Ezf(j,k-1,0) + Ezf(j,k,0));
+    Real ef = 0.5_rt*(Ezf(j,k-1,0) + Ezf(j,k,0));
 
 #else
 
     int lg = amrex::coarsen(l,2);
-    Real wz = (l == lg*2) ? 0.0 : 0.5;
-    Real owz = 1.0-wz;
+    Real wz = (l == lg*2) ? 0.0_rt : 0.5_rt;
+    Real owz = 1.0_rt-wz;
 
     // interp from coarse nodal to fine nodal
     Real eg = owx * owy * owz * Ezg(jg  ,kg  ,lg  )
@@ -612,7 +618,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
         +      wx *  wy *  wz * Ezg(jg+1,kg+1,lg+1);
 
     // interp from coarse staggered to fine nodal
-    wz = 0.5-wz;  owz = 1.0-wz;
+    wz = 0.5_rt-wz;  owz = 1.0_rt-wz;
     Real ec = owx * owy * owz * Ezc(jg  ,kg  ,lg  )
         +      wx * owy * owz * Ezc(jg+1,kg  ,lg  )
         +     owx *  wy * owz * Ezc(jg  ,kg+1,lg  )
@@ -623,7 +629,7 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
         +      wx *  wy *  wz * Ezc(jg+1,kg+1,lg-1);
 
     // interp from fine staggered to fine nodal
-    Real ef = 0.5*(Ezf(j,k,l-1) + Ezf(j,k,l));
+    Real ef = 0.5_rt*(Ezf(j,k,l-1) + Ezf(j,k,l));
 
 #endif
 
@@ -638,7 +644,8 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Exa,
                                amrex::Array4<amrex::Real const> const& Exf)
 {
-    Exa(j,k,l) = 0.5*(Exf(j-1,k,l) + Exf(j,k,l));
+    using namespace amrex;
+    Exa(j,k,l) = 0.5_rt*(Exf(j-1,k,l) + Exf(j,k,l));
 }
 
 // With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
@@ -651,9 +658,10 @@ void warpx_interp_nd_efield_x (int j, int k, int l,
                                const int nox,
                                amrex::Real const* stencil_coef_x)
 {
+    using namespace amrex;
     amrex::Real res = 0.;
     for (int nx = 1; nx < nox/2+1; nx++) {
-        res += 0.5 * stencil_coef_x[nx-1] * (Exf(j + nx - 1, k, l) + Exf(j - nx, k, l));
+        res += 0.5_rt * stencil_coef_x[nx-1] * (Exf(j + nx - 1, k, l) + Exf(j - nx, k, l));
     }
     Exa(j,k,l) = res;
 }
@@ -666,11 +674,12 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Eya,
                                amrex::Array4<amrex::Real const> const& Eyf)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
     Eya(j,k,0) = Eyf(j,k,0);
     amrex::ignore_unused(l);
 #else
-    Eya(j,k,l) = 0.5*(Eyf(j,k-1,l) + Eyf(j,k,l));
+    Eya(j,k,l) = 0.5_rt*(Eyf(j,k-1,l) + Eyf(j,k,l));
 #endif
 }
 
@@ -684,14 +693,15 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
                                const int noy,
                                amrex::Real const* stencil_coef_y)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
     amrex::ignore_unused(noy);
     amrex::ignore_unused(stencil_coef_y);
     Eya(j,k,l) = Eyf(j,k,l);
 #else
-    amrex::Real res = 0.;
+    amrex::Real res = 0._rt;
     for (int ny = 1; ny < noy/2+1; ny++) {
-        res += 0.5 * stencil_coef_y[ny-1] * (Eyf(j, k + ny - 1, l) + Eyf(j, k - ny, l));
+        res += 0.5_rt * stencil_coef_y[ny-1] * (Eyf(j, k + ny - 1, l) + Eyf(j, k - ny, l));
     }
     Eya(j,k,l) = res;
 #endif
@@ -705,11 +715,12 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
                                amrex::Array4<amrex::Real> const& Eza,
                                amrex::Array4<amrex::Real const> const& Ezf)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
-    Eza(j,k,0) = 0.5*(Ezf(j,k-1,0) + Ezf(j,k,0));
+    Eza(j,k,0) = 0.5_rt*(Ezf(j,k-1,0) + Ezf(j,k,0));
     amrex::ignore_unused(l);
 #else
-    Eza(j,k,l) = 0.5*(Ezf(j,k,l-1) + Ezf(j,k,l));
+    Eza(j,k,l) = 0.5_rt*(Ezf(j,k,l-1) + Ezf(j,k,l));
 #endif
 }
 
@@ -723,16 +734,17 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
                                const int noz,
                                amrex::Real const* stencil_coef_z)
 {
+    using namespace amrex;
 #if (AMREX_SPACEDIM == 2)
-    amrex::Real res = 0.;
+    amrex::Real res = 0._rt;
     for (int nz = 1; nz < noz/2+1; nz++) {
-        res += 0.5 * stencil_coef_z[nz-1] * (Ezf(j, k + nz - 1, l) + Ezf(j, k - nz, l));
+        res += 0.5_rt * stencil_coef_z[nz-1] * (Ezf(j, k + nz - 1, l) + Ezf(j, k - nz, l));
     }
     Eza(j,k,l) = res;
 #else
     amrex::Real res = 0.;
     for (int nz = 1; nz < noz/2+1; nz++) {
-        res += 0.5 * stencil_coef_z[nz-1] * (Ezf(j, k, l + nz - 1) + Ezf(j, k, l - nz));
+        res += 0.5_rt * stencil_coef_z[nz-1] * (Ezf(j, k, l + nz - 1) + Ezf(j, k, l - nz));
     }
     Eza(j,k,l) = res;
 #endif
