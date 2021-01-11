@@ -12,6 +12,7 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 
+#include <AMReX.H>
 #include <AMReX_Print.H>
 #include <AMReX_VisMF.H>
 
@@ -495,19 +496,22 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         ngf = ngFFT;
     }
 
+    // Allocate diagonal components (xx,yy,zz) only with divergence cleaning
+    const int ncomp = (do_dive_cleaning) ? 3 : 2;
+
     pml_E_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, 3, nge );
+        WarpX::GetInstance().getEfield_fp(0,0).ixType().toIntVect() ), dm, ncomp, nge );
     pml_E_fp[1] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, 3, nge );
+        WarpX::GetInstance().getEfield_fp(0,1).ixType().toIntVect() ), dm, ncomp, nge );
     pml_E_fp[2] = std::make_unique<MultiFab>(amrex::convert( ba,
-        WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, 3, nge );
+        WarpX::GetInstance().getEfield_fp(0,2).ixType().toIntVect() ), dm, ncomp, nge );
+
     pml_B_fp[0] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getBfield_fp(0,0).ixType().toIntVect() ), dm, 2, ngb );
     pml_B_fp[1] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getBfield_fp(0,1).ixType().toIntVect() ), dm, 2, ngb );
     pml_B_fp[2] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getBfield_fp(0,2).ixType().toIntVect() ), dm, 2, ngb );
-
 
     pml_E_fp[0]->setVal(0.0);
     pml_E_fp[1]->setVal(0.0);
@@ -522,6 +526,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         WarpX::GetInstance().getcurrent_fp(0,1).ixType().toIntVect() ), dm, 1, ngb );
     pml_j_fp[2] = std::make_unique<MultiFab>(amrex::convert( ba,
         WarpX::GetInstance().getcurrent_fp(0,2).ixType().toIntVect() ), dm, 1, ngb );
+
     pml_j_fp[0]->setVal(0.0);
     pml_j_fp[1]->setVal(0.0);
     pml_j_fp[2]->setVal(0.0);
@@ -541,6 +546,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
+        amrex::ignore_unused(dt);
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                                          "PML: PSATD solver selected but not built.");
 #else
@@ -591,11 +597,12 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         DistributionMapping cdm{cba};
 
         pml_E_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
-            WarpX::GetInstance().getEfield_cp(1,0).ixType().toIntVect() ), cdm, 3, nge );
+            WarpX::GetInstance().getEfield_cp(1,0).ixType().toIntVect() ), cdm, ncomp, nge );
         pml_E_cp[1] = std::make_unique<MultiFab>(amrex::convert( cba,
-            WarpX::GetInstance().getEfield_cp(1,1).ixType().toIntVect() ), cdm, 3, nge );
+            WarpX::GetInstance().getEfield_cp(1,1).ixType().toIntVect() ), cdm, ncomp, nge );
         pml_E_cp[2] = std::make_unique<MultiFab>(amrex::convert( cba,
-            WarpX::GetInstance().getEfield_cp(1,2).ixType().toIntVect() ), cdm, 3, nge );
+            WarpX::GetInstance().getEfield_cp(1,2).ixType().toIntVect() ), cdm, ncomp, nge );
+
         pml_B_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
             WarpX::GetInstance().getBfield_cp(1,0).ixType().toIntVect() ), cdm, 2, ngb );
         pml_B_cp[1] = std::make_unique<MultiFab>(amrex::convert( cba,
@@ -616,12 +623,14 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
             pml_F_cp->setVal(0.0);
 
         }
+
         pml_j_cp[0] = std::make_unique<MultiFab>(amrex::convert( cba,
             WarpX::GetInstance().getcurrent_cp(1,0).ixType().toIntVect() ), cdm, 1, ngb );
         pml_j_cp[1] = std::make_unique<MultiFab>(amrex::convert( cba,
             WarpX::GetInstance().getcurrent_cp(1,1).ixType().toIntVect() ), cdm, 1, ngb );
         pml_j_cp[2] = std::make_unique<MultiFab>(amrex::convert( cba,
             WarpX::GetInstance().getcurrent_cp(1,2).ixType().toIntVect() ), cdm, 1, ngb );
+
         pml_j_cp[0]->setVal(0.0);
         pml_j_cp[1]->setVal(0.0);
         pml_j_cp[2]->setVal(0.0);
@@ -635,6 +644,7 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
 
         if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
+            amrex::ignore_unused(dt);
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                                              "PML: PSATD solver selected but not built.");
 #else

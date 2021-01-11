@@ -246,6 +246,8 @@ FlushFormatPlotfile::WriteWarpXHeader(
         }
 
         WriteHeaderParticle(HeaderFile, particle_diags);
+
+        HeaderFile << warpx.getcurrent_injection_position() << "\n";
     }
 }
 
@@ -502,6 +504,9 @@ FlushFormatPlotfile::WriteAllRawFields(
                 MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, warpx.getrho_fp(lev).nComp()/2, warpx.getrho_fp(lev).nComp()/2);
                 WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
             }
+        }
+        if (warpx.get_pointer_phi_fp(lev) != nullptr) {
+            WriteRawMF(warpx.getphi_fp(lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
         }
 
         // Coarse path

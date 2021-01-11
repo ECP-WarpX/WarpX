@@ -23,7 +23,15 @@ jobs:
         export LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
         which nvcc || echo "nvcc not in PATH!"
 
-        cmake -S . -B build_sp -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_COMPUTE=CUDA -DAMReX_CUDA_ARCH=6.0 -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE -DCUDA_ERROR_CAPTURE_THIS=ON
+        cmake -S . -B build_sp         \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_COMPUTE=CUDA         \
+          -DAMReX_CUDA_ARCH=6.0        \
+          -DWarpX_OPENPMD=ON           \
+          -DWarpX_openpmd_internal=OFF \
+          -DWarpX_PRECISION=SINGLE     \
+          -DWarpX_PSATD=ON             \
+          -DAMReX_CUDA_ERROR_CAPTURE_THIS=ON
         cmake --build build_sp -j 2
 
         python3 -m pip install --upgrade pip setuptools wheel
@@ -69,6 +77,44 @@ jobs:
 
         python3 -m pip install --upgrade pip setuptools wheel
         PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
+
+  build_icpx:
+    name: oneAPI ICX SP [Linux]
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: install dependencies
+      shell: bash
+      run: |
+        .github/workflows/dependencies/dpcpp.sh
+    - name: build WarpX
+      shell: bash
+      run: |
+        set +e
+        source /opt/intel/oneapi/setvars.sh
+        set -e
+        export CXX=$(which icpx)
+        export CC=$(which icx)
+
+        cmake -S . -B build_sp         \
+          -DCMAKE_C_COMPILER_ID="Clang"                  \
+          -DCMAKE_C_COMPILER_VERSION=12.0                \
+          -DCMAKE_C_STANDARD_COMPUTED_DEFAULT="11"       \
+          -DCMAKE_CXX_COMPILER_ID="Clang"                \
+          -DCMAKE_CXX_COMPILER_VERSION=12.0              \
+          -DCMAKE_CXX_STANDARD_COMPUTED_DEFAULT="14"     \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_MPI=OFF              \
+          -DWarpX_OPENPMD=ON           \
+          -DWarpX_PRECISION=SINGLE
+        cmake --build build_sp -j 2
+
+        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade setuptools wheel
+        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel Python/
+     # note: setting the CXX compiler ID is a work-around for
+     # the 2021.1 DPC++ release / CMake 3.19.0-3.19.1
+     # https://gitlab.kitware.com/cmake/cmake/-/issues/21551#note_869580
 
   build_dpcc:
     name: oneAPI DPC++ SP [Linux]
