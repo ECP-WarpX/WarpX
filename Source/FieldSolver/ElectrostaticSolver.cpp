@@ -278,7 +278,7 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ex_arr(i,j,k) +=
                         +(beta_x*beta_x-1)*inv_dx*( phi_arr(i+1,j,k)-phi_arr(i,j,k) )
-                        +beta_x*beta_z*0.2_rt5*inv_dz*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j-1,k)
+                        +beta_x*beta_z*0.25_rt*inv_dz*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j-1,k)
                                                   + phi_arr(i+1,j+1,k)-phi_arr(i+1,j-1,k));
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
