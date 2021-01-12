@@ -111,17 +111,21 @@ void UpdateMomentumPerezElastic (
     }
 
     // Compute s
+    const auto tts = m1*g1s*m2*g2s/(inv_c2*p1sm*p1sm) + T_R(1.0);
+    const auto tts2 = tts*tts;
     T_R s = n1*n2/n12 * dt*lnLmd*q1*q1*q2*q2 /
           ( T_R(4.0) * MathConst::pi * PhysConst::ep0 * PhysConst::ep0 *
-            m1*g1*m2*g2/(inv_c2*inv_c2) ) * gc*p1sm/mass_g *
-            std::pow(m1*g1s*m2*g2s/(inv_c2*p1sm*p1sm) + T_R(1.0), 2.0);
+            m1*g1*m2*g2/(inv_c2*inv_c2) ) * gc*p1sm/mass_g * tts2;
 
     // Compute s'
+    const auto cbrt_n1 = std::cbrt(n1);
+    const auto cbrt_n2 = std::cbrt(n2);
+    const auto coeff = static_cast<T_R>(
+        std::pow(4.0*MathConst::pi/3.0,1.0/3.0));
     T_R const vrel = mass_g*p1sm/(m1*g1s*m2*g2s*gc);
-    T_R const sp = std::pow(T_R(4.0)*MathConst::pi/T_R(3.0),T_R(1.0/3.0)) *
-          n1*n2/n12 * dt * vrel * (m1+m2) /
-          amrex::max( m1*std::pow(n1,T_R(2.0/3.0)),
-                      m2*std::pow(n2,T_R(2.0/3.0)) );
+    T_R const sp = coeff * n1*n2/n12 * dt * vrel * (m1+m2) /
+          amrex::max( m1*cbrt_n1*cbrt_n1,
+                      m2*cbrt_n2*cbrt_n2);
 
     // Determine s
     s = amrex::min(s,sp);
@@ -144,8 +148,9 @@ void UpdateMomentumPerezElastic (
     }
     else if ( s > T_R(0.1) && s <= T_R(3.0) )
     {
-        T_R const Ainv = 0.0056958 + 0.9560202*s - 0.508139*s*s +
-            0.47913906*s*s*s - 0.12788975*s*s*s*s + 0.02389567*s*s*s*s*s;
+        T_R const Ainv = static_cast<T_R>(
+            0.0056958 + 0.9560202*s - 0.508139*s*s +
+            0.47913906*s*s*s - 0.12788975*s*s*s*s + 0.02389567*s*s*s*s*s);
         cosXs = Ainv * std::log( std::exp(T_R(-1.0)/Ainv) +
                 T_R(2.0) * r * std::sinh(T_R(1.0)/Ainv) );
     }

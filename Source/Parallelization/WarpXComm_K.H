@@ -128,7 +128,7 @@ void warpx_interp_nd_bfield_x (int j, int k, int l,
         +      wx *  wy *  wz * Bxc(jg+1,kg-1,lg-1);
 
     // interp from fine stagged to fine nodal
-    Real bf = 0.25*(Bxf(j,k-1,l-1) + Bxf(j,k,l-1) + Bxf(j,k-1,l) + Bxf(j,k,l));
+    Real bf = 0.25_rt*(Bxf(j,k-1,l-1) + Bxf(j,k,l-1) + Bxf(j,k-1,l) + Bxf(j,k,l));
 #endif
 
     Bxa(j,k,l) = bg + (bf-bc);

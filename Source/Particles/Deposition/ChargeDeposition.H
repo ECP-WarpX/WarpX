@@ -44,12 +44,12 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
-    const amrex::Real dxi = 1.0/dx[0];
-    const amrex::Real dzi = 1.0/dx[2];
+    const amrex::Real dxi = 1.0_rt/dx[0];
+    const amrex::Real dzi = 1.0_rt/dx[2];
 #if (AMREX_SPACEDIM == 2)
     const amrex::Real invvol = dxi*dzi;
 #elif (defined WARPX_DIM_3D)
-    const amrex::Real dyi = 1.0/dx[1];
+    const amrex::Real dyi = 1.0_rt/dx[1];
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
 
@@ -90,8 +90,8 @@ void doChargeDepositionShapeN(const GetParticlePosition& GetPosition,
                 costheta = xp/rp;
                 sintheta = yp/rp;
             } else {
-                costheta = 1.;
-                sintheta = 0.;
+                costheta = 1._rt;
+                sintheta = 0._rt;
             }
             const Complex xy0 = Complex{costheta, sintheta};
             const amrex::Real x = (rp - xmin)*dxi;
