@@ -34,6 +34,8 @@ NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdto
 
 void NCIGodfreyFilter::ComputeStencils(){
 
+    using namespace warpx::nci_godfrey;
+
     // Sanity checks: filter length shoulz be 5 in z
 #if  (AMREX_SPACEDIM == 3)
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
