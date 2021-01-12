@@ -2,7 +2,6 @@
 
 import sys
 import yt
-import numpy as np
 sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
 import checksumAPI
 
