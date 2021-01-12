@@ -14,7 +14,7 @@ namespace warpx
 {
 namespace nci_godfrey
 {
-    using amrex::literals;
+    using namespace amrex::literals;
 
     // Table width. This is related to the stencil length
     const int tab_width = 4;
