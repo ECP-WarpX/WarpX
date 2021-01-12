@@ -1,6 +1,6 @@
-#ifndef yyHEADER_H
-#define yyHEADER_H 1
-#define yyIN_HEADER 1
+#ifndef wxparserHEADER_H
+#define wxparserHEADER_H 1
+#define wxparserIN_HEADER 1
 
 #define  YY_INT_ALIGNED short int
 
@@ -12,6 +12,240 @@
 #define YY_FLEX_SUBMINOR_VERSION 4
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
+#endif
+
+#ifdef yy_create_buffer
+#define wxparser_create_buffer_ALREADY_DEFINED
+#else
+#define yy_create_buffer wxparser_create_buffer
+#endif
+
+#ifdef yy_delete_buffer
+#define wxparser_delete_buffer_ALREADY_DEFINED
+#else
+#define yy_delete_buffer wxparser_delete_buffer
+#endif
+
+#ifdef yy_scan_buffer
+#define wxparser_scan_buffer_ALREADY_DEFINED
+#else
+#define yy_scan_buffer wxparser_scan_buffer
+#endif
+
+#ifdef yy_scan_string
+#define wxparser_scan_string_ALREADY_DEFINED
+#else
+#define yy_scan_string wxparser_scan_string
+#endif
+
+#ifdef yy_scan_bytes
+#define wxparser_scan_bytes_ALREADY_DEFINED
+#else
+#define yy_scan_bytes wxparser_scan_bytes
+#endif
+
+#ifdef yy_init_buffer
+#define wxparser_init_buffer_ALREADY_DEFINED
+#else
+#define yy_init_buffer wxparser_init_buffer
+#endif
+
+#ifdef yy_flush_buffer
+#define wxparser_flush_buffer_ALREADY_DEFINED
+#else
+#define yy_flush_buffer wxparser_flush_buffer
+#endif
+
+#ifdef yy_load_buffer_state
+#define wxparser_load_buffer_state_ALREADY_DEFINED
+#else
+#define yy_load_buffer_state wxparser_load_buffer_state
+#endif
+
+#ifdef yy_switch_to_buffer
+#define wxparser_switch_to_buffer_ALREADY_DEFINED
+#else
+#define yy_switch_to_buffer wxparser_switch_to_buffer
+#endif
+
+#ifdef yypush_buffer_state
+#define wxparserpush_buffer_state_ALREADY_DEFINED
+#else
+#define yypush_buffer_state wxparserpush_buffer_state
+#endif
+
+#ifdef yypop_buffer_state
+#define wxparserpop_buffer_state_ALREADY_DEFINED
+#else
+#define yypop_buffer_state wxparserpop_buffer_state
+#endif
+
+#ifdef yyensure_buffer_stack
+#define wxparserensure_buffer_stack_ALREADY_DEFINED
+#else
+#define yyensure_buffer_stack wxparserensure_buffer_stack
+#endif
+
+#ifdef yylex
+#define wxparserlex_ALREADY_DEFINED
+#else
+#define yylex wxparserlex
+#endif
+
+#ifdef yyrestart
+#define wxparserrestart_ALREADY_DEFINED
+#else
+#define yyrestart wxparserrestart
+#endif
+
+#ifdef yylex_init
+#define wxparserlex_init_ALREADY_DEFINED
+#else
+#define yylex_init wxparserlex_init
+#endif
+
+#ifdef yylex_init_extra
+#define wxparserlex_init_extra_ALREADY_DEFINED
+#else
+#define yylex_init_extra wxparserlex_init_extra
+#endif
+
+#ifdef yylex_destroy
+#define wxparserlex_destroy_ALREADY_DEFINED
+#else
+#define yylex_destroy wxparserlex_destroy
+#endif
+
+#ifdef yyget_debug
+#define wxparserget_debug_ALREADY_DEFINED
+#else
+#define yyget_debug wxparserget_debug
+#endif
+
+#ifdef yyset_debug
+#define wxparserset_debug_ALREADY_DEFINED
+#else
+#define yyset_debug wxparserset_debug
+#endif
+
+#ifdef yyget_extra
+#define wxparserget_extra_ALREADY_DEFINED
+#else
+#define yyget_extra wxparserget_extra
+#endif
+
+#ifdef yyset_extra
+#define wxparserset_extra_ALREADY_DEFINED
+#else
+#define yyset_extra wxparserset_extra
+#endif
+
+#ifdef yyget_in
+#define wxparserget_in_ALREADY_DEFINED
+#else
+#define yyget_in wxparserget_in
+#endif
+
+#ifdef yyset_in
+#define wxparserset_in_ALREADY_DEFINED
+#else
+#define yyset_in wxparserset_in
+#endif
+
+#ifdef yyget_out
+#define wxparserget_out_ALREADY_DEFINED
+#else
+#define yyget_out wxparserget_out
+#endif
+
+#ifdef yyset_out
+#define wxparserset_out_ALREADY_DEFINED
+#else
+#define yyset_out wxparserset_out
+#endif
+
+#ifdef yyget_leng
+#define wxparserget_leng_ALREADY_DEFINED
+#else
+#define yyget_leng wxparserget_leng
+#endif
+
+#ifdef yyget_text
+#define wxparserget_text_ALREADY_DEFINED
+#else
+#define yyget_text wxparserget_text
+#endif
+
+#ifdef yyget_lineno
+#define wxparserget_lineno_ALREADY_DEFINED
+#else
+#define yyget_lineno wxparserget_lineno
+#endif
+
+#ifdef yyset_lineno
+#define wxparserset_lineno_ALREADY_DEFINED
+#else
+#define yyset_lineno wxparserset_lineno
+#endif
+
+#ifdef yywrap
+#define wxparserwrap_ALREADY_DEFINED
+#else
+#define yywrap wxparserwrap
+#endif
+
+#ifdef yyalloc
+#define wxparseralloc_ALREADY_DEFINED
+#else
+#define yyalloc wxparseralloc
+#endif
+
+#ifdef yyrealloc
+#define wxparserrealloc_ALREADY_DEFINED
+#else
+#define yyrealloc wxparserrealloc
+#endif
+
+#ifdef yyfree
+#define wxparserfree_ALREADY_DEFINED
+#else
+#define yyfree wxparserfree
+#endif
+
+#ifdef yytext
+#define wxparsertext_ALREADY_DEFINED
+#else
+#define yytext wxparsertext
+#endif
+
+#ifdef yyleng
+#define wxparserleng_ALREADY_DEFINED
+#else
+#define yyleng wxparserleng
+#endif
+
+#ifdef yyin
+#define wxparserin_ALREADY_DEFINED
+#else
+#define yyin wxparserin
+#endif
+
+#ifdef yyout
+#define wxparserout_ALREADY_DEFINED
+#else
+#define yyout wxparserout
+#endif
+
+#ifdef yy_flex_debug
+#define wxparser_flex_debug_ALREADY_DEFINED
+#else
+#define yy_flex_debug wxparser_flex_debug
+#endif
+
+#ifdef yylineno
+#define wxparserlineno_ALREADY_DEFINED
+#else
+#define yylineno wxparserlineno
 #endif
 
 /* First, we deal with  platform-specific or compiler-specific issues. */
@@ -199,7 +433,7 @@ void yyfree ( void *  );
 
 /* Begin user sect3 */
 
-#define yywrap() (/*CONSTCOND*/1)
+#define wxparserwrap() (/*CONSTCOND*/1)
 #define YY_SKIP_YYWRAP
 
 extern int yylineno;
@@ -320,150 +554,150 @@ extern int yylex (void);
 #undef YY_DECL
 #endif
 
-#ifndef yy_create_buffer_ALREADY_DEFINED
+#ifndef wxparser_create_buffer_ALREADY_DEFINED
 #undef yy_create_buffer
 #endif
-#ifndef yy_delete_buffer_ALREADY_DEFINED
+#ifndef wxparser_delete_buffer_ALREADY_DEFINED
 #undef yy_delete_buffer
 #endif
-#ifndef yy_scan_buffer_ALREADY_DEFINED
+#ifndef wxparser_scan_buffer_ALREADY_DEFINED
 #undef yy_scan_buffer
 #endif
-#ifndef yy_scan_string_ALREADY_DEFINED
+#ifndef wxparser_scan_string_ALREADY_DEFINED
 #undef yy_scan_string
 #endif
-#ifndef yy_scan_bytes_ALREADY_DEFINED
+#ifndef wxparser_scan_bytes_ALREADY_DEFINED
 #undef yy_scan_bytes
 #endif
-#ifndef yy_init_buffer_ALREADY_DEFINED
+#ifndef wxparser_init_buffer_ALREADY_DEFINED
 #undef yy_init_buffer
 #endif
-#ifndef yy_flush_buffer_ALREADY_DEFINED
+#ifndef wxparser_flush_buffer_ALREADY_DEFINED
 #undef yy_flush_buffer
 #endif
-#ifndef yy_load_buffer_state_ALREADY_DEFINED
+#ifndef wxparser_load_buffer_state_ALREADY_DEFINED
 #undef yy_load_buffer_state
 #endif
-#ifndef yy_switch_to_buffer_ALREADY_DEFINED
+#ifndef wxparser_switch_to_buffer_ALREADY_DEFINED
 #undef yy_switch_to_buffer
 #endif
-#ifndef yypush_buffer_state_ALREADY_DEFINED
+#ifndef wxparserpush_buffer_state_ALREADY_DEFINED
 #undef yypush_buffer_state
 #endif
-#ifndef yypop_buffer_state_ALREADY_DEFINED
+#ifndef wxparserpop_buffer_state_ALREADY_DEFINED
 #undef yypop_buffer_state
 #endif
-#ifndef yyensure_buffer_stack_ALREADY_DEFINED
+#ifndef wxparserensure_buffer_stack_ALREADY_DEFINED
 #undef yyensure_buffer_stack
 #endif
-#ifndef yylex_ALREADY_DEFINED
+#ifndef wxparserlex_ALREADY_DEFINED
 #undef yylex
 #endif
-#ifndef yyrestart_ALREADY_DEFINED
+#ifndef wxparserrestart_ALREADY_DEFINED
 #undef yyrestart
 #endif
-#ifndef yylex_init_ALREADY_DEFINED
+#ifndef wxparserlex_init_ALREADY_DEFINED
 #undef yylex_init
 #endif
-#ifndef yylex_init_extra_ALREADY_DEFINED
+#ifndef wxparserlex_init_extra_ALREADY_DEFINED
 #undef yylex_init_extra
 #endif
-#ifndef yylex_destroy_ALREADY_DEFINED
+#ifndef wxparserlex_destroy_ALREADY_DEFINED
 #undef yylex_destroy
 #endif
-#ifndef yyget_debug_ALREADY_DEFINED
+#ifndef wxparserget_debug_ALREADY_DEFINED
 #undef yyget_debug
 #endif
-#ifndef yyset_debug_ALREADY_DEFINED
+#ifndef wxparserset_debug_ALREADY_DEFINED
 #undef yyset_debug
 #endif
-#ifndef yyget_extra_ALREADY_DEFINED
+#ifndef wxparserget_extra_ALREADY_DEFINED
 #undef yyget_extra
 #endif
-#ifndef yyset_extra_ALREADY_DEFINED
+#ifndef wxparserset_extra_ALREADY_DEFINED
 #undef yyset_extra
 #endif
-#ifndef yyget_in_ALREADY_DEFINED
+#ifndef wxparserget_in_ALREADY_DEFINED
 #undef yyget_in
 #endif
-#ifndef yyset_in_ALREADY_DEFINED
+#ifndef wxparserset_in_ALREADY_DEFINED
 #undef yyset_in
 #endif
-#ifndef yyget_out_ALREADY_DEFINED
+#ifndef wxparserget_out_ALREADY_DEFINED
 #undef yyget_out
 #endif
-#ifndef yyset_out_ALREADY_DEFINED
+#ifndef wxparserset_out_ALREADY_DEFINED
 #undef yyset_out
 #endif
-#ifndef yyget_leng_ALREADY_DEFINED
+#ifndef wxparserget_leng_ALREADY_DEFINED
 #undef yyget_leng
 #endif
-#ifndef yyget_text_ALREADY_DEFINED
+#ifndef wxparserget_text_ALREADY_DEFINED
 #undef yyget_text
 #endif
-#ifndef yyget_lineno_ALREADY_DEFINED
+#ifndef wxparserget_lineno_ALREADY_DEFINED
 #undef yyget_lineno
 #endif
-#ifndef yyset_lineno_ALREADY_DEFINED
+#ifndef wxparserset_lineno_ALREADY_DEFINED
 #undef yyset_lineno
 #endif
-#ifndef yyget_column_ALREADY_DEFINED
+#ifndef wxparserget_column_ALREADY_DEFINED
 #undef yyget_column
 #endif
-#ifndef yyset_column_ALREADY_DEFINED
+#ifndef wxparserset_column_ALREADY_DEFINED
 #undef yyset_column
 #endif
-#ifndef yywrap_ALREADY_DEFINED
+#ifndef wxparserwrap_ALREADY_DEFINED
 #undef yywrap
 #endif
-#ifndef yyget_lval_ALREADY_DEFINED
+#ifndef wxparserget_lval_ALREADY_DEFINED
 #undef yyget_lval
 #endif
-#ifndef yyset_lval_ALREADY_DEFINED
+#ifndef wxparserset_lval_ALREADY_DEFINED
 #undef yyset_lval
 #endif
-#ifndef yyget_lloc_ALREADY_DEFINED
+#ifndef wxparserget_lloc_ALREADY_DEFINED
 #undef yyget_lloc
 #endif
-#ifndef yyset_lloc_ALREADY_DEFINED
+#ifndef wxparserset_lloc_ALREADY_DEFINED
 #undef yyset_lloc
 #endif
-#ifndef yyalloc_ALREADY_DEFINED
+#ifndef wxparseralloc_ALREADY_DEFINED
 #undef yyalloc
 #endif
-#ifndef yyrealloc_ALREADY_DEFINED
+#ifndef wxparserrealloc_ALREADY_DEFINED
 #undef yyrealloc
 #endif
-#ifndef yyfree_ALREADY_DEFINED
+#ifndef wxparserfree_ALREADY_DEFINED
 #undef yyfree
 #endif
-#ifndef yytext_ALREADY_DEFINED
+#ifndef wxparsertext_ALREADY_DEFINED
 #undef yytext
 #endif
-#ifndef yyleng_ALREADY_DEFINED
+#ifndef wxparserleng_ALREADY_DEFINED
 #undef yyleng
 #endif
-#ifndef yyin_ALREADY_DEFINED
+#ifndef wxparserin_ALREADY_DEFINED
 #undef yyin
 #endif
-#ifndef yyout_ALREADY_DEFINED
+#ifndef wxparserout_ALREADY_DEFINED
 #undef yyout
 #endif
-#ifndef yy_flex_debug_ALREADY_DEFINED
+#ifndef wxparser_flex_debug_ALREADY_DEFINED
 #undef yy_flex_debug
 #endif
-#ifndef yylineno_ALREADY_DEFINED
+#ifndef wxparserlineno_ALREADY_DEFINED
 #undef yylineno
 #endif
-#ifndef yytables_fload_ALREADY_DEFINED
+#ifndef wxparsertables_fload_ALREADY_DEFINED
 #undef yytables_fload
 #endif
-#ifndef yytables_destroy_ALREADY_DEFINED
+#ifndef wxparsertables_destroy_ALREADY_DEFINED
 #undef yytables_destroy
 #endif
-#ifndef yyTABLES_NAME_ALREADY_DEFINED
+#ifndef wxparserTABLES_NAME_ALREADY_DEFINED
 #undef yyTABLES_NAME
 #endif
 
-#undef yyIN_HEADER
-#endif /* yyHEADER_H */
+#undef wxparserIN_HEADER
+#endif /* wxparserHEADER_H */
