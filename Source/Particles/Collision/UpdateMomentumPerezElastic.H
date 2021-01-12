@@ -120,7 +120,7 @@ void UpdateMomentumPerezElastic (
     // Compute s'
     const auto cbrt_n1 = std::cbrt(n1);
     const auto cbrt_n2 = std::cbrt(n2);
-    constexpr auto coeff = static_cast<T_R>(
+    const auto coeff = static_cast<T_R>(
         std::pow(4.0*MathConst::pi/3.0,1.0/3.0));
     T_R const vrel = mass_g*p1sm/(m1*g1s*m2*g2s*gc);
     T_R const sp = coeff * n1*n2/n12 * dt * vrel * (m1+m2) /
