@@ -1,18 +1,14 @@
 """
- Copyright 2020
+Copyright 2020
 
- This file is part of WarpX.
+This file is part of WarpX.
 
- License: BSD-3-Clause-LBNL
- """
-
+License: BSD-3-Clause-LBNL
+"""
 from benchmark import Benchmark
-import yt
+from backend.amrex_backend import Backend
 import sys
 import numpy as np
-
-yt.funcs.mylog.setLevel(50)
-
 
 class Checksum:
     '''Class for checksum comparison of one test.
@@ -39,7 +35,7 @@ class Checksum:
     def read_plotfile(self, do_fields=True, do_particles=True):
         '''Get checksum from plotfile.
 
-        Read an AMReX plotfile with yt, compute 1 checksum per field and return
+        Read an simulation output file, compute 1 checksum per field and return
         all checksums in a dictionary.
         The checksum of quantity Q is max(abs(Q)).
 
@@ -48,39 +44,27 @@ class Checksum:
         @param do_particles Whether to read particles from the plotfile.
         '''
 
-        ds = yt.load(self.plotfile)
-        grid_fields = [item for item in ds.field_list if item[0] == 'boxlib']
-        species_list = set([item[0] for item in ds.field_list if
-                            item[1][:9] == 'particle_' and item[0] != 'all'])
+        ds = Backend(self.plotfile)
+        grid_fields = ds.fields_list()
+        species_list = ds.species_list()
 
         data = {}
 
         # Compute checksum for field quantities
         if do_fields:
-            for lev in range(ds.max_level+1):
+            for lev in range(ds.n_levels()):
                 data_lev = {}
-                lev_grids = [grid for grid in ds.index.grids
-                             if grid.Level == lev]
-                # Warning: For now, we assume all levels are rectangular
-                LeftEdge = np.min(
-                    np.array([grid.LeftEdge.v for grid in lev_grids]), axis=0)
-                all_data_level = ds.covering_grid(
-                    level=lev, left_edge=LeftEdge, dims=ds.domain_dimensions)
                 for field in grid_fields:
-                    Q = all_data_level[field].v.squeeze()
-                    data_lev[field[1]] = np.sum(np.abs(Q))
+                    data_lev[field[1]] = ds.get_field_checksum(lev, field, self.test_name)
                 data['lev=' + str(lev)] = data_lev
 
         # Compute checksum for particle quantities
         if do_particles:
-            ad = ds.all_data()
             for species in species_list:
-                part_fields = [item[1] for item in ds.field_list
-                               if item[0] == species]
+                part_fields = ds.get_species_attributes(species)
                 data_species = {}
                 for field in part_fields:
-                    Q = ad[(species, field)].v
-                    data_species[field] = np.sum(np.abs(Q))
+                    data_species[field] = ds.get_species_checksum(species, field)
                 data[species] = data_species
 
         return data
@@ -97,6 +81,8 @@ class Checksum:
         @param test_name Name of test, as found between [] in .ini file.
         @param plotfile Plotfile from which the checksum is computed.
         '''
+
+        print("Checksum evaluation started...")
 
         ref_benchmark = Benchmark(self.test_name)
 
@@ -137,3 +123,4 @@ class Checksum:
                     checksums_differ = True
         if checksums_differ:
             sys.exit(1)
+        print("Checksum evaluation passed.")
