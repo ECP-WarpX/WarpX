@@ -68,7 +68,7 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
 .. code-block:: bash
 
-   make -j 16 COMP=gcc USE_GPU=TRUE
+   make -j 16 COMP=gcc USE_GPU=TRUE MPI_THREAD_MULTIPLE=FALSE
 
 The other :ref:`general compile-time options <building-source>` apply as usual.
 
