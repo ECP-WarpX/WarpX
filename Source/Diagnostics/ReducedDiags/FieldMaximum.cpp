@@ -30,15 +30,14 @@ FieldMaximum::FieldMaximum (std::string rd_name)
 
     constexpr int noutputs = 8; // total energy, E-field energy and B-field energy
     // resize data array
-    m_data.resize(noutputs*nLevel,0.0); // max of Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
+    m_data.resize(noutputs*nLevel, 0.0_rt); // max of Ex,Ey,Ez,|E|,Bx,By,Bz and |B|
 
     if (ParallelDescriptor::IOProcessor())
     {
         if ( m_IsNotRestart )
         {
             // open file
-            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app};
+            std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
             ofs << "#";
             ofs << "[1]step()";
@@ -94,7 +93,7 @@ void FieldMaximum::ComputeDiags (int step)
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
-    // get WarpX class object
+    // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
     // get number of level

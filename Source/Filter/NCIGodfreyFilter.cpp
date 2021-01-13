@@ -8,6 +8,8 @@
 #include "Utils/NCIGodfreyTables.H"
 #include "WarpX.H"
 
+#include <AMReX_REAL.H>
+
 #ifdef _OPENMP
 #   include <omp.h>
 #endif
@@ -31,6 +33,8 @@ NCIGodfreyFilter::NCIGodfreyFilter(godfrey_coeff_set coeff_set, amrex::Real cdto
 }
 
 void NCIGodfreyFilter::ComputeStencils(){
+
+    using namespace warpx::nci_godfrey;
 
     // Sanity checks: filter length shoulz be 5 in z
 #if  (AMREX_SPACEDIM == 3)
@@ -92,19 +96,19 @@ void NCIGodfreyFilter::ComputeStencils(){
     // Compute h_stencil_x and h_stencil_y (no filter in these directions,
     // so only 1 coeff, equal to 1)
     Vector<Real> h_stencil_x(1);
-    h_stencil_x[0] = 1.;
+    h_stencil_x[0] = 1._rt;
 #if (AMREX_SPACEDIM == 3)
     Vector<Real> h_stencil_y(1);
-    h_stencil_y[0] = 1.;
+    h_stencil_y[0] = 1._rt;
 #endif
 
     // Due to the way Filter::DoFilter() is written,
     // coefficient 0 has to be /2
-    h_stencil_x[0] /= 2.;
+    h_stencil_x[0] /= 2._rt;
 #if (AMREX_SPACEDIM == 3)
-    h_stencil_y[0] /= 2.;
+    h_stencil_y[0] /= 2._rt;
 #endif
-    h_stencil_z[0] /= 2.;
+    h_stencil_z[0] /= 2._rt;
 
     stencil_x.resize(h_stencil_x.size());
 #if (AMREX_SPACEDIM == 3)

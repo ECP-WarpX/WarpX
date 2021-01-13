@@ -72,6 +72,10 @@ class Species(picmistandard.PICMI_Species):
 
         self.boost_adjust_transverse_positions = kw.pop('warpx_boost_adjust_transverse_positions', None)
 
+        # For the relativistic electrostatic solver
+        self.self_fields_required_precision = kw.pop('warpx_self_fields_required_precision', None)
+        self.self_fields_max_iters = kw.pop('warpx_self_fields_max_iters', None)
+
     def initialize_inputs(self, layout,
                           initialize_self_fields = False,
                           injection_plane_position = None,
@@ -83,12 +87,17 @@ class Species(picmistandard.PICMI_Species):
 
         pywarpx.particles.species_names.append(self.name)
 
+        if initialize_self_fields is None:
+            initialize_self_fields = False
+
         self.species = pywarpx.Bucket.Bucket(self.name,
                                              mass = self.mass,
                                              charge = self.charge,
                                              injection_style = 'python',
                                              initialize_self_fields = int(initialize_self_fields),
-                                             boost_adjust_transverse_positions = self.boost_adjust_transverse_positions)
+                                             boost_adjust_transverse_positions = self.boost_adjust_transverse_positions,
+                                             self_fields_required_precision = self.self_fields_required_precision,
+                                             self_fields_max_iters = self.self_fields_max_iters)
         pywarpx.Particles.particles_list.append(self.species)
 
         if self.initial_distribution is not None:
@@ -514,8 +523,19 @@ class ElectromagneticSolver(picmistandard.PICMI_ElectromagneticSolver):
 
 
 class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
+    def init(self, kw):
+        self.relativistic = kw.pop('warpx_relativistic', False)
+
     def initialize_inputs(self):
-        pass
+
+        self.grid.initialize_inputs()
+
+        if self.relativistic:
+            pywarpx.warpx.do_electrostatic = 'relativistic'
+        else:
+            pywarpx.warpx.do_electrostatic = 'labframe'
+            pywarpx.warpx.self_fields_required_precision = self.required_precision
+            pywarpx.warpx.self_fields_max_iters = self.maximum_iterations
 
 
 class GaussianLaser(picmistandard.PICMI_GaussianLaser):
@@ -659,7 +679,7 @@ class Simulation(picmistandard.PICMI_Simulation):
 
         pywarpx.warpx.verbose = self.verbose
         if self.time_step_size is not None:
-            pywarpx.warpx.const_dt = self.timestep
+            pywarpx.warpx.const_dt = self.time_step_size
 
         if self.gamma_boost is not None:
             pywarpx.warpx.gamma_boost = self.gamma_boost
@@ -801,10 +821,13 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
                 fields_to_plot.add('jx')
                 fields_to_plot.add('jy')
                 fields_to_plot.add('jz')
-            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'F', 'proc_number', 'part_per_cell']:
+            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
                 fields_to_plot.add(dataname)
             elif dataname in ['Jx', 'Jy', 'Jz']:
                 fields_to_plot.add(dataname.lower())
+            elif dataname.startswith('rho_'):
+                # Adds rho_species diagnostic
+                fields_to_plot.add(dataname)
             elif dataname == 'dive':
                 fields_to_plot.add('divE')
             elif dataname == 'divb':

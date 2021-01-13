@@ -55,7 +55,7 @@ WarpXLaserProfiles::GaussianLaserProfile::init (
     // Get angle between p_X and stc_direction
     // in 2d, stcs are in the simulation plane
 #if AMREX_SPACEDIM == 3
-    m_params.theta_stc = acos(
+    m_params.theta_stc = std::acos(
         m_params.stc_direction[0]*m_common_params.p_X[0] +
         m_params.stc_direction[1]*m_common_params.p_X[1] +
         m_params.stc_direction[2]*m_common_params.p_X[2]);
@@ -84,7 +84,7 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
 {
     Complex I(0,1);
     // Calculate a few factors which are independent of the macroparticle
-    const Real k0 = 2.*MathConst::pi/m_common_params.wavelength;
+    const Real k0 = 2._rt*MathConst::pi/m_common_params.wavelength;
     const Real inv_tau2 = 1._rt /(m_params.duration * m_params.duration);
     const Real oscillation_phase = k0 * PhysConst::c * ( t - m_params.t_peak ) + m_params.phi0;
     // The coefficients below contain info about Gouy phase,
@@ -110,7 +110,7 @@ WarpXLaserProfiles::GaussianLaserProfile::fill_amplitude (
     // Because diffract_factor is a complex, the code below takes into
     // account the impact of the dimensionality on both the Gouy phase
     // and the amplitude of the laser
-#if (AMREX_SPACEDIM == 3)
+#if ((AMREX_SPACEDIM == 3) || (defined WARPX_DIM_RZ))
     prefactor = prefactor / diffract_factor;
 #elif (AMREX_SPACEDIM == 2)
     prefactor = prefactor / amrex::sqrt(diffract_factor);

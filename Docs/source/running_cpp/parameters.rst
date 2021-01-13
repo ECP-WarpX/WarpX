@@ -1331,10 +1331,9 @@ Numerics and algorithms
 
     The coefficients :math:`C`, :math:`S`, :math:`\theta`, :math:`\nu`, :math:`\chi_1`, :math:`\chi_2`, and :math:`\chi_3` are defined in (`Lehe et al, PRE 94, 2016 <https://doi.org/10.1103/PhysRevE.94.053305>`_).
 
-    The default value for ``psatd.update_with_rho`` is ``1`` if ``psatd.v_galilean`` is non-zero or
-    in RZ geometry and ``0`` otherwise.
+    The default value for ``psatd.update_with_rho`` is ``1`` if ``psatd.v_galilean`` is non-zero and ``0`` otherwise.
 
-    Note that ``psatd.update_with_rho=0`` is not supported in RZ geometry.
+    Note that the update with and without rho is also supported in RZ geometry.
 
 * ``pstad.v_galilean`` (`3 floats`, in units of the speed of light; default `0. 0. 0.`)
     Defines the galilean velocity.
@@ -1731,6 +1730,19 @@ Reduced Diagnostics
 
         Note that the fields are averaged on the cell centers before their maximum values are
         computed.
+
+    * ``RhoMaximum``
+        This type computes the maximum and minimum values of the total charge density as well as
+        the maximum absolute value of the charge density of each charged species.
+        Please be aware that measuring maximum charge densities might be very noisy in PIC simulations.
+
+        The output columns are
+        the maximum value of the :math:`rho` field,
+        the minimum value of the :math:`rho` field,
+        the maximum value of the absolute :math:`|rho|` field of each charged species.
+
+        Note that the charge densities are averaged on the cell centers before their maximum values
+        are computed.
 
     * ``ParticleNumber``
         This type computes the total number of macroparticles and of physical particles (i.e. the

@@ -18,11 +18,13 @@ using amrex::operator""_rt;
 PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
                                     amrex::DistributionMapping const & dm,
                                     int const n_rz_azimuthal_modes, int const norder_z,
-                                    bool const nodal, amrex::Real const dt)
+                                    bool const nodal, amrex::Real const dt,
+                                    bool const update_with_rho)
      // Initialize members of base class
      : SpectralBaseAlgorithmRZ(spectral_kspace, dm,
                                norder_z, nodal),
-       m_dt(dt)
+       m_dt(dt),
+       m_update_with_rho(update_with_rho)
 {
 
     // Allocate the arrays of coefficients
@@ -41,6 +43,8 @@ PsatdAlgorithmRZ::PsatdAlgorithmRZ (SpectralKSpaceRZ const & spectral_kspace,
 void
 PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
 {
+
+    bool const update_with_rho = m_update_with_rho;
 
     if (not coefficients_initialized) {
         // This is called from here since it needs the kr values
@@ -68,6 +72,7 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
         amrex::Real const* kr_arr = kr_modes.dataPtr();
         amrex::Real const* modified_kz_arr = modified_kz_vec[mfi].dataPtr();
         int const nr = bx.length(0);
+        amrex::Real const dt = m_dt;
 
         // Loop over indices within one box
         // Note that k = 0
@@ -119,16 +124,26 @@ PsatdAlgorithmRZ::pushSpectralFields(SpectralFieldDataRZ & f)
             amrex::Real const X2 = X2_arr(i,j,k,mode);
             amrex::Real const X3 = X3_arr(i,j,k,mode);
 
+            Complex rho_diff;
+            if (update_with_rho) {
+                rho_diff = X2*rho_new - X3*rho_old;
+            } else {
+                Complex const divE = kr*(Ep_old - Em_old) + I*kz*Ez_old;
+                Complex const divJ = kr*(Jp - Jm) + I*kz*Jz;
+
+                rho_diff = (X2 - X3)*PhysConst::ep0*divE - X2*dt*divJ;
+            }
+
             // Update E (see WarpX online documentation: theory section)
             fields(i,j,k,Ep_m) = C*Ep_old
                         + S_ck*(-c2*I*kr/2._rt*Bz_old + c2*kz*Bp_old - inv_ep0*Jp)
-                        + 0.5_rt*kr*(X2*rho_new - X3*rho_old);
+                        + 0.5_rt*kr*rho_diff;
             fields(i,j,k,Em_m) = C*Em_old
                         + S_ck*(-c2*I*kr/2._rt*Bz_old - c2*kz*Bm_old - inv_ep0*Jm)
-                        - 0.5_rt*kr*(X2*rho_new - X3*rho_old);
+                        - 0.5_rt*kr*rho_diff;
             fields(i,j,k,Ez_m) = C*Ez_old
                         + S_ck*(c2*I*kr*Bp_old + c2*I*kr*Bm_old - inv_ep0*Jz)
-                        - I*kz*(X2*rho_new - X3*rho_old);
+                        - I*kz*rho_diff;
             // Update B (see WarpX online documentation: theory section)
             fields(i,j,k,Bp_m) = C*Bp_old
                         - S_ck*(-I*kr/2._rt*Ez_old + kz*Ep_old)

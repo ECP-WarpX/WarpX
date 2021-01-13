@@ -96,7 +96,8 @@ LaserParticleContainer::LaserParticleContainer (AmrCore* amr_core, int ispecies,
     s = 1.0_rt / std::sqrt(m_p_X[0]*m_p_X[0] + m_p_X[1]*m_p_X[1] + m_p_X[2]*m_p_X[2]);
     m_p_X = { m_p_X[0]*s, m_p_X[1]*s, m_p_X[2]*s };
 
-    Real const dp = std::inner_product(m_nvec.begin(), m_nvec.end(), m_p_X.begin(), 0.0);
+    Real const dp = std::inner_product(
+        m_nvec.begin(), m_nvec.end(), m_p_X.begin(), 0.0_rt);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(std::abs(dp) < 1.0e-14,
         "Laser plane vector is not perpendicular to the main polarization vector");
 
@@ -418,7 +419,7 @@ LaserParticleContainer::Evolve (int lev,
         // Convert time from the boosted to the lab-frame
         // (in order to later calculate the amplitude of the field,
         // at the position of the antenna, in the lab-frame)
-        t_lab = 1./WarpX::gamma_boost*t + WarpX::beta_boost*m_Z0_lab/PhysConst::c;
+        t_lab = 1._rt/WarpX::gamma_boost*t + WarpX::beta_boost*m_Z0_lab/PhysConst::c;
     }
 
     // Update laser profile
@@ -446,7 +447,7 @@ LaserParticleContainer::Evolve (int lev,
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = amrex::second();
+            Real wt = static_cast<Real>(amrex::second());
 
             auto& attribs = pti.GetAttribs();
 
@@ -528,7 +529,7 @@ LaserParticleContainer::Evolve (int lev,
 
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
             {
-                wt = amrex::second() - wt;
+                wt = static_cast<Real>(amrex::second()) - wt;
                 amrex::HostDevice::Atomic::Add( &(*cost)[pti.index()], wt);
             }
         }
@@ -551,7 +552,7 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
     const std::array<Real,3>& dx = WarpX::CellSize(lev);
 
 #if !(defined WARPX_DIM_RZ)
-    const Real eps = dx[0]*1.e-50;
+    const Real eps = static_cast<Real>(dx[0]*1.e-50);
 #endif
 #if (AMREX_SPACEDIM == 3)
     Sx = std::min(std::min(dx[0]/(std::abs(m_u_X[0])+eps),
@@ -574,7 +575,7 @@ LaserParticleContainer::ComputeSpacing (int lev, Real& Sx, Real& Sy) const
 void
 LaserParticleContainer::ComputeWeightMobility (Real Sx, Real Sy)
 {
-    constexpr Real eps = 0.01;
+    constexpr Real eps = 0.01_rt;
     constexpr Real fac = 1.0_rt / (2.0_rt * MathConst::pi * PhysConst::mu0 * PhysConst::c * PhysConst::c * eps);
     m_weight = fac * m_wavelength * Sx * Sy / std::min(Sx,Sy) * m_e_max;
 
@@ -706,7 +707,8 @@ LaserParticleContainer::update_laser_particle (WarpXParIter& pti,
                 vz -= PhysConst::c * beta_boost * tmp_nvec_2;
             }
             // Get the corresponding momenta
-            const Real gamma = gamma_boost/std::sqrt(1. - v_over_c*v_over_c);
+            const Real gamma =
+                static_cast<Real>(gamma_boost/std::sqrt(1. - v_over_c*v_over_c));
             puxp[i] = gamma * vx;
             puyp[i] = gamma * vy;
             puzp[i] = gamma * vz;

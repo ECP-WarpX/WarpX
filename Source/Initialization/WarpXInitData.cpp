@@ -126,8 +126,10 @@ WarpX::InitDiagnostics () {
         const Real* current_hi = geom[0].ProbHi();
         Real dt_boost = dt[0];
         // Find the positions of the lab-frame box that corresponds to the boosted-frame box at t=0
-        Real zmin_lab = current_lo[moving_window_dir]/( (1.+beta_boost)*gamma_boost );
-        Real zmax_lab = current_hi[moving_window_dir]/( (1.+beta_boost)*gamma_boost );
+        Real zmin_lab = static_cast<Real>(
+            current_lo[moving_window_dir]/( (1.+beta_boost)*gamma_boost ));
+        Real zmax_lab = static_cast<Real>(
+            current_hi[moving_window_dir]/( (1.+beta_boost)*gamma_boost ));
         myBFD = std::make_unique<BackTransformedDiagnostic>(
                                                zmin_lab,
                                                zmax_lab,
