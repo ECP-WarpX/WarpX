@@ -24,7 +24,6 @@ Diagnostics::Diagnostics (int i, std::string name)
 
 Diagnostics::~Diagnostics ()
 {
-    delete m_flush_format;
 }
 
 bool
@@ -236,15 +235,15 @@ Diagnostics::InitBaseData ()
     }
     // Construct Flush class.
     if        (m_format == "plotfile"){
-        m_flush_format = new FlushFormatPlotfile;
+        m_flush_format = std::make_unique<FlushFormatPlotfile>() ;
     } else if (m_format == "checkpoint"){
         // creating checkpoint format
-        m_flush_format = new FlushFormatCheckpoint;
+        m_flush_format = std::make_unique<FlushFormatCheckpoint>() ;
     } else if (m_format == "ascent"){
-        m_flush_format = new FlushFormatAscent;
+        m_flush_format = std::make_unique<FlushFormatAscent>();
     } else if (m_format == "sensei"){
 #ifdef BL_USE_SENSEI_INSITU
-        m_flush_format = new FlushFormatSensei(
+        m_flush_format = std::make_unique<FlushFormatSensei>(
             dynamic_cast<amrex::AmrMesh*>(const_cast<WarpX*>(&warpx)),
             m_diag_name);
 #else
@@ -252,7 +251,7 @@ Diagnostics::InitBaseData ()
 #endif
     } else if (m_format == "openpmd"){
 #ifdef WARPX_USE_OPENPMD
-        m_flush_format = new FlushFormatOpenPMD(m_diag_name);
+        m_flush_format = std::make_unique<FlushFormatOpenPMD>(m_diag_name);
 #else
         amrex::Abort("To use openpmd output format, need to compile with USE_OPENPMD=TRUE");
 #endif
