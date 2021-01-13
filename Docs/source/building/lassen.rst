@@ -33,7 +33,7 @@ We use the following modules and environments on the system.
    export proj=<yourProject>
 
    # required dependencies
-   module load cmake/3.16.8
+   module load cmake/3.18.0
    module load gcc/8.3.1
    module load cuda/11.0.2
 
