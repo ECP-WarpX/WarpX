@@ -18,7 +18,7 @@ using SuperParticleType = typename WarpXParticleContainer::SuperParticleType;
 
 /**
  *  \brief Used to keep track of what inputs units a filter function should expect.
- *         "WarpX units" means the momentum is "gamma*v"
+ *         "WarpX units" means the momentum is "gamma*v" (aka proper velocity)
  *         "SI" means the momentum is mass*gamma*v.
  */
 enum struct InputUnits{WarpX, SI};
@@ -117,6 +117,7 @@ struct ParserFilter
             uy /= m_mass;
             uz /= m_mass;
         }
+        // ux, uy, uz are now in beta*gamma
         if ( m_function_partparser(m_t,x,y,z,ux,uy,uz) > 0.5 ) return 1;
         else return 0;
     }
