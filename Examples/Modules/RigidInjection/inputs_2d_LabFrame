@@ -40,5 +40,5 @@ beam.focused = false
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 10000
+diag1.intervals = 10000
 diag1.diag_type = Full

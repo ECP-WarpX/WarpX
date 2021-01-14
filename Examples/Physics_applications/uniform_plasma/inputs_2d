@@ -36,5 +36,5 @@ electrons.uz_th  = 0.01 # uth the std of the (unitless) momentum
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 10
+diag1.intervals = 10
 diag1.diag_type = Full

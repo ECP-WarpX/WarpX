@@ -44,5 +44,5 @@ laser1.wavelength = 2.e-6         # The wavelength of the laser (in meters)
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 50
+diag1.intervals = 50
 diag1.diag_type = Full
