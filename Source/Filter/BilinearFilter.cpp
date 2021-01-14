@@ -25,13 +25,12 @@ namespace {
 
         old_s[0] = 1.;
         int jmax = 1;
-        amrex::Real loc;
         // Convolve the filter with itself npass times
         for(int ipass=1; ipass<npass+1; ipass++){
             // element 0 has to be treated in its own way
             new_s[0] = 0.5_rt * old_s[0];
             if (1<jmax) new_s[0] += 0.5_rt * old_s[1];
-            loc = 0._rt;
+            amrex::Real loc = 0._rt;
             // For each element j, apply the filter to
             // old_s to get new_s[j]. loc stores the tmp
             // filtered value.
