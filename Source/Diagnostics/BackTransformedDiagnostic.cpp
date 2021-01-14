@@ -546,12 +546,12 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
     AMREX_ALWAYS_ASSERT(WarpX::do_back_transformed_fields or
                         WarpX::do_back_transformed_particles);
 
-    m_inv_gamma_boost_ = 1.0 / m_gamma_boost_;
-    m_beta_boost_ = std::sqrt(1.0 - m_inv_gamma_boost_*m_inv_gamma_boost_);
-    m_inv_beta_boost_ = 1.0 / m_beta_boost_;
+    m_inv_gamma_boost_ = 1.0_rt / m_gamma_boost_;
+    m_beta_boost_ = std::sqrt(1.0_rt - m_inv_gamma_boost_*m_inv_gamma_boost_);
+    m_inv_beta_boost_ = 1.0_rt / m_beta_boost_;
 
     m_dz_lab_ = PhysConst::c * m_dt_boost_ * m_inv_beta_boost_ * m_inv_gamma_boost_;
-    m_inv_dz_lab_ = 1.0 / m_dz_lab_;
+    m_inv_dz_lab_ = 1.0_rt / m_dz_lab_;
     int Nz_lab = static_cast<unsigned>((zmax_lab - zmin_lab) * m_inv_dz_lab_);
     int Nx_lab = geom.Domain().length(0);
 #if (AMREX_SPACEDIM == 3)
@@ -619,9 +619,9 @@ BackTransformedDiagnostic(Real zmin_lab, Real zmax_lab, Real v_window_lab,
         const amrex::Real* current_slice_hi = slice_realbox.hi();
 
         const amrex::Real zmin_slice_lab = current_slice_lo[AMREX_SPACEDIM-1] /
-                                          ( (1.+m_beta_boost_)*m_gamma_boost_);
+                                          ( (1._rt+m_beta_boost_)*m_gamma_boost_);
         const amrex::Real zmax_slice_lab = current_slice_hi[AMREX_SPACEDIM-1] /
-                                          ( (1.+m_beta_boost_)*m_gamma_boost_);
+                                          ( (1._rt+m_beta_boost_)*m_gamma_boost_);
         auto Nz_slice_lab = static_cast<int>(
             (zmax_slice_lab - zmin_slice_lab) * m_inv_dz_lab_);
         auto Nx_slice_lab = static_cast<int>(

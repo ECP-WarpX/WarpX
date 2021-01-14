@@ -691,10 +691,6 @@ private:
 
     std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
 
-    void ExchangeWithPmlB (int lev);
-    void ExchangeWithPmlE (int lev);
-    void ExchangeWithPmlF (int lev);
-
     void BuildBufferMasks ();
     void BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
                                  const amrex::IArrayBox &guard_mask, const int ng );

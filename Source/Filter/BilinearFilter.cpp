@@ -8,6 +8,8 @@
 #include "BilinearFilter.H"
 #include "WarpX.H"
 
+#include <AMReX_REAL.H>
+
 #ifdef _OPENMP
 #   include <omp.h>
 #endif
@@ -23,20 +25,19 @@ namespace {
 
         old_s[0] = 1.;
         int jmax = 1;
-        amrex::Real loc;
         // Convolve the filter with itself npass times
         for(int ipass=1; ipass<npass+1; ipass++){
             // element 0 has to be treated in its own way
-            new_s[0] = 0.5 * old_s[0];
-            if (1<jmax) new_s[0] += 0.5 * old_s[1];
-            loc = 0.;
+            new_s[0] = 0.5_rt * old_s[0];
+            if (1<jmax) new_s[0] += 0.5_rt * old_s[1];
+            amrex::Real loc = 0._rt;
             // For each element j, apply the filter to
             // old_s to get new_s[j]. loc stores the tmp
             // filtered value.
             for(int j=1; j<jmax+1; j++){
-                loc = 0.5 * old_s[j];
-                loc += 0.25 * old_s[j-1];
-                if (j<jmax) loc += 0.25 * old_s[j+1];
+                loc = 0.5_rt * old_s[j];
+                loc += 0.25_rt * old_s[j-1];
+                if (j<jmax) loc += 0.25_rt * old_s[j+1];
                 new_s[j] = loc;
             }
             // copy new_s into old_s
@@ -46,7 +47,7 @@ namespace {
         }
         // we use old_s here to make sure the stencil
         // is corrent even when npass = 0
-        old_s[0] *= 0.5; // because we will use it twice
+        old_s[0] *= 0.5_rt; // because we will use it twice
         stencil.resize(old_s.size());
         Gpu::copyAsync(Gpu::hostToDevice,old_s.begin(),old_s.end(),stencil.begin());
         amrex::Gpu::synchronize();

@@ -8,6 +8,7 @@
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_MLMG.H>
 #include <AMReX_MLNodeTensorLaplacian.H>
+#include <AMReX_REAL.H>
 
 #include <WarpX.H>
 
@@ -186,7 +187,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 
     // Normalize by the correct physical constant
     for (int lev=0; lev < rho.size(); lev++){
-        phi[lev]->mult(-1./PhysConst::ep0);
+        phi[lev]->mult(-1._rt/PhysConst::ep0);
     }
 }
 
@@ -219,12 +220,12 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            const Real inv_dx = 1./dx[0];
+            const Real inv_dx = 1._rt/dx[0];
 #if (AMREX_SPACEDIM == 3)
-            const Real inv_dy = 1./dx[1];
-            const Real inv_dz = 1./dx[2];
+            const Real inv_dy = 1._rt/dx[1];
+            const Real inv_dz = 1._rt/dx[2];
 #else
-            const Real inv_dz = 1./dx[1];
+            const Real inv_dz = 1._rt/dx[1];
 #endif
             const Box& tbx  = mfi.tilebox( E[lev][0]->ixType().toIntVect() );
 #if (AMREX_SPACEDIM == 3)
@@ -250,24 +251,24 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ex_arr(i,j,k) +=
                         +(beta_x*beta_x-1)*inv_dx*( phi_arr(i+1,j,k)-phi_arr(i,j,k) )
-                        +beta_x*beta_y*0.25*inv_dy*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j-1,k)
+                        +beta_x*beta_y*0.25_rt*inv_dy*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j-1,k)
                                                   + phi_arr(i+1,j+1,k)-phi_arr(i+1,j-1,k))
-                        +beta_x*beta_z*0.25*inv_dz*(phi_arr(i  ,j,k+1)-phi_arr(i  ,j,k-1)
+                        +beta_x*beta_z*0.25_rt*inv_dz*(phi_arr(i  ,j,k+1)-phi_arr(i  ,j,k-1)
                                                   + phi_arr(i+1,j,k+1)-phi_arr(i+1,j,k-1));
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ey_arr(i,j,k) +=
-                        +beta_y*beta_x*0.25*inv_dx*(phi_arr(i+1,j  ,k)-phi_arr(i-1,j  ,k)
+                        +beta_y*beta_x*0.25_rt*inv_dx*(phi_arr(i+1,j  ,k)-phi_arr(i-1,j  ,k)
                                                   + phi_arr(i+1,j+1,k)-phi_arr(i-1,j+1,k))
                         +(beta_y*beta_y-1)*inv_dy*( phi_arr(i,j+1,k)-phi_arr(i,j,k) )
-                        +beta_y*beta_z*0.25*inv_dz*(phi_arr(i,j  ,k+1)-phi_arr(i,j  ,k-1)
+                        +beta_y*beta_z*0.25_rt*inv_dz*(phi_arr(i,j  ,k+1)-phi_arr(i,j  ,k-1)
                                                   + phi_arr(i,j+1,k+1)-phi_arr(i,j+1,k-1));
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ez_arr(i,j,k) +=
-                        +beta_z*beta_x*0.25*inv_dx*(phi_arr(i+1,j,k  )-phi_arr(i-1,j,k  )
+                        +beta_z*beta_x*0.25_rt*inv_dx*(phi_arr(i+1,j,k  )-phi_arr(i-1,j,k  )
                                                   + phi_arr(i+1,j,k+1)-phi_arr(i-1,j,k+1))
-                        +beta_z*beta_y*0.25*inv_dy*(phi_arr(i,j+1,k  )-phi_arr(i,j-1,k  )
+                        +beta_z*beta_y*0.25_rt*inv_dy*(phi_arr(i,j+1,k  )-phi_arr(i,j-1,k  )
                                                   + phi_arr(i,j+1,k+1)-phi_arr(i,j-1,k+1))
                         +(beta_y*beta_z-1)*inv_dz*( phi_arr(i,j,k+1)-phi_arr(i,j,k) );
                 }
@@ -277,12 +278,12 @@ WarpX::computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ex_arr(i,j,k) +=
                         +(beta_x*beta_x-1)*inv_dx*( phi_arr(i+1,j,k)-phi_arr(i,j,k) )
-                        +beta_x*beta_z*0.25*inv_dz*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j-1,k)
+                        +beta_x*beta_z*0.25_rt*inv_dz*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j-1,k)
                                                   + phi_arr(i+1,j+1,k)-phi_arr(i+1,j-1,k));
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Ez_arr(i,j,k) +=
-                        +beta_z*beta_x*0.25*inv_dx*(phi_arr(i+1,j  ,k)-phi_arr(i-1,j  ,k)
+                        +beta_z*beta_x*0.25_rt*inv_dx*(phi_arr(i+1,j  ,k)-phi_arr(i-1,j  ,k)
                                                   + phi_arr(i+1,j+1,k)-phi_arr(i-1,j+1,k))
                         +(beta_y*beta_z-1)*inv_dz*( phi_arr(i,j+1,k)-phi_arr(i,j,k) );
                 }
@@ -321,12 +322,12 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
 #endif
         for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi )
         {
-            const Real inv_dx = 1./dx[0];
+            const Real inv_dx = 1._rt/dx[0];
 #if (AMREX_SPACEDIM == 3)
-            const Real inv_dy = 1./dx[1];
-            const Real inv_dz = 1./dx[2];
+            const Real inv_dy = 1._rt/dx[1];
+            const Real inv_dz = 1._rt/dx[2];
 #else
-            const Real inv_dz = 1./dx[1];
+            const Real inv_dz = 1._rt/dx[1];
 #endif
             const Box& tbx  = mfi.tilebox( B[lev][0]->ixType().toIntVect() );
             const Box& tby  = mfi.tilebox( B[lev][1]->ixType().toIntVect() );
@@ -341,7 +342,7 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
             Real beta_y = beta[1];
             Real beta_z = beta[2];
 
-            constexpr Real inv_c = 1./PhysConst::c;
+            constexpr Real inv_c = 1._rt/PhysConst::c;
 
             // Calculate the magnetic field
             // Use discretized derivative that matches the staggering of the grid.
@@ -349,23 +350,23 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
             amrex::ParallelFor( tbx, tby, tbz,
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Bx_arr(i,j,k) += inv_c * (
-                        -beta_y*inv_dz*0.5*(phi_arr(i,j  ,k+1)-phi_arr(i,j  ,k)
+                        -beta_y*inv_dz*0.5_rt*(phi_arr(i,j  ,k+1)-phi_arr(i,j  ,k)
                                           + phi_arr(i,j+1,k+1)-phi_arr(i,j+1,k))
-                        +beta_z*inv_dy*0.5*(phi_arr(i,j+1,k  )-phi_arr(i,j,k  )
+                        +beta_z*inv_dy*0.5_rt*(phi_arr(i,j+1,k  )-phi_arr(i,j,k  )
                                           + phi_arr(i,j+1,k+1)-phi_arr(i,j,k+1)));
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     By_arr(i,j,k) += inv_c * (
-                        -beta_z*inv_dx*0.5*(phi_arr(i+1,j,k  )-phi_arr(i,j,k  )
+                        -beta_z*inv_dx*0.5_rt*(phi_arr(i+1,j,k  )-phi_arr(i,j,k  )
                                           + phi_arr(i+1,j,k+1)-phi_arr(i,j,k+1))
-                        +beta_x*inv_dz*0.5*(phi_arr(i  ,j,k+1)-phi_arr(i  ,j,k)
+                        +beta_x*inv_dz*0.5_rt*(phi_arr(i  ,j,k+1)-phi_arr(i  ,j,k)
                                           + phi_arr(i+1,j,k+1)-phi_arr(i+1,j,k)));
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     Bz_arr(i,j,k) += inv_c * (
-                        -beta_x*inv_dy*0.5*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j,k)
+                        -beta_x*inv_dy*0.5_rt*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j,k)
                                           + phi_arr(i+1,j+1,k)-phi_arr(i+1,j,k))
-                        +beta_y*inv_dx*0.5*(phi_arr(i+1,j  ,k)-phi_arr(i,j  ,k)
+                        +beta_y*inv_dx*0.5_rt*(phi_arr(i+1,j  ,k)-phi_arr(i,j  ,k)
                                           + phi_arr(i+1,j+1,k)-phi_arr(i,j+1,k)));
                 }
             );
@@ -377,9 +378,9 @@ WarpX::computeB (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                     By_arr(i,j,k) += inv_c * (
-                        -beta_z*inv_dx*0.5*(phi_arr(i+1,j  ,k)-phi_arr(i,j  ,k)
+                        -beta_z*inv_dx*0.5_rt*(phi_arr(i+1,j  ,k)-phi_arr(i,j  ,k)
                                           + phi_arr(i+1,j+1,k)-phi_arr(i,j+1,k))
-                        +beta_x*inv_dz*0.5*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j,k)
+                        +beta_x*inv_dz*0.5_rt*(phi_arr(i  ,j+1,k)-phi_arr(i  ,j,k)
                                           + phi_arr(i+1,j+1,k)-phi_arr(i+1,j,k)));
                 },
                 [=] AMREX_GPU_DEVICE (int i, int j, int k) {
