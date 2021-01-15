@@ -91,7 +91,7 @@ ifeq ($(USE_SENSEI_INSITU),TRUE)
 endif
 
 ifeq ($(QED),TRUE)
-  INCLUDE_LOCATIONS += $(PICSAR_HOME)/src/multi_physics/QED/src
+  INCLUDE_LOCATIONS += $(PICSAR_HOME)/multi_physics/QED/include
   CXXFLAGS += -DWARPX_QED
   CFLAGS   += -DWARPX_QED
   FFLAGS   += -DWARPX_QED
