@@ -689,6 +689,9 @@ private:
 
     void InitNCICorrector ();
 
+    /** Check the requested resources and write performance hints */
+    void PerformanceHints ();
+
     std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
 
     void BuildBufferMasks ();
