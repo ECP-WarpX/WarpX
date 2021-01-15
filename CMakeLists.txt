@@ -233,7 +233,7 @@ if(WarpX_QED)
     if(WarpX_QED_TABLE_GEN)
         target_compile_definitions(WarpX PUBLIC WARPX_QED_TABLE_GEN)
     endif()
-    target_link_libraries(WarpX PUBLIC PXRMP::QED)
+    target_link_libraries(WarpX PUBLIC PXRMP_QED::PXRMP_QED)
 endif()
 
 # AMReX helper function: propagate CUDA specific target & source properties
