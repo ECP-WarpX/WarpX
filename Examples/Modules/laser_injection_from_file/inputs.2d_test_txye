@@ -21,7 +21,7 @@ interpolation.noy = 3
 interpolation.noz = 3
 warpx.cfl = 0.98
 warpx.do_dynamic_scheduling = 0
-warpx.load_balance_int = -1
+warpx.load_balance_intervals = -1
 warpx.use_filter = 0
 algo.maxwell_solver = ckc
 
@@ -40,5 +40,5 @@ txye_laser.time_chunk_size = 50
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 250
+diag1.intervals = 250
 diag1.diag_type = Full

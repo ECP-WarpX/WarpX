@@ -133,7 +133,7 @@ p_dn_10.single_particle_weight = 1.0
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 50
+diag1.intervals = 50
 diag1.diag_type = Full
 diag1.p_xp_1.variables = ux uy uz
 diag1.p_xn_1.variables = ux uy uz

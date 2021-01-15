@@ -210,7 +210,7 @@ particles.B_external_particle = 2857142.85714286 4285714.28571428 8571428.571428
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 1
+diag1.intervals = 1
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex
 diag1.p1.variables = ux uy uz w

@@ -84,6 +84,6 @@ ions.uz = 0.
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 40
+diag1.intervals = 40
 diag1.diag_type = Full
 diag1.fields_to_plot = jx jz Ex Ez By

@@ -207,7 +207,7 @@ Distribution across MPI ranks and parallelization
     When using mesh refinement, this number applies to the subdomains
     of the coarsest level, but also to any of the finer level.
 
-* ``warpx.load_balance_int`` (`string`) optional (default `0`)
+* ``warpx.load_balance_intervals`` (`string`) optional (default `0`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
     WarpX should try to redistribute the work across MPI ranks, in order to have
     better load balancing.
@@ -1351,7 +1351,7 @@ Numerics and algorithms
 * ``psatd.do_time_averaging`` (`0` or `1`; default: 0)
     Whether to use an averaged Galilean PSATD algorithm or standard Galilean PSATD.
 
-* ``warpx.override_sync_int`` (`string`) optional (default `1`)
+* ``warpx.override_sync_intervals`` (`string`) optional (default `1`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
     synchronization of sources (`rho` and `J`) on grid nodes at box boundaries is performed.
     Since the grid nodes at the interface between two neighbor boxes are duplicated in both
@@ -1374,14 +1374,14 @@ Numerics and algorithms
     When running in an accelerated platform, whether to call a deviceSynchronize around profiling regions.
     This allows the profiler to give meaningful timers, but (hardly) slows down the simulation.
 
- * ``warpx.sort_int`` (`string`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
+ * ``warpx.sort_intervals`` (`string`) optional (defaults: ``-1`` on CPU; ``4`` on GPU)
      Using the `Intervals parser`_ syntax, this string defines the timesteps at which particles are
      sorted by bin.
      If ``<=0``, do not sort particles.
      It is turned on on GPUs for performance reasons (to improve memory locality).
 
  * ``warpx.sort_bin_size`` (list of `int`) optional (default ``4 4 4``)
-     If ``sort_int`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
+     If ``sort_intervals`` is activated particles are sorted in bins of ``sort_bin_size`` cells.
      In 2D, only the first two elements are read.
 
 .. _running-cpp-parameters-boundary:
@@ -1451,11 +1451,11 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Name of each diagnostics.
     example: ``diagnostics.diags_names = diag1 my_second_diag``.
 
-* ``<diag_name>.period`` (`string` optional, default `0`)
+* ``<diag_name>.intervals`` (`string` optional, default `0`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which data is dumped.
     Use a negative number or 0 to disable data dumping.
     This is ``0`` (disabled) by default.
-    example: ``diag1.period = 10,20:25:1``.
+    example: ``diag1.intervals = 10,20:25:1``.
 
 * ``<diag_name>.diag_type`` (`string`)
     Type of diagnostics. So far, only ``Full`` is supported.
@@ -1899,7 +1899,7 @@ Reduced Diagnostics
         so the time of the diagnostic may be long
         depending on the simulation size.
 
-* ``<reduced_diags_name>.frequency`` (`string`) optional (default ``1``)
+* ``<reduced_diags_name>.intervals`` (`string`) optional (default ``1``)
     Using the `Intervals Parser`_ syntax, this string defines the timesteps at which reduced
     diagnostics are written to file.
 
@@ -2069,24 +2069,24 @@ For the 1 and 2 colon syntax, actually having the integers in the string is opti
 
 **Examples**
 
-* ``something_int = 50`` -> do something at timesteps 0, 50, 100, 150, etc.
-  (equivalent to ``something_int = ::50``)
+* ``something_intervals = 50`` -> do something at timesteps 0, 50, 100, 150, etc.
+  (equivalent to ``something_intervals = ::50``)
 
-* ``something_int = 300:600:100`` -> do something at timesteps 300, 400, 500 and 600.
+* ``something_intervals = 300:600:100`` -> do something at timesteps 300, 400, 500 and 600.
 
-* ``something_int = 300::50`` -> do something at timesteps 300, 350, 400, 450, etc.
+* ``something_intervals = 300::50`` -> do something at timesteps 300, 350, 400, 450, etc.
 
-* ``something_int = 105:108,205:208`` -> do something at timesteps 105, 106, 107, 108,
-  205, 206, 207 and 208. (equivalent to ``something_int = 105 : 108 : , 205 : 208 :``)
+* ``something_intervals = 105:108,205:208`` -> do something at timesteps 105, 106, 107, 108,
+  205, 206, 207 and 208. (equivalent to ``something_intervals = 105 : 108 : , 205 : 208 :``)
 
-* ``something_int = :`` or  ``something_int = ::`` -> do something at every timestep.
+* ``something_intervals = :`` or  ``something_intervals = ::`` -> do something at every timestep.
 
-* ``something_int = 167:167,253:253,275:425:50`` do something at timesteps 167, 253, 275,
+* ``something_intervals = 167:167,253:253,275:425:50`` do something at timesteps 167, 253, 275,
   325, 375 and 425.
 
 This is essentially the python slicing syntax except that the stop is inclusive
 (``0:100`` contains 100) and that no colon means that the given value is the period.
 
 Note that if a given period is zero or negative, the correspoding slice is disregarded.
-For example, ``something_int = -1`` deactivates ``something`` and
-``something_int = ::-1,100:1000:25`` is equivalent to ``something_int = 100:1000:25``.
+For example, ``something_intervals = -1`` deactivates ``something`` and
+``something_intervals = ::-1,100:1000:25`` is equivalent to ``something_intervals = 100:1000:25``.

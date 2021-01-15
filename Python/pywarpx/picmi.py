@@ -664,7 +664,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.use_filter = kw.pop('warpx_use_filter', None)
         self.serialize_ics = kw.pop('warpx_serialize_ics', None)
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
-        self.load_balance_int = kw.pop('warpx_load_balance_int', None)
+        self.load_balance_intervals = kw.pop('warpx_load_balance_intervals', None)
         self.load_balance_with_sfc = kw.pop('warpx_load_balance_with_sfc', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
 
@@ -694,7 +694,7 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.warpx.serialize_ics = self.serialize_ics
 
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
-        pywarpx.warpx.load_balance_int = self.load_balance_int
+        pywarpx.warpx.load_balance_intervals = self.load_balance_intervals
         pywarpx.warpx.load_balance_with_sfc = self.load_balance_with_sfc
 
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
@@ -799,7 +799,7 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
         self.diagnostic.dump_rz_modes = self.dump_rz_modes
-        self.diagnostic.period = self.period
+        self.diagnostic.intervals = self.period
         self.diagnostic.diag_lo = self.lower_bound
         self.diagnostic.diag_hi = self.upper_bound
         if self.number_of_cells is not None:
@@ -907,7 +907,7 @@ class ParticleDiagnostic(picmistandard.PICMI_ParticleDiagnostic):
         self.diagnostic.diag_type = 'Full'
         self.diagnostic.format = self.format
         self.diagnostic.openpmd_backend = self.openpmd_backend
-        self.diagnostic.period = self.period
+        self.diagnostic.intervals = self.period
 
         # --- Use a set to ensure that fields don't get repeated.
         variables = set()

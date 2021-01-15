@@ -65,5 +65,5 @@ collision3.ndt = 10
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 10
+diag1.intervals = 10
 diag1.diag_type = Full

@@ -29,5 +29,5 @@ beam.uy_m = 0.0
 beam.uz_m = 0.0
 
 diagnostics.diags_names = diag1
-diag1.period = 8
+diag1.intervals = 8
 diag1.diag_type = Full

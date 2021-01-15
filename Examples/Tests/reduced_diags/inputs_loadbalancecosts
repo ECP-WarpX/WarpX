@@ -24,7 +24,7 @@ warpx.use_filter = 1
 algo.maxwell_solver = yee # or ckc
 
 # Load balancing
-warpx.load_balance_int = 2
+warpx.load_balance_intervals = 2
 #algo.load_balance_costs_update = Timers
 
 # Interpolation
@@ -57,9 +57,9 @@ electrons.uz_th = 0.0
 #################################
 warpx.reduced_diags_names = LBC
 LBC.type = LoadBalanceCosts
-LBC.frequency = 1
+LBC.intervals = 1
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 3
+diag1.intervals = 3
 diag1.diag_type = Full

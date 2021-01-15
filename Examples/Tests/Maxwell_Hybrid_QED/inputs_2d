@@ -48,5 +48,5 @@ warpx.Bz_external_grid_function(x,y,z) = 0.
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 300
+diag1.intervals = 300
 diag1.diag_type = Full
