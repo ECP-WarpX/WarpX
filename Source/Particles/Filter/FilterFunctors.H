@@ -8,6 +8,7 @@
 #define FILTERFUNCTORS_H
 
 #include "WarpX.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 #include "Particles/WarpXParticleContainer.H"
 #include "Utils/WarpXConst.H"
 
@@ -105,9 +106,8 @@ struct ParserFilter
     bool operator () (const SuperParticleType& p, const amrex::RandomEngine&) const noexcept
     {
         if ( !m_is_active ) return 1;
-        amrex::Real const x  = p.pos(0);
-        amrex::Real const y  = p.pos(1);
-        amrex::Real const z  = p.pos(2);
+        amrex::ParticleReal x, y, z;
+        get_particle_position(p, x, y, z);
         amrex::Real ux = p.rdata(PIdx::ux)/PhysConst::c;
         amrex::Real uy = p.rdata(PIdx::uy)/PhysConst::c;
         amrex::Real uz = p.rdata(PIdx::uz)/PhysConst::c;
