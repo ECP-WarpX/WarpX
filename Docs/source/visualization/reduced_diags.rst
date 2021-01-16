@@ -1,3 +1,5 @@
+.. _reduced-diagnostics:
+
 Reduced diagnostics
 ===================
 

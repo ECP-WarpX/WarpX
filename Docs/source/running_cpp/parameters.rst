@@ -1736,6 +1736,8 @@ Reduced Diagnostics
         :math:`\delta_y`, and
         :math:`\epsilon_y` will not be outputed.
 
+
+    .. _loadbalancecosts:          
     * ``LoadBalanceCosts``
         This type computes the cost, used in load balancing, for each box on the domain.
         The cost :math:`c` is computed as
