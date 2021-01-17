@@ -1,10 +1,11 @@
 Visualizing a distribution mapping
 ==================================
 
-WarpX provides via :ref:`reduced diagnostics <reduced-diagnostics>` a means for
-visualization of :ref:`distribution mappings and load balance costs <loadbalancecosts>`.
-Here we demonstrate the workflow for generating this data and using it to plot
-distribution mappings and load balance costs.
+WarpX provides via :ref:`reduced diagnostics <reduced-diagnostics>` and output
+:ref:`LoadBalanceCosts <running-cpp-parameters-reduced-diagnostics>`, which
+allows for visualization of a simulation's distribution mapping and computational
+costs. Here we demonstrate the workflow for generating this data and using it to
+plot distribution mappings and load balance costs.
 
 
 Generating the data
@@ -59,7 +60,7 @@ can be used to read the data:
     for sim in [sim_knapsack, sim_sfc]: sim(2800)
 
 
-For 2D data, the following function can used for visualization of distribution
+For 2D data, the following function can be used for visualization of distribution
 mappings:
 
 .. code-block:: python
@@ -184,7 +185,7 @@ This generates plots like in `[fig:knapsack_sfc_costs_2D] <#fig:knapsack_sfc_cos
 Loading 3D data works the same as loading 2D data, but this time the cost and
 rank arrays will be 3 dimensional.  Here we load and plot some example 3D data
 (`LBC_3D.txt`) from a simulation run on 4 MPI ranks.  Particles fill the box
-from $k=0$ to $k=1$.
+from :math:`k=0` to :math:`k=1`.
 
 .. code-block:: python
 
@@ -266,8 +267,8 @@ This generates plots like in `[fig:distribution_mapping_3D] <#fig:distribution_m
    \centering
 
 .. figure:: distribution_mapping_3D.png
-   :alt: Sample distribution mappings from 3D simulations, visualized as slices in the :math:`ik` plance along :math:`j`.
+   :alt: Sample distribution mappings from 3D simulations, visualized as slices in the :math:`ik` plane along :math:`j`.
    :name: fig:distribution_mapping_3D
    :width: 15cm
 
-   Sample distribution mappings from 3D simulations, visualized as slices in the :math:`ik` plance along :math:`j`.
+   Sample distribution mappings from 3D simulations, visualized as slices in the :math:`ik` plane along :math:`j`.
