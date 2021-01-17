@@ -37,26 +37,26 @@ can be used to read the data:
 
 .. code-block:: python
 
-   # Math
-   import numpy as np
-   import random
+    # Math
+    import numpy as np
+    import random
 
-   # Plotting
-   import matplotlib.pyplot as plt
-   import matplotlib as mpl
-   from matplotlib.colors import ListedColormap
-   from mpl_toolkits.axes_grid1 import make_axes_locatable
+    # Plotting
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    from matplotlib.colors import ListedColormap
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-   # Data handling
-   import plot_distribution_mapping as pdm
+    # Data handling
+    import plot_distribution_mapping as pdm
 
-   sim_knapsack = pdm.SimData('LBC_knapsack.txt', # Data directory
-                             [2800]              # Files to process
-                            )
-   sim_sfc = pdm.SimData('LBC_sfc.txt', [2800])
+    sim_knapsack = pdm.SimData('LBC_knapsack.txt', # Data directory
+                               [2800]              # Files to process
+                              )
+    sim_sfc = pdm.SimData('LBC_sfc.txt', [2800])
 
-   # Set reduced diagnostics data for step 2800
-   for sim in [sim_knapsack, sim_sfc]: sim(2800)
+    # Set reduced diagnostics data for step 2800
+    for sim in [sim_knapsack, sim_sfc]: sim(2800)
 
 
 For 2D data, the following function can used for visualization of distribution
@@ -250,7 +250,7 @@ from $k=0$ to $k=1$.
         cb=plt.gcf().colorbar(im, label='rank', cax=cax, orientation="vertical")
         ticks = np.linspace(0, 1, len(unique_ranks)+1)
         cb.ax.yaxis.set_ticks(ticks)
-        cb.ax.yaxis.set_ticklabels([0,1,2,3," "])
+        cb.ax.yaxis.set_ticklabels([0, 1, 2, 3, " "])
 
     fig, axs = plt.subplots(2, 2, figsize=(8, 8))
     for j,ax in enumerate(axs.flatten()):
