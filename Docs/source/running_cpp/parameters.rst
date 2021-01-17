@@ -1592,6 +1592,7 @@ Back-Transformed Diagnostics
     slice diagnostic if there are within the user-defined width from
     the slice region defined by ``slice.dom_lo`` and ``slice.dom_hi``.
 
+.. _running-cpp-parameters-reduced-diagnostics:
 
 Reduced Diagnostics
 ^^^^^^^^^^^^^^^^^^^
