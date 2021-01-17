@@ -19,7 +19,7 @@ be changed as needed):
 .. code-block:: python
 
     warpx.reduced_diags_names = LBC
-    LBC.type = LoadBalanceCosts 
+    LBC.type = LoadBalanceCosts
     LBC.frequency = 100
 
 The line `warpx.reduced_diags_names = LBC` sets the name of the reduced diagnostics
@@ -32,7 +32,7 @@ Loading and plotting the data
 -----------------------------
 
 After generating data (called `LBC_knapsack.txt` and `LBC_sfc.txt` in the example
-below), the following Python code, along with a helper class in 
+below), the following Python code, along with a helper class in
 :download:`plot_distribution_mapping.py<../../../Tools/PostProcessing/plot_distribution_mapping.py>`
 can be used to read the data:
 
@@ -101,9 +101,9 @@ mappings:
         plt.ylabel('$j$')
         plt.xlabel('$i$')
         plt.minorticks_on()
-        plt.hlines(ycoord, xcoord[0], xcoord[-1], 
+        plt.hlines(ycoord, xcoord[0], xcoord[-1],
                    alpha=0.7, linewidth=0.3, color='lightgrey')
-        plt.vlines(xcoord, ycoord[0], ycoord[-1], 
+        plt.vlines(xcoord, ycoord[0], ycoord[-1],
                    alpha=0.7, linewidth=0.3, color='lightgrey')
 
         plt.gca().set_aspect('equal')
@@ -112,7 +112,7 @@ mappings:
         for j in range(my):
             for i in range(mx):
                 text = plt.gca().text(i+0.5, j+0.5, int(sim.rank_arr[j][i]),
-                                      ha="center", va="center", 
+                                      ha="center", va="center",
                                       color="w", fontsize=8)
 
         # Colorbar
@@ -166,7 +166,7 @@ Similarly, the computational costs per box can be plotted with the following cod
         plt.ylabel('$j$')
         plt.xlabel('$i$')
         ax.set_aspect('equal')
-    
+
     plt.tight_layout()
 
 This generates plots like in `[fig:knapsack_sfc_costs_2D] <#fig:knapsack_sfc_costs_2D>`__:
@@ -230,9 +230,9 @@ from :math:`k=0` to :math:`k=1`.
         plt.ylabel('$k$')
         plt.xlabel('$i$')
         plt.minorticks_on()
-        plt.hlines(zcoord, xcoord[0], xcoord[-1], 
+        plt.hlines(zcoord, xcoord[0], xcoord[-1],
                    alpha=0.7, linewidth=0.3, color='lightgrey')
-        plt.vlines(xcoord, zcoord[0], zcoord[-1], 
+        plt.vlines(xcoord, zcoord[0], zcoord[-1],
                    alpha=0.7, linewidth=0.3, color='lightgrey')
 
         plt.gca().set_aspect('equal')
@@ -241,7 +241,7 @@ from :math:`k=0` to :math:`k=1`.
         for k in range(mz):
             for i in range(mx):
                 text = plt.gca().text(i+0.5, k+0.5, int(sim.rank_arr[k][j0][i]),
-                                      ha="center", va="center", 
+                                      ha="center", va="center",
                                       color="red", fontsize=8)
 
         # Colorbar
@@ -255,7 +255,7 @@ from :math:`k=0` to :math:`k=1`.
 
     fig, axs = plt.subplots(2, 2, figsize=(8, 8))
     for j,ax in enumerate(axs.flatten()):
-        plt.sca(ax)    
+        plt.sca(ax)
         plt.title('j={}'.format(j))
         plot_3D(sim_3D, j)
         plt.tight_layout()
