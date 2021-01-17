@@ -258,7 +258,6 @@ from $k=0$ to $k=1$.
         plt.title('j={}'.format(j))
         plot_3D(sim_3D, j)
         plt.tight_layout()
-    
 
 This generates plots like in `[fig:distribution_mapping_3D] <#fig:distribution_mapping_3D>`__:
 
