@@ -48,7 +48,7 @@ namespace ParticleUtils {
 #else
                 return IntVect(
                     static_cast<int>((p.pos(0)-plo[0])*dxi[0] - lo.x),
-                    static_cast<int>((p.pos(1)-plo[1])*dxi[1] - lo.z)); // double-check
+                    static_cast<int>((p.pos(1)-plo[1])*dxi[1] - lo.y)); // double-check
 #endif
             });
 
