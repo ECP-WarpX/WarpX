@@ -33,7 +33,7 @@ We use the following modules and environments on the system.
    export proj=<yourProject>
 
    # required dependencies
-   module load cmake/3.16.8
+   module load cmake/3.18.0
    module load gcc/8.3.1
    module load cuda/11.0.2
 
@@ -44,7 +44,8 @@ We use the following modules and environments on the system.
    module load boost/1.70.0
 
    # optional: for openPMD support
-   # TODO ADIOS2 & HDF5
+   # TODO ADIOS2
+   module load hdf5-parallel/1.10.4
 
    # optional: for PSATD in RZ geometry support
    # TODO: blaspp lapackpp

@@ -521,12 +521,17 @@ void warpx_interp_nd_efield_y (int j, int k, int l,
 
 #if (AMREX_SPACEDIM == 2)
 
-    // interp from coarse nodal and coarse staggered to fine nodal
-    Real eg = owx * owy * (Eyg(jg  ,kg  ,0) + Eyc(jg  ,kg  ,0))
-        +     owx *  wy * (Eyg(jg  ,kg+1,0) + Eyc(jg  ,kg+1,0))
-        +      wx * owy * (Eyg(jg+1,kg  ,0) + Eyc(jg+1,kg  ,0))
-        +      wx *  wy * (Eyg(jg+1,kg+1,0) + Eyc(jg+1,kg+1,0));
-    Real ec = 0.0_rt;
+    // interp from coarse nodal to fine nodal
+    Real eg = owx * owy * Eyg(jg  ,kg  ,0)
+        +     owx *  wy * Eyg(jg  ,kg+1,0)
+        +      wx * owy * Eyg(jg+1,kg  ,0)
+        +      wx *  wy * Eyg(jg+1,kg+1,0);
+
+    // interp from coarse staggered to fine nodal (Eyc is actually nodal)
+    Real ec = owx * owy * Eyc(jg  ,kg  ,0)
+        +     owx *  wy * Eyc(jg  ,kg+1,0)
+        +      wx * owy * Eyc(jg+1,kg  ,0)
+        +      wx *  wy * Eyc(jg+1,kg+1,0);
 
     // interp from fine staggered to fine nodal
     Real ef = Eyf(j,k,0);

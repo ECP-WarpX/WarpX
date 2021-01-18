@@ -268,7 +268,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-        amrex::ParticleContainer<0, 0, PIdx::nattribs> tmp(pc->GetParGDB());
+        PhysicalParticleContainer tmp(&WarpX::GetInstance());
         Vector<std::string> real_names;
         Vector<std::string> int_names;
         Vector<int> int_flags;
@@ -304,15 +304,16 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         }
 #endif
 
-        // Convert momentum to SI
         pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
 
         RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                          particle_diags[i].m_random_fraction);
         UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                            particle_diags[i].m_uniform_stride);
-        ParserFilter const parser_filter(particle_diags[i].m_do_parser_filter,
-                                         getParser(particle_diags[i].m_particle_filter_parser));
+        ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
+                                   getParser(particle_diags[i].m_particle_filter_parser),
+                                   pc->getMass());
+        parser_filter.m_units = InputUnits::SI;
         GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                              particle_diags[i].m_diag_domain);
 
@@ -332,7 +333,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             particle_diags[i].plot_flags, int_flags,
             real_names, int_names);
 
-        // Convert momentum back to WarpX units
         pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
     }
 }
