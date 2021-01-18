@@ -161,7 +161,7 @@ struct GeometryFilter
                   (p.pos(2) < m_domain.lo(2)) || (p.pos(2) > m_domain.hi(2) ));
 #else
         return ! ((p.pos(0) < m_domain.lo(0)) || (p.pos(0) > m_domain.hi(0) ) ||
-                  (p.pos(1) < m_domain.lo(1)) || (p.pos(1) > m_domain.hi(1) )); // double-check
+                  (p.pos(1) < m_domain.lo(1)) || (p.pos(1) > m_domain.hi(1) ));
 #endif
     }
 private:
