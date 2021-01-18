@@ -22,6 +22,10 @@ function(find_picsar)
 
         # Always disable tests
         set (PXRMP_QED_TEST OFF CACHE INTERNAL "")
+        
+        if(WarpX_COMPUTE STREQUAL SYCL)
+            set (PXRMP_DPCPP_FIX ON CACHE INTERNAL "")
+        endif()
 
         FetchContent_Declare(fetchedpicsar
             GIT_REPOSITORY ${WarpX_picsar_repo}
