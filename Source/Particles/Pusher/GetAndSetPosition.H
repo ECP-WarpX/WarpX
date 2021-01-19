@@ -48,7 +48,6 @@ void getParticlePosition (const P& p, const RType theta,
 struct GetParticlePosition
 {
     using PType = WarpXParticleContainer::ParticleType;
-    using SuperPType = WarpXParticleContainer::SuperParticleType;
     using RType = amrex::ParticleReal;
 
     const PType* AMREX_RESTRICT m_structs = nullptr;
