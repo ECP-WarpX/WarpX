@@ -18,13 +18,16 @@
 /** \brief Extract the cartesian position coordinates of the particle
  *         p and store them in the variables `x`, `y`, `z`
  *         This is the implementaton and can't be called directly */
-template <typename P>
+template <typename PType>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void get_particle_position (const P& p, const RType theta,
-                          RType& x, RType& y, RType& z) const noexcept
+void get_particle_position (const WarpXParticleContainer::SuperParticleType& p,
+                            amrex::ParticleReal& x,
+                            amrex::ParticleReal& y,
+                            amrex::ParticleReal& z) noexcept
 {
 #ifdef WARPX_DIM_RZ
-    RType r = p.pos(0);
+    amrex::ParticleReal theta = p.rdata(PIdx::theta);
+    amrex::ParticleReal r = p.pos(0);
     x = r*std::cos(theta);
     y = r*std::sin(theta);
     z = p.pos(1);
@@ -34,7 +37,7 @@ void get_particle_position (const P& p, const RType theta,
     z = p.pos(2);
 #else
     x = p.pos(0);
-    y = std::numeric_limits<RType>::quiet_NaN();
+    y = std::numeric_limits<amrex::ParticleReal>::quiet_NaN();
     z = p.pos(1);
 #endif
 }
@@ -75,7 +78,21 @@ struct GetParticlePosition
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (const int i, RType& x, RType& y, RType& z) const noexcept
     {
-        get_particle_position(m_structs[i], m_theta[i], x, y, z);
+        const PType& p = m_structs[i];
+#ifdef WARPX_DIM_RZ
+        RType r = p.pos(0);
+        x = r*std::cos(m_theta[i]);
+        y = r*std::sin(m_theta[i]);
+        z = p.pos(1);
+#elif WARPX_DIM_3D
+        x = p.pos(0);
+        y = p.pos(1);
+        z = p.pos(2);
+#else
+        x = p.pos(0);
+        y = m_snan;
+        z = p.pos(1);
+#endif
     }
 };
 
