@@ -25,6 +25,7 @@
 struct GetParticlePosition
 {
     using PType = WarpXParticleContainer::ParticleType;
+    using SuperPType = WarpXParticleContainer::SuperParticleType;
     using RType = amrex::ParticleReal;
 
     const PType* AMREX_RESTRICT m_structs = nullptr;
@@ -52,19 +53,48 @@ struct GetParticlePosition
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (const int i, RType& x, RType& y, RType& z) const noexcept
     {
+        unpack_particle(m_structs[i], x, y, z);
+    }
+
+    /** \brief Extract the cartesian position coordinates of the particle
+    *         p and store them in the variables `x`, `y`, `z`
+    *         Particle version. */
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    void operator() (const PType& p, RType& x, RType& y, RType& z) const noexcept
+    {
+        unpack_particle(p, x, y, z);
+    }
+
+    /** \brief Extract the cartesian position coordinates of the particle
+    *         p and store them in the variables `x`, `y`, `z`
+    *         SuperParticle version. */
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    void operator() (const SuperPType& p, RType& x, RType& y, RType& z) const noexcept
+    {
+        unpack_particle(p, x, y, z);
+    }
+
+private:
+    /** \brief Extract the cartesian position coordinates of the particle
+    *         p and store them in the variables `x`, `y`, `z`
+    *         This is the implementaton and can't be called directly */
+    template <typename P>
+    AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+    void unpack_particle (const P& p, RType& x, RType& y, RType& z) const noexcept
+    {
 #ifdef WARPX_DIM_RZ
-        RType r = m_structs[i].pos(0);
+        RType r = p.pos(0);
         x = r*std::cos(m_theta[i]);
         y = r*std::sin(m_theta[i]);
-        z = m_structs[i].pos(1);
+        z = p.pos(1);
 #elif WARPX_DIM_3D
-        x = m_structs[i].pos(0);
-        y = m_structs[i].pos(1);
-        z = m_structs[i].pos(2);
+        x = p.pos(0);
+        y = p.pos(1);
+        z = p.pos(2);
 #else
-        x = m_structs[i].pos(0);
+        x = p.pos(0);
         y = m_snan;
-        z = m_structs[i].pos(1);
+        z = p.pos(1);
 #endif
     }
 };
