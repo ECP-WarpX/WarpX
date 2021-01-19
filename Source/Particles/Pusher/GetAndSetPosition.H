@@ -75,7 +75,7 @@ struct GetParticlePosition
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     void operator() (const int i, RType& x, RType& y, RType& z) const noexcept
     {
-        unpack_particle_position(m_structs[i], m_theta[i], x, y, z);
+        get_particle_position(m_structs[i], m_theta[i], x, y, z);
     }
 };
 
