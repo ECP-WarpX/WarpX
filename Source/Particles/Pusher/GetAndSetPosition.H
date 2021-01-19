@@ -20,7 +20,7 @@
  *         This is the implementaton and can't be called directly */
 template <typename P>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-void getParticlePosition (const P& p, const RType theta,
+void get_particle_position (const P& p, const RType theta,
                           RType& x, RType& y, RType& z) const noexcept
 {
 #ifdef WARPX_DIM_RZ
