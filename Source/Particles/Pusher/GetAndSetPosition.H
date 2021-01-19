@@ -34,7 +34,7 @@ void getParticlePosition (const P& p, const RType theta,
     z = p.pos(2);
 #else
     x = p.pos(0);
-    y = m_snan;
+    y = std::numeric_limits<RType>::quiet_NaN();
     z = p.pos(1);
 #endif
 }
