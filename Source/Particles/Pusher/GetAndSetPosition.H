@@ -17,8 +17,7 @@
 
 /** \brief Extract the cartesian position coordinates of the particle
  *         p and store them in the variables `x`, `y`, `z`
- *         This is the implementaton and can't be called directly */
-template <typename PType>
+ *         This version operates on a SuperParticle */
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void get_particle_position (const WarpXParticleContainer::SuperParticleType& p,
                             amrex::ParticleReal& x,
