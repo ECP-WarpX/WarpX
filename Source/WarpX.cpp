@@ -1552,7 +1552,7 @@ WarpX::BuildBufferMasks ()
                 const auto& period = Geom(lev).periodicity();
                 tmp.BuildMask(dom, period, covered, notcovered, physbnd, interior);
 #ifdef AMREX_USE_OMP
-#pragma omp parallel
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
                 for (MFIter mfi(*bmasks, true); mfi.isValid(); ++mfi)
                 {

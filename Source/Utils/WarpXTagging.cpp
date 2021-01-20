@@ -20,7 +20,7 @@ WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
     const Real* dx = Geom(lev).CellSize();
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(tags); mfi.isValid(); ++mfi)
     {
@@ -38,4 +38,3 @@ WarpX::ErrorEst (int lev, TagBoxArray& tags, Real /*time*/, int /*ngrow*/)
         }
     }
 }
-

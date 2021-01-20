@@ -599,7 +599,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 
         // Loop over particle tiles and deposit charge on each level
 #ifdef AMREX_USE_OMP
-#pragma omp parallel
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
         {
         int thread_num = omp_get_thread_num();
 #else
@@ -675,7 +675,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     rho->setVal(0.0);
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
     {
 #endif
 #ifdef AMREX_USE_OMP
@@ -870,7 +870,7 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     {
 

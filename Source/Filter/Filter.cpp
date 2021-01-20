@@ -169,6 +169,7 @@ Filter::ApplyStencil (amrex::MultiFab& dstmf, const amrex::MultiFab& srcmf, int 
     WARPX_PROFILE("Filter::ApplyStencil(MultiFab)");
     ncomp = std::min(ncomp, srcmf.nComp());
 #ifdef AMREX_USE_OMP
+// never runs on GPU since in the else branch of AMREX_USE_GPU
 #pragma omp parallel
 #endif
     {

@@ -430,7 +430,7 @@ LaserParticleContainer::Evolve (int lev,
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     {
 #ifdef AMREX_USE_OMP

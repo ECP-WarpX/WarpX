@@ -401,7 +401,7 @@ MultiSigmaBox::ComputePMLFactorsB (const Real* dx, Real dt)
     dt_B = dt;
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(*this); mfi.isValid(); ++mfi)
     {
@@ -417,7 +417,7 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
     dt_E = dt;
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(*this); mfi.isValid(); ++mfi)
     {
