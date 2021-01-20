@@ -137,7 +137,7 @@ private:
    * @param[in] int_comp_names The int attribute names, from WarpX
    * @param[in] np  Number of particles
    */
-  void SetupSoAProperties(openPMD::ParticleSpecies& currSpecies,
+  void SetupSoAProperties (openPMD::ParticleSpecies& currSpecies,
                const amrex::Vector<int>& write_real_comp,
                const amrex::Vector<std::string>& real_comp_names,
                const amrex::Vector<int>& write_int_comp,
@@ -154,7 +154,7 @@ private:
    * @param[in] write_int_comp The int attribute ids, from WarpX
    * @param[in] int_comp_names The int attribute names, from WarpX
    */
-  void SaveParticleProperties(WarpXParIter& pti, //int, int,
+  void SaveParticleProperties (WarpXParIter& pti, //int, int,
             openPMD::ParticleSpecies& currSpecies,
             unsigned long long offset,
             const amrex::Vector<int>& write_real_comp,

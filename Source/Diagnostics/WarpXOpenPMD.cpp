@@ -504,7 +504,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
 }
 
 void
-WarpXOpenPMDPlot::SetupSoAProperties(openPMD::ParticleSpecies& currSpecies,
+WarpXOpenPMDPlot::SetupSoAProperties (openPMD::ParticleSpecies& currSpecies,
                       const amrex::Vector<int>& write_real_comp,
                       const amrex::Vector<std::string>& real_comp_names,
                       const amrex::Vector<int>& write_int_comp,
@@ -518,26 +518,22 @@ WarpXOpenPMDPlot::SetupSoAProperties(openPMD::ParticleSpecies& currSpecies,
     // the beam/input3d showed write_real_comp.size() = 16 while only 10 real comp names
     // so using the min to be safe.
     //
+    auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
+        // handle scalar and non-scalar records by name
+        std::string record_name, component_name;
+        std::tie(record_name, component_name) = detail::name2openPMD(comp_name);
+        return currSpecies[record_name][component_name];
+    };
     auto const real_counter = std::min(write_real_comp.size(), real_comp_names.size());
     for (int i = 0; i < real_counter; ++i) {
       if (write_real_comp[i]) {
-          // handle scalar and non-scalar records by name
-          std::string record_name, component_name;
-          std::tie(record_name, component_name) = detail::name2openPMD(real_comp_names[i]);
-
-          auto particleVarComp = currSpecies[record_name][component_name];
-          particleVarComp.resetDataset(dtype_real);
+          getComponentRecord(real_comp_names[i]).resetDataset(dtype_real);
       }
     }
     auto const int_counter = std::min(write_int_comp.size(), int_comp_names.size());
     for (int i = 0; i < int_counter; ++i) {
         if (write_int_comp[i]) {
-            // handle scalar and non-scalar records by name
-            std::string record_name, component_name;
-            std::tie(record_name, component_name) = detail::name2openPMD(int_comp_names[i]);
-
-            auto particleVarComp = currSpecies[record_name][component_name];
-            particleVarComp.resetDataset(dtype_int);
+            getComponentRecord(int_comp_names[i]).resetDataset(dtype_int);
         }
     }
 
@@ -632,19 +628,20 @@ WarpXOpenPMDPlot::SaveParticleProperties(WarpXParIter& pti,
     }
   }
 
+  auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
+    // handle scalar and non-scalar records by name
+    std::string record_name, component_name;
+    std::tie(record_name, component_name) = detail::name2openPMD(comp_name);
+    return currSpecies[record_name][component_name];
+  };
+
   // here we the save the SoA properties (real)
   {
     for (auto idx=0; idx<m_NumSoARealAttributes; idx++) {
       auto ii = m_NumAoSRealAttributes + idx;
       if (write_real_comp[ii]) {
-          // handle scalar and non-scalar records by name
-          std::string record_name, component_name;
-          std::tie(record_name, component_name) = detail::name2openPMD(real_comp_names[ii]);
-          auto& currRecord = currSpecies[record_name];
-          auto& currRecordComp = currRecord[component_name];
-
-          currRecordComp.storeChunk(openPMD::shareRaw(soa.GetRealData(idx)),
-              {offset}, {numParticleOnTile64});
+        getComponentRecord(real_comp_names[ii]).storeChunk(openPMD::shareRaw(soa.GetRealData(idx)),
+          {offset}, {numParticleOnTile64});
       }
     }
   }
@@ -654,14 +651,8 @@ WarpXOpenPMDPlot::SaveParticleProperties(WarpXParIter& pti,
     for (auto idx=0; idx<int_counter; idx++) {
       auto ii = m_NumAoSIntAttributes + idx; // jump over AoS names
       if (write_int_comp[ii]) {
-        // handle scalar and non-scalar records by name
-        std::string record_name, component_name;
-        std::tie(record_name, component_name) = detail::name2openPMD(int_comp_names[ii]);
-        auto& currRecord = currSpecies[record_name];
-        auto& currRecordComp = currRecord[component_name];
-
-        currRecordComp.storeChunk(openPMD::shareRaw(soa.GetIntData(idx)),
-                                  {offset}, {numParticleOnTile64});
+        getComponentRecord(int_comp_names[ii]).storeChunk(openPMD::shareRaw(soa.GetIntData(idx)),
+          {offset}, {numParticleOnTile64});
       }
     }
   }
