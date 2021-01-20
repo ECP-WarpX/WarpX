@@ -1873,6 +1873,20 @@ Reduced Diagnostics
             the macroparticle weight will be used to compute
             the histogram, and no normalization will be done.
 
+        * ``<reduced_diags_name>.filter_function(t,x,y,z,ux,uy,uz)`` (`string`) optional
+            Users can provide an expression returning a boolean for whether a particle is taken
+            into account when calculating the histogram (the exact test is whether the return
+            value is `> 0.5`).
+            `t` represents the physical time in seconds during the simulation.
+            `x, y, z` represent particle positions in the unit of meter.
+            `ux, uy, uz` represent particle velocities in the unit of
+            :math:`\gamma v/c`, where
+            :math:`\gamma` is the Lorentz factor,
+            :math:`v/c` is the particle velocity normalized by the speed of light.
+            E.g. If provided `(x>0.0)*(uz<10.0)` only those particles located at
+            positions `x` greater than `0`, and those having velocity `uz` less than 10,
+            will be taken into account when calculating the histogram.
+
         The output columns are
         values of the 1st bin, the 2nd bin, ..., the nth bin.
         An example input file and a loading pything script of
