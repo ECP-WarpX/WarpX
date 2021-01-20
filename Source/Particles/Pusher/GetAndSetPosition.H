@@ -13,6 +13,7 @@
 #include <AMReX.H>
 #include <AMReX_REAL.H>
 
+#include <cmath>
 #include <limits>
 
 /** \brief Extract the cartesian position coordinates of the particle
