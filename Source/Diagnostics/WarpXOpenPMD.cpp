@@ -34,8 +34,9 @@ namespace detail
     {
         std::string record_name = fullName;
         std::string component_name = openPMD::RecordComponent::SCALAR;
-        std::size_t startComp = fullName.find_last_of("_");
 
+        // we use "_" as separator in names to group vector records
+        std::size_t startComp = fullName.find_last_of("_");
         if( startComp != std::string::npos ) {  // non-scalar
             record_name = fullName.substr(0, startComp);
             component_name = fullName.substr(startComp + 1u);
@@ -327,7 +328,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
     real_names.push_back("theta");
 #endif
     if(pc->DoFieldIonization()){
-       int_names.push_back("ionization_level");
+       int_names.push_back("ionizationLevel");
        // int_flags specifies, for each integer attribs, whether it is
        // dumped as particle record in a plotfile. So far, ionization_level is the only
        // integer attribs, and it is automatically dumped as particle record
@@ -364,10 +365,6 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
                     const amrex::Vector<std::string>&  int_comp_names) const
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
-  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(write_int_comp.size() == 0u,
-                                   "openPMD: Particle integer components not implemented!");
-  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(int_comp_names.size() == 0u,
-                                   "openPMD: Particle integer components not implemented!");
 
   WarpXParticleCounter counter(pc);
 
@@ -413,7 +410,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
   // define positions & offsets
   //
   SetupPos(pc, currSpecies, counter.GetTotalNumParticles());
-  SetupRealProperties(currSpecies, write_real_comp, real_comp_names, counter.GetTotalNumParticles());
+  SetupSoAProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, counter.GetTotalNumParticles());
 
   // open files from all processors, in case some will not contribute below
   m_Series->flush();
@@ -494,10 +491,11 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
            currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
          }
          //  save "extra" particle properties in AoS and SoA
-         SaveRealProperty(pti,
+         SaveParticleProperties(pti,
              currSpecies,
              offset,
-             write_real_comp, real_comp_names);
+             write_real_comp, real_comp_names,
+             write_int_comp, int_comp_names);
 
          offset += numParticleOnTile64;
       }
@@ -506,58 +504,92 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
 }
 
 void
-WarpXOpenPMDPlot::SetupRealProperties(openPMD::ParticleSpecies& currSpecies,
+WarpXOpenPMDPlot::SetupSoAProperties (openPMD::ParticleSpecies& currSpecies,
                       const amrex::Vector<int>& write_real_comp,
                       const amrex::Vector<std::string>& real_comp_names,
+                      const amrex::Vector<int>& write_int_comp,
+                      const amrex::Vector<std::string>& int_comp_names,
                       unsigned long long np) const
 {
-  auto particlesLineup = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
+    auto dtype_real = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
+    auto dtype_int  = openPMD::Dataset(openPMD::determineDatatype<int>(), {np});
 
-  //
-  // the beam/input3d showed write_real_comp.size() = 16 while only 10 real comp names
-  // so using the min to be safe.
-  //
-  auto counter = std::min(write_real_comp.size(), real_comp_names.size());
-  for (int i = 0; i < counter; ++i)
-    if (write_real_comp[i]) {
-      // handle scalar and non-scalar records by name
-      std::string record_name, component_name;
-      std::tie(record_name, component_name) = detail::name2openPMD(real_comp_names[i]);
-
-      auto particleVarComp = currSpecies[record_name][component_name];
-      particleVarComp.resetDataset(particlesLineup);
-    }
-
-  std::set< std::string > addedRecords; // add meta-data per record only once
-  for (auto idx=0; idx<m_NumSoARealAttributes; idx++) {
-    auto ii = m_NumAoSRealAttributes + idx;
-    if (write_real_comp[ii]) {
-      // handle scalar and non-scalar records by name
-      std::string record_name, component_name;
-      std::tie(record_name, component_name) = detail::name2openPMD(real_comp_names[ii]);
-      auto currRecord = currSpecies[record_name];
-
-      // meta data for ED-PIC extension
-      bool newRecord = false;
-      std::tie(std::ignore, newRecord) = addedRecords.insert(record_name);
-      if( newRecord ) {
-        currRecord.setUnitDimension( detail::getUnitDimension(record_name) );
-        currRecord.setAttribute( "macroWeighted", 0u );
-        if( record_name == "momentum" )
-            currRecord.setAttribute( "weightingPower", 1.0 );
-        else
-            currRecord.setAttribute( "weightingPower", 0.0 );
+    //
+    // the beam/input3d showed write_real_comp.size() = 16 while only 10 real comp names
+    // so using the min to be safe.
+    //
+    auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
+        // handle scalar and non-scalar records by name
+        std::string record_name, component_name;
+        std::tie(record_name, component_name) = detail::name2openPMD(comp_name);
+        return currSpecies[record_name][component_name];
+    };
+    auto const real_counter = std::min(write_real_comp.size(), real_comp_names.size());
+    for (int i = 0; i < real_counter; ++i) {
+      if (write_real_comp[i]) {
+          getComponentRecord(real_comp_names[i]).resetDataset(dtype_real);
       }
     }
-  }
+    auto const int_counter = std::min(write_int_comp.size(), int_comp_names.size());
+    for (int i = 0; i < int_counter; ++i) {
+        if (write_int_comp[i]) {
+            getComponentRecord(int_comp_names[i]).resetDataset(dtype_int);
+        }
+    }
+
+    std::set< std::string > addedRecords; // add meta-data per record only once
+    for (auto idx=0; idx<m_NumSoARealAttributes; idx++) {
+        auto ii = m_NumAoSRealAttributes + idx; // jump over AoS names
+        if (write_real_comp[ii]) {
+            // handle scalar and non-scalar records by name
+            std::string record_name, component_name;
+            std::tie(record_name, component_name) = detail::name2openPMD(real_comp_names[ii]);
+            auto currRecord = currSpecies[record_name];
+
+            // meta data for ED-PIC extension
+            bool newRecord = false;
+            std::tie(std::ignore, newRecord) = addedRecords.insert(record_name);
+            if( newRecord ) {
+                currRecord.setUnitDimension( detail::getUnitDimension(record_name) );
+                currRecord.setAttribute( "macroWeighted", 0u );
+                if( record_name == "momentum" )
+                currRecord.setAttribute( "weightingPower", 1.0 );
+                else
+                currRecord.setAttribute( "weightingPower", 0.0 );
+            }
+        }
+    }
+    for (auto idx=0; idx<int_counter; idx++) {
+        auto ii = m_NumAoSIntAttributes + idx; // jump over AoS names
+        if (write_int_comp[ii]) {
+            // handle scalar and non-scalar records by name
+            std::string record_name, component_name;
+            std::tie(record_name, component_name) = detail::name2openPMD(int_comp_names[ii]);
+            auto currRecord = currSpecies[record_name];
+
+            // meta data for ED-PIC extension
+            bool newRecord = false;
+            std::tie(std::ignore, newRecord) = addedRecords.insert(record_name);
+            if( newRecord ) {
+                currRecord.setUnitDimension( detail::getUnitDimension(record_name) );
+                currRecord.setAttribute( "macroWeighted", 0u );
+                if( record_name == "momentum" )
+                    currRecord.setAttribute( "weightingPower", 1.0 );
+                else
+                    currRecord.setAttribute( "weightingPower", 0.0 );
+            }
+        }
+    }
 }
 
 void
-WarpXOpenPMDPlot::SaveRealProperty(WarpXParIter& pti,
+WarpXOpenPMDPlot::SaveParticleProperties(WarpXParIter& pti,
                        openPMD::ParticleSpecies& currSpecies,
                        unsigned long long const offset,
                        amrex::Vector<int> const& write_real_comp,
-                       amrex::Vector<std::string> const& real_comp_names) const
+                       amrex::Vector<std::string> const& real_comp_names,
+                       amrex::Vector<int> const& write_int_comp,
+                       amrex::Vector<std::string> const& int_comp_names) const
 
 {
   int numOutputReal = 0;
@@ -572,7 +604,7 @@ WarpXOpenPMDPlot::SaveRealProperty(WarpXParIter& pti,
   auto const& aos = pti.GetArrayOfStructs();  // size =  numParticlesOnTile
   auto const& soa = pti.GetStructOfArrays();
 
-  // properties are saved separately
+  // first we concatinate the AoS into contiguous arrays
   {
     for( auto idx=0; idx<m_NumAoSRealAttributes; idx++ ) {
       if( write_real_comp[idx] ) {
@@ -596,23 +628,35 @@ WarpXOpenPMDPlot::SaveRealProperty(WarpXParIter& pti,
     }
   }
 
+  auto const getComponentRecord = [&currSpecies](std::string const comp_name) {
+    // handle scalar and non-scalar records by name
+    std::string record_name, component_name;
+    std::tie(record_name, component_name) = detail::name2openPMD(comp_name);
+    return currSpecies[record_name][component_name];
+  };
+
+  // here we the save the SoA properties (real)
   {
     for (auto idx=0; idx<m_NumSoARealAttributes; idx++) {
       auto ii = m_NumAoSRealAttributes + idx;
       if (write_real_comp[ii]) {
-          // handle scalar and non-scalar records by name
-          std::string record_name, component_name;
-          std::tie(record_name, component_name) = detail::name2openPMD(real_comp_names[ii]);
-          auto& currRecord = currSpecies[record_name];
-          auto& currRecordComp = currRecord[component_name];
-
-          currRecordComp.storeChunk(openPMD::shareRaw(soa.GetRealData(idx)),
-              {offset}, {numParticleOnTile64});
+        getComponentRecord(real_comp_names[ii]).storeChunk(openPMD::shareRaw(soa.GetRealData(idx)),
+          {offset}, {numParticleOnTile64});
+      }
+    }
+  }
+  // and now SoA int properties
+  {
+    auto const int_counter = std::min(write_int_comp.size(), int_comp_names.size());
+    for (auto idx=0; idx<int_counter; idx++) {
+      auto ii = m_NumAoSIntAttributes + idx; // jump over AoS names
+      if (write_int_comp[ii]) {
+        getComponentRecord(int_comp_names[ii]).storeChunk(openPMD::shareRaw(soa.GetIntData(idx)),
+          {offset}, {numParticleOnTile64});
       }
     }
   }
 }
-
 
 
 void

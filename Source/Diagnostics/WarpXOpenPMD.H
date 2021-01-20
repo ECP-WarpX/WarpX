@@ -133,11 +133,15 @@ private:
    * @param[in] currSpecies The openPMD species
    * @param[in] write_real_comp The real attribute ids, from WarpX
    * @param[in] real_comp_names The real attribute names, from WarpX
+   * @param[in] write_int_comp The int attribute ids, from WarpX
+   * @param[in] int_comp_names The int attribute names, from WarpX
    * @param[in] np  Number of particles
    */
-  void SetupRealProperties(openPMD::ParticleSpecies& currSpecies,
+  void SetupSoAProperties (openPMD::ParticleSpecies& currSpecies,
                const amrex::Vector<int>& write_real_comp,
                const amrex::Vector<std::string>& real_comp_names,
+               const amrex::Vector<int>& write_int_comp,
+               const amrex::Vector<std::string>& int_comp_names,
                unsigned long long np) const;
 
   /** This function saves the values of the entries for particle properties
@@ -147,12 +151,16 @@ private:
    * @param[in] offset offset to start saving  the particle iterator contents
    * @param[in] write_real_comp The real attribute ids, from WarpX
    * @param[in] real_comp_names The real attribute names, from WarpX
+   * @param[in] write_int_comp The int attribute ids, from WarpX
+   * @param[in] int_comp_names The int attribute names, from WarpX
    */
-  void SaveRealProperty(WarpXParIter& pti, //int, int,
+  void SaveParticleProperties (WarpXParIter& pti, //int, int,
             openPMD::ParticleSpecies& currSpecies,
             unsigned long long offset,
             const amrex::Vector<int>& write_real_comp,
-            const amrex::Vector<std::string>& real_comp_names) const;
+            const amrex::Vector<std::string>& real_comp_names,
+            const amrex::Vector<int>& write_int_comp,
+            const amrex::Vector<std::string>& int_comp_names) const;
 
   /** This function saves the plot file
    *
@@ -180,8 +188,11 @@ private:
   int m_MPIRank = 0;
   int m_MPISize = 1;
 
-  int m_NumSoARealAttributes = PIdx::nattribs; //! WarpX' addition particle attributes in SoA
-  int m_NumAoSRealAttributes = 0; //! WarpX definition: no additional attributes in particle AoS
+  int m_NumSoARealAttributes = PIdx::nattribs; //! WarpX' additional real particle attributes in SoA
+  int m_NumAoSRealAttributes = 0; //! WarpX definition: no additional real attributes in particle AoS
+
+  //int m_NumSoAIntAttributes = PIdx::nattribs; //! WarpX' additional int particle attributes in SoA
+  int m_NumAoSIntAttributes = 0; //! WarpX definition: no additional int attributes in particle AoS
 
   bool m_OneFilePerTS = true;  //! write in openPMD fileBased manner for individual time steps
   std::string m_OpenPMDFileType = "bp"; //! MPI-parallel openPMD backend: bp or h5
