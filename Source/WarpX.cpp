@@ -161,6 +161,8 @@ WarpX::WarpX ()
 
     BackwardCompatibility();
 
+    InitEB();
+
     // Geometry on all levels has been defined already.
 
     // No valid BoxArray and DistributionMapping have been defined.
@@ -942,6 +944,13 @@ WarpX::ClearLevel (int lev)
 void
 WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& dm)
 {
+#ifdef AMREX_USE_EB
+    m_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
+                                             {1,1,1}, // Not clear how many ghost cells we need yet
+                                             amrex::EBSupport::full);
+#else
+    m_factory[lev] = std::make_unique<FArrayBoxFactory>();
+#endif
 
     bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 

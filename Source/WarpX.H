@@ -874,6 +874,24 @@ private:
     // Domain decomposition on Level 0
     amrex::IntVect numprocs{0};
 
+    //
+    // Embeded Boundary
+    //
+
+    // Factory for field data
+    amrex::Vector<std::unique_ptr<amrex::FabFactory<amrex::FArrayBox> > > m_factory;
+
+    amrex::FabFactory<amrex::FArrayBox> const& Factory (int lev) const noexcept {
+        return *m_factory[lev];
+    }
+#ifdef AMREX_USE_EB
+    amrex::EBFArrayBoxFactory const& EBFactory (int lev) const noexcept {
+        return static_cast<amrex::EBFArrayBoxFactory const&>(*m_factory[lev]);
+    }
+#endif
+
+    void InitEB ();
+
 private:
     // void EvolvePSATD (int numsteps);
     void PushPSATD (amrex::Real dt);

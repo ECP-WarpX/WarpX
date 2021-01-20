@@ -181,6 +181,7 @@ endif()
 
 add_subdirectory(Source/BoundaryConditions)
 add_subdirectory(Source/Diagnostics)
+add_subdirectory(Source/EmbeddedBoundary)
 add_subdirectory(Source/Evolve)
 add_subdirectory(Source/FieldSolver)
 add_subdirectory(Source/Filter)
