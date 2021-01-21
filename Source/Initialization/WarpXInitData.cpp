@@ -116,6 +116,8 @@ WarpX::InitData ()
             reduced_diags->WriteToFile(-1);
         }
     }
+
+    PerformanceHints();
 }
 
 void
@@ -528,4 +530,37 @@ WarpX::InitializeExternalFieldsOnGridUsingParser (
             }
         );
     }
+}
+
+void
+WarpX::PerformanceHints ()
+{
+    // Check requested MPI ranks and available boxes
+    amrex::Long total_nboxes = 0; // on all MPI ranks
+    for (int ilev = 0; ilev <= finestLevel(); ++ilev) {
+        total_nboxes += boxArray(ilev).size();
+    }
+    if (ParallelDescriptor::NProcs() > total_nboxes)
+        amrex::Print() << "\n[Warning] [Performance] Too many resources / too little work!\n"
+            << "  It looks like you requested more compute resources than "
+            << "there are total number of boxes of cells available ("
+            << total_nboxes << "). "
+            << "You started with (" << ParallelDescriptor::NProcs()
+            << ") MPI ranks, so (" << ParallelDescriptor::NProcs() - total_nboxes
+            << ") rank(s) will have no work.\n"
+#ifdef AMREX_USE_GPU
+            << "  On GPUs, consider using 1-8 boxes per GPU that together fill "
+            << "each GPU's memory sufficiently. If you do not rely on dynamic "
+            << "load-balancing, then one large box per GPU is ideal.\n"
+#endif
+            << "  More information:\n"
+            << "  https://warpx.readthedocs.io/en/latest/running_cpp/parallelization.html\n";
+
+    // TODO: warn if some ranks have disproportionally more work than all others
+    //       tricky: it can be ok to assign "vacuum" boxes to some ranks w/o slowing down
+    //               all other ranks; we need to measure this with our load-balancing
+    //               routines and issue a warning only of some ranks stall all other ranks
+    // TODO: check MPI-rank to GPU ratio (should be 1:1)
+    // TODO: check memory per MPI rank, especially if GPUs are underutilized
+    // TODO: CPU tiling hints with OpenMP
 }
