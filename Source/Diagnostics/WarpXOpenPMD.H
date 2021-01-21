@@ -10,6 +10,7 @@
 
 #include "Particles/WarpXParticleContainer.H"
 #include "Particles/MultiParticleContainer.H" // PIdx
+#include "Particles/PhysicalParticleContainer.H"
 
 #include "Diagnostics/ParticleDiag/ParticleDiag.H"
 
@@ -108,7 +109,7 @@ public:
 
   void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags);
 
-  void WriteOpenPMDFields(
+  void WriteOpenPMDFields (
               const std::vector<std::string>& varnames,
               const amrex::MultiFab& mf,
               const amrex::Geometry& geom,
@@ -116,7 +117,7 @@ public:
 
 
 private:
-  void Init(openPMD::Access access, const std::string& filePrefix);
+  void Init (openPMD::Access access, const std::string& filePrefix);
 
   /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
   *
@@ -124,7 +125,7 @@ private:
   * @param[in] currSpecies Corresponding openPMD species
   * @param[in] np          Number of particles
   */
-  void SetupPos(WarpXParticleContainer* pc,
+  void SetupPos (WarpXParticleContainer* pc,
         openPMD::ParticleSpecies& currSpecies,
         const unsigned long long& np) const ;
 
@@ -137,7 +138,7 @@ private:
    * @param[in] int_comp_names The int attribute names, from WarpX
    * @param[in] np  Number of particles
    */
-  void SetupSoAProperties (openPMD::ParticleSpecies& currSpecies,
+  void SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
                const amrex::Vector<int>& write_real_comp,
                const amrex::Vector<std::string>& real_comp_names,
                const amrex::Vector<int>& write_int_comp,
@@ -154,7 +155,7 @@ private:
    * @param[in] write_int_comp The int attribute ids, from WarpX
    * @param[in] int_comp_names The int attribute names, from WarpX
    */
-  void SaveParticleProperties (WarpXParIter& pti, //int, int,
+  void SaveRealProperty (WarpXParIter& pti, //int, int,
             openPMD::ParticleSpecies& currSpecies,
             unsigned long long offset,
             const amrex::Vector<int>& write_real_comp,
@@ -172,7 +173,7 @@ private:
    * @param[in] write_int_comp The int attribute ids, from WarpX
    * @param[in] int_comp_names The int attribute names, from WarpX
    */
-  void DumpToFile(WarpXParticleContainer* pc,
+  void DumpToFile (PhysicalParticleContainer* pc,
             const std::string& name,
             int iteration,
             const amrex::Vector<int>& write_real_comp,
@@ -181,7 +182,7 @@ private:
             const amrex::Vector<std::string>&  int_comp_names) const;
 
   // no need for ts in the name, openPMD  handles it
-    void GetFileName(std::string& filename);
+  void GetFileName (std::string& filename);
 
   std::unique_ptr<openPMD::Series> m_Series;
 

@@ -6,6 +6,7 @@
  */
 #include "WarpXOpenPMD.H"
 #include "FieldIO.H"  // for getReversedVec
+#include "Particles/Filter/FilterFunctors.H"
 #include "Utils/RelativeCellPosition.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
@@ -15,7 +16,6 @@
 #include <map>
 #include <set>
 #include <string>
-#include <sstream>
 #include <tuple>
 #include <utility>
 #include <iostream>
@@ -30,7 +30,7 @@ namespace detail
      * @return pair of openPMD record and component name
      */
     inline std::pair< std::string, std::string >
-    name2openPMD( std::string const& fullName )
+    name2openPMD ( std::string const& fullName )
     {
         std::string record_name = fullName;
         std::string component_name = openPMD::RecordComponent::SCALAR;
@@ -47,7 +47,7 @@ namespace detail
     /** Return the component labels for particle positions
      */
     inline std::vector< std::string >
-    getParticlePositionComponentLabels()
+    getParticlePositionComponentLabels ()
     {
         using vs = std::vector< std::string >;
 #if defined(WARPX_DIM_XZ)
@@ -74,7 +74,7 @@ namespace detail
      * of the index labels for the AMReX FArrayBox.
      */
     inline std::vector< std::string >
-    getFieldAxisLabels()
+    getFieldAxisLabels ()
     {
         using vs = std::vector< std::string >;
 
@@ -99,7 +99,7 @@ namespace detail
     /** Return the component names of a mesh
      */
     inline std::vector< std::string >
-    getFieldComponentLabels()
+    getFieldComponentLabels ()
     {
         using vs = std::vector< std::string >;
 #if defined(WARPX_DIM_RZ)
@@ -120,7 +120,7 @@ namespace detail
      * @return map with base quantities and power scaling
      */
     inline std::map< openPMD::UnitDimension, double >
-    getUnitDimension( std::string const & record_name )
+    getUnitDimension ( std::string const & record_name )
     {
 
         if( record_name == "position" ) return {
@@ -159,7 +159,7 @@ namespace detail
      * set the metadata that indicates the physical unit.
      */
     inline void
-    setOpenPMDUnit( openPMD::Mesh mesh, const std::string field_name )
+    setOpenPMDUnit ( openPMD::Mesh mesh, const std::string field_name )
     {
         if (field_name[0] == 'E'){  // Electric field
             mesh.setUnitDimension({
@@ -310,6 +310,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 
   for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
+    PhysicalParticleContainer tmp(&WarpX::GetInstance());
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;
@@ -334,15 +335,47 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
        // integer attribs, and it is automatically dumped as particle record
        // when ionization is on.
        int_flags.resize(1, 1);
+       tmp.AddIntComp(false);
     }
 
-    // Convert momentum to SI
-    pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
+#ifdef WARPX_QED
+      if( pc->has_breit_wheeler() ) {
+            real_names.push_back("optical_depth_BW");
+            tmp.AddRealComp(false);
+        }
+        if( pc->has_quantum_sync() ) {
+            real_names.push_back("optical_depth_QSR");
+            tmp.AddRealComp(false);
+        }
+#endif
+
+      pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
+
+      RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
+                                       particle_diags[i].m_random_fraction);
+      UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
+                                         particle_diags[i].m_uniform_stride);
+      ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
+                                 getParser(particle_diags[i].m_particle_filter_parser),
+                                 pc->getMass());
+      parser_filter.m_units = InputUnits::SI;
+      GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
+                                           particle_diags[i].m_diag_domain);
+
+      using SrcData = WarpXParticleContainer::ParticleTileType::ConstParticleTileDataType;
+      tmp.copyParticles(*pc,
+                        [=] AMREX_GPU_HOST_DEVICE (const SrcData& src, int ip, const amrex::RandomEngine& engine)
+      {
+          const SuperParticleType& p = src.getSuperParticle(ip);
+          return random_filter(p, engine) * uniform_filter(p, engine)
+                 * parser_filter(p, engine) * geometry_filter(p, engine);
+      }, true);
+
     // real_names contains a list of all real particle attributes.
     // particle_diags[i].plot_flags is 1 or 0, whether quantity is dumped or not.
 
     {
-      DumpToFile(pc,
+      DumpToFile(&tmp,
          particle_diags[i].getSpeciesName(),
          m_CurrentStep,
          particle_diags[i].plot_flags,
@@ -356,7 +389,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 }
 
 void
-WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
+WarpXOpenPMDPlot::DumpToFile (PhysicalParticleContainer* pc,
                     const std::string& name,
                     int iteration,
                     const amrex::Vector<int>& write_real_comp,
@@ -410,7 +443,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
   // define positions & offsets
   //
   SetupPos(pc, currSpecies, counter.GetTotalNumParticles());
-  SetupSoAProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, counter.GetTotalNumParticles());
+  SetupRealProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, counter.GetTotalNumParticles());
 
   // open files from all processors, in case some will not contribute below
   m_Series->flush();
@@ -491,7 +524,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
            currSpecies["id"][scalar].storeChunk(ids, {offset}, {numParticleOnTile64});
          }
          //  save "extra" particle properties in AoS and SoA
-         SaveParticleProperties(pti,
+         SaveRealProperty(pti,
              currSpecies,
              offset,
              write_real_comp, real_comp_names,
@@ -504,7 +537,7 @@ WarpXOpenPMDPlot::DumpToFile (WarpXParticleContainer* pc,
 }
 
 void
-WarpXOpenPMDPlot::SetupSoAProperties (openPMD::ParticleSpecies& currSpecies,
+WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
                       const amrex::Vector<int>& write_real_comp,
                       const amrex::Vector<std::string>& real_comp_names,
                       const amrex::Vector<int>& write_int_comp,
@@ -583,7 +616,7 @@ WarpXOpenPMDPlot::SetupSoAProperties (openPMD::ParticleSpecies& currSpecies,
 }
 
 void
-WarpXOpenPMDPlot::SaveParticleProperties(WarpXParIter& pti,
+WarpXOpenPMDPlot::SaveRealProperty (WarpXParIter& pti,
                        openPMD::ParticleSpecies& currSpecies,
                        unsigned long long const offset,
                        amrex::Vector<int> const& write_real_comp,
