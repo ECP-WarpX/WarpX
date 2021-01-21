@@ -56,7 +56,7 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
 
     // Initialize temporary local arrays for charge/current deposition
     int num_threads = 1;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #pragma omp single
     num_threads = omp_get_num_threads();
@@ -598,8 +598,8 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
         if (reset) rho[lev]->setVal(0.0, rho[lev]->nGrow());
 
         // Loop over particle tiles and deposit charge on each level
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
         {
         int thread_num = omp_get_thread_num();
 #else
@@ -619,7 +619,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 
             DepositCharge(pti, wp, ion_lev, rho[lev].get(), 0, 0, np, thread_num, lev, lev);
         }
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         }
 #endif
 
@@ -674,11 +674,11 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     auto rho = std::make_unique<MultiFab>(nba,dm,WarpX::ncomps,ng_rho);
     rho->setVal(0.0);
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
     {
 #endif
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         int thread_num = omp_get_thread_num();
 #else
         int thread_num = 0;
@@ -699,7 +699,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
             DepositCharge(pti, wp, ion_lev, rho.get(), 0, 0, np,
                           thread_num, lev, lev);
         }
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
     }
 #endif
 
@@ -720,7 +720,7 @@ Real WarpXParticleContainer::sumParticleCharge(bool local) {
     for (int lev = 0; lev < nLevels; ++lev)
     {
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel reduction(+:total_charge)
 #endif
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -786,7 +786,7 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
 #endif
     {
         for (int lev = 0; lev <= nLevels; ++lev) {
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel reduction(+:vx_total, vy_total, vz_total, np_total)
 #endif
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -833,7 +833,7 @@ Real WarpXParticleContainer::maxParticleVelocity(bool local) {
     for (int lev = 0; lev <= nLevels; ++lev)
     {
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel reduction(max:max_v)
 #endif
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -869,8 +869,8 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     {
 

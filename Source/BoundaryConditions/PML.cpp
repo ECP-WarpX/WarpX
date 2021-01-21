@@ -16,7 +16,7 @@
 #include <AMReX_Print.H>
 #include <AMReX_VisMF.H>
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 
@@ -400,8 +400,8 @@ MultiSigmaBox::ComputePMLFactorsB (const Real* dx, Real dt)
 
     dt_B = dt;
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(*this); mfi.isValid(); ++mfi)
     {
@@ -416,8 +416,8 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
 
     dt_E = dt;
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(*this); mfi.isValid(); ++mfi)
     {
@@ -938,7 +938,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         if (ngr.max() > 0) {
             MultiFab::Copy(tmpregmf, reg, 0, 0, 1, ngr);
             tmpregmf.ParallelCopy(totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(reg); mfi.isValid(); ++mfi)
