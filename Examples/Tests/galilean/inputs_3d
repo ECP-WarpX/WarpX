@@ -7,7 +7,7 @@ amr.n_cell = 32 32 32
 amr.max_grid_size = 32
 amr.blocking_factor = 32
 amr.max_level = 0
-psatd.use_default_v_galilean = 1
+psatd.v_galilean = 0. 0. 0.99498743710662
 
 geometry.coord_sys   = 0
 geometry.is_periodic = 1 1 1

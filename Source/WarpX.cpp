@@ -742,9 +742,9 @@ WarpX::ReadParameters ()
         bool use_default_v_galilean=false;
         pp.query("use_default_v_galilean", use_default_v_galilean);
         if (use_default_v_galilean) {
-            v_galilean[2] = -std::sqrt(1-1./(gamma_boost*gamma_boost));
+            m_v_galilean[2] = -std::sqrt(1._rt-1._rt/(gamma_boost*gamma_boost));
         } else {
-            pp.query("v_galilean", v_galilean);
+            pp.query("v_galilean", m_v_galilean);
         }
         // Scale the galilean/comoving velocity
         for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
