@@ -747,14 +747,14 @@ WarpX::ReadParameters ()
         pp.query("do_time_averaging", fft_do_time_averaging);
 
         // Check whether the default Galilean velocity should be used
-        bool use_default_v_galilean=false;
+        bool use_default_v_galilean = false;
         pp.query("use_default_v_galilean", use_default_v_galilean);
         if (use_default_v_galilean) {
-            m_v_galilean[2] = -std::sqrt(1._rt-1._rt/(gamma_boost*gamma_boost));
+            m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
         } else {
             pp.query("v_galilean", m_v_galilean);
         }
-        // Scale the galilean/comoving velocity
+        // Scale the Galilean/comoving velocity by the speed of light
         for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
         for (int i=0; i<3; i++) m_v_comoving[i] *= PhysConst::c;
 

@@ -165,10 +165,16 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
 #endif
 
-    // Parse galilean velocity
-    ParmParse ppsatd("psatd");
-    ppsatd.query("v_galilean", m_v_galilean);
-    // Scale the velocity by the speed of light
+    // Get Galilean velocity
+    ParmParse pp_psatd("psatd");
+    bool use_default_v_galilean = false;
+    pp_psatd.query("use_default_v_galilean", use_default_v_galilean);
+    if (use_default_v_galilean) {
+        m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (WarpX::gamma_boost * WarpX::gamma_boost));
+    } else {
+        pp_psatd.query("v_galilean", m_v_galilean);
+    }
+    // Scale the Galilean velocity by the speed of light
     for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
     // build filter functors
