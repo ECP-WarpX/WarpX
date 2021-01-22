@@ -11,6 +11,8 @@
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "Utils/WarpXUtil.H"
 
+#include <AMReX_AmrParticles.H>
+
 #include <algorithm>
 #include <cstdint>
 #include <map>
@@ -310,7 +312,7 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 
   for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
     WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-    PhysicalParticleContainer tmp(&WarpX::GetInstance());
+    ParticleContainer tmp(&WarpX::GetInstance());
     // names of amrex::Real and int particle attributes in SoA data
     amrex::Vector<std::string> real_names;
     amrex::Vector<std::string> int_names;
@@ -380,7 +382,9 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
          m_CurrentStep,
          particle_diags[i].plot_flags,
          int_flags,
-         real_names, int_names);
+         real_names, int_names,
+         pc->getCharge(), pc->getMass()
+      );
     }
 
     // Convert momentum back to WarpX units
@@ -389,13 +393,15 @@ WarpXOpenPMDPlot::WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& part
 }
 
 void
-WarpXOpenPMDPlot::DumpToFile (PhysicalParticleContainer* pc,
+WarpXOpenPMDPlot::DumpToFile (ParticleContainer* pc,
                     const std::string& name,
                     int iteration,
                     const amrex::Vector<int>& write_real_comp,
                     const amrex::Vector<int>& write_int_comp,
                     const amrex::Vector<std::string>& real_comp_names,
-                    const amrex::Vector<std::string>&  int_comp_names) const
+                    const amrex::Vector<std::string>&  int_comp_names,
+                    amrex::ParticleReal const charge,
+                    amrex::ParticleReal const mass) const
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD: series must be initialized");
 
@@ -442,7 +448,7 @@ WarpXOpenPMDPlot::DumpToFile (PhysicalParticleContainer* pc,
   //
   // define positions & offsets
   //
-  SetupPos(pc, currSpecies, counter.GetTotalNumParticles());
+  SetupPos(currSpecies, counter.GetTotalNumParticles(), charge, mass);
   SetupRealProperties(currSpecies, write_real_comp, real_comp_names, write_int_comp, int_comp_names, counter.GetTotalNumParticles());
 
   // open files from all processors, in case some will not contribute below
@@ -452,7 +458,7 @@ WarpXOpenPMDPlot::DumpToFile (PhysicalParticleContainer* pc,
     {
       uint64_t offset = static_cast<uint64_t>( counter.m_ParticleOffsetAtRank[currentLevel] );
 
-      for (WarpXParIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
+      for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
          auto const numParticleOnTile = pti.numParticles();
          uint64_t const numParticleOnTile64 = static_cast<uint64_t>( numParticleOnTile );
 
@@ -616,7 +622,7 @@ WarpXOpenPMDPlot::SetupRealProperties (openPMD::ParticleSpecies& currSpecies,
 }
 
 void
-WarpXOpenPMDPlot::SaveRealProperty (WarpXParIter& pti,
+WarpXOpenPMDPlot::SaveRealProperty (ParticleIter& pti,
                        openPMD::ParticleSpecies& currSpecies,
                        unsigned long long const offset,
                        amrex::Vector<int> const& write_real_comp,
@@ -693,9 +699,11 @@ WarpXOpenPMDPlot::SaveRealProperty (WarpXParIter& pti,
 
 
 void
-WarpXOpenPMDPlot::SetupPos(WarpXParticleContainer* pc,
+WarpXOpenPMDPlot::SetupPos(
     openPMD::ParticleSpecies& currSpecies,
-    const unsigned long long& np) const
+    const unsigned long long& np,
+    amrex::ParticleReal const charge,
+    amrex::ParticleReal const mass) const
 {
   auto const realType = openPMD::Dataset(openPMD::determineDatatype<amrex::ParticleReal>(), {np});
   auto const idType = openPMD::Dataset(openPMD::determineDatatype< uint64_t >(), {np});
@@ -710,9 +718,9 @@ WarpXOpenPMDPlot::SetupPos(WarpXParticleContainer* pc,
   auto const scalar = openPMD::RecordComponent::SCALAR;
   currSpecies["id"][scalar].resetDataset( idType );
   currSpecies["charge"][scalar].resetDataset( realType );
-  currSpecies["charge"][scalar].makeConstant( pc->getCharge() );
+  currSpecies["charge"][scalar].makeConstant( charge );
   currSpecies["mass"][scalar].resetDataset( realType );
-  currSpecies["mass"][scalar].makeConstant( pc->getMass() );
+  currSpecies["mass"][scalar].makeConstant( mass );
 
   // meta data
   currSpecies["position"].setUnitDimension( detail::getUnitDimension("position") );
@@ -906,7 +914,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
 //
 //
 //
-WarpXParticleCounter::WarpXParticleCounter(WarpXParticleContainer* pc)
+WarpXParticleCounter::WarpXParticleCounter(ParticleContainer* pc)
 {
   m_MPISize = amrex::ParallelDescriptor::NProcs();
   m_MPIRank = amrex::ParallelDescriptor::MyProc();
@@ -919,7 +927,7 @@ WarpXParticleCounter::WarpXParticleCounter(WarpXParticleContainer* pc)
     {
       long numParticles = 0; // numParticles in this processor
 
-      for (WarpXParIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
+      for (ParticleIter pti(*pc, currentLevel); pti.isValid(); ++pti) {
           auto numParticleOnTile = pti.numParticles();
           numParticles += numParticleOnTile;
       }

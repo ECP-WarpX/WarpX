@@ -269,7 +269,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-        amrex::AmrParticleContainer<0,0,PIdx::nattribs,0,amrex::PinnedArenaAllocator>
+        amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>
             tmp(&WarpX::GetInstance());
         Vector<std::string> real_names;
         Vector<std::string> int_names;
