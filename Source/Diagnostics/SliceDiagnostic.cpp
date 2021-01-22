@@ -369,8 +369,8 @@ CheckSliceInput( const RealBox real_box, RealBox &slice_cc_nd_box,
                                  + real_box.lo(idim) );
             slice_realbox.setHi( idim, index_hi * dom_geom[0].CellSize(idim)
                                  + real_box.lo(idim) );
-            slice_cc_nd_box.setLo( idim, slice_realbox.lo(idim) + fac );
-            slice_cc_nd_box.setHi( idim, slice_realbox.hi(idim) - fac );
+            slice_cc_nd_box.setLo( idim, slice_realbox.lo(idim) + Real(fac) );
+            slice_cc_nd_box.setHi( idim, slice_realbox.hi(idim) - Real(fac) );
         }
     }
 }
@@ -430,7 +430,7 @@ InterpolateLo(const Box& bx, FArrayBox &fabox, IntVect slice_lo,
                            double ratio  = (maxval - minval) / (maxpos - minpos);
                            double xdiff  = slice_minpos - minpos;
                            double newval = minval + xdiff * ratio;
-                           fabarr(i,j,k,n) = newval;
+                           fabarr(i,j,k,n) = static_cast<Real>(newval);
                      }
                  }
               }
@@ -450,7 +450,7 @@ InterpolateLo(const Box& bx, FArrayBox &fabox, IntVect slice_lo,
                         double ratio  = (maxval - minval) / (maxpos - minpos);
                         double xdiff  = slice_minpos - minpos;
                         double newval = minval + xdiff * ratio;
-                        fabarr(i,j,k,n) = newval;
+                        fabarr(i,j,k,n) = static_cast<Real>(newval);
                     }
                  }
               }
@@ -470,7 +470,7 @@ InterpolateLo(const Box& bx, FArrayBox &fabox, IntVect slice_lo,
                         double ratio  = (maxval - minval) / (maxpos - minpos);
                         double xdiff  = slice_minpos - minpos;
                         double newval = minval + xdiff * ratio;
-                        fabarr(i,j,k,n) = newval;
+                        fabarr(i,j,k,n) = static_cast<Real>(newval);
                     }
                  }
               }

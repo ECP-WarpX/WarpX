@@ -70,7 +70,7 @@ Then, you need to load the following modules:
 
 ::
 
-    module load modules esslurm gcc/7.3.0 cuda mvapich2
+    module load cgpu gcc cuda mvapich2
 
 You can also use OpenMPI-UCX instead of mvapich: openmpi/4.0.1-ucx-1.6.
 
@@ -103,7 +103,7 @@ First, load the appropriate modules:
 
    module swap craype-haswell craype-mic-knl
    module swap PrgEnv-intel PrgEnv-gnu
-   module load cmake/3.14.4
+   module load cmake/3.18.2
    module load cray-hdf5-parallel
    module load adios2/2.5.0
 

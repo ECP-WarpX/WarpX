@@ -34,7 +34,7 @@ FlushFormatPlotfile::WriteToFile (
     amrex::WriteMultiLevelPlotfile(filename, nlev,
                                    amrex::GetVecOfConstPtrs(mf),
                                    varnames, geom,
-                                   time, iteration, warpx.refRatio(),
+                                   static_cast<Real>(time), iteration, warpx.refRatio(),
                                    "HyperCLaw-V1.1",
                                    "Level_",
                                    "Cell",
@@ -78,7 +78,7 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
         jobInfoFile << PrettyLine;
 
         jobInfoFile << "number of MPI processes: " << ParallelDescriptor::NProcs() << "\n";
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         jobInfoFile << "number of threads:       " << omp_get_max_threads() << "\n";
 #endif
 
@@ -246,6 +246,8 @@ FlushFormatPlotfile::WriteWarpXHeader(
         }
 
         WriteHeaderParticle(HeaderFile, particle_diags);
+
+        HeaderFile << warpx.getcurrent_injection_position() << "\n";
     }
 }
 
@@ -266,7 +268,7 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-        amrex::ParticleContainer<0, 0, PIdx::nattribs> tmp(pc->GetParGDB());
+        PhysicalParticleContainer tmp(&WarpX::GetInstance());
         Vector<std::string> real_names;
         Vector<std::string> int_names;
         Vector<int> int_flags;
@@ -302,15 +304,16 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
         }
 #endif
 
-        // Convert momentum to SI
         pc->ConvertUnits(ConvertDirection::WarpX_to_SI);
 
         RandomFilter const random_filter(particle_diags[i].m_do_random_filter,
                                          particle_diags[i].m_random_fraction);
         UniformFilter const uniform_filter(particle_diags[i].m_do_uniform_filter,
                                            particle_diags[i].m_uniform_stride);
-        ParserFilter const parser_filter(particle_diags[i].m_do_parser_filter,
-                                         getParser(particle_diags[i].m_particle_filter_parser));
+        ParserFilter parser_filter(particle_diags[i].m_do_parser_filter,
+                                   getParser(particle_diags[i].m_particle_filter_parser),
+                                   pc->getMass());
+        parser_filter.m_units = InputUnits::SI;
         GeometryFilter const geometry_filter(particle_diags[i].m_do_geom_filter,
                                              particle_diags[i].m_diag_domain);
 
@@ -330,7 +333,6 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
             particle_diags[i].plot_flags, int_flags,
             real_names, int_names);
 
-        // Convert momentum back to WarpX units
         pc->ConvertUnits(ConvertDirection::SI_to_WarpX);
     }
 }
@@ -502,6 +504,9 @@ FlushFormatPlotfile::WriteAllRawFields(
                 MultiFab rho_new(warpx.getrho_fp(lev), amrex::make_alias, warpx.getrho_fp(lev).nComp()/2, warpx.getrho_fp(lev).nComp()/2);
                 WriteRawMF(rho_new, dm, raw_pltname, default_level_prefix, "rho_fp", lev, plot_raw_fields_guards);
             }
+        }
+        if (warpx.get_pointer_phi_fp(lev) != nullptr) {
+            WriteRawMF(warpx.getphi_fp(lev), dm, raw_pltname, default_level_prefix, "phi_fp", lev, plot_raw_fields_guards);
         }
 
         // Coarse path

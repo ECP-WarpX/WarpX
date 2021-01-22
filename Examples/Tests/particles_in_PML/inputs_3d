@@ -52,5 +52,5 @@ interpolation.noz = 3
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 120
+diag1.intervals = 120
 diag1.diag_type = Full

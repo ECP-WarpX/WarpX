@@ -52,7 +52,7 @@
 #include <AMReX_Interpolater.H>
 #include <AMReX_FillPatchUtil.H>
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 
@@ -437,6 +437,7 @@ public:
     amrex::Vector<amrex::Real> getdt () const {return dt;}
     amrex::Real getdt (int lev) const {return dt[lev];}
     amrex::Real getmoving_window_x() const {return moving_window_x;}
+    amrex::Real getcurrent_injection_position () const {return current_injection_position;}
     bool getis_synchronized() const {return is_synchronized;}
     void setplot_rho (bool a_plot_rho) {plot_rho = a_plot_rho;}
 
@@ -688,11 +689,10 @@ private:
 
     void InitNCICorrector ();
 
-    std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
+    /** Check the requested resources and write performance hints */
+    void PerformanceHints ();
 
-    void ExchangeWithPmlB (int lev);
-    void ExchangeWithPmlE (int lev);
-    void ExchangeWithPmlF (int lev);
+    std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
 
     void BuildBufferMasks ();
     void BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_mask,
@@ -791,7 +791,7 @@ private:
 
 
     // Load balancing
-    /** Load balancing intervals that reads the "load_balance_int" string int the input file
+    /** Load balancing intervals that reads the "load_balance_intervals" string int the input file
      * for getting steps at which load balancing is performed */
     IntervalsParser load_balance_intervals;
     /** Collection of LayoutData to keep track of weights used in load balancing

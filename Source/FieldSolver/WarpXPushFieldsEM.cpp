@@ -16,6 +16,7 @@
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 
+#include <AMReX.H>
 #include <AMReX_Math.H>
 #include <limits>
 
@@ -120,6 +121,7 @@ void
 WarpX::PushPSATD (amrex::Real a_dt)
 {
 #ifndef WARPX_USE_PSATD
+    amrex::ignore_unused(a_dt);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                                      "PushFieldsEM: PSATD solver selected but not built.");
 #else
@@ -138,6 +140,7 @@ WarpX::PushPSATD (amrex::Real a_dt)
 void
 WarpX::PushPSATD (int lev, amrex::Real /* dt */) {
 #ifndef WARPX_USE_PSATD
+    amrex::ignore_unused(lev);
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                                      "PushFieldsEM: PSATD solver selected but not built.");
 #else
@@ -192,10 +195,10 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveBPML(
-                pml[lev]->GetB_fp(), pml[lev]->GetE_fp(), a_dt );
+                pml[lev]->GetB_fp(), pml[lev]->GetE_fp(), a_dt, WarpX::do_dive_cleaning);
         } else {
             m_fdtd_solver_cp[lev]->EvolveBPML(
-                pml[lev]->GetB_cp(), pml[lev]->GetE_cp(), a_dt );
+                pml[lev]->GetB_cp(), pml[lev]->GetE_cp(), a_dt, WarpX::do_dive_cleaning);
         }
     }
 
@@ -388,8 +391,9 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
 #else
                 amrex::Real zcell = static_cast<amrex::Real>(j + nz_guard);
 #endif
-                amrex::Real phase = MathConst::pi*zcell/nz_guard;
-                amrex::Real damp_factor = std::pow(std::sin(phase), 2);
+                const amrex::Real phase = MathConst::pi*zcell/nz_guard;
+                const amrex::Real sin_phase = std::sin(phase);
+                const amrex::Real damp_factor = sin_phase*sin_phase;
 
                 Ex_arr(i,j,k,icomp) *= damp_factor;
                 Ey_arr(i,j,k,icomp) *= damp_factor;
@@ -417,8 +421,9 @@ WarpX::DampFieldsInGuards(std::array<std::unique_ptr<amrex::MultiFab>,3>& Efield
 #else
                 amrex::Real zcell = static_cast<amrex::Real>(nz_tile - j);
 #endif
-                amrex::Real phase = MathConst::pi*zcell/nz_guard;
-                amrex::Real damp_factor = std::pow(std::sin(phase), 2);
+                const amrex::Real phase = MathConst::pi*zcell/nz_guard;
+                const amrex::Real sin_phase = std::sin(phase);
+                const amrex::Real damp_factor = sin_phase*sin_phase;
 
                 Ex_arr(i,j,k,icomp) *= damp_factor;
                 Ey_arr(i,j,k,icomp) *= damp_factor;

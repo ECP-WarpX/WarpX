@@ -45,7 +45,7 @@ amr.blocking_factor = 64
 warpx.do_dynamic_scheduling = 0
 
 # load balancing
-warpx.load_balance_int = 10
+warpx.load_balance_intervals = 10
 warpx.load_balance_with_sfc = 0
 #warpx.load_balance_efficiency_ratio_threshold = 1.1
 algo.load_balance_costs_update = Heuristic
@@ -53,7 +53,7 @@ algo.load_balance_costs_update = Heuristic
 #algo.costs_heuristic_cells_wt = 0.1
 
 # particle bin-sorting on GPU (ideal defaults not investigated in 2D)
-#warpx.sort_int = 4
+#warpx.sort_intervals = 4
 #warpx.sort_bin_size = 4 4 4
 
 
@@ -122,20 +122,20 @@ my_constants.Lcut = 2.0e-6       # [1/m] hard cutoff from surface
 my_constants.r0 = 2.5e-6        # [m] radius or half-thickness
 
 # [target 1] flat foil (thickness = 2*r0)
-#electrons.density_function(x,y,z) = "nc*n0*(
-#    (abs(z)<=r0) +
-#    (abs(z)>r0)*(abs(z)<r0+Lcut)*exp( (-abs(z)+r0)/L ) )"
-#hydrogen.density_function(x,y,z) = "nc*n0*(
-#    (abs(z)<=r0) +
-#    (abs(z)>r0)*(abs(z)<r0+Lcut)*exp( (-abs(z)+r0)/L ) )"
+electrons.density_function(x,y,z) = "nc*n0*(
+    (abs(z)<=r0) +
+    (abs(z)>r0)*(abs(z)<r0+Lcut)*exp( (-abs(z)+r0)/L ) )"
+hydrogen.density_function(x,y,z) = "nc*n0*(
+    (abs(z)<=r0) +
+    (abs(z)>r0)*(abs(z)<r0+Lcut)*exp( (-abs(z)+r0)/L ) )"
 
 # [target 2] cylinder
-electrons.density_function(x,y,z) = "nc*n0*(
-    ((x*x+z*z)<=(r0*r0)) +
-    (sqrt(x*x+z*z)>r0)*(sqrt(x*x+z*z)<r0+Lcut)*exp( (-sqrt(x*x+z*z)+r0)/L ) )"
-hydrogen.density_function(x,y,z) = "nc*n0*(
-    ((x*x+z*z)<=(r0*r0)) +
-    (sqrt(x*x+z*z)>r0)*(sqrt(x*x+z*z)<r0+Lcut)*exp( (-sqrt(x*x+z*z)+r0)/L ) )"
+#electrons.density_function(x,y,z) = "nc*n0*(
+#    ((x*x+z*z)<=(r0*r0)) +
+#    (sqrt(x*x+z*z)>r0)*(sqrt(x*x+z*z)<r0+Lcut)*exp( (-sqrt(x*x+z*z)+r0)/L ) )"
+#hydrogen.density_function(x,y,z) = "nc*n0*(
+#    ((x*x+z*z)<=(r0*r0)) +
+#    (sqrt(x*x+z*z)>r0)*(sqrt(x*x+z*z)<r0+Lcut)*exp( (-sqrt(x*x+z*z)+r0)/L ) )"
 
 # [target 3] sphere
 #electrons.density_function(x,y,z) = "nc*n0*(
@@ -168,21 +168,72 @@ laser1.profile_focal_distance = 4.0e-6  # focal distance from the antenna [m]
 #################################
 # Diagnostics
 #
-diagnostics.diags_names = diag1 openPMDh5
+diagnostics.diags_names = diag1 openPMDfw openPMDbw
 
-diag1.period = 100
+diag1.intervals = 100
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydrogen
+# reduce resolution of output fields
+diag1.coarsening_ratio = 4 4
 diag1.electrons.variables = w ux uy uz
 diag1.hydrogen.variables = w ux uy uz
+# demonstration of a spatial and momentum filter
+diag1.electrons.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz>=0) * (x<1.0e-6) * (x>-1.0e-6)
+diag1.hydrogen.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz>=0) * (x<1.0e-6) * (x>-1.0e-6)
 
-openPMDh5.period = 100
-openPMDh5.diag_type = Full
-openPMDh5.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydrogen
-openPMDh5.electrons.variables = w ux uy uz
-openPMDh5.hydrogen.variables = w ux uy uz
-openPMDh5.format = openpmd
-openPMDh5.openpmd_backend = h5
+openPMDfw.intervals = 100
+openPMDfw.diag_type = Full
+openPMDfw.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz rho rho_electrons rho_hydrogen
+# reduce resolution of output fields
+openPMDfw.coarsening_ratio = 4 4
+openPMDfw.electrons.variables = w ux uy uz
+openPMDfw.hydrogen.variables = w ux uy uz
+openPMDfw.format = openpmd
+openPMDfw.openpmd_backend = h5
+openPMDfw.species = electrons hydrogen
+# demonstration of a spatial and momentum filter
+openPMDfw.electrons.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz>=0) * (x<1.0e-6) * (x>-1.0e-6)
+openPMDfw.hydrogen.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz>=0) * (x<1.0e-6) * (x>-1.0e-6)
+
+openPMDbw.intervals = 100
+openPMDbw.diag_type = Full
+openPMDbw.fields_to_plot = rho_hydrogen
+# reduce resolution of output fields
+openPMDbw.coarsening_ratio = 4 4
+openPMDbw.electrons.variables = w ux uy uz
+openPMDbw.hydrogen.variables = w ux uy uz
+openPMDbw.format = openpmd
+openPMDbw.openpmd_backend = h5
+openPMDbw.species = electrons hydrogen
+# demonstration of a momentum filter
+openPMDbw.electrons.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz<0)
+openPMDbw.hydrogen.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz<0)
+
+
+#################################
+# Reduced Diagnostics
+#
+
+# histograms
+warpx.reduced_diags_names                   = histuH histue
+
+histuH.type                                 = ParticleHistogram
+histuH.intervals                            = 100
+histuH.path                                 = "./"
+histuH.species                              = hydrogen
+histuH.bin_number                           = 1000
+histuH.bin_min                              =  0.0
+histuH.bin_max                              = 35.0
+histuH.histogram_function(t,x,y,z,ux,uy,uz) = "sqrt(ux*ux+uy*uy+uz*uz)"
+
+histue.type                                 = ParticleHistogram
+histue.intervals                            = 100
+histue.path                                 = "./"
+histue.species                              = electrons
+histue.bin_number                           = 1000
+histue.bin_min                              = 0.0
+histue.bin_max                              = 0.1
+histue.histogram_function(t,x,y,z,ux,uy,uz) = "sqrt(ux*ux+uy*uy+uz*uz)"
 
 
 #################################

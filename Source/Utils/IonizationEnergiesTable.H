@@ -1,4 +1,4 @@
-/* Copyright 2019 Axel Huebl, Maxence Thevenet
+/* Copyright 2019-2021 Axel Huebl, Maxence Thevenet
  *
  * This file is part of WarpX.
  *
@@ -32,26 +32,27 @@ std::map<std::string, int> ion_map_ids = {
     {"S", 15},
     {"Cl", 16},
     {"Ar", 17},
-    {"Kr", 18},
-    {"Rb", 19},
-    {"Xe", 20},
-    {"Rn", 21} };
+    {"Cu", 18},
+    {"Kr", 19},
+    {"Rb", 20},
+    {"Xe", 21},
+    {"Rn", 22} };
 
-const int nelements = 22;
+constexpr int nelements = 23;
 
-const int ion_atomic_numbers[nelements] = {
+constexpr int ion_atomic_numbers[nelements] = {
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-    11, 12, 13, 14, 15, 16, 17, 18, 36, 37,
-    54, 86};
+    11, 12, 13, 14, 15, 16, 17, 18, 29, 36,
+    37, 54, 86};
 
-const int ion_energy_offsets[nelements] = {
+constexpr int ion_energy_offsets[nelements] = {
     0, 1, 3, 6, 10, 15, 21, 28, 36, 45,
-    55, 66, 78, 91, 105, 120, 136, 153, 171, 207,
-    244, 298};
+    55, 66, 78, 91, 105, 120, 136, 153, 171, 200,
+    236, 273, 327};
 
-const int energies_tab_length = 384;
+constexpr int energies_tab_length = 413;
 
-const amrex::Real table_ionization_energies[energies_tab_length]{
+constexpr amrex::Real table_ionization_energies[energies_tab_length]{
     // H
     amrex::Real(13.59843449),
     // He
@@ -133,29 +134,42 @@ const amrex::Real table_ionization_energies[energies_tab_length]{
     amrex::Real(479.76), amrex::Real(540.4), amrex::Real(619.0),
     amrex::Real(685.5), amrex::Real(755.13), amrex::Real(855.5),
     amrex::Real(918.375), amrex::Real(4120.6656), amrex::Real(4426.2228),
+    // Cu
+    amrex::Real(7.726380), amrex::Real(20.29239), amrex::Real(36.841),
+    amrex::Real(57.38), amrex::Real(79.8), amrex::Real(103.0),
+    amrex::Real(139.0), amrex::Real(166.0), amrex::Real(198.0),
+    amrex::Real(232.2), amrex::Real(265.33), amrex::Real(367.0),
+    amrex::Real(401.0), amrex::Real(436.0), amrex::Real(483.1),
+    amrex::Real(518.7), amrex::Real(552.8), amrex::Real(632.5),
+    amrex::Real(670.608), amrex::Real(1690.5), amrex::Real(1800),
+    amrex::Real(1918), amrex::Real(2044), amrex::Real(2179.4),
+    amrex::Real(2307.3), amrex::Real(2479.1), amrex::Real(2586.954),
+    amrex::Real(11062.4313), amrex::Real(11567.613),
     // Kr
     amrex::Real(13.9996053), amrex::Real(24.35984), amrex::Real(35.838),
     amrex::Real(50.85), amrex::Real(64.69), amrex::Real(78.49),
     amrex::Real(109.13), amrex::Real(125.802), amrex::Real(233.0),
-    amrex::Real(268), amrex::Real(308), amrex::Real(350), amrex::Real(391),
-    amrex::Real(446), amrex::Real(492), amrex::Real(540), amrex::Real(591),
-    amrex::Real(640), amrex::Real(785), amrex::Real(831.6), amrex::Real(882.8),
+    amrex::Real(268), amrex::Real(308), amrex::Real(350),
+    amrex::Real(391), amrex::Real(446), amrex::Real(492),
+    amrex::Real(540), amrex::Real(591), amrex::Real(640),
+    amrex::Real(785), amrex::Real(831.6), amrex::Real(882.8),
     amrex::Real(945), amrex::Real(999.0), amrex::Real(1042),
     amrex::Real(1155.0), amrex::Real(1205.23), amrex::Real(2928.9),
-    amrex::Real(3072), amrex::Real(3228), amrex::Real(3380), amrex::Real(3584),
-    amrex::Real(3752.0), amrex::Real(3971), amrex::Real(4109.083),
-    amrex::Real(17296.420), amrex::Real(17936.209),
+    amrex::Real(3072), amrex::Real(3228), amrex::Real(3380),
+    amrex::Real(3584), amrex::Real(3752.0), amrex::Real(3971),
+    amrex::Real(4109.083), amrex::Real(17296.420), amrex::Real(17936.209),
     // Rb
     amrex::Real(4.1771280), amrex::Real(27.28954), amrex::Real(39.247),
     amrex::Real(52.20), amrex::Real(68.44), amrex::Real(82.9),
     amrex::Real(98.67), amrex::Real(132.79), amrex::Real(150.628),
     amrex::Real(277.12), amrex::Real(313.1), amrex::Real(356.0),
-    amrex::Real(400), amrex::Real(443), amrex::Real(502), amrex::Real(550),
-    amrex::Real(601), amrex::Real(654), amrex::Real(706.0), amrex::Real(857),
-    amrex::Real(905.3), amrex::Real(958.9), amrex::Real(1024),
-    amrex::Real(1080), amrex::Real(1125), amrex::Real(1242.5),
-    amrex::Real(1294.57), amrex::Real(3133.3), amrex::Real(3281),
-    amrex::Real(3443), amrex::Real(3600), amrex::Real(3815), amrex::Real(3988),
+    amrex::Real(400), amrex::Real(443), amrex::Real(502),
+    amrex::Real(550), amrex::Real(601), amrex::Real(654),
+    amrex::Real(706.0), amrex::Real(857), amrex::Real(905.3),
+    amrex::Real(958.9), amrex::Real(1024), amrex::Real(1080),
+    amrex::Real(1125), amrex::Real(1242.5), amrex::Real(1294.57),
+    amrex::Real(3133.3), amrex::Real(3281), amrex::Real(3443),
+    amrex::Real(3600), amrex::Real(3815), amrex::Real(3988),
     amrex::Real(4214), amrex::Real(4356.865), amrex::Real(18305.884),
     amrex::Real(18965.516),
     // Xe
@@ -163,42 +177,50 @@ const amrex::Real table_ionization_energies[energies_tab_length]{
     amrex::Real(42.20), amrex::Real(54.1), amrex::Real(66.703),
     amrex::Real(91.6), amrex::Real(105.9778), amrex::Real(179.84),
     amrex::Real(202.0), amrex::Real(229.02), amrex::Real(255.0),
-    amrex::Real(281), amrex::Real(314), amrex::Real(343), amrex::Real(374),
-    amrex::Real(404), amrex::Real(434), amrex::Real(549), amrex::Real(582),
-    amrex::Real(616), amrex::Real(650), amrex::Real(700), amrex::Real(736),
-    amrex::Real(818), amrex::Real(857.0), amrex::Real(1493), amrex::Real(1571),
-    amrex::Real(1653), amrex::Real(1742), amrex::Real(1826), amrex::Real(1919),
-    amrex::Real(2023), amrex::Real(2113), amrex::Real(2209), amrex::Real(2300),
-    amrex::Real(2556), amrex::Real(2637), amrex::Real(2726), amrex::Real(2811),
-    amrex::Real(2975), amrex::Real(3068), amrex::Real(3243),
-    amrex::Real(3333.8), amrex::Real(7660), amrex::Real(7889),
-    amrex::Real(8144), amrex::Real(8382), amrex::Real(8971),
-    amrex::Real(9243), amrex::Real(9581), amrex::Real(9810.37),
-    amrex::Real(40271.724), amrex::Real(41299.71),
+    amrex::Real(281), amrex::Real(314), amrex::Real(343),
+    amrex::Real(374), amrex::Real(404), amrex::Real(434),
+    amrex::Real(549), amrex::Real(582), amrex::Real(616),
+    amrex::Real(650), amrex::Real(700), amrex::Real(736),
+    amrex::Real(818), amrex::Real(857.0), amrex::Real(1493),
+    amrex::Real(1571), amrex::Real(1653), amrex::Real(1742),
+    amrex::Real(1826), amrex::Real(1919), amrex::Real(2023),
+    amrex::Real(2113), amrex::Real(2209), amrex::Real(2300),
+    amrex::Real(2556), amrex::Real(2637), amrex::Real(2726),
+    amrex::Real(2811), amrex::Real(2975), amrex::Real(3068),
+    amrex::Real(3243), amrex::Real(3333.8), amrex::Real(7660),
+    amrex::Real(7889), amrex::Real(8144), amrex::Real(8382),
+    amrex::Real(8971), amrex::Real(9243), amrex::Real(9581),
+    amrex::Real(9810.37), amrex::Real(40271.724), amrex::Real(41299.71),
     // Rn
     amrex::Real(10.74850), amrex::Real(21.4), amrex::Real(29.4),
-    amrex::Real(36.9), amrex::Real(52.9), amrex::Real(64.0), amrex::Real(88.0),
-    amrex::Real(102.0), amrex::Real(154.0), amrex::Real(173.9),
-    amrex::Real(195.0), amrex::Real(218.0), amrex::Real(240), amrex::Real(264),
-    amrex::Real(293), amrex::Real(317), amrex::Real(342), amrex::Real(367),
-    amrex::Real(488), amrex::Real(520), amrex::Real(550), amrex::Real(580),
-    amrex::Real(640), amrex::Real(680), amrex::Real(760), amrex::Real(800),
-    amrex::Real(850), amrex::Real(920), amrex::Real(980), amrex::Real(1050),
-    amrex::Real(1110), amrex::Real(1180), amrex::Real(1250), amrex::Real(1310),
-    amrex::Real(1390), amrex::Real(1460), amrex::Real(1520), amrex::Real(1590),
-    amrex::Real(1660), amrex::Real(1720), amrex::Real(2033), amrex::Real(2094),
-    amrex::Real(2158), amrex::Real(2227), amrex::Real(2293), amrex::Real(2357),
-    amrex::Real(2467), amrex::Real(2535), amrex::Real(2606), amrex::Real(2674),
-    amrex::Real(2944), amrex::Real(3010), amrex::Real(3082), amrex::Real(3149),
-    amrex::Real(3433), amrex::Real(3510), amrex::Real(3699), amrex::Real(3777),
-    amrex::Real(6169), amrex::Real(6318), amrex::Real(6476), amrex::Real(6646),
-    amrex::Real(6807), amrex::Real(6964), amrex::Real(7283), amrex::Real(7450),
-    amrex::Real(7630), amrex::Real(7800), amrex::Real(8260), amrex::Real(8410),
-    amrex::Real(8570), amrex::Real(8710), amrex::Real(9610), amrex::Real(9780),
-    amrex::Real(10120), amrex::Real(10290), amrex::Real(21770),
-    amrex::Real(22160), amrex::Real(22600), amrex::Real(22990),
-    amrex::Real(26310), amrex::Real(26830), amrex::Real(27490),
-    amrex::Real(27903.1), amrex::Real(110842.0), amrex::Real(112843.7)
+    amrex::Real(36.9), amrex::Real(52.9), amrex::Real(64.0),
+    amrex::Real(88.0), amrex::Real(102.0), amrex::Real(154.0),
+    amrex::Real(173.9), amrex::Real(195.0), amrex::Real(218.0),
+    amrex::Real(240), amrex::Real(264), amrex::Real(293),
+    amrex::Real(317), amrex::Real(342), amrex::Real(367),
+    amrex::Real(488), amrex::Real(520), amrex::Real(550),
+    amrex::Real(580), amrex::Real(640), amrex::Real(680),
+    amrex::Real(760), amrex::Real(800), amrex::Real(850),
+    amrex::Real(920), amrex::Real(980), amrex::Real(1050),
+    amrex::Real(1110), amrex::Real(1180), amrex::Real(1250),
+    amrex::Real(1310), amrex::Real(1390), amrex::Real(1460),
+    amrex::Real(1520), amrex::Real(1590), amrex::Real(1660),
+    amrex::Real(1720), amrex::Real(2033), amrex::Real(2094),
+    amrex::Real(2158), amrex::Real(2227), amrex::Real(2293),
+    amrex::Real(2357), amrex::Real(2467), amrex::Real(2535),
+    amrex::Real(2606), amrex::Real(2674), amrex::Real(2944),
+    amrex::Real(3010), amrex::Real(3082), amrex::Real(3149),
+    amrex::Real(3433), amrex::Real(3510), amrex::Real(3699),
+    amrex::Real(3777), amrex::Real(6169), amrex::Real(6318),
+    amrex::Real(6476), amrex::Real(6646), amrex::Real(6807),
+    amrex::Real(6964), amrex::Real(7283), amrex::Real(7450),
+    amrex::Real(7630), amrex::Real(7800), amrex::Real(8260),
+    amrex::Real(8410), amrex::Real(8570), amrex::Real(8710),
+    amrex::Real(9610), amrex::Real(9780), amrex::Real(10120),
+    amrex::Real(10290), amrex::Real(21770), amrex::Real(22160),
+    amrex::Real(22600), amrex::Real(22990), amrex::Real(26310),
+    amrex::Real(26830), amrex::Real(27490), amrex::Real(27903.1),
+    amrex::Real(110842.0), amrex::Real(112843.7)
 };
 
 #endif // #ifndef WARPX_IONIZATION_TABLE_H_

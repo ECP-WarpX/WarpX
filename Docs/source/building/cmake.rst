@@ -22,7 +22,7 @@ WarpX depends on the following popular third party software.
 Please see installation instructions below.
 
 - a mature `C++14 <https://en.wikipedia.org/wiki/C%2B%2B14>`_ compiler: e.g. GCC 5, Clang 3.6 or newer
-- `CMake 3.14.0+ <https://cmake.org>`_
+- `CMake 3.15.0+ <https://cmake.org>`_
 - `AMReX <https://amrex-codes.github.io>`_: we automatically download and compile a copy of AMReX
 
 Optional dependencies include:
@@ -121,7 +121,7 @@ CMake Option                  Default & Values                             Descr
 ``CMAKE_BUILD_TYPE``          **RelWithDebInfo**/Release/Debug             Type of build, symbols & optimizations
 ``WarpX_APP``                 **ON**/OFF                                   Build the WarpX executable application
 ``WarpX_ASCENT``              ON/**OFF**                                   Ascent in situ visualization
-``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/DPCPP/HIP                 On-node, accelerated computing backend
+``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
 ``WarpX_DIMS``                **3**/2/RZ                                   Simulation dimensionality
 ``WarpX_LIB``                 ON/**OFF**                                   Build WarpX as a shared library
 ``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)

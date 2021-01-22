@@ -7,6 +7,7 @@
 
 #include "ParticleHistogram.H"
 #include "WarpX.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
 #include "Utils/WarpXUtil.H"
 
 #include <AMReX_REAL.H>
@@ -91,8 +92,7 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
         if ( m_IsNotRestart )
         {
             // open file
-            std::ofstream ofs{m_path + m_rd_name + "." + m_extension,
-                std::ofstream::out | std::ofstream::app};
+            std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
             ofs << "#";
             ofs << "[1]step()";
@@ -122,7 +122,7 @@ void ParticleHistogram::ComputeDiags (int step)
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) return;
 
-    // get WarpX class object
+    // get a reference to WarpX instance
     auto & warpx = WarpX::GetInstance();
 
     // get time at level 0
@@ -152,9 +152,8 @@ void ParticleHistogram::ComputeDiags (int step)
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         {
             auto const w  = p.rdata(PIdx::w);
-            auto const x  = p.pos(0);
-            auto const y  = p.pos(1);
-            auto const z  = p.pos(2);
+            amrex::ParticleReal x, y, z;
+            get_particle_position(p, x, y, z);
             auto const ux = p.rdata(PIdx::ux)/PhysConst::c;
             auto const uy = p.rdata(PIdx::uy)/PhysConst::c;
             auto const uz = p.rdata(PIdx::uz)/PhysConst::c;

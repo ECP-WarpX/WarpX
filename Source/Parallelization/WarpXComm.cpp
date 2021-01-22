@@ -21,44 +21,6 @@
 using namespace amrex;
 
 void
-WarpX::ExchangeWithPmlB (int lev)
-{
-    if (do_pml && pml[lev]->ok()) {
-        pml[lev]->ExchangeB({ Bfield_fp[lev][0].get(),
-                              Bfield_fp[lev][1].get(),
-                              Bfield_fp[lev][2].get() },
-                            { Bfield_cp[lev][0].get(),
-                              Bfield_cp[lev][1].get(),
-                              Bfield_cp[lev][2].get() },
-                              do_pml_in_domain);
-    }
-}
-
-void
-WarpX::ExchangeWithPmlE (int lev)
-{
-    if (do_pml && pml[lev]->ok()) {
-        pml[lev]->ExchangeE({ Efield_fp[lev][0].get(),
-                              Efield_fp[lev][1].get(),
-                              Efield_fp[lev][2].get() },
-                            { Efield_cp[lev][0].get(),
-                              Efield_cp[lev][1].get(),
-                              Efield_cp[lev][2].get() },
-                              do_pml_in_domain);
-    }
-}
-
-void
-WarpX::ExchangeWithPmlF (int lev)
-{
-    if (do_pml && pml[lev]->ok()) {
-        pml[lev]->ExchangeF(F_fp[lev].get(),
-                            F_cp[lev].get(),
-                            do_pml_in_domain);
-    }
-}
-
-void
 WarpX::UpdateAuxilaryData ()
 {
     WARPX_PROFILE("WarpX::UpdateAuxilaryData()");
@@ -73,44 +35,51 @@ WarpX::UpdateAuxilaryData ()
 void
 WarpX::UpdateAuxilaryDataStagToNodal ()
 {
-#ifdef WARPX_USE_PSATD
-    const int fg_nox = WarpX::field_gathering_nox;
-    const int fg_noy = WarpX::field_gathering_noy;
-    const int fg_noz = WarpX::field_gathering_noz;
+#ifndef WARPX_USE_PSATD
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
+            "WarpX::UpdateAuxilaryDataStagToNodal: PSATD solver requires "
+            "WarpX build with spectral solver support.");
+    }
+#else
+    amrex::Gpu::DeviceVector<Real> d_stencil_coef_x;
+    amrex::Gpu::DeviceVector<Real> d_stencil_coef_y;
+    amrex::Gpu::DeviceVector<Real> d_stencil_coef_z;
+    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        const int fg_nox = WarpX::field_gathering_nox;
+        const int fg_noy = WarpX::field_gathering_noy;
+        const int fg_noz = WarpX::field_gathering_noz;
 
-    // Compute real-space stencil coefficients along x
-    amrex::Vector<Real> h_stencil_coef_x = getFornbergStencilCoefficients(fg_nox, false);
-    amrex::Gpu::DeviceVector<Real> d_stencil_coef_x(h_stencil_coef_x.size());
-    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                          h_stencil_coef_x.begin(),
-                          h_stencil_coef_x.end(),
-                          d_stencil_coef_x.begin());
-    amrex::Gpu::synchronize();
-    amrex::Real const* p_stencil_coef_x = d_stencil_coef_x.data();
+        // Compute real-space stencil coefficients along x
+        amrex::Vector<Real> h_stencil_coef_x = getFornbergStencilCoefficients(fg_nox, false);
+        d_stencil_coef_x.resize(h_stencil_coef_x.size());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                              h_stencil_coef_x.begin(),
+                              h_stencil_coef_x.end(),
+                              d_stencil_coef_x.begin());
 
-    // Compute real-space stencil coefficients along y
-    amrex::Vector<Real> h_stencil_coef_y = getFornbergStencilCoefficients(fg_noy, false);
-    amrex::Gpu::DeviceVector<Real> d_stencil_coef_y(h_stencil_coef_y.size());
-    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                          h_stencil_coef_y.begin(),
-                          h_stencil_coef_y.end(),
-                          d_stencil_coef_y.begin());
-    amrex::Gpu::synchronize();
-    amrex::Real const* p_stencil_coef_y = d_stencil_coef_y.data();
+        // Compute real-space stencil coefficients along y
+        amrex::Vector<Real> h_stencil_coef_y = getFornbergStencilCoefficients(fg_noy, false);
+        d_stencil_coef_y.resize(h_stencil_coef_y.size());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                              h_stencil_coef_y.begin(),
+                              h_stencil_coef_y.end(),
+                              d_stencil_coef_y.begin());
 
-    // Compute real-space stencil coefficients along z
-    amrex::Vector<Real> h_stencil_coef_z = getFornbergStencilCoefficients(fg_noz, false);
-    amrex::Gpu::DeviceVector<Real> d_stencil_coef_z(h_stencil_coef_z.size());
-    amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                          h_stencil_coef_z.begin(),
-                          h_stencil_coef_z.end(),
-                          d_stencil_coef_z.begin());
-    amrex::Gpu::synchronize();
-    amrex::Real const* p_stencil_coef_z = d_stencil_coef_z.data();
+        // Compute real-space stencil coefficients along z
+        amrex::Vector<Real> h_stencil_coef_z = getFornbergStencilCoefficients(fg_noz, false);
+        d_stencil_coef_z.resize(h_stencil_coef_z.size());
+        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                              h_stencil_coef_z.begin(),
+                              h_stencil_coef_z.end(),
+                              d_stencil_coef_z.begin());
+
+        amrex::Gpu::synchronize();
+    }
 #endif
 
     // For level 0, we only need to do the average.
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(*Bfield_aux[0][0]); mfi.isValid(); ++mfi)
@@ -134,26 +103,36 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         // with 2 guard cells. Should this number of guard cells be expressed
         // in terms of the parameters defined in the guardCellManager class?
         bx.grow(2);
-        amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-        {
-// FDTD variant
-#ifndef WARPX_USE_PSATD
-            warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp);
-            warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp);
-            warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp);
-            warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp);
-            warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp);
-            warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp);
-// PSATD variant
-#else
-            warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp, fg_noy, fg_noz, p_stencil_coef_y, p_stencil_coef_z);
-            warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp, fg_nox, fg_noz, p_stencil_coef_x, p_stencil_coef_z);
-            warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp, fg_nox, fg_noy, p_stencil_coef_x, p_stencil_coef_y);
-            warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp, fg_nox, p_stencil_coef_x);
-            warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp, fg_noy, p_stencil_coef_y);
-            warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp, fg_noz, p_stencil_coef_z);
+
+        if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+#ifdef WARPX_USE_PSATD
+            const int fg_nox = WarpX::field_gathering_nox;
+            const int fg_noy = WarpX::field_gathering_noy;
+            const int fg_noz = WarpX::field_gathering_noz;
+            amrex::Real const * r_stencil_coef_x = d_stencil_coef_x.data();
+            amrex::Real const * r_stencil_coef_y = d_stencil_coef_y.data();
+            amrex::Real const * r_stencil_coef_z = d_stencil_coef_z.data();
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+            {
+                warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp, fg_noy, fg_noz, r_stencil_coef_y, r_stencil_coef_z);
+                warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp, fg_nox, fg_noz, r_stencil_coef_x, r_stencil_coef_z);
+                warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp, fg_nox, fg_noy, r_stencil_coef_x, r_stencil_coef_y);
+                warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp, fg_nox, r_stencil_coef_x);
+                warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp, fg_noy, r_stencil_coef_y);
+                warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp, fg_noz, r_stencil_coef_z);
+            });
 #endif
-        });
+        } else { // FDTD
+            amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
+            {
+                warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp);
+                warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp);
+                warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp);
+                warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp);
+                warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp);
+                warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp);
+            });
+        }
     }
 
     // NOTE: high-order interpolation is not implemented for mesh refinement
@@ -184,7 +163,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 Btmp[i]->ParallelCopy(*Bfield_aux[lev-1][i], 0, 0, 1, ng, ng, cperiod);
             }
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(*Bfield_aux[lev][0]); mfi.isValid(); ++mfi)
@@ -234,7 +213,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 Etmp[i]->ParallelCopy(*Efield_aux[lev-1][i], 0, 0, 1, ng, ng, cperiod);
             }
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
@@ -295,10 +274,13 @@ WarpX::UpdateAuxilaryDataSameType ()
             MultiFab::Subtract(dBy, *Bfield_cp[lev][1], 0, 0, Bfield_cp[lev][1]->nComp(), ng);
             MultiFab::Subtract(dBz, *Bfield_cp[lev][2], 0, 0, Bfield_cp[lev][2]->nComp(), ng);
 
-            const int refinement_ratio = refRatio(lev-1)[0];
-            AMREX_ALWAYS_ASSERT(refinement_ratio == 2);
+            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
 
-#ifdef _OPENMP
+            const amrex::IntVect& Bx_stag = Bfield_aux[lev-1][0]->ixType().toIntVect();
+            const amrex::IntVect& By_stag = Bfield_aux[lev-1][1]->ixType().toIntVect();
+            const amrex::IntVect& Bz_stag = Bfield_aux[lev-1][2]->ixType().toIntVect();
+
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(*Bfield_aux[lev][0]); mfi.isValid(); ++mfi)
@@ -316,15 +298,15 @@ WarpX::UpdateAuxilaryDataSameType ()
                 amrex::ParallelFor(Box(bx_aux), Box(by_aux), Box(bz_aux),
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_bfield_x(j,k,l, bx_aux, bx_fp, bx_c);
+                    warpx_interp(j, k, l, bx_aux, bx_fp, bx_c, Bx_stag, refinement_ratio);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_bfield_y(j,k,l, by_aux, by_fp, by_c);
+                    warpx_interp(j, k, l, by_aux, by_fp, by_c, By_stag, refinement_ratio);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_bfield_z(j,k,l, bz_aux, bz_fp, bz_c);
+                    warpx_interp(j, k, l, bz_aux, bz_fp, bz_c, Bz_stag, refinement_ratio);
                 });
             }
         }
@@ -350,7 +332,13 @@ WarpX::UpdateAuxilaryDataSameType ()
             MultiFab::Subtract(dEy, *Efield_cp[lev][1], 0, 0, Efield_cp[lev][1]->nComp(), ng);
             MultiFab::Subtract(dEz, *Efield_cp[lev][2], 0, 0, Efield_cp[lev][2]->nComp(), ng);
 
-#ifdef _OPENMP
+            const amrex::IntVect& refinement_ratio = refRatio(lev-1);
+
+            const amrex::IntVect& Ex_stag = Efield_aux[lev-1][0]->ixType().toIntVect();
+            const amrex::IntVect& Ey_stag = Efield_aux[lev-1][1]->ixType().toIntVect();
+            const amrex::IntVect& Ez_stag = Efield_aux[lev-1][2]->ixType().toIntVect();
+
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
@@ -368,15 +356,15 @@ WarpX::UpdateAuxilaryDataSameType ()
                 amrex::ParallelFor(Box(ex_aux), Box(ey_aux), Box(ez_aux),
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_efield_x(j,k,l, ex_aux, ex_fp, ex_c);
+                    warpx_interp(j, k, l, ex_aux, ex_fp, ex_c, Ex_stag, refinement_ratio);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_efield_y(j,k,l, ey_aux, ey_fp, ey_c);
+                    warpx_interp(j, k, l, ey_aux, ey_fp, ey_c, Ey_stag, refinement_ratio);
                 },
                 [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
                 {
-                    warpx_interp_efield_z(j,k,l, ez_aux, ez_fp, ez_c);
+                    warpx_interp(j, k, l, ez_aux, ez_fp, ez_c, Ez_stag, refinement_ratio);
                 });
             }
         }

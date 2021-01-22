@@ -152,7 +152,7 @@ void
 BackTransformFunctor::LorentzTransformZ (amrex::MultiFab& data, amrex::Real gamma_boost,
                                          amrex::Real beta_boost) const
 {
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (amrex::MFIter mfi(data, TilingIfNotGPU()); mfi.isValid(); ++mfi) {

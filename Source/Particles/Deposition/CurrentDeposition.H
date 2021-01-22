@@ -61,17 +61,17 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
-    const amrex::Real dxi = 1.0/dx[0];
-    const amrex::Real dzi = 1.0/dx[2];
+    const amrex::Real dxi = 1.0_rt/dx[0];
+    const amrex::Real dzi = 1.0_rt/dx[2];
 #if !(defined WARPX_DIM_RZ)
-    const amrex::Real dts2dx = 0.5*dt*dxi;
+    const amrex::Real dts2dx = 0.5_rt*dt*dxi;
 #endif
-    const amrex::Real dts2dz = 0.5*dt*dzi;
+    const amrex::Real dts2dz = 0.5_rt*dt*dzi;
 #if (AMREX_SPACEDIM == 2)
     const amrex::Real invvol = dxi*dzi;
 #elif (defined WARPX_DIM_3D)
-    const amrex::Real dyi = 1.0/dx[1];
-    const amrex::Real dts2dy = 0.5*dt*dyi;
+    const amrex::Real dyi = 1.0_rt/dx[1];
+    const amrex::Real dts2dy = 0.5_rt*dt*dyi;
     const amrex::Real invvol = dxi*dyi*dzi;
 #endif
 
@@ -81,7 +81,7 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 #endif
     const amrex::Real zmin = xyzmin[2];
 
-    const amrex::Real clightsq = 1.0/PhysConst::c/PhysConst::c;
+    const amrex::Real clightsq = 1.0_rt/PhysConst::c/PhysConst::c;
 
     amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
     amrex::Array4<amrex::Real> const& jy_arr = jy_fab.array();
@@ -117,8 +117,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 #if (defined WARPX_DIM_RZ)
             // In RZ, wqx is actually wqr, and wqy is wqtheta
             // Convert to cylinderical at the mid point
-            const amrex::Real xpmid = xp - 0.5*dt*vx;
-            const amrex::Real ypmid = yp - 0.5*dt*vy;
+            const amrex::Real xpmid = xp - 0.5_rt*dt*vx;
+            const amrex::Real ypmid = yp - 0.5_rt*dt*vy;
             const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);
             amrex::Real costheta;
             amrex::Real sintheta;
@@ -126,8 +126,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
                 costheta = xpmid/rpmid;
                 sintheta = ypmid/rpmid;
             } else {
-                costheta = 1.;
-                sintheta = 0.;
+                costheta = 1._rt;
+                sintheta = 0._rt;
             }
             const Complex xy0 = Complex{costheta, sintheta};
             const amrex::Real wqx = wq*invvol*(+vx*costheta + vy*sintheta);
@@ -164,9 +164,9 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
                 j_cell = compute_shape_factor(sx_cell, xmid - 0.5);
             }
 
-            amrex::Real sx_jx[depos_order + 1] = {0.};
-            amrex::Real sx_jy[depos_order + 1] = {0.};
-            amrex::Real sx_jz[depos_order + 1] = {0.};
+            amrex::Real sx_jx[depos_order + 1] = {0._rt};
+            amrex::Real sx_jy[depos_order + 1] = {0._rt};
+            amrex::Real sx_jz[depos_order + 1] = {0._rt};
             for (int ix=0; ix<=depos_order; ix++)
             {
                 sx_jx[ix] = ((jx_type[0] == NODE) ? amrex::Real(sx_node[ix]) : amrex::Real(sx_cell[ix]));

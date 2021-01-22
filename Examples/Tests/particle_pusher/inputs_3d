@@ -42,5 +42,5 @@ particles.E_external_particle =  -2.994174829214179e+08  0.0  0.0
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 10000
+diag1.intervals = 10000
 diag1.diag_type = Full

@@ -23,7 +23,7 @@
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 
@@ -342,6 +342,11 @@ WarpX::ReadParameters ()
     }
 
     {
+        ParmParse pp("algo");
+        maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
+    }
+
+    {
         ParmParse pp("warpx");
 
         std::vector<int> numprocs_in;
@@ -384,9 +389,9 @@ WarpX::ReadParameters ()
         pp.query("do_subcycling", do_subcycling);
         pp.query("use_hybrid_QED", use_hybrid_QED);
         pp.query("safe_guard_cells", safe_guard_cells);
-        std::vector<std::string> override_sync_int_string_vec = {"1"};
-        pp.queryarr("override_sync_int", override_sync_int_string_vec);
-        override_sync_intervals = IntervalsParser(override_sync_int_string_vec);
+        std::vector<std::string> override_sync_intervals_string_vec = {"1"};
+        pp.queryarr("override_sync_intervals", override_sync_intervals_string_vec);
+        override_sync_intervals = IntervalsParser(override_sync_intervals_string_vec);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
                                          "Subcycling method 1 only works for 2 levels.");
@@ -494,10 +499,12 @@ WarpX::ReadParameters ()
         filter_npass_each_dir[2] = parse_filter_npass_each_dir[2];
 #endif
 
-#if (defined WARPX_DIM_RZ) && (defined WARPX_USE_PSATD)
-        // With RZ spectral, only use k-space filtering
-        use_kspace_filter = use_filter;
-        use_filter = false;
+#ifdef WARPX_DIM_RZ
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            // With RZ spectral, only use k-space filtering
+            use_kspace_filter = use_filter;
+            use_filter = false;
+        }
 #endif
 
         pp.query("num_mirrors", num_mirrors);
@@ -516,12 +523,12 @@ WarpX::ReadParameters ()
         pp.query("n_field_gather_buffer", n_field_gather_buffer);
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
 #ifdef AMREX_USE_GPU
-        std::vector<std::string>sort_int_string_vec = {"4"};
+        std::vector<std::string>sort_intervals_string_vec = {"4"};
 #else
-        std::vector<std::string> sort_int_string_vec = {"-1"};
+        std::vector<std::string> sort_intervals_string_vec = {"-1"};
 #endif
-        pp.queryarr("sort_int", sort_int_string_vec);
-        sort_intervals = IntervalsParser(sort_int_string_vec);
+        pp.queryarr("sort_intervals", sort_intervals_string_vec);
+        sort_intervals = IntervalsParser(sort_intervals_string_vec);
 
         Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
         bool sort_bin_size_is_specified = pp.queryarr("sort_bin_size", vect_sort_bin_size);
@@ -598,9 +605,9 @@ WarpX::ReadParameters ()
             fine_tag_hi = RealVect{hi};
         }
 
-        std::vector<std::string> load_balance_int_string_vec = {"0"};
-        pp.queryarr("load_balance_int", load_balance_int_string_vec);
-        load_balance_intervals = IntervalsParser(load_balance_int_string_vec);
+        std::vector<std::string> load_balance_intervals_string_vec = {"0"};
+        pp.queryarr("load_balance_intervals", load_balance_intervals_string_vec);
+        load_balance_intervals = IntervalsParser(load_balance_intervals_string_vec);
         pp.query("load_balance_with_sfc", load_balance_with_sfc);
         pp.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
         queryWithParser(pp, "load_balance_efficiency_ratio_threshold",
@@ -618,7 +625,6 @@ WarpX::ReadParameters ()
 
     {
         ParmParse pp("algo");
-        maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
 #ifdef WARPX_DIM_RZ
         if (maxwell_solver_id == MaxwellSolverAlgo::CKC) {
             AMREX_ALWAYS_ASSERT_WITH_MESSAGE( false,
@@ -670,18 +676,20 @@ WarpX::ReadParameters ()
         pp.query("noz", noz);
 
 #ifdef WARPX_USE_PSATD
-        // For momentum-conserving field gathering, read from input the order of
-        // interpolation from the staggered positions to the grid nodes
-        if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
-            pp.query("field_gathering_nox", field_gathering_nox);
-            pp.query("field_gathering_noy", field_gathering_noy);
-            pp.query("field_gathering_noz", field_gathering_noz);
-        }
+        if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+            // For momentum-conserving field gathering, read from input the order of
+            // interpolation from the staggered positions to the grid nodes
+            if (field_gathering_algo == GatheringAlgo::MomentumConserving) {
+                pp.query("field_gathering_nox", field_gathering_nox);
+                pp.query("field_gathering_noy", field_gathering_noy);
+                pp.query("field_gathering_noz", field_gathering_noz);
+            }
 
-        if (maxLevel() > 0) {
-            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-                field_gathering_nox == 2 && field_gathering_noy == 2 && field_gathering_noz == 2,
-                "High-order interpolation (order > 2) is not implemented with mesh refinement");
+            if (maxLevel() > 0) {
+                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    field_gathering_nox == 2 && field_gathering_noy == 2 && field_gathering_noz == 2,
+                    "High-order interpolation (order > 2) is not implemented with mesh refinement");
+            }
         }
 #endif
 
@@ -757,9 +765,6 @@ WarpX::ReadParameters ()
             }
         }
 
-#   ifdef WARPX_DIM_RZ
-        update_with_rho = true;  // Must be true for RZ PSATD
-#   else
         if (m_v_galilean[0] == 0. && m_v_galilean[1] == 0. && m_v_galilean[2] == 0. &&
             m_v_comoving[0] == 0. && m_v_comoving[1] == 0. && m_v_comoving[2] == 0.) {
             update_with_rho = false; // standard PSATD
@@ -767,7 +772,6 @@ WarpX::ReadParameters ()
         else {
             update_with_rho = true;  // Galilean PSATD or comoving PSATD
         }
-#   endif
 
         // Overwrite update_with_rho with value set in input file
         pp.query("update_with_rho", update_with_rho);
@@ -778,9 +782,6 @@ WarpX::ReadParameters ()
         }
 
 #   ifdef WARPX_DIM_RZ
-        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(update_with_rho,
-        "psatd.update_with_rho must be equal to 1 in RZ geometry");
-
         if (!Geom(0).isPeriodic(1)) {
             use_damp_fields_in_z_guard = true;
         }
@@ -835,7 +836,7 @@ WarpX::BackwardCompatibility ()
     if (ppa.query("plot_int", backward_int)){
         amrex::Abort("amr.plot_int is not supported anymore. Please use the new syntax for diagnostics:\n"
             "diagnostics.diags_names = my_diag\n"
-            "my_diag.period = 10\n"
+            "my_diag.intervals = 10\n"
             "for output every 10 iterations. See documentation for more information");
     }
 
@@ -858,6 +859,18 @@ WarpX::BackwardCompatibility ()
     if (ppw.query("plot_crsepatch", backward_int)){
         amrex::Abort("warpx.plot_crsepatch is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
+    }
+    if (ppw.queryarr("load_balance_int", backward_strings)){
+        amrex::Abort("warpx.load_balance_int is no longer a valid option. "
+                     "Please use the renamed option warpx.load_balance_intervals instead.");
+    }
+    if (ppw.queryarr("override_sync_int", backward_strings)){
+        amrex::Abort("warpx.override_sync_int is no longer a valid option. "
+                     "Please use the renamed option warpx.override_sync_intervals instead.");
+    }
+    if (ppw.queryarr("sort_int", backward_strings)){
+        amrex::Abort("warpx.sort_int is no longer a valid option. "
+                     "Please use the renamed option warpx.sort_intervals instead.");
     }
     if (ppw.query("use_kspace_filter", backward_int)){
         amrex::Abort("warpx.use_kspace_filter is not supported anymore. "
@@ -1076,12 +1089,11 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     Efield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,Ey_nodal_flag),dm,ncomps,ngE);
     Efield_avg_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,Ez_nodal_flag),dm,ncomps,ngE);
 
-#ifdef WARPX_USE_PSATD
-    const bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)
-                                || update_with_rho || current_correction;
-#else
-    const bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics);
-#endif
+    bool deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics);
+    if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
+        deposit_charge = do_dive_cleaning || (plot_rho && do_back_transformed_diagnostics)
+                         || update_with_rho || current_correction;
+    }
     if (deposit_charge)
     {
         rho_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,rho_nodal_flag),dm,2*ncomps,ngRho);
@@ -1104,7 +1116,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     {
         F_fp[lev] = std::make_unique<MultiFab>(amrex::convert(ba,IntVect::TheUnitVector()),dm,ncomps, ngF.max());
     }
-    bool const pml_flag_false = false;
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD)
     {
         // Allocate and initialize the spectral solver
@@ -1143,7 +1154,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             realspace_ba.grow(1, ngE[1]); // add guard cells only in z
         }
         spectral_solver_fp[lev] = std::make_unique<SpectralSolverRZ>( realspace_ba, dm,
-            n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev], lev );
+            n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, dx_vect, dt[lev], lev, update_with_rho );
         if (use_kspace_filter) {
             spectral_solver_fp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
         }
@@ -1271,12 +1282,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 #   ifdef WARPX_DIM_RZ
             c_realspace_ba.grow(1, ngE[1]); // add guard cells only in z
             spectral_solver_cp[lev] = std::make_unique<SpectralSolverRZ>( c_realspace_ba, dm,
-                n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev], lev );
+                n_rz_azimuthal_modes, noz_fft, do_nodal, m_v_galilean, cdx_vect, dt[lev], lev, update_with_rho );
             if (use_kspace_filter) {
                 spectral_solver_cp[lev]->InitFilter(filter_npass_each_dir, use_filter_compensation);
             }
 #   else
             c_realspace_ba.grow(ngE); // add guard cells
+            bool const pml_flag_false = false;
             spectral_solver_cp[lev] = std::make_unique<SpectralSolver>( c_realspace_ba, dm,
                 nox_fft, noy_fft, noz_fft, do_nodal, m_v_galilean, m_v_comoving, cdx_vect, dt[lev],
                 pml_flag_false, fft_periodic_single_box, update_with_rho, fft_do_time_averaging );
@@ -1422,7 +1434,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
 #endif
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
@@ -1460,7 +1472,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
 #endif
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
@@ -1546,8 +1558,8 @@ WarpX::BuildBufferMasks ()
                 const Box& dom = Geom(lev).Domain();
                 const auto& period = Geom(lev).periodicity();
                 tmp.BuildMask(dom, period, covered, notcovered, physbnd, interior);
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
                 for (MFIter mfi(*bmasks, true); mfi.isValid(); ++mfi)
                 {
