@@ -64,6 +64,13 @@ collision2.ndt = 10
 collision3.ndt = 10
 
 # Diagnostics
-diagnostics.diags_names = diag1
+diagnostics.diags_names = diag1 diag_filter
 diag1.intervals = 10
 diag1.diag_type = Full
+
+## diag_filter is another diag used to test the particle filter function.
+diag_filter.intervals = 150:150:
+diag_filter.diag_type = Full
+diag_filter.species = electron
+diag_filter.electron.variables = none ## only dump position and id
+diag_filter.electron.plot_filter_function(t,x,y,z,ux,uy,uz) = "(ux*uy*uz < 0) * (sqrt(x**2+y**2+z**2)<100)"
