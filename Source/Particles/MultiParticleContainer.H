@@ -322,7 +322,7 @@ protected:
             info.EnableTiling(pc_src.tile_size);
         }
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         info.SetDynamic(true);
 #endif
 

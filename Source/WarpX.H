@@ -52,7 +52,7 @@
 #include <AMReX_Interpolater.H>
 #include <AMReX_FillPatchUtil.H>
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 
@@ -688,6 +688,9 @@ private:
     void InitDiagnostics ();
 
     void InitNCICorrector ();
+
+    /** Check the requested resources and write performance hints */
+    void PerformanceHints ();
 
     std::unique_ptr<amrex::MultiFab> GetCellCenteredData();
 

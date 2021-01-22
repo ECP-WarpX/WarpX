@@ -586,7 +586,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     if (do_tiling && Gpu::notInLaunchRegion()) {
         info.EnableTiling(tile_size);
     }
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
     info.SetDynamic(true);
 #pragma omp parallel if (not WarpX::serialize_ics)
 #endif
@@ -683,7 +683,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
         // Update NextID to include particles created in this function
         Long pid;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp critical (add_plasma_nextid)
 #endif
         {
@@ -961,11 +961,11 @@ PhysicalParticleContainer::Evolve (int lev,
         }
     }
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         int thread_num = omp_get_thread_num();
 #else
         int thread_num = 0;
@@ -1419,7 +1419,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
     const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev,0));
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {
@@ -1587,7 +1587,7 @@ PhysicalParticleContainer::GetParticleSlice (
             diagnostic_particles[lev][index];
         }
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
         {

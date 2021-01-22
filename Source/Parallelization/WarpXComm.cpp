@@ -79,7 +79,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 #endif
 
     // For level 0, we only need to do the average.
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(*Bfield_aux[0][0]); mfi.isValid(); ++mfi)
@@ -163,7 +163,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 Btmp[i]->ParallelCopy(*Bfield_aux[lev-1][i], 0, 0, 1, ng, ng, cperiod);
             }
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(*Bfield_aux[lev][0]); mfi.isValid(); ++mfi)
@@ -213,7 +213,7 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
                 Etmp[i]->ParallelCopy(*Efield_aux[lev-1][i], 0, 0, 1, ng, ng, cperiod);
             }
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)
@@ -280,7 +280,7 @@ WarpX::UpdateAuxilaryDataSameType ()
             const amrex::IntVect& By_stag = Bfield_aux[lev-1][1]->ixType().toIntVect();
             const amrex::IntVect& Bz_stag = Bfield_aux[lev-1][2]->ixType().toIntVect();
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(*Bfield_aux[lev][0]); mfi.isValid(); ++mfi)
@@ -338,7 +338,7 @@ WarpX::UpdateAuxilaryDataSameType ()
             const amrex::IntVect& Ey_stag = Efield_aux[lev-1][1]->ixType().toIntVect();
             const amrex::IntVect& Ez_stag = Efield_aux[lev-1][2]->ixType().toIntVect();
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(*Efield_aux[lev][0]); mfi.isValid(); ++mfi)

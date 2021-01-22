@@ -477,7 +477,7 @@ LorentzTransformZ(MultiFab& data, Real gamma_boost, Real beta_boost)
 {
     // Loop over tiles/boxes and in-place convert each slice from boosted
     // frame to back-transformed lab frame.
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(data, TilingIfNotGPU()); mfi.isValid(); ++mfi) {

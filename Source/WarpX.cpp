@@ -23,7 +23,7 @@
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 
@@ -1436,7 +1436,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
 #endif
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
@@ -1474,7 +1474,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
 #endif
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
@@ -1560,8 +1560,8 @@ WarpX::BuildBufferMasks ()
                 const Box& dom = Geom(lev).Domain();
                 const auto& period = Geom(lev).periodicity();
                 tmp.BuildMask(dom, period, covered, notcovered, physbnd, interior);
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
                 for (MFIter mfi(*bmasks, true); mfi.isValid(); ++mfi)
                 {
