@@ -321,14 +321,6 @@ public:
     virtual bool has_quantum_sync() const {return false;}
     virtual bool has_breit_wheeler() const {return false;}
 
-    // build filter functors
-    bool m_do_random_filter  = false;
-    bool m_do_uniform_filter = false;
-    bool m_do_parser_filter  = false;
-    amrex::Real m_random_fraction = 1.0;
-    int m_uniform_stride = 1;
-    std::unique_ptr<ParserWrapper<7>> m_particle_filter_parser;
-
     /* \brief This function tests if the current species
     *  is of a given PhysicalSpecies (specified as a template parameter).
     * @tparam PhysSpec the PhysicalSpecies to test against

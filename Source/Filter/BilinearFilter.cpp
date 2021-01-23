@@ -10,7 +10,7 @@
 
 #include <AMReX_REAL.H>
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 

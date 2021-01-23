@@ -17,8 +17,8 @@ namespace Interpolate
         interpolated_F->setVal(0.);
 
         // Loop through the boxes and interpolate the values from the _cp data
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         {
             FArrayBox ffab; // Temporary array ; contains interpolated fields
@@ -69,8 +69,8 @@ namespace Interpolate
         IntVect fy_type = interpolated_F[1]->ixType().toIntVect();
         IntVect fz_type = interpolated_F[2]->ixType().toIntVect();
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for (MFIter mfi(*interpolated_F[0], TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {

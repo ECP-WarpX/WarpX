@@ -33,8 +33,8 @@ namespace
         auto data =
             static_cast<amrex::Real**>(malloc((*num_boxes) * sizeof(amrex::Real*)));
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         for ( amrex::MFIter mfi(mf, false); mfi.isValid(); ++mfi ) {
             int i = mfi.LocalIndex();
@@ -480,4 +480,3 @@ extern "C"
     }
 
 }
-
