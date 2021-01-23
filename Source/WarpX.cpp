@@ -238,6 +238,7 @@ WarpX::WarpX ()
     pml.resize(nlevs_max);
     costs.resize(nlevs_max);
 
+    m_factory.resize(nlevs_max);
 
     if (em_solver_medium == MediumForEM::Macroscopic) {
         // create object for macroscopic solver
