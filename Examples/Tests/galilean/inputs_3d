@@ -9,7 +9,6 @@ amr.blocking_factor = 32
 amr.max_level = 0
 psatd.v_galilean = 0. 0. 0.99498743710662
 
-
 geometry.coord_sys   = 0
 geometry.is_periodic = 1 1 1
 geometry.prob_lo     = -9.67 -9.67 -9.67
