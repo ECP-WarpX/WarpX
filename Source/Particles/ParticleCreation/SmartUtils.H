@@ -40,7 +40,7 @@ template <typename PTile>
 void setNewParticleIDs (PTile& ptile, int old_size, int num_added)
 {
     amrex::Long pid;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp critical (ionization_nextid)
 #endif
     {

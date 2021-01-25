@@ -165,24 +165,17 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 
 #endif
 
-    // Parse galilean velocity
-    ParmParse ppsatd("psatd");
-    ppsatd.query("v_galilean", m_v_galilean);
-    // Scale the velocity by the speed of light
-    for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
-
-    // build filter functors
-    m_do_random_filter  = queryWithParser(pp, "random_fraction", m_random_fraction);
-    m_do_uniform_filter = pp.query("uniform_stride",  m_uniform_stride);
-    std::string buf;
-    m_do_parser_filter  = pp.query("plot_filter_function(t,x,y,z,ux,uy,uz)", buf);
-    if (m_do_parser_filter) {
-        std::string function_string = "";
-        Store_parserString(pp,"plot_filter_function(t,x,y,z,ux,uy,uz)",
-                           function_string);
-        m_particle_filter_parser = std::make_unique<ParserWrapper<7>>(
-            makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
+    // Get Galilean velocity
+    ParmParse pp_psatd("psatd");
+    bool use_default_v_galilean = false;
+    pp_psatd.query("use_default_v_galilean", use_default_v_galilean);
+    if (use_default_v_galilean) {
+        m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (WarpX::gamma_boost * WarpX::gamma_boost));
+    } else {
+        pp_psatd.query("v_galilean", m_v_galilean);
     }
+    // Scale the Galilean velocity by the speed of light
+    for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
 
 }
 
@@ -316,19 +309,19 @@ PhysicalParticleContainer::AddGaussianBeam (
                 u.z *= PhysConst::c;
                 if (do_symmetrize){
                     // Add four particles to the beam:
-                    CheckAndAddParticle(x, y, z, { u.x, u.y, u.z}, weight/4.,
+                    CheckAndAddParticle(x, y, z, { u.x, u.y, u.z}, weight/4._rt,
                                         particle_x,  particle_y,  particle_z,
                                         particle_ux, particle_uy, particle_uz,
                                         particle_w);
-                    CheckAndAddParticle(x, -y, z, { u.x, -u.y, u.z}, weight/4.,
+                    CheckAndAddParticle(x, -y, z, { u.x, -u.y, u.z}, weight/4._rt,
                                         particle_x,  particle_y,  particle_z,
                                         particle_ux, particle_uy, particle_uz,
                                         particle_w);
-                    CheckAndAddParticle(-x, y, z, { -u.x, u.y, u.z}, weight/4.,
+                    CheckAndAddParticle(-x, y, z, { -u.x, u.y, u.z}, weight/4._rt,
                                         particle_x,  particle_y,  particle_z,
                                         particle_ux, particle_uy, particle_uz,
                                         particle_w);
-                    CheckAndAddParticle(-x, -y, z, { -u.x, -u.y, u.z}, weight/4.,
+                    CheckAndAddParticle(-x, -y, z, { -u.x, -u.y, u.z}, weight/4._rt,
                                         particle_x,  particle_y,  particle_z,
                                         particle_ux, particle_uy, particle_uz,
                                         particle_w);
@@ -586,7 +579,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
     if (do_tiling && Gpu::notInLaunchRegion()) {
         info.EnableTiling(tile_size);
     }
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
     info.SetDynamic(true);
 #pragma omp parallel if (not WarpX::serialize_ics)
 #endif
@@ -683,7 +676,7 @@ PhysicalParticleContainer::AddPlasma (int lev, RealBox part_realbox)
 
         // Update NextID to include particles created in this function
         Long pid;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp critical (add_plasma_nextid)
 #endif
         {
@@ -961,11 +954,11 @@ PhysicalParticleContainer::Evolve (int lev,
         }
     }
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         int thread_num = omp_get_thread_num();
 #else
         int thread_num = 0;
@@ -1419,7 +1412,7 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
     const std::array<amrex::Real,3>& dx = WarpX::CellSize(std::max(lev,0));
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {
@@ -1587,7 +1580,7 @@ PhysicalParticleContainer::GetParticleSlice (
             diagnostic_particles[lev][index];
         }
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
         {
@@ -1941,11 +1934,13 @@ PhysicalParticleContainer::InitIonizationModule ()
     // For now, we assume l=0 and m=0.
     // The approximate expressions are used,
     // without Gamma function
-    Real wa = std::pow(PhysConst::alpha,3) * PhysConst::c / PhysConst::r_e;
+    constexpr auto a3 = PhysConst::alpha*PhysConst::alpha*PhysConst::alpha;
+    constexpr auto a4 = a3 * PhysConst::alpha;
+    Real wa = a3 * PhysConst::c / PhysConst::r_e;
     Real Ea = PhysConst::m_e * PhysConst::c*PhysConst::c /PhysConst::q_e *
-        std::pow(PhysConst::alpha,4)/PhysConst::r_e;
+        a4/PhysConst::r_e;
     Real UH = table_ionization_energies[0];
-    Real l_eff = std::sqrt(UH/h_ionization_energies[0]) - 1.;
+    Real l_eff = std::sqrt(UH/h_ionization_energies[0]) - 1._rt;
 
     const Real dt = WarpX::GetInstance().getdt(0);
 

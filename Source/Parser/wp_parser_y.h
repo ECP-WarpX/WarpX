@@ -134,7 +134,7 @@ struct wp_node* wp_newf1 (enum wp_f1_t ftype, struct wp_node* l);
 struct wp_node* wp_newf2 (enum wp_f2_t ftype, struct wp_node* l,
                           struct wp_node* r);
 
-void yyerror (char const *s, ...);
+void wxparsererror (char const *s, ...);
 
 /*******************************************************************/
 

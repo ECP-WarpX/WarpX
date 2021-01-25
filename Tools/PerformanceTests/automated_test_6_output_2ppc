@@ -57,6 +57,6 @@ ions.uz_m  = 0.
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 1
+diag1.intervals = 1
 diag1.file_prefix = "./diags/plt"
 diag1.diag_type = Full

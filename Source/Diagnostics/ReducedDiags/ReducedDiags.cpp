@@ -21,6 +21,8 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 
     m_rd_name = rd_name;
 
+    BackwardCompatibility();
+
     ParmParse pp(m_rd_name);
 
     // read path
@@ -49,9 +51,9 @@ ReducedDiags::ReducedDiags (std::string rd_name)
         }
     }
 
-    // read reduced diags frequency
+    // read reduced diags intervals
     std::vector<std::string> intervals_string_vec = {"1"};
-    pp.queryarr("frequency", intervals_string_vec);
+    pp.queryarr("intervals", intervals_string_vec);
     m_intervals = IntervalsParser(intervals_string_vec);
 
     // read separator
@@ -59,6 +61,16 @@ ReducedDiags::ReducedDiags (std::string rd_name)
 
 }
 // end constructor
+
+void ReducedDiags::BackwardCompatibility ()
+{
+    amrex::ParmParse pp(m_rd_name);
+    std::vector<std::string> backward_strings;
+    if (pp.queryarr("frequency", backward_strings)){
+        amrex::Abort("<reduced_diag_name>.frequency is no longer a valid option. "
+                     "Please use the renamed option <reduced_diag_name>.intervals instead.");
+    }
+}
 
 // write to file function
 void ReducedDiags::WriteToFile (int step) const

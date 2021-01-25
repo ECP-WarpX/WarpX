@@ -23,7 +23,7 @@
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 
@@ -389,9 +389,9 @@ WarpX::ReadParameters ()
         pp.query("do_subcycling", do_subcycling);
         pp.query("use_hybrid_QED", use_hybrid_QED);
         pp.query("safe_guard_cells", safe_guard_cells);
-        std::vector<std::string> override_sync_int_string_vec = {"1"};
-        pp.queryarr("override_sync_int", override_sync_int_string_vec);
-        override_sync_intervals = IntervalsParser(override_sync_int_string_vec);
+        std::vector<std::string> override_sync_intervals_string_vec = {"1"};
+        pp.queryarr("override_sync_intervals", override_sync_intervals_string_vec);
+        override_sync_intervals = IntervalsParser(override_sync_intervals_string_vec);
 
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(do_subcycling != 1 || max_level <= 1,
                                          "Subcycling method 1 only works for 2 levels.");
@@ -523,12 +523,12 @@ WarpX::ReadParameters ()
         pp.query("n_field_gather_buffer", n_field_gather_buffer);
         pp.query("n_current_deposition_buffer", n_current_deposition_buffer);
 #ifdef AMREX_USE_GPU
-        std::vector<std::string>sort_int_string_vec = {"4"};
+        std::vector<std::string>sort_intervals_string_vec = {"4"};
 #else
-        std::vector<std::string> sort_int_string_vec = {"-1"};
+        std::vector<std::string> sort_intervals_string_vec = {"-1"};
 #endif
-        pp.queryarr("sort_int", sort_int_string_vec);
-        sort_intervals = IntervalsParser(sort_int_string_vec);
+        pp.queryarr("sort_intervals", sort_intervals_string_vec);
+        sort_intervals = IntervalsParser(sort_intervals_string_vec);
 
         Vector<int> vect_sort_bin_size(AMREX_SPACEDIM,1);
         bool sort_bin_size_is_specified = pp.queryarr("sort_bin_size", vect_sort_bin_size);
@@ -605,9 +605,9 @@ WarpX::ReadParameters ()
             fine_tag_hi = RealVect{hi};
         }
 
-        std::vector<std::string> load_balance_int_string_vec = {"0"};
-        pp.queryarr("load_balance_int", load_balance_int_string_vec);
-        load_balance_intervals = IntervalsParser(load_balance_int_string_vec);
+        std::vector<std::string> load_balance_intervals_string_vec = {"0"};
+        pp.queryarr("load_balance_intervals", load_balance_intervals_string_vec);
+        load_balance_intervals = IntervalsParser(load_balance_intervals_string_vec);
         pp.query("load_balance_with_sfc", load_balance_with_sfc);
         pp.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
         queryWithParser(pp, "load_balance_efficiency_ratio_threshold",
@@ -743,11 +743,18 @@ WarpX::ReadParameters ()
         }
 
         pp.query("current_correction", current_correction);
-        pp.query("v_galilean", m_v_galilean);
         pp.query("v_comoving", m_v_comoving);
         pp.query("do_time_averaging", fft_do_time_averaging);
 
-        // Scale the velocity by the speed of light
+        // Check whether the default Galilean velocity should be used
+        bool use_default_v_galilean = false;
+        pp.query("use_default_v_galilean", use_default_v_galilean);
+        if (use_default_v_galilean) {
+            m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
+        } else {
+            pp.query("v_galilean", m_v_galilean);
+        }
+        // Scale the Galilean/comoving velocity by the speed of light
         for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
         for (int i=0; i<3; i++) m_v_comoving[i] *= PhysConst::c;
 
@@ -829,7 +836,7 @@ WarpX::BackwardCompatibility ()
     if (ppa.query("plot_int", backward_int)){
         amrex::Abort("amr.plot_int is not supported anymore. Please use the new syntax for diagnostics:\n"
             "diagnostics.diags_names = my_diag\n"
-            "my_diag.period = 10\n"
+            "my_diag.intervals = 10\n"
             "for output every 10 iterations. See documentation for more information");
     }
 
@@ -852,6 +859,18 @@ WarpX::BackwardCompatibility ()
     if (ppw.query("plot_crsepatch", backward_int)){
         amrex::Abort("warpx.plot_crsepatch is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
+    }
+    if (ppw.queryarr("load_balance_int", backward_strings)){
+        amrex::Abort("warpx.load_balance_int is no longer a valid option. "
+                     "Please use the renamed option warpx.load_balance_intervals instead.");
+    }
+    if (ppw.queryarr("override_sync_int", backward_strings)){
+        amrex::Abort("warpx.override_sync_int is no longer a valid option. "
+                     "Please use the renamed option warpx.override_sync_intervals instead.");
+    }
+    if (ppw.queryarr("sort_int", backward_strings)){
+        amrex::Abort("warpx.sort_int is no longer a valid option. "
+                     "Please use the renamed option warpx.sort_intervals instead.");
     }
     if (ppw.query("use_kspace_filter", backward_int)){
         amrex::Abort("warpx.use_kspace_filter is not supported anymore. "
@@ -1415,7 +1434,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
 #endif
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
@@ -1453,7 +1472,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
 #endif
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
@@ -1539,8 +1558,8 @@ WarpX::BuildBufferMasks ()
                 const Box& dom = Geom(lev).Domain();
                 const auto& period = Geom(lev).periodicity();
                 tmp.BuildMask(dom, period, covered, notcovered, physbnd, interior);
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
                 for (MFIter mfi(*bmasks, true); mfi.isValid(); ++mfi)
                 {

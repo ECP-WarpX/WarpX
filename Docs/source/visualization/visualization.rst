@@ -38,6 +38,7 @@ This section describes some of the tools available to visualize the data:
    yt
    backtransformed_diags
    reduced_diags
+   plot_distribution_mapping
    visit
    picviewer
    openpmdviewer

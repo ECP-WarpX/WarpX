@@ -101,7 +101,8 @@ struct IonizationFilterFunc
             amrex::ParticleReal uy = ptd.m_rdata[PIdx::uy][i];
             amrex::ParticleReal uz = ptd.m_rdata[PIdx::uz][i];
 
-            amrex::Real ga = std::sqrt(1. + (ux*ux + uy*uy + uz*uz) * c2_inv);
+            amrex::Real ga = static_cast<amrex::Real>(
+                std::sqrt(1. + (ux*ux + uy*uy + uz*uz) * c2_inv));
             amrex::Real E = std::sqrt(
                                - ( ux*ex + uy*ey + uz*ez ) * ( ux*ex + uy*ey + uz*ez ) * c2_inv
                                + ( ga   *ex + uy*bz - uz*by ) * ( ga   *ex + uy*bz - uz*by )
@@ -110,10 +111,10 @@ struct IonizationFilterFunc
                                );
 
             // Compute probability of ionization p
-            amrex::Real w_dtau = 1./ ga * m_adk_prefactor[ion_lev] *
+            amrex::Real w_dtau = 1._rt/ ga * m_adk_prefactor[ion_lev] *
                 std::pow(E, m_adk_power[ion_lev]) *
                 std::exp( m_adk_exp_prefactor[ion_lev]/E );
-            amrex::Real p = 1. - std::exp( - w_dtau );
+            amrex::Real p = 1._rt - std::exp( - w_dtau );
 
             amrex::Real random_draw = amrex::Random(engine);
             if (random_draw < p)

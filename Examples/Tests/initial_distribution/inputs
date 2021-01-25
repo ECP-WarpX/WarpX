@@ -86,7 +86,7 @@ beam.focused                    = false
 warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h4x h4y h4z bmmntr
 
 h1x.type                                 = ParticleHistogram
-h1x.frequency                            = 1
+h1x.intervals                            = 1
 h1x.path                                 = "./"
 h1x.species                              = gaussian
 h1x.bin_number                           = 50
@@ -95,7 +95,7 @@ h1x.bin_max                              = +4.0e-2
 h1x.histogram_function(t,x,y,z,ux,uy,uz) = "ux"
 
 h1y.type                                 = ParticleHistogram
-h1y.frequency                            = 1
+h1y.intervals                            = 1
 h1y.path                                 = "./"
 h1y.species                              = gaussian
 h1y.bin_number                           = 50
@@ -104,7 +104,7 @@ h1y.bin_max                              = +4.0e-2
 h1y.histogram_function(t,x,y,z,ux,uy,uz) = "uy"
 
 h1z.type                                 = ParticleHistogram
-h1z.frequency                            = 1
+h1z.intervals                            = 1
 h1z.path                                 = "./"
 h1z.species                              = gaussian
 h1z.bin_number                           = 50
@@ -113,7 +113,7 @@ h1z.bin_max                              = +4.0e-2
 h1z.histogram_function(t,x,y,z,ux,uy,uz) = "uz"
 
 h2x.type                                 = ParticleHistogram
-h2x.frequency                            = 1
+h2x.intervals                            = 1
 h2x.path                                 = "./"
 h2x.species                              = maxwell_boltzmann
 h2x.bin_number                           = 50
@@ -122,7 +122,7 @@ h2x.bin_max                              = +4.0e-2
 h2x.histogram_function(t,x,y,z,ux,uy,uz) = "ux"
 
 h2y.type                                 = ParticleHistogram
-h2y.frequency                            = 1
+h2y.intervals                            = 1
 h2y.path                                 = "./"
 h2y.species                              = maxwell_boltzmann
 h2y.bin_number                           = 50
@@ -131,7 +131,7 @@ h2y.bin_max                              = +4.0e-2
 h2y.histogram_function(t,x,y,z,ux,uy,uz) = "uy"
 
 h2z.type                                 = ParticleHistogram
-h2z.frequency                            = 1
+h2z.intervals                            = 1
 h2z.path                                 = "./"
 h2z.species                              = maxwell_boltzmann
 h2z.bin_number                           = 50
@@ -140,7 +140,7 @@ h2z.bin_max                              = +4.0e-2
 h2z.histogram_function(t,x,y,z,ux,uy,uz) = "uz"
 
 h3.type                                  = ParticleHistogram
-h3.frequency                             = 1
+h3.intervals                             = 1
 h3.path                                  = "./"
 h3.species                               = maxwell_juttner
 h3.bin_number                            = 50
@@ -149,7 +149,7 @@ h3.bin_max                               = 12.0
 h3.histogram_function(t,x,y,z,ux,uy,uz)  = "sqrt(1.0+(ux*ux+uy*uy+uz*uz))"
 
 h4x.type                                 = ParticleHistogram
-h4x.frequency                            = 1
+h4x.intervals                            = 1
 h4x.path                                 = "./"
 h4x.species                              = beam
 h4x.bin_number                           = 50
@@ -158,7 +158,7 @@ h4x.bin_max                              = +1.0
 h4x.histogram_function(t,x,y,z,ux,uy,uz) = "x"
 
 h4y.type                                 = ParticleHistogram
-h4y.frequency                            = 1
+h4y.intervals                            = 1
 h4y.path                                 = "./"
 h4y.species                              = beam
 h4y.bin_number                           = 50
@@ -167,7 +167,7 @@ h4y.bin_max                              = +1.0
 h4y.histogram_function(t,x,y,z,ux,uy,uz) = "y"
 
 h4z.type                                 = ParticleHistogram
-h4z.frequency                            = 1
+h4z.intervals                            = 1
 h4z.path                                 = "./"
 h4z.species                              = beam
 h4z.bin_number                           = 50
@@ -177,11 +177,11 @@ h4z.histogram_function(t,x,y,z,ux,uy,uz) = "z"
 
 # our little beam monitor
 bmmntr.type                              = BeamRelevant
-bmmntr.frequency                         = 1
+bmmntr.intervals                         = 1
 bmmntr.path                              = "./"
 bmmntr.species                           = beam
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 1000
+diag1.intervals = 1000
 diag1.diag_type = Full

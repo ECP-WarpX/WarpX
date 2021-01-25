@@ -34,7 +34,7 @@ public:
     /// diags name
     std::string m_rd_name;
 
-    /// output frequency
+    /// output intervals
     IntervalsParser m_intervals;
 
     /// check if it is a restart run
@@ -60,6 +60,11 @@ public:
     /** write to file function
      *  @param[in] step time step */
     virtual void WriteToFile(int step) const;
+
+    /** This function queries deprecated input parameters and abort
+     *  the run if one of them is specified.
+     */
+    void BackwardCompatibility ();
 
 };
 

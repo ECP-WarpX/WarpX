@@ -71,7 +71,7 @@ wp_newf2 (enum wp_f2_t ftype, struct wp_node* l, struct wp_node* r)
 }
 
 void
-yyerror (char const *s, ...)
+wxparsererror (char const *s, ...)
 {
     std::va_list vl;
     va_start(vl, s);
@@ -916,7 +916,7 @@ wp_ast_depth (struct wp_node* node, int* n)
     case WP_DIV_PP:
         break;
     default:
-        yyerror("wp_ast_depth: unknown node type %d\n", node->type);
+        wxparsererror("wp_ast_depth: unknown node type %d\n", node->type);
         exit(1);
     }
     *n += std::max(nl,nr) + 1;
