@@ -80,7 +80,7 @@ assert(error < tolerance)
 ## In the second past of the test, we verify that the diagnostic particle filter function works as
 ## expected. For this, we only use the last simulation timestep.
 
-last_fn_filtered = last_fn.replace("diag1", "diag_filter")
+last_fn_filtered = "diags/diag_filter"+last_fn[-5:]
 ds  = yt.load( last_fn )
 ds_filtered  = yt.load( last_fn_filtered )
 ad  = ds.all_data()
