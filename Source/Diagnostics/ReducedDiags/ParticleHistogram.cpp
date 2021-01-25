@@ -159,9 +159,6 @@ void ParticleHistogram::ComputeDiags (int step)
     const bool is_unity_particle_weight =
         (m_norm == NormalizationType::unity_particle_weight) ? true : false;
 
-    // dummy engine required for the filter parser
-    const auto dummy_engine = amrex::RandomEngine{};
-
     for ( int i = 0; i < m_bin_num; ++i )
     {
         // compute the histogram
@@ -169,7 +166,7 @@ void ParticleHistogram::ComputeDiags (int step)
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         {
             // return 0 if the particle is filtered out
-            if (!fun_filterparser(p, dummy_engine)) {return 0.0_rt;}
+            if (!fun_filterparser(p, amrex::RandomEngine())) {return 0.0_rt;}
             // continue function if particle is not filtered out
             auto const w  = p.rdata(PIdx::w);
             amrex::ParticleReal x, y, z;
