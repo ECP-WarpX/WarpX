@@ -78,6 +78,14 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
     }
 #endif
 
+    const amrex::IntVect& Bx_stag = Bfield_fp[0][0]->ixType().toIntVect();
+    const amrex::IntVect& By_stag = Bfield_fp[0][1]->ixType().toIntVect();
+    const amrex::IntVect& Bz_stag = Bfield_fp[0][2]->ixType().toIntVect();
+
+    const amrex::IntVect& Ex_stag = Efield_fp[0][0]->ixType().toIntVect();
+    const amrex::IntVect& Ey_stag = Efield_fp[0][1]->ixType().toIntVect();
+    const amrex::IntVect& Ez_stag = Efield_fp[0][2]->ixType().toIntVect();
+
     // For level 0, we only need to do the average.
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -114,12 +122,23 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             amrex::Real const * r_stencil_coef_z = d_stencil_coef_z.data();
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp, fg_noy, fg_noz, r_stencil_coef_y, r_stencil_coef_z);
-                warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp, fg_nox, fg_noz, r_stencil_coef_x, r_stencil_coef_z);
-                warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp, fg_nox, fg_noy, r_stencil_coef_x, r_stencil_coef_y);
-                warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp, fg_nox, r_stencil_coef_x);
-                warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp, fg_noy, r_stencil_coef_y);
-                warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp, fg_noz, r_stencil_coef_z);
+                warpx_interp(j, k, l, bx_aux, bx_fp, Bx_stag, fg_nox, fg_noy, fg_noz,
+                             r_stencil_coef_x, r_stencil_coef_y, r_stencil_coef_z);
+
+                warpx_interp(j, k, l, by_aux, by_fp, By_stag, fg_nox, fg_noy, fg_noz,
+                             r_stencil_coef_x, r_stencil_coef_y, r_stencil_coef_z);
+
+                warpx_interp(j, k, l, bz_aux, bz_fp, Bz_stag, fg_nox, fg_noy, fg_noz,
+                             r_stencil_coef_x, r_stencil_coef_y, r_stencil_coef_z);
+
+                warpx_interp(j, k, l, ex_aux, ex_fp, Ex_stag, fg_nox, fg_noy, fg_noz,
+                             r_stencil_coef_x, r_stencil_coef_y, r_stencil_coef_z);
+
+                warpx_interp(j, k, l, ey_aux, ey_fp, Ey_stag, fg_nox, fg_noy, fg_noz,
+                             r_stencil_coef_x, r_stencil_coef_y, r_stencil_coef_z);
+
+                warpx_interp(j, k, l, ez_aux, ez_fp, Ez_stag, fg_nox, fg_noy, fg_noz,
+                             r_stencil_coef_x, r_stencil_coef_y, r_stencil_coef_z);
             });
 #endif
         } else { // FDTD
