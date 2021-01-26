@@ -273,7 +273,7 @@ void CheckGriddingForRZSpectral ()
 {
 #ifndef WARPX_DIM_RZ
     amrex::Abort("CheckGriddingForRZSpectral: WarpX was not built with RZ geometry.");
-#endif
+#else
 
     ParmParse pp("algo");
     int maxwell_solver_id = GetAlgorithmInteger(pp, "maxwell_solver");
@@ -346,6 +346,7 @@ void CheckGriddingForRZSpectral ()
         mg[0] /= 2;
     }
     pp_amr.addarr("max_grid_size_y", mg);
+#endif
 }
 
 namespace WarpXUtilMsg{
