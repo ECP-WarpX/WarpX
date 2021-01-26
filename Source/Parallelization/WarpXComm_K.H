@@ -584,12 +584,29 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
 #endif
 }
 
-// TODO Add Doxygen documentation
-// With the PSATD Maxwell solver, this is the arbitrary-order interpolation function used to
-// interpolate the field from a staggered grid to a nodal grid, before gathering the field
-// from the nodes to the particle positions (momentum-conserving field gathering)
+/**
+ * \brief With the PSATD Maxwell solver, this is the arbitrary-order interpolation function, based
+ * on the Fornberg coefficients, used to interpolate a given field from the Yee grid to the nodal grid,
+ * before gathering the field from the nodes to the particle positions (momentum-conserving field gathering).
+ * The result is stored in the output array \c arr_aux, allocated on the \c aux patch.
+ *
+ * \param[in] j index along x of the output array
+ * \param[in] k index along y (in 3D) or z (in 2D) of the output array
+ * \param[in] l index along z (in 3D, \c l = 0 in 2D) of the output array
+ * \param[in,out] arr_aux output array allocated on the \c aux patch where interpolated values are stored
+ * \param[in] arr_fine input array allocated on the fine patch
+ * \param[in] arr_stag \c IndexType of the input array (Yee staggering)
+ * \param[in] nox order of finite-order interpolation along x
+ * \param[in] noy order of finite-order interpolation along y
+ * \param[in] noz order of finite-order interpolation along z
+ * \param[in] stencil_coef_x array of Fornberg coefficients for finite-order interpolation stencil along x
+ * \param[in] stencil_coef_y array of Fornberg coefficients for finite-order interpolation stencil along y
+ * \param[in] stencil_coef_z array of Fornberg coefficients for finite-order interpolation stencil along z
+ */
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void warpx_interp (int j, int k, int l,
+void warpx_interp (const int j,
+                   const int k,
+                   const int l,
                    amrex::Array4<amrex::Real      > const& arr_aux,
                    amrex::Array4<amrex::Real const> const& arr_fine,
                    const amrex::IntVect& arr_stag,
