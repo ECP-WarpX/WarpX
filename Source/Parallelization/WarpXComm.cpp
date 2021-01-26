@@ -144,12 +144,12 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         } else { // FDTD
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp);
-                warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp);
-                warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp);
-                warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp);
-                warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp);
-                warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp);
+                warpx_interp(j, k, l, bx_aux, bx_fp, Bx_stag);
+                warpx_interp(j, k, l, by_aux, by_fp, By_stag);
+                warpx_interp(j, k, l, bz_aux, bz_fp, Bz_stag);
+                warpx_interp(j, k, l, ex_aux, ex_fp, Ex_stag);
+                warpx_interp(j, k, l, ey_aux, ey_fp, Ey_stag);
+                warpx_interp(j, k, l, ez_aux, ez_fp, Ez_stag);
             });
         }
     }
