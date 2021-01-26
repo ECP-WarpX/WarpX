@@ -272,8 +272,7 @@ getWithParser (const amrex::ParmParse& a_pp, char const * const str, amrex::Real
 void CheckGriddingForRZSpectral ()
 {
 #ifndef WARPX_DIM_RZ
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
-        "CheckGriddingForRZSpectral: WarpX was not built with RZ geometry.");
+    amrex::Abort("CheckGriddingForRZSpectral: WarpX was not built with RZ geometry.");
 #endif
 
     ParmParse pp("algo");
