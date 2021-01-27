@@ -411,6 +411,14 @@ MultiParticleContainer::Redistribute ()
 }
 
 void
+MultiParticleContainer::defineAllParticleTiles ()
+{
+    for (auto& pc : allcontainers) {
+        pc->defineAllParticleTiles();
+    }
+}
+
+void
 MultiParticleContainer::RedistributeLocal (const int num_ghost)
 {
     for (auto& pc : allcontainers) {
