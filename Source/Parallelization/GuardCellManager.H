@@ -8,6 +8,7 @@
 #define GUARDCELLMANAGER_H_
 
 #include <AMReX_IntVect.H>
+#include <AMReX_RealVect.H>
 
 /**
  * \brief This class computes and stores the number of guard cells needed for
@@ -35,6 +36,8 @@ public:
      * \param max_level max level of the simulation
      */
     void Init(
+        const amrex::Real dt,
+        const amrex::RealVect dx,
         const bool do_subcycling,
         const bool do_fdtd_nci_corr,
         const bool do_nodal,
@@ -48,7 +51,8 @@ public:
         const int max_level,
         const amrex::Array<amrex::Real,3> v_galilean,
         const amrex::Array<amrex::Real,3> v_comoving,
-        const bool safe_guard_cells);
+        const bool safe_guard_cells,
+        const int do_electrostatic);
 
     // Guard cells allocated for MultiFabs E and B
     amrex::IntVect ng_alloc_EB = amrex::IntVect::TheZeroVector();
