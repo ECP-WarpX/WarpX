@@ -41,7 +41,7 @@ jobs:
 # intel-basekit intel-hpckit are too large in size
   build_icc:
     name: oneAPI ICC SP&DP [Linux]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
