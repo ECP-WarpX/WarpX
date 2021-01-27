@@ -238,7 +238,7 @@ WarpX::WarpX ()
     pml.resize(nlevs_max);
     costs.resize(nlevs_max);
 
-    m_factory.resize(nlevs_max);
+    m_field_factory.resize(nlevs_max);
 
     if (em_solver_medium == MediumForEM::Macroscopic) {
         // create object for macroscopic solver
@@ -953,11 +953,11 @@ void
 WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& dm)
 {
 #ifdef AMREX_USE_EB
-    m_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
+    m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
                                              {1,1,1}, // Not clear how many ghost cells we need yet
                                              amrex::EBSupport::full);
 #else
-    m_factory[lev] = std::make_unique<FArrayBoxFactory>();
+    m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
 #endif
 
     bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);

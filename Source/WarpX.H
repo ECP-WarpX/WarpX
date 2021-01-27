@@ -882,14 +882,14 @@ private:
     //
 
     // Factory for field data
-    amrex::Vector<std::unique_ptr<amrex::FabFactory<amrex::FArrayBox> > > m_factory;
+    amrex::Vector<std::unique_ptr<amrex::FabFactory<amrex::FArrayBox> > > m_field_factory;
 
-    amrex::FabFactory<amrex::FArrayBox> const& Factory (int lev) const noexcept {
-        return *m_factory[lev];
+    amrex::FabFactory<amrex::FArrayBox> const& fieldFactory (int lev) const noexcept {
+        return *m_field_factory[lev];
     }
 #ifdef AMREX_USE_EB
-    amrex::EBFArrayBoxFactory const& EBFactory (int lev) const noexcept {
-        return static_cast<amrex::EBFArrayBoxFactory const&>(*m_factory[lev]);
+    amrex::EBFArrayBoxFactory const& fieldEBFactory (int lev) const noexcept {
+        return static_cast<amrex::EBFArrayBoxFactory const&>(*m_field_factory[lev]);
     }
 #endif
 

@@ -106,11 +106,11 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
         if (ParallelDescriptor::NProcs() == 1) return;
 
 #ifdef AMREX_USE_EB
-        m_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
-                                                 {1,1,1}, // Not clear how many ghost cells we need yet
-                                                 amrex::EBSupport::full);
+        m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
+                                                       {1,1,1}, // Not clear how many ghost cells we need yet
+                                                       amrex::EBSupport::full);
 #else
-        m_factory[lev] = std::make_unique<FArrayBoxFactory>();
+        m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
 #endif
 
         // Fine patch
