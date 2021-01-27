@@ -88,11 +88,13 @@ WarpX::Evolve (int numsteps)
         // Particles have p^{n} and x^{n}.
         // is_synchronized is true.
         if (is_synchronized) {
-            // Not called at each iteration, so exchange all guard cells
-            FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-            FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
-            UpdateAuxilaryData();
-            FillBoundaryAux(guard_cells.ng_UpdateAux);
+            if (do_electrostatic == ElectrostaticSolverAlgo::None) {
+                // Not called at each iteration, so exchange all guard cells
+                FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+                FillBoundaryB(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
+                UpdateAuxilaryData();
+                FillBoundaryAux(guard_cells.ng_UpdateAux);
+            }
             // on first step, push p by -0.5*dt
             for (int lev = 0; lev <= finest_level; ++lev)
             {
@@ -102,24 +104,26 @@ WarpX::Evolve (int numsteps)
             }
             is_synchronized = false;
         } else {
-            // Beyond one step, we have E^{n} and B^{n}.
-            // Particles have p^{n-1/2} and x^{n}.
+            if (do_electrostatic == ElectrostaticSolverAlgo::None) {
+                // Beyond one step, we have E^{n} and B^{n}.
+                // Particles have p^{n-1/2} and x^{n}.
 
-            // E and B are up-to-date inside the domain only
-            FillBoundaryE(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
-            FillBoundaryB(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
-            // E and B: enough guard cells to update Aux or call Field Gather in fp and cp
-            // Need to update Aux on lower levels, to interpolate to higher levels.
-            if (fft_do_time_averaging)
-            {
-                FillBoundaryE_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
-                FillBoundaryB_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
-            }
-            // TODO Remove call to FillBoundaryAux before UpdateAuxilaryData?
-            if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+                // E and B are up-to-date inside the domain only
+                FillBoundaryE(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+                FillBoundaryB(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+                // E and B: enough guard cells to update Aux or call Field Gather in fp and cp
+                // Need to update Aux on lower levels, to interpolate to higher levels.
+                if (fft_do_time_averaging)
+                {
+                    FillBoundaryE_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+                    FillBoundaryB_avg(guard_cells.ng_FieldGather, guard_cells.ng_Extra);
+                }
+                // TODO Remove call to FillBoundaryAux before UpdateAuxilaryData?
+                if (WarpX::maxwell_solver_id != MaxwellSolverAlgo::PSATD)
+                    FillBoundaryAux(guard_cells.ng_UpdateAux);
+                UpdateAuxilaryData();
                 FillBoundaryAux(guard_cells.ng_UpdateAux);
-            UpdateAuxilaryData();
-            FillBoundaryAux(guard_cells.ng_UpdateAux);
+            }
         }
         if (do_subcycling == 0 || finest_level == 0) {
             OneStep_nosub(cur_time);
@@ -211,6 +215,17 @@ WarpX::Evolve (int numsteps)
             mypc->SortParticlesByBin(sort_bin_size);
         }
 
+        if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
+            // Electrostatic solver:
+            // For each species: deposit charge and add the associated space-charge
+            // E and B field to the grid ; this is done at the end of the PIC
+            // loop (i.e. immediately after a `Redistribute` and before particle
+            // positions are next pushed) so that the particles do not deposit out of bounds
+            // and so that the fields are at the correct time in the output.
+            bool const reset_fields = true;
+            ComputeSpaceChargeField( reset_fields );
+        }
+
         amrex::Print()<< "STEP " << step+1 << " ends." << " TIME = " << cur_time
                       << " DT = " << dt[0] << "\n";
         Real walltime_end_step = amrex::second();
@@ -262,16 +277,6 @@ WarpX::Evolve (int numsteps)
 void
 WarpX::OneStep_nosub (Real cur_time)
 {
-
-    if( do_electrostatic != ElectrostaticSolverAlgo::None ) {
-        // Electrostatic solver:
-        // For each species: deposit charge and add the associated space-charge
-        // E and B field to the grid ; this is done at the beginning of the PIC
-        // loop (i.e. immediately after a `Redistribute` and before particle
-        // positions are pushed) so that the particles do not deposit out of bound
-        bool const reset_fields = true;
-        ComputeSpaceChargeField( reset_fields );
-    }
 
     // Loop over species. For each ionizable species, create particles in
     // product species.
