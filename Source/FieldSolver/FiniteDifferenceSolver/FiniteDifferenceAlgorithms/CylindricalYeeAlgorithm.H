@@ -81,7 +81,7 @@ struct CylindricalYeeAlgorithm {
 
         Real const inv_dr = coefs_r[0];
         return 1._rt/r * inv_dr*( (r+0.5_rt*dr)*F(i+1,j,k,comp) - (r-0.5_rt*dr)*F(i,j,k,comp) );
-    };
+    }
 
     /** Applies the differential operator `1/r * d(rF)/dr`,
      * where `F` is on a *cell-centered* grid in `r`
@@ -99,7 +99,7 @@ struct CylindricalYeeAlgorithm {
 
         Real const inv_dr = coefs_r[0];
         return 1._rt/r * inv_dr*( (r+0.5_rt*dr)*F(i,j,k,comp) - (r-0.5_rt*dr)*F(i-1,j,k,comp) );
-    };
+    }
 
     /**
      * Perform derivative along r on a cell-centered grid, from a nodal field `F` */
@@ -129,7 +129,7 @@ struct CylindricalYeeAlgorithm {
 
         Real const inv_dr = coefs_r[0];
         return inv_dr*( F(i,j,k,comp) - F(i-1,j,k,comp) );
-    };
+    }
 
     /**
      * Perform derivative along z on a cell-centered grid, from a nodal field `F` */
@@ -143,7 +143,7 @@ struct CylindricalYeeAlgorithm {
 
         amrex::Real const inv_dz = coefs_z[0];
         return inv_dz*( F(i,j+1,k,comp) - F(i,j,k,comp) );
-    };
+    }
 
     /**
      * Perform derivative along z on a nodal grid, from a cell-centered field `F` */
@@ -157,7 +157,7 @@ struct CylindricalYeeAlgorithm {
 
         amrex::Real const inv_dz = coefs_z[0];
         return inv_dz*( F(i,j,k,comp) - F(i,j-1,k,comp) );
-    };
+    }
 
 };
 
