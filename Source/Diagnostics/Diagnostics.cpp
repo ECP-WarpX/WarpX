@@ -210,6 +210,8 @@ Diagnostics::InitData ()
         m_output_species.clear();
         m_output_species_names.clear();
     }
+    // temporarily clear out species output sincce particle buffers are not supported.
+    TMP_ClearSpeciesDataForBTD();
 }
 
 
