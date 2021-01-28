@@ -211,7 +211,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
         diag_dom.setLo(idim, std::max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
         // Setting hi-coordinate for the diag domain by taking the max of user-defined
         // hi-cordinate and hi-coordinate of the simulation domain at level, lev
-        diag_dom.setHi(idim, std::min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
+        diag_dom.setHi(idim, std::min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) ); 
     }
     // Initializing the m_buffer_box for the i^th snapshot.
     // At initialization, the Box has the same index space as the boosted-frame
@@ -244,18 +244,6 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     amrex::Box diag_box( lo, hi );
     m_buffer_box[i_buffer] = diag_box;
     m_snapshot_box[i_buffer] = diag_box;
-    // Define box array
-    amrex::BoxArray diag_ba(diag_box);
-    diag_ba.maxSize( warpx.maxGridSize( lev ) );
-    // Update the physical co-ordinates m_lo and m_hi using the final index values
-    // from the coarsenable, cell-centered BoxArray, ba.
-    for ( int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        diag_dom.setLo( idim, warpx.Geom(lev).ProbLo(idim) +
-            diag_ba.getCellCenteredBox(0).smallEnd(idim) * warpx.Geom(lev).CellSize(idim));
-        diag_dom.setHi( idim, warpx.Geom(lev).ProbLo(idim) +
-            (diag_ba.getCellCenteredBox( diag_ba.size()-1 ).bigEnd(idim) + 1) * warpx.Geom(lev).CellSize(idim));
-    }
-
     // Define box array
     amrex::BoxArray diag_ba(diag_box);
     diag_ba.maxSize( warpx.maxGridSize( lev ) );
@@ -465,7 +453,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                 m_current_z_lab[i_buffer] = UpdateCurrentZLabCoordinate(m_t_lab[i_buffer],
                                                                       warpx.gett_new(lev) );
                 // Check if the zslice is in domain
-                bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
+                bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);                
                 // Initialize and define field buffer multifab if buffer is empty
                 if (ZSliceInDomain) {
                     if ( buffer_empty(i_buffer) ) {
@@ -473,7 +461,7 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                             // Compute the geometry, snapshot lab-domain extent
                             // and box-indices
                             DefineSnapshotGeometry(i_buffer, lev);
-                        }
+                        }                        
                         DefineFieldBufferMultiFab(i_buffer, lev);
                     }
                 }
@@ -727,7 +715,6 @@ void BTDiagnostics::TMP_ClearSpeciesDataForBTD ()
 {
     m_output_species.clear();
     m_output_species_names.clear();
-
 }
 
 void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
@@ -866,4 +853,5 @@ BTDiagnostics::InterleaveFabArrayHeader(std::string Buffer_FabHeader_path,
     }
 
     snapshot_FabHeader.WriteMultiFabHeader();
+    
 }
