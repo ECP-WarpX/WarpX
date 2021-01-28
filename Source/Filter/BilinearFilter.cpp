@@ -20,8 +20,8 @@ using namespace amrex;
 namespace {
     void compute_stencil(Gpu::DeviceVector<Real> &stencil, int npass)
     {
-        Vector<Real> old_s(1+npass,0.);
-        Vector<Real> new_s(1+npass,0.);
+        Vector<Real> old_s(amrex::max(1,1+npass),0.);
+        Vector<Real> new_s(amrex::max(1,1+npass),0.);
 
         old_s[0] = 1.;
         int jmax = 1;
