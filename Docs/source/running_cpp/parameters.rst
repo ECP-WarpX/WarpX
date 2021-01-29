@@ -119,7 +119,7 @@ Setting up the field mesh
 
     Note: in development; currently, ``2`` is supported.
 
-* ``amr.ref_ratio_vect`` (3 `integer`s for x,y,z per refined level)
+* ``amr.ref_ratio_vect`` (`3 integers for x,y,z per refined level`)
     When using mesh refinement, this can be used to set the refinement ratio per direction and level, relative to the previous level.
 
     Example: for three levels, a value of ``2 2 4 8 8 16`` refines the first level by 2-fold in x and y and 4-fold in z compared to the coarsest level (level 0/mother grid); compared to the first level, the second level is refined 8-fold in x and y and 16-fold in z.
@@ -285,7 +285,7 @@ WarpX provides a math parser that reads expressions in the input file.
 It can be used in all input parameters that consist in one real number.
 
 WarpX constants
-###############
+^^^^^^^^^^^^^^^
 
 WarpX provides a few pre-defined constants, that can be used for any parameter that consists in one real number.
 
@@ -301,7 +301,7 @@ pi       math constant pi
 See ``Source/Utils/WarpXConst.H`` for the values.
 
 User-defined constants
-######################
+^^^^^^^^^^^^^^^^^^^^^^
 
 Users can define their own constants in the input file.
 These constants can be used for any parameter that consists in one real number.
@@ -314,7 +314,7 @@ For example, parameters ``a0`` and ``z_plateau`` can be specified with:
 * ``my_constants.z_plateau = 150.e-6``
 
 Coordinates
-###########
+^^^^^^^^^^^
 
 Besides, for profiles that depend on spatial coordinates (the plasma momentum distribution or the laser field, see below `Particle initialization` and `Laser initialization`), the parser will interpret some variables as spatial coordinates. These are specified in the input parameter, i.e., ``density_function(x,y,z)`` and ``field_function(X,Y,t)``.
 
@@ -323,7 +323,7 @@ The parser reads python-style expressions between double quotes, for instance
 user-defined constant (see below) and ``x`` and ``y`` are spatial coordinates. The names are case sensitive. The factor
 ``(x>0)`` is ``1`` where ``x>0`` and ``0`` where ``x<=0``. It allows the user to
 define functions by intervals.
-The parser reads mathematical functions into an `abstract syntax tree (AST) <https://en.wikipedia.org/wiki/Abstract_syntax_tree>`_, which supports a maximum depth (see :ref:`build options <building-cmake>`_).
+The parser reads mathematical functions into an `abstract syntax tree (AST) <https://en.wikipedia.org/wiki/Abstract_syntax_tree>`_, which supports a maximum depth (see :ref:`build options <building-cmake>`).
 Additional terms in a function can create a level of depth in the AST, e.g. ``a+b+c+d`` is parsed in groups of ``[+ a [+ b [+ c [+ d]]]]`` (depth: 4).
 A trick to reduce this depth for the parser, e.g. when reaching the limit, is to group expliclity, e.g. via ``(a+b)+(c+d)``, which is parsed in groups of ``[+ [+ a b] [+ c d]]`` (depth: 2).
 
@@ -1160,6 +1160,7 @@ Numerics and algorithms
 
     - ``backwardeuler`` is a fully-implicit, first-order in time scheme for E-update (default).
     - ``laxwendroff`` is the semi-implicit, second order in time scheme for E-update.
+
     Comparing the two methods, Lax-Wendroff is more prone to developing oscillations and requires a smaller timestep for stability. On the other hand, Backward Euler is more robust but it is first-order accurate in time compared to the second-order Lax-Wendroff method.
 
 * ``macroscopic.sigma_function(x,y,z)``, ``macroscopic.epsilon_function(x,y,z)``, ``macroscopic.mu_function(x,y,z)`` (`string`)
@@ -1340,7 +1341,7 @@ Numerics and algorithms
     Non-zero `v_galilean` activates Galilean algorithm, which suppresses the Numerical Cherenkov instability
     in boosted-frame simulation. This requires the code to be compiled with `USE_PSATD=TRUE`.
     (see the sub-section Numerical Stability and alternate formulation
-    in a Galilean frame in :doc:`../theory/boosted-frame`).
+    in a Galilean frame in :doc:`../theory/boosted_frame`).
     It also requires the use of the `direct` current deposition option
     `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
 
@@ -1538,8 +1539,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Lower corner of the output fields (if smaller than ``warpx.dom_lo``, then set to ``warpx.dom_lo``). Currently, when the ``diag_lo`` is different from ``warpx.dom_lo``, particle output is disabled.
 
 * ``<diag_name>.diag_hi`` (list `float`, 1 per dimension) optional (default `+infinity +infinity +infinity`)
-    Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``). Currently, when the ``diag_hi`` is different from ``warpx.dom_hi``, particle output i
-s disabled.
+    Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``). Currently, when the ``diag_hi`` is different from ``warpx.dom_hi``, particle output is disabled.
 
 * ``<diag_name>.write_species`` (`0` or `1`) optional (default `1`)
    Whether to write species output or not. For checkpoint format, always set this parameter to 1.
@@ -1928,16 +1928,15 @@ Reduced Diagnostics
     The default separator is a whitespace.
 
 Lookup tables and other settings for QED modules
------------------------------------------------------------------------------
+------------------------------------------------
 
 Lookup tables store pre-computed values for functions used by the QED modules.
-**This feature requires to compile with QED=TRUE (and also with QED_TABLE_GEN=TRUE for table generation) **
+**This feature requires to compile with QED=TRUE (and also with QED_TABLE_GEN=TRUE for table generation)**
 
 * ``qed_bw.lookup_table_mode`` (`string`)
     There are three options to prepare the lookup table required by the Breit-Wheeler module:
 
-    * ``builtin``:  a built-in table is used (Warning: the table gives reasonable results but its resolution
-    is quite low).
+    * ``builtin``:  a built-in table is used (Warning: the table gives reasonable results but its resolution is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
       (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All
@@ -1972,8 +1971,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 * ``qed_qs.lookup_table_mode`` (`string`)
     There are three options to prepare the lookup table required by the Quantum Synchrotron module:
 
-    * ``builtin``: a built-in table is used (Warning: the table gives reasonable results but its resolution
-    is quite low).
+    * ``builtin``: a built-in table is used (Warning: the table gives reasonable results but its resolution is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
       (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All
