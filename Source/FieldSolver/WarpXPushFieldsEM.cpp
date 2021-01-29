@@ -507,7 +507,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // to the cells above the axis.
             // Note that Jr(i==0) is at 1/2 dr.
             if (rmin == 0. && 0 <= i && i < ngJ) {
-                Jr_arr(i,j,0,0) -= Jr_arr(-1-i,j,0,0);
+                Jr_arr(i,j,0,0) += Jr_arr(-1-i,j,0,0);
             }
             // Apply the inverse volume scaling
             // Since Jr is never node centered in r, no need for distinction
@@ -537,7 +537,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // If Jt is node centered, Jt[0] is located on the boundary.
             // If Jt is cell centered, Jt[0] is at 1/2 dr.
             if (rmin == 0. && 1-ishift_t <= i && i <= ngJ-ishift_t) {
-                Jt_arr(i,j,0,0) -= Jt_arr(-ishift_t-i,j,0,0);
+                Jt_arr(i,j,0,0) += Jt_arr(-ishift_t-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
@@ -575,7 +575,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // If Jz is node centered, Jt[0] is located on the boundary.
             // If Jz is cell centered, Jt[0] is at 1/2 dr.
             if (rmin == 0. && 1-ishift_z <= i && i <= ngJ-ishift_z) {
-                Jz_arr(i,j,0,0) -= Jz_arr(-ishift_z-i,j,0,0);
+                Jz_arr(i,j,0,0) += Jz_arr(-ishift_z-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
@@ -659,7 +659,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
             // to the cells above the axis.
             // Rho is located on the boundary
             if (rmin == 0. && 1-ishift <= i && i <= ngRho-ishift) {
-                Rho_arr(i,j,0,icomp) -= Rho_arr(-ishift-i,j,0,icomp);
+                Rho_arr(i,j,0,icomp) += Rho_arr(-ishift-i,j,0,icomp);
             }
 
             // Apply the inverse volume scaling
