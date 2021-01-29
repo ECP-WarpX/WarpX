@@ -23,6 +23,11 @@ import sys
 import yt
 yt.funcs.mylog.setLevel(0)
 
+# Open plotfile specified in command line
+filename = sys.argv[1]
+ds = yt.load( filename )
+t_max = ds.current_time.item()  # time of simulation
+
 # Constants and initial conditions
 xmin = ymin = zmin = -0.5  #Box dimensions
 xmax = ymax = zmax = 0.5
@@ -31,8 +36,6 @@ m_e = 9.10938356e-31  #Electron mass in kg
 q_e = -1.60217662e-19  #Electron charge in C
 pi = np.pi  #Circular constant of the universe
 r_0 = 0.1  #Initial radius of sphere
-dt = 1e-6  #Timestep used for simulation
-t_max = 3e-5  #Final time of simulation
 q_tot = -1e-15  #Total charge of sphere in C
 
 # Define functions for exact forms of v(r), t(r), Er(r) with r as the radius of
@@ -43,19 +46,15 @@ q_tot = -1e-15  #Total charge of sphere in C
 # The solution r(t) solves the ODE: r''(t) = a/(r(t)**2) with initial conditions
 # r(0) = r_0, r'(0) = 0, and a = q_e*q_tot/(4*pi*eps_0*m_e)
 #
-# Note: E might be saved on a staggered time grid shifted by dt/2 (check this!)
+# The E was calculated at the end of the last time step
 v_exact = lambda r: np.sqrt((q_e*q_tot)/(2*pi*m_e*eps_0)*(1/r_0-1/r))
 t_exact = lambda r: np.sqrt(r_0**3*2*pi*m_e*eps_0/(q_e*q_tot)) \
     * (np.sqrt(r/r_0-1)*np.sqrt(r/r_0) \
        + np.log(np.sqrt(r/r_0-1)+np.sqrt(r/r_0)))
-func = lambda rho: t_exact(rho)-t_max+dt/2  #Objective function to find r(t_max)
+func = lambda rho: t_exact(rho) - t_max  #Objective function to find r(t_max)
 r_end = fsolve(func,r_0)[0]  #Numerically solve for r(t_max)
 E_exact = lambda r: np.sign(r)*(q_tot/(4*pi*eps_0*r**2)*(abs(r)>=r_end) \
     + q_tot*abs(r)/(4*pi*eps_0*r_end**3)*(abs(r)<r_end))
-
-# Open plotfile specified in command line
-filename = sys.argv[1]
-ds = yt.load( filename )
 
 # Load data pertaining to fields
 data = ds.covering_grid(level=0, left_edge=ds.domain_left_edge,
