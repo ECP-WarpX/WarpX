@@ -9,6 +9,7 @@
 #include "WarpX.H"
 #include "Particles/Pusher/GetAndSetPosition.H"
 #include "Utils/WarpXUtil.H"
+#include "Particles/Filter/FilterFunctors.H"
 
 #include <AMReX_REAL.H>
 #include <AMReX_ParticleReduce.H>
@@ -84,6 +85,16 @@ ParticleHistogram::ParticleHistogram (std::string rd_name)
         Abort("Unknown species for ParticleHistogram reduced diagnostic.");
     }
 
+    // Read optional filter
+    std::string buf;
+    m_do_parser_filter = pp.query("filter_function(t,x,y,z,ux,uy,uz)", buf);
+    if (m_do_parser_filter) {
+        std::string filter_string = "";
+        Store_parserString(pp,"filter_function(t,x,y,z,ux,uy,uz)", filter_string);
+        m_parser_filter = std::make_unique<ParserWrapper<m_nvars>>(
+                                     makeParser(filter_string,{"t","x","y","z","ux","uy","uz"}));
+    }
+
     // resize data array
     m_data.resize(m_bin_num,0.0_rt);
 
@@ -139,6 +150,9 @@ void ParticleHistogram::ComputeDiags (int step)
     // get parser
     HostDeviceParser<m_nvars> fun_partparser = getParser(m_parser);
 
+    // get filter parser
+    ParserFilter fun_filterparser(m_do_parser_filter, getParser(m_parser_filter), myspc.getMass());
+
     // declare local variables
     Real const bin_min  = m_bin_min;
     Real const bin_size = m_bin_size;
@@ -151,6 +165,9 @@ void ParticleHistogram::ComputeDiags (int step)
         m_data[i] = ReduceSum( myspc,
         [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         {
+            // return 0 if the particle is filtered out
+            if (!fun_filterparser(p, amrex::RandomEngine())) {return 0.0_rt;}
+            // continue function if particle is not filtered out
             auto const w  = p.rdata(PIdx::w);
             amrex::ParticleReal x, y, z;
             get_particle_position(p, x, y, z);

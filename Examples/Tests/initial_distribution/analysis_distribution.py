@@ -17,6 +17,11 @@ import numpy as np
 import scipy.constants as scc
 import scipy.special as scs
 from read_raw_data import read_reduced_diags_histogram, read_reduced_diags
+import sys
+sys.path.insert(1, '../../../../warpx/Regression/Checksum/')
+import checksumAPI
+
+filename = sys.argv[1]
 
 # print tolerance
 tolerance = 0.02
@@ -64,6 +69,7 @@ assert(f2_error < tolerance)
 
 # load data
 bin_value, bin_data = read_reduced_diags_histogram("h3.txt")[2:]
+bin_data_filtered = read_reduced_diags_histogram("h3_filtered.txt")[3]
 
 # parameters of theory
 theta = 1.0
@@ -73,13 +79,16 @@ V     = 8.0
 db    = 0.22
 
 # compute the analytical solution
-
 f = n*V*db * bin_value**2 * np.sqrt(1.0-1.0/bin_value**2) / \
     (theta*K2) * np.exp(-bin_value/theta)
 f_peak = np.amax(f)
 
+# analytical solution for the filtered histogram: we just filter out gamma values < 5.5
+f_filtered = f*(bin_value > 5.5)
+
 # compute error
-f3_error = np.sum( np.abs(f-bin_data) ) / bin_value.size / f_peak
+f3_error = np.sum( np.abs(f-bin_data) + np.abs(f_filtered-bin_data_filtered) ) \
+           / bin_value.size / f_peak
 
 print('Maxwell-Juttner distribution difference:', f3_error)
 
@@ -134,3 +143,6 @@ assert(f4_error < tolerance)
 
 print('Relative beam charge difference:', charge_error)
 assert(charge_error < tolerance)
+
+test_name = filename[:-9] # Could also be os.path.split(os.getcwd())[1]
+checksumAPI.evaluate_checksum(test_name, filename)

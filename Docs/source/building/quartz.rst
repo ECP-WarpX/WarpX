@@ -89,6 +89,6 @@ The other :ref:`general compile-time options <building-cmake>` apply as usual.
 Running
 -------
 
-Please see :ref:`our example job scripts <running-cpp-quartz>` on how to run WarpX on Quartz.
+Please see :ref:`our example job scripts <running-cpp-quartz-CPUs>` on how to run WarpX on Quartz.
 
 See :doc:`../visualization/yt` for more information on how to visualize the simulation results.
