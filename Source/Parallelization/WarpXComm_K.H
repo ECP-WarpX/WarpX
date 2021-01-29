@@ -522,95 +522,109 @@ void warpx_interp (const int j,
 {
     using namespace amrex;
 
-    // NOTE Indices (j,k,l) in the following refer to (x,z,-) in 2D and (x,y,z) in 3D
-
 #if (AMREX_SPACEDIM == 2)
-    amrex::ignore_unused(noy);
+    amrex::ignore_unused(noy, stencil_coef_y);
 #endif
 
-    // Staggering (0: cell-centered; 1: nodal)
+    // Staggering (s = 0 if cell-centered, s = 1 if nodal)
     const int sj = arr_stag[0];
     const int sk = arr_stag[1];
-    const int sl = (AMREX_SPACEDIM == 2) ? 1 : arr_stag[2];
+#if (AMREX_SPACEDIM == 3)
+    const int sl = arr_stag[2];
+#endif
 
     // Number of points (+1) used for interpolation from the staggered grid to the nodal grid
-    // (if the field is nodal along a given direction, there is no interpolation at all)
-    const int nj = (sj == 0) ? nox/2+1 : 2;
+    // (if the input field is nodal along a given direction, then s = 1, the variable n = 0
+    // is actually never used, and there is no interpolation, only a copy of one single value)
+    const int nj = (sj == 0) ? nox/2 + 1 : 0;
 #if   (AMREX_SPACEDIM == 2)
-    const int nk = (sk == 0) ? noz/2+1 : 2;
+    const int nk = (sk == 0) ? noz/2 + 1 : 0;
 #elif (AMREX_SPACEDIM == 3)
-    const int nk = (sk == 0) ? noy/2+1 : 2;
+    const int nk = (sk == 0) ? noy/2 + 1 : 0;
+    const int nl = (sl == 0) ? noz/2 + 1 : 0;
 #endif
-    const int nl = (sl == 0) ? noz/2+1 : 2;
 
     // Additional normalization factor
     const amrex::Real wj = (sj == 0) ? 0.5_rt : 1.0_rt;
     const amrex::Real wk = (sk == 0) ? 0.5_rt : 1.0_rt;
+#if   (AMREX_SPACEDIM == 2)
+    constexpr amrex::Real wl = 1.0_rt;
+#elif (AMREX_SPACEDIM == 3)
     const amrex::Real wl = (sl == 0) ? 0.5_rt : 1.0_rt;
+#endif
 
-    // Arbitrary-order stencil coefficients (possibly reset in the interpolation loop below)
+    // Arbitrary-order stencil coefficients
+    // (with PSATD they are reassigned in the interpolation loop below)
     amrex::Real cj = 1.0_rt;
     amrex::Real ck = 1.0_rt;
     amrex::Real cl = 1.0_rt;
 
-    // Temporary results
-    amrex::Real tmp = 0.0_rt;
+    // Min and max for interpolation loop along j
+    const int jmin = (sj == 0) ? j - nj + 1 : j;
+    const int jmax = (sj == 0) ? j + nj - 2 : j;
+
+    // Min and max for interpolation loop along k
+    const int kmin = (sk == 0) ? k - nk + 1 : k;
+    const int kmax = (sk == 0) ? k + nk - 2 : k;
+
+    // Min and max for interpolation loop along l
+#if   (AMREX_SPACEDIM == 2)
+    // l = 0 always
+    const int lmin = l;
+    const int lmax = l;
+#elif (AMREX_SPACEDIM == 3)
+    const int lmin = (sl == 0) ? l - nl + 1 : l;
+    const int lmax = (sl == 0) ? l + nl - 2 : l;
+#endif
+
+    // Integer indices to access arbitrary-order stencil coefficients
+    int dj, dk;
+#if (AMREX_SPACEDIM == 3)
+    int dl;
+#endif
+
+    // Interpolation loop (see below examples and illustrations for 1D case).
+    // So far, with FDTD we use only interpolation order 2 and we do not have access
+    // to the Fornberg coefficients. In the future, we might want to use the Fornberg
+    // coefficients with both FDTD and PSATD, in which case the #ifdef WARPX_USE_PSATD condition
+    // below will be removed. Currently, with FDTD we set cj = ck = cl = 1 and do not change them.
+    //
+    // - example and illustration: nodal to nodal
+    //
+    //           j
+    //   --o-----o-----o--  result(j) = f(j)
+    //   --o-----o-----o--
+    //    j-1    j    j+1
+    //
+    // - example and illustration: staggered to nodal
+    //
+    //                       j
+    //   --o-----o-----o-----o-----o-----o-----o--  result(j) = c_0 * (f(j-1) + f(j)  ) / 2
+    //   -----x-----x-----x-----x-----x-----x-----            + c_1 * (f(j-2) + f(j+1)) / 2
+    //       j-3   j-2   j-1    j    j+1   j+2                + c_2 * (f(j-3) + f(j+2)) / 2
+    //       c_2   c_1   c_0   c_0   c_1   c_2                + ...
+    //
     amrex::Real res = 0.0_rt;
-
-    // Auxiliary indices
-    int ju, jd;
-    int ku, kd;
-    int lu, ld;
-
-    // Interpolation loop
-    //
-    // Examples in 1D for order 2 (f stands for arr_fine):
-    //
-    //  j-1    j    j+1
-    // --o-----o-----o--  result(j) = 1/2 * (f(j) + f(j-1)) (only one Fornberg coefficient equal to 1.0)
-    // -----x-----x-----  f staggered
-    //     j-1    j
-    //
-    //  j-1    j    j+1
-    // --o-----o-----o--  result(j) = f(j)
-    // --o-----o-----o--  f nodal
-    //  j-1    j    j+1
-    //
-    for (int ll = 1; ll < nl; ll++) {
-        // First values: ld = l-1, lu = l
-        ld = l - ll;
-        lu = l + ll - 1;
-        // Reset stencil coefficients if necessary
-        if (sl == 0 && nl > 2) cl = stencil_coef_z[ll-1];
-        for (int kk = 1; kk < nk; kk++) {
-            // First values: kd = k-1, ku = k
-            kd = k - kk;
-            ku = k + kk - 1;
-            // Reset stencil coefficients if necessary
-            if (sk == 0 && nk > 2) ck = (AMREX_SPACEDIM == 2) ? stencil_coef_z[kk-1] : stencil_coef_y[kk-1];
-            for (int jj = 1; jj < nj; jj++) {
-                // First values: jd = j-1, ju = j
-                jd = j - jj;
-                ju = j + jj - 1;
-                // Reset stencil coefficients if necessary
-                if (sj == 0 && nj > 2) cj = stencil_coef_x[jj-1];
-                // Accumulate temporary partial sum
-                tmp = arr_fine(ju,ku,lu);
-                if (sj == 0) tmp += arr_fine(jd,ku,lu);
-                if (sk == 0) tmp += arr_fine(ju,kd,lu);
-                if (sl == 0) tmp += arr_fine(ju,ku,ld);
-                if (sj == 0 && sk == 0) tmp += arr_fine(jd,kd,lu);
-                if (sk == 0 && sl == 0) tmp += arr_fine(ju,kd,ld);
-                if (sj == 0 && sl == 0) tmp += arr_fine(jd,ku,ld);
-                if (sj == 0 && sk == 0 && sl == 0) tmp += arr_fine(jd,kd,ld);
-                // Multiply by normalization factors and stencil coefficients
-                tmp *= wj * wk * wl * cj * ck * cl;
-                // Add temporary partial result to global result
-                res += tmp;
+    for         (int ll = lmin; ll <= lmax; ll++) {
+        for     (int kk = kmin; kk <= kmax; kk++) {
+            for (int jj = jmin; jj <= jmax; jj++) {
+#ifdef WARPX_USE_PSATD
+                dj = (j - jj > 0) ? j - jj - 1 : jj - j;
+                dk = (k - kk > 0) ? k - kk - 1 : kk - k;
+                if (sj == 0) cj = stencil_coef_x[dj];
+#if   (AMREX_SPACEDIM == 2)
+                if (sk == 0) ck = stencil_coef_z[dk];
+#elif (AMREX_SPACEDIM == 3)
+                dl = (l - ll > 0) ? l - ll - 1 : ll - l;
+                if (sk == 0) ck = stencil_coef_y[dk];
+                if (sl == 0) cl = stencil_coef_z[dl];
+#endif
+#endif
+                res += cj * ck * cl * arr_fine(jj,kk,ll);
             }
         }
     }
-    arr_aux(j,k,l) = res;
+    arr_aux(j,k,l) = wj * wk * wl * res;
 }
 
 #endif
