@@ -177,6 +177,8 @@ public:
 
     void Redistribute ();
 
+    void defineAllParticleTiles ();
+
     void RedistributeLocal (const int num_ghost);
 
     /** Apply BC. For now, just discard particles outside the domain, regardless

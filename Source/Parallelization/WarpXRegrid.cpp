@@ -93,6 +93,7 @@ WarpX::LoadBalance ()
     if (doLoadBalance)
     {
         mypc->Redistribute();
+        mypc->defineAllParticleTiles();
     }
 #endif
 }
