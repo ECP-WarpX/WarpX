@@ -93,6 +93,7 @@ WarpX::LoadBalance ()
     if (doLoadBalance)
     {
         mypc->Redistribute();
+        mypc->defineAllParticleTiles();
     }
 #endif
 }
@@ -104,6 +105,14 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
     if (ba == boxArray(lev))
     {
         if (ParallelDescriptor::NProcs() == 1) return;
+
+#ifdef AMREX_USE_EB
+        m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
+                                                       {1,1,1}, // Not clear how many ghost cells we need yet
+                                                       amrex::EBSupport::full);
+#else
+        m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
+#endif
 
         // Fine patch
         for (int idim=0; idim < 3; ++idim)

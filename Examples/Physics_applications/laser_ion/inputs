@@ -214,7 +214,9 @@ openPMDbw.hydrogen.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz<0)
 # Reduced Diagnostics
 #
 
-# histograms
+# histograms with 2.0 degree acceptance angle in fw direction
+# 2 deg * pi / 180 : 0.03490658503 rad
+# half-angle +/-   : 0.017453292515 rad
 warpx.reduced_diags_names                   = histuH histue
 
 histuH.type                                 = ParticleHistogram
@@ -225,6 +227,7 @@ histuH.bin_number                           = 1000
 histuH.bin_min                              =  0.0
 histuH.bin_max                              = 35.0
 histuH.histogram_function(t,x,y,z,ux,uy,uz) = "sqrt(ux*ux+uy*uy+uz*uz)"
+histuH.filter_function(t,x,y,z,ux,uy,uz) = "abs(acos(uz / sqrt(ux*ux+uy*uy+uz*uz))) <= 0.017453"
 
 histue.type                                 = ParticleHistogram
 histue.intervals                            = 100
@@ -234,6 +237,7 @@ histue.bin_number                           = 1000
 histue.bin_min                              = 0.0
 histue.bin_max                              = 0.1
 histue.histogram_function(t,x,y,z,ux,uy,uz) = "sqrt(ux*ux+uy*uy+uz*uz)"
+histue.filter_function(t,x,y,z,ux,uy,uz) = "abs(acos(uz / sqrt(ux*ux+uy*uy+uz*uz))) <= 0.017453"
 
 
 #################################
