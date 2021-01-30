@@ -355,6 +355,9 @@ Particle initialization
     particles are pushed in a standard way, using the specified pusher.
     (see the parameter ``<species_name>.zinject_plane`` below)
 
+* ``particles.do_tiling`` (`0` or `1`) optional (default `1`)
+    
+
 * ``<species_name>.species_type`` (`string`) optional (default `unspecified`)
     Type of physical species, ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"``.
     Either this or both ``mass`` and ``charge`` have to be specified.
