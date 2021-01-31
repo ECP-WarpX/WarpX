@@ -358,7 +358,7 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
     WARPX_PROFILE_VAR_START(blp_deposit);
     amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
     amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
-    
+
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
         if        (WarpX::nox == 1){
             doEsirkepovDepositionShapeN<1>(

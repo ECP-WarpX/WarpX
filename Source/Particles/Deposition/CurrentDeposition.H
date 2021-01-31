@@ -343,7 +343,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
     ignore_unused(n_rz_azimuthal_modes);
 #endif
 
-    
+
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     bool const do_ionization = ion_lev;
@@ -379,7 +379,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
 
     // Loop over particles and deposit into Jx_arr, Jy_arr and Jz_arr
     amrex::Real* cost_real = (amrex::Real*) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
-    *cost_real = 0.; 
+    *cost_real = 0.;
     amrex::ParallelFor(
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long const ip) {
@@ -712,7 +712,7 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
 
     // Loop over particles and deposit (Dx,Dy,Dz) into jx_fab, jy_fab and jz_fab
     amrex::Real* cost_real = (amrex::Real*) amrex::The_Managed_Arena()->alloc(sizeof(amrex::Real));
-    *cost_real = 0.; 
+    *cost_real = 0.;
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip)
     {
 #if (defined AMREX_USE_GPU)
