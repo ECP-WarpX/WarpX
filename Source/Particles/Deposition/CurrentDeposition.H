@@ -318,13 +318,15 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
                                   const std::array<amrex::Real, 3> xyzmin,
                                   const amrex::Dim3 lo,
                                   const amrex::Real q,
-                                  const int n_rz_azimuthal_modes)
+                                  const int n_rz_azimuthal_modes,
+                                  amrex::Real* cost_el)
 {
     using namespace amrex;
 #if !defined(WARPX_DIM_RZ)
     ignore_unused(n_rz_azimuthal_modes);
 #endif
 
+    
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     bool const do_ionization = ion_lev;
@@ -362,11 +364,15 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::ParallelFor(
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long const ip) {
-
+            // by-hand timer: start
+            //if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock)
+            unsigned wt = clock();
+            //if (cost) { wt = clock(); }
+            
             // --- Get particle quantities
-      Real const gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*clightsq
-                           + uyp[ip]*uyp[ip]*clightsq
-                           + uzp[ip]*uzp[ip]*clightsq);
+            Real const gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*clightsq
+                                                 + uyp[ip]*uyp[ip]*clightsq
+                                                 + uzp[ip]*uzp[ip]*clightsq);
 
             // wqx, wqy wqz are particle current in each direction
             Real wq = q*wp[ip];
@@ -583,6 +589,17 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
             }
 
 #endif
+            // by-hand timer: end
+            //if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::GpuClock)
+            //if (cost)
+            //{
+                //amrex::Gpu::synchronize();
+            wt = clock() - wt;
+            //const Real add = Real(wt);
+            amrex::Gpu::Atomic::Add( cost_el, 0.);
+            //argument types are: (amrex::Real *, amrex::Real int)
+            //amrex::Gpu::Atomic::Add( &Jz_arr(1,1,1,1), wt);
+                //}
         }
         );
 }

@@ -357,24 +357,27 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
     WARPX_PROFILE_VAR_START(blp_deposit);
     if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
+        amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+        amrex::Real* cost_el = &(*cost)[pti.index()];
+        
         if        (WarpX::nox == 1){
             doEsirkepovDepositionShapeN<1>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes);
+                WarpX::n_rz_azimuthal_modes, cost_el);
         } else if (WarpX::nox == 2){
             doEsirkepovDepositionShapeN<2>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes);
+                WarpX::n_rz_azimuthal_modes, cost_el);
         } else if (WarpX::nox == 3){
             doEsirkepovDepositionShapeN<3>(
                 GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                 uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                 jx_arr, jy_arr, jz_arr, np_to_depose, dt, dx, xyzmin, lo, q,
-                WarpX::n_rz_azimuthal_modes);
+                WarpX::n_rz_azimuthal_modes, cost_el);
         }
     } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
         if        (WarpX::nox == 1){
