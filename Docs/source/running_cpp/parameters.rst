@@ -355,7 +355,7 @@ Particle initialization
     particles are pushed in a standard way, using the specified pusher.
     (see the parameter ``<species_name>.zinject_plane`` below)
 
-* ``particles.do_tiling`` (`bool`) optional (default `false`)
+* ``particles.do_tiling`` (`bool`) optional (default `true` if WarpX is compiled for GPUs, `false` otherwise)
     Controls whether tiling ('cache blocking') transformation is used for particles.
     Tiling should be on when using OpenMP and off when using GPUs.
 
