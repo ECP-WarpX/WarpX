@@ -355,8 +355,9 @@ Particle initialization
     particles are pushed in a standard way, using the specified pusher.
     (see the parameter ``<species_name>.zinject_plane`` below)
 
-* ``particles.do_tiling`` (`0` or `1`) optional (default `1`)
-    
+* ``particles.do_tiling`` (`bool`) optional (default `false`)
+    Controls whether tiling ('cache blocking') transformation is used for particles.
+    Tiling should be on when using OpenMP and off when using GPUs.
 
 * ``<species_name>.species_type`` (`string`) optional (default `unspecified`)
     Type of physical species, ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"``.
