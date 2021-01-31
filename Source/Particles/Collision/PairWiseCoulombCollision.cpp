@@ -51,7 +51,7 @@ PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleConta
     for (int lev = 0; lev <= species1.finestLevel(); ++lev){
 
         // Loop over all grids/tiles at this level
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         info.SetDynamic(true);
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif

@@ -23,7 +23,7 @@
 #   include <AMReX_AmrMeshInSituBridge.H>
 #endif
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 
@@ -161,6 +161,8 @@ WarpX::WarpX ()
 
     BackwardCompatibility();
 
+    InitEB();
+
     // Geometry on all levels has been defined already.
 
     // No valid BoxArray and DistributionMapping have been defined.
@@ -236,6 +238,7 @@ WarpX::WarpX ()
     pml.resize(nlevs_max);
     costs.resize(nlevs_max);
 
+    m_field_factory.resize(nlevs_max);
 
     if (em_solver_medium == MediumForEM::Macroscopic) {
         // create object for macroscopic solver
@@ -743,11 +746,18 @@ WarpX::ReadParameters ()
         }
 
         pp.query("current_correction", current_correction);
-        pp.query("v_galilean", m_v_galilean);
         pp.query("v_comoving", m_v_comoving);
         pp.query("do_time_averaging", fft_do_time_averaging);
 
-        // Scale the velocity by the speed of light
+        // Check whether the default Galilean velocity should be used
+        bool use_default_v_galilean = false;
+        pp.query("use_default_v_galilean", use_default_v_galilean);
+        if (use_default_v_galilean) {
+            m_v_galilean[2] = -std::sqrt(1._rt - 1._rt / (gamma_boost * gamma_boost));
+        } else {
+            pp.query("v_galilean", m_v_galilean);
+        }
+        // Scale the Galilean/comoving velocity by the speed of light
         for (int i=0; i<3; i++) m_v_galilean[i] *= PhysConst::c;
         for (int i=0; i<3; i++) m_v_comoving[i] *= PhysConst::c;
 
@@ -942,10 +952,25 @@ WarpX::ClearLevel (int lev)
 void
 WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& dm)
 {
+#ifdef AMREX_USE_EB
+    m_field_factory[lev] = amrex::makeEBFabFactory(Geom(lev), ba, dm,
+                                             {1,1,1}, // Not clear how many ghost cells we need yet
+                                             amrex::EBSupport::full);
+#else
+    m_field_factory[lev] = std::make_unique<FArrayBoxFactory>();
+#endif
 
     bool aux_is_nodal = (field_gathering_algo == GatheringAlgo::MomentumConserving);
 
+#if   (AMREX_SPACEDIM == 2)
+    amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[2]};
+#elif (AMREX_SPACEDIM == 3)
+    amrex::RealVect dx = {WarpX::CellSize(lev)[0], WarpX::CellSize(lev)[1], WarpX::CellSize(lev)[2]};
+#endif
+
     guard_cells.Init(
+        dt[lev],
+        dx,
         do_subcycling,
         WarpX::use_fdtd_nci_corr,
         do_nodal,
@@ -959,7 +984,8 @@ WarpX::AllocLevelData (int lev, const BoxArray& ba, const DistributionMapping& d
         maxLevel(),
         WarpX::m_v_galilean,
         WarpX::m_v_comoving,
-        safe_guard_cells);
+        safe_guard_cells,
+        WarpX::do_electrostatic);
 
     if (mypc->nSpeciesDepositOnMainGrid() && n_current_deposition_buffer == 0) {
         n_current_deposition_buffer = 1;
@@ -1427,7 +1453,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
 #endif
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
@@ -1465,7 +1491,7 @@ WarpX::ComputeDivB (amrex::MultiFab& divB, int const dcomp,
     const Real rmin = GetInstance().Geom(0).ProbLo(0);
 #endif
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(divB, TilingIfNotGPU()); mfi.isValid(); ++mfi)
@@ -1551,8 +1577,8 @@ WarpX::BuildBufferMasks ()
                 const Box& dom = Geom(lev).Domain();
                 const auto& period = Geom(lev).periodicity();
                 tmp.BuildMask(dom, period, covered, notcovered, physbnd, interior);
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
                 for (MFIter mfi(*bmasks, true); mfi.isValid(); ++mfi)
                 {

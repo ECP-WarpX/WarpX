@@ -3,6 +3,7 @@
 #include "Utils/Interpolate.H"
 #include "Particles/Filter/FilterFunctors.H"
 
+#include <AMReX_AmrParticles.H>
 #include <AMReX_buildInfo.H>
 
 using namespace amrex;
@@ -78,7 +79,7 @@ FlushFormatPlotfile::WriteJobInfo(const std::string& dir) const
         jobInfoFile << PrettyLine;
 
         jobInfoFile << "number of MPI processes: " << ParallelDescriptor::NProcs() << "\n";
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         jobInfoFile << "number of threads:       " << omp_get_max_threads() << "\n";
 #endif
 
@@ -268,7 +269,8 @@ FlushFormatPlotfile::WriteParticles(const std::string& dir,
 
     for (unsigned i = 0, n = particle_diags.size(); i < n; ++i) {
         WarpXParticleContainer* pc = particle_diags[i].getParticleContainer();
-        PhysicalParticleContainer tmp(&WarpX::GetInstance());
+        amrex::AmrParticleContainer<0, 0, PIdx::nattribs, 0, amrex::PinnedArenaAllocator>
+            tmp(&WarpX::GetInstance());
         Vector<std::string> real_names;
         Vector<std::string> int_names;
         Vector<int> int_flags;

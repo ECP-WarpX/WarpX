@@ -1,0 +1,10 @@
+include README.md LEGAL.txt LICENSE.txt
+include pyproject.toml
+include requirements.txt
+global-include CMakeLists.txt *.cmake *.in
+recursive-include Source *
+recursive-include Python *
+
+# see .gitignore
+prune cmake-build*
+prune .spack-env*

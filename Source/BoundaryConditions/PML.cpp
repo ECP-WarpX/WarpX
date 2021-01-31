@@ -16,7 +16,7 @@
 #include <AMReX_Print.H>
 #include <AMReX_VisMF.H>
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 
@@ -400,8 +400,8 @@ MultiSigmaBox::ComputePMLFactorsB (const Real* dx, Real dt)
 
     dt_B = dt;
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(*this); mfi.isValid(); ++mfi)
     {
@@ -416,8 +416,8 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
 
     dt_E = dt;
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for (MFIter mfi(*this); mfi.isValid(); ++mfi)
     {
@@ -482,9 +482,17 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
         // of the stencil for the spectral solver
         IntVect ngFFT;
         if (do_nodal) {
-            ngFFT = IntVect(AMREX_D_DECL(nox_fft, noy_fft, noz_fft));
+#if (AMREX_SPACEDIM==3)
+            ngFFT = IntVect(nox_fft, noy_fft, noz_fft);
+#else
+            ngFFT = IntVect(nox_fft, noz_fft);
+#endif
         } else {
-            ngFFT = IntVect(AMREX_D_DECL(nox_fft / 2, noy_fft / 2, noz_fft / 2));
+#if (AMREX_SPACEDIM==3)
+            ngFFT = IntVect(nox_fft / 2, noy_fft / 2, noz_fft / 2);
+#else
+            ngFFT = IntVect(nox_fft / 2, noz_fft / 2);
+#endif
         }
         // Set the number of guard cells to the maximum of each field
         // (all fields should have the same number of guard cells)
@@ -547,6 +555,9 @@ PML::PML (const BoxArray& grid_ba, const DistributionMapping& /*grid_dm*/,
     if (WarpX::maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifndef WARPX_USE_PSATD
         amrex::ignore_unused(dt);
+#   if(AMREX_SPACEDIM!=3)
+        amrex::ignore_unused(noy_fft);
+#   endif
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(false,
                                          "PML: PSATD solver selected but not built.");
 #else
@@ -938,7 +949,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
         if (ngr.max() > 0) {
             MultiFab::Copy(tmpregmf, reg, 0, 0, 1, ngr);
             tmpregmf.ParallelCopy(totpmlmf, 0, 0, 1, IntVect(0), ngr, period);
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             for (MFIter mfi(reg); mfi.isValid(); ++mfi)

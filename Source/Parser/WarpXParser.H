@@ -17,7 +17,7 @@
 #include "wp_parser_c.h"
 #include "wp_parser_y.h"
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #include <omp.h>
 #endif
 
@@ -70,7 +70,7 @@ private:
     void unpack (amrex::Real* p, T x, Ts... yz) const noexcept;
 
     std::string m_expression;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
     std::vector<struct wp_parser*> m_parser;
     mutable std::vector<std::array<amrex::Real,16> > m_variables;
     mutable std::vector<std::vector<std::string> > m_varnames;
@@ -85,7 +85,7 @@ inline
 amrex::Real
 WarpXParser::eval () const noexcept
 {
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
     return wp_ast_eval<0>(m_parser[omp_get_thread_num()]->ast,nullptr);
 #else
     return wp_ast_eval<0>(m_parser->ast,nullptr);
@@ -97,7 +97,7 @@ inline
 amrex::Real
 WarpXParser::eval (T x, Ts... yz) const noexcept
 {
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
     unpack(m_variables[omp_get_thread_num()].data(), x, yz...);
 #else
     unpack(m_variables.data(), x, yz...);

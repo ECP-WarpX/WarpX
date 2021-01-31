@@ -22,6 +22,7 @@ warpx.cfl     = 1.e-8
 ############ PLASMA #############
 #################################
 particles.species_names = gaussian maxwell_boltzmann maxwell_juttner beam
+particles.rigid_injected_species = beam
 
 gaussian.charge                     = -q_e
 gaussian.mass                       = m_e
@@ -83,7 +84,7 @@ beam.focused                    = false
 # 2 for maxwell-boltzmann
 # 3 for maxwell-juttner
 # 4 for beam
-warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h4x h4y h4z bmmntr
+warpx.reduced_diags_names              = h1x h1y h1z h2x h2y h2z h3 h3_filtered h4x h4y h4z bmmntr
 
 h1x.type                                 = ParticleHistogram
 h1x.intervals                            = 1
@@ -147,6 +148,16 @@ h3.bin_number                            = 50
 h3.bin_min                               = 1.0
 h3.bin_max                               = 12.0
 h3.histogram_function(t,x,y,z,ux,uy,uz)  = "sqrt(1.0+(ux*ux+uy*uy+uz*uz))"
+
+h3_filtered.type                                  = ParticleHistogram
+h3_filtered.intervals                             = 1
+h3_filtered.path                                  = "./"
+h3_filtered.species                               = maxwell_juttner
+h3_filtered.bin_number                            = 50
+h3_filtered.bin_min                               = 1.0
+h3_filtered.bin_max                               = 12.0
+h3_filtered.histogram_function(t,x,y,z,ux,uy,uz)  = "sqrt(1.0+(ux*ux+uy*uy+uz*uz))"
+h3_filtered.filter_function(t,x,y,z,ux,uy,uz)     = "sqrt(1.0+(ux*ux+uy*uy+uz*uz)) > 5.5"
 
 h4x.type                                 = ParticleHistogram
 h4x.intervals                            = 1

@@ -56,7 +56,7 @@ WarpXParticleContainer::WarpXParticleContainer (AmrCore* amr_core, int ispecies)
 
     // Initialize temporary local arrays for charge/current deposition
     int num_threads = 1;
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #pragma omp single
     num_threads = omp_get_num_threads();
@@ -249,29 +249,36 @@ WarpXParticleContainer::DepositCurrent(WarpXParIter& pti,
 
     // Number of guard cells for local deposition of J
     WarpX& warpx = WarpX::GetInstance();
-    const int ng_J = warpx.get_ng_depos_J().max();
 
-    // Extract deposition order (same order along all directions) and check that
-    // particles shape fits within the guard cells.
-    // NOTE: In specific situations where the staggering of J and the current
-    // deposition algorithm are not trivial, this check might be too relaxed
-    // and we might include a particle that should deposit part of its current
-    // in a neighboring box. However, this should catch particles traveling many
-    // cells away, for example with algorithms that allow for large time steps.
-    const int shape_extent = static_cast<int>(WarpX::nox / 2);
-#ifndef AMREX_USE_GPU
-    // On CPU: Particles deposit on tile arrays,
-    // which have a small number of guard cells ng_J
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        amrex::numParticlesOutOfRange(pti, ng_J - shape_extent) == 0,
-        "Particles shape does not fit within tile used for local current deposition");
-#else
-    // On GPU: Particles deposit directly on the J arrays,
-    // which usually have a larger number of guard cells
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        amrex::numParticlesOutOfRange(pti, jx->nGrowVect().min() - shape_extent) == 0,
-        "Particles shape does not fit within guard cells used for current deposition");
+    const amrex::IntVect& ng_J = warpx.get_ng_depos_J();
+
+    // Extract deposition order and check that particles shape fits within the guard cells.
+    // NOTE: In specific situations where the staggering of J and the current deposition algorithm
+    // are not trivial, this check might be too relaxed and we might include a particle that should
+    // deposit part of its current in a neighboring box. However, this should catch particles
+    // traveling many cells away, for example with algorithms that allow for large time steps.
+
+#if   (AMREX_SPACEDIM == 2)
+    const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2),
+                                                       static_cast<int>(WarpX::noz/2));
+#elif (AMREX_SPACEDIM == 3)
+    const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2),
+                                                       static_cast<int>(WarpX::noy/2),
+                                                       static_cast<int>(WarpX::noz/2));
 #endif
+
+    // On CPU: particles deposit on tile arrays, which have a small number of guard cells ng_J
+    // On GPU: particles deposit directly on the J arrays, which usually have a larger number of guard cells
+#ifndef AMREX_USE_GPU
+    const amrex::IntVect range = ng_J - shape_extent;
+#else
+    // Jx, Jy and Jz have the same number of guard cells, hence it is sufficient to check for Jx
+    const amrex::IntVect range = jx->nGrowVect() - shape_extent;
+#endif
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::numParticlesOutOfRange(pti, range) == 0,
+        "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for current deposition");
 
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     Real q = this->charge;
@@ -478,27 +485,33 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
 
     // Number of guard cells for local deposition of rho
     WarpX& warpx = WarpX::GetInstance();
-    const int ng_rho = warpx.get_ng_depos_rho().max();
+    const amrex::IntVect& ng_rho = warpx.get_ng_depos_rho();
 
-    // Extract deposition order (same order along all directions) and check that
-    // particles shape fits within the guard cells.
-    // NOTE: In specific situations where the staggering of rho and the charge
-    // deposition algorithm are not trivial, this check might be too strict and
-    // we might need to relax it, as currently done for the current deposition.
-    const int shape_extent = static_cast<int>(WarpX::nox / 2 + 1);
-#ifndef AMREX_USE_GPU
-    // On CPU: Particles deposit on tile arrays,
-    // which have a small number of guard cells
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        amrex::numParticlesOutOfRange(pti, ng_rho - shape_extent) == 0,
-        "Particles shape does not fit within tile used for local charge deposition");
-#else
-    // On GPU: Particles deposit directly on the rho arrays,
-    // which usually have a larger number of guard cells
-    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
-        amrex::numParticlesOutOfRange(pti, rho->nGrowVect().min() - shape_extent) == 0,
-        "Particles shape does not fit within guard cells used for charge deposition");
+    // Extract deposition order and check that particles shape fits within the guard cells.
+    // NOTE: In specific situations where the staggering of rho and the charge deposition algorithm
+    // are not trivial, this check might be too strict and we might need to relax it, as currently
+    // done for the current deposition.
+
+#if   (AMREX_SPACEDIM == 2)
+    const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2+1),
+                                                       static_cast<int>(WarpX::noz/2+1));
+#elif (AMREX_SPACEDIM == 3)
+    const amrex::IntVect shape_extent = amrex::IntVect(static_cast<int>(WarpX::nox/2+1),
+                                                       static_cast<int>(WarpX::noy/2+1),
+                                                       static_cast<int>(WarpX::noz/2+1));
 #endif
+
+    // On CPU: particles deposit on tile arrays, which have a small number of guard cells ng_rho
+    // On GPU: particles deposit directly on the rho array, which usually have a larger number of guard cells
+#ifndef AMREX_USE_GPU
+    const amrex::IntVect range = ng_rho - shape_extent;
+#else
+    const amrex::IntVect range = rho->nGrowVect() - shape_extent;
+#endif
+
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        amrex::numParticlesOutOfRange(pti, range) == 0,
+        "Particles shape does not fit within tile (CPU) or guard cells (GPU) used for charge deposition");
 
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(depos_lev,0));
     const Real q = this->charge;
@@ -613,8 +626,8 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
         if (reset) rho[lev]->setVal(0.0, rho[lev]->nGrow());
 
         // Loop over particle tiles and deposit charge on each level
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
         {
         int thread_num = omp_get_thread_num();
 #else
@@ -634,7 +647,7 @@ WarpXParticleContainer::DepositCharge (amrex::Vector<std::unique_ptr<amrex::Mult
 
             DepositCharge(pti, wp, ion_lev, rho[lev].get(), 0, 0, np, thread_num, lev, lev);
         }
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         }
 #endif
 
@@ -689,11 +702,11 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     auto rho = std::make_unique<MultiFab>(nba,dm,WarpX::ncomps,ng_rho);
     rho->setVal(0.0);
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
     {
 #endif
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
         int thread_num = omp_get_thread_num();
 #else
         int thread_num = 0;
@@ -714,7 +727,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
             DepositCharge(pti, wp, ion_lev, rho.get(), 0, 0, np,
                           thread_num, lev, lev);
         }
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
     }
 #endif
 
@@ -735,7 +748,7 @@ Real WarpXParticleContainer::sumParticleCharge(bool local) {
     for (int lev = 0; lev < nLevels; ++lev)
     {
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel reduction(+:total_charge)
 #endif
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -801,7 +814,7 @@ std::array<Real, 3> WarpXParticleContainer::meanParticleVelocity(bool local) {
 #endif
     {
         for (int lev = 0; lev <= nLevels; ++lev) {
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel reduction(+:vx_total, vy_total, vz_total, np_total)
 #endif
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -848,7 +861,7 @@ Real WarpXParticleContainer::maxParticleVelocity(bool local) {
     for (int lev = 0; lev <= nLevels; ++lev)
     {
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel reduction(max:max_v)
 #endif
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -884,8 +897,8 @@ WarpXParticleContainer::PushX (int lev, amrex::Real dt)
 
     amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
 
-#ifdef _OPENMP
-#pragma omp parallel
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     {
 
