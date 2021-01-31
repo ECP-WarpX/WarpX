@@ -108,8 +108,8 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long ip) {
 #if (defined AMREX_USE_GPU)
-            amrex::KernelTimer KnlTimer(cost && load_balance_costs_update_algo
-                                        == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+            KernelTimer KnlTimer(cost && load_balance_costs_update_algo
+                                 == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
 #endif
             // --- Get particle quantities
             const amrex::Real gaminv = 1.0/std::sqrt(1.0 + uxp[ip]*uxp[ip]*clightsq
@@ -384,8 +384,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition& GetPosition,
         np_to_depose,
         [=] AMREX_GPU_DEVICE (long const ip) {
 #if (defined AMREX_USE_GPU)
-            amrex::KernelTimer KnlTimer(cost && load_balance_costs_update_algo
-                                        == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+            KernelTimer KnlTimer(cost && load_balance_costs_update_algo
+                                 == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
 #endif
             // --- Get particle quantities
             Real const gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*clightsq
@@ -716,8 +716,8 @@ void doVayDepositionShapeN (const GetParticlePosition& GetPosition,
     amrex::ParallelFor(np_to_depose, [=] AMREX_GPU_DEVICE (long ip)
     {
 #if (defined AMREX_USE_GPU)
-        amrex::KernelTimer KnlTimer(cost && load_balance_costs_update_algo
-                                    == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
+        KernelTimer KnlTimer(cost && load_balance_costs_update_algo
+                             == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
 #endif
         // Inverse of Lorentz factor gamma
         const amrex::Real invgam = 1._rt / std::sqrt(1._rt + uxp[ip] * uxp[ip] * invcsq
