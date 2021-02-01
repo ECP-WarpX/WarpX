@@ -20,6 +20,78 @@ schedules:
 jobs:
 # Linux #######################################################################
 #
+# pip -------------------------------------------------------------------------
+#- job: linux_pip_pypi
+#  displayName: Ubuntu pip from PyPI
+#  pool:
+#    vmImage: ubuntu-18.04
+#  steps:
+#  - script: |
+#      python3 -m pip install -U pip --user
+#      python3 -m pip install pywarpx --user
+#  - script: |
+#      python3 -c "import pywarpx as api; print(api.variants)"
+#      python3 -m pywarpx --help
+#      openpmd-ls --help # not in PATH
+
+#- job: linux_pip_pypi_nobin
+#  displayName: Ubuntu pip from PyPI w/o binary
+#  pool:
+#    vmImage: ubuntu-18.04
+#  steps:
+#  - script: |
+#      python3 -m pip install -U pip setuptools wheel --user
+#      python3 -m pip install -U cmake --user
+#      python3 -m pip install pywarpx --no-binary pywarpx --user
+#  - script: |
+#      python3 -c "from pywarpx import picmi; print(api.variants)"
+#      python3 -m pywarpx --help
+#      openpmd-ls --help # not in PATH
+
+#- job: linux_pypy_pypi
+#  displayName: Ubuntu PyPy from PyPI
+#  pool:
+#    vmImage: ubuntu-disco
+#  steps:
+#  - script: |
+#      sudo apt-get update
+#      sudo apt-get install -y pypy3
+#      wget https://bootstrap.pypa.io/get-pip.py
+#      pypy3 get-pip.py
+#      pypy3 -m pip install -U pip --user
+#      pypy3 -m pip install pywarpx --user
+#  - script: pypy3 -c "from pywarpx import picmi; print(api.variants)"
+
+#- job: linux_pypy_pypi_nobin
+#  displayName: Ubuntu PyPy3 from PyPI w/o binary
+#  pool:
+#    vmImage: ubuntu-disco
+#  steps:
+#  - script: |
+#      sudo apt-get update
+#      sudo apt-get install -y pypy3
+#      wget https://bootstrap.pypa.io/get-pip.py
+#      pypy3 get-pip.py
+#      pypy3 -m pip install -U pip setuptools wheel --user
+#      pypy3 -m pip install -U cmake --user
+#      pypy3 -m pip install pywarpx --no-binary pywarpx --user
+#  - script: pypy3 -c "from pywarpx import picmi; print(api.variants)"
+
+#- job: linux_pip_pypi_mpich
+#  displayName: Ubuntu pip from PyPI w/ MPICH
+#  pool:
+#    vmImage: ubuntu-18.04
+#  steps:
+#  - script: |
+#      sudo apt-get update
+#      sudo apt-get install -y libmpich-dev
+#      python3 -m pip install -U pip setuptools wheel --user
+#      python3 -m pip install -U cmake --user
+#      WarpX_MPI=ON python3 -m pip install pywarpx --no-binary pywarpx --user
+#  - script: |
+#      python3 -c "from pywarpx import picmi; print(api.variants)"
+#      python3 -m pywarpx --help
+#      openpmd-ls --help # not in PATH
 
 - job: linux_pip_dev_openmpi
   displayName: Ubuntu pip from dev w/ OpenMPI
@@ -27,5 +99,750 @@ jobs:
     vmImage: ubuntu-latest
   steps:
   - script: |
-      echo "test!"
+      sudo apt-get update
+      sudo apt-get install -y libopenmpi-dev
+      python3 -m pip install -U pip setuptools wheel --user
+      python3 -m pip install -U cmake --user
+      python3 --version
+      WarpX_MPI=ON python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+  - script: |
+      python3 -c "from pywarpx import picmi"
+#      python3 -m pywarpx --help
+#      openpmd-ls --help # not in PATH
+
+- job: linux_pip_dev
+  displayName: Ubuntu pip from dev
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - script: |
+      python3 -m pip install -U pip setuptools wheel --user
+      python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+  - script: |
+      python3 -c "from pywarpx import picmi"
+#      python3 -m pywarpx --help
+#      openpmd-ls --help # not in PATH
+
+# conda -----------------------------------------------------------------------
+# attn: each build step runs in its own process and might require
+#       "conda activate <env>"!
+- job: linux_conda
+  displayName: Ubuntu conda
+  pool:
+    vmImage: ubuntu-18.04
+  steps:
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+  - script: |
+      conda create -n warpx -y -c conda-forge warpx
+  - script: |
+      source activate warpx
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+#      python3 -c "from pywarpx import picmi" # TODO
+#      python3 -m pywarpx --help
+
+#- job: linux_conda_mpich
+#  displayName: Ubuntu conda w/ MPICH
+#  pool:
+#    vmImage: ubuntu-18.04
+#  steps:
+#  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+#    displayName: Add conda to PATH
+#  - script: |
+#      conda create -n warpx -y -c conda-forge warpx=*=mpi_mpich*
+#  - script: |
+#      source activate warpx
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+#      python3 -c "from pywarpx import picmi" # TODO
+#      python3 -m pywarpx --help
+
+- job: linux_conda_openmpi
+  displayName: Ubuntu conda w/ OpenMPI
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+  - script: |
+      conda create -n warpx -y -c conda-forge warpx
+#        =*=mpi_openmpi*
+  - script: |
+      source activate warpx
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+#      python3 -c "from pywarpx import picmi" # TODO
+#      python3 -m pywarpx --help
+
+# mamba -----------------------------------------------------------------------
+# attn: each build step runs in its own process and might require
+#       "conda activate <env>"!
+- job: linux_mamba
+  displayName: Ubuntu mamba
+  pool:
+    vmImage: ubuntu-18.04
+  steps:
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+  - script: |
+      conda install -y -c conda-forge mamba
+      mamba install -y -c conda-forge warpx
+#  - script: |
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+#      python3 -c "from pywarpx import picmi" # TODO
+#      python3 -m pywarpx --help
+
+#- job: linux_mamba_mpich
+#  displayName: Ubuntu mamba w/ MPICH
+#  pool:
+#    vmImage: ubuntu-18.04
+#  steps:
+#  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+#    displayName: Add conda to PATH
+#  - script: |
+#      conda install -y -c conda-forge mamba
+#      mamba install -y -c conda-forge warpx=*=mpi_mpich*
+#  - script: |
+#      warpx.2d.MPI.OMP.DP.OPMD.QED --help
+#      warpx.3d.MPI.OMP.DP.OPMD.QED --help
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED --help
+#      python3 -c "from pywarpx import picmi" # TODO
+#      python3 -m pywarpx --help
+
+- job: linux_mamba_openmpi
+  displayName: Ubuntu mamba w/ OpenMPI
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+  - script: |
+      conda install -y -c conda-forge mamba
+      mamba install -y -c conda-forge warpx
+#        =*=mpi_openmpi*
+#  - script: |
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+#      python3 -c "from pywarpx import picmi" # TODO
+#      python3 -m pywarpx --help
+
+# spack -----------------------------------------------------------------------
+# timeout: >60min
+- job: linux_spack
+  displayName: Ubuntu spack
+  timeoutInMinutes: 120
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - script: |
+      sudo apt-get update
+      sudo apt-get install -y gfortran
+      export SYSTEM=$(uname -s)
+      git clone https://github.com/spack/spack.git
+      . spack/share/spack/setup-env.sh
+      spack compiler find
+      spack install -v --fail-fast warpx %gcc@7.5.0
+
+      spack load -r warpx
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+
+- job: linux_spack_nompi
+  displayName: Ubuntu spack w/o MPI
+  timeoutInMinutes: 120
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - script: |
+      export SYSTEM=$(uname -s)
+      git clone https://github.com/spack/spack.git
+      . spack/share/spack/setup-env.sh
+      spack compiler find
+      spack install -v --fail-fast warpx -mpi
+
+      spack load -r pywarpx
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+
+# timeout: >120min
+#- job: linux_spack_all
+#  displayName: Ubuntu spack w/ all
+#  timeoutInMinutes: 360
+#  pool:
+#    vmImage: ubuntu-latest
+#  steps:
+#  - script: |
+#      sudo apt-get update
+#      sudo apt-get install -y gfortran
+#      export SYSTEM=$(uname -s)
+#      git clone https://github.com/spack/spack.git
+#      . spack/share/spack/setup-env.sh
+#      spack compiler find
+#      spack bootstrap
+#      . spack/share/spack/setup-env.sh
+#      spack install -v --fail-fast warpx +qed +openpmd %gcc@7.5.0
+#
+#      spack load -r warpx
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+
+# linuxbrew -------------------------------------------------------------------
+#- job: linux_brew
+#  displayName: Ubuntu linuxbrew
+#  pool:
+#    vmImage: ubuntu-latest
+#  steps:
+#  - script: |
+#      bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/#install.sh)"
+#      test -d ~/.linuxbrew && eval $(~/.linuxbrew/bin/brew shellenv)
+#      test -d /home/linuxbrew/.linuxbrew && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+#      test -r ~/.bash_profile && echo "eval \$($(brew --prefix)/bin/brew shellenv)" #>>~/.bash_profile
+#      echo "eval \$($(brew --prefix)/bin/brew shellenv)" >>~/.profile
+#      brew update || true
+#      brew tap openpmd/openpmd
+#      brew install pywarpx
+#      python3 -c "from pywarpx import picmi"
+#      python3 -m pywarpx --help
+#      openpmd-ls --help
+
+# source ----------------------------------------------------------------------
+#- job: linux_source_cuda10_0
+#  displayName: Ubuntu dev source w/ CUDA 10.0.130
+#  pool:
+#    vmImage: ubuntu-18.04
+#  steps:
+#  - script: |
+#      wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
+#      sudo mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600
+#      sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+#      sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
+#      sudo apt-get update
+#      sudo apt-get install -y cmake cuda-10-0 g++ libhdf5-dev libadios-dev
+#      curl -L -o cmake-easyinstall https://git.io/JvLxY
+#      chmod a+x cmake-easyinstall
+#      ./cmake-easyinstall --prefix=$HOME/sw/pywarpx git+https://github.com/ECP-WarpX/WarpX.git@development.git
+#      echo '#include <openPMD/openPMD.hpp>' > main.cu
+#      echo 'int main(){ return 0; }' >> main.cu
+#      cat main.cu
+#      export PATH=/usr/local/cuda/bin:$PATH
+#      nvcc -std=c++14 -I$HOME/sw/pywarpx/include main.cu
+#      nvcc -std=c++17 -I$HOME/sw/pywarpx/include main.cu
+# CUDA 10.2+:
+#     nvcc --Werror all-warnings -std c++14 main.cu
+# cudatoolkit-dev: conda install has permission problems creating some symlinks
+# nvidia-cuda-toolkit 9.1.85: nvcc eats all memory & segfaults
+
+#- job: linux_source_cuda10_2
+#  displayName: Ubuntu dev source w/ CUDA 10.2.89 w/ OpenMPI
+#  pool:
+#    vmImage: ubuntu-18.04
+#  steps:
+#  - script: |
+#      wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
+#      sudo mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600
+#      sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+#      sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
+#      sudo apt-get update
+#      sudo apt-get install -y cmake cuda g++ libhdf5-openmpi-dev libopenmpi-dev
+#      curl -L -o cmake-easyinstall https://git.io/JvLxY
+#      chmod a+x cmake-easyinstall
+#      ./cmake-easyinstall --prefix=$HOME/sw/pywarpx git+https://github.com/ECP-WarpX/WarpX.git@development.git
+#      echo '#include <openPMD/openPMD.hpp>' > main.cu
+#      echo 'int main(){ return 0; }' >> main.cu
+#      cat main.cu
+#      export PATH=/usr/local/cuda/bin:$PATH
+#      nvcc -std=c++14 --Werror all-warnings -I$HOME/sw/pywarpx/include -Xcompiler "$(mpic++ -showme:compile)" main.cu
+#      nvcc -std=c++17 --Werror all-warnings -I$HOME/sw/pywarpx/include -Xcompiler "$(mpic++ -showme:compile)" main.cu
+# Ubuntu Disco (19.04) and later: libadios-openmpi-dev
+
+#- job: linux_source_oneAPI_icc
+#  displayName: Ubuntu dev source w/ ICC (oneAPI)
+#  pool:
+#    vmImage: ubuntu-18.04
+#  steps:
+#  - script: |
+#      export DEBIAN_FRONTEND=noninteractive
+#      sudo apt-get -qqq update
+#      sudo apt-get install -y wget build-essential pkg-config cmake ca-certificates gnupg
+#      sudo wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+#      sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+#      echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+#      sudo apt-get update
+#      sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+#      set +e
+#      source /opt/intel/oneapi/setvars.sh
+#      set -e
+#      export CXX=$(which icpc)
+#      export CC=$(which icc)
+#      curl -L -o cmake-easyinstall https://git.io/JvLxY
+#      chmod a+x cmake-easyinstall
+#      ./cmake-easyinstall --prefix=$HOME/sw/pywarpx git+https://github.com/ECP-WarpX/WarpX.git@development.git -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
+#      echo '#include <openPMD/openPMD.hpp>' > main.cpp
+#      echo 'int main(){ return 0; }' >> main.cpp
+#      cat main.cpp
+#      export PATH=/usr/local/cuda/bin:$PATH
+#      icc -std=c++14 -I$HOME/sw/pywarpx/include main.cpp
+#      icc -std=c++17 -I$HOME/sw/pywarpx/include main.cpp
+# Ref.: https://github.com/rscohn2/oneapi-ci
+
+
+# macOS #######################################################################
+#
+# pip -------------------------------------------------------------------------
+#- job: macOS_pip_pypi
+#  displayName: macOS pip from PyPI
+#  pool:
+#    vmImage: macOS-10.15
+#  steps:
+#  - script: |
+#      python3 -m pip install -U pip --user
+#      python3 -m pip install pywarpx --user
+#  - script: |
+#      python3 -c "from pywarpx import picmi"
+#      python3 -m pywarpx --help
+
+#- job: macOS_pip_pypi_old
+#  displayName: macOS pip from PyPI (old)
+#  pool:
+#    vmImage: macOS-10.14
+#  steps:
+#  - script: |
+#      python3 -m pip install -U pip --user
+#      python3 -m pip install pywarpx --user
+#  - script: |
+#      python3 -c "from pywarpx import picmi"
+#      python3 -m pywarpx --help
+
+#- job: macOS_pip_pypi_nobin
+#  displayName: macOS pip from PyPI w/o binary
+#  pool:
+#    vmImage: macOS-10.14
+#  steps:
+#  - script: |
+#      python3 -m pip install -U pip setuptools wheel cmake --user
+#      python3 -m pip install pywarpx --no-binary pywarpx --user
+#  - script: |
+#      python3 -c "from pywarpx import picmi"
+#      python3 -m pywarpx --help
+
+#- job: macOS_pip_pypy_pypi
+#  displayName: macOS PyPy from PyPI
+#  pool:
+#    vmImage: macOS-10.15
+#  steps:
+#  - script: |
+#      brew update || true
+#      brew install pypy3
+#      pypy3 -m pip install -U pip --user
+#      pypy3 -m pip install pywarpx --user
+#  - script: |
+#      pypy3 -c "from pywarpx import picmi"
+#      pypy3 -m pywarpx --help
+
+#- job: macOS_pip_pypy_pypi_nobin
+#  displayName: macOS PyPy from PyPI w/o binary
+#  pool:
+#    vmImage: macOS-latest
+#  steps:
+#  - script: |
+#      brew update || true
+#      brew install pypy3
+#      pypy3 -m pip install -U pip setuptools wheel cmake --user
+#      pypy3 -m pip install pywarpx --no-binary pywarpx --user
+#  - script: |
+#      pypy3 -c "from pywarpx import picmi"
+#      pypy3 -m pywarpx --help
+
+- job: macOS_pip_pypy_dev
+  displayName: macOS PyPy from dev
+  pool:
+    vmImage: macOS-10.15
+  steps:
+  - script: |
+      brew update || true
+      brew install pypy3 gcc libomp
+      pypy3 -m pip install -U pip --user
+      pypy3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+  - script: |
+      pypy3 -c "from pywarpx import picmi"
+#      pypy3 -m pywarpx --help
+
+#- job: macOS_pip_pypi_mpich
+#  displayName: macOS pip from PyPI w/ MPICH
+#  pool:
+#    vmImage: macOS-10.15
+#  steps:
+#  - script: |
+#      brew update || true
+#      brew install mpich
+#      python3 -m pip install -U pip setuptools wheel cmake --user
+#      WarpX_MPI=ON python3 -m pip install pywarpx --no-binary pywarpx --user
+#  - script: |
+#      python3 -c "from pywarpx import picmi"
+#      python3 -m pywarpx --help
+
+- job: macOS_pip_dev_openmpi
+  displayName: macOS pip from dev w/ OpenMPI
+  pool:
+    vmImage: macOS-latest
+  steps:
+  - script: |
+      brew update || true
+      brew install openmpi libomp
+      python3 -m pip install -U pip --user
+      WarpX_MPI=ON python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+  - script: |
+      python3 -c "from pywarpx import picmi"
+#      python3 -m pywarpx --help
+
+- job: macOS_pip_dev
+  displayName: macOS pip from dev w/o OMP
+  pool:
+    vmImage: macOS-latest
+  steps:
+  - script: |
+      python3 -m pip install -U pip --user
+      WarpX_COMPUTE=NOACC python3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
+  - script: |
+      python3 -c "from pywarpx import picmi"
+#      python3 -m pywarpx --help
+
+# conda -----------------------------------------------------------------------
+# attn: each build step runs in its own process and might require
+#       "conda activate <env>"!
+- job: macOS_conda
+  displayName: macOS conda
+  pool:
+    vmImage: macOS-10.14
+  steps:
+  - bash: |
+      echo "##vso[task.prependpath]$CONDA/bin"
+      sudo chown -R $USER $CONDA
+    displayName: Add conda to PATH
+  - script: |
+      conda create -n warpx -y -c conda-forge warpx
+  - script: |
+      source activate warpx
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+#      python3 -c "from pywarpx import picmi" # TODO
+#      python3 -m pywarpx --help
+
+#- job: macOS_conda_mpich
+#  displayName: macOS conda w/ MPICH
+#  pool:
+#    vmImage: macOS-10.15
+#  steps:
+#  - bash: |
+#      echo "##vso[task.prependpath]$CONDA/bin"
+#      sudo chown -R $USER $CONDA
+#    displayName: Add conda to PATH
+#  - script: |
+#      conda create -n warpx -y -c conda-forge warpx=*=mpi_mpich*
+#  - script: |
+#      source activate warpx
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+##      python3 -c "from pywarpx import picmi" # TODO
+##      python3 -m pywarpx --help
+
+- job: macOS_conda_openmpi
+  displayName: macOS conda w/ OpenMPI
+  pool:
+    vmImage: macOS-latest
+  steps:
+  - bash: |
+      echo "##vso[task.prependpath]$CONDA/bin"
+      sudo chown -R $USER $CONDA
+    displayName: Add conda to PATH
+  - script: |
+      conda create -n warpx -y -c conda-forge warpx
+#         =*=mpi_openmpi*
+  - script: |
+      source activate warpx
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+#      python3 -c "from pywarpx import picmi" # TODO
+#      python3 -m pywarpx --help
+
+# mamba -----------------------------------------------------------------------
+# attn: each build step runs in its own process and might require
+#       "conda activate <env>"!
+- job: macOS_mamba
+  displayName: macOS mamba
+  pool:
+    vmImage: macOS-10.14
+  steps:
+  - bash: |
+      echo "##vso[task.prependpath]$CONDA/bin"
+      sudo chown -R $USER $CONDA
+    displayName: Add conda to PATH
+  - script: |
+      conda install -y -c conda-forge mamba
+      mamba install -y -c conda-forge warpx
+#  - script: |
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+#      python3 -c "from pywarpx import picmi" # TODO
+#      python3 -m pywarpx --help
+
+#- job: macOS_mamba_mpich
+#  displayName: macOS mamba w/ MPICH
+#  pool:
+#    vmImage: macOS-10.15
+#  steps:
+#  - bash: |
+#      echo "##vso[task.prependpath]$CONDA/bin"
+#      sudo chown -R $USER $CONDA
+#    displayName: Add conda to PATH
+#  - script: |
+#      conda install -y -c conda-forge mamba
+#      mamba install -y -c conda-forge warpx=*=mpi_mpich*
+#  - script: |
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+#      python3 -c "from pywarpx import picmi" # TODO
+#      python3 -m pywarpx --help
+
+- job: macOS_mamba_openmpi
+  displayName: macOS mamba w/ OpenMPI
+  pool:
+    vmImage: macOS-latest
+  steps:
+  - bash: |
+      echo "##vso[task.prependpath]$CONDA/bin"
+      sudo chown -R $USER $CONDA
+    displayName: Add conda to PATH
+  - script: |
+      conda install -y -c conda-forge mamba
+      mamba install -y -c conda-forge warpx
+#        =*=mpi_openmpi*
+#  - script: |
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+#      python3 -c "from pywarpx import picmi" # TODO
+#      python3 -m pywarpx --help
+
+# spack -----------------------------------------------------------------------
+# timeout: >60min
+- job: macOS_spack
+  displayName: macOS spack
+  timeoutInMinutes: 120
+  pool:
+    vmImage: macOS-latest
+  steps:
+  - script: |
+      brew update || true
+      brew install gcc
+      export SYSTEM=$(uname -s)
+      git clone https://github.com/spack/spack.git
+      . spack/share/spack/setup-env.sh
+      spack compiler find
+      spack install -v --fail-fast warpx
+      spack load warpx
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+
+- job: macOS_spack_nompi
+  displayName: macOS spack from dev w/o MPI
+  timeoutInMinutes: 120
+  pool:
+    vmImage: macOS-latest
+  steps:
+  - script: |
+      export SYSTEM=$(uname -s)
+      git clone https://github.com/spack/spack.git
+      . spack/share/spack/setup-env.sh
+      spack compiler find
+      spack install -v --fail-fast warpx@develop -mpi
+      spack load -r warpx
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+
+# timeout: >60min
+#- job: macOS_spack_all
+#  displayName: macOS spack w/ all
+#  timeoutInMinutes: 360
+#  pool:
+#    vmImage: macOS-latest
+#  steps:
+#  - script: |
+#      export SYSTEM=$(uname -s)
+#      git clone https://github.com/spack/spack.git
+#      . spack/share/spack/setup-env.sh
+#      spack compiler find
+#      spack install -v --fail-fast warpx +qed +openpmd
+#      spack load -r warpx
+#      warpx.2d.MPI.OMP.DP.OPMD.QED
+#      warpx.3d.MPI.OMP.DP.OPMD.QED
+#      warpx.RZ.MPI.OMP.DP.OPMD.QED
+#      python -c "from mpi4py import MPI; from pywarpx import picmi"
+#      python -m pywarpx --help
+
+# homebrew --------------------------------------------------------------------
+#- job: macOS_brew
+#  displayName: macOS homebrew
+#  pool:
+#    vmImage: macOS-10.14
+#  steps:
+#  - script: |
+#      rm -rf /usr/local/bin/2to3
+#      brew update || true
+#      brew tap openpmd/openpmd
+#      brew install pywarpx
+#  - script: |
+#      python3 -c "from pywarpx import picmi"
+##      python3 -m pywarpx --help
+
+# source ----------------------------------------------------------------------
+# TODO
+
+
+# Windows #####################################################################
+#
+# pip -------------------------------------------------------------------------
+#- job: win_pip_pypi
+#  displayName: Windows pip from PyPI
+#  pool:
+#    vmImage: vs2017-win2016
+#  steps:
+#  - task: UsePythonVersion@0
+#    inputs:
+#      versionSpec: '3.6'
+#      architecture: 'x64'
+#  - script: |
+#      which python
+#      python -m pip install -U pip --user
+#      python -m pip install -v pywarpx --user
+#  - script: |
+#      python -c "from pywarpx import picmi"
+##      python -m pywarpx --help
+
+#- job: win_pip_pypi_nobin
+#  displayName: Windows pip from PyPI w/o binary
+#  pool:
+#    vmImage: vs2017-win2016
+#  steps:
+#  - task: UsePythonVersion@0
+#    inputs:
+#      versionSpec: '3.7'
+#      architecture: 'x64'
+#  - script: |
+#      which python
+#      python -m pip install -U pip setuptools wheel cmake --user
+#      python -m pip install -v pywarpx --no-binary pywarpx --user
+#  - script: |
+#      python -c "from pywarpx import picmi"
+##      python -m pywarpx --help
+
+- job: win_pip_dev
+  displayName: Windows pip from dev
+  pool:
+#   vmImage: windows-latest
+#   vmImage: vs2017-win2016
+   vmImage: windows-2019
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+      architecture: 'x64'
+  - script: |
+      which python
+      python -m pip install -U pip --user
+      set WarpX_COMPUTE=NOACC
+      python -m pip install -v git+https://github.com/ECP-WarpX/WarpX.git@development --user
+  - script: |
+      python -c "from pywarpx import picmi"
+#      python -m pywarpx --help
+
+# conda -----------------------------------------------------------------------
+# attn: each build step runs in its own process and might require
+#       "call activate <env>"!
+- job: win_conda
+  displayName: Windows conda
+  pool:
+    vmImage: vs2017-win2016
+  steps:
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: Add conda command to PATH
+  - script: |
+      call activate base
+      conda install -c conda-forge warpx
+    displayName: Activate base env, install openPMD package
+
+#  - script: dumpbin.exe /dependents C:\Miniconda\Lib\site-packages\openpmd_api.cp37-win_amd64.pyd
+  - script: |
+      which python
+      which python.exe
+
+  - script: |
+      call activate base
+      which python
+      which python.exe
+
+  - script: |
+      call activate base
+#      python -c "from pywarpx import picmi" # TODO
+#      python -m pywarpx --help
+
+# mamba -----------------------------------------------------------------------
+# attn: each build step runs in its own process and might require
+#       "call activate <env>"!
+- job: win_mamba
+  displayName: Windows mamba
+  pool:
+    vmImage: vs2017-win2016
+  steps:
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: Add conda command to PATH
+  - script: |
+      call activate base
+      conda install -y -c conda-forge mamba
+    displayName: Activate base env, install mamba package
+  - script: |
+      call activate base
+      mamba install -y -c conda-forge warpx
+    displayName: Activate base env, install warpx package
+
+#  - script: dumpbin.exe /dependents C:\Miniconda\Lib\site-packages\openpmd_api.cp37-win_amd64.pyd
+  - script: |
+      which python
+      which python.exe
+
+  - script: |
+      call activate base
+      which python
+      which python.exe
+
+  - script: |
+      call activate base
+#      python -c "from pywarpx import picmi" # TODO
+#      python -m pywarpx --help
+#      openpmd-ls --help
+
+# source ----------------------------------------------------------------------
+# TODO
+
+# other to do -----------------------------------------------------------------
+#
+# - open example data sets
+# - compile downstream examples clang -x cuda
 
