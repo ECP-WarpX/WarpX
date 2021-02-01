@@ -1,0 +1,31 @@
+# -*- mode: yaml -*-
+
+# References:
+#   https://github.com/fastai/fastai/blob/22b32aab155dcfa5ebf10d4b86f125039811bd5d/azure-pipelines.yml
+#   https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/anaconda?view=azure-devops&tabs=vs2017
+#   https://docs.microsoft.com/en-us/azure/devops/pipelines/ecosystems/python?view=azure-devops
+#   https://github.com/microsoft/azure-pipelines-tasks/issues/8504
+
+trigger:
+- nightly
+
+schedules:
+- cron: "0 0 * * *"
+  displayName: Daily midnight build
+  branches:
+    include:
+    - nightly
+  always: true
+
+jobs:
+# Linux #######################################################################
+#
+
+- job: linux_pip_dev_openmpi
+  displayName: Ubuntu pip from dev w/ OpenMPI
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - script: |
+      echo "test!"
+
