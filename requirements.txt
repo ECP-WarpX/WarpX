@@ -1,7 +1,7 @@
-numpy~=1.15.0
-periodictable~=1.5.3
+numpy~=1.15
+periodictable~=1.5
 picmistandard==0.0.13
-scipy~=1.6.0  # picmistandard bug: https://github.com/picmi-standard/picmi/pull/34
+scipy~=1.5  # picmistandard bug: https://github.com/picmi-standard/picmi/pull/34
 # optional, some used for testing:
 # yt
 # openpmd-api
