@@ -26,7 +26,7 @@ namespace {
         old_s[0] = 1._rt;
         int jmax = 1;
         // Convolve the filter with itself npass times
-        for(int ipass=1; ipass< static_cast<int>(npass+1); ipass++){
+        for(int ipass=1; ipass< static_cast<int>(npass+1u); ipass++){
             // element 0 has to be treated in its own way
             new_s[0] = 0.5_rt * old_s[0];
             if (1<jmax) new_s[0] += 0.5_rt * old_s[1];
