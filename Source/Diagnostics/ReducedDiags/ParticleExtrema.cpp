@@ -51,7 +51,7 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
         // get WarpXParticleContainer class object
         auto & myspc = mypc.GetParticleContainer(i_s);
 
-        if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
+        if (myspc.DoQED())
         {
             // resize data array for QED species
             const int num_quantities = 18;
@@ -114,7 +114,7 @@ ParticleExtrema::ParticleExtrema (std::string rd_name)
                 ofs << m_sep;
                 ofs << "[18]wmax(1/m)";
 #endif
-                if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
+                if (myspc.DoQED())
                 {
                     ofs << m_sep;
                     ofs << "[19]chimin()";
@@ -351,7 +351,7 @@ void ParticleExtrema::ComputeDiags (int step)
         GetExternalEField get_externalE;
         GetExternalBField get_externalB;
 
-        if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
+        if (myspc.DoQED())
         {
 
             // declare chi arrays
@@ -478,7 +478,7 @@ void ParticleExtrema::ComputeDiags (int step)
         m_data[14] = wmin;
         m_data[15] = wmax;
 #if (defined WARPX_QED)
-        if (myspc.has_breit_wheeler() || myspc.has_quantum_sync())
+        if (myspc.DoQED())
         {
             m_data[16] = chimin_f;
             m_data[17] = chimax_f;

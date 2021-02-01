@@ -627,20 +627,15 @@ Particle initialization
     must be either electrons or positrons. Boris pusher must be used for the
     simulation
 
-* ``<species>.do_qed`` (`int`) optional (default `0`)
-    If `<species>.do_qed = 0` all the QED effects are disabled for this species.
-    If `<species>.do_qed = 1` QED effects can be enabled for this species (see below).
-    **This feature requires to compile with QED=TRUE**
-
 * ``<species>.do_qed_quantum_sync`` (`int`) optional (default `0`)
-    It only works if `<species>.do_qed = 1`. Enables Quantum synchrotron emission for this species.
+    Enables Quantum synchrotron emission for this species.
     Quantum synchrotron lookup table should be either generated or loaded from disk to enable
     this process (see "Lookup tables for QED modules" section below).
     `<species>` must be either an electron or a positron species.
     **This feature requires to compile with QED=TRUE**
 
 * ``<species>.do_qed_breit_wheeler`` (`int`) optional (default `0`)
-    It only works if `<species>.do_qed = 1`. Enables non-linear Breit-Wheeler process for this species.
+    Enables non-linear Breit-Wheeler process for this species.
     Breit-Wheeler lookup table should be either generated or loaded from disk to enable
     this process (see "Lookup tables for QED modules" section below).
     `<species>` must be a photon species.
