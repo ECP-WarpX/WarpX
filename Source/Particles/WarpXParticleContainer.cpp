@@ -584,6 +584,9 @@ WarpXParticleContainer::DepositCharge (WarpXParIter& pti, RealVector& wp,
     const Dim3 lo = lbound(tilebox);
 
     WARPX_PROFILE_VAR_START(blp_ppc_chd);
+    amrex::LayoutData<amrex::Real>* costs = WarpX::getCosts(lev);
+    amrex::Real* cost = costs ? &((*costs)[pti.index()]) : nullptr;
+    
     if        (WarpX::nox == 1){
         doChargeDepositionShapeN<1>(GetPosition, wp.dataPtr()+offset, ion_lev,
                                     rho_fab, np_to_depose, dx, xyzmin, lo, q,
