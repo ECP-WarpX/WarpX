@@ -11,6 +11,9 @@
  */
 #include "WarpX.H"
 #include "FieldSolver/WarpX_FDTD.H"
+#ifdef WARPX_USE_PSATD
+#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#endif
 #include "Python/WarpXWrappers.h"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -693,6 +696,32 @@ WarpX::ReadParameters ()
                     field_gathering_nox == 2 && field_gathering_noy == 2 && field_gathering_noz == 2,
                     "High-order interpolation (order > 2) is not implemented with mesh refinement");
             }
+
+            // Host vectors for Fornberg stencil coefficients used for finite-order centering
+            WarpX::host_centering_stencil_coeffs_x = getFornbergStencilCoefficients(field_gathering_nox, false);
+            WarpX::host_centering_stencil_coeffs_y = getFornbergStencilCoefficients(field_gathering_noy, false);
+            WarpX::host_centering_stencil_coeffs_z = getFornbergStencilCoefficients(field_gathering_noz, false);
+
+            // Device vectors for Fornberg stencil coefficients used for finite-order centering
+            WarpX::device_centering_stencil_coeffs_x.resize(host_centering_stencil_coeffs_x.size());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                                  host_centering_stencil_coeffs_x.begin(),
+                                  host_centering_stencil_coeffs_x.end(),
+                                  device_centering_stencil_coeffs_x.begin());
+
+            WarpX::device_centering_stencil_coeffs_y.resize(host_centering_stencil_coeffs_y.size());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                                  host_centering_stencil_coeffs_y.begin(),
+                                  host_centering_stencil_coeffs_y.end(),
+                                  device_centering_stencil_coeffs_y.begin());
+
+            WarpX::device_centering_stencil_coeffs_z.resize(host_centering_stencil_coeffs_z.size());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                                  host_centering_stencil_coeffs_z.begin(),
+                                  host_centering_stencil_coeffs_z.end(),
+                                  device_centering_stencil_coeffs_z.begin());
+
+            amrex::Gpu::synchronize();
         }
 #endif
 

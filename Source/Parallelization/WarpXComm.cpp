@@ -41,41 +41,6 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             "WarpX::UpdateAuxilaryDataStagToNodal: PSATD solver requires "
             "WarpX build with spectral solver support.");
     }
-#else
-    amrex::Gpu::DeviceVector<Real> d_stencil_coef_x;
-    amrex::Gpu::DeviceVector<Real> d_stencil_coef_y;
-    amrex::Gpu::DeviceVector<Real> d_stencil_coef_z;
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        const int fg_nox = WarpX::field_gathering_nox;
-        const int fg_noy = WarpX::field_gathering_noy;
-        const int fg_noz = WarpX::field_gathering_noz;
-
-        // Compute real-space stencil coefficients along x
-        amrex::Vector<Real> h_stencil_coef_x = getFornbergStencilCoefficients(fg_nox, false);
-        d_stencil_coef_x.resize(h_stencil_coef_x.size());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                              h_stencil_coef_x.begin(),
-                              h_stencil_coef_x.end(),
-                              d_stencil_coef_x.begin());
-
-        // Compute real-space stencil coefficients along y
-        amrex::Vector<Real> h_stencil_coef_y = getFornbergStencilCoefficients(fg_noy, false);
-        d_stencil_coef_y.resize(h_stencil_coef_y.size());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                              h_stencil_coef_y.begin(),
-                              h_stencil_coef_y.end(),
-                              d_stencil_coef_y.begin());
-
-        // Compute real-space stencil coefficients along z
-        amrex::Vector<Real> h_stencil_coef_z = getFornbergStencilCoefficients(fg_noz, false);
-        d_stencil_coef_z.resize(h_stencil_coef_z.size());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                              h_stencil_coef_z.begin(),
-                              h_stencil_coef_z.end(),
-                              d_stencil_coef_z.begin());
-
-        amrex::Gpu::synchronize();
-    }
 #endif
 
     const amrex::IntVect& Bx_stag = Bfield_fp[0][0]->ixType().toIntVect();
@@ -117,28 +82,29 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             const int fg_nox = WarpX::field_gathering_nox;
             const int fg_noy = WarpX::field_gathering_noy;
             const int fg_noz = WarpX::field_gathering_noz;
-            amrex::Real const * r_stencil_coef_x = d_stencil_coef_x.data();
-            amrex::Real const * r_stencil_coef_y = d_stencil_coef_y.data();
-            amrex::Real const * r_stencil_coef_z = d_stencil_coef_z.data();
+            // Device vectors for Fornberg stencil coefficients used for finite-order centering
+            amrex::Real const * stencil_coeffs_x = WarpX::device_centering_stencil_coeffs_x.data();
+            amrex::Real const * stencil_coeffs_y = WarpX::device_centering_stencil_coeffs_y.data();
+            amrex::Real const * stencil_coeffs_z = WarpX::device_centering_stencil_coeffs_z.data();
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
                 warpx_interp(j, k, l, bx_aux, bx_fp, Bx_stag, fg_nox, fg_noy, fg_noz,
-                             r_stencil_coef_x, r_stencil_coef_y, r_stencil_coef_z);
+                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
                 warpx_interp(j, k, l, by_aux, by_fp, By_stag, fg_nox, fg_noy, fg_noz,
-                             r_stencil_coef_x, r_stencil_coef_y, r_stencil_coef_z);
+                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
                 warpx_interp(j, k, l, bz_aux, bz_fp, Bz_stag, fg_nox, fg_noy, fg_noz,
-                             r_stencil_coef_x, r_stencil_coef_y, r_stencil_coef_z);
+                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
                 warpx_interp(j, k, l, ex_aux, ex_fp, Ex_stag, fg_nox, fg_noy, fg_noz,
-                             r_stencil_coef_x, r_stencil_coef_y, r_stencil_coef_z);
+                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
                 warpx_interp(j, k, l, ey_aux, ey_fp, Ey_stag, fg_nox, fg_noy, fg_noz,
-                             r_stencil_coef_x, r_stencil_coef_y, r_stencil_coef_z);
+                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
                 warpx_interp(j, k, l, ez_aux, ez_fp, Ez_stag, fg_nox, fg_noy, fg_noz,
-                             r_stencil_coef_x, r_stencil_coef_y, r_stencil_coef_z);
+                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
             });
 #endif
         } else { // FDTD
