@@ -1817,6 +1817,11 @@ Reduced Diagnostics
         :math:`n_{\text{cell}}` is the number of cells on the box, and
         :math:`w_{\text{cell}}` is the cell cost weight factor (controlled by ``algo.costs_heuristic_cells_wt``).
 
+    * ``LoadBalanceEfficiency``
+        This type computes the load balance efficiency, given the present costs
+        and distribution mapping.  Load balance efficiency is computed as the
+        mean cost over all ranks, divided by the maximum cost over all ranks.
+
     * ``ParticleHistogram``
         This type computes a user defined particle histogram.
 
