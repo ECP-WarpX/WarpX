@@ -14,7 +14,7 @@
 
 
 /**
- *  This class mainly contains a function that gets the 
+ *  This class mainly contains a function that gets the
  *  current load balance efficiency for writing to output.
  */
 class LoadBalanceEfficiency : public ReducedDiags
