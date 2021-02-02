@@ -155,18 +155,6 @@ WarpX::DampPML (int lev, PatchType patch_type)
 
             }
         }
-
-        // Always synchronize nodal points
-        const auto& period = Geom(lev).periodicity();
-        pml_E[0]->OverrideSync(period);
-        pml_E[1]->OverrideSync(period);
-        pml_E[2]->OverrideSync(period);
-        pml_B[0]->OverrideSync(period);
-        pml_B[1]->OverrideSync(period);
-        pml_B[2]->OverrideSync(period);
-        if (pml_F) {
-            pml_F->OverrideSync(period);
-        }
     }
 }
 

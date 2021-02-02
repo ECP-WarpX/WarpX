@@ -378,6 +378,21 @@ public:
 
     void CopyJPML ();
 
+    /**
+     * \brief Synchronize the nodal points of the PML MultiFabs
+     */
+    void NodalSyncPML ();
+
+    /**
+     * \brief Synchronize the nodal points of the PML MultiFabs for given MR level
+     */
+    void NodalSyncPML (int lev);
+
+    /**
+     * \brief Synchronize the nodal points of the PML MultiFabs for given MR level and patch
+     */
+    void NodalSyncPML (int lev, PatchType patch_type);
+
     PML* GetPML (int lev);
 
     /** Run the ionization module on all species */
