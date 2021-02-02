@@ -14,8 +14,8 @@
 
 
 /**
- *  This class mainly contains a function that update the
- *  costs (used in load balance) for writing to output.
+ *  This class mainly contains a function that gets the 
+ *  current load balance efficiency for writing to output.
  */
 class LoadBalanceEfficiency : public ReducedDiags
 {

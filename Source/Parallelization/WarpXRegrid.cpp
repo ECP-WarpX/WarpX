@@ -347,7 +347,7 @@ WarpX::ResetCosts ()
     {
         for (int i : costs[lev]->IndexArray())
         {
-            // Reset costs and load balance efficiency
+            // Reset costs
             (*costs[lev])[i] = 0.0;
         }
     }
