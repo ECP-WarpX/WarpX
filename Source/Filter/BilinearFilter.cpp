@@ -56,22 +56,23 @@ namespace {
 
 void BilinearFilter::ComputeStencils(){
     WARPX_PROFILE("BilinearFilter::ComputeStencils()");
-    stencil_length_each_dir = npass_each_dir;
+    for (int i = 0; i < AMREX_SPACEDIM; ++i)
+        stencil_length_each_dir[i] = npass_each_dir[i];
     stencil_length_each_dir += 1.;
 #if (AMREX_SPACEDIM == 3)
     // npass_each_dir = npass_x npass_y npass_z
-    stencil_x.resize( 1 + npass_each_dir[0] );
-    stencil_y.resize( 1 + npass_each_dir[1] );
-    stencil_z.resize( 1 + npass_each_dir[2] );
-    compute_stencil(stencil_x, static_cast<unsigned int>(npass_each_dir[0]));
-    compute_stencil(stencil_y, static_cast<unsigned int>(npass_each_dir[1]));
-    compute_stencil(stencil_z, static_cast<unsigned int>(npass_each_dir[2]));
+    stencil_x.resize( 1u + npass_each_dir[0] );
+    stencil_y.resize( 1u + npass_each_dir[1] );
+    stencil_z.resize( 1u + npass_each_dir[2] );
+    compute_stencil(stencil_x, npass_each_dir[0]);
+    compute_stencil(stencil_y, npass_each_dir[1]);
+    compute_stencil(stencil_z, npass_each_dir[2]);
 #elif (AMREX_SPACEDIM == 2)
     // npass_each_dir = npass_x npass_z
-    stencil_x.resize( 1 + npass_each_dir[0] );
-    stencil_z.resize( 1 + npass_each_dir[1] );
-    compute_stencil(stencil_x, static_cast<unsigned int>(npass_each_dir[0]));
-    compute_stencil(stencil_z, static_cast<unsigned int>(npass_each_dir[1]));
+    stencil_x.resize( 1u + npass_each_dir[0] );
+    stencil_z.resize( 1u + npass_each_dir[1] );
+    compute_stencil(stencil_x, npass_each_dir[0]);
+    compute_stencil(stencil_z, npass_each_dir[1]);
 #endif
     slen = stencil_length_each_dir.dim3();
 #if (AMREX_SPACEDIM == 2)
