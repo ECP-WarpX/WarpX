@@ -57,7 +57,7 @@ namespace {
 void BilinearFilter::ComputeStencils(){
     WARPX_PROFILE("BilinearFilter::ComputeStencils()");
     for (int i = 0; i < AMREX_SPACEDIM; ++i)
-        stencil_length_each_dir[i] = npass_each_dir[i];
+        stencil_length_each_dir.at(i) = npass_each_dir.at(i);
     stencil_length_each_dir += 1.;
 #if (AMREX_SPACEDIM == 3)
     // npass_each_dir = npass_x npass_y npass_z
