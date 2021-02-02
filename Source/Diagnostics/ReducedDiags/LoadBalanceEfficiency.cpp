@@ -13,7 +13,7 @@ using namespace amrex;
 // constructor
 LoadBalanceEfficiency::LoadBalanceEfficiency (std::string rd_name)
     : ReducedDiags{rd_name}
-{   
+{
     // read number of levels
     int nLevel = 0;
     ParmParse pp("amr");
