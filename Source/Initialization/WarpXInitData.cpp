@@ -451,6 +451,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (costs[lev]) {
         for (int i : costs[lev]->IndexArray()) {
             (*costs[lev])[i] = 0.0;
+            WarpX::setLoadBalanceEfficiency(lev, -1);
         }
     }
 }
