@@ -507,7 +507,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // to the cells above the axis.
             // Note that Jr(i==0) is at 1/2 dr.
             if (rmin == 0. && 0 <= i && i < ngJ) {
-                Jr_arr(i,j,0,0) += Jr_arr(-1-i,j,0,0);
+                Jr_arr(i,j,0,0) -= Jr_arr(-1-i,j,0,0);
             }
             // Apply the inverse volume scaling
             // Since Jr is never node centered in r, no need for distinction
@@ -520,8 +520,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 // to the cells above the axis.
                 // Note that Jr(i==0) is at 1/2 dr.
                 if (rmin == 0. && 0 <= i && i < ngJ) {
-                    Jr_arr(i,j,0,2*imode-1) -= Jr_arr(-1-i,j,0,2*imode-1);
-                    Jr_arr(i,j,0,2*imode) -= Jr_arr(-1-i,j,0,2*imode);
+                    Jr_arr(i,j,0,2*imode-1) += std::pow(-1, imode+1)*Jr_arr(-1-i,j,0,2*imode-1);
+                    Jr_arr(i,j,0,2*imode) += std::pow(-1, imode+1)*Jr_arr(-1-i,j,0,2*imode);
                 }
                 // Apply the inverse volume scaling
                 // Since Jr is never node centered in r, no need for distinction
@@ -537,7 +537,7 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
             // If Jt is node centered, Jt[0] is located on the boundary.
             // If Jt is cell centered, Jt[0] is at 1/2 dr.
             if (rmin == 0. && 1-ishift_t <= i && i <= ngJ-ishift_t) {
-                Jt_arr(i,j,0,0) += Jt_arr(-ishift_t-i,j,0,0);
+                Jt_arr(i,j,0,0) -= Jt_arr(-ishift_t-i,j,0,0);
             }
 
             // Apply the inverse volume scaling
@@ -553,8 +553,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
                 if (rmin == 0. && 1-ishift_t <= i && i <= ngJ-ishift_t) {
-                    Jt_arr(i,j,0,2*imode-1) -= Jt_arr(-ishift_t-i,j,0,2*imode-1);
-                    Jt_arr(i,j,0,2*imode) -= Jt_arr(-ishift_t-i,j,0,2*imode);
+                    Jt_arr(i,j,0,2*imode-1) += std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode-1);
+                    Jt_arr(i,j,0,2*imode) += std::pow(-1, imode+1)*Jt_arr(-ishift_t-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
@@ -591,8 +591,8 @@ WarpX::ApplyInverseVolumeScalingToCurrentDensity (MultiFab* Jx, MultiFab* Jy, Mu
                 // Wrap the current density deposited in the guard cells around
                 // to the cells above the axis.
                 if (rmin == 0. && 1-ishift_z <= i && i <= ngJ-ishift_z) {
-                    Jz_arr(i,j,0,2*imode-1) -= Jz_arr(-ishift_z-i,j,0,2*imode-1);
-                    Jz_arr(i,j,0,2*imode) -= Jz_arr(-ishift_z-i,j,0,2*imode);
+                    Jz_arr(i,j,0,2*imode-1) -= std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode-1);
+                    Jz_arr(i,j,0,2*imode) -= std::pow(-1, imode+1)*Jz_arr(-ishift_z-i,j,0,2*imode);
                 }
 
                 // Apply the inverse volume scaling
@@ -652,14 +652,25 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
         // included in the charge deposition.
         // Note that the loop is also over ncomps, which takes care of the RZ modes,
         // as well as the old and new rho.
-        amrex::ParallelFor(tb, Rho->nComp(),
+        int const ncomp = Rho->nComp();
+        amrex::ParallelFor(tb, ncomp,
         [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/, int icomp)
         {
             // Wrap the charge density deposited in the guard cells around
             // to the cells above the axis.
             // Rho is located on the boundary
             if (rmin == 0. && 1-ishift <= i && i <= ngRho-ishift) {
-                Rho_arr(i,j,0,icomp) += Rho_arr(-ishift-i,j,0,icomp);
+                int imode;
+                if (icomp == 0 || icomp == ncomp/2) {
+                    imode = 0;
+                }
+                else if (icomp < ncomp/2) {
+                    imode = (icomp+1)/2;
+                }
+                else {
+                    imode = (icomp - ncomp/2 + 1)/2;
+                }
+                Rho_arr(i,j,0,icomp) += std::pow(-1, imode+1)*Rho_arr(-ishift-i,j,0,icomp);
             }
 
             // Apply the inverse volume scaling
