@@ -26,7 +26,8 @@ namespace {
         old_s[0] = 1._rt;
         int jmax = 1;
         // Convolve the filter with itself npass times
-        for(int ipass=1; ipass< static_cast<int>(npass+1u); ipass++){
+        int const lastpass = static_cast<int>(npass+1u);
+        for(int ipass=1; ipass< lastpass; ipass++){
             // element 0 has to be treated in its own way
             new_s[0] = 0.5_rt * old_s[0];
             if (1<jmax) new_s[0] += 0.5_rt * old_s[1];
@@ -56,8 +57,8 @@ namespace {
 
 void BilinearFilter::ComputeStencils(){
     WARPX_PROFILE("BilinearFilter::ComputeStencils()");
-    for (int i = 0; i < AMREX_SPACEDIM; ++i)
-        stencil_length_each_dir[i] = npass_each_dir[i];
+    stencil_length_each_dir = npass_each_dir.toArray<unsigned int>();
+        stencil_length_each_dir.at(i) = npass_each_dir.at(i);
     stencil_length_each_dir += 1.;
 #if (AMREX_SPACEDIM == 3)
     // npass_each_dir = npass_x npass_y npass_z

@@ -246,8 +246,8 @@ WarpX::InitNCICorrector ()
 void
 WarpX::InitFilter (){
     if (WarpX::use_filter){
-        for (int i = 0; i < AMREX_SPACEDIM; ++i)
-            WarpX::bilinear_filter.npass_each_dir[i] = WarpX::filter_npass_each_dir[i];
+    WarpX::bilinear_filter.npass_each_dir = WarpX::filter_npass_each_dir.toArray<unsigned int>();
+            WarpX::bilinear_filter.npass_each_dir.at(i) = WarpX::filter_npass_each_dir.at(i);
         WarpX::bilinear_filter.ComputeStencils();
     }
 }
