@@ -670,7 +670,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (MultiFab* Rho, int lev)
                 else {
                     imode = (icomp - ncomp/2 + 1)/2;
                 }
-                Rho_arr(i,j,0,icomp) += std::pow(-1, imode+1)*Rho_arr(-ishift-i,j,0,icomp);
+                Rho_arr(i,j,0,icomp) -= std::pow(-1, imode+1)*Rho_arr(-ishift-i,j,0,icomp);
             }
 
             // Apply the inverse volume scaling
