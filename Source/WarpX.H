@@ -573,6 +573,16 @@ public:
 
     void ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp);
 
+#ifdef WARPX_USE_PSATD
+    // Host and device vectors for Fornberg stencil coefficients used for finite-order centering
+    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_x;
+    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_y;
+    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_z;
+    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_x;
+    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_y;
+    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_z;
+#endif
+
 protected:
 
     /**
