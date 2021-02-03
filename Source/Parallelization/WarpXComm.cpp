@@ -1052,3 +1052,38 @@ WarpX::NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp)
         rhoc.OverrideSync(cperiod);
     }
 }
+
+void WarpX::NodalSyncPML ()
+{
+    for (int lev = 0; lev <= finest_level; lev++) {
+        NodalSyncPML(lev);
+    }
+}
+
+void WarpX::NodalSyncPML (int lev)
+{
+    NodalSyncPML(lev, PatchType::fine);
+    if (lev > 0) NodalSyncPML(lev, PatchType::coarse);
+}
+
+void WarpX::NodalSyncPML (int lev, PatchType patch_type)
+{
+    if (pml[lev]->ok())
+    {
+        const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
+        const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
+        const auto& pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
+
+        // Always synchronize nodal points
+        const auto& period = Geom(lev).periodicity();
+        pml_E[0]->OverrideSync(period);
+        pml_E[1]->OverrideSync(period);
+        pml_E[2]->OverrideSync(period);
+        pml_B[0]->OverrideSync(period);
+        pml_B[1]->OverrideSync(period);
+        pml_B[2]->OverrideSync(period);
+        if (pml_F) {
+            pml_F->OverrideSync(period);
+        }
+    }
+}
