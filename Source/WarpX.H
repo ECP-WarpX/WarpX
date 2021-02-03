@@ -260,6 +260,28 @@ public:
 
     static amrex::LayoutData<amrex::Real>* getCosts (int lev);
 
+    void setLoadBalanceEfficiency (const int lev, const amrex::Real efficiency)
+    {
+        if (m_instance)
+        {
+            m_instance->load_balance_efficiency[lev] = efficiency;
+        } else
+        {
+            return;
+        }
+    }
+
+    amrex::Real getLoadBalanceEfficiency (const int lev)
+    {
+        if (m_instance)
+        {
+            return m_instance->load_balance_efficiency[lev];
+        } else
+        {
+            return -1;
+        }
+    }
+
     static amrex::IntVect filter_npass_each_dir;
     BilinearFilter bilinear_filter;
     amrex::Vector< std::unique_ptr<NCIGodfreyFilter> > nci_godfrey_filter_exeybz;
@@ -828,6 +850,8 @@ private:
      * distribution mapping efficiency is larger than the threshold; 'efficiency'
      * here means the average cost per MPI rank.  */
     amrex::Real load_balance_efficiency_ratio_threshold = amrex::Real(1.1);
+    /** Current load balance efficiency for each level.  */
+    amrex::Vector<amrex::Real> load_balance_efficiency;
     /** Weight factor for cells in `Heuristic` costs update.
      * Default values on GPU are determined from single-GPU tests on Summit.
      * The problem setup for these tests is an empty (i.e. no particles) domain

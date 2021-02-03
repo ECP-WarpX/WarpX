@@ -3,6 +3,7 @@ target_sources(WarpX
     BeamRelevant.cpp
     FieldEnergy.cpp
     LoadBalanceCosts.cpp
+    LoadBalanceEfficiency.cpp
     MultiReducedDiags.cpp
     ParticleEnergy.cpp
     ParticleHistogram.cpp

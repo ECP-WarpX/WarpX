@@ -240,6 +240,7 @@ WarpX::WarpX ()
 
     pml.resize(nlevs_max);
     costs.resize(nlevs_max);
+    load_balance_efficiency.resize(nlevs_max);
 
     m_field_factory.resize(nlevs_max);
 
@@ -976,6 +977,7 @@ WarpX::ClearLevel (int lev)
     rho_cp[lev].reset();
 
     costs[lev].reset();
+    load_balance_efficiency[lev] = -1;
 }
 
 void
@@ -1400,6 +1402,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (load_balance_intervals.isActivated())
     {
         costs[lev] = std::make_unique<LayoutData<Real>>(ba, dm);
+        load_balance_efficiency[lev] = -1;
     }
 }
 
