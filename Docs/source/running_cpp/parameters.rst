@@ -1819,8 +1819,11 @@ Reduced Diagnostics
 
     * ``LoadBalanceEfficiency``
         This type computes the load balance efficiency, given the present costs
-        and distribution mapping.  Load balance efficiency is computed as the
-        mean cost over all ranks, divided by the maximum cost over all ranks.
+        and distribution mapping. Load balance efficiency is computed as the
+        mean cost over all ranks, divided by the maximum cost over all ranks. 
+        Until costs are recorded, load balance efficiency is output as `-1`; 
+        at earliest, the load balance efficiency can be output starting at step
+        `2`, since costs are not recorded until step `1`.
 
     * ``ParticleHistogram``
         This type computes a user defined particle histogram.
