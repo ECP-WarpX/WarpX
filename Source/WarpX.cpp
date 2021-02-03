@@ -1557,6 +1557,15 @@ WarpX::getPMLdirections() const
     return dirsWithPML;
 }
 
+amrex::LayoutData<amrex::Real>* WarpX::getCosts (int lev) {
+    if (m_instance) {
+        return m_instance->costs[lev].get();
+    } else
+    {
+        return nullptr;
+    }
+}
+
 void
 WarpX::BuildBufferMasks ()
 {
