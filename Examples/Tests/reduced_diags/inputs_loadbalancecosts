@@ -24,7 +24,7 @@ warpx.use_filter = 1
 algo.maxwell_solver = yee # or ckc
 
 # Load balancing
-warpx.load_balance_intervals = 2
+algo.load_balance_intervals = 2
 #algo.load_balance_costs_update = Timers
 
 # Interpolation

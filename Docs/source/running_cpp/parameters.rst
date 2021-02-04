@@ -207,7 +207,7 @@ Distribution across MPI ranks and parallelization
     When using mesh refinement, this number applies to the subdomains
     of the coarsest level, but also to any of the finer level.
 
-* ``warpx.load_balance_intervals`` (`string`) optional (default `0`)
+* ``algo.load_balance_intervals`` (`string`) optional (default `0`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
     WarpX should try to redistribute the work across MPI ranks, in order to have
     better load balancing.
@@ -220,23 +220,23 @@ Distribution across MPI ranks and parallelization
     This relies on each MPI rank handling several (in fact many) subdomains
     (see ``max_grid_size``).
 
-* ``warpx.load_balance_with_sfc`` (`0` or `1`) optional (default `0`)
+* ``algo.load_balance_with_sfc`` (`0` or `1`) optional (default `0`)
     If this is `1`: use a Space-Filling Curve (SFC) algorithm in order to
     perform load-balancing of the simulation.
     If this is `0`: the Knapsack algorithm is used instead.
 
-* ``warpx.load_balance_efficiency_ratio_threshold`` (`float`) optional (default `1.1`)
+* ``algo.load_balance_efficiency_ratio_threshold`` (`float`) optional (default `1.1`)
     Controls whether to adopt a proposed distribution mapping computed during a load balance.
     If the the ratio of the proposed to current distribution mapping *efficiency* (i.e.,
     average cost per MPI process; efficiency is a number in the range [0, 1]) is greater
     than the threshold value, the proposed distribution mapping is adopted.  The suggested
-    range of values is ``warpx.load_balance_efficiency_ratio_threshold >= 1``, which ensures
+    range of values is ``algo.load_balance_efficiency_ratio_threshold >= 1``, which ensures
     that the new distribution mapping is adopted only if doing so would improve the load
     balance efficiency. The higher the threshold value, the more conservative is the criterion
     for adoption of a proposed distribution; for example, with
-    ``warpx.load_balance_efficiency_ratio_threshold = 1``, the proposed distribution is
+    ``algo.load_balance_efficiency_ratio_threshold = 1``, the proposed distribution is
     adopted *any* time the proposed distribution improves load balancing; if instead
-    ``warpx.load_balance_efficiency_ratio_threshold = 2``, the proposed distribution is
+    ``algo.load_balance_efficiency_ratio_threshold = 2``, the proposed distribution is
     adopted only if doing so would yield a 100% to the load balance efficiency (with this
     threshold value, if the  current efficiency is ``0.45``, the new distribution would only be
     adopted if the proposed efficiency were greater than ``0.9``).

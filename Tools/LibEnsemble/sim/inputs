@@ -31,6 +31,7 @@ algo.charge_deposition = standard
 algo.field_gathering = momentum-conserving
 algo.particle_pusher = vay
 algo.maxwell_solver = ckc
+algo.load_balance_intervals = -1
 interpolation.nox = 3
 interpolation.noy = 3
 interpolation.noz = 3
@@ -39,7 +40,6 @@ warpx.filter_npass_each_dir = 1 4
 warpx.cfl = .9999
 warpx.do_pml = 0
 warpx.do_dynamic_scheduling = 1
-warpx.load_balance_intervals = -1
 # Moving window
 warpx.do_moving_window = 1
 warpx.moving_window_dir = z
