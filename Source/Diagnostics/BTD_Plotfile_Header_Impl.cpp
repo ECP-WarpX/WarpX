@@ -105,8 +105,8 @@ BTDPlotfileHeaderImpl::WriteHeader ()
     if ( !HeaderFile.good()) amrex::FileOpenFailed(m_Header_path);
 
     HeaderFile.precision(17);
-
-    // Genetic Plotfile type name
+    
+    // Generic Plotfile type name   
     HeaderFile << m_file_version << '\n';
     // number of components
     HeaderFile << m_varnames.size() << '\n';
@@ -143,7 +143,7 @@ BTDPlotfileHeaderImpl::WriteHeader ()
     HeaderFile << '\n';
     // coordinate system (Cartesian)
     HeaderFile << m_coordsys << '\n';
-    //
+    // 
     HeaderFile << m_bwidth << '\n';
     // current level, number of Fabs, current time -- for a single level (m_level = 0)
     HeaderFile << m_cur_level << ' ' << m_numFabs << ' ' << m_time << '\n';
@@ -153,11 +153,11 @@ BTDPlotfileHeaderImpl::WriteHeader ()
     for (int iFab = 0; iFab < m_numFabs; ++iFab) {
         for (int idim = 0; idim < m_spacedim; ++idim) {
             HeaderFile << m_glo[iFab][idim] << ' ' << m_ghi[iFab][idim] << '\n';
-        }
+        }       
     }
     // MultiFabHeaderPath
     HeaderFile << m_CellPath << '\n';
-
+   
 }
 
 
