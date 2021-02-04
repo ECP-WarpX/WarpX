@@ -122,11 +122,11 @@ def check_particle_filter(fn, filtered_fn, filter_expression):
     ## reproduced in python
     assert(numpy.array_equal(ids[sorted_ind_filtered_python],
                              ids_filtered_warpx[sorted_ind_filtered_warpx]))
+    assert(numpy.array_equal(cpus[sorted_ind_filtered_python],
+                             cpus_filtered_warpx[sorted_ind_filtered_warpx]))
 
     ## Finally, we check that the sum of the particles quantities are the same to machine precision
     tolerance_checksum = 1.e-12
-    check_array_sum(cpus[sorted_ind_filtered_python],
-                    cpus_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
     check_array_sum(x[sorted_ind_filtered_python],
                     x_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
     check_array_sum(px[sorted_ind_filtered_python],

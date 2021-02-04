@@ -175,12 +175,12 @@ def check_particle_filter(fn, filtered_fn, filter_expression):
     ## Check that the sorted ids are exactly the same with the warpx filter and the filter
     ## reproduced in python
     assert(np.array_equal(ids[sorted_ind_filtered_python],
-                             ids_filtered_warpx[sorted_ind_filtered_warpx]))
+                          ids_filtered_warpx[sorted_ind_filtered_warpx]))
+    assert(np.array_equal(cpus[sorted_ind_filtered_python],
+                          cpus_filtered_warpx[sorted_ind_filtered_warpx]))
 
     ## Finally, we check that the sum of the particles quantities are the same to machine precision
     tolerance_checksum = 1.e-12
-    check_array_sum(cpus[sorted_ind_filtered_python],
-                    cpus_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
     check_array_sum(r[sorted_ind_filtered_python],
                     r_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
     check_array_sum(z[sorted_ind_filtered_python],
