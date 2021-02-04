@@ -293,6 +293,13 @@ private:
 
     /** Temporarily clear species output for BTD until particle buffer is added */
     void TMP_ClearSpeciesDataForBTD();
+
+    void StitchBuffersForPlotfile (int i_snapshot);
+    void InterleaveBufferAndSnapshotHeader ( std::string buffer_Header,
+                                             std::string snapshot_Header);
+    void InterleaveFabArrayHeader( std::string Buffer_FabHeaderFilename,
+                                   std::string snapshot_FabHeaderFilename,
+                                   std::string newsnapshot_FabFilename);
 };
 
 #endif // WARPX_BTDIAGNOSTICS_H_

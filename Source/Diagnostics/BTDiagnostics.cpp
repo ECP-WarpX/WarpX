@@ -1,4 +1,5 @@
 #include "BTDiagnostics.H"
+#include "BTD_Plotfile_Header_Impl.H"
 #include "WarpX.H"
 #include "Utils/WarpXConst.H"
 #include "ComputeDiagFunctors/ComputeDiagFunctor.H"
@@ -6,6 +7,7 @@
 #include "ComputeDiagFunctors/BackTransformFunctor.H"
 #include "ComputeDiagFunctors/RhoFunctor.H"
 #include "Utils/CoarsenIO.H"
+
 
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_PlotFileUtil.H>
@@ -667,6 +669,11 @@ BTDiagnostics::Flush (int i_buffer)
         warpx.gett_new(0), m_output_species, nlev_output, tmp_file_name,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 
+    if (m_format == "plotfile") {
+        StitchBuffersForPlotfile(i_buffer);
+    }
+
+    
     TMP_FlushLabFrameData (i_buffer);
     // Reset the buffer counter to zero after flushing out data stored in the buffer.
     ResetBufferCounter(i_buffer);
@@ -712,4 +719,131 @@ void BTDiagnostics::TMP_ClearSpeciesDataForBTD ()
     m_output_species.clear();
     m_output_species_names.clear();
     
+}
+
+void BTDiagnostics::StitchBuffersForPlotfile (int i_snapshot)
+{
+    auto & warpx = WarpX::GetInstance();
+    const amrex::Vector<int> iteration = warpx.getistep();
+    if (amrex::ParallelContext::IOProcessorSub()) {
+
+        // Path to final snapshot plotfiles
+        std::string snapshot_path = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_snapshot,5);
+        std::string snapshot_Level0_path = snapshot_path + "/Level_0";
+        std::string snapshot_Header_filename = snapshot_path + "/Header";
+        if (m_buffer_flush_counter[i_snapshot] == 0 ) {
+            // Create Level_0 directory to store all Cell_D and Cell_H files
+            amrex::UtilCreateDirectory(snapshot_Level0_path, 0755);
+        }
+
+        // Path of the buffer recently flushed 
+        std::string BufferPath_prefix = snapshot_path + "/buffer";
+        const std::string recent_Buffer_filepath = amrex::Concatenate(BufferPath_prefix,iteration[0]);
+    
+        // Header file of the recently flushed buffer
+        std::string recent_Header_filename = recent_Buffer_filepath+"/Header";
+        std::string recent_Buffer_Level0_path = recent_Buffer_filepath + "/Level_0";
+        std::string recent_Buffer_FabHeaderFilename = recent_Buffer_Level0_path + "/Cell_H";
+        std::string recent_Buffer_FabFilename = recent_Buffer_Level0_path + "/Cell_D_00000";
+        std::string snapshot_FabHeaderFilename = snapshot_Level0_path + "/Cell_H";
+        std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_",m_buffer_flush_counter[i_snapshot],5);
+        std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_",m_buffer_flush_counter[i_snapshot], 5);
+        
+
+        if ( m_buffer_flush_counter[i_snapshot] == 0) {
+            std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
+            std::rename(recent_Buffer_FabHeaderFilename.c_str(),
+                        snapshot_FabHeaderFilename.c_str());
+            std::rename(recent_Buffer_FabFilename.c_str(),
+                        snapshot_FabFilename.c_str());
+        } else {
+            // 0 Interleave Header file
+            // look at PlotFileDataImpl::PlotFileDataImpl ()
+            InterleaveBufferAndSnapshotHeader(recent_Header_filename,
+                                              snapshot_Header_filename);
+            //1. Copy Cell_D_00000 to snapshot_Level0/Cell_D_00001
+            InterleaveFabArrayHeader(recent_Buffer_FabHeaderFilename,
+                                     snapshot_FabHeaderFilename,
+                                     new_snapshotFabFilename);
+            std::rename(recent_Buffer_FabFilename.c_str(),
+                        snapshot_FabFilename.c_str());
+            // Check if buffer*istep file is present
+        }
+        amrex::Print() << " I am destroying " << recent_Buffer_filepath << "\n";
+        amrex::FileSystem::RemoveAll(recent_Buffer_filepath);        
+
+    } // ParallelContext if ends
+    amrex::ParallelDescriptor::Barrier();
+}  
+
+void
+BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_path,
+                                                   std::string snapshot_Header_path)
+{
+    BTDPlotfileHeaderImpl snapshot_HeaderImpl(snapshot_Header_path);
+    snapshot_HeaderImpl.ReadHeaderData();
+
+    BTDPlotfileHeaderImpl buffer_HeaderImpl(buffer_Header_path);
+    buffer_HeaderImpl.ReadHeaderData();
+
+    // Update timestamp of snapshot with recently flushed buffer
+    snapshot_HeaderImpl.set_time( buffer_HeaderImpl.time() );
+    snapshot_HeaderImpl.set_timestep( buffer_HeaderImpl.timestep() );
+
+    amrex::Box snapshot_Box = snapshot_HeaderImpl.probDomain();
+    amrex::Box buffer_Box = buffer_HeaderImpl.probDomain();
+    amrex::IntVect box_lo(0);
+    amrex::IntVect box_hi(1);
+    // Update prob_lo with min of buffer and snapshot
+    for (int idim = 0; idim < snapshot_HeaderImpl.spaceDim(); ++idim) {
+        amrex::Real min_prob_lo = amrex::min(buffer_HeaderImpl.problo(idim),
+                                             snapshot_HeaderImpl.problo(idim));
+        amrex::Real max_prob_hi = amrex::max(buffer_HeaderImpl.probhi(idim),
+                                             snapshot_HeaderImpl.probhi(idim));
+        snapshot_HeaderImpl.set_problo(idim, min_prob_lo);
+        snapshot_HeaderImpl.set_probhi(idim, max_prob_hi);
+        // Update prob_hi with max of buffer and snapshot
+        box_lo[idim] = amrex::min(buffer_Box.smallEnd(idim),
+                                  snapshot_Box.smallEnd(idim));
+        box_hi[idim] = amrex::max(buffer_Box.bigEnd(idim),
+                                  snapshot_Box.bigEnd(idim));
+    }
+    amrex::Box domain_box(box_lo, box_hi);
+    snapshot_HeaderImpl.set_probDomain(domain_box);    
+
+    // Increment numFabs
+    snapshot_HeaderImpl.IncrementNumFabs(); 
+    snapshot_HeaderImpl.AppendNewFabLo( buffer_HeaderImpl.FabLo(0));
+    snapshot_HeaderImpl.AppendNewFabHi( buffer_HeaderImpl.FabHi(0));
+
+    snapshot_HeaderImpl.WriteHeader();
+}
+
+
+void
+BTDiagnostics::InterleaveFabArrayHeader(std::string Buffer_FabHeader_path,
+                                        std::string snapshot_FabHeader_path,
+                                        std::string newsnapshot_FabFilename)
+{
+    BTDMultiFabHeaderImpl snapshot_FabHeader(snapshot_FabHeader_path);
+    snapshot_FabHeader.ReadMultiFabHeader();
+
+    BTDMultiFabHeaderImpl Buffer_FabHeader(Buffer_FabHeader_path);
+    Buffer_FabHeader.ReadMultiFabHeader();
+
+    // Increment existing fabs in snapshot with the number of fabs in the buffer
+    snapshot_FabHeader.IncreaseMultiFabSize( Buffer_FabHeader.ba_size() );
+    snapshot_FabHeader.ResizeFabData();
+    
+    for (int ifab = 0; ifab < Buffer_FabHeader.ba_size(); ++ifab) {
+        int new_ifab = snapshot_FabHeader.ba_size() - 1 + ifab;
+        snapshot_FabHeader.SetBox(new_ifab, Buffer_FabHeader.ba_box(ifab) );
+        snapshot_FabHeader.SetFabName(new_ifab, Buffer_FabHeader.fodPrefix(ifab),
+                                                newsnapshot_FabFilename,
+                                                Buffer_FabHeader.FabHead(ifab) );
+        snapshot_FabHeader.SetMinVal(new_ifab, Buffer_FabHeader.minval(ifab));
+        snapshot_FabHeader.SetMaxVal(new_ifab, Buffer_FabHeader.maxval(ifab));
+    }
+
+    snapshot_FabHeader.WriteMultiFabHeader();
 }
