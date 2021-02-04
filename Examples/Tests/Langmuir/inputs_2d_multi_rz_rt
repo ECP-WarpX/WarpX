@@ -92,7 +92,8 @@ diag1.fields_to_plot = jx jz Ex Ez By
 diag_parser_filter.intervals = 80:80:
 diag_parser_filter.diag_type = Full
 diag_parser_filter.species = electrons
-diag_parser_filter.electrons.plot_filter_function(t,x,y,z,ux,uy,uz) = "(uy-uz < 0) * (sqrt(x**2+y**2)<10e-6) * (z > 0)"
+diag_parser_filter.electrons.plot_filter_function(t,x,y,z,ux,uy,uz) = "(uy-uz < 0) *
+                                                                 (sqrt(x**2+y**2)<10e-6) * (z > 0)"
 
 ## diag_uniform_filter is a diag used to test the particle uniform filter.
 diag_uniform_filter.intervals = 80:80:

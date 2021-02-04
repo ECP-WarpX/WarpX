@@ -72,7 +72,8 @@ diag1.diag_type = Full
 diag_parser_filter.intervals = 150:150:
 diag_parser_filter.diag_type = Full
 diag_parser_filter.species = electron
-diag_parser_filter.electron.plot_filter_function(t,x,y,z,ux,uy,uz) = "(ux*uy*uz < 0) * (sqrt(x**2+y**2+z**2)<100)"
+diag_parser_filter.electron.plot_filter_function(t,x,y,z,ux,uy,uz) = "(ux*uy*uz < 0) *
+                                                                      (sqrt(x**2+y**2+z**2)<100)"
 
 ## diag_uniform_filter is a diag used to test the particle uniform filter.
 diag_uniform_filter.intervals = 150:150:

@@ -90,6 +90,7 @@ def check_particle_filter(fn, filtered_fn, filter_expression):
 
     ## Load arrays from the unfiltered diagnostic
     ids = ad['electron', 'particle_id'].to_ndarray()
+    cpus = ad['electron', 'particle_cpu'].to_ndarray()
     x = ad['electron', 'particle_position_x'].to_ndarray()
     px  = ad['electron', 'particle_momentum_x'].to_ndarray()
     z = ad['electron', 'particle_position_y'].to_ndarray()
@@ -99,6 +100,7 @@ def check_particle_filter(fn, filtered_fn, filter_expression):
 
     ## Load arrays from the filtered diagnostic
     ids_filtered_warpx = ad_filtered['particle_id'].to_ndarray()
+    cpus_filtered_warpx = ad_filtered['particle_cpu'].to_ndarray()
     x_filtered_warpx = ad_filtered['particle_position_x'].to_ndarray()
     px_filtered_warpx  = ad_filtered['particle_momentum_x'].to_ndarray()
     z_filtered_warpx = ad_filtered['particle_position_y'].to_ndarray()
@@ -121,12 +123,20 @@ def check_particle_filter(fn, filtered_fn, filter_expression):
 
     ## Finally, we check that the sum of the particles quantities are the same to machine precision
     tolerance_checksum = 1.e-12
-    check_array_sum(x[sorted_ind_filtered_python], x_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
-    check_array_sum(px[sorted_ind_filtered_python], px_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
-    check_array_sum(z[sorted_ind_filtered_python], z_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
-    check_array_sum(pz[sorted_ind_filtered_python], pz_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
-    check_array_sum(py[sorted_ind_filtered_python], py_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
-    check_array_sum(w[sorted_ind_filtered_python], w_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
+    check_array_sum(cpus[sorted_ind_filtered_python],
+                    cpus_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
+    check_array_sum(x[sorted_ind_filtered_python],
+                    x_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
+    check_array_sum(px[sorted_ind_filtered_python],
+                    px_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
+    check_array_sum(z[sorted_ind_filtered_python],
+                    z_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
+    check_array_sum(pz[sorted_ind_filtered_python],
+                    pz_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
+    check_array_sum(py[sorted_ind_filtered_python],
+                    py_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
+    check_array_sum(w[sorted_ind_filtered_python],
+                    w_filtered_warpx[sorted_ind_filtered_warpx], tolerance_checksum)
 
 ## This function checks that the absolute sums of two arrays are the same to a required precision
 def check_array_sum(array1, array2, tolerance_checksum):
@@ -149,11 +159,15 @@ def check_random_filter(fn, filtered_fn, random_fraction):
     # 5 sigma test that has an intrinsic probability to fail of 1 over ~2 millions
     std_numparts_filtered = numpy.sqrt(expected_numparts_filtered)
     error = abs(numparts_filtered-expected_numparts_filtered)
-    print("Random filter: difference between expected and actual number of dumped particles: " + str(error))
+    print("Random filter: difference between expected and actual number of dumped particles: " \
+          + str(error))
     print("tolerance: " + str(5*std_numparts_filtered))
     assert(error<5*std_numparts_filtered)
 
-    random_filter_expression = 'numpy.isin(ids, ids_filtered_warpx)'
+    ## Dirty trick to find particles with the same ID + same CPU (does not work with more than 10
+    ## MPI ranks)
+    random_filter_expression = 'numpy.isin(ids + 0.1*cpus,' \
+                                          'ids_filtered_warpx + 0.1*cpus_filtered_warpx)'
     check_particle_filter(fn, filtered_fn, random_filter_expression)
 
 parser_filter_fn = "diags/diag_parser_filter00150"
