@@ -1,0 +1,82 @@
+# Maximum number of time steps
+max_step = 1000
+
+# number of grid points
+amr.n_cell = 100 4
+
+# number of processors
+warpx.numprocs = 1 1
+
+# Maximum level in hierarchy (disable mesh refinement)
+amr.max_level = 0
+
+# Geometry
+geometry.coord_sys   = 0
+geometry.prob_lo = 0   0
+geometry.prob_hi = 1.0 0.04
+
+# Cartesian
+geometry.is_periodic = 1 1 # yes
+
+
+
+
+#electrostatic solver
+#warpx.do_electrostatic = labframe
+#warpx.const_dt = 6.740416205e-11
+
+# particles
+particles.species_names = ele1 ele2 ion
+
+ele1.species_type = "electron"
+ele1.injection_style = "NUniformPerCell"
+ele1.num_particles_per_cell_each_dim = 7 7 1
+ele1.profile = "constant"
+ele1.density = 4.5e15
+ele1.momentum_distribution_type = "gaussian"
+ele1.ux_m = 1
+ele1.uy_m = 0.0
+ele1.uz_m = 0.0
+ele1.ux_th = 1.6678e-3
+#ele1.ux_th = 0.0
+ele1.uy_th = 0.0
+ele1.uz_th = 0.0
+
+ele2.species_type = "electron"
+ele2.injection_style = "NUniformPerCell"
+ele2.num_particles_per_cell_each_dim = 7 7 1
+ele2.profile = "constant"
+ele2.density = 4.5e15
+ele2.momentum_distribution_type = "gaussian"
+ele2.ux_m = -1
+ele2.uy_m = 0.0
+ele2.uz_m = 0.0
+ele2.ux_th = 1.6678e-3
+#ele2.ux_th = 0.0
+ele2.uy_th = 0.0
+ele2.uz_th = 0.0
+
+ion.do_not_push = 1 # immobile positive charge background
+ion.species_type = "hydrogen"
+ion.injection_style = "NUniformPerCell"
+ion.num_particles_per_cell_each_dim = 7 7 1
+ion.profile = "constant"
+ion.density = 9.0e15
+ion.momentum_distribution_type = "constant"
+ion.ux = 0.0
+ion.uy = 0.0
+ion.uz = 0.0
+
+# Diagnostics
+diagnostics.diags_names = full_diag
+full_diag.intervals = 500
+full_diag.diag_type = Full
+full_diag.fields_to_plot = Ex Ey Ez rho
+
+warpx.reduced_diags_names = part_energy field_energy
+
+part_energy.type = "ParticleEnergy"
+part_energy.intervals = 10
+
+field_energy.type = "FieldEnergy"
+part_energy.intervals = 10
