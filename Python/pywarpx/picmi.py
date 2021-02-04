@@ -665,8 +665,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.use_filter = kw.pop('warpx_use_filter', None)
         self.serialize_ics = kw.pop('warpx_serialize_ics', None)
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
-        self.load_balance_intervals_algo = kw.pop('warpx_load_balance_intervals_algo', None)
-        self.load_balance_with_sfc_algo = kw.pop('warpx_load_balance_with_sfc_algo', None)
+        self.load_balance_intervals = kw.pop('warpx_load_balance_intervals', None)
+        self.load_balance_with_sfc = kw.pop('warpx_load_balance_with_sfc', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
 
         self.inputs_initialized = False
@@ -690,8 +690,8 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
         pywarpx.algo.field_gathering = self.field_gathering_algo
         pywarpx.algo.particle_pusher = self.particle_pusher_algo
-        pywarpx.algo.load_balance_intervals = self.load_balance_intervals_algo
-        pywarpx.algo.load_balance_with_sfc = self.load_balance_with_sfc_algo
+        pywarpx.algo.load_balance_intervals = self.load_balance_intervals
+        pywarpx.algo.load_balance_with_sfc = self.load_balance_with_sfc
 
         pywarpx.warpx.use_filter = self.use_filter
         pywarpx.warpx.serialize_ics = self.serialize_ics
