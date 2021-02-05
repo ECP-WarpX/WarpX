@@ -59,6 +59,7 @@ class CMakeBuild(build_ext):
             '-DWarpX_OPENPMD:BOOL=' + WarpX_OPENPMD,
             '-DWarpX_PSATD:BOOL=' + WarpX_PSATD,
             '-DWarpX_QED:BOOL=' + WarpX_QED,
+            '-DWarpX_QED_TABLE_GEN:BOOL=' + WarpX_QED_TABLE_GEN,
             ## static/shared libs
             '-DBUILD_SHARED_LIBS:BOOL=' + BUILD_SHARED_LIBS,
             ## Unix: rpath to current dir when packaged
@@ -128,8 +129,8 @@ WarpX_COMPUTE = os.environ.get('WarpX_COMPUTE', 'OMP')
 WarpX_MPI = os.environ.get('WarpX_MPI', 'OFF')
 WarpX_OPENPMD = os.environ.get('WarpX_OPENPMD', 'OFF')
 WarpX_PSATD = os.environ.get('WarpX_PSATD', 'OFF')
-WarpX_QED = os.environ.get('WarpX_QED', 'OFF')
-# TODO: QED tables (require boost)
+WarpX_QED = os.environ.get('WarpX_QED', 'ON')
+WarpX_QED_TABLE_GEN = os.environ.get('WarpX_QED_TABLE_GEN', 'OFF')
 WarpX_DIMS = os.environ.get('WarpX_DIMS', '2;3;RZ')
 BUILD_PARALLEL = os.environ.get('BUILD_PARALLEL', '2')
 BUILD_SHARED_LIBS = os.environ.get('WarpX_BUILD_SHARED_LIBS',

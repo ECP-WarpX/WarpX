@@ -54,7 +54,8 @@ function(find_picsar)
         mark_as_advanced(PXRMP_QED_OMP)
         mark_as_advanced(PXRMP_QED_TEST)
 
-        message(STATUS "PICSAR: Using INTERNAL version '${PICSAR_VERSION}'")
+        # PICSAR_VERSION: not yet defined
+        message(STATUS "PICSAR: Using INTERNAL version (git branch '${WarpX_picsar_branch}')")
     else()
     # not supported by PICSAR
     #    find_package(PICSAR 20.05 CONFIG REQUIRED QED)
