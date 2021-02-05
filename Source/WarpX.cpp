@@ -882,6 +882,7 @@ WarpX::BackwardCompatibility ()
     }
 
     ParmParse ppw("warpx");
+    std::vector<std::string> backward_strings;
     if (ppw.queryarr("fields_to_plot", backward_strings)){
         amrex::Abort("warpx.fields_to_plot is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
