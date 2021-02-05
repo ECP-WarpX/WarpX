@@ -874,7 +874,7 @@ WarpX::BackwardCompatibility ()
             "my_diag.intervals = 10\n"
             "for output every 10 iterations. See documentation for more information");
     }
-    
+
     std::string backward_str;
     if (ppa.query("plot_file", backward_str)){
         amrex::Abort("amr.plot_file is not supported anymore. "
