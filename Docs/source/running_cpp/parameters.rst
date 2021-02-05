@@ -244,8 +244,9 @@ Distribution across MPI ranks and parallelization
 * ``algo.load_balance_knapsack_factor`` (`float`) optional (default `1.24`)
     Controls the maximum number of boxes that can be assigned to a rank during
     load balance when using the 'knapsack' policy for update of the distribution
-    mapping; the maximum is `load_balance_knapsack_factor*(average number of boxes
-    per rank)`. For example, if there are 4 boxes per rank and `load_balance_knapsack_factor=2`,
+    mapping; the maximum is
+    `load_balance_knapsack_factor*(average number of boxes per rank)`.
+    For example, if there are 4 boxes per rank and `load_balance_knapsack_factor=2`, 
     no more than 8 boxes can be assigned to any rank.
 
 * ``algo.load_balance_costs_update`` (`Heuristic` or `Timers`) optional (default `Timers`)
