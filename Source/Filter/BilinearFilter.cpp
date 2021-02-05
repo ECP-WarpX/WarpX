@@ -18,15 +18,16 @@
 using namespace amrex;
 
 namespace {
-    void compute_stencil(Gpu::DeviceVector<Real> &stencil, int npass)
+    void compute_stencil(Gpu::DeviceVector<Real> &stencil, unsigned int npass)
     {
-        Vector<Real> old_s(1+npass,0.);
-        Vector<Real> new_s(1+npass,0.);
+        Vector<Real> old_s(1u+npass,0.);
+        Vector<Real> new_s(1u+npass,0.);
 
-        old_s[0] = 1.;
+        old_s[0] = 1._rt;
         int jmax = 1;
         // Convolve the filter with itself npass times
-        for(int ipass=1; ipass<npass+1; ipass++){
+        int const lastpass = static_cast<int>(npass+1u);
+        for(int ipass=1; ipass< lastpass; ipass++){
             // element 0 has to be treated in its own way
             new_s[0] = 0.5_rt * old_s[0];
             if (1<jmax) new_s[0] += 0.5_rt * old_s[1];
@@ -56,20 +57,22 @@ namespace {
 
 void BilinearFilter::ComputeStencils(){
     WARPX_PROFILE("BilinearFilter::ComputeStencils()");
-    stencil_length_each_dir = npass_each_dir;
+    int i = 0;
+    for (auto el : npass_each_dir )
+        stencil_length_each_dir[i++] = el;
     stencil_length_each_dir += 1.;
 #if (AMREX_SPACEDIM == 3)
     // npass_each_dir = npass_x npass_y npass_z
-    stencil_x.resize( 1 + npass_each_dir[0] );
-    stencil_y.resize( 1 + npass_each_dir[1] );
-    stencil_z.resize( 1 + npass_each_dir[2] );
+    stencil_x.resize( 1u + npass_each_dir[0] );
+    stencil_y.resize( 1u + npass_each_dir[1] );
+    stencil_z.resize( 1u + npass_each_dir[2] );
     compute_stencil(stencil_x, npass_each_dir[0]);
     compute_stencil(stencil_y, npass_each_dir[1]);
     compute_stencil(stencil_z, npass_each_dir[2]);
 #elif (AMREX_SPACEDIM == 2)
     // npass_each_dir = npass_x npass_z
-    stencil_x.resize( 1 + npass_each_dir[0] );
-    stencil_z.resize( 1 + npass_each_dir[1] );
+    stencil_x.resize( 1u + npass_each_dir[0] );
+    stencil_z.resize( 1u + npass_each_dir[1] );
     compute_stencil(stencil_x, npass_each_dir[0]);
     compute_stencil(stencil_z, npass_each_dir[1]);
 #endif

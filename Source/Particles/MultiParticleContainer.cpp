@@ -228,7 +228,7 @@ MultiParticleContainer::ReadParameters ()
                     WarpXUtilMsg::AlwaysAssert(
                         it != species_names.end(),
                         "ERROR: species '" + name
-                        + "' in particles.rigid_injected_species must be part of particles.species_names"
+                        + "' in particles.photon_species must be part of particles.species_names"
                     );
                     int i = std::distance(species_names.begin(), it);
                     species_types[i] = PCTypes::Photon;
@@ -407,6 +407,14 @@ MultiParticleContainer::Redistribute ()
 {
     for (auto& pc : allcontainers) {
         pc->Redistribute();
+    }
+}
+
+void
+MultiParticleContainer::defineAllParticleTiles ()
+{
+    for (auto& pc : allcontainers) {
+        pc->defineAllParticleTiles();
     }
 }
 

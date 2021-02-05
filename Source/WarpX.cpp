@@ -11,6 +11,9 @@
  */
 #include "WarpX.H"
 #include "FieldSolver/WarpX_FDTD.H"
+#ifdef WARPX_USE_PSATD
+#include "FieldSolver/SpectralSolver/SpectralKSpace.H"
+#endif
 #include "Python/WarpXWrappers.h"
 #include "Utils/WarpXConst.H"
 #include "Utils/WarpXUtil.H"
@@ -237,6 +240,7 @@ WarpX::WarpX ()
 
     pml.resize(nlevs_max);
     costs.resize(nlevs_max);
+    load_balance_efficiency.resize(nlevs_max);
 
     m_field_factory.resize(nlevs_max);
 
@@ -693,6 +697,32 @@ WarpX::ReadParameters ()
                     field_gathering_nox == 2 && field_gathering_noy == 2 && field_gathering_noz == 2,
                     "High-order interpolation (order > 2) is not implemented with mesh refinement");
             }
+
+            // Host vectors for Fornberg stencil coefficients used for finite-order centering
+            host_centering_stencil_coeffs_x = getFornbergStencilCoefficients(field_gathering_nox, false);
+            host_centering_stencil_coeffs_y = getFornbergStencilCoefficients(field_gathering_noy, false);
+            host_centering_stencil_coeffs_z = getFornbergStencilCoefficients(field_gathering_noz, false);
+
+            // Device vectors for Fornberg stencil coefficients used for finite-order centering
+            device_centering_stencil_coeffs_x.resize(host_centering_stencil_coeffs_x.size());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                                  host_centering_stencil_coeffs_x.begin(),
+                                  host_centering_stencil_coeffs_x.end(),
+                                  device_centering_stencil_coeffs_x.begin());
+
+            device_centering_stencil_coeffs_y.resize(host_centering_stencil_coeffs_y.size());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                                  host_centering_stencil_coeffs_y.begin(),
+                                  host_centering_stencil_coeffs_y.end(),
+                                  device_centering_stencil_coeffs_y.begin());
+
+            device_centering_stencil_coeffs_z.resize(host_centering_stencil_coeffs_z.size());
+            amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
+                                  host_centering_stencil_coeffs_z.begin(),
+                                  host_centering_stencil_coeffs_z.end(),
+                                  device_centering_stencil_coeffs_z.begin());
+
+            amrex::Gpu::synchronize();
         }
 #endif
 
@@ -947,6 +977,7 @@ WarpX::ClearLevel (int lev)
     rho_cp[lev].reset();
 
     costs[lev].reset();
+    load_balance_efficiency[lev] = -1;
 }
 
 void
@@ -1371,6 +1402,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (load_balance_intervals.isActivated())
     {
         costs[lev] = std::make_unique<LayoutData<Real>>(ba, dm);
+        load_balance_efficiency[lev] = -1;
     }
 }
 
@@ -1555,6 +1587,18 @@ WarpX::getPMLdirections() const
         }
     }
     return dirsWithPML;
+}
+
+amrex::LayoutData<amrex::Real>*
+WarpX::getCosts (int lev)
+{
+    if (m_instance)
+    {
+        return m_instance->costs[lev].get();
+    } else
+    {
+        return nullptr;
+    }
 }
 
 void

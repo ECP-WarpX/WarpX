@@ -165,7 +165,7 @@ with open('./requirements.txt') as f:
 setup(
     name='pywarpx',
     # note PEP-440 syntax: x.y.zaN but x.y.z.devN
-    version = '21.01',
+    version = '21.02',
     packages = ['pywarpx'],
     package_dir = {'pywarpx': 'Python/pywarpx'},
     author='Jean-Luc Vay, David P. Grote, Maxence Thévenet, Rémi Lehe, Andrew Myers, Weiqun Zhang, Axel Huebl, et al.',
@@ -199,7 +199,7 @@ setup(
     #    ]
     #},
     extras_require={
-        'all': ['openPMD-api~=0.13.0', 'openPMD-viewer~=1.1.0', 'yt~=3.6.1', 'matplotlib'],
+        'all': ['openPMD-api~=0.13.0', 'openPMD-viewer~=1.1', 'yt~=3.6', 'matplotlib'],
     },
     # cmdclass={'test': PyTest},
     # platforms='any',

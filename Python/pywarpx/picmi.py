@@ -28,6 +28,7 @@ class constants:
     m_p = 1.67262192369e-27
     hbar = 1.054571817e-34
 
+picmistandard.register_constants(constants)
 
 class Species(picmistandard.PICMI_Species):
     def init(self, kw):

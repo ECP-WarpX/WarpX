@@ -15,8 +15,8 @@
 #include <AMReX_Vector.H>
 #include <AMReX_Gpu.H>
 
-#include <physics/quantum_sync/quantum_sync_engine_tables.hpp>
-#include <physics/quantum_sync/quantum_sync_engine_core.hpp>
+#include <picsar_qed/physics/quantum_sync/quantum_sync_engine_tables.hpp>
+#include <picsar_qed/physics/quantum_sync/quantum_sync_engine_core.hpp>
 
 #include <string>
 #include <vector>
