@@ -220,11 +220,6 @@ Distribution across MPI ranks and parallelization
     This relies on each MPI rank handling several (in fact many) subdomains
     (see ``max_grid_size``).
 
-* ``algo.load_balance_with_sfc`` (`0` or `1`) optional (default `0`)
-    If this is `1`: use a Space-Filling Curve (SFC) algorithm in order to
-    perform load-balancing of the simulation.
-    If this is `0`: the Knapsack algorithm is used instead.
-
 * ``algo.load_balance_efficiency_ratio_threshold`` (`float`) optional (default `1.1`)
     Controls whether to adopt a proposed distribution mapping computed during a load balance.
     If the the ratio of the proposed to current distribution mapping *efficiency* (i.e.,
@@ -240,6 +235,18 @@ Distribution across MPI ranks and parallelization
     adopted only if doing so would yield a 100% to the load balance efficiency (with this
     threshold value, if the  current efficiency is ``0.45``, the new distribution would only be
     adopted if the proposed efficiency were greater than ``0.9``).
+
+* ``algo.load_balance_with_sfc`` (`0` or `1`) optional (default `0`)
+    If this is `1`: use a Space-Filling Curve (SFC) algorithm in order to
+    perform load-balancing of the simulation.
+    If this is `0`: the Knapsack algorithm is used instead.
+
+* ``algo.load_balance_knapsack_factor`` (`float`) optional (default `1.24`)
+    Controls the maximum number of boxes that can be assigned to a rank during                              
+    load balance when using the 'knapsack' policy for update of the distribution
+    mapping; the maximum is `load_balance_knapsack_factor*(average number of boxes
+    per rank)`. For example, if there are 4 boxes per rank and `load_balance_knapsack_factor=2`, 
+    no more than 8 boxes can be assigned to any rank.
 
 * ``algo.load_balance_costs_update`` (`Heuristic` or `Timers`) optional (default `Timers`)
     If this is `Heuristic`: load balance costs are updated according to a measure of

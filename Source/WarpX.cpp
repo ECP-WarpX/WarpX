@@ -874,7 +874,7 @@ WarpX::BackwardCompatibility ()
             "my_diag.intervals = 10\n"
             "for output every 10 iterations. See documentation for more information");
     }
-
+    
     std::string backward_str;
     if (ppa.query("plot_file", backward_str)){
         amrex::Abort("amr.plot_file is not supported anymore. "
@@ -882,7 +882,6 @@ WarpX::BackwardCompatibility ()
     }
 
     ParmParse ppw("warpx");
-    std::vector<std::string> backward_strings;
     if (ppw.queryarr("fields_to_plot", backward_strings)){
         amrex::Abort("warpx.fields_to_plot is not supported anymore. "
                      "Please use the new syntax for diagnostics, see documentation.");
@@ -898,6 +897,24 @@ WarpX::BackwardCompatibility ()
     if (ppw.queryarr("load_balance_int", backward_strings)){
         amrex::Abort("warpx.load_balance_int is no longer a valid option. "
                      "Please use the renamed option algo.load_balance_intervals instead.");
+    }
+    if (ppw.queryarr("load_balance_intervals", backward_strings)){
+        amrex::Abort("warpx.load_balance_intervals is no longer a valid option. "
+                     "Please use the renamed option algo.load_balance_intervals instead.");
+    }
+
+    amrex::Real backward_Real;
+    if (ppw.query("load_balance_efficiency_ratio_threshold", backward_Real)){
+        amrex::Abort("warpx.load_balance_efficiency_ratio_threshold is not supported anymore. "
+                     "Please use the renamed option algo.load_balance_efficiency_ratio_threshold.");
+    }
+    if (ppw.query("load_balance_with_sfc", backward_int)){
+        amrex::Abort("warpx.load_balance_with_sfc is not supported anymore. "
+                     "Please use the renamed option algo.load_balance_with_sfc.");
+    }
+    if (ppw.query("load_balance_knapsack_factor", backward_Real)){
+        amrex::Abort("warpx.load_balance_knapsack_factor is not supported anymore. "
+                     "Please use the renamed option algo.load_balance_knapsack_factor.");
     }
     if (ppw.queryarr("override_sync_int", backward_strings)){
         amrex::Abort("warpx.override_sync_int is no longer a valid option. "
