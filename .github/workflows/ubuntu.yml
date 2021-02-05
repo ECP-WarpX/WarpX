@@ -20,7 +20,7 @@ jobs:
         cmake --build build -j 2
 
         python3 -m pip install --upgrade pip setuptools wheel
-        python3 -m pip install .
+        python3 -m pip install -v .
 
 # Ref.:
 #   https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/ubuntu18.04/10.1/base/Dockerfile
