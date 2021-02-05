@@ -22,7 +22,8 @@
  * compiled for GPU. The user has to set it to the right value
  * (AMREX_GPU_DEVICE in this case).
  */
-#define PXRMP_GPU AMREX_GPU_HOST_DEVICE
+#define PXRMP_WITH_GPU
+#define PXRMP_GPU_QUALIFIER AMREX_GPU_HOST_DEVICE
 //_________________________
 
 /**
