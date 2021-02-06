@@ -45,9 +45,9 @@ amr.blocking_factor = 64
 warpx.do_dynamic_scheduling = 0
 
 # load balancing
-warpx.load_balance_intervals = 10
-warpx.load_balance_with_sfc = 0
-#warpx.load_balance_efficiency_ratio_threshold = 1.1
+algo.load_balance_intervals = 10
+algo.load_balance_with_sfc = 0
+#algo.load_balance_efficiency_ratio_threshold = 1.1
 algo.load_balance_costs_update = Heuristic
 #algo.costs_heuristic_particles_wt = 0.9
 #algo.costs_heuristic_cells_wt = 0.1

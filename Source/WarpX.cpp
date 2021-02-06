@@ -612,14 +612,6 @@ WarpX::ReadParameters ()
             fine_tag_hi = RealVect{hi};
         }
 
-        std::vector<std::string> load_balance_intervals_string_vec = {"0"};
-        pp.queryarr("load_balance_intervals", load_balance_intervals_string_vec);
-        load_balance_intervals = IntervalsParser(load_balance_intervals_string_vec);
-        pp.query("load_balance_with_sfc", load_balance_with_sfc);
-        pp.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
-        queryWithParser(pp, "load_balance_efficiency_ratio_threshold",
-                             load_balance_efficiency_ratio_threshold);
-
         pp.query("do_dynamic_scheduling", do_dynamic_scheduling);
 
         pp.query("do_nodal", do_nodal);
@@ -668,11 +660,21 @@ WarpX::ReadParameters ()
             // Use same shape factors in all directions, for gathering
             galerkin_interpolation = false;
         }
-        load_balance_costs_update_algo = GetAlgorithmInteger(pp, "load_balance_costs_update");
+
         em_solver_medium = GetAlgorithmInteger(pp, "em_solver_medium");
         if (em_solver_medium == MediumForEM::Macroscopic ) {
             macroscopic_solver_algo = GetAlgorithmInteger(pp,"macroscopic_sigma_method");
         }
+
+        // Load balancing parameters
+        std::vector<std::string> load_balance_intervals_string_vec = {"0"};
+        pp.queryarr("load_balance_intervals", load_balance_intervals_string_vec);
+        load_balance_intervals = IntervalsParser(load_balance_intervals_string_vec);
+        pp.query("load_balance_with_sfc", load_balance_with_sfc);
+        pp.query("load_balance_knapsack_factor", load_balance_knapsack_factor);
+        queryWithParser(pp, "load_balance_efficiency_ratio_threshold",
+                        load_balance_efficiency_ratio_threshold);
+        load_balance_costs_update_algo = GetAlgorithmInteger(pp, "load_balance_costs_update");
         queryWithParser(pp, "costs_heuristic_cells_wt", costs_heuristic_cells_wt);
         queryWithParser(pp, "costs_heuristic_particles_wt", costs_heuristic_particles_wt);
     }
@@ -895,7 +897,25 @@ WarpX::BackwardCompatibility ()
     }
     if (ppw.queryarr("load_balance_int", backward_strings)){
         amrex::Abort("warpx.load_balance_int is no longer a valid option. "
-                     "Please use the renamed option warpx.load_balance_intervals instead.");
+                     "Please use the renamed option algo.load_balance_intervals instead.");
+    }
+    if (ppw.queryarr("load_balance_intervals", backward_strings)){
+        amrex::Abort("warpx.load_balance_intervals is no longer a valid option. "
+                     "Please use the renamed option algo.load_balance_intervals instead.");
+    }
+
+    amrex::Real backward_Real;
+    if (ppw.query("load_balance_efficiency_ratio_threshold", backward_Real)){
+        amrex::Abort("warpx.load_balance_efficiency_ratio_threshold is not supported anymore. "
+                     "Please use the renamed option algo.load_balance_efficiency_ratio_threshold.");
+    }
+    if (ppw.query("load_balance_with_sfc", backward_int)){
+        amrex::Abort("warpx.load_balance_with_sfc is not supported anymore. "
+                     "Please use the renamed option algo.load_balance_with_sfc.");
+    }
+    if (ppw.query("load_balance_knapsack_factor", backward_Real)){
+        amrex::Abort("warpx.load_balance_knapsack_factor is not supported anymore. "
+                     "Please use the renamed option algo.load_balance_knapsack_factor.");
     }
     if (ppw.queryarr("override_sync_int", backward_strings)){
         amrex::Abort("warpx.override_sync_int is no longer a valid option. "
