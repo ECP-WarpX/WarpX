@@ -470,8 +470,10 @@ jobs:
   steps:
   - script: |
       brew update || true
-      brew install pypy3 gcc libomp
+      brew install pypy3 gcc libomp openblas
       pypy3 -m pip install -U pip --user
+      pypy3 -m pip cache remove numpy
+      OPENBLAS="$(brew --prefix openblas)" pypy3 -m pip install numpy
       pypy3 -m pip install git+https://github.com/ECP-WarpX/WarpX.git@development --user
   - script: |
       pypy3 -c "from pywarpx import picmi"
