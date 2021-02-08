@@ -6,6 +6,7 @@
  */
 
 #include "LoadBalanceCosts.H"
+#include "LoadBalanceEfficiency.H"
 #include "ParticleHistogram.H"
 #include "BeamRelevant.H"
 #include "ParticleEnergy.H"
@@ -77,6 +78,11 @@ MultiReducedDiags::MultiReducedDiags ()
         {
             m_multi_rd[i_rd] =
                 std::make_unique<LoadBalanceCosts>(m_rd_names[i_rd]);
+        }
+        else if (rd_type.compare("LoadBalanceEfficiency") == 0)
+        {
+            m_multi_rd[i_rd] =
+                std::make_unique<LoadBalanceEfficiency>(m_rd_names[i_rd]);
         }
         else if (rd_type.compare("ParticleHistogram") == 0)
         {

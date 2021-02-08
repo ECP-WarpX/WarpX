@@ -88,6 +88,9 @@ WarpX::LoadBalance ()
             }
 
             RemakeLevel(lev, t_new[lev], boxArray(lev), newdm);
+
+            // Record the load balance efficiency
+            WarpX::setLoadBalanceEfficiency(lev, proposedEfficiency);
         }
     }
     if (doLoadBalance)
@@ -293,6 +296,7 @@ WarpX::RemakeLevel (int lev, Real /*time*/, const BoxArray& ba, const Distributi
             for (int i : costs[lev]->IndexArray())
             {
                 (*costs[lev])[i] = 0.0;
+                WarpX::setLoadBalanceEfficiency(lev, -1);
             }
         }
 
@@ -343,6 +347,7 @@ WarpX::ResetCosts ()
     {
         for (int i : costs[lev]->IndexArray())
         {
+            // Reset costs
             (*costs[lev])[i] = 0.0;
         }
     }

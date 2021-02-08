@@ -27,8 +27,8 @@ my_constants.zp2   = 24.e-6
 my_constants.zc2   = 24.05545177444479562e-6
 warpx.cfl = 1.0
 warpx.do_dynamic_scheduling = 0
-warpx.load_balance_intervals = 66
 warpx.use_filter = 1
+algo.load_balance_intervals = 66
 
 #################################
 ############ PLASMA #############

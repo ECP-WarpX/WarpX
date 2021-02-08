@@ -41,42 +41,15 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             "WarpX::UpdateAuxilaryDataStagToNodal: PSATD solver requires "
             "WarpX build with spectral solver support.");
     }
-#else
-    amrex::Gpu::DeviceVector<Real> d_stencil_coef_x;
-    amrex::Gpu::DeviceVector<Real> d_stencil_coef_y;
-    amrex::Gpu::DeviceVector<Real> d_stencil_coef_z;
-    if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
-        const int fg_nox = WarpX::field_gathering_nox;
-        const int fg_noy = WarpX::field_gathering_noy;
-        const int fg_noz = WarpX::field_gathering_noz;
-
-        // Compute real-space stencil coefficients along x
-        amrex::Vector<Real> h_stencil_coef_x = getFornbergStencilCoefficients(fg_nox, false);
-        d_stencil_coef_x.resize(h_stencil_coef_x.size());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                              h_stencil_coef_x.begin(),
-                              h_stencil_coef_x.end(),
-                              d_stencil_coef_x.begin());
-
-        // Compute real-space stencil coefficients along y
-        amrex::Vector<Real> h_stencil_coef_y = getFornbergStencilCoefficients(fg_noy, false);
-        d_stencil_coef_y.resize(h_stencil_coef_y.size());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                              h_stencil_coef_y.begin(),
-                              h_stencil_coef_y.end(),
-                              d_stencil_coef_y.begin());
-
-        // Compute real-space stencil coefficients along z
-        amrex::Vector<Real> h_stencil_coef_z = getFornbergStencilCoefficients(fg_noz, false);
-        d_stencil_coef_z.resize(h_stencil_coef_z.size());
-        amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
-                              h_stencil_coef_z.begin(),
-                              h_stencil_coef_z.end(),
-                              d_stencil_coef_z.begin());
-
-        amrex::Gpu::synchronize();
-    }
 #endif
+
+    const amrex::IntVect& Bx_stag = Bfield_fp[0][0]->ixType().toIntVect();
+    const amrex::IntVect& By_stag = Bfield_fp[0][1]->ixType().toIntVect();
+    const amrex::IntVect& Bz_stag = Bfield_fp[0][2]->ixType().toIntVect();
+
+    const amrex::IntVect& Ex_stag = Efield_fp[0][0]->ixType().toIntVect();
+    const amrex::IntVect& Ey_stag = Efield_fp[0][1]->ixType().toIntVect();
+    const amrex::IntVect& Ez_stag = Efield_fp[0][2]->ixType().toIntVect();
 
     // For level 0, we only need to do the average.
 #ifdef AMREX_USE_OMP
@@ -109,28 +82,40 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
             const int fg_nox = WarpX::field_gathering_nox;
             const int fg_noy = WarpX::field_gathering_noy;
             const int fg_noz = WarpX::field_gathering_noz;
-            amrex::Real const * r_stencil_coef_x = d_stencil_coef_x.data();
-            amrex::Real const * r_stencil_coef_y = d_stencil_coef_y.data();
-            amrex::Real const * r_stencil_coef_z = d_stencil_coef_z.data();
+            // Device vectors for Fornberg stencil coefficients used for finite-order centering
+            amrex::Real const * stencil_coeffs_x = WarpX::device_centering_stencil_coeffs_x.data();
+            amrex::Real const * stencil_coeffs_y = WarpX::device_centering_stencil_coeffs_y.data();
+            amrex::Real const * stencil_coeffs_z = WarpX::device_centering_stencil_coeffs_z.data();
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp, fg_noy, fg_noz, r_stencil_coef_y, r_stencil_coef_z);
-                warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp, fg_nox, fg_noz, r_stencil_coef_x, r_stencil_coef_z);
-                warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp, fg_nox, fg_noy, r_stencil_coef_x, r_stencil_coef_y);
-                warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp, fg_nox, r_stencil_coef_x);
-                warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp, fg_noy, r_stencil_coef_y);
-                warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp, fg_noz, r_stencil_coef_z);
+                warpx_interp(j, k, l, bx_aux, bx_fp, Bx_stag, fg_nox, fg_noy, fg_noz,
+                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
+
+                warpx_interp(j, k, l, by_aux, by_fp, By_stag, fg_nox, fg_noy, fg_noz,
+                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
+
+                warpx_interp(j, k, l, bz_aux, bz_fp, Bz_stag, fg_nox, fg_noy, fg_noz,
+                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
+
+                warpx_interp(j, k, l, ex_aux, ex_fp, Ex_stag, fg_nox, fg_noy, fg_noz,
+                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
+
+                warpx_interp(j, k, l, ey_aux, ey_fp, Ey_stag, fg_nox, fg_noy, fg_noz,
+                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
+
+                warpx_interp(j, k, l, ez_aux, ez_fp, Ez_stag, fg_nox, fg_noy, fg_noz,
+                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
             });
 #endif
         } else { // FDTD
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                warpx_interp_nd_bfield_x(j,k,l, bx_aux, bx_fp);
-                warpx_interp_nd_bfield_y(j,k,l, by_aux, by_fp);
-                warpx_interp_nd_bfield_z(j,k,l, bz_aux, bz_fp);
-                warpx_interp_nd_efield_x(j,k,l, ex_aux, ex_fp);
-                warpx_interp_nd_efield_y(j,k,l, ey_aux, ey_fp);
-                warpx_interp_nd_efield_z(j,k,l, ez_aux, ez_fp);
+                warpx_interp(j, k, l, bx_aux, bx_fp, Bx_stag);
+                warpx_interp(j, k, l, by_aux, by_fp, By_stag);
+                warpx_interp(j, k, l, bz_aux, bz_fp, Bz_stag);
+                warpx_interp(j, k, l, ex_aux, ex_fp, Ex_stag);
+                warpx_interp(j, k, l, ey_aux, ey_fp, Ey_stag);
+                warpx_interp(j, k, l, ez_aux, ez_fp, Ez_stag);
             });
         }
     }
@@ -1050,5 +1035,40 @@ WarpX::NodalSyncRho (int lev, PatchType patch_type, int icomp, int ncomp)
         const auto& cperiod = Geom(lev-1).periodicity();
         MultiFab rhoc(*rho_cp[lev], amrex::make_alias, icomp, ncomp);
         rhoc.OverrideSync(cperiod);
+    }
+}
+
+void WarpX::NodalSyncPML ()
+{
+    for (int lev = 0; lev <= finest_level; lev++) {
+        NodalSyncPML(lev);
+    }
+}
+
+void WarpX::NodalSyncPML (int lev)
+{
+    NodalSyncPML(lev, PatchType::fine);
+    if (lev > 0) NodalSyncPML(lev, PatchType::coarse);
+}
+
+void WarpX::NodalSyncPML (int lev, PatchType patch_type)
+{
+    if (pml[lev]->ok())
+    {
+        const auto& pml_E = (patch_type == PatchType::fine) ? pml[lev]->GetE_fp() : pml[lev]->GetE_cp();
+        const auto& pml_B = (patch_type == PatchType::fine) ? pml[lev]->GetB_fp() : pml[lev]->GetB_cp();
+        const auto& pml_F = (patch_type == PatchType::fine) ? pml[lev]->GetF_fp() : pml[lev]->GetF_cp();
+
+        // Always synchronize nodal points
+        const auto& period = Geom(lev).periodicity();
+        pml_E[0]->OverrideSync(period);
+        pml_E[1]->OverrideSync(period);
+        pml_E[2]->OverrideSync(period);
+        pml_B[0]->OverrideSync(period);
+        pml_B[1]->OverrideSync(period);
+        pml_B[2]->OverrideSync(period);
+        if (pml_F) {
+            pml_F->OverrideSync(period);
+        }
     }
 }

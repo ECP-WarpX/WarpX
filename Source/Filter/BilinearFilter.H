@@ -8,6 +8,8 @@
 #ifndef WARPX_BILIN_FILTER_H_
 #define WARPX_BILIN_FILTER_H_
 
+#include <AMReX_Array.H>
+
 #include "Filter.H"
 
 
@@ -19,7 +21,7 @@ public:
 
     void ComputeStencils();
 
-    amrex::IntVect npass_each_dir;
+    amrex::Array<unsigned int, AMREX_SPACEDIM> npass_each_dir;
 
 };
 #endif // #ifndef WARPX_BILIN_FILTER_H_

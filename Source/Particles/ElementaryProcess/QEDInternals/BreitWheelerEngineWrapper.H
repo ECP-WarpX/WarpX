@@ -15,8 +15,8 @@
 #include <AMReX_Vector.H>
 #include <AMReX_Gpu.H>
 
-#include <physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
-#include <physics/breit_wheeler/breit_wheeler_engine_core.hpp>
+#include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_tables.hpp>
+#include <picsar_qed/physics/breit_wheeler/breit_wheeler_engine_core.hpp>
 
 #include <string>
 #include <vector>

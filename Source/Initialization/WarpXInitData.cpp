@@ -246,7 +246,7 @@ WarpX::InitNCICorrector ()
 void
 WarpX::InitFilter (){
     if (WarpX::use_filter){
-        WarpX::bilinear_filter.npass_each_dir = WarpX::filter_npass_each_dir;
+        WarpX::bilinear_filter.npass_each_dir = WarpX::filter_npass_each_dir.toArray<unsigned int>();
         WarpX::bilinear_filter.ComputeStencils();
     }
 }
@@ -451,6 +451,7 @@ WarpX::InitLevelData (int lev, Real /*time*/)
     if (costs[lev]) {
         for (int i : costs[lev]->IndexArray()) {
             (*costs[lev])[i] = 0.0;
+            WarpX::setLoadBalanceEfficiency(lev, -1);
         }
     }
 }

@@ -26,6 +26,7 @@ Please see installation instructions below.
 - a mature `C++14 <https://en.wikipedia.org/wiki/C%2B%2B14>`_ compiler: e.g. GCC 5, Clang 3.6 or newer
 - `CMake 3.15.0+ <https://cmake.org>`_
 - `AMReX <https://amrex-codes.github.io>`_: we automatically download and compile a copy of AMReX
+- `PICSAR <https://github.com/ECP-WarpX/picsar>`_: we automatically download and compile a copy of PICSAR
 
 Optional dependencies include:
 
@@ -33,7 +34,7 @@ Optional dependencies include:
 - `CUDA Toolkit 9.0+ <https://developer.nvidia.com/cuda-downloads>`_: for Nvidia GPU support (see `matching host-compilers <https://gist.github.com/ax3l/9489132>`_)
 - `OpenMP 3.1+ <https://www.openmp.org>`_: for threaded CPU execution (currently not fully accelerated)
 - `FFTW3 <http://www.fftw.org>`_: for spectral solver (PSATD) support
-- `Boost 1.66.0+ <https://www.boost.org/>`_: for QED support
+- `Boost 1.66.0+ <https://www.boost.org/>`_: for QED lookup tables generation support
 - `openPMD-api 0.12.0+ <https://github.com/openPMD/openPMD-api>`_: we automatically download and compile a copy of openPMD-api for openPMD I/O support
 
   - see `optional I/O backends <https://github.com/openPMD/openPMD-api#dependencies>`_
@@ -136,7 +137,8 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_PARSER_DEPTH``        **24**                                       Maximum parser depth for input file functions
 ``WarpX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
-``WarpX_QED``                 ON/**OFF**                                   PICSAR QED (requires Boost and PICSAR)
+``WarpX_QED``                 **ON**/OFF                                   QED support (requires PICSAR)
+``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation support (requires PICSAR and Boost)
 ``WarpX_amrex_repo``          ``https://github.com/AMReX-Codes/amrex.git`` Repository URI to pull and build AMReX from
 ``WarpX_amrex_branch``        ``development``                              Repository branch for ``WarpX_amrex_repo``
 ``WarpX_amrex_internal``      **ON**/OFF                                   Needs a pre-installed AMReX library if set to ``OFF``
@@ -192,7 +194,7 @@ Environment Variable          Default & Values                             Descr
 ``WarpX_MPI``                 ON/**OFF**                                   Multi-node support (message-passing)
 ``WarpX_OPENPMD``             ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
-``WarpX_QED``                 ON/**OFF**                                   PICSAR QED (requires Boost and PICSAR)
+``WarpX_QED``                 **ON**/OFF                                   PICSAR QED (requires Boost and PICSAR)
 ``BUILD_PARALLEL``            ``2``                                        Number of threads to use for parallel builds
 ``BUILD_SHARED_LIBS``         ON/**OFF**                                   Build shared libraries for dependencies
 ``HDF5_USE_STATIC_LIBRARIES`` ON/**OFF**                                   Prefer static libraries for HDF5 dependency (openPMD)

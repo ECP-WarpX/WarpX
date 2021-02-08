@@ -359,7 +359,10 @@ WarpX::OneStep_nosub (Real cur_time)
                 WarpX::Hybrid_QED_Push(dt);
                 FillBoundaryE(guard_cells.ng_alloc_EB, guard_cells.ng_Extra);
             }
-            if (do_pml) DampPML();
+            if (do_pml) {
+                DampPML();
+                NodalSyncPML();
+            }
         } else {
             EvolveF(0.5_rt * dt[0], DtType::FirstHalf);
             FillBoundaryF(guard_cells.ng_FieldSolverF);
@@ -382,6 +385,7 @@ WarpX::OneStep_nosub (Real cur_time)
             if (do_pml) {
                 FillBoundaryF(guard_cells.ng_alloc_F);
                 DampPML();
+                NodalSyncPML();
                 FillBoundaryE(guard_cells.ng_MovingWindow, IntVect::TheZeroVector());
                 FillBoundaryF(guard_cells.ng_MovingWindow);
                 FillBoundaryB(guard_cells.ng_MovingWindow, IntVect::TheZeroVector());

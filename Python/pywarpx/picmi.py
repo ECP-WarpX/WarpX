@@ -28,6 +28,7 @@ class constants:
     m_p = 1.67262192369e-27
     hbar = 1.054571817e-34
 
+picmistandard.register_constants(constants)
 
 class Species(picmistandard.PICMI_Species):
     def init(self, kw):
@@ -665,7 +666,12 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.serialize_ics = kw.pop('warpx_serialize_ics', None)
         self.do_dynamic_scheduling = kw.pop('warpx_do_dynamic_scheduling', None)
         self.load_balance_intervals = kw.pop('warpx_load_balance_intervals', None)
+        self.load_balance_efficiency_ratio_threshold = kw.pop('warpx_load_balance_efficiency_ratio_threshold', None)
         self.load_balance_with_sfc = kw.pop('warpx_load_balance_with_sfc', None)
+        self.load_balance_knapsack_factor = kw.pop('warpx_load_balance_knapsack_factor', None)
+        self.load_balance_costs_update = kw.pop('warpx_load_balance_costs_update', None)
+        self.costs_heuristic_particles_wt = kw.pop('warpx_costs_heuristic_particles_wt', None)
+        self.costs_heuristic_cells_wt = kw.pop('warpx_costs_heuristic_cells_wt', None)
         self.use_fdtd_nci_corr = kw.pop('warpx_use_fdtd_nci_corr', None)
 
         self.inputs_initialized = False
@@ -689,13 +695,18 @@ class Simulation(picmistandard.PICMI_Simulation):
         pywarpx.algo.charge_deposition = self.charge_deposition_algo
         pywarpx.algo.field_gathering = self.field_gathering_algo
         pywarpx.algo.particle_pusher = self.particle_pusher_algo
+        pywarpx.algo.load_balance_intervals = self.load_balance_intervals
+        pywarpx.algo.load_balance_efficiency_ratio_threshold = self.load_balance_efficiency_ratio_threshold
+        pywarpx.algo.load_balance_with_sfc = self.load_balance_with_sfc
+        pywarpx.algo.load_balance_knapsack_factor = self.load_balance_knapsack_factor
+        pywarpx.algo.load_balance_costs_update = self.load_balance_costs_update
+        pywarpx.algo.costs_heuristic_particles_wt = self.costs_heuristic_particles_wt
+        pywarpx.algo.costs_heuristic_cells_wt = self.costs_heuristic_cells_wt
 
         pywarpx.warpx.use_filter = self.use_filter
         pywarpx.warpx.serialize_ics = self.serialize_ics
 
         pywarpx.warpx.do_dynamic_scheduling = self.do_dynamic_scheduling
-        pywarpx.warpx.load_balance_intervals = self.load_balance_intervals
-        pywarpx.warpx.load_balance_with_sfc = self.load_balance_with_sfc
 
         pywarpx.particles.use_fdtd_nci_corr = self.use_fdtd_nci_corr
 

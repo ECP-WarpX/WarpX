@@ -207,7 +207,7 @@ Distribution across MPI ranks and parallelization
     When using mesh refinement, this number applies to the subdomains
     of the coarsest level, but also to any of the finer level.
 
-* ``warpx.load_balance_intervals`` (`string`) optional (default `0`)
+* ``algo.load_balance_intervals`` (`string`) optional (default `0`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
     WarpX should try to redistribute the work across MPI ranks, in order to have
     better load balancing.
@@ -220,26 +220,34 @@ Distribution across MPI ranks and parallelization
     This relies on each MPI rank handling several (in fact many) subdomains
     (see ``max_grid_size``).
 
-* ``warpx.load_balance_with_sfc`` (`0` or `1`) optional (default `0`)
-    If this is `1`: use a Space-Filling Curve (SFC) algorithm in order to
-    perform load-balancing of the simulation.
-    If this is `0`: the Knapsack algorithm is used instead.
-
-* ``warpx.load_balance_efficiency_ratio_threshold`` (`float`) optional (default `1.1`)
+* ``algo.load_balance_efficiency_ratio_threshold`` (`float`) optional (default `1.1`)
     Controls whether to adopt a proposed distribution mapping computed during a load balance.
     If the the ratio of the proposed to current distribution mapping *efficiency* (i.e.,
     average cost per MPI process; efficiency is a number in the range [0, 1]) is greater
     than the threshold value, the proposed distribution mapping is adopted.  The suggested
-    range of values is ``warpx.load_balance_efficiency_ratio_threshold >= 1``, which ensures
+    range of values is ``algo.load_balance_efficiency_ratio_threshold >= 1``, which ensures
     that the new distribution mapping is adopted only if doing so would improve the load
     balance efficiency. The higher the threshold value, the more conservative is the criterion
     for adoption of a proposed distribution; for example, with
-    ``warpx.load_balance_efficiency_ratio_threshold = 1``, the proposed distribution is
+    ``algo.load_balance_efficiency_ratio_threshold = 1``, the proposed distribution is
     adopted *any* time the proposed distribution improves load balancing; if instead
-    ``warpx.load_balance_efficiency_ratio_threshold = 2``, the proposed distribution is
+    ``algo.load_balance_efficiency_ratio_threshold = 2``, the proposed distribution is
     adopted only if doing so would yield a 100% to the load balance efficiency (with this
     threshold value, if the  current efficiency is ``0.45``, the new distribution would only be
     adopted if the proposed efficiency were greater than ``0.9``).
+
+* ``algo.load_balance_with_sfc`` (`0` or `1`) optional (default `0`)
+    If this is `1`: use a Space-Filling Curve (SFC) algorithm in order to
+    perform load-balancing of the simulation.
+    If this is `0`: the Knapsack algorithm is used instead.
+
+* ``algo.load_balance_knapsack_factor`` (`float`) optional (default `1.24`)
+    Controls the maximum number of boxes that can be assigned to a rank during
+    load balance when using the 'knapsack' policy for update of the distribution
+    mapping; the maximum is
+    `load_balance_knapsack_factor*(average number of boxes per rank)`.
+    For example, if there are 4 boxes per rank and `load_balance_knapsack_factor=2`,
+    no more than 8 boxes can be assigned to any rank.
 
 * ``algo.load_balance_costs_update`` (`heuristic` or `timers` or `gpuclock`) optional (default `timers`)
     If this is `heuristic`: load balance costs are updated according to a measure of
@@ -630,20 +638,15 @@ Particle initialization
     must be either electrons or positrons. Boris pusher must be used for the
     simulation
 
-* ``<species>.do_qed`` (`int`) optional (default `0`)
-    If `<species>.do_qed = 0` all the QED effects are disabled for this species.
-    If `<species>.do_qed = 1` QED effects can be enabled for this species (see below).
-    **This feature requires to compile with QED=TRUE**
-
 * ``<species>.do_qed_quantum_sync`` (`int`) optional (default `0`)
-    It only works if `<species>.do_qed = 1`. Enables Quantum synchrotron emission for this species.
+    Enables Quantum synchrotron emission for this species.
     Quantum synchrotron lookup table should be either generated or loaded from disk to enable
     this process (see "Lookup tables for QED modules" section below).
     `<species>` must be either an electron or a positron species.
     **This feature requires to compile with QED=TRUE**
 
 * ``<species>.do_qed_breit_wheeler`` (`int`) optional (default `0`)
-    It only works if `<species>.do_qed = 1`. Enables non-linear Breit-Wheeler process for this species.
+    Enables non-linear Breit-Wheeler process for this species.
     Breit-Wheeler lookup table should be either generated or loaded from disk to enable
     this process (see "Lookup tables for QED modules" section below).
     `<species>` must be a photon species.
@@ -1413,13 +1416,13 @@ Boundary conditions
     Whether to create the PML inside the simulation area or outside. If inside,
     it allows the user to propagate particles in PML and to use extended PML
 
-* ``warpx.do_pml_has_particles`` (`int`; default: 0)
+* ``warpx.pml_has_particles`` (`int`; default: 0)
     Whether to propagate particles in PML or not. Can only be done if PML are in simulation domain,
     i.e. if `warpx.do_pml_in_domain = 1`.
 
 * ``warpx.do_pml_j_damping`` (`int`; default: 0)
     Whether to damp current in PML. Can only be used if particles are propagated in PML,
-    i.e. if `warpx.do_pml_has_particles = 1`.
+    i.e. if `warpx.pml_has_particles = 1`.
 
 * ``warpx.do_pml_Lo`` (`2 ints in 2D`, `3 ints in 3D`; default: `1 1 1`)
     The directions along which one wants a pml boundary condition for lower boundaries on mother grid.
@@ -1824,6 +1827,14 @@ Reduced Diagnostics
         :math:`w_{\text{particle}}` is the particle cost weight factor (controlled by ``algo.costs_heuristic_particles_wt``),
         :math:`n_{\text{cell}}` is the number of cells on the box, and
         :math:`w_{\text{cell}}` is the cell cost weight factor (controlled by ``algo.costs_heuristic_cells_wt``).
+
+    * ``LoadBalanceEfficiency``
+        This type computes the load balance efficiency, given the present costs
+        and distribution mapping. Load balance efficiency is computed as the
+        mean cost over all ranks, divided by the maximum cost over all ranks.
+        Until costs are recorded, load balance efficiency is output as `-1`;
+        at earliest, the load balance efficiency can be output starting at step
+        `2`, since costs are not recorded until step `1`.
 
     * ``ParticleHistogram``
         This type computes a user defined particle histogram.
