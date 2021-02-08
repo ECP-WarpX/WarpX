@@ -752,7 +752,7 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
         std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_",m_buffer_flush_counter[i_snapshot],5);
 
 
-        if ( m_buffer_flush_counter[i_snapshot] == 0) {            
+        if ( m_buffer_flush_counter[i_snapshot] == 0) {
             std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
             std::rename(recent_Buffer_FabHeaderFilename.c_str(),
                         snapshot_FabHeaderFilename.c_str());

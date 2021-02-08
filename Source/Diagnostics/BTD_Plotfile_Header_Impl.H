@@ -9,7 +9,7 @@
 /**
  * \brief Class to read, modify, and write plotfile header when
  * back-transformed diag format is selected as plotfile.
- * This class enables multiple BTD buffers to be interweaved and stitched into 
+ * This class enables multiple BTD buffers to be interweaved and stitched into
  * a single plotfile with a single Header.
  */
 
@@ -53,7 +53,7 @@ public:
     int timestep () const noexcept {return m_timestep; }
     ///** Returns the type of coordinate system */
     //int coordsys () const noexcept {return m_coordsys; }
-    
+
     //int bwidth () const noexcept {return m_bwidth; }
     //int cur_level () const noexcept {return m_cur_level; }
     int numFabs () const noexcept {return m_numFabs; }
@@ -101,7 +101,7 @@ public:
      */
     void set_probDomain (amrex::Box domainBox) {m_prob_domain = domainBox; }
     /** Increments the number of fabs stored in the plotfile by one. */
-    void IncrementNumFabs () { m_numFabs++;}    
+    void IncrementNumFabs () { m_numFabs++;}
     void ResizeFabLo () { m_glo.resize(m_numFabs); }
     void ResizeFabHi () { m_ghi.resize(m_numFabs); }
     /** Append array of lower-corner physical coordinates corresponding to a new fab to
@@ -155,7 +155,7 @@ private:
 /**
  * \brief Class to read, modify, and write MultiFab header in Level_0/Cell_H when
  * back-transformed diag format is selected as plotfile.
- * This class enables multiple fabs to be interweaved and stitched into 
+ * This class enables multiple fabs to be interweaved and stitched into
  * a single plotfile with a single Header, Cell_H.
  */
 class BTDMultiFabHeaderImpl
@@ -188,12 +188,12 @@ class BTDMultiFabHeaderImpl
     /** Returns minimum value of all the components stored in the ith fab. */
     amrex::Vector<amrex::Real> minval(int ifab) { return m_minval[ifab];}
     /** Returns maximum value of all the components stored in the ith fab. */
-    amrex::Vector<amrex::Real> maxval(int ifab) { return m_maxval[ifab];}    
+    amrex::Vector<amrex::Real> maxval(int ifab) { return m_maxval[ifab];}
     void ResizeFabData ();
     /** Increments MultiFab size, m_ba_size, by add_mf_size.
-     *  \param[in] int add_mf_size, number of new multifabs to be appended to the existing 
+     *  \param[in] int add_mf_size, number of new multifabs to be appended to the existing
      *             Box Array.
-     */    
+     */
     void IncreaseMultiFabSize (int add_mf_size) {m_ba_size += add_mf_size;}
     /** Set Box indices of the ith-box in Box Array, m_ba, to the new Box, ba_box.
      *  \param[in] int ibox, index of the ith box in BoxArray, m_ba.
