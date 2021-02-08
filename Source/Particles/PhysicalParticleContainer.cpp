@@ -23,6 +23,7 @@
 #include "Particles/Gather/GetExternalFields.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
+#include <AMReX_Geometry.H>
 #include <AMReX_Print.H>
 #include <AMReX.H>
 
