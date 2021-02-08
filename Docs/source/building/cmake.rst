@@ -194,7 +194,8 @@ Environment Variable          Default & Values                             Descr
 ``WarpX_MPI``                 ON/**OFF**                                   Multi-node support (message-passing)
 ``WarpX_OPENPMD``             ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
-``WarpX_QED``                 **ON**/OFF                                   PICSAR QED (requires Boost and PICSAR)
+``WarpX_QED``                 **ON**/OFF                                   PICSAR QED (requires PICSAR)
+``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation (requires PICSAR and Boost)
 ``BUILD_PARALLEL``            ``2``                                        Number of threads to use for parallel builds
 ``BUILD_SHARED_LIBS``         ON/**OFF**                                   Build shared libraries for dependencies
 ``HDF5_USE_STATIC_LIBRARIES`` ON/**OFF**                                   Prefer static libraries for HDF5 dependency (openPMD)
