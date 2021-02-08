@@ -64,14 +64,14 @@ BTDPlotfileHeaderImpl::ReadHeaderData ()
 
 void
 BTDPlotfileHeaderImpl::AppendNewFabLo (amrex::Array<amrex::Real, AMREX_SPACEDIM> newFabLo)
-{ 
+{
     ResizeFabLo();
     m_glo[m_numFabs-1] = newFabLo;
 }
 
 void
 BTDPlotfileHeaderImpl::AppendNewFabHi (amrex::Array<amrex::Real, AMREX_SPACEDIM> newFabHi)
-{ 
+{
     ResizeFabHi();
     m_ghi[m_numFabs-1] = newFabHi;
 }
@@ -81,7 +81,7 @@ BTDPlotfileHeaderImpl::WriteHeader ()
 {
     if ( amrex::FileExists(m_Header_path) ) {
         amrex::Print() << " removing this file : " << m_Header_path << "\n";
-        amrex::FileSystem::Remove(m_Header_path);        
+        amrex::FileSystem::Remove(m_Header_path);
     }
     std::ofstream HeaderFile;
     HeaderFile.open(m_Header_path.c_str(), std::ofstream::out |
@@ -90,8 +90,8 @@ BTDPlotfileHeaderImpl::WriteHeader ()
     if ( !HeaderFile.good()) amrex::FileOpenFailed(m_Header_path);
 
     HeaderFile.precision(17);
-    
-    // Genetic Plotfile type name   
+
+    // Genetic Plotfile type name
     HeaderFile << m_file_version << '\n';
     // number of components
     HeaderFile << m_varnames.size() << '\n';
@@ -107,12 +107,12 @@ BTDPlotfileHeaderImpl::WriteHeader ()
     HeaderFile << m_finest_level << '\n';
     // Physical coordinate of the lower corner
     for (int idim = 0; idim < m_spacedim; ++idim) {
-        HeaderFile << m_prob_lo[idim] << ' ';        
+        HeaderFile << m_prob_lo[idim] << ' ';
     }
     HeaderFile << '\n';
-    // Physical cooridnate of the upper corner 
+    // Physical cooridnate of the upper corner
     for (int idim = 0; idim < m_spacedim; ++idim) {
-        HeaderFile << m_prob_hi[idim] << ' ';       
+        HeaderFile << m_prob_hi[idim] << ' ';
     }
     HeaderFile << '\n';
     // since nlevels=0, not writing ref_ratio as seen in a typical MR Header
@@ -128,7 +128,7 @@ BTDPlotfileHeaderImpl::WriteHeader ()
     HeaderFile << '\n';
     // coordinate system (Cartesian)
     HeaderFile << m_coordsys << '\n';
-    // 
+    //
     HeaderFile << m_bwidth << '\n';
     // current level, number of Fabs, current time -- for a single level (m_level = 0)
     HeaderFile << m_cur_level << ' ' << m_numFabs << ' ' << m_time << '\n';
@@ -138,11 +138,11 @@ BTDPlotfileHeaderImpl::WriteHeader ()
     for (int iFab = 0; iFab < m_numFabs; ++iFab) {
         for (int idim = 0; idim < m_spacedim; ++idim) {
             HeaderFile << m_glo[iFab][idim] << ' ' << m_ghi[iFab][idim] << '\n';
-        }       
+        }
     }
     // MultiFabHeaderPath
     HeaderFile << m_CellPath << '\n';
-   
+
 }
 
 
@@ -173,9 +173,9 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
         is >> bx;
         m_ba.set(ibox, bx);
     }
-    is.ignore(bl_ignore_max, ')'); 
-    
-    is >> in_hash; // repeat of reading ba_size 
+    is.ignore(bl_ignore_max, ')');
+
+    is >> in_hash; // repeat of reading ba_size
     m_FabOnDiskPrefix.resize(m_ba.size());
     m_fabname.resize(m_ba.size());
     m_fabhead.resize(m_ba.size());
@@ -190,7 +190,7 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
         m_minval[ifab].resize(m_ncomp);
         for (int icomp = 0; icomp < m_ncomp; ++icomp) {
             is >> m_minval[ifab][icomp] >> ch;
-            if( ch != ',' ) amrex::Error("Expected a ',' got something else");            
+            if( ch != ',' ) amrex::Error("Expected a ',' got something else");
         }
     }
     WarpX::GotoNextLine(is);
@@ -200,11 +200,11 @@ BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
         m_maxval[ifab].resize(m_ncomp);
         for (int icomp = 0; icomp < m_ncomp; ++icomp) {
             is >> m_maxval[ifab][icomp] >> ch;
-            if( ch != ',' ) amrex::Error("Expected a ',' got something else");            
+            if( ch != ',' ) amrex::Error("Expected a ',' got something else");
         }
     }
-    
-    
+
+
 }
 
 void
@@ -212,7 +212,7 @@ BTDMultiFabHeaderImpl::WriteMultiFabHeader ()
 {
     if ( amrex::FileExists(m_Header_path) ) {
         amrex::Print() << " removing this file : " << m_Header_path << "\n";
-        amrex::FileSystem::Remove(m_Header_path);        
+        amrex::FileSystem::Remove(m_Header_path);
     }
     std::ofstream FabHeaderFile;
     FabHeaderFile.open(m_Header_path.c_str(), std::ofstream::out |
@@ -221,7 +221,7 @@ BTDMultiFabHeaderImpl::WriteMultiFabHeader ()
     if ( !FabHeaderFile.good()) amrex::FileOpenFailed(m_Header_path);
 
     FabHeaderFile.precision(17);
-    
+
     // multifab header version
     FabHeaderFile << m_vers << '\n';
     // VisMF :: how
@@ -239,23 +239,23 @@ BTDMultiFabHeaderImpl::WriteMultiFabHeader ()
         FabHeaderFile << m_FabOnDiskPrefix[ifab] << ' ' << m_fabname[ifab] << ' ' << m_fabhead[ifab];
         FabHeaderFile << '\n';
     }
-    FabHeaderFile << '\n'; 
+    FabHeaderFile << '\n';
     // Write minvalue of all the components for each fab in the multifab
     FabHeaderFile << m_ba.size() << ',' << m_ncomp << '\n';
     for (int ifab = 0; ifab < m_ba.size(); ++ifab) {
         for (int icomp = 0; icomp < m_ncomp; ++icomp) {
-            FabHeaderFile << m_minval[ifab][icomp] << ',';              
+            FabHeaderFile << m_minval[ifab][icomp] << ',';
         }
-        FabHeaderFile << '\n'; 
+        FabHeaderFile << '\n';
     }
-    FabHeaderFile << '\n'; 
+    FabHeaderFile << '\n';
     // Write minvalue of all the components for each fab in the multifab
     FabHeaderFile << m_ba.size() << ',' << m_ncomp << '\n';
     for (int ifab = 0; ifab < m_ba.size(); ++ifab) {
         for (int icomp = 0; icomp < m_ncomp; ++icomp) {
             FabHeaderFile << m_maxval[ifab][icomp] << ',';
-        }              
-        FabHeaderFile << '\n'; 
+        }
+        FabHeaderFile << '\n';
     }
 }
 

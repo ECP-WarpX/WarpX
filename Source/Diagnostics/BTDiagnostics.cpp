@@ -211,7 +211,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
         diag_dom.setLo(idim, std::max(m_lo[idim],warpx.Geom(lev).ProbLo(idim)) );
         // Setting hi-coordinate for the diag domain by taking the max of user-defined
         // hi-cordinate and hi-coordinate of the simulation domain at level, lev
-        diag_dom.setHi(idim, std::min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) ); 
+        diag_dom.setHi(idim, std::min(m_hi[idim],warpx.Geom(lev).ProbHi(idim)) );
     }
     // Initializing the m_buffer_box for the i^th snapshot.
     // At initialization, the Box has the same index space as the boosted-frame
@@ -452,15 +452,15 @@ BTDiagnostics::PrepareFieldDataForOutput ()
                 m_current_z_lab[i_buffer] = UpdateCurrentZLabCoordinate(m_t_lab[i_buffer],
                                                                       warpx.gett_new(lev) );
                 // Check if the zslice is in domain
-                bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);                
+                bool ZSliceInDomain = GetZSliceInDomainFlag (i_buffer, lev);
                 // Initialize and define field buffer multifab if buffer is empty
                 if (ZSliceInDomain) {
-                    if ( buffer_empty(i_buffer) ) { 
+                    if ( buffer_empty(i_buffer) ) {
                         if ( m_buffer_flush_counter[i_buffer] == 0) {
                             // Compute the geometry, snapshot lab-domain extent
                             // and box-indices
                             DefineSnapshotGeometry(i_buffer, lev);
-                        }                        
+                        }
                         DefineFieldBufferMultiFab(i_buffer, lev);
                     }
                 }
@@ -582,7 +582,7 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
                                                    &m_snapshot_domain_lab[i_buffer],
                                                    amrex::CoordSys::cartesian,
                                                    BTdiag_periodicity.data() );
-            
+
         } else if (lev > 0) {
             // Refine the geometry object defined at the previous level, lev-1
             auto & warpx = WarpX::GetInstance();
@@ -673,7 +673,7 @@ BTDiagnostics::Flush (int i_buffer)
         StitchBuffersForPlotfile(i_buffer);
     }
 
-    
+
     TMP_FlushLabFrameData (i_buffer);
     // Reset the buffer counter to zero after flushing out data stored in the buffer.
     ResetBufferCounter(i_buffer);
@@ -718,7 +718,7 @@ void BTDiagnostics::TMP_ClearSpeciesDataForBTD ()
 {
     m_output_species.clear();
     m_output_species_names.clear();
-    
+
 }
 
 void BTDiagnostics::StitchBuffersForPlotfile (int i_snapshot)
@@ -736,10 +736,10 @@ void BTDiagnostics::StitchBuffersForPlotfile (int i_snapshot)
             amrex::UtilCreateDirectory(snapshot_Level0_path, 0755);
         }
 
-        // Path of the buffer recently flushed 
+        // Path of the buffer recently flushed
         std::string BufferPath_prefix = snapshot_path + "/buffer";
         const std::string recent_Buffer_filepath = amrex::Concatenate(BufferPath_prefix,iteration[0]);
-    
+
         // Header file of the recently flushed buffer
         std::string recent_Header_filename = recent_Buffer_filepath+"/Header";
         std::string recent_Buffer_Level0_path = recent_Buffer_filepath + "/Level_0";
@@ -748,7 +748,7 @@ void BTDiagnostics::StitchBuffersForPlotfile (int i_snapshot)
         std::string snapshot_FabHeaderFilename = snapshot_Level0_path + "/Cell_H";
         std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_",m_buffer_flush_counter[i_snapshot],5);
         std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_",m_buffer_flush_counter[i_snapshot], 5);
-        
+
 
         if ( m_buffer_flush_counter[i_snapshot] == 0) {
             std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
@@ -770,11 +770,11 @@ void BTDiagnostics::StitchBuffersForPlotfile (int i_snapshot)
             // Check if buffer*istep file is present
         }
         amrex::Print() << " I am destroying " << recent_Buffer_filepath << "\n";
-        amrex::FileSystem::RemoveAll(recent_Buffer_filepath);        
+        amrex::FileSystem::RemoveAll(recent_Buffer_filepath);
 
     } // ParallelContext if ends
     amrex::ParallelDescriptor::Barrier();
-}  
+}
 
 void
 BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_path,
@@ -809,10 +809,10 @@ BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_pat
                                   snapshot_Box.bigEnd(idim));
     }
     amrex::Box domain_box(box_lo, box_hi);
-    snapshot_HeaderImpl.set_probDomain(domain_box);    
+    snapshot_HeaderImpl.set_probDomain(domain_box);
 
     // Increment numFabs
-    snapshot_HeaderImpl.IncrementNumFabs(); 
+    snapshot_HeaderImpl.IncrementNumFabs();
     snapshot_HeaderImpl.AppendNewFabLo( buffer_HeaderImpl.FabLo(0));
     snapshot_HeaderImpl.AppendNewFabHi( buffer_HeaderImpl.FabHi(0));
 
@@ -834,7 +834,7 @@ BTDiagnostics::InterleaveFabArrayHeader(std::string Buffer_FabHeader_path,
     // Increment existing fabs in snapshot with the number of fabs in the buffer
     snapshot_FabHeader.IncreaseMultiFabSize( Buffer_FabHeader.ba_size() );
     snapshot_FabHeader.ResizeFabData();
-    
+
     for (int ifab = 0; ifab < Buffer_FabHeader.ba_size(); ++ifab) {
         int new_ifab = snapshot_FabHeader.ba_size() - 1 + ifab;
         snapshot_FabHeader.SetBox(new_ifab, Buffer_FabHeader.ba_box(ifab) );
