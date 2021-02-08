@@ -237,7 +237,7 @@ jobs:
 # timeout: >60min
 - job: linux_spack
   displayName: Ubuntu spack
-  timeoutInMinutes: 120
+  timeoutInMinutes: 360
   pool:
     vmImage: ubuntu-latest
   steps:
@@ -257,7 +257,7 @@ jobs:
 
 - job: linux_spack_nompi
   displayName: Ubuntu spack w/o MPI
-  timeoutInMinutes: 120
+  timeoutInMinutes: 360
   pool:
     vmImage: ubuntu-latest
   steps:
@@ -643,7 +643,7 @@ jobs:
 # timeout: >60min
 - job: macOS_spack
   displayName: macOS spack
-  timeoutInMinutes: 120
+  timeoutInMinutes: 360
   pool:
     vmImage: macOS-latest
   steps:
@@ -662,7 +662,7 @@ jobs:
 
 - job: macOS_spack_nompi
   displayName: macOS spack from dev w/o MPI
-  timeoutInMinutes: 120
+  timeoutInMinutes: 360
   pool:
     vmImage: macOS-latest
   steps:
