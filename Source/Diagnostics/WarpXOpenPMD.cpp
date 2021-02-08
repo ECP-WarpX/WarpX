@@ -257,8 +257,8 @@ void WarpXOpenPMDPlot::SetStep (int ts, const std::string& filePrefix)
 
 void WarpXOpenPMDPlot::CloseStep ()
 {
-    //if (m_Series)
-    //    m_Series->iterations[m_CurrentStep].close();
+    if (m_Series)
+        m_Series->iterations[m_CurrentStep].close();
 }
 
 void

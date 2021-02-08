@@ -553,7 +553,6 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
                                                  BTdiag_periodicity.data() );
         } else if (lev > 0 ) {
             // Refine the geometry object defined at the previous level, lev-1
-            auto & warpx = WarpX::GetInstance();
             m_geom_output[i_buffer][lev] = amrex::refine( m_geom_output[i_buffer][lev-1],
                                                           warpx.RefRatio(lev-1) );
         }
@@ -585,7 +584,6 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
 
         } else if (lev > 0) {
             // Refine the geometry object defined at the previous level, lev-1
-            auto & warpx = WarpX::GetInstance();
             m_geom_snapshot[i_buffer][lev] = amrex::refine( m_geom_snapshot[i_buffer][lev-1],
                                                             warpx.RefRatio(lev-1) );
         }
@@ -670,7 +668,7 @@ BTDiagnostics::Flush (int i_buffer)
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
 
     if (m_format == "plotfile") {
-        StitchBuffersForPlotfile(i_buffer);
+        MergeBuffersForPlotfile(i_buffer);
     }
 
 
@@ -721,7 +719,7 @@ void BTDiagnostics::TMP_ClearSpeciesDataForBTD ()
 
 }
 
-void BTDiagnostics::StitchBuffersForPlotfile (int i_snapshot)
+void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
 {
     auto & warpx = WarpX::GetInstance();
     const amrex::Vector<int> iteration = warpx.getistep();
@@ -729,8 +727,10 @@ void BTDiagnostics::StitchBuffersForPlotfile (int i_snapshot)
 
         // Path to final snapshot plotfiles
         std::string snapshot_path = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_snapshot,5);
+        // BTD plotfile have only one level, Level0.
         std::string snapshot_Level0_path = snapshot_path + "/Level_0";
         std::string snapshot_Header_filename = snapshot_path + "/Header";
+        // Create directory only when the first buffer is flushed out.
         if (m_buffer_flush_counter[i_snapshot] == 0 ) {
             // Create Level_0 directory to store all Cell_D and Cell_H files
             amrex::UtilCreateDirectory(snapshot_Level0_path, 0755);
@@ -739,37 +739,36 @@ void BTDiagnostics::StitchBuffersForPlotfile (int i_snapshot)
         // Path of the buffer recently flushed
         std::string BufferPath_prefix = snapshot_path + "/buffer";
         const std::string recent_Buffer_filepath = amrex::Concatenate(BufferPath_prefix,iteration[0]);
-
         // Header file of the recently flushed buffer
         std::string recent_Header_filename = recent_Buffer_filepath+"/Header";
         std::string recent_Buffer_Level0_path = recent_Buffer_filepath + "/Level_0";
         std::string recent_Buffer_FabHeaderFilename = recent_Buffer_Level0_path + "/Cell_H";
+        // Every buffer that is flushed only has a single fab.
         std::string recent_Buffer_FabFilename = recent_Buffer_Level0_path + "/Cell_D_00000";
+        // Existing snapshot Fab Header Filename
         std::string snapshot_FabHeaderFilename = snapshot_Level0_path + "/Cell_H";
-        std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_",m_buffer_flush_counter[i_snapshot],5);
         std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_",m_buffer_flush_counter[i_snapshot], 5);
+        // Name of the newly appended fab in the snapshot
+        std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_",m_buffer_flush_counter[i_snapshot],5);
 
 
-        if ( m_buffer_flush_counter[i_snapshot] == 0) {
+        if ( m_buffer_flush_counter[i_snapshot] == 0) {            
             std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
             std::rename(recent_Buffer_FabHeaderFilename.c_str(),
                         snapshot_FabHeaderFilename.c_str());
             std::rename(recent_Buffer_FabFilename.c_str(),
                         snapshot_FabFilename.c_str());
         } else {
-            // 0 Interleave Header file
-            // look at PlotFileDataImpl::PlotFileDataImpl ()
+            // Interleave Header file
             InterleaveBufferAndSnapshotHeader(recent_Header_filename,
                                               snapshot_Header_filename);
-            //1. Copy Cell_D_00000 to snapshot_Level0/Cell_D_00001
             InterleaveFabArrayHeader(recent_Buffer_FabHeaderFilename,
                                      snapshot_FabHeaderFilename,
                                      new_snapshotFabFilename);
             std::rename(recent_Buffer_FabFilename.c_str(),
                         snapshot_FabFilename.c_str());
-            // Check if buffer*istep file is present
         }
-        amrex::Print() << " I am destroying " << recent_Buffer_filepath << "\n";
+        // Destroying the recently flushed buffer directory since it is already merged.
         amrex::FileSystem::RemoveAll(recent_Buffer_filepath);
 
     } // ParallelContext if ends
@@ -813,6 +812,7 @@ BTDiagnostics::InterleaveBufferAndSnapshotHeader ( std::string buffer_Header_pat
 
     // Increment numFabs
     snapshot_HeaderImpl.IncrementNumFabs();
+    // The number of fabs in the recently written buffer is always 1.
     snapshot_HeaderImpl.AppendNewFabLo( buffer_HeaderImpl.FabLo(0));
     snapshot_HeaderImpl.AppendNewFabHi( buffer_HeaderImpl.FabHi(0));
 
@@ -838,6 +838,7 @@ BTDiagnostics::InterleaveFabArrayHeader(std::string Buffer_FabHeader_path,
     for (int ifab = 0; ifab < Buffer_FabHeader.ba_size(); ++ifab) {
         int new_ifab = snapshot_FabHeader.ba_size() - 1 + ifab;
         snapshot_FabHeader.SetBox(new_ifab, Buffer_FabHeader.ba_box(ifab) );
+        // Set Name of the new fab using newsnapshot_FabFilename.
         snapshot_FabHeader.SetFabName(new_ifab, Buffer_FabHeader.fodPrefix(ifab),
                                                 newsnapshot_FabFilename,
                                                 Buffer_FabHeader.FabHead(ifab) );
