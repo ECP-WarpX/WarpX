@@ -30,9 +30,10 @@ current_correction = True if re.search( 'current_correction', filename ) else Fa
 
 ds = yt.load( filename )
 
-Ex= ds.index.grids[0]['boxlib', 'Ex'].squeeze().v
-Ey= ds.index.grids[0]['boxlib', 'Ey'].squeeze().v
-Ez= ds.index.grids[0]['boxlib', 'Ez'].squeeze().v
+all_data = ds.covering_grid(level = 0, left_edge = ds.domain_left_edge, dims = ds.domain_dimensions)
+Ex = all_data['boxlib', 'Ex'].squeeze().v
+Ey = all_data['boxlib', 'Ey'].squeeze().v
+Ez = all_data['boxlib', 'Ez'].squeeze().v
 
 if (averaged):
     # energyE_ref was calculated with Galilean PSATD method (v_galilean = (0,0,0.99498743710662))
@@ -58,8 +59,8 @@ assert( error_rel < tolerance_rel )
 
 # Check charge conservation (relative L-infinity norm of error) with current correction
 if current_correction:
-    rho  = ds.index.grids[0]['boxlib', 'rho' ].squeeze().v
-    divE = ds.index.grids[0]['boxlib', 'divE'].squeeze().v
+    rho  = all_data['boxlib', 'rho' ].squeeze().v
+    divE = all_data['boxlib', 'divE'].squeeze().v
     error_rel = np.amax( np.abs( divE - rho/scc.epsilon_0 ) ) / np.amax( np.abs( rho/scc.epsilon_0 ) )
     tolerance = 1e-9
     print("Check charge conservation:")
