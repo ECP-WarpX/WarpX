@@ -37,7 +37,7 @@ void
 PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    
+
     const amrex::Real dt = WarpX::GetInstance().getdt(0);
     if ( int(std::floor(cur_time/dt)) % m_ndt != 0 ) return;
 
@@ -62,7 +62,7 @@ PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleConta
                 amrex::Gpu::synchronize();
             }
             Real wt = amrex::second();
- 
+
             doCoulombCollisionsWithinTile( lev, mfi, species1, species2 );
 
             if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)

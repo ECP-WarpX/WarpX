@@ -63,7 +63,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
     amrex::Real const dt ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    
+
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -74,7 +74,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
             amrex::Gpu::synchronize();
         }
         Real wt = amrex::second();
-        
+
         // Extract field data for this grid/tile
         Array4<Real> const& Bx = Bfield[0]->array(mfi);
         Array4<Real> const& By = Bfield[1]->array(mfi);
@@ -134,7 +134,7 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
     amrex::Real const dt ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    
+
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -232,7 +232,7 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
             }
 
         );
-        
+
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
         {
             amrex::Gpu::synchronize();

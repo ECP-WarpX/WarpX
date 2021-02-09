@@ -69,7 +69,7 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
             amrex::Gpu::synchronize();
         }
         Real wt = amrex::second();
-        
+
         // Note: the size of the real-space box and spectral-space box
         // differ when using real-to-complex FFT. When initializing
         // the FFT plan, the valid dimensions are those of the real-space box.
