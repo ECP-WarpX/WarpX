@@ -68,11 +68,11 @@ warpx.do_dive_cleaning = 1
 
 # Diagnostics
 diagnostics.diags_names = diag1 diagraw
-diag1.period = 2
+diag1.intervals = 2
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell divE divB
 
-diagraw.period = 2
+diagraw.intervals = 2
 diagraw.plot_raw_fields=1
 diagraw.diag_type = Full
 diagraw.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell divE divB

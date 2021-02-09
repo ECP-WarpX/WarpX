@@ -62,8 +62,16 @@
 /* Pull parsers.  */
 #define YYPULL 1
 
-
-
+/* Substitute the type names.  */
+#define YYSTYPE         WXPARSERSTYPE
+/* Substitute the variable and function names.  */
+#define yyparse         wxparserparse
+#define yylex           wxparserlex
+#define yyerror         wxparsererror
+#define yydebug         wxparserdebug
+#define yynerrs         wxparsernerrs
+#define yylval          wxparserlval
+#define yychar          wxparserchar
 
 /* First part of user prologue.  */
 
@@ -71,7 +79,7 @@
     #include <stdlib.h>
     #include <math.h>
     #include "wp_parser_y.h"
-    int yylex (void);
+    int wxparserlex (void);
 
 
 # ifndef YY_CAST
@@ -105,20 +113,28 @@
 
 /* Use api.header.include to #include this header
    instead of duplicating it here.  */
-#ifndef YY_YY_WP_PARSER_TAB_H_INCLUDED
-# define YY_YY_WP_PARSER_TAB_H_INCLUDED
+#ifndef YY_WXPARSER_WP_PARSER_TAB_H_INCLUDED
+# define YY_WXPARSER_WP_PARSER_TAB_H_INCLUDED
 /* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
+#ifndef WXPARSERDEBUG
+# if defined YYDEBUG
 #if YYDEBUG
-extern int yydebug;
+#   define WXPARSERDEBUG 1
+#  else
+#   define WXPARSERDEBUG 0
+#  endif
+# else /* ! defined YYDEBUG */
+#  define WXPARSERDEBUG 0
+# endif /* ! defined YYDEBUG */
+#endif  /* ! defined WXPARSERDEBUG */
+#if WXPARSERDEBUG
+extern int wxparserdebug;
 #endif
 
 /* Token type.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
+#ifndef WXPARSERTOKENTYPE
+# define WXPARSERTOKENTYPE
+  enum wxparsertokentype
   {
     NODE = 258,
     NUMBER = 259,
@@ -139,8 +155,8 @@ extern int yydebug;
 #endif
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-union YYSTYPE
+#if ! defined WXPARSERSTYPE && ! defined WXPARSERSTYPE_IS_DECLARED
+union WXPARSERSTYPE
 {
 
     struct wp_node* n;
@@ -151,17 +167,17 @@ union YYSTYPE
 
 
 };
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+typedef union WXPARSERSTYPE WXPARSERSTYPE;
+# define WXPARSERSTYPE_IS_TRIVIAL 1
+# define WXPARSERSTYPE_IS_DECLARED 1
 #endif
 
 
-extern YYSTYPE yylval;
+extern WXPARSERSTYPE wxparserlval;
 
-int yyparse (void);
+int wxparserparse (void);
 
-#endif /* !YY_YY_WP_PARSER_TAB_H_INCLUDED  */
+#endif /* !YY_WXPARSER_WP_PARSER_TAB_H_INCLUDED  */
 
 
 
@@ -406,7 +422,7 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
-         || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
+         || (defined WXPARSERSTYPE_IS_TRIVIAL && WXPARSERSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
@@ -521,17 +537,17 @@ static const yytype_int8 yytranslate[] =
       16,    24,    25
 };
 
-#if YYDEBUG
+#if WXPARSERDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    67,    67,    68,    77,    78,    79,    80,    81,    82,
-      83,    84,    85,    86,    87,    88,    89,    90,    91,    92,
-      93,    94,    95,    96
+       0,    68,    68,    69,    78,    79,    80,    81,    82,    83,
+      84,    85,    86,    87,    88,    89,    90,    91,    92,    93,
+      94,    95,    96,    97
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || 0
+#if WXPARSERDEBUG || YYERROR_VERBOSE || 0
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
@@ -712,7 +728,7 @@ static const yytype_int8 yyr2[] =
 
 
 /* Enable debugging if requested.  */
-#if YYDEBUG
+#if WXPARSERDEBUG
 
 # ifndef YYFPRINTF
 #  include <stdio.h> /* INFRINGES ON USER NAME SPACE */
@@ -835,12 +851,12 @@ do {                                    \
 /* Nonzero means print parse trace.  It is left uninitialized so that
    multiple parsers can coexist.  */
 int yydebug;
-#else /* !YYDEBUG */
+#else /* !WXPARSERDEBUG */
 # define YYDPRINTF(Args)
 # define YY_SYMBOL_PRINT(Title, Type, Value, Location)
 # define YY_STACK_PRINT(Bottom, Top)
 # define YY_REDUCE_PRINT(Rule)
-#endif /* !YYDEBUG */
+#endif /* !WXPARSERDEBUG */
 
 
 /* YYINITDEPTH -- initial size of the parser's stacks.  */

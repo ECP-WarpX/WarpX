@@ -20,7 +20,7 @@ struct ResamplingAlgorithm
     /**
      * \brief Virtual operator() of the abstract ResamplingAlgorithm class
      */
-    virtual void operator() (WarpXParIter& /*pti*/, const int /*lev*/, WarpXParticleContainer */*pc*/) const = 0;
+    virtual void operator() (WarpXParIter& /*pti*/, const int /*lev*/, WarpXParticleContainer* /*pc*/) const = 0;
 
     /**
      * \brief Virtual destructor of the abstract ResamplingAlgorithm class

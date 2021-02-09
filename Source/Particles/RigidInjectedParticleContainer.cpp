@@ -7,7 +7,7 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #   include <omp.h>
 #endif
 
@@ -22,6 +22,8 @@
 #include "Pusher/GetAndSetPosition.H"
 #include "Gather/ScaleFields.H"
 #include "Gather/FieldGather.H"
+
+#include <AMReX_Geometry.H>
 
 #include <limits>
 #include <sstream>
@@ -82,7 +84,7 @@ RigidInjectedParticleContainer::RemapParticles()
 
         for (int lev = 0; lev <= finestLevel(); lev++) {
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
             {
@@ -147,7 +149,7 @@ RigidInjectedParticleContainer::BoostandRemapParticles()
 
     const Real csqi = 1./(PhysConst::c*PhysConst::c);
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
     {
@@ -390,7 +392,7 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
 
     const std::array<Real,3>& dx = WarpX::CellSize(std::max(lev,0));
 
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel
 #endif
     {

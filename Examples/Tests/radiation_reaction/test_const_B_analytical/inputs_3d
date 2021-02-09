@@ -59,6 +59,6 @@ particles.B_external_particle = 917978.2333474257 1376967.350021139 2753934.7000
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 64
+diag1.intervals = 64
 diag1.diag_type = Full
 diag1.fields_to_plot = rho

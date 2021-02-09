@@ -63,5 +63,5 @@ resampled_part2.resampling_trigger_max_avg_ppc = 395
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 8
+diag1.intervals = 8
 diag1.diag_type = Full

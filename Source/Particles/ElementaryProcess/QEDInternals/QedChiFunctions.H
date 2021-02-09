@@ -15,7 +15,7 @@
 
 #include "QedWrapperCommons.H"
 
-#include <physics/chi_functions.hpp>
+#include <picsar_qed/physics/chi_functions.hpp>
 
 namespace QedUtils{
     /**

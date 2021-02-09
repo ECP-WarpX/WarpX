@@ -3,6 +3,25 @@ name: Ubuntu build
 on: [push, pull_request]
 
 jobs:
+  build_minimal:
+    name: GCC Minimal w/o MPI [Linux]
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: install dependencies
+      run: |
+        .github/workflows/dependencies/gcc.sh
+    - name: build WarpX
+      run: |
+        cmake -S . -B build            \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_MPI=OFF              \
+          -DWarpX_QED=OFF
+        cmake --build build -j 2
+
+        python3 -m pip install --upgrade pip setuptools wheel
+        python3 -m pip install -v .
+
 # Ref.:
 #   https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/ubuntu18.04/10.1/base/Dockerfile
 #   https://github.com/ComputationalRadiationPhysics/picongpu/blob/0.5.0/share/picongpu/dockerfiles/ubuntu-1604/Dockerfile
@@ -41,7 +60,7 @@ jobs:
 # intel-basekit intel-hpckit are too large in size
   build_icc:
     name: oneAPI ICC SP&DP [Linux]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies

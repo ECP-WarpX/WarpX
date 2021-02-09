@@ -9,7 +9,6 @@ amr.blocking_factor = 32
 amr.max_level = 0
 psatd.v_galilean = 0. 0. 0.99498743710662
 
-
 geometry.coord_sys   = 0
 geometry.is_periodic = 1 1 1
 geometry.prob_lo     = -9.67 -9.67 -9.67
@@ -80,5 +79,5 @@ ions.uz_th = 0.0001
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 100
+diag1.intervals = 100
 diag1.diag_type = Full

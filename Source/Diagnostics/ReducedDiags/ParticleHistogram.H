@@ -45,6 +45,12 @@ public:
     static constexpr int m_nvars = 7;
     std::unique_ptr<ParserWrapper<m_nvars>> m_parser;
 
+    /// Optional parser to filter particles before doing the histogram
+    std::unique_ptr<ParserWrapper<m_nvars>> m_parser_filter;
+
+    /// Whether the filter is activated
+    bool m_do_parser_filter = false;
+
     /** This function computes a histogram of user defined quantity.
      *  \param [in] step current time step.
      */

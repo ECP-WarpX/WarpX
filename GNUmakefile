@@ -11,7 +11,7 @@ WARN_ALL = TRUE
 #DIM     = 2
 DIM = 3
 
-#QED	       = TRUE
+QED	       = TRUE
 #QED_TABLE_GEN = TRUE
 
 COMP = gcc
@@ -39,6 +39,8 @@ WarpxBinDir = Bin
 USE_PSATD = FALSE
 USE_PSATD_PICSAR = FALSE
 USE_RZ = FALSE
+
+USE_EB = FALSE
 
 WARPX_HOME := .
 include $(WARPX_HOME)/Source/Make.WarpX

@@ -8,12 +8,14 @@ Until we have transitioned our documentation and functionality completely, pleas
 
 Progress status: `see on GitHub <https://github.com/ECP-WarpX/WarpX/projects/10>`_
 
+
 Introduction to CMake
 =====================
 
 If you are new to CMake, `this short tutorial <https://hsf-training.github.io/hsf-training-cmake-webpage/>`_ from the HEP Software foundation is the perfect place to get started with it.
 
 If you just want to use CMake to build the project, jump into sections *1. Introduction*, *2. Building with CMake* and *9. Finding Packages*.
+
 
 Dependencies
 ============
@@ -24,6 +26,7 @@ Please see installation instructions below.
 - a mature `C++14 <https://en.wikipedia.org/wiki/C%2B%2B14>`_ compiler: e.g. GCC 5, Clang 3.6 or newer
 - `CMake 3.15.0+ <https://cmake.org>`_
 - `AMReX <https://amrex-codes.github.io>`_: we automatically download and compile a copy of AMReX
+- `PICSAR <https://github.com/ECP-WarpX/picsar>`_: we automatically download and compile a copy of PICSAR
 
 Optional dependencies include:
 
@@ -31,11 +34,12 @@ Optional dependencies include:
 - `CUDA Toolkit 9.0+ <https://developer.nvidia.com/cuda-downloads>`_: for Nvidia GPU support (see `matching host-compilers <https://gist.github.com/ax3l/9489132>`_)
 - `OpenMP 3.1+ <https://www.openmp.org>`_: for threaded CPU execution (currently not fully accelerated)
 - `FFTW3 <http://www.fftw.org>`_: for spectral solver (PSATD) support
-- `Boost 1.66.0+ <https://www.boost.org/>`_: for QED support
+- `Boost 1.66.0+ <https://www.boost.org/>`_: for QED lookup tables generation support
 - `openPMD-api 0.12.0+ <https://github.com/openPMD/openPMD-api>`_: we automatically download and compile a copy of openPMD-api for openPMD I/O support
 
   - see `optional I/O backends <https://github.com/openPMD/openPMD-api#dependencies>`_
 - `CCache <https://ccache.dev>`_: to speed up rebuilds (needs 3.7.9+ for CUDA)
+
 
 Install Dependencies
 ====================
@@ -75,6 +79,7 @@ or macOS/Linux:
 
 Now, ``cmake --version`` should be at version 3.14.0 or newer.
 
+
 Configure your compiler
 =======================
 
@@ -91,6 +96,7 @@ If you also want to select a CUDA compiler:
 
    export CUDACXX=$(which nvcc)
    export CUDAHOSTCXX=$(which g++)
+
 
 Build & Test
 ============
@@ -123,6 +129,7 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_ASCENT``              ON/**OFF**                                   Ascent in situ visualization
 ``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
 ``WarpX_DIMS``                **3**/2/RZ                                   Simulation dimensionality
+``WarpX_EB``                  ON/**OFF**                                   Embedded boundary support
 ``WarpX_LIB``                 ON/**OFF**                                   Build WarpX as a shared library
 ``WarpX_MPI``                 **ON**/OFF                                   Multi-node support (message-passing)
 ``WarpX_MPI_THREAD_MULTIPLE`` **ON**/OFF                                   MPI thread-multiple support, i.e. for ``async_io``
@@ -130,7 +137,8 @@ CMake Option                  Default & Values                             Descr
 ``WarpX_PARSER_DEPTH``        **24**                                       Maximum parser depth for input file functions
 ``WarpX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
-``WarpX_QED``                 ON/**OFF**                                   PICSAR QED (requires Boost and PICSAR)
+``WarpX_QED``                 **ON**/OFF                                   QED support (requires PICSAR)
+``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation support (requires PICSAR and Boost)
 ``WarpX_amrex_repo``          ``https://github.com/AMReX-Codes/amrex.git`` Repository URI to pull and build AMReX from
 ``WarpX_amrex_branch``        ``development``                              Repository branch for ``WarpX_amrex_repo``
 ``WarpX_amrex_internal``      **ON**/OFF                                   Needs a pre-installed AMReX library if set to ``OFF``
@@ -142,6 +150,7 @@ Assuming AMReX' source is located in ``$HOME/src/amrex`` and changes are committ
 
 For developers, WarpX can be configured in further detail with options from AMReX, which are `documented in the AMReX manual <https://amrex-codes.github.io/amrex/docs_html/BuildingAMReX.html#customization-options>`_.
 
+
 Run
 ===
 
@@ -149,9 +158,55 @@ An executable WarpX binary with the current compile-time options encoded in its 
 
 Additionally, a `symbolic link <https://en.wikipedia.org/wiki/Symbolic_link>`_ named ``warpx`` can be found in that directory, which points to the last built WarpX executable.
 
-Python Wrapper
-==============
 
+Python Wrapper (New Scripts)
+============================
+
+Build and install a wheel from the root of the WarpX source tree:
+
+.. code-block:: bash
+
+   python3 -m pip wheel -v .
+   python3 -m pip install *whl
+
+Maintainers might also want to generate a self-contained source package that can be distributed to exotic architectures:
+
+.. code-block:: bash
+
+   python setup.py sdist --dist-dir .
+   pip wheel -v pywarpx-*.tar.gz
+   python3 -m pip install *whl
+
+The above steps can also be executed in one go to build from source on a machine:
+
+.. code-block:: bash
+
+   python setup.py sdist --dist-dir .
+   pip install -v pywarpx-*.tar.gz
+
+Environment variables can be used to control the build step:
+
+============================= ============================================ =======================================================
+Environment Variable          Default & Values                             Description
+============================= ============================================ =======================================================
+``WarpX_COMPUTE``             NOACC/**OMP**/CUDA/SYCL/HIP                  On-node, accelerated computing backend
+``WarpX_DIMS``                ``"2;3;RZ"``                                 Simulation dimensionalities (semicolon-separated list)
+``WarpX_MPI``                 ON/**OFF**                                   Multi-node support (message-passing)
+``WarpX_OPENPMD``             ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
+``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
+``WarpX_QED``                 **ON**/OFF                                   PICSAR QED (requires PICSAR)
+``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation (requires PICSAR and Boost)
+``BUILD_PARALLEL``            ``2``                                        Number of threads to use for parallel builds
+``BUILD_SHARED_LIBS``         ON/**OFF**                                   Build shared libraries for dependencies
+``HDF5_USE_STATIC_LIBRARIES`` ON/**OFF**                                   Prefer static libraries for HDF5 dependency (openPMD)
+``ADIOS_USE_STATIC_LIBS``     ON/**OFF**                                   Prefer static libraries for ADIOS1 dependency (openPMD)
+============================= ============================================ =======================================================
+
+
+Python Wrapper (Legacy Scripts)
+===============================
+
+This is a manual workflow using the GNUmake-like Python install logic.
 The Python wrapper library can be built by pre-building WarpX into one or more shared libraries.
 For full functionality in 2D, 3D and RZ geometry, the following workflow can be executed:
 

@@ -62,7 +62,7 @@ void FiniteDifferenceSolver::EvolveFPMLCartesian (
     amrex::Real const dt ) {
 
     // Loop through the grids, and over the tiles within each grid
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Ffield, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {

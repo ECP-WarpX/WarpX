@@ -83,7 +83,7 @@ positrons.momentum_function_uz(x,y,z) = "-epsilon * k/kp * cos(k*x) * cos(k*y) *
 
 # Diagnostics
 diagnostics.diags_names = diag1
-diag1.period = 40
+diag1.intervals = 40
 diag1.diag_type = Full
 diag1.fields_to_plot = Ex Ey Ez Bx By Bz jx jy jz part_per_cell rho
 diag1.electrons.variables = w ux

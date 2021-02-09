@@ -69,7 +69,7 @@ void FiniteDifferenceSolver::EvolveFCartesian (
     amrex::Real const dt ) {
 
     // Loop through the grids, and over the tiles within each grid
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Ffield, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
@@ -92,7 +92,7 @@ void FiniteDifferenceSolver::EvolveFCartesian (
         // Extract tileboxes for which to loop
         Box const& tf  = mfi.tilebox(Ffield->ixType().toIntVect());
 
-        Real constexpr inv_epsilon0 = 1./PhysConst::ep0;
+        Real constexpr inv_epsilon0 = 1._rt/PhysConst::ep0;
 
         // Loop over the cells and update the fields
         amrex::ParallelFor(tf,
@@ -122,7 +122,7 @@ void FiniteDifferenceSolver::EvolveFCylindrical (
     amrex::Real const dt ) {
 
     // Loop through the grids, and over the tiles within each grid
-#ifdef _OPENMP
+#ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Ffield, TilingIfNotGPU()); mfi.isValid(); ++mfi ) {

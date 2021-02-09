@@ -4,7 +4,28 @@ function(find_picsar)
         include(FetchContent)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
-        # FIXME no option to control WarpX_QED_TABLE_GEN / Boost trigger yet
+        # Enable or disable QED lookup tables generation
+
+        # If table generation is enabled, enable or disable
+        # openMP support depending on WarpX_COMPUTE
+        if(WarpX_QED_TABLE_GEN)
+            set(PXRMP_QED_TABLEGEN ON CACHE INTERNAL "")
+            if(WarpX_COMPUTE STREQUAL OMP)
+                set(PXRMP_QED_OMP ON CACHE INTERNAL "")
+            else()
+                set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
+            endif()
+        else()
+            set(PXRMP_QED_TABLEGEN OFF CACHE INTERNAL "")
+            set(PXRMP_QED_OMP OFF CACHE INTERNAL "")
+        endif()
+
+        # Always disable tests
+        set (PXRMP_QED_TEST OFF CACHE INTERNAL "")
+        
+        if(WarpX_COMPUTE STREQUAL SYCL)
+            set (PXRMP_DPCPP_FIX ON CACHE INTERNAL "")
+        endif()
 
         FetchContent_Declare(fetchedpicsar
             GIT_REPOSITORY ${WarpX_picsar_repo}
@@ -15,7 +36,7 @@ function(find_picsar)
 
         if(NOT fetchedpicsar_POPULATED)
             FetchContent_Populate(fetchedpicsar)
-            add_subdirectory(${fetchedpicsar_SOURCE_DIR}/src/multi_physics/QED ${fetchedpicsar_BINARY_DIR})
+            add_subdirectory(${fetchedpicsar_SOURCE_DIR}/multi_physics/QED ${fetchedpicsar_BINARY_DIR})
         endif()
 
         # advanced fetch options
@@ -29,8 +50,12 @@ function(find_picsar)
         # PICSAR options not relevant to WarpX users
         mark_as_advanced(DIM)
         mark_as_advanced(USE_XSDK_DEFAULTS)
+        mark_as_advanced(PXRMP_QED_TABLEGEN)
+        mark_as_advanced(PXRMP_QED_OMP)
+        mark_as_advanced(PXRMP_QED_TEST)
 
-        message(STATUS "PICSAR: Using INTERNAL version '${PICSAR_VERSION}'")
+        # PICSAR_VERSION: not yet defined
+        message(STATUS "PICSAR: Using INTERNAL version (git branch '${WarpX_picsar_branch}')")
     else()
     # not supported by PICSAR
     #    find_package(PICSAR 20.05 CONFIG REQUIRED QED)

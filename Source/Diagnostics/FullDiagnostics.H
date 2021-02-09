@@ -67,7 +67,11 @@ private:
     /** Update the physical extent of the diagnostic domain for moving window and
      *  galilean shift simulations
      */
-     void MovingWindowAndGalileanDomainShift () override;
+    void MovingWindowAndGalileanDomainShift () override;
+    /** This function queries deprecated input parameters and abort
+     *  the run if one of them is specified.
+     */
+    void BackwardCompatibility ();
 };
 
 #endif // WARPX_FULLDIAGNOSTICS_H_

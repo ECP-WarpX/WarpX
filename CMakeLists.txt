@@ -44,11 +44,13 @@ set_default_install_dirs()
 #
 option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
+option(WarpX_EB            "Embedded boundary support"                  OFF)
 option(WarpX_LIB           "Build WarpX as a shared library"            OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
-option(WarpX_QED           "PICSAR QED (requires Boost and PICSAR)"     OFF)
+option(WarpX_QED           "QED support (requires PICSAR)"                    ON)
+option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)" OFF)
 # TODO: sensei, legacy hdf5?
 
 set(WarpX_DIMS_VALUES 2 3 RZ)
@@ -181,6 +183,7 @@ endif()
 
 add_subdirectory(Source/BoundaryConditions)
 add_subdirectory(Source/Diagnostics)
+add_subdirectory(Source/EmbeddedBoundary)
 add_subdirectory(Source/Evolve)
 add_subdirectory(Source/FieldSolver)
 add_subdirectory(Source/Filter)
@@ -229,8 +232,10 @@ endif()
 
 if(WarpX_QED)
     target_compile_definitions(WarpX PUBLIC WARPX_QED)
-    # FIXME WARPX_QED_TABLE_GEN
-    target_link_libraries(WarpX PUBLIC pxrmp_qed)
+    if(WarpX_QED_TABLE_GEN)
+        target_compile_definitions(WarpX PUBLIC WARPX_QED_TABLE_GEN)
+    endif()
+    target_link_libraries(WarpX PUBLIC PXRMP_QED::PXRMP_QED)
 endif()
 
 # AMReX helper function: propagate CUDA specific target & source properties
