@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.15.0)
-project(WarpX VERSION 0.20.5)
+project(WarpX VERSION 21.02)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
