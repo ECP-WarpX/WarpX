@@ -523,7 +523,6 @@ BTDiagnostics::DefineFieldBufferMultiFab (const int i_buffer, const int lev)
         // TMP
         amrex::IntVect ref_ratio = amrex::IntVect(1);
         if (lev > 0 ) ref_ratio = WarpX::RefRatio(lev-1);
-        amrex::RealBox buffer_domain_lab;
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             amrex::Real cellsize;
             if (idim < AMREX_SPACEDIM-1) {
