@@ -159,30 +159,31 @@ void ParticleHistogram::ComputeDiags (int step)
     const bool is_unity_particle_weight =
         (m_norm == NormalizationType::unity_particle_weight) ? true : false;
 
-    for ( int i = 0; i < m_bin_num; ++i )
-    {
-        // compute the histogram
-        m_data[i] = ReduceSum( myspc,
-        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
-        {
-            // return 0 if the particle is filtered out
-            if (!fun_filterparser(p, amrex::RandomEngine())) {return 0.0_rt;}
-            // continue function if particle is not filtered out
-            auto const w  = p.rdata(PIdx::w);
-            amrex::ParticleReal x, y, z;
-            get_particle_position(p, x, y, z);
-            auto const ux = p.rdata(PIdx::ux)/PhysConst::c;
-            auto const uy = p.rdata(PIdx::uy)/PhysConst::c;
-            auto const uz = p.rdata(PIdx::uz)/PhysConst::c;
-            auto const f = fun_partparser(t,x,y,z,ux,uy,uz);
-            auto const f1 = bin_min + bin_size*i;
-            auto const f2 = bin_min + bin_size*(i+1);
-            if ( f > f1 && f < f2 ) {
-                if ( is_unity_particle_weight ) return 1.0_rt;
-                else return w;
-            } else return 0.0_rt;
-        });
+    // compute the histogram
+    for ( int i = 0; i < m_bin_num; ++i ) {
+        m_data[i] = 0.0_rt;
     }
+    ReduceSum( myspc,
+    [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+    {
+        // return 0 if the particle is filtered out
+        if (!fun_filterparser(p, amrex::RandomEngine())) {return 0.0_rt;}
+        // continue function if particle is not filtered out
+        auto const w  = p.rdata(PIdx::w);
+        amrex::ParticleReal x, y, z;
+        get_particle_position(p, x, y, z);
+        auto const ux = p.rdata(PIdx::ux)/PhysConst::c;
+        auto const uy = p.rdata(PIdx::uy)/PhysConst::c;
+        auto const uz = p.rdata(PIdx::uz)/PhysConst::c;
+        auto const f = fun_partparser(t,x,y,z,ux,uy,uz);
+        int i = int(std::floor((f-bin_min)/bin_size));
+        if ( is_unity_particle_weight ) {
+            amrex::HostDevice::Atomic::Add(&m_data[i],1.0_rt);
+        } else {
+            amrex::HostDevice::Atomic::Add(&m_data[i],w);
+        }
+        return 0.0_rt;
+    });
     // reduced sum over mpi ranks
     ParallelDescriptor::ReduceRealSum
         (m_data.data(), m_data.size(), ParallelDescriptor::IOProcessorNumber());
