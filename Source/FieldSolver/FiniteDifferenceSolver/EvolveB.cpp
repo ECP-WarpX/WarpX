@@ -62,12 +62,19 @@ void FiniteDifferenceSolver::EvolveBCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     amrex::Real const dt ) {
 
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Bfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
-
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
+        
         // Extract field data for this grid/tile
         Array4<Real> const& Bx = Bfield[0]->array(mfi);
         Array4<Real> const& By = Bfield[1]->array(mfi);
@@ -109,8 +116,13 @@ void FiniteDifferenceSolver::EvolveBCartesian (
 
         );
 
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::AddNoRet( &(*cost)[mfi.index()], wt);
+        }
     }
-
 }
 
 #else // corresponds to ifndef WARPX_DIM_RZ
@@ -121,11 +133,18 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     amrex::Real const dt ) {
 
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    
     // Loop through the grids, and over the tiles within each grid
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
     for ( MFIter mfi(*Bfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+        }
+        Real wt = amrex::second();
 
         // Extract field data for this grid/tile
         Array4<Real> const& Br = Bfield[0]->array(mfi);
@@ -213,9 +232,14 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
             }
 
         );
-
+        
+        if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers)
+        {
+            amrex::Gpu::synchronize();
+            wt = amrex::second() - wt;
+            amrex::HostDevice::Atomic::AddNoRet( &(*cost)[mfi.index()], wt);
+        }
     }
-
 }
 
 #endif // corresponds to ifndef WARPX_DIM_RZ
