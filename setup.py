@@ -104,16 +104,16 @@ class CMakeBuild(build_ext):
             env.get('CXXFLAGS', ''),
             self.distribution.get_version()
         )
-        if not os.path.exists(self.build_temp):
-            os.makedirs(self.build_temp)
+        build_dir = os.path.join(self.build_temp, dims)
+        os.makedirs(build_dir, exist_ok=True)
         subprocess.check_call(
             ['cmake', ext.sourcedir] + cmake_args,
-            cwd=self.build_temp,
+            cwd=build_dir,
             env=env
         )
         subprocess.check_call(
             ['cmake', '--build', '.'] + build_args,
-            cwd=self.build_temp
+            cwd=build_dir
         )
         # note that this does not call install;
         # we pick up artifacts directly from the build output dirs
