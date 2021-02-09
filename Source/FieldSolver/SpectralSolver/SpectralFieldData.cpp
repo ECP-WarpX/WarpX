@@ -89,7 +89,7 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
-            amrex::HostDevice::Atomic::AddNoRet( &(*cost)[mfi.index()], wt);
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
 }
@@ -191,7 +191,7 @@ SpectralFieldData::ForwardTransform (const MultiFab& mf, const int field_index,
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
-            amrex::HostDevice::Atomic::AddNoRet( &(*cost)[mfi.index()], wt);
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
 }
@@ -303,7 +303,7 @@ SpectralFieldData::BackwardTransform( MultiFab& mf,
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
-            amrex::HostDevice::Atomic::AddNoRet( &(*cost)[mfi.index()], wt);
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
 }

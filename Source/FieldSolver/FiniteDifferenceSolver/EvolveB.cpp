@@ -120,7 +120,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
-            amrex::HostDevice::Atomic::AddNoRet( &(*cost)[mfi.index()], wt);
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
 }
@@ -237,7 +237,7 @@ void FiniteDifferenceSolver::EvolveBCylindrical (
         {
             amrex::Gpu::synchronize();
             wt = amrex::second() - wt;
-            amrex::HostDevice::Atomic::AddNoRet( &(*cost)[mfi.index()], wt);
+            amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
         }
     }
 }
