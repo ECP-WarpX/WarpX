@@ -71,11 +71,28 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         Array4<Real const> const& ey_fp = Efield_fp[0][1]->const_array(mfi);
         Array4<Real const> const& ez_fp = Efield_fp[0][2]->const_array(mfi);
 
+        // We cannot loop over the full box (which would be obtained by setting bx = mfi.fabbox()),
+        // including ghost cells, because the order of interpolation might be larger than 2 and require
+        // a stencil with too many points, when we get close to the boundaries of a computational
+        // sub-domain, while interpolating inside the ghost regions (both the interior ghost regions,
+        // which will be filled in by calling FillBoundaryAux after UpdateAuxilaryData, and the exterior
+        // ghost regions, which will not be filled in because they do not overlap with any valid sub-domain).
         Box bx = mfi.validbox();
-        // TODO It seems like it is necessary to loop over the valid box grown
-        // with 2 guard cells. Should this number of guard cells be expressed
-        // in terms of the parameters defined in the guardCellManager class?
-        bx.grow(2);
+
+        // When gathering the fields onto the particles later on, we will use the data in a number of
+        // exterior ghost cells that depends on the order of the particle shape factors (mostly).
+        // The data in these exterior ghost cells will not have been filled in by calling FillBoundaryAux
+        // after UpdateAuxilaryData, because they do not overlap with any valid sub-domain.
+        // Hence, in order to be more consistent, we grow the valid box by that number of ghost cells,
+        // so that all the data that will be used to gather the fields later on will have been computed
+        // by performing the same type of interpolation. Note however that a loop over the valid box,
+        // without these ghost cells, would probably not alter the overall results significantly.
+#if   (AMREX_SPACEDIM == 2)
+        amrex::IntVect const& ng = amrex::IntVect(WarpX::nox/2+1, WarpX::noz/2+1);
+#elif (AMREX_SPACEDIM == 3)
+        amrex::IntVect const& ng = amrex::IntVect(WarpX::nox/2+1, WarpX::noy/2+1, WarpX::noz/2+1);
+#endif
+        bx.grow(ng);
 
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifdef WARPX_USE_PSATD
