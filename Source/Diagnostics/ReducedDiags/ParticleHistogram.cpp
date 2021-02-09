@@ -177,6 +177,7 @@ void ParticleHistogram::ComputeDiags (int step)
         auto const uz = p.rdata(PIdx::uz)/PhysConst::c;
         auto const f = fun_partparser(t,x,y,z,ux,uy,uz);
         int i = int(std::floor((f-bin_min)/bin_size));
+        if ( i<0 || i>=m_bin_num ) return 0.0_rt;
         if ( is_unity_particle_weight ) {
             amrex::HostDevice::Atomic::Add(&m_data[i],1.0_rt);
         } else {
