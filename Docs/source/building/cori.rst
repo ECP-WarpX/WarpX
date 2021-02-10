@@ -105,25 +105,36 @@ First, load the appropriate modules:
    module swap PrgEnv-intel PrgEnv-gnu
    module load cmake/3.18.2
    module load cray-hdf5-parallel
-   module load adios2/2.5.0
 
-Then, in the ``warpx_directory``, download and build openPMD-api:
+Then, in the ``warpx_directory``, download and build ADIOS2:
 
 .. code-block:: bash
 
-   git clone https://github.com/openPMD/openPMD-api.git
-   mkdir openPMD-api-build
-   cd openPMD-api-build
-   cmake ../openPMD-api -DopenPMD_USE_PYTHON=OFF -DCMAKE_INSTALL_PREFIX=../openPMD-install/ -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_RPATH='$ORIGIN'
-   cmake --build . --target install --parallel 16
+   git clone -b v2.7.1 https://github.com/ornladios/ADIOS2.git adios2
+   cmake -S adios2 -B adios2-build -DADIOS2_USE_Fortran=OFF -DADIOS2_USE_Python=OFF -DCMAKE_INSTALL_PREFIX=adios2-2.7.1-install
+   cmake --build adios2-build --target install --parallel 16
+   export CMAKE_PREFIX_PATH=$PWD/adios2-2.7.1-install:$CMAKE_PREFIX_PATH
 
 Finally, compile WarpX:
 
 .. code-block:: bash
 
-   cd ../WarpX
-   export PKG_CONFIG_PATH=$PWD/../openPMD-install/lib64/pkgconfig:$PKG_CONFIG_PATH
-   export CMAKE_PREFIX_PATH=$PWD/../openPMD-install:$CMAKE_PREFIX_PATH
+   cd WarpX
+   cmake -S . -B build -DWarpX_OPENPMD=ON
+   cmake --build build -j 16
+
+Alternatively, in GNUmake (legacy) logic, we also need to pre-compile openPMD-api:
+
+.. code-block:: bash
+
+   git clone -b 0.13.2 https://github.com/openPMD/openPMD-api.git
+   cmake -S openPMD-api -B openPMD-api-build -DopenPMD_USE_PYTHON=OFF -DCMAKE_INSTALL_PREFIX=openPMD-0.13.2-install -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_RPATH='$ORIGIN'
+   cmake --build openPMD-api-build --target install --parallel 16
+
+.. code-block:: bash
+
+   export PKG_CONFIG_PATH=$PWD/openPMD-0.13.2-install/lib64/pkgconfig:$PKG_CONFIG_PATH
+   cd WarpX
    make -j 16 COMP=gcc USE_OPENPMD=TRUE
 
 In order to run WarpX, load the same modules again.
