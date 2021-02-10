@@ -14,17 +14,17 @@ openPMD-viewer can be installed via ``conda`` or ``pip``:
 
 ::
 
-    conda install -c conda-forge openpmd-viewer
+    conda install -c conda-forge openpmd-viewer openpmd-api
 
 ::
 
-    pip install openPMD-viewer
+    pip install openPMD-viewer openPMD-api
 
 Usage
 -----
 
-openPMD-viewer can be used either in simple Python scripts, or in a Jupyter notebook.
-For interactive plots in Jupyter notebook, add this "cell magic" to the first line of your notebook:
+openPMD-viewer can be used either in simple Python scripts or in [Jupyter](https://jupyter.org).
+For interactive plots in Jupyter notebook, add this ["cell magic"](https://ipython.readthedocs.io/en/stable/interactive/magics.html) to the first line of your notebook:
 
 ::
 
