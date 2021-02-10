@@ -1,7 +1,13 @@
 function(find_picsar)
-    if(WarpX_picsar_internal)
+    if(WarpX_picsar_src)
+        message(STATUS "Compiling local PICSAR ...")
+        message(STATUS "PICSAR source path: ${WarpX_picsar_src}")
+    elseif(WarpX_picsar_internal)
         message(STATUS "Downloading PICSAR ...")
+        message(STATUS "PICSAR repository: ${WarpX_picsar_repo} (${WarpX_picsar_branch})")
         include(FetchContent)
+    endif()
+    if(WarpX_picsar_internal OR WarpX_picsar_src)
         set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 
         # Enable or disable QED lookup tables generation
@@ -27,25 +33,35 @@ function(find_picsar)
             set (PXRMP_DPCPP_FIX ON CACHE INTERNAL "")
         endif()
 
-        FetchContent_Declare(fetchedpicsar
-            GIT_REPOSITORY ${WarpX_picsar_repo}
-            GIT_TAG        ${WarpX_picsar_branch}
-            BUILD_IN_SOURCE 0
-        )
-        FetchContent_GetProperties(fetchedpicsar)
+        if(WarpX_picsar_src)
+            add_subdirectory(
+                ${WarpX_picsar_src}/multi_physics/QED
+                _deps/localpicsar-build/
+            )
+        else()
+            FetchContent_Declare(fetchedpicsar
+                GIT_REPOSITORY ${WarpX_picsar_repo}
+                GIT_TAG        ${WarpX_picsar_branch}
+                BUILD_IN_SOURCE 0
+            )
+            FetchContent_GetProperties(fetchedpicsar)
 
-        if(NOT fetchedpicsar_POPULATED)
-            FetchContent_Populate(fetchedpicsar)
-            add_subdirectory(${fetchedpicsar_SOURCE_DIR}/multi_physics/QED ${fetchedpicsar_BINARY_DIR})
+            if(NOT fetchedpicsar_POPULATED)
+                FetchContent_Populate(fetchedpicsar)
+                add_subdirectory(
+                    ${fetchedpicsar_SOURCE_DIR}/multi_physics/QED
+                    ${fetchedpicsar_BINARY_DIR}
+                )
+            endif()
+
+            # advanced fetch options
+            mark_as_advanced(FETCHCONTENT_BASE_DIR)
+            mark_as_advanced(FETCHCONTENT_FULLY_DISCONNECTED)
+            mark_as_advanced(FETCHCONTENT_QUIET)
+            mark_as_advanced(FETCHCONTENT_SOURCE_DIR_FETCHEDPICSAR)
+            mark_as_advanced(FETCHCONTENT_UPDATES_DISCONNECTED)
+            mark_as_advanced(FETCHCONTENT_UPDATES_DISCONNECTED_FETCHEDPICSAR)
         endif()
-
-        # advanced fetch options
-        mark_as_advanced(FETCHCONTENT_BASE_DIR)
-        mark_as_advanced(FETCHCONTENT_FULLY_DISCONNECTED)
-        mark_as_advanced(FETCHCONTENT_QUIET)
-        mark_as_advanced(FETCHCONTENT_SOURCE_DIR_FETCHEDPICSAR)
-        mark_as_advanced(FETCHCONTENT_UPDATES_DISCONNECTED)
-        mark_as_advanced(FETCHCONTENT_UPDATES_DISCONNECTED_FETCHEDPICSAR)
 
         # PICSAR options not relevant to WarpX users
         mark_as_advanced(DIM)
@@ -65,6 +81,11 @@ function(find_picsar)
 endfunction()
 
 if(WarpX_QED)
+    # local source-tree
+    set(WarpX_picsar_src ""
+        CACHE PATH
+        "Local path to PICSAR source directory (preferred if set)")
+
     option(WarpX_picsar_internal   "Download & build PICSAR" ON)
     set(WarpX_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
         CACHE STRING
