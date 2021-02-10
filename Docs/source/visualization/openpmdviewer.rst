@@ -29,8 +29,8 @@ with the following commands:
 
 ::
 
-    from opmd_viewer import OpenPMDTimeSeries
-    ts = OpenPMDTimeSeries('./diags/hdf5')
+    from openpmd_viewer import OpenPMDTimeSeries
+    ts = OpenPMDTimeSeries('./diags/diag1/')
 
 .. note::
 
