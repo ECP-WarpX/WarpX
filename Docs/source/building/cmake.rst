@@ -159,30 +159,15 @@ An executable WarpX binary with the current compile-time options encoded in its 
 Additionally, a `symbolic link <https://en.wikipedia.org/wiki/Symbolic_link>`_ named ``warpx`` can be found in that directory, which points to the last built WarpX executable.
 
 
-Python Wrapper (New Scripts)
-============================
+Python Bindings
+===============
 
-Build and install a wheel from the root of the WarpX source tree:
+Build and install ``pywarpx`` from the root of the WarpX source tree:
 
 .. code-block:: bash
 
    python3 -m pip wheel -v .
    python3 -m pip install *whl
-
-Maintainers might also want to generate a self-contained source package that can be distributed to exotic architectures:
-
-.. code-block:: bash
-
-   python setup.py sdist --dist-dir .
-   pip wheel -v pywarpx-*.tar.gz
-   python3 -m pip install *whl
-
-The above steps can also be executed in one go to build from source on a machine:
-
-.. code-block:: bash
-
-   python setup.py sdist --dist-dir .
-   pip install -v pywarpx-*.tar.gz
 
 Environment variables can be used to control the build step:
 
@@ -193,6 +178,7 @@ Environment Variable          Default & Values                             Descr
 ``WarpX_DIMS``                ``"2;3;RZ"``                                 Simulation dimensionalities (semicolon-separated list)
 ``WarpX_MPI``                 ON/**OFF**                                   Multi-node support (message-passing)
 ``WarpX_OPENPMD``             ON/**OFF**                                   openPMD I/O (HDF5, ADIOS)
+``WarpX_PRECISION``           SINGLE/**DOUBLE**                            Floating point precision (single/double)
 ``WarpX_PSATD``               ON/**OFF**                                   Spectral solver
 ``WarpX_QED``                 **ON**/OFF                                   PICSAR QED (requires PICSAR)
 ``WarpX_QED_TABLE_GEN``       ON/**OFF**                                   QED table generation (requires PICSAR and Boost)
@@ -200,26 +186,49 @@ Environment Variable          Default & Values                             Descr
 ``BUILD_SHARED_LIBS``         ON/**OFF**                                   Build shared libraries for dependencies
 ``HDF5_USE_STATIC_LIBRARIES`` ON/**OFF**                                   Prefer static libraries for HDF5 dependency (openPMD)
 ``ADIOS_USE_STATIC_LIBS``     ON/**OFF**                                   Prefer static libraries for ADIOS1 dependency (openPMD)
+``PYWARPX_LIB_DIR``           *None*                                       If set, search for pre-built C++ libraries (see below)
 ============================= ============================================ =======================================================
 
 
-Python Wrapper (Legacy Scripts)
-===============================
+Python Bindings (Developers)
+============================
 
-This is a manual workflow using the GNUmake-like Python install logic.
-The Python wrapper library can be built by pre-building WarpX into one or more shared libraries.
-For full functionality in 2D, 3D and RZ geometry, the following workflow can be executed:
+**Developers** might have all Python dependencies already installed and want to just overwrite an already installed ``pywarpx`` package:
 
 .. code-block:: bash
 
-   # build
+   python3 -m pip install --force-reinstall -v .
+
+The Python library ``pywarpx`` can also be created by pre-building WarpX into one or more shared libraries externally.
+For example, a package manager might split WarpX into a C++ package and a Python package.
+If the C++ libraries are already pre-compiled, we can pick them up in the Python build step instead of compiling them again:
+
+.. code-block:: bash
+
+   # build WarpX executables and libraries
    for d in 2 3 RZ; do
      cmake -S . -B build -DWarpX_DIMS=$d -DWarpX_LIB=ON
      cmake --build build -j 4
    done
 
-   # package
-   PYWARPX_LIB_DIR=$PWD/build/lib python3 -m pip wheel Python/
+   # Python package
+   PYWARPX_LIB_DIR=$PWD/build/lib python3 -m pip wheel .
 
    # install
    python3 -m pip install pywarpx-*whl
+
+
+WarpX release managers might also want to generate a self-contained source package that can be distributed to exotic architectures:
+
+.. code-block:: bash
+
+   python setup.py sdist --dist-dir .
+   python3 -m pip wheel -v pywarpx-*.tar.gz
+   python3 -m pip install *whl
+
+The above steps can also be executed in one go to build from source on a machine:
+
+.. code-block:: bash
+
+   python3 setup.py sdist --dist-dir .
+   python3 -m pip install -v pywarpx-*.tar.gz
