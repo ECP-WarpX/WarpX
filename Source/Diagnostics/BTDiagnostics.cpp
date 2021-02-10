@@ -742,8 +742,13 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
         std::string recent_Header_filename = recent_Buffer_filepath+"/Header";
         std::string recent_Buffer_Level0_path = recent_Buffer_filepath + "/Level_0";
         std::string recent_Buffer_FabHeaderFilename = recent_Buffer_Level0_path + "/Cell_H";
+        // Read the header file to get the fab on disk string
+        BTDMultiFabHeaderImpl Buffer_FabHeader(recent_Buffer_FabHeaderFilename);
+        Buffer_FabHeader.ReadMultiFabHeader();
+        if (Buffer_FabHeader.ba_size() > 1) amrex::Abort("BTD Buffer has more than one fabs.");
         // Every buffer that is flushed only has a single fab.
-        std::string recent_Buffer_FabFilename = recent_Buffer_Level0_path + "/Cell_D_00000";
+        std::string recent_Buffer_FabFilename = recent_Buffer_Level0_path + "/"
+                                              + Buffer_FabHeader.FabName(0);
         // Existing snapshot Fab Header Filename
         std::string snapshot_FabHeaderFilename = snapshot_Level0_path + "/Cell_H";
         std::string snapshot_FabFilename = amrex::Concatenate(snapshot_Level0_path+"/Cell_D_",m_buffer_flush_counter[i_snapshot], 5);
