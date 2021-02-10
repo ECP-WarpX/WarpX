@@ -88,6 +88,7 @@ class CMakeBuild(build_ext):
             '-DWarpX_COMPUTE=' + WarpX_COMPUTE,
             '-DWarpX_MPI:BOOL=' + WarpX_MPI,
             '-DWarpX_OPENPMD:BOOL=' + WarpX_OPENPMD,
+            '-DWarpX_PRECISION=' + WarpX_PRECISION,
             '-DWarpX_PSATD:BOOL=' + WarpX_PSATD,
             '-DWarpX_QED:BOOL=' + WarpX_QED,
             '-DWarpX_QED_TABLE_GEN:BOOL=' + WarpX_QED_TABLE_GEN,
@@ -162,6 +163,7 @@ PYWARPX_LIB_DIR = os.environ.get('PYWARPX_LIB_DIR')
 WarpX_COMPUTE = os.environ.get('WarpX_COMPUTE', 'OMP')
 WarpX_MPI = os.environ.get('WarpX_MPI', 'OFF')
 WarpX_OPENPMD = os.environ.get('WarpX_OPENPMD', 'OFF')
+WarpX_PRECISION = os.environ.get('WarpX_PRECISION', 'DOUBLE')
 WarpX_PSATD = os.environ.get('WarpX_PSATD', 'OFF')
 WarpX_QED = os.environ.get('WarpX_QED', 'ON')
 WarpX_QED_TABLE_GEN = os.environ.get('WarpX_QED_TABLE_GEN', 'OFF')
