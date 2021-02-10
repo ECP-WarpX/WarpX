@@ -29,7 +29,7 @@ with the following commands:
 
 ::
 
-    from opmd_viewer import OpenPMDTimeSeries
+    from openpmd_viewer import OpenPMDTimeSeries
     ts = OpenPMDTimeSeries('./diags/hdf5')
 
 .. note::
