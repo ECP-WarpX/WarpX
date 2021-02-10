@@ -2,11 +2,42 @@ import os
 import re
 import sys
 import platform
+import shutil
 import subprocess
 
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+from distutils.command.build import build
 from distutils.version import LooseVersion
+
+
+class CopyPreBuild(build):
+    def initialize_options(self):
+        build.initialize_options(self)
+        # We just overwrite this because the default "build/lib" clashes with
+        # directories many developers have in their source trees;
+        # this can create confusing results with "pip install .", which clones
+        # the whole source tree by default
+        self.build_lib = '_tmppythonbuild'
+
+    def run(self):
+        build.run(self)
+
+        # matches: libwarpx(2d|3d|rz).(so|pyd)
+        re_libprefix = re.compile(r"libwarpx..\.(?:so|pyd)")
+        libs_found = []
+        for lib_name in os.listdir(PYWARPX_LIB_DIR):
+            if re_libprefix.match(lib_name):
+                lib_path = os.path.join(PYWARPX_LIB_DIR, lib_name)
+                libs_found.append(lib_path)
+        if len(libs_found) == 0:
+            raise RuntimeError("Error: no pre-build WarpX libraries found in "
+                               "PYWARPX_LIB_DIR='{}'".format(PYWARPX_LIB_DIR))
+
+        # copy external libs into collection of files in a temporary build dir
+        dst_path = os.path.join(self.build_lib, "pywarpx")
+        for lib_path in libs_found:
+            shutil.copy(lib_path, dst_path)
 
 
 class CMakeExtension(Extension):
@@ -123,8 +154,11 @@ with open('./README.md', encoding='utf-8') as f:
     long_description = f.read()
 
 # Allow to control options via environment vars.
-# Work-around for https://github.com/pypa/setuptools/issues/1712
-# note: changed default for SHARED, MPI, TESTING and EXAMPLES
+#   Work-around for https://github.com/pypa/setuptools/issues/1712
+# Pick up existing WarpX libraries or...
+PYWARPX_LIB_DIR = os.environ.get('PYWARPX_LIB_DIR')
+# ... build WarpX libraries
+#   note: changed default for SHARED, MPI, TESTING and EXAMPLES
 WarpX_COMPUTE = os.environ.get('WarpX_COMPUTE', 'OMP')
 WarpX_MPI = os.environ.get('WarpX_MPI', 'OFF')
 WarpX_OPENPMD = os.environ.get('WarpX_OPENPMD', 'OFF')
@@ -149,10 +183,19 @@ if WarpX_MPI.upper() in ['1', 'ON', 'TRUE', 'YES']:
 else:
     WarpX_MPI = "OFF"
 
-cxx_modules = []  # allowed values: warpx_2d, warpx_3d, warpx_rz
-for dim in [x.lower() for x in WarpX_DIMS.split(';')]:
-    name = dim if dim == "rz" else dim + "d"
-    cxx_modules.append(CMakeExtension("warpx_" + name))
+# for CMake
+cxx_modules = []     # values: warpx_2d, warpx_3d, warpx_rz
+cmdclass = {}        # build extensions
+
+# externally pre-built: pick up pre-built WarpX libraries
+if PYWARPX_LIB_DIR:
+    cmdclass=dict(build=CopyPreBuild)
+# CMake: build WarpX libraries ourselves
+else:
+    cmdclass = dict(build_ext=CMakeBuild)
+    for dim in [x.lower() for x in WarpX_DIMS.split(';')]:
+        name = dim if dim == "rz" else dim + "d"
+        cxx_modules.append(CMakeExtension("warpx_" + name))
 
 # Get the package requirements from the requirements.txt file
 install_requires = []
@@ -186,8 +229,9 @@ setup(
         'Source': 'https://github.com/ECP-WarpX/WarpX',
         'Tracker': 'https://github.com/ECP-WarpX/WarpX/issues',
     },
+    # CMake: self-built as extension module
     ext_modules=cxx_modules,
-    cmdclass=dict(build_ext=CMakeBuild),
+    cmdclass=cmdclass,
     # scripts=['warpx_2d', 'warpx_3d', 'warpx_rz'],
     zip_safe=False,
     python_requires='>=3.6, <3.10',
