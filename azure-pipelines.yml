@@ -248,7 +248,7 @@ jobs:
       git clone https://github.com/spack/spack.git
       . spack/share/spack/setup-env.sh
       spack compiler find
-      spack install -v --fail-fast warpx %gcc@7.5.0
+      spack install -v --fail-fast warpx %gcc@9.3.0
 
       spack load -r warpx
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
@@ -289,7 +289,7 @@ jobs:
 #      spack compiler find
 #      spack bootstrap
 #      . spack/share/spack/setup-env.sh
-#      spack install -v --fail-fast warpx +qed +openpmd %gcc@7.5.0
+#      spack install -v --fail-fast warpx +qed +openpmd %gcc@9.3.0
 #
 #      spack load -r warpx
 #      warpx.2d.MPI.OMP.DP.OPMD.QED
