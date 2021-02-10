@@ -312,6 +312,11 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             }
         }
 
+        if (WarpX::do_current_centering)
+        {
+            current_fp_nodal[lev][i]->setVal(0.0);
+        }
+
         if (B_ext_grid_s == "constant" || B_ext_grid_s == "default") {
            Bfield_fp[lev][i]->setVal(B_external_grid[i]);
            if (fft_do_time_averaging) {

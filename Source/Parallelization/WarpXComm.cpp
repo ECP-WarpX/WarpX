@@ -355,6 +355,34 @@ WarpX::UpdateAuxilaryDataSameType ()
     }
 }
 
+// TODO Add Doxygen
+void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab const& src)
+{
+    //amrex::MultiFab::Copy(dst, src, 0, 0, dst.nComp(), dst.nGrowVect());
+
+    amrex::IntVect const& dst_stag = dst.ixType().toIntVect();
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (Gpu::notInLaunchRegion())
+#endif
+
+    for (MFIter mfi(dst); mfi.isValid(); ++mfi)
+    {
+        Box fabbx = mfi.fabbox();
+
+        if (fabbx.ok())
+        {
+            amrex::Array4<amrex::Real const> const& src_arr = src.const_array(mfi);
+            amrex::Array4<amrex::Real>       const& dst_arr = dst.array(mfi);
+
+            amrex::ParallelFor(fabbx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+            {
+                LinearInterpNodalToStag(i, j, k, dst_arr, src_arr, dst_stag);
+            });
+        }
+    }
+}
+
 void
 WarpX::FillBoundaryB (IntVect ng, IntVect ng_extra_fine)
 {

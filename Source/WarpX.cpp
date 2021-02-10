@@ -79,6 +79,8 @@ int WarpX::do_dive_cleaning = 0;
 int WarpX::em_solver_medium;
 int WarpX::macroscopic_solver_algo;
 
+bool WarpX::do_current_centering = false;
+
 int WarpX::n_rz_azimuthal_modes = 1;
 int WarpX::ncomps = 1;
 
@@ -224,6 +226,11 @@ WarpX::WarpX ()
     Bfield_avg_fp.resize(nlevs_max);
 
     current_store.resize(nlevs_max);
+
+    if (do_current_centering)
+    {
+        current_fp_nodal.resize(nlevs_max);
+    }
 
     F_cp.resize(nlevs_max);
     rho_cp.resize(nlevs_max);
@@ -622,6 +629,16 @@ WarpX::ReadParameters ()
 
         // Only needs to be set with WARPX_DIM_RZ, otherwise defaults to 1
         pp.query("n_rz_azimuthal_modes", n_rz_azimuthal_modes);
+
+        // If true, the current is deposited on a nodal grid and then interpolated onto a Yee grid
+        pp.query("do_current_centering", do_current_centering);
+
+        // If do_nodal = 1, Maxwell's equations are solved on a nodal grid and
+        // the current should not be centered
+        if (do_nodal)
+        {
+            do_current_centering = false;
+        }
     }
 
     {
@@ -996,6 +1013,11 @@ WarpX::ClearLevel (int lev)
 
         current_store[lev][i].reset();
 
+        if (do_current_centering)
+        {
+            current_fp_nodal[lev][i].reset();
+        }
+
         current_cp[lev][i].reset();
         Efield_cp [lev][i].reset();
         Bfield_cp [lev][i].reset();
@@ -1176,6 +1198,13 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     current_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,jy_nodal_flag),dm,ncomps,ngJ,tag("current_fp[y]"));
     current_fp[lev][2] = std::make_unique<MultiFab>(amrex::convert(ba,jz_nodal_flag),dm,ncomps,ngJ,tag("current_fp[z]"));
 
+    if (do_current_centering)
+    {
+        amrex::BoxArray const& nodal_ba = amrex::convert(ba, amrex::IntVect::TheNodeVector());
+        current_fp_nodal[lev][0] = std::make_unique<MultiFab>(nodal_ba, dm, ncomps, ngJ);
+        current_fp_nodal[lev][1] = std::make_unique<MultiFab>(nodal_ba, dm, ncomps, ngJ);
+        current_fp_nodal[lev][2] = std::make_unique<MultiFab>(nodal_ba, dm, ncomps, ngJ);
+    }
 
     Bfield_avg_fp[lev][0] = std::make_unique<MultiFab>(amrex::convert(ba,Bx_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_fp[x]"));
     Bfield_avg_fp[lev][1] = std::make_unique<MultiFab>(amrex::convert(ba,By_nodal_flag),dm,ncomps,ngE,tag("Bfield_avg_fp[y]"));

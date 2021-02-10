@@ -673,4 +673,64 @@ void warpx_interp (const int j,
     dst_arr(j,k,l) = wj * wk * wl * res;
 }
 
+// TODO Doxygen
+AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+void LinearInterpNodalToStag (const int i,
+                              const int j,
+                              const int k,
+                              amrex::Array4<amrex::Real      > const& dst_arr,
+                              amrex::Array4<amrex::Real const> const& src_arr,
+                              const amrex::IntVect& dst_stag)
+{
+    using namespace amrex;
+
+    // Staggering (s = 0 if cell-centered, s = 1 if nodal)
+    const int si = dst_stag[0];
+    const int sj = dst_stag[1];
+#if (AMREX_SPACEDIM == 3)
+    const int sk = dst_stag[2];
+#endif
+
+    // Boolean to know whether to interpolate in a given direction
+    const bool interp_i = (si == 0);
+    const bool interp_j = (sj == 0);
+#if   (AMREX_SPACEDIM == 2)
+    const bool interp_k = false;
+#elif (AMREX_SPACEDIM == 3)
+    const bool interp_k = (sk == 0);
+#endif
+
+    // Additional normalization factor
+    const amrex::Real wi = (interp_i) ? 0.5_rt : 1.0_rt;
+    const amrex::Real wj = (interp_j) ? 0.5_rt : 1.0_rt;
+    const amrex::Real wk = (interp_k) ? 0.5_rt : 1.0_rt;
+
+    // Min and max for interpolation loop along i
+    const int imin = i;
+    const int imax = (interp_i) ? i + 1 : i;
+
+    // Min and max for interpolation loop along j
+    const int jmin = j;
+    const int jmax = (interp_j) ? j + 1 : j;
+
+    // Min and max for interpolation loop along k (k = 0 always in 2D)
+    const int kmin = k;
+    const int kmax = (interp_k) ? k + 1 : k;
+
+    amrex::Real res = 0.0_rt;
+
+    for (int kk = kmin; kk <= kmax; kk++)
+    {
+        for (int jj = jmin; jj <= jmax; jj++)
+        {
+            for (int ii = imin; ii <= imax; ii++)
+            {
+                res += src_arr(ii,jj,kk);
+            }
+        }
+    }
+
+    dst_arr(i,j,k) = wi * wj * wk * res;
+}
+
 #endif
