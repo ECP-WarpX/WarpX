@@ -483,6 +483,18 @@ PhysicalParticleContainer::AddParticles (int lev)
         return;
     }
 
+    if (plasma_injector->add_multiple_particles) {
+        AddNParticles(lev, plasma_injector->multiple_particles_pos_x.size(),
+                      plasma_injector->multiple_particles_pos_x.dataPtr(),
+                      plasma_injector->multiple_particles_pos_y.dataPtr(),
+                      plasma_injector->multiple_particles_pos_z.dataPtr(),
+                      plasma_injector->multiple_particles_vel_x.dataPtr(),
+                      plasma_injector->multiple_particles_vel_y.dataPtr(),
+                      plasma_injector->multiple_particles_vel_z.dataPtr(),
+                      1, plasma_injector->multiple_particles_weight.dataPtr(), 0);
+        return;
+    }
+
     if (plasma_injector->gaussian_beam) {
         AddGaussianBeam(plasma_injector->x_m,
                         plasma_injector->y_m,
