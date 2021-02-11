@@ -237,7 +237,7 @@ Some Developers like to code directly against a local copy of AMReX, changing bo
 
    WarpX_amrex_src=$PWD/../amrex python3 -m pip install --force-reinstall -v .
 
-Additional environment control as common for CMake (:ref:`see above <building-cmake-intro>`) can be set as well, e.g.``CC``, `CXX``, and ``CMAKE_PREFIX_PATH`` hints.
+Additional environment control as common for CMake (:ref:`see above <building-cmake-intro>`) can be set as well, e.g. ``CC``, `CXX``, and ``CMAKE_PREFIX_PATH`` hints.
 So another sophisticated example might be: use Clang as the compiler, build with local source copies of PICSAR and AMReX, support the PSATD solver, MPI and openPMD, hint a parallel HDF5 installation in ``$HOME/sw/hdf5-parallel-1.10.4``, and only build 3D geometry:
 
 .. code-block:: bash
