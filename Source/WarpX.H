@@ -590,7 +590,7 @@ public:
     void ApplyFilterandSumBoundaryRho (int lev, int glev, amrex::MultiFab& rho, int icomp, int ncomp);
 
 #ifdef WARPX_USE_PSATD
-    // Host and device vectors for Fornberg stencil coefficients used for finite-order centering
+    // Host and device vectors for ordered Fornberg stencil coefficients used for finite-order centering
     amrex::Vector<amrex::Real> host_centering_stencil_coeffs_x;
     amrex::Vector<amrex::Real> host_centering_stencil_coeffs_y;
     amrex::Vector<amrex::Real> host_centering_stencil_coeffs_z;
@@ -744,6 +744,10 @@ private:
     const amrex::iMultiFab* getGatherBufferMasks (int lev) const {
         return gather_buffer_masks[lev].get();
     }
+
+    void ReorderFornbergCoefficients(amrex::Vector<amrex::Real>& ordered_coeffs,
+                                     amrex::Vector<amrex::Real>& unordered_coeffs,
+                                     const int order);
 
     void AllocLevelMFs (int lev, const amrex::BoxArray& ba, const amrex::DistributionMapping& dm,
                         const amrex::IntVect& ngE, const amrex::IntVect& ngJ,

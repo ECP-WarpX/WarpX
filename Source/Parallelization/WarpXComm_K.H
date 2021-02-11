@@ -571,10 +571,6 @@ void warpx_interp (const int j,
     amrex::Real cj = 1.0_rt;
     amrex::Real ck = 1.0_rt;
     amrex::Real cl = 1.0_rt;
-    int dj, dk;
-#if (AMREX_SPACEDIM == 3)
-    int dl;
-#endif
 #endif
 
     // Min and max for interpolation loop along j
@@ -641,26 +637,23 @@ void warpx_interp (const int j,
     //     j-3   j-2   j-1    j    j+1   j+2                + c_2 * (f(j-3) + f(j+2)) / 2
     //     c_2   c_1   c_0   c_0   c_1   c_2                + ...
 
-    for (int ll = lmin; ll <= lmax; ll++)
+    for (int ll = 0; ll <= lmax-lmin; ll++)
     {
 #if (AMREX_SPACEDIM == 3)
-        dl = (l - ll > 0) ? l - ll - 1 : ll - l;
-        if (sl == 0) cl = stencil_coeffs_z[dl];
+        if (sl == 0) cl = stencil_coeffs_z[ll];
 #endif
-        for (int kk = kmin; kk <= kmax; kk++)
+        for (int kk = 0; kk <= kmax-kmin; kk++)
         {
-            dk = (k - kk > 0) ? k - kk - 1 : kk - k;
 #if   (AMREX_SPACEDIM == 2)
-            if (sk == 0) ck = stencil_coeffs_z[dk];
+            if (sk == 0) ck = stencil_coeffs_z[kk];
 #elif (AMREX_SPACEDIM == 3)
-            if (sk == 0) ck = stencil_coeffs_y[dk];
+            if (sk == 0) ck = stencil_coeffs_y[kk];
 #endif
-            for (int jj = jmin; jj <= jmax; jj++)
+            for (int jj = 0; jj <= jmax-jmin; jj++)
             {
-                dj = (j - jj > 0) ? j - jj - 1 : jj - j;
-                if (sj == 0) cj = stencil_coeffs_x[dj];
+                if (sj == 0) cj = stencil_coeffs_x[jj];
 
-                res += cj * ck * cl * src_arr_zeropad(jj,kk,ll);
+                res += cj * ck * cl * src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
             }
         }
     }
