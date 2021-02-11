@@ -71,12 +71,16 @@ function(find_picsar)
         mark_as_advanced(PXRMP_QED_TEST)
 
         # PICSAR_VERSION: not yet defined
-        message(STATUS "PICSAR: Using INTERNAL version (git branch '${WarpX_picsar_branch}')")
+        #message(STATUS "PICSAR: Using version '${PICSAR_VERSION}'")
     else()
-    # not supported by PICSAR
-    #    find_package(PICSAR 20.05 CONFIG REQUIRED QED)
-    #    message(STATUS "PICSAR: Found version '${PICSAR_VERSION}'")
-        message(FATAL_ERROR "PICSAR: Cannot be used as externally installed library yet.")
+        # not supported by PICSAR (yet)
+        #find_package(PICSAR 21.02 CONFIG REQUIRED QED)
+        #message(STATUS "PICSAR: Found version '${PICSAR_VERSION}'")
+        message(FATAL_ERROR "PICSAR: Cannot be used as externally installed "
+            "library yet. "
+            "Note that you can point to an external source tree with "
+            "-DWarpX_picsar_src=<path>"
+        )
     endif()
 endfunction()
 
@@ -86,6 +90,7 @@ if(WarpX_QED)
         CACHE PATH
         "Local path to PICSAR source directory (preferred if set)")
 
+    # Git fetcher
     option(WarpX_picsar_internal   "Download & build PICSAR" ON)
     set(WarpX_picsar_repo "https://github.com/ECP-WarpX/picsar.git"
         CACHE STRING
