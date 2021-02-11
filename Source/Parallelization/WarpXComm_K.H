@@ -522,6 +522,13 @@ void warpx_interp (const int j,
 {
     using namespace amrex;
 
+    // Pad input array with zeros beyond ghost cells
+    // for out-of-bound accesses due to large-stencil operations
+    const auto arr_safe = [arr_fine] (const int jj, const int kk, const int ll) noexcept
+    {
+        return arr_fine.contains(jj,kk,ll) ? arr_fine(jj,kk,ll) : 0.0_rt;
+    };
+
     // Avoid compiler warnings
 #if (AMREX_SPACEDIM == 2)
     amrex::ignore_unused(noy, stencil_coeffs_y);
@@ -612,7 +619,7 @@ void warpx_interp (const int j,
         {
             for (int jj = jmin; jj <= jmax; jj++)
             {
-                res += arr_fine(jj,kk,ll);
+                res += arr_safe(jj,kk,ll);
             }
         }
     }
@@ -653,7 +660,7 @@ void warpx_interp (const int j,
                 dj = (j - jj > 0) ? j - jj - 1 : jj - j;
                 if (sj == 0) cj = stencil_coeffs_x[dj];
 
-                res += cj * ck * cl * arr_fine(jj,kk,ll);
+                res += cj * ck * cl * arr_safe(jj,kk,ll);
             }
         }
     }
