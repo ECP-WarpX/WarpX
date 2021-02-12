@@ -155,6 +155,7 @@ void ParticleHistogram::ComputeDiags (int step)
     HostDeviceParser<m_nvars> fun_filterparser = getParser(m_parser_filter);
 
     // declare local variables
+    auto const num_bins = m_bin_num;
     Real const bin_min  = m_bin_min;
     Real const bin_size = m_bin_size;
     const bool is_unity_particle_weight =
@@ -181,7 +182,7 @@ void ParticleHistogram::ComputeDiags (int step)
                 Real* const AMREX_RESTRICT d_uy = attribs[PIdx::uy].dataPtr();
                 Real* const AMREX_RESTRICT d_uz = attribs[PIdx::uz].dataPtr();
 
-                const long np = pti.numParticles();
+                long const np = pti.numParticles();
 
                 //Flag particles that need to be copied if they cross the z_slice
                 amrex::ParallelFor(np,
@@ -201,7 +202,7 @@ void ParticleHistogram::ComputeDiags (int step)
 
                     // determine particle bin
                     int const bin = int(std::floor((f-bin_min)/bin_size));
-                    if ( bin<0 || bin>=m_bin_num ) return; // discard if out-of-range
+                    if ( bin<0 || bin>=num_bins ) return; // discard if out-of-range
 
                     if ( is_unity_particle_weight ) {
                         amrex::HostDevice::Atomic::Add(&dptr_data[bin], 1.0_rt);
