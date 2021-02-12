@@ -10,7 +10,7 @@ Installation
 
 From the terminal, install the latest version of yt:
 
-.. code-block:: python
+.. code-block:: bash
 
     pip install cython
     python -m pip install --upgrade yt
@@ -23,7 +23,7 @@ Visualizing the data
 Once data ("plotfiles") has been created by the simulation, open a Jupyter notebook from
 the terminal:
 
-.. code-block:: python
+.. code-block:: bash
 
     jupyter notebook
 
