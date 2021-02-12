@@ -94,7 +94,7 @@ WarpX::AddSpaceChargeFieldLabFrame ()
 #endif
 
     // Allocate fields for charge
-    // Also, zero out the phi data
+    // Also, zero out the phi data - is this necessary?
     const int num_levels = max_level + 1;
     Vector<std::unique_ptr<MultiFab> > rho(num_levels);
     // Use number of guard cells used for local deposition of rho
@@ -163,12 +163,21 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
             // Ideally, we would often want open boundary conditions here.
             lobc[idim] = LinOpBCType::Dirichlet;
             hibc[idim] = LinOpBCType::Dirichlet;
+
+            // set the boundary potential values for the given dimension
+            setDirichletBC(phi, idim);
         }
     }
 
     // Define the linear operator (Poisson operator)
     MLNodeTensorLaplacian linop( Geom(), boxArray(), DistributionMap() );
     linop.setDomainBC( lobc, hibc );
+
+    // This is apparently necessary for how AMReX expects phi
+    for (int lev=0; lev < rho.size(); lev++){
+        phi[lev]->mult(-1.*PhysConst::ep0);
+    }
+
     // Set the value of beta
     amrex::Array<amrex::Real,AMREX_SPACEDIM> beta_solver =
 #if (AMREX_SPACEDIM==2)
@@ -188,6 +197,99 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
     for (int lev=0; lev < rho.size(); lev++){
         phi[lev]->mult(-1./PhysConst::ep0);
     }
+}
+
+/* \bried Set Dirichlet boundary conditions for the electrostatic solver.
+
+    The given potential's values are fixed on the boundaries of the given
+    dimension according to the desired values from the simulation input file,
+    geometry.potential_lo and geometry.potential_hi.
+
+   \param[inout] phi The electrostatic potential
+   \param[in] idim The dimension for which the Dirichlet boundary condition is set
+*/
+void
+WarpX::setDirichletBC(amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
+                      const int idim) const
+{
+    // Get the boundary potentials specified in the simulation input file
+    Vector<Real> potential_lo(AMREX_SPACEDIM);
+    Vector<Real> potential_hi(AMREX_SPACEDIM);
+
+    ParmParse pp_geom("geometry");
+    pp_geom.getarr("potential_lo",potential_lo,0,AMREX_SPACEDIM);
+    pp_geom.getarr("potential_hi",potential_hi,0,AMREX_SPACEDIM);
+
+    // Print() << "Potential left = " << potential_lo[0] << "\n";
+    // Print() << "Potential right = " << potential_hi[0] << "\n";
+
+    // loop over all multigrid levels and set the boundary values
+    for (int lev=0; lev <= max_level; lev++) {
+        for (MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+            FArrayBox& fab = (*phi[0])[mfi]; //
+            Array4<Real> const& phi_gh = fab.array(); // phi include ghost cells
+            const auto lo = lbound(phi_gh);
+            const auto hi = ubound(phi_gh);
+
+            //TODO use AMREX_GPU_DEVICE for acceleration
+            // The boundary values are set at points lo.idim + 1 and hi.idim -1
+            // since phi_gh includes ghost cells
+            if (idim == 0){
+                for (int k=lo.z; k<=hi.z; k++) {
+                for (int j=lo.y; j<=hi.y; j++) {
+                    phi_gh(lo.x+1,j,k) = potential_lo[idim];
+                    phi_gh(hi.x-1,j,k) = potential_hi[idim];
+                }}
+            }
+            if (idim == 1){
+                for (int k=lo.z; k<=hi.z; k++) {
+                for (int i=lo.x; i<=hi.x; i++) {
+                    phi_gh(i,lo.y+1,k) = potential_lo[idim];
+                    phi_gh(i,hi.y-1,k) = potential_hi[idim];
+                }}
+            }
+            if (idim == 2){
+                for (int j=lo.y; j<=hi.y; j++) {
+                for (int i=lo.x; i<=hi.x; i++) {
+                    phi_gh(i,j,lo.z+1) = potential_lo[idim];
+                    phi_gh(i,j,hi.z-1) = potential_hi[idim];
+                }}
+            }
+    }} // lev & MFIter
+
+    /*
+    Wei-Ting's implementation with GPU acceleration:
+
+    // 1.0 Init V as a linear function of X
+    amrex::Real Lx     = prob_hi[0] - prob_lo[0];
+    amrex::Real DeltaV = potential_hi[0] - potential_lo[0];
+    amrex::Real V_left = potential_lo[0];
+
+    //### query the box size: maybe have the vars as the class var
+    Vector<Real> prob_lo(AMREX_SPACEDIM);
+    Vector<Real> prob_hi(AMREX_SPACEDIM);
+
+    pp_geom.getarr("prob_lo",prob_lo,0,AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(prob_lo.size() == AMREX_SPACEDIM);
+    pp_geom.getarr("prob_hi",prob_hi,0,AMREX_SPACEDIM);
+    AMREX_ALWAYS_ASSERT(prob_hi.size() == AMREX_SPACEDIM);
+
+    // does not loop into ghost cell, since phi is a nodal vector
+    for (int lev=0; lev <= max_level; lev++) {
+      amrex::Real dx = WarpX::CellSize(lev)[0];
+
+      for ( MFIter mfi(*phi[lev], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+         auto phi_arr   = phi[lev]->array(mfi);
+         const Box& tb  = mfi.tilebox( phi[lev]->ixType().toIntVect() );
+
+         amrex::ParallelFor( tb,
+             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                phi_arr(i,j,k) = (i*dx/Lx)*DeltaV + V_left;
+             } // loop ijk
+         );
+    }} // lev & MRIter
+    */
+
 }
 
 /* \bried Compute the electric field that corresponds to `phi`, and
