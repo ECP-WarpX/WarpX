@@ -214,7 +214,7 @@ void ParticleHistogram::ComputeDiags (int step)
     }
 
     // blocking copy from device to host
-    amrex::Gpu::copy(amrex::Gpu::deviceToDevice,
+    amrex::Gpu::copy(amrex::Gpu::deviceToHost,
         d_data.begin(), d_data.end(), m_data.begin());
 
     // reduced sum over mpi ranks
