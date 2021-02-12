@@ -21,7 +21,7 @@ class GalileanAlgorithm : public SpectralBaseAlgorithm
         virtual void pushSpectralFields (SpectralFieldData& f) const override final;
         virtual int getRequiredNumberOfFields () const override final {
             return SpectralFieldIndex::n_fields;
-        };
+        }
         void InitializeSpectralCoefficients (const SpectralKSpace& spectral_kspace,
                                              const amrex::DistributionMapping& dm,
                                              const amrex::Real dt);
