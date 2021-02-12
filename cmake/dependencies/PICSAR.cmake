@@ -69,6 +69,9 @@ function(find_picsar)
         mark_as_advanced(PXRMP_QED_TABLEGEN)
         mark_as_advanced(PXRMP_QED_OMP)
         mark_as_advanced(PXRMP_QED_TEST)
+        mark_as_advanced(PXRMP_BOOST_TEST_DYN_LINK)
+        mark_as_advanced(PXRMP_DPCPP_FIX)
+
 
         # PICSAR_VERSION: not yet defined
         message(STATUS "PICSAR: Using INTERNAL version (git branch '${WarpX_picsar_branch}')")
