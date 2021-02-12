@@ -76,7 +76,7 @@ Moving window
     In this way we define a simulation box (grid) with a fixed size that travels at the speed-of-ligth (:math:`c`), i.e. follows the beam.
 
     .. note::
-    When using moving window the option of continuous injection needs to be active for all particles initialized outside of the simulation box.
+       When using moving window the option of continuous injection needs to be active for all particles initialized outside of the simulation box.
 
 
 Resolution
