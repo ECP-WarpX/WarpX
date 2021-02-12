@@ -19,7 +19,7 @@ WarpX requires Python version 3.6 or newer.
 Using Python input as a preprocessor
 ------------------------------------
 
-In this case, only the pure Python version needs to be installed, as described in :doc:`../building/python.rst`.
+In this case, only the pure Python version needs to be installed, as described in :doc:`../building/python`.
 
 In order to run a new simulation:
 
@@ -43,7 +43,7 @@ This creates the WarpX input file that you can run as normal with the WarpX exec
 Running WarpX directly from Python
 ----------------------------------
 
-For this, a full Python installation of WarpX is required, as described in :doc:`../building/python.rst`.
+For this, a full Python installation of WarpX is required, as described in :doc:`../building/python`.
 
 In order to run a new simulation:
 
