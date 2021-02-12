@@ -33,7 +33,7 @@ class ComovingPsatdAlgorithm : public SpectralBaseAlgorithm
         virtual int getRequiredNumberOfFields () const override final
         {
             return SpectralFieldIndex::n_fields;
-        };
+        }
 
         /* \brief Initialize the coefficients needed in the update equations
          */
