@@ -243,6 +243,7 @@ BTDiagnostics::InitializeFieldBufferData ( int i_buffer , int lev)
     }
     amrex::Box diag_box( lo, hi );
     m_buffer_box[i_buffer] = diag_box;
+    m_snapshot_box[i_buffer] = diag_box;
     // Define box array
     amrex::BoxArray diag_ba(diag_box);
     diag_ba.maxSize( warpx.maxGridSize( lev ) );
