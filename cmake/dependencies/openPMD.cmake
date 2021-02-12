@@ -59,8 +59,6 @@ function(find_openpmd)
         mark_as_advanced(HDF5_C_LIBRARY_z)
         mark_as_advanced(JSON_ImplicitConversions)
         mark_as_advanced(JSON_MultipleHeaders)
-
-        message(STATUS "openPMD-api: Using INTERNAL version '${WarpX_openpmd_branch}'")
     else()
         if(WarpX_MPI)
             set(COMPONENT_WMPI MPI)
@@ -78,6 +76,7 @@ if(WarpX_OPENPMD)
         CACHE PATH
         "Local path to openPMD-api source directory (preferred if set)")
 
+    # Git fetcher
     option(WarpX_openpmd_internal   "Download & build openPMD-api" ON)
     set(WarpX_openpmd_repo "https://github.com/openPMD/openPMD-api.git"
         CACHE STRING
