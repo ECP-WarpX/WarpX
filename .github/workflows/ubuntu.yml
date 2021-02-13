@@ -241,7 +241,8 @@ jobs:
           -DWarpX_LIB=ON              \
           -DWarpX_MPI=ON              \
           -DWarpX_OPENPMD=ON          \
-          -DWarpX_PRECISION=SINGLE
+          -DWarpX_PRECISION=SINGLE    \
+          -DWarpX_PSATD=ON
         cmake --build build_sp -j 2
 
         export WarpX_MPI=ON
