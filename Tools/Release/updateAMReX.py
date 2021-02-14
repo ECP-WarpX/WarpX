@@ -9,7 +9,6 @@
 # when building WarpX.
 #
 import datetime
-import json
 from pathlib import Path
 import re
 import requests
@@ -18,11 +17,11 @@ import sys
 
 # Maintainer Inputs ###########################################################
 
-print("Hi there, this is a WarpX maintainer tool to update the source")
-print("code of WarpX to a new commit/release of AMReX.")
-print("For it to work, you need write access on the source directory and")
-print("you should be working in a clean git branch without ongoing")
-print("rebase/merge/conflict resolves and without unstaged changes.")
+print("""Hi there, this is a WarpX maintainer tool to update the source
+code of WarpX to a new commit/release of AMReX.
+For it to work, you need write access on the source directory and
+you should be working in a clean git branch without ongoing
+rebase/merge/conflict resolves and without unstaged changes.""")
 
 # check source dir
 REPO_DIR = Path(__file__).parent.parent.parent.absolute()
@@ -64,10 +63,9 @@ with open(amrex_cmake_path, encoding='utf-8') as f:
 
 # Ask for new #################################################################
 
-print("We will now run a few sed commands on your source directory.")
-print("Please answer the following questions about the version number")
-print("you want to require from AMReX:")
-print()
+print("""We will now run a few sed commands on your source directory.
+Please answer the following questions about the version number
+you want to require from AMReX:\n""")
 
 print(f"Currently, WarpX builds against this AMReX commit/branch/sha: {amrex_branch}")
 print(f"AMReX HEAD commit (development branch): {amrex_HEAD}")
@@ -135,6 +133,6 @@ with open(amrex_cmake_path, "w", encoding='utf-8') as f:
 
 # Epilog ######################################################################
 
-print("Done. Please check your source, e.g. via")
-print("  git diff")
-print("now and commit the changes if no errors occured.")
+print("""Done. Please check your source, e.g. via
+  git diff
+now and commit the changes if no errors occurred.""")
