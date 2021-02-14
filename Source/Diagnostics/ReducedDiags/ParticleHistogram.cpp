@@ -12,6 +12,7 @@
 #include "Particles/Filter/FilterFunctors.H"
 
 #include <AMReX_GpuContainers.H>
+#include <AMReX_Math.H>
 #include <AMReX_ParticleReduce.H>
 #include <AMReX_REAL.H>
 
@@ -201,7 +202,7 @@ void ParticleHistogram::ComputeDiags (int step)
                     auto const f = fun_partparser(t, x, y, z, ux, uy, uz);
 
                     // determine particle bin
-                    int const bin = int(std::floor((f-bin_min)/bin_size));
+                    int const bin = int(Math::floor((f-bin_min)/bin_size));
                     if ( bin<0 || bin>=num_bins ) return; // discard if out-of-range
 
                     if ( is_unity_particle_weight ) {
