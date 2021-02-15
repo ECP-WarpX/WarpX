@@ -18,6 +18,11 @@ Overall simulation parameters
 * ``max_step`` (`integer`)
     The number of PIC cycles to perform.
 
+* ``stop_time`` (`float`; in seconds)
+    The maximum physical time of the simulation. Can be provided instead of ``max_step``. If both
+    ``max_step`` and ``stop_time`` are provided, both criteria are used and the simulation stops
+    when the first criterion is hit.
+
 * ``warpx.gamma_boost`` (`float`)
     The Lorentz factor of the boosted frame in which the simulation is run.
     (The corresponding Lorentz transformation is assumed to be along ``warpx.boost_direction``.)
