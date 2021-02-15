@@ -24,27 +24,27 @@ using namespace amrex;
 void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-    amrex::Real const dt ) {
+    int lev, amrex::Real const dt ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
 
-        EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, dt );
+        EvolveBCylindrical <CylindricalYeeAlgorithm> ( Bfield, Efield, lev, dt );
 
 #else
     if (m_do_nodal) {
 
-        EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, dt );
+        EvolveBCartesian <CartesianNodalAlgorithm> ( Bfield, Efield, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, dt );
+        EvolveBCartesian <CartesianYeeAlgorithm> ( Bfield, Efield, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, dt );
+        EvolveBCartesian <CartesianCKCAlgorithm> ( Bfield, Efield, lev, dt );
 
 #endif
     } else {
@@ -60,7 +60,7 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-    amrex::Real const dt ) {
+    int lev, amrex::Real const dt ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
@@ -131,7 +131,7 @@ template<typename T_Algo>
 void FiniteDifferenceSolver::EvolveBCylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
-    amrex::Real const dt ) {
+    int lev, amrex::Real const dt ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 

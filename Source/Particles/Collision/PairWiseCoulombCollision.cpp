@@ -36,8 +36,6 @@ PairWiseCoulombCollision::PairWiseCoulombCollision (std::string const collision_
 void
 PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleContainer* mypc)
 {
-    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-
     const amrex::Real dt = WarpX::GetInstance().getdt(0);
     if ( int(std::floor(cur_time/dt)) % m_ndt != 0 ) return;
 
@@ -51,6 +49,8 @@ PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleConta
     // Loop over refinement levels
     for (int lev = 0; lev <= species1.finestLevel(); ++lev){
 
+	amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+	
         // Loop over all grids/tiles at this level
 #ifdef AMREX_USE_OMP
         info.SetDynamic(true);
@@ -61,7 +61,7 @@ PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleConta
             {
                 amrex::Gpu::synchronize();
             }
-            Real wt = amrex::second();
+	    amrex::Real wt = amrex::second();
 
             doCoulombCollisionsWithinTile( lev, mfi, species1, species2 );
 
@@ -69,7 +69,7 @@ PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleConta
             {
                 amrex::Gpu::synchronize();
                 wt = amrex::second() - wt;
-                amrex::HostDevice::Atomic::AddNoRet( &(*cost)[mfi.index()], wt);
+                amrex::HostDevice::Atomic::Add( &(*cost)[mfi.index()], wt);
             }
         }
     }

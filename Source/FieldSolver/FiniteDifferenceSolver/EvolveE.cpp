@@ -28,27 +28,27 @@ void FiniteDifferenceSolver::EvolveE (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::unique_ptr<amrex::MultiFab> const& Ffield,
-    amrex::Real const dt ) {
+    int lev, amrex::Real const dt ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
 #ifdef WARPX_DIM_RZ
     if (m_fdtd_algo == MaxwellSolverAlgo::Yee){
 
-        EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, dt );
+        EvolveECylindrical <CylindricalYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
 
 #else
     if (m_do_nodal) {
 
-        EvolveECartesian <CartesianNodalAlgorithm> ( Efield, Bfield, Jfield, Ffield, dt );
+        EvolveECartesian <CartesianNodalAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
 
-        EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, dt );
+        EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::CKC) {
 
-        EvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, Ffield, dt );
+        EvolveECartesian <CartesianCKCAlgorithm> ( Efield, Bfield, Jfield, Ffield, lev, dt );
 
 #endif
     } else {
@@ -66,7 +66,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::unique_ptr<amrex::MultiFab> const& Ffield,
-    amrex::Real const dt ) {
+    int lev, amrex::Real const dt ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
     Real constexpr c2 = PhysConst::c * PhysConst::c;
@@ -174,7 +174,7 @@ void FiniteDifferenceSolver::EvolveECylindrical (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Bfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Jfield,
     std::unique_ptr<amrex::MultiFab> const& Ffield,
-    amrex::Real const dt ) {
+    int lev, amrex::Real const dt ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
