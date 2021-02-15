@@ -50,7 +50,7 @@ PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleConta
     for (int lev = 0; lev <= species1.finestLevel(); ++lev){
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-    
+
         // Loop over all grids/tiles at this level
 #ifdef AMREX_USE_OMP
         info.SetDynamic(true);
