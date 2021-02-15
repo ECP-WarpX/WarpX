@@ -49,8 +49,8 @@ PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleConta
     // Loop over refinement levels
     for (int lev = 0; lev <= species1.finestLevel(); ++lev){
 
-	amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
-	
+    amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
+    
         // Loop over all grids/tiles at this level
 #ifdef AMREX_USE_OMP
         info.SetDynamic(true);
@@ -61,7 +61,7 @@ PairWiseCoulombCollision::doCollisions (amrex::Real cur_time, MultiParticleConta
             {
                 amrex::Gpu::synchronize();
             }
-	    amrex::Real wt = amrex::second();
+        amrex::Real wt = amrex::second();
 
             doCoulombCollisionsWithinTile( lev, mfi, species1, species2 );
 

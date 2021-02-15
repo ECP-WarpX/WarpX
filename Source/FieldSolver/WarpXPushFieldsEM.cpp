@@ -230,10 +230,10 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
     // Evolve E field in regular cells
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveE( Efield_fp[lev], Bfield_fp[lev],
-					current_fp[lev], F_fp[lev], lev, a_dt );
+                    current_fp[lev], F_fp[lev], lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE( Efield_cp[lev], Bfield_cp[lev],
-					current_cp[lev], F_cp[lev], lev, a_dt );
+                    current_cp[lev], F_cp[lev], lev, a_dt );
     }
 
     // Evolve E field in PML cells

@@ -19,7 +19,7 @@ SpectralFieldData::SpectralFieldData( const amrex::BoxArray& realspace_ba,
                                       const amrex::DistributionMapping& dm,
                                       const int n_field_required,
                                       const bool periodic_single_box,
-				      const int lev)
+                      const int lev)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
@@ -111,7 +111,7 @@ SpectralFieldData::~SpectralFieldData()
  *  (in the spectral field specified by `field_index`) */
 void
 SpectralFieldData::ForwardTransform (const int lev,
-				     const MultiFab& mf, const int field_index,
+                     const MultiFab& mf, const int field_index,
                                      const int i_comp, const IntVect& stag)
 {
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
@@ -203,7 +203,7 @@ SpectralFieldData::ForwardTransform (const int lev,
  * real space, and store it in the component `i_comp` of `mf` */
 void
 SpectralFieldData::BackwardTransform( const int lev,
-				      MultiFab& mf,
+                      MultiFab& mf,
                                       const int field_index,
                                       const int i_comp )
 {

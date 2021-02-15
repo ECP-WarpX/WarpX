@@ -57,11 +57,11 @@ class SpectralFieldData
         ~SpectralFieldData();
 
         void ForwardTransform (const int lev,
-			       const amrex::MultiFab& mf, const int field_index,
+                   const amrex::MultiFab& mf, const int field_index,
                                const int i_comp, const amrex::IntVect& stag);
         AMREX_FORCE_INLINE
         void ForwardTransform (const int lev,
-			       const amrex::MultiFab& mf, const int field_index, const int i_comp)
+                   const amrex::MultiFab& mf, const int field_index, const int i_comp)
         {
             ForwardTransform(lev, mf, field_index, i_comp, mf.ixType().toIntVect());
         }
