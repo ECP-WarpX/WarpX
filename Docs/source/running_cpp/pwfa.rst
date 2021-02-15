@@ -1,7 +1,7 @@
 In-depth explanation of a PWFA simulation setup
 ===============================================
 
-As described in the :doc:`intro`, one of the key applications of the WarpX exascale computing platform is in modelling future, compact and economic plasma-based accelerators.
+As described in the :doc:`../theory/intro`, one of the key applications of the WarpX exascale computing platform is in modelling future, compact and economic plasma-based accelerators.
 In this section we describe the simulation setup of a realistic electron beam driven plasma wakefield accelerator (PWFA) configuration.
 For illustration porpuses the setup can be explored with **WarpX** using the example input file :download:`PWFA <../../../Examples/Physics_applications/plasma_acceleration/inputs_2d_boost>`.
 
@@ -42,8 +42,8 @@ Listed below are the key arguments and best-practices relevant for chosing the p
 Finite Difference Time Domain
 -----------------------------
 
-    For standard plasma wakefield configurations, it is possible to model the physics correctly using the Particle-In-Cell (PIC) Finite Difference Time Domain (FDTD) algorithms (:doc:`picsar_theory`).
-    If the simulation contains localised extremely high intensity fields, however, numerical instabilities might arise, such as the numerical Cherenkov instability (:doc:`boosted_frame`).
+    For standard plasma wakefield configurations, it is possible to model the physics correctly using the Particle-In-Cell (PIC) Finite Difference Time Domain (FDTD) algorithms (:doc:`../theory/picsar_theory`).
+    If the simulation contains localised extremely high intensity fields, however, numerical instabilities might arise, such as the numerical Cherenkov instability (:doc:`../theory/boosted_frame`).
     In that case, it is recommended to use the Pseudo Spectral Analytical Time Domain (PSATD) or the Pseudo-Spectral Time-Domain (PSTD) algorithms.
     In the example we are describing, it is sufficient to use FDTD.
 
@@ -76,7 +76,7 @@ Moving window
     In this way we define a simulation box (grid) with a fixed size that travels at the speed-of-ligth (:math:`c`), i.e. follows the beam.
 
     .. note::
-    When using moving window the option of continuous injection needs to be active for all particles initialized outside of the simulation box.
+       When using moving window the option of continuous injection needs to be active for all particles initialized outside of the simulation box.
 
 
 Resolution
@@ -96,7 +96,7 @@ Time step
 
     The time step (:math:`dt`) is used to iterated over the main PIC loop and is computed by WarpX differently depending on the Maxwell field FDTD solvers used:
 
-    * **For Yee** is equal to the CFL parameter chosen in the input file (:doc:`parameters`) times the Courant–Friedrichs–Lewy condition (CFL) that follows the analytical expression in :doc:`picsar_theory`
+    * **For Yee** is equal to the CFL parameter chosen in the input file (:doc:`parameters`) times the Courant–Friedrichs–Lewy condition (CFL) that follows the analytical expression in :doc:`../theory/picsar_theory`
     * **For CKC** is equal to CFL times the minimum between the boosted frame cell dimensions
 
     where CFL is choosen to be below unity and set an optimal trade-off between making the simulation faster and avoiding NCI and other spurious effects.

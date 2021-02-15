@@ -71,11 +71,10 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         Array4<Real const> const& ey_fp = Efield_fp[0][1]->const_array(mfi);
         Array4<Real const> const& ez_fp = Efield_fp[0][2]->const_array(mfi);
 
-        Box bx = mfi.validbox();
-        // TODO It seems like it is necessary to loop over the valid box grown
-        // with 2 guard cells. Should this number of guard cells be expressed
-        // in terms of the parameters defined in the guardCellManager class?
-        bx.grow(2);
+        // Loop over full box including ghost cells
+        // (input arrays will be padded with zeros beyond ghost cells
+        // for out-of-bound accesses due to large-stencil operations)
+        Box bx = mfi.fabbox();
 
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifdef WARPX_USE_PSATD

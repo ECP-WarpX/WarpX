@@ -44,7 +44,7 @@ WarpX::MoveWindow (bool move_j)
 
     // Update the continuous position of the moving window,
     // and of the plasma injection
-    moving_window_x += moving_window_v * dt[0];
+    moving_window_x += (moving_window_v - WarpX::beta_boost * PhysConst::c)/(1 - moving_window_v * WarpX::beta_boost / PhysConst::c) * dt[0];
     int dir = moving_window_dir;
 
     // Update warpx.current_injection_position
