@@ -274,8 +274,12 @@ WarpX::ComputeMaxStep ()
         computeMaxStepBoostAccelerator(geom[0]);
     }
 
-    max_step = std::min(max_step,
-                        istep[0] + static_cast<int>(std::ceil( (stop_time-t_new[0])/dt[0] )));
+    // Make max_step consistent with stop_time, assuming constant dt. The if condition is here to
+    // avoid an overflow in the static_cast.
+    if (istep[0] + (std::ceil( (stop_time-t_new[0])/dt[0] )) < std::numeric_limits<int>::max()) {
+        max_step = std::min(max_step,
+                            istep[0] + static_cast<int>(std::ceil( (stop_time-t_new[0])/dt[0] )));
+    }
 }
 
 /* \brief computes max_step for wakefield simulation in boosted frame.
