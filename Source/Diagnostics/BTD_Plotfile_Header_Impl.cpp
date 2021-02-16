@@ -4,6 +4,7 @@
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_PlotFileUtil.H>
 #include <AMReX_FileSystem.H>
+#include <AMReX_INT.H>
 #include <memory>
 
 using namespace amrex::literals;
@@ -18,9 +19,23 @@ BTDPlotfileHeaderImpl::BTDPlotfileHeaderImpl (std::string const & Headerfile_pat
 void
 BTDPlotfileHeaderImpl::ReadHeaderData ()
 {
+
     // Read existing snapshot Header first
     amrex::Vector<char> HeaderCharPtr;
-    amrex::ParallelDescriptor::ReadAndBcastFile(m_Header_path, HeaderCharPtr);
+    amrex::Long fileLength(0), fileLengthPadded(0);
+    std::ifstream iss;
+
+    iss.open(m_Header_path.c_str(), std::ios::in);
+    iss.seekg(0, std::ios::end);
+    fileLength = static_cast<std::streamoff>(iss.tellg());
+    iss.seekg(0, std::ios::beg);
+
+    fileLengthPadded = fileLength + 1;
+    HeaderCharPtr.resize(fileLengthPadded);
+    iss.read(HeaderCharPtr.dataPtr(), fileLength);
+    iss.close();
+    HeaderCharPtr[fileLength] = '\0';
+
     std::istringstream is(HeaderCharPtr.dataPtr(), std::istringstream::in);
 
     is >> m_file_version;
@@ -155,8 +170,22 @@ BTDMultiFabHeaderImpl::BTDMultiFabHeaderImpl (std::string const & Headerfile_pat
 void
 BTDMultiFabHeaderImpl::ReadMultiFabHeader ()
 {
+    // Read existing fab Header first
     amrex::Vector<char> HeaderCharPtr;
-    amrex::ParallelDescriptor::ReadAndBcastFile(m_Header_path, HeaderCharPtr);
+    amrex::Long fileLength(0), fileLengthPadded(0);
+    std::ifstream iss;
+
+    iss.open(m_Header_path.c_str(), std::ios::in);
+    iss.seekg(0, std::ios::end);
+    fileLength = static_cast<std::streamoff>(iss.tellg());
+    iss.seekg(0, std::ios::beg);
+
+    fileLengthPadded = fileLength + 1;
+    HeaderCharPtr.resize(fileLengthPadded);
+    iss.read(HeaderCharPtr.dataPtr(), fileLength);
+    iss.close();
+    HeaderCharPtr[fileLength] = '\0';
+
     std::istringstream is(HeaderCharPtr.dataPtr(), std::istringstream::in);
 
     is >> m_vers;

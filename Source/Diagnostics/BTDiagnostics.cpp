@@ -671,7 +671,6 @@ BTDiagnostics::Flush (int i_buffer)
         MergeBuffersForPlotfile(i_buffer);
     }
 
-
     TMP_FlushLabFrameData (i_buffer);
     // Reset the buffer counter to zero after flushing out data stored in the buffer.
     ResetBufferCounter(i_buffer);
@@ -724,7 +723,6 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
     auto & warpx = WarpX::GetInstance();
     const amrex::Vector<int> iteration = warpx.getistep();
     if (amrex::ParallelContext::IOProcessorSub()) {
-
         // Path to final snapshot plotfiles
         std::string snapshot_path = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_snapshot,5);
         // BTD plotfile have only one level, Level0.
@@ -733,7 +731,8 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
         // Create directory only when the first buffer is flushed out.
         if (m_buffer_flush_counter[i_snapshot] == 0 ) {
             // Create Level_0 directory to store all Cell_D and Cell_H files
-            amrex::UtilCreateDirectory(snapshot_Level0_path, 0755);
+            if (!amrex::UtilCreateDirectory(snapshot_Level0_path, 0755) )
+                amrex::CreateDirectoryFailed(snapshot_Level0_path);
         }
 
         // Path of the buffer recently flushed
@@ -756,9 +755,12 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
         // Name of the newly appended fab in the snapshot
         std::string new_snapshotFabFilename = amrex::Concatenate("Cell_D_",m_buffer_flush_counter[i_snapshot],5);
 
-
         if ( m_buffer_flush_counter[i_snapshot] == 0) {
             std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
+	    Buffer_FabHeader.SetFabName(0, Buffer_FabHeader.fodPrefix(0),
+			                new_snapshotFabFilename,
+					Buffer_FabHeader.FabHead(0));
+	    Buffer_FabHeader.WriteMultiFabHeader();
             std::rename(recent_Buffer_FabHeaderFilename.c_str(),
                         snapshot_FabHeaderFilename.c_str());
             std::rename(recent_Buffer_FabFilename.c_str(),
