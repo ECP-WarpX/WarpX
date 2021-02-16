@@ -522,6 +522,8 @@ public:
                      const int max_iters=200) const;
     void setDirichletBC (amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                          const int idim) const;
+    void getBoundaryPotentials(const int idim, amrex::Real &pot_lo,
+                               amrex::Real &pot_hi) const;
     void computeE (amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>, 3> >& E,
                    const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                    std::array<amrex::Real, 3> const beta = {{0,0,0}} ) const;

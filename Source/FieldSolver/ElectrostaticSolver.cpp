@@ -212,16 +212,13 @@ void
 WarpX::setDirichletBC(amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
                       const int idim) const
 {
-    // Get the boundary potentials specified in the simulation input file
-    Vector<Real> potential_lo(AMREX_SPACEDIM);
-    Vector<Real> potential_hi(AMREX_SPACEDIM);
+    Real potential_lo;
+    Real potential_hi;
 
-    ParmParse pp_geom("geometry");
-    pp_geom.getarr("potential_lo",potential_lo,0,AMREX_SPACEDIM);
-    pp_geom.getarr("potential_hi",potential_hi,0,AMREX_SPACEDIM);
+    getBoundaryPotentials(idim, potential_lo, potential_hi);
 
-    // Print() << "Potential left = " << potential_lo[0] << "\n";
-    // Print() << "Potential right = " << potential_hi[0] << "\n";
+    // Print() << "Potential lo = " << potential_lo << "\n";
+    // Print() << "Potential hi = " << potential_hi << "\n";
 
     // loop over all multigrid levels and set the boundary values
     for (int lev=0; lev <= max_level; lev++) {
@@ -237,22 +234,22 @@ WarpX::setDirichletBC(amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
             if (idim == 0){
                 for (int k=lo.z; k<=hi.z; k++) {
                 for (int j=lo.y; j<=hi.y; j++) {
-                    phi_gh(lo.x+1,j,k) = potential_lo[idim];
-                    phi_gh(hi.x-1,j,k) = potential_hi[idim];
+                    phi_gh(lo.x+1,j,k) = potential_lo;
+                    phi_gh(hi.x-1,j,k) = potential_hi;
                 }}
             }
             if (idim == 1){
                 for (int k=lo.z; k<=hi.z; k++) {
                 for (int i=lo.x; i<=hi.x; i++) {
-                    phi_gh(i,lo.y+1,k) = potential_lo[idim];
-                    phi_gh(i,hi.y-1,k) = potential_hi[idim];
+                    phi_gh(i,lo.y+1,k) = potential_lo;
+                    phi_gh(i,hi.y-1,k) = potential_hi;
                 }}
             }
             if (idim == 2){
                 for (int j=lo.y; j<=hi.y; j++) {
                 for (int i=lo.x; i<=hi.x; i++) {
-                    phi_gh(i,j,lo.z+1) = potential_lo[idim];
-                    phi_gh(i,j,hi.z-1) = potential_hi[idim];
+                    phi_gh(i,j,lo.z+1) = potential_lo;
+                    phi_gh(i,j,hi.z-1) = potential_hi;
                 }}
             }
     }} // lev & MFIter
@@ -289,7 +286,33 @@ WarpX::setDirichletBC(amrex::Vector<std::unique_ptr<amrex::MultiFab> >& phi,
          );
     }} // lev & MRIter
     */
+}
 
+/* \bried Utility function to parse input file for boundary potentials.
+
+    The input values are parsed to allow math expressions for the potentials
+    that specify time dependence.
+
+   \param[in] idim The dimension for which the potential is queried
+   \param[inout] pot_lo The specified value of `phi` on the lower boundary.
+   \param[inout] pot_hi The specified value of `phi` on the upper boundary.
+*/
+void
+WarpX::getBoundaryPotentials(const int idim, amrex::Real &pot_lo,
+                             amrex::Real &pot_hi) const{
+    Vector<std::string> potential_lo_str(AMREX_SPACEDIM);
+    Vector<std::string> potential_hi_str(AMREX_SPACEDIM);
+
+    // Get the boundary potentials specified in the simulation input file
+    // first as strings and then parse those for possible math expressions
+    ParmParse pp_geom("geometry");
+    pp_geom.getarr("potential_lo",potential_lo_str,0,AMREX_SPACEDIM);
+    pp_geom.getarr("potential_hi",potential_hi_str,0,AMREX_SPACEDIM);
+
+    auto parser_lo = makeParser(potential_lo_str[idim], {"t"});
+    pot_lo = parser_lo.eval(getistep()[0] * dt[0]);
+    auto parser_hi = makeParser(potential_hi_str[idim], {"t"});
+    pot_hi = parser_hi.eval(getistep()[0] * dt[0]);
 }
 
 /* \bried Compute the electric field that corresponds to `phi`, and
