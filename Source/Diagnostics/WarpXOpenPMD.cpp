@@ -241,6 +241,7 @@ void WarpXOpenPMDPlot::GetFileName(std::string& filename)
 void WarpXOpenPMDPlot::SetStep (int ts, const std::string& filePrefix)
 {
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
+
   if (m_CurrentStep >= ts) {
       // note m_Series is reset in Init(), so using m_Series->iterations.contains(ts) is only able to check the
       // last written step in m_Series's life time, but not other earlier written steps by other m_Series
