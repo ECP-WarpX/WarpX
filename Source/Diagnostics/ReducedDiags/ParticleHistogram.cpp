@@ -205,6 +205,10 @@ void ParticleHistogram::ComputeDiags (int step)
                     int const bin = int(Math::floor((f-bin_min)/bin_size));
                     if ( bin<0 || bin>=num_bins ) return; // discard if out-of-range
 
+                    // add particle to histogram bin
+                    //! @todo performance: on CPU, we are probably faster by
+                    //        letting each thread compute its own histogram and
+                    //        then we reduce the histograms after the loop
                     if ( is_unity_particle_weight ) {
                         amrex::HostDevice::Atomic::Add(&dptr_data[bin], 1.0_rt);
                     } else {
