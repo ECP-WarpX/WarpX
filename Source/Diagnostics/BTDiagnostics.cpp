@@ -786,10 +786,10 @@ void BTDiagnostics::MergeBuffersForPlotfile (int i_snapshot)
 
         if ( m_buffer_flush_counter[i_snapshot] == 0) {
             std::rename(recent_Header_filename.c_str(), snapshot_Header_filename.c_str());
-	    Buffer_FabHeader.SetFabName(0, Buffer_FabHeader.fodPrefix(0),
-			                new_snapshotFabFilename,
-					Buffer_FabHeader.FabHead(0));
-	    Buffer_FabHeader.WriteMultiFabHeader();
+        Buffer_FabHeader.SetFabName(0, Buffer_FabHeader.fodPrefix(0),
+                            new_snapshotFabFilename,
+                    Buffer_FabHeader.FabHead(0));
+        Buffer_FabHeader.WriteMultiFabHeader();
             std::rename(recent_Buffer_FabHeaderFilename.c_str(),
                         snapshot_FabHeaderFilename.c_str());
             std::rename(recent_Buffer_FabFilename.c_str(),
