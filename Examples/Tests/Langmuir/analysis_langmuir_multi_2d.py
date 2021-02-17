@@ -23,7 +23,6 @@
 
 import sys
 import re
-import matplotlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import yt
@@ -101,6 +100,19 @@ assert(error_rel < tolerance)
 # Plot Ez
 E_sim = data['Ez'].to_ndarray()[:,:,0]
 
+def set_axes_and_colorbar(ax, cb, title):
+    ax.set_xlabel(r'$z$')
+    ax.set_ylabel(r'$x$')
+    ax.xaxis.set_major_locator(plt.MaxNLocator(5))
+    ax.yaxis.set_major_locator(plt.MaxNLocator(5))
+    ax.set_title(title)
+    cb.ax.tick_params()
+    cb.ax.yaxis.get_offset_text().set()
+    cb.ax.yaxis.offsetText.set_ha('center')
+    cb.ax.yaxis.offsetText.set_va('bottom')
+    cb.formatter.set_powerlimits((0,0))
+    cb.update_ticks()
+
 fig, (ax1,ax2) = plt.subplots(1,2, dpi=100)
 # Absolute min and max field values
 vmin = min(E_sim.min(), E_th.min())
@@ -109,32 +121,12 @@ vmax = max(E_sim.max(), E_th.max())
 cax1 = make_axes_locatable(ax1).append_axes('right', size='5%', pad='5%')
 im1 = ax1.imshow(E_sim, origin = 'lower', extent = edge[0], vmin = vmin, vmax = vmax)
 cb1 = fig.colorbar(im1, cax = cax1)
-ax1.set_xlabel(r'$z$')
-ax1.set_ylabel(r'$x$')
-ax1.xaxis.set_major_locator(plt.MaxNLocator(5))
-ax1.yaxis.set_major_locator(plt.MaxNLocator(5))
-ax1.set_title('Ez (sim)')
-cb1.ax.tick_params()
-cb1.ax.yaxis.get_offset_text().set()
-cb1.ax.yaxis.offsetText.set_ha('center')
-cb1.ax.yaxis.offsetText.set_va('bottom')
-cb1.formatter.set_powerlimits((0,0))
-cb1.update_ticks()
+set_axes_and_colorbar(ax1, cb1, 'Ez (sim)')
 # Second plot
 cax2 = make_axes_locatable(ax2).append_axes('right', size='5%', pad='5%')
 im2 = ax2.imshow(E_th, origin = 'lower', extent = edge[0], vmin = vmin, vmax = vmax)
 cb2 = fig.colorbar(im2, cax = cax2)
-ax2.set_xlabel(r'$z$')
-ax2.set_ylabel(r'$x$')
-ax2.xaxis.set_major_locator(plt.MaxNLocator(5))
-ax2.yaxis.set_major_locator(plt.MaxNLocator(5))
-ax2.set_title('Ez (theory)')
-cb2.ax.tick_params()
-cb2.ax.yaxis.get_offset_text().set()
-cb2.ax.yaxis.offsetText.set_ha('center')
-cb2.ax.yaxis.offsetText.set_va('bottom')
-cb2.formatter.set_powerlimits((0,0))
-cb2.update_ticks()
+set_axes_and_colorbar(ax2, cb2, 'Ez (theory)')
 # Save figure
 fig.tight_layout()
 fig.savefig('analysis_langmuir_multi_2d.png', dpi=200)
