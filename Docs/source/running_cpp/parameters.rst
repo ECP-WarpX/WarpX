@@ -949,7 +949,7 @@ Laser initialization
     additional parameter, namely, ``warpx.E_external_grid`` must be specified
     in the input file.
     If set to ``parse_E_ext_grid_function``, then a mathematical expression can
-    be used to initialize the external magnetic field on the grid. It
+    be used to initialize the external electric field on the grid. It
     required additional parameters in the input file, namely,
     ``warpx.Ex_external_grid_function(x,y,z)``,
     ``warpx.Ey_external_grid_function(x,y,z)``,
