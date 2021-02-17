@@ -29,7 +29,9 @@ FlushFormatOpenPMD::WriteToFile (
     const amrex::Vector<int> iteration, const double time,
     const amrex::Vector<ParticleDiag>& particle_diags, int /*nlev*/,
     const std::string prefix, bool plot_raw_fields,
-    bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F) const
+    bool plot_raw_fields_guards, bool plot_raw_rho, bool plot_raw_F,
+    bool isBTD, int snapshotID, const amrex::Geometry& full_BTD_snapshot,
+    bool isLastBTDFlush) const
 {
     WARPX_PROFILE("FlushFormatOpenPMD::WriteToFile()");
 
@@ -38,17 +40,17 @@ FlushFormatOpenPMD::WriteToFile (
         "Cannot plot raw data with OpenPMD output format. Use plotfile instead.");
 
     // Set step and output directory name.
-    m_OpenPMDPlotWriter->SetStep(iteration[0], prefix);
+    m_OpenPMDPlotWriter->SetStep(iteration[0], prefix, isBTD, snapshotID);
 
     // fields: only dumped for coarse level
     m_OpenPMDPlotWriter->WriteOpenPMDFields(
-        varnames, mf[0], geom[0], iteration[0], time);
+        varnames, mf[0], geom[0], iteration[0], time, isBTD, full_BTD_snapshot);
 
     // particles: all (reside only on locally finest level)
     m_OpenPMDPlotWriter->WriteOpenPMDParticles(particle_diags);
 
     // signal that no further updates will be written to this iteration
-    m_OpenPMDPlotWriter->CloseStep();
+    m_OpenPMDPlotWriter->CloseStep(isBTD, isLastBTDFlush);
 }
 
 FlushFormatOpenPMD::~FlushFormatOpenPMD (){

@@ -63,7 +63,11 @@ void BTDiagnostics::DerivedInitData ()
     m_cell_centered_data.resize(nmax_lev);
     // allocate vector of cell-center functors for nlevels
     m_cell_center_functors.resize(nmax_lev);
-    // allocate vector to counter number of times the buffer has been refilled
+    // allocate vector to estimate maximum number of buffer multifabs needed to
+    // obtain the lab-frame snapshot.
+    m_max_buffer_multifabs.resize(m_num_buffers);
+    // allocate vector to count number of times the buffer multifab 
+    // has been flushed and refilled
     m_buffer_flush_counter.resize(m_num_buffers);
     // allocate vector of geometry objects corresponding to each snapshot
     m_geom_snapshot.resize( m_num_buffers );
@@ -568,8 +572,26 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
         const int k_lab = k_index_zlab (i_buffer, lev);
         // Box covering the extent of the user-defined diag in the back-transformed frame
         // for the ith snapshot
-        m_snapshot_box[i_buffer].setSmall( m_moving_window_dir, k_lab - m_snapshot_ncells_lab[i_buffer][m_moving_window_dir]);
+        // estimating the maximum number of buffer multifabs needed to obtain the
+        // full lab-frame snapshot
+        m_max_buffer_multifabs[i_buffer] = static_cast<int>( ceil (
+            amrex::Real(m_snapshot_ncells_lab[i_buffer][m_moving_window_dir]) /
+            amrex::Real(m_buffer_size) ) );
+        // number of cells in z is modified since each buffer multifab always
+        // contains a minimum m_buffer_size=256 cells
+        int num_z_cells_in_snapshot = m_max_buffer_multifabs[i_buffer] * m_buffer_size;
+        // Modify the domain indices according to the buffers that are flushed out
+        m_snapshot_box[i_buffer].setSmall( m_moving_window_dir, 
+                                           k_lab - (num_z_cells_in_snapshot-1) );
         m_snapshot_box[i_buffer].setBig( m_moving_window_dir, k_lab);
+
+        // Modifying the physical coordinates of the lab-frame snapshot to be
+        // consistent with the above modified domain-indices in m_snapshot_box.
+        amrex::IntVect ref_ratio = amrex::IntVect(1);
+        amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) - 
+                             num_z_cells_in_snapshot *
+                             dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
+        m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_lo);
         if (lev == 0) {
             // The extent of the physical domain covered by the ith snapshot
             // Default non-periodic geometry for diags
@@ -662,10 +684,15 @@ BTDiagnostics::Flush (int i_buffer)
     auto & warpx = WarpX::GetInstance();
     std::string tmp_file_name = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_buffer,5);
     tmp_file_name = tmp_file_name+"/buffer";
+    bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer] 
+                               - m_buffer_flush_counter[i_buffer]) == 1) ? true : false;
+    amrex::Print() << " is last buffer flush : " << isLastBTDFlush << "\n";
+    bool isBTD = true;
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
         warpx.gett_new(0), m_output_species, nlev_output, tmp_file_name,
-        m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F);
+        m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F,
+        isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush);
 
     if (m_format == "plotfile") {
         MergeBuffersForPlotfile(i_buffer);

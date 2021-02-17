@@ -164,6 +164,11 @@ private:
      *  stored in the buffer multifab is flushed out and the counter is reset is zero.
      */
     amrex::Vector<int> m_buffer_counter;
+    /** Vector of maximum number of buffer multifabs that need to be flushed to 
+     *  generate each lab-frame snapshot. At the final flush, m_buffer_flush_counter
+     *  will be equal to the predicted m_max_buffer_multifabs for each snapshot.
+     */
+    amrex::Vector<int> m_max_buffer_multifabs;
     /** Vector of counters tracking number of times the buffer of multifab is
      *  flushed out and emptied before being refilled again for each snapshot */
     amrex::Vector<int> m_buffer_flush_counter;

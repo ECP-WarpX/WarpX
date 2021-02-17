@@ -238,27 +238,34 @@ void WarpXOpenPMDPlot::GetFileName(std::string& filename)
 }
 
 
-void WarpXOpenPMDPlot::SetStep (int ts, const std::string& filePrefix)
+void WarpXOpenPMDPlot::SetStep (int ts, const std::string& filePrefix,
+                                bool isBTD, int BTD_ts)
 {
-  AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
 
-  if (m_CurrentStep >= ts) {
-      // note m_Series is reset in Init(), so using m_Series->iterations.contains(ts) is only able to check the
-      // last written step in m_Series's life time, but not other earlier written steps by other m_Series
-      std::string warnMsg = " Warning from openPMD writer: Already written iteration:"+std::to_string(ts);
-      std::cout<<warnMsg<<std::endl;
-      amrex::Warning(warnMsg);
-  }
+    if (m_CurrentStep >= ts) {
+        // note m_Series is reset in Init(), so using m_Series->iterations.contains(ts) is only able to check the
+        // last written step in m_Series's life time, but not other earlier written steps by other m_Series
+        std::string warnMsg = " Warning from openPMD writer: Already written iteration:"+std::to_string(ts);
+        std::cout<<warnMsg<<std::endl;
+        amrex::Warning(warnMsg);
+    }
 
-    m_CurrentStep =  ts;
+    m_CurrentStep = ts;
     Init(openPMD::Access::CREATE, filePrefix);
 
 }
 
-void WarpXOpenPMDPlot::CloseStep ()
+void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
 {
-    if (m_Series)
-        m_Series->iterations[m_CurrentStep].close();
+    // default close is true
+    bool callClose = true;
+    // close BTD file only when isLastBTDFlush is true
+    if (isBTD and !isLastBTDFlush) callClose = false;
+    if (callClose) {
+        if (m_Series)
+            m_Series->iterations[m_CurrentStep].close();
+    }
 }
 
 void
@@ -751,7 +758,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
                       const amrex::MultiFab& mf,
                       const amrex::Geometry& geom,
                       const int iteration,
-                      const double time ) const
+                      const double time, bool isBTD,
+                      const amrex::Geometry& full_BTD_snapshot ) const
 {
   //This is AMReX's tiny profiler. Possibly will apply it later
   WARPX_PROFILE("WarpXOpenPMDPlot::WriteOpenPMDFields()");
