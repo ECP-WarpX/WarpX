@@ -38,7 +38,7 @@ See additional options
 
 * ``--skip-fields`` if you don't want the fields to be compared (in that case, the benchmark must not have fields)
 * ``--skip-particles`` same thing for particles
-* ``--rtol`` relative tolerance for the compatison
+* ``--rtol`` relative tolerance for the comparison
 * ``--atol`` absolute tolerance for the comparison (a sum of both is used by ``numpy.isclose()``)
 
 Reset a benchmark from a plotfile you know is correct
