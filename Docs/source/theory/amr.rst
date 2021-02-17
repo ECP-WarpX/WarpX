@@ -1,3 +1,5 @@
+.. _theory-amr:
+
 Mesh refinement
 ===============
 

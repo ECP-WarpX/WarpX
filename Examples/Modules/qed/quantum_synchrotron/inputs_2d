@@ -44,7 +44,6 @@ p1.profile = "constant"
 p1.momentum_distribution_type = "gaussian"
 p1.ux_m = 10.0
 ##########QED####################
-p1.do_qed = 1
 p1.do_qed_quantum_sync = 1
 p1.qed_quantum_sync_phot_product_species = qsp_1
 #################################
@@ -58,7 +57,6 @@ p2.profile = "constant"
 p2.momentum_distribution_type = "gaussian"
 p2.uy_m = 100.0
 ##########QED####################
-p2.do_qed = 1
 p2.do_qed_quantum_sync = 1
 p2.qed_quantum_sync_phot_product_species = qsp_2
 #################################
@@ -72,7 +70,6 @@ p3.profile = "constant"
 p3.momentum_distribution_type = "gaussian"
 p3.uz_m = 1000.0
 ##########QED####################
-p3.do_qed = 1
 p3.do_qed_quantum_sync = 1
 p3.qed_quantum_sync_phot_product_species = qsp_3
 #################################
@@ -88,7 +85,6 @@ p4.ux_m = 5773.502691896
 p4.uy_m = 5773.502691896
 p4.uz_m = 5773.502691896
 ##########QED####################
-p4.do_qed = 1
 p4.do_qed_quantum_sync = 1
 p4.qed_quantum_sync_phot_product_species = qsp_4
 #################################
@@ -100,7 +96,6 @@ qsp_1.num_particles_per_cell_each_dim = 0 0
 qsp_1.profile = constant
 qsp_1.density = 0.0
 qsp_1.momentum_distribution_type = "gaussian"
-qsp_1.do_qed = 1
 qsp_1.do_qed_breit_wheeler = 1
 qsp_1.qed_breit_wheeler_ele_product_species = dummy_ele
 qsp_1.qed_breit_wheeler_pos_product_species = dummy_pos
@@ -111,7 +106,6 @@ qsp_2.num_particles_per_cell_each_dim = 0 0
 qsp_2.profile = constant
 qsp_2.density = 0.0
 qsp_2.momentum_distribution_type = "gaussian"
-qsp_2.do_qed = 1
 qsp_2.do_qed_breit_wheeler = 1
 qsp_2.qed_breit_wheeler_ele_product_species = dummy_ele
 qsp_2.qed_breit_wheeler_pos_product_species = dummy_pos
@@ -122,7 +116,6 @@ qsp_3.num_particles_per_cell_each_dim = 0 0
 qsp_3.profile = constant
 qsp_3.density = 0.0
 qsp_3.momentum_distribution_type = "gaussian"
-qsp_3.do_qed = 1
 qsp_3.do_qed_breit_wheeler = 1
 qsp_3.qed_breit_wheeler_ele_product_species = dummy_ele
 qsp_3.qed_breit_wheeler_pos_product_species = dummy_pos
@@ -133,7 +126,6 @@ qsp_4.num_particles_per_cell_each_dim = 0 0
 qsp_4.profile = constant
 qsp_4.density = 0.0
 qsp_4.momentum_distribution_type = "gaussian"
-qsp_4.do_qed = 1
 qsp_4.do_qed_breit_wheeler = 1
 qsp_4.qed_breit_wheeler_ele_product_species = dummy_ele
 qsp_4.qed_breit_wheeler_pos_product_species = dummy_pos
@@ -146,7 +138,6 @@ dummy_ele.num_particles_per_cell_each_dim = 0 0
 dummy_ele.profile = constant
 dummy_ele.density = 0.0
 dummy_ele.momentum_distribution_type = "gaussian"
-dummy_ele.do_qed = 0
 
 dummy_pos.species_type = "positron"
 dummy_pos.injection_style = nuniformpercell
@@ -154,8 +145,6 @@ dummy_pos.num_particles_per_cell_each_dim = 0 0
 dummy_pos.profile = constant
 dummy_pos.density = 0.0
 dummy_pos.momentum_distribution_type = "gaussian"
-dummy_pos.do_qed = 0
-
 
 #################################
 

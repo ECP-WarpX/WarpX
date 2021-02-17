@@ -1,7 +1,7 @@
 # Preamble ####################################################################
 #
 cmake_minimum_required(VERSION 3.15.0)
-project(WarpX VERSION 0.20.5)
+project(WarpX VERSION 21.02)
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
 
@@ -49,7 +49,8 @@ option(WarpX_LIB           "Build WarpX as a shared library"            OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  OFF)
 option(WarpX_PSATD         "spectral solver support"                    OFF)
-option(WarpX_QED           "PICSAR QED (requires Boost and PICSAR)"     OFF)
+option(WarpX_QED           "QED support (requires PICSAR)"                    ON)
+option(WarpX_QED_TABLE_GEN "QED table generation (requires PICSAR and Boost)" OFF)
 # TODO: sensei, legacy hdf5?
 
 set(WarpX_DIMS_VALUES 2 3 RZ)
@@ -108,8 +109,10 @@ include(${WarpX_SOURCE_DIR}/cmake/dependencies/openPMD.cmake)
 
 # PSATD
 if(WarpX_PSATD)
-    # FFTW (non-GPU) and cuFFT (GPU)
-    if(NOT WarpX_COMPUTE STREQUAL CUDA)
+    # FFTW (non-GPU) and cuFFT/rocFFT (GPU)
+    if(WarpX_COMPUTE STREQUAL HIP)
+        find_package(rocfft REQUIRED)
+    elseif(NOT WarpX_COMPUTE STREQUAL CUDA)
         find_package(PkgConfig REQUIRED QUIET)
         if(WarpX_PRECISION STREQUAL "DOUBLE")
             pkg_check_modules(fftw3 REQUIRED IMPORTED_TARGET fftw3)
@@ -210,6 +213,8 @@ if(WarpX_PSATD)
     if(WarpX_COMPUTE STREQUAL CUDA)
         # CUDA_ADD_CUFFT_TO_TARGET(WarpX)
         target_link_libraries(WarpX PUBLIC cufft)
+    elseif(WarpX_COMPUTE STREQUAL HIP)
+        target_link_libraries(WarpX PUBLIC roc::rocfft)
     else()
         if(WarpX_PRECISION STREQUAL "DOUBLE")
             target_link_libraries(WarpX PUBLIC PkgConfig::fftw3)
@@ -231,8 +236,10 @@ endif()
 
 if(WarpX_QED)
     target_compile_definitions(WarpX PUBLIC WARPX_QED)
-    # FIXME WARPX_QED_TABLE_GEN
-    target_link_libraries(WarpX PUBLIC pxrmp_qed)
+    if(WarpX_QED_TABLE_GEN)
+        target_compile_definitions(WarpX PUBLIC WARPX_QED_TABLE_GEN)
+    endif()
+    target_link_libraries(WarpX PUBLIC PXRMP_QED::PXRMP_QED)
 endif()
 
 # AMReX helper function: propagate CUDA specific target & source properties

@@ -181,11 +181,16 @@ function(set_warpx_binary_name)
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".QED")
         endif()
 
+        if(WarpX_QED_TABLE_GEN)
+            set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".GENQEDTABLES")
+        endif()
+
+
         if(CMAKE_BUILD_TYPE MATCHES "Debug")
             set_property(TARGET ${tgt} APPEND_STRING PROPERTY OUTPUT_NAME ".DEBUG")
         endif()
     endforeach()
-    
+
     if(WarpX_APP)
         # alias to the latest build, because using the full name is often confusing
         add_custom_command(TARGET app POST_BUILD
@@ -287,5 +292,6 @@ function(warpx_print_summary)
     message("    PRECISION: ${WarpX_PRECISION}")
     message("    OPENPMD: ${WarpX_OPENPMD}")
     message("    QED: ${WarpX_QED}")
+    message("    QED table generation: ${WarpX_QED_TABLE_GEN}")
     message("")
 endfunction()

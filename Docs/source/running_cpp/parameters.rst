@@ -119,7 +119,7 @@ Setting up the field mesh
 
     Note: in development; currently, ``2`` is supported.
 
-* ``amr.ref_ratio_vect`` (3 `integer`s for x,y,z per refined level)
+* ``amr.ref_ratio_vect`` (`3 integers for x,y,z per refined level`)
     When using mesh refinement, this can be used to set the refinement ratio per direction and level, relative to the previous level.
 
     Example: for three levels, a value of ``2 2 4 8 8 16`` refines the first level by 2-fold in x and y and 4-fold in z compared to the coarsest level (level 0/mother grid); compared to the first level, the second level is refined 8-fold in x and y and 16-fold in z.
@@ -207,7 +207,7 @@ Distribution across MPI ranks and parallelization
     When using mesh refinement, this number applies to the subdomains
     of the coarsest level, but also to any of the finer level.
 
-* ``warpx.load_balance_intervals`` (`string`) optional (default `0`)
+* ``algo.load_balance_intervals`` (`string`) optional (default `0`)
     Using the `Intervals parser`_ syntax, this string defines the timesteps at which
     WarpX should try to redistribute the work across MPI ranks, in order to have
     better load balancing.
@@ -220,26 +220,34 @@ Distribution across MPI ranks and parallelization
     This relies on each MPI rank handling several (in fact many) subdomains
     (see ``max_grid_size``).
 
-* ``warpx.load_balance_with_sfc`` (`0` or `1`) optional (default `0`)
-    If this is `1`: use a Space-Filling Curve (SFC) algorithm in order to
-    perform load-balancing of the simulation.
-    If this is `0`: the Knapsack algorithm is used instead.
-
-* ``warpx.load_balance_efficiency_ratio_threshold`` (`float`) optional (default `1.1`)
+* ``algo.load_balance_efficiency_ratio_threshold`` (`float`) optional (default `1.1`)
     Controls whether to adopt a proposed distribution mapping computed during a load balance.
     If the the ratio of the proposed to current distribution mapping *efficiency* (i.e.,
     average cost per MPI process; efficiency is a number in the range [0, 1]) is greater
     than the threshold value, the proposed distribution mapping is adopted.  The suggested
-    range of values is ``warpx.load_balance_efficiency_ratio_threshold >= 1``, which ensures
+    range of values is ``algo.load_balance_efficiency_ratio_threshold >= 1``, which ensures
     that the new distribution mapping is adopted only if doing so would improve the load
     balance efficiency. The higher the threshold value, the more conservative is the criterion
     for adoption of a proposed distribution; for example, with
-    ``warpx.load_balance_efficiency_ratio_threshold = 1``, the proposed distribution is
+    ``algo.load_balance_efficiency_ratio_threshold = 1``, the proposed distribution is
     adopted *any* time the proposed distribution improves load balancing; if instead
-    ``warpx.load_balance_efficiency_ratio_threshold = 2``, the proposed distribution is
+    ``algo.load_balance_efficiency_ratio_threshold = 2``, the proposed distribution is
     adopted only if doing so would yield a 100% to the load balance efficiency (with this
     threshold value, if the  current efficiency is ``0.45``, the new distribution would only be
     adopted if the proposed efficiency were greater than ``0.9``).
+
+* ``algo.load_balance_with_sfc`` (`0` or `1`) optional (default `0`)
+    If this is `1`: use a Space-Filling Curve (SFC) algorithm in order to
+    perform load-balancing of the simulation.
+    If this is `0`: the Knapsack algorithm is used instead.
+
+* ``algo.load_balance_knapsack_factor`` (`float`) optional (default `1.24`)
+    Controls the maximum number of boxes that can be assigned to a rank during
+    load balance when using the 'knapsack' policy for update of the distribution
+    mapping; the maximum is
+    `load_balance_knapsack_factor*(average number of boxes per rank)`.
+    For example, if there are 4 boxes per rank and `load_balance_knapsack_factor=2`,
+    no more than 8 boxes can be assigned to any rank.
 
 * ``algo.load_balance_costs_update`` (`Heuristic` or `Timers`) optional (default `Timers`)
     If this is `Heuristic`: load balance costs are updated according to a measure of
@@ -285,7 +293,7 @@ WarpX provides a math parser that reads expressions in the input file.
 It can be used in all input parameters that consist in one real number.
 
 WarpX constants
-###############
+^^^^^^^^^^^^^^^
 
 WarpX provides a few pre-defined constants, that can be used for any parameter that consists in one real number.
 
@@ -301,7 +309,7 @@ pi       math constant pi
 See ``Source/Utils/WarpXConst.H`` for the values.
 
 User-defined constants
-######################
+^^^^^^^^^^^^^^^^^^^^^^
 
 Users can define their own constants in the input file.
 These constants can be used for any parameter that consists in one real number.
@@ -314,7 +322,7 @@ For example, parameters ``a0`` and ``z_plateau`` can be specified with:
 * ``my_constants.z_plateau = 150.e-6``
 
 Coordinates
-###########
+^^^^^^^^^^^
 
 Besides, for profiles that depend on spatial coordinates (the plasma momentum distribution or the laser field, see below `Particle initialization` and `Laser initialization`), the parser will interpret some variables as spatial coordinates. These are specified in the input parameter, i.e., ``density_function(x,y,z)`` and ``field_function(X,Y,t)``.
 
@@ -323,7 +331,7 @@ The parser reads python-style expressions between double quotes, for instance
 user-defined constant (see below) and ``x`` and ``y`` are spatial coordinates. The names are case sensitive. The factor
 ``(x>0)`` is ``1`` where ``x>0`` and ``0`` where ``x<=0``. It allows the user to
 define functions by intervals.
-The parser reads mathematical functions into an `abstract syntax tree (AST) <https://en.wikipedia.org/wiki/Abstract_syntax_tree>`_, which supports a maximum depth (see :ref:`build options <building-cmake>`_).
+The parser reads mathematical functions into an `abstract syntax tree (AST) <https://en.wikipedia.org/wiki/Abstract_syntax_tree>`_, which supports a maximum depth (see :ref:`build options <building-cmake>`).
 Additional terms in a function can create a level of depth in the AST, e.g. ``a+b+c+d`` is parsed in groups of ``[+ a [+ b [+ c [+ d]]]]`` (depth: 4).
 A trick to reduce this depth for the parser, e.g. when reaching the limit, is to group expliclity, e.g. via ``(a+b)+(c+d)``, which is parsed in groups of ``[+ [+ a b] [+ c d]]`` (depth: 2).
 
@@ -354,6 +362,10 @@ Particle initialization
     ``z<zinject_plane``. When ``z>zinject_plane``,
     particles are pushed in a standard way, using the specified pusher.
     (see the parameter ``<species_name>.zinject_plane`` below)
+
+* ``particles.do_tiling`` (`bool`) optional (default `true` if WarpX is compiled for GPUs, `false` otherwise)
+    Controls whether tiling ('cache blocking') transformation is used for particles.
+    Tiling should be on when using OpenMP and off when using GPUs.
 
 * ``<species_name>.species_type`` (`string`) optional (default `unspecified`)
     Type of physical species, ``"electron"``, ``"positron"``, ``"photon"``, ``"hydrogen"``.
@@ -623,20 +635,15 @@ Particle initialization
     must be either electrons or positrons. Boris pusher must be used for the
     simulation
 
-* ``<species>.do_qed`` (`int`) optional (default `0`)
-    If `<species>.do_qed = 0` all the QED effects are disabled for this species.
-    If `<species>.do_qed = 1` QED effects can be enabled for this species (see below).
-    **This feature requires to compile with QED=TRUE**
-
 * ``<species>.do_qed_quantum_sync`` (`int`) optional (default `0`)
-    It only works if `<species>.do_qed = 1`. Enables Quantum synchrotron emission for this species.
+    Enables Quantum synchrotron emission for this species.
     Quantum synchrotron lookup table should be either generated or loaded from disk to enable
     this process (see "Lookup tables for QED modules" section below).
     `<species>` must be either an electron or a positron species.
     **This feature requires to compile with QED=TRUE**
 
 * ``<species>.do_qed_breit_wheeler`` (`int`) optional (default `0`)
-    It only works if `<species>.do_qed = 1`. Enables non-linear Breit-Wheeler process for this species.
+    Enables non-linear Breit-Wheeler process for this species.
     Breit-Wheeler lookup table should be either generated or loaded from disk to enable
     this process (see "Lookup tables for QED modules" section below).
     `<species>` must be a photon species.
@@ -1160,6 +1167,7 @@ Numerics and algorithms
 
     - ``backwardeuler`` is a fully-implicit, first-order in time scheme for E-update (default).
     - ``laxwendroff`` is the semi-implicit, second order in time scheme for E-update.
+
     Comparing the two methods, Lax-Wendroff is more prone to developing oscillations and requires a smaller timestep for stability. On the other hand, Backward Euler is more robust but it is first-order accurate in time compared to the second-order Lax-Wendroff method.
 
 * ``macroscopic.sigma_function(x,y,z)``, ``macroscopic.epsilon_function(x,y,z)``, ``macroscopic.mu_function(x,y,z)`` (`string`)
@@ -1340,7 +1348,7 @@ Numerics and algorithms
     Non-zero `v_galilean` activates Galilean algorithm, which suppresses the Numerical Cherenkov instability
     in boosted-frame simulation. This requires the code to be compiled with `USE_PSATD=TRUE`.
     (see the sub-section Numerical Stability and alternate formulation
-    in a Galilean frame in :doc:`../theory/boosted-frame`).
+    in a Galilean frame in :doc:`../theory/boosted_frame`).
     It also requires the use of the `direct` current deposition option
     `algo.current_deposition = direct` (does not work with Esirkepov algorithm).
 
@@ -1358,14 +1366,14 @@ Numerics and algorithms
     boxes, an instability can occur if they have too different values.
     This option makes sure that they are synchronized periodically.
 
-* ``warpx.use_hybrid_QED`` ('bool'; default: 0)
+* ``warpx.use_hybrid_QED`` (`bool`; default: 0)
     Will use the Hybird QED Maxwell solver when pushing fields: a QED correction is added to the
     field solver to solve non-linear Maxwell's equations, according to [Quantum Electrodynamics
     vacuum polarization solver, P. Carneiro et al., `ArXiv 2016 <https://arxiv.org/abs/1607.04224>`__].
     Note that this option can only be used with the PSATD build. Furthermore,
     warpx.do_nodal must be set to `1` which is not its default value.
 
- * ``warpx.quantum_xi`` ('float'; default: 1.3050122.e-52)
+ * ``warpx.quantum_xi`` (`float`; default: 1.3050122.e-52)
      Overwrites the actual quantum parameter used in Maxwell's QED equations. Assigning a
      value here will make the simulation unphysical, but will allow QED effects to become more apparent.
      Note that this option will only have an effect if the ``warpx.use_Hybrid_QED`` flag is also triggered.
@@ -1405,13 +1413,13 @@ Boundary conditions
     Whether to create the PML inside the simulation area or outside. If inside,
     it allows the user to propagate particles in PML and to use extended PML
 
-* ``warpx.do_pml_has_particles`` (`int`; default: 0)
+* ``warpx.pml_has_particles`` (`int`; default: 0)
     Whether to propagate particles in PML or not. Can only be done if PML are in simulation domain,
     i.e. if `warpx.do_pml_in_domain = 1`.
 
 * ``warpx.do_pml_j_damping`` (`int`; default: 0)
     Whether to damp current in PML. Can only be used if particles are propagated in PML,
-    i.e. if `warpx.do_pml_has_particles = 1`.
+    i.e. if `warpx.pml_has_particles = 1`.
 
 * ``warpx.do_pml_Lo`` (`2 ints in 2D`, `3 ints in 3D`; default: `1 1 1`)
     The directions along which one wants a pml boundary condition for lower boundaries on mother grid.
@@ -1538,8 +1546,7 @@ In-situ capabilities can be used by turning on Sensei or Ascent (provided they a
     Lower corner of the output fields (if smaller than ``warpx.dom_lo``, then set to ``warpx.dom_lo``). Currently, when the ``diag_lo`` is different from ``warpx.dom_lo``, particle output is disabled.
 
 * ``<diag_name>.diag_hi`` (list `float`, 1 per dimension) optional (default `+infinity +infinity +infinity`)
-    Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``). Currently, when the ``diag_hi`` is different from ``warpx.dom_hi``, particle output i
-s disabled.
+    Higher corner of the output fields (if larger than ``warpx.dom_hi``, then set to ``warpx.dom_hi``). Currently, when the ``diag_hi`` is different from ``warpx.dom_hi``, particle output is disabled.
 
 * ``<diag_name>.write_species`` (`0` or `1`) optional (default `1`)
    Whether to write species output or not. For checkpoint format, always set this parameter to 1.
@@ -1818,6 +1825,14 @@ Reduced Diagnostics
         :math:`n_{\text{cell}}` is the number of cells on the box, and
         :math:`w_{\text{cell}}` is the cell cost weight factor (controlled by ``algo.costs_heuristic_cells_wt``).
 
+    * ``LoadBalanceEfficiency``
+        This type computes the load balance efficiency, given the present costs
+        and distribution mapping. Load balance efficiency is computed as the
+        mean cost over all ranks, divided by the maximum cost over all ranks.
+        Until costs are recorded, load balance efficiency is output as `-1`;
+        at earliest, the load balance efficiency can be output starting at step
+        `2`, since costs are not recorded until step `1`.
+
     * ``ParticleHistogram``
         This type computes a user defined particle histogram.
 
@@ -1928,16 +1943,15 @@ Reduced Diagnostics
     The default separator is a whitespace.
 
 Lookup tables and other settings for QED modules
------------------------------------------------------------------------------
+------------------------------------------------
 
 Lookup tables store pre-computed values for functions used by the QED modules.
-**This feature requires to compile with QED=TRUE (and also with QED_TABLE_GEN=TRUE for table generation) **
+**This feature requires to compile with QED=TRUE (and also with QED_TABLE_GEN=TRUE for table generation)**
 
 * ``qed_bw.lookup_table_mode`` (`string`)
     There are three options to prepare the lookup table required by the Breit-Wheeler module:
 
-    * ``builtin``:  a built-in table is used (Warning: the table gives reasonable results but its resolution
-    is quite low).
+    * ``builtin``:  a built-in table is used (Warning: the table gives reasonable results but its resolution is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
       (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All
@@ -1972,8 +1986,7 @@ Lookup tables store pre-computed values for functions used by the QED modules.
 * ``qed_qs.lookup_table_mode`` (`string`)
     There are three options to prepare the lookup table required by the Quantum Synchrotron module:
 
-    * ``builtin``: a built-in table is used (Warning: the table gives reasonable results but its resolution
-    is quite low).
+    * ``builtin``: a built-in table is used (Warning: the table gives reasonable results but its resolution is quite low).
 
     * ``generate``: a new table is generated. This option requires Boost math library
       (version >= 1.66) and to compile with ``QED_TABLE_GEN=TRUE``. All

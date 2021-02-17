@@ -23,6 +23,7 @@
 #include "Particles/Gather/GetExternalFields.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
+#include <AMReX_Geometry.H>
 #include <AMReX_Print.H>
 #include <AMReX.H>
 
@@ -146,23 +147,18 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     //_____________________________
 
 #ifdef WARPX_QED
-    pp.query("do_qed", m_do_qed);
-    if(m_do_qed){
-        //If do_qed is enabled, find out if Quantum Synchrotron process is enabled
-        pp.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
-        if (m_do_qed_quantum_sync)
-            AddRealComp("optical_depth_QSR");
-        pp.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
-        if (m_do_qed_breit_wheeler)
-            AddRealComp("optical_depth_BW");
-    }
+    pp.query("do_qed_quantum_sync", m_do_qed_quantum_sync);
+    if (m_do_qed_quantum_sync)
+        AddRealComp("optical_depth_QSR");
+
+    pp.query("do_qed_breit_wheeler", m_do_qed_breit_wheeler);
+    if (m_do_qed_breit_wheeler)
+        AddRealComp("optical_depth_BW");
 
     if(m_do_qed_quantum_sync){
         pp.get("qed_quantum_sync_phot_product_species",
             m_qed_quantum_sync_phot_product_name);
     }
-
-
 #endif
 
     // Get Galilean velocity

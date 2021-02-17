@@ -20,12 +20,12 @@ be changed as needed):
 
     warpx.reduced_diags_names = LBC
     LBC.type = LoadBalanceCosts
-    LBC.frequency = 100
+    LBC.intervals = 100
 
 The line `warpx.reduced_diags_names = LBC` sets the name of the reduced diagnostics
 output file to `LBC`.  The next line `LBC.type = LoadBalanceCosts` tells WarpX
 that the reduced diagnostics is a `LoadBalanceCosts` diagnostic, and instructs
-WarpX to record costs and rank layouts.  The final line, `LBC.frequency = 100`,
+WarpX to record costs and rank layouts.  The final line, `LBC.intervals = 100`,
 controls the interval for output of this reduced diagnostic's data.
 
 Loading and plotting the data
@@ -136,7 +136,7 @@ The function can be used as follows:
     plot(sim_sfc)
     plt.tight_layout()
 
-The generates plots like in `[fig:knapsack_sfc_distribution_mapping_2D] <#fig:knapsack_sfc_distribution_mapping_2D>`__:
+This generates plots like in `[fig:knapsack_sfc_distribution_mapping_2D] <#fig:knapsack_sfc_distribution_mapping_2D>`__:
 
 .. raw:: latex
 

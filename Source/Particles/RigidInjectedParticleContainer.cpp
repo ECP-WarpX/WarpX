@@ -23,6 +23,8 @@
 #include "Gather/ScaleFields.H"
 #include "Gather/FieldGather.H"
 
+#include <AMReX_Geometry.H>
+
 #include <limits>
 #include <sstream>
 #include <algorithm>

@@ -40,7 +40,7 @@ We use the following modules and environments on the system.
    # optional: for PSATD support
    module load fftw/3.3.8
 
-   # optional: for QED support
+   # optional: for QED lookup table generation support
    module load boost/1.70.0
 
    # optional: for openPMD support
