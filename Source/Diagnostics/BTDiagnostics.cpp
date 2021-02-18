@@ -686,7 +686,6 @@ BTDiagnostics::Flush (int i_buffer)
     tmp_file_name = tmp_file_name+"/buffer";
     bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer]
                                - m_buffer_flush_counter[i_buffer]) == 1) ? true : false;
-    amrex::Print() << " is last buffer flush : " << isLastBTDFlush << "\n";
     bool isBTD = true;
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
