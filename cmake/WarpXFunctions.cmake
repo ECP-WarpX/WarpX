@@ -195,7 +195,7 @@ function(set_warpx_binary_name)
         # alias to the latest build, because using the full name is often confusing
         add_custom_command(TARGET app POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E create_symlink
-                $<TARGET_FILE:app>
+                $<TARGET_FILE_NAME:app>
                 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/warpx
         )
     endif()
@@ -215,7 +215,7 @@ function(set_warpx_binary_name)
         endif()
         add_custom_command(TARGET shared POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E create_symlink
-                $<TARGET_FILE:shared>
+                $<TARGET_FILE_NAME:shared>
                 ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libwarpx.${lib_suffix}.${mod_ext}
         )
     endif()
