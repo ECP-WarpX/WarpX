@@ -66,7 +66,7 @@ void BTDiagnostics::DerivedInitData ()
     // allocate vector to estimate maximum number of buffer multifabs needed to
     // obtain the lab-frame snapshot.
     m_max_buffer_multifabs.resize(m_num_buffers);
-    // allocate vector to count number of times the buffer multifab 
+    // allocate vector to count number of times the buffer multifab
     // has been flushed and refilled
     m_buffer_flush_counter.resize(m_num_buffers);
     // allocate vector of geometry objects corresponding to each snapshot
@@ -581,14 +581,14 @@ BTDiagnostics::DefineSnapshotGeometry (const int i_buffer, const int lev)
         // contains a minimum m_buffer_size=256 cells
         int num_z_cells_in_snapshot = m_max_buffer_multifabs[i_buffer] * m_buffer_size;
         // Modify the domain indices according to the buffers that are flushed out
-        m_snapshot_box[i_buffer].setSmall( m_moving_window_dir, 
+        m_snapshot_box[i_buffer].setSmall( m_moving_window_dir,
                                            k_lab - (num_z_cells_in_snapshot-1) );
         m_snapshot_box[i_buffer].setBig( m_moving_window_dir, k_lab);
 
         // Modifying the physical coordinates of the lab-frame snapshot to be
         // consistent with the above modified domain-indices in m_snapshot_box.
         amrex::IntVect ref_ratio = amrex::IntVect(1);
-        amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) - 
+        amrex::Real new_lo = m_snapshot_domain_lab[i_buffer].hi(m_moving_window_dir) -
                              num_z_cells_in_snapshot *
                              dz_lab(warpx.getdt(lev), ref_ratio[m_moving_window_dir]);
         m_snapshot_domain_lab[i_buffer].setLo(m_moving_window_dir, new_lo);
@@ -684,7 +684,7 @@ BTDiagnostics::Flush (int i_buffer)
     auto & warpx = WarpX::GetInstance();
     std::string tmp_file_name = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_buffer,5);
     tmp_file_name = tmp_file_name+"/buffer";
-    bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer] 
+    bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer]
                                - m_buffer_flush_counter[i_buffer]) == 1) ? true : false;
     amrex::Print() << " is last buffer flush : " << isLastBTDFlush << "\n";
     bool isBTD = true;
