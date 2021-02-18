@@ -131,7 +131,7 @@ with open(amrex_cmake_path, "w", encoding='utf-8') as f:
     f.write(amrex_cmake_content)
 
 
-# Epilog ######################################################################
+# Epilogue ####################################################################
 
 print("""Done. Please check your source, e.g. via
   git diff

@@ -8,7 +8,7 @@ Update WarpX' Core Dependencies
 
 WarpX has direct dependencies on AMReX and PICSAR, which we periodically update.
 
-The following scrips automate this workflow, in case one needs a newer commit of AMReX or PICSAR between releases:
+The following scripts automate this workflow, in case one needs a newer commit of AMReX or PICSAR between releases:
 
 .. code-block:: sh
 
