@@ -519,6 +519,8 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         self.grid.initialize_inputs()
 
         pywarpx.warpx.do_electrostatic = 'labframe'
+        pywarpx.warpx.self_fields_required_precision = self.required_precision
+        pywarpx.warpx.self_fields_max_iters = self.maximum_iterations
         pywarpx.geometry.potential_lo = [
             self.grid.potential_xmin, self.grid.potential_ymin
         ]
@@ -706,10 +708,12 @@ class Simulation(picmistandard.PICMI_Simulation):
         self.solver.initialize_inputs()
 
         for i in range(len(self.species)):
-            self.species[i].initialize_inputs(self.layouts[i],
-                                              self.initialize_self_fields[i],
-                                              self.injection_plane_positions[i],
-                                              self.injection_plane_normal_vectors[i])
+            self.species[i].initialize_inputs(
+                self.layouts[i],
+                False if self.initialize_self_fields[i] is None else True,
+                self.injection_plane_positions[i],
+                self.injection_plane_normal_vectors[i]
+            )
 
         for i in range(len(self.lasers)):
             self.lasers[i].initialize_inputs()
@@ -809,7 +813,10 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
                 fields_to_plot.add('jx')
                 fields_to_plot.add('jy')
                 fields_to_plot.add('jz')
-            elif dataname in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'phi', 'F', 'proc_number', 'part_per_cell']:
+            elif dataname in [
+                    'Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz', 'rho', 'phi', 'F',
+                    'proc_number', 'part_per_cell'
+            ]:
                 fields_to_plot.add(dataname)
             elif dataname in ['Jx', 'Jy', 'Jz']:
                 fields_to_plot.add(dataname.lower())
@@ -817,6 +824,8 @@ class _WarpX_FieldDiagnostic(picmistandard.PICMI_FieldDiagnostic):
                 fields_to_plot.add('divE')
             elif dataname == 'divb':
                 fields_to_plot.add('divB')
+            elif 'rho' in dataname:
+                fields_to_plot.add(dataname)
             elif dataname == 'raw_fields':
                 self.plot_raw_fields = 1
             elif dataname == 'raw_fields_guards':
