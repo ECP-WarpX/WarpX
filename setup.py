@@ -23,8 +23,8 @@ class CopyPreBuild(build):
     def run(self):
         build.run(self)
 
-        # matches: libwarpx(2d|3d|rz).(so|pyd)
-        re_libprefix = re.compile(r"libwarpx..\.(?:so|pyd)")
+        # matches: libwarpx.(2d|3d|rz).(so|pyd)
+        re_libprefix = re.compile(r"libwarpx\...\.(?:so|pyd)")
         libs_found = []
         for lib_name in os.listdir(PYWARPX_LIB_DIR):
             if re_libprefix.match(lib_name):

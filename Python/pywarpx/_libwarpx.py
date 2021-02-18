@@ -59,13 +59,12 @@ else:
 
 _libc = ctypes.CDLL(_find_library('c'))
 
-# macOS/Linux use .so, Windows uses .pyd
-# https://docs.python.org/3/faq/windows.html#is-a-pyd-file-the-same-as-a-dll
+# this is a plain C/C++ shared library, not a Python module
 if os.name == 'nt':
-    mod_ext = "pyd"
+    mod_ext = "dll"
 else:
     mod_ext = "so"
-libname = "libwarpx{0}.{1}".format(geometry_dim, mod_ext)
+libname = "libwarpx.{0}.{1}".format(geometry_dim, mod_ext)
 
 try:
     libwarpx = ctypes.CDLL(os.path.join(_get_package_root(), libname))

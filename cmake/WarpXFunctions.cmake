@@ -209,14 +209,14 @@ function(set_warpx_binary_name)
             set(lib_suffix "rz")
         endif()
         if(WIN32)
-            set(mod_ext "pyd")
+            set(mod_ext "dll")
         else()
             set(mod_ext "so")
         endif()
         add_custom_command(TARGET shared POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E create_symlink
                 $<TARGET_FILE:shared>
-                ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libwarpx${lib_suffix}.${mod_ext}
+                ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libwarpx.${lib_suffix}.${mod_ext}
         )
     endif()
 endfunction()
