@@ -76,7 +76,7 @@ Overall simulation parameters
       fields.
 
     * ``relativistic``: Poisson's equation is solved for each species
-      seperately taking into account their averaged velocities. The field
+      separately taking into account their averaged velocities. The field
       is mapped to the simulation frame and will produce both E and B
       fields.
 
@@ -333,7 +333,7 @@ user-defined constant (see below) and ``x`` and ``y`` are spatial coordinates. T
 define functions by intervals.
 The parser reads mathematical functions into an `abstract syntax tree (AST) <https://en.wikipedia.org/wiki/Abstract_syntax_tree>`_, which supports a maximum depth (see :ref:`build options <building-cmake>`).
 Additional terms in a function can create a level of depth in the AST, e.g. ``a+b+c+d`` is parsed in groups of ``[+ a [+ b [+ c [+ d]]]]`` (depth: 4).
-A trick to reduce this depth for the parser, e.g. when reaching the limit, is to group expliclity, e.g. via ``(a+b)+(c+d)``, which is parsed in groups of ``[+ [+ a b] [+ c d]]`` (depth: 2).
+A trick to reduce this depth for the parser, e.g. when reaching the limit, is to group explicitly, e.g. via ``(a+b)+(c+d)``, which is parsed in groups of ``[+ [+ a b] [+ c d]]`` (depth: 2).
 
 .. _running-cpp-parameters-particle:
 
@@ -865,7 +865,7 @@ Laser initialization
 
 *  ``<laser_name>.phi0`` (`float`; in radians)
     The Carrier Envelope Phase, i.e. the phase of the laser oscillation, at the
-    position where the laser enveloppe is maximum (only used for the ``"gaussian"`` profile)
+    position where the laser envelope is maximum (only used for the ``"gaussian"`` profile)
 
 * ``<laser_name>.stc_direction`` (`3 floats`) optional (default `1. 0. 0.`)
     Direction of laser spatio-temporal couplings.
@@ -949,7 +949,7 @@ Laser initialization
     additional parameter, namely, ``warpx.E_external_grid`` must be specified
     in the input file.
     If set to ``parse_E_ext_grid_function``, then a mathematical expression can
-    be used to initialize the external magnetic field on the grid. It
+    be used to initialize the external electric field on the grid. It
     required additional parameters in the input file, namely,
     ``warpx.Ex_external_grid_function(x,y,z)``,
     ``warpx.Ey_external_grid_function(x,y,z)``,
@@ -1171,7 +1171,7 @@ Numerics and algorithms
     Comparing the two methods, Lax-Wendroff is more prone to developing oscillations and requires a smaller timestep for stability. On the other hand, Backward Euler is more robust but it is first-order accurate in time compared to the second-order Lax-Wendroff method.
 
 * ``macroscopic.sigma_function(x,y,z)``, ``macroscopic.epsilon_function(x,y,z)``, ``macroscopic.mu_function(x,y,z)`` (`string`)
-     To initialize spatially varying conducitivy, permittivity, and permeability, respectively,
+     To initialize spatially varying conductivity, permittivity, and permeability, respectively,
      using a mathematical function in the input. Constants required in the
      mathematical expression can be set using ``my_constants``. These parameters are parsed
      if ``algo.em_solver_medium=macroscopic``.
@@ -1904,12 +1904,12 @@ Reduced Diagnostics
 
         The output columns are
         values of the 1st bin, the 2nd bin, ..., the nth bin.
-        An example input file and a loading pything script of
+        An example input file and a loading python script of
         using the histogram reduced diagnostics
         are given in ``Examples/Tests/initial_distribution/``.
 
     * ``ParticleExtrema``
-        This type computes the minimum and maxmium values of
+        This type computes the minimum and maximum values of
         particle position, momentum, gamma, weight,
         and the :math:`\chi` parameter for QED species.
 
@@ -2114,6 +2114,6 @@ For the 1 and 2 colon syntax, actually having the integers in the string is opti
 This is essentially the python slicing syntax except that the stop is inclusive
 (``0:100`` contains 100) and that no colon means that the given value is the period.
 
-Note that if a given period is zero or negative, the correspoding slice is disregarded.
+Note that if a given period is zero or negative, the corresponding slice is disregarded.
 For example, ``something_intervals = -1`` deactivates ``something`` and
 ``something_intervals = ::-1,100:1000:25`` is equivalent to ``something_intervals = 100:1000:25``.

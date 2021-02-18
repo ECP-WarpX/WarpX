@@ -22,7 +22,7 @@ option to perform the IO in a non-blocking fashion, meaning that the simulation
 will continue to run while an IO thread controls writing the data to disk.
 This can significantly reduce the overall time spent in IO. This is primarily intended for
 large runs on supercomputers such as Summit and Cori; depending on the MPI
-implentation you are using, you may not see a benefit on your workstation.
+implementation you are using, you may not see a benefit on your workstation.
 
 When writing plotfiles, each rank will write to a separate file, up to some maximum number
 (by default, 64). This maximum can be adjusted using the ``amrex.async_out_nfiles`` inputs
@@ -57,7 +57,7 @@ files to disk).
     ascent
 
 If you like the 3D rendering of laser wakefield acceleration
-on the WarpX documentation frontpage (which is
+on the WarpX documentation front page (which is
 also the avatar of the ECP-WarpX organization), you can find the serial
 analysis script :download:`video_yt.py<../../../Tools/PostProcessing/video_yt.py>` as well
 as a parallel analysis script

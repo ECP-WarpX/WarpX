@@ -16,7 +16,7 @@ Dimensions  Makefile Option
 **RZ**      ``USE_RZ=TRUE``
 ==========  ===================
 
-Notet that ``DIM`` is ignored (force-set to ``2``) as soon as ``USE_RZ`` is set to ``TRUE``.
+Note that ``DIM`` is ignored (force-set to ``2``) as soon as ``USE_RZ`` is set to ``TRUE``.
 
 See :ref:`building from source <building-source>` for further details.
 
