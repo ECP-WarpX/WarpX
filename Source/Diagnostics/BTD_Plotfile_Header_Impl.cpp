@@ -105,8 +105,8 @@ BTDPlotfileHeaderImpl::WriteHeader ()
     if ( !HeaderFile.good()) amrex::FileOpenFailed(m_Header_path);
 
     HeaderFile.precision(17);
-    
-    // Generic Plotfile type name   
+
+    // Generic Plotfile type name
     HeaderFile << m_file_version << '\n';
     // number of components
     HeaderFile << m_varnames.size() << '\n';
