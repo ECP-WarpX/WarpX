@@ -10,7 +10,6 @@
 
 #include "WarpX.H"
 #include "ReducedDiags.H"
-#include "LoadBalanceCosts.H"
 
 
 /**

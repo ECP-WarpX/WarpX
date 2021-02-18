@@ -2,11 +2,42 @@ import os
 import re
 import sys
 import platform
+import shutil
 import subprocess
 
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+from distutils.command.build import build
 from distutils.version import LooseVersion
+
+
+class CopyPreBuild(build):
+    def initialize_options(self):
+        build.initialize_options(self)
+        # We just overwrite this because the default "build/lib" clashes with
+        # directories many developers have in their source trees;
+        # this can create confusing results with "pip install .", which clones
+        # the whole source tree by default
+        self.build_lib = '_tmppythonbuild'
+
+    def run(self):
+        build.run(self)
+
+        # matches: libwarpx(2d|3d|rz).(so|pyd)
+        re_libprefix = re.compile(r"libwarpx..\.(?:so|pyd)")
+        libs_found = []
+        for lib_name in os.listdir(PYWARPX_LIB_DIR):
+            if re_libprefix.match(lib_name):
+                lib_path = os.path.join(PYWARPX_LIB_DIR, lib_name)
+                libs_found.append(lib_path)
+        if len(libs_found) == 0:
+            raise RuntimeError("Error: no pre-build WarpX libraries found in "
+                               "PYWARPX_LIB_DIR='{}'".format(PYWARPX_LIB_DIR))
+
+        # copy external libs into collection of files in a temporary build dir
+        dst_path = os.path.join(self.build_lib, "pywarpx")
+        for lib_path in libs_found:
+            shutil.copy(lib_path, dst_path)
 
 
 class CMakeExtension(Extension):
@@ -57,9 +88,13 @@ class CMakeBuild(build_ext):
             '-DWarpX_COMPUTE=' + WarpX_COMPUTE,
             '-DWarpX_MPI:BOOL=' + WarpX_MPI,
             '-DWarpX_OPENPMD:BOOL=' + WarpX_OPENPMD,
+            '-DWarpX_PRECISION=' + WarpX_PRECISION,
             '-DWarpX_PSATD:BOOL=' + WarpX_PSATD,
             '-DWarpX_QED:BOOL=' + WarpX_QED,
             '-DWarpX_QED_TABLE_GEN:BOOL=' + WarpX_QED_TABLE_GEN,
+            ## dependency control (developers & package managers)
+            '-DWarpX_amrex_internal=' + WarpX_amrex_internal,
+            #        see PICSAR and openPMD below
             ## static/shared libs
             '-DBUILD_SHARED_LIBS:BOOL=' + BUILD_SHARED_LIBS,
             ## Unix: rpath to current dir when packaged
@@ -70,11 +105,22 @@ class CMakeBuild(build_ext):
             # Windows: has no RPath concept, all `.dll`s must be in %PATH%
             #          or same dir as calling executable
         ]
+        if WarpX_QED.upper() in ['1', 'ON', 'TRUE', 'YES']:
+            cmake_args.append('-DWarpX_picsar_internal=' + WarpX_picsar_internal)
         if WarpX_OPENPMD.upper() in ['1', 'ON', 'TRUE', 'YES']:
             cmake_args += [
                 '-DHDF5_USE_STATIC_LIBRARIES:BOOL=' + HDF5_USE_STATIC_LIBRARIES,
                 '-DADIOS_USE_STATIC_LIBS:BOOL=' + ADIOS_USE_STATIC_LIBS,
+                '-DWarpX_openpmd_internal=' + WarpX_openpmd_internal,
             ]
+        # further dependency control (developers & package managers)
+        if WarpX_amrex_src:
+            cmake_args.append('-DWarpX_amrex_src=' + WarpX_amrex_src)
+        if WarpX_openpmd_src:
+            cmake_args.append('-DWarpX_openpmd_src=' + WarpX_openpmd_src)
+        if WarpX_picsar_src:
+            cmake_args.append('-DWarpX_picsar_src=' + WarpX_picsar_src)
+
         if sys.platform == "darwin":
             cmake_args.append('-DCMAKE_INSTALL_RPATH=@loader_path')
         else:
@@ -123,11 +169,16 @@ with open('./README.md', encoding='utf-8') as f:
     long_description = f.read()
 
 # Allow to control options via environment vars.
-# Work-around for https://github.com/pypa/setuptools/issues/1712
-# note: changed default for SHARED, MPI, TESTING and EXAMPLES
+#   Work-around for https://github.com/pypa/setuptools/issues/1712
+# Pick up existing WarpX libraries or...
+PYWARPX_LIB_DIR = os.environ.get('PYWARPX_LIB_DIR')
+
+# ... build WarpX libraries with CMake
+#   note: changed default for SHARED, MPI, TESTING and EXAMPLES
 WarpX_COMPUTE = os.environ.get('WarpX_COMPUTE', 'OMP')
 WarpX_MPI = os.environ.get('WarpX_MPI', 'OFF')
 WarpX_OPENPMD = os.environ.get('WarpX_OPENPMD', 'OFF')
+WarpX_PRECISION = os.environ.get('WarpX_PRECISION', 'DOUBLE')
 WarpX_PSATD = os.environ.get('WarpX_PSATD', 'OFF')
 WarpX_QED = os.environ.get('WarpX_QED', 'ON')
 WarpX_QED_TABLE_GEN = os.environ.get('WarpX_QED_TABLE_GEN', 'OFF')
@@ -142,6 +193,13 @@ BUILD_SHARED_LIBS = os.environ.get('WarpX_BUILD_SHARED_LIBS',
 # openPMD-api sub-control
 HDF5_USE_STATIC_LIBRARIES = os.environ.get('HDF5_USE_STATIC_LIBRARIES', 'OFF')
 ADIOS_USE_STATIC_LIBS = os.environ.get('ADIOS_USE_STATIC_LIBS', 'OFF')
+# CMake dependency control (developers & package managers)
+WarpX_amrex_src = os.environ.get('WarpX_amrex_src')
+WarpX_amrex_internal = os.environ.get('WarpX_amrex_internal', 'ON')
+WarpX_openpmd_src = os.environ.get('WarpX_openpmd_src')
+WarpX_openpmd_internal = os.environ.get('WarpX_openpmd_internal', 'ON')
+WarpX_picsar_src = os.environ.get('WarpX_picsar_src')
+WarpX_picsar_internal = os.environ.get('WarpX_picsar_internal', 'ON')
 
 # https://cmake.org/cmake/help/v3.0/command/if.html
 if WarpX_MPI.upper() in ['1', 'ON', 'TRUE', 'YES']:
@@ -149,10 +207,19 @@ if WarpX_MPI.upper() in ['1', 'ON', 'TRUE', 'YES']:
 else:
     WarpX_MPI = "OFF"
 
-cxx_modules = []  # allowed values: warpx_2d, warpx_3d, warpx_rz
-for dim in [x.lower() for x in WarpX_DIMS.split(';')]:
-    name = dim if dim == "rz" else dim + "d"
-    cxx_modules.append(CMakeExtension("warpx_" + name))
+# for CMake
+cxx_modules = []     # values: warpx_2d, warpx_3d, warpx_rz
+cmdclass = {}        # build extensions
+
+# externally pre-built: pick up pre-built WarpX libraries
+if PYWARPX_LIB_DIR:
+    cmdclass=dict(build=CopyPreBuild)
+# CMake: build WarpX libraries ourselves
+else:
+    cmdclass = dict(build_ext=CMakeBuild)
+    for dim in [x.lower() for x in WarpX_DIMS.split(';')]:
+        name = dim if dim == "rz" else dim + "d"
+        cxx_modules.append(CMakeExtension("warpx_" + name))
 
 # Get the package requirements from the requirements.txt file
 install_requires = []
@@ -186,8 +253,9 @@ setup(
         'Source': 'https://github.com/ECP-WarpX/WarpX',
         'Tracker': 'https://github.com/ECP-WarpX/WarpX/issues',
     },
+    # CMake: self-built as extension module
     ext_modules=cxx_modules,
-    cmdclass=dict(build_ext=CMakeBuild),
+    cmdclass=cmdclass,
     # scripts=['warpx_2d', 'warpx_3d', 'warpx_rz'],
     zip_safe=False,
     python_requires='>=3.6, <3.10',

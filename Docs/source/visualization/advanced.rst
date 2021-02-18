@@ -19,7 +19,7 @@ Dump additional data
 In order to dump additional data in WarpX (mostly for debugging purpose), run the simulation
 with parameters (``warpx.plot_rho`` only when using back-transformed diagnostics)
 
-::
+.. code-block:: python
 
     warpx.plot_raw_fields = 1
     warpx.plot_finepatch = 1
@@ -36,7 +36,7 @@ Meta-data
 relevant to this topic (number and locations of grids in the simulation) are accessed to
 with
 
-::
+.. code-block:: python
 
     import yt
     # get yt dataset
@@ -54,7 +54,7 @@ with
 When ``warpx.plot_raw_fields=1`` and ``warpx.plot_finepatch=1``, here are some useful
 commands to access properties of a grid and the Ex field on the fine patch:
 
-::
+.. code-block:: python
 
     # store grid number 2 into my_grid
     my_grid = ds.index.grids[2]
@@ -68,7 +68,7 @@ commands to access properties of a grid and the Ex field on the fine patch:
 
 Return the ``Ex`` field on the fine patch of grid ``my_grid``:
 
-::
+.. code-block:: python
 
     my_field = my_grid['raw', 'Ex_fp'].squeeze().v
 

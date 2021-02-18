@@ -22,12 +22,26 @@ jobs:
         brew install openpmd-api
     - name: build WarpX
       run: |
-        mkdir build_dp && cd build_dp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF
-        make -j 2
+        cmake -S . -B build_dp         \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_OPENPMD=ON           \
+          -DWarpX_openpmd_internal=OFF
+        cmake --build build_dp -j 2
 
-        cd ..
+        cmake -S . -B build_sp         \
+          -DCMAKE_VERBOSE_MAKEFILE=ON  \
+          -DWarpX_LIB=ON               \
+          -DWarpX_OPENPMD=ON           \
+          -DWarpX_openpmd_internal=OFF \
+          -DWarpX_PRECISION=SINGLE
+        cmake --build build_sp -j 2
 
-        mkdir build_sp && cd build_sp
-        cmake .. -DCMAKE_VERBOSE_MAKEFILE=ON -DWarpX_OPENPMD=ON -DWarpX_openpmd_internal=OFF -DWarpX_PRECISION=SINGLE
-        make -j 2
+        python3 -m pip install --upgrade pip setuptools wheel
+        export WarpX_MPI=ON
+        PYWARPX_LIB_DIR=$PWD/build_sp/lib python3 -m pip wheel .
+        python3 -m pip install *.whl
+
+    - name: run pywarpx
+      run: |
+        export OMP_NUM_THREADS=1
+        mpirun -n 2 Examples/Physics_applications/laser_acceleration/PICMI_inputs_laser_acceleration.py

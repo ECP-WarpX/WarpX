@@ -496,9 +496,9 @@ void warpx_interp_nd_efield_z (int j, int k, int l,
  * \param[in] j index along x of the output array
  * \param[in] k index along y (in 3D) or z (in 2D) of the output array
  * \param[in] l index along z (in 3D, \c l = 0 in 2D) of the output array
- * \param[in,out] arr_aux output array allocated on the \c aux patch where interpolated values are stored
- * \param[in] arr_fine input array allocated on the fine patch
- * \param[in] arr_stag \c IndexType of the input array (Yee staggering)
+ * \param[in,out] dst_arr output array allocated on the \c aux patch where interpolated values are stored
+ * \param[in] src_arr input array allocated on the fine patch
+ * \param[in] src_stag \c IndexType of the input array (Yee staggering)
  * \param[in] nox order of finite-order interpolation along x
  * \param[in] noy order of finite-order interpolation along y
  * \param[in] noz order of finite-order interpolation along z
@@ -510,9 +510,9 @@ AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 void warpx_interp (const int j,
                    const int k,
                    const int l,
-                   amrex::Array4<amrex::Real      > const& arr_aux,
-                   amrex::Array4<amrex::Real const> const& arr_fine,
-                   const amrex::IntVect& arr_stag,
+                   amrex::Array4<amrex::Real      > const& dst_arr,
+                   amrex::Array4<amrex::Real const> const& src_arr,
+                   const amrex::IntVect& src_stag,
                    const int nox = 2,
                    const int noy = 2,
                    const int noz = 2,
@@ -521,6 +521,13 @@ void warpx_interp (const int j,
                    amrex::Real const* stencil_coeffs_z = nullptr)
 {
     using namespace amrex;
+
+    // Pad input array with zeros beyond ghost cells
+    // for out-of-bound accesses due to large-stencil operations
+    const auto src_arr_zeropad = [src_arr] (const int jj, const int kk, const int ll) noexcept
+    {
+        return src_arr.contains(jj,kk,ll) ? src_arr(jj,kk,ll) : 0.0_rt;
+    };
 
     // Avoid compiler warnings
 #if (AMREX_SPACEDIM == 2)
@@ -533,10 +540,10 @@ void warpx_interp (const int j,
 #endif
 
     // Staggering (s = 0 if cell-centered, s = 1 if nodal)
-    const int sj = arr_stag[0];
-    const int sk = arr_stag[1];
+    const int sj = src_stag[0];
+    const int sk = src_stag[1];
 #if (AMREX_SPACEDIM == 3)
-    const int sl = arr_stag[2];
+    const int sl = src_stag[2];
 #endif
 
     // Number of points (+1) used for interpolation from the staggered grid to the nodal grid
@@ -612,7 +619,7 @@ void warpx_interp (const int j,
         {
             for (int jj = jmin; jj <= jmax; jj++)
             {
-                res += arr_fine(jj,kk,ll);
+                res += src_arr_zeropad(jj,kk,ll);
             }
         }
     }
@@ -653,14 +660,14 @@ void warpx_interp (const int j,
                 dj = (j - jj > 0) ? j - jj - 1 : jj - j;
                 if (sj == 0) cj = stencil_coeffs_x[dj];
 
-                res += cj * ck * cl * arr_fine(jj,kk,ll);
+                res += cj * ck * cl * src_arr_zeropad(jj,kk,ll);
             }
         }
     }
 
 #endif
 
-    arr_aux(j,k,l) = wj * wk * wl * res;
+    dst_arr(j,k,l) = wj * wk * wl * res;
 }
 
 #endif
