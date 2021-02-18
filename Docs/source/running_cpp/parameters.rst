@@ -400,6 +400,16 @@ Particle initialization
       ``<species_name>.single_particle_vel`` (`3 doubles`, particle 3D normalized momentum, i.e. :math:`\gamma \beta`)
       ``<species_name>.single_particle_weight`` ( `double`, macroparticle weight, i.e. number of physical particles it represents)
 
+    * ``MultipleParticles``: Inject multiple macroparticles.
+      This requires the additional parameters:
+      ``<species_name>.multiple_particles_pos_x`` (list of `doubles`, X positions of the particles [meter])
+      ``<species_name>.multiple_particles_pos_y`` (list of `doubles`, Y positions of the particles [meter])
+      ``<species_name>.multiple_particles_pos_z`` (list of `doubles`, Z positions of the particles [meter])
+      ``<species_name>.multiple_particles_vel_x`` (list of `doubles`, X normalized momenta of the particles, i.e. :math:`\gamma \beta_x`)
+      ``<species_name>.multiple_particles_vel_y`` (list of `doubles`, Y normalized momenta of the particles, i.e. :math:`\gamma \beta_y`)
+      ``<species_name>.multiple_particles_vel_z`` (list of `doubles`, Z normalized momenta of the particles, i.e. :math:`\gamma \beta_z`)
+      ``<species_name>.multiple_particles_weight`` (list of `doubles`, macroparticle weights, i.e. number of physical particles each represents)
+
     * ``gaussian_beam``: Inject particle beam with gaussian distribution in
       space in all directions. This requires additional parameters:
       ``<species_name>.q_tot`` (beam charge) optional (default is ``q_tot=0``),
