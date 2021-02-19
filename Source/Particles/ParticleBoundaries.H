@@ -41,6 +41,15 @@ struct ParticleBoundaries
         zmax_bc = bc;
     }
 
+    bool
+    AllNone () {
+        return (xmin_bc == ParticleBC::none && xmax_bc == ParticleBC::none
+#ifdef WARPX_DIM_3D
+             && ymin_bc == ParticleBC::none && ymax_bc == ParticleBC::none
+#endif
+             && zmin_bc == ParticleBC::none && zmax_bc == ParticleBC::none);
+    }
+
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     static void
     apply_boundary (amrex::ParticleReal& x, amrex::ParticleReal& v, bool& particle_lost,

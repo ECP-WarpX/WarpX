@@ -973,6 +973,9 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
 void
 WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries boundary_conditions){
     WARPX_PROFILE("WarpXParticleContainer::ApplyBoundaryConditions()");
+
+    if (boundary_conditions.AllNone()) return;
+
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
