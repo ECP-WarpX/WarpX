@@ -114,7 +114,11 @@ BTDiagnostics::ReadParameters ()
     // Read list of back-transform diag parameters requested by the user //
     amrex::ParmParse pp(m_diag_name);
 
-    m_file_prefix = "diags/lab_frame_data/" + m_diag_name;
+    if (m_format == "openpmd") {
+        m_file_prefix = "diags/" + m_diag_name;
+    } else {
+        m_file_prefix = "diags/lab_frame_data/" + m_diag_name;
+    }
     pp.query("file_prefix", m_file_prefix);
     pp.query("do_back_transformed_fields", m_do_back_transformed_fields);
     pp.query("do_back_transformed_particles", m_do_back_transformed_particles);
@@ -682,15 +686,18 @@ void
 BTDiagnostics::Flush (int i_buffer)
 {
     auto & warpx = WarpX::GetInstance();
-    std::string tmp_file_name = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_buffer,5);
-    tmp_file_name = tmp_file_name+"/buffer";
+    std::string file_name = m_file_prefix; 
+    if (m_format=="plotfile") {
+        file_name = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_buffer,5);
+        file_name = file_name+"/buffer";
+    }
     bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer]
                                - m_buffer_flush_counter[i_buffer]) == 1) ? true : false;
     bool const isBTD = true;
     double const labtime = m_t_lab[i_buffer];
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        labtime, m_output_species, nlev_output, tmp_file_name,
+        labtime, m_output_species, nlev_output, file_name,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F,
         isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush);
 
