@@ -686,7 +686,7 @@ void
 BTDiagnostics::Flush (int i_buffer)
 {
     auto & warpx = WarpX::GetInstance();
-    std::string file_name = m_file_prefix; 
+    std::string file_name = m_file_prefix;
     if (m_format=="plotfile") {
         file_name = amrex::Concatenate(m_file_prefix +"/snapshots_plotfile/snapshot",i_buffer,5);
         file_name = file_name+"/buffer";
