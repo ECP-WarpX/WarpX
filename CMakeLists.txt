@@ -351,7 +351,7 @@ if(WarpX_LIB)
         set(mod_ext "so")
     endif()
     install(CODE "file(CREATE_LINK
-        ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/libwarpx.3d.MPI.OMP.DP.QED.so
+        $<TARGET_FILE_NAME:shared>
         ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/libwarpx.${lib_suffix}.${mod_ext}
         COPY_ON_ERROR SYMBOLIC)")
 endif()
