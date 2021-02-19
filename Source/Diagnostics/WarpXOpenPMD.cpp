@@ -773,9 +773,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields ( //const std::string& filename,
 
   // is this either a regular write (true) or the first write in a
   // backtransformed diagnostic (BTD):
-  bool first_write_to_iteration = false;
-  if( isBTD )
-      first_write_to_iteration = ! m_Series->iterations.contains( iteration );
+  bool const first_write_to_iteration = ! m_Series->iterations.contains( iteration );
 
   int const ncomp = mf.nComp();
 
