@@ -773,9 +773,9 @@ WarpXOpenPMDPlot::WriteOpenPMDFields ( //const std::string& filename,
 
   // is this either a regular write (true) or the first write in a
   // backtransformed diagnostic (BTD):
-  bool first_BTD_write = false;
+  bool first_write_to_iteration = false;
   if( isBTD )
-      first_BTD_write = ! m_Series->iterations.contains( iteration );
+      first_write_to_iteration = ! m_Series->iterations.contains( iteration );
 
   int const ncomp = mf.nComp();
 
@@ -799,7 +799,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields ( //const std::string& filename,
   // meta data
   auto series_iteration = m_Series->iterations[iteration];
   auto meshes = series_iteration.meshes;
-  if( first_BTD_write ) {
+  if( first_write_to_iteration ) {
       series_iteration.setTime( time );
 
       // meta data for ED-PIC extension
@@ -896,7 +896,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields ( //const std::string& filename,
     //   we invert (only) meta-data arrays to assign labels and offsets in the
     //   order: slowest to fastest varying index when accessing the mesh
     //   contiguously (as 1D flattened logical memory)
-    if( first_BTD_write ) {
+    if( first_write_to_iteration ) {
         mesh.setDataOrder(openPMD::Mesh::DataOrder::C);
         mesh.setAxisLabels(axis_labels);
         mesh.setGridSpacing(grid_spacing);
@@ -907,7 +907,7 @@ WarpXOpenPMDPlot::WriteOpenPMDFields ( //const std::string& filename,
 
     // Create a new mesh record component, and store the associated metadata
     auto mesh_comp = mesh[comp_name];
-    if( first_BTD_write ) {
+    if( first_write_to_iteration ) {
         mesh_comp.resetDataset(dataset);
 
         auto relative_cell_pos = utils::getRelativeCellPosition(mf);       // AMReX Fortran index order
