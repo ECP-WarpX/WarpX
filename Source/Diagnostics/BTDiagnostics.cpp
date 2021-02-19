@@ -686,10 +686,11 @@ BTDiagnostics::Flush (int i_buffer)
     tmp_file_name = tmp_file_name+"/buffer";
     bool isLastBTDFlush = ( ( m_max_buffer_multifabs[i_buffer]
                                - m_buffer_flush_counter[i_buffer]) == 1) ? true : false;
-    bool isBTD = true;
+    bool const isBTD = true;
+    double const labtime = m_t_lab[i_buffer];
     m_flush_format->WriteToFile(
         m_varnames, m_mf_output[i_buffer], m_geom_output[i_buffer], warpx.getistep(),
-        warpx.gett_new(0), m_output_species, nlev_output, tmp_file_name,
+        labtime, m_output_species, nlev_output, tmp_file_name,
         m_plot_raw_fields, m_plot_raw_fields_guards, m_plot_raw_rho, m_plot_raw_F,
         isBTD, i_buffer, m_geom_snapshot[i_buffer][0], isLastBTDFlush);
 

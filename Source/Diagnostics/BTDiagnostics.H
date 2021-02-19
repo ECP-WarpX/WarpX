@@ -297,7 +297,7 @@ private:
                                                           "jx", "jy", "jz", "rho"};
 
     /** Temporarily clear species output for BTD until particle buffer is added */
-    void TMP_ClearSpeciesDataForBTD();
+    void TMP_ClearSpeciesDataForBTD() override;
 
     void MergeBuffersForPlotfile (int i_snapshot);
     void InterleaveBufferAndSnapshotHeader ( std::string buffer_Header,

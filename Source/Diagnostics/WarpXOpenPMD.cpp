@@ -239,21 +239,22 @@ void WarpXOpenPMDPlot::GetFileName(std::string& filename)
 
 
 void WarpXOpenPMDPlot::SetStep (int ts, const std::string& filePrefix,
-                                bool isBTD, int BTD_ts)
+                                bool isBTD)
 {
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(ts >= 0 , "openPMD iterations are unsigned");
 
-    if (m_CurrentStep >= ts) {
-        // note m_Series is reset in Init(), so using m_Series->iterations.contains(ts) is only able to check the
-        // last written step in m_Series's life time, but not other earlier written steps by other m_Series
-        std::string warnMsg = " Warning from openPMD writer: Already written iteration:"+std::to_string(ts);
-        std::cout<<warnMsg<<std::endl;
-        amrex::Warning(warnMsg);
+    if( ! isBTD ) {
+        if (m_CurrentStep >= ts) {
+            // note m_Series is reset in Init(), so using m_Series->iterations.contains(ts) is only able to check the
+            // last written step in m_Series's life time, but not other earlier written steps by other m_Series
+            std::string warnMsg =
+                    " Warning from openPMD writer: Already written iteration:" + std::to_string(ts);
+            std::cout << warnMsg << std::endl;
+            amrex::Warning(warnMsg);
+        }
     }
-
     m_CurrentStep = ts;
-    Init(openPMD::Access::CREATE, filePrefix);
-
+    Init(openPMD::Access::CREATE, filePrefix, isBTD);
 }
 
 void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
@@ -269,8 +270,11 @@ void WarpXOpenPMDPlot::CloseStep (bool isBTD, bool isLastBTDFlush)
 }
 
 void
-WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix)
+WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix, bool isBTD)
 {
+    if( isBTD && m_Series != nullptr )
+        return; // already open for this snapshot (aka timestep in lab frame)
+
     // either for the next ts file,
     // or init a single file for all ts
     std::string filename = filePrefix;
@@ -280,21 +284,18 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix)
     // see ADIOS1 limitation: https://github.com/openPMD/openPMD-api/pull/686
     m_Series = nullptr;
 
-    if( amrex::ParallelDescriptor::NProcs() > 1 )
-    {
+    if (amrex::ParallelDescriptor::NProcs() > 1) {
 #if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
-            filename, access,
-            amrex::ParallelDescriptor::Communicator()
+                filename, access,
+                amrex::ParallelDescriptor::Communicator()
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
 #else
         amrex::Abort("openPMD-api not built with MPI support!");
 #endif
-    }
-    else
-    {
+    } else {
         m_Series = std::make_unique<openPMD::Series>(filename, access);
         m_MPISize = 1;
         m_MPIRank = 1;
@@ -753,10 +754,10 @@ WarpXOpenPMDPlot::SetupPos(
 // this is originally copied from FieldIO.cpp
 //
 void
-WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
+WarpXOpenPMDPlot::WriteOpenPMDFields ( //const std::string& filename,
                       const std::vector<std::string>& varnames,
                       const amrex::MultiFab& mf,
-                      const amrex::Geometry& geom,
+                      const amrex::Geometry& geom, // geometry of the mf/Fab
                       const int iteration,
                       const double time, bool isBTD,
                       const amrex::Geometry& full_BTD_snapshot ) const
@@ -766,18 +767,26 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
 
   AMREX_ALWAYS_ASSERT_WITH_MESSAGE(m_Series != nullptr, "openPMD series must be initialized");
 
+  amrex::Geometry full_geom = geom;
+  if( isBTD )
+      full_geom = full_BTD_snapshot;
+
+  bool first_BTD_write = false;
+  if( isBTD )
+      first_BTD_write = ! m_Series->iterations.contains( iteration );
+
   int const ncomp = mf.nComp();
 
   // Create a few vectors that store info on the global domain
   // Swap the indices for each of them, since AMReX data is Fortran order
   // and since the openPMD API assumes contiguous C order
   // - Size of the box, in integer number of cells
-  amrex::Box const & global_box = geom.Domain();
+  amrex::Box const & global_box = full_geom.Domain();
   auto const global_size = getReversedVec(global_box.size());
   // - Grid spacing
-  std::vector<double> const grid_spacing = getReversedVec(geom.CellSize());
+  std::vector<double> const grid_spacing = getReversedVec(full_geom.CellSize());
   // - Global offset
-  std::vector<double> const global_offset = getReversedVec(geom.ProbLo());
+  std::vector<double> const global_offset = getReversedVec(full_geom.ProbLo());
   // - AxisLabels
   std::vector<std::string> axis_labels = detail::getFieldAxisLabels();
 
@@ -787,64 +796,70 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
 
   // meta data
   auto series_iteration = m_Series->iterations[iteration];
-  series_iteration.setTime( time );
-
-  // meta data for ED-PIC extension
-  auto const period = geom.periodicity(); // TODO double-check: is this the proper global bound or of some level?
-  std::vector< std::string > fieldBoundary( 6, "reflecting" );
-  std::vector< std::string > particleBoundary( 6, "absorbing" );
-#if AMREX_SPACEDIM!=3
-    fieldBoundary.resize(4);
-    particleBoundary.resize(4);
-#endif
-
-  for( auto i = 0u; i < fieldBoundary.size() / 2u; ++i )
-      if( m_fieldPMLdirections.at( i ) )
-          fieldBoundary.at( i ) = "open";
-
-  for( auto i = 0u; i < fieldBoundary.size() / 2u; ++i )
-      if( period.isPeriodic( i ) ) {
-          fieldBoundary.at(2u*i     ) = "periodic";
-          fieldBoundary.at(2u*i + 1u) = "periodic";
-          particleBoundary.at(2u*i     ) = "periodic";
-          particleBoundary.at(2u*i + 1u) = "periodic";
-      }
-
   auto meshes = series_iteration.meshes;
-  meshes.setAttribute( "fieldSolver", [](){
-      switch( WarpX::maxwell_solver_id ) {
-          case MaxwellSolverAlgo::Yee : return "Yee";
-          case MaxwellSolverAlgo::CKC : return "CK";
-          case MaxwellSolverAlgo::PSATD : return "PSATD";
-          default: return "other";
-      }
-  }() );
-  meshes.setAttribute( "fieldBoundary", fieldBoundary );
-  meshes.setAttribute( "particleBoundary", particleBoundary );
-  meshes.setAttribute( "currentSmoothing", [](){
-      if( WarpX::use_filter ) return "Binomial";
-          else return "none";
-  }() );
-    if( WarpX::use_filter )
-        meshes.setAttribute( "currentSmoothingParameters", [](){
-            std::stringstream ss;
-            ss << "period=1;compensator=false";
-            ss << ";numPasses_x=" << WarpX::filter_npass_each_dir[0];
-#if (AMREX_SPACEDIM == 3)
-            ss << ";numPasses_y=" << WarpX::filter_npass_each_dir[1];
-            ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[2];
-#else
-            ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[1];
+  if( first_BTD_write ) {
+      series_iteration.setTime( time );
+
+      // meta data for ED-PIC extension
+      auto const period = full_geom.periodicity(); // TODO double-check: is this the proper global bound or of some level?
+      std::vector<std::string> fieldBoundary(6, "reflecting");
+      std::vector<std::string> particleBoundary(6, "absorbing");
+#if AMREX_SPACEDIM != 3
+      fieldBoundary.resize(4);
+      particleBoundary.resize(4);
 #endif
-            std::string currentSmoothingParameters = ss.str();
-            return currentSmoothingParameters;
-        }() );
-  meshes.setAttribute("chargeCorrection", [](){
-      if( WarpX::do_dive_cleaning ) return "hyperbolic"; // TODO or "spectral" or something? double-check
-      else return "none";
-  }() );
-  if( WarpX::do_dive_cleaning )
-    meshes.setAttribute("chargeCorrectionParameters", "period=1");
+
+      for (auto i = 0u; i < fieldBoundary.size() / 2u; ++i)
+          if (m_fieldPMLdirections.at(i))
+              fieldBoundary.at(i) = "open";
+
+      for (auto i = 0u; i < fieldBoundary.size() / 2u; ++i)
+          if (period.isPeriodic(i)) {
+              fieldBoundary.at(2u * i) = "periodic";
+              fieldBoundary.at(2u * i + 1u) = "periodic";
+              particleBoundary.at(2u * i) = "periodic";
+              particleBoundary.at(2u * i + 1u) = "periodic";
+          }
+
+      meshes.setAttribute("fieldSolver", []() {
+          switch (WarpX::maxwell_solver_id) {
+              case MaxwellSolverAlgo::Yee :
+                  return "Yee";
+              case MaxwellSolverAlgo::CKC :
+                  return "CK";
+              case MaxwellSolverAlgo::PSATD :
+                  return "PSATD";
+              default:
+                  return "other";
+          }
+      }());
+      meshes.setAttribute("fieldBoundary", fieldBoundary);
+      meshes.setAttribute("particleBoundary", particleBoundary);
+      meshes.setAttribute("currentSmoothing", []() {
+          if (WarpX::use_filter) return "Binomial";
+          else return "none";
+      }());
+      if (WarpX::use_filter)
+          meshes.setAttribute("currentSmoothingParameters", []() {
+              std::stringstream ss;
+              ss << "period=1;compensator=false";
+              ss << ";numPasses_x=" << WarpX::filter_npass_each_dir[0];
+#if (AMREX_SPACEDIM == 3)
+              ss << ";numPasses_y=" << WarpX::filter_npass_each_dir[1];
+              ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[2];
+#else
+              ss << ";numPasses_z=" << WarpX::filter_npass_each_dir[1];
+#endif
+              std::string currentSmoothingParameters = ss.str();
+              return currentSmoothingParameters;
+          }());
+      meshes.setAttribute("chargeCorrection", []() {
+          if (WarpX::do_dive_cleaning) return "hyperbolic"; // TODO or "spectral" or something? double-check
+          else return "none";
+      }());
+      if (WarpX::do_dive_cleaning)
+          meshes.setAttribute("chargeCorrectionParameters", "period=1");
+  }
 
   // Loop through the different components, i.e. different fields stored in mf
   for (int icomp=0; icomp<ncomp; icomp++){
@@ -879,20 +894,24 @@ WarpXOpenPMDPlot::WriteOpenPMDFields( //const std::string& filename,
     //   we invert (only) meta-data arrays to assign labels and offsets in the
     //   order: slowest to fastest varying index when accessing the mesh
     //   contiguously (as 1D flattened logical memory)
-    mesh.setDataOrder( openPMD::Mesh::DataOrder::C );
-    mesh.setAxisLabels( axis_labels );
-    mesh.setGridSpacing( grid_spacing );
-    mesh.setGridGlobalOffset( global_offset );
-    mesh.setAttribute( "fieldSmoothing", "none" );
-    detail::setOpenPMDUnit( mesh, field_name );
+    if( first_BTD_write ) {
+        mesh.setDataOrder(openPMD::Mesh::DataOrder::C);
+        mesh.setAxisLabels(axis_labels);
+        mesh.setGridSpacing(grid_spacing);
+        mesh.setGridGlobalOffset(global_offset);
+        mesh.setAttribute("fieldSmoothing", "none");
+        detail::setOpenPMDUnit(mesh, field_name);
+    }
 
     // Create a new mesh record component, and store the associated metadata
     auto mesh_comp = mesh[comp_name];
-    mesh_comp.resetDataset( dataset );
+    if( first_BTD_write ) {
+        mesh_comp.resetDataset(dataset);
 
-    auto relative_cell_pos = utils::getRelativeCellPosition( mf );       // AMReX Fortran index order
-    std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() );  // now in C order
-    mesh_comp.setPosition( relative_cell_pos );
+        auto relative_cell_pos = utils::getRelativeCellPosition(mf);       // AMReX Fortran index order
+        std::reverse(relative_cell_pos.begin(), relative_cell_pos.end());  // now in C order
+        mesh_comp.setPosition(relative_cell_pos);
+    }
 
     // Loop through the multifab, and store each box as a chunk,
     // in the openPMD file.

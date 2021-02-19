@@ -107,7 +107,7 @@ public:
    *
    */
   void SetStep (int ts, const std::string& filePrefix,
-                bool isBTD=false, int BTD_ts=-1);
+                bool isBTD=false);
 
   /** Close the step
    *
@@ -127,7 +127,7 @@ public:
 
 
 private:
-  void Init (openPMD::Access access, const std::string& filePrefix);
+  void Init (openPMD::Access access, const std::string& filePrefix, bool isBTD);
 
   /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
   *
