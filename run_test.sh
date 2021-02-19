@@ -48,9 +48,9 @@ cd test_dir
 echo "cd $PWD"
 
 # Clone PICSAR and AMReX
-git clone --branch development https://github.com/AMReX-Codes/amrex.git
+git clone --branch e611121acca7696320f3757982de857cbab74926 https://github.com/AMReX-Codes/amrex.git
 # Use QED brach for QED tests
-git clone --branch development https://github.com/ECP-WarpX/picsar.git
+git clone --branch b35f07243c51ac35d47857fe36f0aafb6b517955 https://github.com/ECP-WarpX/picsar.git
 
 # Clone the AMReX regression test utility
 git clone https://github.com/ECP-WarpX/regression_testing.git
