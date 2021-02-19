@@ -246,9 +246,11 @@ MultiParticleContainer::ReadParameters ()
         std::string boundary_conditions = "none";
         pp.query("boundary_conditions", boundary_conditions);
         if        (boundary_conditions == "none"){
-            m_boundary_conditions = ParticleBC::none;
+            m_boundary_conditions.SetAll(ParticleBC::none);
         } else if (boundary_conditions == "absorbing"){
-            m_boundary_conditions = ParticleBC::absorbing;
+            m_boundary_conditions.SetAll(ParticleBC::absorbing);
+        } else if (boundary_conditions == "reflecting"){
+            m_boundary_conditions.SetAll(ParticleBC::reflecting);
         } else {
             amrex::Abort("unknown particle BC type");
         }

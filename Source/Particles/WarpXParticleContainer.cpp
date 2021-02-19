@@ -971,13 +971,14 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
 }
 
 void
-WarpXParticleContainer::ApplyBoundaryConditions (ParticleBC boundary_conditions){
+WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries boundary_conditions){
     WARPX_PROFILE("WarpXParticleContainer::ApplyBoundaryConditions()");
     for (int lev = 0; lev <= finestLevel(); ++lev)
     {
         for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
         {
             auto GetPosition = GetParticlePosition(pti);
+            auto SetPosition = SetParticlePosition(pti);
             const Real xmin = Geom(lev).ProbLo(0);
             const Real xmax = Geom(lev).ProbHi(0);
 #ifdef WARPX_DIM_3D
@@ -990,22 +991,36 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBC boundary_conditions)
             ParticleTileType& ptile = ParticlesAt(lev, pti);
             ParticleType * const pp = ptile.GetArrayOfStructs()().data();
 
+            auto& soa = ptile.GetStructOfArrays();
+            amrex::ParticleReal * const AMREX_RESTRICT ux = soa.GetRealData(PIdx::ux).data();
+#ifdef WARPX_DIM_3D
+            amrex::ParticleReal * const AMREX_RESTRICT uy = soa.GetRealData(PIdx::uy).data();
+#endif
+            amrex::ParticleReal * const AMREX_RESTRICT uz = soa.GetRealData(PIdx::uz).data();
+
             // Loop over particles and apply BC to each particle
             amrex::ParallelFor(
                 pti.numParticles(),
                 [=] AMREX_GPU_DEVICE (long i) {
                     ParticleType& p = pp[i];
                     ParticleReal x, y, z;
-                    GetPosition(i, x, y, z);
+                    GetPosition.AsStored(i, x, y, z);
+                    // Note that for RZ, (x, y, z) is actually (r, theta, z).
+
+                    bool particle_lost = false;
+                    ParticleBoundaries::apply_boundary(x, ux[i], particle_lost, xmin, xmax,
+                                                       boundary_conditions.xmin_bc, boundary_conditions.xmax_bc);
 #ifdef WARPX_DIM_3D
-                    if (x < xmin || x > xmax || y < ymin || y > ymax || z < zmin || z > zmax){
-                        if (boundary_conditions == ParticleBC::absorbing) p.id() = -1;
-                    }
-#else
-                    if (x < xmin || x > xmax || z < zmin || z > zmax){
-                        if (boundary_conditions == ParticleBC::absorbing) p.id() = -1;
-                    }
+                    ParticleBoundaries::apply_boundary(y, uy[i], particle_lost, ymin, ymax,
+                                                       boundary_conditions.ymin_bc, boundary_conditions.ymax_bc);
 #endif
+                    ParticleBoundaries::apply_boundary(z, uz[i], particle_lost, zmin, zmax,
+                                                       boundary_conditions.zmin_bc, boundary_conditions.zmax_bc);
+                    if (particle_lost) {
+                        p.id() = -1;
+                    } else {
+                        SetPosition.AsStored(i, x, y, z);
+                    }
                 }
             );
         }

@@ -15,6 +15,7 @@
 #include "SpeciesPhysicalProperties.H"
 #include "Evolve/WarpXDtType.H"
 #include "Particles/Resampling/Resampling.H"
+#include "Particles/ParticleBoundaries.H"
 
 #ifdef WARPX_QED
 #    include "ElementaryProcess/QEDInternals/QuantumSyncEngineWrapper.H"
@@ -25,8 +26,6 @@
 #include <AMReX_AmrCore.H>
 
 #include <memory>
-
-enum struct ParticleBC { none=0, absorbing };
 
 enum struct ConvertDirection{WarpX_to_SI, SI_to_WarpX};
 
@@ -269,7 +268,7 @@ public:
      * \param[in] boundary_conditions Type of boundary conditions. For now, only absorbing or none
      * are supported
      */
-    void ApplyBoundaryConditions (ParticleBC boundary_conditions);
+    void ApplyBoundaryConditions (ParticleBoundaries boundary_conditions);
 
     bool do_splitting = false;
     bool initialize_self_fields = false;
