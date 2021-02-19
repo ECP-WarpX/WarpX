@@ -287,8 +287,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix, b
     if (amrex::ParallelDescriptor::NProcs() > 1) {
 #if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
-                filename, access,
-                amrex::ParallelDescriptor::Communicator()
+            filename, access,
+            amrex::ParallelDescriptor::Communicator()
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
@@ -771,6 +771,8 @@ WarpXOpenPMDPlot::WriteOpenPMDFields ( //const std::string& filename,
   if( isBTD )
       full_geom = full_BTD_snapshot;
 
+  // is this either a regular write (true) or the first write in a
+  // backtransformed diagnostic (BTD):
   bool first_BTD_write = false;
   if( isBTD )
       first_BTD_write = ! m_Series->iterations.contains( iteration );
