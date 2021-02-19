@@ -114,11 +114,7 @@ BTDiagnostics::ReadParameters ()
     // Read list of back-transform diag parameters requested by the user //
     amrex::ParmParse pp(m_diag_name);
 
-    if (m_format == "openpmd") {
-        m_file_prefix = "diags/" + m_diag_name;
-    } else {
-        m_file_prefix = "diags/" + m_diag_name;
-    }
+    m_file_prefix = "diags/" + m_diag_name;
     pp.query("file_prefix", m_file_prefix);
     pp.query("do_back_transformed_fields", m_do_back_transformed_fields);
     pp.query("do_back_transformed_particles", m_do_back_transformed_particles);
