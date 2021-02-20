@@ -358,7 +358,7 @@ Particle initialization
     Boundary conditions to apply to particles on the x, y, or z boundaries.
     The same values as with ``particles.boundary_conditions`` are used. If one
     value is specified, it will apply to both boundaries, the min and max.
-    Two values can be specified for the min and max if the conditions are different.  
+    Two values can be specified for the min and max if the conditions are different.
     Note that this option will take precedence over ``particles.boundary_conditions``.
 
 * ``particles.rigid_injected_species`` (`strings`, separated by spaces)
