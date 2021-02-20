@@ -335,6 +335,27 @@ install(TARGETS ${WarpX_INSTALL_TARGET_NAMES}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
+# simplified library alias
+# this is currently expected by Python bindings
+if(WarpX_LIB)
+    if(WarpX_DIMS STREQUAL 3)
+        set(lib_suffix "3d")
+    elseif(WarpX_DIMS STREQUAL 2)
+        set(lib_suffix "2d")
+    elseif(WarpX_DIMS STREQUAL RZ)
+        set(lib_suffix "rz")
+    endif()
+    if(WIN32)
+        set(mod_ext "dll")
+    else()
+        set(mod_ext "so")
+    endif()
+    install(CODE "file(CREATE_LINK
+        $<TARGET_FILE_NAME:shared>
+        ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/libwarpx.${lib_suffix}.${mod_ext}
+        COPY_ON_ERROR SYMBOLIC)")
+endif()
+
 # CMake package file for find_package(WarpX::WarpX) in depending projects
 #install(EXPORT WarpXTargets
 #    FILE WarpXTargets.cmake

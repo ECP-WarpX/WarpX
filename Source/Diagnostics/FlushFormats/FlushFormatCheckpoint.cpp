@@ -15,7 +15,7 @@ void
 FlushFormatCheckpoint::WriteToFile (
         const amrex::Vector<std::string> /*varnames*/,
         const amrex::Vector<amrex::MultiFab>& /*mf*/,
-        amrex::Vector<amrex::Geometry>& /*geom*/,
+        amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double /*time*/,
         const amrex::Vector<ParticleDiag>& particle_diags, int nlev, const std::string prefix,
         bool /*plot_raw_fields*/,
@@ -36,7 +36,7 @@ FlushFormatCheckpoint::WriteToFile (
     // const int nlevels = finestLevel()+1;
     amrex::PreBuildDirectorHierarchy(checkpointname, default_level_prefix, nlev, true);
 
-    WriteWarpXHeader(checkpointname, particle_diags);
+    WriteWarpXHeader(checkpointname, particle_diags, geom);
 
     WriteJobInfo(checkpointname);
 
