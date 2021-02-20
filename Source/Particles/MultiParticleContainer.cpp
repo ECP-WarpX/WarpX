@@ -245,15 +245,19 @@ MultiParticleContainer::ReadParameters ()
 
         std::string boundary_conditions = "none";
         pp.query("boundary_conditions", boundary_conditions);
-        if        (boundary_conditions == "none"){
-            m_boundary_conditions.SetAll(ParticleBC::none);
-        } else if (boundary_conditions == "absorbing"){
-            m_boundary_conditions.SetAll(ParticleBC::absorbing);
-        } else if (boundary_conditions == "reflecting"){
-            m_boundary_conditions.SetAll(ParticleBC::reflecting);
-        } else {
-            amrex::Abort("unknown particle BC type");
-        }
+        m_boundary_conditions.SetAll(boundary_conditions);
+
+        std::vector<std::string> boundary_conditions_x;
+        pp.queryarr("boundary_conditions_x", boundary_conditions_x);
+        m_boundary_conditions.SetBoundsX(boundary_conditions_x);
+#ifdef WARPX_DIM_3D
+        std::vector<std::string> boundary_conditions_y;
+        pp.queryarr("boundary_conditions_y", boundary_conditions_y);
+        m_boundary_conditions.SetBoundsY(boundary_conditions_y);
+#endif
+        std::vector<std::string> boundary_conditions_z;
+        pp.queryarr("boundary_conditions_z", boundary_conditions_z);
+        m_boundary_conditions.SetBoundsZ(boundary_conditions_z);
 
         ParmParse ppl("lasers");
         ppl.queryarr("names", lasers_names);

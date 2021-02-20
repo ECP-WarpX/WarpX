@@ -268,7 +268,7 @@ public:
      * \param[in] boundary_conditions Type of boundary conditions. For now, only absorbing or none
      * are supported
      */
-    void ApplyBoundaryConditions (ParticleBoundaries boundary_conditions);
+    void ApplyBoundaryConditions (ParticleBoundaries& boundary_conditions);
 
     bool do_splitting = false;
     bool initialize_self_fields = false;

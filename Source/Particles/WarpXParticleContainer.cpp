@@ -971,7 +971,7 @@ WarpXParticleContainer::particlePostLocate(ParticleType& p,
 }
 
 void
-WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries boundary_conditions){
+WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries& boundary_conditions){
     WARPX_PROFILE("WarpXParticleContainer::ApplyBoundaryConditions()");
 
     if (boundary_conditions.AllNone()) return;
@@ -1011,14 +1011,11 @@ WarpXParticleContainer::ApplyBoundaryConditions (ParticleBoundaries boundary_con
                     // Note that for RZ, (x, y, z) is actually (r, theta, z).
 
                     bool particle_lost = false;
-                    ParticleBoundaries::apply_boundary(x, ux[i], particle_lost, xmin, xmax,
-                                                       boundary_conditions.xmin_bc, boundary_conditions.xmax_bc);
+                    ParticleBoundaries::apply_boundary_x(x, ux[i], particle_lost, xmin, xmax, boundary_conditions);
 #ifdef WARPX_DIM_3D
-                    ParticleBoundaries::apply_boundary(y, uy[i], particle_lost, ymin, ymax,
-                                                       boundary_conditions.ymin_bc, boundary_conditions.ymax_bc);
+                    ParticleBoundaries::apply_boundary_y(y, uy[i], particle_lost, ymin, ymax, boundary_conditions);
 #endif
-                    ParticleBoundaries::apply_boundary(z, uz[i], particle_lost, zmin, zmax,
-                                                       boundary_conditions.zmin_bc, boundary_conditions.zmax_bc);
+                    ParticleBoundaries::apply_boundary_z(z, uz[i], particle_lost, zmin, zmax, boundary_conditions);
                     if (particle_lost) {
                         p.id() = -1;
                     } else {
