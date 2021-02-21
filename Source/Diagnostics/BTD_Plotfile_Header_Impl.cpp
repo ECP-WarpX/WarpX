@@ -106,7 +106,7 @@ BTDPlotfileHeaderImpl::WriteHeader ()
 
     HeaderFile.precision(17);
 
-    // Genetic Plotfile type name
+    // Generic Plotfile type name
     HeaderFile << m_file_version << '\n';
     // number of components
     HeaderFile << m_varnames.size() << '\n';
