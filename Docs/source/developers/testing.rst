@@ -39,7 +39,6 @@ from WarpX root folder. It will compile all necessary executables and run all te
 
 * ``export WARPX_TEST_DIM=3``, ``export WARPX_TEST_DIM=2`` or ``export WARPX_TEST_DIM=RZ`` in order to select only the tests that correspond to this dimensionality
 * ``export WARPX_TEST_ARCH=CPU`` or ``export WARPX_TEST_ARCH=GPU`` in order to run the tests on CPU or GPU respectively.
-* ``export WARPX_TEST_COMMIT=...`` in order to test a specific commit.
 
 The command above (without command line arguments) runs all the tests defined in [Regression/WarpX-tests.ini](./Regression/WarpX-tests.ini). In order to run single tests, pass the test names as command line arguments:
 
