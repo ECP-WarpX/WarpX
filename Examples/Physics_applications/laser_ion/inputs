@@ -217,7 +217,7 @@ openPMDbw.hydrogen.plot_filter_function(t,x,y,z,ux,uy,uz) = (uz<0)
 # histograms with 2.0 degree acceptance angle in fw direction
 # 2 deg * pi / 180 : 0.03490658503 rad
 # half-angle +/-   : 0.017453292515 rad
-warpx.reduced_diags_names                   = histuH histue
+warpx.reduced_diags_names                   = histuH histue histuzAll
 
 histuH.type                                 = ParticleHistogram
 histuH.intervals                            = 100
@@ -238,6 +238,17 @@ histue.bin_min                              = 0.0
 histue.bin_max                              = 0.1
 histue.histogram_function(t,x,y,z,ux,uy,uz) = "sqrt(ux*ux+uy*uy+uz*uz)"
 histue.filter_function(t,x,y,z,ux,uy,uz) = "abs(acos(uz / sqrt(ux*ux+uy*uy+uz*uz))) <= 0.017453"
+
+# just a test entry to make sure that the histogram filter is purely optional:
+# this one just records uz of all hydrogen ions, independent of their pointing
+histuzAll.type                                 = ParticleHistogram
+histuzAll.intervals                            = 100
+histuzAll.path                                 = "./"
+histuzAll.species                              = hydrogen
+histuzAll.bin_number                           = 1000
+histuzAll.bin_min                              = -35.0
+histuzAll.bin_max                              =  35.0
+histuzAll.histogram_function(t,x,y,z,ux,uy,uz) = "uz"
 
 
 #################################
