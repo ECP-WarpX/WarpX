@@ -885,4 +885,3 @@ BTDiagnostics::InterleaveFabArrayHeader(std::string Buffer_FabHeader_path,
     snapshot_FabHeader.WriteMultiFabHeader();
 
 }
-
