@@ -43,13 +43,18 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
     }
 #endif
 
-    const amrex::IntVect& Bx_stag = Bfield_fp[0][0]->ixType().toIntVect();
-    const amrex::IntVect& By_stag = Bfield_fp[0][1]->ixType().toIntVect();
-    const amrex::IntVect& Bz_stag = Bfield_fp[0][2]->ixType().toIntVect();
+    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> const & Bmf = WarpX::fft_do_time_averaging ?
+                                                                                Bfield_avg_fp : Bfield_fp;
+    amrex::Vector<std::array<std::unique_ptr<amrex::MultiFab>,3>> const & Emf = WarpX::fft_do_time_averaging ?
+                                                                                Efield_avg_fp : Efield_fp;
 
-    const amrex::IntVect& Ex_stag = Efield_fp[0][0]->ixType().toIntVect();
-    const amrex::IntVect& Ey_stag = Efield_fp[0][1]->ixType().toIntVect();
-    const amrex::IntVect& Ez_stag = Efield_fp[0][2]->ixType().toIntVect();
+    const amrex::IntVect& Bx_stag = Bmf[0][0]->ixType().toIntVect();
+    const amrex::IntVect& By_stag = Bmf[0][1]->ixType().toIntVect();
+    const amrex::IntVect& Bz_stag = Bmf[0][2]->ixType().toIntVect();
+
+    const amrex::IntVect& Ex_stag = Emf[0][0]->ixType().toIntVect();
+    const amrex::IntVect& Ey_stag = Emf[0][1]->ixType().toIntVect();
+    const amrex::IntVect& Ez_stag = Emf[0][2]->ixType().toIntVect();
 
     // For level 0, we only need to do the average.
 #ifdef AMREX_USE_OMP
@@ -60,16 +65,16 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
         Array4<Real> const& bx_aux = Bfield_aux[0][0]->array(mfi);
         Array4<Real> const& by_aux = Bfield_aux[0][1]->array(mfi);
         Array4<Real> const& bz_aux = Bfield_aux[0][2]->array(mfi);
-        Array4<Real const> const& bx_fp = Bfield_fp[0][0]->const_array(mfi);
-        Array4<Real const> const& by_fp = Bfield_fp[0][1]->const_array(mfi);
-        Array4<Real const> const& bz_fp = Bfield_fp[0][2]->const_array(mfi);
+        Array4<Real const> const& bx_fp = Bmf[0][0]->const_array(mfi);
+        Array4<Real const> const& by_fp = Bmf[0][1]->const_array(mfi);
+        Array4<Real const> const& bz_fp = Bmf[0][2]->const_array(mfi);
 
         Array4<Real> const& ex_aux = Efield_aux[0][0]->array(mfi);
         Array4<Real> const& ey_aux = Efield_aux[0][1]->array(mfi);
         Array4<Real> const& ez_aux = Efield_aux[0][2]->array(mfi);
-        Array4<Real const> const& ex_fp = Efield_fp[0][0]->const_array(mfi);
-        Array4<Real const> const& ey_fp = Efield_fp[0][1]->const_array(mfi);
-        Array4<Real const> const& ez_fp = Efield_fp[0][2]->const_array(mfi);
+        Array4<Real const> const& ex_fp = Emf[0][0]->const_array(mfi);
+        Array4<Real const> const& ey_fp = Emf[0][1]->const_array(mfi);
+        Array4<Real const> const& ez_fp = Emf[0][2]->const_array(mfi);
 
         // Loop over full box including ghost cells
         // (input arrays will be padded with zeros beyond ghost cells
