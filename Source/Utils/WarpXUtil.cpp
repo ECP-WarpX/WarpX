@@ -379,11 +379,11 @@ void ReadBCParams ()
     AMREX_ALWAYS_ASSERT(particle_BC_hi.size() == AMREX_SPACEDIM);
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-        WarpX::field_boundary_lo[idim] = GetBCTypeInteger(field_BC_lo[idim]); 
+        WarpX::field_boundary_lo[idim] = GetBCTypeInteger(field_BC_lo[idim]);
         WarpX::field_boundary_hi[idim] = GetBCTypeInteger(field_BC_hi[idim]);
-        WarpX::particle_boundary_lo[idim] = GetBCTypeInteger(particle_BC_lo[idim]); 
+        WarpX::particle_boundary_lo[idim] = GetBCTypeInteger(particle_BC_lo[idim]);
         WarpX::particle_boundary_hi[idim] = GetBCTypeInteger(particle_BC_hi[idim]);
-         
+
         if (WarpX::field_boundary_lo[idim] == BoundaryType::Periodic ||
             WarpX::field_boundary_hi[idim] == BoundaryType::Periodic) {
             geom_periodicity[idim] = 1;
