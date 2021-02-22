@@ -287,8 +287,8 @@ WarpXOpenPMDPlot::Init (openPMD::Access access, const std::string& filePrefix, b
     if (amrex::ParallelDescriptor::NProcs() > 1) {
 #if defined(AMREX_USE_MPI)
         m_Series = std::make_unique<openPMD::Series>(
-                filename, access,
-                amrex::ParallelDescriptor::Communicator()
+            filename, access,
+            amrex::ParallelDescriptor::Communicator()
         );
         m_MPISize = amrex::ParallelDescriptor::NProcs();
         m_MPIRank = amrex::ParallelDescriptor::MyProc();
