@@ -21,6 +21,8 @@
 # Use `export WARPX_TEST_ARCH=CPU` or `export WARPX_TEST_ARCH=GPU` in order
 # to run the tests on CPU or GPU respectively.
 
+set -eu -o pipefail
+
 # Parse command line arguments: if test names are given as command line arguments,
 # store them in variable tests_arg and define new command line argument to call
 # regtest.py with option --tests (works also for single test)
