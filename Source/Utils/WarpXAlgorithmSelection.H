@@ -114,6 +114,16 @@ struct ParticleBoundaryType {
     };
 };
 
+
+struct BoundaryType {
+    enum {
+        PEC = 0,     //!< perfect electric conductor (PEC) with E_tangential=0
+        Periodic = 1,
+        PML = 2,
+        PMC = 3      //!< perfect magnetic conductor (PMC) with B_tangential=0
+    };
+};
+
 int
 GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key );
 
