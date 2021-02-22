@@ -137,6 +137,11 @@ public:
     static long load_balance_costs_update_algo;
     static int em_solver_medium;
     static int macroscopic_solver_algo;
+    static amrex::Vector<int> field_boundary_lo;
+    static amrex::Vector<int> field_boundary_hi;
+    static amrex::Vector<int> particle_boundary_lo;
+    static amrex::Vector<int> particle_boundary_hi;
+
 
     // PSATD: If true (overwritten by the user in the input file), the current correction
     // defined in equation (19) of https://doi.org/10.1016/j.jcp.2013.03.010 is applied
