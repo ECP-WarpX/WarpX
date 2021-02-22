@@ -162,6 +162,8 @@ void ParticleHistogram::ComputeDiags (int step)
     const bool is_unity_particle_weight =
         (m_norm == NormalizationType::unity_particle_weight) ? true : false;
 
+    bool const do_parser_filter = m_do_parser_filter;
+
     // zero-out old data on the host
     std::fill(m_data.begin(), m_data.end(), amrex::Real(0.0));
     amrex::Gpu::DeviceVector< amrex::Real > d_data( m_data.size(), 0.0 );
@@ -170,7 +172,7 @@ void ParticleHistogram::ComputeDiags (int step)
     int const nlevs = std::max(0, myspc.finestLevel()+1);
     for (int lev = 0; lev < nlevs; ++lev) {
 #ifdef AMREX_USE_OMP
-#pragma omp parallel
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
         {
             for (WarpXParIter pti(myspc, lev); pti.isValid(); ++pti)
@@ -197,7 +199,9 @@ void ParticleHistogram::ComputeDiags (int step)
                     auto const uz = d_uz[i] / PhysConst::c;
 
                     // don't count a particle if it is filtered out
-                    if (!fun_filterparser(t, x, y, z, ux, uy, uz)) return;
+                    if (do_parser_filter)
+                        if (!fun_filterparser(t, x, y, z, ux, uy, uz))
+                            return;
                     // continue function if particle is not filtered out
                     auto const f = fun_partparser(t, x, y, z, ux, uy, uz);
 
