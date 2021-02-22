@@ -55,7 +55,6 @@ steps:
   displayName: 'Install dependencies'
 
 - script: |
-      export WARPX_TEST_COMMIT=$BUILD_SOURCEVERSION
       ./run_test.sh
   timeoutInMinutes: 360
   displayName: 'Build & test'
