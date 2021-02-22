@@ -26,8 +26,6 @@ strategy:
     qed:
       WARPX_CI_QED: 'TRUE'
 
-timeoutInMinutes: 360
-
 steps:
 - script: |
     cat /proc/cpuinfo | grep "model name" | sort -u
@@ -58,4 +56,5 @@ steps:
 
 - script: |
       ./run_test.sh
+  timeoutInMinutes: 360
   displayName: 'Build & test'
