@@ -54,7 +54,8 @@ steps:
     fi
   displayName: 'Install dependencies'
 
-- script: |
-      ./run_test.sh
+- task: ShellScript@2
+  inputs:
+    scriptPath: ./run_test.sh
   timeoutInMinutes: 360
   displayName: 'Build & test'
