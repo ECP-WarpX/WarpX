@@ -189,7 +189,7 @@ WarpX::computePhi (const amrex::Vector<std::unique_ptr<amrex::MultiFab> >& rho,
 
     // Solve the Poisson equation
     MLMG mlmg(linop);
-    mlmg.setVerbose(2);
+    mlmg.setVerbose(0);
     mlmg.setMaxIter(max_iters);
     mlmg.solve( GetVecOfPtrs(phi), GetVecOfConstPtrs(rho), required_precision, 0.0);
 
@@ -310,9 +310,9 @@ WarpX::getBoundaryPotentials(const int idim, amrex::Real &pot_lo,
     pp_geom.getarr("potential_hi",potential_hi_str,0,AMREX_SPACEDIM);
 
     auto parser_lo = makeParser(potential_lo_str[idim], {"t"});
-    pot_lo = parser_lo.eval(getistep()[0] * dt[0]);
+    pot_lo = parser_lo.eval(gett_new(0));
     auto parser_hi = makeParser(potential_hi_str[idim], {"t"});
-    pot_hi = parser_hi.eval(getistep()[0] * dt[0]);
+    pot_hi = parser_hi.eval(gett_new(0));
 }
 
 /* \bried Compute the electric field that corresponds to `phi`, and

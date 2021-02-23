@@ -84,7 +84,7 @@ Overall simulation parameters
     The relative precision with which the electrostatic space-charge fields should
     be calculated. More specifically, the space-charge fields are
     computed with an iterative Multi-Level Multi-Grid (MLMG) solver.
-    This solver can fail to reach the default precision within a reasonable
+    This solver can fail to reach the default precision within a reasonable time.
     This only applies when warpx.do_electrostatic = labframe.
 
 * ``self_fields_max_iters`` (`integer`, default: 200)
@@ -115,7 +115,10 @@ Setting up the field mesh
 * ``geometry.is_periodic`` (`2 integers in 2D`, `3 integers in 3D`)
     Whether the boundary conditions are periodic, in each direction.
 
-    For each direction, use 1 for periodic conditions, 0 otherwise.
+    For each direction, use 1 for periodic conditions, 0 otherwise. If
+    warpx.do_electrostatic = labframe and non-periodic conditions are specified
+    the boundary potentials should also be specified through ``geometry.potential_lo``
+    and ``geometry.potential_hi``.
 
 * ``geometry.coord_sys`` (`integer`) optional (default `0`)
     Coordinate system used by the simulation. 0 for Cartesian, 1 for cylindrical.
@@ -1026,7 +1029,6 @@ following the algorithm given by `Perez et al. (Phys. Plasmas 19, 083104, 2012) 
     :math:`R\approx1.4A^{1/3}` is the effective Coulombic radius of the nucleus,
     :math:`A` is the mass number.
     If this is not provided, or if a non-positive value is provided,
-    a Coulomb logarithm will be computed automatically according to the algorithm.
     a Coulomb logarithm will be computed automatically according to the algorithm in
     `Perez et al. (Phys. Plasmas 19, 083104, 2012) <https://doi.org/10.1063/1.4742167>`_.
 
