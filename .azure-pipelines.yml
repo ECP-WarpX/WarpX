@@ -15,8 +15,10 @@ jobs:
 
   strategy:
     matrix:
-      cartesian:
-        WARPX_CI_REGULAR_CARTESIAN: 'TRUE'
+      cartesian2d:
+        WARPX_CI_REGULAR_CARTESIAN_2D: 'TRUE'
+      cartesian3d:
+        WARPX_CI_REGULAR_CARTESIAN_3D: 'TRUE'
       psatd:
         WARPX_CI_PSATD: 'TRUE'
       python:
