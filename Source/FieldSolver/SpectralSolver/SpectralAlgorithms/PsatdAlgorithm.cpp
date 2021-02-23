@@ -426,9 +426,11 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
 
                     else // update_with_rho = 0
                     {
-                        X2_old = (x1 * om2 - theta * (1._rt - C(i,j,k)) * om2_c) / (theta_star - theta);
+                        X2_old = (x1 * om2 - theta * (1._rt - C(i,j,k)) * om2_c)
+                            / (theta_star - theta);
 
-                        X3_old = (x1 * om2 - theta_star * (1._rt - C(i,j,k)) * om2_c) / (theta_star - theta);
+                        X3_old = (x1 * om2 - theta_star * (1._rt - C(i,j,k)) * om2_c)
+                            / (theta_star - theta);
 
                         X2(i,j,k) = c2 * T2(i,j,k) * (X2_old - X3_old) / (om2_c * om2);
 
@@ -489,20 +491,15 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                     // Averaged Galilean algorithm
                     if (time_averaging)
                     {
-                        Psi1(i,j,k) = theta * ((om * S1(i,j,k) + I * nu * om_c * C1(i,j,k))
-                            - T2(i,j,k) * (om * S3(i,j,k) + I * nu * om_c * C3(i,j,k)))
-                            / (dt * (nu2 * om2_c - om2));
+                        Psi1(i,j,k) = (S3(i,j,k) - S1(i,j,k)) / (om * dt);
 
-                        Psi2(i,j,k) = theta * ((om * C1(i,j,k) - I * nu * om_c * S1(i,j,k))
-                            - T2(i,j,k) * (om * C3(i,j,k) - I * nu * om_c * S3(i,j,k)))
-                            / (om * dt * (nu2 * om2_c - om2));
+                        Psi2(i,j,k) = (C3(i,j,k) - C1(i,j,k)) / (om2 * dt);
 
                         Psi3(i,j,k) = 1._rt;
 
-                        A1(i,j,k) = (Psi1(i,j,k) - 1._rt + I * nu * om_c * Psi2(i,j,k))
-                            / (nu2 * om2_c - om2);
+                        A1(i,j,k) = (om * dt + S1(i,j,k) - S3(i,j,k)) / (om3 * dt);
 
-                        A2(i,j,k) = (Psi3(i,j,k) - Psi1(i,j,k)) / om2;
+                        A2(i,j,k) = (om * dt + S1(i,j,k) - S3(i,j,k)) / (om3 * dt);
 
                         CRhoold(i,j,k) = 2._rt * I * c2 * S1(i,j,k) * (dt * C(i,j,k) - S_ck(i,j,k))
                             / (om3 * dt2 * ep0);
@@ -662,7 +659,7 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                         / (om3 * dt2 * ep0);
 
                     CRhonew(i,j,k) = - I * c2 * (om2 * dt2 - C1(i,j,k) + C3(i,j,k))
-                        / (om3 * om * dt2 * ep0);
+                        / (om2 * om2 * dt2 * ep0);
 
                     Jcoef(i,j,k) = Psi2(i,j,k) / ep0;
                 }
@@ -676,7 +673,6 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                 const Real nu  = kv / om_c;
                 const Real nu2 = nu * nu;
                 const Complex theta = amrex::exp(I * nu * om_c * dt * 0.5_rt);
-                const Complex theta_star = amrex::exp(- I * nu * om_c * dt * 0.5_rt);
 
                 C(i,j,k) = 1._rt;
 
@@ -710,18 +706,18 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                 {
                     Complex C_rho = I * c2 / ((1._rt - T2(i,j,k)) * ep0);
 
-                    Psi1(i,j,k) = I * theta * (1._rt - theta) / (nu * om_c * dt);
+                    Psi1(i,j,k) = I * theta * (1._rt - T2(i,j,k)) / (nu * om_c * dt);
 
-                    Psi2(i,j,k) = (2._rt - I * nu * om_c * dt + T2(i,j,k) * (3._rt * I * nu * om_c * dt - 2._rt))
-                        / (2._rt * nu2 * om2_c * dt * theta_star);
+                    Psi2(i,j,k) = theta * (2._rt - I * nu * om_c * dt + T2(i,j,k) * (3._rt * I * nu * om_c * dt - 2._rt))
+                        / (2._rt * nu2 * om2_c * dt);
 
                     Psi3(i,j,k) = I * theta * (1._rt - T2(i,j,k)) / (nu * om_c * dt);
 
                     A1(i,j,k) = (Psi1(i,j,k) - 1._rt + I * nu * om_c * Psi2(i,j,k)) / (nu2 * om2_c);
 
-                    A2(i,j,k) = (8._rt * I * (T2(i,j,k) - 1._rt) + 4._rt * nu * om_c * dt
+                    A2(i,j,k) = theta * (8._rt * I * (T2(i,j,k) - 1._rt) + 4._rt * nu * om_c * dt
                         * (3._rt * T2(i,j,k) - 1._rt) + I * nu2 * om2_c * dt2 * (1._rt - 9._rt * T2(i,j,k)))
-                        / (8._rt * nu2 * nu * om2_c * om_c * dt * theta_star);
+                        / (8._rt * nu2 * nu * om2_c * om_c * dt);
 
                     CRhoold(i,j,k) = C_rho * (T2(i,j,k) * A1(i,j,k) - A2(i,j,k));
 
