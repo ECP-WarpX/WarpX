@@ -1,6 +1,10 @@
 name: windows
 
-on: [push, pull_request]
+on:
+  workflow_run:
+    workflows: ["source"]
+    types:
+      - completed
 
 jobs:
   build_win_msvc:

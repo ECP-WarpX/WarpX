@@ -1,6 +1,10 @@
 name: Ubuntu build
 
-on: [push, pull_request]
+on:
+  workflow_run:
+    workflows: ["source"]
+    types:
+      - completed
 
 jobs:
   build_cxxminimal:
