@@ -405,6 +405,10 @@ void ReadBCParams ()
                 // set particle boundary to periodic
                 WarpX::particle_boundary_lo[idim] = ParticleBoundaryType::Periodic;
                 WarpX::particle_boundary_hi[idim] = ParticleBoundaryType::Periodic;
+<<<<<<< HEAD
+=======
+                amrex::Warning("Particle boundary is set to periodic to be consistent with the fields.");
+>>>>>>> 77e70c05... separate particle and field boudnary structs
             }
 
         }
