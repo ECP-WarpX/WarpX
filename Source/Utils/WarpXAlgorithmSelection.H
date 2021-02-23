@@ -125,7 +125,7 @@ struct FieldBoundaryType {
     };
 };
 
-/** Field boundary conditions at the domain boundary
+/** Particle boundary conditions at the domain boundary
  */
 struct ParticleBoundaryType {
     enum {
