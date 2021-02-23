@@ -56,7 +56,7 @@ We use the following modules and environments on the system.
    # optional: for openPMD support
    module load ums
    module load ums-aph114
-   module load openpmd-api/0.12.0
+   module load openpmd-api/0.13.2
 
    # optional: for PSATD in RZ geometry support
    #   note: needs the ums modules above
@@ -106,16 +106,6 @@ We recommend to store the above lines in a file, such as ``$HOME/warpx.profile``
 
    source $HOME/warpx.profile
 
-Optionally, download and build openPMD-api for I/O (only needed if you did not load our module above):
-
-.. code-block:: bash
-
-   git clone https://github.com/openPMD/openPMD-api.git
-   mkdir openPMD-api-build
-   cd openPMD-api-build
-   cmake ../openPMD-api -DopenPMD_USE_PYTHON=OFF -DCMAKE_INSTALL_PREFIX=$HOME/sw/openPMD-api-install/ -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON -DCMAKE_INSTALL_RPATH='$ORIGIN' -DMPIEXEC_EXECUTABLE=$(which jsrun)
-   cmake --build . --target install --parallel 16
-
 Optionally, download and install :ref:`libEnsemble <libensemble>` for dynamic ensemble optimizations:
 
 .. code-block:: bash
@@ -137,10 +127,9 @@ Then, ``cd`` into the directory ``$HOME/src/warpx`` and use the following comman
 
 .. code-block:: bash
 
-   mkdir -p build
-   cd build
-   cmake .. -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
-   make -j 10
+   rm -rf build
+   cmake -S build -B build -DWarpX_OPENPMD=ON -DWarpX_DIMS=3 -DWarpX_COMPUTE=CUDA
+   cmake --build build -j 10
 
 The general :ref:`cmake compile-time options <building-cmake>` apply as usual.
 
