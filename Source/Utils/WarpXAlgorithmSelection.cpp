@@ -74,12 +74,20 @@ const std::map<std::string, int> MacroscopicSolver_algo_to_int = {
     {"default", MacroscopicSolverAlgo::BackwardEuler}
 };
 
-const std::map<std::string, int> BCType_algo_to_int = {
-    {"pec",      BoundaryType::PEC},
-    {"periodic", BoundaryType::Periodic},
-    {"pml",      BoundaryType::PML},
-    {"pmc",      BoundaryType::PMC},
-    {"default",  BoundaryType::PEC}
+const std::map<std::string, int> FieldBCType_algo_to_int = {
+    {"pec",      FieldBoundaryType::PEC},
+    {"periodic", FieldBoundaryType::Periodic},
+    {"pml",      FieldBoundaryType::PML},
+    {"pmc",      FieldBoundaryType::PMC},
+    {"default",  FieldBoundaryType::PEC}
+};
+
+const std::map<std::string, int> ParticleBCType_algo_to_int = {
+    {"absorbing",  ParticleBoundaryType::Absorbing},
+    {"open",       ParticleBoundaryType::Open},
+    {"reflecting", ParticleBoundaryType::Reflecting},
+    {"periodic",   ParticleBoundaryType::Periodic},
+    {"default",    ParticleBoundaryType::Absorbing}
 };
 
 int
@@ -137,12 +145,13 @@ GetAlgorithmInteger( amrex::ParmParse& pp, const char* pp_search_key ){
 }
 
 int
-GetBCTypeInteger( std::string BCType ){
+GetBCTypeInteger( std::string BCType, bool field ){
     std::transform(BCType.begin(), BCType.end(), BCType.begin(), ::tolower);
 
     std::map<std::string, int> BCType_to_int;
 
-    BCType_to_int = BCType_algo_to_int;
+    if (field) BCType_to_int = FieldBCType_algo_to_int; // set field boundary
+    else BCType_to_int = ParticleBCType_algo_to_int; // set particle boundary
 
     if (BCType_to_int.count(BCType) == 0) {
         std::string error_message = "Invalid string for Field BC. : " + BCType                         + "\nThe valid values are : \n";
