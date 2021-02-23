@@ -106,13 +106,14 @@ public:
    * @note If an iteration has been written, then it will give a warning
    *
    */
-  void SetStep (int ts, const std::string& filePrefix);
+  void SetStep (int ts, const std::string& filePrefix,
+                bool isBTD=false);
 
   /** Close the step
    *
    * Signal that no further updates will be written for the step.
    */
-  void CloseStep ();
+  void CloseStep (bool isBTD = false, bool isLastBTDFlush = false);
 
   void WriteOpenPMDParticles (const amrex::Vector<ParticleDiag>& particle_diags);
 
@@ -120,11 +121,13 @@ public:
               const std::vector<std::string>& varnames,
               const amrex::MultiFab& mf,
               const amrex::Geometry& geom,
-              const int iteration, const double time ) const;
+              const int iteration, const double time,
+              bool isBTD = false,
+              const amrex::Geometry& full_BTD_snapshot=amrex::Geometry() ) const;
 
 
 private:
-  void Init (openPMD::Access access, const std::string& filePrefix);
+  void Init (openPMD::Access access, const std::string& filePrefix, bool isBTD);
 
   /** This function sets up the entries for storing the particle positions, global IDs, and constant records (charge, mass)
   *

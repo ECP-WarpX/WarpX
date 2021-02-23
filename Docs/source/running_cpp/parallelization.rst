@@ -73,7 +73,7 @@ and MPI decomposition and computer architecture used for the run:
 
 * Amount of high-bandwidth memory.
 
-Because these parameters put additional contraints on the domain size for a
+Because these parameters put additional constraints on the domain size for a
 simulation, it can be cumbersome to calculate the number of cells and the
 physical size of the computational domain for a given resolution. This
 :download:`Python script<../../../Tools/DevUtils/compute_domain.py>` does it
@@ -82,6 +82,6 @@ automatically.
 When using the RZ spectral solver, the values of ``amr.max_grid_size`` and ``amr.blocking_factor`` are constrained since the solver
 requires that the full radial extent be within a each block.
 For the radial values, any input is ignored and the max grid size and blocking factor are both set equal to the number of radial cells.
-For the longitudinal values, the blocking factor has a mminimum size of 8, allowing the computational domain of each block to be large enough relative to the guard cells for reasonable performance, but the max grid size and blocking factor must also be small enough so that there will be at least one block per processor.
+For the longitudinal values, the blocking factor has a minimum size of 8, allowing the computational domain of each block to be large enough relative to the guard cells for reasonable performance, but the max grid size and blocking factor must also be small enough so that there will be at least one block per processor.
 If max grid size and/or blocking factor are too large, they will be silently reduced as needed.
 If there are too many processors so that there is not enough blocks for the number processors, WarpX will abort.

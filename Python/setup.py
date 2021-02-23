@@ -34,7 +34,7 @@ if args.with_libwarpx:
     # GNUmake
     if args.with_libwarpx not in allowed_dims:
         print("WARNING: '%s' is not an allowed WarpX DIM" % args.with_libwarpx)
-    package_data = {'pywarpx' : ['libwarpx%s.so' % args.with_libwarpx]}
+    package_data = {'pywarpx' : ['libwarpx.%s.so' % args.with_libwarpx]}
     data_files = []
 elif args.with_lib_dir or PYWARPX_LIB_DIR:
     # CMake and Package Managers
@@ -42,7 +42,7 @@ elif args.with_lib_dir or PYWARPX_LIB_DIR:
     lib_dir = args.with_lib_dir if args.with_lib_dir else PYWARPX_LIB_DIR
     my_path = os.path.dirname(os.path.realpath(__file__))
     for dim in allowed_dims:
-        lib_name = 'libwarpx%s.so' % dim
+        lib_name = 'libwarpx.%s.so' % dim
         lib_path = os.path.join(lib_dir, lib_name)
         link_name = os.path.join(my_path, "pywarpx", lib_name)
         if os.path.isfile(link_name):
