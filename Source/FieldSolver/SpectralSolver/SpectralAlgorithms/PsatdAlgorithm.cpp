@@ -645,6 +645,11 @@ void PsatdAlgorithm::InitializeSpectralCoefficients (
                 // Averaged Galilean algorithm
                 if (time_averaging)
                 {
+                    C1(i,j,k) = std::cos(0.5_rt * om * dt);
+                    S1(i,j,k) = std::sin(0.5_rt * om * dt);
+                    C3(i,j,k) = std::cos(1.5_rt * om * dt);
+                    S3(i,j,k) = std::sin(1.5_rt * om * dt);
+
                     Psi1(i,j,k) = (S3(i,j,k) - S1(i,j,k)) / (om * dt);
 
                     Psi2(i,j,k) = (C3(i,j,k) - C1(i,j,k)) / (om2 * dt);
