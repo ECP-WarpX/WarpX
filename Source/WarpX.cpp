@@ -702,12 +702,30 @@ WarpX::ReadParameters ()
                     "High-order interpolation (order > 2) is not implemented with mesh refinement");
             }
 
-            // Host vectors for Fornberg stencil coefficients used for finite-order centering
-            host_centering_stencil_coeffs_x = getFornbergStencilCoefficients(field_gathering_nox, false);
-            host_centering_stencil_coeffs_y = getFornbergStencilCoefficients(field_gathering_noy, false);
-            host_centering_stencil_coeffs_z = getFornbergStencilCoefficients(field_gathering_noz, false);
+            // Host vectors for Fornberg stencil coefficients
+            amrex::Vector<amrex::Real> host_Fornberg_stencil_coeffs_x;
+            amrex::Vector<amrex::Real> host_Fornberg_stencil_coeffs_y;
+            amrex::Vector<amrex::Real> host_Fornberg_stencil_coeffs_z;
 
-            // Device vectors for Fornberg stencil coefficients used for finite-order centering
+            host_Fornberg_stencil_coeffs_x = getFornbergStencilCoefficients(field_gathering_nox, false);
+            host_Fornberg_stencil_coeffs_y = getFornbergStencilCoefficients(field_gathering_noy, false);
+            host_Fornberg_stencil_coeffs_z = getFornbergStencilCoefficients(field_gathering_noz, false);
+
+            // Host vectors for ordered Fornberg stencil coefficients used for finite-order centering
+            host_centering_stencil_coeffs_x.resize(field_gathering_nox);
+            host_centering_stencil_coeffs_y.resize(field_gathering_noy);
+            host_centering_stencil_coeffs_z.resize(field_gathering_noz);
+
+            // Re-order Fornberg stencil coefficients
+            // example for order 6: (c_0,c_1,c_2) becomes (c_2,c_1,c_0,c_0,c_1,c_2)
+            ReorderFornbergCoefficients(host_centering_stencil_coeffs_x,
+                                        host_Fornberg_stencil_coeffs_x, field_gathering_nox);
+            ReorderFornbergCoefficients(host_centering_stencil_coeffs_y,
+                                        host_Fornberg_stencil_coeffs_y, field_gathering_noy);
+            ReorderFornbergCoefficients(host_centering_stencil_coeffs_z,
+                                        host_Fornberg_stencil_coeffs_z, field_gathering_noz);
+
+            // Device vectors for ordered Fornberg stencil coefficients used for finite-order centering
             device_centering_stencil_coeffs_x.resize(host_centering_stencil_coeffs_x.size());
             amrex::Gpu::copyAsync(amrex::Gpu::hostToDevice,
                                   host_centering_stencil_coeffs_x.begin(),
@@ -1713,6 +1731,19 @@ WarpX::BuildBufferMasksInBox ( const amrex::Box tbx, amrex::IArrayBox &buffer_ma
         }
     }
 #endif
+}
+
+void WarpX::ReorderFornbergCoefficients(amrex::Vector<amrex::Real>& ordered_coeffs,
+                                        amrex::Vector<amrex::Real>& unordered_coeffs,
+                                        const int order)
+{
+    const int n = order / 2;
+    for (int i = 0; i < n; i++) {
+        ordered_coeffs[i] = unordered_coeffs[n-1-i];
+    }
+    for (int i = n; i < order; i++) {
+        ordered_coeffs[i] = unordered_coeffs[i-n];
+    }
 }
 
 const iMultiFab*
