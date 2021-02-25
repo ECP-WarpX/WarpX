@@ -195,7 +195,7 @@ function(set_warpx_binary_name)
         # alias to the latest build, because using the full name is often confusing
         add_custom_command(TARGET app POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E create_symlink
-                $<TARGET_FILE:app>
+                $<TARGET_FILE_NAME:app>
                 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/warpx
         )
     endif()
@@ -209,14 +209,14 @@ function(set_warpx_binary_name)
             set(lib_suffix "rz")
         endif()
         if(WIN32)
-            set(mod_ext "pyd")
+            set(mod_ext "dll")
         else()
             set(mod_ext "so")
         endif()
         add_custom_command(TARGET shared POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E create_symlink
-                $<TARGET_FILE:shared>
-                ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libwarpx${lib_suffix}.${mod_ext}
+                $<TARGET_FILE_NAME:shared>
+                ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libwarpx.${lib_suffix}.${mod_ext}
         )
     endif()
 endfunction()

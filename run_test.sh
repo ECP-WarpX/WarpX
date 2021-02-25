@@ -21,6 +21,8 @@
 # Use `export WARPX_TEST_ARCH=CPU` or `export WARPX_TEST_ARCH=GPU` in order
 # to run the tests on CPU or GPU respectively.
 
+set -eu -o pipefail
+
 # Parse command line arguments: if test names are given as command line arguments,
 # store them in variable tests_arg and define new command line argument to call
 # regtest.py with option --tests (works also for single test)
@@ -48,9 +50,11 @@ cd test_dir
 echo "cd $PWD"
 
 # Clone PICSAR and AMReX
-git clone --branch development https://github.com/AMReX-Codes/amrex.git
+git clone https://github.com/AMReX-Codes/amrex.git
+cd amrex && git checkout 47389357d5de37d84be69d9b06a294e64cb2a96b && cd -
 # Use QED brach for QED tests
-git clone --branch development https://github.com/ECP-WarpX/picsar.git
+git clone https://github.com/ECP-WarpX/picsar.git
+cd picsar && git checkout b35f07243c51ac35d47857fe36f0aafb6b517955 && cd -
 
 # Clone the AMReX regression test utility
 git clone https://github.com/ECP-WarpX/regression_testing.git
@@ -68,8 +72,8 @@ cd ../../regression_testing/
 echo "cd $PWD"
 # run only tests specified in variable tests_arg (single test or multiple tests)
 if [[ ! -z "${tests_arg}" ]]; then
-  python regtest.py ../rt-WarpX/travis-tests.ini --no_update all --source_git_hash=${WARPX_TEST_COMMIT} "${tests_run}"
+  python regtest.py ../rt-WarpX/travis-tests.ini --no_update all "${tests_run}"
 # run all tests (variables tests_arg and tests_run are empty)
 else
-  python regtest.py ../rt-WarpX/travis-tests.ini --no_update all --source_git_hash=${WARPX_TEST_COMMIT}
+  python regtest.py ../rt-WarpX/travis-tests.ini --no_update all
 fi
