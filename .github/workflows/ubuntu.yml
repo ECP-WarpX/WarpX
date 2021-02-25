@@ -180,7 +180,9 @@ jobs:
         export OMP_NUM_THREADS=2
         Examples/Physics_applications/laser_acceleration/PICMI_inputs_laser_acceleration.py
 
+# disabled on 2020-02-25 because DPC++ got too large and we run out CI disk space
   build_dpcc:
+    if: false
     name: oneAPI DPC++ SP [Linux]
     runs-on: ubuntu-20.04
     steps:
