@@ -33,7 +33,7 @@ namespace QedUtils{
         const amrex::ParticleReal pz, const amrex::ParticleReal ex,
         const amrex::ParticleReal ey, const amrex::ParticleReal ez,
         const amrex::ParticleReal bx, const amrex::ParticleReal by,
-        const amrex::RealParticleReal bz)
+        const amrex::ParticleReal bz)
     {
         namespace pxr_p = picsar::multi_physics::phys;
         return pxr_p::chi_photon<amrex::Real, pxr_p::unit_system::SI>(

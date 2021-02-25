@@ -61,7 +61,7 @@ bool BreitWheelerEngine::are_lookup_tables_initialized () const
 bool
 BreitWheelerEngine::init_lookup_tables_from_raw_data (
     const vector<char>& raw_data,
-    const amrex::Real bw_minimum_chi_phot)
+    const amrex::ParticleReal bw_minimum_chi_phot)
 {
     auto raw_iter = raw_data.begin();
     const auto size_first = pxr_sr::get_out<uint64_t>(raw_iter);
@@ -89,7 +89,7 @@ BreitWheelerEngine::init_lookup_tables_from_raw_data (
 }
 
 void BreitWheelerEngine::init_builtin_tables(
-    const amrex::Real bw_minimum_chi_phot)
+    const amrex::ParticleReal bw_minimum_chi_phot)
 {
     init_builtin_dndt_table();
     init_builtin_pair_prod_table();
@@ -123,8 +123,8 @@ BreitWheelerEngine::get_default_ctrl() const
 {
     namespace pxr_bw = picsar::multi_physics::phys::breit_wheeler;
     return PicsarBreitWheelerCtrl{
-        pxr_bw::default_dndt_lookup_table_params<amrex::Real>,
-        pxr_bw::default_pair_prod_lookup_table_params<amrex::Real>
+        pxr_bw::default_dndt_lookup_table_params<amrex::ParticleReal>,
+        pxr_bw::default_pair_prod_lookup_table_params<amrex::ParticleReal>
     };
 }
 
@@ -192,7 +192,7 @@ void BreitWheelerEngine::init_builtin_pair_prod_table()
     pair_prod_params.chi_phot_how_many = 64;
     pair_prod_params.frac_how_many = 64;
 
-    const auto vals = amrex::Gpu::DeviceVector<amrex::Real>{
+    const auto vals = amrex::Gpu::DeviceVector<amrex::ParticleReal>{
         0.00000e+00_rt, 0.00000e+00_rt, 0.00000e+00_rt, 0.00000e+00_rt,
         0.00000e+00_rt, 0.00000e+00_rt, 0.00000e+00_rt, 3.35120e-221_rt,
         1.13067e-188_rt, 2.14228e-163_rt, 3.39948e-143_rt, 1.09215e-126_rt,
