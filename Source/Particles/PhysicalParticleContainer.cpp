@@ -1558,10 +1558,6 @@ PhysicalParticleContainer::GetParticleSlice (
     const Real z_min = z_new - base_dx[direction];
     const Real z_max = z_old + base_dx[direction];
 
-    RealBox slice_box = Geom(0).ProbDomain();
-    slice_box.setLo(direction, z_min);
-    slice_box.setHi(direction, z_max);
-
     diagnostic_particles.resize(finestLevel()+1);
 
     for (int lev = 0; lev < nlevs; ++lev) {
@@ -1592,9 +1588,6 @@ PhysicalParticleContainer::GetParticleSlice (
             {
                 const Box& box = pti.validbox();
                 auto index = std::make_pair(pti.index(), pti.LocalTileIndex());
-                const RealBox tile_real_box(box, dx, plo);
-
-                if ( !slice_box.intersects(tile_real_box) ) continue;
 
                 const auto GetPosition = GetParticlePosition(pti);
 
