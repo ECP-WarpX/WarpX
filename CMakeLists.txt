@@ -86,6 +86,19 @@ option(WarpX_amrex_internal                    "Download & build AMReX" ON)
 # change the default build type to RelWithDebInfo (or Release) instead of Debug
 set_default_build_type("RelWithDebInfo")
 
+# Option to enable interprocedural optimization ###############################
+option(WarpX_IPO                                "Compile with interprocedural optimization" OFF)
+if(WarpX_IPO)
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT is_IPO_available)
+    if(is_IPO_available)
+        set_target_properties(WarpX PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+    else()
+        message(FATAL_ERROR "Interprocedural optimization is not available on this system!")
+    endif()
+endif()
+###############################################################################
+
 # this defined the variable BUILD_TESTING which is ON by default
 #include(CTest)
 
