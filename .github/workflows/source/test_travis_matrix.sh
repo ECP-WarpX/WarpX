@@ -10,8 +10,10 @@ python prepare_file_travis.py
 grep "\[" travis-tests.ini > travis_all_tests.txt
 
 # Concatenate the names of all elements in Travis matrix into another test file
-WARPX_CI_REGULAR_CARTESIAN=TRUE python prepare_file_travis.py
+WARPX_CI_REGULAR_CARTESIAN_2D=TRUE python prepare_file_travis.py
 grep "\[" travis-tests.ini >  travis_matrix_elements.txt
+WARPX_CI_REGULAR_CARTESIAN_3D=TRUE python prepare_file_travis.py
+grep "\[" travis-tests.ini >>  travis_matrix_elements.txt
 WARPX_CI_PSATD=TRUE             python prepare_file_travis.py
 grep "\[" travis-tests.ini >> travis_matrix_elements.txt
 WARPX_CI_PYTHON_MAIN=TRUE       python prepare_file_travis.py
