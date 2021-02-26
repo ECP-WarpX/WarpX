@@ -123,9 +123,15 @@ class Species(picmistandard.PICMI_Species):
 
 picmistandard.PICMI_MultiSpecies.Species_class = Species
 class MultiSpecies(picmistandard.PICMI_MultiSpecies):
-    def initialize_inputs(self, layout, initialize_self_fields=False):
+    def initialize_inputs(self, layout,
+                          initialize_self_fields = False,
+                          injection_plane_position = None,
+                          injection_plane_normal_vector = None):
         for species in self.species_instances_list:
-            species.initialize_inputs(layout, initialize_self_fields)
+            species.initialize_inputs(layout,
+                                      initialize_self_fields,
+                                      injection_plane_position,
+                                      injection_plane_normal_vector)
 
 
 class GaussianBunchDistribution(picmistandard.PICMI_GaussianBunchDistribution):
