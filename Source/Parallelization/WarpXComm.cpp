@@ -51,6 +51,9 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
     const amrex::IntVect& Ey_stag = Efield_fp[0][1]->ixType().toIntVect();
     const amrex::IntVect& Ez_stag = Efield_fp[0][2]->ixType().toIntVect();
 
+    // Destination MultiFab (aux) always has nodal index type when this function is called
+    const amrex::IntVect& dst_stag = amrex::IntVect::TheNodeVector();
+
     // For level 0, we only need to do the average.
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
@@ -89,34 +92,34 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                warpx_interp(j, k, l, bx_aux, bx_fp, Bx_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp(j, k, l, bx_aux, bx_fp, dst_stag, Bx_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, by_aux, by_fp, By_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp(j, k, l, by_aux, by_fp, dst_stag, By_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, bz_aux, bz_fp, Bz_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp(j, k, l, bz_aux, bz_fp, dst_stag, Bz_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, ex_aux, ex_fp, Ex_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp(j, k, l, ex_aux, ex_fp, dst_stag, Ex_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, ey_aux, ey_fp, Ey_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp(j, k, l, ey_aux, ey_fp, dst_stag, Ey_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 
-                warpx_interp(j, k, l, ez_aux, ez_fp, Ez_stag, fg_nox, fg_noy, fg_noz,
+                warpx_interp(j, k, l, ez_aux, ez_fp, dst_stag, Ez_stag, fg_nox, fg_noy, fg_noz,
                              stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
             });
 #endif
         } else { // FDTD
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                warpx_interp(j, k, l, bx_aux, bx_fp, Bx_stag);
-                warpx_interp(j, k, l, by_aux, by_fp, By_stag);
-                warpx_interp(j, k, l, bz_aux, bz_fp, Bz_stag);
-                warpx_interp(j, k, l, ex_aux, ex_fp, Ex_stag);
-                warpx_interp(j, k, l, ey_aux, ey_fp, Ey_stag);
-                warpx_interp(j, k, l, ez_aux, ez_fp, Ez_stag);
+                warpx_interp(j, k, l, bx_aux, bx_fp, dst_stag, Bx_stag);
+                warpx_interp(j, k, l, by_aux, by_fp, dst_stag, By_stag);
+                warpx_interp(j, k, l, bz_aux, bz_fp, dst_stag, Bz_stag);
+                warpx_interp(j, k, l, ex_aux, ex_fp, dst_stag, Ex_stag);
+                warpx_interp(j, k, l, ey_aux, ey_fp, dst_stag, Ey_stag);
+                warpx_interp(j, k, l, ez_aux, ez_fp, dst_stag, Ez_stag);
             });
         }
     }
@@ -372,6 +375,9 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
 
     amrex::IntVect const& dst_stag = dst.ixType().toIntVect();
 
+    // Source MultiFab always has nodal index type when this function is called
+    amrex::IntVect const& src_stag = amrex::IntVect::TheNodeVector();
+
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())
 #endif
@@ -396,8 +402,8 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
 
             amrex::ParallelFor(fabbx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                warpx_interp_nodal_to_stag(j, k, l, dst_arr, src_arr, dst_stag, cc_nox, cc_noy, cc_noz,
-                                           stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
+                warpx_interp(j, k, l, dst_arr, src_arr, dst_stag, src_stag, cc_nox, cc_noy, cc_noz,
+                             stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
             });
         }
     }

@@ -512,6 +512,7 @@ void warpx_interp (const int j,
                    const int l,
                    amrex::Array4<amrex::Real      > const& dst_arr,
                    amrex::Array4<amrex::Real const> const& src_arr,
+                   const amrex::IntVect& dst_stag,
                    const amrex::IntVect& src_stag,
                    const int nox = 2,
                    const int noy = 2,
@@ -539,12 +540,20 @@ void warpx_interp (const int j,
     amrex::ignore_unused(stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
 #endif
 
+    // If dst_nodal = true, we are centering from staggered to nodal
+    // (centering of fields with momentum-conserving field gathering)
+    // If dst_nodal = false, we are centering from nodal to staggered
+    // (centering of currents when WarpX::do_current_centering = 1)
+    const bool dst_nodal = (dst_stag == amrex::IntVect::TheNodeVector());
+
     // Staggering (s = 0 if cell-centered, s = 1 if nodal)
-    const int sj = src_stag[0];
-    const int sk = src_stag[1];
+    const int sj = (dst_nodal) ? src_stag[0] : dst_stag[0];
+    const int sk = (dst_nodal) ? src_stag[1] : dst_stag[1];
 #if (AMREX_SPACEDIM == 3)
-    const int sl = src_stag[2];
+    const int sl = (dst_nodal) ? src_stag[2] : dst_stag[2];
 #endif
+
+    const int shift = (dst_nodal) ? 0 : 1;
 
     // Interpolate along j,k,l only if source MultiFab is staggered along j,k,l
     const bool interp_j = (sj == 0);
@@ -571,12 +580,12 @@ void warpx_interp (const int j,
 #endif
 
     // Min and max for interpolation loop along j
-    const int jmin = (interp_j) ? j - noj/2 : j;
-    const int jmax = (interp_j) ? j + noj/2 - 1 : j;
+    const int jmin = (interp_j) ? j - noj/2 + shift     : j;
+    const int jmax = (interp_j) ? j + noj/2 + shift - 1 : j;
 
     // Min and max for interpolation loop along k
-    const int kmin = (interp_k) ? k - nok/2 : k;
-    const int kmax = (interp_k) ? k + nok/2 - 1 : k;
+    const int kmin = (interp_k) ? k - nok/2 + shift     : k;
+    const int kmax = (interp_k) ? k + nok/2 + shift - 1 : k;
 
     // Min and max for interpolation loop along l
 #if   (AMREX_SPACEDIM == 2)
@@ -584,8 +593,8 @@ void warpx_interp (const int j,
     const int lmin = l;
     const int lmax = l;
 #elif (AMREX_SPACEDIM == 3)
-    const int lmin = (interp_l) ? l - nol/2 : l;
-    const int lmax = (interp_l) ? l + nol/2 - 1 : l;
+    const int lmin = (interp_l) ? l - nol/2 + shift     : l;
+    const int lmax = (interp_l) ? l + nol/2 + shift - 1 : l;
 #endif
 
     amrex::Real res = 0.0_rt;
@@ -669,138 +678,6 @@ void warpx_interp (const int j,
     }
 
 #endif // PSATD (finite-order interpolation)
-
-    dst_arr(j,k,l) = wj * wk * wl * res;
-}
-
-// TODO Doxygen
-AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-void warpx_interp_nodal_to_stag (const int j,
-                                 const int k,
-                                 const int l,
-                                 amrex::Array4<amrex::Real      > const& dst_arr,
-                                 amrex::Array4<amrex::Real const> const& src_arr,
-                                 const amrex::IntVect& dst_stag,
-                                 const int nox,
-                                 const int noy,
-                                 const int noz,
-                                 amrex::Real const* stencil_coeffs_x,
-                                 amrex::Real const* stencil_coeffs_y,
-                                 amrex::Real const* stencil_coeffs_z)
-{
-    using namespace amrex;
-
-    // Pad input array with zeros beyond ghost cells
-    // for out-of-bound accesses due to large-stencil operations
-    const auto src_arr_zeropad = [src_arr] (const int jj, const int kk, const int ll) noexcept
-    {
-        return src_arr.contains(jj,kk,ll) ? src_arr(jj,kk,ll) : 0.0_rt;
-    };
-
-    // Avoid compiler warnings
-#if (AMREX_SPACEDIM == 2)
-    amrex::ignore_unused(noy, stencil_coeffs_y);
-#endif
-
-    // Staggering (s = 0 if cell-centered, s = 1 if nodal)
-    const int sj = dst_stag[0];
-    const int sk = dst_stag[1];
-#if (AMREX_SPACEDIM == 3)
-    const int sl = dst_stag[2];
-#endif
-
-    // Interpolate along j,k,l only if destination MultiFab is staggered along j,k,l
-    const bool interp_j = (sj == 0);
-    const bool interp_k = (sk == 0);
-#if (AMREX_SPACEDIM == 3)
-    const bool interp_l = (sl == 0);
-#endif
-
-    const int noj = nox;
-#if   (AMREX_SPACEDIM == 2)
-    const int nok = noz;
-#elif (AMREX_SPACEDIM == 3)
-    const int nok = noy;
-    const int nol = noz;
-#endif
-
-    // Additional normalization factor
-    const amrex::Real wj = (interp_j) ? 0.5_rt : 1.0_rt;
-    const amrex::Real wk = (interp_k) ? 0.5_rt : 1.0_rt;
-#if   (AMREX_SPACEDIM == 2)
-    constexpr amrex::Real wl = 1.0_rt;
-#elif (AMREX_SPACEDIM == 3)
-    const amrex::Real wl = (interp_l) ? 0.5_rt : 1.0_rt;
-#endif
-
-    // Min and max for interpolation loop along j
-    const int jmin = (interp_j) ? j - noj/2 + 1 : j;
-    const int jmax = (interp_j) ? j + noj/2 : j;
-
-    // Min and max for interpolation loop along k
-    const int kmin = (interp_k) ? k - nok/2 + 1 : k;
-    const int kmax = (interp_k) ? k + nok/2 : k;
-
-    // Min and max for interpolation loop along l
-#if   (AMREX_SPACEDIM == 2)
-    // l = 0 always
-    const int lmin = l;
-    const int lmax = l;
-#elif (AMREX_SPACEDIM == 3)
-    const int lmin = (interp_l) ? l - nol/2 + 1 : l;
-    const int lmax = (interp_l) ? l + nol/2 : l;
-#endif
-
-    // Example of 1D interpolation from nodal grid to nodal grid:
-    //
-    //         j
-    // --o-----o-----o--  result(j) = f(j)
-    // --o-----o-----o--
-    //  j-1    j    j+1
-    //
-    // Example of 1D interpolation from staggered grid to nodal grid:
-    //
-    //                  j
-    // -----x-----x-----x-----x-----x-----  result(j) = c_0 * (f(j)   + f(j+1)) / 2
-    // --o-----o-----o-----o-----o-----o--            + c_1 * (f(j-1) + f(j+2)) / 2
-    //  j-2   j-1    j    j+1   j+2   j+3             + c_2 * (f(j-2) + f(j+3)) / 2
-    //  c_2   c_1   c_0   c_0   c_1   c_2             + ...
-
-    amrex::Real res = 0.0_rt;
-
-    const int nj = jmax - jmin;
-    const int nk = kmax - kmin;
-    const int nl = lmax - lmin;
-
-    amrex::Real cj = 1.0_rt;
-    amrex::Real ck = 1.0_rt;
-    amrex::Real cl = 1.0_rt;
-
-    amrex::Real const* scj = stencil_coeffs_x;
-#if   (AMREX_SPACEDIM == 2)
-    amrex::Real const* sck = stencil_coeffs_z;
-#elif (AMREX_SPACEDIM == 3)
-    amrex::Real const* sck = stencil_coeffs_y;
-    amrex::Real const* scl = stencil_coeffs_z;
-#endif
-
-    for (int ll = 0; ll <= nl; ll++)
-    {
-#if (AMREX_SPACEDIM == 3)
-        if (interp_l) cl = scl[ll];
-#endif
-        for (int kk = 0; kk <= nk; kk++)
-        {
-            if (interp_k) ck = sck[kk];
-
-            for (int jj = 0; jj <= nj; jj++)
-            {
-                if (interp_j) cj = scj[jj];
-
-                res += cj * ck * cl * src_arr_zeropad(jmin+jj,kmin+kk,lmin+ll);
-            }
-        }
-    }
 
     dst_arr(j,k,l) = wj * wk * wl * res;
 }
