@@ -78,13 +78,15 @@ WarpX::UpdateAuxilaryDataStagToNodal ()
 
         if (maxwell_solver_id == MaxwellSolverAlgo::PSATD) {
 #ifdef WARPX_USE_PSATD
-            const int fg_nox = WarpX::field_gathering_nox;
-            const int fg_noy = WarpX::field_gathering_noy;
-            const int fg_noz = WarpX::field_gathering_noz;
+            const int fg_nox = WarpX::field_centering_nox;
+            const int fg_noy = WarpX::field_centering_noy;
+            const int fg_noz = WarpX::field_centering_noz;
+
             // Device vectors for Fornberg stencil coefficients used for finite-order centering
-            amrex::Real const * stencil_coeffs_x = WarpX::device_centering_stencil_coeffs_x.data();
-            amrex::Real const * stencil_coeffs_y = WarpX::device_centering_stencil_coeffs_y.data();
-            amrex::Real const * stencil_coeffs_z = WarpX::device_centering_stencil_coeffs_z.data();
+            amrex::Real const * stencil_coeffs_x = WarpX::device_field_centering_stencil_coeffs_x.data();
+            amrex::Real const * stencil_coeffs_y = WarpX::device_field_centering_stencil_coeffs_y.data();
+            amrex::Real const * stencil_coeffs_z = WarpX::device_field_centering_stencil_coeffs_z.data();
+
             amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
                 warpx_interp(j, k, l, bx_aux, bx_fp, Bx_stag, fg_nox, fg_noy, fg_noz,
@@ -358,7 +360,15 @@ WarpX::UpdateAuxilaryDataSameType ()
 // TODO Add Doxygen
 void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab const& src)
 {
-    //amrex::MultiFab::Copy(dst, src, 0, 0, dst.nComp(), dst.nGrowVect());
+    // If source and destination MultiFabs have the same index type, a simple copy is enough
+    // (for example, this happens with the current along y in 2D, which is always fully nodal)
+    if (dst.ixType() == src.ixType())
+    {
+        amrex::MultiFab::Copy(dst, src, 0, 0, dst.nComp(), dst.nGrowVect());
+        return;
+    }
+
+#ifdef WARPX_USE_PSATD
 
     amrex::IntVect const& dst_stag = dst.ixType().toIntVect();
 
@@ -370,17 +380,30 @@ void WarpX::UpdateCurrentNodalToStag (amrex::MultiFab& dst, amrex::MultiFab cons
     {
         Box fabbx = mfi.fabbox();
 
+        const int cc_nox = WarpX::current_centering_nox;
+        const int cc_noy = WarpX::current_centering_noy;
+        const int cc_noz = WarpX::current_centering_noz;
+
+        // Device vectors for Fornberg stencil coefficients used for finite-order centering
+        amrex::Real const * stencil_coeffs_x = WarpX::device_current_centering_stencil_coeffs_x.data();
+        amrex::Real const * stencil_coeffs_y = WarpX::device_current_centering_stencil_coeffs_y.data();
+        amrex::Real const * stencil_coeffs_z = WarpX::device_current_centering_stencil_coeffs_z.data();
+
         if (fabbx.ok())
         {
             amrex::Array4<amrex::Real const> const& src_arr = src.const_array(mfi);
             amrex::Array4<amrex::Real>       const& dst_arr = dst.array(mfi);
 
-            amrex::ParallelFor(fabbx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+            amrex::ParallelFor(fabbx, [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
             {
-                LinearInterpNodalToStag(i, j, k, dst_arr, src_arr, dst_stag);
+                warpx_interp_nodal_to_stag(j, k, l, dst_arr, src_arr, dst_stag, cc_nox, cc_noy, cc_noz,
+                                           stencil_coeffs_x, stencil_coeffs_y, stencil_coeffs_z);
             });
         }
     }
+
+#endif // PSATD
+
 }
 
 void

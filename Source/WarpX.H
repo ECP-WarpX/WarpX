@@ -157,11 +157,15 @@ public:
     static long noy;
     static long noz;
 
-    // For momentum-conserving field gathering, order of interpolation from the
-    // staggered positions to the grid nodes
-    static int field_gathering_nox;
-    static int field_gathering_noy;
-    static int field_gathering_noz;
+    // Order of finite-order centering of fields (staggered to nodal)
+    static int field_centering_nox;
+    static int field_centering_noy;
+    static int field_centering_noz;
+
+    // Order of finite-order centering of currents (nodal to staggered)
+    static int current_centering_nox;
+    static int current_centering_noy;
+    static int current_centering_noz;
 
     // Number of modes for the RZ multimode version
     static int n_rz_azimuthal_modes;
@@ -595,12 +599,18 @@ public:
 
 #ifdef WARPX_USE_PSATD
     // Host and device vectors for ordered Fornberg stencil coefficients used for finite-order centering
-    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_x;
-    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_y;
-    amrex::Vector<amrex::Real> host_centering_stencil_coeffs_z;
-    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_x;
-    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_y;
-    amrex::Gpu::DeviceVector<amrex::Real> device_centering_stencil_coeffs_z;
+    amrex::Vector<amrex::Real> host_field_centering_stencil_coeffs_x;
+    amrex::Vector<amrex::Real> host_field_centering_stencil_coeffs_y;
+    amrex::Vector<amrex::Real> host_field_centering_stencil_coeffs_z;
+    amrex::Vector<amrex::Real> host_current_centering_stencil_coeffs_x;
+    amrex::Vector<amrex::Real> host_current_centering_stencil_coeffs_y;
+    amrex::Vector<amrex::Real> host_current_centering_stencil_coeffs_z;
+    amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_x;
+    amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_y;
+    amrex::Gpu::DeviceVector<amrex::Real> device_field_centering_stencil_coeffs_z;
+    amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_x;
+    amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_y;
+    amrex::Gpu::DeviceVector<amrex::Real> device_current_centering_stencil_coeffs_z;
 #endif
 
 protected:
